@@ -44,3 +44,16 @@ class RestHelper(Helper):
         API = 'http://{0}/controller/addNode'.format(host_port)
         data = {'hostname': new_host}
         self.post(url=API, data=data)
+
+    @staticmethod
+    def ns_1(host_port):
+        return 'ns_1@'.format(host_port.split(':')[0])
+
+    def rebalance(self, host_port, known_nodes, ejected_nodes):
+        logger.info('Starting rebalance')
+
+        API = 'http://{0}/controller/rebalance'.format(host_port)
+        known_nodes = ','.join(map(self.ns_1, known_nodes))
+        ejected_nodes = ','.join(ejected_nodes)
+        data = {'knownNodes': known_nodes, 'ejectedNodes': ejected_nodes}
+        self.post(url=API, data=data)

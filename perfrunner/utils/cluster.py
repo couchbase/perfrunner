@@ -33,6 +33,13 @@ class ClusterManager(Helper):
                 host = host_port.split(':')[0]
                 self.rest_helper.add_node(master, host)
 
+    def rebalance(self):
+        for cluster in self.clusters:
+            master = cluster[0]
+            known_nodes = cluster[:self.initial_nodes]
+            ejected_nodes = []
+            self.rest_helper.rebalance(master, known_nodes, ejected_nodes)
+
 
 def get_options():
     usage = '%prog -c cluster -t test_config'
@@ -60,6 +67,8 @@ def main():
     cm.set_data_path()
     cm.set_auth()
     cm.set_mem_quota()
+    cm.add_nodes()
+    cm.rebalance()
 
 if __name__ == '__main__':
     main()

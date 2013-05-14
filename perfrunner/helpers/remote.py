@@ -1,7 +1,7 @@
 from fabric.api import execute, hide, run, parallel, settings
 
 from perfrunner.logger import logger
-from perfrunner.utils.config import ClusterSpec
+from perfrunner.helpers import Helper
 
 
 def all_hosts(task):
@@ -25,14 +25,9 @@ def single_host(task):
     return wrapper
 
 
-class RemoteHelper(object):
+class RemoteHelper(Helper):
 
     ARCH = {'i686': 'x86', 'i386': 'x86', 'x86_64': 'x86_64'}
-
-    def __init__(self, spec_file):
-        config = ClusterSpec()
-        config.parse(spec_file)
-        self.__dict__ = config.__dict__
 
     def wget(self, url, outdir='/tmp'):
         logger.info('Fetching {0}'.format(url))

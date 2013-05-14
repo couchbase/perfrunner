@@ -6,7 +6,7 @@ from lxml import etree
 from fabric.api import run
 
 from perfrunner.logger import logger
-from perfrunner.utils.remote import RemoteHelper, all_hosts
+from perfrunner.helpers.remote import RemoteHelper, all_hosts
 
 
 Build = namedtuple('Build', ['arch', 'pkg', 'version', 'toy'])

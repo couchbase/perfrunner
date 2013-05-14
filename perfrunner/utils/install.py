@@ -59,6 +59,8 @@ class CouchbaseInstaller(RemoteHelper):
 
     @all_hosts
     def uninstall_package(self, pkg):
+        logger.info('Uninstalling Couchbase Server')
+
         if pkg == 'deb':
             run('yes | apt-get remove couchbase-server')
         else:
@@ -67,6 +69,8 @@ class CouchbaseInstaller(RemoteHelper):
 
     @all_hosts
     def install_package(self, pkg, filename):
+        logger.info('Installing Couchbase Server')
+
         url = BuildIterator.BUILDS_URL + filename
         self.wget(url, outdir='/tmp')
 

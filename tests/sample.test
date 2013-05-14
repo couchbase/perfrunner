@@ -1,0 +1,4 @@
+[cluster]
+mem_quota = 20480
+initial_nodes = 3
+buckets = 2

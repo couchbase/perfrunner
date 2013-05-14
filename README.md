@@ -11,6 +11,8 @@ Requirements
 * libxml2-devel or equivalent
 * libxslt-devel or equivalent
 
+Python dependencies are listed in requirements.txt.
+
 Cluster installation and setup
 ------------------------------
 

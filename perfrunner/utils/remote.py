@@ -1,4 +1,4 @@
-from fabric.api import execute, hide, run, settings
+from fabric.api import execute, hide, run, parallel, settings
 
 from perfrunner.utils.config import ClusterSpec
 
@@ -9,7 +9,7 @@ def all_hosts(task):
         with hide('output'):
             with settings(user=self.ssh_username, password=self.ssh_password,
                           warn_only=True):
-                return execute(task, *args, hosts=self.hosts, **kargs)
+                return execute(parallel(task), *args, hosts=self.hosts, **kargs)
     return wrapper
 
 

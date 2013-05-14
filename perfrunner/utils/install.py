@@ -58,7 +58,7 @@ class CouchbaseInstaller(RemoteHelper):
             logger.interrupt('Target build not found')
 
     @all_hosts
-    def _uninstall_package(self, pkg):
+    def uninstall_package(self, pkg):
         if pkg == 'deb':
             run('yes | apt-get remove couchbase-server')
         else:
@@ -66,7 +66,7 @@ class CouchbaseInstaller(RemoteHelper):
         run('rm -fr /opt/couchbase')
 
     @all_hosts
-    def _install_package(self, pkg, filename):
+    def install_package(self, pkg, filename):
         url = BuildIterator.BUILDS_URL + filename
         self.wget(url, outdir='/tmp')
 
@@ -84,8 +84,8 @@ class CouchbaseInstaller(RemoteHelper):
         filename = self._get_expected_filename(build)
         self._check_if_exists(filename)
 
-        self._uninstall_package(pkg)
-        self._install_package(pkg, filename)
+        self.uninstall_package(pkg)
+        self.install_package(pkg, filename)
 
 
 def main():

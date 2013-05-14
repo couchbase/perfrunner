@@ -42,7 +42,8 @@ class RestHelper(Helper):
         logger.info('Adding new node: {0}'.format(new_host))
 
         API = 'http://{0}/controller/addNode'.format(host_port)
-        data = {'hostname': new_host}
+        data = {'hostname': new_host,
+                'user': self.rest_username, 'password': self.rest_password}
         self.post(url=API, data=data)
 
     @staticmethod

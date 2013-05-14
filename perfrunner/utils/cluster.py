@@ -26,6 +26,13 @@ class ClusterManager(Helper):
             for host_port in cluster:
                 self.rest_helper.set_mem_quota(host_port, self.mem_quota)
 
+    def add_nodes(self):
+        for cluster in self.clusters:
+            master = cluster[0]
+            for host_port in cluster[1:self.initial_nodes]:
+                host = host_port.split(':')[0]
+                self.rest_helper.add_node(master, host)
+
 
 def get_options():
     usage = '%prog -c cluster -t test_config'

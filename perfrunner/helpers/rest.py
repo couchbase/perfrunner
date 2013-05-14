@@ -37,3 +37,10 @@ class RestHelper(Helper):
         API = 'http://{0}/pools/default'.format(host_port)
         data = {'memoryQuota': mem_quota}
         self.post(url=API, data=data)
+
+    def add_node(self, host_port, new_host):
+        logger.info('Adding new node: {0}'.format(new_host))
+
+        API = 'http://{0}/controller/addNode'.format(host_port)
+        data = {'hostname': new_host}
+        self.post(url=API, data=data)

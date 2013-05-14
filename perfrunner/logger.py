@@ -5,6 +5,7 @@ import sys
 import types
 
 logging.getLogger('paramiko').setLevel(logging.WARNING)
+logging.getLogger('requests').setLevel(logging.WARNING)
 
 config_file = os.path.join(os.path.dirname(__file__), 'logging.conf')
 

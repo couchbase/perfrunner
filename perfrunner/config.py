@@ -5,7 +5,19 @@ from operator import add
 from perfrunner.logger import logger
 
 
-class ClusterSpec(object):
+class Config(object):
+
+    @staticmethod
+    def _read_config(fname):
+        logger.info('Reading configuration file: {0}'.format(fname))
+        if not os.path.isfile(fname):
+            logger.interrupt('File doesn\'t exist: {0}'.format(fname))
+        config = ConfigParser()
+        config.read(fname)
+        return config
+
+
+class ClusterSpec(Config):
 
     def parse(self, fname):
         config = self._read_config(fname)
@@ -29,11 +41,14 @@ class ClusterSpec(object):
     def split_host_port(server):
         return server.split(':')[0]
 
-    @staticmethod
-    def _read_config(fname):
-        logger.info('Reading configuration file: {0}'.format(fname))
-        if not os.path.isfile(fname):
-            logger.interrupt('File doesn\'t exist: {0}'.format(fname))
-        config = ConfigParser()
-        config.read(fname)
-        return config
+
+class TestConfig(Config):
+
+    def parse(self, fname):
+        config = self._read_config(fname)
+        try:
+            self.mem_quota = config.get('cluster', 'mem_quota')
+            self.initial_nodes = config.get('cluster', 'initial_nodes')
+            self.buckets = config.get('cluster', 'buckets')
+        except (NoSectionError, NoOptionError), e:
+            logger.interrupt('Failed to get option from config: {0}'.format(e))

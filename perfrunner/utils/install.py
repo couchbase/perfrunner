@@ -50,10 +50,12 @@ class CouchbaseInstaller(RemoteHelper):
 
     @staticmethod
     def _check_if_exists(target):
-        for filename, url in BuildIterator():
+        for filename in BuildIterator():
             if filename == target:
                 logger.info('Found "{0}"'.format(filename))
-        logger.interrupt('Target build not found')
+                break
+        else:
+            logger.interrupt('Target build not found')
 
     @all_hosts
     def _uninstall_package(self, pkg):

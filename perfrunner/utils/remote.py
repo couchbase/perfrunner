@@ -34,7 +34,7 @@ class RemoteHelper(object):
         self.__dict__ = config.__dict__
 
     def wget(self, url, outdir='/tmp'):
-        run('wget "{0}" -P {1}', url, outdir)
+        run('wget "{0}" -P {1}'.format(url, outdir))
 
     @single_host
     def detect_pkg(self):

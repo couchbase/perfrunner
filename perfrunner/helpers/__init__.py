@@ -1,4 +1,4 @@
-from perfrunner.utils.config import ClusterSpec
+from perfrunner.config import ClusterSpec
 
 
 class Helper(object):

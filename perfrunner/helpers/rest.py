@@ -47,7 +47,7 @@ class RestHelper(Helper):
 
     @staticmethod
     def ns_1(host_port):
-        return 'ns_1@'.format(host_port.split(':')[0])
+        return 'ns_1@{0}'.format(host_port.split(':')[0])
 
     def rebalance(self, host_port, known_nodes, ejected_nodes):
         logger.info('Starting rebalance')

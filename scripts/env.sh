@@ -1,3 +1,3 @@
 #!/bin/bash -ex
-virtualenv env
-env/bin/pip install -r requirements.txt
+virtualenv /tmp/prenv
+/tmp/prenv/bin/pip install -r requirements.txt

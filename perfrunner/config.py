@@ -47,8 +47,8 @@ class TestConfig(Config):
     def parse(self, fname):
         config = self._read_config(fname)
         try:
-            self.mem_quota = config.get('cluster', 'mem_quota')
-            self.initial_nodes = config.get('cluster', 'initial_nodes')
-            self.buckets = config.get('cluster', 'buckets')
+            self.mem_quota = config.getint('cluster', 'mem_quota')
+            self.initial_nodes = config.getint('cluster', 'initial_nodes')
+            self.buckets = config.getint('cluster', 'buckets')
         except (NoSectionError, NoOptionError), e:
             logger.interrupt('Failed to get option from config: {0}'.format(e))

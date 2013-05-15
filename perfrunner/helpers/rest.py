@@ -77,7 +77,7 @@ class RestHelper(Helper):
         while True:
             is_running, progress = self.get_rebalance_status(host_port)
             if is_running:
-                logger.info('Rebalance progress: {0}'.format(progress))
+                logger.info('Rebalance progress: {0} %'.format(progress))
                 time.sleep(10)
             else:
                 break

@@ -91,6 +91,7 @@ def main():
 
     rh = RemoteHelper(options.cluster)
     rh.reset_swap()
+    rh.drop_caches()
 
 if __name__ == '__main__':
     main()

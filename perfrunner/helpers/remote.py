@@ -50,3 +50,8 @@ class RemoteHelper(Helper):
     def reset_swap(self):
         logger.info('Resetting swap')
         run('swapoff --all && swapon --all')
+
+    @all_hosts
+    def drop_caches(self):
+        logger.info('Dropping memory cache')
+        run('sync && echo 3 > /proc/sys/vm/drop_caches')

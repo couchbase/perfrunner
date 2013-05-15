@@ -64,7 +64,7 @@ class TestConfig(Config):
 
     @safe
     def get_num_buckets(self):
-        return self.config.getint('cluster', 'buckets')
+        return self.config.getint('cluster', 'num_buckets')
 
     @safe
     def get_compaction_options(self):

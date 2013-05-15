@@ -1,3 +1,5 @@
+import time
+
 import requests
 
 from perfrunner.logger import logger
@@ -58,6 +60,28 @@ class RestHelper(Helper):
         ejected_nodes = ','.join(ejected_nodes)
         data = {'knownNodes': known_nodes, 'ejectedNodes': ejected_nodes}
         self.post(url=API, data=data)
+
+    def get_tasks(self, host_port):
+        API = '/http://{0}pools/default/tasks'.format(host_port)
+        return self.get(url=API).json()
+
+    def get_rebalance_status(self, host_port):
+        for task in self.get_tasks(host_port):
+            if task['type'] == 'rebalance':
+                is_running = bool(task['status'] == 'running')
+                progress = is_running and task['progress'] or None
+                return is_running, progress
+
+    def monitor_rebalance(self, host_port):
+        logger.info('Monitoring rebalance status')
+        while True:
+            is_running, progress = self.get_rebalance_status(host_port)
+            if is_running:
+                logger.info('Rebalance progress: {0}'.format(progress))
+                time.sleep(10)
+            else:
+                break
+        logger.info('Rebalance successfully completed')
 
     def create_bucket(self, host_port, name, ram_quota, replica_number=1,
                       replica_index=0):

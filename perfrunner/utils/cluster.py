@@ -51,7 +51,7 @@ class ClusterManager(Helper):
             self.rest_helper.monitor_rebalance(master)
 
     def create_buckets(self):
-        ram_quota = self.mem_quota / self.initial_nodes
+        ram_quota = self.mem_quota / self.buckets
         buckets = ('bucket-{0}'.format(i + 1) for i in xrange(self.buckets))
         for cluster in self.clusters:
             master = cluster[0]

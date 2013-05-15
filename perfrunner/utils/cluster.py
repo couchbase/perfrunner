@@ -86,6 +86,7 @@ def main():
     cm.set_mem_quota()
     cm.add_nodes()
     cm.rebalance()
+    cm.create_buckets()
 
     rh = RemoteHelper(options.cluster)
     rh.reset_swap()

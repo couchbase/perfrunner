@@ -10,6 +10,7 @@ Requirements
 * virtualenv
 * libxml2-devel or equivalent
 * libxslt-devel or equivalent
+* libcouchbase
 
 Python dependencies are listed in requirements.txt.
 

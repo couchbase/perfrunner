@@ -48,4 +48,5 @@ class RemoteHelper(Helper):
 
     @all_hosts
     def reset_swap(self):
+        logger.info('Resetting swap')
         run('swapoff --all && swapon --all')

@@ -4,7 +4,7 @@ from fabric.api import run
 
 from perfrunner.helpers import Helper
 from perfrunner.helpers.rest import RestHelper
-from perfrunner.helpers.remote import all_hosts
+from perfrunner.helpers.remote import RemoteHelper, all_hosts
 
 
 class ClusterManager(Helper):
@@ -78,6 +78,9 @@ def main():
     cm.set_mem_quota()
     cm.add_nodes()
     cm.rebalance()
+
+    rh = RemoteHelper(options.cluster)
+    rh.reset_swap()
 
 if __name__ == '__main__':
     main()

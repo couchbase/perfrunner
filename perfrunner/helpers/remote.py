@@ -47,3 +47,7 @@ class RemoteHelper(Helper):
         logger.info('Detecting platform architecture')
         arch = run('arch')
         return self.ARCH[arch]
+
+    @all_hosts
+    def reset_swap(self):
+        run('swapoff --all && swapon --all')

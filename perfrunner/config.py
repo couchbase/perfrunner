@@ -46,6 +46,7 @@ class TestConfig(Config):
 
     def parse(self, fname):
         config = self._read_config(fname)
+        self.test_config = config
         try:
             self.mem_quota = config.getint('cluster', 'mem_quota')
             self.initial_nodes = config.getint('cluster', 'initial_nodes')

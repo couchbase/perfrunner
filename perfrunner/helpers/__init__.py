@@ -12,4 +12,3 @@ class Helper(object):
             config = TestConfig()
             config.parse(test_config)
             self.__dict__.update(config.__dict__)
-            self.test_config = config

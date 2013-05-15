@@ -1,7 +1,10 @@
 from optparse import OptionParser
 
+from fabric.api import run
+
 from perfrunner.helpers import Helper
 from perfrunner.helpers.rest import RestHelper
+from perfrunner.helpers.remote import all_hosts
 
 
 class ClusterManager(Helper):
@@ -11,7 +14,13 @@ class ClusterManager(Helper):
 
         self.rest_helper = RestHelper(cluster_spec)
 
+    @all_hosts
+    def clean_data_path(self):
+        for path in (self.data_path, self.index_path):
+            run('rm -fr {0}'.format(path))
+
     def set_data_path(self):
+        self.clean_data_path()
         for cluster in self.clusters:
             for host_port in cluster:
                 self.rest_helper.set_data_path(host_port)

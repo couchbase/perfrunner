@@ -12,7 +12,6 @@ class ClusterManager(Helper):
     def __init__(self, cluster_spec, test_config):
         super(ClusterManager, self).__init__(cluster_spec, test_config)
 
-        self.test_config = test_config
         self.rest_helper = RestHelper(cluster_spec)
 
     @all_hosts

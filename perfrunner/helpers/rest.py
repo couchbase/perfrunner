@@ -92,3 +92,13 @@ class RestHelper(Helper):
                 'replicaNumber': replica_number, 'replicaIndex': replica_index,
                 'authType': 'sasl', 'saslPassword': ''}
         self.post(url=API, data=data)
+
+    def configure_auto_compaction(self, host_port, parallel=False,
+                                  db_percentage=30, view_percentage=30):
+        logger.info('Applying auto-compaction settings')
+
+        API = 'http://{0}/controller/setAutoCompaction'.format(host_port)
+        data = {'databaseFragmentationThreshold[percentage]': db_percentage,
+                'viewFragmentationThreshold[percentage]': view_percentage,
+                'parallelDBAndViewCompaction': str(parallel).lower()}
+        self.post(url=API, data=data)

@@ -2,3 +2,8 @@
 mem_quota = 20480
 initial_nodes = 3
 buckets = 2
+
+[compaction]
+db_percentage = 10
+view_percentage = 10
+parallel = True

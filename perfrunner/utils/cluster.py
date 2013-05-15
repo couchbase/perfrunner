@@ -12,6 +12,7 @@ class ClusterManager(Helper):
     def __init__(self, cluster_spec, test_config):
         super(ClusterManager, self).__init__(cluster_spec, test_config)
 
+        self.test_config = test_config
         self.rest_helper = RestHelper(cluster_spec)
 
     @all_hosts
@@ -58,6 +59,15 @@ class ClusterManager(Helper):
             for name in buckets:
                 self.rest_helper.create_bucket(master, name, ram_quota)
 
+    def configure_auto_compaction(self):
+        for cluster in self.clusters:
+            master = cluster[0]
+            if 'compaction' in self.test_config.sections():
+                params = dict(
+                    (p, v) for p, v in self.test_config.items('compaction')
+                )
+                self.rest_helper.configure_auto_compaction(master, **params)
+
 
 def get_options():
     usage = '%prog -c cluster -t test_config'
@@ -88,6 +98,7 @@ def main():
     cm.add_nodes()
     cm.rebalance()
     cm.create_buckets()
+    cm.configure_auto_compaction()
 
     rh = RemoteHelper(options.cluster)
     rh.reset_swap()

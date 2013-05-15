@@ -51,21 +51,20 @@ class ClusterManager(Helper):
             self.rest_helper.monitor_rebalance(master)
 
     def create_buckets(self):
-        ram_quota = self.mem_quota / self.buckets
-        buckets = ('bucket-{0}'.format(i + 1) for i in xrange(self.buckets))
+        ram_quota = self.mem_quota / self.num_buckets
+        buckets = ('bucket-{0}'.format(i + 1) for i in xrange(self.num_buckets))
         for cluster in self.clusters:
             master = cluster[0]
             for name in buckets:
                 self.rest_helper.create_bucket(master, name, ram_quota)
 
     def configure_auto_compaction(self):
-        for cluster in self.clusters:
-            master = cluster[0]
-            if 'compaction' in self.test_config.sections():
-                params = dict(
-                    (p, v) for p, v in self.test_config.items('compaction')
+        if self.compaction_options is not None:
+            for cluster in self.clusters:
+                master = cluster[0]
+                self.rest_helper.configure_auto_compaction(
+                    master, **self.compaction_options
                 )
-                self.rest_helper.configure_auto_compaction(master, **params)
 
 
 def get_options():

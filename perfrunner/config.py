@@ -5,51 +5,68 @@ from operator import add
 from perfrunner.logger import logger
 
 
+def safe(method):
+    def wrapper(*args, **kargs):
+        try:
+            return method(*args, **kargs)
+        except (NoSectionError, NoOptionError), e:
+            logger.interrupt('Failed to get option from config: {0}'.format(e))
+    return wrapper
+
+
 class Config(object):
 
-    @staticmethod
-    def _read_config(fname):
+    def parse(self, fname):
         logger.info('Reading configuration file: {0}'.format(fname))
         if not os.path.isfile(fname):
             logger.interrupt('File doesn\'t exist: {0}'.format(fname))
-        config = ConfigParser()
-        config.read(fname)
-        return config
+        self.config = ConfigParser()
+        self.config.read(fname)
 
 
 class ClusterSpec(Config):
 
-    def parse(self, fname):
-        config = self._read_config(fname)
-        try:
-            self.clusters = tuple(
-                servers.split() for _, servers in config.items('clusters')
-            )
-            self.hosts = map(self.split_host_port, reduce(add, self.clusters))
+    @safe
+    def get_clusters(self):
+        return tuple(
+            servers.split() for _, servers in self.config.items('clusters')
+        )
 
-            self.data_path = config.get('storage', 'data')
-            self.index_path = config.get('storage', 'index')
+    @safe
+    def get_hosts(self):
+        split_host_port = lambda server: server.split(':')[0]
+        return map(split_host_port, reduce(add, self.get_clusters()))
 
-            self.rest_username, self.rest_password = \
-                config.get('credentials', 'rest').split(':')
-            self.ssh_username, self.ssh_password = \
-                config.get('credentials', 'ssh').split(':')
-        except (NoSectionError, NoOptionError), e:
-            logger.interrupt('Failed to get option from config: {0}'.format(e))
+    @safe
+    def get_paths(self):
+        data_path = self.config.get('storage', 'data')
+        index_path = self.config.get('storage', 'index')
+        return data_path, index_path
 
-    @staticmethod
-    def split_host_port(server):
-        return server.split(':')[0]
+    @safe
+    def get_rest_credentials(self):
+        return self.config.get('credentials', 'rest').split(':')
+
+    @safe
+    def get_ssh_credentials(self):
+        return self.config.get('credentials', 'ssh').split(':')
 
 
 class TestConfig(Config):
 
-    def parse(self, fname):
-        config = self._read_config(fname)
-        self.test_config = config
-        try:
-            self.mem_quota = config.getint('cluster', 'mem_quota')
-            self.initial_nodes = config.getint('cluster', 'initial_nodes')
-            self.buckets = config.getint('cluster', 'buckets')
-        except (NoSectionError, NoOptionError), e:
-            logger.interrupt('Failed to get option from config: {0}'.format(e))
+    @safe
+    def get_mem_quota(self):
+        return self.config.getint('cluster', 'mem_quota')
+
+    @safe
+    def get_initial_nodes(self):
+        return self.config.getint('cluster', 'initial_nodes')
+
+    @safe
+    def get_num_buckets(self):
+        return self.config.getint('cluster', 'buckets')
+
+    @safe
+    def get_compaction_options(self):
+        if 'compaction' in self.config.sections():
+            return dict((p, v) for p, v in self.config.items('compaction'))

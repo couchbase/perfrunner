@@ -58,3 +58,13 @@ class RestHelper(Helper):
         ejected_nodes = ','.join(ejected_nodes)
         data = {'knownNodes': known_nodes, 'ejectedNodes': ejected_nodes}
         self.post(url=API, data=data)
+
+    def create_bucket(self, host_port, name, ram_quota, replica_number=1,
+                      replica_index=0):
+        logger.info('Adding new bucket: {0}'.format(name))
+
+        API = 'http://{0}/pools/default/buckets'.format(host_port)
+        data = {'name': name, 'bucketType': 'membase', 'ramQuotaMB': ram_quota,
+                'replicaNumber': replica_number, 'replicaIndex': replica_index,
+                'authType': 'sasl', 'saslPassword': ''}
+        self.post(url=API, data=data)

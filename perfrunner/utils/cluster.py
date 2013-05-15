@@ -49,6 +49,14 @@ class ClusterManager(Helper):
             ejected_nodes = []
             self.rest_helper.rebalance(master, known_nodes, ejected_nodes)
 
+    def create_buckets(self):
+        ram_quota = self.mem_quota / self.initial_nodes
+        buckets = ('bucket-{0}'.format(i + 1) for i in xrange(self.buckets))
+        for cluster in self.clusters:
+            master = cluster[0]
+            for name in buckets:
+                self.rest_helper.create_bucket(master, name, ram_quota)
+
 
 def get_options():
     usage = '%prog -c cluster -t test_config'

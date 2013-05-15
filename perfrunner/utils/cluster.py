@@ -48,6 +48,7 @@ class ClusterManager(Helper):
             known_nodes = cluster[:self.initial_nodes]
             ejected_nodes = []
             self.rest_helper.rebalance(master, known_nodes, ejected_nodes)
+            self.rest_helper.monitor_rebalance(master)
 
     def create_buckets(self):
         ram_quota = self.mem_quota / self.initial_nodes

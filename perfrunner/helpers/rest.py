@@ -62,7 +62,7 @@ class RestHelper(Helper):
         self.post(url=API, data=data)
 
     def get_tasks(self, host_port):
-        API = '/http://{0}pools/default/tasks'.format(host_port)
+        API = '/http://{0}/pools/default/tasks'.format(host_port)
         return self.get(url=API).json()
 
     def get_rebalance_status(self, host_port):

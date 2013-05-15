@@ -8,8 +8,7 @@ def all_hosts(task):
     def wrapper(*args, **kargs):
         self = args[0]
         with hide('output', 'running'):
-            with settings(user=self.ssh_username, password=self.ssh_password,
-                          warn_only=True):
+            with settings(user=self.ssh_username, password=self.ssh_password):
                 return execute(parallel(task), *args, hosts=self.hosts, **kargs)
     return wrapper
 
@@ -19,8 +18,7 @@ def single_host(task):
         self = args[0]
         with hide('output', 'running'):
             with settings(host_string=self.hosts[0],
-                          user=self.ssh_username, password=self.ssh_password,
-                          warn_only=True):
+                          user=self.ssh_username, password=self.ssh_password):
                 return task(*args, **kargs)
     return wrapper
 

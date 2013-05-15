@@ -31,7 +31,7 @@ class RemoteHelper(Helper):
 
     def wget(self, url, outdir='/tmp'):
         logger.info('Fetching {0}'.format(url))
-        run('wget "{0}" -P {1}'.format(url, outdir))
+        run('wget -nc "{0}" -P {1}'.format(url, outdir))
 
     @single_host
     def detect_pkg(self):

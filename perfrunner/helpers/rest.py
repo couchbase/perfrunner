@@ -69,7 +69,7 @@ class RestHelper(Helper):
         for task in self.get_tasks(host_port):
             if task['type'] == 'rebalance':
                 is_running = bool(task['status'] == 'running')
-                progress = is_running and task['progress'] or None
+                progress = task.get('progress')
                 return is_running, progress
 
     def monitor_rebalance(self, host_port):

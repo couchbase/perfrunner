@@ -17,7 +17,7 @@ class ClusterManager(Helper):
     @all_hosts
     def clean_data_path(self):
         for path in (self.data_path, self.index_path):
-            run('rm -fr {0}'.format(path))
+            run('rm -fr {0}/*'.format(path))
 
     def set_data_path(self):
         self.clean_data_path()

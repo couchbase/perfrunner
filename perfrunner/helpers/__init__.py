@@ -1,4 +1,4 @@
-from perfrunner.config import ClusterSpec, TestConfig
+from perfrunner.settings import ClusterSpec, TestConfig
 
 
 class Helper(object):

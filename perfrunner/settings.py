@@ -114,7 +114,7 @@ class LoadSettings(PhaseSettings):
 
     def __init__(self, options):
         self.items = self.ITEMS
-        self.ops = options.get('ops', self.OPS)
+        self.ops = int(options.get('ops', self.OPS))
         self.ratio = self.RATIO
-        self.size = options.get('size', self.SIZE)
-        self.workers = options.get('workers', self.WORKERS)
+        self.size = int(options.get('size', self.SIZE))
+        self.workers = int(options.get('workers', self.WORKERS))

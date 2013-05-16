@@ -7,3 +7,8 @@ num_buckets = 2
 db_percentage = 10
 view_percentage = 10
 parallel = True
+
+[load]
+ops=1000000
+size=2048
+workers=12

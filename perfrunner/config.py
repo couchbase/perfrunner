@@ -75,6 +75,10 @@ class TestConfig(Config):
         options = self._get_options_as_dict('compaction')
         return CompactionSettings(options)
 
+    def get_load_settings(self):
+        options = self._get_options_as_dict('load')
+        return LoadSettings(options)
+
 
 class CompactionSettings(object):
 
@@ -86,3 +90,22 @@ class CompactionSettings(object):
         self.db_percentage = options.get('db_percentage', self.DB_PERCENTAGE)
         self.view_percentage = options.get('db_percentage', self.VIEW_PERCENTAGE)
         self.parallel = options.get('parallel', self.PARALLEL)
+
+
+class PhaseSettings(object):
+
+    ITEMS = 0
+    OPS = 0
+    RATIO = 1.0
+    SIZE = 2048
+    WORKERS = 12
+
+
+class LoadSettings(PhaseSettings):
+
+    def __init__(self, options):
+        self.items = self.ITEMS
+        self.ops = options.get('ops', self.OPS)
+        self.ratio = self.RATIO
+        self.size = options.get('size', self.SIZE)
+        self.workers = options.get('workers', self.WORKERS)

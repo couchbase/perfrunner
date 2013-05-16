@@ -25,7 +25,7 @@ class Config(object):
 
     @safe
     def _get_options_as_dict(self, section):
-        if section in self.config:
+        if section in self.config.sections():
             return dict((p, v) for p, v in self.config.items(section))
 
 

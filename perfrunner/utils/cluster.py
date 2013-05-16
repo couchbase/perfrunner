@@ -59,12 +59,11 @@ class ClusterManager(Helper):
                 self.rest_helper.create_bucket(master, name, ram_quota)
 
     def configure_auto_compaction(self):
-        if self.compaction_options is not None:
-            for cluster in self.clusters:
-                master = cluster[0]
-                self.rest_helper.configure_auto_compaction(
-                    master, **self.compaction_options
-                )
+        for cluster in self.clusters:
+            master = cluster[0]
+            self.rest_helper.configure_auto_compaction(
+                master, self.compaction_settings
+            )
 
 
 def get_options():

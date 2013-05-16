@@ -67,6 +67,22 @@ class TestConfig(Config):
         return self.config.getint('cluster', 'num_buckets')
 
     @safe
-    def get_compaction_options(self):
-        if 'compaction' in self.config.sections():
-            return dict((p, v) for p, v in self.config.items('compaction'))
+    def _get_options_as_dict(self, section):
+        if section in self.config:
+            return dict((p, v) for p, v in self.config.items(section))
+
+    def get_compaction_settings(self):
+        options = self._get_options_as_dict('compaction')
+        return CompactionSettings(options)
+
+
+class CompactionSettings(object):
+
+    DB_PERCENTAGE = 30
+    VIEW_PERCENTAGE = 30
+    PARALLEL = False
+
+    def __init__(self, options):
+        self.db_percentage = options.get('db_percentage', self.DB_PERCENTAGE)
+        self.view_percentage = options.get('db_percentage', self.VIEW_PERCENTAGE)
+        self.parallel = options.get('parallel', self.PARALLEL)

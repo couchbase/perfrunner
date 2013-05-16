@@ -21,4 +21,4 @@ class Helper(object):
             self.mem_quota = config.get_mem_quota()
             self.initial_nodes = config.get_initial_nodes()
             self.num_buckets = config.get_num_buckets()
-            self.compaction_options = config.get_compaction_options()
+            self.compaction_settings = config.get_compaction_settings()

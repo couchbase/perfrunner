@@ -23,6 +23,11 @@ class Config(object):
         self.config = ConfigParser()
         self.config.read(fname)
 
+    @safe
+    def _get_options_as_dict(self, section):
+        if section in self.config:
+            return dict((p, v) for p, v in self.config.items(section))
+
 
 class ClusterSpec(Config):
 
@@ -66,11 +71,6 @@ class TestConfig(Config):
     def get_num_buckets(self):
         return self.config.getint('cluster', 'num_buckets')
 
-    @safe
-    def _get_options_as_dict(self, section):
-        if section in self.config:
-            return dict((p, v) for p, v in self.config.items(section))
-
     def get_compaction_settings(self):
         options = self._get_options_as_dict('compaction')
         return CompactionSettings(options)
@@ -90,6 +90,15 @@ class CompactionSettings(object):
         self.db_percentage = options.get('db_percentage', self.DB_PERCENTAGE)
         self.view_percentage = options.get('db_percentage', self.VIEW_PERCENTAGE)
         self.parallel = options.get('parallel', self.PARALLEL)
+
+
+class TargetSettings(object):
+
+    def __init__(self, host_port, bucket, username, password):
+        self.username = username
+        self.password = password
+        self.node = host_port
+        self.bucket = bucket
 
 
 class PhaseSettings(object):

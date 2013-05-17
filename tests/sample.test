@@ -11,4 +11,4 @@ parallel = True
 [load]
 ops=1000000
 size=2048
-workers=12
+workers=32

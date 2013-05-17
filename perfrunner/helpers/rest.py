@@ -1,8 +1,8 @@
 import time
 
 import requests
+from logger import logger
 
-from perfrunner.logger import logger
 from perfrunner.helpers import Helper
 
 

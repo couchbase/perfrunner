@@ -2,7 +2,7 @@ import os.path
 from ConfigParser import ConfigParser, NoOptionError, NoSectionError
 from operator import add
 
-from perfrunner.logger import logger
+from logger import logger
 
 
 def safe(method):

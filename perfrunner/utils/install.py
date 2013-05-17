@@ -2,10 +2,10 @@ from collections import namedtuple
 from optparse import OptionParser
 
 import requests
-from lxml import etree
 from fabric.api import run
+from logger import logger
+from lxml import etree
 
-from perfrunner.logger import logger
 from perfrunner.helpers.remote import RemoteHelper, all_hosts
 
 

@@ -1,6 +1,6 @@
 from fabric.api import execute, hide, run, parallel, settings
+from logger import logger
 
-from perfrunner.logger import logger
 from perfrunner.helpers import Helper
 
 

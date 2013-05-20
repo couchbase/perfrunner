@@ -3,8 +3,9 @@ from optparse import OptionParser
 from fabric.api import run
 
 from perfrunner.helpers import Helper
-from perfrunner.helpers.rest import RestHelper
+from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper, all_hosts
+from perfrunner.helpers.rest import RestHelper
 
 
 class ClusterManager(Helper):
@@ -13,6 +14,7 @@ class ClusterManager(Helper):
         super(ClusterManager, self).__init__(cluster_spec, test_config)
 
         self.rest_helper = RestHelper(cluster_spec)
+        self.monitor = Monitor(cluster_spec)
 
     @all_hosts
     def clean_data_path(self):
@@ -48,7 +50,7 @@ class ClusterManager(Helper):
             known_nodes = cluster[:self.initial_nodes]
             ejected_nodes = []
             self.rest_helper.rebalance(master, known_nodes, ejected_nodes)
-            self.rest_helper.monitor_rebalance(master)
+            self.monitor.monitor_rebalance(master)
 
     def create_buckets(self):
         ram_quota = self.mem_quota / self.num_buckets

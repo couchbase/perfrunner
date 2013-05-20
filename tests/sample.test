@@ -12,3 +12,4 @@ parallel = True
 ops=1000000
 size=2048
 workers=32
+working_set=0.2

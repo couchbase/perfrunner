@@ -108,6 +108,7 @@ class PhaseSettings(object):
     RATIO = 1.0
     SIZE = 2048
     WORKERS = 12
+    WORKING_SET = 0.2
 
 
 class LoadSettings(PhaseSettings):
@@ -118,3 +119,4 @@ class LoadSettings(PhaseSettings):
         self.ratio = self.RATIO
         self.size = int(options.get('size', self.SIZE))
         self.workers = int(options.get('workers', self.WORKERS))
+        self.working_set = float(options.get('working_set', self.WORKING_SET))

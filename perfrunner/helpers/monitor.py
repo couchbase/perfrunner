@@ -45,12 +45,12 @@ class Monitor(RestHelper):
                 logger.info('{0} reached 0'.format(metric))
                 break
 
-    def monitor_disk_queue(self, host_port, bucket):
-        logger.info('Monitoring disk queue: {0}'.format(bucket))
+    def monitor_disk_queue(self, target):
+        logger.info('Monitoring disk queue: {0}'.format(target.bucket))
         for metric in self.DISK_QUEUE_METRICS:
-            self._monitor_metric_value(host_port, bucket, metric)
+            self._monitor_metric_value(target.node, target.bucket, metric)
 
-    def monitor_tap_replication(self, host_port, bucket):
-        logger.info('Monitoring TAP replication: {0}'.format(bucket))
+    def monitor_tap_replication(self, target):
+        logger.info('Monitoring TAP replication: {0}'.format(target.bucket))
         for metric in self.TAP_REPLICATION_METRICS:
-            self._monitor_metric_value(host_port, bucket, metric)
+            self._monitor_metric_value(target.node, target.bucket, metric)

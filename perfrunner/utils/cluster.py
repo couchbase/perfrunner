@@ -14,7 +14,7 @@ class ClusterManager(Helper):
         super(ClusterManager, self).__init__(cluster_spec, test_config)
 
         self.rest_helper = RestHelper(cluster_spec)
-        self.monitor = Monitor(cluster_spec)
+        self.monitor = Monitor(cluster_spec, test_config)
 
     @all_hosts
     def clean_data_path(self):

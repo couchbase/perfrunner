@@ -71,6 +71,10 @@ class TestConfig(Config):
     def get_num_buckets(self):
         return self.config.getint('cluster', 'num_buckets')
 
+    def get_buckets(self):
+        for i in xrange(self.get_num_buckets()):
+            yield 'bucket-{0}'.format(i + 1)
+
     def get_compaction_settings(self):
         options = self._get_options_as_dict('compaction')
         return CompactionSettings(options)

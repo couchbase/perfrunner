@@ -123,3 +123,28 @@ class RestHelper(Helper):
         API = 'http://{0}/pools/default/bucket/{1}/stats'.format(host_port,
                                                                  bucket)
         return self.get(url=API).json()
+
+    def add_remote_cluster(self, host_port, remote_host_port, name):
+        logger.info('Adding remote cluster {0} with reference {1}'.format(
+            remote_host_port, name
+        ))
+
+        API = 'http://{0}/pools/default/remoteClusters'.format(host_port)
+        data = {
+            'hostname': remote_host_port, 'name': name,
+            'username': self.rest_username, 'password': self.rest_password
+        }
+        self.post(uri=API, data=data)
+
+    def start_replication(self, host_port, from_bucket, to_bucket, to_cluster):
+        logger.info('Starting replication from {0} to {1} at {2}'.format(
+            from_bucket, to_bucket, to_cluster
+        ))
+
+        API = 'http://{0}/controller/createReplication'.format(host_port)
+        data = {
+            'replicationType': 'continuous',
+            'toBucket': from_bucket, 'fromBucket': to_bucket,
+            'toCluster': to_cluster
+        }
+        self.post(uri=API, data=data)

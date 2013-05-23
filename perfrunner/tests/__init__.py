@@ -6,8 +6,8 @@ from perfrunner.helpers.rest import RestHelper
 from perfrunner.settings import ClusterSpec, TestConfig, TargetSettings
 
 
-def target_hash(host_port, bucket):
-    int_hash = hash((host_port, bucket))
+def target_hash(*args):
+    int_hash = hash(args)
     str_hash = md5(hex(int_hash)).hexdigest()
     return str_hash[:6]
 

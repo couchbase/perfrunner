@@ -1,7 +1,15 @@
+from hashlib import md5
+
 from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.reporter import Reporter
 from perfrunner.helpers.rest import RestHelper
 from perfrunner.settings import ClusterSpec, TestConfig, TargetSettings
+
+
+def target_hash(host_port, bucket):
+    int_hash = hash((host_port, bucket))
+    str_hash = md5(hex(int_hash)).hexdigest()
+    return str_hash[:6]
 
 
 class PerfTest(object):
@@ -28,4 +36,5 @@ class TargetIterator(object):
         for cluster in self.cluster_spec.get_clusters():
             master = cluster[0]
             for bucket in self.test_config.get_buckets():
-                yield TargetSettings(master, bucket, username, password)
+                prefix = target_hash(master, bucket)
+                yield TargetSettings(master, bucket, username, password, prefix)

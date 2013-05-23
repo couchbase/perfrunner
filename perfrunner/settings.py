@@ -102,11 +102,12 @@ class CompactionSettings(object):
 
 class TargetSettings(object):
 
-    def __init__(self, host_port, bucket, username, password):
+    def __init__(self, host_port, bucket, username, password, prefix):
         self.username = username
         self.password = password
         self.node = host_port
         self.bucket = bucket
+        self.prefix = prefix
 
 
 class PhaseSettings(object):

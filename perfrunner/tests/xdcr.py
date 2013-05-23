@@ -1,6 +1,4 @@
-from hashlib import md5
-
-from perfrunner.tests import TargetIterator
+from perfrunner.tests import TargetIterator, target_hash
 from perfrunner.tests.kv import KVTest
 
 
@@ -8,8 +6,7 @@ class XDCRTest(KVTest):
 
     def _start_replication(self, m1, m2):
         for bucket in self.test_config.get_buckets():
-            stream_hash = hash((m1, m2, bucket))
-            name = md5(hex(stream_hash)).hexdigest()
+            name = target_hash(m1, bucket)
 
             self.rest.add_remote_cluster(m1, m2, name)
             self.rest.start_replication(m1, bucket, bucket, name)

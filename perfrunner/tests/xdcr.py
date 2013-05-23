@@ -1,6 +1,7 @@
 from hashlib import md5
 
 from perfrunner.helpers.rest import RestHelper
+from perfrunner.tests import TargetIterator
 from perfrunner.tests.kv import KVTest
 
 
@@ -28,6 +29,10 @@ class XDCRTest(KVTest):
         if xdcr_settings.replication_type == 'bidir':
             self._start_replication(c1, c2)
             self._start_replication(c2, c1)
+
+        for target_settings in TargetIterator(self.cluster_spec,
+                                              self.test_config):
+            self.monitor.monitor_xdcr_replication(target_settings)
 
     def run(self):
         self._run_load_phase()

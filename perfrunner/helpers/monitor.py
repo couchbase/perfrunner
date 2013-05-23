@@ -56,13 +56,13 @@ class Monitor(RestHelper):
         for metric in self.TAP_REPLICATION_METRICS:
             self._monitor_metric_value(target.node, target.bucket, metric)
 
-    def monitor_xdcr_replication(self, host_port, target):
+    def monitor_xdcr_replication(self, target):
         logger.info('Monitoring XDCR replication: {0}'.format(target.bucket))
         changes_left = True
         while changes_left:
             time.sleep(self.DELAY)
 
-            stats = self.get_bucket_stats(host_port, target.bucket)
+            stats = self.get_bucket_stats(target.node, target.bucket)
             changes_left = stats['op']['samples']['replication_changes_left'][-1]
 
             logger.info('Changes left: {1}'.format(changes_left))

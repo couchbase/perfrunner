@@ -26,9 +26,11 @@ class XDCRTest(KVTest):
             self._start_replication(m1, m2)
             self._start_replication(m1, m2)
 
+        self.reporter.start()
         for target_settings in TargetIterator(self.cluster_spec,
                                               self.test_config):
             self.monitor.monitor_xdcr_replication(target_settings)
+        self.reporter.finish('Initial replication')
 
     def run(self):
         self._run_load_phase()

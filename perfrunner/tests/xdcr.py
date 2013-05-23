@@ -5,10 +5,10 @@ from perfrunner.tests.kv import KVTest
 class XDCRTest(KVTest):
 
     def _start_replication(self, m1, m2):
-        for bucket in self.test_config.get_buckets():
-            name = target_hash(m1, bucket)
+        name = target_hash(m1, m2)
+        self.rest.add_remote_cluster(m1, m2, name)
 
-            self.rest.add_remote_cluster(m1, m2, name)
+        for bucket in self.test_config.get_buckets():
             self.rest.start_replication(m1, bucket, bucket, name)
 
     def _init_xdcr(self):

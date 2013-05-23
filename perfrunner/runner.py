@@ -3,6 +3,7 @@ from optparse import OptionParser
 from perfrunner import settings
 
 from perfrunner.tests.kv import KVTest
+from perfrunner.tests.xdcr import XDCRTest
 
 
 def get_options():

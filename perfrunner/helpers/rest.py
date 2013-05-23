@@ -120,7 +120,7 @@ class RestHelper(Helper):
     def get_bucket_stats(self, host_port, bucket):
         logger.info('Getting bucket stats')
 
-        API = 'http://{0}/pools/default/bucket/{1}/stats'.format(host_port,
+        API = 'http://{0}/pools/default/buckets/{1}/stats'.format(host_port,
                                                                  bucket)
         return self.get(url=API).json()
 

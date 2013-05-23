@@ -11,8 +11,8 @@ class XDCRTest(KVTest):
             stream_hash = hash((m1, m2, bucket))
             name = md5(hex(stream_hash)).hexdigest()
 
-            self.rest_helper.add_remote_cluster(m1, m2, name)
-            self.rest_helper.start_replication(m1, bucket, bucket, name)
+            self.rest.add_remote_cluster(m1, m2, name)
+            self.rest.start_replication(m1, bucket, bucket, name)
 
     def _init_xdcr(self):
         xdcr_settings = self.test_config.get_xdcr_settings()

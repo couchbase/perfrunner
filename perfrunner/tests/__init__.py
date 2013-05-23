@@ -13,7 +13,7 @@ class PerfTest(object):
         self.test_config.parse(test_config_fname)
 
         self.monitor = Monitor(cluster_spec_fname, test_config_fname)
-        self.rest_helper = RestHelper(cluster_spec_fname)
+        self.rest = RestHelper(cluster_spec_fname)
         self.reporter = Reporter()
 
 

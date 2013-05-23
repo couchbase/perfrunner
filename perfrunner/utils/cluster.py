@@ -14,7 +14,7 @@ class ClusterManager(Helper):
         super(ClusterManager, self).__init__(cluster_spec_fname,
                                              test_config_fname)
 
-        self.rest_helper = RestHelper(cluster_spec_fname)
+        self.rest = RestHelper(cluster_spec_fname)
         self.monitor = Monitor(cluster_spec_fname, test_config_fname)
 
     @all_hosts
@@ -26,31 +26,31 @@ class ClusterManager(Helper):
         self.clean_data_path()
         for cluster in self.clusters:
             for host_port in cluster:
-                self.rest_helper.set_data_path(host_port)
+                self.rest.set_data_path(host_port)
 
     def set_auth(self):
         for cluster in self.clusters:
             for host_port in cluster:
-                self.rest_helper.set_auth(host_port)
+                self.rest.set_auth(host_port)
 
     def set_mem_quota(self):
         for cluster in self.clusters:
             for host_port in cluster:
-                self.rest_helper.set_mem_quota(host_port, self.mem_quota)
+                self.rest.set_mem_quota(host_port, self.mem_quota)
 
     def add_nodes(self):
         for cluster in self.clusters:
             master = cluster[0]
             for host_port in cluster[1:self.initial_nodes]:
                 host = host_port.split(':')[0]
-                self.rest_helper.add_node(master, host)
+                self.rest.add_node(master, host)
 
     def rebalance(self):
         for cluster in self.clusters:
             master = cluster[0]
             known_nodes = cluster[:self.initial_nodes]
             ejected_nodes = []
-            self.rest_helper.rebalance(master, known_nodes, ejected_nodes)
+            self.rest.rebalance(master, known_nodes, ejected_nodes)
             self.monitor.monitor_rebalance(master)
 
     def create_buckets(self):
@@ -59,12 +59,12 @@ class ClusterManager(Helper):
         for cluster in self.clusters:
             master = cluster[0]
             for name in buckets:
-                self.rest_helper.create_bucket(master, name, ram_quota)
+                self.rest.create_bucket(master, name, ram_quota)
 
     def configure_auto_compaction(self):
         for cluster in self.clusters:
             master = cluster[0]
-            self.rest_helper.configure_auto_compaction(
+            self.rest.configure_auto_compaction(
                 master, self.compaction_settings
             )
 

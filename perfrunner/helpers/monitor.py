@@ -26,26 +26,25 @@ class Monitor(RestHelper):
 
     def monitor_rebalance(self, host_port):
         logger.info('Monitoring rebalance status')
-        while True:
+        is_running = True
+        while is_running:
+            time.sleep(self.DELAY)
+
             is_running, progress = self.get_rebalance_status(host_port)
-            if is_running:
-                logger.info('Rebalance progress: {0} %'.format(progress))
-                time.sleep(self.DELAY)
-            else:
-                break
+
+            logger.info('Rebalance progress: {0} %'.format(progress))
         logger.info('Rebalance successfully completed')
 
     def _monitor_metric_value(self, host_port, bucket, metric):
-        while True:
+        value = True
+        while value:
+            time.sleep(self.DELAY)
+
             bucket_stats = self.get_bucket_stats(host_port, bucket)
-            curr_value = bucket_stats['op']['samples'][metric][-1]
-            if curr_value:
-                logger.info('Current value of {0}: {1}'.format(metric,
-                                                               curr_value))
-                time.sleep(self.DELAY)
-            else:
-                logger.info('{0} reached 0'.format(metric))
-                break
+            value = bucket_stats['op']['samples'][metric][-1]
+
+            logger.info('Current value of {0}: {1}'.format(metric, value))
+        logger.info('{0} reached 0'.format(metric))
 
     def monitor_disk_queue(self, target):
         logger.info('Monitoring disk queue: {0}'.format(target.bucket))
@@ -59,12 +58,12 @@ class Monitor(RestHelper):
 
     def monitor_xdcr_replication(self, host_port, target):
         logger.info('Monitoring XDCR replication: {0}'.format(target.bucket))
-        while True:
+        changes_left = True
+        while changes_left:
+            time.sleep(self.DELAY)
+
             stats = self.get_bucket_stats(host_port, target.bucket)
             changes_left = stats['op']['samples']['replication_changes_left'][-1]
-            if changes_left:
-                logger.info('Changes left: {1}'.format(changes_left))
-                time.sleep(self.DELAY)
-            else:
-                logger.info('Replication finished')
-                break
+
+            logger.info('Changes left: {1}'.format(changes_left))
+        logger.info('Replication finished')

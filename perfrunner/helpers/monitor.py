@@ -32,7 +32,7 @@ class Monitor(RestHelper):
                 logger.info('Rebalance progress: {0} %'.format(progress))
         logger.info('Rebalance successfully completed')
 
-    def _wait_for_nul_metric(self, host_port, bucket, metric):
+    def _wait_for_null_metric(self, host_port, bucket, metric):
         value = True
         while value:
             time.sleep(self.DELAY)
@@ -47,14 +47,14 @@ class Monitor(RestHelper):
     def monitor_disk_queue(self, target):
         logger.info('Monitoring disk queue: {0}'.format(target.bucket))
         for metric in self.DISK_QUEUE_METRICS:
-            self._wait_for_nul_metric(target.node, target.bucket, metric)
+            self._wait_for_null_metric(target.node, target.bucket, metric)
 
     def monitor_tap_replication(self, target):
         logger.info('Monitoring TAP replication: {0}'.format(target.bucket))
         for metric in self.TAP_REPLICATION_METRICS:
-            self._wait_for_nul_metric(target.node, target.bucket, metric)
+            self._wait_for_null_metric(target.node, target.bucket, metric)
 
     def monitor_xdcr_replication(self, target):
         logger.info('Monitoring XDCR replication: {0}'.format(target.bucket))
         metric = 'replication_changes_left'
-        self._wait_for_nul_metric(target.node, target.bucket, metric)
+        self._wait_for_null_metric(target.node, target.bucket, metric)

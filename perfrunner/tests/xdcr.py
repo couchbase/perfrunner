@@ -24,7 +24,7 @@ class XDCRTest(KVTest):
             self._start_replication(m1, m2)
         if xdcr_settings.replication_type == 'bidir':
             self._start_replication(m1, m2)
-            self._start_replication(m1, m2)
+            self._start_replication(m2, m1)
 
         self.reporter.start()
         for target_settings in TargetIterator(self.cluster_spec,

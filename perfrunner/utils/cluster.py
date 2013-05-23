@@ -55,7 +55,7 @@ class ClusterManager(Helper):
 
     def create_buckets(self):
         ram_quota = self.mem_quota / self.num_buckets
-        buckets = ('bucket-{0}'.format(i + 1) for i in xrange(self.num_buckets))
+        buckets = ['bucket-{0}'.format(i + 1) for i in xrange(self.num_buckets)]
         for cluster in self.clusters:
             master = cluster[0]
             for name in buckets:

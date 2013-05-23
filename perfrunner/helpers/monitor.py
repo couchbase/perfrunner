@@ -21,7 +21,7 @@ class Monitor(RestHelper):
     )
 
     def __init__(self, cluster_spec, test_config):
-        super(Monitor, self).__init__(cluster_spec, test_config)
+        super(Monitor, self).__init__(cluster_spec)
         self.test_config = test_config
 
     def monitor_rebalance(self, host_port):

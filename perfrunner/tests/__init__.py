@@ -1,3 +1,5 @@
+from perfrunner.helpers.monitor import Monitor
+from perfrunner.helpers.rest import RestHelper
 from perfrunner.settings import ClusterSpec, TestConfig, TargetSettings
 
 
@@ -8,6 +10,9 @@ class PerfTest(object):
         self.cluster_spec.parse(cluster_spec_fname)
         self.test_config = TestConfig()
         self.test_config.parse(test_config_fname)
+
+        self.monitor = Monitor(cluster_spec_fname, test_config_fname)
+        self.rest_helper = RestHelper(cluster_spec_fname)
 
 
 class TargetIterator(object):

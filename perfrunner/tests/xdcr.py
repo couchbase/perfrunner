@@ -1,15 +1,10 @@
 from hashlib import md5
 
-from perfrunner.helpers.rest import RestHelper
 from perfrunner.tests import TargetIterator
 from perfrunner.tests.kv import KVTest
 
 
 class XDCRTest(KVTest):
-
-    def __init__(self, cluster_spec, test_config):
-        super(XDCRTest, self).__init__(cluster_spec, test_config)
-        self.rest_helper = RestHelper(cluster_spec)
 
     def _start_replication(self, m1, m2):
         for bucket in self.test_config.get_buckets():

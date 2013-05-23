@@ -10,11 +10,12 @@ from perfrunner.helpers.rest import RestHelper
 
 class ClusterManager(Helper):
 
-    def __init__(self, cluster_spec, test_config):
-        super(ClusterManager, self).__init__(cluster_spec, test_config)
+    def __init__(self, cluster_spec_fname, test_config_fname):
+        super(ClusterManager, self).__init__(cluster_spec_fname,
+                                             test_config_fname)
 
-        self.rest_helper = RestHelper(cluster_spec)
-        self.monitor = Monitor(cluster_spec, test_config)
+        self.rest_helper = RestHelper(cluster_spec_fname)
+        self.monitor = Monitor(cluster_spec_fname, test_config_fname)
 
     @all_hosts
     def clean_data_path(self):
@@ -73,15 +74,15 @@ def get_options():
 
     parser = OptionParser(usage)
 
-    parser.add_option('-c', dest='cluster',
+    parser.add_option('-c', dest='cluster_spec_fname',
                       help='path to cluster specification file',
                       metavar='cluster.spec')
-    parser.add_option('-t', dest='test_config',
+    parser.add_option('-t', dest='test_config_fname',
                       help='path to test configuration file',
                       metavar='my_test.test')
 
     options, _ = parser.parse_args()
-    if not options.cluster or not options.test_config:
+    if not options.cluster_spec_fname or not options.test_config_fname:
         parser.error('Missing mandatory parameter')
 
     return options
@@ -90,7 +91,7 @@ def get_options():
 def main():
     options = get_options()
 
-    cm = ClusterManager(options.cluster, options.test_config)
+    cm = ClusterManager(options.cluster_spec_fname, options.test_config_fname)
     cm.set_data_path()
     cm.set_auth()
     cm.set_mem_quota()

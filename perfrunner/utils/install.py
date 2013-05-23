@@ -95,7 +95,7 @@ def main():
 
     parser = OptionParser(usage)
 
-    parser.add_option('-c', dest='cluster',
+    parser.add_option('-c', dest='cluster_spec_fname',
                       help='path to cluster specification file',
                       metavar='cluster.spec')
     parser.add_option('-v', dest='version',
@@ -104,10 +104,10 @@ def main():
                       help='optional toy build ID', metavar='couchstore')
 
     options, _ = parser.parse_args()
-    if not options.cluster or not options.version:
+    if not options.cluster_spec_fname or not options.version:
         parser.error('Missing mandatory parameter')
 
-    installer = CouchbaseInstaller(options.cluster)
+    installer = CouchbaseInstaller(options.cluster_spec_fname)
     installer.install(options)
 
 if __name__ == '__main__':

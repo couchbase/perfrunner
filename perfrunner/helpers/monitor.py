@@ -32,7 +32,8 @@ class Monitor(RestHelper):
 
             is_running, progress = self.get_rebalance_status(host_port)
 
-            logger.info('Rebalance progress: {0} %'.format(progress))
+            if progress is not None:
+                logger.info('Rebalance progress: {0} %'.format(progress))
         logger.info('Rebalance successfully completed')
 
     def _monitor_metric_value(self, host_port, bucket, metric):

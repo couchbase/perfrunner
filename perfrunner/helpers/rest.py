@@ -121,7 +121,7 @@ class RestHelper(Helper):
             'hostname': remote_host_port, 'name': name,
             'username': self.rest_username, 'password': self.rest_password
         }
-        self.post(uri=API, data=data)
+        self.post(url=API, data=data)
 
     def start_replication(self, host_port, from_bucket, to_bucket, to_cluster):
         logger.info('Starting replication from {0} to {1} at {2}'.format(
@@ -134,4 +134,4 @@ class RestHelper(Helper):
             'toBucket': from_bucket, 'fromBucket': to_bucket,
             'toCluster': to_cluster
         }
-        self.post(uri=API, data=data)
+        self.post(url=API, data=data)

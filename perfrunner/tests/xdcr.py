@@ -23,12 +23,13 @@ class XDCRTest(KVTest):
         xdcr_settings = self.test_config.get_xdcr_settings()
 
         c1, c2 = self.cluster_spec.get_clusters()
+        m1, m2 = c1[0], c2[0]
 
         if xdcr_settings.replication_type == 'unidir':
-            self._start_replication(c1, c2)
+            self._start_replication(m1, m2)
         if xdcr_settings.replication_type == 'bidir':
-            self._start_replication(c1, c2)
-            self._start_replication(c2, c1)
+            self._start_replication(m1, m2)
+            self._start_replication(m1, m2)
 
         for target_settings in TargetIterator(self.cluster_spec,
                                               self.test_config):

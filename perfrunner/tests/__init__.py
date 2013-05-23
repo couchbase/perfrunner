@@ -1,4 +1,5 @@
 from perfrunner.helpers.monitor import Monitor
+from perfrunner.helpers.reporter import Reporter
 from perfrunner.helpers.rest import RestHelper
 from perfrunner.settings import ClusterSpec, TestConfig, TargetSettings
 
@@ -13,6 +14,7 @@ class PerfTest(object):
 
         self.monitor = Monitor(cluster_spec_fname, test_config_fname)
         self.rest_helper = RestHelper(cluster_spec_fname)
+        self.reporter = Reporter()
 
 
 class TargetIterator(object):

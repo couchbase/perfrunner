@@ -83,17 +83,6 @@ class RestHelper(Helper):
                 progress = task.get('progress')
                 return is_running, progress
 
-    def monitor_rebalance(self, host_port):
-        logger.info('Monitoring rebalance status')
-        while True:
-            is_running, progress = self.get_rebalance_status(host_port)
-            if is_running:
-                logger.info('Rebalance progress: {0} %'.format(progress))
-                time.sleep(10)
-            else:
-                break
-        logger.info('Rebalance successfully completed')
-
     def create_bucket(self, host_port, name, ram_quota, replica_number=1,
                       replica_index=0):
         logger.info('Adding new bucket: {0}'.format(name))

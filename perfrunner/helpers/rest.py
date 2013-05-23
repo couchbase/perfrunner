@@ -121,7 +121,7 @@ class RestHelper(Helper):
         logger.info('Getting bucket stats')
 
         API = 'http://{0}/pools/default/buckets/{1}/stats'.format(host_port,
-                                                                 bucket)
+                                                                  bucket)
         return self.get(url=API).json()
 
     def add_remote_cluster(self, host_port, remote_host_port, name):

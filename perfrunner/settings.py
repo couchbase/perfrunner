@@ -83,6 +83,10 @@ class TestConfig(Config):
         options = self._get_options_as_dict('load')
         return LoadSettings(options)
 
+    def get_xdcr_settings(self):
+        options = self._get_options_as_dict('xdcr')
+        return XDCRSettings(options)
+
 
 class CompactionSettings(object):
 
@@ -113,6 +117,7 @@ class PhaseSettings(object):
     SIZE = 2048
     WORKERS = 12
     WORKING_SET = 0.2
+    XDCR_REPLICATION_TYPE = 'bidir'
 
 
 class LoadSettings(PhaseSettings):
@@ -124,3 +129,10 @@ class LoadSettings(PhaseSettings):
         self.size = int(options.get('size', self.SIZE))
         self.workers = int(options.get('workers', self.WORKERS))
         self.working_set = float(options.get('working_set', self.WORKING_SET))
+
+
+class XDCRSettings(PhaseSettings):
+
+    def __init__(self, options):
+        self.replication_type = options.get('replication_type',
+                                            self.XDCR_REPLICATION_TYPE)

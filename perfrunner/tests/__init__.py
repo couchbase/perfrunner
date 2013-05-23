@@ -1,4 +1,13 @@
-from perfrunner.settings import TargetSettings
+from perfrunner.settings import ClusterSpec, TestConfig, TargetSettings
+
+
+class PerfTest(object):
+
+    def __init__(self, cluster_spec_fname, test_config_fname):
+        self.cluster_spec = ClusterSpec()
+        self.cluster_spec.parse(cluster_spec_fname)
+        self.test_config = TestConfig()
+        self.test_config.parse(test_config_fname)
 
 
 class TargetIterator(object):

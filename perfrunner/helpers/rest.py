@@ -8,8 +8,8 @@ from perfrunner.helpers import Helper
 
 class RestHelper(Helper):
 
-    def __init__(self, cluster_spec):
-        super(RestHelper, self).__init__(cluster_spec)
+    def __init__(self, cluster_spec_fname, test_config_fname=None):
+        super(RestHelper, self).__init__(cluster_spec_fname, test_config_fname)
         self.auth = (self.rest_username, self.rest_password)
 
     def get(self, **kwargs):

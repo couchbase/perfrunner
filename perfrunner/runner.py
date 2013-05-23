@@ -28,13 +28,13 @@ def get_options():
 def main():
     options, test_class = get_options()
 
-    cluster_spec = settings.ClusterSpec()
-    cluster_spec.parse(options.cluster)
+    cluster_spec_fname = settings.ClusterSpec()
+    cluster_spec_fname.parse(options.cluster)
 
-    test_config = settings.TestConfig()
-    test_config.parse(options.test_config)
+    test_config_fname = settings.TestConfig()
+    test_config_fname.parse(options.test_config)
 
-    test = eval('{0}(cluster_spec, test_config)'.format(test_class))
+    test = eval('{0}(cluster_spec_fname, test_config_fname)'.format(test_class))
     test.run()
 
 if __name__ == '__main__':

@@ -1,15 +1,14 @@
 from spring.wgen import WorkloadGen
 
 from perfrunner.helpers.monitor import Monitor
-from perfrunner.tests import TargetIterator
+from perfrunner.tests import PerfTest, TargetIterator
 
 
-class KVTest(object):
+class KVTest(PerfTest):
 
-    def __init__(self, cluster_spec, test_config):
-        self.cluster_spec = cluster_spec
-        self.test_config = test_config
-        self.monitor = Monitor(cluster_spec, test_config)
+    def __init__(self, cluster_spec_fname, test_config_fname):
+        super(KVTest, self).__init__(cluster_spec_fname, test_config_fname)
+        self.monitor = Monitor(cluster_spec_fname, test_config_fname)
 
     def _run_load_phase(self):
         workload_settings = self.test_config.get_load_settings()

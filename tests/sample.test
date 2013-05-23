@@ -9,9 +9,9 @@ view_percentage = 10
 parallel = True
 
 [load]
-ops = 1000000
+ops = 100000
 size = 2048
-workers = 32
+workers = 16
 working_set = 0.2
 
 [xdcr]

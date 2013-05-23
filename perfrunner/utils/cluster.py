@@ -100,7 +100,7 @@ def main():
     cm.create_buckets()
     cm.configure_auto_compaction()
 
-    rh = RemoteHelper(options.cluster)
+    rh = RemoteHelper(options.cluster_spec_fname)
     rh.reset_swap()
     rh.drop_caches()
 

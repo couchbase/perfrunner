@@ -19,7 +19,7 @@ class RestHelper(Helper):
                 if r.status_code < 500:
                     return r
                 else:
-                    logger.info('Retrying {0}'.format(r.url))
+                    logger.warn('Retrying {0}'.format(r.url))
                     time.sleep(self.RETRY_DELAY)
             else:
                 logger.interrupt('Request {0} failed after {1} attempts'.format(

@@ -1,3 +1,5 @@
+import time
+
 import requests
 from logger import logger
 
@@ -6,13 +8,34 @@ from perfrunner.helpers import Helper
 
 class RestHelper(Helper):
 
+    MAX_RETRY = 5
+    RETRY_DELAY = 5
+
+    @staticmethod
+    def retry(method):
+        def wrapper(self, **kwargs):
+            for retry in xrange(self.MAX_RETRY):
+                r = method(self, **kwargs)
+                if r.status_code < 500:
+                    return r
+                else:
+                    logger.info('Retrying {0}'.format(r.url))
+                    time.sleep(self.RETRY_DELAY)
+            else:
+                logger.interrupt('Request {0} failed after {1} attempts'.format(
+                    r.url, self.MAX_RETRY
+                ))
+        return wrapper
+
     def __init__(self, cluster_spec_fname, test_config_fname=None):
         super(RestHelper, self).__init__(cluster_spec_fname, test_config_fname)
         self.auth = (self.rest_username, self.rest_password)
 
+    @retry
     def get(self, **kwargs):
         return requests.get(auth=self.auth, **kwargs)
 
+    @retry
     def post(self, **kwargs):
         return requests.post(auth=self.auth, **kwargs)
 

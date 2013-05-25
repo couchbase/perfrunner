@@ -6,17 +6,7 @@ from logger import logger
 from perfrunner.helpers import Helper
 
 
-class RestHelper(Helper):
-
-    MAX_RETRY = 5
-    RETRY_DELAY = 5
-
-    def __init__(self, cluster_spec_fname, test_config_fname=None):
-        super(RestHelper, self).__init__(cluster_spec_fname, test_config_fname)
-        self.auth = (self.rest_username, self.rest_password)
-
-    @staticmethod
-    def retry(method):
+def retry(method):
         def wrapper(self, **kwargs):
             for retry in xrange(self.MAX_RETRY):
                 r = method(self, **kwargs)
@@ -30,6 +20,16 @@ class RestHelper(Helper):
                     r.url, self.MAX_RETRY
                 ))
         return wrapper
+
+
+class RestHelper(Helper):
+
+    MAX_RETRY = 5
+    RETRY_DELAY = 5
+
+    def __init__(self, cluster_spec_fname, test_config_fname=None):
+        super(RestHelper, self).__init__(cluster_spec_fname, test_config_fname)
+        self.auth = (self.rest_username, self.rest_password)
 
     @retry
     def get(self, **kwargs):

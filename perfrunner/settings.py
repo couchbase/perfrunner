@@ -1,5 +1,5 @@
 import os.path
-from ConfigParser import ConfigParser, NoOptionError, NoSectionError
+from ConfigParser import SafeConfigParser, NoOptionError, NoSectionError
 from operator import add
 
 from logger import logger
@@ -20,7 +20,7 @@ class Config(object):
         logger.info('Reading configuration file: {0}'.format(fname))
         if not os.path.isfile(fname):
             logger.interrupt('File doesn\'t exist: {0}'.format(fname))
-        self.config = ConfigParser()
+        self.config = SafeConfigParser()
         self.config.read(fname)
 
     @safe

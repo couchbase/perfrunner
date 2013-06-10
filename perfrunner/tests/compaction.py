@@ -16,3 +16,4 @@ class DbCompactionTest(KVTest):
     def run(self):
         self._run_load_phase()  # initial load
         self._run_load_phase()  # extra mutations for fragmentation
+        self.compact()

@@ -1,5 +1,6 @@
 from optparse import OptionParser
 
+from perfrunner.tests.compaction import DbCompactionTest
 from perfrunner.tests.kv import KVTest
 from perfrunner.tests.xdcr import XDCRTest
 

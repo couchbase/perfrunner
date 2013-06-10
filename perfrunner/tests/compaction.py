@@ -4,7 +4,7 @@ from perfrunner.tests.kv import KVTest
 
 class DbCompactionTest(KVTest):
 
-    def compact(self):
+    def _compact(self):
         self.reporter.start()
         for target_settings in TargetIterator(self.cluster_spec,
                                               self.test_config):
@@ -16,4 +16,4 @@ class DbCompactionTest(KVTest):
     def run(self):
         self._run_load_phase()  # initial load
         self._run_load_phase()  # extra mutations for fragmentation
-        self.compact()
+        self._compact()

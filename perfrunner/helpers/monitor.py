@@ -71,3 +71,13 @@ class Monitor(RestHelper):
         logger.info('Monitoring XDCR replication: {0}'.format(target.bucket))
         metric = 'replication_changes_left'
         self._wait_for_null_metric(target.node, target.bucket, metric)
+
+    def monitor_bucket_fragmentation(self, target):
+        logger.info('Monitoring bucket fragmentation: {0}'.format(target.bucket))
+        metric = 'couch_docs_fragmentation'
+        self._wait_for_null_metric(target.node, target.bucket, metric)
+
+    def monitor_index_fragmentation(self, target):
+        logger.info('Monitoring index fragmentation: {0}'.format(target.bucket))
+        metric = 'couch_views_fragmentation'
+        self._wait_for_null_metric(target.node, target.bucket, metric)

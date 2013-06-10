@@ -163,3 +163,11 @@ class RestHelper(Helper):
         API = 'http://{0}/pools/default/buckets/{1}/controller/compactBucket'\
             .format(host_port, bucket)
         self.post(url=API)
+
+    def trigger_index_compaction(self, host_port, ddoc, bucket):
+        logger.info('Triggering ddoc {0} compaction, bucket {1}'.format(
+            ddoc, bucket))
+
+        API = 'http://{0}/pools/default/buckets/{1}/ddocs/_design%2F{2}/controller/compactView'\
+            .format(host_port, bucket, ddoc)
+        self.post(url=API)

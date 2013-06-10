@@ -7,7 +7,8 @@ from perfrunner.helpers.rest import RestHelper
 
 class Monitor(RestHelper):
 
-    DELAY = 10
+    POLLING_INTERVAL = 10
+    MAX_RETRY = 10
 
     DISK_QUEUE_METRICS = (
         'ep_queue_size',
@@ -24,7 +25,7 @@ class Monitor(RestHelper):
         logger.info('Monitoring rebalance status')
         is_running = True
         while is_running:
-            time.sleep(self.DELAY)
+            time.sleep(self.POLLING_INTERVAL)
 
             is_running, progress = self.get_rebalance_status(host_port)
 
@@ -33,16 +34,28 @@ class Monitor(RestHelper):
         logger.info('Rebalance successfully completed')
 
     def _wait_for_null_metric(self, host_port, bucket, metric):
-        value = True
-        while value:
-            time.sleep(self.DELAY)
+        retry = 0
+        while retry < self.MAX_RETRY:
+            time.sleep(self.POLLING_INTERVAL)
 
             bucket_stats = self.get_bucket_stats(host_port, bucket)
-            value = bucket_stats['op']['samples'][metric][-1]
+            try:
+                value = bucket_stats['op']['samples'][metric][-1]
+            except KeyError:
+                logger.warn('Got broken bucket stats')
+                retry += 1
+                continue
+            else:
+                retry = 0
 
             if value:
                 logger.info('Current value of {0}: {1}'.format(metric, value))
-        logger.info('{0} reached 0'.format(metric))
+            else:
+                logger.info('{0} reached 0'.format(metric))
+                return
+        logger.interrupt('Failed to get bucket stats after {0} attempts'.format(
+            self.MAX_RETRY
+        ))
 
     def monitor_disk_queue(self, target):
         logger.info('Monitoring disk queue: {0}'.format(target.bucket))

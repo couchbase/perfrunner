@@ -156,3 +156,10 @@ class RestHelper(Helper):
             'toCluster': to_cluster
         }
         self.post(url=API, data=data)
+
+    def trigger_bucket_compaction(self, host_port, bucket):
+        logger.info('Triggering bucket {0} compaction'.format(bucket))
+
+        API = 'http://{0}/pools/default/buckets/{1}/controller/compactBucket'\
+            .format(host_port, bucket)
+        self.post(url=API)

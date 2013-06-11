@@ -48,9 +48,6 @@ class InitialIndexTest(IndexTest):
 
 class IncrementalIndexTest(IndexTest):
 
-    def _run_access_phase(self):
-        pass
-
     def run(self):
         self._run_load_phase()
         self._compact_bucket()

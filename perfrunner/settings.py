@@ -169,4 +169,5 @@ class IndexSettings(PhaseSettings):
 
 class AccessSettings(LoadSettings):
 
-    pass
+    def __init__(self, options):
+        super(AccessSettings, self).__init__(options)

@@ -42,6 +42,15 @@ class PerfTest(object):
                 self.monitor.monitor_disk_queue(target)
                 self.monitor.monitor_tap_replication(target)
 
+    def _run_access_phase(self):
+        access_settings = self.test_config.get_access_settings()
+        if access_settings.ops:
+            for target in self.target_iterator:
+                wg = WorkloadGen(access_settings, target)
+                wg.run()
+                self.monitor.monitor_disk_queue(target)
+                self.monitor.monitor_tap_replication(target)
+
 
 class TargetIterator(object):
 

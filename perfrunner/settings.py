@@ -171,3 +171,4 @@ class AccessSettings(LoadSettings):
 
     def __init__(self, options):
         super(AccessSettings, self).__init__(options)
+        self.items = int(options.get('items', self.ITEMS))

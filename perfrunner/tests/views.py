@@ -131,16 +131,14 @@ class IndexTest(DbCompactionTest):
         self.ddocs = view_gen.generate_ddocs(views_settings.views)
 
     def _define_ddocs(self):
-        for target_settings in TargetIterator(self.cluster_spec,
-                                              self.test_config):
+        for target_settings in self.target_iterator:
             for ddoc_name, views in self.ddocs.iteritems():
                 self.rest.create_ddoc(target_settings.node,
                                       target_settings.bucket, ddoc_name, views)
 
     def _build_index(self):
-        for target_settings in TargetIterator(self.cluster_spec,
-                                              self.test_config):
-            self.monitor.monitor_task(target_settings, 'indexer')
+        for target in self.target_iterator:
+            self.monitor.monitor_task(target, 'indexer')
 
     def run(self):
         self._run_load_phase()

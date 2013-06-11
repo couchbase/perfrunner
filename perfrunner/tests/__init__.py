@@ -24,6 +24,9 @@ class PerfTest(object):
         self.rest = RestHelper(cluster_spec_fname)
         self.reporter = Reporter()
 
+        self.target_iterator = TargetIterator(self.cluster_spec,
+                                              self.test_config)
+
 
 class TargetIterator(object):
 

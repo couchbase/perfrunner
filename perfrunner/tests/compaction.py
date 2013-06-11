@@ -1,15 +1,13 @@
-from perfrunner.tests import TargetIterator
 from perfrunner.tests.kv import KVTest
 
 
 class DbCompactionTest(KVTest):
 
     def _compact(self):
-        for target_settings in TargetIterator(self.cluster_spec,
-                                              self.test_config):
-            self.rest.trigger_bucket_compaction(target_settings.node,
-                                                target_settings.bucket)
-            self.monitor.monitor_bucket_fragmentation(target_settings)
+        for target in self.target_iterator:
+            self.rest.trigger_bucket_compaction(target.node,
+                                                target.bucket)
+            self.monitor.monitor_bucket_fragmentation(target)
 
     def run(self):
         self._run_load_phase()  # initial load

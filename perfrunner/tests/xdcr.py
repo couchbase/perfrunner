@@ -1,4 +1,4 @@
-from perfrunner.tests import TargetIterator, target_hash
+from perfrunner.tests import target_hash
 from perfrunner.tests.kv import KVTest
 
 
@@ -23,9 +23,8 @@ class XDCRTest(KVTest):
             self._start_replication(m1, m2)
             self._start_replication(m2, m1)
 
-        for target_settings in TargetIterator(self.cluster_spec,
-                                              self.test_config):
-            self.monitor.monitor_xdcr_replication(target_settings)
+        for target in self.target_iterator:
+            self.monitor.monitor_xdcr_replication(target)
 
     def run(self):
         self._run_load_phase()

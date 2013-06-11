@@ -31,7 +31,7 @@ class PerfTest(object):
         for target in self.target_iterator:
             self.rest.trigger_bucket_compaction(target.node,
                                                 target.bucket)
-            self.monitor.monitor_bucket_fragmentation(target)
+            self.monitor.monitor_task(target, 'bucket_compaction')
 
     def _run_load_phase(self):
         load_settings = self.test_config.get_load_settings()

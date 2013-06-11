@@ -98,3 +98,4 @@ class Monitor(RestHelper):
                     ))
             else:
                 break
+        logger.info('Task {0} successfully completed'.format(task_type))

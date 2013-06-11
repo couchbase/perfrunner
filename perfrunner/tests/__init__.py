@@ -1,5 +1,6 @@
 from hashlib import md5
 
+from logger import logger
 from spring.wgen import WorkloadGen
 
 from perfrunner.helpers.monitor import Monitor
@@ -36,6 +37,9 @@ class PerfTest(object):
     def _run_load_phase(self):
         load_settings = self.test_config.get_load_settings()
         if load_settings.ops:
+            logger.info('Running load phase: {0} ops'.format(
+                load_settings.ops))
+
             for target in self.target_iterator:
                 wg = WorkloadGen(load_settings, target)
                 wg.run()
@@ -45,6 +49,9 @@ class PerfTest(object):
     def _run_access_phase(self):
         access_settings = self.test_config.get_access_settings()
         if access_settings.ops:
+            logger.info('Running access phase: {0} ops'.format(
+                access_settings.ops))
+
             for target in self.target_iterator:
                 wg = WorkloadGen(access_settings, target)
                 wg.run()

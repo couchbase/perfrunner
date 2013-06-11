@@ -123,7 +123,9 @@ class ViewGen(object):
 
 class IndexTest(DbCompactionTest):
 
-    def __init__(self):
+    def __init__(self, *args):
+        super(IndexTest, self).__init__(*args)
+
         view_gen = ViewGen()
         views_settings = self.test_config.get_index_settings()
         self.ddocs = view_gen.generate_ddocs(views_settings.views)

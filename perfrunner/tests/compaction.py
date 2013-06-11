@@ -43,6 +43,7 @@ class IndexCompactionTest(BucketCompactionTest):
             for ddoc_name in self.ddocs:
                 self.rest.trigger_index_compaction(target.node, ddoc_name,
                                                    target.bucket)
+            self.monitor.monitor_task(target, 'view_compaction')
 
     def run(self):
         self._run_load_phase()
@@ -53,6 +54,7 @@ class IndexCompactionTest(BucketCompactionTest):
 
         self._run_load_phase()  # extra mutations for index fragmentation
         self._compact_bucket()
+        self._build_index()
 
         self.reporter.start()
         self._compact_index()

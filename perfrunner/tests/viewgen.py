@@ -1,8 +1,5 @@
 import string
 
-from perfrunner.tests import TargetIterator
-from perfrunner.tests.compaction import DbCompactionTest
-
 
 class RepeatableGenerator(object):
 
@@ -119,32 +116,3 @@ class ViewGen(object):
         self.ddoc_names.reset()
         self.view_names.reset()
         return ddocs
-
-
-class IndexTest(DbCompactionTest):
-
-    def __init__(self, *args):
-        super(IndexTest, self).__init__(*args)
-
-        view_gen = ViewGen()
-        views_settings = self.test_config.get_index_settings()
-        self.ddocs = view_gen.generate_ddocs(views_settings.views)
-
-    def _define_ddocs(self):
-        for target_settings in self.target_iterator:
-            for ddoc_name, views in self.ddocs.iteritems():
-                self.rest.create_ddoc(target_settings.node,
-                                      target_settings.bucket, ddoc_name, views)
-
-    def _build_index(self):
-        for target in self.target_iterator:
-            self.monitor.monitor_task(target, 'indexer')
-
-    def run(self):
-        self._run_load_phase()
-        self._compact()
-
-        self.reporter.start()
-        self._define_ddocs()
-        self._build_index()
-        self.reporter.finish('Initial index')

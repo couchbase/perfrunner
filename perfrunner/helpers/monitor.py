@@ -92,7 +92,7 @@ class Monitor(RestHelper):
                      if task.get('type') == task_type]
             if tasks:
                 for task in tasks:
-                    logger.info('{0}: {1}%, bucket {2}, ddoc {3}'.format(
+                    logger.info('{0}: {1}%, bucket: {2}, ddoc: {3}'.format(
                         task_type, task.get('progress'),
                         task.get('bucket'), task.get('designDocument')
                     ))

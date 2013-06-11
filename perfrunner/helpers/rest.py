@@ -10,7 +10,7 @@ def retry(method):
         def wrapper(self, **kwargs):
             for retry in xrange(self.MAX_RETRY):
                 r = method(self, **kwargs)
-                if r.status_code < 500:
+                if r.status_code in range(200, 203):
                     return r
                 else:
                     logger.warn('Retrying {0}'.format(r.url))

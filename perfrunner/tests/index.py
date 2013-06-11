@@ -20,6 +20,11 @@ class IndexTest(PerfTest):
             for ddoc_name, ddoc in self.ddocs.iteritems():
                 self.rest.create_ddoc(target.node, target.bucket,
                                       ddoc_name, ddoc)
+                for view_name in ddoc['views']:
+                    self.rest.query_view(target.node, target.bucket,
+                                         ddoc_name, view_name,
+                                         params={'limit': 10})
+
             self.monitor.monitor_task(target, 'indexer')
 
     def _compact_index(self):

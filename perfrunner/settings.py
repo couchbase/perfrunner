@@ -159,9 +159,12 @@ class XDCRSettings(PhaseSettings):
 class IndexSettings(PhaseSettings):
 
     VIEWS = [1]
+    DISABLED_UPDATES = False
 
     def __init__(self, options):
         self.views = eval(options.get('views', self.VIEWS))
+        self.disabled_updates = bool(options.get('disabled_updates',
+                                                 self.DISABLED_UPDATES))
 
 
 class AccessSettings(LoadSettings):

@@ -18,3 +18,4 @@ workers = 16
 
 [index]
 views = [10, 10, 10, 10]
+disabled_updates = True

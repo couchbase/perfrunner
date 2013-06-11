@@ -81,3 +81,20 @@ class Monitor(RestHelper):
         logger.info('Monitoring index fragmentation: {0}'.format(target.bucket))
         metric = 'couch_views_fragmentation'
         self._wait_for_null_metric(target.node, target.bucket, metric)
+
+    def monitor_task(self, target, task_type):
+        logger.info('Monitoring task: {0}'.format(task_type))
+
+        while True:
+            time.sleep(self.POLLING_INTERVAL)
+
+            tasks = [task for task in self.get_tasks(target.node)
+                     if task.get('type') == task_type]
+            if tasks:
+                for task in tasks:
+                    logger.info('{0}: {1}%, bucket {2}, ddoc {3}'.format(
+                        task_type, task.get('progress'),
+                        task.get('bucket'), task.get('designDocument')
+                    ))
+            else:
+                break

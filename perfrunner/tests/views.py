@@ -138,15 +138,9 @@ class IndexTest(DbCompactionTest):
                                       target_settings.bucket, ddoc_name, views)
 
     def _build_index(self):
-        params = {'stale': 'false', 'connection_timeout': 36000000, 'limit': 10}
-
         for target_settings in TargetIterator(self.cluster_spec,
                                               self.test_config):
-            for ddoc_name, views in self.ddocs.iteritems():
-                for view_name in views['views']:
-                    self.rest.query_view(target_settings.node,
-                                         target_settings.bucket,
-                                         ddoc_name, view_name, params)
+            self.monitor.monitor_task(target_settings, 'indexer')
 
     def run(self):
         self._run_load_phase()

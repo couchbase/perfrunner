@@ -138,5 +138,6 @@ class IndexTest(DbCompactionTest):
                                       target_settings.bucket, ddoc_name, views)
 
     def run(self):
-        super(IndexTest, self).run()
+        self._run_load_phase()
+        self._compact()
         self._define_ddocs()

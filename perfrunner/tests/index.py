@@ -15,16 +15,19 @@ class IndexTest(PerfTest):
 
         self.ddocs = ViewGen().generate_ddocs(views_settings.views, options)
 
-    def _build_index(self):
+    def _define_ddocs(self):
         for target in self.target_iterator:
             for ddoc_name, ddoc in self.ddocs.iteritems():
                 self.rest.create_ddoc(target.node, target.bucket,
                                       ddoc_name, ddoc)
+
+    def _build_index(self):
+        for target in self.target_iterator:
+            for ddoc_name, ddoc in self.ddocs.iteritems():
                 for view_name in ddoc['views']:
                     self.rest.query_view(target.node, target.bucket,
                                          ddoc_name, view_name,
                                          params={'limit': 10})
-
             self.monitor.monitor_task(target, 'indexer')
 
     def _compact_index(self):
@@ -42,6 +45,7 @@ class InitialIndexTest(IndexTest):
         self._compact_bucket()
 
         self.reporter.start()
+        self._define_ddocs()
         self._build_index()
         self.reporter.finish('Initial index')
 
@@ -52,6 +56,7 @@ class IncrementalIndexTest(IndexTest):
         self._run_load_phase()
         self._compact_bucket()
 
+        self._define_ddocs()
         self._build_index()
 
         self._run_access_phase()

@@ -19,6 +19,7 @@ class IndexCompactionTest(IndexTest):
         self._run_load_phase()
         self._compact_bucket()
 
+        self._define_ddocs()
         self._build_index()
 
         self._run_load_phase()  # extra mutations for index fragmentation

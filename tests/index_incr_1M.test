@@ -21,7 +21,7 @@ views = [10, 10, 10, 10]
 disabled_updates = True
 
 [access]
-items = 10000000
-ops = 10000000
+items = 1000000
+ops = 1000000
 size = 2048
 workers = 16

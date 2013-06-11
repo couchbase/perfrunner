@@ -1,3 +1,4 @@
+import json
 import time
 
 import requests
@@ -184,4 +185,6 @@ class RestHelper(Helper):
 
         API = "http://{0}/couchBase/{1}/_design/{2}".format(
             host_port, bucket, ddoc_name)
-        self.put(url=API, data=views)
+        data = json.dumps(views)
+        headers = {'Content-type': 'application/json'}
+        self.put(url=API, data=data,  headers=headers)

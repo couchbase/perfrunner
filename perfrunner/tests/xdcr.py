@@ -1,8 +1,7 @@
-from perfrunner.tests import target_hash
-from perfrunner.tests.kv import KVTest
+from perfrunner.tests import target_hash, PerfTest
 
 
-class XDCRTest(KVTest):
+class XDCRTest(PerfTest):
 
     def _start_replication(self, m1, m2):
         name = target_hash(m1, m2)

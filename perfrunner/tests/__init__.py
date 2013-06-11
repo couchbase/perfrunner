@@ -1,5 +1,7 @@
 from hashlib import md5
 
+from spring.wgen import WorkloadGen
+
 from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.reporter import Reporter
 from perfrunner.helpers.rest import RestHelper
@@ -24,6 +26,21 @@ class PerfTest(object):
 
         self.target_iterator = TargetIterator(self.cluster_spec,
                                               self.test_config)
+
+    def _compact_bucket(self):
+        for target in self.target_iterator:
+            self.rest.trigger_bucket_compaction(target.node,
+                                                target.bucket)
+            self.monitor.monitor_bucket_fragmentation(target)
+
+    def _run_load_phase(self):
+        load_settings = self.test_config.get_load_settings()
+        if load_settings.ops:
+            for target in self.target_iterator:
+                wg = WorkloadGen(load_settings, target)
+                wg.run()
+                self.monitor.monitor_disk_queue(target)
+                self.monitor.monitor_tap_replication(target)
 
 
 class TargetIterator(object):

@@ -6,16 +6,17 @@ from perfrunner.helpers import Helper
 from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper, all_hosts
 from perfrunner.helpers.rest import RestHelper
+from perfrunner.settings import ClusterSpec, TestConfig
 
 
 class ClusterManager(Helper):
 
-    def __init__(self, cluster_spec_fname, test_config_fname):
-        super(ClusterManager, self).__init__(cluster_spec_fname,
-                                             test_config_fname)
+    def __init__(self, cluster_spec, test_config):
+        super(ClusterManager, self).__init__(cluster_spec,
+                                             test_config)
 
-        self.rest = RestHelper(cluster_spec_fname)
-        self.monitor = Monitor(cluster_spec_fname, test_config_fname)
+        self.rest = RestHelper(cluster_spec)
+        self.monitor = Monitor(cluster_spec, test_config)
 
     @all_hosts
     def clean_data_path(self):
@@ -91,7 +92,12 @@ def get_options():
 def main():
     options = get_options()
 
-    cm = ClusterManager(options.cluster_spec_fname, options.test_config_fname)
+    cluster_spec = ClusterSpec()
+    cluster_spec.parse(options.cluster_spec_fname)
+    test_config = TestConfig()
+    test_config.parse(options.test_config_fname)
+
+    cm = ClusterManager(cluster_spec, test_config)
     cm.set_data_path()
     cm.set_auth()
     cm.set_mem_quota()
@@ -100,7 +106,7 @@ def main():
     cm.create_buckets()
     cm.configure_auto_compaction()
 
-    rh = RemoteHelper(options.cluster_spec_fname)
+    rh = RemoteHelper(cluster_spec)
     rh.reset_swap()
     rh.drop_caches()
 

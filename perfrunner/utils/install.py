@@ -7,7 +7,7 @@ from logger import logger
 from lxml import etree
 
 from perfrunner.helpers.remote import RemoteHelper, all_hosts
-
+from perfrunner.settings import ClusterSpec, TestConfig
 
 Build = namedtuple('Build', ['arch', 'pkg', 'version', 'toy'])
 
@@ -107,7 +107,10 @@ def main():
     if not options.cluster_spec_fname or not options.version:
         parser.error('Missing mandatory parameter')
 
-    installer = CouchbaseInstaller(options.cluster_spec_fname)
+    cluster_spec = ClusterSpec()
+    cluster_spec.parse(options.cluster_spec_fname)
+
+    installer = CouchbaseInstaller(cluster_spec)
     installer.install(options)
 
 if __name__ == '__main__':

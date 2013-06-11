@@ -3,7 +3,7 @@ from hashlib import md5
 from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.reporter import Reporter
 from perfrunner.helpers.rest import RestHelper
-from perfrunner.settings import ClusterSpec, TestConfig, TargetSettings
+from perfrunner.settings import TargetSettings
 
 
 def target_hash(*args):
@@ -14,14 +14,12 @@ def target_hash(*args):
 
 class PerfTest(object):
 
-    def __init__(self, cluster_spec_fname, test_config_fname):
-        self.cluster_spec = ClusterSpec()
-        self.cluster_spec.parse(cluster_spec_fname)
-        self.test_config = TestConfig()
-        self.test_config.parse(test_config_fname)
+    def __init__(self, cluster_spec, test_config):
+        self.cluster_spec = cluster_spec
+        self.test_config = test_config
 
-        self.monitor = Monitor(cluster_spec_fname, test_config_fname)
-        self.rest = RestHelper(cluster_spec_fname)
+        self.monitor = Monitor(cluster_spec, test_config)
+        self.rest = RestHelper(cluster_spec)
         self.reporter = Reporter()
 
         self.target_iterator = TargetIterator(self.cluster_spec,

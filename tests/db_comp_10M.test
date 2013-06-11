@@ -1,3 +1,7 @@
+[test_case]
+module = perfrunner.tests.compaction
+class = BucketCompactionTest
+
 [cluster]
 mem_quota = 20480
 initial_nodes = 4

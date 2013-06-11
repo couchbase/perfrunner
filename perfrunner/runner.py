@@ -1,13 +1,10 @@
 from optparse import OptionParser
 
-from perfrunner.tests.compaction import BucketCompactionTest, IndexCompactionTest
-from perfrunner.tests.index import InitialIndexTest
-from perfrunner.tests.kv import KVTest
-from perfrunner.tests.xdcr import XDCRTest
+from perfrunner.settings import ClusterSpec, TestConfig
 
 
 def get_options():
-    usage = '%prog -c cluster -t test_config test_class'
+    usage = '%prog -c cluster -t test_config'
 
     parser = OptionParser(usage)
 
@@ -18,20 +15,26 @@ def get_options():
                       help='path to test configuration file',
                       metavar='my_test.test')
 
-    options, args = parser.parse_args()
+    options, _ = parser.parse_args()
     if not options.cluster_spec_fname or not options.test_config_fname:
         parser.error('Missing mandatory parameter')
 
-    return options, args[0]
+    return options
 
 
 def main():
-    options, test_class = get_options()
+    options = get_options()
 
-    test = eval(
-        '{0}(options.cluster_spec_fname, options.test_config_fname)'.format(
-            test_class)
-    )
+    cluster_spec = ClusterSpec()
+    cluster_spec.parse(options.cluster_spec_fname)
+    test_config = TestConfig()
+    test_config.parse(options.test_config_fname)
+
+    test_module = test_config.get_test_module()
+    test_class = test_config.get_test_class()
+    eval('from {0} import {1}'.format(test_module, test_class))
+
+    test = eval(test_class)(cluster_spec, test_config)
     test.run()
 
 if __name__ == '__main__':

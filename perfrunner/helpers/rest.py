@@ -28,8 +28,8 @@ class RestHelper(Helper):
     MAX_RETRY = 5
     RETRY_DELAY = 5
 
-    def __init__(self, cluster_spec_fname, test_config_fname=None):
-        super(RestHelper, self).__init__(cluster_spec_fname, test_config_fname)
+    def __init__(self, cluster_spec, test_config=None):
+        super(RestHelper, self).__init__(cluster_spec, test_config)
         self.auth = (self.rest_username, self.rest_password)
 
     @retry

@@ -1,3 +1,7 @@
+[test_case]
+module = perfrunner.tests.xdcr
+class = XDCRTest
+
 [cluster]
 mem_quota = 20480
 initial_nodes = 2

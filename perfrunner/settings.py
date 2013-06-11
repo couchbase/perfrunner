@@ -60,6 +60,14 @@ class ClusterSpec(Config):
 class TestConfig(Config):
 
     @safe
+    def get_test_module(self):
+        return self.config.get('test_case', 'module')
+
+    @safe
+    def get_test_class(self):
+        return self.config.get('test_case', 'class')
+
+    @safe
     def get_mem_quota(self):
         return self.config.getint('cluster', 'mem_quota')
 

@@ -183,8 +183,17 @@ class RestHelper(Helper):
             ddoc_name, bucket
         ))
 
-        API = "http://{0}/couchBase/{1}/_design/{2}".format(
+        API = 'http://{0}/couchBase/{1}/_design/{2}'.format(
             host_port, bucket, ddoc_name)
         data = json.dumps(views)
         headers = {'Content-type': 'application/json'}
         self.put(url=API, data=data,  headers=headers)
+
+    def query_view(self, host_port, bucket, ddoc_name, view_name, params):
+        logger.info('Querying view: {0}/_design/{1}/_view/{2}'.format(
+            bucket, ddoc_name, view_name
+        ))
+
+        API = 'http://{0}/couchBase/{1}/_design/{2}/_view/{3}'.format(
+            host_port, bucket, ddoc_name, view_name)
+        self.get(url=API, params=params)

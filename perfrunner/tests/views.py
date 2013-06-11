@@ -137,7 +137,22 @@ class IndexTest(DbCompactionTest):
                 self.rest.create_ddoc(target_settings.node,
                                       target_settings.bucket, ddoc_name, views)
 
+    def _build_index(self):
+        params = {'stale': 'false', 'connection_timeout': 36000000, 'limit': 10}
+
+        for target_settings in TargetIterator(self.cluster_spec,
+                                              self.test_config):
+            for ddoc_name, views in self.ddocs.iteritems():
+                for view_name in views['views']:
+                    self.rest.query_view(target_settings.node,
+                                         target_settings.bucket,
+                                         ddoc_name, view_name, params)
+
     def run(self):
         self._run_load_phase()
         self._compact()
+
+        self.reporter.start()
         self._define_ddocs()
+        self._build_index()
+        self.reporter.finish('Initial index')

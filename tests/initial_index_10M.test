@@ -1,6 +1,6 @@
 [test_case]
 module = perfrunner.tests.index
-class = IndexCompactionTest
+class = InitialIndexTest
 
 [cluster]
 mem_quota = 20480

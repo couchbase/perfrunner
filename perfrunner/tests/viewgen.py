@@ -91,7 +91,7 @@ class ViewGen(object):
         '''
     }
 
-    def generate_ddocs(self, pattern):
+    def generate_ddocs(self, pattern, options=None):
         """Generate dictionary with design documents and views.
         Pattern looks like:
             [8, 8, 8] -- 8 ddocs (8 views, 8 views, 8 views)
@@ -112,6 +112,8 @@ class ViewGen(object):
                 view_name = self.view_names.next()
                 map_func = self.map_funcs[view_name]
                 ddocs[ddoc_name]['views'][view_name] = {'map': map_func}
+            if options:
+                ddocs[ddoc_name]['options'] = options
 
         self.ddoc_names.reset()
         self.view_names.reset()

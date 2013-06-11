@@ -99,6 +99,10 @@ class TestConfig(Config):
         options = self._get_options_as_dict('index')
         return IndexSettings(options)
 
+    def get_access_settings(self):
+        options = self._get_options_as_dict('access')
+        return AccessSettings(options)
+
 
 class CompactionSettings(object):
 
@@ -158,3 +162,8 @@ class IndexSettings(PhaseSettings):
 
     def __init__(self, options):
         self.views = eval(options.get('views', self.VIEWS))
+
+
+class AccessSettings(LoadSettings):
+
+    pass

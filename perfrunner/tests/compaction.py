@@ -26,13 +26,18 @@ class IndexCompactionTest(BucketCompactionTest):
 
         view_gen = ViewGen()
         views_settings = self.test_config.get_index_settings()
-        self.ddocs = view_gen.generate_ddocs(views_settings.views)
+        if views_settings.disabled_updates:
+            options = {'updateMinChanges': 0, 'replicaUpdateMinChanges': 0}
+        else:
+            options = None
+
+        self.ddocs = view_gen.generate_ddocs(views_settings.views, options)
 
     def _define_ddocs(self):
         for target_settings in self.target_iterator:
-            for ddoc_name, views in self.ddocs.iteritems():
+            for ddoc_name, ddoc in self.ddocs.iteritems():
                 self.rest.create_ddoc(target_settings.node,
-                                      target_settings.bucket, ddoc_name, views)
+                                      target_settings.bucket, ddoc_name, ddoc)
 
     def _build_index(self):
         for target in self.target_iterator:

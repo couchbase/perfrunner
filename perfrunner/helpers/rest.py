@@ -178,14 +178,14 @@ class RestHelper(Helper):
             .format(host_port, bucket, ddoc)
         self.post(url=API)
 
-    def create_ddoc(self, host_port, bucket, ddoc_name, views):
+    def create_ddoc(self, host_port, bucket, ddoc_name, ddoc):
         logger.info('Creating new ddoc {0}, bucket {1}'.format(
             ddoc_name, bucket
         ))
 
         API = 'http://{0}/couchBase/{1}/_design/{2}'.format(
             host_port, bucket, ddoc_name)
-        data = json.dumps(views)
+        data = json.dumps(ddoc)
         headers = {'Content-type': 'application/json'}
         self.put(url=API, data=data,  headers=headers)
 

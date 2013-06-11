@@ -149,4 +149,4 @@ class IndexSettings(PhaseSettings):
     VIEWS = [1]
 
     def __init__(self, options):
-        self.views = options.get('views', self.VIEWS)
+        self.views = eval(options.get('views', self.VIEWS))

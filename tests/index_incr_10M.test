@@ -1,6 +1,6 @@
 [test_case]
 module = perfrunner.tests.index
-class = InitialIndexTest
+class = IncrementalIndexTest
 
 [cluster]
 mem_quota = 20480

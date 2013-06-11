@@ -39,6 +39,10 @@ class RestHelper(Helper):
     def post(self, **kwargs):
         return requests.post(auth=self.auth, **kwargs)
 
+    @retry
+    def put(self, **kwargs):
+        return requests.put(auth=self.auth, **kwargs)
+
     def set_data_path(self, host_port):
         logger.info('Configuring data paths: {0}'.format(host_port))
 
@@ -166,8 +170,18 @@ class RestHelper(Helper):
 
     def trigger_index_compaction(self, host_port, ddoc, bucket):
         logger.info('Triggering ddoc {0} compaction, bucket {1}'.format(
-            ddoc, bucket))
+            ddoc, bucket
+        ))
 
         API = 'http://{0}/pools/default/buckets/{1}/ddocs/_design%2F{2}/controller/compactView'\
             .format(host_port, bucket, ddoc)
         self.post(url=API)
+
+    def create_ddoc(self, host_port, bucket, ddoc_name, views):
+        logger.info('Creating new ddoc {0}, bucket {1}'.format(
+            ddoc_name, bucket
+        ))
+
+        API = "http://{0}/couchBase/{1}/_design/{2}".format(
+            host_port, bucket, ddoc_name)
+        self.put(url=API, data=views)

@@ -1,5 +1,8 @@
 import string
 
+from perfrunner.tests import TargetIterator
+from perfrunner.tests.compaction import DbCompactionTest
+
 
 class RepeatableGenerator(object):
 
@@ -91,7 +94,7 @@ class ViewGen(object):
         '''
     }
 
-    def generate_ddocs(self, pattern=None, options=None):
+    def generate_ddocs(self, pattern):
         """Generate dictionary with design documents and views.
         Pattern looks like:
             [8, 8, 8] -- 8 ddocs (8 views, 8 views, 8 views)
@@ -112,8 +115,26 @@ class ViewGen(object):
                 view_name = self.view_names.next()
                 map_func = self.map_funcs[view_name]
                 ddocs[ddoc_name]['views'][view_name] = {'map': map_func}
-            if options:
-                ddocs[ddoc_name]['options'] = options
+
         self.ddoc_names.reset()
         self.view_names.reset()
         return ddocs
+
+
+class IndexTest(DbCompactionTest):
+
+    def __init__(self):
+        view_gen = ViewGen()
+        views_settings = self.test_config.get_index_settings()
+        self.ddocs = view_gen.generate_ddocs(views_settings.views)
+
+    def _define_ddocs(self):
+        for target_settings in TargetIterator(self.cluster_spec,
+                                              self.test_config):
+            for ddoc_name, views in self.ddocs.iteritems():
+                self.rest.create_ddoc(target_settings.node,
+                                      target_settings.bucket, ddoc_name, views)
+
+    def run(self):
+        super(IndexTest, self).run()
+        self._define_ddocs()

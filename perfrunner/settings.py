@@ -87,6 +87,10 @@ class TestConfig(Config):
         options = self._get_options_as_dict('xdcr')
         return XDCRSettings(options)
 
+    def get_index_settings(self):
+        options = self._get_options_as_dict('index')
+        return IndexSettings(options)
+
 
 class CompactionSettings(object):
 
@@ -118,7 +122,6 @@ class PhaseSettings(object):
     SIZE = 2048
     WORKERS = 12
     WORKING_SET = 0.2
-    XDCR_REPLICATION_TYPE = 'bidir'
 
 
 class LoadSettings(PhaseSettings):
@@ -134,6 +137,16 @@ class LoadSettings(PhaseSettings):
 
 class XDCRSettings(PhaseSettings):
 
+    XDCR_REPLICATION_TYPE = 'bidir'
+
     def __init__(self, options):
         self.replication_type = options.get('replication_type',
                                             self.XDCR_REPLICATION_TYPE)
+
+
+class IndexSettings(PhaseSettings):
+
+    VIEWS = [1]
+
+    def __init__(self, options):
+        self.views = options.get('views', self.VIEWS)

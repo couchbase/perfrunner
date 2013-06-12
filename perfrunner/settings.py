@@ -22,6 +22,7 @@ class Config(object):
             logger.interrupt('File doesn\'t exist: {0}'.format(fname))
         self.config = SafeConfigParser()
         self.config.read(fname)
+        self.fname = fname
 
     @safe
     def _get_options_as_dict(self, section):

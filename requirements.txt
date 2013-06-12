@@ -1,3 +1,4 @@
+couchbase==0.9
 fabric==1.6.0
 logger==1.1
 lxml==3.2.1

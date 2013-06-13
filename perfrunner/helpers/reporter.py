@@ -20,10 +20,12 @@ class Reporter(object):
         )
         return elapsed
 
-    def post_to_sf(self, test, metric, value):
+    def post_to_sf(self, test, value, metric=None):
         key = uuid4().hex
         master_node = test.cluster_spec.get_clusters()[0][0]
         build = test.rest.get_version(master_node)
+        if metric is None:
+            metric = test.test_config.name + test.cluster_spec.name
         data = {'build': build, 'metric': metric, 'value': value}
         try:
             cb = Couchbase.connect(host=ShowFastSettings.HOST,

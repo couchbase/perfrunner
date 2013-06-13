@@ -1,6 +1,7 @@
 import time
 from uuid import uuid4
 
+from btrc import CouchbaseClient, StatsReporter
 from couchbase import Couchbase
 from logger import logger
 
@@ -19,7 +20,7 @@ class Reporter(object):
         )
         return elapsed
 
-    def post(self, test, metric, value):
+    def post_to_sf(self, test, metric, value):
         key = uuid4().hex
         master_node = test.cluster_spec.get_clusters()[0][0]
         build = test.rest.get_version(master_node)
@@ -35,3 +36,8 @@ class Reporter(object):
             logger.warn('Failed to post results, {0}'.format(e))
         else:
             logger.info('Successfully posted: {0}'.format(data))
+
+    def btree_stats(self, host_port, bucket):
+        cb = CouchbaseClient(host_port, bucket)
+        reporter = StatsReporter(cb)
+        reporter.report_stats('btree_stats')

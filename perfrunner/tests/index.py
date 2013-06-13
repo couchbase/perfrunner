@@ -37,6 +37,10 @@ class IndexTest(PerfTest):
                                                    target.bucket)
             self.monitor.monitor_task(target, 'view_compaction')
 
+    def _report_btree_stats(self):
+        for target in self.target_iterator:
+            self.reporter.btree_stats(target.node, target.bucket)
+
 
 class InitialIndexTest(IndexTest):
 
@@ -48,6 +52,7 @@ class InitialIndexTest(IndexTest):
         self._define_ddocs()
         self._build_index()
         self.reporter.finish('Initial index')
+        self._report_btree_stats()
 
 
 class IncrementalIndexTest(IndexTest):
@@ -65,3 +70,4 @@ class IncrementalIndexTest(IndexTest):
         self.reporter.start()
         self._build_index()
         self.reporter.finish('Incremental index')
+        self._report_btree_stats()

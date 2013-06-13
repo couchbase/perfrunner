@@ -21,7 +21,7 @@ class Reporter(object):
 
     def post(self, test, metric, value):
         key = uuid4().hex
-        master_node = test.cluster_spec.get_clusters[0][0]
+        master_node = test.cluster_spec.get_clusters()[0][0]
         build = test.rest.get_version(master_node)
         data = {'build': build, 'metric': metric, 'value': value}
         try:

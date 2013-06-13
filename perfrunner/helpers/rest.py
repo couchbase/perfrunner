@@ -197,3 +197,10 @@ class RestHelper(Helper):
         API = 'http://{0}/couchBase/{1}/_design/{2}/_view/{3}'.format(
             host_port, bucket, ddoc_name, view_name)
         self.get(url=API, params=params)
+
+    def get_version(self, host_port):
+        logger.info('Getting server version')
+
+        API = 'http://{0}/pools/'.format(host_port)
+        r = self.get(url=API).json()
+        return r['implementationVersion'].replace('-rel-enterprise', '')

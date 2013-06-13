@@ -177,6 +177,7 @@ class AccessSettings(LoadSettings):
 
 class ShowFastSettings(object):
 
-    HOST = '172.23.96.10:8091'
+    HOST = '172.23.96.10'
+    PORT = 8091
     USERNAME = 'Administrator'
     PASSWORD = 'password'

@@ -26,6 +26,7 @@ class Reporter(object):
         data = {'build': build, 'metric': metric, 'value': value}
         try:
             cb = Couchbase.connect(host=ShowFastSettings.HOST,
+                                   port=ShowFastSettings.PORT,
                                    username=ShowFastSettings.USERNAME,
                                    password=ShowFastSettings.PASSWORD,
                                    bucket='benchmarks')

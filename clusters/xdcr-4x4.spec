@@ -17,3 +17,10 @@ index = /data
 [credentials]
 rest = Administrator:password
 ssh = root:couchbase
+
+[parameters]
+Platform = VM
+OS = CentOS 6.3 64-bit
+CPU = Intel Xeon X5650
+Memory = 28 GB
+Disk = 1 x HDD

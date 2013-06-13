@@ -13,3 +13,10 @@ index = /data
 [credentials]
 rest = Administrator:password
 ssh = root:couchbase
+
+[parameters]
+Platform = Physical
+OS = CentOS 5.8 64-bit
+CPU = Intel Core2 Quad Q8300
+Memory = 32 GB
+Disk = 2 x SSD

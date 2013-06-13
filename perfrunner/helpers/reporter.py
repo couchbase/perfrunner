@@ -25,7 +25,8 @@ class Reporter(object):
         master_node = test.cluster_spec.get_clusters()[0][0]
         build = test.rest.get_version(master_node)
         if metric is None:
-            metric = test.test_config.name + test.cluster_spec.name
+            metric = '{0}_{1}'.format(test.test_config.name,
+                                      test.cluster_spec.name)
         data = {'build': build, 'metric': metric, 'value': value}
         try:
             cb = Couchbase.connect(host=ShowFastSettings.HOST,

@@ -1,6 +1,7 @@
 [test_case]
 module = perfrunner.tests.index
 class = IncrementalIndexTest
+descr = Incremental Index (sec), 1M x 2KB, non-DGM, 4 x 10 views
 
 [cluster]
 mem_quota = 20480

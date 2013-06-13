@@ -4,6 +4,8 @@ from uuid import uuid4
 from couchbase import Couchbase
 from logger import logger
 
+from perfrunner.settings import ShowFastSettings
+
 
 class Reporter(object):
 
@@ -17,10 +19,13 @@ class Reporter(object):
         )
         return elapsed
 
-    def post(self, host, data):
+    def post(self, data):
         key = uuid4().hex
         try:
-            cb = Couchbase.connect(host=host, bucket='benchmarks')
+            cb = Couchbase.connect(host=ShowFastSettings.HOST,
+                                   username=ShowFastSettings.USERNAME,
+                                   password=ShowFastSettings.PASSWORD,
+                                   bucket='benchmarks')
             cb.set(key, data)
         except Exception, e:
             logger.warn('Failed to post results, {0}'.format(e))

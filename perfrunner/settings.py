@@ -173,3 +173,10 @@ class AccessSettings(LoadSettings):
     def __init__(self, options):
         super(AccessSettings, self).__init__(options)
         self.items = int(options.get('items', self.ITEMS))
+
+
+class ShowFastSettings(object):
+
+    HOST = '172.23.96.10:8091'
+    USERNAME = 'Administrator'
+    PASSWORD = 'password'

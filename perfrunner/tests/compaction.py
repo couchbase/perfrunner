@@ -10,7 +10,9 @@ class BucketCompactionTest(PerfTest):
 
         self.reporter.start()
         self._compact_bucket()
-        self.reporter.finish('Bucket compaction')
+        value = self.reporter.finish('Bucket compaction')
+        metric = self.cluster_spec.fname + self.test_config.fname
+        self.reporter.post(self, metric, value)
 
 
 class IndexCompactionTest(IndexTest):

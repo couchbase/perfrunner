@@ -60,7 +60,7 @@ class SFReporter(object):
             'cluster': self.test.cluster_spec.name
         }
         try:
-            self.cb = Couchbase.connect(bucket='clusters', **SF_STORAGE)
+            self.cb = Couchbase.connect(bucket='metrics', **SF_STORAGE)
             self.cb.set(self.metric, metric_info)
         except Exception, e:
             logger.warn('Failed to add cluster, {0}'.format(e))

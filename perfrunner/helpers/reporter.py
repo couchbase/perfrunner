@@ -5,7 +5,7 @@ from btrc import CouchbaseClient, StatsReporter
 from couchbase import Couchbase
 from logger import logger
 
-from perfrunner.settings import ShowFastSettings
+from perfrunner.settings import SF_STORAGE
 
 
 class Reporter(object):
@@ -20,27 +20,70 @@ class Reporter(object):
         )
         return elapsed
 
-    def post_to_sf(self, test, value, metric=None):
-        key = uuid4().hex
-        master_node = test.cluster_spec.get_clusters()[0][0]
-        build = test.rest.get_version(master_node)
-        if metric is None:
-            metric = '{0}_{1}'.format(test.test_config.name,
-                                      test.cluster_spec.name)
-        data = {'build': build, 'metric': metric, 'value': value}
-        try:
-            cb = Couchbase.connect(host=ShowFastSettings.HOST,
-                                   port=ShowFastSettings.PORT,
-                                   username=ShowFastSettings.USERNAME,
-                                   password=ShowFastSettings.PASSWORD,
-                                   bucket='benchmarks')
-            cb.set(key, data)
-        except Exception, e:
-            logger.warn('Failed to post results, {0}'.format(e))
-        else:
-            logger.info('Successfully posted: {0}'.format(data))
+    def post_to_sf(self, *args):
+        SFReporter(*args).post()
 
     def btree_stats(self, host_port, bucket):
         cb = CouchbaseClient(host_port, bucket)
         reporter = StatsReporter(cb)
         reporter.report_stats('btree_stats')
+
+
+class SFReporter(object):
+
+    def __init__(self, test, value, metric=None):
+        self.test = test
+        self.value = value
+        if metric is None:
+            self.metric = '{0}_{1}'.format(self.test.test_config.name,
+                                           self.test.cluster_spec.name)
+        else:
+            self.metric = metric
+
+    def _add_cluster(self):
+        cluster = self.test.cluster_spec.name
+        params = self.test.cluster_spec.get_parameters()
+        try:
+            self.cb = Couchbase.connect(bucket='clusters', **SF_STORAGE)
+            self.cb.set(cluster, params)
+        except Exception, e:
+            logger.warn('Failed to add cluster, {0}'.format(e))
+        else:
+            logger.info('Successfully posted: {0}, {1}'.format(
+                cluster, params))
+
+    def _add_metric(self):
+        metric_info = {
+            'title': self.test.test_config.get_test_descr(),
+            'cluster': self.test.cluster_spec.name
+        }
+        try:
+            self.cb = Couchbase.connect(bucket='clusters', **SF_STORAGE)
+            self.cb.set(self.metric, metric_info)
+        except Exception, e:
+            logger.warn('Failed to add cluster, {0}'.format(e))
+        else:
+            logger.info('Successfully posted: {0}, {1}'.format(
+                self.metric, metric_info))
+
+    def _prepare_data(self):
+        key = uuid4().hex
+        master_node = self.test.cluster_spec.get_clusters()[0][0]
+        build = self.test.rest.get_version(master_node)
+        data = {'build': build, 'metric': self.metric, 'value': self.value}
+        return key, data
+
+    def _post_benckmark(self):
+        key, benckmark = self._prepare_data()
+        try:
+            self.cb = Couchbase.connect(bucket='benchmarks', **SF_STORAGE)
+            self.cb.set(key, benckmark)
+        except Exception, e:
+            logger.warn('Failed to post results, {0}'.format(e))
+        else:
+            logger.info('Successfully posted: {0}'.format(benckmark))
+
+    def post(self):
+        self._add_metric()
+        self._add_cluster()
+        self._post_benckmark()

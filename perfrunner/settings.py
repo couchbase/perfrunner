@@ -59,6 +59,11 @@ class ClusterSpec(Config):
     def get_ssh_credentials(self):
         return self.config.get('credentials', 'ssh').split(':')
 
+    @safe
+    def get_parameters(self):
+        options = self._get_options_as_dict('parameters')
+        return AccessSettings(options)
+
 
 class TestConfig(Config):
 
@@ -69,6 +74,10 @@ class TestConfig(Config):
     @safe
     def get_test_class(self):
         return self.config.get('test_case', 'class')
+
+    @safe
+    def get_test_descr(self):
+        return self.config.get('test_case', 'descr')
 
     @safe
     def get_mem_quota(self):
@@ -177,9 +186,7 @@ class AccessSettings(LoadSettings):
         self.items = int(options.get('items', self.ITEMS))
 
 
-class ShowFastSettings(object):
-
-    HOST = '172.23.96.10'
-    PORT = 8091
-    USERNAME = 'Administrator'
-    PASSWORD = 'password'
+SF_STORAGE = {
+    'host': '172.23.96.10', 'port': 8091,
+    'username': 'Administrator', 'password': 'password'
+}

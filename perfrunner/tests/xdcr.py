@@ -30,4 +30,5 @@ class XDCRTest(PerfTest):
 
         self.reporter.start()
         self._init_xdcr()
-        self.reporter.finish('Initial replication')
+        value = self.reporter.finish('Initial replication')
+        self.reporter.post_to_sf(self, value)

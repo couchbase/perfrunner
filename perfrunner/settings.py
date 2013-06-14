@@ -61,8 +61,7 @@ class ClusterSpec(Config):
 
     @safe
     def get_parameters(self):
-        options = self._get_options_as_dict('parameters')
-        return AccessSettings(options)
+        return self._get_options_as_dict('parameters')
 
 
 class TestConfig(Config):

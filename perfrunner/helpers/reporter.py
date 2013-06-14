@@ -24,6 +24,8 @@ class Reporter(object):
         SFReporter(*args).post()
 
     def btree_stats(self, host_port, bucket):
+        logger.info('Getting B-tree stats from {0}/{1}'.format(
+            host_port, bucket))
         cb = CouchbaseClient(host_port, bucket)
         reporter = StatsReporter(cb)
         reporter.report_stats('btree_stats')

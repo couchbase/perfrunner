@@ -1,4 +1,6 @@
-from fabric.api import execute, hide, run, parallel, settings
+from uuid import uuid4
+
+from fabric.api import execute, hide, get, run, parallel, settings
 from logger import logger
 
 from perfrunner.helpers import Helper
@@ -55,3 +57,11 @@ class RemoteHelper(Helper):
     def drop_caches(self):
         logger.info('Dropping memory cache')
         run('sync && echo 3 > /proc/sys/vm/drop_caches')
+
+    @all_hosts
+    def collect_info(self):
+        logger.info('Running cbcollect_info')
+        fname = uuid4().hex
+        run('/opt/couchbase/bin/cbcollect_info /tmp/{0}'.format(fname))
+        get('/tmp/{0}'.format(fname))
+        run('rm -f /tmp/{0}'.format(fname))

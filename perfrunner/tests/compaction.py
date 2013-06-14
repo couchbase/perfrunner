@@ -29,4 +29,5 @@ class IndexCompactionTest(IndexTest):
 
         self.reporter.start()
         self._compact_index()
-        self.reporter.finish('Index compaction')
+        value = self.reporter.finish('Index compaction')
+        self.reporter.post_to_sf(self, value)

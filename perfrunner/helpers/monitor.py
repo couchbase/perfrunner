@@ -7,7 +7,7 @@ from perfrunner.helpers.rest import RestHelper
 
 class Monitor(RestHelper):
 
-    POLLING_INTERVAL = 10
+    POLLING_INTERVAL = 5
     MAX_RETRY = 10
 
     DISK_QUEUE_METRICS = (

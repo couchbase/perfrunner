@@ -158,7 +158,7 @@ class PhaseSettings(object):
         self.updates = int(options.get('updates', self.UPDATES))
         self.deletes = int(options.get('deletes', self.DELETES))
         self.ops = int(options.get('ops', self.OPS))
-        self.throughput = int(options.get('throughput', self.THROUGHPUT))
+        self.throughput = float(options.get('throughput', self.THROUGHPUT))
 
         self.size = int(options.get('size', self.SIZE))
         self.items = int(options.get('items', self.ITEMS))

@@ -139,23 +139,33 @@ class TargetSettings(object):
 
 class PhaseSettings(object):
 
+    CREATES = 0
+    READS = 0
+    UPDATES = 0
+    DELETES = 0
     ITEMS = 0
     OPS = 0
-    RATIO = 1.0
     SIZE = 2048
-    WORKERS = 12
-    WORKING_SET = 0.2
+    WORKERS = 8
+    WORKING_SET = 1.0
+
+    def __init__(self, options):
+        self.creates = int(options.get('creates', self.CREATES))
+        self.reads = int(options.get('reads', self.READS))
+        self.updates = int(options.get('updates', self.UPDATES))
+        self.deletes = int(options.get('deletes', self.DELETES))
+        self.ops = int(options.get('ops', self.OPS))
+
+        self.size = int(options.get('size', self.SIZE))
+        self.items = int(options.get('items', self.ITEMS))
+        self.working_set = float(options.get('working_set', self.WORKING_SET))
+
+        self.workers = int(options.get('workers', self.WORKERS))
 
 
 class LoadSettings(PhaseSettings):
 
-    def __init__(self, options):
-        self.items = self.ITEMS
-        self.ops = int(options.get('ops', self.OPS))
-        self.ratio = self.RATIO
-        self.size = int(options.get('size', self.SIZE))
-        self.workers = int(options.get('workers', self.WORKERS))
-        self.working_set = float(options.get('working_set', self.WORKING_SET))
+    CREATES = 100
 
 
 class XDCRSettings(PhaseSettings):
@@ -178,11 +188,9 @@ class IndexSettings(PhaseSettings):
                                                  self.DISABLED_UPDATES))
 
 
-class AccessSettings(LoadSettings):
+class AccessSettings(PhaseSettings):
 
-    def __init__(self, options):
-        super(AccessSettings, self).__init__(options)
-        self.items = int(options.get('items', self.ITEMS))
+    READS = 100
 
 
 SF_STORAGE = {

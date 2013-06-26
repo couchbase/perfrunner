@@ -27,7 +27,7 @@ class CbAgent(object):
             collector.update_metadata()
 
     def start(self):
-        self.processes = [Process(c.collect) for c in self.collectors]
+        self.processes = [Process(target=c.collect) for c in self.collectors]
         map(lambda p: p.start(), self.processes)
 
     def stop(self):

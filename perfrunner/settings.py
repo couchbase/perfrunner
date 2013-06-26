@@ -152,7 +152,7 @@ class PhaseSettings(object):
     SIZE = 2048
     WORKING_SET = 1.0
 
-    WORKERS = 8
+    WORKERS = 12
 
     def __init__(self, options):
         self.creates = int(options.get('creates', self.CREATES))

@@ -15,4 +15,4 @@ view_percentage = 100
 [load]
 ops = 10000000
 size = 2048
-workers = 16
+workers = 12

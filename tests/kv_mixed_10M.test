@@ -1,0 +1,25 @@
+[test_case]
+module = perfrunner.tests.kv
+class = KVTest
+descr = KV linear workload, 5/45/45/5 c/r/u/d, 8K ops/sec, 10M x 2KB, non-DGM
+
+[cluster]
+mem_quota = 20480
+initial_nodes = 4
+num_buckets = 1
+
+[load]
+ops = 10000000
+size = 2048
+workers = 8
+
+[access]
+creates = 5
+reads = 45
+updates = 45
+deletes = 5
+ops = 57600000
+throughput = 8000
+items = 10000000
+size = 2048
+workers = 8

@@ -1,7 +1,9 @@
+import time
 from multiprocessing import Process
 from uuid import uuid4
 
 from cbagent.collectors import NSServer
+from logger import logger
 
 from perfrunner.settings import CbAgentSettings
 
@@ -21,13 +23,23 @@ class CbAgent(object):
             settings.master_node = target.node.split(':')[0]
             for collector in (NSServer, ):
                 self.collectors.append(collector(settings))
+        self.interval = settings.interval
 
     def update_metadata(self):
         for collector in self.collectors:
             collector.update_metadata()
 
+    def run(self, collector):
+        while True:
+            try:
+                collector.collect()
+                time.sleep(self.interval)
+            except Exception as e:
+                logger.warn(e)
+
     def start(self):
-        self.processes = [Process(target=c.collect) for c in self.collectors]
+        self.processes = [
+            Process(target=self.run, args=(c, )) for c in self.collectors]
         map(lambda p: p.start(), self.processes)
 
     def stop(self):

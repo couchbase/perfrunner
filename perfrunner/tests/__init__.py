@@ -3,6 +3,7 @@ from hashlib import md5
 from logger import logger
 from spring.wgen import WorkloadGen
 
+from perfrunner.helpers.cbmonitor import CbAgent
 from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.reporter import Reporter
 from perfrunner.helpers.rest import RestHelper
@@ -21,12 +22,13 @@ class PerfTest(object):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
 
+        self.target_iterator = TargetIterator(self.cluster_spec,
+                                              self.test_config)
+
         self.monitor = Monitor(cluster_spec, test_config)
         self.rest = RestHelper(cluster_spec)
         self.reporter = Reporter()
-
-        self.target_iterator = TargetIterator(self.cluster_spec,
-                                              self.test_config)
+        self.cbagent = CbAgent(cluster_spec, self.target_iterator)
 
     def _compact_bucket(self):
         for target in self.target_iterator:

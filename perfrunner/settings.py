@@ -30,6 +30,8 @@ class Config(object):
     def _get_options_as_dict(self, section):
         if section in self.config.sections():
             return dict((p, v) for p, v in self.config.items(section))
+        else:
+            return {}
 
 
 class ClusterSpec(Config):

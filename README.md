@@ -23,8 +23,8 @@ Cluster installation and setup
 Running tests
 -------------
 
-    python -m perfrunner -c ${cluster} -t ${test_config}
+    python -m perfrunner.runner -c ${cluster} -t ${test_config}
 
 For instance:
 
-    python -m perfrunner -c clusters/vesta.spec -t tests/sample.test
+    python -m perfrunner.runner -c clusters/vesta.spec -t tests/sample.test

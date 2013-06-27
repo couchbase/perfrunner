@@ -1,9 +1,7 @@
-import time
 from multiprocessing import Process
 from uuid import uuid4
 
 from cbagent.collectors import NSServer
-from logger import logger
 
 from perfrunner.settings import CbAgentSettings
 

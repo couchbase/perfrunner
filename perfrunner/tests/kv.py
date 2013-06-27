@@ -1,13 +1,4 @@
-from perfrunner.tests import PerfTest
-
-
-def with_stats(method):
-    def wrapper(self, *args, **kwargs):
-        self.cbagent.update_metadata()
-        self.cbagent.start()
-        method(self, *args, **kwargs)
-        self.cbagent.stop()
-    return wrapper
+from perfrunner.tests import PerfTest, with_stats
 
 
 class KVTest(PerfTest):

@@ -63,5 +63,5 @@ class RemoteHelper(Helper):
         logger.info('Running cbcollect_info')
         fname = uuid4().hex
         run('/opt/couchbase/bin/cbcollect_info /tmp/{0}'.format(fname))
-        get('/tmp/{0}'.format(fname))
-        run('rm -f /tmp/{0}'.format(fname))
+        get('/tmp/{0}.zip'.format(fname))
+        run('rm -f /tmp/{0}.zip'.format(fname))

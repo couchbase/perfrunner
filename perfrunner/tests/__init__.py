@@ -5,6 +5,7 @@ from spring.wgen import WorkloadGen
 
 from perfrunner.helpers.cbmonitor import CbAgent
 from perfrunner.helpers.monitor import Monitor
+from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.reporter import Reporter
 from perfrunner.helpers.rest import RestHelper
 from perfrunner.settings import TargetSettings
@@ -28,6 +29,7 @@ class PerfTest(object):
         self.monitor = Monitor(cluster_spec, test_config)
         self.rest = RestHelper(cluster_spec)
         self.reporter = Reporter()
+        self.remote = RemoteHelper(cluster_spec)
         self.cbagent = CbAgent(cluster_spec, self.target_iterator)
 
     def _compact_bucket(self):
@@ -59,6 +61,9 @@ class PerfTest(object):
                 wg.run()
                 self.monitor.monitor_disk_queue(target)
                 self.monitor.monitor_tap_replication(target)
+
+    def _debug(self):
+        self.remote.collect_info()
 
 
 class TargetIterator(object):

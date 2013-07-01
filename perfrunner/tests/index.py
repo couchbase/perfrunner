@@ -43,7 +43,8 @@ class IndexTest(PerfTest):
         for target in self.target_iterator:
             self.reporter.btree_stats(target.node, target.bucket)
 
-    def run(self):
+    def _debug(self):
+        super(IndexTest, self)._debug()
         self._report_btree_stats()
 
 
@@ -59,7 +60,7 @@ class InitialIndexTest(IndexTest):
         value = self.reporter.finish('Initial index')
         self.reporter.post_to_sf(self, value)
 
-        super(InitialIndexTest, self).run()
+        self._debug()
 
 
 class IncrementalIndexTest(IndexTest):
@@ -79,4 +80,4 @@ class IncrementalIndexTest(IndexTest):
         value = self.reporter.finish('Incremental index')
         self.reporter.post_to_sf(self, value)
 
-        super(IncrementalIndexTest, self).run()
+        self._debug()

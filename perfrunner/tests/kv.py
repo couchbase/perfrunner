@@ -12,3 +12,5 @@ class KVTest(PerfTest):
         self._run_load_phase()
         self._compact_bucket()
         self._run_access_phase()
+
+        self._debug()

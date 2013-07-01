@@ -1,3 +1,4 @@
+from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import PerfTest
 from perfrunner.tests.viewgen import ViewGen
 
@@ -21,6 +22,7 @@ class IndexTest(PerfTest):
                 self.rest.create_ddoc(target.node, target.bucket,
                                       ddoc_name, ddoc)
 
+    @with_stats
     def _build_index(self):
         for target in self.target_iterator:
             for ddoc_name, ddoc in self.ddocs.iteritems():

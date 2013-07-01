@@ -3,7 +3,7 @@ from multiprocessing import Process
 from time import time
 from uuid import uuid4
 
-from cbagent.collectors import NSServer
+from cbagent.collectors import NSServer, ActiveTasks
 from cbagent.metadata_client import MetadataClient
 
 from perfrunner.settings import CbAgentSettings
@@ -37,7 +37,7 @@ class CbAgent(object):
         self.collectors = []
         for target in target_iterator:
             settings.master_node = target.node.split(':')[0]
-            for collector in (NSServer, ):
+            for collector in (NSServer, ActiveTasks):
                 self.collectors.append(collector(settings))
 
     def update_metadata(self):

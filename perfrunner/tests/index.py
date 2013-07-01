@@ -22,7 +22,7 @@ class IndexTest(PerfTest):
                 self.rest.create_ddoc(target.node, target.bucket,
                                       ddoc_name, ddoc)
 
-    @with_stats
+    @with_stats()
     def _build_index(self):
         for target in self.target_iterator:
             for ddoc_name, ddoc in self.ddocs.iteritems():

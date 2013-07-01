@@ -3,42 +3,51 @@ from multiprocessing import Process
 from time import time
 from uuid import uuid4
 
-from cbagent.collectors import NSServer, ActiveTasks
+from cbagent.collectors import NSServer, ActiveTasks, Latency
 from cbagent.metadata_client import MetadataClient
 
 from perfrunner.settings import CbAgentSettings
 
 
-def with_stats(method):
-    def wrapper(self, *args, **kwargs):
-        self.cbagent.update_metadata()
+def with_stats(latency=False):
+    def outer_wrapper(method):
+        def inner_wrapper(self, *args, **kwargs):
+            cbagent = CbAgent(self.cluster_spec)
+            cbagent.prepare_collectors(self.target_iterator, latency)
 
-        from_ts = self.cbagent.start()
-        method(self, *args, **kwargs)
-        to_ts = self.cbagent.stop()
+            cbagent.update_metadata()
 
-        self.cbagent.add_snapshot(method.__name__, from_ts, to_ts)
-    return wrapper
+            from_ts = cbagent.start()
+            method(self, *args, **kwargs)
+            to_ts = cbagent.stop()
+
+            cbagent.add_snapshot(method.__name__, from_ts, to_ts)
+        return inner_wrapper
+    return outer_wrapper
 
 
 class CbAgent(object):
 
-    def __init__(self, cluster_spec, target_iterator):
-        settings = CbAgentSettings()
-        settings.cluster = '{0}_{1}'.format(cluster_spec.name, uuid4().hex[:6])
-        settings.ssh_username, settings.ssh_password = \
+    def __init__(self, cluster_spec, ):
+        self.settings = CbAgentSettings()
+
+        self.settings.cluster = '{0}_{1}'.format(
+            cluster_spec.name, uuid4().hex[:6])
+        self.settings.ssh_username, self.settings.ssh_password = \
             cluster_spec.get_ssh_credentials()
-        settings.rest_username, settings.rest_password = \
+        self.settings.rest_username, self.settings.rest_password = \
             cluster_spec.get_rest_credentials()
 
-        self.md_client = MetadataClient(settings)
-        self.snapshot_prefix = settings.cluster
+    def prepare_collectors(self, target_iterator, latency):
+        collectors = [NSServer, ActiveTasks]
+        if latency:
+            collectors.append(Latency)
 
         self.collectors = []
         for target in target_iterator:
-            settings.master_node = target.node.split(':')[0]
-            for collector in (NSServer, ActiveTasks):
-                self.collectors.append(collector(settings))
+            self.settings.master_node = target.node.split(':')[0]
+            for collector in collectors:
+                self.collectors.append(collector(self.settings))
 
     def update_metadata(self):
         for collector in self.collectors:
@@ -54,5 +63,6 @@ class CbAgent(object):
         return datetime.fromtimestamp(time())
 
     def add_snapshot(self, phase, ts_from, ts_to):
-        name = '{0}_{1}'.format(self.snapshot_prefix, phase)
-        self.md_client.add_snapshot(name, ts_from, ts_to)
+        name = '{0}_{1}'.format(self.settings.cluster, phase)
+        md_client = MetadataClient(self.settings)
+        md_client.add_snapshot(name, ts_from, ts_to)

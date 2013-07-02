@@ -123,7 +123,7 @@ class RestHelper(Helper):
         self.post(url=API, data=data)
 
     def configure_auto_compaction(self, host_port, settings):
-        logger.info('Applying auto-compaction settings')
+        logger.info('Applying auto-compaction settings: {0}'.format(settings))
 
         API = 'http://{0}/controller/setAutoCompaction'.format(host_port)
         data = {

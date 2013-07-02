@@ -75,17 +75,18 @@ class SFReporter(object):
         data = {'build': build, 'metric': self.metric, 'value': self.value}
         return key, data
 
-    def _mark_previous_as_obsolete(self, cb):
-        for row in cb.query('benchmarks', 'all_ids'):
-            doc = cb.get(row.key)
-            doc.update({'obsolete': True})
-            cb.set(row.key, doc)
+    def _mark_previous_as_obsolete(self, cb, benckmark):
+        for row in cb.query('benchmarks', 'values_by_build_and_metric',
+                            key=[benckmark['metric'], benckmark['build']]):
+            doc = cb.get(row.docid)
+            doc.value.update({'obsolete': True})
+            cb.set(row.docid, doc.value)
 
     def _post_benckmark(self):
         key, benckmark = self._prepare_data()
         try:
             cb = Couchbase.connect(bucket='benchmarks', **SF_STORAGE)
-            self._mark_previous_as_obsolete(cb)
+            self._mark_previous_as_obsolete(cb, benckmark)
             cb.set(key, benckmark)
         except Exception, e:
             logger.warn('Failed to post results, {0}'.format(e))

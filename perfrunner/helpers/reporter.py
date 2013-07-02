@@ -46,8 +46,8 @@ class SFReporter(object):
         cluster = self.test.cluster_spec.name
         params = self.test.cluster_spec.get_parameters()
         try:
-            self.cb = Couchbase.connect(bucket='clusters', **SF_STORAGE)
-            self.cb.set(cluster, params)
+            cb = Couchbase.connect(bucket='clusters', **SF_STORAGE)
+            cb.set(cluster, params)
         except Exception, e:
             logger.warn('Failed to add cluster, {0}'.format(e))
         else:
@@ -60,8 +60,8 @@ class SFReporter(object):
             'cluster': self.test.cluster_spec.name
         }
         try:
-            self.cb = Couchbase.connect(bucket='metrics', **SF_STORAGE)
-            self.cb.set(self.metric, metric_info)
+            cb = Couchbase.connect(bucket='metrics', **SF_STORAGE)
+            cb.set(self.metric, metric_info)
         except Exception, e:
             logger.warn('Failed to add cluster, {0}'.format(e))
         else:
@@ -75,11 +75,18 @@ class SFReporter(object):
         data = {'build': build, 'metric': self.metric, 'value': self.value}
         return key, data
 
+    def _mark_previous_as_obsolete(self, cb):
+        for row in cb.query('benchmarks', 'all_ids'):
+            doc = cb.get(row.key)
+            doc.update({'obsolete': True})
+            cb.set(row.key, doc)
+
     def _post_benckmark(self):
         key, benckmark = self._prepare_data()
         try:
-            self.cb = Couchbase.connect(bucket='benchmarks', **SF_STORAGE)
-            self.cb.set(key, benckmark)
+            cb = Couchbase.connect(bucket='benchmarks', **SF_STORAGE)
+            self._mark_previous_as_obsolete(cb)
+            cb.set(key, benckmark)
         except Exception, e:
             logger.warn('Failed to post results, {0}'.format(e))
         else:

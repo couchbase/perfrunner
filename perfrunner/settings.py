@@ -125,7 +125,7 @@ class CompactionSettings(object):
 
     def __init__(self, options):
         self.db_percentage = options.get('db_percentage', self.DB_PERCENTAGE)
-        self.view_percentage = options.get('db_percentage', self.VIEW_PERCENTAGE)
+        self.view_percentage = options.get('view_percentage', self.VIEW_PERCENTAGE)
         self.parallel = options.get('parallel', self.PARALLEL)
 
 

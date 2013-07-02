@@ -15,6 +15,7 @@ def retry(method):
                     return r
                 else:
                     logger.warn('Retrying {0}'.format(r.url))
+                    logger.warn(r.text)
                     time.sleep(self.RETRY_DELAY)
             else:
                 logger.interrupt('Request {0} failed after {1} attempts'.format(

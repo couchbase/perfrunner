@@ -128,6 +128,9 @@ class CompactionSettings(object):
         self.view_percentage = options.get('view_percentage', self.VIEW_PERCENTAGE)
         self.parallel = options.get('parallel', self.PARALLEL)
 
+    def __str__(self):
+        return str(self.__dict__)
+
 
 class TargetSettings(object):
 

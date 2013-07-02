@@ -125,7 +125,12 @@ class RestHelper(Helper):
         logger.info('Applying auto-compaction settings')
 
         API = 'http://{0}/controller/setAutoCompaction'.format(host_port)
-        self.post(url=API, data=settings)
+        data = {
+            'databaseFragmentationThreshold[percentage]': settings.db_percentage,
+            'viewFragmentationThreshold[percentage]': settings.view_percentage,
+            'parallelDBAndViewCompaction': str(settings.parallel).lower()
+        }
+        self.post(url=API, data=data)
 
     def get_bucket_stats(self, host_port, bucket):
         API = 'http://{0}/pools/default/buckets/{1}/stats'.format(host_port,

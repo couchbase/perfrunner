@@ -117,18 +117,16 @@ class TestConfig(Config):
         return AccessSettings(options)
 
 
-class CompactionSettings(dict):
+class CompactionSettings(object):
 
-    API_MAP = {
-        'db_percentage': 'databaseFragmentationThreshold[percentage]',
-        'view_percentage': 'viewFragmentationThreshold[percentage]',
-        'parallel': 'parallelDBAndViewCompaction',
-    }
+    DB_PERCENTAGE = 30
+    VIEW_PERCENTAGE = 30
+    PARALLEL = False
 
     def __init__(self, options):
-        for pr_api, ns_api in self.API_MAP.iteritems():
-            if options.get(pr_api):
-                self[ns_api] = options[pr_api].lower()
+        self.db_percentage = options.get('db_percentage', self.DB_PERCENTAGE)
+        self.view_percentage = options.get('view_percentage', self.VIEW_PERCENTAGE)
+        self.parallel = options.get('parallel', self.PARALLEL)
 
 
 class TargetSettings(object):

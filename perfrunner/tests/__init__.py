@@ -39,7 +39,7 @@ class PerfTest(object):
     def _run_load_phase(self):
         load_settings = self.test_config.get_load_settings()
         if load_settings.ops:
-            logger.info('Running load phase: {0} ops'.format(
+            logger.info('Running load phase: {0}'.format(
                 load_settings.ops))
 
             for target in self.target_iterator:
@@ -51,8 +51,8 @@ class PerfTest(object):
     def _run_access_phase(self):
         access_settings = self.test_config.get_access_settings()
         if access_settings.ops:
-            logger.info('Running access phase: {0} ops'.format(
-                access_settings.ops))
+            logger.info('Running access phase: {0}'.format(
+                access_settings))
 
             for target in self.target_iterator:
                 wg = WorkloadGen(access_settings, target)

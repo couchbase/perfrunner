@@ -171,6 +171,9 @@ class PhaseSettings(object):
 
         self.workers = int(options.get('workers', self.WORKERS))
 
+    def __str__(self):
+        return str(self.__dict__)
+
 
 class LoadSettings(PhaseSettings):
 

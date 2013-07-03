@@ -40,7 +40,7 @@ class PerfTest(object):
         load_settings = self.test_config.get_load_settings()
         if load_settings.ops:
             logger.info('Running load phase: {0}'.format(
-                load_settings.ops))
+                load_settings))
 
             for target in self.target_iterator:
                 wg = WorkloadGen(load_settings, target)

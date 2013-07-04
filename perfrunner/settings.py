@@ -153,7 +153,8 @@ class PhaseSettings(object):
 
     ITEMS = 0
     SIZE = 2048
-    WORKING_SET = 1.0
+    WORKING_SET = 100
+    WORKING_SET_ACCESS = 100
 
     WORKERS = 12
 
@@ -167,7 +168,9 @@ class PhaseSettings(object):
 
         self.size = int(options.get('size', self.SIZE))
         self.items = int(options.get('items', self.ITEMS))
-        self.working_set = float(options.get('working_set', self.WORKING_SET))
+        self.working_set = int(options.get('working_set', self.WORKING_SET))
+        self.working_set_access = int(options.get('working_set_access',
+                                                  self.WORKING_SET_ACCESS))
 
         self.workers = int(options.get('workers', self.WORKERS))
 

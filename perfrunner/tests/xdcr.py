@@ -1,3 +1,4 @@
+from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import target_hash, PerfTest
 
 
@@ -10,6 +11,7 @@ class XDCRTest(PerfTest):
         for bucket in self.test_config.get_buckets():
             self.rest.start_replication(m1, bucket, bucket, name)
 
+    @with_stats()
     def _init_xdcr(self):
         xdcr_settings = self.test_config.get_xdcr_settings()
 

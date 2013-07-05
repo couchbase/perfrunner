@@ -1,4 +1,5 @@
 import pytz
+from copy import copy
 from datetime import datetime
 from multiprocessing import Process
 from time import time
@@ -48,10 +49,11 @@ class CbAgent(object):
 
         self.collectors = []
         for cluster, master_node in self.cluster_spec.get_masters().items():
-            self.settings.cluster = self.gen_unique_cluster_name(cluster)
-            self.settings.master_node = master_node
+            settings = copy(self.settings)
+            settings.cluster = self.gen_unique_cluster_name(cluster)
+            settings.master_node = master_node
             for collector in collectors:
-                self.collectors.append(collector(self.settings))
+                self.collectors.append(collector(settings))
 
     def update_metadata(self):
         for collector in self.collectors:

@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.compaction
 class = BucketCompactionTest
-descr = Bucket Compaction (sec), 20M x 2KB, DGM
+descr = Bucket Compaction (sec), 1 bucket x 20M x 2KB, DGM
 
 [cluster]
 mem_quota = 20480

@@ -224,7 +224,7 @@ SF_STORAGE = {
 class CbAgentSettings(object):
 
     seriesly_host = 'cbmonitor.sc.couchbase.com'
-    cbmonitor_host = 'cbmonitor.sc.couchbase.com'
+    cbmonitor_host_port = 'cbmonitor.sc.couchbase.com'
     cbmonitor_port = 80
     interval = 10
     update_metadata = True

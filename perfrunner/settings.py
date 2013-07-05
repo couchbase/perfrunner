@@ -216,15 +216,15 @@ class AccessSettings(PhaseSettings):
 
 
 SF_STORAGE = {
-    'host': '172.23.96.10', 'port': 8091,
+    'host': 'showfast.sc.couchbase.com', 'port': 8091,
     'username': 'Administrator', 'password': 'password'
 }
 
 
 class CbAgentSettings(object):
 
-    seriesly_host = '172.23.96.10'
-    cbmonitor_host = '172.23.96.10'
+    seriesly_host = 'cbmonitor.sc.couchbase.com'
+    cbmonitor_host = 'cbmonitor.sc.couchbase.com'
     cbmonitor_port = 8000
     interval = 10
     update_metadata = True

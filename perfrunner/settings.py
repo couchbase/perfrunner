@@ -1,6 +1,7 @@
 import os.path
 from ConfigParser import SafeConfigParser, NoOptionError, NoSectionError
 from operator import add
+from uuid import uuid4
 
 from logger import logger
 
@@ -44,10 +45,12 @@ class ClusterSpec(Config):
 
     @safe
     def get_masters(self):
-        return dict(
-            (cluster, servers.split()[0].split(':')[0])
-            for cluster, servers in self.config.items('clusters')
-        )
+        masters = {}
+        for cluster, servers in self.config.items('clusters'):
+            cluster = '{0}_{1}'.format(cluster, uuid4().hex[:6])
+            master_node = servers.split()[0].split(':')[0]
+            masters[cluster] = master_node
+        return masters
 
     @safe
     def get_hosts(self):

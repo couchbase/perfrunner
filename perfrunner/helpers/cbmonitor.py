@@ -3,7 +3,6 @@ from copy import copy
 from datetime import datetime
 from multiprocessing import Process
 from time import time
-from uuid import uuid4
 
 from cbagent.collectors import NSServer, ActiveTasks, Latency
 from cbagent.metadata_client import MetadataClient
@@ -31,7 +30,7 @@ def with_stats(latency=False):
 class CbAgent(object):
 
     def __init__(self, cluster_spec):
-        self.cluster_spec = cluster_spec
+        self.clusters = cluster_spec.get_masters()
 
         self.settings = CbAgentSettings()
         self.settings.ssh_username, self.settings.ssh_password = \
@@ -39,18 +38,15 @@ class CbAgent(object):
         self.settings.rest_username, self.settings.rest_password = \
             cluster_spec.get_rest_credentials()
 
-    def gen_unique_cluster_name(self, cluster):
-        return '{0}_{1}'.format(cluster, uuid4().hex[:6])
-
     def prepare_collectors(self, latency):
         collectors = [NSServer, ActiveTasks]
         if latency:
             collectors.append(Latency)
 
         self.collectors = []
-        for cluster, master_node in self.cluster_spec.get_masters().items():
+        for cluster, master_node in self.clusters:
             settings = copy(self.settings)
-            settings.cluster = self.gen_unique_cluster_name(cluster)
+            settings.cluster = cluster
             settings.master_node = master_node
             for collector in collectors:
                 self.collectors.append(collector(settings))
@@ -69,8 +65,8 @@ class CbAgent(object):
         return datetime.fromtimestamp(time(), tz=pytz.utc)
 
     def add_snapshot(self, phase, ts_from, ts_to):
-        for cluster in self.cluster_spec.get_masters():
-            self.settings.cluster = self.gen_unique_cluster_name(cluster)
-            snapshot = '{0}{1}'.format(self.settings.cluster, phase)
+        for cluster in self.clusters:
+            snapshot = '{0}{1}'.format(cluster, phase)
+            self.settings.cluster = cluster
             md_client = MetadataClient(self.settings)
             md_client.add_snapshot(snapshot, ts_from, ts_to)

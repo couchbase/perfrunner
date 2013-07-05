@@ -43,6 +43,13 @@ class ClusterSpec(Config):
         )
 
     @safe
+    def get_masters(self):
+        return dict(
+            (cluster, servers.split()[0].split(':')[0])
+            for cluster_name, servers in self.config.items('clusters')
+        )
+
+    @safe
     def get_hosts(self):
         split_host_port = lambda server: server.split(':')[0]
         return map(split_host_port, reduce(add, self.get_clusters()))

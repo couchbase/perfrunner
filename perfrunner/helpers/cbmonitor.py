@@ -44,7 +44,7 @@ class CbAgent(object):
             collectors.append(Latency)
 
         self.collectors = []
-        for cluster, master_node in self.clusters:
+        for cluster, master_node in self.clusters.items():
             settings = copy(self.settings)
             settings.cluster = cluster
             settings.master_node = master_node

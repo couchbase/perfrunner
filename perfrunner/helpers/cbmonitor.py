@@ -1,6 +1,7 @@
+import pytz
 from datetime import datetime
 from multiprocessing import Process
-from time import gmtime, mktime
+from time import time
 from uuid import uuid4
 
 from cbagent.collectors import NSServer, ActiveTasks, Latency
@@ -59,11 +60,11 @@ class CbAgent(object):
     def start(self):
         self.processes = [Process(target=c.collect) for c in self.collectors]
         map(lambda p: p.start(), self.processes)
-        return datetime.fromtimestamp(mktime(gmtime()))
+        return datetime.fromtimestamp(time(), tz=pytz.utc)
 
     def stop(self):
         map(lambda p: p.terminate(), self.processes)
-        return datetime.fromtimestamp(mktime(gmtime()))
+        return datetime.fromtimestamp(time(), tz=pytz.utc)
 
     def add_snapshot(self, phase, ts_from, ts_to):
         for cluster in self.cluster_spec.get_masters():

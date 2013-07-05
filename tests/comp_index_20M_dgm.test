@@ -1,7 +1,7 @@
 [test_case]
-module = perfrunner.tests.index
-class = InitialIndexTest
-descr = Initial Index (sec), 1M x 2KB, non-DGM, 4 x 10 views
+module = perfrunner.tests.compaction
+class = IndexCompactionTest
+descr = Index Compaction (sec), 20M x 2KB, DGM, 4 x 10 views
 
 [cluster]
 mem_quota = 20480
@@ -13,9 +13,10 @@ db_percentage = 100
 view_percentage = 100
 
 [load]
-ops = 1000000
+ops = 20000000
 size = 2048
 workers = 12
 
 [index]
 views = [10, 10, 10, 10]
+disabled_updates = True

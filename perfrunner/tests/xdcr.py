@@ -28,9 +28,9 @@ class XDCRTest(PerfTest):
             self.monitor.monitor_xdcr_replication(target)
 
     def _calc_avg_rate(self, time_elapsed):
-        items = self.test_config.get_load_settings().items
+        initial_items = self.test_config.get_load_settings().ops
         buckets = self.test_config.get_num_buckets()
-        return buckets * items / time_elapsed
+        return buckets * initial_items / time_elapsed
 
     def run(self):
         self._run_load_phase()

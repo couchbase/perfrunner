@@ -1,7 +1,7 @@
 perfrunner
 ==========
 
-Performance test framework for NoSQL databases
+Performance test automation framework for Couchbase Server
 
 Requirements
 ------------

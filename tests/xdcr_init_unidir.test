@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.xdcr
 class = XDCRTest
-descr = Initial XDCR (sec), 2 -> 2 UniDir, 1 bucket x 2.5M x 2KB, non-DGM, no compaction
+descr = Initial XDCR rate (items/sec), 2 -> 2 UniDir, 1 bucket x 2.5M x 2KB, non-DGM, no compaction
 
 [cluster]
 mem_quota = 20480

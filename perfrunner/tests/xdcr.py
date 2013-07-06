@@ -27,10 +27,15 @@ class XDCRTest(PerfTest):
         for target in self.target_iterator:
             self.monitor.monitor_xdcr_replication(target)
 
+    def _calc_avg_rate(self, time_elapsed):
+        items = self.test_config.get_load_settings().items
+        buckets = self.test_config.get_num_buckets()
+        return buckets * items / time_elapsed
+
     def run(self):
         self._run_load_phase()
 
         self.reporter.start()
         self._init_xdcr()
-        value = self.reporter.finish('Initial replication')
-        self.reporter.post_to_sf(self, value)
+        time_elapsed = self.reporter.finish('Initial replication')
+        self.reporter.post_to_sf(self, self._calc_avg_rate(time_elapsed))

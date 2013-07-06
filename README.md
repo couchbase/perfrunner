@@ -1,8 +1,3 @@
-perfrunner
-==========
-
-Performance test automation framework for Couchbase Server
-
 Requirements
 ------------
 

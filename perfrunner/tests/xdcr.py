@@ -1,8 +1,32 @@
+from logger import logger
+
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.tests import target_hash, PerfTest
+from perfrunner.settings import TargetSettings
+from perfrunner.tests import target_hash, PerfTest, TargetIterator
 
 
-class XDCRTest(PerfTest):
+class SrcTargetIterator(TargetIterator):
+
+    def __iter__(self):
+        username, password = self.cluster_spec.get_rest_credentials()
+        src_cluster = self.cluster_spec.get_clusters()[0]
+        src_master = src_cluster[0]
+        for bucket in self.test_config.get_buckets():
+                prefix = target_hash(src_master, bucket)
+                yield TargetSettings(src_master, bucket, username, password, prefix)
+
+
+class XdcrInitTest(PerfTest):
+
+    def __init__(self, *args, **kwargs):
+        super(XdcrInitTest, self).__init__(*args, **kwargs)
+        self.src_target_iterator = SrcTargetIterator(self.cluster_spec,
+                                                     self.test_config)
+
+    def _run_load_phase(self):
+        load_settings = self.test_config.get_load_settings()
+        logger.info('Running load phase: {0}'.format(load_settings))
+        self._run_workload(load_settings, self.src_target_iterator)
 
     def _start_replication(self, m1, m2):
         name = target_hash(m1, m2)

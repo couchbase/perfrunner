@@ -16,6 +16,21 @@ def target_hash(*args):
     return str_hash[:6]
 
 
+class TargetIterator(object):
+
+    def __init__(self, cluster_spec, test_config):
+        self.cluster_spec = cluster_spec
+        self.test_config = test_config
+
+    def __iter__(self):
+        username, password = self.cluster_spec.get_rest_credentials()
+        for cluster in self.cluster_spec.get_clusters():
+            master = cluster[0]
+            for bucket in self.test_config.get_buckets():
+                prefix = target_hash(master, bucket)
+                yield TargetSettings(master, bucket, username, password, prefix)
+
+
 class PerfTest(object):
 
     def __init__(self, cluster_spec, test_config):
@@ -36,8 +51,10 @@ class PerfTest(object):
                                                 target.bucket)
             self.monitor.monitor_task(target, 'bucket_compaction')
 
-    def _run_workload(self, settings):
-        for target in self.target_iterator:
+    def _run_workload(self, settings, target_iterator=None):
+        if target_iterator is None:
+            target_iterator = self.target_iterator
+        for target in target_iterator:
             wg = WorkloadGen(settings, target)
             wg.run()
             self.monitor.monitor_disk_queue(target)
@@ -55,18 +72,3 @@ class PerfTest(object):
 
     def _debug(self):
         self.remote.collect_info()
-
-
-class TargetIterator(object):
-
-    def __init__(self, cluster_spec, test_config):
-        self.cluster_spec = cluster_spec
-        self.test_config = test_config
-
-    def __iter__(self):
-        username, password = self.cluster_spec.get_rest_credentials()
-        for cluster in self.cluster_spec.get_clusters():
-            master = cluster[0]
-            for bucket in self.test_config.get_buckets():
-                prefix = target_hash(master, bucket)
-                yield TargetSettings(master, bucket, username, password, prefix)

@@ -52,7 +52,7 @@ class PerfTest(object):
             self.monitor.monitor_task(target, 'bucket_compaction')
 
     def _run_workload(self, settings, target_iterator=None):
-        worker_settings = self.test_config.get_worker_settings()
+        worker_settings = self.cluster_spec.get_worker_settings()
         worker = Worker(*worker_settings)
         worker.start()
         if target_iterator is None:

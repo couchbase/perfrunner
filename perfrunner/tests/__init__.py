@@ -53,7 +53,7 @@ class PerfTest(object):
 
     def _run_workload(self, settings, target_iterator=None):
         worker_settings = self.cluster_spec.get_worker_settings()
-        worker = Worker(*worker_settings)
+        worker = Worker(**worker_settings)
         worker.start()
         if target_iterator is None:
             target_iterator = self.target_iterator

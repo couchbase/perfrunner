@@ -35,13 +35,15 @@ class Worker(object):
         run('mkdir {0}'.format(self.temp_dir))
         with cd(self.temp_dir):
             run('git clone {0}'.format(REPO))
-            run('./perfrunner/scripts/env.sh')
+        with cd('{0}/perfrunner'.format(self.temp_dir)):
+            run('virtualenv env')
+            run('env/bin/pip install -r requirements.txt')
 
     def start(self):
         if self.is_remote:
             logger.info('Starting remote Celery worker')
             with cd('{0}/perfrunner'.format(self.temp_dir)):
-                run('/tmp/prenv/bin/celery worker -A perfrunner.helpers.worker 2>1 &')
+                run('env/bin/celery worker -A perfrunner.helpers.worker 2>1 &')
 
     @task
     def task_run_workload(self, settings, target):

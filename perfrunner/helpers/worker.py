@@ -43,7 +43,8 @@ class Worker(object):
         if self.is_remote:
             logger.info('Starting remote Celery worker')
             with cd('{0}/perfrunner'.format(self.temp_dir)):
-                run('nohup env/bin/celery worker -A perfrunner.helpers.worker 2>1 &',
+                run('nohup env/bin/celery worker -A perfrunner.helpers.worker '
+                    '-c 1 2>1 > /tmp/celery_worker.log &',
                     pty=False)
 
     @task
@@ -62,7 +63,7 @@ class Worker(object):
     def terminate(self):
         if self.is_remote:
             logger.info('Terminating remote Celery worker')
-            run('killall celery; exit 0')
+            run('killall -9 celery; exit 0')
 
     def __del__(self):
         if self.is_remote:

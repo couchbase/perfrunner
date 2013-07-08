@@ -44,7 +44,7 @@ class Worker(object):
             logger.info('Starting remote Celery worker')
             with cd('{0}/perfrunner'.format(self.temp_dir)):
                 run('nohup env/bin/celery worker -A perfrunner.helpers.worker '
-                    '-c 1 2>1 > /tmp/celery_worker.log &',
+                    '-c 1 --loglevel=info 2>1 > /tmp/celery_worker.log &',
                     pty=False)
 
     @task

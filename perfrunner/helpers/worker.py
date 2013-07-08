@@ -15,7 +15,7 @@ class Worker(object):
 
     def __init__(self, host=None, ssh_username=None, ssh_password=None):
         if host and ssh_username and ssh_password:
-            self.is_remote = False
+            self.is_remote = True
 
             state.env.user = ssh_username
             state.env.password = ssh_password
@@ -27,7 +27,7 @@ class Worker(object):
             self.temp_dir = '/tmp/{0}'.format(uuid4().hex[:12])
             self._initialize_project()
         else:
-            self.is_remote = True
+            self.is_remote = False
 
     def _initialize_project(self):
         with cd(self.temp_dir):

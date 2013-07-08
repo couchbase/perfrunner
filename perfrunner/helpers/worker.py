@@ -9,7 +9,7 @@ from spring.wgen import WorkloadGen
 
 from perfrunner.settings import BROKER_URL, REPO
 
-celery = Celery('workers', broker=BROKER_URL)
+celery = Celery('workers', backend='amqp', broker=BROKER_URL)
 
 
 class Worker(object):
@@ -43,7 +43,8 @@ class Worker(object):
         if self.is_remote:
             logger.info('Starting remote Celery worker')
             with cd('{0}/perfrunner'.format(self.temp_dir)):
-                run('env/bin/celery worker -A perfrunner.helpers.worker 2>1 &')
+                run('nohup env/bin/celery worker -A perfrunner.helpers.worker 2>1 &',
+                    pty=False)
 
     @task
     def task_run_workload(self, settings, target):
@@ -52,14 +53,16 @@ class Worker(object):
 
     def run_workload(self, settings, target):
         if self.is_remote:
-            self.task_run_workload.apply(settings, target)
+            logger.info('Starting workload generator remotely')
+            self.task_run_workload.apply_async(args=(settings, target)).wait()
         else:
-            self.task_run_workload(settings, target)
+            logger.info('Starting workload generator locally')
+            self.task_run_workload.apply(args=(settings, target))
 
     def terminate(self):
         if self.is_remote:
             logger.info('Terminating remote Celery worker')
-            run('ps auxww|grep "celery worker"|awk "{print $2}"|xargs kill -9')
+            run('killall celery; exit 0')
 
     def __del__(self):
         if self.is_remote:

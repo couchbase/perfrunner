@@ -6,6 +6,25 @@ from uuid import uuid4
 from logger import logger
 
 
+REPO = 'https://github.com/pavel-paulau/perfrunner'
+
+BROKER_URL = 'amqp://couchbase:couchbase@perflab.sc.couchbase.com:5672//'
+
+SF_STORAGE = {
+    'host': 'showfast.sc.couchbase.com', 'port': 8091,
+    'username': 'Administrator', 'password': 'password'
+}
+
+
+class CbAgentSettings(object):
+
+    seriesly_host = 'cbmonitor.sc.couchbase.com'
+    cbmonitor_host_port = 'cbmonitor.sc.couchbase.com'
+    cbmonitor_port = 80
+    interval = 10
+    update_metadata = True
+
+
 def safe(method):
     def wrapper(*args, **kargs):
         try:
@@ -109,6 +128,9 @@ class TestConfig(Config):
     def get_compaction_settings(self):
         options = self._get_options_as_dict('compaction')
         return CompactionSettings(options)
+
+    def get_worker_settings(self):
+        return self._get_options_as_dict('worker')
 
     def get_load_settings(self):
         options = self._get_options_as_dict('load')
@@ -216,18 +238,3 @@ class IndexSettings(PhaseSettings):
 class AccessSettings(PhaseSettings):
 
     READS = 100
-
-
-SF_STORAGE = {
-    'host': 'showfast.sc.couchbase.com', 'port': 8091,
-    'username': 'Administrator', 'password': 'password'
-}
-
-
-class CbAgentSettings(object):
-
-    seriesly_host = 'cbmonitor.sc.couchbase.com'
-    cbmonitor_host_port = 'cbmonitor.sc.couchbase.com'
-    cbmonitor_port = 80
-    interval = 10
-    update_metadata = True

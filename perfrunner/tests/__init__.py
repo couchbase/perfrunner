@@ -1,12 +1,12 @@
 from hashlib import md5
 
 from logger import logger
-from spring.wgen import WorkloadGen
 
 from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.reporter import Reporter
 from perfrunner.helpers.rest import RestHelper
+from perfrunner.helpers.worker import Worker
 from perfrunner.settings import TargetSettings
 
 
@@ -52,13 +52,16 @@ class PerfTest(object):
             self.monitor.monitor_task(target, 'bucket_compaction')
 
     def _run_workload(self, settings, target_iterator=None):
+        worker_settings = self.test_config.get_worker_settings()
+        worker = Worker(*worker_settings)
+        worker.start()
         if target_iterator is None:
             target_iterator = self.target_iterator
         for target in target_iterator:
-            wg = WorkloadGen(settings, target)
-            wg.run()
+            worker.run_workload(settings, target)
             self.monitor.monitor_disk_queue(target)
             self.monitor.monitor_tap_replication(target)
+        worker.terminate()
 
     def _run_load_phase(self):
         load_settings = self.test_config.get_load_settings()

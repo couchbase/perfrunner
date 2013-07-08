@@ -27,7 +27,7 @@ class Worker(object):
             self.temp_dir = '/tmp/{0}'.format(uuid4().hex[:12])
             self._initialize_project()
         else:
-            self.is_local = True
+            self.is_remote = True
 
     def _initialize_project(self):
         with cd(self.temp_dir):

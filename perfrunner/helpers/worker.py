@@ -4,6 +4,7 @@ from celery import Celery
 from celery.contrib.methods import task
 from fabric.api import cd, run
 from fabric import state
+from logger import logger
 from spring.wgen import WorkloadGen
 
 from perfrunner.settings import BROKER_URL, REPO
@@ -30,13 +31,17 @@ class Worker(object):
             self.is_remote = False
 
     def _initialize_project(self):
+        logger.info('Intializing remote worker environment')
+        run('mkdir {0}'.format(self.temp_dir))
         with cd(self.temp_dir):
             run('git clone {0}'.format(REPO))
-            run('virtualenv perfrunner/env')
-            run('perfrunner/env/bin/pip install -r requirements.txt')
+        with cd('{0}/perfrunner'.format(self.temp_dir)):
+            run('virtualenv env')
+            run('env/bin/pip install -r requirements.txt')
 
     def start(self):
         if self.is_remote:
+            logger.info('Starting remote Celery worker')
             with cd('{0}/perfrunner'.format(self.temp_dir)):
                 run('env/bin/celery worker -A perfrunner.helpers.worker 2>1 &')
 
@@ -53,8 +58,10 @@ class Worker(object):
 
     def terminate(self):
         if self.is_remote:
+            logger.info('Terminating remote Celery worker')
             run('ps auxww|grep "celery worker"|awk "{print $2}"|xargs kill -9')
 
     def __del__(self):
         if self.is_remote:
+            logger.info('Cleaning up remote worker environment')
             run('rm -fr {0}'.format(self.temp_dir))

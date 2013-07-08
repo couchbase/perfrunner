@@ -90,9 +90,11 @@ class ClusterSpec(Config):
     def get_ssh_credentials(self):
         return self.config.get('credentials', 'ssh').split(':')
 
-    @safe
     def get_parameters(self):
         return self._get_options_as_dict('parameters')
+
+    def get_worker_settings(self):
+        return self._get_options_as_dict('worker')
 
 
 class TestConfig(Config):
@@ -128,9 +130,6 @@ class TestConfig(Config):
     def get_compaction_settings(self):
         options = self._get_options_as_dict('compaction')
         return CompactionSettings(options)
-
-    def get_worker_settings(self):
-        return self._get_options_as_dict('worker')
 
     def get_load_settings(self):
         options = self._get_options_as_dict('load')

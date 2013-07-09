@@ -1,8 +1,8 @@
 import time
+from multiprocessing import Event
 
 from perfrunner.tests import PerfTest
-
-from multiprocessing import Event
+from perfrunner.tests.index import IndexTest
 
 
 def with_delay(method):
@@ -36,6 +36,23 @@ class StaticRebalanceTest(RebalanceTest):
     def run(self):
         self._run_load_phase()
         self._compact_bucket()
+
+        self.reporter.start()
+        self.rebalance_in()
+        value = self.reporter.finish('Rebalance')
+        self.reporter.post_to_sf(self, value)
+
+        self._debug()
+
+
+class StaticRebalanceWithIndexTest(RebalanceTest, IndexTest):
+
+    def run(self):
+        self._run_load_phase()
+        self._compact_bucket()
+
+        self._define_ddocs()
+        self._build_index()
 
         self.reporter.start()
         self.rebalance_in()

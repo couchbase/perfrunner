@@ -43,8 +43,8 @@ class Worker(object):
     def _start(self):
         logger.info('Starting remote Celery worker')
         with cd('{0}/perfrunner'.format(self.temp_dir)):
-            run('nohup env/bin/celery worker -A perfrunner.helpers.worker '
-                '-c 1 > /tmp/celery_worker.log &')
+            run('dtach -n /tmp/perfrunner.sock '
+                'env/bin/celery worker -A perfrunner.helpers.worker -c 1')
 
     @task
     def task_run_workload(self, settings, target):

@@ -147,6 +147,10 @@ class TestConfig(Config):
         options = self._get_options_as_dict('access')
         return AccessSettings(options)
 
+    def get_rebalance_settings(self):
+        options = self._get_options_as_dict('rebalance')
+        return RebalanceSettings(options)
+
 
 class CompactionSettings(object):
 
@@ -171,6 +175,18 @@ class TargetSettings(object):
         self.node = host_port
         self.bucket = bucket
         self.prefix = prefix
+
+
+class RebalanceSettings(object):
+
+    NODES_AFTER = 4
+    START_AFTER = 1200
+    STOP_AFTER = 1200
+
+    def __init__(self, options):
+        self.nodes_after = int(options.get('nodes_after', self.NODES_AFTER))
+        self.start_after = int(options.get('start_after', self.START_AFTER))
+        self.stop_after = int(options.get('stop_after', self.STOP_AFTER))
 
 
 class PhaseSettings(object):

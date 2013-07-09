@@ -23,9 +23,16 @@ class RebalanceTest(PerfTest):
 
     @with_delay
     def rebalance_in(self):
+        initial_nodes = self.test_config.get_initial_nodes()
+        nodes_after = self.rebalance_settings.nodes_after
         for cluster in self.cluster_spec.get_clusters():
             master = cluster[0]
-            known_nodes = cluster[:self.rebalance_settings.nodes_after]
+
+            for host_port in cluster[initial_nodes:nodes_after]:
+                host = host_port.split(':')[0]
+                self.rest.add_node(master, host)
+
+            known_nodes = cluster[:nodes_after]
             ejected_nodes = []
             self.rest.rebalance(master, known_nodes, ejected_nodes)
             self.monitor.monitor_rebalance(master)

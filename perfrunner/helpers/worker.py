@@ -21,7 +21,6 @@ class Worker(object):
             state.env.user = ssh_username
             state.env.password = ssh_password
             state.env.host_string = host
-            state.env.warn_only = True
             state.output.running = False
             state.output.stdout = False
 

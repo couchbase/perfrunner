@@ -48,6 +48,9 @@ class PerfTest(object):
         worker_settings = self.cluster_spec.get_worker_settings()
         self.worker = Worker(**worker_settings)
 
+    def __del__(self):
+        self.worker.terminate()
+
     def _compact_bucket(self):
         for target in self.target_iterator:
             self.rest.trigger_bucket_compaction(target.node,

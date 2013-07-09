@@ -59,7 +59,7 @@ class Worker(object):
             logger.info('Starting workload generator locally')
             self.task_run_workload.apply(args=(settings, target))
 
-    def __del__(self):
+    def terminate(self):
         if self.is_remote:
             logger.info('Terminating remote Celery worker')
             run('killall -9 celery; exit 0')

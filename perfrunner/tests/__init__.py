@@ -45,6 +45,9 @@ class PerfTest(object):
         self.reporter = Reporter()
         self.remote = RemoteHelper(cluster_spec)
 
+        worker_settings = self.cluster_spec.get_worker_settings()
+        self.worker = Worker(**worker_settings)
+
     def _compact_bucket(self):
         for target in self.target_iterator:
             self.rest.trigger_bucket_compaction(target.node,
@@ -52,16 +55,12 @@ class PerfTest(object):
             self.monitor.monitor_task(target, 'bucket_compaction')
 
     def _run_workload(self, settings, target_iterator=None):
-        worker_settings = self.cluster_spec.get_worker_settings()
-        worker = Worker(**worker_settings)
-        worker.start()
         if target_iterator is None:
             target_iterator = self.target_iterator
         for target in target_iterator:
-            worker.run_workload(settings, target)
+            self.worker.run_workload(settings, target)
             self.monitor.monitor_disk_queue(target)
             self.monitor.monitor_tap_replication(target)
-        worker.terminate()
 
     def _run_load_phase(self):
         load_settings = self.test_config.get_load_settings()

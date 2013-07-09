@@ -27,6 +27,7 @@ class Worker(object):
 
             self.temp_dir = '/tmp/{0}'.format(uuid4().hex[:12])
             self._initialize_project()
+            self._start()
         else:
             self.is_remote = False
 
@@ -39,12 +40,11 @@ class Worker(object):
             run('virtualenv env')
             run('env/bin/pip install -r requirements.txt')
 
-    def start(self):
-        if self.is_remote:
-            logger.info('Starting remote Celery worker')
-            with cd('{0}/perfrunner'.format(self.temp_dir)):
-                run('nohup env/bin/celery worker -A perfrunner.helpers.worker '
-                    '-c 1 > /tmp/celery_worker.log &')
+    def _start(self):
+        logger.info('Starting remote Celery worker')
+        with cd('{0}/perfrunner'.format(self.temp_dir)):
+            run('nohup env/bin/celery worker -A perfrunner.helpers.worker '
+                '-c 1 > /tmp/celery_worker.log &')
 
     @task
     def task_run_workload(self, settings, target):
@@ -59,12 +59,9 @@ class Worker(object):
             logger.info('Starting workload generator locally')
             self.task_run_workload.apply(args=(settings, target))
 
-    def terminate(self):
+    def __del__(self):
         if self.is_remote:
             logger.info('Terminating remote Celery worker')
             run('killall -9 celery; exit 0')
-
-    def __del__(self):
-        if self.is_remote:
             logger.info('Cleaning up remote worker environment')
             run('rm -fr {0}'.format(self.temp_dir))

@@ -33,7 +33,7 @@ class RebalanceTest(PerfTest):
 
 class StaticRebalanceTest(RebalanceTest):
 
-    def _run(self):
+    def run(self):
         self._run_load_phase()
         self._compact_bucket()
 

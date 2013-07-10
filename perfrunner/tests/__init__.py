@@ -42,7 +42,7 @@ class PerfTest(object):
 
         self.monitor = Monitor(cluster_spec, test_config)
         self.rest = RestHelper(cluster_spec)
-        self.reporter = Reporter()
+        self.reporter = Reporter(self)
         self.remote = RemoteHelper(cluster_spec)
 
         worker_settings = self.cluster_spec.get_worker_settings()

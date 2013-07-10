@@ -5,11 +5,19 @@ from perfrunner.tests import PerfTest
 from perfrunner.tests.index import IndexTest
 
 
-def with_delay(method):
+def with_delay(rebalance):
     def wrapper(self, *args, **kwargs):
         time.sleep(self.rebalance_settings.start_after)
-        method(self, *args, **kwargs)
+
+        self.reporter.reset_utilzation_stats()
+
+        rebalance(self, *args, **kwargs)
+
+        self.reporter.save_utilzation_stats()
+        self.reporter.save_master_events()
+
         time.sleep(self.rebalance_settings.stop_after)
+
         self.shutdown_event.set()
     return wrapper
 
@@ -52,7 +60,7 @@ class StaticRebalanceTest(RebalanceTest):
         self._debug()
 
 
-class StaticRebalanceWithIndexTest(RebalanceTest, IndexTest):
+class StaticRebalanceWithIndexTest(IndexTest, RebalanceTest):
 
     def run(self):
         self._run_load_phase()

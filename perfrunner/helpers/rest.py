@@ -205,3 +205,9 @@ class RestHelper(Helper):
         API = 'http://{0}/pools/'.format(host_port)
         r = self.get(url=API).json()
         return r['implementationVersion'].replace('-rel-enterprise', '')
+
+    def get_master_events(self, host_port):
+        logger.info('Getting master events from {0}'.format(host_port))
+
+        API = 'http://{0}/diag/masterEvents?o=1'.format(host_port)
+        return self.get(url=API).json()

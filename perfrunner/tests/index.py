@@ -39,13 +39,9 @@ class IndexTest(PerfTest):
                                                    target.bucket)
             self.monitor.monitor_task(target, 'view_compaction')
 
-    def _report_btree_stats(self):
-        for target in self.target_iterator:
-            self.reporter.btree_stats(target.node, target.bucket)
-
     def _debug(self):
         super(IndexTest, self)._debug()
-        self._report_btree_stats()
+        self.reporter.save_btree_stats()
 
 
 class InitialIndexTest(IndexTest):

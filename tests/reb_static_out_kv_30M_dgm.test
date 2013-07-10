@@ -1,0 +1,22 @@
+[test_case]
+module = perfrunner.tests.rebalance
+class = StaticRebalanceTest
+descr = Static rebalance time (sec), 4 -> 3, 1 bucket x 30M x 2KB, DGM, no bucket compaction
+
+[cluster]
+mem_quota = 20480
+initial_nodes = 4
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+
+[load]
+ops = 30000000
+size = 2048
+workers = 12
+
+[rebalance]
+nodes_after = 3
+start_after = 0
+stop_after = 0

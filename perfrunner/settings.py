@@ -205,6 +205,8 @@ class PhaseSettings(object):
 
     WORKERS = 12
 
+    SEQ_READS = False
+
     def __init__(self, options):
         self.creates = int(options.get('creates', self.CREATES))
         self.reads = int(options.get('reads', self.READS))
@@ -220,6 +222,8 @@ class PhaseSettings(object):
                                                   self.WORKING_SET_ACCESS))
 
         self.workers = int(options.get('workers', self.WORKERS))
+
+        self.seq_reads = self.SEQ_READS
 
     def __str__(self):
         return str(self.__dict__)

@@ -115,7 +115,7 @@ class MasterEventsReporter(object):
                 fh.write(master_events)
 
 
-class Reporter(BtrcReporter, SFReporter):
+class Reporter(BtrcReporter, SFReporter, MasterEventsReporter):
 
     def start(self):
         self.ts = time.time()

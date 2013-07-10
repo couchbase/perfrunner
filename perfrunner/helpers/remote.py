@@ -61,7 +61,7 @@ class RemoteHelper(Helper):
     @all_hosts
     def collect_info(self):
         logger.info('Running cbcollect_info')
-        fname = uuid4().hex
-        run('/opt/couchbase/bin/cbcollect_info /tmp/{0}'.format(fname))
-        get('/tmp/{0}.zip'.format(fname))
-        run('rm -f /tmp/{0}.zip'.format(fname))
+        fname = '/tmp/{0}.zip'.format(uuid4().hex)
+        run('/opt/couchbase/bin/cbcollect_info {0}'.format(fname))
+        get('{0}'.format(fname))
+        run('rm -f {0}'.format(fname))

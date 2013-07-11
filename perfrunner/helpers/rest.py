@@ -92,7 +92,7 @@ class RestHelper(Helper):
 
         API = 'http://{0}/controller/rebalance'.format(host_port)
         known_nodes = ','.join(map(self.ns_1, known_nodes))
-        ejected_nodes = ','.join(ejected_nodes)
+        ejected_nodes = ','.join(map(self.ns_1, ejected_nodes))
         data = {
             'knownNodes': known_nodes,
             'ejectedNodes': ejected_nodes

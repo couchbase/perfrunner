@@ -72,7 +72,7 @@ class StaticRebalanceWithIndexTest(IndexTest, RebalanceTest):
         self._build_index()
 
         self.reporter.start()
-        self.rebalance_in()
+        self.rebalance()
         value = self.reporter.finish('Rebalance')
         self.reporter.post_to_sf(self, value)
 

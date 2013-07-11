@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.index
 class = InitialIndexTest
-descr = Initial Index (sec), 1 bucket x 10M x 2KB, non-DGM, 4 x 10 views
+descr = Initial Index (min), 1 bucket x 10M x 2KB, non-DGM, 4 x 10 views
 
 [cluster]
 mem_quota = 20480

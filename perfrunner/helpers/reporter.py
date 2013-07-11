@@ -121,8 +121,8 @@ class Reporter(BtrcReporter, SFReporter, MasterEventsReporter):
         self.ts = time.time()
 
     def finish(self, action):
-        elapsed = time.time() - self.ts
+        elapsed = (time.time() - self.ts) / 60
         logger.info(
-            'Time taken to perform "{0}": {1:.1f} sec'.format(action, elapsed)
+            'Time taken to perform "{0}": {1:.1f} min'.format(action, elapsed)
         )
         return elapsed

@@ -63,4 +63,4 @@ class XdcrInitTest(PerfTest):
         self.reporter.start()
         self._init_xdcr()
         time_elapsed = self.reporter.finish('Initial replication')
-        self.reporter.post_to_sf(self, self._calc_avg_rate(time_elapsed))
+        self.reporter.post_to_sf(self._calc_avg_rate(time_elapsed))

@@ -57,7 +57,7 @@ class StaticRebalanceTest(RebalanceTest):
         self.reporter.start()
         self.rebalance()
         value = self.reporter.finish('Rebalance')
-        self.reporter.post_to_sf(self, value)
+        self.reporter.post_to_sf(value)
 
         self._debug()
 
@@ -74,6 +74,6 @@ class StaticRebalanceWithIndexTest(IndexTest, RebalanceTest):
         self.reporter.start()
         self.rebalance()
         value = self.reporter.finish('Rebalance')
-        self.reporter.post_to_sf(self, value)
+        self.reporter.post_to_sf(value)
 
         self._debug()

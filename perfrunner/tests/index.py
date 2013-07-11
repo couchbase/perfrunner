@@ -54,7 +54,7 @@ class InitialIndexTest(IndexTest):
         self._define_ddocs()
         self._build_index()
         value = self.reporter.finish('Initial index')
-        self.reporter.post_to_sf(self, value)
+        self.reporter.post_to_sf(value)
 
         self._debug()
 
@@ -74,6 +74,6 @@ class IncrementalIndexTest(IndexTest):
         self.reporter.start()
         self._build_index()
         value = self.reporter.finish('Incremental index')
-        self.reporter.post_to_sf(self, value)
+        self.reporter.post_to_sf(value)
 
         self._debug()

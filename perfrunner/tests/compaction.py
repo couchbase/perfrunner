@@ -11,7 +11,7 @@ class BucketCompactionTest(PerfTest):
         self.reporter.start()
         self._compact_bucket()
         value = self.reporter.finish('Bucket compaction')
-        self.reporter.post_to_sf(self, value)
+        self.reporter.post_to_sf(value)
 
 
 class IndexCompactionTest(IndexTest):
@@ -28,4 +28,4 @@ class IndexCompactionTest(IndexTest):
         self.reporter.start()
         self._compact_index()
         value = self.reporter.finish('Index compaction')
-        self.reporter.post_to_sf(self, value)
+        self.reporter.post_to_sf(value)

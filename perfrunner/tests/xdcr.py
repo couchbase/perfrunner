@@ -54,7 +54,7 @@ class XdcrInitTest(PerfTest):
     def _calc_avg_rate(self, time_elapsed):
         initial_items = self.test_config.get_load_settings().ops
         buckets = self.test_config.get_num_buckets()
-        return buckets * initial_items / (time_elapsed * 60)
+        return round(buckets * initial_items / (time_elapsed * 60))
 
     def run(self):
         self._run_load_phase()

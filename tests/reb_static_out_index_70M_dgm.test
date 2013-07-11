@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.rebalance
 class = StaticRebalanceWithIndexTest
-descr = Static rebalance time (min), 4 -> 3, 1 bucket x 70M x 2KB, DGM, 1 x 5 views
+descr = Static rebalance time (min), 4 -> 3, 1 bucket x 70M x 2KB, DGM, 1 x 5 views, no bucket compaction
 
 [cluster]
 mem_quota = 81920

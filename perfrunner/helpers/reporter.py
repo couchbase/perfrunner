@@ -112,14 +112,14 @@ class LogReporter(object):
         for target in self.test.target_iterator:
             logs = self.test.rest.get_logs(target.node)
             fname = 'web_log_{0}.json'.format(target.node.split(':')[0])
-            with open(fname) as fh:
+            with open(fname, 'w') as fh:
                 fh.write(json.dumps(logs, indent=4, sort_keys=True))
 
     def save_master_events(self):
         for target in self.test.target_iterator:
             master_events = self.test.rest.get_master_events(target.node)
             fname = 'master_events_{0}.log'.format(target.node.split(':')[0])
-            with open(fname, "w") as fh:
+            with open(fname, 'w') as fh:
                 fh.write(master_events)
 
 

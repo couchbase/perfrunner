@@ -1,6 +1,8 @@
 import time
 from multiprocessing import Event
 
+from logger import logger
+
 from perfrunner.tests import PerfTest
 from perfrunner.tests.index import IndexTest
 
@@ -46,6 +48,9 @@ class RebalanceTest(PerfTest):
                 ejected_nodes = cluster[nodes_after:initial_nodes]
             self.rest.rebalance(master, known_nodes, ejected_nodes)
             self.monitor.monitor_rebalance(master)
+            if not self.rest.is_balanced(master):
+                self._debug()
+                logger.interrupt('Rebalance failed')
 
 
 class StaticRebalanceTest(RebalanceTest):

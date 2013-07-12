@@ -216,3 +216,9 @@ class RestHelper(Helper):
 
         API = 'http://{0}/diag/masterEvents?o=1'.format(host_port)
         return self.get(url=API).text
+
+    def get_logs(self, host_port):
+        logger.info('Getting web logs from {0}'.format(host_port))
+
+        API = 'http://{0}/logs'.format(host_port)
+        return self.get(url=API)

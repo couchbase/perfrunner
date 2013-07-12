@@ -1,3 +1,4 @@
+import json
 import time
 from uuid import uuid4
 
@@ -102,20 +103,27 @@ class SFReporter(object):
         self._post_benckmark(metric, value)
 
 
-class MasterEventsReporter(object):
+class LogReporter(object):
 
     def __init__(self, test):
         self.test = test
 
+    def save_web_logs(self):
+        for target in self.test.target_iterator:
+            logs = self.test.rest.get_logs(target.node)
+            fname = 'web_log_{0}.json'.format(target.node.split(':')[0])
+            with open(fname) as fh:
+                fh.write(json.dumps(logs, indent=4, sort_keys=True))
+
     def save_master_events(self):
         for target in self.test.target_iterator:
             master_events = self.test.rest.get_master_events(target.node)
-            fname = '{0}_master_events.log'.format(target.node.split(':')[0])
+            fname = 'master_events_{0}.log'.format(target.node.split(':')[0])
             with open(fname, "w") as fh:
                 fh.write(master_events)
 
 
-class Reporter(BtrcReporter, SFReporter, MasterEventsReporter):
+class Reporter(BtrcReporter, SFReporter, LogReporter):
 
     def start(self):
         self.ts = time.time()

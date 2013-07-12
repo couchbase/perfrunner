@@ -77,3 +77,4 @@ class PerfTest(object):
 
     def _debug(self):
         self.remote.collect_info()
+        self.reporter.save_web_logs()

@@ -221,4 +221,4 @@ class RestHelper(Helper):
         logger.info('Getting web logs from {0}'.format(host_port))
 
         API = 'http://{0}/logs'.format(host_port)
-        return self.get(url=API)
+        return self.get(url=API).json()

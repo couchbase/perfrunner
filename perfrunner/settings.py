@@ -111,6 +111,9 @@ class TestConfig(Config):
     def get_test_descr(self):
         return self.config.get('test_case', 'descr')
 
+    def get_regression_criterion(self):
+        return self.config.get('test_case', 'larger_is_better')
+
     @safe
     def get_mem_quota(self):
         return self.config.getint('cluster', 'mem_quota')

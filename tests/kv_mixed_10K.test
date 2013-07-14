@@ -2,6 +2,7 @@
 module = perfrunner.tests.kv
 class = KVTest
 descr = KV linear workload, 5C/45R/45U/5D, 8K ops/sec, 1 bucket x 10K x 2KB, non-DGM
+larger_is_better = false
 
 [cluster]
 mem_quota = 20480

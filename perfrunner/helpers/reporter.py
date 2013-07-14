@@ -58,7 +58,8 @@ class SFReporter(object):
     def _add_metric(self, metric):
         metric_info = {
             'title': self.test.test_config.get_test_descr(),
-            'cluster': self.test.cluster_spec.name
+            'cluster': self.test.cluster_spec.name,
+            'larger_is_better': self.test.get_regression_criterion()
         }
         try:
             cb = Couchbase.connect(bucket='metrics', **SF_STORAGE)

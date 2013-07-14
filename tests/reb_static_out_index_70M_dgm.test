@@ -2,6 +2,7 @@
 module = perfrunner.tests.rebalance
 class = StaticRebalanceWithIndexTest
 descr = Static rebalance-out with index (min), 4 -> 3, 1 bucket x 70M x 2KB, DGM, 1 x 5 views, no bucket compaction
+larger_is_better = false
 
 [cluster]
 mem_quota = 81920

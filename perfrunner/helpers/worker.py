@@ -26,9 +26,9 @@ def task_run_workload(settings, target):
 
 class WorkerManager(object):
 
-    def __init__(self, test_config):
-        ssh_username, ssh_password = test_config.get_ssh_credentials()
-        workers = test_config.get_workers()
+    def __init__(self, cluster_spec):
+        ssh_username, ssh_password = cluster_spec.get_ssh_credentials()
+        workers = cluster_spec.get_workers()
 
         if workers and ssh_username and ssh_password:
             self.is_remote = True

@@ -45,7 +45,7 @@ class PerfTest(object):
         self.reporter = Reporter(self)
         self.remote = RemoteHelper(cluster_spec)
 
-        self.worker = WorkerManager(self.test_config)
+        self.worker = WorkerManager(cluster_spec)
 
     def __del__(self):
         self.worker.terminate()

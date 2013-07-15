@@ -101,8 +101,9 @@ def main():
     cm.set_data_path()
     cm.set_auth()
     cm.set_mem_quota()
-    cm.add_nodes()
-    cm.rebalance()
+    if cm.initial_nodes > 1:
+        cm.add_nodes()
+        cm.rebalance()
     cm.create_buckets()
     cm.configure_auto_compaction()
 

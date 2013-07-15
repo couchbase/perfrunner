@@ -13,20 +13,18 @@ class SrcTargetIterator(TargetIterator):
         src_master = src_cluster[0]
         for bucket in self.test_config.get_buckets():
                 prefix = target_hash(src_master, bucket)
-                yield TargetSettings(src_master, bucket, username, password, prefix)
+                yield TargetSettings(src_master, bucket, username, password,
+                                     prefix)
 
 
 class XdcrInitTest(PerfTest):
 
-    def __init__(self, *args, **kwargs):
-        super(XdcrInitTest, self).__init__(*args, **kwargs)
-        self.src_target_iterator = SrcTargetIterator(self.cluster_spec,
-                                                     self.test_config)
-
-    def _run_load_phase(self):
+    def run_load_phase(self):
         load_settings = self.test_config.get_load_settings()
         logger.info('Running load phase: {0}'.format(load_settings))
-        self._run_workload(load_settings, self.src_target_iterator)
+        src_target_iterator = SrcTargetIterator(self.cluster_spec,
+                                                self.test_config)
+        self._run_workload(load_settings, src_target_iterator)
 
     def _start_replication(self, m1, m2):
         name = target_hash(m1, m2)
@@ -64,3 +62,17 @@ class XdcrInitTest(PerfTest):
         self.init_xdcr()
         time_elapsed = self.reporter.finish('Initial replication')
         self.reporter.post_to_sf(self._calc_avg_rate(time_elapsed))
+
+
+class XdcrTest(XdcrInitTest):
+
+    def run_load_phase(self):
+        super(XdcrInitTest, self).run_load_phase()
+
+    def run(self):
+        self.run_load_phase()
+        self.compact_bucket()
+
+        self.init_xdcr()
+
+        self.run_access_phase()

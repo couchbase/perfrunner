@@ -1,0 +1,29 @@
+[test_case]
+module = perfrunner.tests.xdcr
+class = XdcrTest
+descr = Regualr XDCR test, 1 -> 1 UniDir, 1 bucket x 50K x 2KB, non-DGM
+larger_is_better = true
+
+[cluster]
+mem_quota = 20480
+initial_nodes = 1
+num_buckets = 1
+
+[load]
+ops = 50000
+size = 2048
+workers = 4
+
+[xdcr]
+replication_type = unidir
+
+[access]
+creates = 5
+reads = 45
+updates = 45
+deletes = 5
+ops = 100000
+throughput = 2000
+items = 50000
+size = 2048
+workers = 4

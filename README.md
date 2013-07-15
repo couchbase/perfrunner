@@ -5,7 +5,7 @@ Requirements
 * virtualenv
 * libxml2-devel or equivalent
 * libxslt-devel or equivalent
-* libcouchbase
+* libcouchbase-devel
 * dtach (for remote workers only)
 
 Python dependencies are listed in requirements.txt.

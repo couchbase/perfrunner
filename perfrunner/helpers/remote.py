@@ -9,7 +9,7 @@ from perfrunner.helpers import Helper
 
 def all_hosts(task):
     def wrapper(self, *args, **kargs):
-        return execute(parallel(task), *args, hosts=self.hosts, **kargs)
+        return execute(parallel(task), self, *args, hosts=self.hosts, **kargs)
     return wrapper
 
 

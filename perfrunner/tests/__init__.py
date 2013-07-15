@@ -47,7 +47,10 @@ class PerfTest(object):
 
         self.worker = WorkerManager(cluster_spec)
 
-    def __del__(self):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
         self.worker.terminate()
 
     def _compact_bucket(self):

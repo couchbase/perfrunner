@@ -79,7 +79,7 @@ class ClusterSpec(Config):
     def get_workers(self):
         if 'workers' in self.config.sections():
             return tuple(
-                worker_host for _, worker_host in self.config.items('workers')
+                worker.split()[0] for _, worker in self.config.items('workers')
             )
         else:
             return ()

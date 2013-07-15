@@ -1,10 +1,8 @@
 from optparse import OptionParser
 
-from fabric.api import run
-
 from perfrunner.helpers import Helper
 from perfrunner.helpers.monitor import Monitor
-from perfrunner.helpers.remote import RemoteHelper, all_hosts
+from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import RestHelper
 from perfrunner.settings import ClusterSpec, TestConfig
 
@@ -17,14 +15,10 @@ class ClusterManager(Helper):
 
         self.rest = RestHelper(cluster_spec)
         self.monitor = Monitor(cluster_spec, test_config)
-
-    @all_hosts
-    def clean_data_path(self):
-        for path in (self.data_path, self.index_path):
-            run('rm -fr {0}/*'.format(path))
+        self.remote = RemoteHelper(cluster_spec)
 
     def set_data_path(self):
-        self.clean_data_path()
+        self.remote.clean_data_path()
         for cluster in self.clusters:
             for host_port in cluster:
                 self.rest.set_data_path(host_port)
@@ -69,6 +63,10 @@ class ClusterManager(Helper):
                 master, self.compaction_settings
             )
 
+    def clean_memory(self):
+        self.remote.reset_swap()
+        self.remote.drop_caches()
+
 
 def get_options():
     usage = '%prog -c cluster -t test_config'
@@ -107,9 +105,6 @@ def main():
     cm.create_buckets()
     cm.configure_auto_compaction()
 
-    rh = RemoteHelper(cluster_spec)
-    rh.reset_swap()
-    rh.drop_caches()
 
 if __name__ == '__main__':
     main()

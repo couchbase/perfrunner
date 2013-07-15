@@ -1,14 +1,13 @@
 from uuid import uuid4
 
 from celery import Celery
-from fabric.api import cd, run, parallel
-from fabric.tasks import execute
-from fabric import state
+from fabric.api import cd, run
 from kombu.common import Broadcast
 from logger import logger
 from spring.wgen import WorkloadGen
 
 from perfrunner.settings import BROKER_URL, REPO
+from perfrunner.helpers.remote import RemoteHelper, all_hosts
 
 CELERY_QUEUES = (Broadcast('broadcast_tasks'), )
 CELERY_ROUTES = {
@@ -25,27 +24,21 @@ def task_run_workload(settings, target):
     wg.run()
 
 
-class WorkerManager(object):
+class WorkerManager(RemoteHelper):
 
     def __init__(self, cluster_spec):
-        ssh_username, ssh_password = cluster_spec.get_ssh_credentials()
-        self.workers = cluster_spec.get_workers()
+        super(WorkerManager, self).__init__(cluster_spec)
 
-        if self.workers and ssh_username and ssh_password:
+        self.hosts = cluster_spec.get_workers()
+        if self.hosts:
             self.is_remote = True
-
-            state.env.user = ssh_username
-            state.env.password = ssh_password
-            state.output.running = False
-            state.output.stdout = False
-
             self.temp_dir = '/tmp/{0}'.format(uuid4().hex[:12])
-            execute(self._initialize_project, hosts=self.workers)
-            execute(self._start, hosts=self.workers)
+            self._initialize_project()
+            self._start()
         else:
             self.is_remote = False
 
-    @parallel
+    @all_hosts
     def _initialize_project(self):
         logger.info('Intializing remote worker environment')
         run('mkdir {0}'.format(self.temp_dir))
@@ -55,7 +48,7 @@ class WorkerManager(object):
             run('virtualenv env')
             run('env/bin/pip install -r requirements.txt')
 
-    @parallel
+    @all_hosts
     def _start(self):
         logger.info('Starting remote Celery worker')
         with cd('{0}/perfrunner'.format(self.temp_dir)):
@@ -70,13 +63,10 @@ class WorkerManager(object):
             logger.info('Starting workload generator locally')
             task_run_workload.apply(args=(settings, target))
 
-    @parallel
-    def _terminate(self):
+    @all_hosts
+    def terminate(self):
         if self.is_remote:
             logger.info('Terminating remote Celery worker')
             run('killall -9 celery; exit 0')
             logger.info('Cleaning up remote worker environment')
             run('rm -fr {0}'.format(self.temp_dir))
-
-    def terminate(self):
-        execute(self._terminate, hosts=self.workers)

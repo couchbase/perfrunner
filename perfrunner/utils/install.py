@@ -7,7 +7,7 @@ from logger import logger
 from lxml import etree
 
 from perfrunner.helpers.remote import RemoteHelper, all_hosts
-from perfrunner.settings import ClusterSpec, TestConfig
+from perfrunner.settings import ClusterSpec
 
 Build = namedtuple('Build', ['arch', 'pkg', 'version', 'toy'])
 

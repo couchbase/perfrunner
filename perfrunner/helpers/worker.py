@@ -29,9 +29,9 @@ class WorkerManager(object):
 
     def __init__(self, cluster_spec):
         ssh_username, ssh_password = cluster_spec.get_ssh_credentials()
-        workers = cluster_spec.get_workers()
+        self.workers = cluster_spec.get_workers()
 
-        if workers and ssh_username and ssh_password:
+        if self.workers and ssh_username and ssh_password:
             self.is_remote = True
 
             state.env.user = ssh_username
@@ -40,8 +40,8 @@ class WorkerManager(object):
             state.output.stdout = False
 
             self.temp_dir = '/tmp/{0}'.format(uuid4().hex[:12])
-            execute(self._initialize_project, hosts=workers)
-            execute(self._start, hosts=workers)
+            execute(self._initialize_project, hosts=self.workers)
+            execute(self._start, hosts=self.workers)
         else:
             self.is_remote = False
 
@@ -70,9 +70,13 @@ class WorkerManager(object):
             logger.info('Starting workload generator locally')
             task_run_workload.apply(args=(settings, target))
 
-    def terminate(self):
+    @parallel
+    def _terminate(self):
         if self.is_remote:
             logger.info('Terminating remote Celery worker')
             run('killall -9 celery; exit 0')
             logger.info('Cleaning up remote worker environment')
             run('rm -fr {0}'.format(self.temp_dir))
+
+    def terminate(self):
+        execute(self._terminate, hosts=self.workers)

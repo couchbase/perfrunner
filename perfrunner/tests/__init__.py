@@ -45,13 +45,13 @@ class PerfTest(object):
         self.reporter = Reporter(self)
         self.remote = RemoteHelper(cluster_spec)
 
-        self.worker = WorkerManager(cluster_spec)
+        self.worker_manager = WorkerManager(cluster_spec)
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.worker.terminate()
+        self.worker_manager.terminate()
         self.debug()
 
     def compact_bucket(self):
@@ -63,8 +63,8 @@ class PerfTest(object):
     def _run_workload(self, settings, target_iterator=None):
         if target_iterator is None:
             target_iterator = self.target_iterator
+        self.worker_manager.run_workload(settings, target_iterator)
         for target in target_iterator:
-            self.worker.run_workload(settings, target)
             self.monitor.monitor_disk_queue(target)
             self.monitor.monitor_tap_replication(target)
 

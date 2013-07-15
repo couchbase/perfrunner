@@ -53,7 +53,7 @@ class PerfTest(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.worker.terminate()
 
-    def _compact_bucket(self):
+    def compact_bucket(self):
         for target in self.target_iterator:
             self.rest.trigger_bucket_compaction(target.node,
                                                 target.bucket)
@@ -67,16 +67,16 @@ class PerfTest(object):
             self.monitor.monitor_disk_queue(target)
             self.monitor.monitor_tap_replication(target)
 
-    def _run_load_phase(self):
+    def run_load_phase(self):
         load_settings = self.test_config.get_load_settings()
         logger.info('Running load phase: {0}'.format(load_settings))
         self._run_workload(load_settings)
 
-    def _run_access_phase(self):
+    def run_access_phase(self):
         access_settings = self.test_config.get_access_settings()
         logger.info('Running access phase: {0}'.format(access_settings))
         self._run_workload(access_settings)
 
-    def _debug(self):
+    def debug(self):
         self.remote.collect_info()
         self.reporter.save_web_logs()

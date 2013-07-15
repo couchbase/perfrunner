@@ -36,7 +36,7 @@ class XdcrInitTest(PerfTest):
             self.rest.start_replication(m1, bucket, bucket, name)
 
     @with_stats()
-    def _init_xdcr(self):
+    def init_xdcr(self):
         xdcr_settings = self.test_config.get_xdcr_settings()
 
         c1, c2 = self.cluster_spec.get_clusters()
@@ -57,10 +57,10 @@ class XdcrInitTest(PerfTest):
         return round(buckets * initial_items / (time_elapsed * 60))
 
     def run(self):
-        self._run_load_phase()
-        self._compact_bucket()
+        self.run_load_phase()
+        self.compact_bucket()
 
         self.reporter.start()
-        self._init_xdcr()
+        self.init_xdcr()
         time_elapsed = self.reporter.finish('Initial replication')
         self.reporter.post_to_sf(self._calc_avg_rate(time_elapsed))

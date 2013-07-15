@@ -2,6 +2,7 @@ from uuid import uuid4
 
 from celery import Celery
 from fabric.api import cd, run, parallel
+from fabric.tasks import execute
 from fabric import state
 from kombu.common import Broadcast
 from logger import logger
@@ -35,13 +36,12 @@ class WorkerManager(object):
 
             state.env.user = ssh_username
             state.env.password = ssh_password
-            state.env.hosts = workers
             state.output.running = False
             state.output.stdout = False
 
             self.temp_dir = '/tmp/{0}'.format(uuid4().hex[:12])
-            self._initialize_project()
-            self._start()
+            execute(self._initialize_project, hosts=workers)
+            execute(self._start, hosts=workers)
         else:
             self.is_remote = False
 

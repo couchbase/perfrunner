@@ -6,7 +6,7 @@ from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.reporter import Reporter
 from perfrunner.helpers.rest import RestHelper
-from perfrunner.helpers.worker import Worker
+from perfrunner.helpers.worker import WorkerManager
 from perfrunner.settings import TargetSettings
 
 
@@ -45,8 +45,7 @@ class PerfTest(object):
         self.reporter = Reporter(self)
         self.remote = RemoteHelper(cluster_spec)
 
-        worker_settings = self.cluster_spec.get_worker_settings()
-        self.worker = Worker(**worker_settings)
+        self.worker = WorkerManager(self.test_config)
 
     def __del__(self):
         self.worker.terminate()

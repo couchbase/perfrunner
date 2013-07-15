@@ -76,6 +76,14 @@ class ClusterSpec(Config):
         split_host_port = lambda server: server.split(':')[0]
         return map(split_host_port, reduce(add, self.get_clusters()))
 
+    def get_workers(self):
+        if 'workers' in self.config.sections():
+            return tuple(
+                worker_host for _, worker_host in self.config.items('workers')
+            )
+        else:
+            return ()
+
     @safe
     def get_paths(self):
         data_path = self.config.get('storage', 'data')
@@ -92,9 +100,6 @@ class ClusterSpec(Config):
 
     def get_parameters(self):
         return self._get_options_as_dict('parameters')
-
-    def get_worker_settings(self):
-        return self._get_options_as_dict('worker')
 
 
 class TestConfig(Config):

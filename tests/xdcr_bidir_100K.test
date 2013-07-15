@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.xdcr
 class = XdcrTest
-descr = Regualr XDCR test, 1 -> 1 UniDir, 1 bucket x 50K x 2KB, non-DGM
+descr = Regualr XDCR test, 1 -> 1 BiDir, 1 bucket x 100K x 2KB, non-DGM
 larger_is_better = true
 
 [cluster]
@@ -15,7 +15,7 @@ size = 2048
 workers = 4
 
 [xdcr]
-replication_type = unidir
+replication_type = bidir
 
 [access]
 creates = 5

@@ -52,6 +52,7 @@ class PerfTest(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.worker.terminate()
+        self.debug()
 
     def compact_bucket(self):
         for target in self.target_iterator:

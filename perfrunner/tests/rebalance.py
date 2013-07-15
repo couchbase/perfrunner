@@ -49,7 +49,6 @@ class RebalanceTest(PerfTest):
             self.rest.rebalance(master, known_nodes, ejected_nodes)
             self.monitor.monitor_rebalance(master)
             if not self.rest.is_balanced(master):
-                self.debug()
                 logger.interrupt('Rebalance failed')
 
 
@@ -63,8 +62,6 @@ class StaticRebalanceTest(RebalanceTest):
         self.rebalance()
         value = self.reporter.finish('Rebalance')
         self.reporter.post_to_sf(value)
-
-        self.debug()
 
 
 class StaticRebalanceWithIndexTest(IndexTest, RebalanceTest):
@@ -80,5 +77,3 @@ class StaticRebalanceWithIndexTest(IndexTest, RebalanceTest):
         self.rebalance()
         value = self.reporter.finish('Rebalance')
         self.reporter.post_to_sf(value)
-
-        self.debug()

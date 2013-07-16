@@ -8,7 +8,7 @@ from logger import logger
 from spring.wgen import WorkloadGen
 
 from perfrunner.settings import BROKER_URL, REPO
-from perfrunner.helpers.remote import RemoteHelper, all_hosts
+from perfrunner.helpers.remote import all_hosts
 
 CELERY_QUEUES = (Queue('Q1'), Queue('Q2'))
 celery = Celery('workers', backend='amqp', broker=BROKER_URL)
@@ -20,14 +20,20 @@ def task_run_workload(settings, target):
     wg.run()
 
 
-class WorkerManager(RemoteHelper):
+class WorkerManager(object):
 
     def __init__(self, cluster_spec):
-        super(WorkerManager, self).__init__(cluster_spec)
+        ssh_username, ssh_password = cluster_spec.get_ssh_credentials()
 
         self.hosts = cluster_spec.get_workers()
         if self.hosts:
             self.is_remote = True
+
+            state.env.user = ssh_username
+            state.env.password = ssh_password
+            state.output.running = False
+            state.output.stdout = False
+
             self.temp_dir = '/tmp/{0}'.format(uuid4().hex[:12])
             self._initialize_project()
             self._start()

@@ -69,13 +69,8 @@ class CbAgent(object):
     def generate_report(self, snapshot):
         API = 'http://{0}/cbmonitor/pdf/'.format(
             self.settings.cbmonitor_host_port)
-        r = requests.post(API, data={'snapshot': snapshot}, stream=True)
-        if r.status_code != 200:
-            pdf_link = 'http://{0}/media/{1}.pdf'.format(
-                self.settings.cbmonitor_host_port, snapshot)
-            logger.info('Link to PDF report: {0}'.format(pdf_link))
-        else:
-            logger.warn('Failed to generate PDF report')
+        r = requests.post(API, data={'snapshot': snapshot})
+        logger.info('Link to PDF report: {0}'.format(r.text))
 
     def add_snapshot(self, phase, ts_from, ts_to):
         for cluster in self.clusters:

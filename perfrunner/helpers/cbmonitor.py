@@ -70,7 +70,8 @@ class CbAgent(object):
         API = 'http://{0}/cbmonitor/pdf/'.format(
             self.settings.cbmonitor_host_port)
         r = requests.post(API, data={'snapshot': snapshot})
-        logger.info('Link to PDF report: {0}'.format(r.text))
+        logger.info('Link to PDF report: http://{0}{1}'.format(
+            self.settings.cbmonitor_host_port, r.text))
 
     def add_snapshot(self, phase, ts_from, ts_to):
         for cluster in self.clusters:

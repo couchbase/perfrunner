@@ -2,13 +2,12 @@ from uuid import uuid4
 
 from celery import Celery
 from fabric import state
-from fabric.api import cd, run
+from fabric.api import cd, run, execute, parallel
 from kombu import Queue
 from logger import logger
 from spring.wgen import WorkloadGen
 
 from perfrunner.settings import BROKER_URL, REPO
-from perfrunner.helpers.remote import all_hosts
 
 CELERY_QUEUES = (Queue('Q1'), Queue('Q2'))
 celery = Celery('workers', backend='amqp', broker=BROKER_URL)
@@ -35,12 +34,13 @@ class WorkerManager(object):
             state.output.stdout = False
 
             self.temp_dir = '/tmp/{0}'.format(uuid4().hex[:12])
-            self._initialize_project()
+            execute(self._initialize_project, hosts=self.hosts)
+            execute(self._start, hosts=self.hosts)
             self._start()
         else:
             self.is_remote = False
 
-    @all_hosts
+    @parallel
     def _initialize_project(self):
         logger.info('Intializing remote worker environment')
         run('mkdir {0}'.format(self.temp_dir))
@@ -78,10 +78,13 @@ class WorkerManager(object):
         for worker in workers:
             worker.wait()
 
-    @all_hosts
-    def terminate(self):
+    @parallel
+    def _terminate(self):
         if self.is_remote:
             logger.info('Terminating remote Celery workers')
             run('killall -9 celery; exit 0')
             logger.info('Cleaning up remote worker environment')
             run('rm -fr {0}'.format(self.temp_dir))
+
+    def terminate(self):
+        execute(self._terminate, hosts=self.hosts)

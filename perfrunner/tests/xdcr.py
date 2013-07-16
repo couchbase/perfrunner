@@ -60,10 +60,6 @@ class XdcrInitTest(XdcrTest):
                                                 self.test_config)
         self._run_workload(load_settings, src_target_iterator)
 
-    @with_stats()
-    def init_xdcr(self):
-        super(XdcrInitTest, self).init_xdcr()
-
     def _calc_avg_rate(self, time_elapsed):
         initial_items = self.test_config.get_load_settings().ops
         buckets = self.test_config.get_num_buckets()

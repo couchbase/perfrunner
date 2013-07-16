@@ -14,11 +14,14 @@ class ClusterManager(Helper):
                                              test_config)
 
         self.rest = RestHelper(cluster_spec)
-        self.monitor = Monitor(cluster_spec, test_config)
         self.remote = RemoteHelper(cluster_spec)
+        self.monitor = Monitor(cluster_spec, test_config)
+
+    def clean_data_path(self):
+        self.remote.clean_data_path()
 
     def set_data_path(self):
-        self.remote.clean_data_path()
+        self.clean_data_path()
         for cluster in self.clusters:
             for host_port in cluster:
                 self.rest.set_data_path(host_port)
@@ -104,7 +107,7 @@ def main():
         cm.rebalance()
     cm.create_buckets()
     cm.configure_auto_compaction()
-
+    cm.clean_memory()
 
 if __name__ == '__main__':
     main()

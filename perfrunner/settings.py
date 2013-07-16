@@ -20,8 +20,7 @@ class CbAgentSettings(object):
 
     seriesly_host = 'cbmonitor.sc.couchbase.com'
     cbmonitor_host_port = 'cbmonitor.sc.couchbase.com'
-    cbmonitor_port = 80
-    interval = 10
+    interval = 5
     update_metadata = True
 
 

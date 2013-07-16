@@ -35,7 +35,7 @@ class WorkerManager(object):
 
             self.temp_dir = '/tmp/{0}'.format(uuid4().hex[:12])
             execute(self._initialize_project, hosts=self.hosts)
-            execute(self._start, hosts=self.hosts)
+            self._start()
         else:
             self.is_remote = False
 

@@ -4,8 +4,10 @@ from datetime import datetime
 from multiprocessing import Process
 from time import time
 
+import requests
 from cbagent.collectors import NSServer, ActiveTasks, Latency
 from cbagent.metadata_client import MetadataClient
+from logger import logger
 
 from perfrunner.settings import CbAgentSettings
 
@@ -64,9 +66,21 @@ class CbAgent(object):
         map(lambda p: p.terminate(), self.processes)
         return datetime.fromtimestamp(time(), tz=pytz.utc)
 
+    def generate_report(self, snapshot):
+        API = 'http://{0}/cbmonitor/pdf/'.format(
+            self.settings.cbmonitor_host_port)
+        r = requests.post(API, data={'snapshot': snapshot}, stream=True)
+        if r.status_code != 200:
+            pdf_link = 'http://{0}/media/{1}.pdf'.format(
+                self.settings.cbmonitor_host_port, snapshot)
+            logger.info('Link to PDF report: {0}'.format(pdf_link))
+        else:
+            logger.warn('Failed to generate PDF report')
+
     def add_snapshot(self, phase, ts_from, ts_to):
         for cluster in self.clusters:
             snapshot = '{0}_{1}'.format(cluster, phase)
             self.settings.cluster = cluster
             md_client = MetadataClient(self.settings)
             md_client.add_snapshot(snapshot, ts_from, ts_to)
+            self.generate_report(snapshot)

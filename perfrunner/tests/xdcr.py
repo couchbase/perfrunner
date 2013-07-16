@@ -2,10 +2,11 @@ from logger import logger
 
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.settings import TargetSettings
-from perfrunner.tests import target_hash, PerfTest, TargetIterator
+from perfrunner.tests import target_hash, TargetIterator
+from perfrunner.tests.kv import KVTest
 
 
-class XdcrTest(PerfTest):
+class XdcrTest(KVTest):
 
     def _start_replication(self, m1, m2):
         name = target_hash(m1, m2)

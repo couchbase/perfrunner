@@ -5,17 +5,17 @@ from multiprocessing import Process
 from time import time
 
 import requests
-from cbagent.collectors import NSServer, Latency
+from cbagent.collectors import NSServer, Latency, XdcrLag
 from cbagent.metadata_client import MetadataClient
 from logger import logger
 
 from perfrunner.settings import CbAgentSettings
 
 
-def with_stats(latency=False):
+def with_stats(latency=False, xdcr_lag=False):
     def outer_wrapper(method):
         def inner_wrapper(self, *args, **kwargs):
-            self.cbagent.prepare_collectors(latency)
+            self.cbagent.prepare_collectors(latency, xdcr_lag)
 
             self.cbagent.update_metadata()
 
@@ -43,10 +43,12 @@ class CbAgent(object):
             CbAgentSettings.cbmonitor_host_port, self.clusters.keys()[0]
         )
 
-    def prepare_collectors(self, latency):
+    def prepare_collectors(self, latency, xdcr_lag):
         collectors = [NSServer]
         if latency:
             collectors.append(Latency)
+        if xdcr_lag:
+            collectors.append(XdcrLag)
 
         self.collectors = []
         for cluster, master_node in self.clusters.items():

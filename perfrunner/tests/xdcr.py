@@ -1,12 +1,13 @@
 import requests
 from logger import logger
 
-from perfrunner.settings import TargetSettings, CbAgentSettings
+from perfrunner.helpers.cbmonitor import with_stats
+from perfrunner.settings import TargetSettings
 from perfrunner.tests import target_hash, TargetIterator
-from perfrunner.tests.kv import KVTest
+from perfrunner.tests import PerfTest
 
 
-class XdcrTest(KVTest):
+class XdcrTest(PerfTest):
 
     def _start_replication(self, m1, m2):
         name = target_hash(m1, m2)
@@ -29,6 +30,10 @@ class XdcrTest(KVTest):
 
         for target in self.target_iterator:
             self.monitor.monitor_xdcr_replication(target)
+
+    @with_stats(xdcr_lag=True)
+    def run_access_phase(self):
+        super(XdcrTest, self).run_access_phase()
 
     def _get_aggregated_metric(self, params):
         value = 0

@@ -104,9 +104,9 @@ class XdcrTest(PerfTest):
 
     def run(self):
         self.run_load_phase()
-        self.compact_bucket()
 
         self.init_xdcr()
+        self.compact_bucket()
 
         self.run_access_phase()
         self.reporter.post_to_sf(*self._calc_max_replication_changes_left())

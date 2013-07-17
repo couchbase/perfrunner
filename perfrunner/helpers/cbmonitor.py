@@ -51,10 +51,15 @@ class CbAgent(object):
             collectors.append(XdcrLag)
 
         self.collectors = []
-        for cluster, master_node in self.clusters.items():
+        clusters = self.clusters.keys()
+        reversed_clusters = list(reversed(self.clusters.keys()))
+        for i, cluster in enumerate(clusters):
             settings = copy(self.settings)
             settings.cluster = cluster
-            settings.master_node = master_node
+            settings.master_node = self.clusters[cluster]
+            if xdcr_lag:
+                dest_cluster = reversed_clusters[i]
+                settings.dest_master_node = self.clusters[dest_cluster]
             for collector in collectors:
                 self.collectors.append(collector(settings))
 

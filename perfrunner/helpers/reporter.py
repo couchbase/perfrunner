@@ -56,9 +56,6 @@ class SFReporter(object):
                 cluster, params))
 
     def _add_metric(self, metric, metric_info):
-        if metric is None:
-            metric = '{0}_{1}'.format(self.test.test_config.name,
-                                      self.test.cluster_spec.name)
         if metric_info is None:
             metric_info = {
                 'title': self.test.test_config.get_test_descr(),
@@ -100,6 +97,10 @@ class SFReporter(object):
             logger.info('Successfully posted: {0}'.format(benckmark))
 
     def post_to_sf(self, value, metric=None, metric_info=None):
+        if metric is None:
+            metric = '{0}_{1}'.format(self.test.test_config.name,
+                                      self.test.cluster_spec.name)
+
         self._add_metric(metric, metric_info)
         self._add_cluster()
         self._post_benckmark(metric, value)

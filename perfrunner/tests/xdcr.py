@@ -1,3 +1,5 @@
+import math
+
 import requests
 from logger import logger
 
@@ -35,10 +37,41 @@ class XdcrTest(PerfTest):
     def run_access_phase(self):
         super(XdcrTest, self).run_access_phase()
 
+    @staticmethod
+    def _calc_percentile(data, percentile):
+        data.sort()
+
+        k = (len(data) - 1) * percentile
+        f = math.floor(k)
+        c = math.ceil(k)
+
+        if f == c:
+            return data[int(k)]
+        else:
+            return data[int(f)] * (c - k) + data[int(c)] * (k - f)
+
+    def _calc_xdcr_lag(self):
+        metric = '{0}_95th_xdc_lag_left_{1}'.format(
+            self.test_config.name, self.cluster_spec.name)
+        descr = '95th percentile XDCR lag, {0}'.format(
+            self.test_config.get_test_descr())
+        metric_info = {
+            'title': descr,
+            'cluster': self.cluster_spec.name,
+            'larger_is_better': 'false'
+        }
+        timings = []
+        for bucket in self.test_config.get_buckets():
+            url = self.cbagent.lag_query_api.format(bucket)
+            r = requests.get(url=url).json()
+            timings += [value['xdcr_lag'] for value in r.values()]
+        self._calc_percentile(timings, 0.95)
+        return self._calc_percentile(timings, 0.95), metric, metric_info
+
     def _get_aggregated_metric(self, params):
         value = 0
         for bucket in self.test_config.get_buckets():
-            url = self.cbagent.query_api.format(bucket)
+            url = self.cbagent.ns_query_api.format(bucket)
             r = requests.get(url=url, params=params).json()
             value += r.values()[0][0]
         return value
@@ -60,8 +93,7 @@ class XdcrTest(PerfTest):
     def _calc_avg_xdc_ops(self):
         metric = '{0}_avg_xdc_ops_{1}'.format(
             self.test_config.name, self.cluster_spec.name)
-        descr = 'XDC ops/sec, {0}'.format(
-            self.test_config.get_test_descr())
+        descr = 'XDC ops/sec, {0}'.format(self.test_config.get_test_descr())
         metric_info = {
             'title': descr,
             'cluster': self.cluster_spec.name,
@@ -79,6 +111,7 @@ class XdcrTest(PerfTest):
         self.run_access_phase()
         self.reporter.post_to_sf(*self._calc_max_replication_changes_left())
         self.reporter.post_to_sf(*self._calc_avg_xdc_ops())
+        self.reporter.post_to_sf(*self._calc_xdcr_lag())
 
 
 class SrcTargetIterator(TargetIterator):

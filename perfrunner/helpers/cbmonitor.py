@@ -39,13 +39,6 @@ class CbAgent(object):
         self.settings.rest_username, self.settings.rest_password = \
             cluster_spec.get_rest_credentials()
 
-        self.ns_query_api = 'http://{0}/seriesly/ns_server{0}{{0}}/_query'.format(
-            CbAgentSettings.cbmonitor_host_port, self.clusters.keys()[0]
-        )
-        self.lag_query_api = 'http://{0}/seriesly/xdcr_lag{0}{{0}}/_all'.format(
-            CbAgentSettings.cbmonitor_host_port, self.clusters.keys()[0]
-        )
-
     def prepare_collectors(self, latency, xdcr_lag):
         collectors = [NSServer]
         if latency:

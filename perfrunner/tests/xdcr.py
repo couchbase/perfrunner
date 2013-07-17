@@ -1,15 +1,25 @@
 import math
 
-import requests
 from logger import logger
+from seriesly import Seriesly
 
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.settings import TargetSettings
+from perfrunner.settings import TargetSettings, CbAgentSettings
 from perfrunner.tests import target_hash, TargetIterator
 from perfrunner.tests import PerfTest
 
 
 class XdcrTest(PerfTest):
+
+    def __init__(self, *args, **kwargs):
+        super(XdcrTest, self).__init__(*args, **kwargs)
+        self.seriesly = Seriesly(CbAgentSettings.seriesly_host)
+        self.ns_server_db = 'ns_server{0}{{0}}'.format(
+            self.cbagent.clusters.keys()[0]
+        )
+        self.xdcr_lag_db = 'xdcr_lag{0}{{0}}'.format(
+            self.cbagent.clusters.keys()[0]
+        )
 
     def _start_replication(self, m1, m2):
         name = target_hash(m1, m2)
@@ -50,31 +60,35 @@ class XdcrTest(PerfTest):
         else:
             return data[int(f)] * (c - k) + data[int(c)] * (k - f)
 
+    def _get_merged_timings(self):
+        timings = []
+        for bucket in self.test_config.get_buckets():
+            db = 'xdcr_lag{0}{1}'.format(self.cbagent.clusters.keys()[0],
+                                         bucket)
+            data = self.seriesly[db].get_all()
+            timings += [value['xdcr_lag'] for value in data.values()]
+        return round(self._calc_percentile(timings, 0.95))
+
     def _calc_xdcr_lag(self):
         metric = '{0}_95th_xdc_lag_left_{1}'.format(
             self.test_config.name, self.cluster_spec.name)
-        descr = '95th percentile XDCR lag, {0}'.format(
+        descr = '95th percentile XDCR lag (ms), {0}'.format(
             self.test_config.get_test_descr())
         metric_info = {
             'title': descr,
             'cluster': self.cluster_spec.name,
             'larger_is_better': 'false'
         }
-        timings = []
-        for bucket in self.test_config.get_buckets():
-            url = self.cbagent.lag_query_api.format(bucket)
-            r = requests.get(url=url).json()
-            timings += [value['xdcr_lag'] for value in r.values()]
-        self._calc_percentile(timings, 0.95)
-        return self._calc_percentile(timings, 0.95), metric, metric_info
+        return self._get_merged_timings(), metric, metric_info
 
     def _get_aggregated_metric(self, params):
         value = 0
         for bucket in self.test_config.get_buckets():
-            url = self.cbagent.ns_query_api.format(bucket)
-            r = requests.get(url=url, params=params).json()
-            value += r.values()[0][0]
-        return value
+            db = 'ns_server{0}{1}'.format(self.cbagent.clusters.keys()[0],
+                                          bucket)
+            data = self.seriesly[db].query(params)
+            value += data.values()[0][0]
+        return round(value)
 
     def _calc_max_replication_changes_left(self):
         metric = '{0}_max_replication_changes_left_{1}'.format(

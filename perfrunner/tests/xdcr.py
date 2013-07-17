@@ -40,7 +40,7 @@ class XdcrTest(PerfTest):
         for bucket in self.test_config.get_buckets():
             url = self.cbagent.query_api.format(bucket)
             r = requests.get(url=url, params=params).json()
-            value += r.values[0]
+            value += r.values()[0]
         return value
 
     def _calc_max_replication_changes_left(self):

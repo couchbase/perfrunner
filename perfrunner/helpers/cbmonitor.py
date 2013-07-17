@@ -5,7 +5,7 @@ from multiprocessing import Process
 from time import time
 
 import requests
-from cbagent.collectors import NSServer, ActiveTasks, Latency
+from cbagent.collectors import NSServer, Latency
 from cbagent.metadata_client import MetadataClient
 from logger import logger
 
@@ -44,7 +44,7 @@ class CbAgent(object):
         )
 
     def prepare_collectors(self, latency):
-        collectors = [NSServer, ActiveTasks]
+        collectors = [NSServer]
         if latency:
             collectors.append(Latency)
 

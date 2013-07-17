@@ -40,7 +40,7 @@ class CbAgent(object):
             cluster_spec.get_rest_credentials()
 
         self.query_api = 'http://{0}/seriesly/ns_server{1}{{0}}/_query'.format(
-            CbAgentSettings.cbmonitor_host_port, self.clusters[0]
+            CbAgentSettings.cbmonitor_host_port, self.clusters.keys[0]
         )
 
     def prepare_collectors(self, latency):

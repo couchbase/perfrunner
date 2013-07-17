@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.xdcr
 class = XdcrTest
-descr = 4 -> 4 BiDir, 1 bucket x 10M x 2KB, non-DGM
+descr = 4 -> 4 BiDir, 1 bucket x 1M x 2KB, non-DGM
 larger_is_better = true
 
 [cluster]
@@ -10,7 +10,7 @@ initial_nodes = 4
 num_buckets = 1
 
 [load]
-ops = 5000000
+ops = 500000
 size = 2048
 workers = 12
 
@@ -24,6 +24,6 @@ updates = 45
 deletes = 5
 ops = 3600000
 throughput = 2000
-items = 5000000
+items = 500000
 size = 2048
 workers = 4

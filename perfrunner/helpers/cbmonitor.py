@@ -15,16 +15,15 @@ from perfrunner.settings import CbAgentSettings
 def with_stats(latency=False):
     def outer_wrapper(method):
         def inner_wrapper(self, *args, **kwargs):
-            cbagent = CbAgent(self.cluster_spec)
-            cbagent.prepare_collectors(latency)
+            self.cbagent.prepare_collectors(latency)
 
-            cbagent.update_metadata()
+            self.cbagent.update_metadata()
 
-            from_ts = cbagent.start()
+            from_ts = self.cbagent.start()
             method(self, *args, **kwargs)
-            to_ts = cbagent.stop()
+            to_ts = self.cbagent.stop()
 
-            cbagent.add_snapshot(method.__name__, from_ts, to_ts)
+            self.cbagent.add_snapshot(method.__name__, from_ts, to_ts)
         return inner_wrapper
     return outer_wrapper
 
@@ -39,6 +38,10 @@ class CbAgent(object):
             cluster_spec.get_ssh_credentials()
         self.settings.rest_username, self.settings.rest_password = \
             cluster_spec.get_rest_credentials()
+
+        self.query_api = 'http://{0}/seriesly/ns_server{1}{{0}}/_query'.format(
+            CbAgentSettings.cbmonitor_host_port, self.clusters[0]
+        )
 
     def prepare_collectors(self, latency):
         collectors = [NSServer, ActiveTasks]

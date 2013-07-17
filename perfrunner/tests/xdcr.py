@@ -1,7 +1,7 @@
+import requests
 from logger import logger
 
-from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.settings import TargetSettings
+from perfrunner.settings import TargetSettings, CbAgentSettings
 from perfrunner.tests import target_hash, TargetIterator
 from perfrunner.tests.kv import KVTest
 
@@ -30,6 +30,41 @@ class XdcrTest(KVTest):
         for target in self.target_iterator:
             self.monitor.monitor_xdcr_replication(target)
 
+    def _get_aggregated_metric(self, params):
+        value = 0
+        for bucket in self.test_config.get_buckets():
+            url = self.cbagent.query_api.format(bucket)
+            r = requests.get(url=url, params=params).json()
+            value += r.values[0]
+        return value
+
+    def _calc_max_replication_changes_left(self):
+        metric = '{0}_max_replication_changes_left_{1}'.format(
+            self.test_config.name, self.cluster_spec.name)
+        descr = 'Peak replication changes left, {0}'.format(
+            self.test_config.get_test_descr())
+        metric_info = {
+            'title': descr,
+            'cluster': self.cluster_spec.name,
+            'larger_is_better': 'false'
+        }
+        params = {'group': 86400000,
+                  'ptr': '/replication_changes_left', 'reducer': 'max'}
+        return self._get_aggregated_metric(params), metric, metric_info
+
+    def _calc_avg_xdc_ops(self):
+        metric = '{0}_avg_xdc_ops_{1}'.format(
+            self.test_config.name, self.cluster_spec.name)
+        descr = 'XDC ops/sec, {0}'.format(
+            self.test_config.get_test_descr())
+        metric_info = {
+            'title': descr,
+            'cluster': self.cluster_spec.name,
+            'larger_is_better': 'true'
+        }
+        params = {'group': 86400000, 'ptr': '/xdc_ops', 'reducer': 'avg'}
+        return self._get_aggregated_metric(params), metric, metric_info
+
     def run(self):
         self.run_load_phase()
         self.compact_bucket()
@@ -37,6 +72,8 @@ class XdcrTest(KVTest):
         self.init_xdcr()
 
         self.run_access_phase()
+        self.reporter.post_to_sf(self._calc_max_replication_changes_left())
+        self.reporter.post_to_sf(self._calc_avg_xdc_ops())
 
 
 class SrcTargetIterator(TargetIterator):
@@ -60,7 +97,7 @@ class XdcrInitTest(XdcrTest):
                                                 self.test_config)
         self._run_workload(load_settings, src_target_iterator)
 
-    def _calc_avg_rate(self, time_elapsed):
+    def _calc_avg_replication_rate(self, time_elapsed):
         initial_items = self.test_config.get_load_settings().ops
         buckets = self.test_config.get_num_buckets()
         return round(buckets * initial_items / (time_elapsed * 60))
@@ -72,4 +109,4 @@ class XdcrInitTest(XdcrTest):
         self.reporter.start()
         self.init_xdcr()
         time_elapsed = self.reporter.finish('Initial replication')
-        self.reporter.post_to_sf(self._calc_avg_rate(time_elapsed))
+        self.reporter.post_to_sf(self._calc_avg_replication_rate(time_elapsed))

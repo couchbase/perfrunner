@@ -2,6 +2,7 @@ from hashlib import md5
 
 from logger import logger
 
+from perfrunner.helpers.cbmonitor import CbAgent
 from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.reporter import Reporter
@@ -40,11 +41,11 @@ class PerfTest(object):
         self.target_iterator = TargetIterator(self.cluster_spec,
                                               self.test_config)
 
+        self.cbagent = CbAgent(cluster_spec)
         self.monitor = Monitor(cluster_spec, test_config)
         self.rest = RestHelper(cluster_spec)
         self.reporter = Reporter(self)
         self.remote = RemoteHelper(cluster_spec)
-
         self.worker_manager = WorkerManager(cluster_spec)
 
     def __enter__(self):

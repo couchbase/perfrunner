@@ -2,7 +2,7 @@ from uuid import uuid4
 
 from celery import Celery
 from fabric import state
-from fabric.api import cd, run, execute, parallel
+from fabric.api import cd, run
 from kombu import Queue
 from logger import logger
 from spring.wgen import WorkloadGen
@@ -34,27 +34,29 @@ class WorkerManager(object):
             state.output.stdout = False
 
             self.temp_dir = '/tmp/{0}'.format(uuid4().hex[:12])
-            execute(self._initialize_project, hosts=self.hosts)
+            self._initialize_project()
             self._start()
         else:
             self.is_remote = False
 
-    @parallel
     def _initialize_project(self):
         logger.info('Intializing remote worker environment')
-        run('mkdir {0}'.format(self.temp_dir))
-        with cd(self.temp_dir):
-            run('git clone {0}'.format(REPO))
-        with cd('{0}/perfrunner'.format(self.temp_dir)):
-            run('virtualenv env')
-            run('env/bin/pip install -r requirements.txt')
+        for i, q in enumerate(CELERY_QUEUES):
+            state.env.host_string = self.hosts[i]
+            temp_dir = '{0}-{1}'.format(self.temp_dir, q.name)
+            run('mkdir '.format(temp_dir))
+            with cd(temp_dir):
+                run('git clone {0}'.format(REPO))
+            with cd('{0}/perfrunner'.format(temp_dir)):
+                run('virtualenv env')
+                run('env/bin/pip install -r requirements.txt')
 
     def _start(self):
         logger.info('Starting remote Celery workers')
         for i, q in enumerate(CELERY_QUEUES):
             state.env.host_string = self.hosts[i]
             with cd('{0}/perfrunner'.format(self.temp_dir)):
-                run('dtach -n /tmp/perfrunner.sock '
+                run('dtach -n /tmp/perfrunner_{0}.sock '
                     'env/bin/celery worker '
                     '-A perfrunner.helpers.worker -Q {0} -c 4'.format(q.name))
 
@@ -77,13 +79,12 @@ class WorkerManager(object):
         for worker in workers:
             worker.wait()
 
-    @parallel
-    def _terminate(self):
+    def terminate(self):
         if self.is_remote:
             logger.info('Terminating remote Celery workers')
-            run('killall -9 celery; exit 0')
             logger.info('Cleaning up remote worker environment')
-            run('rm -fr {0}'.format(self.temp_dir))
-
-    def terminate(self):
-        execute(self._terminate, hosts=self.hosts)
+            for i, q in enumerate(CELERY_QUEUES):
+                state.env.host_string = self.hosts[i]
+                temp_dir = '{0}-{1}'.format(self.temp_dir, q.name)
+                run('killall -9 celery; exit 0')
+                run('rm -fr {0}'.format(temp_dir))

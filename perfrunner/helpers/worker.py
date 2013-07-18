@@ -55,7 +55,8 @@ class WorkerManager(object):
         logger.info('Starting remote Celery workers')
         for i, q in enumerate(CELERY_QUEUES):
             state.env.host_string = self.hosts[i]
-            with cd('{0}/perfrunner'.format(self.temp_dir)):
+            temp_dir = '{0}-{1}'.format(self.temp_dir, q.name)
+            with cd('{0}/perfrunner'.format(temp_dir)):
                 run('dtach -n /tmp/perfrunner_{0}.sock '
                     'env/bin/celery worker '
                     '-A perfrunner.helpers.worker -Q {0} -c 4'.format(q.name))

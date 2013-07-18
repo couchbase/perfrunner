@@ -1,6 +1,6 @@
 [test_case]
 module = perfrunner.tests.xdcr
-class = XdcrInitTest
+class = XdcrTest
 descr = 2 <-> 2 BiDir, 1 bucket x 35M x 2KB, DGM, no compaction
 larger_is_better = true
 

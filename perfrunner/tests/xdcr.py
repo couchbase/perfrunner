@@ -120,6 +120,7 @@ class XdcrTest(PerfTest):
         self.run_load_phase()
 
         self.init_xdcr()
+
         self.compact_bucket()
 
         self.run_access_phase()
@@ -148,6 +149,7 @@ class XdcrInitTest(XdcrTest):
         src_target_iterator = SrcTargetIterator(self.cluster_spec,
                                                 self.test_config)
         self._run_workload(load_settings, src_target_iterator)
+        self._wait_for_persistence()
 
     def _calc_avg_replication_rate(self, time_elapsed):
         initial_items = self.test_config.get_load_settings().ops

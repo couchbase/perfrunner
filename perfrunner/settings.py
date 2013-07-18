@@ -142,7 +142,7 @@ class TestConfig(Config):
         options = self._get_options_as_dict('load')
         return LoadSettings(options)
 
-    def get_load_settings(self):
+    def get_hot_load_settings(self):
         options = self._get_options_as_dict('hot_load')
         return HotLoadSettings(options)
 

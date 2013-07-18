@@ -123,6 +123,9 @@ class XdcrTest(PerfTest):
         self.init_xdcr()
         self.wait_for_persistence()
 
+        self.run_hot_load_phase()
+        self.wait_for_persistence()
+
         self.compact_bucket()
 
         self.run_access_phase()

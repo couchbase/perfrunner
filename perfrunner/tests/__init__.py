@@ -77,6 +77,12 @@ class PerfTest(object):
         self._run_workload(load_settings)
         self._wait_for_persistence()
 
+    def run_hot_load_phase(self):
+        hot_load_settings = self.test_config.get_hot_load_settings()
+        logger.info('Running hot load phase: {0}'.format(hot_load_settings))
+        self._run_workload(hot_load_settings)
+        self._wait_for_persistence()
+
     def run_access_phase(self):
         access_settings = self.test_config.get_access_settings()
         logger.info('Running access phase: {0}'.format(access_settings))

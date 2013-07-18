@@ -142,6 +142,10 @@ class TestConfig(Config):
         options = self._get_options_as_dict('load')
         return LoadSettings(options)
 
+    def get_load_settings(self):
+        options = self._get_options_as_dict('hot_load')
+        return HotLoadSettings(options)
+
     def get_xdcr_settings(self):
         options = self._get_options_as_dict('xdcr')
         return XDCRSettings(options)
@@ -239,6 +243,11 @@ class PhaseSettings(object):
 class LoadSettings(PhaseSettings):
 
     CREATES = 100
+
+
+class HotLoadSettings(PhaseSettings):
+
+    SEQ_READS = True
 
 
 class XDCRSettings(PhaseSettings):

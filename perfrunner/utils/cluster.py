@@ -1,30 +1,32 @@
 from optparse import OptionParser
 
-from perfrunner.helpers import Helper
 from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import RestHelper
 from perfrunner.settings import ClusterSpec, TestConfig
 
 
-class ClusterManager(Helper):
+class ClusterManager(object):
 
     def __init__(self, cluster_spec, test_config):
-        super(ClusterManager, self).__init__(cluster_spec,
-                                             test_config)
-
         self.rest = RestHelper(cluster_spec)
         self.remote = RemoteHelper(cluster_spec)
-        self.monitor = Monitor(cluster_spec, test_config)
+        self.monitor = Monitor(cluster_spec)
 
-    def clean_data_path(self):
-        self.remote.clean_data_path()
+        self.clusters = cluster_spec.get_clusters()
+        self.data_path, self.index_path = cluster_spec.get_paths()
+        self.mem_quota = test_config.get_mem_quota()
+        self.initial_nodes = test_config.get_initial_nodes()
+        self.threads_number = test_config.get_mrw_threads_number()
+        self.num_buckets = test_config.get_num_buckets()
+        self.compaction_settings = test_config.get_compaction_settings()
 
     def set_data_path(self):
-        self.clean_data_path()
+        self.remote.clean_data_path(self.data_path, self.index_path)
         for cluster in self.clusters:
             for host_port in cluster:
-                self.rest.set_data_path(host_port)
+                self.rest.set_data_path(host_port,
+                                        self.data_path, self.index_path)
 
     def set_auth(self):
         for cluster in self.clusters:
@@ -57,7 +59,8 @@ class ClusterManager(Helper):
         for cluster in self.clusters:
             master = cluster[0]
             for name in buckets:
-                self.rest.create_bucket(master, name, ram_quota)
+                self.rest.create_bucket(master, name, ram_quota,
+                                        threads_number=self.threads_number)
 
     def configure_auto_compaction(self):
         for cluster in self.clusters:

@@ -22,14 +22,12 @@ def task_run_workload(settings, target):
 class WorkerManager(object):
 
     def __init__(self, cluster_spec):
-        ssh_username, ssh_password = cluster_spec.get_ssh_credentials()
-
         self.hosts = cluster_spec.get_workers()
         if self.hosts:
             self.is_remote = True
 
-            state.env.user = ssh_username
-            state.env.password = ssh_password
+            state.env.user, state.env.password = \
+                cluster_spec.get_ssh_credentials()
             state.output.running = False
             state.output.stdout = False
 

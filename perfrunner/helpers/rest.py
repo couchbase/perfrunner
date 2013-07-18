@@ -4,8 +4,6 @@ import time
 import requests
 from logger import logger
 
-from perfrunner.helpers import Helper
-
 
 def retry(method):
         def wrapper(self, **kwargs):
@@ -24,13 +22,14 @@ def retry(method):
         return wrapper
 
 
-class RestHelper(Helper):
+class RestHelper(object):
 
     MAX_RETRY = 5
     RETRY_DELAY = 5
 
-    def __init__(self, cluster_spec, test_config=None):
-        super(RestHelper, self).__init__(cluster_spec, test_config)
+    def __init__(self, cluster_spec):
+        self.rest_username, self.rest_password = \
+            cluster_spec.get_rest_credentials()
         self.auth = (self.rest_username, self.rest_password)
 
     @retry
@@ -45,12 +44,12 @@ class RestHelper(Helper):
     def put(self, **kwargs):
         return requests.put(auth=self.auth, **kwargs)
 
-    def set_data_path(self, host_port):
+    def set_data_path(self, host_port, data_path, index_path):
         logger.info('Configuring data paths: {0}'.format(host_port))
 
         API = 'http://{0}/nodes/self/controller/settings'.format(host_port)
         data = {
-            'path': self.data_path, 'index_path': self.index_path
+            'path': data_path, 'index_path': index_path
         }
         self.post(url=API, data=data)
 

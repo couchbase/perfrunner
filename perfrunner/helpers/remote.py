@@ -4,8 +4,6 @@ from fabric import state
 from fabric.api import execute, get, run, parallel, settings
 from logger import logger
 
-from perfrunner.helpers import Helper
-
 
 def all_hosts(task):
     def wrapper(self, *args, **kargs):
@@ -20,14 +18,13 @@ def single_host(task):
     return wrapper
 
 
-class RemoteHelper(Helper):
+class RemoteHelper(object):
 
     ARCH = {'i686': 'x86', 'i386': 'x86', 'x86_64': 'x86_64'}
 
-    def __init__(self, cluster_spec, test_config=None):
-        super(RemoteHelper, self).__init__(cluster_spec, test_config)
-        state.env.user = self.ssh_username
-        state.env.password = self.ssh_password
+    def __init__(self, cluster_spec):
+        self.hosts = cluster_spec.get_hosts()
+        state.env.user, state.env.password = cluster_spec.get_ssh_credentials()
         state.output.running = False
         state.output.stdout = False
 
@@ -51,8 +48,8 @@ class RemoteHelper(Helper):
         return self.ARCH[arch]
 
     @all_hosts
-    def clean_data_path(self):
-        for path in (self.data_path, self.index_path):
+    def clean_data_path(self, data_path, index_path):
+        for path in (data_path, index_path):
             run('rm -fr {0}/*'.format(path))
 
     @all_hosts

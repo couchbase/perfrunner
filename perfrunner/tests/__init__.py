@@ -42,7 +42,7 @@ class PerfTest(object):
                                               self.test_config)
 
         self.cbagent = CbAgent(cluster_spec)
-        self.monitor = Monitor(cluster_spec, test_config)
+        self.monitor = Monitor(cluster_spec)
         self.rest = RestHelper(cluster_spec)
         self.reporter = Reporter(self)
         self.remote = RemoteHelper(cluster_spec)

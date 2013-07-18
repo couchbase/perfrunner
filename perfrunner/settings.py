@@ -129,7 +129,7 @@ class TestConfig(Config):
         return self.config.getint('cluster', 'num_buckets')
 
     @safe
-    def get_num_mrw_threads(self):
+    def get_mrw_threads_number(self):
         return self.config.getint('cluster', 'threads_number')
 
     def get_buckets(self):

@@ -29,7 +29,7 @@ def safe(method):
         try:
             return method(*args, **kargs)
         except (NoSectionError, NoOptionError), e:
-            logger.interrupt('Failed to get option from config: {0}'.format(e))
+            logger.error('Failed to get option from config: {0}'.format(e))
     return wrapper
 
 
@@ -76,12 +76,9 @@ class ClusterSpec(Config):
         return map(split_host_port, reduce(add, self.get_clusters()))
 
     def get_workers(self):
-        if 'workers' in self.config.sections():
-            return tuple(
-                worker.split()[0] for _, worker in self.config.items('workers')
-            )
-        else:
-            return ()
+        return tuple(
+            worker.split()[0] for _, worker in self.config.items('workers')
+        )
 
     @safe
     def get_paths(self):
@@ -129,6 +126,10 @@ class TestConfig(Config):
     @safe
     def get_num_buckets(self):
         return self.config.getint('cluster', 'num_buckets')
+
+    @safe
+    def get_num_mrw_threads(self):
+        return self.config.getint('cluster', 'threads_number')
 
     def get_buckets(self):
         for i in xrange(self.get_num_buckets()):

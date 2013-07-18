@@ -153,7 +153,7 @@ class XdcrInitTest(XdcrTest):
         logger.info('Running load phase: {0}'.format(load_settings))
         src_target_iterator = SrcTargetIterator(self.cluster_spec,
                                                 self.test_config)
-        self._run_workload(load_settings, src_target_iterator)
+        self.worker_manager.run_workload(load_settings, src_target_iterator)
 
     def _calc_avg_replication_rate(self, time_elapsed):
         initial_items = self.test_config.get_load_settings().ops

@@ -61,11 +61,6 @@ class PerfTest(object):
                                                 target.bucket)
             self.monitor.monitor_task(target, 'bucket_compaction')
 
-    def _run_workload(self, settings, target_iterator=None):
-        if target_iterator is None:
-            target_iterator = self.target_iterator
-        self.worker_manager.run_workload(settings, target_iterator)
-
     def wait_for_persistence(self):
         for target in self.target_iterator:
             self.monitor.monitor_disk_queue(target)
@@ -74,17 +69,17 @@ class PerfTest(object):
     def load(self):
         load_settings = self.test_config.get_load_settings()
         logger.info('Running load phase: {0}'.format(load_settings))
-        self._run_workload(load_settings)
+        self.worker_manager.run_workload(load_settings, self.target_iterator)
 
     def hot_load(self):
         hot_load_settings = self.test_config.get_hot_load_settings()
         logger.info('Running hot load phase: {0}'.format(hot_load_settings))
-        self._run_workload(hot_load_settings)
+        self.worker_manager.run_workload(hot_load_settings, self.target_iterator)
 
     def access(self):
         access_settings = self.test_config.get_access_settings()
         logger.info('Running access phase: {0}'.format(access_settings))
-        self._run_workload(access_settings)
+        self.worker_manager.run_workload(access_settings, self.target_iterator)
 
     def debug(self):
         self.remote.collect_info()

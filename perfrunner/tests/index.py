@@ -46,6 +46,7 @@ class InitialIndexTest(IndexTest):
 
     def run(self):
         self.run_load_phase()
+        self.wait_for_persistence()
         self.compact_bucket()
 
         self.reporter.start()
@@ -59,12 +60,14 @@ class IncrementalIndexTest(IndexTest):
 
     def run(self):
         self.run_load_phase()
+        self.wait_for_persistence()
         self.compact_bucket()
 
         self.define_ddocs()
         self.build_index()
 
         self.run_access_phase()
+        self.wait_for_persistence()
         self.compact_bucket()
 
         self.reporter.start()

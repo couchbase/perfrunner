@@ -56,6 +56,7 @@ class StaticRebalanceTest(RebalanceTest):
 
     def run(self):
         self.run_load_phase()
+        self.wait_for_persistence()
         self.compact_bucket()
 
         self.reporter.start()
@@ -68,6 +69,7 @@ class StaticRebalanceWithIndexTest(IndexTest, RebalanceTest):
 
     def run(self):
         self.run_load_phase()
+        self.wait_for_persistence()
         self.compact_bucket()
 
         self.define_ddocs()

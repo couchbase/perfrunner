@@ -66,7 +66,7 @@ class PerfTest(object):
             target_iterator = self.target_iterator
         self.worker_manager.run_workload(settings, target_iterator)
 
-    def _wait_for_persistence(self):
+    def wait_for_persistence(self):
         for target in self.target_iterator:
             self.monitor.monitor_disk_queue(target)
             self.monitor.monitor_tap_replication(target)
@@ -75,13 +75,11 @@ class PerfTest(object):
         load_settings = self.test_config.get_load_settings()
         logger.info('Running load phase: {0}'.format(load_settings))
         self._run_workload(load_settings)
-        self._wait_for_persistence()
 
     def run_hot_load_phase(self):
         hot_load_settings = self.test_config.get_hot_load_settings()
         logger.info('Running hot load phase: {0}'.format(hot_load_settings))
         self._run_workload(hot_load_settings)
-        self._wait_for_persistence()
 
     def run_access_phase(self):
         access_settings = self.test_config.get_access_settings()

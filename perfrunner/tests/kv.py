@@ -10,5 +10,6 @@ class KVTest(PerfTest):
 
     def run(self):
         self.run_load_phase()
+        self.wait_for_persistence()
         self.compact_bucket()
         self.run_access_phase()

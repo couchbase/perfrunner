@@ -6,7 +6,9 @@ class BucketCompactionTest(PerfTest):
 
     def run(self):
         self.run_load_phase()  # initial load
+        self.wait_for_persistence()
         self.run_load_phase()  # extra mutations for bucket fragmentation
+        self.wait_for_persistence()
 
         self.reporter.start()
         self.compact_bucket()
@@ -18,11 +20,13 @@ class IndexCompactionTest(IndexTest):
 
     def run(self):
         self.run_load_phase()
+        self.wait_for_persistence()
 
         self.define_ddocs()
         self.build_index()
 
         self.run_load_phase()  # extra mutations for index fragmentation
+        self.wait_for_persistence()
         self.build_index()
 
         self.reporter.start()

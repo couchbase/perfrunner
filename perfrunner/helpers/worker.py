@@ -40,8 +40,9 @@ class WorkerManager(object):
             self.is_remote = False
 
     def _initialize_project(self):
-        logger.info('Intializing remote worker environment')
         for i, q in enumerate(CELERY_QUEUES):
+            logger.info('Intializing remote worker environment')
+
             state.env.host_string = self.hosts[i]
             temp_dir = '{0}-{1}'.format(self.temp_dir, q.name)
             run('mkdir {0}'.format(temp_dir))
@@ -52,8 +53,9 @@ class WorkerManager(object):
                 run('env/bin/pip install -r requirements.txt')
 
     def _start(self):
-        logger.info('Starting remote Celery workers')
         for i, q in enumerate(CELERY_QUEUES):
+            logger.info('Starting remote Celery worker')
+
             state.env.host_string = self.hosts[i]
             temp_dir = '{0}-{1}'.format(self.temp_dir, q.name)
             with cd('{0}/perfrunner'.format(temp_dir)):
@@ -82,10 +84,10 @@ class WorkerManager(object):
 
     def terminate(self):
         if self.is_remote:
-            logger.info('Terminating remote Celery workers')
-            logger.info('Cleaning up remote worker environment')
             for i, q in enumerate(CELERY_QUEUES):
                 state.env.host_string = self.hosts[i]
                 temp_dir = '{0}-{1}'.format(self.temp_dir, q.name)
+                logger.info('Terminating remote Celery worker')
                 run('killall -9 celery; exit 0')
+                logger.info('Cleaning up remote worker environment')
                 run('rm -fr {0}'.format(temp_dir))

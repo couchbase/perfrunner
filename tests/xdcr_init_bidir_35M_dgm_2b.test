@@ -1,22 +1,22 @@
 [test_case]
 module = perfrunner.tests.xdcr
 class = XdcrInitTest
-descr = Initial XDCR rate (items/sec), 2 -> 2 UniDir, 1 bucket x 40M x 2KB, DGM, no compaction
+descr = Initial XDCR rate (items/sec), 2 <-> 2 BiDir, 2 bucket x 17.5M x 2KB, DGM, no compaction
 larger_is_better = true
 
 [cluster]
-mem_quota = 61440
+mem_quota = 81920
 initial_nodes = 2
-num_buckets = 1
+num_buckets = 2
 
 [compaction]
 db_percentage = 100
 view_percentage = 100
 
 [load]
-ops = 40000000
+ops = 17500000
 size = 2048
 workers = 12
 
 [xdcr]
-replication_type = unidir
+replication_type = bidir

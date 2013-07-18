@@ -5,9 +5,9 @@ from perfrunner.tests.index import IndexTest
 class BucketCompactionTest(PerfTest):
 
     def run(self):
-        self.run_load_phase()  # initial load
+        self.load()  # initial load
         self.wait_for_persistence()
-        self.run_load_phase()  # extra mutations for bucket fragmentation
+        self.load()  # extra mutations for bucket fragmentation
         self.wait_for_persistence()
 
         self.reporter.start()
@@ -19,13 +19,13 @@ class BucketCompactionTest(PerfTest):
 class IndexCompactionTest(IndexTest):
 
     def run(self):
-        self.run_load_phase()
+        self.load()
         self.wait_for_persistence()
 
         self.define_ddocs()
         self.build_index()
 
-        self.run_load_phase()  # extra mutations for index fragmentation
+        self.load()  # extra mutations for index fragmentation
         self.wait_for_persistence()
         self.build_index()
 

@@ -45,7 +45,7 @@ class IndexTest(PerfTest):
 class InitialIndexTest(IndexTest):
 
     def run(self):
-        self.run_load_phase()
+        self.load()
         self.wait_for_persistence()
         self.compact_bucket()
 
@@ -59,14 +59,14 @@ class InitialIndexTest(IndexTest):
 class IncrementalIndexTest(IndexTest):
 
     def run(self):
-        self.run_load_phase()
+        self.load()
         self.wait_for_persistence()
         self.compact_bucket()
 
         self.define_ddocs()
         self.build_index()
 
-        self.run_access_phase()
+        self.access()
         self.wait_for_persistence()
         self.compact_bucket()
 

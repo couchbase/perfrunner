@@ -55,7 +55,7 @@ class RebalanceTest(PerfTest):
 class StaticRebalanceTest(RebalanceTest):
 
     def run(self):
-        self.run_load_phase()
+        self.load()
         self.wait_for_persistence()
         self.compact_bucket()
 
@@ -68,7 +68,7 @@ class StaticRebalanceTest(RebalanceTest):
 class StaticRebalanceWithIndexTest(IndexTest, RebalanceTest):
 
     def run(self):
-        self.run_load_phase()
+        self.load()
         self.wait_for_persistence()
         self.compact_bucket()
 

@@ -44,8 +44,8 @@ class XdcrTest(PerfTest):
             self.monitor.monitor_xdcr_replication(target)
 
     @with_stats(xdcr_lag=True)
-    def run_access_phase(self):
-        super(XdcrTest, self).run_access_phase()
+    def access(self):
+        super(XdcrTest, self).access()
 
     @staticmethod
     def _calc_percentile(data, percentile):
@@ -117,18 +117,18 @@ class XdcrTest(PerfTest):
         return self._get_aggregated_metric(params), metric, metric_info
 
     def run(self):
-        self.run_load_phase()
+        self.load()
         self.wait_for_persistence()
 
         self.init_xdcr()
         self.wait_for_persistence()
 
-        self.run_hot_load_phase()
+        self.load()
         self.wait_for_persistence()
 
         self.compact_bucket()
 
-        self.run_access_phase()
+        self.access()
         self.reporter.post_to_sf(*self._calc_max_replication_changes_left())
         self.reporter.post_to_sf(*self._calc_avg_xdc_ops())
         self.reporter.post_to_sf(*self._calc_xdcr_lag())
@@ -148,7 +148,7 @@ class SrcTargetIterator(TargetIterator):
 
 class XdcrInitTest(XdcrTest):
 
-    def run_load_phase(self):
+    def load(self):
         load_settings = self.test_config.get_load_settings()
         logger.info('Running load phase: {0}'.format(load_settings))
         src_target_iterator = SrcTargetIterator(self.cluster_spec,
@@ -161,7 +161,7 @@ class XdcrInitTest(XdcrTest):
         return round(buckets * initial_items / (time_elapsed * 60))
 
     def run(self):
-        self.run_load_phase()
+        self.load()
         self.wait_for_persistence()
         self.compact_bucket()
 

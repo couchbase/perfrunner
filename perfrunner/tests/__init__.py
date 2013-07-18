@@ -71,17 +71,17 @@ class PerfTest(object):
             self.monitor.monitor_disk_queue(target)
             self.monitor.monitor_tap_replication(target)
 
-    def run_load_phase(self):
+    def load(self):
         load_settings = self.test_config.get_load_settings()
         logger.info('Running load phase: {0}'.format(load_settings))
         self._run_workload(load_settings)
 
-    def run_hot_load_phase(self):
+    def hot_load(self):
         hot_load_settings = self.test_config.get_hot_load_settings()
         logger.info('Running hot load phase: {0}'.format(hot_load_settings))
         self._run_workload(hot_load_settings)
 
-    def run_access_phase(self):
+    def access(self):
         access_settings = self.test_config.get_access_settings()
         logger.info('Running access phase: {0}'.format(access_settings))
         self._run_workload(access_settings)

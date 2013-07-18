@@ -29,7 +29,7 @@ def safe(method):
         try:
             return method(*args, **kargs)
         except (NoSectionError, NoOptionError), e:
-            logger.error('Failed to get option from config: {0}'.format(e))
+            logger.warn('Failed to get option from config: {0}'.format(e))
     return wrapper
 
 
@@ -75,6 +75,7 @@ class ClusterSpec(Config):
         split_host_port = lambda server: server.split(':')[0]
         return map(split_host_port, reduce(add, self.get_clusters()))
 
+    @safe
     def get_workers(self):
         return tuple(
             worker.split()[0] for _, worker in self.config.items('workers')

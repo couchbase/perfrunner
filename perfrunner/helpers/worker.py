@@ -44,7 +44,7 @@ class WorkerManager(object):
         for i, q in enumerate(CELERY_QUEUES):
             state.env.host_string = self.hosts[i]
             temp_dir = '{0}-{1}'.format(self.temp_dir, q.name)
-            run('mkdir '.format(temp_dir))
+            run('mkdir {0}'.format(temp_dir))
             with cd(temp_dir):
                 run('git clone {0}'.format(REPO))
             with cd('{0}/perfrunner'.format(temp_dir)):

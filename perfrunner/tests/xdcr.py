@@ -60,26 +60,26 @@ class XdcrTest(PerfTest):
         else:
             return data[int(f)] * (c - k) + data[int(c)] * (k - f)
 
-    def _get_merged_timings(self):
+    def _get_merged_timings(self, percentile):
         timings = []
         for bucket in self.test_config.get_buckets():
             db = 'xdcr_lag{0}{1}'.format(self.cbagent.clusters.keys()[0],
                                          bucket)
             data = self.seriesly[db].get_all()
             timings += [value['xdcr_lag'] for value in data.values()]
-        return round(self._calc_percentile(timings, 0.95))
+        return round(self._calc_percentile(timings, percentile) / 1000)
 
     def _calc_xdcr_lag(self):
         metric = '{0}_95th_xdc_lag_left_{1}'.format(
             self.test_config.name, self.cluster_spec.name)
-        descr = '95th percentile XDCR lag (ms), {0}'.format(
+        descr = '95th percentile XDCR lag (sec), {0}'.format(
             self.test_config.get_test_descr())
         metric_info = {
             'title': descr,
             'cluster': self.cluster_spec.name,
             'larger_is_better': 'false'
         }
-        return self._get_merged_timings(), metric, metric_info
+        return self._get_merged_timings(percentile=0.95), metric, metric_info
 
     def _get_aggregated_metric(self, params):
         value = 0

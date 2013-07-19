@@ -67,10 +67,10 @@ class XdcrTest(PerfTest):
                                          bucket)
             data = self.seriesly[db].get_all()
             timings += [value['xdcr_lag'] for value in data.values()]
-        return round(self._calc_percentile(timings, percentile) / 1000)
+        return round(self._calc_percentile(timings, percentile) / 1000, 1)
 
     def _calc_xdcr_lag(self):
-        metric = '{0}_95th_xdc_lag_left_{1}'.format(
+        metric = '{0}_95th_xdc_lag_{1}'.format(
             self.test_config.name, self.cluster_spec.name)
         descr = '95th percentile XDCR lag (sec), {0}'.format(
             self.test_config.get_test_descr())

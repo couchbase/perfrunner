@@ -130,7 +130,6 @@ class XdcrTest(PerfTest):
 
         self.access()
         self.reporter.post_to_sf(*self._calc_max_replication_changes_left())
-        self.reporter.post_to_sf(*self._calc_avg_xdc_ops())
         self.reporter.post_to_sf(*self._calc_xdcr_lag())
 
 

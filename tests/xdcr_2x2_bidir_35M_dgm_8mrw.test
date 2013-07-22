@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.xdcr
 class = XdcrTest
-descr = 2 <-> 2 BiDir, 1 bucket x 35M x 2KB, DGM, no compaction, 8 MRW threads
+descr = 2 <-> 2 BiDir, 1 bucket x 35M x 2KB, DGM, 8 MRW threads
 larger_is_better = true
 
 [cluster]

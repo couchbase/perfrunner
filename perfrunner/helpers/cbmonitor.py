@@ -76,7 +76,8 @@ class CbAgent(object):
         API = 'http://{0}/reports/html/'.format(
             self.settings.cbmonitor_host_port)
         requests.head(API, data={'snapshot': snapshot, 'report': report})
-        logger.info('Link to HTML report: {0}'.format(API))
+        logger.info('Link to HTML report: {0}?snapshot={1}&report={2}'.format(
+            API, snapshot, report))
 
     def add_snapshot(self, phase, ts_from, ts_to):
         for cluster in self.clusters:

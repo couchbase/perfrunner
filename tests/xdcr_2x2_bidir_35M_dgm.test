@@ -14,11 +14,6 @@ ops = 17500000
 size = 2048
 workers = 12
 
-[hot_load]
-items = 17500000
-working_set = 60
-workers = 24
-
 [xdcr]
 replication_type = bidir
 

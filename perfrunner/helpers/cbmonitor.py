@@ -72,12 +72,11 @@ class CbAgent(object):
         map(lambda p: p.terminate(), self.processes)
         return datetime.fromtimestamp(time(), tz=pytz.utc)
 
-    def generate_report(self, snapshot):
-        API = 'http://{0}/cbmonitor/pdf/'.format(
+    def generate_report(self, snapshot, report='BaseReport'):
+        API = 'http://{0}/reports/html/'.format(
             self.settings.cbmonitor_host_port)
-        r = requests.post(API, data={'snapshot': snapshot})
-        logger.info('Link to PDF report: http://{0}{1}'.format(
-            self.settings.cbmonitor_host_port, r.text))
+        requests.head(API, data={'snapshot': snapshot, 'report': report})
+        logger.info('Link to HTML report: {0}'.format(API))
 
     def add_snapshot(self, phase, ts_from, ts_to):
         for cluster in self.clusters:

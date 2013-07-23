@@ -14,12 +14,6 @@ class XdcrTest(PerfTest):
     def __init__(self, *args, **kwargs):
         super(XdcrTest, self).__init__(*args, **kwargs)
         self.seriesly = Seriesly(CbAgentSettings.seriesly_host)
-        self.ns_server_db = 'ns_server{0}{{0}}'.format(
-            self.cbagent.clusters.keys()[0]
-        )
-        self.xdcr_lag_db = 'xdcr_lag{0}{{0}}'.format(
-            self.cbagent.clusters.keys()[0]
-        )
 
     def _start_replication(self, m1, m2):
         name = target_hash(m1, m2)

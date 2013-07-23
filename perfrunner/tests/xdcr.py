@@ -140,9 +140,8 @@ class SrcTargetIterator(TargetIterator):
         src_cluster = self.cluster_spec.get_clusters()[0]
         src_master = src_cluster[0]
         for bucket in self.test_config.get_buckets():
-                prefix = target_hash(src_master, bucket)
-                yield TargetSettings(src_master, bucket, username, password,
-                                     prefix)
+            prefix = target_hash(src_master, bucket)
+            yield TargetSettings(src_master, bucket, username, password, prefix)
 
 
 class XdcrInitTest(XdcrTest):

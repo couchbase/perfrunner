@@ -127,6 +127,15 @@ class XdcrTest(PerfTest):
         self.reporter.post_to_sf(*self._calc_xdcr_lag())
 
 
+class SymmetricXdcrTest(XdcrTest):
+
+    def __init__(self, *args, **kwargs):
+        super(SymmetricXdcrTest, self).__init__(*args, **kwargs)
+        self.target_iterator = TargetIterator(self.cluster_spec,
+                                              self.test_config,
+                                              prefix="symmetric")
+
+
 class SrcTargetIterator(TargetIterator):
 
     def __iter__(self):

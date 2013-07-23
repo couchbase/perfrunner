@@ -19,16 +19,19 @@ def target_hash(*args):
 
 class TargetIterator(object):
 
-    def __init__(self, cluster_spec, test_config):
+    def __init__(self, cluster_spec, test_config, prefix=None):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
+        self.prefix = prefix
 
     def __iter__(self):
         username, password = self.cluster_spec.get_rest_credentials()
+        prefix = self.prefix
         for cluster in self.cluster_spec.get_clusters():
             master = cluster[0]
             for bucket in self.test_config.get_buckets():
-                prefix = target_hash(master, bucket)
+                if self.prefix is None:
+                    prefix = target_hash(master, bucket)
                 yield TargetSettings(master, bucket, username, password, prefix)
 
 

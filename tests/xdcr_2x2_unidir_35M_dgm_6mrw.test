@@ -15,6 +15,11 @@ ops = 35000000
 size = 2048
 workers = 12
 
+[hot_load]
+items = 35000000
+workers = 24
+working_set = 60
+
 [xdcr]
 replication_type = unidir
 
@@ -29,4 +34,4 @@ items = 35000000
 size = 2048
 workers = 24
 working_set = 60
-working_set_access = 90
+working_set_access = 95

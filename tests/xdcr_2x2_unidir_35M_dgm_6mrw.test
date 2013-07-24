@@ -33,5 +33,5 @@ throughput = 10000
 items = 35000000
 size = 2048
 workers = 24
-working_set = 60
-working_set_access = 95
+working_set = 30
+working_set_access = 98

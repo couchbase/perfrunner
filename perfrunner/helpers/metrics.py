@@ -18,7 +18,7 @@ class MetricHelper(object):
             self.test_config.get_test_descr())
         metric_info = {'title': descr, 'cluster': self.cluster_spec_name,
                        'larger_is_better': 'false'}
-        params = {'group': 86400000, 'ptr': '/xdcr_lag', 'reducer': 'max'}
+        params = {'group': 1000000000000, 'ptr': '/xdcr_lag', 'reducer': 'max'}
 
         max_lag = 0
         for bucket in self.test_config.get_buckets():
@@ -36,7 +36,7 @@ class MetricHelper(object):
             self.test_config.get_test_descr())
         metric_info = {'title': descr, 'cluster': self.cluster_spec_name,
                        'larger_is_better': 'false'}
-        params = {'group': 86400000,
+        params = {'group': 1000000000000,
                   'ptr': '/replication_changes_left', 'reducer': 'max'}
 
         max_queue = 0

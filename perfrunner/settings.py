@@ -165,6 +165,18 @@ class TestConfig(Config):
         options = self._get_options_as_dict('rebalance')
         return RebalanceSettings(options)
 
+    def get_stats_settings(self):
+        options = self._get_options_as_dict('stats')
+        return StatsSettings(options)
+
+
+class StatsSettings(object):
+
+    POST_TO_SF = 1
+
+    def __init__(self, options):
+        self.post_to_sf = int(options.get('post_to_sf', self.POST_TO_SF))
+
 
 class CompactionSettings(object):
 

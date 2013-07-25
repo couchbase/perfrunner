@@ -67,7 +67,7 @@ class ClusterSpec(Config):
     @safe
     def get_masters(self):
         masters = OrderedDict()
-        for cluster, servers in self.get_clusters():
+        for cluster, servers in self.get_clusters().items():
             masters[cluster] = servers[0].split(':')[0]
         return masters
 

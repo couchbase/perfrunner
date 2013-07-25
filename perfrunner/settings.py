@@ -4,6 +4,7 @@ from operator import add
 from uuid import uuid4
 
 from logger import logger
+from ordereddict import OrderedDict
 
 
 REPO = 'https://github.com/pavel-paulau/perfrunner'
@@ -57,23 +58,24 @@ class ClusterSpec(Config):
 
     @safe
     def get_clusters(self):
-        return tuple(
-            servers.split() for _, servers in self.config.items('clusters')
-        )
+        clusters = OrderedDict()
+        for cluster, servers in self.config.items('clusters'):
+            cluster = '{0}_{1}'.format(cluster, uuid4().hex[:6])
+            clusters[cluster] = servers.split()
+        return clusters
 
     @safe
     def get_masters(self):
-        masters = {}
-        for cluster, servers in self.config.items('clusters'):
-            cluster = '{0}_{1}'.format(cluster, uuid4().hex[:6])
-            master_node = servers.split()[0].split(':')[0]
-            masters[cluster] = master_node
+        masters = OrderedDict()
+        for cluster, servers in self.get_clusters():
+            masters[cluster] = servers[0].split(':')[0]
         return masters
 
     @safe
-    def get_hosts(self):
+    def get_all_hosts(self):
+        servers = reduce(add, self.get_clusters().values())
         split_host_port = lambda server: server.split(':')[0]
-        return map(split_host_port, reduce(add, self.get_clusters()))
+        return map(split_host_port, servers)
 
     @safe
     def get_workers(self):

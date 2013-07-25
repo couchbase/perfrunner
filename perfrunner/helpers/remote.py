@@ -23,7 +23,7 @@ class RemoteHelper(object):
     ARCH = {'i686': 'x86', 'i386': 'x86', 'x86_64': 'x86_64'}
 
     def __init__(self, cluster_spec):
-        self.hosts = cluster_spec.get_hosts()
+        self.hosts = cluster_spec.get_all_hosts()
         state.env.user, state.env.password = cluster_spec.get_ssh_credentials()
         state.output.running = False
         state.output.stdout = False

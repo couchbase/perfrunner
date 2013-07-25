@@ -5,6 +5,7 @@ couchbase==1.0.0
 fabric==1.6.0
 logger
 lxml==3.2.1
+ordereddict
 pytz
 requests==1.2.0
 seriesly

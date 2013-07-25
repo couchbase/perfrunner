@@ -25,8 +25,7 @@ class XdcrTest(PerfTest):
     def init_xdcr(self):
         xdcr_settings = self.test_config.get_xdcr_settings()
 
-        c1, c2 = self.cluster_spec.get_clusters()
-        m1, m2 = c1[0], c2[0]
+        m1, m2 = self.cluster_spec.get_masters().values()
 
         if xdcr_settings.replication_type == 'unidir':
             self._start_replication(m1, m2)
@@ -140,8 +139,7 @@ class SrcTargetIterator(TargetIterator):
 
     def __iter__(self):
         username, password = self.cluster_spec.get_rest_credentials()
-        src_cluster = self.cluster_spec.get_clusters()[0]
-        src_master = src_cluster[0]
+        src_master = self.cluster_spec.get_masters().values()[0]
         for bucket in self.test_config.get_buckets():
             prefix = target_hash(src_master, bucket)
             yield TargetSettings(src_master, bucket, username, password, prefix)

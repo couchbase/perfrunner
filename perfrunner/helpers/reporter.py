@@ -73,7 +73,7 @@ class SFReporter(object):
 
     def _prepare_data(self, metric, value):
         key = uuid4().hex
-        master_node = self.test.cluster_spec.get_clusters()[0][0]
+        master_node = self.test.cluster_spec.get_masters()[0]
         build = self.test.rest.get_version(master_node)
         data = {'build': build, 'metric': metric, 'value': value}
         return key, data

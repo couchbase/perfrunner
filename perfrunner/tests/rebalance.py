@@ -35,17 +35,17 @@ class RebalanceTest(PerfTest):
     def rebalance(self):
         initial_nodes = self.test_config.get_initial_nodes()
         nodes_after = self.rebalance_settings.nodes_after
-        for cluster in self.cluster_spec.get_clusters():
-            master = cluster[0]
+        for servers in self.cluster_spec.get_clusters().values():
+            master = servers[0]
             if nodes_after > initial_nodes:
-                for host_port in cluster[initial_nodes:nodes_after]:
+                for host_port in servers[initial_nodes:nodes_after]:
                     host = host_port.split(':')[0]
                     self.rest.add_node(master, host)
-                known_nodes = cluster[:nodes_after]
+                known_nodes = servers[:nodes_after]
                 ejected_nodes = []
             else:
-                known_nodes = cluster[:initial_nodes]
-                ejected_nodes = cluster[nodes_after:initial_nodes]
+                known_nodes = servers[:initial_nodes]
+                ejected_nodes = servers[nodes_after:initial_nodes]
             self.rest.rebalance(master, known_nodes, ejected_nodes)
             self.monitor.monitor_rebalance(master)
             if not self.rest.is_balanced(master):

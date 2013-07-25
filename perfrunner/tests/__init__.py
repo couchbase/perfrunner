@@ -27,8 +27,7 @@ class TargetIterator(object):
     def __iter__(self):
         username, password = self.cluster_spec.get_rest_credentials()
         prefix = self.prefix
-        for cluster in self.cluster_spec.get_clusters():
-            master = cluster[0]
+        for master in self.cluster_spec.get_masters().values():
             for bucket in self.test_config.get_buckets():
                 if self.prefix is None:
                     prefix = target_hash(master, bucket)

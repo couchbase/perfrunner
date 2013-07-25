@@ -13,7 +13,7 @@ class ClusterManager(object):
         self.remote = RemoteHelper(cluster_spec)
         self.monitor = Monitor(cluster_spec)
 
-        self.clusters = cluster_spec.get_clusters()
+        self.clusters = cluster_spec.get_clusters().values()
         self.data_path, self.index_path = cluster_spec.get_paths()
         self.mem_quota = test_config.get_mem_quota()
         self.initial_nodes = test_config.get_initial_nodes()

@@ -47,7 +47,8 @@ class CbAgent(object):
             collectors.append(XdcrLag)
 
         self.collectors = []
-        clusters = self.clusters.keys()
+        clusters = map(lambda server: server.split(':')[0],
+                       self.clusters.keys())
         reversed_clusters = list(reversed(self.clusters.keys()))
         for i, cluster in enumerate(clusters):
             settings = copy(self.settings)

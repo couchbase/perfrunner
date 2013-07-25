@@ -68,14 +68,13 @@ class ClusterSpec(Config):
     def get_masters(self):
         masters = OrderedDict()
         for cluster, servers in self.get_clusters().items():
-            masters[cluster] = servers[0].split(':')[0]
+            masters[cluster] = servers[0]
         return masters
 
     @safe
     def get_all_hosts(self):
         servers = reduce(add, self.get_clusters().values())
-        split_host_port = lambda server: server.split(':')[0]
-        return map(split_host_port, servers)
+        return map(lambda server: server.split(':')[0], servers)
 
     @safe
     def get_workers(self):

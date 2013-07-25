@@ -85,6 +85,10 @@ class SFReporter(object):
             doc.value.update({'obsolete': True})
             cb.set(row.docid, doc.value)
 
+    def _log_benchmark(self, metric, value):
+        _, benckmark = self._prepare_data(metric, value)
+        logger.info('Dry run stats: {0}'.format(benckmark))
+
     def _post_benckmark(self, metric, value):
         key, benckmark = self._prepare_data(metric, value)
         try:
@@ -101,9 +105,14 @@ class SFReporter(object):
             metric = '{0}_{1}'.format(self.test.test_config.name,
                                       self.test.cluster_spec.name)
 
-        self._add_metric(metric, metric_info)
-        self._add_cluster()
-        self._post_benckmark(metric, value)
+        stats_settings = self.test.get_stats_settings()
+
+        if stats_settings.post_to_sf:
+            self._add_metric(metric, metric_info)
+            self._add_cluster()
+            self._post_benckmark(metric, value)
+        else:
+            self._log_benchmark(metric, value)
 
 
 class LogReporter(object):

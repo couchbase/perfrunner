@@ -14,7 +14,7 @@ class MetricHelper(object):
     def calc_max_xdcr_lag(self):
         metric = '{0}_max_xdc_lag_{1}'.format(self.test_config.name,
                                               self.cluster_spec_name)
-        descr = 'Max. XDCR lag (sec), {0}'.format(
+        descr = 'Max. replication lag (sec), {0}'.format(
             self.test_config.get_test_descr())
         metric_info = {'title': descr, 'cluster': self.cluster_spec_name,
                        'larger_is_better': 'false'}

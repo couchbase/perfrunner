@@ -8,6 +8,7 @@ import requests
 from cbagent.collectors import NSServer, Latency, XdcrLag
 from cbagent.metadata_client import MetadataClient
 from logger import logger
+from ordereddict import OrderedDict
 
 from perfrunner.settings import CbAgentSettings
 
@@ -31,7 +32,10 @@ def with_stats(latency=False, xdcr_lag=False):
 class CbAgent(object):
 
     def __init__(self, cluster_spec):
-        self.clusters = cluster_spec.get_masters()
+        self.clusters = OrderedDict(
+            map(lambda (cluster, master): (cluster, master.split(':')[0]),
+                cluster_spec.get_masters().items())
+        )
 
         self.settings = CbAgentSettings()
         self.settings.ssh_username, self.settings.ssh_password = \
@@ -47,8 +51,7 @@ class CbAgent(object):
             collectors.append(XdcrLag)
 
         self.collectors = []
-        clusters = map(lambda server: server.split(':')[0],
-                       self.clusters.keys())
+        clusters = self.clusters.keys()
         reversed_clusters = list(reversed(self.clusters.keys()))
         for i, cluster in enumerate(clusters):
             settings = copy(self.settings)

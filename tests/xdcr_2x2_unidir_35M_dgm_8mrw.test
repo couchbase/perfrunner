@@ -11,7 +11,7 @@ post_to_sf = 0
 mem_quota = 81920
 initial_nodes = 2
 num_buckets = 1
-threads_number = 6
+threads_number = 8
 
 [load]
 ops = 35000000

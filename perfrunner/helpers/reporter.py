@@ -105,7 +105,7 @@ class SFReporter(object):
             metric = '{0}_{1}'.format(self.test.test_config.name,
                                       self.test.cluster_spec.name)
 
-        stats_settings = self.test.get_stats_settings()
+        stats_settings = self.test.test_config.get_stats_settings()
 
         if stats_settings.post_to_sf:
             self._add_metric(metric, metric_info)

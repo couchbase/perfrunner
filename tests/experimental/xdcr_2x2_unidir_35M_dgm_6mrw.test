@@ -1,8 +1,8 @@
 [test_case]
 module = perfrunner.tests.xdcr
-class = XdcrTest
-descr = 2 <-> 2 BiDir, 1 bucket x 35M x 2KB, DGM, 6 MRW threads
-larger_is_better = true
+class = SymmetricXdcrTest
+descr = 2 -> 2 UniDir, 1 bucket x 35M x 2KB, DGM
+larger_is_better = false
 
 [stats]
 post_to_sf = 0
@@ -14,12 +14,17 @@ num_buckets = 1
 threads_number = 6
 
 [load]
-ops = 17500000
+ops = 35000000
 size = 2048
 workers = 12
 
+[hot_load]
+items = 35000000
+workers = 24
+working_set = 30
+
 [xdcr]
-replication_type = bidir
+replication_type = unidir
 
 [access]
 creates = 5
@@ -28,8 +33,8 @@ updates = 40
 deletes = 5
 ops = 72000000
 throughput = 10000
-items = 17500000
+items = 35000000
 size = 2048
 workers = 24
-working_set = 60
-working_set_access = 90
+working_set = 30
+working_set_access = 98

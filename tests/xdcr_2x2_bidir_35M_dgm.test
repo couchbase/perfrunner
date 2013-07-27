@@ -2,7 +2,7 @@
 module = perfrunner.tests.xdcr
 class = XdcrTest
 descr = 2 <-> 2 BiDir, 1 bucket x 35M x 2KB, DGM
-larger_is_better = true
+larger_is_better = false
 
 [cluster]
 mem_quota = 81920
@@ -27,5 +27,5 @@ throughput = 10000
 items = 17500000
 size = 2048
 workers = 24
-working_set = 60
+working_set = 30
 working_set_access = 90

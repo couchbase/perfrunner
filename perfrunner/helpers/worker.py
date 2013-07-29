@@ -14,8 +14,8 @@ celery = Celery('workers', backend='amqp', broker=BROKER_URL)
 
 
 @celery.task
-def task_run_workload(settings, target):
-    wg = WorkloadGen(settings, target)
+def task_run_workload(settings, target, shutdown_event):
+    wg = WorkloadGen(settings, target, shutdown_event)
     wg.run()
 
 
@@ -61,7 +61,7 @@ class WorkerManager(object):
                     'env/bin/celery worker '
                     '-A perfrunner.helpers.worker -Q {0} -c 4'.format(q.name))
 
-    def run_workload(self, settings, target_iterator):
+    def run_workload(self, settings, target_iterator, shutdown_event=None):
         queues = (q.name for q in CELERY_QUEUES)
         curr_target = None
         curr_queue = None
@@ -73,10 +73,10 @@ class WorkerManager(object):
                     curr_target = target.node
                     curr_queue = queues.next()
                 workers.append(task_run_workload.apply_async(
-                    args=(settings, target), queue=curr_queue))
+                    args=(settings, target, shutdown_event), queue=curr_queue))
             else:
                 logger.info('Starting workload generator locally')
-                task_run_workload.apply(args=(settings, target))
+                task_run_workload.apply(args=(settings, target, shutdown_event))
         for worker in workers:
             worker.wait()
 

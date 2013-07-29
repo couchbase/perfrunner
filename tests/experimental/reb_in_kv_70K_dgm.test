@@ -1,0 +1,41 @@
+[test_case]
+module = perfrunner.tests.rebalance
+class = DynamicRebalanceTest
+descr = Rebalance-in (min), 3 -> 4, 1 bucket x 70K x 2KB, DGM, no bucket compaction
+larger_is_better = false
+
+[stats]
+post_to_sf = 0
+
+[cluster]
+mem_quota = 81920
+initial_nodes = 3
+num_buckets = 1
+
+[load]
+ops = 70000
+size = 2048
+workers = 1
+
+[hot_load]
+items = 70000
+workers = 1
+working_set = 30
+
+[access]
+creates = 5
+reads = 50
+updates = 40
+deletes = 5
+ops = 3600000000
+throughput = 1000
+items = 70000
+size = 2048
+workers = 4
+working_set = 30
+working_set_access = 98
+
+[rebalance]
+nodes_after = 4
+start_after = 300
+stop_after = 300

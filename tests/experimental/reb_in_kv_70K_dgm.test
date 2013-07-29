@@ -8,7 +8,7 @@ larger_is_better = false
 post_to_sf = 0
 
 [cluster]
-mem_quota = 81920
+mem_quota = 20480
 initial_nodes = 3
 num_buckets = 1
 

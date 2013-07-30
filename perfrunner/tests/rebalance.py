@@ -14,7 +14,9 @@ def with_delay_and_stats(rebalance):
         self.reporter.reset_utilzation_stats()
 
         self.reporter.start()
+
         rebalance(self, *args, **kwargs)
+
         value = self.reporter.finish('Rebalance')
         self.reporter.post_to_sf(value)
 
@@ -22,7 +24,6 @@ def with_delay_and_stats(rebalance):
         self.reporter.save_master_events()
 
         time.sleep(self.rebalance_settings.stop_after)
-
         self.shutdown_event.set()
     return wrapper
 
@@ -62,10 +63,7 @@ class StaticRebalanceTest(RebalanceTest):
         self.wait_for_persistence()
         self.compact_bucket()
 
-        self.reporter.start()
         self.rebalance()
-        value = self.reporter.finish('Rebalance')
-        self.reporter.post_to_sf(value)
 
 
 class StaticRebalanceWithIndexTest(IndexTest, RebalanceTest):

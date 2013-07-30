@@ -3,14 +3,24 @@ from multiprocessing import Event, Process
 
 from logger import logger
 
+from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import PerfTest
 from perfrunner.tests.index import IndexTest
 
 
-def with_delay_and_stats(rebalance):
+def with_delay(rebalance):
     def wrapper(self, *args, **kwargs):
         time.sleep(self.rebalance_settings.start_after)
 
+        rebalance(self, *args, **kwargs)
+
+        time.sleep(self.rebalance_settings.stop_after)
+        self.shutdown_event.set()
+    return wrapper
+
+
+def with_reporter(rebalance):
+    def wrapper(self, *args, **kwargs):
         self.reporter.reset_utilzation_stats()
 
         self.reporter.start()
@@ -22,9 +32,6 @@ def with_delay_and_stats(rebalance):
 
         self.reporter.save_utilzation_stats()
         self.reporter.save_master_events()
-
-        time.sleep(self.rebalance_settings.stop_after)
-        self.shutdown_event.set()
     return wrapper
 
 
@@ -35,7 +42,9 @@ class RebalanceTest(PerfTest):
         self.shutdown_event = Event()
         self.rebalance_settings = self.test_config.get_rebalance_settings()
 
-    @with_delay_and_stats
+    @with_stats()
+    @with_delay
+    @with_reporter
     def rebalance(self):
         initial_nodes = self.test_config.get_initial_nodes()
         nodes_after = self.rebalance_settings.nodes_after

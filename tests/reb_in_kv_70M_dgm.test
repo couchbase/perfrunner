@@ -24,7 +24,6 @@ creates = 5
 reads = 50
 updates = 40
 deletes = 5
-ops = 3600000000
 throughput = 10000
 items = 70000000
 size = 2048

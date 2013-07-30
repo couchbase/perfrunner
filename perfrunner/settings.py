@@ -289,4 +289,4 @@ class IndexSettings(PhaseSettings):
 
 class AccessSettings(PhaseSettings):
 
-    READS = 100
+    OPS = float('inf')

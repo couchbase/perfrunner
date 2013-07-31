@@ -101,9 +101,10 @@ class DynamicRebalanceTest(RebalanceTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
-        self.compact_bucket()
 
         self.hot_load()
+        self.wait_for_persistence()
+        self.compact_bucket()
 
         self.access()  # background
         self.rebalance()

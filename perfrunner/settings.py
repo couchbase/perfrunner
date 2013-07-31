@@ -233,6 +233,7 @@ class PhaseSettings(object):
     WORKERS = 12
 
     SEQ_READS = False
+    SEQ_UPDATES = False
 
     def __init__(self, options):
         self.creates = int(options.get('creates', self.CREATES))
@@ -252,6 +253,7 @@ class PhaseSettings(object):
         self.workers = int(options.get('workers', self.WORKERS))
 
         self.seq_reads = self.SEQ_READS
+        self.seq_updates = self.SEQ_UPDATES
 
     def __str__(self):
         return str(self.__dict__)
@@ -265,6 +267,7 @@ class LoadSettings(PhaseSettings):
 class HotLoadSettings(PhaseSettings):
 
     SEQ_READS = True
+    SEQ_UPDATES = True
 
 
 class XDCRSettings(PhaseSettings):

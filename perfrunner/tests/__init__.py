@@ -75,6 +75,11 @@ class PerfTest(object):
 
     def hot_load(self):
         hot_load_settings = self.test_config.get_hot_load_settings()
+        master_node = self.cluster_spec.get_masters().values()[0]
+        if self.rest.get_version(master_node) < '2.1.0':
+            hot_load_settings.seq_reads = False
+        else:
+            hot_load_settings.seq_updates = False
         logger.info('Running hot load phase: {0}'.format(hot_load_settings))
         self.worker_manager.run_workload(hot_load_settings, self.target_iterator)
 

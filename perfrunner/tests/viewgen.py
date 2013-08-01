@@ -1,7 +1,7 @@
 import string
 
 
-class RepeatableGenerator(object):
+class ResetableGenerator(object):
 
     def __init__(self, iterable):
         self.reset()
@@ -19,9 +19,9 @@ class RepeatableGenerator(object):
 
 class ViewGen(object):
 
-    ddoc_names = RepeatableGenerator(tuple(string.ascii_uppercase))
+    ddoc_names = ResetableGenerator(tuple(string.ascii_uppercase))
 
-    view_names = RepeatableGenerator((
+    view_names = ResetableGenerator((
         'id_by_city',
         'name_and_email_by_category_and_and_coins',
         'id_by_realm_and_coins',

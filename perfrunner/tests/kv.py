@@ -47,11 +47,14 @@ class McIterator(object):
         self.test = test
 
     def __iter__(self):
-        for host in self.test.cluster_spec.get_all_hosts():
-            for bucket in self.test.test_config.get_buckets():
-                mc = MemcachedClient(host=host, port=11210)
-                mc.sasl_auth_plain(bucket, '')
-                yield mc
+        initial_nodes = self.test.test_config.get_initial_nodes()
+        for servers in self.test.cluster_spec.get_clusters().values():
+            for host_port in servers[:initial_nodes]:
+                host = host_port.split(':')[0]
+                for bucket in self.test.test_config.get_buckets():
+                    mc = MemcachedClient(host=host, port=11210)
+                    mc.sasl_auth_plain(bucket, '')
+                    yield mc
 
 
 class FlusherTest(PerfTest):

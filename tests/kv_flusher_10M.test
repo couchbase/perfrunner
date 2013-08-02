@@ -25,5 +25,5 @@ updates = 0
 deletes = 0
 items = 10000000
 size = 2048
-workers = 24
+workers = 12
 throughput = 8000

@@ -61,4 +61,5 @@ class MetricHelper(object):
             db = 'ns_server{0}{1}'.format(self.cluster_name, bucket)
             data = self.seriesly[db].query(params)
             drain_rate += data.values()[0][0]
+        drain_rate /= self.test_config.get_initial_nodes()
         return round(drain_rate)

@@ -75,7 +75,10 @@ class FlusherTest(PerfTest):
     def run(self):
         self.stop_persistence()
         self.load()
+
+        self.access_bg()
         self.drain()
+        self.shutdown_event.set()
 
         self.reporter.post_to_sf(
             self.metric_helper.calc_avg_drain_rate()

@@ -62,11 +62,13 @@ class FlusherTest(PerfTest):
     def stop_persistence(self):
         for mc in McIterator(self.target_iterator):
             mc.stop_persistence()
+            mc.close()
 
     @with_stats()
     def drain(self):
         for mc in McIterator(self.target_iterator):
             mc.start_persistence()
+            mc.close()
         for target in self.target_iterator:
             self.monitor.monitor_disk_queue(target)
 

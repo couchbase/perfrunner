@@ -4,6 +4,7 @@ from multiprocessing import Event, Process
 from logger import logger
 
 from perfrunner.helpers.cbmonitor import CbAgent
+from perfrunner.helpers.metrics import MetricHelper
 from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.reporter import Reporter
@@ -45,6 +46,7 @@ class PerfTest(object):
                                               self.test_config)
 
         self.cbagent = CbAgent(cluster_spec)
+        self.metric_helper = MetricHelper(self)
         self.monitor = Monitor(cluster_spec)
         self.rest = RestHelper(cluster_spec)
         self.reporter = Reporter(self)

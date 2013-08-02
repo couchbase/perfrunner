@@ -4,6 +4,9 @@ class = FlusherTest
 descr = Avg. drain rate (items/sec), 1 bucket x 5M x 2KB
 larger_is_better = true
 
+[stats]
+post_to_sf = 0
+
 [cluster]
 mem_quota = 24576
 initial_nodes = 1

@@ -1,17 +1,12 @@
 from logger import logger
 
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.helpers.metrics import MetricHelper
 from perfrunner.settings import TargetSettings
 from perfrunner.tests import target_hash, TargetIterator
 from perfrunner.tests import PerfTest
 
 
 class XdcrTest(PerfTest):
-
-    def __init__(self, *args, **kwargs):
-        super(XdcrTest, self).__init__(*args, **kwargs)
-        self.metric_helper = MetricHelper(self)
 
     def _start_replication(self, m1, m2):
         name = target_hash(m1, m2)

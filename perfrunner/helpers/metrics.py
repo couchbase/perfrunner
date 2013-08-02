@@ -52,3 +52,13 @@ class MetricHelper(object):
         initial_items = self.test_config.get_load_settings().ops
         buckets = self.test_config.get_num_buckets()
         return round(buckets * initial_items / (time_elapsed * 60))
+
+    def calc_avg_drain_rate(self):
+        params = {'group': 1000000000000,
+                  'ptr': '/ep_diskqueue_drain', 'reducer': 'avg'}
+        drain_rate = 0
+        for bucket in self.test_config.get_buckets():
+            db = 'ns_server{0}{1}'.format(self.cluster_name, bucket)
+            data = self.seriesly[db].query(params)
+            drain_rate += data.values()[0][0]
+        return round(drain_rate)

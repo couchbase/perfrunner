@@ -1,4 +1,5 @@
 from hashlib import md5
+from multiprocessing import Event, Process
 
 from logger import logger
 
@@ -85,6 +86,16 @@ class PerfTest(object):
         access_settings = self.test_config.get_access_settings()
         logger.info('Running access phase: {0}'.format(access_settings))
         self.worker_manager.run_workload(access_settings, self.target_iterator)
+
+    def access_bg(self):
+        access_settings = self.test_config.get_access_settings()
+        logger.info('Running access phase in background: {0}'.format(
+            access_settings))
+        self.shutdown_event = Event()
+        Process(
+            target=self.worker_manager.run_workload,
+            args=(access_settings, self.target_iterator, self.shutdown_event)
+        ).start()
 
     def debug(self):
         self.remote.collect_info()

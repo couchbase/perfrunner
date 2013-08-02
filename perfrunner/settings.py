@@ -235,6 +235,8 @@ class PhaseSettings(object):
     SEQ_READS = False
     SEQ_UPDATES = False
 
+    TIME = 0
+
     def __init__(self, options):
         self.creates = int(options.get('creates', self.CREATES))
         self.reads = int(options.get('reads', self.READS))
@@ -254,6 +256,8 @@ class PhaseSettings(object):
 
         self.seq_reads = self.SEQ_READS
         self.seq_updates = self.SEQ_UPDATES
+
+        self.time = int(options.get('time', self.TIME))
 
     def __str__(self):
         return str(self.__dict__)

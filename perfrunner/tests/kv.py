@@ -43,14 +43,15 @@ class BgFetcherTest(PerfTest):
 
 class McIterator(object):
 
-    def __init__(self, target_iterator):
-        self.target_iterator = target_iterator
+    def __init__(self, test):
+        self.test = test
 
     def __iter__(self):
-        for target in self.target_iterator:
-            mc = MemcachedClient(host=target.node.split(':')[0], port=11210)
-            mc.sasl_auth_plain(target.bucket, '')
-            yield mc
+        for host in self.test.cluster_spec.get_all_hosts():
+            for bucket in self.test.test_config.get_buckets():
+                mc = MemcachedClient(host=host, port=11210)
+                mc.sasl_auth_plain(bucket, '')
+                yield mc
 
 
 class FlusherTest(PerfTest):

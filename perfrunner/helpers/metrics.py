@@ -63,3 +63,14 @@ class MetricHelper(object):
             drain_rate += data.values()[0][0]
         drain_rate /= self.test_config.get_initial_nodes()
         return round(drain_rate)
+
+    def calc_avg_ep_bg_fetched(self):
+        params = {'group': 1000000000000,
+                  'ptr': '/ep_bg_fetched', 'reducer': 'avg'}
+        ep_bg_fetched = 0
+        for bucket in self.test_config.get_buckets():
+            db = 'ns_server{0}{1}'.format(self.cluster_name, bucket)
+            data = self.seriesly[db].query(params)
+            ep_bg_fetched += data.values()[0][0]
+        ep_bg_fetched /= self.test_config.get_initial_nodes()
+        return round(ep_bg_fetched)

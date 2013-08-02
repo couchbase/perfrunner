@@ -40,6 +40,8 @@ class BgFetcherTest(PerfTest):
         self.timer()
         self.shutdown_event.set()
 
+        self.reporter.post_to_sf(self.metric_helper.calc_avg_ep_bg_fetched())
+
 
 class McIterator(object):
 
@@ -80,6 +82,4 @@ class FlusherTest(PerfTest):
         self.drain()
         self.shutdown_event.set()
 
-        self.reporter.post_to_sf(
-            self.metric_helper.calc_avg_drain_rate()
-        )
+        self.reporter.post_to_sf(self.metric_helper.calc_avg_drain_rate())

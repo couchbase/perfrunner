@@ -1,6 +1,7 @@
 import time
 
 from logger import logger
+from mc_bin_client.mc_bin_client import MemcachedClient
 
 from perfrunner.tests import PerfTest
 from perfrunner.helpers.cbmonitor import with_stats
@@ -38,3 +39,26 @@ class BgFetcherTest(PerfTest):
         self.access_bg()
         self.timer()
         self.shutdown_event.set()
+
+
+class FlusherTest(PerfTest):
+
+    def stop_persistence(self):
+        for target in self.target_iterator:
+            mc = MemcachedClient(host=target.node, port=11210)
+            mc.sasl_auth_plain(target.bucket, '')
+            mc.stop_persistence()
+
+    @with_stats()
+    def drain(self):
+        for target in self.target_iterator:
+            mc = MemcachedClient(host=target.node, port=11210)
+            mc.sasl_auth_plain(target.bucket, '')
+            mc.start_persistence()
+        for target in self.target_iterator:
+            self.monitor.monitor_disk_queue(target)
+
+    def run(self):
+        self.stop_persistence()
+        self.load()
+        self.drain()

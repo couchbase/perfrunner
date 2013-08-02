@@ -6,6 +6,7 @@ fabric==1.6.0
 logger
 lxml==3.2.1
 ordereddict
+mc_bin_client==1.0
 pytz
 requests==1.2.0
 seriesly

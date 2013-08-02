@@ -41,19 +41,27 @@ class BgFetcherTest(PerfTest):
         self.shutdown_event.set()
 
 
+class McIterator(object):
+
+    def __init__(self, target_iterator):
+        self.target_iterator = target_iterator
+
+    def __iter__(self):
+        for target in self.target_iterator:
+            mc = MemcachedClient(host=target.node.split(':')[0], port=11210)
+            mc.sasl_auth_plain(target.bucket, '')
+            yield mc
+
+
 class FlusherTest(PerfTest):
 
     def stop_persistence(self):
-        for target in self.target_iterator:
-            mc = MemcachedClient(host=target.node, port=11210)
-            mc.sasl_auth_plain(target.bucket, '')
+        for mc in McIterator(self.target_iterator):
             mc.stop_persistence()
 
     @with_stats()
     def drain(self):
-        for target in self.target_iterator:
-            mc = MemcachedClient(host=target.node, port=11210)
-            mc.sasl_auth_plain(target.bucket, '')
+        for mc in McIterator(self.target_iterator):
             mc.start_persistence()
         for target in self.target_iterator:
             self.monitor.monitor_disk_queue(target)

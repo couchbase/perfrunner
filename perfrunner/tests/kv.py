@@ -80,8 +80,8 @@ class FlusherTest(PerfTest):
         self.stop_persistence()
         self.load()
 
-        self.start_persistence()
         self.access_bg()
+        self.start_persistence()
 
         self.drain()
         self.shutdown_event.set()

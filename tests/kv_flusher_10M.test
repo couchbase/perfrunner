@@ -4,13 +4,16 @@ class = FlusherTest
 descr = Avg. drain rate (items/sec), 1 bucket x 10M x 2KB
 larger_is_better = true
 
+[stats]
+post_to_sf = 0
+
 [cluster]
 mem_quota = 24576
 initial_nodes = 4
 num_buckets = 1
 
 [compaction]
-db_percentage = 2
+db_percentage = 1
 
 [load]
 ops = 10000000
@@ -25,4 +28,4 @@ deletes = 0
 items = 10000000
 size = 2048
 workers = 12
-throughput = 8000
+throughput = 4000

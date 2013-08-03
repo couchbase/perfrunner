@@ -71,14 +71,23 @@ class FlusherTest(PerfTest):
             mc.start_persistence()
             mc.close()
 
+    def access(self):
+        access_settings = self.test_config.get_access_settings()
+        access_settings.seq_updates = True
+        logger.info('Running access phase: {0}'.format(access_settings))
+        self.worker_manager.run_workload(access_settings, self.target_iterator)
+
     @with_stats()
     def drain(self):
         for target in self.target_iterator:
             self.monitor.monitor_disk_queue(target)
 
     def run(self):
-        self.stop_persistence()
         self.load()
+        self.wait_for_persistence()
+
+        self.stop_persistence()
+        self.access()
 
         self.access_bg()
         self.start_persistence()

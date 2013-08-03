@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.kv
 class = FlusherTest
-descr = Avg. drain rate (items/sec), 1 bucket x 6M x 2KB
+descr = Avg. drain rate (items/sec), 1 bucket x 4M x 2KB
 larger_is_better = true
 
 [stats]
@@ -16,7 +16,7 @@ num_buckets = 1
 db_percentage = 100
 
 [load]
-ops = 6000000
+ops = 4000000
 size = 2048
 workers = 12
 
@@ -25,7 +25,7 @@ creates = 0
 reads = 0
 updates = 100
 deletes = 0
-items = 6000000
+items = 4000000
 size = 2048
 workers = 12
-ops = 6000000
+ops = 4000000

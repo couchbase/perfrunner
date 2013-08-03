@@ -13,7 +13,7 @@ initial_nodes = 4
 num_buckets = 1
 
 [compaction]
-db_percentage = 1
+db_percentage = 2
 
 [load]
 ops = 10000000

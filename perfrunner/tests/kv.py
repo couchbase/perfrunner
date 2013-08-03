@@ -24,12 +24,12 @@ class KVTest(PerfTest):
 class BgFetcherTest(KVTest):
 
     def run(self):
-        super(BgFetcherTest, self).timer()
+        super(BgFetcherTest, self).run()
         self.reporter.post_to_sf(self.metric_helper.calc_avg_ep_bg_fetched())
 
 
 class FlusherTest(KVTest):
 
     def run(self):
-        super(FlusherTest, self).timer()
+        super(FlusherTest, self).run()
         self.reporter.post_to_sf(self.metric_helper.calc_avg_drain_rate())

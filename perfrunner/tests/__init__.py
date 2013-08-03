@@ -1,3 +1,4 @@
+import time
 from hashlib import md5
 from multiprocessing import Event, Process
 
@@ -98,6 +99,11 @@ class PerfTest(object):
             target=self.worker_manager.run_workload,
             args=(access_settings, self.target_iterator, self.shutdown_event)
         ).start()
+
+    def timer(self):
+        access_settings = self.test_config.get_access_settings()
+        logger.info('Running phase for {0} seconds'.format(access_settings.time))
+        time.sleep(access_settings.time)
 
     def debug(self):
         self.remote.collect_info()

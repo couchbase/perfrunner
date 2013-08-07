@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.views
 class = ViewsTest
-descr = Peak query throughput (qps), 1 bucket x 1M x 2KB, 1 x 1 views
+descr = Peak query throughput (qps), 1 bucket x 1M x 2KB, 1 x 10 views
 larger_is_better = true
 
 [stats]
@@ -18,7 +18,7 @@ size = 2048
 workers = 12
 
 [index]
-views = [1]
+views = [10]
 
 [access]
 creates = 4

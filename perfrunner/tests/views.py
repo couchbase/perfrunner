@@ -1,6 +1,8 @@
-from perfrunner.tests.index import IndexTest
+from multiprocessing import Event
 
 from logger import logger
+
+from perfrunner.tests.index import IndexTest
 
 
 class ViewsTest(IndexTest):
@@ -8,8 +10,9 @@ class ViewsTest(IndexTest):
     def access_bg(self):
         access_settings = self.test_config.get_access_settings()
         logger.info('Running access phase: {0}'.format(access_settings))
+        self.shutdown_event = Event()
         self.worker_manager.run_workload(access_settings, self.target_iterator,
-                                         ddocs=self.ddocs)
+                                         self.shutdown_event, self.ddocs)
 
     def run(self):
         self.load()

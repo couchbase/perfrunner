@@ -1,4 +1,4 @@
-from multiprocessing import Event
+from multiprocessing import Event, Process
 
 from logger import logger
 
@@ -11,8 +11,11 @@ class ViewsTest(IndexTest):
         access_settings = self.test_config.get_access_settings()
         logger.info('Running access phase: {0}'.format(access_settings))
         self.shutdown_event = Event()
-        self.worker_manager.run_workload(access_settings, self.target_iterator,
-                                         self.shutdown_event, self.ddocs)
+        Process(
+            target=self.worker_manager.run_workload,
+            args=(access_settings, self.target_iterator, self.shutdown_event,
+                  self.ddocs)
+        ).start()
 
     def run(self):
         self.load()

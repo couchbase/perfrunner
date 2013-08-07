@@ -100,8 +100,11 @@ class RestHelper(object):
 
     def is_balanced(self, host_port):
         API = 'http://{0}/pools/rebalanceStatuses'.format(host_port)
-
-        return self.get(url=API).json()['balanced']
+        try:
+            return self.get(url=API).json()['balanced']
+        except KeyError:
+            logger.warn('Deprecated "balanced"')
+            return True
 
     def get_tasks(self, host_port):
         API = 'http://{0}/pools/default/tasks'.format(host_port)

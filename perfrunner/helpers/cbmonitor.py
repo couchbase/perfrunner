@@ -5,7 +5,8 @@ from multiprocessing import Process
 from time import time
 
 import requests
-from cbagent.collectors import NSServer, Latency, XdcrLag
+from cbagent.collectors import (NSServer, SpringLatency, SpringQueryLatency,
+                                XdcrLag)
 from cbagent.metadata_client import MetadataClient
 from logger import logger
 from ordereddict import OrderedDict
@@ -13,10 +14,11 @@ from ordereddict import OrderedDict
 from perfrunner.settings import CbAgentSettings
 
 
-def with_stats(latency=False, xdcr_lag=False):
+def with_stats(latency=False, query_latency=False, xdcr_lag=False):
     def outer_wrapper(method):
         def inner_wrapper(self, *args, **kwargs):
-            self.cbagent.prepare_collectors(latency, xdcr_lag)
+            self.cbagent.prepare_collectors(self, latency, query_latency,
+                                            xdcr_lag)
 
             self.cbagent.update_metadata()
 
@@ -43,25 +45,48 @@ class CbAgent(object):
         self.settings.rest_username, self.settings.rest_password = \
             cluster_spec.get_rest_credentials()
 
-    def prepare_collectors(self, latency, xdcr_lag):
-        collectors = [NSServer]
-        if latency:
-            collectors.append(Latency)
-        if xdcr_lag:
-            collectors.append(XdcrLag)
-
-        self.collectors = []
+    def prepare_collectors(self, test, latency, query_latency, xdcr_lag):
         clusters = self.clusters.keys()
+        self.collectors = []
+
+        self.prepare_ns_server(clusters)
+        if latency:
+            self.prepare_latency(clusters, test.workload)
+        if query_latency:
+            self.prepare_query_latency(clusters, test.workload, test.ddocs)
+        if xdcr_lag:
+            self.prepare_xdcr_lag(clusters)
+
+    def prepare_ns_server(self, clusters):
+        for cluster in clusters:
+            settings = copy(self.settings)
+            settings.cluster = cluster
+            settings.master_node = self.clusters[cluster]
+            self.collectors.append(NSServer(settings))
+
+    def prepare_xdcr_lag(self, clusters):
         reversed_clusters = list(reversed(self.clusters.keys()))
         for i, cluster in enumerate(clusters):
             settings = copy(self.settings)
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
-            if xdcr_lag:
-                dest_cluster = reversed_clusters[i]
-                settings.dest_master_node = self.clusters[dest_cluster]
-            for collector in collectors:
-                self.collectors.append(collector(settings))
+            dest_cluster = reversed_clusters[i]
+            settings.dest_master_node = self.clusters[dest_cluster]
+            self.collectors.append(XdcrLag(settings))
+
+    def prepare_latency(self, clusters, workload):
+        for cluster in clusters:
+            settings = copy(self.settings)
+            settings.cluster = cluster
+            settings.master_node = self.clusters[cluster]
+            self.collectors.append(SpringLatency(settings, workload))
+
+    def prepare_query_latency(self, clusters, workload, ddocs):
+        for cluster in clusters:
+            settings = copy(self.settings)
+            settings.cluster = cluster
+            settings.master_node = self.clusters[cluster]
+            self.collectors.append(SpringQueryLatency(settings, workload, ddocs))
 
     def update_metadata(self):
         for collector in self.collectors:

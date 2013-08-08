@@ -8,7 +8,7 @@ from perfrunner.tests.index import IndexTest
 
 class QueryTest(IndexTest):
 
-    @with_stats()
+    @with_stats(query_latency=True)
     def timer(self):
         super(QueryTest, self).timer()
 

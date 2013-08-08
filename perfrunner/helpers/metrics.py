@@ -1,3 +1,5 @@
+import math
+
 from seriesly import Seriesly
 
 from perfrunner.settings import CbAgentSettings
@@ -10,6 +12,17 @@ class MetricHelper(object):
         self.test_config = test.test_config
         self.cluster_spec_name = test.cluster_spec.name
         self.cluster_name = test.cbagent.clusters.keys()[0]
+
+    @staticmethod
+    def _calc_percentile(data, percentile):
+        data.sort()
+        k = (len(data) - 1) * percentile
+        f = math.floor(k)
+        c = math.ceil(k)
+        if f == c:
+            return data[int(k)]
+        else:
+            return data[int(f)] * (c - k) + data[int(c)] * (k - f)
 
     def calc_max_xdcr_lag(self):
         metric = '{0}_max_xdc_lag_{1}'.format(self.test_config.name,
@@ -85,3 +98,11 @@ class MetricHelper(object):
             couch_views_ops += data.values()[0][0]
         couch_views_ops /= self.test_config.get_initial_nodes()
         return round(couch_views_ops)
+
+    def calc_90th_query_latency(self):
+        timings = []
+        for bucket in self.test_config.get_buckets():
+            db = 'spring_query_latency{0}{1}'.format(self.cluster_name, bucket)
+            data = self.seriesly[db].get_all()
+            timings += [value['latency_query'] for value in data.values()]
+        return round(self._calc_percentile(timings, 0.90))

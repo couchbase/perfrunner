@@ -40,3 +40,10 @@ class PeakQueryThroughputTest(QueryTest):
     def run(self):
         super(PeakQueryThroughputTest, self).run()
         self.reporter.post_to_sf(self.metric_helper.calc_avg_couch_views_ops())
+
+
+class QueryLatencyTest(QueryTest):
+
+    def run(self):
+        super(QueryLatencyTest, self).run()
+        self.reporter.post_to_sf(self.metric_helper.calc_90th_query_latency())

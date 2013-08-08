@@ -1,5 +1,5 @@
 [test_case]
-module = perfrunner.tests.queries
+module = perfrunner.tests.query
 class = PeakQueryThroughputTest
 descr = Peak query throughput (qps), 1 bucket x 1M x 2KB, 5 x 2 views
 larger_is_better = true

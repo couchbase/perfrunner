@@ -26,6 +26,7 @@ reads = 80
 updates = 12
 deletes = 4
 throughput = 4000
+query_throughput = 200
 items = 1000000
 size = 2048
 workers = 8

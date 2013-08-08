@@ -2,10 +2,15 @@ from multiprocessing import Event, Process
 
 from logger import logger
 
+from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests.index import IndexTest
 
 
-class ViewsTest(IndexTest):
+class QueryTest(IndexTest):
+
+    @with_stats()
+    def timer(self):
+        super(QueryTest, self).timer()
 
     def access_bg(self):
         access_settings = self.test_config.get_access_settings()
@@ -28,3 +33,10 @@ class ViewsTest(IndexTest):
         self.access_bg()
         self.timer()
         self.shutdown_event.set()
+
+
+class PeakQueryThroughputTest(QueryTest):
+
+    def run(self):
+        super(PeakQueryThroughputTest, self).run()
+        self.reporter.post_to_sf(self.metric_helper.calc_avg_couch_views_ops())

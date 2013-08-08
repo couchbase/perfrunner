@@ -223,6 +223,7 @@ class PhaseSettings(object):
     DELETES = 0
     OPS = 0
     THROUGHPUT = float('inf')
+    QUERY_THROUGHPUT = float('inf')
 
     ITEMS = 0
     SIZE = 2048
@@ -245,6 +246,8 @@ class PhaseSettings(object):
         self.deletes = int(options.get('deletes', self.DELETES))
         self.ops = float(options.get('ops', self.OPS))
         self.throughput = float(options.get('throughput', self.THROUGHPUT))
+        self.query_throughput = float(options.get('query_throughput',
+                                                  self.QUERY_THROUGHPUT))
 
         self.size = int(options.get('size', self.SIZE))
         self.items = int(options.get('items', self.ITEMS))

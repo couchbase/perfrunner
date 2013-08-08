@@ -14,6 +14,7 @@ class QueryTest(IndexTest):
 
     def access_bg(self):
         access_settings = self.test_config.get_access_settings()
+        self.workload = access_settings
         logger.info('Running access phase: {0}'.format(access_settings))
         self.shutdown_event = Event()
         Process(

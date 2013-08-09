@@ -36,7 +36,7 @@ class QueryTest(IndexTest):
         self.shutdown_event.set()
 
 
-class PeakQueryThroughputTest(QueryTest):
+class QueryThroughputTest(QueryTest):
 
     def run(self):
         super(PeakQueryThroughputTest, self).run()

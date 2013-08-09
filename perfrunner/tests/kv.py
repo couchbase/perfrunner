@@ -5,7 +5,7 @@ from perfrunner.helpers.cbmonitor import with_stats
 class KVTest(PerfTest):
 
     @with_stats()
-    def timer(self):
+    def access(self):
         super(KVTest, self).timer()
 
     def run(self):
@@ -17,7 +17,7 @@ class KVTest(PerfTest):
         self.compact_bucket()
 
         self.access_bg()
-        self.timer()
+        self.access()
         self.shutdown_event.set()
 
 

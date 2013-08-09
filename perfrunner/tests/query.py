@@ -9,7 +9,7 @@ from perfrunner.tests.index import IndexTest
 class QueryTest(IndexTest):
 
     @with_stats(query_latency=True)
-    def timer(self):
+    def access(self):
         super(QueryTest, self).timer()
 
     def access_bg(self):
@@ -32,7 +32,7 @@ class QueryTest(IndexTest):
         self.build_index()
 
         self.access_bg()
-        self.timer()
+        self.access()
         self.shutdown_event.set()
 
 

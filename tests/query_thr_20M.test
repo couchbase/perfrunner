@@ -4,6 +4,9 @@ class = QueryThroughputTest
 descr = Query throughput (qps), 1 bucket x 20M x 2KB, non-DGM, 4 x 2 views
 larger_is_better = true
 
+[stats]
+report = BaseViewsReport
+
 [cluster]
 mem_quota = 61440
 initial_nodes = 4

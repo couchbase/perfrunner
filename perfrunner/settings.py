@@ -173,9 +173,11 @@ class TestConfig(Config):
 class StatsSettings(object):
 
     POST_TO_SF = 1
+    REPORT = 'BaseReport'
 
     def __init__(self, options):
         self.post_to_sf = int(options.get('post_to_sf', self.POST_TO_SF))
+        self.report = options.get('report', self.REPORT)
 
 
 class CompactionSettings(object):

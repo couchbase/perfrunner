@@ -39,7 +39,7 @@ class QueryTest(IndexTest):
 class QueryThroughputTest(QueryTest):
 
     def run(self):
-        super(PeakQueryThroughputTest, self).run()
+        super(QueryThroughputTest, self).run()
         self.reporter.post_to_sf(self.metric_helper.calc_avg_couch_views_ops())
 
 

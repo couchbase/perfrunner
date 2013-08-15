@@ -31,7 +31,7 @@ class XdcrTest(PerfTest):
 
     @with_stats(xdcr_lag=True)
     def access(self):
-        super(XdcrTest, self).timer()
+        super(XdcrTest, self).access()
 
     def run(self):
         self.load()
@@ -45,9 +45,7 @@ class XdcrTest(PerfTest):
 
         self.compact_bucket()
 
-        self.access_bg()
         self.access()
-
         self.reporter.post_to_sf(
             *self.metric_helper.calc_max_replication_changes_left()
         )

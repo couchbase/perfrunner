@@ -35,8 +35,11 @@ class RemoteHelper(object):
     @single_host
     def detect_pkg(self):
         logger.info('Detecting package manager')
-        dist = run('python -c "import platform; print platform.dist()[0]"')
-        if dist in ('Ubuntu', 'Debian'):
+        dist = run('python -c "import platform; print platform.dist()[0]"',
+                   pty=False)
+        if not dist:
+            return 'setup.exe'
+        elif dist in ('Ubuntu', 'Debian'):
             return 'deb'
         else:
             return 'rpm'
@@ -44,7 +47,7 @@ class RemoteHelper(object):
     @single_host
     def detect_arch(self):
         logger.info('Detecting platform architecture')
-        arch = run('arch')
+        arch = run('arch', pty=False)
         return self.ARCH[arch]
 
     @all_hosts

@@ -12,7 +12,6 @@ class MetricHelper(object):
         self.test_config = test.test_config
         self.cluster_spec_name = test.cluster_spec.name
         self.cluster_name = test.cbagent.clusters.keys()[0]
-        self.masters = test.test_config.get_masters()
 
     @staticmethod
     def _calc_percentile(data, percentile):

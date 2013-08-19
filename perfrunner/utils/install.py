@@ -4,7 +4,6 @@ from optparse import OptionParser
 import requests
 from fabric.api import run
 from logger import logger
-from lxml import etree
 
 from perfrunner.helpers.remote import RemoteHelper, all_hosts
 from perfrunner.settings import ClusterSpec
@@ -12,33 +11,12 @@ from perfrunner.settings import ClusterSpec
 Build = namedtuple('Build', ['arch', 'pkg', 'version', 'toy'])
 
 
-class BuildIterator(object):
-
-    BUILDS_URL = 'http://builds.hq.northscale.net/latestbuilds/'
-
-    def __init__(self):
-        pass
-
-    @classmethod
-    def _parse_build_tree(cls):
-        logger.info('Getting list of builds')
-        try:
-            headers = {'Accept-Encoding': 'gzip, deflate'}
-            html = requests.get(url=cls.BUILDS_URL, headers=headers).text
-        except requests.exceptions.ConnectionError:
-            logger.interrupt('Could not connect to build repository')
-        return etree.HTML(html)
-
-    def __iter__(self):
-        tree = self._parse_build_tree()
-        for li in tree.xpath('/html/body/ul/li'):
-            yield li.xpath('a/@href')[0]
-
-
 class CouchbaseInstaller(RemoteHelper):
 
+    BUILDER = 'http://builder.hq.couchbase.com/get/'
+
     @staticmethod
-    def _get_expected_filename(build):
+    def get_expected_filename(build):
         if build.toy:
             return 'couchbase-server-community_toy-{0}-{1}_{2}-toy.{3}'.format(
                 build.toy, build.arch, build.version, build.pkg
@@ -48,12 +26,10 @@ class CouchbaseInstaller(RemoteHelper):
                 build.arch, build.version, build.pkg
             )
 
-    @staticmethod
-    def _check_if_exists(target):
-        for filename in BuildIterator():
-            if filename == target:
-                logger.info('Found "{0}"'.format(filename))
-                break
+    def check_if_exists(self, url):
+        r = requests.head(url)
+        if r.status_code == 200:
+            logger.info('Found "{0}"'.format(url))
         else:
             logger.interrupt('Target build not found')
 
@@ -67,8 +43,7 @@ class CouchbaseInstaller(RemoteHelper):
         run('rm -fr /opt/couchbase')
 
     @all_hosts
-    def install_package(self, pkg, filename):
-        url = BuildIterator.BUILDS_URL + filename
+    def install_package(self, pkg, filename, url):
         self.wget(url, outdir='/tmp')
 
         logger.info('Installing Couchbase Server')
@@ -83,11 +58,12 @@ class CouchbaseInstaller(RemoteHelper):
         pkg = self.detect_pkg()
         build = Build(arch, pkg, options.version, options.toy)
 
-        filename = self._get_expected_filename(build)
-        self._check_if_exists(filename)
+        filename = self.get_expected_filename(build)
+        url = '{0}{1}'.format(self.BUILDER, filename)
+        self.check_if_exists(url)
 
         self.uninstall_package(pkg)
-        self.install_package(pkg, filename)
+        self.install_package(pkg, filename, url)
 
 
 def main():

@@ -169,6 +169,9 @@ class TestConfig(Config):
         options = self._get_options_as_dict('stats')
         return StatsSettings(options)
 
+    def get_internal_settings(self):
+        return self._get_options_as_dict('internal')
+
 
 class StatsSettings(object):
 

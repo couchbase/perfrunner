@@ -20,6 +20,7 @@ class ClusterManager(object):
         self.threads_number = test_config.get_mrw_threads_number()
         self.num_buckets = test_config.get_num_buckets()
         self.compaction_settings = test_config.get_compaction_settings()
+        self.internal_settings = test_config.get_internal_settings()
 
     def set_data_path(self):
         self.remote.clean_data_path(self.data_path, self.index_path)
@@ -68,6 +69,12 @@ class ClusterManager(object):
             self.rest.configure_auto_compaction(
                 master, self.compaction_settings
             )
+
+    def configure_internal_settings(self):
+        for cluster in self.clusters:
+            master = cluster[0]
+            for parameter, value in self.internal_settings.items():
+                self.rest.set_internal_settings(master, {parameter: value})
 
     def clean_memory(self):
         self.remote.reset_swap()

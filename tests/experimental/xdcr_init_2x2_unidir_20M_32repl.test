@@ -1,0 +1,25 @@
+[test_case]
+module = perfrunner.tests.xdcr
+class = XdcrTuningTest
+descr = Initial XDCR rate (items/sec), 2 -> 2 UniDir, 1 bucket x 20M x 2KB, no compaction
+larger_is_better = true
+
+[cluster]
+mem_quota = 81920
+initial_nodes = 2
+num_buckets = 1
+
+[internal]
+xdcrMaxConcurrentReps = 32
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[load]
+ops = 20000000
+size = 2048
+workers = 12
+
+[xdcr]
+replication_type = unidir

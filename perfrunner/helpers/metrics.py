@@ -12,6 +12,7 @@ class MetricHelper(object):
         self.test_config = test.test_config
         self.cluster_spec_name = test.cluster_spec.name
         self.cluster_name = test.cbagent.clusters.keys()[0]
+        self.masters = test.test_config.get_masters()
 
     @staticmethod
     def _calc_percentile(data, percentile):
@@ -106,3 +107,15 @@ class MetricHelper(object):
             data = self.seriesly[db].get_all()
             timings += [value['latency_query'] for value in data.values()]
         return round(self._calc_percentile(timings, 0.90))
+
+    def calc_avg_cpu_utilization(self):
+        cpu_utilazion = dict()
+        params = {'group': 1000000000000,
+                  'ptr': '/cpu_utilization_rate', 'reducer': 'avg'}
+        for cluster, master_host in self.test_config.get_masters():
+            host = master_host.split(':')[0].replace('.', '')
+            for bucket in self.test_config.get_buckets():
+                db = 'ns_server{0}{1}{2}'.format(cluster, bucket, host)
+                data = self.seriesly[db].query(params)
+                cpu_utilazion[cluster] = round(data.values()[0][0], 2)
+        return cpu_utilazion

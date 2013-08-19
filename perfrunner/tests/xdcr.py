@@ -82,6 +82,10 @@ class XdcrInitTest(XdcrTest):
                                                 self.test_config)
         self.worker_manager.run_workload(load_settings, src_target_iterator)
 
+    @with_stats()
+    def init_xdcr(self):
+        super(XdcrInitTest, self).init_xdcr()
+
     def run(self):
         self.load()
         self.wait_for_persistence()
@@ -92,4 +96,14 @@ class XdcrInitTest(XdcrTest):
         time_elapsed = self.reporter.finish('Initial replication')
         self.reporter.post_to_sf(
             self.metric_helper.calc_avg_replication_rate(time_elapsed)
+        )
+
+
+class XdcrTuningTest(XdcrInitTest):
+
+    def run(self):
+        super(XdcrTuningTest, self).run()
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_avg_cpu_utilization(),
+            metric='avg_cpu_utilization_rate'
         )

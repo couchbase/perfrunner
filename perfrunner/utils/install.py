@@ -2,7 +2,7 @@ from collections import namedtuple
 from optparse import OptionParser
 
 import requests
-from fabric.api import run
+from fabric.api import run, put
 from logger import logger
 
 from perfrunner.helpers.remote import RemoteHelper, all_hosts
@@ -40,9 +40,13 @@ class CouchbaseInstaller(RemoteHelper):
         logger.info('Uninstalling Couchbase Server')
         if pkg == 'deb':
             run('yes | apt-get remove couchbase-server')
-        else:
+            run('rm -fr /opt/couchbase')
+        elif pkg == 'rpm':
             run('yes | yum remove couchbase-server')
-        run('rm -fr /opt/couchbase')
+            run('rm -fr /opt/couchbase')
+        elif pkg == 'setup.exe':
+            put('scripts/uninstall.bat')
+            run('./uninstall.bat')
 
     @all_hosts
     def install_package(self, pkg, filename, url):
@@ -52,8 +56,11 @@ class CouchbaseInstaller(RemoteHelper):
         if pkg == 'deb':
             run('yes | apt-get install gdebi')
             run('yes | gdebi /tmp/{0}'.format(filename))
-        else:
+        elif pkg == 'rpm':
             run('yes | rpm -i /tmp/{0}'.format(filename))
+        elif pkg == 'setup.exe':
+            put('scripts/install.bat')
+            run('./install.bat')
 
     def install(self, options):
         arch = self.detect_arch()

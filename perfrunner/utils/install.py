@@ -14,6 +14,7 @@ Build = namedtuple('Build', ['arch', 'pkg', 'version', 'toy'])
 class CouchbaseInstaller(RemoteHelper):
 
     BUILDER = 'http://builder.hq.couchbase.com/get/'
+    LATEST_BUILDS = 'http://builds.hq.northscale.net/latestbuilds/'
 
     @staticmethod
     def get_expected_filename(build):
@@ -26,12 +27,13 @@ class CouchbaseInstaller(RemoteHelper):
                 build.arch, build.version, build.pkg
             )
 
-    def check_if_exists(self, url):
-        r = requests.head(url)
-        if r.status_code == 200:
-            logger.info('Found "{0}"'.format(url))
-        else:
-            logger.interrupt('Target build not found')
+    def get_url(self, filename):
+        for base in (self.BUILDER, self.LATEST_BUILDS):
+            url = '{0}{1}'.format(base, filename)
+            if requests.head(url).status_code == 200:
+                logger.info('Found "{0}"'.format(url))
+                return url
+        logger.interrupt('Target build not found')
 
     @all_hosts
     def uninstall_package(self, pkg):
@@ -59,9 +61,7 @@ class CouchbaseInstaller(RemoteHelper):
         build = Build(arch, pkg, options.version, options.toy)
 
         filename = self.get_expected_filename(build)
-        url = '{0}{1}'.format(self.BUILDER, filename)
-        self.check_if_exists(url)
-
+        url = self.get_url(filename)
         self.uninstall_package(pkg)
         self.install_package(pkg, filename, url)
 

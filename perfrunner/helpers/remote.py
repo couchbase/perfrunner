@@ -20,7 +20,7 @@ def single_host(task):
 
 class RemoteHelper(object):
 
-    ARCH = {'i686': 'x86', 'i386': 'x86', 'x86_64': 'x86_64'}
+    ARCH = {'i386': 'x86', 'x86_64': 'x86_64', 'unknown': 'x86_64'}
 
     def __init__(self, cluster_spec):
         self.hosts = cluster_spec.get_all_hosts()
@@ -47,7 +47,7 @@ class RemoteHelper(object):
     @single_host
     def detect_arch(self):
         logger.info('Detecting platform architecture')
-        arch = run('arch', pty=False)
+        arch = run('uname -i', pty=False)
         return self.ARCH[arch]
 
     @all_hosts

@@ -46,6 +46,7 @@ class CouchbaseInstaller(RemoteHelper):
             run('rm -fr /opt/couchbase')
         elif pkg == 'setup.exe':
             put('scripts/uninstall.bat')
+            run('chmod +x uninstall.bat')
             run('./uninstall.bat')
 
     @all_hosts
@@ -60,6 +61,7 @@ class CouchbaseInstaller(RemoteHelper):
             run('yes | rpm -i /tmp/{0}'.format(filename))
         elif pkg == 'setup.exe':
             put('scripts/install.bat')
+            run('chmod +x install.bat')
             run('./install.bat')
 
     def install(self, options):

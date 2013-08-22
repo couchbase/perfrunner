@@ -80,9 +80,9 @@ class LinuxInstaller(Installer):
 
     @all_hosts
     def install_package(self):
-        logger.info('Installing Couchbase Server on Linux')
-
         self.wget(self.url, outdir='/tmp')
+
+        logger.info('Installing Couchbase Server on Linux')
         if self.build.pkg == 'deb':
             run('yes | apt-get install gdebi')
             run('yes | gdebi /tmp/{0}'.format(self.filename))
@@ -107,9 +107,9 @@ class WindowsInstaller(Installer):
 
     @all_hosts
     def install_package(self):
-        logger.info('Installing Couchbase Server on Windows')
-
         self.wget(self.url, outdir='/cygdrive/c', outfile='setup.exe')
+
+        logger.info('Installing Couchbase Server on Windows')
         put('scripts/install.iss', '/cygdrive/c')
         run('setup.exe -s -f1"C:\\install.iss"')
         while not self.exists(self.VERSION_FILE):

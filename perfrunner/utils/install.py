@@ -99,7 +99,7 @@ class WindowsInstaller(Installer):
         logger.info('Uninstalling Couchbase Server on Windows')
 
         put('scripts/uninstall.iss', '/cygdrive/c')
-        run('/cygdrive/c/setup.exe -s -f1"C:\\uninstall.iss"')
+        run('./setup.exe -s -f1"C:\\uninstall.iss"')
         while self.exists(self.VERSION_FILE):
             time.sleep(5)
         time.sleep(30)
@@ -107,13 +107,13 @@ class WindowsInstaller(Installer):
 
     @all_hosts
     def install_package(self):
-        run('rm -fr /cygdrive/c/setup.exe')
-        self.wget(self.url, outdir='/cygdrive/c', outfile='setup.exe')
-        run('chmod +x /cygdrive/c/setup.exe')
+        run('rm -fr setup.exe')
+        self.wget(self.url, outfile='setup.exe')
+        run('chmod +x setup.exe')
 
         logger.info('Installing Couchbase Server on Windows')
         put('scripts/install.iss', '/cygdrive/c')
-        run('/cygdrive/c/setup.exe -s -f1"C:\\install.iss"')
+        run('./setup.exe -s -f1"C:\\install.iss"')
         while not self.exists(self.VERSION_FILE):
             time.sleep(5)
         time.sleep(60)

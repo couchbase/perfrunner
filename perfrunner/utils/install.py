@@ -33,6 +33,7 @@ class Installer(RemoteHelper):
 
     def __init__(self, build, cluster_spec):
         super(Installer, self).__init__(cluster_spec)
+        self.cluster_spec = cluster_spec
         self.build = build
         self.filename = self.get_expected_filename(build)
         self.url = self.get_url()
@@ -59,11 +60,15 @@ class Installer(RemoteHelper):
     def uninstall_package(self):
         raise NotImplementedError
 
+    def clean_data_path(self):
+        raise NotImplementedError
+
     def install_package(self):
         raise NotImplementedError
 
     def install(self):
         self.uninstall_package()
+        self.clean_data_path()
         self.install_package()
 
 
@@ -77,6 +82,11 @@ class LinuxInstaller(Installer):
         else:
             run('yes | yum remove couchbase-server')
         run('rm -fr /opt/couchbase')
+
+    @all_hosts
+    def clean_data_path(self):
+        for path in self.cluster_spec.get_paths():
+            run('rm -fr {0}/*'.format(path))
 
     @all_hosts
     def install_package(self):
@@ -95,6 +105,13 @@ class WindowsInstaller(Installer):
     VERSION_FILE = '/cygdrive/c/Program Files/Couchbase/Server/VERSION.txt'
 
     @all_hosts
+    def clean_data_path(self):
+        for path in self.cluster_spec.get_paths():
+            path = path.replace(':', '').replace('\\', '/')
+            path = '/cygdrive/{0}'.format(path)
+            run('rm -fr {0}/*'.format(path))
+
+    @all_hosts
     def uninstall_package(self):
         logger.info('Uninstalling Couchbase Server on Windows')
 
@@ -104,6 +121,7 @@ class WindowsInstaller(Installer):
         while self.exists(self.VERSION_FILE):
             time.sleep(5)
         time.sleep(30)
+        self.clean_data_path()
         run('rm -fr /cygdrive/c/Program\ Files/Couchbase')
 
     @all_hosts

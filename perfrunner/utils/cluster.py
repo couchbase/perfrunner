@@ -23,7 +23,6 @@ class ClusterManager(object):
         self.internal_settings = test_config.get_internal_settings()
 
     def set_data_path(self):
-        self.remote.clean_data_path(self.data_path, self.index_path)
         for cluster in self.clusters:
             for host_port in cluster:
                 self.rest.set_data_path(host_port,

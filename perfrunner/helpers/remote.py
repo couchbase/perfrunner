@@ -58,11 +58,6 @@ class RemoteHelper(object):
         return self.ARCH[arch]
 
     @all_hosts
-    def clean_data_path(self, data_path, index_path):
-        for path in (data_path, index_path):
-            run('rm -fr {0}/*'.format(path))
-
-    @all_hosts
     def reset_swap(self):
         logger.info('Resetting swap')
         run('swapoff --all && swapon --all')

@@ -6,8 +6,8 @@ zeus =
     172.23.96.28:8091
 
 [storage]
-data = d:/data
-index = c:/data
+data = d:\data
+index = c:\data
 
 [credentials]
 rest = Administrator:password

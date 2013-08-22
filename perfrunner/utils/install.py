@@ -14,16 +14,16 @@ Build = namedtuple('Build', ['arch', 'pkg', 'version', 'toy'])
 
 class CouchbaseInstaller(object):
 
-    def __new__(cls, cluster_sepc, options):
-        remote_helper = RemoteHelper(cluster_sepc)
+    def __new__(cls, cluster_spec, options):
+        remote_helper = RemoteHelper(cluster_spec)
         arch = remote_helper.detect_arch()
         pkg = remote_helper.detect_pkg()
         build = Build(arch, pkg, options.version, options.toy)
 
         if pkg == 'setup.exe':
-            return WindowsInstaller(build, cluster_sepc)
+            return WindowsInstaller(build, cluster_spec)
         else:
-            return LinuxInstaller(build, cluster_sepc)
+            return LinuxInstaller(build, cluster_spec)
 
 
 class Installer(RemoteHelper):
@@ -31,7 +31,8 @@ class Installer(RemoteHelper):
     BUILDER = 'http://builder.hq.couchbase.com/get/'
     LATEST_BUILDS = 'http://builds.hq.northscale.net/latestbuilds/'
 
-    def __init__(self, build, cluster_sepc):
+    def __init__(self, build, cluster_spec):
+        super(Installer, self).__init__(cluster_spec)
         self.build = build
         self.filename = self.get_expected_filename(build)
         self.url = self.get_url()

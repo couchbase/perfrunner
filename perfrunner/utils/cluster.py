@@ -74,7 +74,8 @@ class ClusterManager(object):
         for cluster in self.clusters:
             master = cluster[0]
             for parameter, value in self.internal_settings.items():
-                self.rest.set_internal_settings(master, {parameter: value})
+                self.rest.set_internal_settings(master,
+                                                {parameter: int(value)})
 
     def clean_memory(self):
         self.remote.reset_swap()

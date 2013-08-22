@@ -231,4 +231,4 @@ class RestHelper(object):
         logger.info('Updating internal settings: {0}'.format(data))
 
         API = 'http://{0}/internalSettings'.format(host_port)
-        return self.post(url=API, params=data).json()
+        return self.post(url=API, data=data)

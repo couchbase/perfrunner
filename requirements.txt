@@ -5,7 +5,6 @@ couchbase==1.0.0
 fabric==1.6.0
 logger
 ordereddict
-mc_bin_client==1.0
 pytz
 requests==1.2.0
 seriesly

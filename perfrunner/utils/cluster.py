@@ -110,6 +110,7 @@ def main():
     test_config.parse(options.test_config_fname)
 
     cm = ClusterManager(cluster_spec, test_config)
+    cm.configure_internal_settings()
     cm.set_data_path()
     cm.set_auth()
     cm.set_mem_quota()

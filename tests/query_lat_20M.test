@@ -2,7 +2,7 @@
 module = perfrunner.tests.query
 class = QueryLatencyTest
 descr = 90th percentile query latency (ms), 1 bucket x 20M x 2KB, non-DGM, 4 x 2 views
-larger_is_better = true
+larger_is_better = false
 
 [stats]
 report = BaseViewsReport

@@ -5,7 +5,7 @@ descr = Initial XDCR rate (items/sec), 2 -> 2 UniDir, 1 bucket x 35M x 2KB, DGM,
 larger_is_better = true
 
 [internal]
-xdcrOptimisticReplicationThreshold = 3072
+xdcrOptimisticReplicationThreshold = 4096
 
 [cluster]
 mem_quota = 81920

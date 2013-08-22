@@ -26,13 +26,12 @@ class CouchbaseInstaller(object):
             return LinuxInstaller(build, cluster_sepc)
 
 
-class Installer(object):
+class Installer(RemoteHelper):
 
     BUILDER = 'http://builder.hq.couchbase.com/get/'
     LATEST_BUILDS = 'http://builds.hq.northscale.net/latestbuilds/'
 
     def __init__(self, build, cluster_sepc):
-        self.remote_helper = RemoteHelper(cluster_sepc)
         self.build = build
         self.filename = self.get_expected_filename(build)
         self.url = self.get_url()
@@ -82,7 +81,7 @@ class LinuxInstaller(Installer):
     def install_package(self):
         logger.info('Installing Couchbase Server on Linux')
 
-        self.remote_helper.wget(self.url, outdir='/tmp')
+        self.wget(self.url, outdir='/tmp')
         if self.build.pkg == 'deb':
             run('yes | apt-get install gdebi')
             run('yes | gdebi /tmp/{0}'.format(self.filename))
@@ -100,7 +99,7 @@ class WindowsInstaller(Installer):
 
         put('scripts/uninstall.iss', '/cygdrive/c')
         run('setup.exe -s -f1"C:\\uninstall.iss"')
-        while self.remote_helper.exists(self.VERSION_FILE):
+        while self.exists(self.VERSION_FILE):
             time.sleep(5)
         time.sleep(30)
         run('rm -fr /cygdrive/c/Program\ Files/Couchbase')
@@ -109,10 +108,10 @@ class WindowsInstaller(Installer):
     def install_package(self):
         logger.info('Installing Couchbase Server on Windows')
 
-        self.remote_helper.wget(self.url, outdir='/cygdrive/c', outfile='setup.exe')
+        self.wget(self.url, outdir='/cygdrive/c', outfile='setup.exe')
         put('scripts/install.iss', '/cygdrive/c')
         run('setup.exe -s -f1"C:\\install.iss"')
-        while not self.remote_helper.exists(self.VERSION_FILE):
+        while not self.exists(self.VERSION_FILE):
             time.sleep(5)
         time.sleep(60)
 

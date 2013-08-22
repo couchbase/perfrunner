@@ -41,6 +41,7 @@ class Config(object):
         if not os.path.isfile(fname):
             logger.interrupt('File doesn\'t exist: {0}'.format(fname))
         self.config = SafeConfigParser()
+        self.config.optionxform = str
         self.config.read(fname)
 
         basename = os.path.basename(fname)

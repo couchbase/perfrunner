@@ -36,9 +36,8 @@ class RemoteHelper(object):
             run('wget -nc "{0}" -P {1}'.format(url, outdir))
 
     def exists(self, fname):
-        r = run('python -c "import os.path; print os.path.exists(\'{0}\')"'.
-                format(fname))
-        return eval(r)
+        r = run('test -f {0}'.format(fname), warn_only=True)
+        return not r.return_code
 
     @single_host
     def detect_pkg(self):

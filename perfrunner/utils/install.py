@@ -98,8 +98,9 @@ class WindowsInstaller(Installer):
     def uninstall_package(self):
         logger.info('Uninstalling Couchbase Server on Windows')
 
-        put('scripts/uninstall.iss', '/cygdrive/c')
-        run('./setup.exe -s -f1"C:\\uninstall.iss"')
+        if self.exists(self.VERSION_FILE):
+            put('scripts/uninstall.iss', '/cygdrive/c')
+            run('./setup.exe -s -f1"C:\\uninstall.iss"')
         while self.exists(self.VERSION_FILE):
             time.sleep(5)
         time.sleep(30)

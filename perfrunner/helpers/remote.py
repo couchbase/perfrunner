@@ -36,7 +36,6 @@ class RemoteHelper(object):
             run('wget -nc "{0}" -P {1}'.format(url, outdir))
 
     def exists(self, fname):
-        #/cygdrive/c/Program Files/Couchbase/Server/VERSION.txt
         r = run('python -c "import os.path; print os.path.exists(\'{0}\')"'.
                 format(fname))
         return eval(r)

@@ -107,6 +107,7 @@ class WindowsInstaller(Installer):
 
     @all_hosts
     def install_package(self):
+        run('rm -fr /cygdrive/c/setup.exe')
         self.wget(self.url, outdir='/cygdrive/c', outfile='setup.exe')
         run('chmod +x /cygdrive/c/setup.exe')
 

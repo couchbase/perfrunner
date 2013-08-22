@@ -28,9 +28,18 @@ class RemoteHelper(object):
         state.output.running = False
         state.output.stdout = False
 
-    def wget(self, url, outdir='/tmp'):
+    def wget(self, url, outdir='/tmp', outfile=None):
         logger.info('Fetching {0}'.format(url))
-        run('wget -nc "{0}" -P {1}'.format(url, outdir))
+        if outfile is not None:
+            run('wget -nc "{0}" -P {1} -O {2}'.format(url, outdir, outfile))
+        else:
+            run('wget -nc "{0}" -P {1}'.format(url, outdir))
+
+    def exists(self, fname):
+        #/cygdrive/c/Program Files/Couchbase/Server/VERSION.txt
+        r = run('python -c "import os.path; print os.path.exists(\'{0}\')"'.
+                format(fname))
+        return eval(r)
 
     @single_host
     def detect_pkg(self):

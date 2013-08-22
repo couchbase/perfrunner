@@ -1,3 +1,4 @@
+import time
 from collections import namedtuple
 from optparse import OptionParser
 
@@ -11,10 +12,30 @@ from perfrunner.settings import ClusterSpec
 Build = namedtuple('Build', ['arch', 'pkg', 'version', 'toy'])
 
 
-class CouchbaseInstaller(RemoteHelper):
+class CouchbaseInstaller(object):
+
+    def __new__(cls, cluster_sepc, options):
+        remote_helper = RemoteHelper(cluster_sepc)
+        arch = remote_helper.detect_arch()
+        pkg = remote_helper.detect_pkg()
+        build = Build(arch, pkg, options.version, options.toy)
+
+        if pkg == 'setup.exe':
+            return WindowsInstaller(build, cluster_sepc)
+        else:
+            return LinuxInstaller(build, cluster_sepc)
+
+
+class Installer(object):
 
     BUILDER = 'http://builder.hq.couchbase.com/get/'
     LATEST_BUILDS = 'http://builds.hq.northscale.net/latestbuilds/'
+
+    def __init__(self, build, cluster_sepc):
+        self.remote_helper = RemoteHelper(cluster_sepc)
+        self.build = build
+        self.filename = self.get_expected_filename(build)
+        self.url = self.get_url()
 
     @staticmethod
     def get_expected_filename(build):
@@ -27,52 +48,73 @@ class CouchbaseInstaller(RemoteHelper):
                 build.arch, build.version, build.pkg
             )
 
-    def get_url(self, filename):
+    def get_url(self):
         for base in (self.BUILDER, self.LATEST_BUILDS):
-            url = '{0}{1}'.format(base, filename)
+            url = '{0}{1}'.format(base, self.filename)
             if requests.head(url).status_code == 200:
                 logger.info('Found "{0}"'.format(url))
                 return url
         logger.interrupt('Target build not found')
 
+    def uninstall_package(self):
+        raise NotImplementedError
+
+    def install_package(self):
+        raise NotImplementedError
+
+    def install(self):
+        self.uninstall_package()
+        self.install_package()
+
+
+class LinuxInstaller(Installer):
+
     @all_hosts
-    def uninstall_package(self, pkg):
-        logger.info('Uninstalling Couchbase Server')
-        if pkg == 'deb':
+    def uninstall_package(self):
+        logger.info('Uninstalling Couchbase Server on Linux')
+        if self.build.pkg == 'deb':
             run('yes | apt-get remove couchbase-server')
-            run('rm -fr /opt/couchbase')
-        elif pkg == 'rpm':
+        else:
             run('yes | yum remove couchbase-server')
-            run('rm -fr /opt/couchbase')
-        elif pkg == 'setup.exe':
-            put('scripts/uninstall.bat')
-            run('chmod +x uninstall.bat')
-            run('./uninstall.bat')
+        run('rm -fr /opt/couchbase')
 
     @all_hosts
-    def install_package(self, pkg, filename, url):
-        self.wget(url, outdir='/tmp')
+    def install_package(self):
+        logger.info('Installing Couchbase Server on Linux')
 
-        logger.info('Installing Couchbase Server')
-        if pkg == 'deb':
+        self.remote_helper.wget(self.url, outdir='/tmp')
+        if self.build.pkg == 'deb':
             run('yes | apt-get install gdebi')
-            run('yes | gdebi /tmp/{0}'.format(filename))
-        elif pkg == 'rpm':
-            run('yes | rpm -i /tmp/{0}'.format(filename))
-        elif pkg == 'setup.exe':
-            put('scripts/install.bat')
-            run('chmod +x install.bat')
-            run('./install.bat')
+            run('yes | gdebi /tmp/{0}'.format(self.filename))
+        else:
+            run('yes | rpm -i /tmp/{0}'.format(self.filename))
 
-    def install(self, options):
-        arch = self.detect_arch()
-        pkg = self.detect_pkg()
-        build = Build(arch, pkg, options.version, options.toy)
 
-        filename = self.get_expected_filename(build)
-        url = self.get_url(filename)
-        self.uninstall_package(pkg)
-        self.install_package(pkg, filename, url)
+class WindowsInstaller(Installer):
+
+    VERSION_FILE = '/cygdrive/c/Program Files/Couchbase/Server/VERSION.txt'
+
+    @all_hosts
+    def uninstall_package(self):
+        logger.info('Uninstalling Couchbase Server on Windows')
+
+        put('scripts/uninstall.iss', '/cygdrive/c')
+        run('setup.exe -s -f1"C:\\uninstall.iss"')
+        while self.remote_helper.exists(self.VERSION_FILE):
+            time.sleep(5)
+        time.sleep(30)
+        run('rm -fr /cygdrive/c/Program\ Files/Couchbase')
+
+    @all_hosts
+    def install_package(self):
+        logger.info('Installing Couchbase Server on Windows')
+
+        self.remote_helper.wget(self.url, outdir='/cygdrive/c', outfile='setup.exe')
+        put('scripts/install.iss', '/cygdrive/c')
+        run('setup.exe -s -f1"C:\\install.iss"')
+        while not self.remote_helper.exists(self.VERSION_FILE):
+            time.sleep(5)
+        time.sleep(60)
 
 
 def main():
@@ -95,8 +137,8 @@ def main():
     cluster_spec = ClusterSpec()
     cluster_spec.parse(options.cluster_spec_fname)
 
-    installer = CouchbaseInstaller(cluster_spec)
-    installer.install(options)
+    installer = CouchbaseInstaller(cluster_spec, options)
+    installer.install()
 
 if __name__ == '__main__':
     main()

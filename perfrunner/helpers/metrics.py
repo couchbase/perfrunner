@@ -10,7 +10,7 @@ class MetricHelper(object):
     def __init__(self, test):
         self.seriesly = Seriesly(CbAgentSettings.seriesly_host)
         self.test_config = test.test_config
-        self.cluster_spec_name = test.cluster_spec.name
+        self.cluster_spec = test.cluster_spec
         self.cluster_name = test.cbagent.clusters.keys()[0]
 
     @staticmethod
@@ -26,10 +26,10 @@ class MetricHelper(object):
 
     def calc_max_xdcr_lag(self):
         metric = '{0}_max_xdc_lag_{1}'.format(self.test_config.name,
-                                              self.cluster_spec_name)
+                                              self.cluster_spec.name)
         descr = 'Max. replication lag (sec), {0}'.format(
             self.test_config.get_test_descr())
-        metric_info = {'title': descr, 'cluster': self.cluster_spec_name,
+        metric_info = {'title': descr, 'cluster': self.cluster_spec.name,
                        'larger_is_better': 'false'}
         params = {'group': 1000000000000, 'ptr': '/xdcr_lag', 'reducer': 'max'}
 
@@ -44,10 +44,10 @@ class MetricHelper(object):
 
     def calc_max_replication_changes_left(self):
         metric = '{0}_max_replication_queue_{1}'.format(self.test_config.name,
-                                                        self.cluster_spec_name)
+                                                        self.cluster_spec.name)
         descr = 'Max. replication queue, {0}'.format(
             self.test_config.get_test_descr())
-        metric_info = {'title': descr, 'cluster': self.cluster_spec_name,
+        metric_info = {'title': descr, 'cluster': self.cluster_spec.name,
                        'larger_is_better': 'false'}
         params = {'group': 1000000000000,
                   'ptr': '/replication_changes_left', 'reducer': 'max'}
@@ -111,7 +111,7 @@ class MetricHelper(object):
         cpu_utilazion = dict()
         params = {'group': 1000000000000,
                   'ptr': '/cpu_utilization_rate', 'reducer': 'avg'}
-        for cluster, master_host in self.test_config.get_masters():
+        for cluster, master_host in self.cluster_spec.get_masters():
             host = master_host.split(':')[0].replace('.', '')
             for bucket in self.test_config.get_buckets():
                 db = 'ns_server{0}{1}{2}'.format(cluster, bucket, host)

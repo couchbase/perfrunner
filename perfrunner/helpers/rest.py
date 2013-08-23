@@ -1,5 +1,6 @@
 import json
 import time
+from collections import namedtuple
 
 import requests
 from requests.exceptions import ConnectionError
@@ -8,21 +9,22 @@ from logger import logger
 
 def retry(method):
         def wrapper(self, **kwargs):
-            for retry in xrange(self.MAX_RETRY):
+            r = namedtuple('request', ['url'])('')
+            for retry in range(self.MAX_RETRY):
                 try:
                     r = method(self, **kwargs)
-                    if r.status_code in range(200, 203):
-                        return r
-                    else:
-                        logger.warn(r.text)
                 except ConnectionError:
-                    pass
-                logger.warn('Retrying {0}'.format(r.url))
-                time.sleep(self.RETRY_DELAY)
-            else:
-                logger.interrupt('Request {0} failed after {1} attempts'.format(
-                    r.url, self.MAX_RETRY
-                ))
+                    time.sleep(self.RETRY_DELAY * 2)
+                    continue
+                if r.status_code in range(200, 203):
+                    return r
+                else:
+                    logger.warn(r.text)
+                    logger.warn('Retrying {0}'.format(r.url))
+                    time.sleep(self.RETRY_DELAY)
+            logger.interrupt('Request {0} failed after {1} attempts'.format(
+                r.url, self.MAX_RETRY
+            ))
         return wrapper
 
 

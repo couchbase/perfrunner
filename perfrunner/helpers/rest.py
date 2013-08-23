@@ -2,19 +2,23 @@ import json
 import time
 
 import requests
+from requests.exceptions import ConnectionError
 from logger import logger
 
 
 def retry(method):
         def wrapper(self, **kwargs):
             for retry in xrange(self.MAX_RETRY):
-                r = method(self, **kwargs)
-                if r.status_code in range(200, 203):
-                    return r
-                else:
-                    logger.warn('Retrying {0}'.format(r.url))
-                    logger.warn(r.text)
-                    time.sleep(self.RETRY_DELAY)
+                try:
+                    r = method(self, **kwargs)
+                    if r.status_code in range(200, 203):
+                        return r
+                    else:
+                        logger.warn(r.text)
+                except ConnectionError:
+                    pass
+                logger.warn('Retrying {0}'.format(r.url))
+                time.sleep(self.RETRY_DELAY)
             else:
                 logger.interrupt('Request {0} failed after {1} attempts'.format(
                     r.url, self.MAX_RETRY

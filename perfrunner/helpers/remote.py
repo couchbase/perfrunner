@@ -60,17 +60,20 @@ class RemoteHelper(object):
     @all_hosts
     def reset_swap(self):
         logger.info('Resetting swap')
-        run('swapoff --all && swapon --all', warn_only=True)
+        run('swapoff --all && swapon --all', warn_only=True, quiet=True)
 
     @all_hosts
     def drop_caches(self):
         logger.info('Dropping memory cache')
-        run('sync && echo 3 > /proc/sys/vm/drop_caches', warn_only=True)
+        run('sync && echo 3 > /proc/sys/vm/drop_caches',
+            warn_only=True, quiet=True)
 
     @all_hosts
     def collect_info(self):
         logger.info('Running cbcollect_info')
         fname = '/tmp/{0}.zip'.format(uuid4().hex)
-        run('/opt/couchbase/bin/cbcollect_info {0}'.format(fname))
-        get('{0}'.format(fname))
-        run('rm -f {0}'.format(fname))
+        r = run('/opt/couchbase/bin/cbcollect_info {0}'.format(fname),
+                warn_only=True, quiet=True)
+        if not r.return_code:
+            get('{0}'.format(fname))
+            run('rm -f {0}'.format(fname))

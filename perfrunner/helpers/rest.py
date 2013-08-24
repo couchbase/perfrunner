@@ -131,7 +131,7 @@ class RestHelper(object):
         data = {
             'name': name, 'bucketType': 'membase', 'ramQuotaMB': ram_quota,
             'replicaNumber': replica_number, 'replicaIndex': replica_index,
-            'authType': 'sasl', 'saslPassword': ''
+            'authType': 'sasl', 'saslPassword': self.rest_password
         }
         if threads_number:
             data['threadsNumber'] = threads_number

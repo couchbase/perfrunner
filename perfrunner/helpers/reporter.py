@@ -26,7 +26,8 @@ class BtrcReporter(object):
         for target in self.test.target_iterator:
             logger.info('Saving utilization stats from {0}/{1}'.format(
                         target.node, target.bucket))
-            cb = CouchbaseClient(target.node, target.bucket)
+            cb = CouchbaseClient(target.node, target.bucket,
+                                 target.username, target.password)
             reporter = StatsReporter(cb)
             reporter.report_stats('util_stats')
 
@@ -34,7 +35,8 @@ class BtrcReporter(object):
         for target in self.test.target_iterator:
             logger.info('Saving B-tree stats from {0}/{1}'.format(
                         target.node, target.bucket))
-            cb = CouchbaseClient(target.node, target.bucket)
+            cb = CouchbaseClient(target.node, target.bucket,
+                                 target.username, target.password)
             reporter = StatsReporter(cb)
             reporter.report_stats('btree_stats')
 

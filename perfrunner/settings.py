@@ -12,8 +12,7 @@ REPO = 'https://github.com/pavel-paulau/perfrunner'
 BROKER_URL = 'amqp://couchbase:couchbase@ci.sc.couchbase.com:5672/perfrunner'
 
 SF_STORAGE = {
-    'host': 'showfast.sc.couchbase.com', 'port': 8091,
-    'username': 'Administrator', 'password': 'password'
+    'host': 'showfast.sc.couchbase.com', 'port': 8091, 'password': 'password'
 }
 
 

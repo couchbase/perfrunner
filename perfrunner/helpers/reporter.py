@@ -18,7 +18,8 @@ class BtrcReporter(object):
         for target in self.test.target_iterator:
             logger.info('Resetting utilization stats from {0}/{1}'.format(
                         target.node, target.bucket))
-            cb = CouchbaseClient(target.node, target.bucket)
+            cb = CouchbaseClient(target.node, target.bucket,
+                                 target.username, target.password)
             cb.reset_utilization_stats()
 
     def save_utilzation_stats(self):

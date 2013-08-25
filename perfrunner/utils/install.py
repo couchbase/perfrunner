@@ -28,7 +28,7 @@ class CouchbaseInstaller(object):
 
 class Installer(RemoteHelper):
 
-    BUILDER = 'http://builder.hq.couchbase.com/get/'
+    CBFS = 'http://cbfs-ext.hq.couchbase.com/builds/'
     LATEST_BUILDS = 'http://builds.hq.northscale.net/latestbuilds/'
 
     def __init__(self, build, cluster_spec):
@@ -50,7 +50,7 @@ class Installer(RemoteHelper):
             )
 
     def get_url(self):
-        for base in (self.BUILDER, self.LATEST_BUILDS):
+        for base in (self.CBFS, self.LATEST_BUILDS):
             url = '{0}{1}'.format(base, self.filename)
             if requests.head(url).status_code == 200:
                 logger.info('Found "{0}"'.format(url))

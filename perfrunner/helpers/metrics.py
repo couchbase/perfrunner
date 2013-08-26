@@ -129,7 +129,7 @@ class MetricHelper(object):
             timings += [
                 value['latency_{0}'.format(operation)] for value in data.values()
             ]
-        latency = round(self._calc_percentile(timings, percentile))
+        latency = round(self._calc_percentile(timings, percentile) * 1000)  # us
 
         return latency, metric, metric_info
 

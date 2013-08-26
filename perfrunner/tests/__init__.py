@@ -46,7 +46,6 @@ class PerfTest(object):
         self.target_iterator = TargetIterator(self.cluster_spec,
                                               self.test_config)
 
-        self.metric_helper = MetricHelper(self)
         self.monitor = Monitor(cluster_spec)
         self.rest = RestHelper(cluster_spec)
         self.reporter = Reporter(self)
@@ -56,6 +55,7 @@ class PerfTest(object):
         master_node = cluster_spec.get_masters().values()[0]
         build = self.rest.get_version(master_node)
         self.cbagent = CbAgent(cluster_spec, build)
+        self.metric_helper = MetricHelper(self)
 
     def __enter__(self):
         return self

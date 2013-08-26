@@ -4,7 +4,7 @@ from perfrunner.helpers.cbmonitor import with_stats
 
 class KVTest(PerfTest):
 
-    @with_stats()
+    @with_stats(latency=True)
     def access(self):
         super(KVTest, self).timer()
 

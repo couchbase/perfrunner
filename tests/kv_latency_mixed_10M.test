@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.kv
 class = LatencyTest
-descr = latency (us), write-heavy, 1 bucket x 10M x 2KB, non-DGM
+descr = latency (us), mixed, 1 bucket x 10M x 2KB, non-DGM
 larger_is_better = true
 
 [stats]
@@ -19,8 +19,8 @@ workers = 12
 
 [access]
 creates = 3
-reads = 20
-updates = 74
+reads = 50
+updates = 44
 deletes = 3
 throughput = 4000
 items = 10000000

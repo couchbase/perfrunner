@@ -21,6 +21,23 @@ class KVTest(PerfTest):
         self.shutdown_event.set()
 
 
+class LatencyTest(KVTest):
+
+    @with_stats(latency=True)
+    def access(self):
+        access_settings = self.test_config.get_access_settings()
+        self.workload = access_settings
+        super(KVTest, self).timer()
+
+    def run(self):
+        super(LatencyTest, self).run()
+        for operation in ('get', 'set'):
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_kv_latency(operation=operation,
+                                                    percentile=0.9)
+            )
+
+
 class BgFetcherTest(KVTest):
 
     def run(self):

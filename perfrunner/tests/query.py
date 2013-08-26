@@ -40,11 +40,15 @@ class QueryThroughputTest(QueryTest):
 
     def run(self):
         super(QueryThroughputTest, self).run()
-        self.reporter.post_to_sf(self.metric_helper.calc_avg_couch_views_ops())
+        self.reporter.post_to_sf(
+            self.metric_helper.calc_avg_couch_views_ops()
+        )
 
 
 class QueryLatencyTest(QueryTest):
 
     def run(self):
         super(QueryLatencyTest, self).run()
-        self.reporter.post_to_sf(self.metric_helper.calc_90th_query_latency())
+        self.reporter.post_to_sf(
+            self.metric_helper.calc_query_latency(percentile=0.9)
+        )

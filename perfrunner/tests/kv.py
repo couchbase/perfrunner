@@ -16,6 +16,7 @@ class KVTest(PerfTest):
         self.wait_for_persistence()
         self.compact_bucket()
 
+        self.workload = self.test_config.get_access_settings()
         self.access_bg()
         self.access()
         self.shutdown_event.set()
@@ -25,9 +26,7 @@ class LatencyTest(KVTest):
 
     @with_stats(latency=True)
     def access(self):
-        access_settings = self.test_config.get_access_settings()
-        self.workload = access_settings
-        super(KVTest, self).timer()
+        super(LatencyTest, self).timer()
 
     def run(self):
         super(LatencyTest, self).run()

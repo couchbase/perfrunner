@@ -38,7 +38,9 @@ class CbAgent(object):
     def __init__(self, cluster_spec, build):
         self.clusters = OrderedDict()
         for cluster, master in cluster_spec.get_masters().items():
-            cluster = '{0}_{1}_{2}'.format(cluster, build, uuid4().hex[:3])
+            cluster = '{0}_{1}_{2}'.format(cluster,
+                                           build.replace('.', ''),
+                                           uuid4().hex[:3])
             master = master.split(':')[0]
             self.clusters[cluster] = master
 

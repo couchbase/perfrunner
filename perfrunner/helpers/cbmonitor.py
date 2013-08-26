@@ -3,6 +3,7 @@ from copy import copy
 from datetime import datetime
 from multiprocessing import Process
 from time import time
+from uuid import uuid4
 
 import requests
 from cbagent.collectors import (NSServer, SpringLatency, SpringQueryLatency,
@@ -34,11 +35,12 @@ def with_stats(latency=False, query_latency=False, xdcr_lag=False):
 
 class CbAgent(object):
 
-    def __init__(self, cluster_spec):
-        self.clusters = OrderedDict(
-            map(lambda (cluster, master): (cluster, master.split(':')[0]),
-                cluster_spec.get_masters().items())
-        )
+    def __init__(self, cluster_spec, build):
+        self.clusters = OrderedDict()
+        for cluster, master in cluster_spec.get_masters().items():
+            cluster = '{0}_{1}_{2}'.format(cluster, build, uuid4().hex[:3])
+            master = master.split(':')[0]
+            self.clusters[cluster] = master
 
         self.settings = CbAgentSettings()
         self.settings.ssh_username, self.settings.ssh_password = \

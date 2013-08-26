@@ -1,7 +1,6 @@
 import os.path
 from ConfigParser import SafeConfigParser, NoOptionError, NoSectionError
 from operator import add
-from uuid import uuid4
 
 from logger import logger
 from ordereddict import OrderedDict
@@ -60,7 +59,6 @@ class ClusterSpec(Config):
     def get_clusters(self):
         clusters = OrderedDict()
         for cluster, servers in self.config.items('clusters'):
-            cluster = '{0}_{1}'.format(cluster, uuid4().hex[:6])
             clusters[cluster] = servers.split()
         return clusters
 

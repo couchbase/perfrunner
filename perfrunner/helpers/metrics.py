@@ -11,7 +11,7 @@ class MetricHelper(object):
         self.seriesly = Seriesly(CbAgentSettings.seriesly_host)
         self.test_config = test.test_config
         self.cluster_spec = test.cluster_spec
-        self.cluster_name = test.cbagent.clusters.keys()[0]
+        self.cluster_names = test.cbagent.clusters.keys()
 
     @staticmethod
     def _calc_percentile(data, percentile):
@@ -35,7 +35,7 @@ class MetricHelper(object):
 
         max_lag = 0
         for bucket in self.test_config.get_buckets():
-            db = 'xdcr_lag{0}{1}'.format(self.cluster_name, bucket)
+            db = 'xdcr_lag{0}{1}'.format(self.cluster_names[0], bucket)
             data = self.seriesly[db].query(params)
             max_lag = max(max_lag, data.values()[0][0])
         max_lag = round(max_lag / 1000, 1)
@@ -54,7 +54,7 @@ class MetricHelper(object):
 
         max_queue = 0
         for bucket in self.test_config.get_buckets():
-            db = 'ns_server{0}{1}'.format(self.cluster_name, bucket)
+            db = 'ns_server{0}{1}'.format(self.cluster_names[0], bucket)
             data = self.seriesly[db].query(params)
             max_queue += data.values()[0][0]
         max_queue = round(max_queue)
@@ -71,7 +71,7 @@ class MetricHelper(object):
                   'ptr': '/ep_diskqueue_drain', 'reducer': 'avg'}
         drain_rate = 0
         for bucket in self.test_config.get_buckets():
-            db = 'ns_server{0}{1}'.format(self.cluster_name, bucket)
+            db = 'ns_server{0}{1}'.format(self.cluster_names[0], bucket)
             data = self.seriesly[db].query(params)
             drain_rate += data.values()[0][0]
         drain_rate /= self.test_config.get_initial_nodes()
@@ -82,7 +82,7 @@ class MetricHelper(object):
                   'ptr': '/ep_bg_fetched', 'reducer': 'avg'}
         ep_bg_fetched = 0
         for bucket in self.test_config.get_buckets():
-            db = 'ns_server{0}{1}'.format(self.cluster_name, bucket)
+            db = 'ns_server{0}{1}'.format(self.cluster_names[0], bucket)
             data = self.seriesly[db].query(params)
             ep_bg_fetched += data.values()[0][0]
         ep_bg_fetched /= self.test_config.get_initial_nodes()
@@ -93,7 +93,7 @@ class MetricHelper(object):
                   'ptr': '/couch_views_ops', 'reducer': 'avg'}
         couch_views_ops = 0
         for bucket in self.test_config.get_buckets():
-            db = 'ns_server{0}{1}'.format(self.cluster_name, bucket)
+            db = 'ns_server{0}{1}'.format(self.cluster_names[0], bucket)
             data = self.seriesly[db].query(params)
             couch_views_ops += data.values()[0][0]
         couch_views_ops /= self.test_config.get_initial_nodes()
@@ -102,7 +102,8 @@ class MetricHelper(object):
     def calc_query_latency(self, percentile=0.9):
         timings = []
         for bucket in self.test_config.get_buckets():
-            db = 'spring_query_latency{0}{1}'.format(self.cluster_name, bucket)
+            db = 'spring_query_latency{0}{1}'.format(self.cluster_names[0],
+                                                     bucket)
             data = self.seriesly[db].get_all()
             timings += [value['latency_query'] for value in data.values()]
         return round(self._calc_percentile(timings, percentile))
@@ -124,10 +125,10 @@ class MetricHelper(object):
 
         timings = []
         for bucket in self.test_config.get_buckets():
-            db = 'spring_latency{0}{1}'.format(self.cluster_name, bucket)
+            db = 'spring_latency{0}{1}'.format(self.cluster_names[0], bucket)
             data = self.seriesly[db].get_all()
             timings += [
-                value['latency_{0}'.format(operation)] for value in data.values()
+                v['latency_{0}'.format(operation)] for v in data.values()
             ]
         latency = round(self._calc_percentile(timings, percentile) * 1000)  # us
 
@@ -138,9 +139,11 @@ class MetricHelper(object):
         params = {'group': 1000000000000,
                   'ptr': '/cpu_utilization_rate', 'reducer': 'avg'}
         for cluster, master_host in self.cluster_spec.get_masters().items():
+            cluster_name = filter(lambda name: name.startswith(cluster),
+                                  self.cluster_names)
             host = master_host.split(':')[0].replace('.', '')
             for bucket in self.test_config.get_buckets():
-                db = 'ns_server{0}{1}{2}'.format(cluster, bucket, host)
+                db = 'ns_server{0}{1}{2}'.format(cluster_name, bucket, host)
                 data = self.seriesly[db].query(params)
                 cpu_utilazion[cluster] = round(data.values()[0][0], 2)
         return cpu_utilazion

@@ -165,18 +165,11 @@ class RestHelper(object):
         }
         self.post(url=API, data=data)
 
-    def start_replication(self, host_port, from_bucket, to_bucket, to_cluster):
-        logger.info('Starting replication from {0} to {1} at {2}'.format(
-            from_bucket, to_bucket, to_cluster
-        ))
+    def start_replication(self, host_port, params):
+        logger.info('Starting replication with parameters {0}'.format(params))
 
         API = 'http://{0}/controller/createReplication'.format(host_port)
-        data = {
-            'replicationType': 'continuous',
-            'toBucket': from_bucket, 'fromBucket': to_bucket,
-            'toCluster': to_cluster
-        }
-        self.post(url=API, data=data)
+        self.post(url=API, data=params)
 
     def trigger_bucket_compaction(self, host_port, bucket):
         logger.info('Triggering bucket {0} compaction'.format(bucket))

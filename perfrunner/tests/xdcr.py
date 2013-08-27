@@ -8,21 +8,31 @@ from perfrunner.tests import PerfTest
 
 class XdcrTest(PerfTest):
 
+    def __init__(self, *args, **kwargs):
+        super(XdcrTest, self).__init__(*args, **kwargs)
+        self.settings = self.test_config.get_xdcr_settings()
+
     def _start_replication(self, m1, m2):
         name = target_hash(m1, m2)
         self.rest.add_remote_cluster(m1, m2, name)
 
         for bucket in self.test_config.get_buckets():
-            self.rest.start_replication(m1, bucket, bucket, name)
+            params = {
+                'replicationType': 'continuous',
+                'toBucket': bucket,
+                'fromBucket': bucket,
+                'toCluster': name
+            }
+            if self.settings.replication_mode:
+                params['type'] = self.settings.replication_mode
+            self.rest.start_replication(m1, params)
 
     def init_xdcr(self):
-        xdcr_settings = self.test_config.get_xdcr_settings()
-
         m1, m2 = self.cluster_spec.get_masters().values()
 
-        if xdcr_settings.replication_type == 'unidir':
+        if self.settings.replication_type == 'unidir':
             self._start_replication(m1, m2)
-        if xdcr_settings.replication_type == 'bidir':
+        if self.settings.replication_type == 'bidir':
             self._start_replication(m1, m2)
             self._start_replication(m2, m1)
 

@@ -113,7 +113,8 @@ class XdcrTuningTest(XdcrInitTest):
 
     def run(self):
         super(XdcrTuningTest, self).run()
-        self.reporter.post_to_sf(
-            *self.metric_helper.calc_avg_cpu_utilization(),
-            metric='avg_cpu_utilization_rate'
-        )
+        for cluster, value in self.metric_helper.calc_cpu_utilization().items():
+            self.reporter.post_to_sf(
+                value=value,
+                metric='{0}_avg_cpu_utilization_rate'.format(cluster)
+            )

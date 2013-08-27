@@ -134,7 +134,7 @@ class MetricHelper(object):
 
         return latency, metric, metric_info
 
-    def calc_avg_cpu_utilization(self):
+    def calc_cpu_utilization(self):
         cpu_utilazion = dict()
         params = {'group': 1000000000000,
                   'ptr': '/cpu_utilization_rate', 'reducer': 'avg'}

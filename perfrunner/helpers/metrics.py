@@ -137,7 +137,7 @@ class MetricHelper(object):
         cpu_utilazion = dict()
         params = {'group': 1000000000000,
                   'ptr': '/cpu_utilization_rate', 'reducer': 'avg'}
-        for cluster, master_host in self.cluster_spec.get_masters():
+        for cluster, master_host in self.cluster_spec.get_masters().items():
             host = master_host.split(':')[0].replace('.', '')
             for bucket in self.test_config.get_buckets():
                 db = 'ns_server{0}{1}{2}'.format(cluster, bucket, host)

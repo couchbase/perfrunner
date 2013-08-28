@@ -31,10 +31,9 @@ class LatencyTest(KVTest):
     def run(self):
         super(LatencyTest, self).run()
         for operation in ('get', 'set'):
-            for percentile in (0.9, 0.95, 0.99):
-                self.reporter.post_to_sf(
-                    *self.metric_helper.calc_kv_latency(operation=operation,
-                                                        percentile=percentile)
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_kv_latency(operation=operation,
+                                                    percentile=0.9)
             )
 
 

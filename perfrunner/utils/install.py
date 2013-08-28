@@ -35,26 +35,32 @@ class Installer(RemoteHelper):
         super(Installer, self).__init__(cluster_spec)
         self.cluster_spec = cluster_spec
         self.build = build
-        self.filename = self.get_expected_filename(build)
-        self.url = self.get_url()
 
-    @staticmethod
-    def get_expected_filename(build):
-        if build.toy:
-            return 'couchbase-server-community_toy-{0}-{1}_{2}-toy.{3}'.format(
-                build.toy, build.arch, build.version, build.pkg
+    def get_expected_filenames(self):
+        if self.build.toy:
+            return (
+                'couchbase-server-community_toy-{0}-{1}_{2}-toy.{3}'.format(
+                    self.build.toy, self.build.arch, self.build.version, self.build.pkg),
+                'couchbase-server-community_toy-{0}-{1}-toy_{2}.{3}'.format(
+                    self.build.toy, self.build.version, self.build.arch, self.build.pkg),
             )
         else:
-            return 'couchbase-server-enterprise_{0}_{1}-rel.{2}'.format(
-                build.arch, build.version, build.pkg
+            return (
+                'couchbase-server-enterprise_{0}_{1}-rel.{2}'.format(
+                    self.build.arch, self.build.version, self.build.pkg),
+                'couchbase-server-enterprise_{0}-rel_{1}.{2}'.format(
+                    self.build.version, self.build.arch, self.build.pkg),
             )
 
-    def get_url(self):
-        for base in (self.CBFS, self.LATEST_BUILDS):
-            url = '{0}{1}'.format(base, self.filename)
-            if requests.head(url).status_code == 200:
-                logger.info('Found "{0}"'.format(url))
-                return url
+    def find_package(self):
+        for filename in self.get_expected_filenames():
+            for base in (self.CBFS, self.LATEST_BUILDS):
+                url = '{0}{1}'.format(base, filename)
+                if requests.head(url).status_code == 200:
+                    logger.info('Found "{0}"'.format(url))
+                    self.filename = filename
+                    self.url = url
+                    return
         logger.interrupt('Target build not found')
 
     def uninstall_package(self):
@@ -67,6 +73,7 @@ class Installer(RemoteHelper):
         raise NotImplementedError
 
     def install(self):
+        self.find_package()
         self.uninstall_package()
         self.clean_data_path()
         self.install_package()

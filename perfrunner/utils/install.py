@@ -54,7 +54,7 @@ class Installer(RemoteHelper):
                 'couchbase-server-enterprise_{version}-rel_{arch}.{pkg}'
             )
         for pattern in patterns:
-            yield pattern.format(**self.build.__dict__)
+            yield pattern.format(**dict(zip(self.build._fields, self.build)))
 
     def find_package(self):
         for filename in self.get_expected_filenames():

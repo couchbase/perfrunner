@@ -58,9 +58,10 @@ class RemoteHelper(object):
         return self.ARCH[arch]
 
     @single_host
-    def detect_openssl(self):
+    def detect_openssl(self, pkg):
         logger.info('Detecting openssl version')
-        return run('rpm -q --qf "%{VERSION}" openssl.x86_64')
+        if pkg == 'rpm':
+            return run('rpm -q --qf "%{VERSION}" openssl.x86_64')
 
     @all_hosts
     def reset_swap(self):

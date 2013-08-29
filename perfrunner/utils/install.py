@@ -9,7 +9,7 @@ from logger import logger
 from perfrunner.helpers.remote import RemoteHelper, all_hosts
 from perfrunner.settings import ClusterSpec
 
-Build = namedtuple('Build', ['arch', 'pkg', 'openssl', 'version', 'toy'])
+Build = namedtuple('Build', ['arch', 'pkg', 'version', 'openssl', 'toy'])
 
 
 class CouchbaseInstaller(object):
@@ -18,8 +18,8 @@ class CouchbaseInstaller(object):
         remote_helper = RemoteHelper(cluster_spec)
         arch = remote_helper.detect_arch()
         pkg = remote_helper.detect_pkg()
-        openssl = remote_helper.detect_openssl()
-        build = Build(arch, pkg, openssl, options.version, options.toy)
+        openssl = remote_helper.detect_openssl(pkg)
+        build = Build(arch, pkg, options.version, openssl, options.toy)
 
         if pkg == 'setup.exe':
             return WindowsInstaller(build, cluster_spec)

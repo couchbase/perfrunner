@@ -9,7 +9,7 @@ from logger import logger
 from perfrunner.helpers.remote import RemoteHelper, all_hosts
 from perfrunner.settings import ClusterSpec
 
-Build = namedtuple('Build', ['arch', 'pkg', 'version', 'toy'])
+Build = namedtuple('Build', ['arch', 'pkg', 'openssl', 'version', 'toy'])
 
 
 class CouchbaseInstaller(object):
@@ -18,7 +18,8 @@ class CouchbaseInstaller(object):
         remote_helper = RemoteHelper(cluster_spec)
         arch = remote_helper.detect_arch()
         pkg = remote_helper.detect_pkg()
-        build = Build(arch, pkg, options.version, options.toy)
+        openssl = remote_helper.detect_openssl()
+        build = Build(arch, pkg, openssl, options.version, options.toy)
 
         if pkg == 'setup.exe':
             return WindowsInstaller(build, cluster_spec)
@@ -38,19 +39,22 @@ class Installer(RemoteHelper):
 
     def get_expected_filenames(self):
         if self.build.toy:
-            return (
-                'couchbase-server-community_toy-{0}-{1}_{2}-toy.{3}'.format(
-                    self.build.toy, self.build.arch, self.build.version, self.build.pkg),
-                'couchbase-server-community_toy-{0}-{1}-toy_{2}.{3}'.format(
-                    self.build.toy, self.build.version, self.build.arch, self.build.pkg),
+            patterns = (
+                'couchbase-server-community_toy-{toy}-{arch}_{version}-toy.{pkg}',
+                'couchbase-server-community_toy-{toy}-{version}-toy_{arch}.{pkg}'
+            )
+        elif self.build.openssl == '0.9.8e':
+            patterns = (
+                'couchbase-server-enterprise_{arch}_{version}-rel.{pkg}',
+                'couchbase-server-enterprise_{version}-rel_{arch}_openssl098.{pkg}'
             )
         else:
-            return (
-                'couchbase-server-enterprise_{0}_{1}-rel.{2}'.format(
-                    self.build.arch, self.build.version, self.build.pkg),
-                'couchbase-server-enterprise_{0}-rel_{1}.{2}'.format(
-                    self.build.version, self.build.arch, self.build.pkg),
+            patterns = (
+                'couchbase-server-enterprise_{arch}_{version}-rel.{pkg}',
+                'couchbase-server-enterprise_{version}-rel_{arch}.{pkg}'
             )
+        for pattern in patterns:
+            yield pattern.format(**self.build.__dict__)
 
     def find_package(self):
         for filename in self.get_expected_filenames():

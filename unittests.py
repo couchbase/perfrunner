@@ -11,7 +11,7 @@ class InstallTest(TestCase):
     def test_normal_pacakge(self, installer_mock):
         installer_mock.return_value = None
         installer = Installer()
-        installer.build = Build('x86_64', 'rpm', '1.0.0', '2.0.0-1976', None)
+        installer.build = Build('x86_64', 'rpm', '2.0.0-1976', '1.0.0', None)
 
         filenames = tuple(installer.get_expected_filenames())
         expected = (
@@ -24,7 +24,7 @@ class InstallTest(TestCase):
     def test_toy_pacakge(self, installer_mock):
         installer_mock.return_value = None
         installer = Installer()
-        installer.build = Build('x86_64', 'rpm', '1.0.0', '2.0.0-1976', 'mytoy')
+        installer.build = Build('x86_64', 'rpm', '2.0.0-1976', '1.0.0', 'mytoy')
 
         filenames = tuple(installer.get_expected_filenames())
         expected = (
@@ -37,7 +37,7 @@ class InstallTest(TestCase):
     def test_openssl_pacakge(self, installer_mock):
         installer_mock.return_value = None
         installer = Installer()
-        installer.build = Build('x86_64', 'rpm', '0.9.8e', '2.2.0-817', None)
+        installer.build = Build('x86_64', 'rpm', '2.2.0-817', '0.9.8e', None)
 
         filenames = tuple(installer.get_expected_filenames())
         expected = (

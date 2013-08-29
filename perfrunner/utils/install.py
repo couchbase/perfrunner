@@ -21,6 +21,8 @@ class CouchbaseInstaller(object):
         openssl = remote_helper.detect_openssl(pkg)
         build = Build(arch, pkg, options.version, openssl, options.toy)
 
+        logger.info('Target build info: {0}'.format(build))
+
         if pkg == 'setup.exe':
             return WindowsInstaller(build, cluster_spec)
         else:

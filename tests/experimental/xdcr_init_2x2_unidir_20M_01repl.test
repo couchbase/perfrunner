@@ -6,6 +6,7 @@ larger_is_better = true
 
 [stats]
 post_to_sf = 0
+report = BaseXdcrReport
 
 [cluster]
 mem_quota = 81920

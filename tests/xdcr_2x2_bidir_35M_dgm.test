@@ -4,6 +4,9 @@ class = XdcrTest
 descr = 2 <-> 2 BiDir, 1 bucket x 35M x 2KB, DGM
 larger_is_better = false
 
+[stats]
+report = BaseXdcrReport
+
 [cluster]
 mem_quota = 81920
 initial_nodes = 2

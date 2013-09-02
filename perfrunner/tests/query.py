@@ -1,4 +1,4 @@
-from multiprocessing import Event, Process
+from multiprocessing import Process
 
 from logger import logger
 

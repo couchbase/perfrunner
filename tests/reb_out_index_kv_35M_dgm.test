@@ -1,6 +1,6 @@
 [test_case]
 module = perfrunner.tests.rebalance
-class = DynamicRebalanceWithIndexTest
+class = DynamicRebalanceWithQueriesTest
 descr = Rebalance-out (min), 4 -> 3, 1 bucket x 35M x 2KB, DGM
 larger_is_better = false
 
@@ -32,6 +32,7 @@ query_throughput = 400
 items = 35000000
 size = 2048
 workers = 24
+query_workers = 12
 working_set = 30
 working_set_access = 98
 

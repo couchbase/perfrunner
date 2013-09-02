@@ -5,6 +5,7 @@ from logger import logger
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import PerfTest
 from perfrunner.tests.index import IndexTest
+from perfrunner.tests.query import QueryTest
 
 
 def with_delay(rebalance):
@@ -100,7 +101,7 @@ class DynamicRebalanceTest(RebalanceTest):
         self.shutdown_event.set()
 
 
-class DynamicRebalanceWithIndexTest(IndexTest, RebalanceTest):
+class DynamicRebalanceWithQueriesTest(QueryTest, RebalanceTest):
 
     def run(self):
         self.load()

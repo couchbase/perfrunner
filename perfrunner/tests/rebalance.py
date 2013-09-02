@@ -98,3 +98,21 @@ class DynamicRebalanceTest(RebalanceTest):
         self.access_bg()
         self.rebalance()
         self.shutdown_event.set()
+
+
+class DynamicRebalanceWithIndexTest(IndexTest, RebalanceTest):
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.hot_load()
+        self.wait_for_persistence()
+        self.compact_bucket()
+
+        self.define_ddocs()
+        self.build_index()
+
+        self.access_bg()
+        self.rebalance()
+        self.shutdown_event.set()

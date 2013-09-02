@@ -38,7 +38,7 @@ class MetricHelper(object):
             db = 'ns_server{0}{1}'.format(self.cluster_names[1], bucket)
             data = self.seriesly[db].query(params)
             xdcr_ops += data.values()[0][0]
-        xdcr_ops = round(xdcr_ops / 1000, 1)
+        xdcr_ops = round(xdcr_ops, 1)
 
         return xdcr_ops, metric, metric_info
 
@@ -57,7 +57,7 @@ class MetricHelper(object):
             db = 'ns_server{0}{1}'.format(self.cluster_names[1], bucket)
             data = self.seriesly[db].query(params)
             set_meta_ops += data.values()[0][0]
-        set_meta_ops = round(set_meta_ops / 1000, 1)
+        set_meta_ops = round(set_meta_ops, 1)
 
         return set_meta_ops, metric, metric_info
 

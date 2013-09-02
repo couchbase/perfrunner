@@ -4,9 +4,6 @@ class = LatencyTest
 descr = latency (ms), write-heavy, 1 bucket x 35M x 2KB
 larger_is_better = true
 
-[stats]
-post_to_sf = 0
-
 [cluster]
 mem_quota = 40960
 initial_nodes = 4
@@ -27,7 +24,7 @@ creates = 3
 reads = 20
 updates = 74
 deletes = 3
-throughput = 4000
+throughput = 8000
 items = 35000000
 size = 2048
 working_set = 30

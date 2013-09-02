@@ -24,6 +24,43 @@ class MetricHelper(object):
         else:
             return data[int(f)] * (c - k) + data[int(c)] * (k - f)
 
+    def calc_avg_xdcr_ops(self):
+        metric = '{0}_avg_xdcr_ops_{1}'.format(self.test_config.name,
+                                               self.cluster_spec.name)
+        descr = 'Avg. XDCR ops/sec, {0}'.format(
+            self.test_config.get_test_descr())
+        metric_info = {'title': descr, 'cluster': self.cluster_spec.name,
+                       'larger_is_better': 'true'}
+        params = {'group': 1000000000000, 'ptr': '/xdc_ops', 'reducer': 'avg'}
+
+        xdcr_ops = 0
+        for bucket in self.test_config.get_buckets():
+            db = 'ns_server{0}{1}'.format(self.cluster_names[1], bucket)
+            data = self.seriesly[db].query(params)
+            xdcr_ops += data.values()[0][0]
+        xdcr_ops = round(xdcr_ops / 1000, 1)
+
+        return xdcr_ops, metric, metric_info
+
+    def calc_avg_set_meta_ops(self):
+        metric = '{0}_avg_set_meta_ops_{1}'.format(self.test_config.name,
+                                                   self.cluster_spec.name)
+        descr = 'Avg. setMeta ops/sec, {0}'.format(
+            self.test_config.get_test_descr())
+        metric_info = {'title': descr, 'cluster': self.cluster_spec.name,
+                       'larger_is_better': 'true'}
+        params = {'group': 1000000000000, 'ptr': '/ep_num_ops_set_meta',
+                  'reducer': 'avg'}
+
+        set_meta_ops = 0
+        for bucket in self.test_config.get_buckets():
+            db = 'ns_server{0}{1}'.format(self.cluster_names[1], bucket)
+            data = self.seriesly[db].query(params)
+            set_meta_ops += data.values()[0][0]
+        set_meta_ops = round(set_meta_ops / 1000, 1)
+
+        return set_meta_ops, metric, metric_info
+
     def calc_max_xdcr_lag(self):
         metric = '{0}_max_xdc_lag_{1}'.format(self.test_config.name,
                                               self.cluster_spec.name)

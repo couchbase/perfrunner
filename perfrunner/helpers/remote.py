@@ -96,7 +96,7 @@ class RemoteLinuxHelper(object):
     def collect_info(self):
         logger.info('Running cbcollect_info')
         fname = '/tmp/{0}.zip'.format(uuid4().hex)
-        r = run('{0}/bin/cbcollect_info {0}'.format(self.ROOT_DIR, fname),
+        r = run('{0}/bin/cbcollect_info {1}'.format(self.ROOT_DIR, fname),
                 warn_only=True)
         if not r.return_code:
             get('{0}'.format(fname))

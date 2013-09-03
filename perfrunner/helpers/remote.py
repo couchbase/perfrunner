@@ -95,6 +95,9 @@ class RemoteLinuxHelper(object):
     @all_hosts
     def collect_info(self):
         logger.info('Running cbcollect_info')
+
+        run('rm -f /tmp/*.zip')
+
         fname = '/tmp/{0}.zip'.format(uuid4().hex)
         r = run('{0}/bin/cbcollect_info {1}'.format(self.ROOT_DIR, fname),
                 warn_only=True)
@@ -158,11 +161,14 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
     @all_hosts
     def collect_info(self):
         logger.info('Running cbcollect_info')
-        fname = '/tmp/{0}.zip'.format(uuid4().hex)
-        r = run('{0}/bin/cbcollect_info.exe {1}'.format(self.ROOT_DIR, fname),
+
+        run('rm -f /cygdrive/c/*.zip')
+
+        fname = '{0}.zip'.format(uuid4().hex)
+        r = run('{0}/bin/cbcollect_info.exe c:\\{1}'.format(self.ROOT_DIR, fname),
                 warn_only=True)
         if not r.return_code:
-            get('{0}'.format(fname))
+            get('/cygdrive/c/{0}'.format(fname))
             run('rm -f {0}'.format(fname))
 
     @all_hosts

@@ -29,13 +29,13 @@ class CouchbaseInstaller(object):
             return LinuxInstaller(build, cluster_spec)
 
 
-class Installer(RemoteHelper):
+class Installer(object):
 
     CBFS = 'http://cbfs-ext.hq.couchbase.com/builds/'
     LATEST_BUILDS = 'http://builds.hq.northscale.net/latestbuilds/'
 
     def __init__(self, build, cluster_spec):
-        super(Installer, self).__init__(cluster_spec)
+        self.remote_helper = RemoteHelper(cluster_spec)
         self.cluster_spec = cluster_spec
         self.build = build
 
@@ -103,7 +103,7 @@ class LinuxInstaller(Installer):
 
     @all_hosts
     def install_package(self):
-        self.wget(self.url, outdir='/tmp')
+        self.remote_helper.wget(self.url, outdir='/tmp')
 
         logger.info('Installing Couchbase Server on Linux')
         if self.build.pkg == 'deb':
@@ -128,9 +128,9 @@ class WindowsInstaller(Installer):
     def uninstall_package(self):
         logger.info('Uninstalling Couchbase Server on Windows')
 
-        if self.exists(self.VERSION_FILE):
+        if self.remote_helper.exists(self.VERSION_FILE):
             run('./setup.exe -s -f1"C:\\uninstall.iss"')
-        while self.exists(self.VERSION_FILE):
+        while self.remote_helper.exists(self.VERSION_FILE):
             time.sleep(5)
         time.sleep(30)
 
@@ -149,7 +149,7 @@ class WindowsInstaller(Installer):
     @all_hosts
     def install_package(self):
         run('rm -fr setup.exe')
-        self.wget(self.url, outfile='setup.exe')
+        self.remote_helper.wget(self.url, outfile='setup.exe')
         run('chmod +x setup.exe')
 
         self.put_iss_files()
@@ -157,7 +157,7 @@ class WindowsInstaller(Installer):
         logger.info('Installing Couchbase Server on Windows')
 
         run('./setup.exe -s -f1"C:\\install.iss"')
-        while not self.exists(self.VERSION_FILE):
+        while not self.remote_helper.exists(self.VERSION_FILE):
             time.sleep(5)
         time.sleep(60)
 

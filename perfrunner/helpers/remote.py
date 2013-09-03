@@ -23,6 +23,10 @@ class RemoteHelper(object):
     ARCH = {'i386': 'x86', 'x86_64': 'x86_64', 'unknown': 'x86_64'}
 
     def __new__(cls, cluster_spec):
+        state.env.user, state.env.password = cluster_spec.get_ssh_credentials()
+        state.output.running = False
+        state.output.stdout = False
+
         os = cls.detect_os(cluster_spec)
         if os == 'Cygwin':
             return RemoteWindowsHelper(cluster_spec, os)
@@ -48,9 +52,6 @@ class RemoteLinuxHelper(object):
     def __init__(self, cluster_spec, os):
         self.os = os
         self.hosts = cluster_spec.get_all_hosts()
-        state.env.user, state.env.password = cluster_spec.get_ssh_credentials()
-        state.output.running = False
-        state.output.stdout = False
 
     def wget(self, url, outdir='/tmp', outfile=None):
         logger.info('Fetching {0}'.format(url))

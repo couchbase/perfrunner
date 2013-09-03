@@ -88,7 +88,7 @@ class StaticRebalanceWithIndexTest(IndexTest, RebalanceTest):
         self.rebalance()
 
 
-class RebalanceTest(RebalanceTest):
+class RebalanceKVTest(RebalanceTest):
 
     def run(self):
         self.load()
@@ -140,7 +140,7 @@ class RebalanceWithXdcrTest(XdcrTest, RebalanceTest):
         bg_process.terminate()
 
 
-class RebalanceWithSymmetricXdcrTestTest(SymmetricXdcrTest, RebalanceTest):
+class RebalanceWithSymmetricXdcrTest(SymmetricXdcrTest, RebalanceTest):
 
     def run(self):
         self.load()

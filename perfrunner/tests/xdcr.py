@@ -1,3 +1,5 @@
+from threading import Thread
+
 from logger import logger
 
 from perfrunner.helpers.cbmonitor import with_stats
@@ -82,8 +84,16 @@ class SymmetricXdcrTest(XdcrTest):
 class TimeDrivenXdcrTest(SymmetricXdcrTest):
 
     def access(self):
-        super(XdcrTest, self).access()
         super(XdcrTest, self).timer()
+
+    def access_bg(self):
+        access_settings = self.test_config.get_access_settings()
+        logger.info('Running access phase in background: {0}'.format(
+            access_settings))
+        Thread(
+            target=self.worker_manager.run_workload,
+            args=(access_settings, self.target_iterator, self.shutdown_event)
+        ).start()
 
     def run(self):
         self.load()

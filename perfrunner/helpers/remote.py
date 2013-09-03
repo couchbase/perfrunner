@@ -20,8 +20,6 @@ def single_host(task):
 
 class RemoteHelper(object):
 
-    ARCH = {'i386': 'x86', 'x86_64': 'x86_64', 'unknown': 'x86_64'}
-
     def __new__(cls, cluster_spec):
         state.env.user, state.env.password = cluster_spec.get_ssh_credentials()
         state.output.running = False
@@ -46,6 +44,8 @@ class RemoteHelper(object):
 
 
 class RemoteLinuxHelper(object):
+
+    ARCH = {'i386': 'x86', 'x86_64': 'x86_64', 'unknown': 'x86_64'}
 
     ROOT_DIR = '/opt/couchbase'
 

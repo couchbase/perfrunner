@@ -1,6 +1,6 @@
 [test_case]
 module = perfrunner.tests.xdcr
-class = TimeDrivenXdcrTest
+class = SymmetricXdcrTest
 descr = 2 -> 2 UniDir, 1 bucket x 1M x 2KB
 larger_is_better = false
 

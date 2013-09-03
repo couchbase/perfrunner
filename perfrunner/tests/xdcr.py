@@ -1,5 +1,3 @@
-from threading import Thread
-
 from logger import logger
 
 from perfrunner.helpers.cbmonitor import with_stats
@@ -13,6 +11,7 @@ class XdcrTest(PerfTest):
     def __init__(self, *args, **kwargs):
         super(XdcrTest, self).__init__(*args, **kwargs)
         self.settings = self.test_config.get_xdcr_settings()
+        self.shutdown_event = None
 
     def _start_replication(self, m1, m2):
         name = target_hash(m1, m2)
@@ -43,7 +42,7 @@ class XdcrTest(PerfTest):
 
     @with_stats(xdcr_lag=True)
     def access(self):
-        super(XdcrTest, self).access()
+        super(XdcrTest, self).timer()
 
     def run(self):
         self.load()
@@ -57,7 +56,10 @@ class XdcrTest(PerfTest):
 
         self.compact_bucket()
 
+        bg_process = self.access_bg()
         self.access()
+        bg_process.terminate()
+
         self.reporter.post_to_sf(
             *self.metric_helper.calc_max_replication_changes_left()
         )
@@ -79,31 +81,6 @@ class SymmetricXdcrTest(XdcrTest):
         self.target_iterator = TargetIterator(self.cluster_spec,
                                               self.test_config,
                                               prefix="symmetric")
-
-
-class TimeDrivenXdcrTest(SymmetricXdcrTest):
-
-    def access(self):
-        super(XdcrTest, self).timer()
-
-    def access_bg(self):
-        access_settings = self.test_config.get_access_settings()
-        logger.info('Running access phase in background: {0}'.format(
-            access_settings))
-        Thread(
-            target=self.worker_manager.run_workload,
-            args=(access_settings, self.target_iterator, self.shutdown_event)
-        ).start()
-
-    def run(self):
-        self.load()
-        self.wait_for_persistence()
-
-        self.init_xdcr()
-        self.wait_for_persistence()
-
-        self.access_bg()
-        self.access()
 
 
 class SrcTargetIterator(TargetIterator):

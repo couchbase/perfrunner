@@ -102,6 +102,7 @@ class RemoteLinuxHelper(object):
             get('{0}'.format(fname))
             run('rm -f {0}'.format(fname))
 
+    @all_hosts
     def clean_data(self):
         for path in self.cluster_spec.get_paths():
             run('rm -fr {0}/*'.format(path))
@@ -164,6 +165,7 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
             get('{0}'.format(fname))
             run('rm -f {0}'.format(fname))
 
+    @all_hosts
     def clean_data(self):
         for path in self.cluster_spec.get_paths():
             path = path.replace(':', '').replace('\\', '/')

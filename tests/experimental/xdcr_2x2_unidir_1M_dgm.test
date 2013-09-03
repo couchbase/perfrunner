@@ -1,0 +1,33 @@
+[test_case]
+module = perfrunner.tests.xdcr
+class = TimeDrivenXdcrTest
+descr = 2 -> 2 UniDir, 1 bucket x 1M x 2KB
+larger_is_better = false
+
+[stats]
+report = BaseXdcrReport
+post_to_sf = 0
+
+[cluster]
+mem_quota = 8192
+initial_nodes = 2
+num_buckets = 1
+
+[load]
+ops = 1000000
+size = 2048
+workers = 12
+
+[xdcr]
+replication_type = unidir
+
+[access]
+creates = 5
+reads = 50
+updates = 40
+deletes = 5
+throughput = 1000
+items = 1000000
+size = 2048
+workers = 4
+time=300

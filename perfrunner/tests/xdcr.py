@@ -79,6 +79,23 @@ class SymmetricXdcrTest(XdcrTest):
                                               prefix="symmetric")
 
 
+class TimeDrivenXdcrTest(SymmetricXdcrTest):
+
+    def access(self):
+        super(XdcrTest, self).access()
+        super(XdcrTest, self).timer()
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.init_xdcr()
+        self.wait_for_persistence()
+
+        self.access_bg()
+        self.access()
+
+
 class SrcTargetIterator(TargetIterator):
 
     def __iter__(self):

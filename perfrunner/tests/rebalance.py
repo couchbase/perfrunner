@@ -40,7 +40,7 @@ class RebalanceTest(PerfTest):
     def __init__(self, *args, **kwargs):
         super(RebalanceTest, self).__init__(*args, **kwargs)
         self.rebalance_settings = self.test_config.get_rebalance_settings()
-        self.servers = self.cluster_spec.get_masters().values()[-1]
+        self.servers = self.cluster_spec.get_clusters().values()[-1]
 
     @with_stats()
     @with_delay

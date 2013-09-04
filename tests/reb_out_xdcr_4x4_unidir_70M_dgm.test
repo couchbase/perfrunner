@@ -1,0 +1,40 @@
+[test_case]
+module = perfrunner.tests.rebalance
+class = RebalanceWithSymmetricXdcrTest
+descr = Rebalance-out (min), 4->4 -> 4->3 UniDir, 1 bucket x 70M x 2KB, DGM
+larger_is_better = false
+
+[cluster]
+mem_quota = 81920
+initial_nodes = 4
+num_buckets = 1
+
+[load]
+ops = 70000000
+size = 2048
+workers = 12
+
+[hot_load]
+items = 70000000
+workers = 24
+working_set = 30
+
+[xdcr]
+replication_type = unidir
+
+[access]
+creates = 5
+reads = 50
+updates = 40
+deletes = 5
+throughput = 10000
+items = 70000000
+size = 2048
+workers = 24
+working_set = 30
+working_set_access = 98
+
+[rebalance]
+nodes_after = 3
+start_after = 1200
+stop_after = 1200

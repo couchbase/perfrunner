@@ -1,4 +1,5 @@
 import time
+from decorator import decorator
 from uuid import uuid4
 
 from fabric import state
@@ -6,17 +7,17 @@ from fabric.api import execute, get, put, run, parallel, settings
 from logger import logger
 
 
-def all_hosts(task):
-    def wrapper(self, *args, **kargs):
-        return execute(parallel(task), self, *args, hosts=self.hosts, **kargs)
-    return wrapper
+@decorator
+def all_hosts(task, *args, **kargs):
+    self = args[0]
+    return execute(parallel(task), *args, hosts=self.hosts, **kargs)
 
 
-def single_host(task):
-    def wrapper(self, *args, **kargs):
-        with settings(host_string=self.hosts[0]):
-            return task(self, *args, **kargs)
-    return wrapper
+@decorator
+def single_host(task, *args, **kargs):
+    self = args[0]
+    with settings(host_string=self.hosts[0]):
+        return task(*args, **kargs)
 
 
 class RemoteHelper(object):

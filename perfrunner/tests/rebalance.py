@@ -1,4 +1,5 @@
 import time
+from decorator import decorator
 
 from logger import logger
 
@@ -9,30 +10,32 @@ from perfrunner.tests.query import QueryTest
 from perfrunner.tests.xdcr import XdcrTest, SymmetricXdcrTest
 
 
-def with_delay(rebalance):
-    def wrapper(self, *args, **kwargs):
-        time.sleep(self.rebalance_settings.start_after)
+@decorator
+def with_delay(rebalance, *args, **kwargs):
+    test = args[0]
 
-        rebalance(self, *args, **kwargs)
+    time.sleep(test.rebalance_settings.start_after)
 
-        time.sleep(self.rebalance_settings.stop_after)
-    return wrapper
+    rebalance(*args, **kwargs)
+
+    time.sleep(test.rebalance_settings.stop_after)
 
 
-def with_reporter(rebalance):
-    def wrapper(self, *args, **kwargs):
-        self.reporter.reset_utilzation_stats()
+@decorator
+def with_reporter(rebalance, *args, **kwargs):
+    test = args[0]
 
-        self.reporter.start()
+    test.reporter.reset_utilzation_stats()
 
-        rebalance(self, *args, **kwargs)
+    test.reporter.start()
 
-        value = self.reporter.finish('Rebalance')
-        self.reporter.post_to_sf(value)
+    rebalance(*args, **kwargs)
 
-        self.reporter.save_utilzation_stats()
-        self.reporter.save_master_events()
-    return wrapper
+    value = test.reporter.finish('Rebalance')
+    test.reporter.post_to_sf(value)
+
+    test.reporter.save_utilzation_stats()
+    test.reporter.save_master_events()
 
 
 class RebalanceTest(PerfTest):

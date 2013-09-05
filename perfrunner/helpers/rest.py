@@ -1,37 +1,38 @@
 import json
 import time
 from collections import namedtuple
+from decorator import decorator
 
 import requests
 from requests.exceptions import ConnectionError
 from logger import logger
 
 
-def retry(method):
-        def wrapper(self, **kwargs):
-            r = namedtuple('request', ['url'])('')
-            for retry in range(self.MAX_RETRY):
-                try:
-                    r = method(self, **kwargs)
-                except ConnectionError:
-                    time.sleep(self.RETRY_DELAY * 2)
-                    continue
-                if r.status_code in range(200, 203):
-                    return r
-                else:
-                    logger.warn(r.text)
-                    logger.warn('Retrying {0}'.format(r.url))
-                    time.sleep(self.RETRY_DELAY)
-            logger.interrupt('Request {0} failed after {1} attempts'.format(
-                r.url, self.MAX_RETRY
-            ))
-        return wrapper
-
-
-class RestHelper(object):
+@decorator
+def retry(method, *args, **kwargs):
 
     MAX_RETRY = 5
     RETRY_DELAY = 5
+
+    r = namedtuple('request', ['url'])('')
+    for retry in range(MAX_RETRY):
+        try:
+            r = method(*args, **kwargs)
+        except ConnectionError:
+            time.sleep(RETRY_DELAY * 2)
+            continue
+        if r.status_code in range(200, 203):
+            return r
+        else:
+            logger.warn(r.text)
+            logger.warn('Retrying {0}'.format(r.url))
+            time.sleep(RETRY_DELAY)
+    logger.interrupt('Request {0} failed after {1} attempts'.format(
+        r.url, MAX_RETRY
+    ))
+
+
+class RestHelper(object):
 
     def __init__(self, cluster_spec):
         self.rest_username, self.rest_password = \

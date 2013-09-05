@@ -1,6 +1,7 @@
 import pytz
 from copy import copy
 from datetime import datetime
+from decorator import decorator
 from multiprocessing import Process
 from time import time
 from uuid import uuid4
@@ -16,21 +17,19 @@ from perfrunner.settings import CbAgentSettings
 
 
 def with_stats(latency=False, query_latency=False, xdcr_lag=False):
-    def outer_wrapper(method):
-        def inner_wrapper(self, *args, **kwargs):
-            self.cbagent.prepare_collectors(self, latency, query_latency,
-                                            xdcr_lag)
+    def with_stats(method, *args, **kwargs):
+        test = args[0]
 
-            self.cbagent.update_metadata()
+        test.cbagent.prepare_collectors(test, latency, query_latency, xdcr_lag)
+        test.cbagent.update_metadata()
 
-            from_ts = self.cbagent.start()
-            method(self, *args, **kwargs)
-            to_ts = self.cbagent.stop()
+        from_ts = test.cbagent.start()
+        method(*args, **kwargs)
+        to_ts = test.cbagent.stop()
 
-            report = self.test_config.get_stats_settings().report
-            self.cbagent.add_snapshot(method.__name__, from_ts, to_ts, report)
-        return inner_wrapper
-    return outer_wrapper
+        report = test.test_config.get_stats_settings().report
+        test.cbagent.add_snapshot(method.__name__, from_ts, to_ts, report)
+    return decorator(with_stats)
 
 
 class CbAgent(object):

@@ -1,5 +1,6 @@
 import os.path
 from ConfigParser import SafeConfigParser, NoOptionError, NoSectionError
+from decorator import decorator
 from operator import add
 
 from logger import logger
@@ -23,13 +24,12 @@ class CbAgentSettings(object):
     update_metadata = True
 
 
-def safe(method):
-    def wrapper(*args, **kargs):
-        try:
-            return method(*args, **kargs)
-        except (NoSectionError, NoOptionError), e:
-            logger.warn('Failed to get option from config: {0}'.format(e))
-    return wrapper
+@decorator
+def safe(method, *args, **kargs):
+    try:
+        return method(*args, **kargs)
+    except (NoSectionError, NoOptionError), e:
+        logger.warn('Failed to get option from config: {0}'.format(e))
 
 
 class Config(object):

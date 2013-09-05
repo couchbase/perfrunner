@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.rebalance
 class = RebalanceWithQueriesTest
-descr = Rebalance-out (min), 4 -> 3, 1 bucket x 70M x 2KB, DGM, 1 x 5 views
+descr = Rebalance-out (min), 4 -> 3, 1 bucket x 70M x 2KB, DGM, 1 x 1 views
 larger_is_better = false
 
 [cluster]
@@ -20,7 +20,7 @@ workers = 24
 working_set = 30
 
 [index]
-views = [5]
+views = [1]
 
 [access]
 creates = 5

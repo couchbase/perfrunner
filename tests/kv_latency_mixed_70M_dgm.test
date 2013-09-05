@@ -4,6 +4,9 @@ class = LatencyTest
 descr = latency (ms), mixed, 1 bucket x 70M x 2KB
 larger_is_better = true
 
+[stats]
+report = BaseKVReport
+
 [cluster]
 mem_quota = 81920
 initial_nodes = 4

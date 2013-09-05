@@ -4,6 +4,9 @@ class = RebalanceWithQueriesTest
 descr = Rebalance-in (min), 3 -> 4, 1 bucket x 35M x 2KB, DGM, 1 x 1 views
 larger_is_better = false
 
+[stats]
+report = BaseRebalanceViewsReport
+
 [cluster]
 mem_quota = 40960
 initial_nodes = 3

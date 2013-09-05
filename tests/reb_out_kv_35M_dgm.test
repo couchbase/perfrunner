@@ -4,6 +4,9 @@ class = RebalanceKVTest
 descr = Rebalance-out (min), 4 -> 3, 1 bucket x 35M x 2KB, DGM
 larger_is_better = false
 
+[stats]
+report = BaseRebalanceReport
+
 [cluster]
 mem_quota = 40960
 initial_nodes = 4

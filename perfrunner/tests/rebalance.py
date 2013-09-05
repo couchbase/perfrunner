@@ -45,7 +45,7 @@ class RebalanceTest(PerfTest):
         self.rebalance_settings = self.test_config.get_rebalance_settings()
         self.servers = self.cluster_spec.get_clusters().values()[-1]
 
-    @with_stats()
+    @with_stats(active_tasks=True)
     @with_delay
     @with_reporter
     def rebalance(self):

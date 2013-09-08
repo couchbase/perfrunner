@@ -1,0 +1,25 @@
+[test_case]
+module = perfrunner.tests.xdcr
+class = XdcrInitTest
+descr = Avg. initial XDCR rate (items/sec), 2 <-> 2 BiDir, 1 bucket x 20M x 2KB, DGM, no compaction
+larger_is_better = true
+
+[stats]
+report = BaseXdcrReport
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 2
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[load]
+ops = 20000000
+size = 2048
+workers = 12
+
+[xdcr]
+replication_type = bidir

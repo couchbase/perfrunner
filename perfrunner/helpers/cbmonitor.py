@@ -30,9 +30,8 @@ def with_stats(latency=False, query_latency=False, xdcr_lag=False,
         to_ts = test.cbagent.stop()
 
         report = test.test_config.get_stats_settings().report
-        test.reports = test.cbagent.add_snapshot(method.__name__,
-                                                 from_ts, to_ts,
-                                                 report)
+        test.cbagent.add_snapshot(method.__name__, from_ts, to_ts, report)
+        test.reports = test.cbagent.reports
     return decorator(with_stats)
 
 

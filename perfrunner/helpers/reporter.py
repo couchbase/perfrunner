@@ -79,6 +79,7 @@ class SFReporter(object):
         master_node = self.test.cluster_spec.get_masters().values()[0]
         build = self.test.rest.get_version(master_node)
         data = {'build': build, 'metric': metric, 'value': value}
+        data.update(self.test.reports)
         return key, data
 
     def _mark_previous_as_obsolete(self, cb, benckmark):

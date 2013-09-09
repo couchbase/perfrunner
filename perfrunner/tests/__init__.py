@@ -48,7 +48,6 @@ class PerfTest(object):
 
         self.monitor = Monitor(cluster_spec)
         self.rest = RestHelper(cluster_spec)
-        self.reporter = Reporter(self)
         self.remote = RemoteHelper(cluster_spec)
         self.worker_manager = WorkerManager(cluster_spec)
 
@@ -56,6 +55,8 @@ class PerfTest(object):
         build = self.rest.get_version(master_node)
         self.cbagent = CbAgent(cluster_spec, build)
         self.metric_helper = MetricHelper(self)
+        self.reporter = Reporter(self)
+        self.reports = {}
 
         self.shutdown_event = Event()
 

@@ -31,11 +31,19 @@ def with_reporter(rebalance, *args, **kwargs):
 
     rebalance(*args, **kwargs)
 
-    value = test.reporter.finish('Rebalance')
-    test.reporter.post_to_sf(value)
+    test.rebalance_time = test.reporter.finish('Rebalance')
 
     test.reporter.save_utilzation_stats()
     test.reporter.save_master_events()
+
+
+@decorator
+def with_delayed_posting(rebalance, *args, **kwargs):
+    test = args[0]
+
+    rebalance(*args, **kwargs)
+
+    test.reporter.post_to_sf(test.rebalance_time)
 
 
 class RebalanceTest(PerfTest):
@@ -45,6 +53,7 @@ class RebalanceTest(PerfTest):
         self.rebalance_settings = self.test_config.get_rebalance_settings()
         self.servers = self.cluster_spec.get_clusters().values()[-1]
 
+    @with_delayed_posting
     @with_stats(active_tasks=True)
     @with_delay
     @with_reporter

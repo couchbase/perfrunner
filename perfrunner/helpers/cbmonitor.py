@@ -128,7 +128,7 @@ class CbAgent(object):
 
     def add_snapshot(self, phase, ts_from, ts_to, report):
         self.reports = {}
-        for i, cluster in enumerate(self.clusters):
+        for i, cluster in enumerate(self.clusters, start=1):
             snapshot = '{0}_{1}'.format(cluster, phase)
             self.settings.cluster = cluster
             md_client = MetadataClient(self.settings)

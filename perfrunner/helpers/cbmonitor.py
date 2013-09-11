@@ -122,8 +122,7 @@ class CbAgent(object):
         api = 'http://{0}/reports/html/'.format(
             self.settings.cbmonitor_host_port)
         url = '{0}?snapshot={1}&report={2}'.format(api, snapshot, report)
-        requests.head(url=url)
-        logger.info('Link to HTML report: {0}'.format(url))
+        requests.get(url=url)
         return url
 
     def add_snapshot(self, phase, ts_from, ts_to, report):
@@ -133,5 +132,5 @@ class CbAgent(object):
             self.settings.cluster = cluster
             md_client = MetadataClient(self.settings)
             md_client.add_snapshot(snapshot, ts_from, ts_to)
-            report = self.generate_report(snapshot, report)
-            self.reports['report{0}'.format(i)] = report
+            self.reports['report{0}'.format(i)] = self.generate_report(snapshot,
+                                                                       report)

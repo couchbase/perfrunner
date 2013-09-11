@@ -91,7 +91,9 @@ class SFReporter(object):
 
     def _log_benchmark(self, metric, value):
         _, benckmark = self._prepare_data(metric, value)
-        logger.info('Dry run stats: {0}'.format(benckmark))
+        logger.info('Dry run stats: {0}'.format(
+            json.dumps(benckmark, indent=4, sort_keys=True)
+        ))
 
     def _post_benckmark(self, metric, value):
         key, benckmark = self._prepare_data(metric, value)
@@ -102,7 +104,9 @@ class SFReporter(object):
         except Exception, e:
             logger.warn('Failed to post results, {0}'.format(e))
         else:
-            logger.info('Successfully posted: {0}'.format(benckmark))
+            logger.info('Successfully posted: {0}'.format(
+                json.dumps(benckmark, indent=4, sort_keys=True)
+            ))
 
     def post_to_sf(self, value, metric=None, metric_info=None):
         if metric is None:

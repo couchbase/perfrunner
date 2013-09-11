@@ -56,7 +56,8 @@ class SFReporter(object):
             logger.warn('Failed to add cluster, {0}'.format(e))
         else:
             logger.info('Successfully posted: {0}, {1}'.format(
-                cluster, params))
+                cluster, json.dumps(params, indent=4, sort_keys=True)
+            ))
 
     def _add_metric(self, metric, metric_info):
         if metric_info is None:
@@ -71,8 +72,9 @@ class SFReporter(object):
         except Exception, e:
             logger.warn('Failed to add cluster, {0}'.format(e))
         else:
-            logger.info('Successfully posted: {0}, {1}'.format(metric,
-                                                               metric_info))
+            logger.info('Successfully posted: {0}, {1}'.format(
+                metric, json.dumps(metric_info, indent=4, sort_keys=True)
+            ))
 
     def _prepare_data(self, metric, value):
         key = uuid4().hex

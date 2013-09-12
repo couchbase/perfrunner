@@ -10,7 +10,6 @@ import requests
 from cbagent.collectors import (NSServer, SpringLatency, SpringQueryLatency,
                                 XdcrLag, ActiveTasks)
 from cbagent.metadata_client import MetadataClient
-from logger import logger
 from ordereddict import OrderedDict
 
 from perfrunner.settings import CbAgentSettings

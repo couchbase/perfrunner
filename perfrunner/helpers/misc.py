@@ -13,4 +13,5 @@ def pretty_dict(d):
 
 
 def log_phase(phase, settings):
-    logger.info('Running {0}: {1}'.format(phase, pretty_dict(settings)))
+    logger.info('Running {0}: {1}'.format(phase,
+                                          pretty_dict(settings.__dict__)))

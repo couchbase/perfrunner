@@ -4,7 +4,6 @@ from datetime import datetime
 from decorator import decorator
 from multiprocessing import Process
 from time import time
-from uuid import uuid4
 
 import requests
 from cbagent.collectors import (NSServer, SpringLatency, SpringQueryLatency,
@@ -12,6 +11,7 @@ from cbagent.collectors import (NSServer, SpringLatency, SpringQueryLatency,
 from cbagent.metadata_client import MetadataClient
 from ordereddict import OrderedDict
 
+from perfrunner.helpers.misc import uhex
 from perfrunner.settings import CbAgentSettings
 
 
@@ -41,7 +41,7 @@ class CbAgent(object):
         for cluster, master in cluster_spec.get_masters().items():
             cluster = '{0}_{1}_{2}'.format(cluster,
                                            build.replace('.', ''),
-                                           uuid4().hex[:3])
+                                           uhex()[:3])
             master = master.split(':')[0]
             self.clusters[cluster] = master
 

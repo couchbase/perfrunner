@@ -1,5 +1,3 @@
-from uuid import uuid4
-
 from celery import Celery
 from fabric import state
 from fabric.api import cd, run
@@ -7,6 +5,7 @@ from kombu import Queue
 from logger import logger
 from spring.wgen import WorkloadGen
 
+from perfrunner.helpers.misc import uhex
 from perfrunner.settings import BROKER_URL, REPO
 
 CELERY_QUEUES = (Queue('Q1'), Queue('Q2'))
@@ -31,7 +30,7 @@ class WorkerManager(object):
             state.output.running = False
             state.output.stdout = False
 
-            self.temp_dir = '/tmp/{0}'.format(uuid4().hex[:12])
+            self.temp_dir = '/tmp/{0}'.format(uhex()[:12])
             self._initialize_project()
             self._start()
         else:

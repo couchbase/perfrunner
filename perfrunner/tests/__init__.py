@@ -7,6 +7,7 @@ from logger import logger
 from perfrunner.helpers.cbmonitor import CbAgent
 from perfrunner.helpers.metrics import MetricHelper
 from perfrunner.helpers.monitor import Monitor
+from perfrunner.helpers.misc import log_phase
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.reporter import Reporter
 from perfrunner.helpers.rest import RestHelper
@@ -80,7 +81,7 @@ class PerfTest(object):
 
     def load(self):
         load_settings = self.test_config.get_load_settings()
-        logger.info('Running load phase: {0}'.format(load_settings))
+        log_phase('load phase', load_settings)
         self.worker_manager.run_workload(load_settings, self.target_iterator)
 
     def hot_load(self):
@@ -88,24 +89,23 @@ class PerfTest(object):
         master_node = self.cluster_spec.get_masters().values()[0]
 
         if self.rest.get_version(master_node) < '2.1.0':
-            logger.info('Running hot load phase: {0}'.format(hot_load_settings))
+            log_phase('hot load phase', hot_load_settings)
             self.worker_manager.run_workload(hot_load_settings,
                                              self.target_iterator)
 
         hot_load_settings.seq_updates = False
-        logger.info('Running hot load phase: {0}'.format(hot_load_settings))
+        log_phase('hot load phase', hot_load_settings)
         self.worker_manager.run_workload(hot_load_settings,
                                          self.target_iterator)
 
     def access(self):
         access_settings = self.test_config.get_access_settings()
-        logger.info('Running access phase: {0}'.format(access_settings))
+        log_phase('access phase', access_settings)
         self.worker_manager.run_workload(access_settings, self.target_iterator)
 
     def access_bg(self):
         access_settings = self.test_config.get_access_settings()
-        logger.info('Running access phase in background: {0}'.format(
-            access_settings))
+        log_phase('access in background', access_settings)
         p = Process(
             target=self.worker_manager.run_workload,
             args=(access_settings, self.target_iterator, self.shutdown_event)

@@ -1,10 +1,11 @@
 import time
 from decorator import decorator
-from uuid import uuid4
 
 from fabric import state
 from fabric.api import execute, get, put, run, parallel, settings
 from logger import logger
+
+from perfrunner.helpers.misc import uhex
 
 
 @decorator
@@ -99,7 +100,7 @@ class RemoteLinuxHelper(object):
 
         run('rm -f /tmp/*.zip')
 
-        fname = '/tmp/{0}.zip'.format(uuid4().hex)
+        fname = '/tmp/{0}.zip'.format(uhex())
         r = run('{0}/bin/cbcollect_info {1}'.format(self.ROOT_DIR, fname),
                 warn_only=True)
         if not r.return_code:
@@ -165,7 +166,7 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
 
         run('rm -f *.zip')
 
-        fname = '{0}.zip'.format(uuid4().hex)
+        fname = '{0}.zip'.format(uhex())
         r = run('{0}/bin/cbcollect_info.exe {1}'.format(self.ROOT_DIR, fname),
                 warn_only=True)
         if not r.return_code:

@@ -1,11 +1,10 @@
-import json
 import time
-from uuid import uuid4
 
 from btrc import CouchbaseClient, StatsReporter
 from couchbase import Couchbase
 from logger import logger
 
+from perfrunner.helpers.misc import uhex, pretty_dict
 from perfrunner.settings import SF_STORAGE
 
 
@@ -56,7 +55,7 @@ class SFReporter(object):
             logger.warn('Failed to add cluster, {0}'.format(e))
         else:
             logger.info('Successfully posted: {0}, {1}'.format(
-                cluster, json.dumps(params, indent=4, sort_keys=True)
+                cluster, pretty_dict(params)
             ))
 
     def _add_metric(self, metric, metric_info):
@@ -73,11 +72,11 @@ class SFReporter(object):
             logger.warn('Failed to add cluster, {0}'.format(e))
         else:
             logger.info('Successfully posted: {0}, {1}'.format(
-                metric, json.dumps(metric_info, indent=4, sort_keys=True)
+                metric, pretty_dict(metric_info)
             ))
 
     def _prepare_data(self, metric, value):
-        key = uuid4().hex
+        key = uhex()
         master_node = self.test.cluster_spec.get_masters().values()[0]
         build = self.test.rest.get_version(master_node)
         data = {'build': build, 'metric': metric, 'value': value}
@@ -94,7 +93,7 @@ class SFReporter(object):
     def _log_benchmark(self, metric, value):
         _, benckmark = self._prepare_data(metric, value)
         logger.info('Dry run stats: {0}'.format(
-            json.dumps(benckmark, indent=4, sort_keys=True)
+            pretty_dict(benckmark)
         ))
 
     def _post_benckmark(self, metric, value):
@@ -107,7 +106,7 @@ class SFReporter(object):
             logger.warn('Failed to post results, {0}'.format(e))
         else:
             logger.info('Successfully posted: {0}'.format(
-                json.dumps(benckmark, indent=4, sort_keys=True)
+                pretty_dict(benckmark)
             ))
 
     def post_to_sf(self, value, metric=None, metric_info=None):
@@ -135,7 +134,7 @@ class LogReporter(object):
             logs = self.test.rest.get_logs(target.node)
             fname = 'web_log_{0}.json'.format(target.node.split(':')[0])
             with open(fname, 'w') as fh:
-                fh.write(json.dumps(logs, indent=4, sort_keys=True))
+                fh.write(pretty_dict(logs))
 
     def save_master_events(self):
         for target in self.test.target_iterator:

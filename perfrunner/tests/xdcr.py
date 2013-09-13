@@ -1,6 +1,5 @@
-from logger import logger
-
 from perfrunner.helpers.cbmonitor import with_stats
+from perfrunner.helpers.misc import log_phase
 from perfrunner.settings import TargetSettings
 from perfrunner.tests import target_hash, TargetIterator
 from perfrunner.tests import PerfTest
@@ -97,7 +96,7 @@ class XdcrInitTest(XdcrTest):
 
     def load(self):
         load_settings = self.test_config.get_load_settings()
-        logger.info('Running load phase: {0}'.format(load_settings))
+        log_phase('load phase', load_settings)
         src_target_iterator = SrcTargetIterator(self.cluster_spec,
                                                 self.test_config)
         self.worker_manager.run_workload(load_settings, src_target_iterator)

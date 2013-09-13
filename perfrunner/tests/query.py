@@ -1,8 +1,7 @@
 from multiprocessing import Process
 
-from logger import logger
-
 from perfrunner.helpers.cbmonitor import with_stats
+from perfrunner.helpers.misc import log_phase
 from perfrunner.tests.index import IndexTest
 
 
@@ -14,7 +13,7 @@ class QueryTest(IndexTest):
 
     def access_bg(self):
         access_settings = self.test_config.get_access_settings()
-        logger.info('Running access phase: {0}'.format(access_settings))
+        log_phase('access phase', access_settings)
         Process(
             target=self.worker_manager.run_workload,
             args=(access_settings, self.target_iterator, self.shutdown_event,

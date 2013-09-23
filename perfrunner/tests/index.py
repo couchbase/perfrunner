@@ -1,3 +1,4 @@
+from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import PerfTest
 from perfrunner.tests.viewgen import ViewGen
 
@@ -44,6 +45,10 @@ class IndexTest(PerfTest):
 
 class InitialIndexTest(IndexTest):
 
+    @with_stats()
+    def build_index(self):
+        super(InitialIndexTest, self).build_index()
+
     def run(self):
         self.load()
         self.wait_for_persistence()
@@ -57,6 +62,10 @@ class InitialIndexTest(IndexTest):
 
 
 class IncrementalIndexTest(IndexTest):
+
+    @with_stats()
+    def build_index(self):
+        super(IncrementalIndexTest, self).build_index()
 
     def run(self):
         self.load()

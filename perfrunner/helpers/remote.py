@@ -2,7 +2,7 @@ import time
 from decorator import decorator
 
 from fabric import state
-from fabric.api import execute, get, put, run, sudo, parallel, settings
+from fabric.api import execute, get, put, run, parallel, settings
 from logger import logger
 
 from perfrunner.helpers.misc import uhex
@@ -60,9 +60,9 @@ class RemoteLinuxHelper(object):
     def wget(self, url, outdir='/tmp', outfile=None):
         logger.info('Fetching {0}'.format(url))
         if outfile is not None:
-            sudo('wget -nc "{0}" -P {1} -O {2}'.format(url, outdir, outfile))
+            run('wget -nc "{0}" -P {1} -O {2}'.format(url, outdir, outfile))
         else:
-            sudo('wget -nc "{0}" -P {1}'.format(url, outdir))
+            run('wget -nc "{0}" -P {1}'.format(url, outdir))
 
     @single_host
     def detect_pkg(self):
@@ -75,51 +75,51 @@ class RemoteLinuxHelper(object):
     @single_host
     def detect_arch(self):
         logger.info('Detecting platform architecture')
-        arch = sudo('uname -i', pty=False)
+        arch = run('uname -i', pty=False)
         return self.ARCH[arch]
 
     @single_host
     def detect_openssl(self, pkg):
         logger.info('Detecting openssl version')
         if pkg == 'rpm':
-            return sudo('rpm -q --qf "%{VERSION}" openssl.x86_64')
+            return run('rpm -q --qf "%{VERSION}" openssl.x86_64')
 
     @all_hosts
     def reset_swap(self):
         logger.info('Resetting swap')
-        sudo('swapoff --all && swapon --all')
+        run('swapoff --all && swapon --all')
 
     @all_hosts
     def drop_caches(self):
         logger.info('Dropping memory cache')
-        sudo('sync && echo 3 > /proc/sys/vm/drop_caches')
+        run('sync && echo 3 > /proc/sys/vm/drop_caches')
 
     @all_hosts
     def collect_info(self):
         logger.info('Running cbcollect_info')
 
-        sudo('rm -f /tmp/*.zip')
+        run('rm -f /tmp/*.zip')
 
         fname = '/tmp/{0}.zip'.format(uhex())
-        r = sudo('{0}/bin/cbcollect_info {1}'.format(self.ROOT_DIR, fname),
-                 warn_only=True)
+        r = run('{0}/bin/cbcollect_info {1}'.format(self.ROOT_DIR, fname),
+                warn_only=True)
         if not r.return_code:
             get('{0}'.format(fname))
-            sudo('rm -f {0}'.format(fname))
+            run('rm -f {0}'.format(fname))
 
     @all_hosts
     def clean_data(self):
         for path in self.cluster_spec.get_paths():
-            sudo('rm -fr {0}/*'.format(path))
-        sudo('rm -fr {0}'.format(self.ROOT_DIR))
+            run('rm -fr {0}/*'.format(path))
+        run('rm -fr {0}'.format(self.ROOT_DIR))
 
     @all_hosts
     def uninstall_package(self, pkg):
         logger.info('Uninstalling Couchbase Server')
         if pkg == 'deb':
-            sudo('yes | apt-get remove couchbase-server')
+            run('yes | apt-get remove couchbase-server')
         else:
-            sudo('yes | yum remove couchbase-server')
+            run('yes | yum remove couchbase-server')
 
     @all_hosts
     def install_package(self, pkg, url, filename, version=None):
@@ -127,10 +127,10 @@ class RemoteLinuxHelper(object):
 
         logger.info('Installing Couchbase Server')
         if pkg == 'deb':
-            sudo('yes | apt-get install gdebi')
-            sudo('yes | gdebi /tmp/{0}'.format(filename))
+            run('yes | apt-get install gdebi')
+            run('yes | gdebi /tmp/{0}'.format(filename))
         else:
-            sudo('yes | rpm -i /tmp/{0}'.format(filename))
+            run('yes | rpm -i /tmp/{0}'.format(filename))
 
 
 class RemoteWindowsHelper(RemoteLinuxHelper):

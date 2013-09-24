@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.index
-class = InitialIndexTest
-descr = Initial index (min), 1 bucket x 40M x 2KB, DGM, 4 x 10 views, no mutations
+class = IncrementalIndexTest
+descr = Incremental index (min), 1 bucket x 50M x 2KB, DGM, 4 x 10 views, no mutations
 larger_is_better = false
 
 [cluster]
@@ -14,9 +14,18 @@ db_percentage = 100
 view_percentage = 100
 
 [load]
-ops = 40000000
+ops = 50000000
 size = 2048
 workers = 12
 
 [index]
 views = [10, 10, 10, 10]
+disabled_updates = True
+
+[access]
+creates = 100
+reads = 0
+ops = 50000000
+items = 50000000
+size = 2048
+workers = 16

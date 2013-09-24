@@ -2,7 +2,7 @@ import time
 from decorator import decorator
 
 from fabric import state
-from fabric.api import execute, get, put, run, parallel, settings
+from fabric.api import execute, get, put, run, sudo, parallel, settings
 from logger import logger
 
 from perfrunner.helpers.misc import uhex
@@ -87,39 +87,39 @@ class RemoteLinuxHelper(object):
     @all_hosts
     def reset_swap(self):
         logger.info('Resetting swap')
-        run('swapoff --all && swapon --all')
+        sudo('swapoff --all && swapon --all')
 
     @all_hosts
     def drop_caches(self):
         logger.info('Dropping memory cache')
-        run('sync && echo 3 > /proc/sys/vm/drop_caches')
+        sudo('sync && echo 3 > /proc/sys/vm/drop_caches')
 
     @all_hosts
     def collect_info(self):
         logger.info('Running cbcollect_info')
 
-        run('rm -f /tmp/*.zip')
+        sudo('rm -f /tmp/*.zip')
 
         fname = '/tmp/{0}.zip'.format(uhex())
         r = run('{0}/bin/cbcollect_info {1}'.format(self.ROOT_DIR, fname),
                 warn_only=True)
         if not r.return_code:
             get('{0}'.format(fname))
-            run('rm -f {0}'.format(fname))
+            sudo('rm -f {0}'.format(fname))
 
     @all_hosts
     def clean_data(self):
         for path in self.cluster_spec.get_paths():
-            run('rm -fr {0}/*'.format(path))
-        run('rm -fr {0}'.format(self.ROOT_DIR))
+            sudo('rm -fr {0}/*'.format(path))
+        sudo('rm -fr {0}'.format(self.ROOT_DIR))
 
     @all_hosts
     def uninstall_package(self, pkg):
         logger.info('Uninstalling Couchbase Server')
         if pkg == 'deb':
-            run('yes | apt-get remove couchbase-server')
+            sudo('yes | apt-get remove couchbase-server')
         else:
-            run('yes | yum remove couchbase-server')
+            sudo('yes | yum remove couchbase-server')
 
     @all_hosts
     def install_package(self, pkg, url, filename, version=None):
@@ -127,10 +127,10 @@ class RemoteLinuxHelper(object):
 
         logger.info('Installing Couchbase Server')
         if pkg == 'deb':
-            run('yes | apt-get install gdebi')
-            run('yes | gdebi /tmp/{0}'.format(filename))
+            sudo('yes | apt-get install gdebi')
+            sudo('yes | gdebi /tmp/{0}'.format(filename))
         else:
-            run('yes | rpm -i /tmp/{0}'.format(filename))
+            sudo('yes | rpm -i /tmp/{0}'.format(filename))
 
 
 class RemoteWindowsHelper(RemoteLinuxHelper):

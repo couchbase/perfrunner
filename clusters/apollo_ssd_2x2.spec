@@ -18,5 +18,5 @@ ssh = root:couchbase
 Platform = Physical
 OS = CentOS 6.4 64-bit
 CPU = Intel Xeon CPU E5-2630
-Memory = 128 GB
+Memory = 64 GB
 Disk = 2 x HDD

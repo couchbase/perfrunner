@@ -38,10 +38,6 @@ class IndexTest(PerfTest):
                                                    target.bucket)
             self.monitor.monitor_task(target, 'view_compaction')
 
-    def debug(self):
-        super(IndexTest, self).debug()
-        self.reporter.save_btree_stats()
-
 
 class InitialIndexTest(IndexTest):
 

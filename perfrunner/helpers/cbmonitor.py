@@ -111,7 +111,10 @@ class CbAgent(object):
             settings = copy(self.settings)
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
-            self.collectors.append(Atop(settings))
+            atop = Atop(settings)
+            atop.restart()
+            atop.update_columns()
+            self.collectors.append(atop)
 
     def update_metadata(self):
         for collector in self.collectors:

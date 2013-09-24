@@ -1,29 +1,29 @@
 [test_case]
 module = perfrunner.tests.rebalance
-class = RebalanceWithSymmetricXdcrTest
-descr = Rebalance-in (min), 4->4 -> 4->3 UniDir, 1 bucket x 70M x 2KB, DGM
+class = RebalanceWithQueriesTest
+descr = Rebalance-in (min), 3 -> 4, 1 bucket x 50M x 2KB, DGM, 1 x 1 views
 larger_is_better = false
 
 [stats]
-report = BaseRebalanceXdcrReport
+report = BaseRebalanceViewsReport
 
 [cluster]
-mem_quota = 81920
+mem_quota = 40960
 initial_nodes = 3
 num_buckets = 1
 
 [load]
-ops = 70000000
+ops = 50000000
 size = 2048
 workers = 12
 
 [hot_load]
-items = 70000000
+items = 50000000
 workers = 24
 working_set = 30
 
-[xdcr]
-replication_type = unidir
+[index]
+views = [1]
 
 [access]
 creates = 5
@@ -31,9 +31,11 @@ reads = 50
 updates = 40
 deletes = 5
 throughput = 10000
-items = 70000000
+query_throughput = 400
+items = 50000000
 size = 2048
 workers = 24
+query_workers = 12
 working_set = 30
 working_set_access = 98
 

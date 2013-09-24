@@ -1,34 +1,34 @@
 [test_case]
 module = perfrunner.tests.kv
 class = LatencyTest
-descr = latency (ms), mixed, 1 bucket x 70M x 2KB
+descr = latency (ms), read-heavy, 1 bucket x 50M x 2KB
 larger_is_better = true
 
 [stats]
 report = BaseKVReport
 
 [cluster]
-mem_quota = 81920
+mem_quota = 40960
 initial_nodes = 4
 num_buckets = 1
 
 [load]
-ops = 70000000
+ops = 50000000
 size = 2048
 workers = 12
 
 [hot_load]
-items = 70000000
+items = 50000000
 workers = 24
 working_set = 30
 
 [access]
 creates = 1
-reads = 50
-updates = 48
+reads = 80
+updates = 18
 deletes = 1
 throughput = 10000
-items = 70000000
+items = 50000000
 size = 2048
 working_set = 30
 working_set_access = 98

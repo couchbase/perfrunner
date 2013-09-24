@@ -1,6 +1,6 @@
 [test_case]
-module = perfrunner.tests.kv
-class = LatencyTest
+module = perfrunner.tests.numa
+class = NumaKVTest
 descr = latency (ms), mixed, 1 bucket x 10M x 2KB
 larger_is_better = true
 

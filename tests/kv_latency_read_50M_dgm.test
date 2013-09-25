@@ -31,6 +31,6 @@ throughput = 10000
 items = 50000000
 size = 2048
 working_set = 30
-working_set_access = 98
+working_set_access = 90
 workers = 12
 time=3600

@@ -51,9 +51,7 @@ class CouchbaseInstaller(object):
                 url = '{0}{1}'.format(base, filename)
                 if requests.head(url).status_code == 200:
                     logger.info('Found "{0}"'.format(url))
-                    self.filename = filename
-                    self.url = url
-                    return
+                    return filename, url
         logger.interrupt('Target build not found')
 
     def uninstall_package(self):
@@ -63,12 +61,12 @@ class CouchbaseInstaller(object):
         self.remote_helper.clean_data()
 
     def install_package(self):
+        filename, url = self.find_package()
         version = self.build.version.split('-')[0]
-        self.remote_helper.install_package(self.build.pkg, self.url,
-                                           self.filename, version)
+        self.remote_helper.install_package(self.build.pkg, url, filename,
+                                           version)
 
     def install(self):
-        self.find_package()
         self.uninstall_package()
         self.clean_data()
         self.install_package()

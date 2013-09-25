@@ -8,14 +8,14 @@ from requests.exceptions import ConnectionError
 from logger import logger
 
 
+MAX_RETRY = 5
+RETRY_DELAY = 5
+
+
 @decorator
 def retry(method, *args, **kwargs):
-
-    MAX_RETRY = 5
-    RETRY_DELAY = 5
-
     r = namedtuple('request', ['url'])('')
-    for retry in range(MAX_RETRY):
+    for _ in range(MAX_RETRY):
         try:
             r = method(*args, **kwargs)
         except ConnectionError:
@@ -54,40 +54,40 @@ class RestHelper(object):
     def set_data_path(self, host_port, data_path, index_path):
         logger.info('Configuring data paths: {0}'.format(host_port))
 
-        API = 'http://{0}/nodes/self/controller/settings'.format(host_port)
+        api = 'http://{0}/nodes/self/controller/settings'.format(host_port)
         data = {
             'path': data_path, 'index_path': index_path
         }
-        self.post(url=API, data=data)
+        self.post(url=api, data=data)
 
     def set_auth(self, host_port):
         logger.info('Configuring cluster authentication: {0}'.format(host_port))
 
-        API = 'http://{0}/settings/web'.format(host_port)
+        api = 'http://{0}/settings/web'.format(host_port)
         data = {
             'username': self.rest_username, 'password': self.rest_password,
             'port': 'SAME'
         }
-        self.post(url=API, data=data)
+        self.post(url=api, data=data)
 
     def set_mem_quota(self, host_port, mem_quota):
         logger.info('Configuring memory quota: {0}'.format(host_port))
 
-        API = 'http://{0}/pools/default'.format(host_port)
+        api = 'http://{0}/pools/default'.format(host_port)
         data = {
             'memoryQuota': mem_quota
         }
-        self.post(url=API, data=data)
+        self.post(url=api, data=data)
 
     def add_node(self, host_port, new_host):
         logger.info('Adding new node: {0}'.format(new_host))
 
-        API = 'http://{0}/controller/addNode'.format(host_port)
+        api = 'http://{0}/controller/addNode'.format(host_port)
         data = {
             'hostname': new_host,
             'user': self.rest_username, 'password': self.rest_password
         }
-        self.post(url=API, data=data)
+        self.post(url=api, data=data)
 
     @staticmethod
     def ns_1(host_port):
@@ -96,26 +96,26 @@ class RestHelper(object):
     def rebalance(self, host_port, known_nodes, ejected_nodes):
         logger.info('Starting rebalance')
 
-        API = 'http://{0}/controller/rebalance'.format(host_port)
+        api = 'http://{0}/controller/rebalance'.format(host_port)
         known_nodes = ','.join(map(self.ns_1, known_nodes))
         ejected_nodes = ','.join(map(self.ns_1, ejected_nodes))
         data = {
             'knownNodes': known_nodes,
             'ejectedNodes': ejected_nodes
         }
-        self.post(url=API, data=data)
+        self.post(url=api, data=data)
 
     def is_balanced(self, host_port):
-        API = 'http://{0}/pools/rebalanceStatuses'.format(host_port)
+        api = 'http://{0}/pools/rebalanceStatuses'.format(host_port)
         try:
-            return self.get(url=API).json()['balanced']
+            return self.get(url=api).json()['balanced']
         except KeyError:
             logger.warn('Deprecated "balanced"')
             return True
 
     def get_tasks(self, host_port):
-        API = 'http://{0}/pools/default/tasks'.format(host_port)
-        return self.get(url=API).json()
+        api = 'http://{0}/pools/default/tasks'.format(host_port)
+        return self.get(url=api).json()
 
     def get_rebalance_status(self, host_port):
         for task in self.get_tasks(host_port):
@@ -128,7 +128,7 @@ class RestHelper(object):
                       replica_index=0, threads_number=None):
         logger.info('Adding new bucket: {0}'.format(name))
 
-        API = 'http://{0}/pools/default/buckets'.format(host_port)
+        api = 'http://{0}/pools/default/buckets'.format(host_port)
         data = {
             'name': name, 'bucketType': 'membase', 'ramQuotaMB': ram_quota,
             'replicaNumber': replica_number, 'replicaIndex': replica_index,
@@ -136,99 +136,99 @@ class RestHelper(object):
         }
         if threads_number:
             data['threadsNumber'] = threads_number
-        self.post(url=API, data=data)
+        self.post(url=api, data=data)
 
     def configure_auto_compaction(self, host_port, settings):
         logger.info('Applying auto-compaction settings: {0}'.format(settings))
 
-        API = 'http://{0}/controller/setAutoCompaction'.format(host_port)
+        api = 'http://{0}/controller/setAutoCompaction'.format(host_port)
         data = {
             'databaseFragmentationThreshold[percentage]': settings.db_percentage,
             'viewFragmentationThreshold[percentage]': settings.view_percentage,
             'parallelDBAndViewCompaction': str(settings.parallel).lower()
         }
-        self.post(url=API, data=data)
+        self.post(url=api, data=data)
 
     def get_bucket_stats(self, host_port, bucket):
-        API = 'http://{0}/pools/default/buckets/{1}/stats'.format(host_port,
+        api = 'http://{0}/pools/default/buckets/{1}/stats'.format(host_port,
                                                                   bucket)
-        return self.get(url=API).json()
+        return self.get(url=api).json()
 
     def add_remote_cluster(self, host_port, remote_host_port, name):
         logger.info('Adding remote cluster {0} with reference {1}'.format(
             remote_host_port, name
         ))
 
-        API = 'http://{0}/pools/default/remoteClusters'.format(host_port)
+        api = 'http://{0}/pools/default/remoteClusters'.format(host_port)
         data = {
             'hostname': remote_host_port, 'name': name,
             'username': self.rest_username, 'password': self.rest_password
         }
-        self.post(url=API, data=data)
+        self.post(url=api, data=data)
 
     def start_replication(self, host_port, params):
         logger.info('Starting replication with parameters {0}'.format(params))
 
-        API = 'http://{0}/controller/createReplication'.format(host_port)
-        self.post(url=API, data=params)
+        api = 'http://{0}/controller/createReplication'.format(host_port)
+        self.post(url=api, data=params)
 
     def trigger_bucket_compaction(self, host_port, bucket):
         logger.info('Triggering bucket {0} compaction'.format(bucket))
 
-        API = 'http://{0}/pools/default/buckets/{1}/controller/compactBucket'\
+        api = 'http://{0}/pools/default/buckets/{1}/controller/compactBucket'\
             .format(host_port, bucket)
-        self.post(url=API)
+        self.post(url=api)
 
     def trigger_index_compaction(self, host_port, ddoc, bucket):
         logger.info('Triggering ddoc {0} compaction, bucket {1}'.format(
             ddoc, bucket
         ))
 
-        API = 'http://{0}/pools/default/buckets/{1}/ddocs/_design%2F{2}/controller/compactView'\
+        api = 'http://{0}/pools/default/buckets/{1}/ddocs/_design%2F{2}/controller/compactView'\
             .format(host_port, bucket, ddoc)
-        self.post(url=API)
+        self.post(url=api)
 
     def create_ddoc(self, host_port, bucket, ddoc_name, ddoc):
         logger.info('Creating new ddoc {0}, bucket {1}'.format(
             ddoc_name, bucket
         ))
 
-        API = 'http://{0}/couchBase/{1}/_design/{2}'.format(
+        api = 'http://{0}/couchBase/{1}/_design/{2}'.format(
             host_port, bucket, ddoc_name)
         data = json.dumps(ddoc)
         headers = {'Content-type': 'application/json'}
-        self.put(url=API, data=data,  headers=headers)
+        self.put(url=api, data=data,  headers=headers)
 
     def query_view(self, host_port, bucket, ddoc_name, view_name, params):
         logger.info('Querying view: {0}/_design/{1}/_view/{2}'.format(
             bucket, ddoc_name, view_name
         ))
 
-        API = 'http://{0}/couchBase/{1}/_design/{2}/_view/{3}'.format(
+        api = 'http://{0}/couchBase/{1}/_design/{2}/_view/{3}'.format(
             host_port, bucket, ddoc_name, view_name)
-        self.get(url=API, params=params)
+        self.get(url=api, params=params)
 
     def get_version(self, host_port):
         logger.info('Getting server version')
 
-        API = 'http://{0}/pools/'.format(host_port)
-        r = self.get(url=API).json()
+        api = 'http://{0}/pools/'.format(host_port)
+        r = self.get(url=api).json()
         return r['implementationVersion'].replace('-rel-enterprise', '')
 
     def get_master_events(self, host_port):
         logger.info('Getting master events from {0}'.format(host_port))
 
-        API = 'http://{0}/diag/masterEvents?o=1'.format(host_port)
-        return self.get(url=API).text
+        api = 'http://{0}/diag/masterEvents?o=1'.format(host_port)
+        return self.get(url=api).text
 
     def get_logs(self, host_port):
         logger.info('Getting web logs from {0}'.format(host_port))
 
-        API = 'http://{0}/logs'.format(host_port)
-        return self.get(url=API).json()
+        api = 'http://{0}/logs'.format(host_port)
+        return self.get(url=api).json()
 
     def set_internal_settings(self, host_port, data):
         logger.info('Updating internal settings: {0}'.format(data))
 
-        API = 'http://{0}/internalSettings'.format(host_port)
-        return self.post(url=API, data=data)
+        api = 'http://{0}/internalSettings'.format(host_port)
+        return self.post(url=api, data=data)

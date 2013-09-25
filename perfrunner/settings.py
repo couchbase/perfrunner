@@ -34,11 +34,14 @@ def safe(method, *args, **kargs):
 
 class Config(object):
 
+    def __init__(self):
+        self.config = SafeConfigParser()
+        self.name = ''
+
     def parse(self, fname):
         logger.info('Reading configuration file: {0}'.format(fname))
         if not os.path.isfile(fname):
             logger.interrupt('File doesn\'t exist: {0}'.format(fname))
-        self.config = SafeConfigParser()
         self.config.optionxform = str
         self.config.read(fname)
 

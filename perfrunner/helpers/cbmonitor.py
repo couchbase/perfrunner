@@ -51,10 +51,13 @@ class CbAgent(object):
         self.settings.rest_username, self.settings.rest_password = \
             cluster_spec.get_rest_credentials()
 
+        self.collectors = []
+        self.processes = []
+        self.reports = {}
+
     def prepare_collectors(self, test, latency, query_latency, xdcr_lag,
                            active_tasks):
         clusters = self.clusters.keys()
-        self.collectors = []
 
         self.prepare_ns_server(clusters)
         if latency:
@@ -125,7 +128,6 @@ class CbAgent(object):
         return url
 
     def add_snapshot(self, phase, ts_from, ts_to, report):
-        self.reports = {}
         for i, cluster in enumerate(self.clusters, start=1):
             snapshot = '{0}_{1}'.format(cluster, phase)
             self.settings.cluster = cluster

@@ -4,7 +4,7 @@ import string
 class ResetableGenerator(object):
 
     def __init__(self, iterable):
-        self.reset()
+        self.counter = -1
         self.iterable = iterable
 
     def next(self):

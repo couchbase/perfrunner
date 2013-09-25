@@ -83,7 +83,8 @@ class SFReporter(object):
         data.update(self.test.reports)
         return key, data
 
-    def _mark_previous_as_obsolete(self, cb, benckmark):
+    @staticmethod
+    def _mark_previous_as_obsolete(cb, benckmark):
         for row in cb.query('benchmarks', 'values_by_build_and_metric',
                             key=[benckmark['metric'], benckmark['build']]):
             doc = cb.get(row.docid)

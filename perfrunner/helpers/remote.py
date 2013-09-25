@@ -57,7 +57,8 @@ class RemoteLinuxHelper(object):
         self.hosts = cluster_spec.get_all_hosts()
         self.cluster_spec = cluster_spec
 
-    def wget(self, url, outdir='/tmp', outfile=None):
+    @staticmethod
+    def wget(url, outdir='/tmp', outfile=None):
         logger.info('Fetching {0}'.format(url))
         if outfile is not None:
             run('wget -nc "{0}" -P {1} -O {2}'.format(url, outdir, outfile))
@@ -139,7 +140,8 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
 
     VERSION_FILE = '/cygdrive/c/Program Files/Couchbase/Server/VERSION.txt'
 
-    def exists(self, fname):
+    @staticmethod
+    def exists(fname):
         r = run('test -f "{0}"'.format(fname), warn_only=True, quiet=True)
         return not r.return_code
 
@@ -191,7 +193,8 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
             time.sleep(5)
         time.sleep(30)
 
-    def put_iss_files(self, version):
+    @staticmethod
+    def put_iss_files(version):
         logger.info('Copying {0} ISS files'.format(version))
         put('scripts/install_{0}.iss'.format(version),
             '/cygdrive/c/install.iss')

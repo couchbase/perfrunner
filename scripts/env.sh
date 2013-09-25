@@ -1,3 +1,3 @@
 #!/bin/bash -ex
-virtualenv /tmp/prenv
-/tmp/prenv/bin/pip install --upgrade -r requirements.txt
+virtualenv /tmp/env
+/tmp/env/bin/pip install --upgrade -r requirements.txt

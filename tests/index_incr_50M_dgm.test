@@ -24,7 +24,6 @@ disabled_updates = True
 
 [access]
 updates = 100
-reads = 0
 ops = 50000000
 items = 50000000
 size = 2048

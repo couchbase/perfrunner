@@ -2,7 +2,7 @@ btrc
 cbagent
 celery==3.0.21
 couchbase==1.0.0
-fabric==1.6.0
+fabric==1.8.0
 logger
 ordereddict
 pytz

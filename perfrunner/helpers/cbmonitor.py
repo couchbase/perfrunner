@@ -7,7 +7,7 @@ from time import time
 
 import requests
 from cbagent.collectors import (NSServer, SpringLatency, SpringQueryLatency,
-                                XdcrLag, ActiveTasks)
+                                XdcrLag, ActiveTasks, Atop)
 from cbagent.metadata_client import MetadataClient
 from ordereddict import OrderedDict
 
@@ -60,6 +60,7 @@ class CbAgent(object):
         clusters = self.clusters.keys()
 
         self.prepare_ns_server(clusters)
+        self.prepare_atop(clusters)
         if latency:
             self.prepare_latency(clusters, test.workload)
         if query_latency:
@@ -75,6 +76,16 @@ class CbAgent(object):
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
             self.collectors.append(NSServer(settings))
+
+    def prepare_atop(self, clusters):
+        for cluster in clusters:
+            settings = copy(self.settings)
+            settings.cluster = cluster
+            settings.master_node = self.clusters[cluster]
+            atop_collector = Atop(settings)
+            atop_collector.restart()
+            atop_collector.update_columns()
+            self.collectors.append(atop_collector)
 
     def prepare_xdcr_lag(self, clusters):
         reversed_clusters = list(reversed(self.clusters.keys()))

@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.index
 class = IncrementalIndexTest
-descr = Incremental index (min), 1 bucket x 50M x 2KB, DGM, 4 x 10 views, no mutations
+descr = Incremental index (min), 1 bucket x 50M x 2KB, DGM, 4 x 2 views, no mutations
 larger_is_better = false
 
 [cluster]
@@ -19,7 +19,7 @@ size = 2048
 workers = 12
 
 [index]
-views = [10, 10, 10, 10]
+views = [2, 2, 2, 2]
 disabled_updates = True
 
 [access]

@@ -184,3 +184,15 @@ class MetricHelper(object):
                 data = self.seriesly[db].query(params)
                 cpu_utilazion[cluster] = round(data.values()[0][0], 2)
         return cpu_utilazion
+
+    def get_indexing_meta(self, value, index_type='Initial'):
+        metric = '{0}_{1}_{2}'.format(
+            self.test_config.name, index_type.lower(), self.cluster_spec.name
+        )
+        descr = '{0} index (min), {1}'.format(
+            index_type, self.test_config.get_test_descr()
+        )
+        metric_info = {'title': descr,
+                       'cluster': self.cluster_spec.name,
+                       'larger_is_better': 'false'}
+        return value, metric, metric_info

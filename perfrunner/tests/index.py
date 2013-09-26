@@ -57,11 +57,11 @@ class InitialIndexTest(IndexTest):
         self.reporter.post_to_sf(value)
 
 
-class IncrementalIndexTest(IndexTest):
+class InitialAndIncrementalIndexTest(IndexTest):
 
     @with_stats(active_tasks=True)
     def build_index(self):
-        super(IncrementalIndexTest, self).build_index()
+        super(InitialAndIncrementalIndexTest, self).build_index()
 
     def run(self):
         self.load()
@@ -71,7 +71,11 @@ class IncrementalIndexTest(IndexTest):
         self.reporter.start()
         self.define_ddocs()
         self.build_index()
-        self.reporter.finish('Initial index')
+        value = self.reporter.finish('Initial index')
+        self.reporter.post_to_sf(
+            *self.metric_helper.get_indexing_meta(value=value,
+                                                  index_type='Initial')
+        )
 
         self.access()
         self.wait_for_persistence()
@@ -80,4 +84,7 @@ class IncrementalIndexTest(IndexTest):
         self.reporter.start()
         self.build_index()
         value = self.reporter.finish('Incremental index')
-        self.reporter.post_to_sf(value)
+        self.reporter.post_to_sf(
+            *self.metric_helper.get_indexing_meta(value=value,
+                                                  index_type='Incremental')
+        )

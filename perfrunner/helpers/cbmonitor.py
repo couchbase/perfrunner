@@ -60,7 +60,7 @@ class CbAgent(object):
         clusters = self.clusters.keys()
 
         self.prepare_ns_server(clusters)
-        if test.remote_helper.os != 'Cygwin':
+        if test.remote.os != 'Cygwin':
             self.prepare_atop(clusters)
         if latency:
             self.prepare_latency(clusters, test.workload)

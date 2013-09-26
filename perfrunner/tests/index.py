@@ -68,8 +68,10 @@ class IncrementalIndexTest(IndexTest):
         self.wait_for_persistence()
         self.compact_bucket()
 
+        self.reporter.start()
         self.define_ddocs()
         self.build_index()
+        self.reporter.finish('Initial index')
 
         self.access()
         self.wait_for_persistence()

@@ -20,9 +20,10 @@ def with_stats(latency=False, query_latency=False, xdcr_lag=False,
     def with_stats(method, *args, **kwargs):
         test = args[0]
 
-        test.cbagent.prepare_collectors(test, latency, query_latency, xdcr_lag,
-                                        active_tasks)
-        test.cbagent.update_metadata()
+        if not test.cbagent.collectors:
+            test.cbagent.prepare_collectors(test, latency, query_latency,
+                                            xdcr_lag, active_tasks)
+            test.cbagent.update_metadata()
 
         from_ts = test.cbagent.start()
         method(*args, **kwargs)

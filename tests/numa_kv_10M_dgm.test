@@ -6,6 +6,7 @@ larger_is_better = true
 
 [stats]
 report = BaseKVReport
+post_to_sf = 0
 
 [cluster]
 mem_quota = 8192

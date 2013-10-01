@@ -66,9 +66,6 @@ class XdcrTest(PerfTest):
             *self.metric_helper.calc_xdcr_lag()
         )
         self.reporter.post_to_sf(
-            *self.metric_helper.calc_avg_xdcr_ops()
-        )
-        self.reporter.post_to_sf(
             *self.metric_helper.calc_avg_set_meta_ops()
         )
 

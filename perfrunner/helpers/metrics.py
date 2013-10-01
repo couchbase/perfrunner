@@ -45,7 +45,7 @@ class MetricHelper(object):
     def calc_avg_set_meta_ops(self):
         metric = '{0}_avg_set_meta_ops_{1}'.format(self.test_config.name,
                                                    self.cluster_spec.name)
-        descr = 'Avg. setMeta ops/sec, {0}'.format(
+        descr = 'Avg. XDCR rate (items/sec), {0}'.format(
             self.test_config.get_test_descr())
         metric_info = {'title': descr, 'cluster': self.cluster_spec.name,
                        'larger_is_better': 'true'}

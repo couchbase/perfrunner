@@ -52,7 +52,7 @@ class CbAgent(object):
             cluster_spec.get_rest_credentials()
 
     def prepare_collectors(self, test, latency, query_latency, xdcr_lag,
-                           active_tasks, atop):
+                           active_tasks):
         clusters = self.clusters.keys()
         self.collectors = []
 

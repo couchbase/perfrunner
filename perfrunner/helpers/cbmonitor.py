@@ -16,12 +16,12 @@ from perfrunner.settings import CbAgentSettings
 
 
 def with_stats(latency=False, query_latency=False, xdcr_lag=False,
-               active_tasks=False, atop=False):
+               active_tasks=False):
     def with_stats(method, *args, **kwargs):
         test = args[0]
 
         test.cbagent.prepare_collectors(test, latency, query_latency, xdcr_lag,
-                                        active_tasks, atop)
+                                        active_tasks)
         test.cbagent.update_metadata()
 
         from_ts = test.cbagent.start()
@@ -57,6 +57,7 @@ class CbAgent(object):
         self.collectors = []
 
         self.prepare_ns_server(clusters)
+        self.prepare_atop(clusters)
         if latency:
             self.prepare_latency(clusters, test.workload)
         if query_latency:
@@ -65,8 +66,6 @@ class CbAgent(object):
             self.prepare_xdcr_lag(clusters)
         if active_tasks:
             self.prepare_active_tasks(clusters)
-        if atop:
-            self.prepare_atop(clusters)
 
     def prepare_ns_server(self, clusters):
         for cluster in clusters:

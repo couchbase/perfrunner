@@ -4,7 +4,7 @@ from perfrunner.helpers.cbmonitor import with_stats
 
 class NumaKVTest(KVTest):
 
-    @with_stats(latency=True, atop=True)
+    @with_stats(latency=True)
     def access(self):
         super(NumaKVTest, self).timer()
 

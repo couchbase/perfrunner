@@ -61,23 +61,23 @@ class MetricHelper(object):
 
         return set_meta_ops, metric, metric_info
 
-    def calc_max_xdcr_lag(self):
-        metric = '{0}_max_xdc_lag_{1}'.format(self.test_config.name,
-                                              self.cluster_spec.name)
-        descr = 'Max. replication lag (sec), {0}'.format(
+    def calc_xdcr_lag(self, percentile=0.9):
+        metric = '{0}_{1}th_xdc_lag_{2}'.format(self.test_config.name,
+                                                int(percentile * 100),
+                                                self.cluster_spec.name)
+        descr = '90th percentile replication lag (sec), {0}'.format(
             self.test_config.get_test_descr())
         metric_info = {'title': descr, 'cluster': self.cluster_spec.name,
                        'larger_is_better': 'false'}
-        params = {'group': 1000000000000, 'ptr': '/xdcr_lag', 'reducer': 'max'}
 
-        max_lag = 0
+        timings = []
         for bucket in self.test_config.get_buckets():
             db = 'xdcr_lag{0}{1}'.format(self.cluster_names[0], bucket)
-            data = self.seriesly[db].query(params)
-            max_lag = max(max_lag, data.values()[0][0])
-        max_lag = round(max_lag / 1000, 1)
+            data = self.seriesly[db].get_all()
+            timings += [v['xdcr_lag'] for v in data.values()]
+        lag = round(self._calc_percentile(timings, percentile), 1)
 
-        return max_lag, metric, metric_info
+        return lag, metric, metric_info
 
     def calc_max_replication_changes_left(self):
         metric = '{0}_max_replication_queue_{1}'.format(self.test_config.name,

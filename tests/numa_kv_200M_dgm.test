@@ -1,0 +1,37 @@
+[test_case]
+module = perfrunner.tests.numa
+class = NumaKVTest
+descr = latency (ms), mixed, 1 bucket x 200M x 2KB
+larger_is_better = true
+
+[stats]
+report = BaseKVReport
+post_to_sf = 0
+
+[cluster]
+mem_quota = 8192
+initial_nodes = 1
+num_buckets = 1
+
+[load]
+ops = 200000000
+size = 2048
+workers = 12
+
+[hot_load]
+items = 200000000
+workers = 24
+working_set = 30
+
+[access]
+creates = 1
+reads = 50
+updates = 48
+deletes = 1
+throughput = 10000
+items = 20000000
+size = 2048
+working_set = 30
+working_set_access = 98
+workers = 12
+time=3600

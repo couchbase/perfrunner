@@ -7,7 +7,7 @@ from logger import logger
 from ordereddict import OrderedDict
 
 
-REPO = 'https://github.com/couchbaselabs/perfrunner'
+REPO = 'https://github.com/pavel-paulau/perfrunner'
 
 BROKER_URL = 'amqp://couchbase:couchbase@ci.sc.couchbase.com:5672/perfrunner'
 

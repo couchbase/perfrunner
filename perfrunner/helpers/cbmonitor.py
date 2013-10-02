@@ -1,10 +1,10 @@
 import pytz
 from copy import copy
 from datetime import datetime
-from decorator import decorator
 from multiprocessing import Process
 from time import time
 
+from decorator import decorator
 import requests
 from cbagent.collectors import (NSServer, SpringLatency, SpringQueryLatency,
                                 XdcrLag, ActiveTasks, Atop)

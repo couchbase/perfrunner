@@ -1,6 +1,6 @@
 import time
-from decorator import decorator
 
+from decorator import decorator
 from logger import logger
 
 from perfrunner.helpers.cbmonitor import with_stats

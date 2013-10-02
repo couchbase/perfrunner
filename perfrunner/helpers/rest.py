@@ -1,11 +1,11 @@
 import json
 import time
 from collections import namedtuple
-from decorator import decorator
 
 import requests
-from requests.exceptions import ConnectionError
+from decorator import decorator
 from logger import logger
+from requests.exceptions import ConnectionError
 
 
 MAX_RETRY = 5

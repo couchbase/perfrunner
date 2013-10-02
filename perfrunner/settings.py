@@ -1,8 +1,8 @@
 import os.path
 from ConfigParser import SafeConfigParser, NoOptionError, NoSectionError
-from decorator import decorator
 from operator import add
 
+from decorator import decorator
 from logger import logger
 from ordereddict import OrderedDict
 

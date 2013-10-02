@@ -1,6 +1,6 @@
 import time
-from decorator import decorator
 
+from decorator import decorator
 from fabric import state
 from fabric.api import execute, get, put, run, parallel, settings
 from logger import logger

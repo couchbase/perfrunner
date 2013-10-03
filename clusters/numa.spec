@@ -8,7 +8,7 @@ index = /ssd2
 
 [credentials]
 rest = Administrator:password
-ssh = ronnie:couchbase
+ssh = root:couchbase
 
 [parameters]
 Platform = Numa

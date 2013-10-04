@@ -68,6 +68,15 @@ class RebalanceTest(PerfTest):
                 self.rest.add_node(master, host)
             known_nodes = self.servers[:nodes_after]
             ejected_nodes = []
+        elif nodes_after == initial_nodes:
+            swap_count = self.rebalance_settings.swap_count
+            if swap_count > initial_nodes:
+                logger.interrupt("invalid swap_count - %d" % swap_count)
+            for host_port in self.servers[initial_nodes:(initial_nodes+swap_count)]:
+                host = host_port.split(':')[0]
+                self.rest.add_node(master, host)
+            known_nodes = self.servers[:(initial_nodes+swap_count)]
+            ejected_nodes = self.servers[(initial_nodes-swap_count):initial_nodes]
         else:
             known_nodes = self.servers[:initial_nodes]
             ejected_nodes = self.servers[nodes_after:initial_nodes]

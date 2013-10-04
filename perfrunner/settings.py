@@ -211,11 +211,13 @@ class RebalanceSettings(object):
     NODES_AFTER = 4
     START_AFTER = 1200
     STOP_AFTER = 1200
+    SWAP_COUNT = 0
 
     def __init__(self, options):
         self.nodes_after = int(options.get('nodes_after', self.NODES_AFTER))
         self.start_after = int(options.get('start_after', self.START_AFTER))
         self.stop_after = int(options.get('stop_after', self.STOP_AFTER))
+        self.swap_count = int(options.get('swap_count', self.SWAP_COUNT))
 
 
 class PhaseSettings(object):

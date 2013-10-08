@@ -3,6 +3,7 @@ module = perfrunner.tests.compaction
 class = IndexCompactionTest
 descr = Index compaction (min), 1 bucket x 40M x 2KB, non-DGM, 4 x 10 views
 larger_is_better = false
+level = Basic
 
 [cluster]
 mem_quota = 81920

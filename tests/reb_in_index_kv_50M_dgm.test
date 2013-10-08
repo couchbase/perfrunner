@@ -3,6 +3,7 @@ module = perfrunner.tests.rebalance
 class = RebalanceWithQueriesTest
 descr = Rebalance-in (min), 3 -> 4, 1 bucket x 50M x 2KB, DGM, 1 x 1 views
 larger_is_better = false
+level = Basic
 
 [stats]
 report = BaseRebalanceViewsReport

@@ -29,8 +29,10 @@ class MetricHelper(object):
                                                self.cluster_spec.name)
         descr = 'Avg. XDCR ops/sec, {0}'.format(
             self.test_config.get_test_descr())
-        metric_info = {'title': descr, 'cluster': self.cluster_spec.name,
-                       'larger_is_better': 'true'}
+        metric_info = {'title': descr,
+                       'cluster': self.cluster_spec.name,
+                       'larger_is_better': 'true',
+                       'level': 'Basic'}
         params = {'group': 1000000000000, 'ptr': '/xdc_ops', 'reducer': 'avg'}
 
         xdcr_ops = 0
@@ -47,8 +49,10 @@ class MetricHelper(object):
                                                    self.cluster_spec.name)
         descr = 'Avg. XDCR rate (items/sec), {0}'.format(
             self.test_config.get_test_descr())
-        metric_info = {'title': descr, 'cluster': self.cluster_spec.name,
-                       'larger_is_better': 'true'}
+        metric_info = {'title': descr,
+                       'cluster': self.cluster_spec.name,
+                       'larger_is_better': 'true',
+                       'level': 'Basic'}
         params = {'group': 1000000000000, 'ptr': '/ep_num_ops_set_meta',
                   'reducer': 'avg'}
 
@@ -67,8 +71,10 @@ class MetricHelper(object):
                                                 self.cluster_spec.name)
         descr = '90th percentile replication lag (sec), {0}'.format(
             self.test_config.get_test_descr())
-        metric_info = {'title': descr, 'cluster': self.cluster_spec.name,
-                       'larger_is_better': 'false'}
+        metric_info = {'title': descr,
+                       'cluster': self.cluster_spec.name,
+                       'larger_is_better': 'false',
+                       'level': 'Basic'}
 
         timings = []
         for bucket in self.test_config.get_buckets():
@@ -84,8 +90,10 @@ class MetricHelper(object):
                                                         self.cluster_spec.name)
         descr = 'Max. replication queue, {0}'.format(
             self.test_config.get_test_descr())
-        metric_info = {'title': descr, 'cluster': self.cluster_spec.name,
-                       'larger_is_better': 'false'}
+        metric_info = {'title': descr,
+                       'cluster': self.cluster_spec.name,
+                       'larger_is_better': 'false',
+                       'level': 'Basic'}
         params = {'group': 1000000000000,
                   'ptr': '/replication_changes_left', 'reducer': 'max'}
 
@@ -157,8 +165,10 @@ class MetricHelper(object):
             operation.upper(),
             self.test_config.get_test_descr()
         )
-        metric_info = {'title': descr, 'cluster': self.cluster_spec.name,
-                       'larger_is_better': 'false'}
+        metric_info = {'title': descr,
+                       'cluster': self.cluster_spec.name,
+                       'larger_is_better': 'false',
+                       'level': 'Basic'}
 
         timings = []
         for bucket in self.test_config.get_buckets():
@@ -194,5 +204,6 @@ class MetricHelper(object):
         )
         metric_info = {'title': descr,
                        'cluster': self.cluster_spec.name,
-                       'larger_is_better': 'false'}
+                       'larger_is_better': 'false',
+                       'level': 'Basic'}
         return value, metric, metric_info

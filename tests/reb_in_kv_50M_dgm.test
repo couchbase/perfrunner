@@ -3,6 +3,7 @@ module = perfrunner.tests.rebalance
 class = RebalanceKVTest
 descr = Rebalance-in (min), 3 -> 4, 1 bucket x 50M x 2KB, DGM
 larger_is_better = false
+level = Basic
 
 [stats]
 report = BaseRebalanceReport

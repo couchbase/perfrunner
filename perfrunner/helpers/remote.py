@@ -159,11 +159,9 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
     def detect_openssl(self, pkg):
         pass
 
-    @all_hosts
     def reset_swap(self):
         pass
 
-    @all_hosts
     def drop_caches(self):
         pass
 
@@ -187,6 +185,9 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
             path = '/cygdrive/{0}'.format(path)
             run('rm -fr {0}/*'.format(path))
         run('rm -fr {0}'.format(self.ROOT_DIR))
+
+    def kill_processes(self):
+        pass
 
     @all_hosts
     def uninstall_package(self, *args, **kwargs):

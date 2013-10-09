@@ -10,8 +10,27 @@ class MetricHelper(object):
     def __init__(self, test):
         self.seriesly = Seriesly(CbAgentSettings.seriesly_host)
         self.test_config = test.test_config
+        self.test_descr = test.test_config.get_test_descr()
         self.cluster_spec = test.cluster_spec
         self.cluster_names = test.cbagent.clusters.keys()
+
+    @staticmethod
+    def _get_query_params(metric):
+        """Convert metric definition to Seriesly query params. E.g.:
+
+        'avg_xdc_ops' -> {'ptr': '/xdc_ops',
+                          'group': 1000000000000, 'reducer': 'avg'}
+
+        Where group is constant."""
+        return {'ptr': '/{0}'.format(metric[4:]),
+                'reducer': metric[:3],
+                'group': 1000000000000}
+
+    def _get_metric_info(self, descr, larger_is_better=False):
+        return {'title': descr,
+                'cluster': self.cluster_spec.name,
+                'larger_is_better': str(larger_is_better).lower(),
+                'level': 'Basic'}
 
     @staticmethod
     def _calc_percentile(data, percentile):
@@ -27,18 +46,14 @@ class MetricHelper(object):
     def calc_avg_xdcr_ops(self):
         metric = '{0}_avg_xdcr_ops_{1}'.format(self.test_config.name,
                                                self.cluster_spec.name)
-        descr = 'Avg. XDCR ops/sec, {0}'.format(
-            self.test_config.get_test_descr())
-        metric_info = {'title': descr,
-                       'cluster': self.cluster_spec.name,
-                       'larger_is_better': 'true',
-                       'level': 'Basic'}
-        params = {'group': 1000000000000, 'ptr': '/xdc_ops', 'reducer': 'avg'}
+        descr = 'Avg. XDCR ops/sec, {0}'.format(self.test_descr)
+        metric_info = self._get_metric_info(descr, larger_is_better=True)
+        query_params = self._get_query_params('avg_xdc_ops')
 
         xdcr_ops = 0
         for bucket in self.test_config.get_buckets():
             db = 'ns_server{0}{1}'.format(self.cluster_names[1], bucket)
-            data = self.seriesly[db].query(params)
+            data = self.seriesly[db].query(query_params)
             xdcr_ops += data.values()[0][0]
         xdcr_ops = round(xdcr_ops, 1)
 
@@ -47,19 +62,14 @@ class MetricHelper(object):
     def calc_avg_set_meta_ops(self):
         metric = '{0}_avg_set_meta_ops_{1}'.format(self.test_config.name,
                                                    self.cluster_spec.name)
-        descr = 'Avg. XDCR rate (items/sec), {0}'.format(
-            self.test_config.get_test_descr())
-        metric_info = {'title': descr,
-                       'cluster': self.cluster_spec.name,
-                       'larger_is_better': 'true',
-                       'level': 'Basic'}
-        params = {'group': 1000000000000, 'ptr': '/ep_num_ops_set_meta',
-                  'reducer': 'avg'}
+        descr = 'Avg. XDCR rate (items/sec), {0}'.format(self.test_descr)
+        metric_info = self._get_metric_info(descr, larger_is_better=True)
+        query_params = self._get_query_params('avg_ep_num_ops_set_meta')
 
         set_meta_ops = 0
         for bucket in self.test_config.get_buckets():
             db = 'ns_server{0}{1}'.format(self.cluster_names[1], bucket)
-            data = self.seriesly[db].query(params)
+            data = self.seriesly[db].query(query_params)
             set_meta_ops += data.values()[0][0]
         set_meta_ops = round(set_meta_ops, 1)
 
@@ -70,11 +80,8 @@ class MetricHelper(object):
                                                 int(percentile * 100),
                                                 self.cluster_spec.name)
         descr = '90th percentile replication lag (sec), {0}'.format(
-            self.test_config.get_test_descr())
-        metric_info = {'title': descr,
-                       'cluster': self.cluster_spec.name,
-                       'larger_is_better': 'false',
-                       'level': 'Basic'}
+            self.test_descr)
+        metric_info = self._get_metric_info(descr)
 
         timings = []
         for bucket in self.test_config.get_buckets():
@@ -88,19 +95,14 @@ class MetricHelper(object):
     def calc_max_replication_changes_left(self):
         metric = '{0}_max_replication_queue_{1}'.format(self.test_config.name,
                                                         self.cluster_spec.name)
-        descr = 'Max. replication queue, {0}'.format(
-            self.test_config.get_test_descr())
-        metric_info = {'title': descr,
-                       'cluster': self.cluster_spec.name,
-                       'larger_is_better': 'false',
-                       'level': 'Basic'}
-        params = {'group': 1000000000000,
-                  'ptr': '/replication_changes_left', 'reducer': 'max'}
+        descr = 'Max. replication queue, {0}'.format(self.test_descr)
+        metric_info = self._get_metric_info(descr)
+        query_params = self._get_query_params('max_replication_changes_left')
 
         max_queue = 0
         for bucket in self.test_config.get_buckets():
             db = 'ns_server{0}{1}'.format(self.cluster_names[0], bucket)
-            data = self.seriesly[db].query(params)
+            data = self.seriesly[db].query(query_params)
             max_queue += data.values()[0][0]
         max_queue = round(max_queue)
 
@@ -108,40 +110,45 @@ class MetricHelper(object):
 
     def calc_avg_replication_rate(self, time_elapsed):
         initial_items = self.test_config.get_load_settings().ops
-        buckets = self.test_config.get_num_buckets()
-        return round(buckets * initial_items / (time_elapsed * 60))
+        num_buckets = self.test_config.get_num_buckets()
+        avg_replication_rate = num_buckets * initial_items / (time_elapsed * 60)
+
+        return round(avg_replication_rate)
 
     def calc_avg_drain_rate(self):
-        params = {'group': 1000000000000,
-                  'ptr': '/ep_diskqueue_drain', 'reducer': 'avg'}
+        query_params = self._get_query_params('avg_ep_diskqueue_drain')
+
         drain_rate = 0
         for bucket in self.test_config.get_buckets():
             db = 'ns_server{0}{1}'.format(self.cluster_names[0], bucket)
-            data = self.seriesly[db].query(params)
+            data = self.seriesly[db].query(query_params)
             drain_rate += data.values()[0][0]
         drain_rate /= self.test_config.get_initial_nodes()
+
         return round(drain_rate)
 
     def calc_avg_ep_bg_fetched(self):
-        params = {'group': 1000000000000,
-                  'ptr': '/ep_bg_fetched', 'reducer': 'avg'}
+        query_params = self._get_query_params('avg_ep_bg_fetched')
+
         ep_bg_fetched = 0
         for bucket in self.test_config.get_buckets():
             db = 'ns_server{0}{1}'.format(self.cluster_names[0], bucket)
-            data = self.seriesly[db].query(params)
+            data = self.seriesly[db].query(query_params)
             ep_bg_fetched += data.values()[0][0]
         ep_bg_fetched /= self.test_config.get_initial_nodes()
+
         return round(ep_bg_fetched)
 
     def calc_avg_couch_views_ops(self):
-        params = {'group': 1000000000000,
-                  'ptr': '/couch_views_ops', 'reducer': 'avg'}
+        query_params = self._get_query_params('avg_couch_views_ops')
+
         couch_views_ops = 0
         for bucket in self.test_config.get_buckets():
             db = 'ns_server{0}{1}'.format(self.cluster_names[0], bucket)
-            data = self.seriesly[db].query(params)
+            data = self.seriesly[db].query(query_params)
             couch_views_ops += data.values()[0][0]
         couch_views_ops /= self.test_config.get_initial_nodes()
+
         return round(couch_views_ops)
 
     def calc_query_latency(self, percentile=0.9):
@@ -151,24 +158,20 @@ class MetricHelper(object):
                                                      bucket)
             data = self.seriesly[db].get_all()
             timings += [value['latency_query'] for value in data.values()]
-        return round(self._calc_percentile(timings, percentile))
+        query_latency = self._calc_percentile(timings, percentile)
+
+        return round(query_latency)
 
     def calc_kv_latency(self, operation, percentile=0.9):
         percentile_int = int(percentile * 100)
-        metric = '{0}_{1}_{2}th_{3}'.format(
-            self.test_config.name,
-            operation,
-            percentile_int,
-            self.cluster_spec.name)
-        descr = '{0}th percentile {1} {2}'.format(
-            percentile_int,
-            operation.upper(),
-            self.test_config.get_test_descr()
-        )
-        metric_info = {'title': descr,
-                       'cluster': self.cluster_spec.name,
-                       'larger_is_better': 'false',
-                       'level': 'Basic'}
+        metric = '{0}_{1}_{2}th_{3}'.format(self.test_config.name,
+                                            operation,
+                                            percentile_int,
+                                            self.cluster_spec.name)
+        descr = '{0}th percentile {1} {2}'.format(percentile_int,
+                                                  operation.upper(),
+                                                  self.test_descr)
+        metric_info = self._get_metric_info(descr)
 
         timings = []
         for bucket in self.test_config.get_buckets():
@@ -182,28 +185,26 @@ class MetricHelper(object):
         return latency, metric, metric_info
 
     def calc_cpu_utilization(self):
+        query_params = self._get_query_params('avg_cpu_utilization_rate')
+
         cpu_utilazion = dict()
-        params = {'group': 1000000000000,
-                  'ptr': '/cpu_utilization_rate', 'reducer': 'avg'}
         for cluster, master_host in self.cluster_spec.get_masters().items():
             cluster_name = filter(lambda name: name.startswith(cluster),
                                   self.cluster_names)[0]
             host = master_host.split(':')[0].replace('.', '')
             for bucket in self.test_config.get_buckets():
                 db = 'ns_server{0}{1}{2}'.format(cluster_name, bucket, host)
-                data = self.seriesly[db].query(params)
+                data = self.seriesly[db].query(query_params)
                 cpu_utilazion[cluster] = round(data.values()[0][0], 2)
+
         return cpu_utilazion
 
-    def get_indexing_meta(self, value, index_type='Initial'):
-        metric = '{0}_{1}_{2}'.format(
-            self.test_config.name, index_type.lower(), self.cluster_spec.name
-        )
-        descr = '{0} index (min), {1}'.format(
-            index_type, self.test_config.get_test_descr()
-        )
-        metric_info = {'title': descr,
-                       'cluster': self.cluster_spec.name,
-                       'larger_is_better': 'false',
-                       'level': 'Basic'}
+    def get_indexing_meta(self, value, index_type):
+        metric = '{0}_{1}_{2}'.format(self.test_config.name,
+                                      index_type.lower(),
+                                      self.cluster_spec.name)
+        descr = '{0} index (min), {1}'.format(index_type,
+                                              self.test_descr)
+        metric_info = self._get_metric_info(descr)
+
         return value, metric, metric_info

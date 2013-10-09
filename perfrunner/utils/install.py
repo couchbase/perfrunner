@@ -54,6 +54,9 @@ class CouchbaseInstaller(object):
                     return filename, url
         logger.interrupt('Target build not found')
 
+    def kill_processes(self):
+        self.remote_helper.kill_processes()
+
     def uninstall_package(self):
         self.remote_helper.uninstall_package(self.build.pkg)
 
@@ -67,6 +70,7 @@ class CouchbaseInstaller(object):
                                            version)
 
     def install(self):
+        self.kill_processes()
         self.uninstall_package()
         self.clean_data()
         self.install_package()

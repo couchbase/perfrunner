@@ -115,6 +115,11 @@ class RemoteLinuxHelper(object):
         run('rm -fr {0}'.format(self.ROOT_DIR))
 
     @all_hosts
+    def kill_processes(self):
+        logger.info('Killing beam.smp, memcached and epmd')
+        run('killall -9 beam.smp memcached epmd', warn_only=True, quiet=True)
+
+    @all_hosts
     def uninstall_package(self, pkg):
         logger.info('Uninstalling Couchbase Server')
         if pkg == 'deb':

@@ -14,6 +14,7 @@ class MetricHelper(object):
         self.cluster_spec = test.cluster_spec
         self.cluster_names = test.cbagent.clusters.keys()
         self.build = test.build
+        self.master_node = test.master_node
 
     @staticmethod
     def _get_query_params(metric):
@@ -27,11 +28,11 @@ class MetricHelper(object):
                 'reducer': metric[:3],
                 'group': 1000000000000}
 
-    def _get_metric_info(self, descr, larger_is_better=False):
+    def _get_metric_info(self, descr, larger_is_better=False, level='Basic'):
         return {'title': descr,
                 'cluster': self.cluster_spec.name,
                 'larger_is_better': str(larger_is_better).lower(),
-                'level': 'Basic'}
+                'level': level}
 
     @staticmethod
     def _calc_percentile(data, percentile):
@@ -154,7 +155,11 @@ class MetricHelper(object):
 
         return round(couch_views_ops)
 
-    def calc_query_latency(self, percentile=0.9):
+    def calc_query_latency(self, percentile):
+        metric = '{0}_{1}'.format(self.test_config.name, self.cluster_spec.name)
+        descr = '90th percentile query latency (ms), {0}'.format(self.test_descr)
+        metric_info = self._get_metric_info(descr)
+
         timings = []
         for bucket in self.test_config.get_buckets():
             db = 'spring_query_latency{0}{1}'.format(self.cluster_names[0],
@@ -163,7 +168,7 @@ class MetricHelper(object):
             timings += [value['latency_query'] for value in data.values()]
         query_latency = self._calc_percentile(timings, percentile)
 
-        return round(query_latency)
+        return round(query_latency), metric, metric_info
 
     def calc_kv_latency(self, operation, percentile=0.9):
         percentile_int = int(percentile * 100)
@@ -187,7 +192,7 @@ class MetricHelper(object):
 
         return latency, metric, metric_info
 
-    def calc_cpu_utilization(self):
+    def calc_cpu_utilizations(self):
         query_params = self._get_query_params('avg_cpu_utilization_rate')
 
         cpu_utilazion = dict()
@@ -201,6 +206,24 @@ class MetricHelper(object):
                 cpu_utilazion[cluster] = round(data.values()[0][0], 2)
 
         return cpu_utilazion
+
+    def calc_cpu_utilization(self):
+        metric = '{0}_avg_cpu_{1}'.format(self.test_config.name,
+                                          self.cluster_spec.name)
+        descr = 'Avg. CPU utilization rate (%), {0}'.format(self.test_descr)
+        metric_info = self._get_metric_info(descr, level='Advanced')
+
+        query_params = self._get_query_params('avg_cpu_utilization_rate')
+
+        host = self.master_node.split(':')[0].replace('.', '')
+        cluster = self.cluster_names[0]
+        bucket = self.test_config.get_buckets()[0]
+
+        db = 'ns_server{0}{1}{2}'.format(cluster, bucket, host)
+        data = self.seriesly[db].query(query_params)
+        cpu_utilazion = round(data.values()[0][0], 2)
+
+        return cpu_utilazion, metric, metric_info
 
     def get_indexing_meta(self, value, index_type):
         metric = '{0}_{1}_{2}'.format(self.test_config.name,

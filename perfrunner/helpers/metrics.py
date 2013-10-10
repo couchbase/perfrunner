@@ -13,6 +13,7 @@ class MetricHelper(object):
         self.test_descr = test.test_config.get_test_descr()
         self.cluster_spec = test.cluster_spec
         self.cluster_names = test.cbagent.clusters.keys()
+        self.build = test.build
 
     @staticmethod
     def _get_query_params(metric):
@@ -147,7 +148,9 @@ class MetricHelper(object):
             db = 'ns_server{0}{1}'.format(self.cluster_names[0], bucket)
             data = self.seriesly[db].query(query_params)
             couch_views_ops += data.values()[0][0]
-        couch_views_ops /= self.test_config.get_initial_nodes()
+
+        if self.build < '3.0.0':
+            couch_views_ops /= self.test_config.get_initial_nodes()
 
         return round(couch_views_ops)
 

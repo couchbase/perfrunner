@@ -44,6 +44,9 @@ class PerfTest(object):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
 
+        master_node = cluster_spec.get_masters().values()[0]
+        self.build = self.rest.get_version(master_node)
+
         self.target_iterator = TargetIterator(self.cluster_spec,
                                               self.test_config)
 
@@ -51,10 +54,7 @@ class PerfTest(object):
         self.rest = RestHelper(cluster_spec)
         self.remote = RemoteHelper(cluster_spec)
         self.worker_manager = WorkerManager(cluster_spec)
-
-        master_node = cluster_spec.get_masters().values()[0]
-        build = self.rest.get_version(master_node)
-        self.cbagent = CbAgent(cluster_spec, build)
+        self.cbagent = CbAgent(cluster_spec, self.build)
         self.metric_helper = MetricHelper(self)
         self.reporter = Reporter(self)
         self.reports = {}
@@ -86,9 +86,8 @@ class PerfTest(object):
 
     def hot_load(self):
         hot_load_settings = self.test_config.get_hot_load_settings()
-        master_node = self.cluster_spec.get_masters().values()[0]
 
-        if self.rest.get_version(master_node) < '2.1.0':
+        if self.build < '2.1.0':
             log_phase('hot load phase', hot_load_settings)
             self.worker_manager.run_workload(hot_load_settings,
                                              self.target_iterator)

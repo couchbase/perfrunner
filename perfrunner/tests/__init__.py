@@ -44,9 +44,6 @@ class PerfTest(object):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
 
-        master_node = cluster_spec.get_masters().values()[0]
-        self.build = self.rest.get_version(master_node)
-
         self.target_iterator = TargetIterator(self.cluster_spec,
                                               self.test_config)
 
@@ -54,6 +51,10 @@ class PerfTest(object):
         self.rest = RestHelper(cluster_spec)
         self.remote = RemoteHelper(cluster_spec)
         self.worker_manager = WorkerManager(cluster_spec)
+
+        self.master_node = cluster_spec.get_masters().values()[0]
+        self.build = self.rest.get_version(self.master_node)
+
         self.cbagent = CbAgent(cluster_spec, self.build)
         self.metric_helper = MetricHelper(self)
         self.reporter = Reporter(self)

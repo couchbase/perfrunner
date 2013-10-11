@@ -50,15 +50,17 @@ class FlusherTest(KVTest):
 
     def stop_persistence(self):
         for target in self.target_iterator:
-            mc = MemcachedClient(host=target.node, port=11210)
-            mc.sasl_auth_plain(target.bucket, '')
+            host = target.node.split(':')[0]
+            mc = MemcachedClient(host=host, port=11210)
+            mc.sasl_auth_plain(user=target.bucket, password=target.password)
             mc.stop_persistence()
 
     @with_stats()
     def drain(self):
         for target in self.target_iterator:
-            mc = MemcachedClient(host=target.node, port=11210)
-            mc.sasl_auth_plain(target.bucket, '')
+            host = target.node.split(':')[0]
+            mc = MemcachedClient(host=host, port=11210)
+            mc.sasl_auth_plain(user=target.bucket, password=target.password)
             mc.start_persistence()
         for target in self.target_iterator:
             self.monitor.monitor_disk_queue(target)

@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.kv
 class = BgFetcherTest
-descr = Avg. BgFetcher disk reads (items/sec), 1 bucket x 55M x 2KB, 80 cache miss rate
+descr = Avg. BgFetcher disk reads (items/sec), 1 bucket x 55M x 2KB, 80% cache miss rate
 larger_is_better = true
 level = Basic
 

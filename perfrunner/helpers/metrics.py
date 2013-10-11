@@ -17,16 +17,19 @@ class MetricHelper(object):
         self.master_node = test.master_node
 
     @staticmethod
-    def _get_query_params(metric):
+    def _get_query_params(metric, from_ts=None, to_ts=None):
         """Convert metric definition to Seriesly query params. E.g.:
 
         'avg_xdc_ops' -> {'ptr': '/xdc_ops',
                           'group': 1000000000000, 'reducer': 'avg'}
 
         Where group is constant."""
-        return {'ptr': '/{0}'.format(metric[4:]),
-                'reducer': metric[:3],
-                'group': 1000000000000}
+        params = {'ptr': '/{0}'.format(metric[4:]),
+                  'reducer': metric[:3],
+                  'group': 1000000000000}
+        if from_ts and to_ts:
+            params.update({'from': from_ts, 'to': to_ts})
+        return params
 
     def _get_metric_info(self, descr, larger_is_better=False, level='Basic'):
         return {'title': descr,
@@ -207,23 +210,47 @@ class MetricHelper(object):
 
         return cpu_utilazion
 
-    def calc_cpu_utilization(self):
+    def calc_cpu_utilization(self, from_ts=None, to_ts=None, meta=None):
         metric = '{0}_avg_cpu_{1}'.format(self.test_config.name,
                                           self.cluster_spec.name)
-        descr = 'Avg. CPU utilization rate (%), {0}'.format(self.test_descr)
+        descr = 'Avg. CPU utilization rate (%)'
+        if meta:
+            descr = '{0}, {1}'.format(descr, meta)
+        descr = ', {0}'.format(descr, self.test_descr)
         metric_info = self._get_metric_info(descr, level='Advanced')
-
-        query_params = self._get_query_params('avg_cpu_utilization_rate')
 
         host = self.master_node.split(':')[0].replace('.', '')
         cluster = self.cluster_names[0]
         bucket = self.test_config.get_buckets()[0]
 
+        query_params = self._get_query_params('avg_cpu_utilization_rate',
+                                              from_ts, to_ts)
         db = 'ns_server{0}{1}{2}'.format(cluster, bucket, host)
         data = self.seriesly[db].query(query_params)
         cpu_utilazion = round(data.values()[0][0], 2)
 
         return cpu_utilazion, metric, metric_info
+
+    def calc_views_disk_size(self, from_ts=None, to_ts=None, meta=None):
+        metric = '{0}_max_views_disk_size_{1}'.format(
+            self.test_config.name, self.cluster_spec.name
+        )
+        descr = 'Max. views disk size (GB)'
+        if meta:
+            descr = '{0}, {1}'.format(descr, meta)
+        descr = ', {0}'.format(descr, self.test_descr)
+        metric_info = self._get_metric_info(descr, level='Advanced')
+
+        cluster = self.cluster_names[0]
+        bucket = self.test_config.get_buckets()[0]
+
+        query_params = self._get_query_params('max_couch_views_actual_disk_size',
+                                              from_ts, to_ts)
+        db = 'ns_server{0}{1}'.format(cluster, bucket)
+        data = self.seriesly[db].query(query_params)
+        disk_size = round(data.values()[0][0] / 1024 ** 3, 2)  # -> GB
+
+        return disk_size, metric, metric_info
 
     def get_indexing_meta(self, value, index_type):
         metric = '{0}_{1}_{2}'.format(self.test_config.name,

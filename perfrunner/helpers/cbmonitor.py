@@ -1,4 +1,5 @@
 import pytz
+from calendar import timegm
 from copy import copy
 from datetime import datetime
 from multiprocessing import Process
@@ -32,6 +33,10 @@ def with_stats(latency=False, query_latency=False, xdcr_lag=False,
         report = test.test_config.get_stats_settings().report
         test.cbagent.add_snapshot(method.__name__, from_ts, to_ts, report)
         test.reports = test.cbagent.reports
+
+        from_ts = timegm(from_ts.timetuple()) * 1000  # -> ms
+        to_ts = timegm(to_ts.timetuple()) * 1000  # -> ms
+        return from_ts, to_ts
     return decorator(with_stats)
 
 

@@ -60,7 +60,12 @@ class InitialIndexTest(IndexTest):
 class InitialAndIncrementalIndexTest(IndexTest):
 
     @with_stats(active_tasks=True)
-    def build_index(self):
+    def build_init_index(self):
+        return super(InitialAndIncrementalIndexTest, self).build_index()
+
+
+    @with_stats(active_tasks=True)
+    def build_incr_index(self):
         super(InitialAndIncrementalIndexTest, self).build_index()
 
     def run(self):
@@ -70,11 +75,19 @@ class InitialAndIncrementalIndexTest(IndexTest):
 
         self.reporter.start()
         self.define_ddocs()
-        self.build_index()
+        from_ts, to_ts = self.build_init_index()
         value = self.reporter.finish('Initial index')
         self.reporter.post_to_sf(
             *self.metric_helper.get_indexing_meta(value=value,
                                                   index_type='Initial')
+        )
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_cpu_utilization(from_ts, to_ts,
+                                                     meta='Initial index')
+        )
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_views_disk_size(from_ts, to_ts,
+                                                     meta='Initial index')
         )
 
         self.access()
@@ -82,9 +95,17 @@ class InitialAndIncrementalIndexTest(IndexTest):
         self.compact_bucket()
 
         self.reporter.start()
-        self.build_index()
+        from_ts, to_ts = self.build_incr_index()
         value = self.reporter.finish('Incremental index')
         self.reporter.post_to_sf(
             *self.metric_helper.get_indexing_meta(value=value,
                                                   index_type='Incremental')
+        )
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_cpu_utilization(from_ts, to_ts,
+                                                     meta='Incremental index')
+        )
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_views_disk_size(from_ts, to_ts,
+                                                     meta='Incremental index')
         )

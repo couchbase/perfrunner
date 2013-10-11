@@ -5,6 +5,9 @@ descr = 1 bucket x 50M x 2KB, DGM, 4 x 1 views, no mutations
 larger_is_better = false
 level = Basic
 
+[stats]
+report = BaseViewsReport
+
 [cluster]
 mem_quota = 40960
 initial_nodes = 4

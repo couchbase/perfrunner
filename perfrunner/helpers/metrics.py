@@ -216,7 +216,7 @@ class MetricHelper(object):
         descr = 'Avg. CPU utilization rate (%)'
         if meta:
             descr = '{0}, {1}'.format(descr, meta)
-        descr = ', {0}'.format(descr, self.test_descr)
+        descr = '{0}, {1}'.format(descr, self.test_descr)
         metric_info = self._get_metric_info(descr, level='Advanced')
 
         host = self.master_node.split(':')[0].replace('.', '')
@@ -238,7 +238,7 @@ class MetricHelper(object):
         descr = 'Max. views disk size (GB)'
         if meta:
             descr = '{0}, {1}'.format(descr, meta)
-        descr = ', {0}'.format(descr, self.test_descr)
+        descr = '{0}, {1}'.format(descr, self.test_descr)
         metric_info = self._get_metric_info(descr, level='Advanced')
 
         query_params = self._get_query_params('max_couch_views_actual_disk_size',

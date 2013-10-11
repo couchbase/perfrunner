@@ -6,8 +6,8 @@ thor_ssd =
     172.23.96.14:8091
 
 [storage]
-data = /ssd2
-index = /ssd
+data = /ssd
+index = /data
 
 [credentials]
 rest = Administrator:password

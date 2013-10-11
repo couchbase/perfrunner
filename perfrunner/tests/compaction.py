@@ -1,8 +1,13 @@
+from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import PerfTest
 from perfrunner.tests.index import IndexTest
 
 
 class BucketCompactionTest(PerfTest):
+
+    @with_stats()
+    def compact_bucket(self):
+        self.compact_bucket()
 
     def run(self):
         self.load()  # initial load

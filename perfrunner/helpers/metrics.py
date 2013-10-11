@@ -221,7 +221,7 @@ class MetricHelper(object):
 
         host = self.master_node.split(':')[0].replace('.', '')
         cluster = self.cluster_names[0]
-        bucket = self.test_config.get_buckets()[0]
+        bucket = tuple(self.test_config.get_buckets())[0]
 
         query_params = self._get_query_params('avg_cpu_utilization_rate',
                                               from_ts, to_ts)
@@ -241,14 +241,14 @@ class MetricHelper(object):
         descr = ', {0}'.format(descr, self.test_descr)
         metric_info = self._get_metric_info(descr, level='Advanced')
 
-        cluster = self.cluster_names[0]
-        bucket = self.test_config.get_buckets()[0]
-
         query_params = self._get_query_params('max_couch_views_actual_disk_size',
                                               from_ts, to_ts)
-        db = 'ns_server{0}{1}'.format(cluster, bucket)
-        data = self.seriesly[db].query(query_params)
-        disk_size = round(data.values()[0][0] / 1024 ** 3, 2)  # -> GB
+
+        disk_size = 0
+        for bucket in self.test_config.get_buckets():
+            db = 'ns_server{0}{1}'.format(self.cluster_names[0], bucket)
+            data = self.seriesly[db].query(query_params)
+            disk_size += round(data.values()[0][0] / 1024 ** 3, 2)  # -> GB
 
         return disk_size, metric, metric_info
 

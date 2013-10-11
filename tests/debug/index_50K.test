@@ -5,6 +5,9 @@ descr = 1 bucket x 50K x 2KB, 1 x 1 views, no mutations
 larger_is_better = false
 level = Basic
 
+[stats]
+post_to_sf = 0
+
 [cluster]
 mem_quota = 10240
 initial_nodes = 4

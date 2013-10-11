@@ -235,6 +235,8 @@ class MetricHelper(object):
         metric = '{0}_max_views_disk_size_{1}'.format(
             self.test_config.name, self.cluster_spec.name
         )
+        if meta:
+            metric = '{0}_{1}'.format(metric, meta.split()[0].lower())
         descr = 'Max. views disk size (GB)'
         if meta:
             descr = '{0}, {1}'.format(descr, meta)

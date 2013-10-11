@@ -239,6 +239,7 @@ class MetricHelper(object):
         if meta:
             descr = '{0}, {1}'.format(descr, meta)
         descr = '{0}, {1}'.format(descr, self.test_descr)
+        descr = descr.replace(' (min)', '')  # rebalance tests
         metric_info = self._get_metric_info(descr, level='Advanced')
 
         query_params = self._get_query_params('max_couch_views_actual_disk_size',

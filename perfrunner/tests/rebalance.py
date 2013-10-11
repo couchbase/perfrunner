@@ -132,9 +132,8 @@ class RebalanceWithQueriesTest(QueryTest, RebalanceTest):
         self.rebalance()
         self.shutdown_event.set()
 
-        meta = self.test_config.get_test_descr().replace(' (min)', '')
         self.reporter.post_to_sf(
-            *self.metric_helper.calc_views_disk_size(meta=meta)
+            *self.metric_helper.calc_views_disk_size()
         )
 
 

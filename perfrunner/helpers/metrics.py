@@ -213,6 +213,8 @@ class MetricHelper(object):
     def calc_cpu_utilization(self, from_ts=None, to_ts=None, meta=None):
         metric = '{0}_avg_cpu_{1}'.format(self.test_config.name,
                                           self.cluster_spec.name)
+        if meta:
+            metric = '{0}_{1}'.format(metric, meta.split()[0].lower())
         descr = 'Avg. CPU utilization rate (%)'
         if meta:
             descr = '{0}, {1}'.format(descr, meta)

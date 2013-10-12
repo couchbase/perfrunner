@@ -22,7 +22,7 @@ workers = 12
 [hot_load]
 items = 100000000
 workers = 24
-working_set = 10
+working_set = 20
 
 [access]
 creates = 0
@@ -31,7 +31,7 @@ updates = 30
 deletes = 0
 items = 100000000
 size = 2048
-workers = 24
-working_set = 10
+workers = 64
+working_set = 20
 working_set_access = 20
-time=1500
+time=3600

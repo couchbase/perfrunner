@@ -7,7 +7,7 @@ class BucketCompactionTest(PerfTest):
 
     @with_stats()
     def compact_bucket(self):
-        self.compact_bucket()
+        super(BucketCompactionTest, self).compact_bucket()
 
     def run(self):
         self.load()  # initial load

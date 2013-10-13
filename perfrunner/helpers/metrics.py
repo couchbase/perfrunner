@@ -206,7 +206,7 @@ class MetricHelper(object):
             for bucket in self.test_config.get_buckets():
                 db = 'ns_server{0}{1}{2}'.format(cluster_name, bucket, host)
                 data = self.seriesly[db].query(query_params)
-                cpu_utilazion[cluster] = round(data.values()[0][0], 2)
+                cpu_utilazion[cluster] = round(data.values()[0][0], 1)
 
         return cpu_utilazion
 
@@ -229,7 +229,7 @@ class MetricHelper(object):
                                               from_ts, to_ts)
         db = 'ns_server{0}{1}{2}'.format(cluster, bucket, host)
         data = self.seriesly[db].query(query_params)
-        cpu_utilazion = round(data.values()[0][0], 2)
+        cpu_utilazion = round(data.values()[0][0], 1)
 
         return cpu_utilazion, metric, metric_info
 
@@ -253,7 +253,7 @@ class MetricHelper(object):
         for bucket in self.test_config.get_buckets():
             db = 'ns_server{0}{1}'.format(self.cluster_names[0], bucket)
             data = self.seriesly[db].query(query_params)
-            disk_size += round(data.values()[0][0] / 1024 ** 3, 2)  # -> GB
+            disk_size += round(data.values()[0][0] / 1024 ** 3, 1)  # -> GB
 
         return disk_size, metric, metric_info
 

@@ -85,3 +85,11 @@ class FlusherTest(KVTest):
         self.reporter.post_to_sf(
             self.metric_helper.calc_avg_drain_rate(time_elapsed)
         )
+
+
+class BeamRssTest(KVTest):
+
+    def run(self):
+        super(BeamRssTest, self).run()
+        if self.remote.os != 'Cygwin':
+            self.reporter.post_to_sf(*self.metric_helper.calc_max_beam_rss())

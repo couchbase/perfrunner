@@ -14,13 +14,17 @@ class ClusterManager(object):
         self.monitor = Monitor(cluster_spec)
 
         self.clusters = cluster_spec.get_clusters().values()
-        self.data_path, self.index_path = cluster_spec.get_paths()
-        self.mem_quota = test_config.get_mem_quota()
         self.initial_nodes = test_config.get_initial_nodes()
-        self.threads_number = test_config.get_mrw_threads_number()
         self.num_buckets = test_config.get_num_buckets()
+        self.data_path, self.index_path = cluster_spec.get_paths()
         self.compaction_settings = test_config.get_compaction_settings()
         self.internal_settings = test_config.get_internal_settings()
+
+        self.mem_quota = test_config.get_mem_quota()
+        self.threads_number = test_config.get_mrw_threads_number()
+        self.replica_number = test_config.get_replica_number()
+        if self.replica_number is None:
+            self.replica_number = 1
 
     def set_data_path(self):
         for cluster in self.clusters:
@@ -60,6 +64,7 @@ class ClusterManager(object):
             master = cluster[0]
             for name in buckets:
                 self.rest.create_bucket(master, name, ram_quota,
+                                        replica_number=self.replica_number,
                                         threads_number=self.threads_number)
 
     def configure_auto_compaction(self):

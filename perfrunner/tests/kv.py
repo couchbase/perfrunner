@@ -48,25 +48,40 @@ class BgFetcherTest(KVTest):
 
 class FlusherTest(KVTest):
 
+    def mc_iterator(self):
+        _, password = self.cluster_spec.get_rest_credentials()
+        for bucket in self.test_config.get_buckets():
+            for host in self.cluster_spec.get_all_hosts():
+                mc = MemcachedClient(host=host, port=11210)
+                mc.sasl_auth_plain(user=bucket, password=password)
+                yield mc
+
     def stop_persistence(self):
-        for target in self.target_iterator:
-            host = target.node.split(':')[0]
-            mc = MemcachedClient(host=host, port=11210)
-            mc.sasl_auth_plain(user=target.bucket, password=target.password)
+        for mc in self.mc_iterator():
             mc.stop_persistence()
+
+    def start_persistence(self):
+        for mc in self.mc_iterator():
+            mc.start_persistence()
 
     @with_stats()
     def drain(self):
-        for target in self.target_iterator:
-            host = target.node.split(':')[0]
-            mc = MemcachedClient(host=host, port=11210)
-            mc.sasl_auth_plain(user=target.bucket, password=target.password)
-            mc.start_persistence()
         for target in self.target_iterator:
             self.monitor.monitor_disk_queue(target)
 
     def run(self):
         self.stop_persistence()
         self.load()
+
+        self.access_bg()
+        self.start_persistence()
+
+        self.reporter.start()
         self.drain()
-        self.reporter.post_to_sf(self.metric_helper.calc_avg_drain_rate())
+        time_elapsed = self.reporter.finish('Drain')
+
+        self.shutdown_event.set()
+
+        self.reporter.post_to_sf(
+            self.metric_helper.calc_avg_drain_rate(time_elapsed)
+        )

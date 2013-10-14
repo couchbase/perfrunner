@@ -137,6 +137,10 @@ class TestConfig(Config):
     def get_mrw_threads_number(self):
         return self.config.getint('cluster', 'threads_number')
 
+    @safe
+    def get_replica_number(self):
+        return self.config.getint('cluster', 'replica_number')
+
     def get_buckets(self):
         for i in xrange(self.get_num_buckets()):
             yield 'bucket-{0}'.format(i + 1)

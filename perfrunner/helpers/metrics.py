@@ -93,7 +93,7 @@ class MetricHelper(object):
             db = 'xdcr_lag{0}{1}'.format(self.cluster_names[0], bucket)
             data = self.seriesly[db].get_all()
             timings += [v['xdcr_lag'] for v in data.values()]
-        lag = round(self._calc_percentile(timings, percentile), 1)
+        lag = round(self._calc_percentile(timings, percentile))
 
         return lag, metric, metric_info
 

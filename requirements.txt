@@ -1,4 +1,5 @@
 btrc
+decorator
 git+https://github.com/couchbaselabs/cbagent.git
 celery==3.0.21
 couchbase==1.0.0

@@ -319,7 +319,7 @@ class AccessSettings(PhaseSettings):
 class TuqSettings(object):
     SERVER_ADDR = '127.0.0.1:8093'
     SERVER_EXE = '/root/cbq-engine'
-    INDEXES = ['city']
+    INDEXES = ['coins']
 
     def __init__(self, options):
         self.server_addr = str(options.get('server_addr', self.SERVER_ADDR))

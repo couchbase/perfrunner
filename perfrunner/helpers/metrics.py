@@ -256,7 +256,7 @@ class MetricHelper(object):
         metric = '{0}_max_beam_rss_{1}'.format(
             self.test_config.name, self.cluster_spec.name
         )
-        descr = 'Max. beam.smp RSS (GB)'
+        descr = 'Max. beam.smp RSS (MB)'
         metric_info = self._get_metric_info(descr, level='Advanced')
 
         query_params = self._get_query_params('max_beam.smp_rss')
@@ -266,7 +266,7 @@ class MetricHelper(object):
             db = 'atop{0}{1}'.format(self.cluster_names[0],
                                      host.replace('.', ''))
             data = self.seriesly[db].query(query_params)
-            rss = round(data.values()[0][0] / 1024 ** 3, 1)
+            rss = round(data.values()[0][0] / 1024 ** 2)
             max_rss = max(max_rss, rss)
 
         return max_rss, metric, metric_info

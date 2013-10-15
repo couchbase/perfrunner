@@ -170,6 +170,9 @@ class TestConfig(Config):
     def get_internal_settings(self):
         return self._get_options_as_dict('internal')
 
+    def get_tuq_settings(self):
+        options = self._get_options_as_dict('tuq')
+        return TuqSettings(options)
 
 class StatsSettings(object):
 
@@ -311,3 +314,14 @@ class IndexSettings(PhaseSettings):
 class AccessSettings(PhaseSettings):
 
     OPS = float('inf')
+
+
+class TuqSettings(object):
+    SERVER_ADDR = '127.0.0.1:8093'
+    SERVER_EXE = '/root/cbq-engine'
+    INDEXES = ['city']
+
+    def __init__(self, options):
+        self.server_addr = str(options.get('server_addr', self.SERVER_ADDR))
+        self.server_exe = str(options.get('server_exe', self.SERVER_EXE))
+        self.indexes = options.get('indexes', self.INDEXES)

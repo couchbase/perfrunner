@@ -246,5 +246,20 @@ class TuqRestHelper(RestHelper):
     def create_index(self, name, path, bucket):
         logger.info('Creating tuq index %s on %s(%s)' % (name, bucket, path))
 
-        return self.post(url=self.API,
-                         data='CREATE INDEX %s ON %s(%s)' % (name, bucket, path))
+        data='CREATE INDEX %s ON %s(%s)' % (name, bucket, path)
+        return self.post(url=self.API, data=data)
+
+    def query_where_range(self, field, range, bucket):
+        logger.info('Firing where range query on %s for range %s on %s'
+                    % (field, range, bucket))
+
+        data = 'SELECT %s FROM %s WHERE %s > %s AND %s < %s'\
+               % (field, bucket, field, range[0], field, range[1])
+        return self.post(url=self.API, data=data)
+
+    def query_where_equal(self, field, val, bucket):
+        logger.info('Firing where equal query on %s for val %s on %s'
+                    % (field, val, bucket))
+
+        data = 'SELECT %s FROM %s WHERE %s = %s' % (field, bucket, field, val)
+        return self.post(url=self.API, data=data)

@@ -93,3 +93,36 @@ class BeamRssTest(KVTest):
         super(BeamRssTest, self).run()
         if self.remote.os != 'Cygwin':
             self.reporter.post_to_sf(*self.metric_helper.calc_max_beam_rss())
+
+
+class WarmupTest(PerfTest):
+
+    def access(self):
+        super(WarmupTest, self).timer()
+
+    def warmup(self):
+        self.remote.stop_server()
+        self.remote.drop_caches()
+        self.remote.start_server()
+        for target in self.target_iterator:
+            warmup_time = self.monitor.monitor_warmup(target)
+            return float(warmup_time) / 10 ** 6 / 60  # min
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.hot_load()
+        self.wait_for_persistence()
+        self.compact_bucket()
+
+        self.workload = self.test_config.get_access_settings()
+        self.access_bg()
+        self.access()
+        self.wait_for_persistence()
+        self.compact_bucket()
+        self.shutdown_event.set()
+
+        warmup_time = self.warmup()
+
+        self.reporter.post_to_sf(warmup_time)

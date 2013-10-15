@@ -146,6 +146,16 @@ class RemoteLinuxHelper(object):
         run('COUCHBASE_NS_SERVER_VM_EXTRA_ARGS=\'["+swt", "{0}"]\' '
             '/etc/init.d/couchbase-server restart'.format(swt))
 
+    @all_hosts
+    def stop_server(self):
+        logger.info('Stopping Couchbase Server')
+        run('/etc/init.d/couchbase-server stop')
+
+    @all_hosts
+    def start_server(self):
+        logger.info('Starting Couchbase Server')
+        run('/etc/init.d/couchbase-server start')
+
 
 class RemoteWindowsHelper(RemoteLinuxHelper):
 

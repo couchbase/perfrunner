@@ -19,6 +19,7 @@ class ClusterManager(object):
         self.data_path, self.index_path = cluster_spec.get_paths()
         self.compaction_settings = test_config.get_compaction_settings()
         self.internal_settings = test_config.get_internal_settings()
+        self.swt = test_config.get_swt()
 
         self.mem_quota = test_config.get_mem_quota()
         self.threads_number = test_config.get_mrw_threads_number()
@@ -85,6 +86,10 @@ class ClusterManager(object):
         self.remote.reset_swap()
         self.remote.drop_caches()
 
+    def restart_with_alternative_swt(self):
+        if self.swt is not None:
+            self.remote.restart_with_alternative_swt(swt=self.swt)
+
 
 def get_options():
     usage = '%prog -c cluster -t test_config'
@@ -114,6 +119,7 @@ def main():
     test_config.parse(options.test_config_fname)
 
     cm = ClusterManager(cluster_spec, test_config)
+    cm.restart_with_alternative_swt()
     cm.configure_internal_settings()
     cm.set_data_path()
     cm.set_auth()

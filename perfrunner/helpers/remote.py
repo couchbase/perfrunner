@@ -138,6 +138,14 @@ class RemoteLinuxHelper(object):
         else:
             run('yes | rpm -i /tmp/{0}'.format(filename))
 
+    @all_hosts
+    def restart_with_alternative_swt(self, swt='medium'):
+        """+swt very_low|low|medium|high|very_high"""
+        logger.info('Change +swt to {0} and restart server'.format(swt))
+
+        run('COUCHBASE_NS_SERVER_VM_EXTRA_ARGS=\'["+swt", "{0}"]\' '
+            '/etc/init.d/couchbase-server restart'.format(swt))
+
 
 class RemoteWindowsHelper(RemoteLinuxHelper):
 
@@ -221,3 +229,6 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
         while not self.exists(self.VERSION_FILE):
             time.sleep(5)
         time.sleep(60)
+
+    def restart_with_alternative_swt(self, swt='medium'):
+        pass

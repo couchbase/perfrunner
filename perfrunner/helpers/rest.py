@@ -235,14 +235,16 @@ class RestHelper(object):
 
 class TuqRestHelper(RestHelper):
 
-    def __init__(self, cluster_spec):
+    def __init__(self, cluster_spec, tuq):
         super(TuqRestHelper, self).__init__(cluster_spec)
         clusters = cluster_spec.get_clusters().values()
         self.master = clusters[0][0]
+        self.tuq = tuq
+        self.API = 'http://%s/query' % self.tuq.server_addr
+        logger.debug('Initializing tuq API %s' % self.API)
 
-    def create_index(self, tuq_server, name, path, bucket):
+    def create_index(self, name, path, bucket):
         logger.info('Creating tuq index %s on %s(%s)' % (name, bucket, path))
 
-        API = 'http://%s/query' % tuq_server
-        return self.post(url=API,
+        return self.post(url=self.API,
                          data='CREATE INDEX %s ON %s(%s)' % (name, bucket, path))

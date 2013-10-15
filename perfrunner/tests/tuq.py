@@ -7,7 +7,8 @@ class TuqTest(PerfTest):
 
     def __init__(self,  cluster_spec, test_config):
         super(TuqTest, self).__init__(cluster_spec, test_config)
-        self.rest = TuqRestHelper(cluster_spec)
+        self.tuq = self.test_config.get_tuq_settings()
+        self.rest = TuqRestHelper(cluster_spec, self.tuq)
 
     @with_stats(query_latency=True)
     def access(self):
@@ -15,8 +16,7 @@ class TuqTest(PerfTest):
 
     def create_tuq_index(self, tuq):
         for index in tuq.indexes:
-            self.rest.create_index(tuq.server_addr, '%s_idx' % index,
-                                   index, self.BUCKET)
+            self.rest.create_index('%s_idx' % index, index, self.BUCKET)
 
     def run(self):
         self.load()

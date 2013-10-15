@@ -256,7 +256,7 @@ class MetricHelper(object):
         metric = '{0}_max_beam_rss_{1}'.format(
             self.test_config.name, self.cluster_spec.name
         )
-        descr = 'Max. beam.smp RSS (MB)'
+        descr = 'Max. beam.smp RSS (MB), {0}'.format(self.test_descr)
         metric_info = self._get_metric_info(descr, level='Advanced')
 
         query_params = self._get_query_params('max_beam.smp_rss')

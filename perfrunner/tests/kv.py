@@ -119,9 +119,10 @@ class WarmupTest(PerfTest):
         self.workload = self.test_config.get_access_settings()
         self.access_bg()
         self.access()
+        self.shutdown_event.set()
+
         self.wait_for_persistence()
         self.compact_bucket()
-        self.shutdown_event.set()
 
         warmup_time = self.warmup()
 

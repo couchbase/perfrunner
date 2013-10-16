@@ -8,9 +8,9 @@ apollo_c2 =
 
 [workers]
 apollo_w1 =
-    172.23.96.10
+    172.23.97.74
 apollo_w2 =
-    172.23.96.10
+    172.23.97.74
 
 [storage]
 data = /data

@@ -9,4 +9,4 @@ ordereddict
 pytz
 requests==1.2.0
 seriesly
-spring
+git+https://github.com/couchbaselabs/spring.git

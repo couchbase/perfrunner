@@ -7,7 +7,7 @@ from time import time
 
 import requests
 from cbagent.collectors import (NSServer, SpringLatency, SpringQueryLatency,
-                                XdcrLag, ActiveTasks, Atop)
+                                SpringTuqLatency, XdcrLag, ActiveTasks, Atop)
 from cbagent.metadata_client import MetadataClient
 from ordereddict import OrderedDict
 
@@ -15,13 +15,13 @@ from perfrunner.helpers.misc import uhex
 from perfrunner.settings import CbAgentSettings
 
 
-def with_stats(latency=False, query_latency=False, xdcr_lag=False,
-               active_tasks=False):
+def with_stats(latency=False, query_latency=False, tuq_latency=False,
+               xdcr_lag=False, active_tasks=False):
     def with_stats(method, *args, **kwargs):
         test = args[0]
 
-        test.cbagent.prepare_collectors(test, latency, query_latency, xdcr_lag,
-                                        active_tasks)
+        test.cbagent.prepare_collectors(test, latency, query_latency, tuq_latency,
+                                        xdcr_lag, active_tasks)
         test.cbagent.update_metadata()
 
         from_ts = test.cbagent.start()
@@ -51,8 +51,8 @@ class CbAgent(object):
         self.settings.rest_username, self.settings.rest_password = \
             cluster_spec.get_rest_credentials()
 
-    def prepare_collectors(self, test, latency, query_latency, xdcr_lag,
-                           active_tasks):
+    def prepare_collectors(self, test, latency, query_latency, tuq_latency,
+                           xdcr_lag, active_tasks):
         clusters = self.clusters.keys()
         self.collectors = []
 
@@ -62,6 +62,9 @@ class CbAgent(object):
             self.prepare_latency(clusters, test.workload)
         if query_latency:
             self.prepare_query_latency(clusters, test.workload, test.ddocs)
+        if tuq_latency:
+            indexes = test.test_config.get_tuq_settings().indexes
+            self.prepare_tuq_latency(clusters, test.workload, indexes)
         if xdcr_lag:
             self.prepare_xdcr_lag(clusters)
         if active_tasks:
@@ -97,6 +100,13 @@ class CbAgent(object):
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
             self.collectors.append(SpringQueryLatency(settings, workload, ddocs))
+
+    def prepare_tuq_latency(self, clusters, workload, indexes):
+        for cluster in clusters:
+            settings = copy(self.settings)
+            settings.cluster = cluster
+            settings.master_node = self.clusters[cluster]
+            self.collectors.append(SpringTuqLatency(settings, workload, indexes))
 
     def prepare_active_tasks(self, clusters):
         for cluster in clusters:

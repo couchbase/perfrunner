@@ -1,5 +1,6 @@
 btrc
 decorator
+git+https://github.com/couchbaselabs/spring.git
 git+https://github.com/couchbaselabs/cbagent.git
 celery==3.0.21
 couchbase==1.0.0
@@ -9,4 +10,3 @@ ordereddict
 pytz
 requests==1.2.0
 seriesly
-git+https://github.com/couchbaselabs/spring.git

@@ -143,8 +143,8 @@ class RemoteLinuxHelper(object):
         """+swt very_low|low|medium|high|very_high"""
         logger.info('Change +swt to {0} and restart server'.format(swt))
 
-        run('COUCHBASE_NS_SERVER_VM_EXTRA_ARGS=\'["+swt", "{0}"]\' '
-            '/etc/init.d/couchbase-server restart'.format(swt))
+        run('ERL_AFLAGS="+swt {0}" /etc/init.d/couchbase-server restart'
+            .format(swt))
 
     @all_hosts
     def stop_server(self):

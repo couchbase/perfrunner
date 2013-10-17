@@ -10,7 +10,7 @@ class TuqTest(PerfTest):
         self.tuq = self.test_config.get_tuq_settings()
         self.rest = TuqRestHelper(cluster_spec, self.tuq)
 
-    @with_stats(query_latency=True)
+    @with_stats(tuq_latency=True)
     def access(self):
         super(TuqTest, self).timer()
 

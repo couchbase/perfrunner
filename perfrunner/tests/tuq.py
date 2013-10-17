@@ -22,7 +22,6 @@ class TuqTest(PerfTest):
         self.load()
         self.wait_for_persistence()
         self.compact_bucket()
-        self.tuq = self.test_config.get_tuq_settings()
         self.create_tuq_index(self.tuq)
 
         self.workload = self.test_config.get_access_settings()

@@ -106,7 +106,7 @@ class WarmupTest(PerfTest):
         self.remote.start_server()
         for target in self.target_iterator:
             warmup_time = self.monitor.monitor_warmup(target)
-            return float(warmup_time) / 10 ** 6 / 60  # min
+            return round(float(warmup_time) / 10 ** 6 / 60, 1)  # min
 
     def run(self):
         self.load()

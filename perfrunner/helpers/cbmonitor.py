@@ -63,8 +63,9 @@ class CbAgent(object):
         if query_latency:
             self.prepare_query_latency(clusters, test.workload, test.ddocs)
         if tuq_latency:
-            indexes = test.test_config.get_tuq_settings().indexes
-            self.prepare_tuq_latency(clusters, test.workload, indexes)
+            tuq = test.test_config.get_tuq_settings()
+            self.prepare_tuq_latency(clusters, test.workload,
+                                     tuq.indexes, tuq.server_addr)
         if xdcr_lag:
             self.prepare_xdcr_lag(clusters)
         if active_tasks:
@@ -101,12 +102,13 @@ class CbAgent(object):
             settings.master_node = self.clusters[cluster]
             self.collectors.append(SpringQueryLatency(settings, workload, ddocs))
 
-    def prepare_tuq_latency(self, clusters, workload, indexes):
+    def prepare_tuq_latency(self, clusters, workload, indexes, tuq_server):
         for cluster in clusters:
             settings = copy(self.settings)
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
-            self.collectors.append(SpringTuqLatency(settings, workload, indexes))
+            self.collectors.append(SpringTuqLatency(settings, workload,
+                                                    indexes, tuq_server))
 
     def prepare_active_tasks(self, clusters):
         for cluster in clusters:

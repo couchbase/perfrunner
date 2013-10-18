@@ -2,6 +2,7 @@ import os.path
 from ConfigParser import SafeConfigParser, NoOptionError, NoSectionError
 from decorator import decorator
 from operator import add
+import ast
 
 from logger import logger
 from ordereddict import OrderedDict
@@ -319,9 +320,9 @@ class AccessSettings(PhaseSettings):
 class TuqSettings(object):
     SERVER_ADDR = '127.0.0.1:8093'
     SERVER_EXE = '/root/cbq-engine'
-    INDEXES = {'coins': ['where_range', 'where_equal']}
+    INDEXES = "{'coins': ['where_range', 'where_equal']}"
 
     def __init__(self, options):
         self.server_addr = str(options.get('server_addr', self.SERVER_ADDR))
         self.server_exe = str(options.get('server_exe', self.SERVER_EXE))
-        self.indexes = options.get('indexes', self.INDEXES)
+        self.indexes = ast.literal_eval(options.get('indexes', self.INDEXES))

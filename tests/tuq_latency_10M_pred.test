@@ -8,7 +8,7 @@ larger_is_better = false
 report = BaseViewsReport
 
 [cluster]
-mem_quota = 40960
+mem_quota = 10240
 initial_nodes = 2
 num_buckets = 1
 

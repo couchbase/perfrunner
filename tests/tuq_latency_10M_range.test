@@ -20,7 +20,7 @@ workers = 12
 [tuq]
 server_addr = 127.0.0.1:8093
 server_exe = /root/query/cbq-engine
-indexes = "{'coins': ['where_range']}"
+indexes = {'coins': ['where_range']}
 
 [access]
 creates = 4

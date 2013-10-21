@@ -12,6 +12,7 @@ from cbagent.metadata_client import MetadataClient
 from ordereddict import OrderedDict
 
 from perfrunner.helpers.misc import uhex
+from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import CbAgentSettings
 
 
@@ -50,6 +51,7 @@ class CbAgent(object):
             cluster_spec.get_ssh_credentials()
         self.settings.rest_username, self.settings.rest_password = \
             cluster_spec.get_rest_credentials()
+        self.os = RemoteHelper.detect_os(cluster_spec)
 
     def prepare_collectors(self, test, latency, query_latency, tuq_latency,
                            xdcr_lag, active_tasks):
@@ -57,7 +59,8 @@ class CbAgent(object):
         self.collectors = []
 
         self.prepare_ns_server(clusters)
-        self.prepare_atop(clusters)
+        if self.os != 'Cygwin':
+            self.prepare_atop(clusters)
         if latency:
             self.prepare_latency(clusters, test.workload)
         if query_latency:

@@ -33,7 +33,7 @@ class Monitor(RestHelper):
             is_running, progress = self.get_rebalance_status(host_port)
 
             if progress is not None:
-                logger.info('Rebalance progress: {0} %'.format(progress))
+                logger.info('Rebalance progress: {} %'.format(progress))
         logger.info('Rebalance successfully completed')
 
     def _wait_for_null_metric(self, host_port, bucket, metric):
@@ -52,41 +52,41 @@ class Monitor(RestHelper):
                 retry = 0
 
             if value:
-                logger.info('Current value of {0}: {1}'.format(metric, value))
+                logger.info('Current value of {}: {}'.format(metric, value))
             else:
-                logger.info('{0} reached 0'.format(metric))
+                logger.info('{} reached 0'.format(metric))
                 return
-        logger.interrupt('Failed to get bucket stats after {0} attempts'.format(
+        logger.interrupt('Failed to get bucket stats after {} attempts'.format(
             self.MAX_RETRY
         ))
 
     def monitor_disk_queue(self, target):
-        logger.info('Monitoring disk queue: {0}'.format(target.bucket))
+        logger.info('Monitoring disk queue: {}'.format(target.bucket))
         for metric in self.DISK_QUEUE_METRICS:
             self._wait_for_null_metric(target.node, target.bucket, metric)
 
     def monitor_tap_replication(self, target):
-        logger.info('Monitoring TAP replication: {0}'.format(target.bucket))
+        logger.info('Monitoring TAP replication: {}'.format(target.bucket))
         for metric in self.TAP_REPLICATION_METRICS:
             self._wait_for_null_metric(target.node, target.bucket, metric)
 
     def monitor_xdcr_replication(self, target):
-        logger.info('Monitoring XDCR replication: {0}'.format(target.bucket))
+        logger.info('Monitoring XDCR replication: {}'.format(target.bucket))
         metric = 'replication_changes_left'
         self._wait_for_null_metric(target.node, target.bucket, metric)
 
     def monitor_bucket_fragmentation(self, target):
-        logger.info('Monitoring bucket fragmentation: {0}'.format(target.bucket))
+        logger.info('Monitoring bucket fragmentation: {}'.format(target.bucket))
         metric = 'couch_docs_fragmentation'
         self._wait_for_null_metric(target.node, target.bucket, metric)
 
     def monitor_index_fragmentation(self, target):
-        logger.info('Monitoring index fragmentation: {0}'.format(target.bucket))
+        logger.info('Monitoring index fragmentation: {}'.format(target.bucket))
         metric = 'couch_views_fragmentation'
         self._wait_for_null_metric(target.node, target.bucket, metric)
 
     def monitor_task(self, target, task_type):
-        logger.info('Monitoring task: {0}'.format(task_type))
+        logger.info('Monitoring task: {}'.format(task_type))
 
         while True:
             time.sleep(self.POLLING_INTERVAL)
@@ -95,13 +95,13 @@ class Monitor(RestHelper):
                      if task.get('type') == task_type]
             if tasks:
                 for task in tasks:
-                    logger.info('{0}: {1}%, bucket: {2}, ddoc: {3}'.format(
+                    logger.info('{}: {}%, bucket: {}, ddoc: {}'.format(
                         task_type, task.get('progress'),
                         task.get('bucket'), task.get('designDocument')
                     ))
             else:
                 break
-        logger.info('Task {0} successfully completed'.format(task_type))
+        logger.info('Task {} successfully completed'.format(task_type))
 
     def monitor_warmup(self, target):
         host = target.node.split(':')[0]
@@ -120,5 +120,5 @@ class Monitor(RestHelper):
                 if state == 'done':
                     return stats['ep_warmup_time']
                 else:
-                    logger.info('Warmpup status: {0}'.format(state))
+                    logger.info('Warmpup status: {}'.format(state))
                     time.sleep(self.POLLING_INTERVAL)

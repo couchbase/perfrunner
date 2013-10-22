@@ -122,5 +122,5 @@ class XdcrTuningTest(XdcrInitTest):
         for cluster, value in self.metric_helper.calc_cpu_utilizations().items():
             self.reporter.post_to_sf(
                 value=value,
-                metric='{0}_avg_cpu_utilization_rate'.format(cluster)
+                metric='{}_avg_cpu_utilization_rate'.format(cluster)
             )

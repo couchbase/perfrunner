@@ -1,5 +1,6 @@
 import pytz
 from calendar import timegm
+from collections import OrderedDict
 from copy import copy
 from datetime import datetime
 from multiprocessing import Process
@@ -10,7 +11,6 @@ import requests
 from cbagent.collectors import (NSServer, SpringLatency, SpringQueryLatency,
                                 XdcrLag, ActiveTasks, Atop)
 from cbagent.metadata_client import MetadataClient
-from ordereddict import OrderedDict
 
 from perfrunner.helpers.misc import uhex
 from perfrunner.settings import CbAgentSettings
@@ -45,9 +45,9 @@ class CbAgent(object):
     def __init__(self, cluster_spec, build):
         self.clusters = OrderedDict()
         for cluster, master in cluster_spec.get_masters().items():
-            cluster = '{0}_{1}_{2}'.format(cluster,
-                                           build.replace('.', ''),
-                                           uhex()[:3])
+            cluster = '{}_{}_{}'.format(cluster,
+                                        build.replace('.', ''),
+                                        uhex()[:3])
             master = master.split(':')[0]
             self.clusters[cluster] = master
 
@@ -139,17 +139,17 @@ class CbAgent(object):
         return datetime.fromtimestamp(time(), tz=pytz.utc)
 
     def generate_report(self, snapshot, report):
-        api = 'http://{0}/reports/html/'.format(
+        api = 'http://{}/reports/html/'.format(
             self.settings.cbmonitor_host_port)
-        url = '{0}?snapshot={1}&report={2}'.format(api, snapshot, report)
+        url = '{}?snapshot={}&report={}'.format(api, snapshot, report)
         requests.get(url=url)
         return url
 
     def add_snapshot(self, phase, ts_from, ts_to, report):
         for i, cluster in enumerate(self.clusters, start=1):
-            snapshot = '{0}_{1}'.format(cluster, phase)
+            snapshot = '{}_{}'.format(cluster, phase)
             self.settings.cluster = cluster
             md_client = MetadataClient(self.settings)
             md_client.add_snapshot(snapshot, ts_from, ts_to)
-            self.reports['report{0}'.format(i)] = self.generate_report(snapshot,
-                                                                       report)
+            self.reports['report{}'.format(i)] = self.generate_report(snapshot,
+                                                                      report)

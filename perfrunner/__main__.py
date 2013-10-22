@@ -32,7 +32,7 @@ def main():
 
     test_module = test_config.get_test_module()
     test_class = test_config.get_test_class()
-    exec('from {0} import {1}'.format(test_module, test_class))
+    exec('from {} import {}'.format(test_module, test_class))
 
     with eval(test_class)(cluster_spec, test_config) as test:
         test.run()

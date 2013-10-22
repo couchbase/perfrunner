@@ -115,7 +115,7 @@ class PerfTest(object):
 
     def timer(self):
         access_settings = self.test_config.get_access_settings()
-        logger.info('Running phase for {0} seconds'.format(access_settings.time))
+        logger.info('Running phase for {} seconds'.format(access_settings.time))
         time.sleep(access_settings.time)
 
     def debug(self):

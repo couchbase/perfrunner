@@ -30,7 +30,7 @@ class WorkerManager(object):
             state.output.running = False
             state.output.stdout = False
 
-            self.temp_dir = '/tmp/{0}'.format(uhex()[:12])
+            self.temp_dir = '/tmp/{}'.format(uhex()[:12])
             self._initialize_project()
             self._start()
         else:
@@ -41,11 +41,11 @@ class WorkerManager(object):
             logger.info('Intializing remote worker environment')
 
             state.env.host_string = self.hosts[i]
-            temp_dir = '{0}-{1}'.format(self.temp_dir, q.name)
-            run('mkdir {0}'.format(temp_dir))
+            temp_dir = '{}-{}'.format(self.temp_dir, q.name)
+            run('mkdir {}'.format(temp_dir))
             with cd(temp_dir):
-                run('git clone {0}'.format(REPO))
-            with cd('{0}/perfrunner'.format(temp_dir)):
+                run('git clone {}'.format(REPO))
+            with cd('{}/perfrunner'.format(temp_dir)):
                 run('virtualenv env')
                 run('env/bin/pip install -r requirements.txt')
 
@@ -54,11 +54,11 @@ class WorkerManager(object):
             logger.info('Starting remote Celery worker')
 
             state.env.host_string = self.hosts[i]
-            temp_dir = '{0}-{1}'.format(self.temp_dir, q.name)
-            with cd('{0}/perfrunner'.format(temp_dir)):
-                run('dtach -n /tmp/perfrunner_{0}.sock '
+            temp_dir = '{}-{}'.format(self.temp_dir, q.name)
+            with cd('{}/perfrunner'.format(temp_dir)):
+                run('dtach -n /tmp/perfrunner_{}.sock '
                     'env/bin/celery worker '
-                    '-A perfrunner.helpers.worker -Q {0} -c 1'.format(q.name))
+                    '-A perfrunner.helpers.worker -Q {} -c 1'.format(q.name))
 
     def run_workload(self, settings, target_iterator, shutdown_event=None,
                      ddocs=None):
@@ -87,8 +87,8 @@ class WorkerManager(object):
         if self.is_remote:
             for i, q in enumerate(CELERY_QUEUES):
                 state.env.host_string = self.hosts[i]
-                temp_dir = '{0}-{1}'.format(self.temp_dir, q.name)
+                temp_dir = '{}-{}'.format(self.temp_dir, q.name)
                 logger.info('Terminating remote Celery worker')
                 run('killall -9 celery; exit 0')
                 logger.info('Cleaning up remote worker environment')
-                run('rm -fr {0}'.format(temp_dir))
+                run('rm -fr {}'.format(temp_dir))

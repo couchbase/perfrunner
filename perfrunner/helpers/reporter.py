@@ -15,7 +15,7 @@ class BtrcReporter(object):
 
     def reset_utilzation_stats(self):
         for target in self.test.target_iterator:
-            logger.info('Resetting utilization stats from {0}/{1}'.format(
+            logger.info('Resetting utilization stats from {}/{}'.format(
                         target.node, target.bucket))
             cb = CouchbaseClient(target.node, target.bucket,
                                  target.username, target.password)
@@ -23,7 +23,7 @@ class BtrcReporter(object):
 
     def save_utilzation_stats(self):
         for target in self.test.target_iterator:
-            logger.info('Saving utilization stats from {0}/{1}'.format(
+            logger.info('Saving utilization stats from {}/{}'.format(
                         target.node, target.bucket))
             cb = CouchbaseClient(target.node, target.bucket,
                                  target.username, target.password)
@@ -32,7 +32,7 @@ class BtrcReporter(object):
 
     def save_btree_stats(self):
         for target in self.test.target_iterator:
-            logger.info('Saving B-tree stats from {0}/{1}'.format(
+            logger.info('Saving B-tree stats from {}/{}'.format(
                         target.node, target.bucket))
             cb = CouchbaseClient(target.node, target.bucket,
                                  target.username, target.password)
@@ -52,9 +52,9 @@ class SFReporter(object):
             cb = Couchbase.connect(bucket='clusters', **SF_STORAGE)
             cb.set(cluster, params)
         except Exception, e:
-            logger.warn('Failed to add cluster, {0}'.format(e))
+            logger.warn('Failed to add cluster, {}'.format(e))
         else:
-            logger.info('Successfully posted: {0}, {1}'.format(
+            logger.info('Successfully posted: {}, {}'.format(
                 cluster, pretty_dict(params)
             ))
 
@@ -70,9 +70,9 @@ class SFReporter(object):
             cb = Couchbase.connect(bucket='metrics', **SF_STORAGE)
             cb.set(metric, metric_info)
         except Exception, e:
-            logger.warn('Failed to add cluster, {0}'.format(e))
+            logger.warn('Failed to add cluster, {}'.format(e))
         else:
-            logger.info('Successfully posted: {0}, {1}'.format(
+            logger.info('Successfully posted: {}, {}'.format(
                 metric, pretty_dict(metric_info)
             ))
 
@@ -94,7 +94,7 @@ class SFReporter(object):
 
     def _log_benchmark(self, metric, value):
         _, benckmark = self._prepare_data(metric, value)
-        logger.info('Dry run stats: {0}'.format(
+        logger.info('Dry run stats: {}'.format(
             pretty_dict(benckmark)
         ))
 
@@ -105,16 +105,16 @@ class SFReporter(object):
             self._mark_previous_as_obsolete(cb, benckmark)
             cb.set(key, benckmark)
         except Exception, e:
-            logger.warn('Failed to post results, {0}'.format(e))
+            logger.warn('Failed to post results, {}'.format(e))
         else:
-            logger.info('Successfully posted: {0}'.format(
+            logger.info('Successfully posted: {}'.format(
                 pretty_dict(benckmark)
             ))
 
     def post_to_sf(self, value, metric=None, metric_info=None):
         if metric is None:
-            metric = '{0}_{1}'.format(self.test.test_config.name,
-                                      self.test.cluster_spec.name)
+            metric = '{}_{}'.format(self.test.test_config.name,
+                                    self.test.cluster_spec.name)
 
         stats_settings = self.test.test_config.get_stats_settings()
 
@@ -134,14 +134,14 @@ class LogReporter(object):
     def save_web_logs(self):
         for target in self.test.target_iterator:
             logs = self.test.rest.get_logs(target.node)
-            fname = 'web_log_{0}.json'.format(target.node.split(':')[0])
+            fname = 'web_log_{}.json'.format(target.node.split(':')[0])
             with open(fname, 'w') as fh:
                 fh.write(pretty_dict(logs))
 
     def save_master_events(self):
         for target in self.test.target_iterator:
             master_events = self.test.rest.get_master_events(target.node)
-            fname = 'master_events_{0}.log'.format(target.node.split(':')[0])
+            fname = 'master_events_{}.log'.format(target.node.split(':')[0])
             with open(fname, 'w') as fh:
                 fh.write(master_events)
 
@@ -154,6 +154,6 @@ class Reporter(BtrcReporter, SFReporter, LogReporter):
     def finish(self, action):
         elapsed = round((time.time() - self.ts) / 60, 1)
         logger.info(
-            'Time taken to perform "{0}": {1} min'.format(action, elapsed)
+            'Time taken to perform "{}": {} min'.format(action, elapsed)
         )
         return elapsed

@@ -59,11 +59,11 @@ class RemoteLinuxHelper(object):
 
     @staticmethod
     def wget(url, outdir='/tmp', outfile=None):
-        logger.info('Fetching {0}'.format(url))
+        logger.info('Fetching {}'.format(url))
         if outfile is not None:
-            run('wget -nc "{0}" -P {1} -O {2}'.format(url, outdir, outfile))
+            run('wget -nc "{}" -P {} -O {}'.format(url, outdir, outfile))
         else:
-            run('wget -nc "{0}" -P {1}'.format(url, outdir))
+            run('wget -nc "{}" -P {}'.format(url, outdir))
 
     @single_host
     def detect_pkg(self):
@@ -101,18 +101,18 @@ class RemoteLinuxHelper(object):
 
         run('rm -f /tmp/*.zip')
 
-        fname = '/tmp/{0}.zip'.format(uhex())
-        r = run('{0}/bin/cbcollect_info {1}'.format(self.ROOT_DIR, fname),
+        fname = '/tmp/{}.zip'.format(uhex())
+        r = run('{}/bin/cbcollect_info {}'.format(self.ROOT_DIR, fname),
                 warn_only=True)
         if not r.return_code:
-            get('{0}'.format(fname))
-            run('rm -f {0}'.format(fname))
+            get('{}'.format(fname))
+            run('rm -f {}'.format(fname))
 
     @all_hosts
     def clean_data(self):
         for path in self.cluster_spec.get_paths():
-            run('rm -fr {0}/*'.format(path))
-        run('rm -fr {0}'.format(self.ROOT_DIR))
+            run('rm -fr {}/*'.format(path))
+        run('rm -fr {}'.format(self.ROOT_DIR))
 
     @all_hosts
     def kill_processes(self):
@@ -134,16 +134,16 @@ class RemoteLinuxHelper(object):
         logger.info('Installing Couchbase Server')
         if pkg == 'deb':
             run('yes | apt-get install gdebi')
-            run('yes | gdebi /tmp/{0}'.format(filename))
+            run('yes | gdebi /tmp/{}'.format(filename))
         else:
-            run('yes | rpm -i /tmp/{0}'.format(filename))
+            run('yes | rpm -i /tmp/{}'.format(filename))
 
     @all_hosts
     def restart_with_alternative_swt(self, swt='medium'):
         """+swt very_low|low|medium|high|very_high"""
-        logger.info('Change +swt to {0} and restart server'.format(swt))
+        logger.info('Change +swt to {} and restart server'.format(swt))
 
-        run('ERL_AFLAGS="+swt {0}" /etc/init.d/couchbase-server restart'
+        run('ERL_AFLAGS="+swt {}" /etc/init.d/couchbase-server restart'
             .format(swt))
 
     @all_hosts
@@ -165,7 +165,7 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
 
     @staticmethod
     def exists(fname):
-        r = run('test -f "{0}"'.format(fname), warn_only=True, quiet=True)
+        r = run('test -f "{}"'.format(fname), warn_only=True, quiet=True)
         return not r.return_code
 
     @single_host
@@ -189,20 +189,20 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
 
         run('rm -f *.zip')
 
-        fname = '{0}.zip'.format(uhex())
-        r = run('{0}/bin/cbcollect_info.exe {1}'.format(self.ROOT_DIR, fname),
+        fname = '{}.zip'.format(uhex())
+        r = run('{}/bin/cbcollect_info.exe {}'.format(self.ROOT_DIR, fname),
                 warn_only=True)
         if not r.return_code:
-            get('{0}'.format(fname))
-            run('rm -f {0}'.format(fname))
+            get('{}'.format(fname))
+            run('rm -f {}'.format(fname))
 
     @all_hosts
     def clean_data(self):
         for path in self.cluster_spec.get_paths():
             path = path.replace(':', '').replace('\\', '/')
-            path = '/cygdrive/{0}'.format(path)
-            run('rm -fr {0}/*'.format(path))
-        run('rm -fr {0}'.format(self.ROOT_DIR))
+            path = '/cygdrive/{}'.format(path)
+            run('rm -fr {}/*'.format(path))
+        run('rm -fr {}'.format(self.ROOT_DIR))
 
     def kill_processes(self):
         pass
@@ -219,10 +219,10 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
 
     @staticmethod
     def put_iss_files(version):
-        logger.info('Copying {0} ISS files'.format(version))
-        put('scripts/install_{0}.iss'.format(version),
+        logger.info('Copying {} ISS files'.format(version))
+        put('scripts/install_{}.iss'.format(version),
             '/cygdrive/c/install.iss')
-        put('scripts/uninstall_{0}.iss'.format(version),
+        put('scripts/uninstall_{}.iss'.format(version),
             '/cygdrive/c/uninstall.iss')
 
     @all_hosts

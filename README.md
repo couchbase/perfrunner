@@ -1,9 +1,9 @@
 Requirements
 ------------
 
-* Python 2.6+ (including headers)
+* Python 2.7 (including headers)
 * virtualenv
-* libcouchbase-devel
+* libcouchbase-devel (or equivalent)
 * dtach (for remote workers only)
 
 Python dependencies are listed in requirements.txt.
@@ -25,8 +25,8 @@ For instance:
 Running tests
 -------------
 
-    python -m perfrunner.runner -c ${cluster} -t ${test_config}
+    python -m perfrunner -c ${cluster} -t ${test_config}
 
 For instance:
 
-    python -m perfrunner.runner -c clusters/vesta.spec -t tests/comp_bucket_20M.test
+    python -m perfrunner -c clusters/vesta.spec -t tests/comp_bucket_20M.test

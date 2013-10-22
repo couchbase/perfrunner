@@ -6,7 +6,6 @@ decorator
 fabric==1.8.0
 logger
 mc_bin_client
-ordereddict
 pytz
 requests==1.2.0
 seriesly

@@ -63,7 +63,6 @@ class InitialAndIncrementalIndexTest(IndexTest):
     def build_init_index(self):
         return super(InitialAndIncrementalIndexTest, self).build_index()
 
-
     @with_stats(active_tasks=True)
     def build_incr_index(self):
         super(InitialAndIncrementalIndexTest, self).build_index()

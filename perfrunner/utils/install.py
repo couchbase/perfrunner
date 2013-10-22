@@ -24,7 +24,7 @@ class CouchbaseInstaller(object):
         openssl = self.remote_helper.detect_openssl(pkg)
 
         self.build = Build(arch, pkg, options.version, openssl, options.toy)
-        logger.info('Target build info: {0}'.format(self.build))
+        logger.info('Target build info: {}'.format(self.build))
 
     def get_expected_filenames(self):
         if self.build.toy:
@@ -43,14 +43,14 @@ class CouchbaseInstaller(object):
                 'couchbase-server-enterprise_{version}-rel_{arch}.{pkg}'
             )
         for pattern in patterns:
-            yield pattern.format(**dict(zip(self.build._fields, self.build)))
+            yield pattern.format(**self.build._asdict())
 
     def find_package(self):
         for filename in self.get_expected_filenames():
             for base in (self.CBFS, self.LATEST_BUILDS):
-                url = '{0}{1}'.format(base, filename)
+                url = '{}{}'.format(base, filename)
                 if requests.head(url).status_code == 200:
-                    logger.info('Found "{0}"'.format(url))
+                    logger.info('Found "{}"'.format(url))
                     return filename, url
         logger.interrupt('Target build not found')
 

@@ -1,10 +1,10 @@
 import os.path
+from collections import OrderedDict
 from ConfigParser import SafeConfigParser, NoOptionError, NoSectionError
 from operator import add
 
 from decorator import decorator
 from logger import logger
-from ordereddict import OrderedDict
 
 
 REPO = 'https://github.com/pavel-paulau/perfrunner'
@@ -29,7 +29,7 @@ def safe(method, *args, **kargs):
     try:
         return method(*args, **kargs)
     except (NoSectionError, NoOptionError), e:
-        logger.warn('Failed to get option from config: {0}'.format(e))
+        logger.warn('Failed to get option from config: {}'.format(e))
 
 
 class Config(object):
@@ -39,9 +39,9 @@ class Config(object):
         self.name = ''
 
     def parse(self, fname):
-        logger.info('Reading configuration file: {0}'.format(fname))
+        logger.info('Reading configuration file: {}'.format(fname))
         if not os.path.isfile(fname):
-            logger.interrupt('File doesn\'t exist: {0}'.format(fname))
+            logger.interrupt('File doesn\'t exist: {}'.format(fname))
         self.config.optionxform = str
         self.config.read(fname)
 
@@ -51,7 +51,7 @@ class Config(object):
     @safe
     def _get_options_as_dict(self, section):
         if section in self.config.sections():
-            return dict((p, v) for p, v in self.config.items(section))
+            return {p: v for p, v in self.config.items(section)}
         else:
             return {}
 
@@ -147,7 +147,7 @@ class TestConfig(Config):
 
     def get_buckets(self):
         for i in xrange(self.get_num_buckets()):
-            yield 'bucket-{0}'.format(i + 1)
+            yield 'bucket-{}'.format(i + 1)
 
     def get_compaction_settings(self):
         options = self._get_options_as_dict('compaction')

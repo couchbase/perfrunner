@@ -30,17 +30,19 @@ class CouchbaseInstaller(object):
         if self.build.toy:
             patterns = (
                 'couchbase-server-community_toy-{toy}-{arch}_{version}-toy.{pkg}',
-                'couchbase-server-community_toy-{toy}-{version}-toy_{arch}.{pkg}'
+                'couchbase-server-community_toy-{toy}-{version}-toy_{arch}.{pkg}',
+                'couchbase-server-community_cent58-master-toy-{toy}-{arch}_{version}-toy.{pkg}',
+                'couchbase-server-community_cent54-master-toy-{toy}-{arch}_{version}-toy.{pkg}',
             )
         elif self.build.openssl == '0.9.8e':
             patterns = (
                 'couchbase-server-enterprise_{arch}_{version}-rel.{pkg}',
-                'couchbase-server-enterprise_{version}-rel_{arch}_openssl098.{pkg}'
+                'couchbase-server-enterprise_{version}-rel_{arch}_openssl098.{pkg}',
             )
         else:
             patterns = (
                 'couchbase-server-enterprise_{arch}_{version}-rel.{pkg}',
-                'couchbase-server-enterprise_{version}-rel_{arch}.{pkg}'
+                'couchbase-server-enterprise_{version}-rel_{arch}.{pkg}',
             )
         for pattern in patterns:
             yield pattern.format(**self.build._asdict())

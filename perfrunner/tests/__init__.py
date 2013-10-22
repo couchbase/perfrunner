@@ -88,7 +88,7 @@ class PerfTest(object):
     def hot_load(self):
         hot_load_settings = self.test_config.get_hot_load_settings()
 
-        if self.build < '2.1.0':
+        if '2.0.0' < self.build < '2.1.0':
             log_phase('hot load phase', hot_load_settings)
             self.worker_manager.run_workload(hot_load_settings,
                                              self.target_iterator)

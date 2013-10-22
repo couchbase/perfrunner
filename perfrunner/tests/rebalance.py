@@ -43,7 +43,10 @@ def with_delayed_posting(rebalance, *args, **kwargs):
 
     rebalance(*args, **kwargs)
 
-    test.reporter.post_to_sf(test.rebalance_time)
+    if test.rest.is_balanced(test.servers[0]):
+        test.reporter.post_to_sf(test.rebalance_time)
+    else:
+        logger.error('Rebalance failed')
 
 
 class RebalanceTest(PerfTest):
@@ -73,8 +76,6 @@ class RebalanceTest(PerfTest):
             ejected_nodes = self.servers[nodes_after:initial_nodes]
         self.rest.rebalance(master, known_nodes, ejected_nodes)
         self.monitor.monitor_rebalance(master)
-        if not self.rest.is_balanced(master):
-            logger.interrupt('Rebalance failed')
 
 
 class StaticRebalanceTest(RebalanceTest):

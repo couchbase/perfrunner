@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.kv
 class = LatencyTest
-descr = latency (ms), write, 1 bucket x 6M x 5KB x 2 nodes
+descr = latency (ms), write, 1 bucket x 10M x 5KB x 2 nodes
 larger_is_better = true
 
 [stats]
@@ -14,12 +14,12 @@ initial_nodes = 2
 num_buckets = 1
 
 [load]
-ops = 6000000
+ops = 10000000
 size = 5120
 workers = 12
 
 [hot_load]
-items = 6000000
+items = 10000000
 workers = 24
 working_set = 30
 
@@ -28,8 +28,8 @@ creates = 14
 reads = 20
 updates = 65
 deletes = 1
-throughput = 10000
-items = 6000000
+throughput = 40000
+items = 10000000
 size = 5120
 working_set = 30
 working_set_access = 90

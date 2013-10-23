@@ -148,7 +148,7 @@ class MetricHelper(object):
             data = self.seriesly[db].query(query_params)
             couch_views_ops += data.values()[0][0]
 
-        if self.build < '3.0.0':
+        if self.build < '2.5.0':
             couch_views_ops /= self.test_config.get_initial_nodes()
 
         return round(couch_views_ops)

@@ -29,3 +29,8 @@ class TuqTest(PerfTest):
             self.access_bg()
         self.access()
         self.shutdown_event.set()
+        for operation in ('tuq', 'query'):
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_tuq_latency(operation=operation,
+                    percentile=0.9)
+            )

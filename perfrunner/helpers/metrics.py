@@ -145,6 +145,32 @@ class MetricHelper(object):
             timings += [value['latency_query'] for value in data.values()]
         return round(self._calc_percentile(timings, percentile))
 
+    def calc_tuq_latency(self, operation, percentile=0.9):
+        percentile_int = int(percentile * 100)
+        metric = '{0}_{1}_{2}th_{3}'.format(
+            self.test_config.name,
+            operation,
+            percentile_int,
+            self.cluster_spec.name)
+        descr = '{0}th percentile {1} {2}'.format(
+            percentile_int,
+            operation.upper(),
+            self.test_config.get_test_descr()
+        )
+        metric_info = {'title': descr, 'cluster': self.cluster_spec.name,
+                       'larger_is_better': 'false'}
+
+        timings = []
+        for bucket in self.test_config.get_buckets():
+            db = 'spring_tuq_latency{0}{1}'.format(self.cluster_names[0], bucket)
+            data = self.seriesly[db].get_all()
+            timings += [
+            v['latency_{0}'.format(operation)] for v in data.values()
+            ]
+        latency = round(self._calc_percentile(timings, percentile), 1)
+
+        return latency, metric, metric_info
+
     def calc_kv_latency(self, operation, percentile=0.9):
         percentile_int = int(percentile * 100)
         metric = '{0}_{1}_{2}th_{3}'.format(

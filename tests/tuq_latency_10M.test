@@ -6,6 +6,7 @@ larger_is_better = false
 
 [stats]
 report = BaseTuqReport
+post_to_sf = 0
 
 [cluster]
 mem_quota = 10240

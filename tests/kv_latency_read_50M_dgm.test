@@ -1,8 +1,8 @@
 [test_case]
 module = perfrunner.tests.kv
 class = LatencyTest
-descr = latency (ms), read-heavy, 1 bucket x 50M x 2KB
-larger_is_better = true
+descr = latency (ms), read, 1 bucket x 50M x 2KB
+larger_is_better = false
 level = Basic
 
 [stats]

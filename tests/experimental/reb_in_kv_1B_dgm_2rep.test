@@ -16,12 +16,13 @@ num_buckets = 1
 replica_number = 2
 
 [load]
-ops = 1000000000
+items = 1000000000
 size = 4096
 workers = 36
 
 [hot_load]
 items = 1000000000
+size = 4096
 workers = 36
 working_set = 1
 

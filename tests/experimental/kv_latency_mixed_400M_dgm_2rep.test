@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.kv
 class = LatencyTest
-descr = latency (ms), mixed, 1 bucket x 400M x 1KB
+descr = latency (ms), mixed, 1 bucket x 400M x 1KB, DGM
 larger_is_better = false
 level = Basic
 
@@ -16,12 +16,13 @@ num_buckets = 1
 replica_number = 2
 
 [load]
-ops = 400000000
+items = 400000000
 size = 1024
 workers = 36
 
 [hot_load]
 items = 400000000
+size = 1024
 workers = 36
 working_set = 10
 

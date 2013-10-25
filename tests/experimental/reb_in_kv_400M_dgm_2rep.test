@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.rebalance
 class = RebalanceKVTest
-descr = Rebalance-out (min), 4 -> 3, 1 bucket x 300M x 1KB, DGM
+descr = Rebalance-in (min), 6 -> 8, 1 bucket x 400M x 1KB, DGM
 larger_is_better = false
 level = Basic
 
@@ -11,33 +11,34 @@ post_to_sf = 0
 
 [cluster]
 mem_quota = 40960
-initial_nodes = 4
+initial_nodes = 6
 num_buckets = 1
 replica_number = 2
 
 [load]
-ops = 300000000
+items = 400000000
 size = 1024
 workers = 36
 
 [hot_load]
-items = 300000000
+items = 400000000
+size = 1024
 workers = 36
 working_set = 10
 
 [access]
-creates = 5
+creates = 4
 reads = 50
-updates = 40
-deletes = 5
+updates = 46
+deletes = 0
 throughput = 4000
-items = 300000000
+items = 400000000
 size = 1024
 workers = 36
 working_set = 10
-working_set_access = 98
+working_set_access = 95
 
 [rebalance]
-nodes_after = 3
-start_after = 600
-stop_after = 600
+nodes_after = 8
+start_after = 1200
+stop_after = 1200

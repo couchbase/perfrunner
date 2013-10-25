@@ -289,6 +289,7 @@ class PhaseSettings(object):
 class LoadSettings(PhaseSettings):
 
     CREATES = 100
+    SEQ_UPDATES = True
 
 
 class HotLoadSettings(PhaseSettings):

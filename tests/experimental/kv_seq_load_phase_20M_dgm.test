@@ -1,25 +1,27 @@
 [test_case]
 module = perfrunner.tests.kv
-class = BeamRssTest
-descr = mixed, 1 bucket x 50M x 2KB, DGM
+class = LatencyTest
+descr = latency (ms), mixed, 1 bucket x 20M x 2KB, DGM
 larger_is_better = false
-level = Advanced
+level = Basic
+
+[stats]
+report = BaseKVReport
+post_to_sf = 0
 
 [cluster]
-mem_quota = 40960
+mem_quota = 16384
 initial_nodes = 4
 num_buckets = 1
 
 [load]
-items = 50000000
-size = 2048
-workers = 20
+items = 20000000
+workers = 24
 
 [hot_load]
-items = 50000000
-size = 2048
-workers = 20
+items = 20000000
 working_set = 30
+workers = 24
 
 [access]
 creates = 1
@@ -27,9 +29,8 @@ reads = 50
 updates = 48
 deletes = 1
 throughput = 10000
-items = 50000000
-size = 2048
+items = 20000000
 working_set = 30
 working_set_access = 98
-workers = 24
-time=3600
+workers = 12
+time = 3600

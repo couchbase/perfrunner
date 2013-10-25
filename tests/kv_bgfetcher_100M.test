@@ -15,13 +15,14 @@ db_percentage = 100
 view_percentage = 100
 
 [load]
-ops = 100000000
+items = 100000000
 size = 2048
-workers = 12
+workers = 20
 
 [hot_load]
 items = 100000000
-workers = 24
+size = 2048
+workers = 20
 working_set = 20
 
 [access]

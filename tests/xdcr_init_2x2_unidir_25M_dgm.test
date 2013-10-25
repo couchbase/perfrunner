@@ -18,9 +18,9 @@ db_percentage = 100
 view_percentage = 100
 
 [load]
-ops = 25000000
+items = 25000000
 size = 2048
-workers = 12
+workers = 20
 
 [xdcr]
 replication_type = unidir

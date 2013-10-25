@@ -15,6 +15,6 @@ db_percentage = 100
 view_percentage = 100
 
 [load]
-ops = 50000000
+items = 50000000
 size = 2048
-workers = 12
+workers = 20

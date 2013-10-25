@@ -12,9 +12,9 @@ num_buckets = 1
 replica_number = 0
 
 [load]
-ops = 40000000
+items = 40000000
 size = 2048
-workers = 12
+workers = 20
 
 [access]
 creates = 0

@@ -14,13 +14,14 @@ initial_nodes = 2
 num_buckets = 1
 
 [load]
-ops = 25000000
+items = 25000000
 size = 2048
-workers = 12
+workers = 20
 
 [hot_load]
 items = 25000000
-workers = 24
+size = 2048
+workers = 20
 working_set = 30
 
 [xdcr]

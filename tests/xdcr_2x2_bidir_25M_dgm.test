@@ -14,9 +14,9 @@ initial_nodes = 2
 num_buckets = 1
 
 [load]
-ops = 25000000
+items = 25000000
 size = 2048
-workers = 12
+workers = 20
 
 [xdcr]
 replication_type = bidir

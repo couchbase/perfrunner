@@ -4,9 +4,9 @@ athena =
     172.23.120.15:8091
 
 [workers]
-apollo_w1 =
+athena_w1 =
     172.23.97.75
-apollo_w2 =
+athena_w2 =
     tahoe-s10806.sc.couchbase.com
 
 [storage]

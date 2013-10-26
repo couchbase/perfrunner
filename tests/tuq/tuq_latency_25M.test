@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.tuq
 class = TuqTest
-descr = 90th percentile query latency (ms), 1 bucket x 10M x 2KB, non-DGM
+descr = 90th percentile query latency (ms), 1 bucket x 25M x 2KB, non-DGM
 larger_is_better = false
 
 [stats]
@@ -14,7 +14,7 @@ initial_nodes = 2
 num_buckets = 1
 
 [load]
-ops = 10000000
+ops = 25000000
 size = 2048
 workers = 12
 
@@ -30,7 +30,7 @@ updates = 12
 deletes = 4
 throughput = 10000
 query_throughput = 400
-items = 10000000
+items = 25000000
 size = 2048
 workers = 12
 query_workers = 12

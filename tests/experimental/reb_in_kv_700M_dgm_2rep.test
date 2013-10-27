@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.rebalance
 class = RebalanceKVTest
-descr = Rebalance-in (min), 6 -> 8, 1 bucket x 1B x 1KB, DGM
+descr = Rebalance-in (min), 6 -> 8, 1 bucket x 700M x 1KB, DGM
 larger_is_better = false
 level = Basic
 
@@ -16,12 +16,12 @@ num_buckets = 1
 replica_number = 2
 
 [load]
-items = 1000000000
+items = 700000000
 size = 1024
 workers = 20
 
 [hot_load]
-items = 1000000000
+items = 700000000
 size = 1024
 workers = 20
 working_set = 1
@@ -32,7 +32,7 @@ reads = 50
 updates = 40
 deletes = 5
 throughput = 2000
-items = 1000000000
+items = 700000000
 size = 1024
 workers = 24
 working_set = 1

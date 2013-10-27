@@ -1,0 +1,49 @@
+[test_case]
+module = perfrunner.tests.rebalance
+class = RebalanceWithQueriesTest
+descr = Rebalance-in (min), 6 -> 8, 1 bucket x 700M x 1KB, DGM, 1 x 1 views
+larger_is_better = false
+level = Basic
+
+[stats]
+report = BaseRebalanceViewsReport
+post_to_sf = 0
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 6
+num_buckets = 1
+replica_number = 2
+
+[load]
+items = 700000000
+size = 1024
+workers = 20
+
+[hot_load]
+items = 700000000
+size = 1024
+workers = 20
+working_set = 1
+
+[index]
+views = [1]
+
+[access]
+creates = 5
+reads = 50
+updates = 40
+deletes = 5
+throughput = 2000
+query_throughput = 400
+query_workers = 24
+items = 700000000
+size = 1024
+workers = 24
+working_set = 1
+working_set_access = 95
+
+[rebalance]
+nodes_after = 8
+start_after = 1200
+stop_after = 1200

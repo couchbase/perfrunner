@@ -30,6 +30,8 @@ class InstallTest(TestCase):
         expected = (
             'couchbase-server-community_toy-mytoy-x86_64_2.0.0-1976-toy.rpm',
             'couchbase-server-community_toy-mytoy-2.0.0-1976-toy_x86_64.rpm',
+            'couchbase-server-community_cent58-master-toy-mytoy-x86_64_2.0.0-1976-toy.rpm',
+            'couchbase-server-community_cent54-master-toy-mytoy-x86_64_2.0.0-1976-toy.rpm',
         )
         self.assertEqual(filenames, expected)
 

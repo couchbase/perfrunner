@@ -18,12 +18,12 @@ replica_number = 2
 [load]
 items = 200000000
 size = 1024
-workers = 36
+workers = 20
 
 [hot_load]
 items = 200000000
 size = 1024
-workers = 36
+workers = 20
 working_set = 10
 
 [access]

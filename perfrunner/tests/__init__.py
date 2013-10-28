@@ -1,5 +1,4 @@
 import time
-from hashlib import md5
 from multiprocessing import Event, Process
 
 from logger import logger
@@ -7,18 +6,12 @@ from logger import logger
 from perfrunner.helpers.cbmonitor import CbAgent
 from perfrunner.helpers.metrics import MetricHelper
 from perfrunner.helpers.monitor import Monitor
-from perfrunner.helpers.misc import log_phase
+from perfrunner.helpers.misc import log_phase, target_hash
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.reporter import Reporter
 from perfrunner.helpers.rest import RestHelper
 from perfrunner.helpers.worker import WorkerManager
 from perfrunner.settings import TargetSettings
-
-
-def target_hash(*args):
-    int_hash = hash(args)
-    str_hash = md5(hex(int_hash)).hexdigest()
-    return str_hash[:6]
 
 
 class TargetIterator(object):
@@ -34,7 +27,7 @@ class TargetIterator(object):
         for master in self.cluster_spec.get_masters().values():
             for bucket in self.test_config.get_buckets():
                 if self.prefix is None:
-                    prefix = target_hash(master, bucket)
+                    prefix = target_hash(master.split(':')[0])
                 yield TargetSettings(master, bucket, username, password, prefix)
 
 

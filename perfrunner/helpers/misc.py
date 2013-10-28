@@ -1,4 +1,5 @@
 import json
+from hashlib import md5
 from uuid import uuid4
 
 from logger import logger
@@ -14,3 +15,9 @@ def pretty_dict(d):
 
 def log_phase(phase, settings):
     logger.info('Running {}: {}'.format(phase, pretty_dict(settings.__dict__)))
+
+
+def target_hash(*args):
+    int_hash = hash(args)
+    str_hash = md5(hex(int_hash)).hexdigest()
+    return str_hash[:6]

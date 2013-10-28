@@ -1,7 +1,7 @@
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.helpers.misc import log_phase
+from perfrunner.helpers.misc import log_phase, target_hash
 from perfrunner.settings import TargetSettings
-from perfrunner.tests import target_hash, TargetIterator
+from perfrunner.tests import TargetIterator
 from perfrunner.tests import PerfTest
 
 

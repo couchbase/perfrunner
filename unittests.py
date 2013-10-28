@@ -2,6 +2,7 @@ from unittest import TestCase
 
 from mock import patch
 
+from perfrunner.helpers.misc import target_hash
 from perfrunner.utils.install import CouchbaseInstaller, Build
 
 
@@ -47,3 +48,6 @@ class InstallTest(TestCase):
             'couchbase-server-enterprise_2.2.0-817-rel_x86_64_openssl098.rpm',
         )
         self.assertEqual(filenames, expected)
+
+    def test_target_hash(self):
+        self.assertEqual(target_hash('127.0.0.1'), '3cf55f')

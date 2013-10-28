@@ -12,7 +12,7 @@ from cbagent.collectors import (NSServer, SpringLatency, SpringQueryLatency,
                                 XdcrLag, ActiveTasks, Atop)
 from cbagent.metadata_client import MetadataClient
 
-from perfrunner.helpers.misc import uhex
+from perfrunner.helpers.misc import target_hash, uhex
 from perfrunner.settings import CbAgentSettings
 
 
@@ -109,7 +109,8 @@ class CbAgent(object):
             settings = copy(self.settings)
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
-            self.collectors.append(SpringLatency(settings, workload))
+            prefix = target_hash(settings.master_node.split(':')[0])
+            self.collectors.append(SpringLatency(settings, workload, prefix))
 
     def prepare_query_latency(self, clusters, workload, ddocs):
         for cluster in clusters:

@@ -24,7 +24,7 @@ workers = 20
 items = 700000000
 size = 1024
 workers = 20
-working_set = 1
+working_set = 0.5
 
 [index]
 views = [1]
@@ -40,7 +40,7 @@ query_workers = 24
 items = 700000000
 size = 1024
 workers = 24
-working_set = 1
+working_set = 0.5
 working_set_access = 95
 
 [rebalance]

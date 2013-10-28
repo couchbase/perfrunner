@@ -4,6 +4,10 @@ from perfrunner.helpers.cbmonitor import with_stats
 
 class KVTest(PerfTest):
 
+    def __init__(self, *args, **kwargs):
+        super(KVTest, self).__init__(*args, **kwargs)
+        self.shutdown_event = None
+
     @with_stats()
     def access(self):
         super(KVTest, self).timer()

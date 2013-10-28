@@ -21,9 +21,9 @@ class KVTest(PerfTest):
         self.compact_bucket()
 
         self.workload = self.test_config.get_access_settings()
-        self.access_bg()
+        bg_process = self.access_bg()
         self.access()
-        self.shutdown_event.set()
+        bg_process.terminate()
 
 
 class LatencyTest(KVTest):

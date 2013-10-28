@@ -34,5 +34,5 @@ items = 30000000
 size = 2048
 working_set = 30
 working_set_access = 98
-workers = 48
+workers = 24
 time=3600

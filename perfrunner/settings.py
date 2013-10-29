@@ -238,6 +238,7 @@ class PhaseSettings(object):
     READS = 0
     UPDATES = 0
     DELETES = 0
+    CASES = 0
     OPS = 0
     THROUGHPUT = float('inf')
     QUERY_THROUGHPUT = float('inf')
@@ -261,6 +262,7 @@ class PhaseSettings(object):
         self.reads = int(options.get('reads', self.READS))
         self.updates = int(options.get('updates', self.UPDATES))
         self.deletes = int(options.get('deletes', self.DELETES))
+        self.cases = int(options.get('cases', self.CASES))
         self.ops = float(options.get('ops', self.OPS))
         self.throughput = float(options.get('throughput', self.THROUGHPUT))
         self.query_throughput = float(options.get('query_throughput',

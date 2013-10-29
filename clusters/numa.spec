@@ -1,6 +1,6 @@
 [clusters]
 numa =
-    numanuma.hq.couchbase.com:8091
+    numanuma.sc.couchbase.com:8091
 
 [storage]
 data = /ssd1

@@ -9,7 +9,7 @@ from logger import logger
 
 REPO = 'https://github.com/pavel-paulau/perfrunner'
 
-BROKER_URL = 'amqp://couchbase:couchbase@ci.sc.couchbase.com:5672/perfrunner'
+BROKER_URL = 'amqp://couchbase:couchbase@ci.sc.couchbase.com:5672/celery'
 
 SF_STORAGE = {
     'host': 'showfast.sc.couchbase.com', 'port': 8091, 'password': 'password'

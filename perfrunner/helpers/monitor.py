@@ -34,7 +34,7 @@ class Monitor(RestHelper):
 
             if progress is not None:
                 logger.info('Rebalance progress: {} %'.format(progress))
-        logger.info('Rebalance successfully completed')
+        logger.info('Rebalance completed')
 
     def _wait_for_null_metric(self, host_port, bucket, metric):
         retry = 0

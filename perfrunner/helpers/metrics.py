@@ -84,7 +84,7 @@ class MetricHelper(object):
         metric = '{}_{}th_xdc_lag_{}'.format(self.test_config.name,
                                              int(percentile * 100),
                                              self.cluster_spec.name)
-        descr = '90th percentile replication lag (sec), {}'.format(
+        descr = '90th percentile replication lag (ms), {}'.format(
             self.test_descr)
         metric_info = self._get_metric_info(descr)
 

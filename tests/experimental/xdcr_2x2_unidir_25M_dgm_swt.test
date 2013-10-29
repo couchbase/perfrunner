@@ -1,0 +1,43 @@
+[test_case]
+module = perfrunner.tests.xdcr
+class = XdcrDebugTest
+descr = 2 -> 2 UniDir, 1 bucket x 25M x 2KB, DGM
+larger_is_better = false
+level = Basic
+
+[stats]
+report = BaseXdcrReport
+post_to_sf = 0
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 2
+num_buckets = 1
+swt = low
+
+[load]
+items = 25000000
+size = 2048
+workers = 20
+
+[hot_load]
+items = 25000000
+size = 2048
+workers = 20
+working_set = 30
+
+[xdcr]
+replication_type = unidir
+
+[access]
+creates = 5
+reads = 20
+updates = 70
+deletes = 5
+throughput = 10000
+items = 25000000
+size = 2048
+workers = 48
+working_set = 30
+working_set_access = 98
+time = 7200

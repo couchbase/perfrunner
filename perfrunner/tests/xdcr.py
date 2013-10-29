@@ -1,3 +1,7 @@
+import time
+
+from logger import logger
+
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import log_phase, target_hash
 from perfrunner.settings import TargetSettings
@@ -124,3 +128,21 @@ class XdcrTuningTest(XdcrInitTest):
                 value=value,
                 metric='{}_avg_cpu_utilization_rate'.format(cluster)
             )
+
+
+class XdcrDebugTest(SymmetricXdcrTest):
+
+    POLLING_INTERVAL = 20
+
+    @with_stats(xdcr_lag=True)
+    def access(self):
+        access_settings = self.test_config.get_access_settings()
+        logger.info('Running phase for {} seconds'.format(access_settings.time))
+        t0 = time.time()
+        while time.time() - t0 < access_settings.time:
+            for master in self.cluster_spec.get_masters().values():
+                run_queues = self.rest.run_diag_eval(
+                    master, 'erlang:statistics(run_queues).'
+                )
+                logger.info('Run queues at {}: {}'.format(master, run_queues))
+            time.sleep(self.POLLING_INTERVAL)

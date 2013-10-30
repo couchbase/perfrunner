@@ -133,9 +133,10 @@ class RebalanceWithQueriesTest(QueryTest, RebalanceTest):
         self.rebalance()
         self.shutdown_event.set()
 
-        self.reporter.post_to_sf(
-            *self.metric_helper.calc_views_disk_size()
-        )
+        if self.rest.is_balanced(self.servers[0]):
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_views_disk_size()
+            )
 
 
 class RebalanceWithXdcrTest(XdcrTest, RebalanceTest):

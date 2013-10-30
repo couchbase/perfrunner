@@ -56,9 +56,9 @@ class WorkerManager(object):
             state.env.host_string = self.hosts[i]
             temp_dir = '{}-{}'.format(self.temp_dir, q.name)
             with cd('{}/perfrunner'.format(temp_dir)):
-                run('dtach -n /tmp/perfrunner_{}.sock '
+                run('dtach -n /tmp/perfrunner_{0}.sock '
                     'env/bin/celery worker '
-                    '-A perfrunner.helpers.worker -Q {} -c 1'.format(q.name))
+                    '-A perfrunner.helpers.worker -Q {0} -c 1'.format(q.name))
 
     def run_workload(self, settings, target_iterator, shutdown_event=None,
                      ddocs=None):

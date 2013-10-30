@@ -231,5 +231,5 @@ class RestHelper(object):
         return self.post(url=api, data=data)
 
     def run_diag_eval(self, host_port, cmd):
-        api = 'http://{}/internalSettings'.format(host_port)
+        api = 'http://{}/diag/eval'.format(host_port)
         return self.post(url=api, data=cmd).text

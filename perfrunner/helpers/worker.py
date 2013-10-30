@@ -46,7 +46,7 @@ class WorkerManager(object):
             with cd(temp_dir):
                 run('git clone {}'.format(REPO))
             with cd('{}/perfrunner'.format(temp_dir)):
-                run('virtualenv env')
+                run('virtualenv -p python2.7 env')
                 run('env/bin/pip install -r requirements.txt')
 
     def _start(self):

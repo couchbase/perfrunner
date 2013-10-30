@@ -18,6 +18,12 @@ ops = 10000000
 size = 2048
 workers = 12
 
+[hot_load]
+items = 10000000 
+workers = 24
+working_set = 30
+
+
 [tuq]
 server_addr = 127.0.0.1:8093
 server_exe = /root/query/cbq-engine

@@ -26,6 +26,9 @@ class TuqTest(PerfTest):
 
         self.workload = self.test_config.get_access_settings()
         if self.tuq.kv_bg:
+            self.hot_load()
+            self.wait_for_persistence()
+            self.compact_bucket()
             self.access_bg()
         self.access()
         self.shutdown_event.set()

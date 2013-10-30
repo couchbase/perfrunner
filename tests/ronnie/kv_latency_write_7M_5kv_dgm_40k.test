@@ -1,0 +1,37 @@
+[test_case]
+module = perfrunner.tests.kv
+class = LatencyTest
+descr = latency (ms), write, 1 bucket x 7M x 5KB x 2 nodes
+larger_is_better = true
+
+[stats]
+report = BaseKVReport
+post_to_sf = 0
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 2
+num_buckets = 1
+
+[load]
+ops = 7000000
+size = 5120
+workers = 12
+
+[hot_load]
+items = 7000000
+workers = 24
+working_set = 30
+
+[access]
+creates = 14
+reads = 20
+updates = 65
+deletes = 1
+throughput = 40000
+items = 7000000
+size = 5120
+working_set = 30
+working_set_access = 90
+workers = 24
+time=3600

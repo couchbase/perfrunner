@@ -66,9 +66,16 @@ class WorkerManager(object):
         curr_target = None
         curr_queue = None
         workers = []
-        for target in target_iterator:
+        targets = list(target_iterator)
+        for target in targets:
             if self.is_remote:
                 logger.info('Starting workload generator remotely')
+                if len(targets) == 1:
+                    for i in range(1, len(self.hosts) + 1):
+                        workers.append(task_run_workload.apply_async(
+                            args=(settings, target, shutdown_event, ddocs),
+                            queue='Q%s' % i))
+                    break
                 if curr_target != target.node:
                     curr_target = target.node
                     curr_queue = queues.next()

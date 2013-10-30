@@ -72,6 +72,7 @@ class WorkerManager(object):
                 logger.info('Starting workload generator remotely')
                 if len(targets) == 1:
                     for i in range(1, len(self.hosts) + 1):
+                        target.prefix = "client-%s" % i
                         workers.append(task_run_workload.apply_async(
                             args=(settings, target, shutdown_event, ddocs),
                             queue='Q%s' % i))

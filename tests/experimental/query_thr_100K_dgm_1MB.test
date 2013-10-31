@@ -1,0 +1,34 @@
+[test_case]
+module = perfrunner.tests.query
+class = QueryThroughputTest
+descr = Query throughput (qps), 1 bucket x 100K x 1MB, DGM, 4 x 2 views
+larger_is_better = true
+level = Basic
+
+[stats]
+report = BaseViewsReport
+post_to_sf = 0
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 4
+num_buckets = 1
+
+[load]
+items = 100000
+size = 1048576
+workers = 20
+
+[index]
+views = [2, 2, 2, 2]
+
+[access]
+creates = 4
+reads = 80
+updates = 12
+deletes = 4
+items = 100000
+size = 5242880
+workers = 24
+query_workers = 24
+time = 3600

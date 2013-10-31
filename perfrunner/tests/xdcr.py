@@ -27,8 +27,8 @@ class XdcrTest(PerfTest):
                 'fromBucket': bucket,
                 'toCluster': name
             }
-            if self.settings.replication_mode:
-                params['type'] = self.settings.replication_mode
+            if self.settings.replication_protocol:
+                params['type'] = self.settings.replication_protocol
             self.rest.start_replication(m1, params)
 
     def init_xdcr(self):

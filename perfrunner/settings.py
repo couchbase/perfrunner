@@ -303,13 +303,13 @@ class HotLoadSettings(PhaseSettings):
 class XDCRSettings(PhaseSettings):
 
     XDCR_REPLICATION_TYPE = 'bidir'
-    XDCR_REPLICATION_MODE = None
+    XDCR_REPLICATION_PROTOCOL = None
 
     def __init__(self, options):
         self.replication_type = options.get('replication_type',
                                             self.XDCR_REPLICATION_TYPE)
-        self.replication_mode = options.get('replication_mode',
-                                            self.XDCR_REPLICATION_MODE)
+        self.replication_protocol = options.get('replication_protocol',
+                                                self.XDCR_REPLICATION_PROTOCOL)
 
 
 class IndexSettings(PhaseSettings):

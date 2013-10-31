@@ -114,14 +114,14 @@ class MetricHelper(object):
         return max_queue, metric, metric_info
 
     def calc_avg_replication_rate(self, time_elapsed):
-        initial_items = self.test_config.get_load_settings().ops
+        initial_items = self.test_config.get_load_settings().items
         num_buckets = self.test_config.get_num_buckets()
         avg_replication_rate = num_buckets * initial_items / (time_elapsed * 60)
 
         return round(avg_replication_rate)
 
     def calc_avg_drain_rate(self, time_elapsed):
-        items_per_node = self.test_config.get_load_settings().ops / \
+        items_per_node = self.test_config.get_load_settings().items / \
             self.test_config.get_initial_nodes()
         drain_rate = items_per_node / (time_elapsed * 60)
 

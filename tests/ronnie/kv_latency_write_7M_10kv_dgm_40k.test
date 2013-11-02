@@ -16,6 +16,7 @@ num_buckets = 1
 [load]
 ops = 7000000
 size = 10240
+throughput=5000
 workers = 12
 
 [hot_load]

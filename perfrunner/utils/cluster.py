@@ -47,6 +47,8 @@ class ClusterManager(object):
 
     def rebalance(self):
         for cluster in self.clusters:
+            if len(cluster) == 1:
+                continue
             master = cluster[0]
             known_nodes = cluster[:self.initial_nodes]
             ejected_nodes = []

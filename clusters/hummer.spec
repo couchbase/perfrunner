@@ -1,9 +1,9 @@
 [clusters]
 tahoe =
-    hummer-s10901.sc.couchbase.com:8091
-    hummer-s10902.sc.couchbase.com:8091
-    hummer-s10903.sc.couchbase.com:8091
-    hummer-s10904.sc.couchbase.com:8091
+    172.23.97.37:8091
+    172.23.97.40:8091
+    172.23.97.34:8091
+    172.23.97.41:8091
 
 [storage]
 data = /data

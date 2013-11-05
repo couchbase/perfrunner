@@ -17,7 +17,7 @@ view_percentage = 100
 [load]
 items = 100000000
 size = 2048
-workers = 20
+workers = 10
 
 [hot_load]
 items = 100000000

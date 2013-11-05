@@ -14,13 +14,13 @@ initial_nodes = 2
 num_buckets = 1
 
 [load]
-ops = 1000000
+ops = 200000
 size = 40960
 throughput=2000
 workers = 12
 
 [hot_load]
-items = 1000000
+items = 200000
 workers = 24
 working_set = 30
 
@@ -30,9 +30,9 @@ reads = 20
 updates = 65
 deletes = 1
 throughput = 40000
-items = 1000000
+items = 200000
 size = 40960
 working_set = 30
 working_set_access = 90
-workers = 30
+workers = 24
 time=3600

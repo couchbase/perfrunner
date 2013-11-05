@@ -8,7 +8,7 @@ from spring.wgen import WorkloadGen
 from perfrunner.helpers.misc import uhex
 from perfrunner.settings import BROKER_URL, REPO
 
-CELERY_QUEUES = (Queue('Q1'), Queue('Q2'))
+CELERY_QUEUES = []
 celery = Celery('workers', backend='amqp', broker=BROKER_URL)
 
 
@@ -24,6 +24,10 @@ class WorkerManager(object):
         self.hosts = cluster_spec.get_workers()
         if self.hosts:
             self.is_remote = True
+            if len(self.hosts) > 1:
+                CELERY_QUEUES.extend([Queue('Q1'), Queue('Q2')])
+            else:
+                CELERY_QUEUES.append(Queue('Q1'))
 
             state.env.user, state.env.password = \
                 cluster_spec.get_ssh_credentials()

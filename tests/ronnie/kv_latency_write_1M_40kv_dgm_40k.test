@@ -25,14 +25,14 @@ workers = 24
 working_set = 30
 
 [access]
-creates = 70
-reads = 20
-updates = 9
-deletes = 1
-throughput = 40000
+creates = 100
+reads = 0
+updates = 0
+deletes = 0
+throughput = 10000
 items = 200000
 size = 40960
 working_set = 30
 working_set_access = 90
-workers = 24
+workers = 18
 time=3600

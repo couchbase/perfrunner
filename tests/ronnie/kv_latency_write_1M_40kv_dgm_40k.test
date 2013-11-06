@@ -25,9 +25,9 @@ workers = 24
 working_set = 30
 
 [access]
-creates = 14
+creates = 70
 reads = 20
-updates = 65
+updates = 9
 deletes = 1
 throughput = 40000
 items = 200000

@@ -233,6 +233,11 @@ class RestHelper(object):
         API = 'http://{0}/internalSettings'.format(host_port)
         return self.post(url=API, data=data)
 
+    def diag_eval(self, host_port, data):
+        API = 'http://{0}/diag/eval/'.format(host_port)
+
+        return self.post(url=API, data=data)
+
 class TuqRestHelper(RestHelper):
 
     def __init__(self, cluster_spec, tuq):

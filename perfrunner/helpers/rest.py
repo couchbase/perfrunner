@@ -238,6 +238,13 @@ class RestHelper(object):
 
         return self.post(url=API, data=data)
 
+    def change_reb_moves_before_compaction(self, host_port, num_moves):
+        logger.info('change rebalance_moves_before_compaction to %s' % num_moves)
+
+        API = 'ns_config:set(rebalance_moves_before_compaction, {0}).'.format(num_moves)
+
+        return self.diag_eval(host_port, API)
+
 class TuqRestHelper(RestHelper):
 
     def __init__(self, cluster_spec, tuq):

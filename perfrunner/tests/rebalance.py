@@ -135,7 +135,6 @@ class RebalanceKVTest(RebalanceTest):
 
         self.access_bg()
         self.rebalance()
-        self.shutdown_event.set()
 
 
 class RebalanceWithQueriesTest(QueryTest, RebalanceTest):

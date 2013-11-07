@@ -53,6 +53,19 @@ class RebalanceTest(PerfTest):
         self.rebalance_settings = self.test_config.get_rebalance_settings()
         self.servers = self.cluster_spec.get_clusters().values()[-1]
         self.shutdown_event = None
+        self.apply_rebalance_settings()
+
+    def apply_rebalance_settings(self):
+        if not self.rebalance_settings:
+            return
+
+        master = self.servers[0]
+        if self.rebalance_settings.reb_moves_per_node:
+            self.rest.change_rebalance_moves_per_node(master,
+                self.rebalance_settings.reb_moves_per_node)
+        if self.rebalance_settings.reb_moves_before_compaction:
+            self.rest.change_reb_moves_before_compaction(master,
+                self.rebalance_settings.reb_moves_before_compaction)
 
     @with_delayed_posting
     @with_stats(active_tasks=True)

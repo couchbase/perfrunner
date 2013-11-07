@@ -245,6 +245,13 @@ class RestHelper(object):
 
         return self.diag_eval(host_port, API)
 
+    def change_rebalance_moves_per_node(self, host_port, num_moves):
+        logger.info('change rebalance_moves_per_node to %s' % num_moves)
+
+        API = 'ns_config:set(rebalance_moves_per_node, {0}).'.format(num_moves)
+
+        return self.diag_eval(host_port, API)
+
 class TuqRestHelper(RestHelper):
 
     def __init__(self, cluster_spec, tuq):

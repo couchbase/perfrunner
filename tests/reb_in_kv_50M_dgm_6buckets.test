@@ -11,7 +11,7 @@ post_to_sf = 0
 [cluster]
 mem_quota = 40960
 initial_nodes = 3
-num_buckets = 1
+num_buckets = 6
 
 [load]
 ops = 50000000

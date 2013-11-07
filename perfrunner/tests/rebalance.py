@@ -52,6 +52,7 @@ class RebalanceTest(PerfTest):
         super(RebalanceTest, self).__init__(*args, **kwargs)
         self.rebalance_settings = self.test_config.get_rebalance_settings()
         self.servers = self.cluster_spec.get_clusters().values()[-1]
+        self.shutdown_event = None
 
     @with_delayed_posting
     @with_stats(active_tasks=True)

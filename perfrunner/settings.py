@@ -216,12 +216,17 @@ class RebalanceSettings(object):
     START_AFTER = 1200
     STOP_AFTER = 1200
     SWAP_COUNT = 0
+    REB_MOVES_PER_NODE = 0
+    REB_MOVES_BEFORE_COMPACTION = 0
 
     def __init__(self, options):
         self.nodes_after = int(options.get('nodes_after', self.NODES_AFTER))
         self.start_after = int(options.get('start_after', self.START_AFTER))
         self.stop_after = int(options.get('stop_after', self.STOP_AFTER))
         self.swap_count = int(options.get('swap_count', self.SWAP_COUNT))
+        self.reb_moves_per_node = int(options.get('reb_moves_per_node', self.REB_MOVES_PER_NODE))
+        self.reb_moves_before_compaction = int(options.get('reb_moves_before_compaction',
+                                                           self.REB_MOVES_BEFORE_COMPACTION))
 
 
 class PhaseSettings(object):

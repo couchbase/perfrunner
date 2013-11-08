@@ -16,11 +16,11 @@ num_buckets = 6
 [load]
 ops = 1000000
 size = 2048
-workers = 12
+workers = 6
 
 [hot_load]
 items = 1000000
-workers = 24
+workers = 6
 working_set = 30
 
 [access]
@@ -31,7 +31,7 @@ deletes = 5
 throughput = 10000
 items = 1000000
 size = 2048
-workers = 24
+workers = 6
 working_set = 30
 working_set_access = 98
 

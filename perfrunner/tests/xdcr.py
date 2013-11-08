@@ -64,7 +64,7 @@ class XdcrTest(PerfTest):
         bg_process.terminate()
 
         self.reporter.post_to_sf(
-            *self.metric_helper.calc_max_replication_changes_left()
+            *self.metric_helper.calc_replication_changes_left()
         )
         self.reporter.post_to_sf(
             *self.metric_helper.calc_xdcr_lag()

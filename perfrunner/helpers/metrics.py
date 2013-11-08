@@ -81,11 +81,12 @@ class MetricHelper(object):
         return set_meta_ops, metric, metric_info
 
     def calc_xdcr_lag(self, percentile=0.9):
+        percentile_int = int(percentile * 100)
         metric = '{}_{}th_xdc_lag_{}'.format(self.test_config.name,
-                                             int(percentile * 100),
+                                             percentile_int,
                                              self.cluster_spec.name)
-        descr = '90th percentile replication lag (ms), {}'.format(
-            self.test_descr)
+        descr = '{}th percentile replication lag (ms), {}'.format(
+            percentile_int, self.test_descr)
         metric_info = self._get_metric_info(descr)
 
         timings = []
@@ -97,21 +98,23 @@ class MetricHelper(object):
 
         return lag, metric, metric_info
 
-    def calc_max_replication_changes_left(self):
-        metric = '{}_max_replication_queue_{}'.format(self.test_config.name,
-                                                      self.cluster_spec.name)
-        descr = 'Max. replication queue, {}'.format(self.test_descr)
+    def calc_replication_changes_left(self, percentile=0.9):
+        percentile_int = int(percentile * 100)
+        metric = '{}_{}th_replication_queue_{}'.format(self.test_config.name,
+                                                       int(percentile * 100),
+                                                       self.cluster_spec.name)
+        descr = '{}th percentile replication queue, {}'.format(percentile_int,
+                                                               self.test_descr)
         metric_info = self._get_metric_info(descr)
-        query_params = self._get_query_params('max_replication_changes_left')
 
-        max_queue = 0
+        queues = []
         for bucket in self.test_config.get_buckets():
             db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
-            data = self.seriesly[db].query(query_params)
-            max_queue += data.values()[0][0]
-        max_queue = round(max_queue)
+            data = self.seriesly[db].get_all()
+            queues += [v['replication_changes_left'] for v in data.values()]
+        queue = round(self._calc_percentile(queues, percentile))
 
-        return max_queue, metric, metric_info
+        return queue, metric, metric_info
 
     def calc_avg_replication_rate(self, time_elapsed):
         initial_items = self.test_config.get_load_settings().items
@@ -153,9 +156,11 @@ class MetricHelper(object):
 
         return round(couch_views_ops)
 
-    def calc_query_latency(self, percentile):
+    def calc_query_latency(self, percentile=0.9):
+        percentile_int = int(percentile * 100)
         metric = '{}_{}'.format(self.test_config.name, self.cluster_spec.name)
-        descr = '90th percentile query latency (ms), {}'.format(self.test_descr)
+        descr = '{}th percentile query latency (ms), {}'.format(percentile_int,
+                                                                self.test_descr)
         metric_info = self._get_metric_info(descr)
 
         timings = []

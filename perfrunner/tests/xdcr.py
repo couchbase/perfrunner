@@ -72,6 +72,9 @@ class XdcrTest(PerfTest):
         self.reporter.post_to_sf(
             *self.metric_helper.calc_avg_set_meta_ops()
         )
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_max_beam_rss()
+        )
 
 
 class SymmetricXdcrTest(XdcrTest):

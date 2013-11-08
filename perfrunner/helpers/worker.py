@@ -8,7 +8,8 @@ from spring.wgen import WorkloadGen
 from perfrunner.helpers.misc import uhex
 from perfrunner.settings import BROKER_URL, REPO
 
-CELERY_QUEUES = []
+CELERY_QUEUES = [Queue('Q1'), Queue('Q2'), Queue('Q3'),
+		         Queue('Q4'), Queue('Q5'), Queue('Q6')]
 celery = Celery('workers', backend='amqp', broker=BROKER_URL)
 
 
@@ -24,27 +25,26 @@ class WorkerManager(object):
         self.hosts = cluster_spec.get_workers()
         if self.hosts:
             self.is_remote = True
-            if len(self.hosts) > 1:
-                CELERY_QUEUES.extend([Queue('Q1'), Queue('Q2')])
-            else:
-                CELERY_QUEUES.append(Queue('Q1'))
-
             state.env.user, state.env.password = \
                 cluster_spec.get_ssh_credentials()
             state.output.running = False
             state.output.stdout = False
-
-            self.temp_dir = '/tmp/{0}'.format(uhex()[:12])
-            self._initialize_project()
-            self._start()
         else:
             self.is_remote = False
+
+        self.temp_dir = '/tmp/{0}'.format(uhex()[:12])
+        self._initialize_project()
+        self._start()
+ 
 
     def _initialize_project(self):
         for i, q in enumerate(CELERY_QUEUES):
             logger.info('Intializing remote worker environment')
 
-            state.env.host_string = self.hosts[i]
+            if self.is_remote:
+                state.env.host_string = self.hosts[i]
+            else:
+                state.env.host_string = "127.0.0.1"
             temp_dir = '{0}-{1}'.format(self.temp_dir, q.name)
             run('mkdir {0}'.format(temp_dir))
             with cd(temp_dir):
@@ -57,7 +57,10 @@ class WorkerManager(object):
         for i, q in enumerate(CELERY_QUEUES):
             logger.info('Starting remote Celery worker')
 
-            state.env.host_string = self.hosts[i]
+            if self.is_remote:
+                state.env.host_string = self.hosts[i]
+            else:
+                state.env.host_string = "127.0.0.1"
             temp_dir = '{0}-{1}'.format(self.temp_dir, q.name)
             with cd('{0}/perfrunner'.format(temp_dir)):
                 run('dtach -n /tmp/perfrunner_{0}.sock '
@@ -66,11 +69,12 @@ class WorkerManager(object):
 
     def run_workload(self, settings, target_iterator, shutdown_event=None,
                      ddocs=None):
+        targets = list(target_iterator)
         queues = (q.name for q in CELERY_QUEUES)
         curr_target = None
         curr_queue = None
         workers = []
-        targets = list(target_iterator)
+        target_cnt = 1
         for target in targets:
             if self.is_remote:
                 logger.info('Starting workload generator remotely')
@@ -88,10 +92,11 @@ class WorkerManager(object):
                     args=(settings, target, shutdown_event, ddocs),
                     queue=curr_queue))
             else:
-                logger.info('Starting workload generator locally')
-                task_run_workload.apply(
-                    args=(settings, target, shutdown_event, ddocs)
-                )
+                logger.info('Starting workload generator locally: %s' % (target.bucket))
+                workers.append(task_run_workload.apply_async(
+                    args=(settings, target, shutdown_event, ddocs),
+		            queue='Q%s' % target_cnt))
+                target_cnt += 1
         for worker in workers:
             worker.wait()
 

@@ -133,8 +133,9 @@ class RebalanceKVTest(RebalanceTest):
         self.wait_for_persistence()
         self.compact_bucket()
 
-        self.access_bg()
+        bg_process = self.access_bg()
         self.rebalance()
+        bg_process.terminate()
 
 
 class RebalanceWithQueriesTest(QueryTest, RebalanceTest):

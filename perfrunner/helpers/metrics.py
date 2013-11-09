@@ -258,18 +258,19 @@ class MetricHelper(object):
         return disk_size, metric, metric_info
 
     def calc_max_beam_rss(self):
-        metric = '{}_max_beam_rss_{}'.format(
-            self.test_config.name, self.cluster_spec.name
-        )
+        metric = '{}_max_beam_rss_{}'.format(self.test_config.name,
+                                             self.cluster_spec.name)
         descr = 'Max. beam.smp RSS (MB), {}'.format(self.test_descr)
         metric_info = self._get_metric_info(descr, level='Advanced')
 
         query_params = self._get_query_params('max_beam.smp_rss')
 
         max_rss = 0
-        for host in self.cluster_spec.get_all_hosts():
-            db = 'atop{}{}'.format(self.cluster_names[0],
-                                   host.replace('.', ''))
+        for cluster, master_host in self.cluster_spec.get_masters().items():
+            cluster_name = filter(lambda name: name.startswith(cluster),
+                                  self.cluster_names)[0]
+            host = master_host.split(':')[0].replace('.', '')
+            db = 'atop{}{}'.format(cluster_name, host)
             data = self.seriesly[db].query(query_params)
             rss = round(data.values()[0][0] / 1024 ** 2)
             max_rss = max(max_rss, rss)

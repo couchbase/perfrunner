@@ -39,5 +39,5 @@ working_set_access = 98
 nodes_after = 4
 start_after = 1200
 stop_after = 1200
-rebalanceMovesPerNode=8
+reb_moves_per_node=8
 reb_moves_before_compaction=256

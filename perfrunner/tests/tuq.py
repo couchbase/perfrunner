@@ -27,10 +27,10 @@ class TuqTest(PerfTest):
 
     def run(self):
         self.load()
+        self.wait_for_persistence()
         if 'where_lt_neg' in self.tuq.indexes['coins']:    # TODO: hard-coded 'coins'
             self.load_neg_coins()
-
-        self.wait_for_persistence()
+            self.wait_for_persistence()
         self.compact_bucket()
         self.create_tuq_index(self.tuq)
 

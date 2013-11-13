@@ -14,8 +14,8 @@ celery = Celery('workers', backend='amqp', broker=BROKER_URL)
 
 
 @celery.task
-def task_run_workload(settings, target, shutdown_event, ddocs):
-    wg = WorkloadGen(settings, target, shutdown_event, ddocs)
+def task_run_workload(settings, target, shutdown_event, ddocs, neg_coins):
+    wg = WorkloadGen(settings, target, shutdown_event, ddocs, neg_coins)
     wg.run()
 
 
@@ -68,7 +68,7 @@ class WorkerManager(object):
                     '-A perfrunner.helpers.worker -Q {0} -c 1'.format(q.name))
 
     def run_workload(self, settings, target_iterator, shutdown_event=None,
-                     ddocs=None):
+                     ddocs=None, neg_coins=False):
         targets = list(target_iterator)
         queues = (q.name for q in CELERY_QUEUES)
         curr_target = None
@@ -82,14 +82,14 @@ class WorkerManager(object):
                     for i in range(1, len(self.hosts) + 1):
                         target.prefix = "client-%s" % i
                         workers.append(task_run_workload.apply_async(
-                            args=(settings, target, shutdown_event, ddocs),
+                            args=(settings, target, shutdown_event, ddocs, neg_coins),
                             queue='Q%s' % i))
                     break
                 if curr_target != target.node:
                     curr_target = target.node
                     curr_queue = queues.next()
                 workers.append(task_run_workload.apply_async(
-                    args=(settings, target, shutdown_event, ddocs),
+                    args=(settings, target, shutdown_event, ddocs, neg_coins),
                     queue=curr_queue))
             else:
                 logger.info('Starting workload generator locally: %s' % (target.bucket))

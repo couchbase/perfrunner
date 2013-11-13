@@ -1,3 +1,4 @@
+from logger import logger
 from perfrunner.tests import PerfTest
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.rest import TuqRestHelper
@@ -18,8 +19,17 @@ class TuqTest(PerfTest):
         for index in tuq.indexes:
             self.rest.create_index('%s_idx' % index, index, self.BUCKET)
 
+    def load_neg_coins(self):
+        logger.info('loading 100 negative coins items')
+        load_settings = self.test_config.get_load_settings()
+        load_settings.size = 100
+        self.worker_manager.run_workload(load_settings, self.target_iterator, neg_coins=True)
+
     def run(self):
         self.load()
+        if 'where_lt_neg' in self.tuq.indexes['coins']:    # TODO: hard-coded 'coins'
+            self.load_neg_coins()
+
         self.wait_for_persistence()
         self.compact_bucket()
         self.create_tuq_index(self.tuq)

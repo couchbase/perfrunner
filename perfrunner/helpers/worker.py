@@ -94,7 +94,7 @@ class WorkerManager(object):
             else:
                 logger.info('Starting workload generator locally: %s' % (target.bucket))
                 workers.append(task_run_workload.apply_async(
-                    args=(settings, target, shutdown_event, ddocs),
+                    args=(settings, target, shutdown_event, ddocs, neg_coins),
 		            queue='Q%s' % target_cnt))
                 target_cnt += 1
         for worker in workers:

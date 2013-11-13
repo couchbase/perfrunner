@@ -9,6 +9,7 @@ from perfrunner.settings import ClusterSpec
 
 Build = namedtuple('Build', ['arch', 'pkg', 'version', 'openssl', 'toy'])
 
+NUM_VBUCKETS = 1024
 
 class CouchbaseInstaller(object):
 
@@ -16,6 +17,7 @@ class CouchbaseInstaller(object):
     LATEST_BUILDS = 'http://builds.hq.northscale.net/latestbuilds/'
 
     def __init__(self, cluster_spec, options):
+        self.options = options
         self.remote_helper = RemoteHelper(cluster_spec)
         self.cluster_spec = cluster_spec
 
@@ -67,15 +69,21 @@ class CouchbaseInstaller(object):
         self.remote_helper.install_package(self.build.pkg, self.url,
                                            self.filename, version)
 
+    def change_num_vbuckets(self):
+        if not self.options.vbuckets or self.options.vbuckets == NUM_VBUCKETS:
+            return
+
+        return self.remote_helper.change_num_vbuckets(self.options.vbuckets)
+
     def install(self):
         self.find_package()
         self.uninstall_package()
         self.clean_data()
         self.install_package()
-
+        self.change_num_vbuckets()
 
 def main():
-    usage = '%prog -c cluster -v version [-t toy]'
+    usage = '%prog -c cluster -v version [-t toy] -b [vbuckets]'
 
     parser = OptionParser(usage)
 
@@ -86,6 +94,8 @@ def main():
                       help='build version', metavar='2.0.0-1976')
     parser.add_option('-t', dest='toy',
                       help='optional toy build ID', metavar='couchstore')
+    parser.add_option('-b', dest='vbuckets',
+                      help='optional num of vbuckets', metavar='vbuckets')
 
     options, _ = parser.parse_args()
     if not options.cluster_spec_fname or not options.version:

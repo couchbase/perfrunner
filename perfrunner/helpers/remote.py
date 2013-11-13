@@ -221,3 +221,9 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
         while not self.exists(self.VERSION_FILE):
             time.sleep(5)
         time.sleep(60)
+
+
+    @all_hosts
+    def change_num_vbuckets(self, num_vbuckets):
+        logger.info('Changing num of vbuckets in Windows is not supported yet.')
+        return 

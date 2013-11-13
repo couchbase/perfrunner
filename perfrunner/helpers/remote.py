@@ -132,6 +132,15 @@ class RemoteLinuxHelper(object):
         else:
             sudo('yes | rpm -i /tmp/{0}'.format(filename))
 
+    @all_hosts
+    def change_num_vbuckets(self, num_vbuckets):
+        logger.info('Changing num of vbuckets to %s' % num_vbuckets)
+
+        sudo('yes | /etc/init.d/couchbase-server stop')
+        sudo("yes | sed -i 's/ulimit -c unlimited/ulimit -c unlimited\\n "
+             "  export COUCHBASE_NUM_VBUCKETS=%s/' /opt/couchbase/etc/couchbase_init.d" % num_vbuckets)
+        sudo('yes | /etc/init.d/couchbase-server start')
+
 
 class RemoteWindowsHelper(RemoteLinuxHelper):
 

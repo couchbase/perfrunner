@@ -8,8 +8,8 @@ from spring.wgen import WorkloadGen
 from perfrunner.helpers.misc import uhex
 from perfrunner.settings import BROKER_URL, REPO
 
-CELERY_QUEUES = [Queue('Q1'), Queue('Q2'), Queue('Q3'),
-		         Queue('Q4'), Queue('Q5'), Queue('Q6')]
+CELERY_QUEUES = [Queue('Q1'), Queue('Q2'), Queue('Q3'),Queue('Q4'),
+                 Queue('Q5'), Queue('Q6'), Queue('Q7'), Queue('Q8')]
 celery = Celery('workers', backend='amqp', broker=BROKER_URL)
 
 

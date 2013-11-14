@@ -75,7 +75,11 @@ class CouchbaseInstaller(object):
 
         return self.remote_helper.change_num_vbuckets(self.options.vbuckets)
 
+    def kill_processes(self):
+        self.remote_helper.kill_processes()
+
     def install(self):
+        self.kill_processes()
         self.find_package()
         self.uninstall_package()
         self.clean_data()

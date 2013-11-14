@@ -141,6 +141,10 @@ class RemoteLinuxHelper(object):
              "  export COUCHBASE_NUM_VBUCKETS=%s/' /opt/couchbase/etc/couchbase_init.d" % num_vbuckets)
         sudo('yes | /etc/init.d/couchbase-server start')
 
+    @all_hosts
+    def kill_processes(self):
+        logger.info('Killing beam.smp, memcached and epmd')
+        run('killall -9 beam.smp memcached epmd', warn_only=True, quiet=True)
 
 class RemoteWindowsHelper(RemoteLinuxHelper):
 
@@ -227,3 +231,8 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
     def change_num_vbuckets(self, num_vbuckets):
         logger.info('Changing num of vbuckets in Windows is not supported yet.')
         return 
+
+    @all_hosts
+    def kill_processes(self):
+        logger.info('Killing processes in Windows is not supported yet.')
+        return

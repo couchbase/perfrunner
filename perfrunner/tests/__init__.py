@@ -105,6 +105,9 @@ class PerfTest(object):
 
     def access_bg(self):
         access_settings = self.test_config.get_access_settings()
+        if not access_settings.throughput:
+            logger.info('access_bg does not run due to zero throughput setting')
+            return None
         log_phase('access in background', access_settings)
         p = Process(
             target=self.worker_manager.run_workload,

@@ -135,7 +135,8 @@ class RebalanceKVTest(RebalanceTest):
 
         bg_process = self.access_bg()
         self.rebalance()
-        bg_process.terminate()
+        if bg_process:
+            bg_process.terminate()
 
 
 class RebalanceWithQueriesTest(QueryTest, RebalanceTest):

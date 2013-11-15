@@ -2,10 +2,6 @@
 athena =
     172.23.120.14:8091
 
-[workers]
-athena_w1 =
-    172.23.120.14
-
 [storage]
 data = /data
 index = /data2

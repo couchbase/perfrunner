@@ -90,6 +90,11 @@ class ClusterManager(object):
         if self.swt is not None:
             self.remote.restart_with_alternative_swt(swt=self.swt)
 
+    def enable_auto_failover(self):
+        for cluster in self.clusters:
+            master = cluster[0]
+            self.rest.enable_auto_failover(master)
+
 
 def get_options():
     usage = '%prog -c cluster -t test_config'
@@ -129,6 +134,7 @@ def main():
         cm.rebalance()
     cm.create_buckets()
     cm.configure_auto_compaction()
+    cm.enable_auto_failover()
     cm.clean_memory()
 
 if __name__ == '__main__':

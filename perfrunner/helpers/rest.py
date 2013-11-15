@@ -110,6 +110,11 @@ class RestHelper(object):
         counters = self.get(url=api).json()['counters']
         return counters['rebalance_start'] == counters['rebalance_success']
 
+    def is_failover(self, host_port):
+        api = 'http://{}/pools/rebalanceStatuses'.format(host_port)
+        counters = self.get(url=api).json()['counters']
+        return counters.get('failover_node')
+
     def get_tasks(self, host_port):
         api = 'http://{}/pools/default/tasks'.format(host_port)
         return self.get(url=api).json()
@@ -234,3 +239,10 @@ class RestHelper(object):
     def run_diag_eval(self, host_port, cmd):
         api = 'http://{}/diag/eval'.format(host_port)
         return self.post(url=api, data=cmd).text
+
+    def enable_auto_failover(self, host_port, timeout=30):
+        logger.info('Enabling auto-failover')
+
+        api = 'http://{}/settings/autoFailover'.format(host_port)
+        data = {'enabled': 'true', 'timeout': timeout}
+        self.post(url=api, data=data)

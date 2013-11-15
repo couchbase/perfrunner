@@ -8,8 +8,8 @@ from spring.wgen import WorkloadGen
 from perfrunner.helpers.misc import uhex
 from perfrunner.settings import BROKER_URL, REPO
 
-CELERY_QUEUES = [Queue('Q1'), Queue('Q2'), Queue('Q3'),Queue('Q4'),
-                 Queue('Q5'), Queue('Q6'), Queue('Q7'), Queue('Q8')]
+CELERY_QUEUES = (Queue('Q1'), Queue('Q2'))
+NUM_CELERY_WORKERS = 64
 celery = Celery('workers', backend='amqp', broker=BROKER_URL)
 
 
@@ -65,7 +65,7 @@ class WorkerManager(object):
             with cd('{0}/perfrunner'.format(temp_dir)):
                 run('dtach -n /tmp/perfrunner_{0}.sock '
                     'env/bin/celery worker '
-                    '-A perfrunner.helpers.worker -Q {0} -c 1'.format(q.name))
+                    '-A perfrunner.helpers.worker -Q {0} -c {1}'.format(q.name, NUM_CELERY_WORKERS))
 
     def run_workload(self, settings, target_iterator, shutdown_event=None,
                      ddocs=None, neg_coins=False):
@@ -74,7 +74,6 @@ class WorkerManager(object):
         curr_target = None
         curr_queue = None
         workers = []
-        target_cnt = 1
         for target in targets:
             if self.is_remote:
                 logger.info('Starting workload generator remotely')
@@ -95,8 +94,7 @@ class WorkerManager(object):
                 logger.info('Starting workload generator locally: %s' % (target.bucket))
                 workers.append(task_run_workload.apply_async(
                     args=(settings, target, shutdown_event, ddocs, neg_coins),
-		            queue='Q%s' % target_cnt))
-                target_cnt += 1
+		            queue='Q1'))
         for worker in workers:
             worker.wait()
 

@@ -8,6 +8,8 @@ from perfrunner.settings import ClusterSpec, TestConfig
 
 class ClusterManager(object):
 
+    MAX_NUM_BUCKETS = 10
+
     def __init__(self, cluster_spec, test_config):
         self.rest = RestHelper(cluster_spec)
         self.remote = RemoteHelper(cluster_spec)
@@ -82,6 +84,10 @@ class ClusterManager(object):
         self.remote.reset_swap()
         self.remote.drop_caches()
 
+    def change_max_num_buckets(self):
+        for cluster in self.clusters:
+            if self.num_buckets > ClusterManager.MAX_NUM_BUCKETS:
+                self.rest.change_max_bucket_count(cluster[0], self.num_buckets)
 
 def get_options():
     usage = '%prog -c cluster -t test_config'
@@ -118,6 +124,7 @@ def main():
     if cm.initial_nodes > 1:
         cm.add_nodes()
         cm.rebalance()
+    cm.change_max_num_buckets()
     cm.create_buckets()
     cm.configure_auto_compaction()
     cm.clean_memory()

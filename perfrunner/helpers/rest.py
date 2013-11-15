@@ -252,6 +252,13 @@ class RestHelper(object):
 
         return self.diag_eval(host_port, API)
 
+    def change_max_bucket_count(self, host_port, num_buckets):
+        logger.info('change max_bucket_count to %s' % num_buckets)
+
+        API = 'ns_config:set(max_bucket_count, {0}).'.format(num_buckets)
+
+        return self.diag_eval(host_port, API)
+
 class TuqRestHelper(RestHelper):
 
     def __init__(self, cluster_spec, tuq):

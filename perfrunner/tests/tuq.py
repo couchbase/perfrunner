@@ -22,7 +22,8 @@ class TuqTest(PerfTest):
     def load_neg_coins(self):
         logger.info('loading 100 negative coins items')
         load_settings = self.test_config.get_load_settings()
-        load_settings.size = 100
+        load_settings.items = int(load_settings.ops)
+        load_settings.ops = float(100)
         self.worker_manager.run_workload(load_settings, self.target_iterator, neg_coins=True)
 
     def run(self):

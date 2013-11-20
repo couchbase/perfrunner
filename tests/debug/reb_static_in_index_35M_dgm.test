@@ -3,8 +3,10 @@ module = perfrunner.tests.rebalance
 class = StaticRebalanceWithIndexTest
 descr = Static rebalance-in with index (min), 3 -> 4, 1 bucket x 35M x 2KB, DGM, 1 x 5 views, no bucket compaction
 larger_is_better = false
+level = Basic
 
 [stats]
+report = BaseRebalanceViewsReport
 post_to_sf = 0
 
 [cluster]
@@ -16,9 +18,9 @@ num_buckets = 1
 db_percentage = 100
 
 [load]
-ops = 35000000
+items = 35000000
 size = 2048
-workers = 12
+workers = 20
 
 [index]
 views = [5]

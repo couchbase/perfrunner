@@ -8,8 +8,8 @@ from time import time
 
 from decorator import decorator
 import requests
-from cbagent.collectors import (NSServer, SpringLatency, SpringQueryLatency,
-                                XdcrLag, ActiveTasks, Atop)
+from cbagent.collectors import (NSServer, PS, ActiveTasks,
+                                SpringLatency, SpringQueryLatency, XdcrLag)
 from cbagent.metadata_client import MetadataClient
 
 from perfrunner.helpers.misc import target_hash, uhex
@@ -67,7 +67,7 @@ class CbAgent(object):
 
         self.prepare_ns_server(clusters)
         if test.remote.os != 'Cygwin':
-            self.prepare_atop(clusters)
+            self.prepare_ps(clusters)
         if latency:
             self.prepare_latency(clusters, test.workload)
         if query_latency:
@@ -84,15 +84,13 @@ class CbAgent(object):
             settings.master_node = self.clusters[cluster]
             self.collectors.append(NSServer(settings))
 
-    def prepare_atop(self, clusters):
+    def prepare_ps(self, clusters):
         for cluster in clusters:
             settings = copy(self.settings)
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
-            atop_collector = Atop(settings)
-            atop_collector.restart()
-            atop_collector.update_columns()
-            self.collectors.append(atop_collector)
+            ps_collector = PS(settings)
+            self.collectors.append(ps_collector)
 
     def prepare_xdcr_lag(self, clusters):
         reversed_clusters = list(reversed(self.clusters.keys()))

@@ -270,7 +270,7 @@ class MetricHelper(object):
             cluster_name = filter(lambda name: name.startswith(cluster),
                                   self.cluster_names)[0]
             host = master_host.split(':')[0].replace('.', '')
-            db = 'atop{}{}'.format(cluster_name, host)
+            db = 'atop{}{}'.format(cluster_name, host)  # Legacy
             data = self.seriesly[db].query(query_params)
             rss = round(data.values()[0][0] / 1024 ** 2)
             max_rss = max(max_rss, rss)

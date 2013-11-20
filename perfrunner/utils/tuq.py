@@ -37,7 +37,7 @@ def main():
     tuq = test_config.get_tuq_settings()
 
     logger.info('Start tuq server locally')
-    local('true || killall -q cbq-engine')
+    local('true || killall -q -9 cbq-engine')
     for cluster in clusters:
         local('%s -couchbase http://%s:%s@%s/ &' %
               (tuq.server_exe, cred[0], cred[1], cluster[0]))

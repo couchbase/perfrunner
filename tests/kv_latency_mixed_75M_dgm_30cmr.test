@@ -1,0 +1,38 @@
+[test_case]
+module = perfrunner.tests.kv
+class = LatencyTest
+descr = latency (ms), mixed, 1 bucket x 75M x 2KB, 30%% cache miss rate
+larger_is_better = false
+level = Basic
+
+[stats]
+report = BaseKVReport
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+
+[load]
+items = 75000000
+size = 2048
+workers = 20
+
+[hot_load]
+items = 75000000
+size = 2048
+workers = 20
+working_set = 30
+
+[access]
+creates = 1
+reads = 50
+updates = 48
+deletes = 1
+throughput = 10000
+items = 75000000
+size = 2048
+working_set = 30
+working_set_access = 30
+workers = 48
+time = 3600

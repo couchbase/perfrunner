@@ -59,11 +59,14 @@ class PerfTest(object):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        for master in self.cluster_spec.get_masters().values():
-            if self.rest.is_failover(master):
-                logger.error('Failover happened {} time(s)'.format(master))
         self.worker_manager.terminate()
         self.debug()
+        for master in self.cluster_spec.get_masters().values():
+            num_failovers = self.rest.get_failover_counter(master)
+            if num_failovers:
+                logger.interrupt(
+                    'Failover happened {} time(s)'.format(num_failovers)
+                )
 
     def compact_bucket(self):
         for target in self.target_iterator:

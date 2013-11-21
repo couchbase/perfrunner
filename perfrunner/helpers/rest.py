@@ -110,7 +110,7 @@ class RestHelper(object):
         counters = self.get(url=api).json()['counters']
         return counters['rebalance_start'] == counters['rebalance_success']
 
-    def is_failover(self, host_port):
+    def get_failover_counter(self, host_port):
         api = 'http://{}/pools/rebalanceStatuses'.format(host_port)
         counters = self.get(url=api).json()['counters']
         return counters.get('failover_node')

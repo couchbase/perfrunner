@@ -7,6 +7,7 @@ level = Basic
 
 [stats]
 report = BaseKVReport
+post_to_sf = 0
 
 [cluster]
 mem_quota = 51200

@@ -1,3 +1,5 @@
+import os
+import shutil
 import time
 from multiprocessing import Event, Process
 
@@ -120,3 +122,7 @@ class PerfTest(object):
     def debug(self):
         self.remote.collect_info()
         self.reporter.save_web_logs()
+        for root, _, files in os.walk('.'):
+            for f in files:
+                if f.endswith('.zip'):
+                    shutil.move(os.path.join(root, f), '.')

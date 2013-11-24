@@ -85,6 +85,7 @@ class ClusterManager(object):
     def clean_memory(self):
         self.remote.reset_swap()
         self.remote.drop_caches()
+        self.remote.set_swappiness()
 
     def restart_with_alternative_swt(self):
         if self.swt is not None:

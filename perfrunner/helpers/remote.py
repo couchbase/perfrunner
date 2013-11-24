@@ -96,6 +96,11 @@ class RemoteLinuxHelper(object):
         run('sync && echo 3 > /proc/sys/vm/drop_caches')
 
     @all_hosts
+    def set_swappiness(self):
+        logger.info('Changing swappiness to 0')
+        run('sysctl vm.swappiness=0')
+
+    @all_hosts
     def collect_info(self):
         logger.info('Running cbcollect_info')
 
@@ -181,6 +186,9 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
         pass
 
     def drop_caches(self):
+        pass
+
+    def set_swappiness(self):
         pass
 
     @all_hosts

@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.kv
-class = LatencyTest
-descr = latency (ms), mixed, 1 bucket x 100M x 2KB, 30%% cache miss rate
+class = ReadLatencyTest
+descr = latency (ms), mixed, 1 bucket x 100M x 2KB, DGM, 30%% cache miss rate
 larger_is_better = false
 level = Basic
 
@@ -34,5 +34,5 @@ items = 100000000
 size = 2048
 working_set = 50
 working_set_access = 70
-workers = 20
+workers = 24
 time = 3600

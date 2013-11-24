@@ -24,19 +24,29 @@ class KVTest(PerfTest):
         self.shutdown_event.set()
 
 
-class LatencyTest(KVTest):
+class MixedLatencyTest(KVTest):
 
     @with_stats(latency=True)
     def access(self):
-        super(LatencyTest, self).timer()
+        super(MixedLatencyTest, self).timer()
 
     def run(self):
-        super(LatencyTest, self).run()
+        super(MixedLatencyTest, self).run()
         for operation in ('get', 'set'):
             self.reporter.post_to_sf(
                 *self.metric_helper.calc_kv_latency(operation=operation,
-                                                    percentile=0.9)
+                                                    percentile=0.99)
             )
+
+
+class ReadLatencyTest(MixedLatencyTest):
+
+    def run(self):
+        super(ReadLatencyTest, self).run()
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_kv_latency(operation='get',
+                                                percentile=0.95)
+        )
 
 
 class BgFetcherTest(KVTest):

@@ -173,7 +173,7 @@ class MetricHelper(object):
 
         return round(query_latency), metric, metric_info
 
-    def calc_kv_latency(self, operation, percentile=0.9):
+    def calc_kv_latency(self, operation, percentile):
         percentile_int = int(percentile * 100)
         metric = '{}_{}_{}th_{}'.format(self.test_config.name,
                                         operation,

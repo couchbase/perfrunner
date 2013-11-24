@@ -49,7 +49,7 @@ class QueryLatencyTest(QueryTest):
         super(QueryLatencyTest, self).run()
 
         self.reporter.post_to_sf(
-            *self.metric_helper.calc_query_latency()
+            *self.metric_helper.calc_query_latency(percentile=0.8)
         )
         self.reporter.post_to_sf(
             *self.metric_helper.calc_cpu_utilization()

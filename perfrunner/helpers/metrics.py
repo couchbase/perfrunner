@@ -156,7 +156,7 @@ class MetricHelper(object):
 
         return round(couch_views_ops)
 
-    def calc_query_latency(self, percentile=0.9):
+    def calc_query_latency(self, percentile):
         percentile_int = int(percentile * 100)
         metric = '{}_{}'.format(self.test_config.name, self.cluster_spec.name)
         descr = '{}th percentile query latency (ms), {}'.format(percentile_int,

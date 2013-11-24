@@ -57,7 +57,7 @@ class RebalanceTest(PerfTest):
         self.servers = self.cluster_spec.get_clusters().values()[-1]
 
     @with_delayed_posting
-    @with_stats(active_tasks=True)
+    @with_stats(latency=True, active_tasks=True)
     @with_delay
     @with_reporter
     def rebalance(self):
@@ -111,6 +111,7 @@ class RebalanceKVTest(RebalanceTest):
         self.wait_for_persistence()
         self.compact_bucket()
 
+        self.workload = self.test_config.get_access_settings()
         self.access_bg()
         self.rebalance()
         self.shutdown_event.set()
@@ -129,6 +130,7 @@ class RebalanceWithQueriesTest(QueryTest, RebalanceTest):
         self.define_ddocs()
         self.build_index()
 
+        self.workload = self.test_config.get_access_settings()
         self.access_bg()
         self.rebalance()
         self.shutdown_event.set()
@@ -153,6 +155,7 @@ class RebalanceWithXdcrTest(XdcrTest, RebalanceTest):
 
         self.compact_bucket()
 
+        self.workload = self.test_config.get_access_settings()
         bg_process = self.access_bg()
         self.rebalance()
         bg_process.terminate()
@@ -172,6 +175,7 @@ class RebalanceWithSymmetricXdcrTest(SymmetricXdcrTest, RebalanceTest):
 
         self.compact_bucket()
 
+        self.workload = self.test_config.get_access_settings()
         bg_process = self.access_bg()
         self.rebalance()
         bg_process.terminate()

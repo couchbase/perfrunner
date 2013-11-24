@@ -43,7 +43,7 @@ class XdcrTest(PerfTest):
         for target in self.target_iterator:
             self.monitor.monitor_xdcr_replication(target)
 
-    @with_stats(xdcr_lag=True)
+    @with_stats(latency=True, xdcr_lag=True)
     def access(self):
         super(XdcrTest, self).timer()
 
@@ -59,6 +59,7 @@ class XdcrTest(PerfTest):
 
         self.compact_bucket()
 
+        self.workload = self.test_config.get_access_settings()
         bg_process = self.access_bg()
         self.access()
         bg_process.terminate()
@@ -137,7 +138,7 @@ class XdcrDebugTest(SymmetricXdcrTest):
 
     POLLING_INTERVAL = 20
 
-    @with_stats(xdcr_lag=True)
+    @with_stats(latency=True, xdcr_lag=True)
     def access(self):
         access_settings = self.test_config.get_access_settings()
         logger.info('Running phase for {} seconds'.format(access_settings.time))

@@ -8,7 +8,7 @@ from time import time
 
 from decorator import decorator
 import requests
-from cbagent.collectors import (NSServer, PS, ActiveTasks,
+from cbagent.collectors import (NSServer, PS, IO, ActiveTasks,
                                 SpringLatency, SpringQueryLatency, XdcrLag)
 from cbagent.metadata_client import MetadataClient
 
@@ -68,6 +68,7 @@ class CbAgent(object):
         self.prepare_ns_server(clusters)
         if test.remote.os != 'Cygwin':
             self.prepare_ps(clusters)
+            self.prepare_iostat(clusters, test)
         if latency:
             self.prepare_latency(clusters, test.workload)
         if query_latency:
@@ -91,6 +92,19 @@ class CbAgent(object):
             settings.master_node = self.clusters[cluster]
             ps_collector = PS(settings)
             self.collectors.append(ps_collector)
+
+    def prepare_iostat(self, clusters, test):
+        data_path, index_path = test.cluster_spec.get_paths()
+        partitions = {'data': data_path}
+        if hasattr(test, 'ddocs'):  # all instances of IndexTest have it
+            partitions = {'index': index_path}
+        for cluster in clusters:
+            settings = copy(self.settings)
+            settings.cluster = cluster
+            settings.master_node = self.clusters[cluster]
+            settings.partitions = partitions
+            io_collector = IO(settings)
+            self.collectors.append(io_collector)
 
     def prepare_xdcr_lag(self, clusters):
         reversed_clusters = list(reversed(self.clusters.keys()))

@@ -79,10 +79,13 @@ class RestHelper(object):
         }
         self.post(url=api, data=data)
 
-    def add_node(self, host_port, new_host):
+    def add_node(self, host_port, new_host, uri=None):
         logger.info('Adding new node: {}'.format(new_host))
 
-        api = 'http://{}/controller/addNode'.format(host_port)
+        if uri:
+            api = 'http://{}{}'.format(host_port, uri)
+        else:
+            api = 'http://{}/controller/addNode'.format(host_port)
         data = {
             'hostname': new_host,
             'user': self.rest_username, 'password': self.rest_password
@@ -246,3 +249,18 @@ class RestHelper(object):
         api = 'http://{}/settings/autoFailover'.format(host_port)
         data = {'enabled': 'true', 'timeout': timeout}
         self.post(url=api, data=data)
+
+    def create_server_group(self, host_port, name):
+        logger.info('Creating server group: {}'.format(name))
+
+        api = 'http://{}/pools/default/serverGroups'.format(host_port)
+        data = {'name': name}
+        self.post(url=api, data=data)
+
+    def get_server_groups(self, host_port):
+        logger.info('Getting server groups')
+
+        api = 'http://{}/pools/default/serverGroups'.format(host_port)
+        return {
+            g["name"]: g["addNodeURI"] for g in self.get(url=api).json()["groups"]
+        }

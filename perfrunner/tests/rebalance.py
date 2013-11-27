@@ -4,6 +4,7 @@ from decorator import decorator
 from logger import logger
 
 from perfrunner.helpers.cbmonitor import with_stats
+from perfrunner.helpers.misc import server_group
 from perfrunner.tests import PerfTest
 from perfrunner.tests.index import IndexTest
 from perfrunner.tests.query import QueryTest
@@ -65,10 +66,15 @@ class RebalanceTest(PerfTest):
         nodes_after = self.rebalance_settings.nodes_after
         master = self.servers[0]
 
+        group_number = self.test_config.get_group_number() or 1
+        groups = group_number > 1 and self.rest.get_server_groups(master) or {}
+
         if nodes_after > initial_nodes:
-            for host_port in self.servers[initial_nodes:nodes_after]:
+            for i, host_port in enumerate(self.servers[initial_nodes:nodes_after],
+                                          start=1):
                 host = host_port.split(':')[0]
-                self.rest.add_node(master, host)
+                uri = groups.get(server_group(self.servers, group_number, i))
+                self.rest.add_node(master, host, uri)
             known_nodes = self.servers[:nodes_after]
             ejected_nodes = []
         else:

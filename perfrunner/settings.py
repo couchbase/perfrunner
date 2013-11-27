@@ -145,6 +145,10 @@ class TestConfig(Config):
     def get_swt(self):
         return self.config.get('cluster', 'swt')
 
+    @safe
+    def get_group_number(self):
+        return self.config.getint('cluster', 'groups')
+
     def get_buckets(self):
         for i in xrange(self.get_num_buckets()):
             yield 'bucket-{}'.format(i + 1)

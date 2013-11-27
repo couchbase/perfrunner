@@ -1,5 +1,6 @@
 from optparse import OptionParser
 
+from perfrunner.helpers.misc import server_group
 from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import RestHelper
@@ -26,6 +27,7 @@ class ClusterManager(object):
         self.replica_number = test_config.get_replica_number()
         if self.replica_number is None:
             self.replica_number = 1
+        self.group_number = test_config.get_group_number() or 1
 
     def set_data_path(self):
         for cluster in self.clusters:
@@ -43,12 +45,25 @@ class ClusterManager(object):
             for host_port in cluster:
                 self.rest.set_mem_quota(host_port, self.mem_quota)
 
+    def create_server_groups(self):
+        for cluster in self.clusters:
+            master = cluster[0]
+            for i in range(1, self.group_number):
+                name = 'Group {}'.format(i + 1)
+                self.rest.create_server_group(master, name=name)
+
     def add_nodes(self):
         for cluster in self.clusters:
             master = cluster[0]
-            for host_port in cluster[1:self.initial_nodes]:
+            if self.group_number > 1:
+                groups = self.rest.get_server_groups(master)
+            else:
+                groups = {}
+            for i, host_port in enumerate(cluster[1:self.initial_nodes],
+                                          start=1):
                 host = host_port.split(':')[0]
-                self.rest.add_node(master, host)
+                uri = groups.get(server_group(cluster, self.group_number, i))
+                self.rest.add_node(master, host, uri)
 
     def rebalance(self):
         for cluster in self.clusters:
@@ -130,6 +145,8 @@ def main():
     cm.set_data_path()
     cm.set_auth()
     cm.set_mem_quota()
+    if cm.group_number > 1:
+        cm.create_server_groups()
     if cm.initial_nodes > 1:
         cm.add_nodes()
         cm.rebalance()

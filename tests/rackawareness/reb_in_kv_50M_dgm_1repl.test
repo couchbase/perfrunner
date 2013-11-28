@@ -1,0 +1,43 @@
+[test_case]
+module = perfrunner.tests.rebalance
+class = RebalanceKVTest
+descr = Rebalance-in (min), 3 -> 4, 1 bucket x 50M x 2KB, DGM
+larger_is_better = false
+level = Basic
+
+[stats]
+report = BaseRebalanceReport
+post_to_sf = 0
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 3
+num_buckets = 1
+
+[load]
+items = 50000000
+size = 2048
+workers = 20
+
+[hot_load]
+items = 50000000
+size = 2048
+workers = 20
+working_set = 30
+
+[access]
+creates = 5
+reads = 50
+updates = 40
+deletes = 5
+throughput = 10000
+items = 50000000
+size = 2048
+workers = 24
+working_set = 30
+working_set_access = 98
+
+[rebalance]
+nodes_after = 4
+start_after = 1200
+stop_after = 1200

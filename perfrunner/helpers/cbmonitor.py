@@ -94,7 +94,7 @@ class CbAgent(object):
         data_path, index_path = test.cluster_spec.get_paths()
         partitions = {'data': data_path}
         if hasattr(test, 'ddocs'):  # all instances of IndexTest have it
-            partitions = {'index': index_path}
+            partitions['index'] = index_path
         for cluster in clusters:
             settings = copy(self.settings)
             settings.cluster = cluster

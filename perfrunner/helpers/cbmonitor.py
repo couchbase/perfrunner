@@ -16,14 +16,13 @@ from perfrunner.helpers.misc import target_hash, uhex
 from perfrunner.settings import CbAgentSettings
 
 
-def with_stats(latency=False, query_latency=False, xdcr_lag=False,
-               active_tasks=False):
+def with_stats(latency=False, query_latency=False, xdcr_lag=False):
     def with_stats(method, *args, **kwargs):
         test = args[0]
 
         if not test.cbagent.collectors:
             test.cbagent.prepare_collectors(test, latency, query_latency,
-                                            xdcr_lag, active_tasks)
+                                            xdcr_lag)
             test.cbagent.update_metadata()
 
         from_ts = test.cbagent.start()
@@ -61,11 +60,11 @@ class CbAgent(object):
         self.processes = []
         self.reports = {}
 
-    def prepare_collectors(self, test, latency, query_latency, xdcr_lag,
-                           active_tasks):
+    def prepare_collectors(self, test, latency, query_latency, xdcr_lag):
         clusters = self.clusters.keys()
 
         self.prepare_ns_server(clusters)
+        self.prepare_active_tasks(clusters)
         if test.remote.os != 'Cygwin':
             self.prepare_ps(clusters)
             self.prepare_iostat(clusters, test)
@@ -75,8 +74,6 @@ class CbAgent(object):
             self.prepare_query_latency(clusters, test.workload, test.ddocs)
         if xdcr_lag:
             self.prepare_xdcr_lag(clusters)
-        if active_tasks:
-            self.prepare_active_tasks(clusters)
 
     def prepare_ns_server(self, clusters):
         for cluster in clusters:

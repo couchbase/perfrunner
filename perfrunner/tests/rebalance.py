@@ -58,7 +58,7 @@ class RebalanceTest(PerfTest):
         self.servers = self.cluster_spec.get_clusters().values()[-1]
 
     @with_delayed_posting
-    @with_stats(latency=True, active_tasks=True)
+    @with_stats(latency=True)
     @with_delay
     @with_reporter
     def rebalance(self):

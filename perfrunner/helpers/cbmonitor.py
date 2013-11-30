@@ -68,7 +68,7 @@ class CbAgent(object):
         if test.remote.os != 'Cygwin':
             self.prepare_ps(clusters)
             self.prepare_iostat(clusters, test)
-        if latency:
+        if latency and hasattr(test, "workload"):
             self.prepare_latency(clusters, test.workload)
         if query_latency:
             self.prepare_query_latency(clusters, test.workload, test.ddocs)

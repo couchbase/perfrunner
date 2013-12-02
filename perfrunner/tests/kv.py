@@ -35,7 +35,7 @@ class MixedLatencyTest(KVTest):
         for operation in ('get', 'set'):
             self.reporter.post_to_sf(
                 *self.metric_helper.calc_kv_latency(operation=operation,
-                                                    percentile=0.95)
+                                                    percentile=95)
             )
 
 
@@ -45,7 +45,7 @@ class ReadLatencyTest(MixedLatencyTest):
         super(MixedLatencyTest, self).run()
         self.reporter.post_to_sf(
             *self.metric_helper.calc_kv_latency(operation='get',
-                                                percentile=0.95)
+                                                percentile=95)
         )
 
 

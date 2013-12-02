@@ -1,5 +1,6 @@
 import math
 
+import numpy as np
 from seriesly import Seriesly
 
 from perfrunner.settings import CbAgentSettings
@@ -37,17 +38,6 @@ class MetricHelper(object):
                 'larger_is_better': str(larger_is_better).lower(),
                 'level': level}
 
-    @staticmethod
-    def _calc_percentile(data, percentile):
-        data.sort()
-        k = (len(data) - 1) * percentile
-        f = math.floor(k)
-        c = math.ceil(k)
-        if f == c:
-            return data[int(k)]
-        else:
-            return data[int(f)] * (c - k) + data[int(c)] * (k - f)
-
     def calc_avg_xdcr_ops(self):
         metric = '{}_avg_xdcr_ops_{}'.format(self.test_config.name,
                                              self.cluster_spec.name)
@@ -80,13 +70,12 @@ class MetricHelper(object):
 
         return set_meta_ops, metric, metric_info
 
-    def calc_xdcr_lag(self, percentile=0.9):
-        percentile_int = int(percentile * 100)
+    def calc_xdcr_lag(self, percentile=90):
         metric = '{}_{}th_xdc_lag_{}'.format(self.test_config.name,
-                                             percentile_int,
+                                             percentile,
                                              self.cluster_spec.name)
         descr = '{}th percentile replication lag (ms), {}'.format(
-            percentile_int, self.test_descr)
+            percentile, self.test_descr)
         metric_info = self._get_metric_info(descr)
 
         timings = []
@@ -94,16 +83,15 @@ class MetricHelper(object):
             db = 'xdcr_lag{}{}'.format(self.cluster_names[0], bucket)
             data = self.seriesly[db].get_all()
             timings += [v['xdcr_lag'] for v in data.values()]
-        lag = round(self._calc_percentile(timings, percentile))
+        lag = round(np.percentile(timings, percentile))
 
         return lag, metric, metric_info
 
-    def calc_replication_changes_left(self, percentile=0.9):
-        percentile_int = int(percentile * 100)
+    def calc_replication_changes_left(self, percentile=90):
         metric = '{}_{}th_replication_queue_{}'.format(self.test_config.name,
                                                        int(percentile * 100),
                                                        self.cluster_spec.name)
-        descr = '{}th percentile replication queue, {}'.format(percentile_int,
+        descr = '{}th percentile replication queue, {}'.format(percentile,
                                                                self.test_descr)
         metric_info = self._get_metric_info(descr)
 
@@ -112,7 +100,7 @@ class MetricHelper(object):
             db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
             data = self.seriesly[db].get_all()
             queues += [v['replication_changes_left'] for v in data.values()]
-        queue = round(self._calc_percentile(queues, percentile))
+        queue = round(np.percentile(queues, percentile))
 
         return queue, metric, metric_info
 
@@ -157,9 +145,8 @@ class MetricHelper(object):
         return round(couch_views_ops)
 
     def calc_query_latency(self, percentile):
-        percentile_int = int(percentile * 100)
         metric = '{}_{}'.format(self.test_config.name, self.cluster_spec.name)
-        descr = '{}th percentile query latency (ms), {}'.format(percentile_int,
+        descr = '{}th percentile query latency (ms), {}'.format(percentile,
                                                                 self.test_descr)
         metric_info = self._get_metric_info(descr)
 
@@ -169,17 +156,16 @@ class MetricHelper(object):
                                                    bucket)
             data = self.seriesly[db].get_all()
             timings += [value['latency_query'] for value in data.values()]
-        query_latency = self._calc_percentile(timings, percentile)
+        query_latency = np.percentile(timings, percentile)
 
         return round(query_latency), metric, metric_info
 
     def calc_kv_latency(self, operation, percentile):
-        percentile_int = int(percentile * 100)
         metric = '{}_{}_{}th_{}'.format(self.test_config.name,
                                         operation,
-                                        percentile_int,
+                                        percentile,
                                         self.cluster_spec.name)
-        descr = '{}th percentile {} {}'.format(percentile_int,
+        descr = '{}th percentile {} {}'.format(percentile,
                                                operation.upper(),
                                                self.test_descr)
         metric_info = self._get_metric_info(descr)
@@ -191,7 +177,7 @@ class MetricHelper(object):
             timings += [
                 v['latency_{}'.format(operation)] for v in data.values()
             ]
-        latency = round(self._calc_percentile(timings, percentile), 1)
+        latency = round(np.percentile(timings, percentile), 1)
 
         return latency, metric, metric_info
 

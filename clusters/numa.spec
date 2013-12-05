@@ -3,8 +3,8 @@ numa =
     numanuma.sc.couchbase.com:8091
 
 [storage]
-data = /ssd1
-index = /ssd2
+data = /mnt/tmp
+index = /mnt/tmp
 
 [credentials]
 rest = Administrator:password

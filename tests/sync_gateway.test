@@ -1,4 +1,5 @@
 [cluster]
-mem_quota = 16384
-initial_nodes = 2
+mem_quota = 20480
+initial_nodes = 1
 num_buckets = 1
+replica_number = 0

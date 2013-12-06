@@ -89,7 +89,7 @@ class MetricHelper(object):
 
     def calc_replication_changes_left(self, percentile=90):
         metric = '{}_{}th_replication_queue_{}'.format(self.test_config.name,
-                                                       int(percentile * 100),
+                                                       percentile,
                                                        self.cluster_spec.name)
         descr = '{}th percentile replication queue, {}'.format(percentile,
                                                                self.test_descr)

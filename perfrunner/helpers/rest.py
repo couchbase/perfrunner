@@ -243,7 +243,7 @@ class RestHelper(object):
         api = 'http://{}/diag/eval'.format(host_port)
         return self.post(url=api, data=cmd).text
 
-    def enable_auto_failover(self, host_port, timeout=45):
+    def enable_auto_failover(self, host_port, timeout=120):
         logger.info('Enabling auto-failover')
 
         api = 'http://{}/settings/autoFailover'.format(host_port)

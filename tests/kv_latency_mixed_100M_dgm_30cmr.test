@@ -5,9 +5,6 @@ descr = latency (ms), mixed, 1 bucket x 100M x 2KB, DGM, 30%% cache miss rate
 larger_is_better = false
 level = Basic
 
-[stats]
-report = BaseKVReport
-
 [cluster]
 mem_quota = 57344
 initial_nodes = 4

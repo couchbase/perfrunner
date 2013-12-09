@@ -5,9 +5,6 @@ descr = 2 <-> 2 BiDir, 1 bucket x 25M x 2KB, DGM
 larger_is_better = false
 level = Basic
 
-[stats]
-report = BaseXdcrReport
-
 [cluster]
 mem_quota = 40960
 initial_nodes = 2

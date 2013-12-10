@@ -32,4 +32,4 @@ size = 2048
 workers = 24
 working_set = 30
 working_set_access = 90
-time = 14800
+time = 10800

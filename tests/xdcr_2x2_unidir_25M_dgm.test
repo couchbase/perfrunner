@@ -10,6 +10,9 @@ mem_quota = 40960
 initial_nodes = 2
 num_buckets = 1
 
+[internal]
+xdcrCheckpointInterval = 14400
+
 [load]
 items = 25000000
 size = 2048

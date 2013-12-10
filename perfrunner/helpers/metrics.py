@@ -87,20 +87,20 @@ class MetricHelper(object):
 
         return lag, metric, metric_info
 
-    def calc_replication_changes_left(self, percentile=90):
-        metric = '{}_{}th_replication_queue_{}'.format(self.test_config.name,
-                                                       percentile,
-                                                       self.cluster_spec.name)
-        descr = '{}th percentile replication queue, {}'.format(percentile,
-                                                               self.test_descr)
+    def calc_replication_changes_left(self):
+        metric = '{}_avg_replication_queue_{}'.format(self.test_config.name,
+                                                      self.cluster_spec.name)
+        descr = 'Avg. replication queue, {}'.format(self.test_descr)
         metric_info = self._get_metric_info(descr)
+        query_params = self._get_query_params('avg_replication_changes_left')
 
-        queues = []
+        queues = 0
         for bucket in self.test_config.get_buckets():
             db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
             data = self.seriesly[db].get_all()
-            queues += [v['replication_changes_left'] for v in data.values()]
-        queue = round(np.percentile(queues, percentile))
+            data = self.seriesly[db].query(query_params)
+            queues += data.values()[0][0]
+        queue = round(queues)
 
         return queue, metric, metric_info
 

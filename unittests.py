@@ -2,7 +2,7 @@ from unittest import TestCase
 
 from mock import patch
 
-from perfrunner.helpers.misc import target_hash
+from perfrunner.helpers.misc import target_hash, server_group
 from perfrunner.utils.install import CouchbaseInstaller, Build
 
 
@@ -51,3 +51,19 @@ class InstallTest(TestCase):
 
     def test_target_hash(self):
         self.assertEqual(target_hash('127.0.0.1'), '3cf55f')
+
+
+class RebalanceTests(TestCase):
+
+    def test_server_group_6_to_8(self):
+        servers = range(8)
+        initial_nodes = 6
+        nodes_after = 8
+        group_number = 3
+
+        groups = []
+        for i, host in enumerate(servers[initial_nodes:nodes_after],
+                                 start=initial_nodes):
+            g = server_group(servers, group_number, i)
+            groups.append(g)
+        self.assertEqual(groups, ['Group 3', 'Group 3'])

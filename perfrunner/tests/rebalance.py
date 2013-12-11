@@ -71,7 +71,7 @@ class RebalanceTest(PerfTest):
 
         if nodes_after > initial_nodes:
             for i, host_port in enumerate(self.servers[initial_nodes:nodes_after],
-                                          start=1):
+                                          start=initial_nodes):
                 host = host_port.split(':')[0]
                 uri = groups.get(server_group(self.servers, group_number, i))
                 self.rest.add_node(master, host, uri)

@@ -18,12 +18,12 @@ replica_number = 2
 [load]
 items = 100000000
 size = 2048
-workers = 20
+workers = 50
 
 [hot_load]
 items = 100000000
 size = 2048
-workers = 20
+workers = 50
 working_set = 30
 
 [access]
@@ -35,7 +35,7 @@ throughput = 10000
 items = 100000000
 size = 2048
 workers = 24
-working_set = 30
+working_set = 5
 working_set_access = 98
 
 [rebalance]

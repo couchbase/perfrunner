@@ -8,6 +8,6 @@ logger
 mc_bin_client
 numpy
 pytz
-requests==1.2.0
+requests==2.1.0
 seriesly
 spring

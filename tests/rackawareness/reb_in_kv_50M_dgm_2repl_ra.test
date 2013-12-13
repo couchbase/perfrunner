@@ -19,7 +19,7 @@ groups = 2
 [load]
 items = 50000000
 size = 2048
-workers = 50
+workers = 25
 
 [hot_load]
 items = 50000000

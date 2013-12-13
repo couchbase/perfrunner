@@ -3,6 +3,7 @@ import time
 from decorator import decorator
 from fabric import state
 from fabric.api import execute, get, put, run, parallel, settings
+from fabric.exceptions import CommandTimeout
 from logger import logger
 
 from perfrunner.helpers.misc import uhex
@@ -107,8 +108,12 @@ class RemoteLinuxHelper(object):
         run('rm -f /tmp/*.zip')
 
         fname = '/tmp/{}.zip'.format(uhex())
-        r = run('{}/bin/cbcollect_info {}'.format(self.ROOT_DIR, fname),
-                warn_only=True)
+        try:
+            r = run('{}/bin/cbcollect_info {}'.format(self.ROOT_DIR, fname),
+                    warn_only=True, timeout=1200)
+        except CommandTimeout:
+            logger.error('cbcollect_info timed out')
+            return
         if not r.return_code:
             get('{}'.format(fname))
             run('rm -f {}'.format(fname))

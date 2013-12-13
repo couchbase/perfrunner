@@ -64,6 +64,30 @@ class RebalanceTests(TestCase):
         groups = []
         for i, host in enumerate(servers[initial_nodes:nodes_after],
                                  start=initial_nodes):
-            g = server_group(servers, group_number, i)
+            g = server_group(servers[:nodes_after], group_number, i)
             groups.append(g)
         self.assertEqual(groups, ['Group 3', 'Group 3'])
+
+    def test_initial_4_out_of_8(self):
+        servers = range(8)
+        initial_nodes = 4
+        group_number = 2
+
+        groups = []
+        for i, host in enumerate(servers[1:initial_nodes], start=1):
+            g = server_group(servers[:initial_nodes], group_number, i)
+            groups.append(g)
+        self.assertEqual(groups, ['Group 1', 'Group 2', 'Group 2'])
+
+    def test_server_group_3_to_4(self):
+        servers = range(8)
+        initial_nodes = 3
+        nodes_after = 4
+        group_number = 2
+
+        groups = []
+        for i, host in enumerate(servers[initial_nodes:nodes_after],
+                                 start=initial_nodes):
+            g = server_group(servers[:nodes_after], group_number, i)
+            groups.append(g)
+        self.assertEqual(groups, ['Group 2'])

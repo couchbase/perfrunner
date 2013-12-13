@@ -73,7 +73,8 @@ class RebalanceTest(PerfTest):
             for i, host_port in enumerate(self.servers[initial_nodes:nodes_after],
                                           start=initial_nodes):
                 host = host_port.split(':')[0]
-                uri = groups.get(server_group(self.servers, group_number, i))
+                uri = groups.get(server_group(self.servers[:nodes_after],
+                                              group_number, i))
                 self.rest.add_node(master, host, uri)
             known_nodes = self.servers[:nodes_after]
             ejected_nodes = []

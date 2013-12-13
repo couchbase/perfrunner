@@ -62,7 +62,8 @@ class ClusterManager(object):
             for i, host_port in enumerate(cluster[1:self.initial_nodes],
                                           start=1):
                 host = host_port.split(':')[0]
-                uri = groups.get(server_group(cluster, self.group_number, i))
+                uri = groups.get(server_group(cluster[:self.initial_nodes],
+                                              self.group_number, i))
                 self.rest.add_node(master, host, uri)
 
     def rebalance(self):

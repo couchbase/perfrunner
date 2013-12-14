@@ -1,10 +1,8 @@
-import pytz
 from calendar import timegm
 from collections import OrderedDict
 from copy import copy
 from datetime import datetime
 from multiprocessing import Process
-from time import time
 
 from decorator import decorator
 import requests
@@ -142,11 +140,11 @@ class CbAgent(object):
     def start(self):
         self.processes = [Process(target=c.collect) for c in self.collectors]
         map(lambda p: p.start(), self.processes)
-        return datetime.fromtimestamp(time(), tz=pytz.utc)
+        return datetime.utcnow()
 
     def stop(self):
         map(lambda p: p.terminate(), self.processes)
-        return datetime.fromtimestamp(time(), tz=pytz.utc)
+        return datetime.utcnow()
 
     def generate_report(self, snapshot, report):
         api = 'http://{}/reports/html/'.format(

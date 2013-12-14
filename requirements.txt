@@ -7,7 +7,6 @@ fabric==1.8.0
 logger
 mc_bin_client
 numpy
-pytz
 requests==2.1.0
 seriesly
 spring

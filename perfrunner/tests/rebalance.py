@@ -64,23 +64,36 @@ class RebalanceTest(PerfTest):
     def rebalance(self):
         initial_nodes = self.test_config.get_initial_nodes()
         nodes_after = self.rebalance_settings.nodes_after
+        swap = self.rebalance_settings.swap
         master = self.servers[0]
 
         group_number = self.test_config.get_group_number() or 1
         groups = group_number > 1 and self.rest.get_server_groups(master) or {}
 
         if nodes_after > initial_nodes:
-            for i, host_port in enumerate(self.servers[initial_nodes:nodes_after],
-                                          start=initial_nodes):
-                host = host_port.split(':')[0]
-                uri = groups.get(server_group(self.servers[:nodes_after],
-                                              group_number, i))
-                self.rest.add_node(master, host, uri)
+            new_nodes = enumerate(
+                self.servers[initial_nodes:nodes_after],
+                start=initial_nodes
+            )
             known_nodes = self.servers[:nodes_after]
             ejected_nodes = []
-        else:
+        elif nodes_after < initial_nodes:
+            new_nodes = []
             known_nodes = self.servers[:initial_nodes]
             ejected_nodes = self.servers[nodes_after:initial_nodes]
+        else:  # swap
+            new_nodes = enumerate(
+                self.servers[initial_nodes:initial_nodes + swap],
+                start=initial_nodes - swap
+            )
+            known_nodes = self.servers[:initial_nodes + swap]
+            ejected_nodes = self.servers[initial_nodes - swap:initial_nodes]
+
+        for i, host_port in new_nodes:
+            host = host_port.split(':')[0]
+            group = server_group(self.servers[:nodes_after], group_number, i)
+            uri = groups.get(group)
+            self.rest.add_node(master, host, uri)
         self.rest.rebalance(master, known_nodes, ejected_nodes)
         self.monitor.monitor_rebalance(master)
 

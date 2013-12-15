@@ -1,0 +1,47 @@
+[test_case]
+module = perfrunner.tests.rebalance
+class = RebalanceWithQueriesTest
+descr = Rebalance-swap (min), 3 -> 3 / 1, 1 bucket x 50M x 2KB, DGM, 1 x 1 views
+larger_is_better = false
+level = Basic
+
+[stats]
+report = BaseRebalanceReport
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 3
+num_buckets = 1
+
+[load]
+items = 50000000
+size = 2048
+workers = 20
+
+[hot_load]
+items = 50000000
+size = 2048
+workers = 20
+working_set = 30
+
+[index]
+views = [1]
+
+[access]
+creates = 5
+reads = 50
+updates = 40
+deletes = 5
+throughput = 10000
+query_throughput = 400
+items = 50000000
+size = 2048
+workers = 24
+query_workers = 12
+working_set = 30
+working_set_access = 98
+
+[rebalance]
+nodes_after = 3
+start_after = 1200
+stop_after = 1200

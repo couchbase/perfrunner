@@ -11,10 +11,10 @@ echo "cd /tmp/perfrunner/scripts/mongo; ./uninstall-mongo-local.sh" | ssh root@n
 echo "cd /tmp/perfrunner/scripts/mongo; ./uninstall-mongo-local.sh" | ssh root@node4 /bin/bash
 
 # INSTALL
-echo "cd /tmp/perfrunner/scripts/mongo; ./install-mongo-local.sh" | ssh root@node1 /bin/bash
-echo "cd /tmp/perfrunner/scripts/mongo; ./install-mongo-local.sh" | ssh root@node2 /bin/bash
-echo "cd /tmp/perfrunner/scripts/mongo; ./install-mongo-local.sh" | ssh root@node3 /bin/bash
-echo "cd /tmp/perfrunner/scripts/mongo; ./install-mongo-local.sh" | ssh root@node4 /bin/bash
+echo "cd /tmp/perfrunner/scripts/mongo; ./install-mongo-local-4.sh" | ssh root@node1 /bin/bash
+echo "cd /tmp/perfrunner/scripts/mongo; ./install-mongo-local-4.sh" | ssh root@node2 /bin/bash
+echo "cd /tmp/perfrunner/scripts/mongo; ./install-mongo-local-4.sh" | ssh root@node3 /bin/bash
+echo "cd /tmp/perfrunner/scripts/mongo; ./install-mongo-local-4.sh" | ssh root@node4 /bin/bash
 
 # Start mongos
 echo "cd /tmp/perfrunner/scripts/mongo; ./start-mongos-4.sh" | ssh root@node1 /bin/bash

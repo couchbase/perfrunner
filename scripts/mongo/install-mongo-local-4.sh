@@ -1,7 +1,7 @@
 #!/bin/bash
 . mongo-env.sh
 
-wget http://downloads.mongodb.org/linux/mongodb-linux-x86_64-${MONGO_VERSION}.tgz -P /tmp
+wget -q http://downloads.mongodb.org/linux/mongodb-linux-x86_64-${MONGO_VERSION}.tgz -P /tmp
 tar xzf /tmp/mongodb-linux-x86_64-${MONGO_VERSION}.tgz -C /tmp
 mv -f /tmp/mongodb-linux-x86_64-${MONGO_VERSION}/ /usr/lib/mongodb
 rm -f /tmp/mongodb-linux-x86_64-${MONGO_VERSION}.tgz

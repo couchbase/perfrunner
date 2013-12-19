@@ -27,8 +27,7 @@ def with_stats(latency=False, query_latency=False, xdcr_lag=False):
         method(*args, **kwargs)
         to_ts = test.cbagent.stop()
 
-        report = test.test_config.get_stats_settings().report
-        test.cbagent.add_snapshot(method.__name__, from_ts, to_ts, report)
+        test.cbagent.add_snapshot(method.__name__, from_ts, to_ts)
         test.reports = test.cbagent.reports
 
         from_ts = timegm(from_ts.timetuple()) * 1000  # -> ms
@@ -146,18 +145,17 @@ class CbAgent(object):
         map(lambda p: p.terminate(), self.processes)
         return datetime.utcnow()
 
-    def generate_report(self, snapshot, report):
+    def generate_report(self, snapshot):
         api = 'http://{}/reports/html/'.format(
             self.settings.cbmonitor_host_port)
-        url = '{}?snapshot={}&report={}'.format(api, snapshot, report)
+        url = '{}?snapshot={}'.format(api, snapshot)
         requests.get(url=url)
         return url
 
-    def add_snapshot(self, phase, ts_from, ts_to, report):
+    def add_snapshot(self, phase, ts_from, ts_to):
         for i, cluster in enumerate(self.clusters, start=1):
             snapshot = '{}_{}'.format(cluster, phase)
             self.settings.cluster = cluster
             md_client = MetadataClient(self.settings)
             md_client.add_snapshot(snapshot, ts_from, ts_to)
-            self.reports['report{}'.format(i)] = self.generate_report(snapshot,
-                                                                      report)
+            self.reports['report{}'.format(i)] = self.generate_report(snapshot)

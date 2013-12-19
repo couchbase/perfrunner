@@ -6,7 +6,6 @@ larger_is_better = false
 level = Basic
 
 [stats]
-report = BaseRebalanceViewsReport
 post_to_sf = 0
 
 [cluster]

@@ -50,7 +50,7 @@ class PerfTest(object):
         self.master_node = cluster_spec.get_masters().values()[0]
         self.build = self.rest.get_version(self.master_node)
 
-        self.cbagent = CbAgent(cluster_spec, self.build)
+        self.cbagent = CbAgent(cluster_spec, test_config, self.build)
         self.metric_helper = MetricHelper(self)
         self.reporter = Reporter(self)
         self.reports = {}

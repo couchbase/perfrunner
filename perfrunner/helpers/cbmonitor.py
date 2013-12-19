@@ -11,7 +11,7 @@ from cbagent.collectors import (NSServer, PS, IO, ActiveTasks,
 from cbagent.metadata_client import MetadataClient
 
 from perfrunner.helpers.misc import target_hash, uhex
-from perfrunner.settings import CbAgentSettings
+from perfrunner.settings import CBMONITOR_HOST
 
 
 def with_stats(latency=False, query_latency=False, xdcr_lag=False):
@@ -38,7 +38,7 @@ def with_stats(latency=False, query_latency=False, xdcr_lag=False):
 
 class CbAgent(object):
 
-    def __init__(self, cluster_spec, build):
+    def __init__(self, cluster_spec, test_config, build):
         self.clusters = OrderedDict()
         for cluster, master in cluster_spec.get_masters().items():
             cluster = '{}_{}_{}'.format(cluster,
@@ -47,7 +47,11 @@ class CbAgent(object):
             master = master.split(':')[0]
             self.clusters[cluster] = master
 
-        self.settings = CbAgentSettings()
+        self.settings = type('settings', (object, ), {
+            'seriesly_host': CBMONITOR_HOST,
+            'cbmonitor_host_port': CBMONITOR_HOST,
+            'interval': test_config.get_stats_settings().interval,
+        })
         self.settings.ssh_username, self.settings.ssh_password = \
             cluster_spec.get_ssh_credentials()
         self.settings.rest_username, self.settings.rest_password = \
@@ -146,8 +150,7 @@ class CbAgent(object):
         return datetime.utcnow()
 
     def generate_report(self, snapshot):
-        api = 'http://{}/reports/html/'.format(
-            self.settings.cbmonitor_host_port)
+        api = 'http://{}/reports/html/'.format(CBMONITOR_HOST)
         url = '{}?snapshot={}'.format(api, snapshot)
         requests.get(url=url)
         return url

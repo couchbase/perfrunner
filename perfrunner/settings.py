@@ -11,17 +11,9 @@ REPO = 'https://github.com/pavel-paulau/perfrunner'
 
 BROKER_URL = 'amqp://couchbase:couchbase@ci.sc.couchbase.com:5672/broker'
 
-SF_STORAGE = {
-    'host': 'showfast.sc.couchbase.com', 'port': 8091, 'password': 'password'
-}
+SF_STORAGE = {'host': 'showfast.sc.couchbase.com', 'password': 'password'}
 
-
-class CbAgentSettings(object):
-
-    seriesly_host = 'cbmonitor.sc.couchbase.com'
-    cbmonitor_host_port = 'cbmonitor.sc.couchbase.com'
-    interval = 5
-    update_metadata = True
+CBMONITOR_HOST = 'cbmonitor.sc.couchbase.com'
 
 
 @decorator
@@ -192,9 +184,11 @@ class TestConfig(Config):
 class StatsSettings(object):
 
     POST_TO_SF = 1
+    INTERVAL = 5
 
     def __init__(self, options):
         self.post_to_sf = int(options.get('post_to_sf', self.POST_TO_SF))
+        self.interval = int(options.get('interval', self.INTERVAL))
 
 
 class CompactionSettings(object):

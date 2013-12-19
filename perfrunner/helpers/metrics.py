@@ -1,13 +1,13 @@
 import numpy as np
 from seriesly import Seriesly
 
-from perfrunner.settings import CbAgentSettings
+from perfrunner.settings import CBMONITOR_HOST
 
 
 class MetricHelper(object):
 
     def __init__(self, test):
-        self.seriesly = Seriesly(CbAgentSettings.seriesly_host)
+        self.seriesly = Seriesly(CBMONITOR_HOST)
         self.test_config = test.test_config
         self.test_descr = test.test_config.get_test_descr()
         self.cluster_spec = test.cluster_spec

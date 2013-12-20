@@ -149,6 +149,10 @@ class TestConfig(Config):
         options = self._get_options_as_dict('compaction')
         return CompactionSettings(options)
 
+    def get_watermark_settings(self):
+        options = self._get_options_as_dict('watermarks')
+        return options
+
     def get_load_settings(self):
         options = self._get_options_as_dict('load')
         return LoadSettings(options)

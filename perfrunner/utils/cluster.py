@@ -7,6 +7,7 @@ from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import RestHelper
 from perfrunner.settings import ClusterSpec, TestConfig
+from perfrunner.tests import TargetIterator
 
 
 class ClusterManager(object):
@@ -115,6 +116,11 @@ class ClusterManager(object):
             master = cluster[0]
             self.rest.enable_auto_failover(master)
 
+    def wait_until_warmed_up(self):
+        target_iterator = TargetIterator(self.cluster_spec, self.test_config)
+        for target in target_iterator:
+            self.monitor.monitor_warmup(target)
+
     def change_watermarks(self):
         watermark_settings = self.test_config.get_watermark_settings()
         _, password = self.cluster_spec.get_rest_credentials()
@@ -169,6 +175,7 @@ def main():
         cm.add_nodes()
         cm.rebalance()
     cm.create_buckets()
+    cm.wait_until_warmed_up()
     cm.configure_auto_compaction()
     cm.enable_auto_failover()
     cm.change_watermarks()

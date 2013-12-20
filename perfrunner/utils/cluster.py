@@ -125,15 +125,18 @@ class ClusterManager(object):
         watermark_settings = self.test_config.get_watermark_settings()
         _, password = self.cluster_spec.get_rest_credentials()
 
-        for bucket in self.test_config.get_buckets():
-            for host in self.cluster_spec.get_all_hosts():
-                mc = MemcachedClient(host=host, port=11210)
-                mc.sasl_auth_plain(user=bucket, password=password)
-                for key, val in watermark_settings.items():
-                    val = int(val) / 100.0  # string -> ratio
-                    mem_quota = self.mem_quota * 1024 ** 2  # Mb -> bytes
-                    val = str(int(val * mem_quota))
-                    mc.set_param(key, val, memcacheConstants.ENGINE_PARAM_FLUSH)
+        for cluster in self.clusters:
+            for host_port in cluster[:self.initial_nodes]:
+                host = host_port.split(':')[0]
+                for bucket in self.test_config.get_buckets():
+                    mc = MemcachedClient(host=host, port=11210)
+                    mc.sasl_auth_plain(user=bucket, password=password)
+                    for key, val in watermark_settings.items():
+                        val = int(val) / 100.0  # string -> ratio
+                        mem_quota = self.mem_quota * 1024 ** 2  # Mb -> bytes
+                        val = str(int(val * mem_quota))
+                        mc.set_param(key, val,
+                                     memcacheConstants.ENGINE_PARAM_FLUSH)
 
 
 def get_options():

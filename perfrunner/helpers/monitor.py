@@ -2,7 +2,7 @@ import socket
 import time
 
 from logger import logger
-from mc_bin_client.mc_bin_client import MemcachedClient
+from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
 
 from perfrunner.helpers.rest import RestHelper
 
@@ -113,7 +113,7 @@ class Monitor(RestHelper):
                 mc = MemcachedClient(host=host, port=11210)
                 mc.sasl_auth_plain(user=target.bucket, password=target.password)
                 stats = mc.stats('warmup')
-            except (EOFError, socket.error):
+            except (EOFError, socket.error, MemcachedError):
                 time.sleep(self.SOCKET_RETRY_INTERVAL)
             else:
                 state = stats['ep_warmup_state']

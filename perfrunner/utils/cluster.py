@@ -1,7 +1,6 @@
 from optparse import OptionParser
 
-from mc_bin_client.mc_bin_client import MemcachedClient, memcacheConstants
-
+from perfrunner.helpers.memcached import MemcachedHelper
 from perfrunner.helpers.misc import server_group
 from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper
@@ -19,6 +18,7 @@ class ClusterManager(object):
         self.rest = RestHelper(cluster_spec)
         self.remote = RemoteHelper(cluster_spec)
         self.monitor = Monitor(cluster_spec)
+        self.memcached = MemcachedHelper(cluster_spec)
 
         self.clusters = cluster_spec.get_clusters().values()
         self.initial_nodes = test_config.get_initial_nodes()
@@ -119,24 +119,18 @@ class ClusterManager(object):
     def wait_until_warmed_up(self):
         target_iterator = TargetIterator(self.cluster_spec, self.test_config)
         for target in target_iterator:
-            self.monitor.monitor_warmup(target)
+            host = target.node.split(':')[0]
+            self.monitor.monitor_warmup(self.memcached, host, target.bucket)
 
     def change_watermarks(self):
         watermark_settings = self.test_config.get_watermark_settings()
-        _, password = self.cluster_spec.get_rest_credentials()
-
         for cluster in self.clusters:
             for host_port in cluster[:self.initial_nodes]:
                 host = host_port.split(':')[0]
                 for bucket in self.test_config.get_buckets():
-                    mc = MemcachedClient(host=host, port=11210)
-                    mc.sasl_auth_plain(user=bucket, password=password)
                     for key, val in watermark_settings.items():
-                        val = int(val) / 100.0  # string -> ratio
-                        mem_quota = self.mem_quota * 1024 ** 2  # Mb -> bytes
-                        val = str(int(val * mem_quota))
-                        mc.set_param(key, val,
-                                     memcacheConstants.ENGINE_PARAM_FLUSH)
+                        val = self.memcached.calc_watermark(val, self.mem_quota)
+                        self.memcached.set_flusher_param(host, bucket, key, val)
 
 
 def get_options():

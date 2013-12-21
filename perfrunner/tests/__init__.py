@@ -6,9 +6,10 @@ from multiprocessing import Event, Process
 from logger import logger
 
 from perfrunner.helpers.cbmonitor import CbAgent
+from perfrunner.helpers.memcached import MemcachedHelper
 from perfrunner.helpers.metrics import MetricHelper
-from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.misc import log_phase, target_hash
+from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.reporter import Reporter
 from perfrunner.helpers.rest import RestHelper
@@ -42,6 +43,7 @@ class PerfTest(object):
         self.target_iterator = TargetIterator(self.cluster_spec,
                                               self.test_config)
 
+        self.memcached = MemcachedHelper(cluster_spec)
         self.monitor = Monitor(cluster_spec)
         self.rest = RestHelper(cluster_spec)
         self.remote = RemoteHelper(cluster_spec)

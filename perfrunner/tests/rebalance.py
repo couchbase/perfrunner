@@ -3,6 +3,7 @@ import time
 from decorator import decorator
 from logger import logger
 
+
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import server_group
 from perfrunner.tests import PerfTest
@@ -57,6 +58,14 @@ class RebalanceTest(PerfTest):
         self.rebalance_settings = self.test_config.get_rebalance_settings()
         self.servers = self.cluster_spec.get_clusters().values()[-1]
 
+    def change_watermarks(self, host):
+        watermark_settings = self.test_config.get_watermark_settings()
+        mem_quota = self.test_config.get_mem_quota()
+        for bucket in self.test_config.get_buckets():
+            for key, val in watermark_settings.items():
+                val = self.memcached.calc_watermark(val, mem_quota)
+                self.memcached.set_flusher_param(host, bucket, key, val)
+
     @with_delayed_posting
     @with_stats(latency=True)
     @with_delay
@@ -95,6 +104,9 @@ class RebalanceTest(PerfTest):
             uri = groups.get(group)
             self.rest.add_node(master, host, uri)
         self.rest.rebalance(master, known_nodes, ejected_nodes)
+        for i, host_port in new_nodes:
+            host = host_port.split(':')[0]
+            self.change_watermarks(host)
         self.monitor.monitor_rebalance(master)
 
 

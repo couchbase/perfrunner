@@ -1,8 +1,6 @@
-import socket
 import time
 
 from logger import logger
-from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
 
 from perfrunner.helpers.rest import RestHelper
 
@@ -10,7 +8,6 @@ from perfrunner.helpers.rest import RestHelper
 class Monitor(RestHelper):
 
     POLLING_INTERVAL = 5
-    SOCKET_RETRY_INTERVAL = 2
     MAX_RETRY = 10
 
     DISK_QUEUE_METRICS = (
@@ -103,22 +100,13 @@ class Monitor(RestHelper):
                 break
         logger.info('Task {} successfully completed'.format(task_type))
 
-    def monitor_warmup(self, target):
-        host = target.node.split(':')[0]
-
+    def monitor_warmup(self, memcahed, host, bucket):
         logger.info('Monitoring warmup status')
-
         while True:
-            try:
-                mc = MemcachedClient(host=host, port=11210)
-                mc.sasl_auth_plain(user=target.bucket, password=target.password)
-                stats = mc.stats('warmup')
-            except (EOFError, socket.error, MemcachedError):
-                time.sleep(self.SOCKET_RETRY_INTERVAL)
+            stats = memcahed.get_stats(host, bucket, 'warmup')
+            state = stats['ep_warmup_state']
+            if state == 'done':
+                return stats['ep_warmup_time']
             else:
-                state = stats['ep_warmup_state']
-                if state == 'done':
-                    return stats['ep_warmup_time']
-                else:
-                    logger.info('Warmpup status: {}'.format(state))
-                    time.sleep(self.POLLING_INTERVAL)
+                logger.info('Warmpup status: {}'.format(state))
+                time.sleep(self.POLLING_INTERVAL)

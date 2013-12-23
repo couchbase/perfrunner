@@ -189,10 +189,12 @@ class StatsSettings(object):
 
     POST_TO_SF = 1
     INTERVAL = 5
+    LAT_INTERVAL = 1
 
     def __init__(self, options):
         self.post_to_sf = int(options.get('post_to_sf', self.POST_TO_SF))
         self.interval = int(options.get('interval', self.INTERVAL))
+        self.lat_interval = int(options.get('lat_interval', self.LAT_INTERVAL))
 
 
 class CompactionSettings(object):

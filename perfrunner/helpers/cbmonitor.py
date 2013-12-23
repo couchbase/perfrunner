@@ -38,8 +38,6 @@ def with_stats(latency=False, query_latency=False, xdcr_lag=False):
 
 class CbAgent(object):
 
-    LATENCY_SAMPLING_INTERVAL = 1
-
     def __init__(self, cluster_spec, test_config, build):
         self.clusters = OrderedDict()
         for cluster, master in cluster_spec.get_masters().items():
@@ -54,6 +52,7 @@ class CbAgent(object):
             'cbmonitor_host_port': CBMONITOR_HOST,
             'interval': test_config.get_stats_settings().interval,
         })
+        self.lat_interval = test_config.get_stats_settings().lat_interval
         self.settings.ssh_username, self.settings.ssh_password = \
             cluster_spec.get_ssh_credentials()
         self.settings.rest_username, self.settings.rest_password = \
@@ -119,7 +118,7 @@ class CbAgent(object):
     def prepare_latency(self, clusters, workload):
         for cluster in clusters:
             settings = copy(self.settings)
-            settings.interval = self.LATENCY_SAMPLING_INTERVAL
+            settings.interval = self.lat_interval
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
             prefix = target_hash(settings.master_node.split(':')[0])
@@ -128,7 +127,7 @@ class CbAgent(object):
     def prepare_query_latency(self, clusters, workload, ddocs):
         for cluster in clusters:
             settings = copy(self.settings)
-            settings.interval = self.LATENCY_SAMPLING_INTERVAL
+            settings.interval = self.lat_interval
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
             self.collectors.append(SpringQueryLatency(settings, workload, ddocs))

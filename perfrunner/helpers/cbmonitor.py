@@ -71,7 +71,7 @@ class CbAgent(object):
             self.prepare_ps(clusters)
             self.prepare_iostat(clusters, test)
         if latency and hasattr(test, "workload"):
-            self.prepare_latency(clusters, test.workload)
+            self.prepare_latency(clusters, test.workload, test)
         if query_latency:
             self.prepare_query_latency(clusters, test.workload, test.ddocs)
         if xdcr_lag:
@@ -115,13 +115,14 @@ class CbAgent(object):
             settings.dest_master_node = self.clusters[dest_cluster]
             self.collectors.append(XdcrLag(settings))
 
-    def prepare_latency(self, clusters, workload):
+    def prepare_latency(self, clusters, workload, test):
         for cluster in clusters:
             settings = copy(self.settings)
             settings.interval = self.lat_interval
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
-            prefix = target_hash(settings.master_node.split(':')[0])
+            prefix = test.target_iterator.prefix or \
+                target_hash(settings.master_node.split(':')[0])
             self.collectors.append(SpringLatency(settings, workload, prefix))
 
     def prepare_query_latency(self, clusters, workload, ddocs):

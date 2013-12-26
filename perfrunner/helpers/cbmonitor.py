@@ -51,7 +51,7 @@ class CbAgent(object):
             'seriesly_host': CBMONITOR_HOST,
             'cbmonitor_host_port': CBMONITOR_HOST,
             'interval': test_config.get_stats_settings().interval,
-        })
+        })()
         self.lat_interval = test_config.get_stats_settings().lat_interval
         self.settings.ssh_username, self.settings.ssh_password = \
             cluster_spec.get_ssh_credentials()

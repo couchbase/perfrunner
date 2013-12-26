@@ -1,3 +1,4 @@
+import exceptions as exc
 import os
 import shutil
 import time
@@ -64,7 +65,8 @@ class PerfTest(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.worker_manager.terminate()
-        self.debug()
+        if exc_type not in (exc.SystemExit, exc.KeyboardInterrupt):
+            self.debug()
         for master in self.cluster_spec.get_masters().values():
             num_failovers = self.rest.get_failover_counter(master)
             if num_failovers:

@@ -1,0 +1,40 @@
+[test_case]
+module = perfrunner.tests.xdcr
+class = SymmetricXdcrTest
+descr = 1 -> 1 UniDir, 1 bucket x 5M x 2KB
+larger_is_better = false
+level = Basic
+
+[stats]
+post_to_sf = 0
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 1
+num_buckets = 1
+
+[internal]
+xdcrCheckpointInterval = 14400
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[load]
+items = 5000000
+size = 2048
+workers = 20
+
+[xdcr]
+replication_type = unidir
+
+[access]
+creates = 0
+reads = 50
+updates = 50
+deletes = 0
+throughput = 5000
+items = 5000000
+size = 2048
+workers = 20
+time = 7200

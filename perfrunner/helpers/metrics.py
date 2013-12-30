@@ -111,7 +111,7 @@ class MetricHelper(object):
 
     def calc_avg_drain_rate(self, time_elapsed):
         items_per_node = self.test_config.get_load_settings().items / \
-            self.test_config.get_initial_nodes()
+            self.test_config.get_initial_nodes()[0]
         drain_rate = items_per_node / (time_elapsed * 60)
 
         return round(drain_rate)
@@ -124,7 +124,7 @@ class MetricHelper(object):
             db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
             data = self.seriesly[db].query(query_params)
             ep_bg_fetched += data.values()[0][0]
-        ep_bg_fetched /= self.test_config.get_initial_nodes()
+        ep_bg_fetched /= self.test_config.get_initial_nodes()[0]
 
         return round(ep_bg_fetched)
 
@@ -138,7 +138,7 @@ class MetricHelper(object):
             couch_views_ops += data.values()[0][0]
 
         if self.build < '2.5.0':
-            couch_views_ops /= self.test_config.get_initial_nodes()
+            couch_views_ops /= self.test_config.get_initial_nodes()[0]
 
         return round(couch_views_ops)
 

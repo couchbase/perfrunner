@@ -71,7 +71,7 @@ class RebalanceTest(PerfTest):
     @with_delay
     @with_reporter
     def rebalance(self):
-        initial_nodes = self.test_config.get_initial_nodes()
+        initial_nodes = self.test_config.get_initial_nodes()[0]  # a crutch!
         nodes_after = self.rebalance_settings.nodes_after
         swap = self.rebalance_settings.swap
         master = self.servers[0]

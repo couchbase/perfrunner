@@ -119,7 +119,9 @@ class TestConfig(Config):
 
     @safe
     def get_initial_nodes(self):
-        return self.config.getint('cluster', 'initial_nodes')
+        initial_nodes = self.config.get('cluster', 'initial_nodes')
+        initial_nodes = [int(_) for _ in initial_nodes.split()]
+        return initial_nodes
 
     @safe
     def get_num_buckets(self):

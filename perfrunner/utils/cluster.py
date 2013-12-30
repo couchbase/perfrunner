@@ -49,23 +49,26 @@ class ClusterManager(object):
                 self.rest.create_server_group(master, name=name)
 
     def add_nodes(self):
-        for cluster in self.clusters:
+        for cluster, initial_nodes in zip(self.clusters, self.initial_nodes):
+            if initial_nodes < 2:  # Single-node cluster
+                continue
+
+            # Adding initial nodes
             master = cluster[0]
             if self.group_number > 1:
                 groups = self.rest.get_server_groups(master)
             else:
                 groups = {}
-            for i, host_port in enumerate(cluster[1:self.initial_nodes],
+            for i, host_port in enumerate(cluster[1:initial_nodes],
                                           start=1):
                 host = host_port.split(':')[0]
-                uri = groups.get(server_group(cluster[:self.initial_nodes],
+                uri = groups.get(server_group(cluster[:initial_nodes],
                                               self.group_number, i))
                 self.rest.add_node(master, host, uri)
 
-    def rebalance(self):
-        for cluster in self.clusters:
+            # Rebalance
             master = cluster[0]
-            known_nodes = cluster[:self.initial_nodes]
+            known_nodes = cluster[:initial_nodes]
             ejected_nodes = []
             self.rest.rebalance(master, known_nodes, ejected_nodes)
             self.monitor.monitor_rebalance(master)
@@ -124,8 +127,8 @@ class ClusterManager(object):
 
     def change_watermarks(self):
         watermark_settings = self.test_config.get_watermark_settings()
-        for cluster in self.clusters:
-            for host_port in cluster[:self.initial_nodes]:
+        for cluster, initial_nodes in zip(self.clusters, self.initial_nodes):
+            for host_port in cluster[:initial_nodes]:
                 host = host_port.split(':')[0]
                 for bucket in self.test_config.get_buckets():
                     for key, val in watermark_settings.items():
@@ -168,9 +171,7 @@ def main():
     cm.set_mem_quota()
     if cm.group_number > 1:
         cm.create_server_groups()
-    if cm.initial_nodes > 1:
-        cm.add_nodes()
-        cm.rebalance()
+    cm.add_nodes()
     cm.create_buckets()
     cm.wait_until_warmed_up()
     cm.configure_auto_compaction()

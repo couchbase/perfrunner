@@ -6,6 +6,12 @@ apollo_c2 =
     172.23.96.17:8091
     172.23.96.18:8091
 
+[workers]
+apollo_w1 =
+    172.23.97.74
+apollo_w2 =
+    172.23.97.74
+
 [storage]
 data = /data
 index = /data2

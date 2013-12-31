@@ -10,7 +10,7 @@ apollo_c2 =
 apollo_w1 =
     172.23.97.74
 apollo_w2 =
-    172.23.97.74
+    172.23.97.75
 
 [storage]
 data = /data

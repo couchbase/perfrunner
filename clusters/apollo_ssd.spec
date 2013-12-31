@@ -6,8 +6,8 @@ apollo_ssd =
     172.23.96.18:8091
 
 [storage]
-data = /ssd2
-index = /ssd
+data = /ssd
+index = /ssd2
 
 [credentials]
 rest = Administrator:password

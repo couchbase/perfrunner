@@ -17,7 +17,7 @@ apollo_w2 =
     172.23.97.75
 
 [storage]
-data = /ssd2
+data = /ssd
 index = /ssd
 
 [credentials]

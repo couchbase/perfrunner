@@ -101,7 +101,7 @@ class Monitor(RestHelper):
         logger.info('Task {} successfully completed'.format(task_type))
 
     def monitor_warmup(self, memcahed, host, bucket):
-        logger.info('Monitoring warmup status')
+        logger.info('Monitoring warmup status: {}@{}'.format(bucket, host))
         while True:
             stats = memcahed.get_stats(host, bucket, 'warmup')
             state = stats['ep_warmup_state']

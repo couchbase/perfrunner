@@ -56,7 +56,9 @@ class RebalanceTest(PerfTest):
     def __init__(self, *args, **kwargs):
         super(RebalanceTest, self).__init__(*args, **kwargs)
         self.rebalance_settings = self.test_config.get_rebalance_settings()
-        self.servers = self.cluster_spec.get_clusters().values()[-1]
+        self.clusters = self.cluster_spec.get_clusters().values()
+        self.initial_nodes = self.test_config.get_initial_nodes()
+        self.nodes_after = self.rebalance_settings.nodes_after
 
     def change_watermarks(self, host):
         watermark_settings = self.test_config.get_watermark_settings()
@@ -71,43 +73,48 @@ class RebalanceTest(PerfTest):
     @with_delay
     @with_reporter
     def rebalance(self):
-        initial_nodes = self.test_config.get_initial_nodes()[0]  # a crutch!
-        nodes_after = self.rebalance_settings.nodes_after
         swap = self.rebalance_settings.swap
-        master = self.servers[0]
-
         group_number = self.test_config.get_group_number() or 1
-        groups = group_number > 1 and self.rest.get_server_groups(master) or {}
 
-        if nodes_after > initial_nodes:
-            new_nodes = enumerate(
-                self.servers[initial_nodes:nodes_after],
-                start=initial_nodes
-            )
-            known_nodes = self.servers[:nodes_after]
-            ejected_nodes = []
-        elif nodes_after < initial_nodes:
-            new_nodes = []
-            known_nodes = self.servers[:initial_nodes]
-            ejected_nodes = self.servers[nodes_after:initial_nodes]
-        else:  # swap
-            new_nodes = enumerate(
-                self.servers[initial_nodes:initial_nodes + swap],
-                start=initial_nodes - swap
-            )
-            known_nodes = self.servers[:initial_nodes + swap]
-            ejected_nodes = self.servers[initial_nodes - swap:initial_nodes]
+        for cluster, initial_nodes, nodes_after in zip(self.clusters,
+                                                       self.initial_nodes,
+                                                       self.nodes_after):
+            master = cluster[0]
 
-        for i, host_port in new_nodes:
-            host = host_port.split(':')[0]
-            group = server_group(self.servers[:nodes_after], group_number, i)
-            uri = groups.get(group)
-            self.rest.add_node(master, host, uri)
-        self.rest.rebalance(master, known_nodes, ejected_nodes)
-        for i, host_port in new_nodes:
-            host = host_port.split(':')[0]
-            self.change_watermarks(host)
-        self.monitor.monitor_rebalance(master)
+            groups = group_number > 1 and self.rest.get_server_groups(master) or {}
+
+            if nodes_after > initial_nodes:
+                new_nodes = enumerate(
+                    cluster[initial_nodes:nodes_after],
+                    start=initial_nodes
+                )
+                known_nodes = cluster[:nodes_after]
+                ejected_nodes = []
+            elif nodes_after < initial_nodes:
+                new_nodes = []
+                known_nodes = cluster[:initial_nodes]
+                ejected_nodes = cluster[nodes_after:initial_nodes]
+            elif swap:
+                new_nodes = enumerate(
+                    cluster[initial_nodes:initial_nodes + swap],
+                    start=initial_nodes - swap
+                )
+                known_nodes = cluster[:initial_nodes + swap]
+                ejected_nodes = cluster[initial_nodes - swap:initial_nodes]
+            else:
+                continue
+
+            for i, host_port in new_nodes:
+                host = host_port.split(':')[0]
+                group = server_group(cluster[:nodes_after], group_number, i)
+                uri = groups.get(group)
+                self.rest.add_node(master, host, uri)
+            self.rest.rebalance(master, known_nodes, ejected_nodes)
+            for i, host_port in new_nodes:
+                host = host_port.split(':')[0]
+                self.change_watermarks(host)
+
+            self.monitor.monitor_rebalance(master)
 
 
 class StaticRebalanceTest(RebalanceTest):

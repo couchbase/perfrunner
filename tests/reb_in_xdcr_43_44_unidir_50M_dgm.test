@@ -1,13 +1,13 @@
 [test_case]
 module = perfrunner.tests.rebalance
 class = RebalanceWithSymmetricXdcrTest
-descr = Rebalance-out (min), 4->4 -> 4->3 UniDir, 1 bucket x 50M x 2KB, DGM
+descr = Rebalance-in (min), 4->3 -> 4->4 UniDir, 1 bucket x 50M x 2KB, DGM
 larger_is_better = false
 level = Basic
 
 [cluster]
 mem_quota = 40960
-initial_nodes = 4
+initial_nodes = 4 3
 num_buckets = 1
 
 [load]
@@ -37,6 +37,6 @@ working_set = 5
 working_set_access = 98
 
 [rebalance]
-nodes_after = 3
+nodes_after = 4 4
 start_after = 1200
 stop_after = 1200

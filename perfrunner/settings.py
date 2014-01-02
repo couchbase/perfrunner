@@ -36,7 +36,6 @@ class Config(object):
             logger.interrupt('File doesn\'t exist: {}'.format(fname))
         self.config.optionxform = str
         self.config.read(fname)
-
         basename = os.path.basename(fname)
         self.name = os.path.splitext(basename)[0]
 
@@ -309,12 +308,14 @@ class XDCRSettings(PhaseSettings):
 
     XDCR_REPLICATION_TYPE = 'bidir'
     XDCR_REPLICATION_PROTOCOL = None
+    XDCR_USE_SSL = False
 
     def __init__(self, options):
         self.replication_type = options.get('replication_type',
                                             self.XDCR_REPLICATION_TYPE)
         self.replication_protocol = options.get('replication_protocol',
                                                 self.XDCR_REPLICATION_PROTOCOL)
+        self.use_ssl = bool(options.get('use_ssl', self.XDCR_USE_SSL))
 
 
 class IndexSettings(PhaseSettings):

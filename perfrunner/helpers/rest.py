@@ -159,7 +159,8 @@ class RestHelper(object):
                                                                 bucket)
         return self.get(url=api).json()
 
-    def add_remote_cluster(self, host_port, remote_host_port, name):
+    def add_remote_cluster(self, host_port, remote_host_port, name,
+                           certificate=None):
         logger.info('Adding remote cluster {} with reference {}'.format(
             remote_host_port, name
         ))
@@ -169,6 +170,10 @@ class RestHelper(object):
             'hostname': remote_host_port, 'name': name,
             'username': self.rest_username, 'password': self.rest_password
         }
+        if certificate:
+            data.update({
+                'demandEncryption': 1, 'certificate': certificate
+            })
         self.post(url=api, data=data)
 
     def start_replication(self, host_port, params):
@@ -264,3 +269,9 @@ class RestHelper(object):
         return {
             g["name"]: g["addNodeURI"] for g in self.get(url=api).json()["groups"]
         }
+
+    def get_certificate(self, host_port):
+        logger.info('Getting remote certificate')
+
+        api = 'http://{}/pools/default/certificate'.format(host_port)
+        return self.get(url=api).json()["certificate"]

@@ -60,7 +60,7 @@ class CbAgent(object):
 
         self.collectors = []
         self.processes = []
-        self.reports = {}
+        self.snapshots = []
 
     def prepare_collectors(self, test, latency, query_latency, xdcr_lag):
         clusters = self.clusters.keys()
@@ -153,11 +153,12 @@ class CbAgent(object):
         map(lambda p: p.terminate(), self.processes)
         return datetime.utcnow()
 
-    def generate_report(self, snapshot):
-        api = 'http://{}/reports/html/'.format(CBMONITOR_HOST)
-        url = '{}?snapshot={}'.format(api, snapshot)
-        requests.get(url=url)
-        return url
+    def trigger_reports(self, snapshot):
+        for report_type in ('html', 'get_corr_matrix'):
+            url = 'http://{}/reports/{}/?snapshot={}'.format(CBMONITOR_HOST,
+                                                             report_type,
+                                                             snapshot)
+            requests.get(url=url)
 
     def add_snapshot(self, phase, ts_from, ts_to):
         for i, cluster in enumerate(self.clusters, start=1):
@@ -165,4 +166,5 @@ class CbAgent(object):
             self.settings.cluster = cluster
             md_client = MetadataClient(self.settings)
             md_client.add_snapshot(snapshot, ts_from, ts_to)
-            self.reports['report{}'.format(i)] = self.generate_report(snapshot)
+            self.snapshots.append(snapshot)
+            self.trigger_reports(snapshot)

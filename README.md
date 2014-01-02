@@ -30,3 +30,7 @@ Running tests
 For instance:
 
     python -m perfrunner -c clusters/vesta.spec -t tests/comp_bucket_20M.test
+
+Overriding test config options (one at a time):
+
+    python -m perfrunner -c clusters/vesta.spec -t tests/comp_bucket_20M.test xdcr.use_ssl True

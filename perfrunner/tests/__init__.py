@@ -7,6 +7,7 @@ from multiprocessing import Event, Process
 from logger import logger
 
 from perfrunner.helpers.cbmonitor import CbAgent
+from perfrunner.helpers.experiments import ExperimentHelper
 from perfrunner.helpers.memcached import MemcachedHelper
 from perfrunner.helpers.metrics import MetricHelper
 from perfrunner.helpers.misc import log_phase, target_hash
@@ -37,7 +38,7 @@ class TargetIterator(object):
 
 class PerfTest(object):
 
-    def __init__(self, cluster_spec, test_config):
+    def __init__(self, cluster_spec, test_config, experiment=None):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
 
@@ -49,6 +50,9 @@ class PerfTest(object):
         self.rest = RestHelper(cluster_spec)
         self.remote = RemoteHelper(cluster_spec)
         self.worker_manager = WorkerManager(cluster_spec)
+
+        if experiment:
+            self.experiment = ExperimentHelper(experiment, test_config)
 
         self.master_node = cluster_spec.get_masters().values()[0]
         self.build = self.rest.get_version(self.master_node)

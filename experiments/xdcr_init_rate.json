@@ -1,0 +1,7 @@
+{
+    "name": "Initial XDCR rate, items/sec",
+    "defaults": {
+        "Source nodes": 1,
+        "Destination nodes": 1
+    }
+}

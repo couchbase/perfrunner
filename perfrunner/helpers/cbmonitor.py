@@ -4,11 +4,12 @@ from copy import copy
 from datetime import datetime
 from multiprocessing import Process
 
-from decorator import decorator
 import requests
 from cbagent.collectors import (NSServer, PS, IO, ActiveTasks,
                                 SpringLatency, SpringQueryLatency, XdcrLag)
 from cbagent.metadata_client import MetadataClient
+from decorator import decorator
+from logger import logger
 
 from perfrunner.helpers.misc import target_hash, uhex
 from perfrunner.settings import CBMONITOR_HOST
@@ -158,6 +159,7 @@ class CbAgent(object):
             url = 'http://{}/reports/{}/?snapshot={}'.format(CBMONITOR_HOST,
                                                              report_type,
                                                              snapshot)
+            logger.info(url)
             requests.get(url=url)
 
     def add_snapshot(self, phase, ts_from, ts_to):

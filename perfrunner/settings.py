@@ -191,7 +191,7 @@ class TestConfig(Config):
 
 class StatsSettings(object):
 
-    POST_TO_SF = 1
+    POST_TO_SF = 0
     INTERVAL = 5
     LAT_INTERVAL = 1
 

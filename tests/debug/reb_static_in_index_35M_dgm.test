@@ -5,9 +5,6 @@ descr = Static rebalance-in with index (min), 3 -> 4, 1 bucket x 35M x 2KB, DGM,
 larger_is_better = false
 level = Basic
 
-[stats]
-post_to_sf = 0
-
 [cluster]
 mem_quota = 40960
 initial_nodes = 3

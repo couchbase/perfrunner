@@ -6,7 +6,6 @@ larger_is_better = false
 level = Basic
 
 [stats]
-post_to_sf = 0
 interval = 30
 lat_interval = 10
 

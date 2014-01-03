@@ -21,7 +21,7 @@ workers = 20
 
 [index]
 views = [1, 1, 1, 1]
-disabled_updates = True
+disabled_updates = 1
 
 [access]
 creates = 100

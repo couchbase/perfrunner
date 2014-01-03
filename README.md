@@ -33,4 +33,4 @@ For instance:
 
 Overriding test config options (one at a time):
 
-    python -m perfrunner -c clusters/vesta.spec -t tests/comp_bucket_20M.test xdcr.use_ssl True
+    python -m perfrunner -c clusters/vesta.spec -t tests/comp_bucket_20M.test cluster.replica_number 1

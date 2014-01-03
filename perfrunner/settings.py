@@ -318,18 +318,18 @@ class XDCRSettings(PhaseSettings):
                                             self.XDCR_REPLICATION_TYPE)
         self.replication_protocol = options.get('replication_protocol',
                                                 self.XDCR_REPLICATION_PROTOCOL)
-        self.use_ssl = bool(options.get('use_ssl', self.XDCR_USE_SSL))
+        self.use_ssl = int(options.get('use_ssl', self.XDCR_USE_SSL))
 
 
 class IndexSettings(PhaseSettings):
 
     VIEWS = [1]
-    DISABLED_UPDATES = False
+    DISABLED_UPDATES = 0
 
     def __init__(self, options):
         self.views = eval(options.get('views', self.VIEWS))
-        self.disabled_updates = bool(options.get('disabled_updates',
-                                                 self.DISABLED_UPDATES))
+        self.disabled_updates = int(options.get('disabled_updates',
+                                                self.DISABLED_UPDATES))
 
 
 class AccessSettings(PhaseSettings):

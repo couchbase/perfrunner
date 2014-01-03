@@ -28,7 +28,7 @@ def with_stats(latency=False, query_latency=False, xdcr_lag=False):
         to_ts = test.cbagent.stop()
 
         test.cbagent.add_snapshot(method.__name__, from_ts, to_ts)
-        test.reports = test.cbagent.reports
+        test.snapshots = test.cbagent.snapshots
 
         from_ts = timegm(from_ts.timetuple()) * 1000  # -> ms
         to_ts = timegm(to_ts.timetuple()) * 1000  # -> ms

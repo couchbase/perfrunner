@@ -119,9 +119,10 @@ class XdcrInitTest(XdcrTest):
         self.reporter.start()
         self.init_xdcr()
         time_elapsed = self.reporter.finish('Initial replication')
-        self.reporter.post_to_sf(
-            self.metric_helper.calc_avg_replication_rate(time_elapsed)
-        )
+        rate = self.metric_helper.calc_avg_replication_rate(time_elapsed)
+        self.reporter.post_to_sf(rate)
+        if hasattr(self, "experiment"):
+            self.experiment.post_results(rate)
 
 
 class XdcrTuningTest(XdcrInitTest):

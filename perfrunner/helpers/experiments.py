@@ -18,18 +18,22 @@ class ExperimentHelper(object):
 
         self.experiment['input'] = {
             self.experiment['input']['param']: eval(self.INPUTS[param])
-            for param in experiment['defaults']
+            for param in self.experiment.template['defaults']
         }
 
     def update_defaults(self):
         cb = Couchbase.connect(bucket='exp_defaults', **SF_STORAGE)
-        cb.set(self.name, self.experiment['defaults'])
+        cb.set(self.name, {
+            'id': self.name,
+            'name': self.experiment['name'],
+            'inputs': self.experiment['defaults'],
+        })
 
     def post_results(self, value):
         self.update_defaults()
 
         self.experiment['value'] = value
-        self.experiment['defaults'] = self.experiment.name
+        self.experiment['defaults'] = self.name
 
         cb = Couchbase.connect(bucket='experiments', **SF_STORAGE)
         cb.set(uhex(), self.experiment)

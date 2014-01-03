@@ -25,18 +25,18 @@ def get_options():
 def main():
     options, args = get_options()
 
-    override = {}
+    overrides = []
     if args:
-        section, option = args[0].split('.')
-        value = ' '.join(args[1:])
-        override = dict(zip(
-            ('section', 'option', 'value'), (section, option, value)
-        ))
+        for params in args:
+            section, option, value = params.split('.')
+            overrides.append(dict(zip(
+                ('section', 'option', 'value'), (section, option, value)
+            )))
 
     cluster_spec = ClusterSpec()
     cluster_spec.parse(options.cluster_spec_fname)
     test_config = TestConfig()
-    test_config.parse(options.test_config_fname, override)
+    test_config.parse(options.test_config_fname, overrides)
 
     test_module = test_config.get_test_module()
     test_class = test_config.get_test_class()

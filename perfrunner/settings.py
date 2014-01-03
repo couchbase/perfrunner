@@ -30,14 +30,15 @@ class Config(object):
         self.config = SafeConfigParser()
         self.name = ''
 
-    def parse(self, fname, override=None):
+    def parse(self, fname, overrides=None):
         logger.info('Reading configuration file: {}'.format(fname))
         if not os.path.isfile(fname):
             logger.interrupt('File doesn\'t exist: {}'.format(fname))
         self.config.optionxform = str
         self.config.read(fname)
-        if override:
-            self.config.set(**override)
+        if overrides:
+            for override in overrides:
+                self.config.set(**override)
 
         basename = os.path.basename(fname)
         self.name = os.path.splitext(basename)[0]

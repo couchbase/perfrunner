@@ -27,7 +27,7 @@ def get_options():
 
 def main():
     options, args = get_options()
-    override = (arg.split('.') for arg in args)
+    override = (arg.split('.') for arg in ' '.join(args).split(','))
 
     cluster_spec = ClusterSpec()
     cluster_spec.parse(options.cluster_spec_fname)

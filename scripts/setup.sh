@@ -7,4 +7,4 @@ if [ -z "${toy}" ]; then
 else
     /tmp/env/bin/python -m perfrunner.utils.install -c ${cluster} -v ${version} -t ${toy}
 fi
-/tmp/env/bin/python -m perfrunner.utils.cluster -c ${cluster} -t ${test_config}
+/tmp/env/bin/python -m perfrunner.utils.cluster -c ${cluster} -t ${test_config} ${override}

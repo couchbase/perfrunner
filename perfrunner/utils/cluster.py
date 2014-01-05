@@ -148,20 +148,21 @@ def get_options():
                       help='path to test configuration file',
                       metavar='my_test.test')
 
-    options, _ = parser.parse_args()
+    options, args = parser.parse_args()
     if not options.cluster_spec_fname or not options.test_config_fname:
         parser.error('Missing mandatory parameter')
 
-    return options
+    return options, args
 
 
 def main():
-    options = get_options()
+    options, args = get_options()
+    override = (arg.split('.') for arg in ' '.join(args).split(','))
 
     cluster_spec = ClusterSpec()
     cluster_spec.parse(options.cluster_spec_fname)
     test_config = TestConfig()
-    test_config.parse(options.test_config_fname)
+    test_config.parse(options.test_config_fname, override)
 
     cm = ClusterManager(cluster_spec, test_config)
     cm.restart_with_alternative_swt()

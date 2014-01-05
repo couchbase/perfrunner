@@ -16,9 +16,9 @@ class ExperimentHelper(object):
         self.experiment = experiment.template
         self.test_config = test_config
 
-        self.experiment['input'] = {
-            self.experiment['input']['param']: eval(self.INPUTS[param])
-            for param in self.experiment.template['defaults']
+        self.experiment['inputs'] = {
+            param: eval(self.INPUTS[param])
+            for param in self.experiment['defaults']
         }
 
     def update_defaults(self):

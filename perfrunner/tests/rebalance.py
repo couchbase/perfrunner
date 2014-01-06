@@ -45,7 +45,7 @@ def with_delayed_posting(rebalance, *args, **kwargs):
 
     rebalance(*args, **kwargs)
 
-    if test.rest.is_balanced(test.servers[0]):
+    if test.is_balanced():
         test.reporter.post_to_sf(test.rebalance_time)
     else:
         logger.error('Rebalance failed')
@@ -59,6 +59,12 @@ class RebalanceTest(PerfTest):
         self.clusters = self.cluster_spec.get_clusters().values()
         self.initial_nodes = self.test_config.get_initial_nodes()
         self.nodes_after = self.rebalance_settings.nodes_after
+
+    def is_balanced(self):
+        for cluster in self.clusters:
+            if not self.rest.is_balanced(cluster[0]):
+                return False
+        return True
 
     def change_watermarks(self, host):
         watermark_settings = self.test_config.get_watermark_settings()
@@ -174,7 +180,7 @@ class RebalanceWithQueriesTest(QueryTest, RebalanceTest):
         self.rebalance()
         self.shutdown_event.set()
 
-        if self.rest.is_balanced(self.servers[0]):
+        if self.is_balanced():
             self.reporter.post_to_sf(
                 *self.metric_helper.calc_views_disk_size()
             )

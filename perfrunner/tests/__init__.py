@@ -69,7 +69,7 @@ class PerfTest(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.worker_manager.terminate()
-        if exc_type not in (exc.SystemExit, exc.KeyboardInterrupt):
+        if exc_type != exc.KeyboardInterrupt:
             self.debug()
         for master in self.cluster_spec.get_masters().values():
             num_failovers = self.rest.get_failover_counter(master)

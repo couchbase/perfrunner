@@ -116,10 +116,11 @@ class XdcrInitTest(XdcrTest):
         self.wait_for_persistence()
         self.compact_bucket()
 
-        self.reporter.start()
-        self.init_xdcr()
-        time_elapsed = self.reporter.finish('Initial replication')
+        from_ts, to_ts = self.init_xdcr()
+        time_elapsed = (to_ts - from_ts) / 1000.0
         rate = self.metric_helper.calc_avg_replication_rate(time_elapsed)
+
+        self.reporter.finish('Initial replication', time_elapsed)
         self.reporter.post_to_sf(rate)
         if hasattr(self, "experiment"):
             self.experiment.post_results(rate)

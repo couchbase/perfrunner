@@ -50,11 +50,12 @@ class InitialIndexTest(IndexTest):
         self.wait_for_persistence()
         self.compact_bucket()
 
-        self.reporter.start()
         self.define_ddocs()
-        self.build_index()
-        value = self.reporter.finish('Initial index')
-        self.reporter.post_to_sf(value)
+        from_ts, to_ts = self.build_index()
+        time_elapsed = (to_ts - from_ts) / 1000.0
+
+        time_elapsed = self.reporter.finish('Initial index', time_elapsed)
+        self.reporter.post_to_sf(time_elapsed)
 
 
 class InitialAndIncrementalIndexTest(IndexTest):
@@ -75,9 +76,11 @@ class InitialAndIncrementalIndexTest(IndexTest):
         self.reporter.start()
         self.define_ddocs()
         from_ts, to_ts = self.build_init_index()
-        value = self.reporter.finish('Initial index')
+        time_elapsed = (to_ts - from_ts) / 1000.0
+
+        time_elapsed = self.reporter.finish('Initial index', time_elapsed)
         self.reporter.post_to_sf(
-            *self.metric_helper.get_indexing_meta(value=value,
+            *self.metric_helper.get_indexing_meta(value=time_elapsed,
                                                   index_type='Initial')
         )
         self.reporter.post_to_sf(
@@ -93,11 +96,12 @@ class InitialAndIncrementalIndexTest(IndexTest):
         self.wait_for_persistence()
         self.compact_bucket()
 
-        self.reporter.start()
         from_ts, to_ts = self.build_incr_index()
-        value = self.reporter.finish('Incremental index')
+        time_elapsed = (to_ts - from_ts) / 1000.0
+
+        time_elapsed = self.reporter.finish('Incremental index', time_elapsed)
         self.reporter.post_to_sf(
-            *self.metric_helper.get_indexing_meta(value=value,
+            *self.metric_helper.get_indexing_meta(value=time_elapsed,
                                                   index_type='Incremental')
         )
         self.reporter.post_to_sf(

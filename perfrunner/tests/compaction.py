@@ -15,13 +15,18 @@ class BucketCompactionTest(PerfTest):
         self.load()  # extra mutations for bucket fragmentation
         self.wait_for_persistence()
 
-        self.reporter.start()
-        self.compact_bucket()
-        value = self.reporter.finish('Bucket compaction')
-        self.reporter.post_to_sf(value)
+        from_ts, to_ts = self.compact_bucket()
+        time_elapsed = (to_ts - from_ts) / 1000.0
+
+        time_elapsed = self.reporter.finish('Bucket compaction', time_elapsed)
+        self.reporter.post_to_sf(time_elapsed)
 
 
 class IndexCompactionTest(IndexTest):
+
+    @with_stats()
+    def compact_index(self):
+        super(IndexCompactionTest, self).compact_index()
 
     def run(self):
         self.load()
@@ -35,6 +40,8 @@ class IndexCompactionTest(IndexTest):
         self.build_index()
 
         self.reporter.start()
-        self.compact_index()
-        value = self.reporter.finish('Index compaction')
-        self.reporter.post_to_sf(value)
+        from_ts, to_ts = self.compact_index()
+        time_elapsed = (to_ts - from_ts) / 1000.0
+
+        time_elapsed = self.reporter.finish('Index compaction', time_elapsed)
+        self.reporter.post_to_sf(time_elapsed)

@@ -105,14 +105,14 @@ class MetricHelper(object):
     def calc_avg_replication_rate(self, time_elapsed):
         initial_items = self.test_config.get_load_settings().items
         num_buckets = self.test_config.get_num_buckets()
-        avg_replication_rate = num_buckets * initial_items / (time_elapsed * 60)
+        avg_replication_rate = num_buckets * initial_items / time_elapsed
 
         return round(avg_replication_rate)
 
     def calc_avg_drain_rate(self, time_elapsed):
         items_per_node = self.test_config.get_load_settings().items / \
             self.test_config.get_initial_nodes()[0]
-        drain_rate = items_per_node / (time_elapsed * 60)
+        drain_rate = items_per_node / time_elapsed
 
         return round(drain_rate)
 

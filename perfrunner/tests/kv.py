@@ -86,12 +86,12 @@ class FlusherTest(KVTest):
         self.access_bg()
         self.start_persistence()
 
-        self.reporter.start()
-        self.drain()
-        time_elapsed = self.reporter.finish('Drain')
+        from_ts, to_ts = self.drain()
+        time_elapsed = (to_ts - from_ts) / 1000.0
 
         self.shutdown_event.set()
 
+        self.reporter.finish('Drain', time_elapsed)
         self.reporter.post_to_sf(
             self.metric_helper.calc_avg_drain_rate(time_elapsed)
         )

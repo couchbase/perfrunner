@@ -2,4 +2,4 @@
 mem_quota = 20480
 initial_nodes = 2
 num_buckets = 1
-replica_number = 0
+replica_number = 1

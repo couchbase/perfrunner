@@ -173,6 +173,8 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
 
     VERSION_FILE = '/cygdrive/c/Program Files/Couchbase/Server/VERSION.txt'
 
+    MAX_RETRIES = 5
+
     @staticmethod
     def exists(fname):
         r = run('test -f "{}"'.format(fname), warn_only=True, quiet=True)
@@ -225,8 +227,18 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
         logger.info('Uninstalling Couchbase Server')
 
         if self.exists(self.VERSION_FILE):
-            run('./setup.exe -s -f1"C:\\uninstall.iss"')
+            for retry in range(self.MAX_RETRIES):
+                try:
+                    r = run('./setup.exe -s -f1"C:\\uninstall.iss"',
+                            warn_only=True, timeout=300)
+                    if not r.return_code:
+                        break
+                except CommandTimeout:
+                    continue
+            else:
+                logger.interrupt('Failed to uninstall package')
         while self.exists(self.VERSION_FILE):
+            logger.info('Waiting for Uninstaller to finish')
             time.sleep(5)
         time.sleep(30)
 
@@ -250,6 +262,7 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
 
         run('./setup.exe -s -f1"C:\\install.iss"')
         while not self.exists(self.VERSION_FILE):
+            logger.info('Waiting for Installer to finish')
             time.sleep(5)
         time.sleep(60)
 

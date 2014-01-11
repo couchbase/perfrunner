@@ -219,8 +219,13 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
             run('rm -fr {}/*'.format(path))
         run('rm -fr {}'.format(self.ROOT_DIR))
 
+    @all_hosts
     def kill_processes(self):
-        pass
+        output = run('ps -ef', warn_only=True, quiet=True)
+        for line in output.split('\n'):
+            if '/home/Administrator/setup' in line:
+                pid = line.split()[1]
+                run('kill {}'.format(pid), warn_only=True, quiet=True)
 
     @all_hosts
     def uninstall_package(self, *args, **kwargs):

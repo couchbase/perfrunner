@@ -75,7 +75,7 @@ class RebalanceTest(PerfTest):
                 self.memcached.set_flusher_param(host, bucket, key, val)
 
     @with_delayed_posting
-    @with_stats(latency=True)
+    @with_stats
     @with_delay
     @with_reporter
     def rebalance(self):
@@ -148,6 +148,8 @@ class StaticRebalanceWithIndexTest(IndexTest, RebalanceTest):
 
 class RebalanceKVTest(RebalanceTest):
 
+    COLLECTORS = {'latency': True}
+
     def run(self):
         self.load()
         self.wait_for_persistence()
@@ -163,6 +165,8 @@ class RebalanceKVTest(RebalanceTest):
 
 
 class RebalanceWithQueriesTest(QueryTest, RebalanceTest):
+
+    COLLECTORS = {'latency': True, 'query_latency': True}
 
     def run(self):
         self.load()
@@ -188,6 +192,8 @@ class RebalanceWithQueriesTest(QueryTest, RebalanceTest):
 
 class RebalanceWithXdcrTest(XdcrTest, RebalanceTest):
 
+    COLLECTORS = {'latency': True, 'xdcr_lag': True}
+
     def run(self):
         self.load()
         self.wait_for_persistence()
@@ -207,6 +213,8 @@ class RebalanceWithXdcrTest(XdcrTest, RebalanceTest):
 
 
 class RebalanceWithSymmetricXdcrTest(SymmetricXdcrTest, RebalanceTest):
+
+    COLLECTORS = {'latency': True, 'xdcr_lag': True}
 
     def run(self):
         self.load()

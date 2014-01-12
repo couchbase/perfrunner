@@ -1,7 +1,3 @@
-import time
-
-from logger import logger
-
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import log_phase, target_hash
 from perfrunner.settings import TargetSettings
@@ -10,6 +6,8 @@ from perfrunner.tests import PerfTest
 
 
 class XdcrTest(PerfTest):
+
+    COLLECTORS = {'latency': True, 'xdcr_lag': True}
 
     def __init__(self, *args, **kwargs):
         super(XdcrTest, self).__init__(*args, **kwargs)
@@ -44,7 +42,7 @@ class XdcrTest(PerfTest):
         for target in self.target_iterator:
             self.monitor.monitor_xdcr_replication(target)
 
-    @with_stats(latency=True, xdcr_lag=True)
+    @with_stats
     def access(self):
         super(XdcrTest, self).timer()
 
@@ -100,6 +98,8 @@ class SrcTargetIterator(TargetIterator):
 
 class XdcrInitTest(XdcrTest):
 
+    COLLECTORS = {}
+
     def load(self):
         load_settings = self.test_config.get_load_settings()
         log_phase('load phase', load_settings)
@@ -107,7 +107,7 @@ class XdcrInitTest(XdcrTest):
                                                 self.test_config)
         self.worker_manager.run_workload(load_settings, src_target_iterator)
 
-    @with_stats()
+    @with_stats
     def init_xdcr(self):
         super(XdcrInitTest, self).init_xdcr()
 
@@ -124,32 +124,3 @@ class XdcrInitTest(XdcrTest):
         self.reporter.post_to_sf(rate)
         if hasattr(self, "experiment"):
             self.experiment.post_results(rate)
-
-
-class XdcrTuningTest(XdcrInitTest):
-
-    def run(self):
-        super(XdcrTuningTest, self).run()
-        for cluster, value in self.metric_helper.calc_cpu_utilizations().items():
-            self.reporter.post_to_sf(
-                value=value,
-                metric='{}_avg_cpu_utilization_rate'.format(cluster)
-            )
-
-
-class XdcrDebugTest(SymmetricXdcrTest):
-
-    POLLING_INTERVAL = 20
-
-    @with_stats(latency=True, xdcr_lag=True)
-    def access(self):
-        access_settings = self.test_config.get_access_settings()
-        logger.info('Running phase for {} seconds'.format(access_settings.time))
-        t0 = time.time()
-        while time.time() - t0 < access_settings.time:
-            for master in self.cluster_spec.get_masters().values():
-                run_queues = self.rest.run_diag_eval(
-                    master, 'erlang:statistics(run_queues).'
-                )
-                logger.info('Run queues at {}: {}'.format(master, run_queues))
-            time.sleep(self.POLLING_INTERVAL)

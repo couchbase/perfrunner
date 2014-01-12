@@ -38,6 +38,8 @@ class TargetIterator(object):
 
 class PerfTest(object):
 
+    COLLECTORS = {}
+
     def __init__(self, cluster_spec, test_config, experiment=None):
         self.cluster_spec = cluster_spec
         self.test_config = test_config

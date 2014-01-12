@@ -5,7 +5,7 @@ from perfrunner.tests.index import IndexTest
 
 class BucketCompactionTest(PerfTest):
 
-    @with_stats()
+    @with_stats
     def compact_bucket(self):
         super(BucketCompactionTest, self).compact_bucket()
 
@@ -24,7 +24,7 @@ class BucketCompactionTest(PerfTest):
 
 class IndexCompactionTest(IndexTest):
 
-    @with_stats()
+    @with_stats
     def compact_index(self):
         super(IndexCompactionTest, self).compact_index()
 

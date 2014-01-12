@@ -6,7 +6,7 @@ from perfrunner.helpers.cbmonitor import with_stats
 
 class KVTest(PerfTest):
 
-    @with_stats()
+    @with_stats
     def access(self):
         super(KVTest, self).timer()
 
@@ -26,9 +26,7 @@ class KVTest(PerfTest):
 
 class MixedLatencyTest(KVTest):
 
-    @with_stats(latency=True)
-    def access(self):
-        super(MixedLatencyTest, self).timer()
+    COLLECTORS = {'latency': True}
 
     def run(self):
         super(MixedLatencyTest, self).run()
@@ -41,6 +39,8 @@ class MixedLatencyTest(KVTest):
 
 class ReadLatencyTest(MixedLatencyTest):
 
+    COLLECTORS = {'latency': True}
+
     def run(self):
         super(MixedLatencyTest, self).run()
         self.reporter.post_to_sf(
@@ -50,6 +50,8 @@ class ReadLatencyTest(MixedLatencyTest):
 
 
 class BgFetcherTest(KVTest):
+
+    COLLECTORS = {'latency': True}
 
     def run(self):
         super(BgFetcherTest, self).run()
@@ -74,7 +76,7 @@ class FlusherTest(KVTest):
         for mc in self.mc_iterator():
             mc.start_persistence()
 
-    @with_stats()
+    @with_stats
     def drain(self):
         for target in self.target_iterator:
             self.monitor.monitor_disk_queue(target)

@@ -41,7 +41,7 @@ class IndexTest(PerfTest):
 
 class InitialIndexTest(IndexTest):
 
-    @with_stats()
+    @with_stats
     def build_index(self):
         super(InitialIndexTest, self).build_index()
 
@@ -60,11 +60,11 @@ class InitialIndexTest(IndexTest):
 
 class InitialAndIncrementalIndexTest(IndexTest):
 
-    @with_stats()
+    @with_stats
     def build_init_index(self):
         return super(InitialAndIncrementalIndexTest, self).build_index()
 
-    @with_stats()
+    @with_stats
     def build_incr_index(self):
         super(InitialAndIncrementalIndexTest, self).build_index()
 

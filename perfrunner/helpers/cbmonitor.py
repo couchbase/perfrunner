@@ -15,26 +15,24 @@ from perfrunner.helpers.misc import target_hash, uhex
 from perfrunner.settings import CBMONITOR_HOST
 
 
-def with_stats(latency=False, query_latency=False, xdcr_lag=False):
-    def with_stats(method, *args, **kwargs):
-        test = args[0]
+@decorator
+def with_stats(method, *args, **kwargs):
+    test = args[0]
 
-        if not test.cbagent.collectors:
-            test.cbagent.prepare_collectors(test, latency, query_latency,
-                                            xdcr_lag)
-            test.cbagent.update_metadata()
+    if not test.cbagent.collectors:
+        test.cbagent.prepare_collectors(test, **test.COLLECTORS)
+        test.cbagent.update_metadata()
 
-        from_ts = test.cbagent.start()
-        method(*args, **kwargs)
-        to_ts = test.cbagent.stop()
+    from_ts = test.cbagent.start()
+    method(*args, **kwargs)
+    to_ts = test.cbagent.stop()
 
-        test.cbagent.add_snapshot(method.__name__, from_ts, to_ts)
-        test.snapshots = test.cbagent.snapshots
+    test.cbagent.add_snapshot(method.__name__, from_ts, to_ts)
+    test.snapshots = test.cbagent.snapshots
 
-        from_ts = timegm(from_ts.timetuple()) * 1000  # -> ms
-        to_ts = timegm(to_ts.timetuple()) * 1000  # -> ms
-        return from_ts, to_ts
-    return decorator(with_stats)
+    from_ts = timegm(from_ts.timetuple()) * 1000  # -> ms
+    to_ts = timegm(to_ts.timetuple()) * 1000  # -> ms
+    return from_ts, to_ts
 
 
 class CbAgent(object):
@@ -63,7 +61,8 @@ class CbAgent(object):
         self.processes = []
         self.snapshots = []
 
-    def prepare_collectors(self, test, latency, query_latency, xdcr_lag):
+    def prepare_collectors(self, test, latency=False, query_latency=False,
+                           xdcr_lag=False):
         clusters = self.clusters.keys()
 
         self.prepare_ns_server(clusters)
@@ -71,7 +70,7 @@ class CbAgent(object):
         if test.remote.os != 'Cygwin':
             self.prepare_ps(clusters)
             self.prepare_iostat(clusters, test)
-        if latency and hasattr(test, "workload"):
+        if latency:
             self.prepare_latency(clusters, test.workload, test)
         if query_latency:
             self.prepare_query_latency(clusters, test.workload, test.ddocs)

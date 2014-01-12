@@ -7,7 +7,9 @@ from perfrunner.tests.index import IndexTest
 
 class QueryTest(IndexTest):
 
-    @with_stats(latency=True, query_latency=True)
+    COLLECTORS = {'latency': True, 'query_latency': True}
+
+    @with_stats
     def access(self):
         super(QueryTest, self).timer()
 

@@ -225,6 +225,7 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
         for line in output.split('\n'):
             if '/home/Administrator/setup' in line:
                 pid = line.split()[1]
+                logger.info('Killing running setup.exe, pid={}'.format(pid))
                 run('kill {}'.format(pid), warn_only=True, quiet=True)
 
     @all_hosts

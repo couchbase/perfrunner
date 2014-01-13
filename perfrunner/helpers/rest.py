@@ -274,4 +274,4 @@ class RestHelper(object):
         logger.info('Getting remote certificate')
 
         api = 'http://{}/pools/default/certificate'.format(host_port)
-        return self.get(url=api).json()["certificate"]
+        return self.get(url=api).text

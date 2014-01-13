@@ -175,6 +175,10 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
 
     MAX_RETRIES = 5
 
+    TIMEOUT = 600
+
+    SLEEP_TIME = 60  # crutch
+
     @staticmethod
     def exists(fname):
         r = run('test -f "{}"'.format(fname), warn_only=True, quiet=True)
@@ -236,17 +240,19 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
             for retry in range(self.MAX_RETRIES):
                 try:
                     r = run('./setup.exe -s -f1"C:\\uninstall.iss"',
-                            warn_only=True, timeout=300)
+                            warn_only=True, timeout=self.TIMEOUT)
                     if not r.return_code:
                         break
                 except CommandTimeout:
                     continue
             else:
                 logger.interrupt('Failed to uninstall package')
-        while self.exists(self.VERSION_FILE):
-            logger.info('Waiting for Uninstaller to finish')
-            time.sleep(5)
-        time.sleep(30)
+
+            while self.exists(self.VERSION_FILE):
+                logger.info('Waiting for Uninstaller to finish')
+                time.sleep(5)
+            logger.info('Sleeping for {} seconds'.format(self.SLEEP_TIME))
+            time.sleep(self.SLEEP_TIME)
 
     @staticmethod
     def put_iss_files(version):
@@ -270,7 +276,8 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
         while not self.exists(self.VERSION_FILE):
             logger.info('Waiting for Installer to finish')
             time.sleep(5)
-        time.sleep(60)
+        logger.info('Sleeping for {} seconds'.format(self.SLEEP_TIME))
+        time.sleep(self.SLEEP_TIME)
 
     def restart_with_alternative_swt(self, swt='medium'):
         pass

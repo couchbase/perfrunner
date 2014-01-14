@@ -7,14 +7,18 @@ from perfrunner.settings import SF_STORAGE
 class ExperimentHelper(object):
 
     INPUTS = {
-        'Source nodes': 'self.test_config.get_initial_nodes()[0]',
-        'Destination nodes': 'self.test_config.get_initial_nodes()[1]',
+        'Source nodes': 'self.tc.get_initial_nodes()[0]',
+        'Destination nodes': 'self.tc.get_initial_nodes()[1]',
+        'Mutations/sec': '0.7 * self.tc.get_access_settings().throughput',
+
+        'Drive type': 'self.cs.get_parameters()["Disk"].split()[-1]',
     }
 
-    def __init__(self, experiment, test_config):
+    def __init__(self, experiment, cluster_spec, test_config):
         self.name = experiment.name
         self.experiment = experiment.template
-        self.test_config = test_config
+        self.tc = test_config
+        self.cs = cluster_spec
 
         self.experiment['inputs'] = {
             param: eval(self.INPUTS[param])

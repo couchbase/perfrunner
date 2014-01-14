@@ -54,7 +54,8 @@ class PerfTest(object):
         self.worker_manager = WorkerManager(cluster_spec)
 
         if experiment:
-            self.experiment = ExperimentHelper(experiment, test_config)
+            self.experiment = ExperimentHelper(experiment,
+                                               cluster_spec, test_config)
 
         self.master_node = cluster_spec.get_masters().values()[0]
         self.build = self.rest.get_version(self.master_node)

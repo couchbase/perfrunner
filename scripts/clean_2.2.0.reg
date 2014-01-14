@@ -1,3 +1,4 @@
 Windows Registry Editor Version 5.00
 
 [-HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\InstallShield_{CC4CF619-03B8-462A-8CCE-7CA1C22B337B}]
+[-HKEY_CLASSES_ROOT\Installer\UpgradeCodes\DAFE44492BF730D45B002C1133EA9A42]

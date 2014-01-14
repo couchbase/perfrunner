@@ -24,6 +24,17 @@ class KVTest(PerfTest):
         self.shutdown_event.set()
 
 
+class ObserveLatencyTest(KVTest):
+
+    COLLECTORS = {'observe_latency': True}
+
+    def run(self):
+        super(ObserveLatencyTest, self).run()
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_observe_latency(percentile=95)
+        )
+
+
 class MixedLatencyTest(KVTest):
 
     COLLECTORS = {'latency': True}

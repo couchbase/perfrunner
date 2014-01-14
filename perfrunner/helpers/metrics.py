@@ -179,6 +179,21 @@ class MetricHelper(object):
 
         return latency, metric, metric_info
 
+    def calc_observe_latency(self, percentile):
+        metric = '{}_{}th_{}'.format(self.test_config.name, percentile,
+                                     self.cluster_spec.name)
+        descr = '{}th percentile {}'.format(percentile, self.test_descr)
+        metric_info = self._get_metric_info(descr)
+
+        timings = []
+        for bucket in self.test_config.get_buckets():
+            db = 'observe{}{}'.format(self.cluster_names[0], bucket)
+            data = self.seriesly[db].get_all()
+            timings += [v['observe_latency'] for v in data.values()]
+        latency = round(np.percentile(timings, percentile), 1)
+
+        return latency, metric, metric_info
+
     def calc_cpu_utilizations(self):
         query_params = self._get_query_params('avg_cpu_utilization_rate')
 

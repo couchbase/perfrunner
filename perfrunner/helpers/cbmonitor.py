@@ -5,7 +5,7 @@ from datetime import datetime
 from multiprocessing import Process
 
 import requests
-from cbagent.collectors import (NSServer, PS, IO, ActiveTasks,
+from cbagent.collectors import (NSServer, PS, IO, ActiveTasks, ObserveLatency,
                                 SpringLatency, SpringQueryLatency, XdcrLag)
 from cbagent.metadata_client import MetadataClient
 from decorator import decorator
@@ -62,7 +62,7 @@ class CbAgent(object):
         self.snapshots = []
 
     def prepare_collectors(self, test, latency=False, query_latency=False,
-                           xdcr_lag=False):
+                           observe_latency=False, xdcr_lag=False):
         clusters = self.clusters.keys()
 
         self.prepare_ns_server(clusters)
@@ -74,6 +74,8 @@ class CbAgent(object):
             self.prepare_latency(clusters, test.workload, test)
         if query_latency:
             self.prepare_query_latency(clusters, test.workload, test.ddocs)
+        if observe_latency:
+            self.prepare_observe_latency(clusters)
         if xdcr_lag:
             self.prepare_xdcr_lag(clusters)
 
@@ -104,6 +106,13 @@ class CbAgent(object):
             settings.partitions = partitions
             io_collector = IO(settings)
             self.collectors.append(io_collector)
+
+    def prepare_observe_latency(self, clusters):
+        for i, cluster in enumerate(clusters):
+            settings = copy(self.settings)
+            settings.cluster = cluster
+            settings.master_node = self.clusters[cluster]
+            self.collectors.append(ObserveLatency(settings))
 
     def prepare_xdcr_lag(self, clusters):
         reversed_clusters = list(reversed(self.clusters.keys()))

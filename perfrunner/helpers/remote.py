@@ -223,8 +223,10 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
             run('rm -fr {}/*'.format(path))
         run('rm -fr {}'.format(self.ROOT_DIR))
 
-    @all_hosts
     def kill_processes(self):
+        pass
+
+    def kill_installer(self):
         output = run('ps -ef', warn_only=True, quiet=True)
         for line in output.split('\n'):
             if '/home/Administrator/setup' in line:
@@ -243,9 +245,10 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
 
         if self.exists(self.VERSION_FILE):
             for retry in range(self.MAX_RETRIES):
+                self.kill_installer()
                 try:
                     r = run('./setup.exe -s -f1"C:\\uninstall.iss"',
-                            warn_only=True, timeout=self.TIMEOUT)
+                            warn_only=True, quiet=True, timeout=self.TIMEOUT)
                     if not r.return_code:
                         break
                 except CommandTimeout:

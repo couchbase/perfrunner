@@ -124,6 +124,7 @@ class SFReporter(object):
             self._post_benckmark(metric, value)
         else:
             self._log_benchmark(metric, value)
+        return value
 
 
 class LogReporter(object):

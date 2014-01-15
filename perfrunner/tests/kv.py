@@ -30,9 +30,12 @@ class ObserveLatencyTest(KVTest):
 
     def run(self):
         super(ObserveLatencyTest, self).run()
-        self.reporter.post_to_sf(
+
+        latency = self.reporter.post_to_sf(
             *self.metric_helper.calc_observe_latency(percentile=95)
         )
+        if hasattr(self, 'experiment'):
+            self.experiment.post_results(latency)
 
 
 class MixedLatencyTest(KVTest):

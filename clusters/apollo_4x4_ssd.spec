@@ -14,7 +14,7 @@ thor =
 apollo_w1 =
     172.23.97.74
 apollo_w2 =
-    172.23.97.75
+    172.23.97.104
 
 [storage]
 data = /ssd

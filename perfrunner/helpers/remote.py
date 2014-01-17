@@ -234,10 +234,10 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
                 logger.info('Killing running setup.exe, pid={}'.format(pid))
                 run('kill {}'.format(pid), warn_only=True, quiet=True)
 
-    @staticmethod
-    def clean_registry(version):
+    def clean_installation(self, version):
         put('scripts/clean_{}.reg'.format(version), '/cygdrive/c/clean.reg')
         run('regedit.exe /s "C:\\clean.reg"', warn_only=True)
+        run('rm -fr {}'.format(self.ROOT_DIR))
 
     @all_hosts
     def uninstall_package(self, pkg, version=None):
@@ -255,7 +255,7 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
                     continue
             else:
                 logger.warn('Failed to uninstall package, cleaning registry')
-                self.clean_registry(version)
+                self.clean_installation(version)
 
             while self.exists(self.VERSION_FILE):
                 logger.info('Waiting for Uninstaller to finish')

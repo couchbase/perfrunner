@@ -19,12 +19,12 @@ workers = 20
 items = 50000000
 size = 2048
 workers = 20
-working_set = 30
+working_set = 20
 
 [access]
 creates = 3
-reads = 30
-updates = 65
+reads = 20
+updates = 75
 deletes = 2
 throughput = 10000
 items = 50000000

@@ -9,7 +9,7 @@ class ExperimentHelper(object):
     INPUTS = {
         'Source nodes': 'self.tc.get_initial_nodes()[0]',
         'Destination nodes': 'self.tc.get_initial_nodes()[1]',
-        'Mutations/sec': '0.7 * self.tc.get_access_settings().throughput',
+        'Mutations/sec': '0.8 * self.tc.get_access_settings().throughput',
 
         'Drive type': 'self.cs.get_parameters()["Disk"].split()[-1]',
     }

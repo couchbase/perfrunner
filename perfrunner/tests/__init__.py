@@ -64,6 +64,7 @@ class PerfTest(object):
         self.metric_helper = MetricHelper(self)
         self.reporter = Reporter(self)
         self.reports = {}
+        self.snapshots = []
 
         self.shutdown_event = Event()
 

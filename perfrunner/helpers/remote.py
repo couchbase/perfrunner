@@ -273,6 +273,7 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
 
     @all_hosts
     def install_package(self, pkg, url, filename, version=None):
+        self.kill_installer()
         run('rm -fr setup.exe')
         self.wget(url, outfile='setup.exe')
         run('chmod +x setup.exe')

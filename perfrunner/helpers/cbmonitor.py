@@ -5,8 +5,9 @@ from datetime import datetime
 from multiprocessing import Process
 
 import requests
-from cbagent.collectors import (NSServer, PS, IO, ActiveTasks, ObserveLatency,
-                                SpringLatency, SpringQueryLatency, XdcrLag)
+from cbagent.collectors import (NSServer, PS, IO, Net, ActiveTasks,
+                                SpringLatency, SpringQueryLatency,
+                                ObserveLatency, XdcrLag)
 from cbagent.metadata_client import MetadataClient
 from decorator import decorator
 from logger import logger
@@ -71,6 +72,7 @@ class CbAgent(object):
         self.prepare_active_tasks(clusters)
         if test.remote.os != 'Cygwin':
             self.prepare_ps(clusters)
+            self.prepare_net(clusters)
             self.prepare_iostat(clusters, test)
         if latency:
             self.prepare_latency(clusters, test.workload, test)
@@ -95,6 +97,14 @@ class CbAgent(object):
             settings.master_node = self.clusters[cluster]
             ps_collector = PS(settings)
             self.collectors.append(ps_collector)
+
+    def prepare_net(self, clusters):
+        for cluster in clusters:
+            settings = copy(self.settings)
+            settings.cluster = cluster
+            settings.master_node = self.clusters[cluster]
+            net_collector = Net(settings)
+            self.collectors.append(net_collector)
 
     def prepare_iostat(self, clusters, test):
         data_path, index_path = test.cluster_spec.get_paths()

@@ -326,11 +326,13 @@ class XDCRSettings(PhaseSettings):
 
 class IndexSettings(PhaseSettings):
 
-    VIEWS = [1]
+    VIEWS = '[1]'
     DISABLED_UPDATES = 0
+    PARAMS = '{}'
 
     def __init__(self, options):
         self.views = eval(options.get('views', self.VIEWS))
+        self.params = eval(options.get('params', self.PARAMS))
         self.disabled_updates = int(options.get('disabled_updates',
                                                 self.DISABLED_UPDATES))
 

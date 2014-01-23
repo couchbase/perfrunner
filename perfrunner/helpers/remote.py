@@ -221,7 +221,6 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
             path = path.replace(':', '').replace('\\', '/')
             path = '/cygdrive/{}'.format(path)
             run('rm -fr {}/*'.format(path))
-        run('rm -fr {}'.format(self.ROOT_DIR))
 
     def kill_processes(self):
         pass
@@ -250,18 +249,15 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
                     r = run('./setup.exe -s -f1"C:\\uninstall.iss"',
                             warn_only=True, quiet=True, timeout=self.TIMEOUT)
                     if not r.return_code:
+                        while self.exists(self.VERSION_FILE):
+                            logger.info('Waiting for Uninstaller to finish')
+                            time.sleep(5)
                         break
                 except CommandTimeout:
                     continue
             else:
                 logger.warn('Failed to uninstall package, cleaning registry')
-                self.clean_installation(version)
-
-            while self.exists(self.VERSION_FILE):
-                logger.info('Waiting for Uninstaller to finish')
-                time.sleep(5)
-            logger.info('Sleeping for {} seconds'.format(self.SLEEP_TIME))
-            time.sleep(self.SLEEP_TIME)
+        self.clean_installation(version)
 
     @staticmethod
     def put_iss_files(version):

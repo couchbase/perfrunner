@@ -14,15 +14,13 @@ class QueryTest(IndexTest):
         super(QueryTest, self).timer()
 
     def access_bg(self):
-        views_settings = self.test_config.get_index_settings()
         access_settings = self.test_config.get_access_settings()
         log_phase('access phase', access_settings)
 
         Process(
             target=self.worker_manager.run_workload,
             args=(access_settings, self.target_iterator),
-            kwargs={'shutdown_event': self.shutdown_event, 'ddocs': self.ddocs,
-                    'qparams': views_settings.params}
+            kwargs={'shutdown_event': self.shutdown_event, 'ddocs': self.ddocs}
         ).start()
 
     def run(self):

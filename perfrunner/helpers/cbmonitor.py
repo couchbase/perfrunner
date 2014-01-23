@@ -77,7 +77,9 @@ class CbAgent(object):
         if latency:
             self.prepare_latency(clusters, test.workload, test)
         if query_latency:
-            self.prepare_query_latency(clusters, test.workload, test.ddocs)
+            qparams = test.test_config.get_index_settings().params
+            self.prepare_query_latency(clusters, test.workload, test.ddocs,
+                                       qparams)
         if observe_latency:
             self.prepare_observe_latency(clusters)
         if xdcr_lag:
@@ -146,13 +148,15 @@ class CbAgent(object):
                 target_hash(settings.master_node.split(':')[0])
             self.collectors.append(SpringLatency(settings, workload, prefix))
 
-    def prepare_query_latency(self, clusters, workload, ddocs):
+    def prepare_query_latency(self, clusters, workload, ddocs, params):
         for cluster in clusters:
             settings = copy(self.settings)
             settings.interval = self.lat_interval
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
-            self.collectors.append(SpringQueryLatency(settings, workload, ddocs))
+            self.collectors.append(
+                SpringQueryLatency(settings, workload, ddocs, params)
+            )
 
     def prepare_active_tasks(self, clusters):
         for cluster in clusters:

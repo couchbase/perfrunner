@@ -121,7 +121,8 @@ class PerfTest(object):
         log_phase('access in background', access_settings)
         p = Process(
             target=self.worker_manager.run_workload,
-            args=(access_settings, self.target_iterator, self.shutdown_event)
+            args=(access_settings, self.target_iterator),
+            kwargs={'shutdown_event': self.shutdown_event}
         )
         p.start()
         return p

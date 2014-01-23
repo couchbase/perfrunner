@@ -18,8 +18,8 @@ class QueryTest(IndexTest):
         log_phase('access phase', access_settings)
         Process(
             target=self.worker_manager.run_workload,
-            args=(access_settings, self.target_iterator, self.shutdown_event,
-                  self.ddocs)
+            args=(access_settings, self.target_iterator),
+            kwargs={'shutdown_event': self.shutdown_event, 'ddocs': self.ddocs}
         ).start()
 
     def run(self):

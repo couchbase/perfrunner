@@ -20,18 +20,26 @@ from perfrunner.settings import CBMONITOR_HOST
 def with_stats(method, *args, **kwargs):
     test = args[0]
 
-    if not test.cbagent.collectors:
-        test.cbagent.prepare_collectors(test, **test.COLLECTORS)
-        test.cbagent.update_metadata()
+    stats_enabled = test.test_config.get_stats_settings().enabled
 
-    from_ts = test.cbagent.start()
+    if stats_enabled:
+        if not test.cbagent.collectors:
+            test.cbagent.prepare_collectors(test, **test.COLLECTORS)
+            test.cbagent.update_metadata()
+        test.cbagent.start()
+
+    from_ts = datetime.utcnow()
     method(*args, **kwargs)
+    to_ts = datetime.utcnow()
+
     if test.shutdown_event is not None:
         test.shutdown_event.set()
-    to_ts = test.cbagent.stop()
 
-    test.cbagent.add_snapshot(method.__name__, from_ts, to_ts)
-    test.snapshots = test.cbagent.snapshots
+    if stats_enabled:
+        test.cbagent.stop()
+
+        test.cbagent.add_snapshot(method.__name__, from_ts, to_ts)
+        test.snapshots = test.cbagent.snapshots
 
     from_ts = timegm(from_ts.timetuple()) * 1000  # -> ms
     to_ts = timegm(to_ts.timetuple()) * 1000  # -> ms
@@ -175,7 +183,6 @@ class CbAgent(object):
     def start(self):
         self.processes = [Process(target=c.collect) for c in self.collectors]
         map(lambda p: p.start(), self.processes)
-        return datetime.utcnow()
 
     def stop(self):
         map(lambda p: p.terminate(), self.processes)

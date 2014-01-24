@@ -54,8 +54,9 @@ class QueryLatencyTest(QueryTest):
         self.reporter.post_to_sf(
             *self.metric_helper.calc_query_latency(percentile=80)
         )
-        self.reporter.post_to_sf(
-            *self.metric_helper.calc_cpu_utilization()
-        )
+        if not self.test_config.get_index_settings().params:
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_cpu_utilization()
+            )
         if self.remote.os != 'Cygwin':
             self.reporter.post_to_sf(*self.metric_helper.calc_max_beam_rss())

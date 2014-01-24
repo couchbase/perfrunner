@@ -112,7 +112,12 @@ class ClusterManager(object):
     def restart_with_alternative_swt(self):
         swt = self.test_config.get_swt()
         if swt is not None:
-            self.remote.restart_with_alternative_swt(swt=swt)
+            self.remote.restart_with_alternative_swt(swt)
+
+    def restart_with_alternative_num_vbuckets(self):
+        num_vbuckets = self.test_config.get_num_vbuckets()
+        if num_vbuckets is not None:
+            self.remote.restart_with_alternative_num_vbuckets(num_vbuckets)
 
     def enable_auto_failover(self):
         for cluster in self.clusters:
@@ -166,6 +171,7 @@ def main():
 
     cm = ClusterManager(cluster_spec, test_config)
     cm.restart_with_alternative_swt()
+    cm.restart_with_alternative_num_vbuckets()
     cm.configure_internal_settings()
     cm.set_data_path()
     cm.set_auth()

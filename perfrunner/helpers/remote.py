@@ -157,6 +157,12 @@ class RemoteLinuxHelper(object):
             .format(swt))
 
     @all_hosts
+    def restart_with_alternative_num_vbuckets(self, num_vbuckets):
+        logger.info('Change number of vbuckets to {}'.format(num_vbuckets))
+        run('COUCHBASE_NUM_VBUCKETS={} /etc/init.d/couchbase-server restart'
+            .format(num_vbuckets))
+
+    @all_hosts
     def stop_server(self):
         logger.info('Stopping Couchbase Server')
         run('/etc/init.d/couchbase-server stop')
@@ -286,4 +292,7 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
         time.sleep(self.SLEEP_TIME)
 
     def restart_with_alternative_swt(self, swt='medium'):
+        pass
+
+    def restart_with_alternative_num_vbuckets(self, num_vbuckets):
         pass

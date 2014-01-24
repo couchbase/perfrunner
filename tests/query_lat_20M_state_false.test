@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.query
 class = QueryLatencyTest
-descr = 1 bucket x 20M x 2KB, non-DGM, 4 x 2 views, stale=false
+descr = 1 bucket x 20M x 2KB, non-DGM, 4 x 1 views, stale=false
 larger_is_better = false
 level = Basic
 
@@ -16,7 +16,7 @@ size = 2048
 workers = 20
 
 [index]
-views = [2, 2, 2, 2]
+views = [1, 1, 1, 1]
 params = {"stale": "false"}
 
 [access]
@@ -24,7 +24,7 @@ creates = 4
 reads = 80
 updates = 12
 deletes = 4
-throughput = 10000
+throughput = 5000
 query_throughput = 400
 items = 20000000
 size = 2048

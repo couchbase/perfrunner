@@ -1,0 +1,28 @@
+[test_case]
+module = perfrunner.tests.rebalance
+class = StaticRebalanceTest
+descr = Static rebalance-in (min), 3 -> 4, 1 bucket x 1M x 2KB
+larger_is_better = false
+level = Basic
+
+[stats]
+enabled = 0
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 3
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[load]
+items = 500000
+size = 2048
+workers = 10
+
+[rebalance]
+nodes_after = 4
+start_after = 0
+stop_after = 0

@@ -34,7 +34,6 @@ class QueryTest(IndexTest):
         self.workload = self.test_config.get_access_settings()
         self.access_bg()
         self.access()
-        self.shutdown_event.set()
 
 
 class QueryThroughputTest(QueryTest):

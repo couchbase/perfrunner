@@ -26,6 +26,8 @@ def with_stats(method, *args, **kwargs):
 
     from_ts = test.cbagent.start()
     method(*args, **kwargs)
+    if test.shutdown_event is not None:
+        test.shutdown_event.set()
     to_ts = test.cbagent.stop()
 
     test.cbagent.add_snapshot(method.__name__, from_ts, to_ts)

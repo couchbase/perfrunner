@@ -161,7 +161,6 @@ class RebalanceKVTest(RebalanceTest):
         self.workload = self.test_config.get_access_settings()
         self.access_bg()
         self.rebalance()
-        self.shutdown_event.set()
 
 
 class RebalanceWithQueriesTest(QueryTest, RebalanceTest):
@@ -182,7 +181,6 @@ class RebalanceWithQueriesTest(QueryTest, RebalanceTest):
         self.workload = self.test_config.get_access_settings()
         self.access_bg()
         self.rebalance()
-        self.shutdown_event.set()
 
         if self.is_balanced():
             self.reporter.post_to_sf(

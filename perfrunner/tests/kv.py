@@ -21,7 +21,6 @@ class KVTest(PerfTest):
         self.workload = self.test_config.get_access_settings()
         self.access_bg()
         self.access()
-        self.shutdown_event.set()
 
 
 class ObserveLatencyTest(KVTest):
@@ -105,8 +104,6 @@ class FlusherTest(KVTest):
         from_ts, to_ts = self.drain()
         time_elapsed = (to_ts - from_ts) / 1000.0
 
-        self.shutdown_event.set()
-
         self.reporter.finish('Drain', time_elapsed)
         self.reporter.post_to_sf(
             self.metric_helper.calc_avg_drain_rate(time_elapsed)
@@ -125,6 +122,7 @@ class WarmupTest(PerfTest):
 
     def access(self):
         super(WarmupTest, self).timer()
+        self.shutdown_event.set()
 
     def warmup(self):
         self.remote.stop_server()
@@ -147,7 +145,6 @@ class WarmupTest(PerfTest):
         self.workload = self.test_config.get_access_settings()
         self.access_bg()
         self.access()
-        self.shutdown_event.set()
 
         self.wait_for_persistence()
         self.compact_bucket()

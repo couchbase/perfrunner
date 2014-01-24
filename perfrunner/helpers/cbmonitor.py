@@ -75,11 +75,9 @@ class CbAgent(object):
             self.prepare_net(clusters)
             self.prepare_iostat(clusters, test)
         if latency:
-            self.prepare_latency(clusters, test.workload, test)
+            self.prepare_latency(clusters, test)
         if query_latency:
-            qparams = test.test_config.get_index_settings().params
-            self.prepare_query_latency(clusters, test.workload, test.ddocs,
-                                       qparams)
+            self.prepare_query_latency(clusters, test)
         if observe_latency:
             self.prepare_observe_latency(clusters)
         if xdcr_lag:
@@ -138,7 +136,7 @@ class CbAgent(object):
             settings.dest_master_node = self.clusters[dest_cluster]
             self.collectors.append(XdcrLag(settings))
 
-    def prepare_latency(self, clusters, workload, test):
+    def prepare_latency(self, clusters, test):
         for cluster in clusters:
             settings = copy(self.settings)
             settings.interval = self.lat_interval
@@ -146,16 +144,19 @@ class CbAgent(object):
             settings.master_node = self.clusters[cluster]
             prefix = test.target_iterator.prefix or \
                 target_hash(settings.master_node.split(':')[0])
-            self.collectors.append(SpringLatency(settings, workload, prefix))
+            self.collectors.append(
+                SpringLatency(settings, test.workload, prefix)
+            )
 
-    def prepare_query_latency(self, clusters, workload, ddocs, params):
+    def prepare_query_latency(self, clusters, test):
+        params = test.test_config.get_index_settings().params
         for cluster in clusters:
             settings = copy(self.settings)
             settings.interval = self.lat_interval
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
             self.collectors.append(
-                SpringQueryLatency(settings, workload, ddocs, params)
+                SpringQueryLatency(settings, test.workload, test.ddocs, params)
             )
 
     def prepare_active_tasks(self, clusters):

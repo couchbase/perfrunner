@@ -10,6 +10,8 @@ class ExperimentHelper(object):
         'Source nodes': 'self.tc.get_initial_nodes()[0]',
         'Destination nodes': 'self.tc.get_initial_nodes()[1]',
         'Mutations/sec': '0.8 * self.tc.get_access_settings().throughput',
+        'Number of buckets': 'self.tc.get_num_buckets()',
+        'Number of vbuckets': 'self.tc.get_num_vbuckets()',
 
         'Drive type': 'self.cs.get_parameters()["Disk"].split()[-1]',
     }

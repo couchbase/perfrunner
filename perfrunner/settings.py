@@ -146,7 +146,7 @@ class TestConfig(Config):
 
     @safe
     def get_num_vbuckets(self):
-        return self.config.get('cluster', 'num_vbuckets')
+        return self.config.getint('cluster', 'num_vbuckets')
 
     @safe
     def get_group_number(self):

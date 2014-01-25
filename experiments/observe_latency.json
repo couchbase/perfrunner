@@ -1,5 +1,5 @@
 {
-    "name": "95th percentile OBSERVE latency, ms",
+    "name": "95th percentile OBSERVE latency (ms)",
     "defaults": {
         "Drive type": "HDD",
         "Mutations/sec": 1000

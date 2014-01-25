@@ -1,5 +1,5 @@
 {
-    "name": "Initial XDCR rate (items/sec)",
+    "name": "Initial XDCR rate (items/sec), variable topology",
     "defaults": {
         "Source nodes": 1,
         "Destination nodes": 1

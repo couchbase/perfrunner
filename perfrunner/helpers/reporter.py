@@ -133,26 +133,16 @@ class LogReporter(object):
         self.test = test
 
     def save_web_logs(self):
-        known_nodes = set()
-        for target in self.test.target_iterator:
-            if target.node in known_nodes:
-                continue
-            else:
-                known_nodes.add(target.node)
-            logs = self.test.rest.get_logs(target.node)
-            fname = 'web_log_{}.json'.format(target.node.split(':')[0])
+        for master in self.test.cluster_spec.yield_masters():
+            logs = self.test.rest.get_logs(master)
+            fname = 'web_log_{}.json'.format(master.split(':')[0])
             with open(fname, 'w') as fh:
                 fh.write(pretty_dict(logs))
 
     def save_master_events(self):
-        known_nodes = set()
-        for target in self.test.target_iterator:
-            if target.node in known_nodes:
-                continue
-            else:
-                known_nodes.add(target.node)
-            master_events = self.test.rest.get_master_events(target.node)
-            fname = 'master_events_{}.log'.format(target.node.split(':')[0])
+        for master in self.test.cluster_spec.yield_masters():
+            master_events = self.test.rest.get_master_events(master)
+            fname = 'master_events_{}.log'.format(master.split(':')[0])
             with open(fname, 'w') as fh:
                 fh.write(master_events)
 

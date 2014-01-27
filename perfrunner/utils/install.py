@@ -51,9 +51,14 @@ class CouchbaseInstaller(object):
         for filename in self.get_expected_filenames():
             for base in (self.CBFS, self.LATEST_BUILDS):
                 url = '{}{}'.format(base, filename)
-                if requests.head(url).status_code == 200:
-                    logger.info('Found "{}"'.format(url))
-                    return filename, url
+                try:
+                    status_code = requests.head(url).status_code
+                except requests.exceptions.ConnectionError:
+                    continue
+                else:
+                    if status_code == 200:
+                        logger.info('Found "{}"'.format(url))
+                        return filename, url
         logger.interrupt('Target build not found')
 
     def kill_processes(self):

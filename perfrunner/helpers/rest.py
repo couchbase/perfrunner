@@ -189,7 +189,7 @@ class RestHelper(object):
             .format(host_port, bucket)
         self.post(url=api)
 
-    def trigger_index_compaction(self, host_port, ddoc, bucket):
+    def trigger_index_compaction(self, host_port, bucket, ddoc):
         logger.info('Triggering ddoc {} compaction, bucket {}'.format(
             ddoc, bucket
         ))

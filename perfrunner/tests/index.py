@@ -17,26 +17,30 @@ class IndexTest(PerfTest):
         self.ddocs = ViewGen().generate_ddocs(views_settings.views, options)
 
     def define_ddocs(self):
-        for target in self.target_iterator:
-            for ddoc_name, ddoc in self.ddocs.iteritems():
-                self.rest.create_ddoc(target.node, target.bucket,
-                                      ddoc_name, ddoc)
+        for master in self.cluster_spec.yield_masters():
+            for bucket in self.test_config.get_buckets():
+                for ddoc_name, ddoc in self.ddocs.iteritems():
+                    self.rest.create_ddoc(master, bucket, ddoc_name, ddoc)
 
     def build_index(self):
-        for target in self.target_iterator:
-            for ddoc_name, ddoc in self.ddocs.iteritems():
-                for view_name in ddoc['views']:
-                    self.rest.query_view(target.node, target.bucket,
-                                         ddoc_name, view_name,
-                                         params={'limit': 10})
-            self.monitor.monitor_task(target, 'indexer')
+        for master in self.cluster_spec.yield_masters():
+            for bucket in self.test_config.get_buckets():
+                for ddoc_name, ddoc in self.ddocs.iteritems():
+                    for view_name in ddoc['views']:
+                        self.rest.query_view(master, bucket,
+                                             ddoc_name, view_name,
+                                             params={'limit': 10})
+        for master in self.cluster_spec.yield_masters():
+            self.monitor.monitor_task(master, 'indexer')
 
     def compact_index(self):
-        for target in self.target_iterator:
-            for ddoc_name in self.ddocs:
-                self.rest.trigger_index_compaction(target.node, ddoc_name,
-                                                   target.bucket)
-            self.monitor.monitor_task(target, 'view_compaction')
+        for master in self.cluster_spec.yield_masters():
+            for bucket in self.test_config.get_buckets():
+                for ddoc_name in self.ddocs:
+                    self.rest.trigger_index_compaction(master, bucket,
+                                                       ddoc_name)
+        for master in self.cluster_spec.yield_masters():
+            self.monitor.monitor_task(master, 'view_compaction')
 
 
 class InitialIndexTest(IndexTest):

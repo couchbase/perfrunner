@@ -91,8 +91,9 @@ class FlusherTest(KVTest):
 
     @with_stats
     def drain(self):
-        for target in self.target_iterator:
-            self.monitor.monitor_disk_queue(target)
+        for master in self.cluster_spec.yield_masters():
+            for bucket in self.test_config.get_buckets():
+                self.monitor.monitor_disk_queue(master, bucket)
 
     def run(self):
         self.stop_persistence()
@@ -128,11 +129,12 @@ class WarmupTest(PerfTest):
         self.remote.stop_server()
         self.remote.drop_caches()
         self.remote.start_server()
-        for target in self.target_iterator:
-            host = target.node.split(':')[0]
-            warmup_time = self.monitor.monitor_warmup(self.memcached,
-                                                      host, target.bucket)
-            return round(float(warmup_time) / 10 ** 6 / 60, 1)  # min
+        for master in self.cluster_spec.yield_masters():
+            for bucket in self.test_config.get_buckets():
+                host = master.node.split(':')[0]
+                warmup_time = self.monitor.monitor_warmup(self.memcached,
+                                                          host, bucket)
+                return round(float(warmup_time) / 10 ** 6 / 60, 1)  # min
 
     def run(self):
         self.load()

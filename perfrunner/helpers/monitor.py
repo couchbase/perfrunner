@@ -57,38 +57,28 @@ class Monitor(RestHelper):
             self.MAX_RETRY
         ))
 
-    def monitor_disk_queue(self, target):
-        logger.info('Monitoring disk queue: {}'.format(target.bucket))
+    def monitor_disk_queue(self, host_port, bucket):
+        logger.info('Monitoring disk queue: {}'.format(bucket))
         for metric in self.DISK_QUEUE_METRICS:
-            self._wait_for_null_metric(target.node, target.bucket, metric)
+            self._wait_for_null_metric(host_port, bucket, metric)
 
-    def monitor_tap_replication(self, target):
-        logger.info('Monitoring TAP replication: {}'.format(target.bucket))
+    def monitor_tap_replication(self, host_port, bucket):
+        logger.info('Monitoring TAP replication: {}'.format(bucket))
         for metric in self.TAP_REPLICATION_METRICS:
-            self._wait_for_null_metric(target.node, target.bucket, metric)
+            self._wait_for_null_metric(host_port, bucket, metric)
 
-    def monitor_xdcr_replication(self, target):
-        logger.info('Monitoring XDCR replication: {}'.format(target.bucket))
+    def monitor_xdcr_replication(self, host_port, bucket):
+        logger.info('Monitoring XDCR replication: {}'.format(bucket))
         metric = 'replication_changes_left'
-        self._wait_for_null_metric(target.node, target.bucket, metric)
+        self._wait_for_null_metric(host_port, bucket, metric)
 
-    def monitor_bucket_fragmentation(self, target):
-        logger.info('Monitoring bucket fragmentation: {}'.format(target.bucket))
-        metric = 'couch_docs_fragmentation'
-        self._wait_for_null_metric(target.node, target.bucket, metric)
-
-    def monitor_index_fragmentation(self, target):
-        logger.info('Monitoring index fragmentation: {}'.format(target.bucket))
-        metric = 'couch_views_fragmentation'
-        self._wait_for_null_metric(target.node, target.bucket, metric)
-
-    def monitor_task(self, target, task_type):
+    def monitor_task(self, host_port, task_type):
         logger.info('Monitoring task: {}'.format(task_type))
 
         while True:
             time.sleep(self.POLLING_INTERVAL)
 
-            tasks = [task for task in self.get_tasks(target.node)
+            tasks = [task for task in self.get_tasks(host_port)
                      if task.get('type') == task_type]
             if tasks:
                 for task in tasks:

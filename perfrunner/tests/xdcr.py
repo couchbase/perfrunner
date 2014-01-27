@@ -40,7 +40,7 @@ class XdcrTest(PerfTest):
             self._start_replication(m2, m1)
 
         for target in self.target_iterator:
-            self.monitor.monitor_xdcr_replication(target)
+            self.monitor.monitor_xdcr_replication(target.node, target.bucket)
 
     @with_stats
     def access(self):

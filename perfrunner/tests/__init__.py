@@ -83,15 +83,17 @@ class PerfTest(object):
                 )
 
     def compact_bucket(self):
-        for target in self.target_iterator:
-            self.rest.trigger_bucket_compaction(target.node,
-                                                target.bucket)
-            self.monitor.monitor_task(target, 'bucket_compaction')
+        for master in self.cluster_spec.yield_masters():
+            for bucket in self.test_config.get_buckets():
+                self.rest.trigger_bucket_compaction(master, bucket)
+        for master in self.cluster_spec.yield_masters():
+            self.monitor.monitor_task(master, 'bucket_compaction')
 
     def wait_for_persistence(self):
-        for target in self.target_iterator:
-            self.monitor.monitor_disk_queue(target)
-            self.monitor.monitor_tap_replication(target)
+        for master in self.cluster_spec.yield_masters():
+            for bucket in self.test_config.get_buckets():
+                self.monitor.monitor_disk_queue(master, bucket)
+                self.monitor.monitor_tap_replication(master, bucket)
 
     def load(self):
         load_settings = self.test_config.get_load_settings()

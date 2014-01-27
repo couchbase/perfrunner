@@ -20,55 +20,56 @@ class ClusterManager(object):
         self.monitor = Monitor(cluster_spec)
         self.memcached = MemcachedHelper(cluster_spec)
 
-        self.clusters = cluster_spec.get_clusters().values()
+        self.clusters = cluster_spec.yield_clusters()
+        self.servers = cluster_spec.yield_servers
+        self.masters = cluster_spec.yield_masters
+        self.hostnames = cluster_spec.yield_hostnames
+
         self.initial_nodes = test_config.get_initial_nodes()
         self.mem_quota = test_config.get_mem_quota()
         self.group_number = test_config.get_group_number() or 1
 
     def set_data_path(self):
         data_path, index_path = self.cluster_spec.get_paths()
-        for cluster in self.clusters:
-            for host_port in cluster:
-                self.rest.set_data_path(host_port, data_path, index_path)
+        for server in self.servers():
+            self.rest.set_data_path(server, data_path, index_path)
 
     def set_auth(self):
-        for cluster in self.clusters:
-            for host_port in cluster:
-                self.rest.set_auth(host_port)
+        for server in self.servers():
+            self.rest.set_auth(server)
 
     def set_mem_quota(self):
-        for cluster in self.clusters:
-            for host_port in cluster:
-                self.rest.set_mem_quota(host_port, self.mem_quota)
+        for server in self.servers():
+            self.rest.set_mem_quota(server, self.mem_quota)
 
     def create_server_groups(self):
-        for cluster in self.clusters:
-            master = cluster[0]
+        for master in self.masters():
             for i in range(1, self.group_number):
                 name = 'Group {}'.format(i + 1)
                 self.rest.create_server_group(master, name=name)
 
     def add_nodes(self):
-        for cluster, initial_nodes in zip(self.clusters, self.initial_nodes):
+        for (_, servers), initial_nodes in zip(self.clusters,
+                                               self.initial_nodes):
             if initial_nodes < 2:  # Single-node cluster
                 continue
 
             # Adding initial nodes
-            master = cluster[0]
+            master = servers[0]
             if self.group_number > 1:
                 groups = self.rest.get_server_groups(master)
             else:
                 groups = {}
-            for i, host_port in enumerate(cluster[1:initial_nodes],
+            for i, host_port in enumerate(servers[1:initial_nodes],
                                           start=1):
                 host = host_port.split(':')[0]
-                uri = groups.get(server_group(cluster[:initial_nodes],
+                uri = groups.get(server_group(servers[:initial_nodes],
                                               self.group_number, i))
                 self.rest.add_node(master, host, uri)
 
             # Rebalance
-            master = cluster[0]
-            known_nodes = cluster[:initial_nodes]
+            master = servers[0]
+            known_nodes = servers[:initial_nodes]
             ejected_nodes = []
             self.rest.rebalance(master, known_nodes, ejected_nodes)
             self.monitor.monitor_rebalance(master)
@@ -83,8 +84,7 @@ class ClusterManager(object):
         ram_quota = self.mem_quota / num_buckets
         buckets = ['bucket-{}'.format(i + 1) for i in xrange(num_buckets)]
 
-        for cluster in self.clusters:
-            master = cluster[0]
+        for master in self.masters():
             for name in buckets:
                 self.rest.create_bucket(master, name, ram_quota,
                                         replica_number=replica_number,
@@ -92,14 +92,12 @@ class ClusterManager(object):
 
     def configure_auto_compaction(self):
         compaction_settings = self.test_config.get_compaction_settings()
-        for cluster in self.clusters:
-            master = cluster[0]
+        for master in self.masters():
             self.rest.configure_auto_compaction(master, compaction_settings)
 
     def configure_internal_settings(self):
         internal_settings = self.test_config.get_internal_settings()
-        for cluster in self.clusters:
-            master = cluster[0]
+        for master in self.masters():
             for parameter, value in internal_settings.items():
                 self.rest.set_internal_settings(master,
                                                 {parameter: int(value)})
@@ -120,8 +118,7 @@ class ClusterManager(object):
             self.remote.restart_with_alternative_num_vbuckets(num_vbuckets)
 
     def enable_auto_failover(self):
-        for cluster in self.clusters:
-            master = cluster[0]
+        for master in self.masters():
             self.rest.enable_auto_failover(master)
 
     def wait_until_warmed_up(self):
@@ -132,13 +129,12 @@ class ClusterManager(object):
 
     def change_watermarks(self):
         watermark_settings = self.test_config.get_watermark_settings()
-        for cluster, initial_nodes in zip(self.clusters, self.initial_nodes):
-            for host_port in cluster[:initial_nodes]:
-                host = host_port.split(':')[0]
-                for bucket in self.test_config.get_buckets():
-                    for key, val in watermark_settings.items():
-                        val = self.memcached.calc_watermark(val, self.mem_quota)
-                        self.memcached.set_flusher_param(host, bucket, key, val)
+        for hostname, initial_nodes in zip(self.hostnames(),
+                                           self.initial_nodes):
+            for bucket in self.test_config.get_buckets():
+                for key, val in watermark_settings.items():
+                    val = self.memcached.calc_watermark(val, self.mem_quota)
+                    self.memcached.set_flusher_param(hostname, bucket, key, val)
 
 
 def get_options():

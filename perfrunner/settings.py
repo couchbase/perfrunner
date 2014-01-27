@@ -1,8 +1,6 @@
 import json
 import os.path
-from collections import OrderedDict
 from ConfigParser import SafeConfigParser, NoOptionError, NoSectionError
-from operator import add
 
 from decorator import decorator
 from logger import logger
@@ -56,23 +54,26 @@ class Config(object):
 class ClusterSpec(Config):
 
     @safe
-    def get_clusters(self):
-        clusters = OrderedDict()
-        for cluster, servers in self.config.items('clusters'):
-            clusters[cluster] = servers.split()
-        return clusters
+    def yield_clusters(self):
+        for cluster_name, servers in self.config.items('clusters'):
+            yield cluster_name, servers.split()
 
     @safe
-    def get_masters(self):
-        masters = OrderedDict()
-        for cluster, servers in self.get_clusters().items():
-            masters[cluster] = servers[0]
-        return masters
+    def yield_masters(self):
+        for _, servers in self.yield_clusters():
+            yield servers[0]
 
     @safe
-    def get_all_hosts(self):
-        servers = reduce(add, self.get_clusters().values())
-        return map(lambda server: server.split(':')[0], servers)
+    def yield_servers(self):
+        for _, servers in self.yield_clusters():
+            for server in servers:
+                yield server
+
+    @safe
+    def yield_hostnames(self):
+        for _, servers in self.yield_clusters():
+            for server in servers:
+                yield server.split(':')[0]
 
     @safe
     def get_workers(self):

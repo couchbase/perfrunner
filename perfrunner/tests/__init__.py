@@ -29,7 +29,7 @@ class TargetIterator(object):
     def __iter__(self):
         username, password = self.cluster_spec.get_rest_credentials()
         prefix = self.prefix
-        for master in self.cluster_spec.get_masters().values():
+        for master in self.cluster_spec.yield_masters():
             for bucket in self.test_config.get_buckets():
                 if self.prefix is None:
                     prefix = target_hash(master.split(':')[0])
@@ -57,7 +57,7 @@ class PerfTest(object):
             self.experiment = ExperimentHelper(experiment,
                                                cluster_spec, test_config)
 
-        self.master_node = cluster_spec.get_masters().values()[0]
+        self.master_node = cluster_spec.yield_masters().next()
         self.build = self.rest.get_version(self.master_node)
 
         self.cbagent = CbAgent(cluster_spec, test_config, self.build)
@@ -75,7 +75,7 @@ class PerfTest(object):
         self.worker_manager.terminate()
         if exc_type != exc.KeyboardInterrupt:
             self.debug()
-        for master in self.cluster_spec.get_masters().values():
+        for master in self.cluster_spec.yield_masters():
             num_failovers = self.rest.get_failover_counter(master)
             if num_failovers:
                 logger.interrupt(

@@ -38,7 +38,7 @@ class RemoteHelper(object):
     @staticmethod
     def detect_os(cluster_spec):
         logger.info('Detecting OS')
-        with settings(host_string=cluster_spec.get_all_hosts()[0]):
+        with settings(host_string=cluster_spec.yield_hostnames().next()):
             os = run('python -c "import platform; print platform.dist()[0]"',
                      pty=False)
         if os:
@@ -55,7 +55,7 @@ class RemoteLinuxHelper(object):
 
     def __init__(self, cluster_spec, os):
         self.os = os
-        self.hosts = cluster_spec.get_all_hosts()
+        self.hosts = tuple(cluster_spec.yield_hostnames())
         self.cluster_spec = cluster_spec
 
     @staticmethod

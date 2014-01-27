@@ -194,21 +194,6 @@ class MetricHelper(object):
 
         return latency, metric, metric_info
 
-    def calc_cpu_utilizations(self):
-        query_params = self._get_query_params('avg_cpu_utilization_rate')
-
-        cpu_utilazion = dict()
-        for cluster, master_host in self.cluster_spec.get_masters().items():
-            cluster_name = filter(lambda name: name.startswith(cluster),
-                                  self.cluster_names)[0]
-            host = master_host.split(':')[0].replace('.', '')
-            for bucket in self.test_config.get_buckets():
-                db = 'ns_server{}{}{}'.format(cluster_name, bucket, host)
-                data = self.seriesly[db].query(query_params)
-                cpu_utilazion[cluster] = round(data.values()[0][0], 1)
-
-        return cpu_utilazion
-
     def calc_cpu_utilization(self, from_ts=None, to_ts=None, meta=None):
         metric = '{}_avg_cpu_{}'.format(self.test_config.name,
                                         self.cluster_spec.name)
@@ -265,11 +250,11 @@ class MetricHelper(object):
         query_params = self._get_query_params('max_beam.smp_rss')
 
         max_rss = 0
-        for cluster, master_host in self.cluster_spec.get_masters().items():
-            cluster_name = filter(lambda name: name.startswith(cluster),
-                                  self.cluster_names)[0]
-            host = master_host.split(':')[0].replace('.', '')
-            db = 'atop{}{}'.format(cluster_name, host)  # Legacy
+        for cluster_name, servers in self.cluster_spec.yield_clusters():
+            cluster = filter(lambda name: name.startswith(cluster_name),
+                             self.cluster_names)[0]
+            master = servers[0].split(':')[0].replace('.', '')
+            db = 'atop{}{}'.format(cluster, master)  # Legacy
             data = self.seriesly[db].query(query_params)
             rss = round(data.values()[0][0] / 1024 ** 2)
             max_rss = max(max_rss, rss)

@@ -76,8 +76,8 @@ class FlusherTest(KVTest):
     def mc_iterator(self):
         _, password = self.cluster_spec.get_rest_credentials()
         for bucket in self.test_config.get_buckets():
-            for host in self.cluster_spec.get_all_hosts():
-                mc = MemcachedClient(host=host, port=11210)
+            for hostname in self.cluster_spec.yield_hostnames():
+                mc = MemcachedClient(host=hostname, port=11210)
                 mc.sasl_auth_plain(user=bucket, password=password)
                 yield mc
 

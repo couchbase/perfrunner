@@ -58,13 +58,10 @@ class RebalanceTest(PerfTest):
     def __init__(self, *args, **kwargs):
         super(RebalanceTest, self).__init__(*args, **kwargs)
         self.rebalance_settings = self.test_config.get_rebalance_settings()
-        self.clusters = self.cluster_spec.get_clusters().values()
-        self.initial_nodes = self.test_config.get_initial_nodes()
-        self.nodes_after = self.rebalance_settings.nodes_after
 
     def is_balanced(self):
-        for cluster in self.clusters:
-            if not self.rest.is_balanced(cluster[0]):
+        for master in self.cluster_spec.yield_masters():
+            if not self.rest.is_balanced(master):
                 return False
         return True
 
@@ -81,40 +78,42 @@ class RebalanceTest(PerfTest):
     @with_delay
     @with_reporter
     def rebalance(self):
+        clusters = self.cluster_spec.yield_clusters()
+        initial_nodes = self.test_config.get_initial_nodes()
+        nodes_after = self.rebalance_settings.nodes_after
         swap = self.rebalance_settings.swap
         group_number = self.test_config.get_group_number() or 1
 
-        for cluster, initial_nodes, nodes_after in zip(self.clusters,
-                                                       self.initial_nodes,
-                                                       self.nodes_after):
-            master = cluster[0]
-
+        for (_, servers), initial_nodes, nodes_after in zip(clusters,
+                                                            initial_nodes,
+                                                            nodes_after):
+            master = servers[0]
             groups = group_number > 1 and self.rest.get_server_groups(master) or {}
 
             if nodes_after > initial_nodes:
                 new_nodes = enumerate(
-                    cluster[initial_nodes:nodes_after],
+                    servers[initial_nodes:nodes_after],
                     start=initial_nodes
                 )
-                known_nodes = cluster[:nodes_after]
+                known_nodes = servers[:nodes_after]
                 ejected_nodes = []
             elif nodes_after < initial_nodes:
                 new_nodes = []
-                known_nodes = cluster[:initial_nodes]
-                ejected_nodes = cluster[nodes_after:initial_nodes]
+                known_nodes = servers[:initial_nodes]
+                ejected_nodes = servers[nodes_after:initial_nodes]
             elif swap:
                 new_nodes = enumerate(
-                    cluster[initial_nodes:initial_nodes + swap],
+                    servers[initial_nodes:initial_nodes + swap],
                     start=initial_nodes - swap
                 )
-                known_nodes = cluster[:initial_nodes + swap]
-                ejected_nodes = cluster[initial_nodes - swap:initial_nodes]
+                known_nodes = servers[:initial_nodes + swap]
+                ejected_nodes = servers[initial_nodes - swap:initial_nodes]
             else:
                 continue
 
             for i, host_port in new_nodes:
                 host = host_port.split(':')[0]
-                group = server_group(cluster[:nodes_after], group_number, i)
+                group = server_group(servers[:nodes_after], group_number, i)
                 uri = groups.get(group)
                 self.rest.add_node(master, host, uri)
             self.rest.rebalance(master, known_nodes, ejected_nodes)

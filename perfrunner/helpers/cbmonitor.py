@@ -50,11 +50,11 @@ class CbAgent(object):
 
     def __init__(self, cluster_spec, test_config, build):
         self.clusters = OrderedDict()
-        for cluster, master in cluster_spec.get_masters().items():
-            cluster = '{}_{}_{}'.format(cluster,
+        for cluster_name, servers in cluster_spec.yield_clusters():
+            cluster = '{}_{}_{}'.format(cluster_name,
                                         build.replace('.', ''),
                                         uhex()[:3])
-            master = master.split(':')[0]
+            master = servers[0].split(':')[0]
             self.clusters[cluster] = master
 
         self.settings = type('settings', (object, ), {

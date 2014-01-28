@@ -8,6 +8,9 @@ level = Basic
 [stats]
 enabled = 0
 
+[internal]
+maxBucketCount = 30
+
 [cluster]
 mem_quota = 40960
 initial_nodes = 3

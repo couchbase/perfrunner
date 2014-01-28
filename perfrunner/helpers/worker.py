@@ -47,7 +47,8 @@ class WorkerManager(object):
                 run('git clone {}'.format(REPO))
             with cd('{}/perfrunner'.format(temp_dir)):
                 run('virtualenv -p python2.7 env')
-                run('env/bin/pip install -r requirements.txt')
+                run('env/bin/pip install '
+                    '--download-cache /tmp/pip -r requirements.txt')
 
     def _start(self):
         for i, q in enumerate(CELERY_QUEUES):

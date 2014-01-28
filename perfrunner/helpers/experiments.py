@@ -1,6 +1,8 @@
 from couchbase import Couchbase
 
-from perfrunner.helpers.misc import uhex
+from logger import logger
+
+from perfrunner.helpers.misc import pretty_dict, uhex
 from perfrunner.settings import SF_STORAGE
 
 
@@ -40,8 +42,12 @@ class ExperimentHelper(object):
     def post_results(self, value):
         self.update_defaults()
 
+        key = uhex()
         self.experiment['value'] = value
         self.experiment['defaults'] = self.name
 
+        logger.info('Adding new experiment {}: {}'.format(
+            key, pretty_dict(self.experiment)
+        ))
         cb = Couchbase.connect(bucket='experiments', **SF_STORAGE)
-        cb.set(uhex(), self.experiment)
+        cb.set(key, self.experiment)

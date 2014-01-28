@@ -17,7 +17,7 @@ from perfrunner.settings import CBMONITOR_HOST
 
 
 @decorator
-def with_stats(method, *args, **kwargs):
+def with_stats(method, *args):
     test = args[0]
 
     stats_enabled = test.test_config.get_stats_settings().enabled
@@ -29,11 +29,8 @@ def with_stats(method, *args, **kwargs):
         test.cbagent.start()
 
     from_ts = datetime.utcnow()
-    method(*args, **kwargs)
+    method(*args)
     to_ts = datetime.utcnow()
-
-    if test.shutdown_event is not None:
-        test.shutdown_event.set()
 
     if stats_enabled:
         test.cbagent.stop()

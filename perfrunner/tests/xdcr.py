@@ -1,8 +1,7 @@
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import log_phase, target_hash
 from perfrunner.settings import TargetSettings
-from perfrunner.tests import TargetIterator
-from perfrunner.tests import PerfTest
+from perfrunner.tests import PerfTest, terminate_bg_process, TargetIterator
 
 
 class XdcrTest(PerfTest):
@@ -12,7 +11,6 @@ class XdcrTest(PerfTest):
     def __init__(self, *args, **kwargs):
         super(XdcrTest, self).__init__(*args, **kwargs)
         self.settings = self.test_config.get_xdcr_settings()
-        self.shutdown_event = None
 
     def _start_replication(self, m1, m2):
         name = target_hash(m1, m2)
@@ -43,6 +41,7 @@ class XdcrTest(PerfTest):
             self.monitor.monitor_xdcr_replication(target.node, target.bucket)
 
     @with_stats
+    @terminate_bg_process
     def access(self):
         super(XdcrTest, self).timer()
 
@@ -59,9 +58,8 @@ class XdcrTest(PerfTest):
         self.compact_bucket()
 
         self.workload = self.test_config.get_access_settings()
-        bg_process = self.access_bg()
+        self.access_bg()
         self.access()
-        bg_process.terminate()
 
         self.reporter.post_to_sf(
             *self.metric_helper.calc_replication_changes_left()

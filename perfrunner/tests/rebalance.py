@@ -6,7 +6,7 @@ from logger import logger
 
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import server_group
-from perfrunner.tests import PerfTest
+from perfrunner.tests import PerfTest, terminate_bg_process
 from perfrunner.tests.index import IndexTest
 from perfrunner.tests.query import QueryTest
 from perfrunner.tests.xdcr import XdcrTest, SymmetricXdcrTest
@@ -75,6 +75,7 @@ class RebalanceTest(PerfTest):
 
     @with_delayed_posting
     @with_stats
+    @terminate_bg_process
     @with_delay
     @with_reporter
     def rebalance(self):
@@ -206,9 +207,8 @@ class RebalanceWithXdcrTest(XdcrTest, RebalanceTest):
         self.compact_bucket()
 
         self.workload = self.test_config.get_access_settings()
-        bg_process = self.access_bg()
+        self.access_bg()
         self.rebalance()
-        bg_process.terminate()
 
 
 class RebalanceWithSymmetricXdcrTest(SymmetricXdcrTest, RebalanceTest):
@@ -228,6 +228,5 @@ class RebalanceWithSymmetricXdcrTest(SymmetricXdcrTest, RebalanceTest):
         self.compact_bucket()
 
         self.workload = self.test_config.get_access_settings()
-        bg_process = self.access_bg()
+        self.access_bg()
         self.rebalance()
-        bg_process.terminate()

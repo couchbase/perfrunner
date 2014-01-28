@@ -5,6 +5,10 @@ apollo =
     172.23.96.17:8091
     172.23.96.18:8091
 
+[clients]
+hosts =
+    172.23.97.105
+
 [storage]
 data = /data
 index = /data2

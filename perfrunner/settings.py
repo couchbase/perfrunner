@@ -77,9 +77,7 @@ class ClusterSpec(Config):
 
     @safe
     def get_workers(self):
-        return tuple(
-            worker.split()[0] for _, worker in self.config.items('workers')
-        )
+        return self.config.get('clients', 'hosts').split()
 
     @safe
     def get_paths(self):

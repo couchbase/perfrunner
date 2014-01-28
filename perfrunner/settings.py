@@ -6,7 +6,7 @@ from decorator import decorator
 from logger import logger
 
 
-REPO = 'https://github.com/pavel-paulau/perfrunner'
+REPO = 'https://github.com/couchbaselabs/perfrunner'
 
 BROKER_URL = 'amqp://couchbase:couchbase@ci.sc.couchbase.com:5672/broker'
 

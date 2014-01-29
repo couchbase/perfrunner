@@ -217,7 +217,7 @@ class CompactionSettings(object):
 
     DB_PERCENTAGE = 30
     VIEW_PERCENTAGE = 30
-    PARALLEL = False
+    PARALLEL = True
 
     def __init__(self, options):
         self.db_percentage = options.get('db_percentage', self.DB_PERCENTAGE)

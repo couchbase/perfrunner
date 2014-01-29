@@ -190,7 +190,7 @@ class MetricHelper(object):
             db = 'observe{}{}'.format(self.cluster_names[0], bucket)
             data = self.seriesly[db].get_all()
             timings += [v['latency_observe'] for v in data.values()]
-        latency = round(np.percentile(timings, percentile), 1)
+        latency = round(np.percentile(timings, percentile))
 
         return latency, metric, metric_info
 

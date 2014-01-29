@@ -2,8 +2,9 @@ import exceptions as exc
 import os
 import shutil
 import time
-from multiprocessing import Event, Process
+from multiprocessing import Process
 
+from decorator import decorator
 from logger import logger
 
 from perfrunner.helpers.cbmonitor import CbAgent
@@ -36,6 +37,14 @@ class TargetIterator(object):
                 yield TargetSettings(master, bucket, username, password, prefix)
 
 
+@decorator
+def terminate_bg_process(method, *args):
+    method(*args)
+    test = args[0]
+    if hasattr(test, "bg_process"):
+        test.bg_process.terminate()
+
+
 class PerfTest(object):
 
     COLLECTORS = {}
@@ -51,7 +60,6 @@ class PerfTest(object):
         self.monitor = Monitor(cluster_spec)
         self.rest = RestHelper(cluster_spec)
         self.remote = RemoteHelper(cluster_spec)
-        self.worker_manager = WorkerManager(cluster_spec)
 
         if experiment:
             self.experiment = ExperimentHelper(experiment,
@@ -66,13 +74,13 @@ class PerfTest(object):
         self.reports = {}
         self.snapshots = []
 
-        self.shutdown_event = Event()
+        self.worker_manager = WorkerManager(cluster_spec, test_config)
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.worker_manager.terminate()
+        self.worker_manager.terminate(self.cluster_spec, self.test_config)
         if exc_type != exc.KeyboardInterrupt:
             self.debug()
         for master in self.cluster_spec.yield_masters():
@@ -121,13 +129,11 @@ class PerfTest(object):
     def access_bg(self):
         access_settings = self.test_config.get_access_settings()
         log_phase('access in background', access_settings)
-        p = Process(
+        self.bg_process = Process(
             target=self.worker_manager.run_workload,
             args=(access_settings, self.target_iterator),
-            kwargs={'shutdown_event': self.shutdown_event}
         )
-        p.start()
-        return p
+        self.bg_process.start()
 
     def timer(self):
         access_settings = self.test_config.get_access_settings()

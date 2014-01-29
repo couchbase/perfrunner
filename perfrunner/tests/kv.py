@@ -1,12 +1,13 @@
 from mc_bin_client.mc_bin_client import MemcachedClient
 
-from perfrunner.tests import PerfTest
 from perfrunner.helpers.cbmonitor import with_stats
+from perfrunner.tests import PerfTest, terminate_bg_process
 
 
 class KVTest(PerfTest):
 
     @with_stats
+    @terminate_bg_process
     def access(self):
         super(KVTest, self).timer()
 
@@ -90,6 +91,7 @@ class FlusherTest(KVTest):
             mc.start_persistence()
 
     @with_stats
+    @terminate_bg_process
     def drain(self):
         for master in self.cluster_spec.yield_masters():
             for bucket in self.test_config.get_buckets():
@@ -101,7 +103,6 @@ class FlusherTest(KVTest):
 
         self.access_bg()
         self.start_persistence()
-
         from_ts, to_ts = self.drain()
         time_elapsed = (to_ts - from_ts) / 1000.0
 
@@ -123,7 +124,6 @@ class WarmupTest(PerfTest):
 
     def access(self):
         super(WarmupTest, self).timer()
-        self.shutdown_event.set()
 
     def warmup(self):
         self.remote.stop_server()

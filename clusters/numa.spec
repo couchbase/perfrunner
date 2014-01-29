@@ -2,6 +2,10 @@
 numa =
     172.23.105.215:8091
 
+[clients]
+hosts =
+    172.23.120.14
+
 [storage]
 data = /ssd
 index = /ssd2

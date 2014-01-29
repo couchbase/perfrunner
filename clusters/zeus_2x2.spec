@@ -6,6 +6,11 @@ zeus_c2 =
     172.23.96.27:8091
     172.23.96.28:8091
 
+[clients]
+hosts =
+    172.23.96.19
+    172.23.96.19
+
 [storage]
 data = d:\data
 index = c:\data

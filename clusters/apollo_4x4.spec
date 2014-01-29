@@ -10,10 +10,9 @@ thor =
     172.23.96.13:8091
     172.23.96.14:8091
 
-[workers]
-apollo_w1 =
+[clients]
+hosts =
     172.23.97.105
-apollo_w2 =
     172.23.97.106
 
 [storage]

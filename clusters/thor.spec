@@ -5,6 +5,10 @@ thor =
     172.23.96.13:8091
     172.23.96.14:8091
 
+[clients]
+hosts =
+    172.23.97.106
+
 [storage]
 data = /data
 index = /data2

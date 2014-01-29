@@ -31,12 +31,14 @@ class IndexCompactionTest(IndexTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
+        self.compact_bucket()
 
         self.define_ddocs()
         self.build_index()
 
         self.load()  # extra mutations for index fragmentation
         self.wait_for_persistence()
+        self.compact_bucket()
         self.build_index()
 
         self.reporter.start()

@@ -14,6 +14,7 @@ thor =
 hosts =
     172.23.97.105
     172.23.97.106
+credentials = root:couchbase
 
 [storage]
 data = /ssd

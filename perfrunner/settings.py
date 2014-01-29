@@ -80,6 +80,10 @@ class ClusterSpec(Config):
         return self.config.get('clients', 'hosts').split()
 
     @safe
+    def get_client_credentials(self):
+        return self.config.get('clients', 'credentials').split(':')
+
+    @safe
     def get_paths(self):
         data_path = self.config.get('storage', 'data')
         index_path = self.config.get('storage', 'index')

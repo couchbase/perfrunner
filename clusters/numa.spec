@@ -5,6 +5,7 @@ numa =
 [clients]
 hosts =
     172.23.120.14
+credentials = root:couchbase
 
 [storage]
 data = /ssd

@@ -8,6 +8,7 @@ zeus =
 [clients]
 hosts =
     172.23.96.19
+credentials = root:couchbase
 
 [storage]
 data = d:\data

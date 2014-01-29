@@ -23,7 +23,8 @@ class WorkerManager(object):
         self.worker_hosts = cluster_spec.get_workers()
         self.queues = []
 
-        state.env.user, state.env.password = cluster_spec.get_ssh_credentials()
+        state.env.user, state.env.password = \
+            cluster_spec.get_client_credentials()
         state.output.running = False
         state.output.stdout = False
 

@@ -9,7 +9,7 @@ level = Basic
 enabled = 0
 
 [internal]
-maxBucketCount = 30
+maxBucketCount = 50
 
 [cluster]
 mem_quota = 40960

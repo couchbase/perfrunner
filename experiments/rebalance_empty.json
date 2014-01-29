@@ -1,0 +1,7 @@
+{
+    "name": "Rebalance-in (min), 3 -> 4, empty bucket, variable #buckets/#vbuckets",
+    "defaults": {
+        "Number of buckets": 1,
+        "Number of vbuckets": 1024
+    }
+}

@@ -1,3 +1,4 @@
+import time
 from optparse import OptionParser
 
 from perfrunner.helpers.memcached import MemcachedHelper
@@ -166,12 +167,18 @@ def main():
     test_config.parse(options.test_config_fname, override)
 
     cm = ClusterManager(cluster_spec, test_config)
+
+    # Individual nodes
     cm.restart_with_alternative_swt()
     cm.restart_with_alternative_num_vbuckets()
     cm.configure_internal_settings()
     cm.set_data_path()
     cm.set_auth()
     cm.set_mem_quota()
+
+    time.sleep(5)
+
+    # Cluster
     if cm.group_number > 1:
         cm.create_server_groups()
     cm.add_nodes()

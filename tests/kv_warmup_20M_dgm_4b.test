@@ -1,0 +1,34 @@
+[test_case]
+module = perfrunner.tests.kv
+class = WarmupTest
+descr = Warmup time (min), 4 buckets x 20M x 2KB, DGM
+larger_is_better = false
+level = Basic
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 4
+num_buckets = 4
+
+[load]
+items = 20000000
+size = 2048
+workers = 10
+
+[hot_load]
+items = 20000000
+workers = 10
+working_set = 10
+
+[access]
+creates = 5
+reads = 50
+updates = 40
+deletes = 5
+throughput = 2500
+items = 20000000
+size = 2048
+workers = 8
+working_set = 10
+working_set_access = 98
+time = 1800

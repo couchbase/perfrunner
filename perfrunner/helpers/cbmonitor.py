@@ -58,7 +58,7 @@ class CbAgent(object):
             'seriesly_host': CBMONITOR_HOST,
             'cbmonitor_host_port': CBMONITOR_HOST,
             'interval': test_config.get_stats_settings().interval,
-            'buckets': None,
+            'buckets': tuple(test_config.get_buckets())[:1],
             'hostnames': None,
         })()
         self.lat_interval = test_config.get_stats_settings().lat_interval

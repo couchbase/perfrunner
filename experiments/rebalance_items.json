@@ -1,7 +1,7 @@
 {
     "name": "Rebalance-in (min), 3 -> 4, 1 bucket, variable #items/#replicas/#vbuckets",
     "defaults": {
-        "Number of items": 1000000,
+        "Number of items (10e6)": 1,
         "Number of vbuckets": 1024,
         "Number of replicas": 1
     }

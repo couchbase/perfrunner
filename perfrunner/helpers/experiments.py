@@ -14,7 +14,7 @@ class ExperimentHelper(object):
         'Mutations/sec': '0.8 * self.tc.get_access_settings().throughput',
         'Number of buckets': 'self.tc.get_num_buckets()',
         'Number of vbuckets': 'self.tc.get_num_vbuckets()',
-        'Number of items': 'self.tc.get_load_settings().items',
+        'Number of items (10e6)': 'self.tc.get_load_settings().items / 10 ** 6',
         'Number of replicas': 'self.tc.get_replica_number()',
 
         'Drive type': 'self.cs.get_parameters()["Disk"].split()[-1]',

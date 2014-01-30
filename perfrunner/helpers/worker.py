@@ -1,6 +1,6 @@
 from celery import Celery
 from fabric import state
-from fabric.api import cd, run
+from fabric.api import cd, run, settings
 from kombu import Queue
 from logger import logger
 from spring.wgen import WorkloadGen
@@ -23,14 +23,12 @@ class WorkerManager(object):
         self.worker_hosts = cluster_spec.get_workers()
         self.queues = []
 
-        state.env.user, state.env.password = \
-            cluster_spec.get_client_credentials()
-        state.output.running = False
-        state.output.stdout = False
+        self.user, self.password = cluster_spec.get_client_credentials()
 
         self.temp_dir = '/tmp/{}'.format(uhex()[:12])
-        self._initialize_project(cluster_spec, test_config)
-        self._start(cluster_spec, test_config)
+        with settings(user=self.user, password=self.password):
+            self._initialize_project(cluster_spec, test_config)
+            self._start(cluster_spec, test_config)
 
     def _initialize_project(self, cluster_spec, test_config):
         for i, master in enumerate(cluster_spec.yield_masters()):
@@ -79,13 +77,14 @@ class WorkerManager(object):
             worker.wait()
 
     def terminate(self, cluster_spec, test_config):
-        for i, master in enumerate(cluster_spec.yield_masters()):
-            state.env.host_string = self.worker_hosts[i]
-            for bucket in test_config.get_buckets():
-                logger.info('Terminating remote Celery worker')
-                run('killall -9 celery; exit 0')
+        with settings(user=self.user, password=self.password):
+            for i, master in enumerate(cluster_spec.yield_masters()):
+                state.env.host_string = self.worker_hosts[i]
+                for bucket in test_config.get_buckets():
+                    logger.info('Terminating remote Celery worker')
+                    run('killall -9 celery; exit 0')
 
-                logger.info('Cleaning up remote worker environment')
-                qname = '{}-{}'.format(master.split(':')[0], bucket)
-                temp_dir = '{}-{}'.format(self.temp_dir, qname)
-                run('rm -fr {}'.format(temp_dir))
+                    logger.info('Cleaning up remote worker environment')
+                    qname = '{}-{}'.format(master.split(':')[0], bucket)
+                    temp_dir = '{}-{}'.format(self.temp_dir, qname)
+                    run('rm -fr {}'.format(temp_dir))

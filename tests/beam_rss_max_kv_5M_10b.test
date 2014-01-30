@@ -13,12 +13,12 @@ num_buckets = 10
 [load]
 items = 5000000
 size = 2048
-workers = 20
+workers = 5
 
 [hot_load]
 items = 5000000
 size = 2048
-workers = 20
+workers = 5
 working_set = 30
 
 [access]
@@ -31,5 +31,5 @@ items = 5000000
 size = 2048
 working_set = 30
 working_set_access = 98
-workers = 24
+workers = 5
 time=3600

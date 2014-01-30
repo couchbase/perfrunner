@@ -242,10 +242,10 @@ class MetricHelper(object):
         return disk_size, metric, metric_info
 
     def calc_max_beam_rss(self):
-        metric = '{}_max_beam_rss_{}'.format(self.test_config.name,
+        metric = 'beam_rss_max_{}_{}'.format(self.test_config.name,
                                              self.cluster_spec.name)
         descr = 'Max. beam.smp RSS (MB), {}'.format(self.test_descr)
-        metric_info = self._get_metric_info(descr, level='Advanced')
+        metric_info = self._get_metric_info(descr)
 
         query_params = self._get_query_params('max_beam.smp_rss')
 

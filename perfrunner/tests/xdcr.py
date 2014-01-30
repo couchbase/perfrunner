@@ -67,9 +67,10 @@ class XdcrTest(PerfTest):
         self.reporter.post_to_sf(
             *self.metric_helper.calc_xdcr_lag()
         )
-        self.reporter.post_to_sf(
-            *self.metric_helper.calc_max_beam_rss()
-        )
+        if self.remote.os != 'Cygwin':
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_max_beam_rss()
+            )
 
 
 class SymmetricXdcrTest(XdcrTest):

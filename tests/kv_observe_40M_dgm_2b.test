@@ -1,0 +1,38 @@
+[test_case]
+module = perfrunner.tests.kv
+class = ObserveLatencyTest
+descr = OBSERVE latency (ms), 5K mutations/sec, 2 buckets x 40M x 2KB, DGM
+larger_is_better = false
+level = Basic
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 4
+num_buckets = 2
+
+[compaction]
+db_percentage = 15
+
+[load]
+items = 40000000
+size = 2048
+workers = 5
+
+[hot_load]
+items = 40000000
+size = 2048
+workers = 5
+working_set = 10
+
+[access]
+creates = 3
+reads = 20
+updates = 75
+deletes = 2
+throughput = 3125
+items = 40000000
+size = 2048
+workers = 12
+working_set = 10
+working_set_access = 98
+time = 3600

@@ -1,5 +1,5 @@
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.tests import PerfTest
+from perfrunner.tests import PerfTest, terminate_bg_process
 from perfrunner.tests.index import IndexTest
 
 
@@ -24,6 +24,10 @@ class BucketCompactionTest(PerfTest):
 
 class IndexCompactionTest(IndexTest):
 
+    @terminate_bg_process
+    def access(self):
+        super(IndexCompactionTest, self).timer()
+
     @with_stats
     def compact_index(self):
         super(IndexCompactionTest, self).compact_index()
@@ -36,10 +40,10 @@ class IndexCompactionTest(IndexTest):
         self.define_ddocs()
         self.build_index()
 
-        self.load()  # extra mutations for index fragmentation
-        self.wait_for_persistence()
+        self.workload = self.test_config.get_access_settings()
+        self.access_bg()
+        self.access()
         self.compact_bucket()
-        self.build_index()
 
         self.reporter.start()
         from_ts, to_ts = self.compact_index()

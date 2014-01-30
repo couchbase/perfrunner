@@ -10,6 +10,9 @@ mem_quota = 57344
 initial_nodes = 4
 num_buckets = 1
 
+[compaction]
+db_percentage = 4
+
 [load]
 items = 100000000
 size = 2048

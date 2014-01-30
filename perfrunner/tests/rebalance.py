@@ -184,11 +184,6 @@ class RebalanceWithQueriesTest(QueryTest, RebalanceTest):
         self.access_bg()
         self.rebalance()
 
-        if self.is_balanced():
-            self.reporter.post_to_sf(
-                *self.metric_helper.calc_views_disk_size()
-            )
-
 
 class RebalanceWithXdcrTest(XdcrTest, RebalanceTest):
 

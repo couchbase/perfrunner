@@ -87,14 +87,6 @@ class InitialAndIncrementalIndexTest(IndexTest):
             *self.metric_helper.get_indexing_meta(value=time_elapsed,
                                                   index_type='Initial')
         )
-        self.reporter.post_to_sf(
-            *self.metric_helper.calc_cpu_utilization(from_ts, to_ts,
-                                                     meta='Initial index')
-        )
-        self.reporter.post_to_sf(
-            *self.metric_helper.calc_views_disk_size(from_ts, to_ts,
-                                                     meta='Initial index')
-        )
 
         self.access()
         self.wait_for_persistence()
@@ -107,12 +99,4 @@ class InitialAndIncrementalIndexTest(IndexTest):
         self.reporter.post_to_sf(
             *self.metric_helper.get_indexing_meta(value=time_elapsed,
                                                   index_type='Incremental')
-        )
-        self.reporter.post_to_sf(
-            *self.metric_helper.calc_cpu_utilization(from_ts, to_ts,
-                                                     meta='Incremental index')
-        )
-        self.reporter.post_to_sf(
-            *self.metric_helper.calc_views_disk_size(from_ts, to_ts,
-                                                     meta='Incremental index')
         )

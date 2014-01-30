@@ -89,5 +89,3 @@ class WorkerManager(object):
                 qname = '{}-{}'.format(master.split(':')[0], bucket)
                 temp_dir = '{}-{}'.format(self.temp_dir, qname)
                 run('rm -fr {}'.format(temp_dir))
-        for queue in self.queues:
-            queue.delete()

@@ -81,7 +81,8 @@ class WorkerManager(object):
 
     def revoke_workers(self):
         for worker in self.workers:
-            worker.revoke(terminate=True)
+            worker.revoke(terminate=True, signal='SIGKILL')
+            logger.info('Worker status: {}'.format(worker.state))
 
     def terminate(self, cluster_spec, test_config):
         with settings(user=self.user, password=self.password):

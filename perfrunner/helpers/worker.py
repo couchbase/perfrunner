@@ -74,7 +74,7 @@ class WorkerManager(object):
             workers.append(worker)
             self.queues.append(queue)
         for worker in workers:
-            worker.wait()
+            worker.wait(propagate=False)
 
     def terminate(self, cluster_spec, test_config):
         with settings(user=self.user, password=self.password):

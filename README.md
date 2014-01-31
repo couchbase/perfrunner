@@ -5,6 +5,7 @@ Requirements
 * virtualenv
 * libcouchbase-devel (or equivalent)
 * dtach (for remote workers only)
+* AMQP broker (RabbitMQ is recommended)
 
 Python dependencies are listed in requirements.txt.
 

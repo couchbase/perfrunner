@@ -43,7 +43,7 @@ class IndexCompactionTest(IndexTest):
         self.workload = self.test_config.get_access_settings()
         self.access_bg()
         self.access()
-        self.compact_bucket()
+        self.wait_for_persistence()
 
         self.reporter.start()
         from_ts, to_ts = self.compact_index()

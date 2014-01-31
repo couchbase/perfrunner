@@ -1,13 +1,13 @@
 from mc_bin_client.mc_bin_client import MemcachedClient
 
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.tests import PerfTest, terminate_bg_process
+from perfrunner.tests import PerfTest, revoke_workers
 
 
 class KVTest(PerfTest):
 
     @with_stats
-    @terminate_bg_process
+    @revoke_workers
     def access(self):
         super(KVTest, self).timer()
 
@@ -91,7 +91,7 @@ class FlusherTest(KVTest):
             mc.start_persistence()
 
     @with_stats
-    @terminate_bg_process
+    @revoke_workers
     def drain(self):
         for master in self.cluster_spec.yield_masters():
             for bucket in self.test_config.get_buckets():

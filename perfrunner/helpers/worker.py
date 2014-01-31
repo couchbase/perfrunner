@@ -22,6 +22,7 @@ class WorkerManager(object):
     def __init__(self, cluster_spec, test_config):
         self.worker_hosts = cluster_spec.get_workers()
         self.queues = []
+        self.workers = []
 
         self.user, self.password = cluster_spec.get_client_credentials()
 
@@ -62,7 +63,7 @@ class WorkerManager(object):
                         '-Q {0} -c 1'.format(qname))
 
     def run_workload(self, settings, target_iterator, ddocs=None):
-        workers = []
+        self.workers = []
         for target in target_iterator:
             logger.info('Starting workload generator remotely')
 
@@ -71,10 +72,16 @@ class WorkerManager(object):
             worker = task_run_workload.apply_async(
                 args=(settings, target, ddocs), queue=queue.name
             )
-            workers.append(worker)
+            self.workers.append(worker)
             self.queues.append(queue)
-        for worker in workers:
-            worker.wait(propagate=False)
+
+    def wait_for_workers(self):
+        for worker in self.workers:
+            worker.wait()
+
+    def revoke_workers(self):
+        for worker in self.workers:
+            worker.revoke(terminate=True)
 
     def terminate(self, cluster_spec, test_config):
         with settings(user=self.user, password=self.password):

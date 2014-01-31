@@ -1,7 +1,7 @@
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import log_phase, target_hash
 from perfrunner.settings import TargetSettings
-from perfrunner.tests import PerfTest, terminate_bg_process, TargetIterator
+from perfrunner.tests import PerfTest, revoke_workers, TargetIterator
 
 
 class XdcrTest(PerfTest):
@@ -41,7 +41,7 @@ class XdcrTest(PerfTest):
             self.monitor.monitor_xdcr_replication(target.node, target.bucket)
 
     @with_stats
-    @terminate_bg_process
+    @revoke_workers
     def access(self):
         super(XdcrTest, self).timer()
 
@@ -95,6 +95,7 @@ class XdcrInitTest(XdcrTest):
         src_target_iterator = SrcTargetIterator(self.cluster_spec,
                                                 self.test_config)
         self.worker_manager.run_workload(load_settings, src_target_iterator)
+        self.worker_manager.wait_for_workers()
 
     @with_stats
     def init_xdcr(self):

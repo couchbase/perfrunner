@@ -1,8 +1,5 @@
-from multiprocessing import Process
-
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.helpers.misc import log_phase
-from perfrunner.tests import terminate_bg_process
+from perfrunner.tests import revoke_workers
 from perfrunner.tests.index import IndexTest
 
 
@@ -11,20 +8,9 @@ class QueryTest(IndexTest):
     COLLECTORS = {'latency': True, 'query_latency': True}
 
     @with_stats
-    @terminate_bg_process
+    @revoke_workers
     def access(self):
         super(QueryTest, self).timer()
-
-    def access_bg(self):
-        access_settings = self.test_config.get_access_settings()
-        log_phase('access phase', access_settings)
-
-        self.bg_process = Process(
-            target=self.worker_manager.run_workload,
-            args=(access_settings, self.target_iterator),
-            kwargs={'ddocs': self.ddocs},
-        )
-        self.bg_process.start()
 
     def run(self):
         self.load()
@@ -35,7 +21,7 @@ class QueryTest(IndexTest):
         self.build_index()
 
         self.workload = self.test_config.get_access_settings()
-        self.access_bg()
+        self.access_bg_with_ddocs()
         self.access()
 
 

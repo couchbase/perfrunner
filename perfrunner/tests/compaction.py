@@ -1,5 +1,5 @@
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.tests import PerfTest, terminate_bg_process
+from perfrunner.tests import PerfTest, revoke_workers
 from perfrunner.tests.index import IndexTest
 
 
@@ -24,7 +24,7 @@ class BucketCompactionTest(PerfTest):
 
 class IndexCompactionTest(IndexTest):
 
-    @terminate_bg_process
+    @revoke_workers
     def access(self):
         super(IndexCompactionTest, self).timer()
 

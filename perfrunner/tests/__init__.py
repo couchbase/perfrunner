@@ -2,7 +2,6 @@ import exceptions as exc
 import os
 import shutil
 import time
-from multiprocessing import Process
 
 from decorator import decorator
 from logger import logger
@@ -38,11 +37,10 @@ class TargetIterator(object):
 
 
 @decorator
-def terminate_bg_process(method, *args):
+def revoke_workers(method, *args):
     method(*args)
     test = args[0]
-    if hasattr(test, "bg_process"):
-        test.bg_process.terminate()
+    test.worker_manager.revoke_workers()
 
 
 class PerfTest(object):
@@ -107,6 +105,7 @@ class PerfTest(object):
         load_settings = self.test_config.get_load_settings()
         log_phase('load phase', load_settings)
         self.worker_manager.run_workload(load_settings, self.target_iterator)
+        self.worker_manager.wait_for_workers()
 
     def hot_load(self):
         hot_load_settings = self.test_config.get_hot_load_settings()
@@ -115,25 +114,30 @@ class PerfTest(object):
             log_phase('hot load phase', hot_load_settings)
             self.worker_manager.run_workload(hot_load_settings,
                                              self.target_iterator)
+            self.worker_manager.wait_for_workers()
 
         hot_load_settings.seq_updates = False
         log_phase('hot load phase', hot_load_settings)
         self.worker_manager.run_workload(hot_load_settings,
                                          self.target_iterator)
+        self.worker_manager.wait_for_workers()
 
     def access(self):
         access_settings = self.test_config.get_access_settings()
         log_phase('access phase', access_settings)
         self.worker_manager.run_workload(access_settings, self.target_iterator)
+        self.worker_manager.wait_for_workers()
 
     def access_bg(self):
         access_settings = self.test_config.get_access_settings()
         log_phase('access in background', access_settings)
-        self.bg_process = Process(
-            target=self.worker_manager.run_workload,
-            args=(access_settings, self.target_iterator),
-        )
-        self.bg_process.start()
+        self.worker_manager.run_workload(access_settings, self.target_iterator)
+
+    def access_bg_with_ddocs(self):
+        access_settings = self.test_config.get_access_settings()
+        log_phase('access phase', access_settings)
+        self.worker_manager.run_workload(access_settings, self.target_iterator,
+                                         ddocs=self.ddocs)
 
     def timer(self):
         access_settings = self.test_config.get_access_settings()

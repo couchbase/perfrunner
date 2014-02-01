@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.compaction
 class = IndexCompactionTest
-descr = Index compaction (min), 1 bucket x 20M x 2KB, non-DGM, 4 x 10 views, 80%% fragmentation
+descr = Index compaction (min), 1 bucket x 20M x 2KB, non-DGM, 4 x 5 views, 80%% fragmentation
 larger_is_better = false
 level = Basic
 
@@ -20,7 +20,7 @@ size = 2048
 workers = 20
 
 [index]
-views = [10, 10, 10, 10]
+views = [5, 5, 5, 5]
 
 [access]
 creates = 4
@@ -33,4 +33,4 @@ items = 20000000
 size = 2048
 workers = 12
 query_workers = 12
-time = 1200
+time = 3600

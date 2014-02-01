@@ -12,8 +12,8 @@ celery = Celery('workers', backend='amqp', broker=BROKER_URL)
 
 
 @celery.task
-def task_run_workload(settings, target, ddocs):
-    wg = WorkloadGen(settings, target, None, ddocs)
+def task_run_workload(settings, target, timer, ddocs):
+    wg = WorkloadGen(settings, target, timer, ddocs)
     wg.run()
 
 
@@ -62,7 +62,7 @@ class WorkerManager(object):
                         'env/bin/celery worker -A perfrunner.helpers.worker '
                         '-Q {0} -c 1'.format(qname))
 
-    def run_workload(self, settings, target_iterator, ddocs=None):
+    def run_workload(self, settings, target_iterator, timer=None, ddocs=None):
         self.workers = []
         for target in target_iterator:
             logger.info('Starting workload generator remotely')
@@ -70,7 +70,7 @@ class WorkerManager(object):
             qname = '{}-{}'.format(target.node.split(':')[0], target.bucket)
             queue = Queue(name=qname)
             worker = task_run_workload.apply_async(
-                args=(settings, target, ddocs), queue=queue.name
+                args=(settings, target, timer, ddocs), queue=queue.name
             )
             self.workers.append(worker)
             self.queues.append(queue)
@@ -78,11 +78,6 @@ class WorkerManager(object):
     def wait_for_workers(self):
         for worker in self.workers:
             worker.wait()
-
-    def revoke_workers(self):
-        for worker in self.workers:
-            worker.revoke(terminate=True, signal='SIGKILL')
-            logger.info('Worker status: {}'.format(worker.state))
 
     def terminate(self, cluster_spec, test_config):
         with settings(user=self.user, password=self.password):

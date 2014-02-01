@@ -36,13 +36,6 @@ class TargetIterator(object):
                 yield TargetSettings(master, bucket, username, password, prefix)
 
 
-@decorator
-def revoke_workers(method, *args):
-    method(*args)
-    test = args[0]
-    test.worker_manager.revoke_workers()
-
-
 class PerfTest(object):
 
     COLLECTORS = {}
@@ -131,12 +124,14 @@ class PerfTest(object):
     def access_bg(self):
         access_settings = self.test_config.get_access_settings()
         log_phase('access in background', access_settings)
-        self.worker_manager.run_workload(access_settings, self.target_iterator)
+        self.worker_manager.run_workload(access_settings, self.target_iterator,
+                                         timer=access_settings.time)
 
     def access_bg_with_ddocs(self):
         access_settings = self.test_config.get_access_settings()
         log_phase('access phase', access_settings)
         self.worker_manager.run_workload(access_settings, self.target_iterator,
+                                         timer=access_settings.time,
                                          ddocs=self.ddocs)
 
     def timer(self):

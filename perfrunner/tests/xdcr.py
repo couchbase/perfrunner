@@ -1,7 +1,7 @@
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import log_phase, target_hash
 from perfrunner.settings import TargetSettings
-from perfrunner.tests import PerfTest, revoke_workers, TargetIterator
+from perfrunner.tests import PerfTest, TargetIterator
 
 
 class XdcrTest(PerfTest):
@@ -41,7 +41,6 @@ class XdcrTest(PerfTest):
             self.monitor.monitor_xdcr_replication(target.node, target.bucket)
 
     @with_stats
-    @revoke_workers
     def access(self):
         super(XdcrTest, self).timer()
 

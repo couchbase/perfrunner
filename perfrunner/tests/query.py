@@ -1,5 +1,4 @@
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.tests import revoke_workers
 from perfrunner.tests.index import IndexTest
 
 
@@ -8,7 +7,6 @@ class QueryTest(IndexTest):
     COLLECTORS = {'latency': True, 'query_latency': True}
 
     @with_stats
-    @revoke_workers
     def access(self):
         super(QueryTest, self).timer()
 

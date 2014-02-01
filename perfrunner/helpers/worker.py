@@ -12,7 +12,7 @@ celery = Celery('workers', backend='amqp', broker=BROKER_URL)
 
 
 @celery.task
-def task_run_workload(settings, target, timer, ddocs):
+def task_run_workload(settings, target, timer=None, ddocs=None):
     wg = WorkloadGen(settings, target, timer, ddocs)
     wg.run()
 
@@ -70,7 +70,9 @@ class WorkerManager(object):
             qname = '{}-{}'.format(target.node.split(':')[0], target.bucket)
             queue = Queue(name=qname)
             worker = task_run_workload.apply_async(
-                args=(settings, target, timer, ddocs), queue=queue.name
+                args=(settings, target),
+                kwargs={'timer': timer, 'ddocs': ddocs},
+                queue=queue.name, expires=timer,
             )
             self.workers.append(worker)
             self.queues.append(queue)

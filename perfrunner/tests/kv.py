@@ -27,6 +27,8 @@ class ObserveLatencyTest(KVTest):
 
     COLLECTORS = {'observe_latency': True}
 
+    ALL_BUCKETS = True
+
     def run(self):
         super(ObserveLatencyTest, self).run()
 
@@ -65,6 +67,8 @@ class ReadLatencyTest(MixedLatencyTest):
 class BgFetcherTest(KVTest):
 
     COLLECTORS = {'latency': True}
+
+    ALL_BUCKETS = True
 
     def run(self):
         super(BgFetcherTest, self).run()

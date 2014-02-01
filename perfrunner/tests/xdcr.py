@@ -8,6 +8,8 @@ class XdcrTest(PerfTest):
 
     COLLECTORS = {'latency': True, 'xdcr_lag': True}
 
+    ALL_BUCKETS = True
+
     def __init__(self, *args, **kwargs):
         super(XdcrTest, self).__init__(*args, **kwargs)
         self.settings = self.test_config.get_xdcr_settings()

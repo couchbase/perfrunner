@@ -3,7 +3,6 @@ import os
 import shutil
 import time
 
-from decorator import decorator
 from logger import logger
 
 from perfrunner.helpers.cbmonitor import CbAgent
@@ -59,7 +58,7 @@ class PerfTest(object):
         self.master_node = cluster_spec.yield_masters().next()
         self.build = self.rest.get_version(self.master_node)
 
-        self.cbagent = CbAgent(cluster_spec, test_config, self.build)
+        self.cbagent = CbAgent(self)
         self.metric_helper = MetricHelper(self)
         self.reporter = Reporter(self)
         self.reports = {}

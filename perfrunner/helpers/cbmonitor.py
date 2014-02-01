@@ -45,27 +45,32 @@ def with_stats(method, *args):
 
 class CbAgent(object):
 
-    def __init__(self, cluster_spec, test_config, build):
+    def __init__(self, test):
         self.clusters = OrderedDict()
-        for cluster_name, servers in cluster_spec.yield_clusters():
+        for cluster_name, servers in test.cluster_spec.yield_clusters():
             cluster = '{}_{}_{}'.format(cluster_name,
-                                        build.replace('.', ''),
+                                        test.build.replace('.', ''),
                                         uhex()[:3])
             master = servers[0].split(':')[0]
             self.clusters[cluster] = master
 
+        if hasattr(test, 'ALL_BUCKETS'):
+            buckets = None
+        else:
+            buckets = tuple(test.test_config.get_buckets())[:1]
+
         self.settings = type('settings', (object, ), {
             'seriesly_host': CBMONITOR_HOST,
             'cbmonitor_host_port': CBMONITOR_HOST,
-            'interval': test_config.get_stats_settings().interval,
-            'buckets': tuple(test_config.get_buckets())[:1],
+            'interval': test.test_config.get_stats_settings().interval,
+            'buckets': buckets,
             'hostnames': None,
         })()
-        self.lat_interval = test_config.get_stats_settings().lat_interval
+        self.lat_interval = test.test_config.get_stats_settings().lat_interval
         self.settings.ssh_username, self.settings.ssh_password = \
-            cluster_spec.get_ssh_credentials()
+            test.cluster_spec.get_ssh_credentials()
         self.settings.rest_username, self.settings.rest_password = \
-            cluster_spec.get_rest_credentials()
+            test.cluster_spec.get_rest_credentials()
 
         self.collectors = []
         self.processes = []

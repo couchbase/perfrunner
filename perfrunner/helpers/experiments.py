@@ -16,6 +16,7 @@ class ExperimentHelper(object):
         'Number of vbuckets': 'self.tc.get_num_vbuckets()',
         'Number of items (10e6)': 'self.tc.get_load_settings().items / 10 ** 6',
         'Number of replicas': 'self.tc.get_replica_number()',
+        'Moves per node': 'self.tc.get_internal_settings()["rebalanceMovesPerNode"]',
 
         'Drive type': 'self.cs.get_parameters()["Disk"].split()[-1]',
     }

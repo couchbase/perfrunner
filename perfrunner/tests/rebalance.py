@@ -180,7 +180,7 @@ class RebalanceWithQueriesTest(QueryTest, RebalanceTest):
         self.build_index()
 
         self.workload = self.test_config.get_access_settings()
-        self.access_bg()
+        self.access_bg_with_ddocs()
         self.rebalance()
 
 

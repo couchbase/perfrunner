@@ -65,8 +65,7 @@ class CouchbaseInstaller(object):
         self.remote_helper.kill_processes()
 
     def uninstall_package(self):
-        version = self.build.version.split('-')[0]
-        self.remote_helper.uninstall_package(self.build.pkg, version)
+        self.remote_helper.uninstall_package(self.build.pkg)
 
     def clean_data(self):
         self.remote_helper.clean_data()

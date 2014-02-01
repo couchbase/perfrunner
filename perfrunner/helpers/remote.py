@@ -130,7 +130,7 @@ class RemoteLinuxHelper(object):
         run('killall -9 beam.smp memcached epmd', warn_only=True, quiet=True)
 
     @all_hosts
-    def uninstall_package(self, pkg, version=None):
+    def uninstall_package(self, pkg):
         logger.info('Uninstalling Couchbase Server')
         if pkg == 'deb':
             run('yes | apt-get remove couchbase-server')
@@ -239,13 +239,13 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
                 logger.info('Killing running setup.exe, pid={}'.format(pid))
                 run('kill {}'.format(pid), warn_only=True, quiet=True)
 
-    def clean_installation(self, version):
-        put('scripts/clean_{}.reg'.format(version), '/cygdrive/c/clean.reg')
+    def clean_installation(self):
+        put('scripts/clean.reg', '/cygdrive/c/clean.reg')
         run('regedit.exe /s "C:\\clean.reg"', warn_only=True)
         run('rm -fr {}'.format(self.ROOT_DIR))
 
     @all_hosts
-    def uninstall_package(self, pkg, version=None):
+    def uninstall_package(self, pkg):
         logger.info('Uninstalling Couchbase Server')
 
         if self.exists(self.VERSION_FILE):
@@ -263,7 +263,7 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
                     continue
             else:
                 logger.warn('Failed to uninstall package, cleaning registry')
-        self.clean_installation(version)
+        self.clean_installation()
 
     @staticmethod
     def put_iss_files(version):

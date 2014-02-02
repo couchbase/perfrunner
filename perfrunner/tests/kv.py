@@ -134,7 +134,7 @@ class WarmupTest(PerfTest):
         warmup_time = 0
         for master in self.cluster_spec.yield_masters():
             for bucket in self.test_config.get_buckets():
-                host = master.node.split(':')[0]
+                host = master.split(':')[0]
                 warmup_time += self.monitor.monitor_warmup(self.memcached,
                                                            host, bucket)
         return round(float(warmup_time) / 10 ** 6 / 60, 1)  # min

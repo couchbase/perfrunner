@@ -47,7 +47,7 @@ class SFReporter(object):
 
     def _add_cluster(self):
         cluster = self.test.cluster_spec.name
-        params = self.test.cluster_spec.get_parameters()
+        params = self.test.cluster_spec.parameters
         try:
             cb = Couchbase.connect(bucket='clusters', **SF_STORAGE)
             cb.set(cluster, params)
@@ -61,10 +61,10 @@ class SFReporter(object):
     def _add_metric(self, metric, metric_info):
         if metric_info is None:
             metric_info = {
-                'title': self.test.test_config.get_test_descr(),
+                'title': self.test.test_config.test_descr,
                 'cluster': self.test.cluster_spec.name,
-                'larger_is_better': self.test.test_config.get_regression_criterion(),
-                'level': self.test.test_config.get_level(),
+                'larger_is_better': self.test.test_config.regression_criterion,
+                'level': self.test.test_config.level,
             }
         try:
             cb = Couchbase.connect(bucket='metrics', **SF_STORAGE)
@@ -116,7 +116,7 @@ class SFReporter(object):
             metric = '{}_{}'.format(self.test.test_config.name,
                                     self.test.cluster_spec.name)
 
-        stats_settings = self.test.test_config.get_stats_settings()
+        stats_settings = self.test.test_config.stats_settings
 
         if stats_settings.post_to_sf:
             self._add_metric(metric, metric_info)

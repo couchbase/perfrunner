@@ -28,7 +28,7 @@ class MemcachedHelper(object):
         return str(int(val * mem_quota))
 
     def __init__(self, cluster_spec):
-        _, self.password = cluster_spec.get_rest_credentials()
+        _, self.password = cluster_spec.rest_credentials
 
     def set_flusher_param(self, host, bucket, key, value):
         logger.info('Changing flusher params: {}={}'.format(key, value))

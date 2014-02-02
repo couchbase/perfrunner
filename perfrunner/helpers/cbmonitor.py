@@ -20,7 +20,7 @@ from perfrunner.settings import CBMONITOR_HOST
 def with_stats(method, *args):
     test = args[0]
 
-    stats_enabled = test.test_config.get_stats_settings().enabled
+    stats_enabled = test.test_config.stats_settings.enabled
 
     if stats_enabled:
         if not test.cbagent.collectors:
@@ -57,20 +57,20 @@ class CbAgent(object):
         if hasattr(test, 'ALL_BUCKETS'):
             buckets = None
         else:
-            buckets = tuple(test.test_config.get_buckets())[:1]
+            buckets = test.test_config.buckets[:1]
 
         self.settings = type('settings', (object, ), {
             'seriesly_host': CBMONITOR_HOST,
             'cbmonitor_host_port': CBMONITOR_HOST,
-            'interval': test.test_config.get_stats_settings().interval,
+            'interval': test.test_config.stats_settings.interval,
             'buckets': buckets,
             'hostnames': None,
         })()
-        self.lat_interval = test.test_config.get_stats_settings().lat_interval
+        self.lat_interval = test.test_config.stats_settings.lat_interval
         self.settings.ssh_username, self.settings.ssh_password = \
-            test.cluster_spec.get_ssh_credentials()
+            test.cluster_spec.ssh_credentials
         self.settings.rest_username, self.settings.rest_password = \
-            test.cluster_spec.get_rest_credentials()
+            test.cluster_spec.rest_credentials
 
         self.collectors = []
         self.processes = []
@@ -119,7 +119,7 @@ class CbAgent(object):
             self.collectors.append(net_collector)
 
     def prepare_iostat(self, clusters, test):
-        data_path, index_path = test.cluster_spec.get_paths()
+        data_path, index_path = test.cluster_spec.paths
         partitions = {'data': data_path}
         if hasattr(test, 'ddocs'):  # all instances of IndexTest have it
             partitions['index'] = index_path
@@ -161,7 +161,7 @@ class CbAgent(object):
             )
 
     def prepare_query_latency(self, clusters, test):
-        params = test.test_config.get_index_settings().params
+        params = test.test_config.index_settings.params
         for cluster in clusters:
             settings = copy(self.settings)
             settings.interval = self.lat_interval

@@ -76,126 +76,156 @@ class ClusterSpec(Config):
                 yield server.split(':')[0]
 
     @safe
-    def get_workers(self):
+    @property
+    def workers(self):
         return self.config.get('clients', 'hosts').split()
 
     @safe
-    def get_client_credentials(self):
+    @property
+    def client_credentials(self):
         return self.config.get('clients', 'credentials').split(':')
 
     @safe
-    def get_paths(self):
+    @property
+    def paths(self):
         data_path = self.config.get('storage', 'data')
         index_path = self.config.get('storage', 'index')
         return data_path, index_path
 
     @safe
-    def get_rest_credentials(self):
+    @property
+    def rest_credentials(self):
         return self.config.get('credentials', 'rest').split(':')
 
     @safe
-    def get_ssh_credentials(self):
+    @property
+    def ssh_credentials(self):
         return self.config.get('credentials', 'ssh').split(':')
 
-    def get_parameters(self):
+    @property
+    def parameters(self):
         return self._get_options_as_dict('parameters')
 
 
 class TestConfig(Config):
 
     @safe
-    def get_test_module(self):
+    @property
+    def test_module(self):
         return self.config.get('test_case', 'module')
 
     @safe
-    def get_test_class(self):
+    @property
+    def test_class(self):
         return self.config.get('test_case', 'class')
 
     @safe
-    def get_test_descr(self):
+    @property
+    def test_descr(self):
         return self.config.get('test_case', 'descr')
 
-    def get_regression_criterion(self):
+    @safe
+    @property
+    def regression_criterion(self):
         return self.config.get('test_case', 'larger_is_better')
 
-    def get_level(self):
+    @safe
+    @property
+    def level(self):
         return self.config.get('test_case', 'level')
 
     @safe
-    def get_mem_quota(self):
+    @property
+    def mem_quota(self):
         return self.config.getint('cluster', 'mem_quota')
 
     @safe
-    def get_initial_nodes(self):
+    @property
+    def initial_nodes(self):
         initial_nodes = self.config.get('cluster', 'initial_nodes')
         initial_nodes = [int(_) for _ in initial_nodes.split()]
         return initial_nodes
 
     @safe
-    def get_num_buckets(self):
+    @property
+    def num_buckets(self):
         return self.config.getint('cluster', 'num_buckets')
 
     @safe
-    def get_mrw_threads_number(self):
+    @property
+    def mrw_threads_number(self):
         return self.config.getint('cluster', 'threads_number')
 
     @safe
-    def get_replica_number(self):
+    @property
+    def replica_number(self):
         return self.config.getint('cluster', 'replica_number')
 
     @safe
+    @property
     def get_swt(self):
         return self.config.get('cluster', 'swt')
 
     @safe
-    def get_num_vbuckets(self):
+    @property
+    def num_vbuckets(self):
         return self.config.getint('cluster', 'num_vbuckets')
 
+    @property
+    def buckets(self):
+        return ['bucket-{}'.format(i + 1) for i in range(self.num_buckets)]
+
     @safe
-    def get_group_number(self):
+    @property
+    def group_number(self):
         return self.config.getint('cluster', 'groups')
 
-    def get_buckets(self):
-        for i in xrange(self.get_num_buckets()):
-            yield 'bucket-{}'.format(i + 1)
-
-    def get_compaction_settings(self):
+    @property
+    def compaction_settings(self):
         options = self._get_options_as_dict('compaction')
         return CompactionSettings(options)
 
-    def get_watermark_settings(self):
-        options = self._get_options_as_dict('watermarks')
-        return options
+    @property
+    def watermark_settings(self):
+        return self._get_options_as_dict('watermarks')
 
-    def get_load_settings(self):
+    @property
+    def load_settings(self):
         options = self._get_options_as_dict('load')
         return LoadSettings(options)
 
-    def get_hot_load_settings(self):
+    @property
+    def hot_load_settings(self):
         options = self._get_options_as_dict('hot_load')
         return HotLoadSettings(options)
 
-    def get_xdcr_settings(self):
+    @property
+    def xdcr_settings(self):
         options = self._get_options_as_dict('xdcr')
         return XDCRSettings(options)
 
-    def get_index_settings(self):
+    @property
+    def index_settings(self):
         options = self._get_options_as_dict('index')
         return IndexSettings(options)
 
-    def get_access_settings(self):
+    @property
+    def access_settings(self):
         options = self._get_options_as_dict('access')
         return AccessSettings(options)
 
-    def get_rebalance_settings(self):
+    @property
+    def rebalance_settings(self):
         options = self._get_options_as_dict('rebalance')
         return RebalanceSettings(options)
 
-    def get_stats_settings(self):
+    @property
+    def stats_settings(self):
         options = self._get_options_as_dict('stats')
         return StatsSettings(options)
 
-    def get_internal_settings(self):
+    @property
+    def internal_settings(self):
         return self._get_options_as_dict('internal')
 
 

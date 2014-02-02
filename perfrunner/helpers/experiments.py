@@ -9,16 +9,16 @@ from perfrunner.settings import SF_STORAGE
 class ExperimentHelper(object):
 
     INPUTS = {
-        'Source nodes': 'self.tc.get_initial_nodes()[0]',
-        'Destination nodes': 'self.tc.get_initial_nodes()[1]',
-        'Mutations/sec': '0.8 * self.tc.get_access_settings().throughput',
-        'Number of buckets': 'self.tc.get_num_buckets()',
-        'Number of vbuckets': 'self.tc.get_num_vbuckets()',
-        'Number of items (10e6)': 'self.tc.get_load_settings().items / 10 ** 6',
-        'Number of replicas': 'self.tc.get_replica_number()',
-        'Moves per node': 'self.tc.get_internal_settings()["rebalanceMovesPerNode"]',
+        'Source nodes': 'self.tc.initial_nodes[0]',
+        'Destination nodes': 'self.tc.initial_nodes[1]',
+        'Mutations/sec': '0.8 * self.tc.access_settings.throughput',
+        'Number of buckets': 'self.tc.num_buckets',
+        'Number of vbuckets': 'self.tc.num_vbuckets',
+        'Number of items (10e6)': 'self.tc.load_settings.items / 10 ** 6',
+        'Number of replicas': 'self.tc.replica_number',
+        'Moves per node': 'self.tc.internal_settings["rebalanceMovesPerNode"]',
 
-        'Drive type': 'self.cs.get_parameters()["Disk"].split()[-1]',
+        'Drive type': 'self.cs.parameters["Disk"].split()[-1]',
     }
 
     def __init__(self, experiment, cluster_spec, test_config):

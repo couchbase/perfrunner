@@ -26,12 +26,12 @@ class ClusterManager(object):
         self.masters = cluster_spec.yield_masters
         self.hostnames = cluster_spec.yield_hostnames
 
-        self.initial_nodes = test_config.get_initial_nodes()
-        self.mem_quota = test_config.get_mem_quota()
-        self.group_number = test_config.get_group_number() or 1
+        self.initial_nodes = test_config.initial_nodes
+        self.mem_quota = test_config.mem_quota
+        self.group_number = test_config.group_number or 1
 
     def set_data_path(self):
-        data_path, index_path = self.cluster_spec.get_paths()
+        data_path, index_path = self.cluster_spec.paths
         for server in self.servers():
             self.rest.set_data_path(server, data_path, index_path)
 
@@ -76,12 +76,12 @@ class ClusterManager(object):
             self.monitor.monitor_rebalance(master)
 
     def create_buckets(self):
-        threads_number = self.test_config.get_mrw_threads_number()
-        replica_number = self.test_config.get_replica_number()
+        threads_number = self.test_config.mrw_threads_number
+        replica_number = self.test_config.replica_number
         if replica_number is None:
             replica_number = 1
 
-        num_buckets = self.test_config.get_num_buckets()
+        num_buckets = self.test_config.num_buckets
         ram_quota = self.mem_quota / num_buckets
         buckets = ['bucket-{}'.format(i + 1) for i in xrange(num_buckets)]
 
@@ -92,12 +92,12 @@ class ClusterManager(object):
                                         threads_number=threads_number)
 
     def configure_auto_compaction(self):
-        compaction_settings = self.test_config.get_compaction_settings()
+        compaction_settings = self.test_config.compaction_settings
         for master in self.masters():
             self.rest.configure_auto_compaction(master, compaction_settings)
 
     def configure_internal_settings(self):
-        internal_settings = self.test_config.get_internal_settings()
+        internal_settings = self.test_config.internal_settings
         for master in self.masters():
             for parameter, value in internal_settings.items():
                 self.rest.set_internal_settings(master,
@@ -109,12 +109,12 @@ class ClusterManager(object):
         self.remote.set_swappiness()
 
     def restart_with_alternative_swt(self):
-        swt = self.test_config.get_swt()
+        swt = self.test_config.swt
         if swt is not None:
             self.remote.restart_with_alternative_swt(swt)
 
     def restart_with_alternative_num_vbuckets(self):
-        num_vbuckets = self.test_config.get_num_vbuckets()
+        num_vbuckets = self.test_config.num_vbuckets
         if num_vbuckets is not None:
             self.remote.restart_with_alternative_num_vbuckets(num_vbuckets)
 
@@ -129,10 +129,10 @@ class ClusterManager(object):
             self.monitor.monitor_warmup(self.memcached, host, target.bucket)
 
     def change_watermarks(self):
-        watermark_settings = self.test_config.get_watermark_settings()
+        watermark_settings = self.test_config.watermark_settings
         for hostname, initial_nodes in zip(self.hostnames(),
                                            self.initial_nodes):
-            for bucket in self.test_config.get_buckets():
+            for bucket in self.test_config.buckets:
                 for key, val in watermark_settings.items():
                     val = self.memcached.calc_watermark(val, self.mem_quota)
                     self.memcached.set_flusher_param(hostname, bucket, key, val)

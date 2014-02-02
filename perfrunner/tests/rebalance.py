@@ -57,7 +57,7 @@ class RebalanceTest(PerfTest):
 
     def __init__(self, *args, **kwargs):
         super(RebalanceTest, self).__init__(*args, **kwargs)
-        self.rebalance_settings = self.test_config.get_rebalance_settings()
+        self.rebalance_settings = self.test_config.rebalance_settings
 
     def is_balanced(self):
         for master in self.cluster_spec.yield_masters():
@@ -66,9 +66,9 @@ class RebalanceTest(PerfTest):
         return True
 
     def change_watermarks(self, host):
-        watermark_settings = self.test_config.get_watermark_settings()
-        mem_quota = self.test_config.get_mem_quota()
-        for bucket in self.test_config.get_buckets():
+        watermark_settings = self.test_config.watermark_settings
+        mem_quota = self.test_config.mem_quota
+        for bucket in self.test_config.buckets:
             for key, val in watermark_settings.items():
                 val = self.memcached.calc_watermark(val, mem_quota)
                 self.memcached.set_flusher_param(host, bucket, key, val)
@@ -79,10 +79,10 @@ class RebalanceTest(PerfTest):
     @with_reporter
     def rebalance(self):
         clusters = self.cluster_spec.yield_clusters()
-        initial_nodes = self.test_config.get_initial_nodes()
+        initial_nodes = self.test_config.initial_nodes
         nodes_after = self.rebalance_settings.nodes_after
         swap = self.rebalance_settings.swap
-        group_number = self.test_config.get_group_number() or 1
+        group_number = self.test_config.group_number or 1
 
         for (_, servers), initial_nodes, nodes_after in zip(clusters,
                                                             initial_nodes,
@@ -159,7 +159,7 @@ class RebalanceKVTest(RebalanceTest):
         self.wait_for_persistence()
         self.compact_bucket()
 
-        self.workload = self.test_config.get_access_settings()
+        self.workload = self.test_config.access_settings
         self.access_bg()
         self.rebalance()
 
@@ -179,7 +179,7 @@ class RebalanceWithQueriesTest(QueryTest, RebalanceTest):
         self.define_ddocs()
         self.build_index()
 
-        self.workload = self.test_config.get_access_settings()
+        self.workload = self.test_config.access_settings
         self.access_bg_with_ddocs()
         self.rebalance()
 
@@ -200,7 +200,7 @@ class RebalanceWithXdcrTest(XdcrTest, RebalanceTest):
 
         self.compact_bucket()
 
-        self.workload = self.test_config.get_access_settings()
+        self.workload = self.test_config.access_settings
         self.access_bg()
         self.rebalance()
 
@@ -221,6 +221,6 @@ class RebalanceWithSymmetricXdcrTest(SymmetricXdcrTest, RebalanceTest):
 
         self.compact_bucket()
 
-        self.workload = self.test_config.get_access_settings()
+        self.workload = self.test_config.access_settings
         self.access_bg()
         self.rebalance()

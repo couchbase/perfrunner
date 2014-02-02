@@ -8,23 +8,23 @@ class IndexTest(PerfTest):
     def __init__(self, *args):
         super(IndexTest, self).__init__(*args)
 
-        views_settings = self.test_config.get_index_settings()
-        if views_settings.disabled_updates:
+        index_settings = self.test_config.index_settings
+        if index_settings.disabled_updates:
             options = {'updateMinChanges': 0, 'replicaUpdateMinChanges': 0}
         else:
             options = None
 
-        self.ddocs = ViewGen().generate_ddocs(views_settings.views, options)
+        self.ddocs = ViewGen().generate_ddocs(index_settings.views, options)
 
     def define_ddocs(self):
         for master in self.cluster_spec.yield_masters():
-            for bucket in self.test_config.get_buckets():
+            for bucket in self.test_config.buckets:
                 for ddoc_name, ddoc in self.ddocs.iteritems():
                     self.rest.create_ddoc(master, bucket, ddoc_name, ddoc)
 
     def build_index(self):
         for master in self.cluster_spec.yield_masters():
-            for bucket in self.test_config.get_buckets():
+            for bucket in self.test_config.buckets:
                 for ddoc_name, ddoc in self.ddocs.iteritems():
                     for view_name in ddoc['views']:
                         self.rest.query_view(master, bucket,
@@ -35,7 +35,7 @@ class IndexTest(PerfTest):
 
     def compact_index(self):
         for master in self.cluster_spec.yield_masters():
-            for bucket in self.test_config.get_buckets():
+            for bucket in self.test_config.buckets:
                 for ddoc_name in self.ddocs:
                     self.rest.trigger_index_compaction(master, bucket,
                                                        ddoc_name)

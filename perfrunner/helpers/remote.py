@@ -25,7 +25,7 @@ def single_host(task, *args, **kargs):
 class RemoteHelper(object):
 
     def __new__(cls, cluster_spec):
-        state.env.user, state.env.password = cluster_spec.get_ssh_credentials()
+        state.env.user, state.env.password = cluster_spec.ssh_credentials
         state.output.running = False
         state.output.stdout = False
 
@@ -120,7 +120,7 @@ class RemoteLinuxHelper(object):
 
     @all_hosts
     def clean_data(self):
-        for path in self.cluster_spec.get_paths():
+        for path in self.cluster_spec.paths:
             run('rm -fr {}/*'.format(path))
         run('rm -fr {}'.format(self.ROOT_DIR))
 
@@ -223,7 +223,7 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
 
     @all_hosts
     def clean_data(self):
-        for path in self.cluster_spec.get_paths():
+        for path in self.cluster_spec.paths:
             path = path.replace(':', '').replace('\\', '/')
             path = '/cygdrive/{}'.format(path)
             run('rm -fr {}/*'.format(path))

@@ -99,11 +99,11 @@ class SettingsTest(TestCase):
     def test_stale_update_after(self):
         test_config = TestConfig()
         test_config.parse(fname='tests/query_lat_20M.test')
-        views_params = test_config.get_index_settings().params
+        views_params = test_config.index_settings.params
         self.assertEqual(views_params, {})
 
     def test_stale_false(self):
         test_config = TestConfig()
         test_config.parse(fname='tests/query_lat_20M_state_false.test')
-        views_params = test_config.get_index_settings().params
+        views_params = test_config.index_settings.params
         self.assertEqual(views_params, {'stale': 'false'})

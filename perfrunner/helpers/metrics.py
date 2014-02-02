@@ -9,7 +9,7 @@ class MetricHelper(object):
     def __init__(self, test):
         self.seriesly = Seriesly(CBMONITOR_HOST)
         self.test_config = test.test_config
-        self.test_descr = test.test_config.get_test_descr()
+        self.test_descr = test.test_config.test_descr
         self.cluster_spec = test.cluster_spec
         self.cluster_names = test.cbagent.clusters.keys()
         self.build = test.build
@@ -44,7 +44,7 @@ class MetricHelper(object):
         query_params = self._get_query_params('avg_xdc_ops')
 
         xdcr_ops = 0
-        for bucket in self.test_config.get_buckets():
+        for bucket in self.test_config.buckets:
             db = 'ns_server{}{}'.format(self.cluster_names[1], bucket)
             data = self.seriesly[db].query(query_params)
             xdcr_ops += data.values()[0][0]
@@ -60,7 +60,7 @@ class MetricHelper(object):
         query_params = self._get_query_params('avg_ep_num_ops_set_meta')
 
         set_meta_ops = 0
-        for bucket in self.test_config.get_buckets():
+        for bucket in self.test_config.buckets:
             db = 'ns_server{}{}'.format(self.cluster_names[1], bucket)
             data = self.seriesly[db].query(query_params)
             set_meta_ops += data.values()[0][0]
@@ -77,7 +77,7 @@ class MetricHelper(object):
         metric_info = self._get_metric_info(descr)
 
         timings = []
-        for bucket in self.test_config.get_buckets():
+        for bucket in self.test_config.buckets:
             db = 'xdcr_lag{}{}'.format(self.cluster_names[0], bucket)
             data = self.seriesly[db].get_all()
             timings += [v['xdcr_lag'] for v in data.values()]
@@ -93,7 +93,7 @@ class MetricHelper(object):
         query_params = self._get_query_params('avg_replication_changes_left')
 
         queues = 0
-        for bucket in self.test_config.get_buckets():
+        for bucket in self.test_config.buckets:
             db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
             data = self.seriesly[db].get_all()
             data = self.seriesly[db].query(query_params)
@@ -103,15 +103,15 @@ class MetricHelper(object):
         return queue, metric, metric_info
 
     def calc_avg_replication_rate(self, time_elapsed):
-        initial_items = self.test_config.get_load_settings().items
-        num_buckets = self.test_config.get_num_buckets()
+        initial_items = self.test_config.load_settings.items
+        num_buckets = self.test_config.num_buckets
         avg_replication_rate = num_buckets * initial_items / time_elapsed
 
         return round(avg_replication_rate)
 
     def calc_avg_drain_rate(self, time_elapsed):
-        items_per_node = self.test_config.get_load_settings().items / \
-            self.test_config.get_initial_nodes()[0]
+        items_per_node = self.test_config.load_settings.items / \
+            self.test_config.initial_nodes[0]
         drain_rate = items_per_node / time_elapsed
 
         return round(drain_rate)
@@ -120,11 +120,11 @@ class MetricHelper(object):
         query_params = self._get_query_params('avg_ep_bg_fetched')
 
         ep_bg_fetched = 0
-        for bucket in self.test_config.get_buckets():
+        for bucket in self.test_config.buckets:
             db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
             data = self.seriesly[db].query(query_params)
             ep_bg_fetched += data.values()[0][0]
-        ep_bg_fetched /= self.test_config.get_initial_nodes()[0]
+        ep_bg_fetched /= self.test_config.initial_nodes[0]
 
         return round(ep_bg_fetched)
 
@@ -132,13 +132,13 @@ class MetricHelper(object):
         query_params = self._get_query_params('avg_couch_views_ops')
 
         couch_views_ops = 0
-        for bucket in self.test_config.get_buckets():
+        for bucket in self.test_config.buckets:
             db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
             data = self.seriesly[db].query(query_params)
             couch_views_ops += data.values()[0][0]
 
         if self.build < '2.5.0':
-            couch_views_ops /= self.test_config.get_initial_nodes()[0]
+            couch_views_ops /= self.test_config.initial_nodes[0]
 
         return round(couch_views_ops)
 
@@ -149,7 +149,7 @@ class MetricHelper(object):
         metric_info = self._get_metric_info(descr)
 
         timings = []
-        for bucket in self.test_config.get_buckets():
+        for bucket in self.test_config.buckets:
             db = 'spring_query_latency{}{}'.format(self.cluster_names[0],
                                                    bucket)
             data = self.seriesly[db].get_all()
@@ -169,7 +169,7 @@ class MetricHelper(object):
         metric_info = self._get_metric_info(descr)
 
         timings = []
-        for bucket in self.test_config.get_buckets():
+        for bucket in self.test_config.buckets:
             db = 'spring_latency{}{}'.format(self.cluster_names[0], bucket)
             data = self.seriesly[db].get_all()
             timings += [
@@ -186,7 +186,7 @@ class MetricHelper(object):
         metric_info = self._get_metric_info(descr)
 
         timings = []
-        for bucket in self.test_config.get_buckets():
+        for bucket in self.test_config.buckets:
             db = 'observe{}{}'.format(self.cluster_names[0], bucket)
             data = self.seriesly[db].get_all()
             timings += [v['latency_observe'] for v in data.values()]
@@ -207,7 +207,7 @@ class MetricHelper(object):
 
         host = self.master_node.split(':')[0].replace('.', '')
         cluster = self.cluster_names[0]
-        bucket = tuple(self.test_config.get_buckets())[0]
+        bucket = self.test_config.buckets[0]
 
         query_params = self._get_query_params('avg_cpu_utilization_rate',
                                               from_ts, to_ts)
@@ -234,7 +234,7 @@ class MetricHelper(object):
                                               from_ts, to_ts)
 
         disk_size = 0
-        for bucket in self.test_config.get_buckets():
+        for bucket in self.test_config.buckets:
             db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
             data = self.seriesly[db].query(query_params)
             disk_size += round(data.values()[0][0] / 1024 ** 3, 1)  # -> GB

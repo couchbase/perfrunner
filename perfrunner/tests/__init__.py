@@ -26,10 +26,10 @@ class TargetIterator(object):
         self.prefix = prefix
 
     def __iter__(self):
-        username, password = self.cluster_spec.get_rest_credentials()
+        username, password = self.cluster_spec.rest_credentials
         prefix = self.prefix
         for master in self.cluster_spec.yield_masters():
-            for bucket in self.test_config.get_buckets():
+            for bucket in self.test_config.buckets:
                 if self.prefix is None:
                     prefix = target_hash(master.split(':')[0])
                 yield TargetSettings(master, bucket, username, password, prefix)
@@ -82,25 +82,25 @@ class PerfTest(object):
 
     def compact_bucket(self):
         for master in self.cluster_spec.yield_masters():
-            for bucket in self.test_config.get_buckets():
+            for bucket in self.test_config.buckets:
                 self.rest.trigger_bucket_compaction(master, bucket)
         for master in self.cluster_spec.yield_masters():
             self.monitor.monitor_task(master, 'bucket_compaction')
 
     def wait_for_persistence(self):
         for master in self.cluster_spec.yield_masters():
-            for bucket in self.test_config.get_buckets():
+            for bucket in self.test_config.buckets:
                 self.monitor.monitor_disk_queue(master, bucket)
                 self.monitor.monitor_tap_replication(master, bucket)
 
     def load(self):
-        load_settings = self.test_config.get_load_settings()
+        load_settings = self.test_config.load_settings
         log_phase('load phase', load_settings)
         self.worker_manager.run_workload(load_settings, self.target_iterator)
         self.worker_manager.wait_for_workers()
 
     def hot_load(self):
-        hot_load_settings = self.test_config.get_hot_load_settings()
+        hot_load_settings = self.test_config.hot_load_settings
 
         if '2.0.0' < self.build < '2.1.0':
             log_phase('hot load phase', hot_load_settings)
@@ -115,26 +115,26 @@ class PerfTest(object):
         self.worker_manager.wait_for_workers()
 
     def access(self):
-        access_settings = self.test_config.get_access_settings()
+        access_settings = self.test_config.access_settings
         log_phase('access phase', access_settings)
         self.worker_manager.run_workload(access_settings, self.target_iterator)
         self.worker_manager.wait_for_workers()
 
     def access_bg(self):
-        access_settings = self.test_config.get_access_settings()
+        access_settings = self.test_config.access_settings
         log_phase('access in background', access_settings)
         self.worker_manager.run_workload(access_settings, self.target_iterator,
                                          timer=access_settings.time)
 
     def access_bg_with_ddocs(self):
-        access_settings = self.test_config.get_access_settings()
+        access_settings = self.test_config.access_settings
         log_phase('access phase', access_settings)
         self.worker_manager.run_workload(access_settings, self.target_iterator,
                                          timer=access_settings.time,
                                          ddocs=self.ddocs)
 
     def timer(self):
-        access_settings = self.test_config.get_access_settings()
+        access_settings = self.test_config.access_settings
         logger.info('Running phase for {} seconds'.format(access_settings.time))
         time.sleep(access_settings.time)
 

@@ -39,7 +39,7 @@ class IndexCompactionTest(IndexTest):
         self.define_ddocs()
         self.build_index()
 
-        self.workload = self.test_config.get_access_settings()
+        self.workload = self.test_config.access_settings
         self.access_bg_with_ddocs()
         self.access()
         self.wait_for_persistence()

@@ -18,7 +18,7 @@ class KVTest(PerfTest):
         self.wait_for_persistence()
         self.compact_bucket()
 
-        self.workload = self.test_config.get_access_settings()
+        self.workload = self.test_config.access_settings
         self.access_bg()
         self.access()
 
@@ -78,8 +78,8 @@ class BgFetcherTest(KVTest):
 class FlusherTest(KVTest):
 
     def mc_iterator(self):
-        _, password = self.cluster_spec.get_rest_credentials()
-        for bucket in self.test_config.get_buckets():
+        _, password = self.cluster_spec.rest_credentials
+        for bucket in self.test_config.buckets:
             for hostname in self.cluster_spec.yield_hostnames():
                 mc = MemcachedClient(host=hostname, port=11210)
                 mc.sasl_auth_plain(user=bucket, password=password)
@@ -96,7 +96,7 @@ class FlusherTest(KVTest):
     @with_stats
     def drain(self):
         for master in self.cluster_spec.yield_masters():
-            for bucket in self.test_config.get_buckets():
+            for bucket in self.test_config.buckets:
                 self.monitor.monitor_disk_queue(master, bucket)
 
     def run(self):
@@ -133,7 +133,7 @@ class WarmupTest(PerfTest):
         self.remote.start_server()
         warmup_time = 0
         for master in self.cluster_spec.yield_masters():
-            for bucket in self.test_config.get_buckets():
+            for bucket in self.test_config.buckets:
                 host = master.split(':')[0]
                 warmup_time += self.monitor.monitor_warmup(self.memcached,
                                                            host, bucket)
@@ -147,7 +147,7 @@ class WarmupTest(PerfTest):
         self.wait_for_persistence()
         self.compact_bucket()
 
-        self.workload = self.test_config.get_access_settings()
+        self.workload = self.test_config.access_settings
         self.access_bg()
         self.access()
 

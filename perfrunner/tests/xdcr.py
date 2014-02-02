@@ -12,14 +12,14 @@ class XdcrTest(PerfTest):
 
     def __init__(self, *args, **kwargs):
         super(XdcrTest, self).__init__(*args, **kwargs)
-        self.settings = self.test_config.get_xdcr_settings()
+        self.settings = self.test_config.xdcr_settings
 
     def _start_replication(self, m1, m2):
         name = target_hash(m1, m2)
         certificate = self.settings.use_ssl and self.rest.get_certificate(m2)
         self.rest.add_remote_cluster(m1, m2, name, certificate)
 
-        for bucket in self.test_config.get_buckets():
+        for bucket in self.test_config.buckets:
             params = {
                 'replicationType': 'continuous',
                 'toBucket': bucket,
@@ -58,7 +58,7 @@ class XdcrTest(PerfTest):
 
         self.compact_bucket()
 
-        self.workload = self.test_config.get_access_settings()
+        self.workload = self.test_config.access_settings
         self.access_bg()
         self.access()
 
@@ -79,9 +79,9 @@ class SymmetricXdcrTest(XdcrTest):
 class SrcTargetIterator(TargetIterator):
 
     def __iter__(self):
-        username, password = self.cluster_spec.get_rest_credentials()
+        username, password = self.cluster_spec.rest_credentials
         src_master = self.cluster_spec.yield_masters().next()
-        for bucket in self.test_config.get_buckets():
+        for bucket in self.test_config.buckets:
             prefix = target_hash(src_master, bucket)
             yield TargetSettings(src_master, bucket, username, password, prefix)
 
@@ -91,7 +91,7 @@ class XdcrInitTest(XdcrTest):
     COLLECTORS = {}
 
     def load(self):
-        load_settings = self.test_config.get_load_settings()
+        load_settings = self.test_config.load_settings
         log_phase('load phase', load_settings)
         src_target_iterator = SrcTargetIterator(self.cluster_spec,
                                                 self.test_config)

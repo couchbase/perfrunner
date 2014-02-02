@@ -20,11 +20,11 @@ def task_run_workload(settings, target, timer=None, ddocs=None):
 class WorkerManager(object):
 
     def __init__(self, cluster_spec, test_config):
-        self.worker_hosts = cluster_spec.get_workers()
+        self.worker_hosts = cluster_spec.workers
         self.queues = []
         self.workers = []
 
-        self.user, self.password = cluster_spec.get_client_credentials()
+        self.user, self.password = cluster_spec.client_credentials
 
         self.temp_dir = '/tmp/{}'.format(uhex()[:12])
         with settings(user=self.user, password=self.password):
@@ -35,7 +35,7 @@ class WorkerManager(object):
         for i, master in enumerate(cluster_spec.yield_masters()):
             state.env.host_string = self.worker_hosts[i]
             run('killall -9 celery; exit 0')
-            for bucket in test_config.get_buckets():
+            for bucket in test_config.buckets:
                 logger.info('Intializing remote worker environment')
 
                 qname = '{}-{}'.format(master.split(':')[0], bucket)
@@ -52,7 +52,7 @@ class WorkerManager(object):
     def _start(self, cluster_spec, test_config):
         for i, master in enumerate(cluster_spec.yield_masters()):
             state.env.host_string = self.worker_hosts[i]
-            for bucket in test_config.get_buckets():
+            for bucket in test_config.buckets:
                 logger.info('Starting remote Celery worker')
 
                 qname = '{}-{}'.format(master.split(':')[0], bucket)
@@ -85,7 +85,7 @@ class WorkerManager(object):
         with settings(user=self.user, password=self.password):
             for i, master in enumerate(cluster_spec.yield_masters()):
                 state.env.host_string = self.worker_hosts[i]
-                for bucket in test_config.get_buckets():
+                for bucket in test_config.buckets:
                     logger.info('Terminating remote Celery worker')
                     run('killall -9 celery; exit 0')
 

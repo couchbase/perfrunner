@@ -36,7 +36,7 @@ class RestHelper(object):
 
     def __init__(self, cluster_spec):
         self.rest_username, self.rest_password = \
-            cluster_spec.get_rest_credentials()
+            cluster_spec.rest_credentials
         self.auth = (self.rest_username, self.rest_password)
 
     @retry

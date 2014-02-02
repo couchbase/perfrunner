@@ -163,7 +163,7 @@ class TestConfig(Config):
 
     @property
     @safe
-    def get_swt(self):
+    def swt(self):
         return self.config.get('cluster', 'swt')
 
     @property

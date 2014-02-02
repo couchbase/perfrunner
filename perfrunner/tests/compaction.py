@@ -43,6 +43,7 @@ class IndexCompactionTest(IndexTest):
         self.access_bg_with_ddocs()
         self.access()
         self.wait_for_persistence()
+        self.build_index()
 
         self.reporter.start()
         from_ts, to_ts = self.compact_index()

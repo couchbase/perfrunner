@@ -137,7 +137,7 @@ class WarmupTest(PerfTest):
                 host = master.split(':')[0]
                 warmup_time += self.monitor.monitor_warmup(self.memcached,
                                                            host, bucket)
-        return round(float(warmup_time) / 10 ** 6 / 60, 1)  # min
+        return round(warmup_time / 10 ** 6 / 60, 1)  # min
 
     def run(self):
         self.load()

@@ -96,7 +96,7 @@ class Monitor(RestHelper):
             stats = memcahed.get_stats(host, bucket, 'warmup')
             state = stats['ep_warmup_state']
             if state == 'done':
-                return stats['ep_warmup_time']
+                return float(stats['ep_warmup_time'])
             else:
                 logger.info('Warmpup status: {}'.format(state))
                 time.sleep(self.POLLING_INTERVAL)

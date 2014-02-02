@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.index
 class = InitialAndIncrementalIndexTest
-descr = 1 bucket x 20M x 2KB, DGM, 4 x 10 views, no mutations
+descr = 1 bucket x 20M x 2KB, DGM, 4 x 4 views, no mutations
 larger_is_better = false
 level = Basic
 
@@ -20,7 +20,7 @@ size = 2048
 workers = 20
 
 [index]
-views = [10, 10, 10, 10]
+views = [4, 4, 4, 4]
 disabled_updates = 1
 
 [access]

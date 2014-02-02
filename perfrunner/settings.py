@@ -75,30 +75,30 @@ class ClusterSpec(Config):
             for server in servers:
                 yield server.split(':')[0]
 
-    @safe
     @property
+    @safe
     def workers(self):
         return self.config.get('clients', 'hosts').split()
 
-    @safe
     @property
+    @safe
     def client_credentials(self):
         return self.config.get('clients', 'credentials').split(':')
 
-    @safe
     @property
+    @safe
     def paths(self):
         data_path = self.config.get('storage', 'data')
         index_path = self.config.get('storage', 'index')
         return data_path, index_path
 
-    @safe
     @property
+    @safe
     def rest_credentials(self):
         return self.config.get('credentials', 'rest').split(':')
 
-    @safe
     @property
+    @safe
     def ssh_credentials(self):
         return self.config.get('credentials', 'ssh').split(':')
 
@@ -109,65 +109,65 @@ class ClusterSpec(Config):
 
 class TestConfig(Config):
 
-    @safe
     @property
+    @safe
     def test_module(self):
         return self.config.get('test_case', 'module')
 
-    @safe
     @property
+    @safe
     def test_class(self):
         return self.config.get('test_case', 'class')
 
-    @safe
     @property
+    @safe
     def test_descr(self):
         return self.config.get('test_case', 'descr')
 
-    @safe
     @property
+    @safe
     def regression_criterion(self):
         return self.config.get('test_case', 'larger_is_better')
 
-    @safe
     @property
+    @safe
     def level(self):
         return self.config.get('test_case', 'level')
 
-    @safe
     @property
+    @safe
     def mem_quota(self):
         return self.config.getint('cluster', 'mem_quota')
 
-    @safe
     @property
+    @safe
     def initial_nodes(self):
         initial_nodes = self.config.get('cluster', 'initial_nodes')
         initial_nodes = [int(_) for _ in initial_nodes.split()]
         return initial_nodes
 
-    @safe
     @property
+    @safe
     def num_buckets(self):
         return self.config.getint('cluster', 'num_buckets')
 
-    @safe
     @property
+    @safe
     def mrw_threads_number(self):
         return self.config.getint('cluster', 'threads_number')
 
-    @safe
     @property
+    @safe
     def replica_number(self):
         return self.config.getint('cluster', 'replica_number')
 
-    @safe
     @property
+    @safe
     def get_swt(self):
         return self.config.get('cluster', 'swt')
 
-    @safe
     @property
+    @safe
     def num_vbuckets(self):
         return self.config.getint('cluster', 'num_vbuckets')
 
@@ -175,8 +175,8 @@ class TestConfig(Config):
     def buckets(self):
         return ['bucket-{}'.format(i + 1) for i in range(self.num_buckets)]
 
-    @safe
     @property
+    @safe
     def group_number(self):
         return self.config.getint('cluster', 'groups')
 

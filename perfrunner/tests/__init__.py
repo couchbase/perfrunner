@@ -1,5 +1,5 @@
 import exceptions as exc
-import os
+import glob
 import shutil
 import time
 
@@ -140,8 +140,7 @@ class PerfTest(object):
 
     def debug(self):
         self.remote.collect_info()
+        for hostname in self.cluster_spec.yield_hostnames():
+            for fname in glob.glob('{}/*.zip'.format(hostname)):
+                shutil.move(fname, '{}.zip'.format(hostname))
         self.reporter.save_web_logs()
-        for root, _, files in os.walk('.'):
-            for f in files:
-                if f.endswith('.zip'):
-                    shutil.move(os.path.join(root, f), '.')

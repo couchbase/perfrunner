@@ -1,5 +1,5 @@
 import time
-from zipfile import ZipFile
+from zipfile import ZipFile, ZIP_DEFLATED
 
 from btrc import CouchbaseClient, StatsReporter
 from couchbase import Couchbase
@@ -141,7 +141,7 @@ class LogReporter(object):
                 fh.write(pretty_dict(logs))
 
     def save_master_events(self):
-        with ZipFile('master_events.zip', 'w') as zh:
+        with ZipFile('master_events.zip', 'w', ZIP_DEFLATED) as zh:
             for master in self.test.cluster_spec.yield_masters():
                 master_events = self.test.rest.get_master_events(master)
                 fname = 'master_events_{}.log'.format(master.split(':')[0])

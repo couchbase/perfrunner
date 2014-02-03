@@ -163,6 +163,12 @@ class RemoteLinuxHelper(object):
             .format(num_vbuckets))
 
     @all_hosts
+    def disable_moxi(self):
+        logger.info('Disabling moxi')
+        run('rm /opt/couchbase/bin/moxi')
+        run('killall -9 moxi')
+
+    @all_hosts
     def stop_server(self):
         logger.info('Stopping Couchbase Server')
         run('/etc/init.d/couchbase-server stop')

@@ -172,6 +172,11 @@ class TestConfig(Config):
         return self.config.getint('cluster', 'num_vbuckets')
 
     @property
+    @safe
+    def disable_moxi(self):
+        return self.config.get('cluster', 'disable_moxi')
+
+    @property
     def buckets(self):
         return ['bucket-{}'.format(i + 1) for i in range(self.num_buckets)]
 

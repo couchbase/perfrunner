@@ -17,6 +17,7 @@ class ExperimentHelper(object):
         'Number of items (10e6)': 'self.tc.load_settings.items / 10 ** 6',
         'Number of replicas': 'self.tc.replica_number',
         'Moves per node': 'self.tc.internal_settings["rebalanceMovesPerNode"]',
+        'Moxi': 'self.tc.disable_moxi is None and "Moxi on" or "Moxi off"',
 
         'Drive type': 'self.cs.parameters["Disk"].split()[-1]',
     }

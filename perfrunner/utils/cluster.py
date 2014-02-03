@@ -43,6 +43,10 @@ class ClusterManager(object):
         for server in self.servers():
             self.rest.set_mem_quota(server, self.mem_quota)
 
+    def disable_moxi(self):
+        if self.test_config.disable_moxi is not None:
+            self.remote.disable_moxi()
+
     def create_server_groups(self):
         for master in self.masters():
             for i in range(1, self.group_number):
@@ -175,6 +179,7 @@ def main():
     cm.set_data_path()
     cm.set_auth()
     cm.set_mem_quota()
+    cm.disable_moxi()
 
     time.sleep(5)
 

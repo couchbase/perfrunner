@@ -73,7 +73,7 @@ class SymmetricXdcrTest(XdcrTest):
         super(SymmetricXdcrTest, self).__init__(*args, **kwargs)
         self.target_iterator = TargetIterator(self.cluster_spec,
                                               self.test_config,
-                                              prefix="symmetric")
+                                              prefix='symmetric')
 
 
 class SrcTargetIterator(TargetIterator):

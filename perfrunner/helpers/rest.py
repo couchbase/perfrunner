@@ -267,7 +267,7 @@ class RestHelper(object):
 
         api = 'http://{}/pools/default/serverGroups'.format(host_port)
         return {
-            g["name"]: g["addNodeURI"] for g in self.get(url=api).json()["groups"]
+            g['name']: g['addNodeURI'] for g in self.get(url=api).json()['groups']
         }
 
     def get_certificate(self, host_port):

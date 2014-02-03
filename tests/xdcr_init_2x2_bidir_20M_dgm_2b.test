@@ -8,7 +8,7 @@ level = Basic
 [cluster]
 mem_quota = 40960
 initial_nodes = 2 2
-num_buckets = 1
+num_buckets = 2
 
 [compaction]
 db_percentage = 100

@@ -229,15 +229,12 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
             run('rm -fr {}/*'.format(path))
 
     def kill_processes(self):
-        pass
+        run('taskkill /F /T /IM empd.exe', warn_only=True, quiet=True)
+        run('taskkill /F /T /IM erl.exe', warn_only=True, quiet=True)
+        run('taskkill /F /T /IM memcached.exe', warn_only=True, quiet=True)
 
     def kill_installer(self):
-        output = run('ps -ef', warn_only=True, quiet=True)
-        for line in output.split('\n'):
-            if '/home/Administrator/setup' in line:
-                pid = line.split()[1]
-                logger.info('Killing running setup.exe, pid={}'.format(pid))
-                run('kill {}'.format(pid), warn_only=True, quiet=True)
+        run('taskkill /F /T /IM setup.exe', warn_only=True, quiet=True)
 
     def clean_installation(self):
         put('scripts/clean.reg', '/cygdrive/c/clean.reg')

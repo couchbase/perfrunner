@@ -3,7 +3,7 @@
     "defaults": {
         "Number of buckets": 1,
         "Number of vbuckets": 1024,
-        "Moves per node": 1,
+        "Moves per node": "1",
         "Moxi": "Moxi on"
     }
 }

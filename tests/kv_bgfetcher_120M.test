@@ -1,25 +1,25 @@
 [test_case]
 module = perfrunner.tests.kv
 class = BgFetcherTest
-descr = Avg. BgFetcher disk reads/sec, 2 buckets x 60M x 2KB, 40%% cache miss rate
+descr = Avg. BgFetcher disk reads/sec, 1 bucket x 120M x 2KB, 40%% cache miss rate
 larger_is_better = true
 level = Basic
 
 [cluster]
 mem_quota = 40960
 initial_nodes = 4
-num_buckets = 2
+num_buckets = 1
 
 [compaction]
 db_percentage = 10
 
 [load]
-items = 60000000
+items = 120000000
 size = 2048
 workers = 10
 
 [hot_load]
-items = 60000000
+items = 120000000
 size = 2048
 workers = 20
 working_set = 20
@@ -29,9 +29,9 @@ creates = 1
 reads = 70
 updates = 28
 deletes = 1
-items = 60000000
+items = 120000000
 size = 2048
-workers = 32
+workers = 64
 working_set = 20
 working_set_access = 60
 time=3600

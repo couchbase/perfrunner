@@ -1,0 +1,38 @@
+[test_case]
+module = perfrunner.tests.xdcr
+class = XdcrTest
+descr = 4 -> 4 BiDir, 2 buckets x 50M x 2KB, DGM
+larger_is_better = false
+level = Basic
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 4 4
+num_buckets = 2
+
+[load]
+items = 50000000
+size = 2048
+workers = 20
+
+[hot_load]
+items = 50000000
+size = 2048
+workers = 20
+working_set = 5
+
+[xdcr]
+replication_type = bidir
+
+[access]
+creates = 1
+reads = 50
+updates = 48
+deletes = 1
+throughput = 5000
+items = 50000000
+size = 2048
+workers = 12
+working_set = 5
+working_set_access = 98
+time = 10800

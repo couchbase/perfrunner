@@ -7,7 +7,7 @@ apollo =
 
 [clients]
 hosts =
-    172.23.97.105
+    172.23.97.74
 credentials = root:couchbase
 
 [storage]

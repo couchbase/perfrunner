@@ -17,7 +17,7 @@ view_percentage = 100
 [load]
 items = 25000000
 size = 2048
-workers = 10
+workers = 5
 
 [xdcr]
 replication_type = unidir

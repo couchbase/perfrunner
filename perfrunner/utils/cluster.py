@@ -181,7 +181,7 @@ def main():
     cm.set_mem_quota()
     cm.disable_moxi()
 
-    time.sleep(5)
+    time.sleep(30)  # crutch
 
     # Cluster
     if cm.group_number > 1:

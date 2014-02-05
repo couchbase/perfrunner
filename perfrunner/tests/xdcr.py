@@ -67,15 +67,6 @@ class XdcrTest(PerfTest):
             self.reporter.post_to_sf(*self.metric_helper.calc_max_beam_rss())
 
 
-class SymmetricXdcrTest(XdcrTest):
-
-    def __init__(self, *args, **kwargs):
-        super(SymmetricXdcrTest, self).__init__(*args, **kwargs)
-        self.target_iterator = TargetIterator(self.cluster_spec,
-                                              self.test_config,
-                                              prefix='symmetric')
-
-
 class SrcTargetIterator(TargetIterator):
 
     def __iter__(self):
@@ -86,7 +77,25 @@ class SrcTargetIterator(TargetIterator):
             yield TargetSettings(src_master, bucket, username, password, prefix)
 
 
-class XdcrInitTest(XdcrTest):
+class SymmetricXdcrTest(XdcrTest):
+
+    def __init__(self, *args, **kwargs):
+        super(SymmetricXdcrTest, self).__init__(*args, **kwargs)
+        self.target_iterator = TargetIterator(self.cluster_spec,
+                                              self.test_config,
+                                              prefix='symmetric')
+
+    def load(self):
+        load_settings = self.test_config.load_settings
+        log_phase('load phase', load_settings)
+        src_target_iterator = SrcTargetIterator(self.cluster_spec,
+                                                self.test_config,
+                                                prefix='symmetric')
+        self.worker_manager.run_workload(load_settings, src_target_iterator)
+        self.worker_manager.wait_for_workers()
+
+
+class XdcrInitTest(SymmetricXdcrTest):
 
     COLLECTORS = {}
 

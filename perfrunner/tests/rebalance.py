@@ -21,6 +21,7 @@ def with_delay(rebalance, *args, **kwargs):
     rebalance(*args, **kwargs)
 
     time.sleep(test.rebalance_settings.stop_after)
+    test.worker_manager.terminate()
 
 
 @decorator

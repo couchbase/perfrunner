@@ -309,7 +309,7 @@ class PhaseSettings(object):
     SEQ_READS = False
     SEQ_UPDATES = False
 
-    TIME = 0
+    TIME = 3600 * 24
 
     def __init__(self, options):
         self.creates = int(options.get('creates', self.CREATES))

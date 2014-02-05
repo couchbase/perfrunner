@@ -20,6 +20,9 @@ def task_run_workload(settings, target, timer=None, ddocs=None):
 class WorkerManager(object):
 
     def __init__(self, cluster_spec, test_config):
+        self.cluster_spec = cluster_spec
+        self.test_config = test_config
+
         self.worker_hosts = cluster_spec.workers
         self.queues = []
         self.workers = []
@@ -28,14 +31,14 @@ class WorkerManager(object):
 
         self.temp_dir = '/tmp/{}'.format(uhex()[:12])
         with settings(user=self.user, password=self.password):
-            self._initialize_project(cluster_spec, test_config)
-            self._start(cluster_spec, test_config)
+            self._initialize_project()
+            self._start()
 
-    def _initialize_project(self, cluster_spec, test_config):
-        for i, master in enumerate(cluster_spec.yield_masters()):
+    def _initialize_project(self):
+        for i, master in enumerate(self.cluster_spec.yield_masters()):
             state.env.host_string = self.worker_hosts[i]
             run('killall -9 celery; exit 0')
-            for bucket in test_config.buckets:
+            for bucket in self.test_config.buckets:
                 logger.info('Intializing remote worker environment')
 
                 qname = '{}-{}'.format(master.split(':')[0], bucket)
@@ -49,10 +52,10 @@ class WorkerManager(object):
                         'env/bin/pip install '
                         '--download-cache /tmp/pip -r requirements.txt')
 
-    def _start(self, cluster_spec, test_config):
-        for i, master in enumerate(cluster_spec.yield_masters()):
+    def _start(self):
+        for i, master in enumerate(self.cluster_spec.yield_masters()):
             state.env.host_string = self.worker_hosts[i]
-            for bucket in test_config.buckets:
+            for bucket in self.test_config.buckets:
                 logger.info('Starting remote Celery worker')
 
                 qname = '{}-{}'.format(master.split(':')[0], bucket)
@@ -81,11 +84,11 @@ class WorkerManager(object):
         for worker in self.workers:
             worker.wait()
 
-    def terminate(self, cluster_spec, test_config):
+    def terminate(self):
         with settings(user=self.user, password=self.password):
-            for i, master in enumerate(cluster_spec.yield_masters()):
+            for i, master in enumerate(self.cluster_spec.yield_masters()):
                 state.env.host_string = self.worker_hosts[i]
-                for bucket in test_config.buckets:
+                for bucket in self.test_config.buckets:
                     logger.info('Terminating remote Celery worker')
                     run('killall -9 celery; exit 0')
 

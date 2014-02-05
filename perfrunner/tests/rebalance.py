@@ -56,6 +56,8 @@ def with_delayed_posting(rebalance, *args, **kwargs):
 
 class RebalanceTest(PerfTest):
 
+    ALL_HOSTNAMES = True
+
     def __init__(self, *args, **kwargs):
         super(RebalanceTest, self).__init__(*args, **kwargs)
         self.rebalance_settings = self.test_config.rebalance_settings

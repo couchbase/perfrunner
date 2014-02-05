@@ -58,13 +58,17 @@ class CbAgent(object):
             buckets = None
         else:
             buckets = test.test_config.buckets[:1]
+        if hasattr(test, 'ALL_HOSTNAMES'):
+            hostnames = tuple(test.cluster_spec.yield_hostnames())
+        else:
+            hostnames = None
 
         self.settings = type('settings', (object, ), {
             'seriesly_host': CBMONITOR_HOST,
             'cbmonitor_host_port': CBMONITOR_HOST,
             'interval': test.test_config.stats_settings.interval,
             'buckets': buckets,
-            'hostnames': None,
+            'hostnames': hostnames,
         })()
         self.lat_interval = test.test_config.stats_settings.lat_interval
         self.settings.ssh_username, self.settings.ssh_password = \

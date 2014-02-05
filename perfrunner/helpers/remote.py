@@ -234,11 +234,8 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
             path = '/cygdrive/{}'.format(path)
             run('rm -fr {}/*'.format(path))
 
-    @all_hosts
     def kill_processes(self):
-        run('taskkill /F /T /IM empd.exe', warn_only=True, quiet=True)
-        run('taskkill /F /T /IM erl.exe', warn_only=True, quiet=True)
-        run('taskkill /F /T /IM memcached.exe', warn_only=True, quiet=True)
+        pass
 
     def kill_installer(self):
         run('taskkill /F /T /IM setup.exe', warn_only=True, quiet=True)

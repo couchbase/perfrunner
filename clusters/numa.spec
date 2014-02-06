@@ -4,12 +4,12 @@ numa =
 
 [clients]
 hosts =
-    172.23.120.14
+    172.23.97.105
 credentials = root:couchbase
 
 [storage]
-data = /ssd
-index = /ssd2
+data = /ssd1
+index = /ssd1
 
 [credentials]
 rest = Administrator:password

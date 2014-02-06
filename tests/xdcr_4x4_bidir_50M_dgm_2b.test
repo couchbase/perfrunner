@@ -19,20 +19,20 @@ workers = 20
 items = 50000000
 size = 2048
 workers = 20
-working_set = 5
+working_set = 20
 
 [xdcr]
 replication_type = bidir
 
 [access]
-creates = 1
+creates = 0
 reads = 50
-updates = 48
-deletes = 1
+updates = 50
+deletes = 0
 throughput = 5000
 items = 50000000
 size = 2048
 workers = 12
-working_set = 5
+working_set = 20
 working_set_access = 98
 time = 10800

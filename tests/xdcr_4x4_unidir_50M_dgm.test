@@ -19,7 +19,7 @@ workers = 20
 items = 50000000
 size = 2048
 workers = 20
-working_set = 5
+working_set = 20
 
 [xdcr]
 replication_type = unidir
@@ -33,6 +33,6 @@ throughput = 10000
 items = 50000000
 size = 2048
 workers = 24
-working_set = 5
+working_set = 20
 working_set_access = 98
 time = 10800

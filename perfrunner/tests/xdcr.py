@@ -71,9 +71,11 @@ class SrcTargetIterator(TargetIterator):
 
     def __iter__(self):
         username, password = self.cluster_spec.rest_credentials
+        prefix = self.prefix
         src_master = self.cluster_spec.yield_masters().next()
         for bucket in self.test_config.buckets:
-            prefix = target_hash(src_master, bucket)
+            if self.prefix is None:
+                prefix = target_hash(src_master, bucket)
             yield TargetSettings(src_master, bucket, username, password, prefix)
 
 

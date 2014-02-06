@@ -256,7 +256,9 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
                     r = run('./setup.exe -s -f1"C:\\uninstall.iss"',
                             warn_only=True, quiet=True, timeout=self.TIMEOUT)
                     if not r.return_code:
-                        while self.exists(self.VERSION_FILE):
+                        t0 = time.time()
+                        while self.exists(self.VERSION_FILE) and \
+                                time.time() - t0 < self.TIMEOUT:
                             logger.info('Waiting for Uninstaller to finish')
                             time.sleep(5)
                         break

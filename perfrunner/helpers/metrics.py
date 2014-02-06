@@ -109,12 +109,24 @@ class MetricHelper(object):
 
         return round(avg_replication_rate)
 
-    def calc_avg_drain_rate(self, time_elapsed):
+    def calc_max_drain_rate(self, time_elapsed):
         items_per_node = self.test_config.load_settings.items / \
             self.test_config.initial_nodes[0]
         drain_rate = items_per_node / time_elapsed
 
         return round(drain_rate)
+
+    def calc_avg_drain_rate(self):
+        query_params = self._get_query_params('avg_ep_diskqueue_drain')
+
+        ep_diskqueue_drain = 0
+        for bucket in self.test_config.buckets:
+            db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
+            data = self.seriesly[db].query(query_params)
+            ep_diskqueue_drain += data.values()[0][0]
+        ep_diskqueue_drain /= self.test_config.initial_nodes[0]
+
+        return round(ep_diskqueue_drain)
 
     def calc_avg_ep_bg_fetched(self):
         query_params = self._get_query_params('avg_ep_bg_fetched')

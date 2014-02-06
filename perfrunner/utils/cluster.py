@@ -96,7 +96,7 @@ class ClusterManager(object):
                                         threads_number=threads_number)
 
     def configure_auto_compaction(self):
-        compaction_settings = self.test_config.compaction_settings
+        compaction_settings = self.test_config.compaction
         for master in self.masters():
             self.rest.configure_auto_compaction(master, compaction_settings)
 

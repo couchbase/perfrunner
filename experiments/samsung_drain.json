@@ -1,0 +1,8 @@
+{
+    "name": "Avg. drain rate (items/sec), 1 node, DGM, variable workload/value size",
+    "defaults": {
+        "Mutations/sec": 5000,
+        "Compaction": "Off",
+        "Value size": 1024
+    }
+}

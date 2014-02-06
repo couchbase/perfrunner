@@ -76,6 +76,19 @@ class BgFetcherTest(KVTest):
         self.reporter.post_to_sf(self.metric_helper.calc_avg_ep_bg_fetched())
 
 
+class DrainTest(KVTest):
+
+    ALL_BUCKETS = True
+
+    def run(self):
+        super(DrainTest, self).run()
+        drain_rate = self.reporter.post_to_sf(
+            self.metric_helper.calc_avg_drain_rate()
+        )
+        if hasattr(self, 'experiment'):
+            self.experiment.post_results(drain_rate)
+
+
 class FlusherTest(KVTest):
 
     def mc_iterator(self):
@@ -111,7 +124,7 @@ class FlusherTest(KVTest):
 
         self.reporter.finish('Drain', time_elapsed)
         self.reporter.post_to_sf(
-            self.metric_helper.calc_avg_drain_rate(time_elapsed)
+            self.metric_helper.calc_max_drain_rate(time_elapsed)
         )
 
 

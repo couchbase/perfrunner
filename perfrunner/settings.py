@@ -186,7 +186,7 @@ class TestConfig(Config):
         return self.config.getint('cluster', 'groups')
 
     @property
-    def compaction_settings(self):
+    def compaction(self):
         options = self._get_options_as_dict('compaction')
         return CompactionSettings(options)
 

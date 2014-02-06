@@ -1,4 +1,5 @@
 from mc_bin_client.mc_bin_client import MemcachedClient
+from tap import TAP
 
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import PerfTest
@@ -157,3 +158,25 @@ class WarmupTest(PerfTest):
         warmup_time = self.warmup()
 
         self.reporter.post_to_sf(warmup_time)
+
+
+class TapTest(PerfTest):
+
+    def consume(self):
+        _, password = self.cluster_spec.rest_credentials
+        for master in self.cluster_spec.yield_masters():
+            for bucket in self.test_config.buckets:
+                host = master.split(':')[0]
+                tap = TAP(host=host, bucket=bucket, password=password)
+                while True:
+                    status, batch = tap.provide_batch()
+                    if not batch or status:
+                        break
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.reporter.start()
+        self.consume()
+        self.reporter.finish('Backfilling')

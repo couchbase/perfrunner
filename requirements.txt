@@ -10,3 +10,4 @@ numpy
 requests==2.1.0
 seriesly
 spring
+tap

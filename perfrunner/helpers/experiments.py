@@ -18,7 +18,7 @@ class ExperimentHelper(object):
         'Number of replicas': 'self.tc.replica_number',
         'Moves per node': 'self.tc.internal_settings["rebalanceMovesPerNode"]',
         'Moxi': 'self.tc.disable_moxi is None and "Moxi on" or "Moxi off"',
-        'Compaction': 'self.tc.compaction.db_percentage > 99 and "Off" or "On"',
+        'Compaction': 'self.tc.compaction.db_percentage == "100" and "Off" or "On"',
         'Value size': 'self.tc.load_settings.size',
 
         'Drive type': 'self.cs.parameters["Disk"].split()[-1]',

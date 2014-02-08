@@ -7,7 +7,7 @@ thor =
 
 [clients]
 hosts =
-    172.23.97.104
+    172.23.97.106
 credentials = root:couchbase
 
 [storage]

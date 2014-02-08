@@ -11,7 +11,7 @@ mix =
 
 [clients]
 hosts =
-    172.23.97.104
+    172.23.97.74
 credentials = root:couchbase
 
 [storage]

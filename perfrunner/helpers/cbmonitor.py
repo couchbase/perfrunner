@@ -171,8 +171,11 @@ class CbAgent(object):
             settings.interval = self.lat_interval
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
+            prefix = test.target_iterator.prefix or \
+                target_hash(settings.master_node.split(':')[0])
             self.collectors.append(
-                SpringQueryLatency(settings, test.workload, test.ddocs, params)
+                SpringQueryLatency(settings, test.workload, prefix=prefix,
+                                   ddocs=test.ddocs, params=params)
             )
 
     def prepare_active_tasks(self, clusters):

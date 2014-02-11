@@ -1,0 +1,39 @@
+[test_case]
+module = perfrunner.tests.kv
+class = DrainTest
+descr = Avg. drain rate (items/sec), 1 bucket x 50M x 1KB, DGM
+larger_is_better = true
+level = Basic
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 2
+num_buckets = 1
+
+[compaction]
+db_percentage = 2
+
+[load]
+items = 50000000
+size = 1024
+workers = 20
+
+[hot_load]
+items = 50000000
+size = 1024
+workers = 24
+working_set = 40
+
+[access]
+creates = 1
+reads = 20
+updates = 78
+deletes = 1
+throughput = 31250
+items = 50000000
+size = 1024
+workers = 6
+working_set = 40
+working_set_access = 98
+time = 1200
+async = 1

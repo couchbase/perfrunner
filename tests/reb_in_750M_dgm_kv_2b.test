@@ -14,7 +14,7 @@ replica_number = 2
 [load]
 items = 750000000
 size = 2048
-workers = 24
+workers = 25
 
 [hot_load]
 items = 750000000

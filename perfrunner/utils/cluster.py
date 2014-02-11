@@ -107,10 +107,11 @@ class ClusterManager(object):
                 self.rest.set_internal_settings(master,
                                                 {parameter: int(value)})
 
-    def clean_memory(self):
+    def tweak_memory(self):
         self.remote.reset_swap()
         self.remote.drop_caches()
         self.remote.set_swappiness()
+        self.remote.disable_thp()
 
     def restart_with_alternative_swt(self):
         swt = self.test_config.swt
@@ -192,7 +193,7 @@ def main():
     cm.configure_auto_compaction()
     cm.enable_auto_failover()
     cm.change_watermarks()
-    cm.clean_memory()
+    cm.tweak_memory()
 
 if __name__ == '__main__':
     main()

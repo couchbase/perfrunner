@@ -102,6 +102,10 @@ class RemoteLinuxHelper(object):
         run('sysctl vm.swappiness=0')
 
     @all_hosts
+    def disable_thp(self):
+        run('echo never > /sys/kernel/mm/transparent_hugepage/enabled')
+
+    @all_hosts
     def collect_info(self):
         logger.info('Running cbcollect_info')
 
@@ -212,6 +216,9 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
         pass
 
     def set_swappiness(self):
+        pass
+
+    def disable_thp(self):
         pass
 
     @all_hosts

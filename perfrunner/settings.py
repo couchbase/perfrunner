@@ -311,6 +311,8 @@ class PhaseSettings(object):
 
     TIME = 3600 * 24
 
+    ASYNC = False
+
     def __init__(self, options):
         self.creates = int(options.get('creates', self.CREATES))
         self.reads = int(options.get('reads', self.READS))
@@ -337,6 +339,8 @@ class PhaseSettings(object):
         self.seq_updates = self.SEQ_UPDATES
 
         self.time = int(options.get('time', self.TIME))
+
+        self.async = bool(int(options.get('async', self.ASYNC)))
 
     def __str__(self):
         return str(self.__dict__)

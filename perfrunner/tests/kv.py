@@ -1,7 +1,11 @@
+from logger import logger
 from mc_bin_client.mc_bin_client import MemcachedClient
 from tap import TAP
+from upr import UprClient
+from upr.constants import CMD_STREAM_REQ
 
 from perfrunner.helpers.cbmonitor import with_stats
+from perfrunner.helpers.misc import uhex
 from perfrunner.tests import PerfTest
 
 
@@ -176,6 +180,7 @@ class WarmupTest(PerfTest):
 class TapTest(PerfTest):
 
     def consume(self):
+        logger.info('Reading data via TAP')
         _, password = self.cluster_spec.rest_credentials
         for master in self.cluster_spec.yield_masters():
             for bucket in self.test_config.buckets:
@@ -193,3 +198,32 @@ class TapTest(PerfTest):
         self.reporter.start()
         self.consume()
         self.reporter.finish('Backfilling')
+
+
+class UprTest(TapTest):
+
+    MAX_SEQNO = 0xFFFFFFFFFFFFFFFF
+
+    def consume(self):
+        logger.info('Reading data via UPR')
+        _, password = self.cluster_spec.rest_credentials
+        for master in self.cluster_spec.yield_masters():
+            for bucket in self.test_config.buckets:
+                upr_client = UprClient(host=master, port=11210)
+                upr_client.sasl_auth_plain(username=bucket, password=password)
+                upr_client.open_producer(uhex()).next_response()
+                for vbucket in range(1024):
+                    op = upr_client.stream_req(vb=vbucket,
+                                               flags=0,
+                                               start_seqno=0,
+                                               end_seqno=self.MAX_SEQNO,
+                                               vb_uuid=0,
+                                               high_seqno=0)
+                    while op.has_response():
+                        response = op.next_response()
+                        if 'opcode' not in response:
+                            logger.interrupt(response)
+                        if response['opcode'] != CMD_STREAM_REQ:
+                            break
+                    upr_client.close_stream(vbucket=vbucket)
+                upr_client.shutdown()

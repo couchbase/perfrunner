@@ -27,6 +27,6 @@ ssh = root:couchbase
 [parameters]
 Platform = Physical
 OS = CentOS 6.5
-CPU = Intel Xeon E5-2680
+CPU = Intel Xeon E5-2680 v2
 Memory = 256 GB
 Disk = RAID 10 SSD

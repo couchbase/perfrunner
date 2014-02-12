@@ -183,8 +183,8 @@ class TapTest(PerfTest):
         logger.info('Reading data via TAP')
         _, password = self.cluster_spec.rest_credentials
         for master in self.cluster_spec.yield_masters():
+            host = master.split(':')[0]
             for bucket in self.test_config.buckets:
-                host = master.split(':')[0]
                 tap = TAP(host=host, bucket=bucket, password=password)
                 while True:
                     status, batch = tap.provide_batch()
@@ -205,14 +205,18 @@ class UprTest(TapTest):
     MAX_SEQNO = 0xFFFFFFFFFFFFFFFF
 
     def consume(self):
-        logger.info('Reading data via UPR')
         _, password = self.cluster_spec.rest_credentials
         for master in self.cluster_spec.yield_masters():
+            host = master.split(':')[0]
             for bucket in self.test_config.buckets:
-                upr_client = UprClient(host=master, port=11210)
+                logger.info(
+                    'Reading data via UPR from {}/{}'.format(host, bucket)
+                )
+                upr_client = UprClient(host=host, port=11210)
                 upr_client.sasl_auth_plain(username=bucket, password=password)
-                upr_client.open_producer(uhex()).next_response()
+                print upr_client.open_producer(uhex()).next_response()
                 for vbucket in range(1024):
+                    logger.info('Reading vbucket {}'.format(vbucket))
                     op = upr_client.stream_req(vb=vbucket,
                                                flags=0,
                                                start_seqno=0,
@@ -221,8 +225,6 @@ class UprTest(TapTest):
                                                high_seqno=0)
                     while op.has_response():
                         response = op.next_response()
-                        if 'opcode' not in response:
-                            logger.interrupt(response)
                         if response['opcode'] != CMD_STREAM_REQ:
                             break
                     upr_client.close_stream(vbucket=vbucket)

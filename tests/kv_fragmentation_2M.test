@@ -1,0 +1,15 @@
+[test_case]
+module = perfrunner.tests.kv
+class = FragmentationTest
+descr = Fragmentation ratio, 1 bucket x 2M x 1KB
+larger_is_better = false
+level = Basic
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 1
+num_buckets = 1
+replica_number = 0
+
+[load]
+items = 2000000

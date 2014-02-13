@@ -62,7 +62,8 @@ class WorkloadGen(object):
 
     NUM_ITERATIONS = 30
 
-    def __init__(self, num_items, host, bucket, password):
+    def __init__(self, num_items, host_port, bucket, password):
+        host, port = host_port.split(':')
         self.c = Couchbase.connect(bucket=bucket, host=host, password=password)
         self.num_items = num_items
 

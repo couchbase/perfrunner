@@ -5,8 +5,8 @@ from upr import UprClient
 from upr.constants import CMD_STREAM_REQ
 
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.helpers.misc import uhex
 from perfrunner.tests import PerfTest
+from perfrunner.workloads.viber import WorkloadGen
 
 
 class KVTest(PerfTest):
@@ -97,8 +97,8 @@ class FlusherTest(KVTest):
 
     def mc_iterator(self):
         _, password = self.cluster_spec.rest_credentials
-        for bucket in self.test_config.buckets:
-            for hostname in self.cluster_spec.yield_hostnames():
+        for hostname in self.cluster_spec.yield_hostnames():
+            for bucket in self.test_config.buckets:
                 mc = MemcachedClient(host=hostname, port=11210)
                 mc.sasl_auth_plain(user=bucket, password=password)
                 yield mc
@@ -214,7 +214,6 @@ class UprTest(TapTest):
                 )
                 upr_client = UprClient(host=host, port=11210)
                 upr_client.sasl_auth_plain(username=bucket, password=password)
-                print upr_client.open_producer(uhex()).next_response()
                 for vbucket in range(1024):
                     logger.info('Reading vbucket {}'.format(vbucket))
                     op = upr_client.stream_req(vb=vbucket,
@@ -229,3 +228,45 @@ class UprTest(TapTest):
                             break
                     upr_client.close_stream(vbucket=vbucket)
                 upr_client.shutdown()
+
+
+class FragmentationTest(PerfTest):
+
+    def wgen_iterator(self):
+        for target in self.target_iterator:
+            yield WorkloadGen(self.test_config.load_settings.items,
+                              target.node, target.bucket, target.password)
+
+    def load(self):
+        for wgen in self.wgen_iterator():
+            wgen.initial_load()
+
+    def access(self):
+        for wgen in self.wgen_iterator():
+            wgen.fragmentation()
+
+    def calc_fragmentation_coeff(self):
+        coeffs = []
+        _, password = self.cluster_spec.rest_credentials
+        for target in self.target_iterator:
+            host = target.node.split(':')[0]
+            stats = self.memcached.get_stats(host, target.bucket,
+                                             stats='memory')
+            total_allocated = \
+                stats['total_fragmentation_bytes'] + \
+                stats['total_allocated_bytes']
+            mem_used = stats['mem_used']
+            coeff = float(total_allocated) / float(mem_used)
+            coeffs.append(coeff)
+        return sum(coeffs) / len(coeffs)
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.compact_bucket()
+
+        self.access()
+        self.wait_for_persistence()
+
+        fragmentation_coeff = self.calc_fragmentation_coeff()
+        self.reporter.post_to_sf(fragmentation_coeff)

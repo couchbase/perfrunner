@@ -239,14 +239,17 @@ class FragmentationTest(PerfTest):
 
     def load(self):
         for wgen in self.wgen_iterator():
-            wgen.initial_load()
+            wgen.load()
 
     def access(self):
-        for wgen in self.wgen_iterator():
-            wgen.fragmentation()
+        for iteration in range(WorkloadGen.NUM_ITERATIONS):
+            for wgen in self.wgen_iterator():
+                wgen.append(iteration)
+            fragmentation_ratio = self.calc_fragmentation_ratio()
+            logger.info('Fragmentation ratio: {}'.format(fragmentation_ratio))
 
-    def calc_fragmentation_coeff(self):
-        coeffs = []
+    def calc_fragmentation_ratio(self):
+        ratios = []
         _, password = self.cluster_spec.rest_credentials
         for target in self.target_iterator:
             host = target.node.split(':')[0]
@@ -256,9 +259,9 @@ class FragmentationTest(PerfTest):
                 stats['total_fragmentation_bytes'] + \
                 stats['total_allocated_bytes']
             mem_used = stats['mem_used']
-            coeff = float(total_allocated) / float(mem_used)
-            coeffs.append(coeff)
-        return sum(coeffs) / len(coeffs)
+            ratio = float(total_allocated) / float(mem_used)
+            ratios.append(ratio)
+        return sum(ratios) / len(ratios)
 
     def run(self):
         self.load()
@@ -268,5 +271,5 @@ class FragmentationTest(PerfTest):
         self.access()
         self.wait_for_persistence()
 
-        fragmentation_coeff = self.calc_fragmentation_coeff()
-        self.reporter.post_to_sf(fragmentation_coeff)
+        fragmentation_ratio = self.calc_fragmentation_ratio()
+        self.reporter.post_to_sf(fragmentation_ratio)

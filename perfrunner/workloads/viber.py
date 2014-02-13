@@ -67,15 +67,14 @@ class WorkloadGen(object):
         self.c = Couchbase.connect(bucket=bucket, host=host, password=password)
         self.num_items = num_items
 
-    def initial_load(self):
+    def load(self):
         logger.info('Running initial load: {} items'.format(self.num_items))
         for k, v in KeyValueIterator(self.num_items):
             self.c.set(k, v)
 
-    def fragmentation(self):
-        for i in range(self.NUM_ITERATIONS):
-            logger.info('Running append iteration: {}'.format(i))
-            for k, f in NewFieldIterator(self.num_items):
-                v = self.c.get(k).value
-                v.append(f)
-                self.c.set(k, v)
+    def append(self, iteration):
+        logger.info('Running append iteration: {}'.format(iteration))
+        for k, f in NewFieldIterator(self.num_items):
+            v = self.c.get(k).value
+            v.append(f)
+            self.c.set(k, v)

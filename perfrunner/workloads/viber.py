@@ -6,7 +6,6 @@ from logger import logger
 from couchbase import experimental
 experimental.enable()
 from txcouchbase.connection import Connection
-
 from twisted.internet import reactor
 
 
@@ -61,17 +60,21 @@ class NewFieldIterator(ViberIterator):
 
     WORKING_SET = 0.5  # 50%
     APPEND_SET = 0.15  # 15%
+    BATCH_SIZE = 100
 
     def __init__(self, num_items):
         self.rnd_num_items = int(self.APPEND_SET * num_items)
         self.num_items = int(self.WORKING_SET * num_items)
 
     def next(self):
-        _id = self._id(random.randint(0, self.num_items))
-        field = self._field(_id)
-        self.rnd_num_items -= 1
-        if self.rnd_num_items:
-            return self._key(_id), field
+        if self.rnd_num_items > 0:
+            batch = []
+            for _ in range(self.BATCH_SIZE):
+                _id = self._id(random.randint(1, self.num_items))
+                field = self._field(_id)
+                self.rnd_num_items -= 1
+                batch.append((self._key(_id), field))
+            return batch
         else:
             raise StopIteration
 
@@ -86,9 +89,10 @@ class WorkloadGen(object):
         self.field_iterator = NewFieldIterator(num_items)
 
     def _interrupt(self, err):
+        reactor.stop()
         logger.interrupt(err.value)
 
-    def _restart_batch(self, *args):
+    def _on_set(self, *args):
         self.counter += 1
         if self.counter == self.kv_iterator.BATCH_SIZE:
             self._set()
@@ -98,7 +102,7 @@ class WorkloadGen(object):
         try:
             for k, v in self.kv_iterator.next():
                 d = self.cb.set(k, v)
-                d.addCallback(self._restart_batch)
+                d.addCallback(self._on_set)
                 d.addErrback(self._interrupt)
         except StopIteration:
             reactor.stop()
@@ -114,13 +118,25 @@ class WorkloadGen(object):
 
         reactor.run()
 
-    def _append(self):
+    def _on_append(self, *args):
+        self.counter += 1
+        if self.counter == self.field_iterator.BATCH_SIZE:
+            self._append()
+
+    def _on_get(self, rv, f):
+        v = rv.value
+        v.append(f)
+        d = self.cb.set(rv.key, v)
+        d.addCallback(self._on_append)
+        d.addErrback(self._interrupt)
+
+    def _append(self, *args):
+        self.counter = 0
         try:
-            k, f = self.field_iterator.next()
-            v = self.cb.get(k).value
-            v.append(f)
-            d = self.cb.set(k, v)
-            d.addCallback(self._append)
+            for k, f in self.field_iterator.next():
+                d = self.cb.get(k)
+                d.addCallback(self._on_get, f)
+                d.addErrback(self._interrupt)
         except StopIteration:
             reactor.stop()
 
@@ -131,5 +147,6 @@ class WorkloadGen(object):
         self.cb = Connection(bucket=bucket, host=host, password=password)
         d = self.cb.connect()
         d.addCallback(self._append)
+        d.addErrback(self._interrupt)
 
         reactor.run()

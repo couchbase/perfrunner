@@ -60,7 +60,7 @@ class NewFieldIterator(ViberIterator):
 
 class WorkloadGen(object):
 
-    NUM_ITERATIONS = 30
+    NUM_ITERATIONS = 20
 
     def __init__(self, num_items, host_port, bucket, password):
         host, port = host_port.split(':')

@@ -1,5 +1,6 @@
 import random
 import string
+from hashlib import md5
 
 from logger import logger
 from couchbase import experimental
@@ -25,7 +26,7 @@ class ViberIterator(object):
         return 'AB_{0}_0'.format(_id)
 
     def _field(self, _id):
-        data = ''.join(random.sample(self.ALPHABET, self.RND_FIELD_SIZE))
+        data = md5(_id).hexdigest()[:16]
         return {'pn': _id, 'nam': 'ViberPhone_{}'.format(data)}
 
 

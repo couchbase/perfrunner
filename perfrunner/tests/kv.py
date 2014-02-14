@@ -261,7 +261,7 @@ class FragmentationTest(PerfTest):
             mem_used = float(stats['mem_used'])
             ratio = total_allocated / mem_used
             ratios.append(ratio)
-        return sum(ratios) / len(ratios)
+        return round(sum(ratios) / len(ratios), 2)
 
     def run(self):
         self.load()

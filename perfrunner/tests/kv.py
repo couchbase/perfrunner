@@ -256,10 +256,10 @@ class FragmentationTest(PerfTest):
             stats = self.memcached.get_stats(host, target.bucket,
                                              stats='memory')
             total_allocated = \
-                stats['total_fragmentation_bytes'] + \
-                stats['total_allocated_bytes']
-            mem_used = stats['mem_used']
-            ratio = float(total_allocated) / float(mem_used)
+                float(stats['total_fragmentation_bytes']) + \
+                float(stats['total_allocated_bytes'])
+            mem_used = float(stats['mem_used'])
+            ratio = total_allocated / mem_used
             ratios.append(ratio)
         return sum(ratios) / len(ratios)
 

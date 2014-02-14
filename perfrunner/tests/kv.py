@@ -232,19 +232,17 @@ class UprTest(TapTest):
 
 class FragmentationTest(PerfTest):
 
-    def wgen_iterator(self):
-        for target in self.target_iterator:
-            yield WorkloadGen(self.test_config.load_settings.items,
-                              target.node, target.bucket, target.password)
-
     def load(self):
-        for wgen in self.wgen_iterator():
-            wgen.load()
+        for target in self.target_iterator:
+            wgen = WorkloadGen(self.test_config.load_settings.items)
+            wgen.load(target.node, target.bucket, target.password)
 
     def access(self):
         for iteration in range(WorkloadGen.NUM_ITERATIONS):
-            for wgen in self.wgen_iterator():
-                wgen.append(iteration)
+            for target in self.target_iterator:
+                wgen = WorkloadGen(self.test_config.load_settings.items)
+                wgen.append(target.node, target.bucket, target.password,
+                            iteration)
             fragmentation_ratio = self.calc_fragmentation_ratio()
             logger.info('Fragmentation ratio: {}'.format(fragmentation_ratio))
 

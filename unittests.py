@@ -3,8 +3,9 @@ from unittest import TestCase
 from mock import patch
 
 from perfrunner.helpers.misc import target_hash, server_group
-from perfrunner.utils.install import CouchbaseInstaller, Build
 from perfrunner.settings import TestConfig
+from perfrunner.utils.install import CouchbaseInstaller, Build
+from perfrunner.workloads.viber import KeyValueIterator
 
 
 class InstallTest(TestCase):
@@ -107,3 +108,13 @@ class SettingsTest(TestCase):
         test_config.parse(fname='tests/query_lat_20M_state_false.test')
         views_params = test_config.index_settings.params
         self.assertEqual(views_params, {'stale': 'false'})
+
+
+class WorkloadTest(TestCase):
+
+    def test_value_size(self):
+        iterator = KeyValueIterator(1000)
+        batch = iterator.next()
+        values = [len(str(v)) for k, v in batch]
+        mean = sum(values) / len(values)
+        self.assertAlmostEqual(mean, 1024, delta=64)

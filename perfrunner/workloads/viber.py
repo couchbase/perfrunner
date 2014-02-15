@@ -58,13 +58,13 @@ class KeyValueIterator(ViberIterator):
 
 class NewFieldIterator(ViberIterator):
 
-    WORKING_SET = 0.5  # 50%
-    APPEND_SET = 0.15  # 15%
+    ACTIVE_RECORDS = 0.80
+    APPEND_SET = 0.2
     BATCH_SIZE = 100
 
     def __init__(self, num_items):
         self.rnd_num_items = int(self.APPEND_SET * num_items)
-        self.num_items = int(self.WORKING_SET * num_items)
+        self.num_items = int(self.ACTIVE_RECORDS * num_items)
 
     def next(self):
         if self.rnd_num_items > 0:

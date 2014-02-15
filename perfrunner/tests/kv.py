@@ -232,21 +232,6 @@ class UprTest(TapTest):
 
 class FragmentationTest(PerfTest):
 
-    def load(self):
-        for target in self.target_iterator:
-            wgen = WorkloadGen(self.test_config.load_settings.items)
-            wgen.load(target.node, target.bucket, target.password)
-
-    def access(self):
-        for iteration in range(WorkloadGen.NUM_ITERATIONS):
-            for target in self.target_iterator:
-                for r in (1, 2, 4):
-                    wgen = WorkloadGen(self.test_config.load_settings.items / r)
-                    wgen.append(target.node, target.bucket, target.password,
-                                iteration, r)
-            fragmentation_ratio = self.calc_fragmentation_ratio()
-            logger.info('Fragmentation ratio: {}'.format(fragmentation_ratio))
-
     def calc_fragmentation_ratio(self):
         ratios = []
         _, password = self.cluster_spec.rest_credentials
@@ -260,15 +245,15 @@ class FragmentationTest(PerfTest):
             mem_used = float(stats['mem_used'])
             ratio = total_allocated / mem_used
             ratios.append(ratio)
-        return round(sum(ratios) / len(ratios), 2)
+        ratio = round(sum(ratios) / len(ratios), 2)
+        logger.info('Fragmentation ratio: {}'.format(ratio))
+        return ratio
 
     def run(self):
-        self.load()
-        self.wait_for_persistence()
-        self.compact_bucket()
-
-        self.access()
-        self.wait_for_persistence()
+        _, password = self.cluster_spec.rest_credentials
+        WorkloadGen(self.test_config.load_settings.items,
+                    self.master_node, self.test_config.buckets[0],
+                    password).run()
 
         fragmentation_ratio = self.calc_fragmentation_ratio()
         self.reporter.post_to_sf(fragmentation_ratio)

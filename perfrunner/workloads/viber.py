@@ -83,18 +83,23 @@ class WorkloadGen(object):
 
     NUM_ITERATIONS = 15
 
-    def __init__(self, num_items):
+    def __init__(self, num_items, host_port, bucket, password):
         self.num_items = num_items
-        self.kv_iterator = KeyValueIterator(num_items)
-        self.field_iterator = NewFieldIterator(num_items)
+        self.kv_iterator = KeyValueIterator(self.num_items)
+        self.field_iterator = NewFieldIterator(self.num_items)
+
+        host, port = host_port.split(':')
+        self.cb = Connection(bucket=bucket, host=host, password=password)
+
+        self.fraction = 1
+        self.iteration = 0
 
     def _interrupt(self, err):
-        reactor.stop()
         logger.interrupt(err.value)
 
     def _on_set(self, *args):
         self.counter += 1
-        if self.counter == self.kv_iterator.BATCH_SIZE:
+        if self.counter == KeyValueIterator.BATCH_SIZE:
             self._set()
 
     def _set(self, *args):
@@ -105,13 +110,13 @@ class WorkloadGen(object):
                 d.addCallback(self._on_set)
                 d.addErrback(self._interrupt)
         except StopIteration:
-            reactor.stop()
+            logger.info('Started iteration: {}-{}'.format(self.iteration,
+                                                          self.fraction))
+            self._append()
 
-    def load(self, host_port, bucket, password):
+    def run(self):
         logger.info('Running initial load: {} items'.format(self.num_items))
-        host, port = host_port.split(':')
 
-        self.cb = Connection(bucket=bucket, host=host, password=password)
         d = self.cb.connect()
         d.addCallback(self._set)
         d.addErrback(self._interrupt)
@@ -120,7 +125,7 @@ class WorkloadGen(object):
 
     def _on_append(self, *args):
         self.counter += 1
-        if self.counter == self.field_iterator.BATCH_SIZE:
+        if self.counter == NewFieldIterator.BATCH_SIZE:
             self._append()
 
     def _on_get(self, rv, f):
@@ -138,19 +143,18 @@ class WorkloadGen(object):
                 d.addCallback(self._on_get, f)
                 d.addErrback(self._interrupt)
         except StopIteration:
-            logger.info('S0')
-            reactor.stop()
-            logger.info('S1')
-
-    def append(self, host_port, bucket, password, iteration, r):
-        logger.info('Running append iteration: {}-{}'.format(iteration, r))
-        host, port = host_port.split(':')
-
-        self.cb = Connection(bucket=bucket, host=host, password=password)
-        d = self.cb.connect()
-        d.addCallback(self._append)
-        d.addErrback(self._interrupt)
-
-        logger.info('S2')
-        reactor.run()
-        logger.info('Finished append iteration: {}-{}'.format(iteration, r))
+            logger.info('Finished iteration: {}-{}'.format(self.iteration,
+                                                           self.fraction))
+            if self.fraction == 4:
+                num_items = self.num_items
+                self.fraction = 1
+                self.iteration += 1
+                if self.iteration == self.NUM_ITERATIONS:
+                    reactor.stop()
+            else:
+                self.fraction *= 2
+                num_items = self.num_items / self.fraction
+            self.field_iterator = NewFieldIterator(num_items)
+            logger.info('Started iteration: {}-{}'.format(self.iteration,
+                                                          self.fraction))
+            self._append()

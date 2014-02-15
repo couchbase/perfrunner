@@ -240,9 +240,10 @@ class FragmentationTest(PerfTest):
     def access(self):
         for iteration in range(WorkloadGen.NUM_ITERATIONS):
             for target in self.target_iterator:
-                wgen = WorkloadGen(self.test_config.load_settings.items)
-                wgen.append(target.node, target.bucket, target.password,
-                            iteration)
+                for r in (1, 2, 4):
+                    wgen = WorkloadGen(self.test_config.load_settings.items / r)
+                    wgen.append(target.node, target.bucket, target.password,
+                                iteration, r)
             fragmentation_ratio = self.calc_fragmentation_ratio()
             logger.info('Fragmentation ratio: {}'.format(fragmentation_ratio))
 

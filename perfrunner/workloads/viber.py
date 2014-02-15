@@ -81,7 +81,7 @@ class NewFieldIterator(ViberIterator):
 
 class WorkloadGen(object):
 
-    NUM_ITERATIONS = 20
+    NUM_ITERATIONS = 15
 
     def __init__(self, num_items):
         self.num_items = num_items
@@ -138,10 +138,12 @@ class WorkloadGen(object):
                 d.addCallback(self._on_get, f)
                 d.addErrback(self._interrupt)
         except StopIteration:
+            logger.info('S0')
             reactor.stop()
+            logger.info('S1')
 
-    def append(self, host_port, bucket, password, iteration):
-        logger.info('Running append iteration: {}'.format(iteration))
+    def append(self, host_port, bucket, password, iteration, r):
+        logger.info('Running append iteration: {}-{}'.format(iteration, r))
         host, port = host_port.split(':')
 
         self.cb = Connection(bucket=bucket, host=host, password=password)
@@ -149,4 +151,6 @@ class WorkloadGen(object):
         d.addCallback(self._append)
         d.addErrback(self._interrupt)
 
+        logger.info('S2')
         reactor.run()
+        logger.info('Finished append iteration: {}-{}'.format(iteration, r))

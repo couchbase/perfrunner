@@ -243,10 +243,11 @@ class FragmentationTest(PerfTest):
                 float(stats['total_fragmentation_bytes']) + \
                 float(stats['total_allocated_bytes'])
             mem_used = float(stats['mem_used'])
-            ratio = total_allocated / mem_used
+            ratio = mem_used / total_allocated
             ratios.append(ratio)
-        ratio = round(sum(ratios) / len(ratios), 2)
-        logger.info('Fragmentation ratio: {}'.format(ratio))
+        ratio = 100 * (1 - sum(ratios) / len(ratios))
+        ratio = round(ratio, 1)
+        logger.info('Fragmentation: {}'.format(ratio))
         return ratio
 
     def run(self):

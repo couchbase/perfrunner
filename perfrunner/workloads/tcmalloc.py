@@ -1,5 +1,4 @@
 import random
-import string
 from hashlib import md5
 
 from logger import logger
@@ -9,11 +8,10 @@ from txcouchbase.connection import Connection
 from twisted.internet import reactor
 
 
-class ViberIterator(object):
+class SmallIterator(object):
 
     FIXED_KEY_WIDTH = 12
     RND_FIELD_SIZE = 16
-    ALPHABET = string.letters + string.digits
 
     def __iter__(self):
         return self
@@ -22,14 +20,14 @@ class ViberIterator(object):
         return '{}'.format(i).zfill(self.FIXED_KEY_WIDTH)
 
     def _key(self, _id):
-        return 'AB_{0}_0'.format(_id)
+        return 'AB_{}_0'.format(_id)
 
     def _field(self, _id):
         data = md5(_id).hexdigest()[:16]
         return {'pn': _id, 'nam': 'ViberPhone_{}'.format(data)}
 
 
-class KeyValueIterator(ViberIterator):
+class KeyValueIterator(SmallIterator):
 
     MIN_FIELDS = 11
     MAX_FIELDS = 22
@@ -56,10 +54,10 @@ class KeyValueIterator(ViberIterator):
             raise StopIteration
 
 
-class NewFieldIterator(ViberIterator):
+class NewFieldIterator(SmallIterator):
 
     ACTIVE_RECORDS = 0.80
-    APPEND_SET = 0.2
+    APPEND_SET = 0.75
     BATCH_SIZE = 100
 
     def __init__(self, num_items):
@@ -79,14 +77,44 @@ class NewFieldIterator(ViberIterator):
             raise StopIteration
 
 
+class LargeIterator(SmallIterator):
+
+    FIELD_SIZE = 102400
+
+    def _key(self, _id):
+        return '{}'.format(_id)
+
+    def _field(self, _id):
+        alphabet = md5(_id).hexdigest() + md5(_id[::-1]).hexdigest()  # 64 bytes
+        field = [alphabet for _ in range(self.FIELD_SIZE / len(alphabet))]
+        return {'f': ''.join(field)}
+
+
+class KeyLargeValueIterator(LargeIterator, KeyValueIterator):
+
+    MIN_FIELDS = 1
+    MAX_FIELDS = 4
+
+
+class NewLargeFieldIterator(LargeIterator, NewFieldIterator):
+
+    pass
+
+
 class WorkloadGen(object):
 
-    NUM_ITERATIONS = 15
+    NUM_ITERATIONS = 5
 
-    def __init__(self, num_items, host_port, bucket, password):
+    def __init__(self, num_items, host_port, bucket, password, small=True):
         self.num_items = num_items
-        self.kv_iterator = KeyValueIterator(self.num_items)
-        self.field_iterator = NewFieldIterator(self.num_items)
+        if small:
+            self.kv_cls = KeyValueIterator
+            self.field_cls = NewFieldIterator
+        else:
+            self.kv_cls = KeyLargeValueIterator
+            self.field_cls = NewLargeFieldIterator
+        self.kv_iterator = self.kv_cls(self.num_items)
+        self.field_iterator = self.field_cls(self.num_items)
 
         host, port = host_port.split(':')
         self.cb = Connection(bucket=bucket, host=host, password=password)
@@ -99,7 +127,7 @@ class WorkloadGen(object):
 
     def _on_set(self, *args):
         self.counter += 1
-        if self.counter == KeyValueIterator.BATCH_SIZE:
+        if self.counter == self.kv_cls.BATCH_SIZE:
             self._set()
 
     def _set(self, *args):
@@ -125,7 +153,7 @@ class WorkloadGen(object):
 
     def _on_append(self, *args):
         self.counter += 1
-        if self.counter == NewFieldIterator.BATCH_SIZE:
+        if self.counter == self.field_cls.BATCH_SIZE:
             self._append()
 
     def _on_get(self, rv, f):
@@ -154,7 +182,7 @@ class WorkloadGen(object):
             else:
                 self.fraction *= 2
                 num_items = self.num_items / self.fraction
-            self.field_iterator = NewFieldIterator(num_items)
+            self.field_iterator = self.field_cls(num_items)
             logger.info('Started iteration: {}-{}'.format(self.iteration,
                                                           self.fraction))
             self._append()

@@ -6,7 +6,7 @@ from upr.constants import CMD_STREAM_REQ
 
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import PerfTest
-from perfrunner.workloads.viber import WorkloadGen
+from perfrunner.workloads.tcmalloc import WorkloadGen
 
 
 class KVTest(PerfTest):
@@ -232,6 +232,13 @@ class UprTest(TapTest):
 
 class FragmentationTest(PerfTest):
 
+    @with_stats
+    def load_and_append(self):
+        _, password = self.cluster_spec.rest_credentials
+        WorkloadGen(self.test_config.load_settings.items,
+                    self.master_node, self.test_config.buckets[0],
+                    password).run()
+
     def calc_fragmentation_ratio(self):
         ratios = []
         _, password = self.cluster_spec.rest_credentials
@@ -251,10 +258,16 @@ class FragmentationTest(PerfTest):
         return ratio
 
     def run(self):
-        _, password = self.cluster_spec.rest_credentials
-        WorkloadGen(self.test_config.load_settings.items,
-                    self.master_node, self.test_config.buckets[0],
-                    password).run()
-
+        self.load_and_append()
         fragmentation_ratio = self.calc_fragmentation_ratio()
         self.reporter.post_to_sf(fragmentation_ratio)
+
+
+class FragmentationLargeTest(FragmentationTest):
+
+    @with_stats
+    def load_and_append(self):
+        _, password = self.cluster_spec.rest_credentials
+        WorkloadGen(self.test_config.load_settings.items,
+                    self.master_node, self.test_config.buckets[0], password,
+                    small=False).run()

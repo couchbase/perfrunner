@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.kv
 class = FragmentationTest
-descr = Memory fragmentation, %%, 1 bucket x 5M x 1KB
+descr = Memory fragmentation (%%), 1 bucket x 5M x 1KB
 larger_is_better = false
 level = Basic
 

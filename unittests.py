@@ -22,6 +22,7 @@ class InstallTest(TestCase):
         expected = (
             'couchbase-server-enterprise_x86_64_2.0.0-1976-rel.rpm',
             'couchbase-server-enterprise_2.0.0-1976-rel_x86_64.rpm',
+            'couchbase-server-enterprise_centos6_x86_64_2.0.0-1976-rel.rpm',
         )
         self.assertEqual(filenames, expected)
 

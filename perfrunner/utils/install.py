@@ -43,6 +43,7 @@ class CouchbaseInstaller(object):
             patterns = (
                 'couchbase-server-enterprise_{arch}_{version}-rel.{pkg}',
                 'couchbase-server-enterprise_{version}-rel_{arch}.{pkg}',
+                'couchbase-server-enterprise_centos6_{arch}_{version}-rel.{pkg}',
             )
         for pattern in patterns:
             yield pattern.format(**self.build._asdict())

@@ -1,12 +1,13 @@
 import time
 from zipfile import ZipFile, ZIP_DEFLATED
 
+import requests
 from btrc import CouchbaseClient, StatsReporter
 from couchbase import Couchbase
 from logger import logger
 
 from perfrunner.helpers.misc import uhex, pretty_dict
-from perfrunner.settings import SF_STORAGE
+from perfrunner.settings import CBMONITOR_HOST, SF_STORAGE
 
 
 class BtrcReporter(object):
@@ -93,6 +94,34 @@ class SFReporter(object):
             doc.value.update({'obsolete': True})
             cb.set(row.docid, doc.value)
 
+    @staticmethod
+    def _compare_to_previous(cb, benckmark):
+        snapshots_by_build = dict()
+        for row in cb.query('benchmarks', 'build_and_snapshots_by_metric',
+                            key=benckmark['metric'], stale='false'):
+            snapshots_by_build[row.value[0]] = row.value[1]
+
+        all_builds = sorted(snapshots_by_build.keys(), reverse=True)
+        new_build = benckmark['build']
+        prev_release = None
+        prev_build = None
+
+        for build in all_builds[all_builds.index(new_build) + 1:]:
+            if build.startswith(new_build.split('-')[0]) and not prev_build:
+                prev_build = build
+            else:
+                prev_release = build
+                break
+
+        api = 'http://{}/reports/compare/'.format(CBMONITOR_HOST)
+        for build in filter(lambda _: _, (prev_build, prev_release)):
+            params = {'baseline': snapshots_by_build[build],
+                      'target': snapshots_by_build[new_build]}
+            comparison = requests.get(url=api, params=params).json()
+            logger.info('{} vs. {}: {}'.format(
+                build, new_build, pretty_dict(comparison)
+            ))
+
     def _log_benchmark(self, metric, value):
         _, benckmark = self._prepare_data(metric, value)
         logger.info('Dry run stats: {}'.format(
@@ -105,6 +134,7 @@ class SFReporter(object):
             cb = Couchbase.connect(bucket='benchmarks', **SF_STORAGE)
             self._mark_previous_as_obsolete(cb, benckmark)
             cb.set(key, benckmark)
+            self._compare_to_previous(cb, benckmark)
         except Exception, e:
             logger.warn('Failed to post results, {}'.format(e))
         else:

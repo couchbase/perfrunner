@@ -1,0 +1,31 @@
+[test_case]
+module = perfrunner.tests.kv
+class = KVTest
+descr = Max memcached throughput, SETs/sec, 1 bucket x 50M x 256B, non-DGM
+larger_is_better = true
+level = Basic
+
+[cluster]
+mem_quota = 163840
+initial_nodes = 1
+num_buckets = 1
+replica_number = 0
+
+[compaction]
+db_percentage = 2
+
+[load]
+items = 50000000
+size = 0
+workers = 25
+
+[access]
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+items = 50000000
+size = 0
+workers = 38
+time = 1200
+async = 1

@@ -13,6 +13,9 @@ class QueryTest(IndexTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
+
+        self.hot_load()
+        self.wait_for_persistence()
         self.compact_bucket()
 
         self.define_ddocs()

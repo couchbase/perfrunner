@@ -115,12 +115,16 @@ class SFReporter(object):
 
         api = 'http://{}/reports/compare/'.format(CBMONITOR_HOST)
         for build in filter(lambda _: _, (prev_build, prev_release)):
-            params = {'baseline': snapshots_by_build[build],
-                      'target': snapshots_by_build[new_build]}
-            comparison = requests.get(url=api, params=params).json()
-            logger.info('{} vs. {}: {}'.format(
-                build, new_build, pretty_dict(comparison)
-            ))
+            baselines = snapshots_by_build[build]
+            targets = snapshots_by_build[new_build]
+            if baselines and targets and len(baselines) == len(targets):
+                for baseline, target in zip(baselines, targets):
+                    params = {'baseline': baseline, 'target': target}
+                    diffs = requests.get(url=api, params=params).json()
+                    diffs = {m for m, confidence in diffs if confidence > 50}
+                    logger.info('{} vs. {}: {}'.format(
+                        build, new_build, pretty_dict(diffs)
+                    ))
 
     def _log_benchmark(self, metric, value):
         _, benckmark = self._prepare_data(metric, value)

@@ -1,4 +1,5 @@
 import time
+from datetime import datetime
 from zipfile import ZipFile, ZIP_DEFLATED
 
 import requests
@@ -40,6 +41,69 @@ class BtrcReporter(object):
                                  target.username, target.password)
             reporter = StatsReporter(cb)
             reporter.report_stats('btree_stats')
+
+
+class Comparator(object):
+
+    def get_snapshots(self, benckmark):
+        # Get all snapshots order by build version for given benchmark
+        self.snapshots_by_build = dict()
+        for row in self.cbb.query('benchmarks', 'build_and_snapshots_by_metric',
+                                  key=benckmark['metric'], stale='false'):
+            self.snapshots_by_build[row.value[0]] = row.value[1]
+
+    def find_previous(self, new_build):
+        # Find previous build within current release and latest build from
+        # previous release
+        all_builds = sorted(self.snapshots_by_build.keys(), reverse=True)
+
+        self.prev_release = None
+        self.prev_build = None
+        for build in all_builds[all_builds.index(new_build) + 1:]:
+            if build.startswith(new_build.split('-')[0]) and not self.prev_build:
+                self.prev_build = build
+            else:
+                self.prev_release = build
+                break
+
+    def compare(self, new_build):
+        # Compare snapshots if possible
+        api = 'http://{}/reports/compare/'.format(CBMONITOR_HOST)
+        for build in filter(lambda _: _, (self.prev_build, self.prev_release)):
+            baselines = self.snapshots_by_build[build]
+            targets = self.snapshots_by_build[new_build]
+            if baselines and targets and len(baselines) == len(targets):
+                changes = {}
+                for baseline, target in zip(baselines, targets):
+                    params = {'baseline': baseline, 'target': target}
+                    comparison = requests.get(url=api, params=params).json()
+                    changes[build] = tuple({
+                        m for m, confidence in comparison if confidence > 50
+                    })
+                yield {
+                    'datetime': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    'changes': changes
+                }
+
+    def __call__(self, test, benckmark):
+        try:
+            self.cbb = Couchbase.connect(bucket='benchmarks', **SF_STORAGE)
+            self.cbf = Couchbase.connect(bucket='feed', **SF_STORAGE)
+        except Exception, e:
+            logger.warn('Failed to connect to database, {}'.format(e))
+            return
+
+        self.get_snapshots(benckmark)
+        self.find_previous(new_build=benckmark['build'])
+
+        # Base feed record
+        base_feed = {
+            'build': benckmark['build'],
+            'cluster': test.cluster_spec.name,
+        }
+        for changes in self.compare(new_build=benckmark['build']):
+            feed = dict(base_feed, **changes)
+            logger.info('Snapshot comparison: {}'.format(pretty_dict(feed)))
 
 
 class SFReporter(object):
@@ -94,38 +158,6 @@ class SFReporter(object):
             doc.value.update({'obsolete': True})
             cb.set(row.docid, doc.value)
 
-    @staticmethod
-    def _compare_to_previous(cb, benckmark):
-        snapshots_by_build = dict()
-        for row in cb.query('benchmarks', 'build_and_snapshots_by_metric',
-                            key=benckmark['metric'], stale='false'):
-            snapshots_by_build[row.value[0]] = row.value[1]
-
-        all_builds = sorted(snapshots_by_build.keys(), reverse=True)
-        new_build = benckmark['build']
-        prev_release = None
-        prev_build = None
-
-        for build in all_builds[all_builds.index(new_build) + 1:]:
-            if build.startswith(new_build.split('-')[0]) and not prev_build:
-                prev_build = build
-            else:
-                prev_release = build
-                break
-
-        api = 'http://{}/reports/compare/'.format(CBMONITOR_HOST)
-        for build in filter(lambda _: _, (prev_build, prev_release)):
-            baselines = snapshots_by_build[build]
-            targets = snapshots_by_build[new_build]
-            if baselines and targets and len(baselines) == len(targets):
-                for baseline, target in zip(baselines, targets):
-                    params = {'baseline': baseline, 'target': target}
-                    diffs = requests.get(url=api, params=params).json()
-                    diffs = {m for m, confidence in diffs if confidence > 50}
-                    logger.info('{} vs. {}: {}'.format(
-                        build, new_build, pretty_dict(diffs)
-                    ))
-
     def _log_benchmark(self, metric, value):
         _, benckmark = self._prepare_data(metric, value)
         logger.info('Dry run stats: {}'.format(
@@ -138,7 +170,7 @@ class SFReporter(object):
             cb = Couchbase.connect(bucket='benchmarks', **SF_STORAGE)
             self._mark_previous_as_obsolete(cb, benckmark)
             cb.set(key, benckmark)
-            self._compare_to_previous(cb, benckmark)
+            Comparator()(test=self.test, benckmark=benckmark)
         except Exception, e:
             logger.warn('Failed to post results, {}'.format(e))
         else:

@@ -11,7 +11,7 @@ initial_nodes = 4
 num_buckets = 1
 
 [compaction]
-db_percentage = 20
+db_percentage = 10
 
 [load]
 items = 100000000
@@ -22,7 +22,7 @@ workers = 20
 items = 100000000
 size = 2048
 workers = 20
-working_set = 20
+working_set = 5
 
 [index]
 views = [1, 1, 1, 1]
@@ -36,8 +36,8 @@ throughput = 10000
 query_throughput = 400
 items = 100000000
 size = 2048
-working_set = 20
+working_set = 5
 working_set_access = 98
-workers = 16
+workers = 24
 query_workers = 12
 time = 3600

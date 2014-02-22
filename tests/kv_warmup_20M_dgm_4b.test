@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.kv
 class = WarmupTest
-descr = Warmup time (min), 4 buckets x 20M x 2KB, DGM
+title = Warmup time (min), 4 buckets x 20M x 2KB, DGM
 larger_is_better = false
 level = Basic
 

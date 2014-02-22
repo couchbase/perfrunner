@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.kv
 class = ObserveLatencyTest
-descr = OBSERVE latency (ms), 5K mutations/sec, 2 buckets x 40M x 2KB, DGM
+title = OBSERVE latency (ms), 5K mutations/sec, 2 buckets x 40M x 2KB, DGM
 larger_is_better = false
 level = Basic
 

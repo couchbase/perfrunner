@@ -9,7 +9,7 @@ class MetricHelper(object):
     def __init__(self, test):
         self.seriesly = Seriesly(CBMONITOR_HOST)
         self.test_config = test.test_config
-        self.test_descr = test.test_config.test_descr
+        self.metric_title = test.test_config.metric_title
         self.cluster_spec = test.cluster_spec
         self.cluster_names = test.cbagent.clusters.keys()
         self.build = test.build
@@ -30,8 +30,8 @@ class MetricHelper(object):
             params.update({'from': from_ts, 'to': to_ts})
         return params
 
-    def _get_metric_info(self, descr, larger_is_better=False, level='Basic'):
-        return {'title': descr,
+    def _get_metric_info(self, title, larger_is_better=False, level='Basic'):
+        return {'title': title,
                 'cluster': self.cluster_spec.name,
                 'larger_is_better': str(larger_is_better).lower(),
                 'level': level}
@@ -39,8 +39,8 @@ class MetricHelper(object):
     def calc_avg_xdcr_ops(self):
         metric = '{}_avg_xdcr_ops_{}'.format(self.test_config.name,
                                              self.cluster_spec.name)
-        descr = 'Avg. XDCR ops/sec, {}'.format(self.test_descr)
-        metric_info = self._get_metric_info(descr, larger_is_better=True)
+        title = 'Avg. XDCR ops/sec, {}'.format(self.metric_title)
+        metric_info = self._get_metric_info(title, larger_is_better=True)
         query_params = self._get_query_params('avg_xdc_ops')
 
         xdcr_ops = 0
@@ -55,8 +55,8 @@ class MetricHelper(object):
     def calc_avg_set_meta_ops(self):
         metric = '{}_avg_set_meta_ops_{}'.format(self.test_config.name,
                                                  self.cluster_spec.name)
-        descr = 'Avg. XDCR rate (items/sec), {}'.format(self.test_descr)
-        metric_info = self._get_metric_info(descr, larger_is_better=True)
+        title = 'Avg. XDCR rate (items/sec), {}'.format(self.metric_title)
+        metric_info = self._get_metric_info(title, larger_is_better=True)
         query_params = self._get_query_params('avg_ep_num_ops_set_meta')
 
         set_meta_ops = 0
@@ -72,9 +72,9 @@ class MetricHelper(object):
         metric = '{}_{}th_xdc_lag_{}'.format(self.test_config.name,
                                              percentile,
                                              self.cluster_spec.name)
-        descr = '{}th percentile replication lag (ms), {}'.format(
-            percentile, self.test_descr)
-        metric_info = self._get_metric_info(descr)
+        title = '{}th percentile replication lag (ms), {}'.format(
+            percentile, self.metric_title)
+        metric_info = self._get_metric_info(title)
 
         timings = []
         for bucket in self.test_config.buckets:
@@ -88,8 +88,8 @@ class MetricHelper(object):
     def calc_replication_changes_left(self):
         metric = '{}_avg_replication_queue_{}'.format(self.test_config.name,
                                                       self.cluster_spec.name)
-        descr = 'Avg. replication queue, {}'.format(self.test_descr)
-        metric_info = self._get_metric_info(descr)
+        title = 'Avg. replication queue, {}'.format(self.metric_title)
+        metric_info = self._get_metric_info(title)
         query_params = self._get_query_params('avg_replication_changes_left')
 
         queues = 0
@@ -155,9 +155,9 @@ class MetricHelper(object):
 
     def calc_query_latency(self, percentile):
         metric = '{}_{}'.format(self.test_config.name, self.cluster_spec.name)
-        descr = '{}th percentile query latency (ms), {}'.format(percentile,
-                                                                self.test_descr)
-        metric_info = self._get_metric_info(descr)
+        title = '{}th percentile query latency (ms), {}'.format(percentile,
+                                                                self.metric_title)
+        metric_info = self._get_metric_info(title)
 
         timings = []
         for bucket in self.test_config.buckets:
@@ -174,10 +174,10 @@ class MetricHelper(object):
                                         operation,
                                         percentile,
                                         self.cluster_spec.name)
-        descr = '{}th percentile {} {}'.format(percentile,
+        title = '{}th percentile {} {}'.format(percentile,
                                                operation.upper(),
-                                               self.test_descr)
-        metric_info = self._get_metric_info(descr)
+                                               self.metric_title)
+        metric_info = self._get_metric_info(title)
 
         timings = []
         for bucket in self.test_config.buckets:
@@ -193,8 +193,8 @@ class MetricHelper(object):
     def calc_observe_latency(self, percentile):
         metric = '{}_{}th_{}'.format(self.test_config.name, percentile,
                                      self.cluster_spec.name)
-        descr = '{}th percentile {}'.format(percentile, self.test_descr)
-        metric_info = self._get_metric_info(descr)
+        title = '{}th percentile {}'.format(percentile, self.metric_title)
+        metric_info = self._get_metric_info(title)
 
         timings = []
         for bucket in self.test_config.buckets:
@@ -210,11 +210,11 @@ class MetricHelper(object):
                                         self.cluster_spec.name)
         if meta:
             metric = '{}_{}'.format(metric, meta.split()[0].lower())
-        descr = 'Avg. CPU utilization rate (%)'
+        title = 'Avg. CPU utilization rate (%)'
         if meta:
-            descr = '{}, {}'.format(descr, meta)
-        descr = '{}, {}'.format(descr, self.test_descr)
-        metric_info = self._get_metric_info(descr, level='Advanced')
+            title = '{}, {}'.format(title, meta)
+        title = '{}, {}'.format(title, self.metric_title)
+        metric_info = self._get_metric_info(title, level='Advanced')
 
         host = self.master_node.split(':')[0].replace('.', '')
         cluster = self.cluster_names[0]
@@ -234,12 +234,12 @@ class MetricHelper(object):
         )
         if meta:
             metric = '{}_{}'.format(metric, meta.split()[0].lower())
-        descr = 'Max. views disk size (GB)'
+        title = 'Max. views disk size (GB)'
         if meta:
-            descr = '{}, {}'.format(descr, meta)
-        descr = '{}, {}'.format(descr, self.test_descr)
-        descr = descr.replace(' (min)', '')  # rebalance tests
-        metric_info = self._get_metric_info(descr, level='Advanced')
+            title = '{}, {}'.format(title, meta)
+        title = '{}, {}'.format(title, self.metric_title)
+        title = descr.replace(' (min)', '')  # rebalance tests
+        metric_info = self._get_metric_info(title, level='Advanced')
 
         query_params = self._get_query_params('max_couch_views_actual_disk_size',
                                               from_ts, to_ts)
@@ -255,8 +255,8 @@ class MetricHelper(object):
     def calc_max_beam_rss(self):
         metric = 'beam_rss_max_{}_{}'.format(self.test_config.name,
                                              self.cluster_spec.name)
-        descr = 'Max. beam.smp RSS (MB), {}'.format(self.test_descr)
-        metric_info = self._get_metric_info(descr)
+        title = 'Max. beam.smp RSS (MB), {}'.format(self.metric_title)
+        metric_info = self._get_metric_info(title)
 
         query_params = self._get_query_params('max_beam.smp_rss')
 
@@ -276,8 +276,8 @@ class MetricHelper(object):
         metric = '{}_{}_{}'.format(self.test_config.name,
                                    index_type.lower(),
                                    self.cluster_spec.name)
-        descr = '{} index (min), {}'.format(index_type,
-                                            self.test_descr)
-        metric_info = self._get_metric_info(descr)
+        title = '{} index (min), {}'.format(index_type,
+                                            self.metric_title)
+        metric_info = self._get_metric_info(title)
 
         return value, metric, metric_info

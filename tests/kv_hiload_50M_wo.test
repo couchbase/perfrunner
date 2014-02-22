@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.kv
 class = KVTest
-descr = Max memcached throughput, SETs/sec, 1 bucket x 50M x 256B, non-DGM
+title = Max memcached throughput, SETs/sec, 1 bucket x 50M x 256B, non-DGM
 larger_is_better = true
 level = Basic
 

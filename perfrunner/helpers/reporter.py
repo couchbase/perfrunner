@@ -63,7 +63,7 @@ class SFReporter(object):
     def _add_metric(self, metric, metric_info):
         if metric_info is None:
             metric_info = {
-                'title': self.test.test_config.test_descr,
+                'title': self.test.test_config.metric_title,
                 'cluster': self.test.cluster_spec.name,
                 'larger_is_better': self.test.test_config.regression_criterion,
                 'level': self.test.test_config.level,

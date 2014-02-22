@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.xdcr
 class = XdcrTest
-descr = 4 -> 4 BiDir, 2 buckets x 50M x 2KB, DGM
+title = 4 -> 4 BiDir, 2 buckets x 50M x 2KB, DGM
 larger_is_better = false
 level = Basic
 

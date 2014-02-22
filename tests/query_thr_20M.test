@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.query
 class = QueryThroughputTest
-descr = Query throughput (qps), 1 bucket x 20M x 2KB, non-DGM, 4 x 1 views
+title = Query throughput (qps), 1 bucket x 20M x 2KB, non-DGM, 4 x 1 views
 larger_is_better = true
 level = Basic
 

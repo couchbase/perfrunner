@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.rebalance
 class = RebalanceWithSymmetricXdcrTest
-descr = Rebalance-out (min), 4->4 -> 4->3 UniDir, 1 bucket x 50M x 2KB, DGM
+title = Rebalance-out (min), 4->4 -> 4->3 UniDir, 1 bucket x 50M x 2KB, DGM
 larger_is_better = false
 level = Basic
 

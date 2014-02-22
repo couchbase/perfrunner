@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.index
 class = InitialAndIncrementalIndexTest
-descr = 1 bucket x 20M x 2KB, non-DGM, 4 x 4 views, no mutations
+title = 1 bucket x 20M x 2KB, non-DGM, 4 x 4 views, no mutations
 larger_is_better = false
 level = Basic
 

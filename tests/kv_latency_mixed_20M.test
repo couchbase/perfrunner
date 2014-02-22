@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.kv
 class = MixedLatencyTest
-descr = latency (ms), mixed, 1 bucket x 20M x 2KB, non-DGM
+title = latency (ms), mixed, 1 bucket x 20M x 2KB, non-DGM
 larger_is_better = false
 level = Basic
 

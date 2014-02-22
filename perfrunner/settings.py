@@ -126,6 +126,11 @@ class TestConfig(Config):
 
     @property
     @safe
+    def metric_title(self):
+        return self.config.get('test_case', 'title')
+
+    @property
+    @safe
     def regression_criterion(self):
         return self.config.get('test_case', 'larger_is_better')
 

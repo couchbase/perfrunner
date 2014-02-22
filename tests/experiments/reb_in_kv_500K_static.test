@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.rebalance
 class = StaticRebalanceTest
-descr = Static rebalance-in (min), 3 -> 4, 1 bucket x 500K x 2KB
+title = Static rebalance-in (min), 3 -> 4, 1 bucket x 500K x 2KB
 larger_is_better = false
 level = Basic
 

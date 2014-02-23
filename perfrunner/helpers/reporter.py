@@ -100,9 +100,12 @@ class Comparator(object):
         base_feed = {
             'build': benckmark['build'],
             'cluster': test.cluster_spec.name,
+            'summary': test.test_config.test_summary
         }
         for changes in self.compare(new_build=benckmark['build']):
             feed = dict(base_feed, **changes)
+            _id = int(time.time() * 10 ** 6)
+            self.cbf.set(_id, feed)
             logger.info('Snapshot comparison: {}'.format(pretty_dict(feed)))
 
 

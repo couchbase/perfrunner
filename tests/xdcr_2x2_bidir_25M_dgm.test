@@ -2,6 +2,7 @@
 module = perfrunner.tests.xdcr
 class = XdcrTest
 title = 2 <-> 2 BiDir, 1 bucket x 25M x 2KB, DGM
+summary = Mixed KV + XDCR test, 2<->2 nodes, 1 bucket x 25M x 2KB, DGM, BiDir, 10K ops/sec
 larger_is_better = false
 level = Basic
 
@@ -19,10 +20,10 @@ workers = 20
 replication_type = bidir
 
 [access]
-creates = 5
+creates = 0
 reads = 50
-updates = 40
-deletes = 5
+updates = 50
+deletes = 0
 throughput = 10000
 items = 25000000
 size = 2048

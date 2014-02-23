@@ -2,6 +2,7 @@
 module = perfrunner.tests.rebalance
 class = RebalanceKVTest
 title = Rebalance-in (min), 3 -> 4, 1 bucket x 100M x 2KB, DGM
+summary = Mixed rebalance test, 3 -> 4 nodes, 1 bucket x 100M x 2KB, 10K ops/sec
 larger_is_better = false
 level = Basic
 

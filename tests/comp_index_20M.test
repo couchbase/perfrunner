@@ -2,6 +2,7 @@
 module = perfrunner.tests.compaction
 class = IndexCompactionTest
 title = Index compaction (min), 1 bucket x 20M x 2KB, non-DGM, 4 x 4 views, 80%% fragmentation
+summary = Index compaction test, 4 nodes, 1 bucket x 20M x 2KB, non-DGM, 4 x 4 views
 larger_is_better = false
 level = Basic
 

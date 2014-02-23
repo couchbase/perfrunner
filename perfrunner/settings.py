@@ -121,8 +121,8 @@ class TestConfig(Config):
 
     @property
     @safe
-    def test_descr(self):
-        return self.config.get('test_case', 'descr')
+    def test_summary(self):
+        return self.config.get('test_case', 'summary')
 
     @property
     @safe

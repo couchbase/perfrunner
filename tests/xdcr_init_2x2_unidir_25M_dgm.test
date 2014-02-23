@@ -2,6 +2,7 @@
 module = perfrunner.tests.xdcr
 class = XdcrInitTest
 title = Avg. initial XDCR rate (items/sec), 2 -> 2 UniDir, 1 bucket x 25M x 2KB, DGM, no compaction
+summary = Initial XDCR test, 2->2 nodes, 1 bucket x 25M x 2KB, DGM, no compaction, UniDir
 larger_is_better = true
 level = Basic
 

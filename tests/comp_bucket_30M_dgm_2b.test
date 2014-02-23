@@ -2,6 +2,7 @@
 module = perfrunner.tests.compaction
 class = BucketCompactionTest
 title = Bucket compaction (min), 2 buckets x 30M x 2KB, DGM, 60%% fragmentation
+summary = Bucket compaction test, 4 nodes, 2 buckets x 30M x 2KB, DGM
 larger_is_better = false
 level = Basic
 

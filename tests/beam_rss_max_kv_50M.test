@@ -2,6 +2,7 @@
 module = perfrunner.tests.kv
 class = BeamRssTest
 title = mixed, 1 bucket x 50M x 2KB, DGM
+summary = Mixed KV test, 4 nodes, 1 bucket x 50M x 2KB, DGM, 10K ops/sec
 larger_is_better = false
 level = Advanced
 

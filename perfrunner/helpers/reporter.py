@@ -104,7 +104,7 @@ class Comparator(object):
         }
         for changes in self.compare(new_build=benckmark['build']):
             feed = dict(base_feed, **changes)
-            _id = int(time.time() * 10 ** 6)
+            _id = str(int(time.time() * 10 ** 6))
             self.cbf.set(_id, feed)
             logger.info('Snapshot comparison: {}'.format(pretty_dict(feed)))
 

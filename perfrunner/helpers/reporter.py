@@ -69,20 +69,27 @@ class Comparator(object):
     def compare(self, new_build):
         # Compare snapshots if possible
         api = 'http://{}/reports/compare/'.format(CBMONITOR_HOST)
+        snapshot_api = 'http://{}/reports/html/?snapshot={{}}&snapshot={{}}'\
+            .format(CBMONITOR_HOST)
         for build in filter(lambda _: _, (self.prev_build, self.prev_release)):
             baselines = self.snapshots_by_build[build]
             targets = self.snapshots_by_build[new_build]
             if baselines and targets and len(baselines) == len(targets):
                 changes = {}
+                reports = {}
                 for baseline, target in zip(baselines, targets):
                     params = {'baseline': baseline, 'target': target}
                     comparison = requests.get(url=api, params=params).json()
                     changes[build] = tuple({
                         m for m, confidence in comparison if confidence > 50
                     })
+                    reports[build] = snapshot_api.format(baseline, target)
+                for report in reports.values():
+                    requests.get(url=report)
                 yield {
                     'datetime': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    'changes': changes
+                    'changes': changes,
+                    'reports': reports,
                 }
 
     def __call__(self, test, benckmark):

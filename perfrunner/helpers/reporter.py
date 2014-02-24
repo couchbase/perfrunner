@@ -45,16 +45,18 @@ class BtrcReporter(object):
 
 class Comparator(object):
 
+    CONFIDENCE_THRESHOLD = 50
+
     def get_snapshots(self, benckmark):
-        # Get all snapshots order by build version for given benchmark
+        """Get all snapshots ordered by build version for given benchmark"""
         self.snapshots_by_build = dict()
         for row in self.cbb.query('benchmarks', 'build_and_snapshots_by_metric',
                                   key=benckmark['metric'], stale='false'):
             self.snapshots_by_build[row.value[0]] = row.value[1]
 
     def find_previous(self, new_build):
-        # Find previous build within current release and latest build from
-        # previous release
+        """Find previous build within current release and latest build from
+        previous release"""
         all_builds = sorted(self.snapshots_by_build.keys(), reverse=True)
 
         self.prev_release = None
@@ -67,30 +69,33 @@ class Comparator(object):
                 break
 
     def compare(self, new_build):
-        # Compare snapshots if possible
+        """Compare snapshots if possible"""
         api = 'http://{}/reports/compare/'.format(CBMONITOR_HOST)
         snapshot_api = 'http://{}/reports/html/?snapshot={{}}&snapshot={{}}'\
             .format(CBMONITOR_HOST)
+
+        changes = []
+        reports = []
         for build in filter(lambda _: _, (self.prev_build, self.prev_release)):
             baselines = self.snapshots_by_build[build]
             targets = self.snapshots_by_build[new_build]
             if baselines and targets and len(baselines) == len(targets):
-                changes = {}
-                reports = {}
                 for baseline, target in zip(baselines, targets):
                     params = {'baseline': baseline, 'target': target}
                     comparison = requests.get(url=api, params=params).json()
-                    changes[build] = tuple({
-                        m for m, confidence in comparison if confidence > 50
+                    diff = tuple({
+                        m for m, confidence in comparison
+                        if confidence > self.CONFIDENCE_THRESHOLD
                     })
-                    reports[build] = snapshot_api.format(baseline, target)
-                for report in reports.values():
-                    requests.get(url=report)
-                yield {
-                    'datetime': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    'changes': changes,
-                    'reports': reports,
-                }
+                    changes.append((build, diff))
+                    snapshots_url = snapshot_api.format(baseline, target)
+                    reports.append((build, snapshots_url))
+
+        # Prefetch (trigger) HTML reports
+        for _, url in reports:
+            requests.get(url=url)
+
+        return {'changes': changes, 'reports': reports}
 
     def __call__(self, test, benckmark):
         try:
@@ -103,17 +108,18 @@ class Comparator(object):
         self.get_snapshots(benckmark)
         self.find_previous(new_build=benckmark['build'])
 
-        # Base feed record
+        # Feed record
+        _id = str(int(time.time() * 10 ** 6))
         base_feed = {
             'build': benckmark['build'],
             'cluster': test.cluster_spec.name,
-            'summary': test.test_config.test_summary
+            'summary': test.test_config.test_summary,
+            'datetime': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         }
-        for changes in self.compare(new_build=benckmark['build']):
-            feed = dict(base_feed, **changes)
-            _id = str(int(time.time() * 10 ** 6))
-            self.cbf.set(_id, feed)
-            logger.info('Snapshot comparison: {}'.format(pretty_dict(feed)))
+        changes = self.compare(new_build=benckmark['build'])
+        feed = dict(base_feed, **changes)
+        self.cbf.set(_id, feed)
+        logger.info('Snapshot comparison: {}'.format(pretty_dict(feed)))
 
 
 class SFReporter(object):

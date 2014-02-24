@@ -62,8 +62,9 @@ class Comparator(object):
         self.prev_release = None
         self.prev_build = None
         for build in all_builds[all_builds.index(new_build) + 1:]:
-            if build.startswith(new_build.split('-')[0]) and not self.prev_build:
-                self.prev_build = build
+            if build.startswith(new_build.split('-')[0]):
+                if not self.prev_build:
+                    self.prev_build = build
             else:
                 self.prev_release = build
                 break

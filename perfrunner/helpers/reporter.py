@@ -114,6 +114,7 @@ class Comparator(object):
         base_feed = {
             'build': benckmark['build'],
             'cluster': test.cluster_spec.name,
+            'test_config': test.test_config.name,
             'summary': test.test_config.test_summary,
             'datetime': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         }

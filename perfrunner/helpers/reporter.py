@@ -55,21 +55,15 @@ class Comparator(object):
             self.snapshots_by_build[row.value[0]] = row.value[1]
 
     def find_previous(self, new_build):
-        """Find previous build within current release and latest build from
+        """Find previous build within current release or latest build from
         previous release"""
         all_builds = sorted(self.snapshots_by_build.keys(), reverse=True)
+        try:
+            return all_builds[all_builds.index(new_build) + 1:][0]
+        except IndexError:
+            return None
 
-        self.prev_release = None
-        self.prev_build = None
-        for build in all_builds[all_builds.index(new_build) + 1:]:
-            if build.startswith(new_build.split('-')[0]):
-                if not self.prev_build:
-                    self.prev_build = build
-            else:
-                self.prev_release = build
-                break
-
-    def compare(self, new_build):
+    def compare(self, prev_build, new_build):
         """Compare snapshots if possible"""
         api = 'http://{}/reports/compare/'.format(CBMONITOR_HOST)
         snapshot_api = 'http://{}/reports/html/?snapshot={{}}&snapshot={{}}'\
@@ -77,13 +71,10 @@ class Comparator(object):
 
         changes = []
         reports = []
-        # Though it's possible to report difference for both previous build and
-        # previous release, last one is ignored for now. Huge difference
-        # between releases spams performance feed with irrelevant changes.
-        for build in filter(lambda _: _, [self.prev_build or self.prev_release]):
-            baselines = self.snapshots_by_build[build]
+        if prev_build is not None:
+            baselines = self.snapshots_by_build[prev_build]
             targets = self.snapshots_by_build[new_build]
-            if baselines and targets and len(baselines) == len(targets):
+            if baselines and targets:
                 for baseline, target in zip(baselines, targets):
                     params = {'baseline': baseline, 'target': target}
                     comparison = requests.get(url=api, params=params).json()
@@ -91,13 +82,13 @@ class Comparator(object):
                         m for m, confidence in comparison
                         if confidence > self.CONFIDENCE_THRESHOLD
                     })
-                    changes.append((build, diff))
+                    changes.append((prev_build, diff))
                     snapshots_url = snapshot_api.format(baseline, target)
-                    reports.append((build, snapshots_url))
+                    reports.append((prev_build, snapshots_url))
 
-        # Prefetch (trigger) HTML reports
-        for _, url in reports:
-            requests.get(url=url)
+            # Prefetch (trigger) HTML reports
+            for _, url in reports:
+                requests.get(url=url)
 
         return {'changes': changes, 'reports': reports}
 
@@ -110,7 +101,7 @@ class Comparator(object):
             return
 
         self.get_snapshots(benckmark)
-        self.find_previous(new_build=benckmark['build'])
+        prev_build = self.find_previous(new_build=benckmark['build'])
 
         # Feed record
         _id = str(int(time.time() * 10 ** 6))
@@ -121,7 +112,8 @@ class Comparator(object):
             'summary': test.test_config.test_summary,
             'datetime': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         }
-        changes = self.compare(new_build=benckmark['build'])
+        changes = self.compare(prev_build=prev_build,
+                               new_build=benckmark['build'])
         feed = dict(base_feed, **changes)
         self.cbf.set(_id, feed)
         logger.info('Snapshot comparison: {}'.format(pretty_dict(feed)))

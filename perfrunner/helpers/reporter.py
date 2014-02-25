@@ -77,7 +77,10 @@ class Comparator(object):
 
         changes = []
         reports = []
-        for build in filter(lambda _: _, (self.prev_build, self.prev_release)):
+        # Though it's possible to report difference for both previous build and
+        # previous release, last one is ignored for now. Huge difference
+        # between releases spams performance feed with irrelevant changes.
+        for build in filter(lambda _: _, [self.prev_build or self.prev_release]):
             baselines = self.snapshots_by_build[build]
             targets = self.snapshots_by_build[new_build]
             if baselines and targets and len(baselines) == len(targets):

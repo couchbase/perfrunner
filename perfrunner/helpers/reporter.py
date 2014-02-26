@@ -61,7 +61,9 @@ class Comparator(object):
         try:
             return all_builds[all_builds.index(new_build) + 1:][0]
         except IndexError:
-            return None
+            return
+        except ValueError:
+            logger.warn('Didn\'t find {} in {}'.format(new_build, all_builds))
 
     def compare(self, prev_build, new_build):
         """Compare snapshots if possible"""

@@ -22,16 +22,3 @@ workers = 20
 
 [index]
 views = [4, 4, 4, 4]
-
-[access]
-creates = 4
-reads = 80
-updates = 12
-deletes = 4
-throughput = 10000
-query_throughput = 400
-items = 20000000
-size = 2048
-workers = 12
-query_workers = 12
-time = 3600

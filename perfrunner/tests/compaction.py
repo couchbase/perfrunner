@@ -5,6 +5,8 @@ from perfrunner.tests.index import IndexTest
 
 class BucketCompactionTest(PerfTest):
 
+    ALL_BUCKETS = True
+
     @with_stats
     def compact_bucket(self):
         super(BucketCompactionTest, self).compact_bucket()
@@ -18,11 +20,15 @@ class BucketCompactionTest(PerfTest):
         from_ts, to_ts = self.compact_bucket()
         time_elapsed = (to_ts - from_ts) / 1000.0
 
-        time_elapsed = self.reporter.finish('Bucket compaction', time_elapsed)
-        self.reporter.post_to_sf(time_elapsed)
+        self.reporter.finish('Bucket compaction', time_elapsed)
+        compaction_speed = \
+            self.metric_helper.calc_compaction_speed(time_elapsed, bucket=True)
+        self.reporter.post_to_sf(compaction_speed)
 
 
 class IndexCompactionTest(IndexTest):
+
+    ALL_BUCKETS = True
 
     def access(self):
         super(IndexCompactionTest, self).timer()
@@ -50,4 +56,6 @@ class IndexCompactionTest(IndexTest):
         time_elapsed = (to_ts - from_ts) / 1000.0
 
         time_elapsed = self.reporter.finish('Index compaction', time_elapsed)
-        self.reporter.post_to_sf(time_elapsed)
+        compaction_speed = \
+            self.metric_helper.calc_compaction_speed(time_elapsed, bucket=False)
+        self.reporter.post_to_sf(compaction_speed)

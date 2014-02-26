@@ -238,7 +238,7 @@ class MetricHelper(object):
         if meta:
             title = '{}, {}'.format(title, meta)
         title = '{}, {}'.format(title, self.metric_title)
-        title = descr.replace(' (min)', '')  # rebalance tests
+        title = title.replace(' (min)', '')  # rebalance tests
         metric_info = self._get_metric_info(title, level='Advanced')
 
         query_params = self._get_query_params('max_couch_views_actual_disk_size',
@@ -281,3 +281,30 @@ class MetricHelper(object):
         metric_info = self._get_metric_info(title)
 
         return value, metric, metric_info
+
+    def calc_compaction_speed(self, time_elapsed, bucket=True):
+        if bucket:
+            max_query_params = \
+                self._get_query_params('max_couch_docs_actual_disk_size')
+            min_query_params = \
+                self._get_query_params('min_couch_docs_actual_disk_size')
+        else:
+            max_query_params = \
+                self._get_query_params('max_couch_views_actual_disk_size')
+            min_query_params = \
+                self._get_query_params('min_couch_views_actual_disk_size')
+
+        max_diff = 0
+        for bucket in self.test_config.buckets:
+            db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
+            data = self.seriesly[db].query(max_query_params)
+            disk_size_before = data.values()[0][0]
+
+            db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
+            data = self.seriesly[db].query(min_query_params)
+            disk_size_after = data.values()[0][0]
+
+            max_diff = max(max_diff, disk_size_before - disk_size_after)
+
+        diff = max_diff / 1024 ** 2 / time_elapsed # Mbytes/sec
+        return round(diff, 1)

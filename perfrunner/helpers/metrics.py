@@ -290,9 +290,9 @@ class MetricHelper(object):
                 self._get_query_params('min_couch_docs_actual_disk_size')
         else:
             max_query_params = \
-                self._get_query_params('max_couch_views_disk_size')
+                self._get_query_params('max_couch_views_actual_disk_size')
             min_query_params = \
-                self._get_query_params('min_couch_views_disk_size')
+                self._get_query_params('min_couch_views_actual_disk_size')
 
         max_diff = 0
         for bucket in self.test_config.buckets:

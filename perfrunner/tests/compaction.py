@@ -55,7 +55,7 @@ class IndexCompactionTest(IndexTest):
         from_ts, to_ts = self.compact_index()
         time_elapsed = (to_ts - from_ts) / 1000.0
 
-        time_elapsed = self.reporter.finish('Index compaction', time_elapsed)
+        self.reporter.finish('Index compaction', time_elapsed)
         compaction_speed = \
             self.metric_helper.calc_compaction_speed(time_elapsed, bucket=False)
         self.reporter.post_to_sf(compaction_speed)

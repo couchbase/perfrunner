@@ -84,9 +84,10 @@ class Comparator(object):
                         m for m, confidence in comparison
                         if confidence > self.CONFIDENCE_THRESHOLD
                     })
-                    changes.append((prev_build, diff))
-                    snapshots_url = snapshot_api.format(baseline, target)
-                    reports.append((prev_build, snapshots_url))
+                    if diff:
+                        changes.append((prev_build, diff))
+                        snapshots_url = snapshot_api.format(baseline, target)
+                        reports.append((prev_build, snapshots_url))
 
             # Prefetch (trigger) HTML reports
             for _, url in reports:

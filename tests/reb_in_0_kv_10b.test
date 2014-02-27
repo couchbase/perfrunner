@@ -1,0 +1,28 @@
+[test_case]
+module = perfrunner.tests.rebalance
+class = RebalanceKVTest
+title = Rebalance-in (min), 3 -> 4, 10 empty buckets
+summary = Mixed rebalance test, 3 -> 4 nodes, 10 empty buckets
+larger_is_better = false
+level = Basic
+
+[stats]
+enabled = 0
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 3
+num_buckets = 10
+
+[compaction]
+db_percentage = 100
+
+[rebalance]
+nodes_after = 4
+start_after = 1200
+stop_after = 1200
+
+[rebalance]
+nodes_after = 4
+start_after = 0
+stop_after = 0

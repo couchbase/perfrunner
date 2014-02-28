@@ -85,6 +85,8 @@ class RebalanceTest(PerfTest):
         initial_nodes = self.test_config.initial_nodes
         nodes_after = self.rebalance_settings.nodes_after
         swap = self.rebalance_settings.swap
+        failover = self.rebalance_settings.failover
+        sleep_after_failover = self.rebalance_settings.sleep_after_failover
         group_number = self.test_config.group_number or 1
 
         for (_, servers), initial_nodes, nodes_after in zip(clusters,
@@ -93,15 +95,16 @@ class RebalanceTest(PerfTest):
             master = servers[0]
             groups = group_number > 1 and self.rest.get_server_groups(master) or {}
 
+            new_nodes = []
+            ejected_nodes = []
+            failover_nodes = []
             if nodes_after > initial_nodes:
                 new_nodes = enumerate(
                     servers[initial_nodes:nodes_after],
                     start=initial_nodes
                 )
                 known_nodes = servers[:nodes_after]
-                ejected_nodes = []
             elif nodes_after < initial_nodes:
-                new_nodes = []
                 known_nodes = servers[:initial_nodes]
                 ejected_nodes = servers[nodes_after:initial_nodes]
             elif swap:
@@ -111,6 +114,9 @@ class RebalanceTest(PerfTest):
                 )
                 known_nodes = servers[:initial_nodes + swap]
                 ejected_nodes = servers[initial_nodes - swap:initial_nodes]
+            elif failover:
+                known_nodes = servers[:initial_nodes]
+                failover_nodes = servers[initial_nodes - failover:initial_nodes]
             else:
                 continue
 
@@ -119,7 +125,15 @@ class RebalanceTest(PerfTest):
                 group = server_group(servers[:nodes_after], group_number, i)
                 uri = groups.get(group)
                 self.rest.add_node(master, host, uri)
+            for host_port in failover_nodes:
+                self.rest.fail_over(master, host_port)
+                self.rest.add_back(master, host_port)
+
+            if failover:
+                time.sleep(sleep_after_failover)
+
             self.rest.rebalance(master, known_nodes, ejected_nodes)
+
             for i, host_port in new_nodes:
                 host = host_port.split(':')[0]
                 self.change_watermarks(host)

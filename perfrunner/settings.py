@@ -281,12 +281,17 @@ class TargetSettings(object):
 class RebalanceSettings(object):
 
     SWAP = 0  # Don't swap by default
+    FAILOVER = 0  # No failover by default
+    SLEEP_AFTER_FAILOVER = 600
     START_AFTER = 1200
     STOP_AFTER = 1200
 
     def __init__(self, options):
         self.nodes_after = [int(_) for _ in options.get('nodes_after').split()]
         self.swap = int(options.get('swap', self.SWAP))
+        self.failover = int(options.get('failover', self.FAILOVER))
+        self.sleep_after_failover = int(options.get('sleep_after_failover',
+                                                    self.SLEEP_AFTER_FAILOVER))
         self.start_after = int(options.get('start_after', self.START_AFTER))
         self.stop_after = int(options.get('stop_after', self.STOP_AFTER))
 

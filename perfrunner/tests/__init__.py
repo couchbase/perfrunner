@@ -75,6 +75,9 @@ class PerfTest(object):
             self.debug()
         for master in self.cluster_spec.yield_masters():
             num_failovers = self.rest.get_failover_counter(master)
+            if hasattr(self, 'rebalance_settings') and \
+                    self.rebalance_settings.failover:
+                continue
             if num_failovers:
                 logger.interrupt(
                     'Failover happened {} time(s)'.format(num_failovers)

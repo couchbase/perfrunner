@@ -153,16 +153,20 @@ class RemoteLinuxHelper(object):
             run('yes | rpm -i /tmp/{}'.format(filename))
 
     @all_hosts
+    def restart(self):
+        logger.info('Restarting server')
+        run('/etc/init.d/couchbase-server restart')
+
+    @all_hosts
     def restart_with_alternative_swt(self, swt='medium'):
         """+swt very_low|low|medium|high|very_high"""
-        logger.info('Change +swt to {} and restart server'.format(swt))
-
+        logger.info('Changing +swt to {} and restart server'.format(swt))
         run('ERL_AFLAGS="+swt {}" /etc/init.d/couchbase-server restart'
             .format(swt))
 
     @all_hosts
     def restart_with_alternative_num_vbuckets(self, num_vbuckets):
-        logger.info('Change number of vbuckets to {}'.format(num_vbuckets))
+        logger.info('Changing number of vbuckets to {}'.format(num_vbuckets))
         run('COUCHBASE_NUM_VBUCKETS={} /etc/init.d/couchbase-server restart'
             .format(num_vbuckets))
 

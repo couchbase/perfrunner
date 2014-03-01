@@ -87,11 +87,10 @@ class ClusterManager(object):
 
         num_buckets = self.test_config.num_buckets
         ram_quota = self.mem_quota / num_buckets
-        buckets = ['bucket-{}'.format(i + 1) for i in xrange(num_buckets)]
 
         for master in self.masters():
-            for name in buckets:
-                self.rest.create_bucket(master, name, ram_quota,
+            for bucket in self.test_config.buckets:
+                self.rest.create_bucket(master, bucket, ram_quota,
                                         replica_number=replica_number,
                                         threads_number=threads_number)
 
@@ -122,6 +121,17 @@ class ClusterManager(object):
         num_vbuckets = self.test_config.num_vbuckets
         if num_vbuckets is not None:
             self.remote.restart_with_alternative_num_vbuckets(num_vbuckets)
+
+    def restart_with_alternative_num_shards(self):
+        cmd = 'ns_bucket:update_bucket_props("{}", ' \
+              '[{{extra_config_string, "max_num_shards={}"}}]).'
+        num_shards = self.test_config.num_shards
+        if num_shards is not None:
+            for master in self.masters():
+                for bucket in self.test_config.buckets:
+                    diag_eval = cmd.format(bucket, num_shards)
+                    self.rest.run_diag_eval(master, diag_eval)
+            self.remote.restart()
 
     def enable_auto_failover(self):
         for master in self.masters():
@@ -189,6 +199,7 @@ def main():
         cm.create_server_groups()
     cm.add_nodes()
     cm.create_buckets()
+    cm.restart_with_alternative_num_shards()
     cm.wait_until_warmed_up()
     cm.configure_auto_compaction()
     cm.enable_auto_failover()

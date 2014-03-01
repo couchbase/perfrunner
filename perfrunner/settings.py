@@ -163,6 +163,11 @@ class TestConfig(Config):
 
     @property
     @safe
+    def num_shards(self):
+        return self.config.getint('cluster', 'num_shards')
+
+    @property
+    @safe
     def replica_number(self):
         return self.config.getint('cluster', 'replica_number')
 

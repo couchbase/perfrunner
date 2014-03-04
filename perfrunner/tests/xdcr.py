@@ -1,7 +1,10 @@
+from logger import logger
+
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import log_phase, target_hash
 from perfrunner.settings import TargetSettings
 from perfrunner.tests import PerfTest, TargetIterator
+from perfrunner.tests.kv import FlusherTest
 
 
 class XdcrTest(PerfTest):
@@ -126,3 +129,19 @@ class XdcrInitTest(SymmetricXdcrTest):
         self.reporter.post_to_sf(rate)
         if hasattr(self, 'experiment'):
             self.experiment.post_results(rate)
+
+
+class XdcrInitInMemoryTest(XdcrInitTest, FlusherTest):
+
+    def stop_persistence(self):
+        servers = tuple(self.cluster_spec.yield_servers())
+        dest_hostnames = [
+            server.split(':')[0] for server in servers[len(servers) / 2:]
+        ]
+        for mc in self.mc_iterator():
+            if mc.host in dest_hostnames:
+                mc.stop_persistence()
+
+    def run(self):
+        self.stop_persistence()
+        super(XdcrInitInMemoryTest, self).run()

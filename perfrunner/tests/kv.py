@@ -1,5 +1,5 @@
 from logger import logger
-from mc_bin_client.mc_bin_client import MemcachedClient
+from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
 from tap import TAP
 from upr import UprClient
 from upr.constants import CMD_STREAM_REQ
@@ -100,8 +100,11 @@ class FlusherTest(KVTest):
         for hostname in self.cluster_spec.yield_hostnames():
             for bucket in self.test_config.buckets:
                 mc = MemcachedClient(host=hostname, port=11210)
-                mc.sasl_auth_plain(user=bucket, password=password)
-                yield mc
+                try:
+                    mc.sasl_auth_plain(user=bucket, password=password)
+                    yield mc
+                except MemcachedError:
+                    logger.warn('Auth failure')
 
     def stop_persistence(self):
         for mc in self.mc_iterator():

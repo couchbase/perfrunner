@@ -102,7 +102,7 @@ class MetricHelper(object):
         return queue, metric, metric_info
 
     def calc_avg_replication_rate(self, time_elapsed):
-        initial_items = self.test_config.load_settings.items
+        initial_items = self.test_config.load_settings.ops
         num_buckets = self.test_config.num_buckets
         avg_replication_rate = num_buckets * initial_items / time_elapsed
 

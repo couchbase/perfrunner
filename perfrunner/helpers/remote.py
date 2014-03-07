@@ -186,6 +186,50 @@ class RemoteLinuxHelper(object):
         logger.info('Starting Couchbase Server')
         run('/etc/init.d/couchbase-server start')
 
+    def detect_if(self):
+        for iface in ('eth0', 'em1'):
+            result = run('grep {} /proc/net/dev'.format(iface),
+                         warn_only=True, quiet=True)
+            if not result.return_code:
+                return iface
+
+    def detect_ip(self, _if):
+        ifconfing = run('ifconfig {} | grep "inet addr"'.format(_if))
+        return ifconfing.split()[1].split(':')[1]
+
+    @all_hosts
+    def disable_wan(self):
+        logger.info('Disabling WAN effects')
+        _if = self.detect_if()
+        run('tc qdisc del dev {} root'.format(_if), warn_only=True, quiet=True)
+
+    @all_hosts
+    def enable_wan(self):
+        logger.info('Enabling WAN effects')
+        _if = self.detect_if()
+        for cmd in (
+            'tc qdisc add dev {} handle 1: root htb',
+            'tc class add dev {} parent 1: classid 1:1 htb rate 1gbit',
+            'tc class add dev {} parent 1:1 classid 1:11 htb rate 1gbit',
+            'tc qdisc add dev {} parent 1:11 handle 10: netem delay 50ms 2ms '
+            'loss 0.005% 50% duplicate 0.005% corrupt 0.005%',
+        ):
+            run(cmd.format(_if))
+
+    @all_hosts
+    def filter_wan(self, src_list, dest_list):
+        logger.info('Filtering WAN effects')
+        _if = self.detect_if()
+
+        if self.detect_ip(_if) in src_list:
+            _filter = dest_list
+        else:
+            _filter = src_list
+
+        for ip in _filter:
+            run('tc filter add dev {} protocol ip prio 1 u32 '
+                'match ip dst {} flowid 1:11'.format(_if, ip))
+
 
 class RemoteWindowsHelper(RemoteLinuxHelper):
 
@@ -309,4 +353,13 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
         pass
 
     def restart_with_alternative_num_vbuckets(self, num_vbuckets):
+        pass
+
+    def disable_wan(self):
+        pass
+
+    def enable_wan(self):
+        pass
+
+    def filter_wan(self, *args):
         pass

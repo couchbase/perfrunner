@@ -16,7 +16,7 @@ credentials = root:couchbase
 
 [storage]
 data = /data
-index = /data
+index = /ssd
 
 [credentials]
 rest = Administrator:password
@@ -27,4 +27,4 @@ Platform = Physical
 OS = CentOS 6.5
 CPU = Intel Xeon E5-2630
 Memory = 64 GB
-Disk = 2 x HDD
+Disk = 1 x HDD, 1 x SSD

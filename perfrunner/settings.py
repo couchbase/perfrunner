@@ -378,6 +378,7 @@ class XDCRSettings(PhaseSettings):
     XDCR_REPLICATION_TYPE = 'bidir'
     XDCR_REPLICATION_PROTOCOL = None
     XDCR_USE_SSL = False
+    WAN_ENABLED = False
 
     def __init__(self, options):
         self.replication_type = options.get('replication_type',
@@ -385,6 +386,7 @@ class XDCRSettings(PhaseSettings):
         self.replication_protocol = options.get('replication_protocol',
                                                 self.XDCR_REPLICATION_PROTOCOL)
         self.use_ssl = int(options.get('use_ssl', self.XDCR_USE_SSL))
+        self.wan_enabled = int(options.get('wan_enabled', self.WAN_ENABLED))
 
 
 class IndexSettings(PhaseSettings):

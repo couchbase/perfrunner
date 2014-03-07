@@ -1,5 +1,3 @@
-from logger import logger
-
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import log_phase, target_hash
 from perfrunner.settings import TargetSettings
@@ -60,6 +58,17 @@ class XdcrTest(PerfTest):
         self.wait_for_persistence()
 
         self.compact_bucket()
+
+        if self.settings.wan_enabled:
+            hostnames = tuple(self.cluster_spec.yield_hostnames())
+            src_list = [
+                hostname for hostname in hostnames[len(hostnames) / 2:]
+            ]
+            dest_list = [
+                hostname for hostname in hostnames[:len(hostnames) / 2]
+            ]
+            self.remote.enable_wan()
+            self.remote.filter_wan(src_list, dest_list)
 
         self.workload = self.test_config.access_settings
         self.access_bg()
@@ -134,9 +143,9 @@ class XdcrInitTest(SymmetricXdcrTest):
 class XdcrInitInMemoryTest(XdcrInitTest, FlusherTest):
 
     def stop_persistence(self):
-        servers = tuple(self.cluster_spec.yield_servers())
+        hostnames = tuple(self.cluster_spec.yield_hostnames())
         dest_hostnames = [
-            server.split(':')[0] for server in servers[len(servers) / 2:]
+            hostname for hostname in hostnames[len(hostnames) / 2:]
         ]
         for mc in self.mc_iterator():
             if mc.host in dest_hostnames:

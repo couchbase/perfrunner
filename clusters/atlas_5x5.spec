@@ -14,8 +14,8 @@ atlas_c2 =
 
 [clients]
 hosts =
-    172.23.100.27
     172.23.100.28
+    172.23.100.27
 credentials = root:couchbase
 
 [storage]

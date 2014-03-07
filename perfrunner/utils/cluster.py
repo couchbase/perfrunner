@@ -205,6 +205,7 @@ def main():
     cm.enable_auto_failover()
     cm.change_watermarks()
     cm.tweak_memory()
+    cm.remote.disable_wan()
 
 if __name__ == '__main__':
     main()

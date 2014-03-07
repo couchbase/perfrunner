@@ -70,6 +70,7 @@ class PerfTest(object):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        self.remote.disable_wan()
         self.worker_manager.terminate()
         if exc_type != exc.KeyboardInterrupt:
             self.debug()

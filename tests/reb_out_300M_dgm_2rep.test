@@ -1,6 +1,6 @@
 [test_case]
 module = perfrunner.tests.rebalance
-class = RebalanceWithQueriesTest
+class = RebalanceKVTest
 title = Rebalance-out (min), 6 -> 5, 1 bucket x 300M x 1KB, 2 replicas, DGM
 summary = Mixed rebalance test, 6 -> 5 nodes, 1 bucket x 300M x 1KB, 2 replicas, 50K ops/sec
 larger_is_better = false
@@ -14,12 +14,12 @@ replica_number = 2
 [load]
 items = 300000000
 size = 64
-workers = 60
+workers = 15
 
 [hot_load]
 items = 300000000
 size = 64
-workers = 40
+workers = 30
 working_set = 0.05
 
 [access]

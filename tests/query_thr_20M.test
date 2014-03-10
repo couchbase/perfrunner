@@ -29,4 +29,4 @@ items = 20000000
 size = 2048
 workers = 24
 query_workers = 24
-time = 3600
+time = 7200

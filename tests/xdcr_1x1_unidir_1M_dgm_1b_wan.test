@@ -1,0 +1,37 @@
+[test_case]
+module = perfrunner.tests.xdcr
+class = SymmetricXdcrTest
+larger_is_better = false
+level = Basic
+
+[cluster]
+mem_quota = 204800
+initial_nodes = 1 1
+num_buckets = 1
+replica_number = 0
+
+[internal]
+xdcrOptimisticReplicationThreshold = 0
+
+[compaction]
+db_percentage = 100
+
+[load]
+items = 1000000
+size = 800
+workers = 20
+
+[xdcr]
+replication_type = unidir
+wan_enabled = 1
+
+[access]
+creates = 0
+reads = 50
+updates = 50
+deletes = 0
+throughput = 2000
+items = 1000000
+size = 800
+workers = 10
+time = 1800

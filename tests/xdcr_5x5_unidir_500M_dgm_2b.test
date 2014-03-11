@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.xdcr
 class = SymmetricXdcrTest
-title = 5 -> 5 UniDir, 2 buckets x 500M x 1KB, DGM, WAN 80±4 ms
+title = 5 -> 5 UniDir, 2 buckets x 500M x 1KB, DGM
 summary = Mixed KV + XDCR test, 5 -> 5 nodes, 2 buckets x 500M x 1KB, DGM, UniDir, 20K ops/sec
 larger_is_better = false
 level = Basic
@@ -31,7 +31,6 @@ working_set = 10
 
 [xdcr]
 replication_type = unidir
-wan_enabled = 1
 
 [access]
 creates = 0

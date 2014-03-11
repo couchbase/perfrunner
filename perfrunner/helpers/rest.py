@@ -130,14 +130,20 @@ class RestHelper(object):
                 return is_running, progress
 
     def create_bucket(self, host_port, name, ram_quota, replica_number=1,
-                      replica_index=0, threads_number=None):
+                      replica_index=0, threads_number=None,
+                      eviction_policy='fullEviction'):
         logger.info('Adding new bucket: {}'.format(name))
 
         api = 'http://{}/pools/default/buckets'.format(host_port)
         data = {
-            'name': name, 'bucketType': 'membase', 'ramQuotaMB': ram_quota,
-            'replicaNumber': replica_number, 'replicaIndex': replica_index,
-            'authType': 'sasl', 'saslPassword': self.rest_password
+            'name': name,
+            'bucketType': 'membase',
+            'ramQuotaMB': ram_quota,
+            'replicaNumber': replica_number,
+            'replicaIndex': replica_index,
+            'authType': 'sasl',
+            'saslPassword': self.rest_password,
+            'eviction_policy': eviction_policy,
         }
         if threads_number:
             data['threadsNumber'] = threads_number

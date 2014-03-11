@@ -370,7 +370,7 @@ class LoadSettings(PhaseSettings):
 class HotLoadSettings(PhaseSettings):
 
     SEQ_READS = True
-    SEQ_UPDATES = True
+    SEQ_UPDATES = False
 
 
 class XDCRSettings(PhaseSettings):

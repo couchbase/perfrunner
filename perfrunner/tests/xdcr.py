@@ -54,10 +54,9 @@ class XdcrTest(PerfTest):
         self.init_xdcr()
         self.wait_for_persistence()
 
-        self.hot_load()
-        self.wait_for_persistence()
-
         self.compact_bucket()
+
+        self.hot_load()
 
         if self.settings.wan_enabled:
             hostnames = tuple(self.cluster_spec.yield_hostnames())

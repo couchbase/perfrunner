@@ -19,9 +19,9 @@ class KVTest(PerfTest):
         self.load()
         self.wait_for_persistence()
 
-        self.hot_load()
-        self.wait_for_persistence()
         self.compact_bucket()
+
+        self.hot_load()
 
         self.workload = self.test_config.access_settings
         self.access_bg()
@@ -164,9 +164,9 @@ class WarmupTest(PerfTest):
         self.load()
         self.wait_for_persistence()
 
-        self.hot_load()
-        self.wait_for_persistence()
         self.compact_bucket()
+
+        self.hot_load()
 
         self.workload = self.test_config.access_settings
         self.access_bg()

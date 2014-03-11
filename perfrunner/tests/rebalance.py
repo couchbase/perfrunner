@@ -172,9 +172,9 @@ class RebalanceKVTest(RebalanceTest):
         self.load()
         self.wait_for_persistence()
 
-        self.hot_load()
-        self.wait_for_persistence()
         self.compact_bucket()
+
+        self.hot_load()
 
         self.workload = self.test_config.access_settings
         self.access_bg()
@@ -189,9 +189,9 @@ class RebalanceWithQueriesTest(QueryTest, RebalanceTest):
         self.load()
         self.wait_for_persistence()
 
-        self.hot_load()
-        self.wait_for_persistence()
         self.compact_bucket()
+
+        self.hot_load()
 
         self.define_ddocs()
         self.build_index()
@@ -212,10 +212,9 @@ class RebalanceWithXdcrTest(XdcrTest, RebalanceTest):
         self.init_xdcr()
         self.wait_for_persistence()
 
-        self.hot_load()
-        self.wait_for_persistence()
-
         self.compact_bucket()
+
+        self.hot_load()
 
         self.workload = self.test_config.access_settings
         self.access_bg()
@@ -233,10 +232,9 @@ class RebalanceWithSymmetricXdcrTest(SymmetricXdcrTest, RebalanceTest):
         self.init_xdcr()
         self.wait_for_persistence()
 
-        self.hot_load()
-        self.wait_for_persistence()
-
         self.compact_bucket()
+
+        self.hot_load()
 
         self.workload = self.test_config.access_settings
         self.access_bg()

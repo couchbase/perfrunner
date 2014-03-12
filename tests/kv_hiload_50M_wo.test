@@ -1,6 +1,6 @@
 [test_case]
 module = perfrunner.tests.kv
-class = KVTest
+class = MixedLatencyTest
 title = Max memcached throughput, SETs/sec, 1 bucket x 100M x 256B, non-DGM
 summary = Write-only KV test, 1 node, 1 bucket x 100M x 256B, non-DGM, 150K ops/sec
 larger_is_better = true

@@ -31,6 +31,7 @@ class CouchbaseInstaller(object):
             patterns = (
                 'couchbase-server-community_toy-{toy}-{arch}_{version}-toy.{pkg}',
                 'couchbase-server-community_toy-{toy}-{version}-toy_{arch}.{pkg}',
+                'couchbase-server-community_cent58-3.0.0-toy-{toy}-{arch}_{version}-toy.{pkg}',
                 'couchbase-server-community_cent58-master-toy-{toy}-{arch}_{version}-toy.{pkg}',
                 'couchbase-server-community_cent54-master-toy-{toy}-{arch}_{version}-toy.{pkg}',
             )

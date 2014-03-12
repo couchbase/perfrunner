@@ -13,6 +13,8 @@ xdcrOptimisticReplicationThreshold = 0
 mem_quota = 204800
 initial_nodes = 1 1
 num_buckets = 1
+
+[bucket]
 replica_number = 0
 
 [compaction]

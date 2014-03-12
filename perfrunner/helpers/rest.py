@@ -129,9 +129,8 @@ class RestHelper(object):
                 progress = task.get('progress')
                 return is_running, progress
 
-    def create_bucket(self, host_port, name, ram_quota, replica_number=1,
-                      replica_index=0, threads_number=None,
-                      eviction_policy='valueOnly'):
+    def create_bucket(self, host_port, name, ram_quota, replica_number,
+                      replica_index, eviction_policy):
         logger.info('Adding new bucket: {}'.format(name))
 
         api = 'http://{}/pools/default/buckets'.format(host_port)
@@ -139,14 +138,12 @@ class RestHelper(object):
             'name': name,
             'bucketType': 'membase',
             'ramQuotaMB': ram_quota,
+            'evictionPolicy': eviction_policy,
             'replicaNumber': replica_number,
             'replicaIndex': replica_index,
             'authType': 'sasl',
             'saslPassword': self.rest_password,
-            'evictionPolicy': eviction_policy,
         }
-        if threads_number:
-            data['threadsNumber'] = threads_number
         self.post(url=api, data=data)
 
     def configure_auto_compaction(self, host_port, settings):

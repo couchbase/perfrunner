@@ -10,6 +10,8 @@ level = Basic
 mem_quota = 51200
 initial_nodes = 4
 num_buckets = 2
+
+[bucket]
 replica_number = 0
 
 [load]

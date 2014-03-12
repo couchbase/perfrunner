@@ -9,6 +9,8 @@ larger_is_better = false
 mem_quota = 1536
 initial_nodes = 6
 num_buckets = 1
+
+[bucket]
 replica_number = 2
 
 [load]

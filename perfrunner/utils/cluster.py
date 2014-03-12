@@ -80,19 +80,20 @@ class ClusterManager(object):
             self.monitor.monitor_rebalance(master)
 
     def create_buckets(self):
-        threads_number = self.test_config.mrw_threads_number
-        replica_number = self.test_config.replica_number
-        if replica_number is None:
-            replica_number = 1
-
-        num_buckets = self.test_config.num_buckets
-        ram_quota = self.mem_quota / num_buckets
+        ram_quota = self.mem_quota / self.test_config.num_buckets
+        replica_number = self.test_config.bucket.replica_number
+        replica_index = self.test_config.bucket.replica_index
+        eviction_policy = self.test_config.bucket.eviction_policy
 
         for master in self.masters():
-            for bucket in self.test_config.buckets:
-                self.rest.create_bucket(master, bucket, ram_quota,
+            for bucket_name in self.test_config.buckets:
+                self.rest.create_bucket(host_port=master,
+                                        name=bucket_name,
+                                        ram_quota=ram_quota,
                                         replica_number=replica_number,
-                                        threads_number=threads_number)
+                                        replica_index=replica_index,
+                                        eviction_policy=eviction_policy,
+                                        )
 
     def configure_auto_compaction(self):
         compaction_settings = self.test_config.compaction
@@ -125,11 +126,11 @@ class ClusterManager(object):
     def restart_with_alternative_num_shards(self):
         cmd = 'ns_bucket:update_bucket_props("{}", ' \
               '[{{extra_config_string, "max_num_shards={}"}}]).'
-        num_shards = self.test_config.num_shards
-        if num_shards is not None:
+        max_num_shards = self.test_config.bucket.max_num_shards
+        if max_num_shards:
             for master in self.masters():
                 for bucket in self.test_config.buckets:
-                    diag_eval = cmd.format(bucket, num_shards)
+                    diag_eval = cmd.format(bucket, max_num_shards)
                     self.rest.run_diag_eval(master, diag_eval)
             self.remote.restart()
 

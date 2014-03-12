@@ -158,21 +158,6 @@ class TestConfig(Config):
 
     @property
     @safe
-    def mrw_threads_number(self):
-        return self.config.getint('cluster', 'threads_number')
-
-    @property
-    @safe
-    def num_shards(self):
-        return self.config.getint('cluster', 'num_shards')
-
-    @property
-    @safe
-    def replica_number(self):
-        return self.config.getint('cluster', 'replica_number')
-
-    @property
-    @safe
     def swt(self):
         return self.config.get('cluster', 'swt')
 
@@ -187,13 +172,18 @@ class TestConfig(Config):
         return self.config.get('cluster', 'disable_moxi')
 
     @property
+    @safe
+    def group_number(self):
+        return self.config.getint('cluster', 'groups')
+
+    @property
     def buckets(self):
         return ['bucket-{}'.format(i + 1) for i in range(self.num_buckets)]
 
     @property
-    @safe
-    def group_number(self):
-        return self.config.getint('cluster', 'groups')
+    def bucket(self):
+        options = self._get_options_as_dict('bucket')
+        return BucketSettings(options)
 
     @property
     def compaction(self):
@@ -256,6 +246,31 @@ class StatsSettings(object):
         self.post_to_sf = int(options.get('post_to_sf', self.POST_TO_SF))
         self.interval = int(options.get('interval', self.INTERVAL))
         self.lat_interval = int(options.get('lat_interval', self.LAT_INTERVAL))
+
+
+class BucketSettings(object):
+
+    MAX_NUM_SHARDS = 0
+    MAX_THREADS = 0
+    REPLICA_NUMBER = 1
+    REPLICA_INDEX = 0
+    EVICTION_POLICY = 'valueOnly'  # alt: fullEviction
+
+    def __init__(self, options):
+        self.max_num_shards = int(
+            options.get('max_num_shards', self.MAX_NUM_SHARDS)
+        )
+        self.max_threads = int(
+            options.get('max_threads', self.MAX_THREADS)
+        )
+        self.replica_number = int(
+            options.get('replica_number', self.REPLICA_NUMBER)
+        )
+        self.replica_index = int(
+            options.get('replica_index', self.REPLICA_INDEX)
+        )
+        self.eviction_policy = \
+            options.get('eviction_policy', self.EVICTION_POLICY)
 
 
 class CompactionSettings(object):

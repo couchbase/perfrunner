@@ -9,8 +9,10 @@ level = Basic
 mem_quota = 40960
 initial_nodes = 3
 num_buckets = 1
-replica_number = 2
 groups = 2
+
+[bucket]
+replica_number = 2
 
 [load]
 items = 50000000

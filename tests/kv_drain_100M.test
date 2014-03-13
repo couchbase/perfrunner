@@ -1,0 +1,40 @@
+[test_case]
+module = perfrunner.tests.kv
+class = DrainTest
+title = Max. drain rate (items/sec), 1 bucket x 100M x 1KB, DGM
+summary = Write-heavy KV test (95/5), 2 nodes, 1 buckets x 100M x 1KB, 56K ops/sec
+larger_is_better = true
+level = Basic
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 2
+num_buckets = 1
+
+[compaction]
+db_percentage = 2
+
+[load]
+items = 100000000
+size = 1024
+workers = 10
+
+[hot_load]
+items = 100000000
+size = 1024
+workers = 12
+working_set = 10
+
+[access]
+creates = 0
+reads = 5
+updates = 95
+deletes = 0
+throughput = 56000
+workers = 10
+items = 100000000
+size = 1024
+working_set = 10
+working_set_access = 99
+time = 5400
+async = 1

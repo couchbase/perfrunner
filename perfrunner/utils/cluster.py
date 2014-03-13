@@ -1,6 +1,8 @@
 import time
 from optparse import OptionParser
 
+from logger import logger
+
 from perfrunner.helpers.memcached import MemcachedHelper
 from perfrunner.helpers.misc import server_group
 from perfrunner.helpers.monitor import Monitor
@@ -123,16 +125,19 @@ class ClusterManager(object):
         if num_vbuckets is not None:
             self.remote.restart_with_alternative_num_vbuckets(num_vbuckets)
 
-    def restart_with_alternative_num_shards(self):
+    def restart_with_alternative_bucket_options(self):
         cmd = 'ns_bucket:update_bucket_props("{}", ' \
-              '[{{extra_config_string, "max_num_shards={}"}}]).'
-        max_num_shards = self.test_config.bucket.max_num_shards
-        if max_num_shards:
-            for master in self.masters():
-                for bucket in self.test_config.buckets:
-                    diag_eval = cmd.format(bucket, max_num_shards)
-                    self.rest.run_diag_eval(master, diag_eval)
-            self.remote.restart()
+              '[{{extra_config_string, "{}={}"}}]).'
+
+        for option in ('max_num_shards', 'max_threads'):
+            value = getattr(self.test_config.bucket, option)
+            if value:
+                logger.info('Changing {} to {}'.format(option, value))
+                for master in self.masters():
+                    for bucket in self.test_config.buckets:
+                        diag_eval = cmd.format(bucket, option, value)
+                        self.rest.run_diag_eval(master, diag_eval)
+                self.remote.restart()
 
     def enable_auto_failover(self):
         for master in self.masters():
@@ -200,7 +205,7 @@ def main():
         cm.create_server_groups()
     cm.add_nodes()
     cm.create_buckets()
-    cm.restart_with_alternative_num_shards()
+    cm.restart_with_alternative_bucket_options()
     cm.wait_until_warmed_up()
     cm.configure_auto_compaction()
     cm.enable_auto_failover()

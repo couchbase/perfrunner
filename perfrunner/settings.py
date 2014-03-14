@@ -272,6 +272,8 @@ class BucketSettings(object):
         self.eviction_policy = \
             options.get('eviction_policy', self.EVICTION_POLICY)
 
+        self.threads_number = options.get('threads_number')  # 2.x
+
 
 class CompactionSettings(object):
 

@@ -115,17 +115,17 @@ class MetricHelper(object):
 
         return round(drain_rate)
 
-    def calc_avg_drain_rate(self):
-        query_params = self._get_query_params('avg_ep_diskqueue_drain')
+    def calc_avg_disk_write_queue(self):
+        query_params = self._get_query_params('avg_disk_write_queue')
 
-        ep_diskqueue_drain = 0
+        disk_write_queue = 0
         for bucket in self.test_config.buckets:
             db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
             data = self.seriesly[db].query(query_params)
-            ep_diskqueue_drain += data.values()[0][0]
-        ep_diskqueue_drain /= self.test_config.initial_nodes[0]
+            disk_write_queue += data.values()[0][0]
+        disk_write_queue /= self.test_config.initial_nodes[0]
 
-        return round(ep_diskqueue_drain)
+        return round(disk_write_queue)
 
     def calc_avg_ep_bg_fetched(self):
         query_params = self._get_query_params('avg_ep_bg_fetched')

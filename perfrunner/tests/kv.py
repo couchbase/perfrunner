@@ -87,7 +87,7 @@ class DrainTest(KVTest):
     def run(self):
         super(DrainTest, self).run()
         drain_rate = self.reporter.post_to_sf(
-            self.metric_helper.calc_avg_drain_rate()
+            self.metric_helper.calc_avg_disk_write_queue()
         )
         if hasattr(self, 'experiment'):
             self.experiment.post_results(drain_rate)

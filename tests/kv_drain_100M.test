@@ -1,8 +1,8 @@
 [test_case]
 module = perfrunner.tests.kv
 class = DrainTest
-title = Max. drain rate (items/sec), 1 bucket x 100M x 1KB, DGM
-summary = Write-heavy KV test (95/5), 2 nodes, 1 buckets x 100M x 1KB, 56K ops/sec
+title = Avg. write queue (items), 1 bucket x 100M x 1KB, DGM, 10K updates/sec
+summary = Write-heavy KV test (80/20), 2 nodes, 1 buckets x 100M x 1KB, 10K updates/sec
 larger_is_better = true
 level = Basic
 
@@ -27,14 +27,14 @@ working_set = 10
 
 [access]
 creates = 0
-reads = 5
-updates = 95
+reads = 20
+updates = 80
 deletes = 0
-throughput = 56000
+throughput = 12500
 workers = 10
 items = 100000000
 size = 1024
 working_set = 10
-working_set_access = 99
+working_set_access = 98
 time = 5400
 async = 1

@@ -86,6 +86,7 @@ class RebalanceTest(PerfTest):
         nodes_after = self.rebalance_settings.nodes_after
         swap = self.rebalance_settings.swap
         failover = self.rebalance_settings.failover
+        graceful_failover = self.rebalance_settings.graceful_failover
         sleep_after_failover = self.rebalance_settings.sleep_after_failover
         group_number = self.test_config.group_number or 1
 
@@ -96,16 +97,17 @@ class RebalanceTest(PerfTest):
             groups = group_number > 1 and self.rest.get_server_groups(master) or {}
 
             new_nodes = []
+            known_nodes = servers[:initial_nodes]
             ejected_nodes = []
             failover_nodes = []
-            if nodes_after > initial_nodes:
+            graceful_failover_nodes = []
+            if nodes_after > initial_nodes:  # rebalance-in
                 new_nodes = enumerate(
                     servers[initial_nodes:nodes_after],
                     start=initial_nodes
                 )
                 known_nodes = servers[:nodes_after]
-            elif nodes_after < initial_nodes:
-                known_nodes = servers[:initial_nodes]
+            elif nodes_after < initial_nodes:  # rebalance-out
                 ejected_nodes = servers[nodes_after:initial_nodes]
             elif swap:
                 new_nodes = enumerate(
@@ -115,8 +117,10 @@ class RebalanceTest(PerfTest):
                 known_nodes = servers[:initial_nodes + swap]
                 ejected_nodes = servers[initial_nodes - swap:initial_nodes]
             elif failover:
-                known_nodes = servers[:initial_nodes]
                 failover_nodes = servers[initial_nodes - failover:initial_nodes]
+            elif graceful_failover:
+                graceful_failover_nodes = \
+                    servers[initial_nodes - graceful_failover:initial_nodes]
             else:
                 continue
 
@@ -128,6 +132,16 @@ class RebalanceTest(PerfTest):
             for host_port in failover_nodes:
                 self.rest.fail_over(master, host_port)
                 self.rest.add_back(master, host_port)
+            for host_port in graceful_failover_nodes:
+                self.rest.graceful_fail_over(master, host_port)
+                self.monitor.monitor_rebalance(master)
+                self.rest.add_back(master, host_port)
+
+            if graceful_failover:
+                self.reporter.post_to_sf(
+                    *self.metric_helper.failover_time(self.reporter)
+                )
+                self.reporter.start()
 
             if failover:
                 time.sleep(sleep_after_failover)

@@ -308,3 +308,17 @@ class MetricHelper(object):
 
         diff = max_diff / 1024 ** 2 / time_elapsed  # Mbytes/sec
         return round(diff, 1)
+
+    def failover_time(self, reporter):
+        metric = '{}_{}_failover'.format(self.test_config.name,
+                                         self.cluster_spec.name)
+        _split = self.metric_title.split(', ')
+
+        title = 'Graceful failover (min), {}, {}'.format(
+            _split[1][-1] + _split[1][1:-1] + _split[1][0],
+            ', '.join(_split[2:]))
+        metric_info = self._get_metric_info(title, larger_is_better=False)
+
+        rebalance_time = reporter.finish('Failover')
+
+        return rebalance_time, metric, metric_info

@@ -288,6 +288,13 @@ class RestHelper(object):
         data = {'otpNode': self.ns_1(node)}
         self.post(url=api, data=data)
 
+    def graceful_fail_over(self, host_port, node):
+        logger.info('Failing over node: {}'.format(node))
+
+        api = 'http://{}/controller/startGracefulFailover'.format(host_port)
+        data = {'otpNode': self.ns_1(node)}
+        self.post(url=api, data=data)
+
     def add_back(self, host_port, node):
         logger.info('Adding node back: {}'.format(node))
 

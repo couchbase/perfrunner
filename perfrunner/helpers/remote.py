@@ -212,7 +212,7 @@ class RemoteLinuxHelper(object):
             'tc class add dev {} parent 1: classid 1:1 htb rate 1gbit',
             'tc class add dev {} parent 1:1 classid 1:11 htb rate 1gbit',
             'tc qdisc add dev {} parent 1:11 handle 10: netem delay 40ms 2ms '
-            'loss 0.005% 50% duplicate 0.005% corrupt 0.005%',
+            'loss 0.05% 50% duplicate 0.05% corrupt 0.05%',
         ):
             run(cmd.format(_if))
 

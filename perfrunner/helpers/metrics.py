@@ -75,12 +75,14 @@ class MetricHelper(object):
         title = '{}th percentile replication lag (ms), {}'.format(
             percentile, self.metric_title)
         metric_info = self._get_metric_info(title)
+        query_params = self._get_query_params('avg_xdcr_lag')
+        query_params.update({'group': 1000})
 
         timings = []
         for bucket in self.test_config.buckets:
             db = 'xdcr_lag{}{}'.format(self.cluster_names[0], bucket)
-            data = self.seriesly[db].get_all()
-            timings += [v['xdcr_lag'] for v in data.values()]
+            data = self.seriesly[db].query(query_params)
+            timings = [v[0] for v in data.values()]
         lag = round(np.percentile(timings, percentile))
 
         return lag, metric, metric_info

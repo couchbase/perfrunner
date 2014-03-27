@@ -162,8 +162,14 @@ class SFReporter(object):
         key = uhex()
         master = self.test.cluster_spec.yield_masters().next()
         build = self.test.rest.get_version(master)
-        data = {'build': build, 'metric': metric, 'value': value,
-                'snapshots': self.test.snapshots}
+        data = {
+            'build': build,
+            'metric': metric,
+            'value': value,
+            'snapshots': self.test.snapshots
+        }
+        if self.test.master_events:
+            data.update({'master_events': key})
         return key, data
 
     @staticmethod
@@ -193,6 +199,15 @@ class SFReporter(object):
             logger.info('Successfully posted: {}'.format(
                 pretty_dict(benckmark)
             ))
+            return key
+
+    def _upload_master_events(self, filename):
+        api = 'http://{}/cbmonitor/add_master_events/'.format(CBMONITOR_HOST)
+        data = {
+            'filename': filename,
+            'master_events': self.test.master_events[0],
+        }
+        requests.post(url=api, data=data)
 
     def post_to_sf(self, value, metric=None, metric_info=None):
         if metric is None:
@@ -204,7 +219,9 @@ class SFReporter(object):
         if stats_settings.post_to_sf:
             self._add_metric(metric, metric_info)
             self._add_cluster()
-            self._post_benckmark(metric, value)
+            key = self._post_benckmark(metric, value)
+            if key and self.test.master_events:
+                self._upload_master_events(filename=key)
         else:
             self._log_benchmark(metric, value)
         return value
@@ -226,6 +243,7 @@ class LogReporter(object):
         with ZipFile('master_events.zip', 'w', ZIP_DEFLATED) as zh:
             for master in self.test.cluster_spec.yield_masters():
                 master_events = self.test.rest.get_master_events(master)
+                self.test.master_events.append(master_events)
                 fname = 'master_events_{}.log'.format(master.split(':')[0])
                 zh.writestr(zinfo_or_arcname=fname, bytes=master_events)
 

@@ -128,7 +128,7 @@ class MetricHelper(object):
             disk_write_queue += data.values()[0][0]
         disk_write_queue /= self.test_config.initial_nodes[0]
 
-        return round(disk_write_queue / 10 ** 6, 1)
+        return round(disk_write_queue / 10 ** 3)
 
     def calc_avg_ep_bg_fetched(self):
         query_params = self._get_query_params('avg_ep_bg_fetched')

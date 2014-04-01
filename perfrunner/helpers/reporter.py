@@ -181,10 +181,11 @@ class SFReporter(object):
             cb.set(row.docid, doc.value)
 
     def _log_benchmark(self, metric, value):
-        _, benckmark = self._prepare_data(metric, value)
+        key, benckmark = self._prepare_data(metric, value)
         logger.info('Dry run stats: {}'.format(
             pretty_dict(benckmark)
         ))
+        return key
 
     def _post_benckmark(self, metric, value):
         key, benckmark = self._prepare_data(metric, value)
@@ -220,10 +221,10 @@ class SFReporter(object):
             self._add_metric(metric, metric_info)
             self._add_cluster()
             key = self._post_benckmark(metric, value)
-            if key and self.test.master_events:
-                self._upload_master_events(filename=key)
         else:
-            self._log_benchmark(metric, value)
+            key = self._log_benchmark(metric, value)
+        if key and self.test.master_events:
+            self._upload_master_events(filename=key)
         return value
 
 

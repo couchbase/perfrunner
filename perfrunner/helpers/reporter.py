@@ -200,7 +200,7 @@ class SFReporter(object):
             logger.info('Successfully posted: {}'.format(
                 pretty_dict(benckmark)
             ))
-            return key
+        return key
 
     def _upload_master_events(self, filename):
         api = 'http://{}/cbmonitor/add_master_events/'.format(CBMONITOR_HOST)

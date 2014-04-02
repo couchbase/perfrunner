@@ -117,11 +117,6 @@ class ClusterManager(object):
         self.remote.set_swappiness()
         self.remote.disable_thp()
 
-    def restart_with_alternative_swt(self):
-        swt = self.test_config.swt
-        if swt is not None:
-            self.remote.restart_with_alternative_swt(swt)
-
     def restart_with_alternative_num_vbuckets(self):
         num_vbuckets = self.test_config.num_vbuckets
         if num_vbuckets is not None:
@@ -197,7 +192,6 @@ def main():
     cm = ClusterManager(cluster_spec, test_config)
 
     # Individual nodes
-    cm.restart_with_alternative_swt()
     cm.restart_with_alternative_num_vbuckets()
     cm.restart_with_alternative_num_cpus()
     cm.configure_internal_settings()

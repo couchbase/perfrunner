@@ -158,11 +158,6 @@ class TestConfig(Config):
 
     @property
     @safe
-    def swt(self):
-        return self.config.get('cluster', 'swt')
-
-    @property
-    @safe
     def num_vbuckets(self):
         return self.config.getint('cluster', 'num_vbuckets')
 

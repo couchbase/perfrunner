@@ -171,6 +171,12 @@ class RemoteLinuxHelper(object):
             .format(num_vbuckets))
 
     @all_hosts
+    def restart_with_alternative_num_cpus(self, num_cpus):
+        logger.info('Changing number of vbuckets to {}'.format(num_cpus))
+        run('MEMCACHED_NUM_CPUS={} /etc/init.d/couchbase-server restart'
+            .format(num_cpus))
+
+    @all_hosts
     def disable_moxi(self):
         logger.info('Disabling moxi')
         run('rm /opt/couchbase/bin/moxi')
@@ -229,6 +235,11 @@ class RemoteLinuxHelper(object):
         for ip in _filter:
             run('tc filter add dev {} protocol ip prio 1 u32 '
                 'match ip dst {} flowid 1:11'.format(_if, ip))
+
+    @single_host
+    def detect_number_cores(self):
+        logger.info('Detecting number of cores')
+        return int(run('nproc', pty=False))
 
 
 class RemoteWindowsHelper(RemoteLinuxHelper):

@@ -141,6 +141,11 @@ class ClusterManager(object):
                         self.rest.run_diag_eval(master, diag_eval)
                 self.remote.restart()
 
+    def restart_with_alternative_num_cpus(self):
+        num_cpus = self.test_config.num_cpus
+        if num_cpus is not None:
+            self.remote.restart_with_alternative_num_cpus(num_cpus)
+
     def enable_auto_failover(self):
         for master in self.masters():
             self.rest.enable_auto_failover(master)
@@ -194,6 +199,7 @@ def main():
     # Individual nodes
     cm.restart_with_alternative_swt()
     cm.restart_with_alternative_num_vbuckets()
+    cm.restart_with_alternative_num_cpus()
     cm.configure_internal_settings()
     cm.set_data_path()
     cm.set_auth()

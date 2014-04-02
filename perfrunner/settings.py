@@ -168,6 +168,11 @@ class TestConfig(Config):
 
     @property
     @safe
+    def num_cpus(self):
+        return self.config.getint('cluster', 'num_cpus')
+
+    @property
+    @safe
     def disable_moxi(self):
         return self.config.get('cluster', 'disable_moxi')
 

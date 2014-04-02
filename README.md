@@ -23,8 +23,8 @@ For instance:
 
     python -m perfrunner.utils.cluster -c clusters/vesta.spec -t tests/comp_bucket_20M.test
 
-Running tests
--------------
+Running performance tests
+-------------------------
 
     python -m perfrunner -c ${cluster} -t ${test_config}
 
@@ -36,3 +36,19 @@ Overriding test config options (comma-separated section.option.value trios):
 
     python -m perfrunner -c clusters/vesta.spec -t tests/comp_bucket_20M.test \
         load.size.512,cluster.initial_nodes.3 4
+
+Running functional tests
+------------------------
+
+    python -m perfrunner.tests.functional -c ${cluster} -t ${test_config}
+
+For instance:
+
+    python -m perfrunner.tests.functional -c clusters/atlas.spec -t tests/functional.test
+
+Running unit tests
+------------------
+
+After `nose` installation:
+
+    nosetests -v unittests.py

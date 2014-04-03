@@ -194,17 +194,18 @@ class TestCaseSettings(object):
 
 class ClusterSettings(object):
 
-    NUM_VBUCKETS = 1
+    NUM_BUCKETS = 1
+    GROUP_NUMBER = 1
 
     def __init__(self, options):
         self.mem_quota = int(options.get('mem_quota'))
         self.initial_nodes = [
             int(nodes) for nodes in options.get('initial_nodes').split()
         ]
-        self.num_buckets = int(options.get('num_buckets', self.NUM_VBUCKETS))
-        self.num_vbuckets = int(options.get('num_vbuckets'))
-        self.group_number = int(options.get('group_number'))
-        self.num_cpus = int(options.get('num_cpus'))
+        self.num_buckets = int(options.get('num_buckets', self.NUM_BUCKETS))
+        self.num_vbuckets = options.get('num_vbuckets')
+        self.group_number = int(options.get('group_number', self.GROUP_NUMBER))
+        self.num_cpus = options.get('num_cpus')
         self.disable_moxi = options.get('disable_moxi')
 
 

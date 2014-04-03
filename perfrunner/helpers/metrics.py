@@ -9,7 +9,7 @@ class MetricHelper(object):
     def __init__(self, test):
         self.seriesly = Seriesly(CBMONITOR_HOST)
         self.test_config = test.test_config
-        self.metric_title = test.test_config.metric_title
+        self.metric_title = test.test_config.test_case.metric_title
         self.cluster_spec = test.cluster_spec
         self.cluster_names = test.cbagent.clusters.keys()
         self.build = test.build

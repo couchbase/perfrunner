@@ -4,7 +4,6 @@ class = FragmentationTest
 title = Memory fragmentation (%%), 1 bucket x 5M x 1KB
 summary = Append-only KV test, 1 node, 1 bucket x 5M x 1KB, non-DGM, small appends
 larger_is_better = false
-level = Basic
 
 [cluster]
 mem_quota = 40960

@@ -112,7 +112,7 @@ class Comparator(object):
             'build': benckmark['build'],
             'cluster': test.cluster_spec.name,
             'test_config': test.test_config.name,
-            'summary': test.test_config.test_summary,
+            'summary': test.test_config.test_case.test_summary,
             'datetime': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         }
         changes = self.compare(prev_build=prev_build,
@@ -143,10 +143,10 @@ class SFReporter(object):
     def _add_metric(self, metric, metric_info):
         if metric_info is None:
             metric_info = {
-                'title': self.test.test_config.metric_title,
+                'title': self.test.test_config.test_case.metric_title,
                 'cluster': self.test.cluster_spec.name,
-                'larger_is_better': self.test.test_config.regression_criterion,
-                'level': self.test.test_config.level,
+                'larger_is_better': self.test.test_config.test_case.larger_is_better,
+                'level': self.test.test_config.test_case.level,
             }
         try:
             cb = Couchbase.connect(bucket='metrics', **SF_STORAGE)

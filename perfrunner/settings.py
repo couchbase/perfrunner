@@ -110,34 +110,9 @@ class ClusterSpec(Config):
 class TestConfig(Config):
 
     @property
-    @safe
-    def test_module(self):
-        return self.config.get('test_case', 'module')
-
-    @property
-    @safe
-    def test_class(self):
-        return self.config.get('test_case', 'class')
-
-    @property
-    @safe
-    def test_summary(self):
-        return self.config.get('test_case', 'summary')
-
-    @property
-    @safe
-    def metric_title(self):
-        return self.config.get('test_case', 'title')
-
-    @property
-    @safe
-    def regression_criterion(self):
-        return self.config.get('test_case', 'larger_is_better')
-
-    @property
-    @safe
-    def level(self):
-        return self.config.get('test_case', 'level')
+    def test_case(self):
+        options = self._get_options_as_dict('test_case')
+        return TestCaseSettings(options)
 
     @property
     def cluster(self):
@@ -202,6 +177,19 @@ class TestConfig(Config):
     @property
     def internal_settings(self):
         return self._get_options_as_dict('internal')
+
+
+class TestCaseSettings(object):
+
+    LEVEL = 'Basic'  # depricated, alt: Advanced
+
+    def __init__(self, options):
+        self.test_module = options.get('module')
+        self.test_class = options.get('class')
+        self.test_summary = options.get('summary')
+        self.metric_title = options.get('title')
+        self.larger_is_better = options.get('larger_is_better')
+        self.level = options.get('level', self.LEVEL)
 
 
 class ClusterSettings(object):

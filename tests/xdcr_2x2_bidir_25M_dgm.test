@@ -4,7 +4,6 @@ class = XdcrTest
 title = 2 <-> 2 BiDir, 1 bucket x 25M x 2KB, DGM
 summary = Mixed KV + XDCR test, 2<->2 nodes, 1 bucket x 25M x 2KB, DGM, BiDir, 10K ops/sec
 larger_is_better = false
-level = Basic
 
 [cluster]
 mem_quota = 40960

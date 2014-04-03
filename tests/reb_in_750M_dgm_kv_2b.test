@@ -4,7 +4,6 @@ class = RebalanceKVTest
 title = Rebalance-in (min), 9 -> 10, 2 buckets x 750M x 2KB, 2 replicas, DGM
 summary = Read-heavy rebalance-in test (70/30), 9 -> 10 nodes, 2 buckets x 750M x 2KB, 2 replicas, 20K ops/sec
 larger_is_better = false
-level = Basic
 
 [cluster]
 mem_quota = 163840

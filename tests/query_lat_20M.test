@@ -4,7 +4,6 @@ class = QueryLatencyTest
 title = 1 bucket x 20M x 2KB, non-DGM, 4 x 1 views
 summary = Read-heavy query test (80/20), 4 nodes, 1 bucket x 20M x 2KB, non-DGM, 4 x 1 views, 10K ops/sec, 400 qps
 larger_is_better = false
-level = Basic
 
 [cluster]
 mem_quota = 40960

@@ -4,7 +4,6 @@ class = SymmetricXdcrTest
 title = 4 -> 4 UniDir, 2 buckets x 50M x 2KB, DGM
 summary = Mixed KV + XDCR test, 4->4 nodes, 2 buckets x 50M x 2KB, DGM, UniDir, 10K ops/sec
 larger_is_better = false
-level = Basic
 
 [cluster]
 mem_quota = 40960

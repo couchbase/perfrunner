@@ -4,7 +4,6 @@ class = ReadLatencyTest
 title = latency (ms), mixed, 1 bucket x 100M x 2KB, DGM, 30%% cache miss rate
 summary = Mixed KV test, 4 nodes, 1 bucket x 100M x 2KB, 30%% cache miss rate, 3K ops/sec
 larger_is_better = false
-level = Basic
 
 [cluster]
 mem_quota = 57344

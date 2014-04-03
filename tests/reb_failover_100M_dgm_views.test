@@ -4,7 +4,6 @@ class = RebalanceWithQueriesTest
 title = Rebalance-after-failover (min), 3 -> 4, 1 bucket x 100M x 2KB, DGM, 1 x 1 views
 summary = Mixed rebalance after failover, 3 -> 4 nodes, 1 bucket x 100M x 2KB, DGM, 1 x 1 views, 10K ops/sec, 400 qps
 larger_is_better = false
-level = Basic
 
 [cluster]
 mem_quota = 40960

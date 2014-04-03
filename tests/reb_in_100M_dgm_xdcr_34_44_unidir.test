@@ -4,7 +4,6 @@ class = RebalanceWithSymmetricXdcrTest
 title = Rebalance-in (min), 3->4 -> 4->4 UniDir, 1 bucket x 100M x 2KB, DGM
 summary = Mixed KV + XDCR rebalance test, 3->4 -> 4->4 nodes, 1 bucket x 100M x 2KB, UniDir, 10K ops/sec
 larger_is_better = false
-level = Basic
 
 [cluster]
 mem_quota = 40960

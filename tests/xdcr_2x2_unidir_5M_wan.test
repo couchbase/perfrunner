@@ -2,7 +2,6 @@
 module = perfrunner.tests.xdcr
 class = SymmetricXdcrTest
 larger_is_better = false
-level = Basic
 
 [stats]
 enabled = 0

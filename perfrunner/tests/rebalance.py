@@ -70,7 +70,7 @@ class RebalanceTest(PerfTest):
 
     def change_watermarks(self, host):
         watermark_settings = self.test_config.watermark_settings
-        mem_quota = self.test_config.mem_quota
+        mem_quota = self.test_config.cluster.mem_quota
         for bucket in self.test_config.buckets:
             for key, val in watermark_settings.items():
                 val = self.memcached.calc_watermark(val, mem_quota)
@@ -82,13 +82,13 @@ class RebalanceTest(PerfTest):
     @with_reporter
     def rebalance(self):
         clusters = self.cluster_spec.yield_clusters()
-        initial_nodes = self.test_config.initial_nodes
+        initial_nodes = self.test_config.cluster.initial_nodes
         nodes_after = self.rebalance_settings.nodes_after
         swap = self.rebalance_settings.swap
         failover = self.rebalance_settings.failover
         graceful_failover = self.rebalance_settings.graceful_failover
         sleep_after_failover = self.rebalance_settings.sleep_after_failover
-        group_number = self.test_config.group_number or 1
+        group_number = self.test_config.cluster.group_number or 1
 
         for (_, servers), initial_nodes, nodes_after in zip(clusters,
                                                             initial_nodes,

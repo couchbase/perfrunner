@@ -9,7 +9,7 @@ level = Basic
 mem_quota = 40960
 initial_nodes = 4
 num_buckets = 1
-groups = 2
+group_number = 2
 
 [bucket]
 replica_number = 2

@@ -9,7 +9,7 @@ level = Basic
 mem_quota = 40960
 initial_nodes = 6
 num_buckets = 1
-groups = 3
+group_number = 3
 
 [load]
 items = 100000000

@@ -30,7 +30,7 @@ class FunctionalTest(unittest.TestCase):
 class MemcachedTests(FunctionalTest):
 
     def test_num_threads(self):
-        expected_threads = self.test_config.num_cpus
+        expected_threads = self.test_config.cluster.num_cpus
         if expected_threads is None:
             cores = self.remote.detect_number_cores()
             expected_threads = int(0.75 * cores)

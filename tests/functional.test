@@ -1,4 +1,3 @@
 [cluster]
 mem_quota = 1024
 initial_nodes = 1
-num_buckets = 1

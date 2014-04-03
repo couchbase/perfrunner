@@ -106,14 +106,14 @@ class MetricHelper(object):
     def calc_avg_replication_rate(self, time_elapsed):
         initial_items = self.test_config.load_settings.ops or \
             self.test_config.load_settings.items
-        num_buckets = self.test_config.num_buckets
+        num_buckets = self.test_config.cluster.num_buckets
         avg_replication_rate = num_buckets * initial_items / time_elapsed
 
         return round(avg_replication_rate)
 
     def calc_max_drain_rate(self, time_elapsed):
         items_per_node = self.test_config.load_settings.items / \
-            self.test_config.initial_nodes[0]
+            self.test_config.cluster.initial_nodes[0]
         drain_rate = items_per_node / time_elapsed
 
         return round(drain_rate)
@@ -126,7 +126,7 @@ class MetricHelper(object):
             db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
             data = self.seriesly[db].query(query_params)
             disk_write_queue += data.values()[0][0]
-        disk_write_queue /= self.test_config.initial_nodes[0]
+        disk_write_queue /= self.test_config.cluster.initial_nodes[0]
 
         return round(disk_write_queue / 10 ** 3)
 
@@ -138,7 +138,7 @@ class MetricHelper(object):
             db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
             data = self.seriesly[db].query(query_params)
             ep_bg_fetched += data.values()[0][0]
-        ep_bg_fetched /= self.test_config.initial_nodes[0]
+        ep_bg_fetched /= self.test_config.cluster.initial_nodes[0]
 
         return round(ep_bg_fetched)
 
@@ -152,7 +152,7 @@ class MetricHelper(object):
             couch_views_ops += data.values()[0][0]
 
         if self.build < '2.5.0':
-            couch_views_ops /= self.test_config.initial_nodes[0]
+            couch_views_ops /= self.test_config.cluster.initial_nodes[0]
 
         return round(couch_views_ops)
 

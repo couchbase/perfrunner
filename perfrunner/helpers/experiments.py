@@ -9,11 +9,11 @@ from perfrunner.settings import SF_STORAGE
 class ExperimentHelper(object):
 
     INPUTS = {
-        'Source nodes': 'self.tc.initial_nodes[0]',
-        'Destination nodes': 'self.tc.initial_nodes[1]',
+        'Source nodes': 'self.tc.cluster.initial_nodes[0]',
+        'Destination nodes': 'self.tc.cluster.initial_nodes[1]',
         'Mutations/sec': '0.8 * self.tc.access_settings.throughput',
-        'Number of buckets': 'self.tc.num_buckets',
-        'Number of vbuckets': 'self.tc.num_vbuckets',
+        'Number of buckets': 'self.tc.cluster.num_buckets',
+        'Number of vbuckets': 'self.tc.cluster.num_vbuckets',
         'Number of items (10e6)': 'self.tc.load_settings.items / 10 ** 6',
         'Number of replicas': 'self.tc.bucket.replica_number',
         'Moves per node': 'self.tc.internal_settings["rebalanceMovesPerNode"]',

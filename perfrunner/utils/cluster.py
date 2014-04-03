@@ -28,9 +28,9 @@ class ClusterManager(object):
         self.masters = cluster_spec.yield_masters
         self.hostnames = cluster_spec.yield_hostnames
 
-        self.initial_nodes = test_config.initial_nodes
-        self.mem_quota = test_config.mem_quota
-        self.group_number = test_config.group_number or 1
+        self.initial_nodes = test_config.cluster.initial_nodes
+        self.mem_quota = test_config.cluster.mem_quota
+        self.group_number = test_config.cluster.group_number or 1
 
     def set_data_path(self):
         data_path, index_path = self.cluster_spec.paths
@@ -46,7 +46,7 @@ class ClusterManager(object):
             self.rest.set_mem_quota(server, self.mem_quota)
 
     def disable_moxi(self):
-        if self.test_config.disable_moxi is not None:
+        if self.test_config.cluster.disable_moxi is not None:
             self.remote.disable_moxi()
 
     def create_server_groups(self):
@@ -82,7 +82,7 @@ class ClusterManager(object):
             self.monitor.monitor_rebalance(master)
 
     def create_buckets(self):
-        ram_quota = self.mem_quota / self.test_config.num_buckets
+        ram_quota = self.mem_quota / self.test_config.cluster.num_buckets
         replica_number = self.test_config.bucket.replica_number
         replica_index = self.test_config.bucket.replica_index
         eviction_policy = self.test_config.bucket.eviction_policy
@@ -118,7 +118,7 @@ class ClusterManager(object):
         self.remote.disable_thp()
 
     def restart_with_alternative_num_vbuckets(self):
-        num_vbuckets = self.test_config.num_vbuckets
+        num_vbuckets = self.test_config.cluster.num_vbuckets
         if num_vbuckets is not None:
             self.remote.restart_with_alternative_num_vbuckets(num_vbuckets)
 
@@ -137,7 +137,7 @@ class ClusterManager(object):
                 self.remote.restart()
 
     def restart_with_alternative_num_cpus(self):
-        num_cpus = self.test_config.num_cpus
+        num_cpus = self.test_config.cluster.num_cpus
         if num_cpus is not None:
             self.remote.restart_with_alternative_num_cpus(num_cpus)
 

@@ -140,50 +140,20 @@ class TestConfig(Config):
         return self.config.get('test_case', 'level')
 
     @property
-    @safe
-    def mem_quota(self):
-        return self.config.getint('cluster', 'mem_quota')
-
-    @property
-    @safe
-    def initial_nodes(self):
-        initial_nodes = self.config.get('cluster', 'initial_nodes')
-        initial_nodes = [int(_) for _ in initial_nodes.split()]
-        return initial_nodes
-
-    @property
-    @safe
-    def num_buckets(self):
-        return self.config.getint('cluster', 'num_buckets')
-
-    @property
-    @safe
-    def num_vbuckets(self):
-        return self.config.getint('cluster', 'num_vbuckets')
-
-    @property
-    @safe
-    def num_cpus(self):
-        return self.config.getint('cluster', 'num_cpus')
-
-    @property
-    @safe
-    def disable_moxi(self):
-        return self.config.get('cluster', 'disable_moxi')
-
-    @property
-    @safe
-    def group_number(self):
-        return self.config.getint('cluster', 'groups')
-
-    @property
-    def buckets(self):
-        return ['bucket-{}'.format(i + 1) for i in range(self.num_buckets)]
+    def cluster(self):
+        options = self._get_options_as_dict('cluster')
+        return ClusterSettings(options)
 
     @property
     def bucket(self):
         options = self._get_options_as_dict('bucket')
         return BucketSettings(options)
+
+    @property
+    def buckets(self):
+        return [
+            'bucket-{}'.format(i + 1) for i in range(self.cluster.num_buckets)
+        ]
 
     @property
     def compaction(self):
@@ -232,6 +202,22 @@ class TestConfig(Config):
     @property
     def internal_settings(self):
         return self._get_options_as_dict('internal')
+
+
+class ClusterSettings(object):
+
+    NUM_VBUCKETS = 1
+
+    def __init__(self, options):
+        self.mem_quota = int(options.get('mem_quota'))
+        self.initial_nodes = [
+            int(nodes) for nodes in options.get('initial_nodes').split()
+        ]
+        self.num_buckets = int(options.get('num_buckets', self.NUM_VBUCKETS))
+        self.num_vbuckets = int(options.get('num_vbuckets'))
+        self.group_number = int(options.get('group_number'))
+        self.num_cpus = int(options.get('num_cpus'))
+        self.disable_moxi = options.get('disable_moxi')
 
 
 class StatsSettings(object):

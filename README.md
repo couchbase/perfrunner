@@ -1,3 +1,14 @@
+![](docs/perf_infra.png)
+
+Related projects:
+* [spring](https://github.com/couchbaselabs/spring)
+* [cbagent](https://github.com/couchbaselabs/cbagent)
+* [cbmonitor](https://github.com/couchbase/cbmonitor)
+* [showfast](https://github.com/couchbaselabs/showfast)
+* [seriesly](https://github.com/dustin/seriesly)
+* [seriesly client](https://github.com/pavel-paulau/seriesly-python-client)
+* [btrc](https://github.com/pavel-paulau/btrc)
+
 Requirements
 ------------
 

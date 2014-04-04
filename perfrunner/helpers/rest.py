@@ -299,3 +299,13 @@ class RestHelper(object):
         api = 'http://{}/controller/reAddNode'.format(host_port)
         data = {'otpNode': self.ns_1(node)}
         self.post(url=api, data=data)
+
+    def set_delta_recovery_type(self, host_port, node):
+        logger.info('Enabling delta recovery: {}'.format(node))
+
+        api = 'http://{}/controller/setRecoveryType'.format(host_port)
+        data = {
+            'otpNode': self.ns_1(node),
+            'recoveryType': 'delta'  # alt: full
+        }
+        self.post(url=api, data=data)

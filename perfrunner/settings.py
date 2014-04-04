@@ -280,6 +280,7 @@ class RebalanceSettings(object):
     SWAP = 0  # Don't swap by default
     FAILOVER = 0  # No failover by default
     GRACEFUL_FAILOVER = 0
+    DELTA_RECOVERY = 0  # Full recovery by default
     SLEEP_AFTER_FAILOVER = 600
     START_AFTER = 1200
     STOP_AFTER = 1200
@@ -292,6 +293,8 @@ class RebalanceSettings(object):
                                                  self.GRACEFUL_FAILOVER))
         self.sleep_after_failover = int(options.get('sleep_after_failover',
                                                     self.SLEEP_AFTER_FAILOVER))
+        self.delta_recovery = int(options.get('delta_recovery',
+                                              self.DELTA_RECOVERY))
         self.start_after = int(options.get('start_after', self.START_AFTER))
         self.stop_after = int(options.get('stop_after', self.STOP_AFTER))
 

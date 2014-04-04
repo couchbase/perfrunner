@@ -87,6 +87,7 @@ class RebalanceTest(PerfTest):
         swap = self.rebalance_settings.swap
         failover = self.rebalance_settings.failover
         graceful_failover = self.rebalance_settings.graceful_failover
+        delta_recovery = self.rebalance_settings.delta_recovery
         sleep_after_failover = self.rebalance_settings.sleep_after_failover
         group_number = self.test_config.cluster.group_number or 1
 
@@ -132,6 +133,8 @@ class RebalanceTest(PerfTest):
             for host_port in failover_nodes:
                 self.rest.fail_over(master, host_port)
                 self.rest.add_back(master, host_port)
+                if delta_recovery:
+                    self.rest.set_delta_recovery_type(master, host_port)
             for host_port in graceful_failover_nodes:
                 self.rest.graceful_fail_over(master, host_port)
                 self.monitor.monitor_rebalance(master)

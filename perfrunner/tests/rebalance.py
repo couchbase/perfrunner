@@ -148,6 +148,7 @@ class RebalanceTest(PerfTest):
 
             if failover:
                 time.sleep(sleep_after_failover)
+                self.reporter.start()
 
             self.rest.rebalance(master, known_nodes, ejected_nodes)
 

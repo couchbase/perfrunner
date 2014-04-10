@@ -9,7 +9,7 @@ report = BaseTuqReport
 post_to_sf = 0
 
 [cluster]
-mem_quota = 10240
+mem_quota = 3000
 initial_nodes = 2
 num_buckets = 1
 

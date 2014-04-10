@@ -3,7 +3,7 @@ decorator
 git+https://github.com/couchbaselabs/spring.git
 git+https://github.com/couchbaselabs/cbagent.git
 celery==3.0.21
-couchbase==1.0.0
+couchbase==2.2.0
 fabric==1.8.0
 logger
 ordereddict

@@ -1,0 +1,19 @@
+[test_case]
+module = perfrunner.tests.kv
+class = TapTest
+title = TAP throughput, items/sec, 1 bucket x 20M x 1KB, non-DGM
+summary = TAP throughput test, 1 node, 1 bucket x 20M x 1KB, non-DGM
+larger_is_better = true
+
+[cluster]
+mem_quota = 57344
+initial_nodes = 1
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+
+[load]
+items = 20000000
+size = 1024
+workers = 20

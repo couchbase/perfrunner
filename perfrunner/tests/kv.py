@@ -63,10 +63,12 @@ class ReadLatencyTest(MixedLatencyTest):
 
     def run(self):
         super(MixedLatencyTest, self).run()
-        self.reporter.post_to_sf(
+        latency_get = self.reporter.post_to_sf(
             *self.metric_helper.calc_kv_latency(operation='get',
                                                 percentile=95)
         )
+        if hasattr(self, 'experiment'):
+            self.experiment.post_results(latency_get)
 
 
 class BgFetcherTest(KVTest):

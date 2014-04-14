@@ -205,7 +205,7 @@ class ClusterSettings(object):
         self.num_buckets = int(options.get('num_buckets', self.NUM_BUCKETS))
         self.num_vbuckets = options.get('num_vbuckets')
         self.group_number = int(options.get('group_number', self.GROUP_NUMBER))
-        self.num_cpus = options.get('num_cpus')
+        self.num_cpus = int(options.get('num_cpus'))
         self.disable_moxi = options.get('disable_moxi')
 
 

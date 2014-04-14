@@ -17,9 +17,10 @@ class ExperimentHelper(object):
         'Number of items (10e6)': 'self.tc.load_settings.items / 10 ** 6',
         'Number of replicas': 'self.tc.bucket.replica_number',
         'Moves per node': 'self.tc.internal_settings["rebalanceMovesPerNode"]',
-        'Moxi': 'self.tc.disable_moxi is None and "Moxi on" or "Moxi off"',
+        'Moxi': 'self.tc.cluster.disable_moxi is None and "Moxi on" or "Moxi off"',
         'Compaction': 'self.tc.compaction.db_percentage == "100" and "Off" or "On"',
         'Value size': 'self.tc.load_settings.size',
+        'memcached threads': 'self.tc.cluster.num_cpus',
 
         'Drive type': 'self.cs.parameters["Disk"].split()[-1]',
     }

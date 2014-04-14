@@ -138,7 +138,7 @@ class ClusterManager(object):
 
     def restart_with_alternative_num_cpus(self):
         num_cpus = self.test_config.cluster.num_cpus
-        if num_cpus is not None:
+        if num_cpus:
             self.remote.restart_with_alternative_num_cpus(num_cpus)
 
     def enable_auto_failover(self):

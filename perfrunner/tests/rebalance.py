@@ -50,8 +50,6 @@ def with_delayed_posting(rebalance, *args, **kwargs):
         test.reporter.post_to_sf(test.rebalance_time)
         if hasattr(test, 'experiment'):
             test.experiment.post_results(test.rebalance_time)
-    else:
-        logger.error('Rebalance failed')
 
 
 class RebalanceTest(PerfTest):

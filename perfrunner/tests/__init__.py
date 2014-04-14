@@ -76,6 +76,9 @@ class PerfTest(object):
         if exc_type != exc.KeyboardInterrupt:
             self.debug()
         for master in self.cluster_spec.yield_masters():
+            if not self.rest.is_balanced(master):
+                logger.interrupt('Rebalance failed')
+
             num_failovers = self.rest.get_failover_counter(master)
             if hasattr(self, 'rebalance_settings'):
                 if self.rebalance_settings.failover or \

@@ -215,12 +215,14 @@ class StatsSettings(object):
     POST_TO_SF = 0
     INTERVAL = 5
     LAT_INTERVAL = 1
+    POST_RSS = 0
 
     def __init__(self, options):
         self.enabled = int(options.get('enabled', self.ENABLED))
         self.post_to_sf = int(options.get('post_to_sf', self.POST_TO_SF))
         self.interval = int(options.get('interval', self.INTERVAL))
         self.lat_interval = int(options.get('lat_interval', self.LAT_INTERVAL))
+        self.post_rss = int(options.get('post_rss', self.POST_RSS))
 
 
 class BucketSettings(object):

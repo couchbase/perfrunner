@@ -5,6 +5,9 @@ title = 5 -> 5 UniDir, 2 buckets x 500M x 1KB, DGM
 summary = Mixed KV + XDCR test, 5 -> 5 nodes, 2 buckets x 500M x 1KB, DGM, UniDir, 20K ops/sec
 larger_is_better = false
 
+[stats]
+post_rss = 1
+
 [cluster]
 mem_quota = 204800
 initial_nodes = 5 5

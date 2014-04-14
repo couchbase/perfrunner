@@ -74,7 +74,8 @@ class XdcrTest(PerfTest):
         self.access()
 
         self.reporter.post_to_sf(*self.metric_helper.calc_xdcr_lag())
-        if self.remote.os != 'Cygwin':
+        if self.remote.os != 'Cygwin' and \
+                self.test_config.stats_settings.post_rss:
             self.reporter.post_to_sf(*self.metric_helper.calc_max_beam_rss())
 
 

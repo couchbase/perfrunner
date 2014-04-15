@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.kv
 class = ReadLatencyTest
-title = Memcached GET latency (ms), 1 bucket x 600M x 256B, non-DGM
+title = memcached GET latency (ms), 1 bucket x 600M x 256B, non-DGM
 summary = Read-only KV test, 1 node, 1 bucket x 600M x 256B, non-DGM, 400K ops/sec
 larger_is_better = true
 
@@ -17,6 +17,7 @@ replica_number = 0
 ops = 600000000
 size = 0
 workers = 30
+throughput = 200000
 async = 1
 
 [access]

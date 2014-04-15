@@ -63,3 +63,31 @@ Running unit tests
 After `nose` installation:
 
     nosetests -v unittests.py
+
+Creating "Insight" experiments
+------------------------------
+
+cbmonitor provides handy APIs for experiments when we need to track metric while varying one or more input parameters. For instance, we want to analyze how GET latency depends on number of front-end memcached threads.
+
+First of all, we create experiment config like [this one](https://github.com/couchbaselabs/perfrunner/blob/master/experiments/get_latency_threads.json):
+
+    {
+        "name": "95th percentile GET latency (ms), variable memcached threads",
+        "defaults": {
+            "memcached threads": 4
+        }
+    }
+
+Query for `memcached threads` variable must be defined in experiment [helper](https://github.com/couchbaselabs/perfrunner/blob/master/perfrunner/helpers/experiments.py):
+
+    'memcached threads': 'self.tc.cluster.num_cpus'
+
+There must be corrensponding [test config](https://github.com/couchbaselabs/perfrunner/blob/master/tests/kv_hiload_600M_ro.test) which measures GET latency.
+Most importantly test case should post experimental results:
+
+    if hasattr(self, 'experiment'):
+        self.experiment.post_results(latency_get)
+
+Finally we can execute [scripts/workload_exp.sh](https://github.com/couchbaselabs/perfrunner/blob/master/scripts/workload_exp.sh) which has `-e` flag.
+
+Now we can check cbmonitor [UI](http://cbmonitor.sc.couchbase.com/insight/) and analyze results.

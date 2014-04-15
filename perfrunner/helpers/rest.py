@@ -109,7 +109,7 @@ class RestHelper(object):
     def is_balanced(self, host_port):
         api = 'http://{}/pools/default'.format(host_port)
         counters = self.get(url=api).json()['counters']
-        return counters['rebalance_start'] == counters['rebalance_success']
+        return counters.get('rebalance_start') == counters.get('rebalance_success')
 
     def get_failover_counter(self, host_port):
         api = 'http://{}/pools/default'.format(host_port)

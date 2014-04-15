@@ -166,7 +166,9 @@ class RemoteLinuxHelper(object):
     @all_hosts
     def restart_with_alternative_num_cpus(self, num_cpus):
         logger.info('Changing number of vbuckets to {}'.format(num_cpus))
-        run('MEMCACHED_NUM_CPUS={} /etc/init.d/couchbase-server restart'
+        run('MEMCACHED_NUM_CPUS={} '
+            'numactl --interleave=all '
+            '/etc/init.d/couchbase-server restart'
             .format(num_cpus))
 
     @all_hosts

@@ -31,7 +31,7 @@ class XdcrTest(PerfTest):
                 params['type'] = self.settings.replication_protocol
             self.rest.start_replication(m1, params)
 
-    def init_xdcr(self):
+    def enable_xdcr(self):
         m1, m2 = self.cluster_spec.yield_masters()
 
         if self.settings.replication_type == 'unidir':
@@ -40,6 +40,7 @@ class XdcrTest(PerfTest):
             self._start_replication(m1, m2)
             self._start_replication(m2, m1)
 
+    def monitor_replication(self):
         for target in self.target_iterator:
             self.monitor.monitor_xdcr_replication(target.node, target.bucket)
 
@@ -48,10 +49,10 @@ class XdcrTest(PerfTest):
         super(XdcrTest, self).timer()
 
     def run(self):
+        self.enable_xdcr()
         self.load()
         self.wait_for_persistence()
-
-        self.init_xdcr()
+        self.monitor_replication()
         self.wait_for_persistence()
 
         self.compact_bucket()
@@ -123,7 +124,8 @@ class XdcrInitTest(SymmetricXdcrTest):
 
     @with_stats
     def init_xdcr(self):
-        super(XdcrInitTest, self).init_xdcr()
+        self.enable_xdcr()
+        self.monitor_replication()
 
     def run(self):
         self.load()

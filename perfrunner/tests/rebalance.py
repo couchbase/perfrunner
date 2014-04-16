@@ -222,10 +222,10 @@ class RebalanceWithXdcrTest(XdcrTest, RebalanceTest):
     COLLECTORS = {'latency': True, 'xdcr_lag': True}
 
     def run(self):
+        self.enable_xdcr()
         self.load()
         self.wait_for_persistence()
-
-        self.init_xdcr()
+        self.monitor_replication()
         self.wait_for_persistence()
 
         self.compact_bucket()
@@ -242,10 +242,10 @@ class RebalanceWithSymmetricXdcrTest(SymmetricXdcrTest, RebalanceTest):
     COLLECTORS = {'latency': True, 'xdcr_lag': True}
 
     def run(self):
+        self.enable_xdcr()
         self.load()
         self.wait_for_persistence()
-
-        self.init_xdcr()
+        self.monitor_replication()
         self.wait_for_persistence()
 
         self.compact_bucket()

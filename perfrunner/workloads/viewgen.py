@@ -23,13 +23,13 @@ class ViewGen(object):
 
     view_names = ResetableGenerator((
         'id_by_city',
-        'name_and_email_by_category_and_and_coins',
+        'name_and_email_by_category_and_coins',
         'id_by_realm_and_coins',
         'name_and_email_by_city',
-        'name_by_category_and_and_coins',
+        'name_by_category_and_coins',
         'experts_id_by_realm_and_coins',
         'id_by_realm',
-        'achievements_by_category_and_and_coins',
+        'achievements_by_category_and_coins',
         'name_and_email_by_realm_and_coins',
         'experts_coins_by_name'
     ))
@@ -57,17 +57,17 @@ class ViewGen(object):
                 }
             }
         ''',
-        'name_by_category_and_and_coins': '''
+        'name_by_category_and_coins': '''
             function(doc, meta) {
                 emit([doc.category, doc.coins], doc.name);
             }
         ''',
-        'name_and_email_by_category_and_and_coins': '''
+        'name_and_email_by_category_and_coins': '''
             function(doc, meta) {
                 emit([doc.category, doc.coins], [doc.name, doc.email]);
             }
         ''',
-        'achievements_by_category_and_and_coins': '''
+        'achievements_by_category_and_coins': '''
             function(doc, meta) {
                 emit([doc.category, doc.coins], doc.achievements);
             }

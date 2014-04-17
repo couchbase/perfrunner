@@ -1,0 +1,49 @@
+[test_case]
+module = perfrunner.tests.xdcr
+class = SymmetricXdcrTest
+title = 5 -> 5 UniDir, 2 buckets x 500M x 1KB, DGM, 2K writes/sec/node, LAN, SSL
+summary = Mixed KV + XDCR test, 5 -> 5 nodes, 2 buckets x 500M x 1KB, DGM, UniDir, 2K writes/sec/node, LAN, SSL
+larger_is_better = false
+
+[stats]
+post_rss = 1
+
+[cluster]
+mem_quota = 204800
+initial_nodes = 5 5
+num_buckets = 2
+
+[internal]
+xdcrOptimisticReplicationThreshold = 0
+
+[compaction]
+db_percentage = 10
+
+[load]
+ops = 500000000
+size = 800
+workers = 20
+async = 1
+
+[hot_load]
+items = 500000000
+size = 800
+workers = 20
+working_set = 10
+
+[xdcr]
+replication_type = unidir
+use_ssl = 1
+
+[access]
+creates = 0
+reads = 50
+updates = 50
+deletes = 0
+throughput = 10000
+items = 500000000
+size = 800
+workers = 30
+working_set = 10
+working_set_access = 98
+time = 10800

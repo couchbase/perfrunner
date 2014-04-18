@@ -1,8 +1,8 @@
 [test_case]
 module = perfrunner.tests.xdcr
 class = SymmetricXdcrTest
-title = 5 -> 5 UniDir, 2 buckets x 500M x 1KB, DGM, 2K writes/sec/node, LAN
-summary = Mixed KV + XDCR test, 5 -> 5 nodes, 2 buckets x 500M x 1KB, DGM, UniDir, 2K writes/sec/node, LAN
+title = 5 -> 5 UniDir, 2 buckets x 500M x 1KB, DGM, 10K SETs/sec, LAN
+summary = Mixed KV + XDCR test, 5 -> 5 UniDir, 2 buckets x 500M x 1KB, DGM, 2K SETs/sec/node, LAN
 larger_is_better = false
 
 [stats]

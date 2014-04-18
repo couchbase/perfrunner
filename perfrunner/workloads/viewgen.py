@@ -118,3 +118,267 @@ class ViewGen(object):
         self.ddoc_names.reset()
         self.view_names.reset()
         return ddocs
+
+
+class ViewGenDev(object):
+
+    MAP_FUNCS = {
+        ################################ BASIC ################################
+        'basic': {
+            'name_and_street_by_city': {
+                'map': '''
+                    function(doc, meta) {
+                        emit(
+                            doc.city.f.f,
+                            [
+                                doc.name.f.f.f,
+                                doc.street.f.f
+                            ]
+                        );
+                    }
+                ''',
+            },
+            'name_and_email_by_county': {
+                'map': '''
+                    function(doc, meta) {
+                        emit(
+                            doc.county.f.f,
+                            [
+                                doc.name.f.f.f,
+                                doc.email.f.f
+                            ]
+                        );
+                    }
+                ''',
+            },
+            'achievements_by_realm': {
+                'map': '''
+                    function(doc, meta) {
+                        emit(doc.realm.f, doc.achievements);
+                    }
+                ''',
+            },
+        },
+        ################################ RANGE ################################
+        'range': {
+            'name_by_coins': {
+                'map': '''
+                    function(doc, meta) {
+                        emit(doc.coins.f, doc.name.f.f.f);
+                    }
+                ''',
+            },
+            'email_by_achievements_and_category': {
+                'map': '''
+                    function(doc, meta) {
+                        emit(
+                            [
+                                doc.achievements[0],
+                                doc.category
+                            ],
+                            doc.email.f.f
+                        );
+                    }
+                ''',
+            },
+            'street_by_achievement_and_year': {
+                'map': '''
+                    function(doc, meta) {
+                        emit(
+                            [
+                                doc.achievements[0],
+                                doc.year
+                            ],
+                            doc.street.f.f
+                        );
+                    }
+                ''',
+            },
+        },
+        ################################ GROUP ################################
+        'group_by': {
+            'coins_stats_by_state_and_year': {
+                'map': '''
+                    function(doc, meta) {
+                        emit(
+                            [
+                                doc.state.f,
+                                doc.year
+                            ],
+                            doc.coins.f
+                        );
+                    }
+                ''',
+                'reduce': '_stats',
+            },
+            'coins_stats_by_gmtime': {
+                'map': '''
+                    function(doc, meta) {
+                        emit(
+                            doc.gmtime,
+                            doc.coins.f
+                        );
+                    }
+                ''',
+                'reduce': '_stats',
+            },
+            'coins_stats_by_full_state_and_year': {
+                'map': '''
+                    function(doc, meta) {
+                        emit(
+                            [
+                                doc.full_state.f,
+                                doc.year
+                            ],
+                            doc.coins.f
+                        );
+                    }
+                ''',
+                'reduce': '_stats',
+            },
+        },
+        ################################ MULTI ################################
+        'multi_emits': {
+            'name_and_email_and_street_and_achievements_and_coins_by_city': {
+                'map': '''
+                    function(doc, meta) {
+                        emit(
+                            doc.city.f.f,
+                            [
+                                doc.name.f.f.f,
+                                doc.email.f.f,
+                                doc.street.f.f,
+                                doc.achievements,
+                                doc.coins.f
+                            ],
+                        );
+                    }
+                ''',
+            },
+            'street_and_name_and_email_and_achievement_and_dobule_by_county': {
+                'map': '''
+                    function(doc, meta) {
+                        emit(
+                            doc.city.f.f,
+                            [
+                                doc.street.f.f,
+                                doc.name.f.f.f,
+                                doc.email.f.f,
+                                doc.achievements[0],
+                                2 * doc.coins.f
+                            ]
+                        );
+                    }
+                ''',
+            },
+            'category_name_and_email_and_street_and_gmtime_and_year_by_country': {
+                'map': '''
+                    function(doc, meta) {
+                        emit(
+                            doc.city.f.f,
+                            [
+                                doc.category,
+                                doc.name.f.f.f,
+                                doc.email.f.f,
+                                doc.street.f.f,
+                                doc.gmtime,
+                                doc.year
+                            ]
+                        );
+                    }
+                ''',
+            },
+        },
+        ############################### COMPUTE ###############################
+        'compute': {
+            'calc_by_city': {
+                'map': '''
+                    function(doc, meta) {
+                        var calc = [];
+                        for (var i = 0; i < doc.achievements.length; i++) {
+                            for (var j = 0; j < doc.gmtime.length; j++) {
+                                var x = Math.random() * Math.exp(i + j),
+                                    y = Math.sin(doc.achievements[i]),
+                                    z = Math.cos(doc.gmtime[j]);
+                                var agg = Math.round(x * (y - z));
+                                if (agg < 0) {
+                                    calc.push(agg);
+                                }
+                            }
+                        }
+                        emit(doc.city.f.f, calc);
+                    }
+                ''',
+            },
+            'calc_by_county': {
+                'map': '''
+                    function(doc, meta) {
+                        var calc = [];
+                        for (var i = 0; i < doc.achievements.length; i++) {
+                            for (var j = 0; j < doc.gmtime.length; j++) {
+                                var x = Math.random() * Math.exp(i + j),
+                                    y = Math.tan(doc.achievements[i]),
+                                    z = Math.sqrt(doc.gmtime[j]);
+                                var agg = Math.round(x * (y - z));
+                                if (agg > 0) {
+                                    calc.push(agg);
+                                }
+                            }
+                        }
+                        emit(doc.county.f.f, calc);
+                    }
+                ''',
+            },
+            'calc_by_realm': {
+                'map': '''
+                    function(doc, meta) {
+                        var calc = [];
+                        for (var i = 0; i < doc.achievements.length; i++) {
+                            for (var j = 0; j < doc.gmtime.length; j++) {
+                                var x = Math.random() * Math.pow(i + 1, j + 1),
+                                    y = Math.tan(doc.achievements[i]),
+                                    z = Math.cos(doc.gmtime[j]);
+                                var agg = Math.round(x / (y + z));
+                                if (agg > 0) {
+                                    calc.push(agg);
+                                }
+                            }
+                        }
+                        emit(doc.county.f.f, calc);
+                    }
+                ''',
+            },
+        },
+        ################################ BODY ################################
+        'body': {
+            'body_by_city': {
+                'map': '''
+                    function(doc, meta) {
+                        emit(doc.city.f.f, doc.body);
+                    }
+                ''',
+            },
+            'body_by_realm': {
+                'map': '''
+                    function(doc, meta) {
+                        emit(doc.realm.f, doc.body);
+                    }
+                ''',
+            },
+            'body_by_country': {
+                'map': '''
+                    function(doc, meta) {
+                        emit(doc.country.f, doc.body);
+                    }
+                ''',
+            },
+        }
+    }
+
+    def generate_ddocs(self, index_type):
+        """Return ddoc definition based on index type"""
+        return {
+            'ddoc': {
+                'views': self.MAP_FUNCS[index_type]
+            }
+        }

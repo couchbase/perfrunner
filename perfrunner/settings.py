@@ -313,6 +313,7 @@ class PhaseSettings(object):
     THROUGHPUT = float('inf')
     QUERY_THROUGHPUT = float('inf')
 
+    DOC_GEN = 'old'
     ITEMS = 0
     SIZE = 2048
     EXPIRATION = 0
@@ -340,6 +341,7 @@ class PhaseSettings(object):
         self.query_throughput = float(options.get('query_throughput',
                                                   self.QUERY_THROUGHPUT))
 
+        self.doc_gen = options.get('doc_gen', self.DOC_GEN)
         self.size = int(options.get('size', self.SIZE))
         self.items = int(options.get('items', self.ITEMS))
         self.expiration = int(options.get('expiration', self.EXPIRATION))
@@ -395,12 +397,14 @@ class IndexSettings(PhaseSettings):
     VIEWS = '[1]'
     DISABLED_UPDATES = 0
     PARAMS = '{}'
+    INDEX_TYPE = 'basic'
 
     def __init__(self, options):
         self.views = eval(options.get('views', self.VIEWS))
         self.params = eval(options.get('params', self.PARAMS))
         self.disabled_updates = int(options.get('disabled_updates',
                                                 self.DISABLED_UPDATES))
+        self.index_type = options.get('index_type', self.PARAMS)
 
 
 class AccessSettings(PhaseSettings):

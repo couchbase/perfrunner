@@ -1,6 +1,6 @@
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import PerfTest
-from perfrunner.workloads.viewgen import ViewGen
+from perfrunner.workloads.viewgen import ViewGen, ViewGenDev
 
 
 class IndexTest(PerfTest):
@@ -100,3 +100,17 @@ class InitialAndIncrementalIndexTest(IndexTest):
             *self.metric_helper.get_indexing_meta(value=time_elapsed,
                                                   index_type='Incremental')
         )
+
+
+class DevIndexTest(IndexTest):
+
+    def __init__(self, *args):
+        super(IndexTest, self).__init__(*args)
+
+        index_type = self.test_config.index_settings.index_type
+        self.ddocs = ViewGenDev().generate_ddocs(index_type)
+
+
+class DevInitialIndexTest(DevIndexTest, InitialIndexTest):
+
+    pass

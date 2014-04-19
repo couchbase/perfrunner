@@ -1,8 +1,8 @@
 [test_case]
 module = perfrunner.tests.rebalance
 class = RebalanceKVTest
-title = Rebalance-in (min), 9 -> 10, 1 bucket x 8G x 1KB, DGM
-summary = Read-heavy rebalance-in test (70/30), 9 -> 10 nodes, 1 bucket x 8G x 1KB, 2 replicas, 10K ops/sec
+title = Rebalance-in (min), 9 -> 10, 1 bucket x 7G x 512B, DGM
+summary = Read-heavy rebalance-in test (70/30), 9 -> 10 nodes, 1 bucket x 7G x 512B, 2 replicas, 10K ops/sec
 larger_is_better = false
 
 [cluster]
@@ -17,15 +17,15 @@ replica_number = 2
 db_percentage = 4
 
 [load]
-ops = 8000000000
+ops = 7000000000
 throughput = 50000
-size = 1024
+size = 256
 workers = 20
 async = 1
 
 [hot_load]
-items = 8000000000
-size = 1024
+items = 7000000000
+size = 256
 workers = 40
 working_set = 0.5
 
@@ -35,8 +35,8 @@ reads = 70
 cases = 28
 deletes = 1
 throughput = 10000
-items = 8000000000
-size = 1024
+items = 7000000000
+size = 256
 workers = 30
 working_set = 0.5
 working_set_access = 95

@@ -250,7 +250,7 @@ class ViewGenDev(object):
                                 doc.street.f.f,
                                 doc.achievements,
                                 doc.coins.f
-                            ],
+                            ]
                         );
                     }
                 ''',

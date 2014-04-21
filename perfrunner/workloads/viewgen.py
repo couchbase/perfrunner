@@ -181,13 +181,13 @@ class ViewGenDev(object):
                     }
                 ''',
             },
-            'street_by_achievement_and_year': {
+            'street_by_year_and_coins': {
                 'map': '''
                     function(doc, meta) {
                         emit(
                             [
-                                doc.achievements[0],
-                                doc.year
+                                doc.year,
+                                doc.coins.f
                             ],
                             doc.street.f.f
                         );

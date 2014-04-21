@@ -168,7 +168,7 @@ class ViewGenDev(object):
                     }
                 ''',
             },
-            'email_by_achievements_and_category': {
+            'email_by_achievement_and_category': {
                 'map': '''
                     function(doc, meta) {
                         emit(

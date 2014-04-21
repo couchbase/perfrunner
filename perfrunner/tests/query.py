@@ -48,6 +48,6 @@ class QueryLatencyTest(QueryTest):
             self.reporter.post_to_sf(*self.metric_helper.calc_max_beam_rss())
 
 
-class DevQueryLatencyTest(DevIndexTest, QueryTest):
+class DevQueryLatencyTest(DevIndexTest, QueryLatencyTest):
 
     pass

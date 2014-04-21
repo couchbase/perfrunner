@@ -211,11 +211,11 @@ class ViewGenDev(object):
                 ''',
                 'reduce': '_stats',
             },
-            'coins_stats_by_gmtime': {
+            'coins_stats_by_gmtime_and_year': {
                 'map': '''
                     function(doc, meta) {
                         emit(
-                            doc.gmtime,
+                            [doc.gmtime, doc.year],
                             doc.coins.f
                         );
                     }

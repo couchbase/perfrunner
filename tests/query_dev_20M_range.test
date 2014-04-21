@@ -1,0 +1,41 @@
+[test_case]
+module = perfrunner.tests.query
+class = DevQueryLatencyTest
+title = 1 bucket x 20M x 1KB, non-DGM, 500 writes/sec, 3 views, stale=false, group queries
+summary = Write-only query test, 1 node, 1 bucket x 20M x 1KB, non-DGM, 3 views, 100 writes/sec, 100 qps
+larger_is_better = false
+
+[cluster]
+mem_quota = 204800
+initial_nodes = 1
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+
+[compaction]
+db_percentage = 10
+
+[load]
+items = 20000000
+size = 1024
+workers = 20
+doc_gen = new
+
+[index]
+index_type = range
+params = {"stale": "false"}
+
+[access]
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+throughput = 100
+query_throughput = 100
+items = 20000000
+size = 1024
+doc_gen = new
+workers = 4
+query_workers = 10
+time = 3600

@@ -397,14 +397,13 @@ class IndexSettings(PhaseSettings):
     VIEWS = '[1]'
     DISABLED_UPDATES = 0
     PARAMS = '{}'
-    INDEX_TYPE = 'basic'
 
     def __init__(self, options):
         self.views = eval(options.get('views', self.VIEWS))
         self.params = eval(options.get('params', self.PARAMS))
         self.disabled_updates = int(options.get('disabled_updates',
                                                 self.DISABLED_UPDATES))
-        self.index_type = options.get('index_type', self.PARAMS)
+        self.index_type = options.get('index_type')
 
 
 class AccessSettings(PhaseSettings):

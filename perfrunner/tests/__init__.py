@@ -130,9 +130,11 @@ class PerfTest(object):
     def access_bg_with_ddocs(self):
         access_settings = self.test_config.access_settings
         log_phase('access phase', access_settings)
+        index_type = self.test_config.index_settings.index_type
         self.worker_manager.run_workload(access_settings, self.target_iterator,
                                          timer=access_settings.time,
-                                         ddocs=self.ddocs)
+                                         ddocs=self.ddocs,
+                                         index_type=index_type)
 
     def timer(self):
         access_settings = self.test_config.access_settings

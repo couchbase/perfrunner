@@ -1,3 +1,5 @@
+from logger import logger
+
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import PerfTest
 from perfrunner.workloads.viewgen import ViewGen, ViewGenDev
@@ -108,6 +110,8 @@ class DevIndexTest(IndexTest):
         super(IndexTest, self).__init__(*args)
 
         index_type = self.test_config.index_settings.index_type
+        if index_type is None:
+            logger.interrupt('Missing index_type param')
         self.ddocs = ViewGenDev().generate_ddocs(index_type)
 
 

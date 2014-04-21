@@ -1,5 +1,5 @@
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.tests.index import IndexTest
+from perfrunner.tests.index import IndexTest, DevIndexTest
 
 
 class QueryTest(IndexTest):
@@ -46,3 +46,8 @@ class QueryLatencyTest(QueryTest):
         if self.remote.os != 'Cygwin' and \
                 self.test_config.stats_settings.post_rss:
             self.reporter.post_to_sf(*self.metric_helper.calc_max_beam_rss())
+
+
+class DevQueryLatencyTest(DevIndexTest, QueryTest):
+
+    pass

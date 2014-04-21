@@ -1,0 +1,43 @@
+[test_case]
+module = perfrunner.tests.query
+class = DevQueryLatencyTest
+title = 1 bucket x 1M x 1KB, non-DGM, 3 basic views
+summary = Read-heavy query test (80/20), 1 node, 1 bucket x 1M x 1KB, non-DGM, 3 basic views, 4K ops/sec, 200 qps
+larger_is_better = false
+
+[stats]
+post_to_sf = 0
+
+[cluster]
+mem_quota = 204800
+initial_nodes = 1
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+
+[compaction]
+db_percentage = 20
+
+[load]
+items = 1000000
+size = 1024
+workers = 10
+doc_gen = new
+
+[index]
+index_type = multi_emits
+
+[access]
+creates = 4
+reads = 80
+updates = 12
+deletes = 4
+throughput = 4000
+query_throughput = 200
+items = 1000000
+size = 1024
+doc_gen = new
+workers = 12
+query_workers = 12
+time = 600

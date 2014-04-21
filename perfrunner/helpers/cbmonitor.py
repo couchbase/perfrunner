@@ -166,6 +166,7 @@ class CbAgent(object):
 
     def prepare_query_latency(self, clusters, test):
         params = test.test_config.index_settings.params
+        index_type = test.test_config.index_settings.index_type
         for cluster in clusters:
             settings = copy(self.settings)
             settings.interval = self.lat_interval
@@ -175,7 +176,8 @@ class CbAgent(object):
                 target_hash(settings.master_node.split(':')[0])
             self.collectors.append(
                 SpringQueryLatency(settings, test.workload, prefix=prefix,
-                                   ddocs=test.ddocs, params=params)
+                                   ddocs=test.ddocs, params=params,
+                                   index_type=index_type)
             )
 
     def prepare_active_tasks(self, clusters):

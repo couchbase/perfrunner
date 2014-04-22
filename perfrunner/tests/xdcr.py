@@ -48,6 +48,18 @@ class XdcrTest(PerfTest):
     def access(self):
         super(XdcrTest, self).timer()
 
+    def configure_wan(self):
+        if self.settings.wan_enabled:
+            hostnames = tuple(self.cluster_spec.yield_hostnames())
+            src_list = [
+                hostname for hostname in hostnames[len(hostnames) / 2:]
+            ]
+            dest_list = [
+                hostname for hostname in hostnames[:len(hostnames) / 2]
+            ]
+            self.remote.enable_wan()
+            self.remote.filter_wan(src_list, dest_list)
+
     def run(self):
         self.enable_xdcr()
         self.load()
@@ -59,16 +71,7 @@ class XdcrTest(PerfTest):
 
         self.hot_load()
 
-        if self.settings.wan_enabled:
-            hostnames = tuple(self.cluster_spec.yield_hostnames())
-            src_list = [
-                hostname for hostname in hostnames[len(hostnames) / 2:]
-            ]
-            dest_list = [
-                hostname for hostname in hostnames[:len(hostnames) / 2]
-            ]
-            self.remote.enable_wan()
-            self.remote.filter_wan(src_list, dest_list)
+        self.configure_wan()
 
         self.workload = self.test_config.access_settings
         self.access_bg()

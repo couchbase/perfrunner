@@ -9,7 +9,7 @@ credentials = root:couchbase
 
 [storage]
 data = /ssd1
-index = /ssd1
+index = /ssd2
 
 [credentials]
 rest = Administrator:password

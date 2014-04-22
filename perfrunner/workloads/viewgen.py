@@ -255,7 +255,7 @@ class ViewGenDev(object):
                     }
                 ''',
             },
-            'street_and_name_and_email_and_achievement_and_dobule_by_county': {
+            'street_and_name_and_email_and_achievement_and_coins_by_county': {
                 'map': '''
                     function(doc, meta) {
                         emit(

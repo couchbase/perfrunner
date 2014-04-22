@@ -3,6 +3,7 @@ from perfrunner.helpers.misc import log_phase, target_hash
 from perfrunner.settings import TargetSettings
 from perfrunner.tests import PerfTest, TargetIterator
 from perfrunner.tests.kv import FlusherTest
+from perfrunner.tests.query import QueryLatencyTest
 
 
 class XdcrTest(PerfTest):
@@ -111,6 +112,31 @@ class SymmetricXdcrTest(XdcrTest):
                                                 prefix='symmetric')
         self.worker_manager.run_workload(load_settings, src_target_iterator)
         self.worker_manager.wait_for_workers()
+
+
+class XdcrWithViewsTest(SymmetricXdcrTest, QueryLatencyTest):
+
+    def run(self):
+        self.enable_xdcr()
+        self.load()
+        self.wait_for_persistence()
+        self.monitor_replication()
+        self.wait_for_persistence()
+
+        self.compact_bucket()
+
+        self.hot_load()
+
+        self.define_ddocs()
+        self.build_index()
+
+        self.configure_wan()
+
+        self.workload = self.test_config.access_settings
+        self.access_bg()
+        self.access()
+
+        self.reporter.post_to_sf(*self.metric_helper.calc_xdcr_lag())
 
 
 class XdcrInitTest(SymmetricXdcrTest):

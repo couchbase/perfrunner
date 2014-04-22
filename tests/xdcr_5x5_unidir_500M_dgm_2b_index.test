@@ -1,8 +1,8 @@
 [test_case]
 module = perfrunner.tests.xdcr
-class = SymmetricXdcrTest
-title = 5 -> 5 UniDir, 2 buckets x 500M x 1KB, DGM, 10K SETs/sec, WAN 80±4 ms
-summary = Mixed KV + XDCR test, 5 -> 5 UniDir, 2 buckets x 500M x 1KB, DGM, 10K SETs/sec, WAN
+class = XdcrWithViewsTest
+title = 5 -> 5 UniDir, 2 buckets x 500M x 1KB, DGM, 1 x 1 views, 10K SETs/sec, LAN
+summary = Mixed KV + XDCR test, 5 -> 5 UniDir, 2 buckets x 500M x 1KB, DGM, 10K SETs/sec, LAN
 larger_is_better = false
 
 [cluster]
@@ -22,6 +22,9 @@ size = 800
 workers = 20
 async = 1
 
+[index]
+views = [1]
+
 [hot_load]
 items = 500000000
 size = 800
@@ -38,9 +41,11 @@ reads = 50
 updates = 50
 deletes = 0
 throughput = 10000
+query_throughput = 400
 items = 500000000
 size = 800
-workers = 30
+workers = 20
+query_workers = 10
 working_set = 10
 working_set_access = 98
 time = 10800

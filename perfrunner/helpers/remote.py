@@ -148,9 +148,9 @@ class RemoteLinuxHelper(object):
         logger.info('Installing Couchbase Server')
         if pkg == 'deb':
             run('yes | apt-get install gdebi')
-            run('yes | gdebi /tmp/{}'.format(filename))
+            run('yes | numactl --interleave=all gdebi /tmp/{}'.format(filename))
         else:
-            run('yes | rpm -i /tmp/{}'.format(filename))
+            run('yes | numactl --interleave=all rpm -i /tmp/{}'.format(filename))
 
     @all_hosts
     def restart(self):

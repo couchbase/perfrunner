@@ -1,0 +1,8 @@
+[cluster]
+mem_quota = 26624
+initial_nodes = 3
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+

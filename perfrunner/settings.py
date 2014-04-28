@@ -399,6 +399,7 @@ class IndexSettings(PhaseSettings):
     VIEWS = '[1]'
     DISABLED_UPDATES = 0
     PARAMS = '{}'
+    INDEXES = ''
 
     def __init__(self, options):
         self.views = eval(options.get('views', self.VIEWS))
@@ -406,6 +407,7 @@ class IndexSettings(PhaseSettings):
         self.disabled_updates = int(options.get('disabled_updates',
                                                 self.DISABLED_UPDATES))
         self.index_type = options.get('index_type')
+        self.indexes = options.get('indexes', self.INDEXES).split(',')
 
 
 class AccessSettings(PhaseSettings):

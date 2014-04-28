@@ -309,3 +309,9 @@ class RestHelper(object):
             'recoveryType': 'delta'  # alt: full
         }
         self.post(url=api, data=data)
+
+    def exec_n1ql_stmnt(self, host, stmnt):
+        logger.info('Executing: {}'.format(stmnt))
+        api = 'http://{}:8093/query'.format(host)
+        params = {'q': stmnt}
+        self.get(url=api, params=params)

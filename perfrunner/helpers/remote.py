@@ -131,7 +131,8 @@ class RemoteLinuxHelper(object):
     @all_hosts
     def kill_processes(self):
         logger.info('Killing beam.smp, memcached and epmd')
-        run('killall -9 beam.smp memcached epmd', warn_only=True, quiet=True)
+        run('killall -9 beam.smp memcached epmd cbq-engine',
+            warn_only=True, quiet=True)
 
     @all_hosts
     def uninstall_package(self, pkg):
@@ -235,6 +236,14 @@ class RemoteLinuxHelper(object):
     def detect_number_cores(self):
         logger.info('Detecting number of cores')
         return int(run('nproc', pty=False))
+
+    @all_hosts
+    def start_cbq(self):
+        logger.info('Starting cbq-engine')
+        url = 'http://{}:{}@127.0.0.1:8091'.format(
+            *self.cluster_spec.rest_credentials)
+        return run('dtach -n /tmp/cbq-engine.sock '
+                   'cbq-engine -couchbase={}'.format(url))
 
 
 class RemoteWindowsHelper(RemoteLinuxHelper):

@@ -197,6 +197,7 @@ class ClusterSettings(object):
     NUM_BUCKETS = 1
     GROUP_NUMBER = 1
     NUM_CPUS = 0  # Use defaults
+    RUN_CBQ = 0
 
     def __init__(self, options):
         self.mem_quota = int(options.get('mem_quota'))
@@ -208,6 +209,7 @@ class ClusterSettings(object):
         self.group_number = int(options.get('group_number', self.GROUP_NUMBER))
         self.num_cpus = int(options.get('num_cpus', self.NUM_CPUS))
         self.disable_moxi = options.get('disable_moxi')
+        self.run_cbq = options.get('run_cbq', self.RUN_CBQ)
 
 
 class StatsSettings(object):

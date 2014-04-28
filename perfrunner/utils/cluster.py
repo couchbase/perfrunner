@@ -160,6 +160,10 @@ class ClusterManager(object):
                     val = self.memcached.calc_watermark(val, self.mem_quota)
                     self.memcached.set_flusher_param(hostname, bucket, key, val)
 
+    def start_cbq_engine(self):
+        if self.test_config.cluster.run_cbq:
+            self.remote.start_cbq()
+
 
 def get_options():
     usage = '%prog -c cluster -t test_config'
@@ -214,6 +218,7 @@ def main():
     cm.change_watermarks()
     cm.tweak_memory()
     cm.remote.disable_wan()
+    cm.start_cbq_engine()
 
 if __name__ == '__main__':
     main()

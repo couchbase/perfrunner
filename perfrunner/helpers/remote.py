@@ -21,6 +21,15 @@ def single_host(task, *args, **kargs):
     with settings(host_string=self.hosts[0]):
         return task(*args, **kargs)
 
+@decorator
+def all_gateways(task, *args, **kargs):
+    self = args[0]
+    return execute(parallel(task), *args, hosts=self.gateways, **kargs)
+
+@decorator
+def all_gateloads(task, *args, **kargs):
+    self = args[0]
+    return execute(parallel(task), *args, hosts=self.gateloads, **kargs)
 
 class RemoteHelper(object):
 
@@ -56,6 +65,8 @@ class RemoteLinuxHelper(object):
     def __init__(self, cluster_spec, os):
         self.os = os
         self.hosts = tuple(cluster_spec.yield_hostnames())
+        self.gateways = tuple(cluster_spec.gateways)
+        self.gateloads = tuple(cluster_spec.gateloads)
         self.cluster_spec = cluster_spec
 
     @staticmethod
@@ -236,6 +247,36 @@ class RemoteLinuxHelper(object):
         logger.info('Detecting number of cores')
         return int(run('nproc', pty=False))
 
+    @all_gateways
+    def kill_processes_gw(self):
+        logger.info('Killing sync_gateway')
+        run('killall sync_gateway', warn_only=True, quiet=True)
+
+    @all_gateways
+    def uninstall_package_gw(self, pkg, filename):
+        logger.info('Uninstalling sync_gateway - yum remove couchbase-sync-gateway')
+        run('yes | yum remove couchbase-sync-gateway', quiet=True)
+
+    @all_gateways
+    def install_package_gw(self, pkg, url, filename, version=None):
+        self.wget(url, outdir='/tmp')
+        logger.info('Installing sync_gateway - {}'.format(filename))
+        run('yes | numactl --interleave=all rpm -i /tmp/{}'.format(filename))
+
+    @all_gateloads
+    def kill_processes_gl(self):
+        logger.info('Killing gateload')
+        run('killall gateload', warn_only=True, quiet=True)
+
+    @all_gateloads
+    def uninstall_package_gl(self):
+        logger.info('Uninstalling gateload - rm -f /opt/gocode/bin/gateload')
+        run('rm -f /opt/gocode/bin/gateload', quiet=True)
+
+    @all_gateloads
+    def install_package_gl(self):
+        logger.info('Installing gateload - go get github.com/couchbaselabs/gateload')
+        run('go get github.com/couchbaselabs/gateload')
 
 class RemoteWindowsHelper(RemoteLinuxHelper):
 

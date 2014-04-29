@@ -82,6 +82,16 @@ class ClusterSpec(Config):
 
     @property
     @safe
+    def gateways(self):
+        return self.config.get('gateways', 'hosts').split()
+
+    @property
+    @safe
+    def gateloads(self):
+        return self.config.get('gateloads', 'hosts').split()
+
+    @property
+    @safe
     def client_credentials(self):
         return self.config.get('clients', 'credentials').split(':')
 

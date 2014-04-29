@@ -210,7 +210,7 @@ class RestHelper(object):
             host_port, bucket, ddoc_name)
         data = json.dumps(ddoc)
         headers = {'Content-type': 'application/json'}
-        self.put(url=api, data=data,  headers=headers)
+        self.put(url=api, data=data, headers=headers)
 
     def query_view(self, host_port, bucket, ddoc_name, view_name, params):
         logger.info('Querying view: {}/_design/{}/_view/{}'.format(

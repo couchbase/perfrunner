@@ -2,6 +2,7 @@ from time import time
 
 import numpy as np
 from couchbase import Couchbase
+from couchbase.exceptions import TimeoutError
 from logger import logger
 from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
 from tap import TAP
@@ -304,7 +305,11 @@ class ReplicationTest(PerfTest):
                 for i in range(self.NUM_MEASUREMENTS):
                     item = str(i)
                     t0 = time()
-                    cb.set(item, item, replicate_to=1)
+                    try:
+                        cb.set(item, item, replicate_to=1)
+                    except TimeoutError:
+                        logger.warn('Operation timed-out')
+                        continue
                     latency = 1000 * (time() - t0)  # s -> ms
                     timings.append(latency)
 

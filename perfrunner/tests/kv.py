@@ -294,10 +294,12 @@ class ReplicationTest(PerfTest):
 
     def measure_latency(self):
         timings = []
+        _, password = self.cluster_spec.rest_credentials
         for master in self.cluster_spec.yield_masters():
             for bucket in self.test_config.buckets:
                 host = master.split(':')[0]
-                cb = Couchbase.connect(bucket=bucket, host=host, port=8091,
+                cb = Couchbase.connect(host=host, port=8091,
+                                       bucket=bucket, password=password,
                                        timeout=120.0)
                 for i in range(self.NUM_MEASUREMENTS):
                     item = str(i)

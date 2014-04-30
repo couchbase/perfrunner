@@ -1,8 +1,14 @@
-from perfrunner.tests import PerfTest
+from perfrunner.tests import PerfTest, TargetIterator
 from perfrunner.workloads.n1ql import INDEX_STATEMENTS
 
 
 class TuqTest(PerfTest):
+
+    def __init__(self, *args, **kwargs):
+        super(TuqTest, self).__init__(*args, **kwargs)
+        self.target_iterator = TargetIterator(self.cluster_spec,
+                                              self.test_config,
+                                              prefix='')
 
     def build_index(self):
         for master in self.cluster_spec.yield_masters():

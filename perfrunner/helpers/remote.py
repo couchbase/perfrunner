@@ -1,4 +1,5 @@
 import time
+import sys
 
 from decorator import decorator
 from fabric import state
@@ -30,6 +31,7 @@ def all_gateways(task, *args, **kargs):
 def all_gateloads(task, *args, **kargs):
     self = args[0]
     return execute(parallel(task), *args, hosts=self.gateloads, **kargs)
+
 
 class RemoteHelper(object):
 
@@ -263,6 +265,13 @@ class RemoteLinuxHelper(object):
         logger.info('Installing sync_gateway - {}'.format(filename))
         run('yes | numactl --interleave=all rpm -i /tmp/{}'.format(filename))
 
+    @all_gateways
+    def start_sync_gateway(self):
+        put("perfrunner/templates/gateway_config.json", "/root/gateway_config.json")
+        run('ulimit -n 65536; '
+            'nohup /opt/couchbase-sync-gateway/bin/sync_gateway '
+            '/root/gateway_config.json &>/root/gateway.log&', pty=False)
+
     @all_gateloads
     def kill_processes_gl(self):
         logger.info('Killing gateload')
@@ -277,6 +286,7 @@ class RemoteLinuxHelper(object):
     def install_package_gl(self):
         logger.info('Installing gateload - go get github.com/couchbaselabs/gateload')
         run('go get github.com/couchbaselabs/gateload')
+
 
 class RemoteWindowsHelper(RemoteLinuxHelper):
 

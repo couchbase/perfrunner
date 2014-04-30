@@ -117,6 +117,34 @@ class ClusterSpec(Config):
         return self._get_options_as_dict('parameters')
 
 
+class TestConfigGateway(Config):
+
+    @property
+    @safe
+    def gateway_compression(self):
+        return bool(self.config.get('gateway', 'compression'))
+
+    @property
+    @safe
+    def gateway_conn_db(self):
+        return int(self.config.get('gateway', 'conn_db'))
+
+    @property
+    @safe
+    def gateway_conn_in(self):
+        return int(self.config.get('gateway', 'conn_in'))
+
+    @property
+    @safe
+    def gateload_pushers(self):
+        return int(self.config.get('gateload', 'pushers'))
+
+    @property
+    @safe
+    def gateload_pullers(self):
+        return int(self.config.get('gateload', 'pullers'))
+
+
 class TestConfig(Config):
 
     @property

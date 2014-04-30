@@ -6,3 +6,14 @@ num_buckets = 1
 [bucket]
 replica_number = 0
 
+[gateway]
+compression = 1
+conn_db = 16
+conn_in = 0
+cpu = 8
+mem = 8000292
+
+[gateload]
+pushers=7000
+pullers=3000
+

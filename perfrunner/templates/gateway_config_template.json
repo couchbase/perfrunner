@@ -1,0 +1,19 @@
+{
+        "log": ["HTTP"],
+        "adminInterface": ":4985",
+        "maxIncomingConnections": null,
+        "maxCouchbaseConnections": null,
+        "MaxFileDescriptors": 90000,  
+        "SlowServerCallWarningThreshold": 500,  
+        "CompressResponses": null,
+        "databases": {
+                "db": {
+                        "server": "http://bucket-1:password@db-toBeReplaced:8091/",
+                        "bucket": "bucket-1",
+                        "users": {
+                                "GUEST": { "disabled": true }
+                        }
+                }
+        }
+}
+

@@ -15,11 +15,13 @@ ssh = root:couchbase
 [gateways]
 hosts =
     172.23.96.63
-    172.23.96.66
 
 [gateloads]
 hosts =
     172.23.100.30
     172.23.100.31
+
+
+
 
 

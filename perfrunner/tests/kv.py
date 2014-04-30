@@ -1,3 +1,7 @@
+from time import time
+
+import numpy as np
+from couchbase import Couchbase
 from logger import logger
 from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
 from tap import TAP
@@ -5,6 +9,7 @@ from upr import UprClient
 from upr.constants import CMD_STREAM_REQ, SUCCESS
 
 from perfrunner.helpers.cbmonitor import with_stats
+from perfrunner.helpers.misc import pretty_dict
 from perfrunner.tests import PerfTest
 from perfrunner.workloads.tcmalloc import WorkloadGen
 
@@ -281,3 +286,41 @@ class FragmentationLargeTest(FragmentationTest):
         WorkloadGen(self.test_config.load_settings.items,
                     self.master_node, self.test_config.buckets[0], password,
                     small=False).run()
+
+
+class ReplicationTest(PerfTest):
+
+    NUM_MEASUREMENTS = 10 ** 6
+
+    def measure_latency(self):
+        timings = []
+        for master in self.cluster_spec.yield_masters():
+            for bucket in self.test_config.buckets:
+                host = master.split(':')[0]
+                cb = Couchbase.connect(bucket=bucket, host=host, port=8091,
+                                       timeout=120.0)
+                for i in range(self.NUM_MEASUREMENTS):
+                    item = str(i)
+                    t0 = time()
+                    cb.set(item, item, replicate_to=1)
+                    latency = 1000 * (time() - t0)  # s -> ms
+                    timings.append(latency)
+
+        summary = {
+            'min': round(min(timings), 1),
+            'max': round(max(timings), 1),
+            'mean': round(np.mean(timings), 1),
+            '80th': round(np.percentile(timings, 80), 1),
+            '90th': round(np.percentile(timings, 90), 1),
+            '95th': round(np.percentile(timings, 95), 1),
+            '99th': round(np.percentile(timings, 99), 1),
+        }
+        logger.info(pretty_dict(summary))
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.compact_bucket()
+
+        self.measure_latency()

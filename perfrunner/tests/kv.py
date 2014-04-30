@@ -291,22 +291,24 @@ class FragmentationLargeTest(FragmentationTest):
 
 class ReplicationTest(PerfTest):
 
-    NUM_MEASUREMENTS = 10 ** 6
+    NUM_SAMPLES = 5000
 
     def measure_latency(self):
+        logger.info('Measuring replication latency')
         timings = []
         _, password = self.cluster_spec.rest_credentials
         for master in self.cluster_spec.yield_masters():
             for bucket in self.test_config.buckets:
                 host = master.split(':')[0]
                 cb = Couchbase.connect(host=host, port=8091,
-                                       bucket=bucket, password=password,
-                                       timeout=120.0)
-                for i in range(self.NUM_MEASUREMENTS):
+                                       bucket=bucket, password=password)
+                for i in range(self.NUM_SAMPLES):
                     item = str(i)
+                    cb.set(item, item)
                     t0 = time()
                     try:
-                        cb.set(item, item, replicate_to=1)
+                        cb.endure(item, persist_to=1, timeout=120,
+                                  interval=0.001)
                     except TimeoutError:
                         logger.warn('Operation timed-out')
                         continue
@@ -327,7 +329,5 @@ class ReplicationTest(PerfTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
-
-        self.compact_bucket()
 
         self.measure_latency()

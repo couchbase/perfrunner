@@ -1,11 +1,13 @@
+import json
 import time
-import sys
 
 from decorator import decorator
 from fabric import state
 from fabric.api import execute, get, put, run, parallel, settings
 from fabric.exceptions import CommandTimeout
 from logger import logger
+
+from perfrunner.helpers.misc import pretty_dict
 
 from perfrunner.helpers.misc import uhex
 
@@ -25,12 +27,12 @@ def single_host(task, *args, **kargs):
 @decorator
 def all_gateways(task, *args, **kargs):
     self = args[0]
-    return execute(parallel(task), *args, hosts=self.gateways, **kargs)
+    return execute(parallel(task), *args, hosts=self.cluster_spec.gateways, **kargs)
 
 @decorator
 def all_gateloads(task, *args, **kargs):
     self = args[0]
-    return execute(parallel(task), *args, hosts=self.gateloads, **kargs)
+    return execute(parallel(task), *args, hosts=self.cluster_spec.gateloads, **kargs)
 
 
 class RemoteHelper(object):
@@ -67,8 +69,6 @@ class RemoteLinuxHelper(object):
     def __init__(self, cluster_spec, os):
         self.os = os
         self.hosts = tuple(cluster_spec.yield_hostnames())
-        self.gateways = tuple(cluster_spec.gateways)
-        self.gateloads = tuple(cluster_spec.gateloads)
         self.cluster_spec = cluster_spec
 
     @staticmethod
@@ -201,7 +201,7 @@ class RemoteLinuxHelper(object):
         run('/etc/init.d/couchbase-server start')
 
     def detect_if(self):
-        for iface in ('eth0', 'em1'):
+        for iface in ('em1', 'eth5', 'eth0'):
             result = run('grep {} /proc/net/dev'.format(iface),
                          warn_only=True, quiet=True)
             if not result.return_code:
@@ -251,7 +251,7 @@ class RemoteLinuxHelper(object):
 
     @all_gateways
     def kill_processes_gw(self):
-        logger.info('Killing sync_gateway')
+        logger.info('Killing sync_gateway processes')
         run('killall sync_gateway', warn_only=True, quiet=True)
 
     @all_gateways
@@ -261,12 +261,13 @@ class RemoteLinuxHelper(object):
 
     @all_gateways
     def install_package_gw(self, pkg, url, filename, version=None):
-        self.wget(url, outdir='/tmp')
         logger.info('Installing sync_gateway - {}'.format(filename))
+        self.wget(url, outdir='/tmp')
         run('yes | numactl --interleave=all rpm -i /tmp/{}'.format(filename))
 
     @all_gateways
     def start_sync_gateway(self):
+        logger.info('Starting sync_gateway')
         put("perfrunner/templates/gateway_config.json", "/root/gateway_config.json")
         run('ulimit -n 65536; '
             'nohup /opt/couchbase-sync-gateway/bin/sync_gateway '
@@ -274,7 +275,7 @@ class RemoteLinuxHelper(object):
 
     @all_gateloads
     def kill_processes_gl(self):
-        logger.info('Killing gateload')
+        logger.info('Killing gateload processes')
         run('killall gateload', warn_only=True, quiet=True)
 
     @all_gateloads
@@ -286,6 +287,28 @@ class RemoteLinuxHelper(object):
     def install_package_gl(self):
         logger.info('Installing gateload - go get github.com/couchbaselabs/gateload')
         run('go get github.com/couchbaselabs/gateload')
+
+    @all_gateloads
+    def start_gateload(self, test_config):
+        logger.info('Starting gateload')
+        _if = self.detect_if()
+        local_ip = self.detect_ip(_if)
+        index = self.cluster_spec.gateloads.index(local_ip)
+
+        config_fname = 'perfrunner/templates/gateload_config_{}.json'.format(index)
+        with open('perfrunner/templates/gateload_config_template.json') as fh:
+            content_gl = json.load(fh)
+        with open(config_fname, 'w') as fh:
+            content_gl['Hostname'] = self.cluster_spec.gateways[index]
+            content_gl['UserOffset'] = (test_config.gateload_settings.pushers +
+                                        test_config.gateload_settings.pullers) * index
+            content_gl['NumPullers'] = test_config.gateload_settings.pullers
+            content_gl['NumPushers'] = test_config.gateload_settings.pushers
+            fh.write(pretty_dict(content_gl))
+        put(config_fname, '/root/gateload_config.json')
+        run('ulimit -n 65536; '
+            'nohup /opt/gocode/bin/gateload -workload /root/gateload_config.json '
+            '&>/root/gateload.log&', pty=False)
 
 
 class RemoteWindowsHelper(RemoteLinuxHelper):

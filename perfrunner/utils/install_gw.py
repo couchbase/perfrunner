@@ -1,5 +1,4 @@
 import json
-from collections import namedtuple
 from optparse import OptionParser
 
 import requests
@@ -8,17 +7,17 @@ from logger import logger
 from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import ClusterSpec
-from perfrunner.settings import TestConfigGateway
+from perfrunner.settings import TestConfig
 
 
 class GatewayInstaller(object):
 
     CBFS = 'http://cbfs-ext.hq.couchbase.com/builds/'
 
-    def __init__(self, cluster_spec, test_config_gateway, options):
+    def __init__(self, cluster_spec, test_config, options):
         self.remote_helper = RemoteHelper(cluster_spec)
         self.cluster_spec = cluster_spec
-        self.test_config = test_config_gateway
+        self.test_config = test_config
         self.pkg = self.remote_helper.detect_pkg()
         self.version = options.version
 
@@ -35,35 +34,50 @@ class GatewayInstaller(object):
                 return filename, url
         logger.interrupt('Target build not found - {}'.format(url))
 
-    def kill_processes(self):
+    def kill_processes_gw(self):
         self.remote_helper.kill_processes_gw()
 
-    def uninstall_package(self):
+    def kill_processes_gl(self):
+        self.remote_helper.kill_processes_gl()
+
+    def uninstall_package_gw(self):
         filename, url = self.find_package()
         self.remote_helper.uninstall_package_gw(self.pkg, filename)
 
-    def install_package(self):
+    def uninstall_package_gl(self):
+        self.remote_helper.uninstall_package_gl()
+
+    def install_package_gw(self):
         filename, url = self.find_package()
         self.remote_helper.install_package_gw(self.pkg, url, filename,
                                               self.version)
 
-    def start_sync_gateway(self):
+    def install_package_gl(self):
+        self.remote_helper.install_package_gl()
+
+    def start_sync_gateways(self):
         with open('perfrunner/templates/gateway_config_template.json') as fh:
             content = json.load(fh)
         with open('perfrunner/templates/gateway_config.json', 'w') as fh:
-            content['maxIncomingConnections'] = self.test_config.gateway_conn_in
-            content['maxCouchbaseConnections'] = self.test_config.gateway_conn_db
-            content['CompressResponses'] = self.test_config.gateway_compression
+            content['maxIncomingConnections'] = self.test_config.gateway_settings.conn_in
+            content['maxCouchbaseConnections'] = self.test_config.gateway_settings.conn_db
+            content['CompressResponses'] = self.test_config.gateway_settings.compression
             db_master = self.cluster_spec.yield_masters().next()
             content['databases']['db']['server'] = "http://bucket-1:password@{}/".format(db_master)
             fh.write(pretty_dict(content))
         self.remote_helper.start_sync_gateway()
 
     def install(self):
-        self.kill_processes()
-        #self.uninstall_package()
-        #self.install_package()
-        self.start_sync_gateway()
+        if self.cluster_spec.gateways.__len__() != self.cluster_spec.gateloads.__len__():
+            logger.interrupt('The cluster config file has different number of gateways({}) and gateloads({})'
+                             .format(self.cluster_spec.gateways.__len__(), self.cluster_spec.gateloads.__len__()))
+        self.kill_processes_gw()
+        self.uninstall_package_gw()
+        self.install_package_gw()
+        self.start_sync_gateways()
+        self.kill_processes_gl()
+        self.uninstall_package_gl()
+        self.install_package_gl()
 
 
 def main():
@@ -87,10 +101,10 @@ def main():
     cluster_spec = ClusterSpec()
     cluster_spec.parse(options.cluster_spec_fname)
 
-    test_config_gateway = TestConfigGateway()
-    test_config_gateway.parse(options.test_config_fname)
+    test_config = TestConfig()
+    test_config.parse(options.test_config_fname)
 
-    installer = GatewayInstaller(cluster_spec, test_config_gateway, options)
+    installer = GatewayInstaller(cluster_spec, test_config, options)
     installer.install()
 
 if __name__ == '__main__':

@@ -120,6 +120,27 @@ class ClusterSpec(Config):
 class TestConfigGateway(Config):
 
     @property
+    def test_case(self):
+        options = self._get_options_as_dict('test_case')
+        return TestCaseSettings(options)
+
+    @property
+    def cluster(self):
+        options = self._get_options_as_dict('cluster')
+        return ClusterSettings(options)
+
+    @property
+    def bucket(self):
+        options = self._get_options_as_dict('bucket')
+        return BucketSettings(options)
+
+    @property
+    def buckets(self):
+        return [
+            'bucket-{}'.format(i + 1) for i in range(self.cluster.num_buckets)
+        ]
+
+    @property
     @safe
     def gateway_compression(self):
         return bool(self.config.get('gateway', 'compression'))
@@ -143,6 +164,11 @@ class TestConfigGateway(Config):
     @safe
     def gateload_pullers(self):
         return int(self.config.get('gateload', 'pullers'))
+
+    @property
+    def stats_settings(self):
+        options = self._get_options_as_dict('stats')
+        return StatsSettings(options)
 
 
 class TestConfig(Config):
@@ -216,6 +242,15 @@ class TestConfig(Config):
     def internal_settings(self):
         return self._get_options_as_dict('internal')
 
+    @property
+    def gateway_settings(self):
+        options = self._get_options_as_dict('gateway')
+        return GatewaySettings(options)
+
+    @property
+    def gateload_settings(self):
+        options = self._get_options_as_dict('gateload')
+        return GateloadSettings(options)
 
 class TestCaseSettings(object):
 
@@ -459,3 +494,25 @@ class Experiment(object):
             self.name = os.path.splitext(os.path.basename(fname))[0]
             with open(fname) as fh:
                 self.template = json.load(fh)
+
+
+class GatewaySettings(PhaseSettings):
+
+    COMPRESSION = 1
+    CONN_IN = 0
+    CONN_DB = 16
+
+    def __init__(self, options):
+        self.conn_in = eval(options.get('conn_in', self.CONN_IN))
+        self.conn_db = eval(options.get('conn_db', self.CONN_DB))
+        self.compression = eval(options.get('compression', self.COMPRESSION))
+
+
+class GateloadSettings(PhaseSettings):
+
+    PULLER = 3500
+    PUSHER = 1500
+
+    def __init__(self, options):
+        self.pullers = eval(options.get('pullers', self.PULLER))
+        self.pushers = eval(options.get('pushers', self.PUSHER))

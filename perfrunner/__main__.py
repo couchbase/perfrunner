@@ -32,13 +32,12 @@ def main():
     cluster_spec = ClusterSpec()
     cluster_spec.parse(options.cluster_spec_fname)
     test_config = TestConfig()
+
     test_config.parse(options.test_config_fname, override)
     experiment = options.exp_fname and Experiment(options.exp_fname)
-
     test_module = test_config.test_case.test_module
     test_class = test_config.test_case.test_class
     exec('from {} import {}'.format(test_module, test_class))
-
     with eval(test_class)(cluster_spec, test_config, experiment) as test:
         test.run()
 

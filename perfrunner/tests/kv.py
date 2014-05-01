@@ -1,8 +1,8 @@
-from time import time
+from time import time, sleep
 
 import numpy as np
 from couchbase import Couchbase
-from couchbase.exceptions import TimeoutError
+from couchbase.user_constants import OBS_NOTFOUND
 from logger import logger
 from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
 from tap import TAP
@@ -297,6 +297,7 @@ class ReplicationTest(PerfTest):
         logger.info('Measuring replication latency')
         timings = []
         _, password = self.cluster_spec.rest_credentials
+        num_nodes = self.test_config.cluster.initial_nodes[0]
         for master in self.cluster_spec.yield_masters():
             for bucket in self.test_config.buckets:
                 host = master.split(':')[0]
@@ -306,13 +307,16 @@ class ReplicationTest(PerfTest):
                     item = str(i)
                     cb.set(item, item)
                     t0 = time()
-                    try:
-                        cb.endure(item, persist_to=1, timeout=120,
-                                  interval=0.001)
-                    except TimeoutError:
-                        logger.warn('Operation timed-out')
-                        continue
+                    not_found = True
+                    while not_found:
+                        not_found = False
+                        sleep(0.001)
+                        v = cb.observe(item).value
+                        for node in range(num_nodes):
+                            if v[node].flags == OBS_NOTFOUND:
+                                not_found = True
                     latency = 1000 * (time() - t0)  # s -> ms
+                    logger.info(latency)
                     timings.append(latency)
 
         summary = {
@@ -327,7 +331,4 @@ class ReplicationTest(PerfTest):
         logger.info(pretty_dict(summary))
 
     def run(self):
-        self.load()
-        self.wait_for_persistence()
-
         self.measure_latency()

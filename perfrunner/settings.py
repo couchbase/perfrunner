@@ -422,6 +422,7 @@ class IndexSettings(PhaseSettings):
     DISABLED_UPDATES = 0
     PARAMS = '{}'
     INDEXES = ''
+    N1QL = 0
 
     def __init__(self, options):
         self.views = eval(options.get('views', self.VIEWS))
@@ -430,6 +431,7 @@ class IndexSettings(PhaseSettings):
                                                 self.DISABLED_UPDATES))
         self.index_type = options.get('index_type')
         self.indexes = options.get('indexes', self.INDEXES).split(',')
+        self.n1ql = int(options.get('n1ql', self.N1QL))
 
 
 class AccessSettings(PhaseSettings):

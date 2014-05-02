@@ -13,9 +13,9 @@ celery = Celery('workers', backend='amqp', broker=BROKER_URL)
 
 @celery.task
 def task_run_workload(settings, target, timer=None, ddocs=None,
-                      index_type=None):
+                      index_type=None, n1ql=None):
     wg = WorkloadGen(settings, target, timer=timer, ddocs=ddocs,
-                     index_type=index_type)
+                     index_type=index_type, n1ql=n1ql)
     wg.run()
 
 
@@ -68,7 +68,7 @@ class WorkerManager(object):
                         '-Q {0} -c 1'.format(qname))
 
     def run_workload(self, settings, target_iterator, timer=None, ddocs=None,
-                     index_type=None):
+                     index_type=None, n1ql=None):
         self.workers = []
         for target in target_iterator:
             logger.info('Starting workload generator remotely')
@@ -78,7 +78,8 @@ class WorkerManager(object):
             worker = task_run_workload.apply_async(
                 args=(settings, target),
                 kwargs={
-                    'timer': timer, 'ddocs': ddocs, 'index_type': index_type
+                    'timer': timer,
+                    'ddocs': ddocs, 'index_type': index_type, 'n1ql': n1ql,
                 },
                 queue=queue.name, expires=timer,
             )

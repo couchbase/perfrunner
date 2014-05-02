@@ -132,10 +132,12 @@ class PerfTest(object):
         access_settings = self.test_config.access_settings
         log_phase('access phase', access_settings)
         index_type = self.test_config.index_settings.index_type
+        n1ql = self.test_config.index_settings.n1ql
         self.worker_manager.run_workload(access_settings, self.target_iterator,
                                          timer=access_settings.time,
                                          ddocs=self.ddocs,
-                                         index_type=index_type)
+                                         index_type=index_type,
+                                         n1ql=n1ql)
 
     def timer(self):
         access_settings = self.test_config.access_settings

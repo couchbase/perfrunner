@@ -1,0 +1,27 @@
+[test_case]
+module = perfrunner.tests.kv
+class = ReplicationTest
+title = Replication latency, ms, 2 nodes, 1 bucket x 1M x 1KB
+summary = Replication latency test, 2 nodes, 1 bucket x 1M x 1KB
+larger_is_better = true
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 2
+num_buckets = 1
+
+[load]
+items = 1000000
+size = 1024
+workers = 10
+
+[access]
+creates = 100
+reads = 0
+updates = 0
+deletes = 0
+throughput = 500
+items = 1000000
+size = 2048
+workers = 1
+time = 3600

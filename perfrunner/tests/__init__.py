@@ -65,14 +65,15 @@ class PerfTest(object):
         self.snapshots = []
         self.master_events = []
 
-        self.worker_manager = WorkerManager(cluster_spec, test_config)
+        if self.cluster_spec.gateways is None:
+            self.worker_manager = WorkerManager(cluster_spec, test_config)
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.remote.disable_wan()
-        self.worker_manager.terminate()
+        if self.cluster_spec.gateways is None:
+            self.worker_manager.terminate()
         if exc_type != exc.KeyboardInterrupt:
             self.debug()
         for master in self.cluster_spec.yield_masters():

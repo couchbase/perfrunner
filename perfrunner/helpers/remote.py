@@ -1,3 +1,4 @@
+import json
 import time
 
 from decorator import decorator
@@ -6,7 +7,7 @@ from fabric.api import execute, get, put, run, parallel, settings
 from fabric.exceptions import CommandTimeout
 from logger import logger
 
-from perfrunner.helpers.misc import uhex
+from perfrunner.helpers.misc import pretty_dict, uhex
 
 
 @decorator
@@ -20,6 +21,22 @@ def single_host(task, *args, **kargs):
     self = args[0]
     with settings(host_string=self.hosts[0]):
         return task(*args, **kargs)
+
+
+@decorator
+def all_gateways(task, *args, **kargs):
+    self = args[0]
+    return execute(
+        parallel(task), *args, hosts=self.cluster_spec.gateways, **kargs
+    )
+
+
+@decorator
+def all_gateloads(task, *args, **kargs):
+    self = args[0]
+    return execute(
+        parallel(task), *args, hosts=self.cluster_spec.gateloads, **kargs
+    )
 
 
 class RemoteHelper(object):
@@ -189,7 +206,7 @@ class RemoteLinuxHelper(object):
         run('/etc/init.d/couchbase-server start')
 
     def detect_if(self):
-        for iface in ('eth0', 'em1'):
+        for iface in ('em1', 'eth5', 'eth0'):
             result = run('grep {} /proc/net/dev'.format(iface),
                          warn_only=True, quiet=True)
             if not result.return_code:
@@ -244,6 +261,70 @@ class RemoteLinuxHelper(object):
             *self.cluster_spec.rest_credentials)
         return run('dtach -n /tmp/cbq-engine.sock '
                    'cbq-engine -couchbase={}'.format(url))
+
+    @all_gateways
+    def kill_processes_gw(self):
+        logger.info('Killing sync_gateway processes')
+        run('killall sync_gateway', warn_only=True, quiet=True)
+
+    @all_gateways
+    def uninstall_package_gw(self, pkg, filename):
+        logger.info('Uninstalling sync_gateway')
+        run('yes | yum remove couchbase-sync-gateway', quiet=True)
+
+    @all_gateways
+    def install_package_gw(self, pkg, url, filename, version=None):
+        logger.info('Installing sync_gateway - {}'.format(filename))
+        self.wget(url, outdir='/tmp')
+        run('yes | numactl --interleave=all rpm -i /tmp/{}'.format(filename))
+
+    @all_gateways
+    def start_sync_gateway(self):
+        logger.info('Starting sync_gateway')
+        put("templates/gateway_config.json", "/root/gateway_config.json")
+        run('ulimit -n 65536; '
+            'nohup /opt/couchbase-sync-gateway/bin/sync_gateway '
+            '/root/gateway_config.json &>/root/gateway.log&', pty=False)
+
+    @all_gateloads
+    def kill_processes_gl(self):
+        logger.info('Killing gateload processes')
+        run('killall gateload', warn_only=True, quiet=True)
+
+    @all_gateloads
+    def uninstall_package_gl(self):
+        logger.info('Uninstalling gateload')
+        run('rm -f /opt/gocode/bin/gateload', quiet=True)
+
+    @all_gateloads
+    def install_package_gl(self):
+        logger.info('Installing gateload')
+        run('go get github.com/couchbaselabs/gateload')
+
+    @all_gateloads
+    def start_gateload(self, test_config):
+        logger.info('Starting gateload')
+        _if = self.detect_if()
+        local_ip = self.detect_ip(_if)
+        index = self.cluster_spec.gateloads.index(local_ip)
+
+        with open('templates/gateload_config_template.json') as fh:
+            template = json.load(fh)
+
+        template['Hostname'] = self.cluster_spec.gateways[index]
+        template['UserOffset'] = (test_config.gateload_settings.pushers +
+                                  test_config.gateload_settings.pullers) * index
+        template['NumPullers'] = test_config.gateload_settings.pullers
+        template['NumPushers'] = test_config.gateload_settings.pushers
+
+        config_fname = 'templates/gateload_config_{}.json'.format(index)
+        with open(config_fname, 'w') as fh:
+            fh.write(pretty_dict(template))
+        put(config_fname, '/root/gateload_config.json')
+
+        run('ulimit -n 65536; nohup /opt/gocode/bin/gateload '
+            '-workload /root/gateload_config.json &>/root/gateload.log&',
+            pty=False)
 
 
 class RemoteWindowsHelper(RemoteLinuxHelper):

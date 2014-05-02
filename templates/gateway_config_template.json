@@ -1,0 +1,18 @@
+{
+        "log": ["HTTP"],
+        "adminInterface": ":4985",
+        "maxIncomingConnections": null,
+        "maxCouchbaseConnections": null,
+        "MaxFileDescriptors": 90000,  
+        "SlowServerCallWarningThreshold": 500,  
+        "CompressResponses": null,
+        "databases": {
+                "db": {
+                        "server": null,
+                        "bucket": "bucket-1",
+                        "users": {
+                                "GUEST": { "disabled": true }
+                        }
+                }
+        }
+}

@@ -1,0 +1,22 @@
+[test_case]
+module = perfrunner.tests.gateload_tests
+class = SyncGatewayGateloadTest
+title = Gateload test for sync gateway performance
+summary = 2 sync gateways in parallet, each with 10K users.  compression = 1  conn_db = 16  conn_in = 0
+
+[cluster]
+mem_quota = 26624
+initial_nodes = 3
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+
+[gateway]
+compression = 1
+conn_db = 16
+conn_in = 0
+
+[gateload]
+pushers=7000
+pullers=3000

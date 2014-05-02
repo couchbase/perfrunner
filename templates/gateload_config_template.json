@@ -21,7 +21,7 @@
       }
     ],
     "RampUpIntervalMs": 900000,
-    "RunTimeMs": 288000000,
+    "RunTimeMs": 1800000,
     "SleepTimeMs": 10000,
     "NumPullers": null,
     "NumPushers": null,

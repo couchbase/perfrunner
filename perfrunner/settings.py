@@ -201,6 +201,7 @@ class TestConfig(Config):
 
 class TestCaseSettings(object):
 
+    USE_WORKERS = 1
     LEVEL = 'Basic'  # depricated, alt: Advanced
 
     def __init__(self, options):
@@ -210,6 +211,7 @@ class TestCaseSettings(object):
         self.metric_title = options.get('title')
         self.larger_is_better = options.get('larger_is_better')
         self.level = options.get('level', self.LEVEL)
+        self.use_workers = int(options.get('use_workers', self.USE_WORKERS))
 
 
 class ClusterSettings(object):

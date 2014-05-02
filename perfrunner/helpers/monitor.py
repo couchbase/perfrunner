@@ -15,7 +15,7 @@ class Monitor(RestHelper):
         'ep_flusher_todo',
     )
     TAP_REPLICATION_METRICS = (
-        'vb_replica_queue_size',
+        'ep_diskqueue_items',  # 'vb_replica_queue_size',
         'ep_tap_replica_queue_itemondisk',
         'ep_tap_rebalance_queue_backfillremaining',
         'ep_tap_replica_qlen',

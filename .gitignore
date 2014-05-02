@@ -38,3 +38,6 @@ nosetests.xml
 *.idea
 
 env
+
+# Templates
+templates/gateway_config.json

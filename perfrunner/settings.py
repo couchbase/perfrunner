@@ -82,6 +82,16 @@ class ClusterSpec(Config):
 
     @property
     @safe
+    def gateways(self):
+        return self.config.get('gateways', 'hosts').split()
+
+    @property
+    @safe
+    def gateloads(self):
+        return self.config.get('gateloads', 'hosts').split()
+
+    @property
+    @safe
     def client_credentials(self):
         return self.config.get('clients', 'credentials').split(':')
 
@@ -177,6 +187,16 @@ class TestConfig(Config):
     @property
     def internal_settings(self):
         return self._get_options_as_dict('internal')
+
+    @property
+    def gateway_settings(self):
+        options = self._get_options_as_dict('gateway')
+        return GatewaySettings(options)
+
+    @property
+    def gateload_settings(self):
+        options = self._get_options_as_dict('gateload')
+        return GateloadSettings(options)
 
 
 class TestCaseSettings(object):
@@ -425,3 +445,25 @@ class Experiment(object):
             self.name = os.path.splitext(os.path.basename(fname))[0]
             with open(fname) as fh:
                 self.template = json.load(fh)
+
+
+class GatewaySettings(PhaseSettings):
+
+    COMPRESSION = 1
+    CONN_IN = 0
+    CONN_DB = 16
+
+    def __init__(self, options):
+        self.conn_in = int(options.get('conn_in', self.CONN_IN))
+        self.conn_db = int(options.get('conn_db', self.CONN_DB))
+        self.compression = int(options.get('compression', self.COMPRESSION))
+
+
+class GateloadSettings(PhaseSettings):
+
+    PULLER = 3500
+    PUSHER = 1500
+
+    def __init__(self, options):
+        self.pullers = int(options.get('pullers', self.PULLER))
+        self.pushers = int(options.get('pushers', self.PUSHER))

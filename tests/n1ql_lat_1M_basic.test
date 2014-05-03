@@ -23,7 +23,7 @@ workers = 20
 doc_gen = new
 
 [index]
-indexes = name_and_street_by_city,name_and_email_by_county,achievements_by_realm
+index_type = basic
 n1ql = 1
 
 [access]

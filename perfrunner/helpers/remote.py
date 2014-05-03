@@ -259,8 +259,8 @@ class RemoteLinuxHelper(object):
         logger.info('Starting cbq-engine')
         url = 'http://{}:{}@127.0.0.1:8091'.format(
             *self.cluster_spec.rest_credentials)
-        return run('dtach -n /tmp/cbq-engine.sock '
-                   'cbq-engine -couchbase={}'.format(url))
+        return run('nohup cbq-engine -couchbase={} -dev=true -log=HTTP '
+                   '&> /tmp/cbq.log &'.format(url), pty=False)
 
     @all_gateways
     def kill_processes_gw(self):

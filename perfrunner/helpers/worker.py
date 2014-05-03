@@ -61,11 +61,11 @@ class WorkerManager(object):
                 logger.info('Starting remote Celery worker')
 
                 qname = '{}-{}'.format(master.split(':')[0], bucket)
-                temp_dir = '{}-{}'.format(self.temp_dir, qname)
-                with cd('{}/perfrunner'.format(temp_dir)):
-                    run('dtach -n /tmp/celery_{0}.sock '
-                        'env/bin/celery worker -A perfrunner.helpers.worker '
-                        '-Q {0} -c 1'.format(qname))
+                temp_dir = '{}-{}/perfrunner'.format(self.temp_dir, qname)
+                run('cd {0}; nohup env/bin/celery worker '
+                    '-A perfrunner.helpers.worker -Q {1} -c 1 '
+                    '&>/tmp/worker_{1}.log &'.format(temp_dir, qname),
+                    pty=False)
 
     def run_workload(self, settings, target_iterator, timer=None, ddocs=None,
                      index_type=None, n1ql=None):

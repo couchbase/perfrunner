@@ -14,5 +14,4 @@ requests==2.1.0
 seriesly
 spring
 tap
-twisted==12.0.0
 upr

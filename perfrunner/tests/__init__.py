@@ -150,3 +150,9 @@ class PerfTest(object):
             for fname in glob.glob('{}/*.zip'.format(hostname)):
                 shutil.move(fname, '{}.zip'.format(hostname))
         self.reporter.save_web_logs()
+
+        if self.test_config.cluster.run_cbq:
+            self.remote.collect_cbq_logs()
+            for hostname in self.cluster_spec.yield_hostnames():
+                for fname in glob.glob('{}/cbq.log'.format(hostname)):
+                    shutil.move(fname, '{}-cbq.log'.format(hostname))

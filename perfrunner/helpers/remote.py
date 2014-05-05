@@ -261,6 +261,11 @@ class RemoteLinuxHelper(object):
                    '-couchbase=http://127.0.0.1:8091 -dev=true -log=HTTP '
                    '&> /tmp/cbq.log &', pty=False)
 
+    @all_hosts
+    def collect_cbq_logs(self):
+        logger.info('Getting cbq-engine logs')
+        get('/tmp/cbq.log')
+
     @all_gateways
     def kill_processes_gw(self):
         logger.info('Killing sync_gateway processes')

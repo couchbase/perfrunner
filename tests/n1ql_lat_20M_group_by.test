@@ -1,8 +1,8 @@
 [test_case]
 module = perfrunner.tests.tuq
 class = TuqTest
-title = 1 node, 1M docs, 100 sets/sec, basic queries
-summary = Write-only query test, 1 node, 1 bucket x 1M x 1KB, 100 sets/sec, 100 qps
+title = 1 node, 1M docs, 100 sets/sec, group queries
+summary = Write-only query test, 1 node, 1 bucket x 20M x 1KB, 100 sets/sec, 100 qps
 larger_is_better = false
 
 [cluster]
@@ -19,13 +19,13 @@ password =
 db_percentage = 10
 
 [load]
-items = 1000000
+items = 20000000
 size = 1024
 workers = 20
 doc_gen = new
 
 [index]
-index_type = basic
+index_type = group_by
 
 [access]
 creates = 0
@@ -34,9 +34,9 @@ updates = 100
 deletes = 0
 throughput = 100
 query_throughput = 100
-items = 1000000
+items = 20000000
 size = 1024
 doc_gen = new
 workers = 1
 query_workers = 1
-time = 600
+time = 3600

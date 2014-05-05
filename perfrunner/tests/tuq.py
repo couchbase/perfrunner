@@ -1,3 +1,4 @@
+from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import PerfTest, TargetIterator
 from perfrunner.workloads.n1ql import INDEX_STATEMENTS
 
@@ -23,6 +24,7 @@ class TuqTest(PerfTest):
                     host = master.split(':')[0]
                     self.rest.exec_n1ql_stmnt(host, statement.format(bucket))
 
+    @with_stats
     def access(self):
         super(TuqTest, self).timer()
 

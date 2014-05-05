@@ -13,12 +13,14 @@ class Monitor(RestHelper):
     DISK_QUEUE_METRICS = (
         'ep_queue_size',
         'ep_flusher_todo',
+        'ep_diskqueue_items',
+        'vb_active_queue_size',
+        'vb_replica_queue_size',
     )
     TAP_REPLICATION_METRICS = (
-        'ep_diskqueue_items',  # 'vb_replica_queue_size',
+        'ep_tap_replica_qlen',
         'ep_tap_replica_queue_itemondisk',
         'ep_tap_rebalance_queue_backfillremaining',
-        'ep_tap_replica_qlen',
     )
 
     def monitor_rebalance(self, host_port):

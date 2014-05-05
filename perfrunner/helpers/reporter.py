@@ -15,13 +15,15 @@ class BtrcReporter(object):
 
     def __init__(self, test):
         self.test = test
+        self.rest_username, self.rest_password = \
+            test.cluster_spec.rest_credentials
 
     def reset_utilzation_stats(self):
         for target in self.test.target_iterator:
             logger.info('Resetting utilization stats from {}/{}'.format(
                         target.node, target.bucket))
             cb = CouchbaseClient(target.node, target.bucket,
-                                 target.username, target.password)
+                                 self.rest_username, self.rest_password)
             cb.reset_utilization_stats()
 
     def save_utilzation_stats(self):
@@ -29,7 +31,7 @@ class BtrcReporter(object):
             logger.info('Saving utilization stats from {}/{}'.format(
                         target.node, target.bucket))
             cb = CouchbaseClient(target.node, target.bucket,
-                                 target.username, target.password)
+                                 self.rest_username, self.rest_password)
             reporter = StatsReporter(cb)
             reporter.report_stats('util_stats')
 
@@ -38,7 +40,7 @@ class BtrcReporter(object):
             logger.info('Saving B-tree stats from {}/{}'.format(
                         target.node, target.bucket))
             cb = CouchbaseClient(target.node, target.bucket,
-                                 target.username, target.password)
+                                 self.rest_username, self.rest_password)
             reporter = StatsReporter(cb)
             reporter.report_stats('btree_stats')
 

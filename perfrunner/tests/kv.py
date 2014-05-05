@@ -104,7 +104,7 @@ class DrainTest(KVTest):
 class FlusherTest(KVTest):
 
     def mc_iterator(self):
-        _, password = self.cluster_spec.rest_credentials
+        password = self.test_config.bucket.password
         for hostname in self.cluster_spec.yield_hostnames():
             for bucket in self.test_config.buckets:
                 mc = MemcachedClient(host=hostname, port=11210)
@@ -192,7 +192,7 @@ class TapTest(PerfTest):
 
     def consume(self):
         logger.info('Reading data via TAP')
-        _, password = self.cluster_spec.rest_credentials
+        password = self.test_config.bucket.password
         for master in self.cluster_spec.yield_masters():
             host = master.split(':')[0]
             for bucket in self.test_config.buckets:
@@ -214,7 +214,7 @@ class TapTest(PerfTest):
 class UprTest(TapTest):
 
     def consume(self):
-        _, password = self.cluster_spec.rest_credentials
+        password = self.test_config.bucket.password
         for master in self.cluster_spec.yield_masters():
             host = master.split(':')[0]
             for bucket in self.test_config.buckets:
@@ -254,14 +254,13 @@ class FragmentationTest(PerfTest):
 
     @with_stats
     def load_and_append(self):
-        _, password = self.cluster_spec.rest_credentials
+        password = self.test_config.bucket.password
         WorkloadGen(self.test_config.load_settings.items,
                     self.master_node, self.test_config.buckets[0],
                     password).run()
 
     def calc_fragmentation_ratio(self):
         ratios = []
-        _, password = self.cluster_spec.rest_credentials
         for target in self.target_iterator:
             host = target.node.split(':')[0]
             stats = self.memcached.get_stats(host, target.bucket,
@@ -283,7 +282,7 @@ class FragmentationLargeTest(FragmentationTest):
 
     @with_stats
     def load_and_append(self):
-        _, password = self.cluster_spec.rest_credentials
+        password = self.test_config.bucket.password
         WorkloadGen(self.test_config.load_settings.items,
                     self.master_node, self.test_config.buckets[0], password,
                     small=False).run()
@@ -296,7 +295,7 @@ class ReplicationTest(PerfTest):
     def measure_latency(self):
         logger.info('Measuring replication latency')
         timings = []
-        _, password = self.cluster_spec.rest_credentials
+        password = self.test_config.bucket.password
         num_nodes = self.test_config.cluster.initial_nodes[0]
         for master in self.cluster_spec.yield_masters():
             for bucket in self.test_config.buckets:

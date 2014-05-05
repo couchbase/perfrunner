@@ -252,6 +252,7 @@ class StatsSettings(object):
 
 class BucketSettings(object):
 
+    PASSWORD = 'password'
     MAX_NUM_SHARDS = 0
     MAX_THREADS = 0
     REPLICA_NUMBER = 1
@@ -259,6 +260,7 @@ class BucketSettings(object):
     EVICTION_POLICY = 'valueOnly'  # alt: fullEviction
 
     def __init__(self, options):
+        self.password = options.get('password', self.PASSWORD)
         self.max_num_shards = int(
             options.get('max_num_shards', self.MAX_NUM_SHARDS)
         )
@@ -294,8 +296,7 @@ class CompactionSettings(object):
 
 class TargetSettings(object):
 
-    def __init__(self, host_port, bucket, username, password, prefix):
-        self.username = username
+    def __init__(self, host_port, bucket, password, prefix):
         self.password = password
         self.node = host_port
         self.bucket = bucket

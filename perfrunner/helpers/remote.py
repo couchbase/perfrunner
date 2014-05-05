@@ -257,10 +257,9 @@ class RemoteLinuxHelper(object):
     @all_hosts
     def start_cbq(self):
         logger.info('Starting cbq-engine')
-        url = 'http://{}:{}@127.0.0.1:8091'.format(
-            *self.cluster_spec.rest_credentials)
-        return run('nohup cbq-engine -couchbase={} -dev=true -log=HTTP '
-                   '&> /tmp/cbq.log &'.format(url), pty=False)
+        return run('nohup cbq-engine '
+                   '-couchbase=http://127.0.0.1:8091 -dev=true -log=HTTP '
+                   '&> /tmp/cbq.log &', pty=False)
 
     @all_gateways
     def kill_processes_gw(self):

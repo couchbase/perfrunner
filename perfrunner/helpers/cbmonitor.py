@@ -76,6 +76,7 @@ class CbAgent(object):
             test.cluster_spec.ssh_credentials
         self.settings.rest_username, self.settings.rest_password = \
             test.cluster_spec.rest_credentials
+        self.settings.bucket_password = test.test_config.bucket.password
 
         self.collectors = []
         self.processes = []

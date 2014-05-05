@@ -13,6 +13,7 @@ run_cbq = 1
 
 [bucket]
 replica_number = 0
+password =
 
 [compaction]
 db_percentage = 10

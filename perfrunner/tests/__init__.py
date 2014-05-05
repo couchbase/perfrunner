@@ -26,13 +26,13 @@ class TargetIterator(object):
         self.prefix = prefix
 
     def __iter__(self):
-        username, password = self.cluster_spec.rest_credentials
+        password = self.test_config.bucket.password
         prefix = self.prefix
         for master in self.cluster_spec.yield_masters():
             for bucket in self.test_config.buckets:
                 if self.prefix is None:
                     prefix = target_hash(master.split(':')[0])
-                yield TargetSettings(master, bucket, username, password, prefix)
+                yield TargetSettings(master, bucket, password, prefix)
 
 
 class PerfTest(object):
@@ -43,10 +43,9 @@ class PerfTest(object):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
 
-        self.target_iterator = TargetIterator(self.cluster_spec,
-                                              self.test_config)
+        self.target_iterator = TargetIterator(cluster_spec, test_config)
 
-        self.memcached = MemcachedHelper(cluster_spec)
+        self.memcached = MemcachedHelper(test_config)
         self.monitor = Monitor(cluster_spec)
         self.rest = RestHelper(cluster_spec)
         self.remote = RemoteHelper(cluster_spec)

@@ -128,7 +128,8 @@ class RestHelper(object):
                 return is_running, progress
 
     def create_bucket(self, host_port, name, ram_quota, replica_number,
-                      replica_index, eviction_policy, threads_number):
+                      replica_index, eviction_policy, threads_number,
+                      password):
         logger.info('Adding new bucket: {}'.format(name))
 
         api = 'http://{}/pools/default/buckets'.format(host_port)
@@ -140,7 +141,7 @@ class RestHelper(object):
             'replicaNumber': replica_number,
             'replicaIndex': replica_index,
             'authType': 'sasl',
-            'saslPassword': self.rest_password,
+            'saslPassword': password,
         }
         if threads_number:
             data.update({'threadsNumber': threads_number})

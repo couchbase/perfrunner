@@ -9,7 +9,6 @@ INDEX_STATEMENTS = {
         'CREATE INDEX by_achievement ON {}(achievements)',
         'CREATE INDEX by_category ON {}(category)',
         'CREATE INDEX by_year ON {}(year)',
-        'CREATE INDEX by_coins ON {}(coins.f)',
     ),
     'multi_emits': (
         'CREATE INDEX by_city ON {}(city.f.f)',
@@ -25,8 +24,6 @@ INDEX_STATEMENTS = {
         'CREATE INDEX by_state ON {}(state.f)',
         'CREATE INDEX by_year ON {}(year)',
         'CREATE INDEX by_gmtime ON {}(gmtime)',
-        'CREATE INDEX by_year ON {}(year)',
         'CREATE INDEX by_full_state ON {}(full_state.f)',
-        'CREATE INDEX by_year ON {}(year)',
     ),
 }

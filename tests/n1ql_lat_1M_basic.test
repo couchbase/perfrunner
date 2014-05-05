@@ -9,6 +9,7 @@ larger_is_better = false
 mem_quota = 204800
 initial_nodes = 1
 num_buckets = 1
+run_cbq = 1
 
 [bucket]
 replica_number = 0

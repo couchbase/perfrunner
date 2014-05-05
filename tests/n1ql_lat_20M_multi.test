@@ -25,7 +25,7 @@ workers = 20
 doc_gen = new
 
 [index]
-index_type = multi
+index_type = multi_emits
 
 [access]
 creates = 0

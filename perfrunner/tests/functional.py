@@ -21,7 +21,7 @@ class FunctionalTest(unittest.TestCase):
 
         self.target_iterator = TargetIterator(self.cluster_spec,
                                               self.test_config)
-        self.memcached = MemcachedHelper(self.cluster_spec)
+        self.memcached = MemcachedHelper(self.test_config)
         self.remote = RemoteHelper(self.cluster_spec)
 
         super(FunctionalTest, self).__init__(*args, **kwargs)

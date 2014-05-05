@@ -21,7 +21,7 @@ class ClusterManager(object):
         self.rest = RestHelper(cluster_spec)
         self.remote = RemoteHelper(cluster_spec)
         self.monitor = Monitor(cluster_spec)
-        self.memcached = MemcachedHelper(cluster_spec)
+        self.memcached = MemcachedHelper(test_config)
 
         self.clusters = cluster_spec.yield_clusters()
         self.servers = cluster_spec.yield_servers

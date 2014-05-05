@@ -4,6 +4,8 @@ from perfrunner.workloads.n1ql import INDEX_STATEMENTS
 
 class TuqTest(PerfTest):
 
+    COLLECTORS = {'n1ql_latency': True}
+
     def __init__(self, *args, **kwargs):
         super(TuqTest, self).__init__(*args, **kwargs)
         self.n1ql = True

@@ -7,6 +7,7 @@ from multiprocessing import Process
 import requests
 from cbagent.collectors import (NSServer, PS, IO, Net, ActiveTasks,
                                 SpringLatency, SpringQueryLatency,
+                                SpringN1QLQueryLatency,
                                 ObserveLatency, XdcrLag)
 from cbagent.metadata_client import MetadataClient
 from decorator import decorator
@@ -81,7 +82,8 @@ class CbAgent(object):
         self.snapshots = []
 
     def prepare_collectors(self, test, latency=False, query_latency=False,
-                           observe_latency=False, xdcr_lag=False):
+                           n1ql_latency=False, observe_latency=False,
+                           xdcr_lag=False):
         clusters = self.clusters.keys()
 
         self.prepare_ns_server(clusters)
@@ -94,6 +96,8 @@ class CbAgent(object):
             self.prepare_latency(clusters, test)
         if query_latency:
             self.prepare_query_latency(clusters, test)
+        if n1ql_latency:
+            self.prepare_n1ql_latency(clusters, test)
         if observe_latency:
             self.prepare_observe_latency(clusters)
         if xdcr_lag:
@@ -178,6 +182,19 @@ class CbAgent(object):
                 SpringQueryLatency(settings, test.workload, prefix=prefix,
                                    ddocs=test.ddocs, params=params,
                                    index_type=index_type)
+            )
+
+    def prepare_n1ql_latency(self, clusters, test):
+        index_type = test.test_config.index_settings.index_type
+        prefix = test.target_iterator.prefix
+        for cluster in clusters:
+            settings = copy(self.settings)
+            settings.interval = self.lat_interval
+            settings.cluster = cluster
+            settings.master_node = self.clusters[cluster]
+            self.collectors.append(
+                SpringN1QLQueryLatency(settings, test.workload, prefix=prefix,
+                                       index_type=index_type)
             )
 
     def prepare_active_tasks(self, clusters):

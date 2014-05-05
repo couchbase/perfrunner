@@ -25,7 +25,6 @@ doc_gen = new
 
 [index]
 index_type = basic
-n1ql = 1
 
 [access]
 creates = 0

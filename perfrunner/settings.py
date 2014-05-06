@@ -459,7 +459,8 @@ class GatewaySettings(PhaseSettings):
     def __init__(self, options):
         self.conn_in = int(options.get('conn_in', self.CONN_IN))
         self.conn_db = int(options.get('conn_db', self.CONN_DB))
-        self.compression = int(options.get('compression', self.COMPRESSION))
+        self.compression = bool(int(options.get('compression',
+                                                self.COMPRESSION)))
 
 
 class GateloadSettings(PhaseSettings):

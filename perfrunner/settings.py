@@ -14,6 +14,8 @@ SF_STORAGE = {'host': 'showfast.sc.couchbase.com', 'password': 'password'}
 
 CBMONITOR_HOST = 'cbmonitor.sc.couchbase.com'
 
+SERIESLY_HOST = '172.23.106.228'
+
 
 @decorator
 def safe(method, *args, **kargs):
@@ -464,7 +466,13 @@ class GateloadSettings(PhaseSettings):
 
     PULLER = 3500
     PUSHER = 1500
+    P95_AVG_CRITERIA = 3
+    P99_AVG_CRITERIA = 5
+    RUN_TIME = 3600  # In seconds.  2 hrs
 
     def __init__(self, options):
         self.pullers = int(options.get('pullers', self.PULLER))
         self.pushers = int(options.get('pushers', self.PUSHER))
+        self.p95_avg_criteria = int(options.get('p95_avg_criteria', self.P95_AVG_CRITERIA))
+        self.p99_avg_criteria = int(options.get('p99_avg_criteria', self.P99_AVG_CRITERIA))
+        self.run_time = int(options.get('run_time', self.RUN_TIME))

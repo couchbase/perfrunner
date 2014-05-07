@@ -4,7 +4,7 @@
         "maxIncomingConnections": null,
         "maxCouchbaseConnections": null,
         "MaxFileDescriptors": 90000,  
-        "SlowServerCallWarningThreshold": 500,  
+        "SlowServerCallWarningThreshold": 500,
         "CompressResponses": null,
         "databases": {
                 "db": {

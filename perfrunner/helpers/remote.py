@@ -8,6 +8,7 @@ from fabric.exceptions import CommandTimeout
 from logger import logger
 
 from perfrunner.helpers.misc import pretty_dict, uhex
+from perfrunner.settings import SERIESLY_HOST
 
 
 @decorator
@@ -20,6 +21,12 @@ def all_hosts(task, *args, **kargs):
 def single_host(task, *args, **kargs):
     self = args[0]
     with settings(host_string=self.hosts[0]):
+        return task(*args, **kargs)
+
+
+@decorator
+def seriesly_host(task, *args, **kargs):
+    with settings(host_string=SERIESLY_HOST):
         return task(*args, **kargs)
 
 
@@ -266,48 +273,89 @@ class RemoteLinuxHelper(object):
         logger.info('Getting cbq-engine logs')
         get('/tmp/cbq.log')
 
-    @all_gateways
-    def kill_processes_gw(self):
-        logger.info('Killing sync_gateway processes')
-        run('killall sync_gateway', warn_only=True, quiet=True)
+    @seriesly_host
+    def kill_processes_seriesly(self):
+        logger.info('kill_processes_seriesly')
+        run('killall -9 sample', quiet=True)
+
+    @seriesly_host
+    def cleanup_seriesly(self):
+        logger.info('cleanup_seriesly')
+        put('scripts/sgw_test_config.sh', '/root/sgw_test_config.sh')
+        put('scripts/sgw_clean_seriesly.sh', '/root/sgw_clean_seriesly.sh')
+        run('chmod 755 /root/sgw_clean_seriesly.sh; /root/sgw_clean_seriesly.sh', warn_only=True)
+        run('killall -9 sample; killall -9 seriesly', quiet=True)
+        run('rm -f *.txt *.log *.gz *.json', warn_only=True)
+
+    @seriesly_host
+    def start_seriesly(self):
+        logger.info('start_seriesly')
+        put('scripts/sgw_test_config.sh', '/root/sgw_test_config.sh')
+        put('scripts/sgw_start_seriesly.sh', '/root/sgw_start_seriesly.sh')
+        run('chmod 777 /root/sgw_start_seriesly.sh; /root/sgw_start_seriesly.sh', warn_only=True)
 
     @all_gateways
-    def uninstall_package_gw(self, pkg, filename):
-        logger.info('Uninstalling sync_gateway')
-        run('yes | yum remove couchbase-sync-gateway', quiet=True)
-
-    @all_gateways
-    def install_package_gw(self, pkg, url, filename, version=None):
-        logger.info('Installing sync_gateway - {}'.format(filename))
+    def install_package_gateway(self, url, filename):
+        logger.info('install_package_gateway - {}'.format(filename))
         self.wget(url, outdir='/tmp')
         run('yes | numactl --interleave=all rpm -i /tmp/{}'.format(filename))
 
     @all_gateways
-    def start_sync_gateway(self):
-        logger.info('Starting sync_gateway')
-        put("templates/gateway_config.json", "/root/gateway_config.json")
+    def uninstall_package_gateway(self):
+        logger.info('uninstall_package_gateway')
+        run('yes | yum remove couchbase-sync-gateway', quiet=True)
+
+    @all_gateways
+    def kill_processes_gateway(self):
+        logger.info('kill_processes_gateway')
+        run('killall -9 sync_gateway', quiet=True)
+
+    @all_gateways
+    def clean_gateway(self):
+        logger.info('clean_gateway')
+        run('killall -9 sync_gateway; rm -f *.txt *.log *.gz *.json', quiet=True)
+
+    @all_gateways
+    def start_gateway(self):
+        logger.info('start_gateway')
+        put('templates/gateway_config.json', '/root/gateway_config.json')
         run('ulimit -n 65536; '
             'nohup /opt/couchbase-sync-gateway/bin/sync_gateway '
             '/root/gateway_config.json &>/root/gateway.log&', pty=False)
 
-    @all_gateloads
-    def kill_processes_gl(self):
-        logger.info('Killing gateload processes')
-        run('killall gateload', warn_only=True, quiet=True)
+    @all_gateways
+    def collect_info_gateway(self):
+        logger.info('collect_info_gateway')
+        _if = self.detect_if()
+        local_ip = self.detect_ip(_if)
+        index = self.cluster_spec.gateways.index(local_ip) + 1
+        run('rm -f gateway.log.gz; gzip gateway.log', warn_only=True)
+        time.sleep(3)
+        get('gateway.log.gz', 'gateway.log-{}.gz'.format(index))
 
     @all_gateloads
-    def uninstall_package_gl(self):
-        logger.info('Uninstalling gateload')
+    def uninstall_package_gateload(self):
+        logger.info('uninstall_package_gateload')
         run('rm -f /opt/gocode/bin/gateload', quiet=True)
 
     @all_gateloads
-    def install_package_gl(self):
-        logger.info('Installing gateload')
+    def install_package_gateload(self):
+        logger.info('install_package_gateload')
         run('go get github.com/couchbaselabs/gateload')
 
     @all_gateloads
+    def kill_processes_gateload(self):
+        logger.info('kill_processes_gateload')
+        run('killall -9 gateload', quiet=True)
+
+    @all_gateloads
+    def clean_gateload(self):
+        logger.info('clean_gateload')
+        run('killall -9 gateload; rm -f *.txt *.log *.gz *.json', quiet=True)
+
+    @all_gateloads
     def start_gateload(self, test_config):
-        logger.info('Starting gateload')
+        logger.info('start_gateload')
         _if = self.detect_if()
         local_ip = self.detect_ip(_if)
         index = self.cluster_spec.gateloads.index(local_ip)
@@ -320,6 +368,7 @@ class RemoteLinuxHelper(object):
                                   test_config.gateload_settings.pullers) * index
         template['NumPullers'] = test_config.gateload_settings.pullers
         template['NumPushers'] = test_config.gateload_settings.pushers
+        template['RunTimeMs'] = test_config.gateload_settings.run_time * 1000
 
         config_fname = 'templates/gateload_config_{}.json'.format(index)
         with open(config_fname, 'w') as fh:
@@ -329,6 +378,15 @@ class RemoteLinuxHelper(object):
         run('ulimit -n 65536; nohup /opt/gocode/bin/gateload '
             '-workload /root/gateload_config.json &>/root/gateload.log&',
             pty=False)
+
+    @all_gateloads
+    def collect_info_gateload(self):
+        logger.info('collect_info_gateload')
+        _if = self.detect_if()
+        local_ip = self.detect_ip(_if)
+        index = self.cluster_spec.gateloads.index(local_ip)
+        run('rm -f gateload.log.gz; gzip gateload.log', warn_only=True)
+        get('gateload.log.gz', 'gateload.log-{}.gz'.format(index))
 
 
 class RemoteWindowsHelper(RemoteLinuxHelper):

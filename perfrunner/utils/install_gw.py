@@ -34,26 +34,24 @@ class GatewayInstaller(object):
                 return filename, url
         logger.interrupt('Target build not found - {}'.format(url))
 
-    def kill_processes_gw(self):
-        self.remote_helper.kill_processes_gw()
+    def kill_processes_gateway(self):
+        self.remote_helper.kill_processes_gateway()
 
-    def kill_processes_gl(self):
-        self.remote_helper.kill_processes_gl()
+    def kill_processes_gateload(self):
+        self.remote_helper.kill_processes_gateload()
 
-    def uninstall_package_gw(self):
+    def uninstall_package_gateway(self):
+        self.remote_helper.uninstall_package_gateway()
+
+    def uninstall_package_gateload(self):
+        self.remote_helper.uninstall_package_gateload()
+
+    def install_package_gateway(self):
         filename, url = self.find_package()
-        self.remote_helper.uninstall_package_gw(self.pkg, filename)
+        self.remote_helper.install_package_gateway(url, filename)
 
-    def uninstall_package_gl(self):
-        self.remote_helper.uninstall_package_gl()
-
-    def install_package_gw(self):
-        filename, url = self.find_package()
-        self.remote_helper.install_package_gw(self.pkg, url, filename,
-                                              self.version)
-
-    def install_package_gl(self):
-        self.remote_helper.install_package_gl()
+    def install_package_gateload(self):
+        self.remote_helper.install_package_gateload()
 
     def start_sync_gateways(self):
         with open('templates/gateway_config_template.json') as fh:
@@ -63,11 +61,11 @@ class GatewayInstaller(object):
         template['databases']['db']['server'] = "http://bucket-1:password@{}/".format(db_master)
         template['maxIncomingConnections'] = self.test_config.gateway_settings.conn_in
         template['maxCouchbaseConnections'] = self.test_config.gateway_settings.conn_db
-        template['CompressResponses'] = self.test_config.gateway_settings.compression
+        template['CompressResponses'] = bool(self.test_config.gateway_settings.compression)
 
         with open('templates/gateway_config.json', 'w') as fh:
             fh.write(pretty_dict(template))
-        self.remote_helper.start_sync_gateway()
+        self.remote_helper.start_gateway()
 
     def install(self):
         num_gateways = len(self.cluster_spec.gateways)
@@ -77,13 +75,12 @@ class GatewayInstaller(object):
                 'The cluster config file has different number of gateways({}) and gateloads({})'
                 .format(num_gateways, num_gateloads)
             )
-        self.kill_processes_gw()
-        self.uninstall_package_gw()
-        self.install_package_gw()
-        self.start_sync_gateways()
-        self.kill_processes_gl()
-        self.uninstall_package_gl()
-        self.install_package_gl()
+        self.kill_processes_gateway()
+        self.uninstall_package_gateway()
+        self.install_package_gateway()
+        self.kill_processes_gateload()
+        self.uninstall_package_gateload()
+        self.install_package_gateload()
 
 
 def main():

@@ -6,7 +6,7 @@ summary = Indexing test, 1 node, 1 bucket x 5M x 2KB, non-DGM, 4 x 4 views
 larger_is_better = false
 
 [cluster]
-mem_quota = 204800
+mem_quota = 40960
 initial_nodes = 1
 num_buckets = 1
 

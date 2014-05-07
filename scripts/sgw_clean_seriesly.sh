@@ -10,7 +10,7 @@ fi
 index=0
 for ip in ${gateways_ip}; do
     index=`expr $index + 1`
-	echo "--- gateway_${index} $ip"
+    echo "--- gateway_${index} $ip"
     curl -v -XDELETE http://localhost:3133/gateway_${index}
     curl -v -XPUT http://localhost:3133/gateway_${index}
 done
@@ -18,7 +18,7 @@ done
 index=0
 for ip in ${gateloads_ip}; do
     index=`expr $index + 1`
-	echo "--- gateload_${index} $ip"
+    echo "--- gateload_${index} $ip"
     curl -v -XDELETE http://localhost:3133/gateload_${index}
     curl -v -XPUT http://localhost:3133/gateload_${index}
 done

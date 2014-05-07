@@ -51,7 +51,7 @@ class SyncGatewayGateloadTest(PerfTest):
 
     def run(self):
         self.start()
-        sleep_time = self.test_config.gateload_settings.run_time
+        sleep_time = self.test_config.gateload_settings.rampup_interval + self.test_config.gateload_settings.run_time
         logger.info('Sleep {} seconds waiting for test to finish'.format(sleep_time))
         time.sleep(sleep_time)
         self.collect_kpi()

@@ -19,7 +19,7 @@ conn_db = 16
 conn_in = 0
 
 [gateload]
-run_time = 900
+run_time = 7200
 pushers = 3500
 pullers = 1500
 p95_avg_criteria = 3

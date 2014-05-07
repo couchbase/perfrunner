@@ -470,7 +470,7 @@ class GateloadSettings(PhaseSettings):
     P95_AVG_CRITERIA = 3
     P99_AVG_CRITERIA = 5
     RUN_TIME = 3600  # In seconds.  1 hr
-    RAMPUP_INTERVAL = 900000
+    RAMPUP_INTERVAL = 900  # In seconds, 15 minutes
 
     def __init__(self, options):
         self.pullers = int(options.get('pullers', self.PULLER))

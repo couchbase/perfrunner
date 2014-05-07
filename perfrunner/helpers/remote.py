@@ -305,6 +305,7 @@ class RemoteLinuxHelper(object):
     def kill_processes_gateway(self):
         logger.info('Killing Sync Gateway')
         run('killall -9 sync_gateway', quiet=True)
+        run('killall -9 sgw_test_info.sh', quiet=True)
 
     @all_gateways
     def clean_gateway(self):
@@ -318,6 +319,10 @@ class RemoteLinuxHelper(object):
         run('ulimit -n 65536; '
             'nohup /opt/couchbase-sync-gateway/bin/sync_gateway '
             '/root/gateway_config.json &>/root/gateway.log&', pty=False)
+        put('scripts/sgw_test_config.sh', '/root/sgw_test_config.sh')
+        put('scripts/sgw_test_info.sh', '/root/sgw_test_info.sh')
+        run('chmod 777 /root/sgw_*.sh')
+        run('nohup /root/sgw_test_info.sh &')
 
     @all_gateways
     def collect_info_gateway(self):

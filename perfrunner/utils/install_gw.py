@@ -77,6 +77,7 @@ class GatewayInstaller(object):
             fh.write('#!/bin/sh\n')
             fh.write('gateways_ip="{}"\n'.format(' '.join(self.cluster_spec.gateways)))
             fh.write('gateloads_ip="{}"\n'.format(' '.join(self.cluster_spec.gateloads)))
+            fh.write('dbs_ip="{}"\n'.format(' '.join(self.cluster_spec.yield_hostnames())))
 
     def install(self):
         num_gateways = len(self.cluster_spec.gateways)
@@ -92,10 +93,9 @@ class GatewayInstaller(object):
         self.kill_processes_gateload()
         self.uninstall_package_gateload()
         self.install_package_gateload()
-        self.start_sync_gateways()
-
-        self.create_bash_config()
         self.remote_helper.cleanup_seriesly()
+        self.create_bash_config()
+        self.start_sync_gateways()
 
 
 def main():

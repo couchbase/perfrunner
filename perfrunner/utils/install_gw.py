@@ -93,8 +93,8 @@ class GatewayInstaller(object):
         self.kill_processes_gateload()
         self.uninstall_package_gateload()
         self.install_package_gateload()
-        self.remote_helper.cleanup_seriesly()
         self.create_bash_config()
+        self.remote_helper.cleanup_seriesly()
         self.start_sync_gateways()
 
 

@@ -59,9 +59,11 @@ class GatewayInstaller(object):
 
         db_master = self.cluster_spec.yield_masters().next()
         template['databases']['db']['server'] = "http://bucket-1:password@{}/".format(db_master)
-        template['maxIncomingConnections'] = self.test_config.gateway_settings.conn_in
-        template['maxCouchbaseConnections'] = self.test_config.gateway_settings.conn_db
-        template['CompressResponses'] = bool(self.test_config.gateway_settings.compression)
+        template.update({
+            'maxIncomingConnections': self.test_config.gateway_settings.conn_in,
+            'maxCouchbaseConnections': self.test_config.gateway_settings.conn_db,
+            'CompressResponses': self.test_config.gateway_settings.compression
+        })
 
         with open('templates/gateway_config.json', 'w') as fh:
             fh.write(pretty_dict(template))

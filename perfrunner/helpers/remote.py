@@ -363,12 +363,14 @@ class RemoteLinuxHelper(object):
         with open('templates/gateload_config_template.json') as fh:
             template = json.load(fh)
 
-        template['Hostname'] = self.cluster_spec.gateways[index]
-        template['UserOffset'] = (test_config.gateload_settings.pushers +
-                                  test_config.gateload_settings.pullers) * index
-        template['NumPullers'] = test_config.gateload_settings.pullers
-        template['NumPushers'] = test_config.gateload_settings.pushers
-        template['RunTimeMs'] = test_config.gateload_settings.run_time * 1000
+        template.update({
+            'Hostname': self.cluster_spec.gateways[index],
+            'UserOffset': (test_config.gateload_settings.pushers +
+                           test_config.gateload_settings.pullers) * index,
+            'NumPullers': test_config.gateload_settings.pullers,
+            'NumPushers': test_config.gateload_settings.pushers,
+            'RunTimeMs': test_config.gateload_settings.run_time * 1000,
+        })
 
         config_fname = 'templates/gateload_config_{}.json'.format(index)
         with open(config_fname, 'w') as fh:

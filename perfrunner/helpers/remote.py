@@ -274,25 +274,21 @@ class RemoteLinuxHelper(object):
         get('/tmp/cbq.log')
 
     @seriesly_host
-    def kill_processes_seriesly(self):
-        logger.info('kill_processes_seriesly')
-        run('killall -9 sample', quiet=True)
-
-    @seriesly_host
     def cleanup_seriesly(self):
-        logger.info('cleanup_seriesly')
+        logger.info('Cleaning up seriesly')
         put('scripts/sgw_test_config.sh', '/root/sgw_test_config.sh')
         put('scripts/sgw_clean_seriesly.sh', '/root/sgw_clean_seriesly.sh')
-        run('chmod 755 /root/sgw_clean_seriesly.sh; /root/sgw_clean_seriesly.sh', warn_only=True)
-        run('killall -9 sample; killall -9 seriesly', quiet=True)
+        run('chmod 755 /root/sgw_clean_seriesly.sh',)
+        run('/root/sgw_clean_seriesly.sh', warn_only=True)
+        run('killall -9 sample seriesly', quiet=True)
         run('rm -f *.txt *.log *.gz *.json', warn_only=True)
 
     @seriesly_host
     def start_seriesly(self):
-        logger.info('start_seriesly')
-        put('scripts/sgw_test_config.sh', '/root/sgw_test_config.sh')
+        logger.info('Starting seriesly')
         put('scripts/sgw_start_seriesly.sh', '/root/sgw_start_seriesly.sh')
-        run('chmod 777 /root/sgw_start_seriesly.sh; /root/sgw_start_seriesly.sh', warn_only=True)
+        run('chmod 777 /root/sgw_start_seriesly.sh')
+        run('/root/sgw_start_seriesly.sh', warn_only=True)
 
     @all_gateways
     def install_package_gateway(self, url, filename):

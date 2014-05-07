@@ -22,13 +22,6 @@ class SyncGatewayGateloadTest(PerfTest):
         for db in db_list:
             seriesly.drop_db(db)
 
-    def create_bash_config(self):
-        logger.info('Creating bash configuration')
-        with open('scripts/sgw_test_config.sh', 'w') as fh:
-            fh.write('#!/bin/sh\n')
-            fh.write('gateways_ip="{}"\n'.format(' '.join(self.cluster_spec.gateways)))
-            fh.write('gateloads_ip="{}"\n'.format(' '.join(self.cluster_spec.gateloads)))
-
     def start(self):
         self.remote.start_seriesly()
         time.sleep(10)
@@ -57,7 +50,6 @@ class SyncGatewayGateloadTest(PerfTest):
                                 .format(p_value, data))
 
     def run(self):
-        self.create_bash_config()
         self.start()
         sleep_time = self.test_config.gateload_settings.run_time
         logger.info('Sleep {} seconds waiting for test to finish'.format(sleep_time))

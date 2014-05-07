@@ -71,6 +71,13 @@ class GatewayInstaller(object):
             fh.write(pretty_dict(template))
         self.remote_helper.start_gateway()
 
+    def create_bash_config(self):
+        logger.info('Creating bash configuration')
+        with open('scripts/sgw_test_config.sh', 'w') as fh:
+            fh.write('#!/bin/sh\n')
+            fh.write('gateways_ip="{}"\n'.format(' '.join(self.cluster_spec.gateways)))
+            fh.write('gateloads_ip="{}"\n'.format(' '.join(self.cluster_spec.gateloads)))
+
     def install(self):
         num_gateways = len(self.cluster_spec.gateways)
         num_gateloads = len(self.cluster_spec.gateloads)
@@ -87,6 +94,7 @@ class GatewayInstaller(object):
         self.install_package_gateload()
         self.start_sync_gateways()
 
+        self.create_bash_config()
         self.remote_helper.cleanup_seriesly()
 
 

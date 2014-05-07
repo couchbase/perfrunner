@@ -298,7 +298,7 @@ class RemoteLinuxHelper(object):
     def install_package_gateway(self, url, filename):
         logger.info('install_package_gateway - {}'.format(filename))
         self.wget(url, outdir='/tmp')
-        run('yes | numactl --interleave=all rpm -i /tmp/{}'.format(filename))
+        run('yes | rpm -i /tmp/{}'.format(filename))
 
     @all_gateways
     def uninstall_package_gateway(self):

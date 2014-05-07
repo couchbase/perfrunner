@@ -292,24 +292,25 @@ class RemoteLinuxHelper(object):
 
     @all_gateways
     def install_package_gateway(self, url, filename):
-        logger.info('install_package_gateway - {}'.format(filename))
+        logger.info('Installing Sync Gateway package - {}'.format(filename))
         self.wget(url, outdir='/tmp')
         run('yes | rpm -i /tmp/{}'.format(filename))
 
     @all_gateways
     def uninstall_package_gateway(self):
-        logger.info('uninstall_package_gateway')
-        run('yes | yum remove couchbase-sync-gateway', quiet=True)
+        logger.info('Uninstalling Sync Gateway package')
+        run('yes | yum remove couchbase-sync-gateway')
 
     @all_gateways
     def kill_processes_gateway(self):
-        logger.info('kill_processes_gateway')
+        logger.info('Killing Sync Gateway')
         run('killall -9 sync_gateway', quiet=True)
 
     @all_gateways
     def clean_gateway(self):
-        logger.info('clean_gateway')
-        run('killall -9 sync_gateway; rm -f *.txt *.log *.gz *.json', quiet=True)
+        logger.info('Cleaning up Gateway')
+        run('killall -9 sync_gateway', quiet=True)
+        run('rm -f *.txt *.log *.gz *.json', quiet=True)
 
     @all_gateways
     def start_gateway(self):
@@ -331,17 +332,17 @@ class RemoteLinuxHelper(object):
 
     @all_gateloads
     def uninstall_package_gateload(self):
-        logger.info('uninstall_package_gateload')
+        logger.info('Removing Gateload binaries')
         run('rm -f /opt/gocode/bin/gateload', quiet=True)
 
     @all_gateloads
     def install_package_gateload(self):
-        logger.info('install_package_gateload')
-        run('go get github.com/couchbaselabs/gateload')
+        logger.info('Install Gateload')
+        run('go get -u github.com/couchbaselabs/gateload')
 
     @all_gateloads
     def kill_processes_gateload(self):
-        logger.info('kill_processes_gateload')
+        logger.info('Killing Gateload processes')
         run('killall -9 gateload', quiet=True)
 
     @all_gateloads

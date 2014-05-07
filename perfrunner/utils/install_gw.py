@@ -83,6 +83,7 @@ class GatewayInstaller(object):
         self.kill_processes_gateload()
         self.uninstall_package_gateload()
         self.install_package_gateload()
+        self.start_sync_gateways()
 
 
 def main():

@@ -469,7 +469,7 @@ class GateloadSettings(PhaseSettings):
     PUSHER = 1500
     P95_AVG_CRITERIA = 3
     P99_AVG_CRITERIA = 5
-    RUN_TIME = 3600  # In seconds.  2 hrs
+    RUN_TIME = 3600  # In seconds.  1 hr
 
     def __init__(self, options):
         self.pullers = int(options.get('pullers', self.PULLER))

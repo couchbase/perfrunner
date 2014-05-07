@@ -23,26 +23,20 @@ class SyncGatewayGateloadTest(PerfTest):
             seriesly.drop_db(db)
 
     def create_bash_config(self):
-        logger.info('gateload_test.py - create_bash_config')
+        logger.info('Creating bash configuration')
         with open('scripts/sgw_test_config.sh', 'w') as fh:
             fh.write('#!/bin/sh\n')
             fh.write('gateways_ip="{}"\n'.format(' '.join(self.cluster_spec.gateways)))
             fh.write('gateloads_ip="{}"\n'.format(' '.join(self.cluster_spec.gateloads)))
 
-    def clean(self):
-        logger.info('clean')
-        self.remote.cleanup_seriesly()
-        self.remote.clean_gateway()
-        self.remote.clean_gateload()
-
     def start(self):
-        logger.info('start')
         self.remote.start_seriesly()
-        self.remote.start_gateway()
         time.sleep(10)
         self.remote.start_gateload(self.test_config)
 
-    def collect_kpi(self, seriesly):
+    def collect_kpi(self):
+        seriesly = Seriesly(host=SERIESLY_HOST)
+
         logger.info('collect_kpi')
         p_values = ['p99', 'p95']
         for i, _ in enumerate(self.cluster_spec.gateloads):
@@ -55,8 +49,7 @@ class SyncGatewayGateloadTest(PerfTest):
                 data = seriesly[target].query(params)
                 value = data.values()[0][0]
                 if value is not None:
-                    value_int = int(value)
-                    value_sec = float(value_int) / 10 ** 9
+                    value_sec = float(value) / 10 ** 9
                     logger.info('\tPushToSubscriberInteractive/{} average: {}'
                                 .format(p_value, round(value_sec, 2)))
                 else:
@@ -64,11 +57,9 @@ class SyncGatewayGateloadTest(PerfTest):
                                 .format(p_value, data))
 
     def run(self):
-        seriesly = Seriesly(host=SERIESLY_HOST)
-        self.clean()
         self.create_bash_config()
         self.start()
-        sleep_time = int(self.test_config.gateload_settings.run_time)
-        logger.info('sleep {} seconds waiting for test to finish'.format(sleep_time))
+        sleep_time = self.test_config.gateload_settings.run_time
+        logger.info('Sleep {} seconds waiting for test to finish'.format(sleep_time))
         time.sleep(sleep_time)
-        self.collect_kpi(seriesly)
+        self.collect_kpi()

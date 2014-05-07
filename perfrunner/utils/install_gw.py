@@ -42,9 +42,11 @@ class GatewayInstaller(object):
 
     def uninstall_package_gateway(self):
         self.remote_helper.uninstall_package_gateway()
+        self.remote_helper.clean_gateway()
 
     def uninstall_package_gateload(self):
         self.remote_helper.uninstall_package_gateload()
+        self.remote_helper.clean_gateload()
 
     def install_package_gateway(self):
         filename, url = self.find_package()
@@ -84,6 +86,8 @@ class GatewayInstaller(object):
         self.uninstall_package_gateload()
         self.install_package_gateload()
         self.start_sync_gateways()
+
+        self.remote_helper.cleanup_seriesly()
 
 
 def main():

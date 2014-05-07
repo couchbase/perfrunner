@@ -309,12 +309,11 @@ class RemoteLinuxHelper(object):
     @all_gateways
     def clean_gateway(self):
         logger.info('Cleaning up Gateway')
-        run('killall -9 sync_gateway', quiet=True)
         run('rm -f *.txt *.log *.gz *.json', quiet=True)
 
     @all_gateways
     def start_gateway(self):
-        logger.info('start_gateway')
+        logger.info('Starting Sync Gateway instances')
         put('templates/gateway_config.json', '/root/gateway_config.json')
         run('ulimit -n 65536; '
             'nohup /opt/couchbase-sync-gateway/bin/sync_gateway '
@@ -347,12 +346,12 @@ class RemoteLinuxHelper(object):
 
     @all_gateloads
     def clean_gateload(self):
-        logger.info('clean_gateload')
-        run('killall -9 gateload; rm -f *.txt *.log *.gz *.json', quiet=True)
+        logger.info('Cleaning up Gateload')
+        run('rm -f *.txt *.log *.gz *.json', quiet=True)
 
     @all_gateloads
     def start_gateload(self, test_config):
-        logger.info('start_gateload')
+        logger.info('Starting Gateload')
         _if = self.detect_if()
         local_ip = self.detect_ip(_if)
         index = self.cluster_spec.gateloads.index(local_ip)

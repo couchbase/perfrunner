@@ -10,7 +10,7 @@ from upr import UprClient
 from upr.constants import CMD_STREAM_REQ, SUCCESS
 
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.helpers.misc import pretty_dict
+from perfrunner.helpers.misc import pretty_dict, uhex
 from perfrunner.tests import PerfTest
 from perfrunner.workloads.tcmalloc import WorkloadGen
 
@@ -295,25 +295,21 @@ class ReplicationTest(PerfTest):
     def measure_latency(self):
         logger.info('Measuring replication latency')
         timings = []
+        found = lambda cb: [
+            v for v in cb.observe(item).value if v.flags != OBS_NOTFOUND
+        ]
         password = self.test_config.bucket.password
-        num_nodes = self.test_config.cluster.initial_nodes[0]
         for master in self.cluster_spec.yield_masters():
             for bucket in self.test_config.buckets:
                 host = master.split(':')[0]
                 cb = Couchbase.connect(host=host, port=8091,
                                        bucket=bucket, password=password)
-                for i in range(self.NUM_SAMPLES):
-                    item = str(i)
+                for _ in range(self.NUM_SAMPLES):
+                    item = uhex()
                     cb.set(item, item)
                     t0 = time()
-                    not_found = True
-                    while not_found:
-                        not_found = False
+                    while len(found(cb)) != 2:
                         sleep(0.001)
-                        v = cb.observe(item).value
-                        for node in range(num_nodes):
-                            if v[node].flags == OBS_NOTFOUND:
-                                not_found = True
                     latency = 1000 * (time() - t0)  # s -> ms
                     logger.info(latency)
                     timings.append(latency)

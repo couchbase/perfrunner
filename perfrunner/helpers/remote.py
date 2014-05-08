@@ -325,12 +325,12 @@ class RemoteLinuxHelper(object):
 
     @all_gateways
     def collect_info_gateway(self):
-        logger.info('collect_info_gateway')
+        logger.info('Collecting Sync Gateway diagnostic information')
         _if = self.detect_if()
         local_ip = self.detect_ip(_if)
         index = self.cluster_spec.gateways.index(local_ip) + 1
-        run('rm -f gateway.log.gz; gzip gateway.log', warn_only=True)
-        time.sleep(3)
+        run('rm -f gateway.log.gz')
+        run('gzip gateway.log')
         get('gateway.log.gz', 'gateway.log-{}.gz'.format(index))
 
     @all_gateloads
@@ -369,11 +369,12 @@ class RemoteLinuxHelper(object):
 
     @all_gateloads
     def collect_info_gateload(self):
-        logger.info('collect_info_gateload')
+        logger.info('Collecting Gateload diagnostic information')
         _if = self.detect_if()
         local_ip = self.detect_ip(_if)
         index = self.cluster_spec.gateloads.index(local_ip)
-        run('rm -f gateload.log.gz; gzip gateload.log', warn_only=True)
+        run('rm -f gateload.log.gz')
+        run('gzip gateload.log')
         get('gateload.log.gz', 'gateload.log-{}.gz'.format(index))
 
 

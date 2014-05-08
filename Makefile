@@ -9,9 +9,6 @@ clean: ; \
 flake8: ; \
     ./env/bin/flake8 --ignore=E501 perfrunner
 
-jshint: ; \
-    jshint webapp/cbmonitor/static/js/*.js
-
 nose: ; \
     ./env/bin/nosetests -v unittests.py
 

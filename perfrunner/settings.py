@@ -14,7 +14,7 @@ SF_STORAGE = {'host': 'showfast.sc.couchbase.com', 'password': 'password'}
 
 CBMONITOR_HOST = 'cbmonitor.sc.couchbase.com'
 
-SERIESLY_HOST = '172.23.106.228'
+SGW_SERIESLY_HOST = '172.23.106.228'
 
 
 @decorator

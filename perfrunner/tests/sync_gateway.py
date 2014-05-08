@@ -1,15 +1,18 @@
 import json
 import time
 
-from seriesly import Seriesly
 from logger import logger
 
+from perfrunner.helpers.metrics import SgwMetricHelper
 from perfrunner.helpers.misc import pretty_dict
 from perfrunner.tests import PerfTest
-from perfrunner.settings import SERIESLY_HOST
 
 
 class SyncGatewayGateloadTest(PerfTest):
+
+    def __init__(self, *args, **kwargs):
+        super(SyncGatewayGateloadTest, self).__init__(*args, **kwargs)
+        self.metric_helper = SgwMetricHelper(self)
 
     def seriesly_create_db(self, seriesly):
         logger.info('gateload_test.py - seriesly_create_db')
@@ -49,26 +52,13 @@ class SyncGatewayGateloadTest(PerfTest):
                 fh.write(pretty_dict(template))
 
     def collect_kpi(self):
-        seriesly = Seriesly(host=SERIESLY_HOST)
-
-        logger.info('collect_kpi')
-        p_values = ['p99', 'p95']
-        for i, _ in enumerate(self.cluster_spec.gateloads):
-            target = 'gateload_{}'.format(i + 1)
-            logger.info('Test results for {}:'.format(target))
-            for p_value in p_values:
-                params = {'ptr': '/gateload/ops/PushToSubscriberInteractive/{}'.format(p_value),
-                          'reducer': 'avg',
-                          'group': 1000000000000}
-                data = seriesly[target].query(params)
-                value = data.values()[0][0]
-                if value is not None:
-                    value_sec = float(value) / 10 ** 9
-                    logger.info('\tPushToSubscriberInteractive/{} average: {}'
-                                .format(p_value, round(value_sec, 2)))
-                else:
-                    logger.info('\tPushToSubscriberInteractive/{} average does not have expected format: {}'
-                                .format(p_value, data))
+        logger.info('Collecting KPI')
+        for idx, gateload in enumerate(self.cluster_spec.gateloads, start=1):
+            logger.info('Test results for {} ({}):'.format(gateload, idx))
+            for p in (95, 99):
+                latency = self.metric_helper.calc_push_latency(p=p, idx=idx)
+                logger.info('\tPushToSubscriberInteractive/p{} average: {}'
+                            .format(p, latency))
 
     def run(self):
         self.start()

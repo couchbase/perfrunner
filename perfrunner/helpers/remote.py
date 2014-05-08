@@ -7,7 +7,7 @@ from fabric.exceptions import CommandTimeout
 from logger import logger
 
 from perfrunner.helpers.misc import uhex
-from perfrunner.settings import SERIESLY_HOST
+from perfrunner.settings import SGW_SERIESLY_HOST
 
 
 @decorator
@@ -25,7 +25,7 @@ def single_host(task, *args, **kargs):
 
 @decorator
 def seriesly_host(task, *args, **kargs):
-    with settings(host_string=SERIESLY_HOST):
+    with settings(host_string=SGW_SERIESLY_HOST):
         return task(*args, **kargs)
 
 

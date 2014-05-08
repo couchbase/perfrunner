@@ -1,7 +1,7 @@
 import numpy as np
 from seriesly import Seriesly
 
-from perfrunner.settings import CBMONITOR_HOST
+from perfrunner.settings import CBMONITOR_HOST, SGW_SERIESLY_HOST
 
 
 class MetricHelper(object):
@@ -325,3 +325,21 @@ class MetricHelper(object):
         rebalance_time = reporter.finish('Failover')
 
         return rebalance_time, metric, metric_info
+
+
+class SgwMetricHelper(MetricHelper):
+
+    def __init__(self, *args, **kwargs):
+        super(SgwMetricHelper, self).__init__(*args, **kwargs)
+        self.seriesly = Seriesly(SGW_SERIESLY_HOST)
+
+    def calc_push_latency(self, p=95, idx=1):
+        query_params = self._get_query_params(
+            'avg_gateload/ops/PushToSubscriberInteractive/p{}'.format(p)
+        )
+        db = 'gateload_{}'.format(idx)
+        data = self.seriesly[db].query(query_params)
+        latency = float(data.values()[0][0])
+        latency /= 10 ** 9  # ns -> s
+
+        return round(latency, 2)

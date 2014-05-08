@@ -18,6 +18,6 @@ ssh = root:couchbase
 [parameters]
 Platform = VM
 OS = CentOS 5.10
-CPU = Intel Xeon E5-2620
+CPU = Intel Xeon E5-2620 (12 cores)
 Memory = 64 GB
 Disk = Samsung SSD

@@ -18,7 +18,6 @@ class GatewayInstaller(object):
         self.remote_helper = RemoteHelper(cluster_spec)
         self.cluster_spec = cluster_spec
         self.test_config = test_config
-        self.pkg = self.remote_helper.detect_pkg()
         self.version = options.version
 
     def find_package(self):

@@ -80,13 +80,6 @@ class GatewayInstaller(object):
             fh.write('dbs_ip="{}"\n'.format(' '.join(self.cluster_spec.yield_hostnames())))
 
     def install(self):
-        num_gateways = len(self.cluster_spec.gateways)
-        num_gateloads = len(self.cluster_spec.gateloads)
-        if num_gateways != num_gateloads:
-            logger.interrupt(
-                'The cluster config file has different number of gateways({}) and gateloads({})'
-                .format(num_gateways, num_gateloads)
-            )
         self.kill_processes_gateway()
         self.uninstall_package_gateway()
         self.install_package_gateway()
@@ -119,6 +112,7 @@ def main():
 
     cluster_spec = ClusterSpec()
     cluster_spec.parse(options.cluster_spec_fname)
+    cluster_spec.verify()
 
     test_config = TestConfig()
     test_config.parse(options.test_config_fname)

@@ -55,6 +55,14 @@ class Config(object):
 
 class ClusterSpec(Config):
 
+    def verify(self):
+        if self.gateways and self.gateloads:
+            if len(self.gateways) != len(self.gateloads):
+                logger.interrupt(
+                    'Mismatch in number of gateways ({}) and gateloads ({})'
+                    .format(len(self.gateways), len(self.gateloads))
+                )
+
     @safe
     def yield_clusters(self):
         for cluster_name, servers in self.config.items('clusters'):

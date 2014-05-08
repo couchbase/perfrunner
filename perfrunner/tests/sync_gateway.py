@@ -1,8 +1,10 @@
+import json
 import time
 
 from seriesly import Seriesly
 from logger import logger
 
+from perfrunner.helpers.misc import pretty_dict
 from perfrunner.tests import PerfTest
 from perfrunner.settings import SERIESLY_HOST
 
@@ -25,7 +27,26 @@ class SyncGatewayGateloadTest(PerfTest):
     def start(self):
         self.remote.start_seriesly()
         time.sleep(10)
-        self.remote.start_gateload(self.test_config)
+        self.generate_gateload_configs()
+        self.remote.start_gateload()
+
+    def generate_gateload_configs(self):
+        with open('templates/gateload_config_template.json') as fh:
+            template = json.load(fh)
+
+        for idx, _ in enumerate(self.cluster_spec.gateloads):
+            template.update({
+                'Hostname': self.cluster_spec.gateways[idx],
+                'UserOffset': (self.test_config.gateload_settings.pushers +
+                               self.test_config.gateload_settings.pullers) * idx,
+                'NumPullers': self.test_config.gateload_settings.pullers,
+                'NumPushers': self.test_config.gateload_settings.pushers,
+                'RunTimeMs': self.test_config.gateload_settings.run_time * 1000,
+            })
+
+            config_fname = 'templates/gateload_config_{}.json'.format(idx)
+            with open(config_fname, 'w') as fh:
+                fh.write(pretty_dict(template))
 
     def collect_kpi(self):
         seriesly = Seriesly(host=SERIESLY_HOST)

@@ -1,4 +1,3 @@
-import json
 import time
 
 from decorator import decorator
@@ -7,7 +6,7 @@ from fabric.api import execute, get, put, run, parallel, settings
 from fabric.exceptions import CommandTimeout
 from logger import logger
 
-from perfrunner.helpers.misc import pretty_dict, uhex
+from perfrunner.helpers.misc import uhex
 from perfrunner.settings import SERIESLY_HOST
 
 
@@ -341,7 +340,7 @@ class RemoteLinuxHelper(object):
 
     @all_gateloads
     def install_package_gateload(self):
-        logger.info('Install Gateload')
+        logger.info('Installing Gateload')
         run('go get -u github.com/couchbaselabs/gateload')
 
     @all_gateloads
@@ -355,27 +354,13 @@ class RemoteLinuxHelper(object):
         run('rm -f *.txt *.log *.gz *.json', quiet=True)
 
     @all_gateloads
-    def start_gateload(self, test_config):
+    def start_gateload(self):
         logger.info('Starting Gateload')
         _if = self.detect_if()
         local_ip = self.detect_ip(_if)
-        index = self.cluster_spec.gateloads.index(local_ip)
+        idx = self.cluster_spec.gateloads.index(local_ip)
 
-        with open('templates/gateload_config_template.json') as fh:
-            template = json.load(fh)
-
-        template.update({
-            'Hostname': self.cluster_spec.gateways[index],
-            'UserOffset': (test_config.gateload_settings.pushers +
-                           test_config.gateload_settings.pullers) * index,
-            'NumPullers': test_config.gateload_settings.pullers,
-            'NumPushers': test_config.gateload_settings.pushers,
-            'RunTimeMs': test_config.gateload_settings.run_time * 1000,
-        })
-
-        config_fname = 'templates/gateload_config_{}.json'.format(index)
-        with open(config_fname, 'w') as fh:
-            fh.write(pretty_dict(template))
+        config_fname = 'templates/gateload_config_{}.json'.format(idx)
         put(config_fname, '/root/gateload_config.json')
 
         run('ulimit -n 65536; nohup /opt/gocode/bin/gateload '

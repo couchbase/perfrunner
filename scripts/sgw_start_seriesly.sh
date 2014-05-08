@@ -1,7 +1,9 @@
 #!/bin/bash
 . sgw_test_config.sh
 
-nohup seriesly -root seriesly-data &
+if [ ! -n  “`ps aux | grep \”seriesly\” | grep -v grep`”  ]; then
+  nohup seriesly -root seriesly-data &
+fi
 
 index=0
 for ip in ${gateways_ip}; do

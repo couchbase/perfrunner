@@ -279,7 +279,7 @@ class RemoteLinuxHelper(object):
         put('scripts/sgw_clean_seriesly.sh', '/root/sgw_clean_seriesly.sh')
         run('chmod 755 /root/sgw_clean_seriesly.sh',)
         run('/root/sgw_clean_seriesly.sh', warn_only=True)
-        run('killall -9 sample seriesly', quiet=True)
+        run('killall -9 sample', quiet=True)
         run('rm -f *.txt *.log *.gz *.json', warn_only=True)
 
     @seriesly_host
@@ -321,7 +321,7 @@ class RemoteLinuxHelper(object):
         put('scripts/sgw_test_config.sh', '/root/sgw_test_config.sh')
         put('scripts/sgw_test_info.sh', '/root/sgw_test_info.sh')
         run('chmod 777 /root/sgw_*.sh')
-        run('nohup /root/sgw_test_info.sh &')
+        run('nohup /root/sgw_test_info.sh &> sgw_test_info.txt &', pty=False)
 
     @all_gateways
     def collect_info_gateway(self):
@@ -331,7 +331,8 @@ class RemoteLinuxHelper(object):
         index = self.cluster_spec.gateways.index(local_ip) + 1
         run('rm -f gateway.log.gz')
         run('gzip gateway.log')
-        get('gateway.log.gz', 'gateway.log-{}.gz'.format(index))
+        get('gateway.log.gz', 'gateway.log_{}.gz'.format(index))
+        get('test_info.txt', 'test_info_{}.txt'.format(index))
 
     @all_gateloads
     def uninstall_package_gateload(self):

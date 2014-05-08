@@ -12,7 +12,7 @@ from perfrunner.settings import TestConfig
 
 class GatewayInstaller(object):
 
-    CBFS = 'http://cbfs-ext.hq.couchbase.com/builds/'
+    PKG_LOC = 'http://packages.couchbase.com/builds/mobile/sync_gateway/0.0.0/'
 
     def __init__(self, cluster_spec, test_config, options):
         self.remote_helper = RemoteHelper(cluster_spec)
@@ -21,8 +21,8 @@ class GatewayInstaller(object):
         self.version = options.version
 
     def find_package(self):
-        filename = 'couchbase-sync-gateway_{}_x86_64.rpm'.format(self.version)
-        url = '{}{}'.format(self.CBFS, filename)
+        filename = 'couchbase-sync-gateway_{}_x86_64-community.rpm'.format(self.version)
+        url = '{}{}/{}'.format(self.PKG_LOC, self.version, filename)
         try:
             status_code = requests.head(url).status_code
         except requests.exceptions.ConnectionError:

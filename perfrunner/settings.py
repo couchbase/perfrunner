@@ -486,4 +486,4 @@ class GateloadSettings(PhaseSettings):
         self.p95_avg_criteria = int(options.get('p95_avg_criteria', self.P95_AVG_CRITERIA))
         self.p99_avg_criteria = int(options.get('p99_avg_criteria', self.P99_AVG_CRITERIA))
         self.run_time = int(options.get('run_time', self.RUN_TIME))
-        self.rampup_interval = self.RAMPUP_INTERVAL
+        self.rampup_interval = int(options.get('rampup_interval', self.RAMPUP_INTERVAL))

@@ -2,7 +2,7 @@
 . sgw_test_config.sh
 
 if [ ! -n  “`ps aux | grep \”seriesly\” | grep -v grep`”  ]; then
-  nohup seriesly -root seriesly-data &
+    nohup seriesly -flushDelay=1s -queryWorkers=4 -root=/root/seriesly-data &
 fi
 
 index=0

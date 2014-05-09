@@ -3,7 +3,7 @@
 
 # Need to have seriesly process running in order to clean the databases
 if [ ! -n  “`ps aux | grep \”seriesly\” | grep -v grep`”  ]; then
-  nohup seriesly -root seriesly-data &
+    nohup seriesly -flushDelay=1s -queryWorkers=4 -root=/root/seriesly-data &
 fi
 
 # Flush seriesly databases for gateway and gateload machines

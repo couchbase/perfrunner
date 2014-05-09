@@ -2,9 +2,11 @@ import json
 import time
 
 from logger import logger
+from seriesly import Seriesly
 
 from perfrunner.helpers.metrics import SgwMetricHelper
 from perfrunner.helpers.misc import pretty_dict
+from perfrunner.settings import SGW_SERIESLY_HOST
 from perfrunner.tests import PerfTest
 
 
@@ -14,21 +16,25 @@ class SyncGatewayGateloadTest(PerfTest):
         super(SyncGatewayGateloadTest, self).__init__(*args, **kwargs)
         self.metric_helper = SgwMetricHelper(self)
 
-    def seriesly_create_db(self, seriesly):
-        logger.info('gateload_test.py - seriesly_create_db')
-        for i, _ in enumerate(self.cluster_spec.gateways):
-            seriesly.create_db('gateway_{}'.format(i))
-        for i, _ in enumerate(self.cluster_spec.gateloads):
-            seriesly.create_db('gateload_{}'.format(i))
-
-    def seriesly_drop_db(self, seriesly):
-        logger.info('gateload_test.py - seriesly_drop_db')
+    def restart_seriesly(self):
+        logger.info('Dropping seriesly dbs')
+        seriesly = Seriesly(host='{}'.format(SGW_SERIESLY_HOST))
         db_list = seriesly.list_dbs()
         for db in db_list:
-            seriesly.drop_db(db)
+            if ('gateway' in db) or ('gateload' in db):
+                seriesly.drop_db(db)
+
+        logger.info('Creating seriesly dbs')
+        for i, _ in enumerate(self.cluster_spec.gateways):
+            seriesly.create_db('gateway_{}'.format(i + 1))
+        for i, _ in enumerate(self.cluster_spec.gateloads):
+            seriesly.create_db('gateload_{}'.format(i + 1))
+
+        self.remote.start_sampling()
 
     def start(self):
-        self.remote.start_seriesly()
+        self.remote.clean_seriesly()
+        self.restart_seriesly()
         time.sleep(10)
         self.generate_gateload_configs()
         self.remote.start_gateload()

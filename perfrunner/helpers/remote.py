@@ -273,18 +273,14 @@ class RemoteLinuxHelper(object):
         get('/tmp/cbq.log')
 
     @seriesly_host
-    def cleanup_seriesly(self):
+    def clean_seriesly(self):
         logger.info('Cleaning up seriesly')
-        put('scripts/sgw_test_config.sh', '/root/sgw_test_config.sh')
-        put('scripts/sgw_clean_seriesly.sh', '/root/sgw_clean_seriesly.sh')
-        run('chmod 755 /root/sgw_clean_seriesly.sh',)
-        run('/root/sgw_clean_seriesly.sh', warn_only=True)
         run('killall -9 sample', quiet=True)
         run('rm -f *.txt *.log *.gz *.json', warn_only=True)
 
     @seriesly_host
-    def start_seriesly(self):
-        logger.info('Starting seriesly')
+    def start_sampling(self):
+        logger.info('Starting sampling')
         put('scripts/sgw_start_seriesly.sh', '/root/sgw_start_seriesly.sh')
         run('chmod 777 /root/sgw_start_seriesly.sh')
         run('/root/sgw_start_seriesly.sh', warn_only=True)

@@ -86,7 +86,6 @@ class GatewayInstaller(object):
         self.uninstall_package_gateload()
         self.install_package_gateload()
         self.create_bash_config()
-        self.remote_helper.cleanup_seriesly()
         self.start_sync_gateways()
 
 

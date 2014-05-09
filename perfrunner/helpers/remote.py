@@ -276,7 +276,7 @@ class RemoteLinuxHelper(object):
     def clean_seriesly(self):
         logger.info('Cleaning up seriesly')
         run('killall -9 sample', quiet=True)
-        run('rm -f *.txt *.log *.gz *.json', warn_only=True)
+        run('rm -f *.txt *.log *.gz *.json *.out', warn_only=True)
 
     @seriesly_host
     def start_sampling(self):
@@ -305,7 +305,7 @@ class RemoteLinuxHelper(object):
     @all_gateways
     def clean_gateway(self):
         logger.info('Cleaning up Gateway')
-        run('rm -f *.txt *.log *.gz *.json', quiet=True)
+        run('rm -f *.txt *.log *.gz *.json *.out', quiet=True)
 
     @all_gateways
     def start_gateway(self):
@@ -348,7 +348,7 @@ class RemoteLinuxHelper(object):
     @all_gateloads
     def clean_gateload(self):
         logger.info('Cleaning up Gateload')
-        run('rm -f *.txt *.log *.gz *.json', quiet=True)
+        run('rm -f *.txt *.log *.gz *.json *.out', quiet=True)
 
     @all_gateloads
     def start_gateload(self):

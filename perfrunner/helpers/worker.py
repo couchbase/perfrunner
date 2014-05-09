@@ -12,10 +12,8 @@ celery = Celery('workers', backend='amqp', broker=BROKER_URL)
 
 
 @celery.task
-def task_run_workload(settings, target, timer=None, ddocs=None,
-                      index_type=None, n1ql=None):
-    wg = WorkloadGen(settings, target, timer=timer, ddocs=ddocs,
-                     index_type=index_type, n1ql=n1ql)
+def task_run_workload(settings, target, timer):
+    wg = WorkloadGen(settings, target, timer=timer)
     wg.run()
 
 
@@ -67,8 +65,7 @@ class WorkerManager(object):
                     '&>/tmp/worker_{1}.log &'.format(temp_dir, qname),
                     pty=False)
 
-    def run_workload(self, settings, target_iterator, timer=None, ddocs=None,
-                     index_type=None, n1ql=None):
+    def run_workload(self, settings, target_iterator, timer=None):
         self.workers = []
         for target in target_iterator:
             logger.info('Starting workload generator remotely')
@@ -76,11 +73,7 @@ class WorkerManager(object):
             qname = '{}-{}'.format(target.node.split(':')[0], target.bucket)
             queue = Queue(name=qname)
             worker = task_run_workload.apply_async(
-                args=(settings, target),
-                kwargs={
-                    'timer': timer,
-                    'ddocs': ddocs, 'index_type': index_type, 'n1ql': n1ql,
-                },
+                args=(settings, target, timer),
                 queue=queue.name, expires=timer,
             )
             self.workers.append(worker)

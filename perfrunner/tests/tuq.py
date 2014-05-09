@@ -36,5 +36,5 @@ class TuqTest(PerfTest):
         self.build_index()
 
         self.workload = self.test_config.access_settings
-        self.access_bg_with_ddocs()
+        self.access_bg()
         self.access()

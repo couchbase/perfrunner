@@ -391,6 +391,10 @@ class PhaseSettings(object):
         self.seq_reads = self.SEQ_READS
         self.seq_updates = self.SEQ_UPDATES
 
+        self.n1ql = None
+        self.ddocs = None
+        self.index_type = None
+
         self.time = int(options.get('time', self.TIME))
 
         self.async = bool(int(options.get('async', self.ASYNC)))

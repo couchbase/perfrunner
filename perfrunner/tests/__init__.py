@@ -123,21 +123,12 @@ class PerfTest(object):
 
     def access_bg(self):
         access_settings = self.test_config.access_settings
-        log_phase('access in background', access_settings)
+        log_phase('access phase in background', access_settings)
+        access_settings.index_type = self.test_config.index_settings.index_type
+        access_settings.n1ql = getattr(self, 'n1ql', None)
+        access_settings.ddocs = getattr(self, 'ddocs', None)
         self.worker_manager.run_workload(access_settings, self.target_iterator,
                                          timer=access_settings.time)
-
-    def access_bg_with_ddocs(self):
-        access_settings = self.test_config.access_settings
-        log_phase('access phase', access_settings)
-        index_type = self.test_config.index_settings.index_type
-        n1ql = getattr(self, 'n1ql', None)
-        ddocs = getattr(self, 'ddocs', None)
-        self.worker_manager.run_workload(access_settings, self.target_iterator,
-                                         timer=access_settings.time,
-                                         ddocs=ddocs,
-                                         index_type=index_type,
-                                         n1ql=n1ql)
 
     def timer(self):
         access_settings = self.test_config.access_settings

@@ -273,17 +273,20 @@ class RemoteLinuxHelper(object):
         get('/tmp/cbq.log')
 
     @seriesly_host
-    def clean_seriesly(self):
-        logger.info('Cleaning up seriesly')
-        run('killall -9 sample', quiet=True)
-        run('rm -f *.txt *.log *.gz *.json *.out', warn_only=True)
+    def restart_seriesly(self):
+        logger.info('Cleaning up and restarting seriesly')
+        run('killall -9 sample seriesly', quiet=True)
+        run('rm -f *.txt *.log *.gz *.json *.out /root/seriesly-data/*',
+            warn_only=True)
+        run('nohup seriesly -flushDelay=1s -root=/root/seriesly-data '
+            '&> seriesly.log &', pty=False)
 
     @seriesly_host
     def start_sampling(self):
         logger.info('Starting sampling')
-        put('scripts/sgw_start_seriesly.sh', '/root/sgw_start_seriesly.sh')
-        run('chmod 777 /root/sgw_start_seriesly.sh')
-        run('/root/sgw_start_seriesly.sh', warn_only=True)
+        put('scripts/sgw_start_samplers.sh', '/root/sgw_start_samplers.sh')
+        run('chmod 777 /root/sgw_start_samplers.sh')
+        run('/root/sgw_start_samplers.sh', warn_only=True)
 
     @all_gateways
     def install_package_gateway(self, url, filename):

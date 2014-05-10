@@ -16,28 +16,13 @@ class SyncGatewayGateloadTest(PerfTest):
         super(SyncGatewayGateloadTest, self).__init__(*args, **kwargs)
         self.metric_helper = SgwMetricHelper(self)
 
-    def restart_seriesly(self):
-        logger.info('Dropping seriesly dbs')
-        seriesly = Seriesly(host='{}'.format(SGW_SERIESLY_HOST))
-        db_list = seriesly.list_dbs()
-        for db in db_list:
-            if ('gateway' in db) or ('gateload' in db):
-                seriesly.drop_db(db)
-
+    def start_samplers(self):
         logger.info('Creating seriesly dbs')
-        for i, _ in enumerate(self.cluster_spec.gateways):
-            seriesly.create_db('gateway_{}'.format(i + 1))
-        for i, _ in enumerate(self.cluster_spec.gateloads):
-            seriesly.create_db('gateload_{}'.format(i + 1))
-
+        seriesly = Seriesly(host='{}'.format(SGW_SERIESLY_HOST))
+        for i, _ in enumerate(self.cluster_spec.gateways, start=1):
+            seriesly.create_db('gateway_{}'.format(i))
+            seriesly.create_db('gateload_{}'.format(i))
         self.remote.start_sampling()
-
-    def start(self):
-        self.remote.clean_seriesly()
-        self.restart_seriesly()
-        time.sleep(10)
-        self.generate_gateload_configs()
-        self.remote.start_gateload()
 
     def generate_gateload_configs(self):
         with open('templates/gateload_config_template.json') as fh:
@@ -67,9 +52,15 @@ class SyncGatewayGateloadTest(PerfTest):
                             .format(p, latency))
 
     def run(self):
-        self.start()
+        self.generate_gateload_configs()
+        self.remote.start_gateload()
+
+        self.remote.restart_seriesly()
+        self.start_samplers()
+
         logger.info('Sleep {} seconds waiting for test to finish'.format(
             self.test_config.gateload_settings.run_time
         ))
         time.sleep(self.test_config.gateload_settings.run_time)
+
         self.collect_kpi()

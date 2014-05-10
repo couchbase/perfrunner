@@ -103,7 +103,9 @@ def main():
     parser.add_option('-v', dest='version',
                       help='build version', metavar='Version')
 
-    options, _ = parser.parse_args()
+    options, args = parser.parse_args()
+    override = args and (arg.split('.') for arg in ' '.join(args).split(','))
+
     if not options.cluster_spec_fname or not options.test_config_fname \
             or not options.version:
         parser.error('Missing mandatory parameter')
@@ -113,7 +115,7 @@ def main():
     cluster_spec.verify()
 
     test_config = TestConfig()
-    test_config.parse(options.test_config_fname)
+    test_config.parse(options.test_config_fname, override)
 
     installer = GatewayInstaller(cluster_spec, test_config, options)
     installer.install()

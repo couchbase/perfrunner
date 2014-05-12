@@ -18,8 +18,8 @@ class GatewayInstaller(object):
             '1.0.0/{0}/couchbase-sync-gateway_{0}_x86_64.rpm',
         ),
         'http://cbfs-ext.hq.couchbase.com/builds': (
-            'couchbase-sync-gateway_{}_x86_64-community.rpm'
-        )
+            'couchbase-sync-gateway_{}_x86_64-community.rpm',
+        ),
     }
 
     def __init__(self, cluster_spec, test_config, options):
@@ -29,19 +29,23 @@ class GatewayInstaller(object):
         self.version = options.version
 
     def find_package(self):
-        for location, patterns in self.BUILDS:
+        for filename, url in self.get_expected_locations():
+            try:
+                status_code = requests.head(url).status_code
+            except requests.exceptions.ConnectionError:
+                pass
+            else:
+                if status_code == 200:
+                    logger.info('Found "{}"'.format(url))
+                    return filename, url
+        logger.interrupt('Target build not found')
+
+    def get_expected_locations(self):
+        for location, patterns in self.BUILDS.items():
             for pattern in patterns:
                 url = '{}/{}'.format(location, pattern.format(self.version))
                 filename = url.split('/')[-1]
-                try:
-                    status_code = requests.head(url).status_code
-                except requests.exceptions.ConnectionError:
-                    pass
-                else:
-                    if status_code == 200:
-                        logger.info('Found "{}"'.format(url))
-                        return filename, url
-        logger.interrupt('Target build not found')
+                yield filename, url
 
     def kill_processes_gateway(self):
         self.remote_helper.kill_processes_gateway()

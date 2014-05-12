@@ -5,9 +5,8 @@ outfile=test_info.txt
 sleep_time=30
 
 echo "Turning off sync-gateway logging"
-myip=`ifconfig | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p'`
 echo "Before"
-curl http://${myip}:4985/_logging
+curl http://localhost:4985/_logging
 curl -XPUT http://localhost:4985/_logging -d '{}'
 echo
 echo "After"

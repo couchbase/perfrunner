@@ -12,7 +12,15 @@ from perfrunner.settings import TestConfig
 
 class GatewayInstaller(object):
 
-    PKG_LOC = 'http://packages.couchbase.com/builds/mobile/sync_gateway/0.0.0/'
+    BUILDS = {
+        'http://packages.couchbase.com/builds/mobile/sync_gateway': (
+            '0.0.0/{0}/couchbase-sync-gateway_{0}_x86_64-community.rpm',
+            '1.0.0/{0}/couchbase-sync-gateway_{0}_x86_64.rpm',
+        ),
+        'http://cbfs-ext.hq.couchbase.com/builds': (
+            'couchbase-sync-gateway_{}_x86_64-community.rpm'
+        )
+    }
 
     def __init__(self, cluster_spec, test_config, options):
         self.remote_helper = RemoteHelper(cluster_spec)
@@ -21,17 +29,19 @@ class GatewayInstaller(object):
         self.version = options.version
 
     def find_package(self):
-        filename = 'couchbase-sync-gateway_{}_x86_64-community.rpm'.format(self.version)
-        url = '{}{}/{}'.format(self.PKG_LOC, self.version, filename)
-        try:
-            status_code = requests.head(url).status_code
-        except requests.exceptions.ConnectionError:
-            pass
-        else:
-            if status_code == 200:
-                logger.info('Found "{}"'.format(url))
-                return filename, url
-        logger.interrupt('Target build not found - {}'.format(url))
+        for location, patterns in self.BUILDS:
+            for pattern in patterns:
+                url = '{}/{}'.format(location, pattern.format(self.version))
+                filename = url.split('/')[-1]
+                try:
+                    status_code = requests.head(url).status_code
+                except requests.exceptions.ConnectionError:
+                    pass
+                else:
+                    if status_code == 200:
+                        logger.info('Found "{}"'.format(url))
+                        return filename, url
+        logger.interrupt('Target build not found')
 
     def kill_processes_gateway(self):
         self.remote_helper.kill_processes_gateway()

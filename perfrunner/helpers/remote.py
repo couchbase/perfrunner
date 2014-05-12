@@ -332,6 +332,7 @@ class RemoteLinuxHelper(object):
         run('gzip gateway.log')
         get('gateway.log.gz', 'gateway.log_{}.gz'.format(index))
         get('test_info.txt', 'test_info_{}.txt'.format(index))
+        get('sgw_test_info.txt', 'sgw_test_info_{}.txt'.format(index))
 
     @all_gateloads
     def uninstall_package_gateload(self):

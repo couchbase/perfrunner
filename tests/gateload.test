@@ -21,7 +21,7 @@ conn_in = 0
 [gateload]
 rampup_interval = 900
 run_time = 7200
-pushers = 3500
-pullers = 1500
+pushers = 1500
+pullers = 3500
 p95_avg_criteria = 3
 p99_avg_criteria = 5

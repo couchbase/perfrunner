@@ -1,4 +1,5 @@
 import time
+from random import randint
 
 from decorator import decorator
 from fabric import state
@@ -363,6 +364,8 @@ class RemoteLinuxHelper(object):
 
         config_fname = 'templates/gateload_config_{}.json'.format(idx)
         put(config_fname, '/root/gateload_config.json')
+
+        time.sleep(randint(2, 8))
 
         run('ulimit -n 65536; nohup /opt/gocode/bin/gateload '
             '-workload /root/gateload_config.json &>/root/gateload.log&',

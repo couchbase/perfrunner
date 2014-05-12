@@ -60,7 +60,7 @@ class ClusterSpec(Config):
             if len(self.gateways) != len(self.gateloads):
                 logger.interrupt(
                     'Mismatch in number of gateways ({}) and gateloads ({})'
-                    .format(len(self.gateways), len(self.gateloads))
+                    .format(len(self.gateloads), len(self.gateloads))
                 )
 
     @safe
@@ -93,12 +93,42 @@ class ClusterSpec(Config):
     @property
     @safe
     def gateways(self):
-        return self.config.get('gateways', 'hosts').split()
+        gateways = self.config.get('gateways', 'hosts').split()
+        if self.num_gateways == 0:
+            return gateways
+        else:
+            return gateways[:self.num_gateways]
+
+    @property
+    @safe
+    def gateloads_cluster(self):
+        return self.config.get('gateloads', 'hosts').split()
 
     @property
     @safe
     def gateloads(self):
-        return self.config.get('gateloads', 'hosts').split()
+        gateloads = self.config.get('gateloads', 'hosts').split()
+        if self.num_gateways == 0:
+            return gateloads
+        else:
+            return gateloads[:self.num_gateways]
+
+    @property
+    @safe
+    def num_gateways(self):
+        if self.config.get('settings', 'num_gateways'):
+            return int(self.config.get('settings', 'num_gateways'))
+        else:
+            gateways = self.config.get('gateways', 'hosts').split()
+            return len(gateways)
+
+    @property
+    @safe
+    def verbose(self):
+        if self.config.get('settings', 'verbose'):
+            return bool(int(self.config.get('settings', 'verbose')))
+        else:
+            return False
 
     @property
     @safe

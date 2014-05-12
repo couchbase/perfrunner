@@ -12,6 +12,10 @@ index = /data
 rest = Administrator:password
 ssh = root:couchbase
 
+[settings]
+verbose = 0
+num_gateways = 0
+
 [gateways]
 hosts =
     172.23.96.63

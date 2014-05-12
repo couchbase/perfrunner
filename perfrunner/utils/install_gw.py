@@ -7,6 +7,7 @@ from logger import logger
 from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import ClusterSpec
+from perfrunner.settings import SGW_SERIESLY_HOST
 from perfrunner.settings import TestConfig
 
 
@@ -91,6 +92,7 @@ class GatewayInstaller(object):
             fh.write('gateways_ip="{}"\n'.format(' '.join(self.cluster_spec.gateways)))
             fh.write('gateloads_ip="{}"\n'.format(' '.join(self.cluster_spec.gateloads)))
             fh.write('dbs_ip="{}"\n'.format(' '.join(self.cluster_spec.yield_hostnames())))
+            fh.write('seriesly_ip={}\n'.format(SGW_SERIESLY_HOST))
 
     def install(self):
         self.kill_processes_gateway()
@@ -125,7 +127,7 @@ def main():
         parser.error('Missing mandatory parameter')
 
     cluster_spec = ClusterSpec()
-    cluster_spec.parse(options.cluster_spec_fname)
+    cluster_spec.parse(options.cluster_spec_fname, override)
     cluster_spec.verify()
 
     test_config = TestConfig()

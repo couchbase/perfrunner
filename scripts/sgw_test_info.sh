@@ -24,6 +24,7 @@ then
         cmd=${cmd%?}
         cmd="$cmd\""
 
+        loop_count=0
         while :
         do
             memcpu=`top -bn1d1 -p $pid | grep $pid | awk '{print $6, $9}' | sed "s/m//"`
@@ -37,6 +38,19 @@ then
             socketsToOthers=`expr $sockets - $socketsToDB`
             output_line="$(date +"%Y%m%d-%H%M%S"): sockets:$sockets - toDB:$socketsToDB - view:$socketsToDB_view - toOthers:$socketsToOthers  - mem/cpu:$memcpu - swap:$swap"
             echo  $output_line >> $outfile
+
+            loop_count=`expr $loop_count + 1`
+            # Query p99 every 10 time in the loop - 5 minutes
+            if [ $loop_count -eq 10 ]; then
+                index=0
+                for ip in ${gateloads_ip}; do
+                    index=`expr $index + 1`
+                    p99_avg=`curl "http://${seriesly_ip}:3133/gateload_${index}/_query?ptr=/gateload/ops/PushToSubscriberInteractive/p99&reducer=avg&group=100000000000"`
+                    echo "PushToSubscriberInteractive/p95 average during test runs: $p99_avg"
+                    echo "PushToSubscriberInteractive/p95 average during test runs: $p99_avg" >> $outfile
+                done
+                loop_count=0
+            fi
 
             sleep $sleep_time
         done

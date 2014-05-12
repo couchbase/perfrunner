@@ -30,7 +30,7 @@ def main():
     override = args and (arg.split('.') for arg in ' '.join(args).split(','))
 
     cluster_spec = ClusterSpec()
-    cluster_spec.parse(options.cluster_spec_fname)
+    cluster_spec.parse(options.cluster_spec_fname, override)
     test_config = TestConfig()
     test_config.parse(options.test_config_fname, override)
     experiment = options.exp_fname and Experiment(options.exp_fname)

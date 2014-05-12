@@ -49,8 +49,12 @@ class RemoteHelper(object):
 
     def __new__(cls, cluster_spec):
         state.env.user, state.env.password = cluster_spec.ssh_credentials
-        state.output.running = False
-        state.output.stdout = False
+        if cluster_spec.verbose:
+            state.output.running = cluster_spec.verbose
+            state.output.stdout = cluster_spec.verbose
+        else:
+            state.output.running = False
+            state.output.stdout = False
 
         os = cls.detect_os(cluster_spec)
         if os == 'Cygwin':
@@ -317,9 +321,13 @@ class RemoteLinuxHelper(object):
         run('ulimit -n 65536; '
             'nohup /opt/couchbase-sync-gateway/bin/sync_gateway '
             '/root/gateway_config.json &>/root/gateway.log&', pty=False)
+        # Wait for sync_gateway process to run before running sgw_test_info.sh
         put('scripts/sgw_test_config.sh', '/root/sgw_test_config.sh')
+        put('scripts/sgw_check_status.sh', '/root/sgw_check_status.sh')
         put('scripts/sgw_test_info.sh', '/root/sgw_test_info.sh')
         run('chmod 777 /root/sgw_*.sh')
+        run('/root/sgw_check_status.sh')
+        logger.info('Starting Sync Gateway sgw_test_info.sh')
         run('nohup /root/sgw_test_info.sh &> sgw_test_info.txt &', pty=False)
 
     @all_gateways
@@ -328,8 +336,8 @@ class RemoteLinuxHelper(object):
         _if = self.detect_if()
         local_ip = self.detect_ip(_if)
         index = self.cluster_spec.gateways.index(local_ip) + 1
-        run('rm -f gateway.log.gz')
-        run('gzip gateway.log')
+        run('rm -f gateway.log.gz', warn_only=True)
+        run('gzip gateway.log', warn_only=True)
         get('gateway.log.gz', 'gateway.log_{}.gz'.format(index))
         get('test_info.txt', 'test_info_{}.txt'.format(index))
         get('sgw_test_info.txt', 'sgw_test_info_{}.txt'.format(index))
@@ -373,8 +381,8 @@ class RemoteLinuxHelper(object):
         _if = self.detect_if()
         local_ip = self.detect_ip(_if)
         index = self.cluster_spec.gateloads.index(local_ip)
-        run('rm -f gateload.log.gz')
-        run('gzip gateload.log')
+        run('rm -f gateload.log.gz', warn_only=True)
+        run('gzip gateload.log', warn_only=True)
         get('gateload.log.gz', 'gateload.log-{}.gz'.format(index))
 
 

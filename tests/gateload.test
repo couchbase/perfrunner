@@ -11,7 +11,7 @@ initial_nodes = 3
 num_buckets = 1
 
 [bucket]
-replica_number = 0
+replica_number = 1
 
 [gateway]
 compression = 1

@@ -124,14 +124,6 @@ class ClusterSpec(Config):
 
     @property
     @safe
-    def verbose(self):
-        if self.config.get('settings', 'verbose'):
-            return bool(int(self.config.get('settings', 'verbose')))
-        else:
-            return False
-
-    @property
-    @safe
     def client_credentials(self):
         return self.config.get('clients', 'credentials').split(':')
 

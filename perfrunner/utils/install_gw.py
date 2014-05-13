@@ -24,7 +24,7 @@ class GatewayInstaller(object):
     }
 
     def __init__(self, cluster_spec, test_config, options):
-        self.remote_helper = RemoteHelper(cluster_spec)
+        self.remote_helper = RemoteHelper(cluster_spec, options.verbose)
         self.cluster_spec = cluster_spec
         self.test_config = test_config
         self.version = options.version
@@ -118,6 +118,8 @@ def main():
                       metavar='TestConfigFilePath')
     parser.add_option('-v', dest='version',
                       help='build version', metavar='Version')
+    parser.add_option('--verbose', dest='verbose', action='store_true',
+                      help='enable verbose logging')
 
     options, args = parser.parse_args()
     override = args and (arg.split('.') for arg in ' '.join(args).split(','))

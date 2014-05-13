@@ -39,7 +39,7 @@ class PerfTest(object):
 
     COLLECTORS = {}
 
-    def __init__(self, cluster_spec, test_config, experiment=None):
+    def __init__(self, cluster_spec, test_config, verbose, experiment=None):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
 
@@ -48,7 +48,7 @@ class PerfTest(object):
         self.memcached = MemcachedHelper(test_config)
         self.monitor = Monitor(cluster_spec)
         self.rest = RestHelper(cluster_spec)
-        self.remote = RemoteHelper(cluster_spec)
+        self.remote = RemoteHelper(cluster_spec, verbose)
 
         if experiment:
             self.experiment = ExperimentHelper(experiment,

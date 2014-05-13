@@ -47,14 +47,10 @@ def all_gateloads(task, *args, **kargs):
 
 class RemoteHelper(object):
 
-    def __new__(cls, cluster_spec):
+    def __new__(cls, cluster_spec, verbose=False):
         state.env.user, state.env.password = cluster_spec.ssh_credentials
-        if cluster_spec.verbose:
-            state.output.running = cluster_spec.verbose
-            state.output.stdout = cluster_spec.verbose
-        else:
-            state.output.running = False
-            state.output.stdout = False
+        state.output.running = verbose
+        state.output.stdout = verbose
 
         os = cls.detect_os(cluster_spec)
         if os == 'Cygwin':

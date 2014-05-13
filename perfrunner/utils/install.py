@@ -16,7 +16,7 @@ class CouchbaseInstaller(object):
     LATEST_BUILDS = 'http://builds.hq.northscale.net/latestbuilds/'
 
     def __init__(self, cluster_spec, options):
-        self.remote_helper = RemoteHelper(cluster_spec)
+        self.remote_helper = RemoteHelper(cluster_spec, options.verbose)
         self.cluster_spec = cluster_spec
 
         arch = self.remote_helper.detect_arch()
@@ -98,6 +98,8 @@ def main():
                       help='build version', metavar='2.0.0-1976')
     parser.add_option('-t', dest='toy',
                       help='optional toy build ID', metavar='couchstore')
+    parser.add_option('--verbose', dest='verbose', action='store_true',
+                      help='enable verbose logging')
 
     options, _ = parser.parse_args()
     if not options.cluster_spec_fname or not options.version:

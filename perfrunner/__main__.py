@@ -17,6 +17,8 @@ def get_options():
     parser.add_option('-e', dest='exp_fname',
                       help='path to experiment template',
                       metavar='experiment.json')
+    parser.add_option('--verbose', dest='verbose', action='store_true',
+                      help='enable verbose logging')
 
     options, args = parser.parse_args()
     if not options.cluster_spec_fname or not options.test_config_fname:
@@ -39,7 +41,10 @@ def main():
     test_class = test_config.test_case.test_class
     exec('from {} import {}'.format(test_module, test_class))
 
-    with eval(test_class)(cluster_spec, test_config, experiment) as test:
+    with eval(test_class)(cluster_spec,
+                          test_config,
+                          options.verbose,
+                          experiment) as test:
         test.run()
 
 if __name__ == '__main__':

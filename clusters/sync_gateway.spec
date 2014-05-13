@@ -13,7 +13,6 @@ rest = Administrator:password
 ssh = root:couchbase
 
 [settings]
-verbose = 0
 num_gateways = 0
 
 [gateways]

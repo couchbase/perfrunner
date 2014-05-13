@@ -14,12 +14,12 @@ from perfrunner.tests import TargetIterator
 
 class ClusterManager(object):
 
-    def __init__(self, cluster_spec, test_config):
+    def __init__(self, cluster_spec, test_config, verbose):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
 
         self.rest = RestHelper(cluster_spec)
-        self.remote = RemoteHelper(cluster_spec)
+        self.remote = RemoteHelper(cluster_spec, verbose)
         self.monitor = Monitor(cluster_spec)
         self.memcached = MemcachedHelper(test_config)
 
@@ -177,6 +177,8 @@ def get_options():
     parser.add_option('-t', dest='test_config_fname',
                       help='path to test configuration file',
                       metavar='my_test.test')
+    parser.add_option('--verbose', dest='verbose', action='store_true',
+                      help='enable verbose logging')
 
     options, args = parser.parse_args()
     if not options.cluster_spec_fname or not options.test_config_fname:
@@ -194,7 +196,7 @@ def main():
     test_config = TestConfig()
     test_config.parse(options.test_config_fname, override)
 
-    cm = ClusterManager(cluster_spec, test_config)
+    cm = ClusterManager(cluster_spec, test_config, options.verbose)
 
     # Individual nodes
     cm.restart_with_alternative_num_vbuckets()

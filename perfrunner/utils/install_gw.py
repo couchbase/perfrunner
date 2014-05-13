@@ -122,7 +122,7 @@ def main():
                       help='enable verbose logging')
 
     options, args = parser.parse_args()
-    override = args and (arg.split('.') for arg in ' '.join(args).split(','))
+    override = args and [arg.split('.') for arg in ' '.join(args).split(',')]
 
     if not options.cluster_spec_fname or not options.test_config_fname \
             or not options.version:

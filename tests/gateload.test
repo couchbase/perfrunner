@@ -20,7 +20,7 @@ conn_in = 0
 
 [gateload]
 rampup_interval = 900
-run_time = 7200
+run_time = 3600
 pushers = 1500
 pullers = 3500
 p95_avg_criteria = 3

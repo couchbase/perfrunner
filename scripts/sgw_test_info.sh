@@ -27,7 +27,8 @@ then
         loop_count=0
         while :
         do
-            memcpu=`top -bn1d1 -p $pid | grep $pid | awk '{print $6, $9}' | sed "s/m//"`
+            cpu=`top -bn1d1 -p $pid | grep $pid | awk '{print $9}' | sed "s/m//"`
+            mem=`cat /proc/${pid}/status | grep VmRSS | awk '{print $2}'`
             swap=`cat /proc/${pid}/status | grep VmSwap | awk '{print $2}'`
 
             netstat -lpnta > tmp_info.txt
@@ -36,7 +37,7 @@ then
             # View is using port 8091, or 8092
             socketsToDB_view=`cat tmp_info.txt | $cmd | grep :809 | wc -l`
             socketsToOthers=`expr $sockets - $socketsToDB`
-            output_line="$(date +"%Y%m%d-%H%M%S"): sockets:$sockets - toDB:$socketsToDB - view:$socketsToDB_view - toOthers:$socketsToOthers  - mem/cpu:$memcpu - swap:$swap"
+            output_line="$(date +"%Y%m%d-%H%M%S"): sockets:$sockets - toDB:$socketsToDB - view:$socketsToDB_view - toOthers:$socketsToOthers  - mem:$mem - cpu:$cpu - swap:$swap"
             echo  $output_line >> $outfile
 
             loop_count=`expr $loop_count + 1`

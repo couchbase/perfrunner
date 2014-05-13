@@ -424,6 +424,7 @@ class PhaseSettings(object):
         self.n1ql = None
         self.ddocs = None
         self.index_type = None
+        self.qparams = {}
 
         self.time = int(options.get('time', self.TIME))
 

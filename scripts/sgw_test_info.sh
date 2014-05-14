@@ -13,6 +13,12 @@ echo "After"
 curl http://localhost:4985/_logging
 echo
 
+free > tmp.txt
+mem=`grep Mem: tmp.txt |  awk '{print $2}'`
+cpu=`nproc`
+echo Machine configuration: cpu:$cpu mem:$mem
+echo Test start - $(date +"%Y%m%d-%H%M%S") > $outfil
+
 pid=`pgrep sync_gateway`
 if [ -n "$pid" ]
 then

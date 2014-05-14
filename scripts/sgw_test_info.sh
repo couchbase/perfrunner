@@ -16,8 +16,9 @@ echo
 free > tmp.txt
 mem=`grep Mem: tmp.txt |  awk '{print $2}'`
 cpu=`nproc`
-echo Machine configuration: cpu:$cpu mem:$mem
-echo Test start - $(date +"%Y%m%d-%H%M%S") > $outfil
+echo Test start - $(date +"%Y%m%d-%H%M%S") > $outfile
+echo Machine configuration: cpu:$cpu mem:$mem  >> $outfile
+
 
 pid=`pgrep sync_gateway`
 if [ -n "$pid" ]

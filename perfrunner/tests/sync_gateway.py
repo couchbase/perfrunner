@@ -70,4 +70,6 @@ class SyncGatewayGateloadTest(PerfTest):
         log_phase('Gateway settings', self.test_config.gateway_settings)
         logger.info('Num Gateways: {}'.format(len(self.cluster_spec.gateways)))
 
+        self.workload()
+
         self.collect_kpi()

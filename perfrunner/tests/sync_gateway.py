@@ -4,8 +4,9 @@ import time
 from logger import logger
 from seriesly import Seriesly
 
+from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.metrics import SgwMetricHelper
-from perfrunner.helpers.misc import pretty_dict
+from perfrunner.helpers.misc import log_phase, pretty_dict
 from perfrunner.settings import SGW_SERIESLY_HOST
 from perfrunner.tests import PerfTest
 
@@ -51,6 +52,13 @@ class SyncGatewayGateloadTest(PerfTest):
                 logger.info('\tPushToSubscriberInteractive/p{} average: {}'
                             .format(p, latency))
 
+    @with_stats
+    def workload(self):
+        logger.info('Sleep {} seconds waiting for test to finish'.format(
+            self.test_config.gateload_settings.run_time
+        ))
+        time.sleep(self.test_config.gateload_settings.run_time)
+
     def run(self):
         self.generate_gateload_configs()
         self.remote.start_gateload()
@@ -58,19 +66,8 @@ class SyncGatewayGateloadTest(PerfTest):
         self.remote.restart_seriesly()
         self.start_samplers()
 
-        logger.info('num_gws-{}, time-{}, ramp-{}, pusher-{}, puller-{}, compress-{}, conn_db-{}, conn_in-{}'.format(
-            len(self.cluster_spec.gateways),
-            self.test_config.gateload_settings.run_time,
-            self.test_config.gateload_settings.rampup_interval,
-            self.test_config.gateload_settings.pushers,
-            self.test_config.gateload_settings.pullers,
-            self.test_config.gateway_settings.compression,
-            self.test_config.gateway_settings.conn_db,
-            self.test_config.gateway_settings.conn_in
-        ))
-        logger.info('Sleep {} seconds waiting for test to finish'.format(
-            self.test_config.gateload_settings.run_time
-        ))
-        time.sleep(self.test_config.gateload_settings.run_time)
+        log_phase('Gateload settings', self.test_config.gateload_settings)
+        log_phase('Gateway settings', self.test_config.gateway_settings)
+        logger.info('Num Gateways: {}'.format(len(self.cluster_spec.gateways)))
 
         self.collect_kpi()

@@ -70,6 +70,7 @@ class CbAgent(object):
             'interval': test.test_config.stats_settings.interval,
             'buckets': buckets,
             'hostnames': hostnames,
+            'sync_gateway_nodes': test.cluster_spec.gateways,
         })()
         self.lat_interval = test.test_config.stats_settings.lat_interval
         self.settings.ssh_username, self.settings.ssh_password = \

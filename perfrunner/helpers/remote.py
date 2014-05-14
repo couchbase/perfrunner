@@ -332,11 +332,14 @@ class RemoteLinuxHelper(object):
         _if = self.detect_if()
         local_ip = self.detect_ip(_if)
         index = self.cluster_spec.gateways.index(local_ip) + 1
+        run('curl http://localhost:4985/_expvar > gateway_expvar.json', warn_only=True)
         run('rm -f gateway.log.gz', warn_only=True)
         run('gzip gateway.log', warn_only=True)
         get('gateway.log.gz', 'gateway.log_{}.gz'.format(index))
         get('test_info.txt', 'test_info_{}.txt'.format(index))
         get('sgw_test_info.txt', 'sgw_test_info_{}.txt'.format(index))
+        get('gateway_config.json', 'gateway_config_{}.json'.format(index))
+        get('gateway_expvar.json', 'gateway_expvar_{}.json'.format(index))
 
     @all_gateloads
     def uninstall_package_gateload(self):
@@ -380,6 +383,7 @@ class RemoteLinuxHelper(object):
         run('rm -f gateload.log.gz', warn_only=True)
         run('gzip gateload.log', warn_only=True)
         get('gateload.log.gz', 'gateload.log-{}.gz'.format(index))
+        get('gateload_config.json', 'gateload_config_{}.json'.format(index))
 
 
 class RemoteWindowsHelper(RemoteLinuxHelper):

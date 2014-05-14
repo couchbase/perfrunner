@@ -58,6 +58,16 @@ class SyncGatewayGateloadTest(PerfTest):
         self.remote.restart_seriesly()
         self.start_samplers()
 
+        logger.info('num_gws-{}, time-{}, ramp-{}, pusher-{}, puller-{}, compress-{}, conn_db-{}, conn_in-{}'.format(
+            len(self.cluster_spec.gateways),
+            self.test_config.gateload_settings.run_time,
+            self.test_config.gateload_settings.rampup_interval,
+            self.test_config.gateload_settings.pushers,
+            self.test_config.gateload_settings.pullers,
+            self.test_config.gateway_settings.compression,
+            self.test_config.gateway_settings.conn_db,
+            self.test_config.gateway_settings.conn_in
+        ))
         logger.info('Sleep {} seconds waiting for test to finish'.format(
             self.test_config.gateload_settings.run_time
         ))

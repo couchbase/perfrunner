@@ -1,4 +1,5 @@
 import numpy as np
+from logger import logger
 from seriesly import Seriesly
 
 from perfrunner.settings import CBMONITOR_HOST, SGW_SERIESLY_HOST
@@ -350,6 +351,10 @@ class SgwMetricHelper(MetricHelper):
             'avg_gateload/ops/PushToSubscriberInteractive/p{}'.format(p)
         )
         db = 'gateload_{}'.format(idx)
+
+        if not self.seriesly[db].get_all():
+            logger.error('No data in {}'.format(db))
+
         data = self.seriesly[db].query(query_params)
         latency = float(data.values()[0][0])
         latency /= 10 ** 9  # ns -> s

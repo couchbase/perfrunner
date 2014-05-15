@@ -321,7 +321,7 @@ class RestHelper(object):
 
 class SyncGatewayRequestHelper(RestHelper):
 
-    def __init__(self, *arg, **kwargs):
+    def __init__(self):
         self.auth = ()
 
     def wait_for_gateway_to_start(self, index, gateway_ip):

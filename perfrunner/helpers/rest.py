@@ -327,14 +327,16 @@ class SyncGatewayRequestHelper(RestHelper):
         logger.info('Sync_gateway process running for gateway_{} {}'.format(index, gateway_ip))
 
     def turn_off_gateway_logging(self, index, gateway_ip):
-        logger.info('Turning off sync_gateway logging for gateway_{} {}'.format(index, gateway_ip))
-        ret = self.get(url='http://{}:4985/_logging'.format(gateway_ip)).text
+        logger.info('Turning off Sync Gateway logging for gateway_{} {}'.format(index, gateway_ip))
+
+        api = 'http://{}:4985/_logging'.format(gateway_ip)
+
+        ret = self.get(url=api).json()
         logger.info('Before - {}'.format(ret))
-        url = 'http://{}:4985/_logging'.format(gateway_ip)
-        data = json.dumps({})
-        headers = {'Content-type': 'application/json'}
-        self.put(url=url, data=data, headers=headers)
-        ret = self.get(url='http://{}:4985/_logging'.format(gateway_ip)).text
+
+        self.put(url=api, data='{}')
+
+        ret = self.get(url=api).json()
         logger.info('After - {}'.format(ret))
 
     def collect_expvar(self, gateway_ip):

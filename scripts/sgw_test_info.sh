@@ -4,15 +4,6 @@
 outfile=test_info.txt
 sleep_time=30
 
-echo "Turning off sync-gateway logging"
-echo "Before"
-curl http://localhost:4985/_logging
-curl -XPUT http://localhost:4985/_logging -d '{}'
-echo
-echo "After"
-curl http://localhost:4985/_logging
-echo
-
 free > tmp.txt
 mem=`grep Mem: tmp.txt |  awk '{print $2}'`
 cpu=`nproc`

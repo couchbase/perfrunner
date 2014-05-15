@@ -71,7 +71,10 @@ class SyncGatewayGateloadTest(PerfTest):
         self.generate_gateload_configs()
         self.remote.start_gateload()
 
+        for idx, gateload in enumerate(self.cluster_spec.gateloads, start=1):
+            self.request_helper.wait_for_gateload_to_start(idx, gateload)
         self.remote.restart_seriesly()
+        self.request_helper.wait_for_seriesly_to_start(SGW_SERIESLY_HOST)
         self.start_samplers()
 
         log_phase('Gateload settings', self.test_config.gateload_settings)

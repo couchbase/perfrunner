@@ -326,6 +326,14 @@ class SyncGatewayRequestHelper(RestHelper):
         self.get(url='http://{}:4985/'.format(gateway_ip))
         logger.info('Sync_gateway process running for gateway_{} {}'.format(index, gateway_ip))
 
+    def wait_for_gateload_to_start(self, index, gateload_ip):
+        self.get(url='http://{}:9876/debug/vars'.format(gateload_ip))
+        logger.info('Gateload process running on gateload_{} {}'.format(index, gateload_ip))
+
+    def wait_for_seriesly_to_start(self, seriesly_ip):
+        self.get(url='http://{}:3133/'.format(seriesly_ip))
+        logger.info('Seriesly process running on {}'.format(seriesly_ip))
+
     def turn_off_gateway_logging(self, index, gateway_ip):
         logger.info('Turning off Sync Gateway logging for gateway_{} {}'.format(index, gateway_ip))
 

@@ -47,8 +47,12 @@ class SyncGatewayGateloadTest(PerfTest):
 
     def collect_kpi(self):
         logger.info('Collecting KPI')
-        for i, gateway_ip in enumerate(self.cluster_spec.gateways, start=1):
-            self.request_helper.collect_gateway_expvar(i, gateway_ip)
+        for idx, gateway_ip in enumerate(self.cluster_spec.gateways, start=1):
+            expvar = self.request_helper.collect_expvar(gateway_ip)
+            fname = 'gateway_expvar_{}.json'.format(idx)
+            with open(fname, 'w') as fh:
+                fh.write(pretty_dict(expvar))
+
         for idx, gateload in enumerate(self.cluster_spec.gateloads, start=1):
             logger.info('Test results for {} ({}):'.format(gateload, idx))
             for p in (95, 99):

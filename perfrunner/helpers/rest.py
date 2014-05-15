@@ -7,8 +7,6 @@ from decorator import decorator
 from logger import logger
 from requests.exceptions import ConnectionError
 
-from perfrunner.helpers.misc import pretty_dict
-
 MAX_RETRY = 5
 RETRY_DELAY = 5
 
@@ -339,9 +337,8 @@ class SyncGatewayRequestHelper(RestHelper):
         ret = self.get(url='http://{}:4985/_logging'.format(gateway_ip)).text
         logger.info('After - {}'.format(ret))
 
-    def collect_gateway_expvar(self, index, gateway_ip):
-        logger.info('Collect expvar for gateway_{} {}'.format(index, gateway_ip))
-        expvar = self.get(url='http://{}:4985/_expvar'.format(gateway_ip)).json()
-        fname = 'gateway_expvar_{}.json'.format(index)
-        with open(fname, 'w') as fh:
-            fh.write(pretty_dict(expvar))
+    def collect_expvar(self, gateway_ip):
+        logger.info('Collecting expvar for {}'.format(gateway_ip))
+
+        api = 'http://{}:4985/_expvar'.format(gateway_ip)
+        return self.get(url=api).json()

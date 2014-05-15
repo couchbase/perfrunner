@@ -7,6 +7,7 @@ from decorator import decorator
 from logger import logger
 from requests.exceptions import ConnectionError
 
+from perfrunner.helpers.misc import pretty_dict
 
 MAX_RETRY = 5
 RETRY_DELAY = 5
@@ -316,3 +317,31 @@ class RestHelper(object):
         api = 'http://{}:8093/query'.format(host)
         params = {'q': stmnt}
         self.get(url=api, params=params)
+
+
+class SyncGatewayRequestHelper(RestHelper):
+
+    def __init__(self, *arg, **kwargs):
+        self.auth = ()
+
+    def wait_for_gateway_to_start(self, index, gateway_ip):
+        self.get(url='http://{}:4985/'.format(gateway_ip))
+        logger.info('Sync_gateway process running for gateway_{} {}'.format(index, gateway_ip))
+
+    def turn_off_gateway_logging(self, index, gateway_ip):
+        logger.info('Turning off sync_gateway logging for gateway_{} {}'.format(index, gateway_ip))
+        ret = self.get(url='http://{}:4985/_logging'.format(gateway_ip)).text
+        logger.info('Before - {}'.format(ret))
+        url = 'http://{}:4985/_logging'.format(gateway_ip)
+        data = json.dumps({})
+        headers = {'Content-type': 'application/json'}
+        self.put(url=url, data=data, headers=headers)
+        ret = self.get(url='http://{}:4985/_logging'.format(gateway_ip)).text
+        logger.info('After - {}'.format(ret))
+
+    def collect_gateway_expvar(self, index, gateway_ip):
+        logger.info('Collect expvar for gateway_{} {}'.format(index, gateway_ip))
+        expvar = self.get(url='http://{}:4985/_expvar'.format(gateway_ip)).json()
+        fname = 'gateway_expvar_{}.json'.format(index)
+        with open(fname, 'w') as fh:
+            fh.write(pretty_dict(expvar))

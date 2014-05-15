@@ -6,6 +6,7 @@ from logger import logger
 
 from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.remote import RemoteHelper
+from perfrunner.helpers.rest import SyncGatewayRequestHelper
 from perfrunner.settings import ClusterSpec
 from perfrunner.settings import SGW_SERIESLY_HOST
 from perfrunner.settings import TestConfig
@@ -28,6 +29,7 @@ class GatewayInstaller(object):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
         self.version = options.version
+        self.request_helper = SyncGatewayRequestHelper()
 
     def find_package(self):
         for filename, url in self.get_expected_locations():
@@ -103,6 +105,10 @@ class GatewayInstaller(object):
         self.install_package_gateload()
         self.create_bash_config()
         self.start_sync_gateways()
+        for i, gateway_ip in enumerate(self.cluster_spec.gateways, start=1):
+            self.request_helper.wait_for_gateway_to_start(i, gateway_ip)
+            self.request_helper.turn_off_gateway_logging(i, gateway_ip)
+        self.remote_helper.start_test_info()
 
 
 def main():

@@ -7,6 +7,7 @@ from seriesly import Seriesly
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.metrics import SgwMetricHelper
 from perfrunner.helpers.misc import log_phase, pretty_dict
+from perfrunner.helpers.rest import SyncGatewayRequestHelper
 from perfrunner.settings import SGW_SERIESLY_HOST
 from perfrunner.tests import PerfTest
 
@@ -16,6 +17,7 @@ class SyncGatewayGateloadTest(PerfTest):
     def __init__(self, *args, **kwargs):
         super(SyncGatewayGateloadTest, self).__init__(*args, **kwargs)
         self.metric_helper = SgwMetricHelper(self)
+        self.request_helper = SyncGatewayRequestHelper()
 
     def start_samplers(self):
         logger.info('Creating seriesly dbs')
@@ -45,6 +47,8 @@ class SyncGatewayGateloadTest(PerfTest):
 
     def collect_kpi(self):
         logger.info('Collecting KPI')
+        for i, gateway_ip in enumerate(self.cluster_spec.gateways, start=1):
+            self.request_helper.collect_gateway_expvar(i, gateway_ip)
         for idx, gateload in enumerate(self.cluster_spec.gateloads, start=1):
             logger.info('Test results for {} ({}):'.format(gateload, idx))
             for p in (95, 99):

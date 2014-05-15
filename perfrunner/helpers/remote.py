@@ -283,10 +283,14 @@ class RemoteLinuxHelper(object):
 
     @seriesly_host
     def start_sampling(self):
-        logger.info('Starting sampling')
-        put('scripts/sgw_start_samplers.sh', '/root/sgw_start_samplers.sh')
-        run('chmod 777 /root/sgw_start_samplers.sh')
-        run('/root/sgw_start_samplers.sh', warn_only=True)
+        for i, gateway_ip in enumerate(self.cluster_spec.gateways, start=1):
+            logger.info('Starting sampling gateway_{}'.format(i))
+            run('nohup sample -v http://{}:4985/_expvar http://localhost:3133/gateway_{} &> sample.log &'
+                .format(gateway_ip, i), pty=False)
+        for i, gateload_ip in enumerate(self.cluster_spec.gateloads, start=1):
+            logger.info('Starting sampling gateload_{}'.format(i))
+            run('nohup sample -v http://{}:4985/_expvar http://localhost:3133/gateload_{} &> sample.log &'
+                .format(gateload_ip, i), pty=False)
 
     @all_gateways
     def install_package_gateway(self, url, filename):
@@ -317,14 +321,14 @@ class RemoteLinuxHelper(object):
         run('ulimit -n 65536; '
             'nohup /opt/couchbase-sync-gateway/bin/sync_gateway '
             '/root/gateway_config.json &>/root/gateway.log&', pty=False)
-        # Wait for sync_gateway process to run before running sgw_test_info.sh
-        put('scripts/sgw_test_config.sh', '/root/sgw_test_config.sh')
-        put('scripts/sgw_check_status.sh', '/root/sgw_check_status.sh')
-        put('scripts/sgw_test_info.sh', '/root/sgw_test_info.sh')
-        run('chmod 777 /root/sgw_*.sh')
-        run('/root/sgw_check_status.sh')
-        logger.info('Starting Sync Gateway sgw_test_info.sh')
-        run('nohup /root/sgw_test_info.sh &> sgw_test_info.txt &', pty=False)
+
+    @all_gateways
+    def start_test_info(self):
+            put('scripts/sgw_test_config.sh', '/root/sgw_test_config.sh')
+            put('scripts/sgw_test_info.sh', '/root/sgw_test_info.sh')
+            run('chmod 777 /root/sgw_*.sh')
+            logger.info('Starting Sync Gateway sgw_test_info.sh')
+            run('nohup /root/sgw_test_info.sh &> sgw_test_info.txt &', pty=False)
 
     @all_gateways
     def collect_info_gateway(self):
@@ -332,14 +336,12 @@ class RemoteLinuxHelper(object):
         _if = self.detect_if()
         local_ip = self.detect_ip(_if)
         index = self.cluster_spec.gateways.index(local_ip) + 1
-        run('curl http://localhost:4985/_expvar > gateway_expvar.json', warn_only=True)
         run('rm -f gateway.log.gz', warn_only=True)
         run('gzip gateway.log', warn_only=True)
         get('gateway.log.gz', 'gateway.log_{}.gz'.format(index))
         get('test_info.txt', 'test_info_{}.txt'.format(index))
         get('sgw_test_info.txt', 'sgw_test_info_{}.txt'.format(index))
         get('gateway_config.json', 'gateway_config_{}.json'.format(index))
-        get('gateway_expvar.json', 'gateway_expvar_{}.json'.format(index))
 
     @all_gateloads
     def uninstall_package_gateload(self):

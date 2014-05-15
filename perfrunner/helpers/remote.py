@@ -289,7 +289,7 @@ class RemoteLinuxHelper(object):
                 .format(gateway_ip, i), pty=False)
         for i, gateload_ip in enumerate(self.cluster_spec.gateloads, start=1):
             logger.info('Starting sampling gateload_{}'.format(i))
-            run('nohup sample -v http://{}:4985/_expvar http://localhost:3133/gateload_{} &> sample.log &'
+            run('nohup sample -v http://{}:9876/debug/vars http://localhost:3133/gateload_{} &> sample.log &'
                 .format(gateload_ip, i), pty=False)
 
     @all_gateways

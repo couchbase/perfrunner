@@ -26,4 +26,9 @@ INDEX_STATEMENTS = {
         'CREATE INDEX by_gmtime ON {}(gmtime)',
         'CREATE INDEX by_full_state ON {}(full_state.f)',
     ),
+    'distinct': (
+        'CREATE INDEX by_state ON {}(state.f)',
+        'CREATE INDEX by_year ON {}(year)',
+        'CREATE INDEX by_full_state ON {}(full_state.f)',
+    ),
 }

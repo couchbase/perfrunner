@@ -1,8 +1,8 @@
 [test_case]
 module = perfrunner.tests.kv
 class = BgFetcherTest
-title = Avg. BgFetcher disk reads/sec, 1 bucket x 150M x 2KB, 40%% cache miss rate
-summary = Read-heavy KV test (70/30), 4 nodes, 1 bucket x 150M x 2KB, 40%% cache miss rate
+title = Avg. BgFetcher wait time (ms), 1 bucket x 150M x 2KB, 40%% cache miss rate
+summary = Read-heavy KV test (80/20), 4 nodes, 1 bucket x 150M x 2KB, 40%% cache miss rate
 larger_is_better = true
 
 [cluster]

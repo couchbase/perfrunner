@@ -85,7 +85,7 @@ class BgFetcherTest(KVTest):
 
     def run(self):
         super(BgFetcherTest, self).run()
-        self.reporter.post_to_sf(self.metric_helper.calc_avg_ep_bg_fetched())
+        self.reporter.post_to_sf(self.metric_helper.calc_avg_bg_wait_time())
 
 
 class DrainTest(KVTest):

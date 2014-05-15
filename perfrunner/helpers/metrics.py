@@ -142,6 +142,18 @@ class MetricHelper(object):
 
         return round(ep_bg_fetched)
 
+    def calc_avg_bg_wait_time(self):
+        query_params = self._get_query_params('avg_avg_bg_wait_time')
+
+        avg_bg_wait_time = []
+        for bucket in self.test_config.buckets:
+            db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
+            data = self.seriesly[db].query(query_params)
+            avg_bg_wait_time.append(data.values()[0][0])
+        avg_bg_wait_time = np.mean(avg_bg_wait_time) / 10 ** 3  # us -> ms
+
+        return round(avg_bg_wait_time)
+
     def calc_avg_couch_views_ops(self):
         query_params = self._get_query_params('avg_couch_views_ops')
 

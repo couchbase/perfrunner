@@ -250,6 +250,14 @@ class LogReporter(object):
                 fname = 'master_events_{}.log'.format(master.split(':')[0])
                 zh.writestr(zinfo_or_arcname=fname, bytes=master_events)
 
+    def save_expvar(self):
+        for idx, gateway_ip in enumerate(self.test.cluster_spec.gateways,
+                                         start=1):
+            expvar = self.test.request_helper.collect_expvar(gateway_ip)
+            fname = 'gateway_expvar_{}.json'.format(idx)
+            with open(fname, 'w') as fh:
+                fh.write(pretty_dict(expvar))
+
 
 class Reporter(BtrcReporter, SFReporter, LogReporter):
 

@@ -152,3 +152,4 @@ class PerfTest(object):
         if self.cluster_spec.gateways:
             self.remote.collect_info_gateway()
             self.remote.collect_info_gateload()
+            self.reporter.save_expvar()

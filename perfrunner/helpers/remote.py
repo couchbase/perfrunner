@@ -179,20 +179,20 @@ class RemoteLinuxHelper(object):
     @all_hosts
     def restart(self):
         logger.info('Restarting server')
-        run('/etc/init.d/couchbase-server restart')
+        run('numactl --interleave=all /etc/init.d/couchbase-server restart')
 
     @all_hosts
     def restart_with_alternative_num_vbuckets(self, num_vbuckets):
         logger.info('Changing number of vbuckets to {}'.format(num_vbuckets))
-        run('COUCHBASE_NUM_VBUCKETS={} /etc/init.d/couchbase-server restart'
+        run('COUCHBASE_NUM_VBUCKETS={} '
+            'numactl --interleave=all /etc/init.d/couchbase-server restart'
             .format(num_vbuckets))
 
     @all_hosts
     def restart_with_alternative_num_cpus(self, num_cpus):
-        logger.info('Changing number of vbuckets to {}'.format(num_cpus))
+        logger.info('Changing number of memcached threads to {}'.format(num_cpus))
         run('MEMCACHED_NUM_CPUS={} '
-            'numactl --interleave=all '
-            '/etc/init.d/couchbase-server restart'
+            'numactl --interleave=all /etc/init.d/couchbase-server restart'
             .format(num_cpus))
 
     @all_hosts

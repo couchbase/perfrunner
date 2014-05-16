@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 import json
 import time
 
@@ -52,29 +52,33 @@ class SyncGatewayGateloadTest(PerfTest):
     def collect_kpi(self):
         logger.info('Collecting Sync Gateway KPI')
 
-        criteria = {
-            95: self.test_config.gateload_settings.p95_avg_criteria,
-            99: self.test_config.gateload_settings.p99_avg_criteria,
-        }
+        criteria = OrderedDict((
+            (95, self.test_config.gateload_settings.p95_avg_criteria),
+            (99, self.test_config.gateload_settings.p99_avg_criteria),
+        ))
 
+        summary = defaultdict(dict)
         latencies = defaultdict(list)
         for idx, gateload in enumerate(self.cluster_spec.gateloads, start=1):
-            logger.info('Test results for {} ({}):'.format(gateload, idx))
             for p in criteria:
                 kpi = self.KPI.format(p)
                 latency = self.metric_helper.calc_push_latency(p=p, idx=idx)
+                summary[gateload][kpi] = latency
                 latencies[p].append(latency)
-                logger.info('{}: {}'.format(kpi, latency))
+        logger.info('Per node summary: {}'.format(pretty_dict(summary)))
 
+        pass_fail = dict()
         for p, criterion in criteria.items():
             kpi = self.KPI.format(p)
             average = np.mean(latencies[p])
             if average > criterion:
-                logger.warn('{}: {} - doesn\'t meet the criteria of {}'
-                            .format(kpi, average, criterion))
+                status = '{}: {} - doesn\'t meet the criteria of {}'\
+                    .format(kpi, average, criterion)
             else:
-                logger.info('{}: {} - meets the criteria of {}'
-                            .format(kpi, average, criterion))
+                status = '{}: {} - meets the criteria of {}'\
+                    .format(kpi, average, criterion)
+            pass_fail[kpi] = status
+        logger.info('Aggregated summary: {}'.format(pretty_dict(pass_fail)))
 
     @with_stats
     def workload(self):

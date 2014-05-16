@@ -318,30 +318,35 @@ class RemoteLinuxHelper(object):
     def start_gateway(self):
         logger.info('Starting Sync Gateway instances')
         put('templates/gateway_config.json', '/root/gateway_config.json')
+        put('scripts/sgw_test_config.sh', '/root/sgw_test_config.sh')
+        put('scripts/sgw_test_info.sh', '/root/sgw_test_info.sh')
+        put('scripts/sgw_check_logs.sh', '/root/sgw_check_logs.sh')
+        run('chmod 777 /root/sgw_*.sh')
         run('ulimit -n 65536; '
             'nohup /opt/couchbase-sync-gateway/bin/sync_gateway '
             '/root/gateway_config.json &>/root/gateway.log&', pty=False)
 
     @all_gateways
     def start_test_info(self):
-            put('scripts/sgw_test_config.sh', '/root/sgw_test_config.sh')
-            put('scripts/sgw_test_info.sh', '/root/sgw_test_info.sh')
-            run('chmod 777 /root/sgw_*.sh')
             logger.info('Starting Sync Gateway sgw_test_info.sh')
             run('nohup /root/sgw_test_info.sh &> sgw_test_info.txt &', pty=False)
 
     @all_gateways
     def collect_info_gateway(self):
-        logger.info('Collecting Sync Gateway diagnostic information')
         _if = self.detect_if()
         local_ip = self.detect_ip(_if)
-        index = self.cluster_spec.gateways.index(local_ip) + 1
+        index = self.cluster_spec.gateways.index(local_ip)
+        logger.info('Collecting diagnostic information from sync gateway_{} {}'.format(index, local_ip))
         run('rm -f gateway.log.gz', warn_only=True)
         run('gzip gateway.log', warn_only=True)
+        put('scripts/sgw_check_logs.sh', '/root/sgw_check_logs.sh')
+        run('chmod 777 /root/sgw_*.sh')
+        run('/root/sgw_check_logs.sh gateway > sgw_check_logs.out', warn_only=True)
         get('gateway.log.gz', 'gateway.log_{}.gz'.format(index))
         get('test_info.txt', 'test_info_{}.txt'.format(index))
         get('sgw_test_info.txt', 'sgw_test_info_{}.txt'.format(index))
         get('gateway_config.json', 'gateway_config_{}.json'.format(index))
+        get('sgw_check_logs.out', 'sgw_check_logs_gateway_{}.out'.format(index))
 
     @all_gateloads
     def uninstall_package_gateload(self):
@@ -372,20 +377,26 @@ class RemoteLinuxHelper(object):
 
         config_fname = 'templates/gateload_config_{}.json'.format(idx)
         put(config_fname, '/root/gateload_config.json')
+        put('scripts/sgw_check_logs.sh', '/root/sgw_check_logs.sh')
+        run('chmod 777 /root/sgw_*.sh')
         run('ulimit -n 65536; nohup /opt/gocode/bin/gateload '
             '-workload /root/gateload_config.json &>/root/gateload.log&',
             pty=False)
 
     @all_gateloads
     def collect_info_gateload(self):
-        logger.info('Collecting Gateload diagnostic information')
         _if = self.detect_if()
         local_ip = self.detect_ip(_if)
         index = self.cluster_spec.gateloads.index(local_ip)
+        logger.info('Collecting diagnostic information from gateload_{} {}'.format(index, local_ip))
         run('rm -f gateload.log.gz', warn_only=True)
         run('gzip gateload.log', warn_only=True)
+        put('scripts/sgw_check_logs.sh', '/root/sgw_check_logs.sh')
+        run('chmod 777 /root/sgw_*.sh')
+        run('/root/sgw_check_logs.sh gateload > sgw_check_logs.out', warn_only=True)
         get('gateload.log.gz', 'gateload.log-{}.gz'.format(index))
         get('gateload_config.json', 'gateload_config_{}.json'.format(index))
+        get('sgw_check_logs.out', 'sgw_check_logs_gateload_{}.out'.format(index))
 
 
 class RemoteWindowsHelper(RemoteLinuxHelper):

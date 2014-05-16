@@ -152,4 +152,14 @@ class PerfTest(object):
         if self.cluster_spec.gateways:
             self.remote.collect_info_gateway()
             self.remote.collect_info_gateload()
+            items = []
+            for i in range(self.cluster_spec.num_gateways):
+                items.append('gateway_{}'.format(i))
+            for i in range(self.cluster_spec.num_gateways):
+                items.append('gateload_{}'.format(i))
+            with open('sgw_check_logs_gateload.txt', 'w') as outfile:
+                for item in items:
+                    outfile.write('\nLog checking at {}:\n'.format(item))
+                    with open('sgw_check_logs_{}.out'.format(item)) as infile:
+                        outfile.write(infile.read())
             self.reporter.save_expvar()

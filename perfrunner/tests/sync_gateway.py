@@ -65,15 +65,15 @@ class SyncGatewayGateloadTest(PerfTest):
                             .format(p, latency))
         criteria = {
             95: self.test_config.gateload_settings.p95_avg_criteria,
-            99: self.test_config.gateload_settings.p99_avg_criteria
+            99: self.test_config.gateload_settings.p99_avg_criteria,
         }
         for p in (95, 99):
             average = np.mean(latencies[p])
             if average > criteria[p]:
-                logger.info('\tPushToSubscriberInteractive/p{} average: {} - does not meet the criteria of {}'
+                logger.warn('\tPushToSubscriberInteractive/p{} average: {} - does not meet the criteria of {}'
                             .format(p, average, criteria[p]))
             else:
-                logger.warn('\tPushToSubscriberInteractive/p{} average: {} - meet the criteria of {}'
+                logger.info('\tPushToSubscriberInteractive/p{} average: {} - meet the criteria of {}'
                             .format(p, average, criteria[p]))
 
     @with_stats

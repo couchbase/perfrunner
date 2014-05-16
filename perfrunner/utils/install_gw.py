@@ -3,6 +3,7 @@ from optparse import OptionParser
 
 import requests
 from logger import logger
+from requests.exceptions import ConnectionError
 
 from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.remote import RemoteHelper
@@ -35,7 +36,7 @@ class GatewayInstaller(object):
         for filename, url in self.get_expected_locations():
             try:
                 status_code = requests.head(url).status_code
-            except requests.exceptions.ConnectionError:
+            except ConnectionError:
                 pass
             else:
                 if status_code == 200:

@@ -3,6 +3,7 @@ from optparse import OptionParser
 
 import requests
 from logger import logger
+from requests.exceptions import ConnectionError
 
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import ClusterSpec
@@ -56,7 +57,7 @@ class CouchbaseInstaller(object):
                 url = '{}{}'.format(base, filename)
                 try:
                     status_code = requests.head(url).status_code
-                except requests.exceptions.ConnectionError:
+                except ConnectionError:
                     continue
                 else:
                     if status_code == 200:

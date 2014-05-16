@@ -67,7 +67,7 @@ class SyncGatewayGateloadTest(PerfTest):
                 latencies[p].append(latency)
         logger.info('Per node summary: {}'.format(pretty_dict(summary)))
 
-        pass_fail = dict()
+        pass_fail = []
         for p, criterion in criteria.items():
             kpi = self.KPI.format(p)
             average = np.mean(latencies[p])
@@ -77,7 +77,7 @@ class SyncGatewayGateloadTest(PerfTest):
             else:
                 status = '{}: {} - meets the criteria of {}'\
                     .format(kpi, average, criterion)
-            pass_fail[kpi] = status
+            pass_fail.append(status)
         logger.info('Aggregated summary: {}'.format(pretty_dict(pass_fail)))
 
     @with_stats

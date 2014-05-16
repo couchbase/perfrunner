@@ -16,6 +16,8 @@ from perfrunner.tests import PerfTest
 
 class SyncGatewayGateloadTest(PerfTest):
 
+    KPI = 'PushToSubscriberInteractive/p{} average'
+
     def __init__(self, *args, **kwargs):
         super(SyncGatewayGateloadTest, self).__init__(*args, **kwargs)
         self.metric_helper = SgwMetricHelper(self)
@@ -48,28 +50,31 @@ class SyncGatewayGateloadTest(PerfTest):
                 fh.write(pretty_dict(template))
 
     def collect_kpi(self):
-        logger.info('Collecting KPI')
+        logger.info('Collecting Sync Gateway KPI')
 
-        latencies = defaultdict(list)
-        for idx, gateload in enumerate(self.cluster_spec.gateloads, start=1):
-            logger.info('Test results for {} ({}):'.format(gateload, idx))
-            for p in (95, 99):
-                latency = self.metric_helper.calc_push_latency(p=p, idx=idx)
-                latencies[p].append(latency)
-                logger.info('\tPushToSubscriberInteractive/p{} average: {}'
-                            .format(p, latency))
         criteria = {
             95: self.test_config.gateload_settings.p95_avg_criteria,
             99: self.test_config.gateload_settings.p99_avg_criteria,
         }
-        for p in (95, 99):
+
+        latencies = defaultdict(list)
+        for idx, gateload in enumerate(self.cluster_spec.gateloads, start=1):
+            logger.info('Test results for {} ({}):'.format(gateload, idx))
+            for p in criteria:
+                kpi = self.KPI.format(p)
+                latency = self.metric_helper.calc_push_latency(p=p, idx=idx)
+                latencies[p].append(latency)
+                logger.info('{}: {}'.format(kpi, latency))
+
+        for p, criterion in criteria:
+            kpi = self.KPI.format(p)
             average = np.mean(latencies[p])
-            if average > criteria[p]:
-                logger.warn('\tPushToSubscriberInteractive/p{} average: {} - does not meet the criteria of {}'
-                            .format(p, average, criteria[p]))
+            if average > criterion:
+                logger.warn('{}: {} - doesn\'t meet the criteria of {}'
+                            .format(kpi, average, criterion))
             else:
-                logger.info('\tPushToSubscriberInteractive/p{} average: {} - meet the criteria of {}'
-                            .format(p, average, criteria[p]))
+                logger.info('{}: {} - meets the criteria of {}'
+                            .format(kpi, average, criterion))
 
     @with_stats
     def workload(self):

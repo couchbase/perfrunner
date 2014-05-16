@@ -17,12 +17,12 @@ class CouchbaseInstaller(object):
     LATEST_BUILDS = 'http://builds.hq.northscale.net/latestbuilds/'
 
     def __init__(self, cluster_spec, options):
-        self.remote_helper = RemoteHelper(cluster_spec, options.verbose)
+        self.remote = RemoteHelper(cluster_spec, options.verbose)
         self.cluster_spec = cluster_spec
 
-        arch = self.remote_helper.detect_arch()
-        pkg = self.remote_helper.detect_pkg()
-        openssl = self.remote_helper.detect_openssl(pkg)
+        arch = self.remote.detect_arch()
+        pkg = self.remote.detect_pkg()
+        openssl = self.remote.detect_openssl(pkg)
 
         self.build = Build(arch, pkg, options.version, openssl, options.toy)
         logger.info('Target build info: {}'.format(self.build))
@@ -66,19 +66,18 @@ class CouchbaseInstaller(object):
         logger.interrupt('Target build not found')
 
     def kill_processes(self):
-        self.remote_helper.kill_processes()
+        self.remote.kill_processes()
 
     def uninstall_package(self):
-        self.remote_helper.uninstall_package(self.build.pkg)
+        self.remote.uninstall_package(self.build.pkg)
 
     def clean_data(self):
-        self.remote_helper.clean_data()
+        self.remote.clean_data()
 
     def install_package(self):
         filename, url = self.find_package()
         version = self.build.version.split('-')[0]
-        self.remote_helper.install_package(self.build.pkg, url, filename,
-                                           version)
+        self.remote.install_package(self.build.pkg, url, filename, version)
 
     def install(self):
         self.kill_processes()

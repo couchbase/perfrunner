@@ -26,7 +26,7 @@ class GatewayInstaller(object):
     }
 
     def __init__(self, cluster_spec, test_config, options):
-        self.remote_helper = RemoteHelper(cluster_spec, options.verbose)
+        self.remote = RemoteHelper(cluster_spec, options.verbose)
         self.cluster_spec = cluster_spec
         self.test_config = test_config
         self.version = options.version
@@ -52,25 +52,25 @@ class GatewayInstaller(object):
                 yield filename, url
 
     def kill_processes_gateway(self):
-        self.remote_helper.kill_processes_gateway()
+        self.remote.kill_processes_gateway()
 
     def kill_processes_gateload(self):
-        self.remote_helper.kill_processes_gateload()
+        self.remote.kill_processes_gateload()
 
     def uninstall_package_gateway(self):
-        self.remote_helper.uninstall_package_gateway()
-        self.remote_helper.clean_gateway()
+        self.remote.uninstall_package_gateway()
+        self.remote.clean_gateway()
 
     def uninstall_package_gateload(self):
-        self.remote_helper.uninstall_package_gateload()
-        self.remote_helper.clean_gateload()
+        self.remote.uninstall_package_gateload()
+        self.remote.clean_gateload()
 
     def install_package_gateway(self):
         filename, url = self.find_package()
-        self.remote_helper.install_package_gateway(url, filename)
+        self.remote.install_package_gateway(url, filename)
 
     def install_package_gateload(self):
-        self.remote_helper.install_package_gateload()
+        self.remote.install_package_gateload()
 
     def start_sync_gateways(self):
         with open('templates/gateway_config_template.json') as fh:
@@ -86,7 +86,7 @@ class GatewayInstaller(object):
 
         with open('templates/gateway_config.json', 'w') as fh:
             fh.write(pretty_dict(template))
-        self.remote_helper.start_gateway()
+        self.remote.start_gateway()
 
     def create_bash_config(self):
         logger.info('Creating bash configuration')
@@ -109,7 +109,7 @@ class GatewayInstaller(object):
         for i, gateway_ip in enumerate(self.cluster_spec.gateways, start=1):
             self.request_helper.wait_for_gateway_to_start(i, gateway_ip)
             self.request_helper.turn_off_gateway_logging(i, gateway_ip)
-        self.remote_helper.start_test_info()
+        self.remote.start_test_info()
 
 
 def main():

@@ -66,7 +66,7 @@ class SyncGatewayGateloadTest(PerfTest):
                 latencies[p].append(latency)
                 logger.info('{}: {}'.format(kpi, latency))
 
-        for p, criterion in criteria:
+        for p, criterion in criteria.items():
             kpi = self.KPI.format(p)
             average = np.mean(latencies[p])
             if average > criterion:

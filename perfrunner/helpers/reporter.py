@@ -258,6 +258,16 @@ class LogReporter(object):
             with open(fname, 'w') as fh:
                 fh.write(pretty_dict(expvar))
 
+    def check_sgw_logs(self):
+        num_gateways = self.test.cluster_spec.num_gateways
+        items = ['gateway_{}'.format(i) for i in range(num_gateways)]
+        items += ['gateload_{}'.format(i) for i in range(num_gateways)]
+        with open('sgw_check_logs_gateload.txt', 'w') as outfile:
+            for item in items:
+                outfile.write('\nLog checking at {}:\n'.format(item))
+                with open('sgw_check_logs_{}.out'.format(item)) as infile:
+                    outfile.write(infile.read())
+
 
 class Reporter(BtrcReporter, SFReporter, LogReporter):
 

@@ -57,27 +57,28 @@ class GatewayInstaller(object):
     def kill_processes_gateload(self):
         self.remote.kill_processes_gateload()
 
-    def uninstall_package_gateway(self):
-        self.remote.uninstall_package_gateway()
+    def uninstall_gateway(self):
+        self.remote.uninstall_gateway()
         self.remote.clean_gateway()
 
-    def uninstall_package_gateload(self):
-        self.remote.uninstall_package_gateload()
+    def uninstall_gateload(self):
+        self.remote.uninstall_gateload()
         self.remote.clean_gateload()
 
-    def install_package_gateway(self):
+    def install_gateway(self):
         filename, url = self.find_package()
-        self.remote.install_package_gateway(url, filename)
+        self.remote.install_gateway(url, filename)
 
-    def install_package_gateload(self):
-        self.remote.install_package_gateload()
+    def install_gateload(self):
+        self.remote.install_gateload()
 
     def start_sync_gateways(self):
         with open('templates/gateway_config_template.json') as fh:
             template = json.load(fh)
 
         db_master = self.cluster_spec.yield_masters().next()
-        template['databases']['db']['server'] = "http://bucket-1:password@{}/".format(db_master)
+        template['databases']['db']['server'] = \
+            'http://bucket-1:password@{}/'.format(db_master)
         template.update({
             'maxIncomingConnections': self.test_config.gateway_settings.conn_in,
             'maxCouchbaseConnections': self.test_config.gateway_settings.conn_db,
@@ -99,16 +100,19 @@ class GatewayInstaller(object):
 
     def install(self):
         self.kill_processes_gateway()
-        self.uninstall_package_gateway()
-        self.install_package_gateway()
+        self.uninstall_gateway()
+        self.install_gateway()
+
         self.kill_processes_gateload()
-        self.uninstall_package_gateload()
-        self.install_package_gateload()
+        self.uninstall_gateload()
+        self.install_gateload()
+
         self.create_bash_config()
         self.start_sync_gateways()
         for i, gateway_ip in enumerate(self.cluster_spec.gateways, start=1):
             self.request_helper.wait_for_gateway_to_start(i, gateway_ip)
             self.request_helper.turn_off_gateway_logging(i, gateway_ip)
+
         self.remote.start_test_info()
 
 

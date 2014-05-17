@@ -69,7 +69,7 @@ class CouchbaseInstaller(object):
         self.remote.kill_processes()
 
     def uninstall_package(self):
-        self.remote.uninstall_package(self.build.pkg)
+        self.remote.uninstall_couchbase(self.build.pkg)
 
     def clean_data(self):
         self.remote.clean_data()
@@ -77,7 +77,7 @@ class CouchbaseInstaller(object):
     def install_package(self):
         filename, url = self.find_package()
         version = self.build.version.split('-')[0]
-        self.remote.install_package(self.build.pkg, url, filename, version)
+        self.remote.install_couchbase(self.build.pkg, url, filename, version)
 
     def install(self):
         self.kill_processes()

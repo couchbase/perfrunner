@@ -74,7 +74,8 @@ class RemoteLinuxHelper(object):
 
     ARCH = {'i386': 'x86', 'x86_64': 'x86_64', 'unknown': 'x86_64'}
 
-    ROOT_DIR = '/opt/couchbase'
+    CB_DIR = '/opt/couchbase'
+    MONGO_DIR = '/opt/mongodb'
 
     def __init__(self, cluster_spec, os):
         self.os = os
@@ -136,7 +137,7 @@ class RemoteLinuxHelper(object):
 
         fname = '/tmp/{}.zip'.format(uhex())
         try:
-            r = run('{}/bin/cbcollect_info {}'.format(self.ROOT_DIR, fname),
+            r = run('{}/bin/cbcollect_info {}'.format(self.CB_DIR, fname),
                     warn_only=True, timeout=1200)
         except CommandTimeout:
             logger.error('cbcollect_info timed out')
@@ -149,16 +150,16 @@ class RemoteLinuxHelper(object):
     def clean_data(self):
         for path in self.cluster_spec.paths:
             run('rm -fr {}/*'.format(path))
-        run('rm -fr {}'.format(self.ROOT_DIR))
+        run('rm -fr {}'.format(self.CB_DIR))
 
     @all_hosts
     def kill_processes(self):
-        logger.info('Killing beam.smp, memcached and epmd')
-        run('killall -9 beam.smp memcached epmd cbq-engine',
+        logger.info('Killing beam.smp, memcached, epmd, cbq-engine, mongod')
+        run('killall -9 beam.smp memcached epmd cbq-engine mongod',
             warn_only=True, quiet=True)
 
     @all_hosts
-    def uninstall_package(self, pkg):
+    def uninstall_couchbase(self, pkg):
         logger.info('Uninstalling Couchbase Server')
         if pkg == 'deb':
             run('yes | apt-get remove couchbase-server', quiet=True)
@@ -166,7 +167,7 @@ class RemoteLinuxHelper(object):
             run('yes | yum remove couchbase-server', quiet=True)
 
     @all_hosts
-    def install_package(self, pkg, url, filename, version=None):
+    def install_couchbase(self, pkg, url, filename, version=None):
         self.wget(url, outdir='/tmp')
 
         logger.info('Installing Couchbase Server')
@@ -293,21 +294,20 @@ class RemoteLinuxHelper(object):
                 .format(gateload_ip, i), pty=False)
 
     @all_gateways
-    def install_package_gateway(self, url, filename):
+    def install_gateway(self, url, filename):
         logger.info('Installing Sync Gateway package - {}'.format(filename))
         self.wget(url, outdir='/tmp')
         run('yes | rpm -i /tmp/{}'.format(filename))
 
     @all_gateways
-    def uninstall_package_gateway(self):
+    def uninstall_gateway(self):
         logger.info('Uninstalling Sync Gateway package')
         run('yes | yum remove couchbase-sync-gateway')
 
     @all_gateways
     def kill_processes_gateway(self):
         logger.info('Killing Sync Gateway')
-        run('killall -9 sync_gateway', quiet=True)
-        run('killall -9 sgw_test_info.sh', quiet=True)
+        run('killall -9 sync_gateway sgw_test_info.sh', quiet=True)
 
     @all_gateways
     def clean_gateway(self):
@@ -349,12 +349,12 @@ class RemoteLinuxHelper(object):
         get('sgw_check_logs.out', 'sgw_check_logs_gateway_{}.out'.format(index))
 
     @all_gateloads
-    def uninstall_package_gateload(self):
+    def uninstall_gateload(self):
         logger.info('Removing Gateload binaries')
         run('rm -f /opt/gocode/bin/gateload', quiet=True)
 
     @all_gateloads
-    def install_package_gateload(self):
+    def install_gateload(self):
         logger.info('Installing Gateload')
         run('go get -u github.com/couchbaselabs/gateload')
 
@@ -398,10 +398,30 @@ class RemoteLinuxHelper(object):
         get('gateload_config.json', 'gateload_config_{}.json'.format(index))
         get('sgw_check_logs.out', 'sgw_check_logs_gateload_{}.out'.format(index))
 
+    @all_hosts
+    def clean_mongodb(self):
+        for path in self.cluster_spec.paths:
+            run('rm -fr {}/*'.format(path))
+        run('rm -fr {}'.format(self.MONGO_DIR))
+
+    @all_hosts
+    def install_mongodb(self, url):
+        self.wget(url, outdir='/tmp')
+        archive = url.split('/')[-1]
+
+        logger.info('Installing MongoDB')
+
+        run('mkdir {}'.format(self.MONGO_DIR))
+        run('tar xzf {} -C {} --strip-components 1'.format(archive,
+                                                           self.MONGO_DIR))
+        run('numactl --interleave=all {}/bin/mongod '
+            '--dbpath={} --fork --logpath /tmp/mongodb.log'
+            .format(self.MONGO_DIR, self.cluster_spec.paths[0]))
+
 
 class RemoteWindowsHelper(RemoteLinuxHelper):
 
-    ROOT_DIR = '/cygdrive/c/Program\ Files/Couchbase/Server'
+    CB_DIR = '/cygdrive/c/Program\ Files/Couchbase/Server'
 
     VERSION_FILE = '/cygdrive/c/Program Files/Couchbase/Server/VERSION.txt'
 
@@ -444,7 +464,7 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
         run('rm -f *.zip')
 
         fname = '{}.zip'.format(uhex())
-        r = run('{}/bin/cbcollect_info.exe {}'.format(self.ROOT_DIR, fname),
+        r = run('{}/bin/cbcollect_info.exe {}'.format(self.CB_DIR, fname),
                 warn_only=True)
         if not r.return_code:
             get('{}'.format(fname))
@@ -466,10 +486,10 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
     def clean_installation(self):
         put('scripts/clean.reg', '/cygdrive/c/clean.reg')
         run('regedit.exe /s "C:\\clean.reg"', warn_only=True)
-        run('rm -fr {}'.format(self.ROOT_DIR))
+        run('rm -fr {}'.format(self.CB_DIR))
 
     @all_hosts
-    def uninstall_package(self, pkg):
+    def uninstall_couchbase(self, pkg):
         logger.info('Uninstalling Couchbase Server')
 
         if self.exists(self.VERSION_FILE):
@@ -500,7 +520,7 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
             '/cygdrive/c/uninstall.iss')
 
     @all_hosts
-    def install_package(self, pkg, url, filename, version=None):
+    def install_couchbase(self, pkg, url, filename, version=None):
         self.kill_installer()
         run('rm -fr setup.exe')
         self.wget(url, outfile='setup.exe')

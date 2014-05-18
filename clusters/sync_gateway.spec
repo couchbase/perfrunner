@@ -17,10 +17,10 @@ num_gateways = 0
 
 [gateways]
 hosts =
-    172.23.96.63
     172.23.96.66
     172.23.96.67
     172.23.96.68
+    172.23.96.63
 
 [gateloads]
 hosts =

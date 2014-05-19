@@ -77,6 +77,8 @@ class RemoteLinuxHelper(object):
     CB_DIR = '/opt/couchbase'
     MONGO_DIR = '/opt/mongodb'
 
+    PROCESSES = ('beam.smp', 'memcached', 'epmd', 'cbq-engine', 'mongod')
+
     def __init__(self, cluster_spec, os):
         self.os = os
         self.hosts = tuple(cluster_spec.yield_hostnames())
@@ -154,8 +156,8 @@ class RemoteLinuxHelper(object):
 
     @all_hosts
     def kill_processes(self):
-        logger.info('Killing beam.smp, memcached, epmd, cbq-engine, mongod')
-        run('killall -9 beam.smp memcached epmd cbq-engine mongod',
+        logger.info('Killing {}'.format(', '.join(self.PROCESSES)))
+        run('killall -9 {}'.format(' '.join(self.PROCESSES)),
             warn_only=True, quiet=True)
 
     @all_hosts

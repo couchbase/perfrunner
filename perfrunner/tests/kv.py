@@ -325,5 +325,8 @@ class ReplicationTest(PerfTest):
         }
         logger.info(pretty_dict(summary))
 
+        if hasattr(self, 'experiment'):
+            self.experiment.post_results(summary['95th'])
+
     def run(self):
         self.measure_latency()

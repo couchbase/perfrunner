@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.kv
-class = ReplicationTest
-title = ReplicateTo=1 latency (ms), 1 bucket x 1B x 1KB, DGM
+class = ObserveLatencyTest
+title = PersistTo=1 latency (ms), 1 bucket x 500M x 1KB, DGM
 larger_is_better = false
 
 [cluster]
@@ -13,13 +13,13 @@ num_buckets = 1
 db_percentage = 100
 
 [load]
-ops = 1000000000
+ops = 500000000
 size = 800
 workers = 10
 async = 1
 
 [hot_load]
-items = 1000000000
+items = 500000000
 size = 800
 workers = 5
 working_set = 10
@@ -30,7 +30,7 @@ reads = 20
 updates = 76
 deletes = 2
 throughput = 3125
-items = 1000000000
+items = 500000000
 size = 800
 workers = 12
 working_set = 10

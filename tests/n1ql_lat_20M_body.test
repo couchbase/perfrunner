@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.tuq
 class = TuqTest
-title = 1 node, 1M docs, 100 sets/sec, querying large fields
+title = 1 node, 20M docs, 100 sets/sec, querying large fields
 summary = Write-only query test, 1 node, 1 bucket x 20M x 1KB, 100 sets/sec, 100 qps
 larger_is_better = false
 

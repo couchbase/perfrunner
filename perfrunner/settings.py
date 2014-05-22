@@ -94,19 +94,13 @@ class ClusterSpec(Config):
     @safe
     def gateways(self):
         gateways = self.config.get('gateways', 'hosts').split()
-        if self.num_gateways == 0:
-            return gateways
-        else:
-            return gateways[:self.num_gateways]
+        return gateways[:self.num_gateways]
 
     @property
     @safe
     def gateloads(self):
         gateloads = self.config.get('gateloads', 'hosts').split()
-        if self.num_gateways == 0:
-            return gateloads
-        else:
-            return gateloads[:self.num_gateways]
+        return gateloads[:self.num_gateways]
 
     @property
     @safe

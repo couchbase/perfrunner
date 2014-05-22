@@ -101,11 +101,6 @@ class ClusterSpec(Config):
 
     @property
     @safe
-    def gateloads_cluster(self):
-        return self.config.get('gateloads', 'hosts').split()
-
-    @property
-    @safe
     def gateloads(self):
         gateloads = self.config.get('gateloads', 'hosts').split()
         if self.num_gateways == 0:

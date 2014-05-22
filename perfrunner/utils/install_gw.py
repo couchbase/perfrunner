@@ -9,7 +9,6 @@ from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import SyncGatewayRequestHelper
 from perfrunner.settings import ClusterSpec
-from perfrunner.settings import SGW_SERIESLY_HOST
 from perfrunner.settings import TestConfig
 
 
@@ -89,15 +88,6 @@ class GatewayInstaller(object):
             fh.write(pretty_dict(template))
         self.remote.start_gateway()
 
-    def create_sgw_test_config(self):
-        logger.info('Creating bash configuration')
-        with open('scripts/sgw_test_config.sh', 'w') as fh:
-            fh.write('#!/bin/sh\n')
-            fh.write('gateways_ip="{}"\n'.format(' '.join(self.cluster_spec.gateways)))
-            fh.write('gateloads_ip="{}"\n'.format(' '.join(self.cluster_spec.gateloads)))
-            fh.write('dbs_ip="{}"\n'.format(' '.join(self.cluster_spec.yield_hostnames())))
-            fh.write('seriesly_ip={}\n'.format(SGW_SERIESLY_HOST))
-
     def install(self):
         self.kill_processes_gateway()
         self.uninstall_gateway()
@@ -111,9 +101,6 @@ class GatewayInstaller(object):
         for i, gateway_ip in enumerate(self.cluster_spec.gateways, start=1):
             self.request_helper.wait_for_gateway_to_start(i, gateway_ip)
             self.request_helper.turn_off_gateway_logging(i, gateway_ip)
-
-        self.create_sgw_test_config()
-        self.remote.start_test_info()
 
 
 def main():

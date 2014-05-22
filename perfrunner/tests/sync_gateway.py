@@ -23,6 +23,19 @@ class SyncGatewayGateloadTest(PerfTest):
         self.metric_helper = SgwMetricHelper(self)
         self.request_helper = SyncGatewayRequestHelper()
 
+    def create_sgw_test_config(self):
+        logger.info('Creating bash configuration')
+        with open('scripts/sgw_test_config.sh', 'w') as fh:
+            fh.write('#!/bin/sh\n')
+            fh.write('gateways_ip="{}"\n'.format(' '.join(self.cluster_spec.gateways)))
+            fh.write('gateloads_ip="{}"\n'.format(' '.join(self.cluster_spec.gateloads)))
+            fh.write('dbs_ip="{}"\n'.format(' '.join(self.cluster_spec.yield_hostnames())))
+            fh.write('seriesly_ip={}\n'.format(SGW_SERIESLY_HOST))
+
+    def start_test_info(self):
+        self.create_sgw_test_config()
+        self.remote.start_test_info()
+
     def start_samplers(self):
         logger.info('Creating seriesly dbs')
         seriesly = Seriesly(host='{}'.format(SGW_SERIESLY_HOST))
@@ -88,11 +101,13 @@ class SyncGatewayGateloadTest(PerfTest):
         time.sleep(self.test_config.gateload_settings.run_time)
 
     def run(self):
+        self.start_test_info()
+
         self.generate_gateload_configs()
         self.remote.start_gateload()
-
         for idx, gateload in enumerate(self.cluster_spec.gateloads, start=1):
             self.request_helper.wait_for_gateload_to_start(idx, gateload)
+
         self.remote.restart_seriesly()
         self.request_helper.wait_for_seriesly_to_start(SGW_SERIESLY_HOST)
         self.start_samplers()

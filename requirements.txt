@@ -5,6 +5,7 @@ couchbase==1.2.0
 decorator
 fabric==1.8.0
 flake8==2.1.0
+jinja2==2.7.2
 logger
 git+https://github.com/pavel-paulau/mc_bin_client.git#egg=mc_bin_client
 mock

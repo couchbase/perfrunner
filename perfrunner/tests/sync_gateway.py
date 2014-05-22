@@ -3,6 +3,7 @@ import json
 import time
 
 import numpy as np
+from jinja2 import Environment, FileSystemLoader
 from logger import logger
 from seriesly import Seriesly
 
@@ -25,12 +26,17 @@ class SyncGatewayGateloadTest(PerfTest):
 
     def create_sgw_test_config(self):
         logger.info('Creating bash configuration')
+
+        loader = FileSystemLoader('templates')
+        env = Environment(loader=loader)
+        template = env.get_template('sgw_test_config.sh')
         with open('scripts/sgw_test_config.sh', 'w') as fh:
-            fh.write('#!/bin/sh\n')
-            fh.write('gateways_ip="{}"\n'.format(' '.join(self.cluster_spec.gateways)))
-            fh.write('gateloads_ip="{}"\n'.format(' '.join(self.cluster_spec.gateloads)))
-            fh.write('dbs_ip="{}"\n'.format(' '.join(self.cluster_spec.yield_hostnames())))
-            fh.write('seriesly_ip={}\n'.format(SGW_SERIESLY_HOST))
+            fh.write(template.render(
+                gateways_ip=' '.join(self.cluster_spec.gateways),
+                gateloads_ip=' '.join(self.cluster_spec.gateloads),
+                dbs_ip=' '.join(self.cluster_spec.yield_hostnames()),
+                seriesly_ip=SGW_SERIESLY_HOST,
+            ))
 
     def start_test_info(self):
         self.create_sgw_test_config()

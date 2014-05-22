@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.query
 class = DevQueryLatencyTest
-title = 1 node, 20M docs, 100 sets/sec, 3 views, stale=false, compute-intensive queries
+title = 1 node, 20M docs, 3 views, 100 updates/sec, 100 queries/sec, stale=false, compute-intensive queries
 summary = Write-only query test, 1 node, 1 bucket x 20M x 1KB, 3 views, 100 sets/sec, 100 qps
 larger_is_better = false
 

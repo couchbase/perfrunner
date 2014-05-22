@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.xdcr
 class = XdcrWithViewsTest
-title = 5 -> 5 UniDir, 2 buckets x 500M x 1KB, DGM, 1 x 1 views, 10K SETs/sec, LAN
+title = 5 -> 5 UniDir, 2 buckets x 500M x 1KB, 1 x 1 views, 10K SETs/sec, LAN
 summary = Mixed KV + XDCR test, 5 -> 5 UniDir, 2 buckets x 500M x 1KB, DGM, 10K SETs/sec, LAN
 larger_is_better = false
 

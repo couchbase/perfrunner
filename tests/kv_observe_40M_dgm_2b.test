@@ -1,8 +1,8 @@
 [test_case]
 module = perfrunner.tests.kv
 class = ObserveLatencyTest
-title = PersistTo=1 latency (ms), 5K mutations/sec, 2 buckets x 40M x 2KB, DGM
-summary = Write-heavy KV test (80/20), 4 nodes, 2 buckets x 40M x 2KB, DGM, 6K ops/sec
+title = PersistTo=1 latency (ms), 2 buckets x 40M x 2KB, 1.25K mutations/sec/node
+summary = Write-heavy KV test (80/20), 4 nodes, 2 buckets x 40M x 2KB, DGM, 6K mutations/sec
 larger_is_better = false
 
 [cluster]

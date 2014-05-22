@@ -1,7 +1,7 @@
 [test_case]
 module = perfrunner.tests.kv
 class = DrainTest
-title = Avg. write queue (10³ items), 1 bucket x 100M x 1KB, DGM, 3K updates/sec/node
+title = Avg. write queue (10³ items), 1 bucket x 100M x 1KB, 3K updates/sec/node
 summary = Write-heavy KV test (80/20), 2 nodes, 1 buckets x 100M x 1KB, 3K updates/sec/node
 larger_is_better = false
 

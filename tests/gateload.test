@@ -1,8 +1,8 @@
 [test_case]
 module = perfrunner.tests.sync_gateway
 class = SyncGatewayGateloadTest
-title = Gateload test for sync gateway performance
-summary = 4 sync gateways in parallet, each with 5K users.  compression = 1  conn_db = 16  conn_in = 0
+title = Gateload test for Sync Gateway performance
+summary = 4 Sync Gateways in parallel, each with 5K users, compression ON, conn_db = 16, conn_in = 0
 use_workers = 0
 
 [cluster]

@@ -322,7 +322,6 @@ class RemoteLinuxHelper(object):
         put('templates/gateway_config.json', '/root/gateway_config.json')
         put('scripts/sgw_test_config.sh', '/root/sgw_test_config.sh')
         put('scripts/sgw_test_info.sh', '/root/sgw_test_info.sh')
-        put('scripts/sgw_check_logs.sh', '/root/sgw_check_logs.sh')
         run('chmod 777 /root/sgw_*.sh')
         run('ulimit -n 65536; '
             'nohup /opt/couchbase-sync-gateway/bin/sync_gateway '

@@ -320,17 +320,17 @@ class RemoteLinuxHelper(object):
     def start_gateway(self):
         logger.info('Starting Sync Gateway instances')
         put('templates/gateway_config.json', '/root/gateway_config.json')
-        put('scripts/sgw_test_config.sh', '/root/sgw_test_config.sh')
-        put('scripts/sgw_test_info.sh', '/root/sgw_test_info.sh')
-        run('chmod 777 /root/sgw_*.sh')
         run('ulimit -n 65536; '
             'nohup /opt/couchbase-sync-gateway/bin/sync_gateway '
             '/root/gateway_config.json &>/root/gateway.log&', pty=False)
 
     @all_gateways
     def start_test_info(self):
-            logger.info('Starting Sync Gateway sgw_test_info.sh')
-            run('nohup /root/sgw_test_info.sh &> sgw_test_info.txt &', pty=False)
+        logger.info('Starting Sync Gateway sgw_test_info.sh')
+        put('scripts/sgw_test_config.sh', '/root/sgw_test_config.sh')
+        put('scripts/sgw_test_info.sh', '/root/sgw_test_info.sh')
+        run('chmod 777 /root/sgw_*.sh')
+        run('nohup /root/sgw_test_info.sh &> sgw_test_info.txt &', pty=False)
 
     @all_gateways
     def collect_info_gateway(self):

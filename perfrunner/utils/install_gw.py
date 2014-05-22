@@ -89,7 +89,7 @@ class GatewayInstaller(object):
             fh.write(pretty_dict(template))
         self.remote.start_gateway()
 
-    def create_bash_config(self):
+    def create_sgw_test_config(self):
         logger.info('Creating bash configuration')
         with open('scripts/sgw_test_config.sh', 'w') as fh:
             fh.write('#!/bin/sh\n')
@@ -107,12 +107,12 @@ class GatewayInstaller(object):
         self.uninstall_gateload()
         self.install_gateload()
 
-        self.create_bash_config()
         self.start_sync_gateways()
         for i, gateway_ip in enumerate(self.cluster_spec.gateways, start=1):
             self.request_helper.wait_for_gateway_to_start(i, gateway_ip)
             self.request_helper.turn_off_gateway_logging(i, gateway_ip)
 
+        self.create_sgw_test_config()
         self.remote.start_test_info()
 
 

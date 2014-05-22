@@ -60,7 +60,7 @@ class ClusterSpec(Config):
             if len(self.gateways) != len(self.gateloads):
                 logger.interrupt(
                     'Mismatch in number of gateways ({}) and gateloads ({})'
-                    .format(len(self.gateloads), len(self.gateloads))
+                    .format(len(self.gateways), len(self.gateloads))
                 )
 
     @safe

@@ -1,18 +1,18 @@
 {
-        "log": ["HTTP"],
-        "adminInterface": ":4985",
-        "maxIncomingConnections": "{{conn_in}}",
-        "maxCouchbaseConnections": "{{conn_db}}",
-        "MaxFileDescriptors": 90000,  
-        "SlowServerCallWarningThreshold": 500,
-        "CompressResponses": {{compression}},
-        "databases": {
-                "db": {
-                        "server": "http://{{bucket}}:password@{{db_master}}/",
-                        "bucket": "{{bucket}}",
-                        "users": {
-                                "GUEST": { "disabled": true }
-                        }
-                }
+    "log": ["HTTP"],
+    "adminInterface": ":4985",
+    "maxIncomingConnections": "{{conn_in}}",
+    "maxCouchbaseConnections": "{{conn_db}}",
+    "maxFileDescriptors": 90000,
+    "slowServerCallWarningThreshold": 500,
+    "compressResponses": {{compression}},
+    "databases": {
+        "db": {
+            "server": "http://{{bucket}}:password@{{db_master}}/",
+            "bucket": "{{bucket}}",
+            "users": {
+                "GUEST": { "disabled": true }
+            }
         }
+    }
 }

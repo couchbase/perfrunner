@@ -4,21 +4,21 @@
     "AdminPort": 4985,
     "Database": "db",
     "DocSizeDistribution": [
-      {
-        "Prob": 20,
-        "MinSize": 32,
-        "MaxSize": 127
-      },
-      {
-        "Prob": 70,
-        "MinSize": 128,
-        "MaxSize": 1023
-      },
-      {
-        "Prob": 10,
-        "MinSize": 1024,
-        "MaxSize": 65536
-      }
+        {
+            "Prob": 20,
+            "MinSize": 32,
+            "MaxSize": 127
+        },
+        {
+            "Prob": 70,
+            "MinSize": 128,
+            "MaxSize": 1023
+        },
+        {
+            "Prob": 10,
+            "MinSize": 1024,
+            "MaxSize": 65536
+        }
     ],
     "RampUpIntervalMs": 900000,
     "RunTimeMs": {{run_time}},

@@ -1,8 +1,8 @@
 [test_case]
 module = perfrunner.tests.sync_gateway
-class = GateloadTest
+class = PassFailGateloadTest
 title = Gateload test for Sync Gateway performance
-summary = 2 Sync Gateways in parallel, each with 5K users, compression ON, conn_db = 16, conn_in = 0
+summary = 1 Sync Gateways, 10K users, compression ON, conn_db = 16, conn_in = 0
 use_workers = 0
 
 [cluster]
@@ -21,7 +21,7 @@ conn_in = 0
 [gateload]
 rampup_interval = 900
 run_time = 3600
-pushers = 1500
-pullers = 3500
+pushers = 3000
+pullers = 7000
 p95_avg_criteria = 3
 p99_avg_criteria = 5

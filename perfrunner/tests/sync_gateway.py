@@ -14,12 +14,12 @@ from perfrunner.settings import SGW_SERIESLY_HOST
 from perfrunner.tests import PerfTest
 
 
-class SyncGatewayGateloadTest(PerfTest):
+class GateloadTest(PerfTest):
 
     KPI = 'PushToSubscriberInteractive/p{} average'
 
     def __init__(self, *args, **kwargs):
-        super(SyncGatewayGateloadTest, self).__init__(*args, **kwargs)
+        super(GateloadTest, self).__init__(*args, **kwargs)
         self.metric_helper = SgwMetricHelper(self)
         self.request_helper = SyncGatewayRequestHelper()
 
@@ -82,7 +82,7 @@ class SyncGatewayGateloadTest(PerfTest):
                 latencies[p].append(latency)
         logger.info('Per node summary: {}'.format(pretty_dict(summary)))
 
-        pass_fail = []
+        self.pass_fail = []
         for p, criterion in criteria.items():
             kpi = self.KPI.format(p)
             average = np.mean(latencies[p])
@@ -92,8 +92,10 @@ class SyncGatewayGateloadTest(PerfTest):
             else:
                 status = '{}: {} - meets the criteria of {}'\
                     .format(kpi, average, criterion)
-            pass_fail.append(status)
-        logger.info('Aggregated summary: {}'.format(pretty_dict(pass_fail)))
+            self.pass_fail.append(status)
+        logger.info(
+            'Aggregated summary: {}'.format(pretty_dict(self.pass_fail))
+        )
 
     @with_stats
     def workload(self):
@@ -120,4 +122,12 @@ class SyncGatewayGateloadTest(PerfTest):
 
         self.workload()
 
-        self.collect_kpi()
+        return self.collect_kpi()
+
+
+class PassFailGateloadTest(GateloadTest):
+
+    def run(self):
+        super(PassFailGateloadTest, self).run()
+        if 'doesn\'t meet' in ''.join(self.pass_fail):
+            logger.interrupt('Test failed')

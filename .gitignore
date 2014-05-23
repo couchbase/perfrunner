@@ -41,3 +41,4 @@ env
 
 # Templates
 templates/gateway_config.json
+templates/gateload_config.json

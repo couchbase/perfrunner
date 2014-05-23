@@ -1,6 +1,5 @@
-from collections import defaultdict, OrderedDict
-import json
 import time
+from collections import defaultdict, OrderedDict
 
 import numpy as np
 from jinja2 import Environment, FileSystemLoader
@@ -24,12 +23,13 @@ class SyncGatewayGateloadTest(PerfTest):
         self.metric_helper = SgwMetricHelper(self)
         self.request_helper = SyncGatewayRequestHelper()
 
+        loader = FileSystemLoader('templates')
+        self.env = Environment(loader=loader)
+
     def create_sgw_test_config(self):
         logger.info('Creating bash configuration')
 
-        loader = FileSystemLoader('templates')
-        env = Environment(loader=loader)
-        template = env.get_template('sgw_test_config.sh')
+        template = self.env.get_template('sgw_test_config.sh')
         with open('scripts/sgw_test_config.sh', 'w') as fh:
             fh.write(template.render(
                 gateways_ip=' '.join(self.cluster_spec.gateways),
@@ -51,22 +51,18 @@ class SyncGatewayGateloadTest(PerfTest):
         self.remote.start_sampling()
 
     def generate_gateload_configs(self):
-        with open('templates/gateload_config_template.json') as fh:
-            template = json.load(fh)
+        template = self.env.get_template('gateload_config_template.json')
 
-        for idx, _ in enumerate(self.cluster_spec.gateloads):
-            template.update({
-                'Hostname': self.cluster_spec.gateways[idx],
-                'UserOffset': (self.test_config.gateload_settings.pushers +
-                               self.test_config.gateload_settings.pullers) * idx,
-                'NumPullers': self.test_config.gateload_settings.pullers,
-                'NumPushers': self.test_config.gateload_settings.pushers,
-                'RunTimeMs': self.test_config.gateload_settings.run_time * 1000,
-            })
-
+        for idx, gateway in enumerate(self.cluster_spec.gateways):
             config_fname = 'templates/gateload_config_{}.json'.format(idx)
             with open(config_fname, 'w') as fh:
-                fh.write(pretty_dict(template))
+                fh.write(template.render(
+                    gateway=gateway,
+                    pushers=self.test_config.gateload_settings.pushers,
+                    pullers=self.test_config.gateload_settings.pullers,
+                    run_time=self.test_config.gateload_settings.run_time * 1000,
+                    idx=idx,
+                ))
 
     def collect_kpi(self):
         logger.info('Collecting Sync Gateway KPI')

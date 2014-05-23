@@ -1,5 +1,5 @@
 {
-    "Hostname": null,
+    "Hostname": "{{gateway}}",
     "Port": 4984,
     "AdminPort": 4985,
     "Database": "db",
@@ -21,15 +21,15 @@
       }
     ],
     "RampUpIntervalMs": 900000,
-    "RunTimeMs": null,
+    "RunTimeMs": {{run_time}},
     "SleepTimeMs": 10000,
-    "NumPullers": null,
-    "NumPushers": null,
+    "NumPullers": {{pullers}},
+    "NumPushers": {{pushers}},
     "ChannelActiveUsers": 40,
     "ChannelConcurrentUsers": 40,
     "MinUserOffTimeMs": 0,
     "MaxUserOffTimeMs": 0,
     "Verbose": false,
     "LogRequests": false,
-    "UserOffset": null
+    "UserOffset": {{idx * (pullers + pushers)}}
 }

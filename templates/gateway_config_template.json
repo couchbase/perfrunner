@@ -1,15 +1,15 @@
 {
         "log": ["HTTP"],
         "adminInterface": ":4985",
-        "maxIncomingConnections": null,
-        "maxCouchbaseConnections": null,
+        "maxIncomingConnections": "{{conn_in}}",
+        "maxCouchbaseConnections": "{{conn_db}}",
         "MaxFileDescriptors": 90000,  
         "SlowServerCallWarningThreshold": 500,
-        "CompressResponses": null,
+        "CompressResponses": {{compression}},
         "databases": {
                 "db": {
-                        "server": null,
-                        "bucket": "bucket-1",
+                        "server": "http://{{bucket}}:password@{{db_master}}/",
+                        "bucket": "{{bucket}}",
                         "users": {
                                 "GUEST": { "disabled": true }
                         }

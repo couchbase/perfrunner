@@ -476,15 +476,14 @@ class Experiment(object):
 
 class GatewaySettings(PhaseSettings):
 
-    COMPRESSION = 1
+    COMPRESSION = 'true'
     CONN_IN = 0
     CONN_DB = 16
 
     def __init__(self, options):
         self.conn_in = int(options.get('conn_in', self.CONN_IN))
         self.conn_db = int(options.get('conn_db', self.CONN_DB))
-        self.compression = bool(int(options.get('compression',
-                                                self.COMPRESSION)))
+        self.compression = options.get('compression', self.COMPRESSION)
 
 
 class GateloadSettings(PhaseSettings):

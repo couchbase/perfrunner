@@ -1,11 +1,10 @@
-import json
 from optparse import OptionParser
 
 import requests
+from jinja2 import Environment, FileSystemLoader
 from logger import logger
 from requests.exceptions import ConnectionError
 
-from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import SyncGatewayRequestHelper
 from perfrunner.settings import ClusterSpec
@@ -71,21 +70,22 @@ class GatewayInstaller(object):
     def install_gateload(self):
         self.remote.install_gateload()
 
-    def start_sync_gateways(self):
-        with open('templates/gateway_config_template.json') as fh:
-            template = json.load(fh)
-
-        db_master = self.cluster_spec.yield_masters().next()
-        template['databases']['db']['server'] = \
-            'http://bucket-1:password@{}/'.format(db_master)
-        template.update({
-            'maxIncomingConnections': self.test_config.gateway_settings.conn_in,
-            'maxCouchbaseConnections': self.test_config.gateway_settings.conn_db,
-            'CompressResponses': self.test_config.gateway_settings.compression
-        })
+    def generate_sync_gateways_config(self):
+        loader = FileSystemLoader('templates')
+        env = Environment(loader=loader)
+        template = env.get_template('gateway_config_template.json')
 
         with open('templates/gateway_config.json', 'w') as fh:
-            fh.write(pretty_dict(template))
+            fh.write(template.render(
+                conn_in=self.test_config.gateway_settings.conn_in,
+                conn_db=self.test_config.gateway_settings.conn_db,
+                compression=self.test_config.gateway_settings.compression,
+                bucket=self.test_config.buckets[0],
+                db_master=self.cluster_spec.yield_masters().next(),
+            ))
+
+    def start_sync_gateways(self):
+        self.generate_sync_gateways_config()
         self.remote.start_gateway()
 
     def install(self):

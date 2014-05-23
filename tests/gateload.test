@@ -14,7 +14,7 @@ num_buckets = 1
 replica_number = 1
 
 [gateway]
-compression = 1
+compression = true
 conn_db = 16
 conn_in = 0
 

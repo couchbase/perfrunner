@@ -143,7 +143,7 @@ class ClusterManager(object):
             self.remote.restart_with_alternative_num_cpus(num_cpus)
 
     def restart_with_sfwi(self):
-        if self.test_config.cluster.swfi:
+        if self.test_config.cluster.sfwi:
             self.remote.restart_with_sfwi()
 
     def enable_auto_failover(self):

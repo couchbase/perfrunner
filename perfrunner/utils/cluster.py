@@ -142,9 +142,9 @@ class ClusterManager(object):
         if num_cpus:
             self.remote.restart_with_alternative_num_cpus(num_cpus)
 
-    def restart_with_swfi(self):
+    def restart_with_sfwi(self):
         if self.test_config.cluster.swfi:
-            self.remote.restart_with_swfi()
+            self.remote.restart_with_sfwi()
 
     def enable_auto_failover(self):
         for master in self.masters():
@@ -203,7 +203,7 @@ def main():
     cm = ClusterManager(cluster_spec, test_config, options.verbose)
 
     # Individual nodes
-    cm.restart_with_swfi()
+    cm.restart_with_sfwi()
     cm.restart_with_alternative_num_vbuckets()
     cm.restart_with_alternative_num_cpus()
     cm.configure_internal_settings()

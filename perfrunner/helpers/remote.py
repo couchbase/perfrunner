@@ -199,8 +199,8 @@ class RemoteLinuxHelper(object):
             .format(num_cpus))
 
     @all_hosts
-    def restart_with_swfi(self):
-        logger.info('Enabling +swfi')
+    def restart_with_sfwi(self):
+        logger.info('Enabling +sfwi')
         run('ERL_FLAGS="+swfi 500" '
             'numactl --interleave=all /etc/init.d/couchbase-server restart')
 

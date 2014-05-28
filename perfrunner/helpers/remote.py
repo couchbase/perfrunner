@@ -199,6 +199,12 @@ class RemoteLinuxHelper(object):
             .format(num_cpus))
 
     @all_hosts
+    def restart_with_swfi(self):
+        logger.info('Enabling +swfi')
+        run('ERL_FLAGS="+swfi 500" '
+            'numactl --interleave=all /etc/init.d/couchbase-server restart')
+
+    @all_hosts
     def disable_moxi(self):
         logger.info('Disabling moxi')
         run('rm /opt/couchbase/bin/moxi')

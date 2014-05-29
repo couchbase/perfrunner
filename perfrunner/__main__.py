@@ -19,6 +19,8 @@ def get_options():
                       metavar='experiment.json')
     parser.add_option('--verbose', dest='verbose', action='store_true',
                       help='enable verbose logging')
+    parser.add_option('--local', dest='local', action='store_true',
+                      help='use localhost as workload generator')
 
     options, args = parser.parse_args()
     if not options.cluster_spec_fname or not options.test_config_fname:

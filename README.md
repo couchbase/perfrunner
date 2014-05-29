@@ -47,6 +47,10 @@ Overriding test config options (comma-separated section.option.value trios):
     python -m perfrunner -c clusters/vesta.spec -t tests/comp_bucket_20M.test \
         load.size.512,cluster.initial_nodes.3 4
 
+`--verbose` flag enables Fabric logging.
+
+With `--local` flag localhost will be used as a workload generator.
+
 Running functional tests
 ------------------------
 

@@ -1,14 +1,21 @@
+import sys
+
 from celery import Celery
 from fabric import state
-from fabric.api import cd, run, settings
+from fabric.api import cd, run, local, settings, quiet
 from kombu import Queue
 from logger import logger
 from spring.wgen import WorkloadGen
 
 from perfrunner.helpers.misc import uhex
-from perfrunner.settings import BROKER_URL, REPO
+from perfrunner.settings import BROKER_URL, LOCAL_BROKER_URL, REPO
 
-celery = Celery('workers', backend='amqp', broker=BROKER_URL)
+if {'--local', '-C'} & set(sys.argv):
+    # -C is a hack to distinguish local and remote workers!
+    broker = LOCAL_BROKER_URL
+else:
+    broker = BROKER_URL
+celery = Celery('workers', backend='amqp', broker=broker)
 
 
 @celery.task
@@ -19,24 +26,29 @@ def task_run_workload(settings, target, timer):
 
 class WorkerManager(object):
 
+    def __new__(cls, *args, **kwargs):
+        if '--local' in sys.argv:
+            return LocalWorkerManager(*args, **kwargs)
+        else:
+            return RemoteWorkerManager(*args, **kwargs)
+
+
+class RemoteWorkerManager(object):
+
     def __init__(self, cluster_spec, test_config):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
 
-        self.worker_hosts = cluster_spec.workers
-        self.queues = []
-        self.workers = []
-
-        self.user, self.password = cluster_spec.client_credentials
-
         self.temp_dir = '/tmp/{}'.format(uhex()[:12])
+        self.user, self.password = cluster_spec.client_credentials
         with settings(user=self.user, password=self.password):
-            self._initialize_project()
-            self._start()
+            self.initialize_project()
+            self.start()
 
-    def _initialize_project(self):
-        for i, master in enumerate(self.cluster_spec.yield_masters()):
-            state.env.host_string = self.worker_hosts[i]
+    def initialize_project(self):
+        for worker, master in zip(self.cluster_spec.workers,
+                                  self.cluster_spec.yield_masters()):
+            state.env.host_string = worker
             run('killall -9 celery', quiet=True)
             for bucket in self.test_config.buckets:
                 logger.info('Intializing remote worker environment')
@@ -52,9 +64,10 @@ class WorkerManager(object):
                         'env/bin/pip install '
                         '--download-cache /tmp/pip -r requirements.txt')
 
-    def _start(self):
-        for i, master in enumerate(self.cluster_spec.yield_masters()):
-            state.env.host_string = self.worker_hosts[i]
+    def start(self):
+        for worker, master in zip(self.cluster_spec.workers,
+                                  self.cluster_spec.yield_masters()):
+            state.env.host_string = worker
             for bucket in self.test_config.buckets:
                 logger.info('Starting remote Celery worker')
 
@@ -68,7 +81,7 @@ class WorkerManager(object):
     def run_workload(self, settings, target_iterator, timer=None):
         self.workers = []
         for target in target_iterator:
-            logger.info('Starting workload generator remotely')
+            logger.info('Running workload generator')
 
             qname = '{}-{}'.format(target.node.split(':')[0], target.bucket)
             queue = Queue(name=qname)
@@ -77,17 +90,17 @@ class WorkerManager(object):
                 queue=queue.name, expires=timer,
             )
             self.workers.append(worker)
-            self.queues.append(queue)
 
     def wait_for_workers(self):
         for worker in self.workers:
             worker.wait()
 
     def terminate(self):
-        with settings(user=self.user, password=self.password):
-            for i, master in enumerate(self.cluster_spec.yield_masters()):
-                state.env.host_string = self.worker_hosts[i]
-                for bucket in self.test_config.buckets:
+        for worker, master in zip(self.cluster_spec.workers,
+                                  self.cluster_spec.yield_masters()):
+            state.env.host_string = worker
+            for bucket in self.test_config.buckets:
+                with settings(user=self.user, password=self.password):
                     logger.info('Terminating remote Celery worker')
                     run('killall -9 celery', quiet=True)
 
@@ -95,3 +108,32 @@ class WorkerManager(object):
                     qname = '{}-{}'.format(master.split(':')[0], bucket)
                     temp_dir = '{}-{}'.format(self.temp_dir, qname)
                     run('rm -fr {}'.format(temp_dir))
+
+
+class LocalWorkerManager(RemoteWorkerManager):
+
+    def __init__(self, cluster_spec, test_config):
+        self.cluster_spec = cluster_spec
+        self.test_config = test_config
+
+        self.start()
+
+    def start(self):
+        logger.info('Terminating local Celery workers')
+        with quiet():
+            local('killall -9 celery')
+
+        for i, master in enumerate(self.cluster_spec.yield_masters()):
+            for bucket in self.test_config.buckets:
+                logger.info('Starting local Celery worker')
+                qname = '{}-{}'.format(master.split(':')[0], bucket)
+                with quiet():
+                    local('nohup env/bin/celery worker '
+                          '-A perfrunner.helpers.worker -Q {0} -c 1 -C '
+                          '&>/tmp/worker_{0}.log &'.format(qname))
+
+    def terminate(self):
+        logger.info('Terminating local Celery workers')
+        with quiet():
+            local('killall -9 celery')
+            local('rm -fr /tmp/perfrunner.db')

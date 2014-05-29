@@ -37,7 +37,7 @@ class WorkerManager(object):
     def _initialize_project(self):
         for i, master in enumerate(self.cluster_spec.yield_masters()):
             state.env.host_string = self.worker_hosts[i]
-            run('killall -9 celery; exit 0')
+            run('killall -9 celery', quiet=True)
             for bucket in self.test_config.buckets:
                 logger.info('Intializing remote worker environment')
 
@@ -89,7 +89,7 @@ class WorkerManager(object):
                 state.env.host_string = self.worker_hosts[i]
                 for bucket in self.test_config.buckets:
                     logger.info('Terminating remote Celery worker')
-                    run('killall -9 celery; exit 0')
+                    run('killall -9 celery', quiet=True)
 
                     logger.info('Cleaning up remote worker environment')
                     qname = '{}-{}'.format(master.split(':')[0], bucket)

@@ -1,5 +1,5 @@
 [clusters]
-apollo =
+hermes =
     172.23.96.15:8091
     172.23.96.16:8091
     172.23.96.17:8091
@@ -11,16 +11,16 @@ hosts =
 credentials = root:couchbase
 
 [storage]
-data = /data
-index = /data
+data = d:\data
+index = d:\data
 
 [credentials]
 rest = Administrator:password
-ssh = root:couchbase
+ssh = Administrator:Membase123
 
 [parameters]
 Platform = Physical
-OS = CentOS 6.5
+OS = Windows Server 2012
 CPU = Intel Xeon E5-2630 (24 vCPU)
 Memory = 64 GB
-Disk = 2 x HDD
+Disk = RAID 10 HDD

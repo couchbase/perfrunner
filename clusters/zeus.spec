@@ -12,7 +12,7 @@ credentials = root:couchbase
 
 [storage]
 data = d:\data
-index = c:\data
+index = d:\data
 
 [credentials]
 rest = Administrator:password

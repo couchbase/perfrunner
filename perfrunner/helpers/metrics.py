@@ -153,7 +153,7 @@ class MetricHelper(object):
             avg_bg_wait_time.append(data.values()[0][0])
         avg_bg_wait_time = np.mean(avg_bg_wait_time) / 10 ** 3  # us -> ms
 
-        return round(avg_bg_wait_time)
+        return round(avg_bg_wait_time, 1)
 
     def calc_avg_couch_views_ops(self):
         query_params = self._get_query_params('avg_couch_views_ops')

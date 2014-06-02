@@ -50,6 +50,10 @@ class RestHelper(object):
     def put(self, **kwargs):
         return requests.put(auth=self.auth, **kwargs)
 
+    @retry
+    def delete(self, **kwargs):
+        return requests.delete(auth=self.auth, **kwargs)
+
     def set_data_path(self, host_port, data_path, index_path):
         logger.info('Configuring data paths: {}'.format(host_port))
 
@@ -145,6 +149,12 @@ class RestHelper(object):
         if threads_number:
             data.update({'threadsNumber': threads_number})
         self.post(url=api, data=data)
+
+    def delete_bucket(self, host_port, name):
+        logger.info('Removing bucket: {}'.format(name))
+
+        api = 'http://{}/pools/default/buckets/{}'.format(host_port, name)
+        self.delete(url=api)
 
     def configure_auto_compaction(self, host_port, settings):
         logger.info('Applying auto-compaction settings: {}'.format(settings))

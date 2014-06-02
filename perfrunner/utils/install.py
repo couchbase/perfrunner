@@ -45,6 +45,7 @@ class CouchbaseInstaller(object):
         else:
             patterns = (
                 'couchbase-server-enterprise_centos6_{arch}_{version}-rel.{pkg}',
+                'couchbase-server-enterprise_ubuntu_1204_{arch}_{version}-rel.{pkg}',
                 'couchbase-server-enterprise_{arch}_{version}-rel.{pkg}',
                 'couchbase-server-enterprise_{version}-rel_{arch}.{pkg}',
             )

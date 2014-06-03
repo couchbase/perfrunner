@@ -494,6 +494,7 @@ class GateloadSettings(PhaseSettings):
 
     PULLER = 3500
     PUSHER = 1500
+    DOC_SIZE = 0
     P95_AVG_CRITERIA = 3
     P99_AVG_CRITERIA = 5
     RUN_TIME = 3600  # In seconds.  1 hr
@@ -502,6 +503,7 @@ class GateloadSettings(PhaseSettings):
     def __init__(self, options):
         self.pullers = int(options.get('pullers', self.PULLER))
         self.pushers = int(options.get('pushers', self.PUSHER))
+        self.doc_size = int(options.get('doc_size', self.DOC_SIZE))
         self.p95_avg_criteria = int(options.get('p95_avg_criteria',
                                                 self.P95_AVG_CRITERIA))
         self.p99_avg_criteria = int(options.get('p99_avg_criteria',

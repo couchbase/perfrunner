@@ -3,6 +3,7 @@
     "Port": 4984,
     "AdminPort": 4985,
     "Database": "db",
+    "DocSize": {{doc_size}},
     "DocSizeDistribution": [
         {
             "Prob": 20,

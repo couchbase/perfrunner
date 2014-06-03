@@ -12,9 +12,9 @@ BROKER_URL = 'amqp://couchbase:couchbase@ci.sc.couchbase.com:5672/broker'
 
 LOCAL_BROKER_URL = 'sqla+sqlite:////tmp/perfrunner.db'
 
-SF_STORAGE = {'host': 'showfast.sc.couchbase.com', 'password': 'password'}
+SHOWFAST = {'host': 'showfast.sc.couchbase.com', 'password': 'password'}
 
-CBMONITOR_HOST = 'cbmonitor.sc.couchbase.com'
+CBMONITOR = {'host': 'cbmonitor.sc.couchbase.com', 'password': 'password'}
 
 SGW_SERIESLY_HOST = '172.23.106.228'
 

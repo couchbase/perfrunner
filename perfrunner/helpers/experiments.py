@@ -3,7 +3,7 @@ from couchbase import Couchbase
 from logger import logger
 
 from perfrunner.helpers.misc import pretty_dict, uhex
-from perfrunner.settings import SF_STORAGE
+from perfrunner.settings import CBMONITOR
 
 
 class ExperimentHelper(object):
@@ -37,7 +37,7 @@ class ExperimentHelper(object):
         }
 
     def update_defaults(self):
-        cb = Couchbase.connect(bucket='exp_defaults', **SF_STORAGE)
+        cb = Couchbase.connect(bucket='exp_defaults', **CBMONITOR)
         cb.set(self.name, {
             'id': self.name,
             'name': self.experiment['name'],
@@ -54,5 +54,5 @@ class ExperimentHelper(object):
         logger.info('Adding new experiment {}: {}'.format(
             key, pretty_dict(self.experiment)
         ))
-        cb = Couchbase.connect(bucket='experiments', **SF_STORAGE)
+        cb = Couchbase.connect(bucket='experiments', **CBMONITOR)
         cb.set(key, self.experiment)

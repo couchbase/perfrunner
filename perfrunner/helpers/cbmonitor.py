@@ -14,7 +14,7 @@ from decorator import decorator
 from logger import logger
 
 from perfrunner.helpers.misc import target_hash, uhex
-from perfrunner.settings import CBMONITOR_HOST
+from perfrunner.settings import CBMONITOR
 
 
 @decorator
@@ -65,8 +65,8 @@ class CbAgent(object):
             hostnames = None
 
         self.settings = type('settings', (object, ), {
-            'seriesly_host': CBMONITOR_HOST,
-            'cbmonitor_host_port': CBMONITOR_HOST,
+            'seriesly_host': CBMONITOR['host'],
+            'cbmonitor_host_port': CBMONITOR['host'],
             'interval': test.test_config.stats_settings.interval,
             'buckets': buckets,
             'hostnames': hostnames,
@@ -220,7 +220,7 @@ class CbAgent(object):
 
     def trigger_reports(self, snapshot):
         for report_type in ('html', 'get_corr_matrix'):
-            url = 'http://{}/reports/{}/?snapshot={}'.format(CBMONITOR_HOST,
+            url = 'http://{}/reports/{}/?snapshot={}'.format(CBMONITOR['host'],
                                                              report_type,
                                                              snapshot)
             logger.info(url)

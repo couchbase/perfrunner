@@ -8,7 +8,7 @@ from couchbase import Couchbase
 from logger import logger
 
 from perfrunner.helpers.misc import uhex, pretty_dict
-from perfrunner.settings import CBMONITOR_HOST, SF_STORAGE
+from perfrunner.settings import CBMONITOR, SHOWFAST
 
 
 class BtrcReporter(object):
@@ -69,9 +69,9 @@ class Comparator(object):
 
     def compare(self, prev_build, new_build):
         """Compare snapshots if possible"""
-        api = 'http://{}/reports/compare/'.format(CBMONITOR_HOST)
+        api = 'http://{}/reports/compare/'.format(CBMONITOR['host'])
         snapshot_api = 'http://{}/reports/html/?snapshot={{}}&snapshot={{}}'\
-            .format(CBMONITOR_HOST)
+            .format(CBMONITOR['host'])
 
         changes = []
         reports = []
@@ -99,8 +99,8 @@ class Comparator(object):
 
     def __call__(self, test, benckmark):
         try:
-            self.cbb = Couchbase.connect(bucket='benchmarks', **SF_STORAGE)
-            self.cbf = Couchbase.connect(bucket='feed', **SF_STORAGE)
+            self.cbb = Couchbase.connect(bucket='benchmarks', **SHOWFAST)
+            self.cbf = Couchbase.connect(bucket='feed', **SHOWFAST)
         except Exception, e:
             logger.warn('Failed to connect to database, {}'.format(e))
             return
@@ -133,7 +133,7 @@ class SFReporter(object):
         cluster = self.test.cluster_spec.name
         params = self.test.cluster_spec.parameters
         try:
-            cb = Couchbase.connect(bucket='clusters', **SF_STORAGE)
+            cb = Couchbase.connect(bucket='clusters', **SHOWFAST)
             cb.set(cluster, params)
         except Exception, e:
             logger.warn('Failed to add cluster, {}'.format(e))
@@ -151,7 +151,7 @@ class SFReporter(object):
                 'level': self.test.test_config.test_case.level,
             }
         try:
-            cb = Couchbase.connect(bucket='metrics', **SF_STORAGE)
+            cb = Couchbase.connect(bucket='metrics', **SHOWFAST)
             cb.set(metric, metric_info)
         except Exception, e:
             logger.warn('Failed to add cluster, {}'.format(e))
@@ -192,7 +192,7 @@ class SFReporter(object):
     def _post_benckmark(self, metric, value):
         key, benckmark = self._prepare_data(metric, value)
         try:
-            cb = Couchbase.connect(bucket='benchmarks', **SF_STORAGE)
+            cb = Couchbase.connect(bucket='benchmarks', **SHOWFAST)
             self._mark_previous_as_obsolete(cb, benckmark)
             cb.set(key, benckmark)
             Comparator()(test=self.test, benckmark=benckmark)
@@ -205,7 +205,7 @@ class SFReporter(object):
         return key
 
     def _upload_master_events(self, filename):
-        api = 'http://{}/cbmonitor/add_master_events/'.format(CBMONITOR_HOST)
+        api = 'http://{}/cbmonitor/add_master_events/'.format(CBMONITOR['host'])
         data = {
             'filename': filename,
             'master_events': self.test.master_events[0],

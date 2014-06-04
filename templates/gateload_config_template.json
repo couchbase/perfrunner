@@ -23,7 +23,7 @@
     ],
     "RampUpIntervalMs": 900000,
     "RunTimeMs": {{run_time}},
-    "SleepTimeMs": 10000,
+    "SleepTimeMs": {{sleep_time}},
     "NumPullers": {{pullers}},
     "NumPushers": {{pushers}},
     "ChannelActiveUsers": 40,

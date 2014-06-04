@@ -61,6 +61,7 @@ class GateloadTest(PerfTest):
                     pushers=self.test_config.gateload_settings.pushers,
                     pullers=self.test_config.gateload_settings.pullers,
                     doc_size=self.test_config.gateload_settings.doc_size,
+                    sleep_time=self.test_config.gateload_settings.sleep_time,
                     run_time=self.test_config.gateload_settings.run_time * 1000,
                     idx=idx,
                 ))

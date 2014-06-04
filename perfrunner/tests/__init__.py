@@ -48,7 +48,7 @@ class PerfTest(object):
         self.memcached = MemcachedHelper(test_config)
         self.monitor = Monitor(cluster_spec)
         self.rest = RestHelper(cluster_spec)
-        self.remote = RemoteHelper(cluster_spec, verbose)
+        self.remote = RemoteHelper(cluster_spec, test_config, verbose)
 
         if experiment:
             self.experiment = ExperimentHelper(experiment,

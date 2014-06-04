@@ -47,16 +47,16 @@ def all_gateloads(task, *args, **kargs):
 
 class RemoteHelper(object):
 
-    def __new__(cls, cluster_spec, verbose=False):
+    def __new__(cls, cluster_spec, test_config, verbose=False):
         state.env.user, state.env.password = cluster_spec.ssh_credentials
         state.output.running = verbose
         state.output.stdout = verbose
 
         os = cls.detect_os(cluster_spec)
         if os == 'Cygwin':
-            return RemoteWindowsHelper(cluster_spec, os)
+            return RemoteWindowsHelper(cluster_spec, test_config, os)
         else:
-            return RemoteLinuxHelper(cluster_spec, os)
+            return RemoteLinuxHelper(cluster_spec, test_config, os)
 
     @staticmethod
     def detect_os(cluster_spec):
@@ -79,10 +79,11 @@ class RemoteLinuxHelper(object):
 
     PROCESSES = ('beam.smp', 'memcached', 'epmd', 'cbq-engine', 'mongod')
 
-    def __init__(self, cluster_spec, os):
+    def __init__(self, cluster_spec, test_config, os):
         self.os = os
         self.hosts = tuple(cluster_spec.yield_hostnames())
         self.cluster_spec = cluster_spec
+        self.test_config = test_config
 
     @staticmethod
     def wget(url, outdir='/tmp', outfile=None):

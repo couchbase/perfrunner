@@ -1,7 +1,7 @@
 from optparse import OptionParser
 
 from perfrunner.helpers.remote import RemoteHelper
-from perfrunner.settings import ClusterSpec
+from perfrunner.settings import ClusterSpec, TestConfig
 from perfrunner.utils.install import CouchbaseInstaller
 
 
@@ -9,8 +9,8 @@ class MongoDBInstaller(CouchbaseInstaller):
 
     URL = 'http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-2.6.1.tgz'
 
-    def __init__(self, cluster_spec, options):
-        self.remote = RemoteHelper(cluster_spec, options.verbose)
+    def __init__(self, cluster_spec, test_config, options):
+        self.remote = RemoteHelper(cluster_spec, test_config, options.verbose)
 
     def uninstall_package(self):
         pass
@@ -33,14 +33,19 @@ def main():
     parser.add_option('--verbose', dest='verbose', action='store_true',
                       help='enable verbose logging')
 
-    options, _ = parser.parse_args()
+    options, args = parser.parse_args()
+    override = args and [arg.split('.') for arg in ' '.join(args).split(',')]
+
     if not options.cluster_spec_fname:
         parser.error('Missing mandatory parameter')
 
     cluster_spec = ClusterSpec()
     cluster_spec.parse(options.cluster_spec_fname)
 
-    installer = MongoDBInstaller(cluster_spec, options)
+    test_config = TestConfig()
+    test_config.parse(options.test_config_fname, override)
+
+    installer = MongoDBInstaller(cluster_spec, test_config, options)
     installer.install()
 
 if __name__ == '__main__':

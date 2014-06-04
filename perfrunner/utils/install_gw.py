@@ -24,7 +24,7 @@ class GatewayInstaller(object):
     }
 
     def __init__(self, cluster_spec, test_config, options):
-        self.remote = RemoteHelper(cluster_spec, options.verbose)
+        self.remote = RemoteHelper(cluster_spec, test_config, options.verbose)
         self.cluster_spec = cluster_spec
         self.test_config = test_config
         self.version = options.version

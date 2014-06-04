@@ -15,9 +15,13 @@ Requirements
 * Python 2.7 (including headers)
 * virtualenv
 * libcouchbase-devel (or equivalent)
-* AMQP broker (RabbitMQ is recommended)
+* AMQP broker (RabbitMQ is recommended) for distributed workloads
 
 Python dependencies are listed in requirements.txt.
+
+SUT dependencies:
+* numactl
+* iostat
 
 Cluster installation and setup
 ------------------------------

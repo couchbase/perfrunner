@@ -102,3 +102,22 @@ class Monitor(RestHelper):
             else:
                 logger.info('Warmpup status: {}'.format(state))
                 time.sleep(self.POLLING_INTERVAL)
+
+    def monitor_node_health(self, host_port):
+        logger.info('Monitoring node health')
+        for retry in range(self.MAX_RETRY * 2):
+            unhealthy_nodes = {
+                n for n, status in self.node_statuses(host_port).items()
+                if status != 'healthy'
+            } | {
+                n for n, status in self.node_statuses_v2(host_port).items()
+                if status != 'healthy'
+            }
+            if unhealthy_nodes:
+                time.sleep(self.POLLING_INTERVAL)
+            else:
+                break
+        else:
+            logger.interrupt('Some nodes are not healthy: {}'.format(
+                unhealthy_nodes
+            ))

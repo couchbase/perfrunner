@@ -156,6 +156,10 @@ class ClusterManager(object):
             host = target.node.split(':')[0]
             self.monitor.monitor_warmup(self.memcached, host, target.bucket)
 
+    def wait_until_healthy(self):
+        for master in self.cluster_spec.yield_masters():
+            self.monitor.monitor_node_health(master)
+
     def change_watermarks(self):
         watermark_settings = self.test_config.watermark_settings
         for hostname, initial_nodes in zip(self.hostnames(),
@@ -221,6 +225,7 @@ def main():
     cm.create_buckets()
     cm.restart_with_alternative_bucket_options()
     cm.wait_until_warmed_up()
+    cm.wait_until_healthy()
     cm.configure_auto_compaction()
     cm.enable_auto_failover()
     cm.change_watermarks()

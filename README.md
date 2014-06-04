@@ -17,7 +17,7 @@ Requirements
 * libcouchbase-devel (or equivalent)
 * AMQP broker (RabbitMQ is recommended) for distributed workloads
 
-Python dependencies are listed in requirements.txt.
+Python dependencies are listed in requirements.txt. `make` does the magic.
 
 SUT dependencies:
 * numactl
@@ -69,7 +69,7 @@ Running unit tests
 
 After `nose` installation:
 
-    nosetests -v unittests.py
+    make test
 
 Creating "Insight" experiments
 ------------------------------

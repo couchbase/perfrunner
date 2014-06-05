@@ -2,6 +2,7 @@
 . sgw_test_config.sh
 
 outfile=test_info.txt
+outfile_sar=test_info_sar.txt
 sleep_time=30
 
 free > tmp.txt
@@ -14,6 +15,10 @@ echo Machine configuration: cpu:$cpu mem:$mem  >> $outfile
 pid=`pgrep sync_gateway`
 if [ -n "$pid" ]
 then
+
+        # Collect sar statistics
+        sar -n DEV $sleep_time > $outfile_sar &
+
         # build the command to get socketsToDB
         cmd="egrep \""
         for ip in ${dbs_ip}; do
@@ -45,8 +50,8 @@ then
                 for ip in ${gateloads_ip}; do
                     index=`expr $index + 1`
                     p99_avg=`curl "http://${seriesly_ip}:3133/gateload_${index}/_query?ptr=/gateload/ops/PushToSubscriberInteractive/p99&reducer=avg&group=100000000000"`
-                    echo "PushToSubscriberInteractive/p95 average during test runs: $p99_avg"
-                    echo "PushToSubscriberInteractive/p95 average during test runs: $p99_avg" >> $outfile
+                    echo "PushToSubscriberInteractive/p99 average during test runs: $p99_avg"
+                    echo "PushToSubscriberInteractive/p99 average during test runs: $p99_avg" >> $outfile
                 done
                 loop_count=0
             fi

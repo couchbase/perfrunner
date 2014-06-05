@@ -316,7 +316,7 @@ class RemoteLinuxHelper(object):
     @all_gateways
     def kill_processes_gateway(self):
         logger.info('Killing Sync Gateway')
-        run('killall -9 sync_gateway sgw_test_info.sh', quiet=True)
+        run('killall -9 sync_gateway sgw_test_info.sh sar', quiet=True)
 
     @all_gateways
     def clean_gateway(self):

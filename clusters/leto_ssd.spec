@@ -11,7 +11,7 @@ hosts =
 credentials = root:couchbase
 
 [storage]
-data = /ssd
+data = /ssd1
 index = /ssd2
 
 [credentials]

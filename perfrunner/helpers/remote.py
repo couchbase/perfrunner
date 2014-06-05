@@ -352,6 +352,7 @@ class RemoteLinuxHelper(object):
         run('/root/sgw_check_logs.sh gateway > sgw_check_logs.out', warn_only=True)
         get('gateway.log.gz', 'gateway.log_{}.gz'.format(index))
         get('test_info.txt', 'test_info_{}.txt'.format(index))
+        get('test_info_sar.txt', 'test_info_sar_{}.txt'.format(index))
         get('sgw_test_info.txt', 'sgw_test_info_{}.txt'.format(index))
         get('gateway_config.json', 'gateway_config_{}.json'.format(index))
         get('sgw_check_logs.out', 'sgw_check_logs_gateway_{}.out'.format(index))

@@ -95,23 +95,12 @@ class ClusterSpec(Config):
     @property
     @safe
     def gateways(self):
-        gateways = self.config.get('gateways', 'hosts').split()
-        return gateways[:self.num_gateways]
+        return self.config.get('gateways', 'hosts').split()
 
     @property
     @safe
     def gateloads(self):
-        gateloads = self.config.get('gateloads', 'hosts').split()
-        return gateloads[:self.num_gateways]
-
-    @property
-    @safe
-    def num_gateways(self):
-        if self.config.get('settings', 'num_gateways'):
-            return int(self.config.get('settings', 'num_gateways'))
-        else:
-            gateways = self.config.get('gateways', 'hosts').split()
-            return len(gateways)
+        return self.config.get('gateloads', 'hosts').split()
 
     @property
     @safe
@@ -483,11 +472,13 @@ class GatewaySettings(PhaseSettings):
     COMPRESSION = 'true'
     CONN_IN = 0
     CONN_DB = 16
+    NUM_NODES = 0
 
     def __init__(self, options):
         self.conn_in = int(options.get('conn_in', self.CONN_IN))
         self.conn_db = int(options.get('conn_db', self.CONN_DB))
         self.compression = options.get('compression', self.COMPRESSION)
+        self.num_nodes = int(options.get('num_nodes', self.NUM_NODES)) or None
 
 
 class GateloadSettings(PhaseSettings):

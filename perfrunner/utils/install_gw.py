@@ -98,7 +98,7 @@ class GatewayInstaller(object):
         self.install_gateload()
 
         self.start_sync_gateways()
-        for i, gateway_ip in enumerate(self.cluster_spec.gateways, start=1):
+        for i, gateway_ip in enumerate(self.remote.gateways, start=1):
             self.request_helper.wait_for_gateway_to_start(i, gateway_ip)
             self.request_helper.turn_off_gateway_logging(i, gateway_ip)
 

@@ -32,17 +32,13 @@ def seriesly_host(task, *args, **kargs):
 @decorator
 def all_gateways(task, *args, **kargs):
     self = args[0]
-    return execute(
-        parallel(task), *args, hosts=self.cluster_spec.gateways, **kargs
-    )
+    return execute(parallel(task), *args, hosts=self.gateways, **kargs)
 
 
 @decorator
 def all_gateloads(task, *args, **kargs):
     self = args[0]
-    return execute(
-        parallel(task), *args, hosts=self.cluster_spec.gateloads, **kargs
-    )
+    return execute(parallel(task), *args, hosts=self.gateloads, **kargs)
 
 
 class RemoteHelper(object):
@@ -84,6 +80,11 @@ class RemoteLinuxHelper(object):
         self.hosts = tuple(cluster_spec.yield_hostnames())
         self.cluster_spec = cluster_spec
         self.test_config = test_config
+
+        if self.cluster_spec.gateways:
+            num_nodes = self.test_config.gateway_settings.num_nodes
+            self.gateways = self.cluster_spec.gateways[:num_nodes]
+            self.gateloads = self.cluster_spec.gateloads[:num_nodes]
 
     @staticmethod
     def wget(url, outdir='/tmp', outfile=None):
@@ -293,14 +294,16 @@ class RemoteLinuxHelper(object):
 
     @seriesly_host
     def start_sampling(self):
-        for i, gateway_ip in enumerate(self.cluster_spec.gateways, start=1):
+        for i, gateway_ip in enumerate(self.gateways, start=1):
             logger.info('Starting sampling gateway_{}'.format(i))
-            run('nohup sample -v http://{}:4985/_expvar http://localhost:3133/gateway_{} &> sample.log &'
-                .format(gateway_ip, i), pty=False)
-        for i, gateload_ip in enumerate(self.cluster_spec.gateloads, start=1):
+            run('nohup sample -v '
+                'http://{}:4985/_expvar http://localhost:3133/gateway_{} '
+                '&> sample.log &'.format(gateway_ip, i), pty=False)
+        for i, gateload_ip in enumerate(self.gateloads, start=1):
             logger.info('Starting sampling gateload_{}'.format(i))
-            run('nohup sample -v http://{}:9876/debug/vars http://localhost:3133/gateload_{} &> sample.log &'
-                .format(gateload_ip, i), pty=False)
+            run('nohup sample -v '
+                'http://{}:9876/debug/vars http://localhost:3133/gateload_{} '
+                '&> sample.log &'.format(gateload_ip, i), pty=False)
 
     @all_gateways
     def install_gateway(self, url, filename):
@@ -343,7 +346,7 @@ class RemoteLinuxHelper(object):
     def collect_info_gateway(self):
         _if = self.detect_if()
         local_ip = self.detect_ip(_if)
-        index = self.cluster_spec.gateways.index(local_ip)
+        index = self.gateways.index(local_ip)
         logger.info('Collecting diagnostic information from sync gateway_{} {}'.format(index, local_ip))
         run('rm -f gateway.log.gz', warn_only=True)
         run('gzip gateway.log', warn_only=True)
@@ -382,7 +385,7 @@ class RemoteLinuxHelper(object):
         logger.info('Starting Gateload')
         _if = self.detect_if()
         local_ip = self.detect_ip(_if)
-        idx = self.cluster_spec.gateloads.index(local_ip)
+        idx = self.gateloads.index(local_ip)
 
         config_fname = 'templates/gateload_config_{}.json'.format(idx)
         put(config_fname, '/root/gateload_config.json')
@@ -396,16 +399,17 @@ class RemoteLinuxHelper(object):
     def collect_info_gateload(self):
         _if = self.detect_if()
         local_ip = self.detect_ip(_if)
-        index = self.cluster_spec.gateloads.index(local_ip)
-        logger.info('Collecting diagnostic information from gateload_{} {}'.format(index, local_ip))
+        idx = self.gateloads.index(local_ip)
+
+        logger.info('Collecting diagnostic information from gateload_{} {}'.format(idx, local_ip))
         run('rm -f gateload.log.gz', warn_only=True)
         run('gzip gateload.log', warn_only=True)
         put('scripts/sgw_check_logs.sh', '/root/sgw_check_logs.sh')
         run('chmod 777 /root/sgw_*.sh')
         run('/root/sgw_check_logs.sh gateload > sgw_check_logs.out', warn_only=True)
-        get('gateload.log.gz', 'gateload.log-{}.gz'.format(index))
-        get('gateload_config.json', 'gateload_config_{}.json'.format(index))
-        get('sgw_check_logs.out', 'sgw_check_logs_gateload_{}.out'.format(index))
+        get('gateload.log.gz', 'gateload.log-{}.gz'.format(idx))
+        get('gateload_config.json', 'gateload_config_{}.json'.format(idx))
+        get('sgw_check_logs.out', 'sgw_check_logs_gateload_{}.out'.format(idx))
 
     @all_hosts
     def clean_mongodb(self):

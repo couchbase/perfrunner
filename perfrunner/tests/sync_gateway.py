@@ -32,8 +32,8 @@ class GateloadTest(PerfTest):
         template = self.env.get_template('sgw_test_config.sh')
         with open('scripts/sgw_test_config.sh', 'w') as fh:
             fh.write(template.render(
-                gateways_ip=' '.join(self.cluster_spec.gateways),
-                gateloads_ip=' '.join(self.cluster_spec.gateloads),
+                gateways_ip=' '.join(self.remote.gateways),
+                gateloads_ip=' '.join(self.remote.gateloads),
                 dbs_ip=' '.join(self.cluster_spec.yield_hostnames()),
                 seriesly_ip=SGW_SERIESLY_HOST,
             ))
@@ -45,7 +45,7 @@ class GateloadTest(PerfTest):
     def start_samplers(self):
         logger.info('Creating seriesly dbs')
         seriesly = Seriesly(host='{}'.format(SGW_SERIESLY_HOST))
-        for i, _ in enumerate(self.cluster_spec.gateways, start=1):
+        for i, _ in enumerate(self.remote.gateways, start=1):
             seriesly.create_db('gateway_{}'.format(i))
             seriesly.create_db('gateload_{}'.format(i))
         self.remote.start_sampling()
@@ -53,7 +53,7 @@ class GateloadTest(PerfTest):
     def generate_gateload_configs(self):
         template = self.env.get_template('gateload_config_template.json')
 
-        for idx, gateway in enumerate(self.cluster_spec.gateways):
+        for idx, gateway in enumerate(self.remote.gateways):
             config_fname = 'templates/gateload_config_{}.json'.format(idx)
             with open(config_fname, 'w') as fh:
                 fh.write(template.render(
@@ -76,7 +76,7 @@ class GateloadTest(PerfTest):
 
         summary = defaultdict(dict)
         latencies = defaultdict(list)
-        for idx, gateload in enumerate(self.cluster_spec.gateloads, start=1):
+        for idx, gateload in enumerate(self.remote.gateloads, start=1):
             for p in criteria:
                 kpi = self.KPI.format(p)
                 latency = self.metric_helper.calc_push_latency(p=p, idx=idx)
@@ -111,7 +111,7 @@ class GateloadTest(PerfTest):
 
         self.generate_gateload_configs()
         self.remote.start_gateload()
-        for idx, gateload in enumerate(self.cluster_spec.gateloads, start=1):
+        for idx, gateload in enumerate(self.remote.gateloads, start=1):
             self.request_helper.wait_for_gateload_to_start(idx, gateload)
 
         self.remote.restart_seriesly()
@@ -120,7 +120,6 @@ class GateloadTest(PerfTest):
 
         log_phase('Gateload settings', self.test_config.gateload_settings)
         log_phase('Gateway settings', self.test_config.gateway_settings)
-        logger.info('Num Gateways: {}'.format(len(self.cluster_spec.gateways)))
 
         self.workload()
 

@@ -259,7 +259,7 @@ class LogReporter(object):
                 fh.write(pretty_dict(expvar))
 
     def check_sgw_logs(self):
-        num_gateways = self.test.cluster_spec.num_gateways
+        num_gateways = self.test.test_config.gateway_settings.num_nodes
         items = ['gateway_{}'.format(i) for i in range(num_gateways)]
         items += ['gateload_{}'.format(i) for i in range(num_gateways)]
         with open('sgw_check_logs_gateload.txt', 'w') as outfile:

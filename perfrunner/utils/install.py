@@ -6,7 +6,7 @@ from logger import logger
 from requests.exceptions import ConnectionError
 
 from perfrunner.helpers.remote import RemoteHelper
-from perfrunner.settings import ClusterSpec, TestConfig
+from perfrunner.settings import ClusterSpec
 
 Build = namedtuple('Build', ['arch', 'pkg', 'version', 'openssl', 'toy'])
 
@@ -16,8 +16,8 @@ class CouchbaseInstaller(object):
     CBFS = 'http://cbfs-ext.hq.couchbase.com/builds/'
     LATEST_BUILDS = 'http://builds.hq.northscale.net/latestbuilds/'
 
-    def __init__(self, cluster_spec, test_config, options):
-        self.remote = RemoteHelper(cluster_spec, test_config, options.verbose)
+    def __init__(self, cluster_spec, options):
+        self.remote = RemoteHelper(cluster_spec, None, options.verbose)
         self.cluster_spec = cluster_spec
 
         arch = self.remote.detect_arch()
@@ -102,8 +102,7 @@ def main():
     parser.add_option('--verbose', dest='verbose', action='store_true',
                       help='enable verbose logging')
 
-    options, args = parser.parse_args()
-    override = args and [arg.split('.') for arg in ' '.join(args).split(',')]
+    options, _ = parser.parse_args()
 
     if not options.cluster_spec_fname or not options.version:
         parser.error('Missing mandatory parameter')
@@ -111,10 +110,7 @@ def main():
     cluster_spec = ClusterSpec()
     cluster_spec.parse(options.cluster_spec_fname)
 
-    test_config = TestConfig()
-    test_config.parse(options.test_config_fname, override)
-
-    installer = CouchbaseInstaller(cluster_spec, test_config, options)
+    installer = CouchbaseInstaller(cluster_spec, options)
     installer.install()
 
 if __name__ == '__main__':

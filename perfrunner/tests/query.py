@@ -30,9 +30,10 @@ class QueryThroughputTest(QueryTest):
 
     def run(self):
         super(QueryThroughputTest, self).run()
-        self.reporter.post_to_sf(
-            self.metric_helper.calc_avg_couch_views_ops()
-        )
+        if self.test_config.stats_settings.enabled:
+            self.reporter.post_to_sf(
+                self.metric_helper.calc_avg_couch_views_ops()
+            )
 
 
 class QueryLatencyTest(QueryTest):
@@ -40,12 +41,15 @@ class QueryLatencyTest(QueryTest):
     def run(self):
         super(QueryLatencyTest, self).run()
 
-        self.reporter.post_to_sf(
-            *self.metric_helper.calc_query_latency(percentile=80)
-        )
-        if self.remote.os != 'Cygwin' and \
-                self.test_config.stats_settings.post_rss:
-            self.reporter.post_to_sf(*self.metric_helper.calc_max_beam_rss())
+        if self.test_config.stats_settings.enabled:
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_query_latency(percentile=80)
+            )
+            if self.remote.os != 'Cygwin' and \
+                    self.test_config.stats_settings.post_rss:
+                self.reporter.post_to_sf(
+                    *self.metric_helper.calc_max_beam_rss()
+                )
 
 
 class DevQueryLatencyTest(DevIndexTest, QueryLatencyTest):

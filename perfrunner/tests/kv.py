@@ -43,11 +43,12 @@ class ObserveLatencyTest(KVTest):
     def run(self):
         super(ObserveLatencyTest, self).run()
 
-        latency = self.reporter.post_to_sf(
-            *self.metric_helper.calc_observe_latency(percentile=95)
-        )
-        if hasattr(self, 'experiment'):
-            self.experiment.post_results(latency)
+        if self.test_config.stats_settings.enabled:
+            latency = self.reporter.post_to_sf(
+                *self.metric_helper.calc_observe_latency(percentile=95)
+            )
+            if hasattr(self, 'experiment'):
+                self.experiment.post_results(latency)
 
 
 class MixedLatencyTest(KVTest):
@@ -56,11 +57,12 @@ class MixedLatencyTest(KVTest):
 
     def run(self):
         super(MixedLatencyTest, self).run()
-        for operation in ('get', 'set'):
-            self.reporter.post_to_sf(
-                *self.metric_helper.calc_kv_latency(operation=operation,
-                                                    percentile=95)
-            )
+        if self.test_config.stats_settings.enabled:
+            for operation in ('get', 'set'):
+                self.reporter.post_to_sf(
+                    *self.metric_helper.calc_kv_latency(operation=operation,
+                                                        percentile=95)
+                )
 
 
 class ReadLatencyTest(MixedLatencyTest):
@@ -69,12 +71,13 @@ class ReadLatencyTest(MixedLatencyTest):
 
     def run(self):
         super(MixedLatencyTest, self).run()
-        latency_get = self.reporter.post_to_sf(
-            *self.metric_helper.calc_kv_latency(operation='get',
-                                                percentile=95)
-        )
-        if hasattr(self, 'experiment'):
-            self.experiment.post_results(latency_get)
+        if self.test_config.stats_settings.enabled:
+            latency_get = self.reporter.post_to_sf(
+                *self.metric_helper.calc_kv_latency(operation='get',
+                                                    percentile=95)
+            )
+            if hasattr(self, 'experiment'):
+                self.experiment.post_results(latency_get)
 
 
 class BgFetcherTest(KVTest):
@@ -85,7 +88,8 @@ class BgFetcherTest(KVTest):
 
     def run(self):
         super(BgFetcherTest, self).run()
-        self.reporter.post_to_sf(self.metric_helper.calc_avg_bg_wait_time())
+        if self.test_config.stats_settings.enabled:
+            self.reporter.post_to_sf(self.metric_helper.calc_avg_bg_wait_time())
 
 
 class DrainTest(KVTest):
@@ -94,11 +98,12 @@ class DrainTest(KVTest):
 
     def run(self):
         super(DrainTest, self).run()
-        drain_rate = self.reporter.post_to_sf(
-            self.metric_helper.calc_avg_disk_write_queue()
-        )
-        if hasattr(self, 'experiment'):
-            self.experiment.post_results(drain_rate)
+        if self.test_config.stats_settings.enabled:
+            drain_rate = self.reporter.post_to_sf(
+                self.metric_helper.calc_avg_disk_write_queue()
+            )
+            if hasattr(self, 'experiment'):
+                self.experiment.post_results(drain_rate)
 
 
 class FlusherTest(KVTest):
@@ -138,17 +143,21 @@ class FlusherTest(KVTest):
         time_elapsed = (to_ts - from_ts) / 1000.0
 
         self.reporter.finish('Drain', time_elapsed)
-        self.reporter.post_to_sf(
-            self.metric_helper.calc_max_drain_rate(time_elapsed)
-        )
+        if self.test_config.stats_settings.enabled:
+            self.reporter.post_to_sf(
+                self.metric_helper.calc_max_drain_rate(time_elapsed)
+            )
 
 
 class BeamRssTest(KVTest):
 
     def run(self):
         super(BeamRssTest, self).run()
-        if self.remote.os != 'Cygwin':
-            self.reporter.post_to_sf(*self.metric_helper.calc_max_beam_rss())
+        if self.test_config.stats_settings.enabled:
+            if self.remote.os != 'Cygwin':
+                self.reporter.post_to_sf(
+                    *self.metric_helper.calc_max_beam_rss()
+                )
 
 
 class WarmupTest(PerfTest):

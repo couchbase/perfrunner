@@ -21,3 +21,10 @@ hosts =
 hosts =
     172.23.96.63
     172.23.96.68
+
+[parameters]
+Platform = Physical
+OS = CentOS 6.5
+CPU = Intel Xeon E5-2630 v2 (24 vCPU)
+Memory = 64 GB
+Disk = HDD

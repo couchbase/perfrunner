@@ -1,0 +1,28 @@
+[test_case]
+module = perfrunner.tests.sync_gateway
+class = GateloadTest
+title = 99th percentile "Push To Subscriber" latency, 1 Sync Gateway, 10K users, default settings
+summary = 1 Sync Gateway, 10K users, compression ON, conn_db = 16, conn_in = 0
+use_workers = 0
+
+[cluster]
+mem_quota = 26624
+initial_nodes = 3
+num_buckets = 1
+
+[bucket]
+replica_number = 1
+
+[gateway]
+compression = true
+conn_db = 16
+conn_in = 0
+num_nodes = 1
+
+[gateload]
+rampup_interval = 900
+run_time = 3600
+pushers = 3000
+pullers = 7000
+p95_avg_criteria = 3
+p99_avg_criteria = 5

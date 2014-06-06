@@ -85,6 +85,8 @@ class RemoteLinuxHelper(object):
             num_nodes = self.test_config.gateway_settings.num_nodes
             self.gateways = self.cluster_spec.gateways[:num_nodes]
             self.gateloads = self.cluster_spec.gateloads[:num_nodes]
+        else:
+            self.gateways = self.gateloads = None
 
     @staticmethod
     def wget(url, outdir='/tmp', outfile=None):

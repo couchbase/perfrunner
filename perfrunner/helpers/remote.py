@@ -81,7 +81,7 @@ class RemoteLinuxHelper(object):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
 
-        if self.cluster_spec.gateways:
+        if self.cluster_spec.gateways and test_config is not None:
             num_nodes = self.test_config.gateway_settings.num_nodes
             self.gateways = self.cluster_spec.gateways[:num_nodes]
             self.gateloads = self.cluster_spec.gateloads[:num_nodes]

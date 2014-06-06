@@ -251,7 +251,7 @@ class LogReporter(object):
                 zh.writestr(zinfo_or_arcname=fname, bytes=master_events)
 
     def save_expvar(self):
-        for idx, gateway_ip in enumerate(self.test.cluster_spec.gateways,
+        for idx, gateway_ip in enumerate(self.test.remote.gateways,
                                          start=1):
             expvar = self.test.request_helper.collect_expvar(gateway_ip)
             fname = 'gateway_expvar_{}.json'.format(idx)

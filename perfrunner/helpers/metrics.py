@@ -280,11 +280,12 @@ class MetricHelper(object):
         for cluster_name, servers in self.cluster_spec.yield_clusters():
             cluster = filter(lambda name: name.startswith(cluster_name),
                              self.cluster_names)[0]
-            master = servers[0].split(':')[0].replace('.', '')
-            db = 'atop{}{}'.format(cluster, master)  # Legacy
-            data = self.seriesly[db].query(query_params)
-            rss = round(data.values()[0][0] / 1024 ** 2)
-            max_rss = max(max_rss, rss)
+            for server in servers:
+                hostname = server.split(':')[0].replace('.', '')
+                db = 'atop{}{}'.format(cluster, hostname)  # Legacy
+                data = self.seriesly[db].query(query_params)
+                rss = round(data.values()[0][0] / 1024 ** 2)
+                max_rss = max(max_rss, rss)
 
         return max_rss, metric, metric_info
 

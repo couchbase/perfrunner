@@ -229,6 +229,9 @@ class TestCaseSettings(object):
 class ClusterSettings(object):
 
     NUM_BUCKETS = 1
+    MIN_NUM_BUCKETS = 1
+    MAX_NUM_BUCKETS = 10
+    INCR_NUM_BUCKETS = 1
     GROUP_NUMBER = 1
     NUM_CPUS = 0  # Use defaults
     RUN_CBQ = 0
@@ -240,6 +243,12 @@ class ClusterSettings(object):
             int(nodes) for nodes in options.get('initial_nodes').split()
         ]
         self.num_buckets = int(options.get('num_buckets', self.NUM_BUCKETS))
+        self.min_num_buckets = int(options.get('min_num_buckets',
+                                               self.MIN_NUM_BUCKETS))
+        self.max_num_buckets = int(options.get('max_num_buckets',
+                                               self.MAX_NUM_BUCKETS))
+        self.incr_num_buckets = int(options.get('incr_num_buckets',
+                                                self.INCR_NUM_BUCKETS))
         self.num_vbuckets = options.get('num_vbuckets')
         self.group_number = int(options.get('group_number', self.GROUP_NUMBER))
         self.num_cpus = int(options.get('num_cpus', self.NUM_CPUS))

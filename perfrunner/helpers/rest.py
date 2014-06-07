@@ -330,6 +330,15 @@ class RestHelper(object):
         data = self.get(url=api).json()
         return {node['hostname']: node['status'] for node in data['nodes']}
 
+    def get_node_stats(self, host_port, bucket):
+        api = 'http://{}/pools/default/buckets/{}/nodes'.format(host_port,
+                                                                bucket)
+        data = self.get(url=api).json()
+        for server in data['servers']:
+            api = 'http://{}{}'.format(host_port, server['stats']['uri'])
+            data = self.get(url=api).json()
+            yield data['hostname'], data['op']['samples']
+
     def exec_n1ql_stmnt(self, host, stmnt):
         logger.info('Executing: {}'.format(stmnt))
         api = 'http://{}:8093/query'.format(host)

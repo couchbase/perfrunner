@@ -222,7 +222,8 @@ def main():
     if cm.group_number > 1:
         cm.create_server_groups()
     cm.add_nodes()
-    cm.create_buckets()
+    if cm.test_config.cluster.num_buckets:
+        cm.create_buckets()
     cm.restart_with_alternative_bucket_options()
     cm.wait_until_warmed_up()
     cm.wait_until_healthy()

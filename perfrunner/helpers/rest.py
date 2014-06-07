@@ -50,7 +50,6 @@ class RestHelper(object):
     def put(self, **kwargs):
         return requests.put(auth=self.auth, **kwargs)
 
-    @retry
     def delete(self, **kwargs):
         return requests.delete(auth=self.auth, **kwargs)
 

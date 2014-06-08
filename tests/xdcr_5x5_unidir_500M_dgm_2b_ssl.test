@@ -19,7 +19,7 @@ db_percentage = 10
 [load]
 ops = 500000000
 size = 800
-workers = 20
+workers = 10
 async = 1
 
 [hot_load]

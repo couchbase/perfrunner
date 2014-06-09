@@ -231,7 +231,7 @@ class RestHelper(object):
         self.get(url=api, params=params)
 
     def get_version(self, host_port):
-        logger.info('Getting server version')
+        logger.info('Getting Couchbase Server version')
 
         api = 'http://{}/pools/'.format(host_port)
         r = self.get(url=api).json()
@@ -380,3 +380,10 @@ class SyncGatewayRequestHelper(RestHelper):
 
         api = 'http://{}:4985/_expvar'.format(gateway_ip)
         return self.get(url=api).json()
+
+    def get_version(self, gateway_ip):
+        logger.info('Getting Sync Gateway version')
+
+        api = 'http://{}:4985/'.format(gateway_ip)
+        meta = self.get(url=api).json()
+        return meta['version'].split(';')[0].split('(')[-1]

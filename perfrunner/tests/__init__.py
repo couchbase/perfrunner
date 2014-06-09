@@ -13,7 +13,7 @@ from perfrunner.helpers.misc import log_phase, target_hash
 from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.reporter import Reporter
-from perfrunner.helpers.rest import RestHelper
+from perfrunner.helpers.rest import RestHelper, SyncGatewayRequestHelper
 from perfrunner.helpers.worker import WorkerManager
 from perfrunner.settings import TargetSettings
 
@@ -55,7 +55,12 @@ class PerfTest(object):
                                                cluster_spec, test_config)
 
         self.master_node = cluster_spec.yield_masters().next()
-        self.build = self.rest.get_version(self.master_node)
+        if self.remote.gateways:
+            self.build = SyncGatewayRequestHelper().get_version(
+                self.remote.gateways[0]
+            )
+        else:
+            self.build = self.rest.get_version(self.master_node)
 
         self.cbagent = CbAgent(self)
         self.metric_helper = MetricHelper(self)

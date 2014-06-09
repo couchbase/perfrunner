@@ -127,7 +127,7 @@ def main():
         parser.error('Missing mandatory parameter')
 
     cluster_spec = ClusterSpec()
-    cluster_spec.parse(options.cluster_spec_fname, override)
+    cluster_spec.parse(options.cluster_spec_fname)
     cluster_spec.verify()
 
     test_config = TestConfig()

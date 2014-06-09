@@ -1,6 +1,7 @@
 import exceptions as exc
 import glob
 import shutil
+import sys
 import time
 
 from logger import logger
@@ -78,7 +79,7 @@ class PerfTest(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.test_config.test_case.use_workers:
             self.worker_manager.terminate()
-        if exc_type != exc.KeyboardInterrupt:
+        if exc_type != exc.KeyboardInterrupt and '--nodebug' not in sys.argv:
             self.debug()
         for master in self.cluster_spec.yield_masters():
             if not self.rest.is_balanced(master):

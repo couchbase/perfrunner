@@ -7,11 +7,8 @@ mem_quota = 204800
 initial_nodes = 1
 num_buckets = 0
 min_num_buckets = 1
-max_num_buckets = 100
+max_num_buckets = 101
 incr_num_buckets = 10
-
-[bucket]
-replica_number = 0
 
 [internal]
 maxBucketCount = 101

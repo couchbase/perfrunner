@@ -162,10 +162,8 @@ class SFReporter(object):
 
     def _prepare_data(self, metric, value):
         key = uhex()
-        master = self.test.cluster_spec.yield_masters().next()
-        build = self.test.rest.get_version(master)
         data = {
-            'build': build,
+            'build': self.test.build,
             'metric': metric,
             'value': value,
             'snapshots': self.test.snapshots

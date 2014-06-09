@@ -123,7 +123,7 @@ class LocalWorkerManager(RemoteWorkerManager):
         with quiet():
             local('killall -9 celery')
 
-        for i, master in enumerate(self.cluster_spec.yield_masters()):
+        for master in self.cluster_spec.yield_masters():
             for bucket in self.test_config.buckets:
                 logger.info('Starting local Celery worker')
                 qname = '{}-{}'.format(master.split(':')[0], bucket)

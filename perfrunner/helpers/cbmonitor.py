@@ -14,7 +14,7 @@ from decorator import decorator
 from logger import logger
 
 from perfrunner.helpers.misc import target_hash, uhex
-from perfrunner.settings import CBMONITOR
+from perfrunner.settings import CBMONITOR, SERIESLY
 
 
 @decorator
@@ -65,7 +65,7 @@ class CbAgent(object):
             hostnames = None
 
         self.settings = type('settings', (object, ), {
-            'seriesly_host': CBMONITOR['host'],
+            'seriesly_host': SERIESLY['host'],
             'cbmonitor_host_port': CBMONITOR['host'],
             'interval': test.test_config.stats_settings.interval,
             'buckets': buckets,

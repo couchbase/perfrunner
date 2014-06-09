@@ -16,6 +16,8 @@ SHOWFAST = {'host': 'showfast.sc.couchbase.com', 'password': 'password'}
 
 CBMONITOR = {'host': 'cbmonitor.sc.couchbase.com', 'password': 'password'}
 
+SERIESLY = {'host': 'cbmonitor.sc.couchbase.com'}
+
 SGW_SERIESLY_HOST = '172.23.106.228'
 
 

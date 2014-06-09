@@ -84,7 +84,7 @@ class GateloadTest(PerfTest):
                 latencies[p].append(latency)
         logger.info('Per node summary: {}'.format(pretty_dict(summary)))
 
-        self.reporter.post_to_sf(np.mean(latencies[99]))
+        self.reporter.post_to_sf(round(np.mean(latencies[99]), 1))
 
         self.pass_fail = []
         for p, criterion in criteria.items():

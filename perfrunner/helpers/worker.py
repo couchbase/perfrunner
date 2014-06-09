@@ -37,7 +37,7 @@ class RemoteWorkerManager(object):
 
     def __init__(self, cluster_spec, test_config):
         self.cluster_spec = cluster_spec
-        self.test_config = test_config
+        self.buckets = test_config.buckets
 
         self.temp_dir = '/tmp/{}'.format(uhex()[:12])
         self.user, self.password = cluster_spec.client_credentials
@@ -50,7 +50,7 @@ class RemoteWorkerManager(object):
                                   self.cluster_spec.yield_masters()):
             state.env.host_string = worker
             run('killall -9 celery', quiet=True)
-            for bucket in self.test_config.buckets:
+            for bucket in self.buckets:
                 logger.info('Intializing remote worker environment')
 
                 qname = '{}-{}'.format(master.split(':')[0], bucket)
@@ -68,7 +68,7 @@ class RemoteWorkerManager(object):
         for worker, master in zip(self.cluster_spec.workers,
                                   self.cluster_spec.yield_masters()):
             state.env.host_string = worker
-            for bucket in self.test_config.buckets:
+            for bucket in self.buckets:
                 logger.info('Starting remote Celery worker')
 
                 qname = '{}-{}'.format(master.split(':')[0], bucket)
@@ -99,7 +99,7 @@ class RemoteWorkerManager(object):
         for worker, master in zip(self.cluster_spec.workers,
                                   self.cluster_spec.yield_masters()):
             state.env.host_string = worker
-            for bucket in self.test_config.buckets:
+            for bucket in self.buckets:
                 with settings(user=self.user, password=self.password):
                     logger.info('Terminating remote Celery worker')
                     run('killall -9 celery', quiet=True)
@@ -114,7 +114,7 @@ class LocalWorkerManager(RemoteWorkerManager):
 
     def __init__(self, cluster_spec, test_config):
         self.cluster_spec = cluster_spec
-        self.test_config = test_config
+        self.buckets = test_config.buckets
 
         self.start()
 
@@ -124,7 +124,7 @@ class LocalWorkerManager(RemoteWorkerManager):
             local('killall -9 celery')
 
         for master in self.cluster_spec.yield_masters():
-            for bucket in self.test_config.buckets:
+            for bucket in self.buckets:
                 logger.info('Starting local Celery worker')
                 qname = '{}-{}'.format(master.split(':')[0], bucket)
                 with quiet():

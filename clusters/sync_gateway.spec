@@ -25,6 +25,6 @@ hosts =
 [parameters]
 Platform = Physical
 OS = CentOS 6.5
-CPU = Intel Xeon E5-2630 v2 (24 vCPU)
-Memory = 64 GB
+CPU = Intel Xeon E5-2630 v2 (16 vCPU)
+Memory = 16 GB
 Disk = HDD

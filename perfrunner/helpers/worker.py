@@ -37,7 +37,7 @@ class RemoteWorkerManager(object):
 
     def __init__(self, cluster_spec, test_config):
         self.cluster_spec = cluster_spec
-        self.buckets = test_config.buckets
+        self.buckets = test_config.buckets or test_config.max_buckets
 
         self.temp_dir = '/tmp/{}'.format(uhex()[:12])
         self.user, self.password = cluster_spec.client_credentials

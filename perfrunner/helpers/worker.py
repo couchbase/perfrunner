@@ -1,4 +1,5 @@
 import sys
+from time import sleep
 
 from celery import Celery
 from fabric import state
@@ -112,6 +113,8 @@ class RemoteWorkerManager(object):
 
 class LocalWorkerManager(RemoteWorkerManager):
 
+    DELAY_BEFORE_START = 2
+
     def __init__(self, cluster_spec, test_config):
         self.cluster_spec = cluster_spec
         self.buckets = test_config.buckets or test_config.max_buckets
@@ -139,6 +142,7 @@ class LocalWorkerManager(RemoteWorkerManager):
                     local('nohup env/bin/celery worker '
                           '-A perfrunner.helpers.worker -Q {0} -c 1 -C '
                           '&>/tmp/worker_{0}.log &'.format(qname))
+                sleep(self.DELAY_BEFORE_START)
 
     def terminate(self):
         logger.info('Terminating local Celery workers')

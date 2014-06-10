@@ -343,18 +343,24 @@ class MetricHelper(object):
 
     @property
     def calc_network_throughput(self):
+        in_bytes_per_sec = []
+        out_bytes_per_sec = []
         for cluster_name, servers in self.cluster_spec.yield_clusters():
-            cluster = filter(lambda name: name.startswith(cluster_name), self.cluster_names)[0]
-            in_bytes_per_sec = []
-            out_bytes_per_sec = []
+            cluster = filter(lambda name: name.startswith(cluster_name),
+                             self.cluster_names)[0]
             for server in servers:
                 hostname = server.split(':')[0].replace('.', '')
                 db = 'net{}{}'.format(cluster, hostname)
                 data = self.seriesly[db].get_all()
-                in_bytes_per_sec += [v['in_bytes_per_sec'] for v in data.values()]
-                out_bytes_per_sec += [v['out_bytes_per_sec'] for v in data.values()]
+                in_bytes_per_sec += [
+                    v['in_bytes_per_sec'] for v in data.values()
+                ]
+                out_bytes_per_sec += [
+                    v['out_bytes_per_sec'] for v in data.values()
+                ]
+
         f = lambda v: format(int(v), ',d')
-        network_matrix = OrderedDict((
+        return OrderedDict((
             ('min in_bytes  per sec', f(min(in_bytes_per_sec))),
             ('max in_bytes  per sec', f(max(in_bytes_per_sec))),
             ('avg in_bytes  per sec', f(np.mean(in_bytes_per_sec))),
@@ -366,8 +372,8 @@ class MetricHelper(object):
             ('avg out_bytes per sec', f(np.mean(out_bytes_per_sec))),
             ('p50 out_bytes per sec', f(np.percentile(out_bytes_per_sec, 50))),
             ('p95 out_bytes per sec', f(np.percentile(out_bytes_per_sec, 95))),
-            ('p99 out_bytes per sec', f(np.percentile(out_bytes_per_sec, 99)))))
-        return network_matrix
+            ('p99 out_bytes per sec', f(np.percentile(out_bytes_per_sec, 99))),
+        ))
 
 
 class SgwMetricHelper(MetricHelper):
@@ -391,12 +397,11 @@ class SgwMetricHelper(MetricHelper):
 
         return round(latency, 2)
 
-    def calc_sync_gateway_requests_per_sec(self, idx=1):
+    def calc_requests_per_sec(self, idx=1):
         query_params = self._get_query_params(
             'avg_syncGateway_rest/requests_total'
         )
-        # Group by 1 second
-        query_params.update({'group': 1000})
+        query_params.update({'group': 1000})  # Group by 1 second
         db = 'gateway_{}'.format(idx)
 
         if not self.seriesly[db].get_all():
@@ -404,5 +409,7 @@ class SgwMetricHelper(MetricHelper):
 
         data = self.seriesly[db].query(query_params)
         total_requests = sorted(v[0] for v in data.values())
-        request_per_sec = [n - c for c, n in zip(total_requests, total_requests[1:])]
+        request_per_sec = [
+            n - c for c, n in zip(total_requests, total_requests[1:])
+        ]
         return round(np.mean(request_per_sec))

@@ -1,9 +1,8 @@
 import json
 import time
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 import numpy as np
-from collections import OrderedDict
 from jinja2 import Environment, FileSystemLoader
 from logger import logger
 from seriesly import Seriesly
@@ -81,7 +80,7 @@ class GateloadTest(PerfTest):
         latencies = defaultdict(list)
         all_requests_per_sec = []
         for idx, gateload in enumerate(self.remote.gateloads, start=1):
-            requests_per_sec = self.metric_helper.calc_sync_gateway_requests_per_sec(idx=idx)
+            requests_per_sec = self.metric_helper.calc_requests_per_sec(idx=idx)
             all_requests_per_sec.append(requests_per_sec)
             for p in criteria:
                 kpi = self.KPI.format(p)

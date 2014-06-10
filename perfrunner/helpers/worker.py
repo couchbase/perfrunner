@@ -36,6 +36,8 @@ class WorkerManager(object):
 
 class RemoteWorkerManager(object):
 
+    DELAY_BEFORE_START = 2
+
     def __init__(self, cluster_spec, test_config):
         self.cluster_spec = cluster_spec
         self.buckets = test_config.buckets or test_config.max_buckets
@@ -91,6 +93,7 @@ class RemoteWorkerManager(object):
                 queue=queue.name, expires=timer,
             )
             self.workers.append(worker)
+            sleep(self.DELAY_BEFORE_START)
 
     def wait_for_workers(self):
         for worker in self.workers:
@@ -112,8 +115,6 @@ class RemoteWorkerManager(object):
 
 
 class LocalWorkerManager(RemoteWorkerManager):
-
-    DELAY_BEFORE_START = 2
 
     def __init__(self, cluster_spec, test_config):
         self.cluster_spec = cluster_spec

@@ -1,13 +1,15 @@
+import json
 import time
-from collections import defaultdict, OrderedDict
+from collections import defaultdict
 
 import numpy as np
+from collections import OrderedDict
 from jinja2 import Environment, FileSystemLoader
 from logger import logger
 from seriesly import Seriesly
 
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.helpers.metrics import SgwMetricHelper
+from perfrunner.helpers.metrics import SgwMetricHelper, MetricHelper
 from perfrunner.helpers.misc import log_phase, pretty_dict
 from perfrunner.helpers.rest import SyncGatewayRequestHelper
 from perfrunner.settings import SGW_SERIESLY_HOST
@@ -21,6 +23,7 @@ class GateloadTest(PerfTest):
     def __init__(self, *args, **kwargs):
         super(GateloadTest, self).__init__(*args, **kwargs)
         self.metric_helper = SgwMetricHelper(self)
+        self.metric_db_servers_helper = MetricHelper(self)
         self.request_helper = SyncGatewayRequestHelper()
 
         loader = FileSystemLoader('templates')
@@ -76,15 +79,17 @@ class GateloadTest(PerfTest):
 
         summary = defaultdict(dict)
         latencies = defaultdict(list)
+        all_requests_per_sec = []
         for idx, gateload in enumerate(self.remote.gateloads, start=1):
+            requests_per_sec = self.metric_helper.calc_sync_gateway_requests_per_sec(idx=idx)
+            all_requests_per_sec.append(requests_per_sec)
             for p in criteria:
                 kpi = self.KPI.format(p)
                 latency = self.metric_helper.calc_push_latency(p=p, idx=idx)
                 summary[gateload][kpi] = latency
+                summary[gateload]['requests per sec'] = requests_per_sec
                 latencies[p].append(latency)
         logger.info('Per node summary: {}'.format(pretty_dict(summary)))
-
-        self.reporter.post_to_sf(round(np.mean(latencies[99]), 1))
 
         self.pass_fail = []
         for p, criterion in criteria.items():
@@ -98,7 +103,13 @@ class GateloadTest(PerfTest):
                     .format(kpi, average, criterion)
             self.pass_fail.append(status)
         logger.info(
-            'Aggregated summary: {}'.format(pretty_dict(self.pass_fail))
+            'Aggregated latency: {}'.format(pretty_dict(self.pass_fail))
+        )
+
+        network_matrix = self.metric_db_servers_helper.calc_network_throughput
+        network_matrix['Avg requests  per sec'] = int(np.average(all_requests_per_sec))
+        logger.info(
+            'Network throughput: {}'.format(json.dumps(network_matrix, indent=4))
         )
 
     @with_stats

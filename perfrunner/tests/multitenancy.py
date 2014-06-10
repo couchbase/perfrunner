@@ -98,6 +98,7 @@ class LoadTest(EmptyBucketsTest):
     def _access(self, buckets):
         access_settings = self.test_config.access_settings
         access_settings.items /= len(buckets)
+        access_settings.throughput /= len(buckets)
 
         target_iterator = TargetIterator(self.master_node, buckets)
         self.worker_manager.run_workload(access_settings, target_iterator,

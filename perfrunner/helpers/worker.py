@@ -116,7 +116,15 @@ class LocalWorkerManager(RemoteWorkerManager):
         self.cluster_spec = cluster_spec
         self.buckets = test_config.buckets or test_config.max_buckets
 
+        self.initialize_project()
         self.start()
+
+    def initialize_project(self):
+        with quiet():
+            local('virtualenv -p python2.7 env')
+            local('PATH=/usr/lib/ccache:/usr/lib64/ccache/bin:$PATH '
+                  'env/bin/pip install '
+                  '--download-cache /tmp/pip -r requirements.txt')
 
     def start(self):
         logger.info('Terminating local Celery workers')

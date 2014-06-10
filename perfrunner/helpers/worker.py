@@ -69,9 +69,9 @@ class RemoteWorkerManager(object):
                                   self.cluster_spec.yield_masters()):
             state.env.host_string = worker
             for bucket in self.buckets:
-                logger.info('Starting remote Celery worker')
-
                 qname = '{}-{}'.format(master.split(':')[0], bucket)
+                logger.info('Starting remote Celery worker: {}'.format(qname))
+
                 temp_dir = '{}-{}/perfrunner'.format(self.temp_dir, qname)
                 run('cd {0}; nohup env/bin/celery worker '
                     '-A perfrunner.helpers.worker -Q {1} -c 1 '
@@ -114,7 +114,7 @@ class LocalWorkerManager(RemoteWorkerManager):
 
     def __init__(self, cluster_spec, test_config):
         self.cluster_spec = cluster_spec
-        self.buckets = test_config.buckets
+        self.buckets = test_config.buckets or test_config.max_buckets
 
         self.start()
 
@@ -125,8 +125,8 @@ class LocalWorkerManager(RemoteWorkerManager):
 
         for master in self.cluster_spec.yield_masters():
             for bucket in self.buckets:
-                logger.info('Starting local Celery worker')
                 qname = '{}-{}'.format(master.split(':')[0], bucket)
+                logger.info('Starting local Celery worker: {}'.format(qname))
                 with quiet():
                     local('nohup env/bin/celery worker '
                           '-A perfrunner.helpers.worker -Q {0} -c 1 -C '

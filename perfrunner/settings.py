@@ -153,6 +153,12 @@ class TestConfig(Config):
         ]
 
     @property
+    def max_buckets(self):
+        return [
+            'bucket-{}'.format(i + 1) for i in range(self.cluster.max_num_buckets)
+        ]
+
+    @property
     def compaction(self):
         options = self._get_options_as_dict('compaction')
         return CompactionSettings(options)

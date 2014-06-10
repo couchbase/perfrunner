@@ -1,0 +1,29 @@
+[test_case]
+module = perfrunner.tests.multitenancy
+class = EmptyBucketsTest
+
+[cluster]
+mem_quota = 204800
+initial_nodes = 1
+num_buckets = 0
+min_num_buckets = 1
+max_num_buckets = 31
+incr_num_buckets = 2
+
+[internal]
+maxBucketCount = 40
+
+[load]
+items = 1000000
+size = 800
+workers = 1
+
+[access]
+creates = 1
+reads = 85
+updates = 13
+deletes = 1
+throughput = 10000
+items = 2000
+size = 800
+workers = 1

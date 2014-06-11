@@ -36,7 +36,7 @@ class WorkerManager(object):
 
 class RemoteWorkerManager(object):
 
-    DELAY_BEFORE_START = 2
+    RACE_DELAY = 2
 
     def __init__(self, cluster_spec, test_config):
         self.cluster_spec = cluster_spec
@@ -93,11 +93,12 @@ class RemoteWorkerManager(object):
                 queue=queue.name, expires=timer,
             )
             self.workers.append(worker)
-            sleep(self.DELAY_BEFORE_START)
+            sleep(self.RACE_DELAY)
 
     def wait_for_workers(self):
         for worker in self.workers:
             worker.wait()
+            sleep(self.RACE_DELAY)
 
     def terminate(self):
         for worker, master in zip(self.cluster_spec.workers,
@@ -143,7 +144,7 @@ class LocalWorkerManager(RemoteWorkerManager):
                     local('nohup env/bin/celery worker '
                           '-A perfrunner.helpers.worker -Q {0} -c 1 -C '
                           '&>/tmp/worker_{0}.log &'.format(qname))
-                sleep(self.DELAY_BEFORE_START)
+                sleep(self.RACE_DELAY)
 
     def terminate(self):
         logger.info('Terminating local Celery workers')

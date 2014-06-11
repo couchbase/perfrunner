@@ -22,9 +22,11 @@ num_nodes = 2
 [gateload]
 rampup_interval = 900
 run_time = 3600
+sleep_time = 10
 pushers = 1500
 pullers = 3500
 doc_size = 0
-sleep_time = 10000
+channel_active_users = 40
+channel_concurrent_users = 40
 p95_avg_criteria = 3
 p99_avg_criteria = 5

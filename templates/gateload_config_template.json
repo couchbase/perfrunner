@@ -21,13 +21,13 @@
             "MaxSize": 65536
         }
     ],
-    "RampUpIntervalMs": 900000,
+    "RampUpIntervalMs": {{rampup_interval}},
     "RunTimeMs": {{run_time}},
     "SleepTimeMs": {{sleep_time}},
     "NumPullers": {{pullers}},
     "NumPushers": {{pushers}},
-    "ChannelActiveUsers": 40,
-    "ChannelConcurrentUsers": 40,
+    "ChannelActiveUsers": {{channel_active_users}},
+    "ChannelConcurrentUsers": {{channel_concurrent_users}},
     "MinUserOffTimeMs": 0,
     "MaxUserOffTimeMs": 0,
     "Verbose": false,

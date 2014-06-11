@@ -503,16 +503,22 @@ class GateloadSettings(PhaseSettings):
     PULLER = 3500
     PUSHER = 1500
     DOC_SIZE = 0
-    SLEEP_TIME = 10000
-    P95_AVG_CRITERIA = 3
-    P99_AVG_CRITERIA = 5
+    CHANNEL_ACTIVE_USERS = 40
+    CHANNEL_CONCURRENT_USERS = 40
+    SLEEP_TIME = 10   # In seconds, 10 seconds
     RUN_TIME = 3600  # In seconds.  1 hr
     RAMPUP_INTERVAL = 900  # In seconds, 15 minutes
+    P95_AVG_CRITERIA = 3
+    P99_AVG_CRITERIA = 5
 
     def __init__(self, options):
         self.pullers = int(options.get('pullers', self.PULLER))
         self.pushers = int(options.get('pushers', self.PUSHER))
         self.doc_size = int(options.get('doc_size', self.DOC_SIZE))
+        self.channel_active_users = int(options.get('channel_active_users',
+                                                    self.CHANNEL_ACTIVE_USERS))
+        self.channel_concurrent_users = int(options.get('channel_concurrent_users',
+                                                        self.CHANNEL_CONCURRENT_USERS))
         self.sleep_time = int(options.get('sleep_time', self.SLEEP_TIME))
         self.p95_avg_criteria = int(options.get('p95_avg_criteria',
                                                 self.P95_AVG_CRITERIA))

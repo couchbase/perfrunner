@@ -36,7 +36,7 @@ class WorkerManager(object):
 
 class RemoteWorkerManager(object):
 
-    RACE_DELAY = 2
+    RACE_DELAY = 4
 
     def __init__(self, cluster_spec, test_config):
         self.cluster_spec = cluster_spec

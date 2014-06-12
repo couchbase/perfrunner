@@ -1,5 +1,4 @@
 import sys
-from time import sleep
 
 from celery import Celery
 from fabric import state
@@ -8,15 +7,17 @@ from kombu import Queue
 from logger import logger
 from spring.wgen import WorkloadGen
 
+from perfrunner import celerylocal, celeryremote
 from perfrunner.helpers.misc import uhex
-from perfrunner.settings import BROKER_URL, LOCAL_BROKER_URL, REPO
+from perfrunner.settings import REPO
 
+
+celery = Celery('workers')
 if {'--local', '-C'} & set(sys.argv):
     # -C is a hack to distinguish local and remote workers!
-    broker = LOCAL_BROKER_URL
+    celery.config_from_object(celerylocal)
 else:
-    broker = BROKER_URL
-celery = Celery('workers', backend='amqp', broker=broker)
+    celery.config_from_object(celeryremote)
 
 
 @celery.task
@@ -35,8 +36,6 @@ class WorkerManager(object):
 
 
 class RemoteWorkerManager(object):
-
-    RACE_DELAY = 4
 
     def __init__(self, cluster_spec, test_config):
         self.cluster_spec = cluster_spec
@@ -93,12 +92,10 @@ class RemoteWorkerManager(object):
                 queue=queue.name, expires=timer,
             )
             self.workers.append(worker)
-            sleep(self.RACE_DELAY)
 
     def wait_for_workers(self):
         for worker in self.workers:
             worker.wait()
-            sleep(self.RACE_DELAY)
 
     def terminate(self):
         for worker, master in zip(self.cluster_spec.workers,
@@ -144,10 +141,9 @@ class LocalWorkerManager(RemoteWorkerManager):
                     local('nohup env/bin/celery worker '
                           '-A perfrunner.helpers.worker -Q {0} -c 1 -C '
                           '&>/tmp/worker_{0}.log &'.format(qname))
-                sleep(self.RACE_DELAY)
 
     def terminate(self):
         logger.info('Terminating local Celery workers')
         with quiet():
             local('killall -9 celery')
-            local('rm -fr /tmp/perfrunner.db')
+            local('rm -fr /tmp/perfrunner.db /tmp/results.db')

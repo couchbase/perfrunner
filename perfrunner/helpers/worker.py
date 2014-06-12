@@ -7,6 +7,7 @@ from fabric.api import cd, run, local, settings, quiet
 from kombu import Queue
 from logger import logger
 from spring.wgen import WorkloadGen
+from sqlalchemy import create_engine
 
 from perfrunner import celerylocal, celeryremote
 from perfrunner.helpers.misc import uhex
@@ -118,12 +119,15 @@ class RemoteWorkerManager(object):
 
 class LocalWorkerManager(RemoteWorkerManager):
 
+    SQLITE_DBS = ('/tmp/perfrunner.db', '/tmp/results.db')
+
     def __init__(self, cluster_spec, test_config):
         self.cluster_spec = cluster_spec
         self.buckets = test_config.buckets or test_config.max_buckets
 
         self.initialize_project()
         self.terminate()
+        self.tune_sqlite()
         self.start()
 
     def initialize_project(self):
@@ -132,6 +136,12 @@ class LocalWorkerManager(RemoteWorkerManager):
             local('PATH=/usr/lib/ccache:/usr/lib64/ccache/bin:$PATH '
                   'env/bin/pip install '
                   '--download-cache /tmp/pip -r requirements.txt')
+
+    def tune_sqlite(self):
+        for db in self.SQLITE_DBS:
+            engine = create_engine('sqlite:///{}'.format(db))
+            engine.execute('PRAGMA read_uncommitted;')
+            engine.execute('PRAGMA synchronous=OFF;')
 
     def start(self):
         for master in self.cluster_spec.yield_masters():
@@ -148,4 +158,5 @@ class LocalWorkerManager(RemoteWorkerManager):
         logger.info('Terminating local Celery workers')
         with quiet():
             local('killall -9 celery')
-            local('rm -fr /tmp/perfrunner.db /tmp/results.db')
+            for db in self.SQLITE_DBS:
+                local('rm -fr {}'.format(db))

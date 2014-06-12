@@ -123,6 +123,7 @@ class LocalWorkerManager(RemoteWorkerManager):
         self.buckets = test_config.buckets or test_config.max_buckets
 
         self.initialize_project()
+        self.terminate()
         self.start()
 
     def initialize_project(self):
@@ -133,10 +134,6 @@ class LocalWorkerManager(RemoteWorkerManager):
                   '--download-cache /tmp/pip -r requirements.txt')
 
     def start(self):
-        logger.info('Terminating local Celery workers')
-        with quiet():
-            local('killall -9 celery')
-
         for master in self.cluster_spec.yield_masters():
             for bucket in self.buckets:
                 qname = '{}-{}'.format(master.split(':')[0], bucket)

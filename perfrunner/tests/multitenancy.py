@@ -12,6 +12,13 @@ class EmptyBucketsTest(PerfTest):
 
     ITERATION_DELAY = 300
 
+    def __index__(self, *args, **kwargs):
+        super(EmptyBucketsTest, self).__init__(*args, **kwargs)
+        self.results = []
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        logger.info(pretty_dict(self.results))
+
     def create_buckets(self, buckets):
         ram_quota = self.test_config.cluster.mem_quota / len(buckets)
         replica_number = self.test_config.bucket.replica_number
@@ -35,15 +42,17 @@ class EmptyBucketsTest(PerfTest):
         rss = lambda data: int(np.mean(data) / 1024 ** 2)
         conn = lambda data: int(np.mean(data))
 
+        summary = {}
         for hostname, s in self.rest.get_node_stats(self.master_node,
                                                     'bucket-1'):
-            summary = {
+            summary[hostname] = {
                 'memcached, MBytes': rss(s['proc/memcached/mem_resident']),
                 'beam.smp, MBytes': rss(s['proc/(main)beam.smp/mem_resident']),
                 'Total CPU, %': cpu(s['cpu_utilization_rate']),
                 'Curr. connections': conn(s['curr_connections']),
             }
-            logger.info(pretty_dict({hostname: summary}))
+        self.results.append(summary)
+        logger.info(pretty_dict(summary))
 
     def delete_buckets(self, buckets):
         for bucket_name in buckets:

@@ -154,4 +154,4 @@ class WorkloadTest(TestCase):
             batch = iterator.next()
             values = [len(str(v)) for k, v in batch]
             mean = sum(values) / len(values)
-            self.assertAlmostEqual(mean, 256000, delta=40960)
+            self.assertAlmostEqual(mean, 256000, delta=51200)

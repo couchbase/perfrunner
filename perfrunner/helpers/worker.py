@@ -141,7 +141,7 @@ class LocalWorkerManager(RemoteWorkerManager):
     def tune_sqlite(self):
         for db in self.SQLITE_DBS:
             engine = create_engine('sqlite:///{}'.format(db))
-            engine.execute('PRAGMA read_uncommitted;')
+            engine.execute('PRAGMA read_uncommitted=1;')
             engine.execute('PRAGMA synchronous=OFF;')
 
     def start(self):

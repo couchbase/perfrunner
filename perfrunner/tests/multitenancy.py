@@ -1,4 +1,5 @@
 import time
+from collections import OrderedDict
 
 import numpy as np
 from logger import logger
@@ -14,7 +15,7 @@ class EmptyBucketsTest(PerfTest):
 
     def __init__(self, *args, **kwargs):
         super(EmptyBucketsTest, self).__init__(*args, **kwargs)
-        self.results = []
+        self.results = OrderedDict()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         logger.info(pretty_dict(self.results))
@@ -39,7 +40,7 @@ class EmptyBucketsTest(PerfTest):
 
         self.monitor.monitor_node_health(self.master_node)
 
-    def report_stats(self):
+    def report_stats(self, num_buckets):
         cpu = lambda data: round(np.mean(data), 1)
         rss = lambda data: int(np.mean(data) / 1024 ** 2)
         conn = lambda data: int(np.mean(data))
@@ -53,7 +54,7 @@ class EmptyBucketsTest(PerfTest):
                 'Total CPU, %': cpu(s['cpu_utilization_rate']),
                 'Curr. connections': conn(s['curr_connections']),
             }
-        self.results.append(summary)
+        self.results[num_buckets] = summary[self.master_node]
         logger.info(pretty_dict(summary))
 
     def delete_buckets(self, buckets):
@@ -76,7 +77,7 @@ class EmptyBucketsTest(PerfTest):
             time.sleep(self.ITERATION_DELAY)
 
             # Monitor
-            self.report_stats()
+            self.report_stats(num_buckets)
 
             # Clean up
             self.delete_buckets(buckets)
@@ -137,7 +138,7 @@ class LoadTest(EmptyBucketsTest):
             self._access(buckets)
 
             # Monitor
-            self.report_stats()
+            self.report_stats(num_buckets)
 
             # Clean up
             self.delete_buckets(buckets)

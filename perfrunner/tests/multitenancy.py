@@ -37,6 +37,8 @@ class EmptyBucketsTest(PerfTest):
                                     threads_number=threads_number,
                                     password=password)
 
+        self.monitor.monitor_node_health(self.master_node)
+
     def report_stats(self):
         cpu = lambda data: round(np.mean(data), 1)
         rss = lambda data: int(np.mean(data) / 1024 ** 2)
@@ -59,6 +61,8 @@ class EmptyBucketsTest(PerfTest):
             self.rest.delete_bucket(host_port=self.master_node,
                                     name=bucket_name)
 
+        self.monitor.monitor_node_health(self.master_node)
+
     def run(self):
         for num_buckets in range(self.test_config.cluster.min_num_buckets,
                                  self.test_config.cluster.max_num_buckets + 1,
@@ -68,7 +72,6 @@ class EmptyBucketsTest(PerfTest):
 
             # Create
             self.create_buckets(buckets)
-            self.monitor.monitor_node_health(self.master_node)
             logger.info('Sleeping {} seconds'.format(self.ITERATION_DELAY))
             time.sleep(self.ITERATION_DELAY)
 
@@ -77,7 +80,6 @@ class EmptyBucketsTest(PerfTest):
 
             # Clean up
             self.delete_buckets(buckets)
-            self.monitor.monitor_node_health(self.master_node)
             logger.info('Sleeping {} seconds'.format(self.ITERATION_DELAY / 2))
             time.sleep(self.ITERATION_DELAY / 2)
 
@@ -128,7 +130,6 @@ class LoadTest(EmptyBucketsTest):
 
             # Create
             self.create_buckets(buckets)
-            self.monitor.monitor_node_health(self.master_node)
 
             # Load and access data
             self._load(buckets)
@@ -140,6 +141,5 @@ class LoadTest(EmptyBucketsTest):
 
             # Clean up
             self.delete_buckets(buckets)
-            self.monitor.monitor_node_health(self.master_node)
             logger.info('Sleeping {} seconds'.format(self.ITERATION_DELAY / 2))
             time.sleep(self.ITERATION_DELAY / 2)

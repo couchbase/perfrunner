@@ -12,7 +12,7 @@ class EmptyBucketsTest(PerfTest):
 
     ITERATION_DELAY = 300
 
-    def __index__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(EmptyBucketsTest, self).__init__(*args, **kwargs)
         self.results = []
 

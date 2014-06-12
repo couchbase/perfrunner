@@ -131,6 +131,7 @@ class LocalWorkerManager(RemoteWorkerManager):
         self.start()
 
     def initialize_project(self):
+        logger.info('Intializing local worker environment')
         with quiet():
             local('virtualenv -p python2.7 env')
             local('PATH=/usr/lib/ccache:/usr/lib64/ccache/bin:$PATH '

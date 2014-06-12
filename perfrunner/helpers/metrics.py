@@ -358,7 +358,11 @@ class MetricHelper(object):
                 out_bytes_per_sec += [
                     v['out_bytes_per_sec'] for v in data.values()
                 ]
-
+        # To prevent exception when the values may not be available during code debugging
+        if not in_bytes_per_sec:
+            in_bytes_per_sec.append(0)
+        if not out_bytes_per_sec:
+            out_bytes_per_sec.append(0)
         f = lambda v: format(int(v), ',d')
         return OrderedDict((
             ('min in_bytes  per sec', f(min(in_bytes_per_sec))),
@@ -392,8 +396,11 @@ class SgwMetricHelper(MetricHelper):
             logger.error('No data in {}'.format(db))
 
         data = self.seriesly[db].query(query_params)
-        latency = float(data.values()[0][0])
-        latency /= 10 ** 9  # ns -> s
+        if data.values()[0][0]:
+            latency = float(data.values()[0][0])
+            latency /= 10 ** 9  # ns -> s
+        else:
+            latency = 0   # 0 means the info not available in seriesly
 
         return round(latency, 2)
 
@@ -413,3 +420,29 @@ class SgwMetricHelper(MetricHelper):
             n - c for c, n in zip(total_requests, total_requests[1:])
         ]
         return round(np.mean(request_per_sec))
+
+    def calc_gateload_doc_counters(self, idx=1):
+        db = 'gateload_{}'.format(idx)
+        pull_push_counters = ["doc_pushed",
+                              "doc_pulled",
+                              "doc_failed_to_push",
+                              "doc_failed_to_pull"]
+        counters = OrderedDict()
+        for item in pull_push_counters:
+            query_params = self._get_query_params('max_gateload/total_{}'.format(item))
+            query_params.update({'group': 1000})  # Group by 1 second
+            data = self.seriesly[db].query(query_params)
+            values = sorted(v[0] for v in data.values())
+            # Only take the last 10 minutes
+            values = values[600:]
+            values = [i for i in values if i is not None]
+            if len(values) > 2:
+                values_per_sec = [
+                    n - c for c, n in zip(values, values[1:])
+                ]
+                counters['Average {}'.format(item)] = round(np.mean(values_per_sec))
+                counters['Max {}'.format(item)] = max(values_per_sec)
+            else:
+                counters['Average {}'.format(item)] = None
+                counters['Max {}'.format(item)] = None
+        return counters

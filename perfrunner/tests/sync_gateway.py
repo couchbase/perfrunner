@@ -82,15 +82,21 @@ class GateloadTest(PerfTest):
         summary = defaultdict(dict)
         latencies = defaultdict(list)
         all_requests_per_sec = []
+        self.errors = []
         for idx, gateload in enumerate(self.remote.gateloads, start=1):
-            requests_per_sec = self.metric_helper.calc_requests_per_sec(idx=idx)
-            all_requests_per_sec.append(requests_per_sec)
             for p in criteria:
                 kpi = self.KPI.format(p)
                 latency = self.metric_helper.calc_push_latency(p=p, idx=idx)
+                if latency == 0:
+                    status = '{}: Failed to get latency data'.format(gateload)
+                    self.errors.append(status)
                 summary[gateload][kpi] = latency
-                summary[gateload]['requests per sec'] = requests_per_sec
                 latencies[p].append(latency)
+            requests_per_sec = self.metric_helper.calc_requests_per_sec(idx=idx)
+            all_requests_per_sec.append(requests_per_sec)
+            summary[gateload]['Average requests per sec'] = requests_per_sec
+            doc_counters = self.metric_helper.calc_gateload_doc_counters(idx=idx)
+            summary[gateload]['gateload doc counters'] = doc_counters
         logger.info('Per node summary: {}'.format(pretty_dict(summary)))
 
         self.pass_fail = []
@@ -145,5 +151,7 @@ class PassFailGateloadTest(GateloadTest):
 
     def run(self):
         super(PassFailGateloadTest, self).run()
+        if self.errors:
+            logger.interrupt('Test failed because of errors')
         if 'doesn\'t meet' in ''.join(self.pass_fail):
-            logger.interrupt('Test failed')
+            logger.interrupt('Test failed because at least one of the latencies does not meet KPI')

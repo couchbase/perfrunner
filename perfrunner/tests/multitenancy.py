@@ -119,8 +119,9 @@ class LoadTest(EmptyBucketsTest):
 
     def _wait_for_persistence(self, buckets):
         for bucket_name in buckets:
-            self.monitor.monitor_disk_queue(self.master_node, bucket_name)
-            self.monitor.monitor_tap_replication(self.master_node, bucket_name)
+            self.monitor.monitor_disk_queues(self.master_node, bucket_name)
+            self.monitor.monitor_tap_queues(self.master_node, bucket_name)
+            self.monitor.monitor_upr_queues(self.master_node, bucket_name)
 
     def run(self):
         for num_buckets in range(self.test_config.cluster.min_num_buckets,

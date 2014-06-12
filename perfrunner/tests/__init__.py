@@ -105,8 +105,9 @@ class PerfTest(object):
     def wait_for_persistence(self):
         for master in self.cluster_spec.yield_masters():
             for bucket in self.test_config.buckets:
-                self.monitor.monitor_disk_queue(master, bucket)
-                self.monitor.monitor_tap_replication(master, bucket)
+                self.monitor.monitor_disk_queues(master, bucket)
+                self.monitor.monitor_tap_queues(master, bucket)
+                self.monitor.monitor_upr_queues(master, bucket)
 
     def load(self):
         load_settings = self.test_config.load_settings

@@ -8,19 +8,28 @@ from perfrunner.helpers.rest import RestHelper
 class Monitor(RestHelper):
 
     POLLING_INTERVAL = 5
-    MAX_RETRY = 10
+    MAX_RETRY = 12
 
-    DISK_QUEUE_METRICS = (
+    DISK_QUEUES = (
         'ep_queue_size',
         'ep_flusher_todo',
         'ep_diskqueue_items',
         'vb_active_queue_size',
         'vb_replica_queue_size',
     )
-    TAP_REPLICATION_METRICS = (
+    TAP_QUEUES = (
         'ep_tap_replica_qlen',
         'ep_tap_replica_queue_itemondisk',
         'ep_tap_rebalance_queue_backfillremaining',
+    )
+
+    UPR_QUEUES = (
+        'ep_upr_replica_items_remaining',
+        'ep_upr_other_items_remaining',
+    )
+
+    XDCR_QUEUES = (
+        'replication_changes_left',
     )
 
     def monitor_rebalance(self, host_port):
@@ -35,44 +44,37 @@ class Monitor(RestHelper):
                 logger.info('Rebalance progress: {} %'.format(progress))
         logger.info('Rebalance completed')
 
-    def _wait_for_null_metric(self, host_port, bucket, metric):
-        retry = 0
-        while retry < self.MAX_RETRY:
+    def _wait_for_empty_queues(self, host_port, bucket, queues):
+        metrics = list(queues)
+        while metrics:
+            bucket_stats = self.get_bucket_stats(host_port, bucket)
+            for metric in metrics:
+                stats = bucket_stats['op']['samples'].get(metric)
+                if stats:
+                    last_value = stats[-1]
+                    if last_value:
+                        logger.info('{} = {}'.format(metric, last_value))
+                        continue
+                    else:
+                        logger.info('{} reached 0'.format(metric))
+                metrics.remove(metric)
             time.sleep(self.POLLING_INTERVAL)
 
-            bucket_stats = self.get_bucket_stats(host_port, bucket)
-            try:
-                value = bucket_stats['op']['samples'][metric][-1]
-            except KeyError:
-                logger.warn('Got broken bucket stats')
-                retry += 1
-                continue
-            else:
-                retry = 0
+    def monitor_disk_queues(self, host_port, bucket):
+        logger.info('Monitoring disk queues: {}'.format(bucket))
+        self._wait_for_empty_queues(host_port, bucket, self.DISK_QUEUES)
 
-            if value:
-                logger.info('Current value of {}: {}'.format(metric, value))
-            else:
-                logger.info('{} reached 0'.format(metric))
-                return
-        logger.interrupt('Failed to get bucket stats after {} attempts'.format(
-            self.MAX_RETRY
-        ))
+    def monitor_tap_queues(self, host_port, bucket):
+        logger.info('Monitoring TAP queues: {}'.format(bucket))
+        self._wait_for_empty_queues(host_port, bucket, self.TAP_QUEUES)
 
-    def monitor_disk_queue(self, host_port, bucket):
-        logger.info('Monitoring disk queue: {}'.format(bucket))
-        for metric in self.DISK_QUEUE_METRICS:
-            self._wait_for_null_metric(host_port, bucket, metric)
+    def monitor_upr_queues(self, host_port, bucket):
+        logger.info('Monitoring UPR queues: {}'.format(bucket))
+        self._wait_for_empty_queues(host_port, bucket, self.UPR_QUEUES)
 
-    def monitor_tap_replication(self, host_port, bucket):
-        logger.info('Monitoring TAP replication: {}'.format(bucket))
-        for metric in self.TAP_REPLICATION_METRICS:
-            self._wait_for_null_metric(host_port, bucket, metric)
-
-    def monitor_xdcr_replication(self, host_port, bucket):
-        logger.info('Monitoring XDCR replication: {}'.format(bucket))
-        metric = 'replication_changes_left'
-        self._wait_for_null_metric(host_port, bucket, metric)
+    def monitor_xdcr_queues(self, host_port, bucket):
+        logger.info('Monitoring XDCR queues: {}'.format(bucket))
+        self._wait_for_empty_queues(host_port, bucket, self.XDCR_QUEUES)
 
     def monitor_task(self, host_port, task_type):
         logger.info('Monitoring task: {}'.format(task_type))
@@ -105,7 +107,7 @@ class Monitor(RestHelper):
 
     def monitor_node_health(self, host_port):
         logger.info('Monitoring node health')
-        for retry in range(self.MAX_RETRY * 2):
+        for retry in range(self.MAX_RETRY):
             unhealthy_nodes = {
                 n for n, status in self.node_statuses(host_port).items()
                 if status != 'healthy'

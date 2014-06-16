@@ -235,7 +235,7 @@ class UprTest(TapTest):
                 mcd_client = MemcachedClient(host=host, port=11210)
                 mcd_client.sasl_auth_plain(user=bucket, password=password)
 
-                op = upr_client.open_producer("stream")
+                op = upr_client.open_producer('stream')
                 response = op.next_response()
                 if response['status'] != SUCCESS:
                     logger.interrupt('Failed to open producer')

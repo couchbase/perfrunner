@@ -432,8 +432,7 @@ class SgwMetricHelper(MetricHelper):
             query_params.update({'group': 1000})  # Group by 1 second
             data = self.seriesly[db].query(query_params)
             values = sorted(v[0] for v in data.values())
-            # Only take the last 10 minutes
-            values = values[600:]
+            values = values[-600:]  # Only take the last 10 minutes
             values = [i for i in values if i is not None]
             if len(values) > 2:
                 values_per_sec = [

@@ -423,12 +423,11 @@ class SgwMetricHelper(MetricHelper):
 
     def calc_gateload_doc_counters(self, idx=1):
         db = 'gateload_{}'.format(idx)
-        pull_push_counters = ["doc_pushed",
-                              "doc_pulled",
-                              "doc_failed_to_push",
-                              "doc_failed_to_pull"]
         counters = OrderedDict()
-        for item in pull_push_counters:
+        for item in ('doc_pushed',
+                     'doc_pulled',
+                     'doc_failed_to_push',
+                     'doc_failed_to_pull'):
             query_params = self._get_query_params('max_gateload/total_{}'.format(item))
             query_params.update({'group': 1000})  # Group by 1 second
             data = self.seriesly[db].query(query_params)

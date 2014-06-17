@@ -4,6 +4,7 @@
     "AdminPort": 4985,
     "Database": "db",
     "DocSize": {{doc_size}},
+    "SendAttachment": {{send_attachment}},
     "DocSizeDistribution": [
         {
             "Prob": 20,

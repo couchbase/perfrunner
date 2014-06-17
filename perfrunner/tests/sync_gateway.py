@@ -63,6 +63,7 @@ class GateloadTest(PerfTest):
                     pushers=self.test_config.gateload_settings.pushers,
                     pullers=self.test_config.gateload_settings.pullers,
                     doc_size=self.test_config.gateload_settings.doc_size,
+                    send_attachment=self.test_config.gateload_settings.send_attachment,
                     channel_active_users=self.test_config.gateload_settings.channel_active_users,
                     channel_concurrent_users=self.test_config.gateload_settings.channel_concurrent_users,
                     sleep_time=self.test_config.gateload_settings.sleep_time * 1000,

@@ -26,6 +26,7 @@ sleep_time = 10
 pushers = 1500
 pullers = 3500
 doc_size = 0
+send_attachment = false
 channel_active_users = 40
 channel_concurrent_users = 40
 p95_avg_criteria = 3

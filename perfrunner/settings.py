@@ -499,6 +499,7 @@ class GateloadSettings(PhaseSettings):
     PULLER = 3500
     PUSHER = 1500
     DOC_SIZE = 0
+    SEND_ATTACHMENT = 'false'
     CHANNEL_ACTIVE_USERS = 40
     CHANNEL_CONCURRENT_USERS = 40
     SLEEP_TIME = 10   # In seconds, 10 seconds
@@ -511,6 +512,7 @@ class GateloadSettings(PhaseSettings):
         self.pullers = int(options.get('pullers', self.PULLER))
         self.pushers = int(options.get('pushers', self.PUSHER))
         self.doc_size = int(options.get('doc_size', self.DOC_SIZE))
+        self.send_attachment = options.get('send_attachment', self.SEND_ATTACHMENT)
         self.channel_active_users = int(options.get('channel_active_users',
                                                     self.CHANNEL_ACTIVE_USERS))
         self.channel_concurrent_users = int(options.get('channel_concurrent_users',

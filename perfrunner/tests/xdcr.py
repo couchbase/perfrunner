@@ -1,3 +1,5 @@
+from time import sleep
+
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import log_phase, target_hash
 from perfrunner.settings import TargetSettings
@@ -147,6 +149,8 @@ class XdcrInitTest(SymmetricXdcrTest):
 
     COLLECTORS = {}
 
+    MONITORING_DELAY = 30
+
     def load(self):
         load_settings = self.test_config.load_settings
         log_phase('load phase', load_settings)
@@ -158,6 +162,7 @@ class XdcrInitTest(SymmetricXdcrTest):
     @with_stats
     def init_xdcr(self):
         self.enable_xdcr()
+        sleep(self.MONITORING_DELAY)
         self.monitor_replication()
 
     def run(self):

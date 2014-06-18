@@ -34,14 +34,14 @@ class KVTest(PerfTest):
         self.access()
 
 
-class ObserveLatencyTest(KVTest):
+class PersistLatencyTest(KVTest):
 
-    COLLECTORS = {'observe_latency': True}
+    COLLECTORS = {'persist_latency': True}
 
     ALL_BUCKETS = True
 
     def run(self):
-        super(ObserveLatencyTest, self).run()
+        super(PersistLatencyTest, self).run()
 
         if self.test_config.stats_settings.enabled:
             latency = self.reporter.post_to_sf(
@@ -49,6 +49,11 @@ class ObserveLatencyTest(KVTest):
             )
             if hasattr(self, 'experiment'):
                 self.experiment.post_results(latency)
+
+
+class ReplicateLatencyTest(PersistLatencyTest):
+
+    COLLECTORS = {'replicate_latency': True}
 
 
 class MixedLatencyTest(KVTest):

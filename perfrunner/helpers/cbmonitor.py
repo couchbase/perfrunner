@@ -83,8 +83,10 @@ class CbAgent(object):
         self.processes = []
         self.snapshots = []
 
-    def prepare_collectors(self, test, latency=False, query_latency=False,
-                           n1ql_latency=False, observe_latency=False,
+    def prepare_collectors(self, test,
+                           latency=False,
+                           query_latency=False, n1ql_latency=False,
+                           persist_latency=False, replicate_latency=False,
                            xdcr_lag=False):
         clusters = self.clusters.keys()
 
@@ -100,8 +102,10 @@ class CbAgent(object):
             self.prepare_query_latency(clusters, test)
         if n1ql_latency:
             self.prepare_n1ql_latency(clusters, test)
-        if observe_latency:
-            self.prepare_observe_latency(clusters)
+        if persist_latency:
+            self.prepare_persist_latency(clusters)
+        if replicate_latency:
+            self.prepare_replicate_latency(clusters)
         if xdcr_lag:
             self.prepare_xdcr_lag(clusters)
 
@@ -141,11 +145,20 @@ class CbAgent(object):
             io_collector = IO(settings)
             self.collectors.append(io_collector)
 
-    def prepare_observe_latency(self, clusters):
+    def prepare_persist_latency(self, clusters):
         for i, cluster in enumerate(clusters):
             settings = copy(self.settings)
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
+            settings.observe = 'persist'
+            self.collectors.append(ObserveLatency(settings))
+
+    def prepare_replicate_latency(self, clusters):
+        for i, cluster in enumerate(clusters):
+            settings = copy(self.settings)
+            settings.cluster = cluster
+            settings.master_node = self.clusters[cluster]
+            settings.observe = 'replicate'
             self.collectors.append(ObserveLatency(settings))
 
     def prepare_xdcr_lag(self, clusters):

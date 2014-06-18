@@ -1,6 +1,6 @@
 [test_case]
 module = perfrunner.tests.kv
-class = ObserveLatencyTest
+class = PersistLatencyTest
 title = PersistTo=1 latency (ms), 1 bucket x 500M x 1KB, DGM
 larger_is_better = false
 

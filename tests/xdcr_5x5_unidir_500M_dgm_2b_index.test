@@ -17,10 +17,9 @@ xdcrOptimisticReplicationThreshold = 0
 db_percentage = 10
 
 [load]
-ops = 500000000
+items = 500000000
 size = 800
-workers = 10
-async = 1
+workers = 20
 
 [index]
 views = [1]

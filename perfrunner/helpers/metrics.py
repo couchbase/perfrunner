@@ -222,26 +222,20 @@ class MetricHelper(object):
 
         return latency, metric, metric_info
 
-    def calc_cpu_utilization(self, from_ts=None, to_ts=None, meta=None):
+    def calc_cpu_utilization(self):
         metric = '{}_avg_cpu_{}'.format(self.test_config.name,
                                         self.cluster_spec.name)
-        if meta:
-            metric = '{}_{}'.format(metric, meta.split()[0].lower())
-        title = 'Avg. CPU utilization rate (%)'
-        if meta:
-            title = '{}, {}'.format(title, meta)
+        title = 'Avg. CPU utilization (%)'
         title = '{}, {}'.format(title, self.metric_title)
-        metric_info = self._get_metric_info(title, level='Advanced')
+        metric_info = self._get_metric_info(title)
 
-        host = self.master_node.split(':')[0].replace('.', '')
         cluster = self.cluster_names[0]
         bucket = self.test_config.buckets[0]
 
-        query_params = self._get_query_params('avg_cpu_utilization_rate',
-                                              from_ts, to_ts)
-        db = 'ns_server{}{}{}'.format(cluster, bucket, host)
+        query_params = self._get_query_params('avg_cpu_utilization_rate')
+        db = 'ns_server{}{}'.format(cluster, bucket)
         data = self.seriesly[db].query(query_params)
-        cpu_utilazion = round(data.values()[0][0], 1)
+        cpu_utilazion = round(data.values()[0][0])
 
         return cpu_utilazion, metric, metric_info
 

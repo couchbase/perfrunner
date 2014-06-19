@@ -268,6 +268,7 @@ class StatsSettings(object):
     INTERVAL = 5
     LAT_INTERVAL = 1
     POST_RSS = 0
+    POST_CPU = 0
 
     def __init__(self, options):
         self.enabled = int(options.get('enabled', self.ENABLED))
@@ -275,6 +276,7 @@ class StatsSettings(object):
         self.interval = int(options.get('interval', self.INTERVAL))
         self.lat_interval = int(options.get('lat_interval', self.LAT_INTERVAL))
         self.post_rss = int(options.get('post_rss', self.POST_RSS))
+        self.post_cpu = int(options.get('post_cpu', self.POST_CPU))
 
 
 class BucketSettings(object):

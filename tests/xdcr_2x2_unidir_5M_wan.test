@@ -3,9 +3,6 @@ module = perfrunner.tests.xdcr
 class = SymmetricXdcrTest
 larger_is_better = false
 
-[stats]
-enabled = 0
-
 [cluster]
 mem_quota = 204800
 initial_nodes = 2 2

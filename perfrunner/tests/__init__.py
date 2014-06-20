@@ -10,7 +10,7 @@ from perfrunner.helpers.cbmonitor import CbAgent
 from perfrunner.helpers.experiments import ExperimentHelper
 from perfrunner.helpers.memcached import MemcachedHelper
 from perfrunner.helpers.metrics import MetricHelper
-from perfrunner.helpers.misc import log_phase, target_hash
+from perfrunner.helpers.misc import log_phase, target_hash, pretty_dict
 from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.reporter import Reporter
@@ -81,19 +81,32 @@ class PerfTest(object):
             self.worker_manager.terminate()
         if exc_type != exc.KeyboardInterrupt and '--nodebug' not in sys.argv:
             self.debug()
+
+        self.check_core_dumps()
         for master in self.cluster_spec.yield_masters():
             if not self.rest.is_balanced(master):
                 logger.interrupt('Rebalance failed')
+            self.check_failover(master)
 
-            num_failovers = self.rest.get_failover_counter(master)
-            if hasattr(self, 'rebalance_settings'):
-                if self.rebalance_settings.failover or \
-                        self.rebalance_settings.graceful_failover:
-                    continue
-            if num_failovers:
-                logger.interrupt(
-                    'Failover happened {} time(s)'.format(num_failovers)
-                )
+    def check_failover(self, master):
+        if hasattr(self, 'rebalance_settings'):
+            if self.rebalance_settings.failover or \
+                    self.rebalance_settings.graceful_failover:
+                return
+
+        num_failovers = self.rest.get_failover_counter(master)
+        if num_failovers:
+            logger.interrupt(
+                'Failover happened {} time(s)'.format(num_failovers)
+            )
+
+    def check_core_dumps(self):
+        dumps_per_host = self.remote.detect_core_dumps()
+        core_dumps = {
+            host: dumps for host, dumps in dumps_per_host.items() if dumps
+        }
+        if core_dumps:
+            logger.interrupt(pretty_dict(core_dumps))
 
     def compact_bucket(self):
         for master in self.cluster_spec.yield_masters():

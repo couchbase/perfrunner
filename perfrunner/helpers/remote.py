@@ -274,6 +274,15 @@ class RemoteLinuxHelper(object):
         return int(run('nproc', pty=False))
 
     @all_hosts
+    def detect_core_dumps(self):
+        # Based on kernel.core_pattern = /tmp/core.%e.%p.%h.%t
+        r = run('ls /tmp/core*', quiet=True)
+        if not r.return_code:
+            return r.split()
+        else:
+            return []
+
+    @all_hosts
     def start_cbq(self):
         logger.info('Starting cbq-engine')
         return run('nohup cbq-engine '

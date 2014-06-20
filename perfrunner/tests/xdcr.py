@@ -64,9 +64,10 @@ class XdcrTest(PerfTest):
             self.remote.filter_wan(src_list, dest_list)
 
     def run(self):
-        self.enable_xdcr()
         self.load()
         self.wait_for_persistence()
+
+        self.enable_xdcr()
         self.monitor_replication()
         self.wait_for_persistence()
 

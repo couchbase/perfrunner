@@ -1,0 +1,24 @@
+[test_case]
+module = perfrunner.tests.kv
+class = KVTest
+
+[cluster]
+mem_quota = 204800
+initial_nodes = 2
+num_buckets = 5
+
+[load]
+items = 200000
+size = 800
+workers = 2
+
+[access]
+creates = 1
+reads = 85
+updates = 13
+deletes = 1
+throughput = 2000
+items = 200000
+size = 800
+workers = 1
+time=600

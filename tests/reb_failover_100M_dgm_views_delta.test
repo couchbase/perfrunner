@@ -24,7 +24,7 @@ workers = 20
 [hot_load]
 items = 100000000
 size = 2048
-workers = 20
+workers = 10
 working_set = 5
 
 [index]

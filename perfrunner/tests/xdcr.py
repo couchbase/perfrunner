@@ -10,6 +10,15 @@ from perfrunner.tests.query import QueryLatencyTest
 
 class XdcrTest(PerfTest):
 
+    """
+    Base XDCR test and also full implementation of bi-directional case.
+
+    As a base class it implements several methods for XDCR management and WAN
+    configuration.
+
+    "run" workflow is common for both uni-directional and bi-directional cases.
+    """
+
     COLLECTORS = {'latency': True, 'xdcr_lag': True}
 
     ALL_BUCKETS = True
@@ -108,6 +117,10 @@ class SrcTargetIterator(TargetIterator):
 
 class SymmetricXdcrTest(XdcrTest):
 
+    """
+    Bad name for uni-directional scenario.
+    """
+
     def __init__(self, *args, **kwargs):
         super(SymmetricXdcrTest, self).__init__(*args, **kwargs)
         self.target_iterator = TargetIterator(self.cluster_spec,
@@ -125,6 +138,10 @@ class SymmetricXdcrTest(XdcrTest):
 
 
 class XdcrWithViewsTest(SymmetricXdcrTest, QueryLatencyTest):
+
+    """
+    XDCR + Views workflow.
+    """
 
     def run(self):
         self.enable_xdcr()
@@ -151,6 +168,11 @@ class XdcrWithViewsTest(SymmetricXdcrTest, QueryLatencyTest):
 
 
 class XdcrInitTest(SymmetricXdcrTest):
+
+    """
+    The test covers scenario when 2 cluster are synced up for the first time.
+    There is no ongoing workload and compaction is usually disabled.
+    """
 
     COLLECTORS = {}
 
@@ -186,6 +208,11 @@ class XdcrInitTest(SymmetricXdcrTest):
 
 
 class XdcrInitInMemoryTest(XdcrInitTest, FlusherTest):
+
+    """
+    Only relevant for debugging of UPR-based replication. Allows to eliminate
+    impact of disk persistence on replication performance.
+    """
 
     def stop_persistence(self):
         hostnames = tuple(self.cluster_spec.yield_hostnames())

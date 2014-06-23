@@ -11,6 +11,11 @@ from perfrunner.tests import PerfTest
 
 class EmptyBucketsTest(PerfTest):
 
+    """
+    Ramp-up test with increasing number of empty buckets. This test indicates
+    the most fundamental scalability issues in multitenancy scenarios.
+    """
+
     ITERATION_DELAY = 300
 
     def __init__(self, *args, **kwargs):
@@ -98,6 +103,12 @@ class TargetIterator(object):
 
 
 class LoadTest(EmptyBucketsTest):
+
+    """
+    Advanced version of base test. Buckets are not empry anymore, there is
+    ongoing workload as well. This is a lazy workflow - it is strongly
+    recommended to reblast cluster after every iteration.
+    """
 
     def _load(self, buckets):
         load_settings = self.test_config.load_settings

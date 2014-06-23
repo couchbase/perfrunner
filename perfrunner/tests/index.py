@@ -7,6 +7,14 @@ from perfrunner.workloads.viewgen import ViewGen, ViewGenDev
 
 class IndexTest(PerfTest):
 
+    """
+    The test measures time it takes to build index (views). This is just a base
+    class, actual measurements happen in initial and incremental indexing tests.
+
+    It doesn't differentiate index types and basically benchmarks dumb/bulk
+    indexing.
+    """
+
     def __init__(self, *args):
         super(IndexTest, self).__init__(*args)
 
@@ -47,6 +55,13 @@ class IndexTest(PerfTest):
 
 class InitialIndexTest(IndexTest):
 
+    """
+    The test measures time it takes to build index for the first time. Scenario
+    is pretty straightforward, there are only two phases:
+    -- Initial data load
+    -- Index building
+    """
+
     @with_stats
     def build_index(self):
         super(InitialIndexTest, self).build_index()
@@ -65,6 +80,12 @@ class InitialIndexTest(IndexTest):
 
 
 class InitialAndIncrementalIndexTest(IndexTest):
+
+    """
+    Extended version of initial indexing test which also has access phase for
+    data/index mutation. It is critical to disable automatic index updates so
+    that we can control index building.
+    """
 
     @with_stats
     def build_init_index(self):
@@ -105,6 +126,12 @@ class InitialAndIncrementalIndexTest(IndexTest):
 
 
 class DevIndexTest(IndexTest):
+
+    """
+    Unlike base test this one introduces measurements per different index type.
+    It only used as a base class for view query tests (in order to get separate
+    measurements for different types of queries).
+    """
 
     def __init__(self, *args):
         super(IndexTest, self).__init__(*args)

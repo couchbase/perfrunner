@@ -4,6 +4,11 @@ from perfrunner.tests.index import IndexTest, DevIndexTest
 
 class QueryTest(IndexTest):
 
+    """
+    The base test which defines workflow for different view query tests. Access
+    phase represents mixed KV workload and queries on views.
+    """
+
     COLLECTORS = {'latency': True, 'query_latency': True}
 
     @with_stats
@@ -28,6 +33,11 @@ class QueryTest(IndexTest):
 
 class QueryThroughputTest(QueryTest):
 
+    """
+    The test adds a simple step to workflow: post-test calculation of average
+    query throughput.
+    """
+
     def run(self):
         super(QueryThroughputTest, self).run()
         if self.test_config.stats_settings.enabled:
@@ -37,6 +47,13 @@ class QueryThroughputTest(QueryTest):
 
 
 class QueryLatencyTest(QueryTest):
+
+    """The basic test for bulk latency measurements. Bulk means a mix of
+    equality, range, group, and etc. The most reasonable test for update_after
+    (stale) queries.
+
+    The class itself only adds calculation and posting of query latency.
+    """
 
     def run(self):
         super(QueryLatencyTest, self).run()
@@ -54,6 +71,13 @@ class QueryLatencyTest(QueryTest):
 
 class IndexLatencyTest(QueryTest):
 
+    """
+    Measurement of end-to-end latency which is defined as time it takes for a
+    document to appear in view output after it is stored in KV.
+
+    The test only adds calculation phase. See cbagent project for details.
+    """
+
     COLLECTORS = {'index_latency': True, 'query_latency': True}
 
     def run(self):
@@ -66,5 +90,9 @@ class IndexLatencyTest(QueryTest):
 
 
 class DevQueryLatencyTest(DevIndexTest, QueryLatencyTest):
+
+    """
+    Per query type latency measurements.
+    """
 
     pass

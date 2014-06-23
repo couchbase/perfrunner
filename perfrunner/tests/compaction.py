@@ -5,6 +5,13 @@ from perfrunner.tests.index import IndexTest
 
 class BucketCompactionTest(PerfTest):
 
+    """
+    The test measures compaction speed as amount of data in MB compacted per
+    second. It consists of two primary phases:
+    -- Initial data load
+    -- Mutation of all documents in order to achieve high fragmentation.
+    """
+
     ALL_BUCKETS = True
 
     @with_stats
@@ -27,6 +34,11 @@ class BucketCompactionTest(PerfTest):
 
 
 class IndexCompactionTest(IndexTest):
+
+    """
+    Similar to bucket compaction test this test quantifies index compaction
+    speed. Additional phase is data indexing after initial data load.
+    """
 
     ALL_BUCKETS = True
 

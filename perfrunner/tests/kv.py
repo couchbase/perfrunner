@@ -17,6 +17,15 @@ from perfrunner.workloads.tcmalloc import WorkloadGen
 
 class KVTest(PerfTest):
 
+    """
+    The most basic KV workflow:
+        Initial data load ->
+            Persistence and intra-cluster replication (for consistency) ->
+                Data compaction (for consistency) ->
+                    "Hot" load or working set warm up ->
+                        "access" phase or active workload
+    """
+
     @with_stats
     def access(self):
         super(KVTest, self).timer()
@@ -36,6 +45,10 @@ class KVTest(PerfTest):
 
 class PersistLatencyTest(KVTest):
 
+    """
+    The same as base test but persistence latency is measured.
+    """
+
     COLLECTORS = {'persist_latency': True}
 
     ALL_BUCKETS = True
@@ -53,10 +66,18 @@ class PersistLatencyTest(KVTest):
 
 class ReplicateLatencyTest(PersistLatencyTest):
 
+    """
+    The same as base test but intra-cluster replication latency is measured.
+    """
+
     COLLECTORS = {'replicate_latency': True}
 
 
 class MixedLatencyTest(KVTest):
+
+    """
+    Enables reporting of GET and SET latency.
+    """
 
     COLLECTORS = {'latency': True}
 
@@ -71,6 +92,10 @@ class MixedLatencyTest(KVTest):
 
 
 class ReadLatencyTest(MixedLatencyTest):
+
+    """
+    Enables reporting of GET latency.
+    """
 
     COLLECTORS = {'latency': True}
 
@@ -87,6 +112,10 @@ class ReadLatencyTest(MixedLatencyTest):
 
 class BgFetcherTest(KVTest):
 
+    """
+    Enables reporting of average BgFetcher wait time (disk fetches).
+    """
+
     COLLECTORS = {'latency': True}
 
     ALL_BUCKETS = True
@@ -98,6 +127,10 @@ class BgFetcherTest(KVTest):
 
 
 class DrainTest(KVTest):
+
+    """
+    Enables reporting of average disk write queue size.
+    """
 
     ALL_BUCKETS = True
 
@@ -112,6 +145,15 @@ class DrainTest(KVTest):
 
 
 class FlusherTest(KVTest):
+
+    """
+    The maximum drain rate benchmark. Data set is loaded while persistence is
+    disabled. After that persistence is enabled and ep-engine commits data with
+    maximum possible speed (using very large batches).
+
+    Please notice that measured drain rate has nothing to do with typical
+    production characteristics. It only used as baseline / reference.
+    """
 
     def mc_iterator(self):
         password = self.test_config.bucket.password
@@ -156,6 +198,10 @@ class FlusherTest(KVTest):
 
 class BeamRssTest(KVTest):
 
+    """
+    Enables reporting of Erlang (beam.smp process) memory usage.
+    """
+
     def run(self):
         super(BeamRssTest, self).run()
         if self.test_config.stats_settings.enabled:
@@ -166,6 +212,12 @@ class BeamRssTest(KVTest):
 
 
 class WarmupTest(PerfTest):
+
+    """
+    After typical workload we restart all nodes and measure time it takes
+    to perform cluster warm up (internal technology, not to be confused with
+    "hot" load phase).
+    """
 
     def access(self):
         super(WarmupTest, self).timer()
@@ -204,6 +256,11 @@ class WarmupTest(PerfTest):
 
 class TapTest(PerfTest):
 
+    """
+    Load data and then read entire data set via TAP protocol (single-threaded
+    consumer).
+    """
+
     def consume(self):
         logger.info('Reading data via TAP')
         password = self.test_config.bucket.password
@@ -226,6 +283,11 @@ class TapTest(PerfTest):
 
 
 class UprTest(TapTest):
+
+    """
+    Load data and then read entire data set via UPR protocol (single-threaded
+    consumer).
+    """
 
     def consume(self):
         password = self.test_config.bucket.password
@@ -266,6 +328,25 @@ class UprTest(TapTest):
 
 class FragmentationTest(PerfTest):
 
+    """
+    This test implements the append-only scenario:
+    1. Single node.
+    2. Load X items, 700-1400 bytes, average 1KB (11-22 fields).
+    3. Append data
+        3.1. Mark first 80% of items as working set.
+        3.2. Randomly update 75% of items in working set by adding 1 field at a time (62 bytes).
+        3.3. Mark first 40% of items as working set.
+        3.4. Randomly update 75% of items in working set by adding 1 field at a time (62 bytes).
+        3.5. Mark first 20% of items as working set.
+        3.6. Randomly update 75% of items in working set by adding 1 field at a time (62 bytes).
+    4. Repeat step #3 5 times.
+
+    See workloads/tcmalloc.py for details.
+
+    Scenario described above allows to spot issues with memory/allocator
+    fragmentation.
+    """
+
     @with_stats
     def load_and_append(self):
         password = self.test_config.bucket.password
@@ -294,6 +375,10 @@ class FragmentationTest(PerfTest):
 
 class FragmentationLargeTest(FragmentationTest):
 
+    """
+    The same as base test but large documents are used.
+    """
+
     @with_stats
     def load_and_append(self):
         password = self.test_config.bucket.password
@@ -303,6 +388,11 @@ class FragmentationLargeTest(FragmentationTest):
 
 
 class ReplicationTest(PerfTest):
+
+    """
+    Quick replication test. Single documents are sequentially inserted and
+    replication latency is measured after each insert.
+    """
 
     NUM_SAMPLES = 5000
 

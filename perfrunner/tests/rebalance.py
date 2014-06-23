@@ -53,6 +53,26 @@ def with_delayed_posting(rebalance, *args, **kwargs):
 
 class RebalanceTest(PerfTest):
 
+    """
+    This class implements methods required for rebalance management. See child
+    classes for workflow details.
+
+    Here is rebalance phase timeline:
+
+        start stats collection ->
+            sleep X minutes (observe pre-rebalance characteristics) ->
+                trigger rebalance stopwatch ->
+                    start rebalance -> wait for rebalance to finish ->
+                trigger rebalance stopwatch ->
+            sleep X minutes (observe post-rebalance characteristics) ->
+        stop stats collection.
+
+    The timeline is implement via a long chain of decorators.
+
+    Actual rebalance step depends on test scenario (e.g., basic rebalance or
+    rebalance after graceful failover, and etc.).
+    """
+
     ALL_HOSTNAMES = True
 
     def __init__(self, *args, **kwargs):
@@ -158,6 +178,10 @@ class RebalanceTest(PerfTest):
 
 class StaticRebalanceTest(RebalanceTest):
 
+    """
+    KV rebalance test with no ongoing workload. Obsolete.
+    """
+
     def run(self):
         self.load()
         self.wait_for_persistence()
@@ -167,6 +191,10 @@ class StaticRebalanceTest(RebalanceTest):
 
 
 class StaticRebalanceWithIndexTest(IndexTest, RebalanceTest):
+
+    """
+    KV + Index rebalance test with no ongoing workload. Obsolete.
+    """
 
     def run(self):
         self.load()
@@ -180,6 +208,10 @@ class StaticRebalanceWithIndexTest(IndexTest, RebalanceTest):
 
 
 class RebalanceKVTest(RebalanceTest):
+
+    """
+    Workflow definition for KV rebalance tests.
+    """
 
     COLLECTORS = {'latency': True}
 
@@ -197,6 +229,10 @@ class RebalanceKVTest(RebalanceTest):
 
 
 class RebalanceWithQueriesTest(QueryTest, RebalanceTest):
+
+    """
+    Workflow definition for KV + Index rebalance tests.
+    """
 
     COLLECTORS = {'latency': True, 'query_latency': True}
 
@@ -218,6 +254,10 @@ class RebalanceWithQueriesTest(QueryTest, RebalanceTest):
 
 class RebalanceWithXdcrTest(XdcrTest, RebalanceTest):
 
+    """
+    Workflow definition for KV + bidir XDCR rebalance tests.
+    """
+
     COLLECTORS = {'latency': True, 'xdcr_lag': True}
 
     def run(self):
@@ -237,6 +277,10 @@ class RebalanceWithXdcrTest(XdcrTest, RebalanceTest):
 
 
 class RebalanceWithSymmetricXdcrTest(SymmetricXdcrTest, RebalanceTest):
+
+    """
+    Workflow definition for KV + unidir XDCR rebalance tests.
+    """
 
     COLLECTORS = {'latency': True, 'xdcr_lag': True}
 

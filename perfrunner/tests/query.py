@@ -52,6 +52,19 @@ class QueryLatencyTest(QueryTest):
                 )
 
 
+class IndexLatencyTest(QueryTest):
+
+    COLLECTORS = {'index_latency': True, 'query_latency': True}
+
+    def run(self):
+        super(IndexLatencyTest, self).run()
+
+        if self.test_config.stats_settings.enabled:
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_observe_latency(percentile=95)
+            )
+
+
 class DevQueryLatencyTest(DevIndexTest, QueryLatencyTest):
 
     pass

@@ -1,5 +1,5 @@
 [test_case]
-module = perfrunner.tests.xdcr
+module = perfrunner.tests.kv
 class = KVTest
 
 [cluster]

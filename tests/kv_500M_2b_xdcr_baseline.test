@@ -1,0 +1,35 @@
+[test_case]
+module = perfrunner.tests.xdcr
+class = KVTest
+
+[cluster]
+mem_quota = 204800
+initial_nodes = 5
+num_buckets = 2
+
+[compaction]
+db_percentage = 10
+
+[load]
+items = 500000000
+size = 800
+workers = 20
+
+[hot_load]
+items = 500000000
+size = 800
+workers = 20
+working_set = 10
+
+[access]
+creates = 0
+reads = 50
+updates = 50
+deletes = 0
+throughput = 10000
+items = 500000000
+size = 800
+workers = 30
+working_set = 10
+working_set_access = 98
+time = 3600

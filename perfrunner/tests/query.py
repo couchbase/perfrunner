@@ -1,3 +1,7 @@
+import time
+
+from logger import logger
+
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests.index import IndexTest, DevIndexTest
 
@@ -96,3 +100,14 @@ class DevQueryLatencyTest(DevIndexTest, QueryLatencyTest):
     """
 
     pass
+
+
+class QueryManualCompactionTest(QueryTest):
+
+    @with_stats
+    def access(self):
+        access_settings = self.test_config.access_settings
+        logger.info('Running phase for {} seconds'.format(access_settings.time))
+        t0 = time.time()
+        while time.time() - t0 < access_settings.time:
+            self.compact_index()

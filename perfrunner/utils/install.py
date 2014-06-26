@@ -8,7 +8,7 @@ from requests.exceptions import ConnectionError
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import ClusterSpec
 
-Build = namedtuple('Build', ['arch', 'pkg', 'version', 'openssl', 'toy'])
+Build = namedtuple('Build', ['arch', 'pkg', 'version', 'toy'])
 
 
 class CouchbaseInstaller(object):
@@ -22,9 +22,8 @@ class CouchbaseInstaller(object):
 
         arch = self.remote.detect_arch()
         pkg = self.remote.detect_pkg()
-        openssl = self.remote.detect_openssl(pkg)
 
-        self.build = Build(arch, pkg, options.version, openssl, options.toy)
+        self.build = Build(arch, pkg, options.version, options.toy)
         logger.info('Target build info: {}'.format(self.build))
 
     def get_expected_filenames(self):
@@ -36,11 +35,6 @@ class CouchbaseInstaller(object):
                 'couchbase-server-community_cent58-3.0.0-toy-{toy}-{arch}_{version}-toy.{pkg}',
                 'couchbase-server-community_cent58-master-toy-{toy}-{arch}_{version}-toy.{pkg}',
                 'couchbase-server-community_cent54-master-toy-{toy}-{arch}_{version}-toy.{pkg}',
-            )
-        elif self.build.openssl == '0.9.8e':
-            patterns = (
-                'couchbase-server-enterprise_{arch}_{version}-rel.{pkg}',
-                'couchbase-server-enterprise_{version}-rel_{arch}_openssl098.{pkg}',
             )
         else:
             patterns = (

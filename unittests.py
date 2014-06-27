@@ -45,7 +45,7 @@ class InstallTest(TestCase):
         self.assertEqual(filenames, expected)
 
     @patch('perfrunner.utils.install.CouchbaseInstaller.__init__')
-    def test_toy_pacakge(self, installer_mock):
+    def test_toy_package(self, installer_mock):
         installer_mock.return_value = None
         installer = CouchbaseInstaller()
         installer.build = Build('x86_64', 'rpm', '2.0.0-1976', '1.0.0', 'mytoy')

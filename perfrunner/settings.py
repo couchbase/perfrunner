@@ -282,8 +282,9 @@ class StatsSettings(object):
 class BucketSettings(object):
 
     PASSWORD = 'password'
-    MAX_NUM_SHARDS = 0
-    MAX_THREADS = 0
+    MAX_NUM_SHARDS = -1
+    MAX_THREADS = -1
+    WARMUP_MIN_MEMORY_THRESHOLD = -1
     REPLICA_NUMBER = 1
     REPLICA_INDEX = 0
     EVICTION_POLICY = 'valueOnly'  # alt: fullEviction
@@ -295,6 +296,10 @@ class BucketSettings(object):
         )
         self.max_threads = int(
             options.get('max_threads', self.MAX_THREADS)
+        )
+        self.warmup_min_memory_threshold = int(
+            options.get('warmup_min_memory_threshold',
+                        self.WARMUP_MIN_MEMORY_THRESHOLD)
         )
         self.replica_number = int(
             options.get('replica_number', self.REPLICA_NUMBER)

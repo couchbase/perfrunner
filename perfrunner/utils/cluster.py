@@ -127,9 +127,10 @@ class ClusterManager(object):
         cmd = 'ns_bucket:update_bucket_props("{}", ' \
               '[{{extra_config_string, "{}={}"}}]).'
 
-        for option in ('max_num_shards', 'max_threads'):
+        for option in ('max_num_shards', 'max_threads',
+                       'warmup_min_memory_threshold'):
             value = getattr(self.test_config.bucket, option)
-            if value:
+            if value != -1:
                 logger.info('Changing {} to {}'.format(option, value))
                 for master in self.masters():
                     for bucket in self.test_config.buckets:

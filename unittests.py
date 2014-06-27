@@ -51,7 +51,7 @@ class InstallTest(TestCase):
         filenames = tuple(installer.get_expected_filenames())
         expected = (
             'couchbase-server-enterprise_x86_64_3.0.0-880-rel.setup.exe',
-            '3.0.0/880/couchbase_server-enterprise-windows-amd64-3.0.0-880.exe',
+            'couchbase_server/3.0.0/880/couchbase_server-enterprise-windows-amd64-3.0.0-880.exe',
         )
         self.assertEqual(filenames, expected)
 

@@ -463,7 +463,7 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
     @single_host
     def detect_pkg(self):
         logger.info('Detecting package manager')
-        return 'setup.exe'
+        return 'exe'
 
     @single_host
     def detect_openssl(self, pkg):

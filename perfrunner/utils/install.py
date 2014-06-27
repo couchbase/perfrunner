@@ -8,7 +8,8 @@ from requests.exceptions import ConnectionError
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import ClusterSpec
 
-Build = namedtuple('Build', ['arch', 'pkg', 'version', 'toy'])
+Build = namedtuple('Build',
+                   ['arch', 'pkg', 'version', 'release', 'build', 'toy'])
 
 
 class CouchbaseInstaller(object):
@@ -22,11 +23,14 @@ class CouchbaseInstaller(object):
 
         arch = self.remote.detect_arch()
         pkg = self.remote.detect_pkg()
+        release, build = options.version.split('-')
 
-        self.build = Build(arch, pkg, options.version, options.toy)
+        self.build = Build(arch, pkg, options.version, release, build,
+                           options.toy)
         logger.info('Target build info: {}'.format(self.build))
 
     def get_expected_filenames(self):
+        patterns = ()  # Sentinel
         if self.build.toy:
             patterns = (
                 'couchbase-server-community_toy-{toy}-{arch}_{version}-toy.{pkg}',
@@ -36,13 +40,22 @@ class CouchbaseInstaller(object):
                 'couchbase-server-community_cent58-master-toy-{toy}-{arch}_{version}-toy.{pkg}',
                 'couchbase-server-community_cent54-master-toy-{toy}-{arch}_{version}-toy.{pkg}',
             )
-        else:
+        elif self.build.pkg == 'rpm':
             patterns = (
                 'couchbase-server-enterprise_centos6_{arch}_{version}-rel.{pkg}',
+                'couchbase-server-enterprise_{arch}_{version}-rel.{pkg}',
+            )
+        elif self.build.pkg == 'deb':
+            patterns = (
                 'couchbase-server-enterprise_ubuntu_1204_{arch}_{version}-rel.{pkg}',
                 'couchbase-server-enterprise_{arch}_{version}-rel.{pkg}',
-                'couchbase-server-enterprise_{version}-rel_{arch}.{pkg}',
             )
+        elif self.build.pkg == 'exe':
+            patterns = (
+                'couchbase-server-enterprise_{arch}_{version}-rel.setup.{pkg}',
+                '{release}/{build}/couchbase_server-enterprise-windows-amd64-{version}.exe',
+            )
+
         for pattern in patterns:
             yield pattern.format(**self.build._asdict())
 
@@ -71,8 +84,8 @@ class CouchbaseInstaller(object):
 
     def install_package(self):
         filename, url = self.find_package()
-        version = self.build.version.split('-')[0]
-        self.remote.install_couchbase(self.build.pkg, url, filename, version)
+        self.remote.install_couchbase(self.build.pkg, url, filename,
+                                      self.build.release)
 
     def install(self):
         self.kill_processes()

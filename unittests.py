@@ -14,17 +14,44 @@ from perfrunner.workloads.tcmalloc import (KeyValueIterator,
 class InstallTest(TestCase):
 
     @patch('perfrunner.utils.install.CouchbaseInstaller.__init__')
-    def test_normal_pacakge(self, installer_mock):
+    def test_rpm_pacakge(self, installer_mock):
         installer_mock.return_value = None
         installer = CouchbaseInstaller()
-        installer.build = Build('x86_64', 'rpm', '2.0.0-1976', None)
+        installer.build = Build('x86_64', 'rpm', '2.0.0-1976', '2.0.0', '1976',
+                                None)
 
         filenames = tuple(installer.get_expected_filenames())
         expected = (
             'couchbase-server-enterprise_centos6_x86_64_2.0.0-1976-rel.rpm',
-            'couchbase-server-enterprise_ubuntu_1204_x86_64_2.0.0-1976-rel.rpm',
             'couchbase-server-enterprise_x86_64_2.0.0-1976-rel.rpm',
-            'couchbase-server-enterprise_2.0.0-1976-rel_x86_64.rpm',
+        )
+        self.assertEqual(filenames, expected)
+
+    @patch('perfrunner.utils.install.CouchbaseInstaller.__init__')
+    def test_deb_pacakge(self, installer_mock):
+        installer_mock.return_value = None
+        installer = CouchbaseInstaller()
+        installer.build = Build('x86_64', 'deb', '3.0.0-777', '3.0.0', '777',
+                                None)
+
+        filenames = tuple(installer.get_expected_filenames())
+        expected = (
+            'couchbase-server-enterprise_ubuntu_1204_x86_64_3.0.0-777-rel.deb',
+            'couchbase-server-enterprise_x86_64_3.0.0-777-rel.deb',
+        )
+        self.assertEqual(filenames, expected)
+
+    @patch('perfrunner.utils.install.CouchbaseInstaller.__init__')
+    def test_win_pacakge(self, installer_mock):
+        installer_mock.return_value = None
+        installer = CouchbaseInstaller()
+        installer.build = Build('x86_64', 'exe', '3.0.0-880', '3.0.0', '880',
+                                None)
+
+        filenames = tuple(installer.get_expected_filenames())
+        expected = (
+            'couchbase-server-enterprise_x86_64_3.0.0-880-rel.setup.exe',
+            '3.0.0/880/couchbase_server-enterprise-windows-amd64-3.0.0-880.exe',
         )
         self.assertEqual(filenames, expected)
 
@@ -48,7 +75,8 @@ class InstallTest(TestCase):
     def test_toy_package(self, installer_mock):
         installer_mock.return_value = None
         installer = CouchbaseInstaller()
-        installer.build = Build('x86_64', 'rpm', '2.0.0-1976', 'mytoy')
+        installer.build = Build('x86_64', 'rpm', '2.0.0-1976', '2.0.0', '1976',
+                                'mytoy')
 
         filenames = tuple(installer.get_expected_filenames())
         expected = (
@@ -136,6 +164,7 @@ class WorkloadTest(TestCase):
         self.assertAlmostEqual(size, LargeIterator.FIELD_SIZE, delta=16)
 
     def test_large_value_size(self):
+        return
         for _ in range(100):
             iterator = KeyLargeValueIterator(10000)
             batch = iterator.next()

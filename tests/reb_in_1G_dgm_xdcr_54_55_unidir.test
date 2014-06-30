@@ -14,10 +14,9 @@ num_buckets = 1
 db_percentage = 10
 
 [load]
-ops = 1000000000
+items = 1000000000
 size = 800
 workers = 25
-async = 1
 
 [hot_load]
 items = 1000000000

@@ -16,7 +16,7 @@ db_percentage = 10
 [load]
 items = 1000000000
 size = 800
-workers = 25
+workers = 10
 
 [hot_load]
 items = 1000000000

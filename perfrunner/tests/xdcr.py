@@ -144,9 +144,10 @@ class XdcrWithViewsTest(SymmetricXdcrTest, QueryLatencyTest):
     """
 
     def run(self):
-        self.enable_xdcr()
         self.load()
         self.wait_for_persistence()
+
+        self.enable_xdcr()
         self.monitor_replication()
         self.wait_for_persistence()
 

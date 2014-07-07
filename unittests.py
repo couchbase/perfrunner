@@ -14,7 +14,7 @@ from perfrunner.workloads.tcmalloc import (KeyValueIterator,
 class InstallTest(TestCase):
 
     @patch('perfrunner.utils.install.CouchbaseInstaller.__init__')
-    def test_rpm_pacakge(self, installer_mock):
+    def test_rpm_package(self, installer_mock):
         installer_mock.return_value = None
         installer = CouchbaseInstaller()
         installer.build = Build('x86_64', 'rpm', '2.0.0-1976', '2.0.0', '1976',
@@ -28,7 +28,7 @@ class InstallTest(TestCase):
         self.assertEqual(filenames, expected)
 
     @patch('perfrunner.utils.install.CouchbaseInstaller.__init__')
-    def test_deb_pacakge(self, installer_mock):
+    def test_deb_package(self, installer_mock):
         installer_mock.return_value = None
         installer = CouchbaseInstaller()
         installer.build = Build('x86_64', 'deb', '3.0.0-777', '3.0.0', '777',
@@ -42,7 +42,7 @@ class InstallTest(TestCase):
         self.assertEqual(filenames, expected)
 
     @patch('perfrunner.utils.install.CouchbaseInstaller.__init__')
-    def test_win_pacakge(self, installer_mock):
+    def test_win_package(self, installer_mock):
         installer_mock.return_value = None
         installer = CouchbaseInstaller()
         installer.build = Build('x86_64', 'exe', '3.0.0-880', '3.0.0', '880',
@@ -56,7 +56,7 @@ class InstallTest(TestCase):
         self.assertEqual(filenames, expected)
 
     @patch('perfrunner.utils.install_gw.GatewayInstaller.__init__')
-    def test_sgw_pacakge(self, installer_mock):
+    def test_sgw_packakge(self, installer_mock):
         installer_mock.return_value = None
         installer = GatewayInstaller()
         installer.version = '0.0.0-178'
@@ -67,6 +67,9 @@ class InstallTest(TestCase):
         expected = (
             'couchbase-sync-gateway_0.0.0-178_x86_64-community.rpm',
             'couchbase-sync-gateway_0.0.0-178_x86_64.rpm',
+            'couchbase-sync-gateway-community_0.0.0-178_x86_64.rpm',
+            'couchbase-sync-gateway-enterprise_0.0.0-178_x86_64.rpm',
+            'couchbase-sync-gateway-enterprise_0.0.0-178_x86_64.rpm',
             'couchbase-sync-gateway_0.0.0-178_x86_64-community.rpm',
         )
         self.assertEqual(filenames, expected)

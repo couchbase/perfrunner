@@ -100,6 +100,8 @@ class GateloadTest(PerfTest):
             summary[gateload]['gateload doc counters'] = doc_counters
         logger.info('Per node summary: {}'.format(pretty_dict(summary)))
 
+        self.reporter.post_to_sf(round(np.mean(latencies[99]), 1))
+
         self.pass_fail = []
         for p, criterion in criteria.items():
             kpi = self.KPI.format(p)

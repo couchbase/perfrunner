@@ -1,6 +1,5 @@
 [test_case]
-module = perfrunner.tests.multitenancy
-class = EmptyBucketsTest
+test = perfrunner.tests.multitenancy.EmptyBucketsTest
 use_workers = 0
 
 [cluster]

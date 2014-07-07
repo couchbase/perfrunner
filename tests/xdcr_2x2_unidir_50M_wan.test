@@ -1,6 +1,5 @@
 [test_case]
-module = perfrunner.tests.xdcr
-class = SymmetricXdcrTest
+test = perfrunner.tests.xdcr.SymmetricXdcrTest
 
 [cluster]
 mem_quota = 204800

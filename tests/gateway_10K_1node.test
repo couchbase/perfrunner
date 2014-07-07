@@ -1,6 +1,5 @@
 [test_case]
-module = perfrunner.tests.sync_gateway
-class = GateloadTest
+test = perfrunner.tests.sync_gateway.GateloadTest
 title = 99th percentile "Push To Subscriber" latency (sec), 1 Sync Gateway, 10K users, default settings
 summary = 1 Sync Gateway, 10K users, compression ON, conn_db = 16, conn_in = 0
 use_workers = 0

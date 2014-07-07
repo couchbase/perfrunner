@@ -1,6 +1,5 @@
 [test_case]
-module = perfrunner.tests.query
-class = IndexLatencyTest
+test = perfrunner.tests.query.IndexLatencyTest
 title = Indexing latency (ms), 1 bucket x 20M x 2KB, non-DGM, 1 view, 250 mutations/sec/node, 400 queries/sec
 summary = Read-heavy query test (90/10), 4 nodes, 1 bucket x 20M x 2KB, non-DGM, 1 view, 250 mutations/sec/node, 400 qps
 larger_is_better = false

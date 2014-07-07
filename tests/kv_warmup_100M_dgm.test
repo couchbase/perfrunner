@@ -1,6 +1,5 @@
 [test_case]
-module = perfrunner.tests.kv
-class = WarmupTest
+test = perfrunner.tests.kv.WarmupTest
 title = Warmup time (min), 1 bucket x 100M x 2KB
 summary = Warmup test, 4 nodes, 4 buckets x 100M x 2KB
 larger_is_better = false

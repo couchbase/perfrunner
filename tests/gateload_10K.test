@@ -1,6 +1,5 @@
 [test_case]
-module = perfrunner.tests.sync_gateway
-class = PassFailGateloadTest
+test = perfrunner.tests.sync_gateway.PassFailGateloadTest
 title = Gateload test for Sync Gateway performance
 summary = 1 Sync Gateway, 10K users, compression ON, conn_db = 16, conn_in = 0
 use_workers = 0

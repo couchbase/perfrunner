@@ -1,6 +1,5 @@
 [test_case]
-module = perfrunner.tests.kv
-class = ReadLatencyTest
+test = perfrunner.tests.kv.ReadLatencyTest
 title = Max memcached throughput, GETs/sec, 1 bucket x 50M x 256B, non-DGM
 summary = Read-only KV test, 1 node, 1 bucket x 50M x 256B, non-DGM, unbounded throughput
 larger_is_better = true

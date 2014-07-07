@@ -1,6 +1,5 @@
 [test_case]
-module = perfrunner.tests.query
-class = QueryLatencyTest
+test = perfrunner.tests.query.QueryLatencyTest
 title = 1 bucket x 20M x 2KB, non-DGM, 4 x 1 views, 500 mutations/sec/node, 400 queries/sec, stale=false
 summary = Read-heavy query test (80/20), 4 nodes, 1 bucket x 20M x 2KB, non-DGM, 4 x 1 views, 500 mutations/sec/node, 400 qps
 larger_is_better = false

@@ -1,6 +1,5 @@
 [test_case]
-module = perfrunner.tests.kv
-class = ReplicationTest
+test = perfrunner.tests.kv.ReplicationTest
 title = ReplicateTo=1 latency (ms), 1 bucket x 500M x 1KB, DGM
 larger_is_better = false
 

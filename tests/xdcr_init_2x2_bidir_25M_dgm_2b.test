@@ -1,6 +1,5 @@
 [test_case]
-module = perfrunner.tests.xdcr
-class = XdcrInitTest
+test = perfrunner.tests.xdcr.XdcrInitTest
 title = Avg. initial XDCR rate (items/sec), 2 <-> 2 BiDir, 2 buckets x 25M x 2KB, DGM, no compaction
 summary = Initial XDCR test, 2<->2 nodes, 2 buckets x 25M x 2KB, DGM, no compaction, BiDir
 larger_is_better = true

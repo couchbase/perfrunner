@@ -1,6 +1,5 @@
 [test_case]
-module = perfrunner.tests.kv
-class = FragmentationLargeTest
+test = perfrunner.tests.kv.FragmentationLargeTest
 title = Memory fragmentation (%%), 1 bucket x 20K x 250KB
 summary = Append-only KV test, 1 node, 1 bucket x 20K x 250KB, non-DGM, large appends
 larger_is_better = false

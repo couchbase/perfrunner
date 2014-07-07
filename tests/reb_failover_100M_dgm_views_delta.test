@@ -1,6 +1,5 @@
 [test_case]
-module = perfrunner.tests.rebalance
-class = RebalanceWithQueriesTest
+test = perfrunner.tests.rebalance.RebalanceWithQueriesTest
 title = Delta rebalance after failover (min), 3 -> 4, 1 bucket x 100M x 2KB, 1 x 1 views, 10K ops/sec, 400 queries/sec
 summary = Mixed delta rebalance after failover, 3 -> 4 nodes, 1 bucket x 100M x 2KB, DGM, 1 x 1 views, 10K ops/sec, 400 qps
 larger_is_better = false

@@ -1,6 +1,5 @@
 [test_case]
-module = perfrunner.tests.rebalance
-class = RebalanceWithQueriesTest
+test = perfrunner.tests.rebalance.RebalanceWithQueriesTest
 title = Rebalance-in (min), 6 -> 8, 1 bucket x 700M x 1KB, 2 replicas, DGM, 1 x 1 views
 summary = Mixed KV + queries rebalance test, 6 -> 8 nodes, 1 bucket x 700M x 1KB, 2 replicas, 1 x 1 views, 10K ops/sec, 400 qps
 larger_is_better = false

@@ -221,8 +221,8 @@ class TestCaseSettings(object):
     LEVEL = 'Basic'  # depricated, alt: Advanced
 
     def __init__(self, options):
-        self.test_module = options.get('module')
-        self.test_class = options.get('class')
+        self.test_module = '.'.join(options.get('test').split('.')[:-1])
+        self.test_class = options.get('test').split('.')[-1]
         self.test_summary = options.get('summary')
         self.metric_title = options.get('title')
         self.larger_is_better = options.get('larger_is_better')

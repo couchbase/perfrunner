@@ -1,6 +1,5 @@
 [test_case]
-module = perfrunner.tests.multitenancy
-class = LoadTest
+test = perfrunner.tests.multitenancy.LoadTest
 
 [cluster]
 mem_quota = 204800

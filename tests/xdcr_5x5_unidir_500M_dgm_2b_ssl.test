@@ -1,6 +1,5 @@
 [test_case]
-module = perfrunner.tests.xdcr
-class = SymmetricXdcrTest
+test = perfrunner.tests.xdcr.SymmetricXdcrTest
 title = 5 -> 5 UniDir, 2 buckets x 500M x 1KB, 10K SETs/sec, LAN, SSL
 summary = Mixed KV + XDCR test, 5 -> 5 UniDir, 2 buckets x 500M x 1KB, DGM, 10K SETs/sec, LAN, SSL
 larger_is_better = false

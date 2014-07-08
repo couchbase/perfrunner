@@ -12,12 +12,14 @@ Related projects:
 Requirements
 ------------
 
-* Python 2.7 (including headers)
+* Python 2.7 (e.g., python-dev package for Ubuntu or [this](https://www.digitalocean.com/community/tutorials/how-to-set-up-python-2-7-6-and-3-3-3-on-centos-6-4) for CentOS)
 * virtualenv
-* libcouchbase-devel (or equivalent)
+* [libcouchbase](http://www.couchbase.com/communities/c-client-library)
+
+Optional:
 * AMQP broker (RabbitMQ is recommended) for distributed workloads
 
-Python dependencies are listed in requirements.txt. `make` does the magic.
+Python dependencies are listed in requirements.txt. `make` creates virtual environment (Python sandbox) and installs those packages.
 
 SUT dependencies:
 * numactl

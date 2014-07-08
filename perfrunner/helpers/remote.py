@@ -197,7 +197,8 @@ class RemoteLinuxHelper(object):
 
     @all_hosts
     def restart_with_alternative_num_cpus(self, num_cpus):
-        logger.info('Changing number of memcached threads to {}'.format(num_cpus))
+        logger.info('Changing number of front-end memcached threads to {}'
+                    .format(num_cpus))
         run('MEMCACHED_NUM_CPUS={} '
             'numactl --interleave=all /etc/init.d/couchbase-server restart'
             .format(num_cpus))

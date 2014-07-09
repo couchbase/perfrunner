@@ -16,7 +16,7 @@ replica_number = 1
 compression = true
 conn_db = 16
 conn_in = 0
-num_nodes = 2
+num_nodes = 0
 
 [gateload]
 rampup_interval = 900
@@ -30,3 +30,4 @@ channel_active_users = 40
 channel_concurrent_users = 40
 p95_avg_criteria = 3
 p99_avg_criteria = 5
+seriesly_host = 172.23.106.228

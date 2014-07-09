@@ -14,8 +14,6 @@ CBMONITOR = {'host': 'cbmonitor.sc.couchbase.com', 'password': 'password'}
 
 SERIESLY = {'host': 'cbmonitor.sc.couchbase.com'}
 
-SGW_SERIESLY_HOST = '172.23.106.228'
-
 
 @decorator
 def safe(method, *args, **kargs):
@@ -514,6 +512,7 @@ class GateloadSettings(PhaseSettings):
     RAMPUP_INTERVAL = 900  # In seconds, 15 minutes
     P95_AVG_CRITERIA = 3
     P99_AVG_CRITERIA = 5
+    SERIESLY_HOST = '172.23.106.228'
 
     def __init__(self, options):
         self.pullers = int(options.get('pullers', self.PULLER))
@@ -532,3 +531,4 @@ class GateloadSettings(PhaseSettings):
         self.run_time = int(options.get('run_time', self.RUN_TIME))
         self.rampup_interval = int(options.get('rampup_interval',
                                                self.RAMPUP_INTERVAL))
+        self.seriesly_host = options.get('seriesly_host', self.SERIESLY_HOST)

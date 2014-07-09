@@ -7,7 +7,6 @@ from fabric.exceptions import CommandTimeout
 from logger import logger
 
 from perfrunner.helpers.misc import uhex
-from perfrunner.settings import SGW_SERIESLY_HOST
 
 
 @decorator
@@ -25,7 +24,8 @@ def single_host(task, *args, **kargs):
 
 @decorator
 def seriesly_host(task, *args, **kargs):
-    with settings(host_string=SGW_SERIESLY_HOST):
+    self = args[0]
+    with settings(host_string=self.test_config.gateload_settings.seriesly_host):
         return task(*args, **kargs)
 
 
@@ -133,7 +133,7 @@ class RemoteLinuxHelper(object):
 
     @all_hosts
     def disable_thp(self):
-        run('echo never > /sys/kernel/mm/transparent_hugepage/enabled')
+        run('echo never > /sys/kernel/mm/transparent_hugepage/enabled', quiet=True)
 
     @all_hosts
     def collect_info(self):

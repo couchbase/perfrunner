@@ -3,7 +3,7 @@ from collections import OrderedDict
 from logger import logger
 from seriesly import Seriesly
 
-from perfrunner.settings import CBMONITOR, SGW_SERIESLY_HOST
+from perfrunner.settings import CBMONITOR
 
 
 class MetricHelper(object):
@@ -378,7 +378,7 @@ class SgwMetricHelper(MetricHelper):
 
     def __init__(self, *args, **kwargs):
         super(SgwMetricHelper, self).__init__(*args, **kwargs)
-        self.seriesly = Seriesly(SGW_SERIESLY_HOST)
+        self.seriesly = Seriesly(self.test_config.gateload_settings.seriesly_host)
 
     def calc_push_latency(self, p=95, idx=1):
         query_params = self._get_query_params(

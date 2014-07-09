@@ -11,7 +11,6 @@ from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.metrics import SgwMetricHelper, MetricHelper
 from perfrunner.helpers.misc import log_phase, pretty_dict
 from perfrunner.helpers.rest import SyncGatewayRequestHelper
-from perfrunner.settings import SGW_SERIESLY_HOST
 from perfrunner.tests import PerfTest
 
 
@@ -37,7 +36,7 @@ class GateloadTest(PerfTest):
                 gateways_ip=' '.join(self.remote.gateways),
                 gateloads_ip=' '.join(self.remote.gateloads),
                 dbs_ip=' '.join(self.cluster_spec.yield_hostnames()),
-                seriesly_ip=SGW_SERIESLY_HOST,
+                seriesly_ip=self.test_config.gateload_settings.seriesly_host,
             ))
 
     def start_test_info(self):
@@ -46,7 +45,7 @@ class GateloadTest(PerfTest):
 
     def start_samplers(self):
         logger.info('Creating seriesly dbs')
-        seriesly = Seriesly(host='{}'.format(SGW_SERIESLY_HOST))
+        seriesly = Seriesly(host='{}'.format(self.test_config.gateload_settings.seriesly_host))
         for i, _ in enumerate(self.remote.gateways, start=1):
             seriesly.create_db('gateway_{}'.format(i))
             seriesly.create_db('gateload_{}'.format(i))
@@ -139,7 +138,7 @@ class GateloadTest(PerfTest):
             self.request_helper.wait_for_gateload_to_start(idx, gateload)
 
         self.remote.restart_seriesly()
-        self.request_helper.wait_for_seriesly_to_start(SGW_SERIESLY_HOST)
+        self.request_helper.wait_for_seriesly_to_start(self.test_config.gateload_settings.seriesly_host)
         self.start_samplers()
 
         log_phase('Gateload settings', self.test_config.gateload_settings)

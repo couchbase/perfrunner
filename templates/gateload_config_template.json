@@ -31,7 +31,7 @@
     "ChannelConcurrentUsers": {{channel_concurrent_users}},
     "MinUserOffTimeMs": 0,
     "MaxUserOffTimeMs": 0,
-    "Verbose": false,
-    "LogRequests": false,
+    "Verbose": {{logging_verbose}},
+    "LogRequests": {{logging_verbose}},
     "UserOffset": {{idx * (pullers + pushers)}}
 }

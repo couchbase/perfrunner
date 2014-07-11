@@ -66,8 +66,12 @@ class GateloadTest(PerfTest):
                     channel_active_users=self.test_config.gateload_settings.channel_active_users,
                     channel_concurrent_users=self.test_config.gateload_settings.channel_concurrent_users,
                     sleep_time=self.test_config.gateload_settings.sleep_time * 1000,
+                    p95_avg_criteria=self.test_config.gateload_settings.p95_avg_criteria,
+                    p99_avg_criteria=self.test_config.gateload_settings.p99_avg_criteria,
                     run_time=self.test_config.gateload_settings.run_time * 1000,
                     rampup_interval=self.test_config.gateload_settings.rampup_interval * 1000,
+                    logging_verbose=self.test_config.gateload_settings.logging_verbose,
+                    seriesly_host=self.test_config.gateload_settings.seriesly_host,
                     idx=idx,
                 ))
 

@@ -105,7 +105,8 @@ class GatewayInstaller(object):
         self.start_sync_gateways()
         for i, gateway_ip in enumerate(self.remote.gateways, start=1):
             self.request_helper.wait_for_gateway_to_start(i, gateway_ip)
-            self.request_helper.turn_off_gateway_logging(i, gateway_ip)
+            if self.test_config.gateway_settings.logging_verbose == 'false':
+                self.request_helper.turn_off_gateway_logging(i, gateway_ip)
 
 
 def main():

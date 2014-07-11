@@ -1,5 +1,5 @@
 {
-    "log": ["HTTP"],
+    "log": ["HTTP", "HTTP+", "CRUD"],
     "adminInterface": ":4985",
     "maxIncomingConnections": {{conn_in}},
     "maxCouchbaseConnections": {{conn_db}},

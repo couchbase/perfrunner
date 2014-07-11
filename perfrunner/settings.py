@@ -491,12 +491,14 @@ class GatewaySettings(PhaseSettings):
     CONN_IN = 0
     CONN_DB = 16
     NUM_NODES = 0
+    LOGGING_VERBOSE = 'false'
 
     def __init__(self, options):
         self.conn_in = int(options.get('conn_in', self.CONN_IN))
         self.conn_db = int(options.get('conn_db', self.CONN_DB))
         self.compression = options.get('compression', self.COMPRESSION)
         self.num_nodes = int(options.get('num_nodes', self.NUM_NODES)) or None
+        self.logging_verbose = options.get('logging_verbose', self.LOGGING_VERBOSE)
 
 
 class GateloadSettings(PhaseSettings):
@@ -513,6 +515,7 @@ class GateloadSettings(PhaseSettings):
     P95_AVG_CRITERIA = 3
     P99_AVG_CRITERIA = 5
     SERIESLY_HOST = '172.23.106.228'
+    LOGGING_VERBOSE = 'false'
 
     def __init__(self, options):
         self.pullers = int(options.get('pullers', self.PULLER))
@@ -531,4 +534,5 @@ class GateloadSettings(PhaseSettings):
         self.run_time = int(options.get('run_time', self.RUN_TIME))
         self.rampup_interval = int(options.get('rampup_interval',
                                                self.RAMPUP_INTERVAL))
+        self.logging_verbose = options.get('logging_verbose', self.LOGGING_VERBOSE)
         self.seriesly_host = options.get('seriesly_host', self.SERIESLY_HOST)

@@ -17,6 +17,7 @@ compression = true
 conn_db = 16
 conn_in = 0
 num_nodes = 0
+logging_verbose = false
 
 [gateload]
 rampup_interval = 900
@@ -31,3 +32,4 @@ channel_concurrent_users = 40
 p95_avg_criteria = 3
 p99_avg_criteria = 5
 seriesly_host = 172.23.106.228
+logging_verbose = false

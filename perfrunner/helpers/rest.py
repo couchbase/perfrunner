@@ -350,30 +350,39 @@ class SyncGatewayRequestHelper(RestHelper):
     def __init__(self):
         self.auth = ()
 
-    def wait_for_gateway_to_start(self, index, gateway_ip):
+    def wait_for_gateway_to_start(self, idx, gateway_ip):
+        logger.info(
+            'Checking that Sync Gateway is running on {}'.format(gateway_ip)
+        )
         self.get(url='http://{}:4985/'.format(gateway_ip))
-        logger.info('Sync_gateway process running for gateway_{} {}'.format(index, gateway_ip))
+        logger.info('Sync Gateway - {} - successfully started'.format(idx))
 
-    def wait_for_gateload_to_start(self, index, gateload_ip):
+    def wait_for_gateload_to_start(self, idx, gateload_ip):
+        logger.info(
+            'Checking that Gateload is running on {}'.format(gateload_ip)
+        )
         self.get(url='http://{}:9876/debug/vars'.format(gateload_ip))
-        logger.info('Gateload process running on gateload_{} {}'.format(index, gateload_ip))
+        logger.info('Gateload - {} - successfully started'.format(idx))
 
     def wait_for_seriesly_to_start(self, seriesly_ip):
+        logger.info(
+            'Checking that Seriesly is running on {}'.format(seriesly_ip)
+        )
         self.get(url='http://{}:3133/'.format(seriesly_ip))
-        logger.info('Seriesly process running on {}'.format(seriesly_ip))
+        logger.info('Seriesly successfully started')
 
-    def turn_off_gateway_logging(self, index, gateway_ip):
-        logger.info('Turning off Sync Gateway logging for gateway_{} {}'.format(index, gateway_ip))
-
+    def turn_off_gateway_logging(self, gateway_ip):
+        logger.info(
+            'Turning off Sync Gateway logging on {}'.format(gateway_ip)
+        )
         api = 'http://{}:4985/_logging'.format(gateway_ip)
 
-        ret = self.get(url=api).json()
-        logger.info('Before - {}'.format(ret))
+        resp = self.get(url=api).json()
+        logger.info('Before - {}'.format(resp))
 
         self.put(url=api, data='{}')
-
-        ret = self.get(url=api).json()
-        logger.info('After - {}'.format(ret))
+        resp = self.get(url=api).json()
+        logger.info('After - {}'.format(resp))
 
     def collect_expvar(self, gateway_ip):
         logger.info('Collecting expvar for {}'.format(gateway_ip))

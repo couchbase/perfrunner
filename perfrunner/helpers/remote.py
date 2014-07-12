@@ -133,7 +133,11 @@ class RemoteLinuxHelper(object):
 
     @all_hosts
     def disable_thp(self):
-        run('echo never > /sys/kernel/mm/transparent_hugepage/enabled', quiet=True)
+        for path in (
+            '/sys/kernel/mm/transparent_hugepage/enabled',
+            '/sys/kernel/mm/redhat_transparent_hugepage/enabled',
+        ):
+            run('echo never > {}'.format(path), quiet=True)
 
     @all_hosts
     def collect_info(self):

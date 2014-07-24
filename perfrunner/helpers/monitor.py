@@ -9,6 +9,7 @@ class Monitor(RestHelper):
 
     POLLING_INTERVAL = 5
     MAX_RETRY = 12
+    REBALANCE_TIMEOUT = 3600 * 2
 
     DISK_QUEUES = (
         'ep_queue_size',
@@ -35,10 +36,18 @@ class Monitor(RestHelper):
     def monitor_rebalance(self, host_port):
         logger.info('Monitoring rebalance status')
         is_running = True
+        last_progress = 0
+        last_progress_time = time.time()
         while is_running:
             time.sleep(self.POLLING_INTERVAL)
 
             is_running, progress = self.get_rebalance_status(host_port)
+            if progress == last_progress and \
+                    time.time() - last_progress_time > self.REBALANCE_TIMEOUT:
+                logger.interrupt('Rebalance hung')
+            else:
+                last_progress = progress
+                last_progress_time = time.time()
 
             if progress is not None:
                 logger.info('Rebalance progress: {} %'.format(progress))

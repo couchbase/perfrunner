@@ -15,7 +15,7 @@ Build = namedtuple('Build',
 class CouchbaseInstaller(object):
 
     CBFS = 'http://cbfs-ext.hq.couchbase.com/builds/'
-    LATEST_BUILDS = 'http://builds.hq.northscale.net/latestbuilds/'
+    LATEST_BUILDS = 'http://latestbuilds.hq.couchbase.com/'
 
     def __init__(self, cluster_spec, options):
         self.remote = RemoteHelper(cluster_spec, None, options.verbose)

@@ -51,6 +51,8 @@ class Monitor(RestHelper):
 
             if progress is not None:
                 logger.info('Rebalance progress: {} %'.format(progress))
+                logger.info('Debug: {}, {}'.format(last_progress,
+                                                   last_progress_time))
         logger.info('Rebalance completed')
 
     def _wait_for_empty_queues(self, host_port, bucket, queues):

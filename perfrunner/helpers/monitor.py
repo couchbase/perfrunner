@@ -88,6 +88,7 @@ class Monitor(RestHelper):
 
     def monitor_xdcr_queues(self, host_port, bucket):
         logger.info('Monitoring XDCR queues: {}'.format(bucket))
+        time.sleep(self.POLLING_INTERVAL)
         self._wait_for_empty_queues(host_port, bucket, self.XDCR_QUEUES)
 
     def monitor_task(self, host_port, task_type):

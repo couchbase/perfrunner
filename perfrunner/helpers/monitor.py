@@ -7,8 +7,8 @@ from perfrunner.helpers.rest import RestHelper
 
 class Monitor(RestHelper):
 
-    POLLING_INTERVAL = 5
-    MAX_RETRY = 12
+    POLLING_INTERVAL = 2
+    MAX_RETRY = 30
     REBALANCE_TIMEOUT = 3600 * 2
 
     DISK_QUEUES = (

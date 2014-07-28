@@ -40,17 +40,15 @@ class Monitor(RestHelper):
         last_progress_time = time.time()
         while is_running:
             is_running, progress = self.get_rebalance_status(host_port)
-            if progress == last_progress and \
-                    time.time() - last_progress_time > self.REBALANCE_TIMEOUT:
-                logger.interrupt('Rebalance hung')
+            if progress == last_progress:
+                if time.time() - last_progress_time > self.REBALANCE_TIMEOUT:
+                    logger.interrupt('Rebalance hung')
             else:
                 last_progress = progress
                 last_progress_time = time.time()
 
             if progress is not None:
                 logger.info('Rebalance progress: {} %'.format(progress))
-                logger.info('Debug: {}, {}'.format(last_progress,
-                                                   last_progress_time))
             if is_running:
                 time.sleep(self.POLLING_INTERVAL)
 

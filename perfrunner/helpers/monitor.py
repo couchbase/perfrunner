@@ -39,8 +39,6 @@ class Monitor(RestHelper):
         last_progress = 0
         last_progress_time = time.time()
         while is_running:
-            time.sleep(self.POLLING_INTERVAL)
-
             is_running, progress = self.get_rebalance_status(host_port)
             if progress == last_progress and \
                     time.time() - last_progress_time > self.REBALANCE_TIMEOUT:
@@ -53,6 +51,9 @@ class Monitor(RestHelper):
                 logger.info('Rebalance progress: {} %'.format(progress))
                 logger.info('Debug: {}, {}'.format(last_progress,
                                                    last_progress_time))
+            if is_running:
+                time.sleep(self.POLLING_INTERVAL)
+
         logger.info('Rebalance completed')
 
     def _wait_for_empty_queues(self, host_port, bucket, queues):
@@ -69,7 +70,9 @@ class Monitor(RestHelper):
                     else:
                         logger.info('{} reached 0'.format(metric))
                 metrics.remove(metric)
-            time.sleep(self.POLLING_INTERVAL)
+
+            if metrics:
+                time.sleep(self.POLLING_INTERVAL)
 
     def monitor_disk_queues(self, host_port, bucket):
         logger.info('Monitoring disk queues: {}'.format(bucket))
@@ -91,8 +94,6 @@ class Monitor(RestHelper):
         logger.info('Monitoring task: {}'.format(task_type))
 
         while True:
-            time.sleep(self.POLLING_INTERVAL)
-
             tasks = [task for task in self.get_tasks(host_port)
                      if task.get('type') == task_type]
             if tasks:
@@ -103,6 +104,8 @@ class Monitor(RestHelper):
                     ))
             else:
                 break
+            time.sleep(self.POLLING_INTERVAL)
+
         logger.info('Task {} successfully completed'.format(task_type))
 
     def monitor_warmup(self, memcahed, host, bucket):

@@ -60,7 +60,9 @@ class Monitor(RestHelper):
         metrics = list(queues)
         while metrics:
             bucket_stats = self.get_bucket_stats(host_port, bucket)
-            for metric in metrics:
+            # As we are changing metrics in the loop; take a copy of
+            # it to iterate over.
+            for metric in list(metrics):
                 stats = bucket_stats['op']['samples'].get(metric)
                 if stats:
                     last_value = stats[-1]

@@ -54,7 +54,7 @@ def next_person(start, step):
 def sizeof_fmt(num):
     for x in ('bytes', 'KB', 'MB', 'GB', 'TB'):
         if num < 1024.0:
-            return '%3.1f %s' % (num, x)
+            return '{:3.1f} {}'.format(num, x)
         num /= 1024.0
 
 

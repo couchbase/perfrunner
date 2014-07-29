@@ -23,6 +23,8 @@ enable_experimental()
 from txcouchbase.connection import Connection as TxCouchbase
 from twisted.internet import reactor
 
+from logger import logger
+
 from perfrunner.workloads.revAB.fittingCode import socialModels
 
 USERS = 10000
@@ -72,15 +74,15 @@ def produce_AB(start):
     # Repeatedly:
     # 1. Populate the graph into Couchbase; randomly delete a percentage of all
     # documents during population.
-    print 'START:', start
+    logger.info('START: {}'.format(start))
     gen = SyncGen(start)
     for i in range(ITERATIONS):
         if start == 0:
             # Show progress (but just for 1 thread to avoid spamming)
-            print '\titeration {}/{}'.format(i + 1, ITERATIONS)
+            logger.info('Iteration {}/{}'.format(i + 1, ITERATIONS))
         gen.populate()
 
-    print 'END:', start
+    logger.info('END: {}'.format(start))
 
 
 class SyncGen():
@@ -145,7 +147,7 @@ class SyncGen():
                         initial_value = d[k][1:]
                         self._add_with_retry(k, initial_value)
                     else:
-                        print 'RC1', v.rc
+                        logger.info('RC1 {}'.format(v.rc))
                         raise
 
         except (exceptions.TimeoutError, exceptions.TemporaryFailError, exceptions.NetworkError) as e:
@@ -159,7 +161,7 @@ class SyncGen():
                         value = d[k][1:]
                         self._add_with_retry(k, value, key_exists=True)
                     else:
-                        print 'RC2', v.rc
+                        logger.info('RC2 {}'.format(v.rc))
                         raise
 
     def _reset(self, key, value):
@@ -172,7 +174,10 @@ class SyncGen():
                 success = True
             except exceptions.TimeoutError as e:
                 self.retries += 1
-                print 'Thread-{}: _reset() sleeping for {}s due to {}'.format(self.start, backoff, e)
+                logger.info(
+                    'Thread-{}: _reset() sleeping for {}s due to {}'
+                    .format(self.start, backoff, e)
+                )
                 time.sleep(backoff)
                 backoff *= 2
 
@@ -200,7 +205,11 @@ class SyncGen():
             except (exceptions.TimeoutError,
                     exceptions.TemporaryFailError) as e:
                 self.retries += 1
-                print 'Thread-{}: Sleeping for {}s due to {}'.format(self.start, backoff, e)
+                logger.info(
+                    'Thread-{}: Sleeping for {}s due to {}'.format(self.start,
+                                                                   backoff,
+                                                                   e)
+                )
                 time.sleep(backoff)
                 backoff *= 2
 
@@ -218,13 +227,13 @@ class ABGen(object):
         self.person_iter = iterator
 
     def on_connect_error(self, err):
-        print 'Got error', err
+        logger.info('Got error: {}'.format(err))
         # Handle it, it's a normal Failure object
         self.client._close()
         err.trap()
 
     def on_connect_success(self, _):
-        print 'Couchbase Connected!'
+        logger.info('Couchbase Connected!')
         self.process_next_person()
 
     def process_next_person(self):
@@ -232,7 +241,7 @@ class ABGen(object):
         try:
             person = self.person_iter.next()
         except StopIteration:
-            print 'StopIteration'
+            logger.info('StopIteration')
             reactor.stop()
             return
         value = person_to_value(self.rng, person)
@@ -250,7 +259,7 @@ class ABGen(object):
         """Success, schedule next"""
         global count
         count += 1
-        print '\r' + 'Processed:', count,
+        logger.info('\rProcessed: {}'.format(count))
         sys.stdout.flush()
         self.process_next_person()
 
@@ -260,35 +269,35 @@ class ABGen(object):
         if err.check(exceptions.NotStoredError):
             # One or more keys do not yet exist, handle with set
             for k, v in err.value.all_results.items():
-                print 'VAL:', err.value
+                logger.info('VAL: {}'.format(err.value))
                 if not v.success:
                     if v.rc == LCB_NOT_STORED:
                         # Snip off semicolon for initial value.
-                        print 'SET:', k, ops[k][1:]
+                        logger.info('SET: {} {}'.format(k, ops[k][1:]))
                         d = self.client.set(k, ops[k][1:], format=FMT_UTF8)
                         d.addCallback(self._on_set)
                         d.addErrback(self._on_set_fail)
 
         elif err == exceptions.TimeoutError:
-            print 'TIMEOUT!', err
-            sys.exit(1)
+            logger.interrupt('Timeout: {}'.format(err))
         else:
-            print 'Unhandled error:', err
-            sys.exit(1)
+            logger.interrupt('Unhandled error: {}'.format(err))
 
     def _on_set(self, result):
         pass
 
     def _on_set_fail(self, err):
-        print 'ON_SET_FAIL', err
-        sys.exit(1)
+        logger.interrupt('ON_SET_FAIL'.format(err))
 
 
 def generate_graph():
-    print 'Generating graph... ',
+    logger.info('Generating graph')
     sys.stdout.flush()
     graph = socialModels.nearestNeighbor_mod(USERS, 0.90, 5)
-    print 'done. {} nodes, {} edges'.format(graph.number_of_nodes(), graph.number_of_edges())
+    logger.info(
+        'Done: {} nodes, {} edges.'
+        .format(graph.number_of_nodes(), graph.number_of_edges())
+    )
     return graph
 
 
@@ -326,12 +335,14 @@ def main():
         produce_AB(0)
 
     size_lock.acquire()
-    print
-    print 'Total documents: {0:,}'.format(USERS)
-    print 'Total size:      {0}'.format(sizeof_fmt(total_size))
-    print 'Total appends:   {0:,}'.format(total_appends)
-    print 'Total adds:      {0:,}'.format(total_adds)
-    print 'Total resets:   {0:,}'.format(total_resets)
+    for m in (
+        '\n\tTotal documents: {0:,}'.format(USERS),
+        '\tTotal size:      {0}'.format(sizeof_fmt(total_size)),
+        '\tTotal appends:   {0:,}'.format(total_appends),
+        '\tTotal adds:      {0:,}'.format(total_adds),
+        '\tTotal resets:    {0:,}\n'.format(total_resets),
+    ):
+        print m
     size_lock.release()
 
 if __name__ == '__main__':

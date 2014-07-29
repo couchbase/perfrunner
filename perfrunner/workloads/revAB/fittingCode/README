@@ -1,0 +1,153 @@
+Measurement-calibrated Graph Modeling for OSN Analysis v1.2b (11/17/11)
+-----------------------------------------------------------
+For questions, please contact adelbert_chang@cs.ucsb.edu
+
+This package is a tool to be used for synthetic graph generation
+targeted at original input graphs, using various graph modeling
+procedures. Fitting code is included to help determine which
+generated synthetic graph is closest to the original input graph.
+
+For more information, please refer to our lab website, the project
+website, and our published paper (which can be found on the project
+website).
+
+Lab website: http://current.cs.ucsb.edu/
+Project website: http://current.cs.ucsb.edu/socialmodels/
+
+[1] Alessandra Sala, Lili Cao, Christo Wilson, Robert Zablit, 
+    Haitao Zheng,and Ben Y. Zhao. Measurement-calibrated Graph
+    Models for Social Network Experiments. Proceedings of The
+    19th World Wide Web Conference (WWW 2010).
+
+
+
+Files
+-----------------------------------------------------------
+*Make sure Python 2.7+, NetworkX, and Orbis have been
+installed. They can be found at http://python.org,
+http://networkx.lanl.gov, and
+http://www.sysnet.ucsd.edu/~pmahadevan/topo_research/topo.html
+respectively.
+
+demo.py
+Run via 'python demo.py' to get a walkthrough on how to use
+our code. We suggest you run this on a GNU Screen, as the demo
+may take a while when running the script, depending on the
+machine it is run on.
+
+fitModel.py
+Code for fitting the graph models discussed in [1] to an input
+graph. The script generated several synthetic graphs by varying
+the parameters of the graph model selected. A file is outputted as well
+that describes how close/far the synthetic graphs are to the input.
+
+    Parameters are varied as such:
+    -Barabasi-Albert has only static parameters, hence no fitting code.
+     n = # of nodes, m = |E| / n of input graph
+
+    -Modified Forest Fire has one variable 'p', which is fine-grained
+     sampled from 0.01 to 0.99 in increments of 0.01.
+
+    -Modified Random Walk has two variables, 'qe' and 'qv.' For coarse
+     sampling, each is varied between 0 and 1 in increments of 0.1.
+     For fine sampling, qe is fixed and qv is varied across the intervals in
+     increments of 0.01.
+
+    -Modified Nearest Neighbor has two variables, 'u' and 'k'. 'u'
+     is varied between 0 and 1 in increments of 0.05 and 'k' is varied
+     from 1 to 10 in increments of 1. For fine sampling, k is fixed
+     and u is varied across intervals in increments of 0.01.
+
+
+fitModel_noPickling.py
+Same as fitModel.py, but each synthetic graph is not put into
+a Python .pickle format, saving on computation time.
+
+socialModels.py
+Graph generation code based on our modified Forest Fire, modified
+Random Walk, and modified Nearest-Neighbor models. For more information,
+please refer to [1].
+
+twoKDistance.py
+Helper module for the fitModel(_noPickling).py script, calculates
+the dK-2 distance between the synthetic graphs and the input graph.
+A small dK-2 distance indicates a close match.
+
+
+Installation
+-----------------------------------------------------------
+Make sure Python 2.7+, NetworkX, and Orbis are installed. 
+Once that is done, the script can be run.
+
+
+Licensing
+-----------------------------------------------------------
+Refer to the LICENSE file.
+
+
+Instructions
+-----------------------------------------------------------
+fitModel[_noPickling].py
+
+    $ python fitModel.py -ff/-rw/-nn <graph name> <pickle path> 
+    <path of dKDist code> <path of output folder>[parameter(s) 
+    if using modified Random walk model]
+
+The additional parameters for fitting our modified Random Walk
+model are '-coarse/-fine'. If '-fine' is selected, 3 additional
+parameters must be added that indicate the qe_start, qe_end , 
+qv_start, and qv_end intervals. THESE INTERVALS ARE CLOSED. That
+is, the final values of qv will hit and finish qv_end
+sampling before terminating, not before.
+*Coarse sampling should be run first. Then using the *_dkDistances.txt
+file, identify intervals for which the dK-2 distance is smallest.
+Then run fine sampling on those intervals.
+
+After the fitting script is done running, check the corresponding
+*_dkDistances.txt file. Look for the parameters with the smallest
+dK-2 distance, which indicates the closest synthetic graph.
+
+Example usage (to excluding the pickling process, simple replace
+the occurences of 'fitModel.py' with 'fitModel_noPicking.py'):
+-----------------------------------------------------------
+To run coarse fitting for the Nearest Neighbor model..
+
+    $ python fitModel.py -nn mySocialGraph pickles/myOSN.pickle
+      ~/code/Orbis_Source/dkDist results/coarseNN/ -coarse
+
+To run fine fitting for the Nearest Neighbor model..
+
+    $ python fitModel.py -nn mySocialGraph pickles/myOSN.pickle
+      ~/code/Orbis_Source/dkDist results/fineNN/ -fine 0.1 0.3 0.4
+
+To run coarse fitting for modified Random Walk...
+
+    $ python fitModel.py -rw mySocialGraph pickles/myOSN.pickle
+      ~/code/Orbis_Source/dkDist results/coarseRW/ -coarse
+
+To run fine fitting for modified Random Walk...
+
+    $ python fitModel.py -rw mySocial Graph pickles/myOSN.pickle
+      ~/code/Orbis_Source/dkDist results/fineRW/ -fine 0.2 0.3 0.1 0.2
+
+
+
+*socialModels.py is a module containing code for our modified Forest Fire,
+modified Random Walk, and modified Nearest Neighbor models. Using it
+is as simple as doing something like:
+
+    >>> import networkx as nx
+    >>> import socialModels as sm
+    >>> G = sm.nearestNeighbor_mod(239694, 0.9, 3)
+
+The Barabasi-Albert model has already been implemented in NetworkX under
+networkx.generators.random_graphs.barabasi_albert_graph. 
+
+Orbis/dK-2 code in C++ can be found at 
+http://www.sysnet.ucsd.edu/~pmahadevan/topo_research/topo.html
+
+The Kronecker Model (+ fitting code) can be found in the C++ SNAP library at 
+http://snap.stanford.edu/snap/download.html
+
+
+For questions, please contact adelbert_chang@cs.ucsb.edu

@@ -72,7 +72,7 @@ def main():
             PersonIterator(graph, graph_keys, start, WORKERS)
             for start in range(WORKERS)
         ]
-        pool = Pool()
+        pool = Pool(processes=WORKERS)
         pool.map(produce_AB, iterators)
 
     else:

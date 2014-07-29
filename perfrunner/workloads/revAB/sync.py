@@ -2,6 +2,7 @@ import os
 import random
 import threading
 import time
+from collections import defaultdict
 
 from couchbase import Couchbase, FMT_UTF8, exceptions
 from couchbase._libcouchbase import (LCB_NOT_STORED, LCB_ETIMEDOUT,
@@ -15,11 +16,8 @@ HOST = 'localhost'
 PORT = 8091
 
 
-size_lock = threading.Lock()
-total_size = 0
-total_appends = 0
-total_adds = 0
-total_resets = 0
+totals_lock = threading.Lock()
+totals = defaultdict(int)
 
 
 def sizeof_fmt(num):
@@ -65,22 +63,18 @@ class SyncGen(object):
                 if d:
                     self._sync_append(d)
 
-        # Increment the global size by our per-thread counts.
-        global total_size, total_appends, total_adds, total_resets
-        size_lock.acquire()
-        total_size += self.size
-        total_appends += self.appends
-        total_adds += self.adds
-        total_resets += self.resets
-        size_lock.release()
+        # Increment the global summary by our per-thread counts.
+        with totals_lock:
+            for metric in ('size', 'appends', 'adds', 'resets'):
+                totals[metric] += getattr(self, metric)
 
-    def report_summary(self):
+    def report_totals(self):
         for m in (
             '\n\tTotal documents: {0:,}'.format(len(self.iterator.graph_keys)),
-            '\tTotal size:      {0}'.format(sizeof_fmt(total_size)),
-            '\tTotal appends:   {0:,}'.format(total_appends),
-            '\tTotal adds:      {0:,}'.format(total_adds),
-            '\tTotal resets:    {0:,}\n'.format(total_resets),
+            '\tTotal size:      {0}'.format(sizeof_fmt(totals['size'])),
+            '\tTotal appends:   {0:,}'.format(totals['appends']),
+            '\tTotal adds:      {0:,}'.format(totals['adds']),
+            '\tTotal resets:    {0:,}\n'.format(totals['resets']),
         ):
             print m
 

@@ -41,7 +41,7 @@ def produce_AB(iterator):
     global done
     done += 1
     if done == WORKERS:
-        gen.report_summary()
+        gen.report_totals()
 
 
 def main():

@@ -18,9 +18,9 @@ count = 0
 
 class AsyncGen(object):
 
-    def __init__(self, iterator):
+    def __init__(self, iterator, conn):
         self.rng = random.Random(0)
-        self.client = TxCouchbase(bucket=BUCKET, host=HOST, port=PORT)
+        self.client = TxCouchbase(**conn)
         d = self.client.connect()
         d.addCallback(self.on_connect_success)
         d.addErrback(self.on_connect_error)

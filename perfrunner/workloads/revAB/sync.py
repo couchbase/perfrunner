@@ -1,4 +1,3 @@
-import os
 import random
 import threading
 import time
@@ -31,7 +30,7 @@ class SyncGen(object):
 
     RESET_FRACTION = 0.07
 
-    def __init__(self, iterator):
+    def __init__(self, iterator, conn):
         self.size = 0
         self.appends = 0
         self.adds = 0
@@ -40,8 +39,7 @@ class SyncGen(object):
         self.iterator = iterator
         # Define a thread-load RNG to ensure deterministic sequence.
         self.rng = random.Random(iterator.start)
-        os.environ['LCB_NO_CCCP'] = '1'
-        self.client = Couchbase.connect(bucket=BUCKET, host=HOST, port=PORT)
+        self.client = Couchbase.connect(**conn)
 
     def populate(self):
         for person in self.iterator:

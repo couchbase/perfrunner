@@ -483,3 +483,19 @@ class RevABTest(FragmentationTest):
                 self.reporter.post_to_sf(
                     *self.metric_helper.calc_max_memcached_rss()
                 )
+
+
+class MemUsedTest(KVTest):
+
+    ALL_BUCKETS = True
+
+    def run(self):
+        super(MemUsedTest, self).run()
+        if self.test_config.stats_settings.enabled:
+            for metric in ('max', 'min'):
+                self.reporter.post_to_sf(
+                    *self.metric_helper.calc_mem_used(metric)
+                )
+                self.reporter.post_to_sf(
+                    *self.metric_helper.calc_mem_used(metric)
+                )

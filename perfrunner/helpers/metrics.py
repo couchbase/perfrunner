@@ -263,6 +263,28 @@ class MetricHelper(object):
 
         return disk_size, metric, metric_info
 
+    def calc_mem_used(self, metric='max'):
+        metric = '{}_{}_mem_used_{}'.format(
+            self.test_config.name, metric, self.cluster_spec.name
+        )
+        title = '{}. mem_used (MB), {}'.format(metric.title(),
+                                               self.metric_title)
+        metric_info = self._get_metric_info(title)
+
+        query_params = self._get_query_params('max_mem_used')
+
+        mem_used = []
+        for bucket in self.test_config.buckets:
+            db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
+            data = self.seriesly[db].query(query_params)
+
+            mem_used.append(
+                round(data.values()[0][0] / 1024 ** 2)  # -> MB
+            )
+        mem_used = eval(metric)(mem_used)
+
+        return mem_used, metric, metric_info
+
     def calc_max_beam_rss(self):
         metric = 'beam_rss_max_{}_{}'.format(self.test_config.name,
                                              self.cluster_spec.name)

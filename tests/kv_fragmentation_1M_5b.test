@@ -1,0 +1,26 @@
+[test_case]
+test = perfrunner.tests.kv.KVTest
+title = 5 buckets x 200K x 1KB, 2 nodes, write-heavy
+summary = 5 buckets x 200K x 1KB, 2 nodes, write-heavy
+larger_is_better = false
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 2
+num_buckets = 5
+
+[load]
+items = 200000
+size = 800
+workers = 2
+
+[access]
+creates = 1
+reads = 8
+updates = 90
+deletes = 1
+throughput = 2000
+items = 200000
+size = 800
+workers = 1
+time=7200

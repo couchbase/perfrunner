@@ -16,5 +16,5 @@ password =
 
 [load]
 items = 100000
-workers = 8
-iterations = 3
+workers = 16
+iterations = 6

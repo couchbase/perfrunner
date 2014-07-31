@@ -440,7 +440,7 @@ class ReplicationTest(PerfTest):
         self.measure_latency()
 
 
-class RevABTest(PerfTest):
+class RevABTest(FragmentationTest):
 
     def generate_graph(self):
         random.seed(0)
@@ -476,3 +476,5 @@ class RevABTest(PerfTest):
     def run(self):
         self.generate_graph()
         self.load()
+        fragmentation_ratio = self.calc_fragmentation_ratio()
+        self.reporter.post_to_sf(fragmentation_ratio)

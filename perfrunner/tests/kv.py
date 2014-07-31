@@ -1,3 +1,5 @@
+import random
+from threading import Thread
 from time import time, sleep
 
 import numpy as np
@@ -12,6 +14,8 @@ from upr.constants import CMD_STREAM_REQ, SUCCESS
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import pretty_dict, uhex
 from perfrunner.tests import PerfTest
+from perfrunner.workloads.revAB.__main__ import produce_AB
+from perfrunner.workloads.revAB.graph import generate_graph, PersonIterator
 from perfrunner.workloads.tcmalloc import WorkloadGen
 
 
@@ -434,3 +438,41 @@ class ReplicationTest(PerfTest):
 
     def run(self):
         self.measure_latency()
+
+
+class RevABTest(PerfTest):
+
+    def generate_graph(self):
+        random.seed(0)
+        self.graph = generate_graph(self.test_config.load_settings.items)
+        self.graph_keys = self.graph.nodes()
+        random.shuffle(self.graph_keys)
+
+    @with_stats
+    def load(self):
+        for target in self.target_iterator:
+            host, port = target.node.split(':')
+            conn = {'host': host, 'port': port, 'bucket': target.bucket}
+
+            threads = list()
+            for seqid in range(self.test_config.load_settings.workers):
+                iterator = PersonIterator(
+                    self.graph,
+                    self.graph_keys,
+                    seqid,
+                    self.test_config.load_settings.workers,
+                )
+                t = Thread(
+                    target=produce_AB,
+                    args=(iterator,
+                          self.test_config.load_settings.iterations,
+                          conn),
+                )
+                threads.append(t)
+                t.start()
+            for t in threads:
+                t.join()
+
+    def run(self):
+        self.generate_graph()
+        self.load()

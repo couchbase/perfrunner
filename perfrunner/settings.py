@@ -387,6 +387,8 @@ class PhaseSettings(object):
 
     ASYNC = False
 
+    ITERATIONS = 1
+
     def __init__(self, options):
         self.creates = int(options.get('creates', self.CREATES))
         self.reads = int(options.get('reads', self.READS))
@@ -421,6 +423,8 @@ class PhaseSettings(object):
         self.time = int(options.get('time', self.TIME))
 
         self.async = bool(int(options.get('async', self.ASYNC)))
+
+        self.iterations = int(options.get('iterations', self.ITERATIONS))
 
     def __str__(self):
         return str(self.__dict__)

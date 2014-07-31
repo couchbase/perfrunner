@@ -1,0 +1,17 @@
+[test_case]
+test = perfrunner.tests.kv.RevABTest
+use_workers = 0
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 1
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+password = 0
+
+[load]
+items = 100000
+workers = 8
+iterations = 3

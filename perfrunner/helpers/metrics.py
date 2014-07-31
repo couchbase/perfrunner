@@ -284,6 +284,29 @@ class MetricHelper(object):
 
         return max_rss, metric, metric_info
 
+    def calc_max_memcached_rss(self):
+        metric = '{}_{}_memcached_rss'.format(self.test_config.name,
+                                              self.cluster_spec.name)
+        title = 'Max. memcached RSS (MB),{}'.format(
+            self.metric_title.split(',')[-1]
+        )
+        metric_info = self._get_metric_info(title)
+
+        query_params = self._get_query_params('max_memcached_rss')
+
+        max_rss = 0
+        for cluster_name, servers in self.cluster_spec.yield_clusters():
+            cluster = filter(lambda name: name.startswith(cluster_name),
+                             self.cluster_names)[0]
+            for server in servers:
+                hostname = server.split(':')[0].replace('.', '')
+                db = 'atop{}{}'.format(cluster, hostname)
+                data = self.seriesly[db].query(query_params)
+                rss = round(data.values()[0][0] / 1024 ** 2)
+                max_rss = max(max_rss, rss)
+
+        return max_rss, metric, metric_info
+
     def get_indexing_meta(self, value, index_type):
         metric = '{}_{}_{}'.format(self.test_config.name,
                                    index_type.lower(),

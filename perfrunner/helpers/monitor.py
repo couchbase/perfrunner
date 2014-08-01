@@ -39,6 +39,8 @@ class Monitor(RestHelper):
         last_progress = 0
         last_progress_time = time.time()
         while is_running:
+            time.sleep(self.POLLING_INTERVAL)
+
             is_running, progress = self.get_rebalance_status(host_port)
             if progress == last_progress:
                 if time.time() - last_progress_time > self.REBALANCE_TIMEOUT:
@@ -49,8 +51,6 @@ class Monitor(RestHelper):
 
             if progress is not None:
                 logger.info('Rebalance progress: {} %'.format(progress))
-            if is_running:
-                time.sleep(self.POLLING_INTERVAL)
 
         logger.info('Rebalance completed')
 
@@ -70,7 +70,6 @@ class Monitor(RestHelper):
                     else:
                         logger.info('{} reached 0'.format(metric))
                 metrics.remove(metric)
-
             if metrics:
                 time.sleep(self.POLLING_INTERVAL)
 
@@ -88,13 +87,14 @@ class Monitor(RestHelper):
 
     def monitor_xdcr_queues(self, host_port, bucket):
         logger.info('Monitoring XDCR queues: {}'.format(bucket))
-        time.sleep(self.POLLING_INTERVAL)
         self._wait_for_empty_queues(host_port, bucket, self.XDCR_QUEUES)
 
     def monitor_task(self, host_port, task_type):
         logger.info('Monitoring task: {}'.format(task_type))
 
         while True:
+            time.sleep(self.POLLING_INTERVAL)
+
             tasks = [task for task in self.get_tasks(host_port)
                      if task.get('type') == task_type]
             if tasks:
@@ -105,8 +105,6 @@ class Monitor(RestHelper):
                     ))
             else:
                 break
-            time.sleep(self.POLLING_INTERVAL)
-
         logger.info('Task {} successfully completed'.format(task_type))
 
     def monitor_warmup(self, memcahed, host, bucket):

@@ -320,7 +320,7 @@ class MetricHelper(object):
         for cluster_name, servers in self.cluster_spec.yield_clusters():
             cluster = filter(lambda name: name.startswith(cluster_name),
                              self.cluster_names)[0]
-            for server in servers[:self.test_config.initial_nodes]:
+            for server in servers[:self.test_config.cluster.initial_nodes]:
                 hostname = server.split(':')[0].replace('.', '')
                 db = 'atop{}{}'.format(cluster, hostname)
                 data = self.seriesly[db].query(query_params)

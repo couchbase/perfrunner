@@ -263,9 +263,9 @@ class MetricHelper(object):
 
         return disk_size, metric, metric_info
 
-    def calc_mem_used(self, metric='max'):
+    def calc_mem_used(self, max_min='max'):
         metric = '{}_{}_mem_used_{}'.format(
-            self.test_config.name, metric, self.cluster_spec.name
+            self.test_config.name, max_min, self.cluster_spec.name
         )
         title = '{}. mem_used (MB), {}'.format(metric.title(),
                                                self.metric_title)
@@ -281,7 +281,7 @@ class MetricHelper(object):
             mem_used.append(
                 round(data.values()[0][0] / 1024 ** 2)  # -> MB
             )
-        mem_used = eval(metric)(mem_used)
+        mem_used = eval(max_min)(mem_used)
 
         return mem_used, metric, metric_info
 

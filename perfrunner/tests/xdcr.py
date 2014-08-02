@@ -23,6 +23,8 @@ class XdcrTest(PerfTest):
 
     ALL_BUCKETS = True
 
+    MONITORING_DELAY = 15
+
     def __init__(self, *args, **kwargs):
         super(XdcrTest, self).__init__(*args, **kwargs)
         self.settings = self.test_config.xdcr_settings
@@ -53,6 +55,7 @@ class XdcrTest(PerfTest):
             self._start_replication(m2, m1)
 
     def monitor_replication(self):
+        sleep(self.MONITORING_DELAY)
         for target in self.target_iterator:
             self.monitor.monitor_xdcr_queues(target.node, target.bucket)
 
@@ -177,8 +180,6 @@ class XdcrInitTest(SymmetricXdcrTest):
 
     COLLECTORS = {}
 
-    MONITORING_DELAY = 30
-
     def load(self):
         load_settings = self.test_config.load_settings
         log_phase('load phase', load_settings)
@@ -190,7 +191,6 @@ class XdcrInitTest(SymmetricXdcrTest):
     @with_stats
     def init_xdcr(self):
         self.enable_xdcr()
-        sleep(self.MONITORING_DELAY)
         self.monitor_replication()
 
     def run(self):

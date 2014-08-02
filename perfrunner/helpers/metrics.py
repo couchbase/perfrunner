@@ -267,7 +267,7 @@ class MetricHelper(object):
         metric = '{}_{}_mem_used_{}'.format(
             self.test_config.name, max_min, self.cluster_spec.name
         )
-        title = '{}. mem_used (MB), {}'.format(metric.title(),
+        title = '{}. mem_used (MB), {}'.format(max_min.title(),
                                                self.metric_title)
         metric_info = self._get_metric_info(title)
 

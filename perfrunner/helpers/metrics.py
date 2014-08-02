@@ -317,10 +317,13 @@ class MetricHelper(object):
         query_params = self._get_query_params('max_memcached_rss')
 
         max_rss = 0
-        for cluster_name, servers in self.cluster_spec.yield_clusters():
+        for (cluster_name, servers), initial_nodes in zip(
+                self.cluster_spec.yield_clusters(),
+                self.test_config.cluster.initial_nodes,
+        ):
             cluster = filter(lambda name: name.startswith(cluster_name),
                              self.cluster_names)[0]
-            for server in servers[:self.test_config.cluster.initial_nodes]:
+            for server in servers[:initial_nodes]:
                 hostname = server.split(':')[0].replace('.', '')
                 db = 'atop{}{}'.format(cluster, hostname)
                 data = self.seriesly[db].query(query_params)

@@ -1,0 +1,34 @@
+[test_case]
+test = perfrunner.tests.kv.MixedLatencyTest
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 4
+num_buckets = 1
+
+[compaction]
+db_percentage = 10
+
+[load]
+items = 100000000
+size = 2048
+workers = 20
+
+[hot_load]
+items = 100000000
+size = 2048
+workers = 20
+working_set = 5
+
+[access]
+creates = 4
+reads = 80
+updates = 12
+deletes = 4
+throughput = 10000
+items = 100000000
+size = 2048
+working_set = 5
+working_set_access = 98
+workers = 24
+time = 7200

@@ -332,6 +332,32 @@ class MetricHelper(object):
 
         return max_rss, metric, metric_info
 
+    def calc_avg_memcached_rss(self):
+        metric = '{}_{}_avg_memcached_rss'.format(self.test_config.name,
+                                                  self.cluster_spec.name)
+        title = 'Avg. memcached RSS (MB),{}'.format(
+            self.metric_title.split(',')[-1]
+        )
+        metric_info = self._get_metric_info(title)
+
+        query_params = self._get_query_params('avg_memcached_rss')
+
+        rss = list()
+        for (cluster_name, servers), initial_nodes in zip(
+                self.cluster_spec.yield_clusters(),
+                self.test_config.cluster.initial_nodes,
+        ):
+            cluster = filter(lambda name: name.startswith(cluster_name),
+                             self.cluster_names)[0]
+            for server in servers[:initial_nodes]:
+                hostname = server.split(':')[0].replace('.', '')
+                db = 'atop{}{}'.format(cluster, hostname)
+                data = self.seriesly[db].query(query_params)
+                rss.append(round(data.values()[0][0] / 1024 ** 2))
+
+        avg_rss = sum(rss) / len(rss)
+        return avg_rss, metric, metric_info
+
     def get_indexing_meta(self, value, index_type):
         metric = '{}_{}_{}'.format(self.test_config.name,
                                    index_type.lower(),

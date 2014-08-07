@@ -1,0 +1,20 @@
+[test_case]
+test = perfrunner.tests.kv.PathoGenTest
+title = Max RSS (MB), 1 bucket x 10K, PathoGen 8B -> 256KB
+summary = Repeatedly ramp document size from 8Bytes to 256KB, 10k docs.
+larger_is_better = false
+use_workers = 0
+
+[cluster]
+mem_quota = 8192
+initial_nodes = 1
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+password =
+
+[load]
+items = 10000
+workers = 7
+iterations = 40

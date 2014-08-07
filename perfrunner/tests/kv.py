@@ -17,6 +17,7 @@ from perfrunner.tests import PerfTest
 from perfrunner.workloads.revAB.__main__ import produce_AB
 from perfrunner.workloads.revAB.graph import generate_graph, PersonIterator
 from perfrunner.workloads.tcmalloc import WorkloadGen
+from perfrunner.workloads.pathoGen import PathoGen
 
 
 class KVTest(PerfTest):
@@ -499,3 +500,25 @@ class MemUsedTest(KVTest):
                 self.reporter.post_to_sf(
                     *self.metric_helper.calc_mem_used(metric)
                 )
+
+
+class PathoGenTest(FragmentationTest):
+    """Pathologically bad mmalloc test. See pathoGen.py for full details."""
+
+    @with_stats
+    def access(self):
+        for target in self.target_iterator:
+            host, port = target.node.split(':')
+            PathoGen(num_items=self.test_config.load_settings.items,
+                     num_workers=self.test_config.load_settings.workers,
+                     num_iterations=self.test_config.load_settings.iterations,
+                     host=host, port=port, bucket=target.bucket).run()
+
+    def run(self):
+        self.access()
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_avg_memcached_rss()
+        )
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_max_memcached_rss()
+        )

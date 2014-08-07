@@ -3,13 +3,13 @@ from collections import OrderedDict
 from logger import logger
 from seriesly import Seriesly
 
-from perfrunner.settings import CBMONITOR
+from perfrunner.settings import SERIESLY
 
 
 class MetricHelper(object):
 
     def __init__(self, test):
-        self.seriesly = Seriesly(CBMONITOR['host'])
+        self.seriesly = Seriesly(SERIESLY['host'])
         self.test_config = test.test_config
         self.metric_title = test.test_config.test_case.metric_title
         self.cluster_spec = test.cluster_spec

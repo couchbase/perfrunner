@@ -1,0 +1,20 @@
+[test_case]
+test = perfrunner.tests.kv.PathoGenFrozenTest
+title = Max RSS (MB), 1 bucket x 1M, PathoGen Frozen 8B -> 8192B
+summary = Repeatedly ramp document size from 8 to 8192 bytes, 1M docs, 20 iterations.
+larger_is_better = false
+use_workers = 0
+
+[cluster]
+mem_quota = 8192
+initial_nodes = 1
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+password =
+
+[load]
+items = 1000000
+workers = 21
+iterations = 20

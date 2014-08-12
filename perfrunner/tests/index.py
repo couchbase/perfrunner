@@ -1,3 +1,5 @@
+from time import sleep
+
 from logger import logger
 
 from perfrunner.helpers.cbmonitor import with_stats
@@ -14,6 +16,8 @@ class IndexTest(PerfTest):
     It doesn't differentiate index types and basically benchmarks dumb/bulk
     indexing.
     """
+
+    MONITORING_DELAY = 10
 
     def __init__(self, *args):
         super(IndexTest, self).__init__(*args)
@@ -40,6 +44,7 @@ class IndexTest(PerfTest):
                         self.rest.query_view(master, bucket,
                                              ddoc_name, view_name,
                                              params={'limit': 10})
+        sleep(self.MONITORING_DELAY)
         for master in self.cluster_spec.yield_masters():
             self.monitor.monitor_task(master, 'indexer')
 

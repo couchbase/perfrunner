@@ -8,6 +8,7 @@ Related projects:
 * [seriesly](https://github.com/dustin/seriesly)
 * [seriesly client](https://github.com/pavel-paulau/seriesly-python-client)
 * [btrc](https://github.com/pavel-paulau/btrc)
+* [moveit](https://github.com/pavel-paulau/moveit)
 
 Requirements
 ------------

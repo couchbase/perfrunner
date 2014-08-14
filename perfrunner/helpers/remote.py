@@ -288,6 +288,12 @@ class RemoteLinuxHelper(object):
             return []
 
     @all_hosts
+    def tune_log_rotation(self):
+        logger.info('Tune log rotation so that it happens less frequently')
+        run('sed -i "s/num_files, [0-9]*/num_files, 50/" '
+            '/opt/couchbase/etc/couchbase/static_config')
+
+    @all_hosts
     def start_cbq(self):
         logger.info('Starting cbq-engine')
         return run('nohup cbq-engine '
@@ -566,6 +572,9 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
         logger.info('Sleeping for {} seconds'.format(self.SLEEP_TIME))
         time.sleep(self.SLEEP_TIME)
 
+    def restart(self):
+        pass
+
     def restart_with_alternative_num_vbuckets(self, num_vbuckets):
         pass
 
@@ -576,4 +585,7 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
         pass
 
     def filter_wan(self, *args):
+        pass
+
+    def tune_log_rotation(self):
         pass

@@ -138,6 +138,10 @@ class ClusterManager(object):
                         self.rest.run_diag_eval(master, diag_eval)
                 self.remote.restart()
 
+    def tune_logging(self):
+        self.remote.tune_log_rotation()
+        self.remote.restart()
+
     def restart_with_alternative_num_cpus(self):
         num_cpus = self.test_config.cluster.num_cpus
         if num_cpus:
@@ -208,6 +212,7 @@ def main():
     cm = ClusterManager(cluster_spec, test_config, options.verbose)
 
     # Individual nodes
+    cm.tune_logging()
     cm.restart_with_sfwi()
     cm.restart_with_alternative_num_vbuckets()
     cm.restart_with_alternative_num_cpus()

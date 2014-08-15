@@ -40,6 +40,8 @@ class PerfTest(object):
 
     COLLECTORS = {}
 
+    MONITORING_DELAY = 10
+
     def __init__(self, cluster_spec, test_config, verbose, experiment=None):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
@@ -112,6 +114,7 @@ class PerfTest(object):
         for master in self.cluster_spec.yield_masters():
             for bucket in self.test_config.buckets:
                 self.rest.trigger_bucket_compaction(master, bucket)
+        time.sleep(self.MONITORING_DELAY)
         for master in self.cluster_spec.yield_masters():
             self.monitor.monitor_task(master, 'bucket_compaction')
 

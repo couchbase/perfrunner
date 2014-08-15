@@ -17,8 +17,6 @@ class IndexTest(PerfTest):
     indexing.
     """
 
-    MONITORING_DELAY = 10
-
     def __init__(self, *args):
         super(IndexTest, self).__init__(*args)
 

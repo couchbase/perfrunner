@@ -23,8 +23,6 @@ class XdcrTest(PerfTest):
 
     ALL_BUCKETS = True
 
-    MONITORING_DELAY = 15
-
     def __init__(self, *args, **kwargs):
         super(XdcrTest, self).__init__(*args, **kwargs)
         self.settings = self.test_config.xdcr_settings

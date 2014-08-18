@@ -1,0 +1,44 @@
+[test_case]
+test = perfrunner.tests.rebalance.RebalanceKVTest
+title = Delta rebalance after failover (min), 3 -> 4, 1 bucket x 500M x 2KB, 10K ops/sec
+summary = Mixed delta rebalance after failover, 3 -> 4 nodes, 1 bucket x 500M x 2KB, DGM, 10K ops/sec
+larger_is_better = false
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+
+[compaction]
+db_percentage = 4
+
+[load]
+items = 500000000
+size = 2048
+workers = 20
+
+[hot_load]
+items = 500000000
+size = 2048
+workers = 20
+working_set = 2
+
+[access]
+creates = 5
+reads = 50
+updates = 40
+deletes = 5
+throughput = 10000
+items = 500000000
+size = 2048
+workers = 24
+working_set = 2
+working_set_access = 98
+
+[rebalance]
+nodes_after = 4
+failover = 1
+delta_recovery = 1
+sleep_after_failover = 1200
+start_after = 1200
+stop_after = 1200

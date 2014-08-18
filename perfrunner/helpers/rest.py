@@ -395,4 +395,4 @@ class SyncGatewayRequestHelper(RestHelper):
 
         api = 'http://{}:4985/'.format(gateway_ip)
         meta = self.get(url=api).json()
-        return meta['version'].split(';')[0].split('(')[-1]
+        return meta['version'].split('(')[0].split('/')[-1]

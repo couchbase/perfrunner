@@ -11,6 +11,7 @@ num_buckets = 1
 
 [bucket]
 replica_number = 2
+eviction_policy = fullEviction
 
 [compaction]
 db_percentage = 4

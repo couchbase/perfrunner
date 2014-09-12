@@ -213,16 +213,28 @@ class Worker(multiprocessing.Process):
         self.in_queue = in_queue
         self.out_queue = out_queue
         self.promotion_policy = promotion_policy
-        self.client = Couchbase.connect(bucket=bucket, host=host, port=port)
+        self.bucket = bucket
+        self.host = host
+        self.port = port
 
         # Pre-generate a buffer of the maximum size to use for constructing documents.
         self.buffer = bytearray('x' for _ in range(SIZES[-1]))
+
+    def _connect(self):
+        """Establish a connection to the Couchbase cluster."""
+        self.client = Couchbase.connect(bucket=self.bucket, host=self.host,
+                                        port=self.port)
 
     def run(self):
         """Run a Worker. They run essentially forever, taking document
         size iterators from the input queue and adding them to the
         output queue for the next guy.
         """
+
+        # We defer creating the Couchbase object until we are actually
+        # 'in' the seperate process here.
+        self._connect()
+
         while True:
             next_size = None
             (i, doc, size) = self.in_queue.get()
@@ -288,6 +300,10 @@ class Supervisor(Worker):
         iteration is started.
         """
         logger.info('Starting PathoGen supervisor')
+
+        # We defer creating the Couchbase object until we are actually
+        # 'in' the seperate process here.
+        self._connect()
 
         # Create initial list of documents on the 'finished' queue
         finished_items = list()

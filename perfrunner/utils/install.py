@@ -54,6 +54,7 @@ class CouchbaseInstaller(object):
         elif self.build.pkg == 'exe':
             patterns = (
                 'couchbase-server-enterprise_{arch}_{version}-rel.setup.{pkg}',
+                'couchbase_server-enterprise-windows-amd64-{version}.{pkg}',
                 'couchbase_server/{release}/{build}/couchbase_server-enterprise-windows-amd64-{version}.exe',
             )
 

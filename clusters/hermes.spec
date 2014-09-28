@@ -16,7 +16,7 @@ index = c:\data
 
 [credentials]
 rest = Administrator:password
-ssh = administrator:Membase123
+ssh = Administrator:Membase123
 
 [parameters]
 Platform = Physical

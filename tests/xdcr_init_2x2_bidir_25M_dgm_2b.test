@@ -5,7 +5,7 @@ summary = Initial XDCR test, 2<->2 nodes, 2 buckets x 25M x 2KB, DGM, no compact
 larger_is_better = true
 
 [cluster]
-mem_quota = 40960
+mem_quota = 45056
 initial_nodes = 2 2
 num_buckets = 2
 

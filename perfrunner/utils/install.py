@@ -38,6 +38,7 @@ class CouchbaseInstaller(object):
                 'couchbase-server-community_cent58-2.5.2-toy-{toy}-{arch}_{version}-toy.{pkg}',
                 'couchbase-server-community_cent58-3.0.0-toy-{toy}-{arch}_{version}-toy.{pkg}',
                 'couchbase-server-community_cent64-3.0.0-toy-{toy}-{arch}_{version}-toy.{pkg}',
+                'couchbase-server-community_cent64-3.0.1-toy-{toy}-{arch}_{version}-toy.{pkg}',
                 'couchbase-server-community_cent58-master-toy-{toy}-{arch}_{version}-toy.{pkg}',
                 'couchbase-server-community_cent54-master-toy-{toy}-{arch}_{version}-toy.{pkg}',
             )

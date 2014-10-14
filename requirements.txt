@@ -16,5 +16,5 @@ requests==2.1.0
 seriesly
 sqlalchemy==0.9.4
 git+https://github.com/couchbaselabs/spring.git#egg=spring
-git+https://github.com/pavel-paulau/tap.git#egg=tap
+git+https://github.com/couchbaselabs/tap.git#egg=tap
 git+https://github.com/couchbaselabs/python-dcp-client.git#egg=dcp-client

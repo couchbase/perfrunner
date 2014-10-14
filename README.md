@@ -10,7 +10,7 @@ Related projects:
 * [btrc](https://github.com/couchbaselabs/btrc)
 * [moveit](https://github.com/pavel-paulau/moveit)
 * [dcp](https://github.com/couchbaselabs/python-dcp-client)
-* [tap](https://github.com/pavel-paulau/tap)
+* [tap](https://github.com/couchbaselabs/tap)
 
 Requirements
 ------------

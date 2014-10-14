@@ -218,6 +218,12 @@ class RemoteLinuxHelper(object):
             'numactl --interleave=all /etc/init.d/couchbase-server restart')
 
     @all_hosts
+    def restart_with_tcmalloc_aggressive_decommit(self):
+        logger.info('Enabling TCMalloc aggressive decommit')
+        run('TCMALLOC_AGGRESSIVE_DECOMMIT=t '
+            'numactl --interleave=all /etc/init.d/couchbase-server restart')
+
+    @all_hosts
     def disable_moxi(self):
         logger.info('Disabling moxi')
         run('rm /opt/couchbase/bin/moxi')

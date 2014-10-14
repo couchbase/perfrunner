@@ -248,6 +248,7 @@ class ClusterSettings(object):
     NUM_CPUS = 0  # Use defaults
     RUN_CBQ = 0
     SFWI = 0
+    TCMALLOC_AGGRESSIVE_DECOMMIT = 0
 
     def __init__(self, options):
         self.mem_quota = int(options.get('mem_quota'))
@@ -267,6 +268,8 @@ class ClusterSettings(object):
         self.disable_moxi = options.get('disable_moxi')
         self.run_cbq = options.get('run_cbq', self.RUN_CBQ)
         self.sfwi = options.get('sfwi', self.SFWI)
+        self.tcmalloc_aggressive_decommit = options.get('tcmalloc_aggressive_decommit',
+                                                        self.TCMALLOC_AGGRESSIVE_DECOMMIT)
 
 
 class StatsSettings(object):

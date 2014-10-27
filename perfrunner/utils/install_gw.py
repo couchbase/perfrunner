@@ -23,6 +23,7 @@ class GatewayInstaller(object):
             '1.0.0/{0}/couchbase-sync-gateway-enterprise_{0}_x86_64.rpm',
             '1.0.1/{0}/couchbase-sync-gateway-enterprise_{0}_x86_64.rpm',
             '1.0.2/{0}/couchbase-sync-gateway-community_{0}_x86_64.rpm',
+            '1.0.3/{0}/couchbase-sync-gateway-community_{0}_x86_64.rpm',
         ),
         'http://cbfs-ext.hq.couchbase.com/builds': (
             'couchbase-sync-gateway_{}_x86_64-community.rpm',

@@ -222,12 +222,20 @@ class RemoteLinuxHelper(object):
     @all_hosts
     def stop_server(self):
         logger.info('Stopping Couchbase Server')
-        run('/etc/init.d/couchbase-server stop')
+        getosname = run('uname -a|cut -c1-6')
+        if(getosname.find("CYGWIN") != -1):
+            run('net stop CouchbaseServer')
+        else:
+            run('/etc/init.d/couchbase-server stop')
 
     @all_hosts
     def start_server(self):
         logger.info('Starting Couchbase Server')
-        run('/etc/init.d/couchbase-server start')
+        getosname = run('uname -a|cut -c1-6')
+        if(getosname.find("CYGWIN") != -1):
+            run('net start CouchbaseServer')
+        else:
+            run('/etc/init.d/couchbase-server start')
 
     def detect_if(self):
         for iface in ('em1', 'eth5', 'eth0'):

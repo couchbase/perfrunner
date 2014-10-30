@@ -210,10 +210,9 @@ class BeamRssTest(KVTest):
     def run(self):
         super(BeamRssTest, self).run()
         if self.test_config.stats_settings.enabled:
-            if self.remote.os != 'Cygwin':
-                self.reporter.post_to_sf(
-                    *self.metric_helper.calc_max_beam_rss()
-                )
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_max_beam_rss()
+            )
 
 
 class WarmupTest(PerfTest):

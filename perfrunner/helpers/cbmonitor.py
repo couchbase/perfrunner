@@ -5,7 +5,7 @@ from datetime import datetime
 from multiprocessing import Process
 
 import requests
-from cbagent.collectors import (NSServer, PS, IO, Net, ActiveTasks,
+from cbagent.collectors import (NSServer, PS, TypePerf, IO, Net, ActiveTasks,
                                 SpringLatency, SpringQueryLatency,
                                 SpringN1QLQueryLatency,
                                 ObserveLatency, XdcrLag)
@@ -97,6 +97,8 @@ class CbAgent(object):
             self.prepare_ps(clusters)
             self.prepare_net(clusters)
             self.prepare_iostat(clusters, test)
+        elif test.remote.os == 'Cygwin':
+            self.prepare_tp(clusters)
         if latency:
             self.prepare_latency(clusters, test)
         if query_latency:
@@ -127,6 +129,14 @@ class CbAgent(object):
             ps_collector = PS(settings)
             self.collectors.append(ps_collector)
 
+    def prepare_tp(self, clusters):
+        for cluster in clusters:
+            settings = copy(self.settings)
+            settings.cluster = cluster
+            settings.master_node = self.clusters[cluster]
+            tp_collector = TypePerf(settings)
+            self.collectors.append(tp_collector)
+ 
     def prepare_net(self, clusters):
         for cluster in clusters:
             settings = copy(self.settings)

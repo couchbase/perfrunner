@@ -97,8 +97,8 @@ class CbAgent(object):
             self.prepare_ps(clusters)
             self.prepare_net(clusters)
             self.prepare_iostat(clusters, test)
-        elif test.remote.os == 'Cygwin':
-            self.prepare_tp(clusters)
+        '''elif test.remote.os == 'Cygwin':
+            self.prepare_tp(clusters)'''
         if latency:
             self.prepare_latency(clusters, test)
         if query_latency:

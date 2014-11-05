@@ -479,10 +479,9 @@ class RevABTest(FragmentationTest):
         fragmentation_ratio = self.calc_fragmentation_ratio()
         self.reporter.post_to_sf(fragmentation_ratio)
         if self.test_config.stats_settings.enabled:
-            if self.remote.os != 'Cygwin':
-                self.reporter.post_to_sf(
-                    *self.metric_helper.calc_max_memcached_rss()
-                )
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_max_memcached_rss()
+            )
 
 
 class MemUsedTest(KVTest):

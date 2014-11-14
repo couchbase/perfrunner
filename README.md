@@ -28,6 +28,29 @@ SUT dependencies:
 * numactl
 * iostat
 
+Installation
+------------------------------
+
+Before using perfrunner you should install the requirements listed in the requirements section. At a minimum you need Python 2.7, virtualenv, and libcouchbase.
+
+First clone the perfrunner repo with the command below.
+
+    git clone https://github.com/couchbaselabs/perfrunner.git
+
+Once inside the perfrunner directory create a virtual environment for all of the perfrunner dependencies and activate the virtual environment.
+
+    cd perfrunner
+    virtualenv -p /usr/bin/python env
+    source env/bin/activate
+
+Now you need to install all of the dependencies so that you can run perfrunner.
+
+    pip install -r requirements.txt --global-option="build_ext" --global-option="--include-dirs=/usr/local/include" --global-option="--library-dirs=/usr/local/lib"
+
+You are now ready to use perfrunner. Once you are done running tests remember to deactivate the virtual environment by running the following command.
+
+    deactivate
+
 Cluster installation and setup
 ------------------------------
 

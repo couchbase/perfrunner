@@ -5,6 +5,8 @@ from ConfigParser import SafeConfigParser, NoOptionError, NoSectionError
 from decorator import decorator
 from logger import logger
 
+from perfrunner.helpers.misc import uhex
+
 
 REPO = 'https://github.com/couchbaselabs/perfrunner'
 
@@ -211,6 +213,11 @@ class TestConfig(Config):
     def gateload_settings(self):
         options = self._get_options_as_dict('gateload')
         return GateloadSettings(options)
+
+    @property
+    def worker_settings(self):
+        options = self._get_options_as_dict('worker_settings')
+        return WorkerSettings(options)
 
 
 class TestCaseSettings(object):
@@ -546,3 +553,13 @@ class GateloadSettings(PhaseSettings):
                                                self.RAMPUP_INTERVAL))
         self.logging_verbose = options.get('logging_verbose', self.LOGGING_VERBOSE)
         self.seriesly_host = options.get('seriesly_host', self.SERIESLY_HOST)
+
+
+class WorkerSettings(PhaseSettings):
+
+    REUSE_WORKSPACE = 'false'
+    WORKSPACE_DIR = '/tmp/{}'.format(uhex()[:12])
+
+    def __init__(self, options):
+        self.reuse_worker = options.get('reuse_workspace', self.REUSE_WORKSPACE)
+        self.worker_dir = options.get('workspace_location', self.WORKSPACE_DIR)

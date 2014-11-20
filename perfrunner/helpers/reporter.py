@@ -9,7 +9,7 @@ from couchbase import Couchbase
 from logger import logger
 
 from perfrunner.helpers.misc import uhex, pretty_dict
-from perfrunner.settings import CBMONITOR, SHOWFAST
+from perfrunner.settings import CBMONITOR
 
 
 class BtrcReporter(object):
@@ -99,9 +99,10 @@ class Comparator(object):
         return {'changes': changes, 'reports': reports}
 
     def __call__(self, test, benckmark):
+        showfast = test.test_config.stats_settings.showfast
         try:
-            self.cbb = Couchbase.connect(bucket='benchmarks', **SHOWFAST)
-            self.cbf = Couchbase.connect(bucket='feed', **SHOWFAST)
+            self.cbb = Couchbase.connect(bucket='benchmarks', **showfast)
+            self.cbf = Couchbase.connect(bucket='feed', **showfast)
         except Exception, e:
             logger.warn('Failed to connect to database, {}'.format(e))
             return
@@ -133,8 +134,9 @@ class SFReporter(object):
     def _add_cluster(self):
         cluster = self.test.cluster_spec.name
         params = self.test.cluster_spec.parameters
+        showfast = self.test.test_config.stats_settings.showfast
         try:
-            cb = Couchbase.connect(bucket='clusters', **SHOWFAST)
+            cb = Couchbase.connect(bucket='clusters', **showfast)
             cb.set(cluster, params)
         except Exception, e:
             logger.warn('Failed to add cluster, {}'.format(e))
@@ -151,8 +153,9 @@ class SFReporter(object):
                 'larger_is_better': self.test.test_config.test_case.larger_is_better,
                 'level': self.test.test_config.test_case.level,
             }
+        showfast = self.test.test_config.stats_settings.showfast
         try:
-            cb = Couchbase.connect(bucket='metrics', **SHOWFAST)
+            cb = Couchbase.connect(bucket='metrics', **showfast)
             cb.set(metric, metric_info)
         except Exception, e:
             logger.warn('Failed to add cluster, {}'.format(e))
@@ -190,8 +193,9 @@ class SFReporter(object):
 
     def _post_benckmark(self, metric, value):
         key, benckmark = self._prepare_data(metric, value)
+        showfast = self.test.test_config.stats_settings.showfast
         try:
-            cb = Couchbase.connect(bucket='benchmarks', **SHOWFAST)
+            cb = Couchbase.connect(bucket='benchmarks', **showfast)
             self._mark_previous_as_obsolete(cb, benckmark)
             cb.set(key, benckmark)
             Comparator()(test=self.test, benckmark=benckmark)

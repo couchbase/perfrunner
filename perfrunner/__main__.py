@@ -1,3 +1,4 @@
+import csv
 from optparse import OptionParser
 
 from perfrunner.settings import ClusterSpec, TestConfig, Experiment
@@ -33,7 +34,8 @@ def get_options():
 
 def main():
     options, args = get_options()
-    override = args and [arg.split('.') for arg in ' '.join(args).split(',')]
+    override = args and [x for x in
+                         csv.reader(' '.join(args).split(','), delimiter='.')]
 
     cluster_spec = ClusterSpec()
     cluster_spec.parse(options.cluster_spec_fname, override)

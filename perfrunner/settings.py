@@ -10,8 +10,6 @@ from perfrunner.helpers.misc import uhex
 
 REPO = 'https://github.com/couchbaselabs/perfrunner'
 
-CBMONITOR = {'host': 'cbmonitor.sc.couchbase.com', 'password': 'password'}
-
 SERIESLY = {'host': 'cbmonitor.sc.couchbase.com'}
 
 
@@ -294,6 +292,7 @@ class ClusterSettings(object):
 
 class StatsSettings(object):
 
+    CBMONITOR = {'host': 'cbmonitor.sc.couchbase.com', 'password': 'password'}
     ENABLED = 1
     POST_TO_SF = 0
     INTERVAL = 5
@@ -303,6 +302,10 @@ class StatsSettings(object):
     SHOWFAST = {'host': 'showfast.sc.couchbase.com', 'password': 'password'}
 
     def __init__(self, options):
+        self.cbmonitor = {'host': options.get('cbmonitor_host',
+                                              self.CBMONITOR['host']),
+                          'password': options.get('cbmonitor_password',
+                                                  self.CBMONITOR['password'])}
         self.enabled = int(options.get('enabled', self.ENABLED))
         self.post_to_sf = int(options.get('post_to_sf', self.POST_TO_SF))
         self.interval = int(options.get('interval', self.INTERVAL))

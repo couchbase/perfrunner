@@ -9,7 +9,6 @@ from couchbase import Couchbase
 from logger import logger
 
 from perfrunner.helpers.misc import uhex, pretty_dict
-from perfrunner.settings import CBMONITOR
 
 
 class BtrcReporter(object):
@@ -68,11 +67,11 @@ class Comparator(object):
         except ValueError:
             logger.warn('Didn\'t find {} in {}'.format(new_build, all_builds))
 
-    def compare(self, prev_build, new_build):
+    def _compare(self, cbmonitor, prev_build, new_build):
         """Compare snapshots if possible"""
-        api = 'http://{}/reports/compare/'.format(CBMONITOR['host'])
+        api = 'http://{}/reports/compare/'.format(cbmonitor['host'])
         snapshot_api = 'http://{}/reports/html/?snapshot={{}}&snapshot={{}}'\
-            .format(CBMONITOR['host'])
+            .format(cbmonitor['host'])
 
         changes = []
         reports = []
@@ -100,6 +99,7 @@ class Comparator(object):
 
     def __call__(self, test, benckmark):
         showfast = test.test_config.stats_settings.showfast
+        cbmonitor = test.test_config.stats_settings.cbmonitor
         try:
             self.cbb = Couchbase.connect(bucket='benchmarks', **showfast)
             self.cbf = Couchbase.connect(bucket='feed', **showfast)
@@ -119,8 +119,9 @@ class Comparator(object):
             'summary': test.test_config.test_case.test_summary,
             'datetime': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         }
-        changes = self.compare(prev_build=prev_build,
-                               new_build=benckmark['build'])
+        changes = self._compare(cbmonitor=cbmonitor,
+                                prev_build=prev_build,
+                                new_build=benckmark['build'])
         feed = dict(base_feed, **changes)
         self.cbf.set(_id, feed)
         logger.info('Snapshot comparison: {}'.format(pretty_dict(feed)))
@@ -208,7 +209,8 @@ class SFReporter(object):
         return key
 
     def _upload_master_events(self, filename):
-        api = 'http://{}/cbmonitor/add_master_events/'.format(CBMONITOR['host'])
+        api = 'http://{}/cbmonitor/add_master_events/'.format(
+            self.test.test_config.stats_settings.cbmonitor['host'])
         data = {
             'filename': filename,
             'master_events': self.test.master_events[0],

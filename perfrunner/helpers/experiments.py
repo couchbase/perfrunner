@@ -3,7 +3,6 @@ from couchbase import Couchbase
 from logger import logger
 
 from perfrunner.helpers.misc import pretty_dict, uhex
-from perfrunner.settings import CBMONITOR
 
 
 class ExperimentHelper(object):
@@ -30,6 +29,7 @@ class ExperimentHelper(object):
         self.experiment = experiment.template
         self.tc = test_config
         self.cs = cluster_spec
+        self.cbmonitor = test_config.stats_settings.cbmonitor
 
         self.experiment['inputs'] = {
             param: eval(self.INPUTS[param])
@@ -37,7 +37,7 @@ class ExperimentHelper(object):
         }
 
     def update_defaults(self):
-        cb = Couchbase.connect(bucket='exp_defaults', **CBMONITOR)
+        cb = Couchbase.connect(bucket='exp_defaults', **self.cbmonitor)
         cb.set(self.name, {
             'id': self.name,
             'name': self.experiment['name'],
@@ -54,5 +54,5 @@ class ExperimentHelper(object):
         logger.info('Adding new experiment {}: {}'.format(
             key, pretty_dict(self.experiment)
         ))
-        cb = Couchbase.connect(bucket='experiments', **CBMONITOR)
+        cb = Couchbase.connect(bucket='experiments', **self.cbmonitor)
         cb.set(key, self.experiment)

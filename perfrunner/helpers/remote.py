@@ -362,7 +362,7 @@ class RemoteLinuxHelper(object):
         put('templates/gateway_config.json', '/root/gateway_config.json')
         run('ulimit -n 65536; '
             'nohup /opt/couchbase-sync-gateway/bin/sync_gateway '
-            '/root/gateway_config.json &>/root/gateway.log&', pty=False)
+            '/root/gateway_config.json >/root/gateway.log 2>&1 &', pty=False)
 
     @all_gateways
     def start_test_info(self):

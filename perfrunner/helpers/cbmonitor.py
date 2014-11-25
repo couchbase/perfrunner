@@ -64,7 +64,7 @@ class CbAgent(object):
         else:
             hostnames = None
 
-        self.settings = type('settings', (object, ), {
+        self.settings = type('settings', (object,), {
             'seriesly_host': SERIESLY['host'],
             'cbmonitor_host_port': CBMONITOR['host'],
             'interval': test.test_config.stats_settings.interval,
@@ -136,7 +136,7 @@ class CbAgent(object):
             settings.master_node = self.clusters[cluster]
             tp_collector = TypePerf(settings)
             self.collectors.append(tp_collector)
- 
+
     def prepare_net(self, clusters):
         for cluster in clusters:
             settings = copy(self.settings)

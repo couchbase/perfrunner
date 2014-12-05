@@ -135,7 +135,8 @@ class ClusterManager(object):
         cmd = 'ns_bucket:update_bucket_props("{}", ' \
               '[{{extra_config_string, "{}={}"}}]).'
 
-        for option in ('exp_pager_stime',
+        for option in ('defragmenter_enabled',
+                       'exp_pager_stime',
                        'max_num_shards',
                        'max_threads',
                        'warmup_min_memory_threshold'):

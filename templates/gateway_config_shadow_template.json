@@ -13,7 +13,7 @@
             "shadow": {
               "server": "http://{{db_master}}/",
               "bucket": "bucket-2"
-            },
+            }
         }
     }
 }

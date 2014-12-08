@@ -1,5 +1,5 @@
 {
-    "log": ["HTTP", "HTTP+", "CRUD"],
+    "log": ["Shadow"],
     "adminInterface": ":4985",
     "maxIncomingConnections": {{conn_in}},
     "maxCouchbaseConnections": {{conn_db}},
@@ -11,8 +11,11 @@
             "server": "http://{{bucket}}:password@{{db_master}}/",
             "bucket": "{{bucket}}",
             "shadow": {
-              "server": "http://{{db_master}}/",
+              "server": "http://bucket-2:password@{{db_master}}/",
               "bucket": "bucket-2"
+            },
+            "users": {
+                "GUEST": { "disabled": true }
             }
         }
     }

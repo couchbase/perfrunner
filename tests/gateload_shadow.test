@@ -7,7 +7,7 @@ use_workers = 0
 [cluster]
 mem_quota = 26624
 initial_nodes = 3
-num_buckets = 1
+num_buckets = 2
 
 [bucket]
 replica_number = 1
@@ -18,7 +18,7 @@ conn_db = 16
 conn_in = 0
 num_nodes = 1
 logging_verbose = false
-shadow = false
+shadow = true
 
 [gateload]
 rampup_interval = 900

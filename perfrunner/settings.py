@@ -496,6 +496,7 @@ class GatewaySettings(PhaseSettings):
     CONN_DB = 16
     NUM_NODES = 1
     LOGGING_VERBOSE = 'false'
+    SHADOW = 'false'
 
     def __init__(self, options):
         self.conn_in = int(options.get('conn_in', self.CONN_IN))
@@ -503,6 +504,7 @@ class GatewaySettings(PhaseSettings):
         self.compression = options.get('compression', self.COMPRESSION)
         self.num_nodes = int(options.get('num_nodes', self.NUM_NODES))
         self.logging_verbose = options.get('logging_verbose', self.LOGGING_VERBOSE)
+        self.shadow = options.get('shadow', self.SHADOW)
 
 
 class GateloadSettings(PhaseSettings):

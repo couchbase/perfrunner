@@ -80,7 +80,10 @@ class GatewayInstaller(object):
     def generate_sync_gateways_config(self):
         loader = FileSystemLoader('templates')
         env = Environment(loader=loader)
-        template = env.get_template('gateway_config_template.json')
+        if self.test_config.gateway_settings.shadow == 'true':
+            template = env.get_template('gateway_config_shadow_template.json')
+        else:
+            template = env.get_template('gateway_config_template.json')
 
         with open('templates/gateway_config.json', 'w') as fh:
             fh.write(template.render(

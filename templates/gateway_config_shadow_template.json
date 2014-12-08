@@ -1,0 +1,22 @@
+{
+    "log": ["HTTP", "HTTP+", "CRUD"],
+    "adminInterface": ":4985",
+    "maxIncomingConnections": {{conn_in}},
+    "maxCouchbaseConnections": {{conn_db}},
+    "maxFileDescriptors": 90000,
+    "slowServerCallWarningThreshold": 500,
+    "compressResponses": {{compression}},
+    "databases": {
+        "db": {
+            "server": "http://{{bucket}}:password@{{db_master}}/",
+            "bucket": "{{bucket}}",
+            "shadow": {
+              "server": "http://{{db_master}}/",
+              "bucket": "bucket-2"
+            },
+            "users": {
+                "GUEST": { "disabled": true }
+            }
+        }
+    }
+}

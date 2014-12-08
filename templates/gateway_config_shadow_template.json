@@ -14,9 +14,6 @@
               "server": "http://{{db_master}}/",
               "bucket": "bucket-2"
             },
-            "users": {
-                "GUEST": { "disabled": true }
-            }
         }
     }
 }

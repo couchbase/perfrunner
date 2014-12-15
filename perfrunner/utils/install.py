@@ -45,6 +45,7 @@ class CouchbaseInstaller(object):
         elif self.build.pkg == 'rpm':
             patterns = (
                 'couchbase-server-enterprise_centos6_{arch}_{version}-rel.{pkg}',
+                'couchbase-server-enterprise-{version}-centos6.{arch}.{pkg}',
                 'couchbase-server-enterprise_{arch}_{version}-rel.{pkg}',
             )
         elif self.build.pkg == 'deb':

@@ -16,7 +16,7 @@ class CouchbaseInstaller(object):
 
     CBFS = 'http://cbfs-ext.hq.couchbase.com/builds/'
     LATEST_BUILDS = 'http://latestbuilds.hq.couchbase.com/'
-    SHERLOCK_BUILDS = 'http://latestbuilds.hq.couchbase.com/couchbase-server/sherlock/{build}/'
+    SHERLOCK_BUILDS = ''
 
     def __init__(self, cluster_spec, options):
         self.remote = RemoteHelper(cluster_spec, None, options.verbose)
@@ -25,6 +25,7 @@ class CouchbaseInstaller(object):
         arch = self.remote.detect_arch()
         pkg = self.remote.detect_pkg()
         release, build = options.version.split('-')
+        self.SHERLOCK_BUILDS = 'http://latestbuilds.hq.couchbase.com/couchbase-server/sherlock/{}/'.format(build)
 
         self.build = Build(arch, pkg, options.version, release, build,
                            options.toy)
@@ -66,7 +67,7 @@ class CouchbaseInstaller(object):
 
     def find_package(self):
         for filename in self.get_expected_filenames():
-            for base in (self.LATEST_BUILDS, self.CBFS):
+            for base in (self.LATEST_BUILDS,self.SHERLOCK_BUILDS, self.CBFS):
                 url = '{}{}'.format(base, filename)
                 try:
                     status_code = requests.head(url).status_code

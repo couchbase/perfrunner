@@ -16,6 +16,7 @@ class CouchbaseInstaller(object):
 
     CBFS = 'http://cbfs-ext.hq.couchbase.com/builds/'
     LATEST_BUILDS = 'http://latestbuilds.hq.couchbase.com/'
+    SHERLOCK_BUILDS = 'http://latestbuilds.hq.couchbase.com/couchbase-server/sherlock/{build}/'
 
     def __init__(self, cluster_spec, options):
         self.remote = RemoteHelper(cluster_spec, None, options.verbose)

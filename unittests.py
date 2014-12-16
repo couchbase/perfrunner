@@ -74,6 +74,8 @@ class InstallTest(TestCase):
             'couchbase-sync-gateway-enterprise_0.0.0-178_x86_64.rpm',
             'couchbase-sync-gateway-community_0.0.0-178_x86_64.rpm',
             'couchbase-sync-gateway-community_0.0.0-178_x86_64.rpm',
+            'couchbase-sync-gateway-community_0.0.0-178_x86_64.rpm',
+            'couchbase-sync-gateway-community_0.0.0-178_x86_64.rpm',
             'couchbase-sync-gateway_0.0.0-178_x86_64-community.rpm',
         )
         self.assertEqual(filenames, expected)

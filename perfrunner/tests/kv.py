@@ -9,7 +9,7 @@ from logger import logger
 from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
 from tap import TAP
 from dcp import DcpClient
-from upr.constants import CMD_STREAM_REQ, SUCCESS
+from dcp.constants import CMD_STREAM_REQ, SUCCESS
 
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import pretty_dict, uhex
@@ -301,7 +301,7 @@ class UprTest(TapTest):
                 logger.info(
                     'Reading data via UPR from {}/{}'.format(host, bucket)
                 )
-                upr_client = UprClient(host=host, port=11210)
+                upr_client = DcpClient(host=host, port=11210)
                 upr_client.sasl_auth_plain(username=bucket, password=password)
                 mcd_client = MemcachedClient(host=host, port=11210)
                 mcd_client.sasl_auth_plain(user=bucket, password=password)

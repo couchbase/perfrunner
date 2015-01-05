@@ -109,7 +109,7 @@ class GateloadTest(PerfTest):
         for p, criterion in criteria.items():
             kpi = self.KPI.format(p)
             average = np.mean(latencies[p])
-            if average > criterion:
+            if average == 0 or average > criterion:
                 status = '{}: {} - doesn\'t meet the criteria of {}'\
                     .format(kpi, average, criterion)
             else:

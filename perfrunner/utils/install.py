@@ -53,6 +53,7 @@ class CouchbaseInstaller(object):
         elif self.build.pkg == 'deb':
             patterns = (
                 'couchbase-server-enterprise_ubuntu_1204_{arch}_{version}-rel.{pkg}',
+                'couchbase-server-enterprise_{version}-ubuntu12.04_amd64.{pkg}',
                 'couchbase-server-enterprise_{arch}_{version}-rel.{pkg}',
             )
         elif self.build.pkg == 'exe':

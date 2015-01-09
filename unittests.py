@@ -38,6 +38,7 @@ class InstallTest(TestCase):
         filenames = tuple(installer.get_expected_filenames())
         expected = (
             'couchbase-server-enterprise_ubuntu_1204_x86_64_3.0.0-777-rel.deb',
+            'couchbase-server-enterprise_3.0.0-777-ubuntu12.04_amd64.deb',
             'couchbase-server-enterprise_x86_64_3.0.0-777-rel.deb',
         )
         self.assertEqual(filenames, expected)

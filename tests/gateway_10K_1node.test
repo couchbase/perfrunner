@@ -17,11 +17,20 @@ compression = true
 conn_db = 16
 conn_in = 0
 num_nodes = 1
+logging_verbose = false
+shadow = false
 
 [gateload]
 rampup_interval = 900
 run_time = 3600
-pushers = 3000
-pullers = 7000
+pushers = 300
+pullers = 700
+sleep_time = 1
+doc_size = 0
+send_attachment = false
+channel_active_users = 40
+channel_concurrent_users = 40
+seriesly_host = 172.23.106.228
+logging_verbose = false
 p95_avg_criteria = 3
 p99_avg_criteria = 5

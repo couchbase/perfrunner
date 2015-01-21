@@ -9,7 +9,7 @@ Related projects:
 * [seriesly client](https://github.com/pavel-paulau/seriesly-python-client)
 * [btrc](https://github.com/pavel-paulau/btrc)
 * [moveit](https://github.com/pavel-paulau/moveit)
-* [upr](https://github.com/pavel-paulau/upr)
+* [dcp](https://github.com/couchbaselabs/python-dcp-client)
 * [tap](https://github.com/pavel-paulau/tap)
 
 Requirements

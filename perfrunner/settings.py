@@ -379,6 +379,7 @@ class PhaseSettings(object):
 
     WORKERS = 12
     QUERY_WORKERS = 0
+    DCP_WORKERS = 0
 
     SEQ_READS = False
     SEQ_UPDATES = False
@@ -411,6 +412,7 @@ class PhaseSettings(object):
         self.workers = int(options.get('workers', self.WORKERS))
         self.query_workers = int(options.get('query_workers',
                                              self.QUERY_WORKERS))
+        self.dcp_workers = int(options.get('dcp_workers', self.DCP_WORKERS))
 
         self.seq_reads = self.SEQ_READS
         self.seq_updates = self.SEQ_UPDATES

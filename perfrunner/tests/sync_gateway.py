@@ -126,6 +126,12 @@ class GateloadTest(PerfTest):
             'Network throughput: {}'.format(json.dumps(network_matrix, indent=4))
         )
 
+        logger.info('Checking pass or fail')
+        if self.errors:
+            logger.interrupt('Test failed because of errors')
+        if 'doesn\'t meet' in ''.join(self.pass_fail):
+            logger.interrupt('Test failed because at least one of the latencies does not meet KPI')
+
     @with_stats
     def workload(self):
         logger.info('Sleep {} seconds waiting for test to finish'.format(

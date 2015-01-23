@@ -52,11 +52,10 @@ then
                     p99_avg=`curl "http://${seriesly_ip}:3133/gateload_${index}/_query?ptr=/gateload/ops/PushToSubscriberInteractive/p99&reducer=avg&group=100000000000"`
                     echo "PushToSubscriberInteractive/p99 average during test runs: $p99_avg"
                     echo "PushToSubscriberInteractive/p99 average during test runs: $p99_avg" >> $outfile
-                    maxPending=`curl "http://localhost:4985/_expvar" | grep maxPending | sed 's/\"//g' | sed 's/^.*maxPending: //' | sed -r 's/^([0-9]*).*/\1/'`
-                    echo "maxPending: $maxPending"
-                    echo "maxPending: $maxPending" >> $outfile
-
                 done
+                maxPending=`curl "http://localhost:4985/_expvar" | grep maxPending | sed 's/\"//g' | sed 's/^.*maxPending: //' | sed -r 's/^([0-9]*).*/\1/'`
+                echo "maxPending: $maxPending"
+                echo "maxPending: $maxPending" >> $outfile
                 loop_count=0
             fi
 

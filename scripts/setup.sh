@@ -2,9 +2,15 @@
 cat ${cluster}
 cat ${test_config}
 
-if [ -z "${toy}" ]; then
-    /tmp/env/bin/python -m perfrunner.utils.install -c ${cluster} -v ${version}
-else
-    /tmp/env/bin/python -m perfrunner.utils.install -c ${cluster} -v ${version} -t ${toy}
+if [ -z "$ENV_FOLDER" ];
+then
+	ENV_FOLDER="/tmp"
 fi
-/tmp/env/bin/python -m perfrunner.utils.cluster -c ${cluster} -t ${test_config} ${override}
+
+
+if [ -z "${toy}" ]; then
+    $ENV_FOLDER/env/bin/python -m perfrunner.utils.install -c ${cluster} -v ${version}
+else
+    $ENV_FOLDER/env/bin/python -m perfrunner.utils.install -c ${cluster} -v ${version} -t ${toy}
+fi
+$ENV_FOLDER/env/bin/python -m perfrunner.utils.cluster -c ${cluster} -t ${test_config} ${override}

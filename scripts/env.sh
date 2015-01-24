@@ -1,3 +1,9 @@
 #!/bin/bash -ex
-virtualenv -p python2.7 /tmp/env
-PATH=/usr/lib/ccache:/usr/lib64/ccache/bin:$PATH /tmp/env/bin/pip install --download-cache /tmp/pip --upgrade -r requirements.txt
+
+if [ -z "$ENV_FOLDER" ];
+then
+	ENV_FOLDER="/tmp"
+fi
+
+virtualenv -p python2.7 $ENV_FOLDER/env
+PATH=/usr/lib/ccache:/usr/lib64/ccache/bin:$PATH $ENV_FOLDER/env/bin/pip install --download-cache $ENV_FOLDER/pip --upgrade -r requirements.txt

@@ -67,6 +67,7 @@ class InstallTest(TestCase):
     #     filenames = tuple(
     #         fname for fname, url in installer.get_expected_locations()
     #     )
+    #     # please see GatewayInstaller.BUILDS to compare
     #     expected = (
     #         'couchbase-sync-gateway_0.0.0-178_x86_64-community.rpm',
     #         'couchbase-sync-gateway_0.0.0-178_x86_64.rpm',

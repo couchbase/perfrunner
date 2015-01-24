@@ -517,7 +517,7 @@ class GateloadSettings(PhaseSettings):
     SEND_ATTACHMENT = 'false'
     CHANNEL_ACTIVE_USERS = 40
     CHANNEL_CONCURRENT_USERS = 40
-    SLEEP_TIME = 10   # In seconds, 10 seconds
+    SLEEP_TIME = 10  # In seconds, 10 seconds
     RUN_TIME = 3600  # In seconds.  1 hr
     RAMPUP_INTERVAL = 900  # In seconds, 15 minutes
     P95_AVG_CRITERIA = 3

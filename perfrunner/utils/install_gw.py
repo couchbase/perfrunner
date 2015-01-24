@@ -30,6 +30,9 @@ class GatewayInstaller(object):
         'http://cbfs-ext.hq.couchbase.com/builds': (
             'couchbase-sync-gateway_{}_x86_64-community.rpm',
         ),
+        'http://latestbuilds.hq.couchbase.com/couchbase-sync-gateway': (
+            '0.0.0/416/couchbase-sync-gateway-enterprise_0.0.0-326_x86_64.rpm',
+        ),
     }
 
     def __init__(self, cluster_spec, test_config, options):

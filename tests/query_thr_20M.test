@@ -2,7 +2,7 @@
 module = perfrunner.tests.query
 class = QueryThroughputTest
 title = Query throughput (qps), 1 bucket x 20M x 2KB, non-DGM, 4 x 1 views
-summary = Read-heavy query test (80/20), 4 nodes, 1 bucket x 100M x 2KB, DGM, 4 x 1 views, 10K ops/sec, unbounded qps
+summary = Read-heavy query test (80/20), 4 nodes, 1 bucket x 20M x 2KB, non-DGM, 4 x 1 views, 10K ops/sec, unbounded qps
 larger_is_better = true
 level = Basic
 

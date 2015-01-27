@@ -43,7 +43,9 @@ then
             if [ $profile_sequence -ge $loop_count ]
             then
                 echo "Done profiling and save results in profiling.tar.gz.  To untar: tar xvfz profiling.tar.gz"
+                echo "Done profiling and save results in profiling.tar.gz.  To untar: tar xvfz profiling.tar.gz" >> $outfile
                 tar cvzf profiling.tar.gz profile_*.prof
+                killall -9 sgw_profiling.sh
             else
                 profile_sequence=`expr $profile_sequence + 1`
             fi

@@ -349,12 +349,12 @@ class RemoteLinuxHelper(object):
     @all_gateways
     def kill_processes_gateway(self):
         logger.info('Killing Sync Gateway')
-        run('killall -9 sync_gateway sgw_test_info.sh sar', quiet=True)
+        run('killall -9 sync_gateway sgw_test_info.sh  sgw_profiling.sh sar', quiet=True)
 
     @all_gateways
     def clean_gateway(self):
         logger.info('Cleaning up Gateway')
-        run('rm -f *.txt *.log *.gz *.json *.out', quiet=True)
+        run('rm -f *.txt *.log *.gz *.json *.out *.prof', quiet=True)
 
     @all_gateways
     def start_gateway(self):
@@ -371,6 +371,11 @@ class RemoteLinuxHelper(object):
         put('scripts/sgw_test_info.sh', '/root/sgw_test_info.sh')
         run('chmod 777 /root/sgw_*.sh')
         run('nohup /root/sgw_test_info.sh &> sgw_test_info.txt &', pty=False)
+        if self.test_config.gateway_settings.profiling_freq != '0':
+            logger.info('Starting Sync Gateway sgw_profiling.sh')
+            put('scripts/sgw_profiling.sh', '/root/sgw_profiling.sh')
+            run('chmod 777 /root/sgw_profiling.sh')
+            run('nohup /root/sgw_profiling.sh &> sgw_profiling.txt &', pty=False)
 
     @all_gateways
     def collect_info_gateway(self):
@@ -389,6 +394,8 @@ class RemoteLinuxHelper(object):
         get('sgw_test_info.txt', 'sgw_test_info_{}.txt'.format(index))
         get('gateway_config.json', 'gateway_config_{}.json'.format(index))
         get('sgw_check_logs.out', 'sgw_check_logs_gateway_{}.out'.format(index))
+        if self.test_config.gateway_settings.profiling_freq != '0':
+            get('profiling.tar.gz', 'profiling_{}.tar.gz'.format(index))
 
     @all_gateloads
     def uninstall_gateload(self):

@@ -29,7 +29,6 @@ class GateloadTest(PerfTest):
 
     def create_sgw_test_config(self):
         logger.info('Creating bash configuration')
-
         template = self.env.get_template('sgw_test_config.sh')
         with open('scripts/sgw_test_config.sh', 'w') as fh:
             fh.write(template.render(
@@ -37,6 +36,8 @@ class GateloadTest(PerfTest):
                 gateloads_ip=' '.join(self.remote.gateloads),
                 dbs_ip=' '.join(self.cluster_spec.yield_hostnames()),
                 seriesly_ip=self.test_config.gateload_settings.seriesly_host,
+                profiling_freq=self.test_config.gateway_settings.profiling_freq,
+                run_time=self.test_config.gateload_settings.run_time,
             ))
 
     def start_test_info(self):

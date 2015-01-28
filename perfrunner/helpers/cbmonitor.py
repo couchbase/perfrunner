@@ -70,11 +70,13 @@ class CbAgent(object):
             'interval': test.test_config.stats_settings.interval,
             'buckets': buckets,
             'hostnames': hostnames,
-            'sync_gateway_nodes': test.remote.gateways,
+            'sync_gateway_nodes':
+                test.remote.gateways if test.remote else None,
         })()
         self.lat_interval = test.test_config.stats_settings.lat_interval
-        self.settings.ssh_username, self.settings.ssh_password = \
-            test.cluster_spec.ssh_credentials
+        if test.cluster_spec.ssh_credentials:
+            self.settings.ssh_username, self.settings.ssh_password = \
+                test.cluster_spec.ssh_credentials
         self.settings.rest_username, self.settings.rest_password = \
             test.cluster_spec.rest_credentials
         self.settings.bucket_password = test.test_config.bucket.password

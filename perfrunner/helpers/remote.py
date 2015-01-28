@@ -44,6 +44,9 @@ def all_gateloads(task, *args, **kargs):
 class RemoteHelper(object):
 
     def __new__(cls, cluster_spec, test_config, verbose=False):
+        if not cluster_spec.ssh_credentials:
+            return None
+
         state.env.user, state.env.password = cluster_spec.ssh_credentials
         state.output.running = verbose
         state.output.stdout = verbose

@@ -58,7 +58,7 @@ class PerfTest(object):
                                                cluster_spec, test_config)
 
         self.master_node = cluster_spec.yield_masters().next()
-        if self.remote.gateways:
+        if self.remote and self.remote.gateways:
             self.build = SyncGatewayRequestHelper().get_version(
                 self.remote.gateways[0]
             )

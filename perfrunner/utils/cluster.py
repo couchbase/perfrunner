@@ -221,16 +221,17 @@ def main():
     cm = ClusterManager(cluster_spec, test_config, options.verbose)
 
     # Individual nodes
-    cm.tune_logging()
-    cm.restart_with_sfwi()
-    cm.restart_with_alternative_num_vbuckets()
-    cm.restart_with_alternative_num_cpus()
-    cm.restart_with_tcmalloc_aggressive_decommit()
+    if cm.remote:
+        cm.tune_logging()
+        cm.restart_with_sfwi()
+        cm.restart_with_alternative_num_vbuckets()
+        cm.restart_with_alternative_num_cpus()
+        cm.restart_with_tcmalloc_aggressive_decommit()
+        cm.disable_moxi()
     cm.configure_internal_settings()
     cm.set_data_path()
     cm.set_auth()
     cm.set_mem_quota()
-    cm.disable_moxi()
 
     time.sleep(30)  # crutch
 
@@ -240,15 +241,17 @@ def main():
     cm.add_nodes()
     if cm.test_config.cluster.num_buckets:
         cm.create_buckets()
-    cm.restart_with_alternative_bucket_options()
+    if cm.remote:
+        cm.restart_with_alternative_bucket_options()
     cm.wait_until_warmed_up()
     cm.wait_until_healthy()
     cm.configure_auto_compaction()
     cm.enable_auto_failover()
     cm.change_watermarks()
-    cm.tweak_memory()
-    cm.remote.disable_wan()
-    cm.start_cbq_engine()
+    if cm.remote:
+        cm.tweak_memory()
+        cm.remote.disable_wan()
+        cm.start_cbq_engine()
 
 if __name__ == '__main__':
     main()

@@ -162,9 +162,11 @@ class FlusherTest(KVTest):
 
     def mc_iterator(self):
         password = self.test_config.bucket.password
-        for hostname in self.cluster_spec.yield_hostnames():
+        for host_port in self.cluster_spec.yield_servers():
+            host = host_port.split(':')[0]
+            memcached_port = self.rest.get_memcached_port(host_port)
             for bucket in self.test_config.buckets:
-                mc = MemcachedClient(host=hostname, port=11210)
+                mc = MemcachedClient(host=host, port=memcached_port)
                 try:
                     mc.sasl_auth_plain(user=bucket, password=password)
                     yield mc
@@ -233,9 +235,8 @@ class WarmupTest(PerfTest):
         warmup_time = 0
         for master in self.cluster_spec.yield_masters():
             for bucket in self.test_config.buckets:
-                host = master.split(':')[0]
                 warmup_time += self.monitor.monitor_warmup(self.memcached,
-                                                           host, bucket)
+                                                           master, bucket)
         return round(warmup_time / 10 ** 6 / 60, 1)  # min
 
     def run(self):
@@ -297,13 +298,14 @@ class UprTest(TapTest):
         password = self.test_config.bucket.password
         for master in self.cluster_spec.yield_masters():
             host = master.split(':')[0]
+            memcached_port = self.rest.get_memcached_port(master)
             for bucket in self.test_config.buckets:
                 logger.info(
                     'Reading data via UPR from {}/{}'.format(host, bucket)
                 )
-                upr_client = DcpClient(host=host, port=11210)
+                upr_client = DcpClient(host=host, port=memcached_port)
                 upr_client.sasl_auth_plain(username=bucket, password=password)
-                mcd_client = MemcachedClient(host=host, port=11210)
+                mcd_client = MemcachedClient(host=host, port=memcached_port)
                 mcd_client.sasl_auth_plain(user=bucket, password=password)
 
                 op = upr_client.open_producer('stream')
@@ -362,7 +364,8 @@ class FragmentationTest(PerfTest):
         ratios = []
         for target in self.target_iterator:
             host = target.node.split(':')[0]
-            stats = self.memcached.get_stats(host, target.bucket,
+            port = self.get_memcached_port(target.node)
+            stats = self.memcached.get_stats(host, port, target.bucket,
                                              stats='memory')
             ratio = float(stats['mem_used']) / float(stats['total_heap_bytes'])
             ratios.append(ratio)

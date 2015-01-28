@@ -3,6 +3,7 @@ import unittest
 from perfrunner.__main__ import get_options
 from perfrunner.helpers.memcached import MemcachedHelper
 from perfrunner.helpers.remote import RemoteHelper
+from perfrunner.helpers.rest import RestHelper
 from perfrunner.settings import ClusterSpec, TestConfig
 from perfrunner.tests import TargetIterator
 
@@ -23,6 +24,7 @@ class FunctionalTest(unittest.TestCase):
                                               self.test_config)
         self.memcached = MemcachedHelper(self.test_config)
         self.remote = RemoteHelper(self.cluster_spec, self.test_config)
+        self.rest = RestHelper(self.cluster_spec)
 
         super(FunctionalTest, self).__init__(*args, **kwargs)
 
@@ -36,7 +38,9 @@ class MemcachedTests(FunctionalTest):
             expected_threads = int(0.75 * cores)
         for target in self.target_iterator:
             host = target.node.split(':')[0]
-            stats = self.memcached.get_stats(host, target.bucket, stats='')
+            port = self.rest.get_memcached_port(target.node)
+            stats = self.memcached.get_stats(host, port, target.bucket,
+                                             stats='')
             num_threads = int(stats['threads'])
             self.assertEqual(num_threads, expected_threads)
 

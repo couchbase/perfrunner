@@ -250,6 +250,15 @@ class RestHelper(object):
         api = 'http://{}/logs'.format(host_port)
         return self.get(url=api).json()
 
+    def get_memcached_port(self, host_port):
+        logger.info('Getting memcached port from {}'.format(host_port))
+
+        api = 'http://{}/pools/default'.format(host_port)
+        r = self.get(url=api).json()
+        for node in r['nodes']:
+            if node['thisNode']:
+                return node['ports']['direct']
+
     def set_internal_settings(self, host_port, data):
         logger.info('Updating internal settings: {}'.format(data))
 

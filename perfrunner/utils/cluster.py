@@ -26,7 +26,6 @@ class ClusterManager(object):
         self.clusters = cluster_spec.yield_clusters()
         self.servers = cluster_spec.yield_servers
         self.masters = cluster_spec.yield_masters
-        self.hostnames = cluster_spec.yield_hostnames
 
         self.initial_nodes = test_config.cluster.initial_nodes
         self.mem_quota = test_config.cluster.mem_quota
@@ -158,8 +157,8 @@ class ClusterManager(object):
     def wait_until_warmed_up(self):
         target_iterator = TargetIterator(self.cluster_spec, self.test_config)
         for target in target_iterator:
-            host = target.node.split(':')[0]
-            self.monitor.monitor_warmup(self.memcached, host, target.bucket)
+            self.monitor.monitor_warmup(self.memcached, target.node,
+                                        target.bucket)
 
     def wait_until_healthy(self):
         for master in self.cluster_spec.yield_masters():
@@ -167,12 +166,15 @@ class ClusterManager(object):
 
     def change_watermarks(self):
         watermark_settings = self.test_config.watermark_settings
-        for hostname, initial_nodes in zip(self.hostnames(),
-                                           self.initial_nodes):
+        for host_port, initial_nodes in zip(self.servers(),
+                                            self.initial_nodes):
+            host = host_port.split(':')[0]
+            memcached_port = self.rest.get_memcached_port(host_port)
             for bucket in self.test_config.buckets:
                 for key, val in watermark_settings.items():
                     val = self.memcached.calc_watermark(val, self.mem_quota)
-                    self.memcached.set_flusher_param(hostname, bucket, key, val)
+                    self.memcached.set_flusher_param(host, memcached_port,
+                                                     bucket, key, val)
 
     def start_cbq_engine(self):
         if self.test_config.cluster.run_cbq:

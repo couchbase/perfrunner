@@ -409,8 +409,8 @@ class ReplicationTest(PerfTest):
         password = self.test_config.bucket.password
         for master in self.cluster_spec.yield_masters():
             for bucket in self.test_config.buckets:
-                host = master.split(':')[0]
-                cb = Couchbase.connect(host=host, port=8091,
+                host, port = master.split(':')
+                cb = Couchbase.connect(host=host, port=port,
                                        bucket=bucket, password=password)
                 for _ in range(self.NUM_SAMPLES):
                     item = uhex()

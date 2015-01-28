@@ -9,10 +9,6 @@ from logger import logger
 from twisted.internet import reactor
 
 
-BUCKET = 'default'
-HOST = 'localhost'
-PORT = 8091
-
 count = 0
 
 

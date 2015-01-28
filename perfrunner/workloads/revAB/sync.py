@@ -10,11 +10,6 @@ from couchbase._libcouchbase import (LCB_NOT_STORED, LCB_ETIMEDOUT,
 from logger import logger
 
 
-BUCKET = 'default'
-HOST = 'localhost'
-PORT = 8091
-
-
 totals_lock = threading.Lock()
 totals = defaultdict(int)
 

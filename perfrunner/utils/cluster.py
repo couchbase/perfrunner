@@ -34,9 +34,10 @@ class ClusterManager(object):
         self.group_number = test_config.cluster.group_number or 1
 
     def set_data_path(self):
-        data_path, index_path = self.cluster_spec.paths
-        for server in self.servers():
-            self.rest.set_data_path(server, data_path, index_path)
+        if self.cluster_spec.paths:
+            data_path, index_path = self.cluster_spec.paths
+            for server in self.servers():
+                self.rest.set_data_path(server, data_path, index_path)
 
     def set_auth(self):
         for server in self.servers():

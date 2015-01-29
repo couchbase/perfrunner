@@ -32,9 +32,7 @@ then
             curl -v -XPOST http://localhost:4985/_profile -d '{}'
             cp profile_cpu.prof profile_cpu_${profile_sequence}.prof
 
-            curl -v -XPOST http://localhost:4985/_profile/heap -d '{"file":"/root/profile_heap.prof"}'
-            sleep ${profile_duration_heap}
-            curl -v -XPOST http://localhost:4985/_profile -d '{}'
+            curl -v -XPOST http://localhost:4985/_heap -d '{"file":"/root/profile_heap.prof"}'
             cp profile_heap.prof profile_heap_${profile_sequence}.prof
 
             echo "$(date +"%Y%m%d-%H%M%S"): Done profiling: $profile_sequence"

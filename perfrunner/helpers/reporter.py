@@ -257,7 +257,7 @@ class LogReporter(object):
                 fh.write(pretty_dict(expvar))
         for idx, gateload_ip in enumerate(self.test.remote.gateloads,
                                           start=1):
-            expvar = self.test.request_helper.collect_expvar(gateload_ip)
+            expvar = self.test.request_helper.collect_gl_expvar(gateload_ip)
             fname = 'gateload_expvar_{}.json'.format(idx)
             with open(fname, 'w') as fh:
                 fh.write(pretty_dict(expvar))

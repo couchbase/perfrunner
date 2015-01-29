@@ -3,7 +3,7 @@
 
 outfile=test_info.txt
 outfile_sar=test_info_sar.txt
-sleep_time=30
+sleep_time=300
 
 free > tmp.txt
 mem=`grep Mem: tmp.txt |  awk '{print $2}'`
@@ -44,8 +44,8 @@ then
             echo  $output_line >> $outfile
 
             loop_count=`expr $loop_count + 1`
-            # Query p99 every 10 time in the loop - 5 minutes
-            if [ $loop_count -eq 10 ]; then
+            # Query p99 every 1 time in the loop - 5 minutes
+            if [ $loop_count -eq 1 ]; then
                 index=0
                 for ip in ${gateloads_ip}; do
                     index=`expr $index + 1`

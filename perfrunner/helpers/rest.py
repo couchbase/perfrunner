@@ -385,9 +385,14 @@ class SyncGatewayRequestHelper(RestHelper):
         logger.info('After - {}'.format(resp))
 
     def collect_expvar(self, gateway_ip):
-        logger.info('Collecting expvar for {}'.format(gateway_ip))
+        logger.info('Collecting expvar for gateway {} - http://{}:4985/_expvar'.format(gateway_ip, gateway_ip))
 
         api = 'http://{}:4985/_expvar'.format(gateway_ip)
+        return self.get(url=api).json()
+
+    def collect_gl_expvar(self, gateload_ip):
+        logger.info('Collecting expvar for gateload {} - http://{}:9876/debug/vars'.format(gateload_ip, gateload_ip))
+        api = 'http://{}:9876/debug/vars'.format(gateload_ip)
         return self.get(url=api).json()
 
     def get_version(self, gateway_ip):

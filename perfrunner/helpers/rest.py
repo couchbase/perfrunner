@@ -256,7 +256,7 @@ class RestHelper(object):
         api = 'http://{}/pools/default'.format(host_port)
         r = self.get(url=api).json()
         for node in r['nodes']:
-            if node['thisNode']:
+            if 'thisNode' in node and node['thisNode']:
                 return node['ports']['direct']
 
     def set_internal_settings(self, host_port, data):

@@ -141,6 +141,9 @@ class RestHelper(object):
             'authType': 'sasl',
             'saslPassword': password,
         }
+
+        logger.info('bucket specification: {}'.format(data))
+
         if threads_number:
             data.update({'threadsNumber': threads_number})
         self.post(url=api, data=data)

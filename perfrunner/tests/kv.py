@@ -8,8 +8,7 @@ from couchbase.user_constants import OBS_NOTFOUND
 from logger import logger
 from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
 from tap import TAP
-from dcp import DcpClient
-from dcp.constants import CMD_STREAM_REQ, SUCCESS
+import dcp
 
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import pretty_dict, uhex

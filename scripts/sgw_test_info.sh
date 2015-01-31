@@ -11,7 +11,6 @@ cpu=`nproc`
 echo Test start - $(date +"%Y%m%d-%H%M%S") > $outfile
 echo Machine configuration: cpu:$cpu mem:$mem  >> $outfile
 
-
 pid=`pgrep sync_gateway`
 if [ -n "$pid" ]
 then
@@ -52,6 +51,29 @@ then
                     p99_avg=`curl "http://${seriesly_ip}:3133/gateload_${index}/_query?ptr=/gateload/ops/PushToSubscriberInteractive/p99&reducer=avg&group=100000000000"`
                     echo "PushToSubscriberInteractive/p99 average during test runs: $p99_avg"
                     echo "PushToSubscriberInteractive/p99 average during test runs: $p99_avg" >> $outfile
+
+                    curl "http://${ip}:9876/debug/vars" > temp.json
+                    if grep "cmdline" temp.json
+                    then
+                        total_doc_failed_to_pull="`cat temp.json | grep total_doc_failed_to_pull`"
+                        if [ -z "$total_doc_failed_to_pull" ]
+                        then
+                            total_doc_failed_to_pull=0
+                        fi
+                        echo "total_doc_failed_to_pull: $total_doc_failed_to_pull"
+                        echo "total_doc_failed_to_pull: $total_doc_failed_to_pull" >> $outfile
+
+                        total_doc_failed_to_push="`cat temp.json | grep total_doc_failed_to_push`"
+                        if [ -z "$total_doc_failed_to_push" ]
+                        then
+                            total_doc_failed_to_push=0
+                        fi
+                        echo "total_doc_failed_to_push: $total_doc_failed_to_push"
+                        echo "total_doc_failed_to_push: $total_doc_failed_to_push" >> $outfile
+
+                        mv temp.json gateload_expvar_$index.json
+                    fi
+
                 done
                 maxPending=`curl "http://localhost:4985/_expvar" | grep maxPending | sed 's/\"//g' | sed 's/^.*maxPending: //' | sed -r 's/^([0-9]*).*/\1/'`
                 echo "maxPending: $maxPending"

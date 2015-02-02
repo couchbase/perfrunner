@@ -92,16 +92,12 @@ class RestHelper(object):
         }
         self.post(url=api, data=data)
 
-    @staticmethod
-    def ns_1(host_port):
-        return 'ns_1@{}'.format(host_port.split(':')[0])
-
     def rebalance(self, host_port, known_nodes, ejected_nodes):
         logger.info('Starting rebalance')
 
         api = 'http://{}/controller/rebalance'.format(host_port)
-        known_nodes = ','.join(map(self.ns_1, known_nodes))
-        ejected_nodes = ','.join(map(self.ns_1, ejected_nodes))
+        known_nodes = ','.join(map(self.get_otp_node_name, known_nodes))
+        ejected_nodes = ','.join(map(self.get_otp_node_name, ejected_nodes))
         data = {
             'knownNodes': known_nodes,
             'ejectedNodes': ejected_nodes
@@ -257,6 +253,13 @@ class RestHelper(object):
         r = self.get(url=api).json()
         return r['ports']['direct']
 
+    def get_otp_node_name(self, host_port):
+        logger.info('Getting OTP node name from {}'.format(host_port))
+
+        api = 'http://{}/nodes/self'.format(host_port)
+        r = self.get(url=api).json()
+        return r['otpNode']
+
     def set_internal_settings(self, host_port, data):
         logger.info('Updating internal settings: {}'.format(data))
 
@@ -299,21 +302,21 @@ class RestHelper(object):
         logger.info('Failing over node: {}'.format(node))
 
         api = 'http://{}/controller/failOver'.format(host_port)
-        data = {'otpNode': self.ns_1(node)}
+        data = {'otpNode': self.get_otp_node_name(node)}
         self.post(url=api, data=data)
 
     def graceful_fail_over(self, host_port, node):
         logger.info('Failing over node: {}'.format(node))
 
         api = 'http://{}/controller/startGracefulFailover'.format(host_port)
-        data = {'otpNode': self.ns_1(node)}
+        data = {'otpNode': self.get_otp_node_name(node)}
         self.post(url=api, data=data)
 
     def add_back(self, host_port, node):
         logger.info('Adding node back: {}'.format(node))
 
         api = 'http://{}/controller/reAddNode'.format(host_port)
-        data = {'otpNode': self.ns_1(node)}
+        data = {'otpNode': self.get_otp_node_name(node)}
         self.post(url=api, data=data)
 
     def set_delta_recovery_type(self, host_port, node):
@@ -321,7 +324,7 @@ class RestHelper(object):
 
         api = 'http://{}/controller/setRecoveryType'.format(host_port)
         data = {
-            'otpNode': self.ns_1(node),
+            'otpNode': self.get_otp_node_name(node),
             'recoveryType': 'delta'  # alt: full
         }
         self.post(url=api, data=data)

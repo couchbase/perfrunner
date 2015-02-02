@@ -33,6 +33,16 @@ class GatewayInstaller(object):
         'http://latestbuilds.hq.couchbase.com/couchbase-sync-gateway': (
             '0.0.0/416/couchbase-sync-gateway-enterprise_0.0.0-326_x86_64.rpm',
         ),
+        'http://latestbuilds.hq.couchbase.com/couchbase-sync-gateway': (
+            '0.0.0/{0}/couchbase-sync-gateway-community_{0}_x86_64.rpm',
+            '0.0.1/{0}/couchbase-sync-gateway-community_{0}_x86_64.rpm',
+            '1.0.0/{0}/couchbase-sync-gateway-enterprise_{0}_x86_64.rpm',
+            '1.0.1/{0}/couchbase-sync-gateway-enterprise_{0}_x86_64.rpm',
+            '1.0.2/{0}/couchbase-sync-gateway-community_{0}_x86_64.rpm',
+            '1.0.3/{0}/couchbase-sync-gateway-community_{0}_x86_64.rpm',
+            '1.0.4/{0}/couchbase-sync-gateway-community_{0}_x86_64.rpm',
+            '1.1.0/{0}/couchbase-sync-gateway-community_{0}_x86_64.rpm',
+        ),
     }
 
     def __init__(self, cluster_spec, test_config, options):

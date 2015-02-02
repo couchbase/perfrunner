@@ -398,7 +398,7 @@ class RemoteLinuxHelper(object):
         get('sgw_test_info.txt', 'sgw_test_info_{}.txt'.format(index))
         get('gateway_config.json', 'gateway_config_{}.json'.format(index))
         get('sgw_check_logs.out', 'sgw_check_logs_gateway_{}.out'.format(index))
-        get('gateload_expvar_{}.json'.format(index + 1), 'gateload_expvar_{}.out'.format(index + 1))
+        get('gateload_expvar_{}.json'.format(index + 1), 'gateload_expvar_{}.json'.format(index + 1))
 
         if self.test_config.gateway_settings.profiling_freq != '0':
             get('profiling.tar.gz', 'profiling_{}.tar.gz'.format(index))

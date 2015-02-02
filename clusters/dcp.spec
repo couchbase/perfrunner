@@ -1,11 +1,11 @@
 [clusters]
 mikewied =
-    172.23.105.195:8091
+    172.23.121.49:8091
+    172.23.121.50:8091
 
 [clients]
 hosts =
     172.23.107.44
-    172.23.107.249
 credentials = root:couchbase
 
 [storage]

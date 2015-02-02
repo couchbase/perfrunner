@@ -141,10 +141,6 @@ class RemoteLinuxHelper(object):
 
     @all_hosts
     def collect_info(self):
-        if self.test_config.test_case.run_cbcollect_info == 'false':
-            logger.info('Skipping cbcollect_info phase')
-            return
-
         logger.info('Running cbcollect_info')
 
         run('rm -f /tmp/*.zip')

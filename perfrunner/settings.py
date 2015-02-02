@@ -224,7 +224,6 @@ class TestCaseSettings(object):
 
     USE_WORKERS = 1
     LEVEL = 'Basic'  # depricated, alt: Advanced
-    CBCOLLECT_INFO = 'true'
 
     def __init__(self, options):
         self.test_module = '.'.join(options.get('test').split('.')[:-1])
@@ -234,8 +233,6 @@ class TestCaseSettings(object):
         self.larger_is_better = options.get('larger_is_better')
         self.level = options.get('level', self.LEVEL)
         self.use_workers = int(options.get('use_workers', self.USE_WORKERS))
-        self.run_cbcollect_info = options.get('run_cbcollect_info',
-                                              self.CBCOLLECT_INFO)
 
 
 class ClusterSettings(object):

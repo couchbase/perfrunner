@@ -511,6 +511,11 @@ class GatewaySettings(PhaseSettings):
     SHADOW = 'false'
     PROFILING_FREQ = 0
 
+    # the only allowed urls are git.io urls, ie: http://git.io/b9PK, and only the
+    # the last part should be passed, not the full url.  So to tell it it find the
+    # config at http://git.io/b9PK, use gateway.config_url.b9PK
+    CONFIG_URL = ''
+
     def __init__(self, options):
         self.conn_in = int(options.get('conn_in', self.CONN_IN))
         self.conn_db = int(options.get('conn_db', self.CONN_DB))
@@ -519,6 +524,7 @@ class GatewaySettings(PhaseSettings):
         self.logging_verbose = options.get('logging_verbose', self.LOGGING_VERBOSE)
         self.shadow = options.get('shadow', self.SHADOW)
         self.profiling_freq = options.get('profiling_freq', self.PROFILING_FREQ)
+        self.config_url = options.get('config_url', self.CONFIG_URL)
 
 
 class GateloadSettings(PhaseSettings):

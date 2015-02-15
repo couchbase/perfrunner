@@ -1,6 +1,7 @@
 from optparse import OptionParser
 
 import requests
+import urllib2
 from jinja2 import Environment, FileSystemLoader
 from logger import logger
 from requests.exceptions import ConnectionError
@@ -92,13 +93,39 @@ class GatewayInstaller(object):
     def install_gateload(self):
         self.remote.install_gateload()
 
+    def choose_template(self):
+
+        config_url_setting = self.test_config.gateway_settings.config_url
+        if len(config_url_setting) > 0:
+
+            target_filename = "downloaded_config.json"
+            target_path = "templates/{}".format(target_filename)
+
+            # build url to remote template (http://git.io/b9PK)
+            config_url = "http://git.io/{}".format(config_url_setting)
+
+            # download to a file in templates directory
+            logger.info("Downloading config: {}".format(config_url))
+            contents = urllib2.urlopen(config_url).read()
+            logger.info("Writing config to: {}".format(target_path))
+            f = open(target_filename, 'w')
+            f.write(contents)
+            f.close()
+
+            # return name of file
+            return target_filename
+
+        if self.test_config.gateway_settings.shadow == 'true':
+            return 'gateway_config_shadow_template.json'
+        else:
+            return 'gateway_config_template.json'
+
     def generate_sync_gateways_config(self):
         loader = FileSystemLoader('templates')
         env = Environment(loader=loader)
-        if self.test_config.gateway_settings.shadow == 'true':
-            template = env.get_template('gateway_config_shadow_template.json')
-        else:
-            template = env.get_template('gateway_config_template.json')
+
+        template_filename = self.choose_template()
+        template = env.get_template(template_filename)
 
         with open('templates/gateway_config.json', 'w') as fh:
             fh.write(template.render(

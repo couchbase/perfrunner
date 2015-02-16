@@ -3,13 +3,13 @@ import random
 from couchbase import FMT_UTF8, exceptions
 from couchbase._libcouchbase import (LCB_NOT_STORED)
 from couchbase.experimental import enable as enable_experimental
-enable_experimental()
 from txcouchbase.connection import Connection as TxCouchbase
 from logger import logger
 from twisted.internet import reactor
 
 
 count = 0
+enable_experimental()
 
 
 class AsyncGen(object):

@@ -7,7 +7,7 @@ clean: ; \
     rm -f `find . -name *.pyc`
 
 flake8: ; \
-    ./env/bin/flake8 --ignore=E501,F401,F821 --exclude perfrunner/workloads/revAB/fittingCode perfrunner
+    ./env/bin/flake8 --ignore=E501,F401,F821,E731 --exclude perfrunner/workloads/revAB/fittingCode perfrunner
 
 nose: ; \
     ./env/bin/nosetests -v unittests.py

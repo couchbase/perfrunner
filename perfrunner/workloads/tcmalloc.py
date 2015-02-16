@@ -3,9 +3,10 @@ from hashlib import md5
 
 from logger import logger
 from couchbase import experimental
-experimental.enable()
 from txcouchbase.connection import Connection
 from twisted.internet import reactor
+
+experimental.enable()
 
 
 class SmallIterator(object):

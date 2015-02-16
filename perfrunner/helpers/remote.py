@@ -392,13 +392,13 @@ class RemoteLinuxHelper(object):
         put('scripts/sgw_check_logs.sh', '/root/sgw_check_logs.sh')
         run('chmod 777 /root/sgw_*.sh')
         run('/root/sgw_check_logs.sh gateway > sgw_check_logs.out', warn_only=True)
-        get('gateway.log.gz', 'gateway.log_{}.gz'.format(index))
-        get('test_info.txt', 'test_info_{}.txt'.format(index))
-        get('test_info_sar.txt', 'test_info_sar_{}.txt'.format(index))
-        get('sgw_test_info.txt', 'sgw_test_info_{}.txt'.format(index))
-        get('gateway_config.json', 'gateway_config_{}.json'.format(index))
-        get('sgw_check_logs.out', 'sgw_check_logs_gateway_{}.out'.format(index))
-        get('gateload_expvar_{}.json'.format(index + 1), 'gateload_expvar_{}.json'.format(index + 1))
+        self.try_get('gateway.log.gz', 'gateway.log_{}.gz'.format(index))
+        self.try_get('test_info.txt', 'test_info_{}.txt'.format(index))
+        self.try_get('test_info_sar.txt', 'test_info_sar_{}.txt'.format(index))
+        self.try_get('sgw_test_info.txt', 'sgw_test_info_{}.txt'.format(index))
+        self.try_get('gateway_config.json', 'gateway_config_{}.json'.format(index))
+        self.try_get('sgw_check_logs.out', 'sgw_check_logs_gateway_{}.out'.format(index))
+        self.try_get('gateload_expvar_{}.json'.format(index + 1), 'gateload_expvar_{}.json'.format(index + 1))
 
         if self.test_config.gateway_settings.profiling_freq != '0':
             get('profiling.tar.gz', 'profiling_{}.tar.gz'.format(index))
@@ -473,6 +473,12 @@ class RemoteLinuxHelper(object):
         run('numactl --interleave=all {}/bin/mongod '
             '--dbpath={} --fork --logpath /tmp/mongodb.log'
             .format(self.MONGO_DIR, self.cluster_spec.paths[0]))
+
+    def try_get(self, remote_path, local_path=None):
+        try:
+            get(remote_path, local_path)
+        except:
+            logger.warn("Exception calling get({}, {}).  Ignoring.".format(remote_path, local_path))
 
 
 class RemoteWindowsHelper(RemoteLinuxHelper):

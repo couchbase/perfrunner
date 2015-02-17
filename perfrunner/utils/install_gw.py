@@ -108,7 +108,7 @@ class GatewayInstaller(object):
             logger.info("Downloading config: {}".format(config_url))
             contents = urllib2.urlopen(config_url).read()
             logger.info("Writing config to: {}".format(target_path))
-            f = open(target_filename, 'w')
+            f = open(target_path, 'w')
             f.write(contents)
             f.close()
 

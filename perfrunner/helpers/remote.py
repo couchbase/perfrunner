@@ -364,9 +364,20 @@ class RemoteLinuxHelper(object):
     def start_gateway(self):
         logger.info('Starting Sync Gateway instances')
         put('templates/gateway_config.json', '/root/gateway_config.json')
-        run('ulimit -n 65536; '
-            'nohup /opt/couchbase-sync-gateway/bin/sync_gateway '
-            '/root/gateway_config.json >/root/gateway.log 2>&1 &', pty=False)
+
+        godebug = self.test_config.gateway_settings.go_debug
+
+        args = {
+            'ulimit': 'ulimit -n 65536',
+            'godebug': godebug,
+            'sgw': '/opt/couchbase-sync-gateway/bin/sync_gateway',
+            'config': '/root/gateway_config.json',
+            'log': '/root/gateway.log',
+        }
+
+        command = '{ulimit}; GODEBUG={godebug} nohup {sgw} {config} > {log} 2>&1 &'.format(**args)
+        logger.info("Command: {}".format(command))
+        run(command, pty=False)
 
     @all_gateways
     def start_test_info(self):

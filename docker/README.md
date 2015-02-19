@@ -8,13 +8,14 @@ Perfrunner is a tool to measure performance of Couchbase Server and Sync Gateway
 ### Run docker image
 
 ```
-$ sudo docker run -ti docker pull tleyden5iwx/perfrunner /bin/bash
+$ sudo docker run -ti tleyden5iwx/perfrunner /bin/bash
 ```
 
 ### Set environment variables
 
 ```
 $ export cluster="clusters/sync_gateway.spec"
+$ export test_config="tests/gateload.test"
 $ export version="2.5.1-1087"
 $ export version_sgw="0.0.1-27"
 $ export override="gateload.pushers.50,gateload.pullers.80,gateway.num_nodes.2,gateway.profiling_freq.500,gateload.run_time.300"

@@ -511,6 +511,10 @@ class GatewaySettings(PhaseSettings):
     SHADOW = 'false'
     PROFILING_FREQ = 0
 
+    # allow customization of the GODEBUG environment variable
+    # see http://golang.org/pkg/runtime/
+    GO_DEBUG = ''
+
     # the only allowed urls are git.io urls, ie: http://git.io/b9PK, and only the
     # the last part should be passed, not the full url.  So to tell it it find the
     # config at http://git.io/b9PK, use gateway.config_url.b9PK
@@ -525,6 +529,7 @@ class GatewaySettings(PhaseSettings):
         self.shadow = options.get('shadow', self.SHADOW)
         self.profiling_freq = options.get('profiling_freq', self.PROFILING_FREQ)
         self.config_url = options.get('config_url', self.CONFIG_URL)
+        self.go_debug = options.get('go_debug', self.GO_DEBUG)
 
 
 class GateloadSettings(PhaseSettings):

@@ -53,7 +53,7 @@ class RestHelper(object):
     def delete(self, **kwargs):
         return requests.delete(auth=self.auth, **kwargs)
 
-    def set_data_path(self, host_port, data_path, index_path, query_path):
+    def set_data_path(self, host_port, data_path, index_path):
         logger.info('Configuring data paths: {}'.format(host_port))
 
         api = 'http://{}/nodes/self/controller/settings'.format(host_port)

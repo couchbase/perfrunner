@@ -36,7 +36,7 @@ class ClusterManager(object):
     def set_data_path(self):
         data_path, index_path = self.cluster_spec.paths
         for server in self.servers():
-            self.rest.set_data_path(server, data_path, index_path, query_path)
+            self.rest.set_data_path(server, data_path, index_path)
 
     def set_auth(self):
         for server in self.servers():

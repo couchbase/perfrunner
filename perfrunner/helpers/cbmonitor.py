@@ -148,7 +148,7 @@ class CbAgent(object):
             self.collectors.append(net_collector)
 
     def prepare_iostat(self, clusters, test):
-        data_path, index_path = test.cluster_spec.paths
+        data_path, index_path, query_path = test.cluster_spec.paths
         partitions = {'data': data_path}
         if hasattr(test, 'ddocs'):  # all instances of IndexTest have it
             partitions['index'] = index_path

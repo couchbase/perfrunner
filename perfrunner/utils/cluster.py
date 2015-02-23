@@ -69,9 +69,19 @@ class ClusterManager(object):
                 groups = {}
             for i, host_port in enumerate(servers[1:initial_nodes],
                                           start=1):
+                host = host_port.split(':')[0]
+                role = None
+                for node in self.index():
+                    if host in node:
+                        print "host: %s in index\n" % host
+                        role = 'index'
+                for node in self.n1ql():
+                    if host in node:
+                        print "host: %s in n1ql\n" % host
+                        role = 'n1ql'
                 uri = groups.get(server_group(servers[:initial_nodes],
                                               self.group_number, i))
-                self.rest.add_node(master, host_port, uri)
+                self.rest.add_node(master, host, role, uri)
 
             # Rebalance
             master = servers[0]

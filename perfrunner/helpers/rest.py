@@ -53,7 +53,7 @@ class RestHelper(object):
     def delete(self, **kwargs):
         return requests.delete(auth=self.auth, **kwargs)
 
-    def set_data_path(self, host_port, data_path, index_path):
+    def set_data_path(self, host_port, data_path, index_path, query_path):
         logger.info('Configuring data paths: {}'.format(host_port))
 
         api = 'http://{}/nodes/self/controller/settings'.format(host_port)
@@ -79,7 +79,7 @@ class RestHelper(object):
         data = {'memoryQuota': mem_quota}
         self.post(url=api, data=data)
 
-    def add_node(self, host_port, new_host, uri=None):
+    def add_node(self, host_port, new_host, role=None, uri=None):
         logger.info('Adding new node: {}'.format(new_host))
 
         if uri:
@@ -88,7 +88,9 @@ class RestHelper(object):
             api = 'http://{}/controller/addNode'.format(host_port)
         data = {
             'hostname': new_host,
-            'user': self.rest_username, 'password': self.rest_password
+            'user': self.rest_username,
+            'password': self.rest_password,
+            'services': role
         }
         self.post(url=api, data=data)
 

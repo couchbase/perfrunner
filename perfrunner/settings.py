@@ -542,6 +542,7 @@ class GateloadSettings(PhaseSettings):
     P99_AVG_CRITERIA = 5
     SERIESLY_HOST = '172.23.106.228'
     LOGGING_VERBOSE = 'false'
+    AUTH_TYPE = 'basic'
 
     def __init__(self, options):
         self.pullers = int(options.get('pullers', self.PULLER))
@@ -562,6 +563,7 @@ class GateloadSettings(PhaseSettings):
                                                self.RAMPUP_INTERVAL))
         self.logging_verbose = options.get('logging_verbose', self.LOGGING_VERBOSE)
         self.seriesly_host = options.get('seriesly_host', self.SERIESLY_HOST)
+        self.auth_type = options.get('auth_type', self.AUTH_TYPE)
 
 
 class WorkerSettings(PhaseSettings):

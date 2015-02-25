@@ -33,5 +33,6 @@
     "MaxUserOffTimeMs": 0,
     "Verbose": {{logging_verbose}},
     "LogRequests": {{logging_verbose}},
-    "UserOffset": {{idx * (pullers + pushers)}}
+    "UserOffset": {{idx * (pullers + pushers)}},
+    "AuthType": "{{auth_type}}"
 }

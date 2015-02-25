@@ -75,6 +75,7 @@ class GateloadTest(PerfTest):
                     seriesly_host=self.test_config.gateload_settings.seriesly_host,
                     idx=idx,
                     auth_type=self.test_config.gateload_settings.auth_type,
+                    password=self.test_config.gateload_settings.password,
                 ))
 
     def collect_kpi(self):

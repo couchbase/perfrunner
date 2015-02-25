@@ -34,5 +34,6 @@
     "Verbose": {{logging_verbose}},
     "LogRequests": {{logging_verbose}},
     "UserOffset": {{idx * (pullers + pushers)}},
-    "AuthType": "{{auth_type}}"
+    "AuthType": "{{auth_type}}",
+    "Password": "{{password}}"
 }

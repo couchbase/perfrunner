@@ -10,6 +10,7 @@
         "db": {
             "server": "http://{{bucket}}:password@{{db_master}}/",
             "bucket": "{{bucket}}",
+	    "allow_empty_password": true,
             "users": {
                 "GUEST": { "disabled": true }
             }

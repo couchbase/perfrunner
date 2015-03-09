@@ -16,11 +16,11 @@ index = /data
 
 [credentials]
 rest = Administrator:password
-ssh = Administrator:Membase123
+ssh = root:couchbase
 
 [parameters]
 Platform = Physical
-OS = Centos 6.5/ Windows Server 2012 R2
-CPU = Intel Xeon E5-2630 v2(12 vCPU)
+OS = Centos 6.5
+CPU = Intel Xeon E5-2630 v2(24 vCPU)
 Memory = 32 GB
 Disk = HDD

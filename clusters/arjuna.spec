@@ -1,13 +1,13 @@
 [clusters]
 arjuna =
-    172.23.100.55:8091
-    172.23.100.56:8091
-    172.23.100.44:8091
-    172.23.100.45:8091
+    172.23.120.18:8091
+    172.23.120.19:8091
+    172.23.120.20:8091
+    172.23.120.21:8091
 
 [clients]
 hosts =
-    172.23.97.74
+    172.23.97.112
 credentials = root:couchbase
 
 [storage]
@@ -20,7 +20,7 @@ ssh = Administrator:Membase123
 
 [parameters]
 Platform = Physical
-OS = Windows Server 2012 R2
+OS = Centos 6.5/ Windows Server 2012 R2
 CPU = Intel Xeon E5-2630 v2(12 vCPU)
 Memory = 32 GB
 Disk = HDD

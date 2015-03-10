@@ -84,6 +84,7 @@ class RemoteLinuxHelper(object):
         self.hosts = tuple(cluster_spec.yield_hostnames())
         self.cluster_spec = cluster_spec
         self.test_config = test_config
+        self.env = {}
 
         if self.cluster_spec.gateways and test_config is not None:
             num_nodes = self.test_config.gateway_settings.num_nodes
@@ -201,34 +202,29 @@ class RemoteLinuxHelper(object):
     @all_hosts
     def restart(self):
         logger.info('Restarting server')
-        run('numactl --interleave=all /etc/init.d/couchbase-server restart')
+        environ = ' '.join('{}={}'.format(k, v) for (k, v) in self.env.items())
+        run(environ + ' numactl --interleave=all /etc/init.d/couchbase-server restart')
 
-    @all_hosts
     def restart_with_alternative_num_vbuckets(self, num_vbuckets):
         logger.info('Changing number of vbuckets to {}'.format(num_vbuckets))
-        run('COUCHBASE_NUM_VBUCKETS={} '
-            'numactl --interleave=all /etc/init.d/couchbase-server restart'
-            .format(num_vbuckets))
+        self.env['COUCHBASE_NUM_VBUCKETS'] = num_vbuckets
+        self.restart()
 
-    @all_hosts
     def restart_with_alternative_num_cpus(self, num_cpus):
         logger.info('Changing number of front-end memcached threads to {}'
                     .format(num_cpus))
-        run('MEMCACHED_NUM_CPUS={} '
-            'numactl --interleave=all /etc/init.d/couchbase-server restart'
-            .format(num_cpus))
+        self.env['MEMCACHED_NUM_CPUS'] = num_cpus
+        self.restart()
 
-    @all_hosts
     def restart_with_sfwi(self):
         logger.info('Enabling +sfwi')
-        run('COUCHBASE_NS_SERVER_VM_EXTRA_ARGS=\'["+sfwi", "100", "+sbwt", "long"]\' '
-            'numactl --interleave=all /etc/init.d/couchbase-server restart')
+        self.env['COUCHBASE_NS_SERVER_VM_EXTRA_ARGS'] = '["+sfwi", "100", "+sbwt", "long"]'
+        self.restart()
 
-    @all_hosts
     def restart_with_tcmalloc_aggressive_decommit(self):
         logger.info('Enabling TCMalloc aggressive decommit')
-        run('TCMALLOC_AGGRESSIVE_DECOMMIT=t '
-            'numactl --interleave=all /etc/init.d/couchbase-server restart')
+        self.env['TCMALLOC_AGGRESSIVE_DECOMMIT'] = 't'
+        self.restart()
 
     @all_hosts
     def disable_moxi(self):

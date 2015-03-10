@@ -36,7 +36,6 @@ class GateloadTest(PerfTest):
                 gateloads_ip=' '.join(self.remote.gateloads),
                 dbs_ip=' '.join(self.cluster_spec.yield_hostnames()),
                 seriesly_ip=self.test_config.gateload_settings.seriesly_host,
-                profiling_freq=self.test_config.gateway_settings.profiling_freq,
                 run_time=self.test_config.gateload_settings.run_time,
             ))
 
@@ -158,6 +157,8 @@ class GateloadTest(PerfTest):
         log_phase('Gateway settings', self.test_config.gateway_settings)
 
         self.workload()
+
+        self.remote.collect_profile_data_gateways()
 
         return self.collect_kpi()
 

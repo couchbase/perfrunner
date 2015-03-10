@@ -353,6 +353,13 @@ class RemoteLinuxHelper(object):
         run('yes | rpm -i /tmp/{}'.format(filename))
 
     @all_gateways
+    def install_gateway_from_source(self, commit_hash):
+        logger.info('Installing Sync Gateway from source - {}'.format(commit_hash))
+        put('scripts/install_sgw_from_source.sh', '/root/install_sgw_from_source.sh')
+        run('chmod 777 /root/install_sgw_from_source.sh')
+        run('/root/install_sgw_from_source.sh {}'.format(commit_hash), pty=False)
+
+    @all_gateways
     def uninstall_gateway(self):
         logger.info('Uninstalling Sync Gateway package')
         run('yes | yum remove couchbase-sync-gateway')
@@ -360,7 +367,7 @@ class RemoteLinuxHelper(object):
     @all_gateways
     def kill_processes_gateway(self):
         logger.info('Killing Sync Gateway')
-        run('killall -9 sync_gateway sgw_test_info.sh  sgw_profiling.sh sar', quiet=True)
+        run('killall -9 sync_gateway sgw_test_info.sh sar', quiet=True)
 
     @all_gateways
     def clean_gateway(self):
@@ -393,11 +400,6 @@ class RemoteLinuxHelper(object):
         put('scripts/sgw_test_info.sh', '/root/sgw_test_info.sh')
         run('chmod 777 /root/sgw_*.sh')
         run('nohup /root/sgw_test_info.sh &> sgw_test_info.txt &', pty=False)
-        if self.test_config.gateway_settings.profiling_freq != '0':
-            logger.info('Starting Sync Gateway sgw_profiling.sh')
-            put('scripts/sgw_profiling.sh', '/root/sgw_profiling.sh')
-            run('chmod 777 /root/sgw_profiling.sh')
-            run('nohup /root/sgw_profiling.sh &> sgw_profiling.txt &', pty=False)
 
     @all_gateways
     def collect_info_gateway(self):
@@ -417,9 +419,6 @@ class RemoteLinuxHelper(object):
         self.try_get('gateway_config.json', 'gateway_config_{}.json'.format(index))
         self.try_get('sgw_check_logs.out', 'sgw_check_logs_gateway_{}.out'.format(index))
         self.try_get('gateload_expvar_{}.json'.format(index + 1), 'gateload_expvar_{}.json'.format(index + 1))
-
-        if self.test_config.gateway_settings.profiling_freq != '0':
-            self.try_get('profiling.tar.gz', 'profiling_{}.tar.gz'.format(index))
 
     @all_gateloads
     def uninstall_gateload(self):
@@ -471,6 +470,23 @@ class RemoteLinuxHelper(object):
         get('gateload.log.gz', 'gateload.log-{}.gz'.format(idx))
         get('gateload_config.json', 'gateload_config_{}.json'.format(idx))
         get('sgw_check_logs.out', 'sgw_check_logs_gateload_{}.out'.format(idx))
+
+    @all_gateways
+    def collect_profile_data_gateways(self):
+        """
+        Collect CPU and heap profile raw data as well as rendered pdfs
+        from go tool pprof
+        """
+        _if = self.detect_if()
+        local_ip = self.detect_ip(_if)
+        idx = self.gateways.index(local_ip)
+
+        logger.info('Collecting profiling data from gateway_{} {}'.format(idx, local_ip))
+
+        put('scripts/sgw_collect_profile.sh', '/root/sgw_collect_profile.sh')
+        run('chmod 777 /root/sgw_collect_profile.sh')
+        run('/root/sgw_collect_profile.sh /opt/couchbase-sync-gateway/bin/sync_gateway /root', pty=False)
+        get('profile_data.tar.gz', 'profile_data.tar-{}.gz'.format(idx))
 
     @all_hosts
     def clean_mongodb(self):

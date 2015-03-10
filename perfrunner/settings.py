@@ -509,7 +509,6 @@ class GatewaySettings(PhaseSettings):
     NUM_NODES = 1
     LOGGING_VERBOSE = 'false'
     SHADOW = 'false'
-    PROFILING_FREQ = 0
 
     # allow customization of the GODEBUG environment variable
     # see http://golang.org/pkg/runtime/
@@ -527,7 +526,6 @@ class GatewaySettings(PhaseSettings):
         self.num_nodes = int(options.get('num_nodes', self.NUM_NODES))
         self.logging_verbose = options.get('logging_verbose', self.LOGGING_VERBOSE)
         self.shadow = options.get('shadow', self.SHADOW)
-        self.profiling_freq = options.get('profiling_freq', self.PROFILING_FREQ)
         self.config_url = options.get('config_url', self.CONFIG_URL)
         self.go_debug = options.get('go_debug', self.GO_DEBUG)
 

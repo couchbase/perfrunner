@@ -87,8 +87,19 @@ class GatewayInstaller(object):
         self.remote.clean_gateload()
 
     def install_gateway(self):
-        filename, url = self.find_package()
-        self.remote.install_gateway(url, filename)
+        if self.is_source_build(self.version):
+            commit_hash = self.version.split(":")[1]
+            self.remote.install_gateway_from_source(commit_hash)
+        else:
+            filename, url = self.find_package()
+            self.remote.install_gateway(url, filename)
+
+    def is_source_build(self, version):
+        """
+        did the user pass in a version of the form commit:<commit_hash>
+        as opposed to the form x.y.z (which represents a jenkins build release)?
+        """
+        return version.startswith("commit:")
 
     def install_gateload(self):
         self.remote.install_gateload()

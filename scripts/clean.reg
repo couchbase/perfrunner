@@ -1,5 +1,6 @@
 Windows Registry Editor Version 5.00
 
+[-HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\InstallShield_{0410F3F3-9F5F-5614-51EC-7DC9F7050055}]
 [-HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\InstallShield_{22EF5D40-7518-4248-B932-4536AAB7293E}]
 [-HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\InstallShield_{CC4CF619-03B8-462A-8CCE-7CA1C22B337B}]
 [-HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\InstallShield_{2B630EB8-BBC7-6FE4-C9B8-D8843EB1EFFA}]

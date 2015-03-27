@@ -532,6 +532,9 @@ class GatewaySettings(PhaseSettings):
         self.shadow = options.get('shadow', self.SHADOW)
         self.config_url = options.get('config_url', self.CONFIG_URL)
         self.go_debug = options.get('go_debug', self.GO_DEBUG)
+        self.node0_cache_writer = options.get('node0_cache_writer', 'false')
+        self.node1_cache_writer = options.get('node1_cache_writer', 'false')
+        self.node2_cache_writer = options.get('node2_cache_writer', 'false')
 
 
 class GateloadSettings(PhaseSettings):

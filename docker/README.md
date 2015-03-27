@@ -27,7 +27,7 @@ $ export override="gateload.pushers.50,gateload.pullers.80,gateway.num_nodes.2,g
 $ cd /root/perfrunner
 $ ./scripts/setup.sh
 $ ./scripts/setup_sgw.sh
-$ /tmp/env/bin/python -m perfrunner -c ${cluster} -t ${test_config} ${override}
+$ /tmp/env/bin/python -m perfrunner --nodebug -c ${cluster} -t ${test_config} ${override}
 ```
 
 ## References

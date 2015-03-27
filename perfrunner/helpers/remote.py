@@ -380,10 +380,12 @@ class RemoteLinuxHelper(object):
     @all_gateways
     def start_gateway(self):
         logger.info('Starting Sync Gateway instances')
-        put('templates/gateway_config.json', '/root/gateway_config.json')
-
+        _if = self.detect_if()
+        local_ip = self.detect_ip(_if)
+        index = self.gateways.index(local_ip)
+        source_config = 'templates/gateway_config_{}.json'.format(index)
+        put(source_config, '/root/gateway_config.json')
         godebug = self.test_config.gateway_settings.go_debug
-
         args = {
             'ulimit': 'ulimit -n 65536',
             'godebug': godebug,
@@ -391,7 +393,6 @@ class RemoteLinuxHelper(object):
             'config': '/root/gateway_config.json',
             'log': '/root/gateway.log',
         }
-
         command = '{ulimit}; GODEBUG={godebug} nohup {sgw} {config} > {log} 2>&1 &'.format(**args)
         logger.info("Command: {}".format(command))
         run(command, pty=False)

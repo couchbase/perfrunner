@@ -138,14 +138,25 @@ class GatewayInstaller(object):
         template_filename = self.choose_template()
         template = env.get_template(template_filename)
 
-        with open('templates/gateway_config.json', 'w') as fh:
-            fh.write(template.render(
-                conn_in=self.test_config.gateway_settings.conn_in,
-                conn_db=self.test_config.gateway_settings.conn_db,
-                compression=self.test_config.gateway_settings.compression,
-                bucket=self.test_config.buckets[0],
-                db_master=self.cluster_spec.yield_masters().next(),
-            ))
+        for idx, gateway_ip in enumerate(self.remote.gateways, start=0):
+            output_filename = "templates/gateway_config_{}.json".format(idx)
+            cache_writer = "false"
+            if idx == 0:
+                cache_writer = self.test_config.gateway_settings.node0_cache_writer
+            elif idx == 1:
+                cache_writer = self.test_config.gateway_settings.node1_cache_writer
+            elif idx == 2:
+                cache_writer = self.test_config.gateway_settings.node2_cache_writer
+
+            with open(output_filename, 'w') as fh:
+                fh.write(template.render(
+                    conn_in=self.test_config.gateway_settings.conn_in,
+                    conn_db=self.test_config.gateway_settings.conn_db,
+                    compression=self.test_config.gateway_settings.compression,
+                    bucket=self.test_config.buckets[0],
+                    cache_writer=cache_writer,
+                    db_master=self.cluster_spec.yield_masters().next(),
+                ))
 
     def start_sync_gateways(self):
         self.generate_sync_gateways_config()

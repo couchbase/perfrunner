@@ -1,4 +1,5 @@
 import time
+import os
 
 from decorator import decorator
 from fabric import state
@@ -422,7 +423,6 @@ class RemoteLinuxHelper(object):
         self.try_get('sgw_test_info.txt', 'sgw_test_info_{}.txt'.format(index))
         self.try_get('gateway_config.json', 'gateway_config_{}.json'.format(index))
         self.try_get('sgw_check_logs.out', 'sgw_check_logs_gateway_{}.out'.format(index))
-        self.try_get('gateload_expvar_{}.json'.format(index + 1), 'gateload_expvar_{}.json'.format(index + 1))
 
     @all_gateloads
     def uninstall_gateload(self):
@@ -471,9 +471,19 @@ class RemoteLinuxHelper(object):
         put('scripts/sgw_check_logs.sh', '/root/sgw_check_logs.sh')
         run('chmod 777 /root/sgw_*.sh')
         run('/root/sgw_check_logs.sh gateload > sgw_check_logs.out', warn_only=True)
-        get('gateload.log.gz', 'gateload.log-{}.gz'.format(idx))
-        get('gateload_config.json', 'gateload_config_{}.json'.format(idx))
-        get('sgw_check_logs.out', 'sgw_check_logs_gateload_{}.out'.format(idx))
+        self.try_get('gateload.log.gz', 'gateload.log-{}.gz'.format(idx))
+        self.try_get('gateload_config.json', 'gateload_config_{}.json'.format(idx))
+        self.try_get('sgw_check_logs.out', 'sgw_check_logs_gateload_{}.out'.format(idx))
+
+        expvar_url = "{}:9876/debug/vars".format(local_ip)
+        logger.info("Getting gateload expvar from {}".format(expvar_url))
+
+        dest_file = 'gateload_expvar_{}.json'.format(idx)
+        if os.path.exists(dest_file):
+            os.remove(dest_file)
+        self.wget(expvar_url, outdir='.', outfile=dest_file)
+        self.try_get(dest_file, dest_file)
+        logger.info('Saved {}'.format(dest_file))
 
     @all_gateways
     def collect_profile_data_gateways(self):
@@ -490,7 +500,7 @@ class RemoteLinuxHelper(object):
         put('scripts/sgw_collect_profile.sh', '/root/sgw_collect_profile.sh')
         run('chmod 777 /root/sgw_collect_profile.sh')
         run('/root/sgw_collect_profile.sh /opt/couchbase-sync-gateway/bin/sync_gateway /root', pty=False)
-        get('profile_data.tar.gz', 'profile_data.tar-{}.gz'.format(idx))
+        self.try_get('profile_data.tar.gz', 'profile_data.tar-{}.gz'.format(idx))
 
     @all_hosts
     def clean_mongodb(self):

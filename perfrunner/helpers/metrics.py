@@ -459,6 +459,7 @@ class SgwMetricHelper(MetricHelper):
             'avg_gateload/ops/PushToSubscriberInteractive/p{}'.format(p)
         )
         db = 'gateload_{}'.format(idx)
+        logger.info("Getting push latency for {}".format(db))
 
         if not self.seriesly[db].get_all():
             logger.error('No data in {}'.format(db))
@@ -478,6 +479,7 @@ class SgwMetricHelper(MetricHelper):
         )
         query_params.update({'group': 1000})  # Group by 1 second
         db = 'gateway_{}'.format(idx)
+        logger.info("Getting requests_per_sec for {}".format(db))
 
         if not self.seriesly[db].get_all():
             logger.error('No data in {}'.format(db))

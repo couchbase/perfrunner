@@ -1,5 +1,7 @@
 import json
 import time
+import sys
+import traceback
 from collections import defaultdict, OrderedDict
 
 import numpy as np
@@ -54,7 +56,8 @@ class GateloadTest(PerfTest):
     def generate_gateload_configs(self):
         template = self.env.get_template('gateload_config_template.json')
 
-        for idx, gateway in enumerate(self.remote.gateways):
+        for idx, gateload in enumerate(self.remote.gateloads):
+            gateway = self.remote.gateways[idx]
             config_fname = 'templates/gateload_config_{}.json'.format(idx)
             with open(config_fname, 'w') as fh:
                 fh.write(template.render(
@@ -79,60 +82,65 @@ class GateloadTest(PerfTest):
 
     def collect_kpi(self):
         logger.info('Collecting Sync Gateway KPI')
+        try:
 
-        criteria = OrderedDict((
-            (95, self.test_config.gateload_settings.p95_avg_criteria),
-            (99, self.test_config.gateload_settings.p99_avg_criteria),
-        ))
+            criteria = OrderedDict((
+                (95, self.test_config.gateload_settings.p95_avg_criteria),
+                (99, self.test_config.gateload_settings.p99_avg_criteria),
+            ))
 
-        summary = defaultdict(dict)
-        latencies = defaultdict(list)
-        all_requests_per_sec = []
-        self.errors = []
-        for idx, gateload in enumerate(self.remote.gateloads, start=1):
-            for p in criteria:
+            summary = defaultdict(dict)
+            latencies = defaultdict(list)
+            all_requests_per_sec = []
+            self.errors = []
+            for idx, gateload in enumerate(self.remote.gateloads, start=1):
+                for p in criteria:
+                    kpi = self.KPI.format(p)
+                    latency = self.metric_helper.calc_push_latency(p=p, idx=idx)
+                    if latency == 0:
+                        status = '{}: Failed to get latency data'.format(gateload)
+                        self.errors.append(status)
+                    summary[gateload][kpi] = latency
+                    latencies[p].append(latency)
+                requests_per_sec = self.metric_helper.calc_requests_per_sec(idx=idx)
+                all_requests_per_sec.append(requests_per_sec)
+                summary[gateload]['Average requests per sec'] = requests_per_sec
+                doc_counters = self.metric_helper.calc_gateload_doc_counters(idx=idx)
+                summary[gateload]['gateload doc counters'] = doc_counters
+            logger.info('Per node summary: {}'.format(pretty_dict(summary)))
+
+            self.reporter.post_to_sf(round(np.mean(latencies[99]), 1))
+
+            self.pass_fail = []
+            for p, criterion in criteria.items():
                 kpi = self.KPI.format(p)
-                latency = self.metric_helper.calc_push_latency(p=p, idx=idx)
-                if latency == 0:
-                    status = '{}: Failed to get latency data'.format(gateload)
-                    self.errors.append(status)
-                summary[gateload][kpi] = latency
-                latencies[p].append(latency)
-            requests_per_sec = self.metric_helper.calc_requests_per_sec(idx=idx)
-            all_requests_per_sec.append(requests_per_sec)
-            summary[gateload]['Average requests per sec'] = requests_per_sec
-            doc_counters = self.metric_helper.calc_gateload_doc_counters(idx=idx)
-            summary[gateload]['gateload doc counters'] = doc_counters
-        logger.info('Per node summary: {}'.format(pretty_dict(summary)))
+                average = np.mean(latencies[p])
+                if average == 0 or average > criterion:
+                    status = "{}: {} - doesn't meet the criteria of {}"\
+                        .format(kpi, average, criterion)
+                else:
+                    status = '{}: {} - meets the criteria of {}'\
+                        .format(kpi, average, criterion)
+                self.pass_fail.append(status)
+            logger.info(
+                'Aggregated latency: {}'.format(pretty_dict(self.pass_fail))
+            )
 
-        self.reporter.post_to_sf(round(np.mean(latencies[99]), 1))
+            network_matrix = self.metric_db_servers_helper.calc_network_throughput
+            network_matrix['Avg requests  per sec'] = int(np.average(all_requests_per_sec))
+            logger.info(
+                'Network throughput: {}'.format(json.dumps(network_matrix, indent=4))
+            )
 
-        self.pass_fail = []
-        for p, criterion in criteria.items():
-            kpi = self.KPI.format(p)
-            average = np.mean(latencies[p])
-            if average == 0 or average > criterion:
-                status = '{}: {} - doesn\'t meet the criteria of {}'\
-                    .format(kpi, average, criterion)
-            else:
-                status = '{}: {} - meets the criteria of {}'\
-                    .format(kpi, average, criterion)
-            self.pass_fail.append(status)
-        logger.info(
-            'Aggregated latency: {}'.format(pretty_dict(self.pass_fail))
-        )
-
-        network_matrix = self.metric_db_servers_helper.calc_network_throughput
-        network_matrix['Avg requests  per sec'] = int(np.average(all_requests_per_sec))
-        logger.info(
-            'Network throughput: {}'.format(json.dumps(network_matrix, indent=4))
-        )
-
-        logger.info('Checking pass or fail')
-        if self.errors:
-            logger.interrupt('Test failed because of errors')
-        if 'doesn\'t meet' in ''.join(self.pass_fail):
-            logger.interrupt('Test failed because at least one of the latencies does not meet KPI')
+            logger.info('Checking pass or fail')
+            if self.errors:
+                logger.interrupt('Test failed because of errors: {}'.format(self.errors))
+            if "doesn't meet" in ''.join(self.pass_fail):
+                logger.interrupt('Test failed: latencies do not meet KPI')
+        except:
+            traceback.print_exc()
+            traceback.print_stack()
+            logger.interrupt('Exception running test: {}'.format(str(sys.exc_info()[0])))
 
     @with_stats
     def workload(self):
@@ -155,10 +163,15 @@ class GateloadTest(PerfTest):
 
         log_phase('Gateload settings', self.test_config.gateload_settings)
         log_phase('Gateway settings', self.test_config.gateway_settings)
+        log_phase('Stats settings', self.test_config.stats_settings)
 
         self.workload()
 
         self.remote.collect_profile_data_gateways()
+        self.remote.collect_info_gateway()
+        self.remote.collect_info_gateload()
+        self.reporter.check_sgw_logs()
+        self.reporter.save_expvar()
 
         return self.collect_kpi()
 

@@ -171,9 +171,3 @@ class PerfTest(object):
             for hostname in self.cluster_spec.yield_hostnames():
                 for fname in glob.glob('{}/cbq.log'.format(hostname)):
                     shutil.move(fname, '{}-cbq.log'.format(hostname))
-
-        if self.cluster_spec.gateways:
-            self.remote.collect_info_gateway()
-            self.remote.collect_info_gateload()
-            self.reporter.check_sgw_logs()
-            self.reporter.save_expvar()

@@ -434,6 +434,8 @@ class PhaseSettings(object):
 
         self.iterations = int(options.get('iterations', self.ITERATIONS))
 
+        self.filename = None
+
     def __str__(self):
         return str(self.__dict__)
 

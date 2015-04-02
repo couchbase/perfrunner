@@ -255,7 +255,8 @@ class WarmupTest(PerfTest):
 
         warmup_time = self.warmup()
 
-        self.reporter.post_to_sf(warmup_time)
+        if self.test_config.stats_settings.enabled:
+            self.reporter.post_to_sf(warmup_time)
 
 
 class TapTest(PerfTest):
@@ -375,8 +376,9 @@ class FragmentationTest(PerfTest):
 
     def run(self):
         self.load_and_append()
-        fragmentation_ratio = self.calc_fragmentation_ratio()
-        self.reporter.post_to_sf(fragmentation_ratio)
+        if self.test_config.stats_settings.enabled:
+            fragmentation_ratio = self.calc_fragmentation_ratio()
+            self.reporter.post_to_sf(fragmentation_ratio)
 
 
 class FragmentationLargeTest(FragmentationTest):
@@ -478,9 +480,9 @@ class RevABTest(FragmentationTest):
     def run(self):
         self.generate_graph()
         self.load()
-        fragmentation_ratio = self.calc_fragmentation_ratio()
-        self.reporter.post_to_sf(fragmentation_ratio)
         if self.test_config.stats_settings.enabled:
+            fragmentation_ratio = self.calc_fragmentation_ratio()
+            self.reporter.post_to_sf(fragmentation_ratio)
             self.reporter.post_to_sf(
                 *self.metric_helper.calc_max_memcached_rss()
             )
@@ -516,12 +518,13 @@ class PathoGenTest(FragmentationTest):
 
     def run(self):
         self.access()
-        self.reporter.post_to_sf(
-            *self.metric_helper.calc_avg_memcached_rss()
-        )
-        self.reporter.post_to_sf(
-            *self.metric_helper.calc_max_memcached_rss()
-        )
+        if self.test_config.stats_settings.enabled:
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_avg_memcached_rss()
+            )
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_max_memcached_rss()
+            )
 
 
 class PathoGenFrozenTest(PathoGenTest):

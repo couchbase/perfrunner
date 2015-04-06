@@ -569,6 +569,9 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
     def disable_thp(self):
         pass
 
+    def detect_ip(self):
+        return run('ipconfig | findstr IPv4').split(': ')[1]
+
     @all_hosts
     def collect_info(self):
         logger.info('Running cbcollect_info')
@@ -605,7 +608,8 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
 
     @all_hosts
     def uninstall_couchbase(self, pkg):
-        logger.info('Uninstalling Couchbase Server')
+        local_ip = self.detect_ip()
+        logger.info('Uninstalling Package on {}'.format(local_ip))
 
         if self.exists(self.VERSION_FILE):
             for retry in range(self.MAX_RETRIES):
@@ -617,13 +621,22 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
                         t0 = time.time()
                         while self.exists(self.VERSION_FILE) and \
                                 time.time() - t0 < self.TIMEOUT:
-                            logger.info('Waiting for Uninstaller to finish')
+                            logger.info('Waiting for Uninstaller to finish on {}'.format(local_ip))
                             time.sleep(5)
                         break
+                    else:
+                        logger.warn('Uninstall script failed to run on {}'.format(local_ip))
                 except CommandTimeout:
+                    logger.warn("Uninstall command timed out - retrying on {} ({} of {})"
+                                .format(local_ip, retry, self.MAX_RETRIES))
                     continue
             else:
-                logger.warn('Failed to uninstall package, cleaning registry')
+                logger.warn('Uninstaller failed with no more retries on {}'
+                            .format(local_ip))
+        else:
+            logger.info('Package not present on {}'.format(local_ip))
+
+        logger.info('Cleaning registry on {}'.format(local_ip))
         self.clean_installation()
 
     @staticmethod
@@ -643,12 +656,19 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
 
         self.put_iss_files(version)
 
-        logger.info('Installing Couchbase Server')
+        local_ip = self.detect_ip()
 
-        run('./setup.exe -s -f1"C:\\install.iss"')
+        logger.info('Installing Package on {}'.format(local_ip))
+        try:
+            run('./setup.exe -s -f1"C:\\install.iss"')
+        except:
+            logger.error('Install script failed on {}'.format(local_ip))
+            raise
+
         while not self.exists(self.VERSION_FILE):
-            logger.info('Waiting for Installer to finish')
+            logger.info('Waiting for Installer to finish on {}'.format(local_ip))
             time.sleep(5)
+
         logger.info('Sleeping for {} seconds'.format(self.SLEEP_TIME))
         time.sleep(self.SLEEP_TIME)
 

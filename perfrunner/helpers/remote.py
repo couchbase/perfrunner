@@ -541,6 +541,8 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
 
     SLEEP_TIME = 60  # crutch
 
+    PROCESSES = ('erl*', 'epmd*')
+
     @staticmethod
     def exists(fname):
         r = run('test -f "{}"'.format(fname), warn_only=True, quiet=True)
@@ -587,8 +589,11 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
             path = '/cygdrive/{}'.format(path)
             run('rm -fr {}/*'.format(path))
 
+    @all_hosts
     def kill_processes(self):
-        pass
+        logger.info('Killing {}'.format(', '.join(self.PROCESSES)))
+        run('taskkill /F /T /IM {}'.format(' /IM '.join(self.PROCESSES)),
+            warn_only=True, quiet=True)
 
     def kill_installer(self):
         run('taskkill /F /T /IM setup.exe', warn_only=True, quiet=True)

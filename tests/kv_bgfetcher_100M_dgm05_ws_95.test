@@ -1,0 +1,38 @@
+[test_case]
+test = perfrunner.tests.kv.BgFetcherTest
+title = Avg. BgFetcher wait time (ms), 1 bucket x 100M x 1KB, DGM 05%%, 2K ops/sec, working set 95%%, 2%% cache miss rate
+summary = Read-heavy KV test (80/20), 1 bucket x 100M x 1KB, DGM 05%%, 2K ops/sec, working set 95%%, 2%% cache miss rate
+larger_is_better = true
+
+[cluster]
+mem_quota = 2060
+initial_nodes = 4
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+
+[load]
+items = 100000000
+size = 1024
+workers = 20
+
+[hot_load]
+items = 100000000
+size = 1024
+workers = 40
+working_set = 98
+
+[access]
+creates = 1
+reads = 80
+updates = 18
+deletes = 1
+throughput = 2000
+workers = 10
+items = 100000000
+size = 1024
+working_set = 98
+working_set_access = 95
+time=3600
+async = 1

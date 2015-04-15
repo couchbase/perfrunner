@@ -3,8 +3,11 @@ from perfrunner.tests import PerfTest, TargetIterator
 from perfrunner.workloads.n1ql import INDEX_STATEMENTS
 from logger import logger
 
+import math
+from tuqquey.tuq import QueryTests
 
-class TuqTest(PerfTest):
+
+class TuqOptionsTest(QueryTests):
 
     COLLECTORS = {'n1ql_latency': True}
 

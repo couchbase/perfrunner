@@ -79,7 +79,14 @@ class RestHelper(object):
         data = {'memoryQuota': mem_quota}
         self.post(url=api, data=data)
 
-    def add_node(self, host_port, new_host, uri=None):
+    def set_services(self, host_port, services):
+        logger.info('Configuring services on master node: {}'.format(host_port))
+
+        api = 'http://{}/node/controller/setupServices'.format(host_port)
+        data = {'services': services}
+        self.post(url=api, data=data)
+
+    def add_node(self, host_port, new_host, services=None, uri=None):
         logger.info('Adding new node: {}'.format(new_host))
 
         if uri:
@@ -88,7 +95,9 @@ class RestHelper(object):
             api = 'http://{}/controller/addNode'.format(host_port)
         data = {
             'hostname': new_host,
-            'user': self.rest_username, 'password': self.rest_password
+            'user': self.rest_username,
+            'password': self.rest_password,
+            'services': services
         }
         self.post(url=api, data=data)
 

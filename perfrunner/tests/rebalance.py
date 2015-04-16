@@ -148,7 +148,7 @@ class RebalanceTest(PerfTest):
             for i, host_port in new_nodes:
                 group = server_group(servers[:nodes_after], group_number, i)
                 uri = groups.get(group)
-                self.rest.add_node(master, host_port, uri)
+                self.rest.add_node(master, host_port, uri=uri)
             for host_port in failover_nodes:
                 self.rest.fail_over(master, host_port)
                 self.rest.add_back(master, host_port)

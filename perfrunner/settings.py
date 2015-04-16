@@ -58,7 +58,7 @@ class ClusterSpec(Config):
     @safe
     def yield_clusters(self):
         for cluster_name, servers in self.config.items('clusters'):
-            yield cluster_name, servers.split()
+            yield cluster_name, [s.split(',', 1)[0] for s in servers.split()]
 
     @safe
     def yield_masters(self):
@@ -76,6 +76,20 @@ class ClusterSpec(Config):
         for _, servers in self.yield_clusters():
             for server in servers:
                 yield server.split(':')[0]
+
+    @property
+    @safe
+    def roles(self):
+        server_roles = {}
+        for _, node in self.config.items('clusters'):
+            for server in node.split():
+                name = server.split(',', 1)[0]
+                if ',' in server:
+                    server_roles[name] = server.split(',', 1)[1]
+                else:  # For backward compatibility, set to kv if not specified
+                    server_roles[name] = 'kv'
+
+        return server_roles
 
     @property
     @safe

@@ -52,8 +52,7 @@ class CbAgent(object):
             cluster = '{}_{}_{}'.format(cluster_name,
                                         test.build.replace('.', ''),
                                         uhex()[:3])
-            master = servers[0].split(':')[0]
-            self.clusters[cluster] = master
+            self.clusters[cluster] = servers[0]
 
         if hasattr(test, 'ALL_BUCKETS'):
             buckets = None

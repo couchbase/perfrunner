@@ -56,6 +56,7 @@ class InstallTest(TestCase):
             'couchbase_server-enterprise-windows-amd64-3.0.0-1028.exe',
             'couchbase-server-enterprise_3.0.0-1028-windows_amd64.exe',
             'couchbase_server/3.0.0/1028/couchbase_server-enterprise-windows-amd64-3.0.0-1028.exe',
+            'couchbase-server-enterprise_3.0.0-1028-windows_amd64.exe',
         )
         self.assertEqual(filenames, expected)
 

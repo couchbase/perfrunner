@@ -62,6 +62,7 @@ class CouchbaseInstaller(object):
                 'couchbase_server-enterprise-windows-amd64-{version}.{pkg}',
                 'couchbase-server-enterprise_{version}-windows_amd64.{pkg}',
                 'couchbase_server/{release}/{build}/couchbase_server-enterprise-windows-amd64-{version}.exe',
+                'couchbase-server-enterprise_{version}-windows_amd64.{pkg}',
             )
 
         for pattern in patterns:

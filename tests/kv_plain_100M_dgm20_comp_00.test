@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.KVTest
-title = KV throughput (qps), 1 bucket x 100M x 2KB, 20 DGM, 500 mutations/sec/node, unbounded ops, compaction 00pct
+title = KV throughput (qps), 1 bucket x 100M x 2KB, 20 DGM, 500 mutations/sec/node, unbounded ops, compaction 02pct
 summary = Read-heavy query test (80/20), 1 bucket x 100M x 2KB, 20no DGM, 500 mutations/sec/node, unbounded qps, compaction 20pct
 larger_is_better = true
 
@@ -13,7 +13,7 @@ num_buckets = 1
 eviction_policy = fullEviction
 
 [compaction]
-db_percentage = 0
+db_percentage = 2
 
 [load]
 items = 100000000

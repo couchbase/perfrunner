@@ -97,7 +97,7 @@ class CbAgent(object):
 
         self.prepare_ns_server(clusters)
         self.prepare_active_tasks(clusters)
-        if test.remote.os != 'Cygwin':
+        if test.remote is None or test.remote.os != 'Cygwin':
             self.prepare_ps(clusters)
             self.prepare_net(clusters)
             self.prepare_iostat(clusters, test)

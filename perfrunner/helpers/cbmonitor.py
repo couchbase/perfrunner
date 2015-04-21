@@ -14,6 +14,7 @@ from decorator import decorator
 from logger import logger
 
 from perfrunner.helpers.misc import target_hash, uhex
+from perfrunner.helpers.rest import RestHelper
 
 
 @decorator
@@ -167,14 +168,29 @@ class CbAgent(object):
             self.collectors.append(net_collector)
 
     def prepare_iostat(self, clusters, test):
-        data_path, index_path = test.cluster_spec.paths
-        partitions = {'data': data_path}
-        if hasattr(test, 'ddocs'):  # all instances of IndexTest have it
-            partitions['index'] = index_path
+        # If tests are run locally, no paths are defined, hence
+        # use the paths that are set by the server itself. Get
+        # those paths via ther REST API
+        rest = None
+
+        if test.cluster_spec.paths:
+            data_path, index_path = test.cluster_spec.paths
+        else:
+            rest = RestHelper(test.cluster_spec)
+
         for cluster in clusters:
             settings = copy(self.settings)
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
+
+            if rest is not None:
+                data_path, index_path = rest.get_data_path(
+                    settings.master_node)
+
+            partitions = {'data': data_path}
+            if hasattr(test, 'ddocs'):  # all instances of IndexTest have it
+                partitions['index'] = index_path
+
             settings.partitions = partitions
             io_collector = IO(settings)
             self.collectors.append(io_collector)

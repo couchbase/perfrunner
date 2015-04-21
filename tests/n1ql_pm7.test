@@ -1,0 +1,40 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1QLTest
+title = PM Specification 7
+summary = No Summary
+larger_is_better = false
+
+[cluster]
+mem_quota = 2048
+initial_nodes = 3
+num_buckets = 1
+
+[load]
+items = 10000
+size = 1024
+workers = 20
+
+[n1ql]
+indexes =
+    CREATE PRIMARY INDEX ON `{bucket}` using gsi;
+    CREATE INDEX by_state ON `{bucket}` (state.f) using gsi;
+
+[access]
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+throughput = 0
+items = 10000
+size = 1024
+workers = 0
+time = 60
+doc_gen = new
+n1ql_queries =
+    SELECT name.f.f AS _name, street.f.f AS _street FROM `bucket-1` WHERE state.f="{state[f]}" ORDER BY name.f.f.f LIMIT 100;
+n1ql_throughput = 10
+n1ql_workers = 1
+
+[worker_settings]
+reuse_workspace = true
+workspace_location = /tmp/n1ql_wksp

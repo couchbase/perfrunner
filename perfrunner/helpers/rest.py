@@ -362,9 +362,11 @@ class RestHelper(object):
 
     def exec_n1ql_stmnt(self, host, stmnt):
         logger.info('Executing: {}'.format(stmnt))
-        api = 'http://{}:8093/query'.format(host)
-        params = {'q': stmnt}
-        self.get(url=api, params=params)
+        api = 'http://{}:8093/query/service'.format(host)
+        data = {
+            'statement': '{0}'.format(stmnt)
+        }
+        self.post(url=api, data=data)
 
     def n1ql_query(self, host, stmnt):
         logger.info('Executing: {}'.format(stmnt))

@@ -403,6 +403,7 @@ class PhaseSettings(object):
     OPS = 0
     THROUGHPUT = float('inf')
     QUERY_THROUGHPUT = float('inf')
+    N1QL_THROUGHPUT = float('inf')
 
     DOC_GEN = 'old'
     ITEMS = 0
@@ -413,6 +414,7 @@ class PhaseSettings(object):
 
     WORKERS = 12
     QUERY_WORKERS = 0
+    N1QL_WORKERS = 0
     DCP_WORKERS = 0
 
     SEQ_READS = False
@@ -434,6 +436,8 @@ class PhaseSettings(object):
         self.throughput = float(options.get('throughput', self.THROUGHPUT))
         self.query_throughput = float(options.get('query_throughput',
                                                   self.QUERY_THROUGHPUT))
+        self.n1ql_throughput = float(options.get('n1ql_throughput',
+                                                 self.N1QL_THROUGHPUT))
 
         self.doc_gen = options.get('doc_gen', self.DOC_GEN)
         self.size = int(options.get('size', self.SIZE))
@@ -446,12 +450,17 @@ class PhaseSettings(object):
         self.workers = int(options.get('workers', self.WORKERS))
         self.query_workers = int(options.get('query_workers',
                                              self.QUERY_WORKERS))
+        self.n1ql_workers = int(options.get('n1ql_workers',
+                                            self.N1QL_WORKERS))
         self.dcp_workers = int(options.get('dcp_workers', self.DCP_WORKERS))
+
+        self.n1ql_queries = []
+        if 'n1ql_queries' in options:
+            self.n1ql_queries = options.get('n1ql_queries').strip().split('\n')
 
         self.seq_reads = self.SEQ_READS
         self.seq_updates = self.SEQ_UPDATES
 
-        self.n1ql = None
         self.ddocs = None
         self.index_type = None
         self.qparams = {}

@@ -29,6 +29,10 @@ size = 1024
 workers = 0
 time = 60
 doc_gen = new
+n1ql_queries =
+    SELECT * FROM `{bucket}` USE KEYS("{key}");
+n1ql_throughput = 10
+n1ql_workers = 1
 
 [worker_settings]
 reuse_workspace = true

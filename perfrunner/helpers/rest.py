@@ -366,6 +366,12 @@ class RestHelper(object):
         params = {'q': stmnt}
         self.get(url=api, params=params)
 
+    def n1ql_query(self, host, stmnt):
+        logger.info('Executing: {}'.format(stmnt))
+        api = 'http://{}:8093/query'.format(host)
+        headers = {'content-type': 'text/plain'}
+        self.post(url=api, data=stmnt, headers=headers)
+
 
 class SyncGatewayRequestHelper(RestHelper):
 

@@ -77,6 +77,15 @@ class ClusterSpec(Config):
             for server in servers:
                 yield server.split(':')[0]
 
+    @safe
+    def yield_servers_by_role(self, role):
+        for name, servers in self.config.items('clusters'):
+            has_service = []
+            for server in servers.split():
+                if role in server.split(',')[1:]:
+                    has_service.append(server.split(',')[0])
+            yield name, has_service
+
     @property
     @safe
     def roles(self):
@@ -190,6 +199,11 @@ class TestConfig(Config):
     def index_settings(self):
         options = self._get_options_as_dict('index')
         return IndexSettings(options)
+
+    @property
+    def n1ql_settings(self):
+        options = self._get_options_as_dict('n1ql')
+        return N1QLSettings(options)
 
     @property
     def access_settings(self):
@@ -442,6 +456,7 @@ class PhaseSettings(object):
         self.index_type = None
         self.qparams = {}
 
+        self.n1ql = None
         self.time = int(options.get('time', self.TIME))
 
         self.async = bool(int(options.get('async', self.ASYNC)))
@@ -494,6 +509,14 @@ class IndexSettings(PhaseSettings):
         self.disabled_updates = int(options.get('disabled_updates',
                                                 self.DISABLED_UPDATES))
         self.index_type = options.get('index_type')
+
+
+class N1QLSettings(PhaseSettings):
+
+    def __init__(self, options):
+        self.indexes = []
+        if 'indexes' in options:
+            self.indexes = options.get('indexes').strip().split('\n')
 
 
 class AccessSettings(PhaseSettings):

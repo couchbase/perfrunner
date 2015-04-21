@@ -10,9 +10,6 @@ initial_nodes = 1
 num_buckets = 1
 run_cbq = 1
 
-[stats]
-enabled = 1
-
 [bucket]
 replica_number = 0
 password =

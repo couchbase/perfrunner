@@ -238,6 +238,7 @@ def main():
         cm.disable_moxi()
     cm.configure_internal_settings()
     cm.set_data_path()
+    cm.set_services()
     cm.set_mem_quota()
     cm.set_auth()
 

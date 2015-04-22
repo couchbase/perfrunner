@@ -2,6 +2,7 @@
 from perfrunner.tests import PerfTest
 from perfrunner.helpers.cbmonitor import with_stats
 
+
 class ReplicationTest(PerfTest):
 
     COLLECTORS = {'replicate_latency': True}

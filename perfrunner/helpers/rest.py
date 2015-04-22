@@ -362,7 +362,7 @@ class RestHelper(object):
 
     def exec_n1ql_stmnt(self, host, stmnt):
         logger.info('Executing: {}'.format(stmnt))
-        api = 'http://{}:8093/query/service'.format(host)
+        api = 'http://{}:8093/query'.format(host)
         data = {
             'statement': '{0}'.format(stmnt)
         }

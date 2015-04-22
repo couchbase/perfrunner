@@ -27,8 +27,12 @@ class N1QLTest(PerfTest):
 
     def _build_index(self, query_node, bucket):
         for index in self.test_config.n1ql_settings.indexes:
-            query = index.format(bucket=bucket)
+            index_name = index.split('::')[0]
+            index_query = index.split('::')[1]
+            query = index_query.format(name=index_name, bucket=bucket)
             self.rest.n1ql_query(query_node, query)
+            self.rest.wait_for_indexes_to_become_online(host=query_node,
+                                                        index_name=index_name)
 
     @with_stats
     def access(self):

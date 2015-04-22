@@ -16,7 +16,7 @@ workers = 20
 
 [n1ql]
 indexes =
-    CREATE PRIMARY INDEX ON `{bucket}` using gsi;
+    #primary::CREATE PRIMARY INDEX ON `{bucket}` using gsi;
 
 [access]
 creates = 0

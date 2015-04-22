@@ -16,8 +16,8 @@ workers = 20
 
 [n1ql]
 indexes =
-    CREATE PRIMARY INDEX ON `{bucket}` using gsi;
-    CREATE INDEX by_state ON `{bucket}` (state.f) using gsi;
+    #primary::CREATE PRIMARY INDEX ON `{bucket}` using gsi;
+    by_state::CREATE INDEX {name} ON `{bucket}` (state.f) using gsi;
 
 [access]
 creates = 0
@@ -31,7 +31,7 @@ workers = 0
 time = 60
 doc_gen = new
 n1ql_queries =
-    SELECT sum(coins.f) FROM `bucket-1` WHERE state.f="{state[f]}";
+    SELECT sum(coins.f) FROM `{bucket}` WHERE state.f="{state[f]}";
 n1ql_throughput = 10
 n1ql_workers = 1
 

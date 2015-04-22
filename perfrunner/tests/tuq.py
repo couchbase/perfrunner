@@ -27,9 +27,10 @@ class TuqTest(PerfTest):
         ]
         for master in self.cluster_spec.yield_masters():
             for bucket in self.test_config.buckets:
+                host = master.split(':')[0]
                 for statement in statements:
-                    host = master.split(':')[0]
                     self.rest.exec_n1ql_stmnt(host, statement.format(bucket))
+                self.rest.wait_for_indexes_to_become_online(host=host)
 
     @with_stats
     def access(self):

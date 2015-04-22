@@ -16,8 +16,8 @@ workers = 20
 
 [n1ql]
 indexes =
-    CREATE PRIMARY INDEX ON `{bucket}` using gsi;
-    CREATE INDEX by_coins ON `{bucket}` (by_coins.f) using gsi;
+    #primary::CREATE PRIMARY INDEX ON `{bucket}` using gsi;
+    by_coins::CREATE INDEX {name} ON `{bucket}` (by_coins.f) using gsi;
 
 [access]
 creates = 0
@@ -31,7 +31,7 @@ workers = 0
 time = 60
 doc_gen = new
 n1ql_queries =
-    SELECT email.f.f AS _email, coins.f AS _coins FROM `bucket-1` where coins.f >-0 AND coins.f <= {coins[f]};
+    SELECT email.f.f AS _email, coins.f AS _coins FROM `{bucket}` where coins.f >=0 AND coins.f <= {coins[f]};
 n1ql_throughput = 10
 n1ql_workers = 1
 

@@ -6,6 +6,8 @@ from perfrunner.workloads.n1ql import INDEX_STATEMENTS
 
 class N1QLTest(PerfTest):
 
+    COLLECTORS = {'n1ql_stats': True}
+
     def __init__(self, *args, **kwargs):
         super(N1QLTest, self).__init__(*args, **kwargs)
 

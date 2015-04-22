@@ -9,7 +9,7 @@ from tuqquey.tuq import QueryTests
 
 class TuqOptionsTest(QueryTests):
 
-    COLLECTORS = {'n1ql_latency': True}
+    COLLECTORS = {'n1ql_latency': True, 'n1ql_stats': True}
 
     def __init__(self, *args, **kwargs):
         super(TuqTest, self).__init__(*args, **kwargs)

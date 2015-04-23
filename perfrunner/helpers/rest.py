@@ -362,7 +362,7 @@ class RestHelper(object):
 
     def exec_n1ql_stmnt(self, host, stmnt):
         logger.info('Executing: {}'.format(stmnt))
-        api = 'http://{}:8093/query'.format(host)
+        api = 'http://{}:8093/query/service'.format(host)
         data = {
             'statement': '{0}'.format(stmnt)
         }
@@ -370,13 +370,13 @@ class RestHelper(object):
 
     def n1ql_query(self, host, stmnt):
         logger.info('Executing: {}'.format(stmnt))
-        api = 'http://{}:8093/query'.format(host)
+        api = 'http://{}:8093/query/service'.format(host)
         headers = {'content-type': 'text/plain'}
         self.post(url=api, data=stmnt, headers=headers)
 
     def wait_for_indexes_to_become_online(self, host, index_name=None):
         # POLL to ensure the indexes become online
-        url = 'http://{}:8093/query'.format(host)
+        url = 'http://{}:8093/query/service'.format(host)
         data = {
             'statement': 'SELECT * FROM system:indexes'
         }

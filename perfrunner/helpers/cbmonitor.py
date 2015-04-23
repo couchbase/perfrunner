@@ -81,6 +81,8 @@ class CbAgent(object):
             test.cluster_spec.rest_credentials
         self.settings.bucket_password = test.test_config.bucket.password
 
+        self.settings.new_n1ql_queries = test.test_config.access_settings.n1ql_queries
+
         self.collectors = []
         self.processes = []
         self.snapshots = []

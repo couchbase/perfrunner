@@ -35,6 +35,6 @@ workers = 1
 time = 1800
 doc_gen = new
 n1ql_queries =
-    SELECT * FROM `{bucket}` [hint by_email] WHERE email.f.f = "{email[f][f]}";
+    SELECT * FROM `{bucket}` WHERE email.f.f = "{email[f][f]}";
 n1ql_throughput = 10
 n1ql_workers = 1

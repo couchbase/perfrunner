@@ -221,7 +221,9 @@ class RemoteLinuxHelper(object):
     def restart(self):
         logger.info('Restarting server')
         environ = ' '.join('{}={}'.format(k, v) for (k, v) in self.env.items())
-        run(environ + ' numactl --interleave=all /etc/init.d/couchbase-server restart')
+        run(environ +
+            ' numactl --interleave=all /etc/init.d/couchbase-server restart',
+            pty=False)
 
     def restart_with_alternative_num_vbuckets(self, num_vbuckets):
         logger.info('Changing number of vbuckets to {}'.format(num_vbuckets))
@@ -257,7 +259,7 @@ class RemoteLinuxHelper(object):
         if(getosname.find("CYGWIN") != -1):
             run('net stop CouchbaseServer')
         else:
-            run('/etc/init.d/couchbase-server stop')
+            run('/etc/init.d/couchbase-server stop', pty=False)
 
     @all_hosts
     def start_server(self):
@@ -266,7 +268,7 @@ class RemoteLinuxHelper(object):
         if(getosname.find("CYGWIN") != -1):
             run('net start CouchbaseServer')
         else:
-            run('/etc/init.d/couchbase-server start')
+            run('/etc/init.d/couchbase-server start', pty=False)
 
     def detect_if(self):
         for iface in ('em1', 'eth5', 'eth0'):

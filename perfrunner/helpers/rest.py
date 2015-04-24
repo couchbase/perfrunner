@@ -84,7 +84,13 @@ class RestHelper(object):
 
         api = 'http://{}/node/controller/setupServices'.format(host_port)
         data = {'services': services}
-        self.post(url=api, data=data)
+        resp = requests.Session().post(url=api, data=data)
+
+        # This post request would return a <NOT FOUND>
+        # if in case of a pre-sherlock server
+        if resp.status_code != 404:
+            if resp.status_code not in range(200, 203):
+                self.post(url=api, data=data)
 
     def add_node(self, host_port, new_host, services=None, uri=None):
         logger.info('Adding new node: {}'.format(new_host))

@@ -48,3 +48,8 @@ class N1QLTest(PerfTest):
         self.workload = self.test_config.access_settings
         self.access_bg()
         self.access()
+
+        if self.test_config.stats_settings.enabled:
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_query_latency(percentile=80)
+            )

@@ -524,6 +524,7 @@ class IndexSettings(PhaseSettings):
                                                 self.DISABLED_UPDATES))
         self.index_type = options.get('index_type')
 
+
 class SecondaryIndexSettings(PhaseSettings):
 
     NAME = '{}'
@@ -532,6 +533,7 @@ class SecondaryIndexSettings(PhaseSettings):
     def __init__(self, options):
         self.name = eval(options.get('name', self.NAME))
         self.field = eval(options.get('field', self.FIELD))
+
 
 class N1QLSettings(PhaseSettings):
 

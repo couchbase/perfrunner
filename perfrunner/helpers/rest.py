@@ -1,6 +1,7 @@
 import json
 import time
-import urllib2, base64
+import urllib2
+import base64
 from collections import namedtuple
 
 import requests
@@ -418,34 +419,34 @@ class RestHelper(object):
 
         url = 'http://{}:9102/getIndexStatus'.format(host)
         request = urllib2.Request(url)
-        base64string = base64.encodestring('%s:%s' % (rest_username, rest_password)).replace('\n', '') 
+        base64string = base64.encodestring('%s:%s' % (rest_username, rest_password)).replace('\n', '')
         request.add_header("Authorization", "Basic %s" % base64string)
 
         while True:
-           time.sleep(1)
-           response = urllib2.urlopen(request)
-           data = str(response.read())
-           json2i = json.loads(data)
-           status = json2i["status"][0]["status"]
-           if(status == 'Ready'):
-              break
+            time.sleep(1)
+            response = urllib2.urlopen(request)
+            data = str(response.read())
+            json2i = json.loads(data)
+            status = json2i["status"][0]["status"]
+            if(status == 'Ready'):
+                break
 
         finish_ts = time.time()
-        logger.info('secondary index build time: {}'.format(finish_ts-init_ts))
-        time_elapsed = round(finish_ts-init_ts)
+        logger.info('secondary index build time: {}'.format(finish_ts - init_ts))
+        time_elapsed = round(finish_ts - init_ts)
         return time_elapsed
 
     def wait_for_secindex_incr_build(self, host_port, bucket):
         # POLL until incremenal index build is complete
 
-        api = 'http://{}/pools/default/buckets/@index-{}/stats'.format(host_port,
-                                                                bucket)
+        api = 'http://{}/pools/default/buckets/@index-{}/stats'.format(host_port, bucket)
         while True:
-           time.sleep(1)
-           data = self.get(url=api).json()
-           status = data["op"]["samples"]["index/num_docs_pending"][-1]
-           if(status == 0):
-              break          
+            time.sleep(1)
+            data = self.get(url=api).json()
+            status = data["op"]["samples"]["index/num_docs_pending"][-1]
+            if(status == 0):
+                break
+
 
 class SyncGatewayRequestHelper(RestHelper):
 

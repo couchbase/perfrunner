@@ -1,5 +1,6 @@
 import time
-import urllib2, base64
+import urllib2
+import base64
 import json
 from logger import logger
 
@@ -23,26 +24,25 @@ class SecondaryIndexTest(PerfTest):
         self.secondaryindex_settings = None
         self.indexnode = None
         self.bucket = None
-        
+
         for name, servers in self.cluster_spec.yield_servers_by_role('index'):
             if not servers:
                 raise Exception('No index servers specified for cluster \"{}\",'
                                 ' cannot create indexes'.format(name))
             self.indexnode = servers[0]
-        
+
         for testbucket in self.test_config.buckets:
             self.bucket = testbucket
-        
-    
+
     @with_stats
     def build_secondaryindex(self):
         """call cbindex create command"""
         logger.info('building secondary index..')
         indexname = self.test_config.secondaryindex_settings.name
         field = self.test_config.secondaryindex_settings.field
-        idx = self.remote.build_secondary_index(self.indexnode, indexname,field)
+        idx = self.remote.build_secondary_index(self.indexnode, indexname, field)
         if idx:
-           logger.info('command status {}'.format(idx))
+            logger.info('command status {}'.format(idx))
         rest_username, rest_password = self.cluster_spec.rest_credentials
         time_elapsed = self.rest.wait_for_secindex_init_build(self.indexnode.split(':')[0],
                                                               rest_username, rest_password)
@@ -68,17 +68,18 @@ class InitialSecondaryIndexTest(SecondaryIndexTest):
         init_ts = time.time()
         self.build_secondaryindex()
         finish_ts = time.time()
-        time_elapsed = finish_ts-init_ts
+        time_elapsed = finish_ts - init_ts
         time_elapsed = self.reporter.finish('Initial secondary index', time_elapsed)
         self.reporter.post_to_sf(
             *self.metric_helper.get_indexing_meta(value=time_elapsed,
                                                   index_type='Initial')
         )
 
+
 class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
 
     """
-    The test measures time it takes to build index for the first time as well as 
+    The test measures time it takes to build index for the first time as well as
     incremental build. There is no disabling of index updates in incremental building,
     index updating is conurrent to KV incremental load.
     """

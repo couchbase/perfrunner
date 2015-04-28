@@ -115,6 +115,13 @@ class RemoteLinuxHelper(object):
         return self.ARCH[arch]
 
     @single_host
+    def build_secondary_index(self, host_port, indexname, fields):
+        logger.info('building secondary index')
+        idx = run('/opt/couchbase/bin/cbindex -auth="Administrator:password" -server {} -type create'
+                  ' -bucket bucket-1 -index {} -fields={}'.format(hostport, indexname, fields), pty=False)
+        return idx
+
+    @single_host
     def detect_openssl(self, pkg):
         logger.info('Detecting openssl version')
         if pkg == 'rpm':

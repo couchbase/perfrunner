@@ -1,0 +1,30 @@
+[test_case]
+test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
+title = 1 bucket x 20M x 2KB,single 2i index, no mutations during initial build only
+summary = Secondary Indexing test, 4 KV nodes, 1 2i node 1 bucket x 20M x 2KB
+larger_is_better = false
+
+[cluster]
+mem_quota = 30000
+initial_nodes = 5
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[load]
+items = 2000000
+size = 2048
+workers = 20
+
+[secondary]
+name = myindex
+field = email
+
+[access]
+creates = 100
+ops = 2000000
+items = 2000000
+size = 2048
+workers = 20

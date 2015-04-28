@@ -201,6 +201,11 @@ class TestConfig(Config):
         return IndexSettings(options)
 
     @property
+    def secondaryindex_settings(self):
+        options = self._get_options_as_dict('secondary')
+        return SecondaryIndexSettings(options)
+
+    @property
     def n1ql_settings(self):
         options = self._get_options_as_dict('n1ql')
         return N1QLSettings(options)
@@ -519,6 +524,14 @@ class IndexSettings(PhaseSettings):
                                                 self.DISABLED_UPDATES))
         self.index_type = options.get('index_type')
 
+class SecondaryIndexSettings(PhaseSettings):
+
+    NAME = '{}'
+    FIELD = '{}'
+
+    def __init__(self, options):
+        self.name = eval(options.get('name', self.NAME))
+        self.field = eval(options.get('field', self.FIELD))
 
 class N1QLSettings(PhaseSettings):
 

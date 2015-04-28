@@ -527,12 +527,12 @@ class IndexSettings(PhaseSettings):
 
 class SecondaryIndexSettings(PhaseSettings):
 
-    NAME = '{}'
-    FIELD = '{}'
+    NAME = 'noname'
+    FIELD = 'nofield'
 
     def __init__(self, options):
-        self.name = eval(options.get('name', self.NAME))
-        self.field = eval(options.get('field', self.FIELD))
+        self.name = str(options.get('name', self.NAME))
+        self.field = str(options.get('field', self.FIELD))
 
 
 class N1QLSettings(PhaseSettings):

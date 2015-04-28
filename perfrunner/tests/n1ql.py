@@ -1,7 +1,6 @@
 import logger
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import PerfTest
-from perfrunner.workloads.n1ql import INDEX_STATEMENTS
 
 
 class N1QLTest(PerfTest):

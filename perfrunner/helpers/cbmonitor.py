@@ -7,8 +7,8 @@ from multiprocessing import Process
 import requests
 from cbagent.collectors import (NSServer, PS, TypePerf, IO, Net, ActiveTasks,
                                 SpringLatency, SpringQueryLatency,
-                                SpringN1QLQueryLatency, N1QLStats,
-                                ObserveLatency, XdcrLag)
+                                SpringN1QLQueryLatency, SecondaryStats,
+                                N1QLStats, ObserveLatency, XdcrLag)
 from cbagent.metadata_client import MetadataClient
 from decorator import decorator
 from logger import logger
@@ -88,7 +88,7 @@ class CbAgent(object):
         self.snapshots = []
 
     def prepare_collectors(self, test,
-                           latency=False,
+                           latency=False, secondary_stats=False,
                            query_latency=False, n1ql_latency=False,
                            n1ql_stats=False, index_latency=False,
                            persist_latency=False, replicate_latency=False,
@@ -109,6 +109,8 @@ class CbAgent(object):
             self.prepare_query_latency(clusters, test)
         if n1ql_latency:
             self.prepare_n1ql_latency(clusters, test)
+        if secondary_stats:
+            self.prepare_secondary_stats(clusters)
         if n1ql_stats:
             self.prepare_n1ql_stats(clusters)
         if index_latency:
@@ -126,6 +128,13 @@ class CbAgent(object):
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
             self.collectors.append(NSServer(settings))
+
+    def prepare_secondary_stats(self, clusters):
+        for cluster in clusters:
+            settings = copy(self.settings)
+            settings.cluster = cluster
+            settings.master_node = self.clusters[cluster]
+            self.collectors.append(SecondaryStats(settings))
 
     def prepare_n1ql_stats(self, clusters):
         for cluster in clusters:

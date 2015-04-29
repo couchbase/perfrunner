@@ -118,7 +118,7 @@ class RemoteLinuxHelper(object):
     def build_secondary_index(self, host_port, indexname, fields):
         logger.info('building secondary index')
         idx = run('/opt/couchbase/bin/cbindex -auth="Administrator:password" -server {} -type create'
-                  ' -bucket bucket-1 -index {} -fields={}'.format(hostport, indexname, fields), pty=False)
+                  ' -bucket bucket-1 -index {} -fields={}'.format(host_port, indexname, fields), pty=False)
         return idx
 
     @single_host

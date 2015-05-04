@@ -8,7 +8,6 @@ from couchbase.user_constants import OBS_NOTFOUND
 from logger import logger
 from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
 from tap import TAP
-import dcp
 
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import pretty_dict, uhex
@@ -285,51 +284,6 @@ class TapTest(PerfTest):
         self.reporter.start()
         self.consume()
         self.reporter.finish('Backfilling')
-
-
-class UprTest(TapTest):
-
-    """
-    Load data and then read entire data set via UPR protocol (single-threaded
-    consumer).
-    """
-
-    def consume(self):
-        password = self.test_config.bucket.password
-        for master in self.cluster_spec.yield_masters():
-            host = master.split(':')[0]
-            memcached_port = self.rest.get_memcached_port(master)
-            for bucket in self.test_config.buckets:
-                logger.info(
-                    'Reading data via UPR from {}/{}'.format(host, bucket)
-                )
-                upr_client = DcpClient(host=host, port=memcached_port)
-                upr_client.sasl_auth_plain(username=bucket, password=password)
-                mcd_client = MemcachedClient(host=host, port=memcached_port)
-                mcd_client.sasl_auth_plain(user=bucket, password=password)
-
-                op = upr_client.open_producer('stream')
-                response = op.next_response()
-                if response['status'] != SUCCESS:
-                    logger.interrupt('Failed to open producer')
-
-                for vb in range(1024):
-                    vb_stats = mcd_client.stats('vbucket-seqno {}'.format(vb))
-                    uuid = long(vb_stats['vb_{}:uuid'.format(vb)])
-                    high_seqno = long(vb_stats['vb_{}:high_seqno'.format(vb)])
-
-                    op = upr_client.stream_req(vb=vb,
-                                               flags=0,
-                                               start_seqno=0,
-                                               end_seqno=high_seqno,
-                                               vb_uuid=uuid,
-                                               high_seqno=high_seqno)
-                    while op.has_response():
-                        response = op.next_response()
-                        if response['opcode'] != CMD_STREAM_REQ:
-                            break
-                    upr_client.close_stream(vbucket=vb)
-                upr_client.shutdown()
 
 
 class FragmentationTest(PerfTest):

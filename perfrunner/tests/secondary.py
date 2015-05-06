@@ -159,5 +159,5 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
         logger.info('Scan throughput: {}'.format(scanthr))
         if self.test_config.stats_settings.enabled:
             self.reporter.post_to_sf(
-                scanthr
+                round(scanthr, 1)
             )

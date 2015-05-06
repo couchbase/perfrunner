@@ -1,0 +1,23 @@
+[test_case]
+test = perfrunner.tests.secondary.SecondaryIndexingThroughputTest
+title = 2i scan throughput (scanps), 1 bucket x 20M x 2KB, non-DGM, single index
+summary = 2i scan throughput test , 4 kv nodes, 1 indexer node, 1 bucket x 20M x 2KB, single index
+larger_is_better = true
+
+[cluster]
+mem_quota = 30000
+initial_nodes = 5
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[load]
+items = 20000000
+size = 2048
+workers = 20
+
+[secondary]
+name = myindex
+field = email

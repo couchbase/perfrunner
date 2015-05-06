@@ -8,7 +8,7 @@ secondary =
 
 [clients]
 hosts =
-    172.23.105.215
+    172.23.97.105
 credentials = root:couchbase
 
 [storage]

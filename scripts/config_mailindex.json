@@ -1,0 +1,21 @@
+{
+       "Concurrency" : 16,
+       "Clients" : 1,
+       "ScanSpecs" : [
+          {
+             "Limit" : 0,
+             "Low" : [
+                "000015"
+             ],
+             "Repeat" : 9999,
+             "Type" : "Range",
+             "Bucket" : "bucket-1",
+             "High" : [
+                "000028"
+             ],
+             "Id" : 1,
+             "Inclusion" : 3,
+             "Index" : "myindex"
+           }
+       ]
+}

@@ -2,6 +2,7 @@ import time
 import urllib2
 import base64
 import json
+import subprocess
 from logger import logger
 
 from perfrunner.helpers.cbmonitor import with_stats
@@ -114,3 +115,49 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
             *self.metric_helper.get_indexing_meta(value=time_elapsed,
                                                   index_type='Incremental')
         )
+
+
+class SecondaryIndexingThroughputTest(SecondaryIndexTest):
+
+    """
+    The test applies scan workload against the 2i server and measures
+    and reports the average scan throughput
+    """
+
+    @with_stats
+    def apply_scanworkload(self):
+        rest_username, rest_password = self.cluster_spec.rest_credentials
+        logger.info('Initiating scan workload')
+        cmdstr = "cbindexperf -cluster {} -auth=\"{}:{}\" -configfile scripts/config_mailindex.json -resultfile result.json".format(self.indexnode, rest_username, rest_password)
+        status = subprocess.call(cmdstr, shell=True)
+        if status != 0:
+            raise Exception('Scan workload could not be applied')
+        else:
+            logger.info('Scan workload applied')
+
+    def read_scanresults(self):
+        with open('scripts/config_mailindex.json') as config_file:
+            configdata = json.load(config_file)
+        numscans = configdata['ScanSpecs'][0]['Repeat']
+
+        with open('result.json') as result_file:
+            resdata = json.load(result_file)
+        duration_s = (resdata['ScanResults'][0]['Duration']) / 1000000000.0
+        numRows = resdata['ScanResults'][0]['Rows']
+        """scans and rows per sec"""
+        scansps = numscans / duration_s
+        rowps = numRows / duration_s
+        return scansps, rowps
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.compact_bucket()
+        from_ts, to_ts = self.build_secondaryindex()
+        self.apply_scanworkload()
+        scanthr, rowthr = self.read_scanresults()
+        logger.info('Scan throughput: {}'.format(scanthr))
+        if self.test_config.stats_settings.enabled:
+            self.reporter.post_to_sf(
+                scanthr
+            )

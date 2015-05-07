@@ -187,6 +187,11 @@ class RestHelper(object):
                                                                 bucket)
         return self.get(url=api).json()
 
+    def get_goxdcr_stats(self, host_port, bucket):
+        api = 'http://{}/pools/default/buckets/@goxdcr-{}/stats'.format(host_port,
+                                                                        bucket)
+        return self.get(url=api).json()
+
     def add_remote_cluster(self, host_port, remote_host_port, name,
                            certificate=None):
         logger.info('Adding remote cluster {} with reference {}'.format(

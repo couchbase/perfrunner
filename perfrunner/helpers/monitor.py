@@ -54,10 +54,13 @@ class Monitor(RestHelper):
 
         logger.info('Rebalance completed')
 
-    def _wait_for_empty_queues(self, host_port, bucket, queues):
+    def _wait_for_empty_queues(self, host_port, bucket, queues, stats_function=None):
         metrics = list(queues)
         while metrics:
-            bucket_stats = self.get_bucket_stats(host_port, bucket)
+            if stats_function:
+                bucket_stats = stats_function(host_port, bucket)
+            else:
+                bucket_stats = self.get_bucket_stats(host_port, bucket)
             # As we are changing metrics in the loop; take a copy of
             # it to iterate over.
             for metric in list(metrics):
@@ -87,7 +90,16 @@ class Monitor(RestHelper):
 
     def monitor_xdcr_queues(self, host_port, bucket):
         logger.info('Monitoring XDCR queues: {}'.format(bucket))
-        self._wait_for_empty_queues(host_port, bucket, self.XDCR_QUEUES)
+        # MB-14366: XDCR stats endpoint changed in 4.0
+        try:
+            self.get_goxdcr_stats(host_port, bucket)
+        except ValueError:
+            # Use default stats function for older builds.
+            stats_function = None
+        else:
+            stats_function = self.get_goxdcr_stats
+        self._wait_for_empty_queues(host_port, bucket, self.XDCR_QUEUES,
+                                    stats_function)
 
     def monitor_task(self, host_port, task_type):
         logger.info('Monitoring task: {}'.format(task_type))

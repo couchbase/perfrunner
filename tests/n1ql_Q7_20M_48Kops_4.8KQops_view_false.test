@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLTest
-title = N1QL Q6 1Bux20Mx1K, Order By Limit Query, 38.4KGops, 9.6KSops, 48KQops, GSI, stale=false
-summary = Order By Limit Query, 38.4KGops, 9.6KSops, 48KQops
+title = N1QL Q7 1Bux20Mx1K, Order By Query, 38.4KGops, 9.6KSops, 4.8KQops, View, stale=false
+summary = Order By Query, 38.4KGops, 9.6KSops, 4.8KQops
 larger_is_better = false
 
 [cluster]
@@ -22,7 +22,7 @@ doc_gen = new
 
 [n1ql]
 indexes =
-    by_state::CREATE INDEX {name} ON `{bucket}` (state.f) using gsi;
+    by_state::CREATE INDEX {name} ON `{bucket}` (state.f) using view;
 
 [access]
 creates = 0
@@ -36,6 +36,6 @@ workers = 24
 time = 1200
 doc_gen = new
 n1ql_queries =
-    SELECT name.f.f AS _name, street.f.f AS _street FROM `{bucket}` WHERE state.f="{state[f]}" ORDER BY name.f.f.f LIMIT 100;
+    SELECT name.f.f AS _name, street.f.f AS _street FROM `{bucket}` WHERE state.f="{state[f]}" ORDER BY name.f.f.f;
 n1ql_throughput = 4800
 n1ql_workers = 720

@@ -60,6 +60,7 @@ class CouchbaseInstaller(object):
             patterns = (
                 'couchbase-server-enterprise_{arch}_{version}-rel.setup.{pkg}',
                 'couchbase_server-enterprise-windows-amd64-{version}.{pkg}',
+                'couchbase-server-enterprise_{version}-windows_amd64.{pkg}',
                 'couchbase_server/{release}/{build}/couchbase_server-enterprise-windows-amd64-{version}.exe',
             )
 

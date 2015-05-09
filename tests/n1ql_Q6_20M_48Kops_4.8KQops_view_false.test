@@ -39,3 +39,4 @@ n1ql_queries =
     SELECT name.f.f AS _name, street.f.f AS _street FROM `{bucket}` WHERE capped_small="{capped_small}" ORDER BY name.f.f.f LIMIT 100;
 n1ql_throughput = 4800
 n1ql_workers = 720
+n1ql_stale = false

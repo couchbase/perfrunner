@@ -39,3 +39,4 @@ n1ql_queries =
     SELECT * FROM `{bucket}` where capped_small = "{capped_small}";
 n1ql_throughput = 48000
 n1ql_workers = 960
+n1ql_stale = ok

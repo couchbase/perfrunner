@@ -39,3 +39,4 @@ n1ql_queries =
     SELECT sum(coins.f) FROM `{bucket}` WHERE state.f="{state[f]}";
 n1ql_throughput = 48000
 n1ql_workers = 960
+n1ql_stale = ok

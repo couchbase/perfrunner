@@ -422,6 +422,7 @@ class PhaseSettings(object):
     THROUGHPUT = float('inf')
     QUERY_THROUGHPUT = float('inf')
     N1QL_THROUGHPUT = float('inf')
+    N1QL_STALE = 'ok'
 
     DOC_GEN = 'old'
     ITEMS = 0
@@ -456,6 +457,7 @@ class PhaseSettings(object):
                                                   self.QUERY_THROUGHPUT))
         self.n1ql_throughput = float(options.get('n1ql_throughput',
                                                  self.N1QL_THROUGHPUT))
+        self.n1ql_stale = options.get('n1ql_stale', self.N1QL_STALE)
 
         self.doc_gen = options.get('doc_gen', self.DOC_GEN)
         self.size = int(options.get('size', self.SIZE))

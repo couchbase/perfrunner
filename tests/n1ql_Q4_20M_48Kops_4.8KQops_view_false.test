@@ -39,3 +39,4 @@ n1ql_queries =
     SELECT count(*) FROM `{bucket}` WHERE category > {category};
 n1ql_throughput = 4800
 n1ql_workers = 720
+n1ql_stale = false

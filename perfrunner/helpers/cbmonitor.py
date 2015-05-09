@@ -242,7 +242,6 @@ class CbAgent(object):
             )
 
     def prepare_n1ql_latency(self, clusters, test):
-        index_type = test.test_config.index_settings.index_type
         prefix = test.target_iterator.prefix
         for cluster in clusters:
             settings = copy(self.settings)
@@ -250,8 +249,7 @@ class CbAgent(object):
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
             self.collectors.append(
-                SpringN1QLQueryLatency(settings, test.workload, prefix=prefix,
-                                       index_type=index_type)
+                SpringN1QLQueryLatency(settings, test.workload, prefix=prefix)
             )
 
     def prepare_active_tasks(self, clusters):

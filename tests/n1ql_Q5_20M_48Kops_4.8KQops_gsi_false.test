@@ -22,7 +22,7 @@ doc_gen = new
 
 [n1ql]
 indexes =
-    by_state::CREATE INDEX {name} ON `{bucket}` (state.f) using gsi;
+    by_capped_small::CREATE INDEX {name} ON `{bucket}` (capped_small) using gsi;
 
 [access]
 creates = 0
@@ -36,7 +36,7 @@ workers = 24
 time = 1200
 doc_gen = new
 n1ql_queries =
-    SELECT sum(coins.f) FROM `{bucket}` WHERE state.f="{state[f]}";
+    SELECT sum(coins.f) FROM `{bucket}` WHERE capped_small="{capped_small}";
 n1ql_throughput = 4800
 n1ql_workers = 720
 n1ql_stale = false

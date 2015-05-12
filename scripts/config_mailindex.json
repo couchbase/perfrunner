@@ -1,5 +1,5 @@
 {
-       "Concurrency" : 16,
+       "Concurrency" : 30,
        "Clients" : 1,
        "ScanSpecs" : [
           {
@@ -7,7 +7,7 @@
              "Low" : [
                 "000015"
              ],
-             "Repeat" : 9999,
+             "Repeat" : 99999,
              "Type" : "Range",
              "Bucket" : "bucket-1",
              "High" : [

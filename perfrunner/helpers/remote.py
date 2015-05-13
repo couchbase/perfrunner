@@ -1,5 +1,4 @@
 import time
-import os
 
 from decorator import decorator
 from fabric import state
@@ -476,17 +475,8 @@ class RemoteLinuxHelper(object):
         run('/root/sgw_check_logs.sh gateload > sgw_check_logs.out', warn_only=True)
         self.try_get('gateload.log.gz', 'gateload.log-{}.gz'.format(idx))
         self.try_get('gateload_config.json', 'gateload_config_{}.json'.format(idx))
+        self.try_get('gateload_expvars.json', 'gateload_expvar_{}.json'.format(idx))
         self.try_get('sgw_check_logs.out', 'sgw_check_logs_gateload_{}.out'.format(idx))
-
-        expvar_url = "{}:9876/debug/vars".format(local_ip)
-        logger.info("Getting gateload expvar from {}".format(expvar_url))
-
-        dest_file = 'gateload_expvar_{}.json'.format(idx)
-        if os.path.exists(dest_file):
-            os.remove(dest_file)
-        self.wget(expvar_url, outdir='.', outfile=dest_file)
-        self.try_get(dest_file, dest_file)
-        logger.info('Saved {}'.format(dest_file))
 
     @all_gateways
     def collect_profile_data_gateways(self):

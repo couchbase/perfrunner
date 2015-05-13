@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.MixedLatencyTest
-title = KV throughput (qps), 1 bucket x 100M x 2KB, DGM 05pct, 500 mutations/sec/node
+title = KV latency (ms), 1 bucket x 100M x 2KB, DGM 05pct, 500 mutations/sec/node
 summary = Read-heavy query test (80/20), 4 nodes, 1 bucket x 100M x 2KB, DGM 05pct, 500 mutations/sec/node, unbounded qps
 larger_is_better = true
 

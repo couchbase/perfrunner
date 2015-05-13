@@ -81,6 +81,13 @@ class RestHelper(object):
         data = {'memoryQuota': mem_quota}
         self.post(url=api, data=data)
 
+    def set_index_mem_quota(self, host_port, mem_quota):
+        logger.info('Configuring indexer memory quota: {} to {} MB'.format(host_port, mem_quota))
+
+        api = 'http://{}/pools/default'.format(host_port)
+        data = {'indexMemoryQuota': mem_quota}
+        self.post(url=api, data=data)
+
     def set_services(self, host_port, services):
         logger.info('Configuring services on master node: {}'.format(host_port))
 

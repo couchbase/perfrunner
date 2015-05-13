@@ -46,6 +46,11 @@ class ClusterManager(object):
         for server in self.servers():
             self.rest.set_mem_quota(server, self.mem_quota)
 
+    def set_index_mem_quota(self):
+        for _, servers in self.cluster_spec.yield_servers_by_role('index'):
+            for server in servers:
+                self.rest.set_index_mem_quota(server, self.mem_quota)
+
     def set_services(self):
         for (_, servers), initial_nodes in zip(self.clusters(),
                                                self.initial_nodes):
@@ -243,6 +248,7 @@ def main():
     cm.set_data_path()
     cm.set_services()
     cm.set_mem_quota()
+    cm.set_index_mem_quota()
     cm.set_auth()
 
     time.sleep(30)  # crutch

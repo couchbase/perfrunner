@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.kv.DrainTest
-title = Avg. write queue (100M items), 1 bucket x 100M x 5KB, 3K updates/sec/node, no DGM
-summary = Write-heavy KV test (80/20), 1 bucket x 100M x 5KB, 3K updates/sec/node, no DGM
+title = Avg. write queue (2M items), 1 bucket x 2M x 5KB, 3K updates/sec/node, no DGM
+summary = Write-heavy KV test (80/20), 1 bucket x 2M x 5KB, 3K updates/sec/node, no DGM
 larger_is_better = false
 
 [cluster]
@@ -16,12 +16,12 @@ eviction_policy = fullEviction
 db_percentage = 20
 
 [load]
-items = 100000000
+items = 2000000
 size = 5120
 workers = 10
 
 [hot_load]
-items = 100000000
+items = 2000000
 size = 5120
 workers = 12
 working_set = 10
@@ -33,7 +33,7 @@ updates = 80
 deletes = 0
 throughput = 7500
 workers = 10
-items = 100000000
+items = 2000000
 size = 5120
 working_set = 10
 working_set_access = 98

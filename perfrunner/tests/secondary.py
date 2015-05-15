@@ -27,6 +27,10 @@ class SecondaryIndexTest(PerfTest):
         self.secondaryindex_settings = None
         self.indexnode = None
         self.bucket = None
+        self.indexes = []
+
+        for index in self.test_config.secondaryindex_settings.name.split(','):
+            self.indexes.append(index)
 
         for name, servers in self.cluster_spec.yield_servers_by_role('index'):
             if not servers:
@@ -41,14 +45,16 @@ class SecondaryIndexTest(PerfTest):
     def build_secondaryindex(self):
         """call cbindex create command"""
         logger.info('building secondary index..')
-        indexname = self.test_config.secondaryindex_settings.name
-        field = self.test_config.secondaryindex_settings.field
-        idx = self.remote.build_secondary_index(self.indexnode, indexname, field)
-        if idx:
-            logger.info('command status {}'.format(idx))
+
+        fields = []
+        for field in self.test_config.secondaryindex_settings.field.split(','):
+            fields.append(field)
+
+        self.remote.build_secondary_index(self.indexnode, self.bucket, self.indexes, fields)
+
         rest_username, rest_password = self.cluster_spec.rest_credentials
         time_elapsed = self.rest.wait_for_secindex_init_build(self.indexnode.split(':')[0],
-                                                              rest_username, rest_password)
+                                                              self.indexes, rest_username, rest_password)
         return time_elapsed
 
 
@@ -95,7 +101,11 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
         access_settings = self.test_config.access_settings
         self.worker_manager.run_workload(access_settings, self.target_iterator)
         self.worker_manager.wait_for_workers()
-        self.rest.wait_for_secindex_incr_build(self.indexnode, self.bucket)
+        load_settings = self.test_config.load_settings
+        access_settings = self.test_config.access_settings
+        numitems = load_settings.items + access_settings.items
+        self.rest.wait_for_secindex_incr_build(self.indexnode.split(':')[0], self.bucket,
+                                               self.indexes, numitems)
 
     def run(self):
         self.load()

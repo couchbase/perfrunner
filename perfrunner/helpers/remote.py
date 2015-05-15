@@ -115,11 +115,30 @@ class RemoteLinuxHelper(object):
         return self.ARCH[arch]
 
     @single_host
-    def build_secondary_index(self, host_port, indexname, fields):
-        logger.info('building secondary index')
-        idx = run('/opt/couchbase/bin/cbindex -auth="Administrator:password" -server {} -type create'
-                  ' -bucket bucket-1 -index {} -fields={}'.format(host_port, indexname, fields), pty=False)
-        return idx
+    def build_secondary_index(self, host_port, bucket, indexes, fields):
+        logger.info('building secondary indexes')
+        defer = '{\\\\\\\"defer_build\\\\\\\":true}'
+        for index, fields in zip(indexes, fields):
+            str = "/opt/couchbase/bin/cbindex -auth=\"Administrator:password\" -server {} -type" \
+                  " create -bucket {} -index {} -fields={}" \
+                  " -with=\"{}\"".format(host_port, bucket, index, fields, defer)
+            status = run(str, shell_escape=False, pty=False)
+            if status:
+                logger.info('cbindex status {}'.format(status))
+
+        time.sleep(10)
+        buildstr = ""
+        for i, index in enumerate(indexes):
+            if(i < len(indexes) - 1):
+                buildstr = buildstr + bucket + ":" + index + ","
+            else:
+                buildstr = buildstr + bucket + ":" + index
+            str = "/opt/couchbase/bin/cbindex -auth=\"Administrator:password\" -server {} -type" \
+                  " build -indexes {}".format(host_port, buildstr)
+        logger.info('cbindex build command {}'.format(str))
+        status = run(str, shell_escape=False, pty=False)
+        if status:
+            logger.info('cbindex status {}'.format(status))
 
     @single_host
     def detect_openssl(self, pkg):

@@ -91,13 +91,12 @@ class Monitor(RestHelper):
     def monitor_xdcr_queues(self, host_port, bucket):
         logger.info('Monitoring XDCR queues: {}'.format(bucket))
         # MB-14366: XDCR stats endpoint changed in 4.0
-        try:
-            self.get_goxdcr_stats(host_port, bucket)
-        except ValueError:
+        if self.check_rest_endpoint_exists("http://{}/pools/default/buckets/@xdcr-{}/stats"
+                                           .format(host_port, bucket)):
+            stats_function = self.get_goxdcr_stats
+        else:
             # Use default stats function for older builds.
             stats_function = None
-        else:
-            stats_function = self.get_goxdcr_stats
         self._wait_for_empty_queues(host_port, bucket, self.XDCR_QUEUES,
                                     stats_function)
 

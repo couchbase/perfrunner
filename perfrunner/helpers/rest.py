@@ -133,6 +133,20 @@ class RestHelper(object):
         counters = self.get(url=api).json()['counters']
         return counters.get('rebalance_start') == counters.get('rebalance_success')
 
+    def check_rest_endpoint_exists(self, api):
+        """Check that a REST endpoint exists, to allow for different endpoints to
+           be monitored dependant on version. """
+        for _ in range(MAX_RETRY):
+            try:
+                r = requests.get(url=api, auth=self.auth)
+            except ConnectionError:
+                time.sleep(RETRY_DELAY * 2)
+                continue
+            if r.status_code in range(200, 203):
+                return True
+            else:
+                return False
+
     def get_failover_counter(self, host_port):
         api = 'http://{}/pools/default'.format(host_port)
         counters = self.get(url=api).json()['counters']

@@ -243,7 +243,6 @@ def main():
         cm.restart_with_alternative_num_cpus()
         cm.restart_with_tcmalloc_aggressive_decommit()
         cm.disable_moxi()
-    time.sleep(300)  # crutch
     cm.configure_internal_settings()
     cm.set_data_path()
     cm.set_services()

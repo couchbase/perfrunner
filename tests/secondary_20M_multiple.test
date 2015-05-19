@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
-title = 1 bucket x 20M x 2KB,single 2i index, no mutations during initial build only
+title = 1 bucket x 20M x 2KB,five 2i indexes, no mutations during initial build only
 summary = Secondary Indexing test, 4 KV nodes, 1 2i node 1 bucket x 20M x 2KB
 larger_is_better = false
 
@@ -16,7 +16,7 @@ view_percentage = 100
 [load]
 items = 20000000
 size = 100
-workers = 5
+workers = 20
 
 [secondary]
 name = myindex1,myindex2,myindex3,myindex4,myindex5
@@ -27,4 +27,4 @@ creates = 100
 ops = 20000000
 items = 20000000
 size = 100
-workers = 5
+workers = 20

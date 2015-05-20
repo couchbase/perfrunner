@@ -7,7 +7,7 @@ from multiprocessing import Process
 import requests
 from cbagent.collectors import (NSServer, PS, TypePerf, IO, Net, ActiveTasks,
                                 SpringLatency, SpringQueryLatency,
-                                SpringN1QLQueryLatency, SecondaryStats,
+                                SpringN1QLQueryLatency, SecondaryStats, SecondaryLatencyStats,
                                 N1QLStats, ObserveLatency, XdcrLag)
 from cbagent.metadata_client import MetadataClient
 from decorator import decorator
@@ -68,6 +68,7 @@ class CbAgent(object):
             'seriesly_host': test.test_config.stats_settings.seriesly['host'],
             'cbmonitor_host_port': test.test_config.stats_settings.cbmonitor['host'],
             'interval': test.test_config.stats_settings.interval,
+            'secondary_statsfile': test.test_config.stats_settings.secondary_statsfile,
             'buckets': buckets,
             'hostnames': hostnames,
             'sync_gateway_nodes':
@@ -92,7 +93,7 @@ class CbAgent(object):
                            query_latency=False, n1ql_latency=False,
                            n1ql_stats=False, index_latency=False,
                            persist_latency=False, replicate_latency=False,
-                           xdcr_lag=False):
+                           xdcr_lag=False, secondary_latency=False):
         clusters = self.clusters.keys()
 
         self.prepare_ns_server(clusters)
@@ -111,6 +112,8 @@ class CbAgent(object):
             self.prepare_n1ql_latency(clusters, test)
         if secondary_stats:
             self.prepare_secondary_stats(clusters)
+        if secondary_latency:
+            self.prepare_secondary_latency(clusters)
         if n1ql_stats:
             self.prepare_n1ql_stats(clusters)
         if index_latency:
@@ -135,6 +138,13 @@ class CbAgent(object):
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
             self.collectors.append(SecondaryStats(settings))
+
+    def prepare_secondary_latency(self, clusters):
+        for cluster in clusters:
+            settings = copy(self.settings)
+            settings.cluster = cluster
+            settings.master_node = self.clusters[cluster]
+            self.collectors.append(SecondaryLatencyStats(settings))
 
     def prepare_n1ql_stats(self, clusters):
         for cluster in clusters:

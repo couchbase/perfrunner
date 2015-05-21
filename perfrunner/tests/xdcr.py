@@ -41,6 +41,8 @@ class XdcrTest(PerfTest):
             }
             if self.settings.replication_protocol:
                 params['type'] = self.settings.replication_protocol
+            if self.settings.filter_expression:
+                params['filterExpression'] = self.settings.filter_expression
             self.rest.start_replication(m1, params)
 
     def enable_xdcr(self):

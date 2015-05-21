@@ -29,6 +29,7 @@ class ClusterManager(object):
 
         self.initial_nodes = test_config.cluster.initial_nodes
         self.mem_quota = test_config.cluster.mem_quota
+        self.index_mem_quota = test_config.cluster.index_mem_quota
         self.group_number = test_config.cluster.group_number or 1
         self.roles = cluster_spec.roles
 
@@ -47,9 +48,8 @@ class ClusterManager(object):
             self.rest.set_mem_quota(server, self.mem_quota)
 
     def set_index_mem_quota(self):
-        for _, servers in self.cluster_spec.yield_servers_by_role('index'):
-            for server in servers:
-                self.rest.set_index_mem_quota(server, self.mem_quota)
+        for server in self.servers():
+            self.rest.set_index_mem_quota(server, self.index_mem_quota)
 
     def set_services(self):
         for (_, servers), initial_nodes in zip(self.clusters(),

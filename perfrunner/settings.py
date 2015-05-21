@@ -268,6 +268,7 @@ class ClusterSettings(object):
 
     def __init__(self, options):
         self.mem_quota = int(options.get('mem_quota'))
+        self.index_mem_quota = int(options.get('index_mem_quota', self.mem_quota))
         self.initial_nodes = [
             int(nodes) for nodes in options.get('initial_nodes').split()
         ]

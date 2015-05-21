@@ -145,7 +145,8 @@ class ClusterManager(object):
                        'ht_locks',
                        'max_num_shards',
                        'max_threads',
-                       'warmup_min_memory_threshold'):
+                       'warmup_min_memory_threshold',
+                       'bfilter_enabled'):
             value = getattr(self.test_config.bucket, option)
             if value != -1:
                 logger.info('Changing {} to {}'.format(option, value))

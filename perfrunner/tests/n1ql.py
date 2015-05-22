@@ -5,7 +5,11 @@ from perfrunner.tests import PerfTest
 
 class N1QLTest(PerfTest):
 
-    COLLECTORS = {'n1ql_latency': True, 'n1ql_stats': True}
+    COLLECTORS = {
+        'n1ql_latency': True,
+        'n1ql_stats': True,
+        'secondary_stats': True
+    }
 
     def __init__(self, *args, **kwargs):
         super(N1QLTest, self).__init__(*args, **kwargs)

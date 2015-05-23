@@ -265,10 +265,11 @@ class ClusterSettings(object):
     RUN_CBQ = 0
     SFWI = 0
     TCMALLOC_AGGRESSIVE_DECOMMIT = 0
+    INDEX_MEM_QUOTA = 256
 
     def __init__(self, options):
         self.mem_quota = int(options.get('mem_quota'))
-        self.index_mem_quota = int(options.get('index_mem_quota', self.mem_quota))
+        self.index_mem_quota = int(options.get('index_mem_quota', INDEX_MEM_QUOTA))
         self.initial_nodes = [
             int(nodes) for nodes in options.get('initial_nodes').split()
         ]

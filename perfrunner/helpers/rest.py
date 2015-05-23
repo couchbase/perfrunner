@@ -95,6 +95,18 @@ class RestHelper(object):
         data = {'indexMemoryQuota': mem_quota}
         self.post(url=api, data=data)
 
+    def set_index_log_level(self, host_port, level):
+        host = host_port.replace('8091', '9102')
+        api = 'http://{}/settings'.format(host)
+        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+
+        logger.info('Setting indexer log level: {} to {}'.format(host, level))
+
+        settings = self.get(url=api).json()
+        settings['projector.settings.log_level'] = level
+        settings['indexer.settings.log_level'] = level
+        self.post(url=api, data=json.dumps(settings), headers=headers)
+
     def set_services(self, host_port, services):
         logger.info('Configuring services on master node: {}'.format(host_port))
 

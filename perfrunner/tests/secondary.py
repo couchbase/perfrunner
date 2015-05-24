@@ -28,6 +28,11 @@ class SecondaryIndexTest(PerfTest):
         self.indexnode = None
         self.bucket = None
         self.indexes = []
+        self.secondaryDB = ''
+
+        if self.test_config.secondaryindex_settings.db == 'memdb':
+            self.secondaryDB = 'memdb'
+        logger.info('secondary storage DB..{}'.format(self.secondaryDB))
 
         for index in self.test_config.secondaryindex_settings.name.split(','):
             self.indexes.append(index)
@@ -50,7 +55,8 @@ class SecondaryIndexTest(PerfTest):
         for field in self.test_config.secondaryindex_settings.field.split(','):
             fields.append(field)
 
-        self.remote.build_secondary_index(self.indexnode, self.bucket, self.indexes, fields)
+        self.remote.build_secondary_index(self.indexnode, self.bucket, self.indexes, fields,
+                                          self.secondaryDB)
 
         rest_username, rest_password = self.cluster_spec.rest_credentials
         time_elapsed = self.rest.wait_for_secindex_init_build(self.indexnode.split(':')[0],

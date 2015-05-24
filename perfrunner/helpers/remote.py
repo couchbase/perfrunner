@@ -117,11 +117,17 @@ class RemoteLinuxHelper(object):
     @single_host
     def build_secondary_index(self, host_port, bucket, indexes, fields):
         logger.info('building secondary indexes')
+        usingdb = ''
+        if secondarydb == 'memdb':
+            usingdb = '-using ' + secondarydb
+        else:
+            pass
         defer = '{\\\\\\\"defer_build\\\\\\\":true}'
         for index, fields in zip(indexes, fields):
             str = "/opt/couchbase/bin/cbindex -auth=\"Administrator:password\" -server {} -type" \
-                  " create -bucket {} -index {} -fields={}" \
-                  " -with=\"{}\"".format(host_port, bucket, index, fields, defer)
+                  " create -bucket {} -index {} -fields={} {}" \
+                  " -with=\"{}\"".format(host_port, bucket, index, fields, usingdb, defer)
+            logger.info('submitting cbindex command {}'.format(str))
             status = run(str, shell_escape=False, pty=False)
             if status:
                 logger.info('cbindex status {}'.format(status))

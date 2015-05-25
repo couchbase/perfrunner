@@ -115,7 +115,7 @@ class RemoteLinuxHelper(object):
         return self.ARCH[arch]
 
     @single_host
-    def build_secondary_index(self, host_port, bucket, indexes, fields):
+    def build_secondary_index(self, host_port, bucket, indexes, fields, secondarydb):
         logger.info('building secondary indexes')
         usingdb = ''
         if secondarydb == 'memdb':

@@ -333,7 +333,7 @@ class BucketSettings(object):
     EXPIRY_PAGER_SLEEP_TIME = -1
     DEFRAGMENTER_ENABLED = -1
     HT_LOCKS = -1
-    BFILTER_ENABLED = 'true'
+    BFILTER_ENABLED = None
 
     def __init__(self, options):
         self.password = options.get('password', self.PASSWORD)

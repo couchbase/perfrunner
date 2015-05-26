@@ -153,7 +153,7 @@ class ClusterManager(object):
                        'warmup_min_memory_threshold',
                        'bfilter_enabled'):
             value = getattr(self.test_config.bucket, option)
-            if value != -1:
+            if value != -1 and value is not None:
                 logger.info('Changing {} to {}'.format(option, value))
                 for master in self.masters():
                     for bucket in self.test_config.buckets:

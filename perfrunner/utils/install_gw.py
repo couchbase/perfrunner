@@ -195,17 +195,16 @@ def main():
                       help='enable verbose logging')
 
     options, args = parser.parse_args()
-    override = args and [arg.split('.') for arg in ' '.join(args).split(',')]
 
     if not options.cluster_spec_fname or not options.test_config_fname \
             or not options.version:
         parser.error('Missing mandatory parameter')
 
     cluster_spec = ClusterSpec()
-    cluster_spec.parse(options.cluster_spec_fname)
+    cluster_spec.parse(options.cluster_spec_fname, args)
 
     test_config = TestConfig()
-    test_config.parse(options.test_config_fname, override)
+    test_config.parse(options.test_config_fname, args)
 
     installer = GatewayInstaller(cluster_spec, test_config, options)
     installer.install()

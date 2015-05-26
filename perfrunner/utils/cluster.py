@@ -232,12 +232,11 @@ def get_options():
 
 def main():
     options, args = get_options()
-    override = args and (arg.split('.') for arg in ' '.join(args).split(','))
 
     cluster_spec = ClusterSpec()
-    cluster_spec.parse(options.cluster_spec_fname)
+    cluster_spec.parse(options.cluster_spec_fname, args)
     test_config = TestConfig()
-    test_config.parse(options.test_config_fname, override)
+    test_config.parse(options.test_config_fname, args)
 
     cm = ClusterManager(cluster_spec, test_config, options.verbose)
 

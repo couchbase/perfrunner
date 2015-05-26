@@ -1,3 +1,4 @@
+import csv
 import json
 import os.path
 from ConfigParser import SafeConfigParser, NoOptionError, NoSectionError
@@ -25,7 +26,11 @@ class Config(object):
         self.config = SafeConfigParser()
         self.name = ''
 
-    def parse(self, fname, override=()):
+    def parse(self, fname, override):
+        if override:
+            override = [x for x in csv.reader(
+                ' '.join(override).split(','), delimiter='.')]
+
         logger.info('Reading configuration file: {}'.format(fname))
         if not os.path.isfile(fname):
             logger.interrupt('File doesn\'t exist: {}'.format(fname))

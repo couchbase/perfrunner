@@ -54,7 +54,7 @@ class ClusterManager(object):
     def set_index_log_level(self):
         for _, servers in self.cluster_spec.yield_servers_by_role('index'):
             for server in servers:
-                self.rest.set_index_log_level(server, 'warn')
+                self.rest.set_index_log_level(server, 'info')
 
     def set_services(self):
         for (_, servers), initial_nodes in zip(self.clusters(),

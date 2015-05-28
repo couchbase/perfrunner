@@ -10,11 +10,12 @@ def uhex():
 
 
 def pretty_dict(d):
-    return json.dumps(d, indent=4, sort_keys=True)
+    return json.dumps(d, indent=4, sort_keys=True,
+                      default=lambda o: o.__dict__)
 
 
 def log_phase(phase, settings):
-    logger.info('Running {}: {}'.format(phase, pretty_dict(settings.__dict__)))
+    logger.info('Running {}: {}'.format(phase, pretty_dict(settings)))
 
 
 def target_hash(*args):

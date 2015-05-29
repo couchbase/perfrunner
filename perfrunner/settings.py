@@ -200,6 +200,11 @@ class TestConfig(Config):
         return IndexSettings(options)
 
     @property
+    def spatial_settings(self):
+        options = self._get_options_as_dict('spatial')
+        return SpatialSettings(options)
+
+    @property
     def secondaryindex_settings(self):
         options = self._get_options_as_dict('secondary')
         return SecondaryIndexSettings(options)
@@ -504,8 +509,6 @@ class PhaseSettings(object):
 
         self.iterations = int(options.get('iterations', self.ITERATIONS))
 
-        self.filename = None
-
     def __str__(self):
         return str(self.__dict__)
 
@@ -552,6 +555,28 @@ class IndexSettings(PhaseSettings):
         self.disabled_updates = int(options.get('disabled_updates',
                                                 self.DISABLED_UPDATES))
         self.index_type = options.get('index_type')
+
+
+class SpatialSettings(object):
+
+    def __init__(self, options):
+        if not options:
+            return
+        self.indexes = []
+        if 'indexes' in options:
+            self.indexes = options.get('indexes').strip().split('\n')
+        self.disabled_updates = int(options.get('disabled_updates', 0))
+        self.dimensionality = int(options.get('dimensionality', 0))
+        self.data = options.get('data', None)
+        if 'view_names' in options:
+            self.view_names = options.get('view_names').strip().split('\n')
+        self.queries = options.get('queries', None)
+        self.workers = int(options.get('workers', 0))
+        self.throughput = float(options.get('throughput', float('inf')))
+        self.qparams = options.get('qparams', {})
+
+    def __str__(self):
+        return str(self.__dict__)
 
 
 class SecondaryIndexSettings(PhaseSettings):

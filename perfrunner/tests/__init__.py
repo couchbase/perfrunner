@@ -127,12 +127,16 @@ class PerfTest(object):
 
     def load(self):
         load_settings = self.test_config.load_settings
+        if self.test_config.spatial_settings:
+            load_settings.spatial = self.test_config.spatial_settings
         log_phase('load phase', load_settings)
         self.worker_manager.run_workload(load_settings, self.target_iterator)
         self.worker_manager.wait_for_workers()
 
     def hot_load(self):
         hot_load_settings = self.test_config.hot_load_settings
+        if self.test_config.spatial_settings:
+            hot_load_settings.spatial = self.test_config.spatial_settings
         log_phase('hot load phase', hot_load_settings)
         self.worker_manager.run_workload(hot_load_settings,
                                          self.target_iterator)
@@ -140,12 +144,16 @@ class PerfTest(object):
 
     def access(self):
         access_settings = self.test_config.access_settings
+        if self.test_config.spatial_settings:
+            access_settings.spatial = self.test_config.spatial_settings
         log_phase('access phase', access_settings)
         self.worker_manager.run_workload(access_settings, self.target_iterator)
         self.worker_manager.wait_for_workers()
 
     def access_bg(self):
         access_settings = self.test_config.access_settings
+        if self.test_config.spatial_settings:
+            access_settings.spatial = self.test_config.spatial_settings
         log_phase('access phase in background', access_settings)
         access_settings.index_type = self.test_config.index_settings.index_type
         access_settings.n1ql = getattr(self, 'n1ql', None)

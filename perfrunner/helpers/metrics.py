@@ -185,6 +185,21 @@ class MetricHelper(object):
 
         return round(query_latency), metric, metric_info
 
+    def calc_secondaryscan_latency(self, percentile):
+        metric = '{}_{}'.format(self.test_config.name, self.cluster_spec.name)
+        title = '{}th percentile secondary scan latency (ms), {}'.format(percentile,
+                                                                         self.metric_title)
+        metric_info = self._get_metric_info(title)
+
+        timings = []
+        db = 'secondaryscan_latency{}'.format(self.cluster_names[0])
+        data = self.seriesly[db].get_all()
+        timings += [value[' Nth-latency'] for value in data.values()]
+        timings = map(int, timings)
+        secondaryscan_latency = np.percentile(timings, percentile) / 1000000
+
+        return round(secondaryscan_latency), metric, metric_info
+
     def calc_kv_latency(self, operation, percentile):
         metric = '{}_{}_{}th_{}'.format(self.test_config.name,
                                         operation,

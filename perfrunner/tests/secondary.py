@@ -177,3 +177,42 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
             self.reporter.post_to_sf(
                 round(scanthr, 1)
             )
+
+
+class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
+
+    """
+    The test applies scan workload against the 2i server and measures
+    and reports the average scan throughput
+    """
+    COLLECTORS = {'secondary_stats': True, 'secondary_latency': True}
+
+    @with_stats
+    def apply_scanworkload(self):
+        rest_username, rest_password = self.cluster_spec.rest_credentials
+        logger.info('Initiating scan workload with stats output')
+        cmdstr = "cbindexperf -cluster {} -auth=\"{}:{}\" -configfile scripts/config_scanlatency.json -resultfile result.json -statsfile /root/statsfile".format(self.indexnode, rest_username, rest_password)
+        status = subprocess.call(cmdstr, shell=True)
+        if status != 0:
+            raise Exception('Scan workload could not be applied')
+        else:
+            logger.info('Scan workload applied')
+
+    def run(self):
+        rmfile = "rm -f {}".format(self.test_config.stats_settings.secondary_statsfile)
+        status = subprocess.call(rmfile, shell=True)
+        if status != 0:
+            raise Exception('existing 2i latency stats file could not be removed')
+        else:
+            logger.info('Existing 2i latency stats file removed')
+
+        self.load()
+        self.wait_for_persistence()
+        self.compact_bucket()
+        from_ts, to_ts = self.build_secondaryindex()
+        self.access_bg()
+        self.apply_scanworkload()
+        if self.test_config.stats_settings.enabled:
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_secondaryscan_latency(percentile=80)
+            )

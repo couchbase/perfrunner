@@ -10,6 +10,7 @@ from spring.wgen import WorkloadGen
 from sqlalchemy import create_engine
 
 from perfrunner import celerylocal, celeryremote
+from perfrunner.helpers.misc import log_phase
 from perfrunner.settings import REPO
 
 
@@ -95,7 +96,7 @@ class RemoteWorkerManager(object):
     def run_workload(self, settings, target_iterator, timer=None):
         self.workers = []
         for target in target_iterator:
-            logger.info('Running workload generator')
+            log_phase('workload generator', settings)
 
             qname = '{}-{}'.format(target.node.split(':')[0], target.bucket)
             queue = Queue(name=qname)

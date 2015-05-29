@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.secondary.SecondaryIndexingThroughputTest
-title = 2i scan throughput (scanps), 1 bucket x 20M x 2KB, non-DGM, single index
-summary = 2i scan throughput test , 4 kv nodes, 1 indexer node, 1 bucket x 20M x 2KB, single index
+title = Secondary index scan throughput (scanps), 1 bucket x 20M x 2KB, non-DGM, single index
+summary = Secondary index scan throughput test , 4 kv, 1 index node, 1 bucket x 20M x 2KB, single index
 larger_is_better = true
 
 [cluster]

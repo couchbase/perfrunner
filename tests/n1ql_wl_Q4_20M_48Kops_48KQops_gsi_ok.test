@@ -36,7 +36,11 @@ size = 1024
 workers = 24
 time = 1200
 doc_gen = new
-n1ql_queries =
-    SELECT count(*) FROM `{bucket}` WHERE category > {category};
+n1ql_queries = full-scan
 n1ql_throughput = 48000
-n1ql_scan_consistency = not_bounded
+n1ql_workers = 480
+
+[n1ql-full-scan]
+statement = SELECT count(*) FROM `{bucket}` WHERE category > {category};
+max-parallelism = 1
+scan_consistency = not_bounded

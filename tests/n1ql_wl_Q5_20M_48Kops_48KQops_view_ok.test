@@ -36,8 +36,11 @@ size = 1024
 workers = 24
 time = 1200
 doc_gen = new
-n1ql_queries =
-    SELECT sum(coins.f) FROM `{bucket}` WHERE capped_small="{capped_small}";
+n1ql_queries = aggregation-query
 n1ql_throughput = 48000
 n1ql_workers = 960
-n1ql_scan_consistency = not_bounded
+
+[n1ql-aggregation-query]
+statement = SELECT sum(coins.f) FROM `{bucket}` WHERE capped_small="{capped_small}";
+max-parallelism = 1
+scan_consistency = not_bounded

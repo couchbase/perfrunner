@@ -217,7 +217,9 @@ class TestConfig(Config):
     @property
     def access_settings(self):
         options = self._get_options_as_dict('access')
-        return AccessSettings(options)
+        access = AccessSettings(options)
+        access.resolve_subcategories(self)
+        return access
 
     @property
     def rebalance_settings(self):
@@ -247,6 +249,9 @@ class TestConfig(Config):
     def worker_settings(self):
         options = self._get_options_as_dict('worker_settings')
         return WorkerSettings(options)
+
+    def get_n1ql_query_definition(self, query_name):
+        return self._get_options_as_dict('n1ql-{}'.format(query_name))
 
 
 class TestCaseSettings(object):
@@ -438,7 +443,6 @@ class PhaseSettings(object):
     THROUGHPUT = float('inf')
     QUERY_THROUGHPUT = float('inf')
     N1QL_THROUGHPUT = float('inf')
-    N1QL_SCAN_CONSISTENCY = 'not_bounded'
 
     DOC_GEN = 'old'
     ITEMS = 0
@@ -473,8 +477,6 @@ class PhaseSettings(object):
                                                   self.QUERY_THROUGHPUT))
         self.n1ql_throughput = float(options.get('n1ql_throughput',
                                                  self.N1QL_THROUGHPUT))
-        self.n1ql_scan_consistency = options.get('n1ql_scan_consistency',
-                                                 self.N1QL_SCAN_CONSISTENCY)
 
         self.doc_gen = options.get('doc_gen', self.DOC_GEN)
         self.size = int(options.get('size', self.SIZE))
@@ -493,7 +495,7 @@ class PhaseSettings(object):
 
         self.n1ql_queries = []
         if 'n1ql_queries' in options:
-            self.n1ql_queries = options.get('n1ql_queries').strip().split('\n')
+            self.n1ql_queries = options.get('n1ql_queries').strip().split(',')
 
         self.seq_reads = self.SEQ_READS
         self.seq_updates = self.SEQ_UPDATES
@@ -508,6 +510,15 @@ class PhaseSettings(object):
         self.async = bool(int(options.get('async', self.ASYNC)))
 
         self.iterations = int(options.get('iterations', self.ITERATIONS))
+
+        self.filename = None
+
+    def resolve_subcategories(self, config):
+        subcategories = self.n1ql_queries
+        query_specs = []
+        for subcategory in subcategories:
+            query_specs.append(config.get_n1ql_query_definition(subcategory))
+        self.n1ql_queries = query_specs
 
     def __str__(self):
         return str(self.__dict__)

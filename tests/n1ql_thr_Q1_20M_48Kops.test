@@ -32,7 +32,10 @@ size = 1024
 workers = 24
 time = 1200
 doc_gen = new
-n1ql_queries =
-    SELECT * FROM `{bucket}` USE KEYS("{key}");
+n1ql_queries = n1ql-key-value-lookup
 n1ql_throughput = 1000000
 n1ql_workers = 240
+
+[n1ql-key-value-lookup]
+statement = SELECT * FROM `{bucket}` USE KEYS("{key}");
+max-parallelism = 1

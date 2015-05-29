@@ -41,6 +41,8 @@ n1ql_throughput = 48000
 n1ql_workers = 960
 
 [n1ql-order-by-query]
-statement = SELECT name.f.f AS _name, street.f.f AS _street FROM `{bucket}` WHERE capped_small="{capped_small}" ORDER BY name.f.f.f;
+use_prepared = True
+statement = SELECT name.f.f AS _name, street.f.f AS _street FROM `bucket-1` WHERE capped_small=$1 ORDER BY name.f.f.f;
 max-parallelism = 1
 scan_consistency = not_bounded
+args = ["{capped_small}"]

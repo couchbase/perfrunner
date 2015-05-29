@@ -41,6 +41,8 @@ n1ql_throughput = 1000000
 n1ql_workers = 960
 
 [n1ql-range-scan]
-statement = SELECT * FROM `{bucket}` where capped_small = "{capped_small}";
+use_prepared = True
+statement = SELECT * FROM `bucket-1` where capped_small = $1;
 max-parallelism = 1
 scan_consistency = not_bounded
+args = ["{capped_small}"]

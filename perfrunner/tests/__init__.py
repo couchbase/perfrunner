@@ -147,6 +147,7 @@ class PerfTest(object):
         if self.test_config.spatial_settings:
             access_settings.spatial = self.test_config.spatial_settings
         log_phase('access phase', access_settings)
+        access_settings.n1ql_queries = getattr(self, 'n1ql_queries', access_settings.n1ql_queries)
         self.worker_manager.run_workload(access_settings, self.target_iterator)
         self.worker_manager.wait_for_workers()
 
@@ -158,6 +159,7 @@ class PerfTest(object):
         access_settings.index_type = self.test_config.index_settings.index_type
         access_settings.n1ql = getattr(self, 'n1ql', None)
         access_settings.ddocs = getattr(self, 'ddocs', None)
+        access_settings.n1ql_queries = getattr(self, 'n1ql_queries', access_settings.n1ql_queries)
         self.worker_manager.run_workload(access_settings, self.target_iterator,
                                          timer=access_settings.time)
 

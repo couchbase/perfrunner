@@ -38,6 +38,28 @@ class N1QLTest(PerfTest):
             self.rest.wait_for_indexes_to_become_online(host=query_node,
                                                         index_name=index_name)
 
+    def _create_prepared_statements(self):
+        for name, servers in self.cluster_spec.yield_servers_by_role('n1ql'):
+            if not servers:
+                raise Exception('No query servers specified for cluster \"{}\",'
+                                ' cannot create prepared statement'.format(name))
+
+            if not self.test_config.buckets:
+                raise Exception('No buckets specified for cluster \"{}\", '
+                                'cannot create prepared statement'.format(name))
+
+            query_node = servers[0].split(':')[0]
+
+            self.n1ql_queries = []
+            access_settings = self.test_config.access_settings
+            for query in access_settings.n1ql_queries:
+                if 'use_prepared' in query and query['use_prepared']:
+                    stmt = 'PREPARE {}'.format(query['statement'])
+                    resp = self.rest.n1ql_query(query_node, stmt)
+                    del query['statement']
+                    query['prepared'] = '"' + resp['results'][0]['name'] + '"'
+                self.n1ql_queries.append(query)
+
     @with_stats
     def access(self):
         super(N1QLTest, self).timer()
@@ -58,6 +80,7 @@ class N1QLLatencyTest(N1QLTest):
 
         self.build_index()
 
+        self._create_prepared_statements()
         self.workload = self.test_config.access_settings
         self.access_bg()
         self.access()
@@ -80,6 +103,7 @@ class N1QLThroughputTest(N1QLTest):
 
         self.build_index()
 
+        self._create_prepared_statements()
         self.workload = self.test_config.access_settings
         self.access_bg()
         self.access()

@@ -429,7 +429,8 @@ class RestHelper(object):
         logger.info('Executing: {}'.format(stmnt))
         api = 'http://{}:8093/query/service'.format(host)
         headers = {'content-type': 'text/plain'}
-        self.post(url=api, data=stmnt, headers=headers)
+        resp = self.post(url=api, data=stmnt, headers=headers)
+        return resp.json()
 
     def wait_for_indexes_to_become_online(self, host, index_name=None):
         # POLL to ensure the indexes become online

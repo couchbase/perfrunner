@@ -41,6 +41,8 @@ n1ql_throughput = 4800
 n1ql_workers = 720
 
 [n1ql-singleton-unique-lookup]
-statement = SELECT * FROM `{bucket}` WHERE email.f.f = "{email[f][f]}";
+use_prepared = True
+statement = SELECT * FROM `bucket-1` WHERE email.f.f = $1;
 max-parallelism = 1
 scan_consistency = request_plus
+args = ["{email[f][f]}"]

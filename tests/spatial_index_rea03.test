@@ -1,0 +1,33 @@
+[test_case]
+test = perfrunner.tests.spatial.SpatialIndexTest
+title = 1 bucket x 6M x 3d, non-DGM, 1 x 1 spatial view (3d), no mutations
+summary = Spatial indexing test, 4 nodes, 1 bucket x 6M x 3d, non-DGM, 4 x 4 spatial views (rea03 dataset)
+larger_is_better = false
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 4
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[load]
+items = 6000000
+size = 1024
+workers = 20
+doc_gen = spatial
+
+[spatial]
+indexes =
+    main::{"spatial":{"geom":"function (doc) {\n  if (doc.a !== undefined && doc.b !== undefined && doc.c !== undefined) {\n    emit([doc.a, doc.b, doc.c], null);\n  }\n}"}}
+dimensionality = 3
+data = /tmp/spatial/data/rea03
+disabled_updates = 1
+
+[access]
+creates = 100
+ops = 5958999
+items = 6000000
+workers = 2

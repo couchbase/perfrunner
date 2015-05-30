@@ -1,0 +1,34 @@
+[test_case]
+test = perfrunner.tests.spatial.SpatialQueryLatencyTest
+title = 1 bucket x 1M x non-DGM, 1 x 1 spatial views, no mutations, 400 queries/sec
+summary = Read-only spatial query test, 4 nodes, 1 bucket x 1M, non-DGM, 1 x 1 views, no mutations, 1000 items returned, 400 qps
+larger_is_better = false
+
+[stats]
+post_rss = 1
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 4
+num_buckets = 1
+
+[compaction]
+db_percentage = 20
+
+[load]
+items = 500000
+size = 2048
+workers = 20
+doc_gen = spatial
+
+[spatial]
+indexes =
+    main::{"spatial":{"geom":"function (doc) {\n  if (doc.a !== undefined && doc.b !== undefined) {\n    emit([doc.a, doc.b], null);\n  }\n}"}}
+view_names = main::geom
+dimensionality = 2
+queries = /tmp/spatial/query3/abs02
+data = /tmp/spatial/data/abs02
+workers = 16
+
+[access]
+time = 600

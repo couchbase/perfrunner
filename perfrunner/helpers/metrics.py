@@ -200,6 +200,17 @@ class MetricHelper(object):
 
         return round(couch_views_ops)
 
+    def calc_avg_couch_spatial_ops(self):
+        query_params = self._get_query_params('avg_couch_spatial_ops')
+
+        couch_spatial_ops = 0
+        for bucket in self.test_config.buckets:
+            db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
+            data = self.seriesly[db].query(query_params)
+            couch_spatial_ops += data.values()[0][0]
+
+        return round(couch_spatial_ops)
+
     def calc_query_latency(self, percentile):
         metric = '{}_{}'.format(self.test_config.name, self.cluster_spec.name)
         title = '{}th percentile query latency (ms), {}'.format(percentile,

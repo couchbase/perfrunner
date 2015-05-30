@@ -1,0 +1,40 @@
+[test_case]
+test = perfrunner.tests.spatial.SpatialQueryLatencyTest
+title = 1 bucket x 12M x non-DGM, 1 x 1 spatial views (3d), 500 mutations/sec/node, 400 queries/sec
+summary = Read-only spatial query test, 4 nodes, 1 bucket x 12M x 3d, non-DGM, 1 x 1 views, 500 mutations/sec/node, 1000 items returned, 400 qps
+larger_is_better = false
+
+[stats]
+post_rss = 1
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 1
+num_buckets = 1
+
+[compaction]
+db_percentage = 20
+
+[load]
+items = 6000000
+workers = 20
+doc_gen = spatial
+
+[spatial]
+indexes =
+    main::{"spatial":{"geom":"function (doc) {\n  if (doc.a !== undefined && doc.b !== undefined && doc.c !== undefined) {\n    emit([doc.a, doc.b, doc.c], null);\n  }\n}"}}
+view_names = main::geom
+dimensionality = 3
+queries = /tmp/spatial/query3/rea03
+data = /tmp/spatial/data/rea03
+workers = 12
+troughput = 400
+
+[access]
+creates = 4
+reads = 80
+updates = 12
+deletes = 4
+items = 6000000
+throughput = 10000
+time = 600

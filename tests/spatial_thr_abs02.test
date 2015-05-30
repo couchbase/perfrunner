@@ -1,0 +1,30 @@
+[test_case]
+test = perfrunner.tests.spatial.SpatialQueryThroughputTest
+title = Spatial View query throughput (qps), 1 bucket x 1M, non-DGM, 1 x 1 spatial views, 500 mutations/sec/node
+summary = Read-only spatial view query test, 4 nodes, 1 bucket x 1M, non-DGM, 1 x 1 views, 500 mutations/sec/node, unbounded qps
+larger_is_better = true
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 4
+num_buckets = 1
+
+[load]
+items = 1000000
+size = 2048
+workers = 20
+doc_gen = spatial
+
+[spatial]
+indexes =
+    main::{"spatial":{"geom":"function (doc) {\n  if (doc.a !== undefined && doc.b !== undefined) {\n    emit([doc.a, doc.b], null);\n  }\n}"}}
+view_names = main::geom
+dimensionality = 2
+data = /tmp/spatial/data/abs02
+queries = /tmp/spatial/query3/abs02
+workers = 24
+throughput = 10000
+
+[access]
+workers = 0
+time = 600

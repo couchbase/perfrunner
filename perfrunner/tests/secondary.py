@@ -3,6 +3,8 @@ import urllib2
 import base64
 import json
 import subprocess
+import numpy as np
+
 from logger import logger
 
 from perfrunner.helpers.cbmonitor import with_stats
@@ -226,3 +228,56 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
             self.reporter.post_to_sf(
                 *self.metric_helper.calc_secondaryscan_latency(percentile=80)
             )
+
+
+class SecondaryIndexingLatencyTest(SecondaryIndexTest):
+
+    """
+    This test applies scan workload against a 2i server and measures
+    the indexing latency
+    """
+
+    @with_stats
+    def apply_scanworkload(self):
+        rest_username, rest_password = self.cluster_spec.rest_credentials
+        logger.info('Initiating the scan workload')
+        cmdstr = "cbindexperf -cluster {} -auth=\"{}:{}\" -configfile scripts/config_indexinglatency.json -resultfile result.json".format(self.indexnode, rest_username, rest_password)
+        status = subprocess.call(cmdstr, shell=True)
+        if status != 0:
+            raise Exception('Scan workload could not be applied')
+        else:
+            logger.info('Scan workload applied')
+        return status
+
+    def run(self):
+        self.load()
+
+        self.wait_for_persistence()
+        self.compact_bucket()
+
+        self.hot_load()
+
+        self.build_secondaryindex()
+
+        num_samples = 100
+        samples = []
+
+        while num_samples != 0:
+            access_settings = self.test_config.access_settings
+            self.worker_manager.run_workload(access_settings, self.target_iterator)
+            self.worker_manager.wait_for_workers()
+            time_before = time.time()
+            status = self.apply_scanworkload()
+            time_after = time.time()
+            if status == 0:
+                num_samples = num_samples - 1
+                time_elapsed = (time_after - time_before) / 1000000.0
+                samples.append(time_elapsed)
+
+        temp = np.array(samples)
+        indexing_latency_percentile_80 = np.percentile(temp, 80)
+
+        logger.info('Indexing latency (80th percentile): {} ms.'.format(indexing_latency_percentile_80))
+
+        if self.test_config.stats_settings.enabled:
+            self.reporter.post_to_sf(indexing_latency_percentile_80)

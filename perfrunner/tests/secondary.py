@@ -158,7 +158,7 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
 
         with open('result.json') as result_file:
             resdata = json.load(result_file)
-        duration_s = (resdata['ScanResults'][0]['Duration']) / 1000000000.0
+        duration_s = (resdata['Duration'])
         numRows = resdata['ScanResults'][0]['Rows']
         """scans and rows per sec"""
         scansps = numscans / duration_s

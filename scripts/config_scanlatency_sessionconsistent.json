@@ -3,7 +3,7 @@
        "Clients" : 1,
        "ScanSpecs" : [
           {
-             "Limit" : 0,
+             "Limit" : 1        ,
              "Low" : [
                 "000015"
              ],
@@ -15,7 +15,9 @@
              ],
              "Id" : 1,
              "Inclusion" : 3,
-             "Index" : "myindex"
+             "Index" : "myindex",
+             "NInterval" : 100,
+             "Consistency" : true
            }
        ]
 }

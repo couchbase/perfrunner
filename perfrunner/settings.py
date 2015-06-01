@@ -553,11 +553,13 @@ class SecondaryIndexSettings(PhaseSettings):
     NAME = 'noname'
     FIELD = 'nofield'
     DB = ''
+    STALE = 'true'
 
     def __init__(self, options):
         self.name = str(options.get('name', self.NAME))
         self.field = str(options.get('field', self.FIELD))
         self.db = str(options.get('db', self.DB))
+        self.stale = str(options.get('stale', self.STALE))
 
 
 class N1QLSettings(PhaseSettings):

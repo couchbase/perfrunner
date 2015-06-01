@@ -15,7 +15,7 @@
              ],
              "Id" : 1,
              "Inclusion" : 3,
-             "Index" : "myindex"
+             "Index" : "myindex",
              "Consistency" : true
            }
        ]

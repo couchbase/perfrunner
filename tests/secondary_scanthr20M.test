@@ -21,3 +21,13 @@ workers = 20
 [secondary]
 name = myindex
 field = email
+
+[access]
+creates = 1
+reads = 50
+updates = 48
+deletes = 1
+throughput = 10000
+items = 20000000
+size = 2048
+workers = 10

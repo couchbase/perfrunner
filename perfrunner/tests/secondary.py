@@ -170,6 +170,7 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
         self.wait_for_persistence()
         self.compact_bucket()
         from_ts, to_ts = self.build_secondaryindex()
+        self.access_bg()
         self.apply_scanworkload()
         scanthr, rowthr = self.read_scanresults()
         logger.info('Scan throughput: {}'.format(scanthr))

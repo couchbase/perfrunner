@@ -29,6 +29,7 @@ class SecondaryIndexTest(PerfTest):
         self.bucket = None
         self.indexes = []
         self.secondaryDB = ''
+        self.configfile = ''
 
         if self.test_config.secondaryindex_settings.db == 'memdb':
             self.secondaryDB = 'memdb'
@@ -140,17 +141,15 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
     and reports the average scan throughput
     """
 
-    configfile = ''
-
     @with_stats
     def apply_scanworkload(self):
         rest_username, rest_password = self.cluster_spec.rest_credentials
         logger.info('Initiating scan workload')
         if self.test_config.secondaryindex_settings.stale == 'false':
-            configfile = 'scripts/config_mailindex_sessionconsistent.json'
+            self.configfile = 'scripts/config_mailindex_sessionconsistent.json'
         else:
-            configfile = 'scripts/config_mailindex.json'
-        cmdstr = "cbindexperf -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json".format(self.indexnode, rest_username, rest_password, configfile)
+            self.configfile = 'scripts/config_mailindex.json'
+        cmdstr = "cbindexperf -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json".format(self.indexnode, rest_username, rest_password, self.configfile)
         status = subprocess.call(cmdstr, shell=True)
         if status != 0:
             raise Exception('Scan workload could not be applied')
@@ -158,7 +157,7 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
             logger.info('Scan workload applied')
 
     def read_scanresults(self):
-        with open('{}'.format(configfile)) as config_file:
+        with open('{}'.format(self.configfile)) as config_file:
             configdata = json.load(config_file)
         numscans = configdata['ScanSpecs'][0]['Repeat']
 
@@ -198,12 +197,11 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
     def apply_scanworkload(self):
         rest_username, rest_password = self.cluster_spec.rest_credentials
         logger.info('Initiating scan workload with stats output')
-        configfile = ''
         if self.test_config.secondaryindex_settings.stale == 'false':
-            configfile = 'scripts/config_scanlatency_sessionconsistent.json'
+            self.configfile = 'scripts/config_scanlatency_sessionconsistent.json'
         else:
-            configfile = 'scripts/config_scanlatency.json'
-        cmdstr = "cbindexperf -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json -statsfile /root/statsfile".format(self.indexnode, rest_username, rest_password, configfile)
+            self.configfile = 'scripts/config_scanlatency.json'
+        cmdstr = "cbindexperf -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json -statsfile /root/statsfile".format(self.indexnode, rest_username, rest_password, self.configfile)
         status = subprocess.call(cmdstr, shell=True)
         if status != 0:
             raise Exception('Scan workload could not be applied')

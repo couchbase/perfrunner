@@ -20,7 +20,7 @@ class SecondaryIndexTest(PerfTest):
     It benchmarks dumb/bulk indexing.
     """
 
-    COLLECTORS = {'secondary_stats': True}
+    COLLECTORS = {'secondary_stats': True, 'secondary_debugstats': True}
 
     def __init__(self, *args):
         super(SecondaryIndexTest, self).__init__(*args)

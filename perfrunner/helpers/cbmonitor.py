@@ -8,7 +8,7 @@ import requests
 from cbagent.collectors import (NSServer, PS, TypePerf, IO, Net, ActiveTasks,
                                 SpringLatency, SpringQueryLatency,
                                 SpringN1QLQueryLatency, SecondaryStats, SecondaryLatencyStats,
-                                N1QLStats, ObserveLatency, XdcrLag)
+                                N1QLStats, SecondaryDebugStats, ObserveLatency, XdcrLag)
 from cbagent.metadata_client import MetadataClient
 from decorator import decorator
 from logger import logger
@@ -55,6 +55,10 @@ class CbAgent(object):
             master = servers[0].split(':')[0]
             self.clusters[cluster] = master
 
+        self.index_node = ''
+        for _, servers in test.cluster_spec.yield_servers_by_role('index'):
+            self.index_node = servers[0].split(':')[0]
+
         if hasattr(test, 'ALL_BUCKETS'):
             buckets = None
         else:
@@ -82,6 +86,7 @@ class CbAgent(object):
             test.cluster_spec.rest_credentials
         self.settings.bucket_password = test.test_config.bucket.password
 
+        self.settings.index_node = self.index_node
         self.settings.new_n1ql_queries = test.test_config.access_settings.n1ql_queries
 
         self.collectors = []
@@ -93,7 +98,8 @@ class CbAgent(object):
                            query_latency=False, n1ql_latency=False,
                            n1ql_stats=False, index_latency=False,
                            persist_latency=False, replicate_latency=False,
-                           xdcr_lag=False, secondary_latency=False):
+                           xdcr_lag=False, secondary_latency=False,
+                           secondary_debugstats=False):
         clusters = self.clusters.keys()
 
         self.prepare_ns_server(clusters)
@@ -112,6 +118,8 @@ class CbAgent(object):
             self.prepare_n1ql_latency(clusters, test)
         if secondary_stats:
             self.prepare_secondary_stats(clusters)
+        if secondary_debugstats:
+            self.prepare_secondary_debugstats(clusters)
         if secondary_latency:
             self.prepare_secondary_latency(clusters)
         if n1ql_stats:
@@ -138,6 +146,13 @@ class CbAgent(object):
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
             self.collectors.append(SecondaryStats(settings))
+
+    def prepare_secondary_debugstats(self, clusters):
+        for cluster in clusters:
+            settings = copy(self.settings)
+            settings.cluster = cluster
+            settings.master_node = self.clusters[cluster]
+            self.collectors.append(SecondaryDebugStats(settings))
 
     def prepare_secondary_latency(self, clusters):
         for cluster in clusters:

@@ -428,7 +428,7 @@ class PhaseSettings(object):
     THROUGHPUT = float('inf')
     QUERY_THROUGHPUT = float('inf')
     N1QL_THROUGHPUT = float('inf')
-    N1QL_STALE = 'ok'
+    N1QL_SCAN_CONSISTENCY = 'not_bounded'
 
     DOC_GEN = 'old'
     ITEMS = 0
@@ -463,7 +463,8 @@ class PhaseSettings(object):
                                                   self.QUERY_THROUGHPUT))
         self.n1ql_throughput = float(options.get('n1ql_throughput',
                                                  self.N1QL_THROUGHPUT))
-        self.n1ql_stale = options.get('n1ql_stale', self.N1QL_STALE)
+        self.n1ql_scan_consistency = options.get('n1ql_scan_consistency',
+                                                 self.N1QL_SCAN_CONSISTENCY)
 
         self.doc_gen = options.get('doc_gen', self.DOC_GEN)
         self.size = int(options.get('size', self.SIZE))

@@ -40,4 +40,4 @@ n1ql_queries =
     SELECT * FROM `{bucket}` WHERE email.f.f = "{email[f][f]}";
 n1ql_throughput = 48000
 n1ql_workers = 480
-n1ql_stale = ok
+n1ql_scan_consistency = not_bounded

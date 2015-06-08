@@ -39,5 +39,4 @@ doc_gen = new
 n1ql_queries =
     SELECT count(*) FROM `{bucket}` WHERE category > {category};
 n1ql_throughput = 48000
-n1ql_workers = 480
-n1ql_stale = ok
+n1ql_scan_consistency = not_bounded

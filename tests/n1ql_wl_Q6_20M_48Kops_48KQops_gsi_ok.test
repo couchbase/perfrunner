@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.n1ql.N1QLTest
+test = perfrunner.tests.n1ql.N1QLLatencyTest
 title = N1QL Q6 1Bux20Mx1K, Order By Limit Query, 38.4KGops, 9.6KSops, 48KQops, GSI, stale=ok
 summary = Order By Limit Query, 38.4KGops, 9.6KSops, 48KQops
 larger_is_better = false

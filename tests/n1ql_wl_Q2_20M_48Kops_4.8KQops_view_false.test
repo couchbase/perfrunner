@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.n1ql.N1QLTest
+test = perfrunner.tests.n1ql.N1QLLatencyTest
 title = N1QL Q2 1Bux20Mx1K, Singleton Unique Lookup, 38.4KGops, 9.6KSops, 4.8KQops, View, stale=false
 summary = Singleton Unique Lookup, 38.4KGops, 9.6KSops, 4.8KQops
 larger_is_better = false

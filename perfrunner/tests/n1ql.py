@@ -1,6 +1,7 @@
 import logger
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import PerfTest
+from exceptions import NotImplementedError
 
 
 class N1QLTest(PerfTest):
@@ -40,6 +41,15 @@ class N1QLTest(PerfTest):
     @with_stats
     def access(self):
         super(N1QLTest, self).timer()
+
+    def run(self):
+        raise NotImplementedError("N1QLTest is a base test and cannot be run")
+
+
+class N1QLLatencyTest(N1QLTest):
+
+    def __init__(self, *args, **kwargs):
+        super(N1QLLatencyTest, self).__init__(*args, **kwargs)
 
     def run(self):
         self.load()

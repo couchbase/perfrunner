@@ -57,7 +57,8 @@ class CbAgent(object):
 
         self.index_node = ''
         for _, servers in test.cluster_spec.yield_servers_by_role('index'):
-            self.index_node = servers[0].split(':')[0]
+            if servers:
+                self.index_node = servers[0].split(':')[0]
 
         if hasattr(test, 'ALL_BUCKETS'):
             buckets = None

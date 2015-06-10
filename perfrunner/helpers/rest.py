@@ -95,16 +95,20 @@ class RestHelper(object):
         data = {'indexMemoryQuota': mem_quota}
         self.post(url=api, data=data)
 
-    def set_index_log_level(self, host_port, level):
+    def set_index_settings(self, host_port, override_settings):
         host = host_port.replace('8091', '9102')
         api = 'http://{}/settings'.format(host)
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
 
-        logger.info('Setting indexer log level: {} to {}'.format(host, level))
-
         settings = self.get(url=api).json()
-        settings['projector.settings.log_level'] = level
-        settings['indexer.settings.log_level'] = level
+        for override, value in override_settings.items():
+            if override not in settings:
+                logger.error('Cannot change 2i setting {} to {}, setting invalid'
+                             .format(override, value))
+                continue
+            settings[override] = value
+            logger.info('Changing 2i setting {} to {}'.format(override, value))
+
         self.post(url=api, data=json.dumps(settings), headers=headers)
 
     def set_services(self, host_port, services):

@@ -592,6 +592,32 @@ class SecondaryIndexSettings(PhaseSettings):
         self.db = str(options.get('db', self.DB))
         self.stale = str(options.get('stale', self.STALE))
 
+        self.settings = {
+            'indexer.settings.inmemory_snapshot.interval': 200,
+            'indexer.settings.log_level': 'error',
+            'indexer.settings.max_cpu_percent': 2400,
+            'indexer.settings.persisted_snapshot.interval': 20000,
+            'indexer.settings.scan_timeout': 0,
+            'projector.settings.log_level': 'error'
+        }
+
+        for option in options:
+            if option.startswith('indexer.settings') or \
+               option.startswith('projector.settings') or \
+               option.startswith('queryport.client.settings'):
+
+                value = options.get(option)
+                try:
+                    if '.' in value:
+                        self.settings[option] = float(value)
+                    else:
+                        self.settings[option] = int(value)
+                    continue
+                except:
+                    pass
+
+                self.settings[option] = value
+
 
 class N1QLSettings(PhaseSettings):
 

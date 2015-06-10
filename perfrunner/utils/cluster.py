@@ -51,10 +51,12 @@ class ClusterManager(object):
         for server in self.servers():
             self.rest.set_index_mem_quota(server, self.index_mem_quota)
 
-    def set_index_log_level(self):
+    def set_index_settings(self):
+        settings = self.test_config.secondaryindex_settings.settings
         for _, servers in self.cluster_spec.yield_servers_by_role('index'):
             for server in servers:
-                self.rest.set_index_log_level(server, 'info')
+                self.rest.set_index_settings(server, settings)
+        self.remote.restart()
 
     def set_services(self):
         for (_, servers), initial_nodes in zip(self.clusters(),
@@ -270,7 +272,7 @@ def main():
     cm.configure_auto_compaction()
     cm.enable_auto_failover()
     cm.change_watermarks()
-    cm.set_index_log_level()
+    cm.set_index_settings()
     if cm.remote:
         cm.tweak_memory()
         cm.remote.disable_wan()

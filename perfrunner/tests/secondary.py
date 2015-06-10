@@ -148,9 +148,9 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
         rest_username, rest_password = self.cluster_spec.rest_credentials
         logger.info('Initiating scan workload')
         if self.test_config.secondaryindex_settings.stale == 'false':
-            self.configfile = 'scripts/config_mailindex_sessionconsistent.json'
+            self.configfile = 'scripts/config_scanthr_sessionconsistent.json'
         else:
-            self.configfile = 'scripts/config_mailindex.json'
+            self.configfile = 'scripts/config_scanthr.json'
         cmdstr = "cbindexperf -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json".format(self.indexnode, rest_username, rest_password, self.configfile)
         status = subprocess.call(cmdstr, shell=True)
         if status != 0:

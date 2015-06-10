@@ -1,0 +1,43 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1QLThroughputTest
+title = N1QL Q2 1Bux20Mx1K, Singleton Unique Lookup, 38.4KGops, 9.6KSops, GSI, stale=false
+summary = Singleton Unique Lookup, 38.4KGops, 9.6KSops
+larger_is_better = false
+
+[cluster]
+mem_quota = 20480
+index_mem_quota = 100000
+initial_nodes = 6
+num_buckets = 1
+
+[bucket]
+replica_number = 1
+password =
+eviction_policy = valueOnly
+
+[load]
+items = 20000000
+size = 1024
+workers = 20
+doc_gen = new
+
+[n1ql]
+indexes =
+    by_email::CREATE INDEX {name} ON `{bucket}` (email.f.f) using gsi;
+
+[access]
+creates = 0
+reads = 80
+updates = 20
+deletes = 0
+throughput = 48000
+items = 20000000
+size = 1024
+workers = 24
+time = 1200
+doc_gen = new
+n1ql_queries =
+    SELECT * FROM `{bucket}` WHERE email.f.f = "{email[f][f]}";
+n1ql_throughput = float('inf')
+n1ql_workers = 720
+n1ql_scan_consistency = request_plus

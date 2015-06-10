@@ -66,3 +66,25 @@ class N1QLLatencyTest(N1QLTest):
             self.reporter.post_to_sf(
                 *self.metric_helper.calc_query_latency(percentile=80)
             )
+
+
+class N1QLThroughputTest(N1QLTest):
+
+    def __init__(self, *args, **kwargs):
+        super(N1QLThroughputTest, self).__init__(*args, **kwargs)
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.compact_bucket()
+
+        self.build_index()
+
+        self.workload = self.test_config.access_settings
+        self.access_bg()
+        self.access()
+
+        if self.test_config.stats_settings.enabled:
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_avg_n1ql_queries()
+            )

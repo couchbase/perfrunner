@@ -69,6 +69,20 @@ class MetricHelper(object):
 
         return set_meta_ops, metric, metric_info
 
+    def calc_avg_n1ql_queries(self):
+        metric = '{}_avg_query_requests_{}'.format(self.test_config.name,
+                                                   self.cluster_spec.name)
+        title = 'Avg. Query Throughput (queries/sec), {}'.format(self.metric_title)
+        metric_info = self._get_metric_info(title, larger_is_better=True)
+        query_params = self._get_query_params('avg_query_requests')
+
+        db = 'n1ql_stats{}'.format(self.cluster_names[0])
+        data = self.seriesly[db].query(query_params)
+        queries = data.values()[0][0]
+        queries = round(queries, 1)
+
+        return queries, metric, metric_info
+
     def calc_xdcr_lag(self, percentile=90):
         metric = '{}_{}th_xdc_lag_{}'.format(self.test_config.name,
                                              percentile,

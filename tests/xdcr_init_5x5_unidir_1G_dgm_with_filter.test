@@ -24,4 +24,4 @@ async = 1
 
 [xdcr]
 replication_type = unidir
-filter_expression = 9999
+filter_expression = 7

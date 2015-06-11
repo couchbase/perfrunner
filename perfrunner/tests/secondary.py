@@ -147,10 +147,20 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
     def apply_scanworkload(self):
         rest_username, rest_password = self.cluster_spec.rest_credentials
         logger.info('Initiating scan workload')
+        numindexes = None
+        numindexes = len(self.indexes)
+
         if self.test_config.secondaryindex_settings.stale == 'false':
-            self.configfile = 'scripts/config_scanthr_sessionconsistent.json'
+            if numindexes == 1:
+                self.configfile = 'scripts/config_scanthr_sessionconsistent.json'
+            elif numindexes == 5:
+                self.configfile = 'scripts/config_scanthr_sessionconsistent_multiple.json'
         else:
-            self.configfile = 'scripts/config_scanthr.json'
+            if numindexes == 1:
+                self.configfile = 'scripts/config_scanthr.json'
+            elif numindexes == 5:
+                self.configfile = 'scripts/config_scanthr_multiple.json'
+
         cmdstr = "cbindexperf -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json".format(self.indexnode, rest_username, rest_password, self.configfile)
         status = subprocess.call(cmdstr, shell=True)
         if status != 0:
@@ -166,7 +176,7 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
         with open('result.json') as result_file:
             resdata = json.load(result_file)
         duration_s = (resdata['Duration'])
-        numRows = resdata['ScanResults'][0]['Rows']
+        numRows = resdata['Rows']
         """scans and rows per sec"""
         scansps = numscans / duration_s
         rowps = numRows / duration_s
@@ -199,10 +209,18 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
     def apply_scanworkload(self):
         rest_username, rest_password = self.cluster_spec.rest_credentials
         logger.info('Initiating scan workload with stats output')
+
         if self.test_config.secondaryindex_settings.stale == 'false':
-            self.configfile = 'scripts/config_scanlatency_sessionconsistent.json'
+            if numindexes == 1:
+                self.configfile = 'scripts/config_scanlatency_sessionconsistent.json'
+            elif numindexes == 5:
+                self.configfile = 'scripts/config_scanlatency_sessionconsistent_multiple.json'
         else:
-            self.configfile = 'scripts/config_scanlatency.json'
+            if numindexes == 1:
+                self.configfile = 'scripts/config_scanlatency.json'
+            elif numindexes == 5:
+                self.configfile = 'scripts/config_scanlatency_multiple.json'
+
         cmdstr = "cbindexperf -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json -statsfile /root/statsfile".format(self.indexnode, rest_username, rest_password, self.configfile)
         status = subprocess.call(cmdstr, shell=True)
         if status != 0:

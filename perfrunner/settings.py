@@ -573,7 +573,7 @@ class SpatialSettings(object):
         self.queries = options.get('queries', None)
         self.workers = int(options.get('workers', 0))
         self.throughput = float(options.get('throughput', float('inf')))
-        self.qparams = options.get('qparams', {})
+        self.params = json.loads(options.get('params', "{}"))
 
     def __str__(self):
         return str(self.__dict__)

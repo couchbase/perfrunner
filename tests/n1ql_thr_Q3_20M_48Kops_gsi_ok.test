@@ -38,6 +38,6 @@ time = 1200
 doc_gen = new
 n1ql_queries =
     SELECT * FROM `{bucket}` where capped_small = "{capped_small}";
-n1ql_throughput = float('inf')
+n1ql_throughput = 1000000
 n1ql_workers = 960
 n1ql_scan_consistency = not_bounded

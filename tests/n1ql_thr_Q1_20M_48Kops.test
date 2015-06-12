@@ -34,5 +34,5 @@ time = 1200
 doc_gen = new
 n1ql_queries =
     SELECT * FROM `{bucket}` USE KEYS("{key}");
-n1ql_throughput = float('inf')
+n1ql_throughput = 1000000
 n1ql_workers = 240

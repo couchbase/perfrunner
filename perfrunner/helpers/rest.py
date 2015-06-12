@@ -476,19 +476,32 @@ class RestHelper(object):
         # POLL until initial index build is complete
         init_ts = time.time()
 
+        logger.info(
+            "Waiting for the following indexes to be ready: {}".format(indexes))
+
         IndexesReady = [0 for index in indexes]
         url = 'http://{}:9102/getIndexStatus'.format(host)
         request = urllib2.Request(url)
         base64string = base64.encodestring('%s:%s' % (rest_username, rest_password)).replace('\n', '')
         request.add_header("Authorization", "Basic %s" % base64string)
 
+        def get_index_status(json2i, index):
+            """
+            Return json2i["status"][k]["status"] if json2i["status"][k]["name"]
+            matches the desired index.
+            """
+            for d in json2i["status"]:
+                if d["name"] == index:
+                    return d["status"]
+            return None
+
         while True:
+            time.sleep(1)
+            response = urllib2.urlopen(request)
+            data = str(response.read())
+            json2i = json.loads(data)
             for i, index in enumerate(indexes):
-                time.sleep(1)
-                response = urllib2.urlopen(request)
-                data = str(response.read())
-                json2i = json.loads(data)
-                status = json2i["status"][i]["status"]
+                status = get_index_status(json2i, index)
                 if(status == 'Ready'):
                     IndexesReady[i] = 1
 
@@ -500,33 +513,62 @@ class RestHelper(object):
         time_elapsed = round(finish_ts - init_ts)
         return time_elapsed
 
-    def wait_for_secindex_incr_build(self, host, bucket, indexes, numitems):
+    def wait_for_secindex_incr_build(self, index_nodes, bucket, indexes, numitems):
         # POLL until incremenal index build is complete
+        logger.info('expecting {} num_docs_indexed for indexes {}'.format(numitems, indexes))
 
-        IndexesReady = [0 for index in indexes]
-        prevSample = 0
-        numitemsindexed = 0
-        IndexesSteady = [0 for index in indexes]
-        threshold = 0.02
-        logger.info('expected total number of indexed items : {}'.format(numitems))
+        # collect num_docs_indexed information globally from all index nodes
+        hosts = [node.split(':')[0] for node in index_nodes]
 
-        api = 'http://{}:9102/stats'.format(host, bucket)
+        def get_num_indexed():
+            data = {}
+            API_TEMP = 'http://{}:9102/stats'
+            for host in hosts:
+                host_data = self.get(url=API_TEMP.format(host)).json()
+                data.update(host_data)
+
+            num_indexed = []
+            for index in indexes:
+                key = "" + bucket + ":" + index + ":num_docs_indexed"
+                val = data[key]
+                num_indexed.append(val)
+            return num_indexed
+
+        expected_num_indexed = [numitems] * len(indexes)
+        prev_num_indexed = [None] * len(indexes)
+        steady_count = 0
+
         while True:
-            for i, index in enumerate(indexes):
-                time.sleep(1)
-                data = self.get(url=api).json()
-                key = ""
-                key = key + bucket + ":" + index + ":num_docs_indexed"
-                numitemsindexed = data[key]
-                if(numitemsindexed != 0 and numitemsindexed == prevSample):
-                    IndexesSteady[i] = IndexesSteady[i] + 1
-                prevSample = numitemsindexed
-                if(numitemsindexed == numitems or IndexesSteady[i] == 20):
-                    if(((numitems - numitemsindexed) / numitems) <= threshold):
-                        IndexesReady[i] = 1
+            time.sleep(1)
+            curr_num_indexed = get_num_indexed()
 
-            if(sum(IndexesReady) == len(indexes)):
+            if curr_num_indexed == expected_num_indexed:
                 break
+
+            # True only if every index's num_docs_indexed is within threshold
+            # of the expected value
+            THRESHOLD = 0.02
+            all_tolerated = all(
+                [
+                    actual >= (1 - THRESHOLD) * expected
+                    for actual, expected in
+                    zip(curr_num_indexed, expected_num_indexed)
+                ])
+
+            if not all_tolerated:
+                continue
+
+            if prev_num_indexed == curr_num_indexed:
+                steady_count += 1
+            else:
+                prev_num_indexed = curr_num_indexed
+                steady_count = 0
+
+            STEADY_COUNT = 20
+            if steady_count == STEADY_COUNT:
+                break
+
+        logger.info("Actually indexed {}".format(curr_num_indexed))
 
 
 class SyncGatewayRequestHelper(RestHelper):

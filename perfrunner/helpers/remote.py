@@ -115,34 +115,68 @@ class RemoteLinuxHelper(object):
         return self.ARCH[arch]
 
     @single_host
-    def build_secondary_index(self, host_port, bucket, indexes, fields, secondarydb):
+    def build_secondary_index(self, index_nodes, bucket, indexes, fields,
+                              secondarydb, where_map):
         logger.info('building secondary indexes')
-        usingdb = ''
-        if secondarydb == 'memdb':
-            usingdb = '-using ' + secondarydb
-        else:
-            pass
-        defer = '{\\\\\\\"defer_build\\\\\\\":true}'
-        for index, fields in zip(indexes, fields):
-            str = "/opt/couchbase/bin/cbindex -auth=\"Administrator:password\" -server {} -type" \
-                  " create -bucket {} -index {} -fields={} {}" \
-                  " -with=\"{}\"".format(host_port, bucket, index, fields, usingdb, defer)
-            logger.info('submitting cbindex command {}'.format(str))
-            status = run(str, shell_escape=False, pty=False)
-            if status:
-                logger.info('cbindex status {}'.format(status))
+
+        # Remember what bucket:index was created
+        bucket_indexes = []
+
+        for index, field in zip(indexes, fields):
+            cmd = "/opt/couchbase/bin/cbindex"
+            cmd += ' -auth=Administrator:password'
+            cmd += ' -server {}'.format(index_nodes[0])
+            cmd += ' -type create -bucket {}'.format(bucket)
+            cmd += ' -fields={}'.format(field)
+
+            if secondarydb:
+                cmd += ' -using {}'.format(secondarydb)
+
+            if index in where_map and field in where_map[index]:
+                # Partition indexes over index nodes by deploying index with
+                # where clause on the corresponding index node
+                where_list = where_map[index][field]
+                for i, (index_node, where) in enumerate(
+                        zip(index_nodes, where_list)):
+                    # don't taint cmd itself because we need to reuse it.
+                    final_cmd = cmd
+                    index_i = index + "_{}".format(i)
+                    final_cmd += ' -index {}'.format(index_i)
+                    final_cmd += " -where='{}'".format(where)
+
+                    # Since .format() is sensitive to {}, use % formatting
+                    with_str_template = \
+                        r'{\\\"defer_build\\\":true, \\\"nodes\\\":[\\\"%s\\\"]}'
+                    with_str = with_str_template % index_node
+
+                    final_cmd += ' -with=\\\"{}\\\"'.format(with_str)
+                    bucket_indexes.append("{}:{}".format(bucket, index_i))
+                    logger.info('submitting cbindex command {}'.format(final_cmd))
+                    status = run(final_cmd, shell_escape=False, pty=False)
+                    if status:
+                        logger.info('cbindex status {}'.format(status))
+            else:
+                # no partitions, no where clause
+                final_cmd = cmd
+                final_cmd += ' -index {}'.format(index)
+                with_str = r'{\\\"defer_build\\\":true}'
+                final_cmd += ' -with=\\\"{}\\\"'.format(with_str)
+                bucket_indexes.append("{}:{}".format(bucket, index))
+
+                logger.info('submitting cbindex command {}'.format(final_cmd))
+                status = run(final_cmd, shell_escape=False, pty=False)
+                if status:
+                    logger.info('cbindex status {}'.format(status))
 
         time.sleep(10)
-        buildstr = ""
-        for i, index in enumerate(indexes):
-            if(i < len(indexes) - 1):
-                buildstr = buildstr + bucket + ":" + index + ","
-            else:
-                buildstr = buildstr + bucket + ":" + index
-            str = "/opt/couchbase/bin/cbindex -auth=\"Administrator:password\" -server {} -type" \
-                  " build -indexes {}".format(host_port, buildstr)
-        logger.info('cbindex build command {}'.format(str))
-        status = run(str, shell_escape=False, pty=False)
+
+        # build indexes
+        cmdstr = '/opt/couchbase/bin/cbindex -auth="Administrator:password"'
+        cmdstr += ' -server {}'.format(index_nodes[0])
+        cmdstr += ' -type build'
+        cmdstr += ' -indexes {}'.format(",".join(bucket_indexes))
+        logger.info('cbindex build command {}'.format(cmdstr))
+        status = run(cmdstr, shell_escape=False, pty=False)
         if status:
             logger.info('cbindex status {}'.format(status))
 

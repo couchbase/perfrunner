@@ -18,6 +18,17 @@ class SecondaryIndexTest(PerfTest):
     The test measures time it takes to build secondary index. This is just a base
     class, actual measurements happen in initial and incremental secondary indexing tests.
     It benchmarks dumb/bulk indexing.
+
+    Sample test spec snippet:
+
+    [secondary]
+    name = myindex1,myindex2
+    field = email,city
+    index_myindex1_partitions={"email":["5fffff", "7fffff"]}
+    index_myindex2_partitions={"city":["5fffff", "7fffff"]}
+
+    NOTE: two partition pivots above imply that we need 3 indexer nodes in the
+    cluster spec.
     """
 
     COLLECTORS = {'secondary_stats': True, 'secondary_debugstats': True}
@@ -27,43 +38,126 @@ class SecondaryIndexTest(PerfTest):
 
         """self.test_config.secondaryindex_settings"""
         self.secondaryindex_settings = None
-        self.indexnode = None
+        self.index_nodes = None
+        self.index_fields = None
         self.bucket = None
         self.indexes = []
         self.secondaryDB = ''
         self.configfile = ''
 
+        self.secondaryDB = None
         if self.test_config.secondaryindex_settings.db == 'memdb':
             self.secondaryDB = 'memdb'
         logger.info('secondary storage DB..{}'.format(self.secondaryDB))
 
-        for index in self.test_config.secondaryindex_settings.name.split(','):
-            self.indexes.append(index)
+        self.indexes = self.test_config.secondaryindex_settings.name.split(',')
+        self.index_fields = self.test_config.secondaryindex_settings.field.split(",")
 
-        for name, servers in self.cluster_spec.yield_servers_by_role('index'):
-            if not servers:
-                raise Exception('No index servers specified for cluster \"{}\",'
-                                ' cannot create indexes'.format(name))
-            self.indexnode = servers[0]
+        # Get first cluster, its index nodes, and first bucket
+        (cluster_name, servers) = \
+            self.cluster_spec.yield_servers_by_role('index').next()
+        if not servers:
+            raise RuntimeError(
+                "No index nodes specified for cluster {}".format(cluster_name))
+        self.index_nodes = servers
 
-        for testbucket in self.test_config.buckets:
-            self.bucket = testbucket
+        self.bucket = self.test_config.buckets[0]
+
+        # Generate active index names that are used if there are partitions.
+        # Else active_indexes is the same as indexes specified in test config
+        self.active_indexes = self.indexes
+        num_partitions = None
+        for index, field_where in self._get_where_map().iteritems():
+            where_list = field_where.itervalues().next()
+            num_partitions = len(where_list)
+            break
+        if num_partitions:
+            # overwrite with indexname_0, indexname_1 ... names for each partition
+            self.active_indexes = []
+            for index in self.indexes:
+                for i in xrange(num_partitions):
+                    index_i = index + "_{}".format(i)
+                    self.active_indexes.append(index_i)
+
+    def _get_where_map(self):
+        """
+        Given the following in test config:
+
+        [secondary]
+        name = myindex1,myindex2
+        field = email,city
+        index_myindex1_partitions={"email":["5fffff", "afffff"]}
+        index_myindex2_partitions={"city":["5fffff", "afffff"]}
+
+        returns something like the following, details omitted by "...":
+
+        {
+            "myindex1":
+                {"email": [ 'email < "5fffff"', ... ] },
+            "myindex2":
+                {"city": [ ... , 'city >= "5fffff" and city < "afffff"', city >= "afffff" ]},
+        }
+        """
+        result = {}
+        # For each index/field, get the partition pivots in a friendly format.
+        # Start with the (index_name, field) pair, find each field's
+        # corresponding partition pivots. From the pivots, generate the (low,
+        # high) endpoints that define a partition. Use None to represent
+        # unbounded.
+        for index_name, field in zip(self.indexes, self.index_fields):
+            index_partition_name = "index_{}_partitions".format(index_name)
+            # check that secondaryindex_settings.index_blah_partitions exists.
+            if not hasattr(self.test_config.secondaryindex_settings,
+                           index_partition_name):
+                continue
+            # Value of index_{}_partitions should be a string that resembles a
+            # Python dict instead of a JSON due to the support for tuple as
+            # keys. However, at the moment the same string can be interpretted
+            # as either JSON or Python Dict.
+            field_pivots = eval(getattr(self.test_config.secondaryindex_settings,
+                                        index_partition_name))
+            for field, pivots in field_pivots.iteritems():
+                pivots = [None] + pivots + [None]
+                partitions = []
+                for i in xrange(len(pivots) - 1):
+                    partitions.append((pivots[i], pivots[i + 1]))
+                if len(partitions) != len(self.index_nodes):
+                    raise RuntimeError(
+                        "Number of pivots in partitions should be one less" +
+                        " than number of index nodes")
+
+            # construct where clause
+            where_list = []
+            for (left, right) in partitions:
+                where = None
+                if left and right:
+                    where = '\\\"{}\\\" <= {} and {} < \\\"{}\\\"'.format(
+                            left, field, field, right)
+                elif left:
+                    where = '{} >= \\\"{}\\\"'.format(field, left)
+                elif right:
+                    where = '{} < \\\"{}\\\"'.format(field, right)
+                where_list.append(where)
+
+            if index_name not in result:
+                result[index_name] = {}
+            result[index_name][field] = where_list
+        return result
 
     @with_stats
     def build_secondaryindex(self):
         """call cbindex create command"""
         logger.info('building secondary index..')
 
-        fields = []
-        for field in self.test_config.secondaryindex_settings.field.split(','):
-            fields.append(field)
+        where_map = self._get_where_map()
 
-        self.remote.build_secondary_index(self.indexnode, self.bucket, self.indexes, fields,
-                                          self.secondaryDB)
+        self.remote.build_secondary_index(
+            self.index_nodes, self.bucket, self.indexes, self.index_fields,
+            self.secondaryDB, where_map)
 
         rest_username, rest_password = self.cluster_spec.rest_credentials
-        time_elapsed = self.rest.wait_for_secindex_init_build(self.indexnode.split(':')[0],
-                                                              self.indexes, rest_username, rest_password)
+        time_elapsed = self.rest.wait_for_secindex_init_build(self.index_nodes[0].split(':')[0],
+                                                              self.active_indexes, rest_username, rest_password)
         return time_elapsed
 
 
@@ -113,8 +207,9 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
         load_settings = self.test_config.load_settings
         access_settings = self.test_config.access_settings
         numitems = load_settings.items + access_settings.items
-        self.rest.wait_for_secindex_incr_build(self.indexnode.split(':')[0], self.bucket,
-                                               self.indexes, numitems)
+
+        self.rest.wait_for_secindex_incr_build(self.index_nodes, self.bucket,
+                                               self.active_indexes, numitems)
 
     def run(self):
         self.load()
@@ -161,7 +256,7 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
             elif numindexes == 5:
                 self.configfile = 'scripts/config_scanthr_multiple.json'
 
-        cmdstr = "cbindexperf -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json".format(self.indexnode, rest_username, rest_password, self.configfile)
+        cmdstr = "cbindexperf -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json".format(self.index_nodes[0], rest_username, rest_password, self.configfile)
         status = subprocess.call(cmdstr, shell=True)
         if status != 0:
             raise Exception('Scan workload could not be applied')
@@ -223,7 +318,7 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
             elif numindexes == 5:
                 self.configfile = 'scripts/config_scanlatency_multiple.json'
 
-        cmdstr = "cbindexperf -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json -statsfile /root/statsfile".format(self.indexnode, rest_username, rest_password, self.configfile)
+        cmdstr = "cbindexperf -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json -statsfile /root/statsfile".format(self.index_nodes[0], rest_username, rest_password, self.configfile)
         status = subprocess.call(cmdstr, shell=True)
         if status != 0:
             raise Exception('Scan workload could not be applied')
@@ -261,7 +356,7 @@ class SecondaryIndexingLatencyTest(SecondaryIndexTest):
     def apply_scanworkload(self):
         rest_username, rest_password = self.cluster_spec.rest_credentials
         logger.info('Initiating the scan workload')
-        cmdstr = "cbindexperf -cluster {} -auth=\"{}:{}\" -configfile scripts/config_indexinglatency.json -resultfile result.json".format(self.indexnode, rest_username, rest_password)
+        cmdstr = "cbindexperf -cluster {} -auth=\"{}:{}\" -configfile scripts/config_indexinglatency.json -resultfile result.json".format(self.index_nodes[0], rest_username, rest_password)
         status = subprocess.call(cmdstr, shell=True)
         if status != 0:
             raise Exception('Scan workload could not be applied')

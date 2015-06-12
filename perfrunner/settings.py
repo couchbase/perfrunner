@@ -602,6 +602,11 @@ class SecondaryIndexSettings(PhaseSettings):
         self.field = str(options.get('field', self.FIELD))
         self.db = str(options.get('db', self.DB))
         self.stale = str(options.get('stale', self.STALE))
+        for name in self.name.split(","):
+            index_partition_name = "index_{}_partitions".format(name)
+            val = str(options.get(index_partition_name, ''))
+            if val:
+                setattr(self, index_partition_name, val)
 
         self.settings = {
             'indexer.settings.inmemory_snapshot.interval': 200,

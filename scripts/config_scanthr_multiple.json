@@ -48,34 +48,21 @@
              "Index" : "myindex3"
            },
           {
-             "Limit" : 0,
-             "Low" : [
-                "000015"
-             ],
-             "Repeat" : 999999,
-             "Type" : "Range",
+             "Type" : "All",
+             "Limit" : 24,
+             "Repeat" : 99,
              "Bucket" : "bucket-1",
-             "High" : [
-                "000028"
-             ],
              "Id" : 1,
-             "Inclusion" : 3,
              "Index" : "myindex4"
            },
           {
-             "Limit" : 0,
-             "Low" : [
-                "000015"
-             ],
-             "Repeat" : 999999,
-             "Type" : "Range",
+             "Type" : "All",
+             "Limit" : 24,
+             "Repeat" : 99,
              "Bucket" : "bucket-1",
-             "High" : [
-                "000028"
-             ],
              "Id" : 1,
-             "Inclusion" : 3,
              "Index" : "myindex5"
-           },
+           }
+
        ]
 }

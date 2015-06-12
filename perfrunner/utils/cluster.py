@@ -273,6 +273,7 @@ def main():
     cm.enable_auto_failover()
     cm.change_watermarks()
     cm.set_index_settings()
+    time.sleep(60)
     if cm.remote:
         cm.tweak_memory()
         cm.remote.disable_wan()

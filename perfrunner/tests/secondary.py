@@ -209,6 +209,8 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
     def apply_scanworkload(self):
         rest_username, rest_password = self.cluster_spec.rest_credentials
         logger.info('Initiating scan workload with stats output')
+        numindexes = None
+        numindexes = len(self.indexes)
 
         if self.test_config.secondaryindex_settings.stale == 'false':
             if numindexes == 1:

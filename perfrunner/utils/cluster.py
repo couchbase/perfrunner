@@ -57,6 +57,7 @@ class ClusterManager(object):
             for server in servers:
                 self.rest.set_index_settings(server, settings)
         self.remote.restart()
+        time.sleep(60)
 
     def set_services(self):
         for (_, servers), initial_nodes in zip(self.clusters(),
@@ -272,9 +273,8 @@ def main():
     cm.configure_auto_compaction()
     cm.enable_auto_failover()
     cm.change_watermarks()
-    cm.set_index_settings()
-    time.sleep(60)
     if cm.remote:
+        cm.set_index_settings()
         cm.tweak_memory()
         cm.remote.disable_wan()
         cm.start_cbq_engine()

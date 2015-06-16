@@ -504,6 +504,10 @@ class RestHelper(object):
         # POLL until incremenal index build is complete
 
         IndexesReady = [0 for index in indexes]
+        prevSample = 0
+        numitemsindexed = 0
+        IndexesSteady = [0 for index in indexes]
+        threshold = 0.02
         logger.info('expected total number of indexed items : {}'.format(numitems))
 
         api = 'http://{}:9102/stats'.format(host, bucket)
@@ -514,8 +518,12 @@ class RestHelper(object):
                 key = ""
                 key = key + bucket + ":" + index + ":num_docs_indexed"
                 numitemsindexed = data[key]
-                if(numitemsindexed == numitems):
-                    IndexesReady[i] = 1
+                if(numitemsindexed != 0 and numitemsindexed == prevSample):
+                    IndexesSteady[i] = IndexesSteady[i] + 1
+                prevSample = numitemsindexed
+                if(numitemsindexed == numitems or IndexesSteady[i] == 20):
+                    if(((numitems - numitemsindexed) / numitems) <= threshold):
+                        IndexesReady[i] = 1
 
             if(sum(IndexesReady) == len(indexes)):
                 break

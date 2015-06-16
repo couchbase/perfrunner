@@ -22,7 +22,6 @@ workers = 10
 
 [hot_load]
 items = 100000000
-size = 2048
 workers = 20
 working_set = 5
 
@@ -37,7 +36,6 @@ deletes = 5
 throughput = 10000
 query_throughput = 400
 items = 100000000
-size = 2048
 workers = 24
 query_workers = 12
 working_set = 5

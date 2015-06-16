@@ -12,6 +12,9 @@ num_buckets = 1
 [bucket]
 replica_number = 1
 
+[load]
+size = 1024
+
 [access]
 items = 10000000
 iterations = 3
@@ -19,5 +22,4 @@ workers = 50
 # 80/20 read/write
 reads = 80
 updates = 20
-size = 1024
 clients_per_cluster = 1

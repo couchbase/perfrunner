@@ -31,6 +31,5 @@ updates = 48
 deletes = 1
 throughput = 5000
 items = 50000000
-size = 800
 workers = 20
 time = 1800

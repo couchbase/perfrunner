@@ -24,7 +24,6 @@ updates = 50
 deletes = 0
 throughput = 80000
 items = 40000000
-size = 800
 workers = 10
 async = 1
 time = 3600

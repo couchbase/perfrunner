@@ -27,5 +27,4 @@ db = memdb
 creates = 100
 ops = 20000000
 items = 20000000
-size = 2048
 workers = 20

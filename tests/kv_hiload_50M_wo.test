@@ -26,7 +26,6 @@ reads = 0
 updates = 100
 deletes = 0
 items = 100000000
-size = 0
 workers = 38
 throughput = 150000
 time = 3600

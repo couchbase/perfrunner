@@ -14,7 +14,6 @@ workers = 20
 
 [access]
 updates = 100
-size = 1024
 throughput = 6000
 workers = 20
 items = 10000

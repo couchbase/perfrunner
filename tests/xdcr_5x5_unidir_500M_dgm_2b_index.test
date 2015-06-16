@@ -25,7 +25,6 @@ views = [1]
 
 [hot_load]
 items = 500000000
-size = 800
 workers = 20
 working_set = 10
 
@@ -41,7 +40,6 @@ deletes = 0
 throughput = 10000
 query_throughput = 400
 items = 500000000
-size = 800
 workers = 20
 query_workers = 10
 working_set = 10

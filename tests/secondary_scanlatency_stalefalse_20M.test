@@ -30,5 +30,4 @@ updates = 48
 deletes = 1
 throughput = 10000
 items = 20000000
-size = 2048
 workers = 20

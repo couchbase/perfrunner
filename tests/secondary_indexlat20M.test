@@ -25,7 +25,6 @@ updates = 80
 deletes = 0
 throughput = 5000
 items = 1000
-size = 1024
 workers = 2
 time = 20
 

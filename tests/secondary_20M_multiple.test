@@ -26,5 +26,4 @@ field = email,city,name,coins,achievements
 creates = 100
 ops = 20000000
 items = 20000000
-size = 100
 workers = 20

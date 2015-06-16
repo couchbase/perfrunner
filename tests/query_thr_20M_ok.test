@@ -25,7 +25,6 @@ updates = 12
 deletes = 4
 throughput = 10000
 items = 20000000
-size = 2048
 workers = 24
 query_workers = 24
 qparams = {"stale": "ok"}

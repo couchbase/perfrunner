@@ -26,7 +26,6 @@ updates = 40
 deletes = 5
 throughput = 2500
 items = 20000000
-size = 2048
 workers = 8
 working_set = 10
 working_set_access = 98

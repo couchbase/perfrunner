@@ -19,7 +19,6 @@ workers = 5
 
 [hot_load]
 items = 40000000
-size = 2048
 workers = 5
 working_set = 10
 
@@ -30,7 +29,6 @@ updates = 75
 deletes = 2
 throughput = 3125
 items = 40000000
-size = 2048
 workers = 12
 working_set = 10
 working_set_access = 98

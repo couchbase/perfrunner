@@ -137,6 +137,11 @@ class PerfTest(object):
         hot_load_settings = self.test_config.hot_load_settings
         if self.test_config.spatial_settings:
             hot_load_settings.spatial = self.test_config.spatial_settings
+
+        # Get some settings from the [load] section
+        hot_load_settings.doc_gen = self.test_config.load_settings.doc_gen
+        hot_load_settings.size = self.test_config.load_settings.size
+
         log_phase('hot load phase', hot_load_settings)
         self.worker_manager.run_workload(hot_load_settings,
                                          self.target_iterator)
@@ -146,6 +151,11 @@ class PerfTest(object):
         access_settings = self.test_config.access_settings
         if self.test_config.spatial_settings:
             access_settings.spatial = self.test_config.spatial_settings
+
+        # Get some settings from the [load] section
+        access_settings.doc_gen = self.test_config.load_settings.doc_gen
+        access_settings.size = self.test_config.load_settings.size
+
         log_phase('access phase', access_settings)
         access_settings.n1ql_queries = getattr(self, 'n1ql_queries', access_settings.n1ql_queries)
         self.worker_manager.run_workload(access_settings, self.target_iterator)
@@ -155,6 +165,11 @@ class PerfTest(object):
         access_settings = self.test_config.access_settings
         if self.test_config.spatial_settings:
             access_settings.spatial = self.test_config.spatial_settings
+
+        # Get some settings from the [load] section
+        access_settings.doc_gen = self.test_config.load_settings.doc_gen
+        access_settings.size = self.test_config.load_settings.size
+
         log_phase('access phase in background', access_settings)
         access_settings.index_type = self.test_config.index_settings.index_type
         access_settings.n1ql = getattr(self, 'n1ql', None)

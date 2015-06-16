@@ -535,6 +535,14 @@ class HotLoadSettings(PhaseSettings):
     SEQ_READS = True
     SEQ_UPDATES = False
 
+    def __init__(self, options):
+        if 'size' in options:
+            logger.interrupt(
+                "The document `size` may only be set in the [load] "
+                "and not in the [hot_load] section")
+
+        super(HotLoadSettings, self).__init__(options)
+
 
 class XDCRSettings(PhaseSettings):
 
@@ -646,6 +654,14 @@ class N1QLSettings(PhaseSettings):
 class AccessSettings(PhaseSettings):
 
     OPS = float('inf')
+
+    def __init__(self, options):
+        if 'size' in options:
+            logger.interrupt(
+                "The document `size` may only be set in the [load] "
+                "and not in the [access] section")
+
+        super(AccessSettings, self).__init__(options)
 
 
 class Experiment(object):

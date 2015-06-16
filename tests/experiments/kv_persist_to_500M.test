@@ -19,7 +19,6 @@ async = 1
 
 [hot_load]
 items = 500000000
-size = 800
 workers = 5
 working_set = 10
 
@@ -30,7 +29,6 @@ updates = 76
 deletes = 2
 throughput = 3125
 items = 500000000
-size = 800
 workers = 12
 working_set = 10
 working_set_access = 98

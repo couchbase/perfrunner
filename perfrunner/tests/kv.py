@@ -526,5 +526,5 @@ class PillowfightTest(PerfTest):
         self.reporter.finish('Pillowfight', time_elapsed)
         if self.test_config.stats_settings.enabled:
             self.reporter.post_to_sf(
-                self.metric_helper.calc_avg_ops()
+                *self.metric_helper.calc_avg_ops()
             )

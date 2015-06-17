@@ -43,6 +43,6 @@ n1ql_workers = 720
 [n1ql-full-scan]
 use_prepared = True
 statement = SELECT count(*) FROM `bucket-1` WHERE category > $1;
-max-parallelism = 1
+max_parallelism = 1
 scan_consistency = request_plus
 args = [{category}]

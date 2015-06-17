@@ -39,5 +39,5 @@ n1ql_workers = 240
 [n1ql-key-value-lookup]
 use_prepared = True
 statement = SELECT * FROM `bucket-1` USE KEYS[$1];
-max-parallelism = 1
+max_parallelism = 1
 args = ["{key}"]

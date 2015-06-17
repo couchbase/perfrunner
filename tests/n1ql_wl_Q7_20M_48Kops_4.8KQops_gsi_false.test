@@ -43,6 +43,6 @@ n1ql_workers = 720
 [n1ql-order-by-query]
 use_prepared = True
 statement = SELECT name.f.f AS _name, street.f.f AS _street FROM `bucket-1` WHERE capped_small=$1 ORDER BY name.f.f.f;
-max-parallelism = 1
+max_parallelism = 1
 scan_consistency = request_plus
 args = ["{capped_small}"]

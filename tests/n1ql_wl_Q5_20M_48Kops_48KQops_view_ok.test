@@ -43,6 +43,6 @@ n1ql_workers = 960
 [n1ql-aggregation-query]
 use_prepared = True
 statement = SELECT sum(coins.f) FROM `bucket-1` WHERE capped_small=$1;
-max-parallelism = 1
+max_parallelism = 1
 scan_consistency = not_bounded
 args = ["{capped_small}"]

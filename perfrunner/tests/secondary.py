@@ -203,7 +203,7 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
     The test applies scan workload against the 2i server and measures
     and reports the average scan throughput
     """
-    COLLECTORS = {'secondary_stats': True, 'secondary_latency': True}
+    COLLECTORS = {'secondary_stats': True, 'secondary_latency': True, 'secondary_debugstats': True}
 
     @with_stats
     def apply_scanworkload(self):

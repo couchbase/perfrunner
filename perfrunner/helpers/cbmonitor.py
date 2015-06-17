@@ -89,7 +89,6 @@ class CbAgent(object):
         self.settings.bucket_password = test.test_config.bucket.password
 
         self.settings.index_node = self.index_node
-        self.settings.new_n1ql_queries = test.test_config.access_settings.n1ql_queries
 
         self.collectors = []
         self.processes = []
@@ -104,6 +103,10 @@ class CbAgent(object):
                            secondary_latency=False,
                            secondary_debugstats=False):
         clusters = self.clusters.keys()
+
+        default_queries = test.test_config.access_settings.n1ql_queries
+        self.settings.new_n1ql_queries = getattr(test, 'n1ql_queries',
+                                                 default_queries)
 
         self.prepare_ns_server(clusters)
         self.prepare_active_tasks(clusters)

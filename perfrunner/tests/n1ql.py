@@ -57,6 +57,7 @@ class N1QLTest(PerfTest):
                     stmt = 'PREPARE {}'.format(query['statement'])
                     resp = self.rest.n1ql_query(query_node, stmt)
                     del query['statement']
+                    del query['use_prepared']
                     query['prepared'] = '"' + resp['results'][0]['name'] + '"'
                 self.n1ql_queries.append(query)
 
@@ -81,7 +82,12 @@ class N1QLLatencyTest(N1QLTest):
         self.build_index()
 
         self._create_prepared_statements()
-        self.workload = self.test_config.access_settings
+
+        access_settings = self.test_config.access_settings
+        access_settings.n1ql_queries = getattr(self, 'n1ql_queries',
+                                               access_settings.n1ql_queries)
+        self.workload = access_settings
+
         self.access_bg()
         self.access()
 
@@ -104,7 +110,12 @@ class N1QLThroughputTest(N1QLTest):
         self.build_index()
 
         self._create_prepared_statements()
-        self.workload = self.test_config.access_settings
+
+        access_settings = self.test_config.access_settings
+        access_settings.n1ql_queries = getattr(self, 'n1ql_queries',
+                                               access_settings.n1ql_queries)
+        self.workload = access_settings
+
         self.access_bg()
         self.access()
 

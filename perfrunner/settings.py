@@ -553,7 +553,7 @@ class HotLoadSettings(PhaseSettings):
         super(HotLoadSettings, self).__init__(options)
 
 
-class XDCRSettings(PhaseSettings):
+class XDCRSettings(object):
 
     XDCR_REPLICATION_TYPE = 'bidir'
     XDCR_REPLICATION_PROTOCOL = None
@@ -570,8 +570,11 @@ class XDCRSettings(PhaseSettings):
         self.wan_enabled = int(options.get('wan_enabled', self.WAN_ENABLED))
         self.filter_expression = options.get('filter_expression', self.FILTER_EXPRESSION)
 
+    def __str__(self):
+        return str(self.__dict__)
 
-class IndexSettings(PhaseSettings):
+
+class IndexSettings(object):
 
     VIEWS = '[1]'
     DISABLED_UPDATES = 0
@@ -583,6 +586,9 @@ class IndexSettings(PhaseSettings):
         self.disabled_updates = int(options.get('disabled_updates',
                                                 self.DISABLED_UPDATES))
         self.index_type = options.get('index_type')
+
+    def __str__(self):
+        return str(self.__dict__)
 
 
 class SpatialSettings(object):
@@ -607,7 +613,7 @@ class SpatialSettings(object):
         return str(self.__dict__)
 
 
-class SecondaryIndexSettings(PhaseSettings):
+class SecondaryIndexSettings(object):
 
     NAME = 'noname'
     FIELD = 'nofield'
@@ -651,13 +657,19 @@ class SecondaryIndexSettings(PhaseSettings):
 
                 self.settings[option] = value
 
+    def __str__(self):
+        return str(self.__dict__)
 
-class N1QLSettings(PhaseSettings):
+
+class N1QLSettings(object):
 
     def __init__(self, options):
         self.indexes = []
         if 'indexes' in options:
             self.indexes = options.get('indexes').strip().split('\n')
+
+    def __str__(self):
+        return str(self.__dict__)
 
 
 class AccessSettings(PhaseSettings):
@@ -685,7 +697,7 @@ class Experiment(object):
                 self.template = json.load(fh)
 
 
-class GatewaySettings(PhaseSettings):
+class GatewaySettings(object):
 
     COMPRESSION = 'true'
     CONN_IN = 0
@@ -716,8 +728,11 @@ class GatewaySettings(PhaseSettings):
         self.node1_cache_writer = options.get('node1_cache_writer', 'false')
         self.node2_cache_writer = options.get('node2_cache_writer', 'false')
 
+    def __str__(self):
+        return str(self.__dict__)
 
-class GateloadSettings(PhaseSettings):
+
+class GateloadSettings(object):
 
     PULLER = 3500
     PUSHER = 1500
@@ -757,8 +772,11 @@ class GateloadSettings(PhaseSettings):
         self.auth_type = options.get('auth_type', self.AUTH_TYPE)
         self.password = options.get('password', self.PASSWORD)
 
+    def __str__(self):
+        return str(self.__dict__)
 
-class WorkerSettings(PhaseSettings):
+
+class WorkerSettings(object):
 
     REUSE_WORKSPACE = 'false'
     WORKSPACE_DIR = '/tmp/{}'.format(uhex()[:12])
@@ -766,3 +784,6 @@ class WorkerSettings(PhaseSettings):
     def __init__(self, options):
         self.reuse_worker = options.get('reuse_workspace', self.REUSE_WORKSPACE)
         self.worker_dir = options.get('workspace_location', self.WORKSPACE_DIR)
+
+    def __str__(self):
+        return str(self.__dict__)

@@ -187,7 +187,12 @@ class TestConfig(Config):
     @property
     def hot_load_settings(self):
         options = self._get_options_as_dict('hot_load')
-        return HotLoadSettings(options)
+        hot_load = HotLoadSettings(options)
+
+        load = self.load_settings
+        hot_load.doc_gen = load.doc_gen
+        hot_load.size = load.size
+        return hot_load
 
     @property
     def xdcr_settings(self):
@@ -219,6 +224,10 @@ class TestConfig(Config):
         options = self._get_options_as_dict('access')
         access = AccessSettings(options)
         access.resolve_subcategories(self)
+
+        load = self.load_settings
+        access.doc_gen = load.doc_gen
+        access.size = load.size
         return access
 
     @property

@@ -4,6 +4,7 @@ import base64
 import json
 import subprocess
 import numpy as np
+import pdb
 
 from logger import logger
 
@@ -231,6 +232,55 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
         )
 
 
+class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSecondaryIndexTest):
+
+    def rebalance(self, initial_nodes, nodes_after):
+        clusters = self.cluster_spec.yield_clusters()
+        for _, servers in clusters:
+            master = servers[0]
+            new_nodes = []
+            ejected_nodes = []
+            new_nodes = enumerate(
+                servers[initial_nodes:nodes_after],
+                start=initial_nodes
+            )
+            known_nodes = servers[:nodes_after]
+            for i, host_port in new_nodes:
+                self.rest.add_node(master, host_port)
+        self.rest.rebalance(master, known_nodes, ejected_nodes)
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.compact_bucket()
+        initial_nodes = []
+        nodes_after = [0]
+        initial_nodes = self.test_config.cluster.initial_nodes
+        nodes_after[0] = initial_nodes[0] + 1
+        self.rebalance(initial_nodes[0], nodes_after[0])
+        from_ts, to_ts = self.build_secondaryindex()
+        time_elapsed = (to_ts - from_ts) / 1000.0
+        time_elapsed = self.reporter.finish('Initial secondary index', time_elapsed)
+        self.reporter.post_to_sf(
+            *self.metric_helper.get_indexing_meta(value=time_elapsed,
+                                                  index_type='Initial')
+        )
+        master = []
+        for _, servers in self.cluster_spec.yield_clusters():
+            master = servers[0]
+        self.monitor.monitor_rebalance(master)
+        initial_nodes[0] = initial_nodes[0] + 1
+        nodes_after[0] = nodes_after[0] + 1
+        self.rebalance(initial_nodes[0], nodes_after[0])
+        from_ts, to_ts = self.build_incrindex()
+        time_elapsed = (to_ts - from_ts) / 1000.0
+        time_elapsed = self.reporter.finish('Incremental secondary index', time_elapsed)
+        self.reporter.post_to_sf(
+            *self.metric_helper.get_indexing_meta(value=time_elapsed,
+                                                  index_type='Incremental')
+        )
+
+
 class SecondaryIndexingThroughputTest(SecondaryIndexTest):
 
     """
@@ -283,6 +333,47 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
         self.compact_bucket()
         from_ts, to_ts = self.build_secondaryindex()
         self.access_bg()
+        self.apply_scanworkload()
+        scanthr, rowthr = self.read_scanresults()
+        logger.info('Scan throughput: {}'.format(scanthr))
+        if self.test_config.stats_settings.enabled:
+            self.reporter.post_to_sf(
+                round(scanthr, 1)
+            )
+
+
+class SecondaryIndexingThroughputRebalanceTest(SecondaryIndexingThroughputTest):
+
+    """
+    The test applies scan workload against the 2i server and measures
+    and reports the average scan throughput"""
+
+    def rebalance(self, initial_nodes, nodes_after):
+        clusters = self.cluster_spec.yield_clusters()
+        for _, servers in clusters:
+            master = servers[0]
+            new_nodes = []
+            ejected_nodes = []
+            new_nodes = enumerate(
+                servers[initial_nodes:nodes_after],
+                start=initial_nodes
+            )
+            known_nodes = servers[:nodes_after]
+            for i, host_port in new_nodes:
+                self.rest.add_node(master, host_port)
+        self.rest.rebalance(master, known_nodes, ejected_nodes)
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.compact_bucket()
+        from_ts, to_ts = self.build_secondaryindex()
+        self.access_bg()
+        initial_nodes = []
+        nodes_after = [0]
+        initial_nodes = self.test_config.cluster.initial_nodes
+        nodes_after[0] = initial_nodes[0] + 1
+        self.rebalance(initial_nodes[0], nodes_after[0])
         self.apply_scanworkload()
         scanthr, rowthr = self.read_scanresults()
         logger.info('Scan throughput: {}'.format(scanthr))
@@ -345,6 +436,53 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
             )
 
 
+class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest):
+
+    """
+    The test applies scan workload against the 2i server and measures
+    and reports the average scan throughput
+    """
+
+    def rebalance(self, initial_nodes, nodes_after):
+        clusters = self.cluster_spec.yield_clusters()
+        for _, servers in clusters:
+            master = servers[0]
+            new_nodes = []
+            ejected_nodes = []
+            new_nodes = enumerate(
+                servers[initial_nodes:nodes_after],
+                start=initial_nodes
+            )
+            known_nodes = servers[:nodes_after]
+            for i, host_port in new_nodes:
+                self.rest.add_node(master, host_port)
+        self.rest.rebalance(master, known_nodes, ejected_nodes)
+
+    def run(self):
+        rmfile = "rm -f {}".format(self.test_config.stats_settings.secondary_statsfile)
+        status = subprocess.call(rmfile, shell=True)
+        if status != 0:
+            raise Exception('existing 2i latency stats file could not be removed')
+        else:
+            logger.info('Existing 2i latency stats file removed')
+
+        self.load()
+        self.wait_for_persistence()
+        self.compact_bucket()
+        initial_nodes = []
+        nodes_after = [0]
+        initial_nodes = self.test_config.cluster.initial_nodes
+        nodes_after[0] = initial_nodes[0] + 1
+        self.rebalance(initial_nodes[0], nodes_after[0])
+        from_ts, to_ts = self.build_secondaryindex()
+        self.access_bg()
+        self.apply_scanworkload()
+        if self.test_config.stats_settings.enabled:
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_secondaryscan_latency(percentile=80)
+            )
+
+
 class SecondaryIndexingLatencyTest(SecondaryIndexTest):
 
     """
@@ -366,14 +504,10 @@ class SecondaryIndexingLatencyTest(SecondaryIndexTest):
 
     def run(self):
         self.load()
-
         self.wait_for_persistence()
         self.compact_bucket()
-
         self.hot_load()
-
         self.build_secondaryindex()
-
         num_samples = 100
         samples = []
 

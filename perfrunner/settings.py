@@ -629,7 +629,7 @@ class SecondaryIndexSettings(PhaseSettings):
             'indexer.settings.inmemory_snapshot.interval': 200,
             'indexer.settings.log_level': 'error',
             'indexer.settings.max_cpu_percent': 2400,
-            'indexer.settings.persisted_snapshot.interval': 20000,
+            'indexer.settings.persisted_snapshot.interval': 5000,
             'indexer.settings.scan_timeout': 0,
             'projector.settings.log_level': 'error'
         }

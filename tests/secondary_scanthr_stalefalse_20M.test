@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.secondary.SecondaryIndexingThroughputTest
-title = Secondary index scan stale=false throughput (scanps), 1 bucket x 20M x 2KB, non-DGM, 10K ops/sec, single index
+title = Secondary index scan stale=false throughput (scanps),24 rows per scan, 1 bucket x 20M x 2KB, non-DGM, 10K ops/sec, single index
 summary = Secondary index scan stale=false throughput test , 4 kv,1 indexer, 1 bucket x 20M x 2KB, 10K ops/sec, single index
 larger_is_better = true
 

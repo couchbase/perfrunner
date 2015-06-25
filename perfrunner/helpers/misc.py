@@ -1,4 +1,5 @@
 import json
+import time
 from hashlib import md5
 from uuid import uuid4
 
@@ -27,3 +28,56 @@ def target_hash(*args):
 def server_group(servers, group_number, i):
     group_id = 1 + i / ((len(servers) + 1) / group_number)
     return 'Group {}'.format(group_id)
+
+
+def retry(catch=(), iterations=5, wait=10):
+    """
+    This is a general purpose decorator for retrying a function while
+    discarding a tuple of exceptions that the function might throw.
+
+    'catch' is a tuple of exceptions. Passing in a list is also fine.
+
+    'iterations' means number of total attempted calls. 'iterations' is only
+    meaningful when >= 2.
+
+    'wait' is wait time between calls.
+
+    Usage:
+
+    import perfrunner.helpers.misc
+
+    @perfrunner.helpers.misc.retry(catch=[RuntimeError, KeyError])
+    def hi():
+        raise KeyError("Key Errrrr from Hi")
+
+    # or if you want to tune your own iterations and wait
+
+    @perfrunner.helpers.misc.retry(
+        catch=[KeyError, TypeError],
+        iterations=3, wait=1)
+    def hi(who):
+        print "hi called"
+        return "hi " +  who
+
+    print hi("john")
+    # this throws TypeError when 'str' and 'None are concatenated
+    print hi(None)
+    """
+    # in case the user specifies a list of Exceptions instead of a tuple
+    catch = tuple(catch)
+
+    def retry_decorator(func):
+        def retry_wrapper(*arg, **kwargs):
+            for i in xrange(iterations):
+                try:
+                    result = func(*arg, **kwargs)
+                except catch:
+                    if i == (iterations - 1):
+                        raise
+                    else:
+                        pass
+                else:
+                    return result
+                time.sleep(wait)
+        return retry_wrapper
+    return retry_decorator

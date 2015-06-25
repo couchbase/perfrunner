@@ -9,6 +9,8 @@ from decorator import decorator
 from logger import logger
 from requests.exceptions import ConnectionError
 
+import perfrunner.helpers.misc as misc
+
 MAX_RETRY = 5
 RETRY_DELAY = 5
 
@@ -485,6 +487,7 @@ class RestHelper(object):
         base64string = base64.encodestring('%s:%s' % (rest_username, rest_password)).replace('\n', '')
         request.add_header("Authorization", "Basic %s" % base64string)
 
+        @misc.retry((KeyError,))
         def get_index_status(json2i, index):
             """
             Return json2i["status"][k]["status"] if json2i["status"][k]["name"]

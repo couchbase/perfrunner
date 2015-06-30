@@ -1,0 +1,40 @@
+[test_case]
+test = perfrunner.tests.rebalance.RebalanceWithSpatialTest
+title = Rebalance-in (min), 3 -> 4, 1 bucket x 12M x 3d, DGM, 1 x 1 views, no load, 400 queries/sec
+summary = Mixed KV + spatial views rebalance test, 3 -> 4 nodes, 1 bucket x 12M x 3d, 1 x 1 views, no load, 400 qps
+larger_is_better = false
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 3
+num_buckets = 1
+
+[compaction]
+db_percentage = 10
+
+[load]
+items = 11958999
+workers = 10
+
+[hot_load]
+items = 11958999
+workers = 10
+working_set = 5
+
+[spatial]
+indexes =
+    main::{"spatial":{"geom":"function (doc) {\n  if (doc.a !== undefined && doc.b !== undefined && doc.c !== undefined) {\n    emit([doc.a, doc.b, doc.c], null);\n  }\n}"}}
+view_names =
+    main::geom
+dimensionality = 3
+data = /tmp/spatial/data/rea03
+queries = /tmp/spatial/query3/rea03
+#queries = http://www.mathematik.uni-marburg.de/~rstar/benchmark/query3/abs02#a4e28ab8049d1f0afbe870b5c5c12f1f3c8a80da
+#data = http://www.mathematik.uni-marburg.de/~rstar/benchmark/data/abs02#9a30b0789d2b3c746d23601bbd327afa8e368d9f
+workers = 12
+throughput = 400
+
+[rebalance]
+nodes_after = 4
+start_after = 1200
+stop_after = 1200

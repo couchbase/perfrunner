@@ -8,6 +8,7 @@ from perfrunner.helpers.misc import server_group
 from perfrunner.tests import PerfTest
 from perfrunner.tests.index import IndexTest
 from perfrunner.tests.query import QueryTest
+from perfrunner.tests.spatial import SpatialQueryTest
 from perfrunner.tests.xdcr import XdcrTest, SymmetricXdcrTest
 
 
@@ -251,6 +252,42 @@ class RebalanceWithQueriesTest(QueryTest, RebalanceTest):
         self.workload = self.test_config.access_settings
         self.access_bg()
         self.rebalance()
+
+
+# This is just a base clase for the mapreduce and spatial tests
+class _RebalanceWithViewsTest(RebalanceTest):
+
+    """
+    Base class for KV + views rebalance tests.
+
+    This class is subclassed for mapreduce and spatial views. The
+    subclasses only define the collectors.
+    """
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.compact_bucket()
+
+        self.hot_load()
+
+        self.define_ddocs()
+        self.build_index()
+
+        self.workload = self.test_config.access_settings
+        self.access_bg()
+        self.rebalance()
+
+
+class RebalanceWithSpatialTest(_RebalanceWithViewsTest, SpatialQueryTest):
+
+    """
+    Workflow definition for KV + Spatal Views rebalance tests.
+    """
+
+    # NOTE vmx 2015-06-11: Getting the get/set latency currently doesn't work
+    # COLLECTORS = {'latency': True, 'spatial_latency': True}
+    COLLECTORS = {'spatial_latency': True}
 
 
 class RebalanceWithXdcrTest(XdcrTest, RebalanceTest):

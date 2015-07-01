@@ -487,7 +487,6 @@ class RestHelper(object):
         base64string = base64.encodestring('%s:%s' % (rest_username, rest_password)).replace('\n', '')
         request.add_header("Authorization", "Basic %s" % base64string)
 
-        @misc.retry((KeyError,))
         def get_index_status(json2i, index):
             """
             Return json2i["status"][k]["status"] if json2i["status"][k]["name"]
@@ -498,8 +497,8 @@ class RestHelper(object):
                     return d["status"]
             return None
 
-        while True:
-            time.sleep(1)
+        @misc.retry(catch=(KeyError,))
+        def check_indexes_ready():
             response = urllib2.urlopen(request)
             data = str(response.read())
             json2i = json.loads(data)
@@ -508,6 +507,9 @@ class RestHelper(object):
                 if(status == 'Ready'):
                     IndexesReady[i] = 1
 
+        while True:
+            time.sleep(1)
+            check_indexes_ready()
             if(sum(IndexesReady) == len(indexes)):
                 break
 

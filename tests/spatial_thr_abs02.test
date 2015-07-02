@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.spatial.SpatialQueryThroughputTest
-title = Spatial View query throughput (qps), 1 bucket x 1M, non-DGM, 1 x 1 spatial views, 500 mutations/sec/node
-summary = Read-only spatial view query test, 4 nodes, 1 bucket x 1M, non-DGM, 1 x 1 views, 500 mutations/sec/node, unbounded qps
+title = Spatial View query throughput (qps), 1 bucket x 1M, non-DGM, 1 x 1 spatial views, no mutations
+summary = Read-only spatial view query test, 4 nodes, 1 bucket x 1M, non-DGM, 1 x 1 views, no mutations, unbounded qps
 larger_is_better = true
 
 [cluster]
@@ -23,7 +23,6 @@ dimensionality = 2
 data = /tmp/spatial/data/abs02
 queries = /tmp/spatial/query3/abs02
 workers = 24
-throughput = 10000
 
 [access]
 workers = 0

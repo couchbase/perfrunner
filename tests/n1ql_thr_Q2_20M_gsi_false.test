@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
-title = N1QL Q2 1Bux20Mx1K, Singleton Unique Lookup, 38.4KGops, 9.6KSops, GSI, stale=ok
+title = N1QL Q2 1Bux20Mx1K, Singleton Unique Lookup, 38.4KGops, 9.6KSops, GSI, stale=false
 summary = Singleton Unique Lookup, 38.4KGops, 9.6KSops
 larger_is_better = false
 
@@ -36,11 +36,11 @@ workers = 24
 time = 1200
 n1ql_queries = singleton-unique-lookup
 n1ql_throughput = 1000000
-n1ql_workers = 480
+n1ql_workers = 128
 
 [n1ql-singleton-unique-lookup]
 use_prepared = True
 statement = SELECT * FROM `bucket-1` WHERE email.f.f = $1;
 max_parallelism = 1
-scan_consistency = not_bounded
+scan_consistency = request_plus
 args = ["{email[f][f]}"]

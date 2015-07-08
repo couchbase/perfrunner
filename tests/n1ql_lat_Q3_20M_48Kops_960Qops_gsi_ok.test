@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLLatencyTest
-title = N1QL Q4 1Bux20Mx1K, Full Scan, 38.4KGops, 9.6KSops, 48KQops, GSI, stale=ok
-summary = Full Scan, 38.4KGops, 9.6KSops, 48KQops
+title = N1QL Q3 1Bux20Mx1K, Range Scan, 38.4KGops, 9.6KSops, 960Qops, GSI, stale=ok
+summary = Range Scan, 38.4KGops, 9.6KSops, 960Qops
 larger_is_better = false
 
 [cluster]
@@ -23,7 +23,7 @@ doc_gen = new
 
 [n1ql]
 indexes =
-    #primary::CREATE PRIMARY INDEX ON `{bucket}` using gsi;
+    by_capped_small::CREATE INDEX {name} ON `{bucket}` (capped_small) using gsi;
 
 [access]
 creates = 0
@@ -34,13 +34,13 @@ throughput = 48000
 items = 20000000
 workers = 24
 time = 1200
-n1ql_queries = full-scan
-n1ql_throughput = 48000
-n1ql_workers = 480
+n1ql_queries = range-scan
+n1ql_throughput = 960
+n1ql_workers = 96
 
-[n1ql-full-scan]
+[n1ql-range-scan]
 use_prepared = True
-statement = SELECT count(*) FROM `bucket-1` WHERE category > $1;
+statement = SELECT * FROM `bucket-1` where capped_small = $1;
 max_parallelism = 1
 scan_consistency = not_bounded
-args = [{category}]
+args = ["{capped_small}"]

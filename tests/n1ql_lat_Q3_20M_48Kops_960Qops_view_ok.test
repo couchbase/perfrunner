@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLLatencyTest
-title = N1QL Q6 1Bux20Mx1K, Order By Limit Query, 38.4KGops, 9.6KSops, 48KQops, View, stale=ok
-summary = Order By Limit Query, 38.4KGops, 9.6KSops, 48KQops
+title = N1QL Q3 1Bux20Mx1K, Range Scan, 38.4KGops, 9.6KSops, 960Qops, View, stale=ok
+summary = Range Scan, 38.4KGops, 9.6KSops, 960Qops
 larger_is_better = false
 
 [cluster]
@@ -34,13 +34,13 @@ throughput = 48000
 items = 20000000
 workers = 24
 time = 1200
-n1ql_queries = order-by-limit-query
-n1ql_throughput = 48000
-n1ql_workers = 960
+n1ql_queries = range-scan
+n1ql_throughput = 960
+n1ql_workers = 96
 
-[n1ql-order-by-limit-query]
+[n1ql-range-scan]
 use_prepared = True
-statement = SELECT name.f.f AS _name, street.f.f AS _street FROM `bucket-1` WHERE capped_small=$1 ORDER BY name.f.f.f LIMIT 100;
+statement = SELECT * FROM `bucket-1` where capped_small = $1;
 max_parallelism = 1
 scan_consistency = not_bounded
 args = ["{capped_small}"]

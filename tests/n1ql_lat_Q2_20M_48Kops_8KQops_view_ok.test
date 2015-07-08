@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLLatencyTest
-title = N1QL Q4 1Bux20Mx1K, Full Scan, 38.4KGops, 9.6KSops, 48KQops, View, stale=ok
-summary = Full Scan, 38.4KGops, 9.6KSops, 48KQops
+title = N1QL Q2 1Bux20Mx1K, Singleton Unique Lookup, 38.4KGops, 9.6KSops, 8KQops, View, stale=ok
+summary = Singleton Unique Lookup, 38.4KGops, 9.6KSops, 8KQops
 larger_is_better = false
 
 [cluster]
@@ -23,7 +23,7 @@ doc_gen = new
 
 [n1ql]
 indexes =
-    #primary::CREATE PRIMARY INDEX ON `{bucket}` using view;
+    by_email::CREATE INDEX {name} ON `{bucket}` (email.f.f) using view;
 
 [access]
 creates = 0
@@ -34,13 +34,13 @@ throughput = 48000
 items = 20000000
 workers = 24
 time = 1200
-n1ql_queries = full-scan
-n1ql_throughput = 48000
-n1ql_workers = 480
+n1ql_queries = singleton-unique-lookup
+n1ql_throughput = 8000
+n1ql_workers = 128
 
-[n1ql-full-scan]
+[n1ql-singleton-unique-lookup]
 use_prepared = True
-statement = SELECT count(*) FROM `bucket-1` WHERE category > $1;
+statement = SELECT * FROM `bucket-1` WHERE email.f.f = $1;
 max_parallelism = 1
 scan_consistency = not_bounded
-args = [{category}]
+args = ["{email[f][f]}"]

@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLLatencyTest
-title = N1QL Q2 1Bux20Mx1K, Singleton Unique Lookup, 38.4KGops, 9.6KSops, 4.8KQops, GSI, stale=false
-summary = Singleton Unique Lookup, 38.4KGops, 9.6KSops, 4.8KQops
+title = N1QL Q2 1Bux20Mx1K, Singleton Unique Lookup, 38.4KGops, 9.6KSops, 450Qops, GSI, stale=false
+summary = Singleton Unique Lookup, 38.4KGops, 9.6KSops, 450Qops
 larger_is_better = false
 
 [cluster]
@@ -35,7 +35,7 @@ items = 20000000
 workers = 24
 time = 1200
 n1ql_queries = singleton-unique-lookup
-n1ql_throughput = 4800
+n1ql_throughput = 450
 n1ql_workers = 720
 
 [n1ql-singleton-unique-lookup]

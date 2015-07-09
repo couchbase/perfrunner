@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLLatencyTest
-title = N1QL Q7 1Bux20Mx1K, Order By Query, 38.4KGops, 9.6KSops, 4.8KQops, GSI, stale=false
-summary = Order By Query, 38.4KGops, 9.6KSops, 4.8KQops
+title = N1QL Q7 1Bux20Mx1K, Order By Query, 38.4KGops, 9.6KSops, 200Qops, GSI, stale=false
+summary = Order By Query, 38.4KGops, 9.6KSops, 200Qops
 larger_is_better = false
 
 [cluster]
@@ -35,7 +35,7 @@ items = 20000000
 workers = 24
 time = 1200
 n1ql_queries = order-by-query
-n1ql_throughput = 4800
+n1ql_throughput = 200
 n1ql_workers = 720
 
 [n1ql-order-by-query]

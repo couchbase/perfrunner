@@ -40,7 +40,7 @@ n1ql_workers = 720
 
 [n1ql-range-scan]
 use_prepared = True
-statement = SELECT * FROM `bucket-1` where capped_small = $1;
+statement = SELECT name.f.f AS _name, street.f.f AS _street FROM `bucket-1` WHERE capped_small=$1;
 max_parallelism = 1
 scan_consistency = request_plus
 args = ["{capped_small}"]

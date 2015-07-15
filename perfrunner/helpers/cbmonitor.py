@@ -104,10 +104,6 @@ class CbAgent(object):
                            secondary_debugstats=False):
         clusters = self.clusters.keys()
 
-        default_queries = test.test_config.access_settings.n1ql_queries
-        self.settings.new_n1ql_queries = getattr(test, 'n1ql_queries',
-                                                 default_queries)
-
         self.prepare_ns_server(clusters)
         self.prepare_active_tasks(clusters)
         if test.remote is None or test.remote.os != 'Cygwin':
@@ -305,6 +301,9 @@ class CbAgent(object):
             )
 
     def prepare_n1ql_latency(self, clusters, test):
+        default_queries = test.test_config.access_settings.n1ql_queries
+        self.settings.new_n1ql_queries = getattr(test, 'n1ql_queries',
+                                                 default_queries)
         prefix = test.target_iterator.prefix
         for cluster in clusters:
             settings = copy(self.settings)

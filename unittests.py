@@ -17,8 +17,8 @@ class InstallTest(TestCase):
     def test_rpm_package(self, installer_mock):
         installer_mock.return_value = None
         installer = CouchbaseInstaller()
-        installer.build = Build('x86_64', 'rpm', '2.0.0-1976', '2.0.0', '1976',
-                                None)
+        installer.build = Build('x86_64', 'rpm', 'enterprise', '2.0.0-1976',
+                                '2.0.0', '1976', None)
 
         filenames = tuple(installer.get_expected_filenames())
         expected = (
@@ -32,8 +32,8 @@ class InstallTest(TestCase):
     def test_deb_package(self, installer_mock):
         installer_mock.return_value = None
         installer = CouchbaseInstaller()
-        installer.build = Build('x86_64', 'deb', '3.0.0-777', '3.0.0', '777',
-                                None)
+        installer.build = Build('x86_64', 'deb', 'enterprise', '3.0.0-777',
+                                '3.0.0', '777', None)
 
         filenames = tuple(installer.get_expected_filenames())
         expected = (
@@ -47,8 +47,8 @@ class InstallTest(TestCase):
     def test_win_package(self, installer_mock):
         installer_mock.return_value = None
         installer = CouchbaseInstaller()
-        installer.build = Build('x86_64', 'exe', '3.0.0-1028', '3.0.0', '1028',
-                                None)
+        installer.build = Build('x86_64', 'exe', 'enterprise', '3.0.0-1028',
+                                '3.0.0', '1028', None)
 
         filenames = tuple(installer.get_expected_filenames())
         expected = (
@@ -88,8 +88,8 @@ class InstallTest(TestCase):
     def test_toy_package(self, installer_mock):
         installer_mock.return_value = None
         installer = CouchbaseInstaller()
-        installer.build = Build('x86_64', 'rpm', '2.0.0-1976', '2.0.0', '1976',
-                                'mytoy')
+        installer.build = Build('x86_64', 'rpm', 'enterprise', '2.0.0-1976',
+                                '2.0.0', '1976', 'mytoy')
 
         filenames = tuple(installer.get_expected_filenames())
         expected = (

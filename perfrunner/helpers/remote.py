@@ -243,8 +243,10 @@ class RemoteLinuxHelper(object):
         logger.info('Uninstalling Couchbase Server')
         if pkg == 'deb':
             run('yes | apt-get remove couchbase-server', quiet=True)
+            run('yes | apt-get remove couchbase-server-community', quiet=True)
         else:
             run('yes | yum remove couchbase-server', quiet=True)
+            run('yes | yum remove couchbase-server-community', quiet=True)
 
     @all_hosts
     def install_couchbase(self, pkg, url, filename, version=None):

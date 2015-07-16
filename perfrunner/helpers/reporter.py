@@ -171,7 +171,8 @@ class SFReporter(object):
             'build': self.test.build,
             'metric': metric,
             'value': value,
-            'snapshots': self.test.snapshots
+            'snapshots': self.test.snapshots,
+            'build_url': os.environ.get('BUILD_URL')
         }
         if self.test.master_events:
             data.update({'master_events': key})

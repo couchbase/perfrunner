@@ -39,6 +39,17 @@ class N1QLTest(PerfTest):
                                                         index_name=index_name)
 
     def _create_prepared_statements(self):
+        self.n1ql_queries = []
+        prepared_stmnts = list()
+        for query in self.test_config.access_settings.n1ql_queries:
+            if 'prepared' in query and query['prepared']:
+                stmt = 'PREPARE {} AS {}'.format(query['prepared'],
+                                                 query['statement'])
+                prepared_stmnts.append(stmt)
+                del query['statement']
+                query['prepared'] = '"' + query['prepared'] + '"'
+            self.n1ql_queries.append(query)
+
         for name, servers in self.cluster_spec.yield_servers_by_role('n1ql'):
             if not servers:
                 raise Exception('No query servers specified for cluster \"{}\",'
@@ -48,18 +59,10 @@ class N1QLTest(PerfTest):
                 raise Exception('No buckets specified for cluster \"{}\", '
                                 'cannot create prepared statement'.format(name))
 
-            query_node = servers[0].split(':')[0]
-
-            self.n1ql_queries = []
-            access_settings = self.test_config.access_settings
-            for query in access_settings.n1ql_queries:
-                if 'prepared' in query and query['prepared']:
-                    stmt = 'PREPARE {} AS {}'.format(query['prepared'],
-                                                     query['statement'])
+            for server in servers:
+                query_node = server.split(':')[0]
+                for stmt in prepared_stmnts:
                     self.rest.n1ql_query(query_node, stmt)
-                    del query['statement']
-                    query['prepared'] = '"' + query['prepared'] + '"'
-                self.n1ql_queries.append(query)
 
     @with_stats
     def access(self):

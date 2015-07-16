@@ -53,12 +53,12 @@ class N1QLTest(PerfTest):
             self.n1ql_queries = []
             access_settings = self.test_config.access_settings
             for query in access_settings.n1ql_queries:
-                if 'use_prepared' in query and query['use_prepared']:
-                    stmt = 'PREPARE {}'.format(query['statement'])
-                    resp = self.rest.n1ql_query(query_node, stmt)
+                if 'prepared' in query and query['prepared']:
+                    stmt = 'PREPARE {} AS {}'.format(query['prepared'],
+                                                     query['statement'])
+                    self.rest.n1ql_query(query_node, stmt)
                     del query['statement']
-                    del query['use_prepared']
-                    query['prepared'] = '"' + resp['results'][0]['name'] + '"'
+                    query['prepared'] = '"' + query['prepared'] + '"'
                 self.n1ql_queries.append(query)
 
     @with_stats

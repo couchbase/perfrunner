@@ -39,7 +39,7 @@ n1ql_throughput = 1000000
 n1ql_workers = 720
 
 [n1ql-range-scan]
-use_prepared = True
+prepared = range_scan
 statement = SELECT name.f.f AS _name, street.f.f AS _street FROM `bucket-1` WHERE capped_small=$1;
 max_parallelism = 1
 scan_consistency = request_plus

@@ -1,5 +1,5 @@
 {
-       "Concurrency" : 720,
+       "Concurrency" : 1000,
        "Clients" : 1,
        "ScanSpecs" : [
           {

@@ -1,5 +1,5 @@
 {
-       "Concurrency" : 1000,
+       "Concurrency" : 150,
        "Clients" : 1,
        "ScanSpecs" : [
           {
@@ -50,7 +50,7 @@
           {
              "Type" : "All",
              "Limit" : 24,
-             "Repeat" : 999999,
+             "Repeat" : 99,
              "Bucket" : "bucket-1",
              "Id" : 1,
              "Index" : "myindex4"
@@ -58,7 +58,7 @@
           {
              "Type" : "All",
              "Limit" : 24,
-             "Repeat" : 999999,
+             "Repeat" : 99,
              "Bucket" : "bucket-1",
              "Id" : 1,
              "Index" : "myindex5"

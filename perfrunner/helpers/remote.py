@@ -658,7 +658,6 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
         run('taskkill /F /T /IM setup.exe', warn_only=True, quiet=True)
 
     def clean_installation(self):
-        put('scripts/clean.reg', '/cygdrive/c/clean.reg')
         run('regedit.exe /s "C:\\clean.reg"', warn_only=True)
         run('rm -fr {}'.format(self.CB_DIR))
 

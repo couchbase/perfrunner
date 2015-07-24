@@ -33,6 +33,8 @@ class CouchbaseInstaller(object):
         if options.version:
             release, build = options.version.split('-')
             self.SHERLOCK_BUILDS = 'http://latestbuilds.hq.couchbase.com/couchbase-server/sherlock/{}/'.format(build)
+            if options.toy:
+                self.SHERLOCK_BUILDS = 'http://latestbuilds.hq.couchbase.com/couchbase-server/toy-{}/{}/'.format(options.toy, build)
 
         self.build = Build(arch, pkg, options.cluster_edition, options.version,
                            release, build, options.toy, options.url)
@@ -50,6 +52,8 @@ class CouchbaseInstaller(object):
                 'couchbase-server-community_cent64-3.0.1-toy-{toy}-{arch}_{version}-toy.{pkg}',
                 'couchbase-server-community_cent58-master-toy-{toy}-{arch}_{version}-toy.{pkg}',
                 'couchbase-server-community_cent54-master-toy-{toy}-{arch}_{version}-toy.{pkg}',
+                # For toy builds >= Sherlock
+                'couchbase-server-enterprise-{version}-centos6.{arch}.{pkg}',
             )
         elif self.build.pkg == 'rpm':
             patterns = (

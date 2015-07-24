@@ -21,7 +21,7 @@ workers = 20
 
 [secondary]
 name = myindex1,myindex2,myindex3,myindex4,myindex5
-field = email,city,name,coins,achievements
+field = alt_email,city,name,coins,achievements
 
 [access]
 creates = 100

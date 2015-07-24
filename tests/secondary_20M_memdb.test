@@ -20,7 +20,7 @@ workers = 20
 
 [secondary]
 name = myindex
-field = email
+field = alt_email
 db = memdb
 
 [access]

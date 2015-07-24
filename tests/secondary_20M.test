@@ -21,7 +21,7 @@ workers = 20
 
 [secondary]
 name = myindex
-field = email
+field = alt_email
 
 [access]
 creates = 100

@@ -51,6 +51,12 @@ class ClusterManager(object):
         for server in self.servers():
             self.rest.set_index_mem_quota(server, self.index_mem_quota)
 
+    def set_query_settings(self):
+        settings = self.test_config.n1ql_settings.settings
+        for _, servers in self.cluster_spec.yield_servers_by_role('n1ql'):
+            for server in servers:
+                self.rest.set_query_settings(server, settings)
+
     def set_index_settings(self):
         settings = self.test_config.secondaryindex_settings.settings
         for _, servers in self.cluster_spec.yield_servers_by_role('index'):
@@ -275,6 +281,7 @@ def main():
     cm.change_watermarks()
     if cm.remote:
         cm.set_index_settings()
+        cm.set_query_settings()
         cm.tweak_memory()
         cm.remote.disable_wan()
         cm.start_cbq_engine()

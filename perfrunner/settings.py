@@ -668,6 +668,22 @@ class N1QLSettings(object):
         if 'indexes' in options:
             self.indexes = options.get('indexes').strip().split('\n')
 
+        self.settings = {}
+        for option in options:
+            if option.startswith('query.settings'):
+                key = option.split('.')[2]
+                value = options.get(option)
+                try:
+                    if '.' in value:
+                        self.settings[key] = float(value)
+                    else:
+                        self.settings[key] = int(value)
+                    continue
+                except:
+                    pass
+
+                self.settings[key] = value
+
     def __str__(self):
         return str(self.__dict__)
 

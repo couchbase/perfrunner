@@ -97,6 +97,22 @@ class RestHelper(object):
         data = {'indexMemoryQuota': mem_quota}
         self.post(url=api, data=data)
 
+    def set_query_settings(self, host_port, override_settings):
+        host = host_port.replace('8091', '8093')
+        api = 'http://{}/admin/settings'.format(host)
+        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+        settings = self.get(url=api).json()
+
+        settings = self.get(url=api).json()
+        for override, value in override_settings.items():
+            if override not in settings:
+                logger.error('Cannot change query setting {} to {}, setting invalid'
+                             .format(override, value))
+                continue
+            settings[override] = value
+            logger.info('Changing query setting {} to {}'.format(override, value))
+        self.post(url=api, data=json.dumps(settings), headers=headers)
+
     def set_index_settings(self, host_port, override_settings):
         host = host_port.replace('8091', '9102')
         api = 'http://{}/settings'.format(host)

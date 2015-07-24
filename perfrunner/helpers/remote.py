@@ -658,7 +658,8 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
         run('taskkill /F /T /IM setup.exe', warn_only=True, quiet=True)
 
     def clean_installation(self):
-        run('rm -fr {}'.format(self.CB_DIR))
+        with settings(warn_only=True):
+            run('rm -fr {}'.format(self.CB_DIR))
 
     @all_hosts
     def uninstall_couchbase(self, pkg):

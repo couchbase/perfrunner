@@ -633,11 +633,11 @@ class SecondaryIndexSettings(object):
 
         self.settings = {
             'indexer.settings.inmemory_snapshot.interval': 200,
-            'indexer.settings.log_level': 'error',
+            'indexer.settings.log_level': 'info',
             'indexer.settings.max_cpu_percent': 2400,
             'indexer.settings.persisted_snapshot.interval': 5000,
             'indexer.settings.scan_timeout': 0,
-            'projector.settings.log_level': 'error'
+            'projector.settings.log_level': 'info'
         }
 
         for option in options:

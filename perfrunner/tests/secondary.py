@@ -473,9 +473,9 @@ class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest
         nodes_after = [0]
         initial_nodes = self.test_config.cluster.initial_nodes
         nodes_after[0] = initial_nodes[0] + 1
-        self.rebalance(initial_nodes[0], nodes_after[0])
         from_ts, to_ts = self.build_secondaryindex()
         self.access_bg()
+        self.rebalance(initial_nodes[0], nodes_after[0])
         self.apply_scanworkload()
         if self.test_config.stats_settings.enabled:
             self.reporter.post_to_sf(

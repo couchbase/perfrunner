@@ -1,5 +1,6 @@
 from collections import namedtuple
 from optparse import OptionParser
+from urlparse import urlparse
 
 import requests
 from logger import logger
@@ -9,7 +10,8 @@ from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import ClusterSpec
 
 Build = namedtuple('Build',
-                   ['arch', 'pkg', 'edition', 'version', 'release', 'build', 'toy'])
+                   ['arch', 'pkg', 'edition', 'version', 'release', 'build',
+                    'toy', 'url'])
 
 
 class CouchbaseInstaller(object):
@@ -19,16 +21,21 @@ class CouchbaseInstaller(object):
     SHERLOCK_BUILDS = ''
 
     def __init__(self, cluster_spec, options):
+        self.options = options
         self.remote = RemoteHelper(cluster_spec, None, options.verbose)
         self.cluster_spec = cluster_spec
 
         arch = self.remote.detect_arch()
         pkg = self.remote.detect_pkg()
-        release, build = options.version.split('-')
-        self.SHERLOCK_BUILDS = 'http://latestbuilds.hq.couchbase.com/couchbase-server/sherlock/{}/'.format(build)
+
+        release = None
+        build = None
+        if options.version:
+            release, build = options.version.split('-')
+            self.SHERLOCK_BUILDS = 'http://latestbuilds.hq.couchbase.com/couchbase-server/sherlock/{}/'.format(build)
 
         self.build = Build(arch, pkg, options.cluster_edition, options.version,
-                           release, build, options.toy)
+                           release, build, options.toy, options.url)
         logger.info('Target build info: {}'.format(self.build))
 
     def get_expected_filenames(self):
@@ -92,7 +99,15 @@ class CouchbaseInstaller(object):
         self.remote.clean_data()
 
     def install_package(self):
-        filename, url = self.find_package()
+        if not self.options.url:
+            filename, url = self.find_package()
+        else:
+            url = self.options.url
+            logger.info("Using this URL to install instead of searching amongst"
+                        " the known locations: {}".format(url))
+            # obtain the filename after the last '/' of a url.
+            filename = urlparse(url).path.split('/')[-1]
+
         self.remote.install_couchbase(self.build.pkg, url, filename,
                                       self.build.release)
 
@@ -117,13 +132,18 @@ def main():
                       help='build version', metavar='2.0.0-1976')
     parser.add_option('-t', dest='toy',
                       help='optional toy build ID', metavar='couchstore')
+    parser.add_option('--url', dest='url', default=None,
+                      help='The http URL to a Couchbase RPM that should be'
+                      ' installed. This overrides the URL to be installed.')
     parser.add_option('--verbose', dest='verbose', action='store_true',
                       help='enable verbose logging')
 
     options, args = parser.parse_args()
 
-    if not options.cluster_spec_fname or not options.version:
-        parser.error('Missing mandatory parameter')
+    if not (options.cluster_spec_fname and options.version) and not options.url:
+        parser.error(
+            'Missing mandatory parameter. Either specify both cluster'
+            ' spec and version, or specify just the URL to be installed')
 
     if options.cluster_edition not in ['community', 'enterprise']:
         parser.error('Cluster edition must be either community or enterprise')

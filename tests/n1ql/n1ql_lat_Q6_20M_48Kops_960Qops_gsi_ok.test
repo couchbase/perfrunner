@@ -41,6 +41,5 @@ n1ql_workers = 96
 [n1ql-order-by-limit-query]
 prepared = order_by_limit_query
 statement = SELECT name.f.f AS _name, street.f.f AS _street FROM `bucket-1` WHERE capped_small=$1 ORDER BY name.f.f.f LIMIT 100;
-max_parallelism = 1
 scan_consistency = not_bounded
 args = ["{capped_small}"]

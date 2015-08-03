@@ -41,6 +41,5 @@ n1ql_workers = 128
 [n1ql-singleton-unique-lookup]
 prepared = singleton_unique_lookup
 statement = SELECT * FROM `bucket-1` WHERE email.f.f = $1;
-max_parallelism = 1
 scan_consistency = not_bounded
 args = ["{email[f][f]}"]

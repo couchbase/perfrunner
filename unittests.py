@@ -18,7 +18,7 @@ class InstallTest(TestCase):
         installer_mock.return_value = None
         installer = CouchbaseInstaller()
         installer.build = Build('x86_64', 'rpm', 'enterprise', '2.0.0-1976',
-                                '2.0.0', '1976', None)
+                                '2.0.0', '1976', None, None)
 
         filenames = tuple(installer.get_expected_filenames())
         expected = (
@@ -33,7 +33,7 @@ class InstallTest(TestCase):
         installer_mock.return_value = None
         installer = CouchbaseInstaller()
         installer.build = Build('x86_64', 'deb', 'enterprise', '3.0.0-777',
-                                '3.0.0', '777', None)
+                                '3.0.0', '777', None, None)
 
         filenames = tuple(installer.get_expected_filenames())
         expected = (
@@ -48,7 +48,7 @@ class InstallTest(TestCase):
         installer_mock.return_value = None
         installer = CouchbaseInstaller()
         installer.build = Build('x86_64', 'exe', 'enterprise', '3.0.0-1028',
-                                '3.0.0', '1028', None)
+                                '3.0.0', '1028', None, None)
 
         filenames = tuple(installer.get_expected_filenames())
         expected = (
@@ -89,7 +89,7 @@ class InstallTest(TestCase):
         installer_mock.return_value = None
         installer = CouchbaseInstaller()
         installer.build = Build('x86_64', 'rpm', 'enterprise', '2.0.0-1976',
-                                '2.0.0', '1976', 'mytoy')
+                                '2.0.0', '1976', 'mytoy', None)
 
         filenames = tuple(installer.get_expected_filenames())
         expected = (
@@ -101,6 +101,7 @@ class InstallTest(TestCase):
             'couchbase-server-community_cent64-3.0.1-toy-mytoy-x86_64_2.0.0-1976-toy.rpm',
             'couchbase-server-community_cent58-master-toy-mytoy-x86_64_2.0.0-1976-toy.rpm',
             'couchbase-server-community_cent54-master-toy-mytoy-x86_64_2.0.0-1976-toy.rpm',
+            'couchbase-server-enterprise-2.0.0-1976-centos6.x86_64.rpm'
         )
         self.assertEqual(filenames, expected)
 

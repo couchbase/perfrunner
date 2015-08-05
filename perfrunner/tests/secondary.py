@@ -307,6 +307,7 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
                 self.configfile = 'scripts/config_scanthr_multiple.json'
 
         cmdstr = "cbindexperf -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json".format(self.index_nodes[0], rest_username, rest_password, self.configfile)
+        logger.info('To be applied:'.format(cmdstr))
         status = subprocess.call(cmdstr, shell=True)
         if status != 0:
             raise Exception('Scan workload could not be applied')

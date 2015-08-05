@@ -30,22 +30,45 @@ class N1QLTest(PerfTest):
                 self._build_index(query_node, bucket)
 
     def _build_index(self, query_node, bucket):
+
+        names = list()
         for index in self.test_config.n1ql_settings.indexes:
-            index_name = index.split('::')[0]
-            index_query = index.split('::')[1]
-            query = index_query.format(name=index_name, bucket=bucket)
-            self.rest.n1ql_query(query_node, query)
-            self.rest.wait_for_indexes_to_become_online(host=query_node,
-                                                        index_name=index_name)
+
+            if '{partition_id}' in index:
+                for id in range(self.test_config.load_settings.doc_partitions):
+                    index_name = index.split('::')[0].format(partition_id=id)
+                    index_query = index.split('::')[1]
+                    query = index_query.format(name=index_name, bucket=bucket,
+                                               partition_id=id)
+                    self.rest.n1ql_query(query_node, query)
+                    names.append(index_name)
+            else:
+                index_name = index.split('::')[0]
+                index_query = index.split('::')[1]
+                query = index_query.format(name=index_name, bucket=bucket)
+                self.rest.n1ql_query(query_node, query)
+                names.append(index_name)
+
+            for name in names:
+                self.rest.wait_for_indexes_to_become_online(host=query_node,
+                                                            index_name=name)
 
     def _create_prepared_statements(self):
         self.n1ql_queries = []
         prepared_stmnts = list()
         for query in self.test_config.access_settings.n1ql_queries:
             if 'prepared' in query and query['prepared']:
-                stmt = 'PREPARE {} AS {}'.format(query['prepared'],
-                                                 query['statement'])
-                prepared_stmnts.append(stmt)
+
+                if '{partition_id}' in query['prepared']:
+                    for id in range(self.test_config.load_settings.doc_partitions):
+                        name = query['prepared'].format(partition_id=id)
+                        part_stmt = query['statement'].format(partition_id=id)
+                        stmt = 'PREPARE {} AS {}'.format(name, part_stmt)
+                        prepared_stmnts.append(stmt)
+                else:
+                    stmt = 'PREPARE {} AS {}'.format(query['prepared'],
+                                                     query['statement'])
+                    prepared_stmnts.append(stmt)
                 del query['statement']
                 query['prepared'] = '"' + query['prepared'] + '"'
             self.n1ql_queries.append(query)

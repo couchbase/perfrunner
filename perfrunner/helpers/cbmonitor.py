@@ -19,7 +19,7 @@ from perfrunner.helpers.rest import RestHelper
 
 
 @decorator
-def with_stats(method, *args):
+def with_stats(method, *args, **kwargs):
     test = args[0]
 
     stats_enabled = test.test_config.stats_settings.enabled
@@ -31,7 +31,7 @@ def with_stats(method, *args):
         test.cbagent.start()
 
     from_ts = datetime.utcnow()
-    method(*args)
+    method(*args, **kwargs)
     to_ts = datetime.utcnow()
 
     if stats_enabled:
@@ -304,14 +304,13 @@ class CbAgent(object):
         default_queries = test.test_config.access_settings.n1ql_queries
         self.settings.new_n1ql_queries = getattr(test, 'n1ql_queries',
                                                  default_queries)
-        prefix = test.target_iterator.prefix
         for cluster in clusters:
             settings = copy(self.settings)
             settings.interval = self.lat_interval
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
             self.collectors.append(
-                SpringN1QLQueryLatency(settings, test.workload, prefix=prefix)
+                SpringN1QLQueryLatency(settings, test.workload, prefix='n1ql')
             )
 
     def prepare_active_tasks(self, clusters):

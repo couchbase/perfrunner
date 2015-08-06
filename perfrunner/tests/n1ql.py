@@ -1,6 +1,7 @@
 import logger
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import PerfTest
+from perfrunner.tests import TargetIterator
 from exceptions import NotImplementedError
 
 
@@ -88,7 +89,7 @@ class N1QLTest(PerfTest):
                     self.rest.n1ql_query(query_node, stmt)
 
     @with_stats
-    def access(self):
+    def access(self, access_settings=None):
         super(N1QLTest, self).timer()
 
     def run(self):
@@ -101,7 +102,13 @@ class N1QLLatencyTest(N1QLTest):
         super(N1QLLatencyTest, self).__init__(*args, **kwargs)
 
     def run(self):
-        self.load()
+        load_settings = self.test_config.load_settings
+        load_settings.items = load_settings.items / 2
+
+        iterator = TargetIterator(self.cluster_spec, self.test_config, 'n1ql')
+        self.load(load_settings, iterator)
+
+        self.load(load_settings)
         self.wait_for_persistence()
         self.compact_bucket()
 
@@ -109,13 +116,13 @@ class N1QLLatencyTest(N1QLTest):
 
         self._create_prepared_statements()
 
-        access_settings = self.test_config.access_settings
-        access_settings.n1ql_queries = getattr(self, 'n1ql_queries',
-                                               access_settings.n1ql_queries)
-        self.workload = access_settings
+        self.workload = self.test_config.access_settings
+        self.workload.items = self.workload.items / 2
+        self.workload.n1ql_queries = getattr(self, 'n1ql_queries',
+                                             self.workload.n1ql_queries)
 
-        self.access_bg()
-        self.access()
+        self.access_bg(self.workload)
+        self.access(self.workload)
 
         if self.test_config.stats_settings.enabled:
             self.reporter.post_to_sf(
@@ -129,7 +136,13 @@ class N1QLThroughputTest(N1QLTest):
         super(N1QLThroughputTest, self).__init__(*args, **kwargs)
 
     def run(self):
-        self.load()
+        load_settings = self.test_config.load_settings
+        load_settings.items = load_settings.items / 2
+
+        iterator = TargetIterator(self.cluster_spec, self.test_config, 'n1ql')
+        self.load(load_settings, iterator)
+
+        self.load(load_settings)
         self.wait_for_persistence()
         self.compact_bucket()
 
@@ -137,13 +150,13 @@ class N1QLThroughputTest(N1QLTest):
 
         self._create_prepared_statements()
 
-        access_settings = self.test_config.access_settings
-        access_settings.n1ql_queries = getattr(self, 'n1ql_queries',
-                                               access_settings.n1ql_queries)
-        self.workload = access_settings
+        self.workload = self.test_config.access_settings
+        self.workload.items = self.workload.items / 2
+        self.workload.n1ql_queries = getattr(self, 'n1ql_queries',
+                                             self.workload.n1ql_queries)
 
-        self.access_bg()
-        self.access()
+        self.access_bg(self.workload)
+        self.access(self.workload)
 
         if self.test_config.stats_settings.enabled:
             self.reporter.post_to_sf(

@@ -281,6 +281,7 @@ def main():
     cm.change_watermarks()
     if cm.remote:
         cm.set_index_settings()
+        time.sleep(60)
         cm.set_query_settings()
         cm.tweak_memory()
         cm.remote.disable_wan()

@@ -37,7 +37,7 @@ workers = 24
 time = 1200
 n1ql_queries = range_scan
 n1ql_throughput = 1000000
-n1ql_workers = 128
+n1ql_workers = 720
 
 [n1ql-range_scan]
 prepared = range_scan_{partition_id}

@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
-title = N1QL Q2 1Bux20Mx1K, Singleton Unique Lookup, Dual Partition, 38.4KGops, 9.6KSops, GSI, stale=false
-summary = Singleton Unique Lookup, Partition, 38.4KGops, 9.6KSops
+title = N1QL Q3 1Bux20Mx1K, Range Scan, Dual Partition, 38.4KGops, 9.6KSops, GSI, stale=false
+summary = Range Scan, Dual Partition, 38.4KGops, 9.6KSops
 larger_is_better = false
 
 [cluster]

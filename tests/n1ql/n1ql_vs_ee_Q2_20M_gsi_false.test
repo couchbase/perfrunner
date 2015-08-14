@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
-title = N1QL Q2 1Bux20Mx1K, EE Singleton Unique Lookup, 38.4KGops, 9.6KSops, GSI, stale=false
-summary = EE Singleton Unique Lookup, 38.4KGops, 9.6KSops
+title = N1QL Q2 1Bux20Mx1K, EE Singleton Unique Lookup, 14.4KGops, 3.6KSops, GSI, stale=false
+summary = EE Singleton Unique Lookup, 14.4KGops, 3.6KSops
 larger_is_better = false
 
 [cluster]
@@ -31,7 +31,7 @@ creates = 0
 reads = 80
 updates = 20
 deletes = 0
-throughput = 48000
+throughput = 18000
 items = 20000000
 workers = 24
 time = 1200

@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
-title = N1QL Q3 1Bux20Mx1K, Range Scan, Dual Partition, 38.4KGops, 9.6KSops, GSI, stale=ok
-summary = Range Scan, Dual Partition, 38.4KGops, 9.6KSops
+title = N1QL Q3 1Bux20Mx1K, Range Scan, Dual Partition, 28.8KGops, 7.2KSops, GSI, stale=ok
+summary = Range Scan, Dual Partition, 28.8KGops, 7.2KSops
 larger_is_better = false
 
 [cluster]
@@ -31,7 +31,7 @@ creates = 0
 reads = 80
 updates = 20
 deletes = 0
-throughput = 48000
+throughput = 36000
 items = 20000000
 workers = 24
 time = 1200

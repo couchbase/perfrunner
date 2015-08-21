@@ -24,7 +24,7 @@ doc_partitions = 1
 
 [n1ql]
 indexes =
-    by_email::CREATE INDEX {name} ON `{bucket}` (email.f.f) using gsi;
+    by_email::CREATE INDEX {name} ON `{bucket}` (email) using gsi;
 
 [access]
 creates = 0
@@ -41,6 +41,6 @@ n1ql_workers = 720
 
 [n1ql-singleton-unique-lookup]
 prepared = singleton_unique_lookup
-statement = SELECT * FROM `bucket-1` WHERE email.f.f = $1;
+statement = SELECT * FROM `bucket-1` WHERE email = $1;
 scan_consistency = request_plus
-args = ["{email[f][f]}"]
+args = ["{email}"]

@@ -20,11 +20,11 @@ items = 20000000
 size = 1024
 workers = 20
 doc_gen = reverse_lookup
-doc_partitions = 1
+doc_partitions = 4
 
 [n1ql]
 indexes =
-    by_capped_small::CREATE INDEX {name} ON `{bucket}` (capped_small) using gsi;
+    by_capped_small_{partition_id}::CREATE INDEX {name} ON `{bucket}` (capped_small) WHERE partition_id == {partition_id} using gsi;
 
 [access]
 creates = 0
@@ -40,7 +40,7 @@ n1ql_throughput = 1000000
 n1ql_workers = 96
 
 [n1ql-range-scan]
-prepared = range_scan
-statement = SELECT name AS _name, street AS _street FROM `bucket-1` WHERE capped_small=$1;
+prepared = range_scan_{partition_id}
+statement = SELECT name AS _name, street AS _street FROM `bucket-1` WHERE partition_id == {partition_id} and capped_small == $1;
 scan_consistency = not_bounded
 args = ["{capped_small}"]

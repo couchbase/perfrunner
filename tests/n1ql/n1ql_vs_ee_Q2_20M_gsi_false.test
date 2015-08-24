@@ -20,11 +20,11 @@ items = 20000000
 size = 1024
 workers = 20
 doc_gen = reverse_lookup
-doc_partitions = 1
+doc_partitions = 4
 
 [n1ql]
 indexes =
-    by_email::CREATE INDEX {name} ON `{bucket}` (email) using gsi;
+    by_email_{partition_id}::CREATE INDEX {name} ON `{bucket}` (email) where partition_id == {partition_id} using gsi;
 
 [access]
 creates = 0
@@ -40,7 +40,7 @@ n1ql_throughput = 1000000
 n1ql_workers = 720
 
 [n1ql-singleton-unique-lookup]
-prepared = singleton_unique_lookup
-statement = SELECT * FROM `bucket-1` WHERE email = $1;
+prepared = singleton_unique_lookup_{partition_id}
+statement = SELECT * FROM `bucket-1` WHERE partition_id == {partition_id} and email == $1;
 scan_consistency = request_plus
 args = ["{email}"]

@@ -1,3 +1,4 @@
+import pdb
 from unittest import TestCase
 
 from mock import patch
@@ -9,7 +10,6 @@ from perfrunner.utils.install_gw import GatewayInstaller
 from perfrunner.workloads.tcmalloc import (KeyValueIterator,
                                            KeyLargeValueIterator,
                                            LargeIterator)
-
 
 class InstallTest(TestCase):
 
@@ -25,6 +25,7 @@ class InstallTest(TestCase):
             'couchbase-server-enterprise_centos6_x86_64_2.0.0-1976-rel.rpm',
             'couchbase-server-enterprise-2.0.0-1976-centos6.x86_64.rpm',
             'couchbase-server-enterprise_x86_64_2.0.0-1976-rel.rpm',
+            'couchbase-server-enterprise_2.0.0-1976-x86_64.rpm',
         )
         self.assertEqual(filenames, expected)
 
@@ -40,6 +41,7 @@ class InstallTest(TestCase):
             'couchbase-server-enterprise_ubuntu_1204_x86_64_3.0.0-777-rel.deb',
             'couchbase-server-enterprise_3.0.0-777-ubuntu12.04_amd64.deb',
             'couchbase-server-enterprise_x86_64_3.0.0-777-rel.deb',
+            'couchbase-server-enterprise_3.0.0-777-x86_64.deb',
         )
         self.assertEqual(filenames, expected)
 
@@ -92,16 +94,20 @@ class InstallTest(TestCase):
                                 '2.0.0', '1976', 'mytoy', None)
 
         filenames = tuple(installer.get_expected_filenames())
+        print 'filenames {}'.format(filenames)
+
         expected = (
             'couchbase-server-community_toy-mytoy-x86_64_2.0.0-1976-toy.rpm',
             'couchbase-server-community_toy-mytoy-2.0.0-1976-toy_x86_64.rpm',
             'couchbase-server-community_cent58-2.5.2-toy-mytoy-x86_64_2.0.0-1976-toy.rpm',
             'couchbase-server-community_cent58-3.0.0-toy-mytoy-x86_64_2.0.0-1976-toy.rpm',
+            'couchbase-server-community_ubuntu12-3.0.0-toy-mytoy-x86_64_2.0.0-1976-toy.rpm',
             'couchbase-server-community_cent64-3.0.0-toy-mytoy-x86_64_2.0.0-1976-toy.rpm',
             'couchbase-server-community_cent64-3.0.1-toy-mytoy-x86_64_2.0.0-1976-toy.rpm',
             'couchbase-server-community_cent58-master-toy-mytoy-x86_64_2.0.0-1976-toy.rpm',
             'couchbase-server-community_cent54-master-toy-mytoy-x86_64_2.0.0-1976-toy.rpm',
-            'couchbase-server-enterprise-2.0.0-1976-centos6.x86_64.rpm'
+            'couchbase-server-enterprise-2.0.0-1976-centos6_x86_64.rpm', 
+            'couchbase-server-enterprise-2.0.0-1976-ubuntu12.04_x86_64.rpm', 
         )
         self.assertEqual(filenames, expected)
 

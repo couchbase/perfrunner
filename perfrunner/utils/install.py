@@ -135,7 +135,7 @@ def main():
     parser.add_option('-c', dest='cluster_spec_fname',
                       help='path to cluster specification file',
                       metavar='cluster.spec')
-    parser.add_option('-3', dest='cluster_edition', default='enterprise',
+    parser.add_option('-e', dest='cluster_edition', default='enterprise',
                       help='the cluster edition (community or enterprise)')
     parser.add_option('-v', dest='version',
                       help='build version', metavar='2.0.0-1976')

@@ -47,9 +47,7 @@ class Config(object):
     @safe
     def _get_options_as_dict(self, section):
         if section in self.config.sections():
-            options = {p: v for p, v in self.config.items(section)}
-            options['_section'] = section
-            return options
+            return {p: v for p, v in self.config.items(section)}
         else:
             return {}
 
@@ -481,7 +479,6 @@ class PhaseSettings(object):
     ITERATIONS = 1
 
     def __init__(self, options):
-        self._section = options['_section']
         self.creates = int(options.get('creates', self.CREATES))
         self.reads = int(options.get('reads', self.READS))
         self.updates = int(options.get('updates', self.UPDATES))
@@ -571,7 +568,6 @@ class XDCRSettings(object):
     FILTER_EXPRESSION = None
 
     def __init__(self, options):
-        self._section = options['_section']
         self.replication_type = options.get('replication_type',
                                             self.XDCR_REPLICATION_TYPE)
         self.replication_protocol = options.get('replication_protocol',
@@ -591,7 +587,6 @@ class IndexSettings(object):
     PARAMS = '{}'
 
     def __init__(self, options):
-        self._section = options['_section']
         self.views = eval(options.get('views', self.VIEWS))
         self.params = eval(options.get('params', self.PARAMS))
         self.disabled_updates = int(options.get('disabled_updates',
@@ -607,7 +602,6 @@ class SpatialSettings(object):
     def __init__(self, options):
         if not options:
             return
-        self._section = options['_section']
         self.indexes = []
         if 'indexes' in options:
             self.indexes = options.get('indexes').strip().split('\n')
@@ -633,7 +627,6 @@ class SecondaryIndexSettings(object):
     STALE = 'true'
 
     def __init__(self, options):
-        self._section = options['_section']
         self.name = str(options.get('name', self.NAME))
         self.field = str(options.get('field', self.FIELD))
         self.db = str(options.get('db', self.DB))
@@ -677,7 +670,6 @@ class SecondaryIndexSettings(object):
 class N1QLSettings(object):
 
     def __init__(self, options):
-        self._section = options['_section']
         self.indexes = []
         if 'indexes' in options:
             self.indexes = options.get('indexes').strip().split('\n')
@@ -718,7 +710,6 @@ class AccessSettings(PhaseSettings):
 class Experiment(object):
 
     def __init__(self, fname):
-        self._section = options['_section']
         logger.info('Reading experiment file: {}'.format(fname))
         if not os.path.isfile(fname):
             logger.interrupt('File doesn\'t exist: {}'.format(fname))
@@ -747,7 +738,6 @@ class GatewaySettings(object):
     CONFIG_URL = ''
 
     def __init__(self, options):
-        self._section = options['_section']
         self.conn_in = int(options.get('conn_in', self.CONN_IN))
         self.conn_db = int(options.get('conn_db', self.CONN_DB))
         self.compression = options.get('compression', self.COMPRESSION)
@@ -783,7 +773,6 @@ class GateloadSettings(object):
     PASSWORD = ''
 
     def __init__(self, options):
-        self._section = options['_section']
         self.pullers = int(options.get('pullers', self.PULLER))
         self.pushers = int(options.get('pushers', self.PUSHER))
         self.doc_size = int(options.get('doc_size', self.DOC_SIZE))
@@ -815,7 +804,6 @@ class WorkerSettings(object):
     WORKSPACE_DIR = '/tmp/{}'.format(uhex()[:12])
 
     def __init__(self, options):
-        self._section = options['_section']
         self.reuse_worker = options.get('reuse_workspace', self.REUSE_WORKSPACE)
         self.worker_dir = options.get('workspace_location', self.WORKSPACE_DIR)
 

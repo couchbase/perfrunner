@@ -579,6 +579,13 @@ class RemoteLinuxHelper(object):
         except:
             logger.warn("Exception calling get({}, {}).  Ignoring.".format(remote_path, local_path))
 
+    @single_host
+    def install_beer_samples(self):
+        logger.info('run install_beer_samples')
+        cmd = '/opt/couchbase/bin/cbdocloader  -n localhost:8091 -u Administrator -p password -b beer-sample /opt/couchbase/samples/beer-sample.zip'
+        result = run(cmd, pty=False)
+        return result
+
 
 class RemoteWindowsHelper(RemoteLinuxHelper):
 

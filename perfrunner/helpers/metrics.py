@@ -2,6 +2,7 @@ import numpy as np
 from collections import OrderedDict
 from logger import logger
 from seriesly import Seriesly
+import time
 
 
 class MetricHelper(object):
@@ -184,7 +185,7 @@ class MetricHelper(object):
             avg_bg_wait_time.append(data.values()[0][0])
         avg_bg_wait_time = np.mean(avg_bg_wait_time) / 10 ** 3  # us -> ms
 
-        return round(avg_bg_wait_time, 1)
+        return round(avg_bg_wait_time, 2)
 
     def calc_avg_couch_views_ops(self):
         query_params = self._get_query_params('avg_couch_views_ops')
@@ -259,7 +260,7 @@ class MetricHelper(object):
             timings += [
                 v['latency_{}'.format(operation)] for v in data.values()
             ]
-        latency = round(np.percentile(timings, percentile), 1)
+        latency = round(np.percentile(timings, percentile))
 
         return latency, metric, metric_info
 
@@ -315,7 +316,7 @@ class MetricHelper(object):
         for bucket in self.test_config.buckets:
             db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
             data = self.seriesly[db].query(query_params)
-            disk_size += round(data.values()[0][0] / 1024 ** 3, 1)  # -> GB
+            disk_size += round(data.values()[0][0] / 1024 ** 3, 2)  # -> GB
 
         return disk_size, metric, metric_info
 
@@ -354,11 +355,17 @@ class MetricHelper(object):
             cluster = filter(lambda name: name.startswith(cluster_name),
                              self.cluster_names)[0]
             for server in servers:
-                hostname = server.split(':')[0].replace('.', '')
-                db = 'atop{}{}'.format(cluster, hostname)  # Legacy
-                data = self.seriesly[db].query(query_params)
-                rss = round(data.values()[0][0] / 1024 ** 2)
-                max_rss = max(max_rss, rss)
+                try:
+                    hostname = server.split(':')[0].replace('.', '')
+                    db = 'atop{}{}'.format(cluster, hostname)  # Legacy
+                    print 'calc_max_beam_rss db', db
+                    data = self.seriesly[db].query(query_params)
+                    print 'calc_max_beam_rss data', data
+                    print 'calc_max_beam_rss data.values', data.values()
+                    rss = round(data.values()[0][0] / 1024 ** 2)
+                    max_rss = max(max_rss, rss)
+                except:
+                    print 'calc_max_beam_rss exception', hostname, data, query_params
 
         return max_rss, metric, metric_info
 
@@ -449,7 +456,7 @@ class MetricHelper(object):
             max_diff = max(max_diff, disk_size_before - disk_size_after)
 
         diff = max_diff / 1024 ** 2 / time_elapsed  # Mbytes/sec
-        return round(diff, 1)
+        return round(diff)
 
     def failover_time(self, reporter):
         metric = '{}_{}_failover'.format(self.test_config.name,

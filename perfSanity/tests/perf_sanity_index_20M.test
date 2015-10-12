@@ -1,0 +1,31 @@
+[test_case]
+test = perfrunner.tests.index.InitialAndIncrementalIndexTest
+title = 1 bucket x 20M x 2KB, non-DGM, 4 x 4 views, no mutations
+summary = Indexing test, 4 nodes, 1 bucket x 20M x 2KB, non-DGM, 4 x 4 views
+larger_is_better = false
+
+[cluster]
+mem_quota = 1000
+initial_nodes = 3
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[load]
+items = 20000
+size = 2048
+workers = 20
+
+[index]
+views = [4, 4, 4, 4]
+disabled_updates = 1
+
+[access]
+creates = 100
+ops = 20000
+items = 20000
+size = 2048
+workers = 16
+time = 600

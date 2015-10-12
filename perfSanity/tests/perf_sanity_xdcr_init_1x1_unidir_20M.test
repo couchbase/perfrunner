@@ -1,0 +1,22 @@
+[test_case]
+test = perfrunner.tests.xdcr.XdcrInitTest
+title = Avg. initial XDCR rate (items/sec), 1 -> 1 UniDir, 1 bucket x 20M x 1KB, no compaction
+summary = Initial XDCR test, 1->1 nodes, 1 bucket x 20M x 1KB, no compaction, UniDir
+larger_is_better = true
+
+[cluster]
+mem_quota = 1000
+initial_nodes = 1 1
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[load]
+items = 200000
+size = 768
+workers = 40
+
+[xdcr]
+replication_type = unidir

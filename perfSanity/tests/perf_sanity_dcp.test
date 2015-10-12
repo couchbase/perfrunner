@@ -1,0 +1,27 @@
+[test_case]
+test = perfrunner.tests.kv.KVTest
+run_cbcollect_info = false
+
+[cluster]
+mem_quota = 2048
+initial_nodes = 2
+num_buckets = 1
+
+[load]
+items = 10000
+size = 1024
+workers = 20
+
+[access]
+updates = 100
+size = 1024
+throughput = 6000
+workers = 20
+items = 10000
+time = 60
+async = 1
+dcp_workers=20
+
+[worker_settings]
+reuse_workspace = true
+workspace_location = /tmp/worker

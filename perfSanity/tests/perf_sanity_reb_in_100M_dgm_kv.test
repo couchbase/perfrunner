@@ -1,0 +1,41 @@
+[test_case]
+test = perfrunner.tests.rebalance.RebalanceKVTest
+title = Rebalance-in (min), 3 -> 4, 1 bucket x 100M x 2KB, DGM, 10K ops/sec
+summary = Mixed rebalance test, 3 -> 4 nodes, 1 bucket x 100M x 2KB, 10K ops/sec
+larger_is_better = false
+
+[cluster]
+mem_quota = 1000
+initial_nodes = 2
+num_buckets = 1
+
+[compaction]
+db_percentage = 90
+
+[load]
+items = 1000000
+size = 2048
+workers = 20
+
+[hot_load]
+items = 1000000
+size = 2048
+workers = 20
+working_set = 5
+
+[access]
+creates = 5
+reads = 50
+updates = 40
+deletes = 5
+throughput = 10000
+items = 1000000
+size = 2048
+workers = 24
+working_set = 5
+working_set_access = 98
+
+[rebalance]
+nodes_after = 3
+start_after = 1200
+stop_after = 1200

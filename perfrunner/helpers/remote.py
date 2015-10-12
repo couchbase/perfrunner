@@ -23,6 +23,12 @@ def single_host(task, *args, **kargs):
 
 
 @decorator
+def all_clients(task, *args, **kargs):
+    self = args[0]
+    return execute(parallel(task), *args, hosts=self.cluster_spec.workers, **kargs)
+
+
+@decorator
 def seriesly_host(task, *args, **kargs):
     self = args[0]
     with settings(host_string=self.test_config.gateload_settings.seriesly_host):
@@ -387,6 +393,32 @@ class RemoteLinuxHelper(object):
     def collect_cbq_logs(self):
         logger.info('Getting cbq-engine logs')
         get('/tmp/cbq.log')
+
+    @all_clients
+    def cbbackup(self, mode=None):  # full, diff, accu
+        backup_path = self.cluster_spec.config.get('storage', 'backup_path')
+        logger.info('cbbackup into %s' % backup_path)
+        postfix = ''
+        if mode:
+            postfix = '-m %s' % mode
+        if not mode or mode in ['full']:
+            run('rm -rf %s' % backup_path)
+        for master in self.cluster_spec.yield_masters():
+            run('/opt/couchbase/bin/cbbackup http://%s:8091 '
+                '%s -u %s -p %s %s'
+                % (master.split(':')[0], backup_path,
+                   self.cluster_spec.rest_credentials[0],
+                   self.cluster_spec.rest_credentials[1], postfix))
+        return run('du -sh %s' % backup_path).split('M')[0]  # in MB
+
+    @all_clients
+    def cbrestore(self):
+        restore_path = self.cluster_spec.config.get('storage', 'backup_path')
+        logger.info('cbrestore from %s' % restore_path)
+        for master in self.cluster_spec.yield_masters():
+            run('/opt/couchbase/bin/cbrestore %s/*/*-full/ '
+                'http://%s:8091 -u Administrator -p password'
+                % (restore_path, master.split(':')[0]))
 
     @seriesly_host
     def restart_seriesly(self):

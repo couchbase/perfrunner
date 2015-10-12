@@ -1,0 +1,18 @@
+[test_case]
+test = perfrunner.tests.cbrecovery_restore.RestoreTest
+title = Restore time(sec): 1 bucket x 6M x 1KB
+summary = Restore all 3 nodes, 1 bucket x 6M x 1KB
+larger_is_better = false
+
+[cluster]
+mem_quota = 6000
+initial_nodes = 3
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+
+[load]
+items = 6000000
+size = 1024
+workers = 20

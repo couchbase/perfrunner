@@ -41,7 +41,7 @@ def main():
             continue
 
         test, spec, params = line.split()
-        print '\n\nTest file', test
+        print '\n\n', time.asctime( time.localtime(time.time()) ), 'Now running', test
         current_summary = {'test': test, 'output': '', 'result': True}
 
         test = 'perfSanity/tests/' + test

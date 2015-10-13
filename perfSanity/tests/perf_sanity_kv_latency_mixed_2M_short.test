@@ -1,0 +1,27 @@
+[test_case]
+test = perfrunner.tests.kv.MixedLatencyTest
+title = latency (ms), mixed, 1 bucket x 2M x 2KB, non-DGM, 10K ops/sec
+summary = Mixed KV test, 4 nodes, 1 bucket x 2M x 2KB, non-DGM, 10K ops/sec
+larger_is_better = false
+
+[cluster]
+mem_quota = 1000
+initial_nodes = 3
+num_buckets = 1
+
+[load]
+items = 200000
+size = 2048
+workers = 2
+size=2048
+
+[access]
+creates = 1
+reads = 50
+updates = 48
+deletes = 1
+throughput = 10000
+items = 20000
+workers = 2
+time = 120
+

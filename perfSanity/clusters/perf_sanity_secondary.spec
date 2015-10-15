@@ -6,7 +6,7 @@ secondary =
 
 [clients]
 hosts =
-    10.5.3.35
+    10.3.5.229
 
 credentials = root:couchbase
 

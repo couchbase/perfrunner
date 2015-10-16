@@ -1,0 +1,37 @@
+[test_case]
+test = perfrunner.tests.secondary.SecondaryIndexingScanLatencyTest
+title = Secondary index stale=false scan latency(ms), 1 bucket x 2M x 2KB, non-DGM, 10K ops/sec, single index
+summary = Secondary index stale=false scan latency(ms) test , 4 kv, 1 indexer, 1 bucket x 2M x 2KB, 10K ops/sec, single index
+larger_is_better = true
+
+[cluster]
+mem_quota = 2000
+initial_nodes = 3
+num_buckets = 1
+
+[stats]
+enabled = 1
+
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[load]
+items = 200000
+size = 2048
+workers = 20
+
+[secondary]
+name = myindex
+field = email
+stale = ok
+
+[access]
+creates = 1
+reads = 50
+updates = 48
+deletes = 1
+throughput = 10000
+items = 200000
+workers = 20

@@ -6,6 +6,7 @@ larger_is_better = false
 
 [stats]
 post_rss = 1
+seriesly_host = 10.3.5.229
 
 [cluster]
 mem_quota = 1000

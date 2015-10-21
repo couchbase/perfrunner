@@ -177,7 +177,7 @@ def main():
     all_success = True
     fo = open(options.summaryFile, "wb")
 
-    print '\n\nTest\t\t\t\t\tMetric\t\t\t\t\tActual\t\t\t\t\tExpected'
+    print '\n\nTest\t\t\t\t\t\t\tMetric\t\t\t\t\t\t\tActual\t\t\tExpected'
     for i in summary:
         #fo.write( '\n' + i['test'])
         if i['status'] == 'not run':

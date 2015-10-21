@@ -9,6 +9,10 @@ mem_quota = 1000
 initial_nodes = 3
 num_buckets = 1
 
+
+[stats]
+seriesly_host = 10.3.5.229
+
 [compaction]
 db_percentage = 10
 

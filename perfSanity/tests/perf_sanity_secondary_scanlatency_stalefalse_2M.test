@@ -10,7 +10,7 @@ initial_nodes = 3
 num_buckets = 1
 
 [stats]
-enabled = 1
+seriesly_host = 10.3.5.229
 
 
 [compaction]

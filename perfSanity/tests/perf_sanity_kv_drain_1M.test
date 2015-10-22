@@ -23,7 +23,6 @@ workers = 10
 
 [hot_load]
 items = 1000000
-size = 1024
 workers = 12
 working_set = 10
 

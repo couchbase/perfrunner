@@ -87,7 +87,7 @@ def main():
         # proc = subprocess.Popen('ls', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 
         #"""
-        proc = subprocess.Popen('./scripts/setup.sh', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        proc = subprocess.Popen('./scripts/setup.sh', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                 shell=True)
 
         for line in iter(proc.stdout.readline, ''):
@@ -107,7 +107,7 @@ def main():
 
         print 'Setup complete, starting workload'
         sys.stdout.flush()
-        proc = subprocess.Popen('./perfSanity/scripts/workload_dev.sh', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        proc = subprocess.Popen('./perfSanity/scripts/workload_dev.sh', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         workload_output = ''
         for line in iter(proc.stdout.readline, ''):
             print line

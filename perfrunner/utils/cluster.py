@@ -274,6 +274,8 @@ def main():
         cm.create_buckets()
     if cm.remote:
         cm.restart_with_alternative_bucket_options()
+    logger.info("Sleeping arbitrary 10 seconds for memcached ep stats")
+    time.sleep(10)
     cm.wait_until_warmed_up()
     cm.wait_until_healthy()
     cm.configure_auto_compaction()

@@ -5,7 +5,7 @@ summary = Mixed rebalance test, 2 -> 3 nodes, 1 bucket x 1M x 2KB, 10K ops/sec
 larger_is_better = false
 
 [cluster]
-mem_quota = 1000
+mem_quota = 2000
 initial_nodes = 2
 num_buckets = 1
 
@@ -24,7 +24,6 @@ workers = 20
 
 [hot_load]
 items = 1000000
-size = 2048
 workers = 20
 working_set = 5
 

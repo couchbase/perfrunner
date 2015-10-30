@@ -63,7 +63,7 @@ def hash_from_xml(xml_data):
         lambda tup: tup['@name'] == 'forestdb',
         xml_data['manifest']['project'])[0]
     logger.info("Found revision {}".format(found))
-    branch = found['@upstream']
+    branch = found.get('@upstream', 'master')
     fdb_hash = found['@revision']
     logger.info("Using branch {} hash {}".format(branch, fdb_hash))
     return branch, fdb_hash

@@ -119,9 +119,11 @@ def compile_standalone_test(fdb_path):
 
 def run_standalone_test():
     run("service couchbase-server stop", warn_only=True)
-    with cd(args.remote_workdir):
-        run("mkdir data")
-        run("./{}".format(prog_name))
+    with shell_env(LD_LIBRARY_PATH = "{}/forestdb/build".format(args.remote_workdir)):
+        with cd(args.remote_workdir):
+            run("mkdir data")
+            run("ldd ./{}".format(prog_name))
+            run("./{}".format(prog_name))
 
 
 def cleanup_remote_workdir():

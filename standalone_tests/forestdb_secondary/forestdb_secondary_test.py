@@ -7,7 +7,7 @@ import urllib2
 import urlparse
 import xmltodict
 
-from fabric.api import run, hosts, env, execute
+from fabric.api import run, hosts, env, execute, shell_env
 from fabric.context_managers import cd
 from logger import logger
 from StringIO import StringIO
@@ -119,7 +119,7 @@ def compile_standalone_test(fdb_path):
 
 def run_standalone_test():
     run("service couchbase-server stop", warn_only=True)
-    with shell_env(LD_LIBRARY_PATH = "{}/forestdb/build".format(args.remote_workdir)):
+    with shell_env(LD_LIBRARY_PATH="{}/forestdb/build".format(args.remote_workdir)):
         with cd(args.remote_workdir):
             run("mkdir data")
             run("ldd ./{}".format(prog_name))
@@ -158,6 +158,8 @@ def get_args():
     (args.release, args.edition) = args.version.split('-')
 
     env.hosts = [args.host]
+    env.user = "root"
+    env.password = "couchbase"
 
 #   logger.setLevel(logging.DEBUG)
 #   logger.handlers[0].setLevel(logging.DEBUG)

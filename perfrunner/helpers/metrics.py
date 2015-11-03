@@ -260,7 +260,7 @@ class MetricHelper(object):
             timings += [
                 v['latency_{}'.format(operation)] for v in data.values()
             ]
-        latency = round(np.percentile(timings, percentile))
+        latency = round(np.percentile(timings, percentile),1)
 
         return latency, metric, metric_info
 
@@ -456,7 +456,7 @@ class MetricHelper(object):
             max_diff = max(max_diff, disk_size_before - disk_size_after)
 
         diff = max_diff / 1024 ** 2 / time_elapsed  # Mbytes/sec
-        return round(diff)
+        return round(diff,1)
 
     def failover_time(self, reporter):
         metric = '{}_{}_failover'.format(self.test_config.name,

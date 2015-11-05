@@ -409,7 +409,7 @@ class RemoteLinuxHelper(object):
                 % (master.split(':')[0], backup_path,
                    self.cluster_spec.rest_credentials[0],
                    self.cluster_spec.rest_credentials[1], postfix))
-        return run('du -sh %s' % backup_path).split('M')[0]  # in MB
+        return run('du -sh %s' % backup_path).split('G')[0]  # in Gb
 
     @all_clients
     def cbrestore(self):

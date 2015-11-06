@@ -41,6 +41,6 @@ n1ql_workers = 1500
 
 [n1ql-aggregation-query]
 use_prepared = True
-statement = SELECT sum(coins.f) FROM `bucket-1` WHERE capped_small=$1;
+statement = SELECT sum(coins) FROM `bucket-1` WHERE capped_small=$1;
 scan_consistency = request_plus
 args = ["{capped_small}"]

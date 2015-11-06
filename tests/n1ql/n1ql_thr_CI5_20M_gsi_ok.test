@@ -24,7 +24,7 @@ doc_partitions = 1
 
 [n1ql]
 indexes =
-    by_capped_small_coins::CREATE INDEX {name} ON `{bucket}` (capped_small, coins.f) using gsi;
+    by_capped_small_coins::CREATE INDEX {name} ON `{bucket}` (capped_small, coins) using gsi;
 
 [access]
 creates = 0
@@ -41,6 +41,6 @@ n1ql_workers = 96
 
 [n1ql-aggregation-query]
 prepared = aggregation_query
-statement = SELECT sum(coins.f) FROM `bucket-1` WHERE capped_small=$1;
+statement = SELECT sum(coins) FROM `bucket-1` WHERE capped_small=$1;
 scan_consistency = not_bounded
 args = ["{capped_small}"]

@@ -171,7 +171,7 @@ def do_beer_queries(conn, rest, host_ip, remote):
     command_list = []
     command_list.append(
         {'query': 'SELECT * FROM `beer-sample` USE KEYS["21st_amendment_brewery_cafe-amendment_pale_ale"];',
-         'expected_elapsed_time': 0.71, 'expected_execution_time': 0.7, 'execution_count': 10000})
+         'expected_elapsed_time': 0.71, 'expected_execution_time': 0.65, 'execution_count': 10000})
     command_list.append({'query': 'select * from `beer-sample` where city = "Lawton";', 'expected_elapsed_time': 1.42,
                          'expected_execution_time': 1.42, 'execution_count': 10000})
     command_list.append(

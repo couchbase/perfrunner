@@ -55,6 +55,11 @@ class CbAgent(object):
                                         uhex()[:3])
             master = servers[0].split(':')[0]
             self.clusters[cluster] = master
+        if test.test_config.test_case.monitor_clients:
+            for node in test.cluster_spec.workers:
+                cluster = '{}{}'.format(self.clusters.items()[0][0][:-3], uhex()[:3])
+                master = node.split(':')[0]
+                self.clusters[cluster] = master
 
         self.index_node = ''
         for _, servers in test.cluster_spec.yield_servers_by_role('index'):
@@ -79,6 +84,8 @@ class CbAgent(object):
             'hostnames': hostnames,
             'sync_gateway_nodes':
                 test.remote.gateways if test.remote else None,
+            'monitor_clients':
+                test.cluster_spec.workers if test.test_config.test_case.monitor_clients else None
         })()
         self.lat_interval = test.test_config.stats_settings.lat_interval
         if test.cluster_spec.ssh_credentials:
@@ -142,7 +149,12 @@ class CbAgent(object):
             settings = copy(self.settings)
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
-            self.collectors.append(NSServer(settings))
+            collector = NSServer(settings)
+            try:
+                sum(1 for _ in collector.get_buckets())
+                self.collectors.append(collector)
+            except RuntimeError:
+                pass
 
     def prepare_secondary_stats(self, clusters):
         for cluster in clusters:
@@ -318,7 +330,12 @@ class CbAgent(object):
             settings = copy(self.settings)
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
-            self.collectors.append(ActiveTasks(settings))
+            collector = ActiveTasks(settings)
+            try:
+                sum(1 for _ in collector.get_buckets())
+                self.collectors.append(collector)
+            except RuntimeError:
+                pass
 
     def update_metadata(self):
         for collector in self.collectors:

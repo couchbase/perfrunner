@@ -1,7 +1,7 @@
 [test_case]
-test = perfrunner.tests.cbbackup_restore.IncrementalBackupWorkloadRunningTest
-title = Incremental Backup time(sec): 1 bucket x 60M x 1KB
-summary = Incremental backup all 3 nodes, 1 bucket x 60M x 1KB, throughput 5000
+test = perfrunner.tests.cbbackup_restore.RestoreAfterIncrementalBackupTest
+title = Restore time (sec) after incremental backup: 1 bucket x 60M x 1KB
+summary = Full Restore after incremental backup, 3 nodes, 1 bucket x 60M x 1KB, throughput 5000
 larger_is_better = false
 monitor_clients = true
 

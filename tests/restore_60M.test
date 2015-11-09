@@ -1,7 +1,7 @@
 [test_case]
-test = perfrunner.tests.cbbackup_restore.BackupTest
-title = Backup time(sec): 1 bucket x 6M x 1KB
-summary = Backup all 3 nodes, 1 bucket x 6M x 1KB
+test = perfrunner.tests.cbbackup_restore.RestoreTest
+title = Restore time(sec): 1 bucket x 60M x 1KB
+summary = Restore all nodes, 1 bucket x 60M x 1KB
 larger_is_better = false
 monitor_clients = true
 
@@ -14,6 +14,6 @@ num_buckets = 1
 db_percentage = 100
 
 [load]
-items = 6000000
+items = 60000000
 size = 1024
 workers = 20

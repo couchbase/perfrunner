@@ -17,13 +17,12 @@ seriesly_host = 10.3.5.229
 db_percentage = 15
 
 [load]
-items = 40000
+items = 4000000
 size = 2048
 workers = 5
 
 [hot_load]
-items = 40000
-size = 2048
+items = 4000000
 workers = 5
 working_set = 10
 
@@ -33,7 +32,7 @@ reads = 20
 updates = 75
 deletes = 2
 throughput = 3125
-items = 40000
+items = 4000000
 workers = 12
 working_set = 10
 working_set_access = 98

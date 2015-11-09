@@ -24,7 +24,7 @@ doc_partitions = 1
 
 [n1ql]
 indexes =
-    by_capped_small_name_street::CREATE INDEX {name} ON `{bucket}` (capped_small, name.f.f, street.f.f) using gsi;
+    by_capped_small_name_street::CREATE INDEX {name} ON `{bucket}` (capped_small, name, street) using gsi;
 
 [access]
 creates = 0
@@ -41,6 +41,6 @@ n1ql_workers = 96
 
 [n1ql-order-by-query]
 prepared = order_by_query
-statement = SELECT name.f.f AS _name, street.f.f AS _street FROM `bucket-1` WHERE capped_small=$1 ORDER BY name.f.f.f;
+statement = SELECT name AS _name, street AS _street FROM `bucket-1` WHERE capped_small=$1 ORDER BY name;
 scan_consistency = not_bounded
 args = ["{capped_small}"]

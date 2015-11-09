@@ -130,7 +130,7 @@ def cb_data_analysis(actual_values,test_name,iter,variation,expected_values):
 
       return True
 
-def get_set_env(property,data,options):
+def get_set_env(property,options):
 
     spec=  property["test_details"]["spec"]
     test=  property["test_details"]["test"]
@@ -179,7 +179,7 @@ def main():
         for property_test in data["test_category"][property]:
             temp_data=[]
             analysis_data=[]
-            my_env,test,spec,params=get_set_env(property_test,data)
+            my_env,test,spec,params=get_set_env(property_test,options)
 
             proc = subprocess.Popen('./scripts/setup.sh', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                         shell=True)

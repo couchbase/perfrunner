@@ -11,6 +11,9 @@ import time
 from datetime import datetime
 import pprint
 
+
+from  perf_data_management import manage_test_result
+
 from couchbase.bucket import Bucket
 from couchbase.exceptions import *
 import couchbase
@@ -54,7 +57,35 @@ test_workload_output = '''
 }
 [20/Oct/2015 15:03:31] INFO - Terminating local Celery workers
 '''
-flag= True
+
+def cb_data_analysis(actual_values,test_name,variation,params,analysis_data):
+
+      variation = float(variation)
+      upper_variation = 1 + variation
+      lower_variation = 1 - variation
+      print '\n analysis of result \n'
+      result = True
+
+      temp_analysis_data=[]
+      for k in params.keys():
+           if actual_values[k]['value'] > upper_variation * params[k]:
+                print '  ', test_name, ' is greater than expected. Expected value for key ',k, ' ', params[k], ' Actual ', actual_values[k]['value'],'\n'
+                temp_analysis_data.append(test_name+' expected result :=> '+str(params[k])+' :Result greater than expected , test result:=> '+ str(actual_values[k]['value']))
+                result *=False
+           elif actual_values[k]['value'] < lower_variation * params[k]:
+                # sort of want to yellow flag this but for now all we have is a red flag so use that
+                print '  ', test_name, ' is less than expected. Expected for key ',k, ' ', params[k], 'Actual ', actual_values[k]['value'],'\n'
+
+                temp_analysis_data.append(test_name+' expected result :=> '+str(params[k])+' :Result less than expected , test result:=> '+ str(actual_values[k]['value']))
+                result *= False
+           else:
+             result *= True
+             print test_name ,'  ' ,params[k],  ' result is expected'
+             temp_analysis_data.append(test_name+' expected result :=> '+str(params[k])+' :Result is expected value :=> ' + str(actual_values[k]['value']))
+      analysis_data.append(temp_analysis_data)
+
+      return result
+
 
 def create_cb_instance(server,bucket):
     try:
@@ -101,7 +132,6 @@ def cb_data_analysis(actual_values,test_name,iter,variation,expected_values):
 
 def get_set_env(property,data,options):
 
-    #ßproperty=property.upper()
     spec=  property["test_details"]["spec"]
     test=  property["test_details"]["test"]
     params=property["test_details"]["params"]
@@ -123,11 +153,14 @@ def main():
     parser.add_option('-v', '--version', dest='version')
     parser.add_option('-s', '--summaryFile', dest='summaryFile')
     parser.add_option('-p','--property',dest='property')
+    parser.add_option('-b','--build',dest='build')
+    parser.add_option('-t','--tag',dest='tag')
 
 
     options, args = parser.parse_args()
     summary = []
 
+    mng_data = manage_test_result()
     data=None
     try:
         with open(options.filename) as data_file:
@@ -135,12 +168,17 @@ def main():
     except (OSError, IOError,ValueError) as e:
         raise e
 
-    archive_bucket = create_cb_instance(data["couchbase_server"],data["couchbase_bucket"])
+    mng_data.create_cb_instance(data["couchbase_server"],data["couchbase_bucket"])
+    mng_data.create_cb_instance(data["couchbase_server"],data["couchbase_test_bucket"])
 
+    test_id=options.tag+ '_'+options.build
+    mng_data.cb_load_test(data["couchbase_test_bucket"],data)
+    mng_data.set_test_id(test_id)
     count = 0
     for property in options.property.split(','):
         for property_test in data["test_category"][property]:
             temp_data=[]
+            analysis_data=[]
             my_env,test,spec,params=get_set_env(property_test,data)
 
             proc = subprocess.Popen('./scripts/setup.sh', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -164,6 +202,7 @@ def main():
             print 'Setup complete, starting workload'
             sys.stdout.flush()
             flag = True
+            count = 0
             while count < data["iteration"] and flag:
 
                 print '\n\n', time.asctime( time.localtime(time.time()) ), 'Now running', test
@@ -199,18 +238,25 @@ def main():
                 print '\n\nWorkload gen output:', workload_output, '\n\n'
 
                 expected_keys = params
+                print "------- actual values ----------\n"
+                print actual_values
+                tmp=[]
                 for k in expected_keys.keys():
-                    pass
-                    #load_cb_data(archive_bucket,900,options.version,property,data["test_category"][property]["test_details"]["actual_value"])
-                    #current_summary['results'].append( {'metric':k, 'expected':expected_keys[k], 'actual':actual_values[k][ 'value']})
-                    #temp_data.append(actual_values[k])
+                   tmp.append(actual_values[k]['value'])
+                temp_data.append(tmp)
+                print '\nCompleted analysis for', test
+                time.sleep(10)
+                if cb_data_analysis(actual_values,test,data["variation"],params,analysis_data):
+                   flag = False
                 summary.append(current_summary)
                 print '\nCompleted analysis for', test
                 time.sleep(10)
-                #if cb_data_analysis(avg(temp_data),test,data["iteration"],data["variation"],property_test["test_details"]["actual_value"]):
-                   #flag = False
                 count += 1
+            iter_str='test result of : ' + str(len(analysis_data)) + ' iteration'
+            analysis_data.insert(0,iter_str)
+            mng_data.load_cb_data_sanity(data["couchbase_bucket"],temp_data,options.version,property,expected_test_result,analysis_data,mng_data.get_test_id(),params.keys(),test)
 
+    mng_data.create_report_sanity(data["couchbase_bucket"],mng_data.get_test_id())
 
 
 if __name__ == "__main__":

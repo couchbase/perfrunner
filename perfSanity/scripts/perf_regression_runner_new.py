@@ -104,31 +104,6 @@ def load_cb_data(cb_instance,output,version,property,expected_result):
     data_to_load['version']=version
 
     cb_instance.upsert(data_to_load['timestamp']+'_'+property+'_'+version ,data_to_load, format=couchbase.FMT_JSON)
-    global flag
-    if flag:
-        #create index and execute only once
-        flag = False
-        #CREATE INDEX timestamp ON `bucket name`(timestamp);CREATE INDEX property ON `bucket name`(propert);
-
-def cb_data_analysis(actual_values,test_name,iter,variation,expected_values):
-      variation = float(variation)
-      upper_variation = 1 + variation
-      lower_variation = 1 - variation
-
-      try:
-          actual_values /= iter
-      except ZeroDivisionError as e:
-          raise e
-
-      if actual_values > upper_variation * expected_values:
-            print '  ', test_name, ' is greater than expected. Expected', expected_values, 'Actual', actual_values
-            return False
-      elif actual_values < lower_variation * expected_values:
-            # sort of want to yellow flag this but for now all we have is a red flag so use that
-            print '  ', test_name, ' is less than expected. Expected', expected_values, 'Actual', actual_values
-            return False
-
-      return True
 
 def get_set_env(property,options):
 

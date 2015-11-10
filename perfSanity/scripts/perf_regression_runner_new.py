@@ -60,7 +60,7 @@ test_workload_output = '''
 
 def cb_data_analysis(actual_values,test_name,variation,params,analysis_data):
 
-      variation = float(variation)
+      variation = .05 #float(variation)
       upper_variation = 1 + variation
       lower_variation = 1 - variation
       print '\n analysis of result \n'

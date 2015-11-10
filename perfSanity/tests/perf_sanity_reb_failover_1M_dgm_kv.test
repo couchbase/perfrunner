@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.rebalance.RebalanceKVTest
-title = Rebalance after failover (min), 3 -> 4, 1 bucket x 100M x 2KB, 10K ops/sec
-summary = Mixed rebalance after failover, 3 -> 4 nodes, 1 bucket x 100M x 2KB, DGM, 10K ops/sec
+title = Rebalance after failover (min), 3 -> 4, 1 bucket x 1M x 2KB, 10K ops/sec
+summary = Mixed rebalance after failover, 3 -> 4 nodes, 1 bucket x 1M x 2KB, DGM, 10K ops/sec
 larger_is_better = false
 
 [cluster]
@@ -23,7 +23,6 @@ workers = 20
 
 [hot_load]
 items = 1000000
-size = 2048
 workers = 20
 working_set = 5
 

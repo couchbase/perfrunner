@@ -87,24 +87,6 @@ def cb_data_analysis(actual_values,test_name,variation,params,analysis_data):
       return result
 
 
-def create_cb_instance(server,bucket):
-    try:
-      url='couchbase://'+server+'/'+bucket
-      return Bucket(url)
-    except CouchbaseError as e:
-        raise e
-
-def load_cb_data(cb_instance,output,version,property,expected_result):
-
-    data_to_load={}
-    data_to_load['timestamp']=str(datetime.now())
-    data_to_load['property']=property
-    data_to_load['value']=output
-    data_to_load['expected_value']=expected_result
-    data_to_load['version']=version
-
-    cb_instance.upsert(data_to_load['timestamp']+'_'+property+'_'+version ,data_to_load, format=couchbase.FMT_JSON)
-
 def get_set_env(property,options):
 
     spec=  property["test_details"]["spec"]
@@ -229,7 +211,7 @@ def main():
                 count += 1
             iter_str='test result of : ' + str(len(analysis_data)) + ' iteration'
             analysis_data.insert(0,iter_str)
-            mng_data.load_cb_data_sanity(data["couchbase_bucket"],temp_data,options.version,property,expected_test_result,analysis_data,mng_data.get_test_id(),params.keys(),test)
+            mng_data.load_cb_data_sanity(data["couchbase_bucket"],temp_data,options.version,property,actual_values,analysis_data,mng_data.get_test_id(),params.keys(),test)
 
     mng_data.create_report_sanity(data["couchbase_bucket"],mng_data.get_test_id())
 

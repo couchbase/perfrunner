@@ -1,7 +1,7 @@
 git+https://github.com/couchbaselabs/btrc.git#get=btrc
 git+https://github.com/couchbase/cbagent.git#egg=cbagent
 celery==3.0.24
-couchbase==2.0.5
+couchbase==1.2.1
 decorator
 fabric==1.8.0
 flake8==2.1.0

@@ -108,16 +108,18 @@ class ClusterManager(object):
             self.rest.rebalance(master, known_nodes, ejected_nodes)
             self.monitor.monitor_rebalance(master)
 
-    def create_buckets(self):
-        ram_quota = self.mem_quota / self.test_config.cluster.num_buckets
+    def create_buckets(self, emptyBuckets=False):
+        ram_quota = self.mem_quota / (self.test_config.cluster.num_buckets +
+                                      self.test_config.cluster.emptybuckets)
         replica_number = self.test_config.bucket.replica_number
         replica_index = self.test_config.bucket.replica_index
         eviction_policy = self.test_config.bucket.eviction_policy
         threads_number = self.test_config.bucket.threads_number
         password = self.test_config.bucket.password
+        buckets = self.test_config.emptybuckets if emptyBuckets else self.test_config.buckets
 
         for master in self.masters():
-            for bucket_name in self.test_config.buckets:
+            for bucket_name in buckets:
                 self.rest.create_bucket(host_port=master,
                                         name=bucket_name,
                                         ram_quota=ram_quota,
@@ -272,10 +274,10 @@ def main():
     cm.add_nodes()
     if cm.test_config.cluster.num_buckets:
         cm.create_buckets()
+    if cm.test_config.cluster.emptybuckets:
+        cm.create_buckets(emptyBuckets=True)
     if cm.remote:
         cm.restart_with_alternative_bucket_options()
-    logger.info("Sleeping arbitrary 10 seconds for memcached ep stats")
-    time.sleep(10)
     cm.wait_until_warmed_up()
     cm.wait_until_healthy()
     cm.configure_auto_compaction()

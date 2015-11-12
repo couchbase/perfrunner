@@ -9,7 +9,7 @@ from logger import logger
 from perfrunner.helpers.misc import uhex
 
 
-REPO = 'https://github.com/couchbase/perfrunner'
+REPO = 'https://github.com/uvenum/perfrunner'
 
 
 @decorator
@@ -165,6 +165,14 @@ class TestConfig(Config):
         ]
 
     @property
+    def emptybuckets(self):
+        return [
+            'bucket-{}'.format(i + 1) for i in range(self.cluster.num_buckets,
+                                                     self.cluster.num_buckets +
+                                                     self.cluster.emptybuckets)
+        ]
+
+    @property
     def max_buckets(self):
         return [
             'bucket-{}'.format(i + 1) for i in range(self.cluster.max_num_buckets)
@@ -283,6 +291,7 @@ class TestCaseSettings(object):
 class ClusterSettings(object):
 
     NUM_BUCKETS = 1
+    NUM_EMPTYBUCKETS = 0
     MIN_NUM_BUCKETS = 1
     MAX_NUM_BUCKETS = 10
     INCR_NUM_BUCKETS = 1
@@ -300,6 +309,7 @@ class ClusterSettings(object):
             int(nodes) for nodes in options.get('initial_nodes').split()
         ]
         self.num_buckets = int(options.get('num_buckets', self.NUM_BUCKETS))
+        self.emptybuckets = int(options.get('emptybuckets', self.NUM_EMPTYBUCKETS))
         self.min_num_buckets = int(options.get('min_num_buckets',
                                                self.MIN_NUM_BUCKETS))
         self.max_num_buckets = int(options.get('max_num_buckets',
@@ -467,6 +477,7 @@ class PhaseSettings(object):
     WORKERS = 12
     QUERY_WORKERS = 0
     N1QL_WORKERS = 0
+    N1QL_OP = 'read'
     DCP_WORKERS = 0
 
     SEQ_READS = False
@@ -506,6 +517,7 @@ class PhaseSettings(object):
                                              self.QUERY_WORKERS))
         self.n1ql_workers = int(options.get('n1ql_workers',
                                             self.N1QL_WORKERS))
+        self.n1ql_op = options.get('n1ql_op', self.N1QL_OP)
         self.dcp_workers = int(options.get('dcp_workers', self.DCP_WORKERS))
 
         self.n1ql_queries = []

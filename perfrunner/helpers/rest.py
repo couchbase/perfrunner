@@ -215,6 +215,7 @@ class RestHelper(object):
             'bucketType': 'membase',
             'ramQuotaMB': ram_quota,
             'evictionPolicy': eviction_policy,
+            'flushEnabled': 1,
             'replicaNumber': replica_number,
             'replicaIndex': replica_index,
             'authType': 'sasl',
@@ -450,7 +451,7 @@ class RestHelper(object):
         data = {
             'statement': '{0}'.format(stmnt)
         }
-        return self.post(url=api, data=data)
+        self.post(url=api, data=data)
 
     def n1ql_query(self, host, stmnt):
         logger.info('Executing: {}'.format(stmnt))

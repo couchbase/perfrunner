@@ -1,0 +1,42 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1QLThroughputTest
+title = N1QL IN1 1Bux20Mx1K, Key-Value Insert, 14.4KGops, 3.6KSops
+summary = Key-Value Insert, 14.4KGops, 3.6KSops
+larger_is_better = false
+
+[cluster]
+mem_quota = 20480
+index_mem_quota = 100000
+initial_nodes = 6
+num_buckets = 1
+
+[bucket]
+replica_number = 1
+password =
+eviction_policy = valueOnly
+
+[load]
+items = 20000000
+size = 1024
+workers = 20
+doc_gen = reverse_lookup
+doc_partitions = 1
+
+[access]
+creates = 0
+reads = 80
+updates = 20
+deletes = 0
+throughput = 18000
+items = 20000000
+workers = 24
+time = 1200
+n1ql_op = create
+n1ql_queries = key-value-insert
+n1ql_throughput = 1000000
+n1ql_workers = 240
+
+[n1ql-key-value-insert]
+prepared = key_value_insert
+statement = INSERT INTO `bucket-1` (key, value) values ($1, $2);
+args = ["{key}","{}"]

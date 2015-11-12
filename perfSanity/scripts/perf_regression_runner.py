@@ -65,7 +65,6 @@ def main():
     options, args = parser.parse_args()
     summary = []
 
-    archive_bucket = Bucket('couchbase://172.23.105.177/QE-Performance-Sanity')
     for line in fileinput.input(options.filename):
 
         time.sleep(10)
@@ -142,9 +141,7 @@ def main():
         expected_keys = json.loads(params)
         for k in expected_keys.keys():
             if k in actual_values:
-                # archive the value, the key is a concatenation of time, version and metric
-                archive_bucket.upsert( time.asctime( time.localtime(time.time()) ) + '-' + options.version + '-' + k,
-                    actual_values[k], format=couchbase.FMT_JSON)
+
 
 
                 current_summary['results'].append( {'metric':k, 'expected':expected_keys[k], 'actual':actual_values[k][ 'value']})

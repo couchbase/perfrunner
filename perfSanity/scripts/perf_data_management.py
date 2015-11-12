@@ -26,7 +26,6 @@ class manage_test_result(object):
         data_to_load['jenkins_ID']=test_id
         data_to_load['version'] = version
         data_to_load['timestamp']=str(datetime.now())
-
         cb_instance.upsert(str(datetime.now())+'query',data_to_load,format=couchbase.FMT_JSON)
 
     def load_cb_data_sanity(self,bucket,output,version,property,expected_result,analysis,test_id,metric,test):

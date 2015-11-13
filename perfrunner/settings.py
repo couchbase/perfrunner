@@ -9,7 +9,7 @@ from logger import logger
 from perfrunner.helpers.misc import uhex
 
 
-REPO = 'https://github.com/uvenum/perfrunner'
+REPO = 'https://github.com/couchbase/perfrunner'
 
 
 @decorator

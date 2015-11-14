@@ -451,7 +451,7 @@ class RestHelper(object):
         data = {
             'statement': '{0}'.format(stmnt)
         }
-        self.post(url=api, data=data)
+        return self.post(url=api, data=data)
 
     def n1ql_query(self, host, stmnt):
         logger.info('Executing: {}'.format(stmnt))

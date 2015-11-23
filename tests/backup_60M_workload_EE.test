@@ -1,13 +1,13 @@
 [test_case]
 test = perfrunner.tests.cbbackup_restore.BackupWorkloadRunningTest
-title = Backup time with workload(sec): 1 bucket x 60M x 1KB
-summary = Backup all 3 nodes, 1 bucket x 60M x 1KB, throughput 5000
+title = EE Full Backup with Workload (Avg. MB/Sec): 1 bucket x 60M x 1KB
+summary = Backup all 4 nodes with wrapper, 1 bucket x 60M x 1KB, throughput 15000
 larger_is_better = false
 monitor_clients = true
 
 [cluster]
-mem_quota = 6000
-initial_nodes = 3
+mem_quota = 52428
+initial_nodes = 4
 num_buckets = 1
 
 [compaction]
@@ -19,11 +19,11 @@ size = 1024
 workers = 20
 
 [access]
-creates = 1
+creates = 0
 reads = 80
-updates = 18
-deletes = 1
-throughput = 5000
+updates = 20
+deletes = 0
+throughput = 15000
 items = 60000000
 workers = 10
 working_set = 10

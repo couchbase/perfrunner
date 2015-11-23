@@ -1,13 +1,13 @@
 [test_case]
 test = perfrunner.tests.cbbackup_restore.RestoreTest
-title = Restore time(sec): 1 bucket x 60M x 1KB
+title = EE Full Restore (Avg. MB/Sec): 1 bucket x 60M x 1KB
 summary = Restore all nodes, 1 bucket x 60M x 1KB
 larger_is_better = false
 monitor_clients = true
 
 [cluster]
-mem_quota = 6000
-initial_nodes = 3
+mem_quota = 52428
+initial_nodes = 4
 num_buckets = 1
 
 [compaction]

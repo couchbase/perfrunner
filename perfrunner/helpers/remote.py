@@ -395,7 +395,7 @@ class RemoteLinuxHelper(object):
         get('/tmp/cbq.log')
 
     @all_clients
-    def cbbackup(self, mode=None):  # full, diff, accu
+    def cbbackup(self, wrapper=False, mode=None):  # full, diff, accu
         backup_path = self.cluster_spec.config.get('storage', 'backup_path')
         logger.info('cbbackup into %s' % backup_path)
         postfix = ''
@@ -403,23 +403,48 @@ class RemoteLinuxHelper(object):
             postfix = '-m %s' % mode
         if not mode or mode in ['full']:
             run('rm -rf %s' % backup_path)
-        for master in self.cluster_spec.yield_masters():
-            run('/opt/couchbase/bin/cbbackup http://%s:8091 '
-                '%s -u %s -p %s %s'
-                % (master.split(':')[0], backup_path,
-                   self.cluster_spec.rest_credentials[0],
-                   self.cluster_spec.rest_credentials[1], postfix))
+        if wrapper:
+            for master in self.cluster_spec.yield_masters():
+                run('cd /opt/couchbase/bin && ./cbbackupwrapper'
+                    ' http://%s:8091 %s -u %s -p %s %s'
+                    % (master.split(':')[0], backup_path,
+                        self.cluster_spec.rest_credentials[0],
+                        self.cluster_spec.rest_credentials[1], postfix))
+        else:
+            for master in self.cluster_spec.yield_masters():
+                if not mode:
+                    run('/opt/couchbase/bin/backup create --dir %s --name default' % backup_path)
+                run('/opt/couchbase/bin/backup cluster --dir %s --name default '
+                    '--host http://%s:8091 --username %s --password %s'
+                    % (backup_path, master.split(':')[0],
+                        self.cluster_spec.rest_credentials[0],
+                        self.cluster_spec.rest_credentials[1]))
+
         return round(float(run('du -sh --block-size=1M %s' % backup_path).
                            split('	')[0]) / 1024, 1)  # in Gb
 
     @all_clients
-    def cbrestore(self):
+    def cbrestore(self, wrapper=False):
         restore_path = self.cluster_spec.config.get('storage', 'backup_path')
-        logger.info('cbrestore from %s' % restore_path)
-        for master in self.cluster_spec.yield_masters():
-            run('/opt/couchbase/bin/cbrestore %s/*/*-full/ '
-                'http://%s:8091 -u Administrator -p password'
-                % (restore_path, master.split(':')[0]))
+        logger.info('restore from %s' % restore_path)
+        if wrapper:
+            for master in self.cluster_spec.yield_masters():
+                run('cd /opt/couchbase/bin && ./cbrestorewrapper %s '
+                    'http://%s:8091 -u Administrator -p password'
+                    % (restore_path, master.split(':')[0]))
+        else:
+            for master in self.cluster_spec.yield_masters():
+                dates = run('ls %s/default/' % restore_path).split()
+                for i in range(len(dates) - 1):
+                    print i
+                    start_date = end_date = dates[i]
+                    if i > 0:
+                        start_date = dates[i-1]
+                    run('/opt/couchbase/bin/backup restore --dir %s --name default '
+                        '--host http://%s:8091 --username %s --password %s --start %s --end %s'
+                        % (restore_path, master.split(':')[0],
+                            self.cluster_spec.rest_credentials[0],
+                            self.cluster_spec.rest_credentials[1], start_date, end_date))
 
     @seriesly_host
     def restart_seriesly(self):

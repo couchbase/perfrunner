@@ -287,6 +287,7 @@ class TestCaseSettings(object):
         self.monitor_clients = options.get('monitor_clients', False)
         self.level = options.get('level', self.LEVEL)
         self.use_workers = int(options.get('use_workers', self.USE_WORKERS))
+        self.use_backup_wrapper = options.get('use_backup_wrapper', False)
 
 
 class ClusterSettings(object):

@@ -1,13 +1,14 @@
 [test_case]
 test = perfrunner.tests.cbbackup_restore.BackupFolderSizeTest
-title = Backup folder size(Gb): 1 bucket x 60M x 1KB
-summary = Backup all 3 nodes to compare backup folder size, 1 bucket x 60M x 1KB
+title = CE Full Backup (Backup Size GB): 1 bucket x 60M x 1KB
+summary = Backup all 4 nodes to compare backup folder size, 1 bucket x 60M x 1KB
 larger_is_better = false
 monitor_clients = true
+use_backup_wrapper = true
 
 [cluster]
-mem_quota = 6000
-initial_nodes = 3
+mem_quota = 52428
+initial_nodes = 4
 num_buckets = 1
 
 [compaction]

@@ -234,6 +234,12 @@ class RestHelper(object):
         api = 'http://{}/pools/default/buckets/{}'.format(host_port, name)
         self.delete(url=api)
 
+    def flush_bucket(self, host_port, name):
+        logger.info('Flushing bucket: {}'.format(name))
+
+        api = 'http://{}/pools/default/buckets/{}/controller/doFlush'.format(host_port, name)
+        self.post(url=api)
+
     def configure_auto_compaction(self, host_port, settings):
         logger.info('Applying auto-compaction settings: {}'.format(settings))
 

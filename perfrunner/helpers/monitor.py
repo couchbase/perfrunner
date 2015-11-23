@@ -125,12 +125,16 @@ class Monitor(RestHelper):
         memcached_port = self.get_memcached_port(host_port)
         while True:
             stats = memcached.get_stats(host, memcached_port, bucket, 'warmup')
-            state = stats['ep_warmup_state']
-            if state == 'done':
-                return float(stats.get('ep_warmup_time', 0))
+            if 'ep_warmup_state' in stats:
+                state = stats['ep_warmup_state']
+                if state == 'done':
+                    return float(stats.get('ep_warmup_time', 0))
+                else:
+                    logger.info('Warmpup status: {}'.format(state))
+                    time.sleep(self.POLLING_INTERVAL)
             else:
-                logger.info('Warmpup status: {}'.format(state))
-                time.sleep(self.POLLING_INTERVAL)
+                    logger.info('No warmup stats are available, continue polling')
+                    time.sleep(self.POLLING_INTERVAL)
 
     def monitor_node_health(self, host_port):
         logger.info('Monitoring node health')

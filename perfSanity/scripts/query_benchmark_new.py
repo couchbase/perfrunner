@@ -18,7 +18,7 @@ import urllib3
 from perfrunner.helpers.rest import RestHelper
 import paramiko
 
-from  perf_data_management import manage_test_result
+from  perfSanity.scripts.perf_data_management import manage_test_result
 
 """
 # An evolving thing - takes as input:

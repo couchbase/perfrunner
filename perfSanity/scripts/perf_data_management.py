@@ -4,7 +4,8 @@ from couchbase.exceptions import *
 from tabulate import tabulate
 import couchbase
 from datetime import datetime
-
+from collections import OrderedDict
+import time
 
 class manage_test_result(object):
 
@@ -68,11 +69,14 @@ class manage_test_result(object):
 
 
     def create_report_sanity(self,bucket,jenkins_id):
+        time.sleep(5)
         cb_instance = self.__couchbase_instance[bucket]
-        result_str ={}
+        result_str =OrderedDict()
         headers=['test','test_type','results_obtained','analysis']
         for val in headers:
             result_str[val] =[]
+        query=N1QLQuery('SELECT * FROM `QE-Performance-Sanity`  where jenkins_ID= $test_id',test_id=jenkins_id)
+        time.sleep(5)
         query=N1QLQuery('SELECT * FROM `QE-Performance-Sanity`  where jenkins_ID= $test_id',test_id=jenkins_id)
         for rows in cb_instance.n1ql_query(query):
             result_value =  rows['QE-Performance-Sanity']['result_value']
@@ -85,8 +89,8 @@ class manage_test_result(object):
             result_str['test_type'].append(test_type)
             result_str['results_obtained'].append(str(result_value[-1]))
             result_str['analysis'].append(str(analysis[-1]))
+
         print tabulate(result_str,headers="keys")
-        #print result_str
 
 
     def create_cb_instance(self,server,bucket):

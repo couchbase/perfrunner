@@ -104,7 +104,6 @@ class manage_test_result(object):
             m=re.search('Fail',result_str)
             if m:
                search_result =  False
-
         print tabulate(result_str,headers="keys")
         return search_result
 

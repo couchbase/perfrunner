@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.secondary.SecondaryIndexingThroughputRebalanceTest
-title = Secondary index stale=false scan throughput with rebalance (scanps),24 rows per scan, 1 bucket x 20M x 2KB, non-DGM, single index
-summary = Secondary index stale=false scan throughput with rebalance test , 4 kv, 1 index node, 1 bucket x 20M x 2KB, single index
+title = Secondary index stale=false scan throughput with rebalance (scanps), 1 bucket x 20M x 2KB, non-DGM, 14.4K Gops/sec, 3.6K mutations/sec, single index
+summary = Secondary index stale=false scan throughput with rebalance test, 4 kv, 1 index node, 1 bucket x 20M x 2KB, 18K ops/sec, single index
 larger_is_better = true
 
 [cluster]
@@ -26,9 +26,9 @@ stale = false
 
 [access]
 creates = 1
-reads = 50
-updates = 48
+reads = 80
+updates = 18
 deletes = 1
-throughput = 10000
+throughput = 18000
 items = 20000000
 workers = 20

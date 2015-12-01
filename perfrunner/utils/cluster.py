@@ -260,6 +260,7 @@ def main():
         cm.restart_with_tcmalloc_aggressive_decommit()
         cm.disable_moxi()
     cm.configure_internal_settings()
+    time.sleep(10)  # dkao: crutch
     cm.set_data_path()
     cm.set_services()
     cm.set_mem_quota()

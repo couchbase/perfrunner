@@ -81,7 +81,7 @@ def cb_data_analysis(actual_values,test_name,variation,params,analysis_data):
            else:
              result *= True
              print test_name ,'  ' ,params[k],  ' result is expected'
-             temp_analysis_data.append += (str('Pass : result is expected'+str(params[k])))
+             temp_analysis_data += (str('Pass : result is expected'+str(params[k])))
       analysis_data.append(temp_analysis_data)
 
       return result

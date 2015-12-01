@@ -66,22 +66,22 @@ def cb_data_analysis(actual_values,test_name,variation,params,analysis_data):
       print '\n analysis of result \n'
       result = True
 
-      temp_analysis_data=[]
+      temp_analysis_data=""
       for k in params.keys():
            if actual_values[k]['value'] > (upper_variation * params[k]):
                 print '  ', test_name, ' is greater than expected. Expected value for key ',k, ' ', params[k], ' Actual ', actual_values[k]['value'],'\n'
-                temp_analysis_data.append(str('Fail: result is greater than expected: '+str(params[k])))
+                temp_analysis_data += (str('Fail: result is greater than expected: '+str(params[k])))
                 result *=False
            elif actual_values[k]['value'] < (lower_variation * params[k]):
                 # sort of want to yellow flag this but for now all we have is a red flag so use that
                 print '  ', test_name, ' is less than expected. Expected for key ',k, ' ', params[k], 'Actual ', actual_values[k]['value'],'\n'
 
-                temp_analysis_data.append(str('Fail: result is lower than expected: '+str(params[k])))
+                temp_analysis_data += (str('Fail: result is lower than expected: '+str(params[k])))
                 result *= False
            else:
              result *= True
              print test_name ,'  ' ,params[k],  ' result is expected'
-             temp_analysis_data.append(str('Pass : result is expected'+str(params[k])))
+             temp_analysis_data.append += (str('Pass : result is expected'+str(params[k])))
       analysis_data.append(temp_analysis_data)
 
       return result

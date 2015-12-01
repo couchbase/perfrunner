@@ -101,7 +101,7 @@ class manage_test_result(object):
             result_str['results_obtained'].append(str(result_value[-1]))
             analysis_pf = str(analysis[-1])
             result_str['analysis'].append(str(analysis[-1]))
-            m=re.search('Fail',result_str)
+            m=re.search('Fail',analysis_pf)
             if m:
                search_result =  False
         print tabulate(result_str,headers="keys")

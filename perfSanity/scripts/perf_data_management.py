@@ -6,6 +6,7 @@ import couchbase
 from datetime import datetime
 from collections import OrderedDict
 import time
+import re
 
 class manage_test_result(object):
 
@@ -16,8 +17,8 @@ class manage_test_result(object):
 
     def create_query_log(self,query_used,result):
         result_load={}
-        result['query_used'] = query_used
-        result['result_log'] = result
+        result_load['query_used'] = query_used
+        result_load['result_log'] = result
         self.__query_log.append(result_load)
 
     def load_data_query_benchmark(self,bucket,test,test_id,version):
@@ -29,6 +30,15 @@ class manage_test_result(object):
         data_to_load['version'] = version
         data_to_load['timestamp']=str(datetime.now())
         cb_instance.upsert(str(datetime.now())+'query',data_to_load,format=couchbase.FMT_JSON)
+
+    def show_data_query_benchmark(self,bucket,test,jenkins_id):
+        cb_instance = self.__couchbase_instance[bucket]
+        result_str =OrderedDict()
+        query=N1QLQuery('SELECT * FROM `QE-Performance-Sanity-Query-Benchmark`  where jenkins_ID= $test_id',test_id=jenkins_id)
+        time.sleep(5)
+        query=N1QLQuery('SELECT * FROM `QE-Performance-Sanity-Query-Benchmark`  where jenkins_ID= $test_id',test_id=jenkins_id)
+        for rows in cb_instance.n1ql_query(query):
+            print rows['QE-Performance-Sanity-Query-Benchmark']['query_log']
 
     def load_cb_data_sanity(self,bucket,output,version,property,expected_result,analysis,test_id,metric,test):
 
@@ -72,6 +82,7 @@ class manage_test_result(object):
         time.sleep(5)
         cb_instance = self.__couchbase_instance[bucket]
         result_str =OrderedDict()
+        search_result=True
         headers=['test','test_type','results_obtained','analysis']
         for val in headers:
             result_str[val] =[]
@@ -88,9 +99,14 @@ class manage_test_result(object):
             result_str['test'].append(test_name)
             result_str['test_type'].append(test_type)
             result_str['results_obtained'].append(str(result_value[-1]))
+            analysis_pf = str(analysis[-1])
             result_str['analysis'].append(str(analysis[-1]))
+            m=re.search('Fail',result_str)
+            if m:
+               search_result =  False
 
         print tabulate(result_str,headers="keys")
+        return search_result
 
 
     def create_cb_instance(self,server,bucket):
@@ -105,3 +121,4 @@ class manage_test_result(object):
 
     def get_test_id(self):
         return self.__test_id
+

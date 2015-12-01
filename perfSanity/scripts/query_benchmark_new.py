@@ -306,7 +306,7 @@ def do_airline_benchmarks(mng_data,conn, rest, host_ip, remote, cluster_spec):
 def main():
     usage = '%prog -v version -c cluster-spec -f conffile -b build -t tag'
     parser = OptionParser(usage)
-    options, args = parser.parse_args()
+
     parser.add_option('-v', '--version', dest='version')
     parser.add_option('-c', dest='cluster_spec_fname',
                       help='path to cluster specification file',
@@ -330,6 +330,7 @@ def main():
     parser.add_option('-b','--build',dest='build')
     parser.add_option('-n','--number',dest='number')
 
+    options, args = parser.parse_args()
     test_id=options.number + '_'+options.build
 
     data=None
@@ -377,11 +378,13 @@ def main():
     beer_result = do_beer_queries(mng_data,conn, rest, host_ip, installer.remote)
     print 'beer_result is', beer_result
 
-    mng_data.cb_load_test('beer result ',beer_result)
-    mng_data.load_data_query_benchmark(data["couchbase_query_bucket"],'query_benchmark',options.version)
+    #mng_data.cb_load_test(data["couchbase_query_bucket"],beer_result)
+    mng_data.load_data_query_benchmark(data["couchbase_query_bucket"],'query_benchmark',test_id,options.version)
+    mng_data.show_data_query_benchmark(data["couchbase_query_bucket"],'query_benchmark',test_id)
     sys.exit(not (airline_result and beer_result))
 
 
 if __name__ == "__main__":
     if not main():
         sys.exit(1)
+

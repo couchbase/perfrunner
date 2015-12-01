@@ -213,7 +213,7 @@ def main():
             analysis_data.insert(0,iter_str)
             mng_data.load_cb_data_sanity(data["couchbase_bucket"],temp_data,options.version,property,actual_values,analysis_data,mng_data.get_test_id(),params.keys(),test)
 
-    mng_data.create_report_sanity(data["couchbase_bucket"],mng_data.get_test_id())
+    return mng_data.create_report_sanity(data["couchbase_bucket"],mng_data.get_test_id())
 
 
 if __name__ == "__main__":

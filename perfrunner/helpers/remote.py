@@ -104,7 +104,7 @@ class RemoteLinuxHelper(object):
         if outfile is not None:
             run('wget -nc "{}" -P {} -O {}'.format(url, outdir, outfile))
         else:
-            run('wget -nc "{}" -P {}'.format(url, outdir))
+            run('wget -N "{}" -P {}'.format(url, outdir))
 
     @single_host
     def detect_pkg(self):

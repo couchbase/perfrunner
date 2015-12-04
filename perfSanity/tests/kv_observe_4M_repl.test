@@ -1,0 +1,34 @@
+[test_case]
+test = perfrunner.tests.kv.ReplicateLatencyTest
+title = ReplicateTo=1 latency (ms), 1 bucket x 4M x 1KB, 5K mutations/sec/node
+summary = Read-heavy KV test (80/20), 3 nodes, 1 bucket x 4M x 1KB, 40K mutations/sec
+larger_is_better = false
+
+[cluster]
+mem_quota = 2000
+initial_nodes = 3
+num_buckets = 1
+
+
+[stats]
+seriesly_host = 10.3.5.229
+
+
+[compaction]
+db_percentage = 100
+
+[load]
+items = 4000000
+size = 800
+workers = 20
+
+[access]
+creates = 0
+reads = 50
+updates = 50
+deletes = 0
+throughput = 80000
+items = 4000000
+workers = 10
+async = 1
+time = 300

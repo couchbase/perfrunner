@@ -31,4 +31,4 @@ throughput = 80000
 items = 4000000
 workers = 10
 async = 1
-time = 300
+time = 600

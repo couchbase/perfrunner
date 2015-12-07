@@ -128,6 +128,24 @@ class IncrementalBackupWorkloadRunningTest(CBBackupRestoreBase):
             self.reporter.post_to_sf(t)
 
 
+class IncrementalBackupWorkloadRunningFolderSizeTest(CBBackupRestoreBase):
+    """
+    After typical workload we backup all nodes then perform
+    incremental backup when workload running and measure backup folder size.
+    """
+
+    def run(self):
+        super(IncrementalBackupWorkloadRunningTest, self).run()
+        self.cbbackup(wrapper=self.test_config.test_case.use_backup_wrapper)
+        self.access_bg()
+
+        self.run_backup_with_stats(
+            wrapper=self.test_config.test_case.use_backup_wrapper, mode='diff')
+        logger.info('backup completed, folder size %s' % self.folder_size)
+        if self.test_config.stats_settings.enabled:
+            self.reporter.post_to_sf(self.folder_size)
+
+
 class RestoreAfterIncrementalBackupTest(CBBackupRestoreBase):
     """
     After typical workload we backup all nodes. After access load

@@ -405,20 +405,24 @@ class RemoteLinuxHelper(object):
             run('rm -rf %s' % backup_path)
         if wrapper:
             for master in self.cluster_spec.yield_masters():
-                run('cd /opt/couchbase/bin && ./cbbackupwrapper'
-                    ' http://%s:8091 %s -u %s -p %s %s'
-                    % (master.split(':')[0], backup_path,
-                        self.cluster_spec.rest_credentials[0],
-                        self.cluster_spec.rest_credentials[1], postfix))
+                cmd = 'cd /opt/couchbase/bin && ./cbbackupwrapper' \
+                      ' http://%s:8091 %s -u %s -p %s %s' \
+                      % (master.split(':')[0], backup_path,
+                         self.cluster_spec.rest_credentials[0],
+                         self.cluster_spec.rest_credentials[1], postfix)
+                logger.info(cmd)
+                run(cmd)
         else:
             for master in self.cluster_spec.yield_masters():
                 if not mode:
                     run('/opt/couchbase/bin/backup create --dir %s --name default' % backup_path)
-                run('/opt/couchbase/bin/backup cluster --dir %s --name default '
-                    '--host http://%s:8091 --username %s --password %s'
+                cmd = '/opt/couchbase/bin/backup cluster --dir %s --name default ' \
+                    '--host http://%s:8091 --username %s --password %s' \
                     % (backup_path, master.split(':')[0],
                         self.cluster_spec.rest_credentials[0],
-                        self.cluster_spec.rest_credentials[1]))
+                        self.cluster_spec.rest_credentials[1])
+                logger.info(cmd)
+                run(cmd)
 
         return round(float(run('du -sh --block-size=1M %s' % backup_path).
                            split('	')[0]) / 1024, 1)  # in Gb
@@ -429,9 +433,11 @@ class RemoteLinuxHelper(object):
         logger.info('restore from %s' % restore_path)
         if wrapper:
             for master in self.cluster_spec.yield_masters():
-                run('cd /opt/couchbase/bin && ./cbrestorewrapper %s '
-                    'http://%s:8091 -u Administrator -p password'
-                    % (restore_path, master.split(':')[0]))
+                cmd = 'cd /opt/couchbase/bin && ./cbrestorewrapper %s ' \
+                    'http://%s:8091 -u Administrator -p password' \
+                    % (restore_path, master.split(':')[0])
+                logger.info(cmd)
+                run(cmd)
         else:
             for master in self.cluster_spec.yield_masters():
                 dates = run('ls %s/default/' % restore_path).split()
@@ -440,11 +446,13 @@ class RemoteLinuxHelper(object):
                     start_date = end_date = dates[i]
                     if i > 0:
                         start_date = dates[i-1]
-                    run('/opt/couchbase/bin/backup restore --dir %s --name default '
-                        '--host http://%s:8091 --username %s --password %s --start %s --end %s'
+                    cmd = '/opt/couchbase/bin/backup restore --dir %s --name default ' \
+                        '--host http://%s:8091 --username %s --password %s --start %s --end %s' \
                         % (restore_path, master.split(':')[0],
                             self.cluster_spec.rest_credentials[0],
-                            self.cluster_spec.rest_credentials[1], start_date, end_date))
+                            self.cluster_spec.rest_credentials[1], start_date, end_date)
+                    logger.info(cmd)
+                    run(cmd)
 
     @seriesly_host
     def restart_seriesly(self):

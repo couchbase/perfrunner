@@ -7,6 +7,7 @@ from datetime import datetime
 from collections import OrderedDict
 import time
 import re
+import json
 
 class manage_test_result(object):
 

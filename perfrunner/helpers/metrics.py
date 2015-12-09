@@ -246,11 +246,20 @@ class MetricHelper(object):
 
         return round(secondaryscan_latency, 2), metric, metric_info
 
-    def calc_kv_latency(self, operation, percentile):
+    def calc_kv_latency(self, operation, percentile, dbname='spring_latency'):
+        '''
+
+        :param operation:
+        :param percentile:
+        :param dbname:  Same procedure is used for KV and subdoc .
+            for KV dbname will spring_latency.For subdoc will be spring_subdoc_latency
+        :return:
+        '''
         metric = '{}_{}_{}th_{}'.format(self.test_config.name,
                                         operation,
                                         percentile,
-                                        self.cluster_spec.name)
+                                        self.cluster_spec.name
+                                        )
         title = '{}th percentile {} {}'.format(percentile,
                                                operation.upper(),
                                                self.metric_title)
@@ -258,7 +267,7 @@ class MetricHelper(object):
 
         timings = []
         for bucket in self.test_config.buckets:
-            db = 'spring_latency{}{}'.format(self.cluster_names[0], bucket)
+            db = '{}{}{}'.format(dbname, self.cluster_names[0], bucket)
             data = self.seriesly[db].get_all()
             timings += [
                 v['latency_{}'.format(operation)] for v in data.values()
@@ -468,6 +477,41 @@ class MetricHelper(object):
         rebalance_time = reporter.finish('Failover')
 
         return rebalance_time, metric, metric_info
+
+    @property
+    def calc_network_bandwidth(self):
+        metric = '{}_network_throughput_{}'.format(self.test_config.name,
+                                                   self.cluster_spec.name)
+        title = 'net throghput, {}'.format(self.metric_title)
+        metric_info = self._get_metric_info(title, larger_is_better=True)
+
+        in_bytes = []
+        out_bytes = []
+        for cluster_name, servers in self.cluster_spec.yield_clusters():
+            cluster = filter(lambda name: name.startswith(cluster_name),
+                             self.cluster_names)[0]
+            for server in servers:
+                hostname = server.split(':')[0].replace('.', '')
+                db = 'net{}{}'.format(cluster, hostname)
+                data = self.seriesly[db].get_all()
+                in_bytes += [
+                    v['in_bytes'] for v in data.values()
+                ]
+                out_bytes += [
+                    v['out_bytes'] for v in data.values()
+                ]
+        # To prevent exception when the values may not be available during code debugging
+        if not in_bytes:
+            in_bytes.append(0)
+        if not out_bytes:
+            out_bytes.append(0)
+        f = lambda v: format(int(v), ',d')
+        #for network bandiwdth test we need to take the difference of bytes at begining
+        #and end of operations
+        return OrderedDict((
+            ('in_bytes  ', (in_bytes[-1] - in_bytes[0])),
+            ('out_bytes ', (out_bytes[-1] - out_bytes[0]))
+        ))
 
     @property
     def calc_network_throughput(self):

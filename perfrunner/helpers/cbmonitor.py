@@ -6,8 +6,7 @@ from multiprocessing import Process
 
 import requests
 from cbagent.collectors import (NSServer, PS, TypePerf, IO, Net, ActiveTasks,
-                                SpringLatency, SpringQueryLatency,
-                                SpringSpatialQueryLatency,
+                                SpringLatency, SpringQueryLatency, SpringSubdocLatency,
                                 SpringN1QLQueryLatency, SecondaryStats, SecondaryLatencyStats,
                                 N1QLStats, SecondaryDebugStats, ObserveLatency, XdcrLag)
 from cbagent.metadata_client import MetadataClient
@@ -101,7 +100,7 @@ class CbAgent(object):
         self.processes = []
         self.snapshots = []
 
-    def prepare_collectors(self, test,
+    def prepare_collectors(self, test, subdoc_latency=False,
                            latency=False, secondary_stats=False,
                            query_latency=False, spatial_latency=False,
                            n1ql_latency=False, n1ql_stats=False,
@@ -119,6 +118,8 @@ class CbAgent(object):
             self.prepare_iostat(clusters, test)
         elif test.remote.os == 'Cygwin':
             self.prepare_tp(clusters)
+        if subdoc_latency:
+            self.prepare_subdoc_latency(clusters, test)
         if latency:
             self.prepare_latency(clusters, test)
         if query_latency:
@@ -280,6 +281,18 @@ class CbAgent(object):
                 target_hash(settings.master_node.split(':')[0])
             self.collectors.append(
                 SpringLatency(settings, test.workload, prefix)
+            )
+
+    def prepare_subdoc_latency(self, clusters, test):
+        for cluster in clusters:
+            settings = copy(self.settings)
+            settings.interval = self.lat_interval
+            settings.cluster = cluster
+            settings.master_node = self.clusters[cluster]
+            prefix = test.target_iterator.prefix or \
+                target_hash(settings.master_node.split(':')[0])
+            self.collectors.append(
+                SpringSubdocLatency(settings, test.workload, prefix)
             )
 
     def prepare_query_latency(self, clusters, test):

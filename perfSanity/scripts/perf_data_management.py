@@ -38,7 +38,7 @@ class manage_test_result(object):
         time.sleep(5)
         query=N1QLQuery('SELECT * FROM `QE-Performance-Sanity-Query-Benchmark`  where jenkins_ID= $test_id',test_id=jenkins_id)
         for rows in cb_instance.n1ql_query(query):
-            print rows['QE-Performance-Sanity-Query-Benchmark']['query_log']
+            print json.dumps(rows['QE-Performance-Sanity-Query-Benchmark']['query_log'],indent=4)
             print "\n \n"
 
     def load_cb_data_sanity(self,bucket,output,version,property,expected_result,analysis,test_id,metric,test):

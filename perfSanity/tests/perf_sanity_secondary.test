@@ -28,6 +28,6 @@ field = email
 
 [access]
 creates = 100
-ops = 1000000
+ops = 2000000
 items = 2000000
 workers = 2

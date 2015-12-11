@@ -8,6 +8,7 @@ from perfrunner.tests import PerfTest
 
 class CBBackupRestoreBase(PerfTest):
     folder_size = 0
+    data_size = 0
     """
     The most basic CB backup /restore class:
     """
@@ -16,6 +17,8 @@ class CBBackupRestoreBase(PerfTest):
         self.load()
         self.wait_for_persistence()
         self.compact_bucket()
+        self.data_size = (self.test_config.load_settings.items *
+                          self.test_config.load_settings.size) / 1000000.0
 
     def cbbackup(self, wrapper=False, mode=None):
         sizes = self.remote.cbbackup(wrapper, mode)
@@ -48,10 +51,10 @@ class BackupTest(CBBackupRestoreBase):
         start = time()
         self.run_backup_with_stats(
             wrapper=self.test_config.test_case.use_backup_wrapper)
-        backup_time = int(time() - start)
-        logger.info('backup completed in %s sec' % backup_time)
+        t = int(time() - start)
+        logger.info('backup completed in %s sec' % t)
         if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(backup_time)
+            self.reporter.post_to_sf(round(self.data_size/t))
 
 
 class BackupWorkloadRunningTest(CBBackupRestoreBase):
@@ -70,7 +73,7 @@ class BackupWorkloadRunningTest(CBBackupRestoreBase):
         t = int(time() - start)
         logger.info('backup completed in %s sec' % t)
         if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(t)
+            self.reporter.post_to_sf(round(self.data_size/t))
 
 
 class BackupFolderSizeTest(CBBackupRestoreBase):
@@ -105,7 +108,7 @@ class RestoreTest(CBBackupRestoreBase):
         t = int(time() - start)
         logger.info('restore completed in %s sec' % t)
         if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(t)
+            self.reporter.post_to_sf(round(self.data_size/t, 1))
 
 
 class IncrementalBackupWorkloadRunningTest(CBBackupRestoreBase):
@@ -125,7 +128,7 @@ class IncrementalBackupWorkloadRunningTest(CBBackupRestoreBase):
         t = int(time() - start)
         logger.info('backup completed in %s sec' % t)
         if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(t)
+            self.reporter.post_to_sf(round(self.data_size/t, 1))
 
 
 class IncrementalBackupWorkloadRunningFolderSizeTest(CBBackupRestoreBase):
@@ -168,5 +171,6 @@ class RestoreAfterIncrementalBackupTest(CBBackupRestoreBase):
             wrapper=self.test_config.test_case.use_backup_wrapper)
         t = int(time() - start)
         logger.info('restore completed in %s sec' % t)
+        self.data_size = self.workload.items*self.workload.size / 1000000.0
         if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(t)
+            self.reporter.post_to_sf(round(self.data_size/t, 1))

@@ -34,8 +34,8 @@ class CBBackupRestoreBase(PerfTest):
         self.remote.cbrestore(wrapper)
 
     def flush_buckets(self):
-        for num_buckets in range(self.test_config.cluster.num_buckets):
-            buckets = ['bucket-{}'.format(i + 1) for i in range(num_buckets)]
+        buckets = ['bucket-{}'.format(i + 1)
+                   for i in range(self.test_config.cluster.num_buckets)]
         for bucket in buckets:
             self.rest.flush_bucket(host_port=self.master_node, name=bucket)
 

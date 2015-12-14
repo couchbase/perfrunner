@@ -117,7 +117,7 @@ def main():
     options, args = parser.parse_args()
     summary = []
 
-    mng_data = manage_test_result()
+    mng_data = manage_test_result([])
     data=None
     try:
         with open(options.filename) as data_file:

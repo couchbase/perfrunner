@@ -11,7 +11,7 @@ import json
 
 class manage_test_result(object):
 
-    def __init__(self,query_types):
+    def __init__(self,query_types=[]):
         self.__couchbase_instance = {}
         self.__test_id=None
         self.__query_types = query_types

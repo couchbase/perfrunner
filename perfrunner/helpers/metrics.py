@@ -244,7 +244,7 @@ class MetricHelper(object):
         timings = map(int, timings)
         secondaryscan_latency = np.percentile(timings, percentile) / 1000000
 
-        return round(secondaryscan_latency), metric, metric_info
+        return round(secondaryscan_latency,2), metric, metric_info
 
     def calc_kv_latency(self, operation, percentile):
         metric = '{}_{}_{}th_{}'.format(self.test_config.name,

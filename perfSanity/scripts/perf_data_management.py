@@ -11,16 +11,20 @@ import json
 
 class manage_test_result(object):
 
-    def __init__(self):
+    def __init__(self,query_types):
         self.__couchbase_instance = {}
         self.__test_id=None
-        self.__query_log = []
+        self.__query_types = query_types
+        self.__query_log = {}
+        for q in self.__query_types:
+             self.__query_log[q] = []
 
-    def create_query_log(self,query_used,result):
-        result_load={}
+    def create_query_log(self,query_type,query_used,result,analysis):
+        result_load=OrderedDict()
         result_load['query_used'] = query_used
         result_load['result_log'] = result
-        self.__query_log.append(result_load)
+        result_load['analysis'] = analysis
+        self.__query_log[query_type].append(result_load)
 
     def load_data_query_benchmark(self,bucket,test,test_id,version):
         cb_instance = self.__couchbase_instance[bucket]

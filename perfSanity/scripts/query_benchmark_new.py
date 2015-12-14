@@ -117,7 +117,7 @@ def run_query(mng_data,conn, request_desc, debug=False):
     return succeeded
 
 
-def execute_commands(mng_data,conn, command_list, rest, host_ip):
+def execute_commands(mng_data,conn,query_type, command_list, rest, host_ip):
     failure_count = 0
 
     for command in command_list:
@@ -157,13 +157,17 @@ def execute_commands(mng_data,conn, command_list, rest, host_ip):
                 log += ' Execution too short - expected {0}.'.format(command['expected_execution_time'])
                 command_succeeded = False
 
-            mng_data.create_query_log(command[key],log)
-
+            results = ""
             if command_succeeded:
                 logger.info(log)
+                results = " Result is expected"
             else:
                 failure_count = failure_count + 1
                 logger.error(log)
+                results = " Result is not expected"
+
+            mng_data.create_query_log(query_type,command[key],log,results)
+
     return failure_count == 0
 
 
@@ -193,7 +197,7 @@ def do_beer_queries(mng_data,conn, rest, host_ip, remote):
         'query': 'select abv, brewery_id from `beer-sample` where style =  "Imperial or Double India Pale Ale" order by abv;',
         'expected_elapsed_time': 14, 'expected_execution_time': 14, 'execution_count': 10000})
 
-    return execute_commands(mng_data,conn, command_list, rest, host_ip)
+    return execute_commands(mng_data,conn,'beer_queries', command_list, rest, host_ip)
 
 
 def do_airline_benchmarks(mng_data,conn, rest, host_ip, remote, cluster_spec):
@@ -300,7 +304,7 @@ def do_airline_benchmarks(mng_data,conn, rest, host_ip, remote, cluster_spec):
     command_list.append({'query': big_long_query3, 'expected_elapsed_time': 2500, 'expected_execution_time': 2500,
                          'execution_count': 10})
 
-    return execute_commands(mng_data,conn, command_list, rest, host_ip)
+    return execute_commands(mng_data,conn,'travel_queries', command_list, rest, host_ip)
 
 
 def main():
@@ -339,7 +343,7 @@ def main():
             data = json.load(data_file)
     except (OSError, IOError,ValueError) as e:
         raise e
-    mng_data = manage_test_result()
+    mng_data = manage_test_result(['beer_queries','travel_queries'])
     mng_data.create_cb_instance(data["couchbase_server"],data["couchbase_query_bucket"])
 
     options, args = parser.parse_args()
@@ -377,6 +381,7 @@ def main():
     airline_result = do_airline_benchmarks(mng_data,conn, rest, host_ip, installer.remote, cluster_spec)
     beer_result = do_beer_queries(mng_data,conn, rest, host_ip, installer.remote)
     print 'beer_result is', beer_result
+
 
     #mng_data.cb_load_test(data["couchbase_query_bucket"],beer_result)
     mng_data.load_data_query_benchmark(data["couchbase_query_bucket"],'query_benchmark',test_id,options.version)

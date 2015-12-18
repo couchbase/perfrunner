@@ -103,15 +103,10 @@ def compile_forestdb(branch, fdb_hash):
 
 def compile_standalone_test(fdb_path):
     with cd(args.remote_workdir):
-        clone_repo("https://github.com/uvenum/forestdb-2ibenchmark.git")
+        clone_repo("https://github.com/couchbaselabs/forestdb-2ibenchmark.git")
         with cd("forestdb-2ibenchmark"):
-            bench_dir = "{}/forestdb-2ibenchmark".format(args.remote_workdir)
             fdb_dir = "{}/forestdb".format(args.remote_workdir)
-            cmd = "g++ -o {} -Werror".format(prog_name)
-            cmd += " -I{0} -I{0}/utils -I{1}/include/".format(bench_dir, fdb_dir)
-            cmd += " -L{}/build".format(fdb_dir)
-            cmd += " forestdb_workload.cc strgen.cc utils/iniparser.cc"
-            cmd += " -lforestdb -lpthread"
+            cmd="FDBDIR={} make".format(fdb_dir)
             run(cmd)
             run("mv {} ../".format(prog_name))
             run("cp bench_config.ini ../")
@@ -124,6 +119,7 @@ def run_standalone_test():
             run("mkdir data")
             run("ldd ./{}".format(prog_name))
             run("./{}".format(prog_name))
+            run("cat incrementalsecondary.txt")
 
 
 def cleanup_remote_workdir():

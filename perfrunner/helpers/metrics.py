@@ -244,7 +244,7 @@ class MetricHelper(object):
         timings = map(int, timings)
         secondaryscan_latency = np.percentile(timings, percentile) / 1000000
 
-        return round(secondaryscan_latency,2), metric, metric_info
+        return round(secondaryscan_latency, 2), metric, metric_info
 
     def calc_kv_latency(self, operation, percentile):
         metric = '{}_{}_{}th_{}'.format(self.test_config.name,
@@ -278,7 +278,7 @@ class MetricHelper(object):
             db = 'observe{}{}'.format(self.cluster_names[0], bucket)
             data = self.seriesly[db].get_all()
             timings += [v['latency_observe'] for v in data.values()]
-        latency = round(np.percentile(timings, percentile),2)
+        latency = round(np.percentile(timings, percentile), 2)
 
         return latency, metric, metric_info
 

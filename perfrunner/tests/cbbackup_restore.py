@@ -54,7 +54,7 @@ class BackupTest(CBBackupRestoreBase):
         t = int(time() - start)
         logger.info('backup completed in %s sec' % t)
         if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(round(self.data_size / t))
+            self.reporter.post_to_sf(round(self.data_size/t))
 
 
 class BackupWorkloadRunningTest(CBBackupRestoreBase):
@@ -73,7 +73,7 @@ class BackupWorkloadRunningTest(CBBackupRestoreBase):
         t = int(time() - start)
         logger.info('backup completed in %s sec' % t)
         if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(round(self.data_size / t))
+            self.reporter.post_to_sf(round(self.data_size/t))
 
 
 class BackupFolderSizeTest(CBBackupRestoreBase):
@@ -108,7 +108,7 @@ class RestoreTest(CBBackupRestoreBase):
         t = int(time() - start)
         logger.info('restore completed in %s sec' % t)
         if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(round(self.data_size / t, 1))
+            self.reporter.post_to_sf(round(self.data_size/t, 1))
 
 
 class IncrementalBackupWorkloadRunningTest(CBBackupRestoreBase):
@@ -128,7 +128,7 @@ class IncrementalBackupWorkloadRunningTest(CBBackupRestoreBase):
         t = int(time() - start)
         logger.info('backup completed in %s sec' % t)
         if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(round(self.data_size / t, 1))
+            self.reporter.post_to_sf(round(self.data_size/t, 1))
 
 
 class IncrementalBackupWorkloadRunningFolderSizeTest(CBBackupRestoreBase):
@@ -171,6 +171,6 @@ class RestoreAfterIncrementalBackupTest(CBBackupRestoreBase):
             wrapper=self.test_config.test_case.use_backup_wrapper)
         t = int(time() - start)
         logger.info('restore completed in %s sec' % t)
-        self.data_size = self.workload.items * self.workload.size / 1000000.0
+        self.data_size = self.workload.items*self.workload.size / 1000000.0
         if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(round(self.data_size / t, 1))
+            self.reporter.post_to_sf(round(self.data_size/t, 1))

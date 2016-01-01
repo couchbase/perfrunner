@@ -1,8 +1,10 @@
 import argparse
 import fabric
+import json
 import logging
 import pprint
 import requests
+import re
 import urllib2
 import urlparse
 import xmltodict
@@ -10,7 +12,9 @@ import xmltodict
 from fabric.api import run, hosts, env, execute, shell_env
 from fabric.context_managers import cd
 from logger import logger
-from StringIO import StringIO
+from uuid import uuid4
+from couchbase import Couchbase
+
 
 args = None
 prog_name = "forestdb_standalone_test"
@@ -106,20 +110,95 @@ def compile_standalone_test(fdb_path):
         clone_repo("https://github.com/couchbaselabs/forestdb-2ibenchmark.git")
         with cd("forestdb-2ibenchmark"):
             fdb_dir = "{}/forestdb".format(args.remote_workdir)
-            cmd="FDBDIR={} make".format(fdb_dir)
+            cmd = "FDBDIR={} make".format(fdb_dir)
             run(cmd)
             run("mv {} ../".format(prog_name))
             run("cp bench_config.ini ../")
+
+
+# Borrowed from perfrunner
+def mark_previous_as_obsolete(cb, benchmark):
+    for row in cb.query('benchmarks', 'values_by_build_and_metric',
+                        key=[benchmark['metric'], benchmark['build']]):
+        doc = cb.get(row.docid)
+        doc.value.update({'obsolete': True})
+        cb.set(row.docid, doc.value)
+
+
+def pretty_dict(d):
+    return json.dumps(d, indent=4, sort_keys=True,
+                      default=lambda o: o.__dict__)
+
+
+def post_benchmark(benchmark):
+    if args.post_to_sf <= 0:
+        logger.info("Dry run \n{}\n".format(pretty_dict(benchmark)))
+        return
+
+    key = uuid4().hex
+    try:
+        cb = Couchbase.connect(
+            bucket="benchmarks", host="ci.sc.couchbase.com", port=8091,
+            password="password")
+        mark_previous_as_obsolete(cb, benchmark)
+        cb.set(key, benchmark)
+    except Exception, e:
+        logger.warn('Failed to post results, {}'.format(e))
+        raise
+    else:
+        logger.info('Successfully posted: {}'.format(
+            pretty_dict(benchmark)
+        ))
+
+
+def post_incremental(incremental_time):
+    data = {}
+    data["metric"] = "secondary_fdb_inc_secondary"
+    data["snapshots"] = []
+    data["build_url"] = None
+    data["build"] = args.version
+    data["value"] = incremental_time
+    post_benchmark(data)
+
+
+def post_initial(initial_time):
+    data = {}
+    data["metric"] = "secondary_fdb_ini_secondary"
+    data["snapshots"] = []
+    data["build_url"] = None
+    data["build"] = args.version
+    data["value"] = initial_time
+    post_benchmark(data)
 
 
 def run_standalone_test():
     run("service couchbase-server stop", warn_only=True)
     with shell_env(LD_LIBRARY_PATH="{}/forestdb/build".format(args.remote_workdir)):
         with cd(args.remote_workdir):
+            run("rm -rf data/")
             run("mkdir data")
             run("ldd ./{}".format(prog_name))
             run("./{}".format(prog_name))
             run("cat incrementalsecondary.txt")
+
+            # Now for internal processing and posting to showfast
+            output_text = run("cat incrementalsecondary.txt")
+            groups = re.search(
+                r"initial index build time[^\d]*(\d*).*?seconds",
+                output_text)
+            initial_time = int(groups.group(1))
+
+            groups = re.search(
+                r"incrmental index build time[^\d]*(\d*).*?seconds",
+                output_text)
+            incremental_time = int(groups.group(1))
+            logger.info("Grepped intial build time {}".format(initial_time))
+            logger.info("Grepped incremental build time {}".format(
+                incremental_time))
+            if initial_time:
+                post_initial(initial_time)
+            if incremental_time:
+                post_incremental(incremental_time)
 
 
 def cleanup_remote_workdir():
@@ -133,9 +212,12 @@ def main():
     xml_data = fetch_url(xml_url)
     branch, fdb_hash = hash_from_xml(xml_data)
 
-    execute(cleanup_remote_workdir)
-    fdb_path = execute(compile_forestdb, branch, fdb_hash)
-    execute(compile_standalone_test, fdb_path)
+    if not args.run_only:
+        execute(cleanup_remote_workdir)
+    if not args.run_only:
+        fdb_path = execute(compile_forestdb, branch, fdb_hash)
+    if not args.run_only:
+        execute(compile_standalone_test, fdb_path)
     execute(run_standalone_test)
 
 
@@ -148,6 +230,8 @@ def get_args():
     parser.add_argument('--version', dest="version", required=True)
     parser.add_argument('--host', dest="host", required=True)
     parser.add_argument('--remote_workdir', dest="remote_workdir", default="/tmp/standalone_forestdb")
+    parser.add_argument('--run-only', dest="run_only", action="store_true")
+    parser.add_argument('--post-to-sf', dest="post_to_sf", type=int, default=0)
 
     args = parser.parse_args()
 

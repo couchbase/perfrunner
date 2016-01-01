@@ -2,3 +2,5 @@ fabric
 logger
 requests
 xmltodict
+couchbase==1.2.1
+

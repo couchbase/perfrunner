@@ -406,7 +406,7 @@ class RemoteLinuxHelper(object):
         if wrapper:
             for master in self.cluster_spec.yield_masters():
                 cmd = 'cd /opt/couchbase/bin && ./cbbackupwrapper' \
-                      ' http://%s:8091 %s -u %s -p %s %s' \
+                      ' http://%s:8091 %s -u %s -p %s -P 16 %s' \
                       % (master.split(':')[0], backup_path,
                          self.cluster_spec.rest_credentials[0],
                          self.cluster_spec.rest_credentials[1], postfix)
@@ -417,10 +417,10 @@ class RemoteLinuxHelper(object):
                 if not mode:
                     run('/opt/couchbase/bin/backup create --dir %s --name default' % backup_path)
                 cmd = '/opt/couchbase/bin/backup cluster --dir %s --name default ' \
-                    '--host http://%s:8091 --username %s --password %s' \
+                    '--host http://%s:8091 --username %s --password %s %s' \
                     % (backup_path, master.split(':')[0],
                         self.cluster_spec.rest_credentials[0],
-                        self.cluster_spec.rest_credentials[1])
+                        self.cluster_spec.rest_credentials[1], postfix)
                 logger.info(cmd)
                 run(cmd)
 

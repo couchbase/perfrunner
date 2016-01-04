@@ -202,7 +202,7 @@ class SFReporter(object):
             cb.set(key, benckmark)
             Comparator()(test=self.test, benckmark=benckmark)
         except Exception, e:
-            logger.warn('Failed to post results, {}'.format(e))
+            logger.warn('Failed to post results, {} : {}'.format(e, benckmark))
         else:
             logger.info('Successfully posted: {}'.format(
                 pretty_dict(benckmark)

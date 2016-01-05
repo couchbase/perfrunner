@@ -60,7 +60,6 @@ def main():
 
     parser.add_option('-f', '--filename', dest='filename')
     parser.add_option('-v', '--version', dest='version')
-    parser.add_option('-j', '--jenkins id', dest='jenkins')
 
     options, args = parser.parse_args()
     summary = []
@@ -71,10 +70,6 @@ def main():
 
     runStartTime = time.strftime("%m/%d/%y-%H:%M:%S", time.strptime(time.ctime() ))
 
-    data = {'runStartTime':runStartTime, 'build':options.version, 'Jenkins':options.jenkins, 'testName':'test', 
-                       'testMetric':'k', 'expectedValue':'expected_keys[k]', 'actualValue':'dfdfdfd', 'pass':True, 
-			'testStartTime':runStartTime}
-    bucket.upsert( runStartTime + '-' + options.version, data,  format=couchbase.FMT_JSON)
 
     for line in fileinput.input(options.filename):
 
@@ -88,12 +83,11 @@ def main():
         print '\n\n', time.asctime( time.localtime(time.time()) ), 'Now running', test
         current_summary = {'test': test, 'status':'run', 'results':[]}
 
-        test = 'perfSanity/tests/' + test
         spec = 'perfSanity/clusters/' + spec
 
         my_env = os.environ
         my_env['cluster'] = spec
-        my_env['test_config'] = test
+        my_env['test_config'] = 'perfSanity/tests/' + test
         my_env['version'] = options.version
         # proc = subprocess.Popen('ls', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 
@@ -166,8 +160,7 @@ def main():
                     print '  ', k, ' is less than expected. Expected', expected_keys[k], 'Actual', actual_values[k][
                         'value']
 
-                import pdb;pdb.set_trace()
-    		data = {'runStartTime':runStartTime, 'build':options.version, 'Jenkins':options.jenkins, 'testName':test, 
+    		data = {'runStartTime':runStartTime, 'build':options.version, 'testName':test, 
                        'testMetric':k, 'expectedValue':expected_keys[k], 'actualValue':actual_values[k]['value'], 'pass':passResult, 
 			'testStartTime':testStartTime}
                 bucket.upsert( testStartTime + '-' + options.version + '-' + test + '-' + k, data,  format=couchbase.FMT_JSON)

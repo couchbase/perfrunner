@@ -6,4 +6,4 @@ then
 fi
 
 
-$ENV_FOLDER/env/bin/python -m perfrunner -c ${cluster} -t ${test_config} ${override} 
+$ENV_FOLDER/env/bin/python -m perfrunner -c ${cluster} -t ${test_config} ${override} --nodebug

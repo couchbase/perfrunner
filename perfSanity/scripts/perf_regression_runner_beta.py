@@ -163,7 +163,7 @@ def main():
     		data = {'runStartTime':runStartTime, 'build':options.version, 'testName':test, 
                        'testMetric':k, 'expectedValue':expected_keys[k], 'actualValue':actual_values[k]['value'], 'pass':passResult, 
 			'testStartTime':testStartTime}
-                bucket.upsert( testStartTime + '-' + options.version + '-' + test + '-' + k, data,  format=couchbase.FMT_JSON)
+                bucket.upsert( runStartTime + '-' + options.version + '-' + test + '-' + k, data,  format=couchbase.FMT_JSON)
 
                 del actual_values[k]
             else:

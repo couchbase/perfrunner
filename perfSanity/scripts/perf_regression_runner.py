@@ -60,14 +60,21 @@ def main():
 
     parser.add_option('-f', '--filename', dest='filename')
     parser.add_option('-v', '--version', dest='version')
-    parser.add_option('-s', '--summaryFile', dest='summaryFile')
 
     options, args = parser.parse_args()
     summary = []
 
+
+    # open the bucket
+    bucket = Bucket('couchbase://'+ '172.23.105.177:8091/Daily-Performance')
+
+    runStartTime = time.strftime("%m/%d/%y-%H:%M:%S", time.strptime(time.ctime() ))
+
+
     for line in fileinput.input(options.filename):
 
         time.sleep(10)
+        testStartTime = time.strftime("%m/%d/%y-%H:%M:%S", time.strptime(time.ctime() ))
 
         if line[0] == '#' or len(line.strip()) == 0:
             continue
@@ -76,12 +83,11 @@ def main():
         print '\n\n', time.asctime( time.localtime(time.time()) ), 'Now running', test
         current_summary = {'test': test, 'status':'run', 'results':[]}
 
-        test = 'perfSanity/tests/' + test
         spec = 'perfSanity/clusters/' + spec
 
         my_env = os.environ
         my_env['cluster'] = spec
-        my_env['test_config'] = test
+        my_env['test_config'] = 'perfSanity/tests/' + test
         my_env['version'] = options.version
         # proc = subprocess.Popen('ls', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 
@@ -141,18 +147,23 @@ def main():
         expected_keys = json.loads(params)
         for k in expected_keys.keys():
             if k in actual_values:
-
-
-
+                passResult = True
                 current_summary['results'].append( {'metric':k, 'expected':expected_keys[k], 'actual':actual_values[k][ 'value']})
                 if actual_values[k]['value'] > 1.05 * expected_keys[k]:
+                    passResult = False
                     print '  ', k, ' is greater than expected. Expected', expected_keys[k], 'Actual', actual_values[k][
                         'value']
 
                 elif actual_values[k]['value'] < 0.95 * expected_keys[k]:
+                    passResult = False
                     # sort of want to yellow flag this but for now all we have is a red flag so use that
                     print '  ', k, ' is less than expected. Expected', expected_keys[k], 'Actual', actual_values[k][
                         'value']
+
+    		data = {'runStartTime':runStartTime, 'build':options.version, 'testName':test, 
+                       'testMetric':k, 'expectedValue':expected_keys[k], 'actualValue':actual_values[k]['value'], 'pass':passResult, 
+			'testStartTime':testStartTime}
+                bucket.upsert( runStartTime + '-' + options.version + '-' + test + '-' + k, data,  format=couchbase.FMT_JSON)
 
                 del actual_values[k]
             else:
@@ -172,11 +183,9 @@ def main():
     # end the for loop - print the results
 
     all_success = True
-    fo = open(options.summaryFile, "wb")
 
     print '\n\nTest\t\t\t\t\t\t\tMetric\t\t\t\t\t\t\tActual\t\t\tExpected'
     for i in summary:
-        #fo.write( '\n' + i['test'])
         if i['status'] == 'not run':
            print i['test'], 'not run:', i['output']
            all_success = False
@@ -197,7 +206,6 @@ def main():
         print # blank line at end of test
 
     #endfor all tests
-    fo.close()
     return all_success
 
 

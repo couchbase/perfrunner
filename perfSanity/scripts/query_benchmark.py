@@ -18,6 +18,13 @@ import urllib3
 from perfrunner.helpers.rest import RestHelper
 import paramiko
 
+
+#from couchbase.bucket import Bucket
+#import couchbase
+from couchbase import Couchbase
+from couchbase.exceptions import CouchbaseError
+
+
 """
 # An evolving thing - takes as input:
 - a build version
@@ -32,7 +39,10 @@ UPPER_BOUND = 1.10
 LOWER_BOUND = 0.90
 
 ARGS = None
-
+# global variables - yuck
+version = None
+runStartTime = None
+couchbaseConnection = None
 
 def get_time_in_millisec(t):
     try:
@@ -113,7 +123,8 @@ def run_query(conn, request_desc, debug=False):
     return succeeded
 
 
-def execute_commands(conn, command_list, rest, host_ip):
+def execute_commands(conn, command_list, rest, host_ip, testName):
+    global couchbaseConnection, version, runStartTime
     failure_count = 0
 
     for command in command_list:
@@ -159,6 +170,20 @@ def execute_commands(conn, command_list, rest, host_ip):
             else:
                 failure_count = failure_count + 1
                 logger.error(log)
+
+
+	    val = {
+  		"actualValue": avg_execution,
+ 		 "expectedValue": command['expected_execution_time'],
+  		"build": version,
+  		"runStartTime": runStartTime,
+  		"pass": command_succeeded,
+  		"testMetric": command['queryDesc'],
+  		"testStartTime": time.strftime("%m/%d/%y-%H:%M:%S", time.strptime(time.ctime() )),
+  		"testName": testName
+		}
+            key = runStartTime + '-' + testName +'-' + command['queryDesc']
+            couchbaseConnection.add(key, val)
     return failure_count == 0
 
 
@@ -170,25 +195,25 @@ def do_beer_queries(conn, rest, host_ip, remote):
 
     command_list = []
     command_list.append(
-        {'query': 'SELECT * FROM `beer-sample` USE KEYS["21st_amendment_brewery_cafe-amendment_pale_ale"];',
+        {'queryDesc':'select *', 'query': 'SELECT * FROM `beer-sample` USE KEYS["21st_amendment_brewery_cafe-amendment_pale_ale"];',
          'expected_elapsed_time': 0.71, 'expected_execution_time': 0.65, 'execution_count': 10000})
-    command_list.append({'query': 'select * from `beer-sample` where city = "Lawton";', 'expected_elapsed_time': 1.42,
+    command_list.append({'queryDesc':'select * with where', 'query': 'select * from `beer-sample` where city = "Lawton";', 'expected_elapsed_time': 1.42,
                          'expected_execution_time': 1.42, 'execution_count': 10000})
     command_list.append(
-        {'query': 'select abv, brewery_id from `beer-sample` where style =  "Imperial or Double India Pale Ale";',
+        {'queryDesc':'select * where with or', 'query': 'select abv, brewery_id from `beer-sample` where style =  "Imperial or Double India Pale Ale";',
          'expected_elapsed_time': 11,
          'expected_execution_time': 11, 'execution_count': 10000})
     command_list.append(
-        {'query': 'select COUNT(*) from `beer-sample` where style =  "Imperial or Double India Pale Ale";',
+        {'queryDesc':'select count with where', 'query': 'select COUNT(*) from `beer-sample` where style =  "Imperial or Double India Pale Ale";',
          'expected_elapsed_time': 3.4, 'expected_execution_time': 3.4, 'execution_count': 10000})
     command_list.append(
-        {'query': 'select SUM(abv) from `beer-sample` where style =  "Imperial or Double India Pale Ale";',
+        {'queryDesc':'select sum where', 'query': 'select SUM(abv) from `beer-sample` where style =  "Imperial or Double India Pale Ale";',
          'expected_elapsed_time': 11, 'expected_execution_time': 11, 'execution_count': 10000})
     command_list.append({
-        'query': 'select abv, brewery_id from `beer-sample` where style =  "Imperial or Double India Pale Ale" order by abv;',
+        'queryDesc':'select fields order by', 'query': 'select abv, brewery_id from `beer-sample` where style =  "Imperial or Double India Pale Ale" order by abv;',
         'expected_elapsed_time': 14, 'expected_execution_time': 14, 'execution_count': 10000})
 
-    return execute_commands(conn, command_list, rest, host_ip)
+    return execute_commands(conn, command_list, rest, host_ip, 'beer-queries')
 
 
 def do_airline_benchmarks(conn, rest, host_ip, remote, cluster_spec):
@@ -219,7 +244,7 @@ def do_airline_benchmarks(conn, rest, host_ip, remote, cluster_spec):
         {'index': 'CREATE INDEX IDX_ODS_TAIL_NBR ON ods(`TAIL_NBR`) WHERE (`TYPE` = "OPS_FLT_LEG") USING GSI;',
          'expected_elapsed_time': 38000, 'expected_execution_time': 38000})
     command_list.append(
-        {'query': "SELECT * FROM   ods WHERE  TYPE = 'OPS_FLT_LEG' AND TAIL_NBR = 'N518LR' ORDER  BY GMT_EST_DEP_DTM ;",
+        {'queryDesc':'Q1', 'query': "SELECT * FROM   ods WHERE  TYPE = 'OPS_FLT_LEG' AND TAIL_NBR = 'N518LR' ORDER  BY GMT_EST_DEP_DTM ;",
          'expected_elapsed_time': 6.1, 'expected_execution_time': 6.1, 'execution_count': 10})
 
     # query 2
@@ -269,7 +294,7 @@ def do_airline_benchmarks(conn, rest, host_ip, remote, cluster_spec):
         'index': 'CREATE INDEX IDX_PRFL_ACT_GMT_DEP_DTM ON ods(`PRFL_ACT_GMT_DEP_DTM`) WHERE (`TYPE`="CREW_ON_FLIGHT") USING GSI;',
         'expected_elapsed_time': 41000, 'expected_execution_time': 41000})
     command_list.append(
-        {'query': big_long_query2, 'expected_elapsed_time': 536, 'expected_execution_time': 536, 'execution_count': 10})
+        {'queryDesc':'Q2', 'query': big_long_query2, 'expected_elapsed_time': 536, 'expected_execution_time': 536, 'execution_count': 10})
 
     # query 3
     big_long_index3 = """
@@ -292,13 +317,16 @@ def do_airline_benchmarks(conn, rest, host_ip, remote, cluster_spec):
     """
 
     command_list.append({'index': big_long_index3, 'expected_elapsed_time': 64000, 'expected_execution_time': 64000})
-    command_list.append({'query': big_long_query3, 'expected_elapsed_time': 2500, 'expected_execution_time': 2500,
+    command_list.append({'queryDesc':'Q3', 'query': big_long_query3, 'expected_elapsed_time': 2500, 'expected_execution_time': 2500,
                          'execution_count': 10})
 
-    return execute_commands(conn, command_list, rest, host_ip)
+    return execute_commands(conn, command_list, rest, host_ip, 'United-Queries')
 
 
 def main():
+
+    global couchbaseConnection, version, runStartTime
+
     usage = '%prog -v version -c cluster-spec'
     parser = OptionParser(usage)
     parser.add_option('-v', '--version', dest='version')
@@ -327,6 +355,13 @@ def main():
     test_config.parse(options.test_config_fname, args)
 
     cm = ClusterManager(cluster_spec, test_config, options.verbose)
+
+
+    couchbaseConnection = Couchbase.connect(bucket='Daily-Performance', host='172.23.105.177')
+
+    runStartTime = time.strftime("%m/%d/%y-%H:%M:%S", time.strptime(time.ctime() ))
+    version = options.version
+    #bucket = Bucket('couchbase://'+ '172.23.105.177:8091/Daily-Performance')
 
     installer = CouchbaseInstaller(cluster_spec, options)
     if True:

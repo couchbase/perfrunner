@@ -1,11 +1,6 @@
-import requests
 import json
-import re
-import fileinput
 
 from optparse import OptionParser
-import subprocess
-import os
 import sys
 import time
 

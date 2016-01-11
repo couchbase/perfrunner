@@ -1,15 +1,11 @@
 import time
-import urllib2
-import base64
 import json
 import subprocess
 import numpy as np
-import pdb
 
 from logger import logger
 
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.tests import PerfTest
 
 

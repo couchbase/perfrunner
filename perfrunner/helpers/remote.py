@@ -405,6 +405,7 @@ class RemoteLinuxHelper(object):
             postfix = '-m %s' % mode
         if not mode or mode in ['full']:
             run('rm -rf %s' % backup_path)
+        start = time.time()
         if wrapper:
             for master in self.cluster_spec.yield_masters():
                 cmd = 'cd /opt/couchbase/bin && ./cbbackupwrapper' \
@@ -425,9 +426,9 @@ class RemoteLinuxHelper(object):
                         self.cluster_spec.rest_credentials[1], postfix)
                 logger.info(cmd)
                 run(cmd)
-
-        return round(float(run('du -sh --block-size=1M %s' % backup_path).
-                           split('	')[0]) / 1024, 1)  # in Gb
+        delta_time = int(time.time() - start)
+        return (round(float(run('du -sh --block-size=1M %s' % backup_path).
+                           split('	')[0]) / 1024, 1), delta_time)  # in Gb / sec
 
     @all_clients
     def cbrestore(self, wrapper=False):

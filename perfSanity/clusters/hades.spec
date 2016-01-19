@@ -7,7 +7,7 @@ hades =
 
 [clients]
 hosts =
-    10.3.5.229
+    10.3.5.236
 credentials = root:couchbase
 
 [storage]

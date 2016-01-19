@@ -13,7 +13,7 @@ num_buckets = 1
 
 
 [stats]
-seriesly_host = 10.3.5.229
+seriesly_host = 10.3.5.236
 
 [bucket]
 replica_number = 1

@@ -1,0 +1,46 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1QLLatencyTest
+title = N1QL Q3 1Bux20Mx1K, Range Scan, 38.4KGops, 10KSops, 960Qops, View, stale=ok
+summary = Range Scan, 38.4KGops, 10KSops, 960Qops
+larger_is_better = false
+
+[cluster]
+mem_quota = 20480
+index_mem_quota = 100000
+initial_nodes = 6
+num_buckets = 1
+
+[bucket]
+replica_number = 1
+password =
+eviction_policy = valueOnly
+
+[load]
+items = 20000000
+size = 1024
+workers = 20
+doc_gen = reverse_lookup
+doc_partitions = 1
+
+[n1ql]
+indexes =
+    by_capped_small::CREATE INDEX {name} ON `{bucket}` (capped_small) using view;
+
+[access]
+creates = 0
+reads = 80
+updates = 20
+deletes = 0
+throughput = 48000
+items = 20000000
+workers = 24
+time = 1200
+n1ql_queries = range-scan
+n1ql_throughput = 960
+n1ql_workers = 96
+
+[n1ql-range-scan]
+prepared = range_scan
+statement = SELECT name.f.f AS _name, street.f.f AS _street FROM `bucket-1` WHERE capped_small=$1;
+scan_consistency = not_bounded
+args = ["{capped_small}"]

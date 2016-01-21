@@ -7,7 +7,7 @@ larger_is_better = false
 [cluster]
 mem_quota = 2048
 index_mem_quota = 1000
-initial_nodes = 6
+initial_nodes = 3
 num_buckets = 1
 
 [bucket]

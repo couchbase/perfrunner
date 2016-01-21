@@ -330,6 +330,7 @@ def main():
     usage = '%prog -v version -c cluster-spec'
     parser = OptionParser(usage)
     parser.add_option('-v', '--version', dest='version')
+    parser.add_option('-r', '--runStartTime', dest='runStartTime')
     parser.add_option('-c', dest='cluster_spec_fname',
                       help='path to cluster specification file',
                       metavar='cluster.spec')
@@ -359,7 +360,7 @@ def main():
 
     couchbaseConnection = Couchbase.connect(bucket='Daily-Performance', host='172.23.105.177')
 
-    runStartTime = time.strftime("%m/%d/%y-%H:%M:%S", time.strptime(time.ctime() ))
+    runStartTime = options.runStartTime
     version = options.version
     #bucket = Bucket('couchbase://'+ '172.23.105.177:8091/Daily-Performance')
 

@@ -113,6 +113,8 @@ def compile_standalone_test(fdb_path):
             cmd = "FDBDIR={} make".format(fdb_dir)
             run(cmd)
             run("mv {} ../".format(prog_name))
+            if args.iniFile is not None:
+                run("ln -sf {0} bench_config.ini".format(args.iniFile))
             run("cp bench_config.ini ../")
 
 
@@ -232,6 +234,7 @@ def get_args():
     parser.add_argument('--remote_workdir', dest="remote_workdir", default="/tmp/standalone_forestdb")
     parser.add_argument('--run-only', dest="run_only", action="store_true")
     parser.add_argument('--post-to-sf', dest="post_to_sf", type=int, default=0)
+    parser.add_argument('--iniFile', dest="iniFile", default=None)
 
     args = parser.parse_args()
 

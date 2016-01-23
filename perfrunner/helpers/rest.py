@@ -206,10 +206,11 @@ class RestHelper(object):
 
     def create_bucket(self, host_port, name, ram_quota, replica_number,
                       replica_index, eviction_policy, threads_number,
-                      password):
+                      password, proxyPort=None):
         logger.info('Adding new bucket: {}'.format(name))
 
         api = 'http://{}/pools/default/buckets'.format(host_port)
+
         data = {
             'name': name,
             'bucketType': 'membase',
@@ -218,9 +219,20 @@ class RestHelper(object):
             'flushEnabled': 1,
             'replicaNumber': replica_number,
             'replicaIndex': replica_index,
-            'authType': 'sasl',
-            'saslPassword': password,
         }
+
+        if proxyPort is None:
+            data.update(
+                {
+                    'authType': 'sasl',
+                    'saslPassword': password,
+                })
+        else:
+            data.update(
+                {
+                    'authType': 'none',
+                    'proxyPort': proxyPort
+                })
 
         logger.info('bucket specification: {}'.format(data))
 
@@ -355,6 +367,18 @@ class RestHelper(object):
         api = 'http://{}/nodes/self'.format(host_port)
         r = self.get(url=api).json()
         return r['ports']['direct']
+
+    def get_fts_port(self, host_port, for_hostname):
+        logger.info("Getting FTS port for {} from {}".format(
+            for_hostname, host_port))
+        api = 'http://{}/pools/default/nodeServices'.format(host_port)
+        r = self.get(url=api).json()
+        fts_port = None
+        for node_service in r['nodesExt']:
+            if node_service['hostname'] == for_hostname:
+                fts_port = node_service['services'].get('fts', None)
+                break
+        return fts_port
 
     def get_otp_node_name(self, host_port):
         logger.info('Getting OTP node name from {}'.format(host_port))

@@ -269,6 +269,11 @@ class TestConfig(Config):
         options = self._get_options_as_dict('worker_settings')
         return WorkerSettings(options)
 
+    @property
+    def fts_settings(self):
+        options = self._get_options_as_dict('fts')
+        return FtsSettings(options)
+
     def get_n1ql_query_definition(self, query_name):
         return self._get_options_as_dict('n1ql-{}'.format(query_name))
 
@@ -405,6 +410,9 @@ class BucketSettings(object):
                                                self.EXPIRY_PAGER_SLEEP_TIME))
         self.ht_locks = int(options.get('ht_locks', self.HT_LOCKS))
         self.bfilter_enabled = options.get('bfilter_enabled', self.BFILTER_ENABLED)
+        self.proxyPort = options.get('proxyPort', None)
+        if self.proxyPort:
+            self.proxyPort = int(self.proxyPort)
 
 
 class CompactionSettings(object):
@@ -820,6 +828,16 @@ class WorkerSettings(object):
     def __init__(self, options):
         self.reuse_worker = options.get('reuse_workspace', self.REUSE_WORKSPACE)
         self.worker_dir = options.get('workspace_location', self.WORKSPACE_DIR)
+
+    def __str__(self):
+        return str(self.__dict__)
+
+
+class FtsSettings(object):
+    def __init__(self, options):
+        self.doc_database_url = options.get("doc_database_url").strip()
+        self.name = options.get("name").strip()
+        self.items = int(options.get("items").strip())
 
     def __str__(self):
         return str(self.__dict__)

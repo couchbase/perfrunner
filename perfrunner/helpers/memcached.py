@@ -29,6 +29,7 @@ class MemcachedHelper(object):
 
     def __init__(self, test_config):
         self.password = test_config.bucket.password
+        self.test_config = test_config
 
     def set_flusher_param(self, host, port, bucket, key, value):
         logger.info('Changing flusher params: {}={}'.format(key, value))
@@ -38,6 +39,10 @@ class MemcachedHelper(object):
 
     @retry
     def get_stats(self, host, port, bucket, stats):
-        mc = MemcachedClient(host=host, port=port)
-        mc.sasl_auth_plain(user=bucket, password=self.password)
+        proxyPort = self.test_config.bucket.proxyPort
+        if proxyPort is None:
+            mc = MemcachedClient(host=host, port=port)
+            mc.sasl_auth_plain(user=bucket, password=self.password)
+        else:
+            mc = MemcachedClient(host=host, port=proxyPort)
         return mc.stats(stats)

@@ -115,6 +115,7 @@ class ClusterManager(object):
         replica_index = self.test_config.bucket.replica_index
         eviction_policy = self.test_config.bucket.eviction_policy
         threads_number = self.test_config.bucket.threads_number
+        proxyPort = self.test_config.bucket.proxyPort
         password = self.test_config.bucket.password
         buckets = self.test_config.emptybuckets if emptyBuckets else self.test_config.buckets
 
@@ -127,7 +128,8 @@ class ClusterManager(object):
                                         replica_index=replica_index,
                                         eviction_policy=eviction_policy,
                                         threads_number=threads_number,
-                                        password=password)
+                                        password=password,
+                                        proxyPort=proxyPort)
 
     def configure_auto_compaction(self):
         compaction_settings = self.test_config.compaction

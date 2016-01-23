@@ -122,6 +122,9 @@ class Monitor(RestHelper):
         logger.info('Monitoring warmup status: {}@{}'.format(bucket,
                                                              host_port))
         host = host_port.split(':')[0]
+        # The supplied memcached_port may not be used if authless bucket is
+        # used due to FTS testing. See helpers/memcached.py and the actual
+        # get_stats call.
         memcached_port = self.get_memcached_port(host_port)
         while True:
             stats = memcached.get_stats(host, memcached_port, bucket, 'warmup')

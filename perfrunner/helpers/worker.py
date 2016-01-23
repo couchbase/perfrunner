@@ -65,6 +65,7 @@ class RemoteWorkerManager(object):
 
         self.reuse_worker = test_config.worker_settings.reuse_worker
         self.temp_dir = test_config.worker_settings.worker_dir
+        logger.info("Using prefix for temp_dir (worker_dir): {}".format(self.temp_dir))
         self.user, self.password = cluster_spec.client_credentials
         with settings(user=self.user, password=self.password):
             self.initialize_project()

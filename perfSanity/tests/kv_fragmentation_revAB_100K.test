@@ -1,0 +1,28 @@
+[test_case]
+test = perfrunner.tests.kv.RevABTest
+title = Memory fragmentation (%%), 1 bucket x 100K, revAB
+summary = Append-only revAB test, 100K docs
+larger_is_better = false
+use_workers = 0
+
+[compaction]
+db_percentage = 80
+
+
+[stats]
+seriesly_host = 10.3.5.236
+
+
+[cluster]
+mem_quota = 10000
+initial_nodes = 1
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+password =
+
+[load]
+items = 100000
+workers = 16
+iterations = 1

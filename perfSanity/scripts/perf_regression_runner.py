@@ -60,6 +60,7 @@ def main():
 
     parser.add_option('-f', '--filename', dest='filename')
     parser.add_option('-v', '--version', dest='version')
+    parser.add_option('-r', '--runStartTime', dest='runStartTime')
 
     options, args = parser.parse_args()
     summary = []
@@ -68,8 +69,10 @@ def main():
     # open the bucket
     bucket = Bucket('couchbase://'+ '172.23.105.177:8091/Daily-Performance')
 
-    runStartTime = time.strftime("%m/%d/%y-%H:%M:%S", time.strptime(time.ctime() ))
 
+    runStartTime = options.runStartTime #time.strftime("%m/%d/%y-%H:%M:%S", time.strptime(time.ctime() ))
+
+    print 'run start time is', runStartTime
 
     for line in fileinput.input(options.filename):
 

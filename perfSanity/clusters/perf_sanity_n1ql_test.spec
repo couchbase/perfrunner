@@ -21,5 +21,5 @@ ssh = root:couchbase
 Platform = VM
 OS = Centos 6.6
 CPU = Intel Xeon X-5650 (4 cores)
-Memory = 4GB
+Memory = 20GB
 Disk = HDD

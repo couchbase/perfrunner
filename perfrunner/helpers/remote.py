@@ -419,11 +419,12 @@ class RemoteLinuxHelper(object):
             for master in self.cluster_spec.yield_masters():
                 if not mode:
                     run('/opt/couchbase/bin/backup create --dir %s --name default' % backup_path)
+                # EE backup does not support modes, ignore 'full, diff, accu'
                 cmd = '/opt/couchbase/bin/backup cluster --dir %s --name default ' \
-                    '--host http://%s:8091 --username %s --password %s --threads 16 %s' \
+                    '--host http://%s:8091 --username %s --password %s --threads 16' \
                     % (backup_path, master.split(':')[0],
                         self.cluster_spec.rest_credentials[0],
-                        self.cluster_spec.rest_credentials[1], postfix)
+                        self.cluster_spec.rest_credentials[1])
                 logger.info(cmd)
                 run(cmd)
         delta_time = int(time.time() - start)

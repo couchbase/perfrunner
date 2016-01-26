@@ -14,7 +14,7 @@ seriesly_host = 10.3.5.236
 
 
 [cluster]
-mem_quota = 10000
+mem_quota = 1000
 initial_nodes = 1
 num_buckets = 1
 
@@ -23,6 +23,6 @@ replica_number = 0
 password =
 
 [load]
-items = 100000
+items = 50000
 workers = 16
 iterations = 1

@@ -152,12 +152,12 @@ def main():
             if k in actual_values:
                 passResult = True
                 current_summary['results'].append( {'metric':k, 'expected':expected_keys[k], 'actual':actual_values[k][ 'value']})
-                if actual_values[k]['value'] > 1.05 * expected_keys[k]:
+                if actual_values[k]['value'] > 1.1 * expected_keys[k]:
                     passResult = False
                     print '  ', k, ' is greater than expected. Expected', expected_keys[k], 'Actual', actual_values[k][
                         'value']
 
-                elif actual_values[k]['value'] < 0.95 * expected_keys[k]:
+                elif actual_values[k]['value'] < 0.9 * expected_keys[k]:
                     passResult = False
                     # sort of want to yellow flag this but for now all we have is a red flag so use that
                     print '  ', k, ' is less than expected. Expected', expected_keys[k], 'Actual', actual_values[k][

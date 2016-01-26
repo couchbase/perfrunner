@@ -134,7 +134,7 @@ def pretty_dict(d):
 
 def post_benchmark(benchmark):
     if args.post_to_sf <= 0:
-        logger.info("Dry run \n{}\n".format(pretty_dict(benchmark)))
+        logger.info("Dry run stats: {}\n".format(pretty_dict(benchmark)))
         return
 
     key = uuid4().hex

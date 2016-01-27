@@ -134,7 +134,7 @@ class IncrementalBackupWorkloadRunningFolderSizeTest(CBBackupRestoreBase):
     """
 
     def run(self):
-        super(IncrementalBackupWorkloadRunningTest, self).run()
+        super(IncrementalBackupWorkloadRunningFolderSizeTest, self).run()
         self.cbbackup(wrapper=self.test_config.test_case.use_backup_wrapper)
         self.access_bg()
 

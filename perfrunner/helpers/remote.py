@@ -420,7 +420,7 @@ class RemoteLinuxHelper(object):
                 if not mode:
                     run('/opt/couchbase/bin/backup create --dir %s --name default' % backup_path)
                 cmd = '/opt/couchbase/bin/backup cluster --dir %s --name default ' \
-                    '--host http://%s:8091 --username %s --password %s %s' \
+                    '--host http://%s:8091 --username %s --password %s --threads 16 %s' \
                     % (backup_path, master.split(':')[0],
                         self.cluster_spec.rest_credentials[0],
                         self.cluster_spec.rest_credentials[1], postfix)
@@ -450,8 +450,8 @@ class RemoteLinuxHelper(object):
                     if i > 0:
                         start_date = dates[i - 1]
                     cmd = '/opt/couchbase/bin/backup restore --dir %s --name default ' \
-                        '--host http://%s:8091 --username %s --password %s --start %s --end %s' \
-                        % (restore_path, master.split(':')[0],
+                        '--host http://%s:8091 --username %s --password %s --start %s --end %s ' \
+                        '--threads 16' % (restore_path, master.split(':')[0],
                             self.cluster_spec.rest_credentials[0],
                             self.cluster_spec.rest_credentials[1], start_date, end_date)
                     logger.info(cmd)

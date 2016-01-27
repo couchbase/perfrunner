@@ -9,7 +9,6 @@ import os
 import sys
 import time
 
-from tabulate import tabulate
 
 from couchbase.bucket import Bucket
 import couchbase

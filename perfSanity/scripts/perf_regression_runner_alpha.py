@@ -230,8 +230,7 @@ def runForestDBTest( testDescriptor, version, runStartTime, bucket  ):
         commonData = {'runStartTime':runStartTime, 'build':version, 'testName':testName,
                             'testStartTime':testStartTime, 'elapsedTime': round(time.time() - startTime,0) }
         for i in results:
-            #print 'about to insert', dict(commonData.items() + i.items())
-            bucket.upsert( testStartTime + '-' + version + '-' + testName, dict(commonData.items() + i.items()), format=couchbase.FMT_JSON)
+            bucket.upsert( testStartTime + '-' + version + '-' + i['testMetric'], dict(commonData.items() + i.items()), format=couchbase.FMT_JSON)
 
 
 def runTest( testDescriptor, version, runStartTime, bucket ):

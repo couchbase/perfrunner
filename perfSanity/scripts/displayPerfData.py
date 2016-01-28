@@ -100,7 +100,8 @@ def main():
 
 
     # open the bucket
-    bucket = Bucket('couchbase://172.23.105.177/Daily-Performance')
+    resultsBucket = Bucket('couchbase://172.23.105.177/Daily-Performance')
+    testDescriptorBucket = Bucket('couchbase://172.23.105.177/Daily-Performance-Tests')
 
 
     print 'the run id is', options.runStart
@@ -109,30 +110,60 @@ def main():
     # query for everything based on the run id
     queryBaseString = """
     select testName, testMetric, pass, expectedValue,actualValue,`build` from `Daily-Performance`
-    where runStartTime = '{0}' and `build`='{1}';
+    where runStartTime = '{0}' and `build`='{1}'  order by pass;
     """
 
     queryString = queryBaseString.format(options.runStart, options.version)
 
 
-    print 'the query is', queryString #.format(options.run, componentString)
+    #print 'the query is', queryString #.format(options.run, componentString)
     query = N1QLQuery(queryString )
-    results = bucket.n1ql_query( queryString )
+    results = resultsBucket.n1ql_query( queryString )
 
 
-    resultList = []
+    passingTests = []
+    failingTests = []
+    stabilizingTests = []
+
     for row in results:
         #print 'row is ',row
         # a bit of a hack to remove the redundant information
         row['testName'] = row['testName'].replace('perf_sanity_','')   #perf_sanity_....   .test
         row['testMetric'] = row['testMetric'].replace('perf_sanity_','').replace('_base_test','') #.replace('_perf_sanity_secondary','')
-        resultList.append(row)
 
-    #import pdb;pdb.set_trace()
 
-    print; print
-    print format_as_table( resultList, ['testName','testMetric','pass','expectedValue','actualValue'],
-                           ['Test Name','Metric','Pass?','Expected','Actual'] )
+        # check for other stuff like MBs
+        row['jira'] = ''
+        row['notes'] = ''
+        try:
+            res = testDescriptorBucket.get(row['testName']).value
+            if 'notes' in res: row['notes'] = res['notes']
+            if 'jira' in res: row['jira'] = res['jira']
+        except:
+            pass
+        #print row
+
+        if row['notes'] == 'stabilizing':
+            stabilizingTests.append( row)
+        elif row['pass']:
+            passingTests.append( row)
+        else:
+            failingTests.append( row )
+
+
+    print '\n\nPassing tests:\n'
+    print format_as_table( sorted(passingTests, key=lambda k: k['testName']), ['testName','testMetric','expectedValue','actualValue'],
+                           ['Test Name','Metric','Expected','Actual'] )
+
+
+    print '\n\nFailing tests:\n'
+    print format_as_table( sorted(failingTests, key=lambda k: k['testName']), ['testName','testMetric','expectedValue','actualValue','jira','notes'],
+                           ['Test Name','Metric','Expected','Actual','Jira','Notes'] )
+
+
+    print '\n\nTests being stabilized:\n'
+    print format_as_table( sorted(stabilizingTests, key=lambda k: k['testName']), ['testName','testMetric','expectedValue','actualValue'],
+                           ['Test Name','Metric','Expected','Actual'] )
 
 
 

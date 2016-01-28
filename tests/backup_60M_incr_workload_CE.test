@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.cbbackup_restore.IncrementalBackupWorkloadRunningTest
-title = CE Incremental Backup time(sec): 1 bucket x 60M x 1KB
+title = CE Incremental Backup time(Avg. MB/Sec): 1 bucket x 60M x 1KB
 summary = Incremental backup all 4 nodes, 1 bucket x 60M x 1KB, throughput 15000
 larger_is_better = false
 monitor_clients = true
@@ -29,4 +29,4 @@ items = 60000000
 workers = 10
 working_set = 10
 working_set_access = 98
-time = 18000
+time = 1200

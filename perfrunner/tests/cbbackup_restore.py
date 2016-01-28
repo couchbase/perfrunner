@@ -1,4 +1,4 @@
-from time import time
+from time import time, sleep
 
 from logger import logger
 
@@ -119,7 +119,8 @@ class IncrementalBackupWorkloadRunningTest(CBBackupRestoreBase):
         super(IncrementalBackupWorkloadRunningTest, self).run()
         self.cbbackup(wrapper=self.test_config.test_case.use_backup_wrapper)
         self.access_bg()
-
+        # a delay to give the data update
+        sleep(300)
         self.run_backup_with_stats(
             wrapper=self.test_config.test_case.use_backup_wrapper, mode='diff')
         logger.info('backup completed in %s sec' % self.spent_time)
@@ -137,7 +138,8 @@ class IncrementalBackupWorkloadRunningFolderSizeTest(CBBackupRestoreBase):
         super(IncrementalBackupWorkloadRunningFolderSizeTest, self).run()
         self.cbbackup(wrapper=self.test_config.test_case.use_backup_wrapper)
         self.access_bg()
-
+        # a delay to give the data update
+        sleep(300)
         self.run_backup_with_stats(
             wrapper=self.test_config.test_case.use_backup_wrapper, mode='diff')
         logger.info('backup completed, folder size %s' % self.folder_size)

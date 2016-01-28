@@ -60,27 +60,34 @@ def checkResults( results, testDescriptor):
             results = []
             actual_values = {}
             for m in matches:
-                print '\n\nhave a match', m
+                #print '\n\nhave a match', m
                 actual = json.loads('{' + m + '}')
                 actual_values[actual['metric']] = actual  # ( json.loads('{' + m + '}') )
 
             expected_keys = testDescriptor['KPIs']
             for k in expected_keys.keys():
-                if k in actual_values:
+                haveAMatch = False
+                for i in actual_values.keys():
+                    if k in i:
+                        haveAMatch = True
+                        actualIndex = i
+                        break
+                        
+                if haveAMatch:
                     passResult = True
-                    if actual_values[k]['value'] > 1.1 * expected_keys[k]:
+                    if actual_values[actualIndex]['value'] > 1.1 * expected_keys[k]:
                         passResult = False
-                        print '  ', k, ' is greater than expected. Expected', expected_keys[k], 'Actual', actual_values[k][
+                        print '  ', k, ' is greater than expected. Expected', expected_keys[k], 'Actual', actual_values[actualIndex][
                             'value']
 
-                    elif actual_values[k]['value'] < 0.9 * expected_keys[k]:
+                    elif actual_values[actualIndex]['value'] < 0.9 * expected_keys[k]:
                         passResult = False
                         # sort of want to yellow flag this but for now all we have is a red flag so use that
-                        print '  ', k, ' is less than expected. Expected', expected_keys[k], 'Actual', actual_values[k][
+                        print '  ', k, ' is less than expected. Expected', expected_keys[k], 'Actual', actual_values[actualIndex][
                             'value']
 
-                    results.append({'testMetric':k, 'expectedValue':expected_keys[k], 'actualValue':actual_values[k]['value'], 'pass':passResult})
-                    del actual_values[k]
+                    results.append({'testMetric':k, 'expectedValue':expected_keys[k], 'actualValue':actual_values[actualIndex]['value'], 'pass':passResult})
+                    del actual_values[actualIndex]
                 else:
                     print '  Expected key', k, ' is not found'
 
@@ -102,7 +109,7 @@ def runPerfRunner( testDescriptor, version, runStartTime, bucket ):
 
 
     test = testDescriptor['testFile'] + '.test'
-    spec = 'perfSanity/clusters/' + testDescriptor['testSpec'] + '.spec'
+    spec = 'perfSanity/clusters/' + testDescriptor['specFile'] + '.spec'
     KPIs = testDescriptor['KPIs']
     #current_summary = {'test': testDescriptor['testName'], 'status':'run', 'results':[]}
 
@@ -153,52 +160,15 @@ def runPerfRunner( testDescriptor, version, runStartTime, bucket ):
         else:
 
             print '\n\nWorkload complete, analyzing results'
-            #"""
-            # parse the line for actual values
-            #workload_output = test_workload_output
-            p = re.compile(r'Dry run stats: {(.*?)}', re.MULTILINE)
-            matches = p.findall(workload_output.replace('\n', ''))
 
-            actual_values = {}
-            for m in matches:
-                actual = json.loads('{' + m + '}')
-                actual_values[actual['metric']] = actual  # ( json.loads('{' + m + '}') )
-            print '\n\nWorkload gen output:', workload_output, '\n\n'
+            results  = checkResults( workload_output, testDescriptor)
+            commonData = {'runStartTime':runStartTime, 'build':version, 'testName':testName,
+                            'testStartTime':testStartTime, 'elapsedTime': round(time.time() - startTime,0) }
+            for i in results:
+                bucket.upsert( testStartTime + '-' + version + '-' + i['testMetric'], dict(commonData.items() + i.items()), format=couchbase.FMT_JSON)
 
-            expected_keys = testDescriptor['KPIs']
-            for k in expected_keys.keys():
-                if k in actual_values:
-                    passResult = True
-                    #current_summary['results'].append( {'metric':k, 'expected':expected_keys[k], 'actual':actual_values[k][ 'value']})
-                    if actual_values[k]['value'] > 1.1 * expected_keys[k]:
-                        passResult = False
-                        print '  ', k, ' is greater than expected. Expected', expected_keys[k], 'Actual', actual_values[k][
-                            'value']
 
-                    elif actual_values[k]['value'] < 0.9 * expected_keys[k]:
-                        passResult = False
-                        # sort of want to yellow flag this but for now all we have is a red flag so use that
-                        print '  ', k, ' is less than expected. Expected', expected_keys[k], 'Actual', actual_values[k][
-                            'value']
 
-                        result = {'runStartTime':runStartTime, 'build':version, 'testName':testName,
-                           'testMetric':k, 'expectedValue':expected_keys[k], 'actualValue':actual_values[k]['value'], 'pass':passResult,
-                            'testStartTime':testStartTime, 'elapsedTime': time.time() - startTime }
-                        bucket.upsert( runStartTime + '-' + version + '-' + test + '-' + k, result,  format=couchbase.FMT_JSON)
-
-                else:
-                    #current_summary['results'].append( {'metric':k, 'expected':'Not found' , 'actual':k})
-                    print '  Expected key', k, ' is not found'
-                    #current_summary['output'] += '\n    Expected key {0} is not found'.format(k)
-
-            if len(actual_values) > 0:
-                print '  The following key(s) were present but not expected:'
-                for i in actual_values:
-                    print '    ', i
-                    #current_summary['results'].append( {'metric':k, 'expected':i , 'actual':'Not found'})
-
-            #summary.append(current_summary)
-            print '\nCompleted analysis for', test
 
 def runForestDBTest( testDescriptor, version, runStartTime, bucket  ):
 
@@ -242,7 +212,7 @@ def runTest( testDescriptor, version, runStartTime, bucket ):
     print '\n\n', time.asctime( time.localtime(time.time()) ), 'Now running', testName
 
     if testDescriptor['testType'] == 'perfRunner':
-        pass #runPerfRunner(testDescriptor, version, runStartTime, bucket)
+        runPerfRunner(testDescriptor, version, runStartTime, bucket)
     elif testDescriptor['testType'] == 'perfRunnerForestDB':
         print 'have the forest DB test', testDescriptor['command']
         runForestDBTest(testDescriptor, version, runStartTime, bucket)
@@ -276,8 +246,11 @@ def main():
     testsToRun = testBucket.n1ql_query( queryString )
     testsToRerun = []
     for row in testsToRun:
-        if not runTest( row, options.version, options.runStartTime, bucket ):
-            testsToRerun.append(row)
+        if 'disabled' in row and row['disabled'].lower() == 'true':
+            print row['testName'], ' is disabled.'
+        else:
+            if not runTest( row, options.version, options.runStartTime, bucket ):
+                testsToRerun.append(row)
 
         #time.sleep(10)
     # end the for loop - print the results

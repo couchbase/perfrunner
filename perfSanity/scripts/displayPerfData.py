@@ -87,7 +87,6 @@ def format_as_table(data,
 
 
 def main():
-    print 'Starting the perf regression runner'
 
     usage = '%prog -f conf-file'
     parser = OptionParser(usage)
@@ -104,12 +103,11 @@ def main():
     testDescriptorBucket = Bucket('couchbase://172.23.105.177/Daily-Performance-Tests')
 
 
-    print 'the run id is', options.runStart
 
 
     # query for everything based on the run id
     queryBaseString = """
-    select testName, testMetric, pass, expectedValue,actualValue,`build` from `Daily-Performance`
+    select testName, testMetric, pass, expectedValue,actualValue,`build`, reason from `Daily-Performance`
     where runStartTime = '{0}' and `build`='{1}'  order by pass;
     """
 
@@ -124,31 +122,41 @@ def main():
     passingTests = []
     failingTests = []
     stabilizingTests = []
+    environmentalIssues = []
 
     for row in results:
         #print 'row is ',row
         # a bit of a hack to remove the redundant information
+        #print 'the row is', row
         row['testName'] = row['testName'].replace('perf_sanity_','')   #perf_sanity_....   .test
-        row['testMetric'] = row['testMetric'].replace('perf_sanity_','').replace('_base_test','') #.replace('_perf_sanity_secondary','')
+
+        if 'testMetric' in row:
+            row['testMetric'] = row['testMetric'].replace('perf_sanity_','').replace('_base_test','') #.replace('_perf_sanity_secondary','')
 
 
-        # check for other stuff like MBs
-        row['jira'] = ''
-        row['notes'] = ''
-        try:
-            res = testDescriptorBucket.get(row['testName']).value
-            if 'notes' in res: row['notes'] = res['notes']
-            if 'jira' in res: row['jira'] = res['jira']
-        except:
-            pass
-        #print row
+            # check for other stuff like MBs
+            row['jira'] = ''
+            row['notes'] = ''
+            try:
+                res = testDescriptorBucket.get(row['testName']).value
+                if 'notes' in res: row['notes'] = res['notes']
+                if 'jira' in res: row['jira'] = res['jira']
+            except:
+                pass
+            #print row
 
-        if row['notes'] == 'stabilizing':
-            stabilizingTests.append( row)
-        elif row['pass']:
-            passingTests.append( row)
+            if row['notes'] == 'stabilizing':
+                stabilizingTests.append( row)
+            elif row['pass']:
+                passingTests.append( row)
+            else:
+                failingTests.append( row )
         else:
-            failingTests.append( row )
+            environmentalIssues.append( row )
+
+
+    print 'Performance Daily Sanity {0}: {1} tests, {2} failures'.format( options.version, len(passingTests) + len(failingTests), \
+         len(failingTests) )
 
 
     print '\n\nPassing tests:\n'
@@ -164,6 +172,11 @@ def main():
     print '\n\nTests being stabilized:\n'
     print format_as_table( sorted(stabilizingTests, key=lambda k: k['testName']), ['testName','testMetric','expectedValue','actualValue'],
                            ['Test Name','Metric','Expected','Actual'] )
+
+    if len(environmentalIssues) > 0:
+        print '\n\nEnvironment issues:\n'
+        print format_as_table( environmentalIssues, ['testName','reason'],
+                           ['Test Name','Reason'] )
 
 
 

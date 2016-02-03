@@ -105,7 +105,7 @@ def runPerfRunner( testDescriptor, version, runStartTime, bucket ):
 
     testStartTime = time.strftime("%m/%d/%y-%H:%M:%S", time.strptime(time.ctime() ))
     startTime = time.time()   # in seconds to get the elapsed time
-    print '\n\n', time.asctime( time.localtime(time.time()) ), 'Now running', testName
+    print '\n\n', time.asctime( time.localtime(time.time()) ), 'Now running', testDescriptor
 
 
     test = testDescriptor['testFile'] + '.test'

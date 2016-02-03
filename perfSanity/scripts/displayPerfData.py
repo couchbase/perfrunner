@@ -144,7 +144,7 @@ def main():
                 if 'jira' in res: row['jira'] = res['jira']
                 if 'status' in res: row['status'] = res['status']
             except:
-                print 'no record for',row['testName']
+                #print 'no record for',row['testName']
                 continue
             #print row
 

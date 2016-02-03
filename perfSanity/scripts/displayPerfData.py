@@ -139,13 +139,16 @@ def main():
             row['notes'] = ''
             try:
                 res = testDescriptorBucket.get(row['testName']).value
+                #print '****res is', res
                 if 'notes' in res: row['notes'] = res['notes']
                 if 'jira' in res: row['jira'] = res['jira']
+                if 'status' in res: row['status'] = res['status']
             except:
-                pass
+                print 'no record for',row['testName']
+                continue
             #print row
 
-            if row['notes'] == 'stabilizing':
+            if row['status'] == 'beta' or row['notes'] == 'stabilizing':
                 stabilizingTests.append( row)
             elif row['pass']:
                 passingTests.append( row)
@@ -159,19 +162,23 @@ def main():
          len(failingTests) )
 
 
-    print '\n\nPassing tests:\n'
-    print format_as_table( sorted(passingTests, key=lambda k: k['testName']), ['testName','testMetric','expectedValue','actualValue'],
-                           ['Test Name','Metric','Expected','Actual'] )
+    if len(failingTests) > 0:
+        print '\n\nFailing tests:\n'
+        print format_as_table( sorted(failingTests, key=lambda k: k['testName']), ['testName','testMetric','expectedValue','actualValue','jira','notes'],
+                               ['Test Name','Metric','Expected','Actual','Jira','Notes'] )
+
+    if len(passingTests) > 0:
+        print '\n\nPassing tests:\n'
+        print format_as_table( sorted(passingTests, key=lambda k: k['testName']), ['testName','testMetric','expectedValue','actualValue'],
+                               ['Test Name','Metric','Expected','Actual'] )
 
 
-    print '\n\nFailing tests:\n'
-    print format_as_table( sorted(failingTests, key=lambda k: k['testName']), ['testName','testMetric','expectedValue','actualValue','jira','notes'],
-                           ['Test Name','Metric','Expected','Actual','Jira','Notes'] )
 
 
-    print '\n\nTests being stabilized:\n'
-    print format_as_table( sorted(stabilizingTests, key=lambda k: k['testName']), ['testName','testMetric','expectedValue','actualValue'],
-                           ['Test Name','Metric','Expected','Actual'] )
+    if len(stabilizingTests) > 0:
+        print '\n\nTests being stabilized:\n'
+        print format_as_table( sorted(stabilizingTests, key=lambda k: k['testName']), ['testName','testMetric','expectedValue','actualValue'],
+                               ['Test Name','Metric','Expected','Actual'] )
 
     if len(environmentalIssues) > 0:
         print '\n\nEnvironment issues:\n'

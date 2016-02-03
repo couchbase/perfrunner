@@ -99,7 +99,7 @@ def checkResults( results, testDescriptor):
 
 
 
-def runPerfRunner( testDescriptor, version, runStartTime, bucket ):
+def runPerfRunner( testDescriptor, version, url, runStartTime, bucket ):
     print testDescriptor['testType']
     testName = testDescriptor['testName']
 
@@ -116,7 +116,10 @@ def runPerfRunner( testDescriptor, version, runStartTime, bucket ):
     my_env = os.environ
     my_env['cluster'] = spec
     my_env['test_config'] = 'perfSanity/tests/' + test
-    my_env['version'] = version
+    if url is None:
+        my_env['version'] = version
+    else:
+        my_env['url'] = url
 
     proc = subprocess.Popen('./scripts/setup.sh', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                         shell=True)
@@ -172,6 +175,10 @@ def runPerfRunner( testDescriptor, version, runStartTime, bucket ):
 
 def runForestDBTest( testDescriptor, version, runStartTime, bucket  ):
 
+    if url is not None:
+        print 'runForestDBTest and url option is not supported'
+        return
+
     testStartTime = time.strftime("%m/%d/%y-%H:%M:%S", time.strptime(time.ctime() ))
     startTime = time.time()   # in seconds to get the elapsed time
     testName = testDescriptor['testName']
@@ -203,7 +210,7 @@ def runForestDBTest( testDescriptor, version, runStartTime, bucket  ):
             bucket.upsert( testStartTime + '-' + version + '-' + i['testMetric'], dict(commonData.items() + i.items()), format=couchbase.FMT_JSON)
 
 
-def runTest( testDescriptor, version, runStartTime, bucket ):
+def runTest( testDescriptor, version, url, runStartTime, bucket ):
     print testDescriptor['testType']
     testName = testDescriptor['testName']
 
@@ -212,7 +219,7 @@ def runTest( testDescriptor, version, runStartTime, bucket ):
     print '\n\n', time.asctime( time.localtime(time.time()) ), 'Now running', testName
 
     if testDescriptor['testType'] == 'perfRunner':
-        runPerfRunner(testDescriptor, version, runStartTime, bucket)
+        runPerfRunner(testDescriptor, version, url, runStartTime, bucket)
     elif testDescriptor['testType'] == 'perfRunnerForestDB':
         print 'have the forest DB test', testDescriptor['command']
         runForestDBTest(testDescriptor, version, runStartTime, bucket)
@@ -226,6 +233,7 @@ def main():
 
     #parser.add_option('-f', '--filename', dest='filename')
     parser.add_option('-v', '--version', dest='version')
+    parser.add_option('-u', '--url', dest='url')
     parser.add_option('-r', '--runStartTime', dest='runStartTime')
     parser.add_option('-n', '--nop', dest='nop',default=False, action='store_true')
 
@@ -234,6 +242,9 @@ def main():
     runStartTime = options.runStartTime
     summary = []
 
+
+    print 'version', options.version
+    print 'url', options.url
 
     # open the bucket
     bucket = Bucket('couchbase://'+ '172.23.105.177:8091/Daily-Performance')
@@ -249,39 +260,12 @@ def main():
         if 'disabled' in row and row['disabled'].lower() == 'true':
             print row['testName'], ' is disabled.'
         else:
-            if not runTest( row, options.version, options.runStartTime, bucket ):
+            if not runTest( row, options.version, options.url, options.runStartTime, bucket ):
                 testsToRerun.append(row)
 
         #time.sleep(10)
     # end the for loop - print the results
     print 'done'
-    return
-
-    all_success = True
-
-    print '\n\nTest\t\t\t\t\t\t\tMetric\t\t\t\t\t\t\tActual\t\t\tExpected'
-    for i in summary:
-        if i['status'] == 'not run':
-           print i['test'], 'not run:', i['output']
-           all_success = False
-        else:
-            for j in i['results']:
-               print i['test'], '\t', j['metric'], '\t', j['actual'], '\t', j['expected'],
-               if j['actual'] == 'Not found' or j['expected'] == 'Not found':
-                  all_success = False
-               else:
-                  # do the compares
-                  if j['actual']  > 1.1 * j['expected']:
-                      print '\tactual is too large',
-                      all_success = False
-                  elif j['actual']  < 0.9 * j['expected']:
-                      print '\tactual is too small',
-                      all_success = False
-               print
-        print # blank line at end of test
-
-    #endfor all tests
-    return all_success
 
 
 if __name__ == "__main__":

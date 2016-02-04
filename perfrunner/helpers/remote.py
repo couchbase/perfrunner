@@ -82,7 +82,8 @@ class RemoteLinuxHelper(object):
     CB_DIR = '/opt/couchbase'
     MONGO_DIR = '/opt/mongodb'
 
-    PROCESSES = ('beam.smp', 'memcached', 'epmd', 'cbq-engine', 'mongod')
+    PROCESSES = ('beam.smp', 'memcached', 'epmd', 'cbq-engine', 'mongod', 'indexer',
+                 'cbft', 'goport', 'goxdcr', 'couch_view_index_updater', 'moxi')
 
     def __init__(self, cluster_spec, test_config, os):
         self.os = os

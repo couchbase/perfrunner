@@ -99,27 +99,30 @@ def checkResults( results, testDescriptor):
 
 
 
-def runPerfRunner( testDescriptor, version, url, runStartTime, bucket ):
+def runPerfRunner( testDescriptor, options):
     print testDescriptor['testType']
     testName = testDescriptor['testName']
 
-    testStartTime = time.strftime("%m/%d/%y-%H:%M:%S", time.strptime(time.ctime() ))
-    startTime = time.time()   # in seconds to get the elapsed time
-    print '\n\n', time.asctime( time.localtime(time.time()) ), 'Now running', testDescriptor
+    #testStartTime = time.strftime("%m/%d/%y-%H:%M:%S", time.strptime(time.ctime() ))
+    #startTime = time.time()   # in seconds to get the elapsed time
+    #print '\n\n', time.asctime( time.localtime(time.time()) ), 'Now running', testDescriptor
 
 
     test = testDescriptor['testFile'] + '.test'
-    spec = 'perfSanity/clusters/' + testDescriptor['specFile'] + '.spec'
+    if options.specFile is None:
+        spec = 'perfSanity/clusters/' + testDescriptor['specFile'] + '.spec'
+    else:
+        spec = 'perfSanity/clusters/' + options.specFile
+    print 'specfile', spec
     KPIs = testDescriptor['KPIs']
-    #current_summary = {'test': testDescriptor['testName'], 'status':'run', 'results':[]}
 
     my_env = os.environ
     my_env['cluster'] = spec
     my_env['test_config'] = 'perfSanity/tests/' + test
-    if url is None:
-        my_env['version'] = version
+    if options.url is None:
+        my_env['version'] = options.version
     else:
-        my_env['url'] = url
+        my_env['url'] = options.url
 
     proc = subprocess.Popen('./scripts/setup.sh', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                         shell=True)
@@ -134,10 +137,7 @@ def runPerfRunner( testDescriptor, version, url, runStartTime, bucket ):
         print '\n\nHave an error during setup'
         print stderrdata
         print stdoutdata
-        result =  {'runStartTime':runStartTime, 'testStartTime':testStartTime, 'build':version, 'testName':testName,
-               'pass':False, 'reason':'Have an error during setup'}
-        bucket.upsert( testStartTime + '-' + version + '-' + test, result,  format=couchbase.FMT_JSON)
-        return False
+        return  [{'pass':False, 'reason':'Have an error during setup'}]
     else:
 
         print 'Setup complete, starting workload'
@@ -154,36 +154,25 @@ def runPerfRunner( testDescriptor, version, url, runStartTime, bucket ):
 
         if proc.returncode == 1:
             print '  Have an error during workload generation'
-            result =  {'runStartTime':runStartTime, 'testStartTime':testStartTime, 'build':version, 'testName':testName,
-               'pass':False, 'reason':'Have an error during workload generation'}
-            bucket.upsert( testStartTime + '-' + version + '-' + test, result,  format=couchbase.FMT_JSON)
-            return False
+            return [{'pass':False, 'reason':'Have an error during workload generation'}]
 
 
         else:
 
             print '\n\nWorkload complete, analyzing results'
 
-            results  = checkResults( workload_output, testDescriptor)
-            commonData = {'runStartTime':runStartTime, 'build':version, 'testName':testName,
-                            'testStartTime':testStartTime, 'elapsedTime': round(time.time() - startTime,0) }
-            for i in results:
-                bucket.upsert( testStartTime + '-' + version + '-' + i['testMetric'], dict(commonData.items() + i.items()), format=couchbase.FMT_JSON)
+            return checkResults( workload_output, testDescriptor)
 
 
+def runForestDBTest( testDescriptor, options):
 
-
-def runForestDBTest( testDescriptor, version, runStartTime, bucket  ):
-
-    if url is not None:
+    if options.url is not None:
         print 'runForestDBTest and url option is not supported'
-        return
+        return []
 
-    testStartTime = time.strftime("%m/%d/%y-%H:%M:%S", time.strptime(time.ctime() ))
-    startTime = time.time()   # in seconds to get the elapsed time
     testName = testDescriptor['testName']
 
-    command = testDescriptor['command'] + ' --version=' + version
+    command = testDescriptor['command'] + ' --version=' + options.version
     print 'the command is', command
 
     proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,shell=True)
@@ -198,31 +187,31 @@ def runForestDBTest( testDescriptor, version, runStartTime, bucket  ):
 
     if proc.returncode == 1:
         print '  Have an error during forest DB'
-        result =  {'runStartTime':runStartTime, 'testStartTime':testStartTime, 'build':version,
-                   'testName':testName,'pass':False, 'reason':'Check logs,'}
-        bucket.upsert( testStartTime + '-' + version + '-' + testName, result, format=couchbase.FMT_JSON)
-        return False
+        return [{'pass':False, 'reason':'Check logs'}]
     else:
-        results  = checkResults( commandOutput, testDescriptor)
-        commonData = {'runStartTime':runStartTime, 'build':version, 'testName':testName,
-                            'testStartTime':testStartTime, 'elapsedTime': round(time.time() - startTime,0) }
-        for i in results:
-            bucket.upsert( testStartTime + '-' + version + '-' + i['testMetric'], dict(commonData.items() + i.items()), format=couchbase.FMT_JSON)
+        return checkResults( commandOutput, testDescriptor)
 
 
-def runTest( testDescriptor, version, url, runStartTime, bucket ):
+def runTest( testDescriptor, options, bucket ):
     print testDescriptor['testType']
     testName = testDescriptor['testName']
 
-    testStartTime = time.strftime("%m/%d/%y-%H:%M:%S", time.strptime(time.ctime() ))
+    testStartTime = time.strftime("%y-%m-%d-%H:%M:%S", time.strptime(time.ctime() ))
     startTime = time.time()   # in seconds to get the elapsed time
     print '\n\n', time.asctime( time.localtime(time.time()) ), 'Now running', testName
 
+    baseResult = {'runStartTime':options.runStartTime, 'testStartTime':testStartTime, 'build':options.version, 'testName':testName}
     if testDescriptor['testType'] == 'perfRunner':
-        runPerfRunner(testDescriptor, version, url, runStartTime, bucket)
+        res = runPerfRunner(testDescriptor, options)
     elif testDescriptor['testType'] == 'perfRunnerForestDB':
         print 'have the forest DB test', testDescriptor['command']
-        runForestDBTest(testDescriptor, version, runStartTime, bucket)
+        res = runForestDBTest(testDescriptor, options)
+
+
+    for i in res:
+        combinedResults = dict(baseResult.items() + i.items()  + {'elapsedTime': round(time.time() - startTime,0)}.items() )
+        print 'the result is ', combinedResults
+        if bucket is not None: bucket.upsert( testStartTime + '-' + version + '-' + i['testMetric'], combinedResults, format=couchbase.FMT_JSON)
 
 
 def main():
@@ -234,10 +223,15 @@ def main():
     #parser.add_option('-f', '--filename', dest='filename')
     parser.add_option('-v', '--version', dest='version')
     parser.add_option('-u', '--url', dest='url')
+    parser.add_option('-q', '--query', dest='query')
+    parser.add_option('-s', '--specFile', dest='specFile')
     parser.add_option('-r', '--runStartTime', dest='runStartTime')
     parser.add_option('-n', '--nop', dest='nop',default=False, action='store_true')
 
     options, args = parser.parse_args()
+
+    print 'query', options.query
+    print 'specfile', options.specFile
 
     runStartTime = options.runStartTime
     summary = []
@@ -247,20 +241,29 @@ def main():
     print 'url', options.url
 
     # open the bucket
-    bucket = Bucket('couchbase://'+ '172.23.105.177:8091/Daily-Performance')
+    if options.nop:
+        bucket = None
+    else:
+        bucket = Bucket('couchbase://'+ '172.23.105.177:8091/Daily-Performance')
 
     testBucket = Bucket('couchbase://'+ '172.23.105.177:8091/Daily-Performance-Tests')
-    queryString = "select `Daily-Performance-Tests`.* from `Daily-Performance-Tests`;"
+    if options.query is None:
+        queryString = "select `Daily-Performance-Tests`.* from `Daily-Performance-Tests`;"
+    else:
+        queryString = "select `Daily-Performance-Tests`.* from `Daily-Performance-Tests` where " + options.query + ";"
 
 
     query = N1QLQuery(queryString )
     testsToRun = testBucket.n1ql_query( queryString )
+    tests = [row for row in testsToRun]
+    print 'the tests are', tests
     testsToRerun = []
-    for row in testsToRun:
-        if 'disabled' in row and row['disabled'].lower() == 'true':
+    for row in tests:
+        print 'in the loop'
+        if row['status'].lower() == 'disabled':
             print row['testName'], ' is disabled.'
         else:
-            if not runTest( row, options.version, options.url, options.runStartTime, bucket ):
+            if not runTest( row, options, bucket ):
                 testsToRerun.append(row)
 
         #time.sleep(10)

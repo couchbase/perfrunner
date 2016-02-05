@@ -206,6 +206,11 @@ def runTest( testDescriptor, options, bucket ):
     elif testDescriptor['testType'] == 'perfRunnerForestDB':
         print 'have the forest DB test', testDescriptor['command']
         res = runForestDBTest(testDescriptor, options)
+    elif testDescriptor['testType'] == 'SampleDBs':
+        return True
+    else:
+        print 'Unknown test type', testDescriptor['testType']
+        return True
 
 
     for i in res:

@@ -211,7 +211,7 @@ def runTest( testDescriptor, options, bucket ):
     for i in res:
         combinedResults = dict(baseResult.items() + i.items()  + {'elapsedTime': round(time.time() - startTime,0)}.items() )
         print 'the result is ', combinedResults
-        if bucket is not None: bucket.upsert( testStartTime + '-' + version + '-' + i['testMetric'], combinedResults, format=couchbase.FMT_JSON)
+        if bucket is not None: bucket.upsert( testStartTime + '-' + options.version + '-' + i['testMetric'], combinedResults, format=couchbase.FMT_JSON)
 
 
 def main():

@@ -8,6 +8,7 @@ import subprocess
 import os
 import sys
 import time
+import traceback
 
 from couchbase.bucket import Bucket
 import couchbase
@@ -216,7 +217,12 @@ def runTest( testDescriptor, options, bucket ):
     for i in res:
         combinedResults = dict(baseResult.items() + i.items()  + {'elapsedTime': round(time.time() - startTime,0)}.items() )
         print 'the result is ', combinedResults
-        if bucket is not None: bucket.upsert( testStartTime + '-' + options.version + '-' + i['testMetric'], combinedResults, format=couchbase.FMT_JSON)
+        if bucket is not None: 
+            if 'testMetric' in combinedResults:
+                testKey = combinedResults['testName'] + '-' + combinedResults['testMetric']
+            else:
+                testKey = combinedResults['testName']
+            bucket.upsert( testStartTime + '-' + options.version + '-' + testKey, combinedResults, format=couchbase.FMT_JSON)
 
 
 def main():
@@ -264,12 +270,15 @@ def main():
     print 'the tests are', tests
     testsToRerun = []
     for row in tests:
-        print 'in the loop'
-        if row['status'].lower() == 'disabled':
-            print row['testName'], ' is disabled.'
-        else:
-            if not runTest( row, options, bucket ):
-                testsToRerun.append(row)
+        try:
+            if row['status'].lower() == 'disabled':
+                print row['testName'], ' is disabled.'
+            else:
+                if not runTest( row, options, bucket ):
+                    testsToRerun.append(row)
+        except:
+            print 'Exception in ', row['testName']
+            traceback.print_exc()
 
         #time.sleep(10)
     # end the for loop - print the results

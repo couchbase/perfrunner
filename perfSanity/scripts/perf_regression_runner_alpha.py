@@ -237,6 +237,7 @@ def main():
     parser.add_option('-q', '--query', dest='query')
     parser.add_option('-s', '--specFile', dest='specFile')
     parser.add_option('-r', '--runStartTime', dest='runStartTime')
+    parser.add_option('-b', '--betaTests', dest='betaTests', default=False, action='store_true')
     parser.add_option('-n', '--nop', dest='nop',default=False, action='store_true')
 
     options, args = parser.parse_args()
@@ -258,12 +259,24 @@ def main():
         bucket = Bucket('couchbase://'+ '172.23.105.177:8091/Daily-Performance')
 
     testBucket = Bucket('couchbase://'+ '172.23.105.177:8091/Daily-Performance-Tests')
-    if options.query is None:
-        queryString = "select `Daily-Performance-Tests`.* from `Daily-Performance-Tests`;"
+    queryString = "select `Daily-Performance-Tests`.* from `Daily-Performance-Tests`"
+    wherePredicates = []
+    if options.query is not None:
+        wherePredicates.append( options.query )
+    if options.betaTests:
+        wherePredicates.append( "status='beta'")
     else:
-        queryString = "select `Daily-Performance-Tests`.* from `Daily-Performance-Tests` where " + options.query + ";"
+        wherePredicates.append( "status!='beta'")
 
+    if len(wherePredicates) > 0:
+       for i in range(len(wherePredicates)):
+          if i == 0:
+              queryString += ' where '
+          else:
+              queryString += ' and '
+          queryString += wherePredicates[i]
 
+    print 'the query string is', queryString
     query = N1QLQuery(queryString )
     testsToRun = testBucket.n1ql_query( queryString )
     tests = [row for row in testsToRun]

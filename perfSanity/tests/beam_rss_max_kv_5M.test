@@ -1,0 +1,37 @@
+[test_case]
+test = perfrunner.tests.kv.BeamRssTest
+title = mixed, 1 bucket x 5M x 2KB, 10K ops/sec
+summary = Mixed KV test, 3 nodes, 1 bucket x 50M x 2KB, DGM, 10K ops/sec
+larger_is_better = false
+level = Advanced
+
+[cluster]
+mem_quota = 2000
+initial_nodes = 3
+num_buckets = 1
+
+[stats]
+seriesly_host = 10.5.3.40
+
+
+[load]
+items = 5000000
+size = 2048
+workers = 20
+
+[hot_load]
+items = 5000000
+workers = 20
+working_set = 30
+
+[access]
+creates = 1
+reads = 50
+updates = 48
+deletes = 1
+throughput = 10000
+items = 5000000
+working_set = 30
+working_set_access = 98
+workers = 24
+time=600

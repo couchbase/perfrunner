@@ -1,0 +1,42 @@
+[test_case]
+test = perfrunner.tests.query.DevQueryLatencyTest
+title = 1 node, 2M docs, 3 views, 100 updates/sec, 100 queries/sec, stale=false, basic queries
+summary = Write-only query test, 1 node, 1 bucket x 2M x 1KB, 3 views, 100 updates/sec, 100 qps
+larger_is_better = false
+
+[cluster]
+mem_quota = 2000
+initial_nodes = 1
+num_buckets = 1
+
+
+[stats]
+seriesly_host = 10.5.3.40
+
+[bucket]
+replica_number = 0
+
+[compaction]
+db_percentage = 100
+
+[load]
+items = 2000000
+size = 1024
+workers = 20
+doc_gen = new
+
+[index]
+index_type = basic
+params = {"stale": "false"}
+
+[access]
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+throughput = 100
+query_throughput = 100
+items = 2000000
+workers = 1
+query_workers = 1
+time = 600

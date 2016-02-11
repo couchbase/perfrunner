@@ -1,18 +1,16 @@
 [test_case]
 test = perfrunner.tests.rebalance.RebalanceKVTest
-title = Rebalance-in (min), 2 -> 3, 1 bucket x 1M x 2KB, DGM, 10K ops/sec
-summary = Mixed rebalance test, 2 -> 3 nodes, 1 bucket x 1M x 2KB, 10K ops/sec
+title = Rebalance after failover (min), 2 -> 3, 1 bucket x 1M x 2KB, 10K ops/sec
+summary = Mixed rebalance after failover, 2 -> 3 nodes, 1 bucket x 1M x 2KB, 10K ops/sec
 larger_is_better = false
 
 [cluster]
 mem_quota = 2000
-initial_nodes = 2
+initial_nodes = 3
 num_buckets = 1
-
 
 [stats]
 seriesly_host = 10.5.3.40
-
 
 [compaction]
 db_percentage = 90
@@ -40,5 +38,7 @@ working_set_access = 98
 
 [rebalance]
 nodes_after = 3
-start_after = 1200
-stop_after = 1200
+failover = 1
+sleep_after_failover = 600
+start_after = 600
+stop_after = 600

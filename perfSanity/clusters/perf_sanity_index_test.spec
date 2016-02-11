@@ -4,7 +4,7 @@ perfregression =
 
 [clients]
 hosts =
-    10.3.5.236
+    10.5.3.40
 credentials = root:couchbase
 
 [storage]

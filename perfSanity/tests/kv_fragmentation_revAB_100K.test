@@ -10,7 +10,7 @@ db_percentage = 80
 
 
 [stats]
-seriesly_host = 10.3.5.236
+seriesly_host = 10.5.3.40
 
 
 [cluster]

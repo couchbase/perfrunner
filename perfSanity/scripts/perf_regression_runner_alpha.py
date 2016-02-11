@@ -5,6 +5,8 @@ import fileinput
 
 from optparse import OptionParser
 import subprocess
+import signal
+
 import os
 import sys
 import time
@@ -104,9 +106,6 @@ def runPerfRunner( testDescriptor, options):
     print testDescriptor['testType']
     testName = testDescriptor['testName']
 
-    #testStartTime = time.strftime("%m/%d/%y-%H:%M:%S", time.strptime(time.ctime() ))
-    #startTime = time.time()   # in seconds to get the elapsed time
-    #print '\n\n', time.asctime( time.localtime(time.time()) ), 'Now running', testDescriptor
 
 
     test = testDescriptor['testFile'] + '.test'
@@ -142,10 +141,16 @@ def runPerfRunner( testDescriptor, options):
     else:
 
         print 'Setup complete, starting workload'
+        # hack to check for a looping process
+        startTime = time.time()   # in seconds to get the elapsed time
         sys.stdout.flush()
         proc = subprocess.Popen('./perfSanity/scripts/workload_dev.sh', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         workload_output = ''
         for line in iter(proc.stdout.readline, ''):
+            if time.time() - startTime > 7200:   # 2 hours
+                sys.stdout.flush()
+                os.kill(proc.pid, signal.SIGUSR1)
+                return  [{'pass':False, 'reason':'Command timed out'}]
             print line
             workload_output += line
 

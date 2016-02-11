@@ -1,7 +1,7 @@
 [test_case]
-test = perfrunner.tests.rebalance.RebalanceKVTest
-title = Rebalance-in (min), 2 -> 3, 1 bucket x 1M x 2KB, DGM, 10K ops/sec
-summary = Mixed rebalance test, 2 -> 3 nodes, 1 bucket x 1M x 2KB, 10K ops/sec
+test = perfrunner.tests.rebalance.RebalanceWithQueriesTest
+title = Rebalance-in (min), 2 -> 3, 1 bucket x 1M x 2KB, 1 x 1 views, 10K ops/sec, 400 queries/sec
+summary = Mixed KV + queries rebalance test, 2 -> 3 nodes, 1 bucket x 1M x 2KB, 1 x 1 views, 10K ops/sec, 400 qps
 larger_is_better = false
 
 [cluster]
@@ -9,10 +9,8 @@ mem_quota = 2000
 initial_nodes = 2
 num_buckets = 1
 
-
 [stats]
 seriesly_host = 10.5.3.40
-
 
 [compaction]
 db_percentage = 90
@@ -20,12 +18,15 @@ db_percentage = 90
 [load]
 items = 1000000
 size = 2048
-workers = 20
+workers = 10
 
 [hot_load]
 items = 1000000
 workers = 20
 working_set = 5
+
+[index]
+views = [1]
 
 [access]
 creates = 5
@@ -33,12 +34,14 @@ reads = 50
 updates = 40
 deletes = 5
 throughput = 10000
+query_throughput = 400
 items = 1000000
 workers = 24
+query_workers = 12
 working_set = 5
 working_set_access = 98
 
 [rebalance]
 nodes_after = 3
-start_after = 1200
-stop_after = 1200
+start_after = 600
+stop_after = 600

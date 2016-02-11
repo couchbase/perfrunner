@@ -7,6 +7,9 @@ mem_quota = 2048
 initial_nodes = 2
 num_buckets = 1
 
+[stats]
+seriesly_host = 10.5.3.40
+
 [load]
 items = 10000
 size = 1024

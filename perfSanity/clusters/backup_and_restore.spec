@@ -3,12 +3,12 @@ perfregression =
     10.17.0.105:8091
     10.17.0.106:8091
     10.17.0.107:8091
-    10.3.5.236:8091
+    10.5.3.40:8091
 
 
 [clients]
 hosts =
-    10.3.5.236
+    10.5.3.40
 credentials = root:couchbase
 
 [storage]

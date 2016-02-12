@@ -110,64 +110,71 @@ def runPerfRunner( testDescriptor, options):
 
     test = testDescriptor['testFile'] + '.test'
     if options.specFile is None:
-        spec = 'perfSanity/clusters/' + testDescriptor['specFile'] + '.spec'
+        # backup and restore needs a list of spec files to do the installs
+        import pdb;pdb.set_trace()
+        if type(testDescriptor['specFile']) is unicode:
+            spec = [ testDescriptor['specFile']]
+        else:
+            print 'have a list of spec files'
+            spec = []
+            for i in testDescriptor['specFile']:
+                spec.append( i )
     else:
-        spec = 'perfSanity/clusters/' + options.specFile
+        spec = [options.specFile]
     print 'specfile', spec
     KPIs = testDescriptor['KPIs']
 
     my_env = os.environ
-    my_env['cluster'] = spec
     my_env['test_config'] = 'perfSanity/tests/' + test
     if options.url is None:
         my_env['version'] = options.version
     else:
         my_env['url'] = options.url
 
-    proc = subprocess.Popen('./scripts/setup.sh', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+
+    for i in spec:
+        my_env['cluster'] = 'perfSanity/clusters/' + i + '.spec'
+        proc = subprocess.Popen('./scripts/setup.sh', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                         shell=True)
 
-    for line in iter(proc.stdout.readline, ''):
-        print 'Setup output', line
-        sys.stdout.flush()
-
-    (stdoutdata, stderrdata) = proc.communicate()
-
-    if proc.returncode == 1:
-        print '\n\nHave an error during setup'
-        print stderrdata
-        print stdoutdata
-        return  [{'pass':False, 'reason':'Have an error during setup'}]
-    else:
-
-        print 'Setup complete, starting workload'
-        # hack to check for a looping process
-        startTime = time.time()   # in seconds to get the elapsed time
-        sys.stdout.flush()
-        proc = subprocess.Popen('./perfSanity/scripts/workload_dev.sh', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        workload_output = ''
         for line in iter(proc.stdout.readline, ''):
-            if time.time() - startTime > 7200:   # 2 hours
-                sys.stdout.flush()
-                os.kill(proc.pid, signal.SIGUSR1)
-                return  [{'pass':False, 'reason':'Command timed out'}]
-            print line
-            workload_output += line
+            print 'Setup output', line
+            sys.stdout.flush()
 
         (stdoutdata, stderrdata) = proc.communicate()
 
-        print 'stderrdata', stderrdata
-
         if proc.returncode == 1:
-            print '  Have an error during workload generation'
-            return [{'pass':False, 'reason':'Have an error during workload generation'}]
+            print '\n\nHave an error during setup'
+            print stderrdata
+            print stdoutdata
+            return  [{'pass':False, 'reason':'Have an error during setup'}]
+
+    print 'Setup complete, starting workload'
 
 
-        else:
+    # hack to check for a looping process
+    startTime = time.time()   # in seconds to get the elapsed time
+    sys.stdout.flush()
+    proc = subprocess.Popen('./perfSanity/scripts/workload_dev.sh', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    workload_output = ''
+    for line in iter(proc.stdout.readline, ''):
+        if time.time() - startTime > 7200:   # 2 hours
+            sys.stdout.flush()
+            os.kill(proc.pid, signal.SIGUSR1)
+            return  [{'pass':False, 'reason':'Command timed out'}]
+        print line
+        workload_output += line
 
-            print '\n\nWorkload complete, analyzing results'
+    (stdoutdata, stderrdata) = proc.communicate()
 
-            return checkResults( workload_output, testDescriptor)
+    print 'stderrdata', stderrdata
+
+    if proc.returncode == 1:
+        print '  Have an error during workload generation'
+        return [{'pass':False, 'reason':'Have an error during workload generation'}]
+    else:
+        print '\n\nWorkload complete, analyzing results'
+        return checkResults( workload_output, testDescriptor)
 
 
 def runForestDBTest( testDescriptor, options):

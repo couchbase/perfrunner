@@ -111,7 +111,6 @@ def runPerfRunner( testDescriptor, options):
     test = testDescriptor['testFile'] + '.test'
     if options.specFile is None:
         # backup and restore needs a list of spec files to do the installs
-        import pdb;pdb.set_trace()
         if type(testDescriptor['specFile']) is unicode:
             spec = [ testDescriptor['specFile']]
         else:

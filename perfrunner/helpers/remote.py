@@ -430,7 +430,7 @@ class RemoteLinuxHelper(object):
                 run(cmd)
         delta_time = int(time.time() - start)
         return (round(float(run('du -sh --block-size=1M %s' % backup_path).
-                           split('	')[0]) / 1024, 1), delta_time)  # in Gb / sec
+                split('	')[0]) / 1024, 1), delta_time)  # in Gb / sec
 
     @all_clients
     def cbrestore(self, wrapper=False):
@@ -441,22 +441,21 @@ class RemoteLinuxHelper(object):
                 cmd = 'cd /opt/couchbase/bin && ./cbrestorewrapper %s ' \
                     'http://%s:8091 -u Administrator -p password' \
                     % (restore_path, master.split(':')[0])
-                logger.info(cmd)
                 run(cmd)
         else:
             for master in self.cluster_spec.yield_masters():
-                dates = run('ls %s/default/' % restore_path).split()
-                for i in range(len(dates) - 1):
+                dates = run('ls %s/default/ | grep 20' % restore_path).split()
+                for i in range(len(dates)):
                     print i
                     start_date = end_date = dates[i]
                     if i > 0:
-                        start_date = dates[i - 1]
+                        end_date = dates[i + 1]
                     cmd = '/opt/couchbase/bin/backup restore --dir %s --name default ' \
                         '--host http://%s:8091 --username %s --password %s --start %s --end %s ' \
                         '--threads 16' % (restore_path, master.split(':')[0],
-                            self.cluster_spec.rest_credentials[0],
-                            self.cluster_spec.rest_credentials[1], start_date, end_date)
-                    logger.info(cmd)
+                                          self.cluster_spec.rest_credentials[0],
+                                          self.cluster_spec.rest_credentials[1],
+                                          start_date, end_date)
                     run(cmd)
 
     @seriesly_host

@@ -1,5 +1,5 @@
 git+https://github.com/couchbaselabs/btrc.git#get=btrc
-git+https://github.com/couchbase/cbagent.git#egg=cbagent
+git+https://github.com/sandipnd/cbagent.git#egg=cbagent
 celery==3.0.24
 couchbase==1.2.1
 decorator
@@ -17,6 +17,6 @@ requests==2.1.0
 seriesly
 sqlalchemy==0.9.4
 urllib3==1.10.4
-git+https://github.com/andreibaranouski/spring.git#egg=spring
+git+https://github.com/couchbase/spring#egg=spring
 git+https://github.com/couchbaselabs/tap.git#egg=tap
 git+https://github.com/couchbaselabs/python-dcp-client.git#egg=dcp-client

@@ -96,7 +96,7 @@ class RemoteWorkerManager(object):
                     run('virtualenv -p python2.7 env')
                     run('PATH=/usr/lib/ccache:/usr/lib64/ccache/bin:$PATH '
                         'env/bin/pip install '
-                        '-r requirements.txt')
+                        '--download-cache /tmp/pip -r requirements.txt')
 
     def start(self):
         for worker, master in zip(self.cluster_spec.workers,
@@ -166,7 +166,7 @@ class LocalWorkerManager(RemoteWorkerManager):
             local('virtualenv -p python2.7 env')
             local('PATH=/usr/lib/ccache:/usr/lib64/ccache/bin:$PATH '
                   'env/bin/pip install '
-                  '-r requirements.txt')
+                  '--download-cache /tmp/pip -r requirements.txt')
 
     def tune_sqlite(self):
         for db in self.SQLITE_DBS:

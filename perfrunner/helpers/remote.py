@@ -448,7 +448,7 @@ class RemoteLinuxHelper(object):
                 for i in range(len(dates)):
                     print i
                     start_date = end_date = dates[i]
-                    if i > 0:
+                    if i < len(dates) - 1:
                         end_date = dates[i + 1]
                     cmd = '/opt/couchbase/bin/backup restore --dir %s --name default ' \
                         '--host http://%s:8091 --username %s --password %s --start %s --end %s ' \

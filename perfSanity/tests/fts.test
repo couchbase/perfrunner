@@ -1,0 +1,28 @@
+[test_case]
+test = perfrunner.tests.fts.FtsIndexTest
+title = FTS Index Test
+summary = FTS Index Test
+larger_is_better = false
+
+
+[fts]
+name = perf_fts_index
+
+;doc_database_url = http://cbnas01.sc.couchbase.com/perf_share/fts/enwiki-20120502-lines-1k.txt .one_chunk.pickled
+;items = 6726077
+
+doc_database_url = http://cbnas01.sc.couchbase.com/perf_share/fts/enwiki.3M.one_chunk.pickled
+items = 50000
+
+[bucket]
+; set authless bucket
+proxyPort = 54321
+
+[cluster]
+mem_quota = 1024
+initial_nodes = 2
+num_buckets = 1
+
+
+[stats]
+seriesly_host = 10.5.3.40

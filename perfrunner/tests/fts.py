@@ -36,7 +36,7 @@ class FtsIndexTest(PerfTest):
         data = dict(DEFAULT_FTS_CREATE)
         data['name'] = index_name
         jstr = json.dumps(data)
-        r = requests.put(url, data=jstr, headers=FTS_CREATE_HEADERS)
+        r = requests.put(url, data=jstr, auth=(self.rest.rest_username, self.rest.rest_password), headers=FTS_CREATE_HEADERS)
         if not r.status_code == 200:
             logger.info("URL: %s" % url)
             logger.info("data: %s" % data)
@@ -95,5 +95,6 @@ class FtsIndexTest(PerfTest):
         self.wait_for_index(fts_node, index_name, num_docs)
         end_time = time.time()
         elapsed_time = end_time - start_time
+        self.reporter.post_to_sf( elapsed_time, metric='index_time' )
         logger.info("FTS initial index build time took {} seconds".format(
             elapsed_time))

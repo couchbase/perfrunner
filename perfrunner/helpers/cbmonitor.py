@@ -11,12 +11,13 @@ from cbagent.collectors import (IO, PS, ActiveTasks, ElasticStats, FtsLatency,
                                 SecondaryLatencyStats, SecondaryStats,
                                 SpringLatency, SpringN1QLQueryLatency,
                                 SpringQueryLatency, SpringSpatialQueryLatency,
-                                TypePerf, XdcrLag)
+                                SpringSubdocLatency, TypePerf, XdcrLag)
 from cbagent.metadata_client import MetadataClient
 from decorator import decorator
 from logger import logger
 
 from perfrunner.helpers.misc import target_hash, uhex
+from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import RestHelper
 
 
@@ -51,6 +52,8 @@ class CbAgent(object):
 
     def __init__(self, test):
         self.clusters = OrderedDict()
+        self.remote = RemoteHelper(test.cluster_spec, test.test_config, verbose=True)
+
         for cluster_name, servers in test.cluster_spec.yield_clusters():
             cluster = '{}_{}_{}'.format(cluster_name,
                                         test.build.replace('.', ''),
@@ -105,7 +108,7 @@ class CbAgent(object):
         self.snapshots = []
         self.fts_stats = None
 
-    def prepare_collectors(self, test,
+    def prepare_collectors(self, test, bandwidth=False, subdoc_latency=False,
                            latency=False, secondary_stats=False,
                            query_latency=False, spatial_latency=False,
                            n1ql_latency=False, n1ql_stats=False,
@@ -116,7 +119,7 @@ class CbAgent(object):
                            fts_latency=False, elastic_stats=False,
                            fts_stats=False, fts_query_stats=False):
         clusters = self.clusters.keys()
-
+        self.bandwidth = bandwidth
         self.prepare_ns_server(clusters)
         self.prepare_active_tasks(clusters)
         if test.remote is None or test.remote.os != 'Cygwin':
@@ -125,6 +128,8 @@ class CbAgent(object):
             self.prepare_iostat(clusters, test)
         elif test.remote.os == 'Cygwin':
             self.prepare_tp(clusters)
+        if subdoc_latency:
+            self.prepare_subdoc_latency(clusters, test)
         if latency:
             self.prepare_latency(clusters, test)
         if query_latency:
@@ -299,6 +304,18 @@ class CbAgent(object):
                 SpringLatency(settings, test.workload, prefix)
             )
 
+    def prepare_subdoc_latency(self, clusters, test):
+        for cluster in clusters:
+            settings = copy(self.settings)
+            settings.interval = self.lat_interval
+            settings.cluster = cluster
+            settings.master_node = self.clusters[cluster]
+            prefix = test.target_iterator.prefix or \
+                target_hash(settings.master_node.split(':')[0])
+            self.collectors.append(
+                SpringSubdocLatency(settings, test.workload, prefix)
+            )
+
     def prepare_query_latency(self, clusters, test):
         params = test.test_config.index_settings.params
         index_type = test.test_config.index_settings.index_type
@@ -401,6 +418,8 @@ class CbAgent(object):
 
     def stop(self):
         map(lambda p: p.terminate(), self.processes)
+        if self.bandwidth:
+            self.remote.kill_process('iptraf')
         return datetime.utcnow()
 
     def trigger_reports(self, snapshot):

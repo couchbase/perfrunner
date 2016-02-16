@@ -479,7 +479,6 @@ class RemoteLinuxHelper(object):
             for master in self.cluster_spec.yield_masters():
                 dates = run('ls %s/default/ | grep 20' % restore_path).split()
                 for i in range(len(dates)):
-                    print i
                     start_date = end_date = dates[i]
                     if i < len(dates) - 1:
                         end_date = dates[i + 1]
@@ -592,6 +591,46 @@ class RemoteLinuxHelper(object):
     @single_client
     def copy_folder_locally(self, src_folder='/tmp/newcerts/', dest_folder='/tmp/newcerts/'):
         get(src_folder, dest_folder)
+
+    @all_hosts
+    def start_bandwidth_monitor(self, track_time=1):
+        """Run iptraf to generate various network statistics and sent output to log file
+        track_time tells IPTraf to run the specified facility for only timeout minutes.
+        """
+        kill_command = "pkill -9 iptraf; rm -rf /tmp/iptraf.log; rm -rf /var/lock/iptraf/*; " \
+                       "rm -rf /var/log/iptraf/*"
+        start_command = "sudo iptraf -i eth0 -L /tmp/iptraf.log -t %d -B /dev/null" % track_time
+        for i in range(2):
+            run(kill_command)
+            run(start_command)
+            time.sleep(2)
+            res = run('ps -ef| grep "iptraf" | grep tmp')
+            logger.info('print res', res)
+            if not res:
+                time.sleep(2)
+            else:
+                break
+
+    @all_hosts
+    def read_bandwidth_stats(self, type, servers):
+        result = 0
+        for server in servers:
+            server_ip = server.split(':')[0]
+            command = "cat /tmp/iptraf.log | grep 'FIN sent' | grep '" + type + " " + server_ip + ":11210'"
+            logger.info(run(command, quiet=True))
+            command += "| awk 'BEGIN{FS = \";\"}{if ($0 ~ /packets/) {if ($6 ~ /FIN sent/)" \
+                       " {print $7}}}' | awk '{print $3}'"
+            temp = run(command, quiet=True)
+            if temp:
+                arr = [int(t) for t in temp.split("\r\n")]
+                result += int(sum(arr))
+            time.sleep(3)
+        return result
+
+    @all_hosts
+    def kill_process(self, process=''):
+        command = "pkill -9 %s" % process
+        run(command, quiet=True)
 
     @seriesly_host
     def restart_seriesly(self):

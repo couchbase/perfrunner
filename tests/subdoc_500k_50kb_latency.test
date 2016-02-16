@@ -1,0 +1,35 @@
+[test_case]
+test = perfrunner.tests.subdoc.SubdocLatencyTest
+title = Subdoc query latency (qps), 1 bucket x 500K x 50KB
+summary = subdoc query latency 1 bucket x 500K x 50KB
+
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 4
+num_buckets = 1
+
+[compaction]
+db_percentage = 10
+
+[load]
+items = 500000
+size = 51200
+workers = 20
+doc_gen = large_subdoc
+
+
+[access]
+creates = 0
+reads = 50
+updates = 50
+deletes = 0
+throughput = 10000
+items = 500000
+workers = 0
+time = 3600
+
+[subdoc]
+workers = 24
+fields = city
+update_fields = city

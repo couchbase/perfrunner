@@ -1,0 +1,33 @@
+[test_case]
+test = perfrunner.tests.subdoc.SubdocKVTest
+title = Subdoc bandwidth reduction (%% of fulldoc) read, 1 doc x 1KB, 10K iterations
+summary = subdoc bandwidth reduction (%% of fulldoc) read, 1 doc x 1KB, 10K iterations
+larger_is_better = true
+
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 4
+num_buckets = 1
+
+[compaction]
+db_percentage = 10
+
+[load]
+items = 1
+size = 1024
+workers = 1
+
+[access]
+creates = 0
+reads = 10000
+updates = 0
+deletes = 0
+items = 1
+workers = 0
+time = 60
+operations = 1
+
+[subdoc]
+workers = 1
+fields = city

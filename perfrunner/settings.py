@@ -237,6 +237,9 @@ class TestConfig(Config):
         access.doc_gen = load.doc_gen
         access.doc_partitions = load.doc_partitions
         access.size = load.size
+        options = self._get_options_as_dict('subdoc')
+        if options:
+            SubDocSettings(options, access)
         return access
 
     @property
@@ -543,9 +546,9 @@ class PhaseSettings(object):
                                              self.QUERY_WORKERS))
         self.n1ql_workers = int(options.get('n1ql_workers',
                                             self.N1QL_WORKERS))
+        self.subdoc_workers = 0
         self.n1ql_op = options.get('n1ql_op', self.N1QL_OP)
         self.dcp_workers = int(options.get('dcp_workers', self.DCP_WORKERS))
-
         self.n1ql_queries = []
         if 'n1ql_queries' in options:
             self.n1ql_queries = options.get('n1ql_queries').strip().split(',')
@@ -566,6 +569,7 @@ class PhaseSettings(object):
 
         self.filename = None
         self.fts_config = None
+        self.operations = bool(int(options.get('operations', False)))
 
     def resolve_subcategories(self, config):
         subcategories = self.n1ql_queries
@@ -732,6 +736,20 @@ class N1QLSettings(object):
 
     def __str__(self):
         return str(self.__dict__)
+
+
+class SubDocSettings(object):
+
+    SUBDOC_WORKERS = 0
+    SUBDOC_FIELDS = []
+    SUBDOC_COUNTER_FIELDS = []
+    SUBDOC_DELETE_FIELDS = []
+
+    def __init__(self, options, access):
+        access.subdoc_workers = int(options.get('workers'), self.SUBDOC_WORKERS)
+        access.subdoc_fields = options.get(('fields'), self.SUBDOC_FIELDS)
+        access.subdoc_counter_fields = options.get(('counter_fields'), self.SUBDOC_COUNTER_FIELDS)
+        access.subdoc_delete_fields = options.get(('delete_fields'), self.SUBDOC_DELETE_FIELDS)
 
 
 class AccessSettings(PhaseSettings):

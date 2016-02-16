@@ -5,6 +5,7 @@ from logger import logger
 from seriesly import Seriesly
 
 from cbmonitor import CbAgent
+from perfrunner.helpers.remote import RemoteHelper
 
 
 class MetricHelper(object):
@@ -19,6 +20,8 @@ class MetricHelper(object):
         self.cluster_names = test.cbagent.clusters.keys()
         self.build = test.build
         self.master_node = test.master_node
+        self.in_bytes_transfer = []
+        self.out_bytes_transfer = []
 
     @staticmethod
     def _get_query_params(metric, from_ts=None, to_ts=None):
@@ -290,11 +293,19 @@ class MetricHelper(object):
 
         return round(secondaryscan_latency, 2), metric, metric_info
 
-    def calc_kv_latency(self, operation, percentile):
+    def calc_kv_latency(self, operation, percentile, dbname='spring_latency'):
+        """Calculate kv latency
+        :param operation:
+        :param percentile:
+        :param dbname:  Same procedure is used for KV and subdoc .
+            for KV dbname will spring_latency.For subdoc will be spring_subdoc_latency
+        :return:
+        """
         metric = '{}_{}_{}th_{}'.format(self.test_config.name,
                                         operation,
                                         percentile,
-                                        self.cluster_spec.name)
+                                        self.cluster_spec.name
+                                        )
         title = '{}th percentile {} {}'.format(percentile,
                                                operation.upper(),
                                                self.metric_title)
@@ -302,7 +313,7 @@ class MetricHelper(object):
 
         timings = []
         for bucket in self.test_config.buckets:
-            db = 'spring_latency{}{}'.format(self.cluster_names[0], bucket)
+            db = '{}{}{}'.format(dbname, self.cluster_names[0], bucket)
             data = self.seriesly[db].get_all()
             timings += [
                 v['latency_{}'.format(operation)] for v in data.values()
@@ -512,6 +523,18 @@ class MetricHelper(object):
         rebalance_time = reporter.finish('Failover')
 
         return rebalance_time, metric, metric_info
+
+    @property
+    def calc_network_bandwidth(self):
+        self.remote = RemoteHelper(self.cluster_spec, self.test_config, verbose=True)
+        for cluster_name, servers in self.cluster_spec.yield_clusters():
+            self.in_bytes_transfer += [self.remote.read_bandwidth_stats("to", servers)]
+            self.out_bytes_transfer += [self.remote.read_bandwidth_stats("from", servers)]
+        logger.info('in bytes', self.in_bytes_transfer)
+        logger.info('out bytes', self.out_bytes_transfer)
+        return OrderedDict((
+            ('in bytes', sum(self.in_bytes_transfer[0].values())),
+            ('out bytes', sum(self.out_bytes_transfer[0].values()))))
 
     @property
     def calc_network_throughput(self):

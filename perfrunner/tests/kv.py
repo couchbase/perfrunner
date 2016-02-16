@@ -10,6 +10,7 @@ from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
 from tap import TAP
 
 from perfrunner.helpers.cbmonitor import with_stats
+from perfrunner.helpers.metrics import MetricHelper
 from perfrunner.helpers.misc import log_phase, pretty_dict, uhex
 from perfrunner.helpers.worker import run_pillowfight_via_celery
 from perfrunner.tests import PerfTest
@@ -215,6 +216,21 @@ class BeamRssTest(KVTest):
             self.reporter.post_to_sf(
                 *self.metric_helper.calc_max_beam_rss()
             )
+
+
+class BandwidthTest(KVTest):
+
+    COLLECTORS = {'bandwidth': True}
+
+    def run(self):
+        super(BandwidthTest, self).run()
+        self.metric_db_servers_helper = MetricHelper(self)
+        network_matrix = self.metric_db_servers_helper.calc_network_bandwidth
+        logger.info(
+            'Network bandwidth: {}'.format(pretty_dict(network_matrix))
+        )
+        if self.test_config.stats_settings.enabled:
+            self.reporter.post_to_sf(network_matrix)
 
 
 class WarmupTest(PerfTest):

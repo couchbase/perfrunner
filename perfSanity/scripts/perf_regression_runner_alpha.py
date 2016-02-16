@@ -133,23 +133,27 @@ def runPerfRunner( testDescriptor, options):
 
     for i in spec:
         my_env['cluster'] = 'perfSanity/clusters/' + i + '.spec'
-        proc = subprocess.Popen('./scripts/setup.sh', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        if re.search('n1ql.*Q[2-3].*',testName):
+            print '-'*100
+            print 'Skipping Setup for N1QL Q2 and Q3 queries ... '
+            print '-'*100
+        else:
+            proc = subprocess.Popen('./scripts/setup.sh', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                         shell=True)
 
-        for line in iter(proc.stdout.readline, ''):
-            print 'Setup output', line
-            sys.stdout.flush()
+            for line in iter(proc.stdout.readline, ''):
+                print 'Setup output', line
+                sys.stdout.flush()
 
-        (stdoutdata, stderrdata) = proc.communicate()
+            (stdoutdata, stderrdata) = proc.communicate()
 
-        if proc.returncode == 1:
-            print '\n\nHave an error during setup'
-            print stderrdata
-            print stdoutdata
-            return  [{'pass':False, 'reason':'Have an error during setup'}]
+            if proc.returncode == 1:
+                print '\n\nHave an error during setup'
+                print stderrdata
+                print stdoutdata
+                return  [{'pass':False, 'reason':'Have an error during setup'}]
 
-    print 'Setup complete, starting workload'
-
+            print 'Setup complete, starting workload'
 
     # hack to check for a looping process
     startTime = time.time()   # in seconds to get the elapsed time

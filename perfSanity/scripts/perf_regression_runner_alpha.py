@@ -6,6 +6,8 @@ import fileinput
 from optparse import OptionParser
 import subprocess
 import signal
+from threading import Timer
+
 
 import os
 import sys
@@ -55,6 +57,38 @@ test_workload_output = '''
 }
 [20/Oct/2015 15:03:31] INFO - Terminating local Celery workers
 '''
+
+
+
+# subprocess timeout code from here http://stackoverflow.com/questions/1191374/using-module-subprocess-with-timeout
+
+def kill_proc(proc, timeout):
+  timeout["value"] = True
+  proc.kill()
+
+def run_with_timeout(cmd, env, timeout_sec):
+  print 'the timeout value is', timeout_sec
+  proc = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  timeout = {"value": False}
+  timer = Timer(timeout_sec, kill_proc, [proc, timeout])
+  timer.start()
+
+  # real time output is handy but it didn't seem to work with the timeout stuff
+  #for line in iter(proc.stdout.readline, ''):
+        #print 'workload line', line
+        #workload_output += line
+
+
+
+  print 'before communicate'
+  stdout, stderr = proc.communicate()
+  print 'after communicate'
+  timer.cancel()
+  return proc.returncode, stdout.decode("utf-8"), stderr.decode("utf-8"), timeout["value"]
+
+
+
+
 
 def checkResults( results, testDescriptor):
             #print '\n\nthe results are', results
@@ -155,29 +189,21 @@ def runPerfRunner( testDescriptor, options):
 
             print 'Setup complete, starting workload'
 
-    # hack to check for a looping process
-    startTime = time.time()   # in seconds to get the elapsed time
-    sys.stdout.flush()
-    proc = subprocess.Popen('./perfSanity/scripts/workload_dev.sh', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    workload_output = ''
-    for line in iter(proc.stdout.readline, ''):
-        if time.time() - startTime > 7200:   # 2 hours
-            sys.stdout.flush()
-            os.kill(proc.pid, signal.SIGUSR1)
-            return  [{'pass':False, 'reason':'Command timed out'}]
-        print line
-        workload_output += line
-
-    (stdoutdata, stderrdata) = proc.communicate()
-
-    print 'stderrdata', stderrdata
+    rc, stdout, stderr, timeout = run_with_timeout( './perfSanity/scripts/workload_dev.sh', my_env, 7200)  # 2 hours
+    print 'rc is', rc
+    print 'timeout is', timeout
+    print 'stderr', stderr
+    print 'stdout is', stdout
 
     if proc.returncode == 1:
         print '  Have an error during workload generation'
         return [{'pass':False, 'reason':'Have an error during workload generation'}]
+    elif timeout:
+        print '  test timeout'
+        return [{'pass':False, 'reason':'test timed out'}]
     else:
         print '\n\nWorkload complete, analyzing results'
-        return checkResults( workload_output, testDescriptor)
+        return checkResults( stdout, testDescriptor)
 
 
 def runForestDBTest( testDescriptor, options):

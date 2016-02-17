@@ -40,7 +40,7 @@ n1ql_throughput = 1000000
 n1ql_workers = 96
 
 [n1ql-order-by-limit-query]
-use_prepared = True
+use_prepared = order_by_limit_query
 statement = SELECT name AS _name, street AS _street FROM `bucket-1` WHERE capped_small=$1 ORDER BY name LIMIT 100;
 scan_consistency = not_bounded
 args = ["{capped_small}"]

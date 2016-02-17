@@ -37,7 +37,7 @@ workers = 24
 time = 1200
 n1ql_queries = order-by-query
 n1ql_throughput = 1000000
-n1ql_workers = 1500
+n1ql_workers = 720
 
 [n1ql-order-by-query]
 prepared = order_by_query

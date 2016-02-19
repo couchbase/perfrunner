@@ -133,9 +133,9 @@ def runPerfRunner( testDescriptor, options):
 
     for i in spec:
         my_env['cluster'] = 'perfSanity/clusters/' + i + '.spec'
-        if re.search('n1ql.*Q[2-3].*',testName):
+        if re.search('n1ql.*Q[2].*',testName):
             print '-'*100
-            print 'Skipping Setup for N1QL Q2 and Q3 queries ... '
+            print 'Skipping Setup for N1QL Q2 queries ... '
             print '-'*100
         else:
             proc = subprocess.Popen('./scripts/setup.sh', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,

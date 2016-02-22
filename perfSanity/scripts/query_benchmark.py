@@ -317,7 +317,7 @@ def do_airline_benchmarks(conn, rest, host_ip, remote, cluster_spec):
     """
 
     command_list.append({'index': big_long_index3, 'expected_elapsed_time': 64000, 'expected_execution_time': 64000})
-    command_list.append({'queryDesc':'Q3', 'query': big_long_query3, 'expected_elapsed_time': 2500, 'expected_execution_time': 2500,
+    command_list.append({'queryDesc':'Q3', 'query': big_long_query3, 'expected_elapsed_time': 2300, 'expected_execution_time': 2300,
                          'execution_count': 10})
 
     return execute_commands(conn, command_list, rest, host_ip, 'United-Queries')

@@ -24,7 +24,6 @@ doc_partitions = 1
 
 [n1ql]
 indexes =
-    by_primary::CREATE PRIMARY INDEX {name} ON `{bucket}` using GSI;
     by_achievements::CREATE INDEX {name} ON `{bucket}` (achievements) using gsi;
 
 

@@ -24,7 +24,7 @@ doc_partitions = 1
 
 [n1ql]
 indexes =
-    by_achievements::CREATE INDEX {name} ON `{bucket}` (achievements) using gsi;
+    by_achievements::CREATE INDEX {name} ON `{bucket}`(DISTINCT ARRAY i FOR i IN achievements END) using gsi;
 
 [access]
 creates = 0

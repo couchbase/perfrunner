@@ -23,8 +23,8 @@ DEFAULT_FTS_CREATE = {
     u'sourceParams': u'{"authUser":"bucket-1","authPassword":"","authSaslUser":"","authSaslPassword":"","clusterManagerBackoffFactor":0,"clusterManagerSleepInitMS":0,"clusterManagerSleepMaxMS":2000,"dataManagerBackoffFactor":0,"dataManagerSleepInitMS":0,"dataManagerSleepMaxMS":2000,"feedBufferSizeBytes":0,"feedBufferAckThreshold":0}',
     u'sourceType': u'couchbase',
     u'sourceUUID': u'',
-    u'type': u'fulltext-index',
-    u'uuid': u'565cea4df8d4e0ed'}
+    u'type': u'fulltext-index'}
+
 
 
 class FtsIndexTest(PerfTest):

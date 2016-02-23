@@ -158,7 +158,7 @@ def main():
             environmentalIssues.append( row )
 
 
-    print 'Performance Daily Sanity {0}: {1} tests, {2} failures'.format( options.version, len(passingTests) + len(failingTests), \
+    print 'Performance Daily Sanity {0}: {1} total tests, {2} failures'.format( options.version, len(passingTests) + len(failingTests), \
          len(failingTests) )
 
 

@@ -318,7 +318,7 @@ def main():
     queryString = "select `Daily-Performance-Tests`.* from `Daily-Performance-Tests`"
     wherePredicates = []
     if options.query is not None:
-        wherePredicates.append( options.query[0] )
+        wherePredicates.append( ' '.join(options.query[0] ) )
     if not options.allTests:
         if options.betaTests:
             wherePredicates.append( "status='beta'")

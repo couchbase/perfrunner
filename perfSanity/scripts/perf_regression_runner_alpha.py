@@ -3,7 +3,7 @@ import json
 import re
 import fileinput
 
-from optparse import OptionParser
+import argparse
 import subprocess
 import signal
 from threading import Timer
@@ -270,18 +270,33 @@ def main():
     print 'Starting the perf regression runner'
 
     usage = '%prog -f conf-file'
-    parser = OptionParser(usage)
+    #parser = OptionParser(usage)
 
-    #parser.add_option('-f', '--filename', dest='filename')
-    parser.add_option('-v', '--version', dest='version')
-    parser.add_option('-u', '--url', dest='url')
-    parser.add_option('-q', '--query', dest='query')
-    parser.add_option('-s', '--specFile', dest='specFile')
-    parser.add_option('-r', '--runStartTime', dest='runStartTime')
-    parser.add_option('-b', '--betaTests', dest='betaTests', default=False, action='store_true')
-    parser.add_option('-n', '--nop', dest='nop',default=False, action='store_true')
+    ##parser.add_option('-f', '--filename', dest='filename')
+    #parser.add_option('-v', '--version', dest='version')
+    #parser.add_option('-u', '--url', dest='url')
+    #parser.add_option('-q', '--query', dest='query')
+    #parser.add_option('-s', '--specFile', dest='specFile')
+    #parser.add_option('-r', '--runStartTime', dest='runStartTime')
+    #parser.add_option('-b', '--betaTests', dest='betaTests', default=False, action='store_true')
+    #parser.add_option('-n', '--nop', dest='nop',default=False, action='store_true')
 
-    options, args = parser.parse_args()
+    #options, args = parser.parse_args()
+
+    # the option parsing way
+    parser = argparse.ArgumentParser(description=usage)
+    parser.add_argument('-q', '--query', nargs='+')
+    parser.add_argument('-v', '--version', dest='version')
+    parser.add_argument('-u', '--url', dest='url')
+    parser.add_argument('-s', '--specFile', dest='specFile')
+    parser.add_argument('-r', '--runStartTime', dest='runStartTime')
+    parser.add_argument('-b', '--betaTests', dest='betaTests', default=False, action='store_true')
+    parser.add_argument('-a', '--allTests', dest='allTests', default=False, action='store_true')
+    parser.add_argument('-n', '--nop', dest='nop',default=False, action='store_true')
+
+    options = parser.parse_args()
+
+
 
     print 'query', options.query
     print 'specfile', options.specFile
@@ -303,11 +318,12 @@ def main():
     queryString = "select `Daily-Performance-Tests`.* from `Daily-Performance-Tests`"
     wherePredicates = []
     if options.query is not None:
-        wherePredicates.append( options.query )
-    if options.betaTests:
-        wherePredicates.append( "status='beta'")
-    else:
-        wherePredicates.append( "status!='beta'")
+        wherePredicates.append( options.query[0] )
+    if not options.allTests:
+        if options.betaTests:
+            wherePredicates.append( "status='beta'")
+        else:
+            wherePredicates.append( "status!='beta'")
 
     if len(wherePredicates) > 0:
        for i in range(len(wherePredicates)):
@@ -323,6 +339,8 @@ def main():
     tests = [row for row in testsToRun]
     print 'the tests are', tests
     testsToRerun = []
+
+
     for row in tests:
         try:
             if row['status'].lower() == 'disabled':

@@ -436,6 +436,7 @@ class RemoteLinuxHelper(object):
     def cbrestore(self, wrapper=False):
         restore_path = self.cluster_spec.config.get('storage', 'backup_path')
         logger.info('restore from %s' % restore_path)
+        start = time.time()
         if wrapper:
             for master in self.cluster_spec.yield_masters():
                 cmd = 'cd /opt/couchbase/bin && ./cbrestorewrapper %s ' \
@@ -457,6 +458,7 @@ class RemoteLinuxHelper(object):
                                           self.cluster_spec.rest_credentials[1],
                                           start_date, end_date)
                     run(cmd)
+        return int(time.time() - start)
 
     @seriesly_host
     def restart_seriesly(self):

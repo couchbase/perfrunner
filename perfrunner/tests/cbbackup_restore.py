@@ -34,7 +34,8 @@ class CBBackupRestoreBase(PerfTest):
 
     @with_stats
     def run_cbrestore_with_stats(self, wrapper=False):
-        self.remote.cbrestore(wrapper)
+        results = self.remote.cbrestore(wrapper)
+        self.spent_time = sum(results.values()) / len(results)
 
     def flush_buckets(self):
         buckets = ['bucket-{}'.format(i + 1)
@@ -163,12 +164,8 @@ class RestoreAfterIncrementalBackupTest(CBBackupRestoreBase):
         self.cbbackup(
             wrapper=self.test_config.test_case.use_backup_wrapper, mode='diff')
         self.flush_buckets()
-
-        start = time()
         self.run_cbrestore_with_stats(
             wrapper=self.test_config.test_case.use_backup_wrapper)
-        t = int(time() - start)
-        logger.info('restore completed in %s sec' % t)
-        self.data_size = self.workload.items * self.workload.size / 1000000.0
+        logger.info('Incremental restore completed in %s sec' % self.spent_time)
         if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(round(self.data_size / t, 1))
+            self.reporter.post_to_sf(self.spent_time)

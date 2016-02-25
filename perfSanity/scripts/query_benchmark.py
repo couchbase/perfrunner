@@ -367,7 +367,7 @@ def do_sabre_benchmarks(conn, rest, host_ip, remote, cluster_spec):
     WHERE
     AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureAirport.LocationCode = 'SFO'
     and AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[1].ArrivalAirport.LocationCode = 'BOS'
-    and AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureDateTime between "2014-05-23T06:15:00"
+    and AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureDateTime ="2014-05-23T06:15:00"
     ORDER BY Flight_Time, Depart_Time, Arrival_Time
     LIMIT 3"""
     command_list.append(

@@ -322,6 +322,96 @@ def do_airline_benchmarks(conn, rest, host_ip, remote, cluster_spec):
 
     return execute_commands(conn, command_list, rest, host_ip, 'United-Queries')
 
+def do_sabre_benchmarks(conn, rest, host_ip, remote, cluster_spec):
+    if True:
+        resp = rest.create_bucket(host_ip + ':8091', 'sabre', 1000, 0, 0, 'valueOnly', 4, None)
+        time.sleep(10)
+
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        try:
+            ssh.connect(host_ip, username=cluster_spec.ssh_credentials[0], password=cluster_spec.ssh_credentials[1])
+        except paramiko.SSHException:
+            print "ssh Connection Failed"
+            return False
+
+        print '-'*100
+        cmd = '/opt/couchbase/bin/cbrestore /root/sabre/backup  couchbase://127.0.0.1:8091 -b ods -B sabre -u {0} -p {1}'.format(
+            rest.rest_username, rest.rest_password)
+        stdin, stdout, stderr = ssh.exec_command(cmd)
+        print cmd
+        print '-'*100
+        for line in stdout.readlines():
+            pass
+        ssh.close()
+
+    command_list = []
+    command_list.append(
+            {'index': 'create index outbound_flight '
+                      'on sabre (AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureAirport.LocationCode,'
+                      'AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[1].ArrivalAirport.LocationCode,'
+                      'AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureDateTime);',
+             'expected_elapsed_time': 27000, 'expected_execution_time': 27000})
+
+    # query 1
+    select_query1 = """
+    SELECT
+    AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureAirport.LocationCode as Depart_Airport,
+    AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[1].ArrivalAirport.LocationCode as Arrival_Airport,
+    ARRAY_LENGTH(AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment) as Flight_Segment,
+    DATE_DIFF_STR(AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[1].ArrivalDateTime,
+    AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureDateTime,"hour") as Flight_Time,
+    AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureDateTime as Depart_Time,
+    AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[1].ArrivalDateTime as Arrival_Time
+    FROM sabre
+    WHERE
+    AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureAirport.LocationCode = 'SFO'
+    and AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[1].ArrivalAirport.LocationCode = 'BOS'
+    and AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureDateTime between "2014-05-23T06:15:00"
+    ORDER BY Flight_Time, Depart_Time, Arrival_Time
+    LIMIT 3"""
+    command_list.append(
+            {'queryDesc':'Q1', 'query': select_query1, 'expected_elapsed_time': 147700, 'expected_execution_time': 147700, 'execution_count': 3})
+
+    command_list.append(
+            {'index': 'create index fare_idx '
+                      'on sabre(AirItineraryPricingInfo.PTC_FareBreakdowns.PTC_FareBreakdown.PassengerFare.TotalFare.Amount);',
+             'expected_elapsed_time': 27000, 'expected_execution_time': 27000})
+    command_list.append(
+            {'index': 'create index min_price_min_stop '
+                      'on sabre (AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureAirport.LocationCode,'
+                      'AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[1].ArrivalAirport.LocationCode,'
+                      'ARRAY_LENGTH(AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment),'
+                      'AirItineraryPricingInfo.PTC_FareBreakdowns.PTC_FareBreakdown.PassengerFare.TotalFare.Amount);',
+             'expected_elapsed_time': 27000, 'expected_execution_time': 27000})
+    command_list.append(
+            {'index': 'create index one_way_direction '
+                      'on sabre (AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureAirport.LocationCode,'
+                      'AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[1].ArrivalAirport.LocationCode,'
+                      'AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureDateTime,'
+                      'AirItinerary.DirectionInd) ;',
+             'expected_elapsed_time': 27000, 'expected_execution_time': 27000})
+    command_list.append(
+            {'index': 'create index flight_direction '
+                      'on sabre( AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureDateTime,'
+                      'AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].FlightNumber,'
+                      'AirItinerary.DirectionInd);',
+             'expected_elapsed_time': 27000, 'expected_execution_time': 27000})
+    command_list.append(
+            {'index': 'create index tax_sequence'
+                      'on sabre(AirItineraryPricingInfo.PTC_FareBreakdowns.PTC_FareBreakdown.PassengerFare.Taxes.Tax[0].TaxCode,'
+                      'SequenceNumber) ;',
+             'expected_elapsed_time': 27000, 'expected_execution_time': 27000})
+    command_list.append(
+            {'index': 'create index flight_num_route '
+                      'on sabre(AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureAirport.LocationCode,'
+                      'AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[1].ArrivalAirport.LocationCode,'
+                      'AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureDateTime, '
+                      'AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].FlightNumber);',
+             'expected_elapsed_time': 27000, 'expected_execution_time': 27000})
+
+    return execute_commands(conn, command_list, rest, host_ip, 'Sabre-Queries')
+
 
 def main():
 

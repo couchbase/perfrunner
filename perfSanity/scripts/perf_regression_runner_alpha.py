@@ -189,11 +189,32 @@ def runPerfRunner( testDescriptor, options):
 
             print 'Setup complete, starting workload'
 
+    """ revert the hang detection - it did not detect the hang and suppressed the output
     rc, stdout, stderr, timeout = run_with_timeout( './perfSanity/scripts/workload_dev.sh', my_env, 7200)  # 2 hours
     print 'rc is', rc
     print 'timeout is', timeout
     print 'stderr', stderr
     print 'stdout is', stdout
+    """
+
+    # check for a looping process
+    startTime = time.time()   # in seconds to get the elapsed time
+    sys.stdout.flush()
+    proc = subprocess.Popen('./perfSanity/scripts/workload_dev.sh', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    workload_output = ''
+    for line in iter(proc.stdout.readline, ''):
+       if time.time() - startTime > 7200:   # 2 hours
+            sys.stdout.flush()
+            os.kill(proc.pid, signal.SIGUSR1)
+            return  [{'pass':False, 'reason':'Command timed out'}]
+       print line
+       workload_output += line
+
+    (stdoutdata, stderrdata) = proc.communicate()
+
+    print 'stderrdata', stderrdata
+
+
 
     if proc.returncode == 1:
         print '  Have an error during workload generation'

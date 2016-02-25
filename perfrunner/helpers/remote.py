@@ -68,7 +68,7 @@ class RemoteHelper(object):
         logger.info('Detecting OS')
         with settings(host_string=cluster_spec.yield_hostnames().next()):
             os = run('python -c "import platform; print platform.dist()[0]"',
-                     pty=False)
+                     pty=True)
         if os:
             return os
         else:
@@ -118,7 +118,7 @@ class RemoteLinuxHelper(object):
     @single_host
     def detect_arch(self):
         logger.info('Detecting platform architecture')
-        arch = run('uname -i', pty=False)
+        arch = run('uname -i', pty=True)
         return self.ARCH[arch]
 
     @single_host

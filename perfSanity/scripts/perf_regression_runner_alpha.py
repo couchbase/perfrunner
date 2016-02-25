@@ -219,12 +219,12 @@ def runPerfRunner( testDescriptor, options):
     if proc.returncode == 1:
         print '  Have an error during workload generation'
         return [{'pass':False, 'reason':'Have an error during workload generation'}]
-    elif timeout:
-        print '  test timeout'
-        return [{'pass':False, 'reason':'test timed out'}]
+    #elif timeout:
+        #print '  test timeout'
+        #return [{'pass':False, 'reason':'test timed out'}]
     else:
         print '\n\nWorkload complete, analyzing results'
-        return checkResults( stdout, testDescriptor)
+        return checkResults( workload_output, testDescriptor)
 
 
 def runForestDBTest( testDescriptor, options):

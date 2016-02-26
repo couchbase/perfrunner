@@ -41,6 +41,6 @@ n1ql_workers = 72
 
 [n1ql-singleton-unique-lookup]
 prepared = singleton_unique_lookup
-statement = SELECT * FROM `bucket-1` WHERE ANY i IN achievements SATISFIES i BETWEEN $1 AND $1+1000 END
+statement = SELECT * FROM `bucket-1` WHERE ANY i IN achievements SATISFIES i BETWEEN $1 AND $1+1000 END;
 scan_consistency = not_bounded
 args = [{achievements[0]}]

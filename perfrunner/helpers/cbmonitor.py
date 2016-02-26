@@ -228,10 +228,13 @@ class CbAgent(object):
             if rest is not None:
                 data_path, index_path = rest.get_data_path(
                     settings.master_node)
-
-            partitions = {'data': data_path}
-            if hasattr(test, 'ddocs'):  # all instances of IndexTest have it
-                partitions['index'] = index_path
+            if hasattr(settings, "monitor_clients") and settings.monitor_clients\
+                    and settings.master_node in settings.monitor_clients:
+                partitions = {'backup': test.remote.cluster_spec.config.get('storage', 'backup_path')}
+            else:
+                partitions = {'data': data_path}
+                if hasattr(test, 'ddocs'):  # all instances of IndexTest have it
+                    partitions['index'] = index_path
 
             settings.partitions = partitions
             io_collector = IO(settings)

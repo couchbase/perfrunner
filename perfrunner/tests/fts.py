@@ -51,6 +51,7 @@ class FtsIndexTest(PerfTest):
         url = "http://{}:{}/api/index/{}/count".format(
             fts_node, fts_port, index_name)
         last_reported = time.time()
+        time.sleep(10)    # wait for the indexer to get organized
         while True:
             r = requests.get(url)
             if not r.status_code == 200:

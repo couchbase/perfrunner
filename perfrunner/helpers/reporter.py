@@ -289,7 +289,7 @@ class Reporter(BtrcReporter, SFReporter, LogReporter):
 
     def finish(self, action, time_elapsed=None):
         time_elapsed = time_elapsed or (time.time() - self.ts)
-        time_elapsed = round(time_elapsed / 60, 1)
+        time_elapsed = round(time_elapsed / 60, 2)
         logger.info(
             'Time taken to perform "{}": {} min'.format(action, time_elapsed)
         )

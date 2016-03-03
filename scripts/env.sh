@@ -6,4 +6,4 @@ then
 fi
 
 virtualenv -p python2.7 $ENV_FOLDER/env
-PATH=/usr/lib/ccache:/usr/lib64/ccache/bin:$PATH $ENV_FOLDER/env/bin/pip install --download-cache $ENV_FOLDER/pip --upgrade -r requirements.txt
+PATH=/usr/lib/ccache:/usr/lib64/ccache/bin:$PATH $ENV_FOLDER/env/bin/pip install --upgrade -r requirements.txt

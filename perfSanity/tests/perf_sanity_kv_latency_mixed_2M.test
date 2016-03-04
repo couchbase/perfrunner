@@ -5,7 +5,7 @@ summary = Mixed KV test, 3 nodes, 1 bucket x 2M x 2KB, non-DGM, 10K ops/sec
 larger_is_better = false
 
 [cluster]
-mem_quota = 1000
+mem_quota = 5000
 initial_nodes = 3
 num_buckets = 1
 

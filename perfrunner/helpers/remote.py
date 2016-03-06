@@ -419,9 +419,9 @@ class RemoteLinuxHelper(object):
         else:
             for master in self.cluster_spec.yield_masters():
                 if not mode:
-                    run('/opt/couchbase/bin/backup create --dir %s --name default' % backup_path)
+                    run('/opt/couchbase/bin/cbbackupmgr config --archive %s --repo default' % backup_path)
                 # EE backup does not support modes, ignore 'full, diff, accu'
-                cmd = '/opt/couchbase/bin/backup cluster --dir %s --name default ' \
+                cmd = '/opt/couchbase/bin/cbbackupmgr backup --archive %s --repo default ' \
                     '--host http://%s:8091 --username %s --password %s --threads 16' \
                     % (backup_path, master.split(':')[0],
                         self.cluster_spec.rest_credentials[0],
@@ -451,7 +451,7 @@ class RemoteLinuxHelper(object):
                     start_date = end_date = dates[i]
                     if i < len(dates) - 1:
                         end_date = dates[i + 1]
-                    cmd = '/opt/couchbase/bin/backup restore --dir %s --name default ' \
+                    cmd = '/opt/couchbase/bin/cbbackupmgr restore --archive %s --repo default ' \
                         '--host http://%s:8091 --username %s --password %s --start %s --end %s ' \
                         '--threads 16' % (restore_path, master.split(':')[0],
                                           self.cluster_spec.rest_credentials[0],

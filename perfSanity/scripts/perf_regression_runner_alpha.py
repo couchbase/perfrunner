@@ -200,6 +200,23 @@ def runPerfRunner( testDescriptor, options):
     # check for a looping process
     startTime = time.time()   # in seconds to get the elapsed time
     sys.stdout.flush()
+
+
+    if options.patchScript is not None:
+        print 'running patchScript', options.patchScript
+        cmd = './perfSanity/scripts/' + options.patchScript
+        print ' the command is ', cmd
+        proc = subprocess.Popen(cmd, env=my_env, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        (stdoutdata, stderrdata) = proc.communicate()
+        print stdoutdata
+        if proc.returncode == 1:
+                print '\n\nHave an error during patchScript'
+                print stderrdata
+                print stdoutdata
+                return  [{'pass':False, 'reason':'Have an error during patchScript'}]
+
+
+
     proc = subprocess.Popen('./perfSanity/scripts/workload_dev.sh', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     workload_output = ''
     for line in iter(proc.stdout.readline, ''):
@@ -314,6 +331,7 @@ def main():
     parser.add_argument('-b', '--betaTests', dest='betaTests', default=False, action='store_true')
     parser.add_argument('-a', '--allTests', dest='allTests', default=False, action='store_true')
     parser.add_argument('-n', '--nop', dest='nop',default=False, action='store_true')
+    parser.add_argument('-p', '--patchScript', dest='patchScript',default=None)
 
     options = parser.parse_args()
 

@@ -366,35 +366,41 @@ def do_sabre_benchmarks(conn, rest, host_ip, remote, cluster_spec):
     and AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[1].ArrivalAirport.LocationCode = 'BOS'
     and AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureDateTime ="2014-05-23T06:15:00"
     ORDER BY Flight_Time, Depart_Time, Arrival_Time
-    LIMIT 3"""
-    command_list.append(
-            {'queryDesc':'Q1', 'query': select_query1, 'expected_elapsed_time': 147700, 'expected_execution_time': 147700, 'execution_count': 3})
-
-    command_list.append(
-            {'index': 'create index fare_idx '
-                      'on sabre(AirItineraryPricingInfo.PTC_FareBreakdowns.PTC_FareBreakdown.PassengerFare.TotalFare.Amount);',
-             'expected_elapsed_time': 27000, 'expected_execution_time': 27000})
-    # query 2
-    select_query2 = """
-    SELECT
-    AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureAirport.LocationCode as Depart_Airport,
-    AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[1].ArrivalAirport.LocationCode as Arrival_Airport,
-    ARRAY_LENGTH(AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment) as Flight_Segment,
-    DATE_DIFF_STR(AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[1].ArrivalDateTime,
-    AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureDateTime,"hour") as Flight_Time,
-    AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureDateTime as Depart_Time,
-    AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[1].ArrivalDateTime as Arrival_Time,
-    AirItineraryPricingInfo.PTC_FareBreakdowns.PTC_FareBreakdown.PassengerFare.TotalFare.Amount as Fare
-    FROM sabre
-    WHERE
-    AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureAirport.LocationCode = 'SFO'
-    and AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[1].ArrivalAirport.LocationCode = 'MIA' and
-    AirItineraryPricingInfo.PTC_FareBreakdowns.PTC_FareBreakdown.PassengerFare.TotalFare.Amount between 400 and 430
-    ORDER BY Fare, Depart_Time, Arrival_Time
     LIMIT 10"""
 
     command_list.append(
-            {'queryDesc':'Q2', 'query': select_query2, 'expected_elapsed_time': 1972, 'expected_execution_time': 1972, 'execution_count': 10})
+            {'queryDesc':'Q1', 'query': select_query1, 'expected_elapsed_time':   1.22, 'expected_execution_time':   1.19, 'execution_count': 10})
+
+    command_list.append(
+            {'index': 'create index airiternary '
+                      'on sabre(AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureAirport.LocationCode, '
+                      'AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[1].ArrivalAirport.LocationCode, '
+                      'AirItineraryPricingInfo.PTC_FareBreakdowns.PTC_FareBreakdown.PassengerFare.TotalFare.Amount,'
+                      'ARRAY_LENGTH(AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment),'
+                      'AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureDateTime,'
+                      'AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[1].ArrivalDateTime );',
+             'expected_elapsed_time': 27000, 'expected_execution_time': 27000})
+    # query 2
+    select_query2 = """
+    select AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureAirport.LocationCode as D, AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[1].ArrivalAirport.LocationCode as A, AirItineraryPricingInfo.PTC_FareBreakdowns.PTC_FareBreakdown.PassengerFare.TotalFare.Amount as F,
+    ARRAY_LENGTH(AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment) as FS,
+    AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[1].ArrivalDateTime as Arrival_Time,
+     AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureDateTime as Depart_Time,
+    DATE_DIFF_STR(AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[1].ArrivalDateTime,
+        AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureDateTime,"hour")
+    from sabre
+    where
+        AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureAirport.LocationCode = 'SFO' and
+        AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[1].ArrivalAirport.LocationCode = 'MIA' and
+        AirItineraryPricingInfo.PTC_FareBreakdowns.PTC_FareBreakdown.PassengerFare.TotalFare.Amount between 400 and 450 and
+        ARRAY_LENGTH(AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment) < 3 and
+       AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureDateTime is not null and
+       AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[1].ArrivalDateTime is not null
+    order by F, D, A
+    limit 10"""
+
+    command_list.append(
+            {'queryDesc':'Q2', 'query': select_query2, 'expected_elapsed_time': 1.02, 'expected_execution_time': 0.98, 'execution_count': 10})
 
     command_list.append(
             {'index': 'create index min_price_min_stop '
@@ -418,13 +424,12 @@ def do_sabre_benchmarks(conn, rest, host_ip, remote, cluster_spec):
     WHERE
     AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureAirport.LocationCode = 'SFO' and
     AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[1].ArrivalAirport.LocationCode = 'MIA' and
-    AirItineraryPricingInfo.PTC_FareBreakdowns.PTC_FareBreakdown.PassengerFare.TotalFare.Amount between 400 and 450 and
-    ARRAY_LENGTH(AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment) < 3
+    AirItineraryPricingInfo.PTC_FareBreakdowns.PTC_FareBreakdown.PassengerFare.TotalFare.Amount between 400 and 450
     ORDER BY Fare, Flight_Segment, Depart_Time, Arrival_Time
     LIMIT 10"""
 
     command_list.append(
-            {'queryDesc':'Q3', 'query': select_query3, 'expected_elapsed_time': 1972, 'expected_execution_time': 1972, 'execution_count': 10})
+            {'queryDesc':'Q3', 'query': select_query3, 'expected_elapsed_time':  0.89, 'expected_execution_time':  0.86, 'execution_count': 10})
 
     command_list.append(
             {'index': 'create index one_way_direction '
@@ -440,7 +445,7 @@ def do_sabre_benchmarks(conn, rest, host_ip, remote, cluster_spec):
                       'AirItinerary.DirectionInd);',
              'expected_elapsed_time': 27000, 'expected_execution_time': 27000})
     command_list.append(
-            {'index': 'create index tax_sequence'
+            {'index': 'create index tax_sequence '
                       'on sabre(AirItineraryPricingInfo.PTC_FareBreakdowns.PTC_FareBreakdown.PassengerFare.Taxes.Tax[0].TaxCode,'
                       'SequenceNumber) ;',
              'expected_elapsed_time': 27000, 'expected_execution_time': 27000})
@@ -522,8 +527,8 @@ def main():
     airline_result = do_airline_benchmarks(conn, rest, host_ip, installer.remote, cluster_spec)
     beer_result = do_beer_queries(conn, rest, host_ip, installer.remote)
     print 'beer_result is', beer_result
-
-    sys.exit(not (airline_result and beer_result))
+    sabre_result = do_sabre_benchmarks(conn, rest, host_ip, installer.remote, cluster_spec)
+    sys.exit(not (airline_result and beer_result and sabre_result))
 
 
 if __name__ == "__main__":

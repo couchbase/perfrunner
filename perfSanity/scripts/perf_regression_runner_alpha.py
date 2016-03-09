@@ -170,7 +170,7 @@ def runPerfRunner( testDescriptor, options):
 
     for i in spec:
         my_env['cluster'] = 'perfSanity/clusters/' + i + '.spec'
-        if options.query is None and re.search('n1ql.*Q[2].*',testName):
+        if False and options.query is None and re.search('n1ql.*Q[2].*',testName):
             print '-'*100
             print 'Skipping Setup for N1QL Q2 queries ... '
             print '-'*100

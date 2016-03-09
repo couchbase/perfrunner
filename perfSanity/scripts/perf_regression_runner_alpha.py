@@ -163,6 +163,9 @@ def runPerfRunner( testDescriptor, options):
         my_env['version'] = options.version
     else:
         my_env['url'] = options.url
+    if 'override' in testDescriptor:
+        print 'override is', testDescriptor['override']
+        my_env['override'] = testDescriptor['override']
 
 
     for i in spec:

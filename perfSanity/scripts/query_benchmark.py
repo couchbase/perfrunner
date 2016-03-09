@@ -335,7 +335,7 @@ def do_sabre_benchmarks(conn, rest, host_ip, remote, cluster_spec):
             print "ssh Connection Failed"
             return False
 
-        cmd = '/opt/couchbase/bin/cbrestore /root/sabre/backup  couchbase://127.0.0.1:8091 -b ods -B sabre -u {0} -p {1}'.format(
+        cmd = '/opt/couchbase/bin/cbrestore /root/sabre/backup  couchbase://127.0.0.1:8091 -b sabre -B sabre -u {0} -p {1}'.format(
             rest.rest_username, rest.rest_password)
         stdin, stdout, stderr = ssh.exec_command(cmd)
         for line in stdout.readlines():
@@ -369,7 +369,7 @@ def do_sabre_benchmarks(conn, rest, host_ip, remote, cluster_spec):
     LIMIT 10"""
 
     command_list.append(
-            {'queryDesc':'Q1', 'query': select_query1, 'expected_elapsed_time':   1.22, 'expected_execution_time':   1.19, 'execution_count': 10})
+            {'queryDesc':'Q1', 'query': select_query1, 'expected_elapsed_time':   434.0, 'expected_execution_time':   434.0, 'execution_count': 10})
 
     command_list.append(
             {'index': 'create index airiternary '
@@ -400,7 +400,7 @@ def do_sabre_benchmarks(conn, rest, host_ip, remote, cluster_spec):
     limit 10"""
 
     command_list.append(
-            {'queryDesc':'Q2', 'query': select_query2, 'expected_elapsed_time': 1.02, 'expected_execution_time': 0.98, 'execution_count': 10})
+            {'queryDesc':'Q2', 'query': select_query2, 'expected_elapsed_time': 0.9, 'expected_execution_time': 0.86, 'execution_count': 10})
 
     command_list.append(
             {'index': 'create index min_price_min_stop '
@@ -429,7 +429,7 @@ def do_sabre_benchmarks(conn, rest, host_ip, remote, cluster_spec):
     LIMIT 10"""
 
     command_list.append(
-            {'queryDesc':'Q3', 'query': select_query3, 'expected_elapsed_time':  0.89, 'expected_execution_time':  0.86, 'execution_count': 10})
+            {'queryDesc':'Q3', 'query': select_query3, 'expected_elapsed_time':  0.9, 'expected_execution_time':  0.86, 'execution_count': 10})
 
     command_list.append(
             {'index': 'create index one_way_direction '

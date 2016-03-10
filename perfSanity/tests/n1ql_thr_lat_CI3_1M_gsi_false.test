@@ -26,6 +26,13 @@ doc_partitions = 1
 indexes =
     by_capped_small_name_street::CREATE INDEX {name} ON `{bucket}` (capped_small, name, street) using gsi;
 
+[load]
+items = 1000000
+size = 1024
+workers = 20
+doc_gen = reverse_lookup
+doc_partitions = 1
+
 [access]
 creates = 0
 reads = 80

@@ -26,6 +26,13 @@ view_percentage = 100
 indexes =
     by_email::CREATE INDEX {name} ON `{bucket}` (email) using gsi;
 
+[load]
+items = 1000000
+size = 1024
+workers = 20
+doc_gen = reverse_lookup
+doc_partitions = 1
+
 [access]
 creates = 0
 reads = 100

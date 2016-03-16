@@ -149,8 +149,8 @@ class N1QLThroughputTest(N1QLTest):
         self.compact_bucket()
 
         self.build_index()
-
-        self._create_prepared_statements()
+        if self.test_config.access_settings.n1ql_op != "ryow":
+            self._create_prepared_statements()
 
         self.workload = self.test_config.access_settings
         self.workload.items /= 2

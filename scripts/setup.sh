@@ -12,7 +12,7 @@ if [ -z "${toy}" ]; then
     if [ -z "${url}" ]; then
         $ENV_FOLDER/env/bin/python -m perfrunner.utils.install -c ${cluster} -v ${version}
     else
-        $ENV_FOLDER/env/bin/python -m perfrunner.utils.install -c ${cluster} --url=${url}
+        $ENV_FOLDER/env/bin/python -m perfrunner.utils.install -c ${cluster} --url ${url}
     fi
  else
     $ENV_FOLDER/env/bin/python -m perfrunner.utils.install -c ${cluster} -v ${version} -t ${toy}

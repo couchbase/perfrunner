@@ -31,4 +31,4 @@ creates = 100
 ops = 20000
 items = 2000000
 workers = 16
-time = 600
+time = 1200

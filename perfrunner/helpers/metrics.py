@@ -212,7 +212,7 @@ class MetricHelper(object):
         return round(couch_spatial_ops)
 
     def calc_query_latency(self, percentile):
-        metric = '{}_avg_query_latency_{}'.format(self.test_config.name, self.cluster_spec.name)
+        metric = '{}_{}'.format(self.test_config.name, self.cluster_spec.name)
         if 'MG7' in metric:
             title = '{}th percentile query latency, {}'.format(percentile,
                                                                self.metric_title)

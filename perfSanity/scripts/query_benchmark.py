@@ -524,6 +524,7 @@ def main():
     logger.info('logging the URL: {}'.format(URL))
     conn = urllib3.connection_from_url(URL)
     rest = RestHelper(cluster_spec)
+    cm.set_index_settings()
     airline_result = do_airline_benchmarks(conn, rest, host_ip, installer.remote, cluster_spec)
     beer_result = do_beer_queries(conn, rest, host_ip, installer.remote)
     print 'beer_result is', beer_result

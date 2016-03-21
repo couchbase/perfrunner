@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
-title = N1QL Q3 Array Indexing Between 1Bux20Mx1K, Singleton Unique Lookup, 14.4KGops, 3.6KSops, GSI, stale=false, n1ql_throughput=1M
-summary = Singleton Unique Lookup, 14.4KGops, 3.6KSops
+title = N1QL Q3 Array Indexing 1Bux20Mx1K, Range Scan, 14.4KGops, 3.6KSops, GSI, stale=false
+summary = N1QL Q3 Array Indexing Range Scan, 14.4KGops, 3.6KSops
 larger_is_better = false
 
 [cluster]
@@ -41,6 +41,6 @@ n1ql_workers = 72
 
 [n1ql-singleton-unique-lookup]
 prepared = singleton_unique_lookup
-statement = SELECT * FROM `bucket-1` WHERE ANY i IN achievements SATISFIES i BETWEEN $1 AND $1+1000 END;
+statement = SELECT name AS _name, street AS _street FROM `bucket-1` WHERE ANY i IN achievements SATISFIES i BETWEEN $1 AND $1+1000 END;
 scan_consistency = request_plus
 args = [{achievements[0]}]

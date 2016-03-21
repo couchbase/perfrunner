@@ -35,8 +35,8 @@ doc_partitions = 1
 
 [access]
 creates = 0
-reads = 100
-updates = 0
+reads = 80
+updates = 20
 deletes = 0
 throughput = 18000
 items = 1000000

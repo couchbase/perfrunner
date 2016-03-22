@@ -5,8 +5,10 @@ summary = Mixed KV + XDCR test, 1 -> 1 UniDir, 2 buckets x 1M x 1KB, DGM, 10K SE
 larger_is_better = false
 
 [stats]
+add_snapshots = 0
 post_rss = 1
 post_cpu = 1
+seriesly_host = 10.5.3.40
 
 [cluster]
 mem_quota = 3000

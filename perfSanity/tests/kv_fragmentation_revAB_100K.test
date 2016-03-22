@@ -10,6 +10,7 @@ db_percentage = 80
 
 
 [stats]
+add_snapshots = 0
 seriesly_host = 10.5.3.40
 
 

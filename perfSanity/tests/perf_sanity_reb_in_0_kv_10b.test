@@ -5,6 +5,7 @@ summary = Mixed rebalance test, 2 -> 3nodes, 10 empty buckets
 larger_is_better = false
 
 [stats]
+add_snapshots = 0
 enabled = 0
 
 [cluster]
@@ -13,6 +14,7 @@ initial_nodes = 2
 num_buckets = 10
 
 [stats]
+add_snapshots = 0
 seriesly_host = 10.5.3.40
 
 

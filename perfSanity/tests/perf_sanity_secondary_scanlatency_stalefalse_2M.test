@@ -11,6 +11,7 @@ initial_nodes = 3
 num_buckets = 1
 
 [stats]
+add_snapshots = 0
 seriesly_host = 10.5.3.40
 
 

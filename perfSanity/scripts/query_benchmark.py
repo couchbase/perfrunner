@@ -287,6 +287,10 @@ def do_airline_benchmarks(conn, rest, host_ip, remote, cluster_spec):
         unnest array_concat(f.PILOT,f.CREW) pilot1
     )"""
 
+
+    """
+    MB-18839
+
     command_list.append({
         'index': 'CREATE INDEX IDX_GMT_EST_DEP_DTM ON ods(`GMT_EST_DEP_DTM`) WHERE (`TYPE`="CREW_ON_FLIGHT") USING GSI;',
         'expected_elapsed_time': 38000, 'expected_execution_time': 38000})
@@ -295,6 +299,7 @@ def do_airline_benchmarks(conn, rest, host_ip, remote, cluster_spec):
         'expected_elapsed_time': 41000, 'expected_execution_time': 41000})
     command_list.append(
         {'queryDesc':'Q2', 'query': big_long_query2, 'expected_elapsed_time': 536, 'expected_execution_time': 536, 'execution_count': 10})
+    """
 
     # query 3
     big_long_index3 = """

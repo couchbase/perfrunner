@@ -5,6 +5,7 @@ summary = Read-heavy query test (80/20), 3 nodes, 1 bucket x 2M x 2KB, non-DGM, 
 larger_is_better = false
 
 [stats]
+add_snapshots = 0
 post_rss = 1
 seriesly_host = 10.5.3.40
 

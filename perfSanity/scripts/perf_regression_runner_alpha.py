@@ -166,6 +166,8 @@ def runPerfRunner( testDescriptor, options):
     if 'override' in testDescriptor:
         print 'override is', testDescriptor['override']
         my_env['override'] = testDescriptor['override']
+    else:
+        my_env['override'] = ''
 
 
     for i in spec:
@@ -357,7 +359,7 @@ def main():
         bucket = Bucket('couchbase://'+ '172.23.105.177:8091/Daily-Performance')
 
     testBucket = Bucket('couchbase://'+ '172.23.105.177:8091/Daily-Performance-Tests')
-    queryString = "select `Daily-Performance-Tests`.* from `Daily-Performance-Tests`"
+    queryString = "select `Daily-Performance-Tests`.* from `Daily-Performance-Tests` where status != 'unimplemented'"
     wherePredicates = []
     if options.query is not None:
         wherePredicates.append( ' '.join(options.query) )
@@ -369,11 +371,7 @@ def main():
 
     if len(wherePredicates) > 0:
        for i in range(len(wherePredicates)):
-          if i == 0:
-              queryString += ' where '
-          else:
-              queryString += ' and '
-          queryString += wherePredicates[i]
+            queryString += ' and ' + wherePredicates[i]
 
     print 'the query string is', queryString
     query = N1QLQuery(queryString )

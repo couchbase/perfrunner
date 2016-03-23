@@ -205,7 +205,7 @@ def do_beer_queries(conn, rest, host_ip, remote):
          'expected_execution_time': 11, 'execution_count': 10000})
     command_list.append(
         {'queryDesc':'select count with where', 'query': 'select COUNT(*) from `beer-sample` where style =  "Imperial or Double India Pale Ale";',
-         'expected_elapsed_time': 3.4, 'expected_execution_time': 3.4, 'execution_count': 10000})
+         'expected_elapsed_time': 1.5, 'expected_execution_time': 1.5, 'execution_count': 10000})
     command_list.append(
         {'queryDesc':'select sum where', 'query': 'select SUM(abv) from `beer-sample` where style =  "Imperial or Double India Pale Ale";',
          'expected_elapsed_time': 11, 'expected_execution_time': 11, 'execution_count': 10000})

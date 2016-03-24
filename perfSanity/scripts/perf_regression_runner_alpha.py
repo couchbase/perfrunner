@@ -181,7 +181,7 @@ def runPerfRunner( testDescriptor, options):
                         shell=True)
 
             for line in iter(proc.stdout.readline, ''):
-                print 'Setup output', line
+                print 'Setup output', line,
                 sys.stdout.flush()
 
             (stdoutdata, stderrdata) = proc.communicate()
@@ -229,7 +229,7 @@ def runPerfRunner( testDescriptor, options):
             sys.stdout.flush()
             os.kill(proc.pid, signal.SIGUSR1)
             return  [{'pass':False, 'reason':'Command timed out'}]
-       print line
+       print line,
        workload_output += line
 
     (stdoutdata, stderrdata) = proc.communicate()
@@ -263,7 +263,7 @@ def runForestDBTest( testDescriptor, options):
     proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,shell=True)
     commandOutput = ''
     for line in iter(proc.stdout.readline, ''):
-        print line
+        print line,
         commandOutput += line
 
     (stdoutdata, stderrdata) = proc.communicate()
@@ -277,7 +277,7 @@ def runForestDBTest( testDescriptor, options):
         return checkResults( commandOutput, testDescriptor)
 
 
-def runTest( testDescriptor, options, bucket ):
+def runTest( testDescriptor, options, bucket, considerRerun ):
     print testDescriptor['testType']
     testName = testDescriptor['testName']
 
@@ -298,16 +298,29 @@ def runTest( testDescriptor, options, bucket ):
         return True
 
 
-    for i in res:
-        combinedResults = dict(baseResult.items() + i.items()  + {'elapsedTime': round(time.time() - startTime,0)}.items() )
-        print 'the result is ', combinedResults
-        if bucket is not None: 
-            if 'testMetric' in combinedResults:
-                testKey = combinedResults['testName'] + '-' + combinedResults['testMetric']
-            else:
-                testKey = combinedResults['testName']
-            bucket.upsert( testStartTime + '-' + options.version + '-' + testKey, combinedResults, format=couchbase.FMT_JSON)
+    # logic is a little complicated here. If this is the second time through we won't even consider the rerun, otherwise the criteria is
+    #   1. There was a setup error, or,
+    #   2. A passing test failed
+    # Won't handle multiple failures
+    rerun = False
+    if considerRerun:
+       if 'reason' in res[0]: rerun = True         # something bad happened, must rerun
+       elif testDescriptor['status'] == 'pass':    # check for failures in a passing test case
+          for i in res:
+             if 'pass' in i and not i['pass']:
+                rerun = True
+    if not rerun:   # final answer - write it to the couchbase
+        for i in res:
+            combinedResults = dict(baseResult.items() + i.items()  + {'elapsedTime': round(time.time() - startTime,0)}.items() )
+            print 'the result is ', combinedResults
+            if bucket is not None: 
+                if 'testMetric' in combinedResults:
+                    testKey = combinedResults['testName'] + '-' + combinedResults['testMetric']
+                else:
+                    testKey = combinedResults['testName']
+                bucket.upsert( testStartTime + '-' + options.version + '-' + testKey, combinedResults, format=couchbase.FMT_JSON)
 
+    return not rerun
 
 def main():
     print 'Starting the perf regression runner'
@@ -386,14 +399,15 @@ def main():
             if row['status'].lower() == 'disabled':
                 print row['testName'], ' is disabled.'
             else:
-                if not runTest( row, options, bucket ):
+                if not runTest( row, options, bucket, considerRerun=True ):
                     testsToRerun.append(row)
         except:
             print 'Exception in ', row['testName']
             traceback.print_exc()
 
-        #time.sleep(10)
     # end the for loop - print the results
+    print 'tests to rerun are', testsToRerun
+    for i in testsToRerun: runTest( i, options, bucket, considerRerun=False )
     print 'done'
 
 

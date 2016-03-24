@@ -40,4 +40,4 @@ query_throughput = 100
 items = 2000000
 workers = 1
 query_workers = 1
-time = 600
+time = 900

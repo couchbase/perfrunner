@@ -8,7 +8,7 @@ hera =
 
 [clients]
 hosts =
-    172.23.97.130
+    172.23.99.111
 credentials = root:couchbase
 
 [storage]

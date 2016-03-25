@@ -304,7 +304,7 @@ def runTest( testDescriptor, options, bucket, considerRerun ):
     # Won't handle multiple failures
     rerun = False
     if considerRerun:
-       if 'reason' in res[0]: rerun = True         # something bad happened, must rerun
+       if len(res) == 0 or 'reason' in res[0]: rerun = True         # something bad happened, must rerun
        elif testDescriptor['status'] == 'pass':    # check for failures in a passing test case
           for i in res:
              if 'pass' in i and not i['pass']:

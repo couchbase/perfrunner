@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
-title = N1QL Q3 Array Indexing 1Bux20Mx1K, Range Scan, 14.4KGops, 3.6KSops, GSI, stale=false, compaction_mode=full
-summary = N1QL Q3 Array Indexing Range Scan, 14.4KGops, 3.6KSops
+title = N1QL Q3 Array Indexing 1Bux20Mx1K, Range Scan, 1.44KGops, 0.36KSops, GSI, stale=false, compaction_mode=full
+summary = N1QL Q3 Array Indexing Range Scan, 1.44KGops, 0.36KSops
 larger_is_better = false
 
 [cluster]
@@ -34,7 +34,7 @@ creates = 0
 reads = 80
 updates = 20
 deletes = 0
-throughput = 18000
+throughput = 1800
 items = 20000000
 workers = 24
 time = 1200

@@ -43,4 +43,4 @@ n1ql_workers = 72
 prepared = singleton_unique_lookup
 statement = SELECT name AS _name, street AS _street FROM `bucket-1` WHERE ANY i IN achievements2 SATISFIES i=$1 END;
 scan_consistency = not_bounded
-args = [{achievements[0]}]
+args = [{achievements2[0]}]

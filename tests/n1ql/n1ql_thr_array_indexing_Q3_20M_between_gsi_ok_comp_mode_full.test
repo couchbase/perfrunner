@@ -27,7 +27,7 @@ indexer.settings.compaction.compaction_mode = full
 
 [n1ql]
 indexes =
-    by_achievements::CREATE INDEX {name} ON `{bucket}`(DISTINCT ARRAY i FOR i IN achievements END) using gsi;
+    by_achievements2::CREATE INDEX {name} ON `{bucket}`(DISTINCT ARRAY i FOR i IN achievements2 END) using gsi;
 
 [access]
 creates = 0
@@ -44,6 +44,6 @@ n1ql_workers = 72
 
 [n1ql-singleton-unique-lookup]
 prepared = singleton_unique_lookup
-statement = SELECT name AS _name, street AS _street FROM `bucket-1` WHERE ANY i IN achievements SATISFIES i BETWEEN $1 AND $1+1000 END;
+statement = SELECT name AS _name, street AS _street FROM `bucket-1` WHERE ANY i IN achievements2 SATISFIES i=$1 END;
 scan_consistency = not_bounded
 args = [{achievements[0]}]

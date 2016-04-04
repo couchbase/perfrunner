@@ -13,6 +13,7 @@ import os
 import sys
 import time
 import traceback
+import string
 
 from couchbase.bucket import Bucket
 import couchbase
@@ -136,29 +137,78 @@ def checkResults( results, testDescriptor):
 
 
 
+platformDescriptor = {'windows':{'servers':['172.23.107.100','172.23.107.5','172.23.107.218'],'seriesly':'172.23.107.168','testClient':'172.23.107.168'}}
+
+def updateSpecFile( fileName, os):
+
+    f = open(fileName)
+    data = f.readlines()
+    f.close()
+
+    for i in range( len(data) ):
+          # really should have proper templates but for now use the CentOS values
+          if '10.17.0.105' in data[i]:
+             data[i] = string.replace(data[i], '10.17.0.105', platformDescriptor[os]['servers'][0] )
+          elif '10.17.0.106' in data[i]:
+             data[i] = string.replace(data[i], '10.17.0.106', platformDescriptor[os]['servers'][1] )
+          elif '10.17.0.107' in data[i]:
+             data[i] = string.replace(data[i], '10.17.0.107', platformDescriptor[os]['servers'][2] )
+          elif '10.5.3.40' in data[i]:   # this is the test client host
+             data[i] = string.replace(data[i], '10.5.3.40', platformDescriptor[os]['testClient'])
+
+          if os == 'windows':
+              # change the credentials
+              if 'root:couchbase' in data[i] and 'credentials' not in data[i]:
+                  data[i] = string.replace(data[i], 'root', 'Administrator')
+                  data[i] = string.replace(data[i], 'couchbase', 'Membase123')
+
+              # and the paths
+              if '/opt/couchbase/var/lib/couchbase/data' in data[i]:
+                  data[i] = string.replace(data[i], '/opt/couchbase/var/lib/couchbase/data', 'c:\data')
+              if '/data/cbbackup_dir' in data[i]:
+                  data[i] = string.replace(data[i], '/data/cbbackup_dir', 'c:\data')
+
+    for d in data:
+          print d,
+
+    f = open(fileName, 'w')
+    f.writelines(data)
+
+
 def runPerfRunner( testDescriptor, options):
     print testDescriptor['testType']
     testName = testDescriptor['testName']
 
 
 
-    test = testDescriptor['testFile'] + '.test'
+    testFile = 'perfSanity/tests/' + testDescriptor['testFile'] + '.test'
     if options.specFile is None:
         # backup and restore needs a list of spec files to do the installs
         if type(testDescriptor['specFile']) is unicode:
-            spec = [ testDescriptor['specFile']]
+            spec = [ 'perfSanity/clusters/' + testDescriptor['specFile'] + '.spec' ]
         else:
             print 'have a list of spec files'
             spec = []
             for i in testDescriptor['specFile']:
-                spec.append( i )
+                spec.append( 'perfSanity/clusters/' + i  + '.spec' )
     else:
-        spec = [options.specFile]
-    print 'specfile', spec
+        spec = ['perfSanity/clusters/' + options.specFile + '.spec']
+
+    if options.os != 'centos':
+         # change the .test file to point to the seriesly host
+         cmd = "sed -i '/seriesly_host/c\seriesly_host = {0}' {1}".format(platformDescriptor[options.os]['seriesly'], testFile)
+         print 'the command is', cmd
+         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+         # and update spec file with the ips
+         for s in spec:
+             updateSpecFile( s, options.os )
+
+    #return
+
     KPIs = testDescriptor['KPIs']
 
     my_env = os.environ
-    my_env['test_config'] = 'perfSanity/tests/' + test
+    my_env['test_config'] = testFile
     if options.url is None:
         my_env['version'] = options.version
     else:
@@ -171,14 +221,13 @@ def runPerfRunner( testDescriptor, options):
 
 
     for i in spec:
-        my_env['cluster'] = 'perfSanity/clusters/' + i + '.spec'
+        my_env['cluster'] = i
         if False and options.query is None and re.search('n1ql.*Q[2].*',testName):
             print '-'*100
             print 'Skipping Setup for N1QL Q2 queries ... '
             print '-'*100
         else:
-            proc = subprocess.Popen('./scripts/setup.sh', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                        shell=True)
+            proc = subprocess.Popen('./scripts/setup.sh', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
 
             for line in iter(proc.stdout.readline, ''):
                 print 'Setup output', line,
@@ -285,7 +334,8 @@ def runTest( testDescriptor, options, bucket, considerRerun ):
     startTime = time.time()   # in seconds to get the elapsed time
     print '\n\n', time.asctime( time.localtime(time.time()) ), 'Now running', testName
 
-    baseResult = {'runStartTime':options.runStartTime, 'testStartTime':testStartTime, 'build':options.version, 'testName':testName}
+    baseResult = {'runStartTime':options.runStartTime, 'testStartTime':testStartTime, 'build':options.version, 'testName':testName,
+                   'os':options.os}
     if testDescriptor['testType'] == 'perfRunner':
         res = runPerfRunner(testDescriptor, options)
     elif testDescriptor['testType'] == 'perfRunnerForestDB':
@@ -305,6 +355,7 @@ def runTest( testDescriptor, options, bucket, considerRerun ):
     rerun = False
     if considerRerun:
        if len(res) == 0 or 'reason' in res[0]: rerun = True         # something bad happened, must rerun
+
        elif testDescriptor['status'] == 'pass':    # check for failures in a passing test case
           for i in res:
              if 'pass' in i and not i['pass']:
@@ -350,6 +401,7 @@ def main():
     parser.add_argument('-a', '--allTests', dest='allTests', default=False, action='store_true')
     parser.add_argument('-n', '--nop', dest='nop',default=False, action='store_true')
     parser.add_argument('-p', '--patchScript', dest='patchScript',default=None)
+    parser.add_argument('-o', '--os', dest='os',default='centos')
 
     options = parser.parse_args()
 
@@ -358,6 +410,8 @@ def main():
     print 'query', options.query
     print 'specfile', options.specFile
 
+
+    print 'the os is', options.os
     runStartTime = options.runStartTime
     summary = []
 

@@ -1,0 +1,36 @@
+[test_case]
+test = perfrunner.tests.kv.ReadLatencyTest
+title = latency (ms), mixed, 1 bucket x 80M x 2KB, DGM, 6K ops/sec, 50%% cache miss rate
+summary = Mixed KV test, 4 nodes, 1 bucket x 80M x 2KB, 50%% cache miss rate, 6K ops/sec
+larger_is_better = false
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+
+[bucket]
+eviction_policy = fullEviction
+
+[load]
+items = 80000000
+size = 2048
+workers = 20
+
+[hot_load]
+items = 80000000
+workers = 40
+working_set = 20
+
+[access]
+creates = 1
+reads = 70
+updates = 28
+deletes = 1
+throughput = 6000
+workers = 3
+items = 80000000
+working_set = 20
+working_set_access = 80
+time = 200
+async = 1

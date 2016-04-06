@@ -199,6 +199,12 @@ def runPerfRunner( testDescriptor, options):
          cmd = "sed -i '/seriesly_host/c\seriesly_host = {0}' {1}".format(platformDescriptor[options.os]['seriesly'], testFile)
          print 'the command is', cmd
          proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+
+         # and mess with the memory quota
+         cmd = "sed -i 's/mem_quota = 8048/mem_quota = 2048/' {0}".format( testFile )
+         print 'the command is', cmd
+         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+
          # and update spec file with the ips
          for s in spec:
              updateSpecFile( s, options.os )

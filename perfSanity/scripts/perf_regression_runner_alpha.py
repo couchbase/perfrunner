@@ -408,6 +408,7 @@ def main():
     parser.add_argument('-n', '--nop', dest='nop',default=False, action='store_true')
     parser.add_argument('-p', '--patchScript', dest='patchScript',default=None)
     parser.add_argument('-o', '--os', dest='os',default='centos')
+    parser.add_argument('-e', '--rerun', dest='rerun',default=True, action='store_false')
 
     options = parser.parse_args()
 
@@ -422,7 +423,7 @@ def main():
     summary = []
 
 
-    print 'version', options.version
+    print 'rerun', options.rerun
     print 'url', options.url
 
     # open the bucket
@@ -459,7 +460,7 @@ def main():
             if row['status'].lower() == 'disabled':
                 print row['testName'], ' is disabled.'
             else:
-                if not runTest( row, options, bucket, considerRerun=True ):
+                if not runTest( row, options, bucket, considerRerun=options.rerun ):
                     testsToRerun.append(row)
         except:
             print 'Exception in ', row['testName']
@@ -467,7 +468,8 @@ def main():
 
     # end the for loop - print the results
     print 'tests to rerun are', testsToRerun
-    for i in testsToRerun: runTest( i, options, bucket, considerRerun=False )
+    if options.rerun:
+        for i in testsToRerun: runTest( i, options, bucket, considerRerun=False )
     print 'done'
 
 

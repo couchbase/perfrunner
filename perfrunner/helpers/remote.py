@@ -110,7 +110,7 @@ class RemoteLinuxHelper(object):
     @single_host
     def detect_pkg(self):
         logger.info('Detecting package manager')
-        if self.os in ('Ubuntu', 'Debian'):
+        if self.os.upper() in ('UBUNTU', 'DEBIAN'):
             return 'deb'
         else:
             return 'rpm'

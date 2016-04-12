@@ -6,7 +6,7 @@ import fileinput
 import argparse
 import subprocess
 import signal
-from threading import Timer
+from threading import Timer,Thread
 
 
 import os
@@ -14,6 +14,7 @@ import sys
 import time
 import traceback
 import string
+import paramiko
 
 from couchbase.bucket import Bucket
 import couchbase
@@ -138,6 +139,36 @@ def checkResults( results, testDescriptor):
 
 
 platformDescriptor = {'windows':{'servers':['172.23.107.100','172.23.107.5','172.23.107.218'],'seriesly':'172.23.107.168','testClient':'172.23.107.168'}}
+windowsVersion = {'172.23.107.100':'04/08/2016-23:45',   '172.23.107.5':'04/08/2016-23:38',  '172.23.107.218':'04/12/2016-00:08'}
+
+def resetServer( ip ):
+       print 'resetting', ip
+       ssh = paramiko.SSHClient()
+       ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+       ssh.connect(ip, username='Administrator', password='Membase123')
+       #trans=ssh.get_transport()
+       #session=trans.open_session()
+       cmd = 'wbadmin start systemstaterecovery -version:{0} -autoReboot -quiet'.format( windowsVersion[ip] )
+       print ip, 'the command is ', cmd
+       stdin, stdout, stderr = ssh.exec_command( cmd )
+       #stdin.close()
+       for line in stdout.read().splitlines():
+           print(ip +':' + line)
+       print ip, 'stderr', stderr
+
+
+def resetWindowsServers():
+    threads = []
+    #for s in ['172.23.107.218']: #platformDescriptor['windows']['servers']:
+    for s in platformDescriptor['windows']['servers']:
+         t = Thread(target=resetServer, args=(s,))
+         t.start()
+         # enable to serialize t.join()
+         threads.append( t )
+
+    for t in threads:
+        t.join()
+
 
 def updateSpecFile( fileName, os):
 
@@ -193,6 +224,12 @@ def runPerfRunner( testDescriptor, options):
                 spec.append( 'perfSanity/clusters/' + i  + '.spec' )
     else:
         spec = ['perfSanity/clusters/' + options.specFile + '.spec']
+
+    if options.os == 'windows':
+        print 'start reset windows servers'
+        resetWindowsServers()
+        print 'done reset windows servers'
+
 
     if options.os != 'centos':
          # change the .test file to point to the seriesly host

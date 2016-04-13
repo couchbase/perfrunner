@@ -189,9 +189,10 @@ def resetWindowsServers():
     RETRY_COUNT = 10
     for s in platformDescriptor['windows']['servers']:
         retries = 0
+        print 'pinging', s,
         while retries < RETRY_COUNT:
             response = os.system("ping -c 1 -w2 " + s + " > /dev/null 2>&1")
-            print s, 'response is', response,
+            print 'response ', response,
             if response == 0:
                 break
             else:
@@ -264,6 +265,7 @@ def runPerfRunner( testDescriptor, options):
         print 'done reset windows servers', res
         if not res:   # heck the Windows servers are not in good shape
             return  [{'pass':False, 'reason':'Failure during Windows snapshot revert'}]
+        time.sleep(60)    # give some time for the system to settle down
 
 
 

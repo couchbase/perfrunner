@@ -148,12 +148,12 @@ def executeRemoteCommand( cmd ):
        #trans=ssh.get_transport()
        #session=trans.open_session()
        #cmd = 'wbadmin start systemstaterecovery -version:{0} -autoReboot -quiet'.format( windowsVersion[ip] )
-       print 'the command is ', cmd
+       #print 'the command is ', cmd
        stdin, stdout, stderr = ssh.exec_command( cmd )
        #stdin.close()
        for line in stdout.read().splitlines():
            print(line)
-       print 'stderr', stderr
+       #print 'stderr', stderr
 
 
 revertUUIDs = ['193abf84-c8ca-bbcc-53a0-b8a0a81d988a', 'e34fe799-8e7e-23fe-979c-da88efa3d497', '18e2f825-4274-4def-a4e2-4969db22cb50' ]
@@ -186,19 +186,20 @@ def resetWindowsServers():
 
 
     # and then verify they are up
+    RETRY_COUNT = 10
     for s in platformDescriptor['windows']['servers']:
         retries = 0
-        while retries < 5:
+        while retries < RETRY_COUNT:
             response = os.system("ping -c 1 -w2 " + s + " > /dev/null 2>&1")
-            print s, 'response is', response
+            print s, 'response is', response,
             if response == 0:
                 break
             else:
-                print 'sleeping'
+                print 'sleeping',
                 time.sleep(20)
                 retries = retries + 1
 
-        if retries == 5: return False
+        if retries == RETRY_COUNT: return False
 
     return True
 

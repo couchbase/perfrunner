@@ -139,36 +139,68 @@ def checkResults( results, testDescriptor):
 
 
 platformDescriptor = {'windows':{'servers':['172.23.107.100','172.23.107.5','172.23.107.218'],'seriesly':'172.23.107.168','testClient':'172.23.107.168'}}
-windowsVersion = {'172.23.107.100':'04/08/2016-23:45',   '172.23.107.5':'04/08/2016-23:38',  '172.23.107.218':'04/12/2016-00:08'}
 
-def resetServer( ip ):
-       print 'resetting', ip
+def executeRemoteCommand( cmd ):
+       print 'executing command', cmd
        ssh = paramiko.SSHClient()
        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-       ssh.connect(ip, username='Administrator', password='Membase123')
+       ssh.connect('172.23.107.51', username='root', password='northscale!23')
        #trans=ssh.get_transport()
        #session=trans.open_session()
-       cmd = 'wbadmin start systemstaterecovery -version:{0} -autoReboot -quiet'.format( windowsVersion[ip] )
-       print ip, 'the command is ', cmd
+       #cmd = 'wbadmin start systemstaterecovery -version:{0} -autoReboot -quiet'.format( windowsVersion[ip] )
+       print 'the command is ', cmd
        stdin, stdout, stderr = ssh.exec_command( cmd )
        #stdin.close()
        for line in stdout.read().splitlines():
-           print(ip +':' + line)
-       print ip, 'stderr', stderr
+           print(line)
+       print 'stderr', stderr
 
+
+revertUUIDs = ['193abf84-c8ca-bbcc-53a0-b8a0a81d988a', 'e34fe799-8e7e-23fe-979c-da88efa3d497', '18e2f825-4274-4def-a4e2-4969db22cb50' ]
+
+VMids = ['s72606-w12r2-cbit-4683', 's72607-w12r2-cbit-4683', 's72608-w12r2-cbit-4683']
 
 def resetWindowsServers():
     threads = []
-    #for s in ['172.23.107.218']: #platformDescriptor['windows']['servers']:
-    for s in platformDescriptor['windows']['servers']:
-         t = Thread(target=resetServer, args=(s,))
+    for s in revertUUIDs:
+         cmd = 'xe snapshot-revert snapshot-uuid={0}'.format( s )
+         t = Thread(target=executeRemoteCommand, args=(cmd,))
          t.start()
-         # enable to serialize t.join()
+         t.join()
          threads.append( t )
 
     for t in threads:
-        t.join()
+        pass #t.join()
 
+    time.sleep(120)
+    threads = []
+    for s in VMids:
+         cmd = 'xe vm-start vm={0}'.format( s )
+         t = Thread(target=executeRemoteCommand, args=(cmd,))
+         t.start()
+         t.join()
+         threads.append( t )
+
+    for t in threads:
+        pass #t.join()
+
+
+    # and then verify they are up
+    for s in platformDescriptor['windows']['servers']:
+        retries = 0
+        while retries < 5:
+            response = os.system("ping -c 1 -w2 " + s + " > /dev/null 2>&1")
+            print s, 'response is', response
+            if response == 0:
+                break
+            else:
+                print 'sleeping'
+                time.sleep(20)
+                retries = retries + 1
+
+        if retries == 5: return False
+
+    return True
 
 def updateSpecFile( fileName, os):
 
@@ -227,8 +259,12 @@ def runPerfRunner( testDescriptor, options):
 
     if options.os == 'windows':
         print 'start reset windows servers'
-        resetWindowsServers()
-        print 'done reset windows servers'
+        res = resetWindowsServers()
+        print 'done reset windows servers', res
+        if not res:   # heck the Windows servers are not in good shape
+            return  [{'pass':False, 'reason':'Failure during Windows snapshot revert'}]
+
+
 
 
     if options.os != 'centos':
@@ -246,7 +282,6 @@ def runPerfRunner( testDescriptor, options):
          for s in spec:
              updateSpecFile( s, options.os )
 
-    #return
 
     KPIs = testDescriptor['KPIs']
 

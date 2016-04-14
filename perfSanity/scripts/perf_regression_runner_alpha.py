@@ -189,7 +189,7 @@ def resetWindowsServers():
     RETRY_COUNT = 10
     for s in platformDescriptor['windows']['servers']:
         retries = 0
-        print 'pinging', s,
+        print '\npinging', s,
         while retries < RETRY_COUNT:
             response = os.system("ping -c 1 -w2 " + s + " > /dev/null 2>&1")
             print 'response ', response,

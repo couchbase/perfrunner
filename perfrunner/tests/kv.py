@@ -237,7 +237,7 @@ class WarmupTest(PerfTest):
             for bucket in self.test_config.buckets:
                 warmup_time += self.monitor.monitor_warmup(self.memcached,
                                                            master, bucket)
-        return round(warmup_time / 10 ** 6 / 60, 1)  # min
+        return round(warmup_time / 10 ** 6 / 60, 2)  # min
 
     def run(self):
         self.load()

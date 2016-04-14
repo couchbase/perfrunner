@@ -186,7 +186,7 @@ def resetWindowsServers():
 
 
     # and then verify they are up
-    RETRY_COUNT = 10
+    RETRY_COUNT = 40
     for s in platformDescriptor['windows']['servers']:
         retries = 0
         print '\npinging', s,
@@ -197,7 +197,7 @@ def resetWindowsServers():
                 break
             else:
                 print 'sleeping',
-                time.sleep(20)
+                time.sleep(15)
                 retries = retries + 1
 
         if retries == RETRY_COUNT: return False
@@ -532,7 +532,7 @@ def main():
 
     for row in tests:
         try:
-            if row['status'].lower() == 'disabled':
+            if row['status'].lower() == 'disabled' or (options.os == 'windows' and 'secondary' in row['testName']):
                 print row['testName'], ' is disabled.'
             else:
                 if not runTest( row, options, bucket, considerRerun=options.rerun ):

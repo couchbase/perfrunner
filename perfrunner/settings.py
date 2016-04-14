@@ -588,6 +588,7 @@ class XDCRSettings(object):
     XDCR_REPLICATION_TYPE = 'bidir'
     XDCR_REPLICATION_PROTOCOL = None
     XDCR_USE_SSL = False
+    XDCR_USE_CA_CERT = False
     WAN_ENABLED = False
     FILTER_EXPRESSION = None
 
@@ -597,6 +598,7 @@ class XDCRSettings(object):
         self.replication_protocol = options.get('replication_protocol',
                                                 self.XDCR_REPLICATION_PROTOCOL)
         self.use_ssl = int(options.get('use_ssl', self.XDCR_USE_SSL))
+        self.use_ca_cert = int(options.get('use_ca_cert', self.XDCR_USE_CA_CERT))
         self.wan_enabled = int(options.get('wan_enabled', self.WAN_ENABLED))
         self.filter_expression = options.get('filter_expression', self.FILTER_EXPRESSION)
 

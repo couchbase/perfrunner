@@ -1,5 +1,8 @@
 from time import sleep
 
+from subprocess import call
+import shutil
+
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import log_phase, target_hash
 from perfrunner.settings import TargetSettings
@@ -161,11 +164,29 @@ class XdcrInitTest(SymmetricXdcrTest):
         self.enable_xdcr()
         self.monitor_replication()
 
+    def _setup_ca_certs(self):
+        print "Reverting to original state - regenerating certificate and removing inbox folder"
+        for server in self.cluster_spec.yield_servers():
+            self.rest.regenerate_cluster_certificate(server)
+        self.remote.delete_inbox_folder()
+        SSLtype = 'go'
+        encryption_type = ''
+        key_length = 1024
+        self.remote.generate_certs(type=SSLtype, encryption=encryption_type, key_length=key_length)
+
+        shutil.rmtree('/tmp/newcerts/')
+        call(["mkdir", "/tmp/newcerts/"])
+
+        self.remote.copy_folder_locally('/tmp/newcerts/', '/tmp/')
+        self.remote.setup_master_ca_cert("/tmp/newcerts/", "/opt/couchbase/var/lib/couchbase/inbox/")
+        self.remote.setup_cluster_nodes("/opt/couchbase/var/lib/couchbase/inbox/")
+
     def run(self):
         self.load()
         self.wait_for_persistence()
         self.compact_bucket()
-
+        if self.settings.use_ca_cert:
+            self._setup_ca_certs()
         from_ts, to_ts = self.init_xdcr()
         time_elapsed = (to_ts - from_ts) / 1000.0
         rate = self.metric_helper.calc_avg_replication_rate(time_elapsed)

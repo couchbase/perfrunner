@@ -622,6 +622,14 @@ class RestHelper(object):
 
         logger.info("Actually indexed {}".format(curr_num_indexed))
 
+    def regenerate_cluster_certificate(self, host_port):
+        api = 'http://{}/controller/regenerateCertificate'.format(host_port)
+        response = self.post(url=api)
+        if not response.ok:
+            logger.error("Unable to regenerateCertificate", response.content)
+        else:
+            logger.debug("Regenerated Certificate", response.content)
+
 
 class SyncGatewayRequestHelper(RestHelper):
 

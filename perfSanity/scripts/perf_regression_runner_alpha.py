@@ -547,7 +547,7 @@ def main():
 
     for row in tests:
         try:
-            if row['status'].lower() == 'disabled' or (options.os == 'windows' and 'secondary' in row['testName']):
+            if row['status'].lower() == 'disabled':
                 print row['testName'], ' is disabled.'
             else:
                 if not runTest( row, options, bucket, considerRerun=options.rerun ):

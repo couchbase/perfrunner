@@ -92,7 +92,7 @@ def run_with_timeout(cmd, env, timeout_sec):
 
 
 
-def checkResults( results, testDescriptor):
+def checkResults( results, testDescriptor, operatingSystem):
             #print '\n\nthe results are', results
             p = re.compile(r'Dry run stats: {(.*?)}', re.MULTILINE)
             matches = p.findall(results.replace('\n', ''))
@@ -106,6 +106,20 @@ def checkResults( results, testDescriptor):
             expected_keys = testDescriptor['KPIs']
             for k in expected_keys.keys():
                 haveAMatch = False
+
+                if type(expected_keys[k]) is int or type(expected_keys[k]) is float:
+                     #print 'have old style kpi'
+                     expected = expected_keys[k]
+                elif type(expected_keys[k]) is dict:
+                     #print 'have a new style dict'
+                     if operatingSystem in expected_keys[k]:
+                         expected = expected_keys[ k ] [operatingSystem] 
+                     else:
+                         print 'unsupported os', operatingSystem
+                else:
+                     print 'unexpected type', type(expected_keys[k])
+                #print 'expected is', expected
+
                 for i in actual_values.keys():
                     if k in i:
                         haveAMatch = True
@@ -114,18 +128,18 @@ def checkResults( results, testDescriptor):
                         
                 if haveAMatch:
                     passResult = True
-                    if actual_values[actualIndex]['value'] > 1.1 * expected_keys[k]:
+                    if actual_values[actualIndex]['value'] > 1.1 * expected:
                         passResult = False
-                        print '  ', k, ' is greater than expected. Expected', expected_keys[k], 'Actual', actual_values[actualIndex][
+                        print '  ', k, ' is greater than expected. Expected', expected, 'Actual', actual_values[actualIndex][
                             'value']
 
-                    elif actual_values[actualIndex]['value'] < 0.9 * expected_keys[k]:
+                    elif actual_values[actualIndex]['value'] < 0.9 * expected:
                         passResult = False
                         # sort of want to yellow flag this but for now all we have is a red flag so use that
-                        print '  ', k, ' is less than expected. Expected', expected_keys[k], 'Actual', actual_values[actualIndex][
+                        print '  ', k, ' is less than expected. Expected', expected, 'Actual', actual_values[actualIndex][
                             'value']
 
-                    results.append({'testMetric':k, 'expectedValue':expected_keys[k], 'actualValue':actual_values[actualIndex]['value'], 'pass':passResult})
+                    results.append({'testMetric':k, 'expectedValue':expected, 'actualValue':actual_values[actualIndex]['value'], 'pass':passResult})
                     del actual_values[actualIndex]
                 else:
                     print '  Expected key', k, ' is not found'
@@ -260,6 +274,7 @@ def runPerfRunner( testDescriptor, options):
         spec = ['perfSanity/clusters/' + options.specFile + '.spec']
 
     if options.os == 'windows':
+
         print 'start reset windows servers'
         res = resetWindowsServers()
         print 'done reset windows servers', res
@@ -376,7 +391,7 @@ def runPerfRunner( testDescriptor, options):
         #return [{'pass':False, 'reason':'test timed out'}]
     else:
         print '\n\nWorkload complete, analyzing results'
-        return checkResults( workload_output, testDescriptor)
+        return checkResults( workload_output, testDescriptor, options.os)
 
 
 def runForestDBTest( testDescriptor, options):
@@ -404,7 +419,7 @@ def runForestDBTest( testDescriptor, options):
         print '  Have an error during forest DB'
         return [{'pass':False, 'reason':'Check logs'}]
     else:
-        return checkResults( commandOutput, testDescriptor)
+        return checkResults( commandOutput, testDescriptor, options.os)
 
 
 def runTest( testDescriptor, options, bucket, considerRerun ):

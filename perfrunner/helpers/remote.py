@@ -123,14 +123,14 @@ class RemoteLinuxHelper(object):
 
     @single_host
     def build_secondary_index(self, index_nodes, bucket, indexes, fields,
-                              secondarydb, where_map):
+                              secondarydb, where_map, commandPath='/opt/couchbase/bin/'):
         logger.info('building secondary indexes')
 
         # Remember what bucket:index was created
         bucket_indexes = []
 
         for index, field in zip(indexes, fields):
-            cmd = "/opt/couchbase/bin/cbindex"
+            cmd = commandPath + "cbindex"
             cmd += ' -auth=Administrator:password'
             cmd += ' -server {}'.format(index_nodes[0])
             cmd += ' -type create -bucket {}'.format(bucket)
@@ -178,7 +178,7 @@ class RemoteLinuxHelper(object):
         time.sleep(10)
 
         # build indexes
-        cmdstr = '/opt/couchbase/bin/cbindex -auth="Administrator:password"'
+        cmdstr = commandPath + 'cbindex -auth="Administrator:password"'
         cmdstr += ' -server {}'.format(index_nodes[0])
         cmdstr += ' -type build'
         cmdstr += ' -indexes {}'.format(",".join(bucket_indexes))
@@ -818,3 +818,10 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
 
     def tune_log_rotation(self):
         pass
+
+
+    def build_secondary_index(self, index_nodes, bucket, indexes, fields,
+                              secondarydb, where_map):
+
+        super(RemoteWindowsHelper, self).build_secondary_index(index_nodes, bucket, indexes, fields,
+                              secondarydb, where_map, commandPath='/cygdrive/c/program\\ files/Couchbase/Server/bin/')

@@ -404,10 +404,10 @@ def do_sabre_benchmarks(conn, rest, host_ip, remote, cluster_spec):
     order by F, D, A
     limit 10"""
 
-    command_list.append(
+    #command_list.append(
             {'queryDesc':'Q2', 'query': select_query2, 'expected_elapsed_time': 1.0, 'expected_execution_time': 1.0, 'execution_count': 10})
 
-    command_list.append(
+    #command_list.append(
             {'index': 'create index min_price_min_stop '
                       'on sabre (AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureAirport.LocationCode,'
                       'AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[1].ArrivalAirport.LocationCode,'
@@ -433,10 +433,10 @@ def do_sabre_benchmarks(conn, rest, host_ip, remote, cluster_spec):
     ORDER BY Fare, Flight_Segment, Depart_Time, Arrival_Time
     LIMIT 10"""
 
-    command_list.append(
+    #command_list.append(
             {'queryDesc':'Q3', 'query': select_query3, 'expected_elapsed_time':  1.09, 'expected_execution_time':  1.09, 'execution_count': 10})
 
-    command_list.append(
+    #command_list.append(
             {'index': 'create index one_way_direction '
                       'on sabre (AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[0].DepartureAirport.LocationCode,'
                       'AirItinerary.OriginDestinationOptions.OriginDestinationOption[0].FlightSegment[1].ArrivalAirport.LocationCode,'

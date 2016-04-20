@@ -229,7 +229,7 @@ class MetricHelper(object):
             timings += [value['latency_query'] for value in data.values()]
         query_latency = np.percentile(timings, percentile)
 
-        return round(query_latency), metric, metric_info
+        return round(query_latency,2), metric, metric_info
 
     def calc_secondaryscan_latency(self, percentile):
         metric = '{}_{}'.format(self.test_config.name, self.cluster_spec.name)

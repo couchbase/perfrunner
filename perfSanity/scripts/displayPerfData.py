@@ -158,8 +158,12 @@ def main():
             environmentalIssues.append( row )
 
 
-    print 'Performance Daily Sanity {0}: {1} total tests results, {2} failures'.format( options.version, len(passingTests) + len(failingTests) + len(environmentalIssues), \
-         len(failingTests) )
+    summary = 'Performance Daily Sanity {0}: {1} total tests, {2} pass, {3} failures'.format( options.version,
+                 len(passingTests) + len(failingTests) + len(environmentalIssues),  len(passingTests),
+                    len(failingTests) )
+    if len(environmentalIssues) > 0:
+        summary = '{0} and {1} tests without results due to enviromental issues'.format( summary, len(environmentalIssues) )
+    print summary
 
 
     if len(failingTests) > 0:

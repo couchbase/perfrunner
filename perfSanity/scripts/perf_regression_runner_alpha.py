@@ -170,7 +170,7 @@ def executeRemoteCommand( cmd ):
        #print 'stderr', stderr
 
 
-revertUUIDs = ['193abf84-c8ca-bbcc-53a0-b8a0a81d988a', 'e34fe799-8e7e-23fe-979c-da88efa3d497', '18e2f825-4274-4def-a4e2-4969db22cb50' ]
+revertUUIDs = ['fb4e923d-bff4-c3e0-6434-8657b8b5724a', 'fbddb566-51f4-0de5-f1a1-f6d33ef97793', '68752cfe-146d-7a2d-528c-b7f6b9a74eed' ]
 
 VMids = ['s72606-w12r2-cbit-4683', 's72607-w12r2-cbit-4683', 's72608-w12r2-cbit-4683']
 

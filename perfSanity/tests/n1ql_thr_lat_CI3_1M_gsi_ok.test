@@ -5,7 +5,7 @@ summary = Range Scan, 14.4KGops, 3.6KSops, 200Qops
 larger_is_better = false
 
 [cluster]
-mem_quota = 8040
+mem_quota = 8048
 index_mem_quota = 1000
 initial_nodes = 3
 num_buckets = 1

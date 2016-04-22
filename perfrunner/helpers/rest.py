@@ -30,8 +30,9 @@ def retry(method, *args, **kwargs):
             logger.warn(r.text)
             logger.warn('Retrying {}'.format(r.url))
             time.sleep(RETRY_DELAY)
-    logger.interrupt('Request {} failed after {} attempts: {}'.format(
-        r.url, MAX_RETRY, r.text))
+    logger.interrupt('Request {} failed after {} attempts'.format(
+        r.url, MAX_RETRY
+    ))
 
 
 class RestHelper(object):

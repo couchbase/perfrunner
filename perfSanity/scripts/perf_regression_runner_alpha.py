@@ -159,12 +159,9 @@ def executeRemoteCommand( cmd ):
        ssh = paramiko.SSHClient()
        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
        ssh.connect('172.23.107.51', username='root', password='northscale!23')
-       #trans=ssh.get_transport()
-       #session=trans.open_session()
-       #cmd = 'wbadmin start systemstaterecovery -version:{0} -autoReboot -quiet'.format( windowsVersion[ip] )
-       #print 'the command is ', cmd
+
        stdin, stdout, stderr = ssh.exec_command( cmd )
-       #stdin.close()
+
        for line in stdout.read().splitlines():
            print(line)
        #print 'stderr', stderr
@@ -293,6 +290,10 @@ def runPerfRunner( testDescriptor, options):
 
          # and mess with the memory quota
          cmd = "sed -i 's/mem_quota = 8048/mem_quota = 2048/' {0}".format( testFile )
+         print 'the command is', cmd
+         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+
+         cmd = "sed -i 's/mem_quota = 5000/mem_quota = 2048/' {0}".format( testFile )
          print 'the command is', cmd
          proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
 

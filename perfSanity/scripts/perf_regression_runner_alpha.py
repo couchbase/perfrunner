@@ -371,7 +371,7 @@ def runPerfRunner( testDescriptor, options):
     proc = subprocess.Popen('./perfSanity/scripts/workload_dev.sh', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     workload_output = ''
     for line in iter(proc.stdout.readline, ''):
-       if time.time() - startTime > 7200:   # 2 hours
+       if time.time() - startTime > 4000:   # 1 hour and a bit
             sys.stdout.flush()
             os.kill(proc.pid, signal.SIGUSR1)
             return  [{'pass':False, 'reason':'Command timed out'}]
@@ -396,6 +396,9 @@ def runPerfRunner( testDescriptor, options):
 
 
 def runForestDBTest( testDescriptor, options):
+
+    if options.version == 'windows':
+        return
 
     if options.url is not None:
         print 'runForestDBTest and url option is not supported'
@@ -457,16 +460,16 @@ def runTest( testDescriptor, options, bucket, considerRerun ):
           for i in res:
              if 'pass' in i and not i['pass']:
                 rerun = True
-    if not rerun:   # final answer - write it to the couchbase
-        for i in res:
-            combinedResults = dict(baseResult.items() + i.items()  + {'elapsedTime': round(time.time() - startTime,0)}.items() )
-            print 'the result is ', combinedResults
-            if bucket is not None: 
-                if 'testMetric' in combinedResults:
-                    testKey = combinedResults['testName'] + '-' + combinedResults['testMetric']
-                else:
-                    testKey = combinedResults['testName']
-                bucket.upsert( testStartTime + '-' + options.version + '-' + testKey, combinedResults, format=couchbase.FMT_JSON)
+
+    for i in res:
+        combinedResults = dict(baseResult.items() + i.items()  + {'elapsedTime': round(time.time() - startTime,0)}.items() )
+        print 'the result is ', combinedResults
+        if bucket is not None:
+            if 'testMetric' in combinedResults:
+                testKey = combinedResults['testName'] + '-' + combinedResults['testMetric']
+            else:
+                testKey = combinedResults['testName']
+            bucket.upsert( testStartTime + '-' + options.version + '-' + testKey, combinedResults, format=couchbase.FMT_JSON)
 
     return not rerun
 
@@ -500,12 +503,15 @@ def main():
     parser.add_argument('-p', '--patchScript', dest='patchScript',default=None)
     parser.add_argument('-o', '--os', dest='os',default='centos')
     parser.add_argument('-e', '--rerun', dest='rerun',default=True, action='store_false')
+    parser.add_argument('-y', '--queryOnly', dest='queryOnly',default=False, action='store_true')
 
     options = parser.parse_args()
 
 
 
     print 'query', options.query
+
+
     print 'specfile', options.specFile
 
 
@@ -516,6 +522,8 @@ def main():
 
     print 'rerun', options.rerun
     print 'url', options.url
+    releaseVersion = float( '.'.join( options.version.split('.')[:2]) )
+    print 'the release version is', releaseVersion
 
     # open the bucket
     if options.nop:
@@ -538,12 +546,18 @@ def main():
        for i in range(len(wherePredicates)):
             queryString += ' and ' + wherePredicates[i]
 
+    # check for versioning
+    queryString += ' and (implementedIn is missing or {0} >= implementedIn)'.format( releaseVersion)
+
     print 'the query string is', queryString
     query = N1QLQuery(queryString )
     testsToRun = testBucket.n1ql_query( queryString )
     tests = [row for row in testsToRun]
-    print 'the tests are', tests
+    print 'the tests are', len(tests), tests
     testsToRerun = []
+
+    if options.queryOnly:
+        return
 
 
     for row in tests:

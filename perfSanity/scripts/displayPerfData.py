@@ -107,8 +107,8 @@ def main():
 
     # query for everything based on the run id
     queryBaseString = """
-    select testName, testMetric, pass, expectedValue,actualValue,`build`, reason from `Daily-Performance`
-    where runStartTime = '{0}' and `build`='{1}'  order by pass;
+    select testName, testMetric, pass, expectedValue,actualValue,`build`,reason,runStartTime from `Daily-Performance`
+    where runStartTime = '{0}' and `build`='{1}'  order by testName, runStartTime;
     """
 
     queryString = queryBaseString.format(options.runStart, options.version)
@@ -159,17 +159,33 @@ def main():
                 passingTests.append( row)
 
                 # check if this test failed previously
-                for i in failingTests:
-                    if row['testName'] == i['testName']:
+                testToRemove = -1
+                for i in range(len(failingTests)):
+                    if row['testName'] == failingTests[i]['testName'] and \
+                            row['testMetric'] == failingTests[i]['testMetric']:
                         # remove from the failed test
-                        failingTests.remove(i)
-                        passedOnSecondRun.append(i)
+                        testToRemove = i
+                        passedOnSecondRun.append(failingTests[i])
                         break
+                if testToRemove >= 0:
+                    failingTests.pop(testToRemove)
 
                     # and add to the needed rerun list
             else:
                 # check if this test failed already
-                if row['testName'] not in [i['testName']  for i in failingTests ]:
+                alreadyRun = False
+                for i in failingTests:
+                    if row['testMetric'] == i['testMetric'] and row['testName'] == i['testName']:
+                        alreadyRun =True
+                        break
+
+                for i in passingTests:
+                    if row['testMetric'] == i['testMetric'] and row['testName'] == i['testName']:
+                        alreadyRun =True
+                        break
+
+
+                if not alreadyRun:
                     failingTests.append( row )
         else:
             environmentalIssues.append( row )

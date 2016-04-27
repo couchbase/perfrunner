@@ -124,6 +124,7 @@ def main():
     stabilizingTests = []
     environmentalIssues = []
     passedOnSecondRun  = []
+    failedOnSecondRun = []
 
 
 
@@ -155,38 +156,45 @@ def main():
 
             if row['status'] == 'beta' or row['notes'] == 'stabilizing':
                 stabilizingTests.append( row)
-            elif row['pass']:
-                passingTests.append( row)
-
-                # check if this test failed previously
-                testToRemove = -1
-                for i in range(len(failingTests)):
-                    if row['testName'] == failingTests[i]['testName'] and \
-                            row['testMetric'] == failingTests[i]['testMetric']:
-                        # remove from the failed test
-                        testToRemove = i
-                        passedOnSecondRun.append(failingTests[i])
-                        break
-                if testToRemove >= 0:
-                    failingTests.pop(testToRemove)
-
-                    # and add to the needed rerun list
             else:
                 # check if this test failed already
-                alreadyRun = False
+                alreadyPassed = False
+                alreadyFailed = False
                 for i in failingTests:
                     if row['testMetric'] == i['testMetric'] and row['testName'] == i['testName']:
-                        alreadyRun =True
+                        alreadyFailed =True
                         break
 
                 for i in passingTests:
                     if row['testMetric'] == i['testMetric'] and row['testName'] == i['testName']:
-                        alreadyRun =True
+                        alreadyPassed =True
                         break
 
+                if row['pass']:
+                    if alreadyPassed:
+                        pass # passed twice, this is a no-op
+                    else:
+                        passingTests.append( row )
+                        if alreadyFailed:
+                            # remove the failing record
+                            testToRemove = -1
+                            for i in range(len(failingTests)):
+                                if row['testName'] == failingTests[i]['testName'] and \
+                                    row['testMetric'] == failingTests[i]['testMetric']:
+                                    testToRemove = i
+                                    passedOnSecondRun.append(failingTests[i])
+                                    break
+                            if testToRemove >= 0:
+                                failingTests.pop(testToRemove)
 
-                if not alreadyRun:
-                    failingTests.append( row )
+                else:   # failed this time
+                    if alreadyFailed:
+                        pass # if failed twice already have it
+                    elif alreadyPassed:
+                        failedOnSecondRun.append( row ) # and keep the pass
+                    else:
+                        failingTests.append( row )
+
         else:
             environmentalIssues.append( row )
 
@@ -230,6 +238,11 @@ def main():
         print format_as_table( sorted(passedOnSecondRun, key=lambda k: k['testName']), ['testName','testMetric','expectedValue','actualValue'],
                                ['Test Name','Metric','Expected','Actual'] )
 
+
+    if len(failedOnSecondRun) > 0:
+        print '\n\nPassed on first run, failed on the second run, these are the second run results:\n'
+        print format_as_table( sorted(failedOnSecondRun, key=lambda k: k['testName']), ['testName','testMetric','expectedValue','actualValue'],
+                               ['Test Name','Metric','Expected','Actual'] )
 
 
 

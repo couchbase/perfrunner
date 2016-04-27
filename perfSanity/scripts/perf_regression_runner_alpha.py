@@ -572,10 +572,10 @@ def main():
             traceback.print_exc()
 
     # end the for loop - print the results
-    print 'tests to rerun are', testsToRerun
+    print 'tests to rerun are', len(testsToRerun), testsToRerun
     if options.rerun:
         for i in testsToRerun: runTest( i, options, bucket, considerRerun=False )
-    print 'done'
+ 
 
 
 if __name__ == "__main__":

@@ -112,10 +112,13 @@ def checkResults( results, testDescriptor, operatingSystem):
                      expected = expected_keys[k]
                 elif type(expected_keys[k]) is dict:
                      #print 'have a new style dict'
-                     if operatingSystem in expected_keys[k]:
-                         expected = expected_keys[ k ] [operatingSystem] 
+
+                     ops = operatingSystem.replace('-dev','')
+                         
+                     if ops in expected_keys[k]:
+                         expected = expected_keys[ k ] [ops]
                      else:
-                         print 'unsupported os', operatingSystem
+                         print 'unsupported os', ops
                          return []
                      
                 else:

@@ -134,6 +134,10 @@ def checkResults( results, testDescriptor, operatingSystem):
                         print 'Larger is Better, so larger expected values are good!'
                         print '  ', k, ' is greater than expected. Expected', expected, 'Actual', actual_values[actualIndex][
                             'value']
+                    elif largerIsBetter is False and actual_values[actualIndex]['value'] < expected:
+                        print 'Larger is Better is False, so lower expected values are good!'
+                        print '  ', k, ' is greater than expected. Expected', expected, 'Actual', actual_values[actualIndex][
+                                                                                                  'value']
                     elif actual_values[actualIndex]['value'] > 1.1 * expected:
                         passResult = False
                         print '  ', k, ' is greater than expected. Expected', expected, 'Actual', actual_values[actualIndex][

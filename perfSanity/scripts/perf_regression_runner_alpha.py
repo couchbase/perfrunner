@@ -112,6 +112,8 @@ def checkResults( results, testDescriptor, operatingSystem):
                      expected = expected_keys[k]
                 elif type(expected_keys[k]) is dict:
                      #print 'have a new style dict'
+                     if larger_is_better in expected_keys[k]:
+                         largerIsBetter = expected_keys[k]['larger_is_better']
                      if operatingSystem in expected_keys[k]:
                          expected = expected_keys[ k ] [operatingSystem] 
                      else:
@@ -128,7 +130,11 @@ def checkResults( results, testDescriptor, operatingSystem):
                         
                 if haveAMatch:
                     passResult = True
-                    if actual_values[actualIndex]['value'] > 1.1 * expected:
+                    if largerIsBetter is True and actual_values[actualIndex]['value'] > expected:
+                        print 'Larger is Better, so larger expected values are good!'
+                        print '  ', k, ' is greater than expected. Expected', expected, 'Actual', actual_values[actualIndex][
+                            'value']
+                    elif actual_values[actualIndex]['value'] > 1.1 * expected:
                         passResult = False
                         print '  ', k, ' is greater than expected. Expected', expected, 'Actual', actual_values[actualIndex][
                             'value']

@@ -98,6 +98,8 @@ def checkResults( results, testDescriptor, operatingSystem):
             matches = p.findall(results.replace('\n', ''))
             results = []
             actual_values = {}
+            larger_is_better = None
+
             for m in matches:
                 #print '\n\nhave a match', m
                 actual = json.loads('{' + m + '}')

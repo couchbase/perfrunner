@@ -45,7 +45,7 @@ workers = 6
 time = 600
 n1ql_queries = singleton-unique-lookup
 n1ql_throughput = 9000
-n1ql_workers = 72
+n1ql_workers = 12
 
 [n1ql-singleton-unique-lookup]
 prepared = singleton_unique_lookup

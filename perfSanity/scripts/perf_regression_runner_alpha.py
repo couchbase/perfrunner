@@ -98,7 +98,6 @@ def checkResults( results, testDescriptor, operatingSystem):
             matches = p.findall(results.replace('\n', ''))
             results = []
             actual_values = {}
-            largerIsBetter = None
 
             for m in matches:
                 #print '\n\nhave a match', m
@@ -108,6 +107,7 @@ def checkResults( results, testDescriptor, operatingSystem):
             expected_keys = testDescriptor['KPIs']
             for k in expected_keys.keys():
                 haveAMatch = False
+                largerIsBetter = None
 
                 if type(expected_keys[k]) is int or type(expected_keys[k]) is float:
                      #print 'have old style kpi'

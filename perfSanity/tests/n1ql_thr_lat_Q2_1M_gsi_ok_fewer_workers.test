@@ -28,7 +28,7 @@ indexes =
     by_email::CREATE INDEX {name} ON `{bucket}` (email) using gsi;
 
 [load]
-items = 1000000
+items = 500000
 size = 1024
 workers = 20
 doc_gen = reverse_lookup

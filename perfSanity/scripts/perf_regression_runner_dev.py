@@ -375,7 +375,7 @@ def runPerfRunner( testDescriptor, options):
 
 
 
-    proc = subprocess.Popen('./perfSanity/scripts/workload_dev.sh', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    proc = subprocess.Popen('./perfSanity/scripts/workload_dev_local.sh', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     workload_output = ''
     for line in iter(proc.stdout.readline, ''):
        if time.time() - startTime > 4000:   # 1 hour and a bit

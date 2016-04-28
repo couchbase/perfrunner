@@ -98,7 +98,7 @@ def checkResults( results, testDescriptor, operatingSystem):
             matches = p.findall(results.replace('\n', ''))
             results = []
             actual_values = {}
-            larger_is_better = None
+            largerIsBetter = None
 
             for m in matches:
                 #print '\n\nhave a match', m
@@ -114,7 +114,7 @@ def checkResults( results, testDescriptor, operatingSystem):
                      expected = expected_keys[k]
                 elif type(expected_keys[k]) is dict:
                      #print 'have a new style dict'
-                     if larger_is_better in expected_keys[k]:
+                     if 'larger_is_better' in expected_keys[k]:
                          largerIsBetter = expected_keys[k]['larger_is_better']
                      if operatingSystem in expected_keys[k]:
                          expected = expected_keys[ k ] [operatingSystem] 

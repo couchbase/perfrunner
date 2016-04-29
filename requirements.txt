@@ -3,7 +3,7 @@ git+https://github.com/couchbase/cbagent.git#egg=cbagent
 celery==3.0.24
 couchbase==1.2.1
 decorator
-pycrypto
+pycrypto==2.6.1
 fabric==1.8.0
 flake8==2.1.0
 jinja2==2.7.2

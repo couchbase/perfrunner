@@ -24,7 +24,7 @@ db_percentage = 100
 view_percentage = 100
 
 [load]
-items = 1000000
+items = 500000
 size = 1024
 workers = 20
 doc_gen = reverse_lookup
@@ -39,13 +39,13 @@ creates = 0
 reads = 80
 updates = 20
 deletes = 0
-throughput = 18000
-items = 1000000
-workers = 24
-time = 1200
+throughput = 180
+items = 1000
+workers = 4
+time = 300
 n1ql_queries = range-scan
-n1ql_throughput = 5000
-n1ql_workers = 72
+n1ql_throughput = 1500
+n1ql_workers = 15
 
 [n1ql-range-scan]
 prepared = range_scan

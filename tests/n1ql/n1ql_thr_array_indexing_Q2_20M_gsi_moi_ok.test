@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
-title = N1QL Q2 Array Indexing 1Bux20Mx1K, Singleton Unique Lookup, 14.4KGops, 3.6KSops, GSI, stale=ok, compaction_mode=full
-summary = Singleton Unique Lookup, 14.4KGops, 3.6KSops
+title = N1QL Q2 Array Indexing 1Bux20Mx1K, Singleton Unique Lookup, 30KSops, GSI, stale=ok, MOI
+summary = Singleton Unique Lookup, 30KSops
 larger_is_better = false
 
 [cluster]
@@ -31,10 +31,10 @@ indexes =
 
 [access]
 creates = 0
-reads = 80
-updates = 20
+reads = 0
+updates = 100
 deletes = 0
-throughput = 18000
+throughput = 30000
 items = 20000000
 workers = 24
 time = 1200

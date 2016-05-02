@@ -14,12 +14,12 @@ add_snapshots = 0
 seriesly_host = 10.5.3.40
 
 [load]
-items = 1000000
+items = 2000000
 size = 2048
 workers = 20
 
 [hot_load]
-items = 1000000
+items = 2000000
 workers = 20
 working_set = 20
 
@@ -29,7 +29,7 @@ reads = 50
 updates = 40
 deletes = 5
 throughput = 10000
-items = 1000000
+items = 2000000
 workers = 8
 working_set = 10
 working_set_access = 98

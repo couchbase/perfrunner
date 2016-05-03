@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
-title = N1QL Q2 Array Indexing 1Bux20Mx1K, Singleton Unique Lookup, 30KSops, GSI, stale=ok, MOI
+title = N1QL Q2 Array Indexing 1Bux20Mx1K, Singleton Unique Lookup, 30KSops, stale=ok, MOI
 summary = Singleton Unique Lookup, 30KSops
 larger_is_better = false
 

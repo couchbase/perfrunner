@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
-title = N1QL Q3 Array Indexing 1Bux20Mx1K, Range Scan, 30KSops, GSI, stale=ok, MOI
+title = N1QL Q3 Array Indexing 1Bux20Mx1K, Range Scan, 30KSops, stale=ok, MOI
 summary = N1QL Q3 Array Indexing Range Scan, 30KSops
 larger_is_better = false
 

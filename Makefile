@@ -1,6 +1,6 @@
 build: ; \
     virtualenv -p python2.7 env; \
-    ./env/bin/pip install --download-cache /tmp/pip -r requirements.txt
+    ./env/bin/pip install -r requirements.txt
 
 clean: ; \
     rm -fr env; \

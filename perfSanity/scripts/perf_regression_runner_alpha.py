@@ -69,6 +69,7 @@ def kill_proc(proc, timeout):
   proc.kill()
 
 def run_with_timeout(cmd, env, timeout_sec):
+
   print 'the timeout value is', timeout_sec
   proc = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   timeout = {"value": False}
@@ -164,7 +165,8 @@ def checkResults( results, testDescriptor, operatingSystem):
 
 
 
-platformDescriptor = {'windows':{'servers':['172.23.107.100','172.23.107.5','172.23.107.218'],'seriesly':'172.23.107.168','testClient':'172.23.107.168'}}
+platformDescriptor = {'windows':{'servers':['172.23.107.100','172.23.107.5','172.23.107.218'],'seriesly':'172.23.107.168','testClient':'172.23.107.168'},
+                      'centos-dev':{'servers':['10.1.5.23','10.1.5.24','10.1.5.25'],'seriesly':'10.1.5.26','testClient':'10.1.5.26'}}
 
 def executeRemoteCommand( cmd ):
        print 'executing command', cmd
@@ -177,6 +179,7 @@ def executeRemoteCommand( cmd ):
        for line in stdout.read().splitlines():
            print(line)
        #print 'stderr', stderr
+       ssh.close()
 
 
 revertUUIDs = ['fb4e923d-bff4-c3e0-6434-8657b8b5724a', 'fbddb566-51f4-0de5-f1a1-f6d33ef97793', '68752cfe-146d-7a2d-528c-b7f6b9a74eed' ]
@@ -229,6 +232,7 @@ def resetWindowsServers():
 
 def updateSpecFile( fileName, os):
 
+    print 'updating the spec file ', fileName, 'for os', os
     f = open(fileName)
     data = f.readlines()
     f.close()
@@ -353,9 +357,9 @@ def runPerfRunner( testDescriptor, options):
             print 'Setup complete, starting workload'
 
     """ revert the hang detection - it did not detect the hang and suppressed the output
-    rc, stdout, stderr, timeout = run_with_timeout( './perfSanity/scripts/workload_dev.sh', my_env, 7200)  # 2 hours
+    #rc, stdout, stderr, timeout = run_with_timeout( './perfSanity/scripts/workload_dev.sh', my_env, 30)  # 2 hours
+    #rc, stdout, stderr, timeout = run_with_timeout( './perfSanity/scripts/workload_dev.sh', my_env, 30)  # 2 hours
     print 'rc is', rc
-    print 'timeout is', timeout
     print 'stderr', stderr
     print 'stdout is', stdout
     """
@@ -393,6 +397,7 @@ def runPerfRunner( testDescriptor, options):
     (stdoutdata, stderrdata) = proc.communicate()
 
     print 'stderrdata', stderrdata
+    print 'the return code is', proc.returncode
 
 
 
@@ -516,6 +521,7 @@ def main():
     parser.add_argument('-o', '--os', dest='os',default='centos')
     parser.add_argument('-e', '--rerun', dest='rerun',default=True, action='store_false')
     parser.add_argument('-y', '--queryOnly', dest='queryOnly',default=False, action='store_true')
+    parser.add_argument('-t', '--test', dest='test',default=False, action='store_true')   # run the test file only
 
     options = parser.parse_args()
 
@@ -544,22 +550,29 @@ def main():
         bucket = Bucket('couchbase://'+ '172.23.105.177:8091/Daily-Performance')
 
     testBucket = Bucket('couchbase://'+ '172.23.105.177:8091/Daily-Performance-Tests')
-    queryString = "select `Daily-Performance-Tests`.* from `Daily-Performance-Tests` where status != 'unimplemented'"
-    wherePredicates = []
-    if options.query is not None:
-        wherePredicates.append( ' '.join(options.query) )
-    if not options.allTests:
-        if options.betaTests:
-            wherePredicates.append( "status='beta'")
-        else:
-            wherePredicates.append( "status!='beta'")
 
-    if len(wherePredicates) > 0:
-       for i in range(len(wherePredicates)):
-            queryString += ' and ' + wherePredicates[i]
 
-    # check for versioning
-    queryString += ' and (implementedIn is missing or {0} >= implementedIn)'.format( releaseVersion)
+    if options.test:
+        queryString = 'select `Daily-Performance-Tests`.* from `Daily-Performance-Tests` where testName = "test"'
+    else:
+        queryString = "select `Daily-Performance-Tests`.* from `Daily-Performance-Tests` where status != 'unimplemented'"
+        wherePredicates = []
+        if options.query is not None:
+            wherePredicates.append( ' '.join(options.query) )
+        if not options.allTests:
+            if options.betaTests:
+                wherePredicates.append( "status='beta'")
+            else:
+                wherePredicates.append( "status!='beta'")
+   
+        if len(wherePredicates) > 0:
+           for i in range(len(wherePredicates)):
+                queryString += ' and ' + wherePredicates[i]
+
+        # check for versioning
+        queryString += ' and (implementedIn is missing or {0} >= implementedIn)'.format( releaseVersion)
+
+
 
     print 'the query string is', queryString
     query = N1QLQuery(queryString )
@@ -568,13 +581,14 @@ def main():
     print 'the tests are', len(tests), tests
     testsToRerun = []
 
+
     if options.queryOnly:
         return
 
 
     for row in tests:
         try:
-            if row['status'].lower() == 'disabled':
+            if row['status'].lower() == 'disabled' and not options.test:
                 print row['testName'], ' is disabled.'
             else:
                 if not runTest( row, options, bucket, considerRerun=options.rerun ):

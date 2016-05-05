@@ -44,8 +44,8 @@ items = 1000
 workers = 4
 time = 300
 n1ql_queries = range-scan
-n1ql_throughput = 500
-n1ql_workers = 5
+n1ql_throughput = 2000
+n1ql_workers = 12
 
 [n1ql-range-scan]
 prepared = range_scan

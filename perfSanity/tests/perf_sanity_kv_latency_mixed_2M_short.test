@@ -14,7 +14,7 @@ add_snapshots = 0
 seriesly_host = 10.5.3.40
 
 [load]
-items = 200000
+items = 2000
 size = 2048
 workers = 2
 size=2048
@@ -24,8 +24,8 @@ creates = 1
 reads = 50
 updates = 48
 deletes = 1
-throughput = 10000
-items = 20000
+throughput = 1000
+items = 2000
 workers = 2
-time = 120
+time = 60
 

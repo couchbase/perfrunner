@@ -15,6 +15,7 @@ import time
 import traceback
 import string
 import paramiko
+import tempfile
 
 from couchbase.bucket import Bucket
 import couchbase
@@ -70,25 +71,37 @@ def kill_proc(proc, timeout):
 
 def run_with_timeout(cmd, env, timeout_sec):
 
-  print 'the timeout value is', timeout_sec
-  proc = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-  timeout = {"value": False}
-  timer = Timer(timeout_sec, kill_proc, [proc, timeout])
-  timer.start()
 
-  # real time output is handy but it didn't seem to work with the timeout stuff
-  #for line in iter(proc.stdout.readline, ''):
-        #print 'workload line', line
-        #workload_output += line
+  outFile =  tempfile.NamedTemporaryFile() 
+  errFile =   tempfile.NamedTemporaryFile() 
+  print 'outfile', outFile.name, ' errFile', errFile.name
 
+  proc = subprocess.Popen(cmd, env=env, stdout=outFile, stderr=errFile)
 
+  wait_remaining_sec = timeout_sec
+  while proc.poll() is None and wait_remaining_sec > 0:
+      time.sleep(5)
+      wait_remaining_sec -= 5
 
-  print 'before communicate'
-  stdout, stderr = proc.communicate()
-  print 'after communicate'
-  timer.cancel()
-  return proc.returncode, stdout.decode("utf-8"), stderr.decode("utf-8"), timeout["value"]
+  if wait_remaining_sec <= 0:
+      print 'Command timed outq'
+      proc.kill()
+      #raise ProcessIncompleteError(proc, timeout)
+      timedOut = True
+  else:
+      timedOut = False
 
+  # read temp streams from start
+  outFile.seek(0);
+  errFile.seek(0);
+  out = outFile.read()
+  err = errFile.read()
+  outFile.close()
+  errFile.close()
+
+  print 'stderr', err
+  print 'stdout', out
+  return timedOut, proc.returncode, out
 
 
 
@@ -340,6 +353,7 @@ def runPerfRunner( testDescriptor, options):
             print 'Skipping Setup for N1QL Q2 queries ... '
             print '-'*100
         else:
+            #break       # uncomment to speed up things
             proc = subprocess.Popen('./scripts/setup.sh', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
 
             for line in iter(proc.stdout.readline, ''):
@@ -356,17 +370,10 @@ def runPerfRunner( testDescriptor, options):
 
             print 'Setup complete, starting workload'
 
-    """ revert the hang detection - it did not detect the hang and suppressed the output
-    #rc, stdout, stderr, timeout = run_with_timeout( './perfSanity/scripts/workload_dev.sh', my_env, 30)  # 2 hours
-    #rc, stdout, stderr, timeout = run_with_timeout( './perfSanity/scripts/workload_dev.sh', my_env, 30)  # 2 hours
-    print 'rc is', rc
-    print 'stderr', stderr
-    print 'stdout is', stdout
-    """
 
     # check for a looping process
-    startTime = time.time()   # in seconds to get the elapsed time
-    sys.stdout.flush()
+    #startTime = time.time()   # in seconds to get the elapsed time
+    #sys.stdout.flush()
 
 
     if options.patchScript is not None:
@@ -384,6 +391,7 @@ def runPerfRunner( testDescriptor, options):
 
 
 
+    """
     proc = subprocess.Popen('./perfSanity/scripts/workload_dev.sh', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     workload_output = ''
     for line in iter(proc.stdout.readline, ''):
@@ -398,15 +406,20 @@ def runPerfRunner( testDescriptor, options):
 
     print 'stderrdata', stderrdata
     print 'the return code is', proc.returncode
+    """
+
+    timedOut, rc, workload_output = run_with_timeout( './perfSanity/scripts/workload_dev.sh', my_env, 4500)  # 1 hour and 15 minutes
+    print 'rc is', rc, 'timedout', timedOut
 
 
 
-    if proc.returncode == 1:
+
+    if timedOut:
+        print '  test timeout'
+        return [{'pass':False, 'reason':'test timed out'}]
+    elif proc.returncode == 1:
         print '  Have an error during workload generation'
         return [{'pass':False, 'reason':'Have an error during workload generation'}]
-    #elif timeout:
-        #print '  test timeout'
-        #return [{'pass':False, 'reason':'test timed out'}]
     else:
         print '\n\nWorkload complete, analyzing results'
         return checkResults( workload_output, testDescriptor, options.os)

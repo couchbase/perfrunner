@@ -427,7 +427,7 @@ def runPerfRunner( testDescriptor, options):
 
 def runForestDBTest( testDescriptor, options):
 
-    if options.version == 'windows':
+    if options.os == 'windows':
         return
 
     if options.url is not None:
@@ -594,6 +594,8 @@ def main():
     print 'the tests are', len(tests), tests
     testsToRerun = []
 
+    NOT_SUPPORTED_FOR_WINDOWS = ['fts']
+
 
     if options.queryOnly:
         return
@@ -603,7 +605,10 @@ def main():
         try:
             if row['status'].lower() == 'disabled' and not options.test:
                 print row['testName'], ' is disabled.'
+            elif options.os == 'windows' and row['testName'] in NOT_SUPPORTED_FOR_WINDOWS:
+                print row['testName'], ' is not supported on Windows.'
             else:
+
                 if not runTest( row, options, bucket, considerRerun=options.rerun ):
                     testsToRerun.append(row)
         except:

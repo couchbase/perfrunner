@@ -93,6 +93,7 @@ def main():
 
     parser.add_option('-r', '--runStart', dest='runStart')
     parser.add_option('-v', '--version', dest='version')
+    parser.add_option('-o', '--os', dest='os',default='centos')
 
     options, args = parser.parse_args()
     summary = []
@@ -107,14 +108,14 @@ def main():
 
     # query for everything based on the run id
     queryBaseString = """
-    select testName, testMetric, pass, expectedValue,actualValue,`build`,reason,runStartTime from `Daily-Performance`
-    where runStartTime = '{0}' and `build`='{1}'  order by testName, runStartTime;
+    select testName, testMetric, pass, expectedValue,actualValue,`build`,reason,runStartTime, os from `Daily-Performance`
+    where runStartTime = '{0}' and `build`='{1}' and os ='{2}' order by testName, runStartTime;
     """
 
-    queryString = queryBaseString.format(options.runStart, options.version)
+    queryString = queryBaseString.format(options.runStart, options.version, options.os)
 
 
-    #print 'the query is', queryString #.format(options.run, componentString)
+    print 'the query is', queryString
     query = N1QLQuery(queryString )
     results = resultsBucket.n1ql_query( queryString )
 
@@ -129,7 +130,7 @@ def main():
 
 
     for row in results:
-        #print 'row is ',row
+        print 'row is ',row
         # a bit of a hack to remove the redundant information
         #print 'the row is', row
         row['testName'] = row['testName'].replace('perf_sanity_','')   #perf_sanity_....   .test

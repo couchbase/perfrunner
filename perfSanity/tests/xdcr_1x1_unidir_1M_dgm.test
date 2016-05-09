@@ -16,7 +16,7 @@ initial_nodes = 1 1
 num_buckets = 2
 
 [internal]
-OptimisticReplicationThreshold = 0
+optimisticReplicationThreshold = 0
 
 [compaction]
 db_percentage = 90

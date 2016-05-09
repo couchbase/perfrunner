@@ -9,7 +9,7 @@ num_buckets = 1
 [bucket]
 replica_number = 1
 
-[internal]
+[xdcr_cluster]
 optimisticReplicationThreshold = 0
 
 [compaction]

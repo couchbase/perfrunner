@@ -13,7 +13,7 @@ mem_quota = 204800
 initial_nodes = 5 5
 num_buckets = 2
 
-[internal]
+[xdcr_cluster]
 optimisticReplicationThreshold = 0
 
 [compaction]

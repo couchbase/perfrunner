@@ -393,6 +393,12 @@ class RestHelper(object):
         api = 'http://{}/internalSettings'.format(host_port)
         return self.post(url=api, data=data)
 
+    def set_xdcr_cluster_settings(self, host_port, data):
+        logger.info('Updating xdcr cluster settings: {}'.format(data))
+
+        api = 'http://{}/settings/replications'.format(host_port)
+        return self.post(url=api, data=data)
+
     def run_diag_eval(self, host_port, cmd):
         api = 'http://{}/diag/eval'.format(host_port)
         return self.post(url=api, data=cmd).text

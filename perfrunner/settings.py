@@ -255,6 +255,10 @@ class TestConfig(Config):
         return self._get_options_as_dict('internal')
 
     @property
+    def xdcr_cluster_settings(self):
+        return self._get_options_as_dict('xdcr_cluster')
+
+    @property
     def gateway_settings(self):
         options = self._get_options_as_dict('gateway')
         return GatewaySettings(options)

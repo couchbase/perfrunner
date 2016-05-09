@@ -16,7 +16,7 @@ seriesly_host = 10.5.3.40
 [bucket]
 replica_number = 0
 
-[internal]
+[xdcr_cluster]
 optimisticReplicationThreshold = 102400
 
 [compaction]

@@ -143,6 +143,12 @@ class ClusterManager(object):
                 self.rest.set_internal_settings(master,
                                                 {parameter: int(value)})
 
+    def configure_xdcr_settings(self):
+        xdcr_cluster_settings = self.test_config.xdcr_cluster_settings
+        for master in self.masters():
+            for parameter, value in xdcr_cluster_settings.items():
+                self.rest.set_xdcr_cluster_settings(master,
+                        {parameter: int(value)})
     def tweak_memory(self):
         self.remote.reset_swap()
         self.remote.drop_caches()
@@ -262,6 +268,7 @@ def main():
         cm.restart_with_tcmalloc_aggressive_decommit()
         cm.disable_moxi()
     cm.configure_internal_settings()
+    cm.configure_xdcr_settings()
     time.sleep(10)  # dkao: crutch
     cm.set_data_path()
     cm.set_services()

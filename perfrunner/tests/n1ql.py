@@ -166,6 +166,11 @@ class N1QLThroughputLatencyTest(N1QLTest):
     def __init__(self, *args, **kwargs):
         super(N1QLThroughputLatencyTest, self).__init__(*args, **kwargs)
 
+    @with_stats
+    def enable_collectors_and_start_load(self):
+        self.access_bg(self.workload)
+        super(N1QLTest, self).timer()
+
     def run(self):
         load_settings = self.test_config.load_settings
         load_settings.items = load_settings.items / 2
@@ -186,8 +191,7 @@ class N1QLThroughputLatencyTest(N1QLTest):
         self.workload.n1ql_queries = getattr(self, 'n1ql_queries',
             self.workload.n1ql_queries)
 
-        self.access_bg(self.workload)
-        self.access(self.workload)
+        self.enable_collectors_and_start_load()
 
         if self.test_config.stats_settings.enabled:
             self.reporter.post_to_sf(

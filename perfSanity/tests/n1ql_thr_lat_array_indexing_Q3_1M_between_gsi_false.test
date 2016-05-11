@@ -32,12 +32,12 @@ reads = 80
 updates = 20
 deletes = 0
 throughput = 1000
-items = 100000
+items = 10000
 workers = 24
 time = 300
 n1ql_queries = singleton-unique-lookup
 n1ql_throughput = 200
-n1ql_workers = 5
+n1ql_workers = 2
 
 [n1ql-singleton-unique-lookup]
 prepared = singleton_unique_lookup

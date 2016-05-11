@@ -38,7 +38,7 @@ workers = 24
 time = 300
 n1ql_queries = key-value-lookup
 n1ql_throughput = 200
-n1ql_workers = 5
+n1ql_workers = 2
 
 [n1ql-key-value-lookup]
 prepared = key_value_lookup

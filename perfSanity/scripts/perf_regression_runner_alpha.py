@@ -409,7 +409,7 @@ def runPerfRunner( testDescriptor, options):
     """
 
     timedOut, rc, workload_output = run_with_timeout( './perfSanity/scripts/workload_dev.sh', my_env, 4500)  # 1 hour and 15 minutes
-    print 'rc is', rc, 'timedout', timedOut
+
 
 
 
@@ -437,7 +437,7 @@ def runForestDBTest( testDescriptor, options):
     testName = testDescriptor['testName']
 
     command = testDescriptor['command'] + ' --version=' + options.version
-    print 'the command is', command
+    #print 'the command is', command
 
     proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,shell=True)
     commandOutput = ''
@@ -594,7 +594,7 @@ def main():
     print 'the tests are', len(tests), tests
     testsToRerun = []
 
-    NOT_SUPPORTED_FOR_WINDOWS = ['fts']
+    NOT_SUPPORTED_FOR_WINDOWS = ['fts','rebalance_views']   # rebalance views is too slow on Windows
 
 
     if options.queryOnly:

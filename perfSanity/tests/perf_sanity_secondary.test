@@ -33,5 +33,6 @@ field = email
 [access]
 creates = 100
 ops = 200000
+throughput = 10000
 items = 200000
 workers = 2

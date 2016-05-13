@@ -37,7 +37,7 @@ items = 100000
 workers = 24
 time = 300
 n1ql_queries = aggregation-query
-n1ql_throughput = 50
+n1ql_throughput = 20
 n1ql_workers = 1
 
 [n1ql-aggregation-query]

@@ -20,6 +20,7 @@ class CouchbaseInstaller(object):
     LATEST_BUILDS = 'http://latestbuilds.hq.couchbase.com/'
     SHERLOCK_BUILDS = ''
     WATSON_BUILDS = ''
+    SPOCK_BUILDS = ''
 
     def __init__(self, cluster_spec, options):
         self.options = options
@@ -35,6 +36,7 @@ class CouchbaseInstaller(object):
             release, build = options.version.split('-')
             self.SHERLOCK_BUILDS = 'http://latestbuilds.hq.couchbase.com/couchbase-server/sherlock/{}/'.format(build)
             self.WATSON_BUILDS = 'http://172.23.120.24/builds/latestbuilds/couchbase-server/watson/{}/'.format(build)
+	    self.SPOCK_BUILDS = 'http://172.23.120.24/builds/latestbuilds/couchbase-server/spock/{}/'.format(build)
             if options.toy:
                 self.SHERLOCK_BUILDS = 'http://latestbuilds.hq.couchbase.com/couchbase-server/toy-{}/{}/'.format(options.toy, build)
         self.build = Build(arch, pkg, options.cluster_edition, options.version,
@@ -86,7 +88,7 @@ class CouchbaseInstaller(object):
 
     def find_package(self):
         for filename in self.get_expected_filenames():
-            for base in (self.LATEST_BUILDS, self.SHERLOCK_BUILDS, self.WATSON_BUILDS, self.CBFS):
+            for base in (self.LATEST_BUILDS, self.SHERLOCK_BUILDS, self.WATSON_BUILDS, self.SPOCK_BUILDS, self.CBFS):
                 url = '{}{}'.format(base, filename)
                 try:
                     status_code = requests.head(url).status_code

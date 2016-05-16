@@ -16,6 +16,7 @@ import traceback
 import string
 import paramiko
 import tempfile
+import glob
 
 from couchbase.bucket import Bucket
 import couchbase
@@ -421,6 +422,16 @@ def runPerfRunner( testDescriptor, options):
         print '  Have an error during workload generation'
         return [{'pass':False, 'reason':'Have an error during workload generation'}]
     else:
+
+
+        workerFiles = glob.glob('/tmp/worker*bucket*log')
+        for f in workerFiles:
+            print '\n\nWorker log file:', f
+            contents = open(f)
+            print contents.read()
+            os.remove( f )
+
+
         print '\n\nWorkload complete, analyzing results'
         return checkResults( workload_output, testDescriptor, options.os)
 
@@ -555,6 +566,7 @@ def main():
     print 'url', options.url
     releaseVersion = float( '.'.join( options.version.split('.')[:2]) )
     print 'the release version is', releaseVersion
+
 
     # open the bucket
     if options.nop:

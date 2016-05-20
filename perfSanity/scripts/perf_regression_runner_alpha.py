@@ -332,6 +332,12 @@ def runPerfRunner( testDescriptor, options):
              updateSpecFile( s, options.os )
 
 
+    print 'options.cbmonitor', options.cbmonitor
+    if options.cbmonitor is not None:
+         cmd = "sed -i '/\[stats\]/a cbmonitor_host = {0}' {1}".format( options.cbmonitor, testFile )
+         print 'the command is', cmd
+         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+
     KPIs = testDescriptor['KPIs']
 
     my_env = os.environ
@@ -542,6 +548,7 @@ def main():
     parser.add_argument('-a', '--allTests', dest='allTests', default=False, action='store_true')
     parser.add_argument('-n', '--nop', dest='nop',default=False, action='store_true')
     parser.add_argument('-p', '--patchScript', dest='patchScript',default=None)
+    parser.add_argument('-c', '--cbmonitor', dest='cbmonitor',default=None)
     parser.add_argument('-o', '--os', dest='os',default='centos')
     parser.add_argument('-e', '--rerun', dest='rerun',default=True, action='store_false')
     parser.add_argument('-y', '--queryOnly', dest='queryOnly',default=False, action='store_true')

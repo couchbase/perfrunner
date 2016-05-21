@@ -37,7 +37,7 @@ workers = 24
 time = 300
 n1ql_queries = order-by-limit-query
 n1ql_throughput = 50
-n1ql_workers = 1
+n1ql_workers = 2
 
 [n1ql-order-by-limit-query]
 prepared = order_by_limit_query

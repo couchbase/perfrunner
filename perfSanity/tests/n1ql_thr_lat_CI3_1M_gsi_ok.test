@@ -10,6 +10,10 @@ index_mem_quota = 1000
 initial_nodes = 3
 num_buckets = 1
 
+[stats]
+add_snapshots = 0
+seriesly_host = 10.5.3.40
+
 [bucket]
 replica_number = 1
 password =

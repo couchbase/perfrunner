@@ -12,7 +12,6 @@ num_buckets = 1
 
 [stats]
 add_snapshots = 0
-add_snapshots = 0
 seriesly_host = 10.5.3.40
 
 [bucket]

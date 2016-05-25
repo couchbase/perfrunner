@@ -206,7 +206,7 @@ class N1QLThroughputLatencyTest(N1QLTest):
             self.workload.n1ql_throughput = self.workload.n1ql_throughput_max
         else:
             self.workload.n1ql_throughput = 25000
-        self.workload.n1ql_workers =  int(self.workload.n1ql_throughput_max / 90)
+        self.workload.n1ql_workers =  int(self.workload.n1ql_throughput / 90)
 
         self.enable_collectors_and_start_load()
 

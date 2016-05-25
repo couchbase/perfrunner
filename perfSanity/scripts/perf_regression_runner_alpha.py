@@ -424,7 +424,7 @@ def runPerfRunner( testDescriptor, options):
     if timedOut:
         print '  test timeout'
         return [{'pass':False, 'reason':'test timed out'}]
-    elif proc.returncode == 1:
+    elif rc == 1:
         print '  Have an error during workload generation'
         return [{'pass':False, 'reason':'Have an error during workload generation'}]
     else:

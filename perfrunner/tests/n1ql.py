@@ -186,6 +186,8 @@ class N1QLThroughputLatencyTest(N1QLTest):
 
         self._create_prepared_statements()
 
+
+
         self.workload = self.test_config.access_settings
         self.workload.items = self.workload.items / 2
         self.workload.n1ql_queries = getattr(self, 'n1ql_queries',
@@ -194,11 +196,25 @@ class N1QLThroughputLatencyTest(N1QLTest):
         self.enable_collectors_and_start_load()
 
         if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(
-                *self.metric_helper.calc_avg_n1ql_queries()
-            )
+            self.reporter.post_to_sf( *self.metric_helper.calc_avg_n1ql_queries()  )
+
+            self.reporter.post_to_sf(  *self.metric_helper.calc_query_latency(percentile=80))
+
+
+        # run with the maximum throughput, if not specified then pick a big number
+        if self.workload.n1ql_throughput_max < float('inf'):
+            self.workload.n1ql_throughput = self.workload.n1ql_throughput_max
+        else:
+            self.workload.n1ql_throughput = 25000
+        self.workload.n1ql_workers =  int(self.workload.n1ql_throughput_max / 90)
+
+        self.enable_collectors_and_start_load()
 
         if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(
-                *self.metric_helper.calc_query_latency(percentile=80)
-            )
+            throughput, metric, metric_info = self.metric_helper.calc_avg_n1ql_queries()
+            # modify with the metric name
+            self.reporter.post_to_sf( throughput, self.test_config.name+'_max_throughput', metric_info)
+
+
+
+

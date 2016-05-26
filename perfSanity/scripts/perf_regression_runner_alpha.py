@@ -36,30 +36,124 @@ This program parses out the results from the files and compares them against the
 
 
 test_workload_output = '''
-[20/Oct/2015 15:01:26] INFO - Creating new database: iostatperfregression_410-4859-enterprise_27b10170106
-[20/Oct/2015 15:01:29] INFO - Creating new database: ns_serverperfregression_410-4859-enterprise_27bbucket-110170107
-[20/Oct/2015 15:02:08] INFO - Adding snapshot: perfregression_410-4859-enterprise_27b_access
-[20/Oct/2015 15:02:15] INFO - http://cbmonitor.sc.couchbase.com/reports/html/?snapshot=perfregression_410-4859-enterprise_27b_access
-[20/Oct/2015 15:03:04] INFO - http://cbmonitor.sc.couchbase.com/reports/get_corr_matrix/?snapshot=perfregression_410-4859-enterprise_27b_access
-[20/Oct/2015 15:03:31] INFO - Dry run stats: {
-    "build": "4.1.0-4859-enterprise", 
+[26/May/2016 10:23:53] INFO - Creating new database: iostatperfregression_450-2594-enterprise_3ff101525
+[26/May/2016 10:23:53] INFO - Creating new database: netperfregression_450-2594-enterprise_3ff101523
+[26/May/2016 10:23:54] INFO - Creating new database: iostatperfregression_450-2594-enterprise_3ff101523
+[26/May/2016 10:23:54] INFO - Running phase for 60 seconds
+[26/May/2016 10:23:54] INFO - Creating new database: atopperfregression_450-2594-enterprise_3ff101524
+[26/May/2016 10:23:54] INFO - Creating new database: atopperfregression_450-2594-enterprise_3ff101525
+[26/May/2016 10:23:54] INFO - Creating new database: atopperfregression_450-2594-enterprise_3ff101523
+[26/May/2016 10:24:54] INFO - Dry run stats: {
+    "build": "4.5.0-2594-enterprise", 
     "build_url": null, 
-    "metric": "perf_sanity_kv_latency_mixed_2M_short_get_95th_perf_sanity_base_test", 
-    "snapshots": [
-        "perfregression_410-4859-enterprise_27b_access"
-    ], 
-    "value": 0.56
+    "metric": "n1ql_thr_lat_CI3_1M_gsi_ok_avg_query_requests_perf_sanity_n1ql_test", 
+    "snapshots": [], 
+    "value": 120.7
 }
-[20/Oct/2015 15:03:31] INFO - Dry run stats: {
-    "build": "4.1.0-4859-enterprise", 
+[26/May/2016 10:24:54] INFO - Dry run stats: {
+    "build": "4.5.0-2594-enterprise", 
     "build_url": null, 
-    "metric": "perf_sanity_kv_latency_mixed_2M_short_set_95th_perf_sanity_base_test", 
-    "snapshots": [
-        "perfregression_410-4859-enterprise_27b_access"
-    ], 
-    "value": 0.95
+    "metric": "n1ql_thr_lat_CI3_1M_gsi_ok_perf_sanity_n1ql_test", 
+    "snapshots": [], 
+    "value": 6.48
 }
-[20/Oct/2015 15:03:31] INFO - Terminating local Celery workers
+[26/May/2016 10:24:54] INFO - Starting new HTTP connection (1): 10.1.5.25
+[26/May/2016 10:24:54] INFO - Running access phase in background: {
+    "async": false, 
+    "cases": 0, 
+    "creates": 0, 
+    "dcp_workers": 0, 
+    "ddocs": null, 
+    "deletes": 0, 
+    "doc_gen": "reverse_lookup", 
+    "doc_partitions": 1, 
+    "expiration": 0, 
+    "filename": null, 
+    "index_type": null, 
+    "items": 50000, 
+    "iterations": 1, 
+    "n1ql": null, 
+    "n1ql_op": "read", 
+    "n1ql_queries": [
+        {
+            "args": "[\"{capped_small}\"]", 
+            "prepared": "\"range_scan\"", 
+            "scan_consistency": "not_bounded"
+        }
+    ], 
+    "n1ql_throughput": 25000, 
+    "n1ql_throughput_max": Infinity, 
+    "n1ql_workers": 277, 
+    "ops": Infinity, 
+    "qparams": {}, 
+    "query_throughput": Infinity, 
+    "query_workers": 0, 
+    "reads": 80, 
+    "seq_reads": false, 
+    "seq_updates": false, 
+    "size": 1024, 
+    "spatial": {}, 
+    "throughput": 1000.0, 
+    "time": 60, 
+    "updates": 20, 
+    "workers": 24, 
+    "working_set": 100.0, 
+    "working_set_access": 100
+}
+[26/May/2016 10:24:54] INFO - Running workload generator: {
+    "async": false, 
+    "cases": 0, 
+    "creates": 0, 
+    "dcp_workers": 0, 
+    "ddocs": null, 
+    "deletes": 0, 
+    "doc_gen": "reverse_lookup", 
+    "doc_partitions": 1, 
+    "expiration": 0, 
+    "filename": null, 
+    "index_type": null, 
+    "items": 50000, 
+    "iterations": 1, 
+    "n1ql": null, 
+    "n1ql_op": "read", 
+    "n1ql_queries": [
+        {
+            "args": "[\"{capped_small}\"]", 
+            "prepared": "\"range_scan\"", 
+            "scan_consistency": "not_bounded"
+        }
+    ], 
+    "n1ql_throughput": 25000, 
+    "n1ql_throughput_max": Infinity, 
+    "n1ql_workers": 277, 
+    "ops": Infinity, 
+    "qparams": {}, 
+    "query_throughput": Infinity, 
+    "query_workers": 0, 
+    "reads": 80, 
+    "seq_reads": false, 
+    "seq_updates": false, 
+    "size": 1024, 
+    "spatial": {}, 
+    "throughput": 1000.0, 
+    "time": 60, 
+    "updates": 20, 
+    "workers": 24, 
+    "working_set": 100.0, 
+    "working_set_access": 100
+}
+[26/May/2016 10:24:56] INFO - Running phase for 60 seconds
+[26/May/2016 10:25:56] INFO - Dry run stats: {
+    "build": "4.5.0-2594-enterprise", 
+    "build_url": null, 
+    "metric": "max_throughput", 
+    "snapshots": [], 
+    "value": 229.3
+}
+[26/May/2016 10:25:56] INFO - Terminating remote Celery worker
+[26/May/2016 10:25:57] INFO - Cleaning up remote worker environment
+
+
 '''
 
 
@@ -115,7 +209,6 @@ def checkResults( results, testDescriptor, operatingSystem):
             actual_values = {}
 
             for m in matches:
-                #print '\n\nhave a match', m
                 actual = json.loads('{' + m + '}')
                 actual_values[actual['metric']] = actual  # ( json.loads('{' + m + '}') )
 
@@ -141,6 +234,7 @@ def checkResults( results, testDescriptor, operatingSystem):
 
                 for i in actual_values.keys():
                     if k in i:
+                        #print 'have an actual match', i
                         haveAMatch = True
                         actualIndex = i
                         break
@@ -285,7 +379,7 @@ def runPerfRunner( testDescriptor, options):
     print testDescriptor['testType']
     testName = testDescriptor['testName']
 
-
+    #return checkResults( test_workload_output, testDescriptor, options.os)
 
     testFile = 'perfSanity/tests/' + testDescriptor['testFile'] + '.test'
     if options.specFile is None:

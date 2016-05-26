@@ -213,7 +213,7 @@ class N1QLThroughputLatencyTest(N1QLTest):
         if self.test_config.stats_settings.enabled:
             throughput, metric, metric_info = self.metric_helper.calc_avg_n1ql_queries()
             # modify with the metric name
-            self.reporter.post_to_sf( throughput, self.test_config.name+'_max_throughput', metric_info)
+            self.reporter.post_to_sf( throughput, 'max_throughput', metric_info)
 
 
 

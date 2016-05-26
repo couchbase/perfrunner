@@ -196,8 +196,8 @@ class N1QLThroughputLatencyTest(N1QLTest):
         self.enable_collectors_and_start_load()
 
         if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf( *self.metric_helper.calc_avg_n1ql_queries()  )
-
+            orig_throughput, metric, metric_info = self.metric_helper.calc_avg_n1ql_queries() 
+            self.reporter.post_to_sf( orig_throughput, metric, metric_info )
             self.reporter.post_to_sf(  *self.metric_helper.calc_query_latency(percentile=80))
 
 
@@ -212,8 +212,8 @@ class N1QLThroughputLatencyTest(N1QLTest):
 
         if self.test_config.stats_settings.enabled:
             throughput, metric, metric_info = self.metric_helper.calc_avg_n1ql_queries()
-            # modify with the metric name
-            self.reporter.post_to_sf( throughput, 'max_throughput', metric_info)
+            # modify with the metric name, de-average out the throughput
+            self.reporter.post_to_sf( 2 * throughput - orig_throughput, 'max_throughput', metric_info)
 
 
 

@@ -57,7 +57,7 @@ def format_as_table(data,
         # on that length
         header_divider = []
         for name in header:
-            header_divider.append('-' * len(name))
+            header_divider.append('-' * len(name.rstrip()))
 
         # Create a list of dictionary from the keys and the header and
         # insert it at the beginning of the list. Do the same for the
@@ -90,6 +90,14 @@ def format_as_table(data,
     return formatted_data
 
 
+def munge_test_name_and_metric( name, metric):
+    name = name.replace('perf_sanity_','')
+
+    metric = metric.replace('perf_sanity_','').replace('_base_test','') #.replace('_perf_sanity_secondary','')
+    if metric == 'avg_query_requests': metric = 'throughput'
+    if 'n1ql_thr_lat_' in metric : metric= 'latency'
+    return name, metric
+
 def main():
 
     usage = '%prog -f conf-file'
@@ -112,12 +120,16 @@ def main():
     # query for everything based on the run id
     queryBaseString = """
     select testName, testMetric, pass, expectedValue,actualValue,`build`, reason,elapsedTime from `Daily-Performance`
-    where runStartTime = '{0}' and `build`='{1}'  order by testName, pass;
+    where runStartTime = '{0}' and `build`='{1}'  order by testName, testMetric, pass;
     """
 
 
     # get the historical results, for now this is 4.1.1
-    historicalResultDescriptor = [{'release':'4.1.1','build':'5914','runStartTime':'2016-05-21:06:50'}]
+    historicalResultDescriptor = [{'release':'4.1.1','build':'5914','runStartTime':'2016-05-21:06:50'},
+                                  {'release':'4.1.2','build':'6036','runStartTime':'2016-05-30:10:14'},
+                                  {'release':'4.7.0','build':'711','runStartTime':'2016-05-27:17:40'},
+                                ]
+
     historicalReleases = [i['release'] for i in historicalResultDescriptor]
     print 'historicalReleases', historicalReleases
     historicalResults = {}
@@ -130,6 +142,7 @@ def main():
         results = resultsBucket.n1ql_query( queryString )
         for row in results:
             if 'testName' in row and 'testMetric' in row and 'actualValue' in row:
+                row['testName'], row['testMetric'] = munge_test_name_and_metric(row['testName'], row['testMetric'])
                 historicalResults[h['release']] [ row['testName']+'-'+row['testMetric']] = row['actualValue']
             #print row
 
@@ -158,14 +171,18 @@ def main():
         #print 'row is ',row
         # a bit of a hack to remove the redundant information
         #print 'the row is', row
-        row['testName'] = row['testName'].replace('perf_sanity_','')   #perf_sanity_....   .test
+
+
+        #row['testName'] = row['testName'].replace('perf_sanity_','')   #perf_sanity_....   .test
 
         if 'testMetric' in row:
 
+            row['testName'], row['testMetric'] = munge_test_name_and_metric(row['testName'], row['testMetric'])
+
             # munge the names
-            row['testMetric'] = row['testMetric'].replace('perf_sanity_','').replace('_base_test','') #.replace('_perf_sanity_secondary','')
-            if row['testMetric'] == 'avg_query_requests': row['testMetric'] = 'throughput'
-            if 'n1ql_thr_lat_' in row['testMetric'] : row['testMetric'] = 'latency'
+            #row['testMetric'] = row['testMetric'].replace('perf_sanity_','').replace('_base_test','') #.replace('_perf_sanity_secondary','')
+            #if row['testMetric'] == 'avg_query_requests': row['testMetric'] = 'throughput'
+            #if 'n1ql_thr_lat_' in row['testMetric'] : row['testMetric'] = 'latency'
 
 
             # check for other stuff like MBs
@@ -358,6 +375,11 @@ def main():
             if i > 0 and testsWithResults[i-1]['testName'] == testsWithResults[i]['testName']:
                 c['testName'] = ''
                 c['elapsedTime'] = ''
+
+            if i > 1 and testsWithResults[i-2]['testName'] == testsWithResults[i - 1 ]['testName'] and \
+                testsWithResults[i-1]['testName'] != testsWithResults[i]['testName']:
+                allTestResults.append(blankRecord)
+
             allTestResults.append( c )
         for i in testsWithoutResults: allTestResults.append( i )
 
@@ -401,17 +423,22 @@ def main():
             i['testName'] = ''
         i['testName'] = i['testName'].replace('n1ql_thr_lat_','')
         if 'pass' in i and not i['pass']:
-            i['testMetric'] += '*'
+            pass #i['testMetric'] += '*'
 
-        if '4.1.1' not in i: i['4.1.1'] = ''
+        for h in historicalReleases:
+            if h not in i: i[h] = ''
         if 'xdcr_init_1x1_unidir_1M_xdcr_1x1' in i['testMetric']: i['testMetric'] = 'throughput'
 
 
 
     print '\n\nFull report\n'
 
-    print format_as_table( allTestResults, ['testName','testMetric'] + historicalReleases + ['actualValue','notes','elapsedTime'],
-                               ['Test Name','Metric'] + historicalReleases + ['Current','Notes', 'Elapsed Time (min)'] )
+    historicalReleasesHeader = [i['release'] + '-' + i['build'] + '   ' for i in historicalResultDescriptor]
+
+    print format_as_table( allTestResults, ['testName','testMetric'] + historicalReleases[0:-1] +
+                           ['actualValue'] + [historicalReleases[-1]] + ['notes','elapsedTime'],
+                               ['Test Name','Metric'] + historicalReleasesHeader[0:-1] + [options.version] +
+                               [historicalReleasesHeader[-1]] + ['Notes', 'Elapsed Time (min)'] )
 
 
 

@@ -43,6 +43,7 @@ time = 300
 n1ql_queries = aggregation-query
 n1ql_throughput = 300
 n1ql_workers = 5
+n1ql_throughput_max = 400
 
 [n1ql-aggregation-query]
 prepared = aggregation_query

@@ -46,6 +46,7 @@ time = 300
 n1ql_queries = range-scan
 n1ql_throughput = 200
 n1ql_workers = 3
+n1ql_throughput_max = 350
 
 [n1ql-range-scan]
 prepared = range_scan

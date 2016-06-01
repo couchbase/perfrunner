@@ -436,9 +436,9 @@ def main():
     historicalReleasesHeader = [i['release'] + '-' + i['build'] + '   ' for i in historicalResultDescriptor]
 
     print format_as_table( allTestResults, ['testName','testMetric'] + historicalReleases[0:-1] +
-                           ['actualValue'] + [historicalReleases[-1]] + ['notes','elapsedTime'],
+                           ['actualValue'] + [historicalReleases[-1]] + ['notes'], #,'elapsedTime'],
                                ['Test Name','Metric'] + historicalReleasesHeader[0:-1] + [options.version] +
-                               [historicalReleasesHeader[-1]] + ['Notes', 'Elapsed Time (min)'] )
+                               [historicalReleasesHeader[-1]] + ['Notes']) #, 'Elapsed Time (min)'] )
 
 
 

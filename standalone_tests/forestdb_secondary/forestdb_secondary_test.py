@@ -27,7 +27,10 @@ def iter_urls():
     WATSON_BUILDS = (
         'http://172.23.120.24/builds/latestbuilds/couchbase-server/watson/{edition}/')
 
-    search_bases = [SHERLOCK_BUILDS, WATSON_BUILDS]
+    SPOCK_BUILDS = (
+        'http://172.23.120.24/builds/latestbuilds/couchbase-server/spock/{edition}/')
+
+    search_bases = [SHERLOCK_BUILDS, WATSON_BUILDS, SPOCK_BUILDS]
 
     patterns = [
         'couchbase-server-{release}-{edition}-manifest.xml'

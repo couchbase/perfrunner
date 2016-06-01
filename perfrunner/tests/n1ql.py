@@ -202,6 +202,7 @@ class N1QLThroughputLatencyTest(N1QLTest):
 
 
         # run with the maximum throughput, if not specified then pick a big number
+        """
         if self.workload.n1ql_throughput_max < float('inf'):
             self.workload.n1ql_throughput = self.workload.n1ql_throughput_max
         else:
@@ -214,6 +215,7 @@ class N1QLThroughputLatencyTest(N1QLTest):
             throughput, metric, metric_info = self.metric_helper.calc_avg_n1ql_queries()
             # modify with the metric name, de-average out the throughput
             self.reporter.post_to_sf( 2 * throughput - orig_throughput, 'max_throughput', metric_info)
+        """
 
 
 

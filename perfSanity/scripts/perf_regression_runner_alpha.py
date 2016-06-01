@@ -280,7 +280,7 @@ def executeRemoteCommand( cmd ):
        print 'executing command', cmd
        ssh = paramiko.SSHClient()
        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-       ssh.connect('172.23.107.51', username='root', password='northscale!23')
+       ssh.connect('172.23.107.51', username='root', password='xxxxx')
 
        stdin, stdout, stderr = ssh.exec_command( cmd )
 

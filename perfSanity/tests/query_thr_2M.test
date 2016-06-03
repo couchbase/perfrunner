@@ -16,7 +16,7 @@ seriesly_host = 10.5.3.40
 
 
 [load]
-items = 2000000
+items = 200000
 size = 2048
 workers = 20
 
@@ -28,8 +28,8 @@ creates = 4
 reads = 80
 updates = 12
 deletes = 4
-throughput = 10000
-items = 2000000
+throughput = 1000
+items = 200000
 workers = 24
 query_workers = 24
 time = 600

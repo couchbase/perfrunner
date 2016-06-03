@@ -105,6 +105,7 @@ def main():
 
     parser.add_option('-r', '--runStart', dest='runStart')
     parser.add_option('-v', '--version', dest='version')
+    parser.add_option('-p', '--historicalData', dest='historicalData', default=False, action='store_true')
 
     options, args = parser.parse_args()
     summary = []
@@ -124,29 +125,30 @@ def main():
     """
 
 
-    # get the historical results, for now this is 4.1.1
-    historicalResultDescriptor = [{'release':'4.1.1','build':'5914','runStartTime':'2016-05-21:06:50'},
-                                  {'release':'4.1.2','build':'6036','runStartTime':'2016-05-30:10:14'},
-                                  {'release':'4.7.0','build':'711','runStartTime':'2016-05-27:17:40'},
-                                ]
+    if options.historicalData:
+        # get the historical results, for now this is 4.1.1
+        historicalResultDescriptor = [{'release':'4.1.1','build':'5914','runStartTime':'2016-05-21:06:50'},
+                                      {'release':'4.1.2','build':'6036','runStartTime':'2016-05-30:10:14'},
+                                      {'release':'4.7.0','build':'711','runStartTime':'2016-05-27:17:40'},
+                                    ]
 
-    historicalReleases = [i['release'] for i in historicalResultDescriptor]
-    print 'historicalReleases', historicalReleases
-    historicalResults = {}
-    for h in historicalResultDescriptor:
-        print h
-        historicalResults[h['release']] = {}
-        queryString = queryBaseString.format(h['runStartTime'], '{0}-{1}'.format(h['release'], h['build']))
-        query = N1QLQuery(queryString )
-        print 'query:', queryString
-        results = resultsBucket.n1ql_query( queryString )
-        for row in results:
-            if 'testName' in row and 'testMetric' in row and 'actualValue' in row:
-                row['testName'], row['testMetric'] = munge_test_name_and_metric(row['testName'], row['testMetric'])
-                historicalResults[h['release']] [ row['testName']+'-'+row['testMetric']] = row['actualValue']
-            #print row
+        historicalReleases = [i['release'] for i in historicalResultDescriptor]
+        print 'historicalReleases', historicalReleases
+        historicalResults = {}
+        for h in historicalResultDescriptor:
+            print h
+            historicalResults[h['release']] = {}
+            queryString = queryBaseString.format(h['runStartTime'], '{0}-{1}'.format(h['release'], h['build']))
+            query = N1QLQuery(queryString )
+            print 'query:', queryString
+            results = resultsBucket.n1ql_query( queryString )
+            for row in results:
+                if 'testName' in row and 'testMetric' in row and 'actualValue' in row:
+                    row['testName'], row['testMetric'] = munge_test_name_and_metric(row['testName'], row['testMetric'])
+                    historicalResults[h['release']] [ row['testName']+'-'+row['testMetric']] = row['actualValue']
+                #print row
 
-    #print 'historical results', historicalResults
+        #print 'historical results', historicalResults
 
 
 
@@ -198,14 +200,16 @@ def main():
                     row['elapsedTime'] = ''
                 else:
                     row['elapsedTime'] = row['elapsedTime'] /60
-                for h in historicalReleases:
-                    #print 'h is', historicalResults[h]
-                    metric = row['testName']+'-'+row['testMetric']
-                    if metric in historicalResults[h]:
-                        row[h] = historicalResults[h][metric]
-                    else:
-                        row[h] = ''
-                    #print 'h', h, 'row[h]', row[h]
+
+                if options.historicalData:
+                    for h in historicalReleases:
+                        #print 'h is', historicalResults[h]
+                        metric = row['testName']+'-'+row['testMetric']
+                        if metric in historicalResults[h]:
+                            row[h] = historicalResults[h][metric]
+                        else:
+                            row[h] = ''
+                        #print 'h', h, 'row[h]', row[h]
             except:
                 print 'no record for',row['testName']
                 continue
@@ -275,8 +279,8 @@ def main():
     summary = 'Performance Daily Sanity {0}: {1} total tests, {2} pass, {3} failures'.format( options.version,
                  len(passingTests) + len(failingTests) + len(filteredEnvironmentalIssues),  len(passingTests),
                     len(failingTests) )
-    if len(environmentalIssues) > 0:
-        summary = '{0} and {1} tests without results due to enviromental issues'.format( summary, len(filteredEnvironmentalIssues) )
+    #if len(environmentalIssues) > 0:
+        #summary = '{0} and {1} tests without results due to enviromental issues'.format( summary, len(filteredEnvironmentalIssues) )
     print summary
 
 
@@ -425,21 +429,26 @@ def main():
         if 'pass' in i and not i['pass']:
             pass #i['testMetric'] += '*'
 
-        for h in historicalReleases:
-            if h not in i: i[h] = ''
+        if options.historicalData:
+            for h in historicalReleases:
+                if h not in i: i[h] = ''
         if 'xdcr_init_1x1_unidir_1M_xdcr_1x1' in i['testMetric']: i['testMetric'] = 'throughput'
 
 
 
     print '\n\nFull report\n'
 
-    historicalReleasesHeader = [i['release'] + '-' + i['build'] + '   ' for i in historicalResultDescriptor]
+    if options.historicalData:
+        historicalReleasesHeader = [i['release'] + '-' + i['build'] + '   ' for i in historicalResultDescriptor]
 
-    print format_as_table( allTestResults, ['testName','testMetric'] + historicalReleases[0:-1] +
-                           ['actualValue'] + [historicalReleases[-1]] + ['notes'], #,'elapsedTime'],
-                               ['Test Name','Metric'] + historicalReleasesHeader[0:-1] + [options.version] +
-                               [historicalReleasesHeader[-1]] + ['Notes']) #, 'Elapsed Time (min)'] )
+        print format_as_table( allTestResults, ['testName','testMetric'] + historicalReleases[0:-1] +
+                               ['actualValue'] + [historicalReleases[-1]] + ['notes'], #,'elapsedTime'],
+                                   ['Test Name','Metric'] + historicalReleasesHeader[0:-1] + [options.version] +
+                                   [historicalReleasesHeader[-1]] + ['Notes']) #, 'Elapsed Time (min)'] )
+    else:
 
+        print format_as_table( allTestResults, ['testName','testMetric','expectedValue', 'actualValue','notes','elapsedTime'],
+                                   ['Test Name','Metric','Expected', 'Actual', 'Notes', 'Elapsed Time (min)'] )
 
 
 

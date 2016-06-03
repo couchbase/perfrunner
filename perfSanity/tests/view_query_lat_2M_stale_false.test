@@ -35,5 +35,5 @@ throughput = 10000
 query_throughput = 200
 items = 200000
 workers = 12
-query_workers = 12
+query_workers = 20
 time = 600

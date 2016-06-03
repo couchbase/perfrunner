@@ -274,6 +274,7 @@ def checkResults( results, testDescriptor, operatingSystem):
 
 
 platformDescriptor = {'windows':{'servers':['172.23.107.100','172.23.107.5','172.23.107.218'],'seriesly':'172.23.107.168','testClient':'172.23.107.168'},
+                      'centos':{'servers':['10.5.3.42','10.5.3.43','10.5.3.44'],'seriesly':'10.5.3.40','testClient':'10.5.3.40'},
                       'centos-dev':{'servers':['10.1.5.23','10.1.5.24','10.1.5.25'],'seriesly':'10.1.5.26','testClient':'10.1.5.26'}}
 
 def executeRemoteCommand( cmd ):
@@ -405,6 +406,10 @@ def runPerfRunner( testDescriptor, options):
 
 
 
+    # and update spec file with the ips
+    for s in spec:
+         updateSpecFile( s, options.os )
+
 
     if options.os != 'centos':
          # change the .test file to point to the seriesly host
@@ -420,10 +425,6 @@ def runPerfRunner( testDescriptor, options):
          cmd = "sed -i 's/mem_quota = 5000/mem_quota = 2048/' {0}".format( testFile )
          print 'the command is', cmd
          proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
-
-         # and update spec file with the ips
-         for s in spec:
-             updateSpecFile( s, options.os )
 
 
     print 'options.cbmonitor', options.cbmonitor
@@ -696,7 +697,7 @@ def main():
                 queryString += ' and ' + wherePredicates[i]
 
         # check for versioning
-        queryString += ' and (implementedIn is missing or {0} >= implementedIn)'.format( releaseVersion)
+        queryString += ' and (implementedIn is missing or {0} >= tonumber(implementedIn))'.format( releaseVersion)
 
 
 

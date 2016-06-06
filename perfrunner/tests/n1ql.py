@@ -174,7 +174,7 @@ class N1QLThroughputLatencyTest(N1QLTest):
         self.access_bg(self.workload)
         super(N1QLThroughputLatencyTest, self).timer()
 
-    def run(self):
+    def run_disabled(self):
         load_settings = self.test_config.load_settings
         load_settings.items = load_settings.items / 2
 
@@ -241,7 +241,7 @@ class N1QLThroughputLatencyTest(N1QLTest):
         self.reporter.post_to_sf( *self.metric_helper.calc_query_latency(percentile=80) )
 
 
-    def run_disable (self):
+    def run(self):
         logger.info( '\n\nStarting N1QL max throughput identification test' )
         INCREMENT = 0.20
         load_settings = self.test_config.load_settings

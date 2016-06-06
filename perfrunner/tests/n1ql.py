@@ -174,7 +174,7 @@ class N1QLThroughputLatencyTest(N1QLTest):
         self.access_bg(self.workload)
         super(N1QLThroughputLatencyTest, self).timer()
 
-    def run_disabled(self):
+    def run(self):
         load_settings = self.test_config.load_settings
         load_settings.items = load_settings.items / 2
 
@@ -207,7 +207,7 @@ class N1QLThroughputLatencyTest(N1QLTest):
             self.reporter.post_to_sf(  *self.metric_helper.calc_query_latency(percentile=80))
 
 
-        """
+
         # run with the maximum throughput, if not specified then pick a big number
         if self.workload.n1ql_throughput_max < float('inf'):
             self.workload.n1ql_throughput = self.workload.n1ql_throughput_max
@@ -220,9 +220,9 @@ class N1QLThroughputLatencyTest(N1QLTest):
         if self.test_config.stats_settings.enabled:
             throughput, metric, metric_info = self.metric_helper.calc_avg_n1ql_queries()
             # modify with the metric name, de-average out the throughput
-            self.reporter.post_to_sf( throughput , 'max_throughput', metric_info)
-            #self.reporter.post_to_sf( 2 * throughput - orig_throughput, 'max_throughput', metric_info)
-        """
+            #self.reporter.post_to_sf( throughput , 'max_throughput', metric_info)
+            self.reporter.post_to_sf( 2 * throughput - orig_throughput, 'max_throughput', metric_info)
+
 
 
     # the following is code to detect max throughput based on a ramp up and ramp down. It will be selectively enabled
@@ -241,7 +241,7 @@ class N1QLThroughputLatencyTest(N1QLTest):
         self.reporter.post_to_sf( *self.metric_helper.calc_query_latency(percentile=80) )
 
 
-    def run(self):
+    def run_disabled(self):
         logger.info( '\n\nStarting N1QL max throughput identification test' )
         INCREMENT = 0.20
         load_settings = self.test_config.load_settings
@@ -319,7 +319,7 @@ class N1QLThroughputLatencyTest(N1QLTest):
                 if observedThroughput > self.workload.n1ql_throughput * 0.95:
                     logger.info('N1QL: {0} Met the target, ramp up further'.format(observedThroughput))
                 else:
-                    logger.info('N1QL: Ramping down, did not reach the desired throughput, requested {0}, actual {1}'.format(self.workload.n1ql_throughput, observedThroughput) )
+                    logger.info('N1QL: While ramping up, did not reach the desired throughput, requested {0}, actual {1}'.format(self.workload.n1ql_throughput, observedThroughput) )
                     haveIdentifiedThroughput = True    # hit the max
             else:
                 if observedThroughput < self.workload.n1ql_throughput * 0.95:

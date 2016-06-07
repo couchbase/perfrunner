@@ -405,16 +405,6 @@ def main():
 
 
 
-    if len(passingTests) > 0:
-        print '\n\nPassing tests:\n'
-        print format_as_table( sorted(passingTests, key=lambda k: k['testName']), ['testName','testMetric','expectedValue','actualValue'],
-                               ['Test Name','Metric','Expected','Actual'] )
-
-
-    if len(filteredEnvironmentalIssues) > 0:
-        print '\n\nEnvironment issues:\n'
-        print format_as_table( filteredEnvironmentalIssues, ['testName','reason'],
-                           ['Test Name','Reason'] )
 
 
 
@@ -465,6 +455,18 @@ def main():
 
 
 
+
+
+    if len(passingTests) > 0:
+        print '\n\nPassing tests:\n'
+        print format_as_table( sorted(passingTests, key=lambda k: k['testName']), ['testName','testMetric','expectedValue','actualValue'],
+                               ['Test Name','Metric','Expected','Actual'] )
+
+
+    if len(filteredEnvironmentalIssues) > 0:
+        print '\n\nEnvironment issues:\n'
+        print format_as_table( filteredEnvironmentalIssues, ['testName','reason'],
+                           ['Test Name','Reason'] )
 
 
 

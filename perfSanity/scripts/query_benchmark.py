@@ -229,7 +229,7 @@ def do_airline_benchmarks(conn, rest, host_ip, remote, cluster_spec):
             print "ssh Connection Failed"
             return False
 
-        cmd = '/opt/couchbase/bin/cbrestore /root/airline-test-data-updated  couchbase://127.0.0.1:8091 -b ods -B ods -u {0} -p {1}'.format(
+        cmd = '/opt/couchbase/bin/cbrestore /root/united  couchbase://127.0.0.1:8091 -b ods -B ods -u {0} -p {1}'.format(
             rest.rest_username, rest.rest_password)
         stdin, stdout, stderr = ssh.exec_command(cmd)
 
@@ -313,8 +313,8 @@ def do_airline_benchmarks(conn, rest, host_ip, remote, cluster_spec):
     SELECT    INBND_DEST_ARPT_CD
     from ods
     where TYPE = "AIRCRAFT_ROUTING"
-    and  INBND_LCL_EST_ARR_DTM > "2015-07-17"
-    and  INBND_LCL_EST_ARR_DTM < "2015-07-25"
+   and  INBND_LCL_EST_ARR_DTM > "17-07-2015"
+    and  INBND_LCL_EST_ARR_DTM < "25-07-2015"
     and  substr(INBND_LCL_EST_ARR_DTM, 11) < "20:00:00"
     and case when OUTBND_LCL_EST_DEP_DTM is missing then true else substr(OUTBND_LCL_EST_DEP_DTM, 11) > "08:00:00" end
     order by INBND_DEST_ARPT_CD

@@ -1,0 +1,34 @@
+[test_case]
+test = perfrunner.tests.kv.PillowfightTest
+title = Pillowfight, 50/50 R/W x 10M 1K items
+summary = Pillowfight op/sec, 10M items with read heavy workload
+larger_is_better = true
+
+[cluster]
+mem_quota = 1024
+initial_nodes = 1
+num_buckets = 1
+
+[stats]
+add_snapshots = 0
+seriesly_host = 10.5.3.40
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+
+[bucket]
+replica_number = 1
+
+[load]
+size = 1024
+
+[access]
+items = 1000000
+iterations = 1
+workers = 100
+#50/50 read/write
+reads = 50
+updates = 50
+clients_per_cluster = 1

@@ -229,7 +229,7 @@ def do_airline_benchmarks(conn, rest, host_ip, remote, cluster_spec):
             print "ssh Connection Failed"
             return False
 
-        cmd = '/opt/couchbase/bin/cbrestore /root/united  couchbase://127.0.0.1:8091 -b ods -B ods -u {0} -p {1}'.format(
+        cmd = '/opt/couchbase/bin/cbrestore /root/airline-test-data-updated  couchbase://127.0.0.1:8091 -b ods -B ods -u {0} -p {1}'.format(
             rest.rest_username, rest.rest_password)
         stdin, stdout, stderr = ssh.exec_command(cmd)
 
@@ -290,7 +290,6 @@ def do_airline_benchmarks(conn, rest, host_ip, remote, cluster_spec):
 
     """
     MB-18839
-
     command_list.append({
         'index': 'CREATE INDEX IDX_GMT_EST_DEP_DTM ON ods(`GMT_EST_DEP_DTM`) WHERE (`TYPE`="CREW_ON_FLIGHT") USING GSI;',
         'expected_elapsed_time': 38000, 'expected_execution_time': 38000})
@@ -313,8 +312,8 @@ def do_airline_benchmarks(conn, rest, host_ip, remote, cluster_spec):
     SELECT    INBND_DEST_ARPT_CD
     from ods
     where TYPE = "AIRCRAFT_ROUTING"
-   and  INBND_LCL_EST_ARR_DTM > "17-07-2015"
-    and  INBND_LCL_EST_ARR_DTM < "25-07-2015"
+    and  INBND_LCL_EST_ARR_DTM > "2015-07-17"
+    and  INBND_LCL_EST_ARR_DTM < "2015-07-25"
     and  substr(INBND_LCL_EST_ARR_DTM, 11) < "20:00:00"
     and case when OUTBND_LCL_EST_DEP_DTM is missing then true else substr(OUTBND_LCL_EST_DEP_DTM, 11) > "08:00:00" end
     order by INBND_DEST_ARPT_CD
@@ -322,7 +321,7 @@ def do_airline_benchmarks(conn, rest, host_ip, remote, cluster_spec):
     """
 
     command_list.append({'index': big_long_index3, 'expected_elapsed_time': 64000, 'expected_execution_time': 64000})
-    command_list.append({'queryDesc':'Q3', 'query': big_long_query3, 'expected_elapsed_time': 0.95, 'expected_execution_time': 0.95,
+    command_list.append({'queryDesc':'Q3', 'query': big_long_query3, 'expected_elapsed_time': 2300, 'expected_execution_time': 2300,
                          'execution_count': 10})
 
     return execute_commands(conn, command_list, rest, host_ip, 'United-Queries')

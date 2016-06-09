@@ -305,8 +305,8 @@ def main():
     smallerSkeletonRecord = {'expectedValue':'','actualValue':'','elapsedTime':''}
 
     blankRecord = {'testName':'','testMetric':'','expectedValue':'','actualValue':'','elapsedTime':'','notes':''}
-    components = ['forest','dcp', 'kv', 'reb','view','xdcr','secondary','n1ql','fts','beer','united','sabre']
-    componentNames = { 'forest':'Forest DB','reb':'Rebalance',
+    components = ['forest','dcp', 'kv', 'reb','view','xdcr', 'restore', 'secondary','n1ql','fts','beer','united','sabre']
+    componentNames = { 'forest':'Forest DB','reb':'Rebalance', 'restore':'Restore',
                      'view':'Views','secondary':'2i','beer':'Beer queries', 'united':'United Queries',
                      'sabre':'Sabre Queries'}
     componentSummary = {}

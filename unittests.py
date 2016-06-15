@@ -1,9 +1,10 @@
+import glob
 from unittest import TestCase
 
 from mock import patch
 
 from perfrunner.helpers.misc import target_hash, server_group
-from perfrunner.settings import TestConfig
+from perfrunner.settings import ClusterSpec, TestConfig
 from perfrunner.utils.install import CouchbaseInstaller, Build
 from perfrunner.workloads.tcmalloc import (KeyValueIterator,
                                            LargeIterator)
@@ -142,6 +143,13 @@ class SettingsTest(TestCase):
         test_config.parse('tests/query_lat_20M_state_false.test', [])
         views_params = test_config.index_settings.params
         self.assertEqual(views_params, {'stale': 'false'})
+
+    def test_cluster_specs(self):
+        for file_name in glob.glob("clusters/*.spec"):
+            cluster_spec = ClusterSpec()
+            cluster_spec.parse(file_name, override=())
+            self.assertIn(cluster_spec.parameters['Platform'],
+                          ('HW', 'Virtual', 'Localhost'))
 
 
 class WorkloadTest(TestCase):

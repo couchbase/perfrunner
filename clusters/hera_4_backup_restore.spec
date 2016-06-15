@@ -21,8 +21,8 @@ rest = Administrator:password
 ssh = root:couchbase
 
 [parameters]
-Platform = Physical
-OS = Centos 6.6
-CPU = Intel(R) Xeon(R) CPU E5-2630 v3 @ 2.40GHz
+Platform = HW
+OS = CentOS 6
+CPU = CPU E5-2630 v3 (32 vCPU)
 Memory = 64GB
-Disk = HDD
+Disk = SSD

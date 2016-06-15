@@ -16,8 +16,8 @@ rest = Administrator:password
 ssh = root:couchbase
 
 [parameters]
-Platform = Physical
-OS = Ubuntu 13.04
-CPU = Intel Xeon E5-4610 (48 vCPU)
+Platform = HW
+OS = Ubuntu 14.04
+CPU = E5-4610 (48 vCPU)
 Memory = 256 GB
-Disk = 2 x SSD
+Disk = SSD

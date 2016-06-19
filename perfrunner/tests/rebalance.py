@@ -338,3 +338,78 @@ class RebalanceWithSymmetricXdcrTest(SymmetricXdcrTest, RebalanceTest):
         self.workload = self.test_config.access_settings
         self.access_bg()
         self.rebalance()
+
+
+class RebalanceWithXdcrTest(SymmetricXdcrTest, RebalanceTest):
+
+    """
+    Workflow definition unidir XDCR rebalance tests.
+    """
+
+    COLLECTORS = {'xdcr_lag': True}
+
+    @with_stats
+    def rebalance(self):
+        clusters = self.cluster_spec.yield_clusters()
+        initial_nodes = self.test_config.cluster.initial_nodes
+        nodes_after = self.rebalance_settings.nodes_after
+        group_number = self.test_config.cluster.group_number or 1
+
+        for (_, servers), initial_nodes, nodes_after in zip(clusters,
+                                                            initial_nodes,
+                                                            nodes_after):
+            master = servers[0]
+            groups = group_number > 1 and self.rest.get_server_groups(master) or {}
+
+            new_nodes = []
+            known_nodes = servers[:initial_nodes]
+            ejected_nodes = []
+            if nodes_after > initial_nodes:  # rebalance-in
+                new_nodes = enumerate(
+                    servers[initial_nodes:nodes_after],
+                    start=initial_nodes
+                )
+                known_nodes = servers[:nodes_after]
+            elif nodes_after < initial_nodes:  # rebalance-out
+                ejected_nodes = servers[nodes_after:initial_nodes]
+            else:
+                continue
+
+            for i, host_port in new_nodes:
+                group = server_group(servers[:nodes_after], group_number, i)
+                uri = groups.get(group)
+                self.rest.add_node(master, host_port, uri=uri)
+            self.rest.rebalance(master, known_nodes, ejected_nodes)
+            self.master = master
+
+        self.enable_xdcr()
+        start = time.time()
+        self.monitor_replication()
+        self.spent_time=int(time.time() - start)
+        self.monitor.monitor_rebalance(self.master)
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.compact_bucket()
+
+        self.rebalance()
+        if self.test_config.stats_settings.enabled:
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_xdcr_lag()
+            )
+            metric = '{}_{}'.format(self.test_config.name,
+                                    self.cluster_spec.name)
+            metric_info = {
+                'title': self.test_config.test_case.metric_title.replace(
+                    "90th percentile replication lag (ms)",
+                    'Avg. Replication Throughput (docs/sec)'),
+                'cluster': self.cluster_spec.name,
+                'larger_is_better': self.test_config.test_case.larger_is_better,
+                'level': self.test_config.test_case.level,
+            }
+            self.reporter.post_to_sf(round(self.test_config.load_settings.items / self.spent_time, 1),
+                                           metric=metric + '_in_bytes', metric_info=metric_info)
+
+

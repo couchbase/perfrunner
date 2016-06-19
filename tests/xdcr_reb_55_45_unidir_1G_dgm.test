@@ -1,0 +1,29 @@
+[test_case]
+test = perfrunner.tests.rebalance.RebalanceWithXdcrTest
+title = 90th percentile replication lag (ms), Rebalance-in 5->5 -> 4->5 UniDir, 1 bucket x 1G x 1KB
+summary = XDCR rebalance test, 5->5 -> 4->5 nodes, 1 bucket x 1G x 1KB, UniDir
+larger_is_better = false
+
+[cluster]
+mem_quota = 204800
+initial_nodes = 5 4
+num_buckets = 1
+
+[compaction]
+db_percentage = 10
+
+[load]
+items = 1000000000
+size = 800
+workers = 15
+
+[xdcr]
+replication_type = unidir
+
+[rebalance]
+nodes_after = 5 5
+start_after = 10
+stop_after = 10
+
+
+

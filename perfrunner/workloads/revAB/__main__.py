@@ -20,7 +20,7 @@ from perfrunner.workloads.revAB.graph import generate_graph, PersonIterator
 done = 0
 
 
-def produce_AB(iterator, iterations, conn):
+def produce_ab(iterator, iterations, conn):
     # Repeatedly:
     # 1. Populate the graph into Couchbase; randomly delete a percentage of all
     # documents during population.
@@ -86,7 +86,7 @@ def main():
         for start in range(options.workers):
             iterator = PersonIterator(graph, graph_keys, start, options.workers)
             t = Thread(
-                target=produce_AB,
+                target=produce_ab,
                 args=(iterator, options.iterations, conn),
             )
             threads.append(t)
@@ -99,7 +99,7 @@ def main():
         pool = Pool(processes=options.workers)
         for start in range(options.workers):
             r = pool.apply_async(
-                func=produce_AB,
+                func=produce_ab,
                 args=(
                     PersonIterator(graph, graph_keys, start, options.workers),
                     options.iterations,

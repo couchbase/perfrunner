@@ -416,9 +416,9 @@ class BucketSettings(object):
                                                self.EXPIRY_PAGER_SLEEP_TIME))
         self.ht_locks = int(options.get('ht_locks', self.HT_LOCKS))
         self.bfilter_enabled = options.get('bfilter_enabled', self.BFILTER_ENABLED)
-        self.proxyPort = options.get('proxyPort', None)
-        if self.proxyPort:
-            self.proxyPort = int(self.proxyPort)
+        self.proxy_port = options.get('proxyPort', None)
+        if self.proxy_port:
+            self.proxy_port = int(self.proxy_port)
 
 
 class CompactionSettings(object):

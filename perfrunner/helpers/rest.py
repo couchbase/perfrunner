@@ -206,7 +206,7 @@ class RestHelper(object):
 
     def create_bucket(self, host_port, name, ram_quota, replica_number,
                       replica_index, eviction_policy, threads_number,
-                      password, proxyPort=None):
+                      password, proxy_port=None):
         logger.info('Adding new bucket: {}'.format(name))
 
         api = 'http://{}/pools/default/buckets'.format(host_port)
@@ -221,7 +221,7 @@ class RestHelper(object):
             'replicaIndex': replica_index,
         }
 
-        if proxyPort is None:
+        if proxy_port is None:
             data.update(
                 {
                     'authType': 'sasl',
@@ -231,7 +231,7 @@ class RestHelper(object):
             data.update(
                 {
                     'authType': 'none',
-                    'proxyPort': proxyPort
+                    'proxyPort': proxy_port,
                 })
 
         logger.info('bucket specification: {}'.format(data))
@@ -534,7 +534,7 @@ class RestHelper(object):
         logger.info(
             "Waiting for the following indexes to be ready: {}".format(indexes))
 
-        IndexesReady = [0 for index in indexes]
+        index_ready = [0 for index in indexes]
         url = 'http://{}:9102/getIndexStatus'.format(host)
         request = urllib2.Request(url)
         base64string = base64.encodestring('%s:%s' % (rest_username, rest_password)).replace('\n', '')
@@ -557,13 +557,13 @@ class RestHelper(object):
             json2i = json.loads(data)
             for i, index in enumerate(indexes):
                 status = get_index_status(json2i, index)
-                if(status == 'Ready'):
-                    IndexesReady[i] = 1
+                if status == 'Ready':
+                    index_ready[i] = 1
 
         while True:
             time.sleep(1)
             check_indexes_ready()
-            if(sum(IndexesReady) == len(indexes)):
+            if sum(index_ready) == len(indexes):
                 break
 
         finish_ts = time.time()
@@ -580,9 +580,8 @@ class RestHelper(object):
 
         def get_num_indexed():
             data = {}
-            API_TEMP = 'http://{}:9102/stats'
             for host in hosts:
-                host_data = self.get(url=API_TEMP.format(host)).json()
+                host_data = self.get(url='http://{}:9102/stats'.format(host)).json()
                 data.update(host_data)
 
             num_indexed = []
@@ -605,10 +604,9 @@ class RestHelper(object):
 
             # True only if every index's num_docs_indexed is within threshold
             # of the expected value
-            THRESHOLD = 0.02
             all_tolerated = all(
                 [
-                    actual >= (1 - THRESHOLD) * expected
+                    actual >= 0.98 * expected  # FIXME: hard-coded constant
                     for actual, expected in
                     zip(curr_num_indexed, expected_num_indexed)
                 ])
@@ -622,8 +620,7 @@ class RestHelper(object):
                 prev_num_indexed = curr_num_indexed
                 steady_count = 0
 
-            STEADY_COUNT = 20
-            if steady_count == STEADY_COUNT:
+            if steady_count == 20:  # FIXME: hard-coded constant
                 break
 
         logger.info("Actually indexed {}".format(curr_num_indexed))

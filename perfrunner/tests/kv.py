@@ -13,7 +13,7 @@ from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import pretty_dict, uhex, log_phase
 from perfrunner.helpers.worker import run_pillowfight_via_celery
 from perfrunner.tests import PerfTest
-from perfrunner.workloads.revAB.__main__ import produce_AB
+from perfrunner.workloads.revAB.__main__ import produce_ab
 from perfrunner.workloads.revAB.graph import generate_graph, PersonIterator
 from perfrunner.workloads.tcmalloc import WorkloadGen
 from perfrunner.workloads.pathoGen import PathoGen
@@ -423,7 +423,7 @@ class RevABTest(FragmentationTest):
                     self.test_config.load_settings.workers,
                 )
                 t = Thread(
-                    target=produce_AB,
+                    target=produce_ab,
                     args=(iterator,
                           self.test_config.load_settings.iterations,
                           conn),

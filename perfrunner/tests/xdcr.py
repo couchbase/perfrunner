@@ -169,10 +169,10 @@ class XdcrInitTest(SymmetricXdcrTest):
         for server in self.cluster_spec.yield_servers():
             self.rest.regenerate_cluster_certificate(server)
         self.remote.delete_inbox_folder()
-        SSLtype = 'go'
+
         encryption_type = ''
         key_length = 1024
-        self.remote.generate_certs(type=SSLtype, encryption=encryption_type, key_length=key_length)
+        self.remote.generate_certs(type='go', encryption=encryption_type, key_length=key_length)
 
         shutil.rmtree('/tmp/newcerts/')
         call(["mkdir", "/tmp/newcerts/"])

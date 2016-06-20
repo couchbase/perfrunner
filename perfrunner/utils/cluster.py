@@ -108,16 +108,16 @@ class ClusterManager(object):
             self.rest.rebalance(master, known_nodes, ejected_nodes)
             self.monitor.monitor_rebalance(master)
 
-    def create_buckets(self, emptyBuckets=False):
+    def create_buckets(self, empty_buckets=False):
         ram_quota = self.mem_quota / (self.test_config.cluster.num_buckets +
                                       self.test_config.cluster.emptybuckets)
         replica_number = self.test_config.bucket.replica_number
         replica_index = self.test_config.bucket.replica_index
         eviction_policy = self.test_config.bucket.eviction_policy
         threads_number = self.test_config.bucket.threads_number
-        proxyPort = self.test_config.bucket.proxyPort
+        proxy_port = self.test_config.bucket.proxy_port
         password = self.test_config.bucket.password
-        buckets = self.test_config.emptybuckets if emptyBuckets else self.test_config.buckets
+        buckets = self.test_config.emptybuckets if empty_buckets else self.test_config.buckets
 
         for master in self.masters():
             for bucket_name in buckets:
@@ -129,7 +129,7 @@ class ClusterManager(object):
                                         eviction_policy=eviction_policy,
                                         threads_number=threads_number,
                                         password=password,
-                                        proxyPort=proxyPort)
+                                        proxy_port=proxy_port)
 
     def configure_auto_compaction(self):
         compaction_settings = self.test_config.compaction
@@ -286,7 +286,7 @@ def main():
     if cm.test_config.cluster.num_buckets:
         cm.create_buckets()
     if cm.test_config.cluster.emptybuckets:
-        cm.create_buckets(emptyBuckets=True)
+        cm.create_buckets(empty_buckets=True)
     if cm.remote:
         cm.restart_with_alternative_bucket_options()
     cm.wait_until_warmed_up()

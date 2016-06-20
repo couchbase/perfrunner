@@ -131,14 +131,14 @@ class RemoteLinuxHelper(object):
 
     @single_host
     def build_secondary_index(self, index_nodes, bucket, indexes, fields,
-                              secondarydb, where_map, commandPath='/opt/couchbase/bin/'):
+                              secondarydb, where_map, command_path='/opt/couchbase/bin/'):
         logger.info('building secondary indexes')
 
         # Remember what bucket:index was created
         bucket_indexes = []
 
         for index, field in zip(indexes, fields):
-            cmd = commandPath + "cbindex"
+            cmd = command_path + "cbindex"
             cmd += ' -auth=Administrator:password'
             cmd += ' -server {}'.format(index_nodes[0])
             cmd += ' -type create -bucket {}'.format(bucket)
@@ -186,7 +186,7 @@ class RemoteLinuxHelper(object):
         time.sleep(10)
 
         # build indexes
-        cmdstr = commandPath + 'cbindex -auth="Administrator:password"'
+        cmdstr = command_path + 'cbindex -auth="Administrator:password"'
         cmdstr += ' -server {}'.format(index_nodes[0])
         cmdstr += ' -type build'
         cmdstr += ' -indexes {}'.format(",".join(bucket_indexes))

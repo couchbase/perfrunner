@@ -148,7 +148,8 @@ class ClusterManager(object):
         for master in self.masters():
             for parameter, value in xdcr_cluster_settings.items():
                 self.rest.set_xdcr_cluster_settings(master,
-                        {parameter: int(value)})
+                                                    {parameter: int(value)})
+
     def tweak_memory(self):
         self.remote.reset_swap()
         self.remote.drop_caches()

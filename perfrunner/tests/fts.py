@@ -1,6 +1,5 @@
 import json
 import requests
-import sys
 import time
 
 from logger import logger
@@ -13,18 +12,18 @@ FTS_CREATE_HEADERS = {'Content-Type': 'application/json'}
 DEFAULT_FTS_CREATE = {
     u'name': None,
     u'params': u'{"mapping":{"types":{},"default_mapping":{"enabled":true,"dynamic":true,"fields":[],"properties":{},"display_order":"0"},"type_field":"_type","default_type":"_default","default_analyzer":"standard","default_datetime_parser":"dateTimeOptional","default_field":"_all","byte_array_converter":"json","analysis":{"analyzers":{},"char_filters":{},"tokenizers":{},"token_filters":{},"token_maps":{}}},"store":{"kvStoreName":"forestdb"}}',
-    u'planParams': {   u'hierarchyRules': None,
-                       u'maxPartitionsPerPIndex': 20,
-                       u'nodePlanParams': None,
-                       u'numReplicas': 0,
-                       u'pindexWeights': None,
-                       u'planFrozen': False},
+    u'planParams': {u'hierarchyRules': None,
+                    u'maxPartitionsPerPIndex': 20,
+                    u'nodePlanParams': None,
+                    u'numReplicas': 0,
+                    u'pindexWeights': None,
+                    u'planFrozen': False},
     u'sourceName': u'bucket-1',
     u'sourceParams': u'{"authUser":"bucket-1","authPassword":"","authSaslUser":"","authSaslPassword":"","clusterManagerBackoffFactor":0,"clusterManagerSleepInitMS":0,"clusterManagerSleepMaxMS":2000,"dataManagerBackoffFactor":0,"dataManagerSleepInitMS":0,"dataManagerSleepMaxMS":2000,"feedBufferSizeBytes":0,"feedBufferAckThreshold":0}',
     u'sourceType': u'couchbase',
     u'sourceUUID': u'',
-    u'type': u'fulltext-index'}
-
+    u'type': u'fulltext-index',
+}
 
 
 class FtsIndexTest(PerfTest):
@@ -96,6 +95,6 @@ class FtsIndexTest(PerfTest):
         self.wait_for_index(fts_node, index_name, num_docs)
         end_time = time.time()
         elapsed_time = end_time - start_time
-        self.reporter.post_to_sf( elapsed_time, metric='index_time' )
+        self.reporter.post_to_sf(elapsed_time, metric='index_time')
         logger.info("FTS initial index build time took {} seconds".format(
             elapsed_time))

@@ -290,7 +290,7 @@ class RebalanceWithSpatialTest(_RebalanceWithViewsTest, SpatialQueryTest):
     COLLECTORS = {'spatial_latency': True}
 
 
-class RebalanceWithXdcrTest(XdcrTest, RebalanceTest):
+class RebalanceWithXDCRTest(XdcrTest, RebalanceTest):
 
     """
     Workflow definition for KV + bidir XDCR rebalance tests.
@@ -385,7 +385,7 @@ class RebalanceWithXdcrTest(SymmetricXdcrTest, RebalanceTest):
         self.enable_xdcr()
         start = time.time()
         self.monitor_replication()
-        self.spent_time=int(time.time() - start)
+        self.spent_time = int(time.time() - start)
         self.monitor.monitor_rebalance(self.master)
 
     def run(self):
@@ -410,6 +410,4 @@ class RebalanceWithXdcrTest(SymmetricXdcrTest, RebalanceTest):
                 'level': self.test_config.test_case.level,
             }
             self.reporter.post_to_sf(round(self.test_config.load_settings.items / self.spent_time, 1),
-                                           metric=metric + '_in_bytes', metric_info=metric_info)
-
-
+                                     metric=metric + '_in_bytes', metric_info=metric_info)

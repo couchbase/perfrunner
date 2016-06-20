@@ -21,11 +21,13 @@ def single_host(task, *args, **kargs):
     with settings(host_string=self.hosts[0]):
         return task(*args, **kargs)
 
+
 @decorator
 def single_client(task, *args, **kargs):
     self = args[0]
     with settings(host_string=self.cluster_spec.workers[0]):
         return task(*args, **kargs)
+
 
 @decorator
 def all_clients(task, *args, **kargs):
@@ -204,7 +206,7 @@ class RemoteLinuxHelper(object):
         path_to_root_cert = dest_chain_folder + "root.crt"
         run('mkdir -p {}'.format(dest_chain_folder))
         put(src_chain_file + "root.crt", path_to_root_cert)
-        run('/opt/couchbase/bin/couchbase-cli ssl-manage --cluster=localhost -u Administrator -p password --upload-cluster-ca={}/root.crt'.format(dest_chain_folder ))
+        run('/opt/couchbase/bin/couchbase-cli ssl-manage --cluster=localhost -u Administrator -p password --upload-cluster-ca={}/root.crt'.format(dest_chain_folder))
 
     @all_hosts
     def reset_swap(self):
@@ -495,7 +497,7 @@ class RemoteLinuxHelper(object):
                        encryption="", key_length=1024):
         cert_folder = "/tmp/newcerts/"
         for _, master in zip(self.cluster_spec.workers,
-                                  self.cluster_spec.yield_masters()):
+                             self.cluster_spec.yield_masters()):
             for bucket in self.test_config.buckets:
                 qname = '{}-{}'.format(master.split(':')[0], bucket)
                 temp_dir = '{}-{}'.format(
@@ -549,8 +551,8 @@ class RemoteLinuxHelper(object):
                     run("openssl x509 -req -in {}{}.csr -CA {}int.pem -CAkey"
                         " {}int.key -CAcreateserial -CAserial {}intermediateCA.srl "
                         "-out .pem -days 365 -sha256".format(
-                        cert_folder, server, cert_folder, cert_folder,
-                        cert_folder, cert_folder, server))
+                            cert_folder, server, cert_folder, cert_folder,
+                            cert_folder, cert_folder, server))
                     run("openssl x509 -req -days 300 -in {}{}.csr -CA {}int.pem "
                         "-CAkey {}int.key -set_serial 01 -out {}{}.pem".format(
                             cert_folder, server, cert_folder,
@@ -921,9 +923,8 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
     def tune_log_rotation(self):
         pass
 
-
     def build_secondary_index(self, index_nodes, bucket, indexes, fields,
                               secondarydb, where_map):
-
-        super(RemoteWindowsHelper, self).build_secondary_index(index_nodes, bucket, indexes, fields,
-                              secondarydb, where_map, commandPath='/cygdrive/c/program\\ files/Couchbase/Server/bin/')
+        super(RemoteWindowsHelper, self).build_secondary_index(
+            index_nodes, bucket, indexes, fields, secondarydb, where_map,
+            commandPath='/cygdrive/c/program\\ files/Couchbase/Server/bin/')

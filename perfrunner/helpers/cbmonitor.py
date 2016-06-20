@@ -38,8 +38,8 @@ def with_stats(method, *args, **kwargs):
         test.cbagent.stop()
 
         if test.test_config.stats_settings.add_snapshots:
-           test.cbagent.add_snapshot(method.__name__, from_ts, to_ts)
-           test.snapshots = test.cbagent.snapshots
+            test.cbagent.add_snapshot(method.__name__, from_ts, to_ts)
+            test.snapshots = test.cbagent.snapshots
 
     from_ts = timegm(from_ts.timetuple()) * 1000  # -> ms
     to_ts = timegm(to_ts.timetuple()) * 1000  # -> ms

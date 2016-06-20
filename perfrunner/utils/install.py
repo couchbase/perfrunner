@@ -36,9 +36,10 @@ class CouchbaseInstaller(object):
             release, build = options.version.split('-')
             self.SHERLOCK_BUILDS = 'http://latestbuilds.hq.couchbase.com/couchbase-server/sherlock/{}/'.format(build)
             self.WATSON_BUILDS = 'http://172.23.120.24/builds/latestbuilds/couchbase-server/watson/{}/'.format(build)
-	    self.SPOCK_BUILDS = 'http://172.23.120.24/builds/latestbuilds/couchbase-server/spock/{}/'.format(build)
+            self.SPOCK_BUILDS = 'http://172.23.120.24/builds/latestbuilds/couchbase-server/spock/{}/'.format(build)
             if options.toy:
                 self.SHERLOCK_BUILDS = 'http://latestbuilds.hq.couchbase.com/couchbase-server/toy-{}/{}/'.format(options.toy, build)
+
         self.build = Build(arch, pkg, options.cluster_edition, options.version,
                            release, build, options.toy, options.url)
         logger.info('Target build info: {}'.format(self.build))

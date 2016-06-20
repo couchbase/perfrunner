@@ -1,18 +1,19 @@
+import time
+from exceptions import NotImplementedError
+
+from logger import logger
+
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import PerfTest
 from perfrunner.tests import TargetIterator
-from exceptions import NotImplementedError
 
-import time
-
-from logger import logger
 
 class N1QLTest(PerfTest):
 
     COLLECTORS = {
         'n1ql_latency': True,
         'n1ql_stats': True,
-        'secondary_stats': True
+        'secondary_stats': True,
     }
 
     def __init__(self, *args, **kwargs):
@@ -131,6 +132,7 @@ class N1QLLatencyTest(N1QLTest):
                 *self.metric_helper.calc_query_latency(percentile=80)
             )
 
+
 class N1QLThroughputTest(N1QLTest):
 
     def __init__(self, *args, **kwargs):
@@ -138,7 +140,7 @@ class N1QLThroughputTest(N1QLTest):
 
     def run(self):
         load_settings = self.test_config.load_settings
-        load_settings.items = load_settings.items / 2
+        load_settings.items /= 2
 
         iterator = TargetIterator(self.cluster_spec, self.test_config, 'n1ql')
         self.load(load_settings, iterator)
@@ -152,7 +154,7 @@ class N1QLThroughputTest(N1QLTest):
         self._create_prepared_statements()
 
         self.workload = self.test_config.access_settings
-        self.workload.items = self.workload.items / 2
+        self.workload.items /= 2
         self.workload.n1ql_queries = getattr(self, 'n1ql_queries',
                                              self.workload.n1ql_queries)
 
@@ -163,6 +165,7 @@ class N1QLThroughputTest(N1QLTest):
             self.reporter.post_to_sf(
                 *self.metric_helper.calc_avg_n1ql_queries()
             )
+
 
 class N1QLThroughputLatencyTest(N1QLTest):
 
@@ -176,7 +179,7 @@ class N1QLThroughputLatencyTest(N1QLTest):
 
     def run(self):
         load_settings = self.test_config.load_settings
-        load_settings.items = load_settings.items / 2
+        load_settings.items /= 2
 
         iterator = TargetIterator(self.cluster_spec, self.test_config, 'n1ql')
 
@@ -188,42 +191,34 @@ class N1QLThroughputLatencyTest(N1QLTest):
 
         self.build_index()
 
-
         self._create_prepared_statements()
 
-
-
         self.workload = self.test_config.access_settings
-        self.workload.items = self.workload.items / 2
+        self.workload.items /= 2
         self.workload.n1ql_queries = getattr(self, 'n1ql_queries',
-            self.workload.n1ql_queries)
-
+                                             self.workload.n1ql_queries)
 
         self.enable_collectors_and_start_load()
 
         if self.test_config.stats_settings.enabled:
-            orig_throughput, metric, metric_info = self.metric_helper.calc_avg_n1ql_queries() 
-            self.reporter.post_to_sf( orig_throughput, metric, metric_info )
-            self.reporter.post_to_sf(  *self.metric_helper.calc_query_latency(percentile=80))
-
-
+            orig_throughput, metric, metric_info = self.metric_helper.calc_avg_n1ql_queries()
+            self.reporter.post_to_sf(orig_throughput, metric, metric_info)
+            self.reporter.post_to_sf(*self.metric_helper.calc_query_latency(percentile=80))
 
         # run with the maximum throughput, if not specified then pick a big number
         if self.workload.n1ql_throughput_max < float('inf'):
             self.workload.n1ql_throughput = self.workload.n1ql_throughput_max
         else:
             self.workload.n1ql_throughput = 25000
-        self.workload.n1ql_workers =  int(self.workload.n1ql_throughput / 40)
+        self.workload.n1ql_workers = int(self.workload.n1ql_throughput / 40)
 
         self.enable_collectors_and_start_load()
 
         if self.test_config.stats_settings.enabled:
             throughput, metric, metric_info = self.metric_helper.calc_avg_n1ql_queries()
             # modify with the metric name, de-average out the throughput
-            #self.reporter.post_to_sf( throughput , 'max_throughput', metric_info)
-            self.reporter.post_to_sf( 2 * throughput - orig_throughput, 'max_throughput', metric_info)
-
-
+            # self.reporter.post_to_sf( throughput , 'max_throughput', metric_info)
+            self.reporter.post_to_sf(2 * throughput - orig_throughput, 'max_throughput', metric_info)
 
     # the following is code to detect max throughput based on a ramp up and ramp down. It will be selectively enabled
     # in this class by changing the name of the parameter
@@ -232,28 +227,26 @@ class N1QLThroughputLatencyTest(N1QLTest):
     def do_run_at_one_level(self):
         self.access_bg(self.workload)
         time.sleep(120)
-        #super(N1QLThroughputLatencyTest, self).timer()
-        #self.access(self.workload)
+        # super(N1QLThroughputLatencyTest, self).timer()
+        # self.access(self.workload)
 
         self.cumulativeThroughput = self.metric_helper.calc_avg_n1ql_queries()[0]
         self.cumulativeLatency = self.metric_helper.calc_query_latency(percentile=80)[0]
-        self.reporter.post_to_sf( *self.metric_helper.calc_avg_n1ql_queries())
-        self.reporter.post_to_sf( *self.metric_helper.calc_query_latency(percentile=80) )
-
+        self.reporter.post_to_sf(*self.metric_helper.calc_avg_n1ql_queries())
+        self.reporter.post_to_sf(*self.metric_helper.calc_query_latency(percentile=80))
 
     def run_disabled(self):
-        logger.info( '\n\nStarting N1QL max throughput identification test' )
+        logger.info('\n\nStarting N1QL max throughput identification test')
         INCREMENT = 0.20
         load_settings = self.test_config.load_settings
-        load_settings.items = load_settings.items / 2
+        load_settings.items /= 2
 
         iterator = TargetIterator(self.cluster_spec, self.test_config, 'n1ql')
 
-        if True:
-            self.load(load_settings, iterator)
-            self.load(load_settings)
-            self.wait_for_persistence()
-            self.compact_bucket()
+        self.load(load_settings, iterator)
+        self.load(load_settings)
+        self.wait_for_persistence()
+        self.compact_bucket()
 
         self.build_index()
 
@@ -261,7 +254,7 @@ class N1QLThroughputLatencyTest(N1QLTest):
 
         self.test_config.access_settings.time = 120
         self.workload = self.test_config.access_settings
-        self.workload.items = self.workload.items / 2
+        self.workload.items /= 2
         self.workload.n1ql_queries = getattr(self, 'n1ql_queries', self.workload.n1ql_queries)
 
         # set some hardcoded values
@@ -269,14 +262,14 @@ class N1QLThroughputLatencyTest(N1QLTest):
         # starting point and worker ratio depends on staleness
         if self.test_config.access_settings.n1ql_queries[0]['scan_consistency'] == 'not_bounded':
             # stale is ok
-            #self.workload.n1ql_throughput = 3000
+            # self.workload.n1ql_throughput = 3000
             worker_divisor = 30
         else:
-           #self.workload.n1ql_throughput = 300
-           worker_divisor = 20
+            # self.workload.n1ql_throughput = 300
+            worker_divisor = 20
 
         self.workload.n1ql_throughput = self.workload.n1ql_throughput_max
-        self.workload.n1ql_workers = int( self.workload.n1ql_throughput / worker_divisor)
+        self.workload.n1ql_workers = int(self.workload.n1ql_throughput / worker_divisor)
 
         # do at the initial level
         originalThroughputRequest = self.workload.n1ql_throughput
@@ -288,50 +281,47 @@ class N1QLThroughputLatencyTest(N1QLTest):
 
         self.do_run_at_one_level()
         print '\n\nobservedThroughput', self.cumulativeThroughput, 'originalThroughputRequest', originalThroughputRequest
-        runData.append({'requestedThroughput': originalThroughputRequest, 'observedThroughput':self.cumulativeThroughput, 
-                        'latency':self.cumulativeLatency} )
+        runData.append({'requestedThroughput': originalThroughputRequest,
+                        'observedThroughput': self.cumulativeThroughput,
+                        'latency': self.cumulativeLatency})
 
         if self.cumulativeThroughput < originalThroughputRequest * 0.95:
-              logger.info( 'N1QL: Did not reach the original target, ramp down' )
-              rampUp = False
+            logger.info('N1QL: Did not reach the original target, ramp down')
+            rampUp = False
         else:
-              logger.info('N1QL: Reached the original target, ramp up')
-              rampUp = True
+            logger.info('N1QL: Reached the original target, ramp up')
+            rampUp = True
 
         runningThroughputAverage = self.cumulativeThroughput
         while not haveIdentifiedThroughput and runCount < 10:
-
             runCount = runCount + 1
             if rampUp:
-                 self.workload.n1ql_throughput = self.workload.n1ql_throughput + INCREMENT * originalThroughputRequest
-                 self.workload.n1ql_workers = int(self.workload.n1ql_workers + INCREMENT * originalWorkers)
+                self.workload.n1ql_throughput = self.workload.n1ql_throughput + INCREMENT * originalThroughputRequest
+                self.workload.n1ql_workers = int(self.workload.n1ql_workers + INCREMENT * originalWorkers)
             else:
-                 self.workload.n1ql_throughput = self.workload.n1ql_throughput - INCREMENT * originalThroughputRequest
-                 self.workload.n1ql_workers = int(self.workload.n1ql_workers - INCREMENT * originalWorkers)
+                self.workload.n1ql_throughput = self.workload.n1ql_throughput - INCREMENT * originalThroughputRequest
+                self.workload.n1ql_workers = int(self.workload.n1ql_workers - INCREMENT * originalWorkers)
 
             self.do_run_at_one_level()
-            observedThroughput = (runCount+1) * self.cumulativeThroughput - runningThroughputAverage
+            observedThroughput = (runCount + 1) * self.cumulativeThroughput - runningThroughputAverage
             runningThroughputAverage = runningThroughputAverage + observedThroughput
-            runData.append( {'requestedThroughput': self.workload.n1ql_throughput, 'observedThroughput':observedThroughput, 
-                             'latency':self.cumulativeLatency})
+            runData.append({'requestedThroughput': self.workload.n1ql_throughput,
+                            'observedThroughput': observedThroughput,
+                            'latency': self.cumulativeLatency})
 
             if rampUp:
                 if observedThroughput > self.workload.n1ql_throughput * 0.95:
                     logger.info('N1QL: {0} Met the target, ramp up further'.format(observedThroughput))
                 else:
-                    logger.info('N1QL: While ramping up, did not reach the desired throughput, requested {0}, actual {1}'.format(self.workload.n1ql_throughput, observedThroughput) )
-                    haveIdentifiedThroughput = True    # hit the max
+                    logger.info('N1QL: While ramping up, did not reach the desired throughput, requested {0}, actual {1}'.format(self.workload.n1ql_throughput, observedThroughput))
+                    haveIdentifiedThroughput = True  # hit the max
             else:
                 if observedThroughput < self.workload.n1ql_throughput * 0.95:
                     logger.info('N1QL: Did not meet the target {0}, ramp down further'.format(observedThroughput))
                 else:
-                    logger.info('N1QL: Ramped down to a throughput that was achieved, requested {0}, actual {1}'.format(self.workload.n1ql_throughput, observedThroughput) )
-                    haveIdentifiedThroughput = True    # hit the bottom
+                    logger.info('N1QL: Ramped down to a throughput that was achieved, requested {0}, actual {1}'.format(self.workload.n1ql_throughput, observedThroughput))
+                    haveIdentifiedThroughput = True  # hit the bottom
 
         logger.info('N1QL Results Summary:')
         for i in runData:
-            logger.info('    Requested throughput {0}, observed throughput {1}, latency {2}'.format( i['requestedThroughput'], i['observedThroughput'], i['latency']))
-
-
-
-
+            logger.info('Requested throughput {0}, observed throughput {1}, latency {2}'.format(i['requestedThroughput'], i['observedThroughput'], i['latency']))

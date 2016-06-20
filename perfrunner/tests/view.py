@@ -1,5 +1,6 @@
 import json
 from time import sleep
+
 from logger import logger
 
 from perfrunner.helpers.cbmonitor import with_stats

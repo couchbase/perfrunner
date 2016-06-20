@@ -97,9 +97,8 @@ import multiprocessing
 import random
 import time
 
-from couchbase import Couchbase, FMT_BYTES, exceptions
+from couchbase import FMT_BYTES, Couchbase, exceptions
 from logger import logger
-
 
 # TCMalloc size classes
 SIZES = (8, 16, 32, 48, 64, 80, 96, 112, 128, 144, 160, 176, 192,

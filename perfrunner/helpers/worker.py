@@ -3,7 +3,7 @@ from time import sleep
 
 from celery import Celery
 from fabric import state
-from fabric.api import cd, run, local, settings, quiet
+from fabric.api import cd, local, quiet, run, settings
 from kombu import Queue
 from logger import logger
 from spring.wgen import WorkloadGen
@@ -13,7 +13,6 @@ from perfrunner import celerylocal, celeryremote
 from perfrunner.helpers.misc import log_phase
 from perfrunner.settings import REPO
 from perfrunner.workloads.pillowfight import Pillowfight
-
 
 celery = Celery('workers')
 if {'--local', '-C'} & set(sys.argv):

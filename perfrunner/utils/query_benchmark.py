@@ -1,17 +1,16 @@
 import json
-
-from optparse import OptionParser
 import sys
 import time
+from optparse import OptionParser
 
-from perfrunner.settings import ClusterSpec
-from perfrunner.utils.install import CouchbaseInstaller
-from perfrunner.utils.cluster import TestConfig, ClusterManager
-
-from logger import logger
-import urllib3
-from perfrunner.helpers.rest import RestHelper
 import paramiko
+import urllib3
+from logger import logger
+
+from perfrunner.helpers.rest import RestHelper
+from perfrunner.settings import ClusterSpec
+from perfrunner.utils.cluster import ClusterManager, TestConfig
+from perfrunner.utils.install import CouchbaseInstaller
 
 """
 # An evolving thing - takes as input:

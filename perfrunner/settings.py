@@ -1,13 +1,12 @@
 import csv
 import json
 import os.path
-from ConfigParser import SafeConfigParser, NoOptionError, NoSectionError
+from ConfigParser import NoOptionError, NoSectionError, SafeConfigParser
 
 from decorator import decorator
 from logger import logger
 
 from perfrunner.helpers.misc import uhex
-
 
 REPO = 'https://github.com/couchbase/perfrunner'
 

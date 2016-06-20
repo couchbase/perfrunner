@@ -4,8 +4,7 @@ from exceptions import NotImplementedError
 from logger import logger
 
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.tests import PerfTest
-from perfrunner.tests import TargetIterator
+from perfrunner.tests import PerfTest, TargetIterator
 
 
 class N1QLTest(PerfTest):

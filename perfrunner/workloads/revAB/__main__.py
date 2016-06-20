@@ -14,8 +14,8 @@ from logger import logger
 from twisted.internet import reactor
 
 from perfrunner.workloads.revAB.async import AsyncGen
+from perfrunner.workloads.revAB.graph import PersonIterator, generate_graph
 from perfrunner.workloads.revAB.sync import SyncGen
-from perfrunner.workloads.revAB.graph import generate_graph, PersonIterator
 
 done = 0
 

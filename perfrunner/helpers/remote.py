@@ -2,7 +2,7 @@ import time
 
 from decorator import decorator
 from fabric import state
-from fabric.api import execute, get, put, run, parallel, settings
+from fabric.api import execute, get, parallel, put, run, settings
 from fabric.exceptions import CommandTimeout
 from logger import logger
 

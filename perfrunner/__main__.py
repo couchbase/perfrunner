@@ -1,6 +1,6 @@
 from optparse import OptionParser
 
-from perfrunner.settings import ClusterSpec, TestConfig, Experiment
+from perfrunner.settings import ClusterSpec, Experiment, TestConfig
 
 
 def get_options():

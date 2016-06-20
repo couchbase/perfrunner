@@ -1,8 +1,8 @@
-import time
 import json
 import subprocess
-import numpy as np
+import time
 
+import numpy as np
 from logger import logger
 
 from perfrunner.helpers.cbmonitor import with_stats

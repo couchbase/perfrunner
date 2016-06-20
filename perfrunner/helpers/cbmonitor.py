@@ -5,11 +5,12 @@ from datetime import datetime
 from multiprocessing import Process
 
 import requests
-from cbagent.collectors import (NSServer, PS, TypePerf, IO, Net, ActiveTasks,
-                                SpringLatency, SpringQueryLatency,
-                                SpringSpatialQueryLatency,
-                                SpringN1QLQueryLatency, SecondaryStats, SecondaryLatencyStats,
-                                N1QLStats, SecondaryDebugStats, ObserveLatency, XdcrLag)
+from cbagent.collectors import (IO, PS, ActiveTasks, N1QLStats, Net, NSServer,
+                                ObserveLatency, SecondaryDebugStats,
+                                SecondaryLatencyStats, SecondaryStats,
+                                SpringLatency, SpringN1QLQueryLatency,
+                                SpringQueryLatency, SpringSpatialQueryLatency,
+                                TypePerf, XdcrLag)
 from cbagent.metadata_client import MetadataClient
 from decorator import decorator
 from logger import logger

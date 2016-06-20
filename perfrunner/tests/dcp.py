@@ -1,6 +1,6 @@
 
-from perfrunner.tests import PerfTest
 from perfrunner.helpers.cbmonitor import with_stats
+from perfrunner.tests import PerfTest
 
 
 class ReplicationTest(PerfTest):

@@ -3,12 +3,11 @@ import threading
 import time
 from collections import defaultdict
 
-from couchbase import Couchbase, FMT_UTF8, exceptions
-from couchbase._libcouchbase import (LCB_NOT_STORED, LCB_ETIMEDOUT,
+from couchbase import FMT_UTF8, Couchbase, exceptions
+from couchbase._libcouchbase import (LCB_ETIMEDOUT, LCB_ETMPFAIL,
                                      LCB_KEY_ENOENT, LCB_NETWORK_ERROR,
-                                     LCB_ETMPFAIL)
+                                     LCB_NOT_STORED)
 from logger import logger
-
 
 totals_lock = threading.Lock()
 totals = defaultdict(int)

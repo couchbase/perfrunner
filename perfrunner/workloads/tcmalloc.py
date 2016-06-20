@@ -1,10 +1,10 @@
 import random
 from hashlib import md5
 
-from logger import logger
 from couchbase import experimental
-from txcouchbase.connection import Connection
+from logger import logger
 from twisted.internet import reactor
+from txcouchbase.connection import Connection
 
 experimental.enable()
 

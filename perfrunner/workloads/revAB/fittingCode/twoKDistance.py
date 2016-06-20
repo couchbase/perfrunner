@@ -21,8 +21,9 @@ __author__ = "Alessandra Sala (alessandra@cs.ucsb.edu), Adelbert Chang (adelbert
 __all__ = ['comparePairs',
            'get_2k_distance']
 
-import string
 import math
+import string
+
 
 def comparePairs(x11, x12, x21, x22):
     """

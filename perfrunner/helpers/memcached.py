@@ -6,7 +6,6 @@ from logger import logger
 from mc_bin_client.mc_bin_client import (MemcachedClient, MemcachedError,
                                          memcacheConstants)
 
-
 SOCKET_RETRY_INTERVAL = 2
 
 

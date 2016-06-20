@@ -1,8 +1,8 @@
 import json
-import time
 import sys
+import time
 import traceback
-from collections import defaultdict, OrderedDict
+from collections import OrderedDict, defaultdict
 
 import numpy as np
 from jinja2 import Environment, FileSystemLoader
@@ -10,7 +10,7 @@ from logger import logger
 from seriesly import Seriesly
 
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.helpers.metrics import SgwMetricHelper, MetricHelper
+from perfrunner.helpers.metrics import MetricHelper, SgwMetricHelper
 from perfrunner.helpers.misc import log_phase, pretty_dict
 from perfrunner.helpers.rest import SyncGatewayRequestHelper
 from perfrunner.tests import PerfTest

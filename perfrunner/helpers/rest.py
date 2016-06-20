@@ -1,7 +1,7 @@
+import base64
 import json
 import time
 import urllib2
-import base64
 from collections import namedtuple
 
 import requests

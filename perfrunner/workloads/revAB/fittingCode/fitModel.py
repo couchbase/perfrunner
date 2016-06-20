@@ -26,11 +26,14 @@ __all__ = ['writeEdgeList',
            'fit_randomWalk_mod',
            'fit_nearestNeighbor_mod']
 
-import sys
-import networkx as nx
-import twoKDistance as tk
-import socialModels as sm
 import os
+import sys
+
+import networkx as nx
+
+import socialModels as sm
+import twoKDistance as tk
+
 
 def writeEdgeList(G, myFile):
     """

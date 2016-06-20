@@ -1,5 +1,4 @@
 from couchbase import Couchbase
-
 from logger import logger
 
 from perfrunner.helpers.misc import pretty_dict, uhex

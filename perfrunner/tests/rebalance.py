@@ -2,14 +2,13 @@ import time
 
 from decorator import decorator
 
-
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import server_group
 from perfrunner.tests import PerfTest
 from perfrunner.tests.index import IndexTest
 from perfrunner.tests.query import QueryTest
 from perfrunner.tests.spatial import SpatialQueryTest
-from perfrunner.tests.xdcr import XdcrTest, SymmetricXdcrTest
+from perfrunner.tests.xdcr import SymmetricXdcrTest, XdcrTest
 
 
 @decorator

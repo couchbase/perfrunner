@@ -1,5 +1,6 @@
-import numpy as np
 from collections import OrderedDict
+
+import numpy as np
 from logger import logger
 from seriesly import Seriesly
 

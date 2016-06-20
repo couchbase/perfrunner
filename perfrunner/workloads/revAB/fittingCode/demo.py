@@ -12,8 +12,9 @@ adelbert_chang@cs.ucsb.edu
 
 __author__ = 'Adelbert Chang (adelbert_chang@cs.ucsb.edu)'
 
-import sys
 import os
+import sys
+
 
 def prompt_user():
     raw_input('(Hit Enter to continue)')
@@ -147,4 +148,3 @@ print '\n\nFine fitting has finished! Now all that is left to do is to look into
     'demoOSN_rwFine_dkDistances.txt file, and find the optimal qe/qv values. Those are your parameters.\n'
 print 'This concludes the demo. If you have any problems/questions/comments/concerns, please contact: ' \
     'adelbert_chang@cs.ucsb.edu. Have a nice day!\n'
-

@@ -1,15 +1,14 @@
+import urllib2
 from optparse import OptionParser
 
 import requests
-import urllib2
 from jinja2 import Environment, FileSystemLoader
 from logger import logger
 from requests.exceptions import ConnectionError
 
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import SyncGatewayRequestHelper
-from perfrunner.settings import ClusterSpec
-from perfrunner.settings import TestConfig
+from perfrunner.settings import ClusterSpec, TestConfig
 
 
 class GatewayInstaller(object):

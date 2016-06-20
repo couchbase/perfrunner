@@ -3,7 +3,7 @@ import time
 from logger import logger
 
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.tests.index import IndexTest, DevIndexTest
+from perfrunner.tests.index import DevIndexTest, IndexTest
 
 
 class QueryTest(IndexTest):

@@ -6,6 +6,7 @@ decorator
 pycrypto==2.6.1
 fabric==1.8.0
 flake8==2.6.0
+isort==4.2.5
 jinja2==2.7.2
 logger
 git+https://github.com/couchbaselabs/mc_bin_client.git#egg=mc_bin_client

@@ -1,7 +1,6 @@
-from time import sleep
-
-from subprocess import call
 import shutil
+from subprocess import call
+from time import sleep
 
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import log_phase, target_hash

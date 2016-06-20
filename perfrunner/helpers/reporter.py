@@ -1,14 +1,14 @@
-import time
 import os
+import time
 from datetime import datetime
-from zipfile import ZipFile, ZIP_DEFLATED
+from zipfile import ZIP_DEFLATED, ZipFile
 
 import requests
 from btrc import CouchbaseClient, StatsReporter
 from couchbase import Couchbase
 from logger import logger
 
-from perfrunner.helpers.misc import uhex, pretty_dict
+from perfrunner.helpers.misc import pretty_dict, uhex
 
 
 class BtrcReporter(object):

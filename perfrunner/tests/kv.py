@@ -1,6 +1,6 @@
 import random
 from threading import Thread
-from time import time, sleep
+from time import sleep, time
 
 import numpy as np
 from couchbase import Couchbase
@@ -10,14 +10,14 @@ from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
 from tap import TAP
 
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.helpers.misc import pretty_dict, uhex, log_phase
+from perfrunner.helpers.misc import log_phase, pretty_dict, uhex
 from perfrunner.helpers.worker import run_pillowfight_via_celery
 from perfrunner.tests import PerfTest
-from perfrunner.workloads.revAB.__main__ import produce_ab
-from perfrunner.workloads.revAB.graph import generate_graph, PersonIterator
-from perfrunner.workloads.tcmalloc import WorkloadGen
 from perfrunner.workloads.pathoGen import PathoGen
 from perfrunner.workloads.pillowfight import Pillowfight
+from perfrunner.workloads.revAB.__main__ import produce_ab
+from perfrunner.workloads.revAB.graph import PersonIterator, generate_graph
+from perfrunner.workloads.tcmalloc import WorkloadGen
 
 
 class KVTest(PerfTest):

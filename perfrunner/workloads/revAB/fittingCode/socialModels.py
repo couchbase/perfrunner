@@ -30,11 +30,12 @@ __all__ = ['forestFire_mod_burnProcedure',
            'randomWalk_mod',
            'nearestNeighbor_mod']
 
-import sys
-import networkx as nx
-import random
-import math
 import bisect
+import math
+import random
+import sys
+
+import networkx as nx
 
 # Control recursion depth
 global limit

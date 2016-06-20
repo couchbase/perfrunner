@@ -1,12 +1,11 @@
 import json
-import requests
 import time
 
+import requests
 from logger import logger
 
-from perfrunner.tests import PerfTest
 from perfrunner.helpers.cbmonitor import with_stats
-
+from perfrunner.tests import PerfTest
 
 FTS_CREATE_HEADERS = {'Content-Type': 'application/json'}
 DEFAULT_FTS_CREATE = {

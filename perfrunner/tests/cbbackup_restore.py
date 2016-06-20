@@ -1,4 +1,4 @@
-from time import time, sleep
+from time import sleep, time
 
 from logger import logger
 

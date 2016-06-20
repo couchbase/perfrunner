@@ -2,9 +2,9 @@
 
 """Pillowfight: workload generator from libcouchbase."""
 
-from logger import logger
-
 import subprocess
+
+from logger import logger
 
 
 class Pillowfight(object):

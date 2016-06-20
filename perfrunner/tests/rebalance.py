@@ -403,8 +403,8 @@ class RebalanceWithXdcrTest(SymmetricXdcrTest, RebalanceTest):
                                     self.cluster_spec.name)
             metric_info = {
                 'title': self.test_config.test_case.metric_title.replace(
-                    "90th percentile replication lag (ms)",
-                    'Avg. Replication Throughput (docs/sec)'),
+                    "Rebalance",
+                    'Avg. Replication Throughput (docs/sec), Rebalance'),
                 'cluster': self.cluster_spec.name,
                 'larger_is_better': self.test_config.test_case.larger_is_better,
                 'level': self.test_config.test_case.level,

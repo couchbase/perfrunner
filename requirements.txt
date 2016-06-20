@@ -5,7 +5,7 @@ couchbase==1.2.1
 decorator
 pycrypto==2.6.1
 fabric==1.8.0
-flake8==2.1.0
+flake8==2.6.0
 jinja2==2.7.2
 logger
 git+https://github.com/couchbaselabs/mc_bin_client.git#egg=mc_bin_client

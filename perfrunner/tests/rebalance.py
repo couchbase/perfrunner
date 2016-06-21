@@ -385,7 +385,8 @@ class RebalanceWithXdcrTest(SymmetricXdcrTest, RebalanceTest):
         start = time.time()
         self.monitor_replication()
         self.spent_time = int(time.time() - start)
-        self.monitor.monitor_rebalance(self.master)
+        if self.master:
+            self.monitor.monitor_rebalance(self.master)
 
     def run(self):
         self.load()

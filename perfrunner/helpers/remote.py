@@ -762,6 +762,20 @@ class RemoteLinuxHelper(object):
         result = run(cmd, pty=False)
         return result
 
+    @single_client
+    def ycsb_load_run(self, path, cmd, log_path = None):
+        if log_path:
+            tmpcmd = 'rm -rf ' + log_path
+            run(tmpcmd)
+            tmpcmd = 'mkdir -p ' + log_path
+            run(tmpcmd)
+        load_run_cmd = 'cd {}'.format(path) + ' &&  mvn -pl com.yahoo.ycsb:couchbase2-binding -am ' \
+                                             'clean package -Dmaven.test.skip -Dcheckstyle.skip=true &&' \
+                                             ' {}'.format(cmd)
+        logger.info(" running command {}".format(load_run_cmd))
+        result = run(load_run_cmd)
+        return result
+
 
 class RemoteWindowsHelper(RemoteLinuxHelper):
 

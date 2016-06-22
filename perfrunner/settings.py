@@ -277,6 +277,11 @@ class TestConfig(Config):
         options = self._get_options_as_dict('fts')
         return FtsSettings(options)
 
+    @property
+    def ycsb_settings(self):
+        options = self._get_options_as_dict('ycsb')
+        return YcsbSettings(options)
+
     def get_n1ql_query_definition(self, query_name):
         return self._get_options_as_dict('n1ql-{}'.format(query_name))
 
@@ -849,6 +854,27 @@ class FtsSettings(object):
         self.doc_database_url = options.get("doc_database_url").strip()
         self.name = options.get("name").strip()
         self.items = int(options.get("items").strip())
+
+    def __str__(self):
+        return str(self.__dict__)
+
+
+class YcsbSettings(object):
+    def __init__(self, options):
+        self.sdk = options.get("sdk")
+        self.bucket = options.get("bucket")
+        self.jvm = options.get("jvm-args")
+        self.threads = options.get("threads")
+        self.parameters = options.get("parameters")
+        self.workload = options.get("workload_path")
+        self.size = options.get("size")
+        self.reccount = options.get("recordcount")
+        self.opcount = options.get("operationcount")
+        self.path= options.get("path")
+        self.log_file = options.get("export_file")
+        self.log_path = options.get("export_file_path")
+        self.workers = int(options.get("worker"))
+
 
     def __str__(self):
         return str(self.__dict__)

@@ -154,18 +154,9 @@ class LocalWorkerManager(RemoteWorkerManager):
         self.cluster_spec = cluster_spec
         self.buckets = test_config.buckets or test_config.max_buckets
 
-        self.initialize_project()
         self.terminate()
         self.tune_sqlite()
         self.start()
-
-    def initialize_project(self):
-        logger.info('Intializing local worker environment')
-        with quiet():
-            local('virtualenv -p python2.7 env')
-            local('PATH=/usr/lib/ccache:/usr/lib64/ccache/bin:$PATH '
-                  'env/bin/pip install '
-                  ' -r requirements.txt')
 
     def tune_sqlite(self):
         for db in self.SQLITE_DBS:

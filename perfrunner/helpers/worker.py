@@ -92,10 +92,7 @@ class RemoteWorkerManager(object):
                 with cd(temp_dir):
                     run('git clone -q {}'.format(REPO))
                 with cd('{}/perfrunner'.format(temp_dir)):
-                    run('virtualenv -p python2.7 env')
-                    run('PATH=/usr/lib/ccache:/usr/lib64/ccache/bin:$PATH '
-                        'env/bin/pip install '
-                        '  -r requirements.txt')
+                    run('make')
 
     def start(self):
         for worker, master in zip(self.cluster_spec.workers,

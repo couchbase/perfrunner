@@ -1,6 +1,6 @@
 git+https://github.com/couchbaselabs/btrc.git#get=btrc
 git+https://github.com/couchbase/cbagent.git#egg=cbagent
-celery==3.0.24
+celery==3.1.23
 couchbase==1.2.1
 cryptography==1.4
 decorator

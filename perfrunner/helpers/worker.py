@@ -178,7 +178,7 @@ class LocalWorkerManager(RemoteWorkerManager):
             for bucket in self.buckets:
                 qname = '{}-{}'.format(master.split(':')[0], bucket)
                 logger.info('Starting local Celery worker: {}'.format(qname))
-                local('nohup env/bin/celery worker '
+                local('PYTHONOPTIMIZE=1 nohup env/bin/celery worker '
                       '-A perfrunner.helpers.worker -Q {0} -c 1 -C '
                       '>/tmp/worker_{0}.log &'.format(qname))
                 sleep(self.RACE_DELAY)

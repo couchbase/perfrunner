@@ -90,7 +90,7 @@ class RemoteWorkerManager(object):
 
                 run('mkdir {}'.format(temp_dir))
                 with cd(temp_dir):
-                    run('git clone {}'.format(REPO))
+                    run('git clone -q {}'.format(REPO))
                 with cd('{}/perfrunner'.format(temp_dir)):
                     run('virtualenv -p python2.7 env')
                     run('PATH=/usr/lib/ccache:/usr/lib64/ccache/bin:$PATH '

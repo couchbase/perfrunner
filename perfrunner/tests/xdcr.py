@@ -119,6 +119,20 @@ class SrcTargetIterator(TargetIterator):
             yield TargetSettings(src_master, bucket, password, prefix)
 
 
+class DestTargetIterator(TargetIterator):
+
+    def __iter__(self):
+        password = self.test_config.bucket.password
+        prefix = self.prefix
+        masters = self.cluster_spec.yield_masters()
+        src_master = masters.next()
+        dest_master = masters.next()
+        for bucket in self.test_config.buckets:
+            if self.prefix is None:
+                prefix = target_hash(src_master, bucket)
+            yield TargetSettings(dest_master, bucket, password, prefix)
+
+
 class SymmetricXdcrTest(XdcrTest):
 
     """

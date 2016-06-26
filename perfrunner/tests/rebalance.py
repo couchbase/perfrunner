@@ -1,14 +1,16 @@
+import multiprocessing
 import time
 
 from decorator import decorator
 
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.helpers.misc import server_group
+from perfrunner.helpers.misc import log_phase, server_group
 from perfrunner.tests import PerfTest
 from perfrunner.tests.index import IndexTest
 from perfrunner.tests.query import QueryTest
 from perfrunner.tests.spatial import SpatialQueryTest
-from perfrunner.tests.xdcr import SymmetricXdcrTest, XdcrTest
+from perfrunner.tests.xdcr import (DestTargetIterator, SymmetricXdcrTest,
+                                   XdcrInitTest, XdcrTest)
 
 
 @decorator
@@ -339,7 +341,7 @@ class RebalanceWithSymmetricXdcrTest(SymmetricXdcrTest, RebalanceTest):
         self.rebalance()
 
 
-class RebalanceWithXdcrTest(SymmetricXdcrTest, RebalanceTest):
+class RebalanceWithXdcrTest(XdcrInitTest, RebalanceTest):
 
     """
     Workflow definition unidir XDCR rebalance tests.
@@ -383,13 +385,25 @@ class RebalanceWithXdcrTest(SymmetricXdcrTest, RebalanceTest):
 
         self.enable_xdcr()
         start = time.time()
+        if self.master:
+            p = multiprocessing.Process(target=self.monitor.monitor_rebalance, args=(self.master,))
+            p.start()
         self.monitor_replication()
         self.spent_time = int(time.time() - start)
-        if self.master:
-            self.monitor.monitor_rebalance(self.master)
+
+    def load_dest(self):
+        load_settings = self.test_config.load_settings
+        log_phase('load phase', load_settings)
+
+        dest_target_iterator = DestTargetIterator(self.cluster_spec,
+                                                  self.test_config)
+        self.worker_manager.run_workload(load_settings, dest_target_iterator)
+        self.worker_manager.wait_for_workers()
 
     def run(self):
         self.load()
+        if self.test_config.cluster.initial_nodes[1] != self.rebalance_settings.nodes_after[1]:
+            self.load_dest()
         self.wait_for_persistence()
 
         self.compact_bucket()

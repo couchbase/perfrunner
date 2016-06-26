@@ -6,7 +6,7 @@ larger_is_better = false
 
 [cluster]
 mem_quota = 204800
-initial_nodes = 5 4
+initial_nodes = 5 5
 num_buckets = 1
 
 [compaction]
@@ -21,7 +21,7 @@ workers = 15
 replication_type = unidir
 
 [rebalance]
-nodes_after = 5 5
+nodes_after = 4 5
 start_after = 10
 stop_after = 10
 

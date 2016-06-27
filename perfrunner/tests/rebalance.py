@@ -355,7 +355,7 @@ class RebalanceWithXdcrTest(XdcrInitTest, RebalanceTest):
         initial_nodes = self.test_config.cluster.initial_nodes
         nodes_after = self.rebalance_settings.nodes_after
         group_number = self.test_config.cluster.group_number or 1
-
+        self.master = None
         for (_, servers), initial_nodes, nodes_after in zip(clusters,
                                                             initial_nodes,
                                                             nodes_after):

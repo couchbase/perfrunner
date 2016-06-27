@@ -7,7 +7,7 @@ leto =
 
 [clients]
 hosts =
-    172.23.100.33
+    172.23.100.213
 credentials = root:couchbase
 
 [storage]

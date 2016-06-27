@@ -63,12 +63,15 @@ class ClusterManager(object):
                 self.rest.set_query_settings(server, settings)
 
     def set_index_settings(self):
-        settings = self.test_config.secondaryindex_settings.settings
-        for _, servers in self.cluster_spec.yield_servers_by_role('index'):
-            for server in servers:
-                self.rest.set_index_settings(server, settings)
-        self.remote.restart()
-        time.sleep(60)
+        if self.test_config.secondaryindex_settings.db != 'memdb':
+            settings = self.test_config.secondaryindex_settings.settings
+            for _, servers in self.cluster_spec.yield_servers_by_role('index'):
+                for server in servers:
+                    self.rest.set_index_settings(server, settings)
+            self.remote.restart()
+            time.sleep(60)
+        else:
+            logger.info("DB type is memdb. Not setting the indexer settings. Taking the default indexer settings")
 
     def set_services(self):
         for (_, servers), initial_nodes in zip(self.clusters(),
@@ -233,6 +236,17 @@ class ClusterManager(object):
         if self.test_config.cluster.run_cbq:
             self.remote.start_cbq()
 
+    def change_dcp_io_threads(self):
+        if self.test_config.secondaryindex_settings.db == 'memdb':
+            cmd = 'ns_bucket:update_bucket_props("{}", ' \
+                  '[{{extra_config_string, "max_num_auxio=16"}}]).'
+            for master in self.masters():
+                for bucket in self.test_config.buckets:
+                    diag_eval = cmd.format(bucket)
+                    self.rest.run_diag_eval(master, diag_eval)
+            time.sleep(30)
+            self.remote.restart()
+
 
 def get_options():
     usage = '%prog -c cluster -t test_config'
@@ -302,6 +316,7 @@ def main():
     cm.change_watermarks()
     if cm.remote:
         cm.set_index_settings()
+        cm.change_dcp_io_threads()
         time.sleep(60)
         cm.set_query_settings()
         cm.tweak_memory()

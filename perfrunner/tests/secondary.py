@@ -157,6 +157,23 @@ class SecondaryIndexTest(PerfTest):
                                                               self.active_indexes, rest_username, rest_password)
         return time_elapsed
 
+    def run_load_for_2i(self):
+        if self.secondaryDB == 'memdb':
+            load_settings = self.test_config.load_settings
+            self.remote.run_spring_on_kv(load_settings=load_settings)
+        else:
+            self.load()
+
+    def run_access_for_2i(self, run_in_background=False):
+        if self.secondaryDB == 'memdb':
+            access_settings = self.test_config.access_settings
+            self.remote.run_spring_on_kv(load_settings=access_settings, silent=run_in_background)
+        else:
+            if run_in_background:
+                self.access_bg()
+            else:
+                self.access()
+
 
 class InitialSecondaryIndexTest(SecondaryIndexTest):
 
@@ -199,17 +216,18 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
     @with_stats
     def build_incrindex(self):
         access_settings = self.test_config.access_settings
-        self.worker_manager.run_workload(access_settings, self.target_iterator)
-        self.worker_manager.wait_for_workers()
         load_settings = self.test_config.load_settings
-        access_settings = self.test_config.access_settings
+        if self.secondaryDB == 'memdb':
+            self.remote.run_spring_on_kv(load_settings=access_settings)
+        else:
+            self.worker_manager.run_workload(access_settings, self.target_iterator)
+            self.worker_manager.wait_for_workers()
         numitems = load_settings.items + access_settings.items
-
         self.rest.wait_for_secindex_incr_build(self.index_nodes, self.bucket,
                                                self.active_indexes, numitems)
 
     def run(self):
-        self.load()
+        self.run_load_for_2i()
         self.wait_for_persistence()
         self.compact_bucket()
         from_ts, to_ts = self.build_secondaryindex()
@@ -219,6 +237,8 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
             *self.metric_helper.get_indexing_meta(value=time_elapsed,
                                                   index_type='Initial')
         )
+        if self.secondaryDB != 'memdb':
+            time.sleep(300)
         from_ts, to_ts = self.build_incrindex()
         time_elapsed = (to_ts - from_ts) / 1000.0
         time_elapsed = self.reporter.finish('Incremental secondary index', time_elapsed)
@@ -246,7 +266,7 @@ class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSeco
         self.rest.rebalance(master, known_nodes, ejected_nodes)
 
     def run(self):
-        self.load()
+        self.run_load_for_2i()
         self.wait_for_persistence()
         self.compact_bucket()
         initial_nodes = []
@@ -261,6 +281,8 @@ class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSeco
             *self.metric_helper.get_indexing_meta(value=time_elapsed,
                                                   index_type='Initial')
         )
+        if self.secondaryDB != 'memdb':
+            time.sleep(300)
         master = []
         for _, servers in self.cluster_spec.yield_clusters():
             master = servers[0]
@@ -293,16 +315,29 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
 
         if self.test_config.secondaryindex_settings.stale == 'false':
             if numindexes == 1:
-                self.configfile = 'scripts/config_scanthr_sessionconsistent.json'
+                if self.secondaryDB == 'memdb':
+                    self.configfile = 'scripts/config_scanthr_sessionconsistent_memdb.json'
+                else:
+                    self.configfile = 'scripts/config_scanthr_sessionconsistent.json'
             elif numindexes == 5:
-                self.configfile = 'scripts/config_scanthr_sessionconsistent_multiple.json'
+                if self.secondaryDB == 'memdb':
+                    self.configfile = 'scripts/config_scanthr_sessionconsistent_multiple_memdb.json'
+                else:
+                    self.configfile = 'scripts/config_scanthr_sessionconsistent_multiple.json'
         else:
-            if numindexes == 1:
-                self.configfile = 'scripts/config_scanthr.json'
-            elif numindexes == 5:
-                self.configfile = 'scripts/config_scanthr_multiple.json'
 
-        cmdstr = "cbindexperf -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json".format(self.index_nodes[0], rest_username, rest_password, self.configfile)
+            if numindexes == 1:
+                if self.secondaryDB == 'memdb':
+                    self.configfile = 'scripts/config_scanthr_memdb.json'
+                else:
+                    self.configfile = 'scripts/config_scanthr.json'
+            elif numindexes == 5:
+                if self.secondaryDB == 'memdb':
+                    self.configfile = 'scripts/config_scanthr_multiple_memdb.json'
+                else:
+                    self.configfile = 'scripts/config_scanthr_multiple.json'
+        cmdstr = "cbindexperf -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json".format(
+            self.index_nodes[0], rest_username, rest_password, self.configfile)
         logger.info('To be applied:'.format(cmdstr))
         status = subprocess.call(cmdstr, shell=True)
         if status != 0:
@@ -325,14 +360,17 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
         return scansps, rowps
 
     def run(self):
-        self.load()
+        self.run_load_for_2i()
         self.wait_for_persistence()
         self.compact_bucket()
         from_ts, to_ts = self.build_secondaryindex()
-        self.access_bg()
+        if self.secondaryDB != 'memdb':
+            time.sleep(300)
+        self.run_access_for_2i(run_in_background=True)
         self.apply_scanworkload()
         scanthr, rowthr = self.read_scanresults()
         logger.info('Scan throughput: {}'.format(scanthr))
+        logger.info('Rows throughput: {}'.format(rowthr))
         if self.test_config.stats_settings.enabled:
             self.reporter.post_to_sf(
                 round(scanthr, 1)
@@ -361,11 +399,13 @@ class SecondaryIndexingThroughputRebalanceTest(SecondaryIndexingThroughputTest):
         self.rest.rebalance(master, known_nodes, ejected_nodes)
 
     def run(self):
-        self.load()
+        self.run_load_for_2i()
         self.wait_for_persistence()
         self.compact_bucket()
         from_ts, to_ts = self.build_secondaryindex()
-        self.access_bg()
+        if self.secondaryDB != 'memdb':
+            time.sleep(300)
+        self.run_access_for_2i(run_in_background=True)
         initial_nodes = []
         nodes_after = [0]
         initial_nodes = self.test_config.cluster.initial_nodes
@@ -397,16 +437,29 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
 
         if self.test_config.secondaryindex_settings.stale == 'false':
             if numindexes == 1:
-                self.configfile = 'scripts/config_scanlatency_sessionconsistent.json'
+                if self.secondaryDB == 'memdb':
+                    self.configfile = 'scripts/config_scanlatency_sessionconsistent_memdb.json'
+                else:
+                    self.configfile = 'scripts/config_scanlatency_sessionconsistent.json'
             elif numindexes == 5:
-                self.configfile = 'scripts/config_scanlatency_sessionconsistent_multiple.json'
+                if self.secondaryDB == 'memdb':
+                    self.configfile = 'scripts/config_scanlatency_sessionconsistent_multiple_memdb.json'
+                else:
+                    self.configfile = 'scripts/config_scanlatency_sessionconsistent_multiple.json'
         else:
             if numindexes == 1:
-                self.configfile = 'scripts/config_scanlatency.json'
+                if self.secondaryDB == 'memdb':
+                    self.configfile = 'scripts/config_scanlatency_memdb.json'
+                else:
+                    self.configfile = 'scripts/config_scanlatency.json'
             elif numindexes == 5:
-                self.configfile = 'scripts/config_scanlatency_multiple.json'
+                if self.secondaryDB == 'memdb':
+                    self.configfile = 'scripts/config_scanlatency_multiple_memdb.json'
+                else:
+                    self.configfile = 'scripts/config_scanlatency_multiple.json'
 
-        cmdstr = "cbindexperf -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json -statsfile /root/statsfile".format(self.index_nodes[0], rest_username, rest_password, self.configfile)
+        cmdstr = "cbindexperf -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json -statsfile /root/statsfile".format(
+            self.index_nodes[0], rest_username, rest_password, self.configfile)
         logger.info("Calling command: {}".format(cmdstr))
         status = subprocess.call(cmdstr, shell=True)
         if status != 0:
@@ -422,11 +475,13 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
         else:
             logger.info('Existing 2i latency stats file removed')
 
-        self.load()
+        self.run_load_for_2i()
         self.wait_for_persistence()
         self.compact_bucket()
         from_ts, to_ts = self.build_secondaryindex()
-        self.access_bg()
+        if self.secondaryDB != 'memdb':
+            time.sleep(300)
+        self.run_access_for_2i(run_in_background=True)
         self.apply_scanworkload()
         if self.test_config.stats_settings.enabled:
             self.reporter.post_to_sf(
@@ -464,7 +519,7 @@ class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest
         else:
             logger.info('Existing 2i latency stats file removed')
 
-        self.load()
+        self.run_load_for_2i()
         self.wait_for_persistence()
         self.compact_bucket()
         initial_nodes = []
@@ -472,9 +527,13 @@ class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest
         initial_nodes = self.test_config.cluster.initial_nodes
         nodes_after[0] = initial_nodes[0] + 1
         from_ts, to_ts = self.build_secondaryindex()
-        self.access_bg()
+        if self.secondaryDB != 'memdb':
+            time.sleep(300)
+        self.run_access_for_2i(run_in_background=True)
         self.rebalance(initial_nodes[0], nodes_after[0])
         self.apply_scanworkload()
+        scan_latency = self.cal_secondaryscan_latency(percentile=80)
+        logger.info("Scan latency = {}".format(scan_latency))
         if self.test_config.stats_settings.enabled:
             self.reporter.post_to_sf(
                 *self.metric_helper.calc_secondaryscan_latency(percentile=80)
@@ -501,7 +560,7 @@ class SecondaryIndexingLatencyTest(SecondaryIndexTest):
         return status
 
     def run(self):
-        self.load()
+        self.run_load_for_2i()
         self.wait_for_persistence()
         self.compact_bucket()
         self.hot_load()

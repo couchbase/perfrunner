@@ -1,11 +1,12 @@
 [test_case]
 test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
-title = 1 bucket x 20M x 2KB,single 2i index, no mutations during initial build only
-summary = Secondary Indexing test, 4 KV nodes, 1 2i node 1 bucket x 20M x 2KB
+title = 1 bucket x 20M x 2KB,single 2i index, no mutations during initial build only, updates only in incremental build
+summary = Secondary Indexing test, 4 KV nodes, 1 2i node 1 bucket x 20M x 2KB, 100 updates in incremental build
 larger_is_better = false
 
 [cluster]
 mem_quota = 30000
+index_mem_quota = 100000
 initial_nodes = 5
 num_buckets = 1
 
@@ -21,10 +22,9 @@ workers = 20
 [secondary]
 name = myindex
 field = alt_email
-db = memdb
 
 [access]
-creates = 100
+updates = 100
 ops = 20000000
 items = 20000000
 workers = 20

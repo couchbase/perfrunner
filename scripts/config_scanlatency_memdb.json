@@ -1,13 +1,13 @@
 {
-       "Concurrency" : 30,
-       "Clients" : 1,
+       "Concurrency" : 128,
+       "Clients" : 5,
        "ScanSpecs" : [
           {
              "Limit" : 1        ,
              "Low" : [
                 "000015"
              ],
-             "Repeat" : 9999999,
+             "Repeat" : 69999999,
              "Type" : "Range",
              "Bucket" : "bucket-1",
              "High" : [

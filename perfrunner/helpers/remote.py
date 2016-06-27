@@ -1,4 +1,5 @@
 import time
+from random import uniform
 
 from decorator import decorator
 from fabric import state
@@ -35,6 +36,21 @@ def all_clients(task, *args, **kargs):
     return execute(parallel(task), *args, hosts=self.cluster_spec.workers, **kargs)
 
 
+@decorator
+def all_kv_nodes(task, *args, **kargs):
+    self = args[0]
+    self.host_index = 0
+    return execute(parallel(task), *args, hosts=self.kv_hosts, **kargs)
+
+
+@decorator
+def kv_node(task, *args, **kargs):
+    self = args[0]
+    host = self.cluster_spec.yield_kv_servers().next()
+    with settings(host_string=host):
+        return task(*args, **kargs)
+
+
 class RemoteHelper(object):
 
     def __new__(cls, cluster_spec, test_config, verbose=False):
@@ -63,6 +79,21 @@ class RemoteHelper(object):
             return 'Cygwin'
 
 
+class CurrentHostMutex:
+
+    def __init__(self):
+        with open("/tmp/current_host.txt", 'w') as f:
+            f.write("0")
+
+    @staticmethod
+    def next_host_index():
+        with open("/tmp/current_host.txt", 'r') as f:
+            next_host = f.readline()
+        with open("/tmp/current_host.txt", 'w') as f:
+            f.write((int(next_host) + 1).__str__())
+        return int(next_host)
+
+
 class RemoteLinuxHelper(object):
 
     ARCH = {'i386': 'x86', 'x86_64': 'x86_64', 'unknown': 'x86_64'}
@@ -72,11 +103,13 @@ class RemoteLinuxHelper(object):
     INBOX_FOLDER = "inbox"
 
     PROCESSES = ('beam.smp', 'memcached', 'epmd', 'cbq-engine', 'mongod', 'indexer',
-                 'cbft', 'goport', 'goxdcr', 'couch_view_index_updater', 'moxi')
+                 'cbft', 'goport', 'goxdcr', 'couch_view_index_updater', 'moxi', 'spring')
 
     def __init__(self, cluster_spec, test_config, os):
         self.os = os
         self.hosts = tuple(cluster_spec.yield_hostnames())
+        self.kv_hosts = tuple(cluster_spec.yield_kv_servers())
+        self.current_host = CurrentHostMutex()
         self.cluster_spec = cluster_spec
         self.test_config = test_config
         self.env = {}
@@ -168,6 +201,85 @@ class RemoteLinuxHelper(object):
         status = run(cmdstr, shell_escape=False, pty=False)
         if status:
             logger.info('cbindex status {}'.format(status))
+
+    @all_kv_nodes
+    def run_spring_on_kv(self, load_settings, silent=False):
+        creates = load_settings.creates
+        reads = load_settings.reads
+        updates = load_settings.updates
+        deletes = load_settings.deletes
+        expires = load_settings.expiration
+        operations = load_settings.items
+        throughput = int(load_settings.throughput) if load_settings.throughput != float('inf') \
+            else load_settings.throughput
+        size = load_settings.size
+        existing_items = load_settings.existing_items
+        items_in_working_set = int(load_settings.working_set)
+        operations_to_hit_working_set = load_settings.working_set_access
+        workers = load_settings.spring_workers
+        logger.info("running spring on kv nodes")
+        number_of_kv_nodes = self.kv_hosts.__len__()
+        existing_item = operation = 0
+        sleep_time = uniform(1, number_of_kv_nodes)
+        time.sleep(sleep_time)
+        host = self.current_host.next_host_index()
+        logger.info("current_host_index {}".format(host))
+        if host != number_of_kv_nodes - 1:
+            if (creates != 0 or reads != 0 or updates != 0 or deletes != 0) and operations != float('inf'):
+                operation = int(operations / (number_of_kv_nodes * 100)) * 100
+                if creates == 100:
+                    existing_item = operation * host + existing_items
+                else:
+                    existing_item = existing_items
+        else:
+            if (creates != 0 or reads != 0 or updates != 0 or deletes != 0) and operations != float('inf'):
+                operation = operations - (int(operations / (number_of_kv_nodes * 100)) * 100 * (number_of_kv_nodes - 1))
+                if creates == 100:
+                    existing_item = operation * host + existing_items
+                else:
+                    existing_item = existing_items
+                f = open("/tmp/current_host.txt", "w")
+                f.write("0")
+                f.close()
+        time.sleep(number_of_kv_nodes * 2 - sleep_time)
+        cmdstr = "spring -c {} -r {} -u {} -d {} -e {} " \
+                 "-s {} -i {} -w {} -W {} -n {}".format(creates, reads, updates, deletes, expires, size,
+                                                        existing_item, items_in_working_set,
+                                                        operations_to_hit_working_set, workers, self.hosts[0])
+        if operation != 0:
+            cmdstr += " -o {}".format(operation)
+        if throughput != float('inf'):
+            thrput = int(throughput / (number_of_kv_nodes * 100)) * 100
+            cmdstr += " -t {}".format(thrput)
+        cmdstr += " cb://Administrator:password@{}:8091/bucket-1".format(self.hosts[0])
+        pty = True
+        if silent:
+            cmdstr += " >/tmp/springlog.log 2>&1 &"
+            pty = False
+        logger.info(cmdstr)
+        result = run(cmdstr, pty=pty)
+        if silent:
+            time.sleep(10)
+            res = run(r"ps aux | grep -ie spring | awk '{print $11}'")
+            if "python2.7" not in res:
+                raise Exception("Spring not run on KV. {}".format(res))
+        else:
+            if "Current progress: 100.00 %" not in result and "Finished: worker-{}".format(workers - 1) not in result:
+                raise Exception("Spring not run on KV")
+
+    @all_kv_nodes
+    def check_spring_running(self):
+        cmdstr = r"ps aux | grep -ie spring | awk '{print $11}'"
+        result = run(cmdstr)
+        logger.info(result)
+        logger.info(result.stdout)
+
+    @all_kv_nodes
+    def kill_spring_processes(self):
+        cmdstr = "ps aux | grep -ie spring | awk '{print $2}' | xargs kill -9"
+        result = run(cmdstr, quiet=True)
+        if result.failed:
+            pass
 
     @single_host
     def detect_openssl(self, pkg):

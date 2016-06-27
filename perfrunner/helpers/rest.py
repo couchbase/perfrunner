@@ -11,8 +11,8 @@ from requests.exceptions import ConnectionError
 
 import perfrunner.helpers.misc as misc
 
-MAX_RETRY = 5
-RETRY_DELAY = 5
+MAX_RETRY = 20
+RETRY_DELAY = 10
 
 
 @decorator
@@ -138,6 +138,9 @@ class RestHelper(object):
             logger.info('Changing 2i setting {} to {}'.format(override, value))
 
         self.post(url=api, data=json.dumps(settings), headers=headers)
+        time.sleep(10)
+        new_settings = self.get(url="{}?internal=ok".format(api)).json()
+        logger.info("New 2i settings: {}".format(new_settings))
 
     def set_services(self, host_port, services):
         logger.info('Configuring services on master node: {}'.format(host_port))
@@ -544,7 +547,7 @@ class RestHelper(object):
         logger.info(
             "Waiting for the following indexes to be ready: {}".format(indexes))
 
-        index_ready = [0 for index in indexes]
+        indexesready = [0 for index in indexes]
         url = 'http://{}:9102/getIndexStatus'.format(host)
         request = urllib2.Request(url)
         base64string = base64.encodestring('%s:%s' % (rest_username, rest_password)).replace('\n', '')
@@ -560,20 +563,34 @@ class RestHelper(object):
                     return d["status"]
             return None
 
-        @misc.retry(catch=(KeyError,))
+        @misc.retry(catch=(KeyError,), iterations=10, wait=30)
         def check_indexes_ready():
-            response = urllib2.urlopen(request)
-            data = str(response.read())
-            json2i = json.loads(data)
-            for i, index in enumerate(indexes):
-                status = get_index_status(json2i, index)
-                if status == 'Ready':
-                    index_ready[i] = 1
-
+            try:
+                response = urllib2.urlopen(request)
+                data = str(response.read())
+                json2i = json.loads(data)
+                for i, index in enumerate(indexes):
+                    status = get_index_status(json2i, index)
+                    if status == 'Ready':
+                        indexesready[i] = 1
+            except urllib2.HTTPError as e:
+                logger.warning("HTTPError {}".format(e))
+                api_temp = 'http://{}:9102/stats'.format(host)
+                host_data = self.get(url=api_temp).json()
+                data = {}
+                data.update(host_data)
+                for i, ind in enumerate(indexes):
+                    key = "bucket-1:" + ind + ":num_docs_pending"
+                    val1 = data[key]
+                    key = "bucket-1:" + ind + ":num_docs_queued"
+                    val2 = data[key]
+                    val = int(val1) + int(val2)
+                    if val == 0:
+                        indexesready[i] = 1
         while True:
             time.sleep(1)
             check_indexes_ready()
-            if sum(index_ready) == len(indexes):
+            if sum(indexesready) == len(indexes):
                 break
 
         finish_ts = time.time()
@@ -601,39 +618,30 @@ class RestHelper(object):
                 num_indexed.append(val)
             return num_indexed
 
-        expected_num_indexed = [numitems] * len(indexes)
-        prev_num_indexed = [None] * len(indexes)
-        steady_count = 0
+        def get_num_pending():
+            data = {}
+            api = 'http://{}:9102/stats'
+            for host in hosts:
+                host_data = self.get(url=api.format(host)).json()
+                data.update(host_data)
+            num_pending = []
+            for index in indexes:
+                key = "" + bucket + ":" + index + ":num_docs_pending"
+                val1 = data[key]
+                key = "" + bucket + ":" + index + ":num_docs_queued"
+                val2 = data[key]
+                val = int(val1) + int(val2)
+                num_pending.append(val)
+            return num_pending
 
+        expected_num_pending = [0] * len(indexes)
         while True:
             time.sleep(1)
-            curr_num_indexed = get_num_indexed()
-
-            if curr_num_indexed == expected_num_indexed:
+            curr_num_pending = get_num_pending()
+            if curr_num_pending == expected_num_pending:
                 break
-
-            # True only if every index's num_docs_indexed is within threshold
-            # of the expected value
-            all_tolerated = all(
-                [
-                    actual >= 0.98 * expected  # FIXME: hard-coded constant
-                    for actual, expected in
-                    zip(curr_num_indexed, expected_num_indexed)
-                ])
-
-            if not all_tolerated:
-                continue
-
-            if prev_num_indexed == curr_num_indexed:
-                steady_count += 1
-            else:
-                prev_num_indexed = curr_num_indexed
-                steady_count = 0
-
-            if steady_count == 20:  # FIXME: hard-coded constant
-                break
-
-        logger.info("Actually indexed {}".format(curr_num_indexed))
+        curr_num_indexed = get_num_indexed()
+        logger.info("Number of Items indexed {}".format(curr_num_indexed))
 
     def regenerate_cluster_certificate(self, host_port):
         api = 'http://{}/controller/regenerateCertificate'.format(host_port)

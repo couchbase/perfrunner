@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
-title = 1 bucket x 300M x 2KB,single 2i index, no mutations during initial build only
-summary = Secondary Indexing test, 4 KV nodes, 1 2i node 1 bucket x 300M x 2KB
+title = 1 bucket x 50M x 2KB,single 2i index, no mutations during initial build only, updates only in incremental build
+summary = Secondary Indexing test, 4 KV nodes, 1 2i node 1 bucket x 50M x 2KB, updates only in incremental build
 larger_is_better = false
 
 [cluster]
@@ -15,7 +15,7 @@ db_percentage = 100
 view_percentage = 100
 
 [load]
-items = 300000000
+items = 50000000
 size = 2048
 workers = 20
 
@@ -24,7 +24,7 @@ name = myindex
 field = alt_email
 
 [access]
-creates = 100
-ops = 300000000
-items = 300000000
+updates = 100
+ops = 50000000
+items = 50000000
 workers = 20

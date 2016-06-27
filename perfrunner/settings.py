@@ -84,6 +84,15 @@ class ClusterSpec(Config):
                     has_service.append(server.split(',')[0])
             yield name, has_service
 
+    @safe
+    def yield_kv_servers(self):
+        for name, servers in self.config.items('clusters'):
+            for server in servers.split():
+                if ',' in server:
+                    continue
+                else:
+                    yield server.split(':')[0]
+
     @property
     @safe
     def roles(self):
@@ -476,6 +485,7 @@ class PhaseSettings(object):
     DOC_PARTITIONS = 1
 
     ITEMS = 0
+    EXISTING_ITEMS = 0
     SIZE = 2048
     EXPIRATION = 0
     WORKING_SET = 100
@@ -486,6 +496,7 @@ class PhaseSettings(object):
     N1QL_WORKERS = 0
     N1QL_OP = 'read'
     DCP_WORKERS = 0
+    SPRING_WORKERS = 100
 
     SEQ_READS = False
     SEQ_UPDATES = False
@@ -493,6 +504,7 @@ class PhaseSettings(object):
     TIME = 3600 * 24
 
     ASYNC = False
+    PARALLEL_WORKLOAD = False
 
     ITERATIONS = 1
 
@@ -516,12 +528,14 @@ class PhaseSettings(object):
                                               self.DOC_PARTITIONS))
         self.size = int(options.get('size', self.SIZE))
         self.items = int(options.get('items', self.ITEMS))
+        self.existing_items = int(options.get('existing_items', self.EXISTING_ITEMS))
         self.expiration = int(options.get('expiration', self.EXPIRATION))
         self.working_set = float(options.get('working_set', self.WORKING_SET))
         self.working_set_access = int(options.get('working_set_access',
                                                   self.WORKING_SET_ACCESS))
 
         self.workers = int(options.get('workers', self.WORKERS))
+
         self.query_workers = int(options.get('query_workers',
                                              self.QUERY_WORKERS))
         self.n1ql_workers = int(options.get('n1ql_workers',
@@ -529,6 +543,7 @@ class PhaseSettings(object):
         self.subdoc_workers = 0
         self.n1ql_op = options.get('n1ql_op', self.N1QL_OP)
         self.dcp_workers = int(options.get('dcp_workers', self.DCP_WORKERS))
+        self.spring_workers = int(options.get('spring_workers', self.SPRING_WORKERS))
         self.n1ql_queries = []
         if 'n1ql_queries' in options:
             self.n1ql_queries = options.get('n1ql_queries').strip().split(',')
@@ -544,7 +559,7 @@ class PhaseSettings(object):
         self.time = int(options.get('time', self.TIME))
 
         self.async = bool(int(options.get('async', self.ASYNC)))
-
+        self.parallel_workload = bool(int(options.get('parallel_workload', self.PARALLEL_WORKLOAD)))
         self.iterations = int(options.get('iterations', self.ITERATIONS))
 
         self.filename = None
@@ -671,8 +686,8 @@ class SecondaryIndexSettings(object):
         }
 
         for option in options:
-            if option.startswith('indexer.settings') or \
-               option.startswith('projector.settings') or \
+            if option.startswith('indexer') or \
+               option.startswith('projector') or \
                option.startswith('queryport.client.settings'):
 
                 value = options.get(option)

@@ -19,10 +19,6 @@ db_percentage = 2
 time = 600
 workers = 4
 
-[stats]
-seriesly_host = 172.23.106.161
-cbmonitor_host = 172.23.106.161
-
 [ycsb]
 sdk = couchbase2
 bucket = couchbase.bucket=bucket-1

@@ -492,6 +492,35 @@ class RemoteLinuxHelper(object):
                     run(cmd)
         return int(time.time() - start)
 
+    @single_host
+    def cbrestorefts(self):
+        restore_path = self.cluster_spec.config.get('storage', 'backup_path')
+        logger.info('restore from %s' % restore_path)
+        cmd = "cd /opt/couchbase/bin && ./cbrestorewrapper {}  http://127.0.0.1:8091 " \
+              "-b {} -u Administrator -p password".format(restore_path, self.test_config.buckets[0])
+        run(cmd)
+
+    @single_host
+    def startelasticsearchplugin(self):
+        cmd = ['service elasticsearch restart',
+               'service elasticsearch stop',
+               'sudo chkconfig --add elasticsearch',
+               'sudo service elasticsearch restart',
+               'sudo service elasticsearch stop',
+               'cd /usr/share/elasticsearch',
+               'echo "couchbase.password: password" >> /etc/elasticsearch/elasticsearch.yml',
+               '/usr/share/elasticsearch/bin/plugin  -install transport-couchbase -url http://packages.couchbase.com.s3.amazonaws.com/releases/elastic-search-adapter" \
+                                                      "/2.0.0/elasticsearch-transport-couchbase-2.0.0.zip',
+               'echo "couchbase.password: password" >> /etc/elasticsearch/elasticsearch.yml',
+               'echo "couchbase.username: Administrator" >> /etc/elasticsearch/elasticsearch.yml'
+               'bin/plugin -install mobz/elasticsearch-head',
+               'sudo service elasticsearch restart']
+
+        for c in cmd.split:
+            cmd = c.strip()
+            logger.info("command executed {}".format(cmd))
+            run(cmd)
+
     @single_client
     def generate_certs(self, root_cn='Root\ Authority', type='go',
                        encryption="", key_length=1024):

@@ -5,8 +5,9 @@ from datetime import datetime
 from multiprocessing import Process
 
 import requests
-from cbagent.collectors import (IO, PS, ActiveTasks, N1QLStats, Net, NSServer,
-                                ObserveLatency, SecondaryDebugStats,
+from cbagent.collectors import (IO, PS, ActiveTasks, ElasticStats, FtsLatency,
+                                FtsQueryStats, FtsStats, N1QLStats, Net,
+                                NSServer, ObserveLatency, SecondaryDebugStats,
                                 SecondaryLatencyStats, SecondaryStats,
                                 SpringLatency, SpringN1QLQueryLatency,
                                 SpringQueryLatency, SpringSpatialQueryLatency,
@@ -25,19 +26,18 @@ def with_stats(method, *args, **kwargs):
 
     stats_enabled = test.test_config.stats_settings.enabled
 
+    from_ts = datetime.utcnow()
     if stats_enabled:
         if not test.cbagent.collectors:
             test.cbagent.prepare_collectors(test, **test.COLLECTORS)
             test.cbagent.update_metadata()
         test.cbagent.start()
 
-    from_ts = datetime.utcnow()
     method(*args, **kwargs)
     to_ts = datetime.utcnow()
 
     if stats_enabled:
         test.cbagent.stop()
-
         if test.test_config.stats_settings.add_snapshots:
             test.cbagent.add_snapshot(method.__name__, from_ts, to_ts)
             test.snapshots = test.cbagent.snapshots
@@ -87,7 +87,8 @@ class CbAgent(object):
             'sync_gateway_nodes':
                 test.remote.gateways if test.remote else None,
             'monitor_clients':
-                test.cluster_spec.workers if test.test_config.test_case.monitor_clients else None
+                test.cluster_spec.workers if test.test_config.test_case.monitor_clients else None,
+            'fts_server': test.test_config.test_case.fts_server
         })()
         self.lat_interval = test.test_config.stats_settings.lat_interval
         if test.cluster_spec.ssh_credentials:
@@ -102,6 +103,7 @@ class CbAgent(object):
         self.collectors = []
         self.processes = []
         self.snapshots = []
+        self.fts_stats = None
 
     def prepare_collectors(self, test,
                            latency=False, secondary_stats=False,
@@ -110,7 +112,9 @@ class CbAgent(object):
                            index_latency=False, persist_latency=False,
                            replicate_latency=False, xdcr_lag=False,
                            secondary_latency=False,
-                           secondary_debugstats=False):
+                           secondary_debugstats=False,
+                           fts_latency=False, elastic_stats=False,
+                           fts_stats=False, fts_query_stats=False):
         clusters = self.clusters.keys()
 
         self.prepare_ns_server(clusters)
@@ -145,6 +149,14 @@ class CbAgent(object):
             self.prepare_replicate_latency(clusters)
         if xdcr_lag:
             self.prepare_xdcr_lag(clusters)
+        if fts_latency:
+            self.prepare_fts_latency(clusters, test.test_config)
+        if fts_stats:
+            self.prepare_fts_stats(clusters, test.test_config)
+        if fts_query_stats:
+            self.prepare_fts_query_stats(clusters, test.test_config)
+        if elastic_stats:
+            self.prepare_elastic_stats(clusters, test.test_config)
 
     def prepare_ns_server(self, clusters):
         for cluster in clusters:
@@ -328,6 +340,43 @@ class CbAgent(object):
             settings.master_node = self.clusters[cluster]
             self.collectors.append(
                 SpringN1QLQueryLatency(settings, test.workload, prefix='n1ql')
+            )
+
+    def prepare_fts_latency(self, clusters, test):
+        for cluster in clusters:
+            settings = copy(self.settings)
+            settings.cluster = cluster
+            settings.master_node = self.clusters[cluster]
+            self.collectors.append(
+                FtsLatency(settings, test)
+            )
+
+    def prepare_fts_stats(self, clusters, test):
+        for cluster in clusters:
+            settings = copy(self.settings)
+            settings.cluster = cluster
+            settings.master_node = self.clusters[cluster]
+            self.collectors.append(
+                FtsStats(settings, test)
+            )
+
+    def prepare_fts_query_stats(self, clusters, test):
+        for cluster in clusters:
+            settings = copy(self.settings)
+            settings.cluster = cluster
+            settings.master_node = self.clusters[cluster]
+            self.fts_stats = FtsQueryStats(settings, test)
+            self.collectors.append(
+                FtsQueryStats(settings, test)
+            )
+
+    def prepare_elastic_stats(self, clusters, test):
+        for cluster in clusters:
+            settings = copy(self.settings)
+            settings.cluster = cluster
+            settings.master_node = self.clusters[cluster]
+            self.collectors.append(
+                ElasticStats(settings, test)
             )
 
     def prepare_active_tasks(self, clusters):

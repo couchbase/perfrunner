@@ -1,0 +1,25 @@
+[test_case]
+test = perfrunner.tests.elastic.ElasticLatencyTest
+title =  match query , 1KB bucket ,1M items,low frequency ,no load
+summary = elastic Latency test for match query
+larger_is_better = true
+fts = true
+
+
+[fts]
+items = 1000000
+name  = perf_elastic_index
+port = 9200
+worker= 0
+query = {"match": "dreamless", "field": "text"}
+query_size = 10
+elastic = 1
+
+[access]
+time = 600
+
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 1
+num_buckets = 1

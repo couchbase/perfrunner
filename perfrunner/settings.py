@@ -298,6 +298,7 @@ class TestCaseSettings(object):
         self.metric_title = options.get('title')
         self.larger_is_better = options.get('larger_is_better')
         self.monitor_clients = options.get('monitor_clients', False)
+        self.fts_server = options.get('fts', False)
         self.level = options.get('level', self.LEVEL)
         self.use_workers = int(options.get('use_workers', self.USE_WORKERS))
         self.use_backup_wrapper = options.get('use_backup_wrapper', False)
@@ -316,10 +317,12 @@ class ClusterSettings(object):
     SFWI = 0
     TCMALLOC_AGGRESSIVE_DECOMMIT = 0
     INDEX_MEM_QUOTA = 256
+    FTS_INDEX_MEM_QUOTA = 512
 
     def __init__(self, options):
         self.mem_quota = int(options.get('mem_quota'))
         self.index_mem_quota = int(options.get('index_mem_quota', self.INDEX_MEM_QUOTA))
+        self.fts_index_mem_quota = int(options.get('fts_index_mem_quota', self.FTS_INDEX_MEM_QUOTA))
         self.initial_nodes = [
             int(nodes) for nodes in options.get('initial_nodes').split()
         ]
@@ -495,7 +498,7 @@ class PhaseSettings(object):
     WORKING_SET = 100
     WORKING_SET_ACCESS = 100
 
-    WORKERS = 12
+    WORKERS = 0
     QUERY_WORKERS = 0
     N1QL_WORKERS = 0
     N1QL_OP = 'read'
@@ -562,6 +565,7 @@ class PhaseSettings(object):
         self.iterations = int(options.get('iterations', self.ITERATIONS))
 
         self.filename = None
+        self.fts_config = None
 
     def resolve_subcategories(self, config):
         subcategories = self.n1ql_queries
@@ -599,7 +603,6 @@ class XDCRSettings(object):
     XDCR_REPLICATION_TYPE = 'bidir'
     XDCR_REPLICATION_PROTOCOL = None
     XDCR_USE_SSL = False
-    XDCR_USE_CA_CERT = False
     WAN_ENABLED = False
     FILTER_EXPRESSION = None
 
@@ -609,7 +612,6 @@ class XDCRSettings(object):
         self.replication_protocol = options.get('replication_protocol',
                                                 self.XDCR_REPLICATION_PROTOCOL)
         self.use_ssl = int(options.get('use_ssl', self.XDCR_USE_SSL))
-        self.use_ca_cert = int(options.get('use_ca_cert', self.XDCR_USE_CA_CERT))
         self.wan_enabled = int(options.get('wan_enabled', self.WAN_ENABLED))
         self.filter_expression = options.get('filter_expression', self.FILTER_EXPRESSION)
 
@@ -744,6 +746,14 @@ class AccessSettings(PhaseSettings):
 
         super(AccessSettings, self).__init__(options)
 
+    @property
+    def fts_settings(self):
+        options = self._get_options_as_dict('fts')
+        return FtsSettings(options)
+
+    def __str__(self):
+        return str(self.__dict__)
+
 
 class Experiment(object):
 
@@ -851,9 +861,16 @@ class WorkerSettings(object):
 
 class FtsSettings(object):
     def __init__(self, options):
-        self.doc_database_url = options.get("doc_database_url").strip()
-        self.name = options.get("name").strip()
-        self.items = int(options.get("items").strip())
+        self.port = int(options.get("port", 0))
+        self.name = options.get("name")
+        self.items = int(options.get("items", 0))
+        self.worker = int(options.get("worker", 0))
+        self.query = options.get("query", '')
+        self.query_size = int(options.get("query_size", 10))
+        self.throughput = 0
+        self.elastic = bool(int(options.get("elastic", 0)))
+        self.query_file = options.get("query_file", None)
+        self.type = options.get("type", "match")
 
     def __str__(self):
         return str(self.__dict__)

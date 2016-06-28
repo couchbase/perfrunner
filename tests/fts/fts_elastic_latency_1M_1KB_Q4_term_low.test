@@ -1,0 +1,23 @@
+[test_case]
+test = perfrunner.tests.elastic.ElasticLatencyTest
+title = 1 bucket x 1M x 1KB, term, low frequency, no KV-load, wiki
+summary = ELasticSearch latency test
+larger_is_better = true
+
+[fts]
+items = 1000000
+name  = perf_elastic_index
+port = 9091
+worker= 18
+type = term
+query_file = perfrunner/tests/FTS/lowterm.txt
+query_size = 10
+elastic = 1
+
+[access]
+time = 600
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 1
+num_buckets = 1

@@ -1,0 +1,27 @@
+[test_case]
+test = perfrunner.tests.elastic.ElasticLatencyTest
+title = prefix query , 1KB bucket ,1M items,low frequency ,no load
+summary = ELastic Latency Test
+larger_is_better = true
+
+
+[fts]
+items = 1127200
+name  = perf_fts_index
+port = 8094
+worker= 0
+query = {"prefix": "million", "field": "text"}
+query_size = 10
+elastic = true
+
+[access]
+time = 600
+
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 1
+num_buckets = 1
+
+[stats]
+seriesly_host = 172.23.123.40

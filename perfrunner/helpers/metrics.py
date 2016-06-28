@@ -4,10 +4,13 @@ import numpy as np
 from logger import logger
 from seriesly import Seriesly
 
+from cbmonitor import CbAgent
+
 
 class MetricHelper(object):
 
     def __init__(self, test):
+        self.test = test
         self.seriesly = Seriesly(
             test.test_config.stats_settings.seriesly['host'])
         self.test_config = test.test_config
@@ -83,6 +86,47 @@ class MetricHelper(object):
         queries = round(queries, 1)
 
         return queries, metric, metric_info
+
+    def parse_log(self, test_config):
+        cbagent = CbAgent(self.test)
+        cbagent.prepare_fts_query_stats(cbagent.clusters.keys(), test_config)
+        fts = cbagent.fts_stats
+        '''
+         we currently have the logs.
+         From the logs we will get the latest result
+        '''
+        fts.collect_stats()
+        total = fts.cbft_query_total()
+        return total
+
+    def calc_avg_fts_queries(self, name='FTS'):
+        metric = '{}_avg_query_requests_{}'.format(self.test_config.name,
+                                                   self.cluster_spec.name)
+        title = 'Avg. {} Query Throughput (queries/sec), {}'.format(name, self.metric_title)
+        metric_info = self._get_metric_info(title, larger_is_better=True)
+        total_queries, failed_queries, timeout_queries = self.parse_log(self.test_config)
+        time_taken = self.test_config.access_settings.time
+        qps = total_queries / time_taken
+        return round(qps, 1), metric, metric_info
+
+    def calc_latency_ftses_queries(self, percentile, dbname,
+                                   metrics, name='FTS'):
+        metric = '{}_{}'.format(self.test_config.name, self.cluster_spec.name)
+        title = '{}th percentile {} query latency (ms), {}'.\
+            format(percentile, name, self.metric_title)
+        metric_info = self._get_metric_info(title, larger_is_better=False)
+        timings = []
+        db = '{}{}'.format(dbname, self.cluster_names[0])
+        data = self.seriesly[db].get_all()
+        timings += [v[metrics] for v in data.values()]
+        fts_latency = round(np.percentile(timings, percentile), 2)
+        return round(fts_latency), metric, metric_info
+
+    def calc_ftses_index(self, elapsedtime):
+        metric = '{}_{}'.format(self.test_config.name, self.cluster_spec.name)
+        title = 'Initial Index(sec), {}'.format(self.metric_title)
+        metric_info = self._get_metric_info(title, larger_is_better=False)
+        return round(elapsedtime, 1), metric, metric_info
 
     def calc_avg_ops(self):
         """Returns the average operations per second."""
@@ -229,7 +273,6 @@ class MetricHelper(object):
             data = self.seriesly[db].get_all()
             timings += [value['latency_query'] for value in data.values()]
         query_latency = np.percentile(timings, percentile)
-
         return round(query_latency, 2), metric, metric_info
 
     def calc_secondaryscan_latency(self, percentile):

@@ -1,0 +1,30 @@
+---
+- hosts: kv:index:n1ql
+  tasks:
+  - yum: state=latest name=epel-release
+  - yum: state=latest name={{item}}
+    with_items:
+      - atop
+      - gdb
+      - htop
+      - iptraf
+      - numactl
+      - tree
+      - wget
+
+- hosts: kv:index:n1ql
+  tasks:
+  - shell: iptables -F
+
+- hosts: kv:index:n1ql
+  tasks:
+  - group: name=couchbase
+  - user:  name=couchbase group=couchbase
+
+- hosts: kv:index:n1ql
+  tasks:
+  - file: path=/data  owner=couchbase group=couchbase
+
+- hosts: kv
+  tasks:
+  - file: path=/index owner=couchbase group=couchbase

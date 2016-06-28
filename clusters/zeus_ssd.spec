@@ -7,7 +7,7 @@ zeus =
 
 [clients]
 hosts =
-    172.23.96.19
+    172.23.100.212
 credentials = root:couchbase
 
 [storage]

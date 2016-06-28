@@ -13,9 +13,6 @@ num_buckets = 1
 add_snapshots = 0
 seriesly_host = 10.5.3.40
 
-[compaction]
-db_percentage = 100
-view_percentage = 100
 
 
 [bucket]
@@ -26,8 +23,8 @@ size = 1024
 
 [access]
 items = 10000000
-iterations = 1
-workers = 100
+iterations = 3
+workers = 50
 # 80/20 read/write
 reads = 80
 updates = 20

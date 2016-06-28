@@ -353,7 +353,7 @@ class StatsSettings(object):
     POST_RSS = 0
     POST_CPU = 0
     SERIESLY = {'host': 'cbmonitor.sc.couchbase.com'}
-    SHOWFAST = {'host': 'showfast.sc.couchbase.com', 'password': 'password'}
+    SHOWFAST = {'host': 'cbmonitor.sc.couchbase.com', 'password': 'password'}
 
     def __init__(self, options):
         self.cbmonitor = {'host': options.get('cbmonitor_host',

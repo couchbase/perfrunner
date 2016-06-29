@@ -870,11 +870,10 @@ class YcsbSettings(object):
         self.size = options.get("size")
         self.reccount = options.get("recordcount")
         self.opcount = options.get("operationcount")
-        self.path= options.get("path")
+        self.path = options.get("path")
         self.log_file = options.get("export_file")
         self.log_path = options.get("export_file_path")
         self.workers = int(options.get("worker"))
-
 
     def __str__(self):
         return str(self.__dict__)

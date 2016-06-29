@@ -1,6 +1,8 @@
+from multiprocessing import Event, Manager, Process
+
 import numpy as np
 from logger import logger
-from multiprocessing import Process, Manager, Event
+
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import PerfTest
 
@@ -74,8 +76,8 @@ class YCSBWorker(object):
         self.task = self.parse_work
         self.run()
         return np.sum(self.ycsb_result['Throughput']), \
-               np.mean(self.ycsb_result['READ_95']),\
-               np.mean(self.ycsb_result['UPDATE_95'])
+            np.mean(self.ycsb_result['READ_95']),\
+            np.mean(self.ycsb_result['UPDATE_95'])
 
 
 class YCSBdata(PerfTest):
@@ -86,7 +88,7 @@ class YCSBdata(PerfTest):
         self.hosts = [x.rpartition(':')[0] for x in self.cluster_spec.yield_servers()]
 
     def create_load_cmd(self, action='load', jvm=True):
-        '''
+        """
         The ycsb command looks like
            ./bin/ycsb run couchbase2 -jvm-args=-Dcom.couchbase.connectTimeout=15000 -jvm-args=-Dcom.couchbase.kvTimeout=60000
            -s -P workloads/workloada  -threads 7 -p couchbase.host=172.23.123.38 -p recordcount=100000 -p operationcount=100000
@@ -96,18 +98,16 @@ class YCSBdata(PerfTest):
         ./bin/ycsb load couchbase2 -jvm-args=-Dcom.couchbase.connectTimeout=300000
         -jvm-args=-Dcom.couchbase.kvTimeout=60000 -P workloads/workloada -p
         couchbase.host=172.23.123.38 -threads 6 -p recordcount=100000 -exportfile=loaddata.json
-
-        :return the commandlist
-        '''
+        """
         commandlist = []
-        commandlist.append('/'+self.ycsb.path+'/bin/ycsb')
+        commandlist.append('/' + self.ycsb.path + '/bin/ycsb')
         commandlist.append(action)
         commandlist.append(self.ycsb.sdk)
         commandlist.append('-s -P ' + self.ycsb.workload)
         if jvm:
             cmd = '-jvm-args=-D'
             for c in self.ycsb.jvm.split(','):
-                commandlist.append(cmd+c)
+                commandlist.append(cmd + c)
 
         commandlist.append('-p %s' % self.ycsb.bucket)
         commandlist.append('-p couchbase.host=%s' % ','.join(self.hosts))

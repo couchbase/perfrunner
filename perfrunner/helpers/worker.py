@@ -103,7 +103,8 @@ class RemoteWorkerManager(object):
                 logger.info('Starting remote Celery worker: {}'.format(qname))
 
                 temp_dir = '{}-{}/perfrunner'.format(self.temp_dir, qname)
-                run('cd {0}; ulimit -n 10240; nohup env/bin/celery worker '
+                run('PYTHONOPTIMIZE=1 C_FORCE_ROOT=1 '
+                    'cd {0}; ulimit -n 10240; nohup env/bin/celery worker '
                     '-A perfrunner.helpers.worker -Q {1} -c 1 '
                     '&>/tmp/worker_{1}.log &'.format(temp_dir, qname),
                     pty=False)

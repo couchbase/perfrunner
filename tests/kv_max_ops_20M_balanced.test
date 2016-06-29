@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.kv.PillowfightTest
-title = Pillowfight, 50/50 R/W x 10M 1K items
-summary = Pillowfight op/sec, 10M items with balanced workload
+title = Pillowfight, 50/50 R/W, 20M ops, 1KB items
+summary = Pillowfight op/sec, 20M ops with balanced workload
 larger_is_better = true
 
 [cluster]
@@ -16,7 +16,7 @@ replica_number = 1
 size = 1024
 
 [access]
-items = 10000000
+items = 20000000
 iterations = 3
 workers = 50
 # 50/50 read/write

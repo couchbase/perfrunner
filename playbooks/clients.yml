@@ -1,0 +1,20 @@
+---
+- hosts: clients
+  tasks:
+  - apt: upgrade=dist
+  - apt: name={{item}} update_cache=yes
+    with_items:
+      - atop
+      - git
+      - htop
+      - libffi-dev
+      - openjdk-8-jdk
+      - python-pip
+      - python-virtualenv
+      - python3.5-dev
+  - apt: deb=http://packages.couchbase.com/releases/couchbase-release/couchbase-release-1.0-2-amd64.deb
+  - apt: name={{item}} update_cache=yes
+    with_items:
+    - build-essential
+    - libcouchbase-dev
+    - libcouchbase2-bin

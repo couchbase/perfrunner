@@ -1,0 +1,24 @@
+[test_case]
+test = perfrunner.tests.fts.FTSThroughputTest
+title = 1 bucket x 1M x 1KB ,Match, low frequency, fdb, non-wiki
+summary = FTS throughput Test
+larger_is_better = true
+fts = true
+
+
+[access]
+time = 600
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 1
+num_buckets = 1
+fts_index_mem_quota = 20000
+
+[fts]
+items = 1000000
+name  = perf_fts_index
+port = 8094
+worker=15
+query = {"match": "dreamless", "field": "text"}
+query_size = 10

@@ -1,0 +1,27 @@
+[test_case]
+test = perfrunner.tests.fts.FTSLatencyTest
+title = 1 bucket x 1M x 1KB, term, high frequency, no KV-load, fdb, wiki
+summary = FTS latency Test
+larger_is_better = false
+fts = true
+
+
+[access]
+time = 1200
+
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 1
+num_buckets = 1
+fts_index_mem_quota = 20000
+
+
+[fts]
+items = 1000000
+name  = perf_fts_index
+port = 8094
+worker= 6
+type = term
+query_file = perfrunner/tests/FTS/hiterm.txt
+query_size = 10

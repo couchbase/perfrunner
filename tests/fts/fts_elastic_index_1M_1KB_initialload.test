@@ -1,0 +1,18 @@
+[test_case]
+test = perfrunner.tests.elastic.ElasticIndexTest
+title = 1 index x 1M x 1KB, 1 ElasticSearch index, no mutations, non-wiki
+summary = FTS Index Test , dataset Gutenberg data
+larger_is_better = false
+
+[fts]
+items = 1000000
+name  = perf_elastic_index
+port = 9091
+
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 1
+num_buckets = 1
+
+

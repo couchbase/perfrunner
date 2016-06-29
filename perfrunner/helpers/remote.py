@@ -769,10 +769,8 @@ class RemoteLinuxHelper(object):
             run(tmpcmd)
             tmpcmd = 'mkdir -p ' + log_path
             run(tmpcmd)
-        load_run_cmd = 'cd {}'.format(path) + \
-            ' &&  mvn -pl com.yahoo.ycsb:couchbase2-binding -am ' \
-            'clean package -Dmaven.test.skip -Dcheckstyle.skip=true &&' \
-            ' {}'.format(cmd)
+        load_run_cmd = 'cd {}'.format(path) + ' &&  mvn -pl com.yahoo.ycsb:couchbase2-binding -am ' \
+                                              'clean package -Dmaven.test.skip -Dcheckstyle.skip=true && {}'.format(cmd)
         logger.info(" running command {}".format(load_run_cmd))
         return run(load_run_cmd)
 

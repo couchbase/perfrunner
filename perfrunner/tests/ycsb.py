@@ -75,9 +75,7 @@ class YCSBWorker(object):
     def parse(self):
         self.task = self.parse_work
         self.run()
-        return np.sum(self.ycsb_result['Throughput']), \
-            np.mean(self.ycsb_result['READ_95']),\
-            np.mean(self.ycsb_result['UPDATE_95'])
+        return np.sum(self.ycsb_result['Throughput']), np.mean(self.ycsb_result['READ_95']), np.mean(self.ycsb_result['UPDATE_95'])
 
 
 class YCSBdata(PerfTest):

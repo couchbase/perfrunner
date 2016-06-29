@@ -1,0 +1,29 @@
+[test_case]
+test = perfrunner.tests.rebalance.RebalanceWithXdcrTest
+title = Rebalance-in 2->2 -> 1->2 UniDir, 1 bucket x 200M x 1KB
+summary = XDCR rebalance test, 2->2 -> 1->2 nodes, 1 bucket x 200M x 1KB, UniDir
+larger_is_better = false
+
+[cluster]
+mem_quota = 204800
+initial_nodes = 2 1
+num_buckets = 1
+
+[compaction]
+db_percentage = 10
+
+[load]
+items = 200000000
+size = 1024
+workers = 15
+
+[xdcr]
+replication_type = unidir
+
+[rebalance]
+nodes_after = 2 2
+start_after = 10
+stop_after = 10
+
+
+

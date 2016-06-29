@@ -106,8 +106,8 @@ class RemoteWorkerManager(object):
                 run('cd {0}; ulimit -n 10240; '
                     'PYTHONOPTIMIZE=1 C_FORCE_ROOT=1 '
                     'nohup env/bin/celery worker '
-                    '-A perfrunner.helpers.worker -Q {1} -c 1 '
-                    '&>/tmp/worker_{1}.log &'.format(temp_dir, qname),
+                    '-A perfrunner.helpers.worker -Q {1} -c 1 -n {2}'
+                    '&>/tmp/worker_{1}.log &'.format(temp_dir, qname, worker),
                     pty=False)
 
     def run_workload(self, settings, target_iterator, timer=None,

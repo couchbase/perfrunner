@@ -45,7 +45,3 @@ prepared = range_scan
 statement = "SELECT name AS _name, street AS _street FROM `bucket-1` WHERE capped_small="{}"";
 args = ["{capped_small}"]
 time_sleep = 1
-
-[worker_settings]
-reuse_workspace = true
-workspace_location = /tmp/worker-ryow

@@ -45,7 +45,3 @@ prepared = singleton_unique_lookup
 statement = "SELECT * FROM `bucket-1` WHERE email="{}"";
 args = ["{email}"]
 time_sleep = 0.01
-
-[worker_settings]
-reuse_workspace = true
-workspace_location = /tmp/worker-ryow

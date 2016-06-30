@@ -8,6 +8,7 @@
       - git
       - htop
       - libffi-dev
+      - libssl-dev
       - openjdk-8-jdk
       - python-pip
       - python-virtualenv

@@ -98,11 +98,14 @@ class RestHelper(object):
         self.post(url=api, data=data)
 
     def set_fts_index_mem_quota(self, host_port, mem_quota):
+        pass
+        '''
         logger.info('Configuring  FTS indexer memory quota: {} to {} MB'.
                     format(host_port, mem_quota))
         api = 'http://{}/pools/default'.format(host_port)
         data = {'ftsMemoryQuota': mem_quota}
         self.post(url=api, data=data)
+        '''
 
     def set_query_settings(self, host_port, override_settings):
         host = host_port.replace('8091', '8093')

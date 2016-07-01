@@ -2,7 +2,6 @@
 
 Related projects:
 * [spring](https://github.com/couchbaselabs/spring)
-* [cbagent](https://github.com/couchbaselabs/cbagent)
 * [cbmonitor](https://github.com/couchbase/cbmonitor)
 * [showfast](https://github.com/couchbaselabs/showfast)
 * [seriesly](https://github.com/dustin/seriesly)

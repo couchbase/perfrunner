@@ -5,6 +5,9 @@ from datetime import datetime
 from multiprocessing import Process
 
 import requests
+from decorator import decorator
+from logger import logger
+
 from cbagent.collectors import (IO, PS, ActiveTasks, ElasticStats, FtsLatency,
                                 FtsQueryStats, FtsStats, N1QLStats, Net,
                                 NSServer, ObserveLatency, SecondaryDebugStats,
@@ -13,9 +16,6 @@ from cbagent.collectors import (IO, PS, ActiveTasks, ElasticStats, FtsLatency,
                                 SpringQueryLatency, SpringSpatialQueryLatency,
                                 SpringSubdocLatency, TypePerf, XdcrLag)
 from cbagent.metadata_client import MetadataClient
-from decorator import decorator
-from logger import logger
-
 from perfrunner.helpers.misc import target_hash, uhex
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import RestHelper

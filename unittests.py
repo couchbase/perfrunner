@@ -3,6 +3,7 @@ from unittest import TestCase
 
 from mock import patch
 
+from cbagent.settings import Settings
 from perfrunner.helpers.misc import target_hash, server_group
 from perfrunner.settings import ClusterSpec, TestConfig
 from perfrunner.utils.install import CouchbaseInstaller, Build
@@ -166,3 +167,9 @@ class WorkloadTest(TestCase):
         field = LargeIterator()._field('000000000001')
         size = len(str(field))
         self.assertAlmostEqual(size, LargeIterator.FIELD_SIZE, delta=16)
+
+
+class CBAgentTest(TestCase):
+
+    def test_settings(self):
+        self.assertEqual(Settings.DEFAULT['interval'], 10)

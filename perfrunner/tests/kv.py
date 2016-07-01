@@ -6,13 +6,13 @@ import numpy as np
 from couchbase import Couchbase
 from couchbase.user_constants import OBS_NOTFOUND
 from logger import logger
-from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
 from tap import TAP
 
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.metrics import MetricHelper
 from perfrunner.helpers.misc import log_phase, pretty_dict, uhex
 from perfrunner.helpers.worker import run_pillowfight_via_celery
+from perfrunner.lib.mc_bin_client import MemcachedClient, MemcachedError
 from perfrunner.tests import PerfTest
 from perfrunner.workloads.pathoGen import PathoGen
 from perfrunner.workloads.pillowfight import Pillowfight

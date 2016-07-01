@@ -9,7 +9,6 @@ Related projects:
 * [seriesly client](https://github.com/pavel-paulau/seriesly-python-client)
 * [moveit](https://github.com/pavel-paulau/moveit)
 * [dcp](https://github.com/couchbaselabs/python-dcp-client)
-* [tap](https://github.com/couchbaselabs/tap)
 
 Requirements
 ------------

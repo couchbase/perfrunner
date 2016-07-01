@@ -7,7 +7,6 @@ Related projects:
 * [showfast](https://github.com/couchbaselabs/showfast)
 * [seriesly](https://github.com/dustin/seriesly)
 * [seriesly client](https://github.com/pavel-paulau/seriesly-python-client)
-* [btrc](https://github.com/couchbaselabs/btrc)
 * [moveit](https://github.com/pavel-paulau/moveit)
 * [dcp](https://github.com/couchbaselabs/python-dcp-client)
 * [tap](https://github.com/couchbaselabs/tap)

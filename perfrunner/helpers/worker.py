@@ -6,13 +6,14 @@ from fabric import state
 from fabric.api import cd, local, quiet, run, settings
 from kombu import Queue
 from logger import logger
-from spring.wgen import WorkloadGen
 from sqlalchemy import create_engine
 
 from perfrunner import celerylocal, celeryremote
 from perfrunner.helpers.misc import log_phase
 from perfrunner.settings import REPO
 from perfrunner.workloads.pillowfight import Pillowfight
+from spring.wgen import WorkloadGen
+
 
 celery = Celery('workers')
 if {'--local', '-C'} & set(sys.argv):

@@ -1,7 +1,6 @@
 ![](docs/perf_infra.png)
 
 Related projects:
-* [spring](https://github.com/couchbaselabs/spring)
 * [cbmonitor](https://github.com/couchbase/cbmonitor)
 * [showfast](https://github.com/couchbaselabs/showfast)
 * [seriesly](https://github.com/dustin/seriesly)

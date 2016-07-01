@@ -7,8 +7,9 @@ from cbagent.settings import Settings
 from perfrunner.helpers.misc import target_hash, server_group
 from perfrunner.settings import ClusterSpec, TestConfig
 from perfrunner.utils.install import CouchbaseInstaller, Build
-from perfrunner.workloads.tcmalloc import (KeyValueIterator,
-                                           LargeIterator)
+from perfrunner.workloads.tcmalloc import KeyValueIterator, LargeIterator
+from spring.docgen import NewDocument
+from spring.wgen import Worker
 
 
 class InstallTest(TestCase):
@@ -173,3 +174,10 @@ class CBAgentTest(TestCase):
 
     def test_settings(self):
         self.assertEqual(Settings.DEFAULT['interval'], 10)
+
+
+class SpringTest(TestCase):
+
+    def spring_imports(self):
+        self.assertEqual(NewDocument.SIZE_VARIATION, 0.25)
+        self.assertEqual(Worker.BATCH_SIZE, 100)

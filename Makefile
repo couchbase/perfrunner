@@ -1,7 +1,7 @@
 build:
 	virtualenv -p python2.7 env
-	./env/bin/pip install -U pip wheel
-	./env/bin/pip install --find-links wheels -r requirements.txt
+	./env/bin/pip install --upgrade --quiet pip wheel
+	./env/bin/pip install --quiet --find-links wheels -r requirements.txt
 
 clean:
 	rm -fr env

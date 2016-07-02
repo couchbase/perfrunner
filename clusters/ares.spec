@@ -20,7 +20,7 @@ ssh = root:couchbase
 
 [parameters]
 Platform = HW
-OS = CentOS 6
+OS = CentOS 7
 CPU = E5-2630 (24 vCPU)
 Memory = 64 GB
-Disk = RAID 10 HDD
+Disk = SSD

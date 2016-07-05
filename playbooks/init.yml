@@ -11,6 +11,7 @@
       - numactl
       - sysstat
       - tree
+      - vim
       - wget
 
 - hosts: kv:index:n1ql

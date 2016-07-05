@@ -11,8 +11,6 @@ class TypePerf(Collector):
     def __init__(self, settings):
         super(TypePerf, self).__init__(settings)
         self.nodes = settings.hostnames or list(self.get_nodes())
-        if hasattr(settings, "sync_gateway_nodes") and settings.sync_gateway_nodes:
-            self.nodes += settings.sync_gateway_nodes
         self.tp = TPStats(hosts=self.nodes,
                           user=self.ssh_username,
                           password=self.ssh_password)

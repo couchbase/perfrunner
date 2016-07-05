@@ -13,7 +13,6 @@ from cbagent.collectors.secondary_latency import SecondaryLatencyStats
 from cbagent.collectors.n1ql_stats import N1QLStats
 from cbagent.collectors.ps import PS
 from cbagent.collectors.typeperf import TypePerf
-from cbagent.collectors.sync_gateway import SyncGateway
 from cbagent.collectors.xdcr_lag import XdcrLag
 from cbagent.settings import Settings
 
@@ -43,8 +42,6 @@ def main():
                       help="n1ql_stats")
     parser.add_option("--ps", action="store_true", dest="ps",
                       help="ps CPU, RSS and VSIZE")
-    parser.add_option("--sg", action="store_true", dest="sync_gateway",
-                      help="Sync Gateway")
     parser.add_option("--x", action="store_true", dest="xdcr_lag",
                       help="XDCR lag")
 
@@ -73,8 +70,6 @@ def main():
         collector = PS
     elif options.typeperf:
         collector = TypePerf
-    elif options.sync_gateway:
-        collector = SyncGateway
     elif options.xdcr_lag:
         collector = XdcrLag
     else:

@@ -105,16 +105,6 @@ class ClusterSpec(Config):
 
     @property
     @safe
-    def gateways(self):
-        return self.config.get('gateways', 'hosts').split()
-
-    @property
-    @safe
-    def gateloads(self):
-        return self.config.get('gateloads', 'hosts').split()
-
-    @property
-    @safe
     def client_credentials(self):
         return self.config.get('clients', 'credentials').split(':')
 
@@ -259,16 +249,6 @@ class TestConfig(Config):
     @property
     def xdcr_cluster_settings(self):
         return self._get_options_as_dict('xdcr_cluster')
-
-    @property
-    def gateway_settings(self):
-        options = self._get_options_as_dict('gateway')
-        return GatewaySettings(options)
-
-    @property
-    def gateload_settings(self):
-        options = self._get_options_as_dict('gateload')
-        return GateloadSettings(options)
 
     @property
     def worker_settings(self):
@@ -783,85 +763,6 @@ class Experiment(object):
             self.name = os.path.splitext(os.path.basename(fname))[0]
             with open(fname) as fh:
                 self.template = json.load(fh)
-
-
-class GatewaySettings(object):
-
-    COMPRESSION = 'true'
-    CONN_IN = 0
-    CONN_DB = 16
-    NUM_NODES = 1
-    LOGGING_VERBOSE = 'false'
-    SHADOW = 'false'
-
-    # allow customization of the GODEBUG environment variable
-    # see http://golang.org/pkg/runtime/
-    GO_DEBUG = ''
-
-    # the only allowed urls are git.io urls, ie: http://git.io/b9PK, and only the
-    # the last part should be passed, not the full url.  So to tell it it find the
-    # config at http://git.io/b9PK, use gateway.config_url.b9PK
-    CONFIG_URL = ''
-
-    def __init__(self, options):
-        self.conn_in = int(options.get('conn_in', self.CONN_IN))
-        self.conn_db = int(options.get('conn_db', self.CONN_DB))
-        self.compression = options.get('compression', self.COMPRESSION)
-        self.num_nodes = int(options.get('num_nodes', self.NUM_NODES))
-        self.logging_verbose = options.get('logging_verbose', self.LOGGING_VERBOSE)
-        self.shadow = options.get('shadow', self.SHADOW)
-        self.config_url = options.get('config_url', self.CONFIG_URL)
-        self.go_debug = options.get('go_debug', self.GO_DEBUG)
-        self.node0_cache_writer = options.get('node0_cache_writer', 'false')
-        self.node1_cache_writer = options.get('node1_cache_writer', 'false')
-        self.node2_cache_writer = options.get('node2_cache_writer', 'false')
-
-    def __str__(self):
-        return str(self.__dict__)
-
-
-class GateloadSettings(object):
-
-    PULLER = 3500
-    PUSHER = 1500
-    DOC_SIZE = 0
-    SEND_ATTACHMENT = 'false'
-    CHANNEL_ACTIVE_USERS = 40
-    CHANNEL_CONCURRENT_USERS = 40
-    SLEEP_TIME = 10  # In seconds, 10 seconds
-    RUN_TIME = 3600  # In seconds.  1 hr
-    RAMPUP_INTERVAL = 900  # In seconds, 15 minutes
-    P95_AVG_CRITERIA = 3
-    P99_AVG_CRITERIA = 5
-    SERIESLY_HOST = '172.23.106.228'
-    LOGGING_VERBOSE = 'false'
-    AUTH_TYPE = 'basic'
-    PASSWORD = ''
-
-    def __init__(self, options):
-        self.pullers = int(options.get('pullers', self.PULLER))
-        self.pushers = int(options.get('pushers', self.PUSHER))
-        self.doc_size = int(options.get('doc_size', self.DOC_SIZE))
-        self.send_attachment = options.get('send_attachment', self.SEND_ATTACHMENT)
-        self.channel_active_users = int(options.get('channel_active_users',
-                                                    self.CHANNEL_ACTIVE_USERS))
-        self.channel_concurrent_users = int(options.get('channel_concurrent_users',
-                                                        self.CHANNEL_CONCURRENT_USERS))
-        self.sleep_time = int(options.get('sleep_time', self.SLEEP_TIME))
-        self.p95_avg_criteria = int(options.get('p95_avg_criteria',
-                                                self.P95_AVG_CRITERIA))
-        self.p99_avg_criteria = int(options.get('p99_avg_criteria',
-                                                self.P99_AVG_CRITERIA))
-        self.run_time = int(options.get('run_time', self.RUN_TIME))
-        self.rampup_interval = int(options.get('rampup_interval',
-                                               self.RAMPUP_INTERVAL))
-        self.logging_verbose = options.get('logging_verbose', self.LOGGING_VERBOSE)
-        self.seriesly_host = options.get('seriesly_host', self.SERIESLY_HOST)
-        self.auth_type = options.get('auth_type', self.AUTH_TYPE)
-        self.password = options.get('password', self.PASSWORD)
-
-    def __str__(self):
-        return str(self.__dict__)
 
 
 class WorkerSettings(object):

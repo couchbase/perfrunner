@@ -256,31 +256,6 @@ class LogReporter(object):
                 fname = 'master_events_{}.log'.format(master.split(':')[0])
                 zh.writestr(zinfo_or_arcname=fname, bytes=master_events)
 
-    def save_expvar(self):
-        for idx, gateway_ip in enumerate(self.test.remote.gateways,
-                                         start=1):
-            expvar = self.test.request_helper.collect_expvar(gateway_ip)
-            fname = 'gateway_expvar_{}.json'.format(idx)
-            with open(fname, 'w') as fh:
-                fh.write(pretty_dict(expvar))
-
-    def check_sgw_logs(self):
-        num_gateways = self.test.test_config.gateway_settings.num_nodes
-        items = ['gateway_{}'.format(i) for i in range(num_gateways)]
-        items += ['gateload_{}'.format(i) for i in range(num_gateways)]
-        with open('sgw_check_logs_gateload.txt', 'w') as outfile:
-            for item in items:
-                try:
-                    infile_name = 'sgw_check_logs_{}.out'.format(item)
-                    if not os.path.exists(infile_name):
-                        outfile.write('\nSkipping log checking at {}:\n'.format(item))
-                    else:
-                        outfile.write('\nLog checking at {}:\n'.format(item))
-                        with open(infile_name) as infile:
-                            outfile.write(infile.read())
-                except:
-                    logger.warn("Exception checking sgw logs: {}.  Ignoring.".format(infile_name))
-
 
 class Reporter(BtrcReporter, SFReporter, LogReporter):
 

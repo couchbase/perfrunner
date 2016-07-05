@@ -88,8 +88,6 @@ class CbAgent(object):
             'secondary_statsfile': test.test_config.stats_settings.secondary_statsfile,
             'buckets': buckets,
             'hostnames': hostnames,
-            'sync_gateway_nodes':
-                test.remote.gateways if test.remote else None,
             'monitor_clients':
                 test.cluster_spec.workers if test.test_config.test_case.monitor_clients else None,
             'fts_server': test.test_config.test_case.fts_server

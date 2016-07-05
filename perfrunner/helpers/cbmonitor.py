@@ -50,9 +50,10 @@ def with_stats(method, *args, **kwargs):
 
 class CbAgent(object):
 
-    def __init__(self, test):
+    def __init__(self, test, verbose):
         self.clusters = OrderedDict()
-        self.remote = RemoteHelper(test.cluster_spec, test.test_config, verbose=True)
+        self.remote = RemoteHelper(test.cluster_spec, test.test_config,
+                                   verbose=verbose)
 
         for cluster_name, servers in test.cluster_spec.yield_clusters():
             cluster = '{}_{}_{}'.format(cluster_name,

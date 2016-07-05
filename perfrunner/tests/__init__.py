@@ -65,7 +65,7 @@ class PerfTest(object):
         else:
             self.build = self.rest.get_version(self.master_node)
 
-        self.cbagent = CbAgent(self)
+        self.cbagent = CbAgent(self, verbose=verbose)
         self.metric_helper = MetricHelper(self)
         self.reporter = Reporter(self)
         self.reports = {}

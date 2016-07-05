@@ -1,7 +1,0 @@
-{
-    "name": "95th percentile ReplicateTo=1 latency (ms), 1 bucket, 2 nodes, 1KB docs, variable workload",
-    "defaults": {
-        "Drive type": "HDD",
-        "Mutations/sec": 100
-    }
-}

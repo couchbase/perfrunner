@@ -49,8 +49,6 @@ def with_delayed_posting(rebalance, *args, **kwargs):
 
     if test.is_balanced():
         test.reporter.post_to_sf(test.rebalance_time)
-        if hasattr(test, 'experiment'):
-            test.experiment.post_results(test.rebalance_time)
 
 
 class RebalanceTest(PerfTest):

@@ -1,7 +1,0 @@
-{
-    "name": "95th percentile OBSERVE latency (ms), variable workload",
-    "defaults": {
-        "Drive type": "HDD",
-        "Mutations/sec": 1000
-    }
-}

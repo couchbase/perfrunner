@@ -1,6 +1,0 @@
-{
-    "name": "95th percentile GET latency (ms), variable memcached threads",
-    "defaults": {
-        "memcached threads": 4
-    }
-}

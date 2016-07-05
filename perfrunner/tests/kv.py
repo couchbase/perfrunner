@@ -63,11 +63,9 @@ class PersistLatencyTest(KVTest):
         super(PersistLatencyTest, self).run()
 
         if self.test_config.stats_settings.enabled:
-            latency = self.reporter.post_to_sf(
+            self.reporter.post_to_sf(
                 *self.metric_helper.calc_observe_latency(percentile=95)
             )
-            if hasattr(self, 'experiment'):
-                self.experiment.post_results(latency)
 
 
 class ReplicateLatencyTest(PersistLatencyTest):
@@ -108,12 +106,10 @@ class ReadLatencyTest(MixedLatencyTest):
     def run(self):
         super(MixedLatencyTest, self).run()
         if self.test_config.stats_settings.enabled:
-            latency_get = self.reporter.post_to_sf(
+            self.reporter.post_to_sf(
                 *self.metric_helper.calc_kv_latency(operation='get',
                                                     percentile=95)
             )
-            if hasattr(self, 'experiment'):
-                self.experiment.post_results(latency_get)
 
 
 class BgFetcherTest(KVTest):
@@ -143,11 +139,9 @@ class DrainTest(KVTest):
     def run(self):
         super(DrainTest, self).run()
         if self.test_config.stats_settings.enabled:
-            drain_rate = self.reporter.post_to_sf(
+            self.reporter.post_to_sf(
                 self.metric_helper.calc_avg_disk_write_queue()
             )
-            if hasattr(self, 'experiment'):
-                self.experiment.post_results(drain_rate)
 
 
 class FlusherTest(KVTest):
@@ -408,9 +402,6 @@ class ReplicationTest(PerfTest):
             '99th': round(np.percentile(timings, 99), 1),
         }
         logger.info(pretty_dict(summary))
-
-        if hasattr(self, 'experiment'):
-            self.experiment.post_results(summary['95th'])
 
     def run(self):
         self.measure_latency()

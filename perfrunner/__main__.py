@@ -1,6 +1,6 @@
 from optparse import OptionParser
 
-from perfrunner.settings import ClusterSpec, Experiment, TestConfig
+from perfrunner.settings import ClusterSpec, TestConfig
 
 
 def get_options():
@@ -14,9 +14,6 @@ def get_options():
     parser.add_option('-t', dest='test_config_fname',
                       help='path to test configuration file',
                       metavar='my_test.test')
-    parser.add_option('-e', dest='exp_fname',
-                      help='path to experiment template',
-                      metavar='experiment.json')
     parser.add_option('--verbose', dest='verbose', action='store_true',
                       help='enable verbose logging')
     parser.add_option('--local', dest='local', action='store_true',
@@ -38,16 +35,12 @@ def main():
     cluster_spec.parse(options.cluster_spec_fname, args)
     test_config = TestConfig()
     test_config.parse(options.test_config_fname, args)
-    experiment = options.exp_fname and Experiment(options.exp_fname)
 
     test_module = test_config.test_case.test_module
     test_class = test_config.test_case.test_class
     exec('from {} import {}'.format(test_module, test_class))
 
-    with eval(test_class)(cluster_spec,
-                          test_config,
-                          options.verbose,
-                          experiment) as test:
+    with eval(test_class)(cluster_spec, test_config, options.verbose) as test:
         test.run()
 
 if __name__ == '__main__':

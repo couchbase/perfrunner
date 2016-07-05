@@ -206,8 +206,6 @@ class XdcrInitTest(SymmetricXdcrTest):
 
         self.reporter.finish('Initial replication', time_elapsed)
         self.reporter.post_to_sf(rate)
-        if hasattr(self, 'experiment'):
-            self.experiment.post_results(rate)
 
 
 class XdcrInitInMemoryTest(XdcrInitTest, FlusherTest):

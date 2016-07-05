@@ -1,7 +1,0 @@
-{
-    "name": "Initial XDCR rate (items/sec), 1 bucket x 20M x 1KB, non-optimistic/no replica/no compaction",
-    "defaults": {
-        "Source nodes": 1,
-        "Destination nodes": 1
-    }
-}

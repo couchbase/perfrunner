@@ -1,9 +1,0 @@
-{
-    "name": "Rebalance-in (min), 3 -> 4, empty bucket, variable #buckets/#vbuckets/rebalanceMovesPerNode",
-    "defaults": {
-        "Number of buckets": 1,
-        "Number of vbuckets": 1024,
-        "Moves per node": "1",
-        "Moxi": "Moxi on"
-    }
-}

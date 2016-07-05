@@ -7,7 +7,6 @@ import time
 from logger import logger
 
 from perfrunner.helpers.cbmonitor import CbAgent
-from perfrunner.helpers.experiments import ExperimentHelper
 from perfrunner.helpers.memcached import MemcachedHelper
 from perfrunner.helpers.metrics import MetricHelper
 from perfrunner.helpers.misc import log_phase, target_hash, pretty_dict
@@ -42,7 +41,7 @@ class PerfTest(object):
 
     MONITORING_DELAY = 10
 
-    def __init__(self, cluster_spec, test_config, verbose, experiment=None):
+    def __init__(self, cluster_spec, test_config, verbose):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
 
@@ -52,10 +51,6 @@ class PerfTest(object):
         self.monitor = Monitor(cluster_spec)
         self.rest = RestHelper(cluster_spec)
         self.remote = RemoteHelper(cluster_spec, test_config, verbose)
-
-        if experiment:
-            self.experiment = ExperimentHelper(experiment,
-                                               cluster_spec, test_config)
 
         self.master_node = cluster_spec.yield_masters().next()
         self.build = self.rest.get_version(self.master_node)

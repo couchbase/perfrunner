@@ -81,9 +81,9 @@ class FTStest(PerfTest):
                         "access" phase or active workload
     """
 
-    def __init__(self, cluster_spec, test_config, verbose, experiment=None):
-        super(FTStest, self).__init__(cluster_spec, test_config,
-                                      verbose, experiment)
+    def __init__(self, cluster_spec, test_config, verbose):
+        super(FTStest, self).__init__(cluster_spec, test_config, verbose)
+
         self.index_definition = INDEXDEF.INDEX
         self.host_port = [x for x in self.cluster_spec.yield_servers()][0]
         self.host = self.host_port.split(':')[0]

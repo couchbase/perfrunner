@@ -753,18 +753,6 @@ class AccessSettings(PhaseSettings):
         return str(self.__dict__)
 
 
-class Experiment(object):
-
-    def __init__(self, fname):
-        logger.info('Reading experiment file: {}'.format(fname))
-        if not os.path.isfile(fname):
-            logger.interrupt('File doesn\'t exist: {}'.format(fname))
-        else:
-            self.name = os.path.splitext(os.path.basename(fname))[0]
-            with open(fname) as fh:
-                self.template = json.load(fh)
-
-
 class WorkerSettings(object):
 
     REUSE_WORKSPACE = 'false'

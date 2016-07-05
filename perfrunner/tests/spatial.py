@@ -2,10 +2,10 @@ from perfrunner.tests.view import ViewIndexTest, ViewQueryTest
 
 
 class SpatialMixin(object):
-    def __init__(self, cluster_spec, test_config, verbose, experiment=None):
+
+    def __init__(self, cluster_spec, test_config, verbose):
         self._view_settings = test_config.spatial_settings
-        super(SpatialMixin, self).__init__(
-            cluster_spec, test_config, verbose, experiment)
+        super(SpatialMixin, self).__init__(cluster_spec, test_config, verbose)
 
     @property
     def view_settings(self):

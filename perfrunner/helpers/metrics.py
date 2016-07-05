@@ -44,6 +44,13 @@ class MetricHelper(object):
                 'larger_is_better': str(larger_is_better).lower(),
                 'level': level}
 
+    def calc_ycsb_queries(self, value, name, larger_is_better=True):
+        metric = '{}_{}_{}'.format(self.test_config.name, name,
+                                   self.cluster_spec.name)
+        title = '{} , {}'.format(name, self.metric_title)
+        metric_info = self._get_metric_info(title, larger_is_better)
+        return value, metric, metric_info
+
     def calc_avg_xdcr_ops(self):
         metric = '{}_avg_xdcr_ops_{}'.format(self.test_config.name,
                                              self.cluster_spec.name)

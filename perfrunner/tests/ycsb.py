@@ -145,9 +145,21 @@ class YCSBTest(YCSBdata):
         self.workload.run()
 
     def post_sf(self, thput, readl, writel, query=None):
-        self.reporter.post_to_sf(thput, metric='throughput')
-        self.reporter.post_to_sf(readl, metric='95_percentile_Read_Latency')
-        self.reporter.post_to_sf(writel, metric='95_percentile_update_Latency')
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_ycsb_queries(thput,
+                                                  name='overall_throughput',
+                                                  larger_is_better=True)
+        )
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_ycsb_queries(readl,
+                                                  name='read_latency_95_percentile',
+                                                  larger_is_better=False)
+        )
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_ycsb_queries(writel,
+                                                  name='update_latency_95_percentile',
+                                                  larger_is_better=False)
+        )
 
     def run(self):
         self.load()

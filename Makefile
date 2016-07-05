@@ -8,7 +8,7 @@ build:
 	pwd > env/lib/python2.7/site-packages/perfrunner.pth
 
 clean:
-	rm -fr env build perfrunner.egg-info
+	rm -fr build perfrunner.egg-info
 	rm -f `find . -name *.pyc`
 
 pep8:

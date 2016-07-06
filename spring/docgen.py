@@ -1,15 +1,15 @@
 import array
+import json
 import math
+import random
 import time
 from hashlib import md5
 from itertools import cycle
-import random
-import json
 
 import numpy as np
 
-from spring.states import STATES, NUM_STATES
 from fastdocgen import build_achievements
+from spring.states import NUM_STATES, STATES
 
 ASCII_A_OFFSET = 97
 
@@ -118,9 +118,9 @@ class KeyForCASUpdate(Iterator):
             right_limit = curr_items
         else:
             right_limit = left_limit + num_cold_items
-        limit_step = (right_limit - left_limit)/self.n1ql_workers
-        left_limit = left_limit +(limit_step)*sid
-        right_limit = left_limit + limit_step -1
+        limit_step = (right_limit - left_limit) / self.n1ql_workers
+        left_limit = left_limit + (limit_step) * sid
+        right_limit = left_limit + limit_step - 1
         key = np.random.random_integers(left_limit, right_limit)
         key = '%012d' % key
         return self.add_prefix(key)
@@ -154,9 +154,9 @@ class NewDocument(Iterator):
 
     @staticmethod
     def _build_alt_email(alphabet):
-        name = random.randint(1,9)
-        domain = random.randint(12,18)
-        return '%s@%s.com' % (alphabet[name:name+6], alphabet[domain:domain+6])
+        name = random.randint(1, 9)
+        domain = random.randint(12, 18)
+        return '%s@%s.com' % (alphabet[name:name + 6], alphabet[domain:domain + 6])
 
     @staticmethod
     def _build_city(alphabet):
@@ -373,16 +373,16 @@ class NewDocumentFromSpatialFile(object):
 
 class ReverseLookupDocument(NewNestedDocument):
 
-    def __init__(self, avg_size, partitions, isRandom=True):
+    def __init__(self, avg_size, partitions, is_random=True):
         super(ReverseLookupDocument, self).__init__(avg_size)
         self.partitions = partitions
-        self.isRandom = isRandom
+        self.is_random = is_random
 
     def _build_email(self, alphabet):
-        if self.isRandom:
-            name = random.randint(1,9)
-            domain = random.randint(12,18)
-            return '%s@%s.com' % (alphabet[name:name+6], alphabet[domain:domain+6])
+        if self.is_random:
+            name = random.randint(1, 9)
+            domain = random.randint(12, 18)
+            return '%s@%s.com' % (alphabet[name:name + 6], alphabet[domain:domain + 6])
 
         return '%s@%s.com' % (alphabet[12:18], alphabet[18:24])
 
@@ -390,9 +390,9 @@ class ReverseLookupDocument(NewNestedDocument):
         return id % self.partitions
 
     def _capped_field(self, alphabet, prefix, id, num_unique):
-        if self.isRandom:
-            seed = random.randint(1,9)
-            return '%s' % (alphabet[seed:seed+6])
+        if self.is_random:
+            seed = random.randint(1, 9)
+            return '%s' % (alphabet[seed:seed + 6])
 
         # Assumes the last 12 characters are digits and
         # monotonically increasing
@@ -445,12 +445,12 @@ class ReverseLookupDocumentArrayIndexing(ReverseLookupDocument):
         spl = key.split('-')
         if spl[0] == 'n1ql':
             # these docs are never updated
-            return [((int(spl[1].lstrip('0')) - 1)*10 + i +
+            return [((int(spl[1].lstrip('0')) - 1) * 10 + i +
                      ReverseLookupDocumentArrayIndexing.delta) for i in xrange(10)]
         else:
             # these docs are involved in updating
-            return [((int(spl[1].lstrip('0')) - 1)*10 + i +
-                     ReverseLookupDocumentArrayIndexing.num_docs*10 +
+            return [((int(spl[1].lstrip('0')) - 1) * 10 + i +
+                     ReverseLookupDocumentArrayIndexing.num_docs * 10 +
                      ReverseLookupDocumentArrayIndexing.delta) for i in xrange(10)]
 
     @staticmethod
@@ -458,12 +458,12 @@ class ReverseLookupDocumentArrayIndexing(ReverseLookupDocument):
         spl = key.split('-')
         if spl[0] == 'n1ql':
             # these docs are never updated
-            return [((int(spl[1].lstrip('0'))//100)*10 + i +
+            return [((int(spl[1].lstrip('0')) // 100) * 10 + i +
                      ReverseLookupDocumentArrayIndexing.delta) for i in xrange(10)]
         else:
             # these docs are involved in updating
-            return [((int(spl[1].lstrip('0'))//100)*10 + i +
-                     ReverseLookupDocumentArrayIndexing.num_docs*10 +
+            return [((int(spl[1].lstrip('0')) // 100) * 10 + i +
+                     ReverseLookupDocumentArrayIndexing.num_docs * 10 +
                      ReverseLookupDocumentArrayIndexing.delta) for i in xrange(10)]
 
     def next(self, key):
@@ -497,8 +497,8 @@ class ReverseLookupDocumentArrayIndexing(ReverseLookupDocument):
 
 class MergeDocument(ReverseLookupDocument):
 
-    def __init__(self, avg_size, partitions, isRandom=True):
-        super(MergeDocument, self).__init__(avg_size, partitions, isRandom)
+    def __init__(self, avg_size, partitions, is_random=True):
+        super(MergeDocument, self).__init__(avg_size, partitions, is_random)
 
     def next(self, key):
         id = int(key[-12:]) + 1
@@ -506,10 +506,10 @@ class MergeDocument(ReverseLookupDocument):
         alphabet = self._build_alphabet(key)
         size = self._size()
 
-        if(id%100000 == 0):
+        if(id % 100000 == 0):
 
             return {
-                'extramerge':self._build_country(alphabet),
+                'extramerge': self._build_country(alphabet),
                 'name': self._build_name(alphabet),
                 'email': self._build_email(alphabet),
                 'alt_email': self._build_alt_email(alphabet),

@@ -1,5 +1,7 @@
-from cbagent.collectors import Collector
 import os.path
+
+from cbagent.collectors import Collector
+
 
 class SecondaryLatencyStats(Collector):
 
@@ -9,7 +11,7 @@ class SecondaryLatencyStats(Collector):
         stats = {}
         if os.path.isfile(self.secondary_statsfile):
             with open(self.secondary_statsfile, 'rb') as fh:
-                first = next(fh).decode()
+                next(fh).decode()
                 fh.seek(-400, 2)
                 last = fh.readlines()[-1].decode()
                 duration = last.split(',')[-1]

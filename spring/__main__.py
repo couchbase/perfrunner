@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 
-from spring.settings import WorkloadSettings, TargetSettings
+from spring.settings import TargetSettings, WorkloadSettings
 from spring.version import VERSION
 from spring.wgen import WorkloadGen
 

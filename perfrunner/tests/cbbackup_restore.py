@@ -7,12 +7,14 @@ from perfrunner.tests import PerfTest
 
 
 class CBBackupRestoreBase(PerfTest):
-    folder_size = 0
-    data_size = 0
-    spent_time = 0
+
     """
     The most basic CB backup /restore class:
     """
+
+    folder_size = 0
+    data_size = 0
+    spent_time = 0
 
     def run(self):
         self.load()

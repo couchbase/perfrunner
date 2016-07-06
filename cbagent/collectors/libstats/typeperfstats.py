@@ -1,5 +1,5 @@
-from cbagent.collectors.libstats.remotestats import (
-    RemoteStats, multi_node_task)
+from cbagent.collectors.libstats.remotestats import (RemoteStats,
+                                                     multi_node_task)
 
 
 class TPStats(RemoteStats):
@@ -26,7 +26,7 @@ class TPStats(RemoteStats):
         sum_rss = 0
         if stdout:
             for v in values:
-                v = float(v.replace('"',''))
+                v = float(v.replace('"', ''))
                 sum_rss = sum_rss + v
             metric, multiplier = self.METRICS[0]
             title = "{}_{}".format(process, metric)

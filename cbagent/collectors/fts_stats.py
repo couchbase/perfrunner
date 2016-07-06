@@ -1,11 +1,8 @@
 import time
-from logger import logger
-
-import json
-from cbagent.collectors import Collector
-from cbagent.collectors import Latency
-from spring.cbgen import FtsGen, ElasticGen
 from math import pow
+
+from cbagent.collectors import Collector
+from spring.cbgen import ElasticGen, FtsGen
 
 
 class FtsCollector(Collector):
@@ -45,12 +42,10 @@ class FtsCollector(Collector):
         return self.cbft_stats_get("total_gc")
 
     def measure(self):
-            stats={}
+            stats = {}
             for metric in self.METRICS:
-                '''
-                the getattr is used to make code simple , avoid using many function
-                the metric name should be same as the method name
-                '''
+                # the getattr is used to make code simple
+                # the metric name should be same as the method name
                 stats[metric] = getattr(self, metric)()
             return stats
 
@@ -87,21 +82,21 @@ class FtsStats(FtsCollector):
 
     COLLECTOR = "fts_stats"
     METRICS = ("cbft_doc_count", "cbft_num_bytes_used_disk",
-               "cbft_num_bytes_used_ram", "cbft_pct_cpu_gc", "cbft_batch_merge_count",
-                    "cbft_total_gc", "cbft_num_bytes_live_data")
+               "cbft_num_bytes_used_ram", "cbft_pct_cpu_gc",
+               "cbft_batch_merge_count", "cbft_total_gc",
+               "cbft_num_bytes_live_data")
 
     def __init__(self, settings, test_config, prefix=None):
         super(FtsStats, self).__init__(settings, test_config)
         for bucket in self.get_buckets():
             self.disk_key = bucket + ':' + test_config.fts_settings.name + \
-                                            ":num_bytes_used_disk"
+                ":num_bytes_used_disk"
             self.count_key = bucket + ':' + test_config.fts_settings.name + \
-                                            ":doc_count"
+                ":doc_count"
             self.batch_count = bucket + ':' + test_config.fts_settings.name + \
-                                            ":batch_merge_count"
-
+                ":batch_merge_count"
             self.live_data = bucket + ':' + test_config.fts_settings.name + \
-                                            ":num_bytes_live_data"
+                ":num_bytes_live_data"
             self.power = pow(10, 9)
 
     def cbft_batch_merge_count(self):
@@ -123,28 +118,27 @@ class FtsQueryStats(FtsLatency):
     METRICS = ("cbft_query_slow", "cbft_query_timeout",
                'cbft_query_error', "cbft_total_term_searchers",
                "cbft_query_total", "cbft_total_bytes_query_results",
-                "cbft_writer_execute_batch_count")
+               "cbft_writer_execute_batch_count")
 
     def __init__(self, settings, test_config, prefix=None):
         super(FtsQueryStats, self).__init__(settings, test_config)
-        '''
-         following is to add different query stats'
-        '''
+
+        # following is to add different query stats'
         for bucket in self.get_buckets():
-            self.total_queries = bucket + ':' + test_config.fts_settings.name \
-                            + ":total_queries"
-            self.total_queries_slow = bucket + ':' + test_config.fts_settings.name \
-                                      + ":total_queries_slow"
-            self.total_queries_timeout = bucket +':' + test_config.fts_settings.name \
-                                         + ":total_queries_timeout"
-            self.total_queries_error = bucket + ':' + test_config.fts_settings.name \
-                                       + ":total_queries_error"
-            self.total_term_searchers = bucket + ':' + test_config.fts_settings.name \
-                                       + ":total_term_searchers"
-            self.total_query_bytes = bucket + ':' + test_config.fts_settings.name \
-                                       + ":total_bytes_query_results"
-            self.total_write_batch = bucket + ':' + test_config.fts_settings.name \
-                                       + ":writer_execute_batch_count"
+            self.total_queries = bucket + ':' + test_config.fts_settings.name + \
+                ":total_queries"
+            self.total_queries_slow = bucket + ':' + test_config.fts_settings.name + \
+                ":total_queries_slow"
+            self.total_queries_timeout = bucket + ':' + test_config.fts_settings.name + \
+                ":total_queries_timeout"
+            self.total_queries_error = bucket + ':' + test_config.fts_settings.name + \
+                ":total_queries_error"
+            self.total_term_searchers = bucket + ':' + test_config.fts_settings.name + \
+                ":total_term_searchers"
+            self.total_query_bytes = bucket + ':' + test_config.fts_settings.name + \
+                ":total_bytes_query_results"
+            self.total_write_batch = bucket + ':' + test_config.fts_settings.name + \
+                ":writer_execute_batch_count"
 
     def cbft_writer_execute_batch_count(self):
         return self.cbft_stats_get(self.total_write_batch)
@@ -172,7 +166,7 @@ class ElasticStats(FtsCollector):
 
     COLLECTOR = "elastic_latency"
 
-    METRICS = ("elastic_latency_get",)
+    METRICS = ("elastic_latency_get", )
 
     def __init__(self, settings, test_config, prefix=None):
         super(ElasticStats, self).__init__(settings, test_config)

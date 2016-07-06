@@ -12,7 +12,7 @@ clean:
 	rm -f `find . -name *.pyc`
 
 pep8:
-	./env/bin/flake8 --statistics perfrunner
+	./env/bin/flake8 --statistics cbagent perfrunner spring
 	./env/bin/isort --quiet --balanced --check-only --recursive perfrunner
 
 nose:

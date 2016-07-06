@@ -1,5 +1,4 @@
 from decorator import decorator
-
 from fabric.api import hide, local, parallel, quiet, run, settings
 from fabric.tasks import execute
 

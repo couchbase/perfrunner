@@ -1,5 +1,5 @@
-from time import time, sleep
 from threading import Thread
+from time import sleep, time
 from uuid import uuid4
 
 from logger import logger

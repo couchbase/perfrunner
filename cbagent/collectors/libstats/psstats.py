@@ -1,5 +1,5 @@
-from cbagent.collectors.libstats.remotestats import (
-    RemoteStats, multi_node_task)
+from cbagent.collectors.libstats.remotestats import (RemoteStats,
+                                                     multi_node_task)
 
 
 class PSStats(RemoteStats):
@@ -20,7 +20,7 @@ class PSStats(RemoteStats):
         samples = {}
         stdout = self.run(self.ps_cmd.format(process))
         if stdout:
-            for i, value in enumerate(stdout.split()[1:1+len(self.METRICS)]):
+            for i, value in enumerate(stdout.split()[1:1 + len(self.METRICS)]):
                 metric, multiplier = self.METRICS[i]
                 title = "{}_{}".format(process, metric)
                 samples[title] = float(value) * multiplier

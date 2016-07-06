@@ -1,5 +1,5 @@
-from cbagent.collectors.libstats.psstats import PSStats
 from cbagent.collectors import Collector
+from cbagent.collectors.libstats.psstats import PSStats
 
 
 class PS(Collector):

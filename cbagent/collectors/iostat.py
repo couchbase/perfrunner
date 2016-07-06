@@ -1,5 +1,5 @@
-from cbagent.collectors.libstats.iostat import IOstat
 from cbagent.collectors import Collector
+from cbagent.collectors.libstats.iostat import IOstat
 
 
 class IO(Collector):

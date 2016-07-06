@@ -1,12 +1,12 @@
-from cbagent.collectors.libstats.typeperfstats import TPStats
 from cbagent.collectors import Collector
+from cbagent.collectors.libstats.typeperfstats import TPStats
 
 
 class TypePerf(Collector):
 
     COLLECTOR = "atop"  # Legacy
 
-    KNOWN_PROCESSES = ("beam.smp","memcached")
+    KNOWN_PROCESSES = ("beam.smp", "memcached")
 
     def __init__(self, settings):
         super(TypePerf, self).__init__(settings)

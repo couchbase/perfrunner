@@ -1,15 +1,15 @@
 import json
 from time import time
+
 from logger import logger
 
-from spring.docgen import (ExistingKey, NewKey, KeyForRemoval, NewDocument, 
+from cbagent.collectors import Latency
+from spring.cbgen import CBGen, N1QLGen, SpatialGen, SubDocGen
+from spring.docgen import (ExistingKey, KeyForRemoval, NewDocument, NewKey,
                            NewNestedDocument, ReverseLookupDocument,
                            ReverseLookupDocumentArrayIndexing)
-from spring.querygen import (ViewQueryGen, ViewQueryGenByType, N1QLQueryGen,
-                             SpatialQueryFromFile)
-from spring.cbgen import CBGen, SpatialGen, N1QLGen, SubDocGen
-
-from cbagent.collectors import Latency
+from spring.querygen import (N1QLQueryGen, SpatialQueryFromFile,
+                             ViewQueryGen, ViewQueryGenByType)
 
 
 class SpringLatency(Latency):
@@ -77,8 +77,10 @@ class SpringSubdocLatency(SpringLatency):
         self.clients = []
         self.ws = workload
         for bucket in self.get_buckets():
-            client = SubDocGen(bucket=bucket, host=settings.master_node,
-                           username=bucket, password=settings.bucket_password)
+            client = SubDocGen(bucket=bucket,
+                               host=settings.master_node,
+                               username=bucket,
+                               password=settings.bucket_password)
             self.clients.append((bucket, client))
 
     def measure(self, client, metric, bucket):
@@ -138,8 +140,7 @@ class SpringSpatialQueryLatency(SpringLatency):
         self.clients = []
         for bucket in self.get_buckets():
             client = SpatialGen(bucket=bucket, host=settings.master_node,
-                             username=bucket,
-                             password=settings.bucket_password)
+                                username=bucket, password=settings.bucket_password)
             self.clients.append((bucket, client))
 
         self.new_queries = SpatialQueryFromFile(
@@ -186,7 +187,7 @@ class SpringN1QLQueryLatency(SpringLatency):
                                  username=bucket,
                                  password=settings.bucket_password)
                 kvclient = CBGen(bucket=bucket, host=settings.master_node,
-                           username=bucket, password=settings.bucket_password)
+                                 username=bucket, password=settings.bucket_password)
                 self.clients.append((bucket, client, kvclient))
             self.new_queries = N1QLQueryGen(queries)
 
@@ -209,7 +210,7 @@ class SpringN1QLQueryLatency(SpringLatency):
             return 1000 * latency  # s -> ms
 
         elif self.n1ql_op == 'rangeupdate':
-            if self.smallcappedinit == False:
+            if not self.smallcappedinit:
                 logger.info("Initiating load for rangeupdate latency collection")
                 for i in range(100):
                     key, ttl = self.new_keys.next(curr_items=self.curr_items)
@@ -234,7 +235,7 @@ class SpringN1QLQueryLatency(SpringLatency):
             return 1000 * latency  # s -> ms
 
         elif self.n1ql_op == 'rangedelete':
-            if self.smallcappedinit == False:
+            if not self.smallcappedinit:
                 logger.info("Initiating load for range update latency collection")
                 for i in range(10000):
                     key, ttl = self.new_keys.next(curr_items=self.curr_items)
@@ -242,7 +243,7 @@ class SpringN1QLQueryLatency(SpringLatency):
                     doc = self.new_docs.next(key)
                     doc['key'] = key
                     doc['bucket'] = bucket
-                    doc['capped_small'] = "stat" +  str(i/100)
+                    doc['capped_small'] = "stat" + str(i / 100)
                     kvclient.create(key, doc)
                     self.curr_items += 1
                 self.smallcappedinit = True
@@ -258,14 +259,14 @@ class SpringN1QLQueryLatency(SpringLatency):
             return 1000 * latency  # s -> ms
 
         elif self.n1ql_op == 'merge':
-             doc = {}
-             ddoc_name, view_name, query = self.new_queries.next(doc)
-             _, latency = client.query(ddoc_name, view_name, query=query)
-             flushpath = '/pools/default/buckets/bucket-2/controller/doFlush'
-             self.post_http(path = flushpath)
-             return latency  # s -> ms
+            doc = {}
+            ddoc_name, view_name, query = self.new_queries.next(doc)
+            _, latency = client.query(ddoc_name, view_name, query=query)
+            flushpath = '/pools/default/buckets/bucket-2/controller/doFlush'
+            self.post_http(path=flushpath)
+            return latency  # s -> ms
 
-        else:              
+        else:
             key = self.existing_keys.next(curr_items=self.items, curr_deletes=0)
         doc = self.new_docs.next(key)
         doc['key'] = key

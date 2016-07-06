@@ -1,23 +1,26 @@
 import logging
 import time
-from multiprocessing import Process, Value, Lock, Event
-from numpy import random
+from multiprocessing import Event, Lock, Process, Value
 
-from twisted.internet import reactor
-
+from couchbase.exceptions import ValueFormatError
+from couchbase.n1ql import MutationState, N1QLQuery
+from dcp import DcpClient, ResponseHandler
 from decorator import decorator
 from logger import logger
-from dcp import DcpClient, ResponseHandler
-from couchbase.n1ql import MutationState
-from couchbase.n1ql import N1QLQuery
-from couchbase.exceptions import ValueFormatError
-from spring.cbgen import CBGen, CBAsyncGen, N1QLGen, SpatialGen, SubDocGen, FtsGen, ElasticGen
-from spring.docgen import (ExistingKey, KeyForRemoval, KeyForCASUpdate,
-                           SequentialHotKey, NewKey, NewDocument, NewNestedDocument,
-                           MergeDocument, ReverseLookupDocument, NewDocumentFromSpatialFile,
-                           ReverseLookupDocumentArrayIndexing, NewLargeDocument)
-from spring.querygen import (ViewQueryGen, ViewQueryGenByType, N1QLQueryGen,
-                             SpatialQueryFromFile)
+from numpy import random
+from twisted.internet import reactor
+
+from spring.cbgen import (CBAsyncGen, CBGen, ElasticGen, FtsGen,
+                          N1QLGen, SpatialGen, SubDocGen)
+from spring.docgen import (ExistingKey, KeyForCASUpdate,
+                           KeyForRemoval, MergeDocument,
+                           NewDocument, NewDocumentFromSpatialFile,
+                           NewKey, NewLargeDocument,
+                           NewNestedDocument, ReverseLookupDocument,
+                           ReverseLookupDocumentArrayIndexing,
+                           SequentialHotKey)
+from spring.querygen import (N1QLQueryGen, SpatialQueryFromFile,
+                             ViewQueryGen, ViewQueryGenByType)
 
 
 @decorator
@@ -64,23 +67,23 @@ class Worker(object):
         elif self.ws.doc_gen == 'new':
             self.docs = NewNestedDocument(self.ws.size)
         elif self.ws.doc_gen == 'merge':
-            isRandom = True
+            is_random = True
             if self.ts.prefix == 'n1ql':
-                isRandom = False
+                is_random = False
             self.docs = MergeDocument(self.ws.size,
-                                              self.ws.doc_partitions,
-                                              isRandom)
+                                      self.ws.doc_partitions,
+                                      is_random)
         elif self.ws.doc_gen == 'reverse_lookup':
-            isRandom = True
+            is_random = True
             if self.ts.prefix == 'n1ql':
-                isRandom = False
+                is_random = False
             self.docs = ReverseLookupDocument(self.ws.size,
                                               self.ws.doc_partitions,
-                                              isRandom)
+                                              is_random)
         elif self.ws.doc_gen == 'reverse_lookup_array_indexing':
-            isRandom = True
+            is_random = True
             if self.ts.prefix == 'n1ql':
-                isRandom = False
+                is_random = False
             if self.ws.updates:
                 # plus 10 to all values in array when updating doc
                 self.docs = ReverseLookupDocumentArrayIndexing(
@@ -105,7 +108,7 @@ class Worker(object):
         # just detect fts instead. The following does not work with
         # authless bucket. FTS's worker does its own Couchbase.connect
         if not (hasattr(self.ws, "fts") and hasattr(
-            self.ws.fts, "doc_database_url")):
+                self.ws.fts, "doc_database_url")):
             # default sasl bucket
             self.init_db({'bucket': self.ts.bucket, 'host': host, 'port': port,
                           'username': self.ts.bucket,
@@ -339,7 +342,7 @@ class SeqUpdatesWorker(Worker):
 
 class WorkerFactory(object):
 
-    def __new__(self, workload_settings):
+    def __new__(cls, workload_settings):
         if getattr(workload_settings, 'async', False):
             worker = AsyncKVWorker
         elif getattr(workload_settings, 'seq_updates', False):
@@ -353,19 +356,20 @@ class WorkerFactory(object):
 
 
 class SubdocWorkerFactory(object):
-    def __new__(self, workload_settings):
+
+    def __new__(cls, workload_settings):
         return SubDocWorker, workload_settings.subdoc_workers
 
 
 class ViewWorkerFactory(object):
 
-    def __new__(self, workload_settings):
+    def __new__(cls, workload_settings):
         return ViewWorker, workload_settings.query_workers
 
 
 class SpatialWorkerFactory(object):
 
-    def __new__(self, workload_settings):
+    def __new__(cls, workload_settings):
         workers = 0
         if hasattr(workload_settings, 'spatial'):
             workers = getattr(workload_settings.spatial, 'workers', 0)
@@ -417,8 +421,8 @@ class QueryWorker(Worker):
             logger.info('Interrupted: {}-{}-{}'.format(self.name, self.sid, e))
         else:
             if self.fallingBehindCount > 0:
-                 logger.info('Worker {0} fell behind {1} times.'
-                             .format(self.name, self.fallingBehindCount))
+                logger.info('Worker {0} fell behind {1} times.'
+                            .format(self.name, self.fallingBehindCount))
             logger.info('Finished: {}-{}'.format(self.name, self.sid))
 
 
@@ -469,7 +473,7 @@ class SpatialWorker(QueryWorker):
 
 class N1QLWorkerFactory(object):
 
-    def __new__(self, workload_settings):
+    def __new__(cls, workload_settings):
         return N1QLWorker, workload_settings.n1ql_workers
 
 
@@ -477,7 +481,7 @@ class N1QLWorker(Worker):
 
     def __init__(self, workload_settings, target_settings, shutdown_event):
         super(N1QLWorker, self).__init__(workload_settings, target_settings,
-                                          shutdown_event)
+                                         shutdown_event)
         self.new_queries = N1QLQueryGen(workload_settings.n1ql_queries)
         self.total_workers = self.ws.n1ql_workers
         self.throughput = self.ws.n1ql_throughput
@@ -486,7 +490,7 @@ class N1QLWorker(Worker):
         host, port = self.ts.node.split(':')
         bucket = self.ts.bucket
         if workload_settings.n1ql_op == 'ryow':
-                bucket += '?fetch_mutation_tokens=true'
+            bucket += '?fetch_mutation_tokens=true'
 
         params = {'bucket': bucket, 'host': host, 'port': port,
                   'username': self.ts.bucket, 'password': self.ts.password}
@@ -502,8 +506,8 @@ class N1QLWorker(Worker):
 
         if self.ws.doc_gen == 'merge':
             self.docs = MergeDocument(self.ws.size,
-                                              self.ws.doc_partitions,
-                                              False)
+                                      self.ws.doc_partitions,
+                                      False)
         elif self.ws.doc_gen == 'reverse_lookup':
             self.docs = ReverseLookupDocument(self.ws.size,
                                               self.ws.doc_partitions,
@@ -514,13 +518,12 @@ class N1QLWorker(Worker):
                     self.ws.size, self.ws.doc_partitions, self.ws.items,
                     delta=random.randint(0, 10))
             else:
-                 self.docs = ReverseLookupDocumentArrayIndexing(
+                self.docs = ReverseLookupDocumentArrayIndexing(
                     self.ws.size, self.ws.doc_partitions, self.ws.items)
         self.cb = N1QLGen(**params)
 
     @with_sleep
     def do_batch(self):
-
         if self.ws.n1ql_op == 'read':
             curr_items_spot = \
                 self.curr_items.value - self.ws.creates * self.ws.workers
@@ -551,21 +554,15 @@ class N1QLWorker(Worker):
             deleted_spot = (deleted_items_tmp +
                             self.BATCH_SIZE * self.total_workers)
 
-        deleted_capped_items_tmp = deleted_capped_spot = 0
+        deleted_capped_items_tmp = 0
         if self.ws.n1ql_op == 'rangedelete':
             with self.lock:
                 self.deleted_capped_items.value += self.BATCH_SIZE
                 deleted_capped_items_tmp = self.deleted_capped_items.value - self.BATCH_SIZE
-            deleted_capped_spot = (deleted_capped_items_tmp +
-                            self.BATCH_SIZE * self.total_workers)
 
-        casupdated_items_tmp = casupdated_spot = 0
         if self.ws.n1ql_op == 'update':
             with self.lock:
                 self.casupdated_items.value += self.BATCH_SIZE
-                casupdated_items_tmp = self.casupdated_items.value - self.BATCH_SIZE
-            casupdated_spot = (casupdated_items_tmp +
-                            self.BATCH_SIZE * self.total_workers)
 
         if self.ws.n1ql_op == 'create':
             for _ in xrange(self.BATCH_SIZE):
@@ -636,7 +633,7 @@ class N1QLWorker(Worker):
                 self.cb.query(ddoc_name, view_name, query=query)
                 deleted_capped_items_tmp += 1
 
-        elif self.ws.n1ql_op == 'merge':           #run select * workload for merge
+        elif self.ws.n1ql_op == 'merge':  # run select * workload for merge
             for _ in xrange(self.BATCH_SIZE):
                 key = self.existing_keys.next(curr_items_spot, deleted_spot)
                 doc = self.docs.next(key)
@@ -649,7 +646,7 @@ class N1QLWorker(Worker):
                 self.cb.query(ddoc_name, view_name, query=query)
 
     def run(self, sid, lock, curr_queries, curr_items, deleted_items,
-                              casupdated_items, deleted_capped_items):
+            casupdated_items, deleted_capped_items):
         self.cb.start_updater()
 
         if self.throughput < float('inf'):
@@ -676,13 +673,14 @@ class N1QLWorker(Worker):
             logger.info('Interrupted: {}-{}-{}'.format(self.name, self.sid, e))
         else:
             if self.fallingBehindCount > 0:
-                 logger.info('Worker {0} fell behind {1} times.'.
-                             format(self.name, self.fallingBehindCount))
+                logger.info('Worker {0} fell behind {1} times.'.
+                            format(self.name, self.fallingBehindCount))
             logger.info('Finished: {}-{}'.format(self.name, self.sid))
+
 
 class DcpWorkerFactory(object):
 
-    def __new__(self, workload_settings):
+    def __new__(cls, workload_settings):
         return DcpWorker, workload_settings.dcp_workers
 
 
@@ -762,7 +760,8 @@ class DcpWorker(Worker):
 
 
 class FtsWorkerFactory(object):
-    def __new__(self, workload_settings):
+
+    def __new__(cls, workload_settings):
         if workload_settings.fts_config:
             return FtsWorker, workload_settings.fts_config.worker
         return FtsWorker, 0
@@ -815,7 +814,7 @@ class WorkloadGen(object):
 
     def start_workers(self, worker_factory, name, curr_items=None,
                       deleted_items=None, casupdated_items=None,
-                      deleted_capped_items = None):
+                      deleted_capped_items=None):
         curr_ops = Value('L', 0)
         lock = Lock()
         worker_type, total_workers = worker_factory(self.ws)
@@ -825,7 +824,7 @@ class WorkloadGen(object):
                 args = (sid, lock)
             elif casupdated_items is not None or deleted_capped_items is not None:
                 args = (sid, lock, curr_ops, curr_items, deleted_items,
-                                casupdated_items, deleted_capped_items)
+                        casupdated_items, deleted_capped_items)
             else:
                 args = (sid, lock, curr_ops, curr_items, deleted_items)
             worker = worker_type(self.ws, self.ts, self.shutdown_event)

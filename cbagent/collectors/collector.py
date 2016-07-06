@@ -6,8 +6,8 @@ from threading import Thread
 import requests
 from logger import logger
 
-from cbagent.stores import SerieslyStore
 from cbagent.metadata_client import MetadataClient
+from cbagent.stores import SerieslyStore
 
 
 class Collector(object):

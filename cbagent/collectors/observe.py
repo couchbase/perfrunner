@@ -1,8 +1,8 @@
-from time import time, sleep
 from threading import Thread
+from time import sleep, time
 from uuid import uuid4
 
-from couchbase.user_constants import OBS_PERSISTED, OBS_NOTFOUND
+from couchbase.user_constants import OBS_NOTFOUND, OBS_PERSISTED
 from decorator import decorator
 from logger import logger
 

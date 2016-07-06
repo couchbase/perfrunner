@@ -1,5 +1,5 @@
-from cbagent.collectors.libstats.atopstats import AtopStats
 from cbagent.collectors import Collector
+from cbagent.collectors.libstats.atopstats import AtopStats
 
 
 class Atop(Collector):

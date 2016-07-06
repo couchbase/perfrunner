@@ -1,5 +1,6 @@
 from cbagent.collectors import Collector
 
+
 class SecondaryStats(Collector):
 
     COLLECTOR = "secondary_stats"
@@ -19,9 +20,9 @@ class SecondaryStats(Collector):
         for bucket in self.get_buckets():
             stats = self._get_secondary_stats(bucket)
             if stats:
-               self.update_metric_metadata(stats.keys(), bucket=bucket)
-               self.store.append(stats,cluster=self.cluster,
-                                 bucket=bucket, collector=self.COLLECTOR)
+                self.update_metric_metadata(stats.keys(), bucket=bucket)
+                self.store.append(stats, cluster=self.cluster,
+                                  bucket=bucket, collector=self.COLLECTOR)
 
     def update_metadata(self):
         self.mc.add_cluster()

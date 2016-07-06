@@ -1,6 +1,6 @@
+from Queue import Empty, Queue
 from threading import Lock
 from time import time
-from Queue import Queue, Empty
 
 from couchbase.connection import Connection
 

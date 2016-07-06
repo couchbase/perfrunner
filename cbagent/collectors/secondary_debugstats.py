@@ -1,5 +1,5 @@
 from cbagent.collectors import Collector
-from logger import logger
+
 
 class SecondaryDebugStats(Collector):
 
@@ -17,11 +17,11 @@ class SecondaryDebugStats(Collector):
         return stats
 
     def sample(self):
-         stats = self._get_secondary_debugstats()
-         if stats:
-             self.update_metric_metadata(stats.keys())
-             self.store.append(stats,cluster=self.cluster,
-                                 collector=self.COLLECTOR)
+        stats = self._get_secondary_debugstats()
+        if stats:
+            self.update_metric_metadata(stats.keys())
+            self.store.append(stats, cluster=self.cluster,
+                              collector=self.COLLECTOR)
 
     def update_metadata(self):
         self.mc.add_cluster()

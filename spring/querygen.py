@@ -1,11 +1,11 @@
 import array
-from itertools import cycle
+import copy
 import json
 import os
-import copy
+from itertools import cycle
 
-from numpy import random
 from couchbase.views.params import Query
+from numpy import random
 
 
 class ViewQueryGen(object):

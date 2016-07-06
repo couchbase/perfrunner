@@ -1,5 +1,5 @@
-from cbagent.collectors.libstats.net import NetStat
 from cbagent.collectors import Collector
+from cbagent.collectors.libstats.net import NetStat
 
 
 class Net(Collector):

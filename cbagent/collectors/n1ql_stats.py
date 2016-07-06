@@ -1,5 +1,6 @@
 from cbagent.collectors import Collector
 
+
 class N1QLStats(Collector):
 
     COLLECTOR = "n1ql_stats"

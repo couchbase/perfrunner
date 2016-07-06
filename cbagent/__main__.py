@@ -4,14 +4,12 @@ from optparse import OptionParser
 from cbagent.collectors.active_tasks import ActiveTasks
 from cbagent.collectors.iostat import IO
 from cbagent.collectors.latency import Latency
-from cbagent.collectors.observe import ObserveLatency
+from cbagent.collectors.n1ql_stats import N1QLStats
 from cbagent.collectors.net import Net
 from cbagent.collectors.ns_server import NSServer
-from cbagent.collectors.secondary_stats import SecondaryStats
-from cbagent.collectors.secondary_debugstats import SecondaryDebugStats
-from cbagent.collectors.secondary_latency import SecondaryLatencyStats
-from cbagent.collectors.n1ql_stats import N1QLStats
+from cbagent.collectors.observe import ObserveLatency
 from cbagent.collectors.ps import PS
+from cbagent.collectors.secondary_stats import SecondaryStats
 from cbagent.collectors.typeperf import TypePerf
 from cbagent.collectors.xdcr_lag import XdcrLag
 from cbagent.settings import Settings

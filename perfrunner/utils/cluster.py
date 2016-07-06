@@ -63,12 +63,16 @@ class ClusterManager(object):
                 self.rest.set_query_settings(server, settings)
 
     def set_index_settings(self):
+        if not self.test_config.secondaryindex_settings.db:
+            return
+
         if self.test_config.secondaryindex_settings.db != 'memdb':
             settings = self.test_config.secondaryindex_settings.settings
             for _, servers in self.cluster_spec.yield_servers_by_role('index'):
                 for server in servers:
                     self.rest.set_index_settings(server, settings)
             self.remote.restart()
+            self.wait_until_healthy()
             time.sleep(60)
         else:
             logger.info("DB type is memdb. Not setting the indexer settings. Taking the default indexer settings")
@@ -115,6 +119,7 @@ class ClusterManager(object):
             ejected_nodes = []
             self.rest.rebalance(master, known_nodes, ejected_nodes)
             self.monitor.monitor_rebalance(master)
+        self.wait_until_healthy()
 
     def create_buckets(self, empty_buckets=False):
         ram_quota = self.mem_quota / (self.test_config.cluster.num_buckets +
@@ -188,6 +193,7 @@ class ClusterManager(object):
                         diag_eval = cmd.format(bucket, option, value)
                         self.rest.run_diag_eval(master, diag_eval)
                 self.remote.restart()
+                self.wait_until_healthy()
 
     def tune_logging(self):
         self.remote.tune_log_rotation()
@@ -246,6 +252,7 @@ class ClusterManager(object):
                     self.rest.run_diag_eval(master, diag_eval)
             time.sleep(30)
             self.remote.restart()
+            self.wait_until_healthy()
 
 
 def get_options():
@@ -281,15 +288,16 @@ def main():
 
     # Individual nodes
     if cm.remote:
+        cm.remote.disable_wan()
         cm.tune_logging()
         cm.restart_with_sfwi()
         cm.restart_with_alternative_num_vbuckets()
         cm.restart_with_alternative_num_cpus()
         cm.restart_with_tcmalloc_aggressive_decommit()
         cm.disable_moxi()
+
     cm.configure_internal_settings()
     cm.configure_xdcr_settings()
-    time.sleep(10)  # dkao: crutch
     cm.set_data_path()
     cm.set_services()
     cm.set_mem_quota()
@@ -297,31 +305,37 @@ def main():
     cm.set_fts_index_mem_quota()
     cm.set_auth()
 
-    time.sleep(30)  # crutch
-
     # Cluster
     if cm.group_number > 1:
         cm.create_server_groups()
     cm.add_nodes()
+
     if cm.test_config.cluster.num_buckets:
         cm.create_buckets()
     if cm.test_config.cluster.emptybuckets:
         cm.create_buckets(empty_buckets=True)
     if cm.remote:
         cm.restart_with_alternative_bucket_options()
+
+    cm.wait_until_warmed_up()
+    cm.wait_until_healthy()
+
+    if cm.remote:
+        cm.set_index_settings()
+        cm.change_dcp_io_threads()
+        cm.set_query_settings()
+
     cm.wait_until_warmed_up()
     cm.wait_until_healthy()
     cm.configure_auto_compaction()
     cm.enable_auto_failover()
     cm.change_watermarks()
+
     if cm.remote:
-        cm.set_index_settings()
-        cm.change_dcp_io_threads()
-        time.sleep(60)
-        cm.set_query_settings()
-        cm.tweak_memory()
-        cm.remote.disable_wan()
         cm.start_cbq_engine()
+
+    if cm.remote:
+        cm.tweak_memory()
 
 if __name__ == '__main__':
     main()

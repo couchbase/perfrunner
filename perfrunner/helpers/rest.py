@@ -111,7 +111,6 @@ class RestHelper(object):
         host = host_port.replace('8091', '8093')
         api = 'http://{}/admin/settings'.format(host)
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-        settings = self.get(url=api).json()
 
         settings = self.get(url=api).json()
         for override, value in override_settings.items():

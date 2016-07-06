@@ -358,8 +358,17 @@ class RestHelper(object):
 
         api = 'http://{}/pools/'.format(host_port)
         r = self.get(url=api).json()
-        return r['implementationVersion']\
-            .replace('-rel-enterprise', '').replace('-community', '')
+        return r['implementationVersion'] \
+            .replace('-rel-enterprise', '') \
+            .replace('-enterprise', '') \
+            .replace('-community', '')
+
+    def is_community(self, host_port):
+        logger.info('Getting Couchbase Server edition')
+
+        api = 'http://{}/pools/'.format(host_port)
+        r = self.get(url=api).json()
+        return 'community' in r['implementationVersion']
 
     def get_master_events(self, host_port):
         logger.info('Getting master events from {}'.format(host_port))

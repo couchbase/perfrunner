@@ -12,7 +12,7 @@ credentials = root:couchbase
 [storage]
 data = /opt/couchbase/var/lib/couchbase/data
 index = /opt/couchbase/var/lib/couchbase/data
-backup_path=/data/cbbackup_dir
+backup = /data/cbbackup_dir
 
 [credentials]
 rest = Administrator:password

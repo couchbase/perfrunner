@@ -1,173 +1,198 @@
-from time import sleep, time
+import time
 
+import requests
 from logger import logger
 
+from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import PerfTest
+from perfrunner.utils.install import CouchbaseInstaller
 
 
-class CBBackupRestoreBase(PerfTest):
+class Options(object):
+
+    cluster_edition = None
+    toy = None
+    url = None
+    verbose = False
+    version = None
+
+
+class BackupRestoreTest(PerfTest):
 
     """
-    The most basic CB backup /restore class:
+    The base CB backup /restore class.
     """
 
-    folder_size = 0
-    data_size = 0
-    spent_time = 0
+    def download_tools(self):
+        options = Options()
+        options.version = self.build
+        if self.rest.is_community(self.master_node):
+            options.cluster_edition = 'community'
+        else:
+            options.cluster_edition = 'enterprise'
+
+        installer = CouchbaseInstaller(self.cluster_spec, options)
+
+        filename, url = installer.find_package()
+
+        logger.info('Downloading "{}"'.format(url))
+        with open(filename, 'w') as fh:
+            resp = requests.get(url)
+            fh.write(resp.content)
+
+        local.extract_cb(filename)
+
+    def __init__(self, *args, **kwargs):
+        super(BackupRestoreTest, self).__init__(*args, **kwargs)
+
+        self.backup_size = 0
+        self.spent_time = 0
+        self.data_size = (self.test_config.load_settings.items *
+                          self.test_config.load_settings.size) / 10 ** 6
 
     def run(self):
+        self.download_tools()
+
         self.load()
         self.wait_for_persistence()
         self.compact_bucket()
-        self.data_size = (self.test_config.load_settings.items *
-                          self.test_config.load_settings.size) / 1000000.0
 
-    def cbbackup(self, wrapper=False, mode=None):
-        results = self.remote.cbbackup(wrapper, mode)
-        total = [s for s, _ in results.values()]
-        self.folder_size = sum(d for d in total) / len(total)
-        times = [t for _, t in results.values()]
-        self.spent_time = sum(d for d in times) / len(times)
+
+class BackupTest(BackupRestoreTest):
+
+    """
+    After a typical workload we backup all nodes and measure time it takes to
+    perform backup.
+    """
 
     @with_stats
-    def run_backup_with_stats(self, wrapper=False, mode=None):
-        self.cbbackup(wrapper, mode)
+    def backup(self, mode=None):
+        t0 = time.time()
+        local.backup(master_node=self.master_node,
+                     cluster_spec=self.cluster_spec,
+                     wrapper=self.rest.is_community(self.master_node),
+                     mode=mode)
+        self.spent_time = time.time() - t0
 
-    @with_stats
-    def run_cbrestore_with_stats(self, wrapper=False):
-        results = self.remote.cbrestore(wrapper)
-        self.spent_time = sum(results.values()) / len(results)
+        self.backup_size = local.calc_backup_size(self.cluster_spec)
 
-    def flush_buckets(self):
-        buckets = ['bucket-{}'.format(i + 1)
-                   for i in range(self.test_config.cluster.num_buckets)]
-        for bucket in buckets:
-            self.rest.flush_bucket(host_port=self.master_node, name=bucket)
+        logger.info('Backup completed in {:.1f} sec, backup size is {} GB'
+                    .format(self.spent_time, self.backup_size))
 
+    def report_backup_kpi(self):
+        if self.test_config.stats_settings.enabled:
+            self.reporter.post_to_sf(round(self.data_size / self.spent_time))
 
-class BackupTest(CBBackupRestoreBase):
-    """
-    After typical workload we backup all nodes and measure time it takes
-    to perform backup.
-    """
     def run(self):
         super(BackupTest, self).run()
-        self.run_backup_with_stats(
-            wrapper=self.test_config.test_case.use_backup_wrapper)
-        logger.info('backup completed in %s sec' % self.spent_time)
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(round(self.data_size / self.spent_time))
+
+        self.backup()
+
+        self.report_backup_kpi()
 
 
-class BackupWorkloadRunningTest(CBBackupRestoreBase):
+class BackupUnderLoadTest(BackupTest):
+
     """
-    After typical workload we backup all nodes and measure time it takes
-    to perform backup when workload running.
+    After a typical workload we backup all nodes and measure time it takes to
+    perform backup when workload running.
     """
 
     def run(self):
-        super(BackupWorkloadRunningTest, self).run()
+        super(BackupTest, self).run()
+
+        self.hot_load()
+
         self.access_bg()
 
-        self.run_backup_with_stats(
-            wrapper=self.test_config.test_case.use_backup_wrapper)
-        logger.info('backup completed in %s sec' % self.spent_time)
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(round(self.data_size / self.spent_time))
+        self.backup()
+
+        self.report_backup_kpi()
 
 
-class BackupFolderSizeTest(CBBackupRestoreBase):
+class IncrementalBackupUnderLoadTest(BackupTest):
+
     """
-    After typical workload we backup all nodes and measure backup folder size.
+    After a typical workload we backup all nodes then perform incremental backup
+    when workload running.
     """
+
+    MUTATION_TIME = 300
 
     def run(self):
-        super(BackupFolderSizeTest, self).run()
+        super(BackupTest, self).run()
 
-        self.run_backup_with_stats(
-            wrapper=self.test_config.test_case.use_backup_wrapper)
-        logger.info('backup completed, folder size %s' % self.folder_size)
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(self.folder_size)
+        self.backup()
 
-
-class RestoreTest(CBBackupRestoreBase):
-    """
-    After typical workload we backup all nodes then restore
-    and measure time it takes to perform restore.
-    """
-
-    def run(self):
-        super(RestoreTest, self).run()
-        self.cbbackup(wrapper=self.test_config.test_case.use_backup_wrapper)
-        self.flush_buckets()
-
-        start = time()
-        self.run_cbrestore_with_stats(
-            wrapper=self.test_config.test_case.use_backup_wrapper)
-        t = int(time() - start)
-        logger.info('restore completed in %s sec' % t)
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(round(self.data_size / t, 1))
-
-
-class IncrementalBackupWorkloadRunningTest(CBBackupRestoreBase):
-    """
-    After typical workload we backup all nodes then perform
-    incremental backup when workload running.
-    """
-
-    def run(self):
-        super(IncrementalBackupWorkloadRunningTest, self).run()
-        self.cbbackup(wrapper=self.test_config.test_case.use_backup_wrapper)
         self.access_bg()
-        # a delay to give the data update
-        sleep(300)
-        self.run_backup_with_stats(
-            wrapper=self.test_config.test_case.use_backup_wrapper, mode='diff')
-        logger.info('backup completed in %s sec' % self.spent_time)
+        time.sleep(self.MUTATION_TIME)
+
+        self.backup(mode='diff')
+
+        self.report_backup_kpi()
+
+
+class RestoreTest(BackupTest):
+
+    """
+    After a typical workload we backup all nodes then restore and measure time
+    it takes to perform restore.
+    """
+
+    @with_stats
+    def restore(self):
+        t0 = time.time()
+        local.restore(cluster_spec=self.cluster_spec,
+                      master_node=self.master_node,
+                      wrapper=self.rest.is_community(self.master_node))
+        self.spent_time = time.time() - t0
+
+        logger.info('Restore completed in {:.1f} sec'.format(self.spent_time))
+
+    def flush_buckets(self):
+        for i in range(self.test_config.cluster.num_buckets):
+            bucket = 'bucket-{}'.format(i + 1)
+            self.rest.flush_bucket(host_port=self.master_node, name=bucket)
+
+    def report_restore_kpi(self):
         if self.test_config.stats_settings.enabled:
             self.reporter.post_to_sf(round(self.data_size / self.spent_time, 1))
 
-
-class IncrementalBackupWorkloadRunningFolderSizeTest(CBBackupRestoreBase):
-    """
-    After typical workload we backup all nodes then perform
-    incremental backup when workload running and measure backup folder size.
-    """
-
     def run(self):
-        super(IncrementalBackupWorkloadRunningFolderSizeTest, self).run()
-        self.cbbackup(wrapper=self.test_config.test_case.use_backup_wrapper)
-        self.access_bg()
-        # a delay to give the data update
-        sleep(300)
-        self.run_backup_with_stats(
-            wrapper=self.test_config.test_case.use_backup_wrapper, mode='diff')
-        logger.info('backup completed, folder size %s' % self.folder_size)
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(self.folder_size)
+        super(BackupTest, self).run()
+
+        self.backup()
+
+        self.flush_buckets()
+
+        self.restore()
+
+        self.report_restore_kpi()
 
 
-class RestoreAfterIncrementalBackupTest(CBBackupRestoreBase):
+class RestoreAfterIncrementalBackupTest(RestoreTest):
+
     """
-    After typical workload we backup all nodes. After access load
-    we backup again (incremental backup).
+    After a typical workload we backup all nodes. After access load we backup
+    again (incremental backup).
+
     Incremental Restore and measure time it takes to perform restore.
     """
 
     def run(self):
-        super(RestoreAfterIncrementalBackupTest, self).run()
-        self.cbbackup(wrapper=self.test_config.test_case.use_backup_wrapper)
-        self.workload = self.test_config.access_settings
-        self.workload.seq_updates = True
-        self.access(self.workload)
-        self.cbbackup(
-            wrapper=self.test_config.test_case.use_backup_wrapper, mode='diff')
+        super(BackupTest, self).run()
+
+        self.backup()
+
+        workload = self.test_config.access_settings
+        workload.seq_updates = True
+        self.access(workload)
+
+        self.backup(mode='diff')
+
         self.flush_buckets()
-        self.run_cbrestore_with_stats(
-            wrapper=self.test_config.test_case.use_backup_wrapper)
-        logger.info('Incremental restore completed in %s sec' % self.spent_time)
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(self.spent_time)
+
+        self.restore()
+
+        self.report_restore_kpi()

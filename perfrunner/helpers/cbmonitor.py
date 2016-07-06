@@ -247,7 +247,7 @@ class CbAgent(object):
                     settings.master_node)
             if hasattr(settings, "monitor_clients") and settings.monitor_clients\
                     and settings.master_node in settings.monitor_clients:
-                partitions = {'backup': test.remote.cluster_spec.config.get('storage', 'backup_path')}
+                partitions = {'backup': test.remote.cluster_spec.config.get('storage', 'backup')}
             else:
                 partitions = {'data': data_path}
                 if hasattr(test, 'ddocs'):  # all instances of IndexTest have it

@@ -8,8 +8,8 @@ build:
 	pwd > env/lib/python2.7/site-packages/perfrunner.pth
 
 clean:
-	rm -fr build perfrunner.egg-info
-	rm -f `find . -name *.pyc`
+	rm -fr build perfrunner.egg-info dist
+	find . -name '*.pyc' -o -name '*.pyo' | xargs rm -f
 
 pep8:
 	./env/bin/flake8 --statistics cbagent perfrunner spring

@@ -7,7 +7,7 @@ ares =
 
 [clients]
 hosts =
-    172.23.100.203
+    172.23.99.132
 credentials = root:couchbase
 
 [storage]

@@ -456,7 +456,7 @@ def runPerfRunner( testDescriptor, options):
             print '-'*100
         else:
             #break       # uncomment to speed up things
-            proc = subprocess.Popen('./scripts/setup.sh', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+            proc = subprocess.Popen('./perfSanity/scripts/setup.sh', env=my_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
 
             for line in iter(proc.stdout.readline, ''):
                 print 'Setup output', line,

@@ -274,7 +274,7 @@ def checkResults( results, testDescriptor, operatingSystem):
 
 
 platformDescriptor = {'windows':{'servers':['172.23.107.100','172.23.107.5','172.23.107.218'],'seriesly':'172.23.107.168','testClient':'172.23.107.168'},
-                      'centos':{'servers':['10.5.3.42','10.5.3.43','10.5.3.44'],'seriesly':'10.5.3.40','testClient':'10.5.3.40'},
+                      'centos':{'servers':['10.5.3.42','10.5.3.43','10.5.3.44'],'seriesly':'10.5.3.46','testClient':'10.5.3.46'},
                       'centos-dev':{'servers':['10.1.5.23','10.1.5.24','10.1.5.25'],'seriesly':'10.1.5.26','testClient':'10.1.5.26'}}
 
 def executeRemoteCommand( cmd ):

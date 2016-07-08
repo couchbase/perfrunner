@@ -63,7 +63,7 @@ class ClusterManager(object):
                 self.rest.set_query_settings(server, settings)
 
     def set_index_settings(self):
-        if not self.test_config.secondaryindex_settings.db:
+        if not list(self.cluster_spec.yield_servers_by_role('index')):
             return
 
         if self.test_config.secondaryindex_settings.db != 'memdb':

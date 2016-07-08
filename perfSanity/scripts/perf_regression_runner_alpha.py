@@ -410,12 +410,14 @@ def runPerfRunner( testDescriptor, options):
     for s in spec:
          updateSpecFile( s, options.os )
 
+    # change the .test file to point to the seriesly host
+    cmd = "sed -i '/seriesly_host/c\seriesly_host = {0}' {1}".format(platformDescriptor[options.os]['seriesly'], testFile)
+    print 'the command is', cmd
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+
 
     if options.os != 'centos':
-         # change the .test file to point to the seriesly host
-         cmd = "sed -i '/seriesly_host/c\seriesly_host = {0}' {1}".format(platformDescriptor[options.os]['seriesly'], testFile)
-         print 'the command is', cmd
-         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+
 
          # and mess with the memory quota
          cmd = "sed -i 's/mem_quota = 8048/mem_quota = 2048/' {0}".format( testFile )

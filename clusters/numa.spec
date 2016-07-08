@@ -8,8 +8,8 @@ hosts =
 credentials = root:couchbase
 
 [storage]
-data = /ssd1
-index = /ssd2
+data = /data
+index = /index
 
 [credentials]
 rest = Administrator:password
@@ -17,7 +17,7 @@ ssh = root:couchbase
 
 [parameters]
 Platform = HW
-OS = Ubuntu 14.04
+OS = CentOS 7
 CPU = E5-4610 (48 vCPU)
 Memory = 256 GB
 Disk = SSD

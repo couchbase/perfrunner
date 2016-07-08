@@ -502,6 +502,20 @@ class RestHelper(object):
             data = self.get(url=api).json()
             yield data['hostname'], data['op']['samples']
 
+    def get_vbmap(self, host_port, bucket):
+        logger.info('Reading vbucket map: {}/{}'.format(host_port, bucket))
+        api = 'http://{}/pools/default/buckets/{}'.format(host_port, bucket)
+        data = self.get(url=api).json()
+
+        return data['vBucketServerMap']['vBucketMap']
+
+    def get_server_list(self, host_port, bucket):
+        api = 'http://{}/pools/default/buckets/{}'.format(host_port, bucket)
+        data = self.get(url=api).json()
+
+        return [server.split(':')[0]
+                for server in data['vBucketServerMap']['serverList']]
+
     def exec_n1ql_stmnt(self, host, stmnt):
         logger.info('Executing: {}'.format(stmnt))
         api = 'http://{}:8093/query/service'.format(host)

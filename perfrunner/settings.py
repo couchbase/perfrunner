@@ -186,6 +186,11 @@ class TestConfig(Config):
         return self._get_options_as_dict('watermarks')
 
     @property
+    def restore_settings(self):
+        options = self._get_options_as_dict('restore')
+        return RestoreSettings(options)
+
+    @property
     def load_settings(self):
         options = self._get_options_as_dict('load')
         return LoadSettings(options)
@@ -594,6 +599,15 @@ class HotLoadSettings(PhaseSettings):
                 "and not in the [hot_load] section")
 
         super(HotLoadSettings, self).__init__(options)
+
+
+class RestoreSettings(object):
+
+    def __init__(self, options):
+        self.snapshot = options.get('snapshot')
+
+    def __str__(self):
+        return str(self.__dict__)
 
 
 class XDCRSettings(object):

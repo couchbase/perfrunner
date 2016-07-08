@@ -14,6 +14,7 @@ from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.reporter import Reporter
 from perfrunner.helpers.rest import RestHelper
+from perfrunner.helpers.restore import RestoreHelper
 from perfrunner.helpers.worker import WorkerManager
 from perfrunner.settings import TargetSettings
 
@@ -51,6 +52,7 @@ class PerfTest(object):
         self.monitor = Monitor(cluster_spec)
         self.rest = RestHelper(cluster_spec)
         self.remote = RemoteHelper(cluster_spec, test_config, verbose)
+        self.restore_helper = RestoreHelper(cluster_spec, test_config, verbose)
 
         self.master_node = cluster_spec.yield_masters().next()
         self.build = self.rest.get_version(self.master_node)
@@ -114,6 +116,10 @@ class PerfTest(object):
                 self.monitor.monitor_disk_queues(master, bucket)
                 self.monitor.monitor_tap_queues(master, bucket)
                 self.monitor.monitor_upr_queues(master, bucket)
+
+    def restore(self):
+        self.restore_helper.restore()
+        self.restore_helper.warmup()
 
     def load(self, load_settings=None, target_iterator=None):
         if load_settings is None:

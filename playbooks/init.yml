@@ -9,6 +9,7 @@
       - htop
       - iptraf
       - numactl
+      - psmisc
       - rsync
       - sysstat
       - tree

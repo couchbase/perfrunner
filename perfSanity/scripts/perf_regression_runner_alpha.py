@@ -439,9 +439,8 @@ def runPerfRunner( testDescriptor, options):
 
     my_env = os.environ
     my_env['test_config'] = testFile
-    if options.url is None:
-        my_env['version'] = options.version
-    else:
+    my_env['version'] = options.version
+    if options.url is not None:
         my_env['url'] = options.url
     if 'override' in testDescriptor:
         print 'override is', testDescriptor['override']

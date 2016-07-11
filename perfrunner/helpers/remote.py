@@ -421,11 +421,8 @@ class RemoteLinuxHelper(object):
             run('/etc/init.d/couchbase-server start', pty=False)
 
     def detect_if(self):
-        for iface in ('em1', 'eth5', 'eth0'):
-            result = run('grep {} /proc/net/dev'.format(iface),
-                         warn_only=True, quiet=True)
-            if not result.return_code:
-                return iface
+        stdout = run("ip route list | grep default")
+        return stdout.strip().split()[4]
 
     def detect_ip(self, _if):
         ifconfig = run('ifconfig {} | grep "inet addr"'.format(_if), warn_only=True)

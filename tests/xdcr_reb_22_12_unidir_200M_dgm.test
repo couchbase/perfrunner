@@ -15,7 +15,7 @@ db_percentage = 10
 [load]
 items = 200000000
 size = 1024
-workers = 15
+workers = 40
 
 [xdcr]
 replication_type = unidir
@@ -24,6 +24,3 @@ replication_type = unidir
 nodes_after = 2 2
 start_after = 10
 stop_after = 10
-
-
-

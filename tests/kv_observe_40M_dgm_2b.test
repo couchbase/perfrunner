@@ -15,11 +15,11 @@ db_percentage = 15
 [load]
 items = 40000000
 size = 2048
-workers = 5
+workers = 20
 
 [hot_load]
 items = 40000000
-workers = 5
+workers = 20
 working_set = 10
 
 [access]

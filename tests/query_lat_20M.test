@@ -18,7 +18,7 @@ db_percentage = 20
 [load]
 items = 20000000
 size = 2048
-workers = 20
+workers = 40
 
 [index]
 views = [1, 1, 1, 1]

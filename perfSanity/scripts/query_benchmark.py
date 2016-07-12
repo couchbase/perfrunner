@@ -245,7 +245,7 @@ def do_airline_benchmarks(conn, rest, host_ip, remote, cluster_spec):
          'expected_elapsed_time': 38000, 'expected_execution_time': 38000})
     command_list.append(
         {'queryDesc':'Q1', 'query': "SELECT * FROM   ods WHERE  TYPE = 'OPS_FLT_LEG' AND TAIL_NBR = 'N518LR' ORDER  BY GMT_EST_DEP_DTM ;",
-         'expected_elapsed_time': 1.3, 'expected_execution_time': 1.3, 'execution_count': 10})
+         'expected_elapsed_time': 4.8, 'expected_execution_time': 4.8, 'execution_count': 10})
 
     # query 2
     big_long_query2 = """

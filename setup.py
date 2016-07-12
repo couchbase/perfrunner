@@ -11,6 +11,7 @@ setup(
             'perfrunner = perfrunner.__main__:main',
             'install = perfrunner.utils.install:main',
             'cluster = perfrunner.utils.cluster:main',
+            'query_benchmark = perfSanity.scripts.query_benchmark:main',
         ]
     },
     ext_modules=[

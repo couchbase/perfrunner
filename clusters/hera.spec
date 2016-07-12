@@ -22,7 +22,7 @@ ssh = root:couchbase
 
 [parameters]
 Platform = HW
-OS = CentOS 6
+OS = CentOS 7
 CPU = Data: CPU E5-2630 v3 (32 vCPU), Query & Index: E5-2680 v3 (48 vCPU)
 Memory = Data: 64GB, Query & Index: 256GB
 Disk = SSD

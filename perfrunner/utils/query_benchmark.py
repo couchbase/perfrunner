@@ -7,9 +7,9 @@ import paramiko
 import urllib3
 from logger import logger
 
+from perfrunner.helpers.cluster import ClusterManager
 from perfrunner.helpers.rest import RestHelper
-from perfrunner.settings import ClusterSpec
-from perfrunner.utils.cluster import ClusterManager, TestConfig
+from perfrunner.settings import ClusterSpec, TestConfig
 from perfrunner.utils.install import CouchbaseInstaller
 
 """

@@ -3,9 +3,9 @@ from collections import defaultdict
 from fabric.api import run, settings
 from logger import logger
 
+from perfrunner.helpers.cluster import ClusterManager
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import RestHelper
-from perfrunner.utils.cluster import ClusterManager
 
 
 class RestoreHelper(object):

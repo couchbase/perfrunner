@@ -9,9 +9,9 @@ import os
 import sys
 import time
 
-from perfrunner.settings import ClusterSpec
+from perfrunner.helpers.cluster import ClusterManager
+from perfrunner.settings import ClusterSpec, TestConfig
 from perfrunner.utils.install import CouchbaseInstaller
-from perfrunner.utils.cluster import TestConfig, ClusterManager
 
 from logger import logger
 import urllib3

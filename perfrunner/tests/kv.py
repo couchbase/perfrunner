@@ -12,7 +12,6 @@ from perfrunner.helpers.metrics import MetricHelper
 from perfrunner.helpers.misc import log_phase, pretty_dict, uhex
 from perfrunner.helpers.worker import run_pillowfight_via_celery
 from perfrunner.lib.mc_bin_client import MemcachedClient, MemcachedError
-from perfrunner.lib.tap import TAP
 from perfrunner.tests import PerfTest
 from perfrunner.workloads.pathoGen import PathoGen
 from perfrunner.workloads.pillowfight import Pillowfight
@@ -268,34 +267,6 @@ class WarmupTest(PerfTest):
 
         if self.test_config.stats_settings.enabled:
             self.reporter.post_to_sf(warmup_time)
-
-
-class TapTest(PerfTest):
-
-    """
-    Load data and then read entire data set via TAP protocol (single-threaded
-    consumer).
-    """
-
-    def consume(self):
-        logger.info('Reading data via TAP')
-        password = self.test_config.bucket.password
-        for master in self.cluster_spec.yield_masters():
-            host = master.split(':')[0]
-            for bucket in self.test_config.buckets:
-                tap = TAP(host=host, bucket=bucket, password=password)
-                while True:
-                    status, batch = tap.provide_batch()
-                    if not batch or status:
-                        break
-
-    def run(self):
-        self.load()
-        self.wait_for_persistence()
-
-        self.reporter.start()
-        self.consume()
-        self.reporter.finish('Backfilling')
 
 
 class FragmentationTest(PerfTest):

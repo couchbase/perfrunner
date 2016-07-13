@@ -4,7 +4,7 @@ numa =
 
 [clients]
 hosts =
-    172.23.105.215
+    172.23.108.137
 credentials = root:couchbase
 
 [storage]

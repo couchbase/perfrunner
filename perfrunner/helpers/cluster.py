@@ -7,7 +7,6 @@ from perfrunner.helpers.misc import server_group
 from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import RestHelper
-from perfrunner.tests import TargetIterator
 
 
 class ClusterManager(object):
@@ -215,10 +214,9 @@ class ClusterManager(object):
             self.rest.enable_auto_failover(master)
 
     def wait_until_warmed_up(self):
-        target_iterator = TargetIterator(self.cluster_spec, self.test_config)
-        for target in target_iterator:
-            self.monitor.monitor_warmup(self.memcached, target.node,
-                                        target.bucket)
+        for master in self.cluster_spec.yield_masters():
+            for bucket in self.test_config.buckets:
+                self.monitor.monitor_warmup(self.memcached, master, bucket)
 
     def wait_until_healthy(self):
         for master in self.cluster_spec.yield_masters():

@@ -65,6 +65,7 @@ class CouchbaseInstaller(object):
             patterns = (
                 'couchbase-server-{edition}_centos6_{arch}_{version}-rel.{pkg}',
                 'couchbase-server-{edition}-{version}-centos6.{arch}.{pkg}',
+                'couchbase-server-{edition}-{version}-centos7.{arch}.{pkg}',
                 'couchbase-server-{edition}_{arch}_{version}-rel.{pkg}',
                 'couchbase-server-{edition}_{version}-{arch}.{pkg}',
             )

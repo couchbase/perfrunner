@@ -128,19 +128,6 @@ class CBGen(CBAsyncGen):
         return tuple(self.client.query(ddoc, view, query=query))
 
 
-class SpatialGen(CBGen):
-
-    def query(self, ddoc, view, query):
-        node = choice(self.server_nodes).replace('8091', '8092')
-        url = 'http://{}/{}/_design/{}/_spatial/{}'.format(
-            node, self.client.bucket, ddoc, view
-        )
-        t0 = time()
-        resp = self.session.get(url=url, params=query)
-        latency = time() - t0
-        return resp.text, latency
-
-
 class SubDocGen(CBGen):
 
     def read(self, key, subdoc_fields):

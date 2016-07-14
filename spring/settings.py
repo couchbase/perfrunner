@@ -1,20 +1,6 @@
-import os
 from urlparse import urlparse
 
 from logger import logger
-
-
-class SpatialSettings(object):
-
-    def __init__(self, data, dimensionality):
-        self.data = data
-        self.dimensionality = dimensionality
-        # The following settings only matter for queries and not data loading
-        self.workers = 0
-        self.throughput = 0
-        self.queries = 0
-        self.view_names = []
-        self.params = None
 
 
 class WorkloadSettings(object):
@@ -47,15 +33,6 @@ class WorkloadSettings(object):
         self.n1ql_workers = 0
 
         self.async = options.async
-
-        if options.dimensionality:
-            self.doc_gen = 'spatial'
-            self.spatial = SpatialSettings(options.data,
-                                           options.dimensionality)
-        if self.doc_gen == 'spatial' and self.spatial.data:
-            length = os.path.getsize(self.spatial.data)
-            # doubles are 8 byte each and we have one for high and one for low
-            self.ops = int(length / (self.spatial.dimensionality * 8 * 2))
 
 
 class TargetSettings(object):

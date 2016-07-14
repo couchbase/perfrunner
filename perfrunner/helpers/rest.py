@@ -345,15 +345,6 @@ class RestHelper(object):
             host_port, bucket, ddoc_name, view_name)
         self.get(url=api, params=params)
 
-    def query_spatial(self, host_port, bucket, ddoc_name, view_name, params):
-        logger.info('Querying view: {}/_design/{}/_spatial/{}'.format(
-            bucket, ddoc_name, view_name
-        ))
-
-        api = 'http://{}/couchBase/{}/_design/{}/_spatial/{}'.format(
-            host_port, bucket, ddoc_name, view_name)
-        self.get(url=api, params=params)
-
     def get_version(self, host_port):
         logger.info('Getting Couchbase Server version')
 

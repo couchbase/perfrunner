@@ -1,5 +1,4 @@
 import csv
-import json
 import os.path
 from ConfigParser import NoOptionError, NoSectionError, SafeConfigParser
 
@@ -215,11 +214,6 @@ class TestConfig(Config):
     def index_settings(self):
         options = self._get_options_as_dict('index')
         return IndexSettings(options)
-
-    @property
-    def spatial_settings(self):
-        options = self._get_options_as_dict('spatial')
-        return SpatialSettings(options)
 
     @property
     def secondaryindex_settings(self):
@@ -645,28 +639,6 @@ class IndexSettings(object):
         self.disabled_updates = int(options.get('disabled_updates',
                                                 self.DISABLED_UPDATES))
         self.index_type = options.get('index_type')
-
-    def __str__(self):
-        return str(self.__dict__)
-
-
-class SpatialSettings(object):
-
-    def __init__(self, options):
-        if not options:
-            return
-        self.indexes = []
-        if 'indexes' in options:
-            self.indexes = options.get('indexes').strip().split('\n')
-        self.disabled_updates = int(options.get('disabled_updates', 0))
-        self.dimensionality = int(options.get('dimensionality', 0))
-        self.data = options.get('data', None)
-        if 'view_names' in options:
-            self.view_names = options.get('view_names').strip().split('\n')
-        self.queries = options.get('queries', None)
-        self.workers = int(options.get('workers', 0))
-        self.throughput = float(options.get('throughput', float('inf')))
-        self.params = json.loads(options.get('params', "{}"))
 
     def __str__(self):
         return str(self.__dict__)

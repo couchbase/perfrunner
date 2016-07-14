@@ -10,17 +10,15 @@ from logger import logger
 from numpy import random
 from twisted.internet import reactor
 
-from spring.cbgen import (CBAsyncGen, CBGen, ElasticGen, FtsGen,
-                          N1QLGen, SpatialGen, SubDocGen)
+from spring.cbgen import (CBAsyncGen, CBGen, ElasticGen, FtsGen, N1QLGen,
+                          SubDocGen)
 from spring.docgen import (ExistingKey, KeyForCASUpdate,
                            KeyForRemoval, MergeDocument,
-                           NewDocument, NewDocumentFromSpatialFile,
-                           NewKey, NewLargeDocument,
+                           NewDocument, NewKey, NewLargeDocument,
                            NewNestedDocument, ReverseLookupDocument,
                            ReverseLookupDocumentArrayIndexing,
                            SequentialHotKey)
-from spring.querygen import (N1QLQueryGen, SpatialQueryFromFile,
-                             ViewQueryGen, ViewQueryGenByType)
+from spring.querygen import N1QLQueryGen, ViewQueryGen, ViewQueryGenByType
 
 
 @decorator
@@ -92,10 +90,6 @@ class Worker(object):
             else:
                 self.docs = ReverseLookupDocumentArrayIndexing(
                     self.ws.size, self.ws.doc_partitions, self.ws.items)
-        elif self.ws.doc_gen == 'spatial':
-            self.docs = NewDocumentFromSpatialFile(
-                self.ws.spatial.data,
-                self.ws.spatial.dimensionality)
         elif self.ws.doc_gen == 'large_subdoc':
             self.docs = NewLargeDocument(self.ws.size)
 
@@ -163,11 +157,6 @@ class KVWorker(Worker):
 
         if not cb:
             cb = self.cb
-
-        # If a file is used as input for the data, make sure the workers
-        # read from the correct file offset
-        if hasattr(self.ws, 'spatial') and hasattr(self.ws.spatial, 'data'):
-            self.docs.offset = curr_items_tmp
 
         cmds = []
         for op in ops:
@@ -367,15 +356,6 @@ class ViewWorkerFactory(object):
         return ViewWorker, workload_settings.query_workers
 
 
-class SpatialWorkerFactory(object):
-
-    def __new__(cls, workload_settings):
-        workers = 0
-        if hasattr(workload_settings, 'spatial'):
-            workers = getattr(workload_settings.spatial, 'workers', 0)
-        return SpatialWorker, workers
-
-
 class QueryWorker(Worker):
 
     def __init__(self, workload_settings, target_settings, shutdown_event):
@@ -441,34 +421,6 @@ class ViewWorker(QueryWorker):
         else:
             self.new_queries = ViewQueryGenByType(workload_settings.index_type,
                                                   workload_settings.qparams)
-
-
-class SpatialWorker(QueryWorker):
-
-    def __init__(self, workload_settings, target_settings, shutdown_event):
-        super(QueryWorker, self).__init__(workload_settings, target_settings,
-                                          shutdown_event)
-        self.total_workers = self.ws.spatial.workers
-        self.throughput = self.ws.spatial.throughput
-        self.name = 'spatial-worker'
-
-        self.new_queries = SpatialQueryFromFile(
-            workload_settings.spatial.queries,
-            workload_settings.spatial.dimensionality,
-            workload_settings.spatial.view_names,
-            workload_settings.spatial.params)
-
-        host, port = self.ts.node.split(':')
-        params = {'bucket': self.ts.bucket, 'host': host, 'port': port,
-                  'username': self.ts.bucket, 'password': self.ts.password}
-        self.cb = SpatialGen(**params)
-
-    @with_sleep
-    def do_batch(self):
-        for i in xrange(self.BATCH_SIZE):
-            offset = self.curr_queries.value - self.BATCH_SIZE + i
-            ddoc_name, view_name, query = self.new_queries.next(offset)
-            self.cb.query(ddoc_name, view_name, query=query)
 
 
 class N1QLWorkerFactory(object):
@@ -853,8 +805,6 @@ class WorkloadGen(object):
         self.start_workers(N1QLWorkerFactory, 'n1ql', curr_items, deleted_items,
                            casupdated_items, deleted_capped_items)
         self.start_workers(DcpWorkerFactory, 'dcp')
-        self.start_workers(SpatialWorkerFactory, 'spatial', curr_items,
-                           deleted_items)
         self.start_workers(FtsWorkerFactory, 'fts')
 
         if self.timer:

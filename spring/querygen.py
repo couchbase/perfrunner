@@ -1,7 +1,4 @@
-import array
 import copy
-import json
-import os
 from itertools import cycle
 
 from couchbase.views.params import Query
@@ -211,54 +208,6 @@ class ViewQueryGenByType(object):
         params = self.generate_params(**doc)[view_name]
         params = dict(self.params, **params)
         return self.DDOC_NAME, view_name, Query(**params)
-
-
-class SpatialQueryFromFile(object):
-    # The size (in byte) one dimension takes. It's min and max, both 64-bit
-    # floats
-    DIM_SIZE = 16
-
-    PARAMS = {
-        'limit': 20,
-        'stale': 'update_after',
-    }
-
-    def __init__(self, filename, dim, view_names, params):
-        """Create new spatial queries from a file.
-
-        ``view_names`` is an array of strings which contains the
-        design document name and the view name separated by two
-        colons (``::``).
-        """
-        self.file = open(filename, 'rb')
-        self.dim = dim
-        self.record_size = dim * self.DIM_SIZE
-        self.max_queries = int(os.path.getsize(filename) / self.record_size)
-        self.params = dict(self.PARAMS, **params)
-        self.view_sequence = cycle(
-            view_name.split('::', 1) for view_name in view_names)
-
-    def __del__(self):
-        self.file.close()
-
-    def _generate_params(self, offset):
-        offset = offset % self.max_queries
-        self.file.seek(self.record_size * offset)
-        mbb = array.array('d')
-        mbb.fromfile(self.file, self.dim * 2)
-        start_range = []
-        end_range = []
-        for i in range(0, self.dim * 2, 2):
-            start_range.append(mbb[i])
-            end_range.append(mbb[i + 1])
-        return {'start_range': json.dumps(start_range, separators=(',', ':')),
-                'end_range': json.dumps(end_range, separators=(',', ':'))}
-
-    def next(self, offset):
-        ddoc_name, view_name = self.view_sequence.next()
-        params = self._generate_params(offset)
-        params = dict(self.params, **params)
-        return ddoc_name, view_name, params
 
 
 class N1QLQueryGen(object):

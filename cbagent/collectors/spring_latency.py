@@ -1,15 +1,13 @@
-import json
 from time import time
 
 from logger import logger
 
 from cbagent.collectors import Latency
-from spring.cbgen import CBGen, N1QLGen, SpatialGen, SubDocGen
+from spring.cbgen import CBGen, N1QLGen, SubDocGen
 from spring.docgen import (ExistingKey, KeyForRemoval, NewDocument, NewKey,
                            NewNestedDocument, ReverseLookupDocument,
                            ReverseLookupDocumentArrayIndexing)
-from spring.querygen import (N1QLQueryGen, SpatialQueryFromFile,
-                             ViewQueryGen, ViewQueryGenByType)
+from spring.querygen import N1QLQueryGen, ViewQueryGen, ViewQueryGenByType
 
 
 class SpringLatency(Latency):
@@ -123,45 +121,6 @@ class SpringQueryLatency(SpringLatency):
         ddoc_name, view_name, query = self.new_queries.next(doc)
 
         _, latency = client.query(ddoc_name, view_name, query=query)
-        return 1000 * latency  # s -> ms
-
-
-class SpringSpatialQueryLatency(SpringLatency):
-
-    COLLECTOR = "spring_query_latency"
-
-    METRICS = ("latency_query", )
-
-    def __init__(self, settings, workload, spatial_settings, prefix=None):
-        super(SpringSpatialQueryLatency, self).__init__(settings, workload,
-                                                        prefix)
-        self.offset = 0
-        view_names = self._parse_views(spatial_settings.indexes)
-        self.clients = []
-        for bucket in self.get_buckets():
-            client = SpatialGen(bucket=bucket, host=settings.master_node,
-                                username=bucket, password=settings.bucket_password)
-            self.clients.append((bucket, client))
-
-        self.new_queries = SpatialQueryFromFile(
-            spatial_settings.queries,
-            spatial_settings.dimensionality,
-            view_names,
-            spatial_settings.params)
-
-    @staticmethod
-    def _parse_views(indexes):
-        views = []
-        for index in indexes:
-            ddoc_name, ddoc = index.split('::', 1)
-            for view_name in json.loads(ddoc)['spatial'].keys():
-                views.append('{}::{}'.format(ddoc_name, view_name))
-        return views
-
-    def measure(self, client, metric, bucket):
-        ddoc_name, view_name, query = self.new_queries.next(self.offset)
-        _, latency = client.query(ddoc_name, view_name, query=query)
-        self.offset += 1
         return 1000 * latency  # s -> ms
 
 

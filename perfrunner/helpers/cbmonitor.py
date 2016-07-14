@@ -13,8 +13,8 @@ from cbagent.collectors import (IO, PS, ActiveTasks, ElasticStats, FtsLatency,
                                 NSServer, ObserveLatency, SecondaryDebugStats,
                                 SecondaryLatencyStats, SecondaryStats,
                                 SpringLatency, SpringN1QLQueryLatency,
-                                SpringQueryLatency, SpringSpatialQueryLatency,
-                                SpringSubdocLatency, TypePerf, XdcrLag)
+                                SpringQueryLatency, SpringSubdocLatency,
+                                TypePerf, XdcrLag)
 from cbagent.metadata_client import MetadataClient
 from perfrunner.helpers.misc import target_hash, uhex
 from perfrunner.helpers.remote import RemoteHelper
@@ -109,7 +109,7 @@ class CbAgent(object):
 
     def prepare_collectors(self, test, bandwidth=False, subdoc_latency=False,
                            latency=False, secondary_stats=False,
-                           query_latency=False, spatial_latency=False,
+                           query_latency=False,
                            n1ql_latency=False, n1ql_stats=False,
                            index_latency=False, persist_latency=False,
                            replicate_latency=False, xdcr_lag=False,
@@ -133,8 +133,6 @@ class CbAgent(object):
             self.prepare_latency(clusters, test)
         if query_latency:
             self.prepare_query_latency(clusters, test)
-        if spatial_latency:
-            self.prepare_spatial_latency(clusters, test)
         if n1ql_latency:
             self.prepare_n1ql_latency(clusters, test)
         if secondary_stats:
@@ -329,20 +327,6 @@ class CbAgent(object):
                 SpringQueryLatency(settings, test.workload, prefix=prefix,
                                    ddocs=test.ddocs, params=params,
                                    index_type=index_type)
-            )
-
-    def prepare_spatial_latency(self, clusters, test):
-        for cluster in clusters:
-            settings = copy(self.settings)
-            settings.interval = self.lat_interval
-            settings.cluster = cluster
-            settings.master_node = self.clusters[cluster]
-            prefix = test.target_iterator.prefix or \
-                target_hash(settings.master_node.split(':')[0])
-            self.collectors.append(
-                SpringSpatialQueryLatency(
-                    settings, test.workload, prefix=prefix,
-                    spatial_settings=test.test_config.spatial_settings)
             )
 
     def prepare_n1ql_latency(self, clusters, test):

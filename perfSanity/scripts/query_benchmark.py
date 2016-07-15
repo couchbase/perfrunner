@@ -216,7 +216,7 @@ def do_beer_queries(conn, rest, host_ip, remote):
     return execute_commands(conn, command_list, rest, host_ip, 'beer-queries')
 
 
-def do_airline_benchmarks(conn, rest, host_ip, remote, cluster_spec):
+def do_airline_benchmarks(conn, rest, host_ip, remote, cluster_spec, version):
     if True:
         resp = rest.create_bucket(host_ip + ':8091', 'ods', 1000, 0, 0, 'valueOnly', 4, None)
         time.sleep(10)
@@ -229,8 +229,10 @@ def do_airline_benchmarks(conn, rest, host_ip, remote, cluster_spec):
             print "ssh Connection Failed"
             return False
 
-        cmd = '/opt/couchbase/bin/cbrestore /root/airline-test-data-updated  couchbase://127.0.0.1:8091 -b ods -B ods -u {0} -p {1}'.format(
-            rest.rest_username, rest.rest_password)
+        if float( '.'.join( version.split('.')[:2]) ) > 4.5:
+            cmd = '/opt/couchbase/bin/cbbackupmgr restore --archive /root/airline-test-data-newformat/  --host couchbase://127.0.0.1:8091 --repo ods -username {0} -password {1}'.format(rest.rest_username, rest.rest_password)
+        else:
+            cmd = '/opt/couchbase/bin/cbrestore /root/airline-test-data-updated  couchbase://127.0.0.1:8091 -b ods -B ods -u {0} -p {1}'.format( rest.rest_username, rest.rest_password)
         stdin, stdout, stderr = ssh.exec_command(cmd)
 
         for line in stdout.readlines():
@@ -529,7 +531,7 @@ def main():
     conn = urllib3.connection_from_url(URL)
     rest = RestHelper(cluster_spec)
     cm.set_index_settings()
-    airline_result = do_airline_benchmarks(conn, rest, host_ip, installer.remote, cluster_spec)
+    airline_result = do_airline_benchmarks(conn, rest, host_ip, installer.remote, cluster_spec, options.version)
     beer_result = do_beer_queries(conn, rest, host_ip, installer.remote)
     print 'beer_result is', beer_result
     sabre_result = do_sabre_benchmarks(conn, rest, host_ip, installer.remote, cluster_spec)

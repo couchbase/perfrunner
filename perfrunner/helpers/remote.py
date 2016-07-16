@@ -688,6 +688,7 @@ class RemoteLinuxHelper(object):
 
     @single_client
     def ycsb_load_run(self, path, cmd, log_path=None):
+        state.connections.clear()
         if log_path:
             tmpcmd = 'rm -rf ' + log_path
             run(tmpcmd)

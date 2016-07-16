@@ -1,5 +1,5 @@
 [clusters]
-hades =
+iris =
     172.23.100.70:8091,kv,n1ql,index
     172.23.100.71:8091,kv,n1ql,index
     172.23.100.72:8091,kv,n1ql,index
@@ -20,7 +20,7 @@ ssh = root:couchbase
 
 [parameters]
 Platform = HW
-OS = CentOS 6
+OS = CentOS 7
 CPU = E5-2630 v2 (24 vCPU)
 Memory = 64GB
 Disk = SSD

@@ -1,0 +1,28 @@
+---
+- hosts: kv:index:n1ql
+  tasks:
+  - shell: 'killall -I -g -q -s SIGKILL {{item}} || true'
+    with_items:
+     - epmd
+     - beam.smp
+     - cbq-engine
+     - cbft
+     - couch_view_index_updater
+     - goport
+     - goxdcr
+     - indexer
+     - memcached
+     - moxi
+  - yum: name=couchbase-server state=absent
+  - file: path=/opt/couchbase state=absent
+
+- hosts: kv:index:n1ql
+  tasks:
+  - shell: rm -fr /data/*
+
+- hosts: kv
+  tasks:
+  - stat: path=/index
+    register: index
+  - shell: rm -fr /index/*
+    when: index.stat.exists

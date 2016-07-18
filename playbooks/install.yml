@@ -1,0 +1,6 @@
+---
+- hosts: kv:index:n1ql
+  tasks:
+  - get_url: url={{ url }} dest=/tmp
+    register: package
+  - yum: name={{ package.dest }} state=present

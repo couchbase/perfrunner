@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
-title = Q5 1Bux20Mx1K, Aggregation Query, 14.4KGops, 3.6KSops GSI, stale=false
+title = Q5, Aggregation Query, 20M docs, 14.4KGops, 3.6KSops GSI, stale=false
 summary = Aggregation Query, 14.4KGops, 3.6KSops
 larger_is_better = false
 

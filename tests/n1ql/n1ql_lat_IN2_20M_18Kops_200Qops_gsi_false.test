@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLLatencyTest
-title = IN2 1Bux50Mx1K, Range Insert, 14.4KGops, 3.6KSops, 200Qops, GSI, stale=false
+title = IN2, Range Insert, 20M docs, 14.4KGops, 3.6KSops, 200Qops, GSI, stale=false
 summary = Range Insert, 14.4KGops, 3.6KSops, 200Qops
 larger_is_better = false
 
@@ -15,7 +15,7 @@ password =
 eviction_policy = valueOnly
 
 [load]
-items = 50000000
+items = 20000000
 size = 1024
 workers = 20
 doc_gen = reverse_lookup
@@ -31,7 +31,7 @@ reads = 80
 updates = 20
 deletes = 0
 throughput = 18000
-items = 50000000
+items = 20000000
 workers = 24
 time = 1200
 n1ql_op = rangedelete

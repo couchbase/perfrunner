@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
-title = Q3 1Bux20Mx1K, Range Scan, 30KSops, GSI, MOI, stale=ok
+title = Q3, Range Scan, 20M docs, 30KSops, GSI, MOI, stale=ok
 summary = Range Scan, 30KSops
 larger_is_better = false
 

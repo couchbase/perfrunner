@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
-title = Q3 1Bux20Mx1K, Range Scan, Dual Partition, 28.8KGops, 7.2KSops, GSI, stale=ok
+title = Q3, Range Scan, Dual Partition, 20M docs, 28.8KGops, 7.2KSops, GSI, stale=ok
 summary = Range Scan, Dual Partition, 28.8KGops, 7.2KSops
 larger_is_better = false
 

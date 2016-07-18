@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
-title = Q1 1Bux20Mx1K, Key-Value Lookup, 14.4KGops, 3.6KSops
+title = Q1, Key-Value Lookup, 20M docs, 14.4KGops, 3.6KSops
 summary = Key-Value Lookup, 14.4KGops, 3.6KSops
 larger_is_better = true
 

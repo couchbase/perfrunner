@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
-title = N1QL IN2 1Bux50Mx1K, Range Insert, 14.4KGops, 3.6KSops, GSI, stale=ok
+title = IN2 1Bux50Mx1K, Range Insert, 14.4KGops, 3.6KSops, GSI, stale=ok
 summary = Key-Value Lookup, 14.4KGops, 3.6KSops
 larger_is_better = false
 

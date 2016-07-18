@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
-title = N1QL Q2 1Bux20Mx1K, Singleton Unique Lookup, 40KGops, 10KSops, GSI, stale=ok
+title = Q2 1Bux20Mx1K, Singleton Unique Lookup, 40KGops, 10KSops, GSI, stale=ok
 summary = Singleton Unique Lookup, 40KGops, 10KSops
 larger_is_better = false
 

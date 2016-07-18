@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
-title = N1QL UP3 1Bux20Mx1K, Key-Value Update, 14.4KGops, 3.6KSops
+title = UP3 1Bux20Mx1K, Key-Value Update, 14.4KGops, 3.6KSops
 summary = Key-Value Update, 14.4KGops, 3.6KSops
 larger_is_better = false
 

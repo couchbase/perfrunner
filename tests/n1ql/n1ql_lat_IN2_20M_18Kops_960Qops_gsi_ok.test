@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLLatencyTest
-title = N1QL IN2 1Bux50Mx1K, Range Insert, 14.4KGops, 3.6KSops, 200Qops, GSI, stale=ok
+title = IN2 1Bux50Mx1K, Range Insert, 14.4KGops, 3.6KSops, 200Qops, GSI, stale=ok
 summary = Range Insert, 14.4KGops, 3.6KSops, 200Qops
 larger_is_better = false
 

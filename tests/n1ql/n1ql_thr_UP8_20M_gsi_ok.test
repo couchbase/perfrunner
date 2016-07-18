@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
-title = N1QL UP8 1Bux20Mx1K, Lookup Update, 14.4KGops, 3.6KSops, GSI, stale=ok
+title = UP8 1Bux20Mx1K, Lookup Update, 14.4KGops, 3.6KSops, GSI, stale=ok
 summary = Lookup Update, 14.4KGops, 3.6KSops
 larger_is_better = false
 

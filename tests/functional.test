@@ -1,3 +1,0 @@
-[cluster]
-mem_quota = 1024
-initial_nodes = 1

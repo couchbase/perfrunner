@@ -308,8 +308,6 @@ class RebalanceWithXdcrTest(XdcrInitTest, RebalanceTest):
     Workflow definition unidir XDCR rebalance tests.
     """
 
-    COLLECTORS = {'xdcr_lag': True}
-
     @with_stats
     def rebalance(self):
         clusters = self.cluster_spec.yield_clusters()
@@ -350,7 +348,7 @@ class RebalanceWithXdcrTest(XdcrInitTest, RebalanceTest):
             p = multiprocessing.Process(target=self.monitor.monitor_rebalance, args=(self.master,))
             p.start()
         self.monitor_replication()
-        self.spent_time = int(time.time() - start)
+        self.time_elapsed = int(time.time() - start)
 
     def load_dest(self):
         load_settings = self.test_config.load_settings
@@ -365,24 +363,13 @@ class RebalanceWithXdcrTest(XdcrInitTest, RebalanceTest):
         self.load()
         if self.test_config.cluster.initial_nodes[1] != self.rebalance_settings.nodes_after[1]:
             self.load_dest()
+
         self.wait_for_persistence()
 
         self.compact_bucket()
 
         self.rebalance()
+
         if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(
-                *self.metric_helper.calc_xdcr_lag()
-            )
-            metric = '{}_{}'.format(self.test_config.name,
-                                    self.cluster_spec.name)
-            metric_info = {
-                'title': self.test_config.test_case.metric_title.replace(
-                    "Rebalance",
-                    'Avg. Replication Throughput (docs/sec), Rebalance'),
-                'cluster': self.cluster_spec.name,
-                'larger_is_better': self.test_config.test_case.larger_is_better,
-                'level': self.test_config.test_case.level,
-            }
-            self.reporter.post_to_sf(round(self.test_config.load_settings.items / self.spent_time, 1),
-                                     metric=metric + '_in_bytes', metric_info=metric_info)
+            rate = self.metric_helper.calc_avg_replication_rate(self.time_elapsed)
+            self.reporter.post_to_sf(value=rate)

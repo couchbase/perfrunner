@@ -32,4 +32,7 @@
 
 - hosts: kv
   tasks:
+  - stat: path=/index
+    register: index
   - file: path=/index owner=couchbase group=couchbase
+    when: index.stat.exists

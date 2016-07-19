@@ -14,6 +14,7 @@ worker= 0
 query = {"match": "dreamless", "field": "text"}
 query_size = 10
 elastic = 1
+logfile = /tmp/elastic_latency_prefix_1M_1K.txt
 
 [access]
 time = 600

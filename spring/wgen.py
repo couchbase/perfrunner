@@ -714,6 +714,10 @@ class DcpWorker(Worker):
 class FtsWorkerFactory(object):
 
     def __new__(cls, workload_settings):
+        '''
+         For FTS worker one extra worker is added,
+         this worker will do the log collection
+        '''
         if workload_settings.fts_config:
             return FtsWorker, workload_settings.fts_config.worker
         return FtsWorker, 0
@@ -740,7 +744,30 @@ class FtsWorker(Worker):
         for i in range(self.BATCH_SIZE):
             if not self.time_to_stop():
                 cmd, args = self.fts_es_query.next()
-                cmd(**args)
+                if self.sid == self.ws.fts_config.worker - 1:
+                    '''
+                    collect stats for last worker
+                    '''
+                    try:
+                        r = cmd(**args)
+                        if not self.ws.fts_config.logfile:
+                            '''
+                             Error Checking if logfile is missing test file
+                            '''
+                            continue
+                        f = open(self.ws.fts_config.logfile, 'w')
+                        if r.status_code not in range(200, 203):
+                            f.write(args)
+                            f.write(r.status_code)
+                            f.write(r.text)
+                        f.close()
+                    except IOError as e:
+                        logger.info("I/O error({0}): {1}".format(e.errno, e.strerror))
+                else:
+                    '''
+                     Only running the rest API no error checking
+                    '''
+                    cmd(**args)
 
     def run(self, sid, lock):
         logger.info("Started {}".format(self.name))

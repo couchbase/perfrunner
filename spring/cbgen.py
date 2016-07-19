@@ -219,9 +219,9 @@ class FtsGen(CBGen):
         self.settings = settings
         self.fts_copy = copy.deepcopy(self.fts_query)
 
-    def form_url(self):
-        return {'url': self.fts_query,
-                'auth': self.auth,
+    def form_url(self, cquery):
+        return {'url': cquery,
+                'auth': self.auth or None,
                 'headers': self.header,
                 'data': json.dumps(self.query)
                 }
@@ -230,13 +230,54 @@ class FtsGen(CBGen):
         file = open(self.settings.query_file, 'r')
         for line in file:
             temp_query = {}
-            term, freq = line.split()
-            temp_query[self.settings.type] = term
-            temp_query['field'] = "text"
+            tosearch, freq = line.split()
+            if self.settings.type in ['conjuncts', 'disjuncts']:
+                '''
+                 For And, OR queries we create the list.
+                 Example looks like
+                 {"field": "title", "match": "1988"}
+                '''
+                tosearch = []
+                for terms in line.split():
+                    '''
+                     Term query is used for And/Or queries
+                    '''
+                    tosearch.append({"field": "text", "term": terms})
+            else:
+                if self.settings.type == 'fuzzy':
+                    temp_query['fuzziness'] = int(freq)
+
+                elif self.settings.type == 'numeric_range':
+                    '''
+                    Creating numeric range query Gen
+                    '''
+                    maxv = tosearch
+                    if freq.strip() == 'max_min':
+                        temp_query['max'] = maxv
+                        temp_query['min'] = maxv - 1000
+                    elif freq.strip() == 'max':
+                        temp_query['max'] = maxv
+                    else:
+                        temp_query['min'] = maxv - 1000
+
+                if self.settings.type == 'match':
+                    '''
+                    Just reassign the whole line to it
+                    '''
+                    tosearch = line
+
+                temp_query['field'] = "text"
+
+            if self.settings.type != 'numeric_range':
+                '''
+                Becuase we declare it earlier.
+                Bruteforce way
+                '''
+                temp_query[self.settings.type] = tosearch
             self.query['query'] = temp_query
             self.query['size'] = self.settings.query_size
             self.fts_query += 'index/' + self.settings.name + '/' + type
-            self.query_list.append(self.form_url())
+            self.query_list.append(self.form_url(self.fts_query))
             self.fts_query = self.fts_copy
         shuffle(self.query_list)
         self.query_iterator = itertools.cycle(self.query_list)
@@ -244,16 +285,16 @@ class FtsGen(CBGen):
     def next(self):
         return self.requests.post, self.query_iterator.next()
 
-    def prepare_query(self, ttype='query'):
+    def prepare_query(self, type='query'):
         self.fts_query = self.fts_copy
-        if ttype == 'query':
+        if type == 'query':
             self.prepare_query_list()
-        elif ttype == 'count':
+        elif type == 'count':
             self.fts_query += 'index/' + self.settings.name + '/' + type
-            return self.requests.get, self.form_url()
-        elif ttype == 'nsstats':
-            self.fts_query += ttype
-            return self.requests.get, self.form_url()
+            return self.requests.get, self.form_url(self.fts_query)
+        elif type == 'nsstats':
+            self.fts_query += type
+            return self.requests.get, self.form_url(self.fts_query)
 
 
 class ElasticGen(FtsGen):
@@ -265,23 +306,26 @@ class ElasticGen(FtsGen):
         self.query = self.__ELASTIC_QUERY
         self.elastic_query = "http://{}:9200/".format(elastic_url)
         self.elastic_copy = copy.deepcopy(self.elastic_query)
+        self.auth = None
 
-    def prepare_query(self):
-        file = open(self.settings.query_file, 'r')
-        for line in file:
-            self.elastic_query = self.elastic_copy
-            term, freq = line.split()
-            self.query['size'] = self.settings.query_size
-            self.elastic_query += self.settings.name + '/_search?pretty'
-            tmp_query = {}
-            tmp_query_txt = {}
-            tmp_query_txt['text'] = term
-            tmp_query[self.settings.type] = tmp_query_txt
-            self.query['query'] = tmp_query
-            elastic_url = {'url': self.elastic_query,
-                           'headers': self.header,
-                           'data': json.dumps(self.query)
-                           }
-            self.query_list.append(elastic_url)
-        shuffle(self.query_list)
-        self.query_iterator = itertools.cycle(self.query_list)
+    def prepare_query(self, type='query'):
+        if type == 'query':
+            file = open(self.settings.query_file, 'r')
+            for line in file:
+                self.elastic_query = self.elastic_copy
+                term, freq = line.split()
+                self.query['size'] = self.settings.query_size
+                self.elastic_query += self.settings.name + '/_search?pretty'
+                tmp_query = {}
+                tmp_query_txt = {}
+                tmp_query_txt['text'] = term
+                if self.settings.type == 'fuzzy':
+                    tmp_query_txt['fuzziness'] = int(freq)
+                tmp_query[self.settings.type] = tmp_query_txt
+                self.query['query'] = tmp_query
+                self.query_list.append(self.form_url(self.elastic_query))
+            shuffle(self.query_list)
+            self.query_iterator = itertools.cycle(self.query_list)
+        elif type == 'stats':
+            self.elastic_query += self.settings.name + '/_stats/'
+            return self.requests.get, self.form_url(self.elastic_query)

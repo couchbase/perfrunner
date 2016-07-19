@@ -375,8 +375,9 @@ class CbAgent(object):
             settings = copy(self.settings)
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
+            self.fts_stats = ElasticStats(settings, test)
             self.collectors.append(
-                ElasticStats(settings, test)
+                self.fts_stats
             )
 
     def prepare_active_tasks(self, clusters):

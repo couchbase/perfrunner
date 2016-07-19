@@ -50,6 +50,14 @@ class ClusterManager(object):
             self.rest.set_index_mem_quota(server, self.index_mem_quota)
 
     def set_fts_index_mem_quota(self):
+        master_node = self.masters().next()
+        version = self.rest.get_version(master_node)
+        if version.split('-')[0] < '4.5.0':
+            '''
+            FTS was introduced in 4.5.0 so any version less
+            than will not executed
+            '''
+            return
         for server in self.servers():
             self.rest.set_fts_index_mem_quota(server, self.fts_index_mem_quota)
 

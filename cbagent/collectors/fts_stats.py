@@ -164,7 +164,7 @@ class FtsQueryStats(FtsLatency):
 
 class ElasticStats(FtsCollector):
 
-    COLLECTOR = "elastic_latency"
+    COLLECTOR = "fts_latency"
 
     METRICS = ("elastic_latency_get", )
 
@@ -172,9 +172,17 @@ class ElasticStats(FtsCollector):
         super(ElasticStats, self).__init__(settings, test_config)
         self.host = settings.master_node
         self.elastic_client = ElasticGen(self.host, test_config.fts_settings)
-        self.elastic_client.prepare_query()
+        self.flag = True
+        self.scmd, self.squery = self.elastic_client.prepare_query(type="stats")
+
+    def cbft_query_total(self):
+        if self.cbft_stats:
+            return self.cbft_stats["_all"]["total"]["search"]["query_total"]
 
     def elastic_latency_get(self):
+        if self.flag:
+            self.elastic_client.prepare_query()
+            self.flag = False
         cmd, query = self.elastic_client.next()
         t0 = time.time()
         cmd(**query)

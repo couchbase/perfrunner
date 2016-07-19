@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.fts.FTSLatencyTest
-title = 1 bucket x 1M x 1KB, match phrase, low frequency, no KV-load, fdb, non-wiki
+title =  PhraseQuery, no kv-load, wiki 1M x 1KB
 summary = FTS throughput Test
 larger_is_better = false
 fts = true
@@ -23,3 +23,4 @@ port = 8094
 worker= 0
 query =  {"match_phrase": "you said", "field": "text"}
 query_size = 10
+logfile = /tmp/fts_phrase_1M_1K.txt

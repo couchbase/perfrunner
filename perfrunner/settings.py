@@ -780,6 +780,7 @@ class FtsSettings(object):
         self.elastic = bool(int(options.get("elastic", 0)))
         self.query_file = options.get("query_file", None)
         self.type = options.get("type", "match")
+        self.logfile = options.get("logfile", None)
 
     def __str__(self):
         return str(self.__dict__)

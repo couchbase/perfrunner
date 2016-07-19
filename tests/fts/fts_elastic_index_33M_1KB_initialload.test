@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.elastic.ElasticIndexTest
-title = 1 index x 33M x 1KB, 1 ElasticSearch index, no mutations, wiki
-summary = FTS Index Test , dataset Gutenberg data
+title = wiki 1M x 1KB
+summary = FTS Index Test , dataset wiki data
 larger_is_better = false
 
 [elastic]

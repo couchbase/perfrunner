@@ -152,7 +152,7 @@ class ElasticIndexTest(Elastictest):
             logger.info("Measuring the time it takes to index {} documents".format(self.elastic_doccount))
             self.index_test()
             self.reporter.post_to_sf(
-                *self.metric_helper.calc_ftses_index(self.index_time_taken)
+                *self.metric_helper.calc_ftses_index(self.index_time_taken, name=' Elasticsearch 1.7')
             )
 
 
@@ -162,14 +162,15 @@ class ElasticLatencyTest(Elastictest):
         def run(self):
             super(ElasticLatencyTest, self).run()
             self.create_index()
+            self.addelastic()
             self.wait_for_index()
             self.access_bg_test()
             if self.test_config.stats_settings.enabled:
                 self.reporter.post_to_sf(
-                    *self.metric_helper.calc_latency_ftses_queries(percentile=95,
-                                                                   dbname='elastic_latency',
+                    *self.metric_helper.calc_latency_ftses_queries(percentile=80,
+                                                                   dbname='fts_latency',
                                                                    metrics='elastic_latency_get',
-                                                                   name='ELASTICSEARCH'
+                                                                   name=' Elasticsearch 1.7'
                                                                    ))
 
 
@@ -178,11 +179,10 @@ class ElasticThroughputTest(Elastictest):
         def run(self):
             super(ElasticThroughputTest, self).run()
             self.create_index()
+            self.addelastic()
             self.wait_for_index()
             self.access_bg_test()
             if self.test_config.stats_settings.enabled:
                 self.reporter.post_to_sf(
-                    *self.metric_helper.calc_latency_ftses_queries(percentile=95,
-                                                                   dbname='elastic_latency',
-                                                                   name='ELASTICSEARCH'
-                                                                   ))
+                    *self.metric_helper.calc_avg_fts_queries(name=' Elasticsearch 1.7')
+                )

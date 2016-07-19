@@ -1,11 +1,12 @@
 [test_case]
 test = perfrunner.tests.ycsb.YCSBTest
 title = 1 bucket x 10M x 1KB
-summary = YCSB test workload A
+summary = YCSB test workload E
 larger_is_better = true
 
 [cluster]
-mem_quota = 49152
+mem_quota = 25000
+index_quota = 25000
 initial_nodes = 8
 num_buckets = 1
 
@@ -28,7 +29,7 @@ recordcount = 10000000
 export_file_path = /tmp/ycsb_log/
 export_file =  ycsb_log
 path = /root/YCSB/
-workload_path = /root/YCSB/workloads/workloada
+workload_path = /root/YCSB/workloads/workloade
 size = 1024
 operationcount = 10000000
 parameters = couchbase.upsert=true, couchbase.queryEndpoints=1, couchbase.epoll=1, couchbase.boost=0

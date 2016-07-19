@@ -19,7 +19,7 @@ class YCSBWorker(object):
         self.timer = access_settings.time
         self.ycsb = ycsb
         self.shutdown_event = self.timer and Event() or None
-        self.ycsb_result = Manager().dict({key: [] for key in ['Throughput', 'READ_95', 'UPDATE_95']})
+        self.ycsb_result = Manager().dict({key: [] for key in ['Throughput', 'READ_95', 'UPDATE_95', 'INSERT_95', 'SCAN_95']})
         self.ycsb_logfiles = Manager().list()
         self.task = self.ycsb_work
 
@@ -51,9 +51,13 @@ class YCSBWorker(object):
             key = 'READ_95'
         elif ttype == "[UPDATE]" and measure == "95thPercentileLatency(us)":
             key = 'UPDATE_95'
+        elif ttype == "[INSERT]" and measure == "95thPercentileLatency(us)":
+            key = 'INSERT_95'
+        elif ttype == "[SCAN]" and measure == "95thPercentileLatency(us)":
+            key = 'SCAN_95'
         else:
             return
-        self.ycsb_result[key] += [float(value)]
+        self.ycsb_result[key] += [round(float(value))]
 
     def parse_work(self, mypid):
         filename = self.ycsb_logfiles[mypid]
@@ -75,7 +79,11 @@ class YCSBWorker(object):
     def parse(self):
         self.task = self.parse_work
         self.run()
-        return np.sum(self.ycsb_result['Throughput']), np.mean(self.ycsb_result['READ_95']), np.mean(self.ycsb_result['UPDATE_95'])
+        return np.sum(self.ycsb_result['Throughput']), \
+            np.mean(self.ycsb_result['READ_95']), \
+            np.mean(self.ycsb_result['UPDATE_95']), \
+            np.mean(self.ycsb_result['INSERT_95']), \
+            np.mean(self.ycsb_result['SCAN_95'])
 
 
 class YCSBdata(PerfTest):
@@ -129,6 +137,12 @@ class YCSBTest(YCSBdata):
     def __init__(self, cluster_spec, test_config, verbose):
         super(YCSBTest, self).__init__(cluster_spec, test_config, verbose)
 
+    def create_index(self):
+        logger.info('creating indexes')
+        for idx, host in enumerate(self.hosts):
+            statement = "create index wle_idx_" + str(idx) + " on `" + self.ycsb.bucket.split('=')[1] + "`(meta().id)'"
+            self.rest.exec_n1ql_stmnt(host, statement)
+
     def load(self):
         try:
             logger.info('running YCSB for loading data')
@@ -143,27 +157,48 @@ class YCSBTest(YCSBdata):
         self.workload = YCSBWorker(self.test_config.access_settings, self.remote, run_cmd, self.ycsb)
         self.workload.run()
 
-    def post_sf(self, thput, readl, writel, query=None):
-        self.reporter.post_to_sf(
-            *self.metric_helper.calc_ycsb_queries(thput,
-                                                  name='overall_throughput',
-                                                  larger_is_better=True)
-        )
-        self.reporter.post_to_sf(
-            *self.metric_helper.calc_ycsb_queries(readl,
-                                                  name='read_latency_95_percentile',
-                                                  larger_is_better=False)
-        )
-        self.reporter.post_to_sf(
-            *self.metric_helper.calc_ycsb_queries(writel,
-                                                  name='update_latency_95_percentile',
-                                                  larger_is_better=False)
-        )
+    def post_sf(self, thput, readl, writel, insertl, scanl, query=None):
+        if not np.isnan(thput):
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_ycsb_queries(round(thput),
+                                                      name='Overal_Throughput',
+                                                      title='Overal Throughput',
+                                                      larger_is_better=True)
+            )
+        if not np.isnan(readl):
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_ycsb_queries(float("{0:.2f}".format(readl / 1000)),
+                                                      name='Read_Latency_95_p',
+                                                      title='95th percentile Read latency, ms',
+                                                      larger_is_better=False)
+            )
+        if not np.isnan(writel):
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_ycsb_queries(float("{0:.2f}".format(writel / 1000)),
+                                                      name='Write_Latency_95_p',
+                                                      title='95th percentile Write latency, ms',
+                                                      larger_is_better=False)
+            )
+        if not np.isnan(insertl):
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_ycsb_queries(float("{0:.2}".format(insertl / 1000)),
+                                                      name='Insert_Latency_95_p',
+                                                      title='95th percentile Insert latency, ms',
+                                                      larger_is_better=False)
+            )
+        if not np.isnan(scanl):
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_ycsb_queries(float("{0:.2}".format(scanl / 1000)),
+                                                      name='Scan_Latency_95_p',
+                                                      title='95th percentile Scan latency, ms',
+                                                      larger_is_better=False)
+            )
 
     def run(self):
+        self.create_index()
         self.load()
         self.wait_for_persistence()
         self.compact_bucket()
         self.access_bg()
-        thput, readl, writel = self.workload.parse()
-        self.post_sf(thput, readl, writel)
+        thput, readl, writel, insertl, scanl = self.workload.parse()
+        self.post_sf(thput, readl, writel, insertl, scanl)

@@ -45,10 +45,10 @@ class MetricHelper(object):
             'larger_is_better': str(larger_is_better).lower(),
         }
 
-    def calc_ycsb_queries(self, value, name, larger_is_better=True):
+    def calc_ycsb_queries(self, value, name, title, larger_is_better=True):
         metric = '{}_{}_{}'.format(self.test_config.name, name,
                                    self.cluster_spec.name)
-        title = '{} , {}'.format(name, self.metric_title)
+        title = '{} , {}'.format(title, self.metric_title)
         metric_info = self._get_metric_info(title, larger_is_better)
         return value, metric, metric_info
 

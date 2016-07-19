@@ -1,4 +1,5 @@
 from collections import defaultdict
+from multiprocessing import Process
 
 from fabric.api import run, settings
 from logger import logger
@@ -27,6 +28,14 @@ class RestoreHelper(object):
 
         return maps
 
+    def cp(self, server, cmd):
+        logger.info('Restoring files on {}'.format(server))
+
+        with settings(host_string=server,
+                      user=self.cluster_spec.ssh_credentials[0],
+                      password=self.cluster_spec.ssh_credentials[1]):
+            run(cmd)
+
     def restore(self):
         snapshot = self.test_config.restore_settings.snapshot
 
@@ -36,6 +45,7 @@ class RestoreHelper(object):
                               self.verbose)
         remote.stop_server()
 
+        restorers = []
         for bucket, (vbmap, server_list) in maps.items():
             files = defaultdict(list)
 
@@ -44,17 +54,16 @@ class RestoreHelper(object):
                     files[server_list[node_idx]].append(vb_idx)
 
             for server, vbuckets in files.items():
-                logger.info('Restoring files on {}'.format(server))
-
                 cmd = 'cp '
                 for vbucket in vbuckets:
                     cmd += '{}/{}.couch.1 '.format(snapshot, vbucket)
                 cmd += '/data/{}'.format(bucket)
 
-                with settings(host_string=server,
-                              user=self.cluster_spec.ssh_credentials[0],
-                              password=self.cluster_spec.ssh_credentials[1]):
-                    run(cmd)
+                p = Process(target=self.cp, args=(server, cmd))
+                restorers.append(p)
+
+        map(lambda p: p.start(), restorers)
+        map(lambda p: p.join(), restorers)
 
         remote.drop_caches()
         remote.start_server()

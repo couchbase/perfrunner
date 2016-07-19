@@ -1,6 +1,8 @@
+import time
 from collections import defaultdict
-from multiprocessing import Process
+from threading import Thread
 
+from fabric import state
 from fabric.api import run, settings
 from logger import logger
 
@@ -15,6 +17,11 @@ class RestoreHelper(object):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
         self.verbose = verbose
+
+        self.snapshot = self.test_config.restore_settings.snapshot
+
+        self.remote = RemoteHelper(self.cluster_spec, self.test_config,
+                                   self.verbose)
 
     def fetch_maps(self):
         rest = RestHelper(self.cluster_spec)
@@ -37,15 +44,12 @@ class RestoreHelper(object):
             run(cmd)
 
     def restore(self):
-        snapshot = self.test_config.restore_settings.snapshot
-
         maps = self.fetch_maps()
 
-        remote = RemoteHelper(self.cluster_spec, self.test_config,
-                              self.verbose)
-        remote.stop_server()
+        self.remote.stop_server()
 
-        restorers = []
+        threads = []
+
         for bucket, (vbmap, server_list) in maps.items():
             files = defaultdict(list)
 
@@ -56,17 +60,20 @@ class RestoreHelper(object):
             for server, vbuckets in files.items():
                 cmd = 'cp '
                 for vbucket in vbuckets:
-                    cmd += '{}/{}.couch.1 '.format(snapshot, vbucket)
+                    cmd += '{}/{}.couch.1 '.format(self.snapshot, vbucket)
                 cmd += '/data/{}'.format(bucket)
 
-                p = Process(target=self.cp, args=(server, cmd))
-                restorers.append(p)
+                threads.append(Thread(target=self.cp, args=(server, cmd)))
 
-        map(lambda p: p.start(), restorers)
-        map(lambda p: p.join(), restorers)
+        for t in threads:
+            t.start()
+            time.sleep(1)
+        for t in threads:
+            t.join()
+        state.connections.clear()
 
-        remote.drop_caches()
-        remote.start_server()
+        self.remote.drop_caches()
+        self.remote.start_server()
 
     def warmup(self):
         cm = ClusterManager(self.cluster_spec, self.test_config, self.verbose)

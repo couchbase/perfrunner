@@ -8,7 +8,7 @@ from perfrunner.helpers.misc import log_phase, server_group
 from perfrunner.tests import PerfTest
 from perfrunner.tests.index import IndexTest
 from perfrunner.tests.query import QueryTest
-from perfrunner.tests.xdcr import (DestTargetIterator, SymmetricXdcrTest,
+from perfrunner.tests.xdcr import (DestTargetIterator, UniDirXdcrTest,
                                    XdcrInitTest, XdcrTest)
 
 
@@ -277,7 +277,7 @@ class RebalanceWithXDCRTest(XdcrTest, RebalanceTest):
         self.rebalance()
 
 
-class RebalanceWithSymmetricXdcrTest(SymmetricXdcrTest, RebalanceTest):
+class RebalanceWithUniDirXdcrTest(UniDirXdcrTest, RebalanceTest):
 
     """
     Workflow definition for KV + unidir XDCR rebalance tests.

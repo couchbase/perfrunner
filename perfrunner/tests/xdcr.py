@@ -135,14 +135,14 @@ class DestTargetIterator(TargetIterator):
             yield TargetSettings(dest_master, bucket, password, prefix)
 
 
-class SymmetricXdcrTest(XdcrTest):
+class UniDirXdcrTest(XdcrTest):
 
     """
-    Bad name for uni-directional scenario.
+    Uni-directional XDCR benchmarks.
     """
 
     def __init__(self, *args, **kwargs):
-        super(SymmetricXdcrTest, self).__init__(*args, **kwargs)
+        super(UniDirXdcrTest, self).__init__(*args, **kwargs)
         self.target_iterator = TargetIterator(self.cluster_spec,
                                               self.test_config,
                                               prefix='symmetric')
@@ -157,7 +157,7 @@ class SymmetricXdcrTest(XdcrTest):
         self.worker_manager.wait_for_workers()
 
 
-class XdcrInitTest(SymmetricXdcrTest):
+class XdcrInitTest(UniDirXdcrTest):
 
     """
     The test covers scenario when 2 cluster are synced up for the first time.

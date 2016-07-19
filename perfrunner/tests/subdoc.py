@@ -81,7 +81,6 @@ class SubdocKVTest(SubdocTest):
                 'title': self.test_config.test_case.metric_title + '(in bytes)',
                 'cluster': self.cluster_spec.name,
                 'larger_is_better': self.test_config.test_case.larger_is_better,
-                'level': self.test_config.test_case.level,
             }
             in_reduction = 100 - self.network_matrix_subdoc['in bytes'] * 100 / \
                 self.network_matrix_full['in bytes']
@@ -91,7 +90,6 @@ class SubdocKVTest(SubdocTest):
                 'title': self.test_config.test_case.metric_title + '(out  bytes)',
                 'cluster': self.cluster_spec.name,
                 'larger_is_better': self.test_config.test_case.larger_is_better,
-                'level': self.test_config.test_case.level,
             }
             out_reduction = 100 - self.network_matrix_subdoc['out bytes'] * 100 / \
                 self.network_matrix_full['out bytes']

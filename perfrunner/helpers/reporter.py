@@ -152,7 +152,6 @@ class SFReporter(object):
                 'title': self.test.test_config.test_case.metric_title,
                 'cluster': self.test.cluster_spec.name,
                 'larger_is_better': self.test.test_config.test_case.larger_is_better,
-                'level': self.test.test_config.test_case.level,
             }
         showfast = self.test.test_config.stats_settings.showfast
         try:

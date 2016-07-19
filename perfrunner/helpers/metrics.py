@@ -38,11 +38,12 @@ class MetricHelper(object):
             params.update({'from': from_ts, 'to': to_ts})
         return params
 
-    def _get_metric_info(self, title, larger_is_better=False, level='Basic'):
-        return {'title': title,
-                'cluster': self.cluster_spec.name,
-                'larger_is_better': str(larger_is_better).lower(),
-                'level': level}
+    def _get_metric_info(self, title, larger_is_better=False):
+        return {
+            'title': title,
+            'cluster': self.cluster_spec.name,
+            'larger_is_better': str(larger_is_better).lower(),
+        }
 
     def calc_ycsb_queries(self, value, name, larger_is_better=True):
         metric = '{}_{}_{}'.format(self.test_config.name, name,
@@ -368,7 +369,7 @@ class MetricHelper(object):
             title = '{}, {}'.format(title, meta)
         title = '{}, {}'.format(title, self.metric_title)
         title = title.replace(' (min)', '')  # rebalance tests
-        metric_info = self._get_metric_info(title, level='Advanced')
+        metric_info = self._get_metric_info(title)
 
         query_params = self._get_query_params('max_couch_views_actual_disk_size',
                                               from_ts, to_ts)

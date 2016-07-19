@@ -280,7 +280,6 @@ class TestConfig(Config):
 class TestCaseSettings(object):
 
     USE_WORKERS = 1
-    LEVEL = 'Basic'  # depricated, alt: Advanced
 
     def __init__(self, options):
         self.test_module = '.'.join(options.get('test').split('.')[:-1])
@@ -290,7 +289,6 @@ class TestCaseSettings(object):
         self.larger_is_better = options.get('larger_is_better')
         self.monitor_clients = options.get('monitor_clients', False)
         self.fts_server = options.get('fts', False)
-        self.level = options.get('level', self.LEVEL)
         self.use_workers = int(options.get('use_workers', self.USE_WORKERS))
 
 

@@ -6,7 +6,6 @@ from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import log_phase, target_hash
 from perfrunner.settings import TargetSettings
 from perfrunner.tests import PerfTest, TargetIterator
-from perfrunner.tests.kv import FlusherTest
 
 
 class XdcrTest(PerfTest):
@@ -201,32 +200,13 @@ class XdcrInitTest(SymmetricXdcrTest):
         self.load()
         self.wait_for_persistence()
         self.compact_bucket()
+
         if self.settings.use_ca_cert:
             self._setup_ca_certs()
+
         from_ts, to_ts = self.init_xdcr()
         time_elapsed = (to_ts - from_ts) / 1000.0
         rate = self.metric_helper.calc_avg_replication_rate(time_elapsed)
 
         self.reporter.finish('Initial replication', time_elapsed)
         self.reporter.post_to_sf(rate)
-
-
-class XdcrInitInMemoryTest(XdcrInitTest, FlusherTest):
-
-    """
-    Only relevant for debugging of UPR-based replication. Allows to eliminate
-    impact of disk persistence on replication performance.
-    """
-
-    def stop_persistence(self):
-        hostnames = tuple(self.cluster_spec.yield_hostnames())
-        dest_hostnames = [
-            hostname for hostname in hostnames[len(hostnames) / 2:]
-        ]
-        for mc in self.mc_iterator():
-            if mc.host in dest_hostnames:
-                mc.stop_persistence()
-
-    def run(self):
-        self.stop_persistence()
-        super(XdcrInitInMemoryTest, self).run()

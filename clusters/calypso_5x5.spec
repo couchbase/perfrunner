@@ -1,10 +1,11 @@
 [clusters]
-atlas =
+calypso_c1 =
     172.23.96.100:8091
     172.23.96.101:8091
     172.23.96.102:8091
     172.23.96.103:8091
     172.23.96.104:8091
+calypso_c2 =
     172.23.96.105:8091
     172.23.96.106:8091
     172.23.96.107:8091
@@ -27,7 +28,7 @@ ssh = root:couchbase
 
 [parameters]
 Platform = HW
-OS = CentOS 6
+OS = CentOS 7
 CPU = E5-2680 v3 (48 vCPU)
 Memory = 256 GB
 Disk = SSD

@@ -17,6 +17,9 @@ optimisticReplicationThreshold = 0
 [compaction]
 db_percentage = 10
 
+[restore]
+snapshot = /home/snapshots/500M_800KB
+
 [load]
 items = 500000000
 size = 800

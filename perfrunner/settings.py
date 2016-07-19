@@ -595,8 +595,10 @@ class HotLoadSettings(PhaseSettings):
 
 class RestoreSettings(object):
 
+    SNAPSHOT = None
+
     def __init__(self, options):
-        self.snapshot = options.get('snapshot')
+        self.snapshot = options.get('snapshot', self.SNAPSHOT)
 
     def __str__(self):
         return str(self.__dict__)

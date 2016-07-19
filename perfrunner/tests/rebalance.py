@@ -286,8 +286,11 @@ class RebalanceWithUniDirXdcrTest(UniDirXdcrTest, RebalanceTest):
     COLLECTORS = {'latency': True, 'xdcr_lag': True}
 
     def run(self):
-        self.load()
-        self.wait_for_persistence()
+        if self.test_config.restore_settings.snapshot:
+            self.restore()
+        else:
+            self.load()
+            self.wait_for_persistence()
 
         self.enable_xdcr()
         self.monitor_replication()

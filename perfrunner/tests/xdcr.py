@@ -89,8 +89,11 @@ class XdcrTest(PerfTest):
                 )
 
     def run(self):
-        self.load()
-        self.wait_for_persistence()
+        if self.test_config.restore_settings.snapshot:
+            self.restore()
+        else:
+            self.load()
+            self.wait_for_persistence()
 
         self.enable_xdcr()
         self.monitor_replication()
@@ -197,9 +200,12 @@ class XdcrInitTest(UniDirXdcrTest):
         self.remote.setup_cluster_nodes("/opt/couchbase/var/lib/couchbase/inbox/")
 
     def run(self):
-        self.load()
-        self.wait_for_persistence()
-        self.compact_bucket()
+        if self.test_config.restore_settings.snapshot:
+            self.restore()
+        else:
+            self.load()
+            self.wait_for_persistence()
+            self.compact_bucket()
 
         if self.settings.use_ca_cert:
             self._setup_ca_certs()

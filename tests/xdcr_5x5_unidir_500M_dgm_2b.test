@@ -14,6 +14,8 @@ initial_nodes = 5 5
 num_buckets = 2
 
 [xdcr_cluster]
+sourceNozzlePerNode = 64
+targetNozzlePerNode = 64
 optimisticReplicationThreshold = 0
 
 [compaction]

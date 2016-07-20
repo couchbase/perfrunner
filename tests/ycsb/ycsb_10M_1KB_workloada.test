@@ -5,7 +5,8 @@ summary = YCSB test workload A
 larger_is_better = true
 
 [cluster]
-mem_quota = 49152
+mem_quota = 32000
+index_quota = 23000
 initial_nodes = 8
 num_buckets = 1
 
@@ -17,7 +18,7 @@ db_percentage = 2
 
 [access]
 time = 600
-workers = 1
+workers = 4
 
 [ycsb]
 sdk = couchbase2
@@ -27,8 +28,8 @@ threads = 35
 recordcount = 10000000
 export_file_path = /tmp/ycsb_log/
 export_file =  ycsb_log
-path = /root/YCSB/
-workload_path = /root/YCSB/workloads/workloada
+path = /root/perfrunner-ycsb/YCSB
+workload_path = /workloads/workloada
 size = 1024
 operationcount = 10000000
 parameters = couchbase.upsert=true, couchbase.queryEndpoints=1, couchbase.epoll=1, couchbase.boost=0

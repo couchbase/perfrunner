@@ -12,10 +12,10 @@ class YCSBException(Exception):
 
 
 class YCSBWorker(object):
-    def __init__(self, access_settings, remote, run_cmd, ycsb):
+    def __init__(self, access_settings, remote, test, ycsb):
         self.workers = access_settings.workers
         self.remote = remote
-        self.run_cmd = run_cmd
+        self.test = test
         self.timer = access_settings.time
         self.ycsb = ycsb
         self.shutdown_event = self.timer and Event() or None
@@ -32,12 +32,14 @@ class YCSBWorker(object):
         log_file = '{}_{}.txt'.format(self.ycsb.log_path +
                                       self.ycsb.log_file, str(mypid))
         self.ycsb_logfiles.append(log_file)
+        self.run_cmd = self.test.create_load_cmd(action="run", mypid=mypid)
         self.run_cmd += ' -p exportfile={}'.format(log_file)
         try:
             while flag and not self.time_to_stop():
                 self.remote.ycsb_load_run(self.ycsb.path,
                                           self.run_cmd,
-                                          log_path=self.ycsb.log_path)
+                                          log_path=self.ycsb.log_path,
+                                          mypid=mypid)
                 flag = False
         except Exception as e:
             raise YCSBException(' Error while running YCSB load' + e)
@@ -93,7 +95,7 @@ class YCSBdata(PerfTest):
         self.ycsb = test_config.ycsb_settings
         self.hosts = [x.rpartition(':')[0] for x in self.cluster_spec.yield_servers()]
 
-    def create_load_cmd(self, action='load', jvm=True):
+    def create_load_cmd(self, action='load', jvm=True, mypid=0):
         """
         The ycsb command looks like
            ./bin/ycsb run couchbase2 -jvm-args=-Dcom.couchbase.connectTimeout=15000
@@ -109,17 +111,17 @@ class YCSBdata(PerfTest):
         couchbase.host=172.23.123.38 -threads 6 -p recordcount=100000 -exportfile=loaddata.json
         """
         commandlist = []
-        commandlist.append('/' + self.ycsb.path + '/bin/ycsb')
+        commandlist.append('/' + self.ycsb.path + '_' + str(mypid) + '/bin/ycsb')
         commandlist.append(action)
         commandlist.append(self.ycsb.sdk)
-        commandlist.append('-s -P ' + self.ycsb.workload)
+        commandlist.append('-s -P ' + self.ycsb.path + '_' + str(mypid) + self.ycsb.workload)
         if jvm:
             cmd = '-jvm-args=-D'
             for c in self.ycsb.jvm.split(','):
                 commandlist.append(cmd + c)
 
         commandlist.append('-p %s' % self.ycsb.bucket)
-        commandlist.append('-p couchbase.host=%s' % ','.join(self.hosts))
+        commandlist.append('-p couchbase.host=%s' % self.hosts[0])
         commandlist.append('-p threads=%s' % self.ycsb.threads)
         commandlist.append('-p recordcount=%s' % self.ycsb.reccount)
         commandlist.append('-p couchbase.password=%s' % self.rest.rest_password)
@@ -139,7 +141,9 @@ class YCSBTest(YCSBdata):
 
     def create_index(self):
         logger.info('creating indexes')
-        for idx, host in enumerate(self.hosts):
+        host = self.hosts[0]
+        length = len(self.hosts)
+        for idx in range(0, length):
             statement = "create index wle_idx_" + str(idx) + " on `" + self.ycsb.bucket.split('=')[1] + "`(meta().id)'"
             self.rest.exec_n1ql_stmnt(host, statement)
 
@@ -153,8 +157,7 @@ class YCSBTest(YCSBdata):
 
     @with_stats
     def access_bg(self):
-        run_cmd = self.create_load_cmd(action="run")
-        self.workload = YCSBWorker(self.test_config.access_settings, self.remote, run_cmd, self.ycsb)
+        self.workload = YCSBWorker(self.test_config.access_settings, self.remote, self, self.ycsb)
         self.workload.run()
 
     def post_sf(self, thput, readl, writel, insertl, scanl, query=None):
@@ -167,28 +170,28 @@ class YCSBTest(YCSBdata):
             )
         if not np.isnan(readl):
             self.reporter.post_to_sf(
-                *self.metric_helper.calc_ycsb_queries(float("{0:.2f}".format(readl / 1000)),
+                *self.metric_helper.calc_ycsb_queries(round((float(readl) / 1000), 2),
                                                       name='Read_Latency_95_p',
                                                       title='95th percentile Read latency, ms',
                                                       larger_is_better=False)
             )
         if not np.isnan(writel):
             self.reporter.post_to_sf(
-                *self.metric_helper.calc_ycsb_queries(float("{0:.2f}".format(writel / 1000)),
+                *self.metric_helper.calc_ycsb_queries(round((float(writel) / 1000), 2),
                                                       name='Write_Latency_95_p',
                                                       title='95th percentile Write latency, ms',
                                                       larger_is_better=False)
             )
         if not np.isnan(insertl):
             self.reporter.post_to_sf(
-                *self.metric_helper.calc_ycsb_queries(float("{0:.2}".format(insertl / 1000)),
+                *self.metric_helper.calc_ycsb_queries(round((float(insertl) / 1000), 2),
                                                       name='Insert_Latency_95_p',
                                                       title='95th percentile Insert latency, ms',
                                                       larger_is_better=False)
             )
         if not np.isnan(scanl):
             self.reporter.post_to_sf(
-                *self.metric_helper.calc_ycsb_queries(float("{0:.2}".format(scanl / 1000)),
+                *self.metric_helper.calc_ycsb_queries(round((float(scanl) / 1000), 2),
                                                       name='Scan_Latency_95_p',
                                                       title='95th percentile Scan latency, ms',
                                                       larger_is_better=False)

@@ -6,4 +6,4 @@ then
 fi
 
 
-env/bin/perfrunner -c ${cluster} -t ${test_config} ${override} --nodebug --local
+env/bin/perfrunner -c ${cluster} -t ${test_config} ${override} --local

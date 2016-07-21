@@ -18,8 +18,8 @@ def get_options():
                       help='enable verbose logging')
     parser.add_option('--local', dest='local', action='store_true',
                       help='use localhost as workload generator')
-    parser.add_option('--nodebug', dest='nodebug', action='store_true',
-                      help='disable debug phase')
+    parser.add_option('--debug', dest='debug', action='store_true',
+                      help='enable debug phase')
 
     options, args = parser.parse_args()
     if not options.cluster_spec_fname or not options.test_config_fname:

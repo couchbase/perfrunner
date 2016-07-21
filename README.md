@@ -51,7 +51,7 @@ Overriding test config options (comma-separated section.option.value trios):
 
 `--verbose` flag enables Fabric logging.
 
-`--nodebug` flag disables debug phase (e.g., execution of cbcollect_info).
+`--debug` flag enables debug phase (e.g., execution of cbcollect_info).
 
 With `--local` flag localhost will be used as a workload generator.
 

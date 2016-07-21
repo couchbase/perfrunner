@@ -73,7 +73,7 @@ class PerfTest(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.test_config.test_case.use_workers:
             self.worker_manager.terminate()
-        if exc_type != exc.KeyboardInterrupt and '--nodebug' not in sys.argv:
+        if exc_type != exc.KeyboardInterrupt and '--debug' in sys.argv:
             self.debug()
 
             self.check_core_dumps()

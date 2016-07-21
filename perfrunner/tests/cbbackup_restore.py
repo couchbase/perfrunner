@@ -79,16 +79,15 @@ class BackupTest(BackupRestoreTest):
         logger.info('Backup completed in {:.1f} sec, backup size is {} GB'
                     .format(self.spent_time, self.backup_size))
 
-    def report_backup_kpi(self):
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(round(self.data_size / self.spent_time))
+    def _report_kpi(self):
+        self.reporter.post_to_sf(round(self.data_size / self.spent_time))
 
     def run(self):
         super(BackupTest, self).run()
 
         self.backup()
 
-        self.report_backup_kpi()
+        self.report_kpi()
 
 
 class BackupUnderLoadTest(BackupTest):
@@ -107,7 +106,7 @@ class BackupUnderLoadTest(BackupTest):
 
         self.backup()
 
-        self.report_backup_kpi()
+        self.report_kpi()
 
 
 class IncrementalBackupUnderLoadTest(BackupTest):
@@ -129,7 +128,7 @@ class IncrementalBackupUnderLoadTest(BackupTest):
 
         self.backup(mode='diff')
 
-        self.report_backup_kpi()
+        self.report_kpi()
 
 
 class RestoreTest(BackupTest):
@@ -154,9 +153,8 @@ class RestoreTest(BackupTest):
             bucket = 'bucket-{}'.format(i + 1)
             self.rest.flush_bucket(host_port=self.master_node, name=bucket)
 
-    def report_restore_kpi(self):
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(round(self.data_size / self.spent_time, 1))
+    def _report_kpi(self):
+        self.reporter.post_to_sf(round(self.data_size / self.spent_time, 1))
 
     def run(self):
         super(BackupTest, self).run()
@@ -167,7 +165,7 @@ class RestoreTest(BackupTest):
 
         self.restore()
 
-        self.report_restore_kpi()
+        self.report_kpi()
 
 
 class RestoreAfterIncrementalBackupTest(RestoreTest):
@@ -194,4 +192,4 @@ class RestoreAfterIncrementalBackupTest(RestoreTest):
 
         self.restore()
 
-        self.report_restore_kpi()
+        self.report_kpi()

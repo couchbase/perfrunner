@@ -162,6 +162,13 @@ class PerfTest(object):
         logger.info('Running phase for {} seconds'.format(access_settings.time))
         time.sleep(access_settings.time)
 
+    def report_kpi(self, *args, **kwargs):
+        if self.test_config.stats_settings.enabled:
+            self._report_kpi()
+
+    def _report_kpi(self, *args, **kwargs):
+        pass
+
     def debug(self):
         self.remote.collect_info()
         for hostname in self.cluster_spec.yield_hostnames():

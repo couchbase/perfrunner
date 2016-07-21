@@ -75,18 +75,19 @@ class XdcrTest(PerfTest):
             self.remote.enable_wan()
             self.remote.filter_wan(src_list, dest_list)
 
-    def report_kpi(self):
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(*self.metric_helper.calc_xdcr_lag())
-            if self.test_config.stats_settings.post_rss and \
-                    self.remote.os != 'Cygwin':
-                self.reporter.post_to_sf(
-                    *self.metric_helper.calc_max_beam_rss()
-                )
-            if self.test_config.stats_settings.post_cpu:
-                self.reporter.post_to_sf(
-                    *self.metric_helper.calc_cpu_utilization()
-                )
+    def _report_kpi(self):
+        self.reporter.post_to_sf(*self.metric_helper.calc_xdcr_lag())
+
+        if self.test_config.stats_settings.post_rss and \
+                self.remote.os != 'Cygwin':
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_max_beam_rss()
+            )
+
+        if self.test_config.stats_settings.post_cpu:
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_cpu_utilization()
+            )
 
     def run(self):
         if self.test_config.restore_settings.snapshot:

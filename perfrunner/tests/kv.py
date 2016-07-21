@@ -8,7 +8,6 @@ from couchbase.user_constants import OBS_NOTFOUND
 from logger import logger
 
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.helpers.metrics import MetricHelper
 from perfrunner.helpers.misc import log_phase, pretty_dict, uhex
 from perfrunner.helpers.worker import run_pillowfight_via_celery
 from perfrunner.lib.mc_bin_client import MemcachedClient, MemcachedError
@@ -47,6 +46,8 @@ class KVTest(PerfTest):
         self.access_bg()
         self.access()
 
+        self.report_kpi()
+
 
 class PersistLatencyTest(KVTest):
 
@@ -58,13 +59,10 @@ class PersistLatencyTest(KVTest):
 
     ALL_BUCKETS = True
 
-    def run(self):
-        super(PersistLatencyTest, self).run()
-
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(
-                *self.metric_helper.calc_observe_latency(percentile=95)
-            )
+    def _report_kpi(self):
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_observe_latency(percentile=95)
+        )
 
 
 class ReplicateLatencyTest(PersistLatencyTest):
@@ -84,14 +82,12 @@ class MixedLatencyTest(KVTest):
 
     COLLECTORS = {'latency': True}
 
-    def run(self):
-        super(MixedLatencyTest, self).run()
-        if self.test_config.stats_settings.enabled:
-            for operation in ('get', 'set'):
-                self.reporter.post_to_sf(
-                    *self.metric_helper.calc_kv_latency(operation=operation,
-                                                        percentile=95)
-                )
+    def _report_kpi(self):
+        for operation in ('get', 'set'):
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_kv_latency(operation=operation,
+                                                    percentile=95)
+            )
 
 
 class ReadLatencyTest(MixedLatencyTest):
@@ -102,13 +98,11 @@ class ReadLatencyTest(MixedLatencyTest):
 
     COLLECTORS = {'latency': True}
 
-    def run(self):
-        super(MixedLatencyTest, self).run()
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(
-                *self.metric_helper.calc_kv_latency(operation='get',
-                                                    percentile=95)
-            )
+    def _report_kpi(self):
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_kv_latency(operation='get',
+                                                percentile=95)
+        )
 
 
 class BgFetcherTest(KVTest):
@@ -121,10 +115,10 @@ class BgFetcherTest(KVTest):
 
     ALL_BUCKETS = True
 
-    def run(self):
-        super(BgFetcherTest, self).run()
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(self.metric_helper.calc_avg_bg_wait_time())
+    def _report_kpi(self):
+        self.reporter.post_to_sf(
+            self.metric_helper.calc_avg_bg_wait_time()
+        )
 
 
 class DrainTest(KVTest):
@@ -135,12 +129,10 @@ class DrainTest(KVTest):
 
     ALL_BUCKETS = True
 
-    def run(self):
-        super(DrainTest, self).run()
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(
-                self.metric_helper.calc_avg_disk_write_queue()
-            )
+    def _report_kpi(self):
+        self.reporter.post_to_sf(
+            self.metric_helper.calc_avg_disk_write_queue()
+        )
 
 
 class FlusherTest(KVTest):
@@ -181,6 +173,11 @@ class FlusherTest(KVTest):
             for bucket in self.test_config.buckets:
                 self.monitor.monitor_disk_queue(master, bucket)
 
+    def _report_kpi(self, time_elapsed):
+        self.reporter.post_to_sf(
+            self.metric_helper.calc_max_drain_rate(time_elapsed)
+        )
+
     def run(self):
         self.stop_persistence()
         self.load()
@@ -191,10 +188,7 @@ class FlusherTest(KVTest):
         time_elapsed = (to_ts - from_ts) / 1000.0
 
         self.reporter.finish('Drain', time_elapsed)
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(
-                self.metric_helper.calc_max_drain_rate(time_elapsed)
-            )
+        self.report_kpi(time_elapsed)
 
 
 class BeamRssTest(KVTest):
@@ -203,27 +197,10 @@ class BeamRssTest(KVTest):
     Enables reporting of Erlang (beam.smp process) memory usage.
     """
 
-    def run(self):
-        super(BeamRssTest, self).run()
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(
-                *self.metric_helper.calc_max_beam_rss()
-            )
-
-
-class BandwidthTest(KVTest):
-
-    COLLECTORS = {'bandwidth': True}
-
-    def run(self):
-        super(BandwidthTest, self).run()
-        self.metric_db_servers_helper = MetricHelper(self)
-        network_matrix = self.metric_db_servers_helper.calc_network_bandwidth
-        logger.info(
-            'Network bandwidth: {}'.format(pretty_dict(network_matrix))
+    def _report_kpi(self):
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_max_beam_rss()
         )
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(network_matrix)
 
 
 class WarmupTest(PerfTest):
@@ -248,6 +225,9 @@ class WarmupTest(PerfTest):
                                                            master, bucket)
         return round(warmup_time / 10 ** 6 / 60, 2)  # min
 
+    def _report_kpi(self, warmup_time):
+        self.reporter.post_to_sf(warmup_time)
+
     def run(self):
         self.load()
         self.wait_for_persistence()
@@ -265,8 +245,7 @@ class WarmupTest(PerfTest):
 
         warmup_time = self.warmup()
 
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(warmup_time)
+        self.report_kpi(warmup_time)
 
 
 class FragmentationTest(PerfTest):
@@ -311,11 +290,15 @@ class FragmentationTest(PerfTest):
         logger.info('Fragmentation: {}'.format(ratio))
         return ratio
 
+    def _report_kpi(self):
+        self.reporter.post_to_sf(
+            self.calc_fragmentation_ratio()
+        )
+
     def run(self):
         self.load_and_append()
-        if self.test_config.stats_settings.enabled:
-            fragmentation_ratio = self.calc_fragmentation_ratio()
-            self.reporter.post_to_sf(fragmentation_ratio)
+
+        self.report_kpi()
 
 
 class FragmentationLargeTest(FragmentationTest):
@@ -411,31 +394,32 @@ class RevABTest(FragmentationTest):
             for t in threads:
                 t.join()
 
+    def _report_kpi(self):
+        fragmentation_ratio = self.calc_fragmentation_ratio()
+        self.reporter.post_to_sf(fragmentation_ratio)
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_max_memcached_rss()
+        )
+
     def run(self):
         self.generate_graph()
         self.load()
-        if self.test_config.stats_settings.enabled:
-            fragmentation_ratio = self.calc_fragmentation_ratio()
-            self.reporter.post_to_sf(fragmentation_ratio)
-            self.reporter.post_to_sf(
-                *self.metric_helper.calc_max_memcached_rss()
-            )
+
+        self.report_kpi()
 
 
 class MemUsedTest(KVTest):
 
     ALL_BUCKETS = True
 
-    def run(self):
-        super(MemUsedTest, self).run()
-        if self.test_config.stats_settings.enabled:
-            for metric in ('max', 'min'):
-                self.reporter.post_to_sf(
-                    *self.metric_helper.calc_mem_used(metric)
-                )
-                self.reporter.post_to_sf(
-                    *self.metric_helper.calc_mem_used(metric)
-                )
+    def _report_kpi(self):
+        for metric in ('max', 'min'):
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_mem_used(metric)
+            )
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_mem_used(metric)
+            )
 
 
 class PathoGenTest(FragmentationTest):
@@ -450,8 +434,7 @@ class PathoGenTest(FragmentationTest):
                      num_iterations=self.test_config.load_settings.iterations,
                      host=host, port=port, bucket=target.bucket).run()
 
-    def run(self):
-        self.access()
+    def _report_kpi(self):
         if self.test_config.stats_settings.enabled:
             self.reporter.post_to_sf(
                 *self.metric_helper.calc_avg_memcached_rss()
@@ -460,9 +443,16 @@ class PathoGenTest(FragmentationTest):
                 *self.metric_helper.calc_max_memcached_rss()
             )
 
+    def run(self):
+        self.access()
+
+        self._report_kpi()
+
 
 class PathoGenFrozenTest(PathoGenTest):
-    """Pathologically bad mmalloc test, Frozen mode. See pathoGen.py for full details."""
+
+    """Pathologically bad mmalloc test, Frozen mode. See pathoGen.py for full
+    details."""
 
     @with_stats
     def access(self):
@@ -475,7 +465,17 @@ class PathoGenFrozenTest(PathoGenTest):
                      host=host, port=port, bucket=target.bucket).run()
 
 
-class PillowfightTest(PerfTest):
+class ThroughputTest(PerfTest):
+
+    def _report_kpi(self):
+        if self.test_config.stats_settings.enabled:
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_avg_ops()
+            )
+
+
+class PillowfightTest(ThroughputTest):
+
     """Uses pillowfight from libcouchbase to drive cluster."""
 
     @with_stats
@@ -502,7 +502,5 @@ class PillowfightTest(PerfTest):
         time_elapsed = (to_ts - from_ts) / 1000.0
 
         self.reporter.finish('Pillowfight', time_elapsed)
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(
-                *self.metric_helper.calc_avg_ops()
-            )
+
+        self.report_kpi()

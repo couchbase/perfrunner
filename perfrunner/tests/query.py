@@ -34,6 +34,8 @@ class QueryTest(IndexTest):
         self.access_bg()
         self.access()
 
+        self.report_kpi()
+
 
 class QueryThroughputTest(QueryTest):
 
@@ -42,12 +44,10 @@ class QueryThroughputTest(QueryTest):
     query throughput.
     """
 
-    def run(self):
-        super(QueryThroughputTest, self).run()
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(
-                self.metric_helper.calc_avg_couch_views_ops()
-            )
+    def _report_kpi(self):
+        self.reporter.post_to_sf(
+            self.metric_helper.calc_avg_couch_views_ops()
+        )
 
 
 class QueryLatencyTest(QueryTest):
@@ -59,17 +59,14 @@ class QueryLatencyTest(QueryTest):
     The class itself only adds calculation and posting of query latency.
     """
 
-    def run(self):
-        super(QueryLatencyTest, self).run()
-
-        if self.test_config.stats_settings.enabled:
+    def _report_kpi(self):
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_query_latency(percentile=80)
+        )
+        if self.test_config.stats_settings.post_rss:
             self.reporter.post_to_sf(
-                *self.metric_helper.calc_query_latency(percentile=80)
+                *self.metric_helper.calc_max_beam_rss()
             )
-            if self.test_config.stats_settings.post_rss:
-                self.reporter.post_to_sf(
-                    *self.metric_helper.calc_max_beam_rss()
-                )
 
 
 class IndexLatencyTest(QueryTest):
@@ -83,13 +80,10 @@ class IndexLatencyTest(QueryTest):
 
     COLLECTORS = {'index_latency': True, 'query_latency': True}
 
-    def run(self):
-        super(IndexLatencyTest, self).run()
-
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(
-                *self.metric_helper.calc_observe_latency(percentile=95)
-            )
+    def _report_kpi(self):
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_observe_latency(percentile=95)
+        )
 
 
 class DevQueryLatencyTest(DevIndexTest, QueryLatencyTest):

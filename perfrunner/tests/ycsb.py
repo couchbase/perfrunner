@@ -122,7 +122,7 @@ class YCSBdata(PerfTest):
 
         commandlist.append('-p %s' % self.ycsb.bucket)
         commandlist.append('-p couchbase.host=%s' % self.hosts[0])
-        commandlist.append('-p threads=%s' % self.ycsb.threads)
+        commandlist.append('-threads %s' % self.ycsb.threads)
         commandlist.append('-p recordcount=%s' % self.ycsb.reccount)
         commandlist.append('-p couchbase.password=%s' % self.rest.rest_password)
 

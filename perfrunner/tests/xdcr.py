@@ -205,7 +205,6 @@ class XdcrInitTest(UniDirXdcrTest):
         else:
             self.load()
             self.wait_for_persistence()
-            self.compact_bucket()
 
         if self.settings.use_ca_cert:
             self._setup_ca_certs()

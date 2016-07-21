@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.ycsb.YCSBTest
-title = 1 bucket x 100M x 1KB x 90% DB fragmentation
+title = 1 bucket x 100M x 1KB x 90p DB fragmentation
 summary = YCSB test workload A
 larger_is_better = true
 

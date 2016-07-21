@@ -53,7 +53,7 @@ Overriding test config options (comma-separated section.option.value trios):
 
 `--debug` flag enables debug phase (e.g., execution of cbcollect_info).
 
-With `--local` flag localhost will be used as a workload generator.
+With `--remote` flag remote workers will be used as workload generators.
 
 Running unit tests
 ------------------

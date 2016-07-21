@@ -16,7 +16,7 @@ from spring.wgen import WorkloadGen
 
 
 celery = Celery('workers')
-if {'--local', '-C'} & set(sys.argv):
+if '-C' in sys.argv or '--remote' not in sys.argv:
     # -C is a hack to distinguish local and remote workers!
     celery.config_from_object(celerylocal)
 else:
@@ -49,10 +49,10 @@ def run_pillowfight_via_celery(settings, target, timer):
 class WorkerManager(object):
 
     def __new__(cls, *args, **kwargs):
-        if '--local' in sys.argv:
-            return LocalWorkerManager(*args, **kwargs)
-        else:
+        if '--remote' in sys.argv:
             return RemoteWorkerManager(*args, **kwargs)
+        else:
+            return LocalWorkerManager(*args, **kwargs)
 
 
 class RemoteWorkerManager(object):

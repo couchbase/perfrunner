@@ -16,8 +16,8 @@ def get_options():
                       metavar='my_test.test')
     parser.add_option('--verbose', dest='verbose', action='store_true',
                       help='enable verbose logging')
-    parser.add_option('--local', dest='local', action='store_true',
-                      help='use localhost as workload generator')
+    parser.add_option('--remote', dest='remote', action='store_true',
+                      help='use remote workers as workload generators')
     parser.add_option('--debug', dest='debug', action='store_true',
                       help='enable debug phase')
 

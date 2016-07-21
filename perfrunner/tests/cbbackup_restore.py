@@ -56,7 +56,6 @@ class BackupRestoreTest(PerfTest):
 
         self.load()
         self.wait_for_persistence()
-        self.compact_bucket()
 
 
 class BackupTest(BackupRestoreTest):

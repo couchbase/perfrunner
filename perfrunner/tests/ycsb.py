@@ -127,6 +127,7 @@ class YCSBdata(PerfTest):
         commandlist.append('-p couchbase.password=%s' % self.rest.rest_password)
 
         if action == 'run':
+            commandlist.append('-p maxexecutiontime=%s' % self.test_config.access_settings.time)
             commandlist.append('-p operationcount=%s' % self.ycsb.opcount)
             commandlist.append('-p exportfile=%s' % (self.ycsb.log_path +
                                                      self.ycsb.log_file))

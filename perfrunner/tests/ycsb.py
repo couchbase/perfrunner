@@ -202,7 +202,6 @@ class YCSBTest(YCSBdata):
         self.create_index()
         self.load()
         self.wait_for_persistence()
-        self.compact_bucket()
         self.access_bg()
         thput, readl, writel, insertl, scanl = self.workload.parse()
         self.post_sf(thput, readl, writel, insertl, scanl)

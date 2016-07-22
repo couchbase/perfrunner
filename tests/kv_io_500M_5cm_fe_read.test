@@ -12,6 +12,9 @@ num_buckets = 1
 [bucket]
 eviction_policy = fullEviction
 
+[compaction]
+db_percentage = 100
+
 [load]
 items = 500000000
 size = 1024
@@ -31,5 +34,6 @@ throughput = 1000000
 workers = 40
 items = 500000000
 working_set = 10
-working_set_access = 95
+working_set_access = 93
 time = 3600
+async = 1

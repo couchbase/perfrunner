@@ -465,7 +465,7 @@ class PathoGenFrozenTest(PathoGenTest):
                      host=host, port=port, bucket=target.bucket).run()
 
 
-class ThroughputTest(PerfTest):
+class ThroughputTest(KVTest):
 
     def _report_kpi(self):
         if self.test_config.stats_settings.enabled:

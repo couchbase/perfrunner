@@ -40,7 +40,7 @@ def with_sleep(method, *args):
 
 
 def set_cpu_afinity(sid):
-    os.system('taskset -p {} {}'.format(sid % cpu_count(), os.getpid()))
+    os.system('taskset -p -c {} {}'.format(sid % cpu_count(), os.getpid()))
 
 
 class Worker(object):

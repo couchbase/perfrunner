@@ -35,10 +35,12 @@ class KVTest(PerfTest):
         super(KVTest, self).timer()
 
     def run(self):
-        self.load()
-        self.wait_for_persistence()
-
-        self.compact_bucket()
+        if self.test_config.restore_settings.snapshot:
+            self.restore()
+        else:
+            self.load()
+            self.wait_for_persistence()
+            self.compact_bucket()
 
         self.hot_load()
 

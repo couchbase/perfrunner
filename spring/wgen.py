@@ -1,4 +1,5 @@
 import logging
+import os
 import time
 from multiprocessing import Event, Lock, Process, Value
 
@@ -7,6 +8,7 @@ from couchbase.n1ql import MutationState, N1QLQuery
 from dcp import DcpClient, ResponseHandler
 from decorator import decorator
 from logger import logger
+from psutil import cpu_count
 from numpy import random
 from twisted.internet import reactor
 
@@ -35,6 +37,10 @@ def with_sleep(method, *args):
             time.sleep(self.CORRECTION_FACTOR * delta)
         else:
             self.fallingBehindCount += 1
+
+
+def set_cpu_afinity(sid):
+    os.system('taskset -p {} {}'.format(sid % cpu_count(), os.getpid()))
 
 
 class Worker(object):
@@ -225,6 +231,7 @@ class KVWorker(Worker):
 
 
 class SubDocWorker(KVWorker):
+
     def __init__(self, workload_settings, target_settings, shutdown_event):
         super(SubDocWorker, self).__init__(workload_settings, target_settings,
                                            shutdown_event)
@@ -294,6 +301,8 @@ class AsyncKVWorker(KVWorker):
         d.addErrback(self.error, cb, i)
 
     def run(self, sid, lock, curr_ops, curr_items, deleted_items):
+        set_cpu_afinity(sid)
+
         if self.ws.throughput < float('inf'):
             self.target_time = (self.BATCH_SIZE * self.ws.workers /
                                 float(self.ws.throughput))
@@ -317,6 +326,8 @@ class AsyncKVWorker(KVWorker):
 class SeqReadsWorker(Worker):
 
     def run(self, sid, *args, **kwargs):
+        set_cpu_afinity(sid)
+
         for key in SequentialHotKey(sid, self.ws, self.ts.prefix):
             self.cb.read(key)
 

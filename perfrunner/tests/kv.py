@@ -88,7 +88,7 @@ class MixedLatencyTest(KVTest):
         for operation in ('get', 'set'):
             self.reporter.post_to_sf(
                 *self.metric_helper.calc_kv_latency(operation=operation,
-                                                    percentile=95)
+                                                    percentile=99)
             )
 
 
@@ -103,7 +103,7 @@ class ReadLatencyTest(MixedLatencyTest):
     def _report_kpi(self):
         self.reporter.post_to_sf(
             *self.metric_helper.calc_kv_latency(operation='get',
-                                                percentile=95)
+                                                percentile=99)
         )
 
 

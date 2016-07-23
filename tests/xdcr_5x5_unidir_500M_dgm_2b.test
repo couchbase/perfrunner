@@ -22,7 +22,7 @@ optimisticReplicationThreshold = 0
 db_percentage = 10
 
 [restore]
-snapshot = /home/snapshots/500M_800KB
+snapshot = /home/snapshots/500M_800B
 
 [load]
 items = 500000000

@@ -22,7 +22,7 @@ size = 800
 workers = 40
 
 [restore]
-snapshot = /home/snapshots/1000M_800KB
+snapshot = /home/snapshots/1000M_800B
 
 [hot_load]
 items = 1000000000

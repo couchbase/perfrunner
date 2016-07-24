@@ -164,7 +164,7 @@ class PerfTest(object):
 
     def report_kpi(self, *args, **kwargs):
         if self.test_config.stats_settings.enabled:
-            self._report_kpi()
+            self._report_kpi(*args, **kwargs)
 
     def _report_kpi(self, *args, **kwargs):
         pass

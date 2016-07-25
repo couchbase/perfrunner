@@ -141,12 +141,15 @@ class YCSBTest(YCSBdata):
         super(YCSBTest, self).__init__(cluster_spec, test_config, verbose)
 
     def create_index(self):
-        logger.info('creating indexes')
-        host = self.hosts[0]
-        length = len(self.hosts)
-        for idx in range(0, length):
-            statement = "create index wle_idx_" + str(idx) + " on `" + self.ycsb.bucket.split('=')[1] + "`(meta().id)'"
-            self.rest.exec_n1ql_stmnt(host, statement)
+        for server_role in self.cluster_spec.roles.values():
+            if 'index' in server_role:
+                logger.info('creating indexes')
+                host = self.hosts[0]
+                length = len(self.hosts)
+                for idx in range(0, length):
+                    statement = "create index wle_idx_" + str(idx) + " on `" + self.ycsb.bucket.split('=')[1] + "`(meta().id)'"
+                    self.rest.exec_n1ql_stmnt(host, statement)
+                break
 
     def load(self):
         try:

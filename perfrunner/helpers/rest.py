@@ -216,7 +216,7 @@ class RestHelper(object):
 
     def create_bucket(self, host_port, name, ram_quota, replica_number,
                       replica_index, eviction_policy, threads_number,
-                      password, proxy_port=None):
+                      password, proxy_port=None, time_synchronization=None):
         logger.info('Adding new bucket: {}'.format(name))
 
         api = 'http://{}/pools/default/buckets'.format(host_port)
@@ -244,6 +244,11 @@ class RestHelper(object):
                     'proxyPort': proxy_port,
                 })
 
+        if time_synchronization:
+            data.update(
+                {
+                    'timeSynchronization': time_synchronization,
+                })
         logger.info('bucket specification: {}'.format(data))
 
         if threads_number:

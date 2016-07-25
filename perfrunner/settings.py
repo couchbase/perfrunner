@@ -380,6 +380,7 @@ class BucketSettings(object):
     DEFRAGMENTER_ENABLED = -1
     HT_LOCKS = -1
     BFILTER_ENABLED = None
+    TIME_SYNCHRONIZATION = None     # alt: enabledWithDrift, enabledWithoutDrift
 
     def __init__(self, options):
         self.password = options.get('password', self.PASSWORD)
@@ -401,6 +402,9 @@ class BucketSettings(object):
         )
         self.eviction_policy = \
             options.get('eviction_policy', self.EVICTION_POLICY)
+
+        self.time_synchronization = \
+            options.get('time_synchronization', self.TIME_SYNCHRONIZATION)
 
         self.defragmenter_enabled = options.get('defragmenter_enabled',
                                                 self.DEFRAGMENTER_ENABLED)

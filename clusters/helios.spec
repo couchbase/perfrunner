@@ -1,5 +1,5 @@
 [clusters]
-numa =
+helios =
     172.23.105.215:8091
 
 [clients]

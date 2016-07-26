@@ -1,0 +1,34 @@
+[test_case]
+test = perfrunner.tests.ycsb.YCSBTest
+title = 1 bucket x 100M x 1KB x 90%% DB fragmentation, 10GB memory limit
+summary = YCSB test workload A
+larger_is_better = true
+
+[cluster]
+mem_quota = 10000
+initial_nodes = 8
+num_buckets = 1
+
+[bucket]
+eviction_policy = fullEviction
+
+[compaction]
+db_percentage = 90
+
+[access]
+time = 600
+workers = 4
+
+[ycsb]
+sdk = couchbase2
+bucket = couchbase.bucket=bucket-1
+jvm-args = com.couchbase.connectTimeout=300000,com.couchbase.kvTimeout=60000
+threads = 35
+recordcount = 100000000
+export_file_path = /tmp/ycsb_log/
+export_file =  ycsb_log
+path = /root/perfrunner-ycsb/YCSB
+workload_path = /workloads/workloada
+size = 1024
+operationcount = 100000000
+parameters = couchbase.upsert=true, couchbase.queryEndpoints=1, couchbase.epoll=1, couchbase.boost=0

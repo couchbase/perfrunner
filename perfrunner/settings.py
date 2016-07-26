@@ -785,6 +785,7 @@ class FtsSettings(object):
         self.query_file = options.get("query_file", None)
         self.type = options.get("type", "match")
         self.logfile = options.get("logfile", None)
+        self.orderby = options.get("orderby", None)
 
     def __str__(self):
         return str(self.__dict__)

@@ -97,6 +97,7 @@ class FTStest(PerfTest):
         self.prepare_index()
         self.index_time_taken = 0
         self.auth = HTTPBasicAuth('Administrator', 'password')
+        self.orderbymetric = self.test_config.fts_settings.orderby
 
     @with_stats
     def access(self):
@@ -200,7 +201,7 @@ class FtsIndexTest(FTStest):
                         format(self.fts_doccount))
             self.index_test()
             self.reporter.post_to_sf(
-                *self.metric_helper.calc_ftses_index(self.index_time_taken)
+                *self.metric_helper.calc_ftses_index(self.index_time_taken, orderbymetric=self.orderbymetric)
             )
 
 
@@ -217,7 +218,8 @@ class FTSLatencyTest(FTStest):
                 self.reporter.post_to_sf(
                     *self.metric_helper.calc_latency_ftses_queries(percentile=80,
                                                                    dbname='fts_latency',
-                                                                   metrics='cbft_latency_get')
+                                                                   metrics='cbft_latency_get',
+                                                                   orderbymetric=self.orderbymetric)
                 )
 
 
@@ -233,5 +235,5 @@ class FTSThroughputTest(FTStest):
             self.access_bg_test()
             if self.test_config.stats_settings.enabled:
                 self.reporter.post_to_sf(
-                    *self.metric_helper.calc_avg_fts_queries()
+                    *self.metric_helper.calc_avg_fts_queries(orderbymetric=self.orderbymetric)
                 )

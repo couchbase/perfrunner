@@ -1,0 +1,25 @@
+[test_case]
+test = perfrunner.tests.elastic.ElasticLatencyTest
+title = Med Term, wiki 1M x 1KB
+summary = ELasticSearch latency test
+larger_is_better = true
+
+[fts]
+items = 1000000
+name  = perf_elastic_index
+port = 9091
+worker= 12
+type = term
+query_file = perfrunner/tests/FTS/midterm.txt
+query_size = 10
+elastic = 1
+logfile = /tmp/elastic_latency_termmed_1M_1K.txt
+orderby = medium_term
+
+[access]
+time = 1200
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 1
+num_buckets = 1

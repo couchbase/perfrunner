@@ -264,7 +264,7 @@ class FtsGen(CBGen):
                     '''
                     Just reassign the whole line to it
                     '''
-                    tosearch = line
+                    tosearch = line.strip()
 
                 temp_query['field'] = "text"
 
@@ -318,9 +318,34 @@ class ElasticGen(FtsGen):
                 self.elastic_query += self.settings.name + '/_search?pretty'
                 tmp_query = {}
                 tmp_query_txt = {}
-                tmp_query_txt['text'] = term
                 if self.settings.type == 'fuzzy':
-                    tmp_query_txt['fuzziness'] = int(freq)
+                    '''
+                    fuzziness is extra parameter for fuzzy
+                    Source: https://www.elastic.co/guide/en/elasticsearch/reference/current/
+                    query-dsl-fuzzy-query.html
+                    '''
+                    tmp_fuzzy = {}
+                    tmp_fuzzy['fuzziness'] = int(freq)
+                    tmp_fuzzy['value'] = term
+                    tmp_query_txt['text'] = tmp_fuzzy
+                elif self.settings.type == 'ids':
+                    '''
+                    values is extra parameter for Docid
+                    source: https://www.elastic.co/guide/en/elasticsearch/reference/
+                    current/query-dsl-ids-query.html
+                    '''
+                    tmp_query_txt['values'] = [term]
+
+                elif self.settings.type == 'match':
+                    '''
+                    Just reassign the whole line to it
+                    Source: https://www.elastic.co/guide/en/elasticsearch/reference/
+                    current/query-dsl-fuzzy-query.html
+                    '''
+                    tmp_query_txt['text'] = line.strip()
+                else:
+                    tmp_query_txt['text'] = term
+
                 tmp_query[self.settings.type] = tmp_query_txt
                 self.query['query'] = tmp_query
                 self.query_list.append(self.form_url(self.elastic_query))

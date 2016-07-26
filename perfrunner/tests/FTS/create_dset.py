@@ -1,5 +1,13 @@
+import glob
 import itertools
+import os
+import re
 from random import shuffle
+
+from couchbase.bucket import Bucket
+from couchbase.n1ql import N1QLQuery
+
+
 '''
   Change the files here and run
   The file1 is randomized  as size
@@ -26,55 +34,42 @@ class CreateData(object):
             file1.close()
 
         @staticmethod
-        def createprefix(file1, file2):
+        def createprefix(file1):
             file = open(file1, 'r')
-            file1 = open(file2, 'r')
-
-            l = list(file1)
-            shuffle(l)
-            b = itertools.cycle(l)
-
+            s = set()
             for c in file:
                 term, freq = c.split()
-                term1, freq = b.next().split()
                 if len(term) > 3:
-                    print term[:3], freq
-                if len(term1) > 3:
-                    print term1[:3], freq
+                    s.add(term[:3])
 
             file.close()
-            file1.close()
+            for v in s:
+                print v, None
 
         @staticmethod
-        def perm(st, freq):
+        def perm(st):
             '''
 
             All regex are expected to be 4 character
             with one wildcard
             '''
-            var = [0 for i in range(4)]
-            for v in range(4):
-                var[v] = '*'
-                if v == 0:
-                    var[1:] = list(st[-3:])
-                elif v == 1:
-                    var[0] = st[0]
-                    var[2:] = list(st[-2:])
-                elif v == 2:
-                    var[:2] = list(st[:2])
-                    var[3] = st[-1:]
-                else:
-                    var[:3] = list(st[:3])
-                print ''.join(var), freq
+            var = [None for x in range(4)]
+            var[2] = '*'
+            var[:2] = list(st[:2])
+            var[3] = st[-1:]
+            return ''.join(var)
 
         @staticmethod
         def createwildcard(file1):
             file1 = open(file1, 'r')
+            s = set()
             for line in file1:
                 term, freq = line.split()
                 if len(term) > 4:
-                    CreateData.perm(term, freq)
+                    s.add(CreateData.perm(term))
             file1.close()
+            for v in s:
+                print v, None
 
         @staticmethod
         def createfuzzy(files, fuzzy):
@@ -114,9 +109,35 @@ class CreateData(object):
                         print term, 'min'
                     c += 1
 
+        @staticmethod
+        def createids():
+            cb = Bucket('couchbase://172.23.123.38/bucket-1', password='password')
+            row_iter = cb.n1ql_query(N1QLQuery('select meta().id from `bucket-1` limit 10000'))
+            for resultid in row_iter:
+                print resultid["id"], None
+
+        @staticmethod
+        def changefiles():
+            '''
+             replacing all test files with Q with ''
+             Not relevant to it, just storing.
+
+             '''
+            os.chdir('~/PERFTS/perfrunner/tests/fts')
+            for file in glob.glob("*.test"):
+                m = re.search('Q\d+_', file)
+                newfile = file
+                if m:
+                    sub = m.group(0)
+                    newfile = file.replace(sub, '')
+                cmd = 'cp ' + file + ' news/' + newfile
+                os.system(cmd)
+
 '''
     CreateData.createandor('midterm.txt', 'hiterm.txt')
-    CreateData.createprefix('midterm.txt', 'hiterm.txt')
+    CreateData.createprefix('midterm.txt')
     CreateData.createwildcard('midterm.txt')
     CreateData.createnumeric('midterm.txt')
+    CreateData.createids()
+    CreateData.changefiles()
 '''

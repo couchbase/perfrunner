@@ -38,12 +38,13 @@ class MetricHelper(object):
             params.update({'from': from_ts, 'to': to_ts})
         return params
 
-    def _get_metric_info(self, title, larger_is_better=False):
-        return {
-            'title': title,
-            'cluster': self.cluster_spec.name,
-            'larger_is_better': str(larger_is_better).lower(),
-        }
+    def _get_metric_info(self, title, larger_is_better=False, level='Basic',
+                         orderbymetric=None):
+        return {'title': title,
+                'cluster': self.cluster_spec.name,
+                'larger_is_better': str(larger_is_better).lower(),
+                'level': level,
+                'orderby': orderbymetric}
 
     def calc_ycsb_queries(self, value, name, title, larger_is_better=True):
         metric = '{}_{}_{}'.format(self.test_config.name, name,
@@ -100,7 +101,7 @@ class MetricHelper(object):
 
     def parse_log(self, test_config, name):
         cbagent = CbAgent(self.test, verbose=False)
-        if name == 'ELASTICSEARCH':
+        if name.find('Elasticsearch') != -1:
             cbagent.prepare_elastic_stats(cbagent.clusters.keys(), test_config)
         else:
             cbagent.prepare_fts_query_stats(cbagent.clusters.keys(), test_config)
@@ -113,25 +114,27 @@ class MetricHelper(object):
         total = fts_es.cbft_query_total()
         return total
 
-    def calc_avg_fts_queries(self, name='FTS'):
+    def calc_avg_fts_queries(self, orderbymetric, name='FTS'):
         metric = '{}_avg_query_requests_{}'.format(self.test_config.name,
                                                    self.cluster_spec.name)
         hosts = [x for x in self.cluster_spec.yield_servers()]
         title = 'Query Throughput (queries/sec), {}, {} node, {}'.format(self.metric_title,
                                                                          len(hosts), name)
-        metric_info = self._get_metric_info(title, larger_is_better=True)
+        metric_info = self._get_metric_info(title, larger_is_better=True,
+                                            orderbymetric=orderbymetric)
         total_queries = self.parse_log(self.test_config, name)
         time_taken = self.test_config.access_settings.time
         qps = total_queries / time_taken
         return round(qps, 1), metric, metric_info
 
     def calc_latency_ftses_queries(self, percentile, dbname,
-                                   metrics, name='FTS'):
+                                   metrics, orderbymetric, name='FTS'):
         metric = '{}_{}'.format(self.test_config.name, self.cluster_spec.name)
         hosts = [x for x in self.cluster_spec.yield_servers()]
         title = '{}th percentile query latency (ms), {}, {} node, {}'.\
             format(percentile, self.metric_title, len(hosts), name)
-        metric_info = self._get_metric_info(title, larger_is_better=False)
+        metric_info = self._get_metric_info(title, larger_is_better=False,
+                                            orderbymetric=orderbymetric)
         timings = []
         db = '{}{}'.format(dbname, self.cluster_names[0])
         data = self.seriesly[db].get_all()
@@ -139,11 +142,12 @@ class MetricHelper(object):
         fts_latency = round(np.percentile(timings, percentile), 2)
         return round(fts_latency), metric, metric_info
 
-    def calc_ftses_index(self, elapsedtime, name='FTS'):
+    def calc_ftses_index(self, elapsedtime, orderbymetric, name='FTS'):
         metric = '{}_{}'.format(self.test_config.name, self.cluster_spec.name)
         hosts = [x for x in self.cluster_spec.yield_servers()]
         title = 'Index Throughput(sec), {}, {} node, {}'.format(self.metric_title, len(hosts), name)
-        metric_info = self._get_metric_info(title, larger_is_better=False)
+        metric_info = self._get_metric_info(title, larger_is_better=False,
+                                            orderbymetric=orderbymetric)
         return round(elapsedtime, 1), metric, metric_info
 
     def calc_avg_ops(self):

@@ -40,6 +40,7 @@ class Elastictest(PerfTest):
         '''
         self.index_url = "http://{}/{}".format(self.url, self.elastic_index)
         self.rest = RestHelper(cluster_spec)
+        self.orderbymetric = self.test_config.fts_settings.orderby
 
     @with_stats
     def access_bg_test(self):
@@ -170,6 +171,7 @@ class ElasticLatencyTest(Elastictest):
                     *self.metric_helper.calc_latency_ftses_queries(percentile=80,
                                                                    dbname='fts_latency',
                                                                    metrics='elastic_latency_get',
+                                                                   orderbymetric=self.orderbymetric,
                                                                    name=' Elasticsearch 1.7'
                                                                    ))
 
@@ -184,5 +186,6 @@ class ElasticThroughputTest(Elastictest):
             self.access_bg_test()
             if self.test_config.stats_settings.enabled:
                 self.reporter.post_to_sf(
-                    *self.metric_helper.calc_avg_fts_queries(name=' Elasticsearch 1.7')
+                    *self.metric_helper.calc_avg_fts_queries(orderbymetric=self.orderbymetric,
+                                                             name=' Elasticsearch 1.7')
                 )

@@ -8,11 +8,10 @@ larger_is_better = false
 items = 1000000
 name  = perf_elastic_index
 port = 9091
-
+orderby = index
 
 [cluster]
 mem_quota = 51024
 initial_nodes = 1
 num_buckets = 1
-
 

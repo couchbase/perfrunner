@@ -767,10 +767,11 @@ class FtsWorker(Worker):
                             '''
                             continue
                         f = open(self.ws.fts_config.logfile, 'w')
-                        if r.status_code not in range(200, 203):
-                            f.write(args)
-                            f.write(r.status_code)
-                            f.write(r.text)
+                        if r.status_code not in range(200, 203) \
+                                or r.json()["hits"]["total"] == 0:
+                            f.write(str(args))
+                            f.write(str(r.status_code))
+                            f.write(str(r.text))
                         f.close()
                     except IOError as e:
                         logger.info("I/O error({0}): {1}".format(e.errno, e.strerror))

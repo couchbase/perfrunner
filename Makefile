@@ -13,7 +13,7 @@ clean:
 
 pep8:
 	./env/bin/flake8 --statistics cbagent perfrunner spring
-	./env/bin/isort --quiet --balanced --check-only --recursive perfrunner
+	./env/bin/isort --quiet --check-only --recursive --multi_line 3 --trailing-comma cbagent perfrunner
 
 nose:
 	./env/bin/nosetests -v unittests.py

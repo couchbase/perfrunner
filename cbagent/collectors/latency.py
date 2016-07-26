@@ -12,7 +12,7 @@ class Latency(Collector):
 
     COLLECTOR = "latency"
 
-    METRICS = ("latency_set", "latency_get", "latency_delete")
+    METRICS = "latency_set", "latency_get", "latency_delete"
 
     def __init__(self, settings):
         super(Latency, self).__init__(settings)

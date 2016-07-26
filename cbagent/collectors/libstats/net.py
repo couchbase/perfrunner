@@ -1,7 +1,9 @@
 from collections import defaultdict
 
-from cbagent.collectors.libstats.remotestats import (RemoteStats,
-                                                     multi_node_task)
+from cbagent.collectors.libstats.remotestats import (
+    RemoteStats,
+    multi_node_task,
+)
 
 
 class NetStat(RemoteStats):

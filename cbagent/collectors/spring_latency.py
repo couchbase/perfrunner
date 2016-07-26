@@ -4,9 +4,15 @@ from logger import logger
 
 from cbagent.collectors import Latency
 from spring.cbgen import CBGen, N1QLGen, SubDocGen
-from spring.docgen import (ExistingKey, KeyForRemoval, NewDocument, NewKey,
-                           NewNestedDocument, ReverseLookupDocument,
-                           ReverseLookupDocumentArrayIndexing)
+from spring.docgen import (
+    ExistingKey,
+    KeyForRemoval,
+    NewDocument,
+    NewKey,
+    NewNestedDocument,
+    ReverseLookupDocument,
+    ReverseLookupDocumentArrayIndexing,
+)
 from spring.querygen import N1QLQueryGen, ViewQueryGen, ViewQueryGenByType
 
 
@@ -14,7 +20,7 @@ class SpringLatency(Latency):
 
     COLLECTOR = "spring_latency"
 
-    METRICS = ("latency_set", "latency_get")
+    METRICS = "latency_set", "latency_get"
 
     def __init__(self, settings, workload, prefix=None):
         super(Latency, self).__init__(settings)
@@ -67,8 +73,9 @@ class SpringLatency(Latency):
 
 class SpringSubdocLatency(SpringLatency):
 
-    METRICS = ("latency_set", "latency_get")
     COLLECTOR = "spring_subdoc_latency"
+
+    METRICS = "latency_set", "latency_get"
 
     def __init__(self, settings, workload, prefix=None):
         super(SpringSubdocLatency, self).__init__(settings, workload, prefix)
@@ -105,7 +112,7 @@ class SpringQueryLatency(SpringLatency):
 
     COLLECTOR = "spring_query_latency"
 
-    METRICS = ("latency_query", )
+    METRICS = "latency_query",
 
     def __init__(self, settings, workload, ddocs, params, index_type,
                  prefix=None):
@@ -128,7 +135,7 @@ class SpringN1QLQueryLatency(SpringLatency):
 
     COLLECTOR = "spring_query_latency"
 
-    METRICS = ("latency_query", )
+    METRICS = "latency_query",
 
     def __init__(self, settings, workload, prefix=None):
         super(SpringN1QLQueryLatency, self).__init__(settings, workload, prefix)

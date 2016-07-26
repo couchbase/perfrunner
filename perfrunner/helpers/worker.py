@@ -14,7 +14,6 @@ from perfrunner.settings import REPO
 from perfrunner.workloads.pillowfight import Pillowfight
 from spring.wgen import WorkloadGen
 
-
 celery = Celery('workers')
 if '-C' in sys.argv or '--remote' not in sys.argv:
     # -C is a hack to distinguish local and remote workers!

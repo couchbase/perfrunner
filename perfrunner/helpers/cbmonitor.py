@@ -8,13 +8,28 @@ import requests
 from decorator import decorator
 from logger import logger
 
-from cbagent.collectors import (IO, PS, ActiveTasks, ElasticStats, FtsLatency,
-                                FtsQueryStats, FtsStats, N1QLStats, Net,
-                                NSServer, ObserveLatency, SecondaryDebugStats,
-                                SecondaryLatencyStats, SecondaryStats,
-                                SpringLatency, SpringN1QLQueryLatency,
-                                SpringQueryLatency, SpringSubdocLatency,
-                                TypePerf, XdcrLag)
+from cbagent.collectors import (
+    IO,
+    PS,
+    ActiveTasks,
+    ElasticStats,
+    FtsLatency,
+    FtsQueryStats,
+    FtsStats,
+    N1QLStats,
+    Net,
+    NSServer,
+    ObserveLatency,
+    SecondaryDebugStats,
+    SecondaryLatencyStats,
+    SecondaryStats,
+    SpringLatency,
+    SpringN1QLQueryLatency,
+    SpringQueryLatency,
+    SpringSubdocLatency,
+    TypePerf,
+    XdcrLag,
+)
 from cbagent.metadata_client import MetadataClient
 from perfrunner.helpers.misc import target_hash, uhex
 from perfrunner.helpers.remote import RemoteHelper

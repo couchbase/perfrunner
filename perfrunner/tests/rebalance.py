@@ -8,8 +8,12 @@ from perfrunner.helpers.misc import log_phase, server_group
 from perfrunner.tests import PerfTest
 from perfrunner.tests.index import IndexTest
 from perfrunner.tests.query import QueryTest
-from perfrunner.tests.xdcr import (DestTargetIterator, UniDirXdcrTest,
-                                   XdcrInitTest, XdcrTest)
+from perfrunner.tests.xdcr import (
+    DestTargetIterator,
+    UniDirXdcrTest,
+    XdcrInitTest,
+    XdcrTest,
+)
 
 
 @decorator

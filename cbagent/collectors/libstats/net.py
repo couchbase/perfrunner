@@ -1,17 +1,14 @@
 from collections import defaultdict
 
 from cbagent.collectors.libstats.remotestats import (RemoteStats,
-                                                     multi_node_task,
-                                                     single_node_task)
+                                                     multi_node_task)
 
 
 class NetStat(RemoteStats):
 
     def __init__(self, *args, **kwargs):
         super(NetStat, self).__init__(*args, **kwargs)
-        self.iface = self.detect_iface()
 
-    @single_node_task
     def detect_iface(self):
         """Examples of output:
 
@@ -23,7 +20,8 @@ class NetStat(RemoteStats):
         return stdout.strip().split()[4]
 
     def get_dev_stats(self):
-        cmd = "grep {} /proc/net/dev".format(self.iface)
+        iface = self.detect_iface()
+        cmd = "grep {} /proc/net/dev".format(iface)
         stdout = self.run("{0}; sleep 1; {0}".format(cmd))
         s1, s2 = stdout.split('\n')
         s1 = [int(v.split(":")[-1]) for v in s1.split() if v.split(":")[-1]]

@@ -9,6 +9,7 @@
       - htop
       - iotop
       - iptraf
+      - net-tools
       - numactl
       - psmisc
       - rsync

@@ -211,7 +211,7 @@ def do_beer_queries(conn, rest, host_ip, remote):
          'expected_elapsed_time': 11, 'expected_execution_time': 11, 'execution_count': 10000})
     command_list.append({
         'queryDesc':'select fields order by', 'query': 'select abv, brewery_id from `beer-sample` where style =  "Imperial or Double India Pale Ale" order by abv;',
-        'expected_elapsed_time': 15.4, 'expected_execution_time': 15.4, 'execution_count': 10000})
+        'expected_elapsed_time': 13.5, 'expected_execution_time': 13.5, 'execution_count': 10000})
 
     return execute_commands(conn, command_list, rest, host_ip, 'beer-queries')
 

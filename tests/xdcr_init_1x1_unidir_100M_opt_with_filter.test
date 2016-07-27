@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.xdcr.XdcrInitTest
-title = Avg. initial XDCR rate (items/sec), 1 -> 1 UniDir, 1 bucket x 100M x 1KB, non-DGM, no compaction, Optimistic, with filter (matching ~50%% of the items)
+title = Avg. initial XDCR rate (items/sec), 1 -> 1 UniDir, 1 bucket x 100M x 1KB, Optimistic, Filter (matching ~50%% of the items)
 summary = Initial XDCR test, 1 -> 1 nodes, 1 bucket x 100M x 1KB, no compaction, UniDir, Optimistic, with filter (matching ~50%% of the items)
 larger_is_better = true
 

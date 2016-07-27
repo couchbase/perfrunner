@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.xdcr.XdcrInitTest
-title = Avg. initial XDCR rate (items/sec), 1 -> 1 UniDir, 1 bucket x 100M x 1KB, non-DGM, no compaction, Self-Signed Certificate
+title = Avg. initial XDCR rate (items/sec), 1 -> 1 UniDir, 1 bucket x 100M x 1KB, SSL
 summary = Initial XDCR test, 1 -> 1 nodes, 1 bucket x 100M x 1KB, no compaction, UniDir, Self-Signed Certificate
 larger_is_better = true
 

@@ -140,6 +140,7 @@ class ClusterManager(object):
         proxy_port = self.test_config.bucket.proxy_port
         password = self.test_config.bucket.password
         buckets = self.test_config.emptybuckets if empty_buckets else self.test_config.buckets
+        time_synchronization = self.test_config.bucket.time_synchronization
 
         for master in self.masters():
             for bucket_name in buckets:
@@ -151,7 +152,8 @@ class ClusterManager(object):
                                         eviction_policy=eviction_policy,
                                         threads_number=threads_number,
                                         password=password,
-                                        proxy_port=proxy_port)
+                                        proxy_port=proxy_port,
+                                        time_synchronization=time_synchronization)
 
     def configure_auto_compaction(self):
         compaction_settings = self.test_config.compaction

@@ -83,6 +83,14 @@ class RestHelper(object):
         }
         self.post(url=api, data=data)
 
+    def rename(self, host_port):
+        logger.info('Changing server name: {}'.format(host_port))
+
+        api = 'http://{}/node/controller/rename'.format(host_port)
+        data = {'hostname': host_port.split(':')[0]}
+
+        self.post(url=api, data=data)
+
     def set_mem_quota(self, host_port, mem_quota):
         logger.info('Configuring memory quota: {}'.format(host_port))
 

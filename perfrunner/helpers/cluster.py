@@ -37,6 +37,10 @@ class ClusterManager(object):
             for server in self.servers():
                 self.rest.set_data_path(server, data_path, index_path)
 
+    def rename(self):
+        for server in self.servers():
+            self.rest.rename(server)
+
     def set_auth(self):
         for server in self.servers():
             self.rest.set_auth(server)

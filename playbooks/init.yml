@@ -8,6 +8,7 @@
       - gdb
       - htop
       - iotop
+      - iperf
       - iptraf
       - net-tools
       - numactl

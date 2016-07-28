@@ -4,9 +4,6 @@ title = 1 bucket x 20M x 2KB, non-DGM, 4 x 1 views, 500 mutations/sec/node, 400 
 summary = Read-heavy query test (80/20), 4 nodes, 1 bucket x 20M x 2KB, non-DGM, 4 x 1 views, 500 mutations/sec/node, 400 qps
 larger_is_better = false
 
-[stats]
-post_rss = 1
-
 [cluster]
 mem_quota = 40960
 initial_nodes = 4

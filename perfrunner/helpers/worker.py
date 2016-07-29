@@ -15,11 +15,11 @@ from perfrunner.workloads.pillowfight import Pillowfight
 from spring.wgen import WorkloadGen
 
 celery = Celery('workers')
-if '-C' in sys.argv or '--remote' not in sys.argv:
-    # -C is a hack to distinguish local and remote workers!
-    celery.config_from_object(celerylocal)
-else:
+if '--remote' in sys.argv or '-C' in sys.argv:
+    # -C flag is a hack to distinguish local and remote workers!
     celery.config_from_object(celeryremote)
+else:
+    celery.config_from_object(celerylocal)
 
 
 @celery.task
@@ -106,7 +106,7 @@ class RemoteWorkerManager(object):
                 run('cd {0}; ulimit -n 10240; '
                     'PYTHONOPTIMIZE=1 C_FORCE_ROOT=1 '
                     'nohup env/bin/celery worker '
-                    '-A perfrunner.helpers.worker -Q {1} -c 1 -n {2}'
+                    '-A perfrunner.helpers.worker -Q {1} -c 1 -n {2} -C '
                     '&>/tmp/worker_{1}.log &'.format(temp_dir, qname, worker),
                     pty=False)
 
@@ -170,7 +170,7 @@ class LocalWorkerManager(RemoteWorkerManager):
                 logger.info('Starting local Celery worker: {}'.format(qname))
                 local('PYTHONOPTIMIZE=1 C_FORCE_ROOT=1 '
                       'nohup env/bin/celery worker '
-                      '-A perfrunner.helpers.worker -Q {0} -c 1 -C '
+                      '-A perfrunner.helpers.worker -Q {0} -c 1 '
                       '>/tmp/worker_{0}.log &'.format(qname))
                 sleep(self.RACE_DELAY)
 

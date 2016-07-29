@@ -23,7 +23,7 @@ workers = 4
 sdk = couchbase2
 bucket = couchbase.bucket=bucket-1
 jvm-args = com.couchbase.connectTimeout=300000,com.couchbase.kvTimeout=60000
-threads = 35 -p couchbase.kv = false
+threads = 35 -p couchbase.kv=false
 recordcount = 10000000
 export_file_path = /tmp/ycsb_log/
 export_file =  ycsb_log

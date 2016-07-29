@@ -336,7 +336,7 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
                     self.configfile = 'scripts/config_scanthr_multiple_memdb.json'
                 else:
                     self.configfile = 'scripts/config_scanthr_multiple.json'
-        cmdstr = "cbindexperf -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json".format(
+        cmdstr = "/opt/couchbase/bin/cbindexperf -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json".format(
             self.index_nodes[0], rest_username, rest_password, self.configfile)
         logger.info('To be applied:'.format(cmdstr))
         status = subprocess.call(cmdstr, shell=True)
@@ -458,7 +458,7 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
                 else:
                     self.configfile = 'scripts/config_scanlatency_multiple.json'
 
-        cmdstr = "cbindexperf -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json -statsfile /root/statsfile".format(
+        cmdstr = "/opt/couchbase/bin/cbindexperf -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json -statsfile /root/statsfile".format(
             self.index_nodes[0], rest_username, rest_password, self.configfile)
         logger.info("Calling command: {}".format(cmdstr))
         status = subprocess.call(cmdstr, shell=True)
@@ -551,7 +551,7 @@ class SecondaryIndexingLatencyTest(SecondaryIndexTest):
     def apply_scanworkload(self):
         rest_username, rest_password = self.cluster_spec.rest_credentials
         logger.info('Initiating the scan workload')
-        cmdstr = "cbindexperf -cluster {} -auth=\"{}:{}\" -configfile scripts/config_indexinglatency.json -resultfile result.json".format(self.index_nodes[0], rest_username, rest_password)
+        cmdstr = "/opt/couchbase/bin/cbindexperf -cluster {} -auth=\"{}:{}\" -configfile scripts/config_indexinglatency.json -resultfile result.json".format(self.index_nodes[0], rest_username, rest_password)
         status = subprocess.call(cmdstr, shell=True)
         if status != 0:
             raise Exception('Scan workload could not be applied')

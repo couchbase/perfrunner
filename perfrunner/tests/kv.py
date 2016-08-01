@@ -469,6 +469,8 @@ class PathoGenFrozenTest(PathoGenTest):
 
 class ThroughputTest(KVTest):
 
+    COLLECTORS = {'latency': True}
+
     def _report_kpi(self):
         if self.test_config.stats_settings.enabled:
             self.reporter.post_to_sf(
@@ -479,6 +481,8 @@ class ThroughputTest(KVTest):
 class PillowfightTest(ThroughputTest):
 
     """Uses pillowfight from libcouchbase to drive cluster."""
+
+    COLLECTORS = {'latency': False}
 
     @with_stats
     def access(self):

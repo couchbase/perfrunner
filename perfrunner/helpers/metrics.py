@@ -320,11 +320,12 @@ class MetricHelper(object):
         metric_info = self._get_metric_info(title)
 
         timings = []
+        op_key = 'latency_{}'.format(operation)
         for bucket in self.test_config.buckets:
             db = '{}{}{}'.format(dbname, self.cluster_names[0], bucket)
             data = self.seriesly[db].get_all()
             timings += [
-                v['latency_{}'.format(operation)] for v in data.values()
+                v[op_key] for v in data.values() if op_key in v
             ]
         latency = round(np.percentile(timings, percentile), 2)
 

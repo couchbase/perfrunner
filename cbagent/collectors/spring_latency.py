@@ -1,8 +1,9 @@
-from time import time
+from time import sleep, time
+from uuid import uuid4
 
 from logger import logger
 
-from cbagent.collectors import Latency
+from cbagent.collectors import Latency, ObserveLatency
 from spring.cbgen import CBGen, N1QLGen, SubDocGen
 from spring.docgen import (
     ExistingKey,
@@ -15,6 +16,8 @@ from spring.docgen import (
 )
 from spring.querygen import N1QLQueryGen, ViewQueryGen, ViewQueryGenByType
 
+uhex = lambda: uuid4().hex
+
 
 class SpringLatency(Latency):
 
@@ -24,6 +27,7 @@ class SpringLatency(Latency):
 
     def __init__(self, settings, workload, prefix=None):
         super(Latency, self).__init__(settings)
+
         self.clients = []
         for bucket in self.get_buckets():
             client = CBGen(bucket=bucket, host=settings.master_node,
@@ -79,6 +83,7 @@ class SpringSubdocLatency(SpringLatency):
 
     def __init__(self, settings, workload, prefix=None):
         super(SpringSubdocLatency, self).__init__(settings, workload, prefix)
+
         self.clients = []
         self.ws = workload
         for bucket in self.get_buckets():
@@ -117,6 +122,7 @@ class SpringQueryLatency(SpringLatency):
     def __init__(self, settings, workload, ddocs, params, index_type,
                  prefix=None):
         super(SpringQueryLatency, self).__init__(settings, workload, prefix)
+
         if index_type is None:
             self.new_queries = ViewQueryGen(ddocs, params)
         else:
@@ -139,6 +145,7 @@ class SpringN1QLQueryLatency(SpringLatency):
 
     def __init__(self, settings, workload, prefix=None):
         super(SpringN1QLQueryLatency, self).__init__(settings, workload, prefix)
+
         self.clients = []
         self.kvclients = []
         self.curr_items = self.items
@@ -249,3 +256,57 @@ class SpringN1QLQueryLatency(SpringLatency):
                 samples[metric] = self.measure(client, kvclient, metric, bucket)
             self.store.append(samples, cluster=self.cluster,
                               bucket=bucket, collector=self.COLLECTOR)
+
+
+class DurabilityLatency(ObserveLatency, SpringLatency):
+
+    COLLECTOR = "durability"
+
+    METRICS = "latency_replicate_to", "latency_persist_to"
+
+    DURABILITY_TIMEOUT = 120
+
+    def __init__(self, settings, workload, prefix=None):
+        SpringLatency.__init__(self, settings, workload, prefix=prefix)
+
+        self.pools = self.init_pool(settings)
+
+    def endure(self, pool, metric):
+        client = pool.get_client()
+
+        key = uhex()
+        doc = self.new_docs.next(key)
+
+        t0 = time()
+
+        client.upsert(key, doc)
+        if metric == "latency_persist_to":
+            client.endure(key, persist_to=1, replicate_to=0, interval=0.010,
+                          timeout=120)
+        else:
+            client.endure(key, persist_to=0, replicate_to=1, interval=0.001)
+
+        latency = 1000 * (time() - t0)  # Latency in ms
+
+        sleep_time = max(0, self.MAX_POLLING_INTERVAL - latency)
+
+        client.delete(key)
+        pool.release_client(client)
+        return {metric: latency}, sleep_time
+
+    def sample(self):
+        while True:
+            for bucket, pool in self.pools:
+                for metric in self.METRICS:
+                    try:
+                        stats, sleep_time = self.endure(pool, metric)
+                        self.store.append(stats,
+                                          cluster=self.cluster,
+                                          bucket=bucket,
+                                          collector=self.COLLECTOR)
+                        sleep(sleep_time)
+                    except Exception as e:
+                        logger.warn(e)
+
+    def collect(self):
+        ObserveLatency.collect(self)

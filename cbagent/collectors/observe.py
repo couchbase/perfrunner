@@ -37,7 +37,12 @@ class ObserveLatency(Latency):
     def __init__(self, settings):
         super(Latency, self).__init__(settings)
 
-        self.pools = []
+        self.pools = self.init_pool(settings)
+
+        self.mode = getattr(settings, "observe", "persist")  # replicate | index
+
+    def init_pool(self, settings):
+        pools = []
         for bucket in self.get_buckets():
             pool = Pool(
                 bucket=bucket,
@@ -46,9 +51,8 @@ class ObserveLatency(Latency):
                 password=settings.bucket_password,
                 quiet=True,
             )
-            self.pools.append((bucket, pool))
-
-        self.mode = getattr(settings, "observe", "persist")  # replicate | index
+            pools.append((bucket, pool))
+        return pools
 
     @timeit
     def _wait_until_persisted(self, client, key):

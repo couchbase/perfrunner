@@ -20,6 +20,7 @@ from secondary_debugstats import SecondaryDebugStats
 from secondary_latency import SecondaryLatencyStats
 from secondary_stats import SecondaryStats
 from spring_latency import (
+    DurabilityLatency,
     SpringLatency,
     SpringQueryLatency,
     SpringSubdocLatency,

@@ -92,6 +92,23 @@ class MixedLatencyTest(KVTest):
             )
 
 
+class DurabilityTest(KVTest):
+
+    """
+    Enables reporting of persistTo=1 and replicateTo=1 latency.
+    """
+
+    COLLECTORS = {'durability': True}
+
+    def _report_kpi(self):
+        for operation in ('replicate_to', 'persist_to'):
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_kv_latency(operation=operation,
+                                                    percentile=99,
+                                                    dbname='durability')
+            )
+
+
 class ReadLatencyTest(MixedLatencyTest):
 
     """

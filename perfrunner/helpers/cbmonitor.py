@@ -12,6 +12,7 @@ from cbagent.collectors import (
     IO,
     PS,
     ActiveTasks,
+    DurabilityLatency,
     ElasticStats,
     FtsLatency,
     FtsQueryStats,
@@ -122,16 +123,25 @@ class CbAgent(object):
         self.snapshots = []
         self.fts_stats = None
 
-    def prepare_collectors(self, test, bandwidth=False, subdoc_latency=False,
-                           latency=False, secondary_stats=False,
+    def prepare_collectors(self, test,
+                           bandwidth=False,
+                           subdoc_latency=False,
+                           latency=False,
+                           secondary_stats=False,
                            query_latency=False,
-                           n1ql_latency=False, n1ql_stats=False,
-                           index_latency=False, persist_latency=False,
-                           replicate_latency=False, xdcr_lag=False,
+                           n1ql_latency=False,
+                           n1ql_stats=False,
+                           index_latency=False,
+                           persist_latency=False,
+                           replicate_latency=False,
+                           xdcr_lag=False,
                            secondary_latency=False,
                            secondary_debugstats=False,
-                           fts_latency=False, elastic_stats=False,
-                           fts_stats=False, fts_query_stats=False):
+                           fts_latency=False,
+                           elastic_stats=False,
+                           fts_stats=False,
+                           fts_query_stats=False,
+                           durability=False):
         clusters = self.clusters.keys()
         self.bandwidth = bandwidth
         self.prepare_ns_server(clusters)
@@ -146,6 +156,8 @@ class CbAgent(object):
             self.prepare_subdoc_latency(clusters, test)
         if latency:
             self.prepare_latency(clusters, test)
+        if durability:
+            self.prepare_durability(clusters, test)
         if query_latency:
             self.prepare_query_latency(clusters, test)
         if n1ql_latency:
@@ -314,6 +326,18 @@ class CbAgent(object):
                 target_hash(settings.master_node.split(':')[0])
             self.collectors.append(
                 SpringLatency(settings, test.workload, prefix)
+            )
+
+    def prepare_durability(self, clusters, test):
+        for cluster in clusters:
+            settings = copy(self.settings)
+            settings.interval = self.lat_interval
+            settings.cluster = cluster
+            settings.master_node = self.clusters[cluster]
+            prefix = test.target_iterator.prefix or \
+                target_hash(settings.master_node.split(':')[0])
+            self.collectors.append(
+                DurabilityLatency(settings, test.workload, prefix)
             )
 
     def prepare_subdoc_latency(self, clusters, test):

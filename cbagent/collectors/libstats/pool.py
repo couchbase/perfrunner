@@ -2,17 +2,23 @@ from Queue import Empty, Queue
 from threading import Lock
 from time import time
 
-from couchbase.connection import Connection
+from couchbase.bucket import Bucket
 
 
 class ClientUnavailableError(Exception):
     pass
 
 
-class ConnectionWrapper(Connection):
+class BucketWrapper(Bucket):
 
     def __init__(self, **kwargs):
-        super(ConnectionWrapper, self).__init__(**kwargs)
+        connection_string = 'couchbase://{}:{}/{}'.format(
+            kwargs['host'], kwargs.get('port', 8091), kwargs['bucket'])
+
+        super(BucketWrapper, self).__init__(connection_string,
+                                            password=kwargs['password'],
+                                            quiet=kwargs['quiet'])
+
         self.use_count = 0
         self.use_time = 0
         self.last_use_time = 0
@@ -40,9 +46,9 @@ class Pool(object):
             self._cur_clients += 1
 
     def _make_client(self):
-        ret = ConnectionWrapper(**self._connargs)
-        self._l.append(ret)
-        return ret
+        bucket = BucketWrapper(**self._connargs)
+        self._l.append(bucket)
+        return bucket
 
     def get_client(self, initial_timeout=0.05, next_timeout=200):
         try:

@@ -105,7 +105,7 @@ class SpringSubdocLatency(SpringLatency):
 
 class SpringCasLatency(SpringLatency):
 
-    METRICS = ("latency_set", "latency_get", "latency_cas")
+    METRICS = "latency_set", "latency_get", "latency_cas"
 
 
 class SpringQueryLatency(SpringLatency):

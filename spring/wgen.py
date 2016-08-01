@@ -203,6 +203,12 @@ class KVWorker(Worker):
         for cmd, args in self.gen_cmd_sequence():
             cmd(*args)
 
+    def run_condition(self, curr_ops):
+        if self.ws.operations:
+            return curr_ops.value < self.ws.items
+        else:
+            return curr_ops.value < self.ws.ops and not self.time_to_stop()
+
     def run(self, sid, lock, curr_ops, curr_items, deleted_items):
         if self.ws.throughput < float('inf'):
             self.target_time = float(self.BATCH_SIZE) * self.ws.workers / \
@@ -216,10 +222,7 @@ class KVWorker(Worker):
 
         logger.info('Started: worker-{}'.format(self.sid))
         try:
-            condition = 'curr_ops.value < self.ws.ops and not self.time_to_stop()'
-            if self.ws.operations:
-                condition = 'curr_ops.value < self.ws.items'
-            while eval(condition):
+            while self.run_condition(curr_ops):
                 with lock:
                     curr_ops.value += self.BATCH_SIZE
                 self.do_batch()
@@ -837,7 +840,9 @@ class WorkloadGen(object):
         deleted_items = Value('L', 0)
         deleted_capped_items = Value('L', 0)
         casupdated_items = Value('L', 0)
-        logger.info('Start all workers')
+
+        logger.info('Starting all workers')
+
         self.start_workers(WorkerFactory, 'kv', curr_items, deleted_items)
         self.start_workers(SubdocWorkerFactory, 'subdoc', curr_items, deleted_items)
         self.start_workers(ViewWorkerFactory, 'view', curr_items, deleted_items)

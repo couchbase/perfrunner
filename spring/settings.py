@@ -22,17 +22,23 @@ class WorkloadSettings(object):
         self.working_set = options.working_set
         self.working_set_access = options.working_set_access
 
+        self.async = options.async
+
         self.workers = options.workers
-        self.query_workers = 0  # Stub for library compatibility
-        self.dcp_workers = 0  # Stub for library compatibility
+
+        # Stubs for library compatibility
+        self.query_workers = 0
+        self.dcp_workers = 0
+        self.subdoc_workers = 0
+        self.n1ql_workers = 0
+
+        self.operations = False
+        self.fts_config = None
 
         self.index_type = None
         self.ddocs = {}
         self.qparams = {}
         self.n1ql = False
-        self.n1ql_workers = 0
-
-        self.async = options.async
 
 
 class TargetSettings(object):

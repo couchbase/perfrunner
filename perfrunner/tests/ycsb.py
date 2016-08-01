@@ -168,8 +168,8 @@ class YCSBTest(YCSBdata):
         if not np.isnan(thput):
             self.reporter.post_to_sf(
                 *self.metric_helper.calc_ycsb_queries(round(thput),
-                                                      name='Overal_Throughput',
-                                                      title='Overal Throughput',
+                                                      name='Overall_Throughput',
+                                                      title='Overall Throughput',
                                                       larger_is_better=True)
             )
         if not np.isnan(readl):

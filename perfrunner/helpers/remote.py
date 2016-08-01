@@ -513,8 +513,7 @@ class RemoteLinuxHelper(object):
         run('/opt/couchbase/bin/couchbase-cli ssl-manage --cluster=localhost -u Administrator -p password --set-node-certificate')
 
     @single_host
-    def cbrestorefts(self):
-        restore_path = self.cluster_spec.config.get('storage', 'backup_path')
+    def cbrestorefts(self, restore_path):
         logger.info('restore from %s' % restore_path)
         cmd = "cd /opt/couchbase/bin && ./cbrestorewrapper {}  http://127.0.0.1:8091 " \
               "-b {} -u Administrator -p password".format(restore_path, self.test_config.buckets[0])

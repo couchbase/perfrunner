@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.elastic.ElasticThroughputTest
-title =  Wildcard, wiki 1M x 1KB
+title =  WildcardQuery, no kv-load, wiki 1M x 1KB
 summary = ELasticSearch throughput Test
 larger_is_better = true
 fts = true
@@ -16,6 +16,8 @@ query_size = 10
 logfile = /tmp/elastic_thput_wildcard_1M_1K.txt
 elastic = 1
 orderby = wildcard
+backup_path = /home/wiki1M
+field = text
 
 [access]
 time = 600

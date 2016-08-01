@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.elastic.ElasticLatencyTest
-title = High Term, wiki 1M x 1KB
+title = High Term, no kv-load, wiki 1M x 1KB
 summary = ELasticSearch latency test
 larger_is_better = true
 
@@ -14,7 +14,9 @@ query_file = perfrunner/tests/FTS/midterm.txt
 query_size = 10
 elastic = 1
 logfile = /tmp/elastic_latency_termhi_1M_1K.txt
-orderby = high_term
+orderby = q1_high_term
+backup_path = /home/wiki1M
+field = text
 
 [access]
 time = 1200

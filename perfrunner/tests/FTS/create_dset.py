@@ -44,7 +44,7 @@ class CreateData(object):
 
             file.close()
             for v in s:
-                print v, None
+                print v
 
         @staticmethod
         def perm(st):
@@ -69,7 +69,7 @@ class CreateData(object):
                     s.add(CreateData.perm(term))
             file1.close()
             for v in s:
-                print v, None
+                print v
 
         @staticmethod
         def createfuzzy(files, fuzzy):

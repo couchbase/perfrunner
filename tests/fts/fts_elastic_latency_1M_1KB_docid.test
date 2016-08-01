@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.elastic.ElasticLatencyTest
-title = DocId Query, wiki 1M x 1KB
+title = DocIdQuery, no kv-load, wiki 1M x 1KB
 summary = ELasticSearch latency test
 larger_is_better = true
 
@@ -15,6 +15,8 @@ query_size = 10
 elastic = 1
 logfile = /tmp/elastic_latency_docid_1M_1K.txt
 orderby = docid
+backup_path = /home/wiki1M
+field = text
 
 [access]
 time = 1200

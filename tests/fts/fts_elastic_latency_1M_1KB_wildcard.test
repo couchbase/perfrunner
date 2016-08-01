@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.elastic.ElasticLatencyTest
-title = FuzzyQuery fuzziness 2, no kv-load, wiki 1M x 1KB
+title = WildcardQuery, no kv-load, wiki 1M x 1KB
 summary = ELasticSearch latency test
 larger_is_better = true
 
@@ -8,13 +8,13 @@ larger_is_better = true
 items = 1000000
 name  = perf_elastic_index
 port = 9091
-worker= 18
-type = fuzzy
-query_file = perfrunner/tests/FTS/fuzzy_2.txt
+worker= 2
+type = wildcard
+query_file = perfrunner/tests/FTS/wildcard.txt
 query_size = 10
 elastic = 1
-logfile = /tmp/elastic_latency_fuzzy_2_1M_1K.txt
-orderby = fuzzy_2
+logfile = /tmp/elastic_latency_wildcard_1M_1K.txt
+orderby = q15_wildcard
 backup_path = /home/wiki1M
 field = text
 

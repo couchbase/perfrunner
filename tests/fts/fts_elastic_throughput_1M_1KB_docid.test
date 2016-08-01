@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.elastic.ElasticThroughputTest
-title = DocIdQuery, wiki 1M x 1KB
+title = DocIdQuery, no kv-load, wiki 1M x 1KB
 summary = ELasticSearch throughput test
 larger_is_better = true
 
@@ -14,7 +14,9 @@ query_file = perfrunner/tests/FTS/docid.txt
 query_size = 10
 elastic = 1
 logfile = /tmp/elastic_thput_docid_1M_1K.txt
-orderby = docid
+orderby = q17_docid
+backup_path = /home/wiki1M
+field = text
 
 [access]
 time = 600

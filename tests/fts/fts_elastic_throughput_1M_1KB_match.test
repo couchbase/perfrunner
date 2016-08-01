@@ -1,18 +1,22 @@
 [test_case]
-test = perfrunner.tests.elastic.ElasticLatencyTest
-title = FTS Index Test , bucket size 1KB , 1M items,low frequency ,match query
-summary = FTS throughput Test
+test = perfrunner.tests.elastic.ElasticThroughputTest
+title = PhraseQuery, no kv-load, wiki 1M x 1KB
+summary = ELasticSearch throughput test
 larger_is_better = true
 
 [fts]
-items = 1127200
+items = 1000000
 name  = perf_fts_index
 port = 8094
-worker=15
-query = {"match": "dreamless", "field": "text"}
+worker= 10
+type = match
+query_file = perfrunner/tests/FTS/phrase.txt
 query_size = 10
+logfile = /tmp/elastic_throughput_matchphrase_1M_1K.txt
+orderby = q13_match
 elastic = 1
-orderby = match
+backup_path = /home/wiki1M
+field = text
 
 [access]
 time = 600
@@ -21,6 +25,3 @@ time = 600
 mem_quota = 51024
 initial_nodes = 1
 num_buckets = 1
-
-[stats]
-seriesly_host = 172.23.123.40

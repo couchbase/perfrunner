@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.elastic.ElasticLatencyTest
-title = PrefixQuery, wiki 1M x 1KB
+title = PrefixQuery, , no kv-load, wiki 1M x 1KB
 summary = ELasticSearch latency test
 larger_is_better = true
 
@@ -14,7 +14,9 @@ query_file = perfrunner/tests/FTS/prefix.txt
 query_size = 10
 elastic = 1
 logfile = /tmp/elastic_latency_prefix_1M_1K.txt
-orderby = prefix
+orderby = q14_prefix
+backup_path = /home/wiki1M
+field = text
 
 [access]
 time = 1200

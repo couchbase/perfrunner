@@ -24,4 +24,6 @@ type = match
 query_file = perfrunner/tests/FTS/phrase.txt
 query_size = 10
 logfile = /tmp/fts_throughput_matchphrase_1M_1K.txt
-orderby = match
+orderby = q13_match
+backup_path = /home/wiki1M
+field = text

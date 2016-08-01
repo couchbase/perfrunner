@@ -23,4 +23,6 @@ type = prefix
 query_file = perfrunner/tests/FTS/prefix.txt
 query_size = 10
 logfile = /tmp/fts_thput_prefix_1M_1K.txt
-orderby = prefix
+orderby = q14_prefix
+backup_path = /home/wiki1M
+field = text

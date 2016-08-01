@@ -10,7 +10,6 @@ credentials = root:couchbase
 [storage]
 data=/opt/couchbase/data
 index=/opt/couchbase/data
-backup_path=/home/wiki1M
 
 [credentials]
 rest = Administrator:password

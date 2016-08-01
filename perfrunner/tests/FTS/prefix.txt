@@ -1,1215 +1,1215 @@
-alo None
-all None
-alm None
-rol None
-edg None
-ron None
-ali None
-alf None
-alg None
-rob None
-ale None
-alb None
-alc None
-1,0 None
-ala None
-roy None
-llo None
-edw None
-edu None
-ric None
-alw None
-alt None
-alu None
-alr None
-rou None
-alp None
-rom None
-ree None
-ver None
-aud None
-aug None
-wid None
-34. None
-roo None
-qui None
-sce None
-aus None
-aut None
-roa None
-tai None
-ren None
-vel None
-vot None
-veh None
-edi None
-smi None
-far None
-fas None
-rem None
-fav None
-fat None
-sco None
-flu None
-voy None
-fai None
-fan None
-01. None
-fal None
-fam None
-fac None
-edm None
-fus None
-29. None
-dim None
-gua None
-rea None
-hyd None
-gue None
-evo None
-did None
-die None
-dif None
-dig None
-tre None
-dia None
-dic None
-hyp None
-cas None
-min None
-rev None
-div None
-gor None
-dip None
-dir None
-dis None
-too None
-des None
-199 None
-198 None
-ten None
-195 None
-194 None
-197 None
-196 None
-191 None
-190 None
-193 None
-192 None
-tex None
-scu None
-19. None
-dev None
-jea None
-ter None
-tes None
-osc None
-10t None
-59. None
-sug None
-aba None
-abb None
-ros None
-suc None
-sub None
-ere None
-abi None
-52. None
-nee None
-abl None
-nec None
-sui None
-abo None
-abr None
-abs None
-sus None
-abu None
-nex None
-sup None
-nev None
-new None
-imd None
-neu None
-can None
-mee None
-lea None
-leb None
-lec None
-10. None
-cam None
-10, None
-leg None
-mem None
-19t None
-men None
-len None
-leo None
-met None
-les None
-let None
-44. None
-lev None
-cab None
-mul None
-100 None
-win None
-ern None
-ves None
-43. None
-boy None
-ref None
-glo None
-fle None
-bor None
-bos None
-bot None
-bou None
-bow None
-dri None
-tri None
-bom None
-bon None
-boo None
-dra None
-boa None
-bod None
-boe None
-sci None
-vic None
-05. None
-fix None
-mea None
-pla None
-vid None
-nel None
-apr None
-oce None
-bru None
-vii None
-vin None
-23. None
-vil None
-hel None
-bro None
-ask None
-33. None
-vec None
-apo None
-bri None
-rus None
-tol None
-tel None
-bre None
-apa None
-sch None
-2,0 None
-bra None
-red None
-cha None
-fed None
-fee None
-eye None
-che None
-it' None
-fea None
-chi None
-fel None
-fem None
-usi None
-cho None
-few None
-chr None
-fer None
-chu None
-wik None
-ora None
-los None
-exe None
-mec None
-scr None
-ral None
-voi None
-ven None
-vi: None
-tru None
-fly None
-sph None
-wro None
-err None
-upo None
-dep None
-car None
-der None
-cap None
-det None
-cav None
-cau None
-cat None
-fli None
-dei None
-nod None
-del None
-dem None
-den None
-cal None
-fla None
-dea None
-deb None
-dec None
-ded None
-dee None
-cae None
-deg None
-sle None
-tau None
-14t None
-atm None
-tap None
-tar None
-tas None
-wed None
-spr None
-spo None
-tax None
-tay None
-pro None
-nuc None
-spi None
-jul None
-55. None
-spl None
-tab None
-rig None
-tal None
-spa None
-mel None
-slo None
-spe None
-cze None
-sis None
-ena None
-enc None
-end None
-ene None
-enf None
-eng None
-enh None
-siz None
-aff None
-afg None
-num None
-eno None
-pmi None
-how None
-hot None
-ens None
-ent None
-hos None
-env None
-sid None
-aft None
-tak None
-sin None
-afr None
-sil None
-map None
-lan None
-mar None
-mau None
-lai None
-lak None
-lad None
-max None
-use None
-urb None
-lab None
-lac None
-mac None
-lay None
-mag None
-ove None
-14. None
-lau None
-mak None
-law None
-mam None
-mal None
-lar None
-hoc None
-egy None
-wei None
-pag None
-sli None
-ste None
-sit None
-wav None
-kel None
-obs None
-hon None
-las None
-gho None
-enj None
-pt: None
-49. None
-hom None
-usc None
-wit None
-ite None
-13. None
-ita None
-zer None
-09. None
-wri None
-rya None
-its None
-fir None
-fis None
-clo None
-byz None
-cli None
-40. None
-eug None
-jim None
-imm None
-cla None
-him None
-fic None
-hou None
-fif None
-fig None
-fie None
-clu None
-fin None
-fil None
-eur None
-nom None
-non None
-usa None
-hop None
-cea None
-evi None
-dal None
-cen None
-cem None
-cel None
-dai None
-nob None
-dak None
-dat None
-dau None
-dav None
-daw None
-it: None
-cer None
-dar None
-13t None
-not None
-sht None
-nov None
-now None
-day None
-nor None
-oxy None
-pak None
-tro None
-uni None
-37. None
-hil None
-tra None
-sim None
-man None
-eva None
-wel None
-emo None
-mai None
-mda None
-39. None
-eve None
-wee None
-wat None
-pho None
-gul None
-mat None
-gol None
-goo None
-gon None
-goi None
-tie None
-blu None
-god None
-rep None
-req None
-goa None
-ret None
-rej None
-may None
-blo None
-rei None
-bli None
-rel None
-nic None
-reb None
-got None
-gov None
-bla None
-reg None
-gos None
-emp None
-ass None
-pun None
-asp None
-ast None
-eco None
-pue None
-ort None
-24. None
-pub None
-nig None
-qua None
-orl None
-wal None
-que None
-sym None
-ori None
-58. None
-org None
-asi None
-ore None
-orb None
-orc None
-pur None
-log None
-rot None
-val None
-51. None
-iss None
-ato None
-atl None
-__n None
-ath None
-cro None
-att None
-iso None
-upp None
-isl None
-isb None
-isa None
-yug None
-mad None
-17. None
-mor None
-equ None
-rur None
-ong None
-loo None
-sof None
-lat None
-onl None
-swi None
-tot None
-45. None
-art None
-ont None
-tem None
-jer None
-jes None
-maj None
-jew None
-kon None
-tor None
-top None
-sep None
-18. None
-tow None
-soi None
-tou None
-182 None
-183 None
-180 None
-181 None
-186 None
-187 None
-184 None
-185 None
-vla None
-jef None
-188 None
-189 None
-htm None
-mer None
-low None
-hud None
-hug None
-heb None
-hum None
-hun None
-tom None
-cyc None
-eli None
-27. None
-hus None
-kev None
-17t None
-06. None
-vie None
-seg None
-beh None
-bei None
-ben None
-sta None
-bel None
-bec None
-bea None
-bef None
-beg None
-bee None
-stu None
-syn None
-bey None
-tod None
-18t None
-ber None
-bes None
-upd None
-sty None
-bet None
-are None
-and None
-20p None
-rad None
-ang None
-pra None
-ana None
-sam None
-anc None
-ran None
-ann None
-ano None
-pri None
-ani None
-rai None
-ant None
-rat None
-sax None
-rar None
-rap None
-ans None
-lui None
-vik None
-any None
-sau None
-ray None
-lie None
-lif None
-lig None
-mil None
-lib None
-lic None
-mia None
-lim None
-lin None
-lio None
-32. None
-mid None
-mig None
-lik None
-lit None
-mix None
-liv None
-liq None
-lis None
-mis None
-mir None
-mit None
-eff None
-rhy None
-200 None
-war None
-thi None
-suf None
-who None
-def None
-fos None
-jst None
-kar None
-eag None
-net None
-typ None
-20, None
-awa None
-20. None
-doi None
-don None
-doo None
-dol None
-dom None
-doc None
-nei None
-dog None
-exh None
-doe None
-ext None
-oxf None
-exp None
-neg None
-axi None
-dov None
-dow None
-dou None
-sig None
-sul None
-56. None
-neb None
-zea None
-12t None
-nea None
-whi None
-one None
-ses None
-jaz None
-ocl None
-wol None
-jav None
-occ None
-sto None
-54. None
-jas None
-jap None
-jan None
-jam None
-jac None
-sur None
-ger None
-hir None
-his None
-hit None
-tog None
-get None
-she None
-12. None
-dyn None
-hid None
-hig None
-geo None
-gen None
-hin None
-eme None
-bat None
-aer None
-bar None
-bas None
-emb None
-41. None
-cry None
-muh None
-sum None
-sha None
-cra None
-bab None
-bac None
-cre None
-ban None
-shi None
-bal None
-cri None
-ult None
-bak None
-sho None
-sev None
-arr None
-set None
-03. None
-ser None
-seq None
-ken None
-tig None
-sex None
-roc None
-ara None
-see None
-arc None
-sec None
-31. None
-sea None
-arg None
-ari None
-sem None
-sel None
-arm None
-arn None
-aro None
-36. None
-mut None
-row None
-lef None
-mus None
-mur None
-wou None
-unr None
-vas None
-wor None
-wom None
-iri None
-woo None
-lud None
-tea None
-muc None
-iro None
-ira None
-mun None
-ire None
-lun None
-ima None
-jor None
-jos None
-jou None
-kei None
-uns None
-kee None
-38. None
-joa None
-job None
-cut None
-tun None
-joh None
-fiv None
-tub None
-jon None
-ham None
-cop None
-cos None
-cor None
-cou None
-cot None
-cov None
-ill None
-ety None
-coa None
-una None
-unc None
-und None
-cod None
-cog None
-cle None
-coi None
-coh None
-eth None
-oct None
-com None
-col None
-coo None
-con None
-pre None
-var None
-25. None
-mes None
-pov None
-pow None
-pot None
-lew None
-por None
-pos None
-pop None
-poo None
-pol None
-57. None
-joi None
-16t None
-250 None
-poe None
-rog None
-opi None
-20t None
-50. None
-twe None
-fra None
-duk None
-fre None
-imp None
-dua None
-dub None
-duc None
-fro None
-mex None
-sac None
-fru None
-pia None
-kep None
-dut None
-mys None
-saf None
-oth None
-16. None
-mcg None
-gav None
-vio None
-gat None
-gar None
-pie None
-gam None
-46. None
-gai None
-els None
-unt None
-ott None
-unu None
-pru None
-fut None
-cul None
-fur None
-eit None
-ski None
-isr None
-say None
-air None
-aim None
-fue None
-hav None
-eig None
-gla None
-fun None
-fr: None
-ful None
-sma None
-sla None
-okl None
-ini None
-opt None
-voc None
-riv None
-dru None
-rit None
-ris None
-h3l None
-gle None
-rin None
-avo None
-avi None
-sar None
-07. None
-ave None
-rid None
-eri None
-ava None
-sai None
-noi None
-pap None
-par None
-pas None
-pat None
-pau None
-yal None
-sav None
-mos None
-pac None
-gui None
-dam None
-pai None
-web None
-inc None
-pal None
-dan None
-pan None
-une None
-phi None
-02. None
-nin None
-dro None
-syd None
-iow None
-bib None
-pha None
-00. None
-phe None
-mov None
-sys None
-syr None
-phy None
-kin None
-kil None
-phr None
-six None
-kno None
-til None
-off None
-kni None
-35. None
-thu None
-kne None
-thr None
-try None
-tho None
-oft None
-epi None
-san None
-the None
-mic None
-tha None
-hol None
-tim None
-yel None
-upr None
-wif None
-yea None
-gun None
-rac None
-ipa None
-zon None
-usu None
-21. None
-tis None
-ams None
-adv None
-hai None
-wea None
-adu None
-cus None
-cur None
-han None
-28. None
-tok None
-sca None
-flo None
-wen None
-eld None
-ele None
-wes None
-add None
-sal None
-cub None
-str None
-ada None
-hap None
-ado None
-har None
-adm None
-adj None
-app None
-cui None
-haw None
-bin None
-bio None
-bil None
-wil None
-opp None
-21s None
-amo None
-ama None
-big None
-amb None
-ame None
-26. None
-mou None
-mot None
-wai None
-ope None
-psy None
-moo None
-mon None
-mom None
-mol None
-mob None
-bit None
-bir None
-bis None
-mod None
-vir None
-med None
-vis None
-53. None
-sic None
-wis None
-wir None
-www None
-htt None
-vit None
-whe None
-oli None
-11. None
-pl: None
-rec None
-sen None
-oly None
-30e None
-wha None
-fou None
-vol None
-est None
-ess None
-for None
-42. None
-pet None
-res None
-per None
-pen None
-peo None
-esc None
-foc None
-fol None
-fon None
-foo None
-pea None
-04. None
-plu None
-run None
-rul None
-300 None
-rug None
-kan None
-11t None
-ple None
-30. None
-plo None
-feb None
-acc None
-aca None
-bgc None
-obj None
-swo None
-nda None
-aci None
-ach None
-es: None
-twi None
-acr None
-acq None
-act None
-obv None
-obt None
-ide None
-fri None
-soc None
-own None
-ahe None
-loc None
-swe None
-som None
-sol None
-soo None
-son None
-mas None
-sor None
-sou None
-sov None
-old None
-ton None
-wan None
-giv None
-loa None
-wak None
-gir None
-her None
-sie None
-vac None
-tur None
-hor None
-lon None
-hal None
-lor None
-gif None
-lov None
-hea None
-gia None
-lou None
-gio None
-uss None
-hen None
-gil None
-was None
-hei None
-fes None
-22. None
-jua None
-jud None
-bur None
-bus None
-eac None
-jun None
-but None
-jum None
-jur None
-jus None
-jup None
-bui None
-bul None
-sun None
-eas None
-ear None
-buf None
-eat None
-bud None
-exc None
-uta None
-sti None
-exa None
-cin None
-dmo None
-cir None
-civ None
-cit None
-nbs None
-150 None
-pil None
-ohi None
-lyr None
-pio None
-int None
-kor None
-inv None
-pic None
-inp None
-myt None
-ins None
-inl None
-inn None
-inh None
-dre None
-inj None
-unk None
-ind None
-kha None
-inf None
-exi None
-pit None
-15. None
-ukr None
-tit None
-way None
-nan None
-poi None
-nam None
-nar None
-nas None
-nap None
-gre None
-nav None
-unl None
-nat None
-gra None
-naz None
-gro None
-you None
-out None
-yor None
-48. None
-15t None
-squ None
-tec None
-08. None
-sqm None
-ico None
-tan None
-mik None
-tac None
-sno None
-ord None
-sat None
-age None
-esp None
-47. None
-aga None
-goe None
-gal None
-quo None
-onc None
-agr None
+alo
+all
+alm
+rol
+edg
+ron
+ali
+alf
+alg
+rob
+ale
+alb
+alc
+1,0
+ala
+roy
+llo
+edw
+edu
+ric
+alw
+alt
+alu
+alr
+rou
+alp
+rom
+ree
+ver
+aud
+aug
+wid
+34.
+roo
+qui
+sce
+aus
+aut
+roa
+tai
+ren
+vel
+vot
+veh
+edi
+smi
+far
+fas
+rem
+fav
+fat
+sco
+flu
+voy
+fai
+fan
+01.
+fal
+fam
+fac
+edm
+fus
+29.
+dim
+gua
+rea
+hyd
+gue
+evo
+did
+die
+dif
+dig
+tre
+dia
+dic
+hyp
+cas
+min
+rev
+div
+gor
+dip
+dir
+dis
+too
+des
+199
+198
+ten
+195
+194
+197
+196
+191
+190
+193
+192
+tex
+scu
+19.
+dev
+jea
+ter
+tes
+osc
+10t
+59.
+sug
+aba
+abb
+ros
+suc
+sub
+ere
+abi
+52.
+nee
+abl
+nec
+sui
+abo
+abr
+abs
+sus
+abu
+nex
+sup
+nev
+new
+imd
+neu
+can
+mee
+lea
+leb
+lec
+10.
+cam
+10,
+leg
+mem
+19t
+men
+len
+leo
+met
+les
+let
+44.
+lev
+cab
+mul
+100
+win
+ern
+ves
+43.
+boy
+ref
+glo
+fle
+bor
+bos
+bot
+bou
+bow
+dri
+tri
+bom
+bon
+boo
+dra
+boa
+bod
+boe
+sci
+vic
+05.
+fix
+mea
+pla
+vid
+nel
+apr
+oce
+bru
+vii
+vin
+23.
+vil
+hel
+bro
+ask
+33.
+vec
+apo
+bri
+rus
+tol
+tel
+bre
+apa
+sch
+2,0
+bra
+red
+cha
+fed
+fee
+eye
+che
+it'
+fea
+chi
+fel
+fem
+usi
+cho
+few
+chr
+fer
+chu
+wik
+ora
+los
+exe
+mec
+scr
+ral
+voi
+ven
+vi:
+tru
+fly
+sph
+wro
+err
+upo
+dep
+car
+der
+cap
+det
+cav
+cau
+cat
+fli
+dei
+nod
+del
+dem
+den
+cal
+fla
+dea
+deb
+dec
+ded
+dee
+cae
+deg
+sle
+tau
+14t
+atm
+tap
+tar
+tas
+wed
+spr
+spo
+tax
+tay
+pro
+nuc
+spi
+jul
+55.
+spl
+tab
+rig
+tal
+spa
+mel
+slo
+spe
+cze
+sis
+ena
+enc
+end
+ene
+enf
+eng
+enh
+siz
+aff
+afg
+num
+eno
+pmi
+how
+hot
+ens
+ent
+hos
+env
+sid
+aft
+tak
+sin
+afr
+sil
+map
+lan
+mar
+mau
+lai
+lak
+lad
+max
+use
+urb
+lab
+lac
+mac
+lay
+mag
+ove
+14.
+lau
+mak
+law
+mam
+mal
+lar
+hoc
+egy
+wei
+pag
+sli
+ste
+sit
+wav
+kel
+obs
+hon
+las
+gho
+enj
+pt:
+49.
+hom
+usc
+wit
+ite
+13.
+ita
+zer
+09.
+wri
+rya
+its
+fir
+fis
+clo
+byz
+cli
+40.
+eug
+jim
+imm
+cla
+him
+fic
+hou
+fif
+fig
+fie
+clu
+fin
+fil
+eur
+nom
+non
+usa
+hop
+cea
+evi
+dal
+cen
+cem
+cel
+dai
+nob
+dak
+dat
+dau
+dav
+daw
+it:
+cer
+dar
+13t
+not
+sht
+nov
+now
+day
+nor
+oxy
+pak
+tro
+uni
+37.
+hil
+tra
+sim
+man
+eva
+wel
+emo
+mai
+mda
+39.
+eve
+wee
+wat
+pho
+gul
+mat
+gol
+goo
+gon
+goi
+tie
+blu
+god
+rep
+req
+goa
+ret
+rej
+may
+blo
+rei
+bli
+rel
+nic
+reb
+got
+gov
+bla
+reg
+gos
+emp
+ass
+pun
+asp
+ast
+eco
+pue
+ort
+24.
+pub
+nig
+qua
+orl
+wal
+que
+sym
+ori
+58.
+org
+asi
+ore
+orb
+orc
+pur
+log
+rot
+val
+51.
+iss
+ato
+atl
+__n
+ath
+cro
+att
+iso
+upp
+isl
+isb
+isa
+yug
+mad
+17.
+mor
+equ
+rur
+ong
+loo
+sof
+lat
+onl
+swi
+tot
+45.
+art
+ont
+tem
+jer
+jes
+maj
+jew
+kon
+tor
+top
+sep
+18.
+tow
+soi
+tou
+182
+183
+180
+181
+186
+187
+184
+185
+vla
+jef
+188
+189
+htm
+mer
+low
+hud
+hug
+heb
+hum
+hun
+tom
+cyc
+eli
+27.
+hus
+kev
+17t
+06.
+vie
+seg
+beh
+bei
+ben
+sta
+bel
+bec
+bea
+bef
+beg
+bee
+stu
+syn
+bey
+tod
+18t
+ber
+bes
+upd
+sty
+bet
+are
+and
+20p
+rad
+ang
+pra
+ana
+sam
+anc
+ran
+ann
+ano
+pri
+ani
+rai
+ant
+rat
+sax
+rar
+rap
+ans
+lui
+vik
+any
+sau
+ray
+lie
+lif
+lig
+mil
+lib
+lic
+mia
+lim
+lin
+lio
+32.
+mid
+mig
+lik
+lit
+mix
+liv
+liq
+lis
+mis
+mir
+mit
+eff
+rhy
+200
+war
+thi
+suf
+who
+def
+fos
+jst
+kar
+eag
+net
+typ
+20,
+awa
+20.
+doi
+don
+doo
+dol
+dom
+doc
+nei
+dog
+exh
+doe
+ext
+oxf
+exp
+neg
+axi
+dov
+dow
+dou
+sig
+sul
+56.
+neb
+zea
+12t
+nea
+whi
+one
+ses
+jaz
+ocl
+wol
+jav
+occ
+sto
+54.
+jas
+jap
+jan
+jam
+jac
+sur
+ger
+hir
+his
+hit
+tog
+get
+she
+12.
+dyn
+hid
+hig
+geo
+gen
+hin
+eme
+bat
+aer
+bar
+bas
+emb
+41.
+cry
+muh
+sum
+sha
+cra
+bab
+bac
+cre
+ban
+shi
+bal
+cri
+ult
+bak
+sho
+sev
+arr
+set
+03.
+ser
+seq
+ken
+tig
+sex
+roc
+ara
+see
+arc
+sec
+31.
+sea
+arg
+ari
+sem
+sel
+arm
+arn
+aro
+36.
+mut
+row
+lef
+mus
+mur
+wou
+unr
+vas
+wor
+wom
+iri
+woo
+lud
+tea
+muc
+iro
+ira
+mun
+ire
+lun
+ima
+jor
+jos
+jou
+kei
+uns
+kee
+38.
+joa
+job
+cut
+tun
+joh
+fiv
+tub
+jon
+ham
+cop
+cos
+cor
+cou
+cot
+cov
+ill
+ety
+coa
+una
+unc
+und
+cod
+cog
+cle
+coi
+coh
+eth
+oct
+com
+col
+coo
+con
+pre
+var
+25.
+mes
+pov
+pow
+pot
+lew
+por
+pos
+pop
+poo
+pol
+57.
+joi
+16t
+250
+poe
+rog
+opi
+20t
+50.
+twe
+fra
+duk
+fre
+imp
+dua
+dub
+duc
+fro
+mex
+sac
+fru
+pia
+kep
+dut
+mys
+saf
+oth
+16.
+mcg
+gav
+vio
+gat
+gar
+pie
+gam
+46.
+gai
+els
+unt
+ott
+unu
+pru
+fut
+cul
+fur
+eit
+ski
+isr
+say
+air
+aim
+fue
+hav
+eig
+gla
+fun
+fr:
+ful
+sma
+sla
+okl
+ini
+opt
+voc
+riv
+dru
+rit
+ris
+h3l
+gle
+rin
+avo
+avi
+sar
+07.
+ave
+rid
+eri
+ava
+sai
+noi
+pap
+par
+pas
+pat
+pau
+yal
+sav
+mos
+pac
+gui
+dam
+pai
+web
+inc
+pal
+dan
+pan
+une
+phi
+02.
+nin
+dro
+syd
+iow
+bib
+pha
+00.
+phe
+mov
+sys
+syr
+phy
+kin
+kil
+phr
+six
+kno
+til
+off
+kni
+35.
+thu
+kne
+thr
+try
+tho
+oft
+epi
+san
+the
+mic
+tha
+hol
+tim
+yel
+upr
+wif
+yea
+gun
+rac
+ipa
+zon
+usu
+21.
+tis
+ams
+adv
+hai
+wea
+adu
+cus
+cur
+han
+28.
+tok
+sca
+flo
+wen
+eld
+ele
+wes
+add
+sal
+cub
+str
+ada
+hap
+ado
+har
+adm
+adj
+app
+cui
+haw
+bin
+bio
+bil
+wil
+opp
+21s
+amo
+ama
+big
+amb
+ame
+26.
+mou
+mot
+wai
+ope
+psy
+moo
+mon
+mom
+mol
+mob
+bit
+bir
+bis
+mod
+vir
+med
+vis
+53.
+sic
+wis
+wir
+www
+htt
+vit
+whe
+oli
+11.
+pl:
+rec
+sen
+oly
+30e
+wha
+fou
+vol
+est
+ess
+for
+42.
+pet
+res
+per
+pen
+peo
+esc
+foc
+fol
+fon
+foo
+pea
+04.
+plu
+run
+rul
+300
+rug
+kan
+11t
+ple
+30.
+plo
+feb
+acc
+aca
+bgc
+obj
+swo
+nda
+aci
+ach
+es:
+twi
+acr
+acq
+act
+obv
+obt
+ide
+fri
+soc
+own
+ahe
+loc
+swe
+som
+sol
+soo
+son
+mas
+sor
+sou
+sov
+old
+ton
+wan
+giv
+loa
+wak
+gir
+her
+sie
+vac
+tur
+hor
+lon
+hal
+lor
+gif
+lov
+hea
+gia
+lou
+gio
+uss
+hen
+gil
+was
+hei
+fes
+22.
+jua
+jud
+bur
+bus
+eac
+jun
+but
+jum
+jur
+jus
+jup
+bui
+bul
+sun
+eas
+ear
+buf
+eat
+bud
+exc
+uta
+sti
+exa
+cin
+dmo
+cir
+civ
+cit
+nbs
+150
+pil
+ohi
+lyr
+pio
+int
+kor
+inv
+pic
+inp
+myt
+ins
+inl
+inn
+inh
+dre
+inj
+unk
+ind
+kha
+inf
+exi
+pit
+15.
+ukr
+tit
+way
+nan
+poi
+nam
+nar
+nas
+nap
+gre
+nav
+unl
+nat
+gra
+naz
+gro
+you
+out
+yor
+48.
+15t
+squ
+tec
+08.
+sqm
+ico
+tan
+mik
+tac
+sno
+ord
+sat
+age
+esp
+47.
+aga
+goe
+gal
+quo
+onc
+agr

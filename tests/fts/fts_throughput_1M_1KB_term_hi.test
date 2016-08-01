@@ -23,4 +23,6 @@ type = term
 query_file = perfrunner/tests/FTS/hiterm.txt
 query_size = 10
 logfile = /tmp/fts_thput_termhi_1M_1K.txt
-orderby = medium_term
+orderby = q1_high_term
+backup_path = /home/wiki1M
+field = text

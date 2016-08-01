@@ -23,4 +23,6 @@ type = fuzzy
 query_file = perfrunner/tests/FTS/fuzzy_2.txt
 query_size = 10
 logfile = /tmp/fts_latency_fuzzy_1M_1K.txt
-orderby = fuzzy_2
+orderby = q11_fuzzy_2
+backup_path = /home/wiki1M
+field = text

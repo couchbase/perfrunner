@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.fts.FTSThroughputTest
-title =  WildcardQuery, no kv-load, wiki 1M x 1KB
+title =  NumericRangeQuery, no kv-load, wiki 1M x 1KB
 summary = FTS throughput Test
 larger_is_better = true
 fts = true
@@ -15,14 +15,14 @@ num_buckets = 1
 fts_index_mem_quota = 20000
 
 [fts]
-items = 1000000
+items = 3273681
 name  = perf_fts_index
 port = 8094
 worker= 8
-type = wildcard
-query_file = perfrunner/tests/FTS/wildcard.txt
+type = numeric
+query_file = perfrunner/tests/FTS/numeric_range.txt
 query_size = 10
-logfile = /tmp/fts_thput_wildcard_1M_1K.txt
-orderby = q15_wildcard
-backup_path = /home/wiki1M
-field = text
+logfile = /tmp/fts_throughput_numeric_1M_1K.txt
+orderby = q12_numeric
+backup_path = /home/numericdata
+field = time

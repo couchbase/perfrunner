@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.elastic.ElasticThroughputTest
-title = Med Term, wiki 1M x 1KB
+title = Med Term,  no kv-load, wiki 1M x 1KB
 summary = ELasticSearch throughput test
 larger_is_better = true
 
@@ -13,8 +13,10 @@ type = term
 query_file = perfrunner/tests/FTS/midterm.txt
 query_size = 10
 elastic = 1
-logfile = /tmp/elastic_thput_termmed_1M_1K.txt
-orderby = medium_term
+logfile = /tmp/elastic_throughput_term_med_1M_1K.txt
+orderby = q2_medium_term
+backup_path = /home/wiki1M
+field = text
 
 [access]
 time = 600

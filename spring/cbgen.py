@@ -226,61 +226,76 @@ class FtsGen(CBGen):
                 'data': json.dumps(self.query)
                 }
 
-    def prepare_query_list(self, type='query'):
-        file = open(self.settings.query_file, 'r')
-        for line in file:
-            temp_query = {}
-            tosearch, freq = line.split()
-            if self.settings.type in ['conjuncts', 'disjuncts']:
-                '''
-                 For And, OR queries we create the list.
-                 Example looks like
-                 {"field": "title", "match": "1988"}
-                '''
-                tosearch = []
-                for terms in line.split():
-                    '''
-                     Term query is used for And/Or queries
-                    '''
-                    tosearch.append({"field": "text", "term": terms})
-            else:
-                if self.settings.type == 'fuzzy':
-                    temp_query['fuzziness'] = int(freq)
+    def process_lines(self, line):
+        if len(line) == 0:
+            raise Exception('Empty line')
+        if ' ' in line:
+            return line.strip().split()
+        else:
+            return line.strip(), None
 
-                elif self.settings.type == 'numeric_range':
+    def prepare_query_list(self, type='query'):
+        try:
+            file = open(self.settings.query_file, 'r')
+            for line in file:
+                temp_query = {}
+                tosearch, freq = self.process_lines(line.strip())
+                if self.settings.type in ['conjuncts', 'disjuncts']:
+                    '''
+                     For And, OR queries we create the list.
+                     Example looks like
+                     {"field": "title", "match": "1988"}
+                    '''
+                    tosearch = []
+                    for terms in line.split():
+                        '''
+                         Term query is used for And/Or queries
+                        '''
+                        tosearch.append({"field": "text", "term": terms})
+                    temp_query[self.settings.type] = tosearch
+
+                elif self.settings.type == 'fuzzy':
+                    temp_query['fuzziness'] = int(freq)
+                    temp_query['term'] = tosearch
+
+                elif self.settings.type == 'numeric':
                     '''
                     Creating numeric range query Gen
                     '''
-                    maxv = tosearch
                     if freq.strip() == 'max_min':
-                        temp_query['max'] = maxv
-                        temp_query['min'] = maxv - 1000
+                        temp_query['max'], temp_query['min'] = [float(k) for k in tosearch.split(':')]
                     elif freq.strip() == 'max':
-                        temp_query['max'] = maxv
+                        temp_query['max'] = float(tosearch)
                     else:
-                        temp_query['min'] = maxv - 1000
+                        temp_query['min'] = float(tosearch)
+                    temp_query['inclusive_max'] = False
+                    temp_query['inclusive_min'] = False
 
-                if self.settings.type == 'match':
+                elif self.settings.type == 'match':
                     '''
                     Just reassign the whole line to it
                     '''
                     tosearch = line.strip()
+                    temp_query[self.settings.type] = tosearch
 
-                temp_query['field'] = "text"
+                elif self.settings.type == 'ids':
+                    tosearch = [tosearch]
+                    temp_query[self.settings.type] = tosearch
+                else:
+                    temp_query[self.settings.type] = tosearch
 
-            if self.settings.type != 'numeric_range':
-                '''
-                Becuase we declare it earlier.
-                Bruteforce way
-                '''
-                temp_query[self.settings.type] = tosearch
-            self.query['query'] = temp_query
-            self.query['size'] = self.settings.query_size
-            self.fts_query += 'index/' + self.settings.name + '/' + type
-            self.query_list.append(self.form_url(self.fts_query))
-            self.fts_query = self.fts_copy
-        shuffle(self.query_list)
-        self.query_iterator = itertools.cycle(self.query_list)
+                temp_query['field'] = self.settings.field
+                self.query['query'] = temp_query
+                self.query['size'] = self.settings.query_size
+                self.fts_query += 'index/' + self.settings.name + '/' + type
+                self.query_list.append(self.form_url(self.fts_query))
+                self.fts_query = self.fts_copy
+            shuffle(self.query_list)
+            self.query_iterator = itertools.cycle(self.query_list)
+        except OSError as err:
+            logger.info("OS error: {0}".format(err))
+        except Exception:
+            pass
 
     def next(self):
         return self.requests.post, self.query_iterator.next()
@@ -310,47 +325,63 @@ class ElasticGen(FtsGen):
 
     def prepare_query(self, type='query'):
         if type == 'query':
-            file = open(self.settings.query_file, 'r')
-            for line in file:
-                self.elastic_query = self.elastic_copy
-                term, freq = line.split()
-                self.query['size'] = self.settings.query_size
-                self.elastic_query += self.settings.name + '/_search?pretty'
-                tmp_query = {}
-                tmp_query_txt = {}
-                if self.settings.type == 'fuzzy':
-                    '''
-                    fuzziness is extra parameter for fuzzy
-                    Source: https://www.elastic.co/guide/en/elasticsearch/reference/current/
-                    query-dsl-fuzzy-query.html
-                    '''
-                    tmp_fuzzy = {}
-                    tmp_fuzzy['fuzziness'] = int(freq)
-                    tmp_fuzzy['value'] = term
-                    tmp_query_txt['text'] = tmp_fuzzy
-                elif self.settings.type == 'ids':
-                    '''
-                    values is extra parameter for Docid
-                    source: https://www.elastic.co/guide/en/elasticsearch/reference/
-                    current/query-dsl-ids-query.html
-                    '''
-                    tmp_query_txt['values'] = [term]
+            try:
+                file = open(self.settings.query_file, 'r')
+                for line in file:
+                    self.elastic_query = self.elastic_copy
+                    term, freq = self.process_lines(line.strip())
+                    self.query['size'] = self.settings.query_size
+                    self.elastic_query += self.settings.name + '/_search?pretty'
+                    tmp_query = {}
+                    tmp_query_txt = {}
+                    if self.settings.type == 'fuzzy':
+                        '''
+                        fuzziness is extra parameter for fuzzy
+                        Source: https://www.elastic.co/guide/en/elasticsearch/reference/current/
+                        query-dsl-fuzzy-query.html
+                        '''
+                        tmp_fuzzy = {}
+                        tmp_fuzzy['fuzziness'] = int(freq)
+                        tmp_fuzzy['value'] = term
+                        tmp_query_txt[self.settings.field] = tmp_fuzzy
+                    elif self.settings.type == 'ids':
+                        '''
+                        values is extra parameter for Docid
+                        source: https://www.elastic.co/guide/en/elasticsearch/reference/
+                        current/query-dsl-ids-query.html
+                        '''
+                        tmp_query_txt['values'] = [term]
 
-                elif self.settings.type == 'match':
-                    '''
-                    Just reassign the whole line to it
-                    Source: https://www.elastic.co/guide/en/elasticsearch/reference/
-                    current/query-dsl-fuzzy-query.html
-                    '''
-                    tmp_query_txt['text'] = line.strip()
-                else:
-                    tmp_query_txt['text'] = term
+                    elif self.settings.type == 'match':
+                        '''
+                        Just reassign the whole line to it
+                        Source: https://www.elastic.co/guide/en/elasticsearch/reference/
+                        current/query-dsl-fuzzy-query.html
+                        '''
+                        tmp_query_txt[self.settings.field] = line.strip()
 
-                tmp_query[self.settings.type] = tmp_query_txt
-                self.query['query'] = tmp_query
-                self.query_list.append(self.form_url(self.elastic_query))
-            shuffle(self.query_list)
-            self.query_iterator = itertools.cycle(self.query_list)
+                    elif self.settings.type == 'range':
+                        trange = {}
+                        if freq.strip() == 'max_min':
+                            trange['gte'], trange['lte'] = [float(k) for k in term.split(':')]
+                        elif freq.strip() == 'max':
+                            trange['gte'] = float(term)
+                        else:
+                            trange['lte'] = float(term)
+                        tmp_query_txt[self.settings.field] = trange
+
+                    else:
+                        tmp_query_txt[self.settings.field] = term
+
+                    tmp_query[self.settings.type] = tmp_query_txt
+                    self.query['query'] = tmp_query
+                    self.query_list.append(self.form_url(self.elastic_query))
+                shuffle(self.query_list)
+                self.query_iterator = itertools.cycle(self.query_list)
+            except OSError as err:
+                logger.info("OS error: {0}".format(err))
+            except Exception:
+                pass
         elif type == 'stats':
             self.elastic_query += self.settings.name + '/_stats/'
             return self.requests.get, self.form_url(self.elastic_query)

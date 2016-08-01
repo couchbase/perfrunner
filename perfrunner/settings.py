@@ -786,6 +786,8 @@ class FtsSettings(object):
         self.type = options.get("type", "match")
         self.logfile = options.get("logfile", None)
         self.orderby = options.get("orderby", None)
+        self.storage = options.get("backup_path")
+        self.field = options.get("field", None)
 
     def __str__(self):
         return str(self.__dict__)

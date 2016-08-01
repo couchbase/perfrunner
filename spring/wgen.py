@@ -754,7 +754,22 @@ class FtsWorker(Worker):
         self.fts_es_query = instance
         self.fts_es_query.prepare_query()
 
+    def do_check_result(self, r):
+        '''
+        Check whether the query returned 0 hits
+        '''
+        if self.ws.fts_config.elastic:
+            return r.json()["hits"]["total"] == 0
+        return r.json()['total_hits'] == 0
+
     def do_batch(self):
+        '''
+        need to store the info if any zero hit, no results
+        we cant do for all workers. one worker will do this,
+        all inputs are from iterator, so it will have a fair
+        amount to proper result. Last worker is scheduled to
+        do the logging stuff.
+        '''
         for i in range(self.BATCH_SIZE):
             if not self.time_to_stop():
                 cmd, args = self.fts_es_query.next()
@@ -771,7 +786,7 @@ class FtsWorker(Worker):
                             continue
                         f = open(self.ws.fts_config.logfile, 'w')
                         if r.status_code not in range(200, 203) \
-                                or r.json()["hits"]["total"] == 0:
+                                or self.do_check_result(r):
                             f.write(str(args))
                             f.write(str(r.status_code))
                             f.write(str(r.text))

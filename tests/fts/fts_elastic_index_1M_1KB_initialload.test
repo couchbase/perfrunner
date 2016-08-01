@@ -8,7 +8,8 @@ larger_is_better = false
 items = 1000000
 name  = perf_elastic_index
 port = 9091
-orderby = index
+orderby = q0_index
+backup_path = /home/wiki1M
 
 [cluster]
 mem_quota = 51024

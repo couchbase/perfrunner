@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.ThroughputTest
-title = Average ops/sec, 50/50 R/W, 500M x 1KB docs, full ejection, 5%% cache miss rate, no compaction
+title = 50/50 R/W, 500M x 1KB, full ejection, 5%% cache miss rate, no compaction
 summary = KV throughput test, 50/50 R/W, 500M x 1KB docs, full ejection, 5%% cache miss rate
 larger_is_better = true
 

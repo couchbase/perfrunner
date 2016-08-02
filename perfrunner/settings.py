@@ -807,6 +807,7 @@ class YcsbSettings(object):
         self.path = options.get("path")
         self.log_file = options.get("export_file")
         self.log_path = options.get("export_file_path")
+        self.index = options.get("index")
 
     def __str__(self):
         return str(self.__dict__)

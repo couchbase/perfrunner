@@ -68,7 +68,7 @@ class Monitor(RestHelper):
                 if stats:
                     last_value = stats[-1]
                     if last_value:
-                        logger.info('{} = {}'.format(metric, last_value))
+                        logger.info('{} = {:,}'.format(metric, last_value))
                         continue
                     else:
                         logger.info('{} reached 0'.format(metric))

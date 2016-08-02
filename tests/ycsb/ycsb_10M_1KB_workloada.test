@@ -31,4 +31,4 @@ path = /root/perfrunner-ycsb/YCSB
 workload_path = /workloads/workloada
 size = 1024
 operationcount = 10000000
-parameters = couchbase.upsert=true, couchbase.queryEndpoints=1, couchbase.epoll=1, couchbase.boost=0
+

@@ -131,6 +131,8 @@ class YCSBdata(PerfTest):
             commandlist.append('-p operationcount=%s' % self.ycsb.opcount)
             commandlist.append('-p exportfile=%s' % (self.ycsb.log_path +
                                                      self.ycsb.log_file))
+            for param in self.ycsb.parameters.split(', '):
+                commandlist.append('-p %s' % param)
 
         return ' '.join(commandlist)
 

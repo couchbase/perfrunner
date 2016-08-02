@@ -163,7 +163,7 @@ class MetricHelper(object):
             db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
             data = self.seriesly[db].query(query_params)
             ops += data.values()[0][0]
-        ops = round(ops, 1)
+        ops = int(ops)
 
         return ops, metric, metric_info
 

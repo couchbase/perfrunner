@@ -532,8 +532,6 @@ class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest
         self.run_access_for_2i(run_in_background=True)
         self.rebalance(initial_nodes[0], nodes_after[0])
         self.apply_scanworkload()
-        scan_latency = self.cal_secondaryscan_latency(percentile=80)
-        logger.info("Scan latency = {}".format(scan_latency))
         if self.test_config.stats_settings.enabled:
             self.reporter.post_to_sf(
                 *self.metric_helper.calc_secondaryscan_latency(percentile=80)

@@ -133,7 +133,26 @@ class CreateData(object):
                 cmd = 'cp ' + file + ' news/' + newfile
                 os.system(cmd)
 
+        @staticmethod
+        def generatebinary():
+            '''
+             This is used to generate numbers used for orderby
+             parameters for .test file
+             all strings generated will be always sorted in order
+             '''
+            for i in range(18):
+                print i, 'q' + format(i, '#010b')
+
+        @staticmethod
+        def generate_test_fts():
+            '''
+            Here we will generate the fts part,
+            '''
+            pass
+
 '''
+    #AndHighOrMedMed
+    #AndMedOrHighHigh
     CreateData.createandor('midterm.txt', 'hiterm.txt')
     CreateData.createprefix('midterm.txt')
     CreateData.createwildcard('midterm.txt')

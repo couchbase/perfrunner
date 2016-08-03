@@ -26,6 +26,6 @@ type = term
 query_file = perfrunner/tests/FTS/lowterm.txt
 query_size = 10
 logfile = /tmp/fts_latency_term_low_1M_1K.txt
-orderby = q3_low_term
+orderby = q0b00000011
 backup_path = /home/wiki1M
 field = text

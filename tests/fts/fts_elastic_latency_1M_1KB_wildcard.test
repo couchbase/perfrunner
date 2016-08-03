@@ -14,7 +14,7 @@ query_file = perfrunner/tests/FTS/wildcard.txt
 query_size = 10
 elastic = 1
 logfile = /tmp/elastic_latency_wildcard_1M_1K.txt
-orderby = q15_wildcard
+orderby = q0b00001111
 backup_path = /home/wiki1M
 field = text
 

@@ -8,13 +8,13 @@ larger_is_better = true
 items = 1000000
 name  = perf_elastic_index
 port = 9091
-worker= 18
+worker= 10
 type = fuzzy
 query_file = perfrunner/tests/FTS/fuzzy_2.txt
 query_size = 10
 elastic = 1
 logfile = /tmp/elastic_latency_fuzzy_2_1M_1K.txt
-orderby = fuzzy_2
+orderby = q0b00001011
 backup_path = /home/wiki1M
 field = text
 

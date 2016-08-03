@@ -234,25 +234,33 @@ class FtsGen(CBGen):
         else:
             return line.strip(), None
 
+    def process_conj_disj(self, ttypes):
+        index = 0
+        keytypes = []
+        while index < len(ttypes):
+            count = int(ttypes[index])
+            keytypes += count * [ttypes[index + 1]]
+            index += 2
+        return itertools.cycle(keytypes)
+
     def prepare_query_list(self, type='query'):
         try:
             file = open(self.settings.query_file, 'r')
             for line in file:
                 temp_query = {}
                 tosearch, freq = self.process_lines(line.strip())
-                if self.settings.type in ['conjuncts', 'disjuncts']:
+                if self.settings.type in['2_conjuncts', '2_disjuncts', '1_conjuncts_2_disjuncts']:
                     '''
                      For And, OR queries we create the list.
                      Example looks like
                      {"field": "title", "match": "1988"}
                     '''
-                    tosearch = []
+                    keytypes = self.process_conj_disj(self.settings.type.split('_'))
                     for terms in line.split():
                         '''
                          Term query is used for And/Or queries
                         '''
-                        tosearch.append({"field": "text", "term": terms})
-                    temp_query[self.settings.type] = tosearch
+                        temp_query[keytypes.next()].append({"field": self.settings.field, "term": terms})
 
                 elif self.settings.type == 'fuzzy':
                     temp_query['fuzziness'] = int(freq)
@@ -322,6 +330,7 @@ class ElasticGen(FtsGen):
         self.elastic_query = "http://{}:9200/".format(elastic_url)
         self.elastic_copy = copy.deepcopy(self.elastic_query)
         self.auth = None
+        self.bool_map = {'conjuncts': 'must', 'disjuncts': 'should'}
 
     def prepare_query(self, type='query'):
         if type == 'query':
@@ -369,6 +378,19 @@ class ElasticGen(FtsGen):
                         else:
                             trange['lte'] = float(term)
                         tmp_query_txt[self.settings.field] = trange
+
+                    elif self.settings.type in ['2_conjuncts', '2_disjuncts', '1_conjuncts_2_disjuncts']:
+                        '''
+                        For mix queries the name is like a map '1_conjuncts_2_disjuncts'
+                        => 1 conjuncts and 2 disjuncts
+                        '''
+                        tbool = {v: [] for k, v in self.bool_map.iteritems()}
+                        keytypes = self.process_conj_disj(self.settings.type.split('_'))
+                        for term in line.strip().split():
+                            key = self.bool_map[keytypes.next()]
+                            tbool[key].append({'term': {self.settings.field: term}})
+                        tmp_query_txt = tbool
+                        self.settings.type = 'bool'
 
                     else:
                         tmp_query_txt[self.settings.field] = term

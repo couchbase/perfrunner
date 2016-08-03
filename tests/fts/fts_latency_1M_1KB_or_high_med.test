@@ -24,6 +24,6 @@ type = disjuncts
 query_file = perfrunner/tests/FTS/mid_hi.txt
 query_size = 10
 logfile = /tmp/fts_orhimed_1M_1K.txt
-orderby = q5_OrHighMed
+orderby = q0b00000101
 backup_path = /home/wiki1M
 field = text

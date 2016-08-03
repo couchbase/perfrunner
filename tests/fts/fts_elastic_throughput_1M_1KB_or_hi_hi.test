@@ -1,7 +1,7 @@
 [test_case]
-test = perfrunner.tests.fts.FTSThroughputTest
-title =  AndHighHigh, no kv-load, wiki 1M x 1KB
-summary = FTS throughput Test
+test = perfrunner.tests.elastic.ElasticThroughputTest
+title =  OrHighHigh, no kv-load, wiki 1M x 1KB
+summary = ElasticSearch throughput Test
 larger_is_better = true
 fts = true
 
@@ -19,10 +19,11 @@ items = 1000000
 name  = perf_fts_index
 port = 8094
 worker= 30
-type = 2_conjuncts
+type = 2_disjuncts
 query_file = perfrunner/tests/FTS/hi_hi.txt
 query_size = 10
-logfile = /tmp/fts_thput_andhihi_1M_1K.txt
-orderby = q0b00000110
+logfile = /tmp/fts_thput_orhihi_1M_1K.txt
+orderby = q0b00000111
 backup_path = /home/wiki1M
 field = text
+elastic = 1

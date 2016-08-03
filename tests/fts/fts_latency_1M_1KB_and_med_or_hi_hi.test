@@ -1,8 +1,8 @@
 [test_case]
 test = perfrunner.tests.fts.FTSLatencyTest
-title =  WildcardQuery, no kv-load, wiki 1M x 1KB
-summary = FTS Latency Test
-larger_is_better = true
+title = AndMedOrHighHigh, no kv-load, wiki 1M x 1KB
+summary = FTS latency Test
+larger_is_better = false
 fts = true
 
 [access]
@@ -14,15 +14,16 @@ initial_nodes = 1
 num_buckets = 1
 fts_index_mem_quota = 20000
 
+
 [fts]
 items = 1000000
 name  = perf_fts_index
 port = 8094
-worker= 2
-type = wildcard
-query_file = perfrunner/tests/FTS/wildcard.txt
+worker= 10
+type = 1_conjuncts_2_disjuncts
+query_file = perfrunner/tests/FTS/mid_hi.txt
 query_size = 10
-logfile = /tmp/fts_latency_wildcard_1M_1K.txt
-orderby = q0b00001111
+logfile = /tmp/fts_latency_AndMedOrHighHigh_1M_1K.txt
+orderby = q0b00001001
 backup_path = /home/wiki1M
 field = text

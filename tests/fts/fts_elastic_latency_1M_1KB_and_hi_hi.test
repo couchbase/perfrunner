@@ -1,7 +1,7 @@
 [test_case]
-test = perfrunner.tests.fts.FTSLatencyTest
+test = perfrunner.tests.elastic.ElasticLatencyTest
 title = AndHighHigh, no kv-load, wiki 1M x 1KB
-summary = FTS latency Test
+summary = Elasticsearch latency Test
 larger_is_better = false
 fts = true
 
@@ -14,13 +14,14 @@ items = 1000000
 name  = perf_fts_index
 port = 8094
 worker= 12
-type = conjuncts
+type = 2_conjuncts
 query_file = perfrunner/tests/FTS/hi_hi.txt
 query_size = 10
-logfile = /tmp/fts_latency_andhihi_1M_1K.txt
+logfile = /tmp/elastic_latency_and_hihi_1M_1K.txt
 orderby = q0b00000110
 backup_path = /home/wiki1M
 field = text
+elastic = 1
 
 [cluster]
 mem_quota = 51024

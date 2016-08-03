@@ -14,7 +14,7 @@ query_file = perfrunner/tests/FTS/midterm.txt
 query_size = 10
 elastic = 1
 logfile = /tmp/elastic_latency_termhi_1M_1K.txt
-orderby = q1_high_term
+orderby = q0b00000001
 backup_path = /home/wiki1M
 field = text
 

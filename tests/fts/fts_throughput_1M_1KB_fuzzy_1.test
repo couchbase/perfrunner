@@ -23,6 +23,6 @@ type = fuzzy
 query_file = perfrunner/tests/FTS/fuzzy_1.txt
 query_size = 10
 logfile = /tmp/fts_thput_fuzzy_1_1M_1K.txt
-orderby = q10_fuzzy_1
+orderby = q0b00001010
 backup_path = /home/wiki1M
 field = text

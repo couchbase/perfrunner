@@ -23,6 +23,6 @@ type = disjuncts
 query_file = perfrunner/tests/FTS/hi_hi.txt
 query_size = 10
 logfile = /tmp/fts_thput_orhihi_1M_1K.txt
-orderby = q7_OrHighHigh
+orderby = q0b00000111
 backup_path = /home/wiki1M
 field = text

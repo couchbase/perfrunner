@@ -6,4 +6,5 @@
       - cmake
       - gcc-c++
       - libaio-devel
+      - python-virtualenv
       - snappy-devel

@@ -27,7 +27,7 @@ def set_workload(line):
     ratio = int(line.split()[2])
     if ratio < 50:
         benchmark['group'] += ', read-heavy'
-    if ratio > 50:
+    elif ratio > 50:
         benchmark['group'] += ', write-heavy'
     else:
         benchmark['group'] += ', mixed'

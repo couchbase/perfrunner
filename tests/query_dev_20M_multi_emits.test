@@ -5,7 +5,7 @@ summary = Write-only query test, 1 node, 1 bucket x 20M x 1KB, 3 views, 100 sets
 larger_is_better = false
 
 [cluster]
-mem_quota = 204800
+mem_quota = 40960
 initial_nodes = 1
 num_buckets = 1
 

@@ -454,18 +454,17 @@ class PathoGenTest(FragmentationTest):
                      host=host, port=port, bucket=target.bucket).run()
 
     def _report_kpi(self):
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(
-                *self.metric_helper.calc_avg_memcached_rss()
-            )
-            self.reporter.post_to_sf(
-                *self.metric_helper.calc_max_memcached_rss()
-            )
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_avg_memcached_rss()
+        )
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_max_memcached_rss()
+        )
 
     def run(self):
         self.access()
 
-        self._report_kpi()
+        self.report_kpi()
 
 
 class PathoGenFrozenTest(PathoGenTest):
@@ -488,14 +487,32 @@ class ThroughputTest(KVTest):
 
     COLLECTORS = {'latency': True}
 
+    def _measure_curr_ops(self):
+        ops = 0
+        for bucket in self.test_config.buckets:
+            for server in self.cluster_spec.yield_servers():
+                host = server.split(':')[0]
+                port = self.rest.get_memcached_port(server)
+
+                stats = self.memcached.get_stats(host, port, bucket, stats='')
+                ops += int(stats['cmd_total_ops'])
+        return ops
+
+    @with_stats
+    def access(self):
+        curr_ops = self._measure_curr_ops()
+
+        super(KVTest, self).timer()
+
+        self.total_ops = self._measure_curr_ops() - curr_ops
+
     def _report_kpi(self):
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(
-                *self.metric_helper.calc_avg_ops()
-            )
+        throughput = self.total_ops / self.test_config.access_settings.time
+
+        self.reporter.post_to_sf(throughput)
 
 
-class PillowfightTest(ThroughputTest):
+class PillowfightTest(KVTest):
 
     """Uses pillowfight from libcouchbase to drive cluster."""
 
@@ -519,6 +536,11 @@ class PillowfightTest(ThroughputTest):
                             num_threads=settings.workers,
                             writes=settings.updates,
                             size=settings.size).run()
+
+    def _report_kpi(self):
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_avg_ops()
+        )
 
     def run(self):
         from_ts, to_ts = self.access()

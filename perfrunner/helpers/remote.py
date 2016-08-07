@@ -425,10 +425,8 @@ class RemoteLinuxHelper(object):
         return stdout.strip().split()[4]
 
     def detect_ip(self, _if):
-        ifconfig = run('ifconfig {} | grep "inet addr"'.format(_if), warn_only=True)
-        if not ifconfig:
-            ifconfig = run('ifconfig | grep "inet addr"| grep Bcast')
-        return ifconfig.split()[1].split(':')[1]
+        stdout = run('ifdata -pa {}'.format(_if))
+        return stdout.strip()
 
     @all_hosts
     def disable_wan(self):

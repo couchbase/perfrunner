@@ -210,6 +210,8 @@ class XdcrInitTest(UniDirXdcrTest):
         if self.settings.use_ca_cert:
             self._setup_ca_certs()
 
+        self.configure_wan()
+
         from_ts, to_ts = self.init_xdcr()
         time_elapsed = (to_ts - from_ts) / 1000.0
         rate = self.metric_helper.calc_avg_replication_rate(time_elapsed)

@@ -10,6 +10,7 @@
       - iotop
       - iperf
       - iptraf
+      - moreutils
       - net-tools
       - numactl
       - psmisc

@@ -90,7 +90,7 @@ class XdcrTest(PerfTest):
             )
 
     def run(self):
-        if self.test_config.restore_settings.snapshot:
+        if self.test_config.restore_settings.snapshot and self.build > '4':
             self.restore()
         else:
             self.load()
@@ -201,7 +201,7 @@ class XdcrInitTest(UniDirXdcrTest):
         self.remote.setup_cluster_nodes("/opt/couchbase/var/lib/couchbase/inbox/")
 
     def run(self):
-        if self.test_config.restore_settings.snapshot:
+        if self.test_config.restore_settings.snapshot and self.build > '4':
             self.restore()
         else:
             self.load()

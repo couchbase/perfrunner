@@ -290,7 +290,7 @@ class RebalanceWithUniDirXdcrTest(UniDirXdcrTest, RebalanceTest):
     COLLECTORS = {'latency': True, 'xdcr_lag': True}
 
     def run(self):
-        if self.test_config.restore_settings.snapshot:
+        if self.test_config.restore_settings.snapshot and self.build > '4':
             self.restore()
         else:
             self.load()

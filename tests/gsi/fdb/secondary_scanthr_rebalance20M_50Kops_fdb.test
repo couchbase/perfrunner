@@ -1,0 +1,33 @@
+[test_case]
+test = perfrunner.tests.secondary.SecondaryIndexingThroughputRebalanceTest
+title = Secondary index scan throughput with rebalance (scanps), 24 rows per scan, 1 bucket x 20M x 1KB, 50K KV ops/sec, single index, FDB
+summary = Secondary index scan throughput with rebalance test, 4 KV, 1 index node, 1 bucket x 20M x 1KB, 50K KV ops/sec, single index, FDB
+larger_is_better = true
+
+[cluster]
+mem_quota = 30000
+index_mem_quota = 30000
+initial_nodes = 4
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[load]
+items = 20000000
+size = 1024
+workers = 20
+
+[secondary]
+name = myindex
+field = alt_email
+
+[access]
+creates = 1
+reads = 80
+updates = 18
+deletes = 1
+throughput = 50000
+items = 100000000
+workers = 20

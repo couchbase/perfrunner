@@ -43,7 +43,7 @@ class SecondaryIndexTest(PerfTest):
         self.configfile = ''
 
         self.secondaryDB = None
-        if self.test_config.secondaryindex_settings.db == 'memdb':
+        if self.test_config.secondaryindex_settings.db == 'moi':
             self.secondaryDB = 'memdb'
         logger.info('secondary storage DB..{}'.format(self.secondaryDB))
 
@@ -316,29 +316,29 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
         if self.test_config.secondaryindex_settings.stale == 'false':
             if numindexes == 1:
                 if self.secondaryDB == 'memdb':
-                    self.configfile = 'scripts/config_scanthr_sessionconsistent_memdb.json'
+                    self.configfile = 'scripts/config_scanthr_sessionconsistent_moi.json'
                 else:
-                    self.configfile = 'scripts/config_scanthr_sessionconsistent.json'
+                    self.configfile = 'scripts/config_scanthr_sessionconsistent_fdb.json'
             elif numindexes == 5:
                 if self.secondaryDB == 'memdb':
-                    self.configfile = 'scripts/config_scanthr_sessionconsistent_multiple_memdb.json'
+                    self.configfile = 'scripts/config_scanthr_sessionconsistent_multiple_moi.json'
                 else:
-                    self.configfile = 'scripts/config_scanthr_sessionconsistent_multiple.json'
+                    self.configfile = 'scripts/config_scanthr_sessionconsistent_multiple_fdb.json'
         else:
 
             if numindexes == 1:
                 if self.secondaryDB == 'memdb':
-                    self.configfile = 'scripts/config_scanthr_memdb.json'
+                    self.configfile = 'scripts/config_scanthr_moi.json'
                 else:
-                    self.configfile = 'scripts/config_scanthr.json'
+                    self.configfile = 'scripts/config_scanthr_fdb.json'
             elif numindexes == 5:
                 if self.secondaryDB == 'memdb':
-                    self.configfile = 'scripts/config_scanthr_multiple_memdb.json'
+                    self.configfile = 'scripts/config_scanthr_multiple_moi.json'
                 else:
-                    self.configfile = 'scripts/config_scanthr_multiple.json'
+                    self.configfile = 'scripts/config_scanthr_multiple_fdb.json'
         cmdstr = "/opt/couchbase/bin/cbindexperf -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json".format(
             self.index_nodes[0], rest_username, rest_password, self.configfile)
-        logger.info('To be applied:'.format(cmdstr))
+        logger.info('To be applied: {}'.format(cmdstr))
         status = subprocess.call(cmdstr, shell=True)
         if status != 0:
             raise Exception('Scan workload could not be applied')
@@ -438,25 +438,25 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
         if self.test_config.secondaryindex_settings.stale == 'false':
             if numindexes == 1:
                 if self.secondaryDB == 'memdb':
-                    self.configfile = 'scripts/config_scanlatency_sessionconsistent_memdb.json'
+                    self.configfile = 'scripts/config_scanlatency_sessionconsistent_moi.json'
                 else:
-                    self.configfile = 'scripts/config_scanlatency_sessionconsistent.json'
+                    self.configfile = 'scripts/config_scanlatency_sessionconsistent_fdb.json'
             elif numindexes == 5:
                 if self.secondaryDB == 'memdb':
-                    self.configfile = 'scripts/config_scanlatency_sessionconsistent_multiple_memdb.json'
+                    self.configfile = 'scripts/config_scanlatency_sessionconsistent_multiple_moi.json'
                 else:
-                    self.configfile = 'scripts/config_scanlatency_sessionconsistent_multiple.json'
+                    self.configfile = 'scripts/config_scanlatency_sessionconsistent_multiple_fdb.json'
         else:
             if numindexes == 1:
                 if self.secondaryDB == 'memdb':
-                    self.configfile = 'scripts/config_scanlatency_memdb.json'
+                    self.configfile = 'scripts/config_scanlatency_moi.json'
                 else:
-                    self.configfile = 'scripts/config_scanlatency.json'
+                    self.configfile = 'scripts/config_scanlatency_fdb.json'
             elif numindexes == 5:
                 if self.secondaryDB == 'memdb':
-                    self.configfile = 'scripts/config_scanlatency_multiple_memdb.json'
+                    self.configfile = 'scripts/config_scanlatency_multiple_moi.json'
                 else:
-                    self.configfile = 'scripts/config_scanlatency_multiple.json'
+                    self.configfile = 'scripts/config_scanlatency_multiple_fdb.json'
 
         cmdstr = "/opt/couchbase/bin/cbindexperf -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json -statsfile /root/statsfile".format(
             self.index_nodes[0], rest_username, rest_password, self.configfile)

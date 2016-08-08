@@ -75,7 +75,7 @@ class ClusterManager(object):
         if not list(self.cluster_spec.yield_servers_by_role('index'))[0][1]:
             return
 
-        if self.test_config.secondaryindex_settings.db != 'memdb':
+        if self.test_config.secondaryindex_settings.db != 'moi':
             settings = self.test_config.secondaryindex_settings.settings
             for _, servers in self.cluster_spec.yield_servers_by_role('index'):
                 for server in servers:
@@ -84,7 +84,7 @@ class ClusterManager(object):
             self.wait_until_healthy()
             time.sleep(60)
         else:
-            logger.info("DB type is memdb. Not setting the indexer settings. Taking the default indexer settings")
+            logger.info("DB type is moi. Not setting the indexer settings. Taking the default indexer settings")
 
     def set_services(self):
         for (_, servers), initial_nodes in zip(self.clusters(),
@@ -253,7 +253,7 @@ class ClusterManager(object):
             self.remote.start_cbq()
 
     def change_dcp_io_threads(self):
-        if self.test_config.secondaryindex_settings.db == 'memdb':
+        if self.test_config.secondaryindex_settings.db == 'moi':
             cmd = 'ns_bucket:update_bucket_props("{}", ' \
                   '[{{extra_config_string, "max_num_auxio=16"}}]).'
             for master in self.masters():

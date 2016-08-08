@@ -1,0 +1,38 @@
+[test_case]
+test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
+title = 1 bucket x 50M x 1KB, single 2i index, 100K KV ops/sec, no mutations during initial build only, MOI
+summary = Secondary Indexing test, 8 KV nodes, 1 2i node 1 bucket x 50M x 1KB, 100K KV ops/sec, MOI
+larger_is_better = false
+
+[cluster]
+mem_quota = 30000
+index_mem_quota = 60000
+initial_nodes = 9
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[bucket]
+replica_number=0
+replica_index=0
+
+[load]
+items = 50000000
+size = 1024
+spring_workers = 100
+
+[secondary]
+name = myindex
+field = email
+db = moi
+
+
+[access]
+updates = 100
+ops = 50000000
+items = 50000000
+existing_items = 50000000
+throughput = 100000
+spring_workers = 100

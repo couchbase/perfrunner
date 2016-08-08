@@ -1,0 +1,34 @@
+[test_case]
+test = perfrunner.tests.secondary.SecondaryIndexingThroughputTest
+title = Secondary index scan stale=false throughput (scanps), 1 bucket x 20M x 1KB, 50K KV ops/sec, 5 indexes, FDB
+summary = Secondary index scan stale=false throughput test, 4 KV, 1 indexer, 1 bucket x 20M x 1KB, 50K KV ops/sec, 5 index, FDB
+larger_is_better = true
+
+[cluster]
+mem_quota = 30000
+index_mem_quota = 30000
+initial_nodes = 5
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[load]
+items = 20000000
+size = 1024
+workers = 20
+
+[secondary]
+name = myindex1,myindex2,myindex3,myindex4,myindex5
+field = alt_email,city,name,coins,achievements
+stale = false
+
+[access]
+creates = 1
+reads = 80
+updates = 18
+deletes = 1
+throughput = 50000
+items = 100000000
+workers = 20

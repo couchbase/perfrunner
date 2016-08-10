@@ -1,0 +1,27 @@
+[test_case]
+test = perfrunner.tests.kv.InitialLoadTest
+title = Avg. write queue (10⁶ items), 1 bucket x 500M x 1KB, 120K ops/sec, initial load, no compaction
+summary = Initial data load, 1 buckets x 500M x 1KB
+larger_is_better = false
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+
+[bucket]
+eviction_policy = fullEviction
+
+[compaction]
+db_percentage = 100
+
+[access]
+creates = 100
+reads = 0
+updates = 0
+deletes = 0
+throughput = 120000
+workers = 40
+items = 0
+ops = 500000000
+time = 360000

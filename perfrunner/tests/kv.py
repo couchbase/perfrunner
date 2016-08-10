@@ -157,11 +157,11 @@ class DrainTest(KVTest):
 class InitialLoadTest(DrainTest):
 
     @with_stats
-    def access(self, *args):
+    def load(self, *args):
         super(KVTest, self).access(*args)
 
     def run(self):
-        self.access()
+        self.load()
 
         self.report_kpi()
 

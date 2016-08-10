@@ -16,15 +16,6 @@ eviction_policy = fullEviction
 db_percentage = 100
 
 [load]
+items = 500000000
 size = 1024
-
-[access]
-creates = 100
-reads = 0
-updates = 0
-deletes = 0
-throughput = 125000
 workers = 40
-items = 0
-ops = 500000000
-time = 360000

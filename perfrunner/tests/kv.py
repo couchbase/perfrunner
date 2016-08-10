@@ -158,7 +158,7 @@ class InitialLoadTest(DrainTest):
 
     @with_stats
     def load(self, *args):
-        super(KVTest, self).access(*args)
+        super(KVTest, self).load(*args)
 
     def run(self):
         self.load()

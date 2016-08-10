@@ -3,7 +3,7 @@ test = perfrunner.tests.elastic.ElasticLatencyTest
 title = AndMedOrHighHigh, no kv-load, wiki 1M x 1KB
 summary = FTS latency Test
 larger_is_better = false
-fts = true
+
 
 [access]
 time = 1200
@@ -19,7 +19,7 @@ fts_index_mem_quota = 20000
 items = 1000000
 name  = perf_elastic_index
 port = 8094
-worker= 10
+worker= 4
 type = 1_conjuncts_2_disjuncts
 query_file = perfrunner/tests/FTS/mid_hi_hi.txt
 query_size = 10

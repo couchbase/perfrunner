@@ -1,0 +1,65 @@
+steps to create dataset
+
+1. Load dataset, example dataload.py
+2. create index , fts.py indextest
+3. go to the system where index is created. Run the build-td.sh
+
+/***********************************************************
+example:
+root@cen-s811 bin]# export COUCHBASE_PATH=/opt/couchbase/bin/
+[root@cen-s811 bin]#  ./cbft-build-td perf_fts_index text 1000000^C
+[root@cen-s811 bin]# cp ~/cbft-build-td .
+[root@cen-s811 bin]#  ./cbft-build-td perf_fts_index text 1000000
+tmpfile for collation is /tmp/td-perf_fts_index.2uLH4Z
+Processing perf_fts_index_*.pindex file...
+2016/08/09 14:39:03 cannot open index, path does not exist   >>>>> See the ERROR
+sorting into /tmp/td-perf_fts_index.2uLH4Z.sorted
+merging into /tmp/td-perf_fts_index.2uLH4Z.merged
+getting high (90000.00 <= x < 900000.0) - /tmp/td-perf_fts_index.2uLH4Z.hi
+getting med (2000.000 <= x < 90000.00) - /tmp/td-perf_fts_index.2uLH4Z.med
+getting low (500.0000 <= x < 2000.000) - /tmp/td-perf_fts_index.2uLH4Z.low
+too high: 0
+too low: 0
+[root@cen-s811 bin]# cd ..
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  GOTO FTS directory
+root@cen-s811 @fts]# ls
+cbft.uuid                                        perf_fts_index_111da155478afad7_63ef8109.pindex
+perf_fts_index_111da155478afad7_0a44bddb.pindex  perf_fts_index_111da155478afad7_76ac2a42.pindex
+perf_fts_index_111da155478afad7_0ffd4517.pindex  perf_fts_index_111da155478afad7_77082885.pindex
+perf_fts_index_111da155478afad7_24e7ea2d.pindex  perf_fts_index_111da155478afad7_8b80958a.pindex
+perf_fts_index_111da155478afad7_27184a97.pindex  perf_fts_index_111da155478afad7_9284f0ad.pindex
+perf_fts_index_111da155478afad7_321cbb28.pindex  perf_fts_index_111da155478afad7_9e13fa43.pindex
+perf_fts_index_111da155478afad7_348f5c3c.pindex  perf_fts_index_111da155478afad7_a4a23588.pindex
+perf_fts_index_111da155478afad7_37fdcf3c.pindex  perf_fts_index_111da155478afad7_b7ff6b68.pindex
+perf_fts_index_111da155478afad7_3cf74ad7.pindex  perf_fts_index_111da155478afad7_cd5a61e8.pindex
+perf_fts_index_111da155478afad7_4728ab89.pindex  perf_fts_index_111da155478afad7_d6109bff.pindex
+perf_fts_index_111da155478afad7_4a7ce4ca.pindex  perf_fts_index_111da155478afad7_d8c75a95.pindex
+perf_fts_index_111da155478afad7_4cdba0cf.pindex  perf_fts_index_111da155478afad7_d90ca3e7.pindex
+perf_fts_index_111da155478afad7_54127e67.pindex  perf_fts_index_111da155478afad7_dee61dfa.pindex
+perf_fts_index_111da155478afad7_577e9974.pindex  perf_fts_index_111da155478afad7_e64340fa.pindex
+perf_fts_index_111da155478afad7_596cc6a1.pindex  perf_fts_index_111da155478afad7_ee590b16.pindex
+perf_fts_index_111da155478afad7_5b1351c0.pindex  perf_fts_index_111da155478afad7_f17535e5.pindex
+perf_fts_index_111da155478afad7_5c5f941e.pindex
+
+root@cen-s811 @fts]#  ~/build-td.sh perf_fts_index text 1000000
+
+sorting into /tmp/td-perf_fts_index.eJG513.sorted
+merging into /tmp/td-perf_fts_index.eJG513.merged
+getting high (90000.00 <= x < 900000.0) - /tmp/td-perf_fts_index.eJG513.hi
+getting med (2000.000 <= x < 90000.00) - /tmp/td-perf_fts_index.eJG513.med
+getting low (500.0000 <= x < 2000.000) - /tmp/td-perf_fts_index.eJG513.low
+too high: 0
+too low: 1401992
+
+***************************************************************************************************/
+
+4. Once high, med, low terms are create, create other datasets from it
+5. how to decide workload.
+    for workload and test follow
+    1.http://home.apache.org/~mikemccand/lucenebench/
+    2. https://www.elastic.co/blog/announcing-rally-benchmarking-for-elasticsearch
+    3. https://benchmarks.elastic.co/index.html
+
+     we use the wikipedia dataset.
+
+     code is written very generic, so new dataset plugin will be easier.

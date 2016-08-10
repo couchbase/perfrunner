@@ -226,15 +226,18 @@ class FtsGen(CBGen):
                 'data': json.dumps(self.query)
                 }
 
-    def process_lines(self, line):
+    @staticmethod
+    def process_lines(line):
         if len(line) == 0:
             raise Exception('Empty line')
-        if ' ' in line:
+        value = line.strip().split()
+        if len(value) == 2:
             return line.strip().split()
         else:
             return line.strip(), None
 
-    def process_conj_disj(self, ttypes):
+    @staticmethod
+    def process_conj_disj(ttypes):
         index = 0
         keytypes = []
         while index < len(ttypes):
@@ -248,14 +251,15 @@ class FtsGen(CBGen):
             file = open(self.settings.query_file, 'r')
             for line in file:
                 temp_query = {}
-                tosearch, freq = self.process_lines(line.strip())
-                if self.settings.type in['2_conjuncts', '2_disjuncts', '1_conjuncts_2_disjuncts']:
+                tosearch, freq = FtsGen.process_lines(line.strip())
+                if self.settings.type in ['2_conjuncts', '2_disjuncts', '1_conjuncts_2_disjuncts']:
                     '''
                      For And, OR queries we create the list.
                      Example looks like
                      {"field": "title", "match": "1988"}
                     '''
-                    keytypes = self.process_conj_disj(self.settings.type.split('_'))
+                    keytypes = FtsGen.process_conj_disj(self.settings.type.split('_'))
+                    temp_query = {'conjuncts': [], 'disjuncts': []}
                     for terms in line.split():
                         '''
                          Term query is used for And/Or queries
@@ -265,6 +269,7 @@ class FtsGen(CBGen):
                 elif self.settings.type == 'fuzzy':
                     temp_query['fuzziness'] = int(freq)
                     temp_query['term'] = tosearch
+                    temp_query['field'] = self.settings.field
 
                 elif self.settings.type == 'numeric':
                     '''
@@ -278,6 +283,7 @@ class FtsGen(CBGen):
                         temp_query['min'] = float(tosearch)
                     temp_query['inclusive_max'] = False
                     temp_query['inclusive_min'] = False
+                    temp_query['field'] = self.settings.field
 
                 elif self.settings.type == 'match':
                     '''
@@ -285,14 +291,17 @@ class FtsGen(CBGen):
                     '''
                     tosearch = line.strip()
                     temp_query[self.settings.type] = tosearch
+                    temp_query['field'] = self.settings.field
 
                 elif self.settings.type == 'ids':
                     tosearch = [tosearch]
                     temp_query[self.settings.type] = tosearch
+                    temp_query['field'] = self.settings.field
+
                 else:
                     temp_query[self.settings.type] = tosearch
+                    temp_query['field'] = self.settings.field
 
-                temp_query['field'] = self.settings.field
                 self.query['query'] = temp_query
                 self.query['size'] = self.settings.query_size
                 self.fts_query += 'index/' + self.settings.name + '/' + type
@@ -338,7 +347,7 @@ class ElasticGen(FtsGen):
                 file = open(self.settings.query_file, 'r')
                 for line in file:
                     self.elastic_query = self.elastic_copy
-                    term, freq = self.process_lines(line.strip())
+                    term, freq = ElasticGen.process_lines(line.strip())
                     self.query['size'] = self.settings.query_size
                     self.elastic_query += self.settings.name + '/_search?pretty'
                     tmp_query = {}
@@ -353,6 +362,8 @@ class ElasticGen(FtsGen):
                         tmp_fuzzy['fuzziness'] = int(freq)
                         tmp_fuzzy['value'] = term
                         tmp_query_txt[self.settings.field] = tmp_fuzzy
+                        tmp_query[self.settings.type] = tmp_query_txt
+
                     elif self.settings.type == 'ids':
                         '''
                         values is extra parameter for Docid
@@ -360,6 +371,7 @@ class ElasticGen(FtsGen):
                         current/query-dsl-ids-query.html
                         '''
                         tmp_query_txt['values'] = [term]
+                        tmp_query[self.settings.type] = tmp_query_txt
 
                     elif self.settings.type == 'match':
                         '''
@@ -368,6 +380,7 @@ class ElasticGen(FtsGen):
                         current/query-dsl-fuzzy-query.html
                         '''
                         tmp_query_txt[self.settings.field] = line.strip()
+                        tmp_query[self.settings.type] = tmp_query_txt
 
                     elif self.settings.type == 'range':
                         trange = {}
@@ -378,6 +391,7 @@ class ElasticGen(FtsGen):
                         else:
                             trange['lte'] = float(term)
                         tmp_query_txt[self.settings.field] = trange
+                        tmp_query[self.settings.type] = tmp_query_txt
 
                     elif self.settings.type in ['2_conjuncts', '2_disjuncts', '1_conjuncts_2_disjuncts']:
                         '''
@@ -385,25 +399,25 @@ class ElasticGen(FtsGen):
                         => 1 conjuncts and 2 disjuncts
                         '''
                         tbool = {v: [] for k, v in self.bool_map.iteritems()}
-                        keytypes = self.process_conj_disj(self.settings.type.split('_'))
+                        keytypes = ElasticGen.process_conj_disj(self.settings.type.split('_'))
                         for term in line.strip().split():
                             key = self.bool_map[keytypes.next()]
                             tbool[key].append({'term': {self.settings.field: term}})
                         tmp_query_txt = tbool
-                        self.settings.type = 'bool'
+                        tmp_query['bool'] = tmp_query_txt
 
                     else:
                         tmp_query_txt[self.settings.field] = term
+                        tmp_query[self.settings.type] = tmp_query_txt
 
-                    tmp_query[self.settings.type] = tmp_query_txt
                     self.query['query'] = tmp_query
                     self.query_list.append(self.form_url(self.elastic_query))
                 shuffle(self.query_list)
                 self.query_iterator = itertools.cycle(self.query_list)
             except OSError as err:
                 logger.info("OS error: {0}".format(err))
-            except Exception:
-                pass
+            except Exception as err:
+                logger.info("Error: {0}".format(err))
         elif type == 'stats':
             self.elastic_query += self.settings.name + '/_stats/'
             return self.requests.get, self.form_url(self.elastic_query)

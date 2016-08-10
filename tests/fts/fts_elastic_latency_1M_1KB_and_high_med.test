@@ -11,9 +11,9 @@ time = 1200
 
 [fts]
 items = 1000000
-name  = perf_fts_index
+name  = perf_elastic_index
 port = 8094
-worker= 12
+worker= 6
 type = 2_conjuncts
 query_file = perfrunner/tests/FTS/mid_hi.txt
 query_size = 10

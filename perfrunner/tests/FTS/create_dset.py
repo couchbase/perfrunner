@@ -6,6 +6,7 @@ from random import shuffle
 
 from couchbase.bucket import Bucket
 from couchbase.n1ql import N1QLQuery
+from nltk.tokenize import TweetTokenizer
 
 
 '''
@@ -18,20 +19,21 @@ from couchbase.n1ql import N1QLQuery
 class CreateData(object):
         @staticmethod
         def createandor(file1, file2):
-            file = open(file1, 'r')
-            file1 = open(file2, 'r')
+            tfile = open(file1, 'r')
 
-            l = list(file1)
+            tfile1 = open(file2, 'r')
+
+            l = list(tfile1)
             shuffle(l)
             b = itertools.cycle(l)
 
-            for c in file:
+            for c in tfile:
                 term, freq = c.split()
                 term1, freq = b.next().split()
-                print term, term1
+                print term1, term, term
 
-            file.close()
-            file1.close()
+            tfile.close()
+            tfile1.close()
 
         @staticmethod
         def createprefix(file1):
@@ -41,7 +43,6 @@ class CreateData(object):
                 term, freq = c.split()
                 if len(term) > 3:
                     s.add(term[:3])
-
             file.close()
             for v in s:
                 print v
@@ -63,10 +64,12 @@ class CreateData(object):
         def createwildcard(file1):
             file1 = open(file1, 'r')
             s = set()
+            count9 = 0
             for line in file1:
                 term, freq = line.split()
-                if len(term) > 4:
+                if len(term) > 4 and count9 % 9 == 0:
                     s.add(CreateData.perm(term))
+                count9 += 1
             file1.close()
             for v in s:
                 print v
@@ -74,10 +77,12 @@ class CreateData(object):
         @staticmethod
         def createfuzzy(files, fuzzy):
             file1 = open(files, 'r')
+            count9 = 0
             for line in file1:
                 term, freq = line.split()
-                if len(term) == 5:
+                if len(term) == 5 and count9 % 9 == 0:
                     print term, fuzzy
+                count9 += 1
             file1.close()
 
         @staticmethod
@@ -90,6 +95,39 @@ class CreateData(object):
                 if w == target:
                     if i < len(source) - 1:
                         return source[i + 1]
+
+        def insert_cb(self, f):
+            '''
+            create phrase dataset
+            '''
+            f1 = open('midterm.txt', 'r')
+            mids = []
+            myset = set()
+            for v in f1:
+                s, _ = v.split()
+                mids.append(s)
+            for piece in self.read_in_chunks(f):
+                test = {}
+                piece = piece.replace('\n', ' ')
+                test['text'] = piece
+                for v in mids:
+                    tknzr = TweetTokenizer()
+                    sl = tknzr.tokenize(piece)
+                    k = CreateData.findnextword(v, sl)
+                    if k and k in mids:
+                        sort = tuple(sorted((k, v)))
+                        if sort not in self.myset:
+                            print v, k
+                            myset.add(sort)
+
+        def read_in_chunks(self, file_object):
+            """Lazy function (generator) to read a file piece by piece.
+            Default chunk size: 1k."""
+            while True:
+                data = file_object.read(self.chunk_size)
+                if not data:
+                    break
+                yield data
 
         @staticmethod
         def createnumeric(source):
@@ -150,6 +188,7 @@ class CreateData(object):
             '''
             pass
 
+
 '''
     #AndHighOrMedMed
     #AndMedOrHighHigh
@@ -159,4 +198,7 @@ class CreateData(object):
     CreateData.createnumeric('midterm.txt')
     CreateData.createids()
     CreateData.changefiles()
+    CreateData.createfuzzy('midterm.txt', 1)
 '''
+
+CreateData.createprefix('midterm.txt')

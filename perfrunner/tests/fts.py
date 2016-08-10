@@ -134,6 +134,16 @@ class FTStest(PerfTest):
         logger.info('Created the Index definition : {}'.
                     format(self.index_definition))
 
+    def check_rec_presist(self):
+        rec_memory = self.fts_doccount
+        self.fts_url = "http://{}/api/nsstats".format(self.host_port)
+        key = ':'.join([self.test_config.buckets[0], self.fts_index, 'num_recs_to_persist'])
+        while rec_memory != 0:
+            logger.info("Record persists to be expected: %s" % rec_memory)
+            r = self.requests.get(url=self.fts_url, auth=self.auth)
+            time.sleep(4 * self.wait_time)
+            rec_memory = r.json()[key]
+
     def create_index(self):
         r = self.requests.put(self.index_url,
                               data=json.dumps(self.index_definition, ensure_ascii=False),
@@ -212,7 +222,7 @@ class FTSLatencyTest(FTStest):
             super(FTSLatencyTest, self).run()
             self.create_index()
             self.wait_for_index()
-            time.sleep(3 * self.wait_time)
+            self.check_rec_presist()
             self.access_bg_test()
             if self.test_config.stats_settings.enabled:
                 self.reporter.post_to_sf(
@@ -231,7 +241,7 @@ class FTSThroughputTest(FTStest):
             super(FTSThroughputTest, self).run()
             self.create_index()
             self.wait_for_index()
-            time.sleep(3 * self.wait_time)
+            self.check_rec_presist()
             self.access_bg_test()
             if self.test_config.stats_settings.enabled:
                 self.reporter.post_to_sf(

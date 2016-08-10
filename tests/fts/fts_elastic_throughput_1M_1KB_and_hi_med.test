@@ -16,10 +16,10 @@ fts_index_mem_quota = 20000
 
 [fts]
 items = 1000000
-name  = perf_fts_index
+name  = perf_elastic_index
 port = 8094
 worker= 30
-type = conjuncts
+type = 2_conjuncts
 query_file = perfrunner/tests/FTS/mid_hi.txt
 query_size = 10
 logfile = /tmp/fts_thput_andhimed_1M_1K.txt

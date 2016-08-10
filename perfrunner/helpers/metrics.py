@@ -225,7 +225,6 @@ class MetricHelper(object):
             db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
             data = self.seriesly[db].query(query_params)
             disk_write_queue += data.values()[0][0]
-        disk_write_queue /= self.test_config.cluster.initial_nodes[0]
 
         return round(disk_write_queue / 10 ** 6, 2)
 

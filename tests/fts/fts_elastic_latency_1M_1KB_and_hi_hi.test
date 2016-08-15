@@ -19,7 +19,8 @@ query_file = perfrunner/tests/FTS/hi_hi.txt
 query_size = 10
 logfile = /tmp/elastic_latency_and_hihi_1M_1K.txt
 orderby = q0b00000110
-backup_path = /home/wiki1M
+backup_path = /home/backup
+repo_path = wiki1M
 field = text
 elastic = 1
 

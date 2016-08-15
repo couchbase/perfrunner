@@ -155,6 +155,32 @@ class Numeric(Docgen):
         c = Bucket("couchbase://{}/{}?operation_timeout=30".format(self.cb_url, self.database))
         self.insert_cb(c)
 
+
+class Datefacet:
+
+    def __init__(self):
+        from couchbase.n1ql import N1QLQuery
+        self.cb = Bucket('couchbase://172.23.123.38/bucket-1')
+        self.row_iter = self.cb.n1ql_query(N1QLQuery('select meta().id from `bucket-1`'))
+
+    def createdateset(self):
+        dateiter = itertools.cycle(('01/03/2013',
+                                    '01/04/2013',
+                                    '01/05/2013',
+                                    '01/05/2014',
+                                    '05/10/2012',
+                                    '05/11/2015'))
+        for resultid in self.row_iter:
+            val = self.cb.get(resultid["id"]).value
+            val["date"] = dateiter.next()
+            self.cb.set(resultid["id"], val)
+
+    def run(self):
+        import concurrent.futures
+        with concurrent.futures.ProcessPoolExecutor(max_workers=10) as executor:
+            executor.submit(self.createdateset())
+
+
 '''
     A = Docgen('/data/wikidata', '172.23.123.38', 'bucket-1')
     A.start_load()
@@ -162,3 +188,6 @@ class Numeric(Docgen):
     A.start_load()
     A.create_document()
 '''
+
+A = Datefacet()
+A.run()

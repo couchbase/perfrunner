@@ -84,7 +84,7 @@ class FtsStats(FtsCollector):
     METRICS = ("cbft_doc_count", "cbft_num_bytes_used_disk",
                "cbft_num_bytes_used_ram", "cbft_pct_cpu_gc",
                "cbft_batch_merge_count", "cbft_total_gc",
-               "cbft_num_bytes_live_data")
+               "cbft_num_bytes_live_data", "cbft_total_bytes_indexed")
 
     def __init__(self, settings, test_config, prefix=None):
         super(FtsStats, self).__init__(settings, test_config)
@@ -98,6 +98,8 @@ class FtsStats(FtsCollector):
             self.live_data = bucket + ':' + test_config.fts_settings.name + \
                 ":num_bytes_live_data"
             self.power = pow(10, 9)
+            self.bytes_index = bucket + ':' + test_config.fts_settings.name + \
+                ":cbft_total_bytes_indexed"
 
     def cbft_batch_merge_count(self):
         return self.cbft_stats_get(self.live_data)
@@ -110,6 +112,9 @@ class FtsStats(FtsCollector):
 
     def cbft_doc_count(self):
         return self.cbft_stats_get(self.count_key)
+
+    def cbft_total_bytes_indexed(self):
+        return self.cbft_stats_get(self.bytes_index)
 
 
 class FtsQueryStats(FtsLatency):

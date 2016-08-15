@@ -9,7 +9,8 @@ items = 33332620
 name  = perf_elastic_index
 port = 9091
 orderby = q0b00000000
-backup_path = /home/wiki1M
+backup_path = /home/backup
+repo_path = wiki1M
 
 [cluster]
 mem_quota = 51024

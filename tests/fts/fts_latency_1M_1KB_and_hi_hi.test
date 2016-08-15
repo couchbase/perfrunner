@@ -20,7 +20,10 @@ query_size = 10
 logfile = /tmp/fts_latency_andhihi_1M_1K.txt
 orderby = q0b00000110
 backup_path = /home/wiki1M
+backup_path = /home/backup
+repo_path = wiki1M
 field = text
+
 
 [cluster]
 mem_quota = 51024

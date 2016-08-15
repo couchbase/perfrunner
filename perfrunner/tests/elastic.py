@@ -80,7 +80,8 @@ class Elastictest(PerfTest):
 
     def load(self):
         logger.info('load/restore data to bucket')
-        self.remote.cbrestorefts(self.test_config.fts_settings.storage)
+        repo_path = self.test_config.fts_settings.storage + '/' + self.test_config.fts_settings.repo
+        self.remote.cbrestorefts(self.test_config.fts_settings.storage, repo_path)
 
     def run(self):
         self.delete_index()

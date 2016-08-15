@@ -24,5 +24,6 @@ query_file = perfrunner/tests/FTS/fuzzy_2.txt
 query_size = 10
 logfile = /tmp/fts_latency_fuzzy_1M_1K.txt
 orderby = q0b00001011
-backup_path = /home/wiki1M
+backup_path = /home/backup
+repo_path = wiki1M
 field = text

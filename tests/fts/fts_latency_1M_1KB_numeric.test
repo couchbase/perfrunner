@@ -24,5 +24,6 @@ query_file = perfrunner/tests/FTS/numeric_range.txt
 query_size = 10
 logfile = /tmp/fts_latency_numeric_1M_1K.txt
 orderby = q0b00001100
-backup_path = /home/numericdata
+backup_path = /home/backup
+repo_path = numericdata
 field = time

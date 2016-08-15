@@ -16,7 +16,8 @@ query_size = 6
 logfile = /tmp/elastic_latency_matchphrase_1M_1K.txt
 orderby = q0b00001101
 elastic = 1
-backup_path = /home/wiki1M
+backup_path = /home/backup
+repo_path = wiki1M
 field = text
 
 [access]

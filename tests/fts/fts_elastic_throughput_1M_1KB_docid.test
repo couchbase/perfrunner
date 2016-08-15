@@ -15,7 +15,8 @@ query_size = 10
 elastic = 1
 logfile = /tmp/elastic_thput_docid_1M_1K.txt
 orderby = q0b00010001
-backup_path = /home/wiki1M
+backup_path = /home/backup
+repo_path = wiki1M
 field = text
 
 [access]

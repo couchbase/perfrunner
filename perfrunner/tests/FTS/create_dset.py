@@ -26,7 +26,23 @@ class CreateData(object):
             l = list(tfile1)
             shuffle(l)
             b = itertools.cycle(l)
+            count = 0
+            for c in tfile:
+                term, freq = c.split()
+                term1, freq = b.next().split()
+                print term1, term, term
+                count += 1
+            tfile.close()
 
+            tfile = open(file1, 'r')
+            for c in tfile:
+                term, freq = c.split()
+                term1, freq = b.next().split()
+                print term1, term, term
+
+            tfile.close()
+
+            tfile = open(file1, 'r')
             for c in tfile:
                 term, freq = c.split()
                 term1, freq = b.next().split()
@@ -152,6 +168,9 @@ class CreateData(object):
             cb = Bucket('couchbase://172.23.123.38/bucket-1', password='password')
             row_iter = cb.n1ql_query(N1QLQuery('select meta().id from `bucket-1` limit 10000'))
             for resultid in row_iter:
+                '''
+                use following to create the docids set
+                '''
                 print resultid["id"], None
 
         @staticmethod
@@ -192,7 +211,7 @@ class CreateData(object):
 '''
     #AndHighOrMedMed
     #AndMedOrHighHigh
-    CreateData.createandor('midterm.txt', 'hiterm.txt')
+    CreateData.createandor('hiterm.txt', 'midterm.txt')
     CreateData.createprefix('midterm.txt')
     CreateData.createwildcard('midterm.txt')
     CreateData.createnumeric('midterm.txt')
@@ -200,5 +219,3 @@ class CreateData(object):
     CreateData.changefiles()
     CreateData.createfuzzy('midterm.txt', 1)
 '''
-
-CreateData.createprefix('midterm.txt')

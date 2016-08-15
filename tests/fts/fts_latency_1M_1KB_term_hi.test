@@ -27,5 +27,6 @@ query_file = perfrunner/tests/FTS/hiterm.txt
 query_size = 10
 logfile = /tmp/fts_latency_term_high_1M_1K.txt
 orderby = q0b00000001
-backup_path = /home/wiki1M
+backup_path = /home/backup
+repo_path = wiki1M
 field = text

@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.fts.FTSLatencyTest
-title =  PhraseQuery, no kv-load, wiki 1M x 1KB
+title =  TermDateFacets, no kv-load, wiki 1M x 1KB
 summary = FTS Latency Test
 larger_is_better = true
 fts = true
@@ -19,11 +19,11 @@ items = 1000000
 name  = perf_fts_index
 port = 8094
 worker= 6
-type = match
-query_file = perfrunner/tests/FTS/phrase.txt
+type = facet
+query_file = perfrunner/tests/FTS/hiterm.txt
 query_size = 10
-logfile = /tmp/fts_latency_matchphrase_1M_1K.txt
+logfile = /tmp/fts_latency_datefacet_1M_1K.txt
+orderby = q0b00010000
 backup_path = /home/backup
-repo_path = wiki1M
-orderby = q0b00001101
-field = text
+repo_path = datefacet
+field = date

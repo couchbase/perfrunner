@@ -24,5 +24,6 @@ query_file = perfrunner/tests/FTS/docid.txt
 query_size = 10
 logfile = /tmp/fts_thput_docid_1M_1K.txt
 orderby = q0b00010001
-backup_path = /home/wiki1M
+backup_path = /home/backup
+repo_path = wiki1M
 field = text

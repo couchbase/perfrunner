@@ -1,3 +1,11 @@
+How to take backup
+
+ cd /opt/couchbase/bin
+ ./cbbackupmgr config --archive /home/backup --repo numericdata
+ ./cbbackupmgr backup --archive /home/backup/ --repo numericdata -host http://localhost:8091 --username Administrator --password password --threads 30
+  ./cbbackupmgr restore --include-buckets=bucket-1  --archive /home/backup/ --repo numericdata  --host http://localhost:8091 --username Administrator --password password --threads 30
+
+
 steps to create dataset
 
 1. Load dataset, example dataload.py
@@ -63,3 +71,5 @@ too low: 1401992
      we use the wikipedia dataset.
 
      code is written very generic, so new dataset plugin will be easier.
+
+

@@ -511,10 +511,15 @@ class RemoteLinuxHelper(object):
         run('/opt/couchbase/bin/couchbase-cli ssl-manage --cluster=localhost -u Administrator -p password --set-node-certificate')
 
     @single_host
-    def cbrestorefts(self, restore_path):
-        logger.info('restore from %s' % restore_path)
-        cmd = "cd /opt/couchbase/bin && ./cbrestorewrapper {}  http://127.0.0.1:8091 " \
-              "-b {} -u Administrator -p password".format(restore_path, self.test_config.buckets[0])
+    def cbrestorefts(self, archive_path, repo_path):
+        '''
+        This is updated cbrestore for spock support. As we move to spock, old version is not needed
+        ft-indexes is disabled to not to take any backup for indices.
+        '''
+        cmd = "cd /opt/couchbase/bin && ./cbbackupmgr restore --include-buckets={}  --archive {} --repo {} " \
+              " --host http://localhost:8091 --username Administrator " \
+              "--password password --threads 30 --disable-ft-indexes --disable-gsi-indexes".\
+            format(self.test_config.buckets[0], archive_path, repo_path)
         run(cmd)
 
     @single_host

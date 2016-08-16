@@ -71,7 +71,8 @@ class BackupTest(BackupRestoreTest):
         local.backup(master_node=self.master_node,
                      cluster_spec=self.cluster_spec,
                      wrapper=self.rest.is_community(self.master_node),
-                     mode=mode)
+                     mode=mode,
+                     compression=self.test_config.backup_settings.compression)
         self.spent_time = time.time() - t0
 
         self.backup_size = local.calc_backup_size(self.cluster_spec)

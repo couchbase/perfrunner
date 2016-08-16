@@ -8,7 +8,7 @@ def extract_cb(filename):
         local(cmd)
 
 
-def backup(master_node, cluster_spec, wrapper=False, mode=None):  # full, diff, accu
+def backup(master_node, cluster_spec, wrapper=False, mode=None, compression=False):
     backup_dir = cluster_spec.config.get('storage', 'backup')
 
     logger.info('Creating a new backup: {}'.format(backup_dir))
@@ -19,7 +19,7 @@ def backup(master_node, cluster_spec, wrapper=False, mode=None):  # full, diff, 
     if wrapper:
         cbbackupwrapper(master_node, cluster_spec, backup_dir, mode)
     else:
-        cbbackupmgr_backup(master_node, cluster_spec, backup_dir, mode)
+        cbbackupmgr_backup(master_node, cluster_spec, backup_dir, mode, compression)
 
 
 def cbbackupwrapper(master_node, cluster_spec, backup_dir, mode):
@@ -39,7 +39,7 @@ def cbbackupwrapper(master_node, cluster_spec, backup_dir, mode):
         local(cmd)
 
 
-def cbbackupmgr_backup(master_node, cluster_spec, backup_dir, mode):
+def cbbackupmgr_backup(master_node, cluster_spec, backup_dir, mode, compression=False):
     if not mode:
         local('./opt/couchbase/bin/cbbackupmgr config '
               '--archive {} --repo default'.format(backup_dir))
@@ -53,6 +53,9 @@ def cbbackupmgr_backup(master_node, cluster_spec, backup_dir, mode):
             cluster_spec.rest_credentials[0],
             cluster_spec.rest_credentials[1],
         )
+    if compression:
+        cmd = '{} --value-compression compressed'.format(cmd)
+
     logger.info('Running: {}'.format(cmd))
     local(cmd)
 

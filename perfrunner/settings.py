@@ -226,6 +226,11 @@ class TestConfig(Config):
         return N1QLSettings(options)
 
     @property
+    def backup_settings(self):
+        options = self._get_options_as_dict('backup')
+        return BackupSettings(options)
+
+    @property
     def access_settings(self):
         options = self._get_options_as_dict('access')
         access = AccessSettings(options)
@@ -757,6 +762,14 @@ class AccessSettings(PhaseSettings):
 
     def __str__(self):
         return str(self.__dict__)
+
+
+class BackupSettings(object):
+
+    COMPRESSION = False
+
+    def __init__(self, options):
+        self.compression = int(options.get('compression', self.COMPRESSION))
 
 
 class WorkerSettings(object):

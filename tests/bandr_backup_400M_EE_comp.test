@@ -1,0 +1,21 @@
+[test_case]
+test = perfrunner.tests.cbbackup_restore.BackupTest
+title = EE full backup throughput (Avg. MB/sec), 1 bucket x 400M x 1KB, DGM, Idle, Compressed
+summary = EE full backup, 1 bucket x 400M x 1KB, DGM, Idle, Compressed
+larger_is_better = true
+
+[cluster]
+mem_quota = 52428
+initial_nodes = 4
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+
+[load]
+items = 400000000
+size = 1024
+workers = 40
+
+[backup]
+compression = 1

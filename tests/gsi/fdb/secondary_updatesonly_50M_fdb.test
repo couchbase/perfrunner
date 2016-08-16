@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
-title = 1 bucket x 50M x 1KB, single 2i index, 18K ops/sec, updates only in incremental build, FDB
-summary = Secondary Indexing test, 4 KV nodes, 1 2i node 1 bucket x 50M x 1KB, 18K ops/sec, updates only in incremental build, FDB
+title = 1 bucket x 50M x 1KB, single 2i index, updates only in incremental build, FDB
+summary = Secondary Indexing test, 4 KV nodes, 1 2i node 1 bucket x 50M x 1KB, updates only in incremental build, FDB
 larger_is_better = false
 
 [cluster]
@@ -28,4 +28,3 @@ updates = 100
 ops = 50000000
 items = 50000000
 workers = 20
-throughput = 18000

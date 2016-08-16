@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.secondary.SecondaryIndexingScanLatencyTest
-title = Secondary index scan latency(ms), 1 bucket x 20M x 1KB, non-DGM, 18K ops/sec, 5 indexes, FDB
-summary = Secondary index scan latency(ms) test, 4 KV, 1 index node, 1 bucket x 20M x 1KB, 18K ops/sec, 5 index, FDB
+title = Secondary index scan latency(ms), 1 bucket x 20M x 1KB, non-DGM, 10K ops/sec, 5K mutations/sec, 5 indexes, FDB
+summary = Secondary index scan latency(ms) test, 4 KV, 1 index node, 1 bucket x 20M x 1KB, 10K ops/sec, 5K mutations/sec, 5 index, FDB
 larger_is_better = true
 
 [cluster]
@@ -28,6 +28,6 @@ creates = 1
 reads = 50
 updates = 48
 deletes = 1
-throughput = 18000
+throughput = 10000
 items = 20000000
 workers = 20

@@ -5,6 +5,8 @@
     with_items:
       - cmake
       - gcc-c++
+      - git
+      - java-1.8.0-openjdk
       - libaio-devel
       - python-virtualenv
       - snappy-devel

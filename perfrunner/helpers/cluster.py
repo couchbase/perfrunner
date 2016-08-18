@@ -76,11 +76,8 @@ class ClusterManager(object):
             for _, servers in self.cluster_spec.yield_servers_by_role('index'):
                 for server in servers:
                     self.rest.set_index_settings(server, settings)
-            self.remote.restart()
-            self.wait_until_healthy()
-            time.sleep(60)
         else:
-            logger.info("DB type is moi. Not setting the indexer settings. Taking the default indexer settings")
+            logger.info("Taking the default MOI settings.")
 
     def set_services(self):
         for (_, servers), initial_nodes in zip(self.clusters(),

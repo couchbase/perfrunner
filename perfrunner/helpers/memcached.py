@@ -24,12 +24,6 @@ def retry(method, *args, **kwargs):
 
 class MemcachedHelper(object):
 
-    @staticmethod
-    def calc_watermark(val, mem_quota):
-        val = int(val) / 100.0  # string -> ratio
-        mem_quota *= 1024 ** 2  # Mb -> bytes
-        return str(int(val * mem_quota))
-
     def __init__(self, test_config):
         self.password = test_config.bucket.password
         self.test_config = test_config

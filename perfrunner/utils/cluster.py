@@ -39,11 +39,6 @@ def main():
     if cm.remote:
         cm.remote.disable_wan()
         cm.tune_logging()
-        cm.restart_with_sfwi()
-        cm.restart_with_alternative_num_vbuckets()
-        cm.restart_with_alternative_num_cpus()
-        cm.restart_with_tcmalloc_aggressive_decommit()
-        cm.disable_moxi()
 
     cm.configure_internal_settings()
     cm.configure_xdcr_settings()
@@ -59,30 +54,20 @@ def main():
     if cm.group_number > 1:
         cm.create_server_groups()
     cm.add_nodes()
+    cm.enable_auto_failover()
+    cm.configure_auto_compaction()
 
     if cm.test_config.cluster.num_buckets:
         cm.create_buckets()
-    if cm.test_config.cluster.emptybuckets:
-        cm.create_buckets(empty_buckets=True)
+
     if cm.remote:
         cm.restart_with_alternative_bucket_options()
-
-    cm.wait_until_warmed_up()
-    cm.wait_until_healthy()
-
-    if cm.remote:
-        cm.set_index_settings()
         cm.change_dcp_io_threads()
+        cm.set_index_settings()
         cm.set_query_settings()
 
     cm.wait_until_warmed_up()
     cm.wait_until_healthy()
-    cm.configure_auto_compaction()
-    cm.enable_auto_failover()
-    cm.change_watermarks()
-
-    if cm.remote:
-        cm.start_cbq_engine()
 
     if cm.remote:
         cm.tweak_memory()

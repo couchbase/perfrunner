@@ -9,7 +9,6 @@ mem_quota = 40960
 index_mem_quota = 100000
 initial_nodes = 6
 num_buckets = 1
-emptybuckets = 1
 
 [bucket]
 replica_number = 1

@@ -99,7 +99,8 @@ class RestHelper(object):
         self.post(url=api, data=data)
 
     def set_index_mem_quota(self, host_port, mem_quota):
-        logger.info('Configuring indexer memory quota: {} to {} MB'.format(host_port, mem_quota))
+        logger.info('Configuring indexer memory quota: {} to {} MB'
+                    .format(host_port, mem_quota))
 
         api = 'http://{}/pools/default'.format(host_port)
         data = {'indexMemoryQuota': mem_quota}
@@ -108,6 +109,7 @@ class RestHelper(object):
     def set_fts_index_mem_quota(self, host_port, mem_quota):
         logger.info('Configuring  FTS indexer memory quota: {} to {} MB'.
                     format(host_port, mem_quota))
+
         api = 'http://{}/pools/default'.format(host_port)
         data = {'ftsMemoryQuota': mem_quota}
         self.post(url=api, data=data)
@@ -240,27 +242,22 @@ class RestHelper(object):
         }
 
         if proxy_port is None:
-            data.update(
-                {
-                    'authType': 'sasl',
-                    'saslPassword': password,
-                })
+            data.update({
+                'authType': 'sasl',
+                'saslPassword': password,
+            })
         else:
-            data.update(
-                {
-                    'authType': 'none',
-                    'proxyPort': proxy_port,
-                })
-
-        if time_synchronization:
-            data.update(
-                {
-                    'timeSynchronization': time_synchronization,
-                })
-        logger.info('bucket specification: {}'.format(data))
-
+            data.update({
+                'authType': 'none',
+                'proxyPort': proxy_port,
+            })
         if threads_number:
-            data.update({'threadsNumber': threads_number})
+            data['threadsNumber'] = threads_number
+        if time_synchronization:
+            data['timeSynchronization'] = time_synchronization
+
+        logger.info('Bucket configuration: {}'.format(misc.pretty_dict(data)))
+
         self.post(url=api, data=data)
 
     def delete_bucket(self, host_port, name):

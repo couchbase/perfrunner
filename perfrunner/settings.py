@@ -162,14 +162,6 @@ class TestConfig(Config):
         ]
 
     @property
-    def emptybuckets(self):
-        return [
-            'bucket-{}'.format(i + 1) for i in range(self.cluster.num_buckets,
-                                                     self.cluster.num_buckets +
-                                                     self.cluster.emptybuckets)
-        ]
-
-    @property
     def max_buckets(self):
         return [
             'bucket-{}'.format(i + 1) for i in range(self.cluster.max_num_buckets)
@@ -179,10 +171,6 @@ class TestConfig(Config):
     def compaction(self):
         options = self._get_options_as_dict('compaction')
         return CompactionSettings(options)
-
-    @property
-    def watermark_settings(self):
-        return self._get_options_as_dict('watermarks')
 
     @property
     def restore_settings(self):
@@ -299,16 +287,8 @@ class TestCaseSettings(object):
 
 class ClusterSettings(object):
 
-    NUM_BUCKETS = 1
-    NUM_EMPTYBUCKETS = 0
-    MIN_NUM_BUCKETS = 1
-    MAX_NUM_BUCKETS = 10
-    INCR_NUM_BUCKETS = 1
     GROUP_NUMBER = 1
-    NUM_CPUS = 0  # Use defaults
-    RUN_CBQ = 0
-    SFWI = 0
-    TCMALLOC_AGGRESSIVE_DECOMMIT = 0
+    NUM_BUCKETS = 1
     INDEX_MEM_QUOTA = 256
     FTS_INDEX_MEM_QUOTA = 512
 
@@ -320,21 +300,8 @@ class ClusterSettings(object):
             int(nodes) for nodes in options.get('initial_nodes').split()
         ]
         self.num_buckets = int(options.get('num_buckets', self.NUM_BUCKETS))
-        self.emptybuckets = int(options.get('emptybuckets', self.NUM_EMPTYBUCKETS))
-        self.min_num_buckets = int(options.get('min_num_buckets',
-                                               self.MIN_NUM_BUCKETS))
-        self.max_num_buckets = int(options.get('max_num_buckets',
-                                               self.MAX_NUM_BUCKETS))
-        self.incr_num_buckets = int(options.get('incr_num_buckets',
-                                                self.INCR_NUM_BUCKETS))
         self.num_vbuckets = options.get('num_vbuckets')
         self.group_number = int(options.get('group_number', self.GROUP_NUMBER))
-        self.num_cpus = int(options.get('num_cpus', self.NUM_CPUS))
-        self.disable_moxi = options.get('disable_moxi')
-        self.run_cbq = options.get('run_cbq', self.RUN_CBQ)
-        self.sfwi = options.get('sfwi', self.SFWI)
-        self.tcmalloc_aggressive_decommit = options.get('tcmalloc_aggressive_decommit',
-                                                        self.TCMALLOC_AGGRESSIVE_DECOMMIT)
 
 
 class StatsSettings(object):

@@ -88,17 +88,6 @@ class RebalanceTest(PerfTest):
                 return False
         return True
 
-    def change_watermarks(self, host_port):
-        host = host_port.split(':')[0]
-        memcached_port = self.rest.get_memcached_port(host_port)
-        watermark_settings = self.test_config.watermark_settings
-        mem_quota = self.test_config.cluster.mem_quota
-        for bucket in self.test_config.buckets:
-            for key, val in watermark_settings.items():
-                val = self.memcached.calc_watermark(val, mem_quota)
-                self.memcached.set_flusher_param(host, memcached_port,
-                                                 bucket, key, val)
-
     @with_delayed_posting
     @with_stats
     @with_delay
@@ -173,9 +162,6 @@ class RebalanceTest(PerfTest):
                 self.reporter.start()
 
             self.rest.rebalance(master, known_nodes, ejected_nodes)
-
-            for _, host_port in new_nodes:
-                self.change_watermarks(host_port)
 
             self.monitor.monitor_rebalance(master)
 

@@ -56,14 +56,10 @@ class ClusterManager(object):
     def set_fts_index_mem_quota(self):
         master_node = self.masters().next()
         version = self.rest.get_version(master_node)
-        if version.split('-')[0] < '4.5.0':
-            '''
-            FTS was introduced in 4.5.0 so any version less
-            than will not executed
-            '''
-            return
-        for server in self.servers():
-            self.rest.set_fts_index_mem_quota(server, self.fts_index_mem_quota)
+        if version >= '4.5.0':  # FTS was introduced in 4.5.0
+            for server in self.servers():
+                self.rest.set_fts_index_mem_quota(server,
+                                                  self.fts_index_mem_quota)
 
     def set_query_settings(self):
         settings = self.test_config.n1ql_settings.settings
@@ -91,10 +87,6 @@ class ClusterManager(object):
                                                self.initial_nodes):
             master = servers[0]
             self.rest.set_services(master, self.roles[master])
-
-    def disable_moxi(self):
-        if self.test_config.cluster.disable_moxi is not None:
-            self.remote.disable_moxi()
 
     def create_server_groups(self):
         for master in self.masters():
@@ -130,16 +122,15 @@ class ClusterManager(object):
             self.monitor.monitor_rebalance(master)
         self.wait_until_healthy()
 
-    def create_buckets(self, empty_buckets=False):
-        ram_quota = self.mem_quota / (self.test_config.cluster.num_buckets +
-                                      self.test_config.cluster.emptybuckets)
+    def create_buckets(self):
+        ram_quota = self.mem_quota / self.test_config.cluster.num_buckets
         replica_number = self.test_config.bucket.replica_number
         replica_index = self.test_config.bucket.replica_index
         eviction_policy = self.test_config.bucket.eviction_policy
         threads_number = self.test_config.bucket.threads_number
         proxy_port = self.test_config.bucket.proxy_port
         password = self.test_config.bucket.password
-        buckets = self.test_config.emptybuckets if empty_buckets else self.test_config.buckets
+        buckets = self.test_config.buckets
         time_synchronization = self.test_config.bucket.time_synchronization
 
         for master in self.masters():
@@ -210,19 +201,6 @@ class ClusterManager(object):
         self.remote.tune_log_rotation()
         self.remote.restart()
 
-    def restart_with_alternative_num_cpus(self):
-        num_cpus = self.test_config.cluster.num_cpus
-        if num_cpus:
-            self.remote.restart_with_alternative_num_cpus(num_cpus)
-
-    def restart_with_tcmalloc_aggressive_decommit(self):
-        if self.test_config.cluster.tcmalloc_aggressive_decommit:
-            self.remote.restart_with_tcmalloc_aggressive_decommit()
-
-    def restart_with_sfwi(self):
-        if self.test_config.cluster.sfwi:
-            self.remote.restart_with_sfwi()
-
     def enable_auto_failover(self):
         for master in self.masters():
             self.rest.enable_auto_failover(master)
@@ -235,22 +213,6 @@ class ClusterManager(object):
     def wait_until_healthy(self):
         for master in self.cluster_spec.yield_masters():
             self.monitor.monitor_node_health(master)
-
-    def change_watermarks(self):
-        watermark_settings = self.test_config.watermark_settings
-        for host_port, initial_nodes in zip(self.servers(),
-                                            self.initial_nodes):
-            host = host_port.split(':')[0]
-            memcached_port = self.rest.get_memcached_port(host_port)
-            for bucket in self.test_config.buckets:
-                for key, val in watermark_settings.items():
-                    val = self.memcached.calc_watermark(val, self.mem_quota)
-                    self.memcached.set_flusher_param(host, memcached_port,
-                                                     bucket, key, val)
-
-    def start_cbq_engine(self):
-        if self.test_config.cluster.run_cbq:
-            self.remote.start_cbq()
 
     def change_dcp_io_threads(self):
         if self.test_config.secondaryindex_settings.db == 'moi':

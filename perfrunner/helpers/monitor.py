@@ -44,7 +44,8 @@ class Monitor(RestHelper):
             is_running, progress = self.get_rebalance_status(host_port)
             if progress == last_progress:
                 if time.time() - last_progress_time > self.REBALANCE_TIMEOUT:
-                    logger.interrupt('Rebalance hung')
+                    logger.error('Rebalance hung')
+                    break
             else:
                 last_progress = progress
                 last_progress_time = time.time()

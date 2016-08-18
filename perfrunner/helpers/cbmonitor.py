@@ -436,14 +436,15 @@ class CbAgent(object):
             collector.update_metadata()
 
     def start(self):
+        logger.info('Starting stats collectors')
         self.processes = [Process(target=c.collect) for c in self.collectors]
         map(lambda p: p.start(), self.processes)
 
     def stop(self):
+        logger.info('Terminating stats collectors')
         map(lambda p: p.terminate(), self.processes)
         if self.bandwidth:
             self.remote.kill_process('iptraf')
-        return datetime.utcnow()
 
     def trigger_reports(self, snapshot):
         for report_type in ('html', 'get_corr_matrix'):

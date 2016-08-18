@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
-title = CI2, Singleton Unique Lookup, 20M docs, 14.4KGops, 3.6KSops, GSI, stale=ok
+title = CI2, Singleton Unique Lookup, 20M docs, 14.4KGops, 3.6KSops, GSI, not_bounded
 summary = Singleton Unique Lookup, 14.4KGops, 3.6KSops
 larger_is_better = true
 

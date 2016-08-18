@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLLatencyTest
-title = Q2, Singleton Unique Lookup, 20M docs, 30KSops, 450Qops, GSI, MOI, stale=false
+title = Q2, Singleton Unique Lookup, 20M docs, 30KSops, 450Qops, GSI, MOI, request_plus
 summary = Singleton Unique Lookup, 30KSops, 450Qops
 larger_is_better = false
 

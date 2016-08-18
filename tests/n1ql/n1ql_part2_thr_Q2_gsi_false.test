@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
-title = Q2, Singleton Unique Lookup, 20M docs, Dual Partition, 28.8KGops, 7.2KSops, GSI, stale=false
+title = Q2, Singleton Unique Lookup, 20M docs, Dual Partition, 28.8KGops, 7.2KSops, GSI, request_plus
 summary = Singleton Unique Lookup, Partition, 28.8KGops, 7.2KSops
 larger_is_better = false
 

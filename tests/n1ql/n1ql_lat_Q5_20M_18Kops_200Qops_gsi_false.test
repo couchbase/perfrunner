@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLLatencyTest
-title = Q5, Aggregation Query, 20M docs, 14.4KGops, 3.6KSops, 200Qops, GSI, stale=false
+title = Q5, Aggregation Query, 20M docs, 14.4KGops, 3.6KSops, 200Qops, GSI, request_plus
 summary = Aggregation Query, 14.4KGops, 3.6KSops, 200Qops
 larger_is_better = false
 

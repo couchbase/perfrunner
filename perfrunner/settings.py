@@ -638,15 +638,7 @@ class SecondaryIndexSettings(object):
             if val:
                 setattr(self, index_partition_name, val)
 
-        self.settings = {
-            'indexer.settings.inmemory_snapshot.interval': 200,
-            'indexer.settings.log_level': 'info',
-            'indexer.settings.max_cpu_percent': 2400,
-            'indexer.settings.persisted_snapshot.interval': 5000,
-            'indexer.settings.scan_timeout': 0,
-            'indexer.settings.storage_mode': 'forestdb',
-            'projector.settings.log_level': 'info'
-        }
+        self.settings = {}
 
         for option in options:
             if option.startswith('indexer') or \

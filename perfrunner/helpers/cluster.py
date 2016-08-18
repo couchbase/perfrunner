@@ -3,7 +3,7 @@ import time
 from logger import logger
 
 from perfrunner.helpers.memcached import MemcachedHelper
-from perfrunner.helpers.misc import server_group
+from perfrunner.helpers.misc import pretty_dict, server_group
 from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import RestHelper
@@ -68,16 +68,14 @@ class ClusterManager(object):
                 self.rest.set_query_settings(server, settings)
 
     def set_index_settings(self):
-        if not list(self.cluster_spec.yield_servers_by_role('index'))[0][1]:
-            return
-
-        if self.test_config.secondaryindex_settings.db != 'moi':
-            settings = self.test_config.secondaryindex_settings.settings
-            for _, servers in self.cluster_spec.yield_servers_by_role('index'):
-                for server in servers:
+        settings = self.test_config.secondaryindex_settings.settings
+        for _, servers in self.cluster_spec.yield_servers_by_role('index'):
+            for server in servers:
+                if settings:
                     self.rest.set_index_settings(server, settings)
-        else:
-            logger.info("Taking the default MOI settings.")
+                curr_settings = self.rest.get_index_settings(server)
+                curr_settings = pretty_dict(curr_settings)
+                logger.info("Index settings: {}".format(curr_settings))
 
     def set_services(self):
         for (_, servers), initial_nodes in zip(self.clusters(),

@@ -129,25 +129,25 @@ class RestHelper(object):
             logger.info('Changing query setting {} to {}'.format(override, value))
         self.post(url=api, data=json.dumps(settings), headers=headers)
 
-    def set_index_settings(self, host_port, override_settings):
+    def set_index_settings(self, host_port, settings):
+        logger.info('Changing indexer settings for {}'.format(host_port))
+
         host = host_port.replace('8091', '9102')
         api = 'http://{}/settings'.format(host)
-        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
 
-        settings = self.get(url=api).json()
-        for override, value in override_settings.items():
-            if override not in settings:
-                logger.error('Cannot change 2i setting {} to {}, setting invalid'
-                             .format(override, value))
-                continue
-            settings[override] = value
-            logger.info('Changing 2i setting {} to {}'.format(override, value))
+        curr_settings = self.get(url=api).json()
+        for option, value in settings.items():
+            if option in curr_settings:
+                logger.info('Changing {} to {}'.format(option, value))
+                self.post(url=api, data=json.dumps({option: value}))
+            else:
+                logger.warn('Skipping unknown option: {}'.format(option))
 
-        self.post(url=api, data=json.dumps(settings), headers=headers)
-        time.sleep(10)
-        new_settings = self.get(url="{}?internal=ok".format(api)).json()
-        logger.info("New internal settings: {}"
-                    .format(misc.pretty_dict(new_settings)))
+    def get_index_settings(self, host_port):
+        host = host_port.replace('8091', '9102')
+        api = 'http://{}/settings?internal=ok'.format(host)
+
+        return self.get(url=api).json()
 
     def set_services(self, host_port, services):
         logger.info('Configuring services on master node: {}'.format(host_port))

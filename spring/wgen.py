@@ -784,7 +784,7 @@ class FtsWorker(Worker):
                              Error Checking if logfile is missing test file
                             '''
                             continue
-                        f = open(self.ws.fts_config.logfile, 'w')
+                        f = open(self.ws.fts_config.logfile, 'a')
                         if r.status_code not in range(200, 203) \
                                 or self.do_check_result(r):
                             f.write(str(args))

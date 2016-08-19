@@ -279,7 +279,7 @@ class FtsGen(CBGen):
                         '''
                         from collections import defaultdict
                         keytypes = FtsGen.process_conj_disj(self.settings.type.split('_'))
-                        temp_query = defaultdict([])
+                        temp_query = defaultdict(list)
                         tbool = {v: {k: None} for k, v in self.bool_map.iteritems()}
 
                         for terms in line.split():
@@ -445,7 +445,7 @@ class ElasticGen(FtsGen):
                             '''
                                 reference: http://substantial.com/blog/2013/01/16/
                                 building-faceted-search-with-elasticsearch
-                             '''
+                            '''
                             tmp_query['query'] = {"match_all": {}}
                             self.query['facets'] = {"format": {"terms": {"field": self.settings.field, "size": 10}}}
 

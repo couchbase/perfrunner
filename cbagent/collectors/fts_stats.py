@@ -84,7 +84,8 @@ class FtsStats(FtsCollector):
     METRICS = ("cbft_doc_count", "cbft_num_bytes_used_disk",
                "cbft_num_bytes_used_ram", "cbft_pct_cpu_gc",
                "cbft_batch_merge_count", "cbft_total_gc",
-               "cbft_num_bytes_live_data", "cbft_total_bytes_indexed")
+               "cbft_num_bytes_live_data", "cbft_total_bytes_indexed",
+               "cbft_num_recs_to_persist", )
 
     def __init__(self, settings, test_config, prefix=None):
         super(FtsStats, self).__init__(settings, test_config)
@@ -100,6 +101,8 @@ class FtsStats(FtsCollector):
             self.power = pow(10, 9)
             self.bytes_index = bucket + ':' + test_config.fts_settings.name + \
                 ":cbft_total_bytes_indexed"
+            self.recs_presist = bucket + ':' + test_config.fts_settings.name + \
+                ":num_recs_to_persist"
 
     def cbft_batch_merge_count(self):
         return self.cbft_stats_get(self.live_data)
@@ -115,6 +118,9 @@ class FtsStats(FtsCollector):
 
     def cbft_total_bytes_indexed(self):
         return self.cbft_stats_get(self.bytes_index)
+
+    def cbft_num_recs_to_persist(self):
+        return self.cbft_stats_get(self.recs_presist)
 
 
 class FtsQueryStats(FtsLatency):
@@ -171,7 +177,11 @@ class ElasticStats(FtsCollector):
 
     COLLECTOR = "fts_latency"
 
-    METRICS = ("elastic_latency_get", )
+    METRICS = ("elastic_latency_get", "elastic_cache_size", "elastic_query_total",
+               "elastic_cache_hit", "elastic_filter_cache_size")
+    '''
+     Help: https://www.elastic.co/guide/en/elasticsearch/guide/current/_monitoring_individual_nodes.html
+     '''
 
     def __init__(self, settings, test_config, prefix=None):
         super(ElasticStats, self).__init__(settings, test_config)
@@ -183,6 +193,22 @@ class ElasticStats(FtsCollector):
     def cbft_query_total(self):
         if self.cbft_stats:
             return self.cbft_stats["_all"]["total"]["search"]["query_total"]
+
+    def elastic_query_total(self):
+        return self.cbft_query_total()
+
+    def elastic_cache_size(self):
+        if self.cbft_stats:
+            return self.cbft_stats["_all"]["total"]["query_cache"]["memory_size_in_bytes"]
+
+    def elastic_cache_hit(self):
+        return self.cbft_stats["_all"]["total"]["query_cache"]["hit_count"]
+
+    def elastic_filter_cache_size(self):
+        return self.cbft_stats["_all"]["total"]["filter_cache"]["memory_size_in_bytes"]
+
+    def elastic_active_search(self):
+        return self.cbft_stats["_all"]["total"]["search"]["open_contexts"]
 
     def elastic_latency_get(self):
         if self.flag:

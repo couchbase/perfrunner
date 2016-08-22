@@ -5,10 +5,12 @@
   - apt: name={{item}} update_cache=yes
     with_items:
       - atop
+      - cpufrequtils
       - git
       - htop
       - libffi-dev
       - libssl-dev
+      - linux-tools-generic
       - openjdk-8-jdk
       - python-pip
       - python-virtualenv

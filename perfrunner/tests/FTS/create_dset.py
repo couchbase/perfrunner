@@ -207,6 +207,24 @@ class CreateData(object):
             '''
             pass
 
+        @staticmethod
+        def generatedates(file1):
+            dates = ['2013-10-17', '2013-11-17', '2014-02-09', '2015-11-26']
+            start = 0
+            end = 0
+            file = open(file1, 'r')
+            for c in file:
+                term, freq = c.split()
+                if end == 4:
+                    start += 1
+                    if start == 4:
+                        start = 0
+                    end = start
+                sd = dates[start]
+                ed = dates[end]
+                end += 1
+                print term, ':'.join([sd, ed])
+            file.close()
 
 '''
     #AndHighOrMedMed
@@ -218,4 +236,5 @@ class CreateData(object):
     CreateData.createids()
     CreateData.changefiles()
     CreateData.createfuzzy('midterm.txt', 1)
+    CreateData.generatedates('hiterm.txt')
 '''

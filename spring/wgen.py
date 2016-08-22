@@ -753,6 +753,7 @@ class FtsWorker(Worker):
 
         self.fts_es_query = instance
         self.fts_es_query.prepare_query()
+        self.count = 0
 
     def do_check_result(self, r):
         '''
@@ -779,6 +780,16 @@ class FtsWorker(Worker):
                     '''
                     try:
                         r = cmd(**args)
+                        '''
+                        increment in sinle thread, so llock needed
+                        '''
+                        self.count += 1
+                        if self.count % 10000 == 0:
+                            '''
+                             Dump a sample of queries
+                             '''
+                            logger.info(args)
+                            logger.info(r.text)
                         if not self.ws.fts_config.logfile:
                             '''
                              Error Checking if logfile is missing test file

@@ -204,8 +204,7 @@ class FtsGen(CBGen):
       This part of code can be generalised and work complex way.
       generators.
     '''
-    __FTS_QUERY = {"ctl": {"timeout": 0, "consistency": {"vectors": {}, "level": ""}},
-                   "query": {}, "size": 10}
+    __FTS_QUERY = {"ctl": {"timeout": 0}, "query": {}, "size": 10}
 
     def __init__(self, cb_url, settings):
         self.fts_query = "http://{}:8094/api/".format(cb_url)
@@ -335,9 +334,36 @@ class FtsGen(CBGen):
                         temp_query['field'] = self.settings.field
 
                     elif self.settings.type == "facet":
+                        '''
+                        https://gist.github.com/mschoch/9bc5f508bb25c94ed9af
+                        "query": {
+                            "boost": 1,
+                            "query": "beer"
+                          },
+                          "fields": ["*"],
+                          "facets": {
+                            "updated": {
+                              "size": 3,
+                              "field": "updated",
+                              "date_ranges": [
+                                      {
+                                              "name": "old",
+                                              "end": "2010-07-27"
+                                      },
+                                      {
+                                              "name": "new",
+                                              "start": "2010-07-27"
+                                      }
+                              ]
+                            }
+                        '''
+                        start_date, end_date = freq.split(':')
                         temp_query["query"] = tosearch
-                        self.query["facets"] = {"type": {"size": 10, "field": self.settings.field}}
-
+                        temp_query["boost"] = 1
+                        self.query['fields'] = ["*"]
+                        self.query["facets"] = {self.settings.field: {"size": 5, "field": self.settings.field,
+                                                "date_ranges": [{"name": "end", "end": end_date},
+                                                                {"name": "start", "start": start_date}]}}
                     else:
                         temp_query[self.settings.type] = tosearch
                         temp_query['field'] = self.settings.field

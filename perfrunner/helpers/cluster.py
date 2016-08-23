@@ -145,6 +145,9 @@ class ClusterManager(object):
         compaction_settings = self.test_config.compaction
         for master in self.masters():
             self.rest.configure_auto_compaction(master, compaction_settings)
+            settings = self.rest.get_auto_compaction_settings(master)
+            logger.info('Auto-compaction settings: {}'
+                        .format(pretty_dict(settings)))
 
     def configure_internal_settings(self):
         internal_settings = self.test_config.internal_settings

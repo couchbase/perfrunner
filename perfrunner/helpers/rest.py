@@ -283,6 +283,10 @@ class RestHelper(object):
         }
         self.post(url=api, data=data)
 
+    def get_auto_compaction_settings(self, host_port):
+        api = 'http://{}/settings/autoCompaction'.format(host_port)
+        return self.get(url=api).json()
+
     def get_bucket_stats(self, host_port, bucket):
         api = 'http://{}/pools/default/buckets/{}/stats'.format(host_port,
                                                                 bucket)

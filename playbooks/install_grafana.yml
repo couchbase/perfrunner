@@ -1,0 +1,15 @@
+---
+- hosts: local:grafana_servers
+  tasks:
+  - name: update grafana sources list
+    lineinfile: dest=/etc/apt/sources.list line="deb https://packagecloud.io/grafana/stable/debian/ wheezy main" 
+  - name: add apt key
+    apt_key: url=https://packagecloud.io/gpg.key state=present
+  - name: Install required grafana dependencies
+    apt: name={{item}} update_cache=yes
+    with_items:
+    - grafana
+    - adduser
+    - libfontconfig
+  - name: ensuring grafana-server is enabled on boot
+    service: name=grafana-server state=started enabled=yes

@@ -28,7 +28,8 @@ class SecondaryIndexTest(PerfTest):
     cluster spec.
     """
 
-    COLLECTORS = {'secondary_stats': True, 'secondary_debugstats': True}
+    COLLECTORS = {'secondary_stats': True, 'secondary_debugstats': True,
+                  'secondary_debugstats_bucket': True}
 
     def __init__(self, *args):
         super(SecondaryIndexTest, self).__init__(*args)
@@ -426,7 +427,8 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
     The test applies scan workload against the 2i server and measures
     and reports the average scan throughput
     """
-    COLLECTORS = {'secondary_stats': True, 'secondary_latency': True, 'secondary_debugstats': True}
+    COLLECTORS = {'secondary_stats': True, 'secondary_latency': True,
+                  'secondary_debugstats': True, 'secondary_debugstats_bucket': True}
 
     @with_stats
     def apply_scanworkload(self):

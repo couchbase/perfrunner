@@ -22,6 +22,7 @@ from cbagent.collectors import (
     NSServer,
     ObserveLatency,
     SecondaryDebugStats,
+    SecondaryDebugStatsBucket,
     SecondaryLatencyStats,
     SecondaryStats,
     SpringLatency,
@@ -137,6 +138,7 @@ class CbAgent(object):
                            xdcr_lag=False,
                            secondary_latency=False,
                            secondary_debugstats=False,
+                           secondary_debugstats_bucket=False,
                            fts_latency=False,
                            elastic_stats=False,
                            fts_stats=False,
@@ -166,6 +168,8 @@ class CbAgent(object):
             self.prepare_secondary_stats(clusters)
         if secondary_debugstats:
             self.prepare_secondary_debugstats(clusters)
+        if secondary_debugstats_bucket:
+            self.prepare_secondary_debugstats_bucket(clusters)
         if secondary_latency:
             self.prepare_secondary_latency(clusters)
         if n1ql_stats:
@@ -212,6 +216,13 @@ class CbAgent(object):
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
             self.collectors.append(SecondaryDebugStats(settings))
+
+    def prepare_secondary_debugstats_bucket(self, clusters):
+        for cluster in clusters:
+            settings = copy(self.settings)
+            settings.cluster = cluster
+            settings.master_node = self.clusters[cluster]
+            self.collectors.append(SecondaryDebugStatsBucket(settings))
 
     def prepare_secondary_latency(self, clusters):
         for cluster in clusters:

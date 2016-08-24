@@ -266,6 +266,11 @@ class TestConfig(Config):
         options = self._get_options_as_dict('ycsb')
         return YcsbSettings(options)
 
+    @property
+    def dailyp_settings(self):
+        options = self._get_options_as_dict('dailyp')
+        return DailypSettings(options)
+
     def get_n1ql_query_definition(self, query_name):
         return self._get_options_as_dict('n1ql-{}'.format(query_name))
 
@@ -781,6 +786,16 @@ class YcsbSettings(object):
         self.log_file = options.get("export_file")
         self.log_path = options.get("export_file_path")
         self.index = options.get("index")
+
+    def __str__(self):
+        return str(self.__dict__)
+
+
+class DailypSettings(object):
+    def __init__(self, options):
+        self.category = options.get("dailyp_category")
+        self.subcategory = options.get("dailyp_subcategory")
+        self.threshold = int(options.get("threshold"))
 
     def __str__(self):
         return str(self.__dict__)

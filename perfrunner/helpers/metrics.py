@@ -99,6 +99,20 @@ class MetricHelper(object):
 
         return queries, metric, metric_info
 
+    def cal_avg_n1ql_queries_for_perfdaily(self):
+        query_params = self._get_query_params('avg_query_requests')
+        db = 'n1ql_stats{}'.format(self.cluster_names[0])
+        data = self.seriesly[db].query(query_params)
+        queries = data.values()[0][0]
+        queries = round(queries, 1)
+
+        return {"name": "avg_query_throughput",
+                "description": "Avg. Query Throughput (queries/sec)",
+                "value": queries,
+                "larger_is_better": self.test.test_config.test_case.larger_is_better.lower() == "true",
+                "threshold": self.test.test_config.dailyp_settings.threshold
+                }
+
     def parse_log(self, test_config, name):
         cbagent = CbAgent(self.test, verbose=False)
         if name.find('Elasticsearch') != -1:

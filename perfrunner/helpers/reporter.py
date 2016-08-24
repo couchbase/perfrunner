@@ -5,7 +5,9 @@ from zipfile import ZIP_DEFLATED, ZipFile
 
 import requests
 from couchbase import Couchbase
+from couchbase.bucket import Bucket
 from logger import logger
+from pytz import timezone
 
 from perfrunner.helpers.misc import pretty_dict, uhex
 from perfrunner.utils.btrc import CouchbaseClient, StatsReporter
@@ -221,9 +223,7 @@ class SFReporter(object):
         if metric is None:
             metric = '{}_{}'.format(self.test.test_config.name,
                                     self.test.cluster_spec.name)
-
         stats_settings = self.test.test_config.stats_settings
-
         if stats_settings.post_to_sf:
             self._add_metric(metric, metric_info)
             self._add_cluster()
@@ -233,6 +233,45 @@ class SFReporter(object):
         if key and self.test.master_events:
             self._upload_master_events(filename=key)
         return value
+
+    def _upload_test_run_dailyp(self, test_run_dict):
+        try:
+            bucket = Bucket('couchbase://{}/perf_daily'.
+                            format(self.test.test_config.stats_settings.cbmonitor['host']))
+        except Exception, e:
+            logger.info("Post to Dailyp, DB connection error: {}".format(e.message))
+            return False
+        docid = "{}__{}__{}__{}__{}".format(test_run_dict['category'],
+                                            test_run_dict['subcategory'],
+                                            test_run_dict['test'],
+                                            test_run_dict['build'],
+                                            test_run_dict['datetime'])
+        bucket.upsert(docid, test_run_dict)
+        return True
+
+    def post_to_dailyp(self, metrics):
+        test_title = self.test.test_config.test_case.metric_title
+        test_name = test_title.replace(', ', '_').replace(',', '_').replace(' ', '_').replace('=', '_')
+        snapshot_links = list()
+        snapshot_host = "http://{}/reports/html/?snapshot=".\
+                        format(self.test.test_config.stats_settings.cbmonitor['host'])
+        for snapshot in self.test.cbagent.snapshots:
+            snapshot_link = snapshot_host + snapshot
+            snapshot_links.append(snapshot_link)
+
+        post_body = {"category": self.test.test_config.dailyp_settings.category,
+                     "subcategory": self.test.test_config.dailyp_settings.subcategory,
+                     "test_title": test_title,
+                     "datetime": datetime.now(timezone('US/Pacific')).strftime("%Y_%m_%d-%H:%M"),
+                     "build": self.test.build,
+                     "test": test_name,
+                     "metrics": metrics,
+                     "snapshots": snapshot_links
+                     }
+        if self._upload_test_run_dailyp(post_body):
+            logger.info("Successfully posted to Dailyp {}".format(post_body))
+        else:
+            logger.warn("Failed to post to Dailyp {}".format(post_body))
 
 
 class LogReporter(object):

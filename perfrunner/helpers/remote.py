@@ -785,9 +785,9 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
     @staticmethod
     def put_iss_files(version):
         logger.info('Copying {} ISS files'.format(version))
-        put('scripts/install_{}.iss'.format(version),
+        put('iss/install_{}.iss'.format(version),
             '/cygdrive/c/install.iss')
-        put('scripts/uninstall_{}.iss'.format(version),
+        put('iss/uninstall_{}.iss'.format(version),
             '/cygdrive/c/uninstall.iss')
 
     @all_hosts

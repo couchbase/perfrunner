@@ -14,8 +14,9 @@ class SecondaryDebugStats(Collector):
         stats = dict()
         for metric in self.METRICS:
             metric1 = "{}:{}".format(bucket, metric) if bucket else metric
-            value = samples[metric1]
-            stats[metric] = value
+            if metric1 in samples:
+                value = samples[metric1]
+                stats[metric] = value
         return stats
 
     def sample(self):

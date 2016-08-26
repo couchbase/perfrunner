@@ -16,23 +16,13 @@ class N1QLTest(PerfTest):
 
     def build_index(self):
         for name, servers in self.cluster_spec.yield_servers_by_role('n1ql'):
-            if not servers:
-                raise Exception('No query servers specified for cluster \"{}\",'
-                                ' cannot create indexes'.format(name))
-
-            if not self.test_config.buckets:
-                raise Exception('No buckets specified for cluster \"{}\",'
-                                ' cannot create indexes'.format(name))
-
             query_node = servers[0].split(':')[0]
             for bucket in self.test_config.buckets:
                 self._build_index(query_node, bucket)
 
     def _build_index(self, query_node, bucket):
-
         names = list()
         for index in self.test_config.n1ql_settings.indexes:
-
             if '{partition_id}' in index:
                 for id in range(self.test_config.load_settings.doc_partitions):
                     index_name = index.split('::')[0].format(partition_id=id)
@@ -57,7 +47,6 @@ class N1QLTest(PerfTest):
         prepared_stmnts = list()
         for query in self.test_config.access_settings.n1ql_queries:
             if 'prepared' in query and query['prepared']:
-
                 if '{partition_id}' in query['prepared']:
                     for id in range(self.test_config.load_settings.doc_partitions):
                         name = query['prepared'].format(partition_id=id)
@@ -73,14 +62,6 @@ class N1QLTest(PerfTest):
             self.n1ql_queries.append(query)
 
         for name, servers in self.cluster_spec.yield_servers_by_role('n1ql'):
-            if not servers:
-                raise Exception('No query servers specified for cluster \"{}\",'
-                                ' cannot create prepared statement'.format(name))
-
-            if not self.test_config.buckets:
-                raise Exception('No buckets specified for cluster \"{}\", '
-                                'cannot create prepared statement'.format(name))
-
             for server in servers:
                 query_node = server.split(':')[0]
                 for stmt in prepared_stmnts:

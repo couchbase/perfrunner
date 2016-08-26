@@ -25,15 +25,14 @@ class N1QLTest(PerfTest):
         for index in self.test_config.n1ql_settings.indexes:
             if '{partition_id}' in index:
                 for id in range(self.test_config.load_settings.doc_partitions):
-                    index_name = index.split('::')[0].format(partition_id=id)
-                    index_query = index.split('::')[1]
+                    index_name, index_query = index.split('::')
+                    index_name = index_name.format(partition_id=id)
                     query = index_query.format(name=index_name, bucket=bucket,
                                                partition_id=id)
                     self.rest.n1ql_query(query_node, query)
                     names.append(index_name)
             else:
-                index_name = index.split('::')[0]
-                index_query = index.split('::')[1]
+                index_name, index_query = index.split('::')
                 query = index_query.format(name=index_name, bucket=bucket)
                 self.rest.n1ql_query(query_node, query)
                 names.append(index_name)

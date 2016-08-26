@@ -35,6 +35,7 @@ class Monitor(RestHelper):
 
     def monitor_rebalance(self, host_port):
         logger.info('Monitoring rebalance status')
+
         is_running = True
         last_progress = 0
         last_progress_time = time.time()
@@ -122,6 +123,7 @@ class Monitor(RestHelper):
     def monitor_warmup(self, memcached, host_port, bucket):
         logger.info('Monitoring warmup status: {}@{}'.format(bucket,
                                                              host_port))
+
         host = host_port.split(':')[0]
         # The supplied memcached_port may not be used if authless bucket is
         # used due to FTS testing. See helpers/memcached.py and the actual
@@ -142,6 +144,7 @@ class Monitor(RestHelper):
 
     def monitor_node_health(self, host_port):
         logger.info('Monitoring node health')
+
         for retry in range(self.MAX_RETRY):
             unhealthy_nodes = {
                 n for n, status in self.node_statuses(host_port).items()
@@ -158,3 +161,30 @@ class Monitor(RestHelper):
             logger.interrupt('Some nodes are not healthy: {}'.format(
                 unhealthy_nodes
             ))
+
+    def monitor_index_state(self, host, index_name=None):
+        logger.info('Monitoring index state')
+
+        if index_name is not None:
+            statement = 'SELECT * FROM system:indexes'
+        else:
+            statement = 'SELECT * FROM system:indexes WHERE name = "{}"'.format(index_name)
+
+        is_building = True
+        while is_building:
+            time.sleep(self.POLLING_INTERVAL)
+
+            response = self.exec_n1ql_statement(host, statement)
+            if response['status'] == 'success':
+                for result in response['results']:
+                    if result['indexes']['state'] != 'online':
+                        break
+                else:
+                    is_building = False
+            else:
+                logger.error(response['status'])
+
+        if index_name is None:
+            logger.info('All Indexes: ONLINE')
+        else:
+            logger.info('Index "{}" is ONLINE'.format(index_name))

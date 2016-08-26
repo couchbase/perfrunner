@@ -29,17 +29,16 @@ class N1QLTest(PerfTest):
                     index_name = index_name.format(partition_id=id)
                     query = index_query.format(name=index_name, bucket=bucket,
                                                partition_id=id)
-                    self.rest.n1ql_query(query_node, query)
+                    self.rest.exec_n1ql_statement(query_node, query)
                     names.append(index_name)
             else:
                 index_name, index_query = index.split('::')
                 query = index_query.format(name=index_name, bucket=bucket)
-                self.rest.n1ql_query(query_node, query)
+                self.rest.exec_n1ql_statement(query_node, query)
                 names.append(index_name)
 
         for name in names:
-            self.rest.wait_for_indexes_to_become_online(host=query_node,
-                                                        index_name=name)
+            self.monitor.monitor_index_state(host=query_node, index_name=name)
 
     def _create_prepared_statements(self):
         self.n1ql_queries = []
@@ -63,8 +62,8 @@ class N1QLTest(PerfTest):
         for name, servers in self.cluster_spec.yield_servers_by_role('n1ql'):
             for server in servers:
                 query_node = server.split(':')[0]
-                for stmt in prepared_stmnts:
-                    self.rest.n1ql_query(query_node, stmt)
+                for statement in prepared_stmnts:
+                    self.rest.exec_n1ql_statement(query_node, statement)
 
     @with_stats
     def access(self, access_settings=None):

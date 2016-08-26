@@ -519,51 +519,16 @@ class RestHelper(object):
         return [server.split(':')[0]
                 for server in data['vBucketServerMap']['serverList']]
 
-    def exec_n1ql_stmnt(self, host, stmnt):
-        logger.info('Executing: {}'.format(stmnt))
+    def exec_n1ql_statement(self, host, statement):
+        logger.info('Executing N1QL statement: {}'.format(statement))
+
         api = 'http://{}:8093/query/service'.format(host)
         data = {
-            'statement': '{0}'.format(stmnt)
+            'statement': statement,
         }
-        return self.post(url=api, data=data)
 
-    def n1ql_query(self, host, stmnt):
-        logger.info('Executing: {}'.format(stmnt))
-        api = 'http://{}:8093/query/service'.format(host)
-        headers = {'content-type': 'text/plain'}
-        resp = self.post(url=api, data=stmnt, headers=headers)
-        return resp.json()
-
-    def wait_for_indexes_to_become_online(self, host, index_name=None):
-        # POLL to ensure the indexes become online
-        url = 'http://{}:8093/query/service'.format(host)
-        data = {
-            'statement': 'SELECT * FROM system:indexes'
-        }
-        if index_name is not None:
-            data = {
-                'statement': 'SELECT * FROM system:indexes WHERE name = "{}"'.format(index_name)
-            }
-
-        ready = False
-        while not ready:
-            time.sleep(10)
-            resp = requests.Session().post(url=url, data=data)
-            if resp.json()['status'] == 'success':
-                results = resp.json()['results']
-                for result in results:
-                    if result['indexes']['state'] == 'online':
-                        ready = True
-                    else:
-                        ready = False
-                        break
-            else:
-                logger.error('Query:{} => Did not return a success!'.format(data['statement']))
-
-        if index_name is None:
-            logger.info('All Indexes: ONLINE')
-        else:
-            logger.info('Index:{} is ONLINE'.format(index_name))
+        response = self.post(url=api, data=data)
+        return response.json()
 
     def wait_for_secindex_init_build(self, host, indexes, rest_username, rest_password):
         # POLL until initial index build is complete

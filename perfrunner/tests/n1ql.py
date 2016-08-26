@@ -37,9 +37,9 @@ class N1QLTest(PerfTest):
                 self.rest.n1ql_query(query_node, query)
                 names.append(index_name)
 
-            for name in names:
-                self.rest.wait_for_indexes_to_become_online(host=query_node,
-                                                            index_name=name)
+        for name in names:
+            self.rest.wait_for_indexes_to_become_online(host=query_node,
+                                                        index_name=name)
 
     def _create_prepared_statements(self):
         self.n1ql_queries = []

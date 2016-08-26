@@ -21,4 +21,3 @@ seriesly
 sqlalchemy==0.9.4
 twisted==16.2.0
 urllib3==1.10.4
-git+https://github.com/couchbaselabs/python-dcp-client.git#egg=dcp-client

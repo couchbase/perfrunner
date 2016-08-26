@@ -5,7 +5,6 @@ from multiprocessing import Event, Lock, Process, Value
 
 from couchbase.exceptions import ValueFormatError
 from couchbase.n1ql import MutationState, N1QLQuery
-from dcp import DcpClient, ResponseHandler
 from decorator import decorator
 from logger import logger
 from psutil import cpu_count
@@ -644,87 +643,6 @@ class N1QLWorker(Worker):
             logger.info('Finished: {}-{}'.format(self.name, self.sid))
 
 
-class DcpWorkerFactory(object):
-
-    def __new__(cls, workload_settings):
-        return DcpWorker, workload_settings.dcp_workers
-
-
-class DcpHandler(ResponseHandler):
-
-    def __init__(self):
-        ResponseHandler.__init__(self)
-        self.count = 0
-
-    def mutation(self, response):
-        pass
-        self.count += 1
-
-    def deletion(self, response):
-        pass
-        self.count += 1
-
-    def marker(self, response):
-        pass
-
-    def stream_end(self, response):
-        pass
-
-    def get_num_items(self):
-        return self.count
-
-
-class DcpWorker(Worker):
-
-    def __init__(self, workload_settings, target_settings,
-                 shutdown_event=None):
-        super(DcpWorker, self).__init__(workload_settings, target_settings,
-                                        shutdown_event)
-
-    def init_db(self, params):
-        pass
-
-    def run(self, sid, lock):
-        self.sid = sid
-        host, port = self.ts.node.split(':')
-
-        try:
-            self.handler = DcpHandler()
-            self.dcp_client = DcpClient()
-            self.dcp_client.connect(host, int(port), self.ts.bucket,
-                                    'Administrator', 'password',
-                                    self.handler)
-        except:
-            logger.info('Connection Error: dcp-worker-{}'.format(self.sid))
-            return
-
-        logger.info('Started: query-worker-{}'.format(self.sid))
-        for vb in range(1024):
-            start_seqno = 0
-            end_seqno = 18446744073709551615  # 2^64 - 1
-            result = self.dcp_client.add_stream(vb, 0, start_seqno, end_seqno,
-                                                0, 0, 0)
-            if result['status'] != 0:
-                logger.warn('Stream failed for vb {} due to error {}'
-                            .format(vb, result['status']))
-
-        no_items = 0
-        last_item_count = 0
-        while no_items < 10:
-            time.sleep(1)
-            cur_items = self.handler.get_num_items()
-            if cur_items == last_item_count:
-                no_items += 1
-            else:
-                no_items = 0
-            last_item_count = cur_items
-
-        self.dcp_client.close()
-
-        logger.info('Finished: dcp-worker-{}, read {} items'
-                    .format(self.sid, last_item_count))
-
-
 class FtsWorkerFactory(object):
 
     def __new__(cls, workload_settings):
@@ -874,7 +792,6 @@ class WorkloadGen(object):
         self.start_workers(ViewWorkerFactory, 'view', curr_items, deleted_items)
         self.start_workers(N1QLWorkerFactory, 'n1ql', curr_items, deleted_items,
                            casupdated_items, deleted_capped_items)
-        self.start_workers(DcpWorkerFactory, 'dcp')
         self.start_workers(FtsWorkerFactory, 'fts')
 
         if self.timer:

@@ -28,7 +28,6 @@ class WorkloadSettings(object):
 
         # Stubs for library compatibility
         self.query_workers = 0
-        self.dcp_workers = 0
         self.subdoc_workers = 0
         self.n1ql_workers = 0
 

@@ -472,7 +472,6 @@ class PhaseSettings(object):
     QUERY_WORKERS = 0
     N1QL_WORKERS = 0
     N1QL_OP = 'read'
-    DCP_WORKERS = 0
     SPRING_WORKERS = 100
 
     SEQ_READS = False
@@ -519,7 +518,6 @@ class PhaseSettings(object):
                                             self.N1QL_WORKERS))
         self.subdoc_workers = 0
         self.n1ql_op = options.get('n1ql_op', self.N1QL_OP)
-        self.dcp_workers = int(options.get('dcp_workers', self.DCP_WORKERS))
         self.spring_workers = int(options.get('spring_workers', self.SPRING_WORKERS))
         self.n1ql_queries = []
         if 'n1ql_queries' in options:

@@ -6,7 +6,6 @@ Related projects:
 * [seriesly](https://github.com/dustin/seriesly)
 * [seriesly client](https://github.com/pavel-paulau/seriesly-python-client)
 * [moveit](https://github.com/pavel-paulau/moveit)
-* [dcp](https://github.com/couchbaselabs/python-dcp-client)
 
 Installation
 ------------------------------

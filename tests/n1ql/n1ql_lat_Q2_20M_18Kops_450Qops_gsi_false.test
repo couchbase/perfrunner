@@ -23,7 +23,7 @@ indexer.settings.gc_percent = 200
 [load]
 items = 20000000
 size = 1024
-workers = 40
+workers = 80
 doc_gen = reverse_lookup
 doc_partitions = 1
 

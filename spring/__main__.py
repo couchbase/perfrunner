@@ -1,7 +1,6 @@
 from argparse import ArgumentParser
 
 from spring.settings import TargetSettings, WorkloadSettings
-from spring.version import VERSION
 from spring.wgen import WorkloadGen
 
 
@@ -21,9 +20,6 @@ class CLIParser(ArgumentParser):
             'uri', metavar='URI', nargs='?',
             default='cb://127.0.0.1:8091/default',
             help='Connection URI'
-        )
-        self.add_argument(
-            '-v', '--version', action='version', version=VERSION
         )
         self.add_argument(
             '-c', dest='creates', type=int, default=0, metavar='',

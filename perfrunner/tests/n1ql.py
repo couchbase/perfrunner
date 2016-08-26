@@ -1,5 +1,4 @@
 import time
-from exceptions import NotImplementedError
 
 from logger import logger
 
@@ -14,9 +13,6 @@ class N1QLTest(PerfTest):
         'n1ql_stats': True,
         'secondary_stats': True,
     }
-
-    def __init__(self, *args, **kwargs):
-        super(N1QLTest, self).__init__(*args, **kwargs)
 
     def build_index(self):
         for name, servers in self.cluster_spec.yield_servers_by_role('n1ql'):
@@ -95,21 +91,26 @@ class N1QLTest(PerfTest):
         super(N1QLTest, self).timer()
 
     def run(self):
-        raise NotImplementedError("N1QLTest is a base test and cannot be run")
+        """Important: the test creates two data sets with different key
+        prefixes.
 
+        In order to run the N1QL tests we need to satisfy two contradicting
+        requirements:
+        * Fields should be changed so that the secondary indexes are being
+        updated.
+        * Fields remain the same (based on a deterministic random algorithm) so
+        that we can query them.
 
-class N1QLLatencyTest(N1QLTest):
-
-    def __init__(self, *args, **kwargs):
-        super(N1QLLatencyTest, self).__init__(*args, **kwargs)
-
-    def run(self):
+        The following workaround was introduced:
+        * 50% of documents are being randomly mutated. These documents are not
+        used for queries.
+        * 50% of documents remain unchanged. Only these documents are used for
+        queries."""
         load_settings = self.test_config.load_settings
         load_settings.items /= 2
 
         iterator = TargetIterator(self.cluster_spec, self.test_config, 'n1ql')
         self.load(load_settings, iterator)
-
         self.load(load_settings)
         self.wait_for_persistence()
         self.compact_bucket()
@@ -122,48 +123,26 @@ class N1QLLatencyTest(N1QLTest):
         self.workload.items /= 2
         self.workload.n1ql_queries = getattr(self, 'n1ql_queries',
                                              self.workload.n1ql_queries)
+        self.access_bg(access_settings=self.workload)
+        self.access(access_settings=self.workload)
 
-        self.access_bg(self.workload)
-        self.access(self.workload)
+        self.report_kpi()
 
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(
-                *self.metric_helper.calc_query_latency(percentile=80)
-            )
+
+class N1QLLatencyTest(N1QLTest):
+
+    def _report_kpi(self):
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_query_latency(percentile=80)
+        )
 
 
 class N1QLThroughputTest(N1QLTest):
 
-    def __init__(self, *args, **kwargs):
-        super(N1QLThroughputTest, self).__init__(*args, **kwargs)
-
-    def run(self):
-        load_settings = self.test_config.load_settings
-        load_settings.items /= 2
-
-        iterator = TargetIterator(self.cluster_spec, self.test_config, 'n1ql')
-        self.load(load_settings, iterator)
-
-        self.load(load_settings)
-        self.wait_for_persistence()
-        self.compact_bucket()
-
-        self.build_index()
-        if self.test_config.access_settings.n1ql_op != "ryow":
-            self._create_prepared_statements()
-
-        self.workload = self.test_config.access_settings
-        self.workload.items /= 2
-        self.workload.n1ql_queries = getattr(self, 'n1ql_queries',
-                                             self.workload.n1ql_queries)
-
-        self.access_bg(self.workload)
-        self.access(self.workload)
-
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(
-                *self.metric_helper.calc_avg_n1ql_queries()
-            )
+    def _report_kpi(self):
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_avg_n1ql_queries()
+        )
 
 
 class N1QLThroughputLatencyTest(N1QLTest):

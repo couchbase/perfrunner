@@ -62,11 +62,7 @@ class Worker(object):
         self.keys_for_removal = KeyForRemoval(self.ts.prefix)
 
         if not hasattr(self.ws, 'doc_gen') or self.ws.doc_gen == 'old':
-            extra_fields = False
-            if (hasattr(self.ws, 'extra_doc_fields') and
-                    self.ws['extra_doc_fields'] == 'yes'):
-                extra_fields = True
-            self.docs = NewDocument(self.ws.size, extra_fields)
+            self.docs = NewDocument(self.ws.size)
         elif self.ws.doc_gen == 'new':
             self.docs = NewNestedDocument(self.ws.size)
         elif self.ws.doc_gen == 'merge':

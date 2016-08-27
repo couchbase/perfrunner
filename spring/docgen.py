@@ -130,14 +130,12 @@ class NewDocument(Iterator):
     SIZE_VARIATION = 0.25  # 25%
     STATIC_PART_SIZE = None
 
-    def __init__(self, avg_size, extra_fields=False):
+    def __init__(self, avg_size):
         self.avg_size = avg_size
-        self.extra_fields = extra_fields
 
     @classmethod
     def _get_variation_coeff(cls):
-        return np.random.uniform(1 - cls.SIZE_VARIATION,
-                                 1 + cls.SIZE_VARIATION)
+        return np.random.uniform(1 - cls.SIZE_VARIATION, 1 + cls.SIZE_VARIATION)
 
     @staticmethod
     def _build_alphabet(key):
@@ -215,40 +213,18 @@ class NewDocument(Iterator):
         body = num_slices * alphabet
         return body[:length_int]
 
-    @staticmethod
-    def _build_extras(alphabet, length):
-        return alphabet[0:length]
-
     def _build_doc(self, alphabet, body_length, key=None):
-        if not self.extra_fields:
-            return {
-                'name': self._build_name(alphabet),
-                'email': self._build_email(alphabet),
-                'alt_email': self._build_alt_email(alphabet),
-                'city': self._build_city(alphabet),
-                'realm': self._build_realm(alphabet),
-                'coins': self._build_coins(alphabet),
-                'category': self._build_category(alphabet),
-                'achievements': self._build_achievements(alphabet, key),
-                'body': self._build_body(alphabet, body_length)
-            }
-        else:
-            return {
-                'name': self._build_name(alphabet),
-                'email': self._build_email(alphabet),
-                'alt_email': self._build_alt_email(alphabet),
-                'city': self._build_city(alphabet),
-                'realm': self._build_realm(alphabet),
-                'coins': self._build_coins(alphabet),
-                'category': self._build_category(alphabet),
-                'achievements': self._build_achievements(alphabet),
-                'body': self._build_body(alphabet, body_length),
-                'extras1': self._build_extras(alphabet, 50),
-                'extras2': self._build_extras(alphabet, 60),
-                'extras3': self._build_extras(alphabet, 70),
-                'extras4': self._build_extras(alphabet, 80),
-                'extras5': self._build_extras(alphabet, 90)
-            }
+        return {
+            'name': self._build_name(alphabet),
+            'email': self._build_email(alphabet),
+            'alt_email': self._build_alt_email(alphabet),
+            'city': self._build_city(alphabet),
+            'realm': self._build_realm(alphabet),
+            'coins': self._build_coins(alphabet),
+            'category': self._build_category(alphabet),
+            'achievements': self._build_achievements(alphabet, key),
+            'body': self._build_body(alphabet, body_length),
+        }
 
     def next(self, key):
         if self.STATIC_PART_SIZE is None:
@@ -470,8 +446,7 @@ class MergeDocument(ReverseLookupDocument):
         alphabet = self._build_alphabet(key)
         size = self._size()
 
-        if(id % 100000 == 0):
-
+        if id % 100000 == 0:
             return {
                 'extramerge': self._build_country(alphabet),
                 'name': self._build_name(alphabet),
@@ -493,9 +468,7 @@ class MergeDocument(ReverseLookupDocument):
                 'capped_small': self._capped_field(alphabet, prefix, id, 100),
                 'partition_id': self._build_partition(alphabet, id)
             }
-
         else:
-
             return {
                 'name': self._build_name(alphabet),
                 'email': self._build_email(alphabet),

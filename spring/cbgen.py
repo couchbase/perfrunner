@@ -156,7 +156,8 @@ class SubDocGen(CBGen):
 class N1QLGen(CBGen):
 
     def __init__(self, **kwargs):
-        super(N1QLGen, self).__init__(**kwargs)
+        self.session = requests.Session()
+        self.session.auth = (kwargs['username'], kwargs['password'])
         self.bucket = kwargs['username']
         self.password = kwargs['password']
 

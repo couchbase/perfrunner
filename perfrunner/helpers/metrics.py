@@ -299,6 +299,22 @@ class MetricHelper(object):
         query_latency = np.percentile(timings, percentile)
         return round(query_latency, 2), metric, metric_info
 
+    def calc_query_latency_for_perfdaily(self, percentile):
+        timings = []
+        for bucket in self.test_config.buckets:
+            db = 'spring_query_latency{}{}'.format(self.cluster_names[0],
+                                                   bucket)
+            data = self.seriesly[db].get_all()
+            timings += [value['latency_query'] for value in data.values()]
+        query_latency = np.percentile(timings, percentile)
+
+        return {"name": '{}th_percentile_query_latency'.format(percentile),
+                "description": '{}th percentile Query Latency (ms)'.format(percentile),
+                "value": round(query_latency, 2),
+                "larger_is_better": self.test.test_config.test_case.larger_is_better.lower() == "true",
+                "threshold": self.test.test_config.dailyp_settings.threshold
+                }
+
     def calc_secondaryscan_latency(self, percentile):
         metric = '{}_{}'.format(self.test_config.name, self.cluster_spec.name)
         title = '{}th percentile secondary scan latency (ms), {}'.format(percentile,

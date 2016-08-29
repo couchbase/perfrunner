@@ -31,4 +31,3 @@ path = /root/perfrunner-ycsb/YCSB
 workload_path = /workloads/workloadc
 size = 1024
 operationcount = 10000000
-

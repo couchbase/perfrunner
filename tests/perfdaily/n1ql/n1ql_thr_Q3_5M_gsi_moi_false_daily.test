@@ -1,12 +1,12 @@
 [test_case]
 test = perfdaily.master.n1ql.N1QLThroughputTestDaily
-title = Q3, Range Scan, 5M docs, 30KSops, GSI, MOI, stale=false
+title = Q3, Range Scan, throughput, 5M docs, GSI, MOI, request_plus
 summary = Range Scan, 30KSops
 larger_is_better = false
 
 [cluster]
 mem_quota = 20480
-index_mem_quota = 10000
+index_mem_quota = 100000
 initial_nodes = 6
 num_buckets = 1
 
@@ -23,6 +23,13 @@ indexes =
 
 [secondary]
 indexer.settings.storage_mode = memory_optimized
+indexer.settings.compaction.min_size = 1048576
+indexer.settings.persisted_snapshot.interval = 3000
+indexer.settings.wal_size = 40960
+indexer.settings.maxVbQueueLength = 10000
+indexer.settings.max_cpu_percent = 2400
+indexer.settings.scan_timeout = 0
+indexer.settings.gc_percent = 200
 
 [access]
 creates = 0
@@ -32,7 +39,7 @@ deletes = 0
 throughput = 30000
 items = 5000000
 workers = 20
-time = 600
+time = 300
 n1ql_queries = range-scan
 n1ql_throughput = 1000000
 n1ql_workers = 720

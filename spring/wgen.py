@@ -13,8 +13,7 @@ from twisted.internet import reactor
 
 from spring.cbgen import (CBAsyncGen, CBGen, ElasticGen, FtsGen, N1QLGen,
                           SubDocGen)
-from spring.docgen import (ExistingKey, KeyForCASUpdate,
-                           KeyForRemoval, MergeDocument,
+from spring.docgen import (ExistingKey, KeyForCASUpdate, KeyForRemoval,
                            NewDocument, NewKey, NewLargeDocument,
                            NewNestedDocument, ReverseLookupDocument,
                            ReverseLookupDocumentArrayIndexing,
@@ -65,13 +64,6 @@ class Worker(object):
             self.docs = NewDocument(self.ws.size)
         elif self.ws.doc_gen == 'new':
             self.docs = NewNestedDocument(self.ws.size)
-        elif self.ws.doc_gen == 'merge':
-            is_random = True
-            if self.ts.prefix == 'n1ql':
-                is_random = False
-            self.docs = MergeDocument(self.ws.size,
-                                      self.ws.doc_partitions,
-                                      is_random)
         elif self.ws.doc_gen == 'reverse_lookup':
             is_random = True
             if self.ts.prefix == 'n1ql':
@@ -465,11 +457,7 @@ class N1QLWorker(Worker):
                                                   self.ws.working_set_access,
                                                   'n1ql')
 
-        if self.ws.doc_gen == 'merge':
-            self.docs = MergeDocument(self.ws.size,
-                                      self.ws.doc_partitions,
-                                      False)
-        elif self.ws.doc_gen == 'reverse_lookup':
+        if self.ws.doc_gen == 'reverse_lookup':
             self.docs = ReverseLookupDocument(self.ws.size,
                                               self.ws.doc_partitions,
                                               False)
@@ -593,18 +581,6 @@ class N1QLWorker(Worker):
                 ddoc_name, view_name, query = self.new_queries.next(doc)
                 self.cb.query(ddoc_name, view_name, query=query)
                 deleted_capped_items_tmp += 1
-
-        elif self.ws.n1ql_op == 'merge':  # run select * workload for merge
-            for _ in xrange(self.BATCH_SIZE):
-                key = self.existing_keys.next(curr_items_spot, deleted_spot)
-                doc = self.docs.next(key)
-                doc['key'] = key
-                doc['bucket'] = self.ts.bucket
-                ddoc_name, view_name, query = self.new_queries.next(doc)
-                query['statement'] = "SELECT * FROM `bucket-1` USE KEYS[$1];"
-                query['args'] = "[\"{key}\"]".format(**doc)
-                del query['prepared']
-                self.cb.query(ddoc_name, view_name, query=query)
 
     def run(self, sid, lock, curr_queries, curr_items, deleted_items,
             casupdated_items, deleted_capped_items):

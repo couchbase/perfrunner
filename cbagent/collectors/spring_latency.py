@@ -230,15 +230,6 @@ class SpringN1QLQueryLatency(SpringLatency):
             _, latency = client.query(ddoc_name, view_name, query=query)
             self.cappedcounter += 1
             return 1000 * latency  # s -> ms
-
-        elif self.n1ql_op == 'merge':
-            doc = {}
-            ddoc_name, view_name, query = self.new_queries.next(doc)
-            _, latency = client.query(ddoc_name, view_name, query=query)
-            flushpath = '/pools/default/buckets/bucket-2/controller/doFlush'
-            self.post_http(path=flushpath)
-            return latency  # s -> ms
-
         else:
             key = self.existing_keys.next(curr_items=self.items, curr_deletes=0)
         doc = self.new_docs.next(key)

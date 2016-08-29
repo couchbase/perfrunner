@@ -251,22 +251,11 @@ class NewNestedDocument(NewDocument):
     def _size(self):
         if self.avg_size <= self.OVERHEAD:
             return 0
-        if random.random() < 0.975:
-            # Normal distribution with mean=self.avg_size
+        if random.random() < 0.975:  # Normal distribution, mean=self.avg_size
             normal = np.random.normal(loc=1.0, scale=0.17)
             return (self.avg_size - self.OVERHEAD) * normal
-        else:
-            # Beta distribution, 2KB-2MB range
+        else:  # Outliers - beta distribution, 2KB-2MB range
             return 2048 / np.random.beta(a=2.2, b=1.0)
-
-    def _capped_field(self, key, num_unique):
-        # Assumes the last 12 characters are digits and
-        # monotonically increasing
-        try:
-            index = (int(key[-12:]) + 1) / num_unique
-            return '{}_{}'.format(num_unique, index)
-        except Exception:
-            return 'Invalid Key for capped field'
 
     def next(self, key):
         alphabet = self._build_alphabet(key)
@@ -288,27 +277,25 @@ class NewNestedDocument(NewDocument):
             'gmtime': self._build_gmtime(alphabet),
             'year': self._build_year(alphabet),
             'body': self._build_body(alphabet, size),
-            'capped_small': self._capped_field(key, 100),
-            'capped_large': self._capped_field(key, 3000),
         }
 
 
 class NewLargeDocument(NewNestedDocument):
+
     def next(self, key):
         alphabet = self._build_alphabet(key)
-        nest1 = super(NewLargeDocument, self).next(key)
-        nest2 = super(NewNestedDocument, self).next(key)
-        return {'nest1': nest1,
-                'nest2': nest2,
-                'name': self._build_name(alphabet),
-                'email': self._build_email(alphabet),
-                'alt_email': self._build_alt_email(alphabet),
-                'city': self._build_city(alphabet),
-                'realm': self._build_realm(alphabet),
-                'coins': self._build_coins(alphabet),
-                'category': self._build_category(alphabet),
-                'achievements': self._build_achievements(alphabet)
-                }
+        return {
+            'nest1': super(NewLargeDocument, self).next(key),
+            'nest2': super(NewNestedDocument, self).next(key),
+            'name': self._build_name(alphabet),
+            'email': self._build_email(alphabet),
+            'alt_email': self._build_alt_email(alphabet),
+            'city': self._build_city(alphabet),
+            'realm': self._build_realm(alphabet),
+            'coins': self._build_coins(alphabet),
+            'category': self._build_category(alphabet),
+            'achievements': self._build_achievements(alphabet),
+        }
 
 
 class ReverseLookupDocument(NewNestedDocument):
@@ -433,59 +420,3 @@ class ReverseLookupDocumentArrayIndexing(ReverseLookupDocument):
             'capped_small': self._capped_field(alphabet, prefix, id, 100),
             'partition_id': self._build_partition(alphabet, id)
         }
-
-
-class MergeDocument(ReverseLookupDocument):
-
-    def __init__(self, avg_size, partitions, is_random=True):
-        super(MergeDocument, self).__init__(avg_size, partitions, is_random)
-
-    def next(self, key):
-        id = int(key[-12:]) + 1
-        prefix = key[:-12]
-        alphabet = self._build_alphabet(key)
-        size = self._size()
-
-        if id % 100000 == 0:
-            return {
-                'extramerge': self._build_country(alphabet),
-                'name': self._build_name(alphabet),
-                'email': self._build_email(alphabet),
-                'alt_email': self._build_alt_email(alphabet),
-                'street': self._build_street(alphabet),
-                'city': self._build_city(alphabet),
-                'county': self._build_county(alphabet),
-                'state': self._build_state(alphabet),
-                'full_state': self._build_full_state(alphabet),
-                'country': self._build_country(alphabet),
-                'realm': self._build_realm(alphabet),
-                'coins': self._build_coins(alphabet),
-                'category': self._build_category(alphabet),
-                'achievements': self._build_achievements(alphabet),
-                'gmtime': self._build_gmtime(alphabet),
-                'year': self._build_year(alphabet),
-                'body': self._build_body(alphabet, size),
-                'capped_small': self._capped_field(alphabet, prefix, id, 100),
-                'partition_id': self._build_partition(alphabet, id)
-            }
-        else:
-            return {
-                'name': self._build_name(alphabet),
-                'email': self._build_email(alphabet),
-                'alt_email': self._build_alt_email(alphabet),
-                'street': self._build_street(alphabet),
-                'city': self._build_city(alphabet),
-                'county': self._build_county(alphabet),
-                'state': self._build_state(alphabet),
-                'full_state': self._build_full_state(alphabet),
-                'country': self._build_country(alphabet),
-                'realm': self._build_realm(alphabet),
-                'coins': self._build_coins(alphabet),
-                'category': self._build_category(alphabet),
-                'achievements': self._build_achievements(alphabet),
-                'gmtime': self._build_gmtime(alphabet),
-                'year': self._build_year(alphabet),
-                'body': self._build_body(alphabet, size),
-                'capped_small': self._capped_field(alphabet, prefix, id, 100),
-                'partition_id': self._build_partition(alphabet, id)
-            }

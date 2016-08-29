@@ -43,10 +43,14 @@ class Elastictest(PerfTest):
         self.orderbymetric = self.test_config.fts_settings.orderby
 
     @with_stats
+    def access(self):
+        super(Elastictest, self).timer()
+
     def access_bg_test(self):
         access_settings = self.test_config.access_settings
         access_settings.fts_config = self.test_config.fts_settings
         self.access_bg(access_settings)
+        self.access()
 
     def addelastic(self):
         '''

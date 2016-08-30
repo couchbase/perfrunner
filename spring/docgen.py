@@ -1,4 +1,3 @@
-import json
 import math
 import random
 import time
@@ -128,7 +127,8 @@ class KeyForCASUpdate(Iterator):
 class NewDocument(Iterator):
 
     SIZE_VARIATION = 0.25  # 25%
-    STATIC_PART_SIZE = None
+
+    OVERHEAD = 225  # Minimum size due to static fields, body size is variable
 
     def __init__(self, avg_size):
         self.avg_size = avg_size
@@ -143,10 +143,10 @@ class NewDocument(Iterator):
 
     @staticmethod
     def _build_name(alphabet):
-        return '%s %s' % (alphabet[:6], alphabet[6:12])
+        return '%s %s' % (alphabet[:6], alphabet[6:12])  # % is faster than format()
 
     @staticmethod
-    def _build_email(alphabet):
+    def _build_email(alphabet, *args):
         return '%s@%s.com' % (alphabet[12:18], alphabet[18:24])
 
     @staticmethod
@@ -213,7 +213,14 @@ class NewDocument(Iterator):
         body = num_slices * alphabet
         return body[:length_int]
 
-    def _build_doc(self, alphabet, body_length, key=None):
+    def _size(self):
+        if self.avg_size <= self.OVERHEAD:
+            return 0
+        return self._get_variation_coeff() * (self.avg_size - self.OVERHEAD)
+
+    def next(self, key):
+        alphabet = self._build_alphabet(key)
+        size = self._size()
         return {
             'name': self._build_name(alphabet),
             'email': self._build_email(alphabet),
@@ -223,26 +230,13 @@ class NewDocument(Iterator):
             'coins': self._build_coins(alphabet),
             'category': self._build_category(alphabet),
             'achievements': self._build_achievements(alphabet, key),
-            'body': self._build_body(alphabet, body_length),
+            'body': self._build_body(alphabet, size),
         }
-
-    def next(self, key):
-        if self.STATIC_PART_SIZE is None:
-            alphabet = self._build_alphabet(key)
-            self.STATIC_PART_SIZE = len(
-                json.dumps(self._build_doc(alphabet, 0)))
-        # numpy.random.uniform includes low, but excludes high [low, high)
-        # that's why we use '- 2' to calc size. It works for the cases
-        # when the number of docs rather large > 10^5
-        body_field_length = self._get_variation_coeff() * (
-            self.avg_size - self.STATIC_PART_SIZE - 2)
-        alphabet = self._build_alphabet(key)
-        return self._build_doc(alphabet, body_field_length)
 
 
 class NewNestedDocument(NewDocument):
 
-    OVERHEAD = 450  # Minimum size due to fixed fields, body size is variable
+    OVERHEAD = 450  # Minimum size due to static fields, body size is variable
 
     def __init__(self, avg_size):
         super(NewNestedDocument, self).__init__(avg_size)
@@ -305,40 +299,32 @@ class ReverseLookupDocument(NewNestedDocument):
         self.partitions = partitions
         self.is_random = is_random
 
-    def _build_email(self, alphabet):
+    def build_email(self, alphabet):
         if self.is_random:
-            name = random.randint(1, 9)
-            domain = random.randint(12, 18)
-            return '%s@%s.com' % (alphabet[name:name + 6], alphabet[domain:domain + 6])
+            return self._build_alt_email(alphabet)
+        else:
+            return self._build_email(alphabet)
 
-        return '%s@%s.com' % (alphabet[12:18], alphabet[18:24])
+    def _build_partition(self, alphabet, seq_id):
+        return seq_id % self.partitions
 
-    def _build_partition(self, alphabet, id):
-        return id % self.partitions
-
-    def _capped_field(self, alphabet, prefix, id, num_unique):
+    def _capped_field(self, alphabet, prefix, seq_id, num_unique):
         if self.is_random:
-            seed = random.randint(1, 9)
-            return '%s' % (alphabet[seed:seed + 6])
+            offset = random.randint(1, 9)
+            return '%s' % alphabet[offset:offset + 6]
 
-        # Assumes the last 12 characters are digits and
-        # monotonically increasing
-        try:
-            parts = self.partitions
-            index = (id % parts) + parts * (id / (parts * num_unique))
-            return '{}_{}_{}'.format(prefix, num_unique, index)
-        except Exception:
-            return 'Invalid Key for capped field'
+        index = (seq_id % self.partitions) + \
+            self.partitions * (seq_id / (self.partitions * num_unique))
+        return '%s_%s_%s' % (prefix, num_unique, index)
 
     def next(self, key):
-        id = int(key[-12:]) + 1
+        seq_id = int(key[-12:]) + 1
         prefix = key[:-12]
         alphabet = self._build_alphabet(key)
         size = self._size()
-
         return {
             'name': self._build_name(alphabet),
-            'email': self._build_email(alphabet),
+            'email': self.build_email(alphabet),
             'alt_email': self._build_alt_email(alphabet),
             'street': self._build_street(alphabet),
             'city': self._build_city(alphabet),
@@ -353,12 +339,13 @@ class ReverseLookupDocument(NewNestedDocument):
             'gmtime': self._build_gmtime(alphabet),
             'year': self._build_year(alphabet),
             'body': self._build_body(alphabet, size),
-            'capped_small': self._capped_field(alphabet, prefix, id, 100),
-            'partition_id': self._build_partition(alphabet, id)
+            'capped_small': self._capped_field(alphabet, prefix, seq_id, 100),
+            'partition_id': self._build_partition(alphabet, seq_id),
         }
 
 
 class ReverseLookupDocumentArrayIndexing(ReverseLookupDocument):
+
     num_docs = 0
     delta = 0
 
@@ -394,7 +381,7 @@ class ReverseLookupDocumentArrayIndexing(ReverseLookupDocument):
                      ReverseLookupDocumentArrayIndexing.delta) for i in xrange(10)]
 
     def next(self, key):
-        id = int(key[-12:]) + 1
+        seq_id = int(key[-12:]) + 1
         prefix = key[:-12]
         alphabet = self._build_alphabet(key)
         size = self._size()
@@ -417,6 +404,6 @@ class ReverseLookupDocumentArrayIndexing(ReverseLookupDocument):
             'gmtime': self._build_gmtime(alphabet),
             'year': self._build_year(alphabet),
             'body': self._build_body(alphabet, size),
-            'capped_small': self._capped_field(alphabet, prefix, id, 100),
-            'partition_id': self._build_partition(alphabet, id)
+            'capped_small': self._capped_field(alphabet, prefix, seq_id, 100),
+            'partition_id': self._build_partition(alphabet, seq_id),
         }

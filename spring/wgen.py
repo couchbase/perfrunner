@@ -7,17 +7,30 @@ from couchbase.exceptions import ValueFormatError
 from couchbase.n1ql import MutationState, N1QLQuery
 from decorator import decorator
 from logger import logger
-from psutil import cpu_count
 from numpy import random
+from psutil import cpu_count
 from twisted.internet import reactor
 
-from spring.cbgen import (CBAsyncGen, CBGen, ElasticGen, FtsGen, N1QLGen,
-                          SubDocGen)
-from spring.docgen import (ExistingKey, KeyForCASUpdate, KeyForRemoval,
-                           NewDocument, NewKey, NewLargeDocument,
-                           NewNestedDocument, ReverseLookupDocument,
-                           ReverseLookupDocumentArrayIndexing,
-                           SequentialHotKey)
+from spring.cbgen import (
+    CBAsyncGen,
+    CBGen,
+    ElasticGen,
+    FtsGen,
+    N1QLGen,
+    SubDocGen,
+)
+from spring.docgen import (
+    ExistingKey,
+    KeyForCASUpdate,
+    KeyForRemoval,
+    NewKey,
+    NewDocument,
+    NewLargeDocument,
+    NewNestedDocument,
+    ReverseLookupDocument,
+    ReverseLookupDocumentArrayIndexing,
+    SequentialHotKey,
+)
 from spring.querygen import N1QLQueryGen, ViewQueryGen, ViewQueryGenByType
 
 
@@ -33,8 +46,6 @@ def with_sleep(method, *args):
         delta = self.target_time - actual_time
         if delta > 0:
             time.sleep(self.CORRECTION_FACTOR * delta)
-        else:
-            self.fallingBehindCount += 1
 
 
 def set_cpu_afinity(sid):
@@ -65,16 +76,11 @@ class Worker(object):
         elif self.ws.doc_gen == 'new':
             self.docs = NewNestedDocument(self.ws.size)
         elif self.ws.doc_gen == 'reverse_lookup':
-            is_random = True
-            if self.ts.prefix == 'n1ql':
-                is_random = False
+            is_random = self.ts.prefix != 'n1ql'
             self.docs = ReverseLookupDocument(self.ws.size,
                                               self.ws.doc_partitions,
                                               is_random)
         elif self.ws.doc_gen == 'reverse_lookup_array_indexing':
-            is_random = True
-            if self.ts.prefix == 'n1ql':
-                is_random = False
             if self.ws.updates:
                 # plus 10 to all values in array when updating doc
                 self.docs = ReverseLookupDocumentArrayIndexing(
@@ -88,7 +94,6 @@ class Worker(object):
 
         self.next_report = 0.05  # report after every 5% of completion
 
-        host, port = self.ts.node.split(':')
         # Only FTS uses proxyPort and authless bucket right now.
         # Instead of jumping hoops to specify proxyPort in target
         # iterator/settings, which only passes down very specific attributes,
@@ -96,12 +101,10 @@ class Worker(object):
         # authless bucket. FTS's worker does its own Couchbase.connect
         if not (hasattr(self.ws, "fts") and hasattr(
                 self.ws.fts, "doc_database_url")):
-            # default sasl bucket
+            host, port = self.ts.node.split(':')
             self.init_db({'bucket': self.ts.bucket, 'host': host, 'port': port,
                           'username': self.ts.bucket,
                           'password': self.ts.password})
-
-        self.fallingBehindCount = 0
 
     def init_db(self, params):
         try:
@@ -376,7 +379,7 @@ class QueryWorker(Worker):
         deleted_spot = \
             self.deleted_items.value + self.ws.deletes * self.ws.workers
 
-        for _ in xrange(self.BATCH_SIZE):
+        for _ in range(self.BATCH_SIZE):
             key = self.existing_keys.next(curr_items_spot, deleted_spot)
             doc = self.docs.next(key)
             doc['key'] = key
@@ -448,22 +451,20 @@ class N1QLWorker(Worker):
         if workload_settings.n1ql_op == 'ryow':
             bucket += '?fetch_mutation_tokens=true'
 
-        params = {'bucket': bucket, 'host': host, 'port': port,
-                  'username': self.ts.bucket, 'password': self.ts.password}
-
         self.existing_keys = ExistingKey(self.ws.working_set,
                                          self.ws.working_set_access,
                                          'n1ql')
         self.new_keys = NewKey('n1ql', self.ws.expiration)
         self.keys_for_removal = KeyForRemoval('n1ql')
-        self.keys_for_casupdate = KeyForCASUpdate(self.total_workers, self.ws.working_set,
+        self.keys_for_casupdate = KeyForCASUpdate(self.total_workers,
+                                                  self.ws.working_set,
                                                   self.ws.working_set_access,
                                                   'n1ql')
 
         if self.ws.doc_gen == 'reverse_lookup':
             self.docs = ReverseLookupDocument(self.ws.size,
                                               self.ws.doc_partitions,
-                                              False)
+                                              is_random=False)
         elif self.ws.doc_gen == 'reverse_lookup_array_indexing':
             if self.ws.updates:
                 self.docs = ReverseLookupDocumentArrayIndexing(
@@ -472,6 +473,9 @@ class N1QLWorker(Worker):
             else:
                 self.docs = ReverseLookupDocumentArrayIndexing(
                     self.ws.size, self.ws.doc_partitions, self.ws.items)
+
+        params = {'bucket': bucket, 'host': host, 'port': port,
+                  'username': self.ts.bucket, 'password': self.ts.password}
         self.cb = N1QLGen(**params)
 
     @with_sleep
@@ -517,7 +521,7 @@ class N1QLWorker(Worker):
                 self.casupdated_items.value += self.BATCH_SIZE
 
         if self.ws.n1ql_op == 'create':
-            for _ in xrange(self.BATCH_SIZE):
+            for _ in range(self.BATCH_SIZE):
                 curr_items_tmp += 1
                 key, ttl = self.new_keys.next(curr_items_tmp)
                 doc = self.docs.next(key)
@@ -527,7 +531,7 @@ class N1QLWorker(Worker):
                 self.cb.query(ddoc_name, view_name, query=query)
 
         elif self.ws.n1ql_op == 'delete':
-            for _ in xrange(self.BATCH_SIZE):
+            for _ in range(self.BATCH_SIZE):
                 deleted_items_tmp += 1
                 key = self.keys_for_removal.next(deleted_items_tmp)
                 doc = self.docs.next(key)
@@ -537,7 +541,7 @@ class N1QLWorker(Worker):
                 self.cb.query(ddoc_name, view_name, query=query)
 
         elif self.ws.n1ql_op == 'update' or self.ws.n1ql_op == 'lookupupdate':
-            for _ in xrange(self.BATCH_SIZE):
+            for _ in range(self.BATCH_SIZE):
                 key = self.keys_for_casupdate.next(self.sid, curr_items_spot, deleted_spot)
                 doc = self.docs.next(key)
                 doc['key'] = key
@@ -546,7 +550,7 @@ class N1QLWorker(Worker):
                 self.cb.query(ddoc_name, view_name, query=query)
 
         elif self.ws.n1ql_op == 'ryow':
-            for _ in xrange(self.BATCH_SIZE):
+            for _ in range(self.BATCH_SIZE):
                 query = self.ws.n1ql_queries[0]['statement'][1:-1]
                 if self.ws.n1ql_queries[0]['prepared'] == "singleton_unique_lookup":
                     by_key = 'email'
@@ -628,6 +632,7 @@ class FtsWorkerFactory(object):
 
 
 class FtsWorker(Worker):
+
     BATCH_SIZE = 100
 
     def __init__(self, workload_settings, target_settings, shutdown_event=None):

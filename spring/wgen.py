@@ -123,6 +123,8 @@ class Worker(object):
 
 class KVWorker(Worker):
 
+    NAME = 'kv-worker'
+
     def gen_cmd_sequence(self, cb=None, cases="cas"):
         ops = \
             ['c'] * self.ws.creates + \
@@ -207,7 +209,7 @@ class KVWorker(Worker):
         self.curr_items = curr_items
         self.deleted_items = deleted_items
 
-        logger.info('Started: worker-{}'.format(self.sid))
+        logger.info('Started: {}-{}'.format(self.NAME, self.sid))
         try:
             while self.run_condition(curr_ops):
                 with lock:
@@ -215,9 +217,9 @@ class KVWorker(Worker):
                 self.do_batch()
                 self.report_progress(curr_ops.value)
         except (KeyboardInterrupt, ValueFormatError):
-            logger.info('Interrupted: worker-{}'.format(self.sid))
+            logger.info('Interrupted: {}-{}'.format(self.NAME, self.sid))
         else:
-            logger.info('Finished: worker-{}'.format(self.sid))
+            logger.info('Finished: {}-{}'.format(self.NAME, self.sid))
 
 
 class SubDocWorker(KVWorker):
@@ -235,6 +237,8 @@ class SubDocWorker(KVWorker):
 
 
 class AsyncKVWorker(KVWorker):
+
+    NAME = 'async-kv-worker'
 
     NUM_CONNECTIONS = 8
 
@@ -256,7 +260,7 @@ class AsyncKVWorker(KVWorker):
                     self.curr_ops.value >= self.ws.ops or self.time_to_stop()):
                 with self.lock:
                     self.done = True
-                logger.info('Finished: worker-{}'.format(self.sid))
+                logger.info('Finished: {}-{}'.format(self.NAME, self.sid))
                 reactor.stop()
             else:
                 self.do_batch(_, cb, i)
@@ -309,7 +313,7 @@ class AsyncKVWorker(KVWorker):
             d = cb.client.connect()
             d.addCallback(self.do_batch, cb, i)
             d.addErrback(self.error, cb, i)
-        logger.info('Started: worker-{}'.format(self.sid))
+        logger.info('Started: {}-{}'.format(self.NAME, self.sid))
         reactor.run()
 
 
@@ -359,6 +363,8 @@ class ViewWorkerFactory(object):
 
 class QueryWorker(Worker):
 
+    NAME = 'query-worker'
+
     def __init__(self, workload_settings, target_settings, shutdown_event):
         super(QueryWorker, self).__init__(workload_settings, target_settings,
                                           shutdown_event)
@@ -392,19 +398,16 @@ class QueryWorker(Worker):
         self.curr_queries = curr_queries
 
         try:
-            logger.info('Started: {}-{}'.format(self.name, self.sid))
+            logger.info('Started: {}-{}'.format(self.NAME, self.sid))
             while curr_queries.value < self.ws.ops and not self.time_to_stop():
                 with lock:
                     curr_queries.value += self.BATCH_SIZE
                 self.do_batch()
                 self.report_progress(curr_queries.value)
         except (KeyboardInterrupt, ValueFormatError, AttributeError) as e:
-            logger.info('Interrupted: {}-{}-{}'.format(self.name, self.sid, e))
+            logger.info('Interrupted: {}-{}, {}'.format(self.NAME, self.sid, e))
         else:
-            if self.fallingBehindCount > 0:
-                logger.info('Worker {0} fell behind {1} times.'
-                            .format(self.name, self.fallingBehindCount))
-            logger.info('Finished: {}-{}'.format(self.name, self.sid))
+            logger.info('Finished: {}-{}'.format(self.NAME, self.sid))
 
 
 class ViewWorker(QueryWorker):
@@ -414,7 +417,6 @@ class ViewWorker(QueryWorker):
                                          shutdown_event)
         self.total_workers = self.ws.query_workers
         self.throughput = self.ws.query_throughput
-        self.name = 'query-worker'
 
         if workload_settings.index_type is None:
             self.new_queries = ViewQueryGen(workload_settings.ddocs,
@@ -432,13 +434,14 @@ class N1QLWorkerFactory(object):
 
 class N1QLWorker(Worker):
 
+    NAME = 'n1ql-worker'
+
     def __init__(self, workload_settings, target_settings, shutdown_event):
         super(N1QLWorker, self).__init__(workload_settings, target_settings,
                                          shutdown_event)
         self.new_queries = N1QLQueryGen(workload_settings.n1ql_queries)
         self.total_workers = self.ws.n1ql_workers
         self.throughput = self.ws.n1ql_throughput
-        self.name = 'n1ql-worker'
 
         host, port = self.ts.node.split(':')
         bucket = self.ts.bucket
@@ -600,19 +603,16 @@ class N1QLWorker(Worker):
         self.curr_queries = curr_queries
 
         try:
-            logger.info('Started: {}-{}'.format(self.name, self.sid))
+            logger.info('Started: {}-{}'.format(self.NAME, self.sid))
             while curr_queries.value < self.ws.ops and not self.time_to_stop():
                 with self.lock:
                     curr_queries.value += self.BATCH_SIZE
                 self.do_batch()
                 self.report_progress(curr_queries.value)
         except (KeyboardInterrupt, ValueFormatError, AttributeError) as e:
-            logger.info('Interrupted: {}-{}-{}'.format(self.name, self.sid, e))
+            logger.info('Interrupted: {}-{}-{}'.format(self.NAME, self.sid, e))
         else:
-            if self.fallingBehindCount > 0:
-                logger.info('Worker {0} fell behind {1} times.'.
-                            format(self.name, self.fallingBehindCount))
-            logger.info('Finished: {}-{}'.format(self.name, self.sid))
+            logger.info('Finished: {}-{}'.format(self.NAME, self.sid))
 
 
 class FtsWorkerFactory(object):

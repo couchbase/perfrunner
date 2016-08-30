@@ -1,6 +1,7 @@
 import copy
 import itertools
 import json
+import logging
 from random import choice, shuffle
 from threading import Thread
 from time import sleep, time
@@ -21,6 +22,8 @@ from txcouchbase.connection import Connection as TxConnection
 from spring.docgen import NewDocument
 
 experimental.enable()
+
+logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 
 @decorator

@@ -236,7 +236,7 @@ class SFReporter(object):
 
     def _upload_test_run_dailyp(self, test_run_dict):
         try:
-            bucket = Bucket('couchbase://{}/perf_daily'.
+            bucket = Bucket('couchbase://{}:8091/perf_daily'.
                             format(self.test.test_config.stats_settings.cbmonitor['host']))
         except Exception, e:
             logger.info("Post to Dailyp, DB connection error: {}".format(e.message))

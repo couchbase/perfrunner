@@ -61,6 +61,11 @@ class MetadataClient(RestClient):
         params = {"cluster": self.settings.cluster}
         return self.get(url, params)
 
+    def get_indexes(self):
+        url = self.base_url + "/get_indexes/"
+        params = {"cluster": self.settings.cluster}
+        return self.get(url, params)
+
     def add_cluster(self):
         if self.settings.cluster in self.get_clusters():
             return
@@ -91,12 +96,22 @@ class MetadataClient(RestClient):
         data = {"name": name, "cluster": self.settings.cluster}
         self.post(url, data)
 
-    def add_metric(self, name, bucket=None, server=None, collector=None):
+    def add_index(self, name):
+        if name in self.get_indexes():
+            return
+
+        logger.info("Adding Index: {}".format(name))
+
+        url = self.base_url + "/add_index/"
+        data = {"name": name, "cluster": self.settings.cluster}
+        self.post(url, data)
+
+    def add_metric(self, name, bucket=None, index=None, server=None, collector=None):
         logger.debug("Adding metric: {}".format(name))
 
         url = self.base_url + "/add_metric/"
         data = {"name": name, "cluster": self.settings.cluster}
-        for extra_param in ("bucket", "server", "collector"):
+        for extra_param in ("bucket", "index", "server", "collector"):
             if eval(extra_param) is not None:
                 data[extra_param] = eval(extra_param)
         self.post(url, data)

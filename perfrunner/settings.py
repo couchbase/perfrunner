@@ -601,6 +601,7 @@ class SecondaryIndexSettings(object):
         self.field = str(options.get('field', self.FIELD))
         self.db = str(options.get('db', self.DB))
         self.stale = str(options.get('stale', self.STALE))
+        self.indexes = self.name.split(",") if self.name is not self.NAME else []
         for name in self.name.split(","):
             index_partition_name = "index_{}_partitions".format(name)
             val = str(options.get(index_partition_name, ''))

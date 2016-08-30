@@ -25,6 +25,7 @@ class Collector(object):
         self.auth = (settings.rest_username, settings.rest_password)
 
         self.buckets = settings.buckets
+        self.indexes = settings.indexes
         self.hostnames = settings.hostnames
         self.nodes = list(self.get_nodes())
         self.ssh_username = getattr(settings, 'ssh_username', None)
@@ -110,13 +111,22 @@ class Collector(object):
                 continue
             yield hostname
 
-    def _update_metric_metadata(self, metrics, bucket=None, server=None):
+    def get_indexes(self):
+        pool = self.get_http(path="/indexStatus")
+        for index in pool["indexes"]:
+            if self.indexes and index["index"] not in self.indexes:
+                continue
+            index_name = index["index"]
+            bucket_name = index["bucket"]
+            yield index_name, bucket_name
+
+    def _update_metric_metadata(self, metrics, bucket=None, index=None, server=None):
         for metric in metrics:
             metric = metric.replace('/', '_')
-            metric_hash = hash((metric, bucket, server))
+            metric_hash = hash((metric, bucket, index, server))
             if metric_hash not in self.metrics:
                 self.metrics.add(metric_hash)
-                self.mc.add_metric(metric, bucket, server, self.COLLECTOR)
+                self.mc.add_metric(metric, bucket, index, server, self.COLLECTOR)
 
     def update_metric_metadata(self, *args, **kwargs):
         if self.updater is None or not self.updater.is_alive():

@@ -29,7 +29,7 @@ class SecondaryIndexTest(PerfTest):
     """
 
     COLLECTORS = {'secondary_stats': True, 'secondary_debugstats': True,
-                  'secondary_debugstats_bucket': True}
+                  'secondary_debugstats_bucket': True, 'secondary_debugstats_index': True}
 
     def __init__(self, *args):
         super(SecondaryIndexTest, self).__init__(*args)
@@ -424,7 +424,8 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
     and reports the average scan throughput
     """
     COLLECTORS = {'secondary_stats': True, 'secondary_latency': True,
-                  'secondary_debugstats': True, 'secondary_debugstats_bucket': True}
+                  'secondary_debugstats': True, 'secondary_debugstats_bucket': True,
+                  'secondary_debugstats_index': True}
 
     @with_stats
     def apply_scanworkload(self):

@@ -21,8 +21,8 @@ class SerieslyStore(object):
         self.seriesly = Seriesly(host)
 
     @staticmethod
-    def build_dbname(cluster, server, bucket, collector):
-        db_name = (collector or "") + cluster + (bucket or "") + (server or "")
+    def build_dbname(cluster, server, bucket, index, collector):
+        db_name = (collector or "") + cluster + (bucket or "") + (index or "") + (server or "")
         for char in "[]/\;.,><&*:%=+@!#^()|?^'\"":
             db_name = db_name.replace(char, "")
         return db_name
@@ -39,8 +39,8 @@ class SerieslyStore(object):
                 self.seriesly.create_db(db_name)
             return self.seriesly[db_name]
 
-    def append(self, data, cluster=None, server=None, bucket=None,
+    def append(self, data, cluster=None, server=None, bucket=None, index=None,
                collector=None):
-        db_name = self.build_dbname(cluster, server, bucket, collector)
+        db_name = self.build_dbname(cluster, server, bucket, index, collector)
         db = self._get_db(db_name)
         db.append(data)

@@ -46,7 +46,8 @@ class SpringLatency(Latency):
             self.new_docs = NewNestedDocument(workload.size)
         elif workload.doc_gen == 'reverse_lookup':
             self.new_docs = ReverseLookupDocument(workload.size,
-                                                  workload.doc_partitions)
+                                                  workload.doc_partitions,
+                                                  is_random=False)
         elif workload.doc_gen == 'reverse_lookup_array_indexing':
             self.new_docs = ReverseLookupDocumentArrayIndexing(
                 workload.size, workload.doc_partitions, workload.items)

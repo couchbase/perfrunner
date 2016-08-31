@@ -90,25 +90,22 @@ class MetricHelper(object):
                                                    self.cluster_spec.name)
         title = 'Avg. Query Throughput (queries/sec), {}'.format(self.metric_title)
         metric_info = self._get_metric_info(title, larger_is_better=True)
-        query_params = self._get_query_params('avg_query_requests')
 
-        db = 'n1ql_stats{}'.format(self.cluster_names[0])
-        data = self.seriesly[db].query(query_params)
-        queries = data.values()[0][0]
-        queries = round(queries, 1)
-
+        queries = self._calc_avg_n1ql_queries()
         return queries, metric, metric_info
 
-    def cal_avg_n1ql_queries_for_perfdaily(self):
+    def _calc_avg_n1ql_queries(self):
         query_params = self._get_query_params('avg_query_requests')
         db = 'n1ql_stats{}'.format(self.cluster_names[0])
         data = self.seriesly[db].query(query_params)
         queries = data.values()[0][0]
-        queries = round(queries, 1)
 
+        return round(queries, 1)
+
+    def cal_avg_n1ql_queries_perfdaily(self):
         return {"name": "avg_query_throughput",
                 "description": "Avg. Query Throughput (queries/sec)",
-                "value": queries,
+                "value": self._calc_avg_n1ql_queries(),
                 "larger_is_better": self.test.test_config.test_case.larger_is_better.lower() == "true",
                 "threshold": self.test.test_config.dailyp_settings.threshold
                 }
@@ -170,16 +167,26 @@ class MetricHelper(object):
                                         self.cluster_spec.name)
         title = 'Average ops/sec, {}'.format(self.metric_title)
         metric_info = self._get_metric_info(title, larger_is_better=True)
-        query_params = self._get_query_params('avg_ops')
 
+        ops = self._calc_avg_ops()
+        return ops, metric, metric_info
+
+    def _calc_avg_ops(self):
+        query_params = self._get_query_params('avg_ops')
         ops = 0
         for bucket in self.test_config.buckets:
             db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
             data = self.seriesly[db].query(query_params)
             ops += data.values()[0][0]
-        ops = int(ops)
+        return int(ops)
 
-        return ops, metric, metric_info
+    def calc_avg_ops_perfdaily(self):
+        return {"name": 'average_throughput',
+                "description": 'Average Throughput (ops/sec)',
+                "value": self._calc_avg_ops(),
+                "larger_is_better": self.test.test_config.test_case.larger_is_better.lower() == "true",
+                "threshold": self.test.test_config.dailyp_settings.threshold
+                }
 
     def calc_xdcr_lag(self, percentile=90):
         metric = '{}_{}th_xdc_lag_{}'.format(self.test_config.name,
@@ -289,7 +296,11 @@ class MetricHelper(object):
             title = '{}th percentile query latency (ms), {}'.format(percentile,
                                                                     self.metric_title)
         metric_info = self._get_metric_info(title)
+        query_latency = self._calc_query_latency(percentile)
 
+        return query_latency, metric, metric_info
+
+    def _calc_query_latency(self, percentile):
         timings = []
         for bucket in self.test_config.buckets:
             db = 'spring_query_latency{}{}'.format(self.cluster_names[0],
@@ -297,20 +308,12 @@ class MetricHelper(object):
             data = self.seriesly[db].get_all()
             timings += [value['latency_query'] for value in data.values()]
         query_latency = np.percentile(timings, percentile)
-        return round(query_latency, 2), metric, metric_info
+        return round(query_latency, 2)
 
-    def calc_query_latency_for_perfdaily(self, percentile):
-        timings = []
-        for bucket in self.test_config.buckets:
-            db = 'spring_query_latency{}{}'.format(self.cluster_names[0],
-                                                   bucket)
-            data = self.seriesly[db].get_all()
-            timings += [value['latency_query'] for value in data.values()]
-        query_latency = np.percentile(timings, percentile)
-
+    def calc_query_latency_perfdaily(self, percentile):
         return {"name": '{}th_percentile_query_latency'.format(percentile),
                 "description": '{}th percentile Query Latency (ms)'.format(percentile),
-                "value": round(query_latency, 2),
+                "value": self._calc_query_latency(percentile),
                 "larger_is_better": self.test.test_config.test_case.larger_is_better.lower() == "true",
                 "threshold": self.test.test_config.dailyp_settings.threshold
                 }
@@ -347,7 +350,11 @@ class MetricHelper(object):
                                                operation.upper(),
                                                self.metric_title)
         metric_info = self._get_metric_info(title)
+        latency = self._calc_kv_latency(operation, percentile, dbname)
 
+        return latency, metric, metric_info
+
+    def _calc_kv_latency(self, operation, percentile, dbname):
         timings = []
         op_key = 'latency_{}'.format(operation)
         for bucket in self.test_config.buckets:
@@ -356,9 +363,15 @@ class MetricHelper(object):
             timings += [
                 v[op_key] for v in data.values() if op_key in v
             ]
-        latency = round(np.percentile(timings, percentile), 2)
+        return round(np.percentile(timings, percentile), 2)
 
-        return latency, metric, metric_info
+    def calc_kv_latency_perfdaily(self, operation, percentile, dbname='spring_latency'):
+        return {"name": '{}th_percentile_{}_latency'.format(percentile, operation),
+                "description": '{}th percentile {} Latency (ms)'.format(percentile, operation.upper()),
+                "value": self._calc_kv_latency(operation, percentile, dbname),
+                "larger_is_better": self.test.test_config.test_case.larger_is_better.lower() == "true",
+                "threshold": self.test.test_config.dailyp_settings.threshold
+                }
 
     def calc_observe_latency(self, percentile):
         metric = '{}_{}th_{}'.format(self.test_config.name, percentile,

@@ -1,0 +1,29 @@
+[test_case]
+test = perfdaily.master.kv.MixedLatencyTestDaily
+title = Latency, r/w mixed, 1 bucket x 20M x 1KB, non-DGM
+summary = Mixed KV test, 4 nodes, 1 bucket x 20M x 1KB, non-DGM, 10K ops/sec
+larger_is_better = false
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+
+[load]
+items = 20000000
+size = 1024
+workers = 40
+
+[access]
+creates = 1
+reads = 50
+updates = 48
+deletes = 1
+throughput = 10000
+items = 20000000
+workers = 12
+time = 600
+
+[dailyp]
+dailyp_category = kv
+threshold = 20

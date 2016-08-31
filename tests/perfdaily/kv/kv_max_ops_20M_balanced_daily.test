@@ -1,0 +1,29 @@
+[test_case]
+test = perfdaily.master.kv.PillowfightTestDaily
+title = Max throughput, Pillowfight, 50/50 R/W, 20M ops
+summary = Pillowfight, 20M ops, 20M ops with balanced workload
+larger_is_better = true
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 2
+num_buckets = 1
+
+[bucket]
+replica_number = 1
+
+[load]
+size = 1024
+
+[access]
+items = 20000000
+iterations = 3
+workers = 50
+# 50/50 read/write
+reads = 50
+updates = 50
+clients_per_cluster = 1
+
+[dailyp]
+dailyp_category = kv
+threshold = 20

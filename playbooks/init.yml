@@ -5,6 +5,7 @@
   - yum: state=latest name={{item}}
     with_items:
       - atop
+      - fio
       - gdb
       - htop
       - iotop

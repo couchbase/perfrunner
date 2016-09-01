@@ -53,38 +53,6 @@ class MetricHelper(object):
         metric_info = self._get_metric_info(title, larger_is_better)
         return value, metric, metric_info
 
-    def calc_avg_xdcr_ops(self):
-        metric = '{}_avg_xdcr_ops_{}'.format(self.test_config.name,
-                                             self.cluster_spec.name)
-        title = 'Avg. XDCR ops/sec, {}'.format(self.metric_title)
-        metric_info = self._get_metric_info(title, larger_is_better=True)
-        query_params = self._get_query_params('avg_xdc_ops')
-
-        xdcr_ops = 0
-        for bucket in self.test_config.buckets:
-            db = 'ns_server{}{}'.format(self.cluster_names[1], bucket)
-            data = self.seriesly[db].query(query_params)
-            xdcr_ops += data.values()[0][0]
-        xdcr_ops = round(xdcr_ops, 1)
-
-        return xdcr_ops, metric, metric_info
-
-    def calc_avg_set_meta_ops(self):
-        metric = '{}_avg_set_meta_ops_{}'.format(self.test_config.name,
-                                                 self.cluster_spec.name)
-        title = 'Avg. XDCR rate (items/sec), {}'.format(self.metric_title)
-        metric_info = self._get_metric_info(title, larger_is_better=True)
-        query_params = self._get_query_params('avg_ep_num_ops_set_meta')
-
-        set_meta_ops = 0
-        for bucket in self.test_config.buckets:
-            db = 'ns_server{}{}'.format(self.cluster_names[1], bucket)
-            data = self.seriesly[db].query(query_params)
-            set_meta_ops += data.values()[0][0]
-        set_meta_ops = round(set_meta_ops, 1)
-
-        return set_meta_ops, metric, metric_info
-
     def calc_avg_n1ql_queries(self):
         metric = '{}_avg_query_requests_{}'.format(self.test_config.name,
                                                    self.cluster_spec.name)
@@ -249,18 +217,6 @@ class MetricHelper(object):
 
         return round(disk_write_queue / 10 ** 6, 2)
 
-    def calc_avg_ep_bg_fetched(self):
-        query_params = self._get_query_params('avg_ep_bg_fetched')
-
-        ep_bg_fetched = 0
-        for bucket in self.test_config.buckets:
-            db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
-            data = self.seriesly[db].query(query_params)
-            ep_bg_fetched += data.values()[0][0]
-        ep_bg_fetched /= self.test_config.cluster.initial_nodes[0]
-
-        return round(ep_bg_fetched)
-
     def calc_avg_bg_wait_time(self):
         query_params = self._get_query_params('avg_avg_bg_wait_time')
 
@@ -289,12 +245,9 @@ class MetricHelper(object):
 
     def calc_query_latency(self, percentile):
         metric = '{}_{}'.format(self.test_config.name, self.cluster_spec.name)
-        if 'MG7' in metric:
-            title = '{}th percentile query latency, {}'.format(percentile,
-                                                               self.metric_title)
-        else:
-            title = '{}th percentile query latency (ms), {}'.format(percentile,
-                                                                    self.metric_title)
+        title = '{}th percentile query latency (ms), {}'.format(percentile,
+                                                                self.metric_title)
+
         metric_info = self._get_metric_info(title)
         query_latency = self._calc_query_latency(percentile)
 
@@ -334,22 +287,15 @@ class MetricHelper(object):
         return round(secondaryscan_latency, 2), metric, metric_info
 
     def calc_kv_latency(self, operation, percentile, dbname='spring_latency'):
-        """Calculate kv latency
-        :param operation:
-        :param percentile:
-        :param dbname:  Same procedure is used for KV and subdoc .
-            for KV dbname will spring_latency.For subdoc will be spring_subdoc_latency
-        :return:
-        """
         metric = '{}_{}_{}th_{}'.format(self.test_config.name,
                                         operation,
                                         percentile,
-                                        self.cluster_spec.name
-                                        )
+                                        self.cluster_spec.name)
         title = '{}th percentile {} {}'.format(percentile,
                                                operation.upper(),
                                                self.metric_title)
         metric_info = self._get_metric_info(title)
+
         latency = self._calc_kv_latency(operation, percentile, dbname)
 
         return latency, metric, metric_info
@@ -404,30 +350,6 @@ class MetricHelper(object):
         cpu_utilazion = round(data.values()[0][0])
 
         return cpu_utilazion, metric, metric_info
-
-    def calc_views_disk_size(self, from_ts=None, to_ts=None, meta=None):
-        metric = '{}_max_views_disk_size_{}'.format(
-            self.test_config.name, self.cluster_spec.name
-        )
-        if meta:
-            metric = '{}_{}'.format(metric, meta.split()[0].lower())
-        title = 'Max. views disk size (GB)'
-        if meta:
-            title = '{}, {}'.format(title, meta)
-        title = '{}, {}'.format(title, self.metric_title)
-        title = title.replace(' (min)', '')  # rebalance tests
-        metric_info = self._get_metric_info(title)
-
-        query_params = self._get_query_params('max_couch_views_actual_disk_size',
-                                              from_ts, to_ts)
-
-        disk_size = 0
-        for bucket in self.test_config.buckets:
-            db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
-            data = self.seriesly[db].query(query_params)
-            disk_size += round(data.values()[0][0] / 1024 ** 3, 2)  # -> GB
-
-        return disk_size, metric, metric_info
 
     def calc_mem_used(self, max_min='max'):
         metric = '{}_{}_mem_used_{}'.format(
@@ -534,33 +456,6 @@ class MetricHelper(object):
 
         return value, metric, metric_info
 
-    def calc_compaction_speed(self, time_elapsed, bucket=True):
-        if bucket:
-            max_query_params = \
-                self._get_query_params('max_couch_docs_actual_disk_size')
-            min_query_params = \
-                self._get_query_params('min_couch_docs_actual_disk_size')
-        else:
-            max_query_params = \
-                self._get_query_params('max_couch_views_actual_disk_size')
-            min_query_params = \
-                self._get_query_params('min_couch_views_actual_disk_size')
-
-        max_diff = 0
-        for bucket in self.test_config.buckets:
-            db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
-            data = self.seriesly[db].query(max_query_params)
-            disk_size_before = data.values()[0][0]
-
-            db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
-            data = self.seriesly[db].query(min_query_params)
-            disk_size_after = data.values()[0][0]
-
-            max_diff = max(max_diff, disk_size_before - disk_size_after)
-
-        diff = max_diff / 1024 ** 2 / time_elapsed  # Mbytes/sec
-        return round(diff, 1)
-
     def failover_time(self, reporter):
         metric = '{}_{}_failover'.format(self.test_config.name,
                                          self.cluster_spec.name)
@@ -586,41 +481,3 @@ class MetricHelper(object):
         return OrderedDict((
             ('in bytes', sum(self.in_bytes_transfer[0].values())),
             ('out bytes', sum(self.out_bytes_transfer[0].values()))))
-
-    @property
-    def calc_network_throughput(self):
-        in_bytes_per_sec = []
-        out_bytes_per_sec = []
-        for cluster_name, servers in self.cluster_spec.yield_clusters():
-            cluster = filter(lambda name: name.startswith(cluster_name),
-                             self.cluster_names)[0]
-            for server in servers:
-                hostname = server.split(':')[0].replace('.', '')
-                db = 'net{}{}'.format(cluster, hostname)
-                data = self.seriesly[db].get_all()
-                in_bytes_per_sec += [
-                    v['in_bytes_per_sec'] for v in data.values()
-                ]
-                out_bytes_per_sec += [
-                    v['out_bytes_per_sec'] for v in data.values()
-                ]
-        # To prevent exception when the values may not be available during code debugging
-        if not in_bytes_per_sec:
-            in_bytes_per_sec.append(0)
-        if not out_bytes_per_sec:
-            out_bytes_per_sec.append(0)
-        f = lambda v: format(int(v), ',d')
-        return OrderedDict((
-            ('min in_bytes  per sec', f(min(in_bytes_per_sec))),
-            ('max in_bytes  per sec', f(max(in_bytes_per_sec))),
-            ('avg in_bytes  per sec', f(np.mean(in_bytes_per_sec))),
-            ('p50 in_bytes  per sec', f(np.percentile(in_bytes_per_sec, 50))),
-            ('p95 in_bytes  per sec', f(np.percentile(in_bytes_per_sec, 95))),
-            ('p99 in_bytes  per sec', f(np.percentile(in_bytes_per_sec, 99))),
-            ('min out_bytes per sec', f(min(out_bytes_per_sec))),
-            ('max out_bytes per sec', f(max(out_bytes_per_sec))),
-            ('avg out_bytes per sec', f(np.mean(out_bytes_per_sec))),
-            ('p50 out_bytes per sec', f(np.percentile(out_bytes_per_sec, 50))),
-            ('p95 out_bytes per sec', f(np.percentile(out_bytes_per_sec, 95))),
-            ('p99 out_bytes per sec', f(np.percentile(out_bytes_per_sec, 99))),
-        ))

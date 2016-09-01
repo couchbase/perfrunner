@@ -281,12 +281,6 @@ class RemoteLinuxHelper(object):
         if result.failed:
             pass
 
-    @single_host
-    def detect_openssl(self, pkg):
-        logger.info('Detecting openssl version')
-        if pkg == 'rpm':
-            return run('rpm -q --qf "%{VERSION}" openssl.x86_64')
-
     @all_hosts
     def setup_master_ca_cert(self, src_chain_file, dest_chain_folder):
         path_to_root_cert = dest_chain_folder + "root.crt"
@@ -460,11 +454,6 @@ class RemoteLinuxHelper(object):
             '/opt/couchbase/etc/couchbase/static_config')
 
     @all_hosts
-    def collect_cbq_logs(self):
-        logger.info('Getting cbq-engine logs')
-        get('/tmp/cbq.log')
-
-    @all_hosts
     def delete_inbox_folder(self):
         final_path = self.CB_DIR + self.INBOX_FOLDER
         run('rm -rf ' + final_path)
@@ -626,32 +615,6 @@ class RemoteLinuxHelper(object):
         command = "pkill -9 %s" % process
         run(command, quiet=True)
 
-    @all_hosts
-    def clean_mongodb(self):
-        for path in self.cluster_spec.paths:
-            run('rm -fr {}/*'.format(path))
-        run('rm -fr {}'.format(self.MONGO_DIR))
-
-    @all_hosts
-    def install_mongodb(self, url):
-        self.wget(url, outdir='/tmp')
-        archive = url.split('/')[-1]
-
-        logger.info('Installing MongoDB')
-
-        run('mkdir {}'.format(self.MONGO_DIR))
-        run('tar xzf {} -C {} --strip-components 1'.format(archive,
-                                                           self.MONGO_DIR))
-        run('numactl --interleave=all {}/bin/mongod '
-            '--dbpath={} --fork --logpath /tmp/mongodb.log'
-            .format(self.MONGO_DIR, self.cluster_spec.paths[0]))
-
-    def try_get(self, remote_path, local_path=None):
-        try:
-            get(remote_path, local_path)
-        except:
-            logger.warn("Exception calling get({}, {}).  Ignoring.".format(remote_path, local_path))
-
     @single_host
     def install_beer_samples(self):
         logger.info('run install_beer_samples')
@@ -696,10 +659,6 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
     def detect_pkg(self):
         logger.info('Detecting package manager')
         return 'exe'
-
-    @single_host
-    def detect_openssl(self, pkg):
-        pass
 
     def reset_swap(self):
         pass

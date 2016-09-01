@@ -4,6 +4,9 @@ title = CI3, Range Scan, 20M docs, 14.4KGops, 3.6KSops, 200Qops, GSI, request_pl
 summary = Range Scan, 14.4KGops, 3.6KSops, 200Qops
 larger_is_better = false
 
+[stats]
+lat_interval = 0
+
 [cluster]
 mem_quota = 20480
 index_mem_quota = 100000

@@ -1,3 +1,8 @@
+perfrunner
+----------
+
+[![codebeat badge](https://codebeat.co/badges/7870f2d2-4a41-477e-af30-d9a8cf097626)](https://codebeat.co/projects/github-com-couchbase-perfrunner)
+
 ![](docs/perf_infra.png)
 
 Related projects:
@@ -8,7 +13,7 @@ Related projects:
 * [moveit](https://github.com/pavel-paulau/moveit)
 
 Installation
-------------------------------
+------------
 
 Before using perfrunner you should install the requirements listed in the requirements section. At a minimum you need Python 2.7, virtualenv, and libcouchbase.
 

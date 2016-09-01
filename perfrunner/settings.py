@@ -332,7 +332,7 @@ class StatsSettings(object):
         self.enabled = int(options.get('enabled', self.ENABLED))
         self.post_to_sf = int(options.get('post_to_sf', self.POST_TO_SF))
         self.interval = int(options.get('interval', self.INTERVAL))
-        self.lat_interval = int(options.get('lat_interval', self.LAT_INTERVAL))
+        self.lat_interval = float(options.get('lat_interval', self.LAT_INTERVAL))
         self.secondary_statsfile = options.get('secondary_statsfile', self.SECONDARY_STATSFILE)
         self.post_rss = int(options.get('post_rss', self.POST_RSS))
         self.post_cpu = int(options.get('post_cpu', self.POST_CPU))

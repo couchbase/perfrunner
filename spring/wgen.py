@@ -679,7 +679,7 @@ class FtsWorker(Worker):
                         increment in sinle thread, so llock needed
                         '''
                         self.count += 1
-                        if self.count % 10000 == 0:
+                        if self.count % 500 == 0:
                             '''
                              Dump a sample of queries
                              '''

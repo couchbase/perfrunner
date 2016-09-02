@@ -1,15 +1,15 @@
 [clusters]
-fts = 172.23.123.38:8091,kv,fts
+fts = 172.23.99.211:8091,kv,fts
 
 
 [clients]
 hosts =
-    172.23.123.40
+    172.23.99.210
 credentials = root:couchbase
 
 [storage]
-data=/opt/couchbase/data
-index=/opt/couchbase/data
+data=/data
+index=/data
 
 [credentials]
 rest = Administrator:password
@@ -17,7 +17,7 @@ ssh = root:couchbase
 
 [parameters]
 Platform = HW
-OS = CentOS 6.5
-CPU = X5650 (24 vCPU)
-Memory = 128 GB
+OS = CentOS 7
+CPU = E5-2680 v3 (48 vCPU)
+Memory = 512 GB
 Disk = SSD

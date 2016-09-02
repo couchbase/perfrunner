@@ -156,7 +156,7 @@ class YCSBTest(YCSBdata):
                     else:
                         statement = "create index wle_idx_" \
                                     + str(idx) + " on `" + self.ycsb.bucket.split('=')[1] + "`(meta().id)'"
-                    self.rest.exec_n1ql_stmnt(host, statement)
+                    self.rest.exec_n1ql_statement(host, statement)
                 break
 
     def load(self):

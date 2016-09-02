@@ -791,9 +791,3 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
 
     def tune_log_rotation(self):
         pass
-
-    def build_secondary_index(self, index_nodes, bucket, indexes, fields,
-                              secondarydb, where_map):
-        super(RemoteWindowsHelper, self).build_secondary_index(
-            index_nodes, bucket, indexes, fields, secondarydb, where_map,
-            commandPath='/cygdrive/c/program\\ files/Couchbase/Server/bin/')

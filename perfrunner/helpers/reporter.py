@@ -197,17 +197,21 @@ class SFReporter(object):
     def _post_benckmark(self, metric, value):
         key, benckmark = self._prepare_data(metric, value)
         showfast = self.test.test_config.stats_settings.showfast
+
+        cb = Couchbase.connect(bucket='benchmarks', **showfast)
         try:
-            cb = Couchbase.connect(bucket='benchmarks', **showfast)
             self._mark_previous_as_obsolete(cb, benckmark)
             cb.set(key, benckmark)
+        except Exception, e:
+            logger.warn('Failed to post benchmark {}: {}'.format(e, benckmark))
+        else:
+            logger.info('Successfully posted: {}'.format(pretty_dict(benckmark)))
+
+        try:
             Comparator()(test=self.test, benckmark=benckmark)
         except Exception, e:
-            logger.warn('Failed to post results, {} : {}'.format(e, benckmark))
-        else:
-            logger.info('Successfully posted: {}'.format(
-                pretty_dict(benckmark)
-            ))
+            logger.warn('Failed to compare results: {}'.format(e))
+
         return key
 
     def _upload_master_events(self, filename):

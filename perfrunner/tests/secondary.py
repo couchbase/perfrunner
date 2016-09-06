@@ -152,10 +152,8 @@ class SecondaryIndexTest(PerfTest):
         self.remote.build_secondary_index(
             self.index_nodes, self.bucket, self.indexes, self.index_fields,
             self.secondaryDB, where_map)
-
-        rest_username, rest_password = self.cluster_spec.rest_credentials
         time_elapsed = self.rest.wait_for_secindex_init_build(self.index_nodes[0].split(':')[0],
-                                                              self.active_indexes, rest_username, rest_password)
+                                                              self.active_indexes)
         return time_elapsed
 
     def run_load_for_2i(self):

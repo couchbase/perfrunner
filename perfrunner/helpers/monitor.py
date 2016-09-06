@@ -2,12 +2,13 @@ import time
 
 from logger import logger
 
+from perfrunner.helpers import misc
 from perfrunner.helpers.rest import RestHelper
 
 
 class Monitor(RestHelper):
-
     POLLING_INTERVAL = 2
+    POLLING_INTERVAL_INDEXING = 1
     MAX_RETRY = 60
     REBALANCE_TIMEOUT = 3600 * 2
 
@@ -188,3 +189,74 @@ class Monitor(RestHelper):
             logger.info('All Indexes: ONLINE')
         else:
             logger.info('Index "{}" is ONLINE'.format(index_name))
+
+    def wait_for_secindex_init_build(self, host, indexes):
+        # POLL until initial index build is complete
+        logger.info(
+            "Waiting for the following indexes to be ready: {}".format(indexes))
+
+        indexes_ready = [0 for i in indexes]
+
+        def get_index_status(json2i, index):
+            """
+            Return json2i["status"][k]["status"] if json2i["status"][k]["name"]
+            matches the desired index.
+            """
+            for d in json2i["status"]:
+                if d["name"] == index:
+                    return d["status"]
+            return None
+
+        @misc.retry(catch=(KeyError,), iterations=10, wait=30)
+        def update_indexes_ready():
+            json2i = self.get_index_status(host)
+            for i, index in enumerate(indexes):
+                status = get_index_status(json2i, index)
+                if status == 'Ready':
+                    indexes_ready[i] = 1
+
+        init_ts = time.time()
+        while sum(indexes_ready) != len(indexes):
+            time.sleep(self.POLLING_INTERVAL_INDEXING)
+            update_indexes_ready()
+        finish_ts = time.time()
+        logger.info('secondary index build time: {}'.format(finish_ts - init_ts))
+        time_elapsed = round(finish_ts - init_ts)
+        return time_elapsed
+
+    def wait_for_secindex_incr_build(self, index_nodes, bucket, indexes, numitems):
+        # POLL until incremenal index build is complete
+        logger.info('expecting {} num_docs_indexed for indexes {}'.format(numitems, indexes))
+
+        # collect num_docs_indexed information globally from all index nodes
+        hosts = [node.split(':')[0] for node in index_nodes]
+
+        def get_num_docs_indexed():
+            data = self.get_index_stats(hosts)
+            num_indexed = []
+            for index in indexes:
+                key = "" + bucket + ":" + index + ":num_docs_indexed"
+                val = data[key]
+                num_indexed.append(val)
+            return num_indexed
+
+        def get_num_docs_index_pending():
+            data = self.get_index_stats(hosts)
+            num_pending = []
+            for index in indexes:
+                key = "" + bucket + ":" + index + ":num_docs_pending"
+                val1 = data[key]
+                key = "" + bucket + ":" + index + ":num_docs_queued"
+                val2 = data[key]
+                val = int(val1) + int(val2)
+                num_pending.append(val)
+            return num_pending
+
+        expected_num_pending = [0] * len(indexes)
+        while True:
+            time.sleep(self.POLLING_INTERVAL_INDEXING)
+            curr_num_pending = get_num_docs_index_pending()
+            if curr_num_pending == expected_num_pending:
+                break
+        curr_num_indexed = get_num_docs_indexed()
+        logger.info("Number of Items indexed {}".format(curr_num_indexed))

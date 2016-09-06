@@ -1,7 +1,5 @@
-import base64
 import json
 import time
-import urllib2
 from collections import namedtuple
 
 import requests
@@ -36,7 +34,6 @@ def retry(method, *args, **kwargs):
 
 
 class RestHelper(object):
-
     def __init__(self, cluster_spec):
         self.rest_username, self.rest_password = \
             cluster_spec.rest_credentials
@@ -515,105 +512,15 @@ class RestHelper(object):
         response = self.post(url=api, data=data)
         return response.json()
 
-    def wait_for_secindex_init_build(self, host, indexes, rest_username, rest_password):
-        # POLL until initial index build is complete
-        init_ts = time.time()
+    def get_index_status(self, host):
+        api = 'http://{}:9102/getIndexStatus'.format(host)
+        response = self.get(url=api)
+        return response.json()
 
-        logger.info(
-            "Waiting for the following indexes to be ready: {}".format(indexes))
-
-        indexesready = [0 for index in indexes]
-        url = 'http://{}:9102/getIndexStatus'.format(host)
-        request = urllib2.Request(url)
-        base64string = base64.encodestring('%s:%s' % (rest_username, rest_password)).replace('\n', '')
-        request.add_header("Authorization", "Basic %s" % base64string)
-
-        def get_index_status(json2i, index):
-            """
-            Return json2i["status"][k]["status"] if json2i["status"][k]["name"]
-            matches the desired index.
-            """
-            for d in json2i["status"]:
-                if d["name"] == index:
-                    return d["status"]
-            return None
-
-        @misc.retry(catch=(KeyError,), iterations=10, wait=30)
-        def check_indexes_ready():
-            try:
-                response = urllib2.urlopen(request)
-                data = str(response.read())
-                json2i = json.loads(data)
-                for i, index in enumerate(indexes):
-                    status = get_index_status(json2i, index)
-                    if status == 'Ready':
-                        indexesready[i] = 1
-            except urllib2.HTTPError as e:
-                logger.warning("HTTPError {}".format(e))
-                api_temp = 'http://{}:9102/stats'.format(host)
-                host_data = self.get(url=api_temp).json()
-                data = {}
-                data.update(host_data)
-                for i, ind in enumerate(indexes):
-                    key = "bucket-1:" + ind + ":num_docs_pending"
-                    val1 = data[key]
-                    key = "bucket-1:" + ind + ":num_docs_queued"
-                    val2 = data[key]
-                    val = int(val1) + int(val2)
-                    if val == 0:
-                        indexesready[i] = 1
-        while True:
-            time.sleep(1)
-            check_indexes_ready()
-            if sum(indexesready) == len(indexes):
-                break
-
-        finish_ts = time.time()
-        logger.info('secondary index build time: {}'.format(finish_ts - init_ts))
-        time_elapsed = round(finish_ts - init_ts)
-        return time_elapsed
-
-    def wait_for_secindex_incr_build(self, index_nodes, bucket, indexes, numitems):
-        # POLL until incremenal index build is complete
-        logger.info('expecting {} num_docs_indexed for indexes {}'.format(numitems, indexes))
-
-        # collect num_docs_indexed information globally from all index nodes
-        hosts = [node.split(':')[0] for node in index_nodes]
-
-        def get_num_indexed():
-            data = {}
-            for host in hosts:
-                host_data = self.get(url='http://{}:9102/stats'.format(host)).json()
-                data.update(host_data)
-
-            num_indexed = []
-            for index in indexes:
-                key = "" + bucket + ":" + index + ":num_docs_indexed"
-                val = data[key]
-                num_indexed.append(val)
-            return num_indexed
-
-        def get_num_pending():
-            data = {}
-            api = 'http://{}:9102/stats'
-            for host in hosts:
-                host_data = self.get(url=api.format(host)).json()
-                data.update(host_data)
-            num_pending = []
-            for index in indexes:
-                key = "" + bucket + ":" + index + ":num_docs_pending"
-                val1 = data[key]
-                key = "" + bucket + ":" + index + ":num_docs_queued"
-                val2 = data[key]
-                val = int(val1) + int(val2)
-                num_pending.append(val)
-            return num_pending
-
-        expected_num_pending = [0] * len(indexes)
-        while True:
-            time.sleep(1)
-            curr_num_pending = get_num_pending()
-            if curr_num_pending == expected_num_pending:
-                break
-        curr_num_indexed = get_num_indexed()
-        logger.info("Number of Items indexed {}".format(curr_num_indexed))
+    def get_index_stats(self, hosts):
+        api = 'http://{}:9102/stats'
+        data = {}
+        for host in hosts:
+            host_data = self.get(url=api.format(host))
+            data.update(host_data.json())
+        return data

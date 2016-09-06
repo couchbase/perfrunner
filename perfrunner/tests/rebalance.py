@@ -2,6 +2,7 @@ import multiprocessing
 import time
 
 from decorator import decorator
+from logger import logger
 
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import log_phase, server_group
@@ -151,7 +152,9 @@ class RebalanceTest(PerfTest):
                 self.monitor.monitor_rebalance(master)
                 self.rest.add_back(master, host_port)
 
-            if failover:
+            if failover or graceful_failover:
+                logger.info('Sleeping for {} seconds after failover'
+                            .format(sleep_after_failover))
                 time.sleep(sleep_after_failover)
                 self.reporter.start()
 

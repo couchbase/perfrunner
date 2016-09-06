@@ -191,8 +191,10 @@ class XdcrInitTest(UniDirXdcrTest):
         self.configure_wan()
 
         from_ts, to_ts = self.init_xdcr()
-        time_elapsed = (to_ts - from_ts) / 1000.0
-        rate = self.metric_helper.calc_avg_replication_rate(time_elapsed)
+        self.time_elapsed = (to_ts - from_ts) / 1000.0
+        self.reporter.finish('Initial replication', self.time_elapsed)
+        self.report_kpi()
 
-        self.reporter.finish('Initial replication', time_elapsed)
+    def _report_kpi(self):
+        rate = self.metric_helper.calc_avg_replication_rate(self.time_elapsed)
         self.reporter.post_to_sf(rate)

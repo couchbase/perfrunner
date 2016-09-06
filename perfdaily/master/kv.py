@@ -19,6 +19,7 @@ class MixedLatencyTestDaily(MixedLatencyTest):
 
 class DurabilityTestDaily(DurabilityTest):
     def _report_kpi(self):
+        metrics = list()
         for operation in ('replicate_to', 'persist_to'):
             metrics.append(self.metric_helper.calc_kv_latency_perfdaily(operation=operation,
                                                                         percentile=99,

@@ -199,6 +199,18 @@ class MetricHelper(object):
 
         return round(avg_replication_rate)
 
+    def calc_avg_replication_rate_perfdaily(self, time_elapsed):
+        initial_items = self.test_config.load_settings.ops or \
+            self.test_config.load_settings.items
+        num_buckets = self.test_config.cluster.num_buckets
+
+        return {"name": 'Avg_initial_XDCR_rate',
+                "description": 'Avg. initial XDCR rate',
+                "value": round(num_buckets * initial_items / time_elapsed),
+                "larger_is_better": self.test.test_config.test_case.larger_is_better.lower() == "true",
+                "threshold": self.test.test_config.dailyp_settings.threshold
+                }
+
     def calc_max_drain_rate(self, time_elapsed):
         items_per_node = self.test_config.load_settings.items / \
             self.test_config.cluster.initial_nodes[0]

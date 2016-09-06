@@ -282,13 +282,6 @@ class RemoteLinuxHelper(object):
             pass
 
     @all_hosts
-    def setup_master_ca_cert(self, src_chain_file, dest_chain_folder):
-        path_to_root_cert = dest_chain_folder + "root.crt"
-        run('mkdir -p {}'.format(dest_chain_folder))
-        put(src_chain_file + "root.crt", path_to_root_cert)
-        run('/opt/couchbase/bin/couchbase-cli ssl-manage --cluster=localhost -u Administrator -p password --upload-cluster-ca={}/root.crt'.format(dest_chain_folder))
-
-    @all_hosts
     def reset_swap(self):
         logger.info('Resetting swap')
         run('swapoff --all && swapon --all')
@@ -453,23 +446,6 @@ class RemoteLinuxHelper(object):
         run('sed -i "s/num_files, [0-9]*/num_files, 50/" '
             '/opt/couchbase/etc/couchbase/static_config')
 
-    @all_hosts
-    def delete_inbox_folder(self):
-        final_path = self.CB_DIR + self.INBOX_FOLDER
-        run('rm -rf ' + final_path)
-
-    @all_hosts
-    def setup_cluster_nodes(self, dest_chain_folder):
-        run('mkdir -p {}'.format(dest_chain_folder))
-        local_ip = self.detect_ip(self.detect_if())
-        src_chain_file = "/tmp/newcerts/long_chain" + local_ip + ":8091.pem"
-        dest_chain_file = dest_chain_folder + "chain.pem"
-        put(src_chain_file, dest_chain_file)
-        src_node_key = "/tmp/newcerts/" + local_ip + ":8091.key"
-        dest_node_key = dest_chain_folder + "pkey.pem"
-        put(src_node_key, dest_node_key)
-        run('/opt/couchbase/bin/couchbase-cli ssl-manage --cluster=localhost -u Administrator -p password --set-node-certificate')
-
     @single_host
     def cbrestorefts(self, archive_path, repo_path):
         '''
@@ -502,78 +478,6 @@ class RemoteLinuxHelper(object):
             cmd = c.strip()
             logger.info("command executed {}".format(cmd))
             run(cmd)
-
-    @single_client
-    def generate_certs(self, root_cn='Root\ Authority', type='go',
-                       encryption="", key_length=1024):
-        cert_folder = "/tmp/newcerts/"
-        for _, master in zip(self.cluster_spec.workers,
-                             self.cluster_spec.yield_masters()):
-            for bucket in self.test_config.buckets:
-                qname = '{}-{}'.format(master.split(':')[0], bucket)
-                temp_dir = '{}-{}'.format(
-                    self.test_config.worker_settings.worker_dir, qname)
-
-        if type == 'go':
-            cert_file = "{}/perfrunner/scripts/security/gencert.go".\
-                format(temp_dir)
-            run("rm -rf {}".format(cert_folder))
-            run("mkdir {}".format(cert_folder))
-
-            run("go run {} -store-to=/tmp/newcerts/root -common-name={}".
-                format(cert_file, root_cn))
-            run("go run {} -store-to={}/interm -sign-with={}/root "
-                "-common-name=Intemediate\ Authority".format(
-                    cert_file, cert_folder, cert_folder))
-            for _, servers in self.cluster_spec.yield_clusters():
-                for server in servers:
-                    run("go run {} -store-to={}{} -sign-with={}interm "
-                        "-common-name={} -final=true".format(
-                            cert_file, cert_folder, server, cert_folder, server))
-                    run("cat {}{}.crt {}interm.crt > {}/long_chain{}.pem".
-                        format(cert_folder, server, cert_folder,
-                               cert_folder, server))
-        elif type == 'openssl':
-            v3_ca = "./pytests/security/v3_ca.crt"
-            run("rm -rf /tmp/newcerts")
-            run("mkdir /tmp/newcerts")
-            run("openssl genrsa {} -out {}ca.key {}".format(
-                encryption, cert_folder, str(key_length)))
-            run("openssl req -new -x509  -days 3650 -sha256 -key {}ca.key -out"
-                " /tmp/newcerts/ca.pem -subj '/C=UA/O=My "
-                "Company/CN=My Company Root CA'".format(cert_folder))
-            run("openssl genrsa {} -out {}/int.key {}".format(
-                encryption, cert_folder, str(key_length)))
-            run("openssl req -new -key {}int.key -out {}/int.csr -subj "
-                "'/C=UA/O=My Company/CN=My Company Intermediate CA'".
-                format(cert_folder, cert_folder))
-            run("openssl x509 -req -in {}int.csr -CA {}ca.pem -CAkey {}ca.key "
-                "-CAcreateserial -CAserial {}rootCA.srl -extfile {} "
-                "-out {}int.pem -days 365 -sha256".
-                format(cert_folder, cert_folder, cert_folder,
-                       cert_folder, v3_ca, cert_folder))
-            for _, servers in self.cluster_spec.yield_clusters():
-                for server in servers:
-                    run("openssl genrsa {} -out {}{}.key {}".format(
-                        encryption, cert_folder, server, str(key_length)))
-                    run("openssl req -new -key {}{}.key -out {}{}.csr -subj "
-                        "'/C=UA/O=My Company/CN={}'".format(
-                            cert_folder, server, cert_folder, server, server))
-                    run("openssl x509 -req -in {}{}.csr -CA {}int.pem -CAkey"
-                        " {}int.key -CAcreateserial -CAserial {}intermediateCA.srl "
-                        "-out .pem -days 365 -sha256".format(
-                            cert_folder, server, cert_folder, cert_folder,
-                            cert_folder, cert_folder, server))
-                    run("openssl x509 -req -days 300 -in {}{}.csr -CA {}int.pem "
-                        "-CAkey {}int.key -set_serial 01 -out {}{}.pem".format(
-                            cert_folder, server, cert_folder,
-                            cert_folder, cert_folder, server))
-                    run("cat {}{}.pem {}int.pem > {}long_chain{}.pem".format(
-                        cert_folder, server, cert_folder, cert_folder, server))
-
-    @single_client
-    def copy_folder_locally(self, src_folder='/tmp/newcerts/', dest_folder='/tmp/newcerts/'):
-        get(src_folder, dest_folder)
 
     @all_hosts
     def start_bandwidth_monitor(self, track_time=1):

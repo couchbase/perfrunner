@@ -1,5 +1,3 @@
-import shutil
-from subprocess import call
 from time import sleep
 
 from perfrunner.helpers.cbmonitor import with_stats
@@ -183,32 +181,12 @@ class XdcrInitTest(UniDirXdcrTest):
         self.enable_xdcr()
         self.monitor_replication()
 
-    def _setup_ca_certs(self):
-        print "Reverting to original state - regenerating certificate and removing inbox folder"
-        for server in self.cluster_spec.yield_servers():
-            self.rest.regenerate_cluster_certificate(server)
-        self.remote.delete_inbox_folder()
-
-        encryption_type = ''
-        key_length = 1024
-        self.remote.generate_certs(type='go', encryption=encryption_type, key_length=key_length)
-
-        shutil.rmtree('/tmp/newcerts/')
-        call(["mkdir", "/tmp/newcerts/"])
-
-        self.remote.copy_folder_locally('/tmp/newcerts/', '/tmp/')
-        self.remote.setup_master_ca_cert("/tmp/newcerts/", "/opt/couchbase/var/lib/couchbase/inbox/")
-        self.remote.setup_cluster_nodes("/opt/couchbase/var/lib/couchbase/inbox/")
-
     def run(self):
         if self.test_config.restore_settings.snapshot and self.build > '4':
             self.restore()
         else:
             self.load()
             self.wait_for_persistence()
-
-        if self.settings.use_ca_cert:
-            self._setup_ca_certs()
 
         self.configure_wan()
 

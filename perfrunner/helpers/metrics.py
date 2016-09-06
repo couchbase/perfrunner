@@ -458,20 +458,6 @@ class MetricHelper(object):
 
         return value, metric, metric_info
 
-    def failover_time(self, reporter):
-        metric = '{}_{}_failover'.format(self.test_config.name,
-                                         self.cluster_spec.name)
-        _split = self.metric_title.split(', ')
-
-        title = 'Graceful failover (min), {}, {}'.format(
-            _split[1][-1] + _split[1][1:-1] + _split[1][0],
-            ', '.join(_split[2:]))
-        metric_info = self._get_metric_info(title, larger_is_better=False)
-
-        rebalance_time = reporter.finish('Failover')
-
-        return rebalance_time, metric, metric_info
-
     @property
     def calc_network_bandwidth(self):
         self.remote = RemoteHelper(self.cluster_spec, self.test_config, verbose=True)

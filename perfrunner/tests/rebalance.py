@@ -151,12 +151,6 @@ class RebalanceTest(PerfTest):
                 self.monitor.monitor_rebalance(master)
                 self.rest.add_back(master, host_port)
 
-            if graceful_failover:
-                self.reporter.post_to_sf(
-                    *self.metric_helper.failover_time(self.reporter)
-                )
-                self.reporter.start()
-
             if failover:
                 time.sleep(sleep_after_failover)
                 self.reporter.start()

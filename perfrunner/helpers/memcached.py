@@ -3,8 +3,7 @@ import time
 
 from decorator import decorator
 from logger import logger
-
-from perfrunner.lib.mc_bin_client import (
+from mc_bin_client.mc_bin_client import (
     MemcachedClient,
     MemcachedError,
     memcacheConstants,

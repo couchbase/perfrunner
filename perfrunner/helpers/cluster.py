@@ -119,27 +119,19 @@ class ClusterManager(object):
 
     def create_buckets(self):
         ram_quota = self.mem_quota / self.test_config.cluster.num_buckets
-        replica_number = self.test_config.bucket.replica_number
-        replica_index = self.test_config.bucket.replica_index
-        eviction_policy = self.test_config.bucket.eviction_policy
-        threads_number = self.test_config.bucket.threads_number
-        proxy_port = self.test_config.bucket.proxy_port
-        password = self.test_config.bucket.password
-        buckets = self.test_config.buckets
-        time_synchronization = self.test_config.bucket.time_synchronization
 
         for master in self.masters():
-            for bucket_name in buckets:
-                self.rest.create_bucket(host_port=master,
-                                        name=bucket_name,
-                                        ram_quota=ram_quota,
-                                        replica_number=replica_number,
-                                        replica_index=replica_index,
-                                        eviction_policy=eviction_policy,
-                                        threads_number=threads_number,
-                                        password=password,
-                                        proxy_port=proxy_port,
-                                        time_synchronization=time_synchronization)
+            for bucket_name in self.test_config.buckets:
+                self.rest.create_bucket(
+                    host_port=master,
+                    name=bucket_name,
+                    ram_quota=ram_quota,
+                    password=self.test_config.bucket.password,
+                    replica_number=self.test_config.bucket.replica_number,
+                    replica_index=self.test_config.bucket.replica_index,
+                    eviction_policy=self.test_config.bucket.eviction_policy,
+                    time_synchronization=self.test_config.bucket.time_synchronization,
+                )
 
     def configure_auto_compaction(self):
         compaction_settings = self.test_config.compaction
@@ -175,25 +167,20 @@ class ClusterManager(object):
             self.remote.restart_with_alternative_num_vbuckets(num_vbuckets)
 
     def restart_with_alternative_bucket_options(self):
+        """Apply custom buckets settings (e.g., max_num_shards or max_num_auxio)
+        using "/diag/eval" and restart the entire cluster."""
         cmd = 'ns_bucket:update_bucket_props("{}", ' \
               '[{{extra_config_string, "{}={}"}}]).'
 
-        for option in ('defragmenter_enabled',
-                       'exp_pager_stime',
-                       'ht_locks',
-                       'max_num_shards',
-                       'max_threads',
-                       'warmup_min_memory_threshold',
-                       'bfilter_enabled'):
-            value = getattr(self.test_config.bucket, option)
-            if value != -1 and value is not None:
-                logger.info('Changing {} to {}'.format(option, value))
-                for master in self.masters():
-                    for bucket in self.test_config.buckets:
-                        diag_eval = cmd.format(bucket, option, value)
-                        self.rest.run_diag_eval(master, diag_eval)
-                self.remote.restart()
-                self.wait_until_healthy()
+        for option, value in self.test_config.bucket_extras.items():
+            logger.info('Changing {} to {}'.format(option, value))
+            for master in self.masters():
+                for bucket in self.test_config.buckets:
+                    diag_eval = cmd.format(bucket, option, value)
+                    self.rest.run_diag_eval(master, diag_eval)
+        if self.test_config.bucket_extras:
+            self.remote.restart()
+            self.wait_until_healthy()
 
     def tune_logging(self):
         self.remote.tune_log_rotation()

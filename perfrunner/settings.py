@@ -156,6 +156,10 @@ class TestConfig(Config):
         return BucketSettings(options)
 
     @property
+    def bucket_extras(self):
+        return self._get_options_as_dict('bucket_extras')
+
+    @property
     def buckets(self):
         return [
             'bucket-{}'.format(i + 1) for i in range(self.cluster.num_buckets)
@@ -341,30 +345,13 @@ class StatsSettings(object):
 class BucketSettings(object):
 
     PASSWORD = 'password'
-    MAX_NUM_SHARDS = -1
-    MAX_THREADS = -1
-    WARMUP_MIN_MEMORY_THRESHOLD = -1
     REPLICA_NUMBER = 1
     REPLICA_INDEX = 0
     EVICTION_POLICY = 'valueOnly'  # alt: fullEviction
-    EXPIRY_PAGER_SLEEP_TIME = -1
-    DEFRAGMENTER_ENABLED = -1
-    HT_LOCKS = -1
-    BFILTER_ENABLED = None
-    TIME_SYNCHRONIZATION = None     # alt: enabledWithDrift, enabledWithoutDrift
+    TIME_SYNCHRONIZATION = None  # alt: enabledWithDrift, enabledWithoutDrift
 
     def __init__(self, options):
         self.password = options.get('password', self.PASSWORD)
-        self.max_num_shards = int(
-            options.get('max_num_shards', self.MAX_NUM_SHARDS)
-        )
-        self.max_threads = int(
-            options.get('max_threads', self.MAX_THREADS)
-        )
-        self.warmup_min_memory_threshold = int(
-            options.get('warmup_min_memory_threshold',
-                        self.WARMUP_MIN_MEMORY_THRESHOLD)
-        )
         self.replica_number = int(
             options.get('replica_number', self.REPLICA_NUMBER)
         )
@@ -376,19 +363,6 @@ class BucketSettings(object):
 
         self.time_synchronization = \
             options.get('time_synchronization', self.TIME_SYNCHRONIZATION)
-
-        self.defragmenter_enabled = options.get('defragmenter_enabled',
-                                                self.DEFRAGMENTER_ENABLED)
-
-        self.threads_number = options.get('threads_number')  # 2.x
-
-        self.exp_pager_stime = int(options.get('exp_pager_stime',
-                                               self.EXPIRY_PAGER_SLEEP_TIME))
-        self.ht_locks = int(options.get('ht_locks', self.HT_LOCKS))
-        self.bfilter_enabled = options.get('bfilter_enabled', self.BFILTER_ENABLED)
-        self.proxy_port = options.get('proxyPort', None)
-        if self.proxy_port:
-            self.proxy_port = int(self.proxy_port)
 
 
 class CompactionSettings(object):

@@ -35,10 +35,6 @@ class MemcachedHelper(object):
 
     @retry
     def get_stats(self, host, port, bucket, stats):
-        proxy_port = self.test_config.bucket.proxy_port
-        if proxy_port is None:
-            mc = MemcachedClient(host=host, port=port)
-            mc.sasl_auth_plain(user=bucket, password=self.password)
-        else:
-            mc = MemcachedClient(host=host, port=proxy_port)
+        mc = MemcachedClient(host=host, port=port)
+        mc.sasl_auth_plain(user=bucket, password=self.password)
         return mc.stats(stats)

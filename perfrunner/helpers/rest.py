@@ -224,9 +224,9 @@ class RestHelper(object):
                 progress = task.get('progress')
                 return is_running, progress
 
-    def create_bucket(self, host_port, name, ram_quota, replica_number,
-                      replica_index, eviction_policy, threads_number,
-                      password, proxy_port=None, time_synchronization=None):
+    def create_bucket(self, host_port, name, password, ram_quota,
+                      replica_number, replica_index, eviction_policy,
+                      time_synchronization=None):
         logger.info('Adding new bucket: {}'.format(name))
 
         api = 'http://{}/pools/default/buckets'.format(host_port)
@@ -239,20 +239,10 @@ class RestHelper(object):
             'flushEnabled': 1,
             'replicaNumber': replica_number,
             'replicaIndex': replica_index,
+            'authType': 'sasl',
+            'saslPassword': password,
         }
 
-        if proxy_port is None:
-            data.update({
-                'authType': 'sasl',
-                'saslPassword': password,
-            })
-        else:
-            data.update({
-                'authType': 'none',
-                'proxyPort': proxy_port,
-            })
-        if threads_number:
-            data['threadsNumber'] = threads_number
         if time_synchronization:
             data['timeSynchronization'] = time_synchronization
 

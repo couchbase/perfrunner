@@ -202,7 +202,7 @@ def do_beer_queries(mng_data,conn, rest, host_ip, remote):
 
 def do_airline_benchmarks(mng_data,conn, rest, host_ip, remote, cluster_spec):
     if True:
-        resp = rest.create_bucket(host_ip + ':8091', 'ods', 1000, 0, 0, 'valueOnly', 4, None)
+        resp = rest.create_bucket(host_port=host_ip + ':8091', name='ods', ram_quota=1000, replica_number=0, replica_index=0, eviction_policy='valueOnly', password=None)
         time.sleep(10)
 
         ssh = paramiko.SSHClient()

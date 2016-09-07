@@ -1,4 +1,3 @@
-from threading import Thread
 from time import sleep, time
 from uuid import uuid4
 
@@ -16,16 +15,16 @@ class XdcrLag(Latency):
 
     METRICS = ("xdcr_lag", )
 
-    NUM_THREADS = 10
+    INITIAL_POLLING_INTERVAL = 0.001  # 1 ms
 
-    INITIAL_REQUEST_INTERVAL = 0.01
+    TIMEOUT = 600  # 10 minutes
 
-    SAMPLING_ERROR = 0.05  # 5%
-
-    MAX_REQUEST_INTERVAL = 2
+    MAX_SAMPLING_INTERVAL = 0.25  # 250 ms
 
     def __init__(self, settings):
         super(Latency, self).__init__(settings)
+
+        self.interval = 0
 
         self.pools = []
         for bucket in self.get_buckets():
@@ -47,24 +46,24 @@ class XdcrLag(Latency):
             self.pools.append((bucket, src_pool, dst_pool))
 
     def _measure_lags(self, src_pool, dst_pool):
+        key = "xdcr_{}".format(uhex())
+
         src_client = src_pool.get_client()
         dst_client = dst_pool.get_client()
 
-        key = "xdcr_{}".format(uhex())
+        polling_interval = self.INITIAL_POLLING_INTERVAL
 
-        req_interval = self.INITIAL_REQUEST_INTERVAL
         src_client.set(key, key)
+
         t0 = time()
-        while True:
-            r = dst_client.get(key)
-            if r.value:
+        while time() - t0 < self.TIMEOUT:
+            if dst_client.get(key).value:
                 break
-            else:
-                sleep(req_interval)
-                req_interval = min(
-                    (time() - t0) * self.SAMPLING_ERROR,
-                    self.MAX_REQUEST_INTERVAL
-                )
+            sleep(polling_interval)
+            polling_interval *= 1.1  # increase interval by 10%
+        else:
+            logger.warn('XDCR sampling timed out after {} seconds'
+                        .format(self.TIMEOUT))
         t1 = time()
 
         src_client.delete(key)
@@ -75,18 +74,13 @@ class XdcrLag(Latency):
         return {"xdcr_lag": (t1 - t0) * 1000}  # s -> ms
 
     def sample(self):
-        while True:
-            try:
-                for bucket, src_pool, dst_pool in self.pools:
-                    lags = self._measure_lags(src_pool, dst_pool)
-                    self.store.append(lags,
-                                      cluster=self.cluster,
-                                      bucket=bucket,
-                                      collector=self.COLLECTOR)
-            except Exception as e:
-                logger.warn(e)
+        t0 = time()
+        for bucket, src_pool, dst_pool in self.pools:
+            lags = self._measure_lags(src_pool, dst_pool)
+            self.store.append(lags,
+                              cluster=self.cluster,
+                              bucket=bucket,
+                              collector=self.COLLECTOR)
+        total_sampling_time = time() - t0
 
-    def collect(self):
-        threads = [Thread(target=self.sample) for _ in range(self.NUM_THREADS)]
-        map(lambda t: t.start(), threads)
-        map(lambda t: t.join(), threads)
+        sleep(max(0, self.MAX_SAMPLING_INTERVAL - total_sampling_time))

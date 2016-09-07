@@ -96,7 +96,6 @@ class ClusterManager(object):
             if initial_nodes < 2:  # Single-node cluster
                 continue
 
-            # Adding initial nodes
             master = servers[0]
             if self.group_number > 1:
                 groups = self.rest.get_server_groups(master)
@@ -109,7 +108,9 @@ class ClusterManager(object):
                 self.rest.add_node(master, host_port, self.roles[host_port],
                                    uri)
 
-            # Rebalance
+    def rebalance(self):
+        for (_, servers), initial_nodes in zip(self.clusters(),
+                                               self.initial_nodes):
             master = servers[0]
             known_nodes = servers[:initial_nodes]
             ejected_nodes = []

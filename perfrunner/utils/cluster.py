@@ -54,6 +54,7 @@ def main():
     if cm.group_number > 1:
         cm.create_server_groups()
     cm.add_nodes()
+    cm.rebalance()
     cm.enable_auto_failover()
     cm.configure_auto_compaction()
 

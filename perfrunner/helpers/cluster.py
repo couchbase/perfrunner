@@ -56,10 +56,11 @@ class ClusterManager(object):
     def set_fts_index_mem_quota(self):
         master_node = self.masters().next()
         version = self.rest.get_version(master_node)
-        if version >= '4.5.0':  # FTS was introduced in 4.5.0
-            for server in self.servers():
-                self.rest.set_fts_index_mem_quota(server,
-                                                  self.fts_index_mem_quota)
+        if version < '4.5.0':  # FTS was introduced in 4.5.0
+            return
+
+        for server in self.servers():
+            self.rest.set_fts_index_mem_quota(server, self.fts_index_mem_quota)
 
     def set_query_settings(self):
         settings = self.test_config.n1ql_settings.settings
@@ -78,6 +79,11 @@ class ClusterManager(object):
                 logger.info("Index settings: {}".format(curr_settings))
 
     def set_services(self):
+        master_node = self.masters().next()
+        version = self.rest.get_version(master_node)
+        if version < '4.0.0':  # Service were introduced in 4.0.0
+            return
+
         for (_, servers), initial_nodes in zip(self.clusters(),
                                                self.initial_nodes):
             master = servers[0]

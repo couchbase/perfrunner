@@ -205,7 +205,7 @@ class MetricHelper(object):
         num_buckets = self.test_config.cluster.num_buckets
 
         return {"name": 'Avg_initial_XDCR_rate',
-                "description": 'Avg. initial XDCR rate',
+                "description": 'Avg. initial XDCR rate (items/sec)',
                 "value": round(num_buckets * initial_items / time_elapsed),
                 "larger_is_better": self.test.test_config.test_case.larger_is_better.lower() == "true",
                 "threshold": self.test.test_config.dailyp_settings.threshold

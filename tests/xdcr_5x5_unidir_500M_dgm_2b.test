@@ -46,4 +46,4 @@ items = 500000000
 workers = 30
 working_set = 10
 working_set_access = 98
-time = 10800
+time = 3600

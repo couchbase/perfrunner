@@ -4,6 +4,9 @@ title = Q3, Range Scan, latency, 5M docs, GSI, request_plus
 summary = Range Scan, 14.4KGops, 3.6KSops, 200Qops
 larger_is_better = false
 
+[stats]
+lat_interval = 0
+
 [cluster]
 mem_quota = 20480
 index_mem_quota = 100000
@@ -42,7 +45,7 @@ workers = 20
 time = 300
 n1ql_queries = range-scan
 n1ql_throughput = 200
-n1ql_workers = 720
+n1ql_workers = 50
 
 [n1ql-range-scan]
 prepared = range_scan

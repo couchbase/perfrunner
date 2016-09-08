@@ -20,10 +20,6 @@ indexer.settings.max_cpu_percent = 2400
 indexer.settings.scan_timeout = 0
 indexer.settings.gc_percent = 200
 
-[bucket]
-replica_number = 1
-password =
-eviction_policy = valueOnly
 
 [load]
 items = 5000000
@@ -43,7 +39,7 @@ updates = 100
 deletes = 0
 throughput = 30000
 items = 5000000
-workers = 24
+workers = 20
 time = 300
 n1ql_queries = singleton-unique-lookup
 n1ql_throughput = 450

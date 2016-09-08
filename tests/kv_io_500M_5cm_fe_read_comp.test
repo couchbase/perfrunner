@@ -15,17 +15,14 @@ eviction_policy = fullEviction
 [compaction]
 db_percentage = 2
 
-[restore]
-snapshot = /home/snapshots/500M_1KB
-
 [load]
 items = 500000000
 size = 1024
-workers = 40
+workers = 80
 
 [hot_load]
 items = 500000000
-workers = 40
+workers = 80
 working_set = 18
 
 [access]

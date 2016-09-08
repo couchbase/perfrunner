@@ -12,9 +12,6 @@ num_buckets = 1
 [bucket]
 eviction_policy = fullEviction
 
-[compaction]
-db_percentage = 2
-
 [load]
 items = 500000000
 size = 1024

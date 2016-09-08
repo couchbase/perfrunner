@@ -499,6 +499,9 @@ class ThroughputTest(KVTest):
 
     COLLECTORS = {'latency': True}
 
+    def compact_bucket(self):
+        pass
+
     def _measure_curr_ops(self):
         ops = 0
         for bucket in self.test_config.buckets:

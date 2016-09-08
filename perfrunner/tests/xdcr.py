@@ -98,8 +98,6 @@ class XdcrTest(PerfTest):
         self.monitor_replication()
         self.wait_for_persistence()
 
-        self.compact_bucket()
-
         self.hot_load()
 
         self.configure_wan()

@@ -12,7 +12,6 @@ from perfrunner.utils.install import CouchbaseInstaller
 class Options(object):
 
     cluster_edition = None
-    toy = None
     url = None
     verbose = False
     version = None

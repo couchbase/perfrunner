@@ -28,14 +28,12 @@ Once inside the perfrunner directory create a virtual environment for all of the
 Cluster installation and setup
 ------------------------------
 
-    ./env/bin/install -c ${cluster} -v ${version} -t ${toy}
+    ./env/bin/install -c ${cluster} -v ${version}
     ./env/bin/cluster -c ${cluster} -t ${test_config}
 
 For instance:
 
-    ./env/bin/install -c clusters/vesta.spec -v 2.0.0-1976
-
-    ./env/bin/install -c clusters/vesta.spec -v 2.1.1-PRF03 -t couchstore
+    ./env/bin/install -c clusters/vesta.spec -v 4.5.0-2601
 
     ./env/bin/cluster -c clusters/vesta.spec -t tests/comp_bucket_20M.test
 

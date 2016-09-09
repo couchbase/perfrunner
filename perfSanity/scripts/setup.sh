@@ -16,6 +16,6 @@ if [ -z "${toy}" ]; then
         env/bin/install -c ${cluster} --url ${url} -v ${version}
     fi
  else
-    env/bin/install -c ${cluster} -v ${version} -t ${toy}
+    env/bin/install -c ${cluster} -v ${version}
 fi
 env/bin/cluster -c ${cluster} -t ${test_config} ${override}

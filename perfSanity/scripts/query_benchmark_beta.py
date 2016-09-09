@@ -336,8 +336,6 @@ def main():
                       metavar='cluster.spec')
     parser.add_option('--verbose', dest='verbose', action='store_true',
                       help='enable verbose logging')
-    parser.add_option('-o', dest='toy',
-                      help='optional toy build ID', metavar='couchstore')
 
     parser.add_option('-t', dest='test_config_fname',
                       help='path to test configuration file',

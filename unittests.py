@@ -19,7 +19,7 @@ class InstallTest(TestCase):
         installer_mock.return_value = None
         installer = CouchbaseInstaller()
         installer.build = Build('x86_64', 'rpm', 'enterprise', '2.0.0-1976',
-                                '2.0.0', '1976', None, None)
+                                '2.0.0', '1976', None)
 
         filenames = tuple(installer.get_expected_filenames())
         expected = (
@@ -36,7 +36,7 @@ class InstallTest(TestCase):
         installer_mock.return_value = None
         installer = CouchbaseInstaller()
         installer.build = Build('x86_64', 'deb', 'enterprise', '3.0.0-777',
-                                '3.0.0', '777', None, None)
+                                '3.0.0', '777', None)
 
         filenames = tuple(installer.get_expected_filenames())
         expected = (
@@ -52,7 +52,7 @@ class InstallTest(TestCase):
         installer_mock.return_value = None
         installer = CouchbaseInstaller()
         installer.build = Build('x86_64', 'exe', 'enterprise', '3.0.0-1028',
-                                '3.0.0', '1028', None, None)
+                                '3.0.0', '1028', None)
 
         filenames = tuple(installer.get_expected_filenames())
         expected = (
@@ -61,31 +61,6 @@ class InstallTest(TestCase):
             'couchbase-server-enterprise_3.0.0-1028-windows_amd64.exe',
             'couchbase_server/3.0.0/1028/couchbase_server-enterprise-windows-amd64-3.0.0-1028.exe',
             'couchbase-server-enterprise_3.0.0-1028-windows_amd64.exe',
-        )
-        self.assertEqual(filenames, expected)
-
-    @patch('perfrunner.utils.install.CouchbaseInstaller.__init__')
-    def test_toy_package(self, installer_mock):
-        installer_mock.return_value = None
-        installer = CouchbaseInstaller()
-        installer.build = Build('x86_64', 'rpm', 'enterprise', '2.0.0-1976',
-                                '2.0.0', '1976', 'mytoy', None)
-
-        filenames = tuple(installer.get_expected_filenames())
-        print 'filenames {}'.format(filenames)
-
-        expected = (
-            'couchbase-server-community_toy-mytoy-x86_64_2.0.0-1976-toy.rpm',
-            'couchbase-server-community_toy-mytoy-2.0.0-1976-toy_x86_64.rpm',
-            'couchbase-server-community_cent58-2.5.2-toy-mytoy-x86_64_2.0.0-1976-toy.rpm',
-            'couchbase-server-community_cent58-3.0.0-toy-mytoy-x86_64_2.0.0-1976-toy.rpm',
-            'couchbase-server-community_ubuntu12-3.0.0-toy-mytoy-x86_64_2.0.0-1976-toy.rpm',
-            'couchbase-server-community_cent64-3.0.0-toy-mytoy-x86_64_2.0.0-1976-toy.rpm',
-            'couchbase-server-community_cent64-3.0.1-toy-mytoy-x86_64_2.0.0-1976-toy.rpm',
-            'couchbase-server-community_cent58-master-toy-mytoy-x86_64_2.0.0-1976-toy.rpm',
-            'couchbase-server-community_cent54-master-toy-mytoy-x86_64_2.0.0-1976-toy.rpm',
-            'couchbase-server-enterprise-2.0.0-1976-centos6_x86_64.rpm', 
-            'couchbase-server-enterprise-2.0.0-1976-ubuntu12.04_x86_64.rpm', 
         )
         self.assertEqual(filenames, expected)
 

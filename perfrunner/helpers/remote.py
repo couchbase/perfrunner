@@ -112,7 +112,6 @@ class RemoteLinuxHelper(object):
         self.current_host = CurrentHostMutex()
         self.cluster_spec = cluster_spec
         self.test_config = test_config
-        self.env = {}
 
     @staticmethod
     def wget(url, outdir='/tmp', outfile=None):
@@ -350,22 +349,22 @@ class RemoteLinuxHelper(object):
         logger.info('Installing Couchbase Server')
         if pkg == 'deb':
             run('yes | apt-get install gdebi')
-            run('yes | numactl --interleave=all gdebi /tmp/{}'.format(filename))
+            run('yes | gdebi /tmp/{}'.format(filename))
         else:
-            run('yes | numactl --interleave=all rpm -i /tmp/{}'.format(filename))
+            run('yes | rpm -i /tmp/{}'.format(filename))
 
     @all_hosts
     def restart(self):
         logger.info('Restarting server')
-        environ = ' '.join('{}={}'.format(k, v) for (k, v) in self.env.items())
-        run(environ +
-            ' numactl --interleave=all /etc/init.d/couchbase-server restart',
-            pty=False)
+        run('service couchbase-server restart', pty=False)
 
+    @all_hosts
     def restart_with_alternative_num_vbuckets(self, num_vbuckets):
         logger.info('Changing number of vbuckets to {}'.format(num_vbuckets))
-        self.env['COUCHBASE_NUM_VBUCKETS'] = num_vbuckets
-        self.restart()
+        run('systemctl set-environment COUCHBASE_NUM_VBUCKETS={}'
+            .format(num_vbuckets))
+        run('service couchbase-server restart', pty=False)
+        run('systemctl unset-environment COUCHBASE_NUM_VBUCKETS')
 
     @all_hosts
     def stop_server(self):

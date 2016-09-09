@@ -39,6 +39,7 @@ def main():
     if cm.remote:
         cm.remote.disable_wan()
         cm.tune_logging()
+        cm.restart_with_alternative_num_vbuckets()
 
     cm.configure_internal_settings()
     cm.configure_xdcr_settings()

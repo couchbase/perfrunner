@@ -64,12 +64,15 @@ class CBGen(CBAsyncGen):
 
     NODES_UPDATE_INTERVAL = 15
 
+    TIMEOUT = 10  # seconds
+
     def __init__(self, **kwargs):
         self.client = Bucket(
             'couchbase://{}:{}/{}'.format(kwargs['host'],
                                           kwargs.get('port', 8091),
                                           kwargs['bucket']),
             password=kwargs['password'],
+            timeout=self.TIMEOUT,
         )
         self.session = requests.Session()
         self.session.auth = (kwargs['username'], kwargs['password'])

@@ -17,7 +17,6 @@ Build = namedtuple(
 
 class CouchbaseInstaller(object):
 
-    CBFS = 'http://cbfs-ext.hq.couchbase.com/builds/'
     LATEST_BUILDS = 'http://latestbuilds.hq.couchbase.com/'
     SHERLOCK_BUILDS = ''
     WATSON_BUILDS = ''
@@ -75,7 +74,7 @@ class CouchbaseInstaller(object):
 
     def find_package(self):
         for filename in self.get_expected_filenames():
-            for base in (self.LATEST_BUILDS, self.SHERLOCK_BUILDS, self.WATSON_BUILDS, self.SPOCK_BUILDS, self.CBFS):
+            for base in (self.LATEST_BUILDS, self.SHERLOCK_BUILDS, self.WATSON_BUILDS, self.SPOCK_BUILDS):
                 url = '{}{}'.format(base, filename)
                 try:
                     status_code = requests.head(url).status_code

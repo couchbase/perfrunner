@@ -33,15 +33,12 @@ def with_delay(rebalance, *args, **kwargs):
 def with_reporter(rebalance, *args, **kwargs):
     test = args[0]
 
-    test.reporter.reset_utilzation_stats()
-
     test.reporter.start()
 
     rebalance(*args, **kwargs)
 
     test.rebalance_time = test.reporter.finish('Rebalance')
 
-    test.reporter.save_utilzation_stats()
     test.reporter.save_master_events()
 
 

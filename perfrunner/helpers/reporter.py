@@ -10,41 +10,6 @@ from logger import logger
 from pytz import timezone
 
 from perfrunner.helpers.misc import pretty_dict, uhex
-from perfrunner.utils.btrc import CouchbaseClient, StatsReporter
-
-
-class BtrcReporter(object):
-
-    def __init__(self, test):
-        self.test = test
-        self.rest_username, self.rest_password = \
-            test.cluster_spec.rest_credentials
-
-    def reset_utilzation_stats(self):
-        for target in self.test.target_iterator:
-            logger.info('Resetting utilization stats from {}/{}'.format(
-                        target.node, target.bucket))
-            cb = CouchbaseClient(target.node, target.bucket,
-                                 self.rest_username, self.rest_password)
-            cb.reset_utilization_stats()
-
-    def save_utilzation_stats(self):
-        for target in self.test.target_iterator:
-            logger.info('Saving utilization stats from {}/{}'.format(
-                        target.node, target.bucket))
-            cb = CouchbaseClient(target.node, target.bucket,
-                                 self.rest_username, self.rest_password)
-            reporter = StatsReporter(cb)
-            reporter.report_stats('util_stats')
-
-    def save_btree_stats(self):
-        for target in self.test.target_iterator:
-            logger.info('Saving B-tree stats from {}/{}'.format(
-                        target.node, target.bucket))
-            cb = CouchbaseClient(target.node, target.bucket,
-                                 self.rest_username, self.rest_password)
-            reporter = StatsReporter(cb)
-            reporter.report_stats('btree_stats')
 
 
 class Comparator(object):
@@ -304,7 +269,7 @@ class LogReporter(object):
                 zh.writestr(zinfo_or_arcname=fname, bytes=master_events)
 
 
-class Reporter(BtrcReporter, SFReporter, LogReporter):
+class Reporter(SFReporter, LogReporter):
 
     def start(self):
         self.ts = time.time()

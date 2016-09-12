@@ -470,6 +470,14 @@ class MetricHelper(object):
 
         return value, metric, metric_info
 
+    def get_indexing_meta_daily(self, value, index_type):
+        return {"name": '{}_{}'.format(self.test_config.name, index_type.lower()),
+                "description": '{} index (min), {}'.format(index_type, self.metric_title),
+                "value": value,
+                "larger_is_better": self.test.test_config.test_case.larger_is_better.lower() == "true",
+                "threshold": self.test.test_config.dailyp_settings.threshold
+                }
+
     @property
     def calc_network_bandwidth(self):
         self.remote = RemoteHelper(self.cluster_spec, self.test_config, verbose=True)

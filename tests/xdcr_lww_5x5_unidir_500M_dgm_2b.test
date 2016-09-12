@@ -1,0 +1,52 @@
+[test_case]
+test = perfrunner.tests.xdcr.UniDirXdcrTest
+title = 5 -> 5 UniDir, 2 buckets x 500M x 1KB, 20K SETs/sec/bucket, LAN, LWW
+summary = Mixed KV + XDCR test, 5 -> 5 UniDir, 2 buckets x 500M x 1KB, DGM, 20K SETs/sec/bucket, LAN, LWW bucket
+larger_is_better = false
+
+[stats]
+post_cpu = 1
+
+[cluster]
+mem_quota = 204800
+initial_nodes = 5 5
+num_buckets = 2
+
+[xdcr_cluster]
+sourceNozzlePerNode = 64
+targetNozzlePerNode = 64
+optimisticReplicationThreshold = 0
+
+[compaction]
+db_percentage = 10
+
+[bucket]
+time_synchronization = enabledWithoutDrift
+
+[restore]
+snapshot = /home/snapshots/500M_800B
+
+[load]
+items = 500000000
+size = 800
+workers = 40
+
+[hot_load]
+items = 500000000
+workers = 20
+working_set = 10
+
+[xdcr]
+replication_type = unidir
+
+[access]
+creates = 0
+reads = 50
+updates = 50
+deletes = 0
+throughput = 40000
+items = 500000000
+workers = 30
+working_set = 10
+working_set_access = 98
+time = 3600

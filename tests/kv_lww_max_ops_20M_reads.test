@@ -1,0 +1,26 @@
+[test_case]
+test = perfrunner.tests.kv.PillowfightTest
+title = Pillowfight, 80/20 R/W, 20M ops, 1KB items, LWW
+summary = Pillowfight op/sec, 20M ops with read heavy workload, LWW bucket
+larger_is_better = true
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 2
+num_buckets = 1
+
+[bucket]
+replica_number = 1
+time_synchronization = enabledWithoutDrift
+
+[load]
+size = 1024
+
+[access]
+items = 20000000
+iterations = 3
+workers = 50
+# 80/20 read/write
+reads = 80
+updates = 20
+clients_per_cluster = 1

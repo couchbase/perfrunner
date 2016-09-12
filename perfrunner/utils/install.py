@@ -9,6 +9,13 @@ from requests.exceptions import ConnectionError
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import ClusterSpec
 
+LOCATIONS = (
+    'http://latestbuilds.hq.couchbase.com/',
+    'http://latestbuilds.hq.couchbase.com/couchbase-server/sherlock/{build}/',
+    'http://172.23.120.24/builds/latestbuilds/couchbase-server/watson/{build}/',
+    'http://172.23.120.24/builds/latestbuilds/couchbase-server/spock/{build}/',
+)
+
 Build = namedtuple(
     'Build',
     ['arch', 'pkg', 'edition', 'version', 'release', 'build', 'url']
@@ -16,11 +23,6 @@ Build = namedtuple(
 
 
 class CouchbaseInstaller(object):
-
-    LATEST_BUILDS = 'http://latestbuilds.hq.couchbase.com/'
-    SHERLOCK_BUILDS = ''
-    WATSON_BUILDS = ''
-    SPOCK_BUILDS = ''
 
     def __init__(self, cluster_spec, options):
         self.options = options
@@ -34,9 +36,6 @@ class CouchbaseInstaller(object):
         build = None
         if options.version:
             release, build = options.version.split('-')
-            self.SHERLOCK_BUILDS = 'http://latestbuilds.hq.couchbase.com/couchbase-server/sherlock/{}/'.format(build)
-            self.WATSON_BUILDS = 'http://172.23.120.24/builds/latestbuilds/couchbase-server/watson/{}/'.format(build)
-            self.SPOCK_BUILDS = 'http://172.23.120.24/builds/latestbuilds/couchbase-server/spock/{}/'.format(build)
 
         self.build = Build(arch, pkg, options.cluster_edition, options.version,
                            release, build, options.url)
@@ -45,45 +44,42 @@ class CouchbaseInstaller(object):
     def get_expected_filenames(self):
         if self.build.pkg == 'rpm':
             patterns = (
-                'couchbase-server-{edition}_centos6_{arch}_{version}-rel.{pkg}',
-                'couchbase-server-{edition}-{version}-centos6.{arch}.{pkg}',
-                'couchbase-server-{edition}-{version}-centos7.{arch}.{pkg}',
                 'couchbase-server-{edition}_{arch}_{version}-rel.{pkg}',
-                'couchbase-server-{edition}_{version}-{arch}.{pkg}',
+                'couchbase-server-{edition}-{version}-centos7.{arch}.{pkg}',
             )
         elif self.build.pkg == 'deb':
             patterns = (
-                'couchbase-server-{edition}_ubuntu_1204_{arch}_{version}-rel.{pkg}',
-                'couchbase-server-{edition}_{version}-ubuntu12.04_amd64.{pkg}',
                 'couchbase-server-{edition}_{arch}_{version}-rel.{pkg}',
-                'couchbase-server-{edition}_{version}-{arch}.{pkg}',
+                'couchbase-server-{edition}_{version}-ubuntu12.04_{arch}.{pkg}',
             )
         elif self.build.pkg == 'exe':
             patterns = (
                 'couchbase-server-{edition}_{arch}_{version}-rel.setup.{pkg}',
-                'couchbase_server-{edition}-windows-amd64-{version}.{pkg}',
-                'couchbase-server-{edition}_{version}-windows_amd64.{pkg}',
-                'couchbase_server/{release}/{build}/couchbase_server-{edition}-windows-amd64-{version}.exe',
-                'couchbase-server-{edition}_{version}-windows_amd64.{pkg}',
+                'couchbase_server-{edition}-windows-{arch}-{version}.{pkg}',
             )
         else:
             patterns = ()  # Sentinel
 
         for pattern in patterns:
-            yield pattern.format(**self.build._asdict())
+            yield pattern.format(**self.build.__dict__)
+
+    @staticmethod
+    def is_exist(url):
+        try:
+            status_code = requests.head(url).status_code
+        except ConnectionError:
+            return False
+        if status_code == 200:
+            return True
+        return False
 
     def find_package(self):
         for filename in self.get_expected_filenames():
-            for base in (self.LATEST_BUILDS, self.SHERLOCK_BUILDS, self.WATSON_BUILDS, self.SPOCK_BUILDS):
-                url = '{}{}'.format(base, filename)
-                try:
-                    status_code = requests.head(url).status_code
-                except ConnectionError:
-                    continue
-                else:
-                    if status_code == 200:
-                        logger.info('Found "{}"'.format(url))
-                        return filename, url
+            for location in LOCATIONS:
+                url = '{}{}'.format(location.format(**self.build.__dict__),
+                                    filename)
+                if self.is_exist(url):
+                    return filename, url
         logger.interrupt('Target build not found')
 
     def kill_processes(self):
@@ -96,15 +92,13 @@ class CouchbaseInstaller(object):
         self.remote.clean_data()
 
     def install_package(self):
-        if not self.options.url:
+        if self.options.version:
             filename, url = self.find_package()
         else:
             url = self.options.url
-            logger.info("Using this URL to install instead of searching amongst"
-                        " the known locations: {}".format(url))
-            # obtain the filename after the last '/' of a url.
             filename = urlparse(url).path.split('/')[-1]
 
+        logger.info('Using this URL: {}'.format(url))
         self.remote.install_couchbase(self.build.pkg, url, filename,
                                       self.build.release)
 
@@ -140,7 +134,7 @@ def main():
 
     if not (options.cluster_spec_fname and options.version) and not options.url:
         parser.error('Missing mandatory parameter. Either pecify both cluster '
-                     'spec and version, or specify just the URL to be installed.')
+                     'spec and version, or specify the URL to be installed.')
 
     cluster_spec = ClusterSpec()
     cluster_spec.parse(options.cluster_spec_fname, args)

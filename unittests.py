@@ -23,11 +23,8 @@ class InstallTest(TestCase):
 
         filenames = tuple(installer.get_expected_filenames())
         expected = (
-            'couchbase-server-enterprise_centos6_x86_64_2.0.0-1976-rel.rpm',
-            'couchbase-server-enterprise-2.0.0-1976-centos6.x86_64.rpm',
-            'couchbase-server-enterprise-2.0.0-1976-centos7.x86_64.rpm',
             'couchbase-server-enterprise_x86_64_2.0.0-1976-rel.rpm',
-            'couchbase-server-enterprise_2.0.0-1976-x86_64.rpm',
+            'couchbase-server-enterprise-2.0.0-1976-centos7.x86_64.rpm',
         )
         self.assertEqual(filenames, expected)
 
@@ -40,10 +37,8 @@ class InstallTest(TestCase):
 
         filenames = tuple(installer.get_expected_filenames())
         expected = (
-            'couchbase-server-enterprise_ubuntu_1204_x86_64_3.0.0-777-rel.deb',
-            'couchbase-server-enterprise_3.0.0-777-ubuntu12.04_amd64.deb',
             'couchbase-server-enterprise_x86_64_3.0.0-777-rel.deb',
-            'couchbase-server-enterprise_3.0.0-777-x86_64.deb',
+            'couchbase-server-enterprise_3.0.0-777-ubuntu12.04_x86_64.deb',
         )
         self.assertEqual(filenames, expected)
 
@@ -57,10 +52,7 @@ class InstallTest(TestCase):
         filenames = tuple(installer.get_expected_filenames())
         expected = (
             'couchbase-server-enterprise_x86_64_3.0.0-1028-rel.setup.exe',
-            'couchbase_server-enterprise-windows-amd64-3.0.0-1028.exe',
-            'couchbase-server-enterprise_3.0.0-1028-windows_amd64.exe',
-            'couchbase_server/3.0.0/1028/couchbase_server-enterprise-windows-amd64-3.0.0-1028.exe',
-            'couchbase-server-enterprise_3.0.0-1028-windows_amd64.exe',
+            'couchbase_server-enterprise-windows-x86_64-3.0.0-1028.exe',
         )
         self.assertEqual(filenames, expected)
 

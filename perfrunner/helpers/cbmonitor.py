@@ -458,7 +458,7 @@ class CbAgent(object):
             self.remote.kill_process('iptraf')
 
     def trigger_reports(self, snapshot):
-        for report_type in ('html', 'get_corr_matrix'):
+        for report_type in ('html', ):
             url = 'http://{}/reports/{}/?snapshot={}'.format(
                 self.settings.cbmonitor_host_port, report_type, snapshot)
             logger.info(url)

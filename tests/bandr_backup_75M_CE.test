@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.cbbackup_restore.BackupTest
+test = perfrunner.tests.tools.BackupTest
 title = CE full backup throughput (Avg. MB/sec), 1 bucket x 75M x 1KB, non-DGM, Idle
 summary = CE Full backup, 1 bucket x 75M x 1KB, non-DGM, Idle
 larger_is_better = true

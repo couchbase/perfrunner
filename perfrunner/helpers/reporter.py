@@ -207,11 +207,6 @@ class SFReporter(object):
         else:
             logger.info('Successfully posted: {}'.format(pretty_dict(benckmark)))
 
-        try:
-            Comparator()(test=self.test, benckmark=benckmark)
-        except Exception, e:
-            logger.warn('Failed to compare results: {}'.format(e))
-
         return key
 
     def _upload_master_events(self, filename):

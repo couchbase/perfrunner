@@ -8,13 +8,22 @@ def extract_cb(filename):
         local(cmd)
 
 
+def cleanup(backup_dir):
+    with quiet():
+        disk = local('df --output=source {} | tail -n1'.format(backup_dir),
+                     capture=True)
+        local('umount {}'.format(disk))
+        local('mkfs.ext4 -F {}'.format(disk))
+        local('mount -a'.format(disk))
+
+
 def backup(master_node, cluster_spec, wrapper=False, mode=None, compression=False):
     backup_dir = cluster_spec.config.get('storage', 'backup')
 
     logger.info('Creating a new backup: {}'.format(backup_dir))
 
     if not mode:
-        local('rm -rf {}'.format(backup_dir))
+        cleanup(backup_dir)
 
     if wrapper:
         cbbackupwrapper(master_node, cluster_spec, backup_dir, mode)

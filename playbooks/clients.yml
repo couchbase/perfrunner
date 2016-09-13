@@ -15,6 +15,7 @@
       - python-pip
       - python-virtualenv
       - python3.5-dev
+      - sshpass
       - rpm2cpio
   - apt: deb=http://packages.couchbase.com/releases/couchbase-release/couchbase-release-1.0-2-amd64.deb
   - apt: name={{item}} update_cache=yes

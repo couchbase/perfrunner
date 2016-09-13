@@ -35,7 +35,8 @@ class NSServer(Collector):
             if not stats:
                 continue
             self.update_metric_metadata(stats.keys(), bucket, host)
-            self.store.append(stats, self.cluster, host, bucket, self.COLLECTOR)
+            self.store.append(stats, self.cluster, host, bucket,
+                              collector=self.COLLECTOR)
 
     def update_metadata(self):
         self.mc.add_cluster()

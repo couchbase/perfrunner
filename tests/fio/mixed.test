@@ -1,0 +1,6 @@
+[test_case]
+test = perfrunner.tests.fio.FIOTest
+use_workers = 0
+
+[fio]
+config = tests/fio/mixed.ini

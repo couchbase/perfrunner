@@ -1,3 +1,4 @@
+import os.path
 import time
 from random import uniform
 
@@ -537,6 +538,14 @@ class RemoteLinuxHelper(object):
                                               'clean package -Dmaven.test.skip -Dcheckstyle.skip=true && {}'.format(cmd)
         logger.info(" running command {}".format(load_run_cmd))
         return run(load_run_cmd)
+
+    @all_hosts
+    def fio(self, config):
+        logger.info('Running fio job: {}'.format(config))
+        filename = os.path.basename(config)
+        remote_path = os.path.join('/tmp', filename)
+        put(config, remote_path)
+        return run('fio --minimal {}'.format(remote_path))
 
 
 class RemoteWindowsHelper(RemoteLinuxHelper):

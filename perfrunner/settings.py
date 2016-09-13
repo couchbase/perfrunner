@@ -272,6 +272,10 @@ class TestConfig(Config):
     def get_n1ql_query_definition(self, query_name):
         return self._get_options_as_dict('n1ql-{}'.format(query_name))
 
+    @property
+    def fio(self):
+        return self._get_options_as_dict('fio')
+
 
 class TestCaseSettings(object):
 

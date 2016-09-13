@@ -10,7 +10,6 @@ from perfrunner.tests import PerfTest
 
 
 class SecondaryIndexTest(PerfTest):
-
     """
     The test measures time it takes to build secondary index. This is just a base
     class, actual measurements happen in initial and incremental secondary indexing tests.
@@ -130,7 +129,7 @@ class SecondaryIndexTest(PerfTest):
                 where = None
                 if left and right:
                     where = '\\\"{}\\\" <= {} and {} < \\\"{}\\\"'.format(
-                            left, field, field, right)
+                        left, field, field, right)
                 elif left:
                     where = '{} >= \\\"{}\\\"'.format(field, left)
                 elif right:
@@ -152,8 +151,8 @@ class SecondaryIndexTest(PerfTest):
         self.remote.build_secondary_index(
             self.index_nodes, self.bucket, self.indexes, self.index_fields,
             self.secondaryDB, where_map)
-        time_elapsed = self.rest.wait_for_secindex_init_build(self.index_nodes[0].split(':')[0],
-                                                              self.active_indexes)
+        time_elapsed = self.monitor.wait_for_secindex_init_build(self.index_nodes[0].split(':')[0],
+                                                                 self.active_indexes)
         return time_elapsed
 
     def run_load_for_2i(self):
@@ -175,7 +174,6 @@ class SecondaryIndexTest(PerfTest):
 
 
 class InitialSecondaryIndexTest(SecondaryIndexTest):
-
     """
     The test measures time it takes to build index for the first time. Scenario
     is pretty straightforward, there are only two phases:
@@ -202,7 +200,6 @@ class InitialSecondaryIndexTest(SecondaryIndexTest):
 
 
 class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
-
     """
     The test measures time it takes to build index for the first time as well as
     incremental build. There is no disabling of index updates in incremental building,
@@ -222,8 +219,8 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
             self.worker_manager.run_workload(access_settings, self.target_iterator)
             self.worker_manager.wait_for_workers()
         numitems = load_settings.items + access_settings.items
-        self.rest.wait_for_secindex_incr_build(self.index_nodes, self.bucket,
-                                               self.active_indexes, numitems)
+        self.monitor.wait_for_secindex_incr_build(self.index_nodes, self.bucket,
+                                                  self.active_indexes, numitems)
 
     def run(self):
         self.run_load_for_2i()
@@ -248,7 +245,6 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
 
 
 class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSecondaryIndexTest):
-
     def rebalance(self, initial_nodes, nodes_after):
         clusters = self.cluster_spec.yield_clusters()
         for _, servers in clusters:
@@ -299,7 +295,6 @@ class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSeco
 
 
 class SecondaryIndexingThroughputTest(SecondaryIndexTest):
-
     """
     The test applies scan workload against the 2i server and measures
     and reports the average scan throughput
@@ -375,7 +370,6 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
 
 
 class SecondaryIndexingThroughputRebalanceTest(SecondaryIndexingThroughputTest):
-
     """
     The test applies scan workload against the 2i server and measures
     and reports the average scan throughput"""
@@ -418,7 +412,6 @@ class SecondaryIndexingThroughputRebalanceTest(SecondaryIndexingThroughputTest):
 
 
 class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
-
     """
     The test applies scan workload against the 2i server and measures
     and reports the average scan throughput
@@ -489,7 +482,6 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
 
 
 class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest):
-
     """
     The test applies scan workload against the 2i server and measures
     and reports the average scan throughput
@@ -538,7 +530,6 @@ class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest
 
 
 class SecondaryIndexingLatencyTest(SecondaryIndexTest):
-
     """
     This test applies scan workload against a 2i server and measures
     the indexing latency
@@ -548,7 +539,8 @@ class SecondaryIndexingLatencyTest(SecondaryIndexTest):
     def apply_scanworkload(self):
         rest_username, rest_password = self.cluster_spec.rest_credentials
         logger.info('Initiating the scan workload')
-        cmdstr = "/opt/couchbase/bin/cbindexperf -cluster {} -auth=\"{}:{}\" -configfile scripts/config_indexinglatency.json -resultfile result.json".format(self.index_nodes[0], rest_username, rest_password)
+        cmdstr = "/opt/couchbase/bin/cbindexperf -cluster {} -auth=\"{}:{}\" -configfile scripts/config_indexinglatency.json -resultfile result.json".format(
+            self.index_nodes[0], rest_username, rest_password)
         status = subprocess.call(cmdstr, shell=True)
         if status != 0:
             raise Exception('Scan workload could not be applied')

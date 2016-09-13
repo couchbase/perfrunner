@@ -1,7 +1,8 @@
 ---
 - hosts: kv
   tasks:
-  - yum: state=latest name={{item}}
+  - name: installing additional packages
+    yum: state=latest name={{item}}
     with_items:
       - cmake
       - gcc-c++

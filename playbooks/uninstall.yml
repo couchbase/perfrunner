@@ -1,7 +1,8 @@
 ---
 - hosts: kv:index:n1ql
   tasks:
-  - shell: 'killall -I -g -q -s SIGKILL {{item}} || true'
+  - name: killing the processes
+    shell: 'killall -I -g -q -s SIGKILL {{item}} || true'
     with_items:
      - epmd
      - beam.smp
@@ -13,16 +14,20 @@
      - indexer
      - memcached
      - moxi
-  - yum: name=couchbase-server state=absent
-  - file: path=/opt/couchbase state=absent
+  - name: uninstalling the Couchbase Server package
+    yum: name=couchbase-server state=absent
+  - name: remove Couchbase Server files
+    file: path=/opt/couchbase state=absent
 
 - hosts: kv:index:n1ql
   tasks:
-  - shell: rm -fr /data/*
+  - name: Removing the files remaining in the "/data" directory
+    shell: rm -fr /data/*
 
 - hosts: kv
   tasks:
   - stat: path=/index
     register: index
-  - shell: rm -fr /index/*
+  - name: removing files in remaining the "/index" directory
+    shell: rm -fr /index/*
     when: index.stat.exists

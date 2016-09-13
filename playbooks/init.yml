@@ -1,8 +1,10 @@
 ---
 - hosts: kv:index:n1ql
   tasks:
-  - yum: state=latest name=epel-release
-  - yum: state=latest name={{item}}
+  - name: upgrading packages on the system
+    yum: state=latest name=epel-release
+  - name: installing additional packages
+    yum: state=latest name={{item}}
     with_items:
       - atop
       - fio
@@ -24,20 +26,25 @@
 
 - hosts: kv:index:n1ql
   tasks:
-  - shell: iptables -F
+  - name: flushing iptables rules
+    shell: iptables -F
 
 - hosts: kv:index:n1ql
   tasks:
-  - group: name=couchbase
-  - user:  name=couchbase group=couchbase
+  - name: creating new "couchbase" group
+    group: name=couchbase
+  - name: creating new "couchbase" user
+    user: name=couchbase group=couchbase
 
 - hosts: kv:index:n1ql
   tasks:
-  - file: path=/data  owner=couchbase group=couchbase
+  - name: creating the "/data" directory
+    file: path=/data  owner=couchbase group=couchbase
 
 - hosts: kv
   tasks:
   - stat: path=/index
     register: index
-  - file: path=/index owner=couchbase group=couchbase
+  - name: creating the "/index" directory
+    file: path=/index owner=couchbase group=couchbase
     when: index.stat.exists

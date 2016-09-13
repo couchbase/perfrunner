@@ -1,6 +1,8 @@
 ---
 - hosts: kv:index:n1ql
   tasks:
-  - get_url: url={{ url }} dest=/tmp
+  - name: downloading the specifed package
+    get_url: url={{ url }} dest=/tmp
     register: package
-  - yum: name={{ package.dest }} state=present
+  - name: installing the specifed package
+    yum: name={{ package.dest }} state=present

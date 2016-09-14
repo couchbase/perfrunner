@@ -1,4 +1,8 @@
-from perfrunner.tests.kv import PillowfightTest, MixedLatencyTest, DurabilityTest
+from perfrunner.tests.kv import (
+    DurabilityTest,
+    MixedLatencyTest,
+    PillowfightTest,
+)
 
 
 class PillowfightTestDaily(PillowfightTest):

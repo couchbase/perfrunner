@@ -1,5 +1,6 @@
-from perfrunner.tests.secondary import InitialandIncrementalSecondaryIndexTest
 import time
+
+from perfrunner.tests.secondary import InitialandIncrementalSecondaryIndexTest
 
 
 class InitialandIncrementalSecondaryIndexTestDaily(InitialandIncrementalSecondaryIndexTest):

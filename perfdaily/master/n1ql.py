@@ -1,6 +1,4 @@
-from perfrunner.tests.n1ql import N1QLThroughputTest
-from perfrunner.tests.n1ql import N1QLLatencyTest
-from perfrunner.tests import TargetIterator
+from perfrunner.tests.n1ql import N1QLLatencyTest, N1QLThroughputTest
 
 
 class N1QLThroughputTestDaily(N1QLThroughputTest):

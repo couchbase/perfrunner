@@ -1,4 +1,4 @@
-kv_max_ops_20M_balanced.test[test_case]
+[test_case]
 test = perfrunner.tests.kv.PillowfightTest
 title = Pillowfight, 50/50 R/W, 20M ops, 1KB items, LWW
 summary = Pillowfight op/sec, 20M ops with balanced workload, LWW bucket

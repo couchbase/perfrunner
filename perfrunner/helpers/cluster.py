@@ -1,5 +1,3 @@
-import time
-
 from logger import logger
 
 from perfrunner.helpers.memcached import MemcachedHelper
@@ -205,15 +203,3 @@ class ClusterManager(object):
     def wait_until_healthy(self):
         for master in self.cluster_spec.yield_masters():
             self.monitor.monitor_node_health(master)
-
-    def change_dcp_io_threads(self):
-        if self.test_config.secondaryindex_settings.db == 'moi':
-            cmd = 'ns_bucket:update_bucket_props("{}", ' \
-                  '[{{extra_config_string, "max_num_auxio=16"}}]).'
-            for master in self.masters():
-                for bucket in self.test_config.buckets:
-                    diag_eval = cmd.format(bucket)
-                    self.rest.run_diag_eval(master, diag_eval)
-            time.sleep(30)
-            self.remote.restart()
-            self.wait_until_healthy()

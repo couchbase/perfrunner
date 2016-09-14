@@ -22,6 +22,7 @@ workers = 20
 [secondary]
 name = myindex1,myindex2,myindex3,myindex4,myindex5
 field = alt_email,city,name,coins,achievements
+cbindexperf_configfile = tests/gsi/fdb/config/config_scanthr_multiple_fdb.json
 
 [access]
 creates = 1

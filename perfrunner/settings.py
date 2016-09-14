@@ -599,13 +599,15 @@ class SecondaryIndexSettings(object):
     FIELD = 'nofield'
     DB = ''
     STALE = 'true'
+    CBINDEXPERF_CONFIGFILE = ''
 
     def __init__(self, options):
-        self.name = str(options.get('name', self.NAME))
-        self.field = str(options.get('field', self.FIELD))
-        self.db = str(options.get('db', self.DB))
-        self.stale = str(options.get('stale', self.STALE))
+        self.name = options.get('name', self.NAME)
+        self.field = options.get('field', self.FIELD)
+        self.db = options.get('db', self.DB)
+        self.stale = options.get('stale', self.STALE)
         self.indexes = self.name.split(",") if self.name is not self.NAME else []
+        self.cbindexperf_configfile = options.get('cbindexperf_configfile', self.CBINDEXPERF_CONFIGFILE)
         for name in self.name.split(","):
             index_partition_name = "index_{}_partitions".format(name)
             val = str(options.get(index_partition_name, ''))

@@ -64,7 +64,6 @@ def main():
 
     if cm.remote:
         cm.restart_with_alternative_bucket_options()
-        cm.change_dcp_io_threads()
         cm.set_index_settings()
         cm.set_query_settings()
 

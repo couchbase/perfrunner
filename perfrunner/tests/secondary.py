@@ -39,10 +39,9 @@ class SecondaryIndexTest(PerfTest):
         self.index_fields = None
         self.bucket = None
         self.indexes = []
-        self.secondaryDB = ''
-        self.configfile = ''
-
         self.secondaryDB = None
+        self.configfile = self.test_config.secondaryindex_settings.cbindexperf_configfile
+
         if self.test_config.secondaryindex_settings.db == 'moi':
             self.secondaryDB = 'memdb'
         logger.info('secondary storage DB..{}'.format(self.secondaryDB))
@@ -304,32 +303,9 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
     def apply_scanworkload(self):
         rest_username, rest_password = self.cluster_spec.rest_credentials
         logger.info('Initiating scan workload')
-        numindexes = len(self.indexes)
 
-        if self.test_config.secondaryindex_settings.stale == 'false':
-            if numindexes == 1:
-                if self.secondaryDB == 'memdb':
-                    self.configfile = 'scripts/config_scanthr_sessionconsistent_moi.json'
-                else:
-                    self.configfile = 'scripts/config_scanthr_sessionconsistent_fdb.json'
-            elif numindexes == 5:
-                if self.secondaryDB == 'memdb':
-                    self.configfile = 'scripts/config_scanthr_sessionconsistent_multiple_moi.json'
-                else:
-                    self.configfile = 'scripts/config_scanthr_sessionconsistent_multiple_fdb.json'
-        else:
-            if numindexes == 1:
-                if self.secondaryDB == 'memdb':
-                    self.configfile = 'scripts/config_scanthr_moi.json'
-                else:
-                    self.configfile = 'scripts/config_scanthr_fdb.json'
-            elif numindexes == 5:
-                if self.secondaryDB == 'memdb':
-                    self.configfile = 'scripts/config_scanthr_multiple_moi.json'
-                else:
-                    self.configfile = 'scripts/config_scanthr_multiple_fdb.json'
-        cmdstr = "/opt/couchbase/bin/cbindexperf -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json".format(
-            self.index_nodes[0], rest_username, rest_password, self.configfile)
+        cmdstr = "/opt/couchbase/bin/cbindexperf -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json" \
+            .format(self.index_nodes[0], rest_username, rest_password, self.configfile)
         logger.info('To be applied: {}'.format(cmdstr))
         status = subprocess.call(cmdstr, shell=True)
         if status != 0:
@@ -424,34 +400,10 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
     def apply_scanworkload(self):
         rest_username, rest_password = self.cluster_spec.rest_credentials
         logger.info('Initiating scan workload with stats output')
-        numindexes = None
-        numindexes = len(self.indexes)
 
-        if self.test_config.secondaryindex_settings.stale == 'false':
-            if numindexes == 1:
-                if self.secondaryDB == 'memdb':
-                    self.configfile = 'scripts/config_scanlatency_sessionconsistent_moi.json'
-                else:
-                    self.configfile = 'scripts/config_scanlatency_sessionconsistent_fdb.json'
-            elif numindexes == 5:
-                if self.secondaryDB == 'memdb':
-                    self.configfile = 'scripts/config_scanlatency_sessionconsistent_multiple_moi.json'
-                else:
-                    self.configfile = 'scripts/config_scanlatency_sessionconsistent_multiple_fdb.json'
-        else:
-            if numindexes == 1:
-                if self.secondaryDB == 'memdb':
-                    self.configfile = 'scripts/config_scanlatency_moi.json'
-                else:
-                    self.configfile = 'scripts/config_scanlatency_fdb.json'
-            elif numindexes == 5:
-                if self.secondaryDB == 'memdb':
-                    self.configfile = 'scripts/config_scanlatency_multiple_moi.json'
-                else:
-                    self.configfile = 'scripts/config_scanlatency_multiple_fdb.json'
-
-        cmdstr = "/opt/couchbase/bin/cbindexperf -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json -statsfile /root/statsfile".format(
-            self.index_nodes[0], rest_username, rest_password, self.configfile)
+        cmdstr = "/opt/couchbase/bin/cbindexperf -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json" \
+                 " -statsfile /root/statsfile"\
+            .format(self.index_nodes[0], rest_username, rest_password, self.configfile)
         logger.info("Calling command: {}".format(cmdstr))
         status = subprocess.call(cmdstr, shell=True)
         if status != 0:

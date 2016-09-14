@@ -23,6 +23,7 @@ workers = 20
 name = myindex1,myindex2,myindex3,myindex4,myindex5
 field = alt_email,city,name,coins,achievements
 stale = false
+cbindexperf_configfile = tests/gsi/fdb/config/config_scanlatency_sessionconsistent_multiple_fdb.json
 
 [access]
 creates = 1

@@ -18,6 +18,9 @@ view_percentage = 100
 replica_number=0
 replica_index=0
 
+[bucket_extras]
+max_num_auxio = 16
+
 [load]
 items = 20000000
 size = 1024
@@ -27,6 +30,7 @@ spring_workers = 100
 name = myindex
 field = email
 db = moi
+cbindexperf_configfile = tests/gsi/moi/config/config_scanthr_moi.json
 
 [access]
 creates = 10

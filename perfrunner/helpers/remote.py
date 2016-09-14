@@ -137,6 +137,14 @@ class RemoteLinuxHelper(object):
         return self.ARCH[arch]
 
     @single_host
+    def detect_os_release(self):
+        """Possible values:
+            CentOS release 6.x (Final)
+            CentOS Linux release 7.2.1511 (Core)
+        """
+        return run('cat /etc/redhat-release').split()[-2][0]
+
+    @single_host
     def build_secondary_index(self, index_nodes, bucket, indexes, fields,
                               secondarydb, where_map, command_path='/opt/couchbase/bin/'):
         logger.info('building secondary indexes')
@@ -569,7 +577,6 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
 
     @single_host
     def detect_pkg(self):
-        logger.info('Detecting package manager')
         return 'exe'
 
     def reset_swap(self):

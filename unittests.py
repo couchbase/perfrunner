@@ -1,63 +1,12 @@
 import glob
 from unittest import TestCase
 
-from mock import patch
-
 from cbagent.settings import Settings
-from perfrunner.helpers.misc import target_hash, server_group
+from perfrunner.helpers.misc import server_group
 from perfrunner.settings import ClusterSpec, TestConfig
-from perfrunner.utils.install import CouchbaseInstaller, Build
 from perfrunner.workloads.tcmalloc import KeyValueIterator, LargeIterator
 from spring.docgen import NewDocument
 from spring.wgen import Worker
-
-
-class InstallTest(TestCase):
-
-    @patch('perfrunner.utils.install.CouchbaseInstaller.__init__')
-    def test_rpm_package(self, installer_mock):
-        installer_mock.return_value = None
-        installer = CouchbaseInstaller()
-        installer.build = Build('x86_64', 'rpm', 'enterprise', '2.0.0-1976',
-                                '2.0.0', '1976', None)
-
-        filenames = tuple(installer.get_expected_filenames())
-        expected = (
-            'couchbase-server-enterprise_x86_64_2.0.0-1976-rel.rpm',
-            'couchbase-server-enterprise-2.0.0-1976-centos7.x86_64.rpm',
-        )
-        self.assertEqual(filenames, expected)
-
-    @patch('perfrunner.utils.install.CouchbaseInstaller.__init__')
-    def test_deb_package(self, installer_mock):
-        installer_mock.return_value = None
-        installer = CouchbaseInstaller()
-        installer.build = Build('x86_64', 'deb', 'enterprise', '3.0.0-777',
-                                '3.0.0', '777', None)
-
-        filenames = tuple(installer.get_expected_filenames())
-        expected = (
-            'couchbase-server-enterprise_x86_64_3.0.0-777-rel.deb',
-            'couchbase-server-enterprise_3.0.0-777-ubuntu12.04_x86_64.deb',
-        )
-        self.assertEqual(filenames, expected)
-
-    @patch('perfrunner.utils.install.CouchbaseInstaller.__init__')
-    def test_win_package(self, installer_mock):
-        installer_mock.return_value = None
-        installer = CouchbaseInstaller()
-        installer.build = Build('x86_64', 'exe', 'enterprise', '3.0.0-1028',
-                                '3.0.0', '1028', None)
-
-        filenames = tuple(installer.get_expected_filenames())
-        expected = (
-            'couchbase-server-enterprise_x86_64_3.0.0-1028-rel.setup.exe',
-            'couchbase_server-enterprise-windows-x86_64-3.0.0-1028.exe',
-        )
-        self.assertEqual(filenames, expected)
-
-    def test_target_hash(self):
-        self.assertEqual(target_hash('127.0.0.1'), '3cf55f')
 
 
 class RebalanceTests(TestCase):

@@ -43,7 +43,7 @@ class CouchbaseInstaller(object):
 
     def get_expected_filenames(self):
         if self.build.pkg == 'rpm':
-            os_release = self.remote.detect_release()
+            os_release = self.remote.detect_os_release()
             patterns = (
                 'couchbase-server-{edition}_{arch}_{version}-rel.{pkg}',
                 'couchbase-server-{{edition}}-{{version}}-centos{}.{{arch}}.{{pkg}}'.format(os_release),

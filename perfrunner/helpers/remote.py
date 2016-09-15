@@ -100,11 +100,10 @@ class RemoteLinuxHelper(object):
     ARCH = {'i386': 'x86', 'x86_64': 'x86_64', 'unknown': 'x86_64'}
 
     CB_DIR = '/opt/couchbase'
-    MONGO_DIR = '/opt/mongodb'
-    INBOX_FOLDER = "inbox"
 
-    PROCESSES = ('beam.smp', 'memcached', 'epmd', 'cbq-engine', 'mongod', 'indexer',
-                 'cbft', 'goport', 'goxdcr', 'couch_view_index_updater', 'moxi', 'spring')
+    PROCESSES = ('beam.smp', 'memcached', 'epmd', 'cbq-engine', 'indexer',
+                 'cbft', 'goport', 'goxdcr', 'couch_view_index_updater',
+                 'moxi', 'spring')
 
     def __init__(self, cluster_spec, test_config, os):
         self.os = os
@@ -282,13 +281,6 @@ class RemoteLinuxHelper(object):
         logger.info(result)
         logger.info(result.stdout)
 
-    @all_kv_nodes
-    def kill_spring_processes(self):
-        cmdstr = "ps aux | grep -ie spring | awk '{print $2}' | xargs kill -9"
-        result = run(cmdstr, quiet=True)
-        if result.failed:
-            pass
-
     @all_hosts
     def reset_swap(self):
         logger.info('Resetting swap')
@@ -378,20 +370,12 @@ class RemoteLinuxHelper(object):
     @all_hosts
     def stop_server(self):
         logger.info('Stopping Couchbase Server')
-        getosname = run('uname -a|cut -c1-6')
-        if(getosname.find("CYGWIN") != -1):
-            run('net stop CouchbaseServer')
-        else:
-            run('/etc/init.d/couchbase-server stop', pty=False)
+        run('/etc/init.d/couchbase-server stop', pty=False)
 
     @all_hosts
     def start_server(self):
         logger.info('Starting Couchbase Server')
-        getosname = run('uname -a|cut -c1-6')
-        if(getosname.find("CYGWIN") != -1):
-            run('net start CouchbaseServer')
-        else:
-            run('/etc/init.d/couchbase-server start', pty=False)
+        run('/etc/init.d/couchbase-server start', pty=False)
 
     def detect_if(self):
         stdout = run("ip route list | grep default")
@@ -433,11 +417,6 @@ class RemoteLinuxHelper(object):
         for ip in _filter:
             run('tc filter add dev {} protocol ip prio 1 u32 '
                 'match ip dst {} flowid 1:11'.format(_if, ip))
-
-    @single_host
-    def detect_number_cores(self):
-        logger.info('Detecting number of cores')
-        return int(run('nproc', pty=False))
 
     @all_hosts
     def detect_core_dumps(self):
@@ -710,3 +689,13 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
 
     def tune_log_rotation(self):
         pass
+
+    @all_hosts
+    def stop_server(self):
+        logger.info('Stopping Couchbase Server')
+        run('net stop CouchbaseServer')
+
+    @all_hosts
+    def start_server(self):
+        logger.info('Starting Couchbase Server')
+        run('net start CouchbaseServer')

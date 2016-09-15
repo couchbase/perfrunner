@@ -143,23 +143,32 @@ class RemoteLinuxHelper(object):
         """
         return run('cat /etc/redhat-release').split()[-2][0]
 
-    @single_host
-    def build_secondary_index(self, index_nodes, bucket, indexes, fields,
-                              secondarydb, where_map, command_path='/opt/couchbase/bin/'):
-        logger.info('building secondary indexes')
+    def run_cbindex_command(self, command):
+        command_path = '/opt/couchbase/bin/cbindex'
+        command = "{path} {cmd}".format(path=command_path, cmd=command)
+        logger.info('Submitting cbindex command {}'.format(command))
 
+        status = run(command, shell_escape=False, pty=False)
+        if status:
+            logger.info('Command status {}'.format(status))
+
+    def build_index(self, index_node, bucket_indexes):
+        all_indexes = ",".join(bucket_indexes)
+        cmd_str = "-auth=Administrator:password -server {index_node} -type build -indexes {all_indexes}" \
+            .format(index_node=index_node, all_indexes=all_indexes)
+
+        self.run_cbindex_command(cmd_str)
+
+    def create_index(self, index_nodes, bucket, indexes, fields, secondarydb, where_map):
         # Remember what bucket:index was created
         bucket_indexes = []
 
         for index, field in zip(indexes, fields):
-            cmd = command_path + "cbindex"
-            cmd += ' -auth=Administrator:password'
-            cmd += ' -server {}'.format(index_nodes[0])
-            cmd += ' -type create -bucket {}'.format(bucket)
-            cmd += ' -fields={}'.format(field)
+            cmd = "-auth=Administrator:password  -server {index_node}  -type create -bucket {bucket}" \
+                  "  -fields={field}".format(index_node=index_nodes[0], bucket=bucket, field=field)
 
             if secondarydb:
-                cmd += ' -using {}'.format(secondarydb)
+                cmd = '{cmd} -using {db}'.format(cmd=cmd, db=secondarydb)
 
             if index in where_map and field in where_map[index]:
                 # Partition indexes over index nodes by deploying index with
@@ -167,63 +176,51 @@ class RemoteLinuxHelper(object):
                 where_list = where_map[index][field]
                 for i, (index_node, where) in enumerate(
                         zip(index_nodes, where_list)):
-                    # don't taint cmd itself because we need to reuse it.
-                    final_cmd = cmd
                     index_i = index + "_{}".format(i)
-                    final_cmd += ' -index {}'.format(index_i)
-                    final_cmd += " -where='{}'".format(where)
-
                     # Since .format() is sensitive to {}, use % formatting
                     with_str_template = \
                         r'{\\\"defer_build\\\":true, \\\"nodes\\\":[\\\"%s\\\"]}'
                     with_str = with_str_template % index_node
 
-                    final_cmd += ' -with=\\\"{}\\\"'.format(with_str)
+                    final_cmd = "{cmd} -index {index} -where='{where}' -with=\\\"{with_str}\\\""\
+                        .format(cmd=cmd, index=index_i, where=where, with_str=with_str)
+
                     bucket_indexes.append("{}:{}".format(bucket, index_i))
-                    logger.info('submitting cbindex command {}'.format(final_cmd))
-                    status = run(final_cmd, shell_escape=False, pty=False)
-                    if status:
-                        logger.info('cbindex status {}'.format(status))
+                    self.run_cbindex_command(final_cmd)
             else:
                 # no partitions, no where clause
-                final_cmd = cmd
-                final_cmd += ' -index {}'.format(index)
                 with_str = r'{\\\"defer_build\\\":true}'
-                final_cmd += ' -with=\\\"{}\\\"'.format(with_str)
+                final_cmd = "{cmd} -index {index} -with=\\\"{with_str}\\\""\
+                    .format(cmd=cmd, index=index, with_str=with_str)
+
                 bucket_indexes.append("{}:{}".format(bucket, index))
+                self.run_cbindex_command(final_cmd)
+        return bucket_indexes
 
-                logger.info('submitting cbindex command {}'.format(final_cmd))
-                status = run(final_cmd, shell_escape=False, pty=False)
-                if status:
-                    logger.info('cbindex status {}'.format(status))
+    @single_host
+    def build_secondary_index(self, index_nodes, bucket, indexes, fields,
+                              secondarydb, where_map):
+        logger.info('building secondary indexes')
 
+        # Create index but do not build
+        bucket_indexes = self.create_index(index_nodes, bucket, indexes, fields, secondarydb, where_map)
         time.sleep(10)
 
         # build indexes
-        cmdstr = command_path + 'cbindex -auth="Administrator:password"'
-        cmdstr += ' -server {}'.format(index_nodes[0])
-        cmdstr += ' -type build'
-        cmdstr += ' -indexes {}'.format(",".join(bucket_indexes))
-        logger.info('cbindex build command {}'.format(cmdstr))
-        status = run(cmdstr, shell_escape=False, pty=False)
-        if status:
-            logger.info('cbindex status {}'.format(status))
+        self.build_index(index_nodes[0], bucket_indexes)
 
     @all_kv_nodes
-    def run_spring_on_kv(self, load_settings, silent=False):
-        creates = load_settings.creates
-        reads = load_settings.reads
-        updates = load_settings.updates
-        deletes = load_settings.deletes
-        expires = load_settings.expiration
-        operations = load_settings.items
-        throughput = int(load_settings.throughput) if load_settings.throughput != float('inf') \
-            else load_settings.throughput
-        size = load_settings.size
-        existing_items = load_settings.existing_items
-        items_in_working_set = int(load_settings.working_set)
-        operations_to_hit_working_set = load_settings.working_set_access
-        workers = load_settings.spring_workers
+    def run_spring_on_kv(self, ls, silent=False):
+
+        def calculate_existing_items():
+            if ls.creates == 100:
+                return operation * host + ls.existing_items
+            return ls.existing_items
+
+        throughput = int(ls.throughput) if ls.throughput != float('inf') \
+            else ls.throughput
+        items_in_working_set = int(ls.working_set)
+        operations_to_hit_working_set = ls.working_set_access
         logger.info("running spring on kv nodes")
         number_of_kv_nodes = self.kv_hosts.__len__()
         existing_item = operation = 0
@@ -232,27 +229,21 @@ class RemoteLinuxHelper(object):
         host = self.current_host.next_host_index()
         logger.info("current_host_index {}".format(host))
         if host != number_of_kv_nodes - 1:
-            if (creates != 0 or reads != 0 or updates != 0 or deletes != 0) and operations != float('inf'):
-                operation = int(operations / (number_of_kv_nodes * 100)) * 100
-                if creates == 100:
-                    existing_item = operation * host + existing_items
-                else:
-                    existing_item = existing_items
+            if (ls.creates != 0 or ls.reads != 0 or ls.updates != 0 or ls.deletes != 0) \
+                    and ls.items != float('inf'):
+                operation = int(ls.items / (number_of_kv_nodes * 100)) * 100
+                existing_item = calculate_existing_items()
         else:
-            if (creates != 0 or reads != 0 or updates != 0 or deletes != 0) and operations != float('inf'):
-                operation = operations - (int(operations / (number_of_kv_nodes * 100)) * 100 * (number_of_kv_nodes - 1))
-                if creates == 100:
-                    existing_item = operation * host + existing_items
-                else:
-                    existing_item = existing_items
-                f = open("/tmp/current_host.txt", "w")
-                f.write("0")
-                f.close()
+            if (ls.creates != 0 or ls.reads != 0 or ls.updates != 0 or ls.deletes != 0) \
+                    and ls.items != float('inf'):
+                operation = \
+                    ls.items - (int(ls.items / (number_of_kv_nodes * 100)) * 100 * (number_of_kv_nodes - 1))
+                existing_item = calculate_existing_items()
+                self.current_host = CurrentHostMutex()
         time.sleep(number_of_kv_nodes * 2 - sleep_time)
-        cmdstr = "spring -c {} -r {} -u {} -d {} -e {} " \
-                 "-s {} -i {} -w {} -W {} -n {}".format(creates, reads, updates, deletes, expires, size,
-                                                        existing_item, items_in_working_set,
-                                                        operations_to_hit_working_set, workers, self.hosts[0])
+        cmdstr = "spring -c {} -r {} -u {} -d {} -e {} -s {} -i {} -w {} -W {} -n {}"\
+            .format(ls.creates, ls.reads, ls.updates, ls.deletes, ls.expiration, ls.size, existing_item,
+                    items_in_working_set, operations_to_hit_working_set, ls.spring_workers, self.hosts[0])
         if operation != 0:
             cmdstr += " -o {}".format(operation)
         if throughput != float('inf'):
@@ -271,7 +262,7 @@ class RemoteLinuxHelper(object):
             if "python" not in res:
                 raise Exception("Spring not run on KV. {}".format(res))
         else:
-            if "Current progress: 100.00 %" not in result and "Finished: worker-{}".format(workers - 1) not in result:
+            if "Current progress: 100.00 %" not in result and "Finished: worker-{}".format(ls.spring_workers - 1) not in result:
                 raise Exception("Spring not run on KV")
 
     @all_kv_nodes

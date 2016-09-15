@@ -157,14 +157,14 @@ class SecondaryIndexTest(PerfTest):
     def run_load_for_2i(self):
         if self.secondaryDB == 'memdb':
             load_settings = self.test_config.load_settings
-            self.remote.run_spring_on_kv(load_settings=load_settings)
+            self.remote.run_spring_on_kv(ls=load_settings)
         else:
             self.load()
 
     def run_access_for_2i(self, run_in_background=False):
         if self.secondaryDB == 'memdb':
             access_settings = self.test_config.access_settings
-            self.remote.run_spring_on_kv(load_settings=access_settings, silent=run_in_background)
+            self.remote.run_spring_on_kv(ls=access_settings, silent=run_in_background)
         else:
             if run_in_background:
                 self.access_bg()
@@ -213,7 +213,7 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
         access_settings = self.test_config.access_settings
         load_settings = self.test_config.load_settings
         if self.secondaryDB == 'memdb':
-            self.remote.run_spring_on_kv(load_settings=access_settings)
+            self.remote.run_spring_on_kv(ls=access_settings)
         else:
             self.worker_manager.run_workload(access_settings, self.target_iterator)
             self.worker_manager.wait_for_workers()

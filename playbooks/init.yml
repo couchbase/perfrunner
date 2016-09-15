@@ -9,6 +9,7 @@
       - atop
       - fio
       - gdb
+      - hdparm
       - htop
       - iotop
       - iperf

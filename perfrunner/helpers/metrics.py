@@ -38,12 +38,10 @@ class MetricHelper(object):
             params.update({'from': from_ts, 'to': to_ts})
         return params
 
-    def _get_metric_info(self, title, larger_is_better=False, level='Basic',
-                         orderbymetric=None):
+    def _get_metric_info(self, title, larger_is_better=False, orderbymetric=None):
         return {'title': title,
                 'cluster': self.cluster_spec.name,
                 'larger_is_better': str(larger_is_better).lower(),
-                'level': level,
                 'orderby': orderbymetric}
 
     def calc_ycsb_queries(self, value, name, title, larger_is_better=True):

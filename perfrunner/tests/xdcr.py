@@ -17,7 +17,7 @@ class XdcrTest(PerfTest):
     "run" workflow is common for both uni-directional and bi-directional cases.
     """
 
-    COLLECTORS = {'latency': True, 'xdcr_lag': True}
+    COLLECTORS = {'latency': True, 'xdcr_lag': True, 'xdcr_stats': True}
 
     ALL_BUCKETS = True
 
@@ -164,7 +164,7 @@ class XdcrInitTest(UniDirXdcrTest):
     There is no ongoing workload and compaction is usually disabled.
     """
 
-    COLLECTORS = {}
+    COLLECTORS = {'xdcr_stats': True}
 
     def load(self):
         load_settings = self.test_config.load_settings

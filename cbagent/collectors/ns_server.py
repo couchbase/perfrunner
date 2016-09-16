@@ -46,3 +46,38 @@ class NSServer(Collector):
 
         for node in self.get_nodes():
             self.mc.add_server(node)
+
+
+class XdcrStats(Collector):
+
+    COLLECTOR = "xdcr_stats"
+
+    def _get_stats_uri(self):
+        for bucket in self.get_buckets():
+            uri = '/_uistats?bucket={}&zoom=minute'.format(bucket)
+            yield bucket, uri
+
+    def _get_stats(self, bucket, uri):
+        samples = self.get_http(path=uri)
+
+        stats = dict()
+        for metric, values in samples['stats']['@xdcr-{}'.format(bucket)].items():
+            if 'replications' in metric:
+                metric = metric.split('/')[-1]
+                stats[metric] = values[-1]
+        return stats
+
+    def sample(self):
+        for bucket, uri in self._get_stats_uri():
+            stats = self._get_stats(bucket, uri)
+            if not stats:
+                continue
+            self.update_metric_metadata(stats.keys(), bucket)
+            self.store.append(stats, cluster=self.cluster, bucket=bucket,
+                              collector=self.COLLECTOR)
+
+    def update_metadata(self):
+        self.mc.add_cluster()
+
+        for bucket in self.get_buckets():
+            self.mc.add_bucket(bucket)

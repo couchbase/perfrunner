@@ -14,7 +14,7 @@ from latency import Latency
 from observe import ObserveLatency
 from n1ql_stats import N1QLStats
 from net import Net
-from ns_server import NSServer
+from ns_server import NSServer, XdcrStats
 from ps import PS
 from secondary_debugstats import SecondaryDebugStats
 from secondary_debugstats import SecondaryDebugStatsBucket

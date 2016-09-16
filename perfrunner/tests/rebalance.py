@@ -242,7 +242,7 @@ class RebalanceWithXDCRTest(XdcrTest, RebalanceTest):
     Workflow definition for KV + bidir XDCR rebalance tests.
     """
 
-    COLLECTORS = {'latency': True, 'xdcr_lag': True}
+    COLLECTORS = {'latency': True, 'xdcr_lag': True, 'xdcr_stats': True}
 
     def run(self):
         self.load()
@@ -267,7 +267,7 @@ class RebalanceWithUniDirXdcrTest(UniDirXdcrTest, RebalanceTest):
     Workflow definition for KV + unidir XDCR rebalance tests.
     """
 
-    COLLECTORS = {'latency': True, 'xdcr_lag': True}
+    COLLECTORS = {'latency': True, 'xdcr_lag': True, 'xdcr_stats': True}
 
     def run(self):
         if self.test_config.restore_settings.snapshot and self.build > '4':

@@ -31,6 +31,7 @@ from cbagent.collectors import (
     SpringSubdocLatency,
     TypePerf,
     XdcrLag,
+    XdcrStats,
 )
 
 from cbagent.collectors.secondary_debugstats import SecondaryDebugStatsIndex
@@ -147,7 +148,8 @@ class CbAgent(object):
                            elastic_stats=False,
                            fts_stats=False,
                            fts_query_stats=False,
-                           durability=False):
+                           durability=False,
+                           xdcr_stats=False):
         clusters = self.clusters.keys()
         self.bandwidth = bandwidth
         self.prepare_ns_server(clusters)
@@ -196,6 +198,8 @@ class CbAgent(object):
             self.prepare_fts_query_stats(clusters, test.test_config)
         if elastic_stats:
             self.prepare_elastic_stats(clusters, test.test_config)
+        if xdcr_stats:
+            self.prepare_xdcr_stats(clusters)
 
     def prepare_ns_server(self, clusters):
         for cluster in clusters:
@@ -203,11 +207,15 @@ class CbAgent(object):
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
             collector = NSServer(settings)
-            try:
-                sum(1 for _ in collector.get_buckets())
-                self.collectors.append(collector)
-            except RuntimeError:
-                pass
+            self.collectors.append(collector)
+
+    def prepare_xdcr_stats(self, clusters):
+        for cluster in clusters:
+            settings = copy(self.settings)
+            settings.cluster = cluster
+            settings.master_node = self.clusters[cluster]
+            collector = XdcrStats(settings)
+            self.collectors.append(collector)
 
     def prepare_secondary_stats(self, clusters):
         for cluster in clusters:
@@ -449,11 +457,7 @@ class CbAgent(object):
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
             collector = ActiveTasks(settings)
-            try:
-                sum(1 for _ in collector.get_buckets())
-                self.collectors.append(collector)
-            except RuntimeError:
-                pass
+            self.collectors.append(collector)
 
     def update_metadata(self):
         for collector in self.collectors:

@@ -564,3 +564,27 @@ class PillowfightTest(KVTest):
         self.reporter.finish('Pillowfight', time_elapsed)
 
         self.report_kpi()
+
+
+class CompactionTest(KVTest):
+
+    @with_stats
+    def compact(self):
+        self.compact_bucket()
+
+    def _report_kpi(self, time_elapsed):
+        self.reporter.post_to_sf(time_elapsed)
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.hot_load()
+
+        self.access_bg()
+
+        from_ts, to_ts = self.compact()
+        time_elapsed = (to_ts - from_ts) / 1000.0
+        time_elapsed = self.reporter.finish('Full compaction', time_elapsed)
+
+        self.report_kpi(time_elapsed)

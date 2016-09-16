@@ -45,8 +45,8 @@ class CouchbaseInstaller(object):
         if self.build.pkg == 'rpm':
             os_release = self.remote.detect_os_release()
             patterns = (
-                'couchbase-server-{edition}_{arch}_{version}-rel.{pkg}',
                 'couchbase-server-{{edition}}-{{version}}-centos{}.{{arch}}.{{pkg}}'.format(os_release),
+                'couchbase-server-{edition}_centos6_{arch}_{version}-rel.{pkg}',
             )
         elif self.build.pkg == 'deb':
             patterns = (

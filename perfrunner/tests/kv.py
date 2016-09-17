@@ -569,6 +569,10 @@ class PillowfightTest(KVTest):
 class CompactionTest(KVTest):
 
     @with_stats
+    def load(self, *args, **kwargs):
+        super(CompactionTest, self).load(*args, **kwargs)
+
+    @with_stats
     def compact(self):
         self.compact_bucket()
 

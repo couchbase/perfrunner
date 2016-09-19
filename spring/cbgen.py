@@ -11,9 +11,15 @@ import requests
 import urllib3
 from couchbase import experimental
 from couchbase.bucket import Bucket
-from couchbase.exceptions import (ConnectError, CouchbaseError, HTTPError,
-                                  KeyExistsError, NotFoundError,
-                                  TemporaryFailError, TimeoutError)
+from couchbase.exceptions import (
+    ConnectError,
+    CouchbaseError,
+    HTTPError,
+    KeyExistsError,
+    NotFoundError,
+    TemporaryFailError,
+    TimeoutError,
+)
 from decorator import decorator
 from logger import logger
 from requests.auth import HTTPBasicAuth

@@ -4,7 +4,7 @@ from cbagent.collectors.libstats.typeperfstats import TPStats
 
 class TypePerf(Collector):
 
-    COLLECTOR = "atop"  # Legacy
+    COLLECTOR = "atop"  # Legacy / compatibility
 
     KNOWN_PROCESSES = ("beam.smp", "memcached")
 

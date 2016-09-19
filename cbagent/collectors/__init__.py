@@ -1,7 +1,6 @@
 from collector import Collector
 
 from active_tasks import ActiveTasks
-from atop import Atop
 from fts_stats import (
     FtsCollector,
     FtsLatency,

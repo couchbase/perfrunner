@@ -4,7 +4,7 @@ from cbagent.collectors.libstats.psstats import PSStats
 
 class PS(Collector):
 
-    COLLECTOR = "atop"  # Legacy
+    COLLECTOR = "atop"  # Legacy / compatibility
 
     KNOWN_PROCESSES = ("beam.smp", "memcached", "indexer", "projector",
                        "cbq-engine", "goxdcr")

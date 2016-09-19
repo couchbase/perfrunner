@@ -277,26 +277,18 @@ class CbAgent(object):
             self.collectors.append(net_collector)
 
     def prepare_iostat(self, clusters, test):
-        # If tests are run locally, no paths are defined, hence
-        # use the paths that are set by the server itself. Get
-        # those paths via ther REST API
-        rest = None
-
-        if test.cluster_spec.paths:
-            data_path, index_path = test.cluster_spec.paths
-        else:
-            rest = RestHelper(test.cluster_spec)
+        rest = RestHelper(test.cluster_spec)
 
         for cluster in clusters:
             settings = copy(self.settings)
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
 
-            if rest is not None:
-                data_path, index_path = rest.get_data_path(settings.master_node)
-                partitions = {'data': data_path}
-                if hasattr(test, 'ddocs'):  # all instances of IndexTest have it
-                    partitions['index'] = index_path
+            data_path, index_path = rest.get_data_path(settings.master_node)
+
+            partitions = {'data': data_path}
+            if hasattr(test, 'ddocs'):  # all instances of IndexTest have it
+                partitions['index'] = index_path
 
             settings.partitions = partitions
             io_collector = IO(settings)

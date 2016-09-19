@@ -38,7 +38,6 @@ from cbagent.collectors.secondary_debugstats import SecondaryDebugStatsIndex
 from cbagent.metadata_client import MetadataClient
 from perfrunner.helpers.misc import target_hash, uhex
 from perfrunner.helpers.remote import RemoteHelper
-from perfrunner.helpers.rest import RestHelper
 
 
 @decorator
@@ -277,19 +276,15 @@ class CbAgent(object):
             self.collectors.append(net_collector)
 
     def prepare_iostat(self, clusters, test):
-        rest = RestHelper(test.cluster_spec)
+        data_path, index_path = test.cluster_spec.paths
+        partitions = {'data': data_path}
+        if hasattr(test, 'ddocs'):  # all instances of IndexTest have it
+            partitions['index'] = index_path
 
         for cluster in clusters:
             settings = copy(self.settings)
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
-
-            data_path, index_path = rest.get_data_path(settings.master_node)
-
-            partitions = {'data': data_path}
-            if hasattr(test, 'ddocs'):  # all instances of IndexTest have it
-                partitions['index'] = index_path
-
             settings.partitions = partitions
             io_collector = IO(settings)
             self.collectors.append(io_collector)

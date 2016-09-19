@@ -63,13 +63,6 @@ class RestHelper(object):
         }
         self.post(url=api, data=data)
 
-    def get_data_path(self, host_port):
-        logger.info('Getting data paths: {}'.format(host_port))
-
-        api = 'http://{}/nodes/self'.format(host_port)
-        hdd = self.get(url=api).json()['storage']['hdd'][0]
-        return hdd['path'], hdd['index_path']
-
     def set_auth(self, host_port):
         logger.info('Configuring cluster authentication: {}'.format(host_port))
 

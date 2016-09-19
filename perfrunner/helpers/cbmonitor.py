@@ -181,7 +181,7 @@ class CbAgent(object):
         if replicate_latency:
             self.prepare_replicate_latency(clusters)
         if xdcr_lag:
-            self.prepare_xdcr_lag(clusters)
+            self.prepare_xdcr_lag(clusters, test)
         if fts_latency:
             self.prepare_fts_latency(clusters, test.test_config)
         if fts_stats:
@@ -313,7 +313,7 @@ class CbAgent(object):
             settings.observe = 'index'
             self.collectors.append(ObserveLatency(settings))
 
-    def prepare_xdcr_lag(self, clusters):
+    def prepare_xdcr_lag(self, clusters, test):
         reversed_clusters = list(reversed(self.clusters.keys()))
         for i, cluster in enumerate(clusters):
             settings = copy(self.settings)
@@ -322,6 +322,9 @@ class CbAgent(object):
             dest_cluster = reversed_clusters[i]
             settings.dest_master_node = self.clusters[dest_cluster]
             self.collectors.append(XdcrLag(settings))
+
+            if test.settings.replication_type == 'unidir':
+                break
 
     def prepare_latency(self, clusters, test):
         for cluster in clusters:

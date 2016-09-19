@@ -18,7 +18,7 @@ class PS(Collector):
             self.nodes = settings.monitor_clients
             self.KNOWN_PROCESSES = ("backup", "cbbackupwrapper", )
 
-        if hasattr(settings, "fts_server"):
+        if hasattr(settings, "fts_server") and settings.fts_server:
             self.KNOWN_PROCESSES = ("beam.smp", "memcached", "cbft",)
 
         self.ps = PSStats(hosts=self.nodes,

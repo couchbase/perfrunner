@@ -7,7 +7,7 @@ class PS(Collector):
     COLLECTOR = "atop"  # Legacy
 
     KNOWN_PROCESSES = ("beam.smp", "memcached", "indexer", "projector",
-                       "cbq-engine")
+                       "cbq-engine", "goxdcr")
 
     def __init__(self, settings):
         super(PS, self).__init__(settings)

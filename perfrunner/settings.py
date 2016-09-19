@@ -287,7 +287,6 @@ class TestCaseSettings(object):
         self.test_summary = options.get('summary')
         self.metric_title = options.get('title')
         self.larger_is_better = options.get('larger_is_better')
-        self.monitor_clients = options.get('monitor_clients', False)
         self.fts_server = options.get('fts', False)
         self.use_workers = int(options.get('use_workers', self.USE_WORKERS))
 

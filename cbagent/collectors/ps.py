@@ -13,11 +13,6 @@ class PS(Collector):
         super(PS, self).__init__(settings)
         self.nodes = settings.hostnames or list(self.get_nodes())
 
-        if hasattr(settings, "monitor_clients") and settings.monitor_clients\
-                and settings.master_node in settings.monitor_clients:
-            self.nodes = settings.monitor_clients
-            self.KNOWN_PROCESSES = ("backup", "cbbackupwrapper", )
-
         if hasattr(settings, "fts_server") and settings.fts_server:
             self.KNOWN_PROCESSES = ("beam.smp", "memcached", "cbft",)
 

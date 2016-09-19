@@ -81,11 +81,6 @@ class CbAgent(object):
                                         uhex()[:3])
             master = servers[0].split(':')[0]
             self.clusters[cluster] = master
-        if test.test_config.test_case.monitor_clients:
-            for node in test.cluster_spec.workers:
-                cluster = '{}{}'.format(self.clusters.items()[0][0][:-3], uhex()[:3])
-                master = node.split(':')[0]
-                self.clusters[cluster] = master
 
         self.index_node = ''
         for _, servers in test.cluster_spec.yield_servers_by_role('index'):
@@ -109,8 +104,6 @@ class CbAgent(object):
             'buckets': buckets,
             'indexes': test.test_config.secondaryindex_settings.indexes,
             'hostnames': hostnames,
-            'monitor_clients':
-                test.cluster_spec.workers if test.test_config.test_case.monitor_clients else None,
             'fts_server': test.test_config.test_case.fts_server
         })()
         self.lat_interval = test.test_config.stats_settings.lat_interval
@@ -300,12 +293,7 @@ class CbAgent(object):
             settings.master_node = self.clusters[cluster]
 
             if rest is not None:
-                data_path, index_path = rest.get_data_path(
-                    settings.master_node)
-            if hasattr(settings, "monitor_clients") and settings.monitor_clients\
-                    and settings.master_node in settings.monitor_clients:
-                partitions = {'backup': test.remote.cluster_spec.config.get('storage', 'backup')}
-            else:
+                data_path, index_path = rest.get_data_path(settings.master_node)
                 partitions = {'data': data_path}
                 if hasattr(test, 'ddocs'):  # all instances of IndexTest have it
                     partitions['index'] = index_path

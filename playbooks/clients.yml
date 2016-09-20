@@ -27,3 +27,5 @@
     - build-essential
     - libcouchbase-dev
     - libcouchbase2-bin
+  - name: disabling scheduled fstrim jobs
+    file: path=/etc/cron.weekly/fstrim state=absent

@@ -25,7 +25,7 @@ def cleanup(backup_dir):
     # Discard unused blocks
     if not os.path.exists(backup_dir):
         os.makedirs(backup_dir)
-    local('fstrip -v {}'.format(backup_dir))
+    local('fstrim -v {}'.format(backup_dir))
 
 
 def backup(master_node, cluster_spec, wrapper=False, mode=None, compression=False):

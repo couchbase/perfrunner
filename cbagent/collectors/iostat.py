@@ -6,13 +6,18 @@ class IO(Collector):
 
     COLLECTOR = "iostat"
 
+    def get_nodes(self):
+        return self.settings.hostnames or super(IO, self).get_nodes()
+
     def __init__(self, settings):
+        self.settings = settings
+        self.partitions = settings.partitions
+
         super(IO, self).__init__(settings)
-        self.nodes = settings.hostnames or list(self.get_nodes())
+
         self.io = IOstat(hosts=self.nodes,
                          user=self.ssh_username,
                          password=self.ssh_password)
-        self.partitions = settings.partitions
 
     def update_metadata(self):
         self.mc.add_cluster()

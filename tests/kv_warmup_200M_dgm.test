@@ -1,0 +1,26 @@
+[test_case]
+test = perfrunner.tests.kv.WarmupTest
+title = Warmup time (min), 1 bucket x 200M x 1KB
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+
+[stats]
+interval = 1
+
+[load]
+items = 200000000
+size = 1024
+workers = 40
+
+[access]
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+throughput = 20000
+items = 200000000
+workers = 20
+time = 3600

@@ -6,9 +6,14 @@ class Net(Collector):
 
     COLLECTOR = "net"
 
+    def get_nodes(self):
+        return self.settings.hostnames or super(Net, self).get_nodes()
+
     def __init__(self, settings):
+        self.settings = settings
+
         super(Net, self).__init__(settings)
-        self.nodes = settings.hostnames or list(self.get_nodes())
+
         self.net = NetStat(hosts=self.nodes,
                            user=self.ssh_username,
                            password=self.ssh_password)

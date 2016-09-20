@@ -237,43 +237,45 @@ class BeamRssTest(KVTest):
 class WarmupTest(PerfTest):
 
     """
-    After typical workload we restart all nodes and measure time it takes
+    After typical workload we restart all nodes and measure the time it takes
     to perform cluster warm up (internal technology, not to be confused with
     "hot" load phase).
     """
 
-    def access(self):
+    ALL_HOSTNAMES = True
+
+    def access(self, *args, **kwargs):
         super(WarmupTest, self).timer()
 
+    @with_stats
     def warmup(self):
         self.remote.stop_server()
         self.remote.drop_caches()
+
+        self.reporter.start()
+        self._warmup()
+        self.time_elapsed = self.reporter.finish('Warmup')
+
+    def _warmup(self):
         self.remote.start_server()
-        warmup_time = 0
         for master in self.cluster_spec.yield_masters():
             for bucket in self.test_config.buckets:
-                warmup_time += self.monitor.monitor_warmup(self.memcached,
-                                                           master, bucket)
-        return round(warmup_time / 10 ** 6 / 60, 2)  # min
+                self.monitor.monitor_warmup(self.memcached, master, bucket)
 
-    def _report_kpi(self, warmup_time):
-        self.reporter.post_to_sf(warmup_time)
+    def _report_kpi(self):
+        self.reporter.post_to_sf(self.time_elapsed)
 
     def run(self):
         self.load()
         self.wait_for_persistence()
 
-        self.hot_load()
-
-        self.workload = self.test_config.access_settings
         self.access_bg()
         self.access()
-
         self.wait_for_persistence()
 
-        warmup_time = self.warmup()
+        self.warmup()
 
-        self.report_kpi(warmup_time)
+        self.report_kpi()
 
 
 class FragmentationTest(PerfTest):

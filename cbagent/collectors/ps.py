@@ -9,15 +9,19 @@ class PS(Collector):
     KNOWN_PROCESSES = ("beam.smp", "memcached", "indexer", "projector",
                        "cbq-engine", "goxdcr")
 
-    def __init__(self, settings):
-        super(PS, self).__init__(settings)
-        self.nodes = settings.hostnames or list(self.get_nodes())
+    def get_nodes(self):
+        return self.settings.hostnames or super(PS, self).get_nodes()
 
-        if hasattr(settings, "fts_server") and settings.fts_server:
-            self.KNOWN_PROCESSES = ("beam.smp", "memcached", "cbft",)
+    def __init__(self, settings):
+        self.settings = settings
+
+        super(PS, self).__init__(settings)
 
         self.ps = PSStats(hosts=self.nodes,
                           user=self.ssh_username, password=self.ssh_password)
+
+        if hasattr(settings, "fts_server") and settings.fts_server:
+            self.KNOWN_PROCESSES = ("beam.smp", "memcached", "cbft")
 
     def update_metadata(self):
         self.mc.add_cluster()

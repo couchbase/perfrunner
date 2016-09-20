@@ -15,6 +15,7 @@ def cleanup(backup_dir):
         local('umount {}'.format(disk))
         local('mkfs.ext4 -F {}'.format(disk))
         local('mount -a'.format(disk))
+        local('fstrim {}'.format(backup_dir))
 
 
 def backup(master_node, cluster_spec, wrapper=False, mode=None, compression=False):

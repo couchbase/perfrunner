@@ -1,3 +1,5 @@
+import os.path
+
 from fabric.api import lcd, local, quiet
 from logger import logger
 
@@ -9,13 +11,15 @@ def extract_cb(filename):
 
 
 def cleanup(backup_dir):
-    with quiet():
-        disk = local('df --output=source {} | tail -n1'.format(backup_dir),
-                     capture=True)
-        local('umount {}'.format(disk))
-        local('mkfs.ext4 -F {}'.format(disk))
-        local('mount -a'.format(disk))
-        local('fstrim {}'.format(backup_dir))
+    if not os.path.exists(backup_dir):
+        os.makedirs(backup_dir)
+
+    dev = local('df --output=source {} | tail -n1'.format(backup_dir), capture=True)
+    for cmd in ('umount {}',
+                'mkfs.ext4 -F {}',
+                'mount -a',
+                'blkdiscard -v {}'):
+        local(cmd.format(dev))
 
 
 def backup(master_node, cluster_spec, wrapper=False, mode=None, compression=False):

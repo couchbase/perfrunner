@@ -263,8 +263,6 @@ class WarmupTest(PerfTest):
         self.load()
         self.wait_for_persistence()
 
-        self.compact_bucket()
-
         self.hot_load()
 
         self.workload = self.test_config.access_settings
@@ -272,7 +270,6 @@ class WarmupTest(PerfTest):
         self.access()
 
         self.wait_for_persistence()
-        self.compact_bucket()
 
         warmup_time = self.warmup()
 

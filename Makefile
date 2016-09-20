@@ -3,7 +3,7 @@
 build:
 	virtualenv -p python2.7 env
 	env/bin/pip install --upgrade --quiet pip wheel
-	env/bin/pip install --quiet --find-links wheels -r requirements.txt
+	env/bin/pip install --quiet -r requirements.txt
 	env/bin/python setup.py install
 	pwd > env/lib/python2.7/site-packages/perfrunner.pth
 

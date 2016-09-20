@@ -391,6 +391,7 @@ class CbAgent(object):
     def prepare_fts_latency(self, clusters, test):
         for cluster in clusters:
             settings = copy(self.settings)
+            settings.interval = self.lat_interval
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
             self.collectors.append(

@@ -7,12 +7,12 @@ setup(
     entry_points={
         'console_scripts': [
             'cbagent = cbagent.__main__:main',
-            'spring = spring.__main__:main',
-            'perfrunner = perfrunner.__main__:main',
-            'install = perfrunner.utils.install:main',
             'cluster = perfrunner.utils.cluster:main',
-            'query_benchmark = perfSanity.scripts.query_benchmark:main',
-        ]
+            'debug = perfrunner.utils.debug:main',
+            'install = perfrunner.utils.install:main',
+            'perfrunner = perfrunner.__main__:main',
+            'spring = spring.__main__:main',
+        ],
     },
     ext_modules=[
         fastdocgen

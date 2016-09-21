@@ -18,8 +18,6 @@ def get_options():
                       help='enable verbose logging')
     parser.add_option('--remote', dest='remote', action='store_true',
                       help='use remote workers as workload generators')
-    parser.add_option('--debug', dest='debug', action='store_true',
-                      help='enable debug phase')
 
     options, args = parser.parse_args()
     if not options.cluster_spec_fname or not options.test_config_fname:

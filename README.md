@@ -53,8 +53,6 @@ Overriding test config options (comma-separated section.option.value trios):
 
 `--verbose` flag enables Fabric logging.
 
-`--debug` flag enables debug phase (e.g., execution of cbcollect_info).
-
 With `--remote` flag remote workers will be used as workload generators.
 
 Running unit tests

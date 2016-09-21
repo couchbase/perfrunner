@@ -253,13 +253,6 @@ class LogReporter(object):
     def __init__(self, test):
         self.test = test
 
-    def save_web_logs(self):
-        for master in self.test.cluster_spec.yield_masters():
-            logs = self.test.rest.get_logs(master)
-            fname = 'web_log_{}.json'.format(master.split(':')[0])
-            with open(fname, 'w') as fh:
-                fh.write(pretty_dict(logs))
-
     def save_master_events(self):
         with ZipFile('master_events.zip', 'w', ZIP_DEFLATED) as zh:
             for master in self.test.cluster_spec.yield_masters():

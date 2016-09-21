@@ -174,5 +174,3 @@ class PerfTest(object):
         for hostname in self.cluster_spec.yield_hostnames():
             for fname in glob.glob('{}/*.zip'.format(hostname)):
                 shutil.move(fname, '{}.zip'.format(hostname))
-
-        self.reporter.save_web_logs()

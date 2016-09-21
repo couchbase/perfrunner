@@ -132,7 +132,7 @@ class FTStest(PerfTest):
         while rec_memory != 0:
             logger.info("Record persists to be expected: %s" % rec_memory)
             r = self.requests.get(url=self.fts_url, auth=self.auth)
-            time.sleep(4 * self.wait_time)
+            time.sleep(self.wait_time)
             rec_memory = r.json()[key]
 
     def create_index(self):
@@ -218,6 +218,12 @@ class FTSLatencyTest(FTStest):
             if self.test_config.stats_settings.enabled:
                 self.reporter.post_to_sf(
                     *self.metric_helper.calc_latency_ftses_queries(percentile=80,
+                                                                   dbname='fts_latency',
+                                                                   metrics='cbft_latency_get',
+                                                                   orderbymetric=self.orderbymetric)
+                )
+                self.reporter.post_to_sf(
+                    *self.metric_helper.calc_latency_ftses_queries(percentile=0,
                                                                    dbname='fts_latency',
                                                                    metrics='cbft_latency_get',
                                                                    orderbymetric=self.orderbymetric)

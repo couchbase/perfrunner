@@ -106,17 +106,26 @@ class MetricHelper(object):
 
     def calc_latency_ftses_queries(self, percentile, dbname,
                                    metrics, orderbymetric, name='FTS'):
-        metric = '{}_{}'.format(self.test_config.name, self.cluster_spec.name)
         hosts = [x for x in self.cluster_spec.yield_servers()]
-        title = '{}th percentile query latency (ms), {}, {} node, {}'.\
-            format(percentile, self.metric_title, len(hosts), name)
+        if percentile == 0:
+            metric = '{}_average_{}'.format(self.test_config.name, self.cluster_spec.name)
+            title = 'Average query latency (ms), {}, {} node, {}'.\
+                    format(self.metric_title, len(hosts), name)
+        else:
+            metric = '{}_{}'.format(self.test_config.name, self.cluster_spec.name)
+            title = '{}th percentile query latency (ms), {}, {} node, {}'. \
+                    format(percentile, self.metric_title, len(hosts), name)
+
         metric_info = self._get_metric_info(title, larger_is_better=False,
                                             orderbymetric=orderbymetric)
         timings = []
         db = '{}{}'.format(dbname, self.cluster_names[0])
         data = self.seriesly[db].get_all()
         timings += [v[metrics] for v in data.values()]
-        fts_latency = round(np.percentile(timings, percentile), 2)
+        if percentile == 0:
+            fts_latency = np.average(timings)
+        else:
+            fts_latency = np.percentile(timings, percentile)
         return round(fts_latency), metric, metric_info
 
     def calc_ftses_index(self, elapsedtime, orderbymetric, name='FTS'):

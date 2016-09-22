@@ -13,19 +13,13 @@ def extract_cb(filename):
 def cleanup(backup_dir):
     logger.info("Cleaning the disk before backup")
 
-    # Find the target block device
-    if not os.path.exists(backup_dir):
-        os.makedirs(backup_dir)  # Otherwise df won't find the device
-    dev = local('df --output=source {} | tail -n1'.format(backup_dir), capture=True)
+    # Remove files from the directory, if any.
+    local('rm -fr {}/*'.format(backup_dir))
 
-    # Create a new filesystem
-    for cmd in ('umount {}', 'mkfs.ext4 -F {}', 'mount -a'):
-        local(cmd.format(dev))
-
-    # Discard unused blocks
+    # Discard unused blocks. Twice.
     if not os.path.exists(backup_dir):
-        os.makedirs(backup_dir)
-    local('fstrim -v {}'.format(backup_dir))
+        os.makedirs(backup_dir)  # Otherwise fstrim won't find the device
+    local('fstrim -v {0} && fstrim -v {0}'.format(backup_dir))
 
 
 def backup(master_node, cluster_spec, wrapper=False, mode=None, compression=False):

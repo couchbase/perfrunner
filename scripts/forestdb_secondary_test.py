@@ -1,35 +1,28 @@
 import argparse
-import fabric
 import json
-import requests
+import os
 import re
 import urllib2
 import urlparse
-import xmltodict
-import os
+from uuid import uuid4
 
-from fabric.api import run, hosts, env, execute, shell_env
+import requests
+import xmltodict
+from couchbase import Couchbase
+from fabric.api import env, execute, run, shell_env
 from fabric.context_managers import cd
 from logger import logger
-from uuid import uuid4
-from couchbase import Couchbase
-
 
 args = None
 prog_name = "forestdb_standalone_test"
 
 
 def iter_urls():
-    SHERLOCK_BUILDS = (
-        'http://latestbuilds.hq.couchbase.com/couchbase-server/sherlock/{edition}/')
-
-    WATSON_BUILDS = (
-        'http://172.23.120.24/builds/latestbuilds/couchbase-server/watson/{edition}/')
-
-    SPOCK_BUILDS = (
-        'http://172.23.120.24/builds/latestbuilds/couchbase-server/spock/{edition}/')
-
-    search_bases = [SHERLOCK_BUILDS, WATSON_BUILDS, SPOCK_BUILDS]
+    search_bases = [
+        'http://latestbuilds.hq.couchbase.com/couchbase-server/sherlock/{edition}/',
+        'http://172.23.120.24/builds/latestbuilds/couchbase-server/watson/{edition}/',
+        'http://172.23.120.24/builds/latestbuilds/couchbase-server/spock/{edition}/',
+    ]
 
     patterns = [
         'couchbase-server-{release}-{edition}-manifest.xml'
@@ -47,7 +40,7 @@ def find_manifest():
         try:
             logger.debug("Trying {}".format(url))
             status_code = requests.head(url).status_code
-        except ConnectionError:
+        except requests.ConnectionError:
             continue
         else:
             if status_code == 200:
@@ -76,15 +69,9 @@ def hash_from_xml(xml_data):
 
 
 def clone_repo(repo):
-    CLONE_TIMEOUT = 60
     cmd = "git clone {}".format(repo)
     logger.info("Running {}".format(cmd))
-    try:
-        run(cmd, pty=False, timeout=CLONE_TIMEOUT)
-    except fabric.exceptions.CommandTimeout:
-        logger.interrupt(
-            "Failed to clone forestdb under {} seconds".format(
-                CLONE_TIMEOUT))
+    run(cmd, pty=False)
 
 
 def compile_forestdb(branch, fdb_hash):

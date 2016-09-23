@@ -12,8 +12,8 @@ clean:
 	find . -name '*.pyc' -o -name '*.pyo' | xargs rm -f
 
 pep8:
-	env/bin/flake8 --statistics cbagent perfdaily perfrunner spring
-	env/bin/isort --quiet --check-only --recursive cbagent perfdaily perfrunner spring
+	env/bin/flake8 --statistics cbagent perfdaily perfrunner scripts spring
+	env/bin/isort --quiet --check-only --recursive cbagent perfdaily perfrunner scripts spring
 
 nose:
 	env/bin/nosetests -v unittests.py

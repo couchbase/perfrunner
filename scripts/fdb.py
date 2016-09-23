@@ -1,9 +1,8 @@
-import json
 import fileinput
+import json
 import os
 
 import requests
-
 
 benchmark = {
     'group': 'ForestDB',

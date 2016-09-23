@@ -24,6 +24,9 @@ name = myindex1,myindex2,myindex3,myindex4,myindex5
 field = alt_email,city,name,coins,achievements
 stale = false
 cbindexperf_configfile = tests/gsi/fdb/config/config_scanlatency_sessionconsistent_multiple_fdb.json
+indexer.settings.storage_mode = forestdb
+indexer.settings.gc_percent = 200
+indexer.settings.max_cpu_percent = 4800
 
 [access]
 creates = 1

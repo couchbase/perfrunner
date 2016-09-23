@@ -31,6 +31,9 @@ name = myindex
 field = email
 db = moi
 cbindexperf_configfile = tests/gsi/moi/config/config_scanthr_moi.json
+indexer.settings.storage_mode = memory_optimized
+indexer.settings.gc_percent = 200
+indexer.settings.max_cpu_percent = 4800
 
 [access]
 creates = 10

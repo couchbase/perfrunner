@@ -24,6 +24,9 @@ name = myindex
 field = alt_email
 stale = false
 cbindexperf_configfile = tests/gsi/fdb/config/config_scanthr_sessionconsistent_fdb.json
+indexer.settings.storage_mode = forestdb
+indexer.settings.gc_percent = 200
+indexer.settings.max_cpu_percent = 4800
 
 [access]
 creates = 1

@@ -30,7 +30,9 @@ spring_workers = 100
 name = myindex
 field = email
 db = moi
-
+indexer.settings.storage_mode = memory_optimized
+indexer.settings.gc_percent = 200
+indexer.settings.max_cpu_percent = 4800
 
 [access]
 updates = 100

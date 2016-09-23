@@ -1,13 +1,12 @@
 import argparse
 import fabric
 import json
-import logging
-import pprint
 import requests
 import re
 import urllib2
 import urlparse
 import xmltodict
+import os
 
 from fabric.api import run, hosts, env, execute, shell_env
 from fabric.context_managers import cd
@@ -160,7 +159,7 @@ def post_incremental(incremental_time):
     data = {}
     data["metric"] = "secondary_fdb_inc_secondary"
     data["snapshots"] = []
-    data["build_url"] = None
+    data["build_url"] = os.environ.get('BUILD_URL')
     data["build"] = args.version
     data["value"] = incremental_time
     post_benchmark(data)
@@ -170,7 +169,7 @@ def post_initial(initial_time):
     data = {}
     data["metric"] = "secondary_fdb_ini_secondary"
     data["snapshots"] = []
-    data["build_url"] = None
+    data["build_url"] = os.environ.get('BUILD_URL')
     data["build"] = args.version
     data["value"] = initial_time
     post_benchmark(data)

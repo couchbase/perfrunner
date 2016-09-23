@@ -21,5 +21,6 @@ seriesly
 sqlalchemy==0.9.4
 twisted==16.2.0
 urllib3==1.10.4
+xmltodict
 
 git+https://github.com/couchbaselabs/mc_bin_client.git#egg=mc_bin_client

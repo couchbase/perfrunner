@@ -16,7 +16,6 @@
       - openjdk-8-jdk
       - python-pip
       - python-virtualenv
-      - python3.5-dev
       - sshpass
       - rpm2cpio
   - name: adding Couchbase repository

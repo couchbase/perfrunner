@@ -23,6 +23,9 @@ class FIOTest(PerfTest):
         self.test_config = test_config
         self.remote = RemoteHelper(cluster_spec, test_config, verbose)
 
+    def __exit__(self, *args, **kwargs):
+        pass
+
     @staticmethod
     def _parse(results):
         """Terse output parsing is based on the following guide:

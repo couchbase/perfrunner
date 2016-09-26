@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.tools.BackupTest
-title = CE full backup throughput (Avg. MB/sec), 1 bucket x 400M x 1KB, DGM, Idle
-summary = CE full backup, 1 bucket x 400M x 1KB, DGM, Idle
-larger_is_better = true
+title = 1 bucket x 400M x 1KB, Heavy DGM, Idle
 
 [cluster]
 mem_quota = 52428

@@ -88,7 +88,7 @@ def calc_backup_size(cluster_spec):
     backup_size = backup_size.split()[0]
     backup_size = float(backup_size) / 2 ** 30  # B -> GB
 
-    return round(backup_size, 1)
+    return round(backup_size)
 
 
 def restore(master_node, cluster_spec, wrapper=False):

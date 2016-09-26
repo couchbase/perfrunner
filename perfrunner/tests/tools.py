@@ -42,14 +42,6 @@ class BackupRestoreTest(PerfTest):
 
         local.extract_cb(filename)
 
-    def __init__(self, *args, **kwargs):
-        super(BackupRestoreTest, self).__init__(*args, **kwargs)
-
-        self.backup_size = 0
-        self.spent_time = 0
-        self.data_size = (self.test_config.load_settings.items *
-                          self.test_config.load_settings.size) / 10 ** 6
-
     def run(self):
         self.download_tools()
 
@@ -66,29 +58,34 @@ class BackupTest(BackupRestoreTest):
 
     @with_stats
     def backup(self, mode=None):
-        t0 = time.time()
         local.backup(
             master_node=self.master_node,
             cluster_spec=self.cluster_spec,
             wrapper=self.rest.is_community(self.master_node),
             mode=mode,
             compression=self.test_config.backup_settings.compression,
-            skip_compaction=self.build >= '4.7.0',  # MB-20768
+            skip_compaction=self.build >= '4.7.0-1082',  # MB-20768
         )
-        self.spent_time = time.time() - t0
-
-        self.backup_size = local.calc_backup_size(self.cluster_spec)
-
-        logger.info('Backup completed in {:.1f} sec, backup size is {} GB'
-                    .format(self.spent_time, self.backup_size))
 
     def _report_kpi(self):
-        self.reporter.post_to_sf(round(self.data_size / self.spent_time))
+        edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
+        backup_size = local.calc_backup_size(self.cluster_spec)
+
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_bnr_throughput(self.time_elapsed,
+                                                    edition,
+                                                    tool='backup')
+        )
+
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_backup_size(backup_size, edition)
+        )
 
     def run(self):
         super(BackupTest, self).run()
 
-        self.backup()
+        from_ts, to_ts = self.backup()
+        self.time_elapsed = (to_ts - from_ts) / 1000.0  # seconds
 
         self.report_kpi()
 
@@ -143,13 +140,9 @@ class RestoreTest(BackupTest):
 
     @with_stats
     def restore(self):
-        t0 = time.time()
         local.restore(cluster_spec=self.cluster_spec,
                       master_node=self.master_node,
                       wrapper=self.rest.is_community(self.master_node))
-        self.spent_time = time.time() - t0
-
-        logger.info('Restore completed in {:.1f} sec'.format(self.spent_time))
 
     def flush_buckets(self):
         for i in range(self.test_config.cluster.num_buckets):
@@ -157,7 +150,13 @@ class RestoreTest(BackupTest):
             self.rest.flush_bucket(host_port=self.master_node, name=bucket)
 
     def _report_kpi(self):
-        self.reporter.post_to_sf(round(self.data_size / self.spent_time, 1))
+        edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
+
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_bnr_throughput(self.time_elapsed,
+                                                    edition,
+                                                    tool='restore')
+        )
 
     def run(self):
         super(BackupTest, self).run()
@@ -166,7 +165,8 @@ class RestoreTest(BackupTest):
 
         self.flush_buckets()
 
-        self.restore()
+        from_ts, to_ts = self.restore()
+        self.time_elapsed = (to_ts - from_ts) / 1000.0  # seconds
 
         self.report_kpi()
 

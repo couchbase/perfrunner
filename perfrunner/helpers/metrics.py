@@ -496,3 +496,28 @@ class MetricHelper(object):
         return OrderedDict((
             ('in bytes', sum(self.in_bytes_transfer[0].values())),
             ('out bytes', sum(self.out_bytes_transfer[0].values()))))
+
+    def calc_bnr_throughput(self, time_elapsed, edition, tool):
+        metric = '{}_{}_thr_{}_{}'.format(self.test_config.name,
+                                          tool,
+                                          self.cluster_spec.name,
+                                          edition)
+        title = '{} full {} throughput (Avg. MB/sec), {}'.format(
+            edition, tool, self.metric_title)
+        metric_info = self._get_metric_info(title)
+
+        data_size = self.test_config.load_settings.items * \
+            self.test_config.load_settings.size / 2.0 ** 20  # MB
+
+        avg_throughput = round(data_size / time_elapsed)
+
+        return avg_throughput, metric, metric_info
+
+    def calc_backup_size(self, size, edition):
+        metric = '{}_size_{}_{}'.format(self.test_config.name,
+                                        self.cluster_spec.name,
+                                        edition)
+        title = '{} backup size (GB), {}'.format(edition, self.metric_title)
+        metric_info = self._get_metric_info(title)
+
+        return size, metric, metric_info

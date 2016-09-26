@@ -22,7 +22,8 @@ def cleanup(backup_dir):
     local('fstrim -v {0} && fstrim -v {0}'.format(backup_dir))
 
 
-def backup(master_node, cluster_spec, wrapper=False, mode=None, compression=False):
+def backup(master_node, cluster_spec, wrapper=False, mode=None,
+           compression=False, skip_compaction=False):
     backup_dir = cluster_spec.config.get('storage', 'backup')
 
     logger.info('Creating a new backup: {}'.format(backup_dir))
@@ -33,7 +34,8 @@ def backup(master_node, cluster_spec, wrapper=False, mode=None, compression=Fals
     if wrapper:
         cbbackupwrapper(master_node, cluster_spec, backup_dir, mode)
     else:
-        cbbackupmgr_backup(master_node, cluster_spec, backup_dir, mode, compression)
+        cbbackupmgr_backup(master_node, cluster_spec, backup_dir, mode,
+                           compression, skip_compaction)
 
 
 def cbbackupwrapper(master_node, cluster_spec, backup_dir, mode):
@@ -53,7 +55,8 @@ def cbbackupwrapper(master_node, cluster_spec, backup_dir, mode):
         local(cmd)
 
 
-def cbbackupmgr_backup(master_node, cluster_spec, backup_dir, mode, compression=False):
+def cbbackupmgr_backup(master_node, cluster_spec, backup_dir, mode,
+                       compression, skip_compaction):
     if not mode:
         local('./opt/couchbase/bin/cbbackupmgr config '
               '--archive {} --repo default'.format(backup_dir))
@@ -67,8 +70,12 @@ def cbbackupmgr_backup(master_node, cluster_spec, backup_dir, mode, compression=
             cluster_spec.rest_credentials[0],
             cluster_spec.rest_credentials[1],
         )
+
     if compression:
         cmd = '{} --value-compression compressed'.format(cmd)
+
+    if skip_compaction:
+        cmd = '{} --skip-last-compaction'.format(cmd)
 
     logger.info('Running: {}'.format(cmd))
     local(cmd)

@@ -67,11 +67,14 @@ class BackupTest(BackupRestoreTest):
     @with_stats
     def backup(self, mode=None):
         t0 = time.time()
-        local.backup(master_node=self.master_node,
-                     cluster_spec=self.cluster_spec,
-                     wrapper=self.rest.is_community(self.master_node),
-                     mode=mode,
-                     compression=self.test_config.backup_settings.compression)
+        local.backup(
+            master_node=self.master_node,
+            cluster_spec=self.cluster_spec,
+            wrapper=self.rest.is_community(self.master_node),
+            mode=mode,
+            compression=self.test_config.backup_settings.compression,
+            skip_compaction=self.build >= '4.7.0',  # MB-20768
+        )
         self.spent_time = time.time() - t0
 
         self.backup_size = local.calc_backup_size(self.cluster_spec)

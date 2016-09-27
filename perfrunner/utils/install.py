@@ -56,7 +56,7 @@ class CouchbaseInstaller(object):
         elif self.build.pkg == 'exe':
             patterns = (
                 'couchbase-server-{edition}_{arch}_{version}-rel.setup.{pkg}',
-                'couchbase_server-{edition}_{version}-windows_{arch}.{pkg}',
+                'couchbase-server-{edition}_{version}-windows_{arch}.{pkg}',
             )
         else:
             patterns = ()  # Sentinel

@@ -97,7 +97,7 @@ class CurrentHostMutex:
 
 class RemoteLinuxHelper(object):
 
-    ARCH = {'i386': 'x86', 'x86_64': 'x86_64', 'unknown': 'x86_64'}
+    ARCH = {'i386': 'x86', 'x86_64': 'x86_64', 'unknown': 'amd64'}
 
     CB_DIR = '/opt/couchbase'
 

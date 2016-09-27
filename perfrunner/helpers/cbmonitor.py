@@ -121,7 +121,6 @@ class CbAgent(object):
         self.fts_stats = None
 
     def prepare_collectors(self, test,
-                           bandwidth=False,
                            subdoc_latency=False,
                            latency=False,
                            secondary_stats=False,
@@ -143,7 +142,7 @@ class CbAgent(object):
                            durability=False,
                            xdcr_stats=False):
         clusters = self.clusters.keys()
-        self.bandwidth = bandwidth
+
         self.prepare_ns_server(clusters)
         self.prepare_active_tasks(clusters)
         if test.remote is None or test.remote.os != 'Cygwin':
@@ -450,8 +449,6 @@ class CbAgent(object):
     def stop(self):
         logger.info('Terminating stats collectors')
         map(lambda p: p.terminate(), self.processes)
-        if self.bandwidth:
-            self.remote.kill_process('iptraf')
 
     def trigger_reports(self, snapshot):
         for report_type in ('html', ):

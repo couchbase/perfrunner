@@ -124,6 +124,37 @@ class ReadLatencyTest(MixedLatencyTest):
         )
 
 
+class SubDocTest(KVTest):
+
+    """
+    Enables reporting of SubDoc latency.
+    """
+
+    COLLECTORS = {'subdoc_latency': True}
+
+    def _report_kpi(self):
+        for operation in ('get', 'set'):
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_kv_latency(operation=operation,
+                                                    percentile=95,
+                                                    dbname='spring_subdoc_latency')
+            )
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.compact_bucket()
+
+        self.workload = self.test_config.access_settings
+
+        self.access_bg()
+        self.workload = self.test_config.access_settings
+        self.access(self.workload)
+
+        self.report_kpi()
+
+
 class BgFetcherTest(KVTest):
 
     """

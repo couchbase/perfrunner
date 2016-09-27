@@ -13,7 +13,6 @@
       - htop
       - iotop
       - iperf
-      - iptraf
       - lsof
       - moreutils
       - net-tools

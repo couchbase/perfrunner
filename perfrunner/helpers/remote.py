@@ -458,51 +458,9 @@ class RemoteLinuxHelper(object):
             run(cmd)
 
     @all_hosts
-    def start_bandwidth_monitor(self, track_time=1):
-        """Run iptraf to generate various network statistics and sent output to log file
-        track_time tells IPTraf to run the specified facility for only timeout minutes.
-        """
-        kill_command = "pkill -9 iptraf; rm -rf /tmp/iptraf.log; rm -rf /var/lock/iptraf/*; " \
-                       "rm -rf /var/log/iptraf/*"
-        start_command = "sudo iptraf -i eth0 -L /tmp/iptraf.log -t %d -B /dev/null" % track_time
-        for i in range(2):
-            run(kill_command)
-            run(start_command)
-            time.sleep(2)
-            res = run('ps -ef| grep "iptraf" | grep tmp')
-            logger.info('print res', res)
-            if not res:
-                time.sleep(2)
-            else:
-                break
-
-    @all_hosts
-    def read_bandwidth_stats(self, type, servers):
-        result = 0
-        for server in servers:
-            server_ip = server.split(':')[0]
-            command = "cat /tmp/iptraf.log | grep 'FIN sent' | grep '" + type + " " + server_ip + ":11210'"
-            logger.info(run(command, quiet=True))
-            command += "| awk 'BEGIN{FS = \";\"}{if ($0 ~ /packets/) {if ($6 ~ /FIN sent/)" \
-                       " {print $7}}}' | awk '{print $3}'"
-            temp = run(command, quiet=True)
-            if temp:
-                arr = [int(t) for t in temp.split("\r\n")]
-                result += int(sum(arr))
-            time.sleep(3)
-        return result
-
-    @all_hosts
     def kill_process(self, process=''):
         command = "pkill -9 %s" % process
         run(command, quiet=True)
-
-    @single_host
-    def install_beer_samples(self):
-        logger.info('run install_beer_samples')
-        cmd = '/opt/couchbase/bin/cbdocloader  -n localhost:8091 -u Administrator -p password -b beer-sample /opt/couchbase/samples/beer-sample.zip'
-        result = run(cmd, pty=False)
-        return result
 
     @single_client
     def ycsb_load_run(self, path, cmd, log_path=None, mypid=0):

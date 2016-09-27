@@ -1,11 +1,8 @@
-from collections import OrderedDict
-
 import numpy as np
 from logger import logger
 from seriesly import Seriesly
 
 from perfrunner.helpers.cbmonitor import CbAgent
-from perfrunner.helpers.remote import RemoteHelper
 
 
 class MetricHelper(object):
@@ -484,18 +481,6 @@ class MetricHelper(object):
                 "larger_is_better": self.test.test_config.test_case.larger_is_better.lower() == "true",
                 "threshold": self.test.test_config.dailyp_settings.threshold
                 }
-
-    @property
-    def calc_network_bandwidth(self):
-        self.remote = RemoteHelper(self.cluster_spec, self.test_config, verbose=True)
-        for cluster_name, servers in self.cluster_spec.yield_clusters():
-            self.in_bytes_transfer += [self.remote.read_bandwidth_stats("to", servers)]
-            self.out_bytes_transfer += [self.remote.read_bandwidth_stats("from", servers)]
-        logger.info('in bytes', self.in_bytes_transfer)
-        logger.info('out bytes', self.out_bytes_transfer)
-        return OrderedDict((
-            ('in bytes', sum(self.in_bytes_transfer[0].values())),
-            ('out bytes', sum(self.out_bytes_transfer[0].values()))))
 
     def calc_bnr_throughput(self, time_elapsed, edition, tool):
         metric = '{}_{}_thr_{}_{}'.format(self.test_config.name,

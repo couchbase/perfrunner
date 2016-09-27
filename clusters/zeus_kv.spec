@@ -23,4 +23,4 @@ Platform = HW
 OS = Windows Server 2012
 CPU = E5-2630 v2 (24 vCPU)
 Memory = 64 GB
-Disk = 2 x SSD
+Disk = SSD

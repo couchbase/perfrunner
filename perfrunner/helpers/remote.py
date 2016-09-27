@@ -4,7 +4,7 @@ from random import uniform
 
 from decorator import decorator
 from fabric import state
-from fabric.api import execute, get, parallel, put, run, settings
+from fabric.api import execute, get, parallel, put, run, settings, show
 from fabric.exceptions import CommandTimeout
 from logger import logger
 
@@ -627,7 +627,7 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
         else:
             logger.info('Package not present on {}'.format(local_ip))
 
-        logger.info('Cleaning registry on {}'.format(local_ip))
+        logger.info('Removing files on {}'.format(local_ip))
         self.clean_installation()
 
     @staticmethod
@@ -690,3 +690,15 @@ class RemoteWindowsHelper(RemoteLinuxHelper):
     def start_server(self):
         logger.info('Starting Couchbase Server')
         run('net start CouchbaseServer')
+
+    @all_hosts
+    def get_system_backup_version(self):
+        # Return version of the latest system state backup
+        stdout = run('wbadmin get versions | grep identifier')
+        return stdout.split()[-1]
+
+    def start_system_state_recovery(self, host, version):
+        # Performs a system state recovery to a specified version
+        with settings(show('output'), host_string=host):
+            run('wbadmin start systemstaterecovery -version:{} -autoReboot -quiet'
+                .format(version), warn_only=True)

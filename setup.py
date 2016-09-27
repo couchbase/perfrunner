@@ -12,6 +12,7 @@ setup(
             'install = perfrunner.utils.install:main',
             'perfrunner = perfrunner.__main__:main',
             'spring = spring.__main__:main',
+            'recovery = perfrunner.utils.recovery:main',
         ],
     },
     ext_modules=[

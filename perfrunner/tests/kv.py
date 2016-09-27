@@ -453,15 +453,17 @@ class MemUsedTest(KVTest):
 
 
 class PathoGenTest(FragmentationTest):
+
     """Pathologically bad malloc test. See pathoGen.py for full details."""
 
     @with_stats
-    def access(self):
+    def access(self, *args):
         for target in self.target_iterator:
             host, port = target.node.split(':')
             PathoGen(num_items=self.test_config.load_settings.items,
                      num_workers=self.test_config.load_settings.workers,
                      num_iterations=self.test_config.load_settings.iterations,
+                     frozen_mode=False,
                      host=host, port=port, bucket=target.bucket).run()
 
     def _report_kpi(self):

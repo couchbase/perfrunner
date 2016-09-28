@@ -1,3 +1,5 @@
+import csv
+import json
 import time
 
 import requests
@@ -41,6 +43,11 @@ class BackupRestoreTest(PerfTest):
             fh.write(resp.content)
 
         local.extract_cb(filename)
+
+    def flush_buckets(self):
+        for i in range(self.test_config.cluster.num_buckets):
+            bucket = 'bucket-{}'.format(i + 1)
+            self.rest.flush_bucket(host_port=self.master_node, name=bucket)
 
     def run(self):
         self.download_tools()
@@ -144,11 +151,6 @@ class RestoreTest(BackupTest):
                       master_node=self.master_node,
                       wrapper=self.rest.is_community(self.master_node))
 
-    def flush_buckets(self):
-        for i in range(self.test_config.cluster.num_buckets):
-            bucket = 'bucket-{}'.format(i + 1)
-            self.rest.flush_bucket(host_port=self.master_node, name=bucket)
-
     def _report_kpi(self):
         edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
 
@@ -196,3 +198,107 @@ class RestoreAfterIncrementalBackupTest(RestoreTest):
         self.restore()
 
         self.report_kpi()
+
+
+class CbExportImportTest(BackupRestoreTest):
+
+    """
+    After a typical workload we export all nodes, measure time it takes to
+    perform export.
+    Then we flush the bucket and import the data, measure time it takes to
+    perform import
+    """
+
+    @with_stats
+    def export(self):
+        t0 = time.time()
+        local.export(master_node=self.master_node,
+                     cluster_spec=self.cluster_spec,
+                     tp=self.test_config.export_import_settings.type,
+                     frmt=self.test_config.export_import_settings.format,
+                     bucket='bucket-1')
+        self.spent_time = time.time() - t0
+
+        self.data_size = local.calc_backup_size(self.cluster_spec)
+
+        logger.info('Export completed in {:.1f} sec, Export size is {} GB'
+                    .format(self.spent_time, self.data_size))
+
+    @with_stats
+    def import_data(self, tp=None, frmt=None):
+        t0 = time.time()
+        tp = tp
+        frmt = frmt
+        if not tp:
+            tp = self.test_config.export_import_settings.type
+        if frmt is None:
+            frmt = self.test_config.export_import_settings.format
+        local.import_data(master_node=self.master_node,
+                          cluster_spec=self.cluster_spec,
+                          tp=tp,
+                          frmt=frmt,
+                          bucket='bucket-1')
+        self.spent_time = time.time() - t0
+
+        logger.info('Export completed in {:.1f} sec, Import size is {} GB'
+                    .format(self.spent_time, self.data_size))
+
+    def _report_kpi(self, prefix=''):
+        metric = '{}_{}'.format(self.test_config.name,
+                                self.cluster_spec.name)
+        metric_info = {
+            'title': prefix + " " + self.test_config.test_case.metric_title,
+            'cluster': self.cluster_spec.name,
+            'larger_is_better': self.test_config.test_case.larger_is_better,
+        }
+        metric = prefix.replace(" ", "_") + "_" + metric
+
+        self.reporter.post_to_sf(round(self.data_size / self.spent_time), metric=metric,
+                                 metric_info=metric_info)
+
+    def _yield_line_delimited_json(self, path):
+        """
+        Read a line-delimited json file yielding each row as a record
+        """
+        with open(path, 'r') as f:
+            for line in f:
+                yield json.loads(line)
+
+    def run(self):
+        super(CbExportImportTest, self).run()
+        self.export()
+        settings = self.test_config.export_import_settings
+        self.report_kpi("Export {} {}".format(settings.type.upper(),
+                                              settings.format.title()))
+
+        self.flush_buckets()
+
+        self.import_data()
+
+        self.report_kpi("Import {} {}".format(settings.type.upper(),
+                                              settings.format.title()))
+
+        if self.test_config.export_import_settings.format == 'lines':
+            self.convert_json_in_csv()
+            self.flush_buckets()
+
+            self.import_data('csv', '')
+
+            self.report_kpi("Import CSV")
+
+    def convert_json_in_csv(self):
+        import_file = "{}/{}.{}".format(
+            self.cluster_spec.config.get('storage', 'backup'),
+            self.test_config.export_import_settings.format,
+            self.test_config.export_import_settings.type)
+        data = self._yield_line_delimited_json(import_file)
+
+        with open('/data/backup/export.csv', 'w') as csvfile:
+            output = csv.writer(csvfile)
+            header = ""
+
+            for row in data:
+                if not header:
+                        header = row
+                        output.writerow(header.keys())
+                output.writerow(row.values())

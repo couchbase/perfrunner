@@ -222,6 +222,11 @@ class TestConfig(Config):
         return BackupSettings(options)
 
     @property
+    def export_import_settings(self):
+        options = self._get_options_as_dict('export_import')
+        return ExportImportSettings(options)
+
+    @property
     def access_settings(self):
         options = self._get_options_as_dict('access')
         access = AccessSettings(options)
@@ -718,6 +723,16 @@ class BackupSettings(object):
 
     def __init__(self, options):
         self.compression = int(options.get('compression', self.COMPRESSION))
+
+
+class ExportImportSettings(object):
+
+    TYPE = 'json'  # csv or json
+    FORMAT = 'lines'  # lines, list, or sample/file
+
+    def __init__(self, options):
+        self.type = options.get('type', self.TYPE)
+        self.format = options.get('format', self.FORMAT)
 
 
 class FtsSettings(object):

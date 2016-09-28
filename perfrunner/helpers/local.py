@@ -1,4 +1,5 @@
 import os.path
+from sys import platform
 
 from fabric.api import lcd, local, quiet
 from logger import logger
@@ -19,7 +20,8 @@ def cleanup(backup_dir):
     # Discard unused blocks. Twice.
     if not os.path.exists(backup_dir):
         os.makedirs(backup_dir)  # Otherwise fstrim won't find the device
-    local('fstrim -v {0} && fstrim -v {0}'.format(backup_dir))
+    if platform == "linux2":
+        local('fstrim -v {0} && fstrim -v {0}'.format(backup_dir))
 
 
 def backup(master_node, cluster_spec, wrapper=False, mode=None,
@@ -126,3 +128,42 @@ def cbbackupmgr_restore(master_node, cluster_spec, backup_dir):
         )
     logger.info('Running: {}'.format(cmd))
     local(cmd)
+
+
+def export(master_node, cluster_spec, tp='json', frmt=None, bucket='default'):
+    export_file = "{}/{}.{}".format(
+        cluster_spec.config.get('storage', 'backup'), frmt, tp)
+
+    cleanup(cluster_spec.config.get('storage', 'backup'))
+
+    logger.info('export into: {}'.format(export_file))
+
+    if tp == 'json':
+        cmd = \
+            './opt/couchbase/bin/cbexport {} -c http://{} --username {} ' \
+            '--password {} --format {} --output {} -b {}' \
+            .format(tp, master_node, cluster_spec.rest_credentials[0],
+                    cluster_spec.rest_credentials[1],
+                    frmt, export_file, bucket)
+    local(cmd, capture=False)
+
+
+def import_data(master_node, cluster_spec, tp='json', frmt=None, bucket=''):
+    import_file = "{}/{}.{}".format(
+        cluster_spec.config.get('storage', 'backup'), frmt, tp)
+    if not frmt:
+        import_file = "{}/export.{}".format(
+            cluster_spec.config.get('storage', 'backup'), tp)
+
+    logger.info('import from: {}'.format(import_file))
+
+    cmd = \
+        './opt/couchbase/bin/cbimport {} -c http://{} --username {} --password {} ' \
+        '--dataset file://{} -b {} -g "#MONO_INCR#" -l LOG' \
+        .format(tp, master_node, cluster_spec.rest_credentials[0],
+                cluster_spec.rest_credentials[1], import_file, bucket)
+
+    if frmt:
+        cmd += ' --format {}'.format(frmt)
+
+    local(cmd, capture=False)

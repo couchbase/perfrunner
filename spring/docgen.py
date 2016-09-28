@@ -517,3 +517,44 @@ class ArrayIndexingDocument(ReverseLookupDocument):
             'capped_small': self._build_capped(alphabet, seq_id, 100),
             'topics': self._build_topics(seq_id),
         }
+
+
+class ImportExportDocument(ReverseLookupDocument):
+
+    """ImportExportDocument extends ReverseLookupDocument by adding fields with random size.
+    TODO: extend for nested json and arrays.
+    """
+    OVERHEAD = 1022
+
+    def next(self, key):
+        seq_id = int(key[-12:]) + 1
+        prefix = key[:-12]
+        alphabet = self._build_alphabet(key)
+        size = self._size()
+        return {
+            'name': self._build_name(alphabet) * random.randint(0, 5),
+            'email': self.build_email(alphabet) * random.randint(0, 5),
+            'alt_email': self._build_alt_email(alphabet) * random.randint(0, 5),
+            'street': self._build_street(alphabet) * random.randint(0, 9),
+            'city': self._build_city(alphabet) * random.randint(0, 9),
+            'county': self._build_county(alphabet) * random.randint(0, 5),
+            'state': self._build_state(alphabet) * random.randint(0, 5),
+            'full_state': self._build_full_state(alphabet) * random.randint(0, 5),
+            'country': self._build_country(alphabet) * random.randint(0, 5),
+            'realm': self._build_realm(alphabet) * random.randint(0, 9),
+            'alt_street': self._build_street(alphabet) * random.randint(0, 9),
+            'alt_city': self._build_city(alphabet) * random.randint(0, 9),
+            'alt_county': self._build_county(alphabet) * random.randint(0, 5),
+            'alt_state': self._build_state(alphabet) * random.randint(0, 5),
+            'alt_full_state': self._build_full_state(alphabet) * random.randint(0, 5),
+            'alt_country': self._build_country(alphabet) * random.randint(0, 5),
+            'alt_realm': self._build_realm(alphabet) * random.randint(0, 9),
+            'coins': self._build_coins(alphabet) * random.randint(0, 999),
+            'category': self._build_category(alphabet) * random.randint(0, 5),
+            'achievements': self._build_achievements(alphabet),
+            'gmtime': self._build_gmtime(alphabet) * random.randint(0, 9),
+            'year': self._build_year(alphabet) * random.randint(0, 5),
+            'body': self._build_body(alphabet, size),
+            'capped_small': self._build_capped(alphabet, prefix, seq_id, 100) * random.randint(0, 5),
+            'alt_capped_small': self._build_capped(alphabet, seq_id, seq_id, 100) * random.randint(0, 5),
+        }

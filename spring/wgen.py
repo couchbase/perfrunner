@@ -23,6 +23,7 @@ from spring.docgen import (
     Document,
     ExistingKey,
     ExtReverseLookupDocument,
+    ImportExportDocument,
     JoinedDocument,
     KeyForCASUpdate,
     KeyForRemoval,
@@ -100,6 +101,8 @@ class Worker(object):
         elif self.ws.doc_gen == 'ref':
             self.docs = RefDocument(self.ws.size,
                                     self.ts.prefix)
+        elif self.ws.doc_gen == 'import_export':
+            self.docs = ImportExportDocument(self.ws.size)
         elif self.ws.doc_gen == 'large_subdoc':
             self.docs = LargeDocument(self.ws.size)
 
@@ -477,6 +480,8 @@ class N1QLWorker(Worker):
                                               prefix='n1ql',
                                               array_size=self.ws.array_size,
                                               num_docs=self.ws.items)
+        elif self.ws.doc_gen == 'import_export':
+            self.docs = ImportExportDocument(self.ws.size)
 
     def init_db(self):
         host, port = self.ts.node.split(':')

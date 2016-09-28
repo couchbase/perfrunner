@@ -72,7 +72,7 @@ class SyncGen(object):
             '\tTotal adds:      {0:,}'.format(totals['adds']),
             '\tTotal resets:    {0:,}\n'.format(totals['resets']),
         ):
-            print m
+            print(m)
 
     def _sync_append(self, d):
         try:

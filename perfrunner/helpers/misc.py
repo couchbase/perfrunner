@@ -68,7 +68,7 @@ def retry(catch=(), iterations=5, wait=10):
 
     def retry_decorator(func):
         def retry_wrapper(*arg, **kwargs):
-            for i in xrange(iterations):
+            for i in range(iterations):
                 try:
                     result = func(*arg, **kwargs)
                 except catch:

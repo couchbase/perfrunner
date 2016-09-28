@@ -108,7 +108,7 @@ class ViewGen(object):
         for number_of_views in pattern:
             ddoc_name = self.ddoc_names.next()
             ddocs[ddoc_name] = {'views': {}}
-            for index_of_view in xrange(number_of_views):
+            for index_of_view in range(number_of_views):
                 view_name = self.view_names.next()
                 map_func = self.map_funcs[view_name]
                 ddocs[ddoc_name]['views'][view_name] = {'map': map_func}

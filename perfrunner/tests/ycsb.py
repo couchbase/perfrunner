@@ -164,7 +164,7 @@ class YCSBTest(YCSBdata):
             logger.info('running YCSB for loading data')
             cmd = self.create_load_cmd()
             self.remote.ycsb_load_run(self.ycsb.path, cmd)
-        except Exception, e:
+        except Exception as e:
             raise YCSBException('YCSB error while loading data' + e.message)
 
     @with_stats

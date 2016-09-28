@@ -14,7 +14,7 @@ REPO = 'https://github.com/couchbase/perfrunner'
 def safe(method, *args, **kargs):
     try:
         return method(*args, **kargs)
-    except (NoSectionError, NoOptionError), e:
+    except (NoSectionError, NoOptionError) as e:
         logger.warn('Failed to get option from config: {}'.format(e))
 
 

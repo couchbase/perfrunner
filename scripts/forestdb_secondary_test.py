@@ -133,7 +133,7 @@ def post_benchmark(benchmark):
             password="password")
         mark_previous_as_obsolete(cb, benchmark)
         cb.set(key, benchmark)
-    except Exception, e:
+    except Exception as e:
         logger.warn('Failed to post results, {}'.format(e))
         raise
     else:

@@ -71,7 +71,7 @@ class SecondaryIndexTest(PerfTest):
             # overwrite with indexname_0, indexname_1 ... names for each partition
             self.active_indexes = []
             for index in self.indexes:
-                for i in xrange(num_partitions):
+                for i in range(num_partitions):
                     index_i = index + "_{}".format(i)
                     self.active_indexes.append(index_i)
 
@@ -115,7 +115,7 @@ class SecondaryIndexTest(PerfTest):
             for field, pivots in field_pivots.iteritems():
                 pivots = [None] + pivots + [None]
                 partitions = []
-                for i in xrange(len(pivots) - 1):
+                for i in range(len(pivots) - 1):
                     partitions.append((pivots[i], pivots[i + 1]))
                 if len(partitions) != len(self.index_nodes):
                     raise RuntimeError(

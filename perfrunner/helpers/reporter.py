@@ -70,7 +70,7 @@ class Comparator(object):
         try:
             self.cbb = Couchbase.connect(bucket='benchmarks', **showfast)
             self.cbf = Couchbase.connect(bucket='feed', **showfast)
-        except Exception, e:
+        except Exception as e:
             logger.warn('Failed to connect to database, {}'.format(e))
             return
 
@@ -106,7 +106,7 @@ class SFReporter(object):
         try:
             cb = Couchbase.connect(bucket='clusters', **showfast)
             cb.set(cluster, params)
-        except Exception, e:
+        except Exception as e:
             logger.warn('Failed to add cluster, {}'.format(e))
         else:
             logger.info('Successfully posted: {}, {}'.format(
@@ -124,7 +124,7 @@ class SFReporter(object):
         try:
             cb = Couchbase.connect(bucket='metrics', **showfast)
             cb.set(metric, metric_info)
-        except Exception, e:
+        except Exception as e:
             logger.warn('Failed to add cluster, {}'.format(e))
         else:
             logger.info('Successfully posted: {}, {}'.format(
@@ -167,7 +167,7 @@ class SFReporter(object):
         try:
             self._mark_previous_as_obsolete(cb, benckmark)
             cb.set(key, benckmark)
-        except Exception, e:
+        except Exception as e:
             logger.warn('Failed to post benchmark {}: {}'.format(e, benckmark))
         else:
             logger.info('Successfully posted: {}'.format(pretty_dict(benckmark)))
@@ -202,7 +202,7 @@ class SFReporter(object):
         try:
             bucket = Bucket('couchbase://{}/perf_daily'.
                             format(self.test.test_config.stats_settings.cbmonitor['host']))
-        except Exception, e:
+        except Exception as e:
             logger.info("Post to Dailyp, DB connection error: {}".format(e.message))
             return False
         docid = "{}__{}__{}__{}__{}".format(test_run_dict['category'],

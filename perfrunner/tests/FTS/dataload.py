@@ -73,7 +73,7 @@ class Docgen(object):
                 self.insert_cb(c, f)
                 f.close()
             except Exception as e:
-                print (self.counts, file)
+                print(self.counts, file)
                 raise e
 
 
@@ -121,13 +121,13 @@ class Numeric(Docgen):
         tmpcount = 0
         for value in self.numeric_ranges:
             if tmpcount % 3 == 0:
-                print value, ' max'
+                print(value, ' max')
             elif tmpcount % 3 == 1:
-                print value, ' min'
+                print(value, ' min')
             elif tmpcount % 3 == 2:
                 upper = value << 1
                 lower = value >> 1
-                print upper, ':', lower, ' max_min'
+                print(upper, ':', lower, ' max_min')
             tmpcount += 1
 
     def insert_cb(self, cb):
@@ -195,7 +195,7 @@ class Datefacet:
                 self.cycledates = itertools.cycle(self.dateiter.keys())
 
             self.lock.release()
-            print self.dateiter
+            print(self.dateiter)
 
     def run(self):
         import concurrent.futures

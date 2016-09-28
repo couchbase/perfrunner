@@ -30,7 +30,7 @@ class CreateData(object):
             for c in tfile:
                 term, freq = c.split()
                 term1, freq = b.next().split()
-                print term1, term, term
+                print(term1, term, term)
                 count += 1
             tfile.close()
 
@@ -38,7 +38,7 @@ class CreateData(object):
             for c in tfile:
                 term, freq = c.split()
                 term1, freq = b.next().split()
-                print term1, term, term
+                print(term1, term, term)
 
             tfile.close()
 
@@ -46,7 +46,7 @@ class CreateData(object):
             for c in tfile:
                 term, freq = c.split()
                 term1, freq = b.next().split()
-                print term1, term, term
+                print(term1, term, term)
 
             tfile.close()
             tfile1.close()
@@ -61,7 +61,7 @@ class CreateData(object):
                     s.add(term[:3])
             file.close()
             for v in s:
-                print v
+                print(v)
 
         @staticmethod
         def perm(st):
@@ -88,7 +88,7 @@ class CreateData(object):
                 count9 += 1
             file1.close()
             for v in s:
-                print v
+                print(v)
 
         @staticmethod
         def createfuzzy(files, fuzzy):
@@ -97,7 +97,7 @@ class CreateData(object):
             for line in file1:
                 term, freq = line.split()
                 if len(term) == 5 and count9 % 9 == 0:
-                    print term, fuzzy
+                    print(term, fuzzy)
                 count9 += 1
             file1.close()
 
@@ -133,7 +133,7 @@ class CreateData(object):
                     if k and k in mids:
                         sort = tuple(sorted((k, v)))
                         if sort not in self.myset:
-                            print v, k
+                            print(v, k)
                             myset.add(sort)
 
         def read_in_chunks(self, file_object):
@@ -156,11 +156,11 @@ class CreateData(object):
                 term, freq = line.split()
                 if term.isdigit():
                     if c % 3 == 0:
-                        print term, 'max_min'
+                        print(term, 'max_min')
                     elif c % 3 == 1:
-                        print term, 'max'
+                        print(term, 'max')
                     else:
-                        print term, 'min'
+                        print(term, 'min')
                     c += 1
 
         @staticmethod
@@ -171,7 +171,7 @@ class CreateData(object):
                 '''
                 use following to create the docids set
                 '''
-                print resultid["id"], None
+                print(resultid["id"], None)
 
         @staticmethod
         def changefiles():
@@ -198,7 +198,7 @@ class CreateData(object):
              all strings generated will be always sorted in order
              '''
             for i in range(18):
-                print i, 'q' + format(i, '#010b')
+                print(i, 'q' + format(i, '#010b'))
 
         @staticmethod
         def generate_test_fts():
@@ -223,7 +223,7 @@ class CreateData(object):
                 sd = dates[start]
                 ed = dates[end]
                 end += 1
-                print term, ':'.join([sd, ed])
+                print(term, ':'.join([sd, ed]))
             file.close()
 
 '''

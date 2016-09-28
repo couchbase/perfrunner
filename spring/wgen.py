@@ -485,7 +485,7 @@ class N1QLWorker(Worker):
                 self.curr_items.value - self.ws.creates * self.ws.workers
             deleted_spot = \
                 self.deleted_items.value + self.ws.deletes * self.ws.workers
-            for _ in xrange(self.BATCH_SIZE):
+            for _ in range(self.BATCH_SIZE):
                 key = self.existing_keys.next(curr_items_spot, deleted_spot)
                 doc = self.docs.next(key)
                 doc['key'] = key
@@ -573,7 +573,7 @@ class N1QLWorker(Worker):
                 len(list(self.cb.client.n1ql_query(nq)))
 
         elif self.ws.n1ql_op == 'rangeupdate':
-            for _ in xrange(self.BATCH_SIZE):
+            for _ in range(self.BATCH_SIZE):
                 key = self.keys_for_casupdate.next(self.sid, curr_items_spot, deleted_spot)
                 doc = self.docs.next(key)
                 doc['key'] = key
@@ -582,7 +582,7 @@ class N1QLWorker(Worker):
                 self.cb.query(ddoc_name, view_name, query=query)
 
         elif self.ws.n1ql_op == 'rangedelete':
-            for _ in xrange(self.BATCH_SIZE):
+            for _ in range(self.BATCH_SIZE):
                 doc = {}
                 doc['capped_small'] = "n1ql-_100_" + str(deleted_capped_items_tmp)
                 ddoc_name, view_name, query = self.new_queries.next(doc)

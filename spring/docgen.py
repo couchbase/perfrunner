@@ -360,12 +360,12 @@ class ReverseLookupDocumentArrayIndexing(ReverseLookupDocument):
         if spl[0] == 'n1ql':
             # these docs are never updated
             return [((int(spl[1].lstrip('0')) - 1) * 10 + i +
-                     ReverseLookupDocumentArrayIndexing.delta) for i in xrange(10)]
+                     ReverseLookupDocumentArrayIndexing.delta) for i in range(10)]
         else:
             # these docs are involved in updating
             return [((int(spl[1].lstrip('0')) - 1) * 10 + i +
                      ReverseLookupDocumentArrayIndexing.num_docs * 10 +
-                     ReverseLookupDocumentArrayIndexing.delta) for i in xrange(10)]
+                     ReverseLookupDocumentArrayIndexing.delta) for i in range(10)]
 
     @staticmethod
     def _build_achievements2(alphabet, key):
@@ -373,12 +373,12 @@ class ReverseLookupDocumentArrayIndexing(ReverseLookupDocument):
         if spl[0] == 'n1ql':
             # these docs are never updated
             return [((int(spl[1].lstrip('0')) // 100) * 10 + i +
-                     ReverseLookupDocumentArrayIndexing.delta) for i in xrange(10)]
+                     ReverseLookupDocumentArrayIndexing.delta) for i in range(10)]
         else:
             # these docs are involved in updating
             return [((int(spl[1].lstrip('0')) // 100) * 10 + i +
                      ReverseLookupDocumentArrayIndexing.num_docs * 10 +
-                     ReverseLookupDocumentArrayIndexing.delta) for i in xrange(10)]
+                     ReverseLookupDocumentArrayIndexing.delta) for i in range(10)]
 
     def next(self, key):
         seq_id = int(key[-12:]) + 1

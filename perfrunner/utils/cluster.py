@@ -42,7 +42,6 @@ def main():
         cm.restart_with_alternative_num_vbuckets()
 
     cm.configure_internal_settings()
-    cm.configure_xdcr_settings()
     cm.set_data_path()
     cm.set_services()
     cm.rename()
@@ -50,6 +49,7 @@ def main():
     cm.set_index_mem_quota()
     cm.set_fts_index_mem_quota()
     cm.set_auth()
+    cm.configure_xdcr_settings()
 
     # Cluster
     if cm.group_number > 1:

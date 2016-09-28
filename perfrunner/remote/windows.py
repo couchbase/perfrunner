@@ -164,8 +164,9 @@ class RemoteWindows(Remote):
     def filter_wan(self, *args):
         pass
 
+    @all_hosts
     def detect_core_dumps(self):
-        pass
+        return []
 
     def tune_log_rotation(self):
         pass

@@ -32,24 +32,10 @@ def single_client(task, *args, **kargs):
 
 
 @decorator
-def all_clients(task, *args, **kargs):
-    self = args[0]
-    return execute(parallel(task), *args, hosts=self.cluster_spec.workers, **kargs)
-
-
-@decorator
 def all_kv_nodes(task, *args, **kargs):
     self = args[0]
     self.host_index = 0
     return execute(parallel(task), *args, hosts=self.kv_hosts, **kargs)
-
-
-@decorator
-def kv_node(task, *args, **kargs):
-    self = args[0]
-    host = self.cluster_spec.yield_kv_servers().next()
-    with settings(host_string=host):
-        return task(*args, **kargs)
 
 
 class RemoteHelper(object):

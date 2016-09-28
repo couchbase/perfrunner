@@ -1,11 +1,13 @@
 .PHONY: build
 
+PYTHON := python2.7
+
 build:
-	virtualenv -p python2.7 env
+	virtualenv -p ${PYTHON} env
 	env/bin/pip install --upgrade --quiet pip wheel
 	env/bin/pip install --quiet -r requirements.txt
 	env/bin/python setup.py install
-	pwd > env/lib/python2.7/site-packages/perfrunner.pth
+	pwd > env/lib/${PYTHON}/site-packages/perfrunner.pth
 
 clean:
 	rm -fr build perfrunner.egg-info dist

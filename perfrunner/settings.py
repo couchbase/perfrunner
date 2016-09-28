@@ -1,11 +1,16 @@
 import csv
 import os.path
-from ConfigParser import NoOptionError, NoSectionError, SafeConfigParser
 
 from decorator import decorator
 from logger import logger
 
 from perfrunner.helpers.misc import uhex
+
+from six.moves.configparser import (
+    NoOptionError,
+    NoSectionError,
+    SafeConfigParser,
+)
 
 REPO = 'https://github.com/couchbase/perfrunner'
 

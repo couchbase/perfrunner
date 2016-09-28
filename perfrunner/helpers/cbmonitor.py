@@ -33,7 +33,6 @@ from cbagent.collectors import (
     XdcrLag,
     XdcrStats,
 )
-
 from cbagent.collectors.secondary_debugstats import SecondaryDebugStatsIndex
 from cbagent.metadata_client import MetadataClient
 from perfrunner.helpers.misc import target_hash, uhex

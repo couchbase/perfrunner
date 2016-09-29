@@ -31,7 +31,7 @@ class KVTest(PerfTest):
     """
 
     @with_stats
-    def access(self):
+    def access(self, *args):
         super(KVTest, self).timer()
 
     def run(self):
@@ -147,10 +147,8 @@ class SubDocTest(KVTest):
         self.compact_bucket()
 
         self.workload = self.test_config.access_settings
-
         self.access_bg()
-        self.workload = self.test_config.access_settings
-        self.access(self.workload)
+        self.access()
 
         self.report_kpi()
 

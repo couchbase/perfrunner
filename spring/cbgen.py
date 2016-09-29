@@ -167,47 +167,37 @@ class SubDocGen(CBGen):
 
 class N1QLGen(CBGen):
 
-    def __init__(self, **kwargs):
-        self.session = requests.Session()
-        self.session.auth = (kwargs['username'], kwargs['password'])
-        self.bucket = kwargs['username']
-        self.password = kwargs['password']
+    def __init__(self, bucket, password, host, port=8091):
+        self.bucket = bucket
+        self.password = password
 
-        self.query_url = 'http://{}:{}/pools/default'.format(
-            kwargs['host'],
-            kwargs.get('port', 8091),
-        )
-        self.query_conns = self._get_query_connections()
+        self.connections = self._get_query_connections(host, port)
 
-    def start_updater(self):
-        pass
+    def _get_query_connections(self, host, port):
+        nodes = requests.get(url='http://{}:{}/pools/default'.format(host, port),
+                             auth=(self.bucket, self.password)).json()
 
-    def _get_query_connections(self):
-        conns = []
-        try:
-            nodes = self.session.get(self.query_url).json()
-            for node in nodes['nodes']:
-                if 'n1ql' in node['services']:
-                    url = node['hostname'].replace('8091', '8093')
-                    conns.append(urllib3.connection_from_url(url))
-        except Exception as e:
-            logger.warn('Failed to get list of servers: {}'.format(e))
-            raise
+        connections = []
+        for node in nodes['nodes']:
+            if 'n1ql' in node['services']:
+                url = node['hostname'].replace('8091', '8093')
+                connections.append(urllib3.connection_from_url(url))
 
-        return conns
+        return connections
 
-    def query(self, ddoc_name, view_name, query):
+    def query(self, query, *args):
         creds = '[{{"user":"local:{}","pass":"{}"}}]'.format(self.bucket,
                                                              self.password)
 
         query['creds'] = creds
-        node = choice(self.query_conns)
+        connection = choice(self.connections)
 
         t0 = time()
-        response = node.request('POST', '/query/service', fields=query,
-                                encode_multipart=False)
+        response = connection.request('POST', '/query/service', fields=query,
+                                      encode_multipart=False)
         response.read(cache_content=False)
         latency = time() - t0
+
         return None, latency
 
 

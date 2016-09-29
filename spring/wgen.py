@@ -474,9 +474,8 @@ class N1QLWorker(Worker):
                 self.docs = ReverseLookupDocumentArrayIndexing(
                     self.ws.size, self.ws.doc_partitions, self.ws.items)
 
-        params = {'bucket': bucket, 'host': host, 'port': port,
-                  'username': self.ts.bucket, 'password': self.ts.password}
-        self.cb = N1QLGen(**params)
+        self.cb = N1QLGen(bucket=self.ts.bucket, password=self.ts.password,
+                          host=host, port=port)
 
     @with_sleep
     def do_batch(self):
@@ -490,8 +489,8 @@ class N1QLWorker(Worker):
                 doc = self.docs.next(key)
                 doc['key'] = key
                 doc['bucket'] = self.ts.bucket
-                ddoc_name, view_name, query = self.new_queries.next(doc)
-                self.cb.query(ddoc_name, view_name, query=query)
+                query = self.new_queries.next(doc)
+                self.cb.query(query)
             return
 
         curr_items_tmp = curr_items_spot = self.curr_items.value
@@ -527,8 +526,8 @@ class N1QLWorker(Worker):
                 doc = self.docs.next(key)
                 doc['key'] = key
                 doc['bucket'] = self.ts.bucket
-                ddoc_name, view_name, query = self.new_queries.next(doc)
-                self.cb.query(ddoc_name, view_name, query=query)
+                query = self.new_queries.next(doc)
+                self.cb.query(query)
 
         elif self.ws.n1ql_op == 'delete':
             for _ in range(self.BATCH_SIZE):
@@ -537,8 +536,8 @@ class N1QLWorker(Worker):
                 doc = self.docs.next(key)
                 doc['key'] = key
                 doc['bucket'] = self.ts.bucket
-                ddoc_name, view_name, query = self.new_queries.next(doc)
-                self.cb.query(ddoc_name, view_name, query=query)
+                query = self.new_queries.next(doc)
+                self.cb.query(query)
 
         elif self.ws.n1ql_op == 'update' or self.ws.n1ql_op == 'lookupupdate':
             for _ in range(self.BATCH_SIZE):
@@ -546,8 +545,8 @@ class N1QLWorker(Worker):
                 doc = self.docs.next(key)
                 doc['key'] = key
                 doc['bucket'] = self.ts.bucket
-                ddoc_name, view_name, query = self.new_queries.next(doc)
-                self.cb.query(ddoc_name, view_name, query=query)
+                query = self.new_queries.next(doc)
+                self.cb.query(query)
 
         elif self.ws.n1ql_op == 'ryow':
             for _ in range(self.BATCH_SIZE):
@@ -578,20 +577,19 @@ class N1QLWorker(Worker):
                 doc = self.docs.next(key)
                 doc['key'] = key
                 doc['bucket'] = self.ts.bucket
-                ddoc_name, view_name, query = self.new_queries.next(doc)
-                self.cb.query(ddoc_name, view_name, query=query)
+                query = self.new_queries.next(doc)
+                self.cb.query(query)
 
         elif self.ws.n1ql_op == 'rangedelete':
             for _ in range(self.BATCH_SIZE):
                 doc = {}
                 doc['capped_small'] = "n1ql-_100_" + str(deleted_capped_items_tmp)
-                ddoc_name, view_name, query = self.new_queries.next(doc)
-                self.cb.query(ddoc_name, view_name, query=query)
+                query = self.new_queries.next(doc)
+                self.cb.query(query)
                 deleted_capped_items_tmp += 1
 
     def run(self, sid, lock, curr_queries, curr_items, deleted_items,
             casupdated_items, deleted_capped_items):
-        self.cb.start_updater()
 
         if self.throughput < float('inf'):
             self.target_time = float(self.BATCH_SIZE) * self.total_workers / \

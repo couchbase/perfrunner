@@ -152,17 +152,20 @@ class SpringN1QLQueryLatency(SpringLatency):
         self.curr_items = self.items
         self.smallcappedinit = False
         self.cappedcounter = 0
+
         queries = settings.new_n1ql_queries
         if queries:
             logger.info("CBAgent will collect latencies for these queries:")
             logger.info(queries)
             for bucket in self.get_buckets():
-                client = N1QLGen(bucket=bucket, host=settings.master_node,
-                                 username=bucket,
-                                 password=settings.bucket_password)
-                kvclient = CBGen(bucket=bucket, host=settings.master_node,
-                                 username=bucket, password=settings.bucket_password)
-                self.clients.append((bucket, client, kvclient))
+                client = N1QLGen(bucket=bucket,
+                                 password=settings.bucket_password,
+                                 host=settings.master_node)
+                kv_client = CBGen(bucket=bucket,
+                                  host=settings.master_node,
+                                  username=bucket,
+                                  password=settings.bucket_password)
+                self.clients.append((bucket, client, kv_client))
             self.new_queries = N1QLQueryGen(queries)
 
     def measure(self, client, kvclient, metric, bucket):
@@ -179,8 +182,8 @@ class SpringN1QLQueryLatency(SpringLatency):
             doc['key'] = key
             doc['bucket'] = bucket
             kvclient.create(key, doc)
-            ddoc_name, view_name, query = self.new_queries.next(doc)
-            _, latency = client.query(ddoc_name, view_name, query=query)
+            query = self.new_queries.next(doc)
+            _, latency = client.query(query)
             return 1000 * latency  # s -> ms
 
         elif self.n1ql_op == 'rangeupdate':
@@ -202,10 +205,10 @@ class SpringN1QLQueryLatency(SpringLatency):
             key = "stat" + key[5:]
             doc = self.new_docs.next(key)
             doc['capped_small'] = "stat"
-            ddoc_name, view_name, query = self.new_queries.next(doc)
+            query = self.new_queries.next(doc)
             query['statement'] = "UPDATE `bucket-1` SET name = name||'' WHERE capped_small=$1;"
             del query['prepared']
-            _, latency = client.query(ddoc_name, view_name, query=query)
+            _, latency = client.query(query)
             return 1000 * latency  # s -> ms
 
         elif self.n1ql_op == 'rangedelete':
@@ -227,8 +230,8 @@ class SpringN1QLQueryLatency(SpringLatency):
             key = "stat" + key[5:]
             doc = self.new_docs.next(key)
             doc['capped_small'] = "stat" + str(self.cappedcounter)
-            ddoc_name, view_name, query = self.new_queries.next(doc)
-            _, latency = client.query(ddoc_name, view_name, query=query)
+            query = self.new_queries.next(doc)
+            _, latency = client.query(query)
             self.cappedcounter += 1
             return 1000 * latency  # s -> ms
         else:
@@ -236,9 +239,9 @@ class SpringN1QLQueryLatency(SpringLatency):
         doc = self.new_docs.next(key)
         doc['key'] = key
         doc['bucket'] = bucket
-        ddoc_name, view_name, query = self.new_queries.next(doc)
+        query = self.new_queries.next(doc)
 
-        _, latency = client.query(ddoc_name, view_name, query=query)
+        _, latency = client.query(query)
         return 1000 * latency  # s -> ms
 
     def sample(self):

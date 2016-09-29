@@ -237,4 +237,4 @@ class N1QLQueryGen(object):
                 idx += 1
             query['args'] = ",".join(argslist)
 
-        return None, None, query
+        return query

@@ -4,7 +4,6 @@ import time
 from multiprocessing import Event, Lock, Process, Value
 
 from couchbase.exceptions import ValueFormatError
-from couchbase.n1ql import MutationState, N1QLQuery
 from decorator import decorator
 from logger import logger
 from numpy import random
@@ -447,15 +446,11 @@ class N1QLWorker(Worker):
         self.throughput = self.ws.n1ql_throughput
 
         host, port = self.ts.node.split(':')
-        bucket = self.ts.bucket
-        if workload_settings.n1ql_op == 'ryow':
-            bucket += '?fetch_mutation_tokens=true'
 
         self.existing_keys = ExistingKey(self.ws.working_set,
                                          self.ws.working_set_access,
                                          'n1ql')
         self.new_keys = NewKey('n1ql', self.ws.expiration)
-        self.keys_for_removal = KeyForRemoval('n1ql')
         self.keys_for_casupdate = KeyForCASUpdate(self.total_workers,
                                                   self.ws.working_set,
                                                   self.ws.working_set_access,
@@ -500,24 +495,9 @@ class N1QLWorker(Worker):
                 curr_items_tmp = self.curr_items.value - self.BATCH_SIZE
             curr_items_spot = (curr_items_tmp -
                                self.BATCH_SIZE * self.total_workers)
-
-        deleted_items_tmp = deleted_spot = 0
-        if self.ws.n1ql_op == 'delete':
+        elif self.ws.n1ql_op == 'update':
             with self.lock:
-                self.deleted_items.value += self.BATCH_SIZE
-                deleted_items_tmp = self.deleted_items.value - self.BATCH_SIZE
-            deleted_spot = (deleted_items_tmp +
-                            self.BATCH_SIZE * self.total_workers)
-
-        deleted_capped_items_tmp = 0
-        if self.ws.n1ql_op == 'rangedelete':
-            with self.lock:
-                self.deleted_capped_items.value += self.BATCH_SIZE
-                deleted_capped_items_tmp = self.deleted_capped_items.value - self.BATCH_SIZE
-
-        if self.ws.n1ql_op == 'update':
-            with self.lock:
-                self.casupdated_items.value += self.BATCH_SIZE
+                self.cas_updated_items.value += self.BATCH_SIZE
 
         if self.ws.n1ql_op == 'create':
             for _ in range(self.BATCH_SIZE):
@@ -529,67 +509,28 @@ class N1QLWorker(Worker):
                 query = self.new_queries.next(doc)
                 self.cb.query(query)
 
-        elif self.ws.n1ql_op == 'delete':
+        elif self.ws.n1ql_op == 'update':
             for _ in range(self.BATCH_SIZE):
-                deleted_items_tmp += 1
-                key = self.keys_for_removal.next(deleted_items_tmp)
+                key = self.keys_for_casupdate.next(self.sid, curr_items_spot,
+                                                   curr_deletes=0)
                 doc = self.docs.next(key)
                 doc['key'] = key
                 doc['bucket'] = self.ts.bucket
                 query = self.new_queries.next(doc)
                 self.cb.query(query)
-
-        elif self.ws.n1ql_op == 'update' or self.ws.n1ql_op == 'lookupupdate':
-            for _ in range(self.BATCH_SIZE):
-                key = self.keys_for_casupdate.next(self.sid, curr_items_spot, deleted_spot)
-                doc = self.docs.next(key)
-                doc['key'] = key
-                doc['bucket'] = self.ts.bucket
-                query = self.new_queries.next(doc)
-                self.cb.query(query)
-
-        elif self.ws.n1ql_op == 'ryow':
-            for _ in range(self.BATCH_SIZE):
-                query = self.ws.n1ql_queries[0]['statement'][1:-1]
-                if self.ws.n1ql_queries[0]['prepared'] == "singleton_unique_lookup":
-                    by_key = 'email'
-                elif self.ws.n1ql_queries[0]['prepared'] == "range_scan":
-                    by_key = 'capped_small'
-                else:
-                    logger.error('n1ql_queries {} not defined'.format(self.ws.n1ql_queries))
-                key1 = self.keys_for_casupdate.next(self.sid, curr_items_spot, deleted_spot)
-                doc1 = self.docs.next(key1)
-                key2 = self.keys_for_casupdate.next(self.sid, curr_items_spot, deleted_spot)
-                doc2 = self.docs.next(key2)
-                rvs = self.cb.client.upsert_multi({key1: doc2, key2: doc1})
-                # This is a part of requirements:
-                # Each n1ql worker sleeps for 1 seconds.
-                time.sleep(float(self.ws.n1ql_queries[0]['time_sleep']))
-                ms = MutationState()
-                ms.add_results(*rvs.values())
-                nq = N1QLQuery(query.format(doc2[by_key]))
-                nq.consistent_with(ms)
-                len(list(self.cb.client.n1ql_query(nq)))
 
         elif self.ws.n1ql_op == 'rangeupdate':
             for _ in range(self.BATCH_SIZE):
-                key = self.keys_for_casupdate.next(self.sid, curr_items_spot, deleted_spot)
+                key = self.keys_for_casupdate.next(self.sid, curr_items_spot,
+                                                   curr_deletes=0)
                 doc = self.docs.next(key)
                 doc['key'] = key
                 doc['bucket'] = self.ts.bucket
                 query = self.new_queries.next(doc)
                 self.cb.query(query)
 
-        elif self.ws.n1ql_op == 'rangedelete':
-            for _ in range(self.BATCH_SIZE):
-                doc = {}
-                doc['capped_small'] = "n1ql-_100_" + str(deleted_capped_items_tmp)
-                query = self.new_queries.next(doc)
-                self.cb.query(query)
-                deleted_capped_items_tmp += 1
-
     def run(self, sid, lock, curr_queries, curr_items, deleted_items,
-            casupdated_items, deleted_capped_items):
+            cas_updated_items):
 
         if self.throughput < float('inf'):
             self.target_time = float(self.BATCH_SIZE) * self.total_workers / \
@@ -600,8 +541,7 @@ class N1QLWorker(Worker):
         self.sid = sid
         self.curr_items = curr_items
         self.deleted_items = deleted_items
-        self.deleted_capped_items = deleted_capped_items
-        self.casupdated_items = casupdated_items
+        self.cas_updated_items = cas_updated_items
         self.curr_queries = curr_queries
 
         try:
@@ -726,8 +666,7 @@ class WorkloadGen(object):
         self.workers = {}
 
     def start_workers(self, worker_factory, name, curr_items=None,
-                      deleted_items=None, casupdated_items=None,
-                      deleted_capped_items=None):
+                      deleted_items=None, cas_updated_items=None):
         curr_ops = Value('L', 0)
         lock = Lock()
         worker_type, total_workers = worker_factory(self.ws)
@@ -735,9 +674,9 @@ class WorkloadGen(object):
         for sid in range(total_workers):
             if curr_items is None and deleted_items is None:
                 args = (sid, lock)
-            elif casupdated_items is not None or deleted_capped_items is not None:
+            elif cas_updated_items is not None:
                 args = (sid, lock, curr_ops, curr_items, deleted_items,
-                        casupdated_items, deleted_capped_items)
+                        cas_updated_items)
             else:
                 args = (sid, lock, curr_ops, curr_items, deleted_items)
             worker = worker_type(self.ws, self.ts, self.shutdown_event)
@@ -757,16 +696,18 @@ class WorkloadGen(object):
     def run(self):
         curr_items = Value('L', self.ws.items)
         deleted_items = Value('L', 0)
-        deleted_capped_items = Value('L', 0)
-        casupdated_items = Value('L', 0)
+        cas_updated_items = Value('L', 0)
 
         logger.info('Starting all workers')
 
-        self.start_workers(WorkerFactory, 'kv', curr_items, deleted_items)
-        self.start_workers(SubdocWorkerFactory, 'subdoc', curr_items, deleted_items)
-        self.start_workers(ViewWorkerFactory, 'view', curr_items, deleted_items)
-        self.start_workers(N1QLWorkerFactory, 'n1ql', curr_items, deleted_items,
-                           casupdated_items, deleted_capped_items)
+        self.start_workers(WorkerFactory,
+                           'kv', curr_items, deleted_items)
+        self.start_workers(SubdocWorkerFactory,
+                           'subdoc', curr_items, deleted_items)
+        self.start_workers(ViewWorkerFactory,
+                           'view', curr_items, deleted_items)
+        self.start_workers(N1QLWorkerFactory,
+                           'n1ql', curr_items, deleted_items, cas_updated_items)
         self.start_workers(FtsWorkerFactory, 'fts')
 
         if self.timer:

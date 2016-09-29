@@ -174,7 +174,7 @@ class SpringN1QLQueryLatency(SpringLatency):
             key, ttl = self.new_keys.next(curr_items=self.curr_items)
             key = "stat" + key[5:]
 
-        elif self.n1ql_op == 'delete' or self.n1ql_op == 'update':
+        elif self.n1ql_op == 'update':
             self.curr_items += 1
             key, ttl = self.new_keys.next(curr_items=self.curr_items)
             key = "stat" + key[5:]
@@ -211,31 +211,9 @@ class SpringN1QLQueryLatency(SpringLatency):
             _, latency = client.query(query)
             return 1000 * latency  # s -> ms
 
-        elif self.n1ql_op == 'rangedelete':
-            if not self.smallcappedinit:
-                logger.info("Initiating load for range update latency collection")
-                for i in range(10000):
-                    key, ttl = self.new_keys.next(curr_items=self.curr_items)
-                    key = "stat" + key[5:]
-                    doc = self.new_docs.next(key)
-                    doc['key'] = key
-                    doc['bucket'] = bucket
-                    doc['capped_small'] = "stat" + str(i / 100)
-                    kvclient.create(key, doc)
-                    self.curr_items += 1
-                self.smallcappedinit = True
-                logger.info("Completed load for range delete latency collection")
-                return 0
-            key, ttl = self.new_keys.next(curr_items=self.curr_items)
-            key = "stat" + key[5:]
-            doc = self.new_docs.next(key)
-            doc['capped_small'] = "stat" + str(self.cappedcounter)
-            query = self.new_queries.next(doc)
-            _, latency = client.query(query)
-            self.cappedcounter += 1
-            return 1000 * latency  # s -> ms
         else:
             key = self.existing_keys.next(curr_items=self.items, curr_deletes=0)
+
         doc = self.new_docs.next(key)
         doc['key'] = key
         doc['bucket'] = bucket

@@ -363,13 +363,23 @@ class ViewWorkerFactory(object):
         return ViewWorker, workload_settings.query_workers
 
 
-class QueryWorker(Worker):
+class ViewWorker(Worker):
 
-    NAME = 'query-worker'
+    NAME = 'view-worker'
 
     def __init__(self, workload_settings, target_settings, shutdown_event):
-        super(QueryWorker, self).__init__(workload_settings, target_settings,
-                                          shutdown_event)
+        super(ViewWorker, self).__init__(workload_settings, target_settings,
+                                         shutdown_event)
+
+        self.total_workers = self.ws.query_workers
+        self.throughput = self.ws.query_throughput
+
+        if workload_settings.index_type is None:
+            self.new_queries = ViewQueryGen(workload_settings.ddocs,
+                                            workload_settings.qparams)
+        else:
+            self.new_queries = ViewQueryGenByType(workload_settings.index_type,
+                                                  workload_settings.qparams)
 
     @with_sleep
     def do_batch(self):
@@ -410,22 +420,6 @@ class QueryWorker(Worker):
             logger.info('Interrupted: {}-{}, {}'.format(self.NAME, self.sid, e))
         else:
             logger.info('Finished: {}-{}'.format(self.NAME, self.sid))
-
-
-class ViewWorker(QueryWorker):
-
-    def __init__(self, workload_settings, target_settings, shutdown_event):
-        super(ViewWorker, self).__init__(workload_settings, target_settings,
-                                         shutdown_event)
-        self.total_workers = self.ws.query_workers
-        self.throughput = self.ws.query_throughput
-
-        if workload_settings.index_type is None:
-            self.new_queries = ViewQueryGen(workload_settings.ddocs,
-                                            workload_settings.qparams)
-        else:
-            self.new_queries = ViewQueryGenByType(workload_settings.index_type,
-                                                  workload_settings.qparams)
 
 
 class N1QLWorkerFactory(object):

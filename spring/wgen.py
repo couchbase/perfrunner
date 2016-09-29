@@ -1,6 +1,7 @@
 import logging
 import os
 import time
+from collections import defaultdict
 from multiprocessing import Event, Lock, Process, Value
 
 from couchbase.exceptions import ValueFormatError
@@ -31,6 +32,7 @@ from spring.docgen import (
     SequentialHotKey,
 )
 from spring.querygen import N1QLQueryGen, ViewQueryGen, ViewQueryGenByType
+from spring.reservoir import Reservoir
 
 
 @decorator
@@ -466,6 +468,8 @@ class N1QLWorker(Worker):
         self.cb = N1QLGen(bucket=self.ts.bucket, password=self.ts.password,
                           host=host, port=port)
 
+        self.reservoir = Reservoir(num_workers=workload_settings.n1ql_workers)
+
     @with_sleep
     def do_batch(self):
         if self.ws.n1ql_op == 'read':
@@ -479,7 +483,8 @@ class N1QLWorker(Worker):
                 doc['key'] = key
                 doc['bucket'] = self.ts.bucket
                 query = self.new_queries.next(doc)
-                self.cb.query(query)
+                _, latency = self.cb.query(query)
+                self.reservoir.update(latency)
             return
 
         curr_items_tmp = curr_items_spot = self.curr_items.value
@@ -501,8 +506,8 @@ class N1QLWorker(Worker):
                 doc['key'] = key
                 doc['bucket'] = self.ts.bucket
                 query = self.new_queries.next(doc)
-                self.cb.query(query)
-
+                _, latency = self.cb.query(query)
+                self.reservoir.update(latency)
         elif self.ws.n1ql_op == 'update':
             for _ in range(self.BATCH_SIZE):
                 key = self.keys_for_casupdate.next(self.sid, curr_items_spot,
@@ -511,8 +516,8 @@ class N1QLWorker(Worker):
                 doc['key'] = key
                 doc['bucket'] = self.ts.bucket
                 query = self.new_queries.next(doc)
-                self.cb.query(query)
-
+                _, latency = self.cb.query(query)
+                self.reservoir.update(latency)
         elif self.ws.n1ql_op == 'rangeupdate':
             for _ in range(self.BATCH_SIZE):
                 key = self.keys_for_casupdate.next(self.sid, curr_items_spot,
@@ -521,7 +526,8 @@ class N1QLWorker(Worker):
                 doc['key'] = key
                 doc['bucket'] = self.ts.bucket
                 query = self.new_queries.next(doc)
-                self.cb.query(query)
+                _, latency = self.cb.query(query)
+                self.reservoir.update(latency)
 
     def run(self, sid, lock, curr_queries, curr_items, deleted_items,
             cas_updated_items):
@@ -549,6 +555,8 @@ class N1QLWorker(Worker):
             logger.info('Interrupted: {}-{}-{}'.format(self.NAME, self.sid, e))
         else:
             logger.info('Finished: {}-{}'.format(self.NAME, self.sid))
+
+        self.reservoir.dump(filename='{}-{}'.format(self.NAME, self.sid))
 
 
 class FtsWorkerFactory(object):
@@ -657,14 +665,14 @@ class WorkloadGen(object):
         self.ts = target_settings
         self.timer = timer
         self.shutdown_event = timer and Event() or None
-        self.workers = {}
+        self.worker_processes = defaultdict(list)
 
     def start_workers(self, worker_factory, name, curr_items=None,
                       deleted_items=None, cas_updated_items=None):
         curr_ops = Value('L', 0)
         lock = Lock()
         worker_type, total_workers = worker_factory(self.ws)
-        self.workers[name] = list()
+
         for sid in range(total_workers):
             if curr_items is None and deleted_items is None:
                 args = (sid, lock)
@@ -673,18 +681,21 @@ class WorkloadGen(object):
                         cas_updated_items)
             else:
                 args = (sid, lock, curr_ops, curr_items, deleted_items)
+
             worker = worker_type(self.ws, self.ts, self.shutdown_event)
-            worker_process = Process(target=worker.run, args=tuple(args))
+
+            worker_process = Process(target=worker.run, args=args)
             worker_process.start()
-            self.workers[name].append(worker_process)
+            self.worker_processes[name].append(worker_process)
+
             if getattr(self.ws, 'async', False):
                 time.sleep(2)
 
     def wait_for_all_workers(self):
-        for workers in self.workers.values():
-            for worker in workers:
-                worker.join()
-                if worker.exitcode:
+        for processes in self.worker_processes.values():
+            for process in processes:
+                process.join()
+                if process.exitcode:
                     logger.interrupt('Worker finished with non-zero exit code')
 
     def run(self):

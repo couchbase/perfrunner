@@ -126,8 +126,10 @@ class RemoteWorkerManager(object):
             sleep(self.RACE_DELAY)
 
     def wait_for_workers(self):
+        logger.info('Waiting for workers to finish')
         for worker in self.workers:
             worker.wait()
+        logger.info('All workers are done')
 
     def terminate(self):
         for worker, master in zip(self.cluster_spec.workers,

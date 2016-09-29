@@ -65,6 +65,8 @@ class N1QLTest(PerfTest):
     def access(self, access_settings=None):
         super(N1QLTest, self).timer()
 
+        self.worker_manager.wait_for_workers()
+
     def run(self):
         """Important: the test creates two data sets with different key
         prefixes.

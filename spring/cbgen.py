@@ -188,9 +188,12 @@ class N1QLGen(CBGen):
     def query(self, query, *args):
         creds = '[{{"user":"local:{}","pass":"{}"}}]'.format(self.bucket,
                                                              self.password)
-
         query['creds'] = creds
-        connection = choice(self.connections)
+
+        if len(self.connections) > 1:
+            connection = choice(self.connections)
+        else:
+            connection = self.connections[0]  # Faster than redundant choice
 
         t0 = time()
         response = connection.request('POST', '/query/service', fields=query,

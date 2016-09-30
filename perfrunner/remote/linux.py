@@ -1,3 +1,4 @@
+import json
 import os.path
 import time
 from random import uniform
@@ -12,6 +13,7 @@ from perfrunner.remote import Remote
 from perfrunner.remote.context import (
     all_hosts,
     all_kv_nodes,
+    kv_node_cbindexperf,
     single_client,
     single_host,
 )
@@ -404,3 +406,42 @@ class RemoteLinux(Remote):
         remote_path = os.path.join('/tmp', filename)
         put(config, remote_path)
         return run('fio --minimal {}'.format(remote_path))
+
+    @kv_node_cbindexperf
+    def kill_process_on_kv_nodes(self, process, **kwargs):
+        cmd = "killall -9 {}{}".format(process, kwargs["host_num"])
+        logger.info("Running command: {}".format(cmd))
+        run(cmd, warn_only=True, quiet=True)
+
+    @kv_node_cbindexperf
+    def run_cbindexperf(self, index_node, config_data, concurrency, **kwargs):
+
+        def modify_json_file(per_node_conn):
+            config_data["Concurrency"] = per_node_conn
+            with open('/tmp/config_template.json', 'w') as config_file:
+                json.dump(config_data, config_file)
+
+        host_num = kwargs["host_num"]
+        per_node_concurrency = concurrency / len(self.kv_hosts)
+        logger.info("Per node concurrency: {}".format(per_node_concurrency))
+        modify_json_file(per_node_concurrency)
+
+        executable = "/opt/couchbase/bin/cbindexperf{}".format(host_num)
+
+        copy_cmd = "cp /opt/couchbase/bin/cbindexperf {}".format(executable)
+        run(copy_cmd)
+
+        cmdstr = "{} -cluster {} -auth=Administrator:password " \
+                 "-configfile /tmp/config_template.json -resultfile result.json" \
+                 " -statsfile /root/statsfile &> /tmp/cbindexperf.log &" \
+            .format(executable, index_node)
+
+        with open("/tmp/config_template.json") as f:
+            file_data = f.read()
+        create_file_cmd = "echo '{}' > /tmp/config_template.json".format(file_data)
+        logger.info("Calling command: {}".format(create_file_cmd))
+        run(create_file_cmd)
+
+        logger.info("Calling command: {}".format(cmdstr))
+        result = run(cmdstr, pty=False)
+        return result

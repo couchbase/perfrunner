@@ -5,6 +5,7 @@ import time
 import numpy as np
 from logger import logger
 
+from cbagent.stores import SerieslyStore
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import PerfTest
 
@@ -41,6 +42,9 @@ class SecondaryIndexTest(PerfTest):
         self.indexes = []
         self.secondaryDB = None
         self.configfile = self.test_config.secondaryindex_settings.cbindexperf_configfile
+        self.init_num_connections = self.test_config.secondaryindex_settings.init_num_connections
+        self.step_num_connections = self.test_config.secondaryindex_settings.step_num_connections
+        self.max_num_connections = self.test_config.secondaryindex_settings.max_num_connections
 
         if self.test_config.secondaryindex_settings.db == 'moi':
             self.secondaryDB = 'memdb'
@@ -170,6 +174,18 @@ class SecondaryIndexTest(PerfTest):
                 self.access_bg()
             else:
                 self.access()
+
+    @staticmethod
+    def get_data_from_config_json(config_file_name):
+        with open(config_file_name) as fh:
+            return json.load(fh)
+
+    def validate_num_connections(self):
+        db = SerieslyStore.build_dbname(self.metric_helper.cluster_names[0], None, None, None, "secondary_debugstats")
+        config_data = self.get_data_from_config_json(self.configfile)
+        ret = self.metric_helper.verify_series_in_limits(db, config_data["Concurrency"], "num_connections")
+        if not ret:
+            raise Exception('Validation for num_connections failed')
 
 
 class InitialSecondaryIndexTest(SecondaryIndexTest):
@@ -343,6 +359,7 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
             self.reporter.post_to_sf(
                 round(scanthr, 1)
             )
+        self.validate_num_connections()
 
 
 class SecondaryIndexingThroughputRebalanceTest(SecondaryIndexingThroughputTest):
@@ -385,6 +402,7 @@ class SecondaryIndexingThroughputRebalanceTest(SecondaryIndexingThroughputTest):
             self.reporter.post_to_sf(
                 round(scanthr, 1)
             )
+        self.validate_num_connections()
 
 
 class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
@@ -431,6 +449,7 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
             self.reporter.post_to_sf(
                 *self.metric_helper.calc_secondaryscan_latency(percentile=80)
             )
+        self.validate_num_connections()
 
 
 class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest):
@@ -479,6 +498,7 @@ class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest
             self.reporter.post_to_sf(
                 *self.metric_helper.calc_secondaryscan_latency(percentile=80)
             )
+        self.validate_num_connections()
 
 
 class SecondaryIndexingLatencyTest(SecondaryIndexTest):
@@ -528,3 +548,56 @@ class SecondaryIndexingLatencyTest(SecondaryIndexTest):
 
         if self.test_config.stats_settings.enabled:
             self.reporter.post_to_sf(indexing_latency_percentile_80)
+
+
+class SecondaryNumConnectionsTest(SecondaryIndexTest):
+    """
+    This test applies scan workload against a 2i server and measures
+    the number of connections it can create.
+    """
+
+    def __init__(self, *args):
+        super(SecondaryNumConnectionsTest, self).__init__(*args)
+        self.curr_connections = self.init_num_connections
+        self.config_data = self.get_data_from_config_json('tests/gsi/config_template.json')
+
+    def _report_kpi(self, connections):
+        if self.test_config.stats_settings.enabled:
+            self.reporter.post_to_sf(
+                *self.metric_helper.indexer_connections(max_connections=connections)
+            )
+
+    @with_stats
+    def apply_scanworkload_steps(self):
+        logger.info('Initiating scan workload with stats output')
+        while self.curr_connections <= self.max_num_connections:
+            try:
+                self.curr_connections = (self.curr_connections / len(self.remote.kv_hosts)) * len(self.remote.kv_hosts)
+                logger.info("try for num-connections: {}".format(self.curr_connections))
+                self.remote.run_cbindexperf(self.index_nodes[0], self.config_data, self.curr_connections)
+                status = self.monitor.wait_for_num_connections(self.index_nodes[0].split(':')[0], self.curr_connections)
+            except Exception as e:
+                logger.info("Got error {}".format(e.message))
+                status = False
+                break
+            finally:
+                self.remote.kill_process_on_kv_nodes("cbindexperf")
+            time.sleep(5)
+            self.curr_connections += self.step_num_connections
+            if not status:
+                break
+        ret_val = self.curr_connections - self.step_num_connections
+        if not status:
+            ret_val -= self.step_num_connections
+        return ret_val if ret_val > self.init_num_connections else 0
+
+    def run(self):
+        self.run_load_for_2i()
+        self.wait_for_persistence()
+        self.compact_bucket()
+        self.build_secondaryindex()
+
+        connections = self.apply_scanworkload_steps()
+        logger.info('Connections: {}'.format(connections))
+
+        self.report_kpi(connections)

@@ -517,3 +517,8 @@ class RestHelper(object):
             host_data = self.get(url=api.format(host))
             data.update(host_data.json())
         return data
+
+    def get_index_num_connections(self, host):
+        api = 'http://{}:9102/stats'.format(host)
+        response = self.get(url=api).json()
+        return response['num_connections']

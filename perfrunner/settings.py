@@ -604,6 +604,9 @@ class SecondaryIndexSettings(object):
     DB = ''
     STALE = 'true'
     CBINDEXPERF_CONFIGFILE = ''
+    INIT_NUM_CONNECTIONS = 0
+    STEP_NUM_CONNECTIONS = 0
+    MAX_NUM_CONNECTIONS = 0
 
     def __init__(self, options):
         self.name = options.get('name', self.NAME)
@@ -612,6 +615,9 @@ class SecondaryIndexSettings(object):
         self.stale = options.get('stale', self.STALE)
         self.indexes = self.name.split(",") if self.name is not self.NAME else []
         self.cbindexperf_configfile = options.get('cbindexperf_configfile', self.CBINDEXPERF_CONFIGFILE)
+        self.init_num_connections = int(options.get('init_num_connections', self.INIT_NUM_CONNECTIONS))
+        self.step_num_connections = int(options.get('step_num_connections', self.STEP_NUM_CONNECTIONS))
+        self.max_num_connections = int(options.get('max_num_connections', self.MAX_NUM_CONNECTIONS))
         for name in self.name.split(","):
             index_partition_name = "index_{}_partitions".format(name)
             val = str(options.get(index_partition_name, ''))

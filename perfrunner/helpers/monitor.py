@@ -260,3 +260,15 @@ class Monitor(RestHelper):
                 break
         curr_num_indexed = get_num_docs_indexed()
         logger.info("Number of Items indexed {}".format(curr_num_indexed))
+
+    def wait_for_num_connections(self, index_node, expected_connections):
+        curr_connections = self.get_index_num_connections(index_node)
+        retry = 1
+        while curr_connections < expected_connections and retry < self.MAX_RETRY:
+            time.sleep(self.POLLING_INTERVAL_INDEXING)
+            curr_connections = self.get_index_num_connections(index_node)
+            logger.info("Got current connections {}".format(curr_connections))
+            retry += 1
+        if retry == self.MAX_RETRY:
+            return False
+        return True

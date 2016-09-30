@@ -308,6 +308,11 @@ class MetricHelper(object):
 
         return round(secondaryscan_latency, 2), metric, metric_info
 
+    def indexer_connections(self, max_connections):
+        metric = '{}_{}'.format(self.test_config.name, self.cluster_spec.name)
+        metric_info = self._get_metric_info(self.metric_title)
+        return max_connections, metric, metric_info
+
     def calc_kv_latency(self, operation, percentile, dbname='spring_latency'):
         metric = '{}_{}_{}th_{}'.format(self.test_config.name,
                                         operation,
@@ -510,3 +515,18 @@ class MetricHelper(object):
         metric_info = self._get_metric_info(title)
 
         return size, metric, metric_info
+
+    def verify_series_in_limits(self, db, expected_number, metric, larger_is_better=False):
+        values = []
+        data = self.seriesly[db].get_all()
+        values += [value[metric] for value in data.values()]
+        values = map(float, values)
+        logger.info("Number of samples for {} are {}".format(metric, len(values)))
+        logger.info("Sample values: {}".format(values))
+
+        if larger_is_better and any(value < expected_number for value in values):
+                return False
+        else:
+            if any(value > expected_number for value in values):
+                return False
+        return True

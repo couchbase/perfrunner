@@ -99,7 +99,11 @@ class MetricHelper(object):
         total_queries = self.parse_log(self.test_config, name)
         time_taken = self.test_config.access_settings.time
         qps = total_queries / time_taken
-        return round(qps, 1), metric, metric_info
+        if qps < 10:
+            qps = round(qps, 2)
+        else:
+            qps = round(qps)
+        return qps, metric, metric_info
 
     def calc_latency_ftses_queries(self, percentile, dbname,
                                    metrics, orderbymetric, name='FTS'):

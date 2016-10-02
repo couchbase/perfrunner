@@ -98,8 +98,8 @@ class MetricHelper(object):
                                             orderbymetric=orderbymetric)
         total_queries = self.parse_log(self.test_config, name)
         time_taken = self.test_config.access_settings.time
-        qps = total_queries / time_taken
-        if qps < 10:
+        qps = total_queries / float(time_taken)
+        if qps < 100:
             qps = round(qps, 2)
         else:
             qps = round(qps)

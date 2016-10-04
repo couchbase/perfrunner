@@ -28,7 +28,7 @@ snapshot = /home/snapshots/500M_800B
 [load]
 items = 500000000
 size = 800
-workers = 40
+workers = 80
 
 [hot_load]
 items = 500000000

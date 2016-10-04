@@ -21,10 +21,9 @@ view_percentage = 100
 snapshot = /home/snapshots/500M_800B
 
 [load]
-ops = 500000000
+items = 500000000
 size = 800
-workers = 40
-async = 1
+workers = 80
 
 [xdcr]
 replication_type = unidir

@@ -14,8 +14,8 @@ replica_number = 0
 time_synchronization = enabledWithoutDrift
 
 [xdcr_cluster]
-sourceNozzlePerNode = 64
-targetNozzlePerNode = 64
+sourceNozzlePerNode = 4
+targetNozzlePerNode = 4
 optimisticReplicationThreshold = 10240
 
 [compaction]

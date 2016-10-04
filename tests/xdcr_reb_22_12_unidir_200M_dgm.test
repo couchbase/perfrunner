@@ -10,8 +10,8 @@ initial_nodes = 2 1
 num_buckets = 1
 
 [xdcr_cluster]
-sourceNozzlePerNode = 64
-targetNozzlePerNode = 64
+sourceNozzlePerNode = 4
+targetNozzlePerNode = 4
 
 [compaction]
 db_percentage = 10

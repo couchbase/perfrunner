@@ -12,16 +12,15 @@ mem_quota = 204800
 initial_nodes = 5 5
 num_buckets = 2
 
+[bucket]
+time_synchronization = enabledWithoutDrift
+
 [xdcr_cluster]
-sourceNozzlePerNode = 64
-targetNozzlePerNode = 64
-optimisticReplicationThreshold = 0
+sourceNozzlePerNode = 4
+targetNozzlePerNode = 4
 
 [compaction]
 db_percentage = 10
-
-[bucket]
-time_synchronization = enabledWithoutDrift
 
 [restore]
 snapshot = /home/snapshots/500M_800B

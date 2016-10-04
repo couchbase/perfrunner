@@ -66,7 +66,6 @@ class YCSBWorker(object):
         with open(filename, "r") as txt:
             for line in txt:
                 self.pattern(line)
-        txt.close()
 
     def run(self):
         processes = [Process(target=self.task, args=(x,)) for x in range(self.workers)]

@@ -25,7 +25,6 @@ from spring_latency import (
     SpringLatency,
     SpringQueryLatency,
     SpringSubdocLatency,
-    SpringN1QLQueryLatency,
 )
 from typeperf import TypePerf
 from xdcr_lag import XdcrLag

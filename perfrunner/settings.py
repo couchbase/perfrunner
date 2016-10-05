@@ -747,6 +747,7 @@ class FtsSettings(object):
         self.storage = options.get("backup_path")
         self.repo = options.get("repo_path")
         self.field = options.get("field", None)
+        self.index_configfile = options.get("index_configfile", None)
 
     def __str__(self):
         return str(self.__dict__)

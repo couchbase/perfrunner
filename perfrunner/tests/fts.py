@@ -9,58 +9,6 @@ from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import PerfTest
 
 
-class INDEXDEF:
-    INDEX = {
-        "type": "fulltext-index",
-        "name": "",
-        "uuid": "",
-        "sourceType": "couchbase",
-        "sourceName": "",
-        "sourceUUID": "",
-        "planParams": {
-            "maxPartitionsPerPIndex": 32,
-            "numReplicas": 0,
-            "hierarchyRules": None,
-            "nodePlanParams": None,
-            "pindexWeights": None,
-            "planFrozen": False
-        },
-        "params": {
-            "doc_config": {
-                "mode": "type_field",
-                "type_field": "type"
-            },
-            "mapping": {
-                "default_analyzer": "simple",
-                "default_datetime_parser": "dateTimeOptional",
-                "default_field": "_all",
-                "default_mapping": {
-                    "display_order": "0",
-                    "dynamic": True,
-                    "enabled": True
-                },
-                "default_type": "_default",
-                "index_dynamic": True,
-                "store_dynamic": False,
-                "type_field": "type"
-            },
-            "store": {
-                "kvStoreName": "mossStore"
-            }
-        },
-        "sourceParams": {
-            "clusterManagerBackoffFactor": 0,
-            "clusterManagerSleepInitMS": 0,
-            "clusterManagerSleepMaxMS": 2000,
-            "dataManagerBackoffFactor": 0,
-            "dataManagerSleepInitMS": 0,
-            "dataManagerSleepMaxMS": 2000,
-            "feedBufferAckThreshold": 0,
-            "feedBufferSizeBytes": 0
-        }
-    }
-
-
 class FTStest(PerfTest):
 
     """
@@ -75,7 +23,7 @@ class FTStest(PerfTest):
     def __init__(self, cluster_spec, test_config, verbose):
         super(FTStest, self).__init__(cluster_spec, test_config, verbose)
 
-        self.index_definition = INDEXDEF.INDEX
+        self.index_definition = self.get_json_from_file(self.test_config.fts_settings.index_configfile)
         self.host_port = [x for x in self.cluster_spec.yield_servers()][0]
         self.host = self.host_port.split(':')[0]
         self.fts_port = 8094
@@ -89,6 +37,11 @@ class FTStest(PerfTest):
         self.index_time_taken = 0
         self.auth = HTTPBasicAuth('Administrator', 'password')
         self.orderbymetric = self.test_config.fts_settings.orderby
+
+    @staticmethod
+    def get_json_from_file(file_name):
+        with open(file_name) as fh:
+            return json.load(fh)
 
     @with_stats
     def access(self):

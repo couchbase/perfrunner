@@ -9,7 +9,7 @@ from logger import logger
 from sqlalchemy import create_engine
 
 from perfrunner import celerylocal, celeryremote
-from perfrunner.helpers.misc import log_phase
+from perfrunner.helpers.misc import log_phase, uhex
 from perfrunner.settings import REPO
 from perfrunner.workloads.pillowfight import Pillowfight
 from spring.wgen import WorkloadGen
@@ -62,8 +62,7 @@ class RemoteWorkerManager(object):
         self.cluster_spec = cluster_spec
         self.buckets = test_config.buckets
 
-        self.reuse_worker = test_config.worker_settings.reuse_worker
-        self.temp_dir = test_config.worker_settings.worker_dir
+        self.temp_dir = '/tmp/{}'.format(uhex()[:12])
         logger.info("Using prefix for temp_dir (worker_dir): {}".format(self.temp_dir))
         self.user, self.password = cluster_spec.client_credentials
         with settings(user=self.user, password=self.password):
@@ -80,13 +79,6 @@ class RemoteWorkerManager(object):
 
                 qname = '{}-{}'.format(master.split(':')[0], bucket)
                 temp_dir = '{}-{}'.format(self.temp_dir, qname)
-
-                r = run('test -d {}'.format(temp_dir), warn_only=True, quiet=True)
-                if r.return_code == 0:
-                    if self.reuse_worker == 'true':
-                        return
-                    logger.error('Worker env exists, but reuse not specified')
-                    sys.exit(1)
 
                 run('mkdir {}'.format(temp_dir))
                 with cd(temp_dir):
@@ -143,8 +135,7 @@ class RemoteWorkerManager(object):
                     logger.info('Cleaning up remote worker environment')
                     qname = '{}-{}'.format(master.split(':')[0], bucket)
                     temp_dir = '{}-{}'.format(self.temp_dir, qname)
-                    if self.reuse_worker == 'false':
-                        run('rm -fr {}'.format(temp_dir))
+                    run('rm -fr {}'.format(temp_dir))
 
 
 class LocalWorkerManager(RemoteWorkerManager):

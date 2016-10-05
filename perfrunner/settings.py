@@ -4,8 +4,6 @@ import os.path
 from decorator import decorator
 from logger import logger
 
-from perfrunner.helpers.misc import uhex
-
 from six.moves.configparser import (
     NoOptionError,
     NoSectionError,
@@ -253,11 +251,6 @@ class TestConfig(Config):
     @property
     def xdcr_cluster_settings(self):
         return self._get_options_as_dict('xdcr_cluster')
-
-    @property
-    def worker_settings(self):
-        options = self._get_options_as_dict('worker_settings')
-        return WorkerSettings(options)
 
     @property
     def fts_settings(self):
@@ -715,19 +708,6 @@ class BackupSettings(object):
 
     def __init__(self, options):
         self.compression = int(options.get('compression', self.COMPRESSION))
-
-
-class WorkerSettings(object):
-
-    REUSE_WORKSPACE = 'false'
-    WORKSPACE_DIR = '/tmp/{}'.format(uhex()[:12])
-
-    def __init__(self, options):
-        self.reuse_worker = options.get('reuse_workspace', self.REUSE_WORKSPACE)
-        self.worker_dir = options.get('workspace_location', self.WORKSPACE_DIR)
-
-    def __str__(self):
-        return str(self.__dict__)
 
 
 class FtsSettings(object):

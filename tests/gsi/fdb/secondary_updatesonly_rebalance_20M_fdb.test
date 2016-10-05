@@ -24,7 +24,7 @@ name = myindex
 field = alt_email
 indexer.settings.storage_mode = forestdb
 indexer.settings.gc_percent = 200
-indexer.settings.max_cpu_percent = 4800
+indexer.settings.max_cpu_percent = 2400
 
 [access]
 updates = 100

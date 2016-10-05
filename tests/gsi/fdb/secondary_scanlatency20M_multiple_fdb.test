@@ -25,7 +25,7 @@ field = alt_email,city,name,coins,achievements
 cbindexperf_configfile = tests/gsi/fdb/config/config_scanlatency_multiple_fdb.json
 indexer.settings.storage_mode = forestdb
 indexer.settings.gc_percent = 200
-indexer.settings.max_cpu_percent = 4800
+indexer.settings.max_cpu_percent = 2400
 
 [access]
 creates = 1

@@ -1,4 +1,4 @@
-[test_case]
+2400[test_case]
 test = perfrunner.tests.secondary.SecondaryIndexingThroughputTest
 title = Secondary index scan stale=false throughput (scanps), 1 bucket x 20M x 1KB, 18K ops/sec, 3.6K mutations/sec, single index, FDB
 summary = Secondary index scan stale=false throughput test, 4 KV, 1 indexer, 1 bucket x 20M x 1KB, 18K ops/sec, 3.6K mutations/sec, single index, FDB
@@ -26,7 +26,7 @@ stale = false
 cbindexperf_configfile = tests/gsi/fdb/config/config_scanthr_sessionconsistent_fdb.json
 indexer.settings.storage_mode = forestdb
 indexer.settings.gc_percent = 200
-indexer.settings.max_cpu_percent = 4800
+indexer.settings.max_cpu_percent = 2400
 
 [access]
 creates = 1

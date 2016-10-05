@@ -21,12 +21,12 @@ from cbagent.collectors import (
     Net,
     NSServer,
     ObserveLatency,
+    ReservoirN1QLLatency,
     SecondaryDebugStats,
     SecondaryDebugStatsBucket,
     SecondaryLatencyStats,
     SecondaryStats,
     SpringLatency,
-    SpringN1QLQueryLatency,
     SpringQueryLatency,
     SpringSubdocLatency,
     TypePerf,
@@ -57,6 +57,7 @@ def with_stats(method, *args, **kwargs):
 
     if stats_enabled:
         test.cbagent.stop()
+        test.cbagent.reconstruct()
         if test.test_config.stats_settings.add_snapshots:
             test.cbagent.add_snapshot(method.__name__, from_ts, to_ts)
             test.snapshots = test.cbagent.snapshots
@@ -159,7 +160,7 @@ class CbAgent(object):
         if query_latency:
             self.prepare_query_latency(clusters, test)
         if n1ql_latency:
-            self.prepare_n1ql_latency(clusters, test)
+            self.prepare_n1ql_latency(clusters)
         if secondary_stats:
             self.prepare_secondary_stats(clusters)
         if secondary_debugstats:
@@ -376,17 +377,13 @@ class CbAgent(object):
                                    index_type=index_type)
             )
 
-    def prepare_n1ql_latency(self, clusters, test):
-        default_queries = test.test_config.access_settings.n1ql_queries
-        self.settings.new_n1ql_queries = getattr(test, 'n1ql_queries',
-                                                 default_queries)
+    def prepare_n1ql_latency(self, clusters):
         for cluster in clusters:
             settings = copy(self.settings)
-            settings.interval = self.lat_interval
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
             self.collectors.append(
-                SpringN1QLQueryLatency(settings, test.workload, prefix='n1ql')
+                ReservoirN1QLLatency(settings)
             )
 
     def prepare_fts_latency(self, clusters, test):
@@ -448,6 +445,12 @@ class CbAgent(object):
     def stop(self):
         logger.info('Terminating stats collectors')
         map(lambda p: p.terminate(), self.processes)
+
+    def reconstruct(self):
+        logger.info('Reconstructing measurements')
+        for collector in self.collectors:
+            if hasattr(collector, 'reconstruct'):
+                collector.reconstruct()
 
     def trigger_reports(self, snapshot):
         for report_type in ('html', ):

@@ -35,12 +35,12 @@ class SerieslyStore(object):
             logger.interrupt("seriesly not available: {}".format(e))
         else:
             if db_name not in existing_dbs:
-                logger.info("Creating new database: {}".format(db_name))
+                logger.info("Creating a new database: {}".format(db_name))
                 self.seriesly.create_db(db_name)
             return self.seriesly[db_name]
 
     def append(self, data, cluster=None, server=None, bucket=None, index=None,
-               collector=None):
+               collector=None, timestamp=None):
         db_name = self.build_dbname(cluster, server, bucket, index, collector)
         db = self._get_db(db_name)
-        db.append(data)
+        db.append(data, timestamp=timestamp)

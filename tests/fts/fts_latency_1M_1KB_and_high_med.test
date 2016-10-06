@@ -22,7 +22,7 @@ orderby = q0b00000100
 backup_path = /home/backup
 repo_path = wiki1M
 field = text
-index_configfile = tests/fts/index/fts_vectors_off.json
+index_configfile = tests/fts/index/fts_tvectors_off.json
 
 [cluster]
 mem_quota = 51024

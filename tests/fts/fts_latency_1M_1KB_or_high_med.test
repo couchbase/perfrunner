@@ -28,4 +28,4 @@ orderby = q0b00000101
 backup_path = /home/backup
 repo_path = wiki1M
 field = text
-index_configfile = tests/fts/index/fts_vectors_off.json
+index_configfile = tests/fts/index/fts_tvectors_off.json

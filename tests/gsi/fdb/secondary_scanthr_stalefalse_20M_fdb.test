@@ -1,4 +1,4 @@
-2400[test_case]
+[test_case]
 test = perfrunner.tests.secondary.SecondaryIndexingThroughputTest
 title = Secondary index scan stale=false throughput (scanps), 1 bucket x 20M x 1KB, 18K ops/sec, 3.6K mutations/sec, single index, FDB
 summary = Secondary index scan stale=false throughput test, 4 KV, 1 indexer, 1 bucket x 20M x 1KB, 18K ops/sec, 3.6K mutations/sec, single index, FDB

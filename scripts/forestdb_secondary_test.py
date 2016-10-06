@@ -64,8 +64,9 @@ def hash_from_xml(xml_data):
     logger.info("Found revision {}".format(found))
     branch = found.get('@upstream', 'master')
     fdb_hash = found['@revision']
-    logger.info("Using branch {} hash {}".format(branch, fdb_hash))
-    return branch, fdb_hash
+    remote = found.get('@remote', 'couchbase')
+    logger.info("Using remote {}, branch {}, hash {}".format(remote, branch, fdb_hash))
+    return remote, branch, fdb_hash
 
 
 def clone_repo(repo):
@@ -74,9 +75,10 @@ def clone_repo(repo):
     run(cmd, pty=False)
 
 
-def compile_forestdb(branch, fdb_hash):
+def compile_forestdb(remote, branch, fdb_hash):
     with cd(args.remote_workdir):
-        clone_repo("https://github.com/couchbase/forestdb.git")
+        git_repo = "https://github.com/{}/forestdb.git".format(remote)
+        clone_repo(git_repo)
         with cd("forestdb"):
             # if not master, move to that branch.
             if branch != "master":
@@ -199,15 +201,13 @@ def cleanup_remote_workdir():
 
 
 def main():
-    xml_url = find_manifest()
+    xml_url = find_manifest() if not args.manifest_url else args.manifest_url
     xml_data = fetch_url(xml_url)
-    branch, fdb_hash = hash_from_xml(xml_data)
+    remote, branch, fdb_hash = hash_from_xml(xml_data)
 
     if not args.run_only:
         execute(cleanup_remote_workdir)
-    if not args.run_only:
-        fdb_path = execute(compile_forestdb, branch, fdb_hash)
-    if not args.run_only:
+        fdb_path = execute(compile_forestdb, remote, branch, fdb_hash)
         execute(compile_standalone_test, fdb_path)
     execute(run_standalone_test)
 
@@ -224,6 +224,7 @@ def get_args():
     parser.add_argument('--run-only', dest="run_only", action="store_true")
     parser.add_argument('--post-to-sf', dest="post_to_sf", type=int, default=0)
     parser.add_argument('--iniFile', dest="iniFile", default=None)
+    parser.add_argument('--manifest_url', dest="manifest_url", default=None)
 
     args = parser.parse_args()
 

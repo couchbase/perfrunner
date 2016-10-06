@@ -90,7 +90,6 @@ class N1QLTest(PerfTest):
         self.load(load_settings, iterator)
         self.load(load_settings)
         self.wait_for_persistence()
-        self.compact_bucket()
 
         self.build_index()
 

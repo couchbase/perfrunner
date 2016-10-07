@@ -1,0 +1,84 @@
+{
+  "type": "fulltext-index",
+  "name": "in3",
+  "uuid": "217ee66d81f9e699",
+  "sourceType": "couchbase",
+  "sourceName": "bucket-1",
+  "sourceUUID": "0810a418142f41a231b83db6ea612e73",
+  "planParams": {
+    "maxPartitionsPerPIndex": 32,
+    "numReplicas": 0,
+    "hierarchyRules": null,
+    "nodePlanParams": null,
+    "pindexWeights": null,
+    "planFrozen": false
+  },
+  "params": {
+    "doc_config": {
+      "mode": "type_field",
+      "type_field": "type"
+    },
+    "mapping": {
+      "default_analyzer": "standard",
+      "default_datetime_parser": "dateTimeOptional",
+      "default_field": "_all",
+      "default_mapping": {
+        "display_order": "0",
+        "dynamic": false,
+        "enabled": true,
+        "properties": {
+          "date": {
+            "dynamic": false,
+            "enabled": true,
+            "fields": [
+              {
+                "analyzer": "",
+                "date_format": "dateTimeOptional",
+                "display_order": "1",
+                "include_in_all": true,
+                "include_term_vectors": true,
+                "index": true,
+                "name": "date",
+                "store": false,
+                "type": "datetime"
+              }
+            ]
+          },
+          "text": {
+            "dynamic": false,
+            "enabled": true,
+            "fields": [
+              {
+                "analyzer": "simple",
+                "display_order": "0",
+                "include_in_all": true,
+                "include_term_vectors": false,
+                "index": true,
+                "name": "text",
+                "store": false,
+                "type": "text"
+              }
+            ]
+          }
+        }
+      },
+      "default_type": "_default",
+      "index_dynamic": true,
+      "store_dynamic": false,
+      "type_field": "type"
+    },
+    "store": {
+      "kvStoreName": "mossStore"
+    }
+  },
+  "sourceParams": {
+    "clusterManagerBackoffFactor": 0,
+    "clusterManagerSleepInitMS": 0,
+    "clusterManagerSleepMaxMS": 2000,
+    "dataManagerBackoffFactor": 0,
+    "dataManagerSleepInitMS": 0,
+    "dataManagerSleepMaxMS": 2000,
+    "feedBufferAckThreshold": 0,
+    "feedBufferSizeBytes": 0
+  }
+}

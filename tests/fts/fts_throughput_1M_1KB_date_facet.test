@@ -27,4 +27,4 @@ orderby = q0b00010000
 backup_path = /home/backup
 repo_path = datefacet
 field = date
-index_configfile = tests/fts/index/fts_tvectors_off.json
+index_configfile = tests/fts/index/fts_tvectors_off_datetime.json

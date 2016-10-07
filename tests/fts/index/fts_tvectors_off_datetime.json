@@ -1,10 +1,10 @@
 {
   "type": "fulltext-index",
-  "name": "in3",
-  "uuid": "217ee66d81f9e699",
+  "name": "",
+  "uuid": "",
   "sourceType": "couchbase",
-  "sourceName": "bucket-1",
-  "sourceUUID": "0810a418142f41a231b83db6ea612e73",
+  "sourceName": "",
+  "sourceUUID": "",
   "planParams": {
     "maxPartitionsPerPIndex": 32,
     "numReplicas": 0,

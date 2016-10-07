@@ -20,11 +20,6 @@ indexer.settings.max_cpu_percent = 2400
 indexer.settings.scan_timeout = 0
 indexer.settings.gc_percent = 200
 
-[bucket]
-replica_number = 1
-password =
-eviction_policy = valueOnly
-
 [load]
 items = 20000000
 size = 1024

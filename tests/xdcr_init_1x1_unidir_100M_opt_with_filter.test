@@ -14,7 +14,7 @@ replica_number = 0
 
 [xdcr_cluster]
 sourceNozzlePerNode = 4
-targetNozzlePerNode = 4
+targetNozzlePerNode = 64
 optimisticReplicationThreshold = 10240
 
 [compaction]

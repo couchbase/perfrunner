@@ -46,7 +46,9 @@ class FtsCollector(Collector):
             for metric in self.METRICS:
                 # the getattr is used to make code simple
                 # the metric name should be same as the method name
-                stats[metric] = getattr(self, metric)()
+                latency = getattr(self, metric)()
+                if latency:
+                    stats[metric] = latency
             return stats
 
     def update_metadata(self):
@@ -58,8 +60,14 @@ class FtsCollector(Collector):
             self.collect_stats()
             self.update_metric_metadata(self.METRICS)
             samples = self.measure()
-            self.store.append(samples, cluster=self.cluster,
-                              collector=self.COLLECTOR)
+            if samples:
+                self.store.append(samples, cluster=self.cluster,
+                                  collector=self.COLLECTOR)
+
+    def check_total_hits(self, r):
+        if self.fts_client.settings.elastic:
+            return r.json()["hits"]["total"] != 0
+        return r.json()['total_hits'] != 0
 
 
 class FtsLatency(FtsCollector):
@@ -74,8 +82,11 @@ class FtsLatency(FtsCollector):
     def cbft_latency_get(self):
         cmd, query = self.fts_client.next()
         t0 = time.time()
-        cmd(**query)
-        return 1000 * (time.time() - t0)
+        r = cmd(**query)
+        t1 = time.time()
+        if r.status_code in range(200, 203) and self.check_total_hits(r):
+            return 1000 * (t1 - t0)
+        return 0
 
 
 class FtsStats(FtsCollector):

@@ -157,7 +157,9 @@ class ElasticIndexTest(Elastictest):
             logger.info("Measuring the time it takes to index {} documents".format(self.elastic_doccount))
             self.index_test()
             self.reporter.post_to_sf(
-                *self.metric_helper.calc_ftses_index(self.index_time_taken, name=' Elasticsearch 1.7')
+                *self.metric_helper.calc_ftses_index(self.index_time_taken,
+                                                     orderbymetric=self.orderbymetric,
+                                                     name=' Elasticsearch 1.7')
             )
 
 

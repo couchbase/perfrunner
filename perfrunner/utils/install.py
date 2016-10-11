@@ -57,6 +57,7 @@ class CouchbaseInstaller(object):
             patterns = (
                 'couchbase-server-{edition}_{arch}_{version}-rel.setup.{pkg}',
                 'couchbase-server-{edition}_{version}-windows_{arch}.{pkg}',
+                'couchbase_server-{edition}-windows-{arch}-{version}.{pkg}',
             )
         else:
             patterns = ()  # Sentinel

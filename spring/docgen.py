@@ -203,7 +203,7 @@ class Document(Iterator):
         return int(alphabet[41], 16) % 3
 
     @staticmethod
-    def _build_achievements(alphabet, key=None):
+    def _build_achievements(alphabet):
         return build_achievements(alphabet) or [0]
 
     @staticmethod
@@ -229,7 +229,7 @@ class Document(Iterator):
             'realm': self._build_realm(alphabet),
             'coins': self._build_coins(alphabet),
             'category': self._build_category(alphabet),
-            'achievements': self._build_achievements(alphabet, key),
+            'achievements': self._build_achievements(alphabet),
             'body': self._build_body(alphabet, size),
         }
 
@@ -335,7 +335,7 @@ class ReverseLookupDocument(NestedDocument):
             'realm': self._build_realm(alphabet),
             'coins': self._build_coins(alphabet),
             'category': self._build_category(alphabet),
-            'achievements': self._build_achievements(alphabet, key),
+            'achievements': self._build_achievements(alphabet),
             'gmtime': self._build_gmtime(alphabet),
             'year': self._build_year(alphabet),
             'body': self._build_body(alphabet, size),
@@ -346,39 +346,74 @@ class ReverseLookupDocument(NestedDocument):
 
 class ArrayIndexingDocument(ReverseLookupDocument):
 
-    num_docs = 0
-    delta = 0
+    """ArrayIndexingDocument extends ReverseLookupDocument by adding two new
+    fields achievements1 and achievements2.
 
-    def __init__(self, avg_size, partitions, num_docs, delta=0):
+    achievements1 is a variable-length array (default length is 10). Every
+    instance of achievements1 is unique. This field is useful for single lookups.
+
+    achievements2 is a fixed-length array. Each instance of achievements2 is
+    repeated 100 times (ARRAY_CAP). This field is useful for range queries.
+    """
+
+    ARRAY_CAP = 100
+
+    NUM_ELEMENTS = 10
+
+    def __init__(self, avg_size, partitions, num_docs, is_random):
         super(ArrayIndexingDocument, self).__init__(avg_size, partitions)
-        ArrayIndexingDocument.num_docs = num_docs
-        ArrayIndexingDocument.delta = delta
+        self.num_docs = num_docs
+        self.is_random = is_random
 
-    @staticmethod
-    def _build_achievements1(alphabet, key):
-        spl = key.split('-')
-        if spl[0] == 'n1ql':
-            # these docs are never updated
-            return [((int(spl[1].lstrip('0')) - 1) * 10 + i +
-                     ArrayIndexingDocument.delta) for i in range(10)]
-        else:
-            # these docs are involved in updating
-            return [((int(spl[1].lstrip('0')) - 1) * 10 + i +
-                     ArrayIndexingDocument.num_docs * 10 +
-                     ArrayIndexingDocument.delta) for i in range(10)]
+    def _build_achievements1(self, seq_id):
+        """Every document reserves a range of numbers that can be used for a
+        new array.
 
-    @staticmethod
-    def _build_achievements2(alphabet, key):
-        spl = key.split('-')
-        if spl[0] == 'n1ql':
-            # these docs are never updated
-            return [((int(spl[1].lstrip('0')) // 100) * 10 + i +
-                     ArrayIndexingDocument.delta) for i in range(10)]
-        else:
-            # these docs are involved in updating
-            return [((int(spl[1].lstrip('0')) // 100) * 10 + i +
-                     ArrayIndexingDocument.num_docs * 10 +
-                     ArrayIndexingDocument.delta) for i in range(10)]
+        The left side of range is always based on sequential document ID.
+
+        Random arrays make a few additional steps:
+        * The range is shifted by the total number of documents so that static (
+        non-random) and random documents do not overlap.
+        * The range is doubled so that it's possible vary elements in a new
+        array.
+        * The left side of range is randomly shifted.
+
+        Here is an example of a new random array for seq_id=7, total 100
+        documents and 10 elements in array:
+            1) offset is set to 1000.
+            2) offset is incremented by 140.
+            3) offset is incremented by a random number (e.g., 5).
+            4) [1145, 1146, 1147, 1148, 1149, 1150, 1151, 1152, 1153, 1154]
+        array is generated.
+
+        Steps for seq_id=8 are the following:
+            1) offset is set to 1000.
+            2) offset is incremented by 160.
+            3) offset is incremented by a random number (e.g., 2).
+           4) [1162, 1163, 1164, 1165, 1166, 1167, 1168, 1169, 1170, 1171]
+        array is generated.
+        """
+        offset = seq_id * self.NUM_ELEMENTS
+        if self.is_random:
+            offset = self.num_docs * self.NUM_ELEMENTS
+            offset += 2 * seq_id * self.NUM_ELEMENTS
+            offset += random.randint(1, self.NUM_ELEMENTS)
+
+        return [offset + i for i in range(self.NUM_ELEMENTS)]
+
+    def _build_achievements2(self, seq_id):
+        """achievements2 is very similar to achievements1. However, in case of
+        achievements2 ranges overlap so that multiple documents case satisfy the
+        same queries. Overlapping is achieving by integer division using
+        ARRAY_CAP constant.
+        """
+        offset = seq_id / self.ARRAY_CAP * self.NUM_ELEMENTS
+        if self.is_random:
+            offset = self.num_docs * self.NUM_ELEMENTS
+            offset += (2 * seq_id) / self.ARRAY_CAP * self.NUM_ELEMENTS
+            offset += random.randint(1, self.NUM_ELEMENTS)
+
+        return [offset + i for i in range(self.NUM_ELEMENTS)]
 
     def next(self, key):
         seq_id = int(key[-12:]) + 1
@@ -399,8 +434,8 @@ class ArrayIndexingDocument(ReverseLookupDocument):
             'realm': self._build_realm(alphabet),
             'coins': self._build_coins(alphabet),
             'category': self._build_category(alphabet),
-            'achievements1': self._build_achievements1(alphabet, key),
-            'achievements2': self._build_achievements2(alphabet, key),
+            'achievements1': self._build_achievements1(seq_id),
+            'achievements2': self._build_achievements2(seq_id),
             'gmtime': self._build_gmtime(alphabet),
             'year': self._build_year(alphabet),
             'body': self._build_body(alphabet, size),

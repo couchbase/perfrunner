@@ -72,24 +72,21 @@ class Worker(object):
         self.new_keys = NewKey(self.ts.prefix, self.ws.expiration)
         self.keys_for_removal = KeyForRemoval(self.ts.prefix)
 
+        is_random = self.ts.prefix != 'n1ql'
+
         if not hasattr(self.ws, 'doc_gen') or self.ws.doc_gen == 'old':
             self.docs = Document(self.ws.size)
         elif self.ws.doc_gen == 'new':
             self.docs = NestedDocument(self.ws.size)
         elif self.ws.doc_gen == 'reverse_lookup':
-            is_random = self.ts.prefix != 'n1ql'
             self.docs = ReverseLookupDocument(self.ws.size,
                                               self.ws.doc_partitions,
                                               is_random)
         elif self.ws.doc_gen == 'array_indexing':
-            if self.ws.updates:
-                # plus 10 to all values in array when updating doc
-                self.docs = ArrayIndexingDocument(
-                    self.ws.size, self.ws.doc_partitions, self.ws.items,
-                    delta=random.randint(0, 10))
-            else:
-                self.docs = ArrayIndexingDocument(
-                    self.ws.size, self.ws.doc_partitions, self.ws.items)
+            self.docs = ArrayIndexingDocument(self.ws.size,
+                                              self.ws.doc_partitions,
+                                              self.ws.items,
+                                              is_random)
         elif self.ws.doc_gen == 'large_subdoc':
             self.docs = LargeDocument(self.ws.size)
 
@@ -457,13 +454,10 @@ class N1QLWorker(Worker):
                                               self.ws.doc_partitions,
                                               is_random=False)
         elif self.ws.doc_gen == 'array_indexing':
-            if self.ws.updates:
-                self.docs = ArrayIndexingDocument(
-                    self.ws.size, self.ws.doc_partitions, self.ws.items,
-                    delta=random.randint(0, 10))
-            else:
-                self.docs = ArrayIndexingDocument(
-                    self.ws.size, self.ws.doc_partitions, self.ws.items)
+            self.docs = ArrayIndexingDocument(self.ws.size,
+                                              self.ws.doc_partitions,
+                                              self.ws.items,
+                                              is_random=False)
 
         self.cb = N1QLGen(bucket=self.ts.bucket, password=self.ts.password,
                           host=host, port=port)

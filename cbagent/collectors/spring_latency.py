@@ -6,13 +6,11 @@ from logger import logger
 from cbagent.collectors import Latency, ObserveLatency
 from spring.cbgen import CBGen, SubDocGen
 from spring.docgen import (
-    ArrayIndexingDocument,
     Document,
     ExistingKey,
     KeyForRemoval,
     NestedDocument,
     NewKey,
-    ReverseLookupDocument,
 )
 from spring.querygen import ViewQueryGen, ViewQueryGenByType
 
@@ -44,15 +42,7 @@ class SpringLatency(Latency):
             self.new_docs = Document(workload.size)
         elif workload.doc_gen == 'new':
             self.new_docs = NestedDocument(workload.size)
-        elif workload.doc_gen == 'reverse_lookup':
-            self.new_docs = ReverseLookupDocument(workload.size,
-                                                  workload.doc_partitions,
-                                                  is_random=False)
-        elif workload.doc_gen == 'array_indexing':
-            self.new_docs = ArrayIndexingDocument(
-                workload.size, workload.doc_partitions, workload.items)
         self.items = workload.items
-        self.n1ql_op = workload.n1ql_op
 
     def measure(self, client, metric, bucket):
         key = self.existing_keys.next(curr_items=self.items, curr_deletes=0)

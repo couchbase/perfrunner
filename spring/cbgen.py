@@ -25,7 +25,7 @@ from logger import logger
 from requests.auth import HTTPBasicAuth
 from txcouchbase.connection import Connection as TxConnection
 
-from spring.docgen import NewDocument
+from spring.docgen import Document
 
 experimental.enable()
 
@@ -147,7 +147,7 @@ class SubDocGen(CBGen):
             self.client.lookup_in(key, SD.get(field))
 
     def update(self, key, subdoc_fields, size):
-        newdoc = NewDocument(size)
+        newdoc = Document(size)
         alphabet = newdoc._build_alphabet(key)
         for field in subdoc_fields.split(','):
             new_field_value = getattr(newdoc, '_build_' + field)(alphabet)

@@ -24,7 +24,7 @@ indexer.settings.gc_percent = 200
 items = 20000000
 size = 1024
 workers = 80
-doc_gen = reverse_lookup_array_indexing
+doc_gen = array_indexing
 doc_partitions = 1
 
 [n1ql]

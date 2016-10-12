@@ -5,7 +5,7 @@ from cbagent.settings import Settings
 from perfrunner.helpers.misc import server_group
 from perfrunner.settings import ClusterSpec, TestConfig
 from perfrunner.workloads.tcmalloc import KeyValueIterator, LargeIterator
-from spring.docgen import NewDocument
+from spring.docgen import Document
 from spring.wgen import Worker
 
 
@@ -96,5 +96,5 @@ class CBAgentTest(TestCase):
 class SpringTest(TestCase):
 
     def spring_imports(self):
-        self.assertEqual(NewDocument.SIZE_VARIATION, 0.25)
+        self.assertEqual(Document.SIZE_VARIATION, 0.25)
         self.assertEqual(Worker.BATCH_SIZE, 100)

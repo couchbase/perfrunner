@@ -6,13 +6,13 @@ from logger import logger
 from cbagent.collectors import Latency, ObserveLatency
 from spring.cbgen import CBGen, SubDocGen
 from spring.docgen import (
+    ArrayIndexingDocument,
+    Document,
     ExistingKey,
     KeyForRemoval,
-    NewDocument,
+    NestedDocument,
     NewKey,
-    NewNestedDocument,
     ReverseLookupDocument,
-    ReverseLookupDocumentArrayIndexing,
 )
 from spring.querygen import ViewQueryGen, ViewQueryGenByType
 
@@ -41,15 +41,15 @@ class SpringLatency(Latency):
         self.keys_for_removal = KeyForRemoval(prefix=prefix)
 
         if not hasattr(workload, 'doc_gen') or workload.doc_gen == 'old':
-            self.new_docs = NewDocument(workload.size)
+            self.new_docs = Document(workload.size)
         elif workload.doc_gen == 'new':
-            self.new_docs = NewNestedDocument(workload.size)
+            self.new_docs = NestedDocument(workload.size)
         elif workload.doc_gen == 'reverse_lookup':
             self.new_docs = ReverseLookupDocument(workload.size,
                                                   workload.doc_partitions,
                                                   is_random=False)
-        elif workload.doc_gen == 'reverse_lookup_array_indexing':
-            self.new_docs = ReverseLookupDocumentArrayIndexing(
+        elif workload.doc_gen == 'array_indexing':
+            self.new_docs = ArrayIndexingDocument(
                 workload.size, workload.doc_partitions, workload.items)
         self.items = workload.items
         self.n1ql_op = workload.n1ql_op

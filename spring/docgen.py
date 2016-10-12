@@ -124,7 +124,7 @@ class KeyForCASUpdate(Iterator):
         return self.add_prefix(key)
 
 
-class NewDocument(Iterator):
+class Document(Iterator):
 
     SIZE_VARIATION = 0.25  # 25%
 
@@ -234,12 +234,12 @@ class NewDocument(Iterator):
         }
 
 
-class NewNestedDocument(NewDocument):
+class NestedDocument(Document):
 
     OVERHEAD = 450  # Minimum size due to static fields, body size is variable
 
     def __init__(self, avg_size):
-        super(NewNestedDocument, self).__init__(avg_size)
+        super(NestedDocument, self).__init__(avg_size)
         self.capped_field_value = {}
 
     def _size(self):
@@ -274,13 +274,13 @@ class NewNestedDocument(NewDocument):
         }
 
 
-class NewLargeDocument(NewNestedDocument):
+class LargeDocument(NestedDocument):
 
     def next(self, key):
         alphabet = self._build_alphabet(key)
         return {
-            'nest1': super(NewLargeDocument, self).next(key),
-            'nest2': super(NewNestedDocument, self).next(key),
+            'nest1': super(LargeDocument, self).next(key),
+            'nest2': super(NestedDocument, self).next(key),
             'name': self._build_name(alphabet),
             'email': self._build_email(alphabet),
             'alt_email': self._build_alt_email(alphabet),
@@ -292,7 +292,7 @@ class NewLargeDocument(NewNestedDocument):
         }
 
 
-class ReverseLookupDocument(NewNestedDocument):
+class ReverseLookupDocument(NestedDocument):
 
     def __init__(self, avg_size, partitions, is_random=True):
         super(ReverseLookupDocument, self).__init__(avg_size)
@@ -344,15 +344,15 @@ class ReverseLookupDocument(NewNestedDocument):
         }
 
 
-class ReverseLookupDocumentArrayIndexing(ReverseLookupDocument):
+class ArrayIndexingDocument(ReverseLookupDocument):
 
     num_docs = 0
     delta = 0
 
     def __init__(self, avg_size, partitions, num_docs, delta=0):
-        super(ReverseLookupDocumentArrayIndexing, self).__init__(avg_size, partitions)
-        ReverseLookupDocumentArrayIndexing.num_docs = num_docs
-        ReverseLookupDocumentArrayIndexing.delta = delta
+        super(ArrayIndexingDocument, self).__init__(avg_size, partitions)
+        ArrayIndexingDocument.num_docs = num_docs
+        ArrayIndexingDocument.delta = delta
 
     @staticmethod
     def _build_achievements1(alphabet, key):
@@ -360,12 +360,12 @@ class ReverseLookupDocumentArrayIndexing(ReverseLookupDocument):
         if spl[0] == 'n1ql':
             # these docs are never updated
             return [((int(spl[1].lstrip('0')) - 1) * 10 + i +
-                     ReverseLookupDocumentArrayIndexing.delta) for i in range(10)]
+                     ArrayIndexingDocument.delta) for i in range(10)]
         else:
             # these docs are involved in updating
             return [((int(spl[1].lstrip('0')) - 1) * 10 + i +
-                     ReverseLookupDocumentArrayIndexing.num_docs * 10 +
-                     ReverseLookupDocumentArrayIndexing.delta) for i in range(10)]
+                     ArrayIndexingDocument.num_docs * 10 +
+                     ArrayIndexingDocument.delta) for i in range(10)]
 
     @staticmethod
     def _build_achievements2(alphabet, key):
@@ -373,12 +373,12 @@ class ReverseLookupDocumentArrayIndexing(ReverseLookupDocument):
         if spl[0] == 'n1ql':
             # these docs are never updated
             return [((int(spl[1].lstrip('0')) // 100) * 10 + i +
-                     ReverseLookupDocumentArrayIndexing.delta) for i in range(10)]
+                     ArrayIndexingDocument.delta) for i in range(10)]
         else:
             # these docs are involved in updating
             return [((int(spl[1].lstrip('0')) // 100) * 10 + i +
-                     ReverseLookupDocumentArrayIndexing.num_docs * 10 +
-                     ReverseLookupDocumentArrayIndexing.delta) for i in range(10)]
+                     ArrayIndexingDocument.num_docs * 10 +
+                     ArrayIndexingDocument.delta) for i in range(10)]
 
     def next(self, key):
         seq_id = int(key[-12:]) + 1

@@ -85,6 +85,7 @@ class Worker(object):
         elif self.ws.doc_gen == 'array_indexing':
             self.docs = ArrayIndexingDocument(self.ws.size,
                                               self.ws.doc_partitions,
+                                              self.ws.array_size,
                                               self.ws.items,
                                               is_random)
         elif self.ws.doc_gen == 'large_subdoc':
@@ -456,6 +457,7 @@ class N1QLWorker(Worker):
         elif self.ws.doc_gen == 'array_indexing':
             self.docs = ArrayIndexingDocument(self.ws.size,
                                               self.ws.doc_partitions,
+                                              self.ws.array_size,
                                               self.ws.items,
                                               is_random=False)
 

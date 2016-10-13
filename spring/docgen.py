@@ -358,10 +358,11 @@ class ArrayIndexingDocument(ReverseLookupDocument):
 
     ARRAY_CAP = 100
 
-    NUM_ELEMENTS = 10
+    ARRAY_SIZE = 10
 
-    def __init__(self, avg_size, partitions, num_docs, is_random):
+    def __init__(self, avg_size, partitions, array_size, num_docs, is_random):
         super(ArrayIndexingDocument, self).__init__(avg_size, partitions)
+        self.array_size = array_size
         self.num_docs = num_docs
         self.is_random = is_random
 
@@ -393,13 +394,13 @@ class ArrayIndexingDocument(ReverseLookupDocument):
            4) [1162, 1163, 1164, 1165, 1166, 1167, 1168, 1169, 1170, 1171]
         array is generated.
         """
-        offset = seq_id * self.NUM_ELEMENTS
+        offset = seq_id * self.array_size
         if self.is_random:
-            offset = self.num_docs * self.NUM_ELEMENTS
-            offset += 2 * seq_id * self.NUM_ELEMENTS
-            offset += random.randint(1, self.NUM_ELEMENTS)
+            offset = self.num_docs * self.array_size
+            offset += 2 * seq_id * self.array_size
+            offset += random.randint(1, self.array_size)
 
-        return [offset + i for i in range(self.NUM_ELEMENTS)]
+        return [offset + i for i in range(self.array_size)]
 
     def _build_achievements2(self, seq_id):
         """achievements2 is very similar to achievements1. However, in case of
@@ -407,13 +408,13 @@ class ArrayIndexingDocument(ReverseLookupDocument):
         same queries. Overlapping is achieving by integer division using
         ARRAY_CAP constant.
         """
-        offset = seq_id / self.ARRAY_CAP * self.NUM_ELEMENTS
+        offset = seq_id / self.ARRAY_CAP * self.ARRAY_SIZE
         if self.is_random:
-            offset = self.num_docs * self.NUM_ELEMENTS
-            offset += (2 * seq_id) / self.ARRAY_CAP * self.NUM_ELEMENTS
-            offset += random.randint(1, self.NUM_ELEMENTS)
+            offset = self.num_docs * self.ARRAY_SIZE
+            offset += (2 * seq_id) / self.ARRAY_CAP * self.ARRAY_SIZE
+            offset += random.randint(1, self.ARRAY_SIZE)
 
-        return [offset + i for i in range(self.NUM_ELEMENTS)]
+        return [offset + i for i in range(self.ARRAY_SIZE)]
 
     def next(self, key):
         seq_id = int(key[-12:]) + 1

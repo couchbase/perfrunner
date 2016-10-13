@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.InitialLoadTest
-title = Avg. write queue (10⁶ items), 1 bucket x 500M x 1KB, 125K ops/sec, initial load, no compaction
-summary = Initial data load, 1 buckets x 500M x 1KB
-larger_is_better = false
+title = Avg. write queue (10⁶ items), 1 bucket x 500M x 1KB, 140K ops/sec, initial load, no compaction
 
 [cluster]
 mem_quota = 51200

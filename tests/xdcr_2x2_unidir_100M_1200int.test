@@ -1,0 +1,31 @@
+[test_case]
+test = perfrunner.tests.xdcr.UniDirXdcrTest
+title = 2 -> 2 UniDir, 1 bucket x 100M x 1KB, 50K SETs/sec
+
+[cluster]
+mem_quota = 204800
+initial_nodes = 2 2
+num_buckets = 1
+
+[xdcr_cluster]
+sourceNozzlePerNode = 4
+targetNozzlePerNode = 64
+checkpointInterval = 1200
+
+[load]
+items = 100000000
+size = 1024
+workers = 80
+
+[xdcr]
+replication_type = unidir
+
+[access]
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+throughput = 50000
+items = 100000000
+workers = 40
+time = 10800

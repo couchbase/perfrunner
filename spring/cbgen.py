@@ -474,12 +474,14 @@ class ElasticGen(FtsGen):
                             tmp_query['bool'] = tmp_query_txt
 
                         elif self.settings.type == 'facet':
-                            '''
-                                reference: http://substantial.com/blog/2013/01/16/
-                                building-faceted-search-with-elasticsearch
-                            '''
-                            tmp_query['query'] = {"match_all": {}}
-                            self.query['facets'] = {"format": {"terms": {"field": self.settings.field, "size": 10}}}
+                            start_date, end_date = freq.split(':')
+                            tmp_query = {"term": {"text": term}}
+                            self.query['size'] = self.settings.query_size
+                            self.query['aggs'] = {"perf_elastic_index": {"date_range": {
+                                                  "field": self.settings.field,
+                                                  "format": "YYYY-MM-DD",
+                                                  "ranges": [{"from": start_date, "to": end_date}]
+                                                  }, "aggs": {"terms_count": {"terms": {"field": "text"}}}}}
 
                         else:
                             tmp_query_txt[self.settings.field] = term

@@ -144,9 +144,18 @@ def post_benchmark(benchmark):
         ))
 
 
+def get_metric_id():
+    ret_val = ""
+    if args.iniFile is not None:
+        ret_val = args.iniFile.replace("bench_config_2i_", "")
+        ret_val = ret_val.replace(".ini", "")
+    return ret_val
+
+
 def post_incremental(incremental_time):
+    metric_id = get_metric_id()
     data = {}
-    data["metric"] = "secondary_fdb_inc_secondary"
+    data["metric"] = "secondary_fdb_standalone_{}_inc_nyx".format(metric_id)
     data["snapshots"] = []
     data["build_url"] = os.environ.get('BUILD_URL')
     data["build"] = args.version
@@ -155,8 +164,9 @@ def post_incremental(incremental_time):
 
 
 def post_initial(initial_time):
+    metric_id = get_metric_id()
     data = {}
-    data["metric"] = "secondary_fdb_ini_secondary"
+    data["metric"] = "secondary_fdb_standalone_{}_ini_nyx".format(metric_id)
     data["snapshots"] = []
     data["build_url"] = os.environ.get('BUILD_URL')
     data["build"] = args.version

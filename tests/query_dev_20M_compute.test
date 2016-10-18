@@ -19,7 +19,7 @@ db_percentage = 10
 items = 20000000
 size = 1024
 workers = 80
-doc_gen = new
+doc_gen = nested
 
 [index]
 index_type = compute

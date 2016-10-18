@@ -38,9 +38,9 @@ class SpringLatency(Latency):
         self.new_keys = NewKey(prefix=prefix, expiration=workload.expiration)
         self.keys_for_removal = KeyForRemoval(prefix=prefix)
 
-        if not hasattr(workload, 'doc_gen') or workload.doc_gen == 'old':
+        if not hasattr(workload, 'doc_gen') or workload.doc_gen == 'basic':
             self.new_docs = Document(workload.size)
-        elif workload.doc_gen == 'new':
+        elif workload.doc_gen == 'nested':
             self.new_docs = NestedDocument(workload.size)
         self.items = workload.items
 

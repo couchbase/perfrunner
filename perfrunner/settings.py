@@ -427,7 +427,8 @@ class PhaseSettings(object):
     N1QL_THROUGHPUT = float('inf')
     N1QL_THROUGHPUT_MAX = float('inf')
 
-    DOC_GEN = 'old'
+    DOC_GEN = 'basic'
+
     ARRAY_SIZE = 10
 
     ITEMS = 0

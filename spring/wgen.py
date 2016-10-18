@@ -74,9 +74,9 @@ class Worker(object):
 
         is_random = self.ts.prefix != 'n1ql'
 
-        if not hasattr(self.ws, 'doc_gen') or self.ws.doc_gen == 'old':
+        if not hasattr(self.ws, 'doc_gen') or self.ws.doc_gen == 'basic':
             self.docs = Document(self.ws.size)
-        elif self.ws.doc_gen == 'new':
+        elif self.ws.doc_gen == 'nested':
             self.docs = NestedDocument(self.ws.size)
         elif self.ws.doc_gen == 'reverse_lookup':
             self.docs = ReverseLookupDocument(self.ws.size, is_random)

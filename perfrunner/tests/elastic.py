@@ -87,11 +87,19 @@ class Elastictest(PerfTest):
         self.remote.cbrestorefts(self.test_config.fts_settings.storage, self.test_config.fts_settings.repo)
 
     def run(self):
+        self.cleanup_and_restore()
+        self.workload = self.test_config.access_settings
+        self.create_index()
+        self.addelastic()
+        self.wait_for_index()
+        self.access_bg_test()
+        self.report_kpi()
+
+    def cleanup_and_restore(self):
         self.delete_index()
         self.load()
         self.wait_for_persistence()
         self.compact_bucket()
-        self.workload = self.test_config.access_settings
 
     def delete_index(self):
         logger.info('Deleting elasticsearch Index')
@@ -153,9 +161,11 @@ class ElasticIndexTest(Elastictest):
             self.index_time_taken = end_time - start_time
 
         def run(self):
-            super(ElasticIndexTest, self).run()
-            logger.info("Measuring the time it takes to index {} documents".format(self.elastic_doccount))
+            self.cleanup_and_restore()
             self.index_test()
+            self.report_kpi()
+
+        def _report_kpi(self):
             self.reporter.post_to_sf(
                 *self.metric_helper.calc_ftses_index(self.index_time_taken,
                                                      orderbymetric=self.orderbymetric,
@@ -166,32 +176,20 @@ class ElasticIndexTest(Elastictest):
 class ElasticLatencyTest(Elastictest):
         COLLECTORS = {"elastic_stats": True}
 
-        def run(self):
-            super(ElasticLatencyTest, self).run()
-            self.create_index()
-            self.addelastic()
-            self.wait_for_index()
-            self.access_bg_test()
-            if self.test_config.stats_settings.enabled:
-                self.reporter.post_to_sf(
-                    *self.metric_helper.calc_latency_ftses_queries(percentile=80,
-                                                                   dbname='fts_latency',
-                                                                   metrics='elastic_latency_get',
-                                                                   orderbymetric=self.orderbymetric,
-                                                                   name=' Elasticsearch 1.7'
-                                                                   ))
+        def _report_kpi(self):
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_latency_ftses_queries(percentile=80,
+                                                               dbname='fts_latency',
+                                                               metrics='elastic_latency_get',
+                                                               orderbymetric=self.orderbymetric,
+                                                               name=' Elasticsearch 1.7'
+                                                               ))
 
 
 class ElasticThroughputTest(Elastictest):
 
-        def run(self):
-            super(ElasticThroughputTest, self).run()
-            self.create_index()
-            self.addelastic()
-            self.wait_for_index()
-            self.access_bg_test()
-            if self.test_config.stats_settings.enabled:
-                self.reporter.post_to_sf(
-                    *self.metric_helper.calc_avg_fts_queries(orderbymetric=self.orderbymetric,
-                                                             name=' Elasticsearch 1.7')
-                )
+        def _report_kpi(self):
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_avg_fts_queries(orderbymetric=self.orderbymetric,
+                                                         name=' Elasticsearch 1.7')
+            )

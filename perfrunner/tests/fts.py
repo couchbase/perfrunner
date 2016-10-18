@@ -58,11 +58,19 @@ class FTStest(PerfTest):
         self.remote.cbrestorefts(self.test_config.fts_settings.storage, self.test_config.fts_settings.repo)
 
     def run(self):
+        self.workload = self.test_config.access_settings
+        self.cleanup_and_restore()
+        self.create_index()
+        self.wait_for_index()
+        self.check_rec_presist()
+        self.access_bg_test()
+        self.report_kpi()
+
+    def cleanup_and_restore(self):
         self.delete_index()
         self.load()
         self.wait_for_persistence()
         self.compact_bucket()
-        self.workload = self.test_config.access_settings
 
     def delete_index(self):
         self.requests.delete(self.index_url,
@@ -148,52 +156,41 @@ class FtsIndexTest(FTStest):
             self.index_time_taken = end_time - start_time
 
         def run(self):
-            super(FtsIndexTest, self).run()
-            logger.info("Creating FTS index {} on {}".
-                        format(self.fts_index, self.host_port))
-            logger.info("Measuring the time it takes to index {} documents".
-                        format(self.fts_doccount))
+            self.cleanup_and_restore()
             self.index_test()
+            self.report_kpi()
+
+        def _report_kpi(self):
             self.reporter.post_to_sf(
                 *self.metric_helper.calc_ftses_index(self.index_time_taken, orderbymetric=self.orderbymetric)
             )
 
 
 class FTSLatencyTest(FTStest):
-        COLLECTORS = {'fts_latency': True, "fts_query_stats": True, "fts_stats": True}
+        COLLECTORS = {'fts_latency': True,
+                      "fts_query_stats": True,
+                      "fts_stats": True}
 
-        def run(self):
-            super(FTSLatencyTest, self).run()
-            self.create_index()
-            self.wait_for_index()
-            self.check_rec_presist()
-            self.access_bg_test()
-            if self.test_config.stats_settings.enabled:
-                self.reporter.post_to_sf(
-                    *self.metric_helper.calc_latency_ftses_queries(percentile=80,
-                                                                   dbname='fts_latency',
-                                                                   metrics='cbft_latency_get',
-                                                                   orderbymetric=self.orderbymetric)
-                )
-                self.reporter.post_to_sf(
-                    *self.metric_helper.calc_latency_ftses_queries(percentile=0,
-                                                                   dbname='fts_latency',
-                                                                   metrics='cbft_latency_get',
-                                                                   orderbymetric=self.orderbymetric)
-                )
+        def _report_kpi(self):
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_latency_ftses_queries(percentile=80,
+                                                               dbname='fts_latency',
+                                                               metrics='cbft_latency_get',
+                                                               orderbymetric=self.orderbymetric)
+            )
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_latency_ftses_queries(percentile=0,
+                                                               dbname='fts_latency',
+                                                               metrics='cbft_latency_get',
+                                                               orderbymetric=self.orderbymetric)
+            )
 
 
 class FTSThroughputTest(FTStest):
         COLLECTORS = {'fts_query_stats': True,
                       "fts_stats": True}
 
-        def run(self):
-            super(FTSThroughputTest, self).run()
-            self.create_index()
-            self.wait_for_index()
-            self.check_rec_presist()
-            self.access_bg_test()
-            if self.test_config.stats_settings.enabled:
-                self.reporter.post_to_sf(
-                    *self.metric_helper.calc_avg_fts_queries(orderbymetric=self.orderbymetric)
-                )
+        def _report_kpi(self):
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_avg_fts_queries(orderbymetric=self.orderbymetric)
+            )

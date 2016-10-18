@@ -416,7 +416,7 @@ class ElasticGen(FtsGen):
                         self.elastic_query = self.elastic_copy
                         term, freq = ElasticGen.process_lines(line.strip())
                         self.query['size'] = self.settings.query_size
-                        self.elastic_query += self.settings.name + '/_search?pretty'
+                        self.elastic_query += self.settings.name + '/_search'
                         tmp_query = {}
                         tmp_query_txt = {}
                         if self.settings.type == 'fuzzy':

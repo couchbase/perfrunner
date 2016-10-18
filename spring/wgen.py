@@ -79,12 +79,9 @@ class Worker(object):
         elif self.ws.doc_gen == 'new':
             self.docs = NestedDocument(self.ws.size)
         elif self.ws.doc_gen == 'reverse_lookup':
-            self.docs = ReverseLookupDocument(self.ws.size,
-                                              self.ws.doc_partitions,
-                                              is_random)
+            self.docs = ReverseLookupDocument(self.ws.size, is_random)
         elif self.ws.doc_gen == 'array_indexing':
             self.docs = ArrayIndexingDocument(self.ws.size,
-                                              self.ws.doc_partitions,
                                               self.ws.array_size,
                                               self.ws.items,
                                               is_random)
@@ -451,12 +448,9 @@ class N1QLWorker(Worker):
                                                   'n1ql')
 
         if self.ws.doc_gen == 'reverse_lookup':
-            self.docs = ReverseLookupDocument(self.ws.size,
-                                              self.ws.doc_partitions,
-                                              is_random=False)
+            self.docs = ReverseLookupDocument(self.ws.size, is_random=False)
         elif self.ws.doc_gen == 'array_indexing':
             self.docs = ArrayIndexingDocument(self.ws.size,
-                                              self.ws.doc_partitions,
                                               self.ws.array_size,
                                               self.ws.items,
                                               is_random=False)

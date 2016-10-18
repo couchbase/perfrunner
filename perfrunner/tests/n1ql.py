@@ -19,19 +19,10 @@ class N1QLTest(PerfTest):
     def _build_index(self, query_node, bucket):
         names = list()
         for index in self.test_config.n1ql_settings.indexes:
-            if '{partition_id}' in index:
-                for id in range(self.test_config.load_settings.doc_partitions):
-                    index_name, index_query = index.split('::')
-                    index_name = index_name.format(partition_id=id)
-                    query = index_query.format(name=index_name, bucket=bucket,
-                                               partition_id=id)
-                    self.rest.exec_n1ql_statement(query_node, query)
-                    names.append(index_name)
-            else:
-                index_name, index_query = index.split('::')
-                query = index_query.format(name=index_name, bucket=bucket)
-                self.rest.exec_n1ql_statement(query_node, query)
-                names.append(index_name)
+            index_name, index_query = index.split('::')
+            query = index_query.format(name=index_name, bucket=bucket)
+            self.rest.exec_n1ql_statement(query_node, query)
+            names.append(index_name)
 
         for name in names:
             self.monitor.monitor_index_state(host=query_node, index_name=name)
@@ -41,16 +32,9 @@ class N1QLTest(PerfTest):
         prepared_stmnts = list()
         for query in self.test_config.access_settings.n1ql_queries:
             if 'prepared' in query and query['prepared']:
-                if '{partition_id}' in query['prepared']:
-                    for id in range(self.test_config.load_settings.doc_partitions):
-                        name = query['prepared'].format(partition_id=id)
-                        part_stmt = query['statement'].format(partition_id=id)
-                        stmt = 'PREPARE {} AS {}'.format(name, part_stmt)
-                        prepared_stmnts.append(stmt)
-                else:
-                    stmt = 'PREPARE {} AS {}'.format(query['prepared'],
-                                                     query['statement'])
-                    prepared_stmnts.append(stmt)
+                stmt = 'PREPARE {} AS {}'.format(query['prepared'],
+                                                 query['statement'])
+                prepared_stmnts.append(stmt)
                 del query['statement']
                 query['prepared'] = '"' + query['prepared'] + '"'
             self.n1ql_queries.append(query)

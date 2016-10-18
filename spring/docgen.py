@@ -294,9 +294,8 @@ class LargeDocument(NestedDocument):
 
 class ReverseLookupDocument(NestedDocument):
 
-    def __init__(self, avg_size, partitions, is_random=True):
+    def __init__(self, avg_size, is_random=True):
         super(ReverseLookupDocument, self).__init__(avg_size)
-        self.partitions = partitions
         self.is_random = is_random
 
     def build_email(self, alphabet):
@@ -305,16 +304,12 @@ class ReverseLookupDocument(NestedDocument):
         else:
             return self._build_email(alphabet)
 
-    def _build_partition(self, alphabet, seq_id):
-        return seq_id % self.partitions
-
     def _capped_field(self, alphabet, prefix, seq_id, num_unique):
         if self.is_random:
             offset = random.randint(1, 9)
             return '%s' % alphabet[offset:offset + 6]
 
-        index = (seq_id % self.partitions) + \
-            self.partitions * (seq_id / (self.partitions * num_unique))
+        index = seq_id / num_unique
         return '%s_%s_%s' % (prefix, num_unique, index)
 
     def next(self, key):
@@ -340,7 +335,7 @@ class ReverseLookupDocument(NestedDocument):
             'year': self._build_year(alphabet),
             'body': self._build_body(alphabet, size),
             'capped_small': self._capped_field(alphabet, prefix, seq_id, 100),
-            'partition_id': self._build_partition(alphabet, seq_id),
+            'partition_id': 0,
         }
 
 
@@ -360,11 +355,10 @@ class ArrayIndexingDocument(ReverseLookupDocument):
 
     ARRAY_SIZE = 10
 
-    def __init__(self, avg_size, partitions, array_size, num_docs, is_random):
-        super(ArrayIndexingDocument, self).__init__(avg_size, partitions)
+    def __init__(self, avg_size, array_size, num_docs, is_random):
+        super(ArrayIndexingDocument, self).__init__(avg_size, is_random)
         self.array_size = array_size
         self.num_docs = num_docs
-        self.is_random = is_random
 
     def _build_achievements1(self, seq_id):
         """Every document reserves a range of numbers that can be used for a
@@ -441,5 +435,5 @@ class ArrayIndexingDocument(ReverseLookupDocument):
             'year': self._build_year(alphabet),
             'body': self._build_body(alphabet, size),
             'capped_small': self._capped_field(alphabet, prefix, seq_id, 100),
-            'partition_id': self._build_partition(alphabet, seq_id),
+            'partition_id': 0,
         }

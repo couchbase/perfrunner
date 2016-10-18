@@ -19,7 +19,6 @@ items = 20000000
 size = 1024
 workers = 20
 doc_gen = reverse_lookup
-doc_partitions = 1
 
 [n1ql]
 indexes =

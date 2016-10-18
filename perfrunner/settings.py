@@ -190,7 +190,6 @@ class TestConfig(Config):
 
         load = self.load_settings
         hot_load.doc_gen = load.doc_gen
-        hot_load.doc_partitions = load.doc_partitions
         hot_load.array_size = load.array_size
         hot_load.size = load.size
         return hot_load
@@ -228,7 +227,6 @@ class TestConfig(Config):
 
         load = self.load_settings
         access.doc_gen = load.doc_gen
-        access.doc_partitions = load.doc_partitions
         access.array_size = load.array_size
         access.size = load.size
         options = self._get_options_as_dict('subdoc')
@@ -430,7 +428,6 @@ class PhaseSettings(object):
     N1QL_THROUGHPUT_MAX = float('inf')
 
     DOC_GEN = 'old'
-    DOC_PARTITIONS = 1
     ARRAY_SIZE = 10
 
     ITEMS = 0
@@ -472,8 +469,7 @@ class PhaseSettings(object):
                                                      self.N1QL_THROUGHPUT_MAX))
 
         self.doc_gen = options.get('doc_gen', self.DOC_GEN)
-        self.doc_partitions = int(options.get('doc_partitions',
-                                              self.DOC_PARTITIONS))
+
         self.array_size = int(options.get('array_size',
                                           self.ARRAY_SIZE))
 

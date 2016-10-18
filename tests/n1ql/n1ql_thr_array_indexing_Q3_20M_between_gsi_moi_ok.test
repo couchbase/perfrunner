@@ -25,7 +25,6 @@ items = 20000000
 size = 1024
 workers = 80
 doc_gen = array_indexing
-doc_partitions = 1
 
 [secondary]
 indexer.settings.compaction.compaction_mode = full

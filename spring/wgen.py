@@ -618,15 +618,16 @@ class FtsWorker(Worker):
                         if self.count % 500 == 0:
                             logger.info(args)
                             logger.info(r.text)
+
                         if not self.ws.fts_config.logfile:
                             continue
-                        f = open(self.ws.fts_config.logfile, 'a')
+
                         if r.status_code not in range(200, 203) \
                                 or self.do_check_result(r):
-                            f.write(str(args))
-                            f.write(str(r.status_code))
-                            f.write(str(r.text))
-                        f.close()
+                            with open(self.ws.fts_config.logfile, 'a') as f:
+                                f.write(str(args))
+                                f.write(str(r.status_code))
+                                f.write(str(r.text))
                     except IOError as e:
                         logger.info("I/O error({0}): {1}".format(e.errno, e.strerror))
                 else:

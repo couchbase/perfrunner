@@ -560,10 +560,8 @@ class N1QLWorker(Worker):
 class FtsWorkerFactory(object):
 
     def __new__(cls, workload_settings):
-        '''
-         For FTS worker one extra worker is added,
-         this worker will do the log collection
-        '''
+        """For FTS worker one extra worker is added, this worker will do the log
+        collection."""
         if workload_settings.fts_config:
             return FtsWorker, workload_settings.fts_config.worker
         return FtsWorker, 0
@@ -598,44 +596,29 @@ class FtsWorker(Worker):
         pass
 
     def do_check_result(self, r):
-        '''
-        Check whether the query returned 0 hits
-        '''
+        """Check whether the query returned 0 hits"""
         if self.ws.fts_config.elastic:
             return r.json()["hits"]["total"] == 0
         return r.json()['total_hits'] == 0
 
     def do_batch(self):
-        '''
-        need to store the info if any zero hit, no results
-        we cant do for all workers. one worker will do this,
-        all inputs are from iterator, so it will have a fair
-        amount to proper result. Last worker is scheduled to
+        """Need to store the info if any zero hit, no results we cant do for all
+        workers. one worker will do this, all inputs are from iterator, so it
+        will have a fair amount to proper result. Last worker is scheduled to
         do the logging stuff.
-        '''
+        """
         for i in range(self.BATCH_SIZE):
             if not self.time_to_stop():
                 cmd, args = self.fts_es_query.next()
                 if self.sid == self.ws.fts_config.worker - 1:
-                    '''
-                    collect stats for last worker
-                    '''
                     try:
                         r = cmd(**args)
-                        '''
-                        increment in sinle thread, so llock needed
-                        '''
+                        # Increment in single thread, so lock is not needed
                         self.count += 1
                         if self.count % 500 == 0:
-                            '''
-                             Dump a sample of queries
-                             '''
                             logger.info(args)
                             logger.info(r.text)
                         if not self.ws.fts_config.logfile:
-                            '''
-                             Error Checking if logfile is missing test file
-                            '''
                             continue
                         f = open(self.ws.fts_config.logfile, 'a')
                         if r.status_code not in range(200, 203) \
@@ -647,9 +630,7 @@ class FtsWorker(Worker):
                     except IOError as e:
                         logger.info("I/O error({0}): {1}".format(e.errno, e.strerror))
                 else:
-                    '''
-                     Only running the rest API no error checking
-                    '''
+                    # Only running the rest API, no error checking
                     cmd(**args)
 
     def run(self, sid, lock):

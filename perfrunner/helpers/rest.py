@@ -211,7 +211,7 @@ class RestHelper(object):
 
     def create_bucket(self, host_port, name, password, ram_quota,
                       replica_number, replica_index, eviction_policy,
-                      time_synchronization=None):
+                      conflict_resolution_type=None):
         logger.info('Adding new bucket: {}'.format(name))
 
         api = 'http://{}/pools/default/buckets'.format(host_port)
@@ -228,8 +228,8 @@ class RestHelper(object):
             'saslPassword': password,
         }
 
-        if time_synchronization:
-            data['timeSynchronization'] = time_synchronization
+        if conflict_resolution_type:
+            data['conflict_resolution_type'] = conflict_resolution_type
 
         logger.info('Bucket configuration: {}'.format(misc.pretty_dict(data)))
 

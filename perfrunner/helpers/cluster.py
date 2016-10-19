@@ -135,7 +135,7 @@ class ClusterManager(object):
                     replica_number=self.test_config.bucket.replica_number,
                     replica_index=self.test_config.bucket.replica_index,
                     eviction_policy=self.test_config.bucket.eviction_policy,
-                    time_synchronization=self.test_config.bucket.time_synchronization,
+                    conflict_resolution_type=self.test_config.bucket.conflict_resolution_type,
                 )
 
     def configure_auto_compaction(self):

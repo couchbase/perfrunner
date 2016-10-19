@@ -349,7 +349,7 @@ class BucketSettings(object):
     REPLICA_NUMBER = 1
     REPLICA_INDEX = 0
     EVICTION_POLICY = 'valueOnly'  # alt: fullEviction
-    TIME_SYNCHRONIZATION = None  # alt: enabledWithDrift, enabledWithoutDrift
+    CONFLICT_RESOLUTION_TYPE = None  # alt: lww
 
     def __init__(self, options):
         self.password = options.get('password', self.PASSWORD)
@@ -362,8 +362,8 @@ class BucketSettings(object):
         self.eviction_policy = \
             options.get('eviction_policy', self.EVICTION_POLICY)
 
-        self.time_synchronization = \
-            options.get('time_synchronization', self.TIME_SYNCHRONIZATION)
+        self.conflict_resolution_type = \
+            options.get('conflict_resolution_type', self.CONFLICT_RESOLUTION_TYPE)
 
 
 class CompactionSettings(object):

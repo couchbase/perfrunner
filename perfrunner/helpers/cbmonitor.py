@@ -419,6 +419,7 @@ class CbAgent(object):
         for cluster in clusters:
             settings = copy(self.settings)
             settings.cluster = cluster
+            settings.interval = self.lat_interval
             settings.master_node = self.clusters[cluster]
             self.fts_stats = ElasticStats(settings, test)
             self.collectors.append(

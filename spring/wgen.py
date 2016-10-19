@@ -72,19 +72,18 @@ class Worker(object):
         self.new_keys = NewKey(self.ts.prefix, self.ws.expiration)
         self.keys_for_removal = KeyForRemoval(self.ts.prefix)
 
-        is_random = self.ts.prefix != 'n1ql'
-
         if not hasattr(self.ws, 'doc_gen') or self.ws.doc_gen == 'basic':
             self.docs = Document(self.ws.size)
         elif self.ws.doc_gen == 'nested':
             self.docs = NestedDocument(self.ws.size)
         elif self.ws.doc_gen == 'reverse_lookup':
-            self.docs = ReverseLookupDocument(self.ws.size, is_random)
+            self.docs = ReverseLookupDocument(self.ws.size,
+                                              self.ts.prefix)
         elif self.ws.doc_gen == 'array_indexing':
             self.docs = ArrayIndexingDocument(self.ws.size,
+                                              self.ts.prefix,
                                               self.ws.array_size,
-                                              self.ws.items,
-                                              is_random)
+                                              self.ws.items)
         elif self.ws.doc_gen == 'large_subdoc':
             self.docs = LargeDocument(self.ws.size)
 
@@ -439,20 +438,20 @@ class N1QLWorker(Worker):
 
         self.existing_keys = ExistingKey(self.ws.working_set,
                                          self.ws.working_set_access,
-                                         'n1ql')
-        self.new_keys = NewKey('n1ql', self.ws.expiration)
+                                         prefix='n1ql')
+        self.new_keys = NewKey(prefix='n1ql', expiration=self.ws.expiration)
         self.keys_for_casupdate = KeyForCASUpdate(self.total_workers,
                                                   self.ws.working_set,
                                                   self.ws.working_set_access,
-                                                  'n1ql')
+                                                  prefix='n1ql')
 
         if self.ws.doc_gen == 'reverse_lookup':
-            self.docs = ReverseLookupDocument(self.ws.size, is_random=False)
+            self.docs = ReverseLookupDocument(self.ws.size, prefix='n1ql')
         elif self.ws.doc_gen == 'array_indexing':
             self.docs = ArrayIndexingDocument(self.ws.size,
-                                              self.ws.array_size,
-                                              self.ws.items,
-                                              is_random=False)
+                                              prefix='n1ql',
+                                              array_size=self.ws.array_size,
+                                              num_docs=self.ws.items)
 
         host, port = self.ts.node.split(':')
         self.cb = N1QLGen(bucket=self.ts.bucket, password=self.ts.password,

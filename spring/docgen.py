@@ -23,8 +23,7 @@ class Iterator(object):
     def add_prefix(self, key):
         if self.prefix:
             return '%s-%s' % (self.prefix, key)
-        else:
-            return key
+        return key
 
 
 class ExistingKey(Iterator):
@@ -221,6 +220,7 @@ class Document(Iterator):
     def next(self, key):
         alphabet = self._build_alphabet(key)
         size = self._size()
+
         return {
             'name': self._build_name(alphabet),
             'email': self._build_email(alphabet),
@@ -254,6 +254,7 @@ class NestedDocument(Document):
     def next(self, key):
         alphabet = self._build_alphabet(key)
         size = self._size()
+
         return {
             'name': {'f': {'f': {'f': self._build_name(alphabet)}}},
             'email': {'f': {'f': self._build_email(alphabet)}},
@@ -294,9 +295,10 @@ class LargeDocument(NestedDocument):
 
 class ReverseLookupDocument(NestedDocument):
 
-    def __init__(self, avg_size, is_random=True):
+    def __init__(self, avg_size, prefix):
         super(ReverseLookupDocument, self).__init__(avg_size)
-        self.is_random = is_random
+        self.prefix = prefix
+        self.is_random = prefix != 'n1ql'
 
     def build_email(self, alphabet):
         if self.is_random:
@@ -304,22 +306,22 @@ class ReverseLookupDocument(NestedDocument):
         else:
             return self._build_email(alphabet)
 
-    def _build_capped(self, alphabet, prefix, seq_id, num_unique):
+    def _build_capped(self, alphabet, seq_id, num_unique):
         if self.is_random:
             offset = random.randint(1, 9)
             return '%s' % alphabet[offset:offset + 6]
 
         index = seq_id / num_unique
-        return '%s_%s_%s' % (prefix, num_unique, index)
+        return '%s_%s_%s' % (self.prefix, num_unique, index)
 
-    def _build_topics(self, prefix, seq_id):
+    def _build_topics(self, seq_id):
         return []
 
     def next(self, key):
-        seq_id = int(key[-12:]) + 1
-        prefix = key[:-12]
         alphabet = self._build_alphabet(key)
         size = self._size()
+        seq_id = int(key[-12:]) + 1
+
         return {
             'name': self._build_name(alphabet),
             'email': self.build_email(alphabet),
@@ -337,18 +339,18 @@ class ReverseLookupDocument(NestedDocument):
             'gmtime': self._build_gmtime(alphabet),
             'year': self._build_year(alphabet),
             'body': self._build_body(alphabet, size),
-            'capped_small': self._build_capped(alphabet, prefix, seq_id, 100),
-            'topics': self._build_topics(prefix, seq_id),
+            'capped_small': self._build_capped(alphabet, seq_id, 100),
+            'topics': self._build_topics(seq_id),
         }
 
 
 class ExtReverseLookupDocument(ReverseLookupDocument):
 
-    def __init__(self, avg_size, num_docs, is_random):
-        super(ExtReverseLookupDocument, self).__init__(avg_size, is_random)
+    def __init__(self, avg_size, prefix, num_docs):
+        super(ExtReverseLookupDocument, self).__init__(avg_size, prefix)
         self.num_docs = num_docs
 
-    def _build_topics(self, prefix, seq_id):
+    def _build_topics(self, seq_id):
         """1:4 reference to JoinedDocument keys."""
         return [
             self.add_prefix('%012d' % ((seq_id + 11) % self.num_docs)),
@@ -360,9 +362,8 @@ class ExtReverseLookupDocument(ReverseLookupDocument):
 
 class JoinedDocument(ReverseLookupDocument):
 
-    def __init__(self, avg_size, num_categories, num_docs, num_replies,
-                 is_random):
-        super(JoinedDocument, self).__init__(avg_size, is_random)
+    def __init__(self, avg_size, prefix, num_categories, num_docs, num_replies):
+        super(JoinedDocument, self).__init__(avg_size, prefix)
         self.num_categories = num_categories
         self.num_docs = num_docs
         self.num_replies = num_replies
@@ -394,14 +395,13 @@ class JoinedDocument(ReverseLookupDocument):
         ]
 
     def next(self, key):
-        seq_id = int(key[-12:])
-        prefix = key[:-12]
         alphabet = self._build_alphabet(key)
+        seq_id = int(key[-12:])
 
         return {
             'owner': self._build_owner(seq_id),
             'title': self._build_title(alphabet),
-            'capped_large': self._build_capped(alphabet, prefix, seq_id, 1000),
+            'capped_large': self._build_capped(alphabet, seq_id, 1000),
             'categories': self._build_categories(seq_id),
             'replies': self._build_replies(seq_id),
         }
@@ -436,8 +436,8 @@ class ArrayIndexingDocument(ReverseLookupDocument):
 
     ARRAY_SIZE = 10
 
-    def __init__(self, avg_size, array_size, num_docs, is_random):
-        super(ArrayIndexingDocument, self).__init__(avg_size, is_random)
+    def __init__(self, avg_size, prefix, array_size, num_docs):
+        super(ArrayIndexingDocument, self).__init__(avg_size, prefix)
         self.array_size = array_size
         self.num_docs = num_docs
 
@@ -492,10 +492,9 @@ class ArrayIndexingDocument(ReverseLookupDocument):
         return [offset + i for i in range(self.ARRAY_SIZE)]
 
     def next(self, key):
-        seq_id = int(key[-12:]) + 1
-        prefix = key[:-12]
         alphabet = self._build_alphabet(key)
         size = self._size()
+        seq_id = int(key[-12:]) + 1
 
         return {
             'name': self._build_name(alphabet),
@@ -515,6 +514,6 @@ class ArrayIndexingDocument(ReverseLookupDocument):
             'gmtime': self._build_gmtime(alphabet),
             'year': self._build_year(alphabet),
             'body': self._build_body(alphabet, size),
-            'capped_small': self._build_capped(alphabet, prefix, seq_id, 100),
-            'topics': self._build_topics(prefix, seq_id),
+            'capped_small': self._build_capped(alphabet, seq_id, 100),
+            'topics': self._build_topics(seq_id),
         }

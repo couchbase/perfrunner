@@ -362,7 +362,7 @@ class ExtReverseLookupDocument(ReverseLookupDocument):
 
 class JoinedDocument(ReverseLookupDocument):
 
-    def __init__(self, avg_size, prefix, num_categories, num_docs, num_replies):
+    def __init__(self, avg_size, prefix, num_docs, num_categories, num_replies):
         super(JoinedDocument, self).__init__(avg_size, prefix)
         self.num_categories = num_categories
         self.num_docs = num_docs

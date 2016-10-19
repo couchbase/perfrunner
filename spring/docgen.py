@@ -304,13 +304,16 @@ class ReverseLookupDocument(NestedDocument):
         else:
             return self._build_email(alphabet)
 
-    def _capped_field(self, alphabet, prefix, seq_id, num_unique):
+    def _build_capped(self, alphabet, prefix, seq_id, num_unique):
         if self.is_random:
             offset = random.randint(1, 9)
             return '%s' % alphabet[offset:offset + 6]
 
         index = seq_id / num_unique
         return '%s_%s_%s' % (prefix, num_unique, index)
+
+    def _build_topics(self, prefix, seq_id):
+        return []
 
     def next(self, key):
         seq_id = int(key[-12:]) + 1
@@ -334,9 +337,24 @@ class ReverseLookupDocument(NestedDocument):
             'gmtime': self._build_gmtime(alphabet),
             'year': self._build_year(alphabet),
             'body': self._build_body(alphabet, size),
-            'capped_small': self._capped_field(alphabet, prefix, seq_id, 100),
-            'partition_id': 0,
+            'capped_small': self._build_capped(alphabet, prefix, seq_id, 100),
+            'topics': self._build_topics(prefix, seq_id),
         }
+
+
+class ExtReverseLookupDocument(ReverseLookupDocument):
+
+    def __init__(self, avg_size, num_docs, is_random):
+        super(ExtReverseLookupDocument, self).__init__(avg_size, is_random)
+        self.num_docs = num_docs
+
+    def _build_topics(self, prefix, seq_id):
+        return [
+            self.add_prefix('%012d' % ((seq_id + 11) % self.num_docs)),
+            self.add_prefix('%012d' % ((seq_id + 19) % self.num_docs)),
+            self.add_prefix('%012d' % ((seq_id + 23) % self.num_docs)),
+            self.add_prefix('%012d' % ((seq_id + 29) % self.num_docs)),
+        ]
 
 
 class ArrayIndexingDocument(ReverseLookupDocument):
@@ -434,6 +452,6 @@ class ArrayIndexingDocument(ReverseLookupDocument):
             'gmtime': self._build_gmtime(alphabet),
             'year': self._build_year(alphabet),
             'body': self._build_body(alphabet, size),
-            'capped_small': self._capped_field(alphabet, prefix, seq_id, 100),
-            'partition_id': 0,
+            'capped_small': self._build_capped(alphabet, prefix, seq_id, 100),
+            'topics': self._build_topics(prefix, seq_id),
         }

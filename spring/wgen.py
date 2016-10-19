@@ -432,11 +432,10 @@ class N1QLWorker(Worker):
     def __init__(self, workload_settings, target_settings, shutdown_event):
         super(N1QLWorker, self).__init__(workload_settings, target_settings,
                                          shutdown_event)
+
         self.new_queries = N1QLQueryGen(workload_settings.n1ql_queries)
         self.total_workers = self.ws.n1ql_workers
         self.throughput = self.ws.n1ql_throughput
-
-        host, port = self.ts.node.split(':')
 
         self.existing_keys = ExistingKey(self.ws.working_set,
                                          self.ws.working_set_access,
@@ -455,69 +454,80 @@ class N1QLWorker(Worker):
                                               self.ws.items,
                                               is_random=False)
 
+        host, port = self.ts.node.split(':')
         self.cb = N1QLGen(bucket=self.ts.bucket, password=self.ts.password,
                           host=host, port=port)
 
         self.reservoir = Reservoir(num_workers=workload_settings.n1ql_workers)
 
+    def read(self):
+        curr_items_spot = \
+            self.curr_items.value - self.ws.creates * self.ws.workers
+        deleted_spot = \
+            self.deleted_items.value + self.ws.deletes * self.ws.workers
+        for _ in range(self.BATCH_SIZE):
+            key = self.existing_keys.next(curr_items_spot, deleted_spot)
+            doc = self.docs.next(key)
+            doc['key'] = key
+            doc['bucket'] = self.ts.bucket
+            query = self.new_queries.next(doc)
+            _, latency = self.cb.query(query)
+            self.reservoir.update(latency)
+
+    def create(self):
+        with self.lock:
+            self.curr_items.value += self.BATCH_SIZE
+            curr_items_tmp = self.curr_items.value - self.BATCH_SIZE
+
+        for _ in range(self.BATCH_SIZE):
+            curr_items_tmp += 1
+            key, ttl = self.new_keys.next(curr_items_tmp)
+            doc = self.docs.next(key)
+            doc['key'] = key
+            doc['bucket'] = self.ts.bucket
+            query = self.new_queries.next(doc)
+            _, latency = self.cb.query(query)
+            self.reservoir.update(latency)
+
+    def update(self):
+        curr_items_spot = self.curr_items.value
+
+        with self.lock:
+            self.cas_updated_items.value += self.BATCH_SIZE
+
+        for _ in range(self.BATCH_SIZE):
+            key = self.keys_for_casupdate.next(self.sid, curr_items_spot,
+                                               curr_deletes=0)
+            doc = self.docs.next(key)
+            doc['key'] = key
+            doc['bucket'] = self.ts.bucket
+            query = self.new_queries.next(doc)
+            _, latency = self.cb.query(query)
+            self.reservoir.update(latency)
+
+    def range_update(self):
+        curr_items_spot = self.curr_items.value
+
+        for _ in range(self.BATCH_SIZE):
+            key = self.keys_for_casupdate.next(self.sid, curr_items_spot,
+                                               curr_deletes=0)
+            doc = self.docs.next(key)
+            doc['key'] = key
+            doc['bucket'] = self.ts.bucket
+            query = self.new_queries.next(doc)
+            _, latency = self.cb.query(query)
+            self.reservoir.update(latency)
+
     @with_sleep
     def do_batch(self):
         if self.ws.n1ql_op == 'read':
-            curr_items_spot = \
-                self.curr_items.value - self.ws.creates * self.ws.workers
-            deleted_spot = \
-                self.deleted_items.value + self.ws.deletes * self.ws.workers
-            for _ in range(self.BATCH_SIZE):
-                key = self.existing_keys.next(curr_items_spot, deleted_spot)
-                doc = self.docs.next(key)
-                doc['key'] = key
-                doc['bucket'] = self.ts.bucket
-                query = self.new_queries.next(doc)
-                _, latency = self.cb.query(query)
-                self.reservoir.update(latency)
-            return
-
-        curr_items_tmp = curr_items_spot = self.curr_items.value
-        if self.ws.n1ql_op == 'create':
-            with self.lock:
-                self.curr_items.value += self.BATCH_SIZE
-                curr_items_tmp = self.curr_items.value - self.BATCH_SIZE
-            curr_items_spot = (curr_items_tmp -
-                               self.BATCH_SIZE * self.total_workers)
+            self.read()
+        elif self.ws.n1ql_op == 'create':
+            self.create()
         elif self.ws.n1ql_op == 'update':
-            with self.lock:
-                self.cas_updated_items.value += self.BATCH_SIZE
-
-        if self.ws.n1ql_op == 'create':
-            for _ in range(self.BATCH_SIZE):
-                curr_items_tmp += 1
-                key, ttl = self.new_keys.next(curr_items_tmp)
-                doc = self.docs.next(key)
-                doc['key'] = key
-                doc['bucket'] = self.ts.bucket
-                query = self.new_queries.next(doc)
-                _, latency = self.cb.query(query)
-                self.reservoir.update(latency)
-        elif self.ws.n1ql_op == 'update':
-            for _ in range(self.BATCH_SIZE):
-                key = self.keys_for_casupdate.next(self.sid, curr_items_spot,
-                                                   curr_deletes=0)
-                doc = self.docs.next(key)
-                doc['key'] = key
-                doc['bucket'] = self.ts.bucket
-                query = self.new_queries.next(doc)
-                _, latency = self.cb.query(query)
-                self.reservoir.update(latency)
+            self.update()
         elif self.ws.n1ql_op == 'rangeupdate':
-            for _ in range(self.BATCH_SIZE):
-                key = self.keys_for_casupdate.next(self.sid, curr_items_spot,
-                                                   curr_deletes=0)
-                doc = self.docs.next(key)
-                doc['key'] = key
-                doc['bucket'] = self.ts.bucket
-                query = self.new_queries.next(doc)
-                _, latency = self.cb.query(query)
-                self.reservoir.update(latency)
+            self.range_update()
 
     def run(self, sid, lock, curr_queries, curr_items, deleted_items,
             cas_updated_items):

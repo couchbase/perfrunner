@@ -1,4 +1,3 @@
-import logging
 import os
 import time
 from collections import defaultdict
@@ -59,19 +58,25 @@ class Worker(object):
 
     BATCH_SIZE = 100
 
-    def __init__(self, workload_settings, target_settings,
-                 shutdown_event=None):
+    def __init__(self, workload_settings, target_settings, shutdown_event=None):
         self.ws = workload_settings
         self.ts = target_settings
         self.shutdown_event = shutdown_event
-        logger.setLevel(logging.INFO)
 
+        self.next_report = 0.05  # report after every 5% of completion
+
+        self.init_keys()
+        self.init_docs()
+        self.init_db()
+
+    def init_keys(self):
         self.existing_keys = ExistingKey(self.ws.working_set,
                                          self.ws.working_set_access,
                                          self.ts.prefix)
         self.new_keys = NewKey(self.ts.prefix, self.ws.expiration)
         self.keys_for_removal = KeyForRemoval(self.ts.prefix)
 
+    def init_docs(self):
         if not hasattr(self.ws, 'doc_gen') or self.ws.doc_gen == 'basic':
             self.docs = Document(self.ws.size)
         elif self.ws.doc_gen == 'nested':
@@ -87,14 +92,11 @@ class Worker(object):
         elif self.ws.doc_gen == 'large_subdoc':
             self.docs = LargeDocument(self.ws.size)
 
-        self.next_report = 0.05  # report after every 5% of completion
-
+    def init_db(self):
         host, port = self.ts.node.split(':')
-        self.init_db({'bucket': self.ts.bucket, 'host': host, 'port': port,
-                      'username': self.ts.bucket,
-                      'password': self.ts.password})
+        params = {'bucket': self.ts.bucket, 'host': host, 'port': port,
+                  'username': self.ts.bucket, 'password': self.ts.password}
 
-    def init_db(self, params):
         try:
             self.cb = CBGen(**params)
         except Exception as e:
@@ -215,15 +217,15 @@ class KVWorker(Worker):
 
 class SubDocWorker(KVWorker):
 
-    def __init__(self, workload_settings, target_settings, shutdown_event):
-        super(SubDocWorker, self).__init__(workload_settings, target_settings,
-                                           shutdown_event)
+    NAME = 'sub-doc-worker'
+
+    def init_db(self):
         host, port = self.ts.node.split(':')
         params = {'bucket': self.ts.bucket, 'host': host, 'port': port,
                   'username': self.ts.bucket, 'password': self.ts.password}
         self.cb = SubDocGen(**params)
 
-    def gen_cmd_sequence(self, cb=None):
+    def gen_cmd_sequence(self, cb=None, *args):
         return super(SubDocWorker, self).gen_cmd_sequence(cb, cases='counter')
 
 
@@ -233,7 +235,11 @@ class AsyncKVWorker(KVWorker):
 
     NUM_CONNECTIONS = 8
 
-    def init_db(self, params):
+    def init_db(self):
+        host, port = self.ts.node.split(':')
+        params = {'bucket': self.ts.bucket, 'host': host, 'port': port,
+                  'username': self.ts.bucket, 'password': self.ts.password}
+
         self.cbs = [CBAsyncGen(**params) for _ in range(self.NUM_CONNECTIONS)]
         self.counter = range(self.NUM_CONNECTIONS)
 
@@ -334,13 +340,12 @@ class WorkerFactory(object):
             worker = SeqUpdatesWorker
         elif getattr(workload_settings, 'seq_reads', False):
             worker = SeqReadsWorker
-        elif not (getattr(workload_settings, 'seq_updates', False) or
-                  getattr(workload_settings, 'seq_reads', False)):
+        else:
             worker = KVWorker
         return worker, workload_settings.workers
 
 
-class SubdocWorkerFactory(object):
+class SubDocWorkerFactory(object):
 
     def __new__(cls, workload_settings):
         return SubDocWorker, workload_settings.subdoc_workers
@@ -421,13 +426,16 @@ class N1QLWorker(Worker):
     NAME = 'n1ql-worker'
 
     def __init__(self, workload_settings, target_settings, shutdown_event):
+        self.new_queries = N1QLQueryGen(workload_settings.n1ql_queries)
+        self.total_workers = workload_settings.n1ql_workers
+        self.throughput = workload_settings.n1ql_throughput
+
+        self.reservoir = Reservoir(num_workers=workload_settings.n1ql_workers)
+
         super(N1QLWorker, self).__init__(workload_settings, target_settings,
                                          shutdown_event)
 
-        self.new_queries = N1QLQueryGen(workload_settings.n1ql_queries)
-        self.total_workers = self.ws.n1ql_workers
-        self.throughput = self.ws.n1ql_throughput
-
+    def init_keys(self):
         self.existing_keys = ExistingKey(self.ws.working_set,
                                          self.ws.working_set_access,
                                          prefix='n1ql')
@@ -437,6 +445,7 @@ class N1QLWorker(Worker):
                                                   self.ws.working_set_access,
                                                   prefix='n1ql')
 
+    def init_docs(self):
         if self.ws.doc_gen == 'reverse_lookup':
             self.docs = ReverseLookupDocument(self.ws.size, prefix='n1ql')
         elif self.ws.doc_gen == 'array_indexing':
@@ -445,11 +454,10 @@ class N1QLWorker(Worker):
                                               array_size=self.ws.array_size,
                                               num_docs=self.ws.items)
 
+    def init_db(self):
         host, port = self.ts.node.split(':')
         self.cb = N1QLGen(bucket=self.ts.bucket, password=self.ts.password,
                           host=host, port=port)
-
-        self.reservoir = Reservoir(num_workers=workload_settings.n1ql_workers)
 
     def read(self):
         curr_items_spot = \
@@ -580,6 +588,15 @@ class FtsWorker(Worker):
         self.fts_es_query.prepare_query()
         self.count = 0
 
+    def init_keys(self):
+        pass
+
+    def init_docs(self):
+        pass
+
+    def init_db(self):
+        pass
+
     def do_check_result(self, r):
         '''
         Check whether the query returned 0 hits
@@ -697,7 +714,7 @@ class WorkloadGen(object):
 
         self.start_workers(WorkerFactory,
                            'kv', curr_items, deleted_items)
-        self.start_workers(SubdocWorkerFactory,
+        self.start_workers(SubDocWorkerFactory,
                            'subdoc', curr_items, deleted_items)
         self.start_workers(ViewWorkerFactory,
                            'view', curr_items, deleted_items)

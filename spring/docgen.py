@@ -349,12 +349,75 @@ class ExtReverseLookupDocument(ReverseLookupDocument):
         self.num_docs = num_docs
 
     def _build_topics(self, prefix, seq_id):
+        """1:4 reference to JoinedDocument keys."""
         return [
             self.add_prefix('%012d' % ((seq_id + 11) % self.num_docs)),
             self.add_prefix('%012d' % ((seq_id + 19) % self.num_docs)),
             self.add_prefix('%012d' % ((seq_id + 23) % self.num_docs)),
             self.add_prefix('%012d' % ((seq_id + 29) % self.num_docs)),
         ]
+
+
+class JoinedDocument(ReverseLookupDocument):
+
+    def __init__(self, avg_size, num_categories, num_docs, num_replies,
+                 is_random):
+        super(JoinedDocument, self).__init__(avg_size, is_random)
+        self.num_categories = num_categories
+        self.num_docs = num_docs
+        self.num_replies = num_replies
+
+    def _build_owner(self, seq_id):
+        """1:1 reference to ReverseLookupDocument keys."""
+        return self.add_prefix('%012d' % seq_id)
+
+    def _build_title(self, alphabet):
+        return alphabet
+
+    def _build_categories(self, seq_id):
+        """1:4 reference to RefDocument keys."""
+        return [
+            self.add_prefix('%012d' % ((seq_id + 11) % self.num_categories)),
+            self.add_prefix('%012d' % ((seq_id + 19) % self.num_categories)),
+            self.add_prefix('%012d' % ((seq_id + 23) % self.num_categories)),
+            self.add_prefix('%012d' % ((seq_id + 29) % self.num_categories)),
+        ]
+
+    def _build_user(self, seq_id, idx):
+        return self.add_prefix('%012d' % ((seq_id + idx + 537) % self.num_docs))
+
+    def _build_replies(self, seq_id):
+        """1:N references to ReverseLookupDocument keys."""
+        return [
+            {'user': self._build_user(seq_id, idx)}
+            for idx in range(self.num_replies)
+        ]
+
+    def next(self, key):
+        seq_id = int(key[-12:])
+        prefix = key[:-12]
+        alphabet = self._build_alphabet(key)
+
+        return {
+            'owner': self._build_owner(seq_id),
+            'title': self._build_title(alphabet),
+            'capped_large': self._build_capped(alphabet, prefix, seq_id, 1000),
+            'categories': self._build_categories(seq_id),
+            'replies': self._build_replies(seq_id),
+        }
+
+
+class RefDocument(Document):
+
+    def _build_ref_name(self, seq_id):
+        return self.add_prefix('%012d' % seq_id)
+
+    def next(self, key):
+        seq_id = int(key[-12:])
+
+        return {
+            'name': self._build_ref_name(seq_id),
+        }
 
 
 class ArrayIndexingDocument(ReverseLookupDocument):

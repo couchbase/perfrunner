@@ -89,17 +89,10 @@ class Worker(object):
 
         self.next_report = 0.05  # report after every 5% of completion
 
-        # Only FTS uses proxyPort and authless bucket right now.
-        # Instead of jumping hoops to specify proxyPort in target
-        # iterator/settings, which only passes down very specific attributes,
-        # just detect fts instead. The following does not work with
-        # authless bucket. FTS's worker does its own Couchbase.connect
-        if not (hasattr(self.ws, "fts") and hasattr(
-                self.ws.fts, "doc_database_url")):
-            host, port = self.ts.node.split(':')
-            self.init_db({'bucket': self.ts.bucket, 'host': host, 'port': port,
-                          'username': self.ts.bucket,
-                          'password': self.ts.password})
+        host, port = self.ts.node.split(':')
+        self.init_db({'bucket': self.ts.bucket, 'host': host, 'port': port,
+                      'username': self.ts.bucket,
+                      'password': self.ts.password})
 
     def init_db(self, params):
         try:

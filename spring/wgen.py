@@ -411,7 +411,6 @@ class ViewWorker(Worker):
                 with lock:
                     curr_queries.value += self.BATCH_SIZE
                 self.do_batch()
-                self.report_progress(curr_queries.value)
         except (KeyboardInterrupt, ValueFormatError, AttributeError) as e:
             logger.info('Interrupted: {}-{}, {}'.format(self.NAME, self.sid, e))
         else:
@@ -549,7 +548,6 @@ class N1QLWorker(Worker):
                 with self.lock:
                     curr_queries.value += self.BATCH_SIZE
                 self.do_batch()
-                self.report_progress(curr_queries.value)
         except (KeyboardInterrupt, ValueFormatError, AttributeError) as e:
             logger.info('Interrupted: {}-{}-{}'.format(self.NAME, self.sid, e))
         else:

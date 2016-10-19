@@ -6,7 +6,6 @@ setup(
     name='perfrunner',
     entry_points={
         'console_scripts': [
-            'cbagent = cbagent.__main__:main',
             'cluster = perfrunner.utils.cluster:main',
             'debug = perfrunner.utils.debug:main',
             'install = perfrunner.utils.install:main',

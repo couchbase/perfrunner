@@ -141,7 +141,7 @@ def export(master_node, cluster_spec, tp='json', frmt=None, bucket='default'):
     if tp == 'json':
         cmd = \
             './opt/couchbase/bin/cbexport {} -c http://{} --username {} ' \
-            '--password {} --format {} --output {} -b {}' \
+            '--password {} --format {} --output {} -b {} -t 16' \
             .format(tp, master_node, cluster_spec.rest_credentials[0],
                     cluster_spec.rest_credentials[1],
                     frmt, export_file, bucket)
@@ -159,7 +159,7 @@ def import_data(master_node, cluster_spec, tp='json', frmt=None, bucket=''):
 
     cmd = \
         './opt/couchbase/bin/cbimport {} -c http://{} --username {} --password {} ' \
-        '--dataset file://{} -b {} -g "#MONO_INCR#" -l LOG' \
+        '--dataset file://{} -b {} -g "#MONO_INCR#" -l LOG -t 16' \
         .format(tp, master_node, cluster_spec.rest_credentials[0],
                 cluster_spec.rest_credentials[1], import_file, bucket)
 

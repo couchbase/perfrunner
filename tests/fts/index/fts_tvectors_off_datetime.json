@@ -19,7 +19,7 @@
       "type_field": "type"
     },
     "mapping": {
-      "default_analyzer": "standard",
+      "default_analyzer": "simple",
       "default_datetime_parser": "dateTimeOptional",
       "default_field": "_all",
       "default_mapping": {
@@ -32,7 +32,6 @@
             "enabled": true,
             "fields": [
               {
-                "analyzer": "",
                 "date_format": "dateTimeOptional",
                 "display_order": "1",
                 "include_in_all": true,
@@ -49,7 +48,6 @@
             "enabled": true,
             "fields": [
               {
-                "analyzer": "simple",
                 "display_order": "0",
                 "include_in_all": true,
                 "include_term_vectors": false,

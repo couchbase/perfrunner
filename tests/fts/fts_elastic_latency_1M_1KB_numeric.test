@@ -4,6 +4,8 @@ title =  NumericRangeQuery, no kv-load, wiki 1M x 1KB
 summary = Elasticsearch latency test for range
 larger_is_better = true
 
+[stats]
+lat_interval = 0.1
 
 [fts]
 items = 3273681

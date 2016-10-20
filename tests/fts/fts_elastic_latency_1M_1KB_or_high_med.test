@@ -4,6 +4,9 @@ title = OrHighMed, no kv-load, wiki 1M x 1KB
 summary = Elasticsearch latency Test
 larger_is_better = false
 
+[stats]
+lat_interval = 0.1
+
 [access]
 time = 1200
 

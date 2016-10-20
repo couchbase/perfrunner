@@ -5,6 +5,8 @@ summary = Elasticsearch latency Test
 larger_is_better = false
 fts = true
 
+[stats]
+lat_interval = 0.1
 
 [access]
 time = 1200

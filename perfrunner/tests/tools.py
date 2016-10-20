@@ -240,7 +240,7 @@ class CbExportImportTest(BackupRestoreTest):
                           bucket='bucket-1')
         self.spent_time = time.time() - t0
 
-        logger.info('Export completed in {:.1f} sec, Import size is {} GB'
+        logger.info('Import completed in {:.1f} sec, Import size is {} GB'
                     .format(self.spent_time, self.data_size))
 
     def _report_kpi(self, prefix=''):
@@ -253,7 +253,11 @@ class CbExportImportTest(BackupRestoreTest):
         }
         metric = prefix.replace(" ", "_") + "_" + metric
 
-        self.reporter.post_to_sf(round(self.data_size / self.spent_time), metric=metric,
+        data_size = self.test_config.load_settings.items * \
+            self.test_config.load_settings.size / 2.0 ** 20  # MB
+        avg_throughput = round(data_size / self.spent_time)
+
+        self.reporter.post_to_sf(avg_throughput, metric=metric,
                                  metric_info=metric_info)
 
     def _yield_line_delimited_json(self, path):
@@ -293,7 +297,8 @@ class CbExportImportTest(BackupRestoreTest):
             self.test_config.export_import_settings.type)
         data = self._yield_line_delimited_json(import_file)
 
-        with open('/data/backup/export.csv', 'w') as csvfile:
+        with open('{}/export.csv'.format(self.cluster_spec.config.get(
+                'storage', 'backup')), 'w') as csvfile:
             output = csv.writer(csvfile)
             header = ""
 

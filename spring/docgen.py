@@ -407,7 +407,7 @@ class JoinedDocument(ReverseLookupDocument):
         }
 
 
-class RefDocument(Document):
+class RefDocument(ReverseLookupDocument):
 
     def _build_ref_name(self, seq_id):
         return self.add_prefix('%012d' % seq_id)

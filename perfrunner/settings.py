@@ -191,6 +191,8 @@ class TestConfig(Config):
         load = self.load_settings
         hot_load.doc_gen = load.doc_gen
         hot_load.array_size = load.array_size
+        hot_load.num_categories = load.num_categories
+        hot_load.num_replies = load.num_replies
         hot_load.size = load.size
         return hot_load
 
@@ -228,6 +230,8 @@ class TestConfig(Config):
         load = self.load_settings
         access.doc_gen = load.doc_gen
         access.array_size = load.array_size
+        access.num_categories = load.num_categories
+        access.num_replies = load.num_replies
         access.size = load.size
         options = self._get_options_as_dict('subdoc')
         if options:
@@ -430,6 +434,8 @@ class PhaseSettings(object):
     DOC_GEN = 'basic'
 
     ARRAY_SIZE = 10
+    NUM_CATEGORIES = 10 ** 6
+    NUM_REPLIES = 1000
 
     ITEMS = 0
     EXISTING_ITEMS = 0
@@ -471,8 +477,10 @@ class PhaseSettings(object):
 
         self.doc_gen = options.get('doc_gen', self.DOC_GEN)
 
-        self.array_size = int(options.get('array_size',
-                                          self.ARRAY_SIZE))
+        self.array_size = int(options.get('array_size', self.ARRAY_SIZE))
+        self.num_categories = int(options.get('num_categories',
+                                              self.NUM_CATEGORIES))
+        self.num_replies = int(options.get('num_replies', self.NUM_REPLIES))
 
         self.size = int(options.get('size', self.SIZE))
         self.items = int(options.get('items', self.ITEMS))

@@ -1,0 +1,32 @@
+[test_case]
+test = perfrunner.tests.elastic.ElasticLatencyTest
+title =  PhraseQuery, , no kv-load,wiki 1M x 1KB, raw latency
+summary = Elastic Latency test for match query
+larger_is_better = true
+
+[stats]
+lat_interval = 0
+
+[fts]
+items = 1000000
+name  = perf_fts_index
+port = 8094
+worker = 0
+type = match
+query_file = tests/fts/data/phrase.txt
+query_size = 6
+logfile = /tmp/elastic_latency_matchphrase_1M_1K.txt
+orderby = q0b00001101
+elastic = 1
+backup_path = /home/backup
+repo_path = wiki1M
+field = text
+
+[access]
+time = 600
+
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 1
+num_buckets = 1

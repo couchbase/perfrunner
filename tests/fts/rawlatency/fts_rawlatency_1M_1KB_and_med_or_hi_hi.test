@@ -1,0 +1,34 @@
+[test_case]
+test = perfrunner.tests.fts.FTSLatencyTest
+title = AndMedOrHighHigh, no kv-load, wiki 1M x 1KB, raw latency
+summary = FTS latency Test
+larger_is_better = false
+fts = true
+
+[stats]
+lat_interval = 0
+
+[access]
+time = 1200
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 1
+num_buckets = 1
+fts_index_mem_quota = 20000
+
+
+[fts]
+items = 1000000
+name  = perf_fts_index
+port = 8094
+worker = 0
+type = 1_conjuncts_2_disjuncts
+query_file = tests/fts/data/mid_hi_hi.txt
+query_size = 10
+logfile = /tmp/fts_latency_AndMedOrHighHigh_1M_1K.txt
+orderby = q0b00001001
+backup_path = /home/backup
+repo_path = wiki1M
+field = text
+index_configfile = tests/fts/index/fts_tvectors_off.json

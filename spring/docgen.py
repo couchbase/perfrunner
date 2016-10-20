@@ -528,7 +528,6 @@ class ImportExportDocument(ReverseLookupDocument):
 
     def next(self, key):
         seq_id = int(key[-12:]) + 1
-        prefix = key[:-12]
         alphabet = self._build_alphabet(key)
         size = self._size()
         return {
@@ -555,6 +554,6 @@ class ImportExportDocument(ReverseLookupDocument):
             'gmtime': self._build_gmtime(alphabet) * random.randint(0, 9),
             'year': self._build_year(alphabet) * random.randint(0, 5),
             'body': self._build_body(alphabet, size),
-            'capped_small': self._build_capped(alphabet, prefix, seq_id, 100) * random.randint(0, 5),
-            'alt_capped_small': self._build_capped(alphabet, seq_id, seq_id, 100) * random.randint(0, 5),
+            'capped_small': self._build_capped(alphabet, seq_id, 100) * random.randint(0, 5),
+            'alt_capped_small': self._build_capped(alphabet, seq_id, 100) * random.randint(0, 5),
         }

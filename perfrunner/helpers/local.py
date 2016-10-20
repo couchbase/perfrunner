@@ -145,6 +145,7 @@ def export(master_node, cluster_spec, tp='json', frmt=None, bucket='default'):
             .format(tp, master_node, cluster_spec.rest_credentials[0],
                     cluster_spec.rest_credentials[1],
                     frmt, export_file, bucket)
+    logger.info('Running: {}'.format(cmd))
     local(cmd, capture=False)
 
 
@@ -165,5 +166,5 @@ def import_data(master_node, cluster_spec, tp='json', frmt=None, bucket=''):
 
     if frmt:
         cmd += ' --format {}'.format(frmt)
-
+    logger.info('Running: {}'.format(cmd))
     local(cmd, capture=False)

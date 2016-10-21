@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.fts.FTSLatencyTest
-title =  FuzzyQuery fuzziness 1, no kv-load, wiki 1M x 1KB, raw latency
+title = FuzzyQuery, fuzziness 1, no kv-load, wiki 1M x 1KB, raw latency
 summary = FTS Latency Test
 larger_is_better = true
 fts = true

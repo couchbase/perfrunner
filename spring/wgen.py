@@ -101,6 +101,11 @@ class Worker(object):
         elif self.ws.doc_gen == 'ref':
             self.docs = RefDocument(self.ws.size,
                                     self.ts.prefix)
+        elif self.ws.doc_gen == 'array_indexing':
+            self.docs = ArrayIndexingDocument(self.ws.size,
+                                              self.ts.prefix,
+                                              self.ws.array_size,
+                                              self.ws.items)
         elif self.ws.doc_gen == 'import_export':
             self.docs = ImportExportDocument(self.ws.size,
                                              self.ts.prefix)

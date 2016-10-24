@@ -486,9 +486,6 @@ class N1QLWorker(Worker):
                                               prefix='n1ql',
                                               array_size=self.ws.array_size,
                                               num_docs=self.ws.items)
-        elif self.ws.doc_gen == 'import_export':
-            self.docs = ImportExportDocument(self.ws.size,
-                                             self.ts.prefix)
 
     def init_db(self):
         host, port = self.ts.node.split(':')

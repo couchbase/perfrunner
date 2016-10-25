@@ -27,9 +27,9 @@ class Monitor(RestHelper):
         'ep_tap_rebalance_queue_backfillremaining',
     )
 
-    UPR_QUEUES = (
-        'ep_upr_replica_items_remaining',
-        'ep_upr_other_items_remaining',
+    DCP_QUEUES = (
+        'ep_dcp_replica_items_remaining',
+        'ep_dcp_other_items_remaining',
     )
 
     XDCR_QUEUES = (
@@ -92,9 +92,9 @@ class Monitor(RestHelper):
         logger.info('Monitoring TAP queues: {}'.format(bucket))
         self._wait_for_empty_queues(host_port, bucket, self.TAP_QUEUES)
 
-    def monitor_upr_queues(self, host_port, bucket):
-        logger.info('Monitoring UPR queues: {}'.format(bucket))
-        self._wait_for_empty_queues(host_port, bucket, self.UPR_QUEUES)
+    def monitor_dcp_queues(self, host_port, bucket):
+        logger.info('Monitoring DCP queues: {}'.format(bucket))
+        self._wait_for_empty_queues(host_port, bucket, self.DCP_QUEUES)
 
     def monitor_xdcr_queues(self, host_port, bucket):
         logger.info('Monitoring XDCR queues: {}'.format(bucket))

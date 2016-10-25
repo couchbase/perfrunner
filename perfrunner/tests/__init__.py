@@ -113,7 +113,7 @@ class PerfTest(object):
             for bucket in self.test_config.buckets:
                 self.monitor.monitor_disk_queues(master, bucket)
                 self.monitor.monitor_tap_queues(master, bucket)
-                self.monitor.monitor_upr_queues(master, bucket)
+                self.monitor.monitor_dcp_queues(master, bucket)
 
     def restore(self):
         self.restore_helper.restore()

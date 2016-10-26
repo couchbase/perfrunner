@@ -1,0 +1,29 @@
+[test_case]
+test = perfrunner.tests.elastic.ElasticThroughputTest
+title = PrefixQuery, no kv-load, wiki 1M x 1KB
+summary = ELasticSearch throughput test
+larger_is_better = true
+
+[fts]
+items = 1000000
+name  = perf_fts_index
+port = 8094
+worker= 50
+type = prefix
+query_file = tests/fts/data/prefix.txt
+query_size = 10
+elastic = 1
+logfile = /tmp/elastic_thput_prefix_1M_1K.txt
+orderby = q0b00001110
+backup_path = /home/backup
+repo_path = wiki1M
+field = text
+index_configfile = tests/fts/index/elastic_6shards.json
+
+[access]
+time = 600
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 1
+num_buckets = 1

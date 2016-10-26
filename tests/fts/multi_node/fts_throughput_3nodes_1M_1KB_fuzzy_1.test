@@ -1,0 +1,30 @@
+[test_case]
+test = perfrunner.tests.fts.FTSThroughputTest
+title = FuzzyQuery, fuzziness 1, no kv-load, wiki 1M x 1KB
+summary = FTS throughput Test
+larger_is_better = true
+fts = true
+
+[access]
+time = 600
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 3
+num_buckets = 1
+fts_index_mem_quota = 20000
+
+[fts]
+items = 1000000
+name  = perf_fts_index
+port = 8094
+worker= 10
+type = fuzzy
+query_file = tests/fts/data/fuzzy_1.txt
+query_size = 10
+logfile = /tmp/fts_thput_fuzzy_1_1M_1K.txt
+orderby = q0b00001010
+backup_path = /home/backup
+repo_path = wiki1M
+field = text
+index_configfile = tests/fts/index/fts_tvectors_off.json

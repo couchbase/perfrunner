@@ -1,0 +1,34 @@
+[test_case]
+test = perfrunner.tests.elastic.ElasticLatencyTest
+title = DocIdQuery, no kv-load, wiki 1M x 1KB
+summary = ElasticSearch latency test
+larger_is_better = true
+
+[stats]
+lat_interval = 0.1
+
+[fts]
+items = 1000000
+name  = perf_elastic_index
+port = 9091
+worker= 3
+type = ids
+query_file = tests/fts/data/docid.txt
+query_size = 10
+elastic = 1
+logfile = /tmp/elastic_latency_docid_1M_1K.txt
+orderby = q0b00010001
+backup_path = /home/backup
+repo_path = wiki1M
+field = text
+index_configfile = tests/fts/index/elastic_6shards.json
+
+[access]
+time = 1200
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 3
+num_buckets = 1
+
+

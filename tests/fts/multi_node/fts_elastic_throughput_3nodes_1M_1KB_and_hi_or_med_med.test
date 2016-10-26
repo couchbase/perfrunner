@@ -1,0 +1,31 @@
+[test_case]
+test = perfrunner.tests.elastic.ElasticThroughputTest
+title = AndHighOrMedMed, no kv-load, wiki 1M x 1KB
+summary = Elasticsearch throughput Test
+larger_is_better = false
+
+
+[access]
+time = 600
+
+[fts]
+items = 1000000
+name  = perf_elastic_index
+port = 8094
+worker= 30
+type = 1_conjuncts_2_disjuncts
+query_file = tests/fts/data/hi_mid_mid.txt
+query_size = 10
+logfile = /tmp/fts_throughput_AndHighOrMedMed_1M_1K.txt
+orderby = q0b00001000
+backup_path = /home/backup
+repo_path = wiki1M
+field = text
+elastic = 1
+index_configfile = tests/fts/index/elastic_6shards.json
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 3
+num_buckets = 1
+

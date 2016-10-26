@@ -1,0 +1,34 @@
+[test_case]
+test = perfrunner.tests.elastic.ElasticLatencyTest
+title = OrHighMed, no kv-load, wiki 1M x 1KB
+summary = Elasticsearch latency Test
+larger_is_better = false
+
+[stats]
+lat_interval = 0.1
+
+[access]
+time = 1200
+
+[fts]
+items = 1000000
+name  = perf_fts_index
+port = 8094
+worker= 1
+type = 2_disjuncts
+query_file = tests/fts/data/mid_hi.txt
+query_size = 10
+logfile = /tmp/fts_orhimed_1M_1K.txt
+orderby = q0b00000101
+backup_path = /home/backup
+repo_path = wiki1M
+field = text
+elastic = 1
+index_configfile = tests/fts/index/elastic_6shards.json
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 3
+num_buckets = 1
+
+

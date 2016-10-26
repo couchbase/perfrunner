@@ -1,11 +1,11 @@
 import json
 import time
-
 import requests
 from logger import logger
 from requests.auth import HTTPBasicAuth
 
 from perfrunner.helpers.cbmonitor import with_stats
+from perfrunner.helpers.misc import get_json_from_file
 from perfrunner.tests import PerfTest
 
 
@@ -23,7 +23,7 @@ class FTStest(PerfTest):
     def __init__(self, cluster_spec, test_config, verbose):
         super(FTStest, self).__init__(cluster_spec, test_config, verbose)
 
-        self.index_definition = self.get_json_from_file(self.test_config.fts_settings.index_configfile)
+        self.index_definition = get_json_from_file(self.test_config.fts_settings.index_configfile)
         self.host_port = [x for x in self.cluster_spec.yield_servers()][0]
         self.host = self.host_port.split(':')[0]
         self.fts_port = 8094
@@ -37,11 +37,6 @@ class FTStest(PerfTest):
         self.index_time_taken = 0
         self.auth = HTTPBasicAuth('Administrator', 'password')
         self.orderbymetric = self.test_config.fts_settings.orderby
-
-    @staticmethod
-    def get_json_from_file(file_name):
-        with open(file_name) as fh:
-            return json.load(fh)
 
     @with_stats
     def access(self):

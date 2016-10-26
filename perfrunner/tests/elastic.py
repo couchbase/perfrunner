@@ -1,28 +1,21 @@
+import json
 import time
-
 import requests
 from logger import logger
 from requests.auth import HTTPBasicAuth
 
+
 from perfrunner.helpers.cbmonitor import with_stats
+from perfrunner.helpers.misc import get_json_from_file
 from perfrunner.helpers.rest import RestHelper
 from perfrunner.tests import PerfTest
 
 
 class Elastictest(PerfTest):
-
-    """
-    The most basic ELASTIC workflow:
-        Initial data load ->
-            Persistence and intra-cluster replication (for consistency) ->
-                Data compaction (for consistency) ->
-                    "Hot" load or working set warm up ->
-                        "access" phase or active workload
-    """
-
     def __init__(self, cluster_spec, test_config, verbose):
         super(Elastictest, self).__init__(cluster_spec, test_config, verbose)
 
+        self.index_definition = get_json_from_file(self.test_config.fts_settings.index_configfile)
         self.host_port = [x for x in self.cluster_spec.yield_servers()][0]
         self.host = self.host_port.split(':')[0]
         self.url = "{}:{}".format(self.host, "9200")
@@ -53,23 +46,6 @@ class Elastictest(PerfTest):
         self.access()
 
     def addelastic(self):
-        '''
-        self.rest.add_remote_cluster(self.host_port, self.elastic_host_port, "Elastic")
-        The above API not working, throwing
-        File "/tmp/pip-build-qBV3Lp/requests/requests/models.py", line 597, in apparent_encoding
-          File "/tmp/pip-build-qBV3Lp/requests/requests/packages/charade/__init__.py", line 27, in detect
-        ImportError: cannot import name universaldetector Error
-
-        api='http://{}/pools/default/remoteClusters'.format(self.host_port)
-        print 'api is ', api
-        mydata = {'username': 'Administrator', 'password': 'password',
-                  'hostname': self.elastic_host_port, 'name': 'Elastic'}
-        print 'mydata', mydata
-        r=requests.post(url =api,
-            data=mydata,
-            auth=HTTPBasicAuth('Administrator', 'password'))
-        print 'status', r
-        '''
         requests.post(url='http://{}:8091/pools/default/remoteClusters'.format(self.host),
                           data={'username': 'Administrator', 'password': 'password',
                                 'hostname': '{}:9091'.format(self.host), 'name': 'Elastic'},
@@ -107,7 +83,8 @@ class Elastictest(PerfTest):
 
     def create_index(self):
         logger.info('Creating elastic search Index')
-        r = self.requests.put(self.index_url)
+        r = self.requests.put(self.index_url,
+                              data=json.dumps(self.index_definition, ensure_ascii=False))
         if not r.status_code == 200:
             logger.info("URL: %s" % self.index_url)
             logger.error(r.text)

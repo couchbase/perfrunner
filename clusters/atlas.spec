@@ -1,6 +1,8 @@
 [clusters]
-fts = 172.23.99.211:8091,kv,fts
-
+fts =
+    172.23.99.211:8091,kv,fts
+    172.23.99.39:8091,kv,fts
+    172.23.99.40:8091,kv,fts
 
 [clients]
 hosts =

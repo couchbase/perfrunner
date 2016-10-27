@@ -142,12 +142,14 @@ class RebalanceTest(PerfTest):
             for host_port in failover_nodes:
                 self.rest.fail_over(master, host_port)
                 self.rest.add_back(master, host_port)
-                if delta_recovery:
-                    self.rest.set_delta_recovery_type(master, host_port)
             for host_port in graceful_failover_nodes:
                 self.rest.graceful_fail_over(master, host_port)
                 self.monitor.monitor_rebalance(master)
                 self.rest.add_back(master, host_port)
+
+            if delta_recovery:
+                for host_port in failover_nodes + graceful_failover_nodes:
+                    self.rest.set_delta_recovery_type(master, host_port)
 
             if failover or graceful_failover:
                 logger.info('Sleeping for {} seconds after failover'

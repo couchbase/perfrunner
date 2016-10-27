@@ -251,7 +251,10 @@ class CbExportImportTest(BackupRestoreTest):
             'cluster': self.cluster_spec.name,
             'larger_is_better': self.test_config.test_case.larger_is_better,
         }
-        metric = prefix.replace(" ", "_") + "_" + metric
+        # replace 'expimp' on import or export
+        metric = metric.replace('expimp', prefix.split()[0].lower())
+        if "CSV" in prefix:
+            metric = metric.replace('json', 'csv')
 
         data_size = self.test_config.load_settings.items * \
             self.test_config.load_settings.size / 2.0 ** 20  # MB

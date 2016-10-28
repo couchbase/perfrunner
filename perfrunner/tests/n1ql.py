@@ -134,3 +134,6 @@ class N1QLJoinTest(N1QLTest):
 
     def run(self):
         self.load()
+        self.wait_for_persistence()
+
+        self.build_index()

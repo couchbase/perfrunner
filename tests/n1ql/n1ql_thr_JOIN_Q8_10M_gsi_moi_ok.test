@@ -23,3 +23,7 @@ indexer.settings.gc_percent = 200
 items = 10000000
 size = 1024
 workers = 80
+
+[n1ql]
+indexes =
+    by_email::CREATE INDEX {name} ON `{bucket}` (email) using gsi;

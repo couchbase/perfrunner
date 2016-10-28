@@ -27,7 +27,7 @@ class N1QLTest(PerfTest):
         for name in names:
             self.monitor.monitor_index_state(host=query_node, index_name=name)
 
-    def _create_prepared_statements(self):
+    def create_prepared_statements(self):
         self.n1ql_queries = []
         prepared_stmnts = list()
         for query in self.test_config.access_settings.n1ql_queries:
@@ -46,12 +46,12 @@ class N1QLTest(PerfTest):
                     self.rest.exec_n1ql_statement(query_node, statement)
 
     @with_stats
-    def access(self, access_settings=None):
+    def access(self, *args):
         super(N1QLTest, self).timer()
 
         self.worker_manager.wait_for_workers()
 
-    def run(self):
+    def load(self, *args):
         """Important: the test creates two data sets with different key
         prefixes.
 
@@ -71,20 +71,26 @@ class N1QLTest(PerfTest):
         load_settings.items /= 2
 
         iterator = TargetIterator(self.cluster_spec, self.test_config, 'n1ql')
-        self.load(load_settings, iterator)
-        self.load(load_settings)
-        self.wait_for_persistence()
+        super(N1QLTest, self).load(load_settings, iterator)
+        super(N1QLTest, self).load(load_settings)
 
-        self.build_index()
-
-        self._create_prepared_statements()
-
+    def access_bg(self, *args):
         self.workload = self.test_config.access_settings
         self.workload.items /= 2
         self.workload.n1ql_queries = getattr(self, 'n1ql_queries',
                                              self.workload.n1ql_queries)
-        self.access_bg(access_settings=self.workload)
-        self.access(access_settings=self.workload)
+        super(N1QLTest, self).access_bg(access_settings=self.workload)
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.build_index()
+
+        self.create_prepared_statements()
+
+        self.access_bg()
+        self.access()
 
         self.report_kpi()
 
@@ -103,3 +109,31 @@ class N1QLThroughputTest(N1QLTest):
         self.reporter.post_to_sf(
             *self.metric_helper.calc_avg_n1ql_queries()
         )
+
+
+class N1QLJoinTest(N1QLTest):
+
+    def load_regular(self, load_settings, target):
+        load_settings.items /= 2
+        super(N1QLTest, self).load(load_settings, (target,))
+        target.prefix = 'n1ql'
+        super(N1QLTest, self).load(load_settings, (target,))
+
+    def load_categories(self, load_settings, target):
+        load_settings.items = load_settings.num_categories
+        target.prefix = 'n1ql'
+        super(N1QLTest, self).load(load_settings, (target,))
+
+    def load(self):
+        for doc_gen, target in zip(('ext_reverse_lookup', 'join', 'ref'),
+                                   self.target_iterator):
+            load_settings = self.test_config.load_settings
+            load_settings.doc_gen = doc_gen
+
+            if doc_gen == 'ref':
+                self.load_categories(load_settings, target)
+            else:
+                self.load_regular(load_settings, target)
+
+    def run(self):
+        self.load()

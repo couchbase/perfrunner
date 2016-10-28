@@ -440,7 +440,7 @@ class PhaseSettings(object):
 
     ARRAY_SIZE = 10
     NUM_CATEGORIES = 10 ** 6
-    NUM_REPLIES = 1000
+    NUM_REPLIES = 100
 
     ITEMS = 0
     EXISTING_ITEMS = 0

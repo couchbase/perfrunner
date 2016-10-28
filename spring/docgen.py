@@ -346,6 +346,8 @@ class ReverseLookupDocument(NestedDocument):
 
 class ExtReverseLookupDocument(ReverseLookupDocument):
 
+    OVERHEAD = 650
+
     def __init__(self, avg_size, prefix, num_docs):
         super(ExtReverseLookupDocument, self).__init__(avg_size, prefix)
         self.num_docs = num_docs
@@ -373,7 +375,7 @@ class JoinedDocument(ReverseLookupDocument):
         return self.add_prefix('%012d' % seq_id)
 
     def _build_title(self, alphabet):
-        return alphabet
+        return alphabet[:32]
 
     def _build_categories(self, seq_id):
         """1:4 reference to RefDocument keys."""

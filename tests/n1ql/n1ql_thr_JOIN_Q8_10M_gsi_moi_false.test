@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLJoinTest
-title = Q8, Inner Lookup JOIN, 20M docs, GSI, MOI, not_bounded
+title = Q8, Inner Lookup JOIN, 20M docs, GSI, MOI, request_plus
 summary = Inner Lookup JOIN
 
 [cluster]
@@ -39,10 +39,10 @@ workers = 10
 time = 1200
 n1ql_queries = join-inner-lookup
 n1ql_throughput = 1000000
-n1ql_workers = 128
+n1ql_workers = 720
 
 [n1ql-join-inner-lookup]
 prepared = joined_inner_lookup
 statement = SELECT u.name, t.title FROM `bucket-1` u JOIN `bucket-2` t ON KEYS u.topics WHERE u.email = $1;
-scan_consistency = not_bounded
+scan_consistency = request_plus
 args = ["{email}"]

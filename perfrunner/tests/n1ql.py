@@ -26,12 +26,13 @@ class N1QLTest(PerfTest):
 
     def create_prepared_statements(self):
         self.n1ql_queries = []
-        prepared_stmnts = list()
+        statements = list()
+
         for query in self.test_config.access_settings.n1ql_queries:
             if 'prepared' in query and query['prepared']:
                 stmt = 'PREPARE {} AS {}'.format(query['prepared'],
                                                  query['statement'])
-                prepared_stmnts.append(stmt)
+                statements.append(stmt)
                 del query['statement']
                 query['prepared'] = '"' + query['prepared'] + '"'
             self.n1ql_queries.append(query)
@@ -39,7 +40,7 @@ class N1QLTest(PerfTest):
         for name, servers in self.cluster_spec.yield_servers_by_role('n1ql'):
             for server in servers:
                 query_node = server.split(':')[0]
-                for statement in prepared_stmnts:
+                for statement in statements:
                     self.rest.exec_n1ql_statement(query_node, statement)
 
     @with_stats
@@ -137,3 +138,5 @@ class N1QLJoinTest(N1QLTest):
         self.wait_for_persistence()
 
         self.build_index()
+
+        self.create_prepared_statements()

@@ -13,19 +13,16 @@ class N1QLTest(PerfTest):
     def build_index(self):
         for name, servers in self.cluster_spec.yield_servers_by_role('n1ql'):
             query_node = servers[0].split(':')[0]
-            for bucket in self.test_config.buckets:
-                self._build_index(query_node, bucket)
+            for bucket, index in zip(self.test_config.buckets,
+                                     self.test_config.n1ql_settings.indexes):
+                self.create_index(query_node, bucket, index)
 
-    def _build_index(self, query_node, bucket):
-        names = list()
-        for index in self.test_config.n1ql_settings.indexes:
-            index_name, index_query = index.split('::')
-            query = index_query.format(name=index_name, bucket=bucket)
-            self.rest.exec_n1ql_statement(query_node, query)
-            names.append(index_name)
+    def create_index(self, query_node, bucket, index):
+        index_name, index_query = index.split('::')
+        query = index_query.format(name=index_name, bucket=bucket)
+        self.rest.exec_n1ql_statement(query_node, query)
 
-        for name in names:
-            self.monitor.monitor_index_state(host=query_node, index_name=name)
+        self.monitor.monitor_index_state(host=query_node, index_name=index_name)
 
     def create_prepared_statements(self):
         self.n1ql_queries = []

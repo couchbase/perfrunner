@@ -167,15 +167,18 @@ class SubDocGen(CBGen):
 
 class N1QLGen(CBGen):
 
-    def __init__(self, bucket, password, host, port=8091):
-        self.bucket = bucket
+    def __init__(self, admin_user, password, host, port=8091):
+        self.admin_user = admin_user
         self.password = password
 
         self.connections = self._get_query_connections(host, port)
 
+        basic_auth = '{}:{}'.format(admin_user, password)
+        self.headers = urllib3.util.make_headers(basic_auth=basic_auth)
+
     def _get_query_connections(self, host, port):
         nodes = requests.get(url='http://{}:{}/pools/default'.format(host, port),
-                             auth=(self.bucket, self.password)).json()
+                             auth=(self.admin_user, self.password)).json()
 
         connections = []
         for node in nodes['nodes']:
@@ -186,18 +189,16 @@ class N1QLGen(CBGen):
         return connections
 
     def query(self, query, *args):
-        creds = '[{{"user":"local:{}","pass":"{}"}}]'.format(self.bucket,
-                                                             self.password)
-        query['creds'] = creds
-
         if len(self.connections) > 1:
             connection = choice(self.connections)
         else:
             connection = self.connections[0]  # Faster than redundant choice
 
         t0 = time()
-        response = connection.request('POST', '/query/service', fields=query,
-                                      encode_multipart=False)
+        response = connection.request(method='POST', url='/query/service',
+                                      fields=query,
+                                      encode_multipart=False,
+                                      headers=self.headers)
         response.read(cache_content=False)
         latency = time() - t0
 

@@ -546,7 +546,7 @@ class N1QLWorker(Worker):
 
     def init_db(self):
         host, port = self.ts.node.split(':')
-        self.cb = N1QLGen(bucket=self.ts.bucket, password=self.ts.password,
+        self.cb = N1QLGen(admin_user=self.ts.admin_user, password=self.ts.password,
                           host=host, port=port)
 
     def read(self):

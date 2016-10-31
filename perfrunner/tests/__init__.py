@@ -24,13 +24,14 @@ class TargetIterator(object):
         self.prefix = prefix
 
     def __iter__(self):
+        admin_user, _ = self.cluster_spec.rest_credentials
         password = self.test_config.bucket.password
         prefix = self.prefix
         for master in self.cluster_spec.yield_masters():
             for bucket in self.test_config.buckets:
                 if self.prefix is None:
                     prefix = target_hash(master.split(':')[0])
-                yield TargetSettings(master, bucket, password, prefix)
+                yield TargetSettings(master, bucket, password, prefix, admin_user)
 
 
 class PerfTest(object):

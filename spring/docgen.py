@@ -371,8 +371,9 @@ class JoinedDocument(ReverseLookupDocument):
         self.num_replies = num_replies
 
     def _build_owner(self, seq_id):
-        """1:1 reference to ReverseLookupDocument keys."""
-        return self.add_prefix('%012d' % seq_id)
+        """4:1 reference to ReverseLookupDocument keys."""
+        ref_id = seq_id % (self.num_docs / 4)
+        return self.add_prefix('%012d' % ref_id)
 
     def _build_title(self, alphabet):
         return alphabet[:32]

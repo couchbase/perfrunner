@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLJoinTest
-title = Q8, Inner Lookup Join, MOI, request_plus
-summary = Inner Lookup Join
+title = Q9, Inner Index Join, MOI, not_bounded
+summary = Inner Index Join
 
 [cluster]
 mem_quota = 51200
@@ -28,6 +28,7 @@ doc_gen = ext_reverse_lookup,join
 [n1ql]
 indexes =
     by_email::CREATE INDEX {name} ON `{bucket}`(email) using gsi;
+    by_owner::CREATE INDEX {name} ON `{bucket}`(owner) using gsi;
 
 [access]
 creates = 0
@@ -38,12 +39,13 @@ throughput = 15000
 items = 10000000
 workers = 20
 time = 1200
-n1ql_queries = lookup-join
+n1ql_queries = index-join
 n1ql_throughput = 1000000
-n1ql_workers = 720
+n1ql_workers = 128
+doc_gen = ext_reverse_lookup,join
 
-[n1ql-lookup-join]
-prepared = lookup_join
-statement = SELECT u.name, t.title FROM `bucket-1` u JOIN `bucket-2` t ON KEYS u.topics WHERE u.email = $1;
-scan_consistency = request_plus
+[n1ql-index-join]
+prepared = index_join
+statement = SELECT t.title FROM `bucket-1` u JOIN `bucket-2` t ON KEY t.owner FOR u WHERE u.email = $1;
+scan_consistency = not_bounded
 args = ["{email}"]

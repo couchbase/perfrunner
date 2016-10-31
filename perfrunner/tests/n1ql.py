@@ -123,8 +123,8 @@ class N1QLJoinTest(N1QLThroughputTest):
         super(N1QLTest, self).load(load_settings, (target,))
 
     def load(self, *args):
-        for doc_gen, target in zip(('ext_reverse_lookup', 'join', 'ref'),
-                                   self.target_iterator):
+        doc_gens = self.test_config.load_settings.doc_gen.split(',')
+        for doc_gen, target in zip(doc_gens, self.target_iterator):
             load_settings = self.test_config.load_settings
             load_settings.doc_gen = doc_gen
 
@@ -134,13 +134,15 @@ class N1QLJoinTest(N1QLThroughputTest):
                 self.load_regular(load_settings, target)
 
     def access_bg(self, *args):
-        for doc_gen, target in zip(('ext_reverse_lookup', ),
-                                   self.target_iterator):
+        doc_gens = self.test_config.load_settings.doc_gen.split(',')
+        for doc_gen, target in zip(doc_gens, self.target_iterator):
             self.workload = self.test_config.access_settings
             self.workload.doc_gen = doc_gen
             self.workload.items /= 2
-            self.workload.n1ql_queries = getattr(self, 'n1ql_queries',
-                                                 self.workload.n1ql_queries)
+            self.workload.n1ql_queries = self.n1ql_queries
+            if doc_gen != 'ext_reverse_lookup':
+                self.workload.n1ql_workers = 0
+
             super(N1QLTest, self).access_bg(access_settings=self.workload,
                                             target_iterator=(target, ))
 

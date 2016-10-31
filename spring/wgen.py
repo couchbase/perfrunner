@@ -467,20 +467,21 @@ class N1QLWorker(Worker):
 
     def init_docs(self):
         if self.ws.doc_gen == 'reverse_lookup':
-            self.docs = ReverseLookupDocument(self.ws.size, prefix='n1ql')
+            self.docs = ReverseLookupDocument(self.ws.size,
+                                              prefix='n1ql')
         elif self.ws.doc_gen == 'ext_reverse_lookup':
             self.docs = ExtReverseLookupDocument(self.ws.size,
-                                                 self.ts.prefix,
-                                                 self.ws.items)
+                                                 prefix='n1ql',
+                                                 num_docs=self.ws.items)
         elif self.ws.doc_gen == 'join':
             self.docs = JoinedDocument(self.ws.size,
-                                       self.ts.prefix,
-                                       self.ws.items,
-                                       self.ws.num_categories,
-                                       self.ws.num_replies)
+                                       prefix='n1ql',
+                                       num_docs=self.ws.items,
+                                       num_categories=self.ws.num_categories,
+                                       num_replies=self.ws.num_replies)
         elif self.ws.doc_gen == 'ref':
             self.docs = RefDocument(self.ws.size,
-                                    self.ts.prefix)
+                                    prefix='n1ql')
         elif self.ws.doc_gen == 'array_indexing':
             self.docs = ArrayIndexingDocument(self.ws.size,
                                               prefix='n1ql',

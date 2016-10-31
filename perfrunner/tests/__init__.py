@@ -145,14 +145,17 @@ class PerfTest(object):
         self.worker_manager.run_workload(access_settings, self.target_iterator)
         self.worker_manager.wait_for_workers()
 
-    def access_bg(self, access_settings=None):
+    def access_bg(self, access_settings=None, target_iterator=None):
         if access_settings is None:
             access_settings = self.test_config.access_settings
+        if target_iterator is None:
+            target_iterator = self.target_iterator
 
         log_phase('access phase in background', access_settings)
         access_settings.index_type = self.test_config.index_settings.index_type
         access_settings.ddocs = getattr(self, 'ddocs', None)
-        self.worker_manager.run_workload(access_settings, self.target_iterator,
+        self.worker_manager.run_workload(access_settings,
+                                         target_iterator,
                                          timer=access_settings.time)
 
     def timer(self):

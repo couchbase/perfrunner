@@ -109,7 +109,7 @@ class N1QLThroughputTest(N1QLTest):
         )
 
 
-class N1QLJoinTest(N1QLTest):
+class N1QLJoinTest(N1QLThroughputTest):
 
     def load_regular(self, load_settings, target):
         load_settings.items /= 2
@@ -122,7 +122,7 @@ class N1QLJoinTest(N1QLTest):
         target.prefix = 'n1ql'
         super(N1QLTest, self).load(load_settings, (target,))
 
-    def load(self):
+    def load(self, *args):
         for doc_gen, target in zip(('ext_reverse_lookup', 'join', 'ref'),
                                    self.target_iterator):
             load_settings = self.test_config.load_settings
@@ -133,10 +133,18 @@ class N1QLJoinTest(N1QLTest):
             else:
                 self.load_regular(load_settings, target)
 
-    def run(self):
-        self.load()
-        self.wait_for_persistence()
+    def access_bg(self, *args):
+        for doc_gen, target in zip(('ext_reverse_lookup', ),
+                                   self.target_iterator):
+            self.workload = self.test_config.access_settings
+            self.workload.doc_gen = doc_gen
+            self.workload.items /= 2
+            self.workload.n1ql_queries = getattr(self, 'n1ql_queries',
+                                                 self.workload.n1ql_queries)
+            super(N1QLTest, self).access_bg(access_settings=self.workload,
+                                            target_iterator=(target, ))
 
-        self.build_index()
-
-        self.create_prepared_statements()
+    def _report_kpi(self):
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_avg_n1ql_queries()
+        )

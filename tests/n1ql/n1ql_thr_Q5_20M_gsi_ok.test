@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
-title = Q5, Aggregation Query, 20M docs, 3.6K SET/s, not_bounded
-summary = Aggregation Query, 3.6K SET/s
+title = Q5, Aggregation Query, FDB, not_bounded
+summary = Aggregation Query
 larger_is_better = true
 
 [cluster]

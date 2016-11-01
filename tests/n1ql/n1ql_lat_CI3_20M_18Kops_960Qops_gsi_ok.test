@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLLatencyTest
-title = CI3, Range Scan, 20M docs, 3.6K SET/s, 960 q/s, not_bounded
-summary = Range Scan, 3.6K SET/s, 960 q/s
+title = CI3, Range Scan, 960 queries/sec, FDB, not_bounded
+summary = Range Scan, 960 queries/sec
 larger_is_better = false
 
 [stats]

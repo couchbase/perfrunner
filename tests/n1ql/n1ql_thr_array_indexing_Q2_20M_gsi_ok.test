@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
-title = Q2 Array Indexing, Singleton Unique Lookup, 20M docs, 3.6K SET/s, not_bounded
-summary = Singleton Unique Lookup, 3.6K SET/s
+title = Q2 Array Indexing, Singleton Unique Lookup, FDB, not_bounded
+summary = Singleton Unique Lookup
 larger_is_better = true
 
 [cluster]

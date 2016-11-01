@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
-title = Q2 Array Indexing, Singleton Unique Lookup, 2M docs, 5KSops, MOI, not_bounded
+title = Q2 Array Indexing, Singleton Unique Lookup, 2M docs, 5K SET/s, MOI, not_bounded
 
 [cluster]
 mem_quota = 40960

@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
-title = CI7, Order By Query, 20M docs, 14.4KGops, 3.6KSops, GSI, not_bounded
+title = CI7, Order By Query, 20M docs, 14.4KGops, 3.6KSops, not_bounded
 summary = Order By Query, 14.4KGops, 3.6KSops
 larger_is_better = true
 

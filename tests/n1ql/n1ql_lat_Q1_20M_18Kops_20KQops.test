@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLLatencyTest
-title = Q1, Key-Value Lookup, 20M docs, 14.4KGops, 3.6KSops, 20KQops
-summary = Key-Value Lookup, 14.4KGops, 3.6KSops, 20KQops
+title = Q1, Key-Value Lookup, 20M docs, 3.6KSops, 20KQops
+summary = Key-Value Lookup, 3.6KSops, 20KQops
 larger_is_better = false
 
 [cluster]

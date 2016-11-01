@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
-title = CI2, Singleton Unique Lookup, 20M docs, 14.4KGops, 3.6KSops, request_plus
-summary = Singleton Unique Lookup, 14.4KGops, 3.6KSops
+title = CI2, Singleton Unique Lookup, 20M docs, 3.6KSops, request_plus
+summary = Singleton Unique Lookup, 3.6KSops
 larger_is_better = true
 
 [cluster]

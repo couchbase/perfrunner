@@ -63,7 +63,7 @@ class MetricHelper(object):
         data = self.seriesly[db].query(query_params)
         queries = data.values()[0][0]
 
-        return round(queries, 1)
+        return int(queries)
 
     def cal_avg_n1ql_queries_perfdaily(self):
         return {"name": "avg_query_throughput",

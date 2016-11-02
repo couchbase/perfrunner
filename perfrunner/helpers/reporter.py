@@ -12,88 +12,6 @@ from pytz import timezone
 from perfrunner.helpers.misc import pretty_dict, uhex
 
 
-class Comparator(object):
-
-    CONFIDENCE_THRESHOLD = 50
-
-    def get_snapshots(self, benckmark):
-        """Get all snapshots ordered by build version for given benchmark"""
-        self.snapshots_by_build = dict()
-        for row in self.cbb.query('benchmarks', 'build_and_snapshots_by_metric',
-                                  key=benckmark['metric'], stale='false'):
-            self.snapshots_by_build[row.value[0]] = row.value[1]
-
-    def find_previous(self, new_build):
-        """Find previous build within current release or latest build from
-        previous release"""
-        all_builds = sorted(self.snapshots_by_build.keys(), reverse=True)
-        try:
-            return all_builds[all_builds.index(new_build) + 1:][0]
-        except IndexError:
-            return
-        except ValueError:
-            logger.warn('Didn\'t find {} in {}'.format(new_build, all_builds))
-
-    def _compare(self, cbmonitor, prev_build, new_build):
-        """Compare snapshots if possible"""
-        api = 'http://{}/reports/compare/'.format(cbmonitor['host'])
-        snapshot_api = 'http://{}/reports/html/?snapshot={{}}&snapshot={{}}'\
-            .format(cbmonitor['host'])
-
-        changes = []
-        reports = []
-        if prev_build is not None:
-            baselines = self.snapshots_by_build[prev_build]
-            targets = self.snapshots_by_build[new_build]
-            if baselines and targets:
-                for baseline, target in zip(baselines, targets):
-                    params = {'baseline': baseline, 'target': target}
-                    comparison = requests.get(url=api, params=params).json()
-                    diff = tuple({
-                        m for m, confidence in comparison
-                        if confidence > self.CONFIDENCE_THRESHOLD
-                    })
-                    if diff:
-                        changes.append((prev_build, diff))
-                        snapshots_url = snapshot_api.format(baseline, target)
-                        reports.append((prev_build, snapshots_url))
-
-            # Prefetch (trigger) HTML reports
-            for _, url in reports:
-                requests.get(url=url)
-
-        return {'changes': changes, 'reports': reports}
-
-    def __call__(self, test, benckmark):
-        showfast = test.test_config.stats_settings.showfast
-        cbmonitor = test.test_config.stats_settings.cbmonitor
-        try:
-            self.cbb = Couchbase.connect(bucket='benchmarks', **showfast)
-            self.cbf = Couchbase.connect(bucket='feed', **showfast)
-        except Exception as e:
-            logger.warn('Failed to connect to database, {}'.format(e))
-            return
-
-        self.get_snapshots(benckmark)
-        prev_build = self.find_previous(new_build=benckmark['build'])
-
-        # Feed record
-        _id = str(int(time.time() * 10 ** 6))
-        base_feed = {
-            'build': benckmark['build'],
-            'cluster': test.cluster_spec.name,
-            'test_config': test.test_config.name,
-            'summary': test.test_config.test_case.test_summary,
-            'datetime': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-        }
-        changes = self._compare(cbmonitor=cbmonitor,
-                                prev_build=prev_build,
-                                new_build=benckmark['build'])
-        feed = dict(base_feed, **changes)
-        self.cbf.set(_id, feed)
-        logger.info('Snapshot comparison: {}'.format(pretty_dict(feed)))
-
-
 class SFReporter(object):
 
     def __init__(self, test):
@@ -139,7 +57,7 @@ class SFReporter(object):
             'value': value,
             'snapshots': self.test.snapshots,
             'build_url': os.environ.get('BUILD_URL'),
-            'datetime': time.strftime('%Y-%M-%d %H:%M'),
+            'datetime': time.strftime('%Y-%m-%d %H:%M'),
         }
         if self.test.master_events:
             data.update({'master_events': key})

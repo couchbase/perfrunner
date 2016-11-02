@@ -138,7 +138,8 @@ class SFReporter(object):
             'metric': metric,
             'value': value,
             'snapshots': self.test.snapshots,
-            'build_url': os.environ.get('BUILD_URL')
+            'build_url': os.environ.get('BUILD_URL'),
+            'datetime': time.strftime('%Y-%M-%d %H:%M'),
         }
         if self.test.master_events:
             data.update({'master_events': key})

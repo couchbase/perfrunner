@@ -18,7 +18,9 @@ class SecondaryLatencyStats(Collector):
                 stats = {}
                 latency = duration.split(':')[1]
                 latency = latency.rstrip()
-                stats[duration.split(':')[0]] = latency
+                latency_key = duration.split(':')[0]
+                latency_key = latency_key.strip()
+                stats[latency_key] = latency
         return stats
 
     def sample(self):

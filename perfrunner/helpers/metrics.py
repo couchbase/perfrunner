@@ -300,7 +300,7 @@ class MetricHelper(object):
         timings = []
         db = 'secondaryscan_latency{}'.format(self.cluster_names[0])
         data = self.seriesly[db].get_all()
-        timings += [value[' Nth-latency'] for value in data.values()]
+        timings += [value['Nth-latency'] for value in data.values()]
         timings = map(int, timings)
         logger.info("Number of samples are {}".format(len(timings)))
         logger.info("Sample timings: {}".format(timings))

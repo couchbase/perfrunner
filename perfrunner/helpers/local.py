@@ -1,7 +1,7 @@
 import os.path
 from sys import platform
 
-from fabric.api import lcd, local, quiet
+from fabric.api import lcd, local, quiet, shell_env
 from logger import logger
 
 
@@ -209,3 +209,17 @@ def run_cbc_pillowfight(host, bucket, password,
 
     logger.info('Running: {}'.format(cmd))
     local(cmd, capture=False)
+
+
+def run_dcptest_script(test):
+    command = "./dcptest -auth {user}:{password} -kvaddrs {master_node_ip}:11210 -buckets {bucket} " \
+              "-nummessages {items} -numconnections {num_connections} -outputfile {outputfile} {master_node}" \
+              " > dcptest.log 2>&1". \
+        format(user=test.username, password=test.password, master_node_ip=test.master_node.split(":")[0],
+               bucket=test.bucket, items=test.items, num_connections=test.num_connections,
+               outputfile=test.OUTPUT_FILE, master_node=test.master_node)
+    logger.info("DCP test command: {}".format(command))
+    cbauth_path = "http://{user}:{password}@{node}".format(user=test.username, password=test.password,
+                                                           node=test.master_node)
+    with shell_env(CBAUTH_REVRPC_URL=cbauth_path):
+        local(command, capture=False)

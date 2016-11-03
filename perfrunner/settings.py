@@ -212,6 +212,11 @@ class TestConfig(Config):
         return SecondaryIndexSettings(options)
 
     @property
+    def dcp_settings(self):
+        options = self._get_options_as_dict('dcp')
+        return DCPSettings(options)
+
+    @property
     def n1ql_settings(self):
         options = self._get_options_as_dict('n1ql')
         return N1QLSettings(options)
@@ -671,6 +676,19 @@ class SecondaryIndexSettings(object):
                     pass
 
                 self.settings[option] = value
+
+    def __str__(self):
+        return str(self.__dict__)
+
+
+class DCPSettings(object):
+
+    NUM_CONNECTIONS = 4
+    BUCKET = "bucket-1"
+
+    def __init__(self, options):
+        self.num_connections = int(options.get('num_connections', self.NUM_CONNECTIONS))
+        self.bucket = options.get('bucket', self.BUCKET)
 
     def __str__(self):
         return str(self.__dict__)

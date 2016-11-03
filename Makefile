@@ -2,6 +2,7 @@
 
 PYTHON := python2.7
 ENV := env
+GOVENDOR := ${GOPATH}/bin/govendor
 
 build:
 	virtualenv -p ${PYTHON} ${ENV}
@@ -10,7 +11,7 @@ build:
 	${ENV}/bin/python setup.py install
 	pwd > ${ENV}/lib/${PYTHON}/site-packages/perfrunner.pth
 
-clean:
+clean: clean-dcptest
 	rm -fr build perfrunner.egg-info dist
 	find . -name '*.pyc' -o -name '*.pyo' | xargs rm -f
 
@@ -22,3 +23,17 @@ nose:
 	${ENV}/bin/nosetests -v unittests.py
 
 test: nose pep8
+
+
+dcptest: vendor-sync
+	go build -o dcptest go/dcptest/main.go
+
+vendor-sync: go-tools
+	${GOVENDOR} sync
+
+go-tools:
+	go get -u github.com/kardianos/govendor
+
+clean-dcptest:
+	rm -f dcptest
+

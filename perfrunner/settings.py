@@ -291,8 +291,7 @@ class TestCaseSettings(object):
     def __init__(self, options):
         self.test_module = '.'.join(options.get('test').split('.')[:-1])
         self.test_class = options.get('test').split('.')[-1]
-        self.test_summary = options.get('summary')
-        self.metric_title = options.get('title')
+        self.title = options.get('title')
         self.larger_is_better = options.get('larger_is_better')
         self.fts_server = options.get('fts', False)
         self.use_workers = int(options.get('use_workers', self.USE_WORKERS))
@@ -748,7 +747,7 @@ class FtsSettings(object):
         self.query_file = options.get("query_file", None)
         self.type = options.get("type", "match")
         self.logfile = options.get("logfile", None)
-        self.orderby = options.get("orderby", None)
+        self.order_by = options.get("orderby", None)
         self.storage = options.get("backup_path")
         self.repo = options.get("repo_path")
         self.field = options.get("field", None)

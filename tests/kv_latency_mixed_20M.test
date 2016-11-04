@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.MixedLatencyTest
 title = latency (ms), mixed, 1 bucket x 20M x 1KB, non-DGM, 10K ops/sec
-summary = Mixed KV test, 4 nodes, 1 bucket x 20M x 1KB, non-DGM, 10K ops/sec
-larger_is_better = false
 
 [stats]
 lat_interval = 0.1

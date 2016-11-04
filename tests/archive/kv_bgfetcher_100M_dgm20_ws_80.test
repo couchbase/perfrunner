@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.BgFetcherTest
 title = Avg. BgFetcher wait time (ms), 1 bucket x 10M x 1KB, DGM 20%%, 2K ops/sec, working set 80%%, 2%% cache miss rate
-summary = Read-heavy KV test (80/20), 1 bucket x 10M x 1KB, DGM 20%%, 2K ops/sec, working set 80%%, 2%% cache miss rate
-larger_is_better = true
 
 [cluster]
 mem_quota = 6000

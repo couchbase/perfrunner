@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.elastic.ElasticThroughputTest
 title = AndMedOrHighHigh, no kv-load, wiki 1M x 1KB
-summary = FTS Throughput Test
-larger_is_better = false
 fts = true
 
 [access]

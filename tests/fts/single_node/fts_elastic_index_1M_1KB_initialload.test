@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.elastic.ElasticIndexTest
 title =  wiki 1M x 1KB
-summary = FTS Index Test, wiki dataset
-larger_is_better = false
 
 [fts]
 items = 1000000

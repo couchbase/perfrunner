@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.elastic.ElasticLatencyTest
 title = WildcardQuery, no kv-load, wiki 1M x 1KB, raw latency
-summary = ELasticSearch latency test
-larger_is_better = true
 
 [stats]
 lat_interval = 0

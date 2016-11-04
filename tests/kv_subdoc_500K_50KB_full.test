@@ -1,7 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.SubDocTest
 title = Subdoc-full query latency (qps), 1 bucket x 500K x 50KB
-summary = subdoc-full query latency 1 bucket x 500k x 50KB
 
 
 [cluster]

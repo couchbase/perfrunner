@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.PathoGenTest
 title = Max RSS (MB), 1 bucket x 10K, PathoGen 8B -> 256KB
-summary = Repeatedly ramp document size from 8Bytes to 256KB, 10k docs.
-larger_is_better = false
 use_workers = 0
 
 [cluster]

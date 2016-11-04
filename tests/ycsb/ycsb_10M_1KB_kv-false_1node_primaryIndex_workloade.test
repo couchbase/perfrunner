@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.ycsb.YCSBTest
 title = 1 bucket x 10M x 1KB Single node, Primary index, couchbase.kv=false,
-summary = YCSB test workload E
-larger_is_better = true
 
 [cluster]
 mem_quota = 30000

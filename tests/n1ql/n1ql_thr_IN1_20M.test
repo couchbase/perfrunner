@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
 title = IN1, Key-Value Insert
-summary = Key-Value Insert
-larger_is_better = true
 
 [cluster]
 mem_quota = 20480

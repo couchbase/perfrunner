@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
 title = Q2, Singleton Unique Lookup, 20M docs, 20KGops, 5KSops, GSI, request_plus
-summary = Singleton Unique Lookup, 20KGops, 5KSops
-larger_is_better = false
 
 [cluster]
 mem_quota = 20480

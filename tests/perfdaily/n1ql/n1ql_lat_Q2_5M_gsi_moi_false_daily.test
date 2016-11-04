@@ -1,7 +1,6 @@
 [test_case]
 test = perfdaily.master.n1ql.N1QLLatencyTestDaily
 title = Q2, Singleton Unique Lookup, latency, 5M docs, GSI, MOI, request_plus
-summary = Singleton Unique Lookup, 30KSops, 450Qops
 larger_is_better = false
 
 [cluster]

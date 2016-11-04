@@ -247,9 +247,8 @@ class CbExportImportTest(BackupRestoreTest):
         metric = '{}_{}'.format(self.test_config.name,
                                 self.cluster_spec.name)
         metric_info = {
-            'title': prefix + " " + self.test_config.test_case.metric_title,
+            'title': prefix + " " + self.test_config.test_case.title,
             'cluster': self.cluster_spec.name,
-            'larger_is_better': self.test_config.test_case.larger_is_better,
         }
         # replace 'expimp' on import or export
         metric = metric.replace('expimp', prefix.split()[0].lower())
@@ -264,9 +263,7 @@ class CbExportImportTest(BackupRestoreTest):
                                  metric_info=metric_info)
 
     def _yield_line_delimited_json(self, path):
-        """
-        Read a line-delimited json file yielding each row as a record
-        """
+        """Read a line-delimited json file yielding each row as a record."""
         with open(path, 'r') as f:
             for line in f:
                 yield json.loads(line)

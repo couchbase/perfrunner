@@ -36,10 +36,10 @@ class FTStest(PerfTest):
         self.prepare_index()
         self.index_time_taken = 0
         self.auth = HTTPBasicAuth('Administrator', 'password')
-        self.orderbymetric = self.test_config.fts_settings.orderby
+        self.order_by = self.test_config.fts_settings.order_by
 
     @with_stats
-    def access(self):
+    def access(self, *args):
         super(FTStest, self).timer()
 
     def access_bg_test(self):
@@ -48,7 +48,7 @@ class FTStest(PerfTest):
         self.access_bg(access_settings)
         self.access()
 
-    def load(self):
+    def load(self, *args):
         logger.info('load/restore data to bucket')
         self.remote.cbrestorefts(self.test_config.fts_settings.storage, self.test_config.fts_settings.repo)
 
@@ -157,7 +157,8 @@ class FtsIndexTest(FTStest):
 
         def _report_kpi(self):
             self.reporter.post_to_sf(
-                *self.metric_helper.calc_ftses_index(self.index_time_taken, orderbymetric=self.orderbymetric)
+                *self.metric_helper.calc_ftses_index(self.index_time_taken,
+                                                     order_by=self.order_by)
             )
 
 
@@ -171,13 +172,13 @@ class FTSLatencyTest(FTStest):
                 *self.metric_helper.calc_latency_ftses_queries(percentile=80,
                                                                dbname='fts_latency',
                                                                metrics='cbft_latency_get',
-                                                               orderbymetric=self.orderbymetric)
+                                                               order_by=self.order_by)
             )
             self.reporter.post_to_sf(
                 *self.metric_helper.calc_latency_ftses_queries(percentile=0,
                                                                dbname='fts_latency',
                                                                metrics='cbft_latency_get',
-                                                               orderbymetric=self.orderbymetric)
+                                                               order_by=self.order_by)
             )
 
 
@@ -187,5 +188,5 @@ class FTSThroughputTest(FTStest):
 
         def _report_kpi(self):
             self.reporter.post_to_sf(
-                *self.metric_helper.calc_avg_fts_queries(orderbymetric=self.orderbymetric)
+                *self.metric_helper.calc_avg_fts_queries(order_by=self.order_by)
             )

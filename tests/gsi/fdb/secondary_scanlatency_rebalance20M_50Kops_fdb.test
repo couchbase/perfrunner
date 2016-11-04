@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.secondary.SecondaryIndexingScanLatencyTest
 title = Secondary index scan latency(ms) with rebalance, 1 bucket x 20M x 1KB, 50K ops/sec, single index, FDB
-summary = Secondary index scan latency(ms) test with rebalance, 4 KV, 1 index node, 1 bucket x 20M x 1KB, 50K ops/sec, single index, FDB
-larger_is_better = true
 
 [cluster]
 mem_quota = 30000

@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
 title = UP4, Range Scan, 20M docs, 14.4KGops, 3.6KSops, GSI, request_plus
-summary = Range Scan, 14.4KGops, 3.6KSops
-larger_is_better = false
 
 [cluster]
 mem_quota = 20480

@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.MixedLatencyTest
 title = KV latency (ms), 1 bucket x 10M x 2KB, no DGM, 500 mutations/sec/node, unbounded ops, compaction 50pct
-summary = Read-heavy query test (80/20), 1 bucket x 10M x 2KB, no DGM, 500 mutations/sec/node, unbounded qps, compaction 50pct
-larger_is_better = true
 
 [cluster]
 mem_quota = 41200

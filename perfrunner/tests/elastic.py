@@ -33,10 +33,10 @@ class Elastictest(PerfTest):
         '''
         self.index_url = "http://{}/{}".format(self.url, self.elastic_index)
         self.rest = RestHelper(cluster_spec)
-        self.orderbymetric = self.test_config.fts_settings.orderby
+        self.order_by = self.test_config.fts_settings.order_by
 
     @with_stats
-    def access(self):
+    def access(self, *args):
         super(Elastictest, self).timer()
 
     def access_bg_test(self):
@@ -58,7 +58,7 @@ class Elastictest(PerfTest):
         if not resp.status_code == 200:
             raise RuntimeError("Failed to create rebalance")
 
-    def load(self):
+    def load(self, *args):
         logger.info('load/restore data to bucket')
         self.remote.cbrestorefts(self.test_config.fts_settings.storage, self.test_config.fts_settings.repo)
 
@@ -145,7 +145,7 @@ class ElasticIndexTest(Elastictest):
         def _report_kpi(self):
             self.reporter.post_to_sf(
                 *self.metric_helper.calc_ftses_index(self.index_time_taken,
-                                                     orderbymetric=self.orderbymetric,
+                                                     order_by=self.order_by,
                                                      name=' Elasticsearch 1.7')
             )
 
@@ -158,7 +158,7 @@ class ElasticLatencyTest(Elastictest):
                 *self.metric_helper.calc_latency_ftses_queries(percentile=80,
                                                                dbname='fts_latency',
                                                                metrics='elastic_latency_get',
-                                                               orderbymetric=self.orderbymetric,
+                                                               order_by=self.order_by,
                                                                name=' Elasticsearch 1.7'
                                                                ))
 
@@ -167,6 +167,6 @@ class ElasticThroughputTest(Elastictest):
 
         def _report_kpi(self):
             self.reporter.post_to_sf(
-                *self.metric_helper.calc_avg_fts_queries(orderbymetric=self.orderbymetric,
+                *self.metric_helper.calc_avg_fts_queries(order_by=self.order_by,
                                                          name=' Elasticsearch 1.7')
             )

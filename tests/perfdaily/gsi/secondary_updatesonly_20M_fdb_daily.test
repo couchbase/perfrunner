@@ -1,7 +1,6 @@
 [test_case]
 test =  perfdaily.master.secondary.InitialandIncrementalSecondaryIndexTestDaily
 title = 1 bucket x 20M x 1KB, single 2i index, updates only in incremental build, FDB
-summary = Secondary Indexing test, 4 KV nodes, 1 2i node 1 bucket x 20M x 1KB, updates in incremental build, FDB
 larger_is_better = false
 
 [cluster]

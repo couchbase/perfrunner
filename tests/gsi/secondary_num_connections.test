@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.secondary.SecondaryNumConnectionsTest
 title = Max number of connections to index node, 1 bucket x 20M x 1KB, single 2i index
-summary = Secondary Indexing test for number of connections to index node, 8 KV nodes, 1 2i node 1 bucket x 20M x 1KB
-larger_is_better = true
 
 [cluster]
 mem_quota = 30000

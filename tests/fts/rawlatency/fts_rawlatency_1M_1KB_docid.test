@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.fts.FTSLatencyTest
 title = DocIdQuery, no kv-load, wiki 1M x 1KB, raw latency
-summary = FTS Latency Test
-larger_is_better = true
 fts = true
 
 [stats]

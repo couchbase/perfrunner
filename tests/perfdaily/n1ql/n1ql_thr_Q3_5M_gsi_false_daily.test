@@ -1,7 +1,6 @@
 [test_case]
 test = perfdaily.master.n1ql.N1QLThroughputTestDaily
 title = Q3, Range Scan, throughput, 5M docs, GSI, request_plus
-summary = Range Scan, 14.4KGops, 3.6KSops
 larger_is_better = true
 
 [cluster]

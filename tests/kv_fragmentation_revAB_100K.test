@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.RevABTest
 title = Memory fragmentation (%%), 1 bucket x 100K, revAB
-summary = Append-only revAB test, 100K docs
-larger_is_better = false
 use_workers = 0
 
 [cluster]

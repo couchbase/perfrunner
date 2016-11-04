@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.fts.FTSThroughputTest
 title = WildcardQuery, no kv-load, wiki 1M x 1KB
-summary = FTS throughput Test
-larger_is_better = true
 fts = true
 
 [access]

@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLLatencyTest
 title = Q3, Range Scan, 20M docs, 38.4KGops, 10KSops, 200Qops, GSI, request_plus
-summary = Range Scan, 38.4KGops, 10KSops, 200Qops
-larger_is_better = false
 
 [cluster]
 mem_quota = 20480

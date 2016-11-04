@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.MemUsedTest
 title = 5 buckets x 200K x 1KB, 2 nodes, write-heavy
-summary = 5 buckets x 200K x 1KB, 2 nodes, write-heavy
-larger_is_better = false
 
 [cluster]
 mem_quota = 40960

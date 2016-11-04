@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLLatencyTest
 title = Q2 1Bux200Mx1K, Singleton Unique Lookup, 14.4KGops, 3.6KSops, 450Qops, GSI, request_plus
-summary = Singleton Unique Lookup, 14.4KGops, 3.6KSops, 450Qops
-larger_is_better = false
 
 [cluster]
 mem_quota = 40960

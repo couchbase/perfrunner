@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.BeamRssTest
 title = mixed, 1 bucket x 50M x 2KB, 10K ops/sec
-summary = Mixed KV test, 4 nodes, 1 bucket x 50M x 2KB, DGM, 10K ops/sec
-larger_is_better = false
 
 [cluster]
 mem_quota = 40960

@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.xdcr.UniDirXdcrTest
 title = 5 -> 5 UniDir, 2 buckets x 500M x 1KB, 20K SETs/sec/bucket, LAN
-summary = Mixed KV + XDCR test, 5 -> 5 UniDir, 2 buckets x 500M x 1KB, DGM, 20K SETs/sec/bucket, LAN
-larger_is_better = false
 
 [stats]
 post_cpu = 1

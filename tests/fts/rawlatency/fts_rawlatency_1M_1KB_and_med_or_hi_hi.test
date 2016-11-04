@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.fts.FTSLatencyTest
 title = AndMedOrHighHigh, no kv-load, wiki 1M x 1KB, raw latency
-summary = FTS latency Test
-larger_is_better = false
 fts = true
 
 [stats]

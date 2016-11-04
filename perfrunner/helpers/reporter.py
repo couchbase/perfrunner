@@ -33,9 +33,8 @@ class SFReporter(object):
     def _add_metric(self, metric, metric_info):
         if metric_info is None:
             metric_info = {
-                'title': self.test.test_config.test_case.metric_title,
+                'title': self.test.test_config.test_case.title,
                 'cluster': self.test.cluster_spec.name,
-                'larger_is_better': self.test.test_config.test_case.larger_is_better,
             }
         showfast = self.test.test_config.stats_settings.showfast
         try:
@@ -119,7 +118,7 @@ class SFReporter(object):
         return True
 
     def post_to_dailyp(self, metrics):
-        test_title = self.test.test_config.test_case.metric_title
+        test_title = self.test.test_config.test_case.title
         test_name = test_title.replace(', ', '_')
         replace_chars = ", =/.`\\"
         for c in replace_chars:

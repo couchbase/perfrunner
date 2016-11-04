@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.elastic.ElasticLatencyTest
 title = DocIdQuery, no kv-load, wiki 1M x 1KB, raw latency
-summary = ElasticSearch latency test
-larger_is_better = true
 
 [stats]
 lat_interval = 0.1

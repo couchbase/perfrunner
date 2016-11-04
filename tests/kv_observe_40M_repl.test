@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.ReplicateLatencyTest
 title = ReplicateTo=1 latency (ms), 1 bucket x 40M x 1KB, 5K mutations/sec/node
-summary = Read-heavy KV test (80/20), 4 nodes, 1 bucket x 40M x 1KB, 40K mutations/sec
-larger_is_better = false
 
 [cluster]
 mem_quota = 51200

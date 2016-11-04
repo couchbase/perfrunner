@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLLatencyTest
 title = Q6, Order By Limit Query, 20M docs, 14.4KGops, 3.6KSops, 960Qops, GSI, not_bounded
-summary = Order By Limit Query, 14.4KGops, 3.6KSops, 960Qops
-larger_is_better = false
 
 [cluster]
 mem_quota = 20480

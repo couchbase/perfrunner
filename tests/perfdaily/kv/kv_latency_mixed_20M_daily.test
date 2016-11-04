@@ -1,7 +1,6 @@
 [test_case]
 test = perfdaily.master.kv.MixedLatencyTestDaily
 title = Latency, r/w mixed, 1 bucket x 20M x 1KB, non-DGM
-summary = Mixed KV test, 4 nodes, 1 bucket x 20M x 1KB, non-DGM, 10K ops/sec
 larger_is_better = false
 
 [cluster]

@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.PillowfightTest
 title = Pillowfight, 80/20 R/W, 20M ops, 1KB items
-summary = Pillowfight op/sec, 20M ops with read heavy workload
-larger_is_better = true
 
 [cluster]
 mem_quota = 51200

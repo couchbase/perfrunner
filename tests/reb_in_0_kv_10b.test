@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.rebalance.RebalanceKVTest
 title = Rebalance-in (min), 3 -> 4, 10 empty buckets
-summary = Mixed rebalance test, 3 -> 4 nodes, 10 empty buckets
-larger_is_better = false
 
 [stats]
 enabled = 0

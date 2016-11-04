@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.ReadLatencyTest
 title = latency (ms), mixed, 1 bucket x 150M x 2KB, DGM, 6K ops/sec, 5%% cache miss rate
-summary = Mixed KV test, 4 nodes, 1 bucket x 150M x 2KB, 5%% cache miss rate, 6K ops/sec
-larger_is_better = false
 
 [cluster]
 mem_quota = 51200

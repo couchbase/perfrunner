@@ -176,36 +176,31 @@ class YCSBTest(YCSBdata):
             self.reporter.post_to_sf(
                 *self.metric_helper.calc_ycsb_queries(round(thput),
                                                       name='Overall_Throughput',
-                                                      title='Overall Throughput',
-                                                      larger_is_better=True)
+                                                      title='Overall Throughput')
             )
         if not np.isnan(readl):
             self.reporter.post_to_sf(
                 *self.metric_helper.calc_ycsb_queries(round((float(readl) / 1000), 2),
                                                       name='Read_Latency_95_p',
-                                                      title='95th percentile Read latency, ms',
-                                                      larger_is_better=False)
+                                                      title='95th percentile Read latency, ms')
             )
         if not np.isnan(writel):
             self.reporter.post_to_sf(
                 *self.metric_helper.calc_ycsb_queries(round((float(writel) / 1000), 2),
                                                       name='Write_Latency_95_p',
-                                                      title='95th percentile Write latency, ms',
-                                                      larger_is_better=False)
+                                                      title='95th percentile Write latency, ms')
             )
         if not np.isnan(insertl):
             self.reporter.post_to_sf(
                 *self.metric_helper.calc_ycsb_queries(round((float(insertl) / 1000), 2),
                                                       name='Insert_Latency_95_p',
-                                                      title='95th percentile Insert latency, ms',
-                                                      larger_is_better=False)
+                                                      title='95th percentile Insert latency, ms')
             )
         if not np.isnan(scanl):
             self.reporter.post_to_sf(
                 *self.metric_helper.calc_ycsb_queries(round((float(scanl) / 1000), 2),
                                                       name='Scan_Latency_95_p',
-                                                      title='95th percentile Scan latency, ms',
-                                                      larger_is_better=False)
+                                                      title='95th percentile Scan latency, ms')
             )
 
     def run(self):

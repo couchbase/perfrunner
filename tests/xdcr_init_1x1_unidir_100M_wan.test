@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.xdcr.XdcrInitTest
 title = Avg. initial XDCR rate (items/sec), 1 -> 1 UniDir, 1 bucket x 100M x 1KB, WAN 80±4 ms
-summary = Initial XDCR test, 1 -> 1 nodes, 1 bucket x 100M x 1KB, no compaction, UniDir, WAN
-larger_is_better = true
 
 [cluster]
 mem_quota = 204800

@@ -447,7 +447,7 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
         self.apply_scanworkload()
         if self.test_config.stats_settings.enabled:
             self.reporter.post_to_sf(
-                *self.metric_helper.calc_secondaryscan_latency(percentile=80)
+                *self.metric_helper.calc_secondary_scan_latency(percentile=80)
             )
         self.validate_num_connections()
 
@@ -496,7 +496,7 @@ class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest
         self.apply_scanworkload()
         if self.test_config.stats_settings.enabled:
             self.reporter.post_to_sf(
-                *self.metric_helper.calc_secondaryscan_latency(percentile=80)
+                *self.metric_helper.calc_secondary_scan_latency(percentile=80)
             )
         self.validate_num_connections()
 

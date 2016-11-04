@@ -1,7 +1,6 @@
 [test_case]
 test =  perfdaily.master.secondary.InitialandIncrementalSecondaryIndexTestDaily
 title = 1 bucket x 100M x 1KB, 100K KV ops/sec, single 2i index, no mutations during initial build only, MOI
-summary = Secondary Indexing test, 8 KV nodes, 1 2i node 1 bucket x 100M x 1KB, 100K KV ops/sec, MOI
 larger_is_better = false
 
 [cluster]

@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
 title = 1 bucket x 20M x 1KB, five 2i indexes, no mutations during initial build only, updates only in incremental build, FDB
-summary = Secondary Indexing test, 4 KV nodes, 1 2i node 1 bucket x 20M x 1KB, updates only in incremental build, FDB
-larger_is_better = false
 
 [cluster]
 mem_quota = 30000

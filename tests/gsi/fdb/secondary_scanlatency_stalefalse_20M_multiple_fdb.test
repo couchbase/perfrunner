@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.secondary.SecondaryIndexingScanLatencyTest
 title = Secondary index stale=false scan latency(ms), 1 bucket x 20M x 1KB, 10K ops/sec, 5K mutations/sec, 5 indexes, FDB
-summary = Secondary index stale=false scan latency(ms) test, 4 KV, 1 indexer, 1 bucket x 20M x 1KB, 10K ops/sec, 5K mutations/sec, 5 indexes, FDB
-larger_is_better = true
 
 [cluster]
 mem_quota = 30000

@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.elastic.ElasticLatencyTest
 title = OrHighHigh, no kv-load, wiki 1M x 1KB
-summary = Elasticsearch latency Test
-larger_is_better = false
 
 [stats]
 lat_interval = 0.1

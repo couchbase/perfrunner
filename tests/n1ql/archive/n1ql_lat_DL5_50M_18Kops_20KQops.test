@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLLatencyTest
 title = DL5 1Bux50Mx1K, Key-Value Delete, 14.4KGops, 3.6KSops, 20KQops
-summary = Key-Value Delete, 14.4KGops, 3.6KSops, 20KQops
-larger_is_better = false
 
 [cluster]
 mem_quota = 40960

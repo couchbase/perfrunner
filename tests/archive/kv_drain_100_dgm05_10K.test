@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.DrainTest
 title = Avg. write queue (10³ items), 1 bucket x 100M x 10KB, 3K updates/sec/node, 5pct DGM
-summary = Write-heavy KV test (80/20), 1 bucket x 100M x 10KB, 3K updates/sec/node, 5pct DGM
-larger_is_better = false
 
 [cluster]
 mem_quota = 2060

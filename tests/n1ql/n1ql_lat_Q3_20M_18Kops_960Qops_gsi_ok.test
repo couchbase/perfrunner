@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLLatencyTest
 title = Q3, Range Scan, 960 queries/sec, FDB, not_bounded
-summary = Range Scan, 960 queries/sec
-larger_is_better = false
 
 [stats]
 lat_interval = 0.2

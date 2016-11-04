@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.fts.FtsIndexTest
 title = wiki 1M x 1KB
-summary = FTS Index Test, 1 node
-larger_is_better = false
 fts = true
 
 [cluster]

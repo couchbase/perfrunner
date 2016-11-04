@@ -1,8 +1,6 @@
 [test_case]
 test = perfrunner.tests.index.InitialAndIncrementalIndexTest
 title = 1 bucket x 20M x 2KB, non-DGM, 4 x 4 views, no mutations
-summary = Indexing test, 4 nodes, 1 bucket x 20M x 2KB, non-DGM, 4 x 4 views
-larger_is_better = false
 
 [cluster]
 mem_quota = 40960

@@ -61,32 +61,32 @@ class SFReporter(object):
         return key, data
 
     @staticmethod
-    def _mark_previous_as_obsolete(cb, benckmark):
+    def _mark_previous_as_obsolete(cb, benchmark):
         for row in cb.query('benchmarks', 'values_by_build_and_metric',
-                            key=[benckmark['metric'], benckmark['build']]):
+                            key=[benchmark['metric'], benchmark['build']]):
             doc = cb.get(row.docid)
             doc.value.update({'obsolete': True})
             cb.set(row.docid, doc.value)
 
     def _log_benchmark(self, metric, value):
-        key, benckmark = self._prepare_data(metric, value)
+        key, benchmark = self._prepare_data(metric, value)
         logger.info('Dry run stats: {}'.format(
-            pretty_dict(benckmark)
+            pretty_dict(benchmark)
         ))
         return key
 
-    def _post_benckmark(self, metric, value):
-        key, benckmark = self._prepare_data(metric, value)
+    def _post_benchmark(self, metric, value):
+        key, benchmark = self._prepare_data(metric, value)
         showfast = self.test.test_config.stats_settings.showfast
 
         cb = Couchbase.connect(bucket='benchmarks', **showfast)
         try:
-            self._mark_previous_as_obsolete(cb, benckmark)
-            cb.set(key, benckmark)
+            self._mark_previous_as_obsolete(cb, benchmark)
+            cb.set(key, benchmark)
         except Exception as e:
-            logger.warn('Failed to post benchmark {}: {}'.format(e, benckmark))
+            logger.warn('Failed to post benchmark {}: {}'.format(e, benchmark))
         else:
-            logger.info('Successfully posted: {}'.format(pretty_dict(benckmark)))
+            logger.info('Successfully posted: {}'.format(pretty_dict(benchmark)))
 
         return key
 
@@ -98,7 +98,7 @@ class SFReporter(object):
         if stats_settings.post_to_sf:
             self._add_metric(metric, metric_info)
             self._add_cluster()
-            self._post_benckmark(metric, value)
+            self._post_benchmark(metric, value)
         else:
             self._log_benchmark(metric, value)
         return value

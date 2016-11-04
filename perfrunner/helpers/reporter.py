@@ -3,7 +3,6 @@ import time
 from datetime import datetime
 from zipfile import ZIP_DEFLATED, ZipFile
 
-import requests
 from couchbase import Couchbase
 from couchbase.bucket import Bucket
 from logger import logger
@@ -59,8 +58,6 @@ class SFReporter(object):
             'build_url': os.environ.get('BUILD_URL'),
             'datetime': time.strftime('%Y-%m-%d %H:%M'),
         }
-        if self.test.master_events:
-            data.update({'master_events': key})
         return key, data
 
     @staticmethod
@@ -93,15 +90,6 @@ class SFReporter(object):
 
         return key
 
-    def _upload_master_events(self, filename):
-        api = 'http://{}/cbmonitor/add_master_events/'.format(
-            self.test.test_config.stats_settings.cbmonitor['host'])
-        data = {
-            'filename': filename,
-            'master_events': self.test.master_events[0],
-        }
-        requests.post(url=api, data=data)
-
     def post_to_sf(self, value, metric=None, metric_info=None):
         if metric is None:
             metric = '{}_{}'.format(self.test.test_config.name,
@@ -110,11 +98,9 @@ class SFReporter(object):
         if stats_settings.post_to_sf:
             self._add_metric(metric, metric_info)
             self._add_cluster()
-            key = self._post_benckmark(metric, value)
+            self._post_benckmark(metric, value)
         else:
-            key = self._log_benchmark(metric, value)
-        if key and self.test.master_events:
-            self._upload_master_events(filename=key)
+            self._log_benchmark(metric, value)
         return value
 
     def _upload_test_run_dailyp(self, test_run_dict):

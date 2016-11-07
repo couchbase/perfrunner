@@ -244,9 +244,6 @@ def get_args():
     env.user = "root"
     env.password = "couchbase"
 
-#   logger.setLevel(logging.DEBUG)
-#   logger.handlers[0].setLevel(logging.DEBUG)
-
 if __name__ == "__main__":
     get_args()
     main()

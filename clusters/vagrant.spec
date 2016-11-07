@@ -11,7 +11,6 @@ rest = Administrator:password
 ssh = root:couchbase
 
 [parameters]
-Platform = Virtual
 OS = Linux
 CPU = Unknown
 Memory = Unknown

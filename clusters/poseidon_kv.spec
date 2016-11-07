@@ -19,7 +19,6 @@ rest = Administrator:password
 ssh = root:couchbase
 
 [parameters]
-Platform = HW
 OS = CentOS 7
 CPU = Data: E5-2630 v2 (24 vCPU)
 Memory = 64GB

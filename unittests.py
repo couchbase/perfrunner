@@ -67,8 +67,6 @@ class SettingsTest(TestCase):
         for file_name in glob.glob("clusters/*.spec"):
             cluster_spec = ClusterSpec()
             cluster_spec.parse(file_name, override=())
-            self.assertIn(cluster_spec.parameters['Platform'],
-                          ('HW', 'Virtual', 'Localhost'))
 
 
 class WorkloadTest(TestCase):

@@ -13,7 +13,6 @@ hosts =
 rest = Administrator:asdasd
 
 [parameters]
-Platform = Localhost
 OS = Unkown
 CPU = Unkown
 Memory = Unkown

@@ -20,7 +20,7 @@ class SecondaryLatencyStats(Collector):
                 latency = latency.rstrip()
                 latency_key = duration.split(':')[0]
                 latency_key = latency_key.strip()
-                stats[latency_key] = latency
+                stats[latency_key] = int(latency)
         return stats
 
     def sample(self):

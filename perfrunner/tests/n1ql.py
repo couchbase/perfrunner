@@ -19,6 +19,8 @@ class N1QLTest(PerfTest):
 
     def create_index(self, query_node, bucket, index):
         index_name, index_query = index.split('::')
+        if not index_name:
+            return
         query = index_query.format(name=index_name, bucket=bucket)
         self.rest.exec_n1ql_statement(query_node, query)
 

@@ -434,7 +434,6 @@ class PhaseSettings(object):
     THROUGHPUT = float('inf')
     QUERY_THROUGHPUT = float('inf')
     N1QL_THROUGHPUT = float('inf')
-    N1QL_THROUGHPUT_MAX = float('inf')
 
     DOC_GEN = 'basic'
 

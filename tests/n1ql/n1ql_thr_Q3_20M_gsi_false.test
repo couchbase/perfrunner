@@ -33,7 +33,6 @@ items = 20000000
 workers = 20
 time = 1200
 n1ql_queries = range-scan
-n1ql_throughput = 1000000
 n1ql_workers = 720
 
 [n1ql-range-scan]

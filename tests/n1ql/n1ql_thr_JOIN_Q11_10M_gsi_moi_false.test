@@ -37,7 +37,6 @@ workers = 20
 time = 1200
 n1ql_gen = join
 n1ql_queries = complex-join
-n1ql_throughput = 1000000
 n1ql_workers = 720
 
 [n1ql-complex-join]

@@ -2,9 +2,6 @@
 test = perfrunner.tests.n1ql.N1QLLatencyTest
 title = CI3, Range Scan, 200 queries/sec, FDB, request_plus
 
-[stats]
-lat_interval = 0
-
 [cluster]
 mem_quota = 20480
 index_mem_quota = 100000

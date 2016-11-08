@@ -2,9 +2,6 @@
 test = perfrunner.tests.n1ql.N1QLLatencyTest
 title = Q3, Range Scan, 960 queries/sec, MOI, not_bounded
 
-[stats]
-lat_interval = 0.2
-
 [cluster]
 mem_quota = 20480
 index_mem_quota = 100000

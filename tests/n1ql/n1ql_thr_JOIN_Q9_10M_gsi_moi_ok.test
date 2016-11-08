@@ -38,6 +38,7 @@ throughput = 15000
 items = 10000000
 workers = 20
 time = 1200
+n1ql_gen = ext_reverse_lookup
 n1ql_queries = index-join
 n1ql_throughput = 1000000
 n1ql_workers = 128

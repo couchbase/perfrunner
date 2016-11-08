@@ -142,7 +142,7 @@ class N1QLJoinTest(N1QLThroughputTest):
             self.workload.doc_gen = doc_gen
             self.workload.items /= 2
             self.workload.n1ql_queries = self.n1ql_queries
-            if doc_gen != 'ext_reverse_lookup':
+            if doc_gen != self.workload.n1ql_gen:
                 self.workload.n1ql_workers = 0
 
             super(N1QLTest, self).access_bg(access_settings=self.workload,

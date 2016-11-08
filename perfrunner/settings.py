@@ -504,6 +504,7 @@ class PhaseSettings(object):
         self.n1ql_op = options.get('n1ql_op', self.N1QL_OP)
         if 'n1ql_queries' in options:
             self.n1ql_queries = options.get('n1ql_queries').strip().split(',')
+        self.n1ql_gen = options.get('n1ql_gen')
 
         self.seq_reads = self.SEQ_READS
         self.seq_updates = self.SEQ_UPDATES

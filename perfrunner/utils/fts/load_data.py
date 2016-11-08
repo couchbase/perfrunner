@@ -1,85 +1,73 @@
 """
-This file is needed only for future reference to
-load data from wiki data.
-DOwnload link : http://people.apache.org/~mikemccand/enwiki-20120502-lines-1k.txt.lzma
+For creating the wiki dataset.
+1. downlowd file : http://people.apache.org/~mikemccand/enwiki-20120502-lines-1k.txt.lzma
+2. split on 2 parts
+3. run the Docgen.start_load()
+
 """
+
 import datetime
-import glob
 import itertools
-import os
 import random
+import concurrent.futures
 
 from couchbase.bucket import Bucket
 
 
 class Docgen(object):
-    def __init__(self, location, cb_url, database, chunk_size=1024):
+    def __init__(self, master_file_path, shadow_file_path, cb_url, bucket_name, chunk_size=1024):
         self.chunk_size = chunk_size
-        self.location = location
+        self.master_file_path = master_file_path
+        self.shadow_file_path = shadow_file_path
         self.cb_url = cb_url
-        self.database = database
-        self.counts = 0
-        '''
-        The keygen part to create keys to optimize space
-        '''
-        self.key1 = self.keygen(2)
-        self.key2 = self.keygen(4)
-        self.key3 = self.keygen(5)
+        self.bucket_name = bucket_name
+        self.items = 1000000
 
-    def keygen(self, keynum):
-        '''
-        the ranges includes all ascii characters from 47 - 123
-
-        '''
-        s = list(map(chr, range(47, 123)))
-        random.shuffle(s)
-        iters = itertools.permutations(s, keynum)
-        return iters
-
-    def read_in_chunks(self, file_object):
-        """Lazy function (generator) to read a file piece by piece.
-        Default chunk size: 1k."""
+    def read_file_gen(self, file):
         while True:
-            data = file_object.read(self.chunk_size)
+            data = file.read(self.chunk_size)
             if not data:
                 break
             yield data
 
-    def insert_cb(self, cb, f):
-        for piece in self.read_in_chunks(f):
+    def insert_cb(self, cb, master_file, shadow_file):
+        master_lines = self.read_file_gen(master_file)
+        shadow_lines = self.read_file_gen(shadow_file)
+        counter = 0
+        while True:
             test = {}
-            piece = piece.replace('\n', ' ')
-            test['text'] = piece
-            key = ""
-            if self.counts < 1000:
-                key = self.key1.next()
-            elif self.counts < 100000:
-                key = self.key2.next()
-            else:
-                key = self.key3.next()
-            key = ''.join(key)
-            cb.upsert(key, test)
+            text = master_lines.next().replace('\n', ' ')
+            text2 = shadow_lines.next().replace('\n', ' ')
+            test['text'] = text
+            test['text2'] = text2
+            key = hex(counter)[2:]
 
-            if self.counts == 1000000:
-                return
-            self.counts += 1
+            try:
+                cb.upsert(key, test)
+                doc = cb.get(key).value
+
+                if doc['text'] and doc['text2']:
+                    if doc['text'] == text and doc['text2'] == text2:
+                        counter += 1
+            except Exception:
+                pass
+
+            if counter >= self.items:
+                break
 
     def start_load(self):
-        os.chdir(self.location)
-        c = Bucket("couchbase://{}/{}?operation_timeout=10".format(self.cb_url, self.database))
-        for file in glob.glob("*.txt"):
-            try:
-                f = open(file)
-                self.insert_cb(c, f)
-                f.close()
-            except Exception as e:
-                print(self.counts, file)
-                raise e
+        cb = Bucket("couchbase://{}/{}?operation_timeout=10".format(self.cb_url, self.bucket_name), password="password")
+        master_file = open(self.master_file_path)
+        shadow_file = open(self.shadow_file_path)
+
+        self.insert_cb(cb, master_file, shadow_file)
+        master_file.close()
+        shadow_file.close()
 
 
 class Numeric(Docgen):
-    def __init__(self, location, cb_url, database):
-        super(Numeric, self).__init__(location, cb_url, database)
+    def __init__(self, master_file_path, shadow_file_path, cb_url, bucket_name):
+        super(Numeric, self).__init__(master_file_path, shadow_file_path, cb_url, bucket_name)
         '''
         now = datetime.datetime(2003, 6, 21, 10, 24, 23, 483163)
         '''
@@ -133,36 +121,23 @@ class Numeric(Docgen):
     def insert_cb(self, cb):
         tmpcount = 0
         for r in range(self.ranges):
-            if r < 1000:
-                key = self.key1.next()
-            elif r < 100000:
-                key = self.key2.next()
-            else:
-                key = self.key3.next()
-            key = ''.join(key)
+            key = hex(r)[2:]
             val = self.time_milis()
             r = random.randint(0, self.ranges)
             if r > 30000 and tmpcount < 10000:
-                '''
-                 Doing random value collect,
-                 numbers mentioned ar completely random
-                 '''
                 self.numeric_ranges.append(val)
                 tmpcount += 1
             cb.upsert(key, {"time": val})
 
     def start_load(self):
-        c = Bucket("couchbase://{}/{}?operation_timeout=30".format(self.cb_url, self.database))
+        c = Bucket("couchbase://{}/{}?operation_timeout=10".format(self.cb_url, self.bucket_name), password="password")
         self.insert_cb(c)
 
 
 class Datefacet:
-
     def __init__(self):
-        from couchbase.n1ql import N1QLQuery
         from multiprocessing import Manager, Lock
-        self.cb = Bucket('couchbase://172.23.123.38/bucket-1')
-        self.row_iter = self.cb.n1ql_query(N1QLQuery('select meta().id from `bucket-1`'))
+        self.cb = Bucket('couchbase://172.23.99.211/bucket-1', password="password")
         self.lock = Lock()
         self.dsize = 1000000
         self.dateiter = Manager().dict({key: None for key in ['2013-10-17', '2013-11-17', '2014-02-09', '2015-11-26']})
@@ -173,7 +148,8 @@ class Datefacet:
         self.cycledates = itertools.cycle(self.dateiter.keys())
 
     def createdateset(self):
-        for resultid in self.row_iter:
+        for resultid in range(0, self.dsize):
+            key = hex(resultid)[2:]
             '''
             Day 1 should have approximately 65% of the documents
             Day 2 should have approximately 20% of the documents
@@ -181,35 +157,30 @@ class Datefacet:
             Day 4 should have approximately 5% of the documents
             format like this 2010-07-27
             '''
-            val = self.cb.get(resultid["id"]).value
+            val = self.cb.get(key).value
             self.lock.acquire()
             tmpdate = self.cycledates.next()
             val["date"] = tmpdate
-            self.cb.set(resultid["id"], val)
-            '''
-             Critical section
-            '''
+            self.cb.set(key, val)
             self.dateiter[tmpdate] -= 1
             if self.dateiter[tmpdate] == 0:
                 self.dateiter.pop(tmpdate, None)
                 self.cycledates = itertools.cycle(self.dateiter.keys())
-
             self.lock.release()
-            print(self.dateiter)
 
     def run(self):
-        import concurrent.futures
         with concurrent.futures.ProcessPoolExecutor(max_workers=10) as executor:
             executor.submit(self.createdateset())
 
+'''
+Usage templates:
+A = Numeric('xaa','xbb', '172.23.99.211', 'bucket-1')
+A.start_load()
+A.create_document()
 
-'''
-    A = Docgen('/data/wikidata', '172.23.123.38', 'bucket-1')
-    A.start_load()
-    A = numeric('/data/wikidata', '172.23.123.38', 'bucket-1')
-    A.start_load()
-    A.create_document()
-'''
+A = Docgen('xaa','xab','172.23.99.39','bucket-1')
+A.start_load()
 
 A = Datefacet()
 A.run()
+'''

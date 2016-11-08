@@ -1,9 +1,27 @@
+General workflow
+
+1. Load data to CB node with FTS service enabled (load_data.py)
+2. Create CB backup
+2. Create FTS index
+3. Export terms and calculation terms distribution (build_td.sh)
+4. Create test datasets (create_test_datasets.py)
+
+
+
+
 How to take backup
 
  cd /opt/couchbase/bin
  ./cbbackupmgr config --archive /home/backup --repo numericdata
  ./cbbackupmgr backup --archive /home/backup/ --repo numericdata -host http://localhost:8091 --username Administrator --password password --threads 30
   ./cbbackupmgr restore --include-buckets=bucket-1  --archive /home/backup/ --repo numericdata  --host http://localhost:8091 --username Administrator --password password --threads 30
+
+backups:
+
+
+fts_wiki
+fts_wiki_date
+fts_numeric
 
 
 steps to create dataset
@@ -73,3 +91,60 @@ too low: 1401992
      code is written very generic, so new dataset plugin will be easier.
 
 
+
+
+build-td:
+
+
+The location of the script in question is:
+
+https://github.com/couchbase/cbft/blob/master/cmd/cbft-build-td
+
+
+
+This script is not shipped as a part of the binary distribution, so you need to acquire it some other way.
+
+2.  The script will invoke other cbft command-line tools which ARE a part of the binary distribution.  This means that you couchbase binaries must be on the path.  For me to fix that here I run:
+
+$ export PATH=$PATH:/Users/mschoch/Documents/research/cbsource/install/bin
+
+This will be /opt/couchbase/bin for most users.
+
+3.  Run the script:
+
+$ ./cbft-build-td perf_fts_index text 1000000
+
+Argument 1 is a pattern matching the index name.  In this case i used "perf_fts_index", internally we match this against $1_*.pindex.
+
+Argument 2 is the name of the field you want to analyze.  The wikipedia documents have 1 field named "text".
+
+Argument 3 is the total number of documents, this is used to calculate the hi/med/low cut-offs.
+
+The script will create a secure temp file, something like : /tmp/td-perf_fts_index.I8NcX5
+The script will open each pindex file (this generates some FDB info message).
+It will print the name of the file it is currently working on.
+The script will keep appending data to the temp file.
+After processing all the files it will sort the data and print a line like:
+sorting into /tmp/td-perf_fts_index.I8NcX5.sorted
+This has the same prefix as the original temp file, with the ".sorted" extension.
+Next, after sorting it must combine all consecutive rows for the same term.
+It will print a message line:
+merging into /tmp/td-perf_fts_index.I8NcX5.merged
+Again, same temp file prefix with new suffix ".merged".
+
+Finally it will make several passes over this ".merged" file to find data falling into the hi/med/low buckets.  You will see output like:
+
+getting high (90000.00 <= x < 900000.0) - /tmp/td-perf_fts_index.I8NcX5.hi
+getting med (2000.000 <= x < 90000.00) - /tmp/td-perf_fts_index.I8NcX5.med
+getting low (500.0000 <= x < 2000.000) - /tmp/td-perf_fts_index.I8NcX5.low
+
+These files contain the the hi/med/low terms and their counts (space separated)
+
+Finally, as a sanity check we print the counts of terms that were either too high or too low:
+
+too high: 2
+too low: 2963229
+
+Here is the output from a sample run:
+
+https://gist.github.com/mschoch/daeb32b6d8fd5c6255cfb8b143b6d238

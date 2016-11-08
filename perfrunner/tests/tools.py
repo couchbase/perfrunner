@@ -1,5 +1,6 @@
 import csv
 import json
+import os
 import time
 
 import requests
@@ -307,3 +308,55 @@ class CbExportImportTest(BackupRestoreTest):
                         header = row
                         output.writerow(header.keys())
                 output.writerow(row.values())
+
+
+class CbImportSampleTest(BackupRestoreTest):
+
+    """
+    Measure time to perform import zip file with sample.
+    """
+
+    @with_stats
+    def import_sample_data(self):
+        t0 = time.time()
+        local.import_sample_data(master_node=self.master_node,
+                                 cluster_spec=self.cluster_spec,
+                                 bucket='bucket-1')
+        self.spent_time = time.time() - t0
+
+        import_file = "{}/../import/beer-sample.zip".\
+            format(self.cluster_spec.config.get('storage', 'backup'))
+
+        self.data_size = os.path.getsize(import_file) / 2 ** 30
+
+        logger.info('Import completed in {:.1f} sec, Import size is {} GB'
+                    .format(self.spent_time, self.data_size))
+
+    def _report_kpi(self, prefix=''):
+        metric = '{}_{}'.format(self.test_config.name,
+                                self.cluster_spec.name)
+        metric_info = {
+            'title': prefix + " " + self.test_config.test_case.title,
+            'cluster': self.cluster_spec.name,
+        }
+
+        metric = metric.replace('expimp', prefix.split()[0].lower())
+
+        avg_throughput = round(self.data_size / self.spent_time)
+
+        print metric
+        print metric_info
+        self.reporter.post_to_sf(avg_throughput, metric=metric,
+                                 metric_info=metric_info)
+
+    def run(self):
+        super(CbImportSampleTest, self)
+
+        self.download_tools()
+
+        settings = self.test_config.export_import_settings
+
+        self.import_sample_data()
+
+        self.report_kpi("Import {} {}".format(settings.type.upper(),
+                                              settings.format.title()))

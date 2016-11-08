@@ -168,3 +168,23 @@ def import_data(master_node, cluster_spec, tp='json', frmt=None, bucket=''):
         cmd += ' --format {}'.format(frmt)
     logger.info('Running: {}'.format(cmd))
     local(cmd, capture=False)
+
+
+def import_sample_data(master_node, cluster_spec, bucket=''):
+    """
+    To generate sample zip with 60m files we need ~10 hours and 250 G of disk.
+    Please use generate_samples.py tool to generate and put it under
+    cluster_spec.config.get('storage', 'backup')/../import folder
+    """
+    import_file = "{}/../import/beer-sample.zip".format(
+        cluster_spec.config.get('storage', 'backup'))
+
+    logger.info('import from: {}'.format(import_file))
+
+    cmd = \
+        './opt/couchbase/bin/cbimport json -c http://{} --username {} --password {} ' \
+        '--dataset {} -b {} -g "#MONO_INCR#" -l LOG -t 16 -f sample' \
+        .format(master_node, cluster_spec.rest_credentials[0],
+                cluster_spec.rest_credentials[1], import_file, bucket)
+    logger.info('Running: {}'.format(cmd))
+    local(cmd, capture=False)

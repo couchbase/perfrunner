@@ -451,11 +451,12 @@ class PhaseSettings(object):
     WORKERS = 0
     QUERY_WORKERS = 0
     N1QL_WORKERS = 0
-    N1QL_OP = 'read'
     SPRING_WORKERS = 100
 
     SEQ_READS = False
     SEQ_UPDATES = False
+
+    N1QL_OP = 'read'
 
     TIME = 3600 * 24
 
@@ -476,8 +477,6 @@ class PhaseSettings(object):
                                                   self.QUERY_THROUGHPUT))
         self.n1ql_throughput = float(options.get('n1ql_throughput',
                                                  self.N1QL_THROUGHPUT))
-        self.n1ql_throughput_max = float(options.get('n1ql_throughput_max',
-                                                     self.N1QL_THROUGHPUT_MAX))
 
         self.doc_gen = options.get('doc_gen', self.DOC_GEN)
 
@@ -495,15 +494,14 @@ class PhaseSettings(object):
                                                   self.WORKING_SET_ACCESS))
 
         self.workers = int(options.get('workers', self.WORKERS))
-
         self.query_workers = int(options.get('query_workers',
                                              self.QUERY_WORKERS))
         self.n1ql_workers = int(options.get('n1ql_workers',
                                             self.N1QL_WORKERS))
         self.subdoc_workers = 0
-        self.n1ql_op = options.get('n1ql_op', self.N1QL_OP)
         self.spring_workers = int(options.get('spring_workers', self.SPRING_WORKERS))
-        self.n1ql_queries = []
+
+        self.n1ql_op = options.get('n1ql_op', self.N1QL_OP)
         if 'n1ql_queries' in options:
             self.n1ql_queries = options.get('n1ql_queries').strip().split(',')
 
@@ -514,7 +512,6 @@ class PhaseSettings(object):
         self.index_type = None
         self.qparams = {}
 
-        self.n1ql = None
         self.time = int(options.get('time', self.TIME))
 
         self.async = bool(int(options.get('async', self.ASYNC)))

@@ -37,7 +37,6 @@ class WorkloadSettings(object):
         self.index_type = None
         self.ddocs = {}
         self.qparams = {}
-        self.n1ql = False
 
 
 class TargetSettings(object):

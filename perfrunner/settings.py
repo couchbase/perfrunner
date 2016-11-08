@@ -230,7 +230,9 @@ class TestConfig(Config):
     def access_settings(self):
         options = self._get_options_as_dict('access')
         access = AccessSettings(options)
-        access.resolve_subcategories(self)
+
+        if hasattr(access, 'n1ql_queries'):
+            access.define_queries(self)
 
         load = self.load_settings
         access.doc_gen = load.doc_gen
@@ -238,9 +240,10 @@ class TestConfig(Config):
         access.num_categories = load.num_categories
         access.num_replies = load.num_replies
         access.size = load.size
-        options = self._get_options_as_dict('subdoc')
-        if options:
-            SubDocSettings(options, access)
+
+        sub_doc_options = self._get_options_as_dict('subdoc')
+        if sub_doc_options:
+            SubDocSettings(sub_doc_options, access)
         return access
 
     @property
@@ -522,12 +525,12 @@ class PhaseSettings(object):
         self.fts_config = None
         self.operations = bool(int(options.get('operations', False)))
 
-    def resolve_subcategories(self, config):
-        subcategories = self.n1ql_queries
-        query_specs = []
-        for subcategory in subcategories:
-            query_specs.append(config.get_n1ql_query_definition(subcategory))
-        self.n1ql_queries = query_specs
+    def define_queries(self, config):
+        queries = []
+        for query_group in self.n1ql_queries:
+            query = config.get_n1ql_query_definition(query_group)
+            queries.append(query)
+        self.n1ql_queries = queries
 
     def __str__(self):
         return str(self.__dict__)

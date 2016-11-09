@@ -76,6 +76,13 @@ class ObserveLatency(Latency):
         while not rows:
             rows = tuple(client.query("A", "id_by_city", key=key))
 
+    @timeit
+    def _wait_until_secondary_indexed(self, client, key):
+        rows = None
+        query = "select city from `bucket-1` where city='{}'".format(key)
+        while not rows:
+            rows = tuple(client.n1ql_query(query))
+
     def _measure_lags(self, pool):
         client = pool.get_client()
 
@@ -86,6 +93,8 @@ class ObserveLatency(Latency):
             t0, t1 = self._wait_until_persisted(client, key)
         elif self.mode == "replicate":
             t0, t1 = self._wait_until_replicated(client, key)
+        elif self.mode == "secondary_index":
+            t0, t1 = self._wait_until_secondary_indexed(client, key)
         else:
             t0, t1 = self._wait_until_indexed(client, key)
         latency = (t1 - t0) * 1000  # s -> ms

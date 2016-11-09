@@ -127,6 +127,7 @@ class CbAgent(object):
                            n1ql_latency=False,
                            n1ql_stats=False,
                            index_latency=False,
+                           secondary_index_latency=False,
                            persist_latency=False,
                            replicate_latency=False,
                            xdcr_lag=False,
@@ -174,6 +175,8 @@ class CbAgent(object):
             self.prepare_n1ql_stats(clusters)
         if index_latency:
             self.prepare_index_latency(clusters)
+        if secondary_index_latency:
+            self.prepare_secondary_index_latency(clusters)
         if persist_latency:
             self.prepare_persist_latency(clusters)
         if replicate_latency:
@@ -309,6 +312,14 @@ class CbAgent(object):
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
             settings.observe = 'index'
+            self.collectors.append(ObserveLatency(settings))
+
+    def prepare_secondary_index_latency(self, clusters):
+        for i, cluster in enumerate(clusters):
+            settings = copy(self.settings)
+            settings.cluster = cluster
+            settings.master_node = self.clusters[cluster]
+            settings.observe = 'secondary_index'
             self.collectors.append(ObserveLatency(settings))
 
     def prepare_xdcr_lag(self, clusters, test):

@@ -146,6 +146,9 @@ class SecondaryIndexTest(PerfTest):
 
     @with_stats
     def build_secondaryindex(self):
+        return self._build_secondaryindex()
+
+    def _build_secondaryindex(self):
         """call cbindex create command"""
         logger.info('building secondary index..')
 
@@ -414,6 +417,14 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
                   'secondary_debugstats': True, 'secondary_debugstats_bucket': True,
                   'secondary_debugstats_index': True}
 
+    def remove_statsfile(self):
+        rmfile = "rm -f {}".format(self.test_config.stats_settings.secondary_statsfile)
+        status = subprocess.call(rmfile, shell=True)
+        if status != 0:
+            raise Exception('existing 2i latency stats file could not be removed')
+        else:
+            logger.info('Existing 2i latency stats file removed')
+
     @with_stats
     def apply_scanworkload(self):
         rest_username, rest_password = self.cluster_spec.rest_credentials
@@ -430,13 +441,7 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
             logger.info('Scan workload applied')
 
     def run(self):
-        rmfile = "rm -f {}".format(self.test_config.stats_settings.secondary_statsfile)
-        status = subprocess.call(rmfile, shell=True)
-        if status != 0:
-            raise Exception('existing 2i latency stats file could not be removed')
-        else:
-            logger.info('Existing 2i latency stats file removed')
-
+        self.remove_statsfile()
         self.run_load_for_2i()
         self.wait_for_persistence()
         self.compact_bucket()
@@ -474,13 +479,7 @@ class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest
         self.rest.rebalance(master, known_nodes, ejected_nodes)
 
     def run(self):
-        rmfile = "rm -f {}".format(self.test_config.stats_settings.secondary_statsfile)
-        status = subprocess.call(rmfile, shell=True)
-        if status != 0:
-            raise Exception('existing 2i latency stats file could not be removed')
-        else:
-            logger.info('Existing 2i latency stats file removed')
-
+        self.remove_statsfile()
         self.run_load_for_2i()
         self.wait_for_persistence()
         self.compact_bucket()
@@ -498,6 +497,34 @@ class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest
             self.reporter.post_to_sf(
                 *self.metric_helper.calc_secondary_scan_latency(percentile=80)
             )
+        self.validate_num_connections()
+
+
+class SecondaryIndexingScanLatencyETOETest(SecondaryIndexingScanLatencyTest):
+    """
+    The test applies scan workload against the 2i server and measures
+    and reports the average scan latency end to end, meaning since doc is added till it gets reflected in query
+    """
+
+    COLLECTORS = {'secondary_stats': True, 'secondary_latency': True,
+                  'secondary_debugstats': True, 'secondary_debugstats_bucket': True,
+                  'secondary_debugstats_index': True, "secondary_index_latency": True}
+
+    def _report_kpi(self):
+        if self.test_config.stats_settings.enabled:
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_observe_latency(percentile=80)
+            )
+
+    def run(self):
+        self.remove_statsfile()
+        self.run_load_for_2i()
+        self.wait_for_persistence()
+        self.compact_bucket()
+        self._build_secondaryindex()
+        self.run_access_for_2i(run_in_background=True)
+        self.apply_scanworkload()
+        self.report_kpi()
         self.validate_num_connections()
 
 

@@ -188,3 +188,24 @@ def import_sample_data(master_node, cluster_spec, bucket=''):
                 cluster_spec.rest_credentials[1], import_file, bucket)
     logger.info('Running: {}'.format(cmd))
     local(cmd, capture=False)
+
+
+def run_cbc_pillowfight(host, bucket, password,
+                        num_items, num_threads, num_cycles, size, updates):
+    cmd = 'cbc-pillowfight ' \
+        '--spec couchbase://{host}/{bucket} ' \
+        '--password {password} ' \
+        '--batch-size 1000 ' \
+        '--num-items {num_items} ' \
+        '--num-threads {num_threads} ' \
+        '--num-cycles {num_cycles} ' \
+        '--min-size {size} ' \
+        '--max-size {size} ' \
+        '--set-pct {updates}'
+
+    cmd = cmd.format(host=host, bucket=bucket, password=password,
+                     num_items=num_items, num_threads=num_threads,
+                     num_cycles=num_cycles, size=size, updates=updates)
+
+    logger.info('Running: {}'.format(cmd))
+    local(cmd, capture=False)

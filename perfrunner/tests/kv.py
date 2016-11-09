@@ -9,11 +9,10 @@ from logger import logger
 from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
 
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.helpers.misc import log_phase, pretty_dict, uhex
-from perfrunner.helpers.worker import run_pillowfight_via_celery
+from perfrunner.helpers.local import run_cbc_pillowfight
+from perfrunner.helpers.misc import pretty_dict, uhex
 from perfrunner.tests import PerfTest
 from perfrunner.workloads.pathoGen import PathoGen
-from perfrunner.workloads.pillowfight import Pillowfight
 from perfrunner.workloads.revAB.__main__ import produce_ab
 from perfrunner.workloads.revAB.graph import PersonIterator, generate_graph
 from perfrunner.workloads.tcmalloc import WorkloadGen
@@ -557,30 +556,25 @@ class ThroughputTest(KVTest):
         self.reporter.post_to_sf(throughput)
 
 
-class PillowfightTest(KVTest):
+class PillowFightTest(PerfTest):
 
-    """Uses pillowfight from libcouchbase to drive cluster."""
-
-    COLLECTORS = {'latency': False}
+    """Uses cbc-pillowfight from libcouchbase to drive cluster."""
 
     @with_stats
-    def access(self):
+    def access(self, *args):
         settings = self.test_config.access_settings
-        if self.test_config.test_case.use_workers:
-            log_phase('access phase', settings)
-            self.worker_manager.run_workload(settings,
-                                             self.target_iterator,
-                                             run_workload=run_pillowfight_via_celery)
-            self.worker_manager.wait_for_workers()
-        else:
-            for target in self.target_iterator:
-                host, port = target.node.split(':')
-                Pillowfight(host=host, port=port, bucket=target.bucket,
-                            password=self.test_config.bucket.password,
-                            num_items=settings.items,
-                            num_threads=settings.workers,
-                            writes=settings.updates,
-                            size=settings.size).run()
+
+        for target in self.target_iterator:
+            host, _ = target.node.split(':')
+
+            run_cbc_pillowfight(host=host,
+                                bucket=target.bucket,
+                                password=self.test_config.bucket.password,
+                                num_items=settings.items,
+                                num_threads=settings.workers,
+                                num_cycles=settings.iterations,
+                                size=settings.size,
+                                updates=settings.updates)
 
     def _report_kpi(self):
         self.reporter.post_to_sf(
@@ -588,10 +582,7 @@ class PillowfightTest(KVTest):
         )
 
     def run(self):
-        from_ts, to_ts = self.access()
-        time_elapsed = (to_ts - from_ts) / 1000.0
-
-        self.reporter.finish('Pillowfight', time_elapsed)
+        self.access()
 
         self.report_kpi()
 

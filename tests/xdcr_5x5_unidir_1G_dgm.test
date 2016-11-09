@@ -1,0 +1,40 @@
+[test_case]
+test = perfrunner.tests.xdcr.UniDirXdcrTest
+title = 5 -> 5 UniDir, 1 bucket x 1B x 1KB, 40K SETs/sec, LAN
+
+[cluster]
+mem_quota = 204800
+initial_nodes = 5 5
+num_buckets = 1
+
+[xdcr_cluster]
+sourceNozzlePerNode = 4
+targetNozzlePerNode = 64
+
+[restore]
+snapshot = /home/snapshots/1000M_800B
+
+[load]
+items = 1000000000
+size = 800
+workers = 80
+
+[hot_load]
+items = 1000000000
+workers = 80
+working_set = 10
+
+[xdcr]
+replication_type = unidir
+
+[access]
+creates = 0
+reads = 50
+updates = 50
+deletes = 0
+throughput = 80000
+items = 1000000000
+workers = 40
+working_set = 10
+working_set_access = 98
+time = 3600

@@ -327,10 +327,10 @@ class CbImportSampleTest(BackupRestoreTest):
         import_file = "{}/../import/beer-sample.zip".\
             format(self.cluster_spec.config.get('storage', 'backup'))
 
-        self.data_size = os.path.getsize(import_file) / 2 ** 30
+        self.data_size = os.path.getsize(import_file)
 
         logger.info('Import completed in {:.1f} sec, Import size is {} GB'
-                    .format(self.spent_time, self.data_size))
+                    .format(self.spent_time, self.data_size / 2 ** 30))
 
     def _report_kpi(self, prefix=''):
         metric = '{}_{}'.format(self.test_config.name,
@@ -342,7 +342,8 @@ class CbImportSampleTest(BackupRestoreTest):
 
         metric = metric.replace('expimp', prefix.split()[0].lower())
 
-        avg_throughput = round(self.data_size / self.spent_time)
+        data_size = self.data_size / 2.0 ** 20
+        avg_throughput = round(data_size / self.spent_time)
 
         print metric
         print metric_info

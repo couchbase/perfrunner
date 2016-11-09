@@ -3,7 +3,7 @@ test = perfrunner.tests.tools.CbImportSampleTest
 title = (Avg. MB/sec), 1 bucket x 60M x 1KB, Idle
 
 [cluster]
-mem_quota = 3100
+mem_quota = 52428
 initial_nodes = 4
 num_buckets = 1
 

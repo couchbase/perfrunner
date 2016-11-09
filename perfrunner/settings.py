@@ -323,7 +323,6 @@ class StatsSettings(object):
 
     CBMONITOR = {'host': 'cbmonitor.sc.couchbase.com', 'password': 'password'}
     ENABLED = 1
-    ADD_SNAPSHOTS = 1
     POST_TO_SF = 0
     INTERVAL = 5
     SECONDARY_STATSFILE = '/root/statsfile'
@@ -338,7 +337,6 @@ class StatsSettings(object):
                                               self.CBMONITOR['host']),
                           'password': options.get('cbmonitor_password',
                                                   self.CBMONITOR['password'])}
-        self.add_snapshots = int(options.get('add_snapshots', self.ADD_SNAPSHOTS))
         self.enabled = int(options.get('enabled', self.ENABLED))
         self.post_to_sf = int(options.get('post_to_sf', self.POST_TO_SF))
         self.interval = int(options.get('interval', self.INTERVAL))

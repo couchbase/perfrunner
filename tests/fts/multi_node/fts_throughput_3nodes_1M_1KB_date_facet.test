@@ -23,6 +23,6 @@ query_size = 10
 logfile = /tmp/fts_throughput_datefacet_1M_1K.txt
 orderby = q0b00010000
 backup_path = /home/backup
-repo_path = datefacet
+repo_path = fts_wiki_date
 field = date
 index_configfile = tests/fts/index/fts_tvectors_off_datetime.json

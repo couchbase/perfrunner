@@ -5,7 +5,7 @@ fts = true
 
 [fts]
 items = 1000000
-name  = perf_fts_index
+name  = perf_elastic_index
 port = 8094
 worker= 10
 type = wildcard
@@ -14,7 +14,8 @@ query_size = 10
 logfile = /tmp/elastic_thput_wildcard_1M_1K.txt
 elastic = 1
 orderby = q0b00001111
-backup_path = /home/wiki1M
+backup_path = /home/backup
+repo_path = fts_wiki
 field = text
 index_configfile = tests/fts/index/elastic_6shards.json
 

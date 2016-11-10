@@ -8,13 +8,13 @@ name  = perf_elastic_index
 port = 9091
 worker= 100
 type = term
-query_file = tests/fts/data/lowterm.txt
+query_file = tests/fts/data/low.txt
 query_size = 10
 elastic = 1
 logfile = /tmp/elastic_thput_termlow_1M_1K.txt
 orderby = q0b00000011
 backup_path = /home/backup
-repo_path = wiki1M
+repo_path = fts_wiki
 field = text
 index_configfile = tests/fts/index/elastic_6shards.json
 

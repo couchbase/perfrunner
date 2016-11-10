@@ -8,7 +8,7 @@ name  = perf_elastic_index
 port = 9091
 orderby = q0b00000000
 backup_path = /home/backup
-repo_path = wiki1M
+repo_path = fts_wiki
 index_configfile = tests/fts/index/elastic_6shards.json
 
 [cluster]

@@ -26,6 +26,6 @@ query_size = 10
 logfile = /tmp/fts_latency_numeric_1M_1K.txt
 orderby = q0b00001100
 backup_path = /home/backup
-repo_path = numericdata
+repo_path = fts_wiki_numeric
 field = time
 index_configfile = tests/fts/index/fts_tvectors_on.json

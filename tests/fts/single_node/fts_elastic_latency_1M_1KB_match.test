@@ -7,7 +7,7 @@ lat_interval = 0.1
 
 [fts]
 items = 1000000
-name  = perf_fts_index
+name  = perf_elastic_index
 port = 8094
 worker= 1
 type = match
@@ -17,7 +17,7 @@ logfile = /tmp/elastic_latency_matchphrase_1M_1K.txt
 orderby = q0b00001101
 elastic = 1
 backup_path = /home/backup
-repo_path = wiki1M
+repo_path = fts_wiki
 field = text
 index_configfile = tests/fts/index/elastic_6shards.json
 

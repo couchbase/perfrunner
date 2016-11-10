@@ -10,7 +10,7 @@ time = 1200
 
 [fts]
 items = 1000000
-name  = perf_fts_index
+name  = perf_elastic_index
 port = 8094
 worker= 1
 type = 2_disjuncts
@@ -19,7 +19,7 @@ query_size = 10
 logfile = /tmp/fts_latency_orhihi_1M_1K.txt
 orderby = q0b00000111
 backup_path = /home/backup
-repo_path = wiki1M
+repo_path = fts_wiki
 field = text
 elastic = 1
 index_configfile = tests/fts/index/elastic_6shards.json

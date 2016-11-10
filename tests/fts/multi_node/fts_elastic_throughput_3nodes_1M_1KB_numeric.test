@@ -15,7 +15,7 @@ logfile = /tmp/elastic_latency_numeric_1M_1K.txt
 orderby = q0b00001100
 elastic = 1
 backup_path = /home/backup
-repo_path = numericdata
+repo_path = fts_numeric
 field = time
 index_configfile = tests/fts/index/elastic_6shards.json
 

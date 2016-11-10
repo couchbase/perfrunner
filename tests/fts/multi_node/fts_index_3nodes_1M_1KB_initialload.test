@@ -15,10 +15,5 @@ items = 1000000
 name  = perf_fts_index
 orderby = q0b00000000
 backup_path = /home/backup
-repo_path = wiki1M
+repo_path = fts_wiki
 index_configfile = tests/fts/index/fts_tvectors_off.json
-
-
-
-
-

@@ -26,6 +26,6 @@ query_size = 10
 logfile = /tmp/fts_prefix_1M_1K.txt
 orderby = q0b00001110
 backup_path = /home/backup
-repo_path = wiki1M
+repo_path = fts_wiki
 field = text
 index_configfile = tests/fts/index/fts_tvectors_off.json

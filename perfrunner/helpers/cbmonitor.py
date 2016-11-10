@@ -37,6 +37,7 @@ from cbagent.collectors.secondary_debugstats import SecondaryDebugStatsIndex
 from cbagent.metadata_client import MetadataClient
 from perfrunner.helpers.misc import target_hash, uhex
 from perfrunner.helpers.remote import RemoteHelper
+from perfrunner.settings import StatsSettings
 
 
 @decorator
@@ -95,8 +96,8 @@ class CbAgent(object):
             hostnames = None
 
         self.settings = type('settings', (object,), {
-            'seriesly_host': test.test_config.stats_settings.seriesly['host'],
-            'cbmonitor_host_port': test.test_config.stats_settings.cbmonitor['host'],
+            'seriesly_host': StatsSettings.SERIESLY,
+            'cbmonitor_host_port': StatsSettings.CBMONITOR,
             'interval': test.test_config.stats_settings.interval,
             'secondary_statsfile': test.test_config.stats_settings.secondary_statsfile,
             'buckets': buckets,

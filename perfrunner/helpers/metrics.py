@@ -3,14 +3,14 @@ from logger import logger
 from seriesly import Seriesly
 
 from perfrunner.helpers.cbmonitor import CbAgent
+from perfrunner.settings import StatsSettings
 
 
 class MetricHelper(object):
 
     def __init__(self, test):
         self.test = test
-        self.seriesly = Seriesly(
-            test.test_config.stats_settings.seriesly['host'])
+        self.seriesly = Seriesly(StatsSettings.SERIESLY)
         self.test_config = test.test_config
         self.title = test.test_config.test_case.title
         self.cluster_spec = test.cluster_spec

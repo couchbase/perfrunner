@@ -321,7 +321,6 @@ class ClusterSettings(object):
 
 class StatsSettings(object):
 
-    CBMONITOR = {'host': 'cbmonitor.sc.couchbase.com', 'password': 'password'}
     ENABLED = 1
     POST_TO_SF = 0
     INTERVAL = 5
@@ -329,14 +328,12 @@ class StatsSettings(object):
     LAT_INTERVAL = 1
     POST_RSS = 0
     POST_CPU = 0
-    SERIESLY = {'host': 'cbmonitor.sc.couchbase.com'}
-    SHOWFAST = {'host': 'cbmonitor.sc.couchbase.com', 'password': 'password'}
+
+    CBMONITOR = 'cbmonitor.sc.couchbase.com'
+    SERIESLY = 'cbmonitor.sc.couchbase.com'
+    SHOWFAST = 'showfast.sc.couchbase.com'
 
     def __init__(self, options):
-        self.cbmonitor = {'host': options.get('cbmonitor_host',
-                                              self.CBMONITOR['host']),
-                          'password': options.get('cbmonitor_password',
-                                                  self.CBMONITOR['password'])}
         self.enabled = int(options.get('enabled', self.ENABLED))
         self.post_to_sf = int(options.get('post_to_sf', self.POST_TO_SF))
         self.interval = int(options.get('interval', self.INTERVAL))
@@ -344,12 +341,6 @@ class StatsSettings(object):
         self.secondary_statsfile = options.get('secondary_statsfile', self.SECONDARY_STATSFILE)
         self.post_rss = int(options.get('post_rss', self.POST_RSS))
         self.post_cpu = int(options.get('post_cpu', self.POST_CPU))
-        self.seriesly = {'host': options.get('seriesly_host',
-                                             self.SERIESLY['host'])}
-        self.showfast = {'host': options.get('showfast_host',
-                                             self.SHOWFAST['host']),
-                         'password': options.get('showfast_password',
-                                                 self.SHOWFAST['password'])}
 
 
 class BucketSettings(object):

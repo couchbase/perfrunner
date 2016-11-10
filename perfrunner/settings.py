@@ -734,6 +734,7 @@ class ExportImportSettings(object):
 
 
 class FtsSettings(object):
+
     def __init__(self, options):
         self.port = int(options.get("port", 0))
         self.name = options.get("name")
@@ -746,7 +747,7 @@ class FtsSettings(object):
         self.query_file = options.get("query_file", None)
         self.type = options.get("type", "match")
         self.logfile = options.get("logfile", None)
-        self.order_by = options.get("orderby", None)
+        self.order_by = options.get("orderby", "")
         self.storage = options.get("backup_path")
         self.repo = options.get("repo_path")
         self.field = options.get("field", None)
@@ -757,6 +758,7 @@ class FtsSettings(object):
 
 
 class YcsbSettings(object):
+
     def __init__(self, options):
         self.sdk = options.get("sdk")
         self.bucket = options.get("bucket")
@@ -777,6 +779,7 @@ class YcsbSettings(object):
 
 
 class DailypSettings(object):
+
     def __init__(self, options):
         self.category = options.get("dailyp_category")
         self.subcategory = options.get("dailyp_subcategory")

@@ -35,10 +35,12 @@ class MetricHelper(object):
             params.update({'from': from_ts, 'to': to_ts})
         return params
 
-    def _get_metric_info(self, title, order_by=None):
-        return {'title': title,
-                'cluster': self.cluster_spec.name,
-                'orderBy': order_by}
+    def _get_metric_info(self, title, order_by=""):
+        return {
+            'title': title,
+            'cluster': self.cluster_spec.name,
+            'orderBy': order_by,
+        }
 
     def calc_ycsb_queries(self, value, name, title):
         metric = '{}_{}_{}'.format(self.test_config.name, name,

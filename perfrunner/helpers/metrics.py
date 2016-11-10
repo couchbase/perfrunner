@@ -40,11 +40,11 @@ class MetricHelper(object):
                 'cluster': self.cluster_spec.name,
                 'orderBy': order_by}
 
-    def calc_ycsb_queries(self, value, name, title, larger_is_better=True):
+    def calc_ycsb_queries(self, value, name, title):
         metric = '{}_{}_{}'.format(self.test_config.name, name,
                                    self.cluster_spec.name)
         title = '{} , {}'.format(title, self.title)
-        metric_info = self._get_metric_info(title, larger_is_better)
+        metric_info = self._get_metric_info(title)
         return value, metric, metric_info
 
     def calc_avg_n1ql_queries(self):

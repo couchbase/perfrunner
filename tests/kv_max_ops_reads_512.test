@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.PillowFightTest
-title = cbc-pillowfight, 2 nodes, 50/50 R/W, 1KB binary items
+title = cbc-pillowfight, 2 nodes, 80/20 R/W, 512B binary items
 
 [cluster]
 mem_quota = 51200
@@ -8,10 +8,10 @@ initial_nodes = 2
 num_buckets = 1
 
 [load]
-size = 1024
+size = 512
 
 [access]
 items = 1000000
 iterations = 40000
 workers = 50
-updates = 50
+updates = 20

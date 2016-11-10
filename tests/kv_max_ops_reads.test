@@ -7,9 +7,6 @@ mem_quota = 51200
 initial_nodes = 2
 num_buckets = 1
 
-[bucket]
-replica_number = 1
-
 [load]
 size = 1024
 

@@ -80,7 +80,7 @@ class Worker(object):
                                          self.ts.prefix)
         self.new_keys = NewKey(self.ts.prefix, self.ws.expiration)
         self.keys_for_removal = KeyForRemoval(self.ts.prefix)
-        self.fts_keys = FTSKey(self.ws.fts_config.mutate_items)
+        self.fts_keys = FTSKey(self.ws)
 
     def init_docs(self):
         if not hasattr(self.ws, 'doc_gen') or self.ws.doc_gen == 'basic':

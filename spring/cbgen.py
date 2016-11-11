@@ -106,6 +106,14 @@ class CBGen(CBAsyncGen):
             sleep(self.NODES_UPDATE_INTERVAL)
 
     @quiet
+    def fts_update(self, key):
+        doc = self.client.get(key).value
+        tmp = doc["text2"]
+        doc["text2"] = doc["text"]
+        doc["text"] = tmp
+        self.client.set(key, doc)
+
+    @quiet
     def create(self, *args, **kwargs):
         super(CBGen, self).create(*args, **kwargs)
 

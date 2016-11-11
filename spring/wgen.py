@@ -23,6 +23,7 @@ from spring.docgen import (
     Document,
     ExistingKey,
     ExtReverseLookupDocument,
+    FTSKey,
     ImportExportDocument,
     JoinedDocument,
     KeyForCASUpdate,
@@ -79,6 +80,7 @@ class Worker(object):
                                          self.ts.prefix)
         self.new_keys = NewKey(self.ts.prefix, self.ws.expiration)
         self.keys_for_removal = KeyForRemoval(self.ts.prefix)
+        self.fts_keys = FTSKey(self.ws.fts_config.mutate_items)
 
     def init_docs(self):
         if not hasattr(self.ws, 'doc_gen') or self.ws.doc_gen == 'basic':
@@ -144,6 +146,7 @@ class KVWorker(Worker):
             ['r'] * self.ws.reads + \
             ['u'] * self.ws.updates + \
             ['d'] * self.ws.deletes + \
+            ['fu'] * self.ws.fts_updates + \
             [cases] * self.ws.cases
         random.shuffle(ops)
 
@@ -198,6 +201,9 @@ class KVWorker(Worker):
             elif op == 'counter':
                 key = self.existing_keys.next(curr_items_spot, deleted_spot)
                 cmds.append((cb.cas, (key, self.ws.subdoc_counter_fields)))
+            elif op == 'fu':
+                key = self.fts_keys.next()
+                cmds.append((cb.fts_update, (key, )))
         return cmds
 
     @with_sleep

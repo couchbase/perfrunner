@@ -123,6 +123,15 @@ class KeyForCASUpdate(Iterator):
         return self.add_prefix(key)
 
 
+class FTSKey(Iterator):
+
+    def __init__(self, items):
+        self.mutate_items = items
+
+    def next(self):
+        return hex(random.randint(0, self.mutate_items))[2:]
+
+
 class Document(Iterator):
 
     SIZE_VARIATION = 0.25  # 25%

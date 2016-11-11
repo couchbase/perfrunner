@@ -428,9 +428,11 @@ class PhaseSettings(object):
     CREATES = 0
     READS = 0
     UPDATES = 0
+    FTS_UPDATES = 0
     DELETES = 0
     CASES = 0
     OPS = 0
+
     THROUGHPUT = float('inf')
     QUERY_THROUGHPUT = float('inf')
     N1QL_THROUGHPUT = float('inf')
@@ -469,6 +471,7 @@ class PhaseSettings(object):
         self.creates = int(options.get('creates', self.CREATES))
         self.reads = int(options.get('reads', self.READS))
         self.updates = int(options.get('updates', self.UPDATES))
+        self.fts_updates = int(options.get('fts_updates', self.FTS_UPDATES))
         self.deletes = int(options.get('deletes', self.DELETES))
         self.cases = int(options.get('cases', self.CASES))
         self.ops = float(options.get('ops', self.OPS))
@@ -738,6 +741,7 @@ class FtsSettings(object):
         self.port = int(options.get("port", 0))
         self.name = options.get("name")
         self.items = int(options.get("items", 0))
+        self.mutate_items = int(options.get("mutate_items", self.items >> 1))
         self.worker = int(options.get("worker", 0))
         self.query = options.get("query", '')
         self.query_size = int(options.get("query_size", 10))

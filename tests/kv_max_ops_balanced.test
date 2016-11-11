@@ -1,6 +1,7 @@
 [test_case]
 test = perfrunner.tests.kv.PillowFightTest
 title = cbc-pillowfight, 2 nodes, 50/50 R/W, 1KB binary items
+use_workers = 0
 
 [cluster]
 mem_quota = 51200

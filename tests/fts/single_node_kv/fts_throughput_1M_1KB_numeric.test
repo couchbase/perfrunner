@@ -1,0 +1,31 @@
+[test_case]
+test = perfrunner.tests.fts.FTSThroughputTest
+title = NumericRangeQuery, numeric 1M, 1K sets/sec kv load
+fts = true
+
+[access]
+fts_updates = 100
+workers = 2
+throughput = 1000
+time = 600
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 1
+num_buckets = 1
+fts_index_mem_quota = 20000
+
+[fts]
+items = 3273681
+name  = perf_fts_index
+port = 8094
+worker= 10
+type = numeric
+query_file = tests/fts/data/numeric_range.txt
+query_size = 10
+logfile = /tmp/fts_throughput_numeric_1M_1K.txt
+orderby = q0b00001100
+backup_path = /home/backup
+repo_path = fts_numeric
+field = time
+index_configfile = tests/fts/index/fts_tvectors_on.json

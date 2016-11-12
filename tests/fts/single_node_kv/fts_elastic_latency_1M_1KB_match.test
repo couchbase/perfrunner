@@ -1,0 +1,33 @@
+[test_case]
+test = perfrunner.tests.elastic.ElasticLatencyTest
+title =  PhraseQuery, wiki 1M x 1KB, 1K sets/sec kv load
+
+[stats]
+lat_interval = 0.1
+
+[fts]
+items = 1000000
+name  = perf_elastic_index
+port = 8094
+worker= 1
+type = match
+query_file = tests/fts/data/phrase.txt
+query_size = 6
+logfile = /tmp/elastic_latency_matchphrase_1M_1K.txt
+orderby = q0b00001101
+elastic = 1
+backup_path = /home/backup
+repo_path = fts_wiki
+field = text
+index_configfile = tests/fts/index/elastic_6shards.json
+
+[access]
+time = 600
+fts_updates = 100
+workers = 2
+throughput = 1000
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 1
+num_buckets = 1

@@ -2,7 +2,7 @@ import copy
 import itertools
 import json
 import logging
-from random import choice, shuffle
+from random import choice, randint, shuffle
 from threading import Thread
 from time import sleep, time
 
@@ -108,9 +108,16 @@ class CBGen(CBAsyncGen):
     @quiet
     def fts_update(self, key):
         doc = self.client.get(key).value
-        tmp = doc["text2"]
-        doc["text2"] = doc["text"]
-        doc["text"] = tmp
+        if 'text' in doc and 'text2' in doc:
+            tmp = doc["text2"]
+            doc["text2"] = doc["text"]
+            doc["text"] = tmp
+        elif 'time' in doc:
+            if randint(0, 1):
+                doc["time"] = int(doc["time"]) >> 1
+            else:
+                doc["time"] = int(doc["time"]) << 1
+
         self.client.set(key, doc)
 
     @quiet

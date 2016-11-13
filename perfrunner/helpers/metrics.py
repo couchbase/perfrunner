@@ -89,9 +89,9 @@ class MetricHelper(object):
     def calc_avg_fts_queries(self, order_by, name='FTS'):
         metric = '{}_avg_query_requests_{}'.format(self.test_config.name,
                                                    self.cluster_spec.name)
-        hosts = [x for x in self.cluster_spec.yield_servers()]
         title = 'Query Throughput (queries/sec), {}, {} node, {}'.format(self.title,
-                                                                         len(hosts), name)
+                                                                         self.test_config.cluster.initial_nodes,
+                                                                         name)
         metric_info = self._get_metric_info(title, order_by=order_by)
         total_queries = self.parse_log(self.test_config, name)
         time_taken = self.test_config.access_settings.time

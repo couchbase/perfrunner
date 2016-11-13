@@ -89,9 +89,10 @@ class MetricHelper(object):
     def calc_avg_fts_queries(self, order_by, name='FTS'):
         metric = '{}_avg_query_requests_{}'.format(self.test_config.name,
                                                    self.cluster_spec.name)
-        title = 'Query Throughput (queries/sec), {}, {} node, {}'.format(self.title,
-                                                                         self.test_config.cluster.initial_nodes,
-                                                                         name)
+        title = 'Query Throughput (queries/sec), {}, {} node, {}'.\
+                format(self.title,
+                       self.test_config.cluster.initial_nodes[0],
+                       name)
         metric_info = self._get_metric_info(title, order_by=order_by)
         total_queries = self.parse_log(self.test_config, name)
         time_taken = self.test_config.access_settings.time
@@ -104,15 +105,19 @@ class MetricHelper(object):
 
     def calc_latency_ftses_queries(self, percentile, dbname,
                                    metrics, order_by, name='FTS'):
-        hosts = [x for x in self.cluster_spec.yield_servers()]
         if percentile == 0:
             metric = '{}_average_{}'.format(self.test_config.name, self.cluster_spec.name)
             title = 'Average query latency (ms), {}, {} node, {}'.\
-                    format(self.title, len(hosts), name)
+                    format(self.title,
+                           self.test_config.cluster.initial_nodes[0],
+                           name)
         else:
             metric = '{}_{}'.format(self.test_config.name, self.cluster_spec.name)
             title = '{}th percentile query latency (ms), {}, {} node, {}'. \
-                    format(percentile, self.title, len(hosts), name)
+                    format(percentile,
+                           self.title,
+                           self.test_config.cluster.initial_nodes[0],
+                           name)
 
         metric_info = self._get_metric_info(title, order_by=order_by)
         timings = []
@@ -127,8 +132,10 @@ class MetricHelper(object):
 
     def calc_ftses_index(self, elapsedtime, order_by, name='FTS'):
         metric = '{}_{}'.format(self.test_config.name, self.cluster_spec.name)
-        hosts = [x for x in self.cluster_spec.yield_servers()]
-        title = 'Index Throughput(sec), {}, {} node, {}'.format(self.title, len(hosts), name)
+        title = 'Index Throughput(sec), {}, {} node, {}'.\
+                format(self.title,
+                       self.test_config.cluster.initial_nodes[0],
+                       name)
         metric_info = self._get_metric_info(title, order_by=order_by)
         return round(elapsedtime, 1), metric, metric_info
 

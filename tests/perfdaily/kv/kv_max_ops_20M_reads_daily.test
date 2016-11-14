@@ -1,7 +1,6 @@
 [test_case]
 test = perfdaily.master.kv.PillowfightTestDaily
 title = Max Throughput, Pillowfight, 80/20 R/W, 20M ops
-larger_is_better = true
 
 [cluster]
 mem_quota = 51200

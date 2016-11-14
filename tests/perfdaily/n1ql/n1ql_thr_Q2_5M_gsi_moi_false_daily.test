@@ -1,7 +1,6 @@
 [test_case]
 test = perfdaily.master.n1ql.N1QLThroughputTestDaily
 title = Q2, Singleton Unique Lookup, throughput, 5M docs, GSI, MOI, request_plus
-larger_is_better = true
 
 [cluster]
 mem_quota = 20480

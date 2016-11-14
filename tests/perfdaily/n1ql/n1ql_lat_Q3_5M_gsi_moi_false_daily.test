@@ -1,7 +1,6 @@
 [test_case]
 test = perfdaily.master.n1ql.N1QLLatencyTestDaily
 title = Q3, Range Scan, latency, 5M docs, latency, GSI, MOI, request_plus
-larger_is_better = false
 
 [cluster]
 mem_quota = 20480

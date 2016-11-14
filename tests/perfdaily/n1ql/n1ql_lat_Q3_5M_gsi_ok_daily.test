@@ -1,7 +1,6 @@
 [test_case]
 test = perfdaily.master.n1ql.N1QLLatencyTestDaily
 title = Q3, Range Scan, latency, 5M docs, GSI, not_bounded
-larger_is_better = false
 
 [stats]
 lat_interval = 0.2

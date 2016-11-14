@@ -295,7 +295,6 @@ class TestCaseSettings(object):
         self.test_module = '.'.join(options.get('test').split('.')[:-1])
         self.test_class = options.get('test').split('.')[-1]
         self.title = options.get('title')
-        self.larger_is_better = options.get('larger_is_better')
         self.fts_server = options.get('fts', False)
         self.use_workers = int(options.get('use_workers', self.USE_WORKERS))
 

@@ -63,7 +63,7 @@ class MetricHelper(object):
             "name": "avg_query_throughput",
             "description": "Avg. Query Throughput (queries/sec)",
             "value": self._calc_avg_n1ql_queries(),
-            "larger_is_better": self.test.test_config.test_case.larger_is_better == "true",
+            "larger_is_better": True,
             "threshold": self.test.test_config.dailyp_settings.threshold,
         }
 
@@ -153,7 +153,7 @@ class MetricHelper(object):
             "name": 'average_throughput',
             "description": 'Average Throughput (ops/sec)',
             "value": self._calc_avg_ops(),
-            "larger_is_better": self.test.test_config.test_case.larger_is_better == "true",
+            "larger_is_better": True,
             "threshold": self.test.test_config.dailyp_settings.threshold,
         }
 
@@ -189,7 +189,7 @@ class MetricHelper(object):
             "name": 'Avg_initial_XDCR_rate',
             "description": 'Avg. initial XDCR rate (items/sec)',
             "value": round(num_buckets * initial_items / time_elapsed),
-            "larger_is_better": self.test.test_config.test_case.larger_is_better == "true",
+            "larger_is_better": True,
             "threshold": self.test.test_config.dailyp_settings.threshold,
         }
 
@@ -262,7 +262,7 @@ class MetricHelper(object):
             "name": '{}th_percentile_query_latency'.format(percentile),
             "description": '{}th percentile Query Latency (ms)'.format(percentile),
             "value": self._calc_query_latency(percentile),
-            "larger_is_better": self.test.test_config.test_case.larger_is_better == "true",
+            "larger_is_better": False,
             "threshold": self.test.test_config.dailyp_settings.threshold,
         }
 
@@ -312,7 +312,7 @@ class MetricHelper(object):
             "name": '{}th_percentile_{}_latency'.format(percentile, operation),
             "description": '{}th percentile {} Latency (ms)'.format(percentile, operation.upper()),
             "value": self._calc_kv_latency(operation, percentile, dbname),
-            "larger_is_better": self.test.test_config.test_case.larger_is_better == "true",
+            "larger_is_better": False,
             "threshold": self.test.test_config.dailyp_settings.threshold,
         }
 
@@ -449,7 +449,7 @@ class MetricHelper(object):
             "name": '{}_{}'.format(self.test_config.name, index_type.lower()),
             "description": '{} index (min), {}'.format(index_type, self.title),
             "value": value,
-            "larger_is_better": self.test.test_config.test_case.larger_is_better == "true",
+            "larger_is_better": False,
             "threshold": self.test.test_config.dailyp_settings.threshold,
         }
 

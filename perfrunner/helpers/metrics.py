@@ -37,15 +37,13 @@ class MetricHelper(object):
         }
 
     def calc_ycsb_queries(self, value, name, title):
-        metric = '{}_{}_{}'.format(self.test_config.name, name,
-                                   self.cluster_spec.name)
+        metric = '{}_{}'.format(self.test_config.name, name)
         title = '{} , {}'.format(title, self.title)
         metric_info = self._get_metric_info(title)
         return value, metric, metric_info
 
     def calc_avg_n1ql_queries(self):
-        metric = '{}_avg_query_requests_{}'.format(self.test_config.name,
-                                                   self.cluster_spec.name)
+        metric = '{}_avg_query_requests'.format(self.test_config.name)
         title = 'Avg. Query Throughput (queries/sec), {}'.format(self.title)
         metric_info = self._get_metric_info(title)
 
@@ -81,8 +79,7 @@ class MetricHelper(object):
         return total
 
     def calc_avg_fts_queries(self, order_by, name='FTS'):
-        metric = '{}_avg_query_requests_{}'.format(self.test_config.name,
-                                                   self.cluster_spec.name)
+        metric = '{}_avg_query_requests'.format(self.test_config.name)
         title = 'Query Throughput (queries/sec), {}, {} node, {}'.\
                 format(self.title,
                        self.test_config.cluster.initial_nodes[0],
@@ -100,13 +97,13 @@ class MetricHelper(object):
     def calc_latency_ftses_queries(self, percentile, dbname,
                                    metrics, order_by, name='FTS'):
         if percentile == 0:
-            metric = '{}_average_{}'.format(self.test_config.name, self.cluster_spec.name)
+            metric = '{}_average'.format(self.test_config.name)
             title = 'Average query latency (ms), {}, {} node, {}'.\
                     format(self.title,
                            self.test_config.cluster.initial_nodes[0],
                            name)
         else:
-            metric = '{}_{}'.format(self.test_config.name, self.cluster_spec.name)
+            metric = self.test_config.name
             title = '{}th percentile query latency (ms), {}, {} node, {}'. \
                     format(percentile,
                            self.title,
@@ -125,7 +122,7 @@ class MetricHelper(object):
         return round(fts_latency), metric, metric_info
 
     def calc_ftses_index(self, elapsedtime, order_by, name='FTS'):
-        metric = '{}_{}'.format(self.test_config.name, self.cluster_spec.name)
+        metric = self.test_config.name
         title = 'Index Throughput(sec), {}, {} node, {}'.\
                 format(self.title,
                        self.test_config.cluster.initial_nodes[0],
@@ -135,8 +132,7 @@ class MetricHelper(object):
 
     def calc_avg_ops(self):
         """Returns the average operations per second."""
-        metric = '{}_avg_ops_{}'.format(self.test_config.name,
-                                        self.cluster_spec.name)
+        metric = '{}_avg_ops'.format(self.test_config.name)
         title = 'Average ops/sec, {}'.format(self.title)
         metric_info = self._get_metric_info(title)
 
@@ -162,9 +158,7 @@ class MetricHelper(object):
         }
 
     def calc_xdcr_lag(self, percentile=90):
-        metric = '{}_{}th_xdc_lag_{}'.format(self.test_config.name,
-                                             percentile,
-                                             self.cluster_spec.name)
+        metric = '{}_{}th_xdc_lag'.format(self.test_config.name, percentile)
         title = '{}th percentile replication lag (ms), {}'.format(
             percentile, self.title)
         metric_info = self._get_metric_info(title)
@@ -181,8 +175,7 @@ class MetricHelper(object):
         return lag, metric, metric_info
 
     def calc_replication_changes_left(self):
-        metric = '{}_avg_replication_queue_{}'.format(self.test_config.name,
-                                                      self.cluster_spec.name)
+        metric = '{}_avg_replication_queue'.format(self.test_config.name)
         title = 'Avg. replication queue, {}'.format(self.title)
         metric_info = self._get_metric_info(title)
         query_params = self._get_query_params('avg_replication_changes_left')
@@ -262,7 +255,7 @@ class MetricHelper(object):
         return round(couch_views_ops)
 
     def calc_query_latency(self, percentile):
-        metric = '{}_{}'.format(self.test_config.name, self.cluster_spec.name)
+        metric = self.test_config.name
         title = '{}th percentile query latency (ms), {}'.format(percentile,
                                                                 self.title)
 
@@ -291,7 +284,7 @@ class MetricHelper(object):
         }
 
     def calc_secondary_scan_latency(self, percentile):
-        metric = '{}_{}'.format(self.test_config.name, self.cluster_spec.name)
+        metric = self.test_config.name
         title = '{}th percentile secondary scan latency (ms), {}'.format(percentile,
                                                                          self.title)
         metric_info = self._get_metric_info(title)
@@ -308,15 +301,14 @@ class MetricHelper(object):
         return round(secondary_scan_latency, 2), metric, metric_info
 
     def indexer_connections(self, max_connections):
-        metric = '{}_{}'.format(self.test_config.name, self.cluster_spec.name)
+        metric = self.test_config.name
         metric_info = self._get_metric_info(self.title)
         return max_connections, metric, metric_info
 
     def calc_kv_latency(self, operation, percentile, dbname='spring_latency'):
-        metric = '{}_{}_{}th_{}'.format(self.test_config.name,
-                                        operation,
-                                        percentile,
-                                        self.cluster_spec.name)
+        metric = '{}_{}_{}th'.format(self.test_config.name,
+                                     operation,
+                                     percentile)
         title = '{}th percentile {} {}'.format(percentile,
                                                operation.upper(),
                                                self.title)
@@ -347,8 +339,7 @@ class MetricHelper(object):
         }
 
     def calc_observe_latency(self, percentile):
-        metric = '{}_{}th_{}'.format(self.test_config.name, percentile,
-                                     self.cluster_spec.name)
+        metric = '{}_{}th'.format(self.test_config.name, percentile)
         title = '{}th percentile {}'.format(percentile, self.title)
         metric_info = self._get_metric_info(title)
 
@@ -362,8 +353,7 @@ class MetricHelper(object):
         return latency, metric, metric_info
 
     def calc_cpu_utilization(self):
-        metric = '{}_avg_cpu_{}'.format(self.test_config.name,
-                                        self.cluster_spec.name)
+        metric = '{}_avg_cpu'.format(self.test_config.name)
         title = 'Avg. CPU utilization (%)'
         title = '{}, {}'.format(title, self.title)
         metric_info = self._get_metric_info(title)
@@ -379,9 +369,7 @@ class MetricHelper(object):
         return cpu_utilazion, metric, metric_info
 
     def calc_mem_used(self, max_min='max'):
-        metric = '{}_{}_mem_used_{}'.format(
-            self.test_config.name, max_min, self.cluster_spec.name
-        )
+        metric = '{}_{}_mem_used'.format(self.test_config.name, max_min)
         title = '{}. mem_used (MB), {}'.format(max_min.title(),
                                                self.title)
         metric_info = self._get_metric_info(title)
@@ -401,8 +389,7 @@ class MetricHelper(object):
         return mem_used, metric, metric_info
 
     def calc_max_beam_rss(self):
-        metric = 'beam_rss_max_{}_{}'.format(self.test_config.name,
-                                             self.cluster_spec.name)
+        metric = 'beam_rss_max_{}'.format(self.test_config.name)
         title = 'Max. beam.smp RSS (MB), {}'.format(self.title)
         metric_info = self._get_metric_info(title)
 
@@ -422,8 +409,7 @@ class MetricHelper(object):
         return max_rss, metric, metric_info
 
     def calc_max_memcached_rss(self):
-        metric = '{}_{}_memcached_rss'.format(self.test_config.name,
-                                              self.cluster_spec.name)
+        metric = '{}_memcached_rss'.format(self.test_config.name)
         title = 'Max. memcached RSS (MB),{}'.format(
             self.title.split(',')[-1]
         )
@@ -448,8 +434,7 @@ class MetricHelper(object):
         return max_rss, metric, metric_info
 
     def calc_avg_memcached_rss(self):
-        metric = '{}_{}_avg_memcached_rss'.format(self.test_config.name,
-                                                  self.cluster_spec.name)
+        metric = '{}_avg_memcached_rss'.format(self.test_config.name)
         title = 'Avg. memcached RSS (MB),{}'.format(
             self.title.split(',')[-1]
         )
@@ -474,9 +459,7 @@ class MetricHelper(object):
         return avg_rss, metric, metric_info
 
     def get_indexing_meta(self, value, index_type):
-        metric = '{}_{}_{}'.format(self.test_config.name,
-                                   index_type.lower(),
-                                   self.cluster_spec.name)
+        metric = '{}_{}'.format(self.test_config.name, index_type.lower())
         title = '{} index (min), {}'.format(index_type,
                                             self.title)
         metric_info = self._get_metric_info(title)
@@ -493,10 +476,7 @@ class MetricHelper(object):
         }
 
     def calc_bnr_throughput(self, time_elapsed, edition, tool):
-        metric = '{}_{}_thr_{}_{}'.format(self.test_config.name,
-                                          tool,
-                                          self.cluster_spec.name,
-                                          edition)
+        metric = '{}_{}_thr_{}'.format(self.test_config.name, tool, edition)
         title = '{} full {} throughput (Avg. MB/sec), {}'.format(
             edition, tool, self.title)
         metric_info = self._get_metric_info(title)
@@ -509,9 +489,7 @@ class MetricHelper(object):
         return avg_throughput, metric, metric_info
 
     def calc_backup_size(self, size, edition):
-        metric = '{}_size_{}_{}'.format(self.test_config.name,
-                                        self.cluster_spec.name,
-                                        edition)
+        metric = '{}_size_{}'.format(self.test_config.name, edition)
         title = '{} backup size (GB), {}'.format(edition, self.title)
         metric_info = self._get_metric_info(title)
 

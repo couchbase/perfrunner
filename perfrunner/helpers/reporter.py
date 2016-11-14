@@ -61,8 +61,8 @@ class SFReporter(object):
 
     def post_to_sf(self, value, metric=None, metric_info=None):
         if metric is None:
-            metric = '{}_{}'.format(self.test.test_config.name,
-                                    self.test.cluster_spec.name)
+            metric = self.test.test_config.name,
+        metric = '{}_{}'.format(metric, self.test.cluster_spec.name)
 
         if self.test.test_config.stats_settings.post_to_sf:
             self._post_benchmark(metric, value)

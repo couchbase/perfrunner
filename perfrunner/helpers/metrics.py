@@ -174,21 +174,6 @@ class MetricHelper(object):
 
         return lag, metric, metric_info
 
-    def calc_replication_changes_left(self):
-        metric = '{}_avg_replication_queue'.format(self.test_config.name)
-        title = 'Avg. replication queue, {}'.format(self.title)
-        metric_info = self._get_metric_info(title)
-        query_params = self._get_query_params('avg_replication_changes_left')
-
-        queues = 0
-        for bucket in self.test_config.buckets:
-            db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
-            data = self.seriesly[db].query(query_params)
-            queues += data.values()[0][0]
-        queue = round(queues)
-
-        return queue, metric, metric_info
-
     def calc_avg_replication_rate(self, time_elapsed):
         initial_items = self.test_config.load_settings.ops or \
             self.test_config.load_settings.items

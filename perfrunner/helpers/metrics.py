@@ -21,19 +21,16 @@ class MetricHelper(object):
         self.out_bytes_transfer = []
 
     @staticmethod
-    def _get_query_params(metric, from_ts=None, to_ts=None):
+    def _get_query_params(metric):
         """Convert metric definition to Seriesly query params. E.g.:
 
-        'avg_xdc_ops' -> {'ptr': '/xdc_ops',
-                          'group': 1000000000000, 'reducer': 'avg'}
+            'avg_xdc_ops' -> {'ptr': '/xdc_ops',
+                              'group': 1000000000000, 'reducer': 'avg'}
 
         Where group is constant."""
-        params = {'ptr': '/{}'.format(metric[4:]),
-                  'reducer': metric[:3],
-                  'group': 1000000000000}
-        if from_ts and to_ts:
-            params.update({'from': from_ts, 'to': to_ts})
-        return params
+        return {'ptr': '/{}'.format(metric[4:]),
+                'reducer': metric[:3],
+                'group': 1000000000000}
 
     def _get_metric_info(self, title, order_by=''):
         return {

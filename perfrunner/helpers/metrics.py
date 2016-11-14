@@ -17,8 +17,6 @@ class MetricHelper(object):
         self.cluster_names = test.cbagent.clusters.keys()
         self.build = test.build
         self.master_node = test.master_node
-        self.in_bytes_transfer = []
-        self.out_bytes_transfer = []
 
     @staticmethod
     def _get_query_params(metric):

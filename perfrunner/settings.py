@@ -308,8 +308,10 @@ class ClusterSettings(object):
 
     def __init__(self, options):
         self.mem_quota = int(options.get('mem_quota'))
-        self.index_mem_quota = int(options.get('index_mem_quota', self.INDEX_MEM_QUOTA))
-        self.fts_index_mem_quota = int(options.get('fts_index_mem_quota', self.FTS_INDEX_MEM_QUOTA))
+        self.index_mem_quota = int(options.get('index_mem_quota',
+                                               self.INDEX_MEM_QUOTA))
+        self.fts_index_mem_quota = int(options.get('fts_index_mem_quota',
+                                                   self.FTS_INDEX_MEM_QUOTA))
         self.initial_nodes = [
             int(nodes) for nodes in options.get('initial_nodes').split()
         ]
@@ -336,8 +338,10 @@ class StatsSettings(object):
         self.enabled = int(options.get('enabled', self.ENABLED))
         self.post_to_sf = int(options.get('post_to_sf', self.POST_TO_SF))
         self.interval = int(options.get('interval', self.INTERVAL))
-        self.lat_interval = float(options.get('lat_interval', self.LAT_INTERVAL))
-        self.secondary_statsfile = options.get('secondary_statsfile', self.SECONDARY_STATSFILE)
+        self.lat_interval = float(options.get('lat_interval',
+                                              self.LAT_INTERVAL))
+        self.secondary_statsfile = options.get('secondary_statsfile',
+                                               self.SECONDARY_STATSFILE)
         self.post_rss = int(options.get('post_rss', self.POST_RSS))
         self.post_cpu = int(options.get('post_cpu', self.POST_CPU))
 
@@ -348,7 +352,6 @@ class BucketSettings(object):
     REPLICA_NUMBER = 1
     REPLICA_INDEX = 0
     EVICTION_POLICY = 'valueOnly'  # alt: fullEviction
-    CONFLICT_RESOLUTION_TYPE = None  # alt: lww
 
     def __init__(self, options):
         self.password = options.get('password', self.PASSWORD)
@@ -358,11 +361,10 @@ class BucketSettings(object):
         self.replica_index = int(
             options.get('replica_index', self.REPLICA_INDEX)
         )
-        self.eviction_policy = \
-            options.get('eviction_policy', self.EVICTION_POLICY)
+        self.eviction_policy = options.get('eviction_policy',
+                                           self.EVICTION_POLICY)
 
-        self.conflict_resolution_type = \
-            options.get('conflict_resolution_type', self.CONFLICT_RESOLUTION_TYPE)
+        self.conflict_resolution_type = options.get('conflict_resolution_type')
 
 
 class CompactionSettings(object):
@@ -372,8 +374,10 @@ class CompactionSettings(object):
     PARALLEL = True
 
     def __init__(self, options):
-        self.db_percentage = options.get('db_percentage', self.DB_PERCENTAGE)
-        self.view_percentage = options.get('view_percentage', self.VIEW_PERCENTAGE)
+        self.db_percentage = options.get('db_percentage',
+                                         self.DB_PERCENTAGE)
+        self.view_percentage = options.get('view_percentage',
+                                           self.VIEW_PERCENTAGE)
         self.parallel = options.get('parallel', self.PARALLEL)
 
     def __str__(self):
@@ -480,7 +484,8 @@ class PhaseSettings(object):
 
         self.size = int(options.get('size', self.SIZE))
         self.items = int(options.get('items', self.ITEMS))
-        self.existing_items = int(options.get('existing_items', self.EXISTING_ITEMS))
+        self.existing_items = int(options.get('existing_items',
+                                              self.EXISTING_ITEMS))
         self.expiration = int(options.get('expiration', self.EXPIRATION))
         self.working_set = float(options.get('working_set', self.WORKING_SET))
         self.working_set_access = int(options.get('working_set_access',
@@ -492,7 +497,8 @@ class PhaseSettings(object):
         self.n1ql_workers = int(options.get('n1ql_workers',
                                             self.N1QL_WORKERS))
         self.subdoc_workers = 0
-        self.spring_workers = int(options.get('spring_workers', self.SPRING_WORKERS))
+        self.spring_workers = int(options.get('spring_workers',
+                                              self.SPRING_WORKERS))
 
         self.n1ql_op = options.get('n1ql_op', self.N1QL_OP)
         if 'n1ql_queries' in options:
@@ -509,7 +515,8 @@ class PhaseSettings(object):
         self.time = int(options.get('time', self.TIME))
 
         self.async = bool(int(options.get('async', self.ASYNC)))
-        self.parallel_workload = bool(int(options.get('parallel_workload', self.PARALLEL_WORKLOAD)))
+        self.parallel_workload = bool(int(options.get('parallel_workload',
+                                                      self.PARALLEL_WORKLOAD)))
         self.iterations = int(options.get('iterations', self.ITERATIONS))
 
         self.fts_config = None
@@ -572,7 +579,8 @@ class XDCRSettings(object):
                                                 self.XDCR_REPLICATION_PROTOCOL)
         self.use_ssl = int(options.get('use_ssl', self.XDCR_USE_SSL))
         self.wan_enabled = int(options.get('wan_enabled', self.WAN_ENABLED))
-        self.filter_expression = options.get('filter_expression', self.FILTER_EXPRESSION)
+        self.filter_expression = options.get('filter_expression',
+                                             self.FILTER_EXPRESSION)
 
     def __str__(self):
         return str(self.__dict__)
@@ -612,10 +620,14 @@ class SecondaryIndexSettings(object):
         self.db = options.get('db', self.DB)
         self.stale = options.get('stale', self.STALE)
         self.indexes = self.name.split(",") if self.name is not self.NAME else []
-        self.cbindexperf_configfile = options.get('cbindexperf_configfile', self.CBINDEXPERF_CONFIGFILE)
-        self.init_num_connections = int(options.get('init_num_connections', self.INIT_NUM_CONNECTIONS))
-        self.step_num_connections = int(options.get('step_num_connections', self.STEP_NUM_CONNECTIONS))
-        self.max_num_connections = int(options.get('max_num_connections', self.MAX_NUM_CONNECTIONS))
+        self.cbindexperf_configfile = options.get('cbindexperf_configfile',
+                                                  self.CBINDEXPERF_CONFIGFILE)
+        self.init_num_connections = int(options.get('init_num_connections',
+                                                    self.INIT_NUM_CONNECTIONS))
+        self.step_num_connections = int(options.get('step_num_connections',
+                                                    self.STEP_NUM_CONNECTIONS))
+        self.max_num_connections = int(options.get('max_num_connections',
+                                                   self.MAX_NUM_CONNECTIONS))
         for name in self.name.split(","):
             index_partition_name = "index_{}_partitions".format(name)
             val = str(options.get(index_partition_name, ''))
@@ -681,9 +693,11 @@ class SubDocSettings(object):
 
     def __init__(self, options, access):
         access.subdoc_workers = int(options.get('workers'), self.SUBDOC_WORKERS)
-        access.subdoc_fields = options.get(('fields'), self.SUBDOC_FIELDS)
-        access.subdoc_counter_fields = options.get(('counter_fields'), self.SUBDOC_COUNTER_FIELDS)
-        access.subdoc_delete_fields = options.get(('delete_fields'), self.SUBDOC_DELETE_FIELDS)
+        access.subdoc_fields = options.get('fields', self.SUBDOC_FIELDS)
+        access.subdoc_counter_fields = options.get('counter_fields',
+                                                   self.SUBDOC_COUNTER_FIELDS)
+        access.subdoc_delete_fields = options.get('delete_fields',
+                                                  self.SUBDOC_DELETE_FIELDS)
 
 
 class AccessSettings(PhaseSettings):

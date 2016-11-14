@@ -283,11 +283,6 @@ class MetricHelper(object):
 
         return round(secondary_scan_latency, 2), metric, metric_info
 
-    def indexer_connections(self, max_connections):
-        metric = self.test_config.name
-        metric_info = self._get_metric_info(self.title)
-        return max_connections, metric, metric_info
-
     def calc_kv_latency(self, operation, percentile, dbname='spring_latency'):
         metric = '{}_{}_{}th'.format(self.test_config.name,
                                      operation,

@@ -589,10 +589,7 @@ class SecondaryNumConnectionsTest(SecondaryIndexTest):
         self.config_data = self.get_data_from_config_json('tests/gsi/config_template.json')
 
     def _report_kpi(self, connections):
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(
-                *self.metric_helper.indexer_connections(max_connections=connections)
-            )
+        self.reporter.post_to_sf(value=connections)
 
     @with_stats
     def apply_scanworkload_steps(self):

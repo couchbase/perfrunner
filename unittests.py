@@ -1,7 +1,6 @@
 import glob
 from unittest import TestCase
 
-from cbagent.settings import Settings
 from perfrunner.helpers.misc import server_group
 from perfrunner.settings import ClusterSpec, TestConfig
 from perfrunner.workloads.tcmalloc import KeyValueIterator, LargeIterator
@@ -83,12 +82,6 @@ class WorkloadTest(TestCase):
         field = LargeIterator()._field('000000000001')
         size = len(str(field))
         self.assertAlmostEqual(size, LargeIterator.FIELD_SIZE, delta=16)
-
-
-class CBAgentTest(TestCase):
-
-    def test_settings(self):
-        self.assertEqual(Settings.DEFAULT['interval'], 10)
 
 
 class SpringTest(TestCase):

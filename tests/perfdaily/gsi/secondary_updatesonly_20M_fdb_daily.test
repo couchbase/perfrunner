@@ -2,6 +2,9 @@
 test =  perfdaily.master.secondary.InitialandIncrementalSecondaryIndexTestDaily
 title = 1 bucket x 20M x 1KB, single 2i index, updates only in incremental build, FDB
 
+[stats]
+monitored_processes = projector
+
 [cluster]
 mem_quota = 30000
 index_mem_quota = 100000

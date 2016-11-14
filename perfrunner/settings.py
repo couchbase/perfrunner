@@ -295,7 +295,6 @@ class TestCaseSettings(object):
         self.test_module = '.'.join(options.get('test').split('.')[:-1])
         self.test_class = options.get('test').split('.')[-1]
         self.title = options.get('title')
-        self.fts_server = options.get('fts', False)
         self.use_workers = int(options.get('use_workers', self.USE_WORKERS))
 
 
@@ -324,26 +323,41 @@ class StatsSettings(object):
 
     ENABLED = 1
     POST_TO_SF = 0
+
     INTERVAL = 5
-    SECONDARY_STATSFILE = '/root/statsfile'
     LAT_INTERVAL = 1
+
     POST_RSS = 0
     POST_CPU = 0
+
+    SECONDARY_STATSFILE = '/root/statsfile'
 
     CBMONITOR = 'cbmonitor.sc.couchbase.com'
     SERIESLY = 'cbmonitor.sc.couchbase.com'
     SHOWFAST = 'showfast.sc.couchbase.com'
 
+    MONITORED_PROCESSES = ['beam.smp',
+                           'cbft',
+                           'cbq-engine',
+                           'indexer',
+                           'memcached']
+
     def __init__(self, options):
         self.enabled = int(options.get('enabled', self.ENABLED))
         self.post_to_sf = int(options.get('post_to_sf', self.POST_TO_SF))
+
         self.interval = int(options.get('interval', self.INTERVAL))
         self.lat_interval = float(options.get('lat_interval',
                                               self.LAT_INTERVAL))
-        self.secondary_statsfile = options.get('secondary_statsfile',
-                                               self.SECONDARY_STATSFILE)
+
         self.post_rss = int(options.get('post_rss', self.POST_RSS))
         self.post_cpu = int(options.get('post_cpu', self.POST_CPU))
+
+        self.secondary_statsfile = options.get('secondary_statsfile',
+                                               self.SECONDARY_STATSFILE)
+
+        self.monitored_processes = self.MONITORED_PROCESSES + \
+            options.get('monitored_processes', '').split()
 
 
 class BucketSettings(object):

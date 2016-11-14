@@ -2,6 +2,9 @@
 test = perfdaily.master.xdcr.XdcrInitTestDaily
 title = Avg. initial XDCR rate (items/sec), 1 -> 1 UniDir, 1 bucket x 50M x 1KB, Optimistic
 
+[stats]
+monitored_processes = goxdcr
+
 [cluster]
 mem_quota = 58000
 initial_nodes = 1 1

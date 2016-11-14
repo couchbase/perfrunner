@@ -6,7 +6,7 @@ class TypePerf(Collector):
 
     COLLECTOR = "atop"  # Legacy / compatibility
 
-    KNOWN_PROCESSES = ("beam.smp", "memcached")
+    TRACKED_PROCESSES = "beam.smp", "memcached"
 
     def __init__(self, settings):
         super(TypePerf, self).__init__(settings)
@@ -14,6 +14,7 @@ class TypePerf(Collector):
         self.tp = TPStats(hosts=self.nodes,
                           user=self.ssh_username,
                           password=self.ssh_password)
+        self.monitored_processes = settings.monitored_processes
 
     def update_metadata(self):
         self.mc.add_cluster()
@@ -21,7 +22,7 @@ class TypePerf(Collector):
             self.mc.add_server(node)
 
     def sample(self):
-        for process in self.KNOWN_PROCESSES:
+        for process in self.monitored_processes:
             for node, stats in self.tp.get_samples(process).items():
                 if stats:
                     self.update_metric_metadata(stats.keys(), server=node)

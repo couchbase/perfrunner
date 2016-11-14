@@ -2,6 +2,9 @@
 test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexRebalanceTest
 title = 1 bucket x 20M x 1KB, single 2i index, rebalance during initial/incr build, FDB
 
+[stats]
+monitored_processes = projector
+
 [cluster]
 mem_quota = 30000
 index_mem_quota = 30000

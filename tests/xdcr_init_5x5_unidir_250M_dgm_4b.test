@@ -2,6 +2,9 @@
 test = perfrunner.tests.xdcr.XdcrInitTest
 title = Avg. initial XDCR rate (items/sec), 5 -> 5 UniDir, 5 buckets x 250M x 1KB
 
+[stats]
+monitored_processes = goxdcr
+
 [cluster]
 mem_quota = 204800
 initial_nodes = 5 5

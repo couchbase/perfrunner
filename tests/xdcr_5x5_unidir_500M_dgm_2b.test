@@ -4,6 +4,7 @@ title = 5 -> 5 UniDir, 2 buckets x 500M x 1KB, 20K SETs/sec/bucket, LAN
 
 [stats]
 post_cpu = 1
+monitored_processes = goxdcr
 
 [cluster]
 mem_quota = 204800

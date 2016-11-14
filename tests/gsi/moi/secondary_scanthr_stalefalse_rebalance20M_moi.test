@@ -2,6 +2,9 @@
 test = perfrunner.tests.secondary.SecondaryIndexingThroughputRebalanceTest
 title = Secondary index stale=false scan throughput with rebalance (scanps), 1 bucket x 20M x 1KB, 100K ops/sec, single index, MOI
 
+[stats]
+monitored_processes = projector
+
 [cluster]
 mem_quota = 30000
 index_mem_quota = 80000

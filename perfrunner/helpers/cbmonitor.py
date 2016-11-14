@@ -103,7 +103,7 @@ class CbAgent(object):
             'buckets': buckets,
             'indexes': test.test_config.secondaryindex_settings.indexes,
             'hostnames': hostnames,
-            'fts_server': test.test_config.test_case.fts_server
+            'monitored_processes': test.test_config.stats_settings.monitored_processes,
         })()
         self.lat_interval = test.test_config.stats_settings.lat_interval
         if test.cluster_spec.ssh_credentials:

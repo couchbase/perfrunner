@@ -2,6 +2,9 @@
 test = perfrunner.tests.xdcr.UniDirXdcrTest
 title = 5 -> 5 UniDir, 2 buckets x 500M x 1KB, 20K SETs/sec/bucket, LAN, LWW
 
+[stats]
+monitored_processes = goxdcr
+
 [cluster]
 mem_quota = 204800
 initial_nodes = 5 5

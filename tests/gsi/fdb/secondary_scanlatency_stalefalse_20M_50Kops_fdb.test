@@ -2,6 +2,9 @@
 test = perfrunner.tests.secondary.SecondaryIndexingScanLatencyTest
 title = Secondary index stale=false scan latency(ms), 1 bucket x 20M x 1KB, 50K ops/sec, single index, FDB
 
+[stats]
+monitored_processes = projector
+
 [cluster]
 mem_quota = 30000
 index_mem_quota = 30000

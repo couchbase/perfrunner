@@ -28,11 +28,9 @@ class SFReporter(object):
 
     def _post_metric(self, metric, metric_info):
         if metric_info is None:
-            metric_info = {
-                'cluster': self.test.cluster_spec.name,
-                'title': self.test.test_config.test_case.title,
-            }
+            metric_info = {'title': self.test.test_config.test_case.title}
         metric_info['id'] = metric
+        metric_info['cluster'] = self.test.cluster_spec.name
 
         logger.info('Adding a metric: {}'.format(pretty_dict(metric_info)))
         requests.post('http://{}/api/v1/metrics'.format(StatsSettings.SHOWFAST),

@@ -1,6 +1,8 @@
 [test_case]
 test = perfrunner.tests.kv.FragmentationTest
 title = Memory fragmentation (%%), 1 bucket x 5M x 1KB
+component = kv
+category = fragmentation
 
 [cluster]
 mem_quota = 40960

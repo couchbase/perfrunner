@@ -1,6 +1,8 @@
 [test_case]
 test = perfrunner.tests.kv.PathoGenTest
 title = Max RSS (MB), 1 bucket x 10K, PathoGen 8B -> 256KB
+component = kv
+category = fragmentation
 use_workers = 0
 
 [cluster]

@@ -1,6 +1,8 @@
 [test_case]
 test = perfrunner.tests.tools.RestoreTest
 title = 1 bucket x 100M x 1KB, DGM, Idle
+component = tools
+category = restore
 
 [cluster]
 mem_quota = 52428

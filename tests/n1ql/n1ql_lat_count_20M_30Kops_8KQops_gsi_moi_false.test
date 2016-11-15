@@ -1,10 +1,8 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLLatencyTest
 title = Count, Aggregation Query, 8K queries/sec, MOI, request_plus
-larger_is_better = false
-
-[stats]
-lat_interval = 0.2
+component = n1ql
+category = count
 
 [cluster]
 mem_quota = 20480

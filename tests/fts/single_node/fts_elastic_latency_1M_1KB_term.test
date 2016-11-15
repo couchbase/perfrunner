@@ -1,6 +1,8 @@
 [test_case]
 test = perfrunner.tests.elastic.ElasticLatencyTest
 title = Med Term, no kv-load, wiki 1M x 1KB
+component = fts
+category = latency
 
 [stats]
 lat_interval = 0.1

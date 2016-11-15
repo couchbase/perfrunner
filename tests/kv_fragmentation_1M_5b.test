@@ -1,6 +1,8 @@
 [test_case]
 test = perfrunner.tests.kv.MemUsedTest
 title = 5 buckets x 200K x 1KB, 2 nodes, write-heavy
+component = kv
+category = fragmentation
 
 [cluster]
 mem_quota = 40960

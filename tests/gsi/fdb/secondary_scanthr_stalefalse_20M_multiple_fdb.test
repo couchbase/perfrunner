@@ -1,6 +1,8 @@
 [test_case]
 test = perfrunner.tests.secondary.SecondaryIndexingThroughputTest
 title = Secondary index scan stale=false throughput (scanps), 1 bucket x 20M x 1KB, 10K ops/sec, 5K mutations/sec, 5 indexes, FDB
+component = secondary
+category = fdb_thr
 
 [stats]
 monitored_processes = projector

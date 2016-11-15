@@ -1,7 +1,8 @@
 [test_case]
 test = perfrunner.tests.fts.FTSLatencyTest
 title = AndHighOrMedMed, no kv-load, wiki 1M x 1KB
-fts = true
+component = fts
+category = latency
 
 [stats]
 lat_interval = 0.1

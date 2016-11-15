@@ -1,6 +1,8 @@
 [test_case]
 test = perfrunner.tests.elastic.ElasticThroughputTest
 title = Med Term, wiki 1M x 1KB, 1K sets/sec kv load
+component = fts
+category = kvthroughput
 
 [fts]
 items = 1000000

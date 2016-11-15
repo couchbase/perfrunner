@@ -1,7 +1,8 @@
 [test_case]
 test = perfrunner.tests.fts.FTSLatencyTest
 title = FuzzyQuery, fuzziness 2, no kv-load, wiki 1M x 1KB, raw latency
-fts = true
+component = fts
+category = latency
 
 [stats]
 lat_interval = 0

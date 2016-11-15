@@ -1,6 +1,8 @@
 [test_case]
 test = perfrunner.tests.kv.ThroughputTest
 title = Average ops/sec, 50/50 R/W, 500M x 1KB, value ejection, 5%% cache miss rate, no compaction
+component = kv
+category = storage
 
 [cluster]
 mem_quota = 51200

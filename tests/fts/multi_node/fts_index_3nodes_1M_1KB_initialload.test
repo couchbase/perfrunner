@@ -1,7 +1,8 @@
 [test_case]
 test = perfrunner.tests.fts.FtsIndexTest
 title = wiki 1M x 1KB
-fts = true
+component = fts
+category = index3
 
 [cluster]
 mem_quota = 51024

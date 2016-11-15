@@ -1,6 +1,8 @@
 [test_case]
 test = perfrunner.tests.kv.WarmupTest
 title = Warmup time (min), 1 bucket x 200M x 1KB
+component = kv
+category = warmup
 
 [cluster]
 mem_quota = 51200

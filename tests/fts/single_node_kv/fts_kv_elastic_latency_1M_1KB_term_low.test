@@ -1,6 +1,8 @@
 [test_case]
 test = perfrunner.tests.elastic.ElasticLatencyTest
 title = Low Term, wiki 1M x 1KB, 1K sets/sec kv load
+component = fts
+category = kvlatency
 
 [stats]
 lat_interval = 0.1

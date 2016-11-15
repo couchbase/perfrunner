@@ -1,7 +1,8 @@
 [test_case]
 test = perfrunner.tests.fts.FTSThroughputTest
 title = High Term, wiki 1M x 1KB, 1K sets/sec kv load
-fts = true
+component = fts
+category = kvthroughput
 
 [access]
 time = 600

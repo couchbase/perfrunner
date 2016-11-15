@@ -1,6 +1,8 @@
 [test_case]
 test = perfrunner.tests.rebalance.RebalanceWithUniDirXdcrTest
 title = Rebalance-in (min), 4->5 -> 5->5 UniDir, 1 bucket x 1G x 1KB, 10K ops/sec
+component = reb
+category = xdcr
 
 [stats]
 monitored_processes = goxdcr

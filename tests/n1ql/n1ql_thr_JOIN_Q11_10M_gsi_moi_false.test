@@ -1,6 +1,8 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLJoinTest
 title = Q11, Complex Join, MOI, request_plus
+component = n1ql
+category = join_unnest
 
 [cluster]
 mem_quota = 51200

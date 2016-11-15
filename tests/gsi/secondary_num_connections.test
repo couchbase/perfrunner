@@ -1,6 +1,7 @@
 [test_case]
 test = perfrunner.tests.secondary.SecondaryNumConnectionsTest
 title = Max number of connections to index node, 1 bucket x 20M x 1KB, single 2i index
+component = secondary
 
 [cluster]
 mem_quota = 30000

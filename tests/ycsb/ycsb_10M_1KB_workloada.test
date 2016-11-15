@@ -1,6 +1,8 @@
 [test_case]
 test = perfrunner.tests.ycsb.YCSBTest
 title = 1 bucket x 10M x 1KB
+component = ycsb
+category = workloada
 
 [cluster]
 mem_quota = 54000

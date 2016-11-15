@@ -1,6 +1,8 @@
 [test_case]
 test = perfrunner.tests.kv.ReplicateLatencyTest
 title = ReplicateTo=1 latency (ms), 1 bucket x 200M x 1KB, 250 mutations/sec/node
+component = kv
+category = observe
 
 [cluster]
 mem_quota = 51200

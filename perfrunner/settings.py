@@ -294,7 +294,12 @@ class TestCaseSettings(object):
     def __init__(self, options):
         self.test_module = '.'.join(options.get('test').split('.')[:-1])
         self.test_class = options.get('test').split('.')[-1]
+
         self.title = options.get('title')
+        self.component = options.get('component', '')
+        self.category = options.get('category', '')
+        self.sub_category = options.get('sub_category', '')
+
         self.use_workers = int(options.get('use_workers', self.USE_WORKERS))
 
 

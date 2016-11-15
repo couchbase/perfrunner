@@ -1,6 +1,8 @@
 [test_case]
 test = perfrunner.tests.xdcr.XdcrInitTest
 title = Avg. initial XDCR rate (items/sec), 5 -> 5 UniDir, 1 bucket x 1G x 1KB, Filter (matching ~50%% of the items)
+component = xdcr
+category = init
 
 [stats]
 monitored_processes = goxdcr

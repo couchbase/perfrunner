@@ -1,6 +1,8 @@
 [test_case]
 test = perfrunner.tests.kv.PersistLatencyTest
 title = PersistTo=1 latency (ms), 2 buckets x 40M x 2KB, 1.25K mutations/sec/node
+component = kv
+category = observe
 
 [cluster]
 mem_quota = 40960

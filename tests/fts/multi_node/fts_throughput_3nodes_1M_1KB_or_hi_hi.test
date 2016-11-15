@@ -1,7 +1,8 @@
 [test_case]
 test = perfrunner.tests.fts.FTSThroughputTest
 title = OrHighHigh, no kv-load, wiki 1M x 1KB
-fts = true
+component = fts
+category = throughput3
 
 [access]
 time = 600

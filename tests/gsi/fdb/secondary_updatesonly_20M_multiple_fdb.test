@@ -1,6 +1,7 @@
 [test_case]
 test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
 title = 1 bucket x 20M x 1KB, five 2i indexes, updates only in incremental build, FDB
+component = secondary
 
 [stats]
 monitored_processes = projector

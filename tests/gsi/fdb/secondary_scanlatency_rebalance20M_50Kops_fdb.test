@@ -1,6 +1,8 @@
 [test_case]
 test = perfrunner.tests.secondary.SecondaryIndexingScanLatencyTest
 title = Secondary index scan latency(ms) with rebalance, 1 bucket x 20M x 1KB, 50K ops/sec, single index, FDB
+component = secondary
+category = fdb_lat
 
 [stats]
 monitored_processes = projector

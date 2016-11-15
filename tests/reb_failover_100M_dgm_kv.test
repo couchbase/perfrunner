@@ -1,6 +1,8 @@
 [test_case]
 test = perfrunner.tests.rebalance.RebalanceKVTest
 title = Full recovery after hard failover (min), 3 -> 4, 1 bucket x 100M x 2KB, 10K ops/sec
+component = reb
+category = failover
 
 [cluster]
 mem_quota = 40960

@@ -1,6 +1,8 @@
 [test_case]
 test = perfrunner.tests.query.DevQueryLatencyTest
 title = 1 node, 20M docs, 3 views, 100 updates/sec, 100 queries/sec, stale=false, basic queries
+component = query
+category = by_type
 
 [cluster]
 mem_quota = 40960

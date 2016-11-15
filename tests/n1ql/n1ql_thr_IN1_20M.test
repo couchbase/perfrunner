@@ -1,6 +1,8 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
 title = IN1, Key-Value Insert
+component = n1ql
+category = dml
 
 [cluster]
 mem_quota = 20480

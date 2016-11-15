@@ -1,7 +1,8 @@
 [test_case]
 test = perfrunner.tests.elastic.ElasticLatencyTest
 title = AndHighMed, wiki 1M x 1KB, 1K sets/sec kv load
-fts = true
+component = fts
+category = kvlatency
 
 [stats]
 lat_interval = 0.1

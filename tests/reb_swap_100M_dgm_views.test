@@ -1,6 +1,8 @@
 [test_case]
 test = perfrunner.tests.rebalance.RebalanceWithQueriesTest
 title = Rebalance-swap (min), 3 -> 3 / 1, 1 bucket x 100M x 2KB, 1 x 1 views, 10K ops/sec, 400 queries/sec
+component = reb
+category = views
 
 [cluster]
 mem_quota = 40960

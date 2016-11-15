@@ -1,6 +1,8 @@
 [test_case]
 test = perfrunner.tests.query.QueryThroughputTest
 title = Query throughput (qps), 1 bucket x 20M x 2KB, non-DGM, 4 x 1 views, 500 mutations/sec/node
+component = query
+category = throughput
 
 [cluster]
 mem_quota = 40960

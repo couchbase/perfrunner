@@ -1,6 +1,8 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
 title = CI6, Order By Limit Query, FDB, request_plus
+component = n1ql
+category = CI_thr
 
 [cluster]
 mem_quota = 20480

@@ -1,7 +1,8 @@
 [test_case]
 test = perfrunner.tests.elastic.ElasticThroughputTest
 title = WildcardQuery, no kv-load, wiki 1M x 1KB
-fts = true
+component = fts
+category = throughput
 
 [fts]
 items = 1000000

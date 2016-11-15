@@ -1,6 +1,8 @@
 [test_case]
 test = perfrunner.tests.elastic.ElasticLatencyTest
 title = FuzzyQuery, fuzziness 2, no kv-load, wiki 1M x 1KB, raw latency
+component = fts
+category = latency
 
 [stats]
 lat_interval = 0

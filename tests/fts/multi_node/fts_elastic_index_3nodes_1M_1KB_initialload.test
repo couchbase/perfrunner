@@ -1,6 +1,8 @@
 [test_case]
 test = perfrunner.tests.elastic.ElasticIndexTest
 title =  wiki 1M x 1KB
+component = fts
+category = index3
 
 [fts]
 items = 1000000

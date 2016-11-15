@@ -285,7 +285,8 @@ class FtsGen(CBGen):
                 for line in tfile:
                     temp_query = {}
                     tosearch, freq = FtsGen.process_lines(line.strip())
-                    if self.settings.type in ['2_conjuncts', '2_disjuncts', '1_conjuncts_2_disjuncts']:
+                    query_type = self.settings.type
+                    if query_type in ['2_conjuncts', '2_disjuncts', '1_conjuncts_2_disjuncts']:
                         '''
                          For And, OR queries we create the list.
                          Example looks like
@@ -298,7 +299,7 @@ class FtsGen(CBGen):
                                     https://blog.newrelic.com/2015/01/21/python-performance-tips/
                         '''
                         from collections import defaultdict
-                        keytypes = FtsGen.process_conj_disj(self.settings.type.split('_'))
+                        keytypes = FtsGen.process_conj_disj(query_type.split('_'))
                         temp_query = defaultdict(list)
                         tbool = {v: {k: None} for k, v in self.bool_map.iteritems()}
 
@@ -309,12 +310,12 @@ class FtsGen(CBGen):
                             tmp_key = keytypes.next()
                             temp_query[tmp_key].append({"field": self.settings.field, "term": terms})
 
-                        if self.settings.type == '1_conjuncts_2_disjuncts':
+                        if query_type == '1_conjuncts_2_disjuncts':
                             for k, v in self.bool_map.iteritems():
                                 tbool[v][k] = temp_query[k]
                             temp_query = tbool
 
-                    elif self.settings.type == 'fuzzy':
+                    elif query_type == 'fuzzy':
                         '''
                         Fuzzy query uses term as search type unlike
                         elasticsearch where they do use word fuzzy
@@ -323,7 +324,7 @@ class FtsGen(CBGen):
                         temp_query['term'] = tosearch
                         temp_query['field'] = self.settings.field
 
-                    elif self.settings.type == 'numeric':
+                    elif query_type == 'numeric':
                         '''
                         Creating numeric range query Gen
                         '''
@@ -337,24 +338,24 @@ class FtsGen(CBGen):
                         temp_query['inclusive_min'] = False
                         temp_query['field'] = self.settings.field
 
-                    elif self.settings.type == 'match':
+                    elif query_type in ['match', 'match_phrase']:
                         '''
                         Just reassign the whole line to it
                         '''
                         tosearch = line.strip()
-                        temp_query[self.settings.type] = tosearch
+                        temp_query[query_type] = tosearch
                         temp_query['field'] = self.settings.field
 
-                    elif self.settings.type == 'ids':
+                    elif query_type == 'ids':
                         '''
                         The ids are from document ids , generated through
                         the N1QL query
                         '''
                         tosearch = [tosearch]
-                        temp_query[self.settings.type] = tosearch
+                        temp_query[query_type] = tosearch
                         temp_query['field'] = self.settings.field
 
-                    elif self.settings.type == "facet":
+                    elif query_type == "facet":
                         '''
                         https://gist.github.com/mschoch/9bc5f508bb25c94ed9af
                         "query": {
@@ -386,7 +387,7 @@ class FtsGen(CBGen):
                                                 "date_ranges": [{"name": "end", "end": end_date},
                                                                 {"name": "start", "start": start_date}]}}
                     else:
-                        temp_query[self.settings.type] = tosearch
+                        temp_query[query_type] = tosearch
                         temp_query['field'] = self.settings.field
 
                     self.query['query'] = temp_query
@@ -434,7 +435,8 @@ class ElasticGen(FtsGen):
                         self.elastic_query += self.settings.name + '/_search'
                         tmp_query = {}
                         tmp_query_txt = {}
-                        if self.settings.type == 'fuzzy':
+                        query_type = self.settings.type
+                        if query_type == 'fuzzy':
                             '''
                             fuzziness is extra parameter for fuzzy
                             Source: https://www.elastic.co/guide/en/elasticsearch/reference/current/
@@ -444,27 +446,27 @@ class ElasticGen(FtsGen):
                             tmp_fuzzy['fuzziness'] = int(freq)
                             tmp_fuzzy['value'] = term
                             tmp_query_txt[self.settings.field] = tmp_fuzzy
-                            tmp_query[self.settings.type] = tmp_query_txt
+                            tmp_query[query_type] = tmp_query_txt
 
-                        elif self.settings.type == 'ids':
+                        elif query_type == 'ids':
                             '''
                             values is extra parameter for Docid
                             source: https://www.elastic.co/guide/en/elasticsearch/reference/
                             current/query-dsl-ids-query.html
                             '''
                             tmp_query_txt['values'] = [term]
-                            tmp_query[self.settings.type] = tmp_query_txt
+                            tmp_query[query_type] = tmp_query_txt
 
-                        elif self.settings.type == 'match':
+                        elif query_type in ['match', 'match_phrase']:
                             '''
                             Just reassign the whole line to it
                             Source: https://www.elastic.co/guide/en/elasticsearch/reference/
                             current/query-dsl-fuzzy-query.html
                             '''
                             tmp_query_txt[self.settings.field] = line.strip()
-                            tmp_query[self.settings.type] = tmp_query_txt
+                            tmp_query[query_type] = tmp_query_txt
 
-                        elif self.settings.type == 'range':
+                        elif query_type == 'range':
                             trange = {}
                             if freq.strip() == 'max_min':
                                 trange['gte'], trange['lte'] = [float(k) for k in term.split(':')]
@@ -473,22 +475,22 @@ class ElasticGen(FtsGen):
                             else:
                                 trange['lte'] = float(term)
                             tmp_query_txt[self.settings.field] = trange
-                            tmp_query[self.settings.type] = tmp_query_txt
+                            tmp_query[query_type] = tmp_query_txt
 
-                        elif self.settings.type in ['2_conjuncts', '2_disjuncts', '1_conjuncts_2_disjuncts']:
+                        elif query_type in ['2_conjuncts', '2_disjuncts', '1_conjuncts_2_disjuncts']:
                             '''
                             For mix queries the name is like a map '1_conjuncts_2_disjuncts'
                             => 1 conjuncts and 2 disjuncts
                             '''
                             tbool = {v: [] for k, v in self.bool_map.iteritems()}
-                            keytypes = ElasticGen.process_conj_disj(self.settings.type.split('_'))
+                            keytypes = ElasticGen.process_conj_disj(query_type.split('_'))
                             for term in line.strip().split():
                                 key = self.bool_map[keytypes.next()]
                                 tbool[key].append({'term': {self.settings.field: term}})
                             tmp_query_txt = tbool
                             tmp_query['bool'] = tmp_query_txt
 
-                        elif self.settings.type == 'facet':
+                        elif query_type == 'facet':
                             start_date, end_date = freq.split(':')
                             tmp_query = {"term": {"text": term}}
                             self.query['size'] = self.settings.query_size
@@ -500,7 +502,7 @@ class ElasticGen(FtsGen):
 
                         else:
                             tmp_query_txt[self.settings.field] = term
-                            tmp_query[self.settings.type] = tmp_query_txt
+                            tmp_query[query_type] = tmp_query_txt
 
                         self.query['query'] = tmp_query
                         self.query_list.append(self.form_url(self.elastic_query))

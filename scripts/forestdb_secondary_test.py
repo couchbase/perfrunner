@@ -2,16 +2,18 @@ import argparse
 import json
 import os
 import re
+import time
 import urllib2
 import urlparse
-from uuid import uuid4
 
 import requests
 import xmltodict
-from couchbase import Couchbase
 from fabric.api import env, execute, run, shell_env
 from fabric.context_managers import cd
 from logger import logger
+
+from perfrunner.helpers.misc import pretty_dict, uhex
+from perfrunner.settings import StatsSettings
 
 args = None
 prog_name = "forestdb_standalone_test"
@@ -109,39 +111,14 @@ def compile_standalone_test(fdb_path):
             run("cp bench_config.ini ../")
 
 
-# Borrowed from perfrunner
-def mark_previous_as_obsolete(cb, benchmark):
-    for row in cb.query('benchmarks', 'values_by_build_and_metric',
-                        key=[benchmark['metric'], benchmark['build']]):
-        doc = cb.get(row.docid)
-        doc.value.update({'obsolete': True})
-        cb.set(row.docid, doc.value)
-
-
-def pretty_dict(d):
-    return json.dumps(d, indent=4, sort_keys=True,
-                      default=lambda o: o.__dict__)
-
-
 def post_benchmark(benchmark):
     if args.post_to_sf <= 0:
         logger.info("Dry run stats: {}\n".format(pretty_dict(benchmark)))
         return
 
-    key = uuid4().hex
-    try:
-        cb = Couchbase.connect(
-            bucket="benchmarks", host="ci.sc.couchbase.com", port=8091,
-            password="password")
-        mark_previous_as_obsolete(cb, benchmark)
-        cb.set(key, benchmark)
-    except Exception as e:
-        logger.warn('Failed to post results, {}'.format(e))
-        raise
-    else:
-        logger.info('Successfully posted: {}'.format(
-            pretty_dict(benchmark)
-        ))
+    logger.info('Adding a benchmark: {}'.format(pretty_dict(benchmark)))
+    requests.post('http://{}/api/v1/benchmarks'.format(StatsSettings.SHOWFAST),
+                  json.dumps(benchmark))
 
 
 def get_metric_id():
@@ -154,23 +131,27 @@ def get_metric_id():
 
 def post_incremental(incremental_time):
     metric_id = get_metric_id()
-    data = {}
-    data["metric"] = "secondary_fdb_standalone_{}_inc_nyx".format(metric_id)
-    data["snapshots"] = []
-    data["build_url"] = os.environ.get('BUILD_URL')
-    data["build"] = args.version
-    data["value"] = incremental_time
+    data = {
+        'build': args.version,
+        'buildURL': os.environ.get('BUILD_URL'),
+        'dateTime': time.strftime('%Y-%m-%d %H:%M'),
+        'id': uhex(),
+        'metric': 'secondary_fdb_standalone_{}_inc_nyx'.format(metric_id),
+        'value': incremental_time,
+    }
     post_benchmark(data)
 
 
 def post_initial(initial_time):
     metric_id = get_metric_id()
-    data = {}
-    data["metric"] = "secondary_fdb_standalone_{}_ini_nyx".format(metric_id)
-    data["snapshots"] = []
-    data["build_url"] = os.environ.get('BUILD_URL')
-    data["build"] = args.version
-    data["value"] = initial_time
+    data = {
+        'build': args.version,
+        'buildURL': os.environ.get('BUILD_URL'),
+        'dateTime': time.strftime('%Y-%m-%d %H:%M'),
+        'id': uhex(),
+        'metric': 'secondary_fdb_standalone_{}_ini_nyx'.format(metric_id),
+        'value': initial_time,
+    }
     post_benchmark(data)
 
 

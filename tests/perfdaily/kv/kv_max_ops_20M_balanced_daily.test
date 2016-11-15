@@ -1,6 +1,7 @@
 [test_case]
 test = perfdaily.master.kv.PillowfightTestDaily
 title = Max throughput, Pillowfight, 50/50 R/W, 20M ops
+category = kv
 
 [cluster]
 mem_quota = 51200
@@ -23,5 +24,4 @@ updates = 50
 clients_per_cluster = 1
 
 [dailyp]
-dailyp_category = kv
 threshold = 20

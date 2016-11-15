@@ -1,6 +1,8 @@
 [test_case]
 test = perfdaily.master.n1ql.N1QLThroughputTestDaily
 title = Q2, Singleton Unique Lookup, throughput, 5M docs, GSI, request_plus
+category = n1ql
+sub_category = FDB
 
 [cluster]
 mem_quota = 20480
@@ -48,6 +50,4 @@ scan_consistency = request_plus
 args = ["{email}"]
 
 [dailyp]
-dailyp_category = n1ql
-dailyp_subcategory = FDB
 threshold = 20

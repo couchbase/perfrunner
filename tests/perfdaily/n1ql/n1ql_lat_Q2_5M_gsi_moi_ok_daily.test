@@ -1,6 +1,8 @@
 [test_case]
 test = perfdaily.master.n1ql.N1QLLatencyTestDaily
 title = Q2, Singleton Unique Lookup, latency, 5M docs, GSI, MOI, not_bounded
+category = n1ql
+sub_category = MOI
 
 [stats]
 lat_interval = 0.2
@@ -51,6 +53,4 @@ scan_consistency = not_bounded
 args = ["{email}"]
 
 [dailyp]
-dailyp_category = n1ql
-dailyp_subcategory = MOI
 threshold = 20

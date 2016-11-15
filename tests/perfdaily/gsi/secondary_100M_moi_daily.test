@@ -1,6 +1,7 @@
 [test_case]
 test =  perfdaily.master.secondary.InitialandIncrementalSecondaryIndexTestDaily
 title = 1 bucket x 100M x 1KB, 100K KV ops/sec, single 2i index, no mutations during initial build only, MOI
+category = 2i
 
 [stats]
 monitored_processes = projector
@@ -46,5 +47,4 @@ throughput = 100000
 spring_workers = 100
 
 [dailyp]
-dailyp_category = 2i
 threshold = 20

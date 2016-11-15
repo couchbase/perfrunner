@@ -825,8 +825,6 @@ class YcsbSettings(object):
 class DailypSettings(object):
 
     def __init__(self, options):
-        self.category = options.get("dailyp_category")
-        self.subcategory = options.get("dailyp_subcategory")
         self.threshold = int(options.get("threshold"))
 
     def __str__(self):

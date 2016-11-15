@@ -1,6 +1,7 @@
 [test_case]
 test =  perfdaily.master.secondary.InitialandIncrementalSecondaryIndexTestDaily
 title = 1 bucket x 20M x 1KB, single 2i index, updates only in incremental build, FDB
+category = 2i
 
 [stats]
 monitored_processes = projector
@@ -39,5 +40,4 @@ items = 20000000
 workers = 20
 
 [dailyp]
-dailyp_category = 2i
 threshold = 20

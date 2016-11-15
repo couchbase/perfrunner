@@ -1,6 +1,8 @@
 [test_case]
 test = perfdaily.master.n1ql.N1QLThroughputTestDaily
 title = Q3, Range Scan, throughput, 5M docs, GSI, MOI, not_bounded
+category = n1ql
+sub_category = MOI
 
 [cluster]
 mem_quota = 20480
@@ -48,6 +50,4 @@ scan_consistency = not_bounded
 args = ["{capped_small}"]
 
 [dailyp]
-dailyp_category = n1ql
-dailyp_subcategory = MOI
 threshold = 20

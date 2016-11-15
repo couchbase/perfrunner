@@ -103,15 +103,15 @@ class SFReporter(object):
             snapshot_link = snapshot_host + snapshot
             snapshot_links.append(snapshot_link)
 
-        if self.test.test_config.dailyp_settings.subcategory is not None:
-            category_full_name = "{}-{}".format(self.test.test_config.dailyp_settings.category,
-                                                self.test.test_config.dailyp_settings.subcategory)
+        if self.test.test_config.test_case.sub_category is not None:
+            category_full_name = "{}-{}".format(self.test.test_config.test_case.category,
+                                                self.test.test_config.test_case.sub_category)
         else:
-            category_full_name = self.test.test_config.dailyp_settings.category
+            category_full_name = self.test.test_config.test_case.category
 
         post_body = {
             "category": category_full_name,
-            "subcategory": self.test.test_config.dailyp_settings.subcategory,
+            "subcategory": self.test.test_config.test_case.sub_category,
             "test_title": test_title,
             "datetime": datetime.now(timezone('US/Pacific')).strftime("%Y_%m_%d-%H:%M"),
             "build": self.test.build,

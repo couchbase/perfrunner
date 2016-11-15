@@ -1,6 +1,7 @@
 [test_case]
 test = perfdaily.master.kv.DurabilityTestDaily
 title = Latency (ms), Durability, 1 bucket x 20M x 1KB, non-DGM
+category = kv
 
 [cluster]
 mem_quota = 51200
@@ -23,5 +24,4 @@ workers = 12
 time = 600
 
 [dailyp]
-dailyp_category = kv
 threshold = 20

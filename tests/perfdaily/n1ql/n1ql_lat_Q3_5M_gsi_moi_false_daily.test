@@ -1,6 +1,8 @@
 [test_case]
 test = perfdaily.master.n1ql.N1QLLatencyTestDaily
 title = Q3, Range Scan, latency, 5M docs, latency, GSI, MOI, request_plus
+category = n1ql
+sub_category = MOI
 
 [cluster]
 mem_quota = 20480
@@ -49,6 +51,4 @@ scan_consistency = request_plus
 args = ["{capped_small}"]
 
 [dailyp]
-dailyp_category = n1ql
-dailyp_subcategory = MOI
 threshold = 20

@@ -1,6 +1,7 @@
 [test_case]
 test = perfdaily.master.xdcr.XdcrInitTestDaily
 title = Avg. initial XDCR rate (items/sec), 1 -> 1 UniDir, 1 bucket x 50M x 1KB
+category = XDCR
 
 [stats]
 monitored_processes = goxdcr
@@ -31,5 +32,4 @@ workers = 40
 replication_type = unidir
 
 [dailyp]
-dailyp_category = XDCR
 threshold = 20

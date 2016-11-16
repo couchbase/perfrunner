@@ -186,7 +186,8 @@ class SecondaryIndexTest(PerfTest):
     def validate_num_connections(self):
         db = SerieslyStore.build_dbname(self.metric_helper.cluster_names[0], None, None, None, "secondary_debugstats")
         config_data = self.get_data_from_config_json(self.configfile)
-        ret = self.metric_helper.verify_series_in_limits(db, config_data["Concurrency"], "num_connections")
+        # Expecting one extra connection than concurrency in config file, MB-21584
+        ret = self.metric_helper.verify_series_in_limits(db, config_data["Concurrency"] + 1, "num_connections")
         if not ret:
             raise Exception('Validation for num_connections failed')
 

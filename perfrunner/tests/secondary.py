@@ -190,31 +190,19 @@ class SecondaryIndexTest(PerfTest):
         if not ret:
             raise Exception('Validation for num_connections failed')
 
+    @with_stats
+    def apply_scanworkload(self):
+        rest_username, rest_password = self.cluster_spec.rest_credentials
+        logger.info('Initiating scan workload')
 
-class InitialSecondaryIndexTest(SecondaryIndexTest):
-    """
-    The test measures time it takes to build index for the first time. Scenario
-    is pretty straightforward, there are only two phases:
-    -- Initial data load
-    -- Index building
-    """
-
-    def build_index(self):
-        super(InitialSecondaryIndexTest, self).build_secondaryindex()
-
-    def run(self):
-        self.load()
-        self.wait_for_persistence()
-        self.compact_bucket()
-        init_ts = time.time()
-        self.build_secondaryindex()
-        finish_ts = time.time()
-        time_elapsed = finish_ts - init_ts
-        time_elapsed = self.reporter.finish('Initial secondary index', time_elapsed)
-        self.reporter.post_to_sf(
-            *self.metric_helper.get_indexing_meta(value=time_elapsed,
-                                                  index_type='Initial')
-        )
+        cmdstr = "/opt/couchbase/bin/cbindexperf -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json" \
+            .format(self.index_nodes[0], rest_username, rest_password, self.configfile)
+        logger.info('To be applied: {}'.format(cmdstr))
+        status = subprocess.call(cmdstr, shell=True)
+        if status != 0:
+            raise Exception('Scan workload could not be applied')
+        else:
+            logger.info('Scan workload applied')
 
 
 class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
@@ -223,6 +211,12 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
     incremental build. There is no disabling of index updates in incremental building,
     index updating is conurrent to KV incremental load.
     """
+
+    def _report_kpi(self, time_elapsed, index_type):
+        self.reporter.post_to_sf(
+            *self.metric_helper.get_indexing_meta(value=time_elapsed,
+                                                  index_type=index_type)
+        )
 
     def build_initindex(self):
         self.build_secondaryindex()
@@ -247,19 +241,12 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
         from_ts, to_ts = self.build_secondaryindex()
         time_elapsed = (to_ts - from_ts) / 1000.0
         time_elapsed = self.reporter.finish('Initial secondary index', time_elapsed)
-        self.reporter.post_to_sf(
-            *self.metric_helper.get_indexing_meta(value=time_elapsed,
-                                                  index_type='Initial')
-        )
-        if self.secondaryDB != 'memdb':
-            time.sleep(300)
+        self.report_kpi(time_elapsed, 'Initial')
+
         from_ts, to_ts = self.build_incrindex()
         time_elapsed = (to_ts - from_ts) / 1000.0
         time_elapsed = self.reporter.finish('Incremental secondary index', time_elapsed)
-        self.reporter.post_to_sf(
-            *self.metric_helper.get_indexing_meta(value=time_elapsed,
-                                                  index_type='Incremental')
-        )
+        self.report_kpi(time_elapsed, 'Incremental')
 
 
 class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSecondaryIndexTest):
@@ -267,7 +254,6 @@ class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSeco
         clusters = self.cluster_spec.yield_clusters()
         for _, servers in clusters:
             master = servers[0]
-            new_nodes = []
             ejected_nodes = []
             new_nodes = enumerate(
                 servers[initial_nodes:nodes_after],
@@ -282,7 +268,6 @@ class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSeco
         self.run_load_for_2i()
         self.wait_for_persistence()
         self.compact_bucket()
-        initial_nodes = []
         nodes_after = [0]
         initial_nodes = self.test_config.cluster.initial_nodes
         nodes_after[0] = initial_nodes[0] + 1
@@ -290,12 +275,8 @@ class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSeco
         from_ts, to_ts = self.build_secondaryindex()
         time_elapsed = (to_ts - from_ts) / 1000.0
         time_elapsed = self.reporter.finish('Initial secondary index', time_elapsed)
-        self.reporter.post_to_sf(
-            *self.metric_helper.get_indexing_meta(value=time_elapsed,
-                                                  index_type='Initial')
-        )
-        if self.secondaryDB != 'memdb':
-            time.sleep(300)
+        self.report_kpi(time_elapsed, 'Initial')
+
         master = []
         for _, servers in self.cluster_spec.yield_clusters():
             master = servers[0]
@@ -306,10 +287,7 @@ class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSeco
         from_ts, to_ts = self.build_incrindex()
         time_elapsed = (to_ts - from_ts) / 1000.0
         time_elapsed = self.reporter.finish('Incremental secondary index', time_elapsed)
-        self.reporter.post_to_sf(
-            *self.metric_helper.get_indexing_meta(value=time_elapsed,
-                                                  index_type='Incremental')
-        )
+        self.report_kpi(time_elapsed, 'Incremental')
 
 
 class SecondaryIndexingThroughputTest(SecondaryIndexTest):
@@ -318,19 +296,10 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
     and reports the average scan throughput
     """
 
-    @with_stats
-    def apply_scanworkload(self):
-        rest_username, rest_password = self.cluster_spec.rest_credentials
-        logger.info('Initiating scan workload')
-
-        cmdstr = "/opt/couchbase/bin/cbindexperf -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json" \
-            .format(self.index_nodes[0], rest_username, rest_password, self.configfile)
-        logger.info('To be applied: {}'.format(cmdstr))
-        status = subprocess.call(cmdstr, shell=True)
-        if status != 0:
-            raise Exception('Scan workload could not be applied')
-        else:
-            logger.info('Scan workload applied')
+    def _report_kpi(self, scan_thr):
+        self.reporter.post_to_sf(
+            round(scan_thr, 1)
+        )
 
     def read_scanresults(self):
         with open('{}'.format(self.configfile)) as config_file:
@@ -350,18 +319,13 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
         self.run_load_for_2i()
         self.wait_for_persistence()
         self.compact_bucket()
-        from_ts, to_ts = self.build_secondaryindex()
-        if self.secondaryDB != 'memdb':
-            time.sleep(300)
+        self.build_secondaryindex()
         self.run_access_for_2i(run_in_background=True)
         self.apply_scanworkload()
-        scanthr, rowthr = self.read_scanresults()
-        logger.info('Scan throughput: {}'.format(scanthr))
-        logger.info('Rows throughput: {}'.format(rowthr))
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(
-                round(scanthr, 1)
-            )
+        scan_thr, row_thr = self.read_scanresults()
+        logger.info('Scan throughput: {}'.format(scan_thr))
+        logger.info('Rows throughput: {}'.format(row_thr))
+        self.report_kpi(scan_thr)
         self.validate_num_connections()
 
 
@@ -374,7 +338,6 @@ class SecondaryIndexingThroughputRebalanceTest(SecondaryIndexingThroughputTest):
         clusters = self.cluster_spec.yield_clusters()
         for _, servers in clusters:
             master = servers[0]
-            new_nodes = []
             ejected_nodes = []
             new_nodes = enumerate(
                 servers[initial_nodes:nodes_after],
@@ -389,22 +352,17 @@ class SecondaryIndexingThroughputRebalanceTest(SecondaryIndexingThroughputTest):
         self.run_load_for_2i()
         self.wait_for_persistence()
         self.compact_bucket()
-        from_ts, to_ts = self.build_secondaryindex()
-        if self.secondaryDB != 'memdb':
-            time.sleep(300)
+        self.build_secondaryindex()
         self.run_access_for_2i(run_in_background=True)
-        initial_nodes = []
         nodes_after = [0]
         initial_nodes = self.test_config.cluster.initial_nodes
         nodes_after[0] = initial_nodes[0] + 1
         self.rebalance(initial_nodes[0], nodes_after[0])
         self.apply_scanworkload()
-        scanthr, rowthr = self.read_scanresults()
-        logger.info('Scan throughput: {}'.format(scanthr))
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(
-                round(scanthr, 1)
-            )
+        scan_thr, row_thr = self.read_scanresults()
+        logger.info('Scan throughput: {}'.format(scan_thr))
+        logger.info('Rows throughput: {}'.format(row_thr))
+        self.report_kpi(scan_thr)
         self.validate_num_connections()
 
 
@@ -417,6 +375,11 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
                   'secondary_debugstats': True, 'secondary_debugstats_bucket': True,
                   'secondary_debugstats_index': True}
 
+    def _report_kpi(self):
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_secondary_scan_latency(percentile=80)
+        )
+
     def remove_statsfile(self):
         rmfile = "rm -f {}".format(self.test_config.stats_settings.secondary_statsfile)
         status = subprocess.call(rmfile, shell=True)
@@ -425,35 +388,15 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
         else:
             logger.info('Existing 2i latency stats file removed')
 
-    @with_stats
-    def apply_scanworkload(self):
-        rest_username, rest_password = self.cluster_spec.rest_credentials
-        logger.info('Initiating scan workload with stats output')
-
-        cmdstr = "/opt/couchbase/bin/cbindexperf -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json" \
-                 " -statsfile /root/statsfile"\
-            .format(self.index_nodes[0], rest_username, rest_password, self.configfile)
-        logger.info("Calling command: {}".format(cmdstr))
-        status = subprocess.call(cmdstr, shell=True)
-        if status != 0:
-            raise Exception('Scan workload could not be applied')
-        else:
-            logger.info('Scan workload applied')
-
     def run(self):
         self.remove_statsfile()
         self.run_load_for_2i()
         self.wait_for_persistence()
         self.compact_bucket()
-        from_ts, to_ts = self.build_secondaryindex()
-        if self.secondaryDB != 'memdb':
-            time.sleep(300)
+        self.build_secondaryindex()
         self.run_access_for_2i(run_in_background=True)
         self.apply_scanworkload()
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(
-                *self.metric_helper.calc_secondary_scan_latency(percentile=80)
-            )
+        self.report_kpi()
         self.validate_num_connections()
 
 
@@ -467,7 +410,6 @@ class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest
         clusters = self.cluster_spec.yield_clusters()
         for _, servers in clusters:
             master = servers[0]
-            new_nodes = []
             ejected_nodes = []
             new_nodes = enumerate(
                 servers[initial_nodes:nodes_after],
@@ -483,20 +425,14 @@ class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest
         self.run_load_for_2i()
         self.wait_for_persistence()
         self.compact_bucket()
-        initial_nodes = []
         nodes_after = [0]
         initial_nodes = self.test_config.cluster.initial_nodes
         nodes_after[0] = initial_nodes[0] + 1
-        from_ts, to_ts = self.build_secondaryindex()
-        if self.secondaryDB != 'memdb':
-            time.sleep(300)
+        self.build_secondaryindex()
         self.run_access_for_2i(run_in_background=True)
         self.rebalance(initial_nodes[0], nodes_after[0])
         self.apply_scanworkload()
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(
-                *self.metric_helper.calc_secondary_scan_latency(percentile=80)
-            )
+        self.report_kpi()
         self.validate_num_connections()
 
 
@@ -511,10 +447,9 @@ class SecondaryIndexingScanLatencyETOETest(SecondaryIndexingScanLatencyTest):
                   'secondary_debugstats_index': True, "secondary_index_latency": True}
 
     def _report_kpi(self):
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(
-                *self.metric_helper.calc_observe_latency(percentile=80)
-            )
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_observe_latency(percentile=80)
+        )
 
     def run(self):
         self.remove_statsfile()
@@ -538,8 +473,9 @@ class SecondaryIndexingLatencyTest(SecondaryIndexTest):
     def apply_scanworkload(self):
         rest_username, rest_password = self.cluster_spec.rest_credentials
         logger.info('Initiating the scan workload')
-        cmdstr = "/opt/couchbase/bin/cbindexperf -cluster {} -auth=\"{}:{}\" -configfile scripts/config_indexinglatency.json -resultfile result.json".format(
-            self.index_nodes[0], rest_username, rest_password)
+        cmdstr = "/opt/couchbase/bin/cbindexperf -cluster {} -auth=\"{}:{}\" " \
+                 "-configfile scripts/config_indexinglatency.json " \
+                 "-resultfile result.json".format(self.index_nodes[0], rest_username, rest_password)
         status = subprocess.call(cmdstr, shell=True)
         if status != 0:
             raise Exception('Scan workload could not be applied')
@@ -564,7 +500,7 @@ class SecondaryIndexingLatencyTest(SecondaryIndexTest):
             status = self.apply_scanworkload()
             time_after = time.time()
             if status == 0:
-                num_samples = num_samples - 1
+                num_samples -= 1
                 time_elapsed = (time_after - time_before) / 1000000.0
                 samples.append(time_elapsed)
 

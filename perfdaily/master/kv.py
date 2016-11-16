@@ -1,11 +1,11 @@
 from perfrunner.tests.kv import (
     DurabilityTest,
     MixedLatencyTest,
-    PillowfightTest,
+    PillowFightTest,
 )
 
 
-class PillowfightTestDaily(PillowfightTest):
+class PillowfightTestDaily(PillowFightTest):
     def _report_kpi(self):
         metrics = list()
         metrics.append(self.metric_helper.calc_avg_ops_perfdaily())

@@ -11,14 +11,8 @@ from perfrunner.tests import PerfTest
 
 class FTStest(PerfTest):
 
-    """
-    The most basic FTS workflow:
-        Initial data load ->
-            Persistence and intra-cluster replication (for consistency) ->
-                Data compaction (for consistency) ->
-                    "Hot" load or working set warm up ->
-                        "access" phase or active workload
-    """
+    WAIT_TIME = 1
+    INDEX_WAIT_MAX = 600
 
     def __init__(self, cluster_spec, test_config, verbose):
         super(FTStest, self).__init__(cluster_spec, test_config, verbose)
@@ -31,7 +25,6 @@ class FTStest(PerfTest):
         self.fts_index = self.test_config.fts_settings.name
         self.header = {'Content-Type': 'application/json'}
         self.requests = requests.session()
-        self.wait_time = 30
         self.fts_doccount = self.test_config.fts_settings.items
         self.prepare_index()
         self.index_time_taken = 0
@@ -88,7 +81,7 @@ class FTStest(PerfTest):
         while rec_memory != 0:
             logger.info("Record persists to be expected: %s" % rec_memory)
             r = self.requests.get(url=self.fts_url, auth=self.auth)
-            time.sleep(self.wait_time)
+            time.sleep(self.WAIT_TIME)
             rec_memory = r.json()[key]
 
     def create_index(self):
@@ -102,39 +95,26 @@ class FTStest(PerfTest):
             logger.info("HEADER: %s" % self.header)
             logger.error(r.text)
             raise RuntimeError("Failed to create FTS index")
-        time.sleep(self.wait_time)
+        time.sleep(self.WAIT_TIME)
 
-    def wait_for_index(self, wait_interval=10, progress_interval=60):
+    def wait_for_index(self):
         logger.info(' Waiting for Index to be completed')
-        last_reported = time.time()
-        lastcount = 0
-        retry = 0
-        while True and (retry != 6):
+        attempts = 0
+        while True:
             r = self.requests.get(url=self.index_url + '/count', auth=self.auth)
-            if not r.status_code == 200:
-                raise RuntimeError(
-                    "Failed to fetch document count of index. Status {}".format(r.status_code))
+            if r.status_code != 200:
+                raise RuntimeError("Failed to fetch document count of index. Status {}".format(r.status_code))
             count = int(r.json()['count'])
-            if lastcount >= count:
-                retry += 1
-                time.sleep(wait_interval * retry)
-                logger.info('count of documents :{} is same or less for retry {}'.format(count, retry))
-                continue
-            retry = 0
-            logger.info("Done at document count {}".
-                        format(count))
             if count >= self.fts_doccount:
-                logger.info("Finished at document count {}".
-                            format(count))
+                logger.info("Finished at document count {}".format(count))
                 return
-            check_report = time.time()
-            if check_report - last_reported >= progress_interval:
-                last_reported = check_report
-                logger.info("(progress) Document count is at {}".
-                            format(count))
-            lastcount = count
-        if lastcount != self.fts_doccount:
-            raise RuntimeError("Failed to create Index")
+            else:
+                if not attempts % 10:
+                    logger.info("(progress) idexed documents count {}".format(count))
+                attempts += 1
+                time.sleep(self.WAIT_TIME)
+                if (attempts * self.WAIT_TIME) >= self.INDEX_WAIT_MAX:
+                    raise RuntimeError("Failed to create Index")
 
 
 class FtsIndexTest(FTStest):

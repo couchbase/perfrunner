@@ -12,6 +12,10 @@ from perfrunner.tests import PerfTest
 
 
 class Elastictest(PerfTest):
+
+    WAIT_TIME = 1
+    INDEX_WAIT_MAX = 600
+
     def __init__(self, cluster_spec, test_config, verbose):
         super(Elastictest, self).__init__(cluster_spec, test_config, verbose)
 
@@ -24,7 +28,6 @@ class Elastictest(PerfTest):
         self.elastic_index = self.test_config.fts_settings.name
         self.header = {'Content-Type': 'application/json'}
         self.requests = requests.session()
-        self.wait_time = 60
         self.elastic_doccount = self.test_config.fts_settings.items
         self.index_time_taken = 0
         '''
@@ -89,41 +92,26 @@ class Elastictest(PerfTest):
             logger.info("URL: %s" % self.index_url)
             logger.error(r.text)
             raise RuntimeError("Failed to create elastic search index")
-        time.sleep(self.wait_time)
+        time.sleep(self.WAIT_TIME)
 
-    def wait_for_index(self, wait_interval=10, progress_interval=60):
+    def wait_for_index(self):
         logger.info(' Waiting for  ELasticSearch plugin Index to be completed')
-        last_reported = time.time()
-        '''
-         To avoid infinite loop in case hangs,
-         lastcount variable for that
-        '''
-        lastcount = 0
-        retry = 0
-        while True and (retry != 6):
-            r = self.requests.get(self.index_url + '/_count')
-            if not r.status_code == 200:
-                raise RuntimeError(
-                    "Failed to fetch document count of index. Status {}".format(r.status_code))
+        attempts = 0
+        while True:
+            r = self.requests.get(url=self.index_url + '/_count')
+            if r.status_code != 200:
+                raise RuntimeError("Failed to fetch document count of index. Status {}".format(r.status_code))
             count = int(r.json()['count'])
-            if lastcount >= count:
-                retry += 1
-                time.sleep(wait_interval * retry)
-                logger.info('count of documents :{} is same or less for retry {}'.
-                            format(count, retry))
-                continue
-            retry = 0
-            logger.info("Done at document count {}".format(count))
-            if count >= self.elastic_doccount:
+            if count >= self.fts_doccount:
                 logger.info("Finished at document count {}".format(count))
                 return
-            check_report = time.time()
-            if check_report - last_reported >= progress_interval:
-                last_reported = check_report
-                logger.info("(progress) Document count is at {}".format(count))
-            lastcount = count
-        if lastcount != self.elastic_doccount:
-            raise RuntimeError("Failed to create Index")
+            else:
+                if not attempts % 10:
+                    logger.info("(progress) idexed documents count {}".format(count))
+                attempts += 1
+                time.sleep(self.WAIT_TIME)
+                if (attempts * self.WAIT_TIME) >= self.INDEX_WAIT_MAX:
+                    raise RuntimeError("Failed to create Index")
 
 
 class ElasticIndexTest(Elastictest):

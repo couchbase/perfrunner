@@ -339,8 +339,8 @@ class RemoteLinux(Remote):
 
     @all_hosts
     def detect_core_dumps(self):
-        # Based on kernel.core_pattern = /tmp/core.%e.%p.%h.%t
-        r = run('ls /tmp/core*', quiet=True)
+        # Based on kernel.core_pattern = /data/core-%e-%p
+        r = run('ls /data/core*', quiet=True)
         if not r.return_code:
             return r.split()
         else:

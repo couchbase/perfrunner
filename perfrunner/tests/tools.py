@@ -245,12 +245,10 @@ class CbExportImportTest(BackupRestoreTest):
                     .format(self.spent_time, self.data_size))
 
     def _report_kpi(self, prefix=''):
-        metric = '{}_{}'.format(self.test_config.name,
-                                self.cluster_spec.name)
         metric_info = {
             'title': prefix + " " + self.test_config.test_case.title,
-            'cluster': self.cluster_spec.name,
         }
+        metric = self.test_config.name
         # replace 'expimp' on import or export
         metric = metric.replace('expimp', prefix.split()[0].lower())
         if "CSV" in prefix:
@@ -333,20 +331,15 @@ class CbImportSampleTest(BackupRestoreTest):
                     .format(self.spent_time, self.data_size / 2 ** 30))
 
     def _report_kpi(self, prefix=''):
-        metric = '{}_{}'.format(self.test_config.name,
-                                self.cluster_spec.name)
         metric_info = {
             'title': prefix + " " + self.test_config.test_case.title,
-            'cluster': self.cluster_spec.name,
         }
-
+        metric = self.test_config.name
         metric = metric.replace('expimp', prefix.split()[0].lower())
 
         data_size = self.data_size / 2.0 ** 20
         avg_throughput = round(data_size / self.spent_time)
 
-        print metric
-        print metric_info
         self.reporter.post_to_sf(avg_throughput, metric=metric,
                                  metric_info=metric_info)
 

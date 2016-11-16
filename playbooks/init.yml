@@ -48,3 +48,11 @@
   - name: creating the "/index" directory
     file: path=/index owner=couchbase group=couchbase
     when: index.stat.exists
+
+- hosts: kv:index:n1ql
+  tasks:
+   - name: changing location of core dumps
+     sysctl:
+      name: kernel.core_pattern
+      value: /data/core-%e-%p
+      state: present

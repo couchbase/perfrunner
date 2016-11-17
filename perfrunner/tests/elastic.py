@@ -102,7 +102,7 @@ class Elastictest(PerfTest):
             if r.status_code != 200:
                 raise RuntimeError("Failed to fetch document count of index. Status {}".format(r.status_code))
             count = int(r.json()['count'])
-            if count >= self.fts_doccount:
+            if count >= self.elastic_doccount:
                 logger.info("Finished at document count {}".format(count))
                 return
             else:

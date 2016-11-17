@@ -1,7 +1,7 @@
 from decorator import decorator
 from logger import logger
 from seriesly import Seriesly
-from seriesly.exceptions import ConnectionError
+from seriesly.exceptions import BadRequest, ConnectionError
 
 
 def _memoize(method, self, db):
@@ -43,4 +43,7 @@ class SerieslyStore(object):
                collector=None, timestamp=None):
         db_name = self.build_dbname(cluster, server, bucket, index, collector)
         db = self._get_db(db_name)
-        db.append(data, timestamp=timestamp)
+        try:
+            db.append(data, timestamp=timestamp)
+        except BadRequest:  # Ignore bad requests
+            pass

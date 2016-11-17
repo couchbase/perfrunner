@@ -9,6 +9,7 @@
       - atop
       - cpufrequtils
       - git
+      - golang-go
       - htop
       - libffi-dev
       - libssl-dev
@@ -28,7 +29,3 @@
     - libcouchbase2-bin
   - name: disabling scheduled fstrim jobs
     file: path=/etc/cron.weekly/fstrim state=absent
-  - name: installing golang
-    apt: name={{item}} update_cache=yes
-    with_items:
-    - golang-go

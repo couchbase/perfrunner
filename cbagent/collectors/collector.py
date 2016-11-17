@@ -1,3 +1,4 @@
+import logging
 import socket
 import sys
 import time
@@ -8,6 +9,8 @@ from logger import logger
 
 from cbagent.metadata_client import MetadataClient
 from cbagent.stores import SerieslyStore
+
+logging.getLogger("requests").setLevel(logging.ERROR)
 
 
 class Collector(object):
@@ -135,4 +138,4 @@ class Collector(object):
             except KeyboardInterrupt:
                 sys.exit()
             except Exception as e:
-                logger.warn(e)
+                logger.warn("Unexpected exception: {}".format(e))

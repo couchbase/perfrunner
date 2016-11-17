@@ -1,6 +1,8 @@
 [test_case]
 test = perfrunner.tests.dcp.DCPThroughputTest
 title = DCP Throughput, 1 bucket x 20M x 1KB, single connection, no mutations
+component = kv
+category = dcp
 
 [cluster]
 mem_quota = 30000

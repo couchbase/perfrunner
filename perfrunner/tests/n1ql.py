@@ -138,10 +138,14 @@ class N1QLJoinTest(N1QLThroughputTest):
     def access_bg(self, *args):
         doc_gens = self.test_config.load_settings.doc_gen.split(',')
         for doc_gen, target in zip(doc_gens, self.target_iterator):
+            if doc_gen == 'ref':
+                continue
+
             self.workload = self.test_config.access_settings
             self.workload.doc_gen = doc_gen
             self.workload.items /= 2
             self.workload.n1ql_queries = self.n1ql_queries
+
             if doc_gen != self.workload.n1ql_gen:
                 self.workload.n1ql_workers = 0
 

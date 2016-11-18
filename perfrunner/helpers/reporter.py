@@ -103,7 +103,7 @@ class SFReporter(object):
             snapshot_link = snapshot_host + snapshot
             snapshot_links.append(snapshot_link)
 
-        if self.test.test_config.test_case.sub_category is not None:
+        if self.test.test_config.test_case.sub_category:
             category_full_name = "{}-{}".format(self.test.test_config.test_case.category,
                                                 self.test.test_config.test_case.sub_category)
         else:

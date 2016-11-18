@@ -1,6 +1,21 @@
 {
-    "index" : {
+    "settings" : {
         "number_of_shards" : 6,
         "number_of_replicas" : 0
+    },
+    "mappings" : {
+        "couchbaseDocument" : {
+            "properties" : {
+                "doc" : {
+                    "properties" : {
+                        "text2": {
+                            "type": "string",
+                            "include_in_all": false,
+                            "index": "no"
+                        }
+                    }
+                }
+            }
+        }
     }
 }

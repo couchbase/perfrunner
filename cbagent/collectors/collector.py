@@ -137,8 +137,6 @@ class Collector(object):
                 time.sleep(self.interval)
             except KeyboardInterrupt:
                 sys.exit()
-            except socket.error:
-                pass
             except Exception as e:
                 logger.warn("Unexpected exception in {}: {}"
                             .format(self.__class__.__name__, e))

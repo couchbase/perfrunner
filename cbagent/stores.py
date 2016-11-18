@@ -1,3 +1,5 @@
+import socket
+
 from decorator import decorator
 from logger import logger
 from seriesly import Seriesly
@@ -45,5 +47,5 @@ class SerieslyStore(object):
         db = self._get_db(db_name)
         try:
             db.append(data, timestamp=timestamp)
-        except BadRequest:  # Ignore bad requests
+        except (BadRequest, socket.error):  # Ignore bad requests
             pass

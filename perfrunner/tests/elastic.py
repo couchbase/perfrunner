@@ -81,21 +81,21 @@ class Elastictest(PerfTest):
         self.compact_bucket()
 
     def delete_index(self):
-        logger.info('Deleting elasticsearch Index')
+        logger.info('Deleting Elasticsearch index')
         self.requests.delete(self.index_url)
 
     def create_index(self):
-        logger.info('Creating elastic search Index')
+        logger.info('Creating Elasticsearch index')
         r = self.requests.put(self.index_url,
                               data=json.dumps(self.index_definition, ensure_ascii=False))
         if not r.status_code == 200:
             logger.info("URL: %s" % self.index_url)
             logger.error(r.text)
-            raise RuntimeError("Failed to create elastic search index")
+            raise RuntimeError("Failed to create Elasticsearch index")
         time.sleep(self.WAIT_TIME)
 
     def wait_for_index(self):
-        logger.info(' Waiting for  ELasticSearch plugin Index to be completed')
+        logger.info(' Waiting for Elasticsearch index to be completed')
         attempts = 0
         while True:
             r = self.requests.get(url=self.index_url + '/_count')
@@ -111,7 +111,7 @@ class Elastictest(PerfTest):
                 attempts += 1
                 time.sleep(self.WAIT_TIME)
                 if (attempts * self.WAIT_TIME) >= self.INDEX_WAIT_MAX:
-                    raise RuntimeError("Failed to create Index")
+                    raise RuntimeError("Failed to create index")
 
 
 class ElasticIndexTest(Elastictest):

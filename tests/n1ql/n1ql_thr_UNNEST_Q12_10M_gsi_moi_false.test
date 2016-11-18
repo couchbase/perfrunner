@@ -23,7 +23,7 @@ doc_gen = ext_reverse_lookup,join
 [n1ql]
 indexes =
     ::
-    by_replies::CREATE INDEX {name} ON `{bucket}` (DISTINCT ARRAY r.`user` FOR r IN replies END);
+    by_replies::CREATE INDEX {name} ON `{bucket}` (DISTINCT ARRAY r.`user` FOR r IN replies END, title);
 
 [access]
 creates = 0
@@ -40,6 +40,6 @@ n1ql_workers = 720
 
 [n1ql-unnest]
 prepared = unnest_100
-statement = SELECT r.`user` FROM `bucket-2` t UNNEST t.replies AS r WHERE r.`user` = $1;
+statement = SELECT t.title FROM `bucket-2` t UNNEST t.replies AS r WHERE r.`user` = $1;
 scan_consistency = request_plus
 args = ["{key}"]

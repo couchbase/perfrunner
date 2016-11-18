@@ -1,0 +1,23 @@
+---
+- hosts: kv:index:n1ql
+  tasks:
+  - name: umounting data parition
+    mount:
+      name: /data
+      state: unmounted
+      src: /dev/sdb1
+      fstype: ext4
+  - name: re-creating filesystem
+    filesystem:
+      fstype: ext4
+      dev: /dev/sdb1
+  - name: mounting data parition
+    mount:
+      name: /data
+      state: mounted
+      src: /dev/sdb1
+      fstype: ext4
+  - name: discarding unused blocks
+    shell: fstrim -v /data
+  - name: ensuring ownership of "/data" directory
+    file: path=/data  owner=couchbase group=couchbase

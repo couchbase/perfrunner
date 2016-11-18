@@ -10,14 +10,20 @@ from fts_stats import (
 )
 from iostat import IO
 from latency import Latency
-from observe import ObserveLatency
+from observe import (
+    ObserveLatency,
+    ObserveSecondaryIndexLatency,
+)
 from n1ql_stats import N1QLStats
 from net import Net
 from ns_server import NSServer, XdcrStats
 from ps import PS
 from reservoir import ReservoirN1QLLatency
-from secondary_debugstats import SecondaryDebugStats
-from secondary_debugstats import SecondaryDebugStatsBucket
+from secondary_debugstats import (
+    SecondaryDebugStats,
+    SecondaryDebugStatsBucket,
+    SecondaryDebugStatsIndex,
+)
 from secondary_latency import SecondaryLatencyStats
 from secondary_stats import SecondaryStats
 from spring_latency import (

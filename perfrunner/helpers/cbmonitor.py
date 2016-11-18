@@ -21,9 +21,11 @@ from cbagent.collectors import (
     Net,
     NSServer,
     ObserveLatency,
+    ObserveSecondaryIndexLatency,
     ReservoirN1QLLatency,
     SecondaryDebugStats,
     SecondaryDebugStatsBucket,
+    SecondaryDebugStatsIndex,
     SecondaryLatencyStats,
     SecondaryStats,
     SpringLatency,
@@ -33,7 +35,6 @@ from cbagent.collectors import (
     XdcrLag,
     XdcrStats,
 )
-from cbagent.collectors.secondary_debugstats import SecondaryDebugStatsIndex
 from cbagent.metadata_client import MetadataClient
 from perfrunner.helpers.misc import target_hash, uhex
 from perfrunner.helpers.remote import RemoteHelper
@@ -321,7 +322,7 @@ class CbAgent(object):
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
             settings.observe = 'secondary_index'
-            self.collectors.append(ObserveLatency(settings))
+            self.collectors.append(ObserveSecondaryIndexLatency(settings))
 
     def prepare_xdcr_lag(self, clusters, test):
         reversed_clusters = list(reversed(self.clusters.keys()))

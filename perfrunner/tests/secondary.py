@@ -438,7 +438,7 @@ class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest
         self.validate_num_connections()
 
 
-class SecondaryIndexingScanLatencyETOETest(SecondaryIndexingScanLatencyTest):
+class SecondaryIndexingDocIndexingLatencyTest(SecondaryIndexingScanLatencyTest):
     """
     The test applies scan workload against the 2i server and measures
     and reports the average scan latency end to end, meaning since doc is added till it gets reflected in query
@@ -462,7 +462,6 @@ class SecondaryIndexingScanLatencyETOETest(SecondaryIndexingScanLatencyTest):
         self.run_access_for_2i(run_in_background=True)
         self.apply_scanworkload()
         self.report_kpi()
-        self.validate_num_connections()
 
 
 class SecondaryIndexingLatencyTest(SecondaryIndexTest):

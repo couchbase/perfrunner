@@ -2,6 +2,8 @@ from threading import Thread
 from time import sleep, time
 from uuid import uuid4
 
+from couchbase.bucket import Bucket
+from couchbase.n1ql import N1QLQuery
 from couchbase.user_constants import OBS_NOTFOUND, OBS_PERSISTED
 from decorator import decorator
 from logger import logger
@@ -76,33 +78,32 @@ class ObserveLatency(Latency):
         while not rows:
             rows = tuple(client.query("A", "id_by_city", key=key))
 
-    @timeit
-    def _wait_until_secondary_indexed(self, client, key):
-        rows = None
-        query = "select city from `bucket-1` where city='{}'".format(key)
-        while not rows:
-            rows = tuple(client.n1ql_query(query))
-
-    def _measure_lags(self, pool):
+    def _create_doc(self, pool):
         client = pool.get_client()
 
         key = uhex()
         client.set(key, {"city": key})
+        return client, key
+
+    def _post_wait_operations(self, end_time, start_time, key, client, pool):
+        latency = (end_time - start_time) * 1000  # s -> ms
+        sleep_time = max(0, self.MAX_POLLING_INTERVAL - (end_time - start_time))
+
+        client.delete(key)
+        pool.release_client(client)
+        return {"latency_observe": latency}, sleep_time
+
+    def _measure_lags(self, pool):
+        client, key = self._create_doc(pool)
 
         if self.mode == "persist":
             t0, t1 = self._wait_until_persisted(client, key)
         elif self.mode == "replicate":
             t0, t1 = self._wait_until_replicated(client, key)
-        elif self.mode == "secondary_index":
-            t0, t1 = self._wait_until_secondary_indexed(client, key)
         else:
             t0, t1 = self._wait_until_indexed(client, key)
-        latency = (t1 - t0) * 1000  # s -> ms
-        sleep_time = max(0, self.MAX_POLLING_INTERVAL - (t1 - t0))
 
-        client.delete(key)
-        pool.release_client(client)
-        return {"latency_observe": latency}, sleep_time
+        return self._post_wait_operations(end_time=t1, start_time=t0, key=key, client=client, pool=pool)
 
     def sample(self):
         while True:
@@ -121,3 +122,41 @@ class ObserveLatency(Latency):
         threads = [Thread(target=self.sample) for _ in range(self.NUM_THREADS)]
         map(lambda t: t.start(), threads)
         map(lambda t: t.join(), threads)
+
+
+class ObserveSecondaryIndexLatency(ObserveLatency):
+
+    def __init__(self, settings):
+        super(Latency, self).__init__(settings)
+
+    @timeit
+    def _wait_until_secondary_indexed(self, key, cb, query):
+        row = None
+        query.set_option("$c", key)
+        while not row:
+            row = cb.n1ql_query(query).get_single_result()
+
+    def _measure_lags(self, pool, cb=None, query=None):
+        client, key = self._create_doc(pool)
+
+        t0, t1 = self._wait_until_secondary_indexed(key, cb, query)
+
+        return self._post_wait_operations(end_time=t1, start_time=t0, key=key, client=client, pool=pool)
+
+    def sample(self):
+        connection_string = 'couchbase://{}/{}?password={}'.format(self.master_node, self.buckets[0], self.auth[1])
+        cb = Bucket(connection_string)
+        query = N1QLQuery("select city from `bucket-1` where city=$c", c="abc")
+        query.adhoc = False
+
+        while True:
+            try:
+                for bucket, pool in self.pools:
+                    stats, sleep_time = self._measure_lags(pool, cb=cb, query=query)
+                    self.store.append(stats,
+                                      cluster=self.cluster,
+                                      bucket=bucket,
+                                      collector=self.COLLECTOR)
+                    sleep(sleep_time)
+            except Exception as e:
+                logger.warn(e)

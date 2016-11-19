@@ -11,6 +11,7 @@
     filesystem:
       fstype: ext4
       dev: /dev/sdb1
+      force: yes
   - name: mounting data parition
     mount:
       name: /data

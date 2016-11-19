@@ -6,7 +6,7 @@ category = throughput
 
 [fts]
 items = 1000000
-name  = perf_elasctic_index
+name  = perf_elastic_index
 port = 8094
 worker = 50
 type = prefix

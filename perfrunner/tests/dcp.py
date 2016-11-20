@@ -31,9 +31,7 @@ class DCPThroughputTest(DCPTest):
     OUTPUT_FILE = "dcpstatsfile"
 
     def _report_kpi(self, throughput):
-        self.reporter.post_to_sf(
-            *self.metric_helper.get_dcp_meta(value=throughput)
-        )
+        self.reporter.post_to_sf(value=throughput)
 
     @with_stats
     def run_dcptest_script(self):

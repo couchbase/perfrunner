@@ -444,12 +444,6 @@ class MetricHelper(object):
 
         return value, metric, metric_info
 
-    def get_dcp_meta(self, value):
-        metric = '{}_{}'.format(self.test_config.name, self.cluster_spec.name)
-        metric_info = self._get_metric_info(self.title)
-
-        return value, metric, metric_info
-
     def get_indexing_meta_daily(self, value, index_type):
         return {
             "name": '{}_{}'.format(self.test_config.name, index_type.lower()),

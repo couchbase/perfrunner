@@ -19,7 +19,7 @@ view_percentage = 100
 [load]
 items = 50000000
 size = 1024
-workers = 80
+workers = 40
 
 [dcp]
 num_connections = 1

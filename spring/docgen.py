@@ -415,7 +415,7 @@ class JoinedDocument(ReverseLookupDocument):
         return {
             'owner': self._build_owner(seq_id),
             'title': self._build_title(alphabet),
-            'capped_large': self._build_capped(alphabet, seq_id, 1000),
+            'capped': self._build_capped(alphabet, seq_id, 1000),
             'categories': self._build_categories(seq_id),
             'replies': self._build_replies(seq_id),
         }

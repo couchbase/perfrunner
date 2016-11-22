@@ -26,7 +26,7 @@ doc_gen = ext_reverse_lookup,join,ref
 [n1ql]
 indexes =
     ::
-    by_capped_large::CREATE INDEX {name} ON `{bucket}`(capped_large);
+    by_capped::CREATE INDEX {name} ON `{bucket}`(capped);
 
 [access]
 creates = 0
@@ -43,6 +43,6 @@ n1ql_workers = 720
 
 [n1ql-complex-join]
 prepared = complex_join
-statement = SELECT u.email AS email, COUNT(t.title) FROM `bucket-2` t INNER JOIN `bucket-3` c ON KEYS t.categories LEFT OUTER JOIN `bucket-1` u ON KEYS t.owner WHERE t.capped_large = $1 AND c.name = $2 GROUP BY u.email;
+statement = SELECT u.email AS email, COUNT(t.title) FROM `bucket-2` t INNER JOIN `bucket-3` c ON KEYS t.categories LEFT OUTER JOIN `bucket-1` u ON KEYS t.owner WHERE t.capped = $1 AND c.name = $2 GROUP BY u.email;
 scan_consistency = request_plus
-args = ["{capped_large}","{categories[0]}"]
+args = ["{capped}","{categories[0]}"]

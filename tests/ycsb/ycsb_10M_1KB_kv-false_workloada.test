@@ -30,5 +30,5 @@ export_file =  ycsb_log
 path = /root/perfrunner-ycsb/YCSB
 workload_path = /workloads/workloada
 size = 1024
-operationcount = 10000000
+operationcount = 100000000
 parameters = couchbase.kv=false

@@ -111,6 +111,12 @@ class YCSBdata(PerfTest):
         commandlist.append(action)
         commandlist.append(self.ycsb.sdk)
         commandlist.append('-s -P ' + self.ycsb.path + '_' + str(mypid) + self.ycsb.workload)
+        if self.ycsb.workload == '/workloads/workloade':
+            PerfTest.COLLECTORS = {
+                'n1ql_latency': True,
+                'n1ql_stats': True,
+                'secondary_stats': True,
+            }
         if jvm:
             cmd = '-jvm-args=-D'
             for c in self.ycsb.jvm.split(','):

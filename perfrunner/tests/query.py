@@ -63,10 +63,6 @@ class QueryLatencyTest(QueryTest):
         self.reporter.post_to_sf(
             *self.metric_helper.calc_query_latency(percentile=80)
         )
-        if self.test_config.stats_settings.post_rss:
-            self.reporter.post_to_sf(
-                *self.metric_helper.calc_max_beam_rss()
-            )
 
 
 class IndexLatencyTest(QueryTest):

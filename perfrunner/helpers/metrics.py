@@ -436,12 +436,15 @@ class MetricHelper(object):
         avg_rss = sum(rss) / len(rss)
         return avg_rss, metric, metric_info
 
-    def get_indexing_meta(self, value, index_type):
+    def get_indexing_meta(self, value, index_type, storage=None):
         metric = '{}_{}'.format(self.test_config.name, index_type.lower())
         title = '{} index (min), {}'.format(index_type,
                                             self.title)
         metric_info = self._get_metric_info(title)
-        metric_info['category'] = index_type.lower()
+        if storage is None:
+            metric_info['category'] = index_type.lower()
+        else:
+            metric_info['category'] = '{}_{}'.format(index_type.lower(), storage)
 
         return value, metric, metric_info
 

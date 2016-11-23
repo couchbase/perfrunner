@@ -215,9 +215,11 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
     """
 
     def _report_kpi(self, time_elapsed, index_type):
+        storage = self.secondaryDB and 'moi' or 'fdb'
         self.reporter.post_to_sf(
             *self.metric_helper.get_indexing_meta(value=time_elapsed,
-                                                  index_type=index_type)
+                                                  index_type=index_type,
+                                                  storage=storage)
         )
 
     def build_initindex(self):

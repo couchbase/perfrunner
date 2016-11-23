@@ -46,15 +46,6 @@ class IndexTest(PerfTest):
         for master in self.cluster_spec.yield_masters():
             self.monitor.monitor_task(master, 'indexer')
 
-    def compact_index(self):
-        for master in self.cluster_spec.yield_masters():
-            for bucket in self.test_config.buckets:
-                for ddoc_name in self.ddocs:
-                    self.rest.trigger_index_compaction(master, bucket,
-                                                       ddoc_name)
-        for master in self.cluster_spec.yield_masters():
-            self.monitor.monitor_task(master, 'view_compaction')
-
 
 class InitialIndexTest(IndexTest):
 

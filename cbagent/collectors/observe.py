@@ -127,7 +127,7 @@ class ObserveLatency(Latency):
 class ObserveSecondaryIndexLatency(ObserveLatency):
 
     def __init__(self, settings):
-        super(Latency, self).__init__(settings)
+        super(ObserveSecondaryIndexLatency, self).__init__(settings)
 
     @timeit
     def _wait_until_secondary_indexed(self, key, cb, query):

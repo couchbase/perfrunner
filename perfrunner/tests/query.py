@@ -16,7 +16,7 @@ class QueryTest(IndexTest):
     COLLECTORS = {'latency': True, 'query_latency': True}
 
     @with_stats
-    def access(self):
+    def access(self, *args):
         super(QueryTest, self).timer()
 
     def run(self):

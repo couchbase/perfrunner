@@ -247,6 +247,7 @@ class CbExportImportTest(BackupRestoreTest):
     def _report_kpi(self, prefix=''):
         metric_info = {
             'title': prefix + " " + self.test_config.test_case.title,
+            'category': prefix.split()[0].lower(),
         }
         metric = self.test_config.name
         # replace 'expimp' on import or export
@@ -333,6 +334,7 @@ class CbImportSampleTest(BackupRestoreTest):
     def _report_kpi(self, prefix=''):
         metric_info = {
             'title': prefix + " " + self.test_config.test_case.title,
+            'category': prefix.split()[0].lower(),
         }
         metric = self.test_config.name
         metric = metric.replace('expimp', prefix.split()[0].lower())

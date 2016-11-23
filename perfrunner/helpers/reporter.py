@@ -32,7 +32,8 @@ class SFReporter(object):
         metric_info['id'] = metric
         metric_info['cluster'] = self.test.cluster_spec.name
         metric_info['component'] = self.test.test_config.test_case.component
-        metric_info['category'] = self.test.test_config.test_case.category
+        metric_info['category'] = \
+            metric_info.get('category', self.test.test_config.test_case.category)
         metric_info['subCategory'] = self.test.test_config.test_case.sub_category
 
         logger.info('Adding a metric: {}'.format(pretty_dict(metric_info)))

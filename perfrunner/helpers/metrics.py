@@ -441,6 +441,7 @@ class MetricHelper(object):
         title = '{} index (min), {}'.format(index_type,
                                             self.title)
         metric_info = self._get_metric_info(title)
+        metric_info['category'] = index_type.lower()
 
         return value, metric, metric_info
 

@@ -346,8 +346,6 @@ class CbImportSampleTest(BackupRestoreTest):
                                  metric_info=metric_info)
 
     def run(self):
-        super(CbImportSampleTest, self)
-
         self.download_tools()
 
         settings = self.test_config.export_import_settings

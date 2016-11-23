@@ -75,7 +75,6 @@ class InitialIndexTest(IndexTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
-        self.compact_bucket()
 
         self.define_ddocs()
         from_ts, to_ts = self.build_index()
@@ -104,7 +103,6 @@ class InitialAndIncrementalIndexTest(IndexTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
-        self.compact_bucket()
 
         self.reporter.start()
         self.define_ddocs()
@@ -119,7 +117,6 @@ class InitialAndIncrementalIndexTest(IndexTest):
 
         self.access()
         self.wait_for_persistence()
-        self.compact_bucket()
 
         from_ts, to_ts = self.build_incr_index()
         time_elapsed = (to_ts - from_ts) / 1000.0

@@ -143,8 +143,3 @@ class DevIndexTest(IndexTest):
         if index_type is None:
             logger.interrupt('Missing index_type param')
         self.ddocs = ViewGenDev().generate_ddocs(index_type)
-
-
-class DevInitialIndexTest(DevIndexTest, InitialIndexTest):
-
-    pass

@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.secondary.SecondaryIndexingDocIndexingLatencyTest
-title = Secondary index scan latency(ms) end to end, 1 bucket x 20M x 1KB, 100K KV ops/sec, single index, MOI
+title = Secondary Document index latency(ms), 1 bucket x 20M x 1KB, 100K KV ops/sec, single index, MOI
 component = secondary
 category = moi_lat
 

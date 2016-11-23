@@ -245,8 +245,14 @@ class CbExportImportTest(BackupRestoreTest):
                     .format(self.spent_time, self.data_size))
 
     def _report_kpi(self, prefix=''):
+        extra = ''
+        if self.test_config.load_settings.doc_gen == 'import_export_array':
+            extra = "Array Docs "
+        if self.test_config.load_settings.doc_gen == 'import_export_nested':
+            extra = "Nested Docs "
         metric_info = {
-            'title': prefix + " " + self.test_config.test_case.title,
+            'title': prefix + " " + extra + " " +
+            self.test_config.test_case.title,
             'category': prefix.split()[0].lower(),
         }
         metric = self.test_config.name
@@ -258,7 +264,6 @@ class CbExportImportTest(BackupRestoreTest):
         data_size = self.test_config.load_settings.items * \
             self.test_config.load_settings.size / 2.0 ** 20  # MB
         avg_throughput = round(data_size / self.spent_time)
-
         self.reporter.post_to_sf(avg_throughput, metric=metric,
                                  metric_info=metric_info)
 
@@ -272,8 +277,12 @@ class CbExportImportTest(BackupRestoreTest):
         super(CbExportImportTest, self).run()
         self.export()
         settings = self.test_config.export_import_settings
-        self.report_kpi("Export {} {}".format(settings.type.upper(),
-                                              settings.format.title()))
+        if self.test_config.load_settings.size != 20480 and \
+            self.test_config.load_settings.doc_gen not in \
+                ['import_export_nested', 'import_export_array']:
+            # only import
+            self.report_kpi("Export {} {}".format(settings.type.upper(),
+                                                  settings.format.title()))
 
         self.flush_buckets()
 
@@ -332,12 +341,14 @@ class CbImportSampleTest(BackupRestoreTest):
                     .format(self.spent_time, self.data_size / 2 ** 30))
 
     def _report_kpi(self, prefix=''):
+        edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
         metric_info = {
-            'title': prefix + " " + self.test_config.test_case.title,
+            'title': edition + " " + prefix + " " + self.test_config.test_case.title,
             'category': prefix.split()[0].lower(),
         }
         metric = self.test_config.name
-        metric = metric.replace('expimp', prefix.split()[0].lower())
+        metric = metric.replace('expimp', prefix.split()[0].lower()) +\
+            "_" + edition.lower()
 
         data_size = self.data_size / 2.0 ** 20
         avg_throughput = round(data_size / self.spent_time)

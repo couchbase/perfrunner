@@ -25,6 +25,8 @@ from spring.docgen import (
     ExtReverseLookupDocument,
     FTSKey,
     ImportExportDocument,
+    ImportExportDocumentArray,
+    ImportExportDocumentNested,
     JoinedDocument,
     KeyForCASUpdate,
     KeyForRemoval,
@@ -113,9 +115,15 @@ class Worker(object):
                                               self.ts.prefix,
                                               self.ws.array_size,
                                               self.ws.items)
-        elif self.ws.doc_gen == 'import_export':
+        elif self.ws.doc_gen == 'import_export_simple':
             self.docs = ImportExportDocument(self.ws.size,
                                              self.ts.prefix)
+        elif self.ws.doc_gen == 'import_export_array':
+            self.docs = ImportExportDocumentArray(self.ws.size,
+                                                  self.ts.prefix)
+        elif self.ws.doc_gen == 'import_export_nested':
+            self.docs = ImportExportDocumentNested(self.ws.size,
+                                                   self.ts.prefix)
         elif self.ws.doc_gen == 'large_subdoc':
             self.docs = LargeDocument(self.ws.size)
 

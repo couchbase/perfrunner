@@ -579,9 +579,8 @@ class ArrayIndexingDocument(ReverseLookupDocument):
 
 
 class ImportExportDocument(ReverseLookupDocument):
-
-    """ImportExportDocument extends ReverseLookupDocument by adding fields with random size.
-    TODO: extend for nested json and arrays.
+    """ImportExportDocument extends ReverseLookupDocument by adding
+     25 fields with random size
     """
     OVERHEAD = 1022
 
@@ -592,27 +591,174 @@ class ImportExportDocument(ReverseLookupDocument):
         return {
             'name': self._build_name(alphabet) * random.randint(0, 5),
             'email': self.build_email(alphabet) * random.randint(0, 5),
-            'alt_email': self._build_alt_email(alphabet) * random.randint(0, 5),
+            'alt_email': self._build_alt_email(
+                alphabet) * random.randint(0, 5),
             'street': self._build_street(alphabet) * random.randint(0, 9),
             'city': self._build_city(alphabet) * random.randint(0, 9),
             'county': self._build_county(alphabet) * random.randint(0, 5),
             'state': self._build_state(alphabet) * random.randint(0, 5),
-            'full_state': self._build_full_state(alphabet) * random.randint(0, 5),
-            'country': self._build_country(alphabet) * random.randint(0, 5),
-            'realm': self._build_realm(alphabet) * random.randint(0, 9),
-            'alt_street': self._build_street(alphabet) * random.randint(0, 9),
-            'alt_city': self._build_city(alphabet) * random.randint(0, 9),
-            'alt_county': self._build_county(alphabet) * random.randint(0, 5),
-            'alt_state': self._build_state(alphabet) * random.randint(0, 5),
-            'alt_full_state': self._build_full_state(alphabet) * random.randint(0, 5),
-            'alt_country': self._build_country(alphabet) * random.randint(0, 5),
-            'alt_realm': self._build_realm(alphabet) * random.randint(0, 9),
-            'coins': self._build_coins(alphabet) * random.randint(0, 999),
-            'category': self._build_category(alphabet) * random.randint(0, 5),
+            'full_state': self._build_full_state(
+                alphabet) * random.randint(0, 5),
+            'country': self._build_country(
+                alphabet) * random.randint(0, 5),
+            'realm': self._build_realm(
+                alphabet) * random.randint(0, 9),
+            'alt_street': self._build_street(
+                alphabet) * random.randint(0, 9),
+            'alt_city': self._build_city(
+                alphabet) * random.randint(0, 9),
+            'alt_county': self._build_county(
+                alphabet) * random.randint(0, 5),
+            'alt_state': self._build_state(
+                alphabet) * random.randint(0, 5),
+            'alt_full_state': self._build_full_state(
+                alphabet) * random.randint(0, 5),
+            'alt_country': self._build_country(
+                alphabet) * random.randint(0, 5),
+            'alt_realm': self._build_realm(
+                alphabet) * random.randint(0, 9),
+            'coins': self._build_coins(
+                alphabet) * random.randint(0, 999),
+            'category': self._build_category(
+                alphabet) * random.randint(0, 5),
             'achievements': self._build_achievements(alphabet),
             'gmtime': self._build_gmtime(alphabet) * random.randint(0, 9),
             'year': self._build_year(alphabet) * random.randint(0, 5),
             'body': self._build_body(alphabet, size),
-            'capped_small': self._build_capped(alphabet, seq_id, 100) * random.randint(0, 5),
-            'alt_capped_small': self._build_capped(alphabet, seq_id, 100) * random.randint(0, 5),
+            'capped_small': self._build_capped(
+                alphabet, seq_id, 100) * random.randint(0, 5),
+            'alt_capped_small': self._build_capped(
+                alphabet, seq_id, 100) * random.randint(0, 5),
+        }
+
+
+class ImportExportDocumentArray(ImportExportDocument):
+    """ImportExportDocumentArray extends ImportExportDocument by adding array docs as:
+     25 fields of random size. Have an array with at least 10 items in five fields.
+    """
+
+    OVERHEAD = 0
+
+    def _random_array(self, value, num):
+        if value == '':
+            return []
+        l = len(value)
+        if l < num:
+            return [value] * 5
+        scope = sorted(random.sample(range(l), num))
+        result = [value[0 if i == 0 else scope[i - 1]:i + scope[i]] for i in xrange(num)]
+        return result
+
+    def next(self, key):
+        seq_id = int(key[-12:]) + 1
+        alphabet = self._build_alphabet(key)
+        size = self._size()
+
+        # 25 Fields of random size. Have an array with at least 10 items in five fields.
+        return {
+            'name': self._random_array(self._build_name(
+                alphabet) * random.randint(0, 9), 5),
+            'email': self.build_email(
+                alphabet) * random.randint(0, 5),
+            'alt_email': self._build_alt_email(
+                alphabet) * random.randint(0, 9),
+            'street': self._random_array(self._build_street(
+                alphabet) * random.randint(0, 9), 5),
+            'city': self._random_array(self._build_city(
+                alphabet) * random.randint(0, 9), 5),
+            'county': self._random_array(self._build_county(
+                alphabet) * random.randint(0, 9), 5),
+            'state': self._random_array(self._build_state(
+                alphabet) * random.randint(0, 9), 5),
+            'full_state': self._random_array(self._build_full_state(
+                alphabet) * random.randint(0, 9), 5),
+            'country': self._random_array(self._build_country(
+                alphabet) * random.randint(0, 9), 5),
+            'realm': self._build_realm(alphabet) * random.randint(0, 9),
+            'alt_street': self._random_array(self._build_street(
+                alphabet) * random.randint(0, 9), 5),
+            'alt_city': self._random_array(self._build_city(
+                alphabet) * random.randint(0, 9), 5),
+            'alt_county': self._build_county(
+                alphabet) * random.randint(0, 9),
+            'alt_state': self._build_state(
+                alphabet) * random.randint(0, 9),
+            'alt_full_state': self._build_full_state(
+                alphabet) * random.randint(0, 9),
+            'alt_country': self._build_country(
+                alphabet) * random.randint(0, 9),
+            'alt_realm': self._build_realm(
+                alphabet) * random.randint(0, 9),
+            'coins': self._build_coins(
+                alphabet) * random.randint(0, 999),
+            'category': self._build_category(
+                alphabet) * random.randint(0, 9),
+            'achievements': self._build_achievements(alphabet),
+            'gmtime': self._build_gmtime(alphabet) * random.randint(0, 9),
+            'year': self._build_year(alphabet) * random.randint(0, 5),
+            'body': self._random_array(self._build_body(alphabet, size), 7),
+            'capped_small': self._build_capped(
+                alphabet, seq_id, 100) * random.randint(0, 5),
+            'alt_capped_small': self._build_capped(
+                alphabet, seq_id, 100) * random.randint(0, 5),
+        }
+
+
+class ImportExportDocumentNested(ImportExportDocument):
+    """ImportExportDocumentNested extends ImportExportDocument by adding nested docs as:
+     25 fields of random size. Nest each document. Five levels.
+    """
+
+    def next(self, key):
+        seq_id = int(key[-12:]) + 1
+        alphabet = self._build_alphabet(key)
+        size = self._size()
+
+        return {
+            'name': {'n': {'a': {'m': {'e': self._build_name(
+                alphabet) * random.randint(0, 3)}}}},
+            'email': {'e': {'m': {'a': {'i': self.build_email(
+                alphabet) * random.randint(0, 3)}}}},
+            'alt_email': {'a': {'l': {'t': {'e': self._build_alt_email(
+                alphabet) * random.randint(0, 3)}}}},
+            'street': {'s': {'t': {'r': {'e': self._build_street(
+                alphabet) * random.randint(0, 3)}}}},
+            'city': {'c': {'i': {'t': {'y': self._build_city(
+                alphabet) * random.randint(0, 3)}}}},
+            'county': {'c': {'o': {'u': {'n': self._build_county(
+                alphabet) * random.randint(0, 3)}}}},
+            'state': {'s': {'t': {'a': {'t': self._build_state(
+                alphabet) * random.randint(0, 3)}}}},
+            'full_state': {'f': {'u': {'l': {'l': self._build_full_state(
+                alphabet) * random.randint(0, 3)}}}},
+            'country': {'c': {'o': {'u': {'n': self._build_country(
+                alphabet) * random.randint(0, 3)}}}},
+            'realm': {'r': {'e': {'a': {'l': self._build_realm(
+                alphabet) * random.randint(0, 3)}}}},
+            'alt_street': {'a': {'l': {'t': {'s': self._build_street(
+                alphabet) * random.randint(0, 3)}}}},
+            'alt_city': {'a': {'l': {'t': {'c': self._build_city(
+                alphabet) * random.randint(0, 3)}}}},
+            'alt_county': {'e': {'m': {'a': {'i': self._build_county(
+                alphabet) * random.randint(0, 3)}}}},
+            'alt_state': {'e': {'m': {'a': {'i': self._build_state(
+                alphabet) * random.randint(0, 3)}}}},
+            'alt_full_state': {'e': {'m': {'a': {'i': self._build_full_state(
+                alphabet) * random.randint(0, 2)}}}},
+            'alt_country': {'e': {'m': {'a': {'i': self._build_country(
+                alphabet) * random.randint(0, 2)}}}},
+            'alt_realm': {'e': {'m': {'a': {'i': self._build_realm(
+                alphabet) * random.randint(0, 3)}}}},
+            'coins': {'e': {'m': {'a': {'i': self._build_coins(
+                alphabet) * random.randint(0, 99)}}}},
+            'category': {'e': {'m': {'a': {'i': self._build_category(
+                alphabet) * random.randint(0, 3)}}}},
+            'achievements': self._build_achievements(alphabet),
+            'gmtime': self._build_gmtime(alphabet) * random.randint(0, 2),
+            'year': self._build_year(alphabet) * random.randint(0, 2),
+            'body': self._build_body(alphabet, size),
+            'capped_small': self._build_capped(
+                alphabet, seq_id, 10) * random.randint(0, 2),
+            'alt_capped_small': self._build_capped(
+                alphabet, seq_id, 10) * random.randint(0, 2),
         }

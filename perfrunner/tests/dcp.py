@@ -50,7 +50,6 @@ class DCPThroughputTest(DCPTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
-        self.compact_bucket()
 
         self.run_dcptest_script()
 

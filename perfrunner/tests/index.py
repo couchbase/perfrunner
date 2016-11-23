@@ -84,8 +84,12 @@ class InitialAndIncrementalIndexTest(InitialIndexTest):
     """
 
     @with_stats
+    def build_index(self):
+        super(InitialIndexTest, self).build_index()
+
+    @with_stats
     def build_incr_index(self):
-        super(InitialAndIncrementalIndexTest, self).build_index()
+        super(InitialIndexTest, self).build_index()
 
     def _report_kpi(self, time_elapsed, index_type='Initial'):
         self.reporter.post_to_sf(

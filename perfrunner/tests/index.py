@@ -69,6 +69,9 @@ class InitialIndexTest(IndexTest):
     def build_index(self):
         super(InitialIndexTest, self).build_index()
 
+    def _report_kpi(self, time_elapsed):
+        self.reporter.post_to_sf(time_elapsed)
+
     def run(self):
         self.load()
         self.wait_for_persistence()
@@ -79,7 +82,7 @@ class InitialIndexTest(IndexTest):
         time_elapsed = (to_ts - from_ts) / 1000.0
 
         time_elapsed = self.reporter.finish('Initial index', time_elapsed)
-        self.reporter.post_to_sf(time_elapsed)
+        self.report_kpi(time_elapsed)
 
 
 class InitialAndIncrementalIndexTest(IndexTest):

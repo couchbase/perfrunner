@@ -355,6 +355,51 @@ class ReverseLookupDocument(NestedDocument):
         }
 
 
+class ReverseRangeLookupDocument(ReverseLookupDocument):
+
+    def __init__(self, avg_size, prefix, range_distance):
+        super(ReverseRangeLookupDocument, self).__init__(avg_size, prefix)
+        if self.prefix is None:
+            self.prefix = ""
+        # Keep one extra as query runs from greater than 'x' to less than 'y' both exclusive
+        self.distance = range_distance + 1
+
+    def _build_capped(self, alphabet, seq_id, num_unique):
+        if self.is_random:
+            offset = random.randint(1, 9)
+            return '%s' % alphabet[offset:offset + 6]
+
+        index = seq_id / num_unique
+        return '%s_%s_%12s' % (self.prefix, num_unique, index)
+
+    def next(self, key):
+        alphabet = self._build_alphabet(key)
+        size = self._size()
+        seq_id = int(key[-12:]) + 1
+
+        return {
+            'name': self._build_name(alphabet),
+            'email': self.build_email(alphabet),
+            'alt_email': self._build_alt_email(alphabet),
+            'street': self._build_street(alphabet),
+            'city': self._build_city(alphabet),
+            'county': self._build_county(alphabet),
+            'state': self._build_state(alphabet),
+            'full_state': self._build_full_state(alphabet),
+            'country': self._build_country(alphabet),
+            'realm': self._build_realm(alphabet),
+            'coins': self._build_coins(alphabet),
+            'category': self._build_category(alphabet),
+            'achievements': self._build_achievements(alphabet),
+            'gmtime': self._build_gmtime(alphabet),
+            'year': self._build_year(alphabet),
+            'body': self._build_body(alphabet, size),
+            'capped_small': self._build_capped(alphabet, seq_id, 100),
+            'capped_small_range': self._build_capped(alphabet, seq_id + (self.distance * 100), 100),
+            'topics': self._build_topics(seq_id),
+        }
+
+
 class ExtReverseLookupDocument(ReverseLookupDocument):
 
     OVERHEAD = 650

@@ -33,6 +33,7 @@ from spring.docgen import (
     NewKey,
     RefDocument,
     ReverseLookupDocument,
+    ReverseRangeLookupDocument,
     SequentialHotKey,
 )
 from spring.querygen import N1QLQueryGen, ViewQueryGen, ViewQueryGenByType
@@ -90,6 +91,10 @@ class Worker(object):
         elif self.ws.doc_gen == 'reverse_lookup':
             self.docs = ReverseLookupDocument(self.ws.size,
                                               self.ts.prefix)
+        elif self.ws.doc_gen == 'reverse_range_lookup':
+            self.docs = ReverseRangeLookupDocument(self.ws.size,
+                                                   prefix='n1ql',
+                                                   range_distance=self.ws.range_distance)
         elif self.ws.doc_gen == 'ext_reverse_lookup':
             self.docs = ExtReverseLookupDocument(self.ws.size,
                                                  self.ts.prefix,
@@ -475,6 +480,10 @@ class N1QLWorker(Worker):
         if self.ws.doc_gen == 'reverse_lookup':
             self.docs = ReverseLookupDocument(self.ws.size,
                                               prefix='n1ql')
+        elif self.ws.doc_gen == 'reverse_range_lookup':
+            self.docs = ReverseRangeLookupDocument(self.ws.size,
+                                                   prefix='n1ql',
+                                                   range_distance=self.ws.range_distance)
         elif self.ws.doc_gen == 'ext_reverse_lookup':
             self.docs = ExtReverseLookupDocument(self.ws.size,
                                                  prefix='n1ql',

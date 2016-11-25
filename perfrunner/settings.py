@@ -241,6 +241,7 @@ class TestConfig(Config):
 
         load = self.load_settings
         access.doc_gen = load.doc_gen
+        access.range_distance = load.range_distance
         access.array_size = load.array_size
         access.num_categories = load.num_categories
         access.num_replies = load.num_replies
@@ -470,6 +471,7 @@ class PhaseSettings(object):
     QUERY_WORKERS = 0
     N1QL_WORKERS = 0
     SPRING_WORKERS = 100
+    RANGE_DISTANCE = 10
 
     SEQ_READS = False
     SEQ_UPDATES = False
@@ -521,6 +523,8 @@ class PhaseSettings(object):
         self.subdoc_workers = 0
         self.spring_workers = int(options.get('spring_workers',
                                               self.SPRING_WORKERS))
+        self.range_distance = int(options.get('range_distance',
+                                              self.RANGE_DISTANCE))
 
         self.n1ql_op = options.get('n1ql_op', self.N1QL_OP)
         if 'n1ql_queries' in options:

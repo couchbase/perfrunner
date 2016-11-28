@@ -1,0 +1,23 @@
+[test_case]
+test = perfdaily.master.kv.PillowfightTestDaily
+title = Max throughput, Pillowfight, 50/50 R/W, 20M ops
+category = kv
+use_workers = 0
+
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 2
+num_buckets = 1
+
+[load]
+size = 1024
+
+[access]
+items = 1000000
+iterations = 40000
+workers = 50
+updates = 50
+
+[dailyp]
+threshold = 10

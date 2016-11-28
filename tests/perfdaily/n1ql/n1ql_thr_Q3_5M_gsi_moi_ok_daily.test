@@ -50,4 +50,4 @@ scan_consistency = not_bounded
 args = ["{capped_small}"]
 
 [dailyp]
-threshold = 20
+threshold = 10

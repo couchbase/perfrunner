@@ -50,4 +50,4 @@ scan_consistency = request_plus
 args = ["{email}"]
 
 [dailyp]
-threshold = 20
+threshold = 10

@@ -359,12 +359,9 @@ class RemoteLinux(Remote):
 
     @single_host
     def cbrestorefts(self, archive_path, repo_path):
-        """This is updated cbrestore for spock support. As we move to spock, old
-        version is not needed ft-indexes is disabled to not to take any backup
-        for indices."""
         cmd = "cd /opt/couchbase/bin && ./cbbackupmgr restore --archive {} --repo {} " \
               " --host http://localhost:8091 --username Administrator " \
-              "--password password --threads 30 --disable-ft-indexes --disable-gsi-indexes".\
+              "--password password --disable-ft-indexes --disable-gsi-indexes".\
             format(archive_path, repo_path)
         run(cmd)
 

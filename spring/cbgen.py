@@ -1,4 +1,3 @@
-import copy
 import itertools
 import json
 import logging
@@ -22,7 +21,6 @@ from couchbase.exceptions import (
 )
 from decorator import decorator
 from logger import logger
-from requests.auth import HTTPBasicAuth
 from txcouchbase.connection import Connection as TxConnection
 
 from spring.docgen import Document
@@ -220,36 +218,48 @@ class N1QLGen(CBGen):
 
 
 class FtsGen(CBGen):
-    '''
-      FTSGen and ElasticGen classes are fts and ES query generators.
-      This part of code can be generalised and work complex way.
-      generators.
-    '''
-    __FTS_QUERY = {"ctl": {"timeout": 0}, "query": {}, "size": 10}
 
-    def __init__(self, cb_url, settings):
-        self.fts_query = "http://{}:8094/api/".format(cb_url)
-        self.auth = HTTPBasicAuth('Administrator', 'password')
-        self.header = {'Content-Type': 'application/json'}
+    QUERY_TEMPLATE = {"ctl": {"timeout": 0}, "query": {}, "size": 10}
+
+    def __init__(self, master_node, settings, auth=None):
+
+        self.master_node = master_node
+        self.query_port = settings.port
+        self.auth = auth
         self.requests = requests.Session()
-        '''
-              keep-alive is used false to avoid any cache.
-              Using keep-alive false
-              makes it a  real life scenario
-            '''
         self.requests.keep_alive = False
-        self.query = self.__FTS_QUERY
-        self.query_list = []
-        self.query_iterator = None
         self.settings = settings
-        self.fts_copy = copy.deepcopy(self.fts_query)
+        self.query_nodes = self.get_nodes()
+        self.nodes_list_size = len(self.query_nodes)
+        self.query_list = []
+        self.header = {'Content-Type': 'application/json'}
         self.bool_map = {'conjuncts': 'must', 'disjuncts': 'should'}
+        self.query_list_size = 0
 
-    def form_url(self, cquery):
-        return {'url': cquery,
-                'auth': self.auth or None,
+        self.prepare_query_list()
+
+    @property
+    def query_template(self):
+        return self.QUERY_TEMPLATE
+
+    def get_nodes(self):
+        nodes = []
+        cluster_map = requests.get(url='http://{}:8091/pools/default'.format(self.master_node),
+                                   auth=self.auth).json()
+        for node in cluster_map['nodes']:
+            if 'fts' in node['services']:
+                url = node['hostname'].split(":")[0]
+                nodes.append(url)
+        return nodes
+
+    def form_url(self, full_query):
+        url = "http://{}:{}/api/index/{}/query".format(self.next_node(),
+                                                       self.query_port,
+                                                       self.settings.name)
+        return {'url': url,
+                'auth': self.auth,
                 'headers': self.header,
-                'data': json.dumps(self.query)
+                'data': json.dumps(full_query)
                 }
 
     @staticmethod
@@ -269,249 +279,164 @@ class FtsGen(CBGen):
         while index < len(ttypes):
             count = int(ttypes[index])
             keytypes += count * [ttypes[index + 1]]
-            '''
-            index incremented by 2 becuase the type is mentioned
-            as '1_conjuncts_2_disjuncts', 'number_typeofsearch' ]
-            Here we are creating a list of types to search
-            '''
             index += 2
         return itertools.cycle(keytypes)
 
     def prepare_query_list(self, type='query'):
-            with open(self.settings.query_file, 'r') as tfile:
-                '''
-                  Open file using WITH command , it take care of close
-                '''
-                for line in tfile:
-                    temp_query = {}
-                    tosearch, freq = FtsGen.process_lines(line.strip())
-                    query_type = self.settings.type
-                    if query_type in ['2_conjuncts', '2_disjuncts', '1_conjuncts_2_disjuncts']:
-                        '''
-                         For And, OR queries we create the list.
-                         Example looks like
-                         {"field": "title", "match": "1988"}
-                         Elasticsearch things are simple , for us it conjuncts, disjunct are
-                         two seperate.
-                         Defaultdict is used only here, I dont want to import elesewhere
-                         to minimise the import overload
-                         reference: https://wiki.python.org/moin/PythonSpeed/PerformanceTips
-                                    https://blog.newrelic.com/2015/01/21/python-performance-tips/
-                        '''
-                        from collections import defaultdict
-                        keytypes = FtsGen.process_conj_disj(query_type.split('_'))
-                        temp_query = defaultdict(list)
-                        tbool = {v: {k: None} for k, v in self.bool_map.iteritems()}
+        with open(self.settings.query_file, 'r') as tfile:
+            for line in tfile:
+                temp_query = {}
+                tosearch, freq = FtsGen.process_lines(line.strip())
+                query_type = self.settings.type
+                if query_type in ['2_conjuncts', '2_disjuncts', '1_conjuncts_2_disjuncts']:
+                    from collections import defaultdict
+                    keytypes = FtsGen.process_conj_disj(query_type.split('_'))
+                    temp_query = defaultdict(list)
+                    tbool = {v: {k: None} for k, v in self.bool_map.iteritems()}
 
-                        for terms in line.split():
-                            '''
-                             Term query is used for And/Or queries
-                            '''
-                            tmp_key = keytypes.next()
-                            temp_query[tmp_key].append({"field": self.settings.field, "term": terms})
+                    for terms in line.split():
 
-                        if query_type == '1_conjuncts_2_disjuncts':
-                            for k, v in self.bool_map.iteritems():
-                                tbool[v][k] = temp_query[k]
-                            temp_query = tbool
+                        tmp_key = keytypes.next()
+                        temp_query[tmp_key].append({"field": self.settings.field, "term": terms})
 
-                    elif query_type == 'fuzzy':
-                        '''
-                        Fuzzy query uses term as search type unlike
-                        elasticsearch where they do use word fuzzy
-                        '''
-                        temp_query['fuzziness'] = int(freq)
-                        temp_query['term'] = tosearch
-                        temp_query['field'] = self.settings.field
+                    if query_type == '1_conjuncts_2_disjuncts':
+                        for k, v in self.bool_map.iteritems():
+                            tbool[v][k] = temp_query[k]
+                        temp_query = tbool
 
-                    elif query_type == 'numeric':
-                        '''
-                        Creating numeric range query Gen
-                        '''
-                        if freq.strip() == 'max_min':
-                            temp_query['max'], temp_query['min'] = [float(k) for k in tosearch.split(':')]
-                        elif freq.strip() == 'max':
-                            temp_query['max'] = float(tosearch)
-                        else:
-                            temp_query['min'] = float(tosearch)
-                        temp_query['inclusive_max'] = False
-                        temp_query['inclusive_min'] = False
-                        temp_query['field'] = self.settings.field
+                elif query_type == 'fuzzy':
+                    temp_query['fuzziness'] = int(freq)
+                    temp_query['term'] = tosearch
+                    temp_query['field'] = self.settings.field
 
-                    elif query_type in ['match', 'match_phrase']:
-                        '''
-                        Just reassign the whole line to it
-                        '''
-                        tosearch = line.strip()
-                        temp_query[query_type] = tosearch
-                        temp_query['field'] = self.settings.field
-
-                    elif query_type == 'ids':
-                        '''
-                        The ids are from document ids , generated through
-                        the N1QL query
-                        '''
-                        tosearch = [tosearch]
-                        temp_query[query_type] = tosearch
-                        temp_query['field'] = self.settings.field
-
-                    elif query_type == "facet":
-                        '''
-                        https://gist.github.com/mschoch/9bc5f508bb25c94ed9af
-                        "query": {
-                            "boost": 1,
-                            "query": "beer"
-                          },
-                          "fields": ["*"],
-                          "facets": {
-                            "updated": {
-                              "size": 3,
-                              "field": "updated",
-                              "date_ranges": [
-                                      {
-                                              "name": "old",
-                                              "end": "2010-07-27"
-                                      },
-                                      {
-                                              "name": "new",
-                                              "start": "2010-07-27"
-                                      }
-                              ]
-                            }
-                        '''
-                        start_date, end_date = freq.split(':')
-                        temp_query["query"] = tosearch
-                        temp_query["boost"] = 1
-                        self.query['fields'] = ["*"]
-                        self.query["facets"] = {self.settings.field: {"size": 5, "field": self.settings.field,
-                                                "date_ranges": [{"name": "end", "end": end_date},
-                                                                {"name": "start", "start": start_date}]}}
+                elif query_type == 'numeric':
+                    if freq.strip() == 'max_min':
+                        temp_query['max'], temp_query['min'] = [float(k) for k in tosearch.split(':')]
+                    elif freq.strip() == 'max':
+                        temp_query['max'] = float(tosearch)
                     else:
-                        temp_query[query_type] = tosearch
-                        temp_query['field'] = self.settings.field
+                        temp_query['min'] = float(tosearch)
+                    temp_query['inclusive_max'] = False
+                    temp_query['inclusive_min'] = False
+                    temp_query['field'] = self.settings.field
 
-                    self.query['query'] = temp_query
-                    self.query['size'] = self.settings.query_size
-                    self.fts_query += 'index/' + self.settings.name + '/' + type
-                    self.query_list.append(self.form_url(self.fts_query))
-                    self.fts_query = self.fts_copy
-            shuffle(self.query_list)
-            self.query_iterator = itertools.cycle(self.query_list)
+                elif query_type in ['match', 'match_phrase']:
+                    tosearch = line.strip()
+                    temp_query[query_type] = tosearch
+                    temp_query['field'] = self.settings.field
+
+                elif query_type == 'ids':
+                    tosearch = [tosearch]
+                    temp_query[query_type] = tosearch
+                    temp_query['field'] = self.settings.field
+
+                elif query_type == "facet":
+
+                    start_date, end_date = freq.split(':')
+                    temp_query["query"] = tosearch
+                    temp_query["boost"] = 1
+                    self.query_template['fields'] = ["*"]
+                    self.query_template["facets"] = {self.settings.field:
+                                                     {"size": 5, "field": self.settings.field,
+                                                      "date_ranges": [{"name": "end",
+                                                                       "end": end_date},
+                                                                      {"name": "start",
+                                                                       "start": start_date}]}}
+                else:
+                    temp_query[query_type] = tosearch
+                    temp_query['field'] = self.settings.field
+
+                self.query_template['query'] = temp_query
+                self.query_template['size'] = self.settings.query_size
+                self.query_list.append(self.form_url(self.query_template))
+
+        self.query_list_size = len(self.query_list)
+        shuffle(self.query_list)
 
     def next(self):
-        return self.requests.post, self.query_iterator.next()
+        return self.requests.post, self.query_list[randint(0, self.query_list_size - 1)]
 
-    def prepare_query(self, type='query'):
-        self.fts_query = self.fts_copy
-        if type == 'query':
-            self.prepare_query_list()
-        elif type == 'count':
-            self.fts_query += 'index/' + self.settings.name + '/' + type
-            return self.requests.get, self.form_url(self.fts_query)
-        elif type == 'nsstats':
-            self.fts_query += type
-            return self.requests.get, self.form_url(self.fts_query)
+    def next_node(self):
+        return self.query_nodes[randint(0, self.nodes_list_size - 1)]
 
 
 class ElasticGen(FtsGen):
 
-    __ELASTIC_QUERY = {"query": {}, "size": 10}
+    QUERY_TEMPLATE = {"query": {}, "size": 10}
 
-    def __init__(self, elastic_url, settings):
-        super(ElasticGen, self).__init__(elastic_url, settings)
-        self.query = self.__ELASTIC_QUERY
-        self.elastic_query = "http://{}:9200/".format(elastic_url)
-        self.elastic_copy = copy.deepcopy(self.elastic_query)
-        self.auth = None
+    def form_url(self, full_query):
+        url = "http://{}:9200/{}/_search".format(self.next_node(), self.settings.name)
+        return {'url': url,
+                'auth': None,
+                'headers': self.header,
+                'data': json.dumps(full_query)
+                }
 
-    def prepare_query(self, type='query'):
-        if type == 'query':
-            try:
-                with open(self.settings.query_file, 'r') as tfile:
-                    for line in tfile:
-                        self.elastic_query = self.elastic_copy
-                        term, freq = ElasticGen.process_lines(line.strip())
-                        self.query['size'] = self.settings.query_size
-                        self.elastic_query += self.settings.name + '/_search'
-                        tmp_query = {}
-                        tmp_query_txt = {}
-                        query_type = self.settings.type
-                        if query_type == 'fuzzy':
-                            '''
-                            fuzziness is extra parameter for fuzzy
-                            Source: https://www.elastic.co/guide/en/elasticsearch/reference/current/
-                            query-dsl-fuzzy-query.html
-                            '''
-                            tmp_fuzzy = {}
-                            tmp_fuzzy['fuzziness'] = int(freq)
-                            tmp_fuzzy['value'] = term
-                            tmp_query_txt[self.settings.field] = tmp_fuzzy
-                            tmp_query[query_type] = tmp_query_txt
+    def get_nodes(self):
+        nodes = []
+        cluster_map = requests.get(url='http://{}:9200/_nodes'.format(self.master_node)).json()
+        for node in cluster_map['nodes'].values():
+            url = node["ip"]
+            nodes.append(url)
+        return nodes
 
-                        elif query_type == 'ids':
-                            '''
-                            values is extra parameter for Docid
-                            source: https://www.elastic.co/guide/en/elasticsearch/reference/
-                            current/query-dsl-ids-query.html
-                            '''
-                            tmp_query_txt['values'] = [term]
-                            tmp_query[query_type] = tmp_query_txt
+    def prepare_query_list(self):
+        with open(self.settings.query_file, 'r') as tfile:
+            for line in tfile:
+                term, freq = ElasticGen.process_lines(line.strip())
+                tmp_query = {}
+                tmp_query_txt = {}
+                query_type = self.settings.type
+                if query_type == 'fuzzy':
+                    tmp_fuzzy = {}
+                    tmp_fuzzy['fuzziness'] = int(freq)
+                    tmp_fuzzy['value'] = term
+                    tmp_query_txt[self.settings.field] = tmp_fuzzy
+                    tmp_query[query_type] = tmp_query_txt
 
-                        elif query_type in ['match', 'match_phrase']:
-                            '''
-                            Just reassign the whole line to it
-                            Source: https://www.elastic.co/guide/en/elasticsearch/reference/
-                            current/query-dsl-fuzzy-query.html
-                            '''
-                            tmp_query_txt[self.settings.field] = line.strip()
-                            tmp_query[query_type] = tmp_query_txt
+                elif query_type == 'ids':
+                    tmp_query_txt['values'] = [term]
+                    tmp_query[query_type] = tmp_query_txt
 
-                        elif query_type == 'range':
-                            trange = {}
-                            if freq.strip() == 'max_min':
-                                trange['gte'], trange['lte'] = [float(k) for k in term.split(':')]
-                            elif freq.strip() == 'max':
-                                trange['gte'] = float(term)
-                            else:
-                                trange['lte'] = float(term)
-                            tmp_query_txt[self.settings.field] = trange
-                            tmp_query[query_type] = tmp_query_txt
+                elif query_type in ['match', 'match_phrase']:
+                    tmp_query_txt[self.settings.field] = line.strip()
+                    tmp_query[query_type] = tmp_query_txt
 
-                        elif query_type in ['2_conjuncts', '2_disjuncts', '1_conjuncts_2_disjuncts']:
-                            '''
-                            For mix queries the name is like a map '1_conjuncts_2_disjuncts'
-                            => 1 conjuncts and 2 disjuncts
-                            '''
-                            tbool = {v: [] for k, v in self.bool_map.iteritems()}
-                            keytypes = ElasticGen.process_conj_disj(query_type.split('_'))
-                            for term in line.strip().split():
-                                key = self.bool_map[keytypes.next()]
-                                tbool[key].append({'term': {self.settings.field: term}})
-                            tmp_query_txt = tbool
-                            tmp_query['bool'] = tmp_query_txt
+                elif query_type == 'range':
+                    trange = {}
+                    if freq.strip() == 'max_min':
+                        trange['gte'], trange['lte'] = [float(k) for k in term.split(':')]
+                    elif freq.strip() == 'max':
+                        trange['gte'] = float(term)
+                    else:
+                        trange['lte'] = float(term)
+                    tmp_query_txt[self.settings.field] = trange
+                    tmp_query[query_type] = tmp_query_txt
 
-                        elif query_type == 'facet':
-                            start_date, end_date = freq.split(':')
-                            tmp_query = {"term": {"text": term}}
-                            self.query['size'] = self.settings.query_size
-                            self.query['aggs'] = {"perf_elastic_index": {"date_range": {
-                                                  "field": self.settings.field,
-                                                  "format": "YYYY-MM-DD",
-                                                  "ranges": [{"from": start_date, "to": end_date}]
-                                                  }, "aggs": {"terms_count": {"terms": {"field": "text"}}}}}
+                elif query_type in ['2_conjuncts', '2_disjuncts', '1_conjuncts_2_disjuncts']:
+                    tbool = {v: [] for k, v in self.bool_map.iteritems()}
+                    keytypes = ElasticGen.process_conj_disj(query_type.split('_'))
+                    for term in line.strip().split():
+                        key = self.bool_map[keytypes.next()]
+                        tbool[key].append({'term': {self.settings.field: term}})
+                    tmp_query_txt = tbool
+                    tmp_query['bool'] = tmp_query_txt
 
-                        else:
-                            tmp_query_txt[self.settings.field] = term
-                            tmp_query[query_type] = tmp_query_txt
+                elif query_type == 'facet':
+                    start_date, end_date = freq.split(':')
+                    tmp_query = {"term": {"text": term}}
+                    self.query_template['size'] = self.settings.query_size
+                    self.query_template['aggs'] = {"perf_elastic_index": {"date_range": {
+                                                   "field": self.settings.field,
+                                                   "format": "YYYY-MM-DD",
+                                                   "ranges": [{"from": start_date, "to": end_date}]
+                                                   }, "aggs": {"terms_count": {"terms": {"field": "text"}}}}}
 
-                        self.query['query'] = tmp_query
-                        self.query_list.append(self.form_url(self.elastic_query))
-                shuffle(self.query_list)
-                self.query_iterator = itertools.cycle(self.query_list)
-            except OSError as err:
-                logger.info("OS error: {0}".format(err))
-            except Exception as err:
-                logger.info("Error: {0}".format(err))
-        elif type == 'stats':
-            self.elastic_query += self.settings.name + '/_stats/'
-            return self.requests.get, self.form_url(self.elastic_query)
+                else:
+                    tmp_query_txt[self.settings.field] = term
+                    tmp_query[query_type] = tmp_query_txt
+
+                self.query_template['query'] = tmp_query
+                self.query_list.append(self.form_url(self.query_template))
+        self.query_list_size = len(self.query_list)
+        shuffle(self.query_list)

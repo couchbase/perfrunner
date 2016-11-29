@@ -2,12 +2,14 @@ import os
 import time
 from collections import defaultdict
 from multiprocessing import Event, Lock, Process, Value
+import requests
 
 from couchbase.exceptions import ValueFormatError
 from decorator import decorator
 from logger import logger
 from numpy import random
 from psutil import cpu_count
+
 from twisted.internet import reactor
 
 from spring.cbgen import (
@@ -624,8 +626,6 @@ class N1QLWorker(Worker):
 class FtsWorkerFactory(object):
 
     def __new__(cls, workload_settings):
-        """For FTS worker one extra worker is added, this worker will do the log
-        collection."""
         if workload_settings.fts_config:
             return FtsWorker, workload_settings.fts_config.worker
         return FtsWorker, 0
@@ -634,21 +634,13 @@ class FtsWorkerFactory(object):
 class FtsWorker(Worker):
 
     BATCH_SIZE = 100
+    NAME = "fts-es-worker"
 
     def __init__(self, workload_settings, target_settings, shutdown_event=None):
-        super(FtsWorker, self).__init__(workload_settings, target_settings,
-                                        shutdown_event)
-        host, port = self.ts.node.split(':')
-        if self.ws.fts_config.elastic:
-            instance = ElasticGen(host, self.ws.fts_config)
-            self.name = "ElasticWorker"
-        else:
-            instance = FtsGen(host, self.ws.fts_config)
-            self.name = "FtsWorker"
-
-        self.fts_es_query = instance
-        self.fts_es_query.prepare_query()
-        self.count = 0
+        super(FtsWorker, self).__init__(workload_settings, target_settings, shutdown_event)
+        self.query_list = workload_settings.fts_query_list
+        self.query_list_size = workload_settings.fts_query_list_size
+        self.requests = requests.Session()
 
     def init_keys(self):
         pass
@@ -660,34 +652,21 @@ class FtsWorker(Worker):
         pass
 
     def do_check_result(self, r):
-        """Check whether the query returned 0 hits"""
         if self.ws.fts_config.elastic:
             return r.json()["hits"]["total"] == 0
         return r.json()['total_hits'] == 0
 
     def do_batch(self):
-        """Need to store the info if any zero hit, no results we cant do for all
-        workers. one worker will do this, all inputs are from iterator, so it
-        will have a fair amount to proper result. Last worker is scheduled to
-        do the logging stuff.
-        """
         for i in range(self.BATCH_SIZE):
             if not self.time_to_stop():
-                cmd, args = self.fts_es_query.next()
-                if self.sid == self.ws.fts_config.worker - 1:
+                args = self.query_list[random.randint(self.query_list_size - 1)]
+                if self.sid == 0:
                     try:
-                        r = cmd(**args)
-                        # Increment in single thread, so lock is not needed
-                        self.count += 1
-                        if self.count % 500 == 0:
-                            logger.info(args)
-                            logger.info(r.text)
-
+                        r = self.requests.post(**args)
                         if not self.ws.fts_config.logfile:
                             continue
 
-                        if r.status_code not in range(200, 203) \
-                                or self.do_check_result(r):
+                        if r.status_code not in range(200, 203) or self.do_check_result(r):
                             with open(self.ws.fts_config.logfile, 'a') as f:
                                 f.write(str(args))
                                 f.write(str(r.status_code))
@@ -695,20 +674,19 @@ class FtsWorker(Worker):
                     except IOError as e:
                         logger.info("I/O error({0}): {1}".format(e.errno, e.strerror))
                 else:
-                    # Only running the rest API, no error checking
-                    cmd(**args)
+                    self.requests.post(**args)
 
     def run(self, sid, lock):
-        logger.info("Started {}".format(self.name))
+        logger.info("Started {}".format(self.NAME))
         self.sid = sid
         try:
-            logger.info('Started: {}-{}'.format(self.name, self.sid))
+            logger.info('Started: {}-{}'.format(self.NAME, self.sid))
             while not self.time_to_stop():
                 self.do_batch()
         except (KeyboardInterrupt, ValueFormatError, AttributeError) as e:
-            logger.info('Interrupted: {}-{}-{}'.format(self.name, self.sid, e))
+            logger.info('Interrupted: {}-{}-{}'.format(self.NAME, self.sid, e))
         else:
-            logger.info('Finished: {}-{}'.format(self.name, self.sid))
+            logger.info('Finished: {}-{}'.format(self.NAME, self.sid))
 
 
 class WorkloadGen(object):
@@ -716,6 +694,7 @@ class WorkloadGen(object):
     def __init__(self, workload_settings, target_settings, timer=None):
         self.ws = workload_settings
         self.ts = target_settings
+        self.rest_auth = (self.ws.fts_config.username, self.ts.password)
         self.timer = timer
         self.shutdown_event = timer and Event() or None
         self.worker_processes = defaultdict(list)
@@ -725,6 +704,13 @@ class WorkloadGen(object):
         curr_ops = Value('L', 0)
         lock = Lock()
         worker_type, total_workers = worker_factory(self.ws)
+        if name == 'fts':
+            master_host = self.ts.node.split(":")[0]
+            if self.ws.fts_config.elastic:
+                self.ws.fts_query_list = ElasticGen(master_host, self.ws.fts_config, self.rest_auth).query_list
+            else:
+                self.ws.fts_query_list = FtsGen(master_host, self.ws.fts_config, self.rest_auth).query_list
+            self.ws.fts_query_list_size = len(self.ws.fts_query_list)
 
         for sid in range(total_workers):
             if curr_items is None and deleted_items is None:

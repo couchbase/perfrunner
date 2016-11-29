@@ -7,21 +7,17 @@ from spring.cbgen import ElasticGen, FtsGen
 
 class FtsCollector(Collector):
     def __init__(self, settings, test_config, prefix=None):
-            super(FtsCollector, self).__init__(settings)
-            self.host = settings.master_node
-            self.fts_client = FtsGen(self.host, test_config.fts_settings)
-            self.cbft_stats = None
-            self.NO_RESULT = 0
-            self.scmd, self.squery = self.fts_client.prepare_query(type="nsstats")
+        super(FtsCollector, self).__init__(settings)
+        self.cbft_stats = None
+        self.fts_settings = test_config.fts_settings
+        self.host = settings.master_node
+        self.fts_client = self.init_client(test_config)
+
+    def init_client(self, test_config):
+        return FtsGen(self.host, test_config.fts_settings, self.auth)
 
     def collect_stats(self):
-        r = self.scmd(**self.squery)
-        '''
-         The nsserver stats not exposed
-         following fundtion is added to collect nsserver stats per METRICS,
-         no need to call same stats for different metrics. Optimized and reliable code.
-         collect_stats should be called once.
-        '''
+        r = self.session.get("http://{}:{}/api/nsstats".format(self.host, self.fts_settings.port))
         if r.status_code == 200:
             self.cbft_stats = r.json()
         else:
@@ -77,7 +73,6 @@ class FtsLatency(FtsCollector):
 
     def __init__(self, settings, test_config, prefix=None):
         super(FtsLatency, self).__init__(settings, test_config)
-        self.fts_client.prepare_query()
 
     def cbft_latency_get(self):
         cmd, query = self.fts_client.next()
@@ -190,16 +185,20 @@ class ElasticStats(FtsCollector):
 
     METRICS = ("elastic_latency_get", "elastic_cache_size", "elastic_query_total",
                "elastic_cache_hit", "elastic_filter_cache_size")
-    '''
-     Help: https://www.elastic.co/guide/en/elasticsearch/guide/current/_monitoring_individual_nodes.html
-     '''
 
     def __init__(self, settings, test_config, prefix=None):
         super(ElasticStats, self).__init__(settings, test_config)
         self.host = settings.master_node
-        self.elastic_client = ElasticGen(self.host, test_config.fts_settings)
-        self.flag = True
-        self.scmd, self.squery = self.elastic_client.prepare_query(type="stats")
+
+    def init_client(self, test_config):
+        return ElasticGen(self.host, test_config.fts_settings)
+
+    def collect_stats(self):
+        r = self.session.get("http://{}:9200/_stats".format(self.host, self.fts_settings.port))
+        if r.status_code == 200:
+            self.cbft_stats = r.json()
+        else:
+            self.cbft_stats = None
 
     def cbft_query_total(self):
         if self.cbft_stats:
@@ -222,10 +221,10 @@ class ElasticStats(FtsCollector):
         return self.cbft_stats["_all"]["total"]["search"]["open_contexts"]
 
     def elastic_latency_get(self):
-        if self.flag:
-            self.elastic_client.prepare_query()
-            self.flag = False
-        cmd, query = self.elastic_client.next()
+        cmd, query = self.fts_client.next()
         t0 = time.time()
-        cmd(**query)
-        return 1000 * (time.time() - t0)
+        r = cmd(**query)
+        t1 = time.time()
+        if r.status_code in range(200, 203) and self.check_total_hits(r):
+            return 1000 * (t1 - t0)
+        return 0

@@ -786,7 +786,7 @@ class ExportImportSettings(object):
 class FtsSettings(object):
 
     def __init__(self, options):
-        self.port = int(options.get("port", 0))
+        self.port = options.get("port", "8094")
         self.name = options.get("name")
         self.items = int(options.get("items", 0))
         self.mutate_items = int(options.get("mutate_items", self.items >> 1))
@@ -803,6 +803,7 @@ class FtsSettings(object):
         self.repo = options.get("repo_path")
         self.field = options.get("field", None)
         self.index_configfile = options.get("index_configfile", None)
+        self.username = options.get("username", "Administrator")
 
     def __str__(self):
         return str(self.__dict__)

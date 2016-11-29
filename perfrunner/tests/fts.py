@@ -12,7 +12,7 @@ from perfrunner.tests import PerfTest
 class FTStest(PerfTest):
 
     WAIT_TIME = 1
-    INDEX_WAIT_MAX = 600
+    INDEX_WAIT_MAX = 1200
 
     def __init__(self, cluster_spec, test_config, verbose):
         super(FTStest, self).__init__(cluster_spec, test_config, verbose)

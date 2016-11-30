@@ -1,6 +1,7 @@
 import multiprocessing
 import time
 
+import dateutil.parser
 from decorator import decorator
 from logger import logger
 
@@ -20,10 +21,14 @@ from perfrunner.tests.xdcr import (
 def with_delay(rebalance, *args, **kwargs):
     test = args[0]
 
+    logger.info('Sleeping for {} minutes before taking actions'
+                .format(test.rebalance_settings.start_after))
     time.sleep(test.rebalance_settings.start_after)
 
     rebalance(*args, **kwargs)
 
+    logger.info('Sleeping for {} minutes before finishing'
+                .format(test.rebalance_settings.stop_after))
     time.sleep(test.rebalance_settings.stop_after)
     test.worker_manager.terminate()
 
@@ -189,6 +194,44 @@ class RecoveryTest(RebalanceKVTest):
             self.rest.rebalance(master, known_nodes=servers[:initial_nodes],
                                 ejected_nodes=[])
             self.monitor.monitor_rebalance(master)
+
+
+class FailoverTest(RebalanceKVTest):
+
+    EXTRA_TIMEOUT = 30
+
+    def check_auto_failover(self, master):
+        timeout = self.test_config.cluster.auto_failover_timeout
+
+        time.sleep(timeout + self.EXTRA_TIMEOUT)
+        time_str = self.remote.detect_auto_failover(master.split(':')[0])
+        if time_str is not None:
+            t_failover = dateutil.parser.parse(time_str)
+            t_failover = time.mktime(t_failover.timetuple())
+            return t_failover
+
+    def _report_kpi(self, delta):
+        self.reporter.post_to_sf(delta)
+
+    @with_delay
+    def rebalance(self):
+        clusters = self.cluster_spec.yield_clusters()
+        initial_nodes = self.test_config.cluster.initial_nodes
+        failed_nodes = self.rebalance_settings.failed_nodes
+
+        for (_, servers), initial_nodes in zip(clusters,
+                                               initial_nodes):
+            master = servers[0].split(':')[0]
+            failed = servers[initial_nodes - failed_nodes:initial_nodes]
+
+            t_failure = time.time()
+            for host_port in failed:
+                self.remote.shutdown(host_port.split(':')[0])
+
+            t_failover = self.check_auto_failover(master)
+            if t_failover:
+                delta = round(t_failover - t_failure, 1)
+                self.report_kpi(delta)
 
 
 class RebalanceWithQueriesTest(QueryTest, RebalanceTest):

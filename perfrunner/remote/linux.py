@@ -4,7 +4,7 @@ import time
 from random import uniform
 
 from fabric import state
-from fabric.api import get, put, run
+from fabric.api import get, put, run, settings
 from fabric.exceptions import CommandTimeout
 from logger import logger
 
@@ -251,6 +251,12 @@ class RemoteLinux(Remote):
         run('killall -9 {}'.format(' '.join(self.PROCESSES)),
             warn_only=True, quiet=True)
 
+    def shutdown(self, host):
+        with settings(host_string=host):
+            logger.info('Killing {}'.format(', '.join(self.PROCESSES)))
+            run('killall -9 {}'.format(' '.join(self.PROCESSES)),
+                warn_only=True, quiet=True)
+
     @all_hosts
     def uninstall_couchbase(self, pkg):
         logger.info('Uninstalling Couchbase Server')
@@ -444,3 +450,10 @@ class RemoteLinux(Remote):
         logger.info("Calling command: {}".format(cmdstr))
         result = run(cmdstr, pty=False)
         return result
+
+    def detect_auto_failover(self, host):
+        with settings(host_string=host):
+            r = run('grep "Starting failing over" '
+                    '/opt/couchbase/var/lib/couchbase/logs/info.log', quiet=True)
+            if not r.return_code:
+                return r.strip().split(',')[1]

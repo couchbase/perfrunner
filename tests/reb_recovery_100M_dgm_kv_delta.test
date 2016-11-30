@@ -1,8 +1,8 @@
 [test_case]
-test = perfrunner.tests.rebalance.RebalanceKVTest
-title = Full recovery after graceful failover (min), 3 -> 4, 1 bucket x 100M x 2KB, 10K ops/sec
+test = perfrunner.tests.rebalance.RecoveryTest
+title = Delta recovery after hard failover (min), 3 -> 4, 1 bucket x 100M x 2KB, 10K ops/sec
 component = reb
-category = failover
+category = recovery
 
 [cluster]
 mem_quota = 40960
@@ -34,8 +34,9 @@ working_set = 5
 working_set_access = 98
 
 [rebalance]
-nodes_after = 4
-graceful_failover = 1
+failed_nodes = 1
+failover = hard
+delta_recovery = 1
 sleep_after_failover = 1200
 start_after = 1200
 stop_after = 1200

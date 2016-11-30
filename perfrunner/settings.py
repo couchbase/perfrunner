@@ -418,24 +418,26 @@ class TargetSettings(object):
 
 class RebalanceSettings(object):
 
-    SWAP = 0  # Don't swap by default
-    FAILOVER = 0  # No failover by default
-    GRACEFUL_FAILOVER = 0
+    SWAP = 1
+    FAILOVER = 'hard'  # Atl: graceful
     DELTA_RECOVERY = 0  # Full recovery by default
     SLEEP_AFTER_FAILOVER = 600
     START_AFTER = 1200
     STOP_AFTER = 1200
 
     def __init__(self, options):
-        self.nodes_after = [int(_) for _ in options.get('nodes_after').split()]
+        nodes_after = options.get('nodes_after', '').split()
+        self.nodes_after = [int(num_nodes) for num_nodes in nodes_after]
+
         self.swap = int(options.get('swap', self.SWAP))
-        self.failover = int(options.get('failover', self.FAILOVER))
-        self.graceful_failover = int(options.get('graceful_failover',
-                                                 self.GRACEFUL_FAILOVER))
+
+        self.failed_nodes = int(options.get('failed_nodes', 1))
+        self.failover = options.get('failover', self.FAILOVER)
         self.sleep_after_failover = int(options.get('sleep_after_failover',
                                                     self.SLEEP_AFTER_FAILOVER))
         self.delta_recovery = int(options.get('delta_recovery',
                                               self.DELTA_RECOVERY))
+
         self.start_after = int(options.get('start_after', self.START_AFTER))
         self.stop_after = int(options.get('stop_after', self.STOP_AFTER))
 

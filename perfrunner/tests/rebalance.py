@@ -67,9 +67,9 @@ class RebalanceTest(PerfTest):
             sleep X minutes (observe post-rebalance characteristics) ->
         stop stats collection.
 
-    The timeline is implement via a long chain of decorators.
+    The timeline is implemented via a long chain of decorators.
 
-    Actual rebalance step depends on test scenario (e.g., basic rebalance or
+    Actual rebalance steps depend on test scenario (e.g., basic rebalance or
     rebalance after graceful failover, and etc.).
     """
 
@@ -94,10 +94,7 @@ class RebalanceTest(PerfTest):
         initial_nodes = self.test_config.cluster.initial_nodes
         nodes_after = self.rebalance_settings.nodes_after
         swap = self.rebalance_settings.swap
-        failover = self.rebalance_settings.failover
-        graceful_failover = self.rebalance_settings.graceful_failover
-        delta_recovery = self.rebalance_settings.delta_recovery
-        sleep_after_failover = self.rebalance_settings.sleep_after_failover
+
         group_number = self.test_config.cluster.group_number or 1
 
         for (_, servers), initial_nodes, nodes_after in zip(clusters,
@@ -109,8 +106,7 @@ class RebalanceTest(PerfTest):
             new_nodes = []
             known_nodes = servers[:initial_nodes]
             ejected_nodes = []
-            failover_nodes = []
-            graceful_failover_nodes = []
+
             if nodes_after > initial_nodes:  # rebalance-in
                 new_nodes = enumerate(
                     servers[initial_nodes:nodes_after],
@@ -119,42 +115,18 @@ class RebalanceTest(PerfTest):
                 known_nodes = servers[:nodes_after]
             elif nodes_after < initial_nodes:  # rebalance-out
                 ejected_nodes = servers[nodes_after:initial_nodes]
-            elif swap:
+            else:  # swap
                 new_nodes = enumerate(
                     servers[initial_nodes:initial_nodes + swap],
                     start=initial_nodes - swap
                 )
                 known_nodes = servers[:initial_nodes + swap]
                 ejected_nodes = servers[initial_nodes - swap:initial_nodes]
-            elif failover:
-                failover_nodes = servers[initial_nodes - failover:initial_nodes]
-            elif graceful_failover:
-                graceful_failover_nodes = \
-                    servers[initial_nodes - graceful_failover:initial_nodes]
-            else:
-                continue
 
             for i, host_port in new_nodes:
                 group = server_group(servers[:nodes_after], group_number, i)
                 uri = groups.get(group)
                 self.rest.add_node(master, host_port, uri=uri)
-            for host_port in failover_nodes:
-                self.rest.fail_over(master, host_port)
-                self.rest.add_back(master, host_port)
-            for host_port in graceful_failover_nodes:
-                self.rest.graceful_fail_over(master, host_port)
-                self.monitor.monitor_rebalance(master)
-                self.rest.add_back(master, host_port)
-
-            if delta_recovery:
-                for host_port in failover_nodes + graceful_failover_nodes:
-                    self.rest.set_delta_recovery_type(master, host_port)
-
-            if failover or graceful_failover:
-                logger.info('Sleeping for {} seconds after failover'
-                            .format(sleep_after_failover))
-                time.sleep(sleep_after_failover)
-                self.reporter.start()
 
             self.rest.rebalance(master, known_nodes, ejected_nodes)
 
@@ -180,6 +152,45 @@ class RebalanceKVTest(RebalanceTest):
         self.workload = self.test_config.access_settings
         self.access_bg()
         self.rebalance()
+
+
+class RecoveryTest(RebalanceKVTest):
+
+    @with_delayed_posting
+    @with_stats
+    @with_delay
+    @with_reporter
+    def rebalance(self):
+        clusters = self.cluster_spec.yield_clusters()
+        initial_nodes = self.test_config.cluster.initial_nodes
+        failed_nodes = self.rebalance_settings.failed_nodes
+
+        for (_, servers), initial_nodes in zip(clusters,
+                                               initial_nodes):
+            master = servers[0]
+
+            failed = servers[initial_nodes - failed_nodes:initial_nodes]
+
+            for host_port in failed:
+                if self.rebalance_settings.failover == 'hard':
+                    self.rest.fail_over(master, host_port)
+                else:
+                    self.rest.graceful_fail_over(master, host_port)
+                    self.monitor.monitor_rebalance(master)
+                self.rest.add_back(master, host_port)
+
+            if self.rebalance_settings.delta_recovery:
+                for host_port in failed:
+                    self.rest.set_delta_recovery_type(master, host_port)
+
+            logger.info('Sleeping for {} seconds after failover'
+                        .format(self.rebalance_settings.sleep_after_failover))
+            time.sleep(self.rebalance_settings.sleep_after_failover)
+
+            self.reporter.start()
+            self.rest.rebalance(master, known_nodes=servers[:initial_nodes],
+                                ejected_nodes=[])
+            self.monitor.monitor_rebalance(master)
 
 
 class RebalanceWithQueriesTest(QueryTest, RebalanceTest):

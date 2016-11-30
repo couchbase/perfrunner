@@ -278,7 +278,6 @@ class MetricHelper(object):
         timings += [value['Nth-latency'] for value in data.values()]
         timings = map(int, timings)
         logger.info("Number of samples are {}".format(len(timings)))
-        logger.info("Sample timings: {}".format(timings))
         secondary_scan_latency = np.percentile(timings, percentile) / 1000000
 
         return round(secondary_scan_latency, 2), metric, metric_info

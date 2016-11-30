@@ -243,6 +243,7 @@ class CbAgent(object):
     def prepare_secondary_latency(self, clusters):
         for cluster in clusters:
             settings = copy(self.settings)
+            settings.interval = self.lat_interval
             settings.cluster = cluster
             settings.master_node = self.clusters[cluster]
             self.collectors.append(SecondaryLatencyStats(settings))

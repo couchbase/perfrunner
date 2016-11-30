@@ -1,16 +1,17 @@
 [test_case]
 test = perfrunner.tests.dcp.DCPThroughputTest
-title = DCP Throughput, 1 bucket x 250M x 1KB, 1 connection, no mutations
+title = DCP Throughput, 1 bucket x 250M x 1KB, 4 connections, DGM, no mutations
 component = kv
 category = dcp
 
 [cluster]
-mem_quota = 450000
+mem_quota = 51200
 initial_nodes = 1
 num_buckets = 1
 
 [bucket]
 replica_number = 0
+eviction_policy = fullEviction
 
 [compaction]
 db_percentage = 100
@@ -18,7 +19,7 @@ db_percentage = 100
 [load]
 items = 250000000
 size = 1024
-workers = 80
+workers = 40
 
 [dcp]
-num_connections = 1
+num_connections = 4

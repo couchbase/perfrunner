@@ -26,6 +26,11 @@ Once inside the perfrunner directory create a virtual environment for all of the
 
     make
 
+To run DCP test, one more step required to build DCP go binary.
+As DCP client is go client, make sure that perfrunner is placed inside $GOPATH/src, see also https://golang.org/doc/code.html
+
+    make dcptest
+
 Cluster installation and setup
 ------------------------------
 

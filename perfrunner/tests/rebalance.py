@@ -7,7 +7,6 @@ from logger import logger
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import log_phase, server_group
 from perfrunner.tests import PerfTest
-from perfrunner.tests.index import IndexTest
 from perfrunner.tests.query import QueryTest
 from perfrunner.tests.xdcr import (
     DestTargetIterator,
@@ -160,37 +159,6 @@ class RebalanceTest(PerfTest):
             self.rest.rebalance(master, known_nodes, ejected_nodes)
 
             self.monitor.monitor_rebalance(master)
-
-
-class StaticRebalanceTest(RebalanceTest):
-
-    """
-    KV rebalance test with no ongoing workload. Obsolete.
-    """
-
-    def run(self):
-        self.load()
-        self.wait_for_persistence()
-        self.compact_bucket()
-
-        self.rebalance()
-
-
-class StaticRebalanceWithIndexTest(IndexTest, RebalanceTest):
-
-    """
-    KV + Index rebalance test with no ongoing workload. Obsolete.
-    """
-
-    def run(self):
-        self.load()
-        self.wait_for_persistence()
-        self.compact_bucket()
-
-        self.define_ddocs()
-        self.build_index()
-
-        self.rebalance()
 
 
 class RebalanceKVTest(RebalanceTest):

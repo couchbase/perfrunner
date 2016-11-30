@@ -315,6 +315,7 @@ class ClusterSettings(object):
     NUM_BUCKETS = 1
     INDEX_MEM_QUOTA = 256
     FTS_INDEX_MEM_QUOTA = 512
+    AUTO_FAILOVER_TIMEOUT = 120
 
     def __init__(self, options):
         self.mem_quota = int(options.get('mem_quota'))
@@ -328,6 +329,8 @@ class ClusterSettings(object):
         self.num_buckets = int(options.get('num_buckets', self.NUM_BUCKETS))
         self.num_vbuckets = options.get('num_vbuckets')
         self.group_number = int(options.get('group_number', self.GROUP_NUMBER))
+        self.auto_failover_timeout = int(options.get('auto_failover_timeout',
+                                                     self.AUTO_FAILOVER_TIMEOUT))
 
 
 class StatsSettings(object):

@@ -192,8 +192,9 @@ class ClusterManager(object):
         self.remote.restart()
 
     def enable_auto_failover(self):
+        timeout = self.test_config.cluster.auto_failover_timeout
         for master in self.masters():
-            self.rest.enable_auto_failover(master)
+            self.rest.enable_auto_failover(master, timeout)
 
     def wait_until_warmed_up(self):
         for master in self.cluster_spec.yield_masters():

@@ -132,7 +132,6 @@ class RemoteLinux(Remote):
 
         # Create index but do not build
         bucket_indexes = self.create_index(index_nodes, bucket, indexes, fields, secondarydb, where_map)
-        time.sleep(10)
 
         # build indexes
         self.build_index(index_nodes[0], bucket_indexes)

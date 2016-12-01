@@ -47,13 +47,13 @@ def with_stats(method, *args, **kwargs):
 
     stats_enabled = test.test_config.stats_settings.enabled
 
-    from_ts = datetime.utcnow()
     if stats_enabled:
         if not test.cbagent.collectors:
             test.cbagent.prepare_collectors(test, **test.COLLECTORS)
             test.cbagent.update_metadata()
         test.cbagent.start()
 
+    from_ts = datetime.utcnow()
     method(*args, **kwargs)
     to_ts = datetime.utcnow()
 

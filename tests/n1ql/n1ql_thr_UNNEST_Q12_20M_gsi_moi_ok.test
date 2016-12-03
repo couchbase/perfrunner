@@ -33,7 +33,7 @@ throughput = 30000
 items = 20000000
 workers = 20
 time = 1200
-nrql_gen = join
+n1ql_gen = join
 n1ql_queries = unnest
 n1ql_workers = 720
 

@@ -1,6 +1,7 @@
 [test_case]
 test = perfrunner.tests.tools.CbExportImportTest
 title = (Avg. MB/sec), 1 bucket x 3M x 20KB, Idle
+component = tools
 
 [cluster]
 mem_quota = 52428

@@ -694,7 +694,6 @@ class WorkloadGen(object):
     def __init__(self, workload_settings, target_settings, timer=None):
         self.ws = workload_settings
         self.ts = target_settings
-        self.rest_auth = (self.ws.fts_config.username, self.ts.password)
         self.timer = timer
         self.shutdown_event = timer and Event() or None
         self.worker_processes = defaultdict(list)
@@ -705,11 +704,12 @@ class WorkloadGen(object):
         lock = Lock()
         worker_type, total_workers = worker_factory(self.ws)
         if name == 'fts':
+            rest_auth = (self.ws.fts_config.username, self.ts.password)
             master_host = self.ts.node.split(":")[0]
             if self.ws.fts_config.elastic:
-                self.ws.fts_query_list = ElasticGen(master_host, self.ws.fts_config, self.rest_auth).query_list
+                self.ws.fts_query_list = ElasticGen(master_host, self.ws.fts_config, rest_auth).query_list
             else:
-                self.ws.fts_query_list = FtsGen(master_host, self.ws.fts_config, self.rest_auth).query_list
+                self.ws.fts_query_list = FtsGen(master_host, self.ws.fts_config, rest_auth).query_list
             self.ws.fts_query_list_size = len(self.ws.fts_query_list)
 
         for sid in range(total_workers):

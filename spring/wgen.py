@@ -703,7 +703,7 @@ class WorkloadGen(object):
         curr_ops = Value('L', 0)
         lock = Lock()
         worker_type, total_workers = worker_factory(self.ws)
-        if name == 'fts':
+        if name == 'fts' and total_workers:
             rest_auth = (self.ws.fts_config.username, self.ts.password)
             master_host = self.ts.node.split(":")[0]
             if self.ws.fts_config.elastic:

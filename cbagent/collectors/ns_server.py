@@ -8,13 +8,7 @@ class NSServer(Collector):
     def _get_stats_uri(self):
         for bucket, stats in self.get_buckets(with_stats=True):
             uri = stats["uri"]
-            yield uri, bucket, None  # cluster wide
-
-            stats_list = self.get_http(path=stats["nodeStatsListURI"])
-            for server in stats_list["servers"]:
-                host = server["hostname"].split(":")[0]
-                uri = server["stats"]["uri"]
-                yield uri, bucket, host  # server specific
+            yield uri, bucket  # cluster wide
 
     def _get_stats(self, uri):
         samples = self.get_http(path=uri)  # get last minute samples
@@ -30,12 +24,12 @@ class NSServer(Collector):
         return stats
 
     def sample(self):
-        for uri, bucket, host in self._get_stats_uri():
+        for uri, bucket in self._get_stats_uri():
             stats = self._get_stats(uri)
             if not stats:
                 continue
-            self.update_metric_metadata(stats.keys(), bucket, host)
-            self.store.append(stats, self.cluster, host, bucket,
+            self.update_metric_metadata(stats.keys(), bucket)
+            self.store.append(stats, cluster=self.cluster, bucket=bucket,
                               collector=self.COLLECTOR)
 
     def update_metadata(self):

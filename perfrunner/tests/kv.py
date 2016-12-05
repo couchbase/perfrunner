@@ -270,8 +270,6 @@ class WarmupTest(PerfTest):
     "hot" load phase).
     """
 
-    ALL_HOSTNAMES = True
-
     def access(self, *args, **kwargs):
         super(WarmupTest, self).timer()
 

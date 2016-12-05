@@ -29,4 +29,4 @@ orderby = q0b00001100
 backup_path = /home/backup
 repo_path = numericdata
 field = time
-index_configfile = tests/fts/index/fts_tvectors_on.json
+index_configfile = tests/fts/index/fts_numeric.json

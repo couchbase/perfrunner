@@ -6,7 +6,7 @@
   "sourceName": "",
   "sourceUUID": "",
   "planParams": {
-    "maxPartitionsPerPIndex": 32,
+    "maxPartitionsPerPIndex": 171,
     "numReplicas": 0,
     "hierarchyRules": null,
     "nodePlanParams": null,

@@ -21,13 +21,13 @@ from perfrunner.tests.xdcr import (
 def with_delay(rebalance, *args, **kwargs):
     test = args[0]
 
-    logger.info('Sleeping for {} minutes before taking actions'
+    logger.info('Sleeping for {} seconds before taking actions'
                 .format(test.rebalance_settings.start_after))
     time.sleep(test.rebalance_settings.start_after)
 
     rebalance(*args, **kwargs)
 
-    logger.info('Sleeping for {} minutes before finishing'
+    logger.info('Sleeping for {} seconds before finishing'
                 .format(test.rebalance_settings.stop_after))
     time.sleep(test.rebalance_settings.stop_after)
     test.worker_manager.terminate()

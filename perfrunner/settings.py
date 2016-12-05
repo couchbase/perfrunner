@@ -421,7 +421,7 @@ class TargetSettings(object):
 
 class RebalanceSettings(object):
 
-    SWAP = 1
+    SWAP = 0
     FAILOVER = 'hard'  # Atl: graceful
     DELTA_RECOVERY = 0  # Full recovery by default
     SLEEP_AFTER_FAILOVER = 600

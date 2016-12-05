@@ -120,13 +120,15 @@ class RebalanceTest(PerfTest):
                 known_nodes = servers[:nodes_after]
             elif nodes_after < initial_nodes:  # rebalance-out
                 ejected_nodes = servers[nodes_after:initial_nodes]
-            else:  # swap
+            elif swap:
                 new_nodes = enumerate(
                     servers[initial_nodes:initial_nodes + swap],
                     start=initial_nodes - swap
                 )
                 known_nodes = servers[:initial_nodes + swap]
                 ejected_nodes = servers[initial_nodes - swap:initial_nodes]
+            else:
+                continue
 
             for i, host_port in new_nodes:
                 group = server_group(servers[:nodes_after], group_number, i)

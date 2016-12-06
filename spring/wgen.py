@@ -2,14 +2,13 @@ import os
 import time
 from collections import defaultdict
 from multiprocessing import Event, Lock, Process, Value
-import requests
 
+import requests
 from couchbase.exceptions import ValueFormatError
 from decorator import decorator
 from logger import logger
 from numpy import random
 from psutil import cpu_count
-
 from twisted.internet import reactor
 
 from spring.cbgen import (
@@ -72,6 +71,7 @@ class Worker(object):
         self.ws = workload_settings
         self.ts = target_settings
         self.shutdown_event = shutdown_event
+        self.sid = 0
 
         self.next_report = 0.05  # report after every 5% of completion
 
@@ -149,6 +149,9 @@ class Worker(object):
     def time_to_stop(self):
         return (self.shutdown_event is not None and
                 self.shutdown_event.is_set())
+
+    def seed(self):
+        random.seed(seed=self.sid * 9901)
 
 
 class KVWorker(Worker):
@@ -242,6 +245,8 @@ class KVWorker(Worker):
         self.lock = lock
         self.curr_items = curr_items
         self.deleted_items = deleted_items
+
+        self.seed()
 
         logger.info('Started: {}-{}'.format(self.NAME, self.sid))
         try:
@@ -345,6 +350,8 @@ class AsyncKVWorker(KVWorker):
         self.curr_items = curr_items
         self.deleted_items = deleted_items
         self.curr_ops = curr_ops
+
+        self.seed()
 
         self.done = False
         for i, cb in enumerate(self.cbs):

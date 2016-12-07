@@ -485,6 +485,7 @@ class PhaseSettings(object):
     SPRING_WORKERS = 100
 
     N1QL_OP = 'read'
+    N1QL_BATCH_SIZE = 100
 
     ARRAY_SIZE = 10
     NUM_CATEGORIES = 10 ** 6
@@ -544,6 +545,8 @@ class PhaseSettings(object):
         self.n1ql_op = options.get('n1ql_op', self.N1QL_OP)
         self.n1ql_throughput = float(options.get('n1ql_throughput',
                                                  self.N1QL_THROUGHPUT))
+        self.n1ql_batch_size = int(options.get('n1ql_batch_size',
+                                               self.N1QL_BATCH_SIZE))
         self.array_size = int(options.get('array_size', self.ARRAY_SIZE))
         self.num_categories = int(options.get('num_categories',
                                               self.NUM_CATEGORIES))

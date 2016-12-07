@@ -524,7 +524,7 @@ class N1QLWorker(Worker):
         if self.ws.doc_gen == 'ext_reverse_lookup':
             curr_items_tmp /= 4
 
-        for _ in range(self.BATCH_SIZE):
+        for _ in range(self.ws.n1ql_batch_size):
             key = self.existing_keys.next(curr_items=curr_items_tmp,
                                           curr_deletes=0)
             doc = self.docs.next(key)
@@ -537,10 +537,10 @@ class N1QLWorker(Worker):
 
     def create(self):
         with self.lock:
-            self.curr_items.value += self.BATCH_SIZE
-            curr_items_tmp = self.curr_items.value - self.BATCH_SIZE
+            self.curr_items.value += self.ws.n1ql_batch_size
+            curr_items_tmp = self.curr_items.value - self.ws.n1ql_batch_size
 
-        for _ in range(self.BATCH_SIZE):
+        for _ in range(self.ws.n1ql_batch_size):
             curr_items_tmp += 1
             key, ttl = self.new_keys.next(curr_items=curr_items_tmp)
             doc = self.docs.next(key)
@@ -553,10 +553,10 @@ class N1QLWorker(Worker):
 
     def update(self):
         with self.lock:
-            self.cas_updated_items.value += self.BATCH_SIZE
-            curr_items_tmp = self.curr_items.value - self.BATCH_SIZE
+            self.cas_updated_items.value += self.ws.n1ql_batch_size
+            curr_items_tmp = self.curr_items.value - self.ws.n1ql_batch_size
 
-        for _ in range(self.BATCH_SIZE):
+        for _ in range(self.ws.n1ql_batch_size):
             key = self.keys_for_casupdate.next(self.sid,
                                                curr_items=curr_items_tmp)
             doc = self.docs.next(key)
@@ -569,10 +569,10 @@ class N1QLWorker(Worker):
 
     def range_update(self):
         with self.lock:
-            self.cas_updated_items.value += self.BATCH_SIZE
-            curr_items_tmp = self.curr_items.value - self.BATCH_SIZE
+            self.cas_updated_items.value += self.ws.n1ql_batch_size
+            curr_items_tmp = self.curr_items.value - self.ws.n1ql_batch_size
 
-        for _ in range(self.BATCH_SIZE):
+        for _ in range(self.ws.n1ql_batch_size):
             key = self.keys_for_casupdate.next(self.sid,
                                                curr_items=curr_items_tmp)
             doc = self.docs.next(key)
@@ -596,8 +596,8 @@ class N1QLWorker(Worker):
 
     def run(self, sid, lock, curr_ops, curr_items, deleted_items, cas_updated_items):
         if self.throughput < float('inf'):
-            self.target_time = float(self.BATCH_SIZE) * self.total_workers / \
-                self.throughput
+            self.target_time = self.ws.n1ql_batch_size * self.total_workers / \
+                float(self.throughput)
         else:
             self.target_time = None
         self.lock = lock
@@ -627,7 +627,6 @@ class FtsWorkerFactory(object):
 
 class FtsWorker(Worker):
 
-    BATCH_SIZE = 100
     NAME = "fts-es-worker"
 
     def __init__(self, workload_settings, target_settings, shutdown_event=None):

@@ -103,12 +103,11 @@ class KeyForCASUpdate(Iterator):
         self.working_set_access = working_set_access
         self.prefix = prefix
 
-    def next(self, sid, curr_items, curr_deletes):
-        num_existing_items = curr_items - curr_deletes
-        num_hot_items = int(num_existing_items * self.working_set / 100.0)
-        num_cold_items = num_existing_items - num_hot_items
+    def next(self, sid, curr_items):
+        num_hot_items = int(curr_items * self.working_set / 100.0)
+        num_cold_items = curr_items - num_hot_items
 
-        left_limit = 1 + curr_deletes
+        left_limit = 1
         if self.working_set_access == 100 or \
                 random.randint(0, 100) <= self.working_set_access:
             left_limit += num_cold_items
@@ -116,7 +115,7 @@ class KeyForCASUpdate(Iterator):
         else:
             right_limit = left_limit + num_cold_items
         limit_step = (right_limit - left_limit) / self.n1ql_workers
-        left_limit = left_limit + (limit_step) * sid
+        left_limit += limit_step * sid
         right_limit = left_limit + limit_step - 1
         key = np.random.random_integers(left_limit, right_limit)
         key = '%012d' % key

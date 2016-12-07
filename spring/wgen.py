@@ -561,8 +561,7 @@ class N1QLWorker(Worker):
 
         for _ in range(self.BATCH_SIZE):
             key = self.keys_for_casupdate.next(self.sid,
-                                               curr_items=curr_items_tmp,
-                                               curr_deletes=0)
+                                               curr_items=curr_items_tmp)
             doc = self.docs.next(key)
             doc['key'] = key
             doc['bucket'] = self.ts.bucket
@@ -578,8 +577,7 @@ class N1QLWorker(Worker):
 
         for _ in range(self.BATCH_SIZE):
             key = self.keys_for_casupdate.next(self.sid,
-                                               curr_items=curr_items_tmp,
-                                               curr_deletes=0)
+                                               curr_items=curr_items_tmp)
             doc = self.docs.next(key)
             doc['key'] = key
             doc['bucket'] = self.ts.bucket

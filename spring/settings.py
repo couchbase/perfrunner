@@ -31,7 +31,6 @@ class WorkloadSettings(object):
         self.subdoc_workers = 0
         self.n1ql_workers = 0
 
-        self.operations = False
         self.fts_config = None
         self.fts_updates = 0
 

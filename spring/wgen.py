@@ -230,10 +230,7 @@ class KVWorker(Worker):
             cmd(*args)
 
     def run_condition(self, curr_ops):
-        if self.ws.operations:
-            return curr_ops.value < self.ws.items
-        else:
-            return curr_ops.value < self.ws.ops and not self.time_to_stop()
+        return curr_ops.value < self.ws.ops and not self.time_to_stop()
 
     def run(self, sid, lock, curr_ops, curr_items, deleted_items):
         if self.ws.throughput < float('inf'):

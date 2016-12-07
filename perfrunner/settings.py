@@ -447,111 +447,122 @@ class RebalanceSettings(object):
 
 class PhaseSettings(object):
 
-    CREATES = 0
-    READS = 0
-    UPDATES = 0
-    FTS_UPDATES = 0
-    DELETES = 0
-    CASES = 0
-    OPS = 0
-
-    THROUGHPUT = float('inf')
-    QUERY_THROUGHPUT = float('inf')
-    N1QL_THROUGHPUT = float('inf')
+    TIME = 3600 * 24
 
     DOC_GEN = 'basic'
 
-    ARRAY_SIZE = 10
-    NUM_CATEGORIES = 10 ** 6
-    NUM_REPLIES = 100
+    CREATES = 0
+    READS = 0
+    UPDATES = 0
+    DELETES = 0
+    CASES = 0
+    FTS_UPDATES = 0
+
+    OPS = 0
+
+    SEQ_READS = False
+    SEQ_UPDATES = False
+
+    ITERATIONS = 1
+
+    ASYNC = False
 
     ITEMS = 0
     EXISTING_ITEMS = 0
     SIZE = 2048
     EXPIRATION = 0
+
     WORKING_SET = 100
     WORKING_SET_ACCESS = 100
+
+    THROUGHPUT = float('inf')
+    QUERY_THROUGHPUT = float('inf')
+    N1QL_THROUGHPUT = float('inf')
 
     WORKERS = 0
     QUERY_WORKERS = 0
     N1QL_WORKERS = 0
     SPRING_WORKERS = 100
-    RANGE_DISTANCE = 10
-
-    SEQ_READS = False
-    SEQ_UPDATES = False
 
     N1QL_OP = 'read'
 
-    TIME = 3600 * 24
+    ARRAY_SIZE = 10
+    NUM_CATEGORIES = 10 ** 6
+    NUM_REPLIES = 100
+    RANGE_DISTANCE = 10
 
-    ASYNC = False
     PARALLEL_WORKLOAD = False
 
-    ITERATIONS = 1
-
     def __init__(self, options):
-        self.creates = int(options.get('creates', self.CREATES))
-        self.reads = int(options.get('reads', self.READS))
-        self.updates = int(options.get('updates', self.UPDATES))
-        self.fts_updates = int(options.get('fts_updates', self.FTS_UPDATES))
-        self.deletes = int(options.get('deletes', self.DELETES))
-        self.cases = int(options.get('cases', self.CASES))
-        self.ops = float(options.get('ops', self.OPS))
-        self.throughput = float(options.get('throughput', self.THROUGHPUT))
-        self.query_throughput = float(options.get('query_throughput',
-                                                  self.QUERY_THROUGHPUT))
-        self.n1ql_throughput = float(options.get('n1ql_throughput',
-                                                 self.N1QL_THROUGHPUT))
+        # Common settings
+        self.time = int(options.get('time', self.TIME))
 
+        # KV settings
         self.doc_gen = options.get('doc_gen', self.DOC_GEN)
-
-        self.array_size = int(options.get('array_size', self.ARRAY_SIZE))
-        self.num_categories = int(options.get('num_categories',
-                                              self.NUM_CATEGORIES))
-        self.num_replies = int(options.get('num_replies', self.NUM_REPLIES))
 
         self.size = int(options.get('size', self.SIZE))
         self.items = int(options.get('items', self.ITEMS))
-        self.existing_items = int(options.get('existing_items',
-                                              self.EXISTING_ITEMS))
+
+        self.creates = int(options.get('creates', self.CREATES))
+        self.reads = int(options.get('reads', self.READS))
+        self.updates = int(options.get('updates', self.UPDATES))
+        self.deletes = int(options.get('deletes', self.DELETES))
+        self.cases = int(options.get('cases', self.CASES))
+        self.fts_updates = int(options.get('fts_updates', self.FTS_UPDATES))
+
+        self.ops = float(options.get('ops', self.OPS))
+        self.throughput = float(options.get('throughput', self.THROUGHPUT))
+
         self.expiration = int(options.get('expiration', self.EXPIRATION))
         self.working_set = float(options.get('working_set', self.WORKING_SET))
         self.working_set_access = int(options.get('working_set_access',
                                                   self.WORKING_SET_ACCESS))
-
         self.workers = int(options.get('workers', self.WORKERS))
-        self.query_workers = int(options.get('query_workers',
-                                             self.QUERY_WORKERS))
-        self.n1ql_workers = int(options.get('n1ql_workers',
-                                            self.N1QL_WORKERS))
-        self.subdoc_workers = 0
-        self.spring_workers = int(options.get('spring_workers',
-                                              self.SPRING_WORKERS))
-        self.range_distance = int(options.get('range_distance',
-                                              self.RANGE_DISTANCE))
-
-        self.n1ql_op = options.get('n1ql_op', self.N1QL_OP)
-        if 'n1ql_queries' in options:
-            self.n1ql_queries = options.get('n1ql_queries').strip().split(',')
-        self.n1ql_gen = options.get('n1ql_gen')
+        self.async = bool(int(options.get('async', self.ASYNC)))
 
         self.seq_reads = self.SEQ_READS
         self.seq_updates = self.SEQ_UPDATES
 
+        self.iterations = int(options.get('iterations', self.ITERATIONS))
+
+        # SubDoc settings
+        self.subdoc_workers = 0
+
+        # Views settings
         self.ddocs = None
         self.index_type = None
         self.qparams = {}
+        self.query_workers = int(options.get('query_workers',
+                                             self.QUERY_WORKERS))
+        self.query_throughput = float(options.get('query_throughput',
+                                                  self.QUERY_THROUGHPUT))
 
-        self.time = int(options.get('time', self.TIME))
+        # N1QL settings
+        self.n1ql_gen = options.get('n1ql_gen')
 
-        self.async = bool(int(options.get('async', self.ASYNC)))
+        self.n1ql_workers = int(options.get('n1ql_workers', self.N1QL_WORKERS))
+        self.n1ql_op = options.get('n1ql_op', self.N1QL_OP)
+        self.n1ql_throughput = float(options.get('n1ql_throughput',
+                                                 self.N1QL_THROUGHPUT))
+        self.array_size = int(options.get('array_size', self.ARRAY_SIZE))
+        self.num_categories = int(options.get('num_categories',
+                                              self.NUM_CATEGORIES))
+        self.num_replies = int(options.get('num_replies', self.NUM_REPLIES))
+        self.range_distance = int(options.get('range_distance',
+                                              self.RANGE_DISTANCE))
+        if 'n1ql_queries' in options:
+            self.n1ql_queries = options.get('n1ql_queries').strip().split(',')
+
+        # 2i settings
+        self.existing_items = int(options.get('existing_items',
+                                              self.EXISTING_ITEMS))
+        self.spring_workers = int(options.get('spring_workers',
+                                              self.SPRING_WORKERS))
         self.parallel_workload = bool(int(options.get('parallel_workload',
                                                       self.PARALLEL_WORKLOAD)))
-        self.iterations = int(options.get('iterations', self.ITERATIONS))
 
+        # FTS settings
         self.fts_config = None
-        self.operations = bool(int(options.get('operations', False)))
 
     def define_queries(self, config):
         queries = []

@@ -36,6 +36,7 @@ time = 1200
 n1ql_gen = join
 n1ql_queries = unnest
 n1ql_workers = 720
+n1ql_batch_size = 10
 
 [n1ql-unnest]
 prepared = unnest_100

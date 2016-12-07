@@ -578,9 +578,11 @@ class ArrayIndexingDocument(ReverseLookupDocument):
 
 
 class ImportExportDocument(ReverseLookupDocument):
+
     """ImportExportDocument extends ReverseLookupDocument by adding
      25 fields with random size
     """
+
     OVERHEAD = 1022
 
     def next(self, key):
@@ -632,6 +634,7 @@ class ImportExportDocument(ReverseLookupDocument):
 
 
 class ImportExportDocumentArray(ImportExportDocument):
+
     """ImportExportDocumentArray extends ImportExportDocument by adding array docs as:
      25 fields of random size. Have an array with at least 10 items in five fields.
     """
@@ -645,7 +648,7 @@ class ImportExportDocumentArray(ImportExportDocument):
         if l < num:
             return [value] * 5
         scope = sorted(random.sample(range(l), num))
-        result = [value[0 if i == 0 else scope[i - 1]:i + scope[i]] for i in xrange(num)]
+        result = [value[0 if i == 0 else scope[i - 1]:i + scope[i]] for i in range(num)]
         return result
 
     def next(self, key):
@@ -704,6 +707,7 @@ class ImportExportDocumentArray(ImportExportDocument):
 
 
 class ImportExportDocumentNested(ImportExportDocument):
+
     """ImportExportDocumentNested extends ImportExportDocument by adding nested docs as:
      25 fields of random size. Nest each document. Five levels.
     """

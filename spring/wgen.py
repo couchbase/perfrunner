@@ -438,7 +438,7 @@ class ViewWorker(Worker):
             ddoc_name, view_name, query = self.new_queries.next(doc)
             self.cb.query(ddoc_name, view_name, query=query)
 
-    def run(self, sid, lock, curr_queries, curr_items, deleted_items):
+    def run(self, sid, lock, curr_ops, curr_items, deleted_items):
         self.cb.start_updater()
 
         if self.throughput < float('inf'):
@@ -449,13 +449,10 @@ class ViewWorker(Worker):
         self.sid = sid
         self.curr_items = curr_items
         self.deleted_items = deleted_items
-        self.curr_queries = curr_queries
 
         try:
             logger.info('Started: {}-{}'.format(self.NAME, self.sid))
             while not self.time_to_stop():
-                with lock:
-                    curr_queries.value += self.BATCH_SIZE
                 self.do_batch()
         except (KeyboardInterrupt, ValueFormatError, AttributeError) as e:
             logger.info('Interrupted: {}-{}, {}'.format(self.NAME, self.sid, e))
@@ -602,8 +599,7 @@ class N1QLWorker(Worker):
         elif self.ws.n1ql_op == 'rangeupdate':
             self.range_update()
 
-    def run(self, sid, lock, curr_queries, curr_items, _, cas_updated_items):
-
+    def run(self, sid, lock, curr_ops, curr_items, deleted_items, cas_updated_items):
         if self.throughput < float('inf'):
             self.target_time = float(self.BATCH_SIZE) * self.total_workers / \
                 self.throughput
@@ -613,13 +609,10 @@ class N1QLWorker(Worker):
         self.sid = sid
         self.curr_items = curr_items
         self.cas_updated_items = cas_updated_items
-        self.curr_queries = curr_queries
 
         try:
             logger.info('Started: {}-{}'.format(self.NAME, self.sid))
             while not self.time_to_stop():
-                with self.lock:
-                    curr_queries.value += self.BATCH_SIZE
                 self.do_batch()
         except (KeyboardInterrupt, ValueFormatError, AttributeError) as e:
             logger.info('Interrupted: {}-{}-{}'.format(self.NAME, self.sid, e))

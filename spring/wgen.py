@@ -453,7 +453,7 @@ class ViewWorker(Worker):
 
         try:
             logger.info('Started: {}-{}'.format(self.NAME, self.sid))
-            while curr_queries.value < self.ws.ops and not self.time_to_stop():
+            while not self.time_to_stop():
                 with lock:
                     curr_queries.value += self.BATCH_SIZE
                 self.do_batch()
@@ -602,8 +602,7 @@ class N1QLWorker(Worker):
         elif self.ws.n1ql_op == 'rangeupdate':
             self.range_update()
 
-    def run(self, sid, lock, curr_queries, curr_items, deleted_items,
-            cas_updated_items):
+    def run(self, sid, lock, curr_queries, curr_items, _, cas_updated_items):
 
         if self.throughput < float('inf'):
             self.target_time = float(self.BATCH_SIZE) * self.total_workers / \
@@ -618,7 +617,7 @@ class N1QLWorker(Worker):
 
         try:
             logger.info('Started: {}-{}'.format(self.NAME, self.sid))
-            while curr_queries.value < self.ws.ops and not self.time_to_stop():
+            while not self.time_to_stop():
                 with self.lock:
                     curr_queries.value += self.BATCH_SIZE
                 self.do_batch()

@@ -198,6 +198,29 @@ class RecoveryTest(RebalanceKVTest):
 
 class FailoverTest(RebalanceKVTest):
 
+    @with_delay
+    def rebalance(self):
+        clusters = self.cluster_spec.yield_clusters()
+        initial_nodes = self.test_config.cluster.initial_nodes
+        failed_nodes = self.rebalance_settings.failed_nodes
+
+        for (_, servers), initial_nodes in zip(clusters,
+                                               initial_nodes):
+            master = servers[0]
+
+            failed = servers[initial_nodes - failed_nodes:initial_nodes]
+
+            for host_port in failed:
+                if self.rebalance_settings.failover == 'hard':
+                    self.rest.fail_over(master, host_port)
+                else:
+                    self.rest.graceful_fail_over(master, host_port)
+                    self.monitor.monitor_rebalance(master)
+                self.rest.add_back(master, host_port)
+
+
+class FailoverDetectionTest(RebalanceKVTest):
+
     EXTRA_TIMEOUT = 30
 
     def check_auto_failover(self, master):

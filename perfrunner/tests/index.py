@@ -31,13 +31,13 @@ class IndexTest(PerfTest):
     def define_ddocs(self):
         for master in self.cluster_spec.yield_masters():
             for bucket in self.test_config.buckets:
-                for ddoc_name, ddoc in self.ddocs.iteritems():
+                for ddoc_name, ddoc in self.ddocs.items():
                     self.rest.create_ddoc(master, bucket, ddoc_name, ddoc)
 
     def build_index(self):
         for master in self.cluster_spec.yield_masters():
             for bucket in self.test_config.buckets:
-                for ddoc_name, ddoc in self.ddocs.iteritems():
+                for ddoc_name, ddoc in self.ddocs.items():
                     for view_name in ddoc['views']:
                         self.rest.query_view(master, bucket,
                                              ddoc_name, view_name,

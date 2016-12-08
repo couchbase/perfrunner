@@ -78,7 +78,7 @@ class SyncGen(object):
         try:
             self.client.append_multi(d, format=FMT_UTF8)
             # Data size accounting.
-            for value in d.itervalues():
+            for value in d.values():
                 self.size += len(value)
             self.appends += len(d)
 

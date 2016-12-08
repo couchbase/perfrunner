@@ -1,5 +1,5 @@
-import exceptions as exc
 import time
+from exceptions import KeyboardInterrupt
 
 from logger import logger
 
@@ -71,7 +71,7 @@ class PerfTest(object):
         if self.test_config.test_case.use_workers:
             self.worker_manager.terminate()
 
-        if exc_type != exc.KeyboardInterrupt:
+        if exc_type != KeyboardInterrupt:
             self.check_core_dumps()
 
             for master in self.cluster_spec.yield_masters():

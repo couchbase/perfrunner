@@ -18,7 +18,7 @@ class NSServer(Collector):
             # Index and N1QL nodes don't have stats in ns_server
             return None
 
-        for metric, values in samples['op']['samples'].iteritems():
+        for metric, values in samples['op']['samples'].items():
             metric = metric.replace('/', '_')
             stats[metric] = values[-1]  # only the most recent sample
         return stats

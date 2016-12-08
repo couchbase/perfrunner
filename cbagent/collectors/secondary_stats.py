@@ -11,7 +11,7 @@ class SecondaryStats(Collector):
         uri = "/pools/default/buckets/@index-{}/stats".format(bucket)
         samples = self.get_http(path=uri, server=server)
         stats = dict()
-        for metric, values in samples['op']['samples'].iteritems():
+        for metric, values in samples['op']['samples'].items():
             metric = metric.replace('/', '_')
             stats[metric] = values[-1]  # only the most recent sample
         return stats

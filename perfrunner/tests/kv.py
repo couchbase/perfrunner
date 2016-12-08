@@ -383,8 +383,8 @@ class ReplicationTest(PerfTest):
     def measure_latency(self):
         logger.info('Measuring replication latency')
         timings = []
-        found = lambda cb: [
-            v for v in cb.observe(item).value if v.flags != OBS_NOTFOUND
+        found = lambda client: [
+            v for v in client.observe(item).value if v.flags != OBS_NOTFOUND
         ]
         password = self.test_config.bucket.password
         for master in self.cluster_spec.yield_masters():
@@ -426,7 +426,7 @@ class RevABTest(FragmentationTest):
         random.shuffle(self.graph_keys)
 
     @with_stats
-    def load(self):
+    def load(self, *args):
         for target in self.target_iterator:
             host, port = target.node.split(':')
             conn = {'host': host, 'port': port, 'bucket': target.bucket}

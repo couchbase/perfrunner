@@ -84,10 +84,7 @@ class Numeric(Docgen):
         self.numeric_ranges = []
 
     def form_date(self):
-        '''
-
-          1636840, 1091227, 818420 are divisble of self.ranges
-        '''
+        # 1636840, 1091227, 818420 are divisible of self.ranges
         if self.count in [1636840, 1091227, 818420]:
             self.start_yr += 1
         self.count += 1
@@ -118,7 +115,7 @@ class Numeric(Docgen):
                 print(upper, ':', lower, ' max_min')
             tmpcount += 1
 
-    def insert_cb(self, cb):
+    def insert_cb(self, cb, *args):
         tmpcount = 0
         for r in range(self.ranges):
             key = hex(r)[2:]

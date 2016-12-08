@@ -58,7 +58,7 @@ class XdcrTest(PerfTest):
             self.monitor.monitor_xdcr_queues(target.node, target.bucket)
 
     @with_stats
-    def access(self):
+    def access(self, *args):
         super(XdcrTest, self).timer()
 
     def configure_wan(self):
@@ -141,7 +141,7 @@ class UniDirXdcrTest(XdcrTest):
                                               self.test_config,
                                               prefix='symmetric')
 
-    def load(self):
+    def load(self, *args):
         load_settings = self.test_config.load_settings
         log_phase('load phase', load_settings)
         src_target_iterator = SrcTargetIterator(self.cluster_spec,

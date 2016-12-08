@@ -200,7 +200,7 @@ class Monitor(RestHelper):
         logger.info(
             "Waiting for the following indexes to be ready: {}".format(indexes))
 
-        indexes_ready = [0 for i in indexes]
+        indexes_ready = [0 for _ in indexes]
 
         def get_index_status(json2i, index):
             """

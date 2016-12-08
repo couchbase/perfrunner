@@ -3,7 +3,7 @@ import time
 from perfrunner.tests.secondary import InitialandIncrementalSecondaryIndexTest
 
 
-class InitialandIncrementalSecondaryIndexTestDaily(InitialandIncrementalSecondaryIndexTest):
+class InitialAndIncrementalSecondaryIndexTestDaily(InitialandIncrementalSecondaryIndexTest):
     def run(self):
         self.run_load_for_2i()
         self.wait_for_persistence()

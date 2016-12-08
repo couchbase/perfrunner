@@ -5,10 +5,9 @@ from random import choice, randint, shuffle
 from threading import Thread
 from time import sleep, time
 
-import couchbase.subdocument as SD
 import requests
 import urllib3
-from couchbase import experimental
+from couchbase import experimental, subdocument
 from couchbase.bucket import Bucket
 from couchbase.exceptions import (
     ConnectError,
@@ -157,14 +156,14 @@ class SubDocGen(CBGen):
 
     def read(self, key, subdoc_fields):
         for field in subdoc_fields.split(','):
-            self.client.lookup_in(key, SD.get(field))
+            self.client.lookup_in(key, subdocument.get(field))
 
     def update(self, key, subdoc_fields, size):
         newdoc = Document(size)
         alphabet = newdoc._build_alphabet(key)
         for field in subdoc_fields.split(','):
             new_field_value = getattr(newdoc, '_build_' + field)(alphabet)
-            self.client.mutate_in(key, SD.upsert(field, new_field_value))
+            self.client.mutate_in(key, subdocument.upsert(field, new_field_value))
 
     def counter(self, key, subdoc_counter_fields):
         for field in subdoc_counter_fields.split(','):
@@ -282,7 +281,7 @@ class FtsGen(CBGen):
             index += 2
         return itertools.cycle(keytypes)
 
-    def prepare_query_list(self, type='query'):
+    def prepare_query_list(self):
         with open(self.settings.query_file, 'r') as tfile:
             for line in tfile:
                 temp_query = {}
@@ -292,7 +291,7 @@ class FtsGen(CBGen):
                     from collections import defaultdict
                     keytypes = FtsGen.process_conj_disj(query_type.split('_'))
                     temp_query = defaultdict(list)
-                    tbool = {v: {k: None} for k, v in self.bool_map.iteritems()}
+                    tbool = {v: {k: None} for k, v in self.bool_map.items()}
 
                     for terms in line.split():
 
@@ -300,7 +299,7 @@ class FtsGen(CBGen):
                         temp_query[tmp_key].append({"field": self.settings.field, "term": terms})
 
                     if query_type == '1_conjuncts_2_disjuncts':
-                        for k, v in self.bool_map.iteritems():
+                        for k, v in self.bool_map.items():
                             tbool[v][k] = temp_query[k]
                         temp_query = tbool
 
@@ -388,9 +387,10 @@ class ElasticGen(FtsGen):
                 tmp_query_txt = {}
                 query_type = self.settings.type
                 if query_type == 'fuzzy':
-                    tmp_fuzzy = {}
-                    tmp_fuzzy['fuzziness'] = int(freq)
-                    tmp_fuzzy['value'] = term
+                    tmp_fuzzy = {
+                        'fuzziness': int(freq),
+                        'value': term,
+                    }
                     tmp_query_txt[self.settings.field] = tmp_fuzzy
                     tmp_query[query_type] = tmp_query_txt
 
@@ -414,7 +414,7 @@ class ElasticGen(FtsGen):
                     tmp_query[query_type] = tmp_query_txt
 
                 elif query_type in ['2_conjuncts', '2_disjuncts', '1_conjuncts_2_disjuncts']:
-                    tbool = {v: [] for k, v in self.bool_map.iteritems()}
+                    tbool = {v: [] for k, v in self.bool_map.items()}
                     keytypes = ElasticGen.process_conj_disj(query_type.split('_'))
                     for term in line.strip().split():
                         key = self.bool_map[keytypes.next()]

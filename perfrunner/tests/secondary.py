@@ -67,8 +67,8 @@ class SecondaryIndexTest(PerfTest):
         # Else active_indexes is the same as indexes specified in test config
         self.active_indexes = self.indexes
         num_partitions = None
-        for index, field_where in self._get_where_map().iteritems():
-            where_list = field_where.itervalues().next()
+        for index, field_where in self._get_where_map().items():
+            where_list = field_where.values().next()
             num_partitions = len(where_list)
             break
         if num_partitions:
@@ -116,7 +116,7 @@ class SecondaryIndexTest(PerfTest):
             # as either JSON or Python Dict.
             field_pivots = eval(getattr(self.test_config.secondaryindex_settings,
                                         index_partition_name))
-            for field, pivots in field_pivots.iteritems():
+            for field, pivots in field_pivots.items():
                 pivots = [None] + pivots + [None]
                 partitions = []
                 for i in range(len(pivots) - 1):
@@ -285,8 +285,8 @@ class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSeco
         for _, servers in self.cluster_spec.yield_clusters():
             master = servers[0]
         self.monitor.monitor_rebalance(master)
-        initial_nodes[0] = initial_nodes[0] + 1
-        nodes_after[0] = nodes_after[0] + 1
+        initial_nodes[0] += 1
+        nodes_after[0] += 1
         self.rebalance(initial_nodes[0], nodes_after[0])
         from_ts, to_ts = self.build_incrindex()
         time_elapsed = (to_ts - from_ts) / 1000.0

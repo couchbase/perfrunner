@@ -39,8 +39,8 @@ class DCPThroughputTest(DCPTest):
 
     def get_throughput(self):
         # get throughput from OUTPUT_FILE for posting to showfast
-        with open(self.OUTPUT_FILE) as file:
-            output_text = file.read()
+        with open(self.OUTPUT_FILE) as fh:
+            output_text = fh.read()
             groups = re.search(
                 r"Throughput = [^\d]*(\d*).*?",
                 output_text)

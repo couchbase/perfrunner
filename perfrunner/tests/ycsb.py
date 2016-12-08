@@ -34,19 +34,16 @@ class YCSBWorker(object):
         self.ycsb_logfiles.append(log_file)
         self.run_cmd = self.test.create_load_cmd(action="run", mypid=mypid)
         self.run_cmd += ' -p exportfile={}'.format(log_file)
-        try:
-            while flag and not self.time_to_stop():
-                self.remote.ycsb_load_run(self.ycsb.path,
-                                          self.run_cmd,
-                                          log_path=self.ycsb.log_path,
-                                          mypid=mypid)
-                flag = False
-        except Exception as e:
-            raise YCSBException(' Error while running YCSB load' + e)
+
+        while flag and not self.time_to_stop():
+            self.remote.ycsb_load_run(self.ycsb.path,
+                                      self.run_cmd,
+                                      log_path=self.ycsb.log_path,
+                                      mypid=mypid)
+            flag = False
 
     def pattern(self, line):
         ttype, measure, value = map(str.strip, line.split(','))
-        key = ''
         if ttype == "[OVERALL]" and measure == "Throughput(ops/sec)":
             key = 'Throughput'
         elif ttype == "[READ]" and measure == "95thPercentileLatency(us)":
@@ -158,7 +155,7 @@ class YCSBTest(YCSBdata):
                     self.rest.exec_n1ql_statement(host, statement)
                 break
 
-    def load(self):
+    def load(self, *args):
         try:
             logger.info('running YCSB for loading data')
             cmd = self.create_load_cmd()
@@ -167,7 +164,7 @@ class YCSBTest(YCSBdata):
             raise YCSBException('YCSB error while loading data' + e.message)
 
     @with_stats
-    def access_bg(self):
+    def access_bg(self, *args):
         self.workload = YCSBWorker(self.test_config.access_settings, self.remote, self, self.ycsb)
         self.workload.run()
 

@@ -29,7 +29,7 @@ class ViewQueryGen(object):
         self.params = dict(self.PARAMS, **params)
 
         self.view_sequence = []
-        for ddoc_name, ddoc in ddocs.iteritems():
+        for ddoc_name, ddoc in ddocs.items():
             for view_name in ddoc['views']:
                 self.view_sequence += \
                     [(ddoc_name, view_name)] * self.QUERIES_PER_VIEW[view_name]

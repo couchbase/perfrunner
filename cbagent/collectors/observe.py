@@ -66,8 +66,8 @@ class ObserveLatency(Latency):
 
     @timeit
     def _wait_until_replicated(self, client, key):
-        found = lambda client: [
-            v for v in client.observe(key).value if v.flags != OBS_NOTFOUND
+        found = lambda _client: [
+            v for v in _client.observe(key).value if v.flags != OBS_NOTFOUND
         ]
         while len(found(client)) != 2:
             sleep(0.002)

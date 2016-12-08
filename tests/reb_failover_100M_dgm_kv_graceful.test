@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.rebalance.FailoverTest
+test = perfrunner.tests.rebalance.GracefulFailoverTest
 title = Graceful failover (ms), 4 -> 3, 1 bucket x 100M x 2KB, 10K ops/sec
 component = reb
 category = failover
@@ -32,6 +32,5 @@ working_set_access = 98
 
 [rebalance]
 failed_nodes = 1
-failover = graceful
-start_after = 900
+start_after = 600
 stop_after = 300

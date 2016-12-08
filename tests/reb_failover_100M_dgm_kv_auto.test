@@ -1,6 +1,6 @@
 [test_case]
-test = perfrunner.tests.rebalance.FailureDetectionTest
-title = Failure detection time (s), 4 -> 3, 1 bucket x 100M x 2KB, 10K ops/sec
+test = perfrunner.tests.rebalance.AutoFailoverTest
+title = Auto failover (ms), 4 -> 3, 1 bucket x 100M x 2KB, 10K ops/sec
 component = reb
 category = failover
 
@@ -33,5 +33,5 @@ working_set_access = 98
 
 [rebalance]
 failed_nodes = 1
-start_after = 900
+start_after = 600
 stop_after = 300

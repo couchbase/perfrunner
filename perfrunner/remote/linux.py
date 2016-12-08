@@ -454,3 +454,24 @@ class RemoteLinux(Remote):
                     '/opt/couchbase/var/lib/couchbase/logs/info.log', quiet=True)
             if not r.return_code:
                 return r.strip().split(',')[1]
+
+    def detect_hard_failover_start(self, host):
+        with settings(host_string=host):
+            r = run('grep "Starting failing" '
+                    '/opt/couchbase/var/lib/couchbase/logs/info.log', quiet=True)
+            if not r.return_code:
+                return r.strip().split(',')[1]
+
+    def detect_graceful_failover_start(self, host):
+        with settings(host_string=host):
+            r = run('grep "Starting vbucket moves" '
+                    '/opt/couchbase/var/lib/couchbase/logs/info.log', quiet=True)
+            if not r.return_code:
+                return r.strip().split(',')[1]
+
+    def detect_failover_end(self, host):
+        with settings(host_string=host):
+            r = run('grep "Failed over \'" '
+                    '/opt/couchbase/var/lib/couchbase/logs/info.log', quiet=True)
+            if not r.return_code:
+                return r.strip().split(',')[1]

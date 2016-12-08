@@ -198,6 +198,31 @@ class RecoveryTest(RebalanceKVTest):
 
 class FailoverTest(RebalanceKVTest):
 
+    @staticmethod
+    def convert_time(time_str):
+        t = dateutil.parser.parse(time_str)
+        return time.mktime(t.timetuple())
+
+    def run(self):
+        super(FailoverTest, self).run()
+
+        self.report_kpi()
+
+
+class HardFailoverTest(FailoverTest):
+
+    def _report_kpi(self):
+        master_node = self.master_node.split(':')[0]
+
+        t_start = self.remote.detect_hard_failover_start(master_node)
+        t_end = self.remote.detect_failover_end(master_node)
+
+        if t_end and t_start:
+            t_start = self.convert_time(t_start)
+            t_end = self.convert_time(t_end)
+            delta = int(1000 * (t_end - t_start))  # s -> ms
+            self.reporter.post_to_sf(delta)
+
     @with_delay
     def rebalance(self):
         clusters = self.cluster_spec.yield_clusters()
@@ -211,30 +236,22 @@ class FailoverTest(RebalanceKVTest):
             failed = servers[initial_nodes - failed_nodes:initial_nodes]
 
             for host_port in failed:
-                if self.rebalance_settings.failover == 'hard':
-                    self.rest.fail_over(master, host_port)
-                else:
-                    self.rest.graceful_fail_over(master, host_port)
-                    self.monitor.monitor_rebalance(master)
-                self.rest.add_back(master, host_port)
+                self.rest.fail_over(master, host_port)
 
 
-class FailoverDetectionTest(RebalanceKVTest):
+class GracefulFailoverTest(FailoverTest):
 
-    EXTRA_TIMEOUT = 30
+    def _report_kpi(self):
+        master_node = self.master_node.split(':')[0]
 
-    def check_auto_failover(self, master):
-        timeout = self.test_config.cluster.auto_failover_timeout
+        t_start = self.remote.detect_graceful_failover_start(master_node)
+        t_end = self.remote.detect_failover_end(master_node)
 
-        time.sleep(timeout + self.EXTRA_TIMEOUT)
-        time_str = self.remote.detect_auto_failover(master.split(':')[0])
-        if time_str is not None:
-            t_failover = dateutil.parser.parse(time_str)
-            t_failover = time.mktime(t_failover.timetuple())
-            return t_failover
-
-    def _report_kpi(self, delta):
-        self.reporter.post_to_sf(delta)
+        if t_end and t_start:
+            t_start = self.convert_time(t_start)
+            t_end = self.convert_time(t_end)
+            delta = int(1000 * (t_end - t_start))  # s -> ms
+            self.reporter.post_to_sf(delta)
 
     @with_delay
     def rebalance(self):
@@ -244,17 +261,67 @@ class FailoverDetectionTest(RebalanceKVTest):
 
         for (_, servers), initial_nodes in zip(clusters,
                                                initial_nodes):
-            master = servers[0].split(':')[0]
+            master = servers[0]
+
             failed = servers[initial_nodes - failed_nodes:initial_nodes]
 
-            t_failure = time.time()
+            for host_port in failed:
+                self.rest.graceful_fail_over(master, host_port)
+                self.monitor.monitor_rebalance(master)
+
+
+class AutoFailoverTest(FailoverTest):
+
+    def _report_kpi(self):
+        master_node = self.master_node.split(':')[0]
+
+        t_start = self.remote.detect_hard_failover_start(master_node)
+        t_end = self.remote.detect_failover_end(master_node)
+
+        if t_end and t_start:
+            t_start = self.convert_time(t_start)
+            t_end = self.convert_time(t_end)
+            delta = int(1000 * (t_end - t_start))  # s -> ms
+            self.reporter.post_to_sf(delta)
+
+    @with_delay
+    def rebalance(self):
+        clusters = self.cluster_spec.yield_clusters()
+        initial_nodes = self.test_config.cluster.initial_nodes
+        failed_nodes = self.rebalance_settings.failed_nodes
+
+        for (_, servers), initial_nodes in zip(clusters,
+                                               initial_nodes):
+            failed = servers[initial_nodes - failed_nodes:initial_nodes]
+
             for host_port in failed:
                 self.remote.shutdown(host_port.split(':')[0])
 
-            t_failover = self.check_auto_failover(master)
-            if t_failover:
-                delta = round(t_failover - t_failure, 1)
-                self.report_kpi(delta)
+
+class FailureDetectionTest(FailoverTest):
+
+    def _report_kpi(self):
+        master_node = self.master_node.split(':')[0]
+        t_failover = self.remote.detect_auto_failover(master_node)
+
+        if t_failover:
+            t_failover = self.convert_time(t_failover)
+            delta = round(t_failover - self.t_failure, 1)
+            self.reporter.post_to_sf(delta)
+
+    @with_delay
+    def rebalance(self):
+        clusters = self.cluster_spec.yield_clusters()
+        initial_nodes = self.test_config.cluster.initial_nodes
+        failed_nodes = self.rebalance_settings.failed_nodes
+
+        for (_, servers), initial_nodes in zip(clusters,
+                                               initial_nodes):
+            failed = servers[initial_nodes - failed_nodes:initial_nodes]
+
+            self.t_failure = time.time()
+            for host_port in failed:
+                self.remote.shutdown(host_port.split(':')[0])
 
 
 class RebalanceWithQueriesTest(QueryTest, RebalanceTest):

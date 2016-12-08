@@ -201,7 +201,7 @@ class FailoverTest(RebalanceKVTest):
     @staticmethod
     def convert_time(time_str):
         t = dateutil.parser.parse(time_str)
-        return time.mktime(t.timetuple())
+        return float(t.strftime('%s.%f'))
 
     def run(self):
         super(FailoverTest, self).run()

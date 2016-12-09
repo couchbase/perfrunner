@@ -3,8 +3,6 @@ perfrunner
 
 [![codebeat badge](https://codebeat.co/badges/7870f2d2-4a41-477e-af30-d9a8cf097626)](https://codebeat.co/projects/github-com-couchbase-perfrunner)
 
-![](docs/perf_infra.png)
-
 Installation
 ------------
 
@@ -18,18 +16,20 @@ Before using perfrunner you should install the requirements listed in the requir
 
 Note, you should be able to install both client and server system dependencies using the Ansible playbooks (namely, clients.yml and init.yml).
 
-First clone the perfrunner repo with the command below.
+First clone the perfrunner repo with the command below:
 
     git clone https://github.com/couchbaselabs/perfrunner.git
 
-Once inside the perfrunner directory create a virtual environment for all of the perfrunner dependencies and install all of the dependencies so that you can run perfrunner.
+Once inside the perfrunner directory create a virtual environment for all of the perfrunner dependencies and install all of the dependencies so that you can run perfrunner:
 
     make
 
-To run DCP test, one more step required to build DCP go binary.
-As DCP client is go client, make sure that perfrunner is placed inside $GOPATH/src, see also https://golang.org/doc/code.html
+To run DCP tests, one more step is required to build DCP client:
 
     make dcptest
+
+As DCP client is a Go application, make sure that perfrunner is placed inside $GOPATH/src.
+See also [How to Write Go Code](https://golang.org/doc/code.html).
 
 Cluster installation and setup
 ------------------------------
@@ -64,7 +64,7 @@ With `--remote` flag remote workers will be used as workload generators.
 Unit tests
 ----------
 
-Just run the test target.
+Just run the test target:
 
     make test
 

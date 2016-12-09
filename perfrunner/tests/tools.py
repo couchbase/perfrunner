@@ -294,9 +294,7 @@ class CbExportImportTest(BackupRestoreTest):
         if self.test_config.export_import_settings.format == 'lines':
             self.convert_json_in_csv()
             self.flush_buckets()
-
             self.import_data('csv', '')
-
             self.report_kpi("Import CSV")
 
     def convert_json_in_csv(self):
@@ -318,6 +316,29 @@ class CbExportImportTest(BackupRestoreTest):
                 output.writerow(row.values())
 
 
+class CbImportCETest(CbExportImportTest):
+
+    """
+    Import CSV Data with cbtransfer (CE version)
+    """
+
+    @with_stats
+    def import_csv_cbtransfer(self):
+        t0 = time.time()
+        self.data_size = local.cbtransfer_import_data(
+            master_node=self.master_node,
+            cluster_spec=self.cluster_spec,
+            bucket='bucket-1')
+        self.spent_time = time.time() - t0
+
+        logger.info('Import completed in {:.1f} sec, Import size is {} GB'
+                    .format(self.spent_time, self.data_size / 2 ** 30))
+
+    def run(self):
+        self.import_csv_cbtransfer()
+        self.report_kpi("CE Import CSV")
+
+
 class CbImportSampleTest(BackupRestoreTest):
 
     """
@@ -327,9 +348,10 @@ class CbImportSampleTest(BackupRestoreTest):
     @with_stats
     def import_sample_data(self):
         t0 = time.time()
+        edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
         local.import_sample_data(master_node=self.master_node,
                                  cluster_spec=self.cluster_spec,
-                                 bucket='bucket-1')
+                                 bucket='bucket-1', edition=edition)
         self.spent_time = time.time() - t0
 
         import_file = "{}/../import/beer-sample.zip".\

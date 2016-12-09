@@ -159,7 +159,7 @@ def import_data(master_node, cluster_spec, tp='json', frmt=None, bucket=''):
     logger.info('import from: {}'.format(import_file))
 
     cmd = \
-        './opt/couchbase/bin/cbimport {} -c http://{} --username {} --password {} ' \
+        './opt/couchbase/bin/cbimport {} -c http://{} -u {} -p {} ' \
         '--dataset file://{} -b {} -g "#MONO_INCR#" -l LOG -t 16' \
         .format(tp, master_node, cluster_spec.rest_credentials[0],
                 cluster_spec.rest_credentials[1], import_file, bucket)
@@ -170,24 +170,47 @@ def import_data(master_node, cluster_spec, tp='json', frmt=None, bucket=''):
     local(cmd, capture=False)
 
 
-def import_sample_data(master_node, cluster_spec, bucket=''):
+def import_sample_data(master_node, cluster_spec, bucket='', edition='EE'):
     """
     To generate sample zip with 60m files we need ~10 hours and 250 G of disk.
     Please use generate_samples.py tool to generate and put it under
-    cluster_spec.config.get('storage', 'backup')/../import folder
+    /data/import/ folder
     """
-    import_file = "{}/../import/beer-sample.zip".format(
-        cluster_spec.config.get('storage', 'backup'))
+    import_file = "/data/import/beer-sample.zip"
 
     logger.info('import from: {}'.format(import_file))
-
-    cmd = \
-        './opt/couchbase/bin/cbimport json -c http://{} --username {} --password {} ' \
-        '--dataset {} -b {} -g "#MONO_INCR#" -l LOG -t 16 -f sample' \
-        .format(master_node, cluster_spec.rest_credentials[0],
-                cluster_spec.rest_credentials[1], import_file, bucket)
+    if edition == 'EE':
+        cmd = \
+            './opt/couchbase/bin/cbimport json -c http://{} -u {} ' \
+            '-p {} -d {} -b {} -g "#MONO_INCR#" -l LOG -t 16 -f sample' \
+            .format(master_node, cluster_spec.rest_credentials[0],
+                    cluster_spec.rest_credentials[1], import_file, bucket)
+    else:
+        # MB-21945 in 4.7
+        cmd = \
+            './opt/couchbase/bin/cbdocloader -c http://{} -u {} -p {} -b {} -m 40000 -d {}' \
+            .format(master_node, cluster_spec.rest_credentials[0],
+                    cluster_spec.rest_credentials[1], bucket, import_file)
     logger.info('Running: {}'.format(cmd))
     local(cmd, capture=False)
+
+
+def cbtransfer_import_data(master_node, cluster_spec, bucket=''):
+    bf = "/data/json_lines_ce"
+    files = local("ls {} | grep export_csv".format(bf), capture=True).split()
+
+    logger.info('import from: {}/{}'.format(bf, files))
+    size = 0
+    for f in files:
+        cmd = \
+            './opt/couchbase/bin/cbtransfer {}/{} http://{} -u {} -p {} -B {}' \
+            .format(bf, f, master_node, cluster_spec.rest_credentials[0],
+                    cluster_spec.rest_credentials[1], bucket)
+
+        logger.info('Running: {}'.format(cmd))
+        local(cmd, capture=False)
+        size += os.path.getsize("{}/{}".format(bf, f))
+    return size
 
 
 def run_cbc_pillowfight(host, bucket, password,

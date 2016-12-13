@@ -24,9 +24,11 @@ nose:
 
 test: nose pep8
 
-
 dcptest: vendor-sync
 	go build ./go/dcptest
+
+kvgen: vendor-sync
+	go build ./go/kvgen
 
 vendor-sync: go-tools
 	${GOVENDOR} sync

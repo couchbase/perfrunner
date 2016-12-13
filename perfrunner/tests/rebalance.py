@@ -8,7 +8,7 @@ from logger import logger
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import log_phase, server_group
 from perfrunner.tests import PerfTest
-from perfrunner.tests.query import QueryTest
+from perfrunner.tests.views import QueryTest
 from perfrunner.tests.xdcr import (
     DestTargetIterator,
     UniDirXdcrTest,

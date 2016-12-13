@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.index.InitialAndIncrementalIndexTest
+test = perfrunner.tests.views.InitialAndIncrementalIndexTest
 title = 1 bucket x 20M x 2KB, non-DGM, 4 x 4 views, no mutations
 component = index
 

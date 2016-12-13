@@ -26,7 +26,7 @@ test: nose pep8
 
 
 dcptest: vendor-sync
-	go build -o dcptest go/dcptest/main.go
+	go build ./go/dcptest
 
 vendor-sync: go-tools
 	${GOVENDOR} sync
@@ -36,4 +36,3 @@ go-tools:
 
 clean-dcptest:
 	rm -f dcptest
-

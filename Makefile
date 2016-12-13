@@ -11,8 +11,8 @@ build:
 	${ENV}/bin/python setup.py install
 	pwd > ${ENV}/lib/${PYTHON}/site-packages/perfrunner.pth
 
-clean: clean-dcptest
-	rm -fr build perfrunner.egg-info dist
+clean:
+	rm -fr build perfrunner.egg-info dist dcptest kvgen
 	find . -name '*.pyc' -o -name '*.pyo' | xargs rm -f
 
 pep8:
@@ -35,6 +35,3 @@ vendor-sync: go-tools
 
 go-tools:
 	go get -u github.com/kardianos/govendor
-
-clean-dcptest:
-	rm -f dcptest

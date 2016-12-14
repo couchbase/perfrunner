@@ -168,6 +168,22 @@ class Monitor(RestHelper):
                 unhealthy_nodes
             ))
 
+    def monitor_indexing(self, host_port):
+        logger.info('Monitoring indexing progress')
+
+        pending_docs = 1
+        while pending_docs:
+            time.sleep(self.POLLING_INTERVAL_INDEXING * 5)
+
+            pending_docs = 0
+            stats = self.get_gsi_stats(host_port)
+            for metric, value in stats.items():
+                if 'num_docs_queued' in metric or 'num_docs_pending' in metric:
+                    pending_docs += value
+            logger.info('Pending docs: {:,}'.format(pending_docs))
+
+        logger.info('Indexing completed')
+
     def monitor_index_state(self, host, index_name=None):
         logger.info('Monitoring index state')
 

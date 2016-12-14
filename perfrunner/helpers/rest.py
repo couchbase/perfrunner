@@ -139,6 +139,34 @@ class RestHelper(object):
 
         return self.get(url=api).json()
 
+    def get_gsi_stats(self, host_port):
+        host = host_port.replace('8091', '9102')
+        api = 'http://{}/stats'.format(host)
+
+        return self.get(url=api).json()
+
+    def create_index(self, host_port, bucket, name, field, storage='memdb'):
+        host = host_port.replace('8091', '9102')
+        api = 'http://{}/createIndex'.format(host)
+        data = {
+            'index': {
+                'bucket': bucket,
+                'using': storage,
+                'name': name,
+                'secExprs': ['`{}`'.format(field)],
+                'exprType': 'N1QL',
+                'isPrimary': False,
+                'where': '',
+                'deferred': False,
+                'partitionKey': '',
+                'partitionScheme': 'SINGLE',
+            },
+            'type': 'create',
+            'version': 1,
+        }
+        logger.info('Creating index {}'.format(misc.pretty_dict(data)))
+        self.post(url=api, data=json.dumps(data))
+
     def set_services(self, host_port, services):
         logger.info('Configuring services on master node {}: {}'
                     .format(host_port, misc.pretty_dict(services)))

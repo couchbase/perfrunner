@@ -223,3 +223,12 @@ def run_dcptest_script(test):
                                                            node=test.master_node)
     with shell_env(CBAUTH_REVRPC_URL=cbauth_path):
         local(command, capture=False)
+
+
+def run_kvgen(hostname, num_docs, prefix):
+    cmd = './kvgen -hostname {} -docs {} -prefix {}'.format(hostname,
+                                                            num_docs,
+                                                            prefix)
+    logger.info('Running: {}'.format(cmd))
+    with shell_env(GOGC='300'):
+        local(cmd, capture=False)

@@ -102,7 +102,7 @@ class CbAgent(object):
             'interval': test.test_config.stats_settings.interval,
             'secondary_statsfile': test.test_config.stats_settings.secondary_statsfile,
             'buckets': buckets,
-            'indexes': test.test_config.secondaryindex_settings.indexes,
+            'indexes': test.test_config.gsi_settings.indexes,
             'hostnames': hostnames,
             'monitored_processes': test.test_config.stats_settings.monitored_processes,
         })()

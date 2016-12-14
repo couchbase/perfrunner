@@ -34,24 +34,23 @@ class SecondaryIndexTest(PerfTest):
     def __init__(self, *args):
         super(SecondaryIndexTest, self).__init__(*args)
 
-        """self.test_config.secondaryindex_settings"""
-        self.secondaryindex_settings = None
+        self.gsi_settings = None
         self.index_nodes = None
         self.index_fields = None
         self.bucket = None
         self.indexes = []
         self.secondaryDB = None
-        self.configfile = self.test_config.secondaryindex_settings.cbindexperf_configfile
-        self.init_num_connections = self.test_config.secondaryindex_settings.init_num_connections
-        self.step_num_connections = self.test_config.secondaryindex_settings.step_num_connections
-        self.max_num_connections = self.test_config.secondaryindex_settings.max_num_connections
+        self.configfile = self.test_config.gsi_settings.cbindexperf_configfile
+        self.init_num_connections = self.test_config.gsi_settings.init_num_connections
+        self.step_num_connections = self.test_config.gsi_settings.step_num_connections
+        self.max_num_connections = self.test_config.gsi_settings.max_num_connections
 
-        if self.test_config.secondaryindex_settings.db == 'moi':
+        if self.test_config.gsi_settings.db == 'moi':
             self.secondaryDB = 'memdb'
         logger.info('secondary storage DB..{}'.format(self.secondaryDB))
 
-        self.indexes = self.test_config.secondaryindex_settings.name.split(',')
-        self.index_fields = self.test_config.secondaryindex_settings.field.split(",")
+        self.indexes = self.test_config.gsi_settings.name.split(',')
+        self.index_fields = self.test_config.gsi_settings.field.split(",")
 
         # Get first cluster, its index nodes, and first bucket
         (cluster_name, servers) = \
@@ -106,15 +105,15 @@ class SecondaryIndexTest(PerfTest):
         # unbounded.
         for index_name, field in zip(self.indexes, self.index_fields):
             index_partition_name = "index_{}_partitions".format(index_name)
-            # check that secondaryindex_settings.index_blah_partitions exists.
-            if not hasattr(self.test_config.secondaryindex_settings,
+            # check that gsi_settings.index_blah_partitions exists.
+            if not hasattr(self.test_config.gsi_settings,
                            index_partition_name):
                 continue
             # Value of index_{}_partitions should be a string that resembles a
             # Python dict instead of a JSON due to the support for tuple as
             # keys. However, at the moment the same string can be interpretted
             # as either JSON or Python Dict.
-            field_pivots = eval(getattr(self.test_config.secondaryindex_settings,
+            field_pivots = eval(getattr(self.test_config.gsi_settings,
                                         index_partition_name))
             for field, pivots in field_pivots.items():
                 pivots = [None] + pivots + [None]

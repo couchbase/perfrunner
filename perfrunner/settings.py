@@ -207,9 +207,9 @@ class TestConfig(Config):
         return IndexSettings(options)
 
     @property
-    def secondaryindex_settings(self):
+    def gsi_settings(self):
         options = self._get_options_as_dict('secondary')
-        return SecondaryIndexSettings(options)
+        return GSISettings(options)
 
     @property
     def dcp_settings(self):
@@ -648,7 +648,7 @@ class IndexSettings(object):
         return str(self.__dict__)
 
 
-class SecondaryIndexSettings(object):
+class GSISettings(object):
 
     NAME = 'noname'
     FIELD = 'nofield'

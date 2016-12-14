@@ -13,7 +13,7 @@ class SecondaryLatencyStats(Collector):
             with open(self.secondary_statsfile, 'rb') as fh:
                 try:
                     next(fh).decode()
-                    fh.seek(-400, 2)
+                    fh.seek(-200, 2)
                     last = fh.readlines()[-1].decode()
                     duration = last.split(',')[-1]
                     stats = {}
@@ -22,7 +22,7 @@ class SecondaryLatencyStats(Collector):
                     latency_key = duration.split(':')[0]
                     latency_key = latency_key.strip()
                     stats[latency_key] = int(latency)
-                except StopIteration:
+                except (StopIteration, IOError):
                     pass
         return stats
 

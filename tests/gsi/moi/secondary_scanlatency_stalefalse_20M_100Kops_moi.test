@@ -31,8 +31,7 @@ size = 1024
 spring_workers = 100
 
 [secondary]
-name = myindex
-field = email
+indexes = myindex:email
 stale = false
 db = moi
 cbindexperf_configfile = tests/gsi/moi/config/config_scanlatency_sessionconsistent_moi.json

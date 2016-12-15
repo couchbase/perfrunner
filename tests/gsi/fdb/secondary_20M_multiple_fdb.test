@@ -22,8 +22,7 @@ size = 1024
 workers = 20
 
 [secondary]
-name = myindex1,myindex2,myindex3,myindex4,myindex5
-field = alt_email,city,name,coins,achievements
+name = myindex1:alt_email,myindex2:city,myindex3:name,myindex4:coins,myindex5:achievements
 indexer.settings.storage_mode = forestdb
 indexer.settings.gc_percent = 200
 indexer.settings.max_cpu_percent = 2400

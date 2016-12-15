@@ -24,8 +24,7 @@ size = 1024
 workers = 20
 
 [secondary]
-name = myindex1,myindex2,myindex3,myindex4,myindex5
-field = alt_email,city,name,coins,achievements
+name = myindex1:alt_email,myindex2:city,myindex3:name,myindex4:coins,myindex5:achievements
 cbindexperf_configfile = tests/gsi/fdb/config/config_scanlatency_multiple_fdb.json
 indexer.settings.storage_mode = forestdb
 indexer.settings.gc_percent = 200

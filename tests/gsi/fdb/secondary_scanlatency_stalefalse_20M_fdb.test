@@ -24,8 +24,7 @@ size = 1024
 workers = 20
 
 [secondary]
-name = myindex
-field = alt_email
+indexes = myindex:alt_email
 stale = false
 cbindexperf_configfile = tests/gsi/fdb/config/config_scanlatency_sessionconsistent_fdb.json
 indexer.settings.storage_mode = forestdb

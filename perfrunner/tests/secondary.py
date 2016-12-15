@@ -11,21 +11,11 @@ from perfrunner.tests import PerfTest
 
 
 class SecondaryIndexTest(PerfTest):
+
     """
-    The test measures time it takes to build secondary index. This is just a base
-    class, actual measurements happen in initial and incremental secondary indexing tests.
-    It benchmarks dumb/bulk indexing.
-
-    Sample test spec snippet:
-
-    [secondary]
-    name = myindex1,myindex2
-    field = email,city
-    index_myindex1_partitions={"email":["5fffff", "7fffff"]}
-    index_myindex2_partitions={"city":["5fffff", "7fffff"]}
-
-    NOTE: two partition pivots above imply that we need 3 indexer nodes in the
-    cluster spec.
+    The test measures time it takes to build secondary index. This is just a
+    base class, actual measurements happen in initial and incremental secondary
+    indexing tests. It benchmarks dumb/bulk indexing.
     """
 
     COLLECTORS = {'secondary_stats': True, 'secondary_debugstats': True,
@@ -35,10 +25,6 @@ class SecondaryIndexTest(PerfTest):
         super(SecondaryIndexTest, self).__init__(*args)
 
         self.gsi_settings = None
-        self.index_nodes = None
-        self.index_fields = None
-        self.bucket = None
-        self.indexes = []
         self.secondaryDB = None
         self.configfile = self.test_config.gsi_settings.cbindexperf_configfile
         self.init_num_connections = self.test_config.gsi_settings.init_num_connections
@@ -49,8 +35,7 @@ class SecondaryIndexTest(PerfTest):
             self.secondaryDB = 'memdb'
         logger.info('secondary storage DB..{}'.format(self.secondaryDB))
 
-        self.indexes = self.test_config.gsi_settings.name.split(',')
-        self.index_fields = self.test_config.gsi_settings.field.split(",")
+        self.indexes = self.test_config.gsi_settings.indexes
 
         # Get first cluster, its index nodes, and first bucket
         (cluster_name, servers) = \
@@ -62,87 +47,6 @@ class SecondaryIndexTest(PerfTest):
 
         self.bucket = self.test_config.buckets[0]
 
-        # Generate active index names that are used if there are partitions.
-        # Else active_indexes is the same as indexes specified in test config
-        self.active_indexes = self.indexes
-        num_partitions = None
-        for index, field_where in self._get_where_map().items():
-            where_list = field_where.values().next()
-            num_partitions = len(where_list)
-            break
-        if num_partitions:
-            # overwrite with indexname_0, indexname_1 ... names for each partition
-            self.active_indexes = []
-            for index in self.indexes:
-                for i in range(num_partitions):
-                    index_i = index + "_{}".format(i)
-                    self.active_indexes.append(index_i)
-
-    def _get_where_map(self):
-        """
-        Given the following in test config:
-
-        [secondary]
-        name = myindex1,myindex2
-        field = email,city
-        index_myindex1_partitions={"email":["5fffff", "afffff"]}
-        index_myindex2_partitions={"city":["5fffff", "afffff"]}
-
-        returns something like the following, details omitted by "...":
-
-        {
-            "myindex1":
-                {"email": [ 'email < "5fffff"', ... ] },
-            "myindex2":
-                {"city": [ ... , 'city >= "5fffff" and city < "afffff"', city >= "afffff" ]},
-        }
-        """
-        result = {}
-        # For each index/field, get the partition pivots in a friendly format.
-        # Start with the (index_name, field) pair, find each field's
-        # corresponding partition pivots. From the pivots, generate the (low,
-        # high) endpoints that define a partition. Use None to represent
-        # unbounded.
-        for index_name, field in zip(self.indexes, self.index_fields):
-            index_partition_name = "index_{}_partitions".format(index_name)
-            # check that gsi_settings.index_blah_partitions exists.
-            if not hasattr(self.test_config.gsi_settings,
-                           index_partition_name):
-                continue
-            # Value of index_{}_partitions should be a string that resembles a
-            # Python dict instead of a JSON due to the support for tuple as
-            # keys. However, at the moment the same string can be interpretted
-            # as either JSON or Python Dict.
-            field_pivots = eval(getattr(self.test_config.gsi_settings,
-                                        index_partition_name))
-            for field, pivots in field_pivots.items():
-                pivots = [None] + pivots + [None]
-                partitions = []
-                for i in range(len(pivots) - 1):
-                    partitions.append((pivots[i], pivots[i + 1]))
-                if len(partitions) != len(self.index_nodes):
-                    raise RuntimeError(
-                        "Number of pivots in partitions should be one less" +
-                        " than number of index nodes")
-
-            # construct where clause
-            where_list = []
-            for (left, right) in partitions:
-                where = None
-                if left and right:
-                    where = '\\\"{}\\\" <= {} and {} < \\\"{}\\\"'.format(
-                        left, field, field, right)
-                elif left:
-                    where = '{} >= \\\"{}\\\"'.format(field, left)
-                elif right:
-                    where = '{} < \\\"{}\\\"'.format(field, right)
-                where_list.append(where)
-
-            if index_name not in result:
-                result[index_name] = {}
-            result[index_name][field] = where_list
-        return result
-
     @with_stats
     def build_secondaryindex(self):
         return self._build_secondaryindex()
@@ -151,13 +55,10 @@ class SecondaryIndexTest(PerfTest):
         """call cbindex create command"""
         logger.info('building secondary index..')
 
-        where_map = self._get_where_map()
-
         self.remote.build_secondary_index(
-            self.index_nodes, self.bucket, self.indexes, self.index_fields,
-            self.secondaryDB, where_map)
-        time_elapsed = self.monitor.wait_for_secindex_init_build(self.index_nodes[0].split(':')[0],
-                                                                 self.active_indexes)
+            self.index_nodes, self.bucket, self.indexes, self.secondaryDB)
+        time_elapsed = self.monitor.wait_for_secindex_init_build(
+            self.index_nodes[0].split(':')[0], self.indexes.keys())
         return time_elapsed
 
     def run_load_for_2i(self):
@@ -235,7 +136,7 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
             self.worker_manager.wait_for_workers()
         numitems = load_settings.items + access_settings.items
         self.monitor.wait_for_secindex_incr_build(self.index_nodes, self.bucket,
-                                                  self.active_indexes, numitems)
+                                                  self.indexes.keys(), numitems)
 
     def run(self):
         self.run_load_for_2i()

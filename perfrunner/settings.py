@@ -650,8 +650,6 @@ class IndexSettings(object):
 
 class GSISettings(object):
 
-    NAME = 'noname'
-    FIELD = 'nofield'
     DB = ''
     STALE = 'true'
     CBINDEXPERF_CONFIGFILE = ''
@@ -660,11 +658,14 @@ class GSISettings(object):
     MAX_NUM_CONNECTIONS = 0
 
     def __init__(self, options):
-        self.name = options.get('name', self.NAME)
-        self.field = options.get('field', self.FIELD)
+        self.indexes = {}
+        if options.get('indexes') is not None:
+            for index_def in options.get('indexes').split(','):
+                name, field = index_def.split(':')
+                self.indexes[name] = field
+
         self.db = options.get('db', self.DB)
         self.stale = options.get('stale', self.STALE)
-        self.indexes = self.name.split(",") if self.name is not self.NAME else []
         self.cbindexperf_configfile = options.get('cbindexperf_configfile',
                                                   self.CBINDEXPERF_CONFIGFILE)
         self.init_num_connections = int(options.get('init_num_connections',
@@ -673,14 +674,8 @@ class GSISettings(object):
                                                     self.STEP_NUM_CONNECTIONS))
         self.max_num_connections = int(options.get('max_num_connections',
                                                    self.MAX_NUM_CONNECTIONS))
-        for name in self.name.split(","):
-            index_partition_name = "index_{}_partitions".format(name)
-            val = str(options.get(index_partition_name, ''))
-            if val:
-                setattr(self, index_partition_name, val)
 
         self.settings = {}
-
         for option in options:
             if option.startswith('indexer') or \
                option.startswith('projector') or \

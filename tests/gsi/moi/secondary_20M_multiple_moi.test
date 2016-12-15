@@ -29,8 +29,7 @@ size = 1024
 spring_workers = 100
 
 [secondary]
-name = myindex1,myindex2,myindex3,myindex4,myindex5
-field = email,city,name,coins,achievements
+name = myindex1:email,myindex2:city,myindex3:name,myindex4:coins,myindex5:achievements
 db = moi
 indexer.settings.storage_mode = memory_optimized
 indexer.settings.gc_percent = 200

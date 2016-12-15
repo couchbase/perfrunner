@@ -87,51 +87,32 @@ class RemoteLinux(Remote):
 
         self.run_cbindex_command(cmd_str)
 
-    def create_index(self, index_nodes, bucket, indexes, fields, secondarydb, where_map):
+    def create_index(self, index_nodes, bucket, indexes, secondarydb):
         # Remember what bucket:index was created
         bucket_indexes = []
 
-        for index, field in zip(indexes, fields):
+        for index, field in indexes.items():
             cmd = "-auth=Administrator:password  -server {index_node}  -type create -bucket {bucket}" \
                   "  -fields={field}".format(index_node=index_nodes[0], bucket=bucket, field=field)
 
             if secondarydb:
                 cmd = '{cmd} -using {db}'.format(cmd=cmd, db=secondarydb)
 
-            if index in where_map and field in where_map[index]:
-                # Partition indexes over index nodes by deploying index with
-                # where clause on the corresponding index node
-                where_list = where_map[index][field]
-                for i, (index_node, where) in enumerate(
-                        zip(index_nodes, where_list)):
-                    index_i = index + "_{}".format(i)
-                    # Since .format() is sensitive to {}, use % formatting
-                    with_str_template = \
-                        r'{\\\"defer_build\\\":true, \\\"nodes\\\":[\\\"%s\\\"]}'
-                    with_str = with_str_template % index_node
+            with_str = r'{\\\"defer_build\\\":true}'
+            final_cmd = "{cmd} -index {index} -with=\\\"{with_str}\\\"" \
+                .format(cmd=cmd, index=index, with_str=with_str)
 
-                    final_cmd = "{cmd} -index {index} -where='{where}' -with=\\\"{with_str}\\\""\
-                        .format(cmd=cmd, index=index_i, where=where, with_str=with_str)
+            bucket_indexes.append("{}:{}".format(bucket, index))
+            self.run_cbindex_command(final_cmd)
 
-                    bucket_indexes.append("{}:{}".format(bucket, index_i))
-                    self.run_cbindex_command(final_cmd)
-            else:
-                # no partitions, no where clause
-                with_str = r'{\\\"defer_build\\\":true}'
-                final_cmd = "{cmd} -index {index} -with=\\\"{with_str}\\\""\
-                    .format(cmd=cmd, index=index, with_str=with_str)
-
-                bucket_indexes.append("{}:{}".format(bucket, index))
-                self.run_cbindex_command(final_cmd)
         return bucket_indexes
 
     @single_host
-    def build_secondary_index(self, index_nodes, bucket, indexes, fields,
-                              secondarydb, where_map):
+    def build_secondary_index(self, index_nodes, bucket, indexes, secondarydb):
         logger.info('building secondary indexes')
 
         # Create index but do not build
-        bucket_indexes = self.create_index(index_nodes, bucket, indexes, fields, secondarydb, where_map)
+        bucket_indexes = self.create_index(index_nodes, bucket, indexes, secondarydb)
 
         # build indexes
         self.build_index(index_nodes[0], bucket_indexes)

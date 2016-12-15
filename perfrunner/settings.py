@@ -650,7 +650,6 @@ class IndexSettings(object):
 
 class GSISettings(object):
 
-    DB = ''
     STALE = 'true'
     CBINDEXPERF_CONFIGFILE = ''
     INIT_NUM_CONNECTIONS = 0
@@ -664,7 +663,6 @@ class GSISettings(object):
                 name, field = index_def.split(':')
                 self.indexes[name] = field
 
-        self.db = options.get('db', self.DB)
         self.stale = options.get('stale', self.STALE)
         self.cbindexperf_configfile = options.get('cbindexperf_configfile',
                                                   self.CBINDEXPERF_CONFIGFILE)
@@ -692,6 +690,12 @@ class GSISettings(object):
                     pass
 
                 self.settings[option] = value
+
+        if self.settings:
+            if self.settings['indexer.settings.storage_mode'] == 'forestdb':
+                self.storage = 'forestdb'
+            else:
+                self.storage = 'memdb'
 
     def __str__(self):
         return str(self.__dict__)

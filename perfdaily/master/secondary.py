@@ -17,7 +17,7 @@ class InitialAndIncrementalSecondaryIndexTestDaily(InitialandIncrementalSecondar
         metrics.append(self.metric_helper.get_indexing_meta_daily(value=time_elapsed,
                                                                   index_type='Initial'))
 
-        if self.secondaryDB != 'memdb':
+        if self.storage != 'memdb':
             time.sleep(300)
         from_ts, to_ts = self.build_incrindex()
         time_elapsed = (to_ts - from_ts) / 1000.0

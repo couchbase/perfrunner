@@ -24,17 +24,12 @@ class SecondaryIndexTest(PerfTest):
     def __init__(self, *args):
         super(SecondaryIndexTest, self).__init__(*args)
 
-        self.gsi_settings = None
-        self.secondaryDB = None
         self.configfile = self.test_config.gsi_settings.cbindexperf_configfile
         self.init_num_connections = self.test_config.gsi_settings.init_num_connections
         self.step_num_connections = self.test_config.gsi_settings.step_num_connections
         self.max_num_connections = self.test_config.gsi_settings.max_num_connections
 
-        if self.test_config.gsi_settings.db == 'moi':
-            self.secondaryDB = 'memdb'
-        logger.info('secondary storage DB..{}'.format(self.secondaryDB))
-
+        self.storage = self.test_config.gsi_settings.storage
         self.indexes = self.test_config.gsi_settings.indexes
 
         # Get first cluster, its index nodes, and first bucket
@@ -55,21 +50,21 @@ class SecondaryIndexTest(PerfTest):
         """call cbindex create command"""
         logger.info('building secondary index..')
 
-        self.remote.build_secondary_index(
-            self.index_nodes, self.bucket, self.indexes, self.secondaryDB)
+        self.remote.build_secondary_index(self.index_nodes, self.bucket,
+                                          self.indexes, self.storage)
         time_elapsed = self.monitor.wait_for_secindex_init_build(
             self.index_nodes[0].split(':')[0], self.indexes.keys())
         return time_elapsed
 
     def run_load_for_2i(self):
-        if self.secondaryDB == 'memdb':
+        if self.storage == 'memdb':
             load_settings = self.test_config.load_settings
             self.remote.run_spring_on_kv(ls=load_settings)
         else:
             self.load()
 
     def run_access_for_2i(self, run_in_background=False):
-        if self.secondaryDB == 'memdb':
+        if self.storage == 'memdb':
             access_settings = self.test_config.access_settings
             self.remote.run_spring_on_kv(ls=access_settings, silent=run_in_background)
         else:
@@ -115,7 +110,7 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
     """
 
     def _report_kpi(self, time_elapsed, index_type):
-        storage = self.secondaryDB and 'moi' or 'fdb'
+        storage = self.storage == 'memdb' and 'moi' or 'fdb'
         self.reporter.post_to_sf(
             *self.metric_helper.get_indexing_meta(value=time_elapsed,
                                                   index_type=index_type,
@@ -129,7 +124,7 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
     def build_incrindex(self):
         access_settings = self.test_config.access_settings
         load_settings = self.test_config.load_settings
-        if self.secondaryDB == 'memdb':
+        if self.storage == 'memdb':
             self.remote.run_spring_on_kv(ls=access_settings)
         else:
             self.worker_manager.run_workload(access_settings, self.target_iterator)

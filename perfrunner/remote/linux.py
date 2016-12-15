@@ -87,7 +87,7 @@ class RemoteLinux(Remote):
 
         self.run_cbindex_command(cmd_str)
 
-    def create_index(self, index_nodes, bucket, indexes, secondarydb):
+    def create_index(self, index_nodes, bucket, indexes, storage):
         # Remember what bucket:index was created
         bucket_indexes = []
 
@@ -95,8 +95,8 @@ class RemoteLinux(Remote):
             cmd = "-auth=Administrator:password  -server {index_node}  -type create -bucket {bucket}" \
                   "  -fields={field}".format(index_node=index_nodes[0], bucket=bucket, field=field)
 
-            if secondarydb:
-                cmd = '{cmd} -using {db}'.format(cmd=cmd, db=secondarydb)
+            if storage == 'memdb':
+                cmd = '{cmd} -using {db}'.format(cmd=cmd, db=storage)
 
             with_str = r'{\\\"defer_build\\\":true}'
             final_cmd = "{cmd} -index {index} -with=\\\"{with_str}\\\"" \
@@ -108,11 +108,11 @@ class RemoteLinux(Remote):
         return bucket_indexes
 
     @single_host
-    def build_secondary_index(self, index_nodes, bucket, indexes, secondarydb):
+    def build_secondary_index(self, index_nodes, bucket, indexes, storage):
         logger.info('building secondary indexes')
 
         # Create index but do not build
-        bucket_indexes = self.create_index(index_nodes, bucket, indexes, secondarydb)
+        bucket_indexes = self.create_index(index_nodes, bucket, indexes, storage)
 
         # build indexes
         self.build_index(index_nodes[0], bucket_indexes)

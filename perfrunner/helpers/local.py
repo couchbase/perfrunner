@@ -199,15 +199,16 @@ def run_cbc_pillowfight(host, bucket, password,
         '--batch-size 1000 ' \
         '--num-items {num_items} ' \
         '--num-threads {num_threads} ' \
-        '--num-cycles {num_cycles} ' \
         '--min-size {size} ' \
         '--max-size {size} ' \
-        '--set-pct {writes} '
 
     if populate:
         cmd += '--populate-only'
     else:
-        cmd += '--no-population'
+        cmd += \
+            '--set-pct {writes} ' \
+            '--num-cycles {num_cycles} ' \
+            '--no-population'
 
     cmd = cmd.format(host=host, bucket=bucket, password=password,
                      num_items=num_items, num_threads=num_threads,

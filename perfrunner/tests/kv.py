@@ -558,6 +558,22 @@ class PillowFightTest(PerfTest):
 
     """Uses cbc-pillowfight from libcouchbase to drive cluster."""
 
+    def load(self, *args):
+        settings = self.test_config.load_seetings
+
+        for target in self.target_iterator:
+            host, _ = target.node.split(':')
+
+            run_cbc_pillowfight(host=host,
+                                bucket=target.bucket,
+                                password=self.test_config.bucket.password,
+                                num_items=settings.items,
+                                num_threads=settings.workers,
+                                num_cycles=settings.iterations,
+                                size=settings.size,
+                                writes=settings.creates,
+                                populate=True)
+
     @with_stats
     def access(self, *args):
         settings = self.test_config.access_settings
@@ -572,7 +588,7 @@ class PillowFightTest(PerfTest):
                                 num_threads=settings.workers,
                                 num_cycles=settings.iterations,
                                 size=settings.size,
-                                updates=settings.updates)
+                                writes=settings.updates)
 
     def _report_kpi(self):
         self.reporter.post_to_sf(
@@ -580,6 +596,9 @@ class PillowFightTest(PerfTest):
         )
 
     def run(self):
+        self.load()
+        self.wait_for_persistence()
+
         self.access()
 
         self.report_kpi()

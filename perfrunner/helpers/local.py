@@ -191,7 +191,8 @@ def import_sample_data(master_node, cluster_spec, bucket=''):
 
 
 def run_cbc_pillowfight(host, bucket, password,
-                        num_items, num_threads, num_cycles, size, updates):
+                        num_items, num_threads, num_cycles, size, writes,
+                        populate=False):
     cmd = 'cbc-pillowfight ' \
         '--spec couchbase://{host}/{bucket} ' \
         '--password {password} ' \
@@ -201,11 +202,16 @@ def run_cbc_pillowfight(host, bucket, password,
         '--num-cycles {num_cycles} ' \
         '--min-size {size} ' \
         '--max-size {size} ' \
-        '--set-pct {updates}'
+        '--set-pct {writes} '
+
+    if populate:
+        cmd += '--populate-only'
+    else:
+        cmd += '--no-population'
 
     cmd = cmd.format(host=host, bucket=bucket, password=password,
                      num_items=num_items, num_threads=num_threads,
-                     num_cycles=num_cycles, size=size, updates=updates)
+                     num_cycles=num_cycles, size=size, writes=writes)
 
     logger.info('Running: {}'.format(cmd))
     local(cmd, capture=False)

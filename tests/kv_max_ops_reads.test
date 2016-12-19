@@ -12,9 +12,11 @@ num_buckets = 1
 
 [load]
 size = 1024
+items = 20000000
+workers = 50
 
 [access]
-items = 1000000
+items = 20000000
 iterations = 40000
 workers = 50
 updates = 20

@@ -1,6 +1,6 @@
 [test_case]
 test = perfdaily.master.kv.PillowfightTestDaily
-title = Max Throughput, Pillowfight, 80/20 R/W, 20M ops
+title = Max Throughput, Pillowfight, 80/20 R/W
 category = kv
 use_workers = 0
 
@@ -14,9 +14,11 @@ replica_number = 1
 
 [load]
 size = 1024
+items = 20000000
+workers = 50
 
 [access]
-items = 10000000
+items = 20000000
 iterations = 4000
 workers = 50
 updates = 20

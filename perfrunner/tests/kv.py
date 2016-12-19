@@ -559,7 +559,7 @@ class PillowFightTest(PerfTest):
     """Uses cbc-pillowfight from libcouchbase to drive cluster."""
 
     def load(self, *args):
-        settings = self.test_config.load_seetings
+        settings = self.test_config.load_settings
 
         for target in self.target_iterator:
             host, _ = target.node.split(':')

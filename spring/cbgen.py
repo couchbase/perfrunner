@@ -40,8 +40,11 @@ def quiet(method, *args, **kwargs):
 
 class CBAsyncGen(object):
 
+    TIMEOUT = 60  # seconds
+
     def __init__(self, **kwargs):
-        self.client = TxConnection(quiet=True, timeout=60, **kwargs)
+        self.client = TxConnection(quiet=True, **kwargs)
+        self.client.timeout = self.TIMEOUT
 
     def create(self, key, doc, ttl=None):
         extra_params = {}

@@ -13,6 +13,7 @@ nyx =
 [clients]
 hosts =
     172.23.99.250
+    172.23.101.47
 credentials = root:couchbase
 
 [storage]

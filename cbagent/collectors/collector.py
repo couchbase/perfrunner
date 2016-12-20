@@ -133,8 +133,12 @@ class Collector(object):
     def collect(self):
         while True:
             try:
+                t0 = time.time()
                 self.sample()
-                time.sleep(self.interval)
+                delta = time.time() - t0()
+                if delta >= self.interval:
+                    continue
+                time.sleep(self.interval - delta)
             except KeyboardInterrupt:
                 sys.exit()
             except Exception as e:

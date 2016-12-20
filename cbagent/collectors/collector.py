@@ -135,7 +135,7 @@ class Collector(object):
             try:
                 t0 = time.time()
                 self.sample()
-                delta = time.time() - t0()
+                delta = time.time() - t0
                 if delta >= self.interval:
                     continue
                 time.sleep(self.interval - delta)

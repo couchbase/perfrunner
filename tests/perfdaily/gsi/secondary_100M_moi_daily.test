@@ -27,7 +27,6 @@ spring_workers = 100
 
 [secondary]
 indexes = myindex:email
-db = moi
 indexer.settings.storage_mode = memory_optimized
 indexer.settings.gc_percent = 200
 

@@ -4,9 +4,6 @@ title = Q3, Range Scan, latency, 5M docs, GSI, not_bounded
 category = n1ql
 sub_category = FDB
 
-[stats]
-lat_interval = 0.2
-
 [cluster]
 mem_quota = 20480
 index_mem_quota = 100000

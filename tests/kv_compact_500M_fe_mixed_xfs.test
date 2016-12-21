@@ -1,0 +1,38 @@
+[test_case]
+test = perfrunner.tests.kv.CompactionTest
+title = Full compaction time (min), 1 bucket x 500M x 1KB, 20/80 R/W, 100K ops/sec, XFS
+component = kv
+category = compact
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+
+[bucket]
+eviction_policy = fullEviction
+
+[compaction]
+db_percentage = 100
+
+[load]
+items = 500000000
+size = 1024
+workers = 80
+
+[hot_load]
+items = 500000000
+workers = 80
+working_set = 18
+
+[access]
+creates = 0
+reads = 20
+updates = 80
+deletes = 0
+throughput = 100000
+workers = 40
+items = 500000000
+working_set = 18
+working_set_access = 95
+async = 1

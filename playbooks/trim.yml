@@ -6,10 +6,10 @@
       name: /data
       state: unmounted
       src: /dev/sdb1
-      fstype: ext4
+      fstype: {{ fstype | default(ext4) }}
   - name: re-creating filesystem
     filesystem:
-      fstype: ext4
+      fstype: {{ fstype | default(ext4) }}
       dev: /dev/sdb1
       force: yes
   - name: mounting data parition
@@ -17,7 +17,7 @@
       name: /data
       state: mounted
       src: /dev/sdb1
-      fstype: ext4
+      fstype: {{ fstype | default(ext4) }}
   - name: discarding unused blocks
     shell: fstrim -v /data
   - name: ensuring ownership of "/data" directory

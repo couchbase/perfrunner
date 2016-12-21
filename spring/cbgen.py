@@ -106,21 +106,6 @@ class CBGen(CBAsyncGen):
             sleep(self.NODES_UPDATE_INTERVAL)
 
     @quiet
-    def fts_update(self, key):
-        doc = self.client.get(key).value
-        if 'text' in doc and 'text2' in doc:
-            tmp = doc["text2"]
-            doc["text2"] = doc["text"]
-            doc["text"] = tmp
-        elif 'time' in doc:
-            if randint(0, 1):
-                doc["time"] = int(doc["time"]) >> 1
-            else:
-                doc["time"] = int(doc["time"]) << 1
-
-        self.client.set(key, doc)
-
-    @quiet
     def create(self, *args, **kwargs):
         super(CBGen, self).create(*args, **kwargs)
 

@@ -509,7 +509,8 @@ class PhaseSettings(object):
         self.updates = int(options.get('updates', self.UPDATES))
         self.deletes = int(options.get('deletes', self.DELETES))
         self.cases = int(options.get('cases', self.CASES))
-        self.fts_updates = int(options.get('fts_updates', self.FTS_UPDATES))
+        self.fts_updates_swap = int(options.get('fts_updates_swap', self.FTS_UPDATES))
+        self.fts_updates_reverse = int(options.get('fts_updates_reverse', self.FTS_UPDATES))
 
         self.ops = float(options.get('ops', self.OPS))
         self.throughput = float(options.get('throughput', self.THROUGHPUT))

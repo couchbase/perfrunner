@@ -32,7 +32,8 @@ class WorkloadSettings(object):
         self.n1ql_workers = 0
 
         self.fts_config = None
-        self.fts_updates = 0
+        self.fts_updates_swap = 0
+        self.fts_updates_reverse = 0
 
         self.index_type = None
         self.ddocs = {}

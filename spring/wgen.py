@@ -3,6 +3,7 @@ import time
 from collections import defaultdict
 from multiprocessing import Event, Lock, Process, Value
 
+from random import randint
 import requests
 from couchbase.exceptions import ValueFormatError
 from decorator import decorator
@@ -164,7 +165,8 @@ class KVWorker(Worker):
             ['r'] * self.ws.reads + \
             ['u'] * self.ws.updates + \
             ['d'] * self.ws.deletes + \
-            ['fu'] * self.ws.fts_updates + \
+            ['fus'] * self.ws.fts_updates_swap + \
+            ['fur'] * self.ws.fts_updates_reverse + \
             [cases] * self.ws.cases
         random.shuffle(ops)
 
@@ -219,10 +221,35 @@ class KVWorker(Worker):
             elif op == 'counter':
                 key = self.existing_keys.next(curr_items_spot, deleted_spot)
                 cmds.append((cb.cas, (key, self.ws.subdoc_counter_fields)))
-            elif op == 'fu':
+            elif op == 'fus':
                 key = self.fts_keys.next()
-                cmds.append((cb.fts_update, (key, )))
+                cmds.append((self.do_fts_updates_swap, (key,)))
+            elif op == 'fur':
+                key = self.fts_keys.next()
+                cmds.append((self.do_fts_updates_reverse, (key,)))
         return cmds
+
+    def do_fts_updates_swap(self, key):
+        doc = self.cb.client.get(key).value
+        if 'text' in doc and 'text2' in doc:
+            tmp = doc["text2"]
+            doc["text2"] = doc["text"]
+            doc["text"] = tmp
+        elif 'time' in doc:
+            if randint(0, 1):
+                doc["time"] = int(doc["time"]) >> 1
+            else:
+                doc["time"] = int(doc["time"]) << 1
+        else:
+            return
+        self.cb.client.set(key, doc)
+
+    def do_fts_updates_reverse(self, key):
+        doc = self.cb.client.get(key).value
+        words = doc["name"].split(' ')
+        if len(words):
+            doc["name"] = ' '.join(words[::-1])
+            self.cb.client.set(key, doc)
 
     @with_sleep
     def do_batch(self, *args, **kwargs):

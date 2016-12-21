@@ -1,0 +1,32 @@
+[test_case]
+test = perfrunner.tests.fts.FTSLatencyTest
+title = AndLowLow, no kv-load, musicbrainz 20M
+component = fts
+category = latency3
+
+[stats]
+lat_interval = 0.01
+
+[access]
+time = 600
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 3
+num_buckets = 1
+fts_index_mem_quota = 20000
+
+[fts]
+items = 17390348
+name  = perf_fts_index
+port = 8094
+worker = 1
+type = 2_disjuncts
+query_file = tests/fts/data/musicbrainz/low_low.txt
+query_size = 10
+logfile = /tmp/fts_lat_orll_20M.txt
+orderby = q0b00000010
+backup_path = /home/backup
+repo_path = musicbrainz
+field = name
+index_configfile = tests/fts/index/musicbrainz/fts_musicbrainz_tv_off.json

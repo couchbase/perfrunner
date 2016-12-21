@@ -7,6 +7,14 @@ category = latency
 [stats]
 lat_interval = 0.1
 
+
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 1
+num_buckets = 1
+
+
 [fts]
 items = 1000000
 name  = perf_elastic_index
@@ -26,7 +34,4 @@ index_configfile = tests/fts/index/elastic_6shards.json
 [access]
 time = 1200
 
-[cluster]
-mem_quota = 51024
-initial_nodes = 1
-num_buckets = 1
+

@@ -1,0 +1,109 @@
+{
+    "settings" : {
+        "number_of_shards" : 6,
+        "number_of_replicas" : 0
+    },
+    "mappings" : {
+        "couchbaseDocument" : {
+            "_all" : {"enabled" : false},
+            "properties" : {
+                "doc" : {
+                    "_all" : {"enabled" : false},
+                    "properties" : {
+                        "name": {
+                            "type": "string",
+                            "include_in_all": false
+                        },
+                        "artist": {
+                            "type": "string",
+                            "include_in_all": false,
+                            "index": "no"
+                        },
+                        "begin_date_day": {
+                            "type": "long",
+                            "include_in_all": false,
+                            "index": "no"
+                        },
+                        "begin_date_month": {
+                            "type": "long",
+                            "include_in_all": false,
+                            "index": "no"
+                        },
+                        "begin_date_year": {
+                            "include_in_all": false,
+                            "index": "no",
+                            "type": "long"
+                        },
+                        "comment": {
+                            "include_in_all": false,
+                            "index": "no",
+                            "type": "string"
+                        },
+                        "edits_pending": {
+                            "include_in_all": false,
+                            "index": "no",
+                            "type": "boolean"
+                        },
+                        "end_date_day": {
+                            "include_in_all": false,
+                            "index": "no",
+                            "type": "long"
+                        },
+                        "end_date_month": {
+                            "include_in_all": false,
+                            "index": "no",
+                            "type": "long"
+                        },
+                        "end_date_year": {
+                            "include_in_all": false,
+                            "index": "no",
+                            "type": "long"
+                        },
+                        "gid": {
+                            "include_in_all": false,
+                            "index": "no",
+                            "type": "string"
+                        },
+                        "id": {
+                            "include_in_all": false,
+                            "index": "no",
+                            "type": "long"
+                        },
+                        "last_updated": {
+                            "include_in_all": false,
+                            "index": "no",
+                            "type": "string"
+                        },
+                        "length": {
+                            "include_in_all": false,
+                            "index": "no",
+                            "type": "long"
+                        },
+                        "sort_name": {
+                            "include_in_all": false,
+                            "index": "no",
+                            "type": "string"
+                        },
+                        "track_id": {
+                            "include_in_all": false,
+                            "index": "no",
+                            "type": "string"
+                        },
+                        "type": {
+                            "include_in_all": false,
+                            "index": "no",
+                            "type": "string"
+                        },
+                        "uuid": {
+                            "include_in_all": false,
+                            "index": "no",
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+

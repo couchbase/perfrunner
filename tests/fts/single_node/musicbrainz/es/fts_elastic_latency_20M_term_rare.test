@@ -1,0 +1,35 @@
+[test_case]
+test = perfrunner.tests.elastic.ElasticLatencyTest
+title = Rare Term, no kv-load, musicbrainz 20M
+component = fts
+category = latency
+
+[stats]
+lat_interval = 0.01
+
+
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 1
+num_buckets = 1
+fts_index_mem_quota = 20000
+
+[fts]
+items = 17390348
+name  = perf_fts_index
+port = 9091
+worker = 1
+type = term
+query_file = tests/fts/data/musicbrainz/rare.txt
+query_size = 10
+elastic = 1
+logfile = /tmp/es_lat_term_rare_20M.txt
+orderby = q0b00000010
+backup_path = /home/backup
+repo_path = musicbrainz
+field = name
+index_configfile = tests/fts/index/musicbrainz/elastic_musicbrainz.json
+
+[access]
+time = 600

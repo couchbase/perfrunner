@@ -34,7 +34,7 @@ doc_gen = small_plasma
 [secondary]
 indexes = myindex:city
 db = moi
-cbindexperf_configfile = tests/gsi/moi/config/config_scanlatency_plasma.json
+cbindexperf_configfile = tests/gsi/plasma/config/config_scanlatency_plasma.json
 indexer.settings.storage_mode = memory_optimized
 indexer.settings.gc_percent = 200
 indexer.settings.max_cpu_percent = 4800

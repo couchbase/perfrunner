@@ -765,3 +765,13 @@ class ImportExportDocumentNested(ImportExportDocument):
             'alt_capped_small': self._build_capped(
                 alphabet, seq_id, 10) * random.randint(0, 2),
         }
+
+
+class SmallPlasmaDocument(Document):
+
+    def next(self, key):
+        alphabet = self._build_alphabet(key)
+
+        return {
+            'city': alphabet
+        }

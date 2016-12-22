@@ -39,6 +39,7 @@ from spring.docgen import (
     ReverseLookupDocument,
     ReverseRangeLookupDocument,
     SequentialHotKey,
+    SmallPlasmaDocument,
 )
 from spring.querygen import N1QLQueryGen, ViewQueryGen, ViewQueryGenByType
 from spring.reservoir import Reservoir
@@ -129,6 +130,8 @@ class Worker(object):
                                                    self.ts.prefix)
         elif self.ws.doc_gen == 'large_subdoc':
             self.docs = LargeDocument(self.ws.size)
+        elif self.ws.doc_gen == 'small_plasma':
+            self.docs = SmallPlasmaDocument(self.ws.size)
 
     def init_db(self):
         host, port = self.ts.node.split(':')

@@ -8,7 +8,7 @@ from perfrunner.tests.kv import (
 class PillowfightTestDaily(PillowFightTest):
     def _report_kpi(self):
         metrics = list()
-        metrics.append(self.metric_helper.calc_avg_ops_perfdaily())
+        metrics.append(self.metric_helper.calc_ops_perfdaily())
         self.reporter.post_to_dailyp(metrics)
 
 

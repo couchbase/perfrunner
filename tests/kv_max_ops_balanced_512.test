@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.PillowFightTest
-title = cbc-pillowfight, 2 nodes, 50/50 R/W, 512B binary items
+title = Max ops/sec, cbc-pillowfight, 2 nodes, 50/50 R/W, 512B binary items
 component = kv
 category = max_ops
 use_workers = 0

@@ -567,7 +567,7 @@ class PillowFightTest(PerfTest):
 
     def _report_kpi(self):
         self.reporter.post_to_sf(
-            *self.metric_helper.calc_avg_ops()
+            self.metric_helper.calc_max_ops()
         )
 
     def run(self):

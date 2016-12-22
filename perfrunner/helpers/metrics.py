@@ -125,32 +125,22 @@ class MetricHelper(object):
         metric_info = self._get_metric_info(title, order_by=order_by)
         return round(elapsedtime, 1), metric, metric_info
 
-    def calc_avg_ops(self):
-        """Returns the average operations per second."""
-        metric = '{}_avg_ops'.format(self.test_config.name)
-        title = 'Average ops/sec, {}'.format(self.title)
-        metric_info = self._get_metric_info(title)
-
-        ops = self._calc_avg_ops()
-        return ops, metric, metric_info
-
-    def _calc_avg_ops(self):
-        query_params = self._get_query_params('avg_ops')
-        ops = 0
-        for bucket in self.test_config.buckets:
-            db = 'ns_server{}{}'.format(self.test.cbagent.cluster_ids[0], bucket)
-            data = self.seriesly[db].query(query_params)
-            ops += data.values()[0][0]
-        return int(ops)
-
-    def calc_avg_ops_perfdaily(self):
+    def calc_ops_perfdaily(self):
         return {
             "name": 'average_throughput',
-            "description": 'Average Throughput (ops/sec)',
-            "value": self._calc_avg_ops(),
+            "description": 'Max Throughput (ops/sec)',
+            "value": self.calc_max_ops(),
             "larger_is_better": True,
             "threshold": self.test.test_config.dailyp_settings.threshold,
         }
+
+    def calc_max_ops(self):
+        values = []
+        for bucket in self.test_config.buckets:
+            db = 'ns_server{}{}'.format(self.test.cbagent.cluster_ids[0], bucket)
+            data = self.seriesly[db].get_all()
+            values += [v['ops'] for v in data.values()]
+        return int(np.percentile(values, 90))
 
     def calc_xdcr_lag(self, percentile=90):
         metric = '{}_{}th_xdc_lag'.format(self.test_config.name, percentile)

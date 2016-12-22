@@ -24,7 +24,6 @@ class Collector(object):
 
         self.cluster = settings.cluster
         self.master_node = settings.master_node
-        self.index_node = settings.index_node
         self.auth = (settings.rest_username, settings.rest_password)
 
         self.buckets = settings.buckets

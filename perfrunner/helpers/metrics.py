@@ -14,9 +14,7 @@ class MetricHelper(object):
         self.test_config = test.test_config
         self.title = test.test_config.test_case.title
         self.cluster_spec = test.cluster_spec
-        self.cluster_names = test.cbagent.clusters.keys()
         self.build = test.build
-        self.master_node = test.master_node
 
     @staticmethod
     def _get_query_params(metric):
@@ -52,7 +50,7 @@ class MetricHelper(object):
 
     def _calc_avg_n1ql_queries(self):
         query_params = self._get_query_params('avg_query_requests')
-        db = 'n1ql_stats{}'.format(self.cluster_names[0])
+        db = 'n1ql_stats{}'.format(self.test.cbagent.cluster_ids[0])
         data = self.seriesly[db].query(query_params)
         queries = data.values()[0][0]
 
@@ -70,9 +68,9 @@ class MetricHelper(object):
     def parse_log(self, test_config, name):
         cbagent = CbAgent(self.test, verbose=False)
         if name.find('Elasticsearch') != -1:
-            cbagent.prepare_elastic_stats(cbagent.clusters.keys(), test_config)
+            cbagent.add_elastic_stats(test_config)
         else:
-            cbagent.prepare_fts_query_stats(cbagent.clusters.keys(), test_config)
+            cbagent.add_fts_query_stats(test_config)
         fts_es = cbagent.fts_stats
         fts_es.collect_stats()
         total = fts_es.cbft_query_total()
@@ -112,7 +110,7 @@ class MetricHelper(object):
 
         metric_info = self._get_metric_info(title, order_by=order_by)
         timings = []
-        db = '{}{}'.format(dbname, self.cluster_names[0])
+        db = '{}{}'.format(dbname, self.test.cbagent.cluster_ids[0])
         data = self.seriesly[db].get_all()
         timings += [v[metrics] for v in data.values()]
         if percentile == 0:
@@ -143,7 +141,7 @@ class MetricHelper(object):
         query_params = self._get_query_params('avg_ops')
         ops = 0
         for bucket in self.test_config.buckets:
-            db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
+            db = 'ns_server{}{}'.format(self.test.cbagent.cluster_ids[0], bucket)
             data = self.seriesly[db].query(query_params)
             ops += data.values()[0][0]
         return int(ops)
@@ -165,7 +163,7 @@ class MetricHelper(object):
 
         timings = []
         for bucket in self.test_config.buckets:
-            db = 'xdcr_lag{}{}'.format(self.cluster_names[0], bucket)
+            db = 'xdcr_lag{}{}'.format(self.test.cbagent.cluster_ids[0], bucket)
             data = self.seriesly[db].get_all()
             timings += [v['xdcr_lag'] for v in data.values()]
         lag = round(np.percentile(timings, percentile))
@@ -205,7 +203,7 @@ class MetricHelper(object):
 
         disk_write_queue = 0
         for bucket in self.test_config.buckets:
-            db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
+            db = 'ns_server{}{}'.format(self.test.cbagent.cluster_ids[0], bucket)
             data = self.seriesly[db].query(query_params)
             disk_write_queue += data.values()[0][0]
 
@@ -216,7 +214,7 @@ class MetricHelper(object):
 
         avg_bg_wait_time = []
         for bucket in self.test_config.buckets:
-            db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
+            db = 'ns_server{}{}'.format(self.test.cbagent.cluster_ids[0], bucket)
             data = self.seriesly[db].query(query_params)
             avg_bg_wait_time.append(data.values()[0][0])
         avg_bg_wait_time = np.mean(avg_bg_wait_time) / 10 ** 3  # us -> ms
@@ -228,7 +226,7 @@ class MetricHelper(object):
 
         couch_views_ops = 0
         for bucket in self.test_config.buckets:
-            db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
+            db = 'ns_server{}{}'.format(self.test.cbagent.cluster_ids[0], bucket)
             data = self.seriesly[db].query(query_params)
             couch_views_ops += data.values()[0][0]
 
@@ -250,7 +248,7 @@ class MetricHelper(object):
     def _calc_query_latency(self, percentile):
         timings = []
         for bucket in self.test_config.buckets:
-            db = 'spring_query_latency{}{}'.format(self.cluster_names[0],
+            db = 'spring_query_latency{}{}'.format(self.test.cbagent.cluster_ids[0],
                                                    bucket)
             data = self.seriesly[db].get_all()
             timings += [value['latency_query'] for value in data.values()]
@@ -273,7 +271,7 @@ class MetricHelper(object):
         metric_info = self._get_metric_info(title)
 
         timings = []
-        db = 'secondaryscan_latency{}'.format(self.cluster_names[0])
+        db = 'secondaryscan_latency{}'.format(self.test.cbagent.cluster_ids[0])
         data = self.seriesly[db].get_all()
         timings += [value['Nth-latency'] for value in data.values()]
         timings = map(int, timings)
@@ -299,7 +297,7 @@ class MetricHelper(object):
         timings = []
         op_key = 'latency_{}'.format(operation)
         for bucket in self.test_config.buckets:
-            db = '{}{}{}'.format(dbname, self.cluster_names[0], bucket)
+            db = '{}{}{}'.format(dbname, self.test.cbagent.cluster_ids[0], bucket)
             data = self.seriesly[db].get_all()
             timings += [
                 v[op_key] for v in data.values() if op_key in v
@@ -322,7 +320,7 @@ class MetricHelper(object):
 
         timings = []
         for bucket in self.test_config.buckets:
-            db = 'observe{}{}'.format(self.cluster_names[0], bucket)
+            db = 'observe{}{}'.format(self.test.cbagent.cluster_ids[0], bucket)
             data = self.seriesly[db].get_all()
             timings += [v['latency_observe'] for v in data.values()]
         latency = round(np.percentile(timings, percentile), 2)
@@ -335,7 +333,7 @@ class MetricHelper(object):
         title = '{}, {}'.format(title, self.title)
         metric_info = self._get_metric_info(title)
 
-        cluster = self.cluster_names[0]
+        cluster = self.test.cbagent.cluster_ids[0]
         bucket = self.test_config.buckets[0]
 
         query_params = self._get_query_params('avg_cpu_utilization_rate')
@@ -355,7 +353,7 @@ class MetricHelper(object):
 
         mem_used = []
         for bucket in self.test_config.buckets:
-            db = 'ns_server{}{}'.format(self.cluster_names[0], bucket)
+            db = 'ns_server{}{}'.format(self.test.cbagent.cluster_ids[0], bucket)
             data = self.seriesly[db].query(query_params)
 
             mem_used.append(
@@ -375,7 +373,7 @@ class MetricHelper(object):
         max_rss = 0
         for cluster_name, servers in self.cluster_spec.yield_clusters():
             cluster = filter(lambda name: name.startswith(cluster_name),
-                             self.cluster_names)[0]
+                             self.test.cbagent.cluster_ids)[0]
             for server in servers:
                 hostname = server.split(':')[0].replace('.', '')
                 db = 'atop{}{}'.format(cluster, hostname)  # Legacy
@@ -400,7 +398,7 @@ class MetricHelper(object):
                 self.test_config.cluster.initial_nodes,
         ):
             cluster = filter(lambda name: name.startswith(cluster_name),
-                             self.cluster_names)[0]
+                             self.test.cbagent.cluster_ids)[0]
             for server in servers[:initial_nodes]:
                 hostname = server.split(':')[0].replace('.', '')
                 db = 'atop{}{}'.format(cluster, hostname)
@@ -425,7 +423,7 @@ class MetricHelper(object):
                 self.test_config.cluster.initial_nodes,
         ):
             cluster = filter(lambda name: name.startswith(cluster_name),
-                             self.cluster_names)[0]
+                             self.test.cbagent.cluster_ids)[0]
             for server in servers[:initial_nodes]:
                 hostname = server.split(':')[0].replace('.', '')
                 db = 'atop{}{}'.format(cluster, hostname)

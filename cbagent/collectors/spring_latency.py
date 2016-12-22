@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from logger import logger
 
-from cbagent.collectors import Latency, ObserveLatency
+from cbagent.collectors import Latency, ObserveIndexLatency
 from spring.cbgen import CBGen, SubDocGen
 from spring.docgen import (
     Document,
@@ -25,6 +25,8 @@ class SpringLatency(Latency):
 
     def __init__(self, settings, workload, prefix=None):
         super(Latency, self).__init__(settings)
+
+        self.interval = settings.lat_interval
 
         self.clients = []
         for bucket in self.get_buckets():
@@ -128,7 +130,7 @@ class SpringQueryLatency(SpringLatency):
         return 1000 * latency  # s -> ms
 
 
-class DurabilityLatency(ObserveLatency, SpringLatency):
+class DurabilityLatency(ObserveIndexLatency, SpringLatency):
 
     COLLECTOR = "durability"
 
@@ -179,4 +181,4 @@ class DurabilityLatency(ObserveLatency, SpringLatency):
                         logger.warn(e)
 
     def collect(self):
-        ObserveLatency.collect(self)
+        ObserveIndexLatency.collect(self)

@@ -20,7 +20,7 @@ from cbagent.collectors import (
     N1QLStats,
     Net,
     NSServer,
-    ObserveLatency,
+    ObserveIndexLatency,
     ObserveSecondaryIndexLatency,
     ReservoirN1QLLatency,
     SecondaryDebugStats,
@@ -48,9 +48,9 @@ def with_stats(method, *args, **kwargs):
     stats_enabled = test.test_config.stats_settings.enabled
 
     if stats_enabled:
-        if not test.cbagent.collectors:
-            test.cbagent.prepare_collectors(test, **test.COLLECTORS)
-            test.cbagent.update_metadata()
+        test.cbagent.init_clusters(test=test, phase=method.__name__)
+        test.cbagent.add_collectors(test, **test.COLLECTORS)
+        test.cbagent.update_metadata()
         test.cbagent.start()
 
     from_ts = datetime.utcnow()
@@ -60,8 +60,7 @@ def with_stats(method, *args, **kwargs):
     if stats_enabled:
         test.cbagent.stop()
         test.cbagent.reconstruct()
-        test.cbagent.add_snapshot(method.__name__, from_ts, to_ts)
-        test.snapshots = test.cbagent.snapshots
+        test.snapshots = test.cbagent.add_snapshot(from_ts, to_ts)
 
     from_ts = timegm(from_ts.timetuple()) * 1000  # -> ms
     to_ts = timegm(to_ts.timetuple()) * 1000  # -> ms
@@ -71,21 +70,8 @@ def with_stats(method, *args, **kwargs):
 class CbAgent(object):
 
     def __init__(self, test, verbose):
-        self.clusters = OrderedDict()
         self.remote = RemoteHelper(test.cluster_spec, test.test_config,
                                    verbose=verbose)
-
-        for cluster_name, servers in test.cluster_spec.yield_clusters():
-            cluster = '{}_{}_{}'.format(cluster_name,
-                                        test.build.replace('.', ''),
-                                        uhex()[:3])
-            master = servers[0].split(':')[0]
-            self.clusters[cluster] = master
-
-        self.index_node = ''
-        for _, servers in test.cluster_spec.yield_servers_by_role('index'):
-            if servers:
-                self.index_node = servers[0].split(':')[0]
 
         if hasattr(test, 'ALL_BUCKETS'):
             buckets = None
@@ -100,13 +86,13 @@ class CbAgent(object):
             'seriesly_host': StatsSettings.SERIESLY,
             'cbmonitor_host_port': StatsSettings.CBMONITOR,
             'interval': test.test_config.stats_settings.interval,
+            'lat_interval': test.test_config.stats_settings.lat_interval,
             'secondary_statsfile': test.test_config.stats_settings.secondary_statsfile,
             'buckets': buckets,
             'indexes': test.test_config.gsi_settings.indexes,
             'hostnames': hostnames,
             'monitored_processes': test.test_config.stats_settings.monitored_processes,
         })()
-        self.lat_interval = test.test_config.stats_settings.lat_interval
         if test.cluster_spec.ssh_credentials:
             self.settings.ssh_username, self.settings.ssh_password = \
                 test.cluster_spec.ssh_credentials
@@ -114,338 +100,214 @@ class CbAgent(object):
             test.cluster_spec.rest_credentials
         self.settings.bucket_password = test.test_config.bucket.password
 
-        self.settings.index_node = self.index_node
+        for _, servers in test.cluster_spec.yield_servers_by_role('index'):
+            if servers:
+                self.settings.index_node = servers[0].split(':')[0]
 
+    def init_clusters(self, test, phase):
+        self.cluster_map = OrderedDict()
+
+        for cluster_name, servers in test.cluster_spec.yield_clusters():
+            cluster_id = '{}_{}_{}_{}'.format(cluster_name,
+                                              test.build.replace('.', ''),
+                                              phase,
+                                              uhex()[:4])
+            master = servers[0].split(':')[0]
+            self.cluster_map[cluster_id] = master
+        self.cluster_ids = self.cluster_map.keys()
+
+    def add_collectors(self, test,
+                       elastic_stats=False,
+                       durability=False,
+                       fts_latency=False,
+                       fts_query_stats=False,
+                       fts_stats=False,
+                       latency=False,
+                       index_latency=False,
+                       n1ql_latency=False,
+                       n1ql_stats=False,
+                       query_latency=False,
+                       secondary_debugstats=False,
+                       secondary_debugstats_bucket=False,
+                       secondary_debugstats_index=False,
+                       secondary_index_latency=False,
+                       secondary_latency=False,
+                       secondary_stats=False,
+                       subdoc_latency=False,
+                       xdcr_lag=False,
+                       xdcr_stats=False):
         self.collectors = []
         self.processes = []
-        self.snapshots = []
-        self.fts_stats = None
 
-    def prepare_collectors(self, test,
-                           subdoc_latency=False,
-                           latency=False,
-                           secondary_stats=False,
-                           query_latency=False,
-                           n1ql_latency=False,
-                           n1ql_stats=False,
-                           index_latency=False,
-                           secondary_index_latency=False,
-                           persist_latency=False,
-                           replicate_latency=False,
-                           xdcr_lag=False,
-                           secondary_latency=False,
-                           secondary_debugstats=False,
-                           secondary_debugstats_bucket=False,
-                           secondary_debugstats_index=False,
-                           fts_latency=False,
-                           elastic_stats=False,
-                           fts_stats=False,
-                           fts_query_stats=False,
-                           durability=False,
-                           xdcr_stats=False):
-        clusters = self.clusters.keys()
+        self.add_collector(NSServer)
+        self.add_collector(ActiveTasks)
 
-        self.prepare_ns_server(clusters)
-        self.prepare_active_tasks(clusters)
         if test.remote is None or test.remote.os != 'Cygwin':
-            self.prepare_ps(clusters)
-            self.prepare_net(clusters)
-            self.prepare_iostat(clusters, test)
+            self.add_collector(PS)
+            self.add_collector(Net)
+            self.add_iostat(test)
         elif test.remote.os == 'Cygwin':
-            self.prepare_tp(clusters)
-        if subdoc_latency:
-            self.prepare_subdoc_latency(clusters, test)
-        if latency:
-            self.prepare_latency(clusters, test)
+            self.add_collector(TypePerf)
+
         if durability:
-            self.prepare_durability(clusters, test)
-        if query_latency:
-            self.prepare_query_latency(clusters, test)
-        if n1ql_latency:
-            self.prepare_n1ql_latency(clusters)
-        if secondary_stats:
-            self.prepare_secondary_stats(clusters)
-        if secondary_debugstats:
-            self.prepare_secondary_debugstats(clusters)
-        if secondary_debugstats_bucket:
-            self.prepare_secondary_debugstats_bucket(clusters)
-        if secondary_debugstats_index:
-            self.prepare_secondary_debugstats_index(clusters)
-        if secondary_latency:
-            self.prepare_secondary_latency(clusters)
-        if n1ql_stats:
-            self.prepare_n1ql_stats(clusters)
+            self.add_durability(test)
         if index_latency:
-            self.prepare_index_latency(clusters)
-        if secondary_index_latency:
-            self.prepare_secondary_index_latency(clusters)
-        if persist_latency:
-            self.prepare_persist_latency(clusters)
-        if replicate_latency:
-            self.prepare_replicate_latency(clusters)
-        if xdcr_lag:
-            self.prepare_xdcr_lag(clusters, test)
-        if fts_latency:
-            self.prepare_fts_latency(clusters, test.test_config)
-        if fts_stats:
-            self.prepare_fts_stats(clusters, test.test_config)
-        if fts_query_stats:
-            self.prepare_fts_query_stats(clusters, test.test_config)
+            self.add_collector(ObserveIndexLatency)
+        if latency:
+            self.add_kv_latency(test)
+        if n1ql_latency:
+            self.add_collector(ReservoirN1QLLatency)
+        if n1ql_stats:
+            self.add_collector(N1QLStats)
+        if query_latency:
+            self.add_query_latency(test)
+        if subdoc_latency:
+            self.add_subdoc_latency(test)
+
         if elastic_stats:
-            self.prepare_elastic_stats(clusters, test.test_config)
+            self.add_elastic_stats(test.test_config)
+        if fts_latency:
+            self.add_fts_latency(test.test_config)
+        if fts_stats:
+            self.add_collector(FtsStats)
+        if fts_query_stats:
+            self.add_fts_query_stats(test.test_config)
+
+        if secondary_debugstats:
+            self.add_collector(SecondaryDebugStats)
+        if secondary_debugstats_bucket:
+            self.add_collector(SecondaryDebugStatsBucket)
+        if secondary_debugstats_index:
+            self.add_collector(SecondaryDebugStatsIndex)
+        if secondary_index_latency:
+            self.add_collector(ObserveSecondaryIndexLatency)
+        if secondary_latency:
+            self.add_collector(SecondaryLatencyStats)
+        if secondary_stats:
+            self.add_collector(SecondaryStats)
+
+        if xdcr_lag:
+            self.add_xdcr_lag(test)
         if xdcr_stats:
-            self.prepare_xdcr_stats(clusters)
+            self.add_collector(XdcrStats)
 
-    def prepare_ns_server(self, clusters):
-        for cluster in clusters:
+    def add_collector(self, cls):
+        for cluster_id, master_node in self.cluster_map.items():
             settings = copy(self.settings)
-            settings.cluster = cluster
-            settings.master_node = self.clusters[cluster]
-            collector = NSServer(settings)
+            settings.cluster = cluster_id
+            settings.master_node = master_node
+
+            collector = cls(settings)
             self.collectors.append(collector)
 
-    def prepare_xdcr_stats(self, clusters):
-        for cluster in clusters:
-            settings = copy(self.settings)
-            settings.cluster = cluster
-            settings.master_node = self.clusters[cluster]
-            collector = XdcrStats(settings)
-            self.collectors.append(collector)
-
-    def prepare_secondary_stats(self, clusters):
-        for cluster in clusters:
-            settings = copy(self.settings)
-            settings.cluster = cluster
-            settings.master_node = self.clusters[cluster]
-            self.collectors.append(SecondaryStats(settings))
-
-    def prepare_secondary_debugstats(self, clusters):
-        for cluster in clusters:
-            settings = copy(self.settings)
-            settings.cluster = cluster
-            settings.master_node = self.clusters[cluster]
-            self.collectors.append(SecondaryDebugStats(settings))
-
-    def prepare_secondary_debugstats_bucket(self, clusters):
-        for cluster in clusters:
-            settings = copy(self.settings)
-            settings.cluster = cluster
-            settings.master_node = self.clusters[cluster]
-            self.collectors.append(SecondaryDebugStatsBucket(settings))
-
-    def prepare_secondary_debugstats_index(self, clusters):
-        for cluster in clusters:
-            settings = copy(self.settings)
-            settings.cluster = cluster
-            settings.master_node = self.clusters[cluster]
-            self.collectors.append(SecondaryDebugStatsIndex(settings))
-
-    def prepare_secondary_latency(self, clusters):
-        for cluster in clusters:
-            settings = copy(self.settings)
-            settings.interval = self.lat_interval
-            settings.cluster = cluster
-            settings.master_node = self.clusters[cluster]
-            self.collectors.append(SecondaryLatencyStats(settings))
-
-    def prepare_n1ql_stats(self, clusters):
-        for cluster in clusters:
-            settings = copy(self.settings)
-            settings.cluster = cluster
-            settings.master_node = self.clusters[cluster]
-            self.collectors.append(N1QLStats(settings))
-
-    def prepare_ps(self, clusters):
-        for cluster in clusters:
-            settings = copy(self.settings)
-            settings.cluster = cluster
-            settings.master_node = self.clusters[cluster]
-            ps_collector = PS(settings)
-            self.collectors.append(ps_collector)
-
-    def prepare_tp(self, clusters):
-        for cluster in clusters:
-            settings = copy(self.settings)
-            settings.cluster = cluster
-            settings.master_node = self.clusters[cluster]
-            tp_collector = TypePerf(settings)
-            self.collectors.append(tp_collector)
-
-    def prepare_net(self, clusters):
-        for cluster in clusters:
-            settings = copy(self.settings)
-            settings.cluster = cluster
-            settings.master_node = self.clusters[cluster]
-            net_collector = Net(settings)
-            self.collectors.append(net_collector)
-
-    def prepare_iostat(self, clusters, test):
+    def add_iostat(self, test):
         data_path, index_path = test.cluster_spec.paths
         partitions = {'data': data_path}
         if hasattr(test, 'ddocs'):  # all instances of IndexTest have it
             partitions['index'] = index_path
 
-        for cluster in clusters:
+        for cluster_id, master_node in self.cluster_map.items():
             settings = copy(self.settings)
-            settings.cluster = cluster
-            settings.master_node = self.clusters[cluster]
+            settings.cluster = cluster_id
+            settings.master_node = master_node
             settings.partitions = partitions
-            io_collector = IO(settings)
-            self.collectors.append(io_collector)
 
-    def prepare_persist_latency(self, clusters):
-        for i, cluster in enumerate(clusters):
-            settings = copy(self.settings)
-            settings.cluster = cluster
-            settings.master_node = self.clusters[cluster]
-            settings.observe = 'persist'
-            self.collectors.append(ObserveLatency(settings))
+            collector = IO(settings)
+            self.collectors.append(collector)
 
-    def prepare_replicate_latency(self, clusters):
-        for i, cluster in enumerate(clusters):
+    def add_kv_latency(self, test):
+        for cluster_id, master_node in self.cluster_map.items():
             settings = copy(self.settings)
-            settings.cluster = cluster
-            settings.master_node = self.clusters[cluster]
-            settings.observe = 'replicate'
-            self.collectors.append(ObserveLatency(settings))
+            settings.cluster = cluster_id
+            settings.master_node = master_node
+            prefix = test.target_iterator.prefix or \
+                target_hash(settings.master_node.split(':')[0])
 
-    def prepare_index_latency(self, clusters):
-        for i, cluster in enumerate(clusters):
-            settings = copy(self.settings)
-            settings.cluster = cluster
-            settings.master_node = self.clusters[cluster]
-            settings.observe = 'index'
-            self.collectors.append(ObserveLatency(settings))
+            collector = SpringLatency(settings, test.workload, prefix)
+            self.collectors.append(collector)
 
-    def prepare_secondary_index_latency(self, clusters):
-        for i, cluster in enumerate(clusters):
+    def add_durability(self, test):
+        for cluster_id, master_node in self.cluster_map.items():
             settings = copy(self.settings)
-            settings.cluster = cluster
-            settings.master_node = self.clusters[cluster]
-            settings.observe = 'secondary_index'
-            self.collectors.append(ObserveSecondaryIndexLatency(settings))
+            settings.cluster = cluster_id
+            settings.master_node = master_node
 
-    def prepare_xdcr_lag(self, clusters, test):
-        reversed_clusters = list(reversed(self.clusters.keys()))
-        for i, cluster in enumerate(clusters):
+            prefix = test.target_iterator.prefix or \
+                target_hash(settings.master_node.split(':')[0])
+
+            collector = DurabilityLatency(settings, test.workload, prefix)
+            self.collectors.append(collector)
+
+    def add_subdoc_latency(self, test):
+        for cluster_id, master_node in self.cluster_map.items():
             settings = copy(self.settings)
-            settings.cluster = cluster
-            settings.master_node = self.clusters[cluster]
+            settings.cluster = cluster_id
+            settings.master_node = master_node
+
+            prefix = test.target_iterator.prefix or \
+                target_hash(settings.master_node.split(':')[0])
+
+            collector = SpringSubdocLatency(settings, test.workload, prefix)
+            self.collectors.append(collector)
+
+    def add_query_latency(self, test):
+        params = test.test_config.index_settings.params
+        index_type = test.test_config.index_settings.index_type
+        for cluster_id, master_node in self.cluster_map.items():
+            settings = copy(self.settings)
+            settings.cluster = cluster_id
+            settings.master_node = master_node
+
+            prefix = test.target_iterator.prefix or \
+                target_hash(settings.master_node.split(':')[0])
+
+            collector = SpringQueryLatency(settings, test.workload,
+                                           prefix=prefix, ddocs=test.ddocs,
+                                           params=params, index_type=index_type)
+            self.collectors.append(collector)
+
+    def add_fts_latency(self, test):
+        for cluster_id, master_node in self.cluster_map.items():
+            settings = copy(self.settings)
+            settings.cluster = cluster_id
+            settings.master_node = master_node
+
+            collector = FtsLatency(settings, test)
+            self.collectors.append(collector)
+
+    def add_fts_query_stats(self, test_config):
+        for cluster_id, master_node in self.cluster_map.items():
+            settings = copy(self.settings)
+            settings.cluster = cluster_id
+            settings.master_node = master_node
+
+            self.fts_stats = FtsQueryStats(settings, test_config)
+            self.collectors.append(self.fts_stats)
+
+    def add_elastic_stats(self, test_config):
+        for cluster_id, master_node in self.cluster_map.items():
+            settings = copy(self.settings)
+            settings.cluster = cluster_id
+            settings.master_node = master_node
+
+            self.fts_stats = ElasticStats(settings, test_config)
+            self.collectors.append(self.fts_stats)
+
+    def add_xdcr_lag(self, test):
+        reversed_clusters = list(reversed(self.cluster_ids))
+
+        for i, cluster_id in enumerate(self.cluster_map):
+            settings = copy(self.settings)
+            settings.cluster = cluster_id
+            settings.master_node = self.cluster_map[cluster_id]
             dest_cluster = reversed_clusters[i]
-            settings.dest_master_node = self.clusters[dest_cluster]
-            self.collectors.append(XdcrLag(settings))
+            settings.dest_master_node = self.cluster_map[dest_cluster]
+
+            collector = XdcrLag(settings)
+            self.collectors.append(collector)
 
             if test.settings.replication_type == 'unidir':
                 break
-
-    def prepare_latency(self, clusters, test):
-        for cluster in clusters:
-            settings = copy(self.settings)
-            settings.interval = self.lat_interval
-            settings.cluster = cluster
-            settings.master_node = self.clusters[cluster]
-            prefix = test.target_iterator.prefix or \
-                target_hash(settings.master_node.split(':')[0])
-            self.collectors.append(
-                SpringLatency(settings, test.workload, prefix)
-            )
-
-    def prepare_durability(self, clusters, test):
-        for cluster in clusters:
-            settings = copy(self.settings)
-            settings.interval = self.lat_interval
-            settings.cluster = cluster
-            settings.master_node = self.clusters[cluster]
-            prefix = test.target_iterator.prefix or \
-                target_hash(settings.master_node.split(':')[0])
-            self.collectors.append(
-                DurabilityLatency(settings, test.workload, prefix)
-            )
-
-    def prepare_subdoc_latency(self, clusters, test):
-        for cluster in clusters:
-            settings = copy(self.settings)
-            settings.interval = self.lat_interval
-            settings.cluster = cluster
-            settings.master_node = self.clusters[cluster]
-            prefix = test.target_iterator.prefix or \
-                target_hash(settings.master_node.split(':')[0])
-            self.collectors.append(
-                SpringSubdocLatency(settings, test.workload, prefix)
-            )
-
-    def prepare_query_latency(self, clusters, test):
-        params = test.test_config.index_settings.params
-        index_type = test.test_config.index_settings.index_type
-        for cluster in clusters:
-            settings = copy(self.settings)
-            settings.interval = self.lat_interval
-            settings.cluster = cluster
-            settings.master_node = self.clusters[cluster]
-            prefix = test.target_iterator.prefix or \
-                target_hash(settings.master_node.split(':')[0])
-            self.collectors.append(
-                SpringQueryLatency(settings, test.workload, prefix=prefix,
-                                   ddocs=test.ddocs, params=params,
-                                   index_type=index_type)
-            )
-
-    def prepare_n1ql_latency(self, clusters):
-        for cluster in clusters:
-            settings = copy(self.settings)
-            settings.cluster = cluster
-            settings.master_node = self.clusters[cluster]
-            self.collectors.append(
-                ReservoirN1QLLatency(settings)
-            )
-
-    def prepare_fts_latency(self, clusters, test):
-        for cluster in clusters:
-            settings = copy(self.settings)
-            settings.interval = self.lat_interval
-            settings.cluster = cluster
-            settings.master_node = self.clusters[cluster]
-            self.collectors.append(
-                FtsLatency(settings, test)
-            )
-
-    def prepare_fts_stats(self, clusters, test):
-        for cluster in clusters:
-            settings = copy(self.settings)
-            settings.cluster = cluster
-            settings.master_node = self.clusters[cluster]
-            self.collectors.append(
-                FtsStats(settings, test)
-            )
-
-    def prepare_fts_query_stats(self, clusters, test):
-        for cluster in clusters:
-            settings = copy(self.settings)
-            settings.cluster = cluster
-            settings.master_node = self.clusters[cluster]
-            self.fts_stats = FtsQueryStats(settings, test)
-            self.collectors.append(
-                FtsQueryStats(settings, test)
-            )
-
-    def prepare_elastic_stats(self, clusters, test):
-        for cluster in clusters:
-            settings = copy(self.settings)
-            settings.cluster = cluster
-            settings.interval = self.lat_interval
-            settings.master_node = self.clusters[cluster]
-            self.fts_stats = ElasticStats(settings, test)
-            self.collectors.append(
-                self.fts_stats
-            )
-
-    def prepare_active_tasks(self, clusters):
-        for cluster in clusters:
-            settings = copy(self.settings)
-            settings.cluster = cluster
-            settings.master_node = self.clusters[cluster]
-            collector = ActiveTasks(settings)
-            self.collectors.append(collector)
 
     def update_metadata(self):
         for collector in self.collectors:
@@ -473,11 +335,12 @@ class CbAgent(object):
             logger.info(url)
             requests.get(url=url)
 
-    def add_snapshot(self, phase, ts_from, ts_to):
-        for i, cluster in enumerate(self.clusters, start=1):
-            snapshot = '{}_{}'.format(cluster, phase)
-            self.settings.cluster = cluster
+    def add_snapshot(self, ts_from, ts_to):
+        snapshots = []
+        for cluster_id in self.cluster_ids:
+            self.settings.cluster = cluster_id
             md_client = MetadataClient(self.settings)
-            md_client.add_snapshot(snapshot, ts_from, ts_to)
-            self.snapshots.append(snapshot)
-            self.trigger_reports(snapshot)
+            md_client.add_snapshot(cluster_id, ts_from, ts_to)
+            snapshots.append(cluster_id)
+            self.trigger_reports(cluster_id)
+        return snapshots

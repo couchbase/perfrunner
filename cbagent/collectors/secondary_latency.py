@@ -7,6 +7,10 @@ class SecondaryLatencyStats(Collector):
 
     COLLECTOR = "secondaryscan_latency"
 
+    def __init__(self, settings):
+        super(SecondaryLatencyStats, self).__init__(settings)
+        self.interval = settings.lat_interval
+
     def _get_secondaryscan_latency(self):
         stats = {}
         if os.path.isfile(self.secondary_statsfile):

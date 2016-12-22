@@ -77,6 +77,7 @@ class FtsLatency(FtsCollector):
 
     def __init__(self, settings, test_config):
         super(FtsLatency, self).__init__(settings, test_config)
+        self.interval = settings.lat_interval
 
     def cbft_latency_get(self):
         cmd, query = self.fts_client.next()
@@ -194,6 +195,7 @@ class ElasticStats(FtsCollector):
 
     def __init__(self, settings, test_config):
         super(ElasticStats, self).__init__(settings, test_config)
+        self.interval = settings.lat_interval
         self.host = settings.master_node
 
     def init_client(self, test_config):

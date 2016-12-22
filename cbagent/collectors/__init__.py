@@ -11,7 +11,7 @@ from fts_stats import (
 from iostat import IO
 from latency import Latency
 from observe import (
-    ObserveLatency,
+    ObserveIndexLatency,
     ObserveSecondaryIndexLatency,
 )
 from n1ql_stats import N1QLStats

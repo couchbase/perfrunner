@@ -2,9 +2,14 @@ from cbagent.collectors import Collector
 
 
 class SecondaryDebugStats(Collector):
+
     COLLECTOR = "secondary_debugstats"
 
-    METRICS = ("num_connections", "memory_used_storage", "memory_used_queue")
+    METRICS = "num_connections", "memory_used_storage", "memory_used_queue"
+
+    def __init__(self, settings):
+        super(SecondaryDebugStats, self).__init__(settings)
+        self.index_node = settings.index_node
 
     def _get_secondary_debugstats(self, bucket=None, index=None):
         server = self.index_node
@@ -42,9 +47,10 @@ class SecondaryDebugStats(Collector):
 
 
 class SecondaryDebugStatsBucket(SecondaryDebugStats):
+
     COLLECTOR = "secondary_debugstats_bucket"
 
-    METRICS = ("mutation_queue_size", "num_nonalign_ts", "ts_queue_size")
+    METRICS = "mutation_queue_size", "num_nonalign_ts", "ts_queue_size"
 
     def sample(self):
         for bucket in self.get_buckets():
@@ -61,15 +67,25 @@ class SecondaryDebugStatsBucket(SecondaryDebugStats):
 
 
 class SecondaryDebugStatsIndex(SecondaryDebugStats):
+
     COLLECTOR = "secondary_debugstats_index"
 
-    METRICS = ("avg_scan_latency", "avg_ts_interval", "num_completed_requests",
-               "avg_ts_items_count", "num_compactions", "num_rows_returned",
-               "flush_queue_size", "avg_scan_wait_latency",
-               "timings/storage_commit", "timings/storage_del", "timings/storage_get",
-               "timings/storage_set", "timings/storage_snapshot_create",
-               "timings/dcp_getseqs"
-               )
+    METRICS = (
+        "avg_scan_latency",
+        "avg_ts_interval",
+        "num_completed_requests",
+        "avg_ts_items_count",
+        "num_compactions",
+        "num_rows_returned",
+        "flush_queue_size",
+        "avg_scan_wait_latency",
+        "timings/storage_commit",
+        "timings/storage_del",
+        "timings/storage_get",
+        "timings/storage_set",
+        "timings/storage_snapshot_create",
+        "timings/dcp_getseqs",
+    )
 
     def sample(self):
         for index, bucket in self.get_all_indexes():

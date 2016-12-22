@@ -5,7 +5,7 @@ component = fts
 category = throughput
 
 [access]
-time = 300
+time = 600
 
 [cluster]
 mem_quota = 51024

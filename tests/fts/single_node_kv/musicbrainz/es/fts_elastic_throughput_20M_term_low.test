@@ -1,0 +1,33 @@
+[test_case]
+test = perfrunner.tests.elastic.ElasticThroughputTest
+title = Low Term, 1K sets/sec kv load, musicbrainz 20M
+component = fts
+category = throughput
+
+[access]
+time = 600
+fts_updates_reverse = 100
+workers = 2
+throughput = 1000
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 1
+num_buckets = 1
+
+
+[fts]
+items = 17390348
+name  = perf_fts_index
+port = 9091
+worker = 40
+type = term
+query_file = tests/fts/data/musicbrainz/low.txt
+query_size = 10
+elastic = 1
+logfile = /tmp/es_thput_term_low_20M.txt
+orderby = q0b00000010
+backup_path = /home/backup
+repo_path = musicbrainz
+field = name
+index_configfile = tests/fts/index/musicbrainz/elastic_musicbrainz.json

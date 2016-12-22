@@ -26,11 +26,11 @@ max_num_auxio = 16
 [load]
 items = 20000000
 size = 1024
-spring_workers = 100
+workers = 80
 doc_gen = small_plasma
 
 [secondary]
-indexes = myindex:email
+indexes = myindex:city
 db = moi
 indexer.settings.storage_mode = memory_optimized
 indexer.settings.gc_percent = 200
@@ -42,4 +42,4 @@ ops = 20000000
 items = 20000000
 existing_items = 20000000
 throughput = 100000
-spring_workers = 100
+workers = 80

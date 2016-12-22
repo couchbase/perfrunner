@@ -1,0 +1,71 @@
+{
+       "Concurrency" : 128,
+       "Clients" : 5,
+       "ScanSpecs" : [
+          {
+             "Limit" : 1,
+             "Low" : [
+                "000015"
+             ],
+             "Repeat" : 9999999,
+             "Type" : "Range",
+             "Bucket" : "bucket-1",
+             "High" : [
+                "000028"
+             ],
+             "Id" : 1,
+             "Inclusion" : 3,
+             "Index" : "myindex1",
+             "Consistency" : true
+           },
+          {
+             "Limit" : 1,
+             "Low" : [
+                "000015"
+             ],
+             "Repeat" : 9999999,
+             "Type" : "Range",
+             "Bucket" : "bucket-1",
+             "High" : [
+                "000028"
+             ],
+             "Id" : 1,
+             "Inclusion" : 3,
+             "Index" : "myindex2",
+             "Consistency" : true
+           },
+          {
+             "Limit" : 1,
+             "Low" : [
+                "000015"
+             ],
+             "Repeat" : 9999999,
+             "Type" : "Range",
+             "Bucket" : "bucket-1",
+             "High" : [
+                "000028"
+             ],
+             "Id" : 1,
+             "Inclusion" : 3,
+             "Index" : "myindex3",
+             "Consistency" : true
+           },
+          {
+             "Type" : "All",
+             "Limit" : 1,
+             "Repeat" : 9999999,
+             "Bucket" : "bucket-1",
+             "Id" : 1,
+             "Index" : "myindex4"
+           },
+          {
+             "Type" : "All",
+             "Limit" : 1,
+             "Repeat" : 9999999,
+             "Bucket" : "bucket-1",
+             "Id" : 1,
+             "Index" : "myindex5"
+           }
+
+       ]
+}

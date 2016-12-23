@@ -50,31 +50,6 @@ class KVTest(PerfTest):
         self.report_kpi()
 
 
-class PersistLatencyTest(KVTest):
-
-    """
-    The same as base test but persistence latency is measured.
-    """
-
-    COLLECTORS = {'persist_latency': True}
-
-    ALL_BUCKETS = True
-
-    def _report_kpi(self):
-        self.reporter.post_to_sf(
-            *self.metric_helper.calc_observe_latency(percentile=95)
-        )
-
-
-class ReplicateLatencyTest(PersistLatencyTest):
-
-    """
-    The same as base test but intra-cluster replication latency is measured.
-    """
-
-    COLLECTORS = {'replicate_latency': True}
-
-
 class MixedLatencyTest(KVTest):
 
     """

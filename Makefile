@@ -12,7 +12,7 @@ build:
 	pwd > ${ENV}/lib/${PYTHON}/site-packages/perfrunner.pth
 
 clean:
-	rm -fr build perfrunner.egg-info dist dcptest kvgen
+	rm -fr build perfrunner.egg-info dist dcptest kvgen cbindexperf
 	find . -name '*.pyc' -o -name '*.pyo' | xargs rm -f
 
 pep8:
@@ -26,6 +26,12 @@ test: nose pep8
 
 dcptest: vendor-sync
 	go build ./go/dcptest
+
+cbindexperf: buildquery
+	go build ./go/cbindexperf
+
+buildquery: vendor-sync
+	cd vendor/github.com/couchbase/query/parser/n1ql && sh build.sh
 
 kvgen: vendor-sync
 	go build ./go/kvgen

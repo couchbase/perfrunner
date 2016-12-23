@@ -117,118 +117,118 @@
 			"revisionTime": "2016-03-11T02:08:04Z"
 		},
 		{
-			"checksumSHA1": "uuru9X1BMeu3ZUixho03vxtUq88=",
+			"checksumSHA1": "kqNVH7BEa67tfa2NwvJ6nMbzKck=",
 			"path": "github.com/couchbase/indexing",
-			"revision": "f25ae388d20da15805eb81afbc44919550ba8951",
+			"revision": "99b339ec8db2059801fd3cf5aa3cd20fa6e7898f",
 			"revisionTime": "2016-08-31T10:04:57Z",
 			"tree": true
 		},
 		{
-			"checksumSHA1": "JX7cU2jtvWyRabjvHbWilrt2JcY=",
+			"checksumSHA1": "WOMsnOkRg2drzapW9pWPyhi33e8=",
 			"path": "github.com/couchbase/indexing/secondary/common",
-			"revision": "f25ae388d20da15805eb81afbc44919550ba8951",
+			"revision": "99b339ec8db2059801fd3cf5aa3cd20fa6e7898f",
 			"revisionTime": "2016-08-31T10:04:57Z"
 		},
 		{
-			"checksumSHA1": "p+X3jW78bDhYpNmmhSeb4ThGqqU=",
+			"checksumSHA1": "TGd3c+SoKZUF/kWROBczazvHZhE=",
 			"path": "github.com/couchbase/indexing/secondary/dcp",
-			"revision": "f25ae388d20da15805eb81afbc44919550ba8951",
+			"revision": "99b339ec8db2059801fd3cf5aa3cd20fa6e7898f",
 			"revisionTime": "2016-08-31T10:04:57Z"
 		},
 		{
 			"checksumSHA1": "W91imfHfk6Mm/LrNVQ/OE1Tk8ZQ=",
 			"path": "github.com/couchbase/indexing/secondary/dcp/transport",
-			"revision": "f25ae388d20da15805eb81afbc44919550ba8951",
+			"revision": "99b339ec8db2059801fd3cf5aa3cd20fa6e7898f",
 			"revisionTime": "2016-08-31T10:04:57Z"
 		},
 		{
-			"checksumSHA1": "6udOlyp/qUoMma8Gzy6Y4QBBNkc=",
+			"checksumSHA1": "FaNGNaGJFcvTPRIvMrt+kS8ippQ=",
 			"path": "github.com/couchbase/indexing/secondary/dcp/transport/client",
-			"revision": "f25ae388d20da15805eb81afbc44919550ba8951",
+			"revision": "99b339ec8db2059801fd3cf5aa3cd20fa6e7898f",
 			"revisionTime": "2016-08-31T10:04:57Z"
 		},
 		{
-			"checksumSHA1": "X9zSvDcELxIHlcxySQ2shX/PB1Q=",
+			"checksumSHA1": "99u12gl5Nb+Nsefrfqg4G84QZRA=",
 			"path": "github.com/couchbase/indexing/secondary/fdb",
-			"revision": "f25ae388d20da15805eb81afbc44919550ba8951",
+			"revision": "99b339ec8db2059801fd3cf5aa3cd20fa6e7898f",
 			"revisionTime": "2016-08-31T10:04:57Z"
 		},
 		{
 			"checksumSHA1": "FYGZsRQL8yTBldXYefsBFAcZNxY=",
 			"path": "github.com/couchbase/indexing/secondary/logging",
-			"revision": "f25ae388d20da15805eb81afbc44919550ba8951",
+			"revision": "99b339ec8db2059801fd3cf5aa3cd20fa6e7898f",
 			"revisionTime": "2016-08-31T10:04:57Z"
 		},
 		{
 			"checksumSHA1": "9hIwccBzuzcR5vWLX9bTXDo1H0M=",
 			"path": "github.com/couchbase/indexing/secondary/platform",
-			"revision": "f25ae388d20da15805eb81afbc44919550ba8951",
+			"revision": "99b339ec8db2059801fd3cf5aa3cd20fa6e7898f",
 			"revisionTime": "2016-08-31T10:04:57Z"
 		},
 		{
 			"checksumSHA1": "bOzo4epgLP99O9L1eCiBgOwRC0U=",
 			"path": "github.com/couchbase/indexing/secondary/stats",
-			"revision": "f25ae388d20da15805eb81afbc44919550ba8951",
+			"revision": "99b339ec8db2059801fd3cf5aa3cd20fa6e7898f",
 			"revisionTime": "2016-08-31T10:04:57Z"
 		},
 		{
-			"checksumSHA1": "7us7CdqMzMl6uKJMmUaR4mVWEmU=",
+			"checksumSHA1": "rFXvSnqB16YPpXW7wMt5jw0a8IY=",
 			"path": "github.com/couchbase/query/algebra",
-			"revision": "573e85d79458054272a88dad6d2cec7eda2ad36f",
+			"revision": "4a903dcc8f035fdaf22753296d7f7a0e57b1d03c",
 			"revisionTime": "2016-11-13T20:09:36Z"
 		},
 		{
-			"checksumSHA1": "1fx1PWTGuLt8yZgEabIuknXUx8I=",
+			"checksumSHA1": "JG1FacaLXqTxVk6QPoOsjDKgT7w=",
 			"path": "github.com/couchbase/query/datastore",
-			"revision": "573e85d79458054272a88dad6d2cec7eda2ad36f",
+			"revision": "4a903dcc8f035fdaf22753296d7f7a0e57b1d03c",
 			"revisionTime": "2016-11-13T20:09:36Z"
 		},
 		{
-			"checksumSHA1": "g/CeYyy0cJA5WpQHYZL6OyFZlrE=",
+			"checksumSHA1": "H+Ltz9W/qmhLpmrLBQ6T2HAxllY=",
 			"path": "github.com/couchbase/query/errors",
-			"revision": "573e85d79458054272a88dad6d2cec7eda2ad36f",
+			"revision": "4a903dcc8f035fdaf22753296d7f7a0e57b1d03c",
 			"revisionTime": "2016-11-13T20:09:36Z"
 		},
 		{
-			"checksumSHA1": "rEj7bIV77rEEEgyMIrElYtvCoU4=",
+			"checksumSHA1": "f55DVKcqREse7IGaQeb28HXguhY=",
 			"path": "github.com/couchbase/query/expression",
-			"revision": "573e85d79458054272a88dad6d2cec7eda2ad36f",
+			"revision": "4a903dcc8f035fdaf22753296d7f7a0e57b1d03c",
 			"revisionTime": "2016-11-13T20:09:36Z"
 		},
 		{
 			"checksumSHA1": "t5muFOeIxj8w/8Z//meWJRVGqd0=",
 			"path": "github.com/couchbase/query/expression/parser",
-			"revision": "573e85d79458054272a88dad6d2cec7eda2ad36f",
+			"revision": "4a903dcc8f035fdaf22753296d7f7a0e57b1d03c",
 			"revisionTime": "2016-11-13T20:09:36Z"
 		},
 		{
 			"checksumSHA1": "uF0TBRPIJ8kmQylA41JMP54zP5Q=",
 			"path": "github.com/couchbase/query/logging",
-			"revision": "573e85d79458054272a88dad6d2cec7eda2ad36f",
+			"revision": "4a903dcc8f035fdaf22753296d7f7a0e57b1d03c",
 			"revisionTime": "2016-11-13T20:09:36Z"
 		},
 		{
-			"checksumSHA1": "rE+SSgnFzJRGcSK7zOgwdtyVMaw=",
+			"checksumSHA1": "ZWZTztoZ9zWg4s1GKzuEpHlTAiY=",
 			"path": "github.com/couchbase/query/parser/n1ql",
-			"revision": "573e85d79458054272a88dad6d2cec7eda2ad36f",
+			"revision": "4a903dcc8f035fdaf22753296d7f7a0e57b1d03c",
 			"revisionTime": "2016-11-13T20:09:36Z"
 		},
 		{
 			"checksumSHA1": "sUT8LoItpinWzoKBMz34E8dopCw=",
 			"path": "github.com/couchbase/query/timestamp",
-			"revision": "573e85d79458054272a88dad6d2cec7eda2ad36f",
+			"revision": "4a903dcc8f035fdaf22753296d7f7a0e57b1d03c",
 			"revisionTime": "2016-11-13T20:09:36Z"
 		},
 		{
 			"checksumSHA1": "1tJJ2a2SPvOXcz+G/ZBCW4IdAU4=",
 			"path": "github.com/couchbase/query/util",
-			"revision": "573e85d79458054272a88dad6d2cec7eda2ad36f",
+			"revision": "4a903dcc8f035fdaf22753296d7f7a0e57b1d03c",
 			"revisionTime": "2016-11-13T20:09:36Z"
 		},
 		{
-			"checksumSHA1": "HdU0zZryvZ/yzuFxG4cURf9oZaQ=",
+			"checksumSHA1": "7EFdUe9fCRTDPBgNMAX+5soM+Nk=",
 			"path": "github.com/couchbase/query/value",
-			"revision": "573e85d79458054272a88dad6d2cec7eda2ad36f",
+			"revision": "4a903dcc8f035fdaf22753296d7f7a0e57b1d03c",
 			"revisionTime": "2016-11-13T20:09:36Z"
 		},
 		{

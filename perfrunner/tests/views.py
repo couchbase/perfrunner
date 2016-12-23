@@ -57,7 +57,7 @@ class InitialIndexTest(IndexTest):
     """
 
     @with_stats
-    def build_index(self):
+    def init_index(self):
         super(InitialIndexTest, self).build_index()
 
     def _report_kpi(self, time_elapsed):
@@ -68,7 +68,7 @@ class InitialIndexTest(IndexTest):
         self.wait_for_persistence()
 
         self.define_ddocs()
-        from_ts, to_ts = self.build_index()
+        from_ts, to_ts = self.init_index()
         time_elapsed = (to_ts - from_ts) / 1000.0
 
         time_elapsed = self.reporter.finish('Initial index', time_elapsed)
@@ -84,11 +84,11 @@ class InitialAndIncrementalIndexTest(InitialIndexTest):
     """
 
     @with_stats
-    def build_index(self):
+    def init_index(self):
         super(InitialIndexTest, self).build_index()
 
     @with_stats
-    def build_incr_index(self):
+    def incr_index(self):
         super(InitialIndexTest, self).build_index()
 
     def _report_kpi(self, time_elapsed, index_type='Initial'):
@@ -102,7 +102,7 @@ class InitialAndIncrementalIndexTest(InitialIndexTest):
         self.access()
         self.wait_for_persistence()
 
-        from_ts, to_ts = self.build_incr_index()
+        from_ts, to_ts = self.incr_index()
         time_elapsed = (to_ts - from_ts) / 1000.0
 
         time_elapsed = self.reporter.finish('Incremental index', time_elapsed)

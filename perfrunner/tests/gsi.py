@@ -52,13 +52,13 @@ class IndexTest(PerfTest):
                                                storage=storage)
 
     @with_stats
-    def build_init_index(self):
+    def init_index(self):
         for name, servers in self.cluster_spec.yield_servers_by_role('index'):
             for server in servers:
                 self.monitor.monitor_indexing(server)
 
     @with_stats
-    def build_incr_index(self):
+    def incr_index(self):
         for name, servers in self.cluster_spec.yield_servers_by_role('index'):
             for server in servers:
                 self.monitor.monitor_indexing(server)
@@ -68,7 +68,7 @@ class IndexTest(PerfTest):
         self.wait_for_persistence()
 
         self.create_index()
-        self.build_init_index()
+        self.init_index()
 
         self.bg_load()
-        self.build_incr_index()
+        self.incr_index()

@@ -100,7 +100,7 @@ class SFReporter(object):
         snapshot_links = list()
         snapshot_host = "http://{}/reports/html/?snapshot=".\
             format(StatsSettings.CBMONITOR)
-        for snapshot in self.test.cbagent.snapshots:
+        for snapshot in self.test.snapshots:
             snapshot_link = snapshot_host + snapshot
             snapshot_links.append(snapshot_link)
 

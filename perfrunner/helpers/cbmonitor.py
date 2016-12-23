@@ -169,7 +169,7 @@ class CbAgent(object):
         if fts_latency:
             self.add_fts_latency(test.test_config)
         if fts_stats:
-            self.add_collector(FtsStats)
+            self.add_collector(FtsStats, test.test_config)
         if fts_query_stats:
             self.add_fts_query_stats(test.test_config)
 
@@ -191,13 +191,13 @@ class CbAgent(object):
         if xdcr_stats:
             self.add_collector(XdcrStats)
 
-    def add_collector(self, cls):
+    def add_collector(self, cls, *args):
         for cluster_id, master_node in self.cluster_map.items():
             settings = copy(self.settings)
             settings.cluster = cluster_id
             settings.master_node = master_node
 
-            collector = cls(settings)
+            collector = cls(settings, *args)
             self.collectors.append(collector)
 
     def add_iostat(self, test):

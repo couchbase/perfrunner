@@ -2,7 +2,6 @@ import numpy as np
 from logger import logger
 from seriesly import Seriesly
 
-from perfrunner.helpers.cbmonitor import CbAgent
 from perfrunner.settings import StatsSettings
 
 
@@ -66,12 +65,10 @@ class MetricHelper(object):
         }
 
     def parse_log(self, test_config, name):
-        cbagent = CbAgent(self.test, verbose=False)
         if name.find('Elasticsearch') != -1:
-            cbagent.add_elastic_stats(test_config)
-        else:
-            cbagent.add_fts_query_stats(test_config)
-        fts_es = cbagent.fts_stats
+            self.test.cbagent.add_elastic_stats(test_config)
+
+        fts_es = self.test.cbagent.fts_stats
         fts_es.collect_stats()
         total = fts_es.cbft_query_total()
         return total

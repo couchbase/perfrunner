@@ -32,7 +32,7 @@ workers = 80
 doc_gen = small_plasma
 
 [secondary]
-indexes = myindex1:email,myindex2:city,myindex3:name,myindex4:coins,myindex5:achievements
+indexes = myindex1:email,myindex2:city,myindex3:name,myindex4:coins,myindex5:alt_email
 db = moi
 cbindexperf_configfile = tests/gsi/plasma/config/config_scanlatency_multiple_plasma.json
 indexer.settings.storage_mode = memory_optimized

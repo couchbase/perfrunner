@@ -77,7 +77,6 @@ class CLIParser(ArgumentParser):
         )
         self.add_argument(
             '-g', dest='generator', type=str, default='basic', metavar='',
-            choices=('old', 'new'),
             help='document generator ("basic" or "nested")'
         )
         self.add_argument('--async', action='store_true', default=False,

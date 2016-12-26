@@ -775,3 +775,21 @@ class SmallPlasmaDocument(Document):
         return {
             'city': alphabet
         }
+
+
+class MultiItemPlasmaDocument(Document):
+
+    @staticmethod
+    def build_coins(alphabet):
+        return max(0.1, int(alphabet[31:40], 16) / 100.0)
+
+    def next(self, key):
+        alphabet = self._build_alphabet(key)
+
+        return {
+            'city': alphabet,
+            'name': alphabet,
+            'email': alphabet,
+            'alt_email': alphabet,
+            'coins': self.build_coins(alphabet)
+        }

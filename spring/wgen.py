@@ -33,6 +33,7 @@ from spring.docgen import (
     KeyForCASUpdate,
     KeyForRemoval,
     LargeDocument,
+    MultiItemPlasmaDocument,
     NestedDocument,
     NewKey,
     RefDocument,
@@ -132,6 +133,8 @@ class Worker(object):
             self.docs = LargeDocument(self.ws.size)
         elif self.ws.doc_gen == 'small_plasma':
             self.docs = SmallPlasmaDocument(self.ws.size)
+        elif self.ws.doc_gen == 'multiitem_plasma':
+            self.docs = MultiItemPlasmaDocument(self.ws.size)
 
     def init_db(self):
         host, port = self.ts.node.split(':')

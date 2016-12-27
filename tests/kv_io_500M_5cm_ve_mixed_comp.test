@@ -15,7 +15,7 @@ eviction_policy = valueOnly
 [load]
 items = 500000000
 size = 1024
-workers = 80
+workers = 40
 
 [hot_load]
 items = 500000000

@@ -268,7 +268,12 @@ class MetricHelper(object):
         metric_info = self._get_metric_info(title)
 
         timings = []
-        db = 'secondaryscan_latency{}'.format(self.test.cbagent.cluster_ids[0])
+        cluster = ""
+        for cid in self.test.cbagent.cluster_ids:
+            if "apply_scanworkload" in cid:
+                cluster = cid
+                break
+        db = 'secondaryscan_latency{}'.format(cluster)
         data = self.seriesly[db].get_all()
         timings += [value['Nth-latency'] for value in data.values()]
         timings = map(int, timings)

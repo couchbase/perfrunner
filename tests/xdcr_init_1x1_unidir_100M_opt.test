@@ -26,7 +26,7 @@ view_percentage = 100
 
 [load]
 items = 100000000
-size = 800
+size = 1024
 workers = 80
 
 [xdcr]

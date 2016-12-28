@@ -2,7 +2,7 @@
 test = perfrunner.tests.fts.FTSThroughputTest
 title = Low Term, 1K sets/sec kv load, musicbrainz 20M
 component = fts
-category = throughput
+category = kvthroughput
 
 [access]
 time = 600

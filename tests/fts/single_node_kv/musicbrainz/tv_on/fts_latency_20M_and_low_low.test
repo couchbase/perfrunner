@@ -2,7 +2,7 @@
 test = perfrunner.tests.fts.FTSLatencyTest
 title = AndLowLow, 1K sets/sec kv load, musicbrainz 20M
 component = fts
-category = latency
+category = kvlatency
 
 [stats]
 lat_interval = 0.01

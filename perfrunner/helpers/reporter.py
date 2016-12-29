@@ -110,7 +110,7 @@ class SFReporter(object):
         else:
             category_full_name = self.test.test_config.test_case.category
 
-        post_body = {
+        results = {
             "category": category_full_name,
             "subcategory": self.test.test_config.test_case.sub_category,
             "test_title": test_title,
@@ -121,10 +121,9 @@ class SFReporter(object):
             "snapshots": snapshot_links,
         }
 
-        if self._upload_test_run_dailyp(post_body):
-            logger.info("Successfully posted to Dailyp {}".format(post_body))
-        else:
-            logger.warn("Failed to post to Dailyp {}".format(post_body))
+        logger.info('Posting results to perfdaily: {}'.format(pretty_dict(results)))
+        if not self._upload_test_run_dailyp(results):
+            logger.error('Failed to post results')
 
 
 class LogReporter(object):

@@ -154,9 +154,11 @@ class QueryTest(IndexTest):
 class QueryThroughputTest(QueryTest):
 
     """
-    The test adds a simple step to workflow: post-test calculation of average
-    query throughput.
+    The test adds a simple step to the workflow: post-test calculation of
+    average query throughput.
     """
+
+    COLLECTORS = {}
 
     def _report_kpi(self):
         self.reporter.post_to_sf(

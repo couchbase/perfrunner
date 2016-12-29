@@ -143,8 +143,6 @@ class QueryTest(IndexTest):
         self.load()
         self.wait_for_persistence()
 
-        self.compact_bucket()
-
         self.hot_load()
 
         self.define_ddocs()

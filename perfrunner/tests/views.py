@@ -1,7 +1,5 @@
 from time import sleep
 
-from logger import logger
-
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import PerfTest
 from perfrunner.workloads.viewgen import ViewGen, ViewGenDev
@@ -109,7 +107,7 @@ class InitialAndIncrementalIndexTest(InitialIndexTest):
         self.report_kpi(time_elapsed, index_type='Incremental')
 
 
-class DevIndexTest(IndexTest):
+class IndexByTypeTest(IndexTest):
 
     """
     Unlike base test this one introduces measurements per different index type.
@@ -121,8 +119,6 @@ class DevIndexTest(IndexTest):
         super(IndexTest, self).__init__(*args)
 
         index_type = self.test_config.index_settings.index_type
-        if index_type is None:
-            logger.interrupt('Missing index_type param')
         self.ddocs = ViewGenDev().generate_ddocs(index_type)
 
 
@@ -192,7 +188,7 @@ class IndexLatencyTest(QueryTest):
     The test only adds calculation phase. See cbagent project for details.
     """
 
-    COLLECTORS = {'index_latency': True, 'query_latency': True}
+    COLLECTORS = {'index_latency': True}
 
     def _report_kpi(self):
         self.reporter.post_to_sf(
@@ -200,7 +196,7 @@ class IndexLatencyTest(QueryTest):
         )
 
 
-class DevQueryLatencyTest(DevIndexTest, QueryLatencyTest):
+class QueryLatencyByTypeTest(IndexByTypeTest, QueryLatencyTest):
 
     """
     Per query type latency measurements.

@@ -22,14 +22,13 @@ from cbagent.collectors import (
     NSServer,
     ObserveIndexLatency,
     ObserveSecondaryIndexLatency,
-    ReservoirN1QLLatency,
+    ReservoirQueryLatency,
     SecondaryDebugStats,
     SecondaryDebugStatsBucket,
     SecondaryDebugStatsIndex,
     SecondaryLatencyStats,
     SecondaryStats,
     SpringLatency,
-    SpringQueryLatency,
     SpringSubdocLatency,
     TypePerf,
     XdcrLag,
@@ -155,14 +154,13 @@ class CbAgent(object):
             self.add_collector(ObserveIndexLatency)
         if latency:
             self.add_kv_latency(test)
-        if n1ql_latency:
-            self.add_collector(ReservoirN1QLLatency)
-        if n1ql_stats:
-            self.add_collector(N1QLStats)
-        if query_latency:
-            self.add_query_latency(test)
+        if query_latency or n1ql_latency:
+            self.add_collector(ReservoirQueryLatency)
         if subdoc_latency:
             self.add_subdoc_latency(test)
+
+        if n1ql_stats:
+            self.add_collector(N1QLStats)
 
         if elastic_stats:
             self.add_elastic_stats(test.test_config)
@@ -248,22 +246,6 @@ class CbAgent(object):
                 target_hash(settings.master_node.split(':')[0])
 
             collector = SpringSubdocLatency(settings, test.workload, prefix)
-            self.collectors.append(collector)
-
-    def add_query_latency(self, test):
-        params = test.test_config.index_settings.params
-        index_type = test.test_config.index_settings.index_type
-        for cluster_id, master_node in self.cluster_map.items():
-            settings = copy(self.settings)
-            settings.cluster = cluster_id
-            settings.master_node = master_node
-
-            prefix = test.target_iterator.prefix or \
-                target_hash(settings.master_node.split(':')[0])
-
-            collector = SpringQueryLatency(settings, test.workload,
-                                           prefix=prefix, ddocs=test.ddocs,
-                                           params=params, index_type=index_type)
             self.collectors.append(collector)
 
     def add_fts_latency(self, test):

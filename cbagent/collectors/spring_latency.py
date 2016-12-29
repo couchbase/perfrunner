@@ -12,7 +12,6 @@ from spring.docgen import (
     NestedDocument,
     NewKey,
 )
-from spring.querygen import ViewQueryGen, ViewQueryGenByType
 
 uhex = lambda: uuid4().hex
 
@@ -99,35 +98,6 @@ class SpringSubdocLatency(SpringLatency):
         elif metric == "latency_counter":
             client.counter(key, self.ws.subdoc_counter_fields)
         return 1000 * (time() - t0)  # Latency in ms
-
-
-class SpringCasLatency(SpringLatency):
-
-    METRICS = "latency_set", "latency_get", "latency_cas"
-
-
-class SpringQueryLatency(SpringLatency):
-
-    COLLECTOR = "spring_query_latency"
-
-    METRICS = "latency_query",
-
-    def __init__(self, settings, workload, ddocs, params, index_type,
-                 prefix=None):
-        super(SpringQueryLatency, self).__init__(settings, workload, prefix)
-
-        if index_type is None:
-            self.new_queries = ViewQueryGen(ddocs, params)
-        else:
-            self.new_queries = ViewQueryGenByType(index_type, params)
-
-    def measure(self, client, metric, bucket):
-        key = self.existing_keys.next(curr_items=self.items, curr_deletes=0)
-        doc = self.new_docs.next(key)
-        ddoc_name, view_name, query = self.new_queries.next(doc)
-
-        _, latency = client.query(ddoc_name, view_name, query=query)
-        return 1000 * latency  # s -> ms
 
 
 class DurabilityLatency(ObserveIndexLatency, SpringLatency):

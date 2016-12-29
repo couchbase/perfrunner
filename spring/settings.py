@@ -37,7 +37,7 @@ class WorkloadSettings(object):
 
         self.index_type = None
         self.ddocs = {}
-        self.qparams = {}
+        self.query_params = {}
 
 
 class TargetSettings(object):

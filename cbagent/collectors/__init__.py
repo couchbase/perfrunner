@@ -18,7 +18,7 @@ from n1ql_stats import N1QLStats
 from net import Net
 from ns_server import NSServer, XdcrStats
 from ps import PS
-from reservoir import ReservoirN1QLLatency
+from reservoir import ReservoirQueryLatency
 from secondary_debugstats import (
     SecondaryDebugStats,
     SecondaryDebugStatsBucket,
@@ -29,7 +29,6 @@ from secondary_stats import SecondaryStats
 from spring_latency import (
     DurabilityLatency,
     SpringLatency,
-    SpringQueryLatency,
     SpringSubdocLatency,
 )
 from typeperf import TypePerf

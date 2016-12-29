@@ -480,6 +480,8 @@ class PhaseSettings(object):
     QUERY_THROUGHPUT = float('inf')
     N1QL_THROUGHPUT = float('inf')
 
+    VIEW_QUERY_PARAMS = '{}'
+
     WORKERS = 0
     QUERY_WORKERS = 0
     N1QL_WORKERS = 0
@@ -534,7 +536,8 @@ class PhaseSettings(object):
         # Views settings
         self.ddocs = None
         self.index_type = None
-        self.qparams = {}
+        self.query_params = eval(options.get('query_params',
+                                             self.VIEW_QUERY_PARAMS))
         self.query_workers = int(options.get('query_workers',
                                              self.QUERY_WORKERS))
         self.query_throughput = float(options.get('query_throughput',
@@ -637,11 +640,9 @@ class IndexSettings(object):
 
     VIEWS = '[1]'
     DISABLED_UPDATES = 0
-    PARAMS = '{}'
 
     def __init__(self, options):
         self.views = eval(options.get('views', self.VIEWS))
-        self.params = eval(options.get('params', self.PARAMS))
         self.disabled_updates = int(options.get('disabled_updates',
                                                 self.DISABLED_UPDATES))
         self.index_type = options.get('index_type')

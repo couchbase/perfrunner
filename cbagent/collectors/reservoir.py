@@ -4,7 +4,7 @@ import glob
 from cbagent.collectors.latency import Latency
 
 
-class ReservoirN1QLLatency(Latency):
+class ReservoirQueryLatency(Latency):
 
     COLLECTOR = "spring_query_latency"
 
@@ -18,7 +18,7 @@ class ReservoirN1QLLatency(Latency):
 
     @staticmethod
     def get_stats():
-        for filename in glob.glob('n1ql-worker-*'):
+        for filename in glob.glob('*-worker-*'):
             with open(filename) as fh:
                 reader = csv.reader(fh)
                 for timestamp, latency in reader:

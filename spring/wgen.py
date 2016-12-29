@@ -443,12 +443,14 @@ class ViewWorker(Worker):
         self.total_workers = self.ws.query_workers
         self.throughput = self.ws.query_throughput
 
+        self.reservoir = Reservoir(num_workers=self.ws.query_workers)
+
         if workload_settings.index_type is None:
             self.new_queries = ViewQueryGen(workload_settings.ddocs,
-                                            workload_settings.qparams)
+                                            workload_settings.query_params)
         else:
             self.new_queries = ViewQueryGenByType(workload_settings.index_type,
-                                                  workload_settings.qparams)
+                                                  workload_settings.query_params)
 
     @with_sleep
     def do_batch(self):
@@ -463,7 +465,8 @@ class ViewWorker(Worker):
             doc['key'] = key
             doc['bucket'] = self.ts.bucket
             ddoc_name, view_name, query = self.new_queries.next(doc)
-            self.cb.query(ddoc_name, view_name, query=query)
+            _, latency = self.cb.query(ddoc_name, view_name, query=query)
+            self.reservoir.update(latency)
 
     def run(self, sid, lock, curr_ops, curr_items, deleted_items):
         self.cb.start_updater()
@@ -485,6 +488,8 @@ class ViewWorker(Worker):
             logger.info('Interrupted: {}-{}, {}'.format(self.NAME, self.sid, e))
         else:
             logger.info('Finished: {}-{}'.format(self.NAME, self.sid))
+
+        self.reservoir.dump(filename='{}-{}'.format(self.NAME, self.sid))
 
 
 class N1QLWorkerFactory(object):

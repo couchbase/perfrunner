@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.views.DevQueryLatencyTest
+test = perfrunner.tests.views.QueryLatencyByTypeTest
 title = 1 node, 20M docs, 3 views, 100 updates/sec, 100 queries/sec, stale=false, basic queries
 component = query
 category = by_type
@@ -20,7 +20,6 @@ doc_gen = nested
 
 [index]
 index_type = basic
-params = {"stale": "false"}
 
 [access]
 creates = 0
@@ -31,5 +30,6 @@ throughput = 100
 query_throughput = 100
 items = 20000000
 workers = 1
-query_workers = 2
+query_workers = 10
+query_params = {"stale": "false"}
 time = 3600

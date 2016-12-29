@@ -1,6 +1,6 @@
 [test_case]
-test = perfrunner.tests.views.DevQueryLatencyTest
-title = 1 node, 20M docs, 3 views, 100 updates/sec, 100 queries/sec, stale=false, group queries
+test = perfrunner.tests.views.QueryLatencyByTypeTest
+title = 1 node, 20M docs, 3 views, 100 updates/sec, 100 queries/sec, stale=false, compute-intensive queries
 component = query
 category = by_type
 
@@ -19,8 +19,7 @@ workers = 80
 doc_gen = nested
 
 [index]
-index_type = group_by
-params = {"stale": "false"}
+index_type = compute
 
 [access]
 creates = 0
@@ -31,5 +30,6 @@ throughput = 100
 query_throughput = 100
 items = 20000000
 workers = 1
-query_workers = 2
+query_workers = 10
+query_params = {"stale": "false"}
 time = 3600

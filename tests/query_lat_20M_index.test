@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.views.IndexLatencyTest
-title = Indexing latency (ms), 1 bucket x 20M x 2KB, non-DGM, 1 view, 250 mutations/sec/node, 400 queries/sec
+title = indexing latency (ms), 1 bucket x 20M x 2KB, non-DGM, 1 view, 250 mutations/sec/node, 400 queries/sec
 component = query
 category = lat
 

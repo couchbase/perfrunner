@@ -52,15 +52,9 @@ class SettingsTest(TestCase):
 
     def test_stale_update_after(self):
         test_config = TestConfig()
-        test_config.parse('tests/query_lat_20M.test', [])
-        views_params = test_config.index_settings.params
-        self.assertEqual(views_params, {})
-
-    def test_stale_false(self):
-        test_config = TestConfig()
-        test_config.parse('tests/query_lat_20M_state_false.test', [])
-        views_params = test_config.index_settings.params
-        self.assertEqual(views_params, {'stale': 'false'})
+        test_config.parse('tests/query_lat_20M_basic.test', [])
+        query_params = test_config.access_settings.query_params
+        self.assertEqual(query_params, {'stale': 'false'})
 
     def test_cluster_specs(self):
         for file_name in glob.glob("clusters/*.spec"):

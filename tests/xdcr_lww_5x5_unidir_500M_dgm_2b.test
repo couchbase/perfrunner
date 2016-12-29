@@ -2,7 +2,7 @@
 test = perfrunner.tests.xdcr.UniDirXdcrTest
 title = 5 -> 5 UniDir, 2 buckets x 500M x 1KB, 20K SETs/sec/bucket, LAN, LWW
 component = xdcr
-category = lww
+category = ongoing
 
 [stats]
 monitored_processes = goxdcr

@@ -135,6 +135,8 @@ class QueryTest(IndexTest):
     def access(self, *args):
         super(QueryTest, self).timer()
 
+        self.worker_manager.wait_for_workers()
+
     def run(self):
         self.load()
         self.wait_for_persistence()

@@ -5,7 +5,7 @@ from perfrunner.settings import StatsSettings
 
 
 def main():
-    s = Seriesly(StatsSettings.SERIESLY['host'])
+    s = Seriesly(StatsSettings.SERIESLY)
     for db in s.list_dbs():
         logger.info('Compacting {}'.format(db))
         result = s[db].compact()

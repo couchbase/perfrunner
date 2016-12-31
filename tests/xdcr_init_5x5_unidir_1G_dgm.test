@@ -18,8 +18,6 @@ targetNozzlePerNode = 64
 
 [compaction]
 db_percentage = 100
-view_percentage = 100
-
 
 [load]
 items = 1000000000

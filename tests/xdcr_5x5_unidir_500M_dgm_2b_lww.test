@@ -1,10 +1,11 @@
 [test_case]
 test = perfrunner.tests.xdcr.UniDirXdcrTest
-title = 5 -> 5 UniDir, 2 buckets x 500M x 1KB, 20K SETs/sec/bucket, LAN, SSL
+title = 5 -> 5 UniDir, 2 buckets x 500M x 1KB, 20K SETs/sec, LWW
 component = xdcr
 category = ongoing
 
 [stats]
+post_cpu = 1
 monitored_processes = goxdcr
 
 [cluster]
@@ -16,14 +17,13 @@ num_buckets = 2
 sourceNozzlePerNode = 4
 targetNozzlePerNode = 64
 
-[compaction]
-db_percentage = 10
-
+[bucket]
+conflict_resolution_type = lww
 
 [load]
 items = 500000000
 size = 1024
-workers = 80
+workers = 50
 
 [hot_load]
 items = 500000000
@@ -32,16 +32,15 @@ working_set = 10
 
 [xdcr]
 replication_type = unidir
-use_ssl = 1
 
 [access]
 creates = 0
 reads = 50
 updates = 50
 deletes = 0
-throughput = 40000
+throughput = 20000
 items = 500000000
-workers = 30
+workers = 20
 working_set = 10
 working_set_access = 98
 time = 3600

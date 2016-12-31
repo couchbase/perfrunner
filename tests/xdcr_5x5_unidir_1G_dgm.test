@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.xdcr.UniDirXdcrTest
-title = 5 -> 5 UniDir, 1 bucket x 1B x 1KB, 40K SETs/sec, LAN
+title = 5 -> 5 UniDir, 1 bucket x 1B x 1KB, 20K SETs/sec
 component = xdcr
 category = ongoing
 
@@ -16,19 +16,14 @@ num_buckets = 1
 sourceNozzlePerNode = 4
 targetNozzlePerNode = 64
 
-[compaction]
-db_percentage = 100
-view_percentage = 100
-
-
 [load]
 items = 1000000000
 size = 1024
-workers = 80
+workers = 50
 
 [hot_load]
 items = 1000000000
-workers = 80
+workers = 100
 working_set = 10
 
 [xdcr]
@@ -39,7 +34,7 @@ creates = 0
 reads = 50
 updates = 50
 deletes = 0
-throughput = 80000
+throughput = 40000
 items = 1000000000
 workers = 40
 working_set = 10

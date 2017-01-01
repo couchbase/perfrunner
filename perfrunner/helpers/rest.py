@@ -257,7 +257,7 @@ class RestHelper(object):
         }
 
         if conflict_resolution_type:
-            data['conflict_resolution_type'] = conflict_resolution_type
+            data['conflictResolutionType'] = conflict_resolution_type
 
         logger.info('Bucket configuration: {}'.format(misc.pretty_dict(data)))
 

@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.xdcr.UniDirXdcrTest
-title = 5 -> 5 UniDir, 1 bucket x 1B x 1KB, 20K SETs/sec
+title = 5 -> 5 UniDir, 1 bucket x 1B x 1KB, 40K SETs/sec
 component = xdcr
 category = ongoing
 
@@ -31,12 +31,12 @@ replication_type = unidir
 
 [access]
 creates = 0
-reads = 50
-updates = 50
+reads = 20
+updates = 80
 deletes = 0
-throughput = 40000
+throughput = 50000
 items = 1000000000
-workers = 40
+workers = 50
 working_set = 10
 working_set_access = 98
 time = 3600

@@ -17,7 +17,7 @@ class XdcrTest(PerfTest):
     "run" workflow is common for both uni-directional and bi-directional cases.
     """
 
-    COLLECTORS = {'latency': True, 'xdcr_lag': True, 'xdcr_stats': True}
+    COLLECTORS = {'xdcr_lag': True, 'xdcr_stats': True}
 
     ALL_BUCKETS = True
 

@@ -75,6 +75,12 @@ class SFReporter(object):
         else:
             self._log_benchmark(metric, value)
 
+
+class DailyReporter(object):
+
+    def __init__(self, test):
+        self.test = test
+
     def _upload_test_run_dailyp(self, test_run_dict):
         try:
             bucket = Bucket('couchbase://{}/perf_daily'
@@ -140,7 +146,7 @@ class LogReporter(object):
                 zh.writestr(zinfo_or_arcname=fname, bytes=master_events)
 
 
-class Reporter(SFReporter, LogReporter):
+class Reporter(SFReporter, LogReporter, DailyReporter):
 
     def start(self):
         self.ts = time.time()

@@ -142,7 +142,7 @@ class MetricHelper(object):
             values += [v['ops'] for v in data.values()]
         return int(np.percentile(values, 90))
 
-    def calc_xdcr_lag(self, percentile=90):
+    def calc_xdcr_lag(self, percentile=95):
         metric = '{}_{}th_xdc_lag'.format(self.test_config.name, percentile)
         title = '{}th percentile replication lag (ms), {}'.format(
             percentile, self.title)
@@ -153,7 +153,7 @@ class MetricHelper(object):
             db = 'xdcr_lag{}{}'.format(self.test.cbagent.cluster_ids[0], bucket)
             data = self.seriesly[db].get_all()
             timings += [v['xdcr_lag'] for v in data.values()]
-        lag = round(np.percentile(timings, percentile))
+        lag = round(np.percentile(timings, percentile), 1)
 
         return lag, metric, metric_info
 

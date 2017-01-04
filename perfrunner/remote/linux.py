@@ -456,3 +456,26 @@ class RemoteLinux(Remote):
                     '/opt/couchbase/var/lib/couchbase/logs/info.log', quiet=True)
             if not r.return_code:
                 return r.strip().split(',')[1]
+
+    @property
+    def num_vcpu(self):
+        return int(run('lscpu -a -e | wc -l')) - 1
+
+    @property
+    def num_cores(self):
+        return int(run('lscpu | grep socket').strip().split()[-1])
+
+    @all_hosts
+    def disable_cpu(self):
+        logger.info('Throttling CPU resources')
+        reserved_cores = {i for i in range(0, 2 * self.num_cores, 2)}
+        all_cores = {i for i in range(self.num_vcpu)}
+
+        for i in all_cores - reserved_cores:
+            run('echo 0 > /sys/devices/system/cpu/cpu{}/online'.format(i))
+
+    @all_hosts
+    def enable_cpu(self):
+        logger.info('Enabling all CPU cores')
+        for i in range(self.num_vcpu):
+            run('echo 1 > /sys/devices/system/cpu/cpu{}/online'.format(i))

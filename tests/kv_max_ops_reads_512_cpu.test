@@ -1,0 +1,22 @@
+[test_case]
+test = perfrunner.tests.kv.PillowFightThrottledTest
+title = Max ops/sec, cbc-pillowfight, 2 nodes, 80/20 R/W, 512B binary items, throttled CPU
+component = kv
+category = max_ops
+use_workers = 0
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 2
+num_buckets = 1
+
+[load]
+size = 512
+items = 20000000
+workers = 50
+
+[access]
+items = 20000000
+iterations = 40000
+workers = 50
+updates = 20

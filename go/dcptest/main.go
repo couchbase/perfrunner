@@ -17,14 +17,14 @@ import (
 )
 
 import (
-        mcd "github.com/couchbase/indexing/secondary/dcp/transport"
-        mc "github.com/couchbase/indexing/secondary/dcp/transport/client"
+	mcd "github.com/couchbase/indexing/secondary/dcp/transport"
+	mc "github.com/couchbase/indexing/secondary/dcp/transport/client"
 )
 
 var options struct {
 	buckets        []string // buckets to connect with
 	kvAddress      []string
-	stats          int      // periodic timeout(ms) to print stats, 0 will disable
+	stats          int // periodic timeout(ms) to print stats, 0 will disable
 	printFLogs     bool
 	auth           string
 	info           bool

@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	c "github.com/couchbase/indexing/secondary/common"
 	"github.com/couchbase/indexing/secondary/platform"
+	"github.com/couchbase/indexing/secondary/queryport/client"
 	"github.com/couchbase/indexing/secondary/stats"
 	"io/ioutil"
 	"os"
-	"github.com/couchbase/indexing/secondary/queryport/client"
 )
 
 type ScanConfig struct {
@@ -24,7 +24,7 @@ type ScanConfig struct {
 	Repeat      uint32
 	NInterval   uint32 // Stats dump nrequests interval
 	Consistency bool   // Use session consistency
-	Scans	    client.Scans
+	Scans       client.Scans
 
 	iteration uint32
 }

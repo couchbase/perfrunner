@@ -22,7 +22,10 @@ pep8:
 nose:
 	${ENV}/bin/nosetests -v unittests.py
 
-test: nose pep8
+gofmt:
+	gofmt -e -d -s go && ! gofmt -l go | read
+
+test: nose pep8 gofmt
 
 dcptest: vendor-sync
 	go build ./go/dcptest

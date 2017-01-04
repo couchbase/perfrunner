@@ -1,0 +1,30 @@
+[test_case]
+test = perfdaily.xdcr.XdcrInitTest
+title = 1 -> 1 UniDir, 1 bucket x 25M x 1KB, Optimistic
+component = XDCR
+
+[stats]
+monitored_processes = goxdcr
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 1 1
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+
+[xdcr_cluster]
+optimisticReplicationThreshold = 10240
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[load]
+items = 25000000
+size = 1024
+workers = 80
+
+[xdcr]
+replication_type = unidir

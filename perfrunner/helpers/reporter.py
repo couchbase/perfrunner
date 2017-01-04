@@ -1,13 +1,10 @@
 import json
 import os
 import time
-from datetime import datetime
 from zipfile import ZIP_DEFLATED, ZipFile
 
 import requests
-from couchbase.bucket import Bucket
 from logger import logger
-from pytz import timezone
 
 from perfrunner.helpers.misc import pretty_dict, uhex
 from perfrunner.settings import StatsSettings
@@ -81,55 +78,26 @@ class DailyReporter(object):
     def __init__(self, test):
         self.test = test
 
-    def _upload_test_run_dailyp(self, test_run_dict):
-        try:
-            bucket = Bucket('couchbase://{}/perf_daily'
-                            .format(StatsSettings.CBMONITOR))
-        except Exception as e:
-            logger.info("Post to Dailyp, DB connection error: {}".format(e.message))
-            return False
-        doc_id = "{}__{}__{}__{}__{}".format(test_run_dict['category'],
-                                             test_run_dict['subcategory'],
-                                             test_run_dict['test'],
-                                             test_run_dict['build'],
-                                             test_run_dict['datetime'])
-        bucket.upsert(doc_id, test_run_dict)
-        return True
+    def _post(self, benchmark):
+        logger.info('Adding a benchmark: {}'.format(pretty_dict(benchmark)))
+        requests.post(
+            'http://{}/daily/api/v1/benchmarks'.format(StatsSettings.SHOWFAST),
+            json.dumps(benchmark))
 
-    def post_to_dailyp(self, metrics):
-        test_title = self.test.test_config.test_case.title
-        test_name = test_title.replace(', ', '_')
-        replace_chars = ", =/.`\\"
-        for c in replace_chars:
-            test_name = test_name.replace(c, "_")
-
-        snapshot_links = list()
-        snapshot_host = "http://{}/reports/html/?snapshot=".\
-            format(StatsSettings.CBMONITOR)
-        for snapshot in self.test.snapshots:
-            snapshot_link = snapshot_host + snapshot
-            snapshot_links.append(snapshot_link)
-
-        if self.test.test_config.test_case.sub_category:
-            category_full_name = "{}-{}".format(self.test.test_config.test_case.category,
-                                                self.test.test_config.test_case.sub_category)
-        else:
-            category_full_name = self.test.test_config.test_case.category
-
-        results = {
-            "category": category_full_name,
-            "subcategory": self.test.test_config.test_case.sub_category,
-            "test_title": test_title,
-            "datetime": datetime.now(timezone('US/Pacific')).strftime("%Y_%m_%d-%H:%M"),
-            "build": self.test.build,
-            "test": test_name,
-            "metrics": metrics,
-            "snapshots": snapshot_links,
+    def post_to_daily(self, metric, value):
+        benchmark = {
+            'build': self.test.build,
+            'buildURL': os.environ.get('BUILD_URL', ''),
+            'component': self.test.test_config.test_case.component,
+            'dateTime': time.strftime('%Y-%m-%d %H:%M'),
+            'greaterIsBetter': self.test.test_config.test_case.greater_is_better,
+            'metric': metric,
+            'snapshots': self.test.snapshots,
+            'threshold': self.test.test_config.test_case.threshold,
+            'title': self.test.test_config.test_case.title,
+            'value': value,
         }
-
-        logger.info('Posting results to perfdaily: {}'.format(pretty_dict(results)))
-        if not self._upload_test_run_dailyp(results):
-            logger.error('Failed to post results')
+        self._post(benchmark)
 
 
 class LogReporter(object):

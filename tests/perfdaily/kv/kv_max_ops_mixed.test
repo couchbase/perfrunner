@@ -1,9 +1,8 @@
 [test_case]
-test = perfdaily.master.kv.PillowfightTestDaily
-title = Max throughput, Pillowfight, 50/50 R/W
-category = kv
+test = perfdaily.kv.PillowFightTest
+title = Pillowfight, 50/50 R/W, 256B binary items
+component = KV
 use_workers = 0
-
 
 [cluster]
 mem_quota = 51200
@@ -11,15 +10,12 @@ initial_nodes = 2
 num_buckets = 1
 
 [load]
-size = 1024
+size = 256
 items = 20000000
 workers = 50
 
 [access]
 items = 20000000
-iterations = 40000
+iterations = 20000
 workers = 50
 updates = 50
-
-[dailyp]
-threshold = 10

@@ -1,8 +1,7 @@
 [test_case]
-test = perfdaily.master.n1ql.N1QLThroughputTestDaily
-title = Q2, Singleton Unique Lookup, throughput, 5M docs, GSI, request_plus
-category = n1ql
-sub_category = FDB
+test = perfdaily.n1ql.N1QLThroughputTest
+title = Q2, Singleton Unique Lookup, 5M docs, FDB, request_plus
+component = N1QL
 
 [cluster]
 mem_quota = 20480
@@ -12,13 +11,6 @@ num_buckets = 1
 
 [secondary]
 indexer.settings.storage_mode = forestdb
-indexer.settings.compaction.min_size = 1048576
-indexer.settings.persisted_snapshot.interval = 3000
-indexer.settings.wal_size = 40960
-indexer.settings.maxVbQueueLength = 10000
-indexer.settings.max_cpu_percent = 2400
-indexer.settings.scan_timeout = 0
-indexer.settings.gc_percent = 200
 
 [load]
 items = 5000000
@@ -28,7 +20,7 @@ doc_gen = reverse_lookup
 
 [n1ql]
 indexes =
-    by_email::CREATE INDEX {name} ON `{bucket}` (email) using gsi;
+    by_email::CREATE INDEX {name} ON `{bucket}` (email);
 
 [access]
 creates = 0
@@ -38,9 +30,8 @@ deletes = 0
 throughput = 18000
 items = 5000000
 workers = 20
-time = 300
+time = 600
 n1ql_queries = singleton-unique-lookup
-n1ql_throughput = 1000000
 n1ql_workers = 720
 
 [n1ql-singleton-unique-lookup]
@@ -48,6 +39,3 @@ prepared = singleton_unique_lookup
 statement = SELECT * FROM `bucket-1` WHERE email = $1;
 scan_consistency = request_plus
 args = ["{email}"]
-
-[dailyp]
-threshold = 10

@@ -280,11 +280,6 @@ class TestConfig(Config):
         options = self._get_options_as_dict('ycsb')
         return YcsbSettings(options)
 
-    @property
-    def dailyp_settings(self):
-        options = self._get_options_as_dict('dailyp')
-        return DailypSettings(options)
-
     def get_n1ql_query_definition(self, query_name):
         return self._get_options_as_dict('n1ql-{}'.format(query_name))
 
@@ -294,6 +289,9 @@ class TestConfig(Config):
 
 
 class TestCaseSettings(object):
+
+    LARGER_IS_BETTER = 1
+    THRESHOLD = 10
 
     USE_WORKERS = 1
 
@@ -305,6 +303,10 @@ class TestCaseSettings(object):
         self.component = options.get('component', '')
         self.category = options.get('category', '')
         self.sub_category = options.get('sub_category', '')
+
+        self.greater_is_better = bool(int(options.get('greater_is_better',
+                                                      self.LARGER_IS_BETTER)))
+        self.threshold = int(options.get("threshold", self.THRESHOLD))
 
         self.use_workers = int(options.get('use_workers', self.USE_WORKERS))
 
@@ -845,15 +847,6 @@ class YcsbSettings(object):
         self.log_file = options.get("export_file")
         self.log_path = options.get("export_file_path")
         self.index = options.get("index")
-
-    def __str__(self):
-        return str(self.__dict__)
-
-
-class DailypSettings(object):
-
-    def __init__(self, options):
-        self.threshold = int(options.get("threshold"))
 
     def __str__(self):
         return str(self.__dict__)

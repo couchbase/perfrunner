@@ -55,15 +55,6 @@ class MetricHelper(object):
 
         return int(queries)
 
-    def cal_avg_n1ql_queries_perfdaily(self):
-        return {
-            "name": "avg_query_throughput",
-            "description": "Avg. Query Throughput (queries/sec)",
-            "value": self._calc_avg_n1ql_queries(),
-            "larger_is_better": True,
-            "threshold": self.test.test_config.dailyp_settings.threshold,
-        }
-
     def parse_log(self, test_config, name):
         if name.find('Elasticsearch') != -1:
             self.test.cbagent.add_elastic_stats(test_config)
@@ -125,15 +116,6 @@ class MetricHelper(object):
         metric_info = self._get_metric_info(title, order_by=order_by)
         return round(elapsedtime, 1), metric, metric_info
 
-    def calc_ops_perfdaily(self):
-        return {
-            "name": 'average_throughput',
-            "description": 'Max Throughput (ops/sec)',
-            "value": self.calc_max_ops(),
-            "larger_is_better": True,
-            "threshold": self.test.test_config.dailyp_settings.threshold,
-        }
-
     def calc_max_ops(self):
         values = []
         for bucket in self.test_config.buckets:
@@ -164,19 +146,6 @@ class MetricHelper(object):
         avg_replication_rate = num_buckets * initial_items / time_elapsed
 
         return round(avg_replication_rate)
-
-    def calc_avg_replication_rate_perfdaily(self, time_elapsed):
-        initial_items = self.test_config.load_settings.ops or \
-            self.test_config.load_settings.items
-        num_buckets = self.test_config.cluster.num_buckets
-
-        return {
-            "name": 'Avg_initial_XDCR_rate',
-            "description": 'Avg. initial XDCR rate (items/sec)',
-            "value": round(num_buckets * initial_items / time_elapsed),
-            "larger_is_better": True,
-            "threshold": self.test.test_config.dailyp_settings.threshold,
-        }
 
     def calc_max_drain_rate(self, time_elapsed):
         items_per_node = self.test_config.load_settings.items / \
@@ -242,15 +211,6 @@ class MetricHelper(object):
         query_latency = np.percentile(timings, percentile)
         return round(query_latency, 2)
 
-    def calc_query_latency_perfdaily(self, percentile):
-        return {
-            "name": '{}th_percentile_query_latency'.format(percentile),
-            "description": '{}th percentile Query Latency (ms)'.format(percentile),
-            "value": self._calc_query_latency(percentile),
-            "larger_is_better": False,
-            "threshold": self.test.test_config.dailyp_settings.threshold,
-        }
-
     def calc_secondary_scan_latency(self, percentile):
         metric = self.test_config.name
         title = '{}th percentile secondary scan latency (ms), {}'.format(percentile,
@@ -295,15 +255,6 @@ class MetricHelper(object):
                 v[op_key] for v in data.values() if op_key in v
             ]
         return round(np.percentile(timings, percentile), 2)
-
-    def calc_kv_latency_perfdaily(self, operation, percentile, dbname='spring_latency'):
-        return {
-            "name": '{}th_percentile_{}_latency'.format(percentile, operation),
-            "description": '{}th percentile {} Latency (ms)'.format(percentile, operation.upper()),
-            "value": self._calc_kv_latency(operation, percentile, dbname),
-            "larger_is_better": False,
-            "threshold": self.test.test_config.dailyp_settings.threshold,
-        }
 
     def calc_observe_latency(self, percentile):
         metric = '{}_{}th'.format(self.test_config.name, percentile)
@@ -437,15 +388,6 @@ class MetricHelper(object):
 
         return value, metric, metric_info
 
-    def get_indexing_meta_daily(self, value, index_type):
-        return {
-            "name": '{}_{}'.format(self.test_config.name, index_type.lower()),
-            "description": '{} index (min), {}'.format(index_type, self.title),
-            "value": value,
-            "larger_is_better": False,
-            "threshold": self.test.test_config.dailyp_settings.threshold,
-        }
-
     def calc_bnr_throughput(self, time_elapsed, edition, tool):
         metric = '{}_{}_thr_{}'.format(self.test_config.name, tool, edition)
         title = '{} full {} throughput (Avg. MB/sec), {}'.format(
@@ -481,3 +423,18 @@ class MetricHelper(object):
             if any(value > expected_number for value in values):
                 return False
         return True
+
+
+class DailyMetricHelper(MetricHelper):
+
+    def cal_avg_n1ql_queries(self):
+        return 'Avg Query Throughput (queries/sec)', \
+            self._calc_avg_n1ql_queries()
+
+    def calc_max_ops(self):
+        return 'Max Throughput (ops/sec)', \
+            super(DailyMetricHelper, self).calc_max_ops()
+
+    def calc_avg_replication_rate(self, time_elapsed):
+        return 'Avg XDCR Rate (items/sec)', \
+            super(DailyMetricHelper, self).calc_avg_replication_rate(time_elapsed)

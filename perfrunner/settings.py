@@ -655,6 +655,7 @@ class GSISettings(object):
 
     STALE = 'true'
     CBINDEXPERF_CONFIGFILE = ''
+    CBINDEXPERF_CONFIGFILES = ''
     INIT_NUM_CONNECTIONS = 0
     STEP_NUM_CONNECTIONS = 0
     MAX_NUM_CONNECTIONS = 0
@@ -664,11 +665,14 @@ class GSISettings(object):
         if options.get('indexes') is not None:
             for index_def in options.get('indexes').split(','):
                 name, field = index_def.split(':')
+                field = ','.join(field.split(' '))
                 self.indexes[name] = field
 
         self.stale = options.get('stale', self.STALE)
         self.cbindexperf_configfile = options.get('cbindexperf_configfile',
                                                   self.CBINDEXPERF_CONFIGFILE)
+        self.cbindexperf_configfiles = options.get('cbindexperf_configfiles',
+                                                   self.CBINDEXPERF_CONFIGFILES)
         self.init_num_connections = int(options.get('init_num_connections',
                                                     self.INIT_NUM_CONNECTIONS))
         self.step_num_connections = int(options.get('step_num_connections',

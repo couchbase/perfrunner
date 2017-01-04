@@ -25,6 +25,7 @@ class SecondaryIndexTest(PerfTest):
         super(SecondaryIndexTest, self).__init__(*args)
 
         self.configfile = self.test_config.gsi_settings.cbindexperf_configfile
+        self.configfiles = self.test_config.gsi_settings.cbindexperf_configfiles.split(",")
         self.init_num_connections = self.test_config.gsi_settings.init_num_connections
         self.step_num_connections = self.test_config.gsi_settings.step_num_connections
         self.max_num_connections = self.test_config.gsi_settings.max_num_connections
@@ -87,13 +88,13 @@ class SecondaryIndexTest(PerfTest):
             raise Exception('Validation for num_connections failed')
 
     @with_stats
-    def apply_scanworkload(self):
+    def apply_scanworkload(self, path_to_tool="/opt/couchbase/bin/cbindexperf"):
         rest_username, rest_password = self.cluster_spec.rest_credentials
         logger.info('Initiating scan workload')
 
-        cmdstr = "/opt/couchbase/bin/cbindexperf -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json " \
+        cmdstr = "{} -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json " \
                  "-statsfile /root/statsfile" \
-            .format(self.index_nodes[0], rest_username, rest_password, self.configfile)
+            .format(path_to_tool, self.index_nodes[0], rest_username, rest_password, self.configfile)
         logger.info('To be applied: {}'.format(cmdstr))
         status = subprocess.call(cmdstr, shell=True)
         if status != 0:
@@ -459,3 +460,57 @@ class SecondaryNumConnectionsTest(SecondaryIndexTest):
         logger.info('Connections: {}'.format(connections))
 
         self.report_kpi(connections)
+
+
+class SecondaryIndexingScanMultifilterTest(SecondaryIndexingScanLatencyTest):
+    """
+    The test applies scan workload against the 2i server and measures
+    and reports the average scan throughput
+    """
+    COLLECTORS = {'secondary_stats': True,
+                  'secondary_debugstats': True, 'secondary_debugstats_bucket': True,
+                  'secondary_debugstats_index': True}
+
+    def _report_kpi(self, multifilter_time, independent_time):
+        time_diff = independent_time - multifilter_time
+        self.reporter.post_to_sf(time_diff)
+
+    @staticmethod
+    def read_duration_from_results():
+        with open('result.json') as result_file:
+            resdata = json.load(result_file)
+        return resdata['Duration']
+
+    def apply_scanworkload_configfile(self, configfile):
+        self.configfile = configfile
+        return self.apply_scanworkload(path_to_tool="./cbindexperf")
+
+    def apply_scanworkloads(self):
+        total_time = 0
+        for configfile in self.configfiles:
+            self.apply_scanworkload_configfile(configfile)
+            diff = self.read_duration_from_results()
+            logger.info("Config File: {} - Time taken: {}".format(configfile, diff))
+            total_time += diff
+        return total_time
+
+    def apply_scan_multifilter_workload(self):
+        self.apply_scanworkload_configfile(self.configfile)
+        return self.read_duration_from_results()
+
+    def run(self):
+        self.remove_statsfile()
+        self.run_load_for_2i()
+        self.wait_for_persistence()
+        self.compact_bucket()
+        self.build_secondaryindex()
+
+        self.run_access_for_2i(run_in_background=True)
+
+        multifilter_time = self.apply_scan_multifilter_workload()
+        logger.info("Multifilter time taken: {}".format(multifilter_time))
+
+        independent_time = self.apply_scanworkloads()
+        logger.info("Independent filters time taken: {}".format(independent_time))
+
+        self.report_kpi(multifilter_time, independent_time)

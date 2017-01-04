@@ -1,0 +1,43 @@
+{
+  "Concurrency": 64,
+  "Clients": 5,
+  "ScanSpecs": [
+    {
+      "Limit": 0,
+      "Repeat" : 999,
+      "Type": "MultiScan",
+      "Bucket": "bucket-1",
+      "Id": 4,
+      "Index": "myindex",
+      "Scans": [
+        {
+          "Filter": [
+            {
+              "Low": "1",
+              "High": "2",
+              "Inclusion": 3
+            }
+          ]
+        },
+        {
+          "Filter": [
+            {
+              "Low": "6",
+              "High": "7",
+              "Inclusion": 3
+            }
+          ]
+        },
+        {
+          "Filter": [
+            {
+              "Low": "a",
+              "High": "b",
+              "Inclusion": 3
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

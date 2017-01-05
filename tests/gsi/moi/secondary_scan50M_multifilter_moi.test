@@ -37,6 +37,7 @@ cbindexperf_configfiles = tests/gsi/moi/config/config_scan_multifilter1_moi.json
 indexer.settings.storage_mode = memory_optimized
 indexer.settings.gc_percent = 200
 indexer.settings.max_cpu_percent = 4800
+indexer.settings.scan_timeout = 600000
 
 [access]
 creates = 10

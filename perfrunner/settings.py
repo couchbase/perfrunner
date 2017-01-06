@@ -290,8 +290,7 @@ class TestConfig(Config):
 
 class TestCaseSettings(object):
 
-    LARGER_IS_BETTER = 1
-    THRESHOLD = 10
+    THRESHOLD = -10
 
     USE_WORKERS = 1
 
@@ -304,8 +303,6 @@ class TestCaseSettings(object):
         self.category = options.get('category', '')
         self.sub_category = options.get('sub_category', '')
 
-        self.greater_is_better = bool(int(options.get('greater_is_better',
-                                                      self.LARGER_IS_BETTER)))
         self.threshold = int(options.get("threshold", self.THRESHOLD))
 
         self.use_workers = int(options.get('use_workers', self.USE_WORKERS))

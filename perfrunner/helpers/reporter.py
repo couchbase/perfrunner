@@ -90,7 +90,6 @@ class DailyReporter(object):
             'buildURL': os.environ.get('BUILD_URL', ''),
             'component': self.test.test_config.test_case.component,
             'dateTime': time.strftime('%Y-%m-%d %H:%M'),
-            'greaterIsBetter': self.test.test_config.test_case.greater_is_better,
             'metric': metric,
             'snapshots': self.test.snapshots,
             'threshold': self.test.test_config.test_case.threshold,

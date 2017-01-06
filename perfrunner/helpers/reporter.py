@@ -92,8 +92,8 @@ class DailyReporter(object):
             'dateTime': time.strftime('%Y-%m-%d %H:%M'),
             'metric': metric,
             'snapshots': self.test.snapshots,
+            'testCase': self.test.test_config.test_case.title,
             'threshold': self.test.test_config.test_case.threshold,
-            'title': self.test.test_config.test_case.title,
             'value': value,
         }
         self._post(benchmark)

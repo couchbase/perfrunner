@@ -1,10 +1,10 @@
 [test_case]
 test = perfdaily.kv.DCPThroughputTest
-title = DCP, 1 bucket x 250M x 1KB, 8 connections, no mutations
+title = DCP, 1 bucket x 250M x 1KB, DGM, 8 connections, no mutations
 component = KV
 
 [cluster]
-mem_quota = 450000
+mem_quota = 51200
 initial_nodes = 1
 num_buckets = 1
 

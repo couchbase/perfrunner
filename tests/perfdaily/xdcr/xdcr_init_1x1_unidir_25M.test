@@ -1,6 +1,6 @@
 [test_case]
 test = perfdaily.xdcr.XdcrInitTest
-title = 1 -> 1 UniDir, 1 bucket x 25M x 1KB
+title = 1 -> 1 UniDir, 25M x 1KB items
 component = XDCR
 
 [stats]

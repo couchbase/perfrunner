@@ -1,12 +1,9 @@
 [clusters]
-poseidon_c1 =
-    172.23.132.10:8091
-    172.23.132.11:8091
-
-poseidon_c2 =
-    172.23.132.12:8091
-    172.23.132.13:8091
-
+triton =
+    172.23.132.17:8091
+    172.23.132.18:8091
+    172.23.132.19:8091
+    172.23.132.20:8091
 
 [clients]
 hosts =
@@ -23,6 +20,6 @@ ssh = root:couchbase
 
 [parameters]
 OS = CentOS 7
-CPU = Data: E5-2630 v2 (24 vCPU)
-Memory = Data: 64GB
+CPU = Data: E5-2630 v4 (40 vCPU)
+Memory = 64GB
 Disk = SSD

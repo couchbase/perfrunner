@@ -1,0 +1,28 @@
+[test_case]
+test = perfdaily.gsi.InitialIndexTest
+title = 200M docs, 1 index, MOI
+component = GSI
+threshold = 10
+
+[stats]
+interval = 1
+monitored_processes = projector
+
+[cluster]
+mem_quota = 51200
+index_mem_quota = 204800
+initial_nodes = 6
+num_buckets = 1
+
+[secondary]
+indexer.settings.storage_mode = memory_optimized
+indexes = by_email:email
+
+[compaction]
+db_percentage = 100
+
+[bucket]
+replica_number = 0
+
+[load]
+items = 200000000

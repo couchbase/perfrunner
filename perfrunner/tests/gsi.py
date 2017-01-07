@@ -72,3 +72,16 @@ class IndexTest(PerfTest):
 
         self.bg_load()
         self.incr_index()
+
+
+class InitialIndexTest(IndexTest):
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.create_index()
+        from_ts, to_ts = self.init_index()
+        time_elapsed = round((to_ts - from_ts) / 1000.0 / 60, 2)  # ms -> min
+
+        self.report_kpi(time_elapsed)

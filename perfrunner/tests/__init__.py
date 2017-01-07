@@ -113,7 +113,6 @@ class PerfTest(object):
         for master in self.cluster_spec.yield_masters():
             for bucket in self.test_config.buckets:
                 self.monitor.monitor_disk_queues(master, bucket)
-                self.monitor.monitor_tap_queues(master, bucket)
                 self.monitor.monitor_dcp_queues(master, bucket)
 
     def restore(self):

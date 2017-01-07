@@ -22,11 +22,6 @@ class Monitor(RestHelper):
         'vb_active_queue_size',
         'vb_replica_queue_size',
     )
-    TAP_QUEUES = (
-        'ep_tap_replica_qlen',
-        'ep_tap_replica_queue_itemondisk',
-        'ep_tap_rebalance_queue_backfillremaining',
-    )
 
     DCP_QUEUES = (
         'ep_dcp_replica_items_remaining',
@@ -60,9 +55,7 @@ class Monitor(RestHelper):
 
         logger.info('Rebalance completed')
 
-    def _wait_for_empty_queues(self, host_port, bucket, queues,
-                               stats_function=None):
-        stats_function = stats_function or self.get_bucket_stats
+    def _wait_for_empty_queues(self, host_port, bucket, queues, stats_function):
         metrics = list(queues)
 
         start_time = time.time()
@@ -87,27 +80,18 @@ class Monitor(RestHelper):
 
     def monitor_disk_queues(self, host_port, bucket):
         logger.info('Monitoring disk queues: {}'.format(bucket))
-        self._wait_for_empty_queues(host_port, bucket, self.DISK_QUEUES)
-
-    def monitor_tap_queues(self, host_port, bucket):
-        logger.info('Monitoring TAP queues: {}'.format(bucket))
-        self._wait_for_empty_queues(host_port, bucket, self.TAP_QUEUES)
+        self._wait_for_empty_queues(host_port, bucket, self.DISK_QUEUES,
+                                    self.get_bucket_stats)
 
     def monitor_dcp_queues(self, host_port, bucket):
         logger.info('Monitoring DCP queues: {}'.format(bucket))
-        self._wait_for_empty_queues(host_port, bucket, self.DCP_QUEUES)
+        self._wait_for_empty_queues(host_port, bucket, self.DCP_QUEUES,
+                                    self.get_bucket_stats)
 
     def monitor_xdcr_queues(self, host_port, bucket):
         logger.info('Monitoring XDCR queues: {}'.format(bucket))
-        # MB-14366: XDCR stats endpoint changed in 4.0
-        if self.check_rest_endpoint_exists("http://{}/pools/default/buckets/@xdcr-{}/stats"
-                                           .format(host_port, bucket)):
-            stats_function = self.get_goxdcr_stats
-        else:
-            # Use default stats function for older builds.
-            stats_function = None
         self._wait_for_empty_queues(host_port, bucket, self.XDCR_QUEUES,
-                                    stats_function)
+                                    self.get_xdcr_stats)
 
     def monitor_task(self, host_port, task_type):
         logger.info('Monitoring task: {}'.format(task_type))
@@ -132,10 +116,8 @@ class Monitor(RestHelper):
                                                              host_port))
 
         host = host_port.split(':')[0]
-        # The supplied memcached_port may not be used if authless bucket is
-        # used due to FTS testing. See helpers/memcached.py and the actual
-        # get_stats call.
         memcached_port = self.get_memcached_port(host_port)
+
         while True:
             stats = memcached.get_stats(host, memcached_port, bucket, 'warmup')
             if 'ep_warmup_state' in stats:

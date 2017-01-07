@@ -34,10 +34,10 @@ def retry(method, *args, **kwargs):
 
 
 class RestHelper(object):
+
     def __init__(self, cluster_spec):
-        self.rest_username, self.rest_password = \
-            cluster_spec.rest_credentials
-        self.auth = (self.rest_username, self.rest_password)
+        self.rest_username, self.rest_password = cluster_spec.rest_credentials
+        self.auth = self.rest_username, self.rest_password
 
     @retry
     def get(self, **kwargs):
@@ -50,9 +50,6 @@ class RestHelper(object):
     @retry
     def put(self, **kwargs):
         return requests.put(auth=self.auth, **kwargs)
-
-    def delete(self, **kwargs):
-        return requests.delete(auth=self.auth, **kwargs)
 
     def set_data_path(self, host_port, data_path, index_path):
         logger.info('Configuring data paths: {}'.format(host_port))
@@ -207,20 +204,6 @@ class RestHelper(object):
         counters = self.get(url=api).json()['counters']
         return counters.get('rebalance_start') == counters.get('rebalance_success')
 
-    def check_rest_endpoint_exists(self, api):
-        """Check that a REST endpoint exists, to allow for different endpoints to
-           be monitored dependant on version. """
-        for _ in range(MAX_RETRY):
-            try:
-                r = requests.get(url=api, auth=self.auth)
-            except ConnectionError:
-                time.sleep(RETRY_DELAY * 2)
-                continue
-            if r.status_code in range(200, 203):
-                return True
-            else:
-                return False
-
     def get_failover_counter(self, host_port):
         api = 'http://{}/pools/default'.format(host_port)
         counters = self.get(url=api).json()['counters']
@@ -263,12 +246,6 @@ class RestHelper(object):
 
         self.post(url=api, data=data)
 
-    def delete_bucket(self, host_port, name):
-        logger.info('Removing bucket: {}'.format(name))
-
-        api = 'http://{}/pools/default/buckets/{}'.format(host_port, name)
-        self.delete(url=api)
-
     def flush_bucket(self, host_port, name):
         logger.info('Flushing bucket: {}'.format(name))
 
@@ -295,7 +272,7 @@ class RestHelper(object):
                                                                 bucket)
         return self.get(url=api).json()
 
-    def get_goxdcr_stats(self, host_port, bucket):
+    def get_xdcr_stats(self, host_port, bucket):
         api = 'http://{}/pools/default/buckets/@xdcr-{}/stats'.format(host_port,
                                                                       bucket)
         return self.get(url=api).json()

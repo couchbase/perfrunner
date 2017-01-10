@@ -424,6 +424,12 @@ class MetricHelper(object):
                 return False
         return True
 
+    def parse_ycsb_throughput(self):
+        with open('YCSB/ycsb.log') as fh:
+            for line in fh.readlines():
+                if line.startswith('[OVERALL], Throughput(ops/sec)'):
+                    return int(float(line.split()[-1]))
+
 
 class DailyMetricHelper(MetricHelper):
 
@@ -438,3 +444,7 @@ class DailyMetricHelper(MetricHelper):
     def calc_avg_replication_rate(self, time_elapsed):
         return 'Avg XDCR Rate (items/sec)', \
             super(DailyMetricHelper, self).calc_avg_replication_rate(time_elapsed)
+
+    def cal_ycsb_throughput(self):
+        return 'Avg Throughput (ops/sec)', \
+            self.parse_ycsb_throughput()

@@ -239,3 +239,32 @@ def run_kvgen(hostname, num_docs, prefix):
     logger.info('Running: {}'.format(cmd))
     with shell_env(GOGC='300'):
         local(cmd, capture=False)
+
+
+def run_ycsb(host, bucket, password, action, workload, items, workers,
+             ops=None, time=None):
+    cmd = 'bin/ycsb {action} couchbase2 ' \
+        '-P {workload} ' \
+        '-p recordcount={items} ' \
+        '-p threadcount={workers} ' \
+        '-p couchbase.host={host} ' \
+        '-p couchbase.bucket={bucket} ' \
+        '-p couchbase.password={password} ' \
+        '-p couchbase.boost=48 ' \
+        '-p couchbase.epoll=true ' \
+        '-p exportfile=ycsb.log'
+
+    if ops is not None:
+        cmd += ' -p operationcount={ops}'
+    if time is not None:
+        cmd += ' -p maxexecutiontime={time}'
+
+    cmd += ' 2>/dev/null'
+
+    cmd = cmd.format(host=host, bucket=bucket, password=password,
+                     action=action, workload=workload,
+                     items=items, ops=ops, workers=workers, time=time)
+
+    logger.info('Running: {}'.format(cmd))
+    with lcd('YCSB'):
+        local(cmd, capture=False)

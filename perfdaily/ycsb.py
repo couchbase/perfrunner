@@ -1,0 +1,10 @@
+from perfdaily import DailyTest
+from perfrunner.tests.ycsb2 import YCSBN1QLTest as _YCSBN1QLTest
+
+
+class YCSBN1QLTest(DailyTest, _YCSBN1QLTest):
+
+    def _report_kpi(self):
+        self.reporter.post_to_daily(
+            *self.metric_helper.cal_ycsb_throughput()
+        )

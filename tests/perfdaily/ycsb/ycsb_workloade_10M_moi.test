@@ -1,0 +1,34 @@
+[test_case]
+test = perfdaily.ycsb.YCSBN1QLTest
+title = Workload E, 10M items, MOI, single node
+component = YCSB
+use_workers = 0
+
+[cluster]
+mem_quota = 20480
+index_mem_quota = 100000
+initial_nodes = 1
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+
+[secondary]
+indexer.settings.storage_mode = memory_optimized
+
+[ycsb]
+workload_path = workloads/workloade
+
+[load]
+items = 10000000
+workers = 160
+
+[n1ql]
+indexes =
+    primary_idx::CREATE PRIMARY INDEX {name} ON `{bucket}`;
+
+[access]
+items = 10000000
+workers = 160
+ops = 10000000
+time = 600

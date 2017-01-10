@@ -1,6 +1,6 @@
 [test_case]
-test = perfrunner.tests.secondary.SecondaryIndexingScanMultifilterTest
-title = Secondary index scan latency(ms), 1 bucket x 50M x 1KB, 100K KV ops/sec, MOI
+test = perfrunner.tests.secondary.SecondaryIndexingMultiScanTest
+title = Secondary index multi scan time minus independent filter scan time(sec), 1 bucket x 50M x 1KB, 100K KV ops/sec, MOI
 component = secondary
 category = moi_lat
 

@@ -462,7 +462,7 @@ class SecondaryNumConnectionsTest(SecondaryIndexTest):
         self.report_kpi(connections)
 
 
-class SecondaryIndexingScanMultifilterTest(SecondaryIndexingScanLatencyTest):
+class SecondaryIndexingMultiScanTest(SecondaryIndexingScanLatencyTest):
     """
     The test applies scan workload against the 2i server and measures
     and reports the average scan throughput
@@ -473,7 +473,7 @@ class SecondaryIndexingScanMultifilterTest(SecondaryIndexingScanLatencyTest):
 
     def _report_kpi(self, multifilter_time, independent_time):
         time_diff = independent_time - multifilter_time
-        self.reporter.post_to_sf(time_diff)
+        self.reporter.post_to_sf(round(time_diff, 2))
 
     @staticmethod
     def read_duration_from_results():

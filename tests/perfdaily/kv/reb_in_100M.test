@@ -1,0 +1,35 @@
+[test_case]
+test = perfdaily.kv.RebalanceTest
+title = Rebalance 3 -> 4, 100M x 1KB items, DGM, 10K mixed ops/sec
+component = KV
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 3
+num_buckets = 1
+
+[load]
+items = 100000000
+size = 1024
+workers = 80
+
+[hot_load]
+items = 100000000
+workers = 100
+working_set = 50
+
+[access]
+creates = 0
+reads = 50
+updates = 50
+deletes = 0
+throughput = 10000
+items = 100000000
+workers = 25
+working_set = 50
+working_set_access = 95
+
+[rebalance]
+nodes_after = 4
+start_after = 180
+stop_after = 180

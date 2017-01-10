@@ -53,7 +53,7 @@ def with_delayed_posting(rebalance, *args, **kwargs):
     rebalance(*args, **kwargs)
 
     if test.is_balanced():
-        test.reporter.post_to_sf(test.rebalance_time)
+        test.report_kpi(test.rebalance_time)
 
 
 class RebalanceTest(PerfTest):
@@ -87,6 +87,9 @@ class RebalanceTest(PerfTest):
             if not self.rest.is_balanced(master):
                 return False
         return True
+
+    def _report_kpi(self, rebalance_time):
+        self.reporter.post_to_sf(rebalance_time)
 
     @with_delayed_posting
     @with_stats

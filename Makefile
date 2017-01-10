@@ -12,7 +12,7 @@ build:
 	pwd > ${ENV}/lib/${PYTHON}/site-packages/perfrunner.pth
 
 clean:
-	rm -fr build perfrunner.egg-info dist dcptest kvgen cbindexperf
+	rm -fr build perfrunner.egg-info dist dcptest kvgen cbindexperf YCSB
 	find . -name '*.pyc' -o -name '*.pyo' | xargs rm -f
 
 pep8:
@@ -44,3 +44,7 @@ vendor-sync: go-tools
 
 go-tools:
 	go get -u github.com/kardianos/govendor
+
+ycsb:
+	git clone git://github.com/brianfrankcooper/YCSB.git
+	cd YCSB && mvn -pl com.yahoo.ycsb:couchbase2-binding -am clean package

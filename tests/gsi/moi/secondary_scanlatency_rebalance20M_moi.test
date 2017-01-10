@@ -31,7 +31,7 @@ size = 1024
 spring_workers = 100
 
 [secondary]
-indexes = myindex:email
+indexes = myindex:alt_email
 db = moi
 cbindexperf_configfile = tests/gsi/moi/config/config_scanlatency_moi.json
 indexer.settings.storage_mode = memory_optimized

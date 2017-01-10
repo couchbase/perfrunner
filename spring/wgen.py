@@ -26,6 +26,7 @@ from spring.docgen import (
     ExistingKey,
     ExtReverseLookupDocument,
     FTSKey,
+    GSIMultiIndexDocument,
     ImportExportDocument,
     ImportExportDocumentArray,
     ImportExportDocumentNested,
@@ -131,6 +132,8 @@ class Worker(object):
                                                    self.ts.prefix)
         elif self.ws.doc_gen == 'large_subdoc':
             self.docs = LargeDocument(self.ws.size)
+        elif self.ws.doc_gen == 'gsi_multiindex':
+            self.docs = GSIMultiIndexDocument(self.ws.size)
         elif self.ws.doc_gen == 'small_plasma':
             self.docs = SmallPlasmaDocument(self.ws.size)
         elif self.ws.doc_gen == 'multiitem_plasma':

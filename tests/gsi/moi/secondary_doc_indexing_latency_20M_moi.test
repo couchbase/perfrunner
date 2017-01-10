@@ -27,7 +27,7 @@ size = 1024
 spring_workers = 100
 
 [secondary]
-indexes = myindex:city
+indexes = myindex:alt_email
 stale = ok
 db = moi
 cbindexperf_configfile = tests/gsi/moi/config/config_scanlatency_moi.json

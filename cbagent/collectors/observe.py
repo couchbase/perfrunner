@@ -110,8 +110,16 @@ class ObserveSecondaryIndexLatency(ObserveIndexLatency):
         while not row:
             row = cb.n1ql_query(query).get_single_result()
 
+    @staticmethod
+    def create_alt_mail_doc(pool):
+        client = pool.get_client()
+
+        key = uhex()
+        client.set(key, {"alt_email": key})
+        return client, key
+
     def _measure_lags(self, pool, cb=None, query=None):
-        client, key = self._create_doc(pool)
+        client, key = self.create_alt_mail_doc(pool)
 
         t0, t1 = self._wait_until_secondary_indexed(key, cb, query)
 
@@ -122,7 +130,7 @@ class ObserveSecondaryIndexLatency(ObserveIndexLatency):
         connection_string = 'couchbase://{}/{}?password={}'.format(
             self.master_node, self.buckets[0], self.auth[1])
         cb = Bucket(connection_string)
-        query = N1QLQuery("select city from `bucket-1` where city=$c", c="abc")
+        query = N1QLQuery("select city from `bucket-1` where alt_email=$c", c="abc")
         query.adhoc = False
 
         while True:

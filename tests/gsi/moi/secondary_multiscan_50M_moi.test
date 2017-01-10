@@ -28,9 +28,10 @@ max_num_auxio = 16
 items = 50000000
 size = 1024
 spring_workers = 100
+doc_gen = gsi_multiindex
 
 [secondary]
-indexes = myindex:name city coins
+indexes = myindex:alt_email city coins
 db = moi
 cbindexperf_configfile = tests/gsi/moi/config/config_scan_multifilter_moi.json
 cbindexperf_configfiles = tests/gsi/moi/config/config_scan_multifilter1_moi.json,tests/gsi/moi/config/config_scan_multifilter2_moi.json,tests/gsi/moi/config/config_scan_multifilter3_moi.json

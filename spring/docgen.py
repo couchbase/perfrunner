@@ -769,27 +769,33 @@ class ImportExportDocumentNested(ImportExportDocument):
 
 class SmallPlasmaDocument(Document):
 
+    @staticmethod
+    def build_item(alphabet):
+        num = random.randint(1, 64)
+        return alphabet[num:64] + alphabet[0:num]
+
     def next(self, key):
         alphabet = self._build_alphabet(key)
 
         return {
-            'city': alphabet
+            'city': self.build_item(alphabet=alphabet)
         }
 
 
-class MultiItemPlasmaDocument(Document):
+class MultiItemPlasmaDocument(SmallPlasmaDocument):
 
     @staticmethod
     def build_coins(alphabet):
-        return max(0.1, int(alphabet[31:40], 16) / 100.0)
+        num = random.randint(3, 11)
+        return max(0.1, int(alphabet[0:num], 16) / 100.0)
 
     def next(self, key):
         alphabet = self._build_alphabet(key)
 
         return {
-            'city': alphabet,
-            'name': alphabet,
-            'email': alphabet,
-            'alt_email': alphabet,
+            'city': self.build_item(alphabet=alphabet),
+            'name': self.build_item(alphabet=alphabet),
+            'email': self.build_item(alphabet=alphabet),
+            'alt_email': self.build_item(alphabet=alphabet),
             'coins': self.build_coins(alphabet)
         }

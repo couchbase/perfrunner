@@ -13,6 +13,7 @@ from perfrunner.remote import Remote
 from perfrunner.remote.context import (
     all_hosts,
     all_kv_nodes,
+    index_node,
     kv_node_cbindexperf,
     single_client,
     single_host,
@@ -479,3 +480,8 @@ class RemoteLinux(Remote):
         logger.info('Enabling all CPU cores')
         for i in range(self.num_vcpu):
             run('echo 1 > /sys/devices/system/cpu/cpu{}/online'.format(i))
+
+    @index_node
+    def kill_indexer_process(self):
+        logger.info('Killing indexer process')
+        run("killall indexer")

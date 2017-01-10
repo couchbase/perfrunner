@@ -29,6 +29,7 @@ class SecondaryIndexTest(PerfTest):
         self.init_num_connections = self.test_config.gsi_settings.init_num_connections
         self.step_num_connections = self.test_config.gsi_settings.step_num_connections
         self.max_num_connections = self.test_config.gsi_settings.max_num_connections
+        self.run_recovery_test = self.test_config.gsi_settings.run_recovery_test
 
         self.storage = self.test_config.gsi_settings.storage
         self.indexes = self.test_config.gsi_settings.indexes
@@ -110,12 +111,13 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
     index updating is conurrent to KV incremental load.
     """
 
-    def _report_kpi(self, time_elapsed, index_type):
+    def _report_kpi(self, time_elapsed, index_type, unit="min"):
         storage = self.storage == 'memdb' and 'moi' or 'fdb'
         self.reporter.post_to_sf(
             *self.metric_helper.get_indexing_meta(value=time_elapsed,
                                                   index_type=index_type,
-                                                  storage=storage)
+                                                  storage=storage,
+                                                  unit=unit)
         )
 
     def build_initindex(self):
@@ -134,6 +136,15 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
         self.monitor.wait_for_secindex_incr_build(self.index_nodes, self.bucket,
                                                   self.indexes.keys(), numitems)
 
+    def run_recovery_scenario(self):
+        if self.run_recovery_test:
+            # Measure recovery time for index
+            self.remote.kill_indexer_process()
+            recovery_time = self.monitor.wait_for_recovery(self.index_nodes, self.bucket, self.indexes.keys()[0])
+            if recovery_time == -1:
+                raise Exception('Indexer failed to recover...!!!')
+            self.report_kpi(recovery_time, 'Recovery', "ms")
+
     def run(self):
         self.run_load_for_2i()
         self.wait_for_persistence()
@@ -147,6 +158,8 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
         time_elapsed = (to_ts - from_ts) / 1000.0
         time_elapsed = self.reporter.finish('Incremental secondary index', time_elapsed)
         self.report_kpi(time_elapsed, 'Incremental')
+
+        self.run_recovery_scenario()
 
 
 class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSecondaryIndexTest):

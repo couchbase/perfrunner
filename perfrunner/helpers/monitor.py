@@ -13,6 +13,7 @@ class Monitor(RestHelper):
     MAX_RETRY = 60
     REBALANCE_TIMEOUT = 3600 * 2
     TIMEOUT = 3600 * 12
+    MAX_RETRY_RECOVERY = 300
 
     DISK_QUEUES = (
         'ep_queue_size',
@@ -293,3 +294,14 @@ class Monitor(RestHelper):
         if retry == self.MAX_RETRY:
             return False
         return True
+
+    def wait_for_recovery(self, index_nodes, bucket, index):
+        hosts = [node.split(':')[0] for node in index_nodes]
+        for retry in range(self.MAX_RETRY_RECOVERY):
+            response = self.get_index_stats(hosts)
+            item = "{}:{}:disk_load_duration".format(bucket, index)
+            if item in response:
+                return response[item]
+            else:
+                time.sleep(self.POLLING_INTERVAL)
+        return -1

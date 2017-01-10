@@ -40,3 +40,16 @@ def kv_node_cbindexperf(task, *args, **kargs):
                 kargs["host_num"] = count
                 task(*args, **kargs)
     return _kv_node_cbindexperf(task, *args, **kargs)
+
+
+@decorator
+def index_node(task, *args, **kargs):
+    self = args[0]
+    # Get first cluster, its index nodes
+    (cluster_name, servers) = \
+        self.cluster_spec.yield_servers_by_role('index').next()
+    if not servers:
+        raise RuntimeError(
+            "No index nodes specified for cluster {}".format(cluster_name))
+    with settings(host_string=servers[0].split(':')[0]):
+        return task(*args, **kargs)

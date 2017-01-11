@@ -9,7 +9,7 @@ items = 1000000
 name  = perf_elastic_index
 port = 9091
 orderby = q0b00000000
-backup_path = /home/backup
+backup_path = /fts/backup
 repo_path = fts_wiki
 index_configfile = tests/fts/index/elastic_6shards.json
 

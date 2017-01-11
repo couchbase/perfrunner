@@ -18,7 +18,7 @@ query_size = 10
 elastic = 1
 logfile = /tmp/elastic_latency_termmed_1M_1K.txt
 orderby = q0b00000010
-backup_path = /home/backup
+backup_path = /fts/backup
 repo_path = wiki1M
 field = text
 

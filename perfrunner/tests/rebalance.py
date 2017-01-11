@@ -214,7 +214,7 @@ class FailoverTest(RebalanceKVTest):
 
 class HardFailoverTest(FailoverTest):
 
-    def _report_kpi(self):
+    def _report_kpi(self, *args):
         master_node = self.master_node.split(':')[0]
 
         t_start = self.remote.detect_hard_failover_start(master_node)
@@ -244,7 +244,7 @@ class HardFailoverTest(FailoverTest):
 
 class GracefulFailoverTest(FailoverTest):
 
-    def _report_kpi(self):
+    def _report_kpi(self, *args):
         master_node = self.master_node.split(':')[0]
 
         t_start = self.remote.detect_graceful_failover_start(master_node)
@@ -275,7 +275,7 @@ class GracefulFailoverTest(FailoverTest):
 
 class AutoFailoverTest(FailoverTest):
 
-    def _report_kpi(self):
+    def _report_kpi(self, *args):
         master_node = self.master_node.split(':')[0]
 
         t_start = self.remote.detect_hard_failover_start(master_node)
@@ -303,7 +303,7 @@ class AutoFailoverTest(FailoverTest):
 
 class FailureDetectionTest(FailoverTest):
 
-    def _report_kpi(self):
+    def _report_kpi(self, *args):
         master_node = self.master_node.split(':')[0]
         t_failover = self.remote.detect_auto_failover(master_node)
 
@@ -327,7 +327,7 @@ class FailureDetectionTest(FailoverTest):
                 self.remote.shutdown(host_port.split(':')[0])
 
 
-class RebalanceWithQueriesTest(QueryTest, RebalanceTest):
+class RebalanceWithQueriesTest(RebalanceTest, QueryTest):
 
     """
     Workflow definition for KV + Index rebalance tests.
@@ -349,7 +349,7 @@ class RebalanceWithQueriesTest(QueryTest, RebalanceTest):
         self.rebalance()
 
 
-class RebalanceWithXDCRTest(XdcrTest, RebalanceTest):
+class RebalanceWithXDCRTest(RebalanceTest, XdcrTest):
 
     """
     Workflow definition for KV + bidir XDCR rebalance tests.
@@ -372,7 +372,7 @@ class RebalanceWithXDCRTest(XdcrTest, RebalanceTest):
         self.rebalance()
 
 
-class RebalanceWithUniDirXdcrTest(UniDirXdcrTest, RebalanceTest):
+class RebalanceWithUniDirXdcrTest(RebalanceTest, UniDirXdcrTest):
 
     """
     Workflow definition for KV + unidir XDCR rebalance tests.
@@ -398,11 +398,7 @@ class RebalanceWithUniDirXdcrTest(UniDirXdcrTest, RebalanceTest):
         self.rebalance()
 
 
-class RebalanceWithXdcrTest(XdcrInitTest, RebalanceTest):
-
-    """
-    Workflow definition unidir XDCR rebalance tests.
-    """
+class RebalanceWithXdcrTest(RebalanceTest, XdcrInitTest):
 
     @with_stats
     def rebalance(self):
@@ -455,6 +451,10 @@ class RebalanceWithXdcrTest(XdcrInitTest, RebalanceTest):
         self.worker_manager.run_workload(load_settings, dest_target_iterator)
         self.worker_manager.wait_for_workers()
 
+    def _report_kpi(self, *args):
+        rate = self.metric_helper.calc_avg_replication_rate(self.time_elapsed)
+        self.reporter.post_to_sf(value=rate)
+
     def run(self):
         self.load()
         if self.test_config.cluster.initial_nodes[1] != self.rebalance_settings.nodes_after[1]:
@@ -464,6 +464,4 @@ class RebalanceWithXdcrTest(XdcrInitTest, RebalanceTest):
 
         self.rebalance()
 
-        if self.test_config.stats_settings.enabled:
-            rate = self.metric_helper.calc_avg_replication_rate(self.time_elapsed)
-            self.reporter.post_to_sf(value=rate)
+        self.report_kpi()

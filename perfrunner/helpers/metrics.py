@@ -448,3 +448,11 @@ class DailyMetricHelper(MetricHelper):
     def cal_ycsb_throughput(self):
         return 'Avg Throughput (ops/sec)', \
             self.parse_ycsb_throughput()
+
+    def calc_backup_throughput(self, time_elapsed):
+        data_size = self.test_config.load_settings.items * \
+            self.test_config.load_settings.size / 2.0 ** 20  # MB
+        throughput = round(data_size / time_elapsed)
+
+        return 'Avg Throughput (MB/sec)', \
+            throughput

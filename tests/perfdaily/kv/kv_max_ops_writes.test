@@ -1,0 +1,21 @@
+[test_case]
+test = perfdaily.kv.PillowFightTest
+title = Pillowfight, 20/80 R/W, 256B binary items
+component = KV
+use_workers = 0
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 2
+num_buckets = 1
+
+[load]
+size = 256
+items = 20000000
+workers = 50
+
+[access]
+items = 20000000
+iterations = 20000
+workers = 50
+updates = 80

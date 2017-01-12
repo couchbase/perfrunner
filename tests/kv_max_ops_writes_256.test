@@ -1,0 +1,22 @@
+[test_case]
+test = perfrunner.tests.kv.PillowFightTest
+title = Max ops/sec, cbc-pillowfight, 2 nodes, 20/80 R/W, 256B binary items
+component = kv
+category = max_ops
+use_workers = 0
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 2
+num_buckets = 1
+
+[load]
+size = 256
+items = 20000000
+workers = 50
+
+[access]
+items = 20000000
+iterations = 40000
+workers = 50
+updates = 80

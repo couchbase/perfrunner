@@ -3,6 +3,9 @@ test = perfdaily.n1ql.N1QLThroughputTest
 title = Q1, Key-Value Lookup, 5M docs
 component = N1QL
 
+[stats]
+interval = 1
+
 [cluster]
 mem_quota = 20480
 index_mem_quota = 100000

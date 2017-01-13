@@ -34,7 +34,7 @@ class DCPThroughputTest(DCPTest):
         self.reporter.post_to_sf(value=throughput)
 
     @with_stats
-    def run_dcptest_script(self):
+    def access(self, *args):
         local.run_dcptest_script(self)
 
     def get_throughput(self):
@@ -51,7 +51,7 @@ class DCPThroughputTest(DCPTest):
         self.load()
         self.wait_for_persistence()
 
-        self.run_dcptest_script()
+        self.access()
 
         throughput = self.get_throughput()
 

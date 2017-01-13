@@ -92,6 +92,12 @@ class SecondaryIndexTest(PerfTest):
         else:
             logger.info('Scan workload applied')
 
+    def print_index_disk_usage(self):
+        (data, index) = self.cluster_spec.paths
+        logger.info("Disk usage:\n{}".format(self.remote.get_disk_usage(index)))
+        logger.info("Index storage stats:\n{}".format(
+            self.rest.get_index_storage_stats(self.index_nodes[0].split(':')[0])))
+
 
 class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
     """
@@ -138,11 +144,13 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
         from_ts, to_ts = self.build_secondaryindex()
         time_elapsed = (to_ts - from_ts) / 1000.0
         time_elapsed = self.reporter.finish('Initial secondary index', time_elapsed)
+        self.print_index_disk_usage()
         self.report_kpi(time_elapsed, 'Initial')
 
         from_ts, to_ts = self.build_incrindex()
         time_elapsed = (to_ts - from_ts) / 1000.0
         time_elapsed = self.reporter.finish('Incremental secondary index', time_elapsed)
+        self.print_index_disk_usage()
         self.report_kpi(time_elapsed, 'Incremental')
 
         self.run_recovery_scenario()
@@ -174,6 +182,7 @@ class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSeco
         from_ts, to_ts = self.build_secondaryindex()
         time_elapsed = (to_ts - from_ts) / 1000.0
         time_elapsed = self.reporter.finish('Initial secondary index', time_elapsed)
+        self.print_index_disk_usage()
         self.report_kpi(time_elapsed, 'Initial')
 
         master = []
@@ -186,6 +195,7 @@ class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSeco
         from_ts, to_ts = self.build_incrindex()
         time_elapsed = (to_ts - from_ts) / 1000.0
         time_elapsed = self.reporter.finish('Incremental secondary index', time_elapsed)
+        self.print_index_disk_usage()
         self.report_kpi(time_elapsed, 'Incremental')
 
 
@@ -224,6 +234,7 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
         scan_thr, row_thr = self.read_scanresults()
         logger.info('Scan throughput: {}'.format(scan_thr))
         logger.info('Rows throughput: {}'.format(row_thr))
+        self.print_index_disk_usage()
         self.report_kpi(scan_thr)
         self.validate_num_connections()
 
@@ -261,6 +272,7 @@ class SecondaryIndexingThroughputRebalanceTest(SecondaryIndexingThroughputTest):
         scan_thr, row_thr = self.read_scanresults()
         logger.info('Scan throughput: {}'.format(scan_thr))
         logger.info('Rows throughput: {}'.format(row_thr))
+        self.print_index_disk_usage()
         self.report_kpi(scan_thr)
         self.validate_num_connections()
 
@@ -295,6 +307,7 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
         self.build_secondaryindex()
         self.run_access_for_2i(run_in_background=True)
         self.apply_scanworkload()
+        self.print_index_disk_usage()
         self.report_kpi()
         self.validate_num_connections()
 
@@ -331,6 +344,7 @@ class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest
         self.run_access_for_2i(run_in_background=True)
         self.rebalance(initial_nodes[0], nodes_after[0])
         self.apply_scanworkload()
+        self.print_index_disk_usage()
         self.report_kpi()
         self.validate_num_connections()
 

@@ -527,3 +527,7 @@ class RestHelper(object):
         api = 'http://{}:9102/stats'.format(host)
         response = self.get(url=api).json()
         return response['num_connections']
+
+    def get_index_storage_stats(self, host):
+        api = 'http://{}:9102/stats/storage'.format(host)
+        return self.get(url=api).text

@@ -485,3 +485,8 @@ class RemoteLinux(Remote):
     def kill_indexer_process(self):
         logger.info('Killing indexer process')
         run("killall indexer")
+
+    @index_node
+    def get_disk_usage(self, path):
+        logger.info('Get disk usage')
+        return run("du -h {}".format(path), pty=True)

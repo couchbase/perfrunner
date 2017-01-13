@@ -156,3 +156,31 @@ class N1QLJoinTest(N1QLThroughputTest):
         self.reporter.post_to_sf(
             *self.metric_helper.calc_avg_n1ql_queries()
         )
+
+
+class N1QLBulkTest(N1QLTest):
+
+    @with_stats
+    def access(self, *args):
+        statement = self.test_config.access_settings.n1ql_queries[0]['statement']
+
+        for name, servers in self.cluster_spec.yield_servers_by_role('n1ql'):
+            query_node = servers[0].split(':')[0]
+
+            self.rest.exec_n1ql_statement(query_node, statement)
+
+    def _report_kpi(self, time_elapsed):
+        self.reporter.post_to_sf(
+            self.metric_helper.calc_bulk_n1ql_throughput(time_elapsed)
+        )
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.build_index()
+
+        from_ts, to_ts = self.access()
+        time_elapsed = to_ts - from_ts
+
+        self.report_kpi(time_elapsed)

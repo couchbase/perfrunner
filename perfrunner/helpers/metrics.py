@@ -55,6 +55,11 @@ class MetricHelper(object):
 
         return int(queries)
 
+    def calc_bulk_n1ql_throughput(self, time_elapsed):
+        items = self.test_config.load_settings.items / 4
+        time_elapsed /= 1000.0  # ms -> s
+        return round(items / time_elapsed)
+
     def parse_log(self, test_config, name):
         if name.find('Elasticsearch') != -1:
             self.test.cbagent.add_elastic_stats(test_config)

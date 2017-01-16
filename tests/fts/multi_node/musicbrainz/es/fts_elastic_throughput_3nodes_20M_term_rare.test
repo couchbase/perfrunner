@@ -14,7 +14,7 @@ num_buckets = 1
 fts_index_mem_quota = 20000
 
 [fts]
-items = 17390348
+items = 17386753
 name  = perf_fts_index
 port = 9091
 worker = 600

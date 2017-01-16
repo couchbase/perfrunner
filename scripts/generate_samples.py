@@ -53,15 +53,12 @@ def generate_files():
                                 '.json', str(i * 10 + 1 + j) + '.json'))
             print len(files) * (j + 1 + i * 10), "files generated"
 
-        print 'copy beer-sample' + str(i), 'into beer-sample/' + pth
-        shutil.copytree('beer-sample' + str(i), 'beer-sample/' + pth +
-                        '/beer-sample' + str(i))
+        print 'copy beer-sample' + str(i), pth
+        shutil.copytree('beer-sample' + str(i), pth + '/beer-sample' + str(i))
         shutil.rmtree('beer-sample' + str(i))
 
     end = time.time()
     print "time to generate %s: %s" % (NUM_FILES, end - start)
-
-    shutil.rmtree('beer-sample/docs')
 
 
 if __name__ == '__main__':

@@ -23,7 +23,7 @@ doc_gen = reverse_lookup
 
 [n1ql]
 indexes =
-    by_email::CREATE INDEX {name} ON `{bucket}` (email) using gsi;
+    by_email::CREATE INDEX {name} ON `{bucket}`(email);
 
 [access]
 creates = 0

@@ -22,8 +22,8 @@ doc_gen = ext_reverse_lookup,join
 
 [n1ql]
 indexes =
-    by_email::CREATE INDEX {name} ON `{bucket}`(email) using gsi;
-    by_owner::CREATE INDEX {name} ON `{bucket}`(owner) using gsi;
+    by_email::CREATE INDEX {name} ON `{bucket}`(email);
+    by_owner::CREATE INDEX {name} ON `{bucket}`(owner);
 
 [access]
 creates = 0

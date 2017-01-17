@@ -23,7 +23,7 @@ doc_gen = reverse_lookup
 
 [n1ql]
 indexes =
-    by_capped_small_name_street::CREATE INDEX {name} ON `{bucket}` (capped_small, name, street) using gsi;
+    by_capped_small_name_street::CREATE INDEX {name} ON `{bucket}`(capped_small, name, street);
 
 [access]
 creates = 0

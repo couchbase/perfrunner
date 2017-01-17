@@ -26,7 +26,7 @@ replica_number=0
 
 [n1ql]
 indexes =
-    by_capped_small::CREATE INDEX {name} ON `{bucket}`(capped_small) using gsi;
+    by_capped_small::CREATE INDEX {name} ON `{bucket}`(capped_small);
 
 [access]
 creates = 0

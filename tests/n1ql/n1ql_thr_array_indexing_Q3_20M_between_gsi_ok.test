@@ -23,7 +23,7 @@ doc_gen = array_indexing
 
 [n1ql]
 indexes =
-    by_achievements2::CREATE INDEX {name} ON `{bucket}`(DISTINCT ARRAY i FOR i IN achievements2 END) using gsi;
+    by_achievements2::CREATE INDEX {name} ON `{bucket}`(DISTINCT ARRAY i FOR i IN achievements2 END);
 
 [access]
 creates = 0

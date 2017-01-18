@@ -58,22 +58,11 @@ class SecondaryIndexTest(PerfTest):
             self.index_nodes[0].split(':')[0], self.indexes.keys())
         return time_elapsed
 
-    def run_load_for_2i(self):
-        if self.storage == 'memdb':
-            load_settings = self.test_config.load_settings
-            self.remote.run_spring_on_kv(ls=load_settings)
-        else:
-            self.load()
-
     def run_access_for_2i(self, run_in_background=False):
-        if self.storage == 'memdb':
-            access_settings = self.test_config.access_settings
-            self.remote.run_spring_on_kv(ls=access_settings, silent=run_in_background)
+        if run_in_background:
+            self.access_bg()
         else:
-            if run_in_background:
-                self.access_bg()
-            else:
-                self.access()
+            self.access()
 
     @staticmethod
     def get_data_from_config_json(config_file_name):
@@ -127,11 +116,8 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
     def build_incrindex(self):
         access_settings = self.test_config.access_settings
         load_settings = self.test_config.load_settings
-        if self.storage == 'memdb':
-            self.remote.run_spring_on_kv(ls=access_settings)
-        else:
-            self.worker_manager.run_workload(access_settings, self.target_iterator)
-            self.worker_manager.wait_for_workers()
+        self.worker_manager.run_workload(access_settings, self.target_iterator)
+        self.worker_manager.wait_for_workers()
         numitems = load_settings.items + access_settings.items
         self.monitor.wait_for_secindex_incr_build(self.index_nodes, self.bucket,
                                                   self.indexes.keys(), numitems)
@@ -146,7 +132,7 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
             self.report_kpi(recovery_time, 'Recovery', "ms")
 
     def run(self):
-        self.run_load_for_2i()
+        self.load()
         self.wait_for_persistence()
         self.compact_bucket()
         from_ts, to_ts = self.build_secondaryindex()
@@ -178,7 +164,7 @@ class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSeco
         self.rest.rebalance(master, known_nodes, ejected_nodes)
 
     def run(self):
-        self.run_load_for_2i()
+        self.load()
         self.wait_for_persistence()
         self.compact_bucket()
         nodes_after = [0]
@@ -229,7 +215,7 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
         return scansps, rowps
 
     def run(self):
-        self.run_load_for_2i()
+        self.load()
         self.wait_for_persistence()
         self.compact_bucket()
         self.build_secondaryindex()
@@ -262,7 +248,7 @@ class SecondaryIndexingThroughputRebalanceTest(SecondaryIndexingThroughputTest):
         self.rest.rebalance(master, known_nodes, ejected_nodes)
 
     def run(self):
-        self.run_load_for_2i()
+        self.load()
         self.wait_for_persistence()
         self.compact_bucket()
         self.build_secondaryindex()
@@ -303,7 +289,7 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
 
     def run(self):
         self.remove_statsfile()
-        self.run_load_for_2i()
+        self.load()
         self.wait_for_persistence()
         self.compact_bucket()
         self.build_secondaryindex()
@@ -335,7 +321,7 @@ class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest
 
     def run(self):
         self.remove_statsfile()
-        self.run_load_for_2i()
+        self.load()
         self.wait_for_persistence()
         self.compact_bucket()
         nodes_after = [0]
@@ -366,7 +352,7 @@ class SecondaryIndexingDocIndexingLatencyTest(SecondaryIndexingScanLatencyTest):
 
     def run(self):
         self.remove_statsfile()
-        self.run_load_for_2i()
+        self.load()
         self.wait_for_persistence()
         self.compact_bucket()
         self._build_secondaryindex()
@@ -396,7 +382,7 @@ class SecondaryIndexingLatencyTest(SecondaryIndexTest):
         return status
 
     def run(self):
-        self.run_load_for_2i()
+        self.load()
         self.wait_for_persistence()
         self.compact_bucket()
         self.hot_load()
@@ -464,7 +450,7 @@ class SecondaryNumConnectionsTest(SecondaryIndexTest):
         return ret_val if ret_val > self.init_num_connections else 0
 
     def run(self):
-        self.run_load_for_2i()
+        self.load()
         self.wait_for_persistence()
         self.compact_bucket()
         self.build_secondaryindex()
@@ -513,7 +499,7 @@ class SecondaryIndexingMultiScanTest(SecondaryIndexingScanLatencyTest):
 
     def run(self):
         self.remove_statsfile()
-        self.run_load_for_2i()
+        self.load()
         self.wait_for_persistence()
         self.compact_bucket()
         self.build_secondaryindex()

@@ -26,7 +26,7 @@ max_num_auxio = 16
 [load]
 items = 1000000000
 size = 1024
-spring_workers = 100
+workers = 100
 
 [secondary]
 indexes = myindex:alt_email
@@ -40,5 +40,5 @@ updates = 100
 ops = 1000000000
 items = 1000000000
 existing_items = 1000000000
-spring_workers = 100
 throughput = 100000
+workers = 80

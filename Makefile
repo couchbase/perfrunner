@@ -1,5 +1,7 @@
 .PHONY: build
 
+SHELL := /bin/bash
+
 PYTHON := python2.7
 ENV := env
 GOVENDOR := ${GOPATH}/bin/govendor

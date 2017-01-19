@@ -184,3 +184,13 @@ class N1QLBulkTest(N1QLTest):
         time_elapsed = to_ts - from_ts
 
         self.report_kpi(time_elapsed)
+
+
+class N1QLMixedThroughputTest(N1QLThroughputTest):
+
+    def build_index(self):
+        bucket = self.test_config.buckets[0]
+        for name, servers in self.cluster_spec.yield_servers_by_role('n1ql'):
+            query_node = servers[0].split(':')[0]
+            for index in self.test_config.n1ql_settings.indexes:
+                self.create_index(query_node, bucket, index)

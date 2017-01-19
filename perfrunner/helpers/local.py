@@ -268,3 +268,13 @@ def run_ycsb(host, bucket, password, action, workload, items, workers,
     logger.info('Running: {}'.format(cmd))
     with lcd('YCSB'):
         local(cmd, capture=False)
+
+
+def run_cbindexperf(path_to_tool, node, rest_username, rest_password, configfile):
+    logger.info('Initiating scan workload')
+    cmdstr = "{} -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json " \
+             "-statsfile /root/statsfile" \
+        .format(path_to_tool, node, rest_username, rest_password, configfile)
+    logger.info('To be applied: {}'.format(cmdstr))
+    ret = local(cmdstr)
+    return ret.return_code

@@ -7,6 +7,7 @@ from logger import logger
 
 from cbagent.stores import SerieslyStore
 from perfrunner.helpers.cbmonitor import with_stats
+from perfrunner.helpers.local import run_cbindexperf
 from perfrunner.tests import PerfTest
 
 
@@ -80,13 +81,7 @@ class SecondaryIndexTest(PerfTest):
     @with_stats
     def apply_scanworkload(self, path_to_tool="/opt/couchbase/bin/cbindexperf"):
         rest_username, rest_password = self.cluster_spec.rest_credentials
-        logger.info('Initiating scan workload')
-
-        cmdstr = "{} -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json " \
-                 "-statsfile /root/statsfile" \
-            .format(path_to_tool, self.index_nodes[0], rest_username, rest_password, self.configfile)
-        logger.info('To be applied: {}'.format(cmdstr))
-        status = subprocess.call(cmdstr, shell=True)
+        status = run_cbindexperf(path_to_tool, self.index_nodes[0], rest_username, rest_password, self.configfile)
         if status != 0:
             raise Exception('Scan workload could not be applied')
         else:

@@ -41,7 +41,7 @@ func newValue(i uint64) *doc {
 	t := time.Now()
 
 	return &doc{
-		Email: fmt.Sprintf("%012x@%09x.%d", t.Nanosecond(), i, i%10),
+		Email: fmt.Sprintf("%x@%09x.%d", t.UnixNano(), i, i%10),
 	}
 }
 

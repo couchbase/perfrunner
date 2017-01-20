@@ -50,3 +50,6 @@ go-tools:
 ycsb:
 	git clone git://github.com/brianfrankcooper/YCSB.git
 	cd YCSB && mvn -pl com.yahoo.ycsb:couchbase2-binding -am -Dcheckstyle.skip -DskipTests clean package
+
+memblock:
+	gcc -o memblock c/memblock/memblock.c

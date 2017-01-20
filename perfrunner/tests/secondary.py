@@ -31,6 +31,7 @@ class SecondaryIndexTest(PerfTest):
         self.step_num_connections = self.test_config.gsi_settings.step_num_connections
         self.max_num_connections = self.test_config.gsi_settings.max_num_connections
         self.run_recovery_test = self.test_config.gsi_settings.run_recovery_test
+        self.block_memory = self.test_config.gsi_settings.block_memory
 
         self.storage = self.test_config.gsi_settings.storage
         self.indexes = self.test_config.gsi_settings.indexes
@@ -44,6 +45,14 @@ class SecondaryIndexTest(PerfTest):
         self.index_nodes = servers
 
         self.bucket = self.test_config.buckets[0]
+        self._block_memory()
+
+    def __del__(self):
+        self.remote.kill_process_on_index_node("memblock")
+
+    def _block_memory(self):
+        if self.block_memory > 0:
+            self.remote.block_memory(self.block_memory)
 
     @with_stats
     def build_secondaryindex(self):
@@ -126,7 +135,7 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
     def run_recovery_scenario(self):
         if self.run_recovery_test:
             # Measure recovery time for index
-            self.remote.kill_indexer_process()
+            self.remote.kill_process_on_index_node("indexer")
             recovery_time = self.monitor.wait_for_recovery(self.index_nodes, self.bucket, self.indexes.keys()[0])
             if recovery_time == -1:
                 raise Exception('Indexer failed to recover...!!!')

@@ -43,7 +43,7 @@ class RemoteLinux(Remote):
 
     PROCESSES = ('beam.smp', 'memcached', 'epmd', 'cbq-engine', 'indexer',
                  'cbft', 'goport', 'goxdcr', 'couch_view_index_updater',
-                 'moxi', 'spring')
+                 'moxi', 'spring', 'memblock')
 
     def __init__(self, cluster_spec, test_config, os):
         super(RemoteLinux, self).__init__(cluster_spec, test_config, os)
@@ -482,11 +482,17 @@ class RemoteLinux(Remote):
             run('echo 1 > /sys/devices/system/cpu/cpu{}/online'.format(i))
 
     @index_node
-    def kill_indexer_process(self):
-        logger.info('Killing indexer process')
-        run("killall indexer")
+    def kill_process_on_index_node(self, process):
+        logger.info('Killing following process on index node: {}'.format(process))
+        run("killall {}".format(process))
 
     @index_node
     def get_disk_usage(self, path):
         logger.info('Get disk usage')
         return run("du -h {}".format(path), pty=True)
+
+    @index_node
+    def block_memory(self, size):
+        put('memblock', '/tmp', mode=0755)
+        logger.info('Blocking memory for {} bytes'.format(size))
+        run("/tmp/memblock {} 2>/dev/null >/dev/null &".format(size), pty=False)

@@ -51,7 +51,7 @@ class SFReporter(object):
     def _log_benchmark(self, metric, value):
         benchmark = self._generate_benchmark(metric, value)
 
-        logger.info('Dry run stats: {}'.format(pretty_dict(benchmark)))
+        logger.info('Dry run: {}'.format(pretty_dict(benchmark)))
 
     def _post_benchmark(self, metric, value):
         benchmark = self._generate_benchmark(metric, value)
@@ -78,11 +78,16 @@ class DailyReporter(object):
     def __init__(self, test):
         self.test = test
 
-    def _post(self, benchmark):
+    @staticmethod
+    def _post_daily_benchmark(benchmark):
         logger.info('Adding a benchmark: {}'.format(pretty_dict(benchmark)))
         requests.post(
             'http://{}/daily/api/v1/benchmarks'.format(StatsSettings.SHOWFAST),
             json.dumps(benchmark))
+
+    @staticmethod
+    def _log_daily_benchmark(benchmark):
+        logger.info('Dry run: {}'.format(pretty_dict(benchmark)))
 
     def post_to_daily(self, metric, value):
         benchmark = {
@@ -96,7 +101,11 @@ class DailyReporter(object):
             'threshold': self.test.test_config.test_case.threshold,
             'value': value,
         }
-        self._post(benchmark)
+
+        if self.test.test_config.stats_settings.post_to_sf:
+            self._post_daily_benchmark(benchmark)
+        else:
+            self._log_daily_benchmark(benchmark)
 
 
 class LogReporter(object):

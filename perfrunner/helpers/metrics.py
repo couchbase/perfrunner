@@ -437,7 +437,7 @@ class MetricHelper(object):
 
 class DailyMetricHelper(MetricHelper):
 
-    def cal_avg_n1ql_queries(self):
+    def calc_avg_n1ql_queries(self):
         return 'Avg Query Throughput (queries/sec)', \
             self._calc_avg_n1ql_queries()
 
@@ -449,7 +449,7 @@ class DailyMetricHelper(MetricHelper):
         return 'Avg XDCR Rate (items/sec)', \
             super(DailyMetricHelper, self).calc_avg_replication_rate(time_elapsed)
 
-    def cal_ycsb_throughput(self):
+    def calc_ycsb_throughput(self):
         return 'Avg Throughput (ops/sec)', \
             self.parse_ycsb_throughput()
 

@@ -4,6 +4,9 @@ title = Workload E, 10M items, MOI, single node
 component = YCSB
 use_workers = 0
 
+[stats]
+monitored_processes = projector
+
 [cluster]
 mem_quota = 20480
 index_mem_quota = 100000

@@ -2,7 +2,7 @@
 test = perfrunner.tests.n1ql.N1QLBulkTest
 title = Avg. Throughput (docs/sec), DL10, Bulk Delete, 5M documents
 component = n1ql
-category = dml
+category = iud
 
 [cluster]
 mem_quota = 20480

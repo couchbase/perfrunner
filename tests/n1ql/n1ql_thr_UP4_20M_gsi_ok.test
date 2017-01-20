@@ -2,7 +2,7 @@
 test = perfrunner.tests.n1ql.N1QLThroughputTest
 title = UP4, Range Scan, FDB, not_bounded
 component = n1ql
-category = dml
+category = iud
 
 [cluster]
 mem_quota = 20480

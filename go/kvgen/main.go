@@ -5,62 +5,52 @@ import (
 	"fmt"
 	"os"
 	"sync"
-	"time"
 
 	"github.com/couchbase/go-couchbase"
 )
 
 const (
-	prime = uint64(971)
+	prime = int64(971)
 )
 
 var (
-	numDocs, numWorkers uint64
-	prefix              string
-	couchbaseBucket     *couchbase.Bucket
+	numDocs, numWorkers, size int64
+	prefix, doc_type          string
+	couchbaseBucket           *couchbase.Bucket
 )
-
-type doc struct {
-	Email string `json:"email"`
-}
 
 type KV struct {
 	key   string
 	value *doc
 }
 
-// newKey generates a new key with a common prefix and variable suffix based on
-// sequential document identifier.
-func newKey(i uint64) string {
-	return fmt.Sprintf("%s-%012x", prefix, i)
-}
-
-// newValue generates a new set of field(s) based on sequential document
-// identifier. Current time is used in order to randomize document fields.
-func newValue(i uint64) *doc {
-	t := time.Now()
-
-	return &doc{
-		Email: fmt.Sprintf("%x@%09x.%d", t.UnixNano(), i, i%10),
-	}
-}
-
 // generateKV produces unique key-value pairs. The entire key space is
 // equally divided between multiple workers. Documents are generated so that
 // the overall order of insertions is deterministic and pseudo-random.
-func generateKV(workerID uint64) chan KV {
+func generateKV(workerID int64) chan KV {
 	kvPairs := make(chan KV, 1e4)
 	var docsPerWorker = numDocs / numWorkers
-	var j uint64
+	var j int64
 
 	go func() {
 		defer close(kvPairs)
 
-		for i := uint64(0); i < docsPerWorker; i++ {
+		var doc_gen get_doc_value
+		doc_gen = basic_doc{}
+
+		// Will add more types of doc as they come along
+		switch doc_type {
+		case "multi_item_doc":
+			doc_gen = multi_item_doc{}
+		case "fixed_size_doc":
+			doc_gen = fixed_size_doc{}
+		}
+
+		for i := int64(0); i < docsPerWorker; i++ {
 			j = (j + prime) % docsPerWorker
 			seed := j + workerID*docsPerWorker
 
-			kvPairs <- KV{newKey(seed), newValue(seed)}
+			kvPairs <- KV{newKey(seed), doc_gen.newValue(seed)}
 		}
 	}()
 
@@ -68,7 +58,7 @@ func generateKV(workerID uint64) chan KV {
 }
 
 // singleLoad represents an individual sequence if SET operations.
-func singleLoad(workerID uint64, wg *sync.WaitGroup) {
+func singleLoad(workerID int64, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	for kv := range generateKV(workerID) {
@@ -81,7 +71,7 @@ func singleLoad(workerID uint64, wg *sync.WaitGroup) {
 func load() {
 	wg := sync.WaitGroup{}
 
-	for i := uint64(0); i < numWorkers; i++ {
+	for i := int64(0); i < numWorkers; i++ {
 		wg.Add(1)
 		go singleLoad(i, &wg)
 	}
@@ -114,8 +104,10 @@ func main() {
 	flag.StringVar(&password, "password", "password", "bucket password")
 
 	flag.StringVar(&prefix, "prefix", "couchbase", "common key prefix")
-	flag.Uint64Var(&numDocs, "docs", 1e8, "number of documents")
-	flag.Uint64Var(&numWorkers, "workers", 125, "number of workers")
+	flag.Int64Var(&numDocs, "docs", 1e8, "number of documents")
+	flag.Int64Var(&numWorkers, "workers", 125, "number of workers")
+	flag.Int64Var(&size, "size", 128, "size of doc")
+	flag.StringVar(&doc_type, "doc_type", "basic", "type of document")
 
 	flag.Parse()
 

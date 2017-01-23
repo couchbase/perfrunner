@@ -34,7 +34,6 @@ indexes = myindex:city
 db = moi
 run_recovery_test = 1
 indexer.settings.storage_mode = memory_optimized
-indexer.settings.gc_percent = 200
 indexer.settings.max_cpu_percent = 4800
 
 [access]

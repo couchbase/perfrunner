@@ -1,0 +1,25 @@
+[test_case]
+test = perfrunner.tests.xdcr.XdcrInitTest
+title = Avg. initial XDCR rate (items/sec), 5 -> 5 UniDir, 1 bucket x 1G x 1KB, DGM, Compaction
+component = xdcr
+category = init_multi
+
+[stats]
+monitored_processes = goxdcr
+
+[cluster]
+mem_quota = 204800
+initial_nodes = 5 5
+num_buckets = 1
+
+[xdcr_cluster]
+sourceNozzlePerNode = 4
+targetNozzlePerNode = 64
+
+[load]
+items = 1000000000
+size = 1024
+workers = 80
+
+[xdcr]
+replication_type = unidir

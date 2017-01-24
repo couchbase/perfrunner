@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.views.InitialAndIncrementalIndexTest
 title = 1 bucket x 50M x 2KB, DGM, 4 x 1 views, no mutations
-component = index
+component = views
 
 [cluster]
 mem_quota = 40960

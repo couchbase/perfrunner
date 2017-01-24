@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.views.QueryLatencyTest
 title = 1 bucket x 100M x 2KB, DGM, 4 x 1 views, 500 mutations/sec/node, 400 queries/sec
-component = query
+component = views
 category = lat
 
 [cluster]

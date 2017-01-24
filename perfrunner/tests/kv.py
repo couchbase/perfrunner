@@ -34,12 +34,9 @@ class KVTest(PerfTest):
         super(KVTest, self).timer()
 
     def run(self):
-        if self.test_config.restore_settings.snapshot and self.build > '4':
-            self.restore()
-        else:
-            self.load()
-            self.wait_for_persistence()
-            self.compact_bucket()
+        self.load()
+        self.wait_for_persistence()
+        self.compact_bucket()
 
         self.hot_load()
 
@@ -96,6 +93,9 @@ class ReadLatencyTest(MixedLatencyTest):
             *self.metric_helper.calc_kv_latency(operation='get',
                                                 percentile=99)
         )
+
+    def compact_bucket(self):
+        pass
 
 
 class SubDocTest(KVTest):

@@ -1,0 +1,41 @@
+[test_case]
+test = perfrunner.tests.kv.ReadLatencyTest
+title = latency (ms), mixed, 1 bucket x 500M x 1KB, DGM, 10K ops/sec, 10%% cache miss rate
+component = kv
+category = latency
+
+[stats]
+lat_interval = 0.1
+
+[cluster]
+mem_quota = 56320
+initial_nodes = 4
+num_buckets = 1
+
+[bucket]
+eviction_policy = fullEviction
+
+[compaction]
+db_percentage = 10
+
+[load]
+items = 500000000
+size = 1024
+workers = 80
+
+[hot_load]
+items = 500000000
+workers = 80
+working_set = 19
+
+[access]
+creates = 0
+reads = 80
+updates = 20
+deletes = 0
+throughput = 10000
+workers = 25
+items = 500000000
+working_set = 19
+working_set_access = 90
+time = 3600

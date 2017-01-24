@@ -99,7 +99,7 @@ class N1QLLatencyTest(N1QLTest):
 
     def _report_kpi(self):
         self.reporter.post_to_sf(
-            *self.metric_helper.calc_query_latency(percentile=80)
+            *self.metric_helper.calc_query_latency(percentile=90)
         )
 
 

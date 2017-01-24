@@ -79,7 +79,7 @@ class ClusterManager(object):
     def set_services(self):
         master_node = self.masters().next()
         version = self.rest.get_version(master_node)
-        if version < '4.0.0':  # Service were introduced in 4.0.0
+        if version < '4.0.0':  # Services were introduced in 4.0.0
             return
 
         for (_, servers), initial_nodes in zip(self.clusters(),
@@ -204,3 +204,14 @@ class ClusterManager(object):
     def wait_until_healthy(self):
         for master in self.cluster_spec.yield_masters():
             self.monitor.monitor_node_health(master)
+
+    def enable_secrets(self):
+        # Secrets management was introduced in 4.6.0
+        master_node = self.masters().next()
+        version = self.rest.get_version(master_node)
+        if version < '4.6.0' or self.remote.os == 'Cygwin':
+            return
+
+        for server in self.servers():
+            self.rest.set_master_password(server)
+        self.remote.set_master_password()

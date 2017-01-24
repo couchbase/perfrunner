@@ -192,3 +192,6 @@ class RemoteWindows(Remote):
         with settings(show('output'), host_string=host):
             run('wbadmin start systemstaterecovery -version:{} -autoReboot -quiet'
                 .format(version), warn_only=True)
+
+    def enable_secrets(self, *args, **kwargs):
+        pass

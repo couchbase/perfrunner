@@ -531,3 +531,10 @@ class RestHelper(object):
     def get_index_storage_stats(self, host):
         api = 'http://{}:9102/stats/storage'.format(host)
         return self.get(url=api).text
+
+    def set_master_password(self, host_port, password='password'):
+        logger.info('Setting master password at {}'.format(host_port))
+
+        api = 'http://{}/node/controller/changeMasterPassword'.format(host_port)
+        data = {'newPassword': password}
+        self.post(url=api, data=data)

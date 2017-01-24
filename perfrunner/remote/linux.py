@@ -496,3 +496,8 @@ class RemoteLinux(Remote):
         put('memblock', '/tmp', mode=0755)
         logger.info('Blocking memory for {} bytes'.format(size))
         run("/tmp/memblock {} 2>/dev/null >/dev/null &".format(size), pty=False)
+
+    @all_hosts
+    def set_master_password(self, password='password'):
+        logger.info('Enabling encrypted secrets')
+        run('systemctl set-environment CB_MASTER_PASSWORD={}'.format(password))

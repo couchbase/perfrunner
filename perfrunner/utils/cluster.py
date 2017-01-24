@@ -38,6 +38,7 @@ def main():
     # Individual nodes
     if cm.remote:
         cm.remote.disable_wan()
+        cm.enable_secrets()
         cm.tune_logging()
         cm.restart_with_alternative_num_vbuckets()
 

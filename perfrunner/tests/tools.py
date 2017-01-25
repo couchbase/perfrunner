@@ -335,6 +335,7 @@ class CbImportCETest(CbExportImportTest):
                     .format(self.spent_time, self.data_size / 2 ** 30))
 
     def run(self):
+        self.download_tools()
         self.import_csv_cbtransfer()
         self.report_kpi("CE Import CSV")
 

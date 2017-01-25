@@ -354,8 +354,7 @@ class CbImportSampleTest(BackupRestoreTest):
                                  bucket='bucket-1', edition=edition)
         self.spent_time = time.time() - t0
 
-        import_file = "{}/../import/beer-sample.zip".\
-            format(self.cluster_spec.config.get('storage', 'backup'))
+        import_file = "/data/import/beer-sample.zip"
 
         self.data_size = os.path.getsize(import_file)
 

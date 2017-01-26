@@ -1,0 +1,43 @@
+[test_case]
+test = perfrunner.tests.xdcr.UniDirXdcrTest
+title = 5 -> 5 UniDir, 1 bucket x 1B x 1KB, 40K SETs/sec, WAN 80±4 ms
+component = xdcr
+category = ongoing
+
+[stats]
+monitored_processes = goxdcr
+
+[cluster]
+mem_quota = 204800
+initial_nodes = 5 5
+num_buckets = 1
+
+[xdcr_cluster]
+sourceNozzlePerNode = 4
+targetNozzlePerNode = 64
+
+[load]
+items = 1000000000
+size = 1024
+workers = 50
+
+[hot_load]
+items = 1000000000
+workers = 100
+working_set = 10
+
+[xdcr]
+replication_type = unidir
+wan_enabled = 1
+
+[access]
+creates = 0
+reads = 20
+updates = 80
+deletes = 0
+throughput = 50000
+items = 1000000000
+workers = 50
+working_set = 10
+working_set_access = 98
+time = 3600

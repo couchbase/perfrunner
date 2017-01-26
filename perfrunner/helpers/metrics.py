@@ -48,12 +48,14 @@ class MetricHelper(object):
         return queries, metric, metric_info
 
     def _calc_avg_n1ql_queries(self):
-        query_params = self._get_query_params('avg_query_requests')
-        db = 'n1ql_stats{}'.format(self.test.cbagent.cluster_ids[0])
-        data = self.seriesly[db].query(query_params)
-        queries = data.values()[0][0]
+        test_time = self.test_config.access_settings.time
 
-        return int(queries)
+        for name, servers in self.cluster_spec.yield_servers_by_role('n1ql'):
+            query_node = servers[0].split(':')[0]
+
+            vitals = self.test.rest.get_query_stats(query_node)
+            total_requests = vitals['requests.count']
+            return int(total_requests / test_time)
 
     def calc_bulk_n1ql_throughput(self, time_elapsed):
         items = self.test_config.load_settings.items / 4

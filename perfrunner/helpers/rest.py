@@ -510,6 +510,14 @@ class RestHelper(object):
         response = self.post(url=api, data=data)
         return response.json()
 
+    def get_query_stats(self, host):
+        logger.info('Getting query engine stats')
+
+        api = 'http://{}:8093/admin/stats'.format(host)
+
+        response = self.get(url=api)
+        return response.json()
+
     def get_index_status(self, host):
         api = 'http://{}:9102/getIndexStatus'.format(host)
         response = self.get(url=api)

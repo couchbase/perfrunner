@@ -23,16 +23,16 @@ doc_gen = reverse_lookup
 
 [n1ql]
 indexes =
-    by_email::CREATE INDEX {name} ON `{bucket}` (email);
+    by_email::CREATE INDEX {name} ON `{bucket}`(email);
 
 [access]
 creates = 0
-reads = 80
-updates = 20
+reads = 0
+updates = 100
 deletes = 0
-throughput = 18000
+throughput = 3600
 items = 5000000
-workers = 20
+workers = 4
 time = 600
 n1ql_queries = singleton-unique-lookup
 n1ql_workers = 720

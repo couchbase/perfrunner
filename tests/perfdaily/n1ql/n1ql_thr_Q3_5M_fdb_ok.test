@@ -27,15 +27,15 @@ indexes =
 
 [access]
 creates = 0
-reads = 80
-updates = 20
+reads = 0
+updates = 100
 deletes = 0
-throughput = 18000
+throughput = 3600
 items = 5000000
-workers = 20
+workers = 4
 time = 600
 n1ql_queries = range-scan
-n1ql_workers = 96
+n1ql_workers = 240
 
 [n1ql-range-scan]
 prepared = range_scan

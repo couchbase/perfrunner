@@ -322,11 +322,11 @@ class CbImportCETest(CbExportImportTest):
     Import CSV Data with cbtransfer (CE version)
     """
 
-    def _report_kpi(self, prefix=''):
+    def _report_kpi(self):
         metric_info = {
-            'title': prefix + " " +
+            'title': "CE Import CSV " +
             self.test_config.test_case.title,
-            'category': prefix.split()[0].lower(),
+            'category': 'import',
         }
         metric = self.test_config.name
 
@@ -353,7 +353,7 @@ class CbImportCETest(CbExportImportTest):
     def run(self):
         self.download_tools()
         self.import_csv_cbtransfer()
-        self.report_kpi("CE Import CSV")
+        self.report_kpi()
 
 
 class CbImportSampleTest(BackupRestoreTest):

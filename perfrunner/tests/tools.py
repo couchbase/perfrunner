@@ -322,6 +322,22 @@ class CbImportCETest(CbExportImportTest):
     Import CSV Data with cbtransfer (CE version)
     """
 
+    def _report_kpi(self, prefix=''):
+        metric_info = {
+            'title': prefix + " " +
+            self.test_config.test_case.title,
+            'category': prefix.split()[0].lower(),
+        }
+        metric = self.test_config.name
+
+        metric = metric.replace('expimp', 'import')
+
+        data_size = self.test_config.load_settings.items * \
+            self.test_config.load_settings.size / 2.0 ** 20  # MB
+        avg_throughput = round(data_size / self.spent_time)
+        self.reporter.post_to_sf(avg_throughput, metric=metric,
+                                 metric_info=metric_info)
+
     @with_stats
     def import_csv_cbtransfer(self):
         t0 = time.time()

@@ -135,10 +135,6 @@ class CBGen(CBAsyncGen):
         latency = time() - t0
         return resp.text, latency
 
-    @quiet
-    def lcb_query(self, ddoc, view, query):
-        return tuple(self.client.query(ddoc, view, query=query))
-
 
 class SubDocGen(CBGen):
 

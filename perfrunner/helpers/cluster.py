@@ -209,7 +209,8 @@ class ClusterManager(object):
         # Secrets management was introduced in 4.6.0
         master_node = self.masters().next()
         version = self.rest.get_version(master_node)
-        if version < '4.6.0' or self.remote.os == 'Cygwin':
+        if version < '4.6.0' or self.remote.os == 'Cygwin' or \
+                self.rest.is_community(master_node):
             return
 
         for server in self.servers():

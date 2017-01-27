@@ -15,6 +15,7 @@ num_buckets = 2
 [xdcr_cluster]
 sourceNozzlePerNode = 4
 targetNozzlePerNode = 64
+optimisticReplicationThreshold = 0
 
 [bucket]
 conflict_resolution_type = lww

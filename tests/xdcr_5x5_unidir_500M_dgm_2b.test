@@ -16,6 +16,7 @@ num_buckets = 2
 [xdcr_cluster]
 sourceNozzlePerNode = 4
 targetNozzlePerNode = 64
+optimisticReplicationThreshold = 0
 
 [load]
 items = 500000000

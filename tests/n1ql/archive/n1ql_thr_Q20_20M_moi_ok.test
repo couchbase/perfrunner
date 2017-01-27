@@ -38,30 +38,25 @@ n1ql_queries = key-value-lookup,singleton-unique-lookup,range-scan,primary-range
 n1ql_workers = 256
 
 [n1ql-key-value-lookup]
-prepared = key_value_lookup
 statement = SELECT * FROM `bucket-1` USE KEYS[$1];
 args = ["{key}"]
 
 [n1ql-singleton-unique-lookup]
-prepared = singleton_unique_lookup
 statement = SELECT * FROM `bucket-1` WHERE email = $1;
 scan_consistency = not_bounded
 args = ["{email}"]
 
 [n1ql-range-scan]
-prepared = range_scan
 statement = SELECT name AS _name, street AS _street FROM `bucket-1` WHERE capped_small=$1;
 scan_consistency = not_bounded
 args = ["{capped_small}"]
 
 [n1ql-primary-range-scan]
-prepared = primary_range_scan
 statement = SELECT RAW meta().id FROM `bucket-1` WHERE meta().id >= $1 ORDER BY meta().id LIMIT 50;
 scan_consistency = not_bounded
 args = ["{key}"]
 
 [n1ql-order-by-query]
-prepared = order_by_query
 statement = SELECT name AS _name, street AS _street FROM `bucket-1` WHERE capped_small=$1 ORDER BY name LIMIT 10;
 scan_consistency = not_bounded
 args = ["{capped_small}"]

@@ -26,25 +26,6 @@ class N1QLTest(PerfTest):
 
         self.monitor.monitor_index_state(host=query_node, index_name=index_name)
 
-    def create_prepared_statements(self):
-        self.n1ql_queries = []
-        prepared_statements = []
-
-        for query in self.test_config.access_settings.n1ql_queries:
-            if 'prepared' in query and query['prepared']:
-                prepared = 'PREPARE {} AS {}'.format(query['prepared'],
-                                                     query['statement'])
-                prepared_statements.append(prepared)
-                del query['statement']
-                query['prepared'] = '"' + query['prepared'] + '"'
-            self.n1ql_queries.append(query)
-
-        for name, servers in self.cluster_spec.yield_servers_by_role('n1ql'):
-            for server in servers:
-                query_node = server.split(':')[0]
-                for statement in prepared_statements:
-                    self.rest.exec_n1ql_statement(query_node, statement)
-
     @with_stats
     def access(self, *args):
         super(N1QLTest, self).timer()
@@ -75,19 +56,15 @@ class N1QLTest(PerfTest):
         super(N1QLTest, self).load(load_settings)
 
     def access_bg(self, *args):
-        self.workload = self.test_config.access_settings
-        self.workload.items /= 2
-        self.workload.n1ql_queries = getattr(self, 'n1ql_queries',
-                                             self.workload.n1ql_queries)
-        super(N1QLTest, self).access_bg(access_settings=self.workload)
+        access_settings = self.test_config.access_settings
+        access_settings.items /= 2
+        super(N1QLTest, self).access_bg(access_settings=access_settings)
 
     def run(self):
         self.load()
         self.wait_for_persistence()
 
         self.build_index()
-
-        self.create_prepared_statements()
 
         self.access_bg()
         self.access()
@@ -141,15 +118,15 @@ class N1QLJoinTest(N1QLThroughputTest):
             if doc_gen == 'ref':
                 continue
 
-            self.workload = self.test_config.access_settings
-            self.workload.doc_gen = doc_gen
-            self.workload.items /= 2
-            self.workload.n1ql_queries = self.n1ql_queries
+            access_settings = self.test_config.access_settings
+            access_settings.doc_gen = doc_gen
+            access_settings.items /= 2
+            access_settings.buckets = self.test_config.buckets
 
-            if doc_gen != self.workload.n1ql_gen:
-                self.workload.n1ql_workers = 0
+            if doc_gen != access_settings.n1ql_gen:
+                access_settings.n1ql_workers = 0
 
-            super(N1QLTest, self).access_bg(access_settings=self.workload,
+            super(N1QLTest, self).access_bg(access_settings=access_settings,
                                             target_iterator=(target, ))
 
     def _report_kpi(self):

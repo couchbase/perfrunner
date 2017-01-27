@@ -37,7 +37,6 @@ n1ql_throughput = 960
 n1ql_workers = 720
 
 [n1ql-rangeinsert]
-prepared = rangeinsert
 statement = INSERT INTO `bucket-2` (KEY doc_id, VALUE doc_val) SELECT meta(`bucket-1`).id AS doc_id, `bucket-1` as doc_val FROM `bucket-1` WHERE capped_small = $1;;
 scan_consistency = request_plus
 args = ["{capped_small}"]

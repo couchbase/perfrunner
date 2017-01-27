@@ -29,6 +29,5 @@ n1ql_workers = 480
 time = 600
 
 [n1ql-key-value-lookup]
-prepared = key_value_lookup
 statement = SELECT * FROM `bucket-1` USE KEYS[$1];
 args = ["{key}"]

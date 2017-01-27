@@ -38,7 +38,6 @@ n1ql_throughput = 8000
 n1ql_workers = 240
 
 [n1ql-singleton-unique-lookup]
-prepared = singleton_unique_lookup
 statement = SELECT * FROM `bucket-1` WHERE email = $1;
 scan_consistency = not_bounded
 args = ["{email}"]

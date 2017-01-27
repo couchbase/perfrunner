@@ -2,8 +2,8 @@ import os
 import time
 from collections import defaultdict
 from multiprocessing import Event, Lock, Process, Value
-
 from random import randint
+
 import requests
 from couchbase.exceptions import ValueFormatError
 from decorator import decorator
@@ -12,14 +12,7 @@ from numpy import random
 from psutil import cpu_count
 from twisted.internet import reactor
 
-from spring.cbgen import (
-    CBAsyncGen,
-    CBGen,
-    ElasticGen,
-    FtsGen,
-    N1QLGen,
-    SubDocGen,
-)
+from spring.cbgen import CBAsyncGen, CBGen, ElasticGen, FtsGen, SubDocGen
 from spring.docgen import (
     ArrayIndexingDocument,
     Document,
@@ -518,6 +511,8 @@ class N1QLWorker(Worker):
         super(N1QLWorker, self).__init__(workload_settings, target_settings,
                                          shutdown_event)
 
+        self.init_creds()
+
     def init_keys(self):
         self.existing_keys = ExistingKey(self.ws.working_set,
                                          self.ws.working_set_access,
@@ -555,10 +550,9 @@ class N1QLWorker(Worker):
                                               array_size=self.ws.array_size,
                                               num_docs=self.ws.items)
 
-    def init_db(self):
-        host, port = self.ts.node.split(':')
-        self.cb = N1QLGen(admin_user=self.ts.admin_user, password=self.ts.password,
-                          host=host, port=port)
+    def init_creds(self):
+        for bucket in getattr(self.ws, 'buckets', []):
+            self.cb.client.add_bucket_creds(bucket, self.ts.password)
 
     def read(self):
         curr_items_tmp = self.curr_items.value
@@ -571,7 +565,7 @@ class N1QLWorker(Worker):
             doc = self.docs.next(key)
             query = self.new_queries.next(key, doc)
 
-            _, latency = self.cb.query(query)
+            latency = self.cb.n1ql_query(query)
             self.reservoir.update(latency)
 
     def create(self):
@@ -585,7 +579,7 @@ class N1QLWorker(Worker):
             doc = self.docs.next(key)
             query = self.new_queries.next(key, doc)
 
-            _, latency = self.cb.query(query)
+            latency = self.cb.n1ql_query(query)
             self.reservoir.update(latency)
 
     def update(self):
@@ -599,7 +593,7 @@ class N1QLWorker(Worker):
             doc = self.docs.next(key)
             query = self.new_queries.next(key, doc)
 
-            _, latency = self.cb.query(query)
+            latency = self.cb.n1ql_query(query)
             self.reservoir.update(latency)
 
     def range_update(self):
@@ -613,7 +607,7 @@ class N1QLWorker(Worker):
             doc = self.docs.next(key)
             query = self.new_queries.next(key, doc)
 
-            _, latency = self.cb.query(query)
+            latency = self.cb.n1ql_query(query)
             self.reservoir.update(latency)
 
     @with_sleep

@@ -33,6 +33,5 @@ n1ql_throughput = 20000
 n1ql_workers = 240
 
 [n1ql-key-value-lookup]
-prepared = key_value_lookup
 statement = SELECT * FROM `bucket-1` USE KEYS[$1];
 args = ["{key}"]

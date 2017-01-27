@@ -38,7 +38,6 @@ n1ql_throughput = 1000000
 n1ql_workers = 96
 
 [n1ql-updaterange]
-prepared = updaterange
 statement = UPDATE `bucket-1` SET name = name||'' WHERE capped_small=$1;
 scan_consistency = not_bounded
 args = ["{capped_small}"]

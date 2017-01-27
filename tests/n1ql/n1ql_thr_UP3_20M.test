@@ -28,6 +28,5 @@ n1ql_queries = key-value-update
 n1ql_workers = 480
 
 [n1ql-key-value-update]
-prepared = key_value_update
 statement = UPDATE `bucket-1` USE KEYS [$1] SET name = name||'_UPDATED';
 args = ["{key}"]

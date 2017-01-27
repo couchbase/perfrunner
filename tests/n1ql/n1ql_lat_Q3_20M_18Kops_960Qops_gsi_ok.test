@@ -38,7 +38,6 @@ n1ql_throughput = 960
 n1ql_workers = 240
 
 [n1ql-range-scan]
-prepared = range_scan
 statement = SELECT name AS _name, street AS _street FROM `bucket-1` WHERE capped_small=$1;
 scan_consistency = not_bounded
 args = ["{capped_small}"]

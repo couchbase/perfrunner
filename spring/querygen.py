@@ -1,6 +1,7 @@
 import copy
 from itertools import cycle
 
+from couchbase.n1ql import N1QLQuery
 from couchbase.views.params import Query
 from numpy import random
 
@@ -220,5 +221,12 @@ class N1QLQueryGen(object):
 
     def next(self, key, doc):
         query = copy.deepcopy(self.queries.next())
-        query['args'] = query['args'].format(key=key, **doc)
-        return query
+        args = query['args'].format(key=key, **doc)
+
+        n1ql_query = N1QLQuery(query['statement'], *eval(args))
+        n1ql_query.cross_bucket = True
+        n1ql_query.adhoc = False
+        n1ql_query.consistency = query.get('scan_consistency',
+                                           'not_bounded')
+
+        return n1ql_query

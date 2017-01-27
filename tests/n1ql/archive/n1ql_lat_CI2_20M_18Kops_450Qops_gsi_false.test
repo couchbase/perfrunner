@@ -37,7 +37,6 @@ n1ql_throughput = 450
 n1ql_workers = 100
 
 [n1ql-singleton-unique-lookup]
-prepared = singleton_unique_lookup
 statement = SELECT name AS _name, street AS _street  FROM `bucket-1` WHERE email = $1;
 scan_consistency = request_plus
 args = ["{email}"]"

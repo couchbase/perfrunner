@@ -6,7 +6,6 @@ from threading import Thread
 from time import sleep, time
 
 import requests
-import urllib3
 from couchbase import experimental, subdocument
 from couchbase.bucket import Bucket
 from couchbase.exceptions import (
@@ -80,6 +79,8 @@ class CBGen(CBAsyncGen):
             password=kwargs['password'],
             timeout=self.TIMEOUT,
         )
+        self.client.n1ql_timeout = self.TIMEOUT
+
         self.session = requests.Session()
         self.session.auth = (kwargs['username'], kwargs['password'])
         self.server_nodes = ['{}:{}'.format(kwargs['host'],
@@ -135,6 +136,12 @@ class CBGen(CBAsyncGen):
         latency = time() - t0
         return resp.text, latency
 
+    @quiet
+    def n1ql_query(self, query):
+        t0 = time()
+        tuple(self.client.n1ql_query(query))
+        return time() - t0
+
 
 class SubDocGen(CBGen):
 
@@ -159,46 +166,6 @@ class SubDocGen(CBGen):
 
     def multipath(self):
         raise NotImplementedError
-
-
-class N1QLGen(CBGen):
-
-    def __init__(self, admin_user, password, host, port=8091):
-        self.admin_user = admin_user
-        self.password = password
-
-        self.connections = self._get_query_connections(host, port)
-
-        basic_auth = '{}:{}'.format(admin_user, password)
-        self.headers = urllib3.util.make_headers(basic_auth=basic_auth)
-
-    def _get_query_connections(self, host, port):
-        nodes = requests.get(url='http://{}:{}/pools/default'.format(host, port),
-                             auth=(self.admin_user, self.password)).json()
-
-        connections = []
-        for node in nodes['nodes']:
-            if 'n1ql' in node['services']:
-                url = node['hostname'].replace('8091', '8093')
-                connections.append(urllib3.connection_from_url(url))
-
-        return connections
-
-    def query(self, query, *args):
-        if len(self.connections) > 1:
-            connection = choice(self.connections)
-        else:
-            connection = self.connections[0]  # Faster than redundant choice
-
-        t0 = time()
-        response = connection.request(method='POST', url='/query/service',
-                                      fields=query,
-                                      encode_multipart=False,
-                                      headers=self.headers)
-        response.read(cache_content=False)
-        latency = time() - t0
-
-        return None, latency
 
 
 class FtsGen(CBGen):

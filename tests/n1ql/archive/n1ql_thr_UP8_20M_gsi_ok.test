@@ -38,7 +38,6 @@ n1ql_throughput = 1000000
 n1ql_workers = 128
 
 [n1ql-lookupupdate]
-prepared = lookupupdate
 statement = UPDATE `bucket-1` SET name = name||'_UPDATED' WHERE email = $1;
 scan_consistency = not_bounded
 args = ["{email}"]

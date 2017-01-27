@@ -34,6 +34,5 @@ n1ql_workers = 240
 n1ql_op = create
 
 [n1ql-key-value-insert]
-prepared = key_value_insert
 statement = INSERT INTO `bucket-1` (key, value) values ($1, $2);
 args = ["{key}","{}"]

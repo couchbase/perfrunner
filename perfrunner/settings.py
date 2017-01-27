@@ -411,12 +411,11 @@ class CompactionSettings(object):
 
 class TargetSettings(object):
 
-    def __init__(self, host_port, bucket, password, prefix, admin_user=None):
+    def __init__(self, host_port, bucket, password, prefix):
         self.password = password
         self.node = host_port
         self.bucket = bucket
         self.prefix = prefix
-        self.admin_user = admin_user
 
 
 class RebalanceSettings(object):

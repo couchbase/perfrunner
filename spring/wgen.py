@@ -468,10 +468,10 @@ class ViewWorker(Worker):
         for _ in range(self.BATCH_SIZE):
             key = self.existing_keys.next(curr_items_spot, deleted_spot)
             doc = self.docs.next(key)
-            doc['key'] = key
-            doc['bucket'] = self.ts.bucket
             ddoc_name, view_name, query = self.new_queries.next(doc)
+
             _, latency = self.cb.query(ddoc_name, view_name, query=query)
+
             self.reservoir.update(latency)
 
     def run(self, sid, lock, curr_ops, curr_items, deleted_items):
@@ -569,9 +569,7 @@ class N1QLWorker(Worker):
             key = self.existing_keys.next(curr_items=curr_items_tmp,
                                           curr_deletes=0)
             doc = self.docs.next(key)
-            doc['key'] = key
-            doc['bucket'] = self.ts.bucket
-            query = self.new_queries.next(doc)
+            query = self.new_queries.next(key, doc)
 
             _, latency = self.cb.query(query)
             self.reservoir.update(latency)
@@ -585,9 +583,7 @@ class N1QLWorker(Worker):
             curr_items_tmp += 1
             key, ttl = self.new_keys.next(curr_items=curr_items_tmp)
             doc = self.docs.next(key)
-            doc['key'] = key
-            doc['bucket'] = self.ts.bucket
-            query = self.new_queries.next(doc)
+            query = self.new_queries.next(key, doc)
 
             _, latency = self.cb.query(query)
             self.reservoir.update(latency)
@@ -601,9 +597,7 @@ class N1QLWorker(Worker):
             key = self.keys_for_casupdate.next(self.sid,
                                                curr_items=curr_items_tmp)
             doc = self.docs.next(key)
-            doc['key'] = key
-            doc['bucket'] = self.ts.bucket
-            query = self.new_queries.next(doc)
+            query = self.new_queries.next(key, doc)
 
             _, latency = self.cb.query(query)
             self.reservoir.update(latency)
@@ -617,9 +611,7 @@ class N1QLWorker(Worker):
             key = self.keys_for_casupdate.next(self.sid,
                                                curr_items=curr_items_tmp)
             doc = self.docs.next(key)
-            doc['key'] = key
-            doc['bucket'] = self.ts.bucket
-            query = self.new_queries.next(doc)
+            query = self.new_queries.next(key, doc)
 
             _, latency = self.cb.query(query)
             self.reservoir.update(latency)

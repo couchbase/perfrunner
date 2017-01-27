@@ -573,8 +573,8 @@ class PhaseSettings(object):
 
     def define_queries(self, config):
         queries = []
-        for query_group in self.n1ql_queries:
-            query = config.get_n1ql_query_definition(query_group)
+        for query_name in self.n1ql_queries:
+            query = config.get_n1ql_query_definition(query_name)
             queries.append(query)
         self.n1ql_queries = queries
 

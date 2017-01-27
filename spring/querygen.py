@@ -218,21 +218,7 @@ class N1QLQueryGen(object):
     def generate_query(self):
         return
 
-    def next(self, doc):
+    def next(self, key, doc):
         query = copy.deepcopy(self.queries.next())
-        if 'statement' in query:
-            query['statement'] = query['statement'].format(**doc)
-
-        if 'prepared' in query:
-            query['prepared'] = query['prepared'].format(**doc)
-
-        if 'args' in query:
-            args_split = query['args'].split(',')
-            for idx, arg in enumerate(args_split):
-                if '{}' in arg:
-                    args_split[idx] = arg.format(doc)
-                else:
-                    args_split[idx] = arg.format(**doc)
-            query['args'] = ','.join(args_split)
-
+        query['args'] = query['args'].format(key=key, **doc)
         return query

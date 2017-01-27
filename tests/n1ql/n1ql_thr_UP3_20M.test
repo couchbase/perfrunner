@@ -20,17 +20,12 @@ workers = 80
 doc_gen = reverse_lookup
 
 [access]
-creates = 0
-reads = 80
-updates = 20
-deletes = 0
-throughput = 18000
 items = 20000000
-workers = 20
+workers = 0
 time = 1200
 n1ql_op = update
 n1ql_queries = key-value-update
-n1ql_workers = 240
+n1ql_workers = 480
 
 [n1ql-key-value-update]
 prepared = key_value_update

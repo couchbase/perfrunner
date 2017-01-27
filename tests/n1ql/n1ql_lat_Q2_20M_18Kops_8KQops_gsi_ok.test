@@ -26,16 +26,16 @@ indexes =
 
 [access]
 creates = 0
-reads = 80
-updates = 20
+reads = 0
+updates = 100
 deletes = 0
-throughput = 18000
+throughput = 3600
 items = 20000000
-workers = 20
+workers = 4
 time = 1200
 n1ql_queries = singleton-unique-lookup
 n1ql_throughput = 8000
-n1ql_workers = 128
+n1ql_workers = 240
 
 [n1ql-singleton-unique-lookup]
 prepared = singleton_unique_lookup

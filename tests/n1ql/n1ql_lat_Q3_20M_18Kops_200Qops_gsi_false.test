@@ -26,12 +26,12 @@ indexes =
 
 [access]
 creates = 0
-reads = 80
-updates = 20
+reads = 0
+updates = 100
 deletes = 0
-throughput = 18000
+throughput = 3600
 items = 20000000
-workers = 20
+workers = 4
 time = 1200
 n1ql_queries = range-scan
 n1ql_throughput = 200

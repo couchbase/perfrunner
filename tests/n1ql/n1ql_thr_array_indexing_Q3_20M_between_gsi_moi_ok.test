@@ -36,7 +36,7 @@ items = 20000000
 workers = 20
 time = 1200
 n1ql_queries = singleton-unique-lookup
-n1ql_workers = 96
+n1ql_workers = 240
 
 [n1ql-singleton-unique-lookup]
 prepared = singleton_unique_lookup

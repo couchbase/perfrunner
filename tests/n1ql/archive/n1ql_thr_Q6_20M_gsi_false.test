@@ -26,12 +26,12 @@ indexes =
 
 [access]
 creates = 0
-reads = 80
-updates = 20
+reads = 0
+reads = 100
 deletes = 0
-throughput = 18000
+throughput = 3600
 items = 20000000
-workers = 20
+workers = 4
 time = 1200
 n1ql_queries = order-by-limit-query
 n1ql_workers = 720

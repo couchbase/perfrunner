@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLBulkTest
-title = Avg. Throughput (docs/sec), DL10, Bulk Delete, 5M documents
+title = Avg. Throughput (docs/sec), DL10, Bulk Delete, MOI, 5M documents
 component = n1ql
 category = iud
 

@@ -214,7 +214,9 @@ class MetricHelper(object):
             data = self.seriesly[db].get_all()
             timings += [value['latency_query'] for value in data.values()]
         query_latency = np.percentile(timings, percentile)
-        return round(query_latency, 2)
+        if query_latency < 100:
+            return round(query_latency, 1)
+        return int(query_latency)
 
     def calc_secondary_scan_latency(self, percentile):
         metric = self.test_config.name

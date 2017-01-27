@@ -15,7 +15,6 @@ replica_number = 0
 
 [secondary]
 indexer.settings.storage_mode = memory_optimized
-indexer.settings.gc_percent = 200
 
 [load]
 items = 10000000

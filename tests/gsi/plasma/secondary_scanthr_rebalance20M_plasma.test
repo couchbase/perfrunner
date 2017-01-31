@@ -36,6 +36,7 @@ db = moi
 cbindexperf_configfile = tests/gsi/plasma/config/config_scanthr_plasma.json
 indexer.settings.storage_mode = memory_optimized
 indexer.settings.max_cpu_percent = 4800
+indexer.settings.gc_percent = 200
 
 [access]
 creates = 10

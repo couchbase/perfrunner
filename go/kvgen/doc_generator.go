@@ -70,6 +70,6 @@ func (basic multi_item_doc) newValue(i int64) *doc {
 		City:         fmt.Sprintf("%09x", t),
 		Coins:        t,
 		Achievements: t % prime,
-		Body:         fmt.Sprintf("%s", randSeq(size-60, 300)),
+		Body:         fmt.Sprintf("%s", randSeq(size-166, 300)),
 	}
 }

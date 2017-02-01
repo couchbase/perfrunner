@@ -19,7 +19,6 @@ func randSeq(n int64, step int64) string {
 type doc struct {
 	Email        string `json:"email,omitempty"`
 	Name         string `json:"name,omitempty"`
-	Alt_email    string `json:"alt_email,omitempty"`
 	City         string `json:"city,omitempty"`
 	Coins        int64  `json:"coins,omitempty"`
 	Achievements int64  `json:"achievements,omitempty"`
@@ -57,7 +56,6 @@ func (basic basic_doc) newValue(i int64) *doc {
 }
 
 func (basic fixed_size_doc) newValue(i int64) *doc {
-
 	return &doc{
 		City: fmt.Sprintf("%s", randSeq(size, size)),
 	}

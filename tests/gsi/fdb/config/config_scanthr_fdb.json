@@ -7,7 +7,7 @@
              "Low" : [
                 "000015"
              ],
-             "Repeat" : 39999999,
+             "Repeat" : 59999999,
              "Type" : "Range",
              "Bucket" : "bucket-1",
              "High" : [

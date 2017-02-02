@@ -7,7 +7,7 @@
              "Low" : [
                 "000015"
              ],
-             "Repeat" : 39999999,
+             "Repeat" : 49999999,
              "Type" : "Range",
              "Bucket" : "bucket-1",
              "High" : [
@@ -23,7 +23,7 @@
              "Low" : [
                 "000015"
              ],
-             "Repeat" : 39999999,
+             "Repeat" : 49999999,
              "Type" : "Range",
              "Bucket" : "bucket-1",
              "High" : [
@@ -39,7 +39,7 @@
              "Low" : [
                 "000015"
              ],
-             "Repeat" : 39999999,
+             "Repeat" : 49999999,
              "Type" : "Range",
              "Bucket" : "bucket-1",
              "High" : [
@@ -53,7 +53,7 @@
           {
              "Type" : "All",
              "Limit" : 1,
-             "Repeat" : 39999999,
+             "Repeat" : 49999999,
              "Bucket" : "bucket-1",
              "Id" : 1,
              "Index" : "myindex4"
@@ -61,7 +61,7 @@
           {
              "Type" : "All",
              "Limit" : 1,
-             "Repeat" : 39999999,
+             "Repeat" : 49999999,
              "Bucket" : "bucket-1",
              "Id" : 1,
              "Index" : "myindex5"

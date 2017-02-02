@@ -292,7 +292,7 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
 
     def _report_kpi(self):
         self.reporter.post_to_sf(
-            *self.metric_helper.calc_secondary_scan_latency(percentile=80)
+            *self.metric_helper.calc_secondary_scan_latency(percentile=90)
         )
 
     def remove_statsfile(self):
@@ -365,7 +365,7 @@ class SecondaryIndexingDocIndexingLatencyTest(SecondaryIndexingScanLatencyTest):
 
     def _report_kpi(self):
         self.reporter.post_to_sf(
-            *self.metric_helper.calc_observe_latency(percentile=80)
+            *self.metric_helper.calc_observe_latency(percentile=90)
         )
 
     def run(self):

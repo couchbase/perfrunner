@@ -79,7 +79,6 @@ class CBGen(CBAsyncGen):
             password=kwargs['password'],
             timeout=self.TIMEOUT,
         )
-        self.client.n1ql_timeout = self.TIMEOUT
 
         self.session = requests.Session()
         self.session.auth = (kwargs['username'], kwargs['password'])

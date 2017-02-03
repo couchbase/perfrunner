@@ -80,6 +80,6 @@ class WorkloadTest(TestCase):
 
 class SpringTest(TestCase):
 
-    def spring_imports(self):
+    def test_spring_imports(self):
         self.assertEqual(Document.SIZE_VARIATION, 0.25)
         self.assertEqual(Worker.BATCH_SIZE, 100)

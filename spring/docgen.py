@@ -7,7 +7,12 @@ from itertools import cycle
 import numpy as np
 
 from fastdocgen import build_achievements
-from spring.states import NUM_STATES, STATES
+from spring.dictionary import (
+    NUM_STATES,
+    NUM_STREET_SUFFIXES,
+    STATES,
+    STREET_SUFFIX,
+)
 
 ASCII_A_OFFSET = 97
 
@@ -574,6 +579,66 @@ class ArrayIndexingDocument(ReverseLookupDocument):
             'body': self._build_body(alphabet, size),
             'capped_small': self._build_capped(alphabet, seq_id, 100),
             'topics': self._build_topics(seq_id),
+        }
+
+
+class ProfileDocument(ReverseLookupDocument):
+
+    OVERHEAD = 390
+
+    def _build_capped(self, *args):
+        capped = super(ProfileDocument, self)._build_capped(*args)
+        return capped.replace('_', '')
+
+    def _build_zip(self, seq_id):
+        if self.is_random:
+            zip_code = random.randint(70000, 90000)
+        else:
+            zip_code = 70000 + seq_id % 20000
+        return str(zip_code)
+
+    def _build_long_street(self, alphabet, seq_id, capped_small, capped_large):
+        if self.is_random:
+            num = random.randint(0, 1000)
+            idx = random.randint(0, NUM_STREET_SUFFIXES - 1)
+        else:
+            num = seq_id % 5000
+            idx = alphabet.find('7') % NUM_STREET_SUFFIXES
+        suffix = STREET_SUFFIX[idx]
+
+        return '%d %s %s %s' % (num, capped_small, capped_large, suffix)
+
+    def next(self, key):
+        alphabet = self._build_alphabet(key)
+        size = self._size()
+        seq_id = int(key[-12:]) + 1
+
+        category = self._build_category(alphabet) + 1
+        capped_large = self._build_capped(alphabet, seq_id, 1000 * category)
+        capped_small = self._build_capped(alphabet, seq_id, 10)
+
+        return {
+            'first_name': self._build_name(alphabet),
+            'last_name': self._build_street(alphabet),
+            'email': self.build_email(alphabet),
+            'balance': self._build_coins(alphabet),
+            'date': {
+                'gmtime': self._build_gmtime(alphabet),
+                'year': self._build_year(alphabet),
+            },
+            'capped_large': capped_large,
+            'address': {
+                'street': self._build_long_street(alphabet,
+                                                  seq_id,
+                                                  capped_small,
+                                                  capped_large),
+                'city': self._build_city(alphabet),
+                'county': self._build_county(alphabet),
+                'state': self._build_state(alphabet),
+                'zip': self._build_zip(seq_id),
+                'realm': self._build_realm(alphabet),
+            },
+            'body': self._build_body(alphabet, size),
         }
 
 

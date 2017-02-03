@@ -30,6 +30,7 @@ from spring.docgen import (
     MultiItemPlasmaDocument,
     NestedDocument,
     NewKey,
+    ProfileDocument,
     RefDocument,
     ReverseLookupDocument,
     ReverseRangeLookupDocument,
@@ -114,6 +115,9 @@ class Worker(object):
                                               self.ts.prefix,
                                               self.ws.array_size,
                                               self.ws.items)
+        elif self.ws.doc_gen == 'profile':
+            self.docs = ProfileDocument(self.ws.size,
+                                        self.ts.prefix)
         elif self.ws.doc_gen == 'import_export_simple':
             self.docs = ImportExportDocument(self.ws.size,
                                              self.ts.prefix)
@@ -544,6 +548,9 @@ class N1QLWorker(Worker):
         elif self.ws.doc_gen == 'ref':
             self.docs = RefDocument(self.ws.size,
                                     prefix='n1ql')
+        elif self.ws.doc_gen == 'profile':
+            self.docs = ProfileDocument(self.ws.size,
+                                        prefix='n1ql')
         elif self.ws.doc_gen == 'array_indexing':
             self.docs = ArrayIndexingDocument(self.ws.size,
                                               prefix='n1ql',

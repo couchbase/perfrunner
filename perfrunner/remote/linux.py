@@ -498,6 +498,15 @@ class RemoteLinux(Remote):
         logger.info('Blocking memory for {} bytes'.format(size))
         run("/tmp/memblock {} 2>/dev/null >/dev/null &".format(size), pty=False)
 
+    @index_node
+    def check_process_running(self, process):
+        pid = run("pidof {}".format(process), pty=True)
+        if not pid:
+            logger.info('Process {} is not running.'.format(process))
+            return False
+        logger.info('Process {} is running, with pid {}'.format(process, pid))
+        return True
+
     @all_hosts
     def set_master_password(self, password='password'):
         logger.info('Enabling encrypted secrets')

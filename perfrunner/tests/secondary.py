@@ -54,6 +54,11 @@ class SecondaryIndexTest(PerfTest):
         if self.block_memory > 0:
             self.remote.block_memory(self.block_memory)
 
+    def check_memory_blocker(self):
+        if self.block_memory > 0:
+            if not self.remote.check_process_running("memblock"):
+                raise Exception('memblock is not running, might have been killed!!!')
+
     @with_stats
     def build_secondaryindex(self):
         return self._build_secondaryindex()
@@ -158,6 +163,7 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
         self.report_kpi(time_elapsed, 'Incremental')
 
         self.run_recovery_scenario()
+        self.check_memory_blocker()
 
 
 class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSecondaryIndexTest):

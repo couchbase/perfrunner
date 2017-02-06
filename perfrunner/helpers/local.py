@@ -25,7 +25,7 @@ def cleanup(backup_dir):
 
 
 def backup(master_node, cluster_spec, wrapper=False, mode=None,
-           compression=False, skip_compaction=False):
+           compression=False):
     backup_dir = cluster_spec.config.get('storage', 'backup')
 
     logger.info('Creating a new backup: {}'.format(backup_dir))
@@ -37,7 +37,7 @@ def backup(master_node, cluster_spec, wrapper=False, mode=None,
         cbbackupwrapper(master_node, cluster_spec, backup_dir, mode)
     else:
         cbbackupmgr_backup(master_node, cluster_spec, backup_dir, mode,
-                           compression, skip_compaction)
+                           compression)
 
 
 def cbbackupwrapper(master_node, cluster_spec, backup_dir, mode):
@@ -58,7 +58,7 @@ def cbbackupwrapper(master_node, cluster_spec, backup_dir, mode):
 
 
 def cbbackupmgr_backup(master_node, cluster_spec, backup_dir, mode,
-                       compression, skip_compaction):
+                       compression):
     if not mode:
         local('./opt/couchbase/bin/cbbackupmgr config '
               '--archive {} --repo default'.format(backup_dir))
@@ -75,9 +75,6 @@ def cbbackupmgr_backup(master_node, cluster_spec, backup_dir, mode,
 
     if compression:
         cmd = '{} --value-compression compressed'.format(cmd)
-
-    if skip_compaction:
-        cmd = '{} --skip-last-compaction'.format(cmd)
 
     logger.info('Running: {}'.format(cmd))
     local(cmd)

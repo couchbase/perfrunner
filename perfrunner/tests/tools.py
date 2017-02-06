@@ -71,8 +71,7 @@ class BackupTest(BackupRestoreTest):
             cluster_spec=self.cluster_spec,
             wrapper=self.rest.is_community(self.master_node),
             mode=mode,
-            compression=self.test_config.backup_settings.compression,
-            skip_compaction=self.build >= '4.7.0-1082',  # MB-20768
+            compression=self.test_config.backup_settings.compression
         )
 
     def _report_kpi(self):

@@ -27,7 +27,7 @@ max_num_auxio = 16
 items = 20000000
 size = 1024
 workers = 80
-doc_gen = small_plasma
+doc_gen = multiitem_plasma
 
 [secondary]
 indexes = myindex1:email,myindex2:city,myindex3:name,myindex4:coins,myindex5:alt_email

@@ -8,6 +8,7 @@ use_workers = 0
 mem_quota = 20480
 initial_nodes = 1
 num_buckets = 1
+throttle_cpu = 1
 
 [bucket]
 replica_number = 0

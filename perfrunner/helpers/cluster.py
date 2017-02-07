@@ -216,3 +216,12 @@ class ClusterManager(object):
         for server in self.servers():
             self.rest.set_master_password(server)
         self.remote.set_master_password()
+
+    def throttle_cpu(self):
+        if self.remote.os == 'Cygwin':
+            return
+
+        self.remote.enable_cpu()
+
+        if self.test_config.cluster.throttle_cpu:
+            self.remote.disable_cpu()

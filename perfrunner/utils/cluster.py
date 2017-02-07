@@ -37,6 +37,7 @@ def main():
 
     # Individual nodes
     if cm.remote:
+        cm.throttle_cpu()
         cm.remote.disable_wan()
         cm.enable_secrets()
         cm.tune_logging()

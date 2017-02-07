@@ -579,16 +579,6 @@ class PillowFightTest(PerfTest):
         self.report_kpi()
 
 
-class PillowFightThrottledTest(PillowFightTest):
-
-    def run(self):
-        self.remote.disable_cpu()
-
-        super(PillowFightThrottledTest, self).run()
-
-        self.remote.enable_cpu()
-
-
 class CompactionTest(KVTest):
 
     @with_stats

@@ -195,3 +195,6 @@ class RemoteWindows(Remote):
 
     def enable_secrets(self, *args, **kwargs):
         pass
+
+    def enable_cpu(self):
+        pass

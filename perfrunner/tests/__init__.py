@@ -68,6 +68,9 @@ class PerfTest(object):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.test_config.cluster.throttle_cpu:
+            self.remote.enable_cpu()
+
         if self.test_config.test_case.use_workers:
             self.worker_manager.terminate()
 

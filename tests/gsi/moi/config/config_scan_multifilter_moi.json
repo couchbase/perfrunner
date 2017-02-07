@@ -9,6 +9,7 @@
       "Bucket": "bucket-1",
       "Id": 4,
       "Index": "myindex",
+      "NInterval" : 100,
       "Scans": [
         {
           "Filter": [

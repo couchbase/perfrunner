@@ -92,11 +92,9 @@ func RunJob(client *qclient.GsiClient, job *Job, aggrQ chan *JobResult) {
 		err = client.Lookup(spec.DefnId, requestID, spec.Lookups, false,
 			spec.Limit, cons, nil, callb)
 	case "MultiScan":
-		entrykeys := make([]int64, 1)
-		entrykeys[0] = 42
 		proj := &qclient.IndexProjection{
-			EntryKeys:  entrykeys,
-			PrimaryKey: false,
+			EntryKeys:  nil,
+			PrimaryKey: true,
 		}
 		requestID := os.Args[0] + uuid
 		err = client.MultiScan(spec.DefnId, requestID, spec.Scans, false, false, proj, 0, spec.Limit,

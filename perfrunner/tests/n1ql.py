@@ -90,6 +90,8 @@ class N1QLThroughputTest(N1QLTest):
 
 class N1QLJoinTest(N1QLThroughputTest):
 
+    ALL_BUCKETS = True
+
     def load_regular(self, load_settings, target):
         load_settings.items /= 2
         super(N1QLTest, self).load(load_settings, (target,))

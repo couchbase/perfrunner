@@ -233,75 +233,76 @@ class FtsGen(CBGen):
         return itertools.cycle(keytypes)
 
     def prepare_query_list(self):
-        with open(self.settings.query_file, 'r') as tfile:
-            for line in tfile:
-                temp_query = {}
-                tosearch, freq = FtsGen.process_lines(line.strip())
-                query_type = self.settings.type
-                if query_type in ['2_conjuncts', '2_disjuncts', '1_conjuncts_2_disjuncts']:
-                    from collections import defaultdict
-                    keytypes = FtsGen.process_conj_disj(query_type.split('_'))
-                    temp_query = defaultdict(list)
-                    tbool = {v: {k: None} for k, v in self.bool_map.items()}
+        if self.settings.query_file:
+            with open(self.settings.query_file, 'r') as tfile:
+                for line in tfile:
+                    temp_query = {}
+                    tosearch, freq = FtsGen.process_lines(line.strip())
+                    query_type = self.settings.type
+                    if query_type in ['2_conjuncts', '2_disjuncts', '1_conjuncts_2_disjuncts']:
+                        from collections import defaultdict
+                        keytypes = FtsGen.process_conj_disj(query_type.split('_'))
+                        temp_query = defaultdict(list)
+                        tbool = {v: {k: None} for k, v in self.bool_map.items()}
 
-                    for terms in line.split():
+                        for terms in line.split():
 
-                        tmp_key = keytypes.next()
-                        temp_query[tmp_key].append({"field": self.settings.field, "term": terms})
+                            tmp_key = keytypes.next()
+                            temp_query[tmp_key].append({"field": self.settings.field, "term": terms})
 
-                    if query_type == '1_conjuncts_2_disjuncts':
-                        for k, v in self.bool_map.items():
-                            tbool[v][k] = temp_query[k]
-                        temp_query = tbool
+                        if query_type == '1_conjuncts_2_disjuncts':
+                            for k, v in self.bool_map.items():
+                                tbool[v][k] = temp_query[k]
+                            temp_query = tbool
 
-                elif query_type == 'fuzzy':
-                    temp_query['fuzziness'] = int(freq)
-                    temp_query['term'] = tosearch
-                    temp_query['field'] = self.settings.field
+                    elif query_type == 'fuzzy':
+                        temp_query['fuzziness'] = int(freq)
+                        temp_query['term'] = tosearch
+                        temp_query['field'] = self.settings.field
 
-                elif query_type == 'numeric':
-                    if freq.strip() == 'max_min':
-                        temp_query['max'], temp_query['min'] = [float(k) for k in tosearch.split(':')]
-                    elif freq.strip() == 'max':
-                        temp_query['max'] = float(tosearch)
+                    elif query_type == 'numeric':
+                        if freq.strip() == 'max_min':
+                            temp_query['max'], temp_query['min'] = [float(k) for k in tosearch.split(':')]
+                        elif freq.strip() == 'max':
+                            temp_query['max'] = float(tosearch)
+                        else:
+                            temp_query['min'] = float(tosearch)
+                        temp_query['inclusive_max'] = False
+                        temp_query['inclusive_min'] = False
+                        temp_query['field'] = self.settings.field
+
+                    elif query_type in ['match', 'match_phrase']:
+                        tosearch = line.strip()
+                        temp_query[query_type] = tosearch
+                        temp_query['field'] = self.settings.field
+
+                    elif query_type == 'ids':
+                        tosearch = [tosearch]
+                        temp_query[query_type] = tosearch
+                        temp_query['field'] = self.settings.field
+
+                    elif query_type == "facet":
+
+                        start_date, end_date = freq.split(':')
+                        temp_query["query"] = tosearch
+                        temp_query["boost"] = 1
+                        self.query_template['fields'] = ["*"]
+                        self.query_template["facets"] = {self.settings.field:
+                                                         {"size": 5, "field": self.settings.field,
+                                                          "date_ranges": [{"name": "end",
+                                                                           "end": end_date},
+                                                                          {"name": "start",
+                                                                           "start": start_date}]}}
                     else:
-                        temp_query['min'] = float(tosearch)
-                    temp_query['inclusive_max'] = False
-                    temp_query['inclusive_min'] = False
-                    temp_query['field'] = self.settings.field
+                        temp_query[query_type] = tosearch
+                        temp_query['field'] = self.settings.field
 
-                elif query_type in ['match', 'match_phrase']:
-                    tosearch = line.strip()
-                    temp_query[query_type] = tosearch
-                    temp_query['field'] = self.settings.field
+                    self.query_template['query'] = temp_query
+                    self.query_template['size'] = self.settings.query_size
+                    self.query_list.append(self.form_url(self.query_template))
 
-                elif query_type == 'ids':
-                    tosearch = [tosearch]
-                    temp_query[query_type] = tosearch
-                    temp_query['field'] = self.settings.field
-
-                elif query_type == "facet":
-
-                    start_date, end_date = freq.split(':')
-                    temp_query["query"] = tosearch
-                    temp_query["boost"] = 1
-                    self.query_template['fields'] = ["*"]
-                    self.query_template["facets"] = {self.settings.field:
-                                                     {"size": 5, "field": self.settings.field,
-                                                      "date_ranges": [{"name": "end",
-                                                                       "end": end_date},
-                                                                      {"name": "start",
-                                                                       "start": start_date}]}}
-                else:
-                    temp_query[query_type] = tosearch
-                    temp_query['field'] = self.settings.field
-
-                self.query_template['query'] = temp_query
-                self.query_template['size'] = self.settings.query_size
-                self.query_list.append(self.form_url(self.query_template))
-
-        self.query_list_size = len(self.query_list)
-        shuffle(self.query_list)
+            self.query_list_size = len(self.query_list)
+            shuffle(self.query_list)
 
     def next(self):
         return self.requests.post, self.query_list[randint(0, self.query_list_size - 1)]
@@ -331,63 +332,64 @@ class ElasticGen(FtsGen):
         return nodes
 
     def prepare_query_list(self):
-        with open(self.settings.query_file, 'r') as tfile:
-            for line in tfile:
-                term, freq = ElasticGen.process_lines(line.strip())
-                tmp_query = {}
-                tmp_query_txt = {}
-                query_type = self.settings.type
-                if query_type == 'fuzzy':
-                    tmp_fuzzy = {
-                        'fuzziness': int(freq),
-                        'value': term,
-                    }
-                    tmp_query_txt[self.settings.field] = tmp_fuzzy
-                    tmp_query[query_type] = tmp_query_txt
+        if self.settings.query_file:
+            with open(self.settings.query_file, 'r') as tfile:
+                for line in tfile:
+                    term, freq = ElasticGen.process_lines(line.strip())
+                    tmp_query = {}
+                    tmp_query_txt = {}
+                    query_type = self.settings.type
+                    if query_type == 'fuzzy':
+                        tmp_fuzzy = {
+                            'fuzziness': int(freq),
+                            'value': term,
+                        }
+                        tmp_query_txt[self.settings.field] = tmp_fuzzy
+                        tmp_query[query_type] = tmp_query_txt
 
-                elif query_type == 'ids':
-                    tmp_query_txt['values'] = [term]
-                    tmp_query[query_type] = tmp_query_txt
+                    elif query_type == 'ids':
+                        tmp_query_txt['values'] = [term]
+                        tmp_query[query_type] = tmp_query_txt
 
-                elif query_type in ['match', 'match_phrase']:
-                    tmp_query_txt[self.settings.field] = line.strip()
-                    tmp_query[query_type] = tmp_query_txt
+                    elif query_type in ['match', 'match_phrase']:
+                        tmp_query_txt[self.settings.field] = line.strip()
+                        tmp_query[query_type] = tmp_query_txt
 
-                elif query_type == 'range':
-                    trange = {}
-                    if freq.strip() == 'max_min':
-                        trange['gte'], trange['lte'] = [float(k) for k in term.split(':')]
-                    elif freq.strip() == 'max':
-                        trange['gte'] = float(term)
+                    elif query_type == 'range':
+                        trange = {}
+                        if freq.strip() == 'max_min':
+                            trange['gte'], trange['lte'] = [float(k) for k in term.split(':')]
+                        elif freq.strip() == 'max':
+                            trange['gte'] = float(term)
+                        else:
+                            trange['lte'] = float(term)
+                        tmp_query_txt[self.settings.field] = trange
+                        tmp_query[query_type] = tmp_query_txt
+
+                    elif query_type in ['2_conjuncts', '2_disjuncts', '1_conjuncts_2_disjuncts']:
+                        tbool = {v: [] for k, v in self.bool_map.items()}
+                        keytypes = ElasticGen.process_conj_disj(query_type.split('_'))
+                        for term in line.strip().split():
+                            key = self.bool_map[keytypes.next()]
+                            tbool[key].append({'term': {self.settings.field: term}})
+                        tmp_query_txt = tbool
+                        tmp_query['bool'] = tmp_query_txt
+
+                    elif query_type == 'facet':
+                        start_date, end_date = freq.split(':')
+                        tmp_query = {"term": {"text": term}}
+                        self.query_template['size'] = self.settings.query_size
+                        self.query_template['aggs'] = {"perf_elastic_index": {"date_range": {
+                                                       "field": self.settings.field,
+                                                       "format": "YYYY-MM-DD",
+                                                       "ranges": [{"from": start_date, "to": end_date}]
+                                                       }, "aggs": {"terms_count": {"terms": {"field": "text"}}}}}
+
                     else:
-                        trange['lte'] = float(term)
-                    tmp_query_txt[self.settings.field] = trange
-                    tmp_query[query_type] = tmp_query_txt
+                        tmp_query_txt[self.settings.field] = term
+                        tmp_query[query_type] = tmp_query_txt
 
-                elif query_type in ['2_conjuncts', '2_disjuncts', '1_conjuncts_2_disjuncts']:
-                    tbool = {v: [] for k, v in self.bool_map.items()}
-                    keytypes = ElasticGen.process_conj_disj(query_type.split('_'))
-                    for term in line.strip().split():
-                        key = self.bool_map[keytypes.next()]
-                        tbool[key].append({'term': {self.settings.field: term}})
-                    tmp_query_txt = tbool
-                    tmp_query['bool'] = tmp_query_txt
-
-                elif query_type == 'facet':
-                    start_date, end_date = freq.split(':')
-                    tmp_query = {"term": {"text": term}}
-                    self.query_template['size'] = self.settings.query_size
-                    self.query_template['aggs'] = {"perf_elastic_index": {"date_range": {
-                                                   "field": self.settings.field,
-                                                   "format": "YYYY-MM-DD",
-                                                   "ranges": [{"from": start_date, "to": end_date}]
-                                                   }, "aggs": {"terms_count": {"terms": {"field": "text"}}}}}
-
-                else:
-                    tmp_query_txt[self.settings.field] = term
-                    tmp_query[query_type] = tmp_query_txt
-
-                self.query_template['query'] = tmp_query
-                self.query_list.append(self.form_url(self.query_template))
-        self.query_list_size = len(self.query_list)
-        shuffle(self.query_list)
+                    self.query_template['query'] = tmp_query
+                    self.query_list.append(self.form_url(self.query_template))
+            self.query_list_size = len(self.query_list)
+            shuffle(self.query_list)

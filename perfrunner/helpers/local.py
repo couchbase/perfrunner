@@ -1,7 +1,7 @@
 import os.path
 from sys import platform
 
-from fabric.api import lcd, local, quiet, shell_env
+from fabric.api import lcd, local, quiet, settings, shell_env
 from logger import logger
 
 
@@ -305,11 +305,19 @@ def run_ycsb(host, bucket, password, action, workload, items, workers,
         local(cmd, capture=False)
 
 
-def run_cbindexperf(path_to_tool, node, rest_username, rest_password, configfile):
+def run_cbindexperf(path_to_tool, node, rest_username, rest_password, configfile, run_in_background=False):
     logger.info('Initiating scan workload')
     cmdstr = "{} -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json " \
              "-statsfile /root/statsfile" \
         .format(path_to_tool, node, rest_username, rest_password, configfile)
+    if run_in_background:
+        cmdstr += " &"
     logger.info('To be applied: {}'.format(cmdstr))
     ret = local(cmdstr)
     return ret.return_code
+
+
+def kill_process(process):
+    logger.info('Killing following process: {}'.format(process))
+    with settings(warn_only=True):
+        local("killall {}".format(process))

@@ -17,6 +17,21 @@ from spring.dictionary import (
 ASCII_A_OFFSET = 97
 
 
+class HashKeys(object):
+
+    def __init__(self, workload_settings):
+        self.ws = workload_settings
+
+    def hash_it(self, key):
+        if self.ws.hash_keys:
+            if self.ws.key_length:
+                num_slices = int(math.ceil(self.ws.key_length / 32.0))
+                doc_key = num_slices * md5(key).hexdigest()
+                return doc_key[:self.ws.key_length]
+            return md5(key).hexdigest()
+        return key
+
+
 class Iterator(object):
 
     def __init__(self):
@@ -38,7 +53,7 @@ class ExistingKey(Iterator):
         self.working_set_access = working_set_access
         self.prefix = prefix
 
-    def next(self, curr_items, curr_deletes):
+    def next(self, curr_items, curr_deletes, *args):
         num_existing_items = curr_items - curr_deletes
         num_hot_items = int(num_existing_items * self.working_set / 100.0)
         num_cold_items = num_existing_items - num_hot_items
@@ -51,6 +66,45 @@ class ExistingKey(Iterator):
         else:
             right_limit = left_limit + num_cold_items
         key = np.random.random_integers(left_limit, right_limit)
+        key = '%012d' % key
+        return self.add_prefix(key)
+
+
+class ExistingMovingHotWorkloadKey(ExistingKey):
+
+    def __init__(self, working_set, working_set_access, prefix, working_set_move_time):
+        super(ExistingMovingHotWorkloadKey, self).__init__(working_set, working_set_access, prefix)
+        self.working_set_move_time = working_set_move_time
+
+    def next(self, curr_items, curr_deletes, *args):
+        current_hot_load_start = args[0]
+        timer_elapse = args[1]
+
+        num_existing_items = curr_items - curr_deletes
+        num_hot_items = int(num_existing_items * self.working_set / 100.0)
+        num_cold_items = num_existing_items - num_hot_items
+
+        left_limit = 1 + curr_deletes
+
+        if timer_elapse.value:
+            timer_elapse.value = 0
+            # Create next hot_load_start, multiplying by 2.5 to choose next
+            # hot workload start beyond current hot workload limit and then modulus
+            # to prevent going beyond num_docs
+            current_hot_load_start.value = int((current_hot_load_start.value * 2.5)
+                                               % (num_existing_items - num_hot_items))
+
+        if self.working_set_access == 100 or \
+                random.randint(0, 100) <= self.working_set_access:
+            left_limit += current_hot_load_start.value
+            right_limit = left_limit + num_hot_items
+            key = np.random.random_integers(left_limit, right_limit)
+        else:
+            cold_key_offset = np.random.random_integers(0, num_cold_items)
+            if cold_key_offset > left_limit + current_hot_load_start.value:
+                key = left_limit + cold_key_offset + num_hot_items
+            else:
+                key = left_limit + cold_key_offset
         key = '%012d' % key
         return self.add_prefix(key)
 
@@ -854,11 +908,14 @@ class GSIMultiIndexDocument(Document):
 class PlasmaDocument(Document):
 
     @staticmethod
-    def build_item(alphabet, size=64):
-        num_slices = int(math.ceil(size / 64.0))  # 64 is len(alphabet)
+    def build_item(alphabet, size=64, prefix=""):
+        length = size - len(prefix)
+        num_slices = int(math.ceil(length / 64.0))  # 64 == len(alphabet)
         body = num_slices * alphabet
-        num = random.randint(1, size)
-        return body[num:size] + body[0:num]
+        num = random.randint(1, length)
+        if prefix:
+            return prefix + "-" + body[num:length] + body[0:num]
+        return body[num:length] + body[0:num]
 
 
 class SmallPlasmaDocument(PlasmaDocument):
@@ -868,6 +925,17 @@ class SmallPlasmaDocument(PlasmaDocument):
 
         return {
             'alt_email': self._build_alt_email(alphabet)
+        }
+
+
+class SequentialPlasmaDocument(PlasmaDocument):
+
+    def next(self, key):
+        alphabet = self._build_alphabet(key)
+        number = key[-12:]
+
+        return {
+            'city': self.build_item(alphabet=alphabet, size=17, prefix=number)
         }
 
 

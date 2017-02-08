@@ -21,6 +21,7 @@ class WorkloadSettings(object):
         self.expiration = options.expiration
         self.working_set = options.working_set
         self.working_set_access = options.working_set_access
+        self.working_set_move_time = options.working_set_move_time
 
         self.async = options.async
 

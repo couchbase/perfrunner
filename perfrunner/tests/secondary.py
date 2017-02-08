@@ -7,8 +7,8 @@ from logger import logger
 
 from cbagent.stores import SerieslyStore
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.helpers.local import run_cbindexperf
-from perfrunner.tests import PerfTest
+from perfrunner.helpers.local import kill_process, run_cbindexperf
+from perfrunner.tests import PerfTest, TargetIterator
 
 
 class SecondaryIndexTest(PerfTest):
@@ -35,6 +35,7 @@ class SecondaryIndexTest(PerfTest):
         self.run_recovery_test = self.test_config.gsi_settings.run_recovery_test
         self.block_memory = self.test_config.gsi_settings.block_memory
         self.incremental_load_iterations = self.test_config.gsi_settings.incremental_load_iterations
+        self.scan_time = self.test_config.gsi_settings.scan_time
 
         self.storage = self.test_config.gsi_settings.storage
         self.indexes = self.test_config.gsi_settings.indexes
@@ -49,6 +50,7 @@ class SecondaryIndexTest(PerfTest):
 
         self.bucket = self.test_config.buckets[0]
         self._block_memory()
+        self.target_iterator = TargetIterator(self.cluster_spec, self.test_config, "gsi")
 
         if self.storage == "plasma":
             self.COLLECTORS["secondary_storage_stats"] = True
@@ -121,6 +123,29 @@ class SecondaryIndexTest(PerfTest):
                 self.rest.get_index_storage_stats_mm(self.index_nodes[0].split(':')[0])))
 
         return self.remote.get_disk_usage(index, human_readable=False)
+
+    def change_scan_range(self, iteration):
+        num_hot_items = \
+            int(self.test_config.access_settings.items * self.test_config.access_settings.working_set / 100.0)
+
+        with open(self.configfile, "r") as jsonFile:
+            data = json.load(jsonFile)
+
+        if iteration == 0:
+            old_start = num_hot_items
+        else:
+            old_start = data["ScanSpecs"][0]["Low"][0].split("-")
+            old_start = old_start[0] if len(old_start) == 1 else old_start[1]
+
+        # predict next hot_load_start
+        start = (int(old_start) * 2.5) % (self.test_config.access_settings.items - num_hot_items)
+        end = start + num_hot_items
+
+        data["ScanSpecs"][0]["Low"][0] = "gsi-" + '%012d' % start
+        data["ScanSpecs"][0]["High"][0] = "gsi-" + '%012d' % end
+
+        with open(self.configfile, "w") as jsonFile:
+            jsonFile.write(json.dumps(data))
 
 
 class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
@@ -440,6 +465,26 @@ class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest
         self.print_index_disk_usage()
         self.report_kpi()
         self.validate_num_connections()
+
+
+class SecondaryIndexingMovingScanLatencyTest(SecondaryIndexingScanLatencyTest):
+    """
+    The test applies scan workload against the 2i server and measures
+    scan latency for moving workload
+    """
+
+    @with_stats
+    def apply_scanworkload(self, path_to_tool="/opt/couchbase/bin/cbindexperf"):
+        rest_username, rest_password = self.cluster_spec.rest_credentials
+
+        t = 0
+        while t < self.scan_time:
+            self.change_scan_range(t)
+            run_cbindexperf(path_to_tool, self.index_nodes[0], rest_username,
+                            rest_password, self.configfile, run_in_background=True)
+            time.sleep(self.test_config.access_settings.working_set_move_time)
+            kill_process("cbindexperf")
+            t += self.test_config.access_settings.working_set_move_time
 
 
 class SecondaryIndexingDocIndexingLatencyTest(SecondaryIndexingScanLatencyTest):

@@ -253,6 +253,8 @@ class TestConfig(Config):
         access.num_categories = load.num_categories
         access.num_replies = load.num_replies
         access.size = load.size
+        access.hash_keys = load.hash_keys
+        access.key_length = load.key_length
 
         sub_doc_options = self._get_options_as_dict('subdoc')
         if sub_doc_options:
@@ -479,6 +481,8 @@ class PhaseSettings(object):
     ITERATIONS = 1
 
     ASYNC = False
+    HASH_KEYS = 0
+    KEY_LENGTH = 0      # max can be 32
 
     ITEMS = 0
     EXISTING_ITEMS = 0
@@ -487,6 +491,7 @@ class PhaseSettings(object):
 
     WORKING_SET = 100
     WORKING_SET_ACCESS = 100
+    WORKING_SET_MOVE_TIME = 0
 
     THROUGHPUT = float('inf')
     QUERY_THROUGHPUT = float('inf')
@@ -538,8 +543,12 @@ class PhaseSettings(object):
         self.working_set = float(options.get('working_set', self.WORKING_SET))
         self.working_set_access = int(options.get('working_set_access',
                                                   self.WORKING_SET_ACCESS))
+        self.working_set_move_time = int(options.get('working_set_move_time',
+                                                     self.WORKING_SET_MOVE_TIME))
         self.workers = int(options.get('workers', self.WORKERS))
         self.async = bool(int(options.get('async', self.ASYNC)))
+        self.hash_keys = int(options.get('hash_keys', self.HASH_KEYS))
+        self.key_length = int(options.get('key_length', self.KEY_LENGTH))
 
         self.seq_reads = self.SEQ_READS
         self.seq_updates = self.SEQ_UPDATES
@@ -682,6 +691,7 @@ class GSISettings(object):
     RUN_RECOVERY_TEST = 0
     BLOCK_MEMORY = 0
     INCREMENTAL_LOAD_ITERATIONS = 0
+    SCAN_TIME = 1200
 
     def __init__(self, options):
         self.indexes = {}
@@ -709,6 +719,7 @@ class GSISettings(object):
         self.block_memory = int(options.get('block_memory', self.BLOCK_MEMORY))
         self.incremental_load_iterations = int(options.get('incremental_load_iterations',
                                                            self.INCREMENTAL_LOAD_ITERATIONS))
+        self.scan_time = int(options.get('scan_time', self.SCAN_TIME))
 
         self.settings = {}
         for option in options:

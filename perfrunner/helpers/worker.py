@@ -47,6 +47,7 @@ class RemoteWorkerManager(object):
         self.temp_dir = '/tmp/{}'.format(uhex()[:12])
         logger.info("Using prefix for temp_dir (worker_dir): {}".format(self.temp_dir))
         self.user, self.password = cluster_spec.client_credentials
+        self.sync = None
         with settings(user=self.user, password=self.password):
             self.initialize_project()
             self.start()

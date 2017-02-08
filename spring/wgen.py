@@ -12,14 +12,18 @@ from numpy import random
 from psutil import cpu_count
 from twisted.internet import reactor
 
+from perfrunner.helpers.sync import SyncHotWorkload
+
 from spring.cbgen import CBAsyncGen, CBGen, ElasticGen, FtsGen, SubDocGen
 from spring.docgen import (
     ArrayIndexingDocument,
     Document,
     ExistingKey,
+    ExistingMovingHotWorkloadKey,
     ExtReverseLookupDocument,
     FTSKey,
     GSIMultiIndexDocument,
+    HashKeys,
     ImportExportDocument,
     ImportExportDocumentArray,
     ImportExportDocumentNested,
@@ -35,6 +39,7 @@ from spring.docgen import (
     ReverseLookupDocument,
     ReverseRangeLookupDocument,
     SequentialHotKey,
+    SequentialPlasmaDocument,
     SmallPlasmaDocument,
     VaryingItemSizePlasmaDocument,
 )
@@ -82,9 +87,14 @@ class Worker(object):
         self.existing_keys = ExistingKey(self.ws.working_set,
                                          self.ws.working_set_access,
                                          self.ts.prefix)
+        if self.ws.working_set_move_time:
+            self.existing_keys = ExistingMovingHotWorkloadKey(self.ws.working_set,
+                                                              self.ws.working_set_access,
+                                                              self.ts.prefix, self.ws.working_set_move_time)
         self.new_keys = NewKey(self.ts.prefix, self.ws.expiration)
         self.keys_for_removal = KeyForRemoval(self.ts.prefix)
         self.fts_keys = FTSKey(self.ws)
+        self.hash_keys = HashKeys(self.ws)
 
     def init_docs(self):
         if not hasattr(self.ws, 'doc_gen') or self.ws.doc_gen == 'basic':
@@ -134,6 +144,8 @@ class Worker(object):
             self.docs = GSIMultiIndexDocument(self.ws.size)
         elif self.ws.doc_gen == 'small_plasma':
             self.docs = SmallPlasmaDocument(self.ws.size)
+        elif self.ws.doc_gen == 'sequential_plasma':
+            self.docs = SequentialPlasmaDocument(self.ws.size)
         elif self.ws.doc_gen == 'large_item_plasma':
             self.docs = LargeItemPlasmaDocument(self.ws.size,
                                                 self.ws.item_size)
@@ -207,9 +219,11 @@ class KVWorker(Worker):
                 curr_items_tmp += 1
                 key, ttl = self.new_keys.next(curr_items_tmp)
                 doc = self.docs.next(key)
+                key = self.hash_keys.hash_it(key)
                 cmds.append((cb.create, (key, doc, ttl)))
             elif op == 'r':
                 key = self.existing_keys.next(curr_items_spot, deleted_spot)
+                key = self.hash_keys.hash_it(key)
                 if cases == 'counter':
                     cmds.append((cb.read, (key, self.ws.subdoc_fields)))
                 else:
@@ -217,27 +231,36 @@ class KVWorker(Worker):
             elif op == 'u':
                 if cases == 'counter':
                     key = self.existing_keys.next(curr_items_spot, deleted_spot)
+                    key = self.hash_keys.hash_it(key)
                     cmds.append((cb.update, (key, self.ws.subdoc_fields, self.ws.size)))
                 else:
-                    key = self.existing_keys.next(curr_items_spot, deleted_spot)
+                    key = self.existing_keys.next(curr_items_spot, deleted_spot,
+                                                  self.current_hot_load_start,
+                                                  self.timer_elapse)
                     doc = self.docs.next(key)
+                    key = self.hash_keys.hash_it(key)
                     cmds.append((cb.update, (key, doc)))
             elif op == 'd':
                 deleted_items_tmp += 1
                 key = self.keys_for_removal.next(deleted_items_tmp)
+                key = self.hash_keys.hash_it(key)
                 cmds.append((cb.delete, (key, )))
             elif op == 'cas':
                 key = self.existing_keys.next(curr_items_spot, deleted_spot)
                 doc = self.docs.next(key)
+                key = self.hash_keys.hash_it(key)
                 cmds.append((cb.cas, (key, doc)))
             elif op == 'counter':
                 key = self.existing_keys.next(curr_items_spot, deleted_spot)
+                key = self.hash_keys.hash_it(key)
                 cmds.append((cb.cas, (key, self.ws.subdoc_counter_fields)))
             elif op == 'fus':
                 key = self.fts_keys.next()
+                key = self.hash_keys.hash_it(key)
                 cmds.append((self.do_fts_updates_swap, (key,)))
             elif op == 'fur':
                 key = self.fts_keys.next()
+                key = self.hash_keys.hash_it(key)
                 cmds.append((self.do_fts_updates_reverse, (key,)))
         return cmds
 
@@ -271,7 +294,8 @@ class KVWorker(Worker):
     def run_condition(self, curr_ops):
         return curr_ops.value < self.ws.ops and not self.time_to_stop()
 
-    def run(self, sid, lock, curr_ops, curr_items, deleted_items):
+    def run(self, sid, lock, curr_ops, curr_items, deleted_items, current_hot_load_start=None, timer_elapse=None):
+
         if self.ws.throughput < float('inf'):
             self.target_time = float(self.BATCH_SIZE) * self.ws.workers / \
                 self.ws.throughput
@@ -281,6 +305,8 @@ class KVWorker(Worker):
         self.lock = lock
         self.curr_items = curr_items
         self.deleted_items = deleted_items
+        self.current_hot_load_start = current_hot_load_start
+        self.timer_elapse = timer_elapse
 
         self.seed()
 
@@ -404,6 +430,7 @@ class SeqReadsWorker(Worker):
         set_cpu_afinity(sid)
 
         for key in SequentialHotKey(sid, self.ws, self.ts.prefix):
+            key = self.hash_keys.hash_it(key)
             self.cb.read(key)
 
 
@@ -412,6 +439,7 @@ class SeqUpdatesWorker(Worker):
     def run(self, sid, *args, **kwargs):
         for key in SequentialHotKey(sid, self.ws, self.ts.prefix):
             doc = self.docs.next(key)
+            key = self.hash_keys.hash_it(key)
             self.cb.update(key, doc)
 
 
@@ -731,7 +759,8 @@ class WorkloadGen(object):
         self.worker_processes = defaultdict(list)
 
     def start_workers(self, worker_factory, name, curr_items=None,
-                      deleted_items=None, cas_updated_items=None):
+                      deleted_items=None, cas_updated_items=None,
+                      current_hot_load_start=None, timer_elapse=None):
         curr_ops = Value('L', 0)
         lock = Lock()
         worker_type, total_workers = worker_factory(self.ws)
@@ -751,7 +780,7 @@ class WorkloadGen(object):
                 args = (sid, lock, curr_ops, curr_items, deleted_items,
                         cas_updated_items)
             else:
-                args = (sid, lock, curr_ops, curr_items, deleted_items)
+                args = (sid, lock, curr_ops, curr_items, deleted_items, current_hot_load_start, timer_elapse)
 
             worker = worker_type(self.ws, self.ts, self.shutdown_event)
 
@@ -773,11 +802,16 @@ class WorkloadGen(object):
         curr_items = Value('L', self.ws.items)
         deleted_items = Value('L', 0)
         cas_updated_items = Value('L', 0)
+        current_hot_load_start = Value('L', 0)
+        timer_elapse = Value('I', 0)
+
+        if self.ws.working_set_move_time:
+            current_hot_load_start.value = int(self.ws.items * self.ws.working_set / 100.0)
 
         logger.info('Starting all workers')
 
         self.start_workers(WorkerFactory,
-                           'kv', curr_items, deleted_items)
+                           'kv', curr_items, deleted_items, None, current_hot_load_start, timer_elapse)
         self.start_workers(SubDocWorkerFactory,
                            'subdoc', curr_items, deleted_items)
         self.start_workers(ViewWorkerFactory,
@@ -786,7 +820,12 @@ class WorkloadGen(object):
                            'n1ql', curr_items, deleted_items, cas_updated_items)
         self.start_workers(FtsWorkerFactory, 'fts')
 
+        sync = SyncHotWorkload(current_hot_load_start, timer_elapse)
+        sync.start_timer(self.ws)
+
         if self.timer:
             time.sleep(self.timer)
             self.shutdown_event.set()
         self.wait_for_all_workers()
+
+        sync.stop_timer()

@@ -117,59 +117,51 @@
 			"revisionTime": "2016-03-11T02:08:04Z"
 		},
 		{
-			"checksumSHA1": "kqNVH7BEa67tfa2NwvJ6nMbzKck=",
+			"checksumSHA1": "D4SUsGTOk/ZmLVaEbVOkttE8t3Q=",
 			"path": "github.com/couchbase/indexing",
-			"revision": "99b339ec8db2059801fd3cf5aa3cd20fa6e7898f",
-			"revisionTime": "2016-08-31T10:04:57Z",
+			"revision": "07cefbba716bde9805302e31e3ab9dcca34dafe9",
 			"tree": true
 		},
 		{
-			"checksumSHA1": "WOMsnOkRg2drzapW9pWPyhi33e8=",
+			"checksumSHA1": "saATJIo30yDb7/6z0VqWP1VESlk=",
 			"path": "github.com/couchbase/indexing/secondary/common",
-			"revision": "99b339ec8db2059801fd3cf5aa3cd20fa6e7898f",
-			"revisionTime": "2016-08-31T10:04:57Z"
+			"revision": "07cefbba716bde9805302e31e3ab9dcca34dafe9"
 		},
 		{
-			"checksumSHA1": "TGd3c+SoKZUF/kWROBczazvHZhE=",
+			"checksumSHA1": "1gzGprNfHB6qlh6EEGMn1XTnkoY=",
 			"path": "github.com/couchbase/indexing/secondary/dcp",
-			"revision": "99b339ec8db2059801fd3cf5aa3cd20fa6e7898f",
-			"revisionTime": "2016-08-31T10:04:57Z"
+			"revision": "07cefbba716bde9805302e31e3ab9dcca34dafe9"
 		},
 		{
 			"checksumSHA1": "W91imfHfk6Mm/LrNVQ/OE1Tk8ZQ=",
 			"path": "github.com/couchbase/indexing/secondary/dcp/transport",
-			"revision": "99b339ec8db2059801fd3cf5aa3cd20fa6e7898f",
-			"revisionTime": "2016-08-31T10:04:57Z"
+			"revision": "07cefbba716bde9805302e31e3ab9dcca34dafe9"
 		},
 		{
 			"checksumSHA1": "FaNGNaGJFcvTPRIvMrt+kS8ippQ=",
 			"path": "github.com/couchbase/indexing/secondary/dcp/transport/client",
-			"revision": "99b339ec8db2059801fd3cf5aa3cd20fa6e7898f",
-			"revisionTime": "2016-08-31T10:04:57Z"
+			"revision": "07cefbba716bde9805302e31e3ab9dcca34dafe9"
 		},
 		{
 			"checksumSHA1": "99u12gl5Nb+Nsefrfqg4G84QZRA=",
 			"path": "github.com/couchbase/indexing/secondary/fdb",
-			"revision": "99b339ec8db2059801fd3cf5aa3cd20fa6e7898f",
-			"revisionTime": "2016-08-31T10:04:57Z"
+			"revision": "07cefbba716bde9805302e31e3ab9dcca34dafe9"
 		},
 		{
 			"checksumSHA1": "FYGZsRQL8yTBldXYefsBFAcZNxY=",
 			"path": "github.com/couchbase/indexing/secondary/logging",
-			"revision": "99b339ec8db2059801fd3cf5aa3cd20fa6e7898f",
+			"revision": "07cefbba716bde9805302e31e3ab9dcca34dafe9",
 			"revisionTime": "2016-08-31T10:04:57Z"
 		},
 		{
 			"checksumSHA1": "9hIwccBzuzcR5vWLX9bTXDo1H0M=",
 			"path": "github.com/couchbase/indexing/secondary/platform",
-			"revision": "99b339ec8db2059801fd3cf5aa3cd20fa6e7898f",
-			"revisionTime": "2016-08-31T10:04:57Z"
+			"revision": "07cefbba716bde9805302e31e3ab9dcca34dafe9"
 		},
 		{
 			"checksumSHA1": "bOzo4epgLP99O9L1eCiBgOwRC0U=",
 			"path": "github.com/couchbase/indexing/secondary/stats",
-			"revision": "99b339ec8db2059801fd3cf5aa3cd20fa6e7898f",
-			"revisionTime": "2016-08-31T10:04:57Z"
+			"revision": "07cefbba716bde9805302e31e3ab9dcca34dafe9"
 		},
 		{
 			"checksumSHA1": "rFXvSnqB16YPpXW7wMt5jw0a8IY=",

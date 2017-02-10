@@ -92,12 +92,8 @@ func RunJob(client *qclient.GsiClient, job *Job, aggrQ chan *JobResult) {
 		err = client.Lookup(spec.DefnId, requestID, spec.Lookups, false,
 			spec.Limit, cons, nil, callb)
 	case "MultiScan":
-		proj := &qclient.IndexProjection{
-			EntryKeys:  nil,
-			PrimaryKey: true,
-		}
 		requestID := os.Args[0] + uuid
-		err = client.MultiScan(spec.DefnId, requestID, spec.Scans, false, false, proj, 0, spec.Limit,
+		err = client.MultiScan(spec.DefnId, requestID, spec.Scans, false, false, nil, 0, spec.Limit,
 			cons, nil, callb)
 	}
 

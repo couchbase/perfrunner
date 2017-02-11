@@ -381,6 +381,7 @@ class BucketSettings(object):
     REPLICA_NUMBER = 1
     REPLICA_INDEX = 0
     EVICTION_POLICY = 'valueOnly'  # alt: fullEviction
+    BUCKET_TYPE = 'membase'  # alt: ephemeral
 
     def __init__(self, options):
         self.password = options.get('password', self.PASSWORD)
@@ -392,6 +393,8 @@ class BucketSettings(object):
         )
         self.eviction_policy = options.get('eviction_policy',
                                            self.EVICTION_POLICY)
+        self.bucket_type = options.get('bucket_type',
+                                       self.BUCKET_TYPE)
 
         self.conflict_resolution_type = options.get('conflict_resolution_type')
 

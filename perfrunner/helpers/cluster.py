@@ -135,6 +135,7 @@ class ClusterManager(object):
                     replica_number=self.test_config.bucket.replica_number,
                     replica_index=self.test_config.bucket.replica_index,
                     eviction_policy=self.test_config.bucket.eviction_policy,
+                    bucket_type=self.test_config.bucket.bucket_type,
                     conflict_resolution_type=self.test_config.bucket.conflict_resolution_type,
                 )
 
@@ -197,6 +198,9 @@ class ClusterManager(object):
             self.rest.enable_auto_failover(master, timeout)
 
     def wait_until_warmed_up(self):
+        if self.test_config.bucket.bucket_type == 'ephemeral':
+            return
+
         for master in self.cluster_spec.yield_masters():
             for bucket in self.test_config.buckets:
                 self.monitor.monitor_warmup(self.memcached, master, bucket)

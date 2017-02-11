@@ -222,14 +222,14 @@ class RestHelper(object):
 
     def create_bucket(self, host_port, name, password, ram_quota,
                       replica_number, replica_index, eviction_policy,
-                      conflict_resolution_type=None):
+                      bucket_type, conflict_resolution_type=None):
         logger.info('Adding new bucket: {}'.format(name))
 
         api = 'http://{}/pools/default/buckets'.format(host_port)
 
         data = {
             'name': name,
-            'bucketType': 'membase',
+            'bucketType': bucket_type,
             'ramQuotaMB': ram_quota,
             'evictionPolicy': eviction_policy,
             'flushEnabled': 1,

@@ -201,6 +201,7 @@ class RemoteLinux(Remote):
         for path in (
             '/sys/kernel/mm/transparent_hugepage/enabled',
             '/sys/kernel/mm/redhat_transparent_hugepage/enabled',
+            '/sys/kernel/mm/transparent_hugepage/defrag',
         ):
             run('echo never > {}'.format(path), quiet=True)
 

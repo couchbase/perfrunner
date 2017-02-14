@@ -32,7 +32,7 @@ workers = 100
 indexes = myindex:alt_email
 db = moi
 run_recovery_test = 1
-indexer.settings.storage_mode = memory_optimized
+indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
 
 [access]

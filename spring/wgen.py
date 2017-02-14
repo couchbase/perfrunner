@@ -27,6 +27,7 @@ from spring.docgen import (
     KeyForCASUpdate,
     KeyForRemoval,
     LargeDocument,
+    LargeItemPlasmaDocument,
     MultiItemPlasmaDocument,
     NestedDocument,
     NewKey,
@@ -36,6 +37,7 @@ from spring.docgen import (
     ReverseRangeLookupDocument,
     SequentialHotKey,
     SmallPlasmaDocument,
+    VaryingItemSizePlasmaDocument,
 )
 from spring.querygen import N1QLQueryGen, ViewQueryGen, ViewQueryGenByType
 from spring.reservoir import Reservoir
@@ -135,6 +137,13 @@ class Worker(object):
             self.docs = SmallPlasmaDocument(self.ws.size)
         elif self.ws.doc_gen == 'multiitem_plasma':
             self.docs = MultiItemPlasmaDocument(self.ws.size)
+        elif self.ws.doc_gen == 'large_item_plasma':
+            self.docs = LargeItemPlasmaDocument(self.ws.size,
+                                                self.ws.item_size)
+        elif self.ws.doc_gen == 'varying_item_plasma':
+            self.docs = VaryingItemSizePlasmaDocument(self.ws.size,
+                                                      self.ws.size_variation_min,
+                                                      self.ws.size_variation_max)
 
     def init_db(self):
         host, port = self.ts.node.split(':')

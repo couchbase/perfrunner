@@ -846,7 +846,7 @@ class GSIMultiIndexDocument(Document):
             'realm': self._build_realm(alphabet),
             'coins': self._build_coins(alphabet),
             'category': self._build_category(alphabet),
-            'achievements': self._build_alt_email(alphabet),
+            'achievements': self._build_achievements(alphabet),
             'body': self._build_body(alphabet, size),
         }
 
@@ -854,9 +854,11 @@ class GSIMultiIndexDocument(Document):
 class SmallPlasmaDocument(Document):
 
     @staticmethod
-    def build_item(alphabet):
-        num = random.randint(1, 64)
-        return alphabet[num:64] + alphabet[0:num]
+    def build_item(alphabet, size=64):
+        num_slices = int(math.ceil(size / 64.0))  # 64 == len(alphabet)
+        body = num_slices * alphabet
+        num = random.randint(1, size)
+        return body[num:size] + body[0:num]
 
     def next(self, key):
         alphabet = self._build_alphabet(key)
@@ -882,4 +884,52 @@ class MultiItemPlasmaDocument(SmallPlasmaDocument):
             'email': self.build_item(alphabet=alphabet),
             'alt_email': self.build_item(alphabet=alphabet),
             'coins': self.build_coins(alphabet)
+        }
+
+
+class LargeItemPlasmaDocument(SmallPlasmaDocument):
+
+    def __init__(self, avg_size, item_size):
+        super(LargeItemPlasmaDocument, self).__init__(avg_size)
+        self.item_size = item_size
+
+    def next(self, key):
+        alphabet = self._build_alphabet(key)
+        size = self._size()
+
+        return {
+            'name': self._build_name(alphabet),
+            'email': self._build_email(alphabet),
+            'alt_email': self._build_alt_email(alphabet),
+            'city': self.build_item(alphabet=alphabet, size=self.item_size),
+            'realm': self._build_realm(alphabet),
+            'coins': self._build_coins(alphabet),
+            'category': self._build_category(alphabet),
+            'achievements': self._build_achievements(alphabet),
+            'body': self._build_body(alphabet, size),
+        }
+
+
+class VaryingItemSizePlasmaDocument(SmallPlasmaDocument):
+
+    def __init__(self, avg_size, size_variation_min, size_variation_max):
+        super(VaryingItemSizePlasmaDocument, self).__init__(avg_size)
+        self.size_variation_min = size_variation_min
+        self.size_variation_max = size_variation_max
+
+    def next(self, key):
+        alphabet = self._build_alphabet(key)
+        size = self._size()
+        length = random.randint(self.size_variation_min, self.size_variation_max)
+
+        return {
+            'name': self._build_name(alphabet),
+            'email': self._build_email(alphabet),
+            'alt_email': self._build_alt_email(alphabet),
+            'city': self.build_item(alphabet=alphabet, size=length),
+            'realm': self._build_realm(alphabet),
+            'coins': self._build_coins(alphabet),
+            'category': self._build_category(alphabet),
+            'achievements': self._build_achievements(alphabet),
+            'body': self._build_body(alphabet, size),
         }

@@ -509,6 +509,10 @@ class PhaseSettings(object):
 
     PARALLEL_WORKLOAD = False
 
+    ITEM_SIZE = 64
+    SIZE_VARIATION_MIN = 1
+    SIZE_VARIATION_MAX = 1024
+
     def __init__(self, options):
         # Common settings
         self.time = int(options.get('time', self.TIME))
@@ -580,6 +584,10 @@ class PhaseSettings(object):
                                               self.SPRING_WORKERS))
         self.parallel_workload = bool(int(options.get('parallel_workload',
                                                       self.PARALLEL_WORKLOAD)))
+
+        self.item_size = int(options.get('item_size', self.ITEM_SIZE))
+        self.size_variation_min = int(options.get('size_variation_min', self.SIZE_VARIATION_MIN))
+        self.size_variation_max = int(options.get('size_variation_max', self.SIZE_VARIATION_MAX))
 
         # FTS settings
         self.fts_config = None

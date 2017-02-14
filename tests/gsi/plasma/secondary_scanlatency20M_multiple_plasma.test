@@ -28,11 +28,11 @@ max_num_auxio = 16
 [load]
 items = 20000000
 size = 1024
-workers = 80
-doc_gen = multiitem_plasma
+workers = 100
+doc_gen = gsi_multiindex
 
 [secondary]
-indexes = myindex1:email,myindex2:city,myindex3:name,myindex4:coins,myindex5:alt_email
+indexes = myindex1:alt_email,myindex2:city,myindex3:name,myindex4:coins,myindex5:achievements
 db = moi
 cbindexperf_configfile = tests/gsi/plasma/config/config_scanlatency_multiple_plasma.json
 indexer.settings.storage_mode = memory_optimized

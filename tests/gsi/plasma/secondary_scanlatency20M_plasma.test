@@ -28,12 +28,10 @@ max_num_auxio = 16
 [load]
 items = 20000000
 size = 1024
-workers = 80
-parallel_workload = 1
-doc_gen = small_plasma
+workers = 100
 
 [secondary]
-indexes = myindex:city
+indexes = myindex:alt_email
 db = moi
 cbindexperf_configfile = tests/gsi/plasma/config/config_scanlatency_plasma.json
 indexer.settings.storage_mode = memory_optimized
@@ -48,5 +46,4 @@ ops = 300000000
 items = 20000000
 existing_items = 20000000
 workers = 80
-parallel_workload = 1
 throughput = 100000

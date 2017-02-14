@@ -26,11 +26,10 @@ max_num_auxio = 16
 [load]
 items = 100000000
 size = 1024
-workers = 80
-doc_gen = small_plasma
+workers = 100
 
 [secondary]
-indexes = myindex:city
+indexes = myindex:alt_email
 db = moi
 run_recovery_test = 1
 indexer.settings.storage_mode = memory_optimized

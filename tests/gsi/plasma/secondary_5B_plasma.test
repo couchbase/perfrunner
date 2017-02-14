@@ -25,8 +25,7 @@ max_num_auxio = 16
 
 [load]
 items = 5000000000
-size = 1024
-workers = 80
+workers = 100
 doc_gen = small_plasma
 
 [secondary]

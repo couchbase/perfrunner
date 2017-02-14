@@ -30,7 +30,6 @@ doc_gen = small_plasma
 
 [secondary]
 indexes = myindex:city
-db = moi
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
 

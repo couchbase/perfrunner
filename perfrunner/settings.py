@@ -708,8 +708,9 @@ class GSISettings(object):
                 self.settings[option] = value
 
         if self.settings:
-            if self.settings['indexer.settings.storage_mode'] == 'forestdb':
-                self.storage = 'forestdb'
+            if self.settings['indexer.settings.storage_mode'] == 'forestdb' or \
+                    self.settings['indexer.settings.storage_mode'] == 'plasma':
+                self.storage = self.settings['indexer.settings.storage_mode']
             else:
                 self.storage = 'memdb'
 

@@ -96,7 +96,7 @@ class RemoteLinux(Remote):
             cmd = "-auth=Administrator:password  -server {index_node}  -type create -bucket {bucket}" \
                   "  -fields={field}".format(index_node=index_nodes[0], bucket=bucket, field=field)
 
-            if storage == 'memdb':
+            if storage == 'memdb' or storage == 'plasma':
                 cmd = '{cmd} -using {db}'.format(cmd=cmd, db=storage)
 
             with_str = r'{\\\"defer_build\\\":true}'

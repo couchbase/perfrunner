@@ -32,7 +32,6 @@ workers = 100
 
 [secondary]
 indexes = myindex:alt_email
-db = moi
 cbindexperf_configfile = tests/gsi/plasma/config/config_scanlatency_plasma.json
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800

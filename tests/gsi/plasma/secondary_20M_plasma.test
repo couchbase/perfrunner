@@ -30,7 +30,6 @@ workers = 100
 
 [secondary]
 indexes = myindex:alt_email
-db = moi
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
 

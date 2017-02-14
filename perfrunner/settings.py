@@ -87,6 +87,13 @@ class ClusterSpec(Config):
             yield name, has_service
 
     @safe
+    def yield_fts_servers(self):
+        for name, servers in self.config.items('clusters'):
+            for server in servers.split():
+                if 'fts' in server.split(',')[1:]:
+                    yield server.split(':')[0]
+
+    @safe
     def yield_kv_servers(self):
         for name, servers in self.config.items('clusters'):
             for server in servers.split():

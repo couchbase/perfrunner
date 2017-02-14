@@ -18,18 +18,21 @@ class FTStest(PerfTest):
         super(FTStest, self).__init__(cluster_spec, test_config, verbose)
 
         self.index_definition = get_json_from_file(self.test_config.fts_settings.index_configfile)
-        self.host_port = [x for x in self.cluster_spec.yield_servers()][0]
-        self.host = self.host_port.split(':')[0]
-        self.fts_port = 8094
-        self.host_port = '{}:{}'.format(self.host, self.fts_port)
         self.fts_index = self.test_config.fts_settings.name
         self.header = {'Content-Type': 'application/json'}
         self.requests = requests.session()
         self.fts_doccount = self.test_config.fts_settings.items
-        self.prepare_index()
         self.index_time_taken = 0
+        self.index_size_raw = 0
         self.auth = HTTPBasicAuth('Administrator', 'password')
         self.order_by = self.test_config.fts_settings.order_by
+
+        initial_nodes = test_config.cluster.initial_nodes[0]
+        all_fts_hosts = [x for x in self.cluster_spec.yield_fts_servers()]
+        self.active_fts_hosts = all_fts_hosts[:initial_nodes]
+        self.fts_master_host = self.active_fts_hosts[0]
+        self.fts_port = 8094
+        self.prepare_index()
 
     @with_stats
     def access(self, *args):
@@ -69,17 +72,18 @@ class FTStest(PerfTest):
     def prepare_index(self):
         self.index_definition['name'] = self.fts_index
         self.index_definition["sourceName"] = self.test_config.buckets[0]
-        self.index_url = "http://{}/api/index/{}".\
-            format(self.host_port, self.fts_index)
+        self.index_url = "http://{}:{}/api/index/{}".format(self.fts_master_host,
+                                                            self.fts_port,
+                                                            self.fts_index)
         logger.info('Created the Index definition : {}'.
                     format(self.index_definition))
 
     def check_rec_presist(self):
         rec_memory = self.fts_doccount
-        self.fts_url = "http://{}/api/nsstats".format(self.host_port)
+        self.fts_url = "http://{}:{}/api/nsstats".format(self.fts_master_host, self.fts_port)
         key = ':'.join([self.test_config.buckets[0], self.fts_index, 'num_recs_to_persist'])
         while rec_memory != 0:
-            logger.info("Record persists to be expected: %s" % rec_memory)
+            logger.info("Records to persist: %s" % rec_memory)
             r = self.requests.get(url=self.fts_url, auth=self.auth)
             time.sleep(self.WAIT_TIME)
             rec_memory = r.json()[key]
@@ -120,6 +124,7 @@ class FTStest(PerfTest):
 class FtsIndexTest(FTStest):
 
         COLLECTORS = {"fts_stats": True}
+        index_size_metric_name = "num_bytes_used_disk"
 
         @with_stats
         def index_test(self):
@@ -129,6 +134,15 @@ class FtsIndexTest(FTStest):
             self.wait_for_index()
             end_time = time.time()
             self.index_time_taken = end_time - start_time
+            self.check_rec_presist()
+            self.calculate_index_size()
+
+        def calculate_index_size(self):
+            for host in self.active_fts_hosts:
+                r = self.requests.get("http://{}:{}/api/nsstats".format(host, self.fts_port))
+                self.index_size_raw += r.json()["{}:{}:{}".format(self.test_config.buckets[0],
+                                                                  self.fts_index,
+                                                                  self.index_size_metric_name)]
 
         def run(self):
             self.cleanup_and_restore()
@@ -139,6 +153,10 @@ class FtsIndexTest(FTStest):
             self.reporter.post_to_sf(
                 *self.metric_helper.calc_ftses_index(self.index_time_taken,
                                                      order_by=self.order_by)
+            )
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_fts_index_size(self.index_size_raw,
+                                                        order_by=self.order_by)
             )
 
 

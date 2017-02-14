@@ -23,13 +23,12 @@ class Elastictest(PerfTest):
         self.host_port = [x for x in self.cluster_spec.yield_servers()][0]
         self.host = self.host_port.split(':')[0]
         self.url = "{}:{}".format(self.host, "9200")
-        self.elastic_host_port = "{}:{}".format(self.host, "9091")
-        self.elastic_port = self.test_config.fts_settings.port
         self.elastic_index = self.test_config.fts_settings.name
         self.header = {'Content-Type': 'application/json'}
         self.requests = requests.session()
         self.elastic_doccount = self.test_config.fts_settings.items
         self.index_time_taken = 0
+        self.index_size_raw = 0
         '''
         This API will be needed for fresh installation
         self.remote.startelasticsearchplugin()
@@ -113,6 +112,14 @@ class Elastictest(PerfTest):
                 if (attempts * self.WAIT_TIME) >= self.INDEX_WAIT_MAX:
                     raise RuntimeError("Failed to create index")
 
+    def check_es_presist(self):
+        translog_size = 1
+        while translog_size != 0:
+            r = self.requests.get("http://{}/_stats".format(self.url))
+            translog_size = r.json()["indices"][self.elastic_index]["total"]["translog"]["operations"]
+            logger.info("Translog size (expected to be 0): {}".format(translog_size))
+            time.sleep(self.WAIT_TIME * 10)
+
 
 class ElasticIndexTest(Elastictest):
 
@@ -124,6 +131,12 @@ class ElasticIndexTest(Elastictest):
             self.wait_for_index()
             end_time = time.time()
             self.index_time_taken = end_time - start_time
+            self.check_es_presist()
+            self.calculate_index_size()
+
+        def calculate_index_size(self):
+            r = self.requests.get("http://{}/_stats".format(self.url))
+            self.index_size_raw += r.json()["indices"][self.elastic_index]["total"]["store"]["size_in_bytes"]
 
         def run(self):
             self.cleanup_and_restore()
@@ -135,6 +148,11 @@ class ElasticIndexTest(Elastictest):
                 *self.metric_helper.calc_ftses_index(self.index_time_taken,
                                                      order_by=self.order_by,
                                                      name=' Elasticsearch 1.7')
+            )
+            self.reporter.post_to_sf(
+                *self.metric_helper.calc_fts_index_size(self.index_size_raw,
+                                                        order_by=self.order_by,
+                                                        name=' Elasticsearch 1.7')
             )
 
 

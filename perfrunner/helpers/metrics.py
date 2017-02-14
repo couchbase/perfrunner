@@ -116,12 +116,22 @@ class MetricHelper(object):
 
     def calc_ftses_index(self, elapsedtime, order_by, name='FTS'):
         metric = self.test_config.name
-        title = 'Index Throughput(sec), {}, {} node, {}'.\
+        title = 'Index build time(sec), {}, {} node, {}'.\
                 format(self.title,
                        self.test_config.cluster.initial_nodes[0],
                        name)
         metric_info = self._get_metric_info(title, order_by=order_by)
         return round(elapsedtime, 1), metric, metric_info
+
+    def calc_fts_index_size(self, index_size_raw, order_by, name='FTS'):
+        metric = "{}_indexsize".format(self.test_config.name)
+        title = 'Index size (MB), {}, {} node, {}'.\
+                format(self.title,
+                       self.test_config.cluster.initial_nodes[0],
+                       name)
+        metric_info = self._get_metric_info(title, order_by=order_by)
+        index_size_mb = int(index_size_raw / (1024 ** 2))
+        return index_size_mb, metric, metric_info
 
     def calc_max_ops(self):
         values = []

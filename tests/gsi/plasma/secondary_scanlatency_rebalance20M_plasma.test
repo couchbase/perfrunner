@@ -2,7 +2,7 @@
 test = perfrunner.tests.secondary.SecondaryIndexingScanLatencyRebalanceTest
 title = Secondary index scan latency(ms) with rebalance, 1 bucket x 20M x 1KB, 100K ops/sec, single index, PLASMA
 component = secondary
-category = moi_lat
+category = plasma_lat
 
 [stats]
 monitored_processes = projector

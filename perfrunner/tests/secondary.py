@@ -116,7 +116,8 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
     """
 
     def _report_kpi(self, time_elapsed, index_type, unit="min"):
-        storage = self.storage == 'memdb' and 'moi' or 'fdb'
+        storage = self.storage if self.storage != 'memdb' else 'moi'
+
         self.reporter.post_to_sf(
             *self.metric_helper.get_indexing_meta(value=time_elapsed,
                                                   index_type=index_type,

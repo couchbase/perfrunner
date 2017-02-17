@@ -35,10 +35,15 @@ nosetests.xml
 .pydevproject
 
 # PyCharm
-*.idea
+*.idea/
 
-env
+env/
 
 vendor/github.com
+
+cbindexperf
+!cbindexperf/
 dcptest
+!dcptest/
 kvgen
+!kvgen/

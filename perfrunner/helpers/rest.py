@@ -8,6 +8,7 @@ from logger import logger
 from requests.exceptions import ConnectionError
 
 import perfrunner.helpers.misc as misc
+from perfrunner.settings import BucketSettings
 
 MAX_RETRY = 20
 RETRY_DELAY = 10
@@ -234,10 +235,12 @@ class RestHelper(object):
             'evictionPolicy': eviction_policy,
             'flushEnabled': 1,
             'replicaNumber': replica_number,
-            'replicaIndex': replica_index,
             'authType': 'sasl',
             'saslPassword': password,
         }
+
+        if bucket_type == BucketSettings.BUCKET_TYPE:
+            data['replicaIndex'] = replica_index
 
         if conflict_resolution_type:
             data['conflictResolutionType'] = conflict_resolution_type

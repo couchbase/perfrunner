@@ -579,6 +579,35 @@ class PillowFightTest(PerfTest):
         self.report_kpi()
 
 
+class PillowFightTLSTest(PillowFightTest):
+
+    ROOT_CERTIFICATE = 'root.pem'
+
+    def download_certificate(self):
+        cert = self.rest.get_certificate(self.master_node)
+        with open(self.ROOT_CERTIFICATE, 'w') as fh:
+            fh.write(cert)
+
+    @with_stats
+    def access(self, *args):
+        self.download_certificate()
+
+        settings = self.test_config.access_settings
+
+        for target in self.target_iterator:
+            host, _ = target.node.split(':')
+
+            run_cbc_pillowfight(host=host,
+                                bucket=target.bucket,
+                                password=self.test_config.bucket.password,
+                                num_items=settings.items,
+                                num_threads=settings.workers,
+                                num_cycles=settings.iterations,
+                                size=settings.size,
+                                writes=settings.updates,
+                                certificate=self.ROOT_CERTIFICATE)
+
+
 class CompactionTest(KVTest):
 
     @with_stats

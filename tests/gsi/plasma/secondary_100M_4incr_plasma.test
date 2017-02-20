@@ -1,0 +1,44 @@
+[test_case]
+test = perfrunner.tests.secondary.MultipalIncrementalSecondaryIndexTest
+title = 1 bucket x 100M x 1KB, 100K KV ops/sec, single 2i index, running incremental load 4 times, PLASMA
+component = secondary
+
+[stats]
+monitored_processes = projector
+
+[cluster]
+mem_quota = 30000
+index_mem_quota = 400000
+initial_nodes = 9
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[bucket]
+replica_number=0
+replica_index=0
+
+[bucket_extras]
+max_num_auxio = 16
+
+[load]
+items = 100000000
+size = 1024
+workers = 100
+
+[secondary]
+indexes = myindex:alt_email
+run_recovery_test = 1
+incremental_load_iterations = 4
+indexer.settings.storage_mode = plasma
+indexer.settings.max_cpu_percent = 4800
+
+[access]
+updates = 100
+ops = 100000000
+items = 100000000
+existing_items = 100000000
+throughput = 100000
+workers = 80

@@ -681,6 +681,7 @@ class GSISettings(object):
     MAX_NUM_CONNECTIONS = 0
     RUN_RECOVERY_TEST = 0
     BLOCK_MEMORY = 0
+    INCREMENTAL_LOAD_ITERATIONS = 0
 
     def __init__(self, options):
         self.indexes = {}
@@ -703,6 +704,8 @@ class GSISettings(object):
                                                    self.MAX_NUM_CONNECTIONS))
         self.run_recovery_test = int(options.get('run_recovery_test', self.RUN_RECOVERY_TEST))
         self.block_memory = int(options.get('block_memory', self.BLOCK_MEMORY))
+        self.incremental_load_iterations = int(options.get('incremental_load_iterations',
+                                                           self.INCREMENTAL_LOAD_ITERATIONS))
 
         self.settings = {}
         for option in options:

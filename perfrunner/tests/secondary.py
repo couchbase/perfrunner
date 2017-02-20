@@ -34,6 +34,7 @@ class SecondaryIndexTest(PerfTest):
         self.max_num_connections = self.test_config.gsi_settings.max_num_connections
         self.run_recovery_test = self.test_config.gsi_settings.run_recovery_test
         self.block_memory = self.test_config.gsi_settings.block_memory
+        self.incremental_load_iterations = self.test_config.gsi_settings.incremental_load_iterations
 
         self.storage = self.test_config.gsi_settings.storage
         self.indexes = self.test_config.gsi_settings.indexes
@@ -106,8 +107,9 @@ class SecondaryIndexTest(PerfTest):
         else:
             logger.info('Scan workload applied')
 
-    def print_index_disk_usage(self):
+    def print_index_disk_usage(self, text=""):
         (data, index) = self.cluster_spec.paths
+        logger.info("{}".format(text))
         logger.info("Disk usage:\n{}".format(self.remote.get_disk_usage(index)))
         logger.info("Index storage stats:\n{}".format(
             self.rest.get_index_storage_stats(self.index_nodes[0].split(':')[0])))
@@ -166,6 +168,36 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
         time_elapsed = (to_ts - from_ts) / 1000.0
         time_elapsed = self.reporter.finish('Incremental secondary index', time_elapsed)
         self.print_index_disk_usage()
+        self.report_kpi(time_elapsed, 'Incremental')
+
+        self.run_recovery_scenario()
+        self.check_memory_blocker()
+
+
+class MultipalIncrementalSecondaryIndexTest(InitialandIncrementalSecondaryIndexTest):
+
+    @with_stats
+    def build_incrindex_multiple_times(self, num_times):
+        access_settings = self.test_config.access_settings
+        load_settings = self.test_config.load_settings
+
+        for i in range(1, num_times + 1):
+            self.worker_manager.run_workload(access_settings, self.target_iterator)
+            self.worker_manager.wait_for_workers()
+            numitems = load_settings.items + access_settings.items
+            self.monitor.wait_for_secindex_incr_build(self.index_nodes, self.bucket,
+                                                      self.indexes.keys(), numitems)
+            self.print_index_disk_usage(text="After running incremental load for {} iteration/s =>\n".format(i))
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.compact_bucket()
+        self._build_secondaryindex()
+
+        from_ts, to_ts = self.build_incrindex_multiple_times(self.incremental_load_iterations)
+        time_elapsed = (to_ts - from_ts) / 1000.0
+        time_elapsed = self.reporter.finish('Incremental secondary index', time_elapsed)
         self.report_kpi(time_elapsed, 'Incremental')
 
         self.run_recovery_scenario()

@@ -47,6 +47,9 @@ class SecondaryIndexTest(PerfTest):
         self.bucket = self.test_config.buckets[0]
         self._block_memory()
 
+        if self.storage == "plasma":
+            self.COLLECTORS["secondary_storage_stats"] = True
+
     def __del__(self):
         self.remote.kill_process_on_index_node("memblock")
 

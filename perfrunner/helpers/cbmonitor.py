@@ -28,6 +28,7 @@ from cbagent.collectors import (
     SecondaryDebugStatsIndex,
     SecondaryLatencyStats,
     SecondaryStats,
+    SecondaryStorageStats,
     SpringLatency,
     SpringSubdocLatency,
     TypePerf,
@@ -132,6 +133,7 @@ class CbAgent(object):
                        secondary_index_latency=False,
                        secondary_latency=False,
                        secondary_stats=False,
+                       secondary_storage_stats=False,
                        subdoc_latency=False,
                        xdcr_lag=False,
                        xdcr_stats=False):
@@ -183,6 +185,8 @@ class CbAgent(object):
             self.add_collector(SecondaryLatencyStats)
         if secondary_stats:
             self.add_collector(SecondaryStats)
+        if secondary_storage_stats:
+            self.add_collector(SecondaryStorageStats)
 
         if xdcr_lag:
             self.add_xdcr_lag(test)

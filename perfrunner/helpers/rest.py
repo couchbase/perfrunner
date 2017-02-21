@@ -547,5 +547,16 @@ class RestHelper(object):
         logger.info('Setting master password at {}'.format(host_port))
 
         api = 'http://{}/node/controller/changeMasterPassword'.format(host_port)
-        data = {'newPassword': password}
+        data = {
+            'newPassword': password,
+        }
+        self.post(url=api, data=data)
+
+    def enable_audit(self, host_port):
+        logger.info('Enabling audit')
+
+        api = 'http://{}/settings/audit'.format(host_port)
+        data = {
+            'auditdEnabled': 'true',
+        }
         self.post(url=api, data=data)

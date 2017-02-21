@@ -60,6 +60,7 @@ def main():
     cm.rebalance()
     cm.enable_auto_failover()
     cm.configure_auto_compaction()
+    cm.enable_audit()
 
     if cm.test_config.cluster.num_buckets:
         cm.create_buckets()

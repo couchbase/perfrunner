@@ -22,12 +22,18 @@ class ClusterManager(object):
         self.servers = cluster_spec.yield_servers
         self.masters = cluster_spec.yield_masters
 
+        self.master_node = self.masters().next()
+
         self.initial_nodes = test_config.cluster.initial_nodes
         self.mem_quota = test_config.cluster.mem_quota
         self.index_mem_quota = test_config.cluster.index_mem_quota
         self.fts_index_mem_quota = test_config.cluster.fts_index_mem_quota
         self.group_number = test_config.cluster.group_number or 1
         self.roles = cluster_spec.roles
+
+    def is_compatible(self, min_release):
+        version = self.rest.get_version(self.master_node)
+        return version >= min_release
 
     def set_data_path(self):
         if self.cluster_spec.paths:
@@ -52,9 +58,7 @@ class ClusterManager(object):
             self.rest.set_index_mem_quota(server, self.index_mem_quota)
 
     def set_fts_index_mem_quota(self):
-        master_node = self.masters().next()
-        version = self.rest.get_version(master_node)
-        if version < '4.5.0':  # FTS was introduced in 4.5.0
+        if not self.is_compatible(min_release='4.5.0'):
             return
 
         for server in self.servers():
@@ -77,9 +81,7 @@ class ClusterManager(object):
                 logger.info("Index settings: {}".format(curr_settings))
 
     def set_services(self):
-        master_node = self.masters().next()
-        version = self.rest.get_version(master_node)
-        if version < '4.0.0':  # Services were introduced in 4.0.0
+        if not self.is_compatible(min_release='4.0.0'):
             return
 
         for (_, servers), initial_nodes in zip(self.clusters(),
@@ -210,16 +212,21 @@ class ClusterManager(object):
             self.monitor.monitor_node_health(master)
 
     def enable_secrets(self):
-        # Secrets management was introduced in 4.6.0
-        master_node = self.masters().next()
-        version = self.rest.get_version(master_node)
-        if version < '4.6.0' or self.remote.os == 'Cygwin' or \
-                self.rest.is_community(master_node):
+        if not self.is_compatible(min_release='4.6.0') or \
+                self.remote.os == 'Cygwin' or \
+                self.rest.is_community(self.master_node):
             return
 
         for server in self.servers():
             self.rest.set_master_password(server)
         self.remote.set_master_password()
+
+    def enable_audit(self):
+        if not self.is_compatible(min_release='4.0.0'):
+            return
+
+        for master in self.cluster_spec.yield_masters():
+            self.rest.enable_audit(master)
 
     def throttle_cpu(self):
         if self.remote.os == 'Cygwin':

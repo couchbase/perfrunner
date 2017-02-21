@@ -566,6 +566,8 @@ class RestHelper(object):
             'data_dcp_reader[{0}]',
             'data_monitoring[{0}]',
             'data_reader_writer[{0}]',
+            'fts_admin[{0}]',
+            'fts_searcher[{0}]',
             'query_delete[{0}]',
             'query_insert[{0}]',
             'query_select[{0}]',

@@ -851,43 +851,27 @@ class GSIMultiIndexDocument(Document):
         }
 
 
-class SmallPlasmaDocument(Document):
+class PlasmaDocument(Document):
 
     @staticmethod
     def build_item(alphabet, size=64):
-        num_slices = int(math.ceil(size / 64.0))  # 64 == len(alphabet)
+        num_slices = int(math.ceil(size / 64.0))  # 64 is len(alphabet)
         body = num_slices * alphabet
         num = random.randint(1, size)
         return body[num:size] + body[0:num]
 
-    def next(self, key):
-        alphabet = self._build_alphabet(key)
 
-        return {
-            'city': self.build_item(alphabet=alphabet)
-        }
-
-
-class MultiItemPlasmaDocument(SmallPlasmaDocument):
-
-    @staticmethod
-    def build_coins(alphabet):
-        num = random.randint(3, 11)
-        return max(0.1, int(alphabet[0:num], 16) / 100.0)
+class SmallPlasmaDocument(PlasmaDocument):
 
     def next(self, key):
         alphabet = self._build_alphabet(key)
 
         return {
-            'city': self.build_item(alphabet=alphabet),
-            'name': self.build_item(alphabet=alphabet),
-            'email': self.build_item(alphabet=alphabet),
-            'alt_email': self.build_item(alphabet=alphabet),
-            'coins': self.build_coins(alphabet)
+            'alt_email': self._build_alt_email(alphabet)
         }
 
 
-class LargeItemPlasmaDocument(SmallPlasmaDocument):
+class LargeItemPlasmaDocument(PlasmaDocument):
 
     def __init__(self, avg_size, item_size):
         super(LargeItemPlasmaDocument, self).__init__(avg_size)
@@ -910,7 +894,7 @@ class LargeItemPlasmaDocument(SmallPlasmaDocument):
         }
 
 
-class VaryingItemSizePlasmaDocument(SmallPlasmaDocument):
+class VaryingItemSizePlasmaDocument(PlasmaDocument):
 
     def __init__(self, avg_size, size_variation_min, size_variation_max):
         super(VaryingItemSizePlasmaDocument, self).__init__(avg_size)

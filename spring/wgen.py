@@ -28,7 +28,6 @@ from spring.docgen import (
     KeyForRemoval,
     LargeDocument,
     LargeItemPlasmaDocument,
-    MultiItemPlasmaDocument,
     NestedDocument,
     NewKey,
     ProfileDocument,
@@ -135,8 +134,6 @@ class Worker(object):
             self.docs = GSIMultiIndexDocument(self.ws.size)
         elif self.ws.doc_gen == 'small_plasma':
             self.docs = SmallPlasmaDocument(self.ws.size)
-        elif self.ws.doc_gen == 'multiitem_plasma':
-            self.docs = MultiItemPlasmaDocument(self.ws.size)
         elif self.ws.doc_gen == 'large_item_plasma':
             self.docs = LargeItemPlasmaDocument(self.ws.size,
                                                 self.ws.item_size)

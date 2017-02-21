@@ -29,7 +29,7 @@ workers = 100
 doc_gen = small_plasma
 
 [secondary]
-indexes = myindex:city\
+indexes = myindex:alt_email
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
 

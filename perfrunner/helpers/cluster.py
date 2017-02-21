@@ -228,6 +228,19 @@ class ClusterManager(object):
         for master in self.cluster_spec.yield_masters():
             self.rest.enable_audit(master)
 
+    def add_rbac_users(self):
+        if not self.is_compatible(min_release='5.0.0-2050') or \
+                self.rest.is_community(self.master_node):
+            return
+
+        for master in self.masters():
+            for bucket_name in self.test_config.buckets:
+                self.rest.add_rbac_user(
+                    host_port=master,
+                    bucket_name=bucket_name,
+                    password=self.test_config.bucket.password,
+                )
+
     def throttle_cpu(self):
         if self.remote.os == 'Cygwin':
             return

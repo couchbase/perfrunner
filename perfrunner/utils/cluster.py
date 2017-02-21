@@ -64,6 +64,7 @@ def main():
 
     if cm.test_config.cluster.num_buckets:
         cm.create_buckets()
+        cm.add_rbac_users()
 
     if cm.remote:
         cm.restart_with_alternative_bucket_options()

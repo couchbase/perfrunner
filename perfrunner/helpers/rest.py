@@ -560,3 +560,24 @@ class RestHelper(object):
             'auditdEnabled': 'true',
         }
         self.post(url=api, data=data)
+
+    def add_rbac_user(self, host_port, bucket_name, password):
+        roles = ','.join((
+            'data_monitoring[{0}]',
+            'data_reader_writer[{0}]',
+            'query_delete[{0}]',
+            'query_insert[{0}]',
+            'query_select[{0}]',
+            'query_update[{0}]',
+        )).format(bucket_name)
+
+        logger.info('Adding an RBAC user: {}, roles: {}'.format(bucket_name,
+                                                                roles))
+
+        api = 'http://{}/settings/rbac/users/builtin/{}'.format(host_port,
+                                                                bucket_name)
+        data = {
+            'password': password,
+            'roles': roles,
+        }
+        self.put(url=api, data=data)

@@ -7,22 +7,7 @@ from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import PerfTest
 
 
-class DCPTest(PerfTest):
-    """
-    The test is for DCP performance.
-    """
-
-    COLLECTORS = {}
-
-    def __init__(self, *args):
-        super(DCPTest, self).__init__(*args)
-        self.num_connections = self.test_config.dcp_settings.num_connections
-        self.bucket = self.test_config.dcp_settings.bucket
-        self.username, self.password = self.cluster_spec.rest_credentials
-        self.items = self.test_config.load_settings.items
-
-
-class DCPThroughputTest(DCPTest):
+class DCPThroughputTest(PerfTest):
 
     """
     The test measures time to get number of dcp messages and calculates throughput.
@@ -35,7 +20,18 @@ class DCPThroughputTest(DCPTest):
 
     @with_stats
     def access(self, *args):
-        local.run_dcptest_script(self)
+        username, password = self.cluster_spec.rest_credentials
+
+        for target in self.target_iterator:
+            local.run_dcptest_script(
+                host_port=target.node,
+                username=username,
+                password=password,
+                bucket=target.bucket,
+                num_items=self.test_config.load_settings.items,
+                num_connections=self.test_config.dcp_settings.num_connections,
+                output_file=self.OUTPUT_FILE,
+            )
 
     def get_throughput(self):
         # get throughput from OUTPUT_FILE for posting to showfast

@@ -243,18 +243,28 @@ def run_cbc_pillowfight(host, bucket, password,
     local(cmd, capture=False)
 
 
-def run_dcptest_script(test):
-    command = "./dcptest -auth {user}:{password} -kvaddrs {master_node_ip}:11210 -buckets {bucket} " \
-              "-nummessages {items} -numconnections {num_connections} -outputfile {outputfile} {master_node}" \
-              " > dcptest.log 2>&1". \
-        format(user=test.username, password=test.password, master_node_ip=test.master_node.split(":")[0],
-               bucket=test.bucket, items=test.items, num_connections=test.num_connections,
-               outputfile=test.OUTPUT_FILE, master_node=test.master_node)
-    logger.info("DCP test command: {}".format(command))
-    cbauth_path = "http://{user}:{password}@{node}".format(user=test.username, password=test.password,
-                                                           node=test.master_node)
+def run_dcptest_script(host_port, username, password, bucket,
+                       num_items, num_connections, output_file):
+    cmd = './dcptest ' \
+        '-kvaddrs {kvaddrs} ' \
+        '-buckets {bucket} ' \
+        '-nummessages {num_items} ' \
+        '-numconnections {num_connections} ' \
+        '-outputfile {outputfile} ' \
+        '{host_port} > dcptest.log 2>&1'
+
+    cmd = cmd.format(kvaddrs=host_port.replace('8091', '11210'), bucket=bucket,
+                     num_items=num_items, num_connections=num_connections,
+                     outputfile=output_file, host_port=host_port)
+
+    cbauth_path = 'http://{user}:{password}@{host}'.format(host=host_port,
+                                                           user=username,
+                                                           password=password)
+
+    logger.info('Running: {}'.format(cmd))
+
     with shell_env(CBAUTH_REVRPC_URL=cbauth_path):
-        local(command, capture=False)
+        local(cmd, capture=False)
 
 
 def run_kvgen(hostname, num_docs, prefix):

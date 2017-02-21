@@ -19,9 +19,6 @@ size = 1024
 workers = 80
 doc_gen = array_indexing
 
-[secondary]
-indexer.settings.compaction.compaction_mode = full
-
 [n1ql]
 indexes =
     by_achievements2::CREATE INDEX {name} ON `{bucket}`(DISTINCT ARRAY i FOR i IN achievements2 END);

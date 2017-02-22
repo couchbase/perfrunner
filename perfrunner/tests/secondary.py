@@ -22,6 +22,8 @@ class SecondaryIndexTest(PerfTest):
     COLLECTORS = {'secondary_stats': True, 'secondary_debugstats': True,
                   'secondary_debugstats_bucket': True, 'secondary_debugstats_index': True}
 
+    SHOWFAST_EXTENSIONS = {'memdb': 'moi', 'forestdb': 'fdb', 'plasma': 'plasma'}
+
     def __init__(self, *args):
         super(SecondaryIndexTest, self).__init__(*args)
 
@@ -119,7 +121,7 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
     """
 
     def _report_kpi(self, time_elapsed, index_type, unit="min"):
-        storage = self.storage if self.storage != 'memdb' else 'moi'
+        storage = self.SHOWFAST_EXTENSIONS[self.storage]
 
         self.reporter.post_to_sf(
             *self.metric_helper.get_indexing_meta(value=time_elapsed,

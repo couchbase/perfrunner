@@ -40,21 +40,21 @@ class Collector(object):
         self.metrics = set()
         self.updater = None
 
-    def get_http(self, path, server=None, port=8091):
+    def get_http(self, path, server=None, port=8091, json=True):
         server = server or self.master_node
         url = "http://{}:{}{}".format(server, port, path)
         try:
             r = self.session.get(url=url, auth=self.auth)
             if r.status_code in (200, 201, 202):
-                return r.json()
+                return json and r.json() or r.text
             else:
                 logger.warn("Bad response: {}".format(url))
                 return self.refresh_nodes_and_retry(path, server, port)
         except requests.ConnectionError:
             logger.warn("Connection error: {}".format(url))
-            return self.refresh_nodes_and_retry(path, server, port)
+            return self.refresh_nodes_and_retry(path, server, port, json)
 
-    def refresh_nodes_and_retry(self, path, server=None, port=8091):
+    def refresh_nodes_and_retry(self, path, server=None, port=8091, json=True):
         time.sleep(self.interval)
 
         for node in self.nodes:
@@ -68,7 +68,7 @@ class Collector(object):
         if server not in self.nodes:
             raise RuntimeError("Bad node {}".format(server or ""))
 
-        return self.get_http(path, server, port)
+        return self.get_http(path, server, port, json)
 
     def _check_node(self, node):
         try:

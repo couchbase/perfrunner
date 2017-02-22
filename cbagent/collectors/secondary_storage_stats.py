@@ -22,7 +22,7 @@ class SecondaryStorageStats(Collector):
         server = self.index_node
         port = '9102'
         uri = "/stats/storage"
-        samples = self.get_http(path=uri, server=server, port=port)
+        samples = self.get_http(path=uri, server=server, port=port, json=False)
         index_stats = dict()
         stats = dict()
         data = samples.split("\n")
@@ -52,13 +52,14 @@ class SecondaryStorageStats(Collector):
 
     def sample(self):
         index_stats = self._get_secondary_storage_stats()
-        for index, bucket in self.get_all_indexes():
-            stats = index_stats[index]
-            if stats:
-                index1 = "{}.{}".format(bucket, index)
-                self.update_metric_metadata(stats.keys(), index=index1)
-                self.store.append(stats, cluster=self.cluster,
-                                  index=index1, collector=self.COLLECTOR)
+        if index_stats:
+            for index, bucket in self.get_all_indexes():
+                stats = index_stats[index]
+                if stats:
+                    index1 = "{}.{}".format(bucket, index)
+                    self.update_metric_metadata(stats.keys(), index=index1)
+                    self.store.append(stats, cluster=self.cluster,
+                                      index=index1, collector=self.COLLECTOR)
 
     def update_metadata(self):
         self.mc.add_cluster()

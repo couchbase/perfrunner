@@ -563,6 +563,7 @@ class RestHelper(object):
 
     def add_rbac_user(self, host_port, bucket_name, password):
         roles = ','.join((
+            'bucket_admin[{0}]',
             'data_dcp_reader[{0}]',
             'data_monitoring[{0}]',
             'data_reader_writer[{0}]',

@@ -8,8 +8,8 @@ monitored_processes = projector
 
 [cluster]
 mem_quota = 50000
-index_mem_quota = 400000
-initial_nodes = 9
+index_mem_quota = 440000
+initial_nodes = 11
 num_buckets = 1
 
 [compaction]
@@ -38,5 +38,5 @@ updates = 100
 ops = 5000000000
 items = 5000000000
 existing_items = 5000000000
-workers = 80
+workers = 100
 throughput = 100000

@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
-title = 1 bucket x 1B x 1KB, single 2i index, 100K ops/sec, no mutations during initial build only, PLASMA
+title = 1 bucket x 1B, single 2i index, 100K ops/sec, no mutations during initial build only, PLASMA
 component = secondary
 
 [stats]
@@ -38,5 +38,5 @@ updates = 100
 ops = 1000000000
 items = 1000000000
 existing_items = 1000000000
-workers = 80
+workers = 100
 throughput = 100000

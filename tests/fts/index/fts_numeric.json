@@ -28,7 +28,7 @@
         "enabled": true
       },
       "default_type": "_default",
-      "index_dynamic": true,
+      "index_dynamic": false,
       "store_dynamic": false,
       "type_field": "type"
     },

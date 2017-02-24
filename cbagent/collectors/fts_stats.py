@@ -1,4 +1,5 @@
 import time
+from datetime import datetime
 from math import pow
 
 from cbagent.collectors import Collector
@@ -15,6 +16,13 @@ class FtsCollector(Collector):
         self.fts_settings = test_config.fts_settings
         self.host = settings.master_node
         self.fts_client = self.init_client(test_config)
+
+        self.total_requests_since_last_event = 0
+        self.requests_in_last_timeframe = 0
+        self.events_timeframe = 2
+        self.event_start_time = datetime.utcnow()
+        self.events_to_skip = 3
+        self.current_avg_throughput = 0
 
     def init_client(self, test_config):
         return FtsGen(self.host, test_config.fts_settings, self.auth)
@@ -142,7 +150,7 @@ class FtsQueryStats(FtsLatency):
     METRICS = ("cbft_query_slow", "cbft_query_timeout",
                'cbft_query_error', "cbft_total_term_searchers",
                "cbft_query_total", "cbft_total_bytes_query_results",
-               "cbft_writer_execute_batch_count")
+               "cbft_writer_execute_batch_count", "cbft_query_throughput")
 
     def __init__(self, settings, test_config):
         super(FtsQueryStats, self).__init__(settings, test_config)
@@ -184,6 +192,20 @@ class FtsQueryStats(FtsLatency):
 
     def cbft_query_error(self):
         return self.cbft_stats_get(self.total_queries_error)
+
+    def cbft_query_throughput(self):
+        time_now = datetime.utcnow()
+        total_requests = int(self.cbft_stats_get(self.total_queries))
+        delta = time_now - self.event_start_time
+        if delta.seconds >= self.events_timeframe:
+            self.requests_in_last_timeframe = total_requests - self.total_requests_since_last_event
+            self.total_requests_since_last_event = total_requests
+            self.event_start_time = datetime.utcnow()
+            if (not self.events_to_skip) and total_requests:
+                self.current_avg_throughput = self.requests_in_last_timeframe / self.events_timeframe
+            else:
+                self.events_to_skip -= 1
+        return self.current_avg_throughput
 
 
 class ElasticStats(FtsCollector):

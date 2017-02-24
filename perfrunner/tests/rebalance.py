@@ -92,10 +92,13 @@ class RebalanceTest(PerfTest):
         self.reporter.post_to_sf(rebalance_time)
 
     @with_delayed_posting
+    def rebalance(self):
+        self._rebalance()
+
     @with_stats
     @with_delay
     @with_reporter
-    def rebalance(self):
+    def _rebalance(self, services=None):
         clusters = self.cluster_spec.yield_clusters()
         initial_nodes = self.test_config.cluster.initial_nodes
         nodes_after = self.rebalance_settings.nodes_after
@@ -134,7 +137,7 @@ class RebalanceTest(PerfTest):
             for i, host_port in new_nodes:
                 group = server_group(servers[:nodes_after], group_number, i)
                 uri = groups.get(group)
-                self.rest.add_node(master, host_port, uri=uri)
+                self.rest.add_node(master, host_port, services=services, uri=uri)
 
             self.rest.rebalance(master, known_nodes, ejected_nodes)
 
@@ -157,6 +160,19 @@ class RebalanceKVTest(RebalanceTest):
 
         self.workload = self.test_config.access_settings
         self.access_bg()
+        self.rebalance()
+
+
+class RebalanceBaselineForFTS(RebalanceTest):
+
+    def load(self, *args):
+        logger.info('load/restore data to bucket')
+        self.remote.cbrestorefts(self.test_config.fts_settings.storage, self.test_config.fts_settings.repo)
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.workload = self.test_config.access_settings
         self.rebalance()
 
 

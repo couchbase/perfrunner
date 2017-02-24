@@ -133,6 +133,12 @@ class MetricHelper(object):
         index_size_mb = int(index_size_raw / (1024 ** 2))
         return index_size_mb, metric, metric_info
 
+    def calc_fts_rebalance_time(self, reb_time, order_by, name='FTS'):
+        metric = "{}_reb".format(self.test_config.name)
+        title = 'Rebalance time (min), {}, {}'.format(self.title, name)
+        metric_info = self._get_metric_info(title, order_by=order_by)
+        return reb_time, metric, metric_info
+
     def calc_max_ops(self):
         values = []
         for bucket in self.test_config.buckets:

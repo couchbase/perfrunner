@@ -1,5 +1,6 @@
 import json
 import time
+
 import requests
 from logger import logger
 from requests.auth import HTTPBasicAuth
@@ -7,6 +8,7 @@ from requests.auth import HTTPBasicAuth
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import get_json_from_file
 from perfrunner.tests import PerfTest
+from perfrunner.tests.rebalance import RebalanceTest
 
 
 class FTStest(PerfTest):
@@ -188,3 +190,50 @@ class FTSThroughputTest(FTStest):
             self.reporter.post_to_sf(
                 *self.metric_helper.calc_avg_fts_queries(order_by=self.order_by)
             )
+
+
+class FTSRebalanceTest(FTStest, RebalanceTest):
+
+    COLLECTORS = {'fts_query_stats': True,
+                  "fts_stats": True}
+
+    def __init__(self, *args, **kwargs):
+        super(FTSRebalanceTest, self).__init__(*args, **kwargs)
+        self.rebalance_settings = self.test_config.rebalance_settings
+        self.rebalance_time = 0
+
+    def run(self):
+        self.workload = self.test_config.access_settings
+        self.cleanup_and_restore()
+        self.create_index()
+        self.wait_for_index()
+        self.check_rec_presist()
+        self.access_bg_test()
+        self.report_rebalance(self.rebalance_time)
+
+    @with_stats
+    def access_bg_test(self):
+        access_settings = self.test_config.access_settings
+        access_settings.fts_config = self.test_config.fts_settings
+        self.access_bg(access_settings)
+        self.rebalance_fts()
+
+    def rebalance_fts(self):
+        self._rebalance(services="kv,fts")
+
+    def report_rebalance(self, rebalance_time):
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_fts_rebalance_time(reb_time=rebalance_time,
+                                                        order_by=self.order_by)
+        )
+
+
+class FTSRebalanceTestThroughput(FTSRebalanceTest):
+    COLLECTORS = {'fts_query_stats': True,
+                  "fts_stats": True}
+
+
+class FTSRebalanceTestLatency(FTSRebalanceTest):
+    COLLECTORS = {'fts_latency': True,
+                  "fts_query_stats": True,
+                  "fts_stats": True}

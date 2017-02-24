@@ -37,8 +37,6 @@ class CurrentHostMutex:
 
 class RemoteLinux(Remote):
 
-    ARCH = {'i386': 'x86', 'x86_64': 'x86_64'}
-
     CB_DIR = '/opt/couchbase'
 
     PROCESSES = ('beam.smp', 'memcached', 'epmd', 'cbq-engine', 'indexer',
@@ -57,12 +55,6 @@ class RemoteLinux(Remote):
             return 'deb'
         else:
             return 'rpm'
-
-    @single_host
-    def detect_arch(self):
-        logger.info('Detecting platform architecture')
-        arch = run('uname -i', pty=True)
-        return self.ARCH[arch]
 
     @single_host
     def detect_os_release(self):

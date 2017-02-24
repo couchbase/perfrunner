@@ -18,7 +18,7 @@ LOCATIONS = (
 
 Build = namedtuple(
     'Build',
-    ['arch', 'pkg', 'edition', 'version', 'release', 'build', 'url']
+    ['pkg', 'edition', 'version', 'release', 'build', 'url']
 )
 
 
@@ -29,7 +29,6 @@ class CouchbaseInstaller(object):
         self.remote = RemoteHelper(cluster_spec, None, options.verbose)
         self.cluster_spec = cluster_spec
 
-        arch = self.remote.detect_arch()
         pkg = self.remote.detect_pkg()
 
         release = None
@@ -37,7 +36,7 @@ class CouchbaseInstaller(object):
         if options.version:
             release, build = options.version.split('-')
 
-        self.build = Build(arch, pkg, options.cluster_edition, options.version,
+        self.build = Build(pkg, options.cluster_edition, options.version,
                            release, build, options.url)
         logger.info('Target build info: {}'.format(self.build))
 
@@ -45,19 +44,18 @@ class CouchbaseInstaller(object):
         if self.build.pkg == 'rpm':
             os_release = self.remote.detect_os_release()
             patterns = (
-                'couchbase-server-{{edition}}-{{version}}-centos{}.{{arch}}.{{pkg}}'.format(os_release),
-                'couchbase-server-{edition}_centos6_{arch}_{version}-rel.{pkg}',
+                'couchbase-server-{{edition}}-{{version}}-centos{}.x86_64.{{pkg}}'.format(os_release),
+                'couchbase-server-{edition}_centos6_x86_64_{version}-rel.{pkg}',
             )
         elif self.build.pkg == 'deb':
             patterns = (
-                'couchbase-server-{edition}_{arch}_{version}-rel.{pkg}',
-                'couchbase-server-{edition}_{version}-ubuntu12.04_{arch}.{pkg}',
+                'couchbase-server-{edition}_{version}-ubuntu12.04_amd64.{pkg}',
             )
         elif self.build.pkg == 'exe':
             patterns = (
-                'couchbase-server-{edition}_{arch}_{version}-rel.setup.{pkg}',
-                'couchbase-server-{edition}_{version}-windows_{arch}.{pkg}',
-                'couchbase_server-{edition}-windows-{arch}-{version}.{pkg}',
+                'couchbase-server-{edition}_amd64_{version}-rel.setup.{pkg}',
+                'couchbase-server-{edition}_{version}-windows_amd64.{pkg}',
+                'couchbase_server-{edition}-windows-amd64-{version}.{pkg}',
             )
         else:
             patterns = ()  # Sentinel

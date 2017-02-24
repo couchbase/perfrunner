@@ -32,9 +32,6 @@ class RemoteWindows(Remote):
     def detect_pkg(self):
         return 'exe'
 
-    def detect_arch(self):
-        return 'amd64'
-
     def reset_swap(self):
         pass
 

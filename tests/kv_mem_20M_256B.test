@@ -1,0 +1,22 @@
+[test_case]
+test = perfrunner.tests.kv.MemoryOverheadTest
+title = Memory overhead (%%), 1 bucket x 20M x 256B
+component = kv
+category = memory
+use_workers = 0
+
+[stats]
+interval = 1
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+
+[load]
+items = 20000000
+size = 256
+workers = 10
+
+[access]
+time = 300

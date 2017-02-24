@@ -122,10 +122,12 @@ class CbAgent(object):
                        fts_latency=False,
                        fts_query_stats=False,
                        fts_stats=False,
+                       iostat=True,
                        latency=False,
                        index_latency=False,
                        n1ql_latency=False,
                        n1ql_stats=False,
+                       net=True,
                        query_latency=False,
                        secondary_debugstats=False,
                        secondary_debugstats_bucket=False,
@@ -145,8 +147,10 @@ class CbAgent(object):
 
         if test.remote is None or test.remote.os != 'Cygwin':
             self.add_collector(PS)
-            self.add_collector(Net)
-            self.add_iostat(test)
+            if net:
+                self.add_collector(Net)
+            if iostat:
+                self.add_iostat(test)
         elif test.remote.os == 'Cygwin':
             self.add_collector(TypePerf)
 

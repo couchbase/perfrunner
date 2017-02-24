@@ -630,3 +630,19 @@ class CompactionTest(KVTest):
         time_elapsed = self.reporter.finish('Full compaction', time_elapsed)
 
         self.report_kpi(time_elapsed)
+
+
+class MemoryOverheadTest(PillowFightTest):
+
+    COLLECTORS = {'iostat': False, 'net': False}
+
+    PF_KEY_SIZE = 20
+
+    def _report_kpi(self):
+        self.reporter.post_to_sf(
+            self.metric_helper.calc_memory_overhead(key_size=self.PF_KEY_SIZE)
+        )
+
+    @with_stats
+    def access(self, *args):
+        sleep(self.test_config.access_settings.time)

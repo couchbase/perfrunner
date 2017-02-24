@@ -2,7 +2,7 @@
 test = perfrunner.tests.kv.FragmentationLargeTest
 title = Memory fragmentation (%%), 1 bucket x 20K x 250KB
 component = kv
-category = fragmentation
+category = memory
 
 [cluster]
 mem_quota = 40960

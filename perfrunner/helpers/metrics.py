@@ -395,6 +395,18 @@ class MetricHelper(object):
         avg_rss = sum(rss) / len(rss)
         return avg_rss, metric, metric_info
 
+    def calc_memory_overhead(self, key_size=20):
+        item_size = key_size + self.test_config.load_settings.size
+        user_data = self.test_config.load_settings.items * item_size
+        user_data *= self.test_config.bucket.replica_number + 1
+        user_data /= 2 ** 20
+
+        mem_used, _, _ = self.calc_avg_memcached_rss()
+        mem_used *= self.test_config.cluster.initial_nodes[0]
+
+        overhead = 100 * (mem_used / user_data - 1)
+        return int(overhead)
+
     def get_indexing_meta(self, value, index_type, storage=None, unit="min"):
         metric = '{}_{}'.format(self.test_config.name, index_type.lower())
         title = '{} index ({}), {}'.format(index_type, unit, self.title)

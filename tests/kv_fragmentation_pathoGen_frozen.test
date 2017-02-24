@@ -2,7 +2,7 @@
 test = perfrunner.tests.kv.PathoGenFrozenTest
 title = Max RSS (MB), 1 bucket x 1M, PathoGen Frozen 8B -> 8192B
 component = kv
-category = fragmentation
+category = memory
 use_workers = 0
 
 [cluster]

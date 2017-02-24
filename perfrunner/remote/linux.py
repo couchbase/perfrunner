@@ -57,12 +57,16 @@ class RemoteLinux(Remote):
             return 'rpm'
 
     @single_host
-    def detect_os_release(self):
+    def detect_centos_release(self):
         """Possible values:
             CentOS release 6.x (Final)
             CentOS Linux release 7.2.1511 (Core)
         """
         return run('cat /etc/redhat-release').split()[-2][0]
+
+    @single_host
+    def detect_ubuntu_release(self):
+        return run('lsb_release -sr').strip()
 
     def run_cbindex_command(self, command):
         command_path = '/opt/couchbase/bin/cbindex'

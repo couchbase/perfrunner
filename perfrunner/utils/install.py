@@ -42,14 +42,15 @@ class CouchbaseInstaller(object):
 
     def get_expected_filenames(self):
         if self.build.pkg == 'rpm':
-            os_release = self.remote.detect_os_release()
+            os_release = self.remote.detect_centos_release()
             patterns = (
                 'couchbase-server-{{edition}}-{{version}}-centos{}.x86_64.{{pkg}}'.format(os_release),
                 'couchbase-server-{edition}_centos6_x86_64_{version}-rel.{pkg}',
             )
         elif self.build.pkg == 'deb':
+            os_release = self.remote.detect_ubuntu_release()
             patterns = (
-                'couchbase-server-{edition}_{version}-ubuntu12.04_amd64.{pkg}',
+                'couchbase-server-{{edition}}_{{version}}-ubuntu{}_amd64.{{pkg}}'.format(os_release),
             )
         elif self.build.pkg == 'exe':
             patterns = (

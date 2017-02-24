@@ -463,9 +463,18 @@ class RemoteLinux(Remote):
         run("killall {}".format(process))
 
     @index_node
-    def get_disk_usage(self, path):
+    def get_disk_usage(self, path, human_readable=True):
         logger.info('Get disk usage')
-        return run("du -h {}".format(path), pty=True)
+        if human_readable:
+            return run("du -h {}".format(path), pty=True)
+        data = run("du -sb {}/@2i".format(path))
+        return int(data.split()[0])
+
+    @index_node
+    def get_indexer_process_memory(self):
+        logger.info('Get indexer process memory')
+        data = run("ps -eo rss,comm | grep indexer", pty=True)
+        return int(data.split()[0])
 
     @index_node
     def block_memory(self, size):

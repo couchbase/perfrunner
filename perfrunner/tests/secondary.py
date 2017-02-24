@@ -114,6 +114,8 @@ class SecondaryIndexTest(PerfTest):
         logger.info("Index storage stats:\n{}".format(
             self.rest.get_index_storage_stats(self.index_nodes[0].split(':')[0])))
 
+        return self.remote.get_disk_usage(index, human_readable=False)
+
 
 class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
     """
@@ -180,6 +182,20 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
 
 class MultipalIncrementalSecondaryIndexTest(InitialandIncrementalSecondaryIndexTest):
 
+    def __init__(self, *args):
+        super(MultipalIncrementalSecondaryIndexTest, self).__init__(*args)
+        self.memory_usage = dict()
+        self.disk_usage = dict()
+
+    def _report_kpi(self, usage_diff, memory_type, unit="GB"):
+        usage_diff = float(usage_diff) / 2 ** 30
+        usage_diff = round(usage_diff, 2)
+
+        self.reporter.post_to_sf(
+            *self.metric_helper.get_memory_meta(value=usage_diff,
+                                                memory_type=memory_type)
+        )
+
     @with_stats
     def build_incrindex_multiple_times(self, num_times):
         access_settings = self.test_config.access_settings
@@ -191,7 +207,10 @@ class MultipalIncrementalSecondaryIndexTest(InitialandIncrementalSecondaryIndexT
             numitems = load_settings.items + access_settings.items
             self.monitor.wait_for_secindex_incr_build(self.index_nodes, self.bucket,
                                                       self.indexes.keys(), numitems)
-            self.print_index_disk_usage(text="After running incremental load for {} iteration/s =>\n".format(i))
+            self.disk_usage[i] = \
+                self.print_index_disk_usage(text="After running incremental load for {} iteration/s =>\n".format(i))
+            self.memory_usage[i] = self.remote.get_indexer_process_memory()
+            time.sleep(30)
 
     def run(self):
         self.load()
@@ -199,10 +218,13 @@ class MultipalIncrementalSecondaryIndexTest(InitialandIncrementalSecondaryIndexT
         self.compact_bucket()
         self._build_secondaryindex()
 
-        from_ts, to_ts = self.build_incrindex_multiple_times(self.incremental_load_iterations)
-        time_elapsed = (to_ts - from_ts) / 1000.0
-        time_elapsed = self.reporter.finish('Incremental secondary index', time_elapsed)
-        self.report_kpi(time_elapsed, 'Incremental')
+        self.build_incrindex_multiple_times(self.incremental_load_iterations)
+
+        # report memory usage diff
+        self.report_kpi(self.memory_usage[6] - self.memory_usage[4], 'Memory usage difference')
+
+        # report disk usage diff
+        self.report_kpi(self.disk_usage[6] - self.disk_usage[4], 'Disk usage difference')
 
         self.run_recovery_scenario()
         self.check_memory_blocker()

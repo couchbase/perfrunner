@@ -424,6 +424,13 @@ class MetricHelper(object):
 
         return value, metric, metric_info
 
+    def get_memory_meta(self, value, memory_type):
+        metric = '{}_{}'.format(self.test_config.name, memory_type.lower())
+        title = '{} (GB), {}'.format(memory_type, self.title)
+        metric_info = self._get_metric_info(title)
+
+        return value, metric, metric_info
+
     def calc_bnr_throughput(self, time_elapsed, edition, tool):
         metric = '{}_{}_thr_{}'.format(self.test_config.name, tool, edition)
         title = '{} full {} throughput (Avg. MB/sec), {}'.format(

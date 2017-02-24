@@ -1,7 +1,8 @@
 [test_case]
 test = perfrunner.tests.secondary.MultipalIncrementalSecondaryIndexTest
-title = 1 bucket x 100M x 1KB, 100K KV ops/sec, single 2i index, running incremental load 4 times, PLASMA
+title = 1 bucket x 100M x 1KB, 100K KV ops/sec, single 2i index, running incremental load 6 times, PLASMA
 component = secondary
+category = incremental_moi
 
 [stats]
 monitored_processes = projector
@@ -31,7 +32,7 @@ workers = 100
 [secondary]
 indexes = myindex:alt_email
 run_recovery_test = 1
-incremental_load_iterations = 4
+incremental_load_iterations = 6
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
 

@@ -13,7 +13,7 @@ class Monitor(RestHelper):
     MAX_RETRY = 60
     REBALANCE_TIMEOUT = 3600 * 2
     TIMEOUT = 3600 * 12
-    MAX_RETRY_RECOVERY = 300
+    MAX_RETRY_RECOVERY = 1200
 
     DISK_QUEUES = (
         'ep_queue_size',

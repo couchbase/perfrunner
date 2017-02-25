@@ -222,7 +222,8 @@ class ClusterManager(object):
         self.remote.set_master_password()
 
     def enable_audit(self):
-        if not self.is_compatible(min_release='4.0.0'):
+        if not self.is_compatible(min_release='4.0.0') or \
+                self.rest.is_community(self.master_node):
             return
 
         for master in self.cluster_spec.yield_masters():

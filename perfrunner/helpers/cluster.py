@@ -68,7 +68,8 @@ class ClusterManager(object):
         settings = self.test_config.n1ql_settings.settings
         for _, servers in self.cluster_spec.yield_servers_by_role('n1ql'):
             for server in servers:
-                self.rest.set_query_settings(server, settings)
+                if settings:
+                    self.rest.set_query_settings(server, settings)
 
     def set_index_settings(self):
         settings = self.test_config.gsi_settings.settings

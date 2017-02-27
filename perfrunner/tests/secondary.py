@@ -154,7 +154,7 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
                 raise Exception('Indexer failed to recover...!!!')
             self.report_kpi(recovery_time, 'Recovery', "ms")
 
-    def run(self):
+    def load_and_build_initindex(self):
         self.load()
         self.wait_for_persistence()
         self.compact_bucket()
@@ -162,6 +162,10 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
         time_elapsed = (to_ts - from_ts) / 1000.0
         time_elapsed = self.reporter.finish('Initial secondary index', time_elapsed)
         self.print_index_disk_usage()
+        return time_elapsed
+
+    def run(self):
+        time_elapsed = self.load_and_build_initindex()
         self.report_kpi(time_elapsed, 'Initial')
 
         from_ts, to_ts = self.build_incrindex()
@@ -245,6 +249,19 @@ class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSeco
         time_elapsed = self.reporter.finish('Incremental secondary index', time_elapsed)
         self.print_index_disk_usage()
         self.report_kpi(time_elapsed, 'Incremental')
+
+
+class InitialSecondaryIndexTest(InitialandIncrementalSecondaryIndexTest):
+    """
+    The test measures time it takes to build index for the first time
+    """
+
+    def run(self):
+        time_elapsed = self.load_and_build_initindex()
+        self.report_kpi(time_elapsed, 'Initial')
+
+        self.run_recovery_scenario()
+        self.check_memory_blocker()
 
 
 class SecondaryIndexingThroughputTest(SecondaryIndexTest):

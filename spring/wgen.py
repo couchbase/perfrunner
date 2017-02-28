@@ -698,7 +698,6 @@ class FtsWorker(Worker):
                         r = self.requests.post(**args)
                         if not self.ws.fts_config.logfile:
                             continue
-
                         if r.status_code not in range(200, 203) or self.do_check_result(r):
                             with open(self.ws.fts_config.logfile, 'a') as f:
                                 f.write(str(args))
@@ -737,11 +736,13 @@ class WorkloadGen(object):
         lock = Lock()
         worker_type, total_workers = worker_factory(self.ws)
         if name == 'fts' and total_workers:
-            rest_auth = (self.ws.fts_config.username, self.ts.password)
+
             master_host = self.ts.node.split(":")[0]
             if self.ws.fts_config.elastic:
+                rest_auth = (self.ws.fts_config.username, self.ts.password)
                 self.ws.fts_query_list = ElasticGen(master_host, self.ws.fts_config, rest_auth).query_list
             else:
+                rest_auth = (self.ts.bucket, self.ts.password)
                 self.ws.fts_query_list = FtsGen(master_host, self.ws.fts_config, rest_auth).query_list
             self.ws.fts_query_list_size = len(self.ws.fts_query_list)
 

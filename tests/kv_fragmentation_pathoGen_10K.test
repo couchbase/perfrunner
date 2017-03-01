@@ -12,7 +12,6 @@ num_buckets = 1
 
 [bucket]
 replica_number = 0
-password =
 
 [load]
 items = 10000

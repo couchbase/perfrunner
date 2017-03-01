@@ -156,8 +156,8 @@ class PathoGen(object):
 
     """Main generator class, responsible for orchestrating the process."""
 
-    def __init__(self, num_items, num_workers, num_iterations, frozen_mode, host,
-                 port, bucket):
+    def __init__(self, num_items, num_workers, num_iterations, frozen_mode,
+                 host, port, bucket, password):
         self.num_items = num_items
         self.num_workers = num_workers
 
@@ -178,7 +178,9 @@ class PathoGen(object):
         for i in range(self.num_workers):
             if i == self.num_workers - 1:
                 # Last one is the Supervisor
-                t = Supervisor(number=i, host=host, port=port, bucket=bucket,
+                t = Supervisor(number=i,
+                               host=host, port=port,
+                               bucket=bucket, password=password,
                                queues=self.queues,
                                in_queue=self.queues[i],
                                out_queue=self.queues[(i + 1) % self.num_workers],
@@ -187,7 +189,9 @@ class PathoGen(object):
                                num_iterations=num_iterations,
                                max_size=max_size)
             else:
-                t = Worker(number=i, host=host, port=port, bucket=bucket,
+                t = Worker(number=i,
+                           host=host, port=port,
+                           bucket=bucket, password=password,
                            in_queue=self.queues[i],
                            out_queue=self.queues[(i + 1) % self.num_workers],
                            promotion_policy=promotion_policy)
@@ -205,7 +209,7 @@ class PathoGen(object):
 
 class Worker(multiprocessing.Process):
 
-    def __init__(self, number, host, port, bucket, in_queue,
+    def __init__(self, number, host, port, bucket, password, in_queue,
                  out_queue, promotion_policy):
         super(Worker, self).__init__()
         self.id = number
@@ -213,6 +217,7 @@ class Worker(multiprocessing.Process):
         self.out_queue = out_queue
         self.promotion_policy = promotion_policy
         self.bucket = bucket
+        self.password = password
         self.host = host
         self.port = port
 
@@ -221,8 +226,10 @@ class Worker(multiprocessing.Process):
 
     def _connect(self):
         """Establish a connection to the Couchbase cluster."""
-        self.client = Couchbase.connect(bucket=self.bucket, host=self.host,
-                                        port=self.port)
+        self.client = Couchbase.connect(host=self.host,
+                                        port=self.port,
+                                        bucket=self.bucket,
+                                        password=self.password)
 
     def run(self):
         """Run a Worker. They run essentially forever, taking document
@@ -282,11 +289,11 @@ class Supervisor(Worker):
 
     SLEEP_TIME = 0
 
-    def __init__(self, number, host, port, bucket, queues, in_queue,
-                 out_queue, promotion_policy, num_items, num_iterations, max_size):
-        super(Supervisor, self).__init__(number, host, port, bucket,
-                                         in_queue, out_queue,
-                                         promotion_policy)
+    def __init__(self, number, host, port, bucket, password, queues, in_queue,
+                 out_queue, promotion_policy, num_items, num_iterations,
+                 max_size):
+        super(Supervisor, self).__init__(number, host, port, bucket, password,
+                                         in_queue, out_queue, promotion_policy)
         self.queues = queues
         self.num_items = num_items
         self.num_iterations = num_iterations

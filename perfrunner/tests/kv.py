@@ -404,7 +404,8 @@ class RevABTest(FragmentationTest):
     def load(self, *args):
         for target in self.target_iterator:
             host, port = target.node.split(':')
-            conn = {'host': host, 'port': port, 'bucket': target.bucket}
+            conn = {'host': host, 'port': port,
+                    'bucket': target.bucket, 'password': target.password}
 
             threads = list()
             for seqid in range(self.test_config.load_settings.workers):
@@ -461,11 +462,13 @@ class PathoGenTest(FragmentationTest):
     def access(self, *args):
         for target in self.target_iterator:
             host, port = target.node.split(':')
-            PathoGen(num_items=self.test_config.load_settings.items,
-                     num_workers=self.test_config.load_settings.workers,
-                     num_iterations=self.test_config.load_settings.iterations,
-                     frozen_mode=False,
-                     host=host, port=port, bucket=target.bucket).run()
+            pg = PathoGen(num_items=self.test_config.load_settings.items,
+                          num_workers=self.test_config.load_settings.workers,
+                          num_iterations=self.test_config.load_settings.iterations,
+                          frozen_mode=False,
+                          host=host, port=port,
+                          bucket=target.bucket, password=target.password)
+            pg.run()
 
     def _report_kpi(self):
         self.reporter.post_to_sf(
@@ -490,11 +493,13 @@ class PathoGenFrozenTest(PathoGenTest):
     def access(self):
         for target in self.target_iterator:
             host, port = target.node.split(':')
-            PathoGen(num_items=self.test_config.load_settings.items,
-                     num_workers=self.test_config.load_settings.workers,
-                     num_iterations=self.test_config.load_settings.iterations,
-                     frozen_mode=True,
-                     host=host, port=port, bucket=target.bucket).run()
+            pg = PathoGen(num_items=self.test_config.load_settings.items,
+                          num_workers=self.test_config.load_settings.workers,
+                          num_iterations=self.test_config.load_settings.iterations,
+                          frozen_mode=True,
+                          host=host, port=port,
+                          bucket=target.bucket, password=target.password)
+            pg.run()
 
 
 class ThroughputTest(KVTest):

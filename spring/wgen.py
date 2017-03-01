@@ -736,13 +736,12 @@ class WorkloadGen(object):
         lock = Lock()
         worker_type, total_workers = worker_factory(self.ws)
         if name == 'fts' and total_workers:
-
             master_host = self.ts.node.split(":")[0]
             if self.ws.fts_config.elastic:
                 rest_auth = (self.ws.fts_config.username, self.ts.password)
                 self.ws.fts_query_list = ElasticGen(master_host, self.ws.fts_config, rest_auth).query_list
             else:
-                rest_auth = (self.ts.bucket, self.ts.password)
+                rest_auth = (self.ws.fts_config.username, self.ts.password)
                 self.ws.fts_query_list = FtsGen(master_host, self.ws.fts_config, rest_auth).query_list
             self.ws.fts_query_list_size = len(self.ws.fts_query_list)
 

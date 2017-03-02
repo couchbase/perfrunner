@@ -688,7 +688,10 @@ class GSISettings(object):
         if options.get('indexes') is not None:
             for index_def in options.get('indexes').split(','):
                 name, field = index_def.split(':')
-                field = ','.join(field.split(' '))
+                if field.startswith('"'):
+                    field = field.replace('"', '\\\"')
+                else:
+                    field = ','.join(field.split(' '))
                 self.indexes[name] = field
 
         self.stale = options.get('stale', self.STALE)

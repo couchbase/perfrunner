@@ -31,7 +31,7 @@ doc_gen = array_indexing
 array_size = 10
 
 [secondary]
-indexes = myindex:achievements1
+indexes = myindex:"ALL ARRAY v FOR v IN achievements1 END"
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
 

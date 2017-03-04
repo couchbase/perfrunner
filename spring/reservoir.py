@@ -23,6 +23,9 @@ class Reservoir(object):
 
     def update(self, value):
         """Conditionally add new measurements to the reservoir."""
+        if not value:  # Ignore bad results
+            return
+
         self.count += 1
         timestamp = int(time.time() * 10 ** 9)  # Nanosecond granularity
 

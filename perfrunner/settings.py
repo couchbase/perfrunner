@@ -321,7 +321,7 @@ class ClusterSettings(object):
     NUM_BUCKETS = 1
     INDEX_MEM_QUOTA = 256
     FTS_INDEX_MEM_QUOTA = 512
-    AUTO_FAILOVER_TIMEOUT = 120
+    AUTO_FAILOVER_TIMEOUT = 30
     THROTTLE_CPU = 0
 
     def __init__(self, options):

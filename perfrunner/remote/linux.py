@@ -167,7 +167,8 @@ class RemoteLinux(Remote):
             if "python" not in res:
                 raise Exception("Spring not run on KV. {}".format(res))
         else:
-            if "Current progress: 100.00 %" not in result and "Finished: worker-{}".format(ls.spring_workers - 1) not in result:
+            if "Current progress: 100.00 %" not in result and \
+                    "Finished: worker-{}".format(ls.spring_workers - 1) not in result:
                 raise Exception("Spring not run on KV")
 
     @all_kv_nodes
@@ -343,28 +344,6 @@ class RemoteLinux(Remote):
               "--password password --disable-ft-indexes --disable-gsi-indexes".\
             format(archive_path, repo_path)
         run(cmd)
-
-    @single_host
-    def startelasticsearchplugin(self):
-        cmds = [
-            'service elasticsearch restart',
-            'service elasticsearch stop',
-            'sudo chkconfig --add elasticsearch',
-            'sudo service elasticsearch restart',
-            'sudo service elasticsearch stop',
-            'cd /usr/share/elasticsearch',
-            'echo "couchbase.password: password" >> /etc/elasticsearch/elasticsearch.yml',
-            '/usr/share/elasticsearch/bin/plugin  -install transport-couchbase -url http://packages.couchbase.com.s3.amazonaws.com/releases/elastic-search-adapter" \
-                                                      "/2.0.0/elasticsearch-transport-couchbase-2.0.0.zip',
-            'echo "couchbase.password: password" >> /etc/elasticsearch/elasticsearch.yml',
-            'echo "couchbase.username: Administrator" >> /etc/elasticsearch/elasticsearch.yml'
-            'bin/plugin -install mobz/elasticsearch-head',
-            'sudo service elasticsearch restart',
-        ]
-
-        for cmd in cmds:
-            logger.info("Executed command: {}".format(cmd))
-            run(cmd)
 
     @single_client
     def ycsb_load_run(self, path, cmd, log_path=None, mypid=0):

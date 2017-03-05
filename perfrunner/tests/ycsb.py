@@ -19,7 +19,9 @@ class YCSBWorker(object):
         self.timer = access_settings.time
         self.ycsb = ycsb
         self.shutdown_event = self.timer and Event() or None
-        self.ycsb_result = Manager().dict({key: [] for key in ['Throughput', 'READ_95', 'UPDATE_95', 'INSERT_95', 'SCAN_95']})
+        self.ycsb_result = Manager().dict({
+            key: [] for key in ['Throughput', 'READ_95', 'UPDATE_95', 'INSERT_95', 'SCAN_95']
+        })
         self.ycsb_logfiles = Manager().list()
         self.task = self.ycsb_work
 

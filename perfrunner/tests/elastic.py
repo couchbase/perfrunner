@@ -29,10 +29,6 @@ class Elastictest(PerfTest):
         self.elastic_doccount = self.test_config.fts_settings.items
         self.index_time_taken = 0
         self.index_size_raw = 0
-        '''
-        This API will be needed for fresh installation
-        self.remote.startelasticsearchplugin()
-        '''
         self.index_url = "http://{}/{}".format(self.url, self.elastic_index)
         self.rest = RestHelper(cluster_spec)
         self.order_by = self.test_config.fts_settings.order_by

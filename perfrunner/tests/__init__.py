@@ -79,7 +79,7 @@ class PerfTest(object):
 
             for master in self.cluster_spec.yield_masters():
                 if not self.rest.is_balanced(master):
-                    logger.interrupt('Rebalance failed')
+                    logger.interrupt('The cluster is not balanced')
 
                 self.check_failover(master)
 

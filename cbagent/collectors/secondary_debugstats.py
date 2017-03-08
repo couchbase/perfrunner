@@ -5,7 +5,7 @@ class SecondaryDebugStats(Collector):
 
     COLLECTOR = "secondary_debugstats"
 
-    METRICS = "num_connections", "memory_used_storage", "memory_used_queue"
+    METRICS = "num_connections", "memory_used_storage", "memory_used_queue", "memory_used"
 
     def __init__(self, settings):
         super(SecondaryDebugStats, self).__init__(settings)

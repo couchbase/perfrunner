@@ -8,7 +8,7 @@ class SecondaryStorageStats(Collector):
 
     METRICS = "memory_size", "num_cached_pages", "num_pages", "num_pages_swapout", "num_pages_swapin", \
               "bytes_incoming", "bytes_written", "write_amp", "lss_fragmentation", "cache_hits", "cache_misses", \
-              "cache_hit_ratio", "resident_ratio", "allocated", "freed", "reclaimed"
+              "cache_hit_ratio", "resident_ratio", "allocated", "freed", "reclaimed", "reclaim_pending"
 
     def __init__(self, settings):
         super(SecondaryStorageStats, self).__init__(settings)

@@ -557,6 +557,10 @@ class RestHelper(object):
         api = 'http://{}:9102/stats/storage'.format(host)
         return self.get(url=api).text
 
+    def get_index_storage_stats_mm(self, host):
+        api = 'http://{}:9102/stats/storage/mm'.format(host)
+        return self.get(url=api).text
+
     def set_master_password(self, host_port, password='password'):
         logger.info('Setting master password at {}'.format(host_port))
 

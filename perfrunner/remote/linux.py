@@ -495,3 +495,9 @@ class RemoteLinux(Remote):
     def set_master_password(self, password='password'):
         logger.info('Enabling encrypted secrets')
         run('systemctl set-environment CB_MASTER_PASSWORD={}'.format(password))
+
+    @single_client
+    def get_indexer_heap_profile(self, indexer):
+        logger.info('Get indexer heap profile')
+        cmd = "go tool pprof --text http://{}:9102/debug/pprof/heap".format(indexer)
+        return run(cmd, pty=True)

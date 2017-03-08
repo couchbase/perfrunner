@@ -113,6 +113,11 @@ class SecondaryIndexTest(PerfTest):
         logger.info("Disk usage:\n{}".format(self.remote.get_disk_usage(index)))
         logger.info("Index storage stats:\n{}".format(
             self.rest.get_index_storage_stats(self.index_nodes[0].split(':')[0])))
+        logger.info("Indexer heap profile:\n{}".format(
+            self.remote.get_indexer_heap_profile(self.index_nodes[0].split(':')[0])))
+        if self.storage == 'plasma':
+            logger.info("Index storage stats mm:\n{}".format(
+                self.rest.get_index_storage_stats_mm(self.index_nodes[0].split(':')[0])))
 
         return self.remote.get_disk_usage(index, human_readable=False)
 

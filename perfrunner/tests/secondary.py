@@ -180,10 +180,10 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
         self.check_memory_blocker()
 
 
-class MultipalIncrementalSecondaryIndexTest(InitialandIncrementalSecondaryIndexTest):
+class MultipleIncrementalSecondaryIndexTest(InitialandIncrementalSecondaryIndexTest):
 
     def __init__(self, *args):
-        super(MultipalIncrementalSecondaryIndexTest, self).__init__(*args)
+        super(MultipleIncrementalSecondaryIndexTest, self).__init__(*args)
         self.memory_usage = dict()
         self.disk_usage = dict()
 

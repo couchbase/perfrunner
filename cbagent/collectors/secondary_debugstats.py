@@ -79,6 +79,7 @@ class SecondaryDebugStatsIndex(SecondaryDebugStats):
         "num_rows_returned",
         "flush_queue_size",
         "avg_scan_wait_latency",
+        "disk_store_duration",
         "timings/storage_commit",
         "timings/storage_del",
         "timings/storage_get",

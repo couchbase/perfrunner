@@ -425,7 +425,7 @@ class MetricHelper(object):
         return value, metric, metric_info
 
     def get_memory_meta(self, value, memory_type):
-        metric = '{}_{}'.format(self.test_config.name, memory_type.lower())
+        metric = '{}_{}'.format(self.test_config.name, memory_type.replace(" ", "").lower())
         title = '{} (GB), {}'.format(memory_type, self.title)
         metric_info = self._get_metric_info(title)
 

@@ -2,11 +2,11 @@ from collector import Collector
 
 from active_tasks import ActiveTasks
 from fts_stats import (
-    FtsCollector,
-    FtsLatency,
+    FTSCollector,
+    FTSLatencyCollector,
+    FTSTotalsCollector,
     ElasticStats,
-    FtsStats,
-    FtsQueryStats,
+
 )
 from iostat import IO
 from latency import Latency

@@ -14,9 +14,9 @@ from cbagent.collectors import (
     ActiveTasks,
     DurabilityLatency,
     ElasticStats,
-    FtsLatency,
-    FtsQueryStats,
-    FtsStats,
+    FTSCollector,
+    FTSLatencyCollector,
+    FTSTotalsCollector,
     N1QLStats,
     Net,
     NSServer,
@@ -120,7 +120,7 @@ class CbAgent(object):
                        elastic_stats=False,
                        durability=False,
                        fts_latency=False,
-                       fts_query_stats=False,
+                       fts_totals=False,
                        fts_stats=False,
                        iostat=True,
                        latency=False,
@@ -169,13 +169,13 @@ class CbAgent(object):
             self.add_collector(N1QLStats)
 
         if elastic_stats:
-            self.add_elastic_stats(test.test_config)
+            self.add_collector(ElasticStats, test)
         if fts_latency:
-            self.add_fts_latency(test.test_config)
+            self.add_collector(FTSLatencyCollector, test)
         if fts_stats:
-            self.add_collector(FtsStats, test.test_config)
-        if fts_query_stats:
-            self.add_fts_query_stats(test.test_config)
+            self.add_collector(FTSCollector, test)
+        if fts_totals:
+            self.add_collector(FTSTotalsCollector, test)
 
         if secondary_debugstats:
             self.add_collector(SecondaryDebugStats)
@@ -255,33 +255,6 @@ class CbAgent(object):
 
             collector = SpringSubdocLatency(settings, test.workload, prefix)
             self.collectors.append(collector)
-
-    def add_fts_latency(self, test):
-        for cluster_id, master_node in self.cluster_map.items():
-            settings = copy(self.settings)
-            settings.cluster = cluster_id
-            settings.master_node = master_node
-
-            collector = FtsLatency(settings, test)
-            self.collectors.append(collector)
-
-    def add_fts_query_stats(self, test_config):
-        for cluster_id, master_node in self.cluster_map.items():
-            settings = copy(self.settings)
-            settings.cluster = cluster_id
-            settings.master_node = master_node
-
-            self.fts_stats = FtsQueryStats(settings, test_config)
-            self.collectors.append(self.fts_stats)
-
-    def add_elastic_stats(self, test_config):
-        for cluster_id, master_node in self.cluster_map.items():
-            settings = copy(self.settings)
-            settings.cluster = cluster_id
-            settings.master_node = master_node
-
-            self.fts_stats = ElasticStats(settings, test_config)
-            self.collectors.append(self.fts_stats)
 
     def add_xdcr_lag(self, test):
         reversed_clusters = list(reversed(self.cluster_ids))

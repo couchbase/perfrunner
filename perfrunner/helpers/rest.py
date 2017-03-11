@@ -521,6 +521,20 @@ class RestHelper(object):
         response = self.get(url=api)
         return response.json()
 
+    def get_fts_stats(self, host):
+        api = 'http://{}:8094/api/nsstats'.format(host)
+        response = self.get(url=api)
+        if response.status_code == 200:
+            return response.json()
+        return None
+
+    def get_elastic_stats(self, host):
+        api = "http://{}:9200/_stats".format(host)
+        response = self.get(url=api)
+        if response.status_code == 200:
+            return response.json()
+        return None
+
     def get_index_status(self, host):
         api = 'http://{}:9102/getIndexStatus'.format(host)
         response = self.get(url=api)

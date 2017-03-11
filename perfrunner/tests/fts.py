@@ -164,7 +164,7 @@ class FtsIndexTest(FTStest):
 
 class FTSLatencyTest(FTStest):
         COLLECTORS = {'fts_latency': True,
-                      "fts_query_stats": True,
+                      "fts_totals": True,
                       "fts_stats": True}
 
         def _report_kpi(self):
@@ -183,7 +183,7 @@ class FTSLatencyTest(FTStest):
 
 
 class FTSThroughputTest(FTStest):
-        COLLECTORS = {'fts_query_stats': True,
+        COLLECTORS = {'fts_totals': True,
                       "fts_stats": True}
 
         def _report_kpi(self):
@@ -194,8 +194,8 @@ class FTSThroughputTest(FTStest):
 
 class FTSRebalanceTest(FTStest, RebalanceTest):
 
-    COLLECTORS = {'fts_query_stats': True,
-                  "fts_stats": True}
+    COLLECTORS = {'fts_stats': True,
+                  "fts_totals": True}
 
     def __init__(self, *args, **kwargs):
         super(FTSRebalanceTest, self).__init__(*args, **kwargs)
@@ -229,11 +229,11 @@ class FTSRebalanceTest(FTStest, RebalanceTest):
 
 
 class FTSRebalanceTestThroughput(FTSRebalanceTest):
-    COLLECTORS = {'fts_query_stats': True,
+    COLLECTORS = {'fts_totals': True,
                   "fts_stats": True}
 
 
 class FTSRebalanceTestLatency(FTSRebalanceTest):
     COLLECTORS = {'fts_latency': True,
-                  "fts_query_stats": True,
+                  "fts_totals": True,
                   "fts_stats": True}

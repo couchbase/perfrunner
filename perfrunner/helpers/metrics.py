@@ -62,15 +62,6 @@ class MetricHelper(object):
         time_elapsed /= 1000.0  # ms -> s
         return round(items / time_elapsed)
 
-    def parse_log(self, test_config, name):
-        if name.find('Elasticsearch') != -1:
-            self.test.cbagent.add_elastic_stats(test_config)
-
-        fts_es = self.test.cbagent.fts_stats
-        fts_es.collect_stats()
-        total = fts_es.cbft_query_total()
-        return total
-
     def calc_avg_fts_queries(self, order_by, name='FTS'):
         metric = '{}_avg_query_requests'.format(self.test_config.name)
         title = 'Query Throughput (queries/sec), {}, {} node, {}'.\
@@ -78,7 +69,21 @@ class MetricHelper(object):
                        self.test_config.cluster.initial_nodes[0],
                        name)
         metric_info = self._get_metric_info(title, order_by=order_by)
-        total_queries = self.parse_log(self.test_config, name)
+
+        if name == 'FTS':
+            total_queries = 0
+            for host in self.test.active_fts_hosts:
+                allstats = self.test.rest.get_fts_stats(host)
+                key = "{}:{}:{}".format(self.test_config.buckets[0],
+                                        self.test.fts_index,
+                                        "total_queries")
+                if key in allstats:
+                    total_queries += allstats[key]
+
+        else:
+            allstats = self.test.rest.get_elastic_stats(self.test.fts_master_host)
+            total_queries = allstats["_all"]["total"]["search"]["query_total"]
+
         time_taken = self.test_config.access_settings.time
         qps = total_queries / float(time_taken)
         if qps < 100:

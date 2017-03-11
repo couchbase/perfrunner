@@ -1,94 +1,108 @@
 import time
-from datetime import datetime
-from math import pow
 
 from cbagent.collectors import Collector
+from perfrunner.helpers import rest
 from spring.cbgen import ElasticGen, FtsGen
 
 
-class FtsCollector(Collector):
+class FTSCollector(Collector):
 
-    METRICS = ()
+    COLLECTOR = "fts_stats"
 
-    def __init__(self, settings, test_config):
-        super(FtsCollector, self).__init__(settings)
-        self.cbft_stats = None
-        self.fts_settings = test_config.fts_settings
-        self.host = settings.master_node
-        self.fts_client = self.init_client(test_config)
+    METRICS = ("batch_merge_count",
+               "doc_count",
+               "iterator_next_count",
+               "iterator_seek_count",
+               "num_bytes_live_data",
+               "num_bytes_used_disk",
+               "num_mutations_to_index",
+               "num_pindexes",
+               "num_pindexes_actual",
+               "num_pindexes_target",
+               "num_recs_to_persist",
+               "reader_get_count",
+               "reader_multi_get_count",
+               "reader_prefix_iterator_count",
+               "reader_range_iterator_count",
+               "timer_batch_store_count",
+               "timer_data_delete_count",
+               "timer_data_update_count",
+               "timer_opaque_get_count",
+               "timer_opaque_set_count",
+               "timer_rollback_count",
+               "timer_snapshot_start_count",
+               "total_bytes_indexed",
+               "total_bytes_query_results",
+               "total_compactions",
+               "total_queries",
+               "total_queries_error",
+               "total_queries_slow",
+               "total_queries_timeout",
+               "total_request_time",
+               "total_term_searchers",
+               "writer_execute_batch_count",
+               "num_bytes_used_ram",
+               "pct_cpu_gc",
+               "total_gc",
+               )
 
-        self.total_requests_since_last_event = 0
-        self.requests_in_last_timeframe = 0
-        self.events_timeframe = 2
-        self.event_start_time = datetime.utcnow()
-        self.events_to_skip = 3
-        self.current_avg_throughput = 0
+    def __init__(self, settings, test):
+        super(FTSCollector, self).__init__(settings)
+        self.cbft_stats = dict()
+        self.fts_settings = test.test_config.fts_settings
+        self.fts_index_name = test.fts_index
+        self.allbuckets = [x for x in self.get_buckets()]
+        self.active_fts_hosts = test.active_fts_hosts
+        self.master_node = settings.master_node
+        self.rest = rest.RestHelper(test.cluster_spec)
+        self.test = test
+        self.fts_client = self.init_client(test.test_config)
 
     def init_client(self, test_config):
-        return FtsGen(self.host, test_config.fts_settings, self.auth)
+        return FtsGen(self.master_node, test_config.fts_settings, self.test.auth)
 
     def collect_stats(self):
-        r = self.session.get("http://{}:{}/api/nsstats".format(self.host, self.fts_settings.port))
-        if r.status_code == 200:
-            self.cbft_stats = r.json()
-        else:
-            self.cbft_stats = None
+        for host in self.active_fts_hosts:
+            self.cbft_stats[host] = self.rest.get_fts_stats(host)
 
-    def cbft_stats_get(self, key):
-        if key not in self.cbft_stats:
+    def get_fts_stats_by_name(self, host, bucket, index, name):
+        key = "{}:{}:{}".format(bucket, index, name)
+        if key not in self.cbft_stats[host]:
             return 0
-        return self.cbft_stats[key]
-
-    def cbft_pct_cpu_gc(self):
-        return self.cbft_stats_get("pct_cpu_gc")
-
-    def cbft_num_bytes_used_ram(self):
-        return self.cbft_stats_get("num_bytes_used_ram")
-
-    def cbft_total_gc(self):
-        return self.cbft_stats_get("total_gc")
+        return self.cbft_stats[host][key]
 
     def measure(self):
-        stats = {}
+        stats = dict()
         for metric in self.METRICS:
-            # the getattr is used to make code simple
-            # the metric name should be same as the method name
-            latency = getattr(self, metric)()
-            if latency:
-                stats[metric] = latency
+            for host in self.active_fts_hosts:
+                stats[host] = dict()
+                stats[host][metric] = self.get_fts_stats_by_name(host,
+                                                                 self.allbuckets[0],
+                                                                 self.fts_index_name,
+                                                                 metric)
         return stats
 
     def update_metadata(self):
         self.mc.add_cluster()
         for metric in self.METRICS:
-                self.mc.add_metric(metric, collector=self.COLLECTOR)
+            for host in self.active_fts_hosts:
+                self.mc.add_metric(metric, server=host, collector=self.COLLECTOR)
 
     def sample(self):
             self.collect_stats()
             self.update_metric_metadata(self.METRICS)
             samples = self.measure()
-            if samples:
-                self.store.append(samples, cluster=self.cluster,
-                                  collector=self.COLLECTOR)
+            for host in self.active_fts_hosts:
+                if host in samples:
+                    self.store.append(samples[host], cluster=self.cluster, server=host, collector=self.COLLECTOR)
 
     def check_total_hits(self, r):
         if self.fts_client.settings.elastic:
             return r.json()["hits"]["total"] != 0
         return r.json()['total_hits'] != 0
 
-
-class FtsLatency(FtsCollector):
-
-    COLLECTOR = "fts_latency"
-
-    METRICS = ("cbft_latency_get", )
-
-    def __init__(self, settings, test_config):
-        super(FtsLatency, self).__init__(settings, test_config)
-        self.interval = settings.lat_interval
-
-    def cbft_latency_get(self):
-        cmd, query = self.fts_client.next()
+    def measure_latency(self, client):
+        cmd, query = client.next()
         t0 = time.time()
         r = cmd(**query)
         t1 = time.time()
@@ -97,126 +111,61 @@ class FtsLatency(FtsCollector):
         return 0
 
 
-class FtsStats(FtsCollector):
+class FTSTotalsCollector (FTSCollector):
+    COLLECTOR = "fts_totals"
 
-    COLLECTOR = "fts_stats"
+    def update_metadata(self):
+        self.mc.add_cluster()
+        for metric in self.METRICS:
+            self.mc.add_metric(metric, collector=self.COLLECTOR)
 
-    METRICS = ("cbft_doc_count", "cbft_num_bytes_used_disk",
-               "cbft_num_bytes_used_ram", "cbft_pct_cpu_gc",
-               "cbft_batch_merge_count", "cbft_total_gc",
-               "cbft_num_bytes_live_data", "cbft_total_bytes_indexed",
-               "cbft_num_recs_to_persist", )
-
-    def __init__(self, settings, test_config):
-        super(FtsStats, self).__init__(settings, test_config)
-        for bucket in self.get_buckets():
-            self.disk_key = bucket + ':' + test_config.fts_settings.name + \
-                ":num_bytes_used_disk"
-            self.count_key = bucket + ':' + test_config.fts_settings.name + \
-                ":doc_count"
-            self.batch_count = bucket + ':' + test_config.fts_settings.name + \
-                ":batch_merge_count"
-            self.live_data = bucket + ':' + test_config.fts_settings.name + \
-                ":num_bytes_live_data"
-            self.power = pow(10, 9)
-            self.bytes_index = bucket + ':' + test_config.fts_settings.name + \
-                ":cbft_total_bytes_indexed"
-            self.recs_presist = bucket + ':' + test_config.fts_settings.name + \
-                ":num_recs_to_persist"
-
-    def cbft_batch_merge_count(self):
-        return self.cbft_stats_get(self.live_data)
-
-    def cbft_num_bytes_live_data(self):
-        return self.cbft_stats_get(self.batch_count)
-
-    def cbft_num_bytes_used_disk(self):
-        return float(self.cbft_stats_get(self.disk_key) / self.power)
-
-    def cbft_doc_count(self):
-        return self.cbft_stats_get(self.count_key)
-
-    def cbft_total_bytes_indexed(self):
-        return self.cbft_stats_get(self.bytes_index)
-
-    def cbft_num_recs_to_persist(self):
-        return self.cbft_stats_get(self.recs_presist)
+    def sample(self):
+            self.collect_stats()
+            self.update_metric_metadata(self.METRICS)
+            samples = dict()
+            samples["totals"] = dict()
+            hosts_samples = self.measure()
+            for host in self.active_fts_hosts:
+                if host in hosts_samples:
+                    for metric in self.METRICS:
+                        if metric not in samples["totals"]:
+                            samples["totals"][metric] = 0
+                        if metric in hosts_samples[host]:
+                            samples["totals"][metric] += hosts_samples[host][metric]
+            self.store.append(samples["totals"], cluster=self.cluster, collector=self.COLLECTOR)
 
 
-class FtsQueryStats(FtsLatency):
+class FTSLatencyCollector (FTSTotalsCollector):
+    COLLECTOR = "fts_latency"
 
-    COLLECTOR = "fts_query_stats"
+    METRICS = ("cbft_latency_get")
 
-    METRICS = ("cbft_query_slow", "cbft_query_timeout",
-               'cbft_query_error', "cbft_total_term_searchers",
-               "cbft_query_total", "cbft_total_bytes_query_results",
-               "cbft_writer_execute_batch_count", "cbft_query_throughput")
+    def __init__(self, settings, test):
+        super(FTSLatencyCollector, self).__init__(settings, test)
+        self.interval = settings.lat_interval
 
-    def __init__(self, settings, test_config):
-        super(FtsQueryStats, self).__init__(settings, test_config)
+    def sample(self):
+            self.collect_stats()
+            self.update_metric_metadata(self.METRICS)
+            samples = self.measure()
+            if samples:
+                self.store.append(samples, cluster=self.cluster, collector=self.COLLECTOR)
 
-        # following is to add different query stats'
-        for bucket in self.get_buckets():
-            self.total_queries = bucket + ':' + test_config.fts_settings.name + \
-                ":total_queries"
-            self.total_queries_slow = bucket + ':' + test_config.fts_settings.name + \
-                ":total_queries_slow"
-            self.total_queries_timeout = bucket + ':' + test_config.fts_settings.name + \
-                ":total_queries_timeout"
-            self.total_queries_error = bucket + ':' + test_config.fts_settings.name + \
-                ":total_queries_error"
-            self.total_term_searchers = bucket + ':' + test_config.fts_settings.name + \
-                ":total_term_searchers"
-            self.total_query_bytes = bucket + ':' + test_config.fts_settings.name + \
-                ":total_bytes_query_results"
-            self.total_write_batch = bucket + ':' + test_config.fts_settings.name + \
-                ":writer_execute_batch_count"
-
-    def cbft_writer_execute_batch_count(self):
-        return self.cbft_stats_get(self.total_write_batch)
-
-    def cbft_total_term_searchers(self):
-        return self.cbft_stats_get(self.total_term_searchers)
-
-    def cbft_total_bytes_query_results(self):
-        return self.cbft_stats_get(self.total_query_bytes)
-
-    def cbft_query_slow(self):
-        return self.cbft_stats_get(self.total_queries_slow)
-
-    def cbft_query_total(self):
-        return self.cbft_stats_get(self.total_queries)
-
-    def cbft_query_timeout(self):
-        return self.cbft_stats_get(self.total_queries_timeout)
-
-    def cbft_query_error(self):
-        return self.cbft_stats_get(self.total_queries_error)
-
-    def cbft_query_throughput(self):
-        time_now = datetime.utcnow()
-        total_requests = int(self.cbft_stats_get(self.total_queries))
-        delta = time_now - self.event_start_time
-        if delta.seconds >= self.events_timeframe:
-            self.requests_in_last_timeframe = total_requests - self.total_requests_since_last_event
-            self.total_requests_since_last_event = total_requests
-            self.event_start_time = datetime.utcnow()
-            if (not self.events_to_skip) and total_requests:
-                self.current_avg_throughput = self.requests_in_last_timeframe / self.events_timeframe
-            else:
-                self.events_to_skip -= 1
-        return self.current_avg_throughput
+    def measure(self):
+        stats = dict()
+        stats["cbft_latency_get"] = self.measure_latency(self.fts_client)
+        return stats
 
 
-class ElasticStats(FtsCollector):
+class ElasticStats(FTSCollector):
 
     COLLECTOR = "fts_latency"
 
     METRICS = ("elastic_latency_get", "elastic_cache_size", "elastic_query_total",
                "elastic_cache_hit", "elastic_filter_cache_size")
 
-    def __init__(self, settings, test_config):
-        super(ElasticStats, self).__init__(settings, test_config)
+    def __init__(self, settings, test):
+        super(ElasticStats, self).__init__(settings, test)
         self.interval = settings.lat_interval
         self.host = settings.master_node
 
@@ -224,22 +173,13 @@ class ElasticStats(FtsCollector):
         return ElasticGen(self.host, test_config.fts_settings)
 
     def collect_stats(self):
-        r = self.session.get("http://{}:9200/_stats".format(self.host, self.fts_settings.port))
-        if r.status_code == 200:
-            self.cbft_stats = r.json()
-        else:
-            self.cbft_stats = None
-
-    def cbft_query_total(self):
-        if self.cbft_stats:
-            return self.cbft_stats["_all"]["total"]["search"]["query_total"]
+        self.cbft_stats = self.rest.get_elastic_stats(self.host)
 
     def elastic_query_total(self):
-        return self.cbft_query_total()
+        return self.cbft_stats["_all"]["total"]["search"]["query_total"]
 
     def elastic_cache_size(self):
-        if self.cbft_stats:
-            return self.cbft_stats["_all"]["total"]["query_cache"]["memory_size_in_bytes"]
+        return self.cbft_stats["_all"]["total"]["query_cache"]["memory_size_in_bytes"]
 
     def elastic_cache_hit(self):
         return self.cbft_stats["_all"]["total"]["query_cache"]["hit_count"]
@@ -251,10 +191,26 @@ class ElasticStats(FtsCollector):
         return self.cbft_stats["_all"]["total"]["search"]["open_contexts"]
 
     def elastic_latency_get(self):
-        cmd, query = self.fts_client.next()
-        t0 = time.time()
-        r = cmd(**query)
-        t1 = time.time()
-        if r.status_code in range(200, 203) and self.check_total_hits(r):
-            return 1000 * (t1 - t0)
-        return 0
+        return self.measure_latency(self.fts_client)
+
+    def measure(self):
+        stats = {}
+        for metric in self.METRICS:
+            latency = getattr(self, metric)()
+            if latency:
+                stats[metric] = latency
+        return stats
+
+    def update_metadata(self):
+        self.mc.add_cluster()
+        for metric in self.METRICS:
+                self.mc.add_metric(metric, collector=self.COLLECTOR)
+
+    def sample(self):
+        self.collect_stats()
+        if (self.cbft_stats):
+            self.update_metric_metadata(self.METRICS)
+            samples = self.measure()
+            if samples:
+                self.store.append(samples, cluster=self.cluster,
+                                  collector=self.COLLECTOR)

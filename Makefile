@@ -14,7 +14,7 @@ build:
 	pwd > ${ENV}/lib/${PYTHON}/site-packages/perfrunner.pth
 
 clean:
-	rm -fr build perfrunner.egg-info dist dcptest kvgen cbindexperf YCSB
+	rm -fr build perfrunner.egg-info dist dcptest kvgen cbindexperf rachell YCSB
 	find . -name '*.pyc' -o -name '*.pyo' | xargs rm -f
 
 pep8:
@@ -40,6 +40,9 @@ buildquery: vendor-sync
 
 kvgen: vendor-sync
 	go build ./go/kvgen
+
+rachell:
+	go build ./go/rachell
 
 vendor-sync: go-tools
 	${GOVENDOR} sync

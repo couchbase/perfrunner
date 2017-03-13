@@ -4,7 +4,6 @@ from active_tasks import ActiveTasks
 from fts_stats import (
     FTSCollector,
     FTSLatencyCollector,
-    FTSTotalsCollector,
     ElasticStats,
 
 )

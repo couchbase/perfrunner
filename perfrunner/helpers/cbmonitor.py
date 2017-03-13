@@ -16,7 +16,6 @@ from cbagent.collectors import (
     ElasticStats,
     FTSCollector,
     FTSLatencyCollector,
-    FTSTotalsCollector,
     N1QLStats,
     Net,
     NSServer,
@@ -121,7 +120,6 @@ class CbAgent(object):
                        elastic_stats=False,
                        durability=False,
                        fts_latency=False,
-                       fts_totals=False,
                        fts_stats=False,
                        iostat=True,
                        latency=False,
@@ -176,8 +174,6 @@ class CbAgent(object):
             self.add_collector(FTSLatencyCollector, test)
         if fts_stats:
             self.add_collector(FTSCollector, test)
-        if fts_totals:
-            self.add_collector(FTSTotalsCollector, test)
 
         if secondary_debugstats:
             self.add_collector(SecondaryDebugStats)

@@ -8,6 +8,7 @@ from spring.cbgen import ElasticGen, FtsGen
 class FTSCollector(Collector):
 
     COLLECTOR = "fts_stats"
+    COLLECTOR_TOTALS = "fts_totals"
 
     METRICS = ("batch_merge_count",
                "doc_count",
@@ -57,6 +58,7 @@ class FTSCollector(Collector):
         self.rest = rest.RestHelper(test.cluster_spec)
         self.test = test
         self.fts_client = self.init_client(test.test_config)
+        self.interval = settings.lat_interval
 
     def init_client(self, test_config):
         return FtsGen(self.master_node, test_config.fts_settings, self.test.auth)
@@ -66,16 +68,20 @@ class FTSCollector(Collector):
             self.cbft_stats[host] = self.rest.get_fts_stats(host)
 
     def get_fts_stats_by_name(self, host, bucket, index, name):
+        if name in self.cbft_stats[host]:
+            return self.cbft_stats[host][name]
+
         key = "{}:{}:{}".format(bucket, index, name)
-        if key not in self.cbft_stats[host]:
-            return 0
-        return self.cbft_stats[host][key]
+        if key in self.cbft_stats[host]:
+            return self.cbft_stats[host][key]
+        return 0
 
     def measure(self):
         stats = dict()
         for metric in self.METRICS:
             for host in self.active_fts_hosts:
-                stats[host] = dict()
+                if host not in stats:
+                    stats[host] = dict()
                 stats[host][metric] = self.get_fts_stats_by_name(host,
                                                                  self.allbuckets[0],
                                                                  self.fts_index_name,
@@ -87,14 +93,24 @@ class FTSCollector(Collector):
         for metric in self.METRICS:
             for host in self.active_fts_hosts:
                 self.mc.add_metric(metric, server=host, collector=self.COLLECTOR)
+            self.mc.add_metric(metric, collector=self.COLLECTOR_TOTALS)
 
     def sample(self):
             self.collect_stats()
             self.update_metric_metadata(self.METRICS)
             samples = self.measure()
+            totals = dict()
             for host in self.active_fts_hosts:
                 if host in samples:
                     self.store.append(samples[host], cluster=self.cluster, server=host, collector=self.COLLECTOR)
+
+                    for metric in self.METRICS:
+                        if metric not in totals:
+                            totals[metric] = 0
+                        if metric in samples[host]:
+                            totals[metric] += samples[host][metric]
+
+            self.store.append(totals, cluster=self.cluster, collector=self.COLLECTOR_TOTALS)
 
     def check_total_hits(self, r):
         if self.fts_client.settings.elastic:
@@ -111,34 +127,10 @@ class FTSCollector(Collector):
         return 0
 
 
-class FTSTotalsCollector (FTSCollector):
-    COLLECTOR = "fts_totals"
-
-    def update_metadata(self):
-        self.mc.add_cluster()
-        for metric in self.METRICS:
-            self.mc.add_metric(metric, collector=self.COLLECTOR)
-
-    def sample(self):
-            self.collect_stats()
-            self.update_metric_metadata(self.METRICS)
-            samples = dict()
-            samples["totals"] = dict()
-            hosts_samples = self.measure()
-            for host in self.active_fts_hosts:
-                if host in hosts_samples:
-                    for metric in self.METRICS:
-                        if metric not in samples["totals"]:
-                            samples["totals"][metric] = 0
-                        if metric in hosts_samples[host]:
-                            samples["totals"][metric] += hosts_samples[host][metric]
-            self.store.append(samples["totals"], cluster=self.cluster, collector=self.COLLECTOR)
-
-
-class FTSLatencyCollector (FTSTotalsCollector):
+class FTSLatencyCollector (FTSCollector):
     COLLECTOR = "fts_latency"
 
-    METRICS = ("cbft_latency_get")
+    METRICS = ("cbft_latency_get",)
 
     def __init__(self, settings, test):
         super(FTSLatencyCollector, self).__init__(settings, test)
@@ -162,7 +154,7 @@ class ElasticStats(FTSCollector):
     COLLECTOR = "fts_latency"
 
     METRICS = ("elastic_latency_get", "elastic_cache_size", "elastic_query_total",
-               "elastic_cache_hit", "elastic_filter_cache_size")
+               "elastic_cache_hit", "elastic_filter_cache_size",)
 
     def __init__(self, settings, test):
         super(ElasticStats, self).__init__(settings, test)

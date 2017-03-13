@@ -52,6 +52,7 @@ class SecondaryIndexTest(PerfTest):
 
         if self.storage == "plasma":
             self.COLLECTORS["secondary_storage_stats"] = True
+            self.COLLECTORS["secondary_storage_stats_mm"] = True
 
     def __del__(self):
         self.remote.kill_process_on_index_node("memblock")

@@ -27,6 +27,7 @@ from secondary_debugstats import (
 from secondary_latency import SecondaryLatencyStats
 from secondary_stats import SecondaryStats
 from secondary_storage_stats import SecondaryStorageStats
+from secondary_storage_stats_mm import SecondaryStorageStatsMM
 from spring_latency import (
     DurabilityLatency,
     SpringLatency,

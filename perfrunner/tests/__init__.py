@@ -39,6 +39,8 @@ class PerfTest(object):
 
     MONITORING_DELAY = 10
 
+    ROOT_CERTIFICATE = 'root.pem'
+
     def __init__(self, cluster_spec, test_config, verbose):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
@@ -82,6 +84,11 @@ class PerfTest(object):
                     logger.interrupt('The cluster is not balanced')
 
                 self.check_failover(master)
+
+    def download_certificate(self):
+        cert = self.rest.get_certificate(self.master_node)
+        with open(self.ROOT_CERTIFICATE, 'w') as fh:
+            fh.write(cert)
 
     def check_failover(self, master):
         if hasattr(self, 'rebalance_settings'):

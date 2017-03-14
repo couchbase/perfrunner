@@ -56,6 +56,8 @@ class N1QLTest(PerfTest):
         super(N1QLTest, self).load(load_settings)
 
     def access_bg(self, *args):
+        self.download_certificate()
+
         access_settings = self.test_config.access_settings
         access_settings.items /= 2
         super(N1QLTest, self).access_bg(access_settings=access_settings)

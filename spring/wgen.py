@@ -157,7 +157,8 @@ class Worker(object):
     def init_db(self):
         host, port = self.ts.node.split(':')
         params = {'bucket': self.ts.bucket, 'host': host, 'port': port,
-                  'username': self.ts.bucket, 'password': self.ts.password}
+                  'username': self.ts.bucket, 'password': self.ts.password,
+                  'use_ssl': self.ws.use_ssl}
 
         try:
             self.cb = CBGen(**params)

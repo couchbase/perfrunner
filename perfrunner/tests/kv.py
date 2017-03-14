@@ -586,13 +586,6 @@ class PillowFightTest(PerfTest):
 
 class PillowFightTLSTest(PillowFightTest):
 
-    ROOT_CERTIFICATE = 'root.pem'
-
-    def download_certificate(self):
-        cert = self.rest.get_certificate(self.master_node)
-        with open(self.ROOT_CERTIFICATE, 'w') as fh:
-            fh.write(cert)
-
     @with_stats
     def access(self, *args):
         self.download_certificate()

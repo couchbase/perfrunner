@@ -40,6 +40,8 @@ class WorkloadSettings(object):
         self.ddocs = {}
         self.query_params = {}
 
+        self.use_ssl = False
+
 
 class TargetSettings(object):
 

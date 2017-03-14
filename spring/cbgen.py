@@ -41,7 +41,7 @@ class CBAsyncGen(object):
 
     TIMEOUT = 60  # seconds
 
-    def __init__(self, **kwargs):
+    def __init__(self, use_ssl=False, **kwargs):
         self.client = TxConnection(quiet=True, **kwargs)
         self.client.timeout = self.TIMEOUT
 
@@ -71,14 +71,20 @@ class CBGen(CBAsyncGen):
 
     TIMEOUT = 10  # seconds
 
-    def __init__(self, **kwargs):
-        self.client = Bucket(
-            'couchbase://{}:{}/{}'.format(kwargs['host'],
-                                          kwargs.get('port', 8091),
-                                          kwargs['bucket']),
-            password=kwargs['password'],
-            timeout=self.TIMEOUT,
-        )
+    def __init__(self, use_ssl=False, **kwargs):
+        connection_string = 'couchbase://{}/{}?password={}'
+
+        if use_ssl:
+            connection_string = connection_string.replace('couchbase',
+                                                          'couchbases')
+            connection_string += '&certpath=root.pem'
+
+        connection_string = connection_string.format(kwargs['host'],
+                                                     kwargs['bucket'],
+                                                     kwargs['password'])
+
+        self.client = Bucket(connection_string=connection_string)
+        self.client.timeout = self.TIMEOUT
 
         self.session = requests.Session()
         self.session.auth = (kwargs['username'], kwargs['password'])

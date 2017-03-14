@@ -464,6 +464,8 @@ class PhaseSettings(object):
 
     TIME = 3600 * 24
 
+    USE_SSL = 0
+
     DOC_GEN = 'basic'
 
     CREATES = 0
@@ -521,6 +523,7 @@ class PhaseSettings(object):
     def __init__(self, options):
         # Common settings
         self.time = int(options.get('time', self.TIME))
+        self.use_ssl = bool(int(options.get('use_ssl', self.USE_SSL)))
 
         # KV settings
         self.doc_gen = options.get('doc_gen', self.DOC_GEN)

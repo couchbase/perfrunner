@@ -603,3 +603,10 @@ class RestHelper(object):
             'roles': roles,
         }
         self.put(url=api, data=data)
+
+    def get_rbac_roles(self, host_port):
+        logger.info('Getting RBAC roles')
+
+        api = 'http://{}/settings/rbac/roles'.format(host_port)
+
+        return self.get(url=api).json()

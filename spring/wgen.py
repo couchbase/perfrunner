@@ -295,7 +295,8 @@ class KVWorker(Worker):
     def run_condition(self, curr_ops):
         return curr_ops.value < self.ws.ops and not self.time_to_stop()
 
-    def run(self, sid, lock, curr_ops, curr_items, deleted_items, current_hot_load_start=None, timer_elapse=None):
+    def run(self, sid, lock, curr_ops, curr_items, deleted_items,
+            current_hot_load_start=None, timer_elapse=None):
 
         if self.ws.throughput < float('inf'):
             self.target_time = float(self.BATCH_SIZE) * self.ws.workers / \
@@ -400,7 +401,7 @@ class AsyncKVWorker(KVWorker):
         d.addCallback(self.do_batch, cb, i)
         d.addErrback(self.error, cb, i)
 
-    def run(self, sid, lock, curr_ops, curr_items, deleted_items):
+    def run(self, sid, lock, curr_ops, curr_items, deleted_items, *args):
         set_cpu_afinity(sid)
 
         if self.ws.throughput < float('inf'):
@@ -506,7 +507,7 @@ class ViewWorker(Worker):
 
             self.reservoir.update(latency)
 
-    def run(self, sid, lock, curr_ops, curr_items, deleted_items):
+    def run(self, sid, lock, curr_ops, curr_items, deleted_items, *args):
         self.cb.start_updater()
 
         if self.throughput < float('inf'):
@@ -663,7 +664,8 @@ class N1QLWorker(Worker):
         elif self.ws.n1ql_op == 'rangeupdate':
             self.range_update()
 
-    def run(self, sid, lock, curr_ops, curr_items, deleted_items, cas_updated_items):
+    def run(self, sid, lock, curr_ops, curr_items, deleted_items,
+            cas_updated_items):
         if self.throughput < float('inf'):
             self.target_time = self.ws.n1ql_batch_size * self.total_workers / \
                 float(self.throughput)
@@ -781,7 +783,8 @@ class WorkloadGen(object):
                 args = (sid, lock, curr_ops, curr_items, deleted_items,
                         cas_updated_items)
             else:
-                args = (sid, lock, curr_ops, curr_items, deleted_items, current_hot_load_start, timer_elapse)
+                args = (sid, lock, curr_ops, curr_items, deleted_items,
+                        current_hot_load_start, timer_elapse)
 
             worker = worker_type(self.ws, self.ts, self.shutdown_event)
 

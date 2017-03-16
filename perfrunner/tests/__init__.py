@@ -77,17 +77,19 @@ class PerfTest(object):
 
         if exc_type != KeyboardInterrupt:
             self.check_core_dumps()
-
-            for master in self.cluster_spec.yield_masters():
-                if not self.rest.is_balanced(master):
-                    logger.interrupt('The cluster is not balanced')
-
-                self.check_failover(master)
+            self.check_rebalance()
 
     def download_certificate(self):
         cert = self.rest.get_certificate(self.master_node)
         with open(self.ROOT_CERTIFICATE, 'w') as fh:
             fh.write(cert)
+
+    def check_rebalance(self):
+        for master in self.cluster_spec.yield_masters():
+            if self.rest.is_not_balanced(master):
+                logger.interrupt('The cluster is not balanced')
+
+            self.check_failover(master)
 
     def check_failover(self, master):
         if hasattr(self, 'rebalance_settings'):

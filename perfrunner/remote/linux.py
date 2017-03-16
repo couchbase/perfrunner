@@ -414,3 +414,12 @@ class RemoteLinux(Remote):
         logger.info('Get indexer heap profile')
         cmd = "go tool pprof --text http://{}:9102/debug/pprof/heap".format(indexer)
         return run(cmd, pty=True)
+
+    @index_node
+    def get_indexer_rebalance_failure(self):
+        logger.info('Get indexer rebalance failure count')
+        data = run("grep 'indexer rebalance failure - ddl in progress'"
+                   " /opt/couchbase/var/lib/couchbase/logs/json_rpc.log", pty=True)
+        if not data.return_code:
+            return len(data.split("\n"))
+        return 0

@@ -200,14 +200,16 @@ class RestHelper(object):
         }
         self.post(url=api, data=data)
 
-    def is_balanced(self, host_port):
+    def get_counters(self, host_port):
         api = 'http://{}/pools/default'.format(host_port)
-        counters = self.get(url=api).json()['counters']
-        return counters.get('rebalance_start') == counters.get('rebalance_success')
+        return self.get(url=api).json()['counters']
+
+    def is_not_balanced(self, host_port):
+        counters = self.get_counters(host_port)
+        return counters.get('rebalance_start') - counters.get('rebalance_success')
 
     def get_failover_counter(self, host_port):
-        api = 'http://{}/pools/default'.format(host_port)
-        counters = self.get(url=api).json()['counters']
+        counters = self.get_counters(host_port)
         return counters.get('failover_node')
 
     def get_tasks(self, host_port):

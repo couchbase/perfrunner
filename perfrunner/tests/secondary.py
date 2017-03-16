@@ -60,6 +60,14 @@ class SecondaryIndexTest(PerfTest):
     def __del__(self):
         self.remote.kill_process_on_index_node("memblock")
 
+    def check_rebalance(self):
+        for master in self.cluster_spec.yield_masters():
+            failure_count = self.rest.is_not_balanced(master)
+            if failure_count and (failure_count != self.remote.get_indexer_rebalance_failure()):
+                logger.interrupt('The cluster is not balanced')
+
+            self.check_failover(master)
+
     def _block_memory(self):
         if self.block_memory > 0:
             self.remote.block_memory(self.block_memory)

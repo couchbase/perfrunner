@@ -1,0 +1,50 @@
+[test_case]
+test = perfrunner.tests.secondary.SecondaryRebalanceTest
+title = 1 bucket x 100M x 1KB, 100K KV ops/sec, single 2i index, Rebalance, MOI
+component = secondary
+category = moi_lat
+
+[stats]
+monitored_processes = projector
+
+[cluster]
+mem_quota = 30000
+index_mem_quota = 50000
+initial_nodes = 9
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[bucket]
+replica_number=0
+replica_index=0
+
+[bucket_extras]
+max_num_auxio = 16
+
+[load]
+items = 100000000
+size = 1024
+workers = 100
+
+[rebalance]
+nodes_after = 9
+start_after = 180
+stop_after = 180
+swap = 1
+
+[secondary]
+indexes = myindex:alt_email
+db = moi
+indexer.settings.storage_mode = memory_optimized
+indexer.settings.gc_percent = 200
+indexer.settings.max_cpu_percent = 4800
+
+[access]
+updates = 100
+items = 100000000
+existing_items = 100000000
+throughput = 100000
+workers = 80

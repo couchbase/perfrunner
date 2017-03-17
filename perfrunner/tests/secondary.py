@@ -9,6 +9,7 @@ from cbagent.stores import SerieslyStore
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.local import kill_process, run_cbindexperf
 from perfrunner.tests import PerfTest, TargetIterator
+from perfrunner.tests.rebalance import RebalanceTest
 
 
 class SecondaryIndexTest(PerfTest):
@@ -662,3 +663,31 @@ class SecondaryIndexingMultiScanTest(SecondaryIndexingScanLatencyTest):
         logger.info("Independent filters time taken: {}".format(independent_time))
 
         self.report_kpi(multifilter_time, independent_time)
+
+
+class SecondaryRebalanceTest(SecondaryIndexTest, RebalanceTest):
+    """
+    Measure swap rebalance time for indexer.
+    """
+
+    COLLECTORS = {}
+
+    def __init__(self, *args, **kwargs):
+        super(SecondaryRebalanceTest, self).__init__(*args, **kwargs)
+        self.rebalance_settings = self.test_config.rebalance_settings
+        self.rebalance_time = 0
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.compact_bucket()
+        self._build_secondaryindex()
+        self.run_access_for_2i(run_in_background=True)
+        self.rebalance_indexer()
+        self.report_kpi(self.rebalance_time)
+
+    def rebalance_indexer(self):
+        self._rebalance(services="index")
+
+    def _report_kpi(self, rebalance_time):
+        self.reporter.post_to_sf(rebalance_time)

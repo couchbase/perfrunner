@@ -19,6 +19,7 @@ from cbagent.collectors import (
     N1QLStats,
     Net,
     NSServer,
+    NSServerOverview,
     ObserveIndexLatency,
     ObserveSecondaryIndexLatency,
     ReservoirQueryLatency,
@@ -143,6 +144,7 @@ class CbAgent(object):
         self.processes = []
 
         self.add_collector(NSServer)
+        self.add_collector(NSServerOverview)
         self.add_collector(ActiveTasks)
 
         if test.remote is None or test.remote.os != 'Cygwin':

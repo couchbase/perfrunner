@@ -15,7 +15,7 @@ from observe import (
 )
 from n1ql_stats import N1QLStats
 from net import Net
-from ns_server import NSServer, XdcrStats
+from ns_server import NSServer, NSServerOverview, XdcrStats
 from ps import PS
 from reservoir import ReservoirQueryLatency
 from secondary_debugstats import (

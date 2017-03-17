@@ -12,7 +12,7 @@ class NSServer(Collector):
 
     def _get_stats(self, uri):
         samples = self.get_http(path=uri)  # get last minute samples
-        stats = dict()
+        stats = {}
 
         if samples["op"]["lastTStamp"] == 0:
             # Index and N1QL nodes don't have stats in ns_server
@@ -38,8 +38,29 @@ class NSServer(Collector):
         for bucket in self.get_buckets():
             self.mc.add_bucket(bucket)
 
-        for node in self.get_nodes():
-            self.mc.add_server(node)
+
+class NSServerOverview(NSServer):
+
+    METRICS = 'ops',
+
+    def _get_overview_stats(self):
+        overview = self.get_http(path='/pools/default/overviewStats')
+
+        stats = {}
+        for metric, values in overview.items():
+            stats[metric] = values[-1]  # only the most recent sample
+        return stats
+
+    def sample(self):
+        overview = self._get_overview_stats()
+        if not overview:
+            return
+
+        self.store.append(overview, cluster=self.cluster,
+                          collector=self.COLLECTOR)
+
+    def update_metadata(self):
+        self.update_metric_metadata(self.METRICS)
 
 
 class XdcrStats(Collector):

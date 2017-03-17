@@ -1,7 +1,5 @@
 import json
 import os.path
-import time
-from random import uniform
 
 from fabric import state
 from fabric.api import get, put, run, settings
@@ -12,27 +10,11 @@ from perfrunner.helpers.misc import uhex
 from perfrunner.remote import Remote
 from perfrunner.remote.context import (
     all_hosts,
-    all_kv_nodes,
     index_node,
     kv_node_cbindexperf,
     single_client,
     single_host,
 )
-
-
-class CurrentHostMutex:
-
-    def __init__(self):
-        with open("/tmp/current_host.txt", 'w') as f:
-            f.write("0")
-
-    @staticmethod
-    def next_host_index():
-        with open("/tmp/current_host.txt", 'r') as f:
-            next_host = f.readline()
-        with open("/tmp/current_host.txt", 'w') as f:
-            f.write((int(next_host) + 1).__str__())
-        return int(next_host)
 
 
 class RemoteLinux(Remote):
@@ -42,11 +24,6 @@ class RemoteLinux(Remote):
     PROCESSES = ('beam.smp', 'memcached', 'epmd', 'cbq-engine', 'indexer',
                  'cbft', 'goport', 'goxdcr', 'couch_view_index_updater',
                  'moxi', 'spring', 'memblock')
-
-    def __init__(self, cluster_spec, test_config, os):
-        super(RemoteLinux, self).__init__(cluster_spec, test_config, os)
-
-        self.current_host = CurrentHostMutex()
 
     @single_host
     def detect_pkg(self):
@@ -113,70 +90,6 @@ class RemoteLinux(Remote):
 
         # build indexes
         self.build_index(index_nodes[0], bucket_indexes)
-
-    @all_kv_nodes
-    def run_spring_on_kv(self, ls, silent=False):
-
-        def calculate_existing_items():
-            if ls.creates == 100:
-                return operation * host + ls.existing_items
-            return ls.existing_items
-
-        throughput = int(ls.throughput) if ls.throughput != float('inf') \
-            else ls.throughput
-        items_in_working_set = int(ls.working_set)
-        operations_to_hit_working_set = ls.working_set_access
-        logger.info("running spring on kv nodes")
-        number_of_kv_nodes = self.kv_hosts.__len__()
-        existing_item = operation = 0
-        sleep_time = uniform(1, number_of_kv_nodes)
-        time.sleep(sleep_time)
-        host = self.current_host.next_host_index()
-        logger.info("current_host_index {}".format(host))
-        if host != number_of_kv_nodes - 1:
-            if (ls.creates != 0 or ls.reads != 0 or ls.updates != 0 or ls.deletes != 0) \
-                    and ls.items != float('inf'):
-                operation = int(ls.items / (number_of_kv_nodes * 100)) * 100
-                existing_item = calculate_existing_items()
-        else:
-            if (ls.creates != 0 or ls.reads != 0 or ls.updates != 0 or ls.deletes != 0) \
-                    and ls.items != float('inf'):
-                operation = \
-                    ls.items - (int(ls.items / (number_of_kv_nodes * 100)) * 100 * (number_of_kv_nodes - 1))
-                existing_item = calculate_existing_items()
-                self.current_host = CurrentHostMutex()
-        time.sleep(number_of_kv_nodes * 2 - sleep_time)
-        cmdstr = "spring -c {} -r {} -u {} -d {} -e {} -s {} -i {} -w {} -W {} -n {}"\
-            .format(ls.creates, ls.reads, ls.updates, ls.deletes, ls.expiration, ls.size, existing_item,
-                    items_in_working_set, operations_to_hit_working_set, ls.spring_workers, self.hosts[0])
-        if operation != 0:
-            cmdstr += " -o {}".format(operation)
-        if throughput != float('inf'):
-            thrput = int(throughput / (number_of_kv_nodes * 100)) * 100
-            cmdstr += " -t {}".format(thrput)
-        cmdstr += " cb://Administrator:password@{}:8091/bucket-1".format(self.hosts[0])
-        pty = True
-        if silent:
-            cmdstr += " >/tmp/springlog.log 2>&1 &"
-            pty = False
-        logger.info(cmdstr)
-        result = run(cmdstr, pty=pty)
-        if silent:
-            time.sleep(10)
-            res = run(r"ps aux | grep -ie spring | awk '{print $11}'")
-            if "python" not in res:
-                raise Exception("Spring not run on KV. {}".format(res))
-        else:
-            if "Current progress: 100.00 %" not in result and \
-                    "Finished: worker-{}".format(ls.spring_workers - 1) not in result:
-                raise Exception("Spring not run on KV")
-
-    @all_kv_nodes
-    def check_spring_running(self):
-        cmdstr = r"ps aux | grep -ie spring | awk '{print $11}'"
-        result = run(cmdstr)
-        logger.info(result)
-        logger.info(result.stdout)
 
     @all_hosts
     def reset_swap(self):

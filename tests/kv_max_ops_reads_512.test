@@ -3,7 +3,6 @@ test = perfrunner.tests.kv.PillowFightTest
 title = Max ops/sec, cbc-pillowfight, 2 nodes, 80/20 R/W, 512B binary items
 component = kv
 category = max_ops
-use_workers = 0
 
 [cluster]
 mem_quota = 51200

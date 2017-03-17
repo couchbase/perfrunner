@@ -3,7 +3,6 @@ test = perfrunner.tests.kv.MemoryOverheadTest
 title = Memory overhead (%%), 1 bucket x 20M x 1KB
 component = kv
 category = memory
-use_workers = 0
 
 [stats]
 interval = 1

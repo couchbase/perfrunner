@@ -6,13 +6,13 @@ from logger import logger
 from perfrunner.helpers.cbmonitor import CbAgent
 from perfrunner.helpers.memcached import MemcachedHelper
 from perfrunner.helpers.metrics import MetricHelper
-from perfrunner.helpers.misc import log_phase, target_hash, pretty_dict
+from perfrunner.helpers.misc import log_action, target_hash, pretty_dict
 from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.reporter import Reporter
 from perfrunner.helpers.rest import RestHelper
 from perfrunner.helpers.restore import RestoreHelper
-from perfrunner.helpers.worker import WorkerManager
+from perfrunner.helpers.worker import spring_task, WorkerManager
 from perfrunner.settings import TargetSettings
 
 
@@ -128,44 +128,43 @@ class PerfTest(object):
         self.restore_helper.restore()
         self.restore_helper.warmup()
 
-    def load(self, load_settings=None, target_iterator=None):
-        if load_settings is None:
-            load_settings = self.test_config.load_settings
+    def run_phase(self, phase, task, settings, target_iterator):
+        log_action(phase, settings)
+        self.worker_manager.run_tasks(task, settings, target_iterator)
+        self.worker_manager.wait_for_workers()
+
+    def load(self, task=spring_task, settings=None, target_iterator=None):
+        if settings is None:
+            settings = self.test_config.load_settings
         if target_iterator is None:
             target_iterator = self.target_iterator
 
-        log_phase('load phase', load_settings)
-        self.worker_manager.run_workload(load_settings, target_iterator)
-        self.worker_manager.wait_for_workers()
+        self.run_phase('load phase', task, settings, target_iterator)
 
-    def hot_load(self):
-        hot_load_settings = self.test_config.hot_load_settings
+    def hot_load(self, task=spring_task):
+        settings = self.test_config.hot_load_settings
 
-        log_phase('hot load phase', hot_load_settings)
-        self.worker_manager.run_workload(hot_load_settings,
-                                         self.target_iterator)
-        self.worker_manager.wait_for_workers()
+        self.run_phase('load phase', task, settings, self.target_iterator)
 
-    def access(self, access_settings=None):
-        if access_settings is None:
-            access_settings = self.test_config.access_settings
+    def access(self, task=spring_task, settings=None):
+        if settings is None:
+            settings = self.test_config.access_settings
 
-        log_phase('access phase', access_settings)
-        self.worker_manager.run_workload(access_settings, self.target_iterator)
-        self.worker_manager.wait_for_workers()
+        self.run_phase('access phase', task, settings, self.target_iterator)
 
-    def access_bg(self, access_settings=None, target_iterator=None):
-        if access_settings is None:
-            access_settings = self.test_config.access_settings
+    def access_bg(self, task=spring_task, settings=None, target_iterator=None):
+        if settings is None:
+            settings = self.test_config.access_settings
         if target_iterator is None:
             target_iterator = self.target_iterator
 
-        log_phase('access phase in background', access_settings)
-        access_settings.index_type = self.test_config.index_settings.index_type
-        access_settings.ddocs = getattr(self, 'ddocs', None)
-        self.worker_manager.run_workload(access_settings,
-                                         target_iterator,
-                                         timer=access_settings.time)
+        settings.index_type = self.test_config.index_settings.index_type
+        settings.ddocs = getattr(self, 'ddocs', None)
+
+        log_action('access phase in background', settings)
+
+        self.worker_manager.run_tasks(task, settings, target_iterator,
+                                      timer=settings.time)
 
     def timer(self):
         access_settings = self.test_config.access_settings

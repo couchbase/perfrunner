@@ -9,9 +9,13 @@ from logger import logger
 from sqlalchemy import create_engine
 
 from perfrunner import celerylocal, celeryremote
-from perfrunner.helpers.misc import log_phase, uhex
+from perfrunner.helpers.misc import log_action, uhex
 from perfrunner.settings import REPO
-from spring.wgen import WorkloadGen
+from perfrunner.workloads import spring_workload
+from perfrunner.workloads.pillowfight import (
+    pillowfight_data_load,
+    pillowfight_workload,
+)
 
 celery = Celery('workers')
 if '--remote' in sys.argv or '-C' in sys.argv:
@@ -22,9 +26,18 @@ else:
 
 
 @celery.task
-def task_run_workload(settings, target, timer):
-    wg = WorkloadGen(settings, target, timer=timer)
-    wg.run()
+def spring_task(*args, **kwargs):
+    spring_workload(*args, **kwargs)
+
+
+@celery.task
+def pillowfight_data_load_task(*args, **kwargs):
+    pillowfight_data_load(*args, **kwargs)
+
+
+@celery.task
+def pillowfight_task(*args, **kwargs):
+    pillowfight_workload(*args, **kwargs)
 
 
 class WorkerManager(object):
@@ -85,16 +98,15 @@ class RemoteWorkerManager(object):
                     '&>/tmp/worker_{1}.log &'.format(temp_dir, qname, worker),
                     pty=False)
 
-    def run_workload(self, settings, target_iterator, timer=None,
-                     run_workload=task_run_workload):
+    def run_tasks(self, task, task_settings, target_iterator, timer=None):
         self.workers = []
         for target in target_iterator:
-            log_phase('workload generator', settings)
+            log_action('Celery task', task_settings)
 
             qname = '{}-{}'.format(target.node.split(':')[0], target.bucket)
             queue = Queue(name=qname)
-            worker = run_workload.apply_async(
-                args=(settings, target, timer),
+            worker = task.apply_async(
+                args=(task_settings, target, timer),
                 queue=queue.name, expires=timer,
             )
             self.workers.append(worker)

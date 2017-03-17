@@ -15,8 +15,8 @@ def pretty_dict(d):
                       default=lambda o: o.__dict__)
 
 
-def log_phase(phase, settings):
-    logger.info('Running {}: {}'.format(phase, pretty_dict(settings)))
+def log_action(action, settings):
+    logger.info('Running {}: {}'.format(action, pretty_dict(settings)))
 
 
 def target_hash(*args):

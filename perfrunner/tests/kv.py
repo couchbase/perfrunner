@@ -9,8 +9,11 @@ from logger import logger
 from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
 
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.helpers.local import run_cbc_pillowfight
 from perfrunner.helpers.misc import pretty_dict, uhex
+from perfrunner.helpers.worker import (
+    pillowfight_data_load_task,
+    pillowfight_task,
+)
 from perfrunner.tests import PerfTest
 from perfrunner.workloads.pathoGen import PathoGen
 from perfrunner.workloads.revAB.__main__ import produce_ab
@@ -160,8 +163,8 @@ class DrainTest(KVTest):
 class InitialLoadTest(DrainTest):
 
     @with_stats
-    def load(self, *args):
-        super(KVTest, self).load(*args)
+    def load(self, *args, **kwargs):
+        super(KVTest, self).load(*args, **kwargs)
 
     def run(self):
         self.load()
@@ -538,37 +541,14 @@ class PillowFightTest(PerfTest):
 
     """Uses cbc-pillowfight from libcouchbase to drive cluster."""
 
+    ALL_BUCKETS = True
+
     def load(self, *args):
-        settings = self.test_config.load_settings
-
-        for target in self.target_iterator:
-            host, _ = target.node.split(':')
-
-            run_cbc_pillowfight(host=host,
-                                bucket=target.bucket,
-                                password=self.test_config.bucket.password,
-                                num_items=settings.items,
-                                num_threads=settings.workers,
-                                num_cycles=settings.iterations,
-                                size=settings.size,
-                                writes=settings.creates,
-                                populate=True)
+        PerfTest.load(self, task=pillowfight_data_load_task)
 
     @with_stats
     def access(self, *args):
-        settings = self.test_config.access_settings
-
-        for target in self.target_iterator:
-            host, _ = target.node.split(':')
-
-            run_cbc_pillowfight(host=host,
-                                bucket=target.bucket,
-                                password=self.test_config.bucket.password,
-                                num_items=settings.items,
-                                num_threads=settings.workers,
-                                num_cycles=settings.iterations,
-                                size=settings.size,
-                                writes=settings.updates)
+        PerfTest.access(self, task=pillowfight_task)
 
     def _report_kpi(self):
         self.reporter.post_to_sf(
@@ -582,28 +562,6 @@ class PillowFightTest(PerfTest):
         self.access()
 
         self.report_kpi()
-
-
-class PillowFightTLSTest(PillowFightTest):
-
-    @with_stats
-    def access(self, *args):
-        self.download_certificate()
-
-        settings = self.test_config.access_settings
-
-        for target in self.target_iterator:
-            host, _ = target.node.split(':')
-
-            run_cbc_pillowfight(host=host,
-                                bucket=target.bucket,
-                                password=self.test_config.bucket.password,
-                                num_items=settings.items,
-                                num_threads=settings.workers,
-                                num_cycles=settings.iterations,
-                                size=settings.size,
-                                writes=settings.updates,
-                                certificate=self.ROOT_CERTIFICATE)
 
 
 class CompactionTest(KVTest):

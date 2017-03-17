@@ -1,7 +1,7 @@
 from time import sleep
 
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.helpers.misc import log_phase, target_hash
+from perfrunner.helpers.misc import target_hash
 from perfrunner.settings import TargetSettings
 from perfrunner.tests import PerfTest, TargetIterator
 
@@ -142,13 +142,10 @@ class UniDirXdcrTest(XdcrTest):
                                               prefix='symmetric')
 
     def load(self, *args):
-        load_settings = self.test_config.load_settings
-        log_phase('load phase', load_settings)
         src_target_iterator = SrcTargetIterator(self.cluster_spec,
                                                 self.test_config,
                                                 prefix='symmetric')
-        self.worker_manager.run_workload(load_settings, src_target_iterator)
-        self.worker_manager.wait_for_workers()
+        super(UniDirXdcrTest, self).load(target_iterator=src_target_iterator)
 
 
 class XdcrInitTest(UniDirXdcrTest):
@@ -161,12 +158,9 @@ class XdcrInitTest(UniDirXdcrTest):
     COLLECTORS = {'xdcr_stats': True}
 
     def load(self):
-        load_settings = self.test_config.load_settings
-        log_phase('load phase', load_settings)
         src_target_iterator = SrcTargetIterator(self.cluster_spec,
                                                 self.test_config)
-        self.worker_manager.run_workload(load_settings, src_target_iterator)
-        self.worker_manager.wait_for_workers()
+        super(UniDirXdcrTest, self).load(target_iterator=src_target_iterator)
 
     @with_stats
     def init_xdcr(self):

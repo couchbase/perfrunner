@@ -212,7 +212,7 @@ def cbtransfer_import_data(master_node, cluster_spec, bucket=''):
 
 def run_cbc_pillowfight(host, bucket, password,
                         num_items, num_threads, num_cycles, size, writes,
-                        populate=False, certificate=None):
+                        populate=False, use_ssl=False):
     cmd = 'cbc-pillowfight ' \
         '--password {password} ' \
         '--batch-size 1000 ' \
@@ -221,8 +221,8 @@ def run_cbc_pillowfight(host, bucket, password,
         '--min-size {size} ' \
         '--max-size {size} ' \
 
-    if certificate:
-        cmd += '--spec couchbases://{host}/{bucket} --certpath {certificate} '
+    if use_ssl:
+        cmd += '--spec couchbases://{host}/{bucket} --certpath root.pem '
     else:
         cmd += '--spec couchbase://{host}/{bucket} '
 
@@ -236,8 +236,7 @@ def run_cbc_pillowfight(host, bucket, password,
 
     cmd = cmd.format(host=host, bucket=bucket, password=password,
                      num_items=num_items, num_threads=num_threads,
-                     num_cycles=num_cycles, size=size, writes=writes,
-                     certificate=certificate)
+                     num_cycles=num_cycles, size=size, writes=writes)
 
     logger.info('Running: {}'.format(cmd))
     local(cmd, capture=False)

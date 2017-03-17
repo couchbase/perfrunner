@@ -170,11 +170,10 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
 
     @with_stats
     def build_incrindex(self):
-        access_settings = self.test_config.access_settings
-        load_settings = self.test_config.load_settings
-        self.worker_manager.run_workload(access_settings, self.target_iterator)
-        self.worker_manager.wait_for_workers()
-        numitems = load_settings.items + access_settings.items
+        self.access()
+
+        numitems = self.test_config.load_settings.items + \
+            self.test_config.access_settings.items
         self.monitor.wait_for_secindex_incr_build(self.index_nodes, self.bucket,
                                                   self.indexes.keys(), numitems)
 
@@ -229,13 +228,12 @@ class MultipleIncrementalSecondaryIndexTest(InitialandIncrementalSecondaryIndexT
 
     @with_stats
     def build_incrindex_multiple_times(self, num_times):
-        access_settings = self.test_config.access_settings
-        load_settings = self.test_config.load_settings
+        numitems = self.test_config.load_settings.items + \
+            self.test_config.access_settings.items
 
         for i in range(1, num_times + 1):
-            self.worker_manager.run_workload(access_settings, self.target_iterator)
-            self.worker_manager.wait_for_workers()
-            numitems = load_settings.items + access_settings.items
+            self.access()
+
             self.monitor.wait_for_secindex_incr_build(self.index_nodes, self.bucket,
                                                       self.indexes.keys(), numitems)
             self.disk_usage[i] = \
@@ -543,9 +541,8 @@ class SecondaryIndexingLatencyTest(SecondaryIndexTest):
         samples = []
 
         while num_samples != 0:
-            access_settings = self.test_config.access_settings
-            self.worker_manager.run_workload(access_settings, self.target_iterator)
-            self.worker_manager.wait_for_workers()
+            self.access()
+
             time_before = time.time()
             status = self.apply_scanworkload()
             time_after = time.time()

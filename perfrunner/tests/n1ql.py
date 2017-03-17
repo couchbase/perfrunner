@@ -52,15 +52,16 @@ class N1QLTest(PerfTest):
         load_settings.items /= 2
 
         iterator = TargetIterator(self.cluster_spec, self.test_config, 'n1ql')
-        super(N1QLTest, self).load(load_settings, iterator)
-        super(N1QLTest, self).load(load_settings)
+        super(N1QLTest, self).load(settings=load_settings,
+                                   target_iterator=iterator)
+        super(N1QLTest, self).load(settings=load_settings)
 
     def access_bg(self, *args):
         self.download_certificate()
 
         access_settings = self.test_config.access_settings
         access_settings.items /= 2
-        super(N1QLTest, self).access_bg(access_settings=access_settings)
+        super(N1QLTest, self).access_bg(settings=access_settings)
 
     def run(self):
         self.load()
@@ -96,14 +97,17 @@ class N1QLJoinTest(N1QLThroughputTest):
 
     def load_regular(self, load_settings, target):
         load_settings.items /= 2
-        super(N1QLTest, self).load(load_settings, (target,))
+        super(N1QLTest, self).load(settings=load_settings,
+                                   target_iterator=(target, ))
         target.prefix = 'n1ql'
-        super(N1QLTest, self).load(load_settings, (target,))
+        super(N1QLTest, self).load(settings=load_settings,
+                                   target_iterator=(target, ))
 
     def load_categories(self, load_settings, target):
         load_settings.items = load_settings.num_categories
         target.prefix = 'n1ql'
-        super(N1QLTest, self).load(load_settings, (target,))
+        super(N1QLTest, self).load(settings=load_settings,
+                                   target_iterator=(target, ))
 
     def load(self, *args):
         doc_gens = self.test_config.load_settings.doc_gen.split(',')
@@ -130,7 +134,7 @@ class N1QLJoinTest(N1QLThroughputTest):
             if doc_gen != access_settings.n1ql_gen:
                 access_settings.n1ql_workers = 0
 
-            super(N1QLTest, self).access_bg(access_settings=access_settings,
+            super(N1QLTest, self).access_bg(settings=access_settings,
                                             target_iterator=(target, ))
 
     def _report_kpi(self):

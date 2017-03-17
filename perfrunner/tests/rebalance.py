@@ -6,7 +6,7 @@ from decorator import decorator
 from logger import logger
 
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.helpers.misc import log_phase, server_group
+from perfrunner.helpers.misc import server_group
 from perfrunner.tests import PerfTest
 from perfrunner.tests.views import QueryTest
 from perfrunner.tests.xdcr import (
@@ -459,13 +459,9 @@ class RebalanceWithXdcrTest(RebalanceTest, XdcrInitTest):
         self.time_elapsed = int(time.time() - start)
 
     def load_dest(self):
-        load_settings = self.test_config.load_settings
-        log_phase('load phase', load_settings)
-
         dest_target_iterator = DestTargetIterator(self.cluster_spec,
                                                   self.test_config)
-        self.worker_manager.run_workload(load_settings, dest_target_iterator)
-        self.worker_manager.wait_for_workers()
+        super(RebalanceWithXdcrTest, self).load(target_iterator=dest_target_iterator)
 
     def _report_kpi(self, *args):
         rate = self.metric_helper.calc_avg_replication_rate(self.time_elapsed)

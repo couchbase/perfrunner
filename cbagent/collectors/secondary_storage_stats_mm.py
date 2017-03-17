@@ -30,6 +30,6 @@ class SecondaryStorageStatsMM(SecondaryStats):
     def sample(self):
         stats = self._get_secondary_storage_stats_mm()
         if stats:
-            self.update_metric_metadata(self.METRICS)
+            self.update_metric_metadata(stats.keys())
             self.store.append(stats, cluster=self.cluster,
                               collector=self.COLLECTOR)

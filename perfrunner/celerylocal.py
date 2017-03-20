@@ -1,3 +1,3 @@
-BROKER_URL = 'sqla+sqlite:////tmp/perfrunner.db'
+BROKER_URL = 'sqla+sqlite:///perfrunner.db'
 CELERY_RESULT_BACKEND = 'database'
-CELERY_RESULT_DBURI = 'sqlite:////tmp/results.db'
+CELERY_RESULT_DBURI = 'sqlite:///results.db'

@@ -1,16 +1,16 @@
+import os.path
 import sys
+from itertools import cycle
 from time import sleep
 
 from celery import Celery
-from fabric import state
-from fabric.api import cd, local, quiet, run, settings
 from kombu import Queue
 from logger import logger
 from sqlalchemy import create_engine
 
 from perfrunner import celerylocal, celeryremote
+from perfrunner.helpers import local
 from perfrunner.helpers.misc import log_action, uhex
-from perfrunner.settings import REPO
 from perfrunner.workloads import spring_workload
 from perfrunner.workloads.pillowfight import (
     pillowfight_data_load,
@@ -53,50 +53,38 @@ class RemoteWorkerManager(object):
 
     RACE_DELAY = 2
 
-    def __init__(self, cluster_spec, test_config):
+    def __init__(self, cluster_spec, test_config, remote_manager):
         self.cluster_spec = cluster_spec
         self.buckets = test_config.buckets
+        self.remote = remote_manager
 
-        self.temp_dir = '/tmp/{}'.format(uhex()[:12])
-        logger.info("Using prefix for temp_dir (worker_dir): {}".format(self.temp_dir))
-        self.user, self.password = cluster_spec.client_credentials
-        self.sync = None
-        with settings(user=self.user, password=self.password):
-            self.initialize_project()
-            self.start()
+        self.temp_dir = os.path.join('/tmp', uhex())
 
-    def initialize_project(self):
-        for worker, master in zip(self.cluster_spec.workers,
-                                  self.cluster_spec.yield_masters()):
-            state.env.host_string = worker
-            run('killall -9 celery', quiet=True)
+        self.terminate()
+        self.start()
+
+    def new_worker_pool(self):
+        return cycle(self.cluster_spec.workers)
+
+    def yield_queues(self):
+        for master in self.cluster_spec.yield_masters():
             for bucket in self.buckets:
-                logger.info('Intializing remote worker environment')
-
-                qname = '{}-{}'.format(master.split(':')[0], bucket)
-                temp_dir = '{}-{}'.format(self.temp_dir, qname)
-
-                run('mkdir {}'.format(temp_dir))
-                with cd(temp_dir):
-                    run('git clone -q {}'.format(REPO))
-                with cd('{}/perfrunner'.format(temp_dir)):
-                    run('make')
+                yield '{}-{}'.format(master.split(':')[0], bucket)
 
     def start(self):
-        for worker, master in zip(self.cluster_spec.workers,
-                                  self.cluster_spec.yield_masters()):
-            state.env.host_string = worker
-            for bucket in self.buckets:
-                qname = '{}-{}'.format(master.split(':')[0], bucket)
-                logger.info('Starting remote Celery worker: {}'.format(qname))
+        logger.info('Initializing remote worker environment')
 
-                temp_dir = '{}-{}/perfrunner'.format(self.temp_dir, qname)
-                run('cd {0}; ulimit -n 10240; '
-                    'PYTHONOPTIMIZE=1 C_FORCE_ROOT=1 '
-                    'nohup env/bin/celery worker '
-                    '-A perfrunner.helpers.worker -Q {1} -c 1 -n {2} -C '
-                    '&>/tmp/worker_{1}.log &'.format(temp_dir, qname, worker),
-                    pty=False)
+        worker_pool = cycle(self.cluster_spec.workers)
+
+        for queue in self.yield_queues():
+            worker = worker_pool.next()
+            logger.info('Starting Celery worker, host={}, queue={}'
+                        .format(worker, queue))
+
+            worker_home = os.path.join(self.temp_dir, queue)
+
+            self.remote.init_repo(worker, worker_home)
+            self.remote.start_celery_worker(self, worker, worker_home, queue)
 
     def run_tasks(self, task, task_settings, target_iterator, timer=None):
         self.workers = []
@@ -119,25 +107,15 @@ class RemoteWorkerManager(object):
         logger.info('All workers are done')
 
     def terminate(self):
-        for worker, master in zip(self.cluster_spec.workers,
-                                  self.cluster_spec.yield_masters()):
-            state.env.host_string = worker
-            for bucket in self.buckets:
-                with settings(user=self.user, password=self.password):
-                    logger.info('Terminating remote Celery worker')
-                    run('killall -9 celery', quiet=True)
-
-                    logger.info('Cleaning up remote worker environment')
-                    qname = '{}-{}'.format(master.split(':')[0], bucket)
-                    temp_dir = '{}-{}'.format(self.temp_dir, qname)
-                    run('rm -fr {}'.format(temp_dir))
+        logger.info('Terminating Celery workers')
+        self.remote.clean_clients(self.temp_dir)
 
 
 class LocalWorkerManager(RemoteWorkerManager):
 
-    SQLITE_DBS = ('/tmp/perfrunner.db', '/tmp/results.db')
+    SQLITE_DBS = 'perfrunner.db', 'results.db'
 
-    def __init__(self, cluster_spec, test_config):
+    def __init__(self, cluster_spec, test_config, *args):
         self.cluster_spec = cluster_spec
         self.buckets = test_config.buckets
 
@@ -152,19 +130,11 @@ class LocalWorkerManager(RemoteWorkerManager):
             engine.execute('PRAGMA synchronous=OFF;')
 
     def start(self):
-        for master in self.cluster_spec.yield_masters():
-            for bucket in self.buckets:
-                qname = '{}-{}'.format(master.split(':')[0], bucket)
-                logger.info('Starting local Celery worker: {}'.format(qname))
-                local('PYTHONOPTIMIZE=1 C_FORCE_ROOT=1 '
-                      'nohup env/bin/celery worker '
-                      '-A perfrunner.helpers.worker -Q {0} -c 1 '
-                      '>/tmp/worker_{0}.log &'.format(qname))
-                sleep(self.RACE_DELAY)
+        for queue in self.yield_queues():
+            logger.info('Starting Celery worker, queue={}'.format(queue))
+            local.start_celery_worker(queue)
+            sleep(self.RACE_DELAY)
 
     def terminate(self):
-        logger.info('Terminating local Celery workers')
-        with quiet():
-            local('killall -9 celery')
-            for db in self.SQLITE_DBS:
-                local('rm -fr {}'.format(db))
+        logger.info('Terminating Celery workers')
+        local.kill_process('celery')

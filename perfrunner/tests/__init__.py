@@ -64,7 +64,8 @@ class PerfTest(object):
         self.master_events = []
 
         if self.test_config.test_case.use_workers:
-            self.worker_manager = WorkerManager(cluster_spec, test_config)
+            self.worker_manager = WorkerManager(cluster_spec, test_config,
+                                                self.remote)
 
     def __enter__(self):
         return self

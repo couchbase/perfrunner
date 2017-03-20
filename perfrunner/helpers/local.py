@@ -1,7 +1,7 @@
 import os.path
 from sys import platform
 
-from fabric.api import lcd, local, quiet, settings, shell_env
+from fabric.api import lcd, local, quiet, shell_env
 from logger import logger
 
 
@@ -317,6 +317,13 @@ def run_cbindexperf(path_to_tool, node, rest_username, rest_password, configfile
 
 
 def kill_process(process):
-    logger.info('Killing following process: {}'.format(process))
-    with settings(warn_only=True):
-        local("killall {}".format(process))
+    logger.info('Killing the following process: {}'.format(process))
+    with quiet():
+        local("killall -9 {}".format(process))
+
+
+def start_celery_worker(queue):
+    with shell_env(PYTHONOPTIMIZE='1', C_FORCE_ROOT='1'):
+        local('nohup env/bin/celery worker '
+              '-A perfrunner.helpers.worker -Q {0} -c 1 > worker-{0}.log &'
+              .format(queue))

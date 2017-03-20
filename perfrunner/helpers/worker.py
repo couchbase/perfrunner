@@ -16,6 +16,8 @@ from perfrunner.workloads.pillowfight import (
     pillowfight_data_load,
     pillowfight_workload,
 )
+from perfrunner.workloads.ycsb import ycsb_data_load, ycsb_workload
+
 
 celery = Celery('workers')
 if '--remote' in sys.argv or '-C' in sys.argv:
@@ -38,6 +40,16 @@ def pillowfight_data_load_task(*args, **kwargs):
 @celery.task
 def pillowfight_task(*args, **kwargs):
     pillowfight_workload(*args, **kwargs)
+
+
+@celery.task
+def ycsb_data_load_task(*args, **kwargs):
+    ycsb_data_load(*args, **kwargs)
+
+
+@celery.task
+def ycsb_task(*args, **kwargs):
+    ycsb_workload(*args, **kwargs)
 
 
 class WorkerManager(object):

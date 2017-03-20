@@ -604,6 +604,9 @@ class PhaseSettings(object):
         # FTS settings
         self.fts_config = None
 
+        # YCSB settings
+        self.workload_path = options.get('workload_path')
+
     def define_queries(self, config):
         queries = []
         for query_name in self.n1ql_queries:

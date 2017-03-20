@@ -2,7 +2,6 @@
 test = perfdaily.ycsb.YCSBN1QLTest
 title = Workload E, 10M items, MOI, single node
 component = YCSB
-use_workers = 0
 
 [stats]
 monitored_processes = projector
@@ -19,10 +18,8 @@ replica_number = 0
 [secondary]
 indexer.settings.storage_mode = memory_optimized
 
-[ycsb]
-workload_path = workloads/workloade
-
 [load]
+workload_path = workloads/workloade
 items = 10000000
 workers = 160
 
@@ -31,6 +28,7 @@ indexes =
     primary_idx::CREATE PRIMARY INDEX {name} ON `{bucket}`;
 
 [access]
+workload_path = workloads/workloade
 items = 10000000
 workers = 160
 ops = 10000000

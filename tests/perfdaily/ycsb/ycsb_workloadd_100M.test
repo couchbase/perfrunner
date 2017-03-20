@@ -2,7 +2,6 @@
 test = perfdaily.ycsb.YCSBTest
 title = Workload D, 100M items, two nodes
 component = YCSB
-use_workers = 0
 
 [cluster]
 mem_quota = 51200
@@ -10,14 +9,13 @@ initial_nodes = 2
 num_buckets = 1
 throttle_cpu = 1
 
-[ycsb]
-workload_path = workloads/workloadd
-
 [load]
+workload_path = workloads/workloadd
 items = 100000000
 workers = 25
 
 [access]
+workload_path = workloads/workloadd
 items = 100000000
 workers = 160
 ops = 1000000000

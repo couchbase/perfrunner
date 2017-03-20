@@ -401,7 +401,8 @@ class AsyncKVWorker(KVWorker):
         d.addCallback(self.do_batch, cb, i)
         d.addErrback(self.error, cb, i)
 
-    def run(self, sid, lock, curr_ops, curr_items, deleted_items, *args):
+    def run(self, sid, lock, curr_ops, curr_items, deleted_items,
+            current_hot_load_start=None, timer_elapse=None):
         set_cpu_afinity(sid)
 
         if self.ws.throughput < float('inf'):
@@ -409,11 +410,14 @@ class AsyncKVWorker(KVWorker):
                                 float(self.ws.throughput))
         else:
             self.target_time = None
+
         self.sid = sid
         self.lock = lock
         self.curr_items = curr_items
         self.deleted_items = deleted_items
         self.curr_ops = curr_ops
+        self.current_hot_load_start = current_hot_load_start
+        self.timer_elapse = timer_elapse
 
         self.seed()
 

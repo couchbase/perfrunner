@@ -1,4 +1,4 @@
-from fabric.api import cd, run, settings
+from fabric.api import cd, run, settings, shell_env
 from logger import logger
 
 from perfrunner.remote.context import all_clients
@@ -39,9 +39,9 @@ class Remote(object):
 
     def start_celery_worker(self, worker, worker_home, queue):
         with settings(host_string=worker):
-            run('cd {0}; ulimit -n 10240; '
-                'PYTHONOPTIMIZE=1 C_FORCE_ROOT=1 '
-                'nohup env/bin/celery worker '
-                '-A perfrunner.helpers.worker -Q {1} -c 1 -n {2} -C '
-                '&>worker_{1}.log &'.format(worker_home, queue, worker),
-                pty=False)
+            with cd(worker_home):
+                with shell_env(PYTHONOPTIMIZE='1', C_FORCE_ROOT='1'):
+                    run('ulimit -n 10240; '
+                        'nohup env/bin/celery worker '
+                        '-A perfrunner.helpers.worker -Q {0} -c 1 -n {1} -C '
+                        '&>worker_{0}.log &'.format(queue, worker), pty=False)

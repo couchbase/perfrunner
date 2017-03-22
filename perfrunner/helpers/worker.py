@@ -94,9 +94,10 @@ class RemoteWorkerManager(object):
                         .format(worker, queue))
 
             worker_home = os.path.join(self.temp_dir, queue)
+            perfrunner_home = os.path.join(worker_home, 'perfrunner')
 
             self.remote.init_repo(worker, worker_home)
-            self.remote.start_celery_worker(self, worker, worker_home, queue)
+            self.remote.start_celery_worker(worker, perfrunner_home, queue)
 
     def run_tasks(self, task, task_settings, target_iterator, timer=None):
         self.workers = []

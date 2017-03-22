@@ -24,7 +24,7 @@ class Remote(object):
 
     @all_clients
     def clean_clients(self, temp_dir):
-        run('killall -9 celery')
+        run('killall -9 celery', quiet=True)
         run('rm -fr {}'.format(temp_dir))
 
     def init_repo(self, worker, worker_home):

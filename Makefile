@@ -7,10 +7,10 @@ ENV := env
 GOVENDOR := ${GOPATH}/bin/govendor
 
 build:
-	virtualenv -p ${PYTHON} ${ENV}
+	virtualenv --quiet --python ${PYTHON} ${ENV}
 	${ENV}/bin/pip install --upgrade --quiet pip wheel
 	${ENV}/bin/pip install --quiet -r requirements.txt
-	${ENV}/bin/python setup.py install
+	${ENV}/bin/python setup.py --quiet install
 	pwd > ${ENV}/lib/${PYTHON}/site-packages/perfrunner.pth
 
 clean:

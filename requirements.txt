@@ -2,7 +2,7 @@ ansible==2.1.0.0
 awscli==1.10.58
 celery==3.1.23
 cffi==1.7.0
-couchbase==2.2.0
+couchbase==2.2.1
 cryptography==1.4
 decorator
 pycrypto==2.6.1

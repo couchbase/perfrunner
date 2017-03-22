@@ -149,5 +149,6 @@ def main():
     elif ca.options.command == 'reset':
         cb.reset_utilization_stats()
 
+
 if __name__ == '__main__':
     main()

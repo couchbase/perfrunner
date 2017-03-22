@@ -225,6 +225,7 @@ def get_args():
     env.user = "root"
     env.password = "couchbase"
 
+
 if __name__ == "__main__":
     get_args()
     main()

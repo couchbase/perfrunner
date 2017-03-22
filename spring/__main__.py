@@ -123,6 +123,7 @@ def main():
     wg = WorkloadGen(ws, ts)
     wg.run()
 
+
 if __name__ == '__main__':
     try:
         main()

@@ -143,5 +143,6 @@ def main():
     installer = CouchbaseInstaller(cluster_spec, options)
     installer.install()
 
+
 if __name__ == '__main__':
     main()

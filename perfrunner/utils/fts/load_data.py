@@ -169,6 +169,7 @@ class Datefacet:
         with concurrent.futures.ProcessPoolExecutor(max_workers=10) as executor:
             executor.submit(self.createdateset())
 
+
 '''
 Usage templates:
 A = Numeric('xaa','xbb', '172.23.99.211', 'bucket-1')

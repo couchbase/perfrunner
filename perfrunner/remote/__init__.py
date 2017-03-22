@@ -7,6 +7,8 @@ from perfrunner.settings import REPO
 
 class Remote(object):
 
+    CLIENT_PROCESSES = 'celery', 'cbc-pillowfight'
+
     def __init__(self, cluster_spec, test_config, os):
         self.os = os
         self.hosts = tuple(cluster_spec.yield_hostnames())
@@ -24,7 +26,8 @@ class Remote(object):
 
     @all_clients
     def clean_clients(self, temp_dir):
-        run('killall -9 celery', quiet=True)
+        run('killall -9 {}'.format(' '.join(self.CLIENT_PROCESSES)), quiet=True)
+
         run('rm -fr {}'.format(temp_dir))
 
     def init_repo(self, worker, worker_home):

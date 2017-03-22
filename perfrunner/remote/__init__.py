@@ -29,7 +29,7 @@ class Remote(object):
 
     def init_repo(self, worker, worker_home):
         with settings(host_string=worker):
-            run('mkdir {}'.format(worker_home))
+            run('mkdir -p {}'.format(worker_home))
 
             with cd(worker_home):
                 run('git clone -q {}'.format(REPO))

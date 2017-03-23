@@ -548,6 +548,8 @@ class PillowFightTest(PerfTest):
 
     @with_stats
     def access(self, *args):
+        self.download_certificate()
+
         PerfTest.access(self, task=pillowfight_task)
 
     def _report_kpi(self):

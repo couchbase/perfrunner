@@ -33,32 +33,32 @@ def prepare_root_folder(sample_path='/opt/couchbase/samples/beer-sample.zip'):
 
 def calc_needed_files():
     files = listdir(pth)
-    print len(files), "files in folder", pth
+    print(len(files), "files in folder", pth)
     num_folders = int(NUM_FILES / (len(files) * 10))
-    print "additionally will generate", num_folders, "folders by", \
-        len(files) * 10, "files"
+    print("additionally will generate", num_folders, "folders by",
+          len(files) * 10, "files")
     return files, num_folders
 
 
 def generate_files():
     start = time.time()
-    for i in xrange(num_folders):
+    for i in range(num_folders):
         if not os.path.exists('beer-sample' + str(i)):
-            print "folder ", 'beer-sample' + str(i), "created"
+            print("folder ", 'beer-sample' + str(i), "created")
             os.makedirs('beer-sample' + str(i))
-        for j in xrange(10):
+        for j in range(10):
             for f in files:
                 shutil.copy(pth + "/" + f,
                             'beer-sample' + str(i) + "/" + f.replace(
                                 '.json', str(i * 10 + 1 + j) + '.json'))
-            print len(files) * (j + 1 + i * 10), "files generated"
+            print(len(files) * (j + 1 + i * 10), "files generated")
 
-        print 'copy beer-sample' + str(i), pth
+        print('copy beer-sample' + str(i), pth)
         shutil.copytree('beer-sample' + str(i), pth + '/beer-sample' + str(i))
         shutil.rmtree('beer-sample' + str(i))
 
     end = time.time()
-    print "time to generate %s: %s" % (NUM_FILES, end - start)
+    print("time to generate %s: %s" % (NUM_FILES, end - start))
 
 
 if __name__ == '__main__':

@@ -391,7 +391,7 @@ class RemoteLinux(Remote):
 
     @index_node
     def block_memory(self, size):
-        put('memblock', '/tmp', mode=0755)
+        put('memblock', '/tmp', mode=0o755)
         logger.info('Blocking memory for {} bytes'.format(size))
         run("/tmp/memblock {} 2>/dev/null >/dev/null &".format(size), pty=False)
 

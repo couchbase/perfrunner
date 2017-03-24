@@ -31,8 +31,8 @@ import sys
 
 import networkx as nx
 
-import socialModels as sm
-import twoKDistance as tk
+from perfrunner.workloads.revAB.fittingCode import socialModels as sm
+from perfrunner.workloads.revAB.fittingCode import twoKDistance as tk
 
 
 def writeEdgeList(G, myFile):
@@ -63,7 +63,7 @@ def fit_forestFire_mod(graphSize, graphID, dkPath, original2k, resultPath):
     
     p = 0.01
     while p < 1.0:
-        print 'Running modified Forest Fire with parameters: n = ', graphSize, ' p = ', p
+        print('Running modified Forest Fire with parameters: n = ', graphSize, ' p = ', p)
         
         newFile = graphID + '_ff_' + str(p)
 
@@ -71,7 +71,7 @@ def fit_forestFire_mod(graphSize, graphID, dkPath, original2k, resultPath):
         syntheticGraph = sm.forestFire_mod(graphSize, p)
 
         # Write pickle, edge list, and 2k distro to file
-        print 'Calculating dK-2...\n'
+        print('Calculating dK-2...\n')
         getdk2(syntheticGraph, newFile, dkPath, resultPath)
 
         # Find distance between the dK-2 distributions
@@ -115,7 +115,7 @@ def fit_randomWalk_mod(graphSize, graphID, dkPath, original2k, resultPath, inter
         while qv <= qv_end:
             qeFloat = float(qe) / 100 if not interval else qe
             qvFloat = float(qv) / 100 if not interval else qv
-            print 'Running modified Random Walk (coarse) with parameters: n = ', graphSize, ' qe = ', qeFloat, ' qv = ', qvFloat
+            print('Running modified Random Walk (coarse) with parameters: n = ', graphSize, ' qe = ', qeFloat, ' qv = ', qvFloat)
 
             newFile = graphID + '_rwCoarse_' + str(qeFloat) + '_' + str(qvFloat)
             
@@ -123,7 +123,7 @@ def fit_randomWalk_mod(graphSize, graphID, dkPath, original2k, resultPath, inter
             syntheticGraph = sm.randomWalk_mod(graphSize, qeFloat, qvFloat)
             
             # Write pickle, edge list, and 2k distro to file
-            print 'Calculating dK-2...\n'
+            print('Calculating dK-2...\n')
             getdk2(syntheticGraph, newFile, dkPath, resultPath)
             
             # Find distance between the dK-2 distributions
@@ -163,7 +163,7 @@ def fit_nearestNeighbor_mod(graphSize, graphID, dkPath, original2k, resultPath, 
 
     for k in kList:
         for u in uList:
-            print 'Running modified Nearest Neighbor with parameters: n = ', graphSize, ' k = ', k, ' u = ', u
+            print('Running modified Nearest Neighbor with parameters: n = ', graphSize, ' k = ', k, ' u = ', u)
             
             newFile = graphID + '_nn_' + str(k) + '_' + str(u)
 
@@ -171,7 +171,7 @@ def fit_nearestNeighbor_mod(graphSize, graphID, dkPath, original2k, resultPath, 
             syntheticGraph = sm.nearestNeighbor_mod(graphSize, u, k)
 
             # Write pickle, edge list, and 2k distro to file
-            print 'Calculating dK-2...\n'
+            print('Calculating dK-2...\n')
             getdk2(syntheticGraph, newFile, dkPath, resultPath)
 
             # Find distance between the dK-2 distributions
@@ -197,11 +197,11 @@ if __name__ == "__main__":
     if not os.path.exists('./' + resultPath):
         os.makedirs('./' + resultPath)
 
-    print 'Extracting graph from pickle...'
+    print('Extracting graph from pickle...')
     G = nx.read_gpickle(picklePath)
 
     # Extract dK-2
-    print 'Extracting dK-2...'
+    print('Extracting dK-2...')
     getdk2(G, graphID, dkPath, resultPath)
 
     # Begin fitting
@@ -212,7 +212,7 @@ if __name__ == "__main__":
 
     elif modelName == '-rw':
         if len(sys.argv) < 7:
-            print 'Modified random walk testing requires -coarse/-fine parameter as last argument'
+            print('Modified random walk testing requires -coarse/-fine parameter as last argument')
 
         if sys.argv[6] == '-fine':
             if len(sys.argv) != 11:
@@ -237,7 +237,7 @@ if __name__ == "__main__":
 
     elif modelName == '-nn':
         if len(sys.argv) < 7:
-            print 'Modified nearest neighbor testing requires -coarse/-fine parameter as last argument.'
+            print('Modified nearest neighbor testing requires -coarse/-fine parameter as last argument.')
 
         if sys.argv[6] == '-fine':
             if len(sys.argv) != 8:

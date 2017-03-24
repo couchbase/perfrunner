@@ -356,12 +356,6 @@ class RestHelper(object):
         r = self.get(url=api).json()
         return 'community' in r['implementationVersion']
 
-    def get_master_events(self, host_port):
-        logger.info('Getting master events from {}'.format(host_port))
-
-        api = 'http://{}/diag/masterEvents?o=1'.format(host_port)
-        return self.get(url=api).text
-
     def get_logs(self, host_port):
         logger.info('Getting web logs from {}'.format(host_port))
 

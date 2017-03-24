@@ -43,8 +43,6 @@ def with_reporter(rebalance, *args, **kwargs):
 
     test.rebalance_time = test.reporter.finish('Rebalance')
 
-    test.reporter.save_master_events()
-
 
 @decorator
 def with_delayed_posting(rebalance, *args, **kwargs):

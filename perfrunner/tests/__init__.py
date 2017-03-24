@@ -61,7 +61,6 @@ class PerfTest(object):
         self.reporter = Reporter(self)
         self.reports = {}
         self.snapshots = []
-        self.master_events = []
 
         if self.test_config.test_case.use_workers:
             self.worker_manager = WorkerManager(cluster_spec, test_config,

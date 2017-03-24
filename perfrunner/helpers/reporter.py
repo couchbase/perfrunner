@@ -1,7 +1,6 @@
 import json
 import os
 import time
-from zipfile import ZIP_DEFLATED, ZipFile
 
 import requests
 from logger import logger
@@ -108,21 +107,7 @@ class DailyReporter(object):
             self._log_daily_benchmark(benchmark)
 
 
-class LogReporter(object):
-
-    def __init__(self, test):
-        self.test = test
-
-    def save_master_events(self):
-        with ZipFile('master_events.zip', 'w', ZIP_DEFLATED) as zh:
-            for master in self.test.cluster_spec.yield_masters():
-                master_events = self.test.rest.get_master_events(master)
-                self.test.master_events.append(master_events)
-                fname = 'master_events_{}.log'.format(master.split(':')[0])
-                zh.writestr(zinfo_or_arcname=fname, bytes=master_events)
-
-
-class Reporter(SFReporter, LogReporter, DailyReporter):
+class Reporter(SFReporter, DailyReporter):
 
     def start(self):
         self.ts = time.time()

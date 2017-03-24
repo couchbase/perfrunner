@@ -1,14 +1,9 @@
 import csv
 import os.path
+from configparser import ConfigParser, NoOptionError, NoSectionError
 
 from decorator import decorator
 from logger import logger
-
-from six.moves.configparser import (
-    NoOptionError,
-    NoSectionError,
-    SafeConfigParser,
-)
 
 REPO = 'https://github.com/couchbase/perfrunner'
 
@@ -24,7 +19,7 @@ def safe(method, *args, **kargs):
 class Config(object):
 
     def __init__(self):
-        self.config = SafeConfigParser()
+        self.config = ConfigParser()
         self.name = ''
 
     def parse(self, fname, override):
@@ -814,14 +809,6 @@ class AccessSettings(PhaseSettings):
                 "and not in the [access] section")
 
         super(AccessSettings, self).__init__(options)
-
-    @property
-    def fts_settings(self):
-        options = self._get_options_as_dict('fts')
-        return FtsSettings(options)
-
-    def __str__(self):
-        return str(self.__dict__)
 
 
 class BackupSettings(object):

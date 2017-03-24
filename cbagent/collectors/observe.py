@@ -97,8 +97,10 @@ class ObserveIndexLatency(Latency):
 
     def collect(self):
         threads = [Thread(target=self.sample) for _ in range(self.NUM_THREADS)]
-        map(lambda t: t.start(), threads)
-        map(lambda t: t.join(), threads)
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
 
 
 class ObserveSecondaryIndexLatency(ObserveIndexLatency):

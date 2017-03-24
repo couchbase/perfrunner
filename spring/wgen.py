@@ -90,7 +90,8 @@ class Worker(object):
         if self.ws.working_set_move_time:
             self.existing_keys = ExistingMovingHotWorkloadKey(self.ws.working_set,
                                                               self.ws.working_set_access,
-                                                              self.ts.prefix, self.ws.working_set_move_time)
+                                                              self.ts.prefix,
+                                                              self.ws.working_set_move_time)
         self.new_keys = NewKey(self.ts.prefix, self.ws.expiration)
         self.keys_for_removal = KeyForRemoval(self.ts.prefix)
         self.fts_keys = FTSKey(self.ws)
@@ -351,7 +352,7 @@ class AsyncKVWorker(KVWorker):
                   'username': self.ts.bucket, 'password': self.ts.password}
 
         self.cbs = [CBAsyncGen(**params) for _ in range(self.NUM_CONNECTIONS)]
-        self.counter = range(self.NUM_CONNECTIONS)
+        self.counter = list(range(self.NUM_CONNECTIONS))
 
     def restart(self, _, cb, i):
         self.counter[i] += 1
@@ -604,7 +605,7 @@ class N1QLWorker(Worker):
     def read(self):
         curr_items_tmp = self.curr_items.value
         if self.ws.doc_gen == 'ext_reverse_lookup':
-            curr_items_tmp /= 4
+            curr_items_tmp //= 4
 
         for _ in range(self.ws.n1ql_batch_size):
             key = self.existing_keys.next(curr_items=curr_items_tmp,
@@ -814,7 +815,7 @@ class WorkloadGen(object):
         timer_elapse = Value('I', 0)
 
         if self.ws.working_set_move_time:
-            current_hot_load_start.value = int(self.ws.items * self.ws.working_set / 100.0)
+            current_hot_load_start.value = int(self.ws.items * self.ws.working_set / 100)
 
         logger.info('Starting all workers')
 

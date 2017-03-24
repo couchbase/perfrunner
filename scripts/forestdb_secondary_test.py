@@ -3,8 +3,8 @@ import json
 import os
 import re
 import time
-import urllib2
-import urlparse
+from urllib.parse import urljoin
+from urllib.request import urlopen
 
 import requests
 import xmltodict
@@ -32,7 +32,7 @@ def iter_urls():
 
     for base in search_bases:
         for pat in patterns:
-            url = urlparse.urljoin(
+            url = urljoin(
                 base.format(**(args.__dict__)), pat.format(**(args.__dict__)))
             yield url
 
@@ -52,7 +52,7 @@ def find_manifest():
 
 
 def fetch_url(xml_url):
-    file = urllib2.urlopen(xml_url)
+    file = urlopen(xml_url)
     data = file.read()
     file.close()
     xml_data = xmltodict.parse(data)
@@ -60,9 +60,8 @@ def fetch_url(xml_url):
 
 
 def hash_from_xml(xml_data):
-    found = filter(
-        lambda tup: tup['@name'] == 'forestdb',
-        xml_data['manifest']['project'])[0]
+    found = list(filter(lambda tup: tup['@name'] == 'forestdb',
+                        xml_data['manifest']['project']))[0]
     logger.info("Found revision {}".format(found))
     branch = found.get('@upstream', 'master')
     fdb_hash = found['@revision']

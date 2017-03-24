@@ -164,12 +164,9 @@ class YCSBTest(YCSBdata):
                 break
 
     def load(self, *args):
-        try:
-            logger.info('running YCSB for loading data')
-            cmd = self.create_load_cmd()
-            self.remote.ycsb_load_run(self.ycsb.path, cmd)
-        except Exception as e:
-            raise YCSBException('YCSB error while loading data' + e.message)
+        logger.info('running YCSB for loading data')
+        cmd = self.create_load_cmd()
+        self.remote.ycsb_load_run(self.ycsb.path, cmd)
 
     @with_stats
     def access_bg(self, *args):

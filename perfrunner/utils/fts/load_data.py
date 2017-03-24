@@ -6,10 +6,10 @@ For creating the wiki dataset.
 
 """
 
+import concurrent.futures
 import datetime
 import itertools
 import random
-import concurrent.futures
 
 from couchbase.bucket import Bucket
 
@@ -90,12 +90,12 @@ class Numeric(Docgen):
         self.count += 1
         return (
             self.start_yr,
-            self.month.next(),
-            self.days.next(),
-            self.hours.next(),
-            self.minutes.next(),
-            self.seconds.next(),
-            self.milis.next()
+            next(self.month),
+            next(self.days),
+            next(self.hours),
+            next(self.minutes),
+            next(self.seconds),
+            next(self.milis)
         )
 
     def time_milis(self):
@@ -156,7 +156,7 @@ class Datefacet:
             '''
             val = self.cb.get(key).value
             self.lock.acquire()
-            tmpdate = self.cycledates.next()
+            tmpdate = next(self.cycledates)
             val["date"] = tmpdate
             self.cb.set(key, val)
             self.dateiter[tmpdate] -= 1

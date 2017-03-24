@@ -115,7 +115,7 @@ class CbAgent(object):
                                               uhex()[:4])
             master = servers[0].split(':')[0]
             self.cluster_map[cluster_id] = master
-        self.cluster_ids = self.cluster_map.keys()
+        self.cluster_ids = list(self.cluster_map.keys())
 
     def add_collectors(self, test,
                        elastic_stats=False,
@@ -281,11 +281,13 @@ class CbAgent(object):
     def start(self):
         logger.info('Starting stats collectors')
         self.processes = [Process(target=c.collect) for c in self.collectors]
-        map(lambda p: p.start(), self.processes)
+        for p in self.processes:
+            p.start()
 
     def stop(self):
         logger.info('Terminating stats collectors')
-        map(lambda p: p.terminate(), self.processes)
+        for p in self.processes:
+            p.terminate()
 
     def reconstruct(self):
         logger.info('Reconstructing measurements')

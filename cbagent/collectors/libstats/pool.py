@@ -1,4 +1,4 @@
-from Queue import Empty, Queue
+from queue import Empty, Queue
 from threading import Lock
 from time import time
 

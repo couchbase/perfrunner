@@ -49,7 +49,7 @@ class N1QLTest(PerfTest):
         * 50% of documents remain unchanged. Only these documents are used for
         queries."""
         load_settings = self.test_config.load_settings
-        load_settings.items /= 2
+        load_settings.items //= 2
 
         iterator = TargetIterator(self.cluster_spec, self.test_config, 'n1ql')
         super(N1QLTest, self).load(settings=load_settings,
@@ -60,7 +60,7 @@ class N1QLTest(PerfTest):
         self.download_certificate()
 
         access_settings = self.test_config.access_settings
-        access_settings.items /= 2
+        access_settings.items //= 2
         super(N1QLTest, self).access_bg(settings=access_settings)
 
     def run(self):
@@ -96,7 +96,7 @@ class N1QLJoinTest(N1QLThroughputTest):
     ALL_BUCKETS = True
 
     def load_regular(self, load_settings, target):
-        load_settings.items /= 2
+        load_settings.items //= 2
         super(N1QLTest, self).load(settings=load_settings,
                                    target_iterator=(target, ))
         target.prefix = 'n1ql'
@@ -128,7 +128,7 @@ class N1QLJoinTest(N1QLThroughputTest):
 
             access_settings = self.test_config.access_settings
             access_settings.doc_gen = doc_gen
-            access_settings.items /= 2
+            access_settings.items //= 2
             access_settings.buckets = self.test_config.buckets
 
             if doc_gen != access_settings.n1ql_gen:

@@ -21,12 +21,12 @@ def log_action(action, settings):
 
 def target_hash(*args):
     int_hash = hash(args)
-    str_hash = md5(hex(int_hash)).hexdigest()
+    str_hash = md5(hex(int_hash).encode('utf-8')).hexdigest()
     return str_hash[:6]
 
 
 def server_group(servers, group_number, i):
-    group_id = 1 + i / ((len(servers) + 1) / group_number)
+    group_id = 1 + i // ((len(servers) + 1) // group_number)
     return 'Group {}'.format(group_id)
 
 

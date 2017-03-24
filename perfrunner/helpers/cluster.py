@@ -22,7 +22,7 @@ class ClusterManager(object):
         self.servers = cluster_spec.yield_servers
         self.masters = cluster_spec.yield_masters
 
-        self.master_node = self.masters().next()
+        self.master_node = next(self.masters())
 
         self.initial_nodes = test_config.cluster.initial_nodes
         self.mem_quota = test_config.cluster.mem_quota
@@ -126,7 +126,7 @@ class ClusterManager(object):
         self.wait_until_healthy()
 
     def create_buckets(self):
-        ram_quota = self.mem_quota / self.test_config.cluster.num_buckets
+        ram_quota = self.mem_quota // self.test_config.cluster.num_buckets
 
         for master in self.masters():
             for bucket_name in self.test_config.buckets:

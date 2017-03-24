@@ -18,7 +18,7 @@ class IndexTest(PerfTest):
 
     def kvgen(self):
         master = self.master_node.split(':')[0]
-        num_docs = self.test_config.load_settings.items / self.NUM_KVGEN_INSTANCES
+        num_docs = self.test_config.load_settings.items // self.NUM_KVGEN_INSTANCES
 
         threads = []
         for i in range(self.NUM_KVGEN_INSTANCES):
@@ -30,12 +30,15 @@ class IndexTest(PerfTest):
 
     def load(self, *args):
         threads = self.kvgen()
-        map(lambda t: t.start(), threads)
-        map(lambda t: t.join(), threads)
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
 
     def bg_load(self):
         threads = self.kvgen()
-        map(lambda t: t.start(), threads)
+        for t in threads:
+            t.start()
 
     def create_index(self):
         storage = self.test_config.gsi_settings.storage

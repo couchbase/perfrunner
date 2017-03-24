@@ -22,9 +22,9 @@ for line in dataset:
         if len(result_dataset) > 2000:
             break
         else:
-            print len(result_dataset)
+            print((len(result_dataset)))
 
 result_file = open("l_l_validated.txt", "w")
 for line in result_dataset:
-    print>> result_file, line
+    print(line, file=result_file)
 result_file.close()

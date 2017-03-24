@@ -80,7 +80,7 @@ class ViewQueryGen(object):
         }
 
     def next(self, doc):
-        ddoc_name, view_name = self.view_sequence.next()
+        ddoc_name, view_name = next(self.view_sequence)
         params = self.generate_params(**doc)[view_name]
         params = dict(self.params, **params)
         return ddoc_name, view_name, Query(**params)
@@ -205,7 +205,7 @@ class ViewQueryGenByType(object):
         }
 
     def next(self, doc):
-        view_name = self.view_sequence.next()
+        view_name = next(self.view_sequence)
         params = self.generate_params(**doc)[view_name]
         params = dict(self.params, **params)
         return self.DDOC_NAME, view_name, Query(**params)
@@ -220,7 +220,7 @@ class N1QLQueryGen(object):
         return
 
     def next(self, key, doc):
-        query = copy.deepcopy(self.queries.next())
+        query = copy.deepcopy(next(self.queries))
         args = query['args'].format(key=key, **doc)
 
         n1ql_query = N1QLQuery(query['statement'], *eval(args))

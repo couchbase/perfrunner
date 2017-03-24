@@ -59,7 +59,7 @@ class MetricHelper(object):
 
     def calc_bulk_n1ql_throughput(self, time_elapsed):
         items = self.test_config.load_settings.items / 4
-        time_elapsed /= 1000.0  # ms -> s
+        time_elapsed /= 1000  # ms -> s
         return round(items / time_elapsed)
 
     def calc_avg_fts_queries(self, order_by, name='FTS'):
@@ -189,7 +189,7 @@ class MetricHelper(object):
         for bucket in self.test_config.buckets:
             db = 'ns_server{}{}'.format(self.test.cbagent.cluster_ids[0], bucket)
             data = self.seriesly[db].query(query_params)
-            disk_write_queue += data.values()[0][0]
+            disk_write_queue += list(data.values())[0][0]
 
         return round(disk_write_queue / 10 ** 6, 2)
 
@@ -200,7 +200,7 @@ class MetricHelper(object):
         for bucket in self.test_config.buckets:
             db = 'ns_server{}{}'.format(self.test.cbagent.cluster_ids[0], bucket)
             data = self.seriesly[db].query(query_params)
-            avg_bg_wait_time.append(data.values()[0][0])
+            avg_bg_wait_time.append(list(data.values())[0][0])
         avg_bg_wait_time = np.mean(avg_bg_wait_time) / 10 ** 3  # us -> ms
 
         return round(avg_bg_wait_time, 2)
@@ -212,7 +212,7 @@ class MetricHelper(object):
         for bucket in self.test_config.buckets:
             db = 'ns_server{}{}'.format(self.test.cbagent.cluster_ids[0], bucket)
             data = self.seriesly[db].query(query_params)
-            couch_views_ops += data.values()[0][0]
+            couch_views_ops += list(data.values())[0][0]
 
         if self.build < '2.5.0':
             couch_views_ops /= self.test_config.cluster.initial_nodes[0]
@@ -256,7 +256,7 @@ class MetricHelper(object):
         db = 'secondaryscan_latency{}'.format(cluster)
         data = self.seriesly[db].get_all()
         timings += [value['Nth-latency'] for value in data.values()]
-        timings = map(int, timings)
+        timings = list(map(int, timings))
         logger.info("Number of samples are {}".format(len(timings)))
         secondary_scan_latency = np.percentile(timings, percentile) / 1000000
 
@@ -312,7 +312,7 @@ class MetricHelper(object):
         query_params = self._get_query_params('avg_cpu_utilization_rate')
         db = 'ns_server{}{}'.format(cluster, bucket)
         data = self.seriesly[db].query(query_params)
-        cpu_utilazion = round(data.values()[0][0])
+        cpu_utilazion = round(list(data.values())[0][0])
 
         return cpu_utilazion, metric, metric_info
 
@@ -330,7 +330,7 @@ class MetricHelper(object):
             data = self.seriesly[db].query(query_params)
 
             mem_used.append(
-                round(data.values()[0][0] / 1024 ** 2)  # -> MB
+                round(list(data.values())[0][0] / 1024 ** 2)  # -> MB
             )
         mem_used = eval(max_min)(mem_used)
 
@@ -345,13 +345,13 @@ class MetricHelper(object):
 
         max_rss = 0
         for cluster_name, servers in self.cluster_spec.yield_clusters():
-            cluster = filter(lambda name: name.startswith(cluster_name),
-                             self.test.cbagent.cluster_ids)[0]
+            cluster = list(filter(lambda name: name.startswith(cluster_name),
+                                  self.test.cbagent.cluster_ids))[0]
             for server in servers:
                 hostname = server.split(':')[0].replace('.', '')
                 db = 'atop{}{}'.format(cluster, hostname)  # Legacy
                 data = self.seriesly[db].query(query_params)
-                rss = round(data.values()[0][0] / 1024 ** 2)
+                rss = round(list(data.values())[0][0] / 1024 ** 2)
                 max_rss = max(max_rss, rss)
 
         return max_rss, metric, metric_info
@@ -370,13 +370,13 @@ class MetricHelper(object):
                 self.cluster_spec.yield_clusters(),
                 self.test_config.cluster.initial_nodes,
         ):
-            cluster = filter(lambda name: name.startswith(cluster_name),
-                             self.test.cbagent.cluster_ids)[0]
+            cluster = list(filter(lambda name: name.startswith(cluster_name),
+                                  self.test.cbagent.cluster_ids))[0]
             for server in servers[:initial_nodes]:
                 hostname = server.split(':')[0].replace('.', '')
                 db = 'atop{}{}'.format(cluster, hostname)
                 data = self.seriesly[db].query(query_params)
-                rss = round(data.values()[0][0] / 1024 ** 2)
+                rss = round(list(data.values())[0][0] / 1024 ** 2)
                 max_rss = max(max_rss, rss)
 
         return max_rss, metric, metric_info
@@ -395,15 +395,15 @@ class MetricHelper(object):
                 self.cluster_spec.yield_clusters(),
                 self.test_config.cluster.initial_nodes,
         ):
-            cluster = filter(lambda name: name.startswith(cluster_name),
-                             self.test.cbagent.cluster_ids)[0]
+            cluster = list(filter(lambda name: name.startswith(cluster_name),
+                                  self.test.cbagent.cluster_ids))[0]
             for server in servers[:initial_nodes]:
                 hostname = server.split(':')[0].replace('.', '')
                 db = 'atop{}{}'.format(cluster, hostname)
                 data = self.seriesly[db].query(query_params)
-                rss.append(round(data.values()[0][0] / 1024 ** 2))
+                rss.append(round(list(data.values())[0][0] / 1024 ** 2))
 
-        avg_rss = sum(rss) / len(rss)
+        avg_rss = sum(rss) // len(rss)
         return avg_rss, metric, metric_info
 
     def calc_memory_overhead(self, key_size=20):
@@ -443,7 +443,7 @@ class MetricHelper(object):
         metric_info = self._get_metric_info(title)
 
         data_size = self.test_config.load_settings.items * \
-            self.test_config.load_settings.size / 2.0 ** 20  # MB
+            self.test_config.load_settings.size / 2 ** 20  # MB
 
         avg_throughput = round(data_size / time_elapsed)
 
@@ -461,7 +461,7 @@ class MetricHelper(object):
         values = []
         data = self.seriesly[db].get_all()
         values += [value[metric] for value in data.values()]
-        values = map(float, values)
+        values = list(map(float, values))
         logger.info("Number of samples for {} are {}".format(metric, len(values)))
         logger.info("Sample values: {}".format(values))
 
@@ -499,7 +499,7 @@ class DailyMetricHelper(MetricHelper):
 
     def calc_backup_throughput(self, time_elapsed):
         data_size = self.test_config.load_settings.items * \
-            self.test_config.load_settings.size / 2.0 ** 20  # MB
+            self.test_config.load_settings.size / 2 ** 20  # MB
         throughput = round(data_size / time_elapsed)
 
         return 'Avg Throughput (MB/sec)', \

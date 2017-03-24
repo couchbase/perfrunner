@@ -43,7 +43,7 @@ class SecondaryIndexTest(PerfTest):
 
         # Get first cluster, its index nodes, and first bucket
         (cluster_name, servers) = \
-            self.cluster_spec.yield_servers_by_role('index').next()
+            next(self.cluster_spec.yield_servers_by_role('index'))
         if not servers:
             raise RuntimeError(
                 "No index nodes specified for cluster {}".format(cluster_name))
@@ -80,7 +80,9 @@ class SecondaryIndexTest(PerfTest):
         self.remote.build_secondary_index(self.index_nodes, self.bucket,
                                           self.indexes, self.storage)
         time_elapsed = self.monitor.wait_for_secindex_init_build(
-            self.index_nodes[0].split(':')[0], self.indexes.keys())
+            self.index_nodes[0].split(':')[0],
+            list(self.indexes.keys()),
+        )
         return time_elapsed
 
     def run_access_for_2i(self, run_in_background=False):
@@ -175,14 +177,18 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
 
         numitems = self.test_config.load_settings.items + \
             self.test_config.access_settings.items
-        self.monitor.wait_for_secindex_incr_build(self.index_nodes, self.bucket,
-                                                  self.indexes.keys(), numitems)
+        self.monitor.wait_for_secindex_incr_build(self.index_nodes,
+                                                  self.bucket,
+                                                  list(self.indexes.keys()),
+                                                  numitems)
 
     def run_recovery_scenario(self):
         if self.run_recovery_test:
             # Measure recovery time for index
             self.remote.kill_process_on_index_node("indexer")
-            recovery_time = self.monitor.wait_for_recovery(self.index_nodes, self.bucket, self.indexes.keys()[0])
+            recovery_time = self.monitor.wait_for_recovery(self.index_nodes,
+                                                           self.bucket,
+                                                           list(self.indexes.keys())[0])
             if recovery_time == -1:
                 raise Exception('Indexer failed to recover...!!!')
             self.report_kpi(recovery_time, 'Recovery', "ms")
@@ -235,8 +241,10 @@ class MultipleIncrementalSecondaryIndexTest(InitialandIncrementalSecondaryIndexT
         for i in range(1, num_times + 1):
             self.access()
 
-            self.monitor.wait_for_secindex_incr_build(self.index_nodes, self.bucket,
-                                                      self.indexes.keys(), numitems)
+            self.monitor.wait_for_secindex_incr_build(self.index_nodes,
+                                                      self.bucket,
+                                                      list(self.indexes.keys()),
+                                                      numitems)
             self.disk_usage[i] = \
                 self.print_index_disk_usage(text="After running incremental load for {} iteration/s =>\n".format(i))
             self.memory_usage[i] = self.remote.get_indexer_process_memory()
@@ -585,7 +593,7 @@ class SecondaryNumConnectionsTest(SecondaryIndexTest):
                 self.remote.run_cbindexperf(self.index_nodes[0], self.config_data, self.curr_connections)
                 status = self.monitor.wait_for_num_connections(self.index_nodes[0].split(':')[0], self.curr_connections)
             except Exception as e:
-                logger.info("Got error {}".format(e.message))
+                logger.info("Got error {}".format(e))
                 status = False
                 break
             finally:

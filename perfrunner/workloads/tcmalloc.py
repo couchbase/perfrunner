@@ -24,6 +24,7 @@ class SmallIterator(object):
         return 'AB_{}_0'.format(_id)
 
     def _field(self, _id):
+        _id = _id.encode('utf-8')
         data = md5(_id).hexdigest()[:16]
         return {'pn': _id, 'nam': 'ViberPhone_{}'.format(data)}
 
@@ -86,8 +87,10 @@ class LargeIterator(SmallIterator):
         return '{}'.format(_id)
 
     def _field(self, _id):
-        alphabet = md5(_id).hexdigest() + md5(_id[::-1]).hexdigest()  # 64 bytes
-        field = [alphabet for _ in range(self.FIELD_SIZE / len(alphabet))]
+        rev_id = _id[::-1].encode('utf-8')
+        _id = _id.encode('utf-8')
+        alphabet = md5(_id).hexdigest() + md5(rev_id).hexdigest()  # 64 bytes
+        field = [alphabet for _ in range(int(self.FIELD_SIZE / len(alphabet)))]
         return {'f': ''.join(field)}
 
 

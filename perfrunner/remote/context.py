@@ -30,15 +30,13 @@ def single_client(task, *args, **kwargs):
 
 @decorator
 def kv_node_cbindexperf(task, *args, **kwargs):
-    def _kv_node_cbindexperf(task, *args, **kwargs):
-        count = 0
-        self = args[0]
-        for host in self.kv_hosts:
-            count += 1
-            with settings(host_string=host):
-                kwargs["host_num"] = count
-                task(*args, **kwargs)
-    return _kv_node_cbindexperf(task, *args, **kwargs)
+    count = 0
+    self = args[0]
+    for host in self.kv_hosts:
+        count += 1
+        with settings(host_string=host):
+            kwargs["host_num"] = count
+            task(*args, **kwargs)
 
 
 @decorator
@@ -46,7 +44,7 @@ def index_node(task, *args, **kwargs):
     self = args[0]
     # Get first cluster, its index nodes
     (cluster_name, servers) = \
-        self.cluster_spec.yield_servers_by_role('index').next()
+        next(self.cluster_spec.yield_servers_by_role('index'))
     if not servers:
         raise RuntimeError(
             "No index nodes specified for cluster {}".format(cluster_name))

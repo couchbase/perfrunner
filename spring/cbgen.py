@@ -253,7 +253,7 @@ class FtsGen(CBGen):
 
                         for terms in line.split():
 
-                            tmp_key = keytypes.next()
+                            tmp_key = next(keytypes)
                             temp_query[tmp_key].append({"field": self.settings.field, "term": terms})
 
                         if query_type == '1_conjuncts_2_disjuncts':
@@ -376,7 +376,7 @@ class ElasticGen(FtsGen):
                         tbool = {v: [] for k, v in self.bool_map.items()}
                         keytypes = ElasticGen.process_conj_disj(query_type.split('_'))
                         for term in line.strip().split():
-                            key = self.bool_map[keytypes.next()]
+                            key = self.bool_map[next(keytypes)]
                             tbool[key].append({'term': {self.settings.field: term}})
                         tmp_query_txt = tbool
                         tmp_query['bool'] = tmp_query_txt

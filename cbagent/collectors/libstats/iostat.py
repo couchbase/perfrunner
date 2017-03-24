@@ -32,9 +32,9 @@ class IOstat(RemoteStats):
             "iostat -xk 1 2 -N {} | grep -v '^$' | tail -n 2".format(device)
         )
         stdout = stdout.split()
-        header = stdout[:len(stdout) / 2]
+        header = stdout[:len(stdout) // 2]
         data = dict()
-        for i, value in enumerate(stdout[len(stdout) / 2:]):
+        for i, value in enumerate(stdout[len(stdout) // 2:]):
             data[header[i]] = value
         return data
 

@@ -1,6 +1,6 @@
 from collections import namedtuple
 from optparse import OptionParser
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 import requests
 from logger import logger
@@ -62,7 +62,7 @@ class CouchbaseInstaller(object):
             patterns = ()  # Sentinel
 
         for pattern in patterns:
-            yield pattern.format(**self.build.__dict__)
+            yield pattern.format(**self.build._asdict())
 
     @staticmethod
     def is_exist(url):
@@ -77,7 +77,7 @@ class CouchbaseInstaller(object):
     def find_package(self):
         for filename in self.get_expected_filenames():
             for location in LOCATIONS:
-                url = '{}{}'.format(location.format(**self.build.__dict__),
+                url = '{}{}'.format(location.format(**self.build._asdict()),
                                     filename)
                 if self.is_exist(url):
                     return filename, url

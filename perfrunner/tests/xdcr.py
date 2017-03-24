@@ -65,10 +65,10 @@ class XdcrTest(PerfTest):
         if self.settings.wan_enabled:
             hostnames = tuple(self.cluster_spec.yield_hostnames())
             src_list = [
-                hostname for hostname in hostnames[len(hostnames) / 2:]
+                hostname for hostname in hostnames[len(hostnames) // 2:]
             ]
             dest_list = [
-                hostname for hostname in hostnames[:len(hostnames) / 2]
+                hostname for hostname in hostnames[:len(hostnames) // 2]
             ]
             self.remote.enable_wan()
             self.remote.filter_wan(src_list, dest_list)
@@ -108,7 +108,7 @@ class SrcTargetIterator(TargetIterator):
     def __iter__(self):
         password = self.test_config.bucket.password
         prefix = self.prefix
-        src_master = self.cluster_spec.yield_masters().next()
+        src_master = next(self.cluster_spec.yield_masters())
         for bucket in self.test_config.buckets:
             if self.prefix is None:
                 prefix = target_hash(src_master, bucket)
@@ -121,8 +121,8 @@ class DestTargetIterator(TargetIterator):
         password = self.test_config.bucket.password
         prefix = self.prefix
         masters = self.cluster_spec.yield_masters()
-        src_master = masters.next()
-        dest_master = masters.next()
+        src_master = next(masters)
+        dest_master = next(masters)
         for bucket in self.test_config.buckets:
             if self.prefix is None:
                 prefix = target_hash(src_master, bucket)

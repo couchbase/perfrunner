@@ -2,7 +2,7 @@
 
 SHELL := /bin/bash
 
-PYTHON := python2.7
+PYTHON := python3.5
 ENV := env
 GOVENDOR := ${GOPATH}/bin/govendor
 
@@ -14,8 +14,8 @@ build:
 	pwd > ${ENV}/lib/${PYTHON}/site-packages/perfrunner.pth
 
 clean:
-	rm -fr build perfrunner.egg-info dist dcptest kvgen cbindexperf rachell YCSB *.db
-	find . -name '*.pyc' -o -name '*.pyo' | xargs rm -f
+	rm -fr build perfrunner.egg-info dist dcptest kvgen cbindexperf rachell YCSB *.db *.log
+	find . -name '*.pyc' -o -name '*.pyo' -o -name __pycache__ | xargs rm -fr
 
 pep8:
 	${ENV}/bin/flake8 --statistics cbagent perfdaily perfrunner scripts spring

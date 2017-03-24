@@ -99,7 +99,7 @@ class ViewGen(object):
             [8] -- 1 ddoc (8 views)
             [1, 1, 1, 1] -- 4 ddocs (1 view per ddoc)
         """
-        if filter(lambda v: v > 10, pattern):
+        if list(filter(lambda v: v > 10, pattern)):
             raise Exception('Maximum 10 views per ddoc allowed')
         if len(pattern) > 10:
             raise Exception('Maximum 10 design documents allowed')

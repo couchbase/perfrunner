@@ -94,7 +94,7 @@ class CLIParser(ArgumentParser):
         args = super(CLIParser, self).parse_args()
 
         percentages = [args.creates, args.reads, args.updates, args.deletes]
-        if filter(lambda p: not 0 <= p <= 100, percentages) or \
+        if list(filter(lambda p: not 0 <= p <= 100, percentages)) or \
                 sum(percentages) != 100:
             self.error('Invalid operation [-c, -r, -u, -d] percentage')
 

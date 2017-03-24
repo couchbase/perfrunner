@@ -1,5 +1,4 @@
 import time
-from exceptions import KeyboardInterrupt
 
 from logger import logger
 
@@ -53,7 +52,7 @@ class PerfTest(object):
         self.remote = RemoteHelper(cluster_spec, test_config, verbose)
         self.restore_helper = RestoreHelper(cluster_spec, test_config, verbose)
 
-        self.master_node = cluster_spec.yield_masters().next()
+        self.master_node = next(cluster_spec.yield_masters())
         self.build = self.rest.get_version(self.master_node)
 
         self.cbagent = CbAgent(self, verbose=verbose)

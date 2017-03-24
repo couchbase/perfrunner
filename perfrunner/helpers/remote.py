@@ -25,7 +25,7 @@ class RemoteHelper(object):
     @staticmethod
     def detect_os(cluster_spec):
         logger.info('Detecting OS')
-        with settings(host_string=cluster_spec.yield_hostnames().next()):
+        with settings(host_string=next(cluster_spec.yield_hostnames())):
             os = run('python -c "import platform; print platform.dist()[0]"',
                      pty=True)
         if os:

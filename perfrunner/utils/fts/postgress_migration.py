@@ -16,19 +16,19 @@ import psycopg2
 def load_as_separate_docs(bucketname, count, limit):
     bucket_name = bucketname
 
-    print "Connecting to postgres"
+    print("Connecting to postgres")
     conn = psycopg2.connect("dbname='musicbrainz_db' user='musicbrainz' host='localhost' password='musicbrainz'")
     curr = conn.cursor()
 
-    print "Fetching all tracks"
+    print("Fetching all tracks")
     curr.execute("select id, gid, artist_credit, name, length, comment, edits_pending, "
                  "last_updated from recording offset {} limit {}".format(count, limit))
     rows = curr.fetchall()
 
-    print "Connecting to Couchbase"
+    print("Connecting to Couchbase")
     cb = Bucket("couchbase://{}/{}?operation_timeout=10".format(cb_url, bucket_name), password="")
 
-    print "Loading data"
+    print("Loading data")
     key_counter = count
     for row in rows:
         document = {}
@@ -96,8 +96,8 @@ def load_as_separate_docs(bucketname, count, limit):
             key_counter += 1
 
         except Exception:
-            print document
-            print subdocument
+            print(document)
+            print(subdocument)
 
 
 cb_url = "172.23.99.211"

@@ -1,5 +1,10 @@
 #include <Python.h>
 
+struct module_state {
+    PyObject *error;
+};
+
+#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
 
 static PyObject *
 build_achievements(PyObject *self, PyObject *args)
@@ -31,7 +36,7 @@ build_achievements(PyObject *self, PyObject *args)
     int iter = 0;
     for (i = 0; i < max_len; i++) {
         if (achievements[i] >= 0) {
-            PyObject *num = PyInt_FromLong(achievements[i]);
+            PyObject *num = PyLong_FromLong(achievements[i]);
             PyList_SET_ITEM(py_array, iter, num);
             iter++;
         }
@@ -41,18 +46,41 @@ build_achievements(PyObject *self, PyObject *args)
 
 
 static PyMethodDef
-FastDocGenMethods[] = {
+fastdocgen_methods[] = {
     {"build_achievements",  build_achievements, METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL}
 };
 
+static int fastdocgen_traverse(PyObject *m, visitproc visit, void *arg) {
+    Py_VISIT(GETSTATE(m)->error);
+    return 0;
+}
+
+static int fastdocgen_clear(PyObject *m) {
+    Py_CLEAR(GETSTATE(m)->error);
+    return 0;
+}
+
+static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "fastdocgen",
+        NULL,
+        sizeof(struct module_state),
+        fastdocgen_methods,
+        NULL,
+        fastdocgen_traverse,
+        fastdocgen_clear,
+        NULL
+};
 
 PyMODINIT_FUNC
-initfastdocgen(void)
+PyInit_fastdocgen(void)
 {
     PyObject *m;
 
-    m = Py_InitModule("fastdocgen", FastDocGenMethods);
+	m = PyModule_Create(&moduledef);
     if (m == NULL)
-        return;
+        return NULL;
+
+    return m;
 }

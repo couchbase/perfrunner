@@ -39,7 +39,7 @@ class BackupRestoreTest(PerfTest):
         filename, url = installer.find_package()
 
         logger.info('Downloading "{}"'.format(url))
-        with open(filename, 'w') as fh:
+        with open(filename, 'wb') as fh:
             resp = requests.get(url)
             fh.write(resp.content)
 
@@ -310,9 +310,9 @@ class CbExportImportTest(BackupRestoreTest):
 
             for row in data:
                 if not header:
-                        header = row
-                        output.writerow(header.keys())
-                output.writerow(row.values())
+                    header = row
+                    output.writerow(list(header.keys()))
+                output.writerow(list(row.values()))
 
 
 class CbImportCETest(CbExportImportTest):

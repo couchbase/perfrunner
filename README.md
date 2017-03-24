@@ -8,7 +8,7 @@ Installation
 
 Before using perfrunner you should install the requirements listed in the requirements section. At a minimum you need
 
-* Python 2.7
+* Python 3.5
 * virtualenv
 * libcouchbase
 * libffi

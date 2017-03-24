@@ -35,7 +35,7 @@ class TestDataset(object):
 
         result_file = open(output_name, "w")
         for line in results:
-            print>> result_file, line
+            print(line, file=result_file)
         result_file.close()
 
     def combine_3(self, output_name, file1, file2, file3):
@@ -59,7 +59,7 @@ class TestDataset(object):
         results = results[:self.limit]
         result_file = open(output_name, "w")
         for line in results:
-            print>> result_file, line
+            print(line, file=result_file)
         result_file.close()
 
     def get_fuzzies(self, output1_file, output2_file, input_file, size=5):
@@ -77,8 +77,8 @@ class TestDataset(object):
         output1_file = open(output1_file, "w")
         output2_file = open(output2_file, "w")
         for line in sized_lines:
-            print>> output1_file, "{} {}".format(line, "1")
-            print>> output2_file, "{} {}".format(line, "2")
+            print("{} {}".format(line, "1"), file=output1_file)
+            print("{} {}".format(line, "2"), file=output2_file)
         output1_file.close()
         output2_file.close()
 
@@ -90,7 +90,7 @@ class TestDataset(object):
             if len(line) == 4:
                 term = line
                 term = line[:2] + '*' + line[3:]
-                print>> of, term
+                print(term, file=of)
         of.close()
 
     def get_prefix(self, output_file, input_file):
@@ -103,7 +103,7 @@ class TestDataset(object):
         map = list(map)[:self.limit]
         output_file = open(output_file, "w")
         for line in map:
-            print>>output_file, line
+            print(line, file=output_file)
         output_file.close()
 
     def get_dates(self, output_file, input_file):
@@ -113,7 +113,7 @@ class TestDataset(object):
         for line in lines:
             line = line.split()[0]
             result = "{} {} {}".format(line, dates[random.randint(0, 1)], dates[random.randint(2, 3)])
-            print>> output_file, result
+            print(result, file=output_file)
 
     def get_phrases(self, cb_url, output_file, input_file, docs_total):
         cb = Bucket("couchbase://{}/{}?operation_timeout=10".format(cb_url, "bucket-1"), password="password")
@@ -137,15 +137,15 @@ class TestDataset(object):
                                 if str.isalpha(term_next):
                                     result_phrase = "{} {}".format(term, term_next)
                                     results.add(result_phrase)
-            except Exception, e:
-                print "{}: {}: {}".format(key, len(results), str(e))
+            except Exception as e:
+                print(("{}: {}: {}".format(key, len(results), str(e))))
 
             if len(results) > self.limit:
                 break
 
         output_file = open(output_file, "w")
         for phrase in results:
-            print>> output_file, phrase
+            print(phrase, file=output_file)
 
 
 datagen = TestDataset()

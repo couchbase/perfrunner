@@ -89,7 +89,7 @@ class RemoteWorkerManager(object):
         worker_pool = cycle(self.cluster_spec.workers)
 
         for queue in self.yield_queues():
-            worker = worker_pool.next()
+            worker = next(worker_pool)
             logger.info('Starting Celery worker, host={}, queue={}'
                         .format(worker, queue))
 

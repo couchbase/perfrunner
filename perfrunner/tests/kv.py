@@ -317,7 +317,7 @@ class FragmentationTest(PerfTest):
             port = self.rest.get_memcached_port(target.node)
             stats = self.memcached.get_stats(host, port, target.bucket,
                                              stats='memory')
-            ratio = float(stats['mem_used']) / float(stats['total_heap_bytes'])
+            ratio = stats[b'mem_used'] / stats[b'total_heap_bytes']
             ratios.append(ratio)
         ratio = 100 * (1 - sum(ratios) / len(ratios))
         ratio = round(ratio, 1)
@@ -520,7 +520,7 @@ class ThroughputTest(KVTest):
                 port = self.rest.get_memcached_port(server)
 
                 stats = self.memcached.get_stats(host, port, bucket, stats='')
-                ops += int(stats['cmd_total_ops'])
+                ops += int(stats[b'cmd_total_ops'])
         return ops
 
     @with_stats
@@ -532,7 +532,7 @@ class ThroughputTest(KVTest):
         self.total_ops = self._measure_curr_ops() - curr_ops
 
     def _report_kpi(self):
-        throughput = self.total_ops / self.test_config.access_settings.time
+        throughput = self.total_ops // self.test_config.access_settings.time
 
         self.reporter.post_to_sf(throughput)
 
@@ -584,7 +584,7 @@ class CompactionTest(KVTest):
         self.access_bg()
 
         from_ts, to_ts = self.compact()
-        time_elapsed = (to_ts - from_ts) / 1000.0
+        time_elapsed = (to_ts - from_ts) / 1000
         time_elapsed = self.reporter.finish('Full compaction', time_elapsed)
 
         self.report_kpi(time_elapsed)

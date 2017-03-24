@@ -25,7 +25,7 @@ class HashKeys(object):
     def hash_it(self, key):
         if self.ws.hash_keys:
             if self.ws.key_length:
-                num_slices = int(math.ceil(self.ws.key_length / 32.0))
+                num_slices = int(math.ceil(self.ws.key_length / 32))
                 doc_key = num_slices * md5(key).hexdigest()
                 return doc_key[:self.ws.key_length]
             return md5(key).hexdigest()
@@ -55,7 +55,7 @@ class ExistingKey(Iterator):
 
     def next(self, curr_items, curr_deletes, *args):
         num_existing_items = curr_items - curr_deletes
-        num_hot_items = int(num_existing_items * self.working_set / 100.0)
+        num_hot_items = int(num_existing_items * self.working_set / 100)
         num_cold_items = num_existing_items - num_hot_items
 
         left_limit = 1 + curr_deletes
@@ -81,7 +81,7 @@ class ExistingMovingHotWorkloadKey(ExistingKey):
         timer_elapse = args[1]
 
         num_existing_items = curr_items - curr_deletes
-        num_hot_items = int(num_existing_items * self.working_set / 100.0)
+        num_hot_items = int(num_existing_items * self.working_set / 100)
         num_cold_items = num_existing_items - num_hot_items
 
         left_limit = 1 + curr_deletes
@@ -117,12 +117,12 @@ class SequentialHotKey(Iterator):
         self.prefix = prefix
 
     def __iter__(self):
-        num_hot_keys = int(self.ws.items * self.ws.working_set / 100.0)
+        num_hot_keys = int(self.ws.items * self.ws.working_set / 100)
         num_cold_items = self.ws.items - num_hot_keys
 
-        for seq_id in xrange(1 + num_cold_items + self.sid,
-                             1 + self.ws.items,
-                             self.ws.workers):
+        for seq_id in range(1 + num_cold_items + self.sid,
+                            1 + self.ws.items,
+                            self.ws.workers):
             key = '%012d' % seq_id
             key = self.add_prefix(key)
             yield key
@@ -140,7 +140,7 @@ class NewKey(Iterator):
         key = self.add_prefix(key)
         ttl = None
         if self.expiration and random.randint(1, 100) <= self.expiration:
-            ttl = self.ttls.next()
+            ttl = next(self.ttls)
         return key, ttl
 
 
@@ -163,7 +163,7 @@ class KeyForCASUpdate(Iterator):
         self.prefix = prefix
 
     def next(self, sid, curr_items):
-        num_hot_items = int(curr_items * self.working_set / 100.0)
+        num_hot_items = int(curr_items * self.working_set / 100)
         num_cold_items = curr_items - num_hot_items
 
         left_limit = 1
@@ -173,7 +173,7 @@ class KeyForCASUpdate(Iterator):
             right_limit = curr_items
         else:
             right_limit = left_limit + num_cold_items
-        limit_step = (right_limit - left_limit) / self.n1ql_workers
+        limit_step = (right_limit - left_limit) // self.n1ql_workers
         left_limit += limit_step * sid
         right_limit = left_limit + limit_step - 1
         key = np.random.random_integers(left_limit, right_limit)
@@ -207,7 +207,8 @@ class Document(Iterator):
 
     @staticmethod
     def _build_alphabet(key):
-        return md5(key).hexdigest() + md5(key[::-1]).hexdigest()
+        _key = key.encode('utf-8')
+        return md5(_key).hexdigest() + md5(_key[::-1]).hexdigest()
 
     @staticmethod
     def _build_name(alphabet):
@@ -245,7 +246,7 @@ class Document(Iterator):
 
     @staticmethod
     def _build_coins(alphabet):
-        return max(0.1, int(alphabet[36:40], 16) / 100.0)
+        return max(0.1, int(alphabet[36:40], 16) / 100)
 
     @staticmethod
     def _build_gmtime(alphabet):
@@ -380,7 +381,7 @@ class ReverseLookupDocument(NestedDocument):
             offset = random.randint(1, 9)
             return '%s' % alphabet[offset:offset + 6]
 
-        index = seq_id / num_unique
+        index = seq_id // num_unique
         return '%s_%s_%s' % (self.prefix, num_unique, index)
 
     def _build_topics(self, seq_id):
@@ -427,7 +428,7 @@ class ReverseRangeLookupDocument(ReverseLookupDocument):
             offset = random.randint(1, 9)
             return '%s' % alphabet[offset:offset + 6]
 
-        index = seq_id / num_unique
+        index = seq_id // num_unique
         return '%s_%s_%12s' % (self.prefix, num_unique, index)
 
     def next(self, key):
@@ -486,7 +487,7 @@ class JoinedDocument(ReverseLookupDocument):
 
     def _build_owner(self, seq_id):
         """4:1 reference to ReverseLookupDocument keys."""
-        ref_id = seq_id % (self.num_docs / 4)
+        ref_id = seq_id % (self.num_docs // 4)
         return self.add_prefix('%012d' % ref_id)
 
     def _build_title(self, alphabet):
@@ -600,10 +601,10 @@ class ArrayIndexingDocument(ReverseLookupDocument):
         same queries. Overlapping is achieving by integer division using
         ARRAY_CAP constant.
         """
-        offset = seq_id / self.ARRAY_CAP * self.ARRAY_SIZE
+        offset = seq_id // self.ARRAY_CAP * self.ARRAY_SIZE
         if self.is_random:
             offset = self.num_docs * self.ARRAY_SIZE
-            offset += (2 * seq_id) / self.ARRAY_CAP * self.ARRAY_SIZE
+            offset += (2 * seq_id) // self.ARRAY_CAP * self.ARRAY_SIZE
             offset += random.randint(1, self.ARRAY_SIZE)
 
         return [offset + i for i in range(self.ARRAY_SIZE)]
@@ -910,7 +911,7 @@ class PlasmaDocument(Document):
     @staticmethod
     def build_item(alphabet, size=64, prefix=""):
         length = size - len(prefix)
-        num_slices = int(math.ceil(length / 64.0))  # 64 == len(alphabet)
+        num_slices = int(math.ceil(length / 64))  # 64 == len(alphabet)
         body = num_slices * alphabet
         num = random.randint(1, length)
         if prefix:

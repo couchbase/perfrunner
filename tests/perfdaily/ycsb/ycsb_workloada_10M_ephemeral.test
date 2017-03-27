@@ -1,0 +1,26 @@
+[test_case]
+test = perfdaily.ycsb.YCSBTest
+title = Workload A, 10M items, single node, Ephemeral
+component = YCSB
+
+[cluster]
+mem_quota = 20480
+initial_nodes = 1
+num_buckets = 1
+throttle_cpu = 1
+
+[bucket]
+replica_number = 0
+bucket_type = ephemeral
+
+[load]
+workload_path = workloads/workloada
+items = 10000000
+workers = 160
+
+[access]
+workload_path = workloads/workloada
+items = 10000000
+workers = 160
+ops = 1000000000
+time = 600

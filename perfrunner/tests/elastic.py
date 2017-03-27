@@ -40,7 +40,7 @@ class Elastictest(PerfTest):
     def access_bg_test(self):
         access_settings = self.test_config.access_settings
         access_settings.fts_config = self.test_config.fts_settings
-        self.access_bg(access_settings)
+        self.access_bg(settings=access_settings)
         self.access()
 
     def addelastic(self):

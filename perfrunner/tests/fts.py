@@ -43,7 +43,7 @@ class FTStest(PerfTest):
     def access_bg_test(self):
         access_settings = self.test_config.access_settings
         access_settings.fts_config = self.test_config.fts_settings
-        self.access_bg(access_settings)
+        self.access_bg(settings=access_settings)
         self.access()
 
     def load(self, *args):
@@ -212,7 +212,7 @@ class FTSRebalanceTest(FTStest, RebalanceTest):
     def access_bg_test(self):
         access_settings = self.test_config.access_settings
         access_settings.fts_config = self.test_config.fts_settings
-        self.access_bg(access_settings)
+        self.access_bg(settings=access_settings)
         self.rebalance_fts()
 
     def rebalance_fts(self):

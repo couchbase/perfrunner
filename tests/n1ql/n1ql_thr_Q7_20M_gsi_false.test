@@ -2,7 +2,7 @@
 test = perfrunner.tests.n1ql.N1QLThroughputTest
 title = Q7, Order By Query, FDB, request_plus
 component = n1ql
-category = Q5_Q7_thr
+category = Q5+_thr
 
 [cluster]
 mem_quota = 20480

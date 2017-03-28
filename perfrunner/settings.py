@@ -1,6 +1,7 @@
 import csv
 import os.path
 from configparser import ConfigParser, NoOptionError, NoSectionError
+from typing import Iterator, List
 
 from decorator import decorator
 from logger import logger
@@ -51,29 +52,29 @@ class Config(object):
 class ClusterSpec(Config):
 
     @safe
-    def yield_clusters(self):
+    def yield_clusters(self) -> Iterator:
         for cluster_name, servers in self.config.items('clusters'):
             yield cluster_name, [s.split(',', 1)[0] for s in servers.split()]
 
     @safe
-    def yield_masters(self):
+    def yield_masters(self) -> Iterator:
         for _, servers in self.yield_clusters():
             yield servers[0]
 
     @safe
-    def yield_servers(self):
+    def yield_servers(self) -> Iterator:
         for _, servers in self.yield_clusters():
             for server in servers:
                 yield server
 
     @safe
-    def yield_hostnames(self):
+    def yield_hostnames(self) -> Iterator:
         for _, servers in self.yield_clusters():
             for server in servers:
                 yield server.split(':')[0]
 
     @safe
-    def yield_servers_by_role(self, role):
+    def yield_servers_by_role(self, role) -> Iterator:
         for name, servers in self.config.items('clusters'):
             has_service = []
             for server in servers.split():
@@ -82,14 +83,14 @@ class ClusterSpec(Config):
             yield name, has_service
 
     @safe
-    def yield_fts_servers(self):
+    def yield_fts_servers(self) -> Iterator:
         for name, servers in self.config.items('clusters'):
             for server in servers.split():
                 if 'fts' in server.split(',')[1:]:
                     yield server.split(':')[0]
 
     @safe
-    def yield_kv_servers(self):
+    def yield_kv_servers(self) -> Iterator:
         for name, servers in self.config.items('clusters'):
             for server in servers.split():
                 if ',' in server:
@@ -99,7 +100,7 @@ class ClusterSpec(Config):
 
     @property
     @safe
-    def roles(self):
+    def roles(self) -> dict:
         server_roles = {}
         for _, node in self.config.items('clusters'):
             for server in node.split():
@@ -113,33 +114,33 @@ class ClusterSpec(Config):
 
     @property
     @safe
-    def workers(self):
+    def workers(self) -> List[str]:
         return self.config.get('clients', 'hosts').split()
 
     @property
     @safe
-    def client_credentials(self):
+    def client_credentials(self) -> List[str]:
         return self.config.get('clients', 'credentials').split(':')
 
     @property
     @safe
-    def paths(self):
+    def paths(self) -> (str, str):
         data_path = self.config.get('storage', 'data')
         index_path = self.config.get('storage', 'index')
         return data_path, index_path
 
     @property
     @safe
-    def rest_credentials(self):
+    def rest_credentials(self) -> List[str]:
         return self.config.get('credentials', 'rest').split(':')
 
     @property
     @safe
-    def ssh_credentials(self):
+    def ssh_credentials(self) -> List[str]:
         return self.config.get('credentials', 'ssh').split(':')
 
     @property
-    def parameters(self):
+    def parameters(self) -> dict:
         return self._get_options_as_dict('parameters')
 
 

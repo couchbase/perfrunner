@@ -40,12 +40,12 @@ class Remote(object):
                 with cd('perfrunner'):
                     run('make')
 
-    def start_celery_worker(self, worker, worker_home, queue):
+    def start_celery_worker(self, worker, worker_home):
         with settings(host_string=worker):
             with cd(worker_home), shell_env(PYTHONOPTIMIZE='1',
                                             PYTHONWARNINGS='ignore',
                                             C_FORCE_ROOT='1'):
                 run('ulimit -n 10240; '
                     'nohup env/bin/celery worker '
-                    '-A perfrunner.helpers.worker -Q {0} -c 1 -n {1} -C '
-                    '&>worker_{0}.log &'.format(queue, worker), pty=False)
+                    '-A perfrunner.helpers.worker -Q {0} -n {0} -C '
+                    '&>worker_{0}.log &'.format(worker), pty=False)

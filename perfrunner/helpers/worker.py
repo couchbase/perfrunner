@@ -4,7 +4,6 @@ from itertools import cycle
 from time import sleep
 
 from celery import Celery
-from kombu import Queue
 from logger import logger
 from sqlalchemy import create_engine
 
@@ -71,44 +70,34 @@ class RemoteWorkerManager(object):
         self.remote = remote_manager
 
         self.temp_dir = os.path.join('/tmp', uhex())
+        self.queues = cycle(self.cluster_spec.workers)
 
         self.terminate()
         self.start()
 
-    def new_worker_pool(self):
-        return cycle(self.cluster_spec.workers)
-
-    def yield_queues(self):
-        for master in self.cluster_spec.yield_masters():
-            for bucket in self.buckets:
-                yield '{}-{}'.format(master.split(':')[0], bucket)
+    def next_queue(self) -> str:
+        return next(self.queues)
 
     def start(self):
         logger.info('Initializing remote worker environment')
 
-        worker_pool = cycle(self.cluster_spec.workers)
+        for worker in self.cluster_spec.workers:
+            logger.info('Starting remote Celery worker, host={}'.format(worker))
 
-        for queue in self.yield_queues():
-            worker = next(worker_pool)
-            logger.info('Starting Celery worker, host={}, queue={}'
-                        .format(worker, queue))
+            self.remote.init_repo(worker, self.temp_dir)
 
-            worker_home = os.path.join(self.temp_dir, queue)
-            perfrunner_home = os.path.join(worker_home, 'perfrunner')
-
-            self.remote.init_repo(worker, worker_home)
-            self.remote.start_celery_worker(worker, perfrunner_home, queue)
+            perfrunner_home = os.path.join(self.temp_dir, 'perfrunner')
+            self.remote.start_celery_worker(worker, perfrunner_home)
 
     def run_tasks(self, task, task_settings, target_iterator, timer=None):
         self.workers = []
+
         for target in target_iterator:
             log_action('Celery task', task_settings)
 
-            qname = '{}-{}'.format(target.node.split(':')[0], target.bucket)
-            queue = Queue(name=qname)
             worker = task.apply_async(
                 args=(task_settings, target, timer),
-                queue=queue.name, expires=timer,
+                queue=self.next_queue(), expires=timer,
             )
             self.workers.append(worker)
             sleep(self.RACE_DELAY)
@@ -136,6 +125,9 @@ class LocalWorkerManager(RemoteWorkerManager):
         self.tune_sqlite()
         self.start()
 
+    def next_queue(self) -> str:
+        return 'local'
+
     def tune_sqlite(self):
         for db in self.SQLITE_DBS:
             engine = create_engine('sqlite:///{}'.format(db))
@@ -143,10 +135,9 @@ class LocalWorkerManager(RemoteWorkerManager):
             engine.execute('PRAGMA synchronous=OFF;')
 
     def start(self):
-        for queue in self.yield_queues():
-            logger.info('Starting Celery worker, queue={}'.format(queue))
-            local.start_celery_worker(queue)
-            sleep(self.RACE_DELAY)
+        logger.info('Starting local Celery worker')
+        local.start_celery_worker(queue='local')
+        sleep(self.RACE_DELAY)
 
     def terminate(self):
         logger.info('Terminating Celery workers')

@@ -325,8 +325,7 @@ def kill_process(process):
 def start_celery_worker(queue):
     with shell_env(PYTHONOPTIMIZE='1', PYTHONWARNINGS='ignore', C_FORCE_ROOT='1'):
         local('nohup env/bin/celery worker '
-              '-A perfrunner.helpers.worker -Q {0} -c 1 > worker-{0}.log &'
-              .format(queue))
+              '-A perfrunner.helpers.worker -Q {} > worker.log &'.format(queue))
 
 
 def clone_ycsb(repo: str, branch: str):

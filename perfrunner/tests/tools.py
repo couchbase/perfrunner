@@ -214,7 +214,6 @@ class CbExportImportTest(BackupRestoreTest):
         t0 = time.time()
         local.export(master_node=self.master_node,
                      cluster_spec=self.cluster_spec,
-                     tp=self.test_config.export_import_settings.type,
                      frmt=self.test_config.export_import_settings.format,
                      bucket='bucket-1')
         self.spent_time = time.time() - t0
@@ -321,7 +320,7 @@ class CbImportCETest(CbExportImportTest):
     Import CSV Data with cbtransfer (CE version)
     """
 
-    def _report_kpi(self):
+    def _report_kpi(self, *args):
         metric_info = {
             'title': "CE Import CSV " +
             self.test_config.test_case.title,

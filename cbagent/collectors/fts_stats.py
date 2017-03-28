@@ -200,7 +200,7 @@ class ElasticStats(FTSCollector):
 
     def sample(self):
         self.collect_stats()
-        if (self.cbft_stats):
+        if self.cbft_stats:
             self.update_metric_metadata(self.METRICS)
             samples = self.measure()
             if samples:

@@ -108,11 +108,13 @@ class YCSBdata(PerfTest):
         -jvm-args=-Dcom.couchbase.kvTimeout=60000 -P workloads/workloada -p
         couchbase.host=172.23.123.38 -threads 6 -p recordcount=100000 -exportfile=loaddata.json
         """
-        commandlist = []
-        commandlist.append('/' + self.ycsb.path + '_' + str(mypid) + '/bin/ycsb')
-        commandlist.append(action)
-        commandlist.append(self.ycsb.sdk)
-        commandlist.append('-s -P ' + self.ycsb.path + '_' + str(mypid) + self.ycsb.workload)
+        commandlist = [
+            '/' + self.ycsb.path + '_' + str(mypid) + '/bin/ycsb',
+            action,
+            self.ycsb.sdk,
+            '-s -P ' + self.ycsb.path + '_' + str(mypid) + self.ycsb.workload,
+        ]
+
         if self.ycsb.workload == '/workloads/workloade':
             PerfTest.COLLECTORS = {
                 'n1ql_latency': True,
@@ -173,7 +175,7 @@ class YCSBTest(YCSBdata):
         self.workload = YCSBWorker(self.test_config.access_settings, self.remote, self, self.ycsb)
         self.workload.run()
 
-    def post_sf(self, thput, readl, writel, insertl, scanl, query=None):
+    def post_sf(self, thput, readl, writel, insertl, scanl):
         if not np.isnan(thput):
             self.reporter.post_to_sf(
                 *self.metric_helper.calc_ycsb_queries(round(thput),

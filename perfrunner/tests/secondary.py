@@ -269,6 +269,7 @@ class MultipleIncrementalSecondaryIndexTest(InitialandIncrementalSecondaryIndexT
 
 
 class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSecondaryIndexTest):
+
     def rebalance(self, initial_nodes, nodes_after):
         clusters = self.cluster_spec.yield_clusters()
         for _, servers in clusters:
@@ -281,7 +282,8 @@ class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSeco
             known_nodes = servers[:nodes_after]
             for i, host_port in new_nodes:
                 self.rest.add_node(master, host_port)
-        self.rest.rebalance(master, known_nodes, ejected_nodes)
+
+            self.rest.rebalance(master, known_nodes, ejected_nodes)
 
     def run(self):
         self.load()
@@ -381,7 +383,8 @@ class SecondaryIndexingThroughputRebalanceTest(SecondaryIndexingThroughputTest):
             known_nodes = servers[:nodes_after]
             for i, host_port in new_nodes:
                 self.rest.add_node(master, host_port)
-        self.rest.rebalance(master, known_nodes, ejected_nodes)
+
+            self.rest.rebalance(master, known_nodes, ejected_nodes)
 
     def run(self):
         self.load()
@@ -411,7 +414,7 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
                   'secondary_debugstats': True, 'secondary_debugstats_bucket': True,
                   'secondary_debugstats_index': True}
 
-    def _report_kpi(self):
+    def _report_kpi(self, *args):
         self.reporter.post_to_sf(
             *self.metric_helper.calc_secondary_scan_latency(percentile=90)
         )
@@ -455,7 +458,8 @@ class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest
             known_nodes = servers[:nodes_after]
             for i, host_port in new_nodes:
                 self.rest.add_node(master, host_port)
-        self.rest.rebalance(master, known_nodes, ejected_nodes)
+
+            self.rest.rebalance(master, known_nodes, ejected_nodes)
 
     def run(self):
         self.remove_statsfile()
@@ -527,7 +531,7 @@ class SecondaryIndexingLatencyTest(SecondaryIndexTest):
     """
 
     @with_stats
-    def apply_scanworkload(self):
+    def apply_scanworkload(self, *args):
         rest_username, rest_password = self.cluster_spec.rest_credentials
         logger.info('Initiating the scan workload')
         cmdstr = "/opt/couchbase/bin/cbindexperf -cluster {} -auth=\"{}:{}\" " \

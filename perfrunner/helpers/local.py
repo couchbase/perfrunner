@@ -135,13 +135,13 @@ def export(master_node, cluster_spec, tp='json', frmt=None, bucket='default'):
 
     logger.info('export into: {}'.format(export_file))
 
-    if tp == 'json':
-        cmd = \
-            './opt/couchbase/bin/cbexport {} -c http://{} --username {} ' \
-            '--password {} --format {} --output {} -b {} -t 16' \
-            .format(tp, master_node, cluster_spec.rest_credentials[0],
-                    cluster_spec.rest_credentials[1],
-                    frmt, export_file, bucket)
+    cmd = \
+        './opt/couchbase/bin/cbexport {} -c http://{} --username {} ' \
+        '--password {} --format {} --output {} -b {} -t 16' \
+        .format(tp, master_node, cluster_spec.rest_credentials[0],
+                cluster_spec.rest_credentials[1],
+                frmt, export_file, bucket)
+
     logger.info('Running: {}'.format(cmd))
     local(cmd, capture=False)
 

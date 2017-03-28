@@ -33,7 +33,7 @@ def iter_urls():
     for base in search_bases:
         for pat in patterns:
             url = urljoin(
-                base.format(**(args.__dict__)), pat.format(**(args.__dict__)))
+                base.format(**args.__dict__), pat.format(**args.__dict__))
             yield url
 
 
@@ -97,7 +97,7 @@ def compile_forestdb(remote, branch, fdb_hash):
     return fdb_path
 
 
-def compile_standalone_test(fdb_path):
+def compile_standalone_test():
     with cd(args.remote_workdir):
         clone_repo("https://github.com/couchbaselabs/forestdb-2ibenchmark.git")
         with cd("forestdb-2ibenchmark"):

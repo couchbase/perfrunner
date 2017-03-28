@@ -81,7 +81,7 @@ class RemoteWindows(Remote):
             run('rm -fr {}'.format(self.CB_DIR))
 
     @all_hosts
-    def uninstall_couchbase(self, pkg):
+    def uninstall_couchbase(self, *args):
         local_ip = self.detect_ip()
         logger.info('Uninstalling Package on {}'.format(local_ip))
 

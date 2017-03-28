@@ -736,7 +736,9 @@ class GSISettings(object):
                     else:
                         self.settings[option] = int(value)
                     continue
-                except:
+                except Exception as e:
+                    logger.error('Failed to parse GSI option {}. {}'
+                                 .format(option, e))
                     pass
 
                 self.settings[option] = value

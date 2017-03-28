@@ -3,6 +3,7 @@ test = perfdaily.gsi.InitialIndexTest
 title = 20M docs, 1 index, FDB
 component = GSI
 threshold = 10
+use_workers = 0
 
 [stats]
 monitored_processes = projector

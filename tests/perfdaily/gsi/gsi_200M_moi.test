@@ -3,6 +3,7 @@ test = perfdaily.gsi.InitialIndexTest
 title = 200M docs, 1 index, MOI
 component = GSI
 threshold = 10
+use_workers = 0
 
 [stats]
 interval = 1

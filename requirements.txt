@@ -17,7 +17,7 @@ numpy==1.12.1
 pep8-naming==0.4.1
 psutil==5.2.0
 requests==2.13.0
-sqlalchemy==0.9.4
+sqlalchemy==1.1.7
 twisted==16.2.0
 xmltodict
 

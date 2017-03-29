@@ -286,7 +286,7 @@ def run_ycsb(host, bucket, password, action, workload, items, workers,
         '-p couchbase.password={password} ' \
         '-p couchbase.boost=48 ' \
         '-p couchbase.epoll=true ' \
-        '-p exportfile=ycsb.log'
+        '-p exportfile=ycsb_{action}.log'
 
     if ops is not None:
         cmd += ' -p operationcount={ops}'

@@ -473,7 +473,7 @@ class MetricHelper(object):
         return True
 
     def parse_ycsb_throughput(self):
-        with open('YCSB/ycsb.log') as fh:
+        with open('YCSB/ycsb_run.log') as fh:
             for line in fh.readlines():
                 if line.startswith('[OVERALL], Throughput(ops/sec)'):
                     return int(float(line.split()[-1]))

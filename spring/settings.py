@@ -21,7 +21,6 @@ class WorkloadSettings(object):
         self.expiration = options.expiration
         self.working_set = options.working_set
         self.working_set_access = options.working_set_access
-        self.working_set_move_time = options.working_set_move_time
 
         self.async = options.async
 
@@ -41,6 +40,9 @@ class WorkloadSettings(object):
         self.query_params = {}
 
         self.use_ssl = False
+
+        self.working_set_move_time = 0
+        self.hash_keys = False
 
 
 class TargetSettings(object):

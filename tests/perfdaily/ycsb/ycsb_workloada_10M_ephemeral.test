@@ -10,8 +10,9 @@ num_buckets = 1
 throttle_cpu = 1
 
 [bucket]
-replica_number = 0
 bucket_type = ephemeral
+eviction_policy = nruEviction
+replica_number = 0
 
 [load]
 workload_path = workloads/workloada

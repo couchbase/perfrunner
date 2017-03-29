@@ -12,6 +12,7 @@ throttle_cpu = 1
 
 [bucket]
 bucket_type = ephemeral
+eviction_policy = nruEviction
 
 [load]
 size = 512

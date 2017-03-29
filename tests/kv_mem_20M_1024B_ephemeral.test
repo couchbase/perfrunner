@@ -14,6 +14,7 @@ num_buckets = 1
 
 [bucket]
 bucket_type = ephemeral
+eviction_policy = nruEviction
 
 [load]
 items = 20000000

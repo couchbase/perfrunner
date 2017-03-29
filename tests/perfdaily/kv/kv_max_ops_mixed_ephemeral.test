@@ -10,6 +10,7 @@ num_buckets = 1
 
 [bucket]
 bucket_type = ephemeral
+eviction_policy = nruEviction
 
 [load]
 size = 256

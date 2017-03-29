@@ -860,6 +860,9 @@ class FtsSettings(object):
 
 class YcsbSettings(object):
 
+    REPO = 'git://github.com/brianfrankcooper/YCSB.git'
+    BRANCH = 'master'
+
     def __init__(self, options):
         self.sdk = options.get("sdk")
         self.bucket = options.get("bucket")
@@ -874,6 +877,9 @@ class YcsbSettings(object):
         self.log_file = options.get("export_file")
         self.log_path = options.get("export_file_path")
         self.index = options.get("index")
+
+        self.repo = options.get('repo', self.REPO)
+        self.branch = options.get('branch', self.BRANCH)
 
     def __str__(self):
         return str(self.__dict__)

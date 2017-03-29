@@ -327,3 +327,8 @@ def start_celery_worker(queue):
         local('nohup env/bin/celery worker '
               '-A perfrunner.helpers.worker -Q {0} -c 1 > worker-{0}.log &'
               .format(queue))
+
+
+def clone_ycsb(repo: str, branch: str):
+    logger.info('Cloning YCSB repository: {}'.format(repo))
+    local('git clone -q -b {} {}'.format(branch, repo))

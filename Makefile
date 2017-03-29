@@ -14,7 +14,7 @@ build:
 	pwd > ${ENV}/lib/${PYTHON}/site-packages/perfrunner.pth
 
 clean:
-	rm -fr build perfrunner.egg-info dist dcptest kvgen cbindexperf rachell YCSB *.db *.log
+	rm -fr build perfrunner.egg-info dist dcptest kvgen cbindexperf rachell *.db *.log
 	find . -name '*.pyc' -o -name '*.pyo' -o -name __pycache__ | xargs rm -fr
 
 pep8:
@@ -49,10 +49,6 @@ vendor-sync: go-tools
 
 go-tools:
 	go get -u github.com/kardianos/govendor
-
-ycsb:
-	git clone git://github.com/brianfrankcooper/YCSB.git
-	cd YCSB && mvn -pl com.yahoo.ycsb:couchbase2-binding -am -Dcheckstyle.skip -DskipTests clean package
 
 memblock:
 	gcc -o memblock c/memblock/memblock.c

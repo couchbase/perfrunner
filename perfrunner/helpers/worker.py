@@ -1,7 +1,6 @@
 import os.path
 import sys
 from itertools import cycle
-from time import sleep
 
 from celery import Celery
 from logger import logger
@@ -62,8 +61,6 @@ class WorkerManager(object):
 
 class RemoteWorkerManager(object):
 
-    RACE_DELAY = 2
-
     def __init__(self, cluster_spec, test_config, remote_manager):
         self.cluster_spec = cluster_spec
         self.buckets = test_config.buckets
@@ -90,22 +87,21 @@ class RemoteWorkerManager(object):
             self.remote.start_celery_worker(worker, perfrunner_home)
 
     def run_tasks(self, task, task_settings, target_iterator, timer=None):
-        self.workers = []
+        self.callbacks = []
 
         for target in target_iterator:
             log_action('Celery task', task_settings)
 
-            worker = task.apply_async(
+            callback = task.apply_async(
                 args=(task_settings, target, timer),
                 queue=self.next_queue(), expires=timer,
             )
-            self.workers.append(worker)
-            sleep(self.RACE_DELAY)
+            self.callbacks.append(callback)
 
     def wait_for_workers(self):
-        logger.info('Waiting for workers to finish')
-        for worker in self.workers:
-            worker.wait()
+        logger.info('Waiting for all tasks to finish')
+        for callback in self.callbacks:
+            callback.wait()
         logger.info('All workers are done')
 
     def terminate(self):
@@ -131,13 +127,11 @@ class LocalWorkerManager(RemoteWorkerManager):
     def tune_sqlite(self):
         for db in self.SQLITE_DBS:
             engine = create_engine('sqlite:///{}'.format(db))
-            engine.execute('PRAGMA read_uncommitted=1;')
             engine.execute('PRAGMA synchronous=OFF;')
 
     def start(self):
         logger.info('Starting local Celery worker')
         local.start_celery_worker(queue='local')
-        sleep(self.RACE_DELAY)
 
     def terminate(self):
         logger.info('Terminating Celery workers')

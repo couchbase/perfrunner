@@ -6,6 +6,7 @@ from threading import Thread
 from time import sleep, time
 
 import requests
+import urllib3
 from couchbase import experimental, subdocument
 from couchbase.bucket import Bucket
 from couchbase.exceptions import (
@@ -183,6 +184,8 @@ class FtsGen(CBGen):
         self.query_port = settings.port
         self.auth = auth
         self.requests = requests.Session()
+        self.http_pool = self.new_http_pool()
+
         self.settings = settings
         self.query_nodes = self.get_nodes()
         self.nodes_list_size = len(self.query_nodes)
@@ -192,6 +195,13 @@ class FtsGen(CBGen):
         self.query_list_size = 0
 
         self.prepare_query_list()
+
+    def new_http_pool(self):
+        basic_auth = '{}:{}'.format(self.auth.username, self.auth.password)
+        headers = urllib3.make_headers(keep_alive=True, basic_auth=basic_auth)
+        headers.update({'Content-Type': 'application/json'})
+
+        return urllib3.PoolManager(headers=headers)
 
     @property
     def query_template(self):
@@ -314,6 +324,9 @@ class FtsGen(CBGen):
 
     def next_node(self):
         return self.query_nodes[randint(0, self.nodes_list_size - 1)]
+
+    def execute_query(self, query):
+        return self.http_pool.request('POST', query['url'], body=query['data'])
 
 
 class ElasticGen(FtsGen):

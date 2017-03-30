@@ -1,15 +1,16 @@
+import json
 import os
 import time
 from collections import defaultdict
 from multiprocessing import Event, Lock, Process, Value
 from random import randint
 
-import requests
 from couchbase.exceptions import ValueFormatError
 from decorator import decorator
 from logger import logger
 from numpy import random
 from psutil import cpu_count
+from requests.auth import HTTPBasicAuth
 from twisted.internet import reactor
 
 from perfrunner.helpers.sync import SyncHotWorkload
@@ -707,9 +708,9 @@ class FtsWorker(Worker):
 
     def __init__(self, workload_settings, target_settings, shutdown_event=None):
         super(FtsWorker, self).__init__(workload_settings, target_settings, shutdown_event)
-        self.query_list = workload_settings.fts_query_list
-        self.query_list_size = workload_settings.fts_query_list_size
-        self.requests = requests.Session()
+        self.query_gen = workload_settings.query_gen
+        self.query_list = workload_settings.query_gen.query_list
+        self.query_list_size = len(workload_settings.query_gen.query_list)
 
     def init_keys(self):
         pass
@@ -721,26 +722,27 @@ class FtsWorker(Worker):
         pass
 
     def do_check_result(self, r):
+        result = json.loads(r.data.decode('utf-8'))
         if self.ws.fts_config.elastic:
-            return r.json()["hits"]["total"] == 0
-        return r.json()['total_hits'] == 0
+            return result["hits"]["total"] == 0
+        return result['total_hits'] == 0
 
     def validate_response(self, r, args):
         if not self.ws.fts_config.logfile:
             return
 
-        if r.status_code not in range(200, 203) or self.do_check_result(r):
+        if r.status not in range(200, 203) or self.do_check_result(r):
             with open(self.ws.fts_config.logfile, 'a') as f:
                 f.write(str(args))
                 f.write(str(r.status_code))
-                f.write(str(r.text))
+                f.write(str(r.data))
 
     def do_batch(self):
         for i in range(self.BATCH_SIZE):
             args = self.query_list[random.randint(self.query_list_size - 1)]
-            r = self.requests.post(**args)
+            response = self.query_gen.execute_query(args)
             if self.sid == 0:
-                self.validate_response(r, args)
+                self.validate_response(response, args)
 
     def run(self, sid, lock):
         logger.info("Started {}".format(self.NAME))
@@ -772,12 +774,11 @@ class WorkloadGen(object):
         worker_type, total_workers = worker_factory(self.ws)
         if name == 'fts' and total_workers:
             master_host = self.ts.node.split(":")[0]
-            rest_auth = (self.ws.fts_config.username, self.ts.password)
+            auth = HTTPBasicAuth(self.ws.fts_config.username, self.ts.password)
             if self.ws.fts_config.elastic:
-                self.ws.fts_query_list = ElasticGen(master_host, self.ws.fts_config, rest_auth).query_list
+                self.ws.query_gen = ElasticGen(master_host, self.ws.fts_config, auth)
             else:
-                self.ws.fts_query_list = FtsGen(master_host, self.ws.fts_config, rest_auth).query_list
-            self.ws.fts_query_list_size = len(self.ws.fts_query_list)
+                self.ws.query_gen = FtsGen(master_host, self.ws.fts_config, auth)
 
         for sid in range(total_workers):
             if curr_items is None and deleted_items is None:

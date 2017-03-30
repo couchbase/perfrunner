@@ -183,7 +183,6 @@ class FtsGen(CBGen):
         self.query_port = settings.port
         self.auth = auth
         self.requests = requests.Session()
-        self.requests.keep_alive = False
         self.settings = settings
         self.query_nodes = self.get_nodes()
         self.nodes_list_size = len(self.query_nodes)

@@ -725,23 +725,22 @@ class FtsWorker(Worker):
             return r.json()["hits"]["total"] == 0
         return r.json()['total_hits'] == 0
 
+    def validate_response(self, r, args):
+        if not self.ws.fts_config.logfile:
+            return
+
+        if r.status_code not in range(200, 203) or self.do_check_result(r):
+            with open(self.ws.fts_config.logfile, 'a') as f:
+                f.write(str(args))
+                f.write(str(r.status_code))
+                f.write(str(r.text))
+
     def do_batch(self):
         for i in range(self.BATCH_SIZE):
             args = self.query_list[random.randint(self.query_list_size - 1)]
+            r = self.requests.post(**args)
             if self.sid == 0:
-                try:
-                    r = self.requests.post(**args)
-                    if not self.ws.fts_config.logfile:
-                        continue
-                    if r.status_code not in range(200, 203) or self.do_check_result(r):
-                        with open(self.ws.fts_config.logfile, 'a') as f:
-                            f.write(str(args))
-                            f.write(str(r.status_code))
-                            f.write(str(r.text))
-                except IOError as e:
-                    logger.info("I/O error({0}): {1}".format(e.errno, e.strerror))
-            else:
-                self.requests.post(**args)
+                self.validate_response(r, args)
 
     def run(self, sid, lock):
         logger.info("Started {}".format(self.NAME))

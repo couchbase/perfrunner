@@ -26,7 +26,7 @@ class SmallIterator(object):
     def _field(self, _id):
         _id = _id.encode('utf-8')
         data = md5(_id).hexdigest()[:16]
-        return {'pn': _id, 'nam': 'ViberPhone_{}'.format(data)}
+        return {'pn': str(_id), 'nam': 'ViberPhone_{}'.format(data)}
 
 
 class KeyValueIterator(SmallIterator):

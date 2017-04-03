@@ -23,7 +23,7 @@ class Config(object):
         self.config = ConfigParser()
         self.name = ''
 
-    def parse(self, fname, override):
+    def parse(self, fname, override=()):
         if override:
             override = [x for x in csv.reader(
                 ' '.join(override).split(','), delimiter='.')]

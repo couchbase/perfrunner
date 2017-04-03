@@ -1,5 +1,6 @@
 import json
 import os.path
+from urllib.parse import urlparse
 
 from fabric import state
 from fabric.api import get, put, run, settings
@@ -25,9 +26,8 @@ class RemoteLinux(Remote):
                  'cbft', 'goport', 'goxdcr', 'couch_view_index_updater',
                  'moxi', 'spring', 'memblock')
 
-    @single_host
-    def detect_pkg(self):
-        logger.info('Detecting package manager')
+    @property
+    def package(self):
         if self.os.upper() in ('UBUNTU', 'DEBIAN'):
             return 'deb'
         else:
@@ -151,21 +151,25 @@ class RemoteLinux(Remote):
                 warn_only=True, quiet=True)
 
     @all_hosts
-    def uninstall_couchbase(self, pkg):
+    def uninstall_couchbase(self):
         logger.info('Uninstalling Couchbase Server')
-        if pkg == 'deb':
+        if self.package == 'deb':
             run('yes | apt-get remove couchbase-server', quiet=True)
             run('yes | apt-get remove couchbase-server-community', quiet=True)
         else:
             run('yes | yum remove couchbase-server', quiet=True)
             run('yes | yum remove couchbase-server-community', quiet=True)
 
+    def upload_iss_files(self, release: str):
+        pass
+
     @all_hosts
-    def install_couchbase(self, pkg, url, filename, version=None):
+    def install_couchbase(self, url: str):
         self.wget(url, outdir='/tmp')
+        filename = urlparse(url).path.split('/')[-1]
 
         logger.info('Installing Couchbase Server')
-        if pkg == 'deb':
+        if self.package == 'deb':
             run('yes | apt-get install gdebi')
             run('yes | gdebi /tmp/{}'.format(filename))
         else:

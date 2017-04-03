@@ -21,6 +21,7 @@ requests==2.1.0
 sqlalchemy==1.1.7
 twisted==16.2.0
 urllib3==1.20
+validators==0.11.3
 xmltodict
 
 git+https://github.com/couchbaselabs/mc_bin_client.git@py3#egg=mc_bin_client

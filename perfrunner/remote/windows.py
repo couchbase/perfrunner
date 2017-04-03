@@ -6,7 +6,7 @@ from logger import logger
 
 from perfrunner.helpers.misc import uhex
 from perfrunner.remote import Remote
-from perfrunner.remote.context import all_hosts, single_host
+from perfrunner.remote.context import all_hosts
 
 
 class RemoteWindows(Remote):
@@ -28,8 +28,8 @@ class RemoteWindows(Remote):
         r = run('test -f "{}"'.format(fname), warn_only=True, quiet=True)
         return not r.return_code
 
-    @single_host
-    def detect_pkg(self):
+    @property
+    def package(self):
         return 'exe'
 
     def reset_swap(self):
@@ -81,7 +81,7 @@ class RemoteWindows(Remote):
             run('rm -fr {}'.format(self.CB_DIR))
 
     @all_hosts
-    def uninstall_couchbase(self, *args):
+    def uninstall_couchbase(self):
         local_ip = self.detect_ip()
         logger.info('Uninstalling Package on {}'.format(local_ip))
 
@@ -113,22 +113,20 @@ class RemoteWindows(Remote):
         logger.info('Removing files on {}'.format(local_ip))
         self.clean_installation()
 
-    @staticmethod
-    def put_iss_files(version):
-        logger.info('Copying {} ISS files'.format(version))
-        put('iss/install_{}.iss'.format(version),
+    @all_hosts
+    def upload_iss_files(self, release: str):
+        logger.info('Copying {} ISS files'.format(release))
+        put('iss/install_{}.iss'.format(release),
             '/cygdrive/c/install.iss')
-        put('iss/uninstall_{}.iss'.format(version),
+        put('iss/uninstall_{}.iss'.format(release),
             '/cygdrive/c/uninstall.iss')
 
     @all_hosts
-    def install_couchbase(self, pkg, url, filename, version=None):
+    def install_couchbase(self, url: str):
         self.kill_installer()
         run('rm -fr setup.exe')
         self.wget(url, outfile='setup.exe')
         run('chmod +x setup.exe')
-
-        self.put_iss_files(version)
 
         local_ip = self.detect_ip()
 

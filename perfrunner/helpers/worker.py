@@ -8,7 +8,7 @@ from sqlalchemy import create_engine
 
 from perfrunner import celerylocal, celeryremote
 from perfrunner.helpers import local
-from perfrunner.helpers.misc import log_action, uhex
+from perfrunner.helpers.misc import log_action
 from perfrunner.workloads import spring_workload
 from perfrunner.workloads.pillowfight import (
     pillowfight_data_load,
@@ -61,12 +61,13 @@ class WorkerManager(object):
 
 class RemoteWorkerManager(object):
 
+    WORKER_HOME = '/tmp/perfrunner'
+
     def __init__(self, cluster_spec, test_config, remote_manager):
         self.cluster_spec = cluster_spec
         self.buckets = test_config.buckets
         self.remote = remote_manager
 
-        self.temp_dir = os.path.join('/tmp', uhex())
         self.queues = cycle(self.cluster_spec.workers)
 
         self.terminate()
@@ -81,9 +82,9 @@ class RemoteWorkerManager(object):
         for worker in self.cluster_spec.workers:
             logger.info('Starting remote Celery worker, host={}'.format(worker))
 
-            self.remote.init_repo(worker, self.temp_dir)
+            self.remote.init_repo(worker, self.WORKER_HOME)
 
-            perfrunner_home = os.path.join(self.temp_dir, 'perfrunner')
+            perfrunner_home = os.path.join(self.WORKER_HOME, 'perfrunner')
             self.remote.start_celery_worker(worker, perfrunner_home)
 
     def run_tasks(self, task, task_settings, target_iterator, timer=None):
@@ -106,7 +107,7 @@ class RemoteWorkerManager(object):
 
     def terminate(self):
         logger.info('Terminating Celery workers')
-        self.remote.clean_clients(self.temp_dir)
+        self.remote.clean_clients(self.WORKER_HOME)
 
 
 class LocalWorkerManager(RemoteWorkerManager):

@@ -575,20 +575,8 @@ class RestHelper(object):
         }
         self.post(url=api, data=data)
 
-    def add_rbac_user(self, host_port, bucket_name, password):
-        roles = ','.join((
-            'bucket_admin[{0}]',
-            'data_dcp_reader[{0}]',
-            'data_monitoring[{0}]',
-            'data_reader_writer[{0}]',
-            'fts_admin[{0}]',
-            'fts_searcher[{0}]',
-            'query_delete[{0}]',
-            'query_insert[{0}]',
-            'query_select[{0}]',
-            'query_update[{0}]',
-        )).format(bucket_name)
-
+    def add_rbac_user(self, host_port: str, bucket_name: str, password: str,
+                      roles: tuple):
         logger.info('Adding an RBAC user: {}, roles: {}'.format(bucket_name,
                                                                 roles))
 
@@ -596,13 +584,6 @@ class RestHelper(object):
                                                                 bucket_name)
         data = {
             'password': password,
-            'roles': roles,
+            'roles': ','.join(roles),
         }
         self.put(url=api, data=data)
-
-    def get_rbac_roles(self, host_port):
-        logger.info('Getting RBAC roles')
-
-        api = 'http://{}/settings/rbac/roles'.format(host_port)
-
-        return self.get(url=api).json()

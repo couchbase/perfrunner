@@ -166,7 +166,7 @@ class TestConfig(Config):
         return self._get_options_as_dict('bucket_extras')
 
     @property
-    def buckets(self):
+    def buckets(self) -> List[str]:
         return [
             'bucket-{}'.format(i + 1) for i in range(self.cluster.num_buckets)
         ]

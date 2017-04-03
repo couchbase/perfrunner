@@ -230,25 +230,34 @@ class ClusterManager(object):
         for master in self.cluster_spec.yield_masters():
             self.rest.enable_audit(master)
 
-    def is_rbac_compatible(self):
-        for master in self.masters():
-            for role in self.rest.get_rbac_roles(master):
-                if role['role'] == 'data_reader_writer':
-                    return True
-        return False
-
     def add_rbac_users(self):
-        if not self.is_compatible(min_release='5.0') or \
-                not self.is_rbac_compatible() or \
-                self.rest.is_community(self.master_node):
+        if not self.is_compatible(min_release='5.0'):
             return
 
+        if self.rest.is_community(self.master_node):
+            roles = 'admin',
+        else:
+            roles = (
+                'bucket_admin[{bucket}]',
+                'data_dcp_reader[{bucket}]',
+                'data_monitoring[{bucket}]',
+                'data_reader_writer[{bucket}]',
+                'fts_admin[{bucket}]',
+                'fts_searcher[{bucket}]',
+                'query_delete[{bucket}]',
+                'query_insert[{bucket}]',
+                'query_select[{bucket}]',
+                'query_update[{bucket}]',
+            )
+
         for master in self.masters():
-            for bucket_name in self.test_config.buckets:
+            for bucket in self.test_config.buckets:
+                bucket_roles = tuple(role.format(bucket=bucket) for role in roles)
                 self.rest.add_rbac_user(
                     host_port=master,
-                    bucket_name=bucket_name,
+                    bucket_name=bucket,
                     password=self.test_config.bucket.password,
+                    roles=bucket_roles,
                 )
 
     def throttle_cpu(self):

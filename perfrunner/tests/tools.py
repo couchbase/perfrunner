@@ -24,7 +24,7 @@ class BackupRestoreTest(PerfTest):
         else:
             edition = 'enterprise'
 
-        installer = CouchbaseInstaller(None,
+        installer = CouchbaseInstaller(self.cluster_spec,
                                        type("Options", (), {"verbose": False}))
 
         filename, url = installer.find_package(version=self.build,

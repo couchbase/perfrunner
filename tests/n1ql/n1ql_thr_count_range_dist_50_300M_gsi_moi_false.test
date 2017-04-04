@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
-title = Count, Aggregation Query, 300M,  Results 10000, MOI, request_plus
+title = Q20, Count (10K matches), 300M docs, MOI, request_plus
 component = n1ql
 category = count
 

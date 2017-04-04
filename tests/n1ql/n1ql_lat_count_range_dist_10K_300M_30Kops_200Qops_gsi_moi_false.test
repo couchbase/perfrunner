@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLLatencyTest
-title = Count, Aggregation Query, Results 2000000, MOI, request_plus
+title = Q20, Count (2M matches), 300M docs, MOI, request_plus
 component = n1ql
 category = count
 

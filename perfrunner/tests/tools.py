@@ -12,14 +12,6 @@ from perfrunner.tests import PerfTest
 from perfrunner.utils.install import CouchbaseInstaller
 
 
-class Options(object):
-
-    cluster_edition = None
-    url = None
-    verbose = False
-    version = None
-
-
 class BackupRestoreTest(PerfTest):
 
     """
@@ -27,16 +19,15 @@ class BackupRestoreTest(PerfTest):
     """
 
     def download_tools(self):
-        options = Options()
-        options.version = self.build
         if self.rest.is_community(self.master_node):
-            options.cluster_edition = 'community'
+            edition = 'community'
         else:
-            options.cluster_edition = 'enterprise'
+            edition = 'enterprise'
 
-        installer = CouchbaseInstaller(self.cluster_spec, options)
+        installer = CouchbaseInstaller(None, None)
 
-        filename, url = installer.find_package()
+        filename, url = installer.find_package(version=self.build,
+                                               edition=edition)
 
         logger.info('Downloading "{}"'.format(url))
         with open(filename, 'wb') as fh:

@@ -37,7 +37,6 @@ class CouchbaseInstaller(object):
 
     def __init__(self, cluster_spec, options):
         self.remote = RemoteHelper(cluster_spec, None, options.verbose)
-        self.cluster_spec = cluster_spec
         self.options = options
 
     @property

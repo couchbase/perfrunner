@@ -27,15 +27,14 @@ class BackupRestoreTest(PerfTest):
         installer = CouchbaseInstaller(self.cluster_spec,
                                        type("Options", (), {"verbose": False}))
 
-        filename, url = installer.find_package(version=self.build,
-                                               edition=edition)
+        url = installer.find_package(version=self.build, edition=edition)
 
         logger.info('Downloading "{}"'.format(url))
-        with open(filename, 'wb') as fh:
+        with open('couchbase.rpm', 'wb') as fh:
             resp = requests.get(url)
             fh.write(resp.content)
 
-        local.extract_cb(filename)
+        local.extract_cb(filename='couchbase.rpm')
 
     def flush_buckets(self):
         for i in range(self.test_config.cluster.num_buckets):

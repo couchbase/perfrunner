@@ -1,0 +1,42 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1QLThroughputTest
+title = Q21, COUNT DISTINCT, MOI, not_bounded, API1
+component = n1ql
+category = API2
+
+[cluster]
+mem_quota = 20480
+index_mem_quota = 100000
+initial_nodes = 6
+num_buckets = 1
+
+[secondary]
+indexer.settings.storage_mode = memory_optimized
+
+[load]
+items = 20000000
+size = 1024
+workers = 80
+doc_gen = reverse_lookup
+
+[n1ql]
+indexes =
+    idx::CREATE INDEX {name} ON `{bucket}`(capped_small, year);
+query.settings.max-index-api = 1
+
+[access]
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+throughput = 30000
+items = 20000000
+workers = 20
+time = 1200
+n1ql_queries = count-distinct
+n1ql_workers = 480
+
+[n1ql-count-distinct]
+statement = SELECT COUNT(DISTINCT year) FROM `bucket-1` WHERE capped_small = $1;
+scan_consistency = not_bounded
+args = ["{capped_small}"]

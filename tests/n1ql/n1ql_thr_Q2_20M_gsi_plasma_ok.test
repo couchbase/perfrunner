@@ -1,0 +1,41 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1QLThroughputTest
+title = Q2, Singleton Unique Lookup, Plasma, not_bounded
+component = n1ql
+category = Q1_Q3_thr
+
+[cluster]
+mem_quota = 20480
+index_mem_quota = 100000
+initial_nodes = 6
+num_buckets = 1
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[load]
+items = 20000000
+size = 1024
+workers = 80
+doc_gen = reverse_lookup
+
+[n1ql]
+indexes =
+    by_email::CREATE INDEX {name} ON `{bucket}`(email);
+
+[access]
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+throughput = 30000
+items = 20000000
+workers = 20
+time = 1200
+n1ql_queries = singleton-unique-lookup
+n1ql_workers = 240
+
+[n1ql-singleton-unique-lookup]
+statement = SELECT * FROM `bucket-1` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]

@@ -125,6 +125,16 @@ class PerfTest(object):
                 self.monitor.monitor_disk_queues(master, bucket)
                 self.monitor.monitor_dcp_queues(master, bucket)
 
+    def check_num_items(self):
+        for target in self.target_iterator:
+            stats = self.rest.get_bucket_stats(host_port=target.node,
+                                               bucket=target.bucket)
+            curr_items = stats['op']['samples'].get('curr_items')[-1]
+
+            if curr_items != self.test_config.load_settings.items:
+                logger.interrupt('Mismatch in the number of items: {}'
+                                 .format(curr_items))
+
     def restore(self):
         self.restore_helper.restore()
         self.restore_helper.warmup()

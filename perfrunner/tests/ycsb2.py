@@ -13,6 +13,7 @@ class YCSBTest(PerfTest):
 
     def load(self, *args, **kwargs):
         PerfTest.load(self, task=ycsb_data_load_task)
+        self.check_num_items()
 
     @with_stats
     def access(self, *args, **kwargs):

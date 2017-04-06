@@ -2,7 +2,8 @@
 test = perfrunner.tests.secondary.SecondaryIndexingScanLatencyTest
 title = Secondary index scan latency(ms), 1 bucket x 20M x 1KB, 100K KV ops/sec, 5 indexes, MOI
 component = secondary
-category = moi_lat
+category = lat
+sub_category = MOI
 
 [stats]
 monitored_processes = projector

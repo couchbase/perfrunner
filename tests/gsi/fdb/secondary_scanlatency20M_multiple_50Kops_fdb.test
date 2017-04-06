@@ -2,7 +2,8 @@
 test = perfrunner.tests.secondary.SecondaryIndexingScanLatencyTest
 title = Secondary index scan latency(ms), 1 bucket x 20M x 1KB, 50K KV ops/sec, 5 indexes, FDB
 component = secondary
-category = fdb_lat
+category = lat
+sub_category = ForestDB
 
 [stats]
 monitored_processes = projector

@@ -2,6 +2,7 @@
 test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexRebalanceTest
 title = 1 bucket x 20M x 1KB, single 2i index, rebalance during initial/incr build, updates only in the incremental phase, FDB
 component = secondary
+sub_category = ForestDB
 
 [stats]
 monitored_processes = projector

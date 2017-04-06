@@ -2,7 +2,8 @@
 test = perfrunner.tests.secondary.SecondaryIndexingDocIndexingLatencyTest
 title = Secondary Document index latency(ms), 1 bucket x 20M x 1KB, 100K KV ops/sec, single index, MOI
 component = secondary
-category = moi_lat
+category = lat
+sub_category = MOI
 
 [cluster]
 mem_quota = 30000

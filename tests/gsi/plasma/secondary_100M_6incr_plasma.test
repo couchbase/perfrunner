@@ -2,7 +2,8 @@
 test = perfrunner.tests.secondary.MultipleIncrementalSecondaryIndexTest
 title = 1 bucket x 100M x 1KB, 100K KV ops/sec, single 2i index, running incremental load 6 times, PLASMA
 component = secondary
-category = incremental_plasma
+category = incremental
+sub_category = Plasma
 
 [stats]
 monitored_processes = projector

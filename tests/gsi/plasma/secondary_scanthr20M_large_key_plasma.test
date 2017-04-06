@@ -2,7 +2,8 @@
 test = perfrunner.tests.secondary.SecondaryIndexingThroughputTest
 title = Secondary index scan throughput (scanps), 1 bucket x 20M x 1KB, 100K KV ops/sec, large key 1024 char, single index, PLASMA
 component = secondary
-category = plasma_thr
+category = thr
+sub_category = Plasma
 
 [stats]
 monitored_processes = projector

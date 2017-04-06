@@ -23,7 +23,7 @@ class HashKeys:
     def __init__(self, workload_settings):
         self.ws = workload_settings
 
-    def hash_it(self, key):
+    def hash_it(self, key: str) -> str:
         if self.ws.hash_keys:
             if self.ws.key_length:
                 num_slices = int(math.ceil(self.ws.key_length / 32))
@@ -137,7 +137,7 @@ class NewKey(Iterator):
         self.expiration = expiration
         self.ttls = cycle(range(150, 450, 30))
 
-    def next(self, curr_items) -> (str, int):
+    def next(self, curr_items) -> Tuple[str, int]:
         key = '%012d' % curr_items
         key = self.add_prefix(key)
         ttl = None
@@ -313,7 +313,7 @@ class NestedDocument(Document):
 
     def __init__(self, avg_size: int):
         super().__init__(avg_size)
-        self.capped_field_value = {}
+        self.capped_field_value = {}  # type: dict
 
     def _size(self) -> float:
         if self.avg_size <= self.OVERHEAD:

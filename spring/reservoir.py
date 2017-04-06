@@ -17,7 +17,7 @@ class Reservoir:
     MAX_CAPACITY = 10 ** 5
 
     def __init__(self, num_workers=1):
-        self.capacity = self.MAX_CAPACITY / num_workers
+        self.capacity = self.MAX_CAPACITY // num_workers
         self.values = []
         self.count = 0  # Total items to sample
 

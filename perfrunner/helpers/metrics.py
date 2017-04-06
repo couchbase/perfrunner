@@ -487,11 +487,11 @@ class DailyMetricHelper(MetricHelper):
 
     def calc_max_ops(self):
         return 'Max Throughput (ops/sec)', \
-            super(DailyMetricHelper, self).calc_max_ops()
+            super().calc_max_ops()
 
     def calc_avg_replication_rate(self, time_elapsed):
         return 'Avg XDCR Rate (items/sec)', \
-            super(DailyMetricHelper, self).calc_avg_replication_rate(time_elapsed)
+            super().calc_avg_replication_rate(time_elapsed)
 
     def calc_ycsb_throughput(self):
         return 'Avg Throughput (ops/sec)', \

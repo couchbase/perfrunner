@@ -17,7 +17,7 @@ class FTStest(PerfTest):
     INDEX_WAIT_MAX = 2400
 
     def __init__(self, cluster_spec, test_config, verbose):
-        super(FTStest, self).__init__(cluster_spec, test_config, verbose)
+        super().__init__(cluster_spec, test_config, verbose)
 
         self.index_definition = get_json_from_file(self.test_config.fts_settings.index_configfile)
         self.fts_index = self.test_config.fts_settings.name
@@ -38,7 +38,7 @@ class FTStest(PerfTest):
 
     @with_stats
     def access(self, *args):
-        super(FTStest, self).timer()
+        super().timer()
 
     def access_bg_test(self):
         access_settings = self.test_config.access_settings
@@ -195,7 +195,7 @@ class FTSRebalanceTest(FTStest, RebalanceTest):
     COLLECTORS = {'fts_stats': True}
 
     def __init__(self, *args, **kwargs):
-        super(FTSRebalanceTest, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.rebalance_settings = self.test_config.rebalance_settings
         self.rebalance_time = 0
 

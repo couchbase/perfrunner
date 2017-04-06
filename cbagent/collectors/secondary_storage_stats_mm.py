@@ -8,7 +8,7 @@ class SecondaryStorageStatsMM(SecondaryStats):
     METRICS = "Allocated", "resident", "metadata"
 
     def __init__(self, settings):
-        super(SecondaryStorageStatsMM, self).__init__(settings)
+        super().__init__(settings)
         self.index_node = settings.index_node
 
     def _get_secondary_storage_stats_mm(self):

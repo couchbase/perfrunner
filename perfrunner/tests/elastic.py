@@ -17,7 +17,7 @@ class Elastictest(PerfTest):
     INDEX_WAIT_MAX = 2400
 
     def __init__(self, cluster_spec, test_config, verbose):
-        super(Elastictest, self).__init__(cluster_spec, test_config, verbose)
+        super().__init__(cluster_spec, test_config, verbose)
 
         self.index_definition = get_json_from_file(self.test_config.fts_settings.index_configfile)
         self.host_port = [x for x in self.cluster_spec.yield_servers()][0]
@@ -35,7 +35,7 @@ class Elastictest(PerfTest):
 
     @with_stats
     def access(self, *args):
-        super(Elastictest, self).timer()
+        super().timer()
 
     def access_bg_test(self):
         access_settings = self.test_config.access_settings

@@ -22,7 +22,7 @@ class XdcrTest(PerfTest):
     ALL_BUCKETS = True
 
     def __init__(self, *args, **kwargs):
-        super(XdcrTest, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.settings = self.test_config.xdcr_settings
 
     def _start_replication(self, m1, m2):
@@ -59,7 +59,7 @@ class XdcrTest(PerfTest):
 
     @with_stats
     def access(self, *args):
-        super(XdcrTest, self).timer()
+        super().timer()
 
     def configure_wan(self):
         if self.settings.wan_enabled:
@@ -136,7 +136,7 @@ class UniDirXdcrTest(XdcrTest):
     """
 
     def __init__(self, *args, **kwargs):
-        super(UniDirXdcrTest, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.target_iterator = TargetIterator(self.cluster_spec,
                                               self.test_config,
                                               prefix='symmetric')
@@ -145,7 +145,7 @@ class UniDirXdcrTest(XdcrTest):
         src_target_iterator = SrcTargetIterator(self.cluster_spec,
                                                 self.test_config,
                                                 prefix='symmetric')
-        super(UniDirXdcrTest, self).load(target_iterator=src_target_iterator)
+        super().load(target_iterator=src_target_iterator)
 
 
 class XdcrInitTest(UniDirXdcrTest):

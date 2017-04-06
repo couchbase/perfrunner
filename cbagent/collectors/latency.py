@@ -15,7 +15,7 @@ class Latency(Collector):
     METRICS = "latency_set", "latency_get", "latency_delete"
 
     def __init__(self, settings):
-        super(Latency, self).__init__(settings)
+        super().__init__(settings)
         self.clients = []
         for bucket in self.get_buckets():
             self.clients.append(Couchbase.connect(

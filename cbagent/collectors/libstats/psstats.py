@@ -12,7 +12,7 @@ class PSStats(RemoteStats):
     )
 
     def __init__(self, hosts, user, password):
-        super(PSStats, self).__init__(hosts, user, password)
+        super().__init__(hosts, user, password)
         self.ps_cmd = "ps -eo pid,rss,vsize,comm | " \
                       "grep {} | grep -v grep | sort -n -k 2 | tail -n 1"
         self.top_cmd = "top -bn2 -d1 -p {} | grep {}"

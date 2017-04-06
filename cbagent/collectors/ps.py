@@ -7,12 +7,12 @@ class PS(Collector):
     COLLECTOR = "atop"  # Legacy / compatibility
 
     def get_nodes(self):
-        return self.settings.hostnames or super(PS, self).get_nodes()
+        return self.settings.hostnames or super().get_nodes()
 
     def __init__(self, settings):
         self.settings = settings
 
-        super(PS, self).__init__(settings)
+        super().__init__(settings)
 
         self.ps = PSStats(hosts=self.nodes,
                           user=self.ssh_username, password=self.ssh_password)

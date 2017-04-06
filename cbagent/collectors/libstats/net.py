@@ -8,9 +8,6 @@ from cbagent.collectors.libstats.remotestats import (
 
 class NetStat(RemoteStats):
 
-    def __init__(self, *args, **kwargs):
-        super(NetStat, self).__init__(*args, **kwargs)
-
     def detect_iface(self):
         """Examples of output:
 

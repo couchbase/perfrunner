@@ -75,9 +75,7 @@ class ExistingMovingHotWorkloadKey(ExistingKey):
 
     def __init__(self, working_set: int, working_set_access: int, prefix: str,
                  working_set_move_time: int):
-        super(ExistingMovingHotWorkloadKey, self).__init__(working_set,
-                                                           working_set_access,
-                                                           prefix)
+        super().__init__(working_set, working_set_access, prefix)
         self.working_set_move_time = working_set_move_time
 
     def next(self, curr_items: int, curr_deletes: int, *args) -> str:
@@ -314,7 +312,7 @@ class NestedDocument(Document):
     OVERHEAD = 450  # Minimum size due to static fields, body size is variable
 
     def __init__(self, avg_size: int):
-        super(NestedDocument, self).__init__(avg_size)
+        super().__init__(avg_size)
         self.capped_field_value = {}
 
     def _size(self) -> float:
@@ -355,7 +353,7 @@ class LargeDocument(NestedDocument):
     def next(self, key: str) -> dict:
         alphabet = self._build_alphabet(key)
         return {
-            'nest1': super(LargeDocument, self).next(key),
+            'nest1': super().next(key),
             'nest2': super(NestedDocument, self).next(key),
             'name': self._build_name(alphabet),
             'email': self._build_email(alphabet),
@@ -371,7 +369,7 @@ class LargeDocument(NestedDocument):
 class ReverseLookupDocument(NestedDocument):
 
     def __init__(self, avg_size: int, prefix: str):
-        super(ReverseLookupDocument, self).__init__(avg_size)
+        super().__init__(avg_size)
         self.prefix = prefix
         self.is_random = prefix != 'n1ql'
 
@@ -422,7 +420,7 @@ class ReverseLookupDocument(NestedDocument):
 class ReverseRangeLookupDocument(ReverseLookupDocument):
 
     def __init__(self, avg_size: int, prefix: str, range_distance: int):
-        super(ReverseRangeLookupDocument, self).__init__(avg_size, prefix)
+        super().__init__(avg_size, prefix)
         if self.prefix is None:
             self.prefix = ""
         # Keep one extra as query runs from greater than 'x' to less than 'y'
@@ -470,7 +468,7 @@ class ExtReverseLookupDocument(ReverseLookupDocument):
     OVERHEAD = 650
 
     def __init__(self, avg_size: int, prefix: str, num_docs: int):
-        super(ExtReverseLookupDocument, self).__init__(avg_size, prefix)
+        super().__init__(avg_size, prefix)
         self.num_docs = num_docs
 
     def _build_topics(self, seq_id: int) -> List[str]:
@@ -487,7 +485,7 @@ class JoinedDocument(ReverseLookupDocument):
 
     def __init__(self, avg_size: int, prefix: str, num_docs: int,
                  num_categories: int, num_replies: int):
-        super(JoinedDocument, self).__init__(avg_size, prefix)
+        super().__init__(avg_size, prefix)
         self.num_categories = num_categories
         self.num_docs = num_docs
         self.num_replies = num_replies
@@ -562,7 +560,7 @@ class ArrayIndexingDocument(ReverseLookupDocument):
     ARRAY_SIZE = 10
 
     def __init__(self, avg_size: int, prefix: str, array_size: int, num_docs: int):
-        super(ArrayIndexingDocument, self).__init__(avg_size, prefix)
+        super().__init__(avg_size, prefix)
         self.array_size = array_size
         self.num_docs = num_docs
 
@@ -649,7 +647,7 @@ class ProfileDocument(ReverseLookupDocument):
     OVERHEAD = 390
 
     def _build_capped(self, *args):
-        capped = super(ProfileDocument, self)._build_capped(*args)
+        capped = super()._build_capped(*args)
         return capped.replace('_', '')
 
     def _build_zip(self, seq_id: int) -> str:
@@ -951,7 +949,7 @@ class SequentialPlasmaDocument(PlasmaDocument):
 class LargeItemPlasmaDocument(PlasmaDocument):
 
     def __init__(self, avg_size: int, item_size: int):
-        super(LargeItemPlasmaDocument, self).__init__(avg_size)
+        super().__init__(avg_size)
         self.item_size = item_size
 
     def next(self, key: str) -> dict:
@@ -975,7 +973,7 @@ class VaryingItemSizePlasmaDocument(PlasmaDocument):
 
     def __init__(self, avg_size: int, size_variation_min: int,
                  size_variation_max: int):
-        super(VaryingItemSizePlasmaDocument, self).__init__(avg_size)
+        super().__init__(avg_size)
         self.size_variation_min = size_variation_min
         self.size_variation_max = size_variation_max
 

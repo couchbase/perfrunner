@@ -338,7 +338,7 @@ class SubDocWorker(KVWorker):
         self.cb = SubDocGen(**params)
 
     def gen_cmd_sequence(self, cb=None, *args):
-        return super(SubDocWorker, self).gen_cmd_sequence(cb, cases='counter')
+        return super().gen_cmd_sequence(cb, cases='counter')
 
 
 class AsyncKVWorker(KVWorker):
@@ -482,8 +482,7 @@ class ViewWorker(Worker):
     NAME = 'view-worker'
 
     def __init__(self, workload_settings, target_settings, shutdown_event):
-        super(ViewWorker, self).__init__(workload_settings, target_settings,
-                                         shutdown_event)
+        super().__init__(workload_settings, target_settings, shutdown_event)
 
         self.total_workers = self.ws.query_workers
         self.throughput = self.ws.query_throughput
@@ -554,8 +553,7 @@ class N1QLWorker(Worker):
 
         self.reservoir = Reservoir(num_workers=workload_settings.n1ql_workers)
 
-        super(N1QLWorker, self).__init__(workload_settings, target_settings,
-                                         shutdown_event)
+        super().__init__(workload_settings, target_settings, shutdown_event)
 
         self.init_creds()
 
@@ -707,7 +705,7 @@ class FtsWorker(Worker):
     NAME = "fts-es-worker"
 
     def __init__(self, workload_settings, target_settings, shutdown_event=None):
-        super(FtsWorker, self).__init__(workload_settings, target_settings, shutdown_event)
+        super().__init__(workload_settings, target_settings, shutdown_event)
         self.query_gen = workload_settings.query_gen
         self.query_list = workload_settings.query_gen.query_list
         self.query_list_size = len(workload_settings.query_gen.query_list)

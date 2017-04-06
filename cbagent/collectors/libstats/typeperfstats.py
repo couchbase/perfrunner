@@ -11,7 +11,7 @@ class TPStats(RemoteStats):
     )
 
     def __init__(self, hosts, user, password):
-        super(TPStats, self).__init__(hosts, user, password)
+        super().__init__(hosts, user, password)
         self.typeperf_cmd = "typeperf \"\\Process(*{}*)\\Working Set\" -sc 1|sed '3q;d'"
 
     @multi_node_task

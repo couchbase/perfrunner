@@ -22,7 +22,7 @@ class XdcrLag(Latency):
     MAX_SAMPLING_INTERVAL = 0.25  # 250 ms
 
     def __init__(self, settings):
-        super(Latency, self).__init__(settings)
+        super().__init__(settings)
 
         self.interval = 0
 

@@ -89,7 +89,7 @@ class YCSBWorker:
 class YCSBdata(PerfTest):
 
     def __init__(self, cluster_spec, test_config, verbose):
-        super(YCSBdata, self).__init__(cluster_spec, test_config, verbose, )
+        super().__init__(cluster_spec, test_config, verbose, )
         self.ycsb = test_config.ycsb_settings
         self.hosts = [x.rpartition(':')[0] for x in self.cluster_spec.yield_servers()]
 
@@ -145,9 +145,6 @@ class YCSBdata(PerfTest):
 
 
 class YCSBTest(YCSBdata):
-
-    def __init__(self, cluster_spec, test_config, verbose):
-        super(YCSBTest, self).__init__(cluster_spec, test_config, verbose)
 
     def create_index(self):
         for server_role in self.cluster_spec.roles.values():

@@ -12,7 +12,7 @@ class CLIParser(ArgumentParser):
         '[cb://user:pass@host:port/bucket]')
 
     def __init__(self):
-        super(CLIParser, self).__init__(prog=self.PROG, usage=self.USAGE)
+        super().__init__(prog=self.PROG, usage=self.USAGE)
         self._add_arguments()
 
     def _add_arguments(self):
@@ -91,7 +91,7 @@ class CLIParser(ArgumentParser):
         )
 
     def parse_args(self, *args):
-        args = super(CLIParser, self).parse_args()
+        args = super().parse_args()
 
         percentages = [args.creates, args.reads, args.updates, args.deletes]
         if list(filter(lambda p: not 0 <= p <= 100, percentages)) or \

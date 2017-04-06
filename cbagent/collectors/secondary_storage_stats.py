@@ -11,7 +11,7 @@ class SecondaryStorageStats(Collector):
               "cache_hit_ratio", "resident_ratio", "allocated", "freed", "reclaimed", "reclaim_pending"
 
     def __init__(self, settings):
-        super(SecondaryStorageStats, self).__init__(settings)
+        super().__init__(settings)
         self.index_node = settings.index_node
 
     def get_all_indexes(self):

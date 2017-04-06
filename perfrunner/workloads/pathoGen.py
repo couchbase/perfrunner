@@ -211,7 +211,7 @@ class Worker(multiprocessing.Process):
 
     def __init__(self, number, host, port, bucket, password, in_queue,
                  out_queue, promotion_policy):
-        super(Worker, self).__init__()
+        super().__init__()
         self.id = number
         self.in_queue = in_queue
         self.out_queue = out_queue
@@ -292,8 +292,8 @@ class Supervisor(Worker):
     def __init__(self, number, host, port, bucket, password, queues, in_queue,
                  out_queue, promotion_policy, num_items, num_iterations,
                  max_size):
-        super(Supervisor, self).__init__(number, host, port, bucket, password,
-                                         in_queue, out_queue, promotion_policy)
+        super().__init__(number, host, port, bucket, password,
+                         in_queue, out_queue, promotion_policy)
         self.queues = queues
         self.num_items = num_items
         self.num_iterations = num_iterations

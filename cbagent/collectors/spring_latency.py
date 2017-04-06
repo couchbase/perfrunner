@@ -74,7 +74,7 @@ class SpringSubdocLatency(SpringLatency):
     METRICS = "latency_set", "latency_get"
 
     def __init__(self, settings, workload, prefix=None):
-        super(SpringSubdocLatency, self).__init__(settings, workload, prefix)
+        super().__init__(settings, workload, prefix)
 
         self.clients = []
         self.ws = workload

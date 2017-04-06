@@ -36,7 +36,7 @@ class ObserveIndexLatency(Latency):
     MAX_REQUEST_INTERVAL = 2
 
     def __init__(self, settings):
-        super(Latency, self).__init__(settings)
+        super().__init__(settings)
 
         self.pools = self.init_pool(settings)
 

@@ -8,7 +8,7 @@ class SecondaryDebugStats(Collector):
     METRICS = "num_connections", "memory_used_storage", "memory_used_queue", "memory_used"
 
     def __init__(self, settings):
-        super(SecondaryDebugStats, self).__init__(settings)
+        super().__init__(settings)
         self.index_node = settings.index_node
 
     def _get_secondary_debugstats(self, bucket=None, index=None):

@@ -34,7 +34,7 @@ class KVTest(PerfTest):
 
     @with_stats
     def access(self, *args):
-        super(KVTest, self).timer()
+        super().timer()
 
     def run(self):
         self.load()
@@ -164,7 +164,7 @@ class InitialLoadTest(DrainTest):
 
     @with_stats
     def load(self, *args, **kwargs):
-        super(KVTest, self).load(*args, **kwargs)
+        super().load(*args, **kwargs)
 
     def run(self):
         self.load()
@@ -249,7 +249,7 @@ class WarmupTest(PerfTest):
     """
 
     def access(self, *args, **kwargs):
-        super(WarmupTest, self).timer()
+        super().timer()
 
     @with_stats
     def warmup(self):
@@ -527,7 +527,7 @@ class ThroughputTest(KVTest):
     def access(self):
         curr_ops = self._measure_curr_ops()
 
-        super(KVTest, self).timer()
+        super().timer()
 
         self.total_ops = self._measure_curr_ops() - curr_ops
 

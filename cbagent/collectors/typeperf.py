@@ -9,7 +9,7 @@ class TypePerf(Collector):
     TRACKED_PROCESSES = "beam.smp", "memcached"
 
     def __init__(self, settings):
-        super(TypePerf, self).__init__(settings)
+        super().__init__(settings)
         self.nodes = settings.hostnames or list(self.get_nodes())
         self.tp = TPStats(hosts=self.nodes,
                           user=self.ssh_username,

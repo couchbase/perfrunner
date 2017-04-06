@@ -114,23 +114,23 @@ class CBGen(CBAsyncGen):
 
     @quiet
     def create(self, *args, **kwargs):
-        super(CBGen, self).create(*args, **kwargs)
+        super().create(*args, **kwargs)
 
     @quiet
     def read(self, *args, **kwargs):
-        super(CBGen, self).read(*args, **kwargs)
+        super().read(*args, **kwargs)
 
     @quiet
     def update(self, *args, **kwargs):
-        super(CBGen, self).update(*args, **kwargs)
+        super().update(*args, **kwargs)
 
     @quiet
     def cas(self, *args, **kwargs):
-        super(CBGen, self).cas(*args, **kwargs)
+        super().cas(*args, **kwargs)
 
     @quiet
     def delete(self, *args, **kwargs):
-        super(CBGen, self).delete(*args, **kwargs)
+        super().delete(*args, **kwargs)
 
     def query(self, ddoc, view, query):
         node = choice(self.server_nodes).replace('8091', '8092')

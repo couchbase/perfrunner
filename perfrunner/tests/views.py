@@ -16,7 +16,7 @@ class IndexTest(PerfTest):
     """
 
     def __init__(self, *args):
-        super(IndexTest, self).__init__(*args)
+        super().__init__(*args)
 
         index_settings = self.test_config.index_settings
         if index_settings.disabled_updates:
@@ -56,7 +56,7 @@ class InitialIndexTest(IndexTest):
 
     @with_stats
     def init_index(self):
-        super(InitialIndexTest, self).build_index()
+        super().build_index()
 
     def _report_kpi(self, time_elapsed):
         self.reporter.post_to_sf(time_elapsed)
@@ -95,7 +95,7 @@ class InitialAndIncrementalIndexTest(InitialIndexTest):
         )
 
     def run(self):
-        super(InitialAndIncrementalIndexTest, self).run()
+        super().run()
 
         self.access()
         self.wait_for_persistence()
@@ -116,7 +116,7 @@ class IndexByTypeTest(IndexTest):
     """
 
     def __init__(self, *args):
-        super(IndexTest, self).__init__(*args)
+        super().__init__(*args)
 
         index_type = self.test_config.index_settings.index_type
         self.ddocs = ViewGenDev().generate_ddocs(index_type)
@@ -133,7 +133,7 @@ class QueryTest(IndexTest):
 
     @with_stats
     def access(self, *args):
-        super(QueryTest, self).timer()
+        super().timer()
 
         self.worker_manager.wait_for_workers()
 

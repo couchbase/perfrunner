@@ -15,9 +15,8 @@ class BucketWrapper(Bucket):
         connection_string = 'couchbase://{}:{}/{}'.format(
             kwargs['host'], kwargs.get('port', 8091), kwargs['bucket'])
 
-        super(BucketWrapper, self).__init__(connection_string,
-                                            password=kwargs['password'],
-                                            quiet=kwargs['quiet'])
+        super().__init__(connection_string,
+                         password=kwargs['password'], quiet=kwargs['quiet'])
 
         self.use_count = 0
         self.use_time = 0

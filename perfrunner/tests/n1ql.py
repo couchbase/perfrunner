@@ -28,7 +28,7 @@ class N1QLTest(PerfTest):
 
     @with_stats
     def access(self, *args):
-        super(N1QLTest, self).timer()
+        super().timer()
 
         self.worker_manager.wait_for_workers()
 
@@ -52,16 +52,15 @@ class N1QLTest(PerfTest):
         load_settings.items //= 2
 
         iterator = TargetIterator(self.cluster_spec, self.test_config, 'n1ql')
-        super(N1QLTest, self).load(settings=load_settings,
-                                   target_iterator=iterator)
-        super(N1QLTest, self).load(settings=load_settings)
+        super().load(settings=load_settings, target_iterator=iterator)
+        super().load(settings=load_settings)
 
     def access_bg(self, *args):
         self.download_certificate()
 
         access_settings = self.test_config.access_settings
         access_settings.items //= 2
-        super(N1QLTest, self).access_bg(settings=access_settings)
+        super().access_bg(settings=access_settings)
 
     def run(self):
         self.load()

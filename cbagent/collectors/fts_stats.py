@@ -48,7 +48,7 @@ class FTSCollector(Collector):
                )
 
     def __init__(self, settings, test):
-        super(FTSCollector, self).__init__(settings)
+        super().__init__(settings)
         self.cbft_stats = dict()
         self.fts_settings = test.test_config.fts_settings
         self.fts_index_name = test.fts_index
@@ -127,13 +127,13 @@ class FTSCollector(Collector):
         return 0
 
 
-class FTSLatencyCollector (FTSCollector):
+class FTSLatencyCollector(FTSCollector):
     COLLECTOR = "fts_latency"
 
     METRICS = ("cbft_latency_get",)
 
     def __init__(self, settings, test):
-        super(FTSLatencyCollector, self).__init__(settings, test)
+        super().__init__(settings, test)
         self.interval = settings.lat_interval
 
     def sample(self):
@@ -157,7 +157,7 @@ class ElasticStats(FTSCollector):
                "elastic_cache_hit", "elastic_filter_cache_size",)
 
     def __init__(self, settings, test):
-        super(ElasticStats, self).__init__(settings, test)
+        super().__init__(settings, test)
         self.interval = settings.lat_interval
         self.host = settings.master_node
 

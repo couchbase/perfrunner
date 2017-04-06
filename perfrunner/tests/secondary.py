@@ -26,7 +26,7 @@ class SecondaryIndexTest(PerfTest):
     SHOWFAST_EXTENSIONS = {'memdb': 'moi', 'forestdb': 'fdb', 'plasma': 'plasma'}
 
     def __init__(self, *args):
-        super(SecondaryIndexTest, self).__init__(*args)
+        super().__init__(*args)
 
         self.configfile = self.test_config.gsi_settings.cbindexperf_configfile
         self.configfiles = self.test_config.gsi_settings.cbindexperf_configfiles.split(",")
@@ -228,7 +228,7 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
 class MultipleIncrementalSecondaryIndexTest(InitialandIncrementalSecondaryIndexTest):
 
     def __init__(self, *args):
-        super(MultipleIncrementalSecondaryIndexTest, self).__init__(*args)
+        super().__init__(*args)
         self.memory_usage = dict()
         self.disk_usage = dict()
 
@@ -588,7 +588,7 @@ class SecondaryNumConnectionsTest(SecondaryIndexTest):
     """
 
     def __init__(self, *args):
-        super(SecondaryNumConnectionsTest, self).__init__(*args)
+        super().__init__(*args)
         self.curr_connections = self.init_num_connections
         self.config_data = self.get_data_from_config_json('tests/gsi/config_template.json')
 
@@ -693,7 +693,7 @@ class SecondaryRebalanceTest(SecondaryIndexTest, RebalanceTest):
     COLLECTORS = {}
 
     def __init__(self, *args, **kwargs):
-        super(SecondaryRebalanceTest, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.rebalance_settings = self.test_config.rebalance_settings
         self.rebalance_time = 0
 

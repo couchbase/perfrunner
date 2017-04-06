@@ -80,7 +80,7 @@ class BackupTest(BackupRestoreTest):
         )
 
     def run(self):
-        super(BackupTest, self).run()
+        super().run()
 
         from_ts, to_ts = self.backup()
         self.time_elapsed = (to_ts - from_ts) / 1000.0  # seconds
@@ -263,7 +263,7 @@ class CbExportImportTest(BackupRestoreTest):
                 yield json.loads(line)
 
     def run(self):
-        super(CbExportImportTest, self).run()
+        super().run()
         self.export()
         settings = self.test_config.export_import_settings
         if self.test_config.load_settings.size != 20480 and \

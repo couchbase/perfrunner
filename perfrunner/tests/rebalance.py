@@ -77,7 +77,7 @@ class RebalanceTest(PerfTest):
     """
 
     def __init__(self, *args, **kwargs):
-        super(RebalanceTest, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.rebalance_settings = self.test_config.rebalance_settings
 
     def is_balanced(self):
@@ -221,7 +221,7 @@ class FailoverTest(RebalanceKVTest):
         return float(t.strftime('%s.%f'))
 
     def run(self):
-        super(FailoverTest, self).run()
+        super().run()
 
         self.report_kpi()
 
@@ -459,7 +459,7 @@ class RebalanceWithXdcrTest(RebalanceTest, XdcrInitTest):
     def load_dest(self):
         dest_target_iterator = DestTargetIterator(self.cluster_spec,
                                                   self.test_config)
-        super(RebalanceWithXdcrTest, self).load(target_iterator=dest_target_iterator)
+        super().load(target_iterator=dest_target_iterator)
 
     def _report_kpi(self, *args):
         rate = self.metric_helper.calc_avg_replication_rate(self.time_elapsed)

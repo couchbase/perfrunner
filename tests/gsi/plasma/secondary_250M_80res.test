@@ -1,0 +1,49 @@
+[test_case]
+test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
+title = 1 bucket x 250M, single 2i index, 100K KV ops/sec, 80%% Resident, PLASMA
+component = secondary
+sub_category = PlasmaDGM
+
+[stats]
+monitored_processes = projector
+
+[cluster]
+mem_quota = 14437
+index_mem_quota = 87796
+initial_nodes = 11
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[bucket]
+replica_number=0
+replica_index=0
+
+[bucket_extras]
+max_num_auxio = 16
+
+[load]
+items = 250000000
+size = 17
+workers = 100
+doc_gen = sequential_plasma
+hash_keys = 1
+key_length = 16
+
+[secondary]
+indexes = myindex:city
+indexer.settings.storage_mode = plasma
+indexer.settings.max_cpu_percent = 4800
+
+[access]
+updates = 100
+ops = 250000000
+items = 250000000
+existing_items = 250000000
+throughput = 100000
+workers = 100
+working_set = 20
+working_set_access = 100
+working_set_move_time = 120

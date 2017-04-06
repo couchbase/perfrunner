@@ -13,7 +13,6 @@ class YCSBTest(PerfTest):
 
     def load(self, *args, **kwargs):
         PerfTest.load(self, task=ycsb_data_load_task)
-        self.check_num_items()
 
     @with_stats
     def access(self, *args, **kwargs):
@@ -29,6 +28,7 @@ class YCSBTest(PerfTest):
 
         self.load()
         self.wait_for_persistence()
+        self.check_num_items()
 
         self.access()
 
@@ -42,6 +42,7 @@ class YCSBN1QLTest(YCSBTest, N1QLTest):
 
         self.load()
         self.wait_for_persistence()
+        self.check_num_items()
 
         self.build_index()
 

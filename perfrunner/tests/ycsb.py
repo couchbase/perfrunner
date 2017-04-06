@@ -11,7 +11,7 @@ class YCSBException(Exception):
     pass
 
 
-class YCSBWorker(object):
+class YCSBWorker:
     def __init__(self, access_settings, remote, test, ycsb):
         self.workers = access_settings.workers
         self.remote = remote

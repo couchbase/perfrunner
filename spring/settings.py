@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 from logger import logger
 
 
-class WorkloadSettings(object):
+class WorkloadSettings:
 
     def __init__(self, options):
         self.creates = options.creates
@@ -45,7 +45,7 @@ class WorkloadSettings(object):
         self.hash_keys = False
 
 
-class TargetSettings(object):
+class TargetSettings:
 
     def __init__(self, target_uri, prefix):
         params = urlparse(target_uri)

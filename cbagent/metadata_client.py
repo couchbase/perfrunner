@@ -20,7 +20,7 @@ def interrupt(request, *args, **kargs):
         logger.interrupt(e)
 
 
-class RestClient(object):
+class RestClient:
 
     def __init__(self):
         self.session = requests.Session()

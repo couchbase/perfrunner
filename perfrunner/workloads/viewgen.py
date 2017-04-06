@@ -1,7 +1,7 @@
 import string
 
 
-class ResetableGenerator(object):
+class ResetableGenerator:
 
     def __init__(self, iterable):
         self.counter = -1
@@ -17,7 +17,7 @@ class ResetableGenerator(object):
         self.counter = -1
 
 
-class ViewGen(object):
+class ViewGen:
 
     ddoc_names = ResetableGenerator(tuple(string.ascii_uppercase))
 
@@ -120,7 +120,7 @@ class ViewGen(object):
         return ddocs
 
 
-class ViewGenDev(object):
+class ViewGenDev:
 
     MAP_FUNCS = {
         # ############################## BASIC ############################## #

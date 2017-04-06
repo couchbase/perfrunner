@@ -2,7 +2,7 @@ import random
 from couchbase.bucket import Bucket
 
 
-class TestDataset(object):
+class TestDataset:
     def __init__(self):
         self.limit = 2000
 

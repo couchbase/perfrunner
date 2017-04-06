@@ -16,7 +16,7 @@ def retry(method, *args, **kwargs):
             time.sleep(SOCKET_RETRY_INTERVAL)
 
 
-class MemcachedHelper(object):
+class MemcachedHelper:
 
     def __init__(self, test_config):
         self.password = test_config.bucket.password

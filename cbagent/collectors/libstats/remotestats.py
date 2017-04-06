@@ -33,7 +33,7 @@ def run_local(*args, **kwargs):
         return local(*args, capture=True)
 
 
-class RemoteStats(object):
+class RemoteStats:
 
     def __init__(self, hosts, user, password):
         self.hosts = hosts

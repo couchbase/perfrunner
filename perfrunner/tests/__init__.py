@@ -15,7 +15,7 @@ from perfrunner.helpers.worker import spring_task, WorkerManager
 from perfrunner.settings import TargetSettings
 
 
-class TargetIterator(object):
+class TargetIterator:
 
     def __init__(self, cluster_spec, test_config, prefix=None):
         self.cluster_spec = cluster_spec
@@ -32,7 +32,7 @@ class TargetIterator(object):
                 yield TargetSettings(master, bucket, password, prefix)
 
 
-class PerfTest(object):
+class PerfTest:
 
     COLLECTORS = {}
 

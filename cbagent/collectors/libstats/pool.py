@@ -31,7 +31,7 @@ class BucketWrapper(Bucket):
         self.use_count += 1
 
 
-class Pool(object):
+class Pool:
 
     def __init__(self, initial=10, max_clients=20, **connargs):
         self._q = Queue()

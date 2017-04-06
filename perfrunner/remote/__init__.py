@@ -5,7 +5,7 @@ from perfrunner.remote.context import all_clients
 from perfrunner.settings import REPO
 
 
-class Remote(object):
+class Remote:
 
     CLIENT_PROCESSES = 'celery', 'cbc-pillowfight'
 

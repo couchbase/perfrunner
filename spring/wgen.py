@@ -66,7 +66,7 @@ def set_cpu_afinity(sid):
     os.system('taskset -p -c {} {}'.format(sid % cpu_count(), os.getpid()))
 
 
-class Worker(object):
+class Worker:
 
     CORRECTION_FACTOR = 0.975  # empiric!
 
@@ -451,7 +451,7 @@ class SeqUpdatesWorker(Worker):
             self.cb.update(key, doc)
 
 
-class WorkerFactory(object):
+class WorkerFactory:
 
     def __new__(cls, workload_settings):
         if getattr(workload_settings, 'async', False):
@@ -465,13 +465,13 @@ class WorkerFactory(object):
         return worker, workload_settings.workers
 
 
-class SubDocWorkerFactory(object):
+class SubDocWorkerFactory:
 
     def __new__(cls, workload_settings):
         return SubDocWorker, workload_settings.subdoc_workers
 
 
-class ViewWorkerFactory(object):
+class ViewWorkerFactory:
 
     def __new__(cls, workload_settings):
         return ViewWorker, workload_settings.query_workers
@@ -537,7 +537,7 @@ class ViewWorker(Worker):
         self.reservoir.dump(filename='{}-{}'.format(self.NAME, self.sid))
 
 
-class N1QLWorkerFactory(object):
+class N1QLWorkerFactory:
 
     def __new__(cls, workload_settings):
         return N1QLWorker, workload_settings.n1ql_workers
@@ -694,7 +694,7 @@ class N1QLWorker(Worker):
         self.reservoir.dump(filename='{}-{}'.format(self.NAME, self.sid))
 
 
-class FtsWorkerFactory(object):
+class FtsWorkerFactory:
 
     def __new__(cls, workload_settings):
         if workload_settings.fts_config:
@@ -757,7 +757,7 @@ class FtsWorker(Worker):
             logger.info('Finished: {}-{}'.format(self.NAME, self.sid))
 
 
-class WorkloadGen(object):
+class WorkloadGen:
 
     def __init__(self, workload_settings, target_settings, timer=None):
         self.ws = workload_settings

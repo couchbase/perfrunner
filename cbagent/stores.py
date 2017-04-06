@@ -17,7 +17,7 @@ def memoize(method):
     return decorator(_memoize, method)
 
 
-class SerieslyStore(object):
+class SerieslyStore:
 
     def __init__(self, host):
         self.seriesly = Seriesly(host)

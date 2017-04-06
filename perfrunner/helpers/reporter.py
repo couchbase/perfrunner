@@ -9,7 +9,7 @@ from perfrunner.helpers.misc import pretty_dict, uhex
 from perfrunner.settings import StatsSettings
 
 
-class SFReporter(object):
+class SFReporter:
 
     def __init__(self, test):
         self.test = test
@@ -72,7 +72,7 @@ class SFReporter(object):
             self._log_benchmark(metric, value)
 
 
-class DailyReporter(object):
+class DailyReporter:
 
     def __init__(self, test):
         self.test = test

@@ -17,7 +17,7 @@ def safe(method, *args, **kargs):
         logger.warn('Failed to get option from config: {}'.format(e))
 
 
-class Config(object):
+class Config:
 
     def __init__(self):
         self.config = ConfigParser()
@@ -293,7 +293,7 @@ class TestConfig(Config):
         return self._get_options_as_dict('fio')
 
 
-class TestCaseSettings(object):
+class TestCaseSettings:
 
     THRESHOLD = -10
 
@@ -313,7 +313,7 @@ class TestCaseSettings(object):
         self.use_workers = int(options.get('use_workers', self.USE_WORKERS))
 
 
-class ClusterSettings(object):
+class ClusterSettings:
 
     GROUP_NUMBER = 1
     NUM_BUCKETS = 1
@@ -341,7 +341,7 @@ class ClusterSettings(object):
                                             self.THROTTLE_CPU))
 
 
-class StatsSettings(object):
+class StatsSettings:
 
     ENABLED = 1
     POST_TO_SF = 0
@@ -380,7 +380,7 @@ class StatsSettings(object):
             options.get('monitored_processes', '').split()
 
 
-class BucketSettings(object):
+class BucketSettings:
 
     PASSWORD = 'password'
     REPLICA_NUMBER = 1
@@ -404,7 +404,7 @@ class BucketSettings(object):
         self.conflict_resolution_type = options.get('conflict_resolution_type')
 
 
-class CompactionSettings(object):
+class CompactionSettings:
 
     DB_PERCENTAGE = 30
     VIEW_PERCENTAGE = 30
@@ -421,7 +421,7 @@ class CompactionSettings(object):
         return str(self.__dict__)
 
 
-class TargetSettings(object):
+class TargetSettings:
 
     def __init__(self, host_port, bucket, password, prefix):
         self.password = password
@@ -430,7 +430,7 @@ class TargetSettings(object):
         self.prefix = prefix
 
 
-class RebalanceSettings(object):
+class RebalanceSettings:
 
     SWAP = 0
     FAILOVER = 'hard'  # Atl: graceful
@@ -456,7 +456,7 @@ class RebalanceSettings(object):
         self.stop_after = int(options.get('stop_after', self.STOP_AFTER))
 
 
-class PhaseSettings(object):
+class PhaseSettings:
 
     TIME = 3600 * 24
 
@@ -634,7 +634,7 @@ class HotLoadSettings(PhaseSettings):
         super(HotLoadSettings, self).__init__(options)
 
 
-class RestoreSettings(object):
+class RestoreSettings:
 
     SNAPSHOT = None
 
@@ -645,7 +645,7 @@ class RestoreSettings(object):
         return str(self.__dict__)
 
 
-class XDCRSettings(object):
+class XDCRSettings:
 
     XDCR_REPLICATION_TYPE = 'bidir'
     XDCR_REPLICATION_PROTOCOL = None
@@ -667,7 +667,7 @@ class XDCRSettings(object):
         return str(self.__dict__)
 
 
-class IndexSettings(object):
+class IndexSettings:
 
     VIEWS = '[1]'
     DISABLED_UPDATES = 0
@@ -682,7 +682,7 @@ class IndexSettings(object):
         return str(self.__dict__)
 
 
-class GSISettings(object):
+class GSISettings:
 
     STALE = 'true'
     CBINDEXPERF_CONFIGFILE = ''
@@ -754,7 +754,7 @@ class GSISettings(object):
         return str(self.__dict__)
 
 
-class DCPSettings(object):
+class DCPSettings:
 
     NUM_CONNECTIONS = 4
     BUCKET = "bucket-1"
@@ -767,7 +767,7 @@ class DCPSettings(object):
         return str(self.__dict__)
 
 
-class N1QLSettings(object):
+class N1QLSettings:
 
     def __init__(self, options):
         self.indexes = []
@@ -785,7 +785,7 @@ class N1QLSettings(object):
         return str(self.__dict__)
 
 
-class SubDocSettings(object):
+class SubDocSettings:
 
     SUBDOC_WORKERS = 0
     SUBDOC_FIELDS = []
@@ -814,7 +814,7 @@ class AccessSettings(PhaseSettings):
         super(AccessSettings, self).__init__(options)
 
 
-class BackupSettings(object):
+class BackupSettings:
 
     COMPRESSION = False
 
@@ -822,7 +822,7 @@ class BackupSettings(object):
         self.compression = int(options.get('compression', self.COMPRESSION))
 
 
-class ExportImportSettings(object):
+class ExportImportSettings:
 
     TYPE = 'json'  # csv or json
     FORMAT = 'lines'  # lines, list, or sample/file
@@ -832,7 +832,7 @@ class ExportImportSettings(object):
         self.format = options.get('format', self.FORMAT)
 
 
-class FtsSettings(object):
+class FtsSettings:
 
     def __init__(self, options):
         self.port = options.get("port", "8094")
@@ -858,7 +858,7 @@ class FtsSettings(object):
         return str(self.__dict__)
 
 
-class YcsbSettings(object):
+class YcsbSettings:
 
     REPO = 'git://github.com/brianfrankcooper/YCSB.git'
     BRANCH = 'master'

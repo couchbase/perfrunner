@@ -1,7 +1,7 @@
 import threading
 
 
-class SyncHotWorkload(object):
+class SyncHotWorkload:
 
     def __init__(self, current_hot_load_start, timer_elapse):
         self.timer = None

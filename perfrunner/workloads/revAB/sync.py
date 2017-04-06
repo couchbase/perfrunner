@@ -24,7 +24,7 @@ def sizeof_fmt(num):
         num /= 1024.0
 
 
-class SyncGen(object):
+class SyncGen:
 
     RESET_FRACTION = 0.07
 

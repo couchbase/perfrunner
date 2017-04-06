@@ -68,7 +68,7 @@ def with_stats(method, *args, **kwargs):
     return from_ts, to_ts
 
 
-class CbAgent(object):
+class CbAgent:
 
     def __init__(self, test, verbose):
         self.remote = RemoteHelper(test.cluster_spec, test.test_config,

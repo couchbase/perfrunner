@@ -6,7 +6,7 @@ from perfrunner.remote.linux import RemoteLinux
 from perfrunner.remote.windows import RemoteWindows
 
 
-class RemoteHelper(object):
+class RemoteHelper:
 
     def __new__(cls, cluster_spec, test_config, verbose=False):
         if not cluster_spec.ssh_credentials:

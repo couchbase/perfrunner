@@ -5,7 +5,7 @@ import time
 from logger import logger
 
 
-class Reservoir(object):
+class Reservoir:
 
     """
     Implementation of Algorithm R.

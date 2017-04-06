@@ -6,7 +6,7 @@ from couchbase.views.params import Query
 from numpy import random
 
 
-class ViewQueryGen(object):
+class ViewQueryGen:
 
     PARAMS = {
         'limit': 30,
@@ -86,7 +86,7 @@ class ViewQueryGen(object):
         return ddoc_name, view_name, Query(**params)
 
 
-class ViewQueryGenByType(object):
+class ViewQueryGenByType:
 
     PARAMS = {
         'limit': 20,
@@ -211,7 +211,7 @@ class ViewQueryGenByType(object):
         return self.DDOC_NAME, view_name, Query(**params)
 
 
-class N1QLQueryGen(object):
+class N1QLQueryGen:
 
     def __init__(self, queries):
         self.queries = cycle(queries)

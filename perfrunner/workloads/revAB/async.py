@@ -11,7 +11,7 @@ count = 0
 enable_experimental()
 
 
-class AsyncGen(object):
+class AsyncGen:
 
     def __init__(self, iterator, conn):
         self.rng = random.Random(0)

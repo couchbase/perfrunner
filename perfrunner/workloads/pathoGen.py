@@ -113,7 +113,7 @@ SIZES = (8, 16, 32, 48, 64, 80, 96, 112, 128, 144, 160, 176, 192,
          237568, 245760, 253952, 262144)
 
 
-class AlwaysPromote(object):
+class AlwaysPromote:
     """Promotion policy for baseline case - always promote."""
 
     def __init__(self, num_items, num_iterations, max_size):
@@ -123,7 +123,7 @@ class AlwaysPromote(object):
         return SequenceIterator(self.max_size)
 
 
-class Freeze(object):
+class Freeze:
 
     def __init__(self, num_items, num_iterations, max_size):
         self.num_items = num_items
@@ -152,7 +152,7 @@ class Freeze(object):
         return 1.0 - (final_fraction ** (1.0 / num_iterations))
 
 
-class PathoGen(object):
+class PathoGen:
 
     """Main generator class, responsible for orchestrating the process."""
 
@@ -274,7 +274,7 @@ class Worker(multiprocessing.Process):
                 backoff *= 2
 
 
-class SequenceIterator(object):
+class SequenceIterator:
     def __init__(self, max_size):
         self.sizes = list(SIZES[:SIZES.index(max_size) + 1])
 

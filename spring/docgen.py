@@ -18,7 +18,7 @@ from spring.dictionary import (
 ASCII_A_OFFSET = 97
 
 
-class HashKeys(object):
+class HashKeys:
 
     def __init__(self, workload_settings):
         self.ws = workload_settings
@@ -33,7 +33,7 @@ class HashKeys(object):
         return key
 
 
-class Iterator(object):
+class Iterator:
 
     def __init__(self):
         self.prefix = None

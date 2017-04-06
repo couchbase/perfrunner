@@ -50,7 +50,7 @@ def ycsb_task(*args, **kwargs):
     ycsb_workload(*args, **kwargs)
 
 
-class WorkerManager(object):
+class WorkerManager:
 
     def __new__(cls, *args, **kwargs):
         if '--remote' in sys.argv:
@@ -59,7 +59,7 @@ class WorkerManager(object):
             return LocalWorkerManager(*args, **kwargs)
 
 
-class RemoteWorkerManager(object):
+class RemoteWorkerManager:
 
     WORKER_HOME = '/tmp/perfrunner'
 

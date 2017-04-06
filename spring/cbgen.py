@@ -38,7 +38,7 @@ def quiet(method, *args, **kwargs):
         logger.warn('{}: {}'.format(method, e))
 
 
-class CBAsyncGen(object):
+class CBAsyncGen:
 
     TIMEOUT = 60  # seconds
 

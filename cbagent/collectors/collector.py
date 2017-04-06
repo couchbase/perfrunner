@@ -13,7 +13,7 @@ from cbagent.stores import SerieslyStore
 logging.getLogger("requests").setLevel(logging.ERROR)
 
 
-class Collector(object):
+class Collector:
 
     COLLECTOR = None
 

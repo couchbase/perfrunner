@@ -15,7 +15,7 @@ def generate_graph(users):
     return graph
 
 
-class PersonIterator(object):
+class PersonIterator:
 
     def __init__(self, graph, graph_keys, start, step):
         self.graph = graph

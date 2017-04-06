@@ -9,7 +9,7 @@ from txcouchbase.connection import Connection
 experimental.enable()
 
 
-class SmallIterator(object):
+class SmallIterator:
 
     FIXED_KEY_WIDTH = 12
     RND_FIELD_SIZE = 16
@@ -105,7 +105,7 @@ class NewLargeFieldIterator(LargeIterator, NewFieldIterator):
     pass
 
 
-class WorkloadGen(object):
+class WorkloadGen:
 
     NUM_ITERATIONS = 5
 

@@ -11,7 +11,7 @@ from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import RestHelper
 
 
-class RestoreHelper(object):
+class RestoreHelper:
 
     def __init__(self, cluster_spec, test_config, verbose):
         self.cluster_spec = cluster_spec

@@ -14,7 +14,7 @@ import random
 from couchbase.bucket import Bucket
 
 
-class Docgen(object):
+class Docgen:
     def __init__(self, master_file_path, shadow_file_path, cb_url, bucket_name, chunk_size=1024):
         self.chunk_size = chunk_size
         self.master_file_path = master_file_path

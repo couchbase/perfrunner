@@ -5,7 +5,7 @@ from seriesly import Seriesly
 from perfrunner.settings import StatsSettings
 
 
-class MetricHelper(object):
+class MetricHelper:
 
     def __init__(self, test):
         self.test = test

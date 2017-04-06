@@ -6,7 +6,7 @@ import requests
 from logger import logger
 
 
-class CouchbaseClient(object):
+class CouchbaseClient:
 
     """Minimal Couchbase client
     """
@@ -78,7 +78,7 @@ class CouchbaseClient(object):
             requests.post(url=url, auth=self.auth)
 
 
-class CliArgs(object):
+class CliArgs:
 
     """CLI options and args handler
     """
@@ -114,7 +114,7 @@ class CliArgs(object):
                          'commands supported')
 
 
-class StatsReporter(object):
+class StatsReporter:
 
     """Save all stats in *.json files
     """

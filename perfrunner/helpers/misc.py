@@ -3,8 +3,6 @@ import time
 from hashlib import md5
 from uuid import uuid4
 
-from logger import logger
-
 
 def uhex():
     return uuid4().hex
@@ -13,10 +11,6 @@ def uhex():
 def pretty_dict(d):
     return json.dumps(d, indent=4, sort_keys=True,
                       default=lambda o: o.__dict__)
-
-
-def log_action(action, settings):
-    logger.info('Running {}: {}'.format(action, pretty_dict(settings)))
 
 
 def target_hash(*args):

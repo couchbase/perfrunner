@@ -6,6 +6,8 @@ from typing import Iterator, List, Tuple
 from decorator import decorator
 from logger import logger
 
+from perfrunner.helpers.misc import target_hash
+
 REPO = 'https://github.com/couchbase/perfrunner'
 
 
@@ -270,15 +272,6 @@ class CompactionSettings:
 
     def __str__(self):
         return str(self.__dict__)
-
-
-class TargetSettings:
-
-    def __init__(self, host_port: str, bucket: str, password: str, prefix: str):
-        self.password = password
-        self.node = host_port
-        self.bucket = bucket
-        self.prefix = prefix
 
 
 class RebalanceSettings:
@@ -881,3 +874,32 @@ class TestConfig(Config):
     @property
     def fio(self) -> dict:
         return self._get_options_as_dict('fio')
+
+
+class TargetSettings:
+
+    def __init__(self, host_port: str, bucket: str, password: str, prefix: str):
+        self.password = password
+        self.node = host_port
+        self.bucket = bucket
+        self.prefix = prefix
+
+
+class TargetIterator:
+
+    def __init__(self,
+                 cluster_spec: ClusterSpec,
+                 test_config: TestConfig,
+                 prefix: str = None):
+        self.cluster_spec = cluster_spec
+        self.test_config = test_config
+        self.prefix = prefix
+
+    def __iter__(self) -> Iterator:
+        password = self.test_config.bucket.password
+        prefix = self.prefix
+        for master in self.cluster_spec.yield_masters():
+            for bucket in self.test_config.buckets:
+                if self.prefix is None:
+                    prefix = target_hash(master.split(':')[0])
+                yield TargetSettings(master, bucket, password, prefix)

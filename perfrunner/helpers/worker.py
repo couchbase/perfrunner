@@ -1,6 +1,7 @@
 import os.path
 import sys
 from itertools import cycle
+from typing import Callable
 
 from celery import Celery
 from logger import logger
@@ -8,7 +9,13 @@ from sqlalchemy import create_engine
 
 from perfrunner import celerylocal, celeryremote
 from perfrunner.helpers import local
-from perfrunner.helpers.misc import log_action
+from perfrunner.remote import Remote
+from perfrunner.settings import (
+    ClusterSpec,
+    PhaseSettings,
+    TargetIterator,
+    TestConfig,
+)
 from perfrunner.workloads import spring_workload
 from perfrunner.workloads.pillowfight import (
     pillowfight_data_load,
@@ -63,7 +70,10 @@ class RemoteWorkerManager:
 
     WORKER_HOME = '/tmp/perfrunner'
 
-    def __init__(self, cluster_spec, test_config, remote_manager):
+    def __init__(self,
+                 cluster_spec: ClusterSpec,
+                 test_config: TestConfig,
+                 remote_manager: Remote):
         self.cluster_spec = cluster_spec
         self.buckets = test_config.buckets
         self.remote = remote_manager
@@ -87,12 +97,14 @@ class RemoteWorkerManager:
             perfrunner_home = os.path.join(self.WORKER_HOME, 'perfrunner')
             self.remote.start_celery_worker(worker, perfrunner_home)
 
-    def run_tasks(self, task, task_settings, target_iterator, timer=None):
+    def run_tasks(self,
+                  task: Callable,
+                  task_settings: PhaseSettings,
+                  target_iterator: TargetIterator,
+                  timer: int = None):
         self.callbacks = []
 
         for target in target_iterator:
-            log_action('Celery task', task_settings)
-
             callback = task.apply_async(
                 args=(task_settings, target, timer),
                 queue=self.next_queue(), expires=timer,
@@ -114,7 +126,10 @@ class LocalWorkerManager(RemoteWorkerManager):
 
     SQLITE_DBS = 'perfrunner.db', 'results.db'
 
-    def __init__(self, cluster_spec, test_config, *args):
+    def __init__(self,
+                 cluster_spec: ClusterSpec,
+                 test_config: TestConfig,
+                 *args):
         self.cluster_spec = cluster_spec
         self.buckets = test_config.buckets
 

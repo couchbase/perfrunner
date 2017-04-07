@@ -1,7 +1,7 @@
 import csv
 import os.path
 from configparser import ConfigParser, NoOptionError, NoSectionError
-from typing import Iterator, List
+from typing import Iterator, List, Tuple
 
 from decorator import decorator
 from logger import logger
@@ -10,9 +10,9 @@ REPO = 'https://github.com/couchbase/perfrunner'
 
 
 @decorator
-def safe(method, *args, **kargs):
+def safe(method, *args, **kwargs):
     try:
-        return method(*args, **kargs)
+        return method(*args, **kwargs)
     except (NoSectionError, NoOptionError) as e:
         logger.warn('Failed to get option from config: {}'.format(e))
 
@@ -23,14 +23,14 @@ class Config:
         self.config = ConfigParser()
         self.name = ''
 
-    def parse(self, fname, override=()):
+    def parse(self, fname: str, override=()) -> None:
         if override:
             override = [x for x in csv.reader(
                 ' '.join(override).split(','), delimiter='.')]
 
         logger.info('Reading configuration file: {}'.format(fname))
         if not os.path.isfile(fname):
-            logger.interrupt('File doesn\'t exist: {}'.format(fname))
+            logger.interrupt("File doesn't exist: {}".format(fname))
         self.config.optionxform = str
         self.config.read(fname)
         for section, option, value in override:
@@ -42,7 +42,7 @@ class Config:
         self.name = os.path.splitext(basename)[0]
 
     @safe
-    def _get_options_as_dict(self, section):
+    def _get_options_as_dict(self, section: str) -> dict:
         if section in self.config.sections():
             return {p: v for p, v in self.config.items(section)}
         else:
@@ -74,7 +74,7 @@ class ClusterSpec(Config):
                 yield server.split(':')[0]
 
     @safe
-    def yield_servers_by_role(self, role) -> Iterator:
+    def yield_servers_by_role(self, role: str) -> Iterator:
         for name, servers in self.config.items('clusters'):
             has_service = []
             for server in servers.split():
@@ -124,7 +124,7 @@ class ClusterSpec(Config):
 
     @property
     @safe
-    def paths(self) -> (str, str):
+    def paths(self) -> Tuple[str, str]:
         data_path = self.config.get('storage', 'data')
         index_path = self.config.get('storage', 'index')
         return data_path, index_path
@@ -144,162 +144,13 @@ class ClusterSpec(Config):
         return self._get_options_as_dict('parameters')
 
 
-class TestConfig(Config):
-
-    @property
-    def test_case(self):
-        options = self._get_options_as_dict('test_case')
-        return TestCaseSettings(options)
-
-    @property
-    def cluster(self):
-        options = self._get_options_as_dict('cluster')
-        return ClusterSettings(options)
-
-    @property
-    def bucket(self):
-        options = self._get_options_as_dict('bucket')
-        return BucketSettings(options)
-
-    @property
-    def bucket_extras(self):
-        return self._get_options_as_dict('bucket_extras')
-
-    @property
-    def buckets(self) -> List[str]:
-        return [
-            'bucket-{}'.format(i + 1) for i in range(self.cluster.num_buckets)
-        ]
-
-    @property
-    def compaction(self):
-        options = self._get_options_as_dict('compaction')
-        return CompactionSettings(options)
-
-    @property
-    def restore_settings(self):
-        options = self._get_options_as_dict('restore')
-        return RestoreSettings(options)
-
-    @property
-    def load_settings(self):
-        options = self._get_options_as_dict('load')
-        return LoadSettings(options)
-
-    @property
-    def hot_load_settings(self):
-        options = self._get_options_as_dict('hot_load')
-        hot_load = HotLoadSettings(options)
-
-        load = self.load_settings
-        hot_load.doc_gen = load.doc_gen
-        hot_load.array_size = load.array_size
-        hot_load.num_categories = load.num_categories
-        hot_load.num_replies = load.num_replies
-        hot_load.size = load.size
-        return hot_load
-
-    @property
-    def xdcr_settings(self):
-        options = self._get_options_as_dict('xdcr')
-        return XDCRSettings(options)
-
-    @property
-    def index_settings(self):
-        options = self._get_options_as_dict('index')
-        return IndexSettings(options)
-
-    @property
-    def gsi_settings(self):
-        options = self._get_options_as_dict('secondary')
-        return GSISettings(options)
-
-    @property
-    def dcp_settings(self):
-        options = self._get_options_as_dict('dcp')
-        return DCPSettings(options)
-
-    @property
-    def n1ql_settings(self):
-        options = self._get_options_as_dict('n1ql')
-        return N1QLSettings(options)
-
-    @property
-    def backup_settings(self):
-        options = self._get_options_as_dict('backup')
-        return BackupSettings(options)
-
-    @property
-    def export_import_settings(self):
-        options = self._get_options_as_dict('export_import')
-        return ExportImportSettings(options)
-
-    @property
-    def access_settings(self):
-        options = self._get_options_as_dict('access')
-        access = AccessSettings(options)
-
-        if hasattr(access, 'n1ql_queries'):
-            access.define_queries(self)
-
-        load = self.load_settings
-        access.doc_gen = load.doc_gen
-        access.range_distance = load.range_distance
-        access.array_size = load.array_size
-        access.num_categories = load.num_categories
-        access.num_replies = load.num_replies
-        access.size = load.size
-        access.hash_keys = load.hash_keys
-        access.key_length = load.key_length
-
-        sub_doc_options = self._get_options_as_dict('subdoc')
-        if sub_doc_options:
-            SubDocSettings(sub_doc_options, access)
-        return access
-
-    @property
-    def rebalance_settings(self):
-        options = self._get_options_as_dict('rebalance')
-        return RebalanceSettings(options)
-
-    @property
-    def stats_settings(self):
-        options = self._get_options_as_dict('stats')
-        return StatsSettings(options)
-
-    @property
-    def internal_settings(self):
-        return self._get_options_as_dict('internal')
-
-    @property
-    def xdcr_cluster_settings(self):
-        return self._get_options_as_dict('xdcr_cluster')
-
-    @property
-    def fts_settings(self):
-        options = self._get_options_as_dict('fts')
-        return FtsSettings(options)
-
-    @property
-    def ycsb_settings(self):
-        options = self._get_options_as_dict('ycsb')
-        return YcsbSettings(options)
-
-    def get_n1ql_query_definition(self, query_name):
-        return self._get_options_as_dict('n1ql-{}'.format(query_name))
-
-    @property
-    def fio(self):
-        return self._get_options_as_dict('fio')
-
-
 class TestCaseSettings:
 
     THRESHOLD = -10
 
     USE_WORKERS = 1
 
-    def __init__(self, options):
+    def __init__(self, options: dict):
         self.test_module = '.'.join(options.get('test').split('.')[:-1])
         self.test_class = options.get('test').split('.')[-1]
 
@@ -322,7 +173,7 @@ class ClusterSettings:
     AUTO_FAILOVER_TIMEOUT = 30
     THROTTLE_CPU = 0
 
-    def __init__(self, options):
+    def __init__(self, options: dict):
         self.mem_quota = int(options.get('mem_quota'))
         self.index_mem_quota = int(options.get('index_mem_quota',
                                                self.INDEX_MEM_QUOTA))
@@ -363,7 +214,7 @@ class StatsSettings:
                            'indexer',
                            'memcached']
 
-    def __init__(self, options):
+    def __init__(self, options: dict):
         self.enabled = int(options.get('enabled', self.ENABLED))
         self.post_to_sf = int(options.get('post_to_sf', self.POST_TO_SF))
 
@@ -388,7 +239,7 @@ class BucketSettings:
     EVICTION_POLICY = 'valueOnly'  # alt: fullEviction
     BUCKET_TYPE = 'membase'  # alt: ephemeral
 
-    def __init__(self, options):
+    def __init__(self, options: dict):
         self.password = options.get('password', self.PASSWORD)
         self.replica_number = int(
             options.get('replica_number', self.REPLICA_NUMBER)
@@ -410,7 +261,7 @@ class CompactionSettings:
     VIEW_PERCENTAGE = 30
     PARALLEL = True
 
-    def __init__(self, options):
+    def __init__(self, options: dict):
         self.db_percentage = options.get('db_percentage',
                                          self.DB_PERCENTAGE)
         self.view_percentage = options.get('view_percentage',
@@ -423,7 +274,7 @@ class CompactionSettings:
 
 class TargetSettings:
 
-    def __init__(self, host_port, bucket, password, prefix):
+    def __init__(self, host_port: str, bucket: str, password: str, prefix: str):
         self.password = password
         self.node = host_port
         self.bucket = bucket
@@ -439,7 +290,7 @@ class RebalanceSettings:
     START_AFTER = 1200
     STOP_AFTER = 1200
 
-    def __init__(self, options):
+    def __init__(self, options: dict):
         nodes_after = options.get('nodes_after', '').split()
         self.nodes_after = [int(num_nodes) for num_nodes in nodes_after]
 
@@ -480,7 +331,7 @@ class PhaseSettings:
 
     ASYNC = False
     HASH_KEYS = 0
-    KEY_LENGTH = 0      # max can be 32
+    KEY_LENGTH = 0  # max can be 32
 
     ITEMS = 0
     EXISTING_ITEMS = 0
@@ -516,7 +367,12 @@ class PhaseSettings:
     SIZE_VARIATION_MIN = 1
     SIZE_VARIATION_MAX = 1024
 
-    def __init__(self, options):
+    SUBDOC_WORKERS = 0
+    SUBDOC_FIELDS = []
+    SUBDOC_COUNTER_FIELDS = []
+    SUBDOC_DELETE_FIELDS = []
+
+    def __init__(self, options: dict):
         # Common settings
         self.time = int(options.get('time', self.TIME))
         self.use_ssl = bool(int(options.get('use_ssl', self.USE_SSL)))
@@ -532,8 +388,10 @@ class PhaseSettings:
         self.updates = int(options.get('updates', self.UPDATES))
         self.deletes = int(options.get('deletes', self.DELETES))
         self.cases = int(options.get('cases', self.CASES))
-        self.fts_updates_swap = int(options.get('fts_updates_swap', self.FTS_UPDATES))
-        self.fts_updates_reverse = int(options.get('fts_updates_reverse', self.FTS_UPDATES))
+        self.fts_updates_swap = int(options.get('fts_updates_swap',
+                                                self.FTS_UPDATES))
+        self.fts_updates_reverse = int(options.get('fts_updates_reverse',
+                                                   self.FTS_UPDATES))
 
         self.ops = float(options.get('ops', self.OPS))
         self.throughput = float(options.get('throughput', self.THROUGHPUT))
@@ -594,8 +452,10 @@ class PhaseSettings:
                                                       self.PARALLEL_WORKLOAD)))
 
         self.item_size = int(options.get('item_size', self.ITEM_SIZE))
-        self.size_variation_min = int(options.get('size_variation_min', self.SIZE_VARIATION_MIN))
-        self.size_variation_max = int(options.get('size_variation_max', self.SIZE_VARIATION_MAX))
+        self.size_variation_min = int(options.get('size_variation_min',
+                                                  self.SIZE_VARIATION_MIN))
+        self.size_variation_max = int(options.get('size_variation_max',
+                                                  self.SIZE_VARIATION_MAX))
 
         # FTS settings
         self.fts_config = None
@@ -603,14 +463,13 @@ class PhaseSettings:
         # YCSB settings
         self.workload_path = options.get('workload_path')
 
-    def define_queries(self, config):
-        queries = []
-        for query_name in self.n1ql_queries:
-            query = config.get_n1ql_query_definition(query_name)
-            queries.append(query)
-        self.n1ql_queries = queries
+        # Subdoc
+        self.subdoc_workers = int(options.get('subdoc_workers',
+                                              self.SUBDOC_WORKERS))
+        self.subdoc_fields = options.get('subdoc_fields',
+                                         self.SUBDOC_FIELDS)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.__dict__)
 
 
@@ -625,7 +484,7 @@ class HotLoadSettings(PhaseSettings):
     SEQ_READS = True
     SEQ_UPDATES = False
 
-    def __init__(self, options):
+    def __init__(self, options: dict):
         if 'size' in options:
             logger.interrupt(
                 "The document `size` may only be set in the [load] "
@@ -641,7 +500,7 @@ class RestoreSettings:
     def __init__(self, options):
         self.snapshot = options.get('snapshot', self.SNAPSHOT)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.__dict__)
 
 
@@ -653,7 +512,7 @@ class XDCRSettings:
     WAN_ENABLED = False
     FILTER_EXPRESSION = None
 
-    def __init__(self, options):
+    def __init__(self, options: dict):
         self.replication_type = options.get('replication_type',
                                             self.XDCR_REPLICATION_TYPE)
         self.replication_protocol = options.get('replication_protocol',
@@ -663,7 +522,7 @@ class XDCRSettings:
         self.filter_expression = options.get('filter_expression',
                                              self.FILTER_EXPRESSION)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.__dict__)
 
 
@@ -672,13 +531,13 @@ class IndexSettings:
     VIEWS = '[1]'
     DISABLED_UPDATES = 0
 
-    def __init__(self, options):
+    def __init__(self, options: dict):
         self.views = eval(options.get('views', self.VIEWS))
         self.disabled_updates = int(options.get('disabled_updates',
                                                 self.DISABLED_UPDATES))
         self.index_type = options.get('index_type')
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.__dict__)
 
 
@@ -695,7 +554,7 @@ class GSISettings:
     INCREMENTAL_LOAD_ITERATIONS = 0
     SCAN_TIME = 1200
 
-    def __init__(self, options):
+    def __init__(self, options: dict):
         self.indexes = {}
         if options.get('indexes') is not None:
             for index_def in options.get('indexes').split(','):
@@ -717,7 +576,8 @@ class GSISettings:
                                                     self.STEP_NUM_CONNECTIONS))
         self.max_num_connections = int(options.get('max_num_connections',
                                                    self.MAX_NUM_CONNECTIONS))
-        self.run_recovery_test = int(options.get('run_recovery_test', self.RUN_RECOVERY_TEST))
+        self.run_recovery_test = int(options.get('run_recovery_test',
+                                                 self.RUN_RECOVERY_TEST))
         self.block_memory = int(options.get('block_memory', self.BLOCK_MEMORY))
         self.incremental_load_iterations = int(options.get('incremental_load_iterations',
                                                            self.INCREMENTAL_LOAD_ITERATIONS))
@@ -750,7 +610,7 @@ class GSISettings:
             else:
                 self.storage = 'memdb'
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.__dict__)
 
 
@@ -759,17 +619,18 @@ class DCPSettings:
     NUM_CONNECTIONS = 4
     BUCKET = "bucket-1"
 
-    def __init__(self, options):
-        self.num_connections = int(options.get('num_connections', self.NUM_CONNECTIONS))
+    def __init__(self, options: dict):
+        self.num_connections = int(options.get('num_connections',
+                                               self.NUM_CONNECTIONS))
         self.bucket = options.get('bucket', self.BUCKET)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.__dict__)
 
 
 class N1QLSettings:
 
-    def __init__(self, options):
+    def __init__(self, options: dict):
         self.indexes = []
         if 'indexes' in options:
             self.indexes = options.get('indexes').strip().split('\n')
@@ -781,24 +642,8 @@ class N1QLSettings:
                 value = options.get(option)
                 self.settings[key] = int(value)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.__dict__)
-
-
-class SubDocSettings:
-
-    SUBDOC_WORKERS = 0
-    SUBDOC_FIELDS = []
-    SUBDOC_COUNTER_FIELDS = []
-    SUBDOC_DELETE_FIELDS = []
-
-    def __init__(self, options, access):
-        access.subdoc_workers = int(options.get('workers'), self.SUBDOC_WORKERS)
-        access.subdoc_fields = options.get('fields', self.SUBDOC_FIELDS)
-        access.subdoc_counter_fields = options.get('counter_fields',
-                                                   self.SUBDOC_COUNTER_FIELDS)
-        access.subdoc_delete_fields = options.get('delete_fields',
-                                                  self.SUBDOC_DELETE_FIELDS)
 
 
 class AccessSettings(PhaseSettings):
@@ -813,12 +658,19 @@ class AccessSettings(PhaseSettings):
 
         super(AccessSettings, self).__init__(options)
 
+    def define_queries(self, config) -> None:
+        queries = []
+        for query_name in self.n1ql_queries:
+            query = config.get_n1ql_query_definition(query_name)
+            queries.append(query)
+        self.n1ql_queries = queries
+
 
 class BackupSettings:
 
     COMPRESSION = False
 
-    def __init__(self, options):
+    def __init__(self, options: dict):
         self.compression = int(options.get('compression', self.COMPRESSION))
 
 
@@ -827,14 +679,14 @@ class ExportImportSettings:
     TYPE = 'json'  # csv or json
     FORMAT = 'lines'  # lines, list, or sample/file
 
-    def __init__(self, options):
+    def __init__(self, options: dict):
         self.type = options.get('type', self.TYPE)
         self.format = options.get('format', self.FORMAT)
 
 
 class FtsSettings:
 
-    def __init__(self, options):
+    def __init__(self, options: dict):
         self.port = options.get("port", "8094")
         self.name = options.get("name")
         self.items = int(options.get("items", 0))
@@ -854,7 +706,7 @@ class FtsSettings:
         self.index_configfile = options.get("index_configfile", None)
         self.username = options.get("username", "Administrator")
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.__dict__)
 
 
@@ -863,7 +715,7 @@ class YcsbSettings:
     REPO = 'git://github.com/brianfrankcooper/YCSB.git'
     BRANCH = 'master'
 
-    def __init__(self, options):
+    def __init__(self, options: dict):
         self.sdk = options.get("sdk")
         self.bucket = options.get("bucket")
         self.jvm = options.get("jvm-args")
@@ -881,5 +733,151 @@ class YcsbSettings:
         self.repo = options.get('repo', self.REPO)
         self.branch = options.get('branch', self.BRANCH)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.__dict__)
+
+
+class TestConfig(Config):
+
+    @property
+    def test_case(self) -> TestCaseSettings:
+        options = self._get_options_as_dict('test_case')
+        return TestCaseSettings(options)
+
+    @property
+    def cluster(self) -> ClusterSettings:
+        options = self._get_options_as_dict('cluster')
+        return ClusterSettings(options)
+
+    @property
+    def bucket(self) -> BucketSettings:
+        options = self._get_options_as_dict('bucket')
+        return BucketSettings(options)
+
+    @property
+    def bucket_extras(self) -> dict:
+        return self._get_options_as_dict('bucket_extras')
+
+    @property
+    def buckets(self) -> List[str]:
+        return [
+            'bucket-{}'.format(i + 1) for i in range(self.cluster.num_buckets)
+        ]
+
+    @property
+    def compaction(self) -> CompactionSettings:
+        options = self._get_options_as_dict('compaction')
+        return CompactionSettings(options)
+
+    @property
+    def restore_settings(self) -> RestoreSettings:
+        options = self._get_options_as_dict('restore')
+        return RestoreSettings(options)
+
+    @property
+    def load_settings(self):
+        options = self._get_options_as_dict('load')
+        return LoadSettings(options)
+
+    @property
+    def hot_load_settings(self) -> HotLoadSettings:
+        options = self._get_options_as_dict('hot_load')
+        hot_load = HotLoadSettings(options)
+
+        load = self.load_settings
+        hot_load.doc_gen = load.doc_gen
+        hot_load.array_size = load.array_size
+        hot_load.num_categories = load.num_categories
+        hot_load.num_replies = load.num_replies
+        hot_load.size = load.size
+        return hot_load
+
+    @property
+    def xdcr_settings(self) -> XDCRSettings:
+        options = self._get_options_as_dict('xdcr')
+        return XDCRSettings(options)
+
+    @property
+    def index_settings(self) -> IndexSettings:
+        options = self._get_options_as_dict('index')
+        return IndexSettings(options)
+
+    @property
+    def gsi_settings(self) -> GSISettings:
+        options = self._get_options_as_dict('secondary')
+        return GSISettings(options)
+
+    @property
+    def dcp_settings(self) -> DCPSettings:
+        options = self._get_options_as_dict('dcp')
+        return DCPSettings(options)
+
+    @property
+    def n1ql_settings(self) -> N1QLSettings:
+        options = self._get_options_as_dict('n1ql')
+        return N1QLSettings(options)
+
+    @property
+    def backup_settings(self) -> BackupSettings:
+        options = self._get_options_as_dict('backup')
+        return BackupSettings(options)
+
+    @property
+    def export_import_settings(self) -> ExportImportSettings:
+        options = self._get_options_as_dict('export_import')
+        return ExportImportSettings(options)
+
+    @property
+    def access_settings(self) -> AccessSettings:
+        options = self._get_options_as_dict('access')
+        access = AccessSettings(options)
+
+        if hasattr(access, 'n1ql_queries'):
+            access.define_queries(self)
+
+        load_settings = self.load_settings
+        access.doc_gen = load_settings.doc_gen
+        access.range_distance = load_settings.range_distance
+        access.array_size = load_settings.array_size
+        access.num_categories = load_settings.num_categories
+        access.num_replies = load_settings.num_replies
+        access.size = load_settings.size
+        access.hash_keys = load_settings.hash_keys
+        access.key_length = load_settings.key_length
+
+        return access
+
+    @property
+    def rebalance_settings(self) -> RebalanceSettings:
+        options = self._get_options_as_dict('rebalance')
+        return RebalanceSettings(options)
+
+    @property
+    def stats_settings(self) -> StatsSettings:
+        options = self._get_options_as_dict('stats')
+        return StatsSettings(options)
+
+    @property
+    def internal_settings(self) -> dict:
+        return self._get_options_as_dict('internal')
+
+    @property
+    def xdcr_cluster_settings(self) -> dict:
+        return self._get_options_as_dict('xdcr_cluster')
+
+    @property
+    def fts_settings(self) -> FtsSettings:
+        options = self._get_options_as_dict('fts')
+        return FtsSettings(options)
+
+    @property
+    def ycsb_settings(self) -> YcsbSettings:
+        options = self._get_options_as_dict('ycsb')
+        return YcsbSettings(options)
+
+    def get_n1ql_query_definition(self, query_name: str) -> dict:
+        return self._get_options_as_dict('n1ql-{}'.format(query_name))
+
+    @property
+    def fio(self) -> dict:
+        return self._get_options_as_dict('fio')

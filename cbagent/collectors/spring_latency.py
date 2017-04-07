@@ -93,10 +93,6 @@ class SpringSubdocLatency(SpringLatency):
             client.update(key, self.ws.subdoc_fields, self.ws.size)
         elif metric == "latency_get":
             client.read(key, self.ws.subdoc_fields)
-        if metric == "latency_remove":
-            client.delete(key, self.ws.subdoc_delete_fields)
-        elif metric == "latency_counter":
-            client.counter(key, self.ws.subdoc_counter_fields)
         return 1000 * (time() - t0)  # Latency in ms
 
 

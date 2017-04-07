@@ -162,17 +162,6 @@ class SubDocGen(CBGen):
             new_field_value = getattr(newdoc, '_build_' + field)(alphabet)
             self.client.mutate_in(key, subdocument.upsert(field, new_field_value))
 
-    def counter(self, key, subdoc_counter_fields):
-        for field in subdoc_counter_fields.split(','):
-            self.client.counter_in(key, field, delta=50)
-
-    def delete(self, key, subdoc_delete_fields):
-        for field in subdoc_delete_fields.split(','):
-            self.client.remove_in(key, field)
-
-    def multipath(self):
-        raise NotImplementedError
-
 
 class FtsGen(CBGen):
 

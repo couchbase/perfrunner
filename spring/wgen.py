@@ -253,10 +253,6 @@ class KVWorker(Worker):
                 doc = self.docs.next(key)
                 key = self.hash_keys.hash_it(key)
                 cmds.append((cb.cas, (key, doc)))
-            elif op == 'counter':
-                key = self.existing_keys.next(curr_items_spot, deleted_spot)
-                key = self.hash_keys.hash_it(key)
-                cmds.append((cb.cas, (key, self.ws.subdoc_counter_fields)))
             elif op == 'fus':
                 key = self.fts_keys.next()
                 key = self.hash_keys.hash_it(key)

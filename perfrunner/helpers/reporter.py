@@ -1,6 +1,7 @@
 import json
 import os
 import time
+from typing import Union
 
 import requests
 from logger import logger
@@ -14,7 +15,7 @@ class SFReporter:
     def __init__(self, test):
         self.test = test
 
-    def _post_cluster(self):
+    def _post_cluster(self) -> None:
         cluster = self.test.cluster_spec.parameters
         cluster['Name'] = self.test.cluster_spec.name
 
@@ -22,7 +23,7 @@ class SFReporter:
         requests.post('http://{}/api/v1/clusters'.format(StatsSettings.SHOWFAST),
                       json.dumps(cluster))
 
-    def _post_metric(self, metric, metric_info):
+    def _post_metric(self, metric: str, metric_info: dict) -> None:
         if metric_info is None:
             metric_info = {'title': self.test.test_config.test_case.title}
         metric_info['id'] = metric
@@ -36,7 +37,7 @@ class SFReporter:
         requests.post('http://{}/api/v1/metrics'.format(StatsSettings.SHOWFAST),
                       json.dumps(metric_info))
 
-    def _generate_benchmark(self, metric, value):
+    def _generate_benchmark(self, metric: str, value: Union[float, int]) -> dict:
         return {
             'build': self.test.build,
             'buildURL': os.environ.get('BUILD_URL'),
@@ -47,19 +48,22 @@ class SFReporter:
             'value': value,
         }
 
-    def _log_benchmark(self, metric, value):
+    def _log_benchmark(self, metric: str, value: float) -> None:
         benchmark = self._generate_benchmark(metric, value)
 
         logger.info('Dry run: {}'.format(pretty_dict(benchmark)))
 
-    def _post_benchmark(self, metric, value):
+    def _post_benchmark(self, metric: str, value: float) -> None:
         benchmark = self._generate_benchmark(metric, value)
 
         logger.info('Adding a benchmark: {}'.format(pretty_dict(benchmark)))
         requests.post('http://{}/api/v1/benchmarks'.format(StatsSettings.SHOWFAST),
                       json.dumps(benchmark))
 
-    def post_to_sf(self, value, metric=None, metric_info=None):
+    def post_to_sf(self,
+                   value: Union[float, int],
+                   metric: str = None,
+                   metric_info: dict = None) -> None:
         if metric is None:
             metric = self.test.test_config.name
         metric = '{}_{}'.format(metric, self.test.cluster_spec.name)
@@ -78,17 +82,17 @@ class DailyReporter:
         self.test = test
 
     @staticmethod
-    def _post_daily_benchmark(benchmark):
+    def _post_daily_benchmark(benchmark: dict) -> None:
         logger.info('Adding a benchmark: {}'.format(pretty_dict(benchmark)))
         requests.post(
             'http://{}/daily/api/v1/benchmarks'.format(StatsSettings.SHOWFAST),
             json.dumps(benchmark))
 
     @staticmethod
-    def _log_daily_benchmark(benchmark):
+    def _log_daily_benchmark(benchmark: dict) -> None:
         logger.info('Dry run: {}'.format(pretty_dict(benchmark)))
 
-    def post_to_daily(self, metric, value):
+    def post_to_daily(self, metric: str, value: Union[float, int]) -> None:
         benchmark = {
             'build': self.test.build,
             'buildURL': os.environ.get('BUILD_URL', ''),
@@ -112,7 +116,7 @@ class Reporter(SFReporter, DailyReporter):
     def start(self):
         self.ts = time.time()
 
-    def finish(self, action, time_elapsed=None):
+    def finish(self, action: str, time_elapsed: float = None) -> float:
         time_elapsed = time_elapsed or (time.time() - self.ts)
         time_elapsed = round(time_elapsed / 60, 2)
         logger.info(

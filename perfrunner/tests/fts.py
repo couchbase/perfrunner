@@ -153,8 +153,8 @@ class FtsIndexTest(FTStest):
 
         def _report_kpi(self):
             self.reporter.post_to_sf(
-                *self.metric_helper.calc_ftses_index(self.index_time_taken,
-                                                     order_by=self.order_by)
+                *self.metric_helper.calc_fts_index(self.index_time_taken,
+                                                   order_by=self.order_by)
             )
             self.reporter.post_to_sf(
                 *self.metric_helper.calc_fts_index_size(self.index_size_raw,
@@ -168,16 +168,16 @@ class FTSLatencyTest(FTStest):
 
         def _report_kpi(self):
             self.reporter.post_to_sf(
-                *self.metric_helper.calc_latency_ftses_queries(percentile=80,
-                                                               dbname='fts_latency',
-                                                               metrics='cbft_latency_get',
-                                                               order_by=self.order_by)
+                *self.metric_helper.calc_latency_fts_queries(percentile=80,
+                                                             dbname='fts_latency',
+                                                             metric='cbft_latency_get',
+                                                             order_by=self.order_by)
             )
             self.reporter.post_to_sf(
-                *self.metric_helper.calc_latency_ftses_queries(percentile=0,
-                                                               dbname='fts_latency',
-                                                               metrics='cbft_latency_get',
-                                                               order_by=self.order_by)
+                *self.metric_helper.calc_latency_fts_queries(percentile=0,
+                                                             dbname='fts_latency',
+                                                             metric='cbft_latency_get',
+                                                             order_by=self.order_by)
             )
 
 

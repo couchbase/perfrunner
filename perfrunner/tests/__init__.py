@@ -174,7 +174,7 @@ class PerfTest:
         settings.ddocs = getattr(self, 'ddocs', None)
 
         self.run_phase('background access phase',
-                       task, settings, target_iterator, settings.timer, False)
+                       task, settings, target_iterator, settings.time, False)
 
     def timer(self) -> None:
         access_settings = self.test_config.access_settings

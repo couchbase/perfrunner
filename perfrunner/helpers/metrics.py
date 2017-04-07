@@ -418,14 +418,11 @@ class MetricHelper:
         overhead = 100 * (mem_used / user_data - 1)
         return int(overhead)
 
-    def get_indexing_meta(self, value, index_type, storage=None, unit="min"):
+    def get_indexing_meta(self, value, index_type, unit="min"):
         metric = '{}_{}'.format(self.test_config.name, index_type.lower())
         title = '{} index ({}), {}'.format(index_type, unit, self.title)
         metric_info = self._get_metric_info(title)
-        if storage is None:
-            metric_info['category'] = index_type.lower()
-        else:
-            metric_info['category'] = '{}_{}'.format(index_type.lower(), storage)
+        metric_info['category'] = index_type.lower()
 
         return value, metric, metric_info
 

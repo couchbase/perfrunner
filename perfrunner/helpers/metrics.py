@@ -1,3 +1,5 @@
+import glob
+
 import numpy as np
 from logger import logger
 from seriesly import Seriesly
@@ -469,11 +471,14 @@ class MetricHelper:
                 return False
         return True
 
-    def parse_ycsb_throughput(self):
-        with open('YCSB/ycsb_run.log') as fh:
-            for line in fh.readlines():
-                if line.startswith('[OVERALL], Throughput(ops/sec)'):
-                    return int(float(line.split()[-1]))
+    def parse_ycsb_throughput(self) -> int:
+        throughput = 0
+        for filename in glob.glob("YCSB/ycsb_run_*.log"):
+            with open(filename) as fh:
+                for line in fh.readlines():
+                    if line.startswith('[OVERALL], Throughput(ops/sec)'):
+                        throughput += int(float(line.split()[-1]))
+        return throughput
 
 
 class DailyMetricHelper(MetricHelper):

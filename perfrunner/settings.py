@@ -345,6 +345,7 @@ class PhaseSettings:
     QUERY_WORKERS = 0
     N1QL_WORKERS = 0
     SPRING_WORKERS = 100
+    WORKER_INSTANCES = 1
 
     N1QL_OP = 'read'
     N1QL_BATCH_SIZE = 100
@@ -404,6 +405,9 @@ class PhaseSettings:
         self.seq_updates = self.SEQ_UPDATES
 
         self.iterations = int(options.get('iterations', self.ITERATIONS))
+
+        self.worker_instances = int(options.get('worker_instances',
+                                                self.WORKER_INSTANCES))
 
         # SubDoc settings
         self.subdoc_workers = 0

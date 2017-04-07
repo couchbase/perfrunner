@@ -753,7 +753,7 @@ class FtsWorker(Worker):
 
 class WorkloadGen:
 
-    def __init__(self, workload_settings, target_settings, timer=None):
+    def __init__(self, workload_settings, target_settings, timer=None, *args):
         self.ws = workload_settings
         self.ts = target_settings
         self.timer = timer

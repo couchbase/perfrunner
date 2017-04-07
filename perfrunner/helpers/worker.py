@@ -33,28 +33,28 @@ else:
 
 
 @celery.task
-def spring_task(*args, **kwargs):
-    spring_workload(*args, **kwargs)
+def spring_task(*args):
+    spring_workload(*args)
 
 
 @celery.task
-def pillowfight_data_load_task(*args, **kwargs):
-    pillowfight_data_load(*args, **kwargs)
+def pillowfight_data_load_task(*args):
+    pillowfight_data_load(*args)
 
 
 @celery.task
-def pillowfight_task(*args, **kwargs):
-    pillowfight_workload(*args, **kwargs)
+def pillowfight_task(*args):
+    pillowfight_workload(*args)
 
 
 @celery.task
-def ycsb_data_load_task(*args, **kwargs):
-    ycsb_data_load(*args, **kwargs)
+def ycsb_data_load_task(*args):
+    ycsb_data_load(*args)
 
 
 @celery.task
-def ycsb_task(*args, **kwargs):
-    ycsb_workload(*args, **kwargs)
+def ycsb_task(*args):
+    ycsb_workload(*args)
 
 
 class WorkerManager:
@@ -105,11 +105,12 @@ class RemoteWorkerManager:
         self.callbacks = []
 
         for target in target_iterator:
-            callback = task.apply_async(
-                args=(task_settings, target, timer),
-                queue=self.next_queue(), expires=timer,
-            )
-            self.callbacks.append(callback)
+            for instance in range(task_settings.worker_instances):
+                callback = task.apply_async(
+                    args=(task_settings, target, timer, instance),
+                    queue=self.next_queue(), expires=timer,
+                )
+                self.callbacks.append(callback)
 
     def wait_for_workers(self):
         logger.info('Waiting for all tasks to finish')

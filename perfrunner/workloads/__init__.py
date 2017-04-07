@@ -1,6 +1,6 @@
 from spring.wgen import WorkloadGen
 
 
-def spring_workload(*args, **kwargs):
-    wg = WorkloadGen(*args, **kwargs)
+def spring_workload(*args):
+    wg = WorkloadGen(*args)
     wg.run()

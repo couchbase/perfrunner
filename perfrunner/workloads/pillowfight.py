@@ -1,7 +1,10 @@
 from perfrunner.helpers.local import run_cbc_pillowfight
+from perfrunner.settings import PhaseSettings, TargetSettings
 
 
-def pillowfight_data_load(workload_settings, target, *args, **kwargs):
+def pillowfight_data_load(workload_settings: PhaseSettings,
+                          target: TargetSettings,
+                          *args):
     host, _ = target.node.split(':')
 
     run_cbc_pillowfight(host=host,
@@ -16,7 +19,9 @@ def pillowfight_data_load(workload_settings, target, *args, **kwargs):
                         use_ssl=workload_settings.use_ssl)
 
 
-def pillowfight_workload(workload_settings, target, *args, **kwargs):
+def pillowfight_workload(workload_settings: PhaseSettings,
+                         target: TargetSettings,
+                         *args):
     host, _ = target.node.split(':')
 
     run_cbc_pillowfight(host=host,

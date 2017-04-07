@@ -276,7 +276,7 @@ def run_kvgen(hostname, num_docs, prefix):
 
 
 def run_ycsb(host, bucket, password, action, workload, items, workers,
-             ops=None, time=None):
+             ops=None, time=None, instance=0):
     cmd = 'bin/ycsb {action} couchbase2 ' \
         '-P {workload} ' \
         '-p recordcount={items} ' \
@@ -286,7 +286,7 @@ def run_ycsb(host, bucket, password, action, workload, items, workers,
         '-p couchbase.password={password} ' \
         '-p couchbase.boost=48 ' \
         '-p couchbase.epoll=true ' \
-        '-p exportfile=ycsb_{action}.log'
+        '-p exportfile=ycsb_{action}_{instance}.log'
 
     if ops is not None:
         cmd += ' -p operationcount={ops}'
@@ -297,7 +297,8 @@ def run_ycsb(host, bucket, password, action, workload, items, workers,
 
     cmd = cmd.format(host=host, bucket=bucket, password=password,
                      action=action, workload=workload,
-                     items=items, ops=ops, workers=workers, time=time)
+                     items=items, ops=ops, workers=workers, time=time,
+                     instance=instance)
 
     logger.info('Running: {}'.format(cmd))
     with lcd('YCSB'):

@@ -30,15 +30,15 @@ class Remote:
 
         run('rm -fr {}'.format(temp_dir))
 
-    def init_repo(self, worker, worker_home):
-        with settings(host_string=worker):
-            run('mkdir -p {}'.format(worker_home))
+    @all_clients
+    def init_repo(self, worker_home: str):
+        run('mkdir -p {}'.format(worker_home))
 
-            with cd(worker_home):
-                run('git clone -q {}'.format(REPO))
+        with cd(worker_home):
+            run('git clone -q {}'.format(REPO))
 
-                with cd('perfrunner'):
-                    run('make')
+            with cd('perfrunner'):
+                run('make')
 
     def start_celery_worker(self, worker, worker_home):
         with settings(host_string=worker):

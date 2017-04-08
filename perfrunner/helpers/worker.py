@@ -88,12 +88,10 @@ class RemoteWorkerManager:
 
     def start(self):
         logger.info('Initializing remote worker environment')
+        self.remote.init_repo(self.WORKER_HOME)
 
         for worker in self.cluster_spec.workers:
             logger.info('Starting remote Celery worker, host={}'.format(worker))
-
-            self.remote.init_repo(worker, self.WORKER_HOME)
-
             perfrunner_home = os.path.join(self.WORKER_HOME, 'perfrunner')
             self.remote.start_celery_worker(worker, perfrunner_home)
 

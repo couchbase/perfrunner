@@ -49,3 +49,9 @@ class Remote:
                     'nohup env/bin/celery worker '
                     '-A perfrunner.helpers.worker -Q {0} -n {0} -C '
                     '&>worker_{0}.log &'.format(worker), pty=False)
+
+    @all_clients
+    def clone_ycsb(self, repo: str, branch: str, worker_home: str):
+        logger.info('Cloning YCSB repository: {}'.format(repo))
+        with cd(worker_home), cd('perfrunner'):
+            run('git clone -q -b {} {}'.format(branch, repo))

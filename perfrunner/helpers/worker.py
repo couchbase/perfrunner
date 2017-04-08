@@ -75,7 +75,7 @@ class RemoteWorkerManager:
                  test_config: TestConfig,
                  remote_manager: Remote):
         self.cluster_spec = cluster_spec
-        self.buckets = test_config.buckets
+        self.test_config = test_config
         self.remote = remote_manager
 
         self.queues = cycle(self.cluster_spec.workers)
@@ -96,6 +96,11 @@ class RemoteWorkerManager:
 
             perfrunner_home = os.path.join(self.WORKER_HOME, 'perfrunner')
             self.remote.start_celery_worker(worker, perfrunner_home)
+
+    def init_ycsb_repo(self):
+        self.remote.clone_ycsb(repo=self.test_config.ycsb_settings.repo,
+                               branch=self.test_config.ycsb_settings.branch,
+                               worker_home=self.WORKER_HOME)
 
     def run_tasks(self,
                   task: Callable,
@@ -132,7 +137,7 @@ class LocalWorkerManager(RemoteWorkerManager):
                  test_config: TestConfig,
                  *args):
         self.cluster_spec = cluster_spec
-        self.buckets = test_config.buckets
+        self.test_config = test_config
 
         self.terminate()
         self.tune_sqlite()
@@ -149,6 +154,10 @@ class LocalWorkerManager(RemoteWorkerManager):
     def start(self):
         logger.info('Starting local Celery worker')
         local.start_celery_worker(queue='local')
+
+    def init_ycsb_repo(self):
+        local.clone_ycsb(repo=self.test_config.ycsb_settings.repo,
+                         branch=self.test_config.ycsb_settings.branch)
 
     def terminate(self):
         logger.info('Terminating Celery workers')

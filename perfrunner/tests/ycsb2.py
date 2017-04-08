@@ -1,5 +1,4 @@
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.helpers.local import clone_ycsb
 from perfrunner.helpers.worker import ycsb_data_load_task, ycsb_task
 from perfrunner.tests import PerfTest
 from perfrunner.tests.n1ql import N1QLTest
@@ -8,8 +7,7 @@ from perfrunner.tests.n1ql import N1QLTest
 class YCSBTest(PerfTest):
 
     def download_ycsb(self):
-        clone_ycsb(repo=self.test_config.ycsb_settings.repo,
-                   branch=self.test_config.ycsb_settings.branch)
+        self.worker_manager.init_ycsb_repo()
 
     def load(self, *args, **kwargs):
         PerfTest.load(self, task=ycsb_data_load_task)

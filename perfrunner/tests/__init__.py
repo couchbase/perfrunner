@@ -13,7 +13,12 @@ from perfrunner.helpers.reporter import Reporter
 from perfrunner.helpers.rest import RestHelper
 from perfrunner.helpers.restore import RestoreHelper
 from perfrunner.helpers.worker import spring_task, WorkerManager
-from perfrunner.settings import TargetIterator, PhaseSettings
+from perfrunner.settings import (
+    ClusterSpec,
+    PhaseSettings,
+    TargetIterator,
+    TestConfig,
+)
 
 
 class PerfTest:
@@ -24,7 +29,10 @@ class PerfTest:
 
     ROOT_CERTIFICATE = 'root.pem'
 
-    def __init__(self, cluster_spec, test_config, verbose):
+    def __init__(self,
+                 cluster_spec: ClusterSpec,
+                 test_config: TestConfig,
+                 verbose: bool):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
 

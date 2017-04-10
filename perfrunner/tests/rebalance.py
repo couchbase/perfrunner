@@ -459,7 +459,7 @@ class RebalanceWithXdcrTest(RebalanceTest, XdcrInitTest):
     def load_dest(self):
         dest_target_iterator = DestTargetIterator(self.cluster_spec,
                                                   self.test_config)
-        super(RebalanceTest, self).load(target_iterator=dest_target_iterator)
+        PerfTest.load(self, target_iterator=dest_target_iterator)
 
     def _report_kpi(self, *args):
         rate = self.metric_helper.calc_avg_replication_rate(self.time_elapsed)

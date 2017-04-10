@@ -9,7 +9,7 @@ from perfrunner.helpers.rest import RestHelper
 
 class ClusterManager:
 
-    def __init__(self, cluster_spec, test_config, verbose):
+    def __init__(self, cluster_spec, test_config, verbose=False):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
 

@@ -13,15 +13,19 @@ from perfrunner.helpers.rest import RestHelper
 
 class RestoreHelper:
 
-    def __init__(self, cluster_spec, test_config, verbose):
+    def __init__(self, cluster_spec, test_config):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
-        self.verbose = verbose
 
         self.snapshot = self.test_config.restore_settings.snapshot
 
-        self.remote = RemoteHelper(self.cluster_spec, self.test_config,
-                                   self.verbose)
+        self.remote = RemoteHelper(self.cluster_spec, self.test_config)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
 
     def fetch_maps(self):
         rest = RestHelper(self.cluster_spec)
@@ -76,6 +80,6 @@ class RestoreHelper:
         self.remote.start_server()
 
     def warmup(self):
-        cm = ClusterManager(self.cluster_spec, self.test_config, self.verbose)
+        cm = ClusterManager(self.cluster_spec, self.test_config)
         cm.wait_until_warmed_up()
         cm.wait_until_healthy()

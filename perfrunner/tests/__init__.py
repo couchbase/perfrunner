@@ -42,7 +42,6 @@ class PerfTest:
         self.monitor = Monitor(cluster_spec)
         self.rest = RestHelper(cluster_spec)
         self.remote = RemoteHelper(cluster_spec, test_config, verbose)
-        self.restore_helper = RestoreHelper(cluster_spec, test_config, verbose)
 
         self.master_node = next(cluster_spec.yield_masters())
         self.build = self.rest.get_version(self.master_node)
@@ -128,8 +127,9 @@ class PerfTest:
                                  .format(curr_items))
 
     def restore(self) -> None:
-        self.restore_helper.restore()
-        self.restore_helper.warmup()
+        with RestoreHelper(self.cluster_spec, self.test_config) as rh:
+            rh.restore()
+            rh.warmup()
 
     def run_phase(self,
                   phase: str,

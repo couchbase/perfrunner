@@ -1,4 +1,5 @@
 import glob
+import os.path
 import shutil
 from optparse import OptionParser
 
@@ -34,6 +35,11 @@ def main():
     for hostname in cluster_spec.yield_hostnames():
         for fname in glob.glob('{}/*.zip'.format(hostname)):
             shutil.move(fname, '{}.zip'.format(hostname))
+
+    if cluster_spec.backup is not None:
+        logs = os.path.join(cluster_spec.backup, 'logs')
+        if os.path.exists(logs):
+            shutil.make_archive('tools', 'zip', logs)
 
 
 if __name__ == '__main__':

@@ -26,28 +26,25 @@ def cleanup(backup_dir):
 
 def backup(master_node, cluster_spec, wrapper=False, mode=None,
            compression=False):
-    backup_dir = cluster_spec.config.get('storage', 'backup')
-
-    logger.info('Creating a new backup: {}'.format(backup_dir))
+    logger.info('Creating a new backup: {}'.format(cluster_spec.backup))
 
     if not mode:
-        cleanup(backup_dir)
+        cleanup(cluster_spec.backup)
 
     if wrapper:
-        cbbackupwrapper(master_node, cluster_spec, backup_dir, mode)
+        cbbackupwrapper(master_node, cluster_spec, mode)
     else:
-        cbbackupmgr_backup(master_node, cluster_spec, backup_dir, mode,
-                           compression)
+        cbbackupmgr_backup(master_node, cluster_spec, mode, compression)
 
 
-def cbbackupwrapper(master_node, cluster_spec, backup_dir, mode):
+def cbbackupwrapper(master_node, cluster_spec, mode):
     postfix = ''
     if mode:
         postfix = '-m {}'.format(mode)
 
     cmd = './cbbackupwrapper http://{} {} -u {} -p {} -P 16 {}'.format(
         master_node,
-        backup_dir,
+        cluster_spec.backup,
         cluster_spec.rest_credentials[0],
         cluster_spec.rest_credentials[1],
         postfix,
@@ -57,17 +54,16 @@ def cbbackupwrapper(master_node, cluster_spec, backup_dir, mode):
         local(cmd)
 
 
-def cbbackupmgr_backup(master_node, cluster_spec, backup_dir, mode,
-                       compression):
+def cbbackupmgr_backup(master_node, cluster_spec, mode, compression):
     if not mode:
         local('./opt/couchbase/bin/cbbackupmgr config '
-              '--archive {} --repo default'.format(backup_dir))
+              '--archive {} --repo default'.format(cluster_spec.backup))
 
     cmd = \
         './opt/couchbase/bin/cbbackupmgr backup ' \
         '--archive {} --repo default  --threads 16 ' \
         '--host http://{} --username {} --password {}'.format(
-            backup_dir,
+            cluster_spec.backup,
             master_node,
             cluster_spec.rest_credentials[0],
             cluster_spec.rest_credentials[1],
@@ -81,9 +77,7 @@ def cbbackupmgr_backup(master_node, cluster_spec, backup_dir, mode,
 
 
 def calc_backup_size(cluster_spec):
-    backup_dir = cluster_spec.config.get('storage', 'backup')
-
-    backup_size = local('du -sb0 {}'.format(backup_dir), capture=True)
+    backup_size = local('du -sb0 {}'.format(cluster_spec.backup), capture=True)
     backup_size = backup_size.split()[0]
     backup_size = float(backup_size) / 2 ** 30  # B -> GB
 
@@ -91,19 +85,17 @@ def calc_backup_size(cluster_spec):
 
 
 def restore(master_node, cluster_spec, wrapper=False):
-    backup_dir = cluster_spec.config.get('storage', 'backup')
-
-    logger.info('Restore from {}'.format(backup_dir))
+    logger.info('Restore from {}'.format(cluster_spec.backup))
 
     if wrapper:
-        cbrestorewrapper(master_node, cluster_spec, backup_dir)
+        cbrestorewrapper(master_node, cluster_spec)
     else:
-        cbbackupmgr_restore(master_node, cluster_spec, backup_dir)
+        cbbackupmgr_restore(master_node, cluster_spec)
 
 
-def cbrestorewrapper(master_node, cluster_spec, backup_dir):
+def cbrestorewrapper(master_node, cluster_spec):
     cmd = './cbrestorewrapper {} http://{} -u {} -p {}'.format(
-        backup_dir,
+        cluster_spec.backup,
         master_node,
         cluster_spec.rest_credentials[0],
         cluster_spec.rest_credentials[1],
@@ -113,12 +105,12 @@ def cbrestorewrapper(master_node, cluster_spec, backup_dir):
         local(cmd)
 
 
-def cbbackupmgr_restore(master_node, cluster_spec, backup_dir):
+def cbbackupmgr_restore(master_node, cluster_spec):
     cmd = \
         './opt/couchbase/bin/cbbackupmgr restore ' \
         '--archive {} --repo default  --threads 16 ' \
         '--host http://{} --username {} --password {}'.format(
-            backup_dir,
+            cluster_spec.backup,
             master_node,
             cluster_spec.rest_credentials[0],
             cluster_spec.rest_credentials[1],
@@ -128,10 +120,9 @@ def cbbackupmgr_restore(master_node, cluster_spec, backup_dir):
 
 
 def export(master_node, cluster_spec, tp='json', frmt=None, bucket='default'):
-    export_file = "{}/{}.{}".format(
-        cluster_spec.config.get('storage', 'backup'), frmt, tp)
+    export_file = "{}/{}.{}".format(cluster_spec.backup, frmt, tp)
 
-    cleanup(cluster_spec.config.get('storage', 'backup'))
+    cleanup(cluster_spec.backup)
 
     logger.info('export into: {}'.format(export_file))
 
@@ -147,11 +138,9 @@ def export(master_node, cluster_spec, tp='json', frmt=None, bucket='default'):
 
 
 def import_data(master_node, cluster_spec, tp='json', frmt=None, bucket=''):
-    import_file = "{}/{}.{}".format(
-        cluster_spec.config.get('storage', 'backup'), frmt, tp)
+    import_file = "{}/{}.{}".format(cluster_spec.backup, frmt, tp)
     if not frmt:
-        import_file = "{}/export.{}".format(
-            cluster_spec.config.get('storage', 'backup'), tp)
+        import_file = "{}/export.{}".format(cluster_spec.backup, tp)
 
     logger.info('import from: {}'.format(import_file))
 

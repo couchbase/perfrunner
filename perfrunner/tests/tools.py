@@ -159,7 +159,7 @@ class RestoreTest(BackupTest):
         self.flush_buckets()
 
         from_ts, to_ts = self.restore()
-        self.time_elapsed = (to_ts - from_ts) / 1000.0  # seconds
+        self.time_elapsed = (to_ts - from_ts) / 1000  # seconds
 
         self.report_kpi()
 
@@ -288,14 +288,14 @@ class CbExportImportTest(BackupRestoreTest):
 
     def convert_json_in_csv(self):
         import_file = "{}/{}.{}".format(
-            self.cluster_spec.config.get('storage', 'backup'),
+            self.cluster_spec.backup,
             self.test_config.export_import_settings.format,
             self.test_config.export_import_settings.type)
         data = self._yield_line_delimited_json(import_file)
 
-        with open('{}/export.csv'.format(self.cluster_spec.config.get(
-                'storage', 'backup')), 'w') as csvfile:
-            output = csv.writer(csvfile)
+        export_file = os.path.join(self.cluster_spec.backup, 'export.csv')
+        with open(export_file, 'w') as csv_file:
+            output = csv.writer(csv_file)
             header = ""
 
             for row in data:

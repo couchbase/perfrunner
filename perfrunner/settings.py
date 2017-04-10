@@ -133,6 +133,11 @@ class ClusterSpec(Config):
 
     @property
     @safe
+    def backup(self) -> str:
+        return self.config.get('storage', 'backup')
+
+    @property
+    @safe
     def rest_credentials(self) -> List[str]:
         return self.config.get('credentials', 'rest').split(':')
 

@@ -62,6 +62,7 @@ class PerfTest:
         if exc_type != KeyboardInterrupt:
             self.check_core_dumps()
             self.check_rebalance()
+            self.check_failover()
 
     def download_certificate(self) -> None:
         cert = self.rest.get_certificate(self.master_node)
@@ -73,19 +74,18 @@ class PerfTest:
             if self.rest.is_not_balanced(master):
                 logger.interrupt('The cluster is not balanced')
 
-            self.check_failover(master)
-
-    def check_failover(self, master: str) -> None:
+    def check_failover(self) -> None:
         if hasattr(self, 'rebalance_settings'):
             if self.rebalance_settings.failover or \
                     self.rebalance_settings.graceful_failover:
                 return
 
-        num_failovers = self.rest.get_failover_counter(master)
-        if num_failovers:
-            logger.interrupt(
-                'Failover happened {} time(s)'.format(num_failovers)
-            )
+        for master in self.cluster_spec.yield_masters():
+            num_failovers = self.rest.get_failover_counter(master)
+            if num_failovers:
+                logger.interrupt(
+                    'Failover happened {} time(s)'.format(num_failovers)
+                )
 
     def check_core_dumps(self) -> None:
         dumps_per_host = self.remote.detect_core_dumps()

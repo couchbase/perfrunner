@@ -64,8 +64,6 @@ class SecondaryIndexTest(PerfTest):
             if failure_count and (failure_count != self.remote.get_indexer_rebalance_failure()):
                 logger.interrupt('The cluster is not balanced')
 
-            self.check_failover(master)
-
     def _block_memory(self):
         if self.block_memory > 0:
             self.remote.block_memory(self.block_memory)

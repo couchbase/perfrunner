@@ -465,6 +465,9 @@ class RebalanceWithXdcrTest(RebalanceTest, XdcrInitTest):
         rate = self.metric_helper.calc_avg_replication_rate(self.time_elapsed)
         self.reporter.post_to_sf(value=rate)
 
+    def check_rebalance(self):
+        pass
+
     def run(self):
         self.load()
         if self.test_config.cluster.initial_nodes[1] != self.rebalance_settings.nodes_after[1]:

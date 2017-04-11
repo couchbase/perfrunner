@@ -53,8 +53,7 @@ class PerfTest:
         self.snapshots = []
 
         if self.test_config.test_case.use_workers:
-            self.worker_manager = WorkerManager(cluster_spec, test_config,
-                                                self.remote)
+            self.worker_manager = WorkerManager(cluster_spec, test_config)
 
     def __enter__(self):
         return self

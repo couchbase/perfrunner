@@ -9,7 +9,7 @@ from sqlalchemy import create_engine
 
 from perfrunner import celerylocal, celeryremote
 from perfrunner.helpers import local
-from perfrunner.remote import Remote
+from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import (
     ClusterSpec,
     PhaseSettings,
@@ -70,13 +70,10 @@ class RemoteWorkerManager:
 
     WORKER_HOME = '/tmp/perfrunner'
 
-    def __init__(self,
-                 cluster_spec: ClusterSpec,
-                 test_config: TestConfig,
-                 remote_manager: Remote):
+    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
-        self.remote = remote_manager
+        self.remote = RemoteHelper(cluster_spec, test_config)
 
         self.queues = cycle(self.cluster_spec.workers)
 
@@ -130,10 +127,7 @@ class LocalWorkerManager(RemoteWorkerManager):
 
     SQLITE_DBS = 'perfrunner.db', 'results.db'
 
-    def __init__(self,
-                 cluster_spec: ClusterSpec,
-                 test_config: TestConfig,
-                 *args):
+    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
 

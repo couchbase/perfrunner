@@ -158,7 +158,6 @@ class RebalanceKVTest(RebalanceTest):
 
         self.hot_load()
 
-        self.workload = self.test_config.access_settings
         self.access_bg()
         self.rebalance()
 
@@ -172,7 +171,6 @@ class RebalanceBaselineForFTS(RebalanceTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
-        self.workload = self.test_config.access_settings
         self.rebalance()
 
 
@@ -368,7 +366,6 @@ class RebalanceWithQueriesTest(RebalanceTest, QueryTest):
         self.define_ddocs()
         self.build_index()
 
-        self.workload = self.test_config.access_settings
         self.access_bg()
         self.rebalance()
 
@@ -391,7 +388,6 @@ class RebalanceWithXDCRTest(RebalanceTest, XdcrTest):
 
         self.hot_load()
 
-        self.workload = self.test_config.access_settings
         self.access_bg()
         self.rebalance()
 
@@ -417,7 +413,6 @@ class RebalanceWithUniDirXdcrTest(RebalanceTest, UniDirXdcrTest):
 
         self.hot_load()
 
-        self.workload = self.test_config.access_settings
         self.access_bg()
         self.rebalance()
 

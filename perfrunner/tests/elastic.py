@@ -62,7 +62,6 @@ class Elastictest(PerfTest):
 
     def run(self):
         self.cleanup_and_restore()
-        self.workload = self.test_config.access_settings
         self.create_index()
         self.addelastic()
         self.wait_for_index()

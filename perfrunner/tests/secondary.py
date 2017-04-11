@@ -104,7 +104,7 @@ class SecondaryIndexTest(PerfTest):
             return json.load(fh)
 
     def validate_num_connections(self):
-        db = SerieslyStore.build_dbname(self.cbagent.cluster_ids[0], None, None, None, "secondary_debugstats")
+        db = SerieslyStore.build_dbname(self.cbmonitor_clusters[0], None, None, None, "secondary_debugstats")
         config_data = self.get_data_from_config_json(self.configfile)
         # Expecting few extra connections(Number of GSi clients) than concurrency in config file
         ret = self.metrics.verify_series_in_limits(db, config_data["Concurrency"] + 5, "num_connections")

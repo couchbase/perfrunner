@@ -144,7 +144,6 @@ class QueryTest(IndexTest):
         self.define_ddocs()
         self.build_index()
 
-        self.workload = self.test_config.access_settings
         self.access_bg()
         self.access()
 

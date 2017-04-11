@@ -2,7 +2,7 @@ import time
 from collections import OrderedDict
 from copy import copy
 from multiprocessing import Process
-from typing import Callable
+from typing import Callable, Union
 
 import requests
 from decorator import decorator
@@ -38,8 +38,8 @@ from cbagent.collectors import (
 )
 from cbagent.metadata_client import MetadataClient
 from perfrunner.helpers.misc import target_hash, uhex
-from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import StatsSettings
+from perfrunner.tests import PerfTest
 
 
 @decorator
@@ -50,77 +50,84 @@ def timeit(method: Callable, *args, **kwargs) -> float:
 
 
 @decorator
-def with_stats(method: Callable, *args, **kwargs) -> float:
-    test = args[0]
+def with_stats(method: Callable, *args, **kwargs) -> Union[float, None]:
+    with CbAgent(test=args[0], phase=method.__name__):
+        return method(*args, **kwargs)
 
-    stats_enabled = test.test_config.stats_settings.enabled
 
-    if stats_enabled:
-        test.cbagent.init_clusters(test=test, phase=method.__name__)
-        test.cbagent.add_collectors(test, **test.COLLECTORS)
-        test.cbagent.update_metadata()
-        test.cbagent.start()
+def new_cbagent_settings(test: PerfTest):
+    if not test.test_config.stats_settings.enabled:
+        return None
 
-    r = method(*args, **kwargs)
+    if hasattr(test, 'ALL_BUCKETS'):
+        buckets = None
+    else:
+        buckets = test.test_config.buckets[:1]
+    if hasattr(test, 'ALL_HOSTNAMES'):
+        hostnames = tuple(test.cluster_spec.yield_hostnames())
+    else:
+        hostnames = None
 
-    if stats_enabled:
-        test.cbagent.stop()
-        test.cbagent.reconstruct()
-        test.snapshots = test.cbagent.add_snapshot()
+    settings = type('settings', (object,), {
+        'seriesly_host': StatsSettings.SERIESLY,
+        'cbmonitor_host_port': StatsSettings.CBMONITOR,
+        'interval': test.test_config.stats_settings.interval,
+        'lat_interval': test.test_config.stats_settings.lat_interval,
+        'secondary_statsfile': test.test_config.stats_settings.secondary_statsfile,
+        'buckets': buckets,
+        'indexes': test.test_config.gsi_settings.indexes,
+        'hostnames': hostnames,
+        'monitored_processes': test.test_config.stats_settings.monitored_processes,
+        'bucket_password': test.test_config.bucket.password,
+    })()
 
-    return r
+    if test.cluster_spec.ssh_credentials:
+        settings.ssh_username, settings.ssh_password = \
+            test.cluster_spec.ssh_credentials
+    settings.rest_username, settings.rest_password = \
+        test.cluster_spec.rest_credentials
+
+    for _, servers in test.cluster_spec.yield_servers_by_role('index'):
+        if servers:
+            settings.index_node = servers[0].split(':')[0]
+
+    return settings
 
 
 class CbAgent:
 
-    def __init__(self, test, verbose):
-        self.remote = RemoteHelper(test.cluster_spec, test.test_config,
-                                   verbose=verbose)
+    def __init__(self, test: PerfTest, phase: str):
+        self.test = test
+        self.settings = new_cbagent_settings(test=test)
 
-        if hasattr(test, 'ALL_BUCKETS'):
-            buckets = None
-        else:
-            buckets = test.test_config.buckets[:1]
-        if hasattr(test, 'ALL_HOSTNAMES'):
-            hostnames = tuple(test.cluster_spec.yield_hostnames())
-        else:
-            hostnames = None
+        if self.test.test_config.stats_settings.enabled:
+            self.init_clusters(phase=phase)
+            self.add_collectors(**test.COLLECTORS)
+            self.update_metadata()
+            self.start()
 
-        self.settings = type('settings', (object,), {
-            'seriesly_host': StatsSettings.SERIESLY,
-            'cbmonitor_host_port': StatsSettings.CBMONITOR,
-            'interval': test.test_config.stats_settings.interval,
-            'lat_interval': test.test_config.stats_settings.lat_interval,
-            'secondary_statsfile': test.test_config.stats_settings.secondary_statsfile,
-            'buckets': buckets,
-            'indexes': test.test_config.gsi_settings.indexes,
-            'hostnames': hostnames,
-            'monitored_processes': test.test_config.stats_settings.monitored_processes,
-            'bucket_password': test.test_config.bucket.password,
-        })()
-        if test.cluster_spec.ssh_credentials:
-            self.settings.ssh_username, self.settings.ssh_password = \
-                test.cluster_spec.ssh_credentials
-        self.settings.rest_username, self.settings.rest_password = \
-            test.cluster_spec.rest_credentials
+    def __enter__(self):
+        return self
 
-        for _, servers in test.cluster_spec.yield_servers_by_role('index'):
-            if servers:
-                self.settings.index_node = servers[0].split(':')[0]
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.test.test_config.stats_settings.enabled:
+            self.stop()
+            self.reconstruct()
+            self.add_snapshot()
 
-    def init_clusters(self, test, phase):
+    def init_clusters(self, phase: str):
         self.cluster_map = OrderedDict()
 
-        for cluster_name, servers in test.cluster_spec.yield_clusters():
+        for cluster_name, servers in self.test.cluster_spec.yield_clusters():
             cluster_id = '{}_{}_{}_{}'.format(cluster_name,
-                                              test.build.replace('.', ''),
+                                              self.test.build.replace('.', ''),
                                               phase,
                                               uhex()[:4])
             master = servers[0].split(':')[0]
             self.cluster_map[cluster_id] = master
-        self.cluster_ids = list(self.cluster_map.keys())
+        self.test.cbmonitor_clusters = list(self.cluster_map.keys())
 
-    def add_collectors(self, test,
+    def add_collectors(self,
                        elastic_stats=False,
                        durability=False,
                        fts_latency=False,
@@ -150,35 +157,35 @@ class CbAgent:
         self.add_collector(NSServerOverview)
         self.add_collector(ActiveTasks)
 
-        if test.remote is None or test.remote.os != 'Cygwin':
+        if self.test.remote.os != 'Cygwin':
             self.add_collector(PS)
             if net:
                 self.add_collector(Net)
             if iostat:
-                self.add_iostat(test)
-        elif test.remote.os == 'Cygwin':
+                self.add_iostat()
+        else:
             self.add_collector(TypePerf)
 
         if durability:
-            self.add_durability(test)
+            self.add_durability()
         if index_latency:
             self.add_collector(ObserveIndexLatency)
         if latency:
-            self.add_kv_latency(test)
+            self.add_kv_latency()
         if query_latency or n1ql_latency:
             self.add_collector(ReservoirQueryLatency)
         if subdoc_latency:
-            self.add_subdoc_latency(test)
+            self.add_subdoc_latency()
 
         if n1ql_stats:
             self.add_collector(N1QLStats)
 
         if elastic_stats:
-            self.add_collector(ElasticStats, test)
+            self.add_collector(ElasticStats, self.test)
         if fts_latency:
-            self.add_collector(FTSLatencyCollector, test)
+            self.add_collector(FTSLatencyCollector, self.test)
         if fts_stats:
-            self.add_collector(FTSCollector, test)
+            self.add_collector(FTSCollector, self.test)
 
         if secondary_debugstats:
             self.add_collector(SecondaryDebugStats)
@@ -198,7 +205,7 @@ class CbAgent:
             self.add_collector(SecondaryStorageStatsMM)
 
         if xdcr_lag:
-            self.add_xdcr_lag(test)
+            self.add_xdcr_lag()
         if xdcr_stats:
             self.add_collector(XdcrStats)
 
@@ -211,10 +218,10 @@ class CbAgent:
             collector = cls(settings, *args)
             self.collectors.append(collector)
 
-    def add_iostat(self, test):
-        data_path, index_path = test.cluster_spec.paths
+    def add_iostat(self):
+        data_path, index_path = self.test.cluster_spec.paths
         partitions = {'data': data_path}
-        if hasattr(test, 'ddocs'):  # all instances of IndexTest have it
+        if hasattr(self.test, 'ddocs'):  # all instances of IndexTest have it
             partitions['index'] = index_path
 
         for cluster_id, master_node in self.cluster_map.items():
@@ -226,43 +233,49 @@ class CbAgent:
             collector = IO(settings)
             self.collectors.append(collector)
 
-    def add_kv_latency(self, test):
+    def add_kv_latency(self):
         for cluster_id, master_node in self.cluster_map.items():
             settings = copy(self.settings)
             settings.cluster = cluster_id
             settings.master_node = master_node
-            prefix = test.target_iterator.prefix or \
+            prefix = self.test.target_iterator.prefix or \
                 target_hash(settings.master_node.split(':')[0])
 
-            collector = SpringLatency(settings, test.workload, prefix)
+            collector = SpringLatency(settings,
+                                      self.test.test_config.access_settings,
+                                      prefix)
             self.collectors.append(collector)
 
-    def add_durability(self, test):
-        for cluster_id, master_node in self.cluster_map.items():
-            settings = copy(self.settings)
-            settings.cluster = cluster_id
-            settings.master_node = master_node
-
-            prefix = test.target_iterator.prefix or \
-                target_hash(settings.master_node.split(':')[0])
-
-            collector = DurabilityLatency(settings, test.workload, prefix)
-            self.collectors.append(collector)
-
-    def add_subdoc_latency(self, test):
+    def add_durability(self):
         for cluster_id, master_node in self.cluster_map.items():
             settings = copy(self.settings)
             settings.cluster = cluster_id
             settings.master_node = master_node
 
-            prefix = test.target_iterator.prefix or \
+            prefix = self.test.target_iterator.prefix or \
                 target_hash(settings.master_node.split(':')[0])
 
-            collector = SubdocLatency(settings, test.workload, prefix)
+            collector = DurabilityLatency(settings,
+                                          self.test.test_config.access_settings,
+                                          prefix)
             self.collectors.append(collector)
 
-    def add_xdcr_lag(self, test):
-        reversed_clusters = list(reversed(self.cluster_ids))
+    def add_subdoc_latency(self):
+        for cluster_id, master_node in self.cluster_map.items():
+            settings = copy(self.settings)
+            settings.cluster = cluster_id
+            settings.master_node = master_node
+
+            prefix = self.test.target_iterator.prefix or \
+                target_hash(settings.master_node.split(':')[0])
+
+            collector = SubdocLatency(settings,
+                                      self.test.test_config.access_settings,
+                                      prefix)
+            self.collectors.append(collector)
+
+    def add_xdcr_lag(self):
+        reversed_clusters = list(reversed(self.test.cbmonitor_clusters))
 
         for i, cluster_id in enumerate(self.cluster_map):
             settings = copy(self.settings)
@@ -274,7 +287,7 @@ class CbAgent:
             collector = XdcrLag(settings)
             self.collectors.append(collector)
 
-            if test.settings.replication_type == 'unidir':
+            if self.test.test_config.xdcr_settings.replication_type == 'unidir':
                 break
 
     def update_metadata(self):
@@ -298,7 +311,7 @@ class CbAgent:
             if hasattr(collector, 'reconstruct'):
                 collector.reconstruct()
 
-    def trigger_reports(self, snapshot):
+    def trigger_reports(self, snapshot: str):
         for report_type in ('html', ):
             url = 'http://{}/reports/{}/?snapshot={}'.format(
                 self.settings.cbmonitor_host_port, report_type, snapshot)
@@ -306,11 +319,10 @@ class CbAgent:
             requests.get(url=url)
 
     def add_snapshot(self):
-        snapshots = []
-        for cluster_id in self.cluster_ids:
+        for cluster_id in self.test.cbmonitor_clusters:
             self.settings.cluster = cluster_id
             md_client = MetadataClient(self.settings)
             md_client.add_snapshot(cluster_id)
-            snapshots.append(cluster_id)
             self.trigger_reports(cluster_id)
-        return snapshots
+
+            self.test.cbmonitor_snapshots.append(cluster_id)

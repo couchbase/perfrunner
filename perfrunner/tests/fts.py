@@ -51,7 +51,6 @@ class FTStest(PerfTest):
         self.remote.cbrestorefts(self.test_config.fts_settings.storage, self.test_config.fts_settings.repo)
 
     def run(self):
-        self.workload = self.test_config.access_settings
         self.cleanup_and_restore()
         self.create_index()
         self.wait_for_index()
@@ -200,7 +199,6 @@ class FTSRebalanceTest(FTStest, RebalanceTest):
         self.rebalance_time = 0
 
     def run(self):
-        self.workload = self.test_config.access_settings
         self.cleanup_and_restore()
         self.create_index()
         self.wait_for_index()

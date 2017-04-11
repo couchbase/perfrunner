@@ -39,7 +39,6 @@ class KVTest(PerfTest):
 
         self.hot_load()
 
-        self.workload = self.test_config.access_settings
         self.access_bg()
         self.access()
 

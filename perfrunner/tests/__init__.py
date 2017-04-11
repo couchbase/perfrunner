@@ -3,7 +3,6 @@ from typing import Callable
 
 from logger import logger
 
-from perfrunner.helpers.cbmonitor import CbAgent
 from perfrunner.helpers.memcached import MemcachedHelper
 from perfrunner.helpers.metrics import MetricHelper
 from perfrunner.helpers.misc import pretty_dict
@@ -44,10 +43,11 @@ class PerfTest:
         self.master_node = next(cluster_spec.yield_masters())
         self.build = self.rest.get_version(self.master_node)
 
-        self.cbagent = CbAgent(self, verbose=verbose)
         self.metrics = MetricHelper(self)
         self.reporter = ShowFastReporter(cluster_spec, test_config, self.build)
-        self.snapshots = []
+
+        self.cbmonitor_snapshots = []
+        self.cbmonitor_clusters = []
 
         if self.test_config.test_case.use_workers:
             self.worker_manager = WorkerManager(cluster_spec, test_config)

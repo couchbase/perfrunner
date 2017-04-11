@@ -282,7 +282,7 @@ def run_ycsb(host, bucket, password, action, workload, items, workers,
     if time is not None:
         cmd += ' -p maxexecutiontime={time}'
 
-    cmd += ' 2>/dev/null'
+    cmd += ' 2>ycsb_{instance}_stderr.log'
 
     cmd = cmd.format(host=host, bucket=bucket, password=password,
                      action=action, workload=workload,

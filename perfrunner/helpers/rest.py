@@ -1,6 +1,7 @@
 import json
 import time
 from collections import namedtuple
+from typing import List
 
 import requests
 from decorator import decorator
@@ -574,6 +575,13 @@ class RestHelper:
             'auditdEnabled': 'true',
         }
         self.post(url=api, data=data)
+
+    def get_rbac_roles(self, host_port) -> List[dict]:
+        logger.info('Getting the existing RBAC roles')
+
+        api = 'http://{}/settings/rbac/roles'.format(host_port)
+
+        return self.get(url=api).json()
 
     def add_rbac_user(self, host_port: str, bucket_name: str, password: str,
                       roles: tuple):

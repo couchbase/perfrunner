@@ -1,3 +1,5 @@
+from typing import List
+
 from logger import logger
 
 from perfrunner.helpers.memcached import MemcachedHelper
@@ -230,25 +232,41 @@ class ClusterManager:
         for master in self.cluster_spec.yield_masters():
             self.rest.enable_audit(master)
 
+    def generate_ce_roles(self) -> List[str]:
+        return ['admin']
+
+    def generate_ee_roles(self) -> List[str]:
+        existing_roles = {r['role']
+                          for r in self.rest.get_rbac_roles(self.master_node)}
+
+        roles = []
+        for role in (
+                'bucket_admin',
+                'data_dcp_reader',
+                'data_monitoring',
+                'data_reader_writer',
+                'data_reader',
+                'data_writer',
+                'fts_admin',
+                'fts_searcher',
+                'query_delete',
+                'query_insert',
+                'query_select',
+                'query_update',
+        ):
+            if role in existing_roles:
+                roles.append(role + '[{bucket}]')
+
+        return roles
+
     def add_rbac_users(self):
         if not self.is_compatible(min_release='5.0'):
             return
 
         if self.rest.is_community(self.master_node):
-            roles = 'admin',
+            roles = self.generate_ce_roles()
         else:
-            roles = (
-                'bucket_admin[{bucket}]',
-                'data_dcp_reader[{bucket}]',
-                'data_monitoring[{bucket}]',
-                'data_reader_writer[{bucket}]',
-                'fts_admin[{bucket}]',
-                'fts_searcher[{bucket}]',
-                'query_delete[{bucket}]',
-                'query_insert[{bucket}]',
-                'query_select[{bucket}]',
-                'query_update[{bucket}]',
-            )
+            roles = self.generate_ee_roles()
 
         for master in self.masters():
             for bucket in self.test_config.buckets:

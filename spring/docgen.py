@@ -25,6 +25,7 @@ class HashKeys:
 
     def hash_it(self, key: str) -> str:
         if self.ws.hash_keys:
+            key = key.encode('utf-8')
             if self.ws.key_length:
                 num_slices = int(math.ceil(self.ws.key_length / 32))
                 doc_key = num_slices * md5(key).hexdigest()

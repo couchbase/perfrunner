@@ -1,0 +1,45 @@
+---
+- hosts: kv
+  vars:
+    cassandra_home: /opt/apache-cassandra
+    data_dir: /data
+  tasks:
+  - name: removing the existing installation (if any)
+    file: path={{ cassandra_home }} state=absent
+
+  - name: creating a folder for Apache Cassandra
+    file: path={{ cassandra_home }} state=directory
+
+  - name: downloading the specifed package
+    get_url: url={{ url }} dest=/tmp
+    register: package
+
+  - name: extracting the package
+    unarchive:
+      src: "{{ package.dest }}"
+      dest: "{{ cassandra_home }}"
+      remote_src: True
+      extra_opts: ["--strip-components=1"]
+
+  - name: updating the configuration file
+    replace:
+      path: "{{ cassandra_home }}/conf/cassandra.yaml"
+      regexp: "{{ item.regexp }}"
+      replace: "{{ item.replace }}"
+    with_items:
+      - regexp: '# data_file_directories:'
+        replace: 'data_file_directories:'
+      - regexp: '#     - /var/lib/cassandra/data'
+        replace: '    - {{ data_dir }}/data'
+      - regexp: '# commitlog_directory: /var/lib/cassandra/commitlog'
+        replace: 'commitlog_directory: {{ data_dir }}/commitlog'
+      - regexp: 'listen_address: localhost'
+        replace: 'listen_address: {{ inventory_hostname }}'
+      - regexp: '# saved_caches_directory: /var/lib/cassandra/saved_caches'
+        replace: 'saved_caches_directory: {{ data_dir }}/saved_caches'
+      - regexp: 'rpc_address: localhost'
+        replace: 'rpc_address: 0.0.0.0'
+      - regexp: '- seeds: "127.0.0.1"'
+        replace: '- seeds: "{{ ansible_play_hosts[0] }},{{ ansible_play_hosts[1] }}"'
+      - regexp: '# broadcast_rpc_address: 1.2.3.4'
+        replace: 'broadcast_rpc_address: {{ inventory_hostname }}'

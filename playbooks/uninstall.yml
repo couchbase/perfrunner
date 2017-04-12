@@ -11,17 +11,18 @@
      - couch_view_index_updater
      - goport
      - goxdcr
+     - java
      - indexer
      - memcached
      - moxi
   - name: uninstalling the Couchbase Server package
     yum: name=couchbase-server state=absent
-  - name: remove Couchbase Server files
+  - name: removing Couchbase Server files
     file: path=/opt/couchbase state=absent
 
 - hosts: kv:index:n1ql
   tasks:
-  - name: Removing the files remaining in the "/data" directory
+  - name: removing the files remaining in the "/data" directory
     shell: rm -fr /data/*
 
 - hosts: kv

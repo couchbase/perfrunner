@@ -36,12 +36,11 @@ def main():
     cm = ClusterManager(cluster_spec, test_config, options.verbose)
 
     # Individual nodes
-    if cm.remote:
-        cm.throttle_cpu()
-        cm.remote.disable_wan()
-        cm.enable_secrets()
-        cm.tune_logging()
-        cm.restart_with_alternative_num_vbuckets()
+    cm.throttle_cpu()
+    cm.remote.disable_wan()
+    cm.enable_secrets()
+    cm.tune_logging()
+    cm.restart_with_alternative_num_vbuckets()
 
     cm.configure_internal_settings()
     cm.set_data_path()
@@ -66,16 +65,14 @@ def main():
         cm.create_buckets()
         cm.add_rbac_users()
 
-    if cm.remote:
-        cm.restart_with_alternative_bucket_options()
-        cm.set_index_settings()
-        cm.set_query_settings()
+    cm.restart_with_alternative_bucket_options()
+    cm.set_index_settings()
+    cm.set_query_settings()
 
     cm.wait_until_warmed_up()
     cm.wait_until_healthy()
 
-    if cm.remote:
-        cm.tweak_memory()
+    cm.tweak_memory()
 
 
 if __name__ == '__main__':

@@ -1,3 +1,4 @@
+import csv
 import json
 import subprocess
 import time
@@ -38,6 +39,8 @@ class SecondaryIndexTest(PerfTest):
 
         self.storage = self.test_config.gsi_settings.storage
         self.indexes = self.test_config.gsi_settings.indexes
+
+        self.secondary_statsfile = self.test_config.stats_settings.secondary_statsfile
 
         # Get first cluster, its index nodes, and first bucket
         (cluster_name, servers) = \
@@ -404,6 +407,69 @@ class SecondaryIndexingThroughputRebalanceTest(SecondaryIndexingThroughputTest):
         logger.info('Rows throughput: {}'.format(row_thr))
         self.print_index_disk_usage()
         self.report_kpi(scan_thr)
+        self.validate_num_connections()
+
+
+class SecondaryIndexingMovingScanThroughputTest(SecondaryIndexingThroughputTest):
+    """
+    The test applies scan workload against the 2i server and measures
+    scan throughput for moving workload
+    """
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.scan_thr = []
+
+    """
+    get_throughput function parses statsfile created by cbindexperf, and
+    calculates throughput.
+    Format for statsfile is-
+    id:1, rows:0, duration:8632734534, Nth-latency:16686556
+    id:1, rows:0, duration:3403693509, Nth-latency:6859285
+    """
+    def get_throughput(self) -> float:
+        duration = 0
+        lines = 0
+        with open(self.secondary_statsfile, 'rb') as csvfile:
+            csv_reader = csv.reader(csvfile, delimiter=',')
+            for row in csv_reader:
+                duration += int(row[2].split(":")[1])
+                lines += 1
+        return lines * 100 / (duration / 1000000000)
+
+    """
+    Calculating average throughput from list of throughputs
+    """
+    def calc_throughput(self) -> float:
+        logger.info('Throughputs collected over hot workloads: {}'.format(self.scan_thr))
+        return sum(self.scan_thr) / len(self.scan_thr)
+
+    """
+    Apply moving scan workload and collect throughput for each load
+    """
+    @with_stats
+    def apply_scanworkload(self, path_to_tool="/opt/couchbase/bin/cbindexperf"):
+        rest_username, rest_password = self.cluster_spec.rest_credentials
+
+        t = 0
+        while t < self.scan_time:
+            self.change_scan_range(t)
+            run_cbindexperf(path_to_tool, self.index_nodes[0], rest_username,
+                            rest_password, self.configfile, run_in_background=True)
+            time.sleep(self.test_config.access_settings.working_set_move_time)
+            kill_process("cbindexperf")
+            self.scan_thr.append(self.get_throughput())
+            t += self.test_config.access_settings.working_set_move_time
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.compact_bucket()
+        self.build_secondaryindex()
+        self.run_access_for_2i(run_in_background=True)
+        self.apply_scanworkload()
+        scan_throughput = self.calc_throughput()
+        self.print_index_disk_usage()
+        self.report_kpi(scan_throughput)
         self.validate_num_connections()
 
 

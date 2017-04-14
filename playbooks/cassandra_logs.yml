@@ -1,0 +1,24 @@
+---
+- hosts: kv
+  vars:
+    cassandra_home: /opt/apache-cassandra
+  tasks:
+  - name: creating a temporary directory
+    tempfile:
+      state: directory
+    register: result
+
+  - name: archiving the database logs
+    archive:
+      path: "{{ cassandra_home }}/logs"
+      dest: "{{ result.path }}/{{ inventory_hostname }}.zip"
+      format: zip
+
+  - name: downloading the remote logs
+    fetch:
+      src: "{{ result.path }}/{{ inventory_hostname }}.zip"
+      dest: ../
+      flat: yes
+
+  - name: removing temporary files
+    file: path={{ result.path }} state=absent

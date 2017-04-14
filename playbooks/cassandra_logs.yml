@@ -6,19 +6,19 @@
   - name: creating a temporary directory
     tempfile:
       state: directory
-    register: result
+    register: temp
 
   - name: archiving the database logs
     archive:
       path: "{{ cassandra_home }}/logs"
-      dest: "{{ result.path }}/{{ inventory_hostname }}.zip"
+      dest: "{{ temp.path }}/{{ inventory_hostname }}.zip"
       format: zip
 
   - name: downloading the remote logs
     fetch:
-      src: "{{ result.path }}/{{ inventory_hostname }}.zip"
+      src: "{{ temp.path }}/{{ inventory_hostname }}.zip"
       dest: ../
       flat: yes
 
   - name: removing temporary files
-    file: path={{ result.path }} state=absent
+    file: path={{ temp.path }} state=absent

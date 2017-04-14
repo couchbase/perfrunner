@@ -1,8 +1,17 @@
 ---
 - hosts: kv:index:n1ql
   tasks:
+  - name: creating a temporary directory
+    tempfile:
+      state: directory
+    register: temp
+
   - name: downloading the specifed package
-    get_url: url={{ url }} dest=/tmp
+    get_url: url={{ url }} dest={{ temp.path }}
     register: package
+
   - name: installing the specifed package
     yum: name={{ package.dest }} state=present
+
+  - name: removing temporary files
+    file: path={{ temp.path }} state=absent

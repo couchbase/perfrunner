@@ -8,7 +8,6 @@ category = workloadd
 mem_quota = 51200
 initial_nodes = 4
 num_buckets = 1
-throttle_cpu = 1
 
 [load]
 workload_path = workloads/workloadd

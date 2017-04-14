@@ -1,0 +1,22 @@
+[test_case]
+test = perfrunner.tests.ycsb2.YCSBTest
+title = Avg Throughput (ops/sec), YCSB Workload A, 500M items, 4 nodes
+component = YCSB
+category = workloada
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+
+[load]
+workload_path = workloads/workloada
+items = 500000000
+workers = 25
+
+[access]
+workload_path = workloads/workloada
+items = 500000000
+workers = 160
+ops = 1000000000
+time = 3600

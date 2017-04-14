@@ -1,24 +1,31 @@
 ---
 - hosts: kv:index:n1ql
+  vars:
+    data_dir: /data
+    disk: /dev/sdb1
   tasks:
   - name: umounting data parition
     mount:
-      name: /data
+      name: "{{ data_dir }}"
       state: unmounted
-      src: /dev/sdb1
+      src: "{{ disk }}"
       fstype: "{{ fstype | default('ext4') }}"
+
   - name: re-creating filesystem
     filesystem:
       fstype: "{{ fstype | default('ext4') }}"
-      dev: /dev/sdb1
+      dev: "{{ disk }}"
       force: yes
+
   - name: mounting data parition
     mount:
-      name: /data
+      name: "{{ data_dir }}"
       state: mounted
-      src: /dev/sdb1
+      src: "{{ disk }}"
       fstype: "{{ fstype | default('ext4') }}"
+
   - name: discarding unused blocks
-    shell: fstrim -v /data
-  - name: ensuring ownership of "/data" directory
-    file: path=/data  owner=couchbase group=couchbase
+    shell: fstrim -v {{ data_dir }}
+
+  - name: ensuring ownership of "{{ data_dir }}" directory
+    file: path={{ data_dir }} owner=couchbase group=couchbase

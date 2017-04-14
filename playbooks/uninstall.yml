@@ -1,5 +1,9 @@
 ---
 - hosts: kv:index:n1ql
+  vars:
+    couhcbase_home: /opt/couchbase
+    data_dir: /data
+    index_dir: /index
   tasks:
   - name: killing the processes
     shell: 'killall -I -g -q -s SIGKILL {{item}} || true'
@@ -15,20 +19,19 @@
      - indexer
      - memcached
      - moxi
+
   - name: uninstalling the Couchbase Server package
     yum: name=couchbase-server state=absent
+
   - name: removing Couchbase Server files
-    file: path=/opt/couchbase state=absent
+    file: path={{ couhcbase_home }} state=absent
 
-- hosts: kv:index:n1ql
-  tasks:
-  - name: removing the files remaining in the "/data" directory
-    shell: rm -fr /data/*
+  - name: removing the files remaining in the "{{ data_dir }}" directory
+    shell: rm -fr {{ data_dir }}/*
 
-- hosts: kv
-  tasks:
-  - stat: path=/index
+  - stat: path={{ index_dir }}
     register: index
-  - name: removing files in remaining the "/index" directory
-    shell: rm -fr /index/*
+
+  - name: removing the files remaining in the "{{ index_dir }}" directory
+    shell: rm -fr {{ index_dir }}/*
     when: index.stat.exists

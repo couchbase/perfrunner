@@ -1,0 +1,39 @@
+[test_case]
+test = perfrunner.tests.secondary.InitialSecondaryIndexTest
+title = 1 bucket x 1B, single 2i index, Initial build only, 80%% Resident, PLASMA
+component = secondary
+sub_category = PlasmaDGM
+
+[stats]
+monitored_processes = projector
+
+[cluster]
+mem_quota = 50000
+index_mem_quota = 142613
+initial_nodes = 11
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[bucket]
+replica_number=0
+replica_index=0
+
+[bucket_extras]
+max_num_auxio = 16
+
+[load]
+items = 1000000000
+size = 17
+workers = 100
+doc_gen = sequential_plasma
+hash_keys = 1
+key_length = 16
+
+[secondary]
+indexes = myindex:city
+run_recovery_test = 1
+indexer.settings.storage_mode = plasma
+indexer.settings.max_cpu_percent = 4800

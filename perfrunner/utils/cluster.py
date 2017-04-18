@@ -47,8 +47,6 @@ def main():
     cm.set_services()
     cm.rename()
     cm.set_mem_quota()
-    cm.set_index_mem_quota()
-    cm.set_fts_index_mem_quota()
     cm.set_auth()
     cm.configure_xdcr_settings()
 

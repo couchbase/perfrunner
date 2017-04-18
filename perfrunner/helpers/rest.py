@@ -81,23 +81,21 @@ class RestHelper:
         self.post(url=api, data=data)
 
     def set_mem_quota(self, host_port, mem_quota):
-        logger.info('Configuring memory quota: {}'.format(host_port))
+        logger.info('Configuring data RAM quota: {} MB'.format(mem_quota))
 
         api = 'http://{}/pools/default'.format(host_port)
         data = {'memoryQuota': mem_quota}
         self.post(url=api, data=data)
 
     def set_index_mem_quota(self, host_port, mem_quota):
-        logger.info('Configuring indexer memory quota: {} to {} MB'
-                    .format(host_port, mem_quota))
+        logger.info('Configuring index RAM quota: {} MB'.format(mem_quota))
 
         api = 'http://{}/pools/default'.format(host_port)
         data = {'indexMemoryQuota': mem_quota}
         self.post(url=api, data=data)
 
     def set_fts_index_mem_quota(self, host_port, mem_quota):
-        logger.info('Configuring FTS indexer memory quota: {} to {} MB'.
-                    format(host_port, mem_quota))
+        logger.info('Configuring FTS RAM quota: {} MB'.format(mem_quota))
 
         api = 'http://{}/pools/default'.format(host_port)
         data = {'ftsMemoryQuota': mem_quota}

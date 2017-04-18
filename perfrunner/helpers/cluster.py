@@ -29,7 +29,7 @@ class ClusterManager:
         self.initial_nodes = test_config.cluster.initial_nodes
         self.mem_quota = test_config.cluster.mem_quota
         self.index_mem_quota = test_config.cluster.index_mem_quota
-        self.fts_index_mem_quota = test_config.cluster.fts_index_mem_quota
+        self.fts_mem_quota = test_config.cluster.fts_index_mem_quota
         self.group_number = test_config.cluster.group_number or 1
         self.roles = cluster_spec.roles
 
@@ -52,19 +52,11 @@ class ClusterManager:
             self.rest.set_auth(server)
 
     def set_mem_quota(self):
-        for server in self.servers():
-            self.rest.set_mem_quota(server, self.mem_quota)
-
-    def set_index_mem_quota(self):
-        for server in self.servers():
-            self.rest.set_index_mem_quota(server, self.index_mem_quota)
-
-    def set_fts_index_mem_quota(self):
-        if not self.is_compatible(min_release='4.5.0'):
-            return
-
-        for server in self.servers():
-            self.rest.set_fts_index_mem_quota(server, self.fts_index_mem_quota)
+        for master in self.cluster_spec.yield_masters():
+            self.rest.set_mem_quota(master, self.mem_quota)
+            self.rest.set_index_mem_quota(master, self.index_mem_quota)
+            if self.is_compatible(min_release='4.5.0'):
+                self.rest.set_fts_index_mem_quota(master, self.fts_mem_quota)
 
     def set_query_settings(self):
         settings = self.test_config.n1ql_settings.settings

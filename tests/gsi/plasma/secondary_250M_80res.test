@@ -9,7 +9,7 @@ monitored_processes = projector
 
 [cluster]
 mem_quota = 14437
-index_mem_quota = 87796
+index_mem_quota = 56819
 initial_nodes = 11
 num_buckets = 1
 
@@ -35,6 +35,7 @@ key_length = 16
 [secondary]
 indexes = myindex:city
 run_recovery_test = 1
+restrict_kernel_memory = 76024M
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
 

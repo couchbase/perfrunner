@@ -35,5 +35,6 @@ key_length = 16
 [secondary]
 indexes = myindex:city
 run_recovery_test = 1
+restrict_kernel_memory = 116417M
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800

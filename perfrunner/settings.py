@@ -588,22 +588,16 @@ class GSISettings:
         self.settings = {}
         for option in options:
             if option.startswith('indexer') or \
-               option.startswith('projector') or \
-               option.startswith('queryport.client.settings'):
-
+                    option.startswith('projector') or \
+                    option.startswith('queryport.client.settings'):
                 value = options.get(option)
                 try:
                     if '.' in value:
                         self.settings[option] = float(value)
                     else:
                         self.settings[option] = int(value)
-                    continue
-                except Exception as e:
-                    logger.error('Failed to parse GSI option {}. {}'
-                                 .format(option, e))
-                    pass
-
-                self.settings[option] = value
+                except ValueError:
+                    self.settings[option] = value
 
         if self.settings:
             if self.settings['indexer.settings.storage_mode'] == 'forestdb' or \

@@ -178,3 +178,13 @@ class N1QLMixedThroughputTest(N1QLThroughputTest):
             query_node = servers[0].split(':')[0]
             for index in self.test_config.n1ql_settings.indexes:
                 self.create_index(query_node, bucket, index)
+
+
+class N1QLDGMThroughputTest(N1QLThroughputTest):
+
+    COLLECTORS = {
+        'n1ql_latency': True,
+        'n1ql_stats': True,
+        'secondary_stats': True,
+        'secondary_storage_stats': True,
+    }

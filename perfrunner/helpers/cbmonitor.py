@@ -31,7 +31,7 @@ from cbagent.collectors import (
     SecondaryStorageStats,
     SecondaryStorageStatsMM,
     SpringLatency,
-    SpringSubdocLatency,
+    SubdocLatency,
     TypePerf,
     XdcrLag,
     XdcrStats,
@@ -255,7 +255,7 @@ class CbAgent:
             prefix = test.target_iterator.prefix or \
                 target_hash(settings.master_node.split(':')[0])
 
-            collector = SpringSubdocLatency(settings, test.workload, prefix)
+            collector = SubdocLatency(settings, test.workload, prefix)
             self.collectors.append(collector)
 
     def add_xdcr_lag(self, test):

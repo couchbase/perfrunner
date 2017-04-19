@@ -60,11 +60,7 @@ class SpringLatency(Latency):
                               bucket=bucket, collector=self.COLLECTOR)
 
 
-class SpringSubdocLatency(SpringLatency):
-
-    COLLECTOR = "spring_subdoc_latency"
-
-    METRICS = "latency_set", "latency_get"
+class SubdocLatency(SpringLatency):
 
     def __init__(self, settings, workload, prefix=None):
         super().__init__(settings, workload, prefix)

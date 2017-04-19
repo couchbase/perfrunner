@@ -363,11 +363,6 @@ class PhaseSettings:
     SIZE_VARIATION_MIN = 1
     SIZE_VARIATION_MAX = 1024
 
-    SUBDOC_WORKERS = 0
-    SUBDOC_FIELD = ''
-    SUBDOC_COUNTER_FIELDS = []
-    SUBDOC_DELETE_FIELDS = []
-
     def __init__(self, options: dict):
         # Common settings
         self.time = int(options.get('time', self.TIME))
@@ -459,10 +454,7 @@ class PhaseSettings:
         self.workload_path = options.get('workload_path')
 
         # Subdoc
-        self.subdoc_workers = int(options.get('subdoc_workers',
-                                              self.SUBDOC_WORKERS))
-        self.subdoc_field = options.get('subdoc_field',
-                                        self.SUBDOC_FIELD)
+        self.subdoc_field = options.get('subdoc_field')
 
     def __str__(self) -> str:
         return str(self.__dict__)

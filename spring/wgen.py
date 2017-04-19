@@ -459,21 +459,17 @@ class SeqUpdatesWorker(Worker):
 class WorkerFactory:
 
     def __new__(cls, workload_settings):
-        if getattr(workload_settings, 'async', False):
+        if getattr(workload_settings, 'async'):
             worker = AsyncKVWorker
-        elif getattr(workload_settings, 'seq_updates', False):
+        elif getattr(workload_settings, 'seq_updates'):
             worker = SeqUpdatesWorker
-        elif getattr(workload_settings, 'seq_reads', False):
+        elif getattr(workload_settings, 'seq_reads'):
             worker = SeqReadsWorker
+        elif getattr(workload_settings, 'subdoc_field'):
+            worker = SubDocWorker
         else:
             worker = KVWorker
         return worker, workload_settings.workers
-
-
-class SubDocWorkerFactory:
-
-    def __new__(cls, workload_settings):
-        return SubDocWorker, workload_settings.subdoc_workers
 
 
 class ViewWorkerFactory:
@@ -816,8 +812,6 @@ class WorkloadGen:
         self.start_workers(WorkerFactory,
                            'kv', curr_items, deleted_items,
                            current_hot_load_start, timer_elapse)
-        self.start_workers(SubDocWorkerFactory,
-                           'subdoc', curr_items, deleted_items)
         self.start_workers(ViewWorkerFactory,
                            'view', curr_items, deleted_items)
         self.start_workers(N1QLWorkerFactory,

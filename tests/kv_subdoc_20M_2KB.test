@@ -1,9 +1,8 @@
 [test_case]
 test = perfrunner.tests.kv.SubDocTest
-title = Subdoc query latency (qps), 1 bucket x 20M x 2KB
+title = subdoc latency (qps), 1 bucket x 20M x 2KB
 component = kv
 category = subdoc
-
 
 [cluster]
 mem_quota = 40960
@@ -25,7 +24,6 @@ updates = 50
 deletes = 0
 throughput = 10000
 items = 20000000
-workers = 0
-subdoc_workers = 24
+workers = 24
 subdoc_field = city
 time = 3600

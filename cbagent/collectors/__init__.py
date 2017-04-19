@@ -30,7 +30,7 @@ from cbagent.collectors.secondary_storage_stats_mm import SecondaryStorageStatsM
 from cbagent.collectors.spring_latency import (
     DurabilityLatency,
     SpringLatency,
-    SpringSubdocLatency,
+    SubdocLatency,
 )
 from cbagent.collectors.typeperf import TypePerf
 from cbagent.collectors.xdcr_lag import XdcrLag

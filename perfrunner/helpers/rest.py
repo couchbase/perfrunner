@@ -585,11 +585,16 @@ class RestHelper:
                       roles: tuple):
         logger.info('Adding an RBAC user: {}, roles: {}'.format(bucket_name,
                                                                 roles))
-
-        api = 'http://{}/settings/rbac/users/builtin/{}'.format(host_port,
-                                                                bucket_name)
+        domains = ("local",
+                   "buildin")
         data = {
             'password': password,
             'roles': ','.join(roles),
         }
-        self.put(url=api, data=data)
+
+        for domain in domains:
+            apiurl = 'http://{}/settings/rbac/users/{}/{}'.format(host_port, domain, bucket_name)
+            r = requests.put(url=apiurl, data=data, auth=self.auth)
+            if r.status_code == 200:
+                return
+        logger.interrupt("All available rbac user apis failed")

@@ -1,10 +1,11 @@
 import glob
+from collections import namedtuple
 from unittest import TestCase
 
 from perfrunner.helpers.misc import server_group
 from perfrunner.settings import ClusterSpec, TestConfig
 from perfrunner.workloads.tcmalloc import KeyValueIterator, LargeIterator
-from spring.docgen import Document
+from spring.docgen import Document, SequentialKey, UnorderedKey
 from spring.wgen import Worker
 
 
@@ -78,8 +79,35 @@ class WorkloadTest(TestCase):
         self.assertAlmostEqual(size, LargeIterator.FIELD_SIZE, delta=16)
 
 
+SpringSettings = namedtuple('SprintSettings', ('items', 'workers'))
+
+
 class SpringTest(TestCase):
 
     def test_spring_imports(self):
         self.assertEqual(Document.SIZE_VARIATION, 0.25)
         self.assertEqual(Worker.BATCH_SIZE, 100)
+
+    def test_seq_key_generator(self):
+        settings = SpringSettings(items=10 ** 5, workers=25)
+
+        keys = []
+        for worker in range(settings.workers):
+            generator = SequentialKey(worker, settings, prefix='test')
+            keys += [key for key in generator]
+
+        expected_keys = ['test-%012d' % i for i in range(1, settings.items + 1)]
+
+        self.assertEqual(sorted(keys), expected_keys)
+
+    def test_unordered_key_generator(self):
+        settings = SpringSettings(items=10 ** 5, workers=25)
+
+        keys = []
+        for worker in range(settings.workers):
+            generator = UnorderedKey(worker, settings, prefix='test')
+            keys += [key for key in generator]
+
+        expected_keys = ['test-%012d' % i for i in range(1, settings.items + 1)]
+
+        self.assertEqual(sorted(keys), expected_keys)

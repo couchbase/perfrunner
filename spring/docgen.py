@@ -238,6 +238,32 @@ class SequentialHotKey(Generator):
             yield key
 
 
+class UnorderedKey(Generator):
+
+    """
+    UnorderedKey improves SequentialKey by randomizing the order of insertions.
+
+    The key space is still the same.
+    """
+
+    PRIME = 971
+
+    def __init__(self, sid, ws, prefix):
+        self.sid = sid
+        self.ws = ws
+        self.prefix = prefix
+
+    def __iter__(self):
+        keys_per_workers = self.ws.items // self.ws.workers
+
+        key_id = 0
+        for _ in range(keys_per_workers):
+            key_id = (key_id + self.PRIME) % keys_per_workers
+            key = '%012d' % (key_id + 1 + self.sid * keys_per_workers)
+            key = self.add_prefix(key)
+            yield key
+
+
 class KeyForCASUpdate(Generator):
 
     def __init__(self, total_workers: int, prefix: str):

@@ -5,13 +5,7 @@ from logger import logger
 
 from cbagent.collectors import Latency, ObserveIndexLatency
 from spring.cbgen import CBGen, SubDocGen
-from spring.docgen import (
-    Document,
-    ExistingKey,
-    KeyForRemoval,
-    NestedDocument,
-    NewKey,
-)
+from spring.docgen import Document, NestedDocument, UniformKey, WorkingSetKey
 
 uhex = lambda: uuid4().hex
 
@@ -33,11 +27,12 @@ class SpringLatency(Latency):
                            username=bucket, password=settings.bucket_password)
             self.clients.append((bucket, client))
 
-        self.existing_keys = ExistingKey(workload.working_set,
-                                         workload.working_set_access,
-                                         prefix=prefix)
-        self.new_keys = NewKey(prefix=prefix, expiration=workload.expiration)
-        self.keys_for_removal = KeyForRemoval(prefix=prefix)
+        if workload.working_set < 100:
+            self.existing_keys = WorkingSetKey(workload.working_set,
+                                               workload.working_set_access,
+                                               prefix=prefix)
+        else:
+            self.existing_keys = UniformKey(prefix=prefix)
 
         if not hasattr(workload, 'doc_gen') or workload.doc_gen == 'basic':
             self.new_docs = Document(workload.size)
@@ -54,8 +49,6 @@ class SpringLatency(Latency):
             client.create(key, doc)
         elif metric == "latency_get":
             client.read(key)
-        elif metric == "latency_cas":
-            client.cas(key, doc)
         return 1000 * (time() - t0)  # Latency in ms
 
     def sample(self):
@@ -87,12 +80,13 @@ class SpringSubdocLatency(SpringLatency):
 
     def measure(self, client, metric, bucket):
         key = self.existing_keys.next(curr_items=self.items, curr_deletes=0)
+        doc = self.new_docs.next(key)
 
         t0 = time()
         if metric == "latency_set":
-            client.update(key, self.ws.subdoc_fields, self.ws.size)
+            client.update(key, self.ws.subdoc_field, doc)
         elif metric == "latency_get":
-            client.read(key, self.ws.subdoc_fields)
+            client.read(key, self.ws.subdoc_field)
         return 1000 * (time() - t0)  # Latency in ms
 
 

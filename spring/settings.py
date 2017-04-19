@@ -10,7 +10,6 @@ class WorkloadSettings:
         self.reads = options.reads
         self.updates = options.updates
         self.deletes = options.deletes
-        self.cases = 0  # Stub for library compatibility
 
         self.ops = options.ops
         self.throughput = options.throughput

@@ -18,23 +18,7 @@ from spring.dictionary import (
 ASCII_A_OFFSET = 97
 
 
-class HashKeys:
-
-    def __init__(self, workload_settings):
-        self.ws = workload_settings
-
-    def hash_it(self, key: str) -> str:
-        if self.ws.hash_keys:
-            key = key.encode('utf-8')
-            if self.ws.key_length:
-                num_slices = int(math.ceil(self.ws.key_length / 32))
-                doc_key = num_slices * md5(key).hexdigest()
-                return doc_key[:self.ws.key_length]
-            return md5(key).hexdigest()
-        return key
-
-
-class Iterator:
+class Generator:
 
     def __init__(self):
         self.prefix = None
@@ -48,7 +32,100 @@ class Iterator:
         return key
 
 
-class ExistingKey(Iterator):
+class NewOrderedKey(Generator):
+
+    """
+    NewOrderedKey generates ordered keys with an optional common prefix. These
+    keys are usually used for inserting new documents into the database.
+
+    Example:
+
+        "38d7cd-000072438963"
+
+    The suffix is a 12 characters long string consisting of digits from 0 to 9.
+
+    This key pattern is rather uncommon in real-world scenarios.
+    """
+
+    def __init__(self, prefix: str, expiration: int):
+        self.prefix = prefix
+        self.expiration = expiration
+        self.ttls = cycle(range(150, 450, 30))
+
+    def next(self, curr_items) -> Tuple[str, int]:
+        key = '%012d' % curr_items
+        key = self.add_prefix(key)
+        ttl = None
+        if self.expiration and random.randint(1, 100) <= self.expiration:
+            ttl = next(self.ttls)
+        return key, ttl
+
+
+class KeyForRemoval(Generator):
+
+    """
+    KeyForRemoval picks a still existing key at the beginning of the key space.
+    """
+
+    def __init__(self, prefix: str):
+        self.prefix = prefix
+
+    def next(self, curr_deletes: int) -> str:
+        key = '%012d' % curr_deletes
+        return self.add_prefix(key)
+
+
+class UniformKey(Generator):
+
+    """
+    UniformKey randomly samples an existing key from the entire key space using
+    discrete uniform distribution.
+
+        |<-------------------- key space -------------------->|
+
+        |xxxxxxxxx|...........................................|
+
+                  ^                                           ^
+                  |                                           |
+
+              curr_deletes                                curr_items
+
+    This generator should not be used when the key access pattern is important.
+    """
+
+    def __init__(self, prefix: str):
+        self.prefix = prefix
+
+    def next(self, curr_items: int, curr_deletes: int, *args) -> str:
+        key = np.random.random_integers(low=1 + curr_deletes, high=curr_items)
+        key = '%012d' % key
+        return self.add_prefix(key)
+
+
+class WorkingSetKey(Generator):
+
+    """
+    WorkingSetKey extends UniformKey and samples keys from the working set.
+    Working set is a subset of the entire key space.
+
+    There are two options that characterize the working set:
+    * working_set - a percentage (from 0 to 100) of the entire key space that
+    should be considered as the working set.
+    * working_set_access - a percentage (from 0 to 100) that defines the
+    probability at which the keys from the working set are being used. This
+    parameter implements deterministic cache miss ratio.
+
+        |<--------------------------- key space ------------------------->|
+
+                |<----------- cold items ---------->|<---- hot items ---->|
+
+        |xxxxxxx|.........................................................|
+
+                ^                                                         ^
+                |                                                         |
+
+            curr_deletes                                              curr_items
+    """
 
     def __init__(self, working_set: int, working_set_access: int, prefix: str):
         self.working_set = working_set
@@ -60,34 +137,34 @@ class ExistingKey(Iterator):
         num_hot_items = int(num_existing_items * self.working_set / 100)
         num_cold_items = num_existing_items - num_hot_items
 
-        left_limit = 1 + curr_deletes
-        if self.working_set_access == 100 or \
-                random.randint(0, 100) <= self.working_set_access:
-            left_limit += num_cold_items
-            right_limit = curr_items
-        else:
-            right_limit = left_limit + num_cold_items
-        key = np.random.random_integers(left_limit, right_limit)
+        left_boundary = 1 + curr_deletes
+        if random.randint(0, 100) <= self.working_set_access:  # cache hit
+            left_boundary += num_cold_items
+            right_boundary = curr_items
+        else:  # cache miss
+            right_boundary = left_boundary + num_cold_items
+
+        key = np.random.random_integers(low=left_boundary, high=right_boundary)
         key = '%012d' % key
         return self.add_prefix(key)
 
 
-class ExistingMovingHotWorkloadKey(ExistingKey):
+class MovingWorkingSetKey(Generator):
 
     def __init__(self, working_set: int, working_set_access: int, prefix: str,
                  working_set_move_time: int):
-        super().__init__(working_set, working_set_access, prefix)
+        self.working_set = working_set
+        self.working_set_access = working_set_access
+        self.prefix = prefix
         self.working_set_move_time = working_set_move_time
 
-    def next(self, curr_items: int, curr_deletes: int, *args) -> str:
-        current_hot_load_start = args[0]
-        timer_elapse = args[1]
-
+    def next(self, curr_items: int, curr_deletes: int,
+             current_hot_load_start: int, timer_elapse: int) -> str:
         num_existing_items = curr_items - curr_deletes
         num_hot_items = int(num_existing_items * self.working_set / 100)
         num_cold_items = num_existing_items - num_hot_items
 
-        left_limit = 1 + curr_deletes
+        left_boundary = 1 + curr_deletes
 
         if timer_elapse.value:
             timer_elapse.value = 0
@@ -99,20 +176,50 @@ class ExistingMovingHotWorkloadKey(ExistingKey):
 
         if self.working_set_access == 100 or \
                 random.randint(0, 100) <= self.working_set_access:
-            left_limit += current_hot_load_start.value
-            right_limit = left_limit + num_hot_items
-            key = np.random.random_integers(left_limit, right_limit)
+            left_boundary += current_hot_load_start.value
+            right_boundary = left_boundary + num_hot_items
+            key = np.random.random_integers(left_boundary, right_boundary)
         else:
             cold_key_offset = np.random.random_integers(0, num_cold_items)
-            if cold_key_offset > left_limit + current_hot_load_start.value:
-                key = left_limit + cold_key_offset + num_hot_items
+            if cold_key_offset > left_boundary + current_hot_load_start.value:
+                key = left_boundary + cold_key_offset + num_hot_items
             else:
-                key = left_limit + cold_key_offset
+                key = left_boundary + cold_key_offset
         key = '%012d' % key
         return self.add_prefix(key)
 
 
-class SequentialHotKey(Iterator):
+class SequentialKey(Generator):
+
+    """
+    SequentialKey equally divides the key space between the workers and
+    sequentially iterates over a given part of the key space (based on the
+    sequential worker identifier).
+
+    This generator is used for loading data.
+    """
+
+    def __init__(self, sid: int, ws, prefix: str):
+        self.sid = sid
+        self.ws = ws
+        self.prefix = prefix
+
+    def __iter__(self):
+        for seq_id in range(1 + self.sid, 1 + self.ws.items, self.ws.workers):
+            key = '%012d' % seq_id
+            key = self.add_prefix(key)
+            yield key
+
+
+class SequentialHotKey(Generator):
+
+    """
+    SequentialHotKey equally divides the working set between the workers and
+    sequentially iterates over a given part of the working set (based on the
+    sequential worker identifier).
+
+    This generator is used for warming up the working set.
+    """
 
     def __init__(self, sid: int, ws, prefix: str):
         self.sid = sid
@@ -131,61 +238,25 @@ class SequentialHotKey(Iterator):
             yield key
 
 
-class NewKey(Iterator):
+class KeyForCASUpdate(Generator):
 
-    def __init__(self, prefix: str, expiration: int):
-        self.prefix = prefix
-        self.expiration = expiration
-        self.ttls = cycle(range(150, 450, 30))
-
-    def next(self, curr_items) -> Tuple[str, int]:
-        key = '%012d' % curr_items
-        key = self.add_prefix(key)
-        ttl = None
-        if self.expiration and random.randint(1, 100) <= self.expiration:
-            ttl = next(self.ttls)
-        return key, ttl
-
-
-class KeyForRemoval(Iterator):
-
-    def __init__(self, prefix: str):
-        self.prefix = prefix
-
-    def next(self, curr_deletes: int) -> str:
-        key = '%012d' % curr_deletes
-        return self.add_prefix(key)
-
-
-class KeyForCASUpdate(Iterator):
-
-    def __init__(self, total_workers: int, working_set: int, working_set_access: int,
-                 prefix: str):
+    def __init__(self, total_workers: int, prefix: str):
         self.n1ql_workers = total_workers
-        self.working_set = working_set
-        self.working_set_access = working_set_access
         self.prefix = prefix
 
     def next(self, sid: int, curr_items: int) -> str:
-        num_hot_items = int(curr_items * self.working_set / 100)
-        num_cold_items = curr_items - num_hot_items
+        per_worker_items = curr_items // self.n1ql_workers
 
-        left_limit = 1
-        if self.working_set_access == 100 or \
-                random.randint(0, 100) <= self.working_set_access:
-            left_limit += num_cold_items
-            right_limit = curr_items
-        else:
-            right_limit = left_limit + num_cold_items
-        limit_step = (right_limit - left_limit) // self.n1ql_workers
-        left_limit += limit_step * sid
-        right_limit = left_limit + limit_step - 1
-        key = np.random.random_integers(left_limit, right_limit)
+        left_boundary = 1 + sid * per_worker_items
+        right_boundary = left_boundary + per_worker_items
+
+        key = np.random.random_integers(low=left_boundary,
+                                        high=right_boundary)
         key = '%012d' % key
         return self.add_prefix(key)
 
 
-class FTSKey(Iterator):
+class FTSKey(Generator):
 
     def __init__(self, ws):
         self.mutate_items = 0
@@ -196,7 +267,23 @@ class FTSKey(Iterator):
         return hex(random.randint(0, self.mutate_items))[2:]
 
 
-class Document(Iterator):
+class HashKeys:
+
+    def __init__(self, workload_settings):
+        self.ws = workload_settings
+
+    def hash_it(self, key: str) -> str:
+        if self.ws.hash_keys:
+            key = key.encode('utf-8')
+            if self.ws.key_length:
+                num_slices = int(math.ceil(self.ws.key_length / 32))
+                doc_key = num_slices * md5(key).hexdigest()
+                return doc_key[:self.ws.key_length]
+            return md5(key).hexdigest()
+        return key
+
+
+class Document(Generator):
 
     SIZE_VARIATION = 0.25  # 25%
 
@@ -219,7 +306,7 @@ class Document(Iterator):
         return '%s %s' % (alphabet[:6], alphabet[6:12])  # % is faster than format()
 
     @staticmethod
-    def _build_email(alphabet: str, *args) -> str:
+    def _build_email(alphabet: str) -> str:
         return '%s@%s.com' % (alphabet[12:18], alphabet[18:24])
 
     @staticmethod

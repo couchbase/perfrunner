@@ -19,8 +19,6 @@ from spring.cbgen import CBAsyncGen, CBGen, ElasticGen, FtsGen, SubDocGen
 from spring.docgen import (
     ArrayIndexingDocument,
     Document,
-    ExistingKey,
-    ExistingMovingHotWorkloadKey,
     ExtReverseLookupDocument,
     FTSKey,
     GSIMultiIndexDocument,
@@ -33,16 +31,20 @@ from spring.docgen import (
     KeyForRemoval,
     LargeDocument,
     LargeItemPlasmaDocument,
+    MovingWorkingSetKey,
     NestedDocument,
-    NewKey,
+    NewOrderedKey,
     ProfileDocument,
     RefDocument,
     ReverseLookupDocument,
     ReverseRangeLookupDocument,
     SequentialHotKey,
+    SequentialKey,
     SequentialPlasmaDocument,
     SmallPlasmaDocument,
+    UniformKey,
     VaryingItemSizePlasmaDocument,
+    WorkingSetKey,
 )
 from spring.querygen import N1QLQueryGen, ViewQueryGen, ViewQueryGenByType
 from spring.reservoir import Reservoir
@@ -85,17 +87,25 @@ class Worker:
         self.init_db()
 
     def init_keys(self):
-        self.existing_keys = ExistingKey(self.ws.working_set,
-                                         self.ws.working_set_access,
-                                         self.ts.prefix)
+        self.new_keys = NewOrderedKey(prefix=self.ts.prefix,
+                                      expiration=self.ws.expiration)
+
         if self.ws.working_set_move_time:
-            self.existing_keys = ExistingMovingHotWorkloadKey(self.ws.working_set,
-                                                              self.ws.working_set_access,
-                                                              self.ts.prefix,
-                                                              self.ws.working_set_move_time)
-        self.new_keys = NewKey(self.ts.prefix, self.ws.expiration)
+            self.existing_keys = MovingWorkingSetKey(self.ws.working_set,
+                                                     self.ws.working_set_access,
+                                                     self.ts.prefix,
+                                                     self.ws.working_set_move_time)
+        elif self.ws.working_set < 100:
+            self.existing_keys = WorkingSetKey(self.ws.working_set,
+                                               self.ws.working_set_access,
+                                               self.ts.prefix)
+        else:
+            self.existing_keys = UniformKey(self.ts.prefix)
+
         self.keys_for_removal = KeyForRemoval(self.ts.prefix)
+
         self.fts_keys = FTSKey(self.ws)
+
         self.hash_keys = HashKeys(self.ws)
 
     def init_docs(self):
@@ -186,15 +196,14 @@ class KVWorker(Worker):
 
     NAME = 'kv-worker'
 
-    def gen_cmd_sequence(self, cb=None, cases="cas"):
+    def gen_cmd_sequence(self, cb=None, extras=None):
         ops = \
             ['c'] * self.ws.creates + \
             ['r'] * self.ws.reads + \
             ['u'] * self.ws.updates + \
             ['d'] * self.ws.deletes + \
             ['fus'] * self.ws.fts_updates_swap + \
-            ['fur'] * self.ws.fts_updates_reverse + \
-            [cases] * self.ws.cases
+            ['fur'] * self.ws.fts_updates_reverse
         random.shuffle(ops)
 
         curr_items_tmp = curr_items_spot = self.curr_items.value
@@ -227,21 +236,21 @@ class KVWorker(Worker):
             elif op == 'r':
                 key = self.existing_keys.next(curr_items_spot, deleted_spot)
                 key = self.hash_keys.hash_it(key)
-                if cases == 'counter':
-                    cmds.append((cb.read, (key, self.ws.subdoc_fields)))
+
+                if extras == 'subdoc':
+                    cmds.append((cb.read, (key, self.ws.subdoc_field)))
                 else:
                     cmds.append((cb.read, (key, )))
             elif op == 'u':
-                if cases == 'counter':
-                    key = self.existing_keys.next(curr_items_spot, deleted_spot)
-                    key = self.hash_keys.hash_it(key)
-                    cmds.append((cb.update, (key, self.ws.subdoc_fields, self.ws.size)))
+                key = self.existing_keys.next(curr_items_spot, deleted_spot,
+                                              self.current_hot_load_start,
+                                              self.timer_elapse)
+                key = self.hash_keys.hash_it(key)
+                doc = self.docs.next(key)
+
+                if extras == 'subdoc':
+                    cmds.append((cb.update, (key, self.ws.subdoc_field, doc)))
                 else:
-                    key = self.existing_keys.next(curr_items_spot, deleted_spot,
-                                                  self.current_hot_load_start,
-                                                  self.timer_elapse)
-                    doc = self.docs.next(key)
-                    key = self.hash_keys.hash_it(key)
                     cmds.append((cb.update, (key, doc)))
             elif op == 'd':
                 deleted_items_tmp += 1
@@ -334,7 +343,7 @@ class SubDocWorker(KVWorker):
         self.cb = SubDocGen(**params)
 
     def gen_cmd_sequence(self, cb=None, *args):
-        return super().gen_cmd_sequence(cb, cases='counter')
+        return super().gen_cmd_sequence(cb, extras='subdoc')
 
 
 class AsyncKVWorker(KVWorker):
@@ -430,7 +439,7 @@ class AsyncKVWorker(KVWorker):
 
 class SeqReadsWorker(Worker):
 
-    def run(self, sid, *args, **kwargs):
+    def run(self, sid, *args):
         set_cpu_afinity(sid)
 
         for key in SequentialHotKey(sid, self.ws, self.ts.prefix):
@@ -440,8 +449,8 @@ class SeqReadsWorker(Worker):
 
 class SeqUpdatesWorker(Worker):
 
-    def run(self, sid, *args, **kwargs):
-        for key in SequentialHotKey(sid, self.ws, self.ts.prefix):
+    def run(self, sid, *args):
+        for key in SequentialKey(sid, self.ws, self.ts.prefix):
             doc = self.docs.next(key)
             key = self.hash_keys.hash_it(key)
             self.cb.update(key, doc)
@@ -554,14 +563,13 @@ class N1QLWorker(Worker):
         self.init_creds()
 
     def init_keys(self):
-        self.existing_keys = ExistingKey(self.ws.working_set,
-                                         self.ws.working_set_access,
-                                         prefix='n1ql')
-        self.new_keys = NewKey(prefix='n1ql', expiration=self.ws.expiration)
-        self.keys_for_casupdate = KeyForCASUpdate(self.total_workers,
-                                                  self.ws.working_set,
-                                                  self.ws.working_set_access,
-                                                  prefix='n1ql')
+        self.new_keys = NewOrderedKey(prefix='n1ql',
+                                      expiration=self.ws.expiration)
+
+        self.existing_keys = UniformKey(prefix='n1ql')
+
+        self.keys_for_cas_update = KeyForCASUpdate(self.total_workers,
+                                                   prefix='n1ql')
 
     def init_docs(self):
         if self.ws.doc_gen == 'reverse_lookup':
@@ -627,12 +635,11 @@ class N1QLWorker(Worker):
 
     def update(self):
         with self.lock:
-            self.cas_updated_items.value += self.ws.n1ql_batch_size
-            curr_items_tmp = self.curr_items.value - self.ws.n1ql_batch_size
+            curr_items_tmp = self.curr_items.value
 
         for _ in range(self.ws.n1ql_batch_size):
-            key = self.keys_for_casupdate.next(self.sid,
-                                               curr_items=curr_items_tmp)
+            key = self.keys_for_cas_update.next(sid=self.sid,
+                                                curr_items=curr_items_tmp)
             doc = self.docs.next(key)
             query = self.new_queries.next(key, doc)
 
@@ -641,12 +648,11 @@ class N1QLWorker(Worker):
 
     def range_update(self):
         with self.lock:
-            self.cas_updated_items.value += self.ws.n1ql_batch_size
-            curr_items_tmp = self.curr_items.value - self.ws.n1ql_batch_size
+            curr_items_tmp = self.curr_items.valueize
 
         for _ in range(self.ws.n1ql_batch_size):
-            key = self.keys_for_casupdate.next(self.sid,
-                                               curr_items=curr_items_tmp)
+            key = self.keys_for_cas_update.next(sid=self.sid,
+                                                curr_items=curr_items_tmp)
             doc = self.docs.next(key)
             query = self.new_queries.next(key, doc)
 
@@ -664,8 +670,7 @@ class N1QLWorker(Worker):
         elif self.ws.n1ql_op == 'rangeupdate':
             self.range_update()
 
-    def run(self, sid, lock, curr_ops, curr_items, deleted_items,
-            cas_updated_items):
+    def run(self, sid, lock, curr_ops, curr_items, *args):
         if self.throughput < float('inf'):
             self.target_time = self.ws.n1ql_batch_size * self.total_workers / \
                 float(self.throughput)
@@ -674,7 +679,6 @@ class N1QLWorker(Worker):
         self.lock = lock
         self.sid = sid
         self.curr_items = curr_items
-        self.cas_updated_items = cas_updated_items
 
         try:
             logger.info('Started: {}-{}'.format(self.NAME, self.sid))
@@ -738,7 +742,7 @@ class FtsWorker(Worker):
             if self.sid == 0:
                 self.validate_response(response, args)
 
-    def run(self, sid, lock):
+    def run(self, sid, *args):
         logger.info("Started {}".format(self.NAME))
         self.sid = sid
         try:
@@ -760,9 +764,13 @@ class WorkloadGen:
         self.shutdown_event = timer and Event() or None
         self.worker_processes = defaultdict(list)
 
-    def start_workers(self, worker_factory, name, curr_items=None,
-                      deleted_items=None, cas_updated_items=None,
-                      current_hot_load_start=None, timer_elapse=None):
+    def start_workers(self,
+                      worker_factory,
+                      name,
+                      curr_items=None,
+                      deleted_items=None,
+                      current_hot_load_start=None,
+                      timer_elapse=None):
         curr_ops = Value('L', 0)
         lock = Lock()
         worker_type, total_workers = worker_factory(self.ws)
@@ -775,14 +783,8 @@ class WorkloadGen:
                 self.ws.query_gen = FtsGen(master_host, self.ws.fts_config, auth)
 
         for sid in range(total_workers):
-            if curr_items is None and deleted_items is None:
-                args = (sid, lock)
-            elif cas_updated_items is not None:
-                args = (sid, lock, curr_ops, curr_items, deleted_items,
-                        cas_updated_items)
-            else:
-                args = (sid, lock, curr_ops, curr_items, deleted_items,
-                        current_hot_load_start, timer_elapse)
+            args = (sid, lock, curr_ops, curr_items, deleted_items,
+                    current_hot_load_start, timer_elapse)
 
             worker = worker_type(self.ws, self.ts, self.shutdown_event)
 
@@ -803,7 +805,6 @@ class WorkloadGen:
     def run(self):
         curr_items = Value('L', self.ws.items)
         deleted_items = Value('L', 0)
-        cas_updated_items = Value('L', 0)
         current_hot_load_start = Value('L', 0)
         timer_elapse = Value('I', 0)
 
@@ -813,13 +814,14 @@ class WorkloadGen:
         logger.info('Starting all workers')
 
         self.start_workers(WorkerFactory,
-                           'kv', curr_items, deleted_items, None, current_hot_load_start, timer_elapse)
+                           'kv', curr_items, deleted_items,
+                           current_hot_load_start, timer_elapse)
         self.start_workers(SubDocWorkerFactory,
                            'subdoc', curr_items, deleted_items)
         self.start_workers(ViewWorkerFactory,
                            'view', curr_items, deleted_items)
         self.start_workers(N1QLWorkerFactory,
-                           'n1ql', curr_items, deleted_items, cas_updated_items)
+                           'n1ql', curr_items, deleted_items)
         self.start_workers(FtsWorkerFactory, 'fts')
 
         sync = SyncHotWorkload(current_hot_load_start, timer_elapse)

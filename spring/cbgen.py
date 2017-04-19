@@ -22,8 +22,6 @@ from decorator import decorator
 from logger import logger
 from txcouchbase.connection import Connection as TxConnection
 
-from spring.docgen import Document
-
 experimental.enable()
 
 logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -151,16 +149,13 @@ class CBGen(CBAsyncGen):
 
 class SubDocGen(CBGen):
 
-    def read(self, key, subdoc_fields):
-        for field in subdoc_fields.split(','):
-            self.client.lookup_in(key, subdocument.get(field))
+    def read(self, key: str, field: str):
+        self.client.lookup_in(key, subdocument.get(path=field))
 
-    def update(self, key, subdoc_fields, size):
-        newdoc = Document(size)
-        alphabet = newdoc._build_alphabet(key)
-        for field in subdoc_fields.split(','):
-            new_field_value = getattr(newdoc, '_build_' + field)(alphabet)
-            self.client.mutate_in(key, subdocument.upsert(field, new_field_value))
+    def update(self, key: str, field: str, doc: dict):
+        new_field_value = doc[field]
+        self.client.mutate_in(key, subdocument.upsert(path=field,
+                                                      value=new_field_value))
 
 
 class FtsGen(CBGen):

@@ -315,7 +315,6 @@ class PhaseSettings:
     READS = 0
     UPDATES = 0
     DELETES = 0
-    CASES = 0
     FTS_UPDATES = 0
 
     OPS = 0
@@ -365,7 +364,7 @@ class PhaseSettings:
     SIZE_VARIATION_MAX = 1024
 
     SUBDOC_WORKERS = 0
-    SUBDOC_FIELDS = []
+    SUBDOC_FIELD = ''
     SUBDOC_COUNTER_FIELDS = []
     SUBDOC_DELETE_FIELDS = []
 
@@ -384,7 +383,6 @@ class PhaseSettings:
         self.reads = int(options.get('reads', self.READS))
         self.updates = int(options.get('updates', self.UPDATES))
         self.deletes = int(options.get('deletes', self.DELETES))
-        self.cases = int(options.get('cases', self.CASES))
         self.fts_updates_swap = int(options.get('fts_updates_swap',
                                                 self.FTS_UPDATES))
         self.fts_updates_reverse = int(options.get('fts_updates_reverse',
@@ -411,9 +409,6 @@ class PhaseSettings:
 
         self.worker_instances = int(options.get('worker_instances',
                                                 self.WORKER_INSTANCES))
-
-        # SubDoc settings
-        self.subdoc_workers = 0
 
         # Views settings
         self.ddocs = None
@@ -466,8 +461,8 @@ class PhaseSettings:
         # Subdoc
         self.subdoc_workers = int(options.get('subdoc_workers',
                                               self.SUBDOC_WORKERS))
-        self.subdoc_fields = options.get('subdoc_fields',
-                                         self.SUBDOC_FIELDS)
+        self.subdoc_field = options.get('subdoc_field',
+                                        self.SUBDOC_FIELD)
 
     def __str__(self) -> str:
         return str(self.__dict__)

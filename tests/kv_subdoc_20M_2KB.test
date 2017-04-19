@@ -27,5 +27,5 @@ throughput = 10000
 items = 20000000
 workers = 0
 subdoc_workers = 24
-subdoc_fields = city
+subdoc_field = city
 time = 3600

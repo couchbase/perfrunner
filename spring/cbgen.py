@@ -157,6 +157,16 @@ class SubDocGen(CBGen):
         self.client.mutate_in(key, subdocument.upsert(path=field,
                                                       value=new_field_value))
 
+    def read_xattr(self, key: str, field: str):
+        self.client.lookup_in(key, subdocument.get(path=field,
+                                                   xattr=True))
+
+    def update_xattr(self, key: str, field: str, doc: dict):
+        self.client.mutate_in(key, subdocument.upsert(path=field,
+                                                      value=doc,
+                                                      xattr=True,
+                                                      create_parents=True))
+
 
 class FtsGen(CBGen):
 

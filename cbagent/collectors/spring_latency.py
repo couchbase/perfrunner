@@ -86,6 +86,20 @@ class SubdocLatency(SpringLatency):
         return 1000 * (time() - t0)  # Latency in ms
 
 
+class XATTRLatency(SubdocLatency):
+
+    def measure(self, client, metric, bucket):
+        key = self.existing_keys.next(curr_items=self.items, curr_deletes=0)
+        doc = self.new_docs.next(key)
+
+        t0 = time()
+        if metric == "latency_set":
+            client.update_xattr(key, self.ws.subdoc_field, doc)
+        elif metric == "latency_get":
+            client.read_xattr(key, self.ws.subdoc_field)
+        return 1000 * (time() - t0)  # Latency in ms
+
+
 class DurabilityLatency(ObserveIndexLatency, SpringLatency):
 
     COLLECTOR = "durability"

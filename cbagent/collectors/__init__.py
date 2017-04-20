@@ -31,6 +31,7 @@ from cbagent.collectors.spring_latency import (
     DurabilityLatency,
     SpringLatency,
     SubdocLatency,
+    XATTRLatency,
 )
 from cbagent.collectors.typeperf import TypePerf
 from cbagent.collectors.xdcr_lag import XdcrLag

@@ -189,6 +189,21 @@ class MovingWorkingSetKey(Generator):
         return self.add_prefix(key)
 
 
+class ZipfKey(Generator):
+
+    ALPHA = 1.9
+
+    def __init__(self, prefix: str):
+        self.prefix = prefix
+
+    def next(self, curr_items: int, curr_deletes: int, *args) -> str:
+        key = curr_items - np.random.zipf(a=self.ALPHA)
+        if key <= curr_deletes:
+            key = curr_items
+        key = '%012d' % key
+        return self.add_prefix(key)
+
+
 class SequentialKey(Generator):
 
     """

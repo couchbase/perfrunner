@@ -5,7 +5,7 @@ from unittest import TestCase
 from perfrunner.helpers.misc import server_group
 from perfrunner.settings import ClusterSpec, TestConfig
 from perfrunner.workloads.tcmalloc import KeyValueIterator, LargeIterator
-from spring.docgen import Document, SequentialKey, UnorderedKey
+from spring.docgen import Document, SequentialKey, UnorderedKey, ZipfKey
 from spring.wgen import Worker
 
 
@@ -111,3 +111,13 @@ class SpringTest(TestCase):
         expected_keys = ['test-%012d' % i for i in range(1, settings.items + 1)]
 
         self.assertEqual(sorted(keys), expected_keys)
+
+    def test_zipf_generator(self):
+        num_items = 10 ** 4
+        generator = ZipfKey(prefix='')
+
+        for i in range(10 ** 5):
+            key = generator.next(curr_deletes=0, curr_items=num_items)
+            key = int(key)
+            self.assertLessEqual(key, num_items)
+            self.assertGreaterEqual(key, 1)

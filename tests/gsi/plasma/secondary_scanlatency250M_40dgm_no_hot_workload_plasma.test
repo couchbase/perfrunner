@@ -3,7 +3,7 @@ test = perfrunner.tests.secondary.SecondaryIndexingScanLatencyTest
 title = Secondary index scan latency(ms), 1 bucket x 250M, 100K KV ops/sec, single index, DGM, PLASMA
 component = secondary
 category = lat
-sub_category = Plasma
+sub_category = PlasmaDGM
 
 [stats]
 monitored_processes = projector

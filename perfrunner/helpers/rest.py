@@ -585,8 +585,7 @@ class RestHelper:
                       roles: tuple):
         logger.info('Adding an RBAC user: {}, roles: {}'.format(bucket_name,
                                                                 roles))
-        domains = ("local",
-                   "buildin")
+        domains = ("local", "builtin")
         data = {
             'password': password,
             'roles': ','.join(roles),

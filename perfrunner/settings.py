@@ -177,7 +177,6 @@ class ClusterSettings:
     NUM_BUCKETS = 1
     INDEX_MEM_QUOTA = 256
     FTS_INDEX_MEM_QUOTA = 512
-    AUTO_FAILOVER_TIMEOUT = 30
     THROTTLE_CPU = 0
 
     def __init__(self, options: dict):
@@ -192,9 +191,8 @@ class ClusterSettings:
         self.num_buckets = int(options.get('num_buckets',
                                            self.NUM_BUCKETS))
         self.num_vbuckets = options.get('num_vbuckets')
-        self.group_number = int(options.get('group_number', self.GROUP_NUMBER))
-        self.auto_failover_timeout = int(options.get('auto_failover_timeout',
-                                                     self.AUTO_FAILOVER_TIMEOUT))
+        self.group_number = int(options.get('group_number',
+                                            self.GROUP_NUMBER))
         self.throttle_cpu = int(options.get('throttle_cpu',
                                             self.THROTTLE_CPU))
 

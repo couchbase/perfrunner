@@ -45,13 +45,19 @@ class RestHelper:
     def get(self, **kwargs):
         return requests.get(auth=self.auth, **kwargs)
 
-    @retry
-    def post(self, **kwargs):
+    def _post(self, **kwargs):
         return requests.post(auth=self.auth, **kwargs)
 
     @retry
-    def put(self, **kwargs):
+    def post(self, **kwargs):
+        return self._post(**kwargs)
+
+    def _put(self, **kwargs):
         return requests.put(auth=self.auth, **kwargs)
+
+    @retry
+    def put(self, **kwargs):
+        return self._put(**kwargs)
 
     def set_data_path(self, host_port, data_path, index_path):
         logger.info('Configuring data paths: {}'.format(host_port))
@@ -405,12 +411,15 @@ class RestHelper:
         api = 'http://{}/diag/eval'.format(host_port)
         return self.post(url=api, data=cmd).text
 
-    def enable_auto_failover(self, host_port, timeout=30):
-        logger.info('Enabling auto-failover')
+    def enable_auto_failover(self, host_port):
+        logger.info('Enabling auto-failover with the minimum timeout')
 
         api = 'http://{}/settings/autoFailover'.format(host_port)
-        data = {'enabled': 'true', 'timeout': timeout}
-        self.post(url=api, data=data)
+        for timeout in 5, 30:
+            data = {'enabled': 'true', 'timeout': timeout}
+            r = self._post(url=api, data=data)
+            if r.status_code == 200:
+                return
 
     def create_server_group(self, host_port, name):
         logger.info('Creating server group: {}'.format(name))
@@ -592,8 +601,10 @@ class RestHelper:
         }
 
         for domain in domains:
-            apiurl = 'http://{}/settings/rbac/users/{}/{}'.format(host_port, domain, bucket_name)
-            r = requests.put(url=apiurl, data=data, auth=self.auth)
+            api = 'http://{}/settings/rbac/users/{}/{}'.format(host_port,
+                                                               domain,
+                                                               bucket_name)
+            r = self._put(url=api, data=data)
             if r.status_code == 200:
                 return
         logger.interrupt("All available rbac user apis failed")

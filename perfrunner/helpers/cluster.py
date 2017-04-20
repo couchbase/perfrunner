@@ -190,9 +190,8 @@ class ClusterManager:
         self.remote.restart()
 
     def enable_auto_failover(self):
-        timeout = self.test_config.cluster.auto_failover_timeout
         for master in self.masters():
-            self.rest.enable_auto_failover(master, timeout)
+            self.rest.enable_auto_failover(master)
 
     def wait_until_warmed_up(self):
         if self.test_config.bucket.bucket_type == 'ephemeral':

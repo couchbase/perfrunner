@@ -4,6 +4,7 @@ billiard==3.5.0.2
 celery==3.1.25
 cffi==1.7.0
 couchbase==2.2.1
+coverage==4.3.4
 cryptography==1.4
 decorator
 fabric3==1.13.1.post1

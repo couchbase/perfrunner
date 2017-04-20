@@ -22,7 +22,7 @@ pep8:
 	${ENV}/bin/isort --quiet --check-only --recursive cbagent perfdaily perfrunner scripts spring
 
 nose:
-	${ENV}/bin/nosetests -v unittests.py
+	${ENV}/bin/nosetests -v --with-coverage --cover-package=cbagent,perfrunner,spring unittests.py
 
 gofmt:
 	gofmt -e -d -s go && ! gofmt -l go | read

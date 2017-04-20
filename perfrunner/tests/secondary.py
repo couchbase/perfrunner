@@ -151,8 +151,8 @@ class SecondaryIndexTest(PerfTest):
         start = (int(old_start) * 2.5) % (self.test_config.access_settings.items - num_hot_items)
         end = start + num_hot_items
 
-        data["ScanSpecs"][0]["Low"][0] = "gsi-" + '%012d' % start
-        data["ScanSpecs"][0]["High"][0] = "gsi-" + '%012d' % end
+        data["ScanSpecs"][0]["Low"][0] = '%012d' % start
+        data["ScanSpecs"][0]["High"][0] = '%012d' % end
 
         with open(self.configfile, "w") as jsonFile:
             jsonFile.write(json.dumps(data))

@@ -33,6 +33,7 @@ class SecondaryIndexTest(PerfTest):
         self.step_num_connections = self.test_config.gsi_settings.step_num_connections
         self.max_num_connections = self.test_config.gsi_settings.max_num_connections
         self.run_recovery_test = self.test_config.gsi_settings.run_recovery_test
+        self.incremental_only = self.test_config.gsi_settings.incremental_only
         self.block_memory = self.test_config.gsi_settings.block_memory
         self.incremental_load_iterations = self.test_config.gsi_settings.incremental_load_iterations
         self.scan_time = self.test_config.gsi_settings.scan_time
@@ -198,7 +199,7 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
                 raise Exception('Indexer failed to recover...!!!')
             self.report_kpi(recovery_time, 'Recovery', "ms")
 
-    def load_and_build_initindex(self):
+    def load_and_build_initial_index(self):
         self.load()
         self.wait_for_persistence()
         self.compact_bucket()
@@ -206,11 +207,11 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
         time_elapsed = (to_ts - from_ts) / 1000.0
         time_elapsed = self.reporter.finish('Initial secondary index', time_elapsed)
         self.print_index_disk_usage()
-        return time_elapsed
+        if not self.incremental_only:
+            self.report_kpi(time_elapsed, 'Initial')
 
     def run(self):
-        time_elapsed = self.load_and_build_initindex()
-        self.report_kpi(time_elapsed, 'Initial')
+        self.load_and_build_initial_index()
 
         from_ts, to_ts = self.build_incrindex()
         time_elapsed = (to_ts - from_ts) / 1000.0
@@ -324,8 +325,7 @@ class InitialSecondaryIndexTest(InitialandIncrementalSecondaryIndexTest):
     """
 
     def run(self):
-        time_elapsed = self.load_and_build_initindex()
-        self.report_kpi(time_elapsed, 'Initial')
+        self.load_and_build_initial_index()
 
         self.run_recovery_scenario()
         self.check_memory_blocker()

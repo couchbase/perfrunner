@@ -94,9 +94,9 @@ class XATTRLatency(SubdocLatency):
 
         t0 = time()
         if metric == "latency_set":
-            client.update_xattr(key, self.ws.subdoc_field, doc)
+            client.update_xattr(key, self.ws.xattr_field, doc)
         elif metric == "latency_get":
-            client.read_xattr(key, self.ws.subdoc_field)
+            client.read_xattr(key, self.ws.xattr_field)
         return 1000 * (time() - t0)  # Latency in ms
 
 

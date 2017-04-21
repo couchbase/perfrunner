@@ -239,6 +239,8 @@ class KVWorker(Worker):
 
                 if extras == 'subdoc':
                     cmds.append((cb.read, (key, self.ws.subdoc_field)))
+                elif extras == 'xattr':
+                    cmds.append((cb.read_xattr, (key, self.ws.xattr_field)))
                 else:
                     cmds.append((cb.read, (key, )))
             elif op == 'u':
@@ -250,6 +252,8 @@ class KVWorker(Worker):
 
                 if extras == 'subdoc':
                     cmds.append((cb.update, (key, self.ws.subdoc_field, doc)))
+                elif extras == 'xattr':
+                    cmds.append((cb.update_xattr, (key, self.ws.xattr_field, doc)))
                 else:
                     cmds.append((cb.update, (key, doc)))
             elif op == 'd':
@@ -342,8 +346,16 @@ class SubDocWorker(KVWorker):
                   'username': self.ts.bucket, 'password': self.ts.password}
         self.cb = SubDocGen(**params)
 
-    def gen_cmd_sequence(self, cb=None, *args):
+    def gen_cmd_sequence(self, cb=None, *args, **kwargs):
         return super().gen_cmd_sequence(cb, extras='subdoc')
+
+
+class XATTRWorker(SubDocWorker):
+
+    NAME = 'xattr-worker'
+
+    def gen_cmd_sequence(self, cb=None, *args):
+        return super().gen_cmd_sequence(cb, extras='xattr')
 
 
 class AsyncKVWorker(KVWorker):
@@ -467,6 +479,8 @@ class WorkerFactory:
             worker = SeqReadsWorker
         elif getattr(workload_settings, 'subdoc_field'):
             worker = SubDocWorker
+        elif getattr(workload_settings, 'xattr_field'):
+            worker = XATTRWorker
         else:
             worker = KVWorker
         return worker, workload_settings.workers

@@ -40,7 +40,7 @@ cbindexperf_configfile = tests/gsi/plasma/config/config_scanlatency_plasma.json
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
 indexer.settings.gc_percent = 200
-restrict_kernel_memory = 32933M
+restrict_kernel_memory = 36933M
 
 [access]
 updates = 100

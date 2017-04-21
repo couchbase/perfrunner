@@ -1,0 +1,30 @@
+[test_case]
+test = perfrunner.tests.kv.EvictionTest
+title = Avg ejections/sec, NRU - Ephemeral, single node
+component = kv
+category = cache
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 1
+num_buckets = 1
+
+[bucket]
+bucket_type = ephemeral
+eviction_policy = nruEviction
+replica_number = 0
+
+[load]
+items = 35000000
+size = 1024
+workers = 100
+
+[access]
+creates = 100
+reads = 0
+updates = 0
+deletes = 0
+workers = 100
+items = 35000000
+throughput = 200000
+time = 3600

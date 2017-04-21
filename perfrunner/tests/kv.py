@@ -468,6 +468,36 @@ class ThroughputTest(KVTest):
         )
 
 
+class EvictionTest(KVTest):
+
+    COLLECTORS = {}
+
+    def compact_bucket(self):
+        pass
+
+    def _measure_ejected_items(self) -> int:
+        ejected_items = 0
+        for bucket in self.test_config.buckets:
+            for hostname, _ in self.rest.get_node_stats(self.master_node,
+                                                        bucket):
+                host = hostname.split(':')[0]
+                port = self.rest.get_memcached_port(hostname)
+
+                stats = self.memcached.get_stats(host, port, bucket, stats='')
+
+                ejected_items += int(stats[b'vb_active_auto_delete_count'])
+                ejected_items += int(stats[b'vb_pending_auto_delete_count'])
+                ejected_items += int(stats[b'vb_replica_auto_delete_count'])
+        return ejected_items
+
+    def _report_kpi(self):
+        ejected_items = self._measure_ejected_items()
+
+        self.reporter.post(
+            *self.metrics.kv_throughput(ejected_items)
+        )
+
+
 class PillowFightTest(PerfTest):
 
     """Uses cbc-pillowfight from libcouchbase to drive cluster."""

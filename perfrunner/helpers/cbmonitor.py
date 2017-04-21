@@ -61,7 +61,7 @@ def with_stats(method, *args, **kwargs):
     if stats_enabled:
         test.cbagent.stop()
         test.cbagent.reconstruct()
-        test.snapshots = test.cbagent.add_snapshot(from_ts, to_ts)
+        test.snapshots = test.cbagent.add_snapshot()
 
     from_ts = timegm(from_ts.timetuple()) * 1000  # -> ms
     to_ts = timegm(to_ts.timetuple()) * 1000  # -> ms
@@ -302,12 +302,12 @@ class CbAgent:
             logger.info(url)
             requests.get(url=url)
 
-    def add_snapshot(self, ts_from, ts_to):
+    def add_snapshot(self):
         snapshots = []
         for cluster_id in self.cluster_ids:
             self.settings.cluster = cluster_id
             md_client = MetadataClient(self.settings)
-            md_client.add_snapshot(cluster_id, ts_from, ts_to)
+            md_client.add_snapshot(cluster_id)
             snapshots.append(cluster_id)
             self.trigger_reports(cluster_id)
         return snapshots

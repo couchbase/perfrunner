@@ -116,10 +116,9 @@ class MetadataClient(RestClient):
                 data[extra_param] = eval(extra_param)
         self.post(url, data)
 
-    def add_snapshot(self, name, ts_from, ts_to):
+    def add_snapshot(self, name):
         logger.info("Adding snapshot: {}".format(name))
 
         url = self.base_url + "/add_snapshot/"
-        data = {"cluster": self.settings.cluster, "name": name,
-                "ts_from": ts_from, "ts_to": ts_to}
+        data = {"cluster": self.settings.cluster, "name": name}
         self.post(url, data)

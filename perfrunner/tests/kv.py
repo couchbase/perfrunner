@@ -1,15 +1,11 @@
 import random
 from threading import Thread
-from time import sleep, time
+from time import sleep
 
-import numpy as np
-from couchbase import Couchbase
-from couchbase.user_constants import OBS_NOTFOUND
 from logger import logger
 from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
 
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.helpers.misc import pretty_dict, uhex
 from perfrunner.helpers.worker import (
     pillowfight_data_load_task,
     pillowfight_task,
@@ -327,52 +323,6 @@ class FragmentationLargeTest(FragmentationTest):
         WorkloadGen(self.test_config.load_settings.items,
                     self.master_node, self.test_config.buckets[0], password,
                     small=False).run()
-
-
-class ReplicationTest(PerfTest):
-
-    """
-    Quick replication test. Single documents are sequentially inserted and
-    replication latency is measured after each insert.
-    """
-
-    NUM_SAMPLES = 5000
-
-    def measure_latency(self):
-        logger.info('Measuring replication latency')
-        timings = []
-        found = lambda client: [
-            v for v in client.observe(item).value if v.flags != OBS_NOTFOUND
-        ]
-        password = self.test_config.bucket.password
-        for master in self.cluster_spec.yield_masters():
-            for bucket in self.test_config.buckets:
-                host, port = master.split(':')
-                cb = Couchbase.connect(host=host, port=port,
-                                       bucket=bucket, password=password)
-                for _ in range(self.NUM_SAMPLES):
-                    item = uhex()
-                    cb.set(item, item)
-                    t0 = time()
-                    while len(found(cb)) != 2:
-                        sleep(0.001)
-                    latency = 1000 * (time() - t0)  # s -> ms
-                    logger.info(latency)
-                    timings.append(latency)
-
-        summary = {
-            'min': round(min(timings), 1),
-            'max': round(max(timings), 1),
-            'mean': round(np.mean(timings), 1),
-            '80th': round(np.percentile(timings, 80), 1),
-            '90th': round(np.percentile(timings, 90), 1),
-            '95th': round(np.percentile(timings, 95), 1),
-            '99th': round(np.percentile(timings, 99), 1),
-        }
-        logger.info(pretty_dict(summary))
-
-    def run(self):
-        self.measure_latency()
 
 
 class RevABTest(FragmentationTest):

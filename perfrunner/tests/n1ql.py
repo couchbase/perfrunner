@@ -28,7 +28,7 @@ class N1QLTest(PerfTest):
 
     @with_stats
     def access(self, *args):
-        super().timer()
+        super().sleep()
 
         self.worker_manager.wait_for_workers()
 

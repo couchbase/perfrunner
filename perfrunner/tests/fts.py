@@ -38,7 +38,7 @@ class FTStest(PerfTest):
 
     @with_stats
     def access(self, *args):
-        super().timer()
+        super().sleep()
 
     def access_bg_test(self):
         access_settings = self.test_config.access_settings

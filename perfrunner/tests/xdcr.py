@@ -59,7 +59,7 @@ class XdcrTest(PerfTest):
 
     @with_stats
     def access(self, *args):
-        super().timer()
+        super().sleep()
 
     def configure_wan(self):
         if self.settings.wan_enabled:

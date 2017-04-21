@@ -133,7 +133,7 @@ class QueryTest(IndexTest):
 
     @with_stats
     def access(self, *args):
-        super().timer()
+        super().sleep()
 
         self.worker_manager.wait_for_workers()
 

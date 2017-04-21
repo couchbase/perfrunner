@@ -183,7 +183,7 @@ class PerfTest:
         self.run_phase('background access phase',
                        task, settings, target_iterator, settings.time, False)
 
-    def timer(self) -> None:
+    def sleep(self) -> None:
         access_settings = self.test_config.access_settings
         logger.info('Running phase for {} seconds'.format(access_settings.time))
         time.sleep(access_settings.time)

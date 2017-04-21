@@ -413,6 +413,11 @@ class RemoteLinux(Remote):
         logger.info('Enabling encrypted secrets')
         run('systemctl set-environment CB_MASTER_PASSWORD={}'.format(password))
 
+    @all_hosts
+    def unset_master_password(self):
+        logger.info('Disabling encrypted secrets')
+        run('systemctl unset-environment CB_MASTER_PASSWORD')
+
     @single_client
     def get_indexer_heap_profile(self, indexer):
         logger.info('Get indexer heap profile')

@@ -65,6 +65,8 @@ class PerfTest:
         if self.test_config.test_case.use_workers:
             self.worker_manager.terminate()
 
+        self.remote.unset_master_password()
+
         if exc_type != KeyboardInterrupt:
             self.check_core_dumps()
             self.check_rebalance()

@@ -16,11 +16,6 @@ class YCSBTest(PerfTest):
     def access(self, *args, **kwargs):
         PerfTest.access(self, task=ycsb_task)
 
-    def _report_kpi(self):
-        self.reporter.post_to_sf(
-            self.metric_helper.parse_ycsb_throughput()
-        )
-
     def run(self):
         self.download_ycsb()
 

@@ -1,5 +1,5 @@
 [test_case]
-test = perfdaily.ycsb.YCSBN1QLTest
+test = perfdaily.ycsb.YCSBN1QLThroughputTest
 title = Workload E, 10M items, MOI, single node
 component = YCSB
 

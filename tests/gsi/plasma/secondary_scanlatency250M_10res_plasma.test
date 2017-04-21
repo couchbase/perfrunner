@@ -43,7 +43,9 @@ indexer.settings.gc_percent = 200
 restrict_kernel_memory = 14587M
 
 [access]
-updates = 100
+creates = 10
+updates = 80
+deletes = 10
 items = 250000000
 existing_items = 250000000
 throughput = 100000

@@ -1,17 +1,16 @@
 [test_case]
-test = perfrunner.tests.secondary.SecondaryIndexingMovingScanLatencyTest
-title = Secondary index scan latency(ms), 1 bucket x 250M, 100K KV ops/sec, single index, 80%% Resident, PLASMA
+test = perfrunner.tests.secondary.SecondaryIndexingMovingScanThroughputTest
+title = Secondary index scan throughput (scanps), 1 bucket x 250M, 100K KV ops/sec, single index, 50%% Resident, PLASMA
 component = secondary
-category = lat
+category = thr
 sub_category = PlasmaDGM
 
 [stats]
 monitored_processes = projector
-lat_interval = 0.5
 
 [cluster]
 mem_quota = 15000
-index_mem_quota = 35754
+index_mem_quota = 22346
 initial_nodes = 11
 num_buckets = 1
 
@@ -36,11 +35,11 @@ key_length = 16
 
 [secondary]
 indexes = myindex:city
-cbindexperf_configfile = tests/gsi/plasma/config/config_scanlatency_plasma.json
+cbindexperf_configfile = tests/gsi/plasma/config/config_scanthr_plasma.json
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
 indexer.settings.gc_percent = 200
-restrict_kernel_memory = 51693M
+restrict_kernel_memory = 36933M
 
 [access]
 creates = 10

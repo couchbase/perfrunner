@@ -33,6 +33,7 @@ from cbagent.collectors import (
     SpringLatency,
     SubdocLatency,
     TypePerf,
+    XATTRLatency,
     XdcrLag,
     XdcrStats,
 )
@@ -148,6 +149,7 @@ class CbAgent:
                        secondary_storage_stats=False,
                        secondary_storage_stats_mm=False,
                        subdoc_latency=False,
+                       xattr_latency=False,
                        xdcr_lag=False,
                        xdcr_stats=False):
         self.collectors = []
@@ -166,19 +168,22 @@ class CbAgent:
         else:
             self.add_collector(TypePerf)
 
-        if durability:
-            self.add_durability()
-        if index_latency:
-            self.add_collector(ObserveIndexLatency)
         if latency:
-            self.add_kv_latency()
+            self.add_latency_collector(SpringLatency)
+        if durability:
+            self.add_latency_collector(DurabilityLatency)
+        if subdoc_latency:
+            self.add_latency_collector(SubdocLatency)
+        if xattr_latency:
+            self.add_latency_collector(XATTRLatency)
+
         if query_latency or n1ql_latency:
             self.add_collector(ReservoirQueryLatency)
-        if subdoc_latency:
-            self.add_subdoc_latency()
-
         if n1ql_stats:
             self.add_collector(N1QLStats)
+
+        if index_latency:
+            self.add_collector(ObserveIndexLatency)
 
         if elastic_stats:
             self.add_collector(ElasticStats, self.test)
@@ -233,7 +238,7 @@ class CbAgent:
             collector = IO(settings)
             self.collectors.append(collector)
 
-    def add_kv_latency(self):
+    def add_latency_collector(self, cls):
         for cluster_id, master_node in self.cluster_map.items():
             settings = copy(self.settings)
             settings.cluster = cluster_id
@@ -241,37 +246,9 @@ class CbAgent:
             prefix = self.test.target_iterator.prefix or \
                 target_hash(settings.master_node.split(':')[0])
 
-            collector = SpringLatency(settings,
-                                      self.test.test_config.access_settings,
-                                      prefix)
-            self.collectors.append(collector)
-
-    def add_durability(self):
-        for cluster_id, master_node in self.cluster_map.items():
-            settings = copy(self.settings)
-            settings.cluster = cluster_id
-            settings.master_node = master_node
-
-            prefix = self.test.target_iterator.prefix or \
-                target_hash(settings.master_node.split(':')[0])
-
-            collector = DurabilityLatency(settings,
-                                          self.test.test_config.access_settings,
-                                          prefix)
-            self.collectors.append(collector)
-
-    def add_subdoc_latency(self):
-        for cluster_id, master_node in self.cluster_map.items():
-            settings = copy(self.settings)
-            settings.cluster = cluster_id
-            settings.master_node = master_node
-
-            prefix = self.test.target_iterator.prefix or \
-                target_hash(settings.master_node.split(':')[0])
-
-            collector = SubdocLatency(settings,
-                                      self.test.test_config.access_settings,
-                                      prefix)
+            collector = cls(settings,
+                            self.test.test_config.access_settings,
+                            prefix)
             self.collectors.append(collector)
 
     def add_xdcr_lag(self):

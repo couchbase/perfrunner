@@ -456,8 +456,9 @@ class PhaseSettings:
         # YCSB settings
         self.workload_path = options.get('workload_path')
 
-        # Subdoc
+        # Subdoc & XATTR
         self.subdoc_field = options.get('subdoc_field')
+        self.xattr_field = options.get('xattr_field')
 
     def __str__(self) -> str:
         return str(self.__dict__)

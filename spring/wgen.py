@@ -347,7 +347,7 @@ class SubDocWorker(KVWorker):
                   'username': self.ts.bucket, 'password': self.ts.password}
         self.cb = SubDocGen(**params)
 
-    def gen_cmd_sequence(self, cb=None, *args, **kwargs):
+    def gen_cmd_sequence(self, cb=None, *args):
         return super().gen_cmd_sequence(cb, extras='subdoc')
 
 
@@ -356,7 +356,7 @@ class XATTRWorker(SubDocWorker):
     NAME = 'xattr-worker'
 
     def gen_cmd_sequence(self, cb=None, *args):
-        return super().gen_cmd_sequence(cb, extras='xattr')
+        return super(SubDocWorker, self).gen_cmd_sequence(cb, extras='xattr')
 
 
 class AsyncKVWorker(KVWorker):
@@ -469,22 +469,34 @@ class SeqUpdatesWorker(Worker):
             self.cb.update(key, doc)
 
 
+class SeqXATTRUpdatesWorker(XATTRWorker):
+
+    def run(self, sid, *args):
+        for key in SequentialKey(sid, self.ws, self.ts.prefix):
+            doc = self.docs.next(key)
+            key = self.hash_keys.hash_it(key)
+            self.cb.update_xattr(key, self.ws.xattr_field, doc)
+
+
 class WorkerFactory:
 
-    def __new__(cls, workload_settings):
-        if getattr(workload_settings, 'async', None):
+    def __new__(cls, settings):
+        if getattr(settings, 'async', None):
             worker = AsyncKVWorker
-        elif getattr(workload_settings, 'seq_updates', None):
+        elif getattr(settings, 'seq_updates') and \
+                getattr(settings, 'xattr_field', None):
+            worker = SeqXATTRUpdatesWorker
+        elif getattr(settings, 'seq_updates', None):
             worker = SeqUpdatesWorker
-        elif getattr(workload_settings, 'seq_reads', None):
+        elif getattr(settings, 'seq_reads', None):
             worker = SeqReadsWorker
-        elif getattr(workload_settings, 'subdoc_field', None):
+        elif getattr(settings, 'subdoc_field', None):
             worker = SubDocWorker
-        elif getattr(workload_settings, 'xattr_field', None):
+        elif getattr(settings, 'xattr_field', None):
             worker = XATTRWorker
         else:
             worker = KVWorker
-        return worker, workload_settings.workers
+        return worker, settings.workers
 
 
 class ViewWorkerFactory:

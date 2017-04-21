@@ -149,18 +149,22 @@ class CBGen(CBAsyncGen):
 
 class SubDocGen(CBGen):
 
+    @quiet
     def read(self, key: str, field: str):
         self.client.lookup_in(key, subdocument.get(path=field))
 
+    @quiet
     def update(self, key: str, field: str, doc: dict):
         new_field_value = doc[field]
         self.client.mutate_in(key, subdocument.upsert(path=field,
                                                       value=new_field_value))
 
+    @quiet
     def read_xattr(self, key: str, field: str):
         self.client.lookup_in(key, subdocument.get(path=field,
                                                    xattr=True))
 
+    @quiet
     def update_xattr(self, key: str, field: str, doc: dict):
         self.client.mutate_in(key, subdocument.upsert(path=field,
                                                       value=doc,

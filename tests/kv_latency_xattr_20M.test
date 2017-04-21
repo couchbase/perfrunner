@@ -1,21 +1,21 @@
 [test_case]
-test = perfrunner.tests.kv.SubDocTest
-title = subdoc latency (qps), 1 bucket x 20M x 2KB
+test = perfrunner.tests.kv.XATTRTest
+title = XATTR latency (ms), 1 bucket x 20M x 1KB
 component = kv
 category = subdoc
+
+[stats]
+lat_interval = 0.1
 
 [cluster]
 mem_quota = 40960
 initial_nodes = 4
 num_buckets = 1
 
-[compaction]
-db_percentage = 10
-
 [load]
 items = 20000000
-size = 2048
-workers = 40
+size = 1024
+workers = 80
 
 [access]
 creates = 0
@@ -25,5 +25,5 @@ deletes = 0
 throughput = 10000
 items = 20000000
 workers = 24
-subdoc_field = city
+xattr_field = city
 time = 3600

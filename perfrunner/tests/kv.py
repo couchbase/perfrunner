@@ -102,6 +102,32 @@ class SubDocTest(MixedLatencyTest):
     COLLECTORS = {'subdoc_latency': True}
 
 
+class XATTRTest(MixedLatencyTest):
+
+    """
+    Enables reporting of XATTR latency.
+    """
+
+    COLLECTORS = {'xattr_latency': True}
+
+    def add_xattr(self):
+        access_settings = self.test_config.access_settings
+        access_settings.seq_updates = True
+
+        PerfTest.access(self, settings=access_settings)
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.add_xattr()
+
+        self.access_bg()
+        self.access()
+
+        self.report_kpi()
+
+
 class BgFetcherTest(KVTest):
 
     """

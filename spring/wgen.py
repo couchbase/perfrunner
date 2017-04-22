@@ -471,15 +471,15 @@ class SeqUpdatesWorker(Worker):
 class WorkerFactory:
 
     def __new__(cls, workload_settings):
-        if getattr(workload_settings, 'async'):
+        if getattr(workload_settings, 'async', None):
             worker = AsyncKVWorker
-        elif getattr(workload_settings, 'seq_updates'):
+        elif getattr(workload_settings, 'seq_updates', None):
             worker = SeqUpdatesWorker
-        elif getattr(workload_settings, 'seq_reads'):
+        elif getattr(workload_settings, 'seq_reads', None):
             worker = SeqReadsWorker
-        elif getattr(workload_settings, 'subdoc_field'):
+        elif getattr(workload_settings, 'subdoc_field', None):
             worker = SubDocWorker
-        elif getattr(workload_settings, 'xattr_field'):
+        elif getattr(workload_settings, 'xattr_field', None):
             worker = XATTRWorker
         else:
             worker = KVWorker

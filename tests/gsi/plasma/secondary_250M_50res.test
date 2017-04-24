@@ -1,15 +1,16 @@
 [test_case]
-test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
-title = 1 bucket x 250M, single 2i index, 100K KV ops/sec, no mutations during initial build, 50%% Resident, PLASMA
+test = perfrunner.tests.secondary.InitialandIncrementalDGMSecondaryIndexTest
+title = 1 bucket x 250M, single 2i index, 100K KV ops/sec, hot workload, 50%% Resident, PLASMA
 component = secondary
 sub_category = PlasmaDGM
 
 [stats]
 monitored_processes = projector
+lat_interval = 0.5
 
 [cluster]
 mem_quota = 12000
-index_mem_quota = 35512
+index_mem_quota = 43735
 initial_nodes = 11
 num_buckets = 1
 
@@ -36,7 +37,7 @@ key_length = 16
 indexes = myindex:city
 run_recovery_test = 1
 incremental_only = 1
-restrict_kernel_memory = 49390M
+restrict_kernel_memory = 59669M
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
 

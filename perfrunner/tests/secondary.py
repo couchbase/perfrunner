@@ -74,6 +74,14 @@ class SecondaryIndexTest(PerfTest):
             if not self.remote.check_process_running("memblock"):
                 raise Exception('memblock is not running, might have been killed!!!')
 
+    def remove_statsfile(self):
+        rmfile = "rm -f {}".format(self.test_config.stats_settings.secondary_statsfile)
+        status = subprocess.call(rmfile, shell=True)
+        if status != 0:
+            raise Exception('existing 2i latency stats file could not be removed')
+        else:
+            logger.info('Existing 2i latency stats file removed')
+
     @with_stats
     def build_secondaryindex(self):
         return self._build_secondaryindex()
@@ -155,6 +163,20 @@ class SecondaryIndexTest(PerfTest):
         with open(self.configfile, "w") as jsonFile:
             jsonFile.write(json.dumps(data))
 
+    def read_scanresults(self):
+        with open('{}'.format(self.configfile)) as config_file:
+            configdata = json.load(config_file)
+        numscans = configdata['ScanSpecs'][0]['Repeat']
+
+        with open('result.json') as result_file:
+            resdata = json.load(result_file)
+        duration_s = (resdata['Duration'])
+        num_rows = resdata['Rows']
+        """scans and rows per sec"""
+        scansps = numscans / duration_s
+        rowps = num_rows / duration_s
+        return scansps, rowps
+
     def __exit__(self, *args, **kwargs):
         super().__exit__(*args, **kwargs)
         if self.block_memory > 0:
@@ -225,6 +247,30 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
         self.print_index_disk_usage()
         self.report_kpi(time_elapsed, 'Incremental')
 
+        self.run_recovery_scenario()
+        self.check_memory_blocker()
+
+
+class InitialandIncrementalDGMSecondaryIndexTest(InitialandIncrementalSecondaryIndexTest):
+    """
+    The test measures time it takes to build index for the first time as well as
+    incremental build. There is no disabling of index updates in incremental building,
+    index updating is conurrent to KV incremental load.
+    """
+    def run(self):
+        self.load_and_build_initial_index()
+
+        from_ts, to_ts = self.build_incrindex()
+        time_elapsed = (to_ts - from_ts) / 1000.0
+        self.reporter.finish('First incremental secondary index', time_elapsed)
+        self.print_index_disk_usage()
+
+        from_ts, to_ts = self.build_incrindex()
+        time_elapsed = (to_ts - from_ts) / 1000.0
+        time_elapsed = self.reporter.finish('Second incremental secondary index', time_elapsed)
+        self.print_index_disk_usage()
+
+        self.report_kpi(time_elapsed, 'Incremental')
         self.run_recovery_scenario()
         self.check_memory_blocker()
 
@@ -348,20 +394,6 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
             round(scan_thr, 1)
         )
 
-    def read_scanresults(self):
-        with open('{}'.format(self.configfile)) as config_file:
-            configdata = json.load(config_file)
-        numscans = configdata['ScanSpecs'][0]['Repeat']
-
-        with open('result.json') as result_file:
-            resdata = json.load(result_file)
-        duration_s = (resdata['Duration'])
-        num_rows = resdata['Rows']
-        """scans and rows per sec"""
-        scansps = numscans / duration_s
-        rowps = num_rows / duration_s
-        return scansps, rowps
-
     def run(self):
         self.load()
         self.wait_for_persistence()
@@ -416,7 +448,31 @@ class SecondaryIndexingThroughputRebalanceTest(SecondaryIndexingThroughputTest):
         self.validate_num_connections()
 
 
-class SecondaryIndexingMovingScanThroughputTest(SecondaryIndexingThroughputTest):
+class InitialIncrementalScanThroughputTest(InitialandIncrementalDGMSecondaryIndexTest):
+
+    def _report_kpi(self, *args):
+        if len(args) == 1:
+            self.report_throughput_kpi(*args)
+
+    def report_throughput_kpi(self, scan_thr):
+        self.reporter.post_to_sf(
+            round(scan_thr, 1)
+        )
+
+    def run(self):
+        self.remove_statsfile()
+        super().run()
+        self.run_access_for_2i(run_in_background=True)
+        self.apply_scanworkload()
+        scan_thr, row_thr = self.read_scanresults()
+        logger.info('Scan throughput: {}'.format(scan_thr))
+        logger.info('Rows throughput: {}'.format(row_thr))
+        self.print_index_disk_usage()
+        self.report_kpi(scan_thr)
+        self.validate_num_connections()
+
+
+class InitialIncrementalMovingScanThroughputTest(InitialIncrementalScanThroughputTest):
     """
     The test applies scan workload against the 2i server and measures
     scan throughput for moving workload
@@ -425,9 +481,16 @@ class SecondaryIndexingMovingScanThroughputTest(SecondaryIndexingThroughputTest)
         super().__init__(*args)
         self.scan_thr = []
 
+    def get_config(self):
+        with open('{}'.format(self.configfile)) as config_file:
+            config_data = json.load(config_file)
+        return config_data['ScanSpecs'][0]['NInterval'], config_data['Concurrency']
+
     """
     get_throughput function parses statsfile created by cbindexperf, and
     calculates throughput.
+    interval- number of scans after which entry made in statsfile
+    concurrency- number of concurrent routines making scans
     Format for statsfile is-
     id:1, rows:0, duration:8632734534, Nth-latency:16686556
     id:1, rows:0, duration:3403693509, Nth-latency:6859285
@@ -440,7 +503,8 @@ class SecondaryIndexingMovingScanThroughputTest(SecondaryIndexingThroughputTest)
             for row in csv_reader:
                 duration += int(row[2].split(":")[1])
                 lines += 1
-        return lines * 100 / (duration / 1000000000)
+        interval, concurrency = self.get_config()
+        return lines * interval / (duration / 1000000000 / concurrency)
 
     """
     Calculating average throughput from list of throughputs
@@ -467,10 +531,8 @@ class SecondaryIndexingMovingScanThroughputTest(SecondaryIndexingThroughputTest)
             t += self.test_config.access_settings.working_set_move_time
 
     def run(self):
-        self.load()
-        self.wait_for_persistence()
-        self.compact_bucket()
-        self.build_secondaryindex()
+        self.remove_statsfile()
+        InitialandIncrementalSecondaryIndexTest.run(self)
         self.run_access_for_2i(run_in_background=True)
         self.apply_scanworkload()
         scan_throughput = self.calc_throughput()
@@ -492,14 +554,6 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
         self.reporter.post_to_sf(
             *self.metric_helper.calc_secondary_scan_latency(percentile=90)
         )
-
-    def remove_statsfile(self):
-        rmfile = "rm -f {}".format(self.test_config.stats_settings.secondary_statsfile)
-        status = subprocess.call(rmfile, shell=True)
-        if status != 0:
-            raise Exception('existing 2i latency stats file could not be removed')
-        else:
-            logger.info('Existing 2i latency stats file removed')
 
     def run(self):
         self.remove_statsfile()
@@ -552,11 +606,47 @@ class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest
         self.validate_num_connections()
 
 
-class SecondaryIndexingMovingScanLatencyTest(SecondaryIndexingScanLatencyTest):
+class InitialIncrementalScanLatencyTest(InitialandIncrementalDGMSecondaryIndexTest):
     """
-    The test applies scan workload against the 2i server and measures
+    The test perform initial index build, then incremental index build and
+    then applies scan workload against the 2i server and measures
     scan latency for moving workload
     """
+    COLLECTORS = {'secondary_stats': True, 'secondary_latency': True,
+                  'secondary_debugstats': True, 'secondary_debugstats_bucket': True,
+                  'secondary_debugstats_index': True}
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.run_recovery_test_local = self.run_recovery_test
+        self.run_recovery_test = 0
+
+    def _report_kpi(self, *args):
+        if len(args):
+            super()._report_kpi(*args)
+        else:
+            self.report_latency_kpi()
+
+    def report_latency_kpi(self):
+        self.reporter.post_to_sf(
+            *self.metric_helper.calc_secondary_scan_latency(percentile=90)
+        )
+
+    def run(self):
+        self.remove_statsfile()
+        super().run()
+        self.run_access_for_2i(run_in_background=True)
+        self.apply_scanworkload()
+        self.print_index_disk_usage()
+        self.report_kpi()
+        self.validate_num_connections()
+
+        self.run_recovery_test = self.run_recovery_test_local
+        self.run_recovery_scenario()
+        self.check_memory_blocker()
+
+
+class InitialIncrementalMovingScanLatencyTest(InitialIncrementalScanLatencyTest):
 
     @with_stats
     def apply_scanworkload(self, path_to_tool="/opt/couchbase/bin/cbindexperf"):

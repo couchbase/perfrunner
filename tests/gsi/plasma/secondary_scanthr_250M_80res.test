@@ -1,7 +1,8 @@
 [test_case]
-test = perfrunner.tests.secondary.InitialandIncrementalDGMSecondaryIndexTest
+test = perfrunner.tests.secondary.InitialIncrementalMovingScanThroughputTest
 title = 1 bucket x 250M, single 2i index, 100K KV ops/sec, hot workload, 80%% Resident, PLASMA
 component = secondary
+category = thr
 sub_category = PlasmaDGM
 
 [stats]
@@ -35,11 +36,11 @@ key_length = 16
 
 [secondary]
 indexes = myindex:city
-run_recovery_test = 1
-incremental_only = 1
 restrict_kernel_memory = 92470M
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
+cbindexperf_configfile = tests/gsi/plasma/config/config_scanthr_dgm_plasma.json
+scan_time = 1500
 
 [access]
 updates = 100

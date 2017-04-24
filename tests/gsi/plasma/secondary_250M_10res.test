@@ -1,15 +1,17 @@
 [test_case]
-test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
-title = 1 bucket x 250M, single 2i index, 100K KV ops/sec, no mutations during initial build, 10%% Resident, PLASMA
+test = perfrunner.tests.secondary.InitialIncrementalMovingScanLatencyTest
+title = 1 bucket x 250M, single 2i index, 100K KV ops/sec, hot workload, 10%% Resident, PLASMA
 component = secondary
+category = lat
 sub_category = PlasmaDGM
 
 [stats]
 monitored_processes = projector
+lat_interval = 0.5
 
 [cluster]
 mem_quota = 12000
-index_mem_quota = 7102
+index_mem_quota = 8747
 initial_nodes = 11
 num_buckets = 1
 
@@ -36,9 +38,11 @@ key_length = 16
 indexes = myindex:city
 run_recovery_test = 1
 incremental_only = 1
-restrict_kernel_memory = 17878M
+restrict_kernel_memory = 19934M
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
+cbindexperf_configfile = tests/gsi/plasma/config/config_scanlatency_plasma.json
+scan_time = 1500
 
 [access]
 updates = 100

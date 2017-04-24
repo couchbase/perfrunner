@@ -67,8 +67,8 @@ def main():
     cm.set_index_settings()
     cm.set_query_settings()
 
-    cm.wait_until_warmed_up()
     cm.wait_until_healthy()
+    cm.wait_until_warmed_up()
 
     cm.tweak_memory()
 

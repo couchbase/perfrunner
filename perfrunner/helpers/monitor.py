@@ -3,6 +3,7 @@ import time
 from logger import logger
 
 from perfrunner.helpers import misc
+from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import RestHelper
 
 
@@ -10,6 +11,7 @@ class Monitor(RestHelper):
 
     POLLING_INTERVAL = 2
     POLLING_INTERVAL_INDEXING = 1
+    POLLING_INTERVAL_MACHINE_UP = 10
     MAX_RETRY = 60
     REBALANCE_TIMEOUT = 3600 * 2
     TIMEOUT = 3600 * 12
@@ -31,6 +33,11 @@ class Monitor(RestHelper):
     XDCR_QUEUES = (
         'replication_changes_left',
     )
+
+    def __init__(self, cluster_spec, test_config, verbose):
+        super().__init__(cluster_spec=cluster_spec)
+        self.cluster_spec = cluster_spec
+        self.remote = RemoteHelper(cluster_spec, test_config, verbose)
 
     def monitor_rebalance(self, host_port):
         logger.info('Monitoring rebalance status')
@@ -287,3 +294,18 @@ class Monitor(RestHelper):
             else:
                 time.sleep(self.POLLING_INTERVAL)
         return -1
+
+    def wait_for_indexer(self):
+        # Get first cluster, its index nodes
+        (cluster_name, servers) = \
+            next(self.cluster_spec.yield_servers_by_role('index'))
+        index_node = servers[0].split(':')[0]
+        for retry in range(self.MAX_RETRY):
+            time.sleep(self.POLLING_INTERVAL_MACHINE_UP)
+            if self.remote.is_up(index_node):
+                logger.info('Indexer is back...!')
+                return
+            else:
+                logger.info('Waiting for indexer...')
+        else:
+            logger.interrupt('Indexer is not up!!!')

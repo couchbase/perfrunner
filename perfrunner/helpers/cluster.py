@@ -17,7 +17,7 @@ class ClusterManager:
 
         self.rest = RestHelper(cluster_spec)
         self.remote = RemoteHelper(cluster_spec, test_config, verbose)
-        self.monitor = Monitor(cluster_spec)
+        self.monitor = Monitor(cluster_spec, test_config, verbose)
         self.memcached = MemcachedHelper(test_config)
 
         self.clusters = cluster_spec.yield_clusters
@@ -277,3 +277,10 @@ class ClusterManager:
 
         if self.test_config.cluster.throttle_cpu:
             self.remote.disable_cpu()
+
+    def indexer_restrict_memory(self):
+        if self.test_config.gsi_settings.restrict_kernel_memory:
+            self.remote.restrict_memory_kernel_parameter(
+                self.test_config.gsi_settings.restrict_kernel_memory)
+            self.remote.reboot()
+            self.monitor.wait_for_indexer()

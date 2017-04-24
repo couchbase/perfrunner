@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 
 from fabric import state
 from fabric.api import get, put, run, settings
-from fabric.exceptions import CommandTimeout
+from fabric.exceptions import CommandTimeout, NetworkError
 from logger import logger
 
 from perfrunner.helpers.misc import uhex
@@ -428,7 +428,34 @@ class RemoteLinux(Remote):
     def get_indexer_rebalance_failure(self):
         logger.info('Get indexer rebalance failure count')
         data = run("grep 'indexer rebalance failure - ddl in progress'"
-                   " /opt/couchbase/var/lib/couchbase/logs/json_rpc.log", pty=True)
+                   " /opt/couchbase/var/lib/couchbase/logs/json_rpc.log")
         if not data.return_code:
             return len(data.split("\n"))
         return 0
+
+    @index_node
+    def restrict_memory_kernel_parameter(self, size):
+        change_option_cmd = "sed -i 's/quiet/quiet mem={}/' /etc/default/grub".format(size)
+        logger.info('Changing kernel memory to {}'.format(size))
+        run(change_option_cmd)
+        run("grub2-mkconfig -o /boot/grub2/grub.cfg")
+
+    @index_node
+    def reset_memory_kernel_parameter(self):
+        change_option_cmd = "sed -ir 's/ mem=[0-9]*[kmgKMG]//' /etc/default/grub"
+        run(change_option_cmd)
+        run("grub2-mkconfig -o /boot/grub2/grub.cfg")
+
+    @index_node
+    def reboot(self):
+        logger.info('Rebooting indexer...')
+        run("reboot", warn_only=True, pty=False)
+
+    @staticmethod
+    def is_up(host_string: str) -> bool:
+        with settings(host_string=host_string):
+            try:
+                result = run("ls")
+                return result.return_code == 0  # 0 mean success
+            except NetworkError:
+                return False

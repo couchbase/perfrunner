@@ -39,7 +39,7 @@ class PerfTest:
         self.target_iterator = TargetIterator(cluster_spec, test_config)
 
         self.memcached = MemcachedHelper(test_config)
-        self.monitor = Monitor(cluster_spec)
+        self.monitor = Monitor(cluster_spec, test_config, verbose)
         self.rest = RestHelper(cluster_spec)
         self.remote = RemoteHelper(cluster_spec, test_config, verbose)
 

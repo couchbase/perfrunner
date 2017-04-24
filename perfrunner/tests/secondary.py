@@ -59,9 +59,6 @@ class SecondaryIndexTest(PerfTest):
             self.COLLECTORS["secondary_storage_stats"] = True
             self.COLLECTORS["secondary_storage_stats_mm"] = True
 
-    def __del__(self):
-        self.remote.kill_process_on_index_node("memblock")
-
     def check_rebalance(self):
         for master in self.cluster_spec.yield_masters():
             failure_count = self.rest.is_not_balanced(master)
@@ -157,6 +154,15 @@ class SecondaryIndexTest(PerfTest):
 
         with open(self.configfile, "w") as jsonFile:
             jsonFile.write(json.dumps(data))
+
+    def __exit__(self, *args, **kwargs):
+        super().__exit__(*args, **kwargs)
+        if self.block_memory > 0:
+            self.remote.kill_process_on_index_node("memblock")
+        if self.test_config.gsi_settings.restrict_kernel_memory:
+            self.remote.reset_memory_kernel_parameter()
+            self.remote.reboot()
+            self.monitor.wait_for_indexer()
 
 
 class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):

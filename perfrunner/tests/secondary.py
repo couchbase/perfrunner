@@ -429,7 +429,7 @@ class SecondaryIndexingMovingScanThroughputTest(SecondaryIndexingThroughputTest)
     def get_throughput(self) -> float:
         duration = 0
         lines = 0
-        with open(self.secondary_statsfile, 'rb') as csvfile:
+        with open(self.secondary_statsfile, 'r') as csvfile:
             csv_reader = csv.reader(csvfile, delimiter=',')
             for row in csv_reader:
                 duration += int(row[2].split(":")[1])

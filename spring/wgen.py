@@ -658,7 +658,7 @@ class N1QLWorker(Worker):
 
     def range_update(self):
         with self.lock:
-            curr_items_tmp = self.curr_items.valueize
+            curr_items_tmp = self.curr_items.value
 
         for _ in range(self.ws.n1ql_batch_size):
             key = self.keys_for_cas_update.next(sid=self.sid,

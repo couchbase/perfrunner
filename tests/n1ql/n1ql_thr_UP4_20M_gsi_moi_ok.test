@@ -32,7 +32,7 @@ throughput = 30000
 items = 20000000
 workers = 20
 time = 1200
-n1ql_op = rangeupdate
+n1ql_op = update
 n1ql_queries = updaterange
 n1ql_workers = 480
 

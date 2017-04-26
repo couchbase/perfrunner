@@ -656,19 +656,6 @@ class N1QLWorker(Worker):
             latency = self.cb.n1ql_query(query)
             self.reservoir.update(latency)
 
-    def range_update(self):
-        with self.lock:
-            curr_items_tmp = self.curr_items.value
-
-        for _ in range(self.ws.n1ql_batch_size):
-            key = self.keys_for_cas_update.next(sid=self.sid,
-                                                curr_items=curr_items_tmp)
-            doc = self.docs.next(key)
-            query = self.new_queries.next(key, doc)
-
-            latency = self.cb.n1ql_query(query)
-            self.reservoir.update(latency)
-
     @with_sleep
     def do_batch(self):
         if self.ws.n1ql_op == 'read':
@@ -677,8 +664,6 @@ class N1QLWorker(Worker):
             self.create()
         elif self.ws.n1ql_op == 'update':
             self.update()
-        elif self.ws.n1ql_op == 'rangeupdate':
-            self.range_update()
 
     def run(self, sid, lock, curr_ops, curr_items, *args):
         if self.throughput < float('inf'):

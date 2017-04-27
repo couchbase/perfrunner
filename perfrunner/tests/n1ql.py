@@ -180,7 +180,7 @@ class N1QLMixedThroughputTest(N1QLThroughputTest):
                 self.create_index(query_node, bucket, index)
 
 
-class N1QLDGMThroughputTest(N1QLThroughputTest):
+class N1QLDGMTest:
 
     COLLECTORS = {
         'n1ql_latency': True,
@@ -188,3 +188,13 @@ class N1QLDGMThroughputTest(N1QLThroughputTest):
         'secondary_stats': True,
         'secondary_storage_stats': True,
     }
+
+
+class N1QLDGMThroughputTest(N1QLDGMTest, N1QLThroughputTest):
+
+    pass
+
+
+class N1QLDGMLatencyTest(N1QLDGMTest, N1QLLatencyTest):
+
+    pass

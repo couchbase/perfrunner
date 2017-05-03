@@ -152,11 +152,12 @@ class WorkingSetKey(Generator):
 class MovingWorkingSetKey(Generator):
 
     def __init__(self, working_set: int, working_set_access: int, prefix: str,
-                 working_set_move_time: int):
+                 working_set_move_time: int, working_set_moving_docs: int):
         self.working_set = working_set
         self.working_set_access = working_set_access
         self.prefix = prefix
         self.working_set_move_time = working_set_move_time
+        self.working_set_moving_docs = working_set_moving_docs
 
     def next(self, curr_items: int, curr_deletes: int,
              current_hot_load_start: int, timer_elapse: int) -> str:
@@ -168,10 +169,9 @@ class MovingWorkingSetKey(Generator):
 
         if timer_elapse.value:
             timer_elapse.value = 0
-            # Create next hot_load_start, multiplying by 2.5 to choose next
-            # hot workload start beyond current hot workload limit and then modulus
+            # Create next hot_load_start, add working_set_move_docs and then modulus
             # to prevent going beyond num_docs
-            current_hot_load_start.value = int((current_hot_load_start.value * 2.5)
+            current_hot_load_start.value = int((current_hot_load_start.value + self.working_set_moving_docs)
                                                % (num_existing_items - num_hot_items))
 
         if self.working_set_access == 100 or \

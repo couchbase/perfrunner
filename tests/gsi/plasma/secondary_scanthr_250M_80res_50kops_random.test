@@ -1,8 +1,8 @@
 [test_case]
-test = perfrunner.tests.secondary.InitialIncrementalScanLatencyTest
+test = perfrunner.tests.secondary.InitialIncrementalScanThroughputTest
 title = 1 bucket x 250M, single 2i index, 50K KV ops/sec, random workload, 80%% Resident, PLASMA
 component = secondary
-category = lat
+category = thr
 sub_category = PlasmaDGM
 
 [stats]
@@ -33,12 +33,10 @@ doc_gen = small_plasma
 
 [secondary]
 indexes = myindex:alt_email
-run_recovery_test = 1
-incremental_only = 1
 restrict_kernel_memory = 70490M
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
-cbindexperf_configfile = tests/gsi/plasma/config/config_scanlatency_dgm_random_plasma.json
+cbindexperf_configfile = tests/gsi/plasma/config/config_scanthr_dgm_random_plasma.json
 scan_time = 1500
 
 [access]

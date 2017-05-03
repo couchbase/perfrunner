@@ -147,7 +147,8 @@ class SecondaryIndexTest(PerfTest):
             old_start = old_start[0] if len(old_start) == 1 else old_start[1]
 
         # predict next hot_load_start
-        start = (int(old_start) * 2.5) % (self.test_config.access_settings.items - num_hot_items)
+        start = (int(old_start) + self.test_config.access_settings.working_set_moving_docs) % \
+                (self.test_config.access_settings.items - num_hot_items)
         end = start + num_hot_items
 
         data["ScanSpecs"][0]["Low"][0] = '%012d' % start
@@ -443,6 +444,11 @@ class SecondaryIndexingThroughputRebalanceTest(SecondaryIndexingThroughputTest):
 
 class InitialIncrementalScanThroughputTest(InitialandIncrementalDGMSecondaryIndexTest):
 
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.run_recovery_test_local = self.run_recovery_test
+        self.run_recovery_test = 0
+
     def _report_kpi(self, *args):
         if len(args) == 1:
             self.report_throughput_kpi(*args)
@@ -463,6 +469,10 @@ class InitialIncrementalScanThroughputTest(InitialandIncrementalDGMSecondaryInde
         self.print_index_disk_usage()
         self.report_kpi(scan_thr)
         self.validate_num_connections()
+
+        self.run_recovery_test = self.run_recovery_test_local
+        self.run_recovery_scenario()
+        self.check_memory_blocker()
 
 
 class InitialIncrementalMovingScanThroughputTest(InitialIncrementalScanThroughputTest):
@@ -525,13 +535,17 @@ class InitialIncrementalMovingScanThroughputTest(InitialIncrementalScanThroughpu
 
     def run(self):
         self.remove_statsfile()
-        InitialandIncrementalSecondaryIndexTest.run(self)
+        InitialandIncrementalDGMSecondaryIndexTest.run(self)
         self.run_access_for_2i(run_in_background=True)
         self.apply_scanworkload()
         scan_throughput = self.calc_throughput()
         self.print_index_disk_usage()
         self.report_kpi(scan_throughput)
         self.validate_num_connections()
+
+        self.run_recovery_test = self.run_recovery_test_local
+        self.run_recovery_scenario()
+        self.check_memory_blocker()
 
 
 class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):

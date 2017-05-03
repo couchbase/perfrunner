@@ -94,7 +94,8 @@ class Worker:
             self.existing_keys = MovingWorkingSetKey(self.ws.working_set,
                                                      self.ws.working_set_access,
                                                      self.ts.prefix,
-                                                     self.ws.working_set_move_time)
+                                                     self.ws.working_set_move_time,
+                                                     self.ws.working_set_moving_docs)
         elif self.ws.working_set < 100:
             self.existing_keys = WorkingSetKey(self.ws.working_set,
                                                self.ws.working_set_access,

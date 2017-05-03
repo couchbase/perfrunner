@@ -336,6 +336,7 @@ class PhaseSettings:
     WORKING_SET = 100
     WORKING_SET_ACCESS = 100
     WORKING_SET_MOVE_TIME = 0
+    WORKING_SET_MOVE_DOCS = 0
 
     THROUGHPUT = float('inf')
     QUERY_THROUGHPUT = float('inf')
@@ -392,6 +393,8 @@ class PhaseSettings:
                                                   self.WORKING_SET_ACCESS))
         self.working_set_move_time = int(options.get('working_set_move_time',
                                                      self.WORKING_SET_MOVE_TIME))
+        self.working_set_moving_docs = int(options.get('working_set_moving_docs',
+                                                       self.WORKING_SET_MOVE_DOCS))
         self.workers = int(options.get('workers', self.WORKERS))
         self.async = bool(int(options.get('async', self.ASYNC)))
         self.hash_keys = int(options.get('hash_keys', self.HASH_KEYS))

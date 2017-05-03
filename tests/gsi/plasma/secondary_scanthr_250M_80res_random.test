@@ -36,7 +36,7 @@ indexes = myindex:alt_email
 restrict_kernel_memory = 85303M
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
-cbindexperf_configfile = tests/gsi/plasma/config/config_scanthr_dgm_plasma.json
+cbindexperf_configfile = tests/gsi/plasma/config/config_scanthr_dgm_random_plasma.json
 scan_time = 1500
 
 [access]

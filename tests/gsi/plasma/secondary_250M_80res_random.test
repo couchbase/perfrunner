@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.secondary.InitialandIncrementalDGMSecondaryIndexTest
+test = perfrunner.tests.secondary.InitialIncrementalScanLatencyTest
 title = 1 bucket x 250M, single 2i index, 100K KV ops/sec, random workload, 80%% Resident, PLASMA
 component = secondary
 sub_category = PlasmaDGM
@@ -37,6 +37,8 @@ incremental_only = 1
 restrict_kernel_memory = 85303M
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
+cbindexperf_configfile = tests/gsi/plasma/config/config_scanlatency_dgm_random_plasma.json
+scan_time = 1500
 
 [access]
 updates = 100

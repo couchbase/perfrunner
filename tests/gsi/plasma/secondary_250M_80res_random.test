@@ -29,12 +29,12 @@ max_num_auxio = 16
 items = 250000000
 size = 17
 workers = 100
-doc_gen = sequential_plasma
+doc_gen = small_plasma
 hash_keys = 1
 key_length = 16
 
 [secondary]
-indexes = myindex:city
+indexes = myindex:alt_email
 run_recovery_test = 1
 incremental_only = 1
 restrict_kernel_memory = 92470M

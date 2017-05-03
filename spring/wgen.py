@@ -247,8 +247,8 @@ class KVWorker(Worker):
                 key = self.existing_keys.next(curr_items_spot, deleted_spot,
                                               self.current_hot_load_start,
                                               self.timer_elapse)
-                key = self.hash_keys.hash_it(key)
                 doc = self.docs.next(key)
+                key = self.hash_keys.hash_it(key)
 
                 if extras == 'subdoc':
                     cmds.append((cb.update, (key, self.ws.subdoc_field, doc)))

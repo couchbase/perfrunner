@@ -24,6 +24,7 @@ type ScanConfig struct {
 	Repeat      uint32
 	NInterval   uint32 // Stats dump nrequests interval
 	Consistency bool   // Use session consistency
+	RandomLen   uint32
 	Scans       client.Scans
 
 	iteration uint32

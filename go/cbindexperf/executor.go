@@ -7,6 +7,7 @@ import (
 	qclient "github.com/couchbase/indexing/secondary/queryport/client"
 	"io"
 	"math"
+	"math/rand"
 	"os"
 	"sync"
 	"time"
@@ -22,6 +23,8 @@ var (
 	clientBootTime = 5 // Seconds
 
 	requestCounter = platform.NewAlignedUint64(0)
+
+	letterRunes = []rune("0123456789abcdef")
 )
 
 type Job struct {
@@ -34,6 +37,19 @@ type JobResult struct {
 	job  *Job
 	rows int64
 	dur  int64
+}
+
+func Init() {
+	rand.Seed(time.Now().UnixNano())
+}
+
+func RandString(n uint32) []interface{} {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(16)]
+	}
+	return []interface{}{string(b)}
+
 }
 
 func RunJob(client *qclient.GsiClient, job *Job, aggrQ chan *JobResult) {
@@ -85,6 +101,9 @@ func RunJob(client *qclient.GsiClient, job *Job, aggrQ chan *JobResult) {
 		err = client.ScanAll(spec.DefnId, requestID, spec.Limit, cons, nil, callb)
 	case "Range":
 		requestID := os.Args[0] + uuid
+		if spec.RandomLen > 0 {
+			spec.Low = RandString(spec.RandomLen)
+		}
 		err = client.Range(spec.DefnId, requestID, spec.Low, spec.High,
 			qclient.Inclusion(spec.Inclusion), false, spec.Limit, cons, nil, callb)
 	case "Lookup":
@@ -165,6 +184,8 @@ func RunCommands(cluster string, cfg *Config, statsW io.Writer) (*Result, error)
 	if cfg.ClientBootTime == 0 {
 		cfg.ClientBootTime = clientBootTime
 	}
+
+	Init()
 
 	config := c.SystemConfig.SectionConfig("queryport.client.", true)
 	config.SetValue("settings.poolSize", int(cfg.Concurrency))

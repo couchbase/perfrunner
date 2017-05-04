@@ -27,11 +27,8 @@ max_num_auxio = 16
 
 [load]
 items = 250000000
-size = 17
 workers = 100
 doc_gen = small_plasma
-hash_keys = 1
-key_length = 16
 
 [secondary]
 indexes = myindex:alt_email

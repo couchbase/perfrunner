@@ -11,7 +11,7 @@ lat_interval = 0.5
 
 [cluster]
 mem_quota = 12000
-index_mem_quota = 64469
+index_mem_quota = 53830
 initial_nodes = 11
 num_buckets = 1
 
@@ -35,7 +35,7 @@ doc_gen = small_plasma
 indexes = myindex:alt_email
 run_recovery_test = 1
 incremental_only = 1
-restrict_kernel_memory = 85587M
+restrict_kernel_memory = 72288M
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
 cbindexperf_configfile = tests/gsi/plasma/config/config_scanlatency_dgm_plasma.json

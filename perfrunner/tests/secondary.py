@@ -59,12 +59,6 @@ class SecondaryIndexTest(PerfTest):
             self.COLLECTORS["secondary_storage_stats"] = True
             self.COLLECTORS["secondary_storage_stats_mm"] = True
 
-    def check_rebalance(self):
-        for master in self.cluster_spec.yield_masters():
-            failure_count = self.rest.is_not_balanced(master)
-            if failure_count and (failure_count != self.remote.get_indexer_rebalance_failure()):
-                logger.interrupt('The cluster is not balanced')
-
     def _block_memory(self):
         if self.block_memory > 0:
             self.remote.block_memory(self.block_memory)

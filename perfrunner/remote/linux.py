@@ -425,15 +425,6 @@ class RemoteLinux(Remote):
         return run(cmd, pty=True)
 
     @index_node
-    def get_indexer_rebalance_failure(self):
-        logger.info('Get indexer rebalance failure count')
-        data = run("grep 'indexer rebalance failure - ddl in progress'"
-                   " /opt/couchbase/var/lib/couchbase/logs/json_rpc.log")
-        if not data.return_code:
-            return len(data.split("\n"))
-        return 0
-
-    @index_node
     def restrict_memory_kernel_parameter(self, size):
         change_option_cmd = "sed -i 's/quiet/quiet mem={}/' /etc/default/grub".format(size)
         logger.info('Changing kernel memory to {}'.format(size))

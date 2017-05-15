@@ -8,6 +8,8 @@ BASE_URL = 'http://172.23.120.24/builds/latestbuilds/couchbase-server'
 
 CHECKPOINT = '/home/latest'
 
+MAX_MISSING = 3
+
 RELEASES = {
     'spock': '5.0.0',
 }
@@ -50,13 +52,20 @@ def main():
     options, _ = parser.parse_args()
 
     latest = None
-    build = read_latest() + 1
+    build = read_latest()
+    missing = 0
 
-    while build_exists(options.release, build):
+    while missing < MAX_MISSING:
+        build += 1
+
         logger.info('Checking build {}'.format(build))
+
+        if not build_exists(options.release, build):
+            missing += 1
+            continue
+
         if rpm_package_exists(options.release, build):
             latest = build
-            build += 1
 
     if latest:
         store_latest(build=latest)

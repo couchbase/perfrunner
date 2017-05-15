@@ -100,6 +100,22 @@ class Monitor(RestHelper):
         self._wait_for_empty_queues(host_port, bucket, self.XDCR_QUEUES,
                                     self.get_xdcr_stats)
 
+    def _get_num_items(self, host_port: str, bucket: str) -> bool:
+        stats = self.get_bucket_stats(host_port=host_port, bucket=bucket)
+        return stats['op']['samples'].get('curr_items')[-1]
+
+    def monitor_num_items(self, host_port: str, bucket: str, num_items: int):
+        logger.info('Checking the number of items in {}'.format(bucket))
+        retries = 0
+        while retries < self.MAX_RETRY:
+            if self._get_num_items(host_port, bucket) == num_items:
+                break
+            time.sleep(self.POLLING_INTERVAL)
+            retries += 1
+        else:
+            raise Exception('Mismatch in the number of items: {}'
+                            .format(self._get_num_items(host_port, bucket)))
+
     def monitor_task(self, host_port, task_type):
         logger.info('Monitoring task: {}'.format(task_type))
 

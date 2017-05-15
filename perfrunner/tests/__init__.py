@@ -25,8 +25,6 @@ class PerfTest:
 
     COLLECTORS = {}
 
-    MONITORING_DELAY = 10
-
     ROOT_CERTIFICATE = 'root.pem'
 
     def __init__(self,
@@ -104,28 +102,21 @@ class PerfTest:
             logger.interrupt(pretty_dict(core_dumps))
 
     def compact_bucket(self) -> None:
-        for master in self.cluster_spec.yield_masters():
-            for bucket in self.test_config.buckets:
-                self.rest.trigger_bucket_compaction(master, bucket)
-        time.sleep(self.MONITORING_DELAY)
-        for master in self.cluster_spec.yield_masters():
-            self.monitor.monitor_task(master, 'bucket_compaction')
+        for target in self.target_iterator:
+            self.rest.trigger_bucket_compaction(target.node, target.bucket)
+
+        for target in self.target_iterator:
+            self.monitor.monitor_task(target.node, 'bucket_compaction')
 
     def wait_for_persistence(self) -> None:
-        for master in self.cluster_spec.yield_masters():
-            for bucket in self.test_config.buckets:
-                self.monitor.monitor_disk_queues(master, bucket)
-                self.monitor.monitor_dcp_queues(master, bucket)
+        for target in self.target_iterator:
+            self.monitor.monitor_disk_queues(target.node, target.bucket)
+            self.monitor.monitor_dcp_queues(target.node, target.bucket)
 
     def check_num_items(self) -> None:
         for target in self.target_iterator:
-            stats = self.rest.get_bucket_stats(host_port=target.node,
-                                               bucket=target.bucket)
-            curr_items = stats['op']['samples'].get('curr_items')[-1]
-
-            if curr_items != self.test_config.load_settings.items:
-                logger.interrupt('Mismatch in the number of items: {}'
-                                 .format(curr_items))
+            self.monitor.monitor_num_items(target.node, target.bucket,
+                                           self.test_config.load_settings.items)
 
     def restore(self) -> None:
         with RestoreHelper(self.cluster_spec, self.test_config) as rh:

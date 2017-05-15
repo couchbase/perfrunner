@@ -3,7 +3,6 @@ import json
 import subprocess
 import time
 
-import numpy as np
 from logger import logger
 
 from cbagent.stores import SerieslyStore
@@ -680,55 +679,6 @@ class SecondaryIndexingDocIndexingLatencyTest(SecondaryIndexingScanLatencyTest):
         self.run_access_for_2i(run_in_background=True)
         self.apply_scanworkload()
         self.report_kpi()
-
-
-class SecondaryIndexingLatencyTest(SecondaryIndexTest):
-    """
-    This test applies scan workload against a 2i server and measures
-    the indexing latency
-    """
-
-    @with_stats
-    def apply_scanworkload(self, *args):
-        rest_username, rest_password = self.cluster_spec.rest_credentials
-        logger.info('Initiating the scan workload')
-        cmdstr = "/opt/couchbase/bin/cbindexperf -cluster {} -auth=\"{}:{}\" " \
-                 "-configfile scripts/config_indexinglatency.json " \
-                 "-resultfile result.json".format(self.index_nodes[0], rest_username, rest_password)
-        status = subprocess.call(cmdstr, shell=True)
-        if status != 0:
-            raise Exception('Scan workload could not be applied')
-        else:
-            logger.info('Scan workload applied')
-        return status
-
-    def run(self):
-        self.load()
-        self.wait_for_persistence()
-        self.compact_bucket()
-        self.hot_load()
-        self.build_secondaryindex()
-        num_samples = 100
-        samples = []
-
-        while num_samples != 0:
-            self.access()
-
-            time_before = time.time()
-            status = self.apply_scanworkload()
-            time_after = time.time()
-            if status == 0:
-                num_samples -= 1
-                time_elapsed = (time_after - time_before) / 1000000.0
-                samples.append(time_elapsed)
-
-        temp = np.array(samples)
-        indexing_latency_percentile_80 = np.percentile(temp, 80)
-
-        logger.info('Indexing latency (80th percentile): {} ms.'.format(indexing_latency_percentile_80))
-
-        if self.test_config.stats_settings.enabled:
-            self.reporter.post_to_sf(indexing_latency_percentile_80)
 
 
 class SecondaryNumConnectionsTest(SecondaryIndexTest):

@@ -178,25 +178,25 @@ class RemoteLinux(Remote):
     @all_hosts
     def restart(self):
         logger.info('Restarting server')
-        run('service couchbase-server restart', pty=False)
+        run('systemctl restart couchbase-server', pty=False)
 
     @all_hosts
     def restart_with_alternative_num_vbuckets(self, num_vbuckets):
         logger.info('Changing number of vbuckets to {}'.format(num_vbuckets))
         run('systemctl set-environment COUCHBASE_NUM_VBUCKETS={}'
             .format(num_vbuckets))
-        run('service couchbase-server restart', pty=False)
+        run('systemctl restart couchbase-server', pty=False)
         run('systemctl unset-environment COUCHBASE_NUM_VBUCKETS')
 
     @all_hosts
     def stop_server(self):
         logger.info('Stopping Couchbase Server')
-        run('/etc/init.d/couchbase-server stop', pty=False)
+        run('systemctl stop couchbase-server', pty=False)
 
     @all_hosts
     def start_server(self):
         logger.info('Starting Couchbase Server')
-        run('/etc/init.d/couchbase-server start', pty=False)
+        run('systemctl start couchbase-server', pty=False)
 
     def detect_if(self):
         stdout = run("ip route list | grep default")

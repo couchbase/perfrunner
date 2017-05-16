@@ -2,7 +2,7 @@
 test = perfdaily.kv.RebalanceTest
 title = Rebalance 3 -> 4, 100M x 1KB items, DGM, 10K mixed ops/sec
 component = KV
-threshold = 10
+threshold = 15
 
 [cluster]
 mem_quota = 51200

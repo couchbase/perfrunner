@@ -1,5 +1,3 @@
-from time import sleep
-
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import target_hash
 from perfrunner.settings import TargetSettings
@@ -53,7 +51,6 @@ class XdcrTest(PerfTest):
             self._start_replication(m2, m1)
 
     def monitor_replication(self):
-        sleep(self.MONITORING_DELAY)
         for target in self.target_iterator:
             self.monitor.monitor_xdcr_queues(target.node, target.bucket)
 

@@ -9,13 +9,14 @@ from perfrunner.helpers.rest import RestHelper
 
 class Monitor(RestHelper):
 
+    MAX_RETRY = 60
+    MAX_RETRY_RECOVERY = 1200
+    MONITORING_DELAY = 5
     POLLING_INTERVAL = 2
     POLLING_INTERVAL_INDEXING = 1
     POLLING_INTERVAL_MACHINE_UP = 10
-    MAX_RETRY = 60
     REBALANCE_TIMEOUT = 3600 * 2
     TIMEOUT = 3600 * 12
-    MAX_RETRY_RECOVERY = 1200
 
     DISK_QUEUES = (
         'ep_queue_size',
@@ -118,6 +119,7 @@ class Monitor(RestHelper):
 
     def monitor_task(self, host_port, task_type):
         logger.info('Monitoring task: {}'.format(task_type))
+        time.sleep(self.MONITORING_DELAY)
 
         while True:
             time.sleep(self.POLLING_INTERVAL)

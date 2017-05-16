@@ -1,5 +1,3 @@
-from time import sleep
-
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import PerfTest
 from perfrunner.workloads.viewgen import ViewGen, ViewGenDev
@@ -40,7 +38,7 @@ class IndexTest(PerfTest):
                         self.rest.query_view(master, bucket,
                                              ddoc_name, view_name,
                                              params={'limit': 10})
-        sleep(self.MONITORING_DELAY)
+
         for master in self.cluster_spec.yield_masters():
             self.monitor.monitor_task(master, 'indexer')
 

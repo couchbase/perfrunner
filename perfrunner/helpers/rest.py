@@ -221,12 +221,13 @@ class RestHelper:
         api = 'http://{}/pools/default/tasks'.format(host_port)
         return self.get(url=api).json()
 
-    def get_rebalance_status(self, host_port):
+    def get_task_status(self, host_port: str, task_type: str) -> [bool, float]:
         for task in self.get_tasks(host_port):
-            if task['type'] == 'rebalance':
-                is_running = bool(task['status'] == 'running')
+            if task['type'] == task_type:
+                is_running = task['status'] == 'running'
                 progress = task.get('progress')
                 return is_running, progress
+        return False, 0
 
     def create_bucket(self, host_port, name, password, ram_quota,
                       replica_number, replica_index, eviction_policy,

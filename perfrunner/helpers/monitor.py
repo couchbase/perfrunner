@@ -49,7 +49,8 @@ class Monitor(RestHelper):
         while is_running:
             time.sleep(self.POLLING_INTERVAL)
 
-            is_running, progress = self.get_rebalance_status(host_port)
+            is_running, progress = self.get_task_status(host_port,
+                                                        task_type='rebalance')
             if progress == last_progress:
                 if time.time() - last_progress_time > self.REBALANCE_TIMEOUT:
                     logger.error('Rebalance hung')
@@ -96,8 +97,15 @@ class Monitor(RestHelper):
         self._wait_for_empty_queues(host_port, bucket, self.DCP_QUEUES,
                                     self.get_bucket_stats)
 
-    def monitor_xdcr_queues(self, host_port, bucket):
+    def _wait_for_xdcr_to_start(self, host_port: str):
+        is_running = False
+        while not is_running:
+            time.sleep(self.POLLING_INTERVAL)
+            is_running, _ = self.get_task_status(host_port, task_type='xdcr')
+
+    def monitor_xdcr_queues(self, host_port: str, bucket: str):
         logger.info('Monitoring XDCR queues: {}'.format(bucket))
+        self._wait_for_xdcr_to_start(host_port)
         self._wait_for_empty_queues(host_port, bucket, self.XDCR_QUEUES,
                                     self.get_xdcr_stats)
 

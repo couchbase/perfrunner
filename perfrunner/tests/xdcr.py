@@ -52,7 +52,8 @@ class XdcrTest(PerfTest):
 
     def monitor_replication(self):
         for target in self.target_iterator:
-            self.monitor.monitor_xdcr_queues(target.node, target.bucket)
+            if self.rest.get_remote_clusters(target.node):
+                self.monitor.monitor_xdcr_queues(target.node, target.bucket)
 
     @with_stats
     def access(self, *args):

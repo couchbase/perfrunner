@@ -1,7 +1,7 @@
 import json
 import time
 from collections import namedtuple
-from typing import List
+from typing import Dict, List
 
 import requests
 from decorator import decorator
@@ -304,6 +304,12 @@ class RestHelper:
                 'demandEncryption': 1, 'certificate': certificate
             })
         self.post(url=api, data=data)
+
+    def get_remote_clusters(self, host_port: str) -> List[Dict]:
+        logger.info('Getting remote clusters')
+
+        api = 'http://{}/pools/default/remoteClusters'.format(host_port)
+        return self.get(url=api).json()
 
     def start_replication(self, host_port, params):
         logger.info('Starting replication with parameters {}'.format(params))

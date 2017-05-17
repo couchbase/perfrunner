@@ -3,28 +3,28 @@
 	"ignore": "test",
 	"package": [
 		{
-			"checksumSHA1": "DSOG8q9Pyj1yRQLi803yzMckuC0=",
+			"checksumSHA1": "0sp013r+LwFEeKpt3L7h7IkuCZU=",
 			"path": "github.com/couchbase/cbauth",
-			"revision": "4a6d537777f57b291a8126f94dfbe3201c1d4efc",
-			"revisionTime": "2016-05-25T20:49:00Z"
+			"revision": "4f0ce347fbe95c435db15eae5ccf982ec8e1b93f",
+			"revisionTime": "2017-05-15T22:35:04Z"
 		},
 		{
-			"checksumSHA1": "Mywo5qTDkBLbS8+2r8uS5gs7eBQ=",
+			"checksumSHA1": "H0CfzTF8pgAJwZNJK83R3M00m3U=",
 			"path": "github.com/couchbase/cbauth/cbauthimpl",
-			"revision": "4a6d537777f57b291a8126f94dfbe3201c1d4efc",
-			"revisionTime": "2016-05-25T20:49:00Z"
+			"revision": "4f0ce347fbe95c435db15eae5ccf982ec8e1b93f",
+			"revisionTime": "2017-05-15T22:35:04Z"
 		},
 		{
-			"checksumSHA1": "8AbUBVIqlnp1MBkW5lmnaFSNTFo=",
+			"checksumSHA1": "4/GRyWRWrdo9adzaMt4nGFWyFSU=",
 			"path": "github.com/couchbase/cbauth/metakv",
-			"revision": "4a6d537777f57b291a8126f94dfbe3201c1d4efc",
-			"revisionTime": "2016-05-25T20:49:00Z"
+			"revision": "4f0ce347fbe95c435db15eae5ccf982ec8e1b93f",
+			"revisionTime": "2017-05-15T22:35:04Z"
 		},
 		{
-			"checksumSHA1": "F6qx3ryW37GU0dXrmM/kBleOGbc=",
+			"checksumSHA1": "gz6Rs/iV6bvHqmNWuiTVXDSnEE4=",
 			"path": "github.com/couchbase/cbauth/revrpc",
-			"revision": "4a6d537777f57b291a8126f94dfbe3201c1d4efc",
-			"revisionTime": "2016-05-25T20:49:00Z"
+			"revision": "4f0ce347fbe95c435db15eae5ccf982ec8e1b93f",
+			"revisionTime": "2017-05-15T22:35:04Z"
 		},
 		{
 			"checksumSHA1": "zWaGQETDZ1cuY8y+89EZG5Fsl4M=",

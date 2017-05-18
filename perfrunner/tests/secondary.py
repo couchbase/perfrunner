@@ -569,7 +569,7 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
         self.compact_bucket()
         self.build_secondaryindex()
         self.run_access_for_2i(run_in_background=True)
-        self.apply_scanworkload()
+        self.apply_scanworkload(path_to_tool="./cbindexperf")
         self.print_index_disk_usage()
         self.report_kpi()
         self.validate_num_connections()

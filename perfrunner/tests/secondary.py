@@ -394,7 +394,7 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
         self.compact_bucket()
         self.build_secondaryindex()
         self.run_access_for_2i(run_in_background=True)
-        self.apply_scanworkload()
+        self.apply_scanworkload(path_to_tool="./cbindexperf")
         scan_thr, row_thr = self.read_scanresults()
         logger.info('Scan throughput: {}'.format(scan_thr))
         logger.info('Rows throughput: {}'.format(row_thr))
@@ -433,7 +433,7 @@ class SecondaryIndexingThroughputRebalanceTest(SecondaryIndexingThroughputTest):
         initial_nodes = self.test_config.cluster.initial_nodes
         nodes_after[0] = initial_nodes[0] + 1
         self.rebalance(initial_nodes[0], nodes_after[0])
-        self.apply_scanworkload()
+        self.apply_scanworkload(path_to_tool="./cbindexperf")
         scan_thr, row_thr = self.read_scanresults()
         logger.info('Scan throughput: {}'.format(scan_thr))
         logger.info('Rows throughput: {}'.format(row_thr))
@@ -537,7 +537,7 @@ class InitialIncrementalMovingScanThroughputTest(InitialIncrementalScanThroughpu
         self.remove_statsfile()
         InitialandIncrementalDGMSecondaryIndexTest.run(self)
         self.run_access_for_2i(run_in_background=True)
-        self.apply_scanworkload()
+        self.apply_scanworkload(path_to_tool="./cbindexperf")
         scan_throughput = self.calc_throughput()
         self.print_index_disk_usage()
         self.report_kpi(scan_throughput)
@@ -607,7 +607,7 @@ class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest
         self.build_secondaryindex()
         self.run_access_for_2i(run_in_background=True)
         self.rebalance(initial_nodes[0], nodes_after[0])
-        self.apply_scanworkload()
+        self.apply_scanworkload(path_to_tool="./cbindexperf")
         self.print_index_disk_usage()
         self.report_kpi()
         self.validate_num_connections()
@@ -672,7 +672,8 @@ class InitialIncrementalMovingScanLatencyTest(InitialIncrementalScanLatencyTest)
 class SecondaryIndexingDocIndexingLatencyTest(SecondaryIndexingScanLatencyTest):
     """
     The test applies scan workload against the 2i server and measures
-    and reports the average scan latency end to end, meaning since doc is added till it gets reflected in query
+    and reports the average scan latency end to end, meaning since doc
+    is added till it gets reflected in query
     """
 
     COLLECTORS = {'secondary_stats': True, 'secondary_latency': True,

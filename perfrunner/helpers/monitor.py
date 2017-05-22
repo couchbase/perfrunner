@@ -81,7 +81,7 @@ class Monitor(RestHelper):
                         continue
                     else:
                         logger.info('{} reached 0'.format(metric))
-                metrics.remove(metric)
+                    metrics.remove(metric)
             if metrics:
                 time.sleep(self.POLLING_INTERVAL)
             if time.time() - start_time > self.TIMEOUT:

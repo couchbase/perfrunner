@@ -93,13 +93,13 @@ class CbAgent:
             'indexes': test.test_config.gsi_settings.indexes,
             'hostnames': hostnames,
             'monitored_processes': test.test_config.stats_settings.monitored_processes,
+            'bucket_password': test.test_config.bucket.password,
         })()
         if test.cluster_spec.ssh_credentials:
             self.settings.ssh_username, self.settings.ssh_password = \
                 test.cluster_spec.ssh_credentials
         self.settings.rest_username, self.settings.rest_password = \
             test.cluster_spec.rest_credentials
-        self.settings.bucket_password = test.test_config.bucket.password
 
         for _, servers in test.cluster_spec.yield_servers_by_role('index'):
             if servers:

@@ -164,7 +164,7 @@ class QueryThroughputTest(QueryTest):
 
     def _report_kpi(self):
         self.reporter.post(
-            self.metrics.calc_avg_couch_views_ops()
+            self.metrics.avg_couch_views_ops()
         )
 
 
@@ -179,7 +179,7 @@ class QueryLatencyTest(QueryTest):
 
     def _report_kpi(self):
         self.reporter.post(
-            *self.metrics.calc_query_latency(percentile=80)
+            *self.metrics.query_latency(percentile=80)
         )
 
 
@@ -196,7 +196,7 @@ class IndexLatencyTest(QueryTest):
 
     def _report_kpi(self):
         self.reporter.post(
-            *self.metrics.calc_observe_latency(percentile=95)
+            *self.metrics.observe_latency(percentile=95)
         )
 
 

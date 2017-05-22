@@ -73,12 +73,12 @@ class XdcrTest(PerfTest):
 
     def _report_kpi(self):
         self.reporter.post(
-            *self.metrics.calc_xdcr_lag()
+            *self.metrics.xdcr_lag()
         )
 
         if self.test_config.stats_settings.post_cpu:
             self.reporter.post(
-                *self.metrics.calc_cpu_utilization()
+                *self.metrics.cpu_utilization()
             )
 
     def run(self):
@@ -182,5 +182,5 @@ class XdcrInitTest(UniDirXdcrTest):
         self.report_kpi()
 
     def _report_kpi(self):
-        rate = self.metrics.calc_avg_replication_rate(self.time_elapsed)
+        rate = self.metrics.avg_replication_rate(self.time_elapsed)
         self.reporter.post(rate)

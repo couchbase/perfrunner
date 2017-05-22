@@ -6,5 +6,5 @@ class XdcrInitTest(DailyTest, _XdcrInitTest):
 
     def _report_kpi(self):
         self.reporter.post_to_daily(
-            *self.metrics.calc_avg_replication_rate(self.time_elapsed)
+            *self.metrics.avg_replication_rate(self.time_elapsed)
         )

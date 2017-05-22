@@ -559,7 +559,7 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
 
     def _report_kpi(self, *args):
         self.reporter.post(
-            *self.metrics.calc_secondary_scan_latency(percentile=90)
+            *self.metrics.secondary_scan_latency(percentile=90)
         )
 
     def run(self):
@@ -636,7 +636,7 @@ class InitialIncrementalScanLatencyTest(InitialandIncrementalDGMSecondaryIndexTe
 
     def report_latency_kpi(self):
         self.reporter.post(
-            *self.metrics.calc_secondary_scan_latency(percentile=90)
+            *self.metrics.secondary_scan_latency(percentile=90)
         )
 
     def run(self):
@@ -682,7 +682,7 @@ class SecondaryIndexingDocIndexingLatencyTest(SecondaryIndexingScanLatencyTest):
 
     def _report_kpi(self):
         self.reporter.post(
-            *self.metrics.calc_observe_latency(percentile=90)
+            *self.metrics.observe_latency(percentile=90)
         )
 
     def run(self):

@@ -69,13 +69,13 @@ class BackupTest(BackupRestoreTest):
         backup_size = local.calc_backup_size(self.cluster_spec)
 
         self.reporter.post(
-            *self.metrics.calc_bnr_throughput(self.time_elapsed,
-                                              edition,
-                                              tool='backup')
+            *self.metrics.bnr_throughput(self.time_elapsed,
+                                         edition,
+                                         tool='backup')
         )
 
         self.reporter.post(
-            *self.metrics.calc_backup_size(backup_size, edition)
+            *self.metrics.backup_size(backup_size, edition)
         )
 
     def run(self):
@@ -145,9 +145,9 @@ class RestoreTest(BackupTest):
         edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
 
         self.reporter.post(
-            *self.metrics.calc_bnr_throughput(self.time_elapsed,
-                                              edition,
-                                              tool='restore')
+            *self.metrics.bnr_throughput(self.time_elapsed,
+                                         edition,
+                                         tool='restore')
         )
 
     def run(self):

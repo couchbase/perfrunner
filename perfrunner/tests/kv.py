@@ -57,8 +57,8 @@ class MixedLatencyTest(KVTest):
     def _report_kpi(self):
         for operation in ('get', 'set'):
             self.reporter.post(
-                *self.metrics.calc_kv_latency(operation=operation,
-                                              percentile=99)
+                *self.metrics.kv_latency(operation=operation,
+                                         percentile=99)
             )
 
     def compact_bucket(self):
@@ -76,9 +76,9 @@ class DurabilityTest(KVTest):
     def _report_kpi(self):
         for operation in ('replicate_to', 'persist_to'):
             self.reporter.post(
-                *self.metrics.calc_kv_latency(operation=operation,
-                                              percentile=99,
-                                              dbname='durability')
+                *self.metrics.kv_latency(operation=operation,
+                                         percentile=99,
+                                         dbname='durability')
             )
 
 
@@ -92,8 +92,8 @@ class ReadLatencyTest(MixedLatencyTest):
 
     def _report_kpi(self):
         self.reporter.post(
-            *self.metrics.calc_kv_latency(operation='get',
-                                          percentile=99)
+            *self.metrics.kv_latency(operation='get',
+                                     percentile=99)
         )
 
 
@@ -118,7 +118,7 @@ class BgFetcherTest(KVTest):
 
     def _report_kpi(self):
         self.reporter.post(
-            self.metrics.calc_avg_bg_wait_time()
+            self.metrics.avg_bg_wait_time()
         )
 
 
@@ -132,7 +132,7 @@ class DrainTest(KVTest):
 
     def _report_kpi(self):
         self.reporter.post(
-            self.metrics.calc_avg_disk_write_queue()
+            self.metrics.avg_disk_write_queue()
         )
 
 
@@ -188,7 +188,7 @@ class FlusherTest(KVTest):
 
     def _report_kpi(self, time_elapsed):
         self.reporter.post(
-            self.metrics.calc_max_drain_rate(time_elapsed)
+            self.metrics.max_drain_rate(time_elapsed)
         )
 
     def run(self):
@@ -212,7 +212,7 @@ class BeamRssTest(KVTest):
 
     def _report_kpi(self):
         self.reporter.post(
-            *self.metrics.calc_max_beam_rss()
+            *self.metrics.max_beam_rss()
         )
 
 
@@ -363,7 +363,7 @@ class RevABTest(FragmentationTest):
         fragmentation_ratio = self.calc_fragmentation_ratio()
         self.reporter.post(fragmentation_ratio)
         self.reporter.post(
-            *self.metrics.calc_max_memcached_rss()
+            *self.metrics.max_memcached_rss()
         )
 
     def run(self):
@@ -380,10 +380,10 @@ class MemUsedTest(KVTest):
     def _report_kpi(self):
         for metric in ('max', 'min'):
             self.reporter.post(
-                *self.metrics.calc_mem_used(metric)
+                *self.metrics.mem_used(metric)
             )
             self.reporter.post(
-                *self.metrics.calc_mem_used(metric)
+                *self.metrics.mem_used(metric)
             )
 
 
@@ -405,10 +405,10 @@ class PathoGenTest(FragmentationTest):
 
     def _report_kpi(self):
         self.reporter.post(
-            *self.metrics.calc_avg_memcached_rss()
+            *self.metrics.avg_memcached_rss()
         )
         self.reporter.post(
-            *self.metrics.calc_max_memcached_rss()
+            *self.metrics.max_memcached_rss()
         )
 
     def run(self):
@@ -484,7 +484,7 @@ class PillowFightTest(PerfTest):
 
     def _report_kpi(self):
         self.reporter.post(
-            self.metrics.calc_max_ops()
+            self.metrics.max_ops()
         )
 
     def run(self):
@@ -528,7 +528,7 @@ class MemoryOverheadTest(PillowFightTest):
 
     def _report_kpi(self):
         self.reporter.post(
-            self.metrics.calc_memory_overhead(key_size=self.PF_KEY_SIZE)
+            self.metrics.memory_overhead(key_size=self.PF_KEY_SIZE)
         )
 
     @with_stats

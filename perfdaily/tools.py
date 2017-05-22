@@ -6,5 +6,5 @@ class BackupTest(DailyTest, _BackupTest):
 
     def _report_kpi(self):
         self.reporter.post_to_daily(
-            *self.metrics.calc_backup_throughput(self.time_elapsed)
+            *self.metrics.backup_throughput(self.time_elapsed)
         )

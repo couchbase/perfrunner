@@ -1,5 +1,5 @@
 {
-       "Concurrency" : 128,
+       "Concurrency" : 64,
        "Clients" : 5,
        "ScanSpecs" : [
           {
@@ -11,12 +11,13 @@
              "Type" : "Range",
              "Bucket" : "bucket-1",
              "High" : [
-                "000028"
+                "ffffff"
              ],
              "Id" : 1,
              "Inclusion" : 3,
              "Index" : "myindex",
-             "NInterval" : 100
+             "NInterval" : 100,
+             "RandomLen" : 6
            }
        ]
 }

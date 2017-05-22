@@ -106,7 +106,7 @@ class SecondaryIndexTest(PerfTest):
         db = SerieslyStore.build_dbname(self.cbagent.cluster_ids[0], None, None, None, "secondary_debugstats")
         config_data = self.get_data_from_config_json(self.configfile)
         # Expecting few extra connections(Number of GSi clients) than concurrency in config file
-        ret = self.metric_helper.verify_series_in_limits(db, config_data["Concurrency"] + 5, "num_connections")
+        ret = self.metrics.verify_series_in_limits(db, config_data["Concurrency"] + 5, "num_connections")
         if not ret:
             raise Exception('Validation for num_connections failed')
 
@@ -191,9 +191,9 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
     def _report_kpi(self, time_elapsed, index_type, unit="min"):
 
         self.reporter.post_to_sf(
-            *self.metric_helper.get_indexing_meta(value=time_elapsed,
-                                                  index_type=index_type,
-                                                  unit=unit)
+            *self.metrics.get_indexing_meta(value=time_elapsed,
+                                            index_type=index_type,
+                                            unit=unit)
         )
 
     def build_initindex(self):
@@ -281,8 +281,8 @@ class MultipleIncrementalSecondaryIndexTest(InitialandIncrementalSecondaryIndexT
         usage_diff = round(usage_diff, 2)
 
         self.reporter.post_to_sf(
-            *self.metric_helper.get_memory_meta(value=usage_diff,
-                                                memory_type=memory_type)
+            *self.metrics.get_memory_meta(value=usage_diff,
+                                          memory_type=memory_type)
         )
 
     @with_stats
@@ -559,7 +559,7 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
 
     def _report_kpi(self, *args):
         self.reporter.post_to_sf(
-            *self.metric_helper.calc_secondary_scan_latency(percentile=90)
+            *self.metrics.calc_secondary_scan_latency(percentile=90)
         )
 
     def run(self):
@@ -636,7 +636,7 @@ class InitialIncrementalScanLatencyTest(InitialandIncrementalDGMSecondaryIndexTe
 
     def report_latency_kpi(self):
         self.reporter.post_to_sf(
-            *self.metric_helper.calc_secondary_scan_latency(percentile=90)
+            *self.metrics.calc_secondary_scan_latency(percentile=90)
         )
 
     def run(self):
@@ -682,7 +682,7 @@ class SecondaryIndexingDocIndexingLatencyTest(SecondaryIndexingScanLatencyTest):
 
     def _report_kpi(self):
         self.reporter.post_to_sf(
-            *self.metric_helper.calc_observe_latency(percentile=90)
+            *self.metrics.calc_observe_latency(percentile=90)
         )
 
     def run(self):

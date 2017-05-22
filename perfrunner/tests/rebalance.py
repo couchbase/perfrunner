@@ -462,7 +462,7 @@ class RebalanceWithXdcrTest(RebalanceTest, XdcrInitTest):
         PerfTest.load(self, target_iterator=dest_target_iterator)
 
     def _report_kpi(self, *args):
-        rate = self.metric_helper.calc_avg_replication_rate(self.time_elapsed)
+        rate = self.metrics.calc_avg_replication_rate(self.time_elapsed)
         self.reporter.post_to_sf(value=rate)
 
     def check_rebalance(self):

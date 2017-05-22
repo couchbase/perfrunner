@@ -6,4 +6,4 @@ class DailyTest(PerfTest):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.metric_helper = DailyMetricHelper(self)
+        self.metrics = DailyMetricHelper(self)

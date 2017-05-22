@@ -15,7 +15,7 @@ class PillowFightTest(DailyTest, _PillowFightTest):
 
     def _report_kpi(self):
         self.reporter.post_to_daily(
-            *self.metric_helper.calc_max_ops()
+            *self.metrics.calc_max_ops()
         )
 
 

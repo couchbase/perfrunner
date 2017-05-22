@@ -89,7 +89,7 @@ class InitialAndIncrementalIndexTest(InitialIndexTest):
 
     def _report_kpi(self, time_elapsed, index_type='Initial'):
         self.reporter.post_to_sf(
-            *self.metric_helper.get_indexing_meta(time_elapsed, index_type)
+            *self.metrics.get_indexing_meta(time_elapsed, index_type)
         )
 
     def run(self):
@@ -162,7 +162,7 @@ class QueryThroughputTest(QueryTest):
 
     def _report_kpi(self):
         self.reporter.post_to_sf(
-            self.metric_helper.calc_avg_couch_views_ops()
+            self.metrics.calc_avg_couch_views_ops()
         )
 
 
@@ -177,7 +177,7 @@ class QueryLatencyTest(QueryTest):
 
     def _report_kpi(self):
         self.reporter.post_to_sf(
-            *self.metric_helper.calc_query_latency(percentile=80)
+            *self.metrics.calc_query_latency(percentile=80)
         )
 
 
@@ -194,7 +194,7 @@ class IndexLatencyTest(QueryTest):
 
     def _report_kpi(self):
         self.reporter.post_to_sf(
-            *self.metric_helper.calc_observe_latency(percentile=95)
+            *self.metrics.calc_observe_latency(percentile=95)
         )
 
 

@@ -1,13 +1,16 @@
 import json
 import os
 import time
-from typing import Union
+from typing import Any, Dict, Union
 
 import requests
 from logger import logger
 
 from perfrunner.helpers.misc import pretty_dict, uhex
 from perfrunner.settings import StatsSettings
+
+
+JSON = Dict[str, Any]
 
 
 class SFReporter:
@@ -37,7 +40,9 @@ class SFReporter:
         requests.post('http://{}/api/v1/metrics'.format(StatsSettings.SHOWFAST),
                       json.dumps(metric_info))
 
-    def _generate_benchmark(self, metric: str, value: Union[float, int]) -> dict:
+    def _generate_benchmark(self,
+                            metric: str,
+                            value: Union[float, int]) -> JSON:
         return {
             'build': self.test.build,
             'buildURL': os.environ.get('BUILD_URL'),
@@ -82,14 +87,14 @@ class DailyReporter:
         self.test = test
 
     @staticmethod
-    def _post_daily_benchmark(benchmark: dict) -> None:
+    def _post_daily_benchmark(benchmark: JSON) -> None:
         logger.info('Adding a benchmark: {}'.format(pretty_dict(benchmark)))
         requests.post(
             'http://{}/daily/api/v1/benchmarks'.format(StatsSettings.SHOWFAST),
             json.dumps(benchmark))
 
     @staticmethod
-    def _log_daily_benchmark(benchmark: dict) -> None:
+    def _log_daily_benchmark(benchmark: JSON) -> None:
         logger.info('Dry run: {}'.format(pretty_dict(benchmark)))
 
     def post_to_daily(self, metric: str, value: Union[float, int]) -> None:

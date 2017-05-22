@@ -13,20 +13,22 @@ from perfrunner.settings import ClusterSpec
 LOCATIONS = (
     'http://172.23.120.24/builds/latestbuilds/couchbase-server/spock/{build}/',
     'http://172.23.120.24/builds/latestbuilds/couchbase-server/watson/{build}/',
+    'http://172.23.120.24/builds/releases/{release}/'
 )
 
 PKG_PATTERNS = {
     'rpm': (
         'couchbase-server-{edition}-{release}-{build}-centos{os}.x86_64.rpm',
-        'couchbase-server-{edition}_centos6_x86_64_{release}-{build}-rel.rpm',
+        'couchbase-server-{edition}-{release}-centos{os}.x86_64.rpm',
+        'couchbase-server-{edition}-{release}-centos6.x86_64.rpm',
     ),
     'deb': (
-        'couchbase-server-{edition}_{release}-{build}-ubuntu{os}_amd64.deb'
+        'couchbase-server-{edition}_{release}-{build}-ubuntu{os}_amd64.deb',
+        'couchbase-server-{edition}_{release}-ubuntu{os}_amd64.deb',
     ),
     'exe': (
-        'couchbase-server-{edition}_amd64_{release}-{build}-rel.setup.exe',
         'couchbase-server-{edition}_{release}-{build}-windows_amd64.exe',
-        'couchbase_server-{edition}-windows-amd64-{release}-{build}.exe',
+        'couchbase-server-{edition}_{release}-windows_amd64.exe',
     ),
 }
 
@@ -48,8 +50,14 @@ class CouchbaseInstaller:
                                      edition=self.options.edition)
 
     @property
-    def release(self):
+    def release(self) -> str:
         return self.options.version.split('-')[0]
+
+    @property
+    def build(self) -> str:
+        split = self.options.version.split('-')
+        if len(split) > 1:
+            return split[1]
 
     def find_package(self, version: str, edition: str) -> [str, str]:
         for url in self.url_iterator(version, edition):
@@ -63,13 +71,12 @@ class CouchbaseInstaller:
             os_release = self.remote.detect_centos_release()
         elif self.remote.package == 'deb':
             os_release = self.remote.detect_ubuntu_release()
-        release, build = version.split('-')
 
         for pkg_pattern in PKG_PATTERNS[self.remote.package]:
             for loc_pattern in LOCATIONS:
                 url = loc_pattern + pkg_pattern
-                yield url.format(release=release, build=build, edition=edition,
-                                 os=os_release)
+                yield url.format(release=self.release, build=self.build,
+                                 edition=edition, os=os_release)
 
     @staticmethod
     def is_exist(url):

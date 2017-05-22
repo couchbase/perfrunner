@@ -1,8 +1,10 @@
+import time
 from calendar import timegm
 from collections import OrderedDict
 from copy import copy
 from datetime import datetime
 from multiprocessing import Process
+from typing import Callable
 
 import requests
 from decorator import decorator
@@ -43,7 +45,14 @@ from perfrunner.settings import StatsSettings
 
 
 @decorator
-def with_stats(method, *args, **kwargs):
+def timeit(method: Callable, *args, **kwargs) -> float:
+    t0 = time.time()
+    method(*args, **kwargs)
+    return time.time() - t0  # Elapsed time in seconds
+
+
+@decorator
+def with_stats(method: Callable, *args, **kwargs):
     test = args[0]
 
     stats_enabled = test.test_config.stats_settings.enabled

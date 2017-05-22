@@ -46,8 +46,7 @@ class CouchbaseInstaller:
         if validators.url(self.options.version):
             return self.options.version
         else:
-            return self.find_package(version=self.options.version,
-                                     edition=self.options.edition)
+            return self.find_package(edition=self.options.edition)
 
     @property
     def release(self) -> str:
@@ -59,13 +58,13 @@ class CouchbaseInstaller:
         if len(split) > 1:
             return split[1]
 
-    def find_package(self, version: str, edition: str) -> [str, str]:
-        for url in self.url_iterator(version, edition):
+    def find_package(self, edition: str) -> [str, str]:
+        for url in self.url_iterator(edition):
             if self.is_exist(url):
                 return url
         logger.interrupt('Target build not found')
 
-    def url_iterator(self, version: str, edition: str) -> Iterator[str]:
+    def url_iterator(self, edition: str) -> Iterator[str]:
         os_release = None
         if self.remote.package == 'rpm':
             os_release = self.remote.detect_centos_release()

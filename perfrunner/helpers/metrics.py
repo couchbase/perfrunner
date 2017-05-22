@@ -286,7 +286,7 @@ class MetricHelper:
 
     def kv_latency(self,
                    operation: str,
-                   percentile: int,
+                   percentile: int = 99,
                    dbname: str = 'spring_latency') -> Metric:
         metric = '{}_{}_{}th'.format(self.test_config.name,
                                      operation,

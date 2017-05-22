@@ -57,8 +57,7 @@ class MixedLatencyTest(KVTest):
     def _report_kpi(self):
         for operation in ('get', 'set'):
             self.reporter.post(
-                *self.metrics.kv_latency(operation=operation,
-                                         percentile=99)
+                *self.metrics.kv_latency(operation=operation)
             )
 
     def compact_bucket(self):
@@ -77,7 +76,6 @@ class DurabilityTest(KVTest):
         for operation in ('replicate_to', 'persist_to'):
             self.reporter.post(
                 *self.metrics.kv_latency(operation=operation,
-                                         percentile=99,
                                          dbname='durability')
             )
 
@@ -92,8 +90,7 @@ class ReadLatencyTest(MixedLatencyTest):
 
     def _report_kpi(self):
         self.reporter.post(
-            *self.metrics.kv_latency(operation='get',
-                                     percentile=99)
+            *self.metrics.kv_latency(operation='get')
         )
 
 

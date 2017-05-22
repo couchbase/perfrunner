@@ -56,7 +56,7 @@ class MixedLatencyTest(KVTest):
 
     def _report_kpi(self):
         for operation in ('get', 'set'):
-            self.reporter.post_to_sf(
+            self.reporter.post(
                 *self.metrics.calc_kv_latency(operation=operation,
                                               percentile=99)
             )
@@ -75,7 +75,7 @@ class DurabilityTest(KVTest):
 
     def _report_kpi(self):
         for operation in ('replicate_to', 'persist_to'):
-            self.reporter.post_to_sf(
+            self.reporter.post(
                 *self.metrics.calc_kv_latency(operation=operation,
                                               percentile=99,
                                               dbname='durability')
@@ -91,7 +91,7 @@ class ReadLatencyTest(MixedLatencyTest):
     COLLECTORS = {'latency': True}
 
     def _report_kpi(self):
-        self.reporter.post_to_sf(
+        self.reporter.post(
             *self.metrics.calc_kv_latency(operation='get',
                                           percentile=99)
         )
@@ -117,7 +117,7 @@ class BgFetcherTest(KVTest):
     ALL_BUCKETS = True
 
     def _report_kpi(self):
-        self.reporter.post_to_sf(
+        self.reporter.post(
             self.metrics.calc_avg_bg_wait_time()
         )
 
@@ -131,7 +131,7 @@ class DrainTest(KVTest):
     ALL_BUCKETS = True
 
     def _report_kpi(self):
-        self.reporter.post_to_sf(
+        self.reporter.post(
             self.metrics.calc_avg_disk_write_queue()
         )
 
@@ -187,7 +187,7 @@ class FlusherTest(KVTest):
                 self.monitor.monitor_disk_queue(master, bucket)
 
     def _report_kpi(self, time_elapsed):
-        self.reporter.post_to_sf(
+        self.reporter.post(
             self.metrics.calc_max_drain_rate(time_elapsed)
         )
 
@@ -211,7 +211,7 @@ class BeamRssTest(KVTest):
     """
 
     def _report_kpi(self):
-        self.reporter.post_to_sf(
+        self.reporter.post(
             *self.metrics.calc_max_beam_rss()
         )
 
@@ -243,7 +243,7 @@ class WarmupTest(PerfTest):
                 self.monitor.monitor_warmup(self.memcached, master, bucket)
 
     def _report_kpi(self):
-        self.reporter.post_to_sf(self.time_elapsed)
+        self.reporter.post(self.time_elapsed)
 
     def run(self):
         self.load()
@@ -301,7 +301,7 @@ class FragmentationTest(PerfTest):
         return ratio
 
     def _report_kpi(self):
-        self.reporter.post_to_sf(
+        self.reporter.post(
             self.calc_fragmentation_ratio()
         )
 
@@ -361,8 +361,8 @@ class RevABTest(FragmentationTest):
 
     def _report_kpi(self):
         fragmentation_ratio = self.calc_fragmentation_ratio()
-        self.reporter.post_to_sf(fragmentation_ratio)
-        self.reporter.post_to_sf(
+        self.reporter.post(fragmentation_ratio)
+        self.reporter.post(
             *self.metrics.calc_max_memcached_rss()
         )
 
@@ -379,10 +379,10 @@ class MemUsedTest(KVTest):
 
     def _report_kpi(self):
         for metric in ('max', 'min'):
-            self.reporter.post_to_sf(
+            self.reporter.post(
                 *self.metrics.calc_mem_used(metric)
             )
-            self.reporter.post_to_sf(
+            self.reporter.post(
                 *self.metrics.calc_mem_used(metric)
             )
 
@@ -404,10 +404,10 @@ class PathoGenTest(FragmentationTest):
             pg.run()
 
     def _report_kpi(self):
-        self.reporter.post_to_sf(
+        self.reporter.post(
             *self.metrics.calc_avg_memcached_rss()
         )
-        self.reporter.post_to_sf(
+        self.reporter.post(
             *self.metrics.calc_max_memcached_rss()
         )
 
@@ -464,7 +464,7 @@ class ThroughputTest(KVTest):
     def _report_kpi(self):
         throughput = self.total_ops // self.test_config.access_settings.time
 
-        self.reporter.post_to_sf(throughput)
+        self.reporter.post(throughput)
 
 
 class PillowFightTest(PerfTest):
@@ -483,7 +483,7 @@ class PillowFightTest(PerfTest):
         PerfTest.access(self, task=pillowfight_task)
 
     def _report_kpi(self):
-        self.reporter.post_to_sf(
+        self.reporter.post(
             self.metrics.calc_max_ops()
         )
 
@@ -503,7 +503,7 @@ class CompactionTest(KVTest):
         self.compact_bucket()
 
     def _report_kpi(self, time_elapsed):
-        self.reporter.post_to_sf(time_elapsed)
+        self.reporter.post(time_elapsed)
 
     def run(self):
         self.load()
@@ -527,7 +527,7 @@ class MemoryOverheadTest(PillowFightTest):
     PF_KEY_SIZE = 20
 
     def _report_kpi(self):
-        self.reporter.post_to_sf(
+        self.reporter.post(
             self.metrics.calc_memory_overhead(key_size=self.PF_KEY_SIZE)
         )
 

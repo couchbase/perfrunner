@@ -16,7 +16,9 @@ class DCPThroughputTest(PerfTest):
     OUTPUT_FILE = "dcpstatsfile"
 
     def _report_kpi(self, throughput):
-        self.reporter.post_to_sf(value=throughput)
+        self.reporter.post(
+            value=throughput
+        )
 
     @with_stats
     def access(self, *args):

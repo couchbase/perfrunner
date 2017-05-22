@@ -77,7 +77,7 @@ class N1QLTest(PerfTest):
 class N1QLLatencyTest(N1QLTest):
 
     def _report_kpi(self):
-        self.reporter.post_to_sf(
+        self.reporter.post(
             *self.metrics.calc_query_latency(percentile=90)
         )
 
@@ -85,7 +85,7 @@ class N1QLLatencyTest(N1QLTest):
 class N1QLThroughputTest(N1QLTest):
 
     def _report_kpi(self):
-        self.reporter.post_to_sf(
+        self.reporter.post(
             *self.metrics.calc_avg_n1ql_queries()
         )
 
@@ -137,7 +137,7 @@ class N1QLJoinTest(N1QLThroughputTest):
                                             target_iterator=(target, ))
 
     def _report_kpi(self):
-        self.reporter.post_to_sf(
+        self.reporter.post(
             *self.metrics.calc_avg_n1ql_queries()
         )
 
@@ -154,7 +154,7 @@ class N1QLBulkTest(N1QLTest):
             self.rest.exec_n1ql_statement(query_node, statement)
 
     def _report_kpi(self, time_elapsed):
-        self.reporter.post_to_sf(
+        self.reporter.post(
             self.metrics.calc_bulk_n1ql_throughput(time_elapsed)
         )
 

@@ -68,13 +68,13 @@ class BackupTest(BackupRestoreTest):
         edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
         backup_size = local.calc_backup_size(self.cluster_spec)
 
-        self.reporter.post_to_sf(
+        self.reporter.post(
             *self.metrics.calc_bnr_throughput(self.time_elapsed,
                                               edition,
                                               tool='backup')
         )
 
-        self.reporter.post_to_sf(
+        self.reporter.post(
             *self.metrics.calc_backup_size(backup_size, edition)
         )
 
@@ -144,7 +144,7 @@ class RestoreTest(BackupTest):
     def _report_kpi(self):
         edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
 
-        self.reporter.post_to_sf(
+        self.reporter.post(
             *self.metrics.calc_bnr_throughput(self.time_elapsed,
                                               edition,
                                               tool='restore')
@@ -252,8 +252,8 @@ class CbExportImportTest(BackupRestoreTest):
         data_size = self.test_config.load_settings.items * \
             self.test_config.load_settings.size / 2.0 ** 20  # MB
         avg_throughput = round(data_size / self.spent_time)
-        self.reporter.post_to_sf(avg_throughput, metric=metric,
-                                 metric_info=metric_info)
+        self.reporter.post(avg_throughput, metric=metric,
+                           metric_info=metric_info)
 
     def _yield_line_delimited_json(self, path):
         """Read a line-delimited json file yielding each row as a record."""
@@ -323,8 +323,8 @@ class CbImportCETest(CbExportImportTest):
         data_size = self.test_config.load_settings.items * \
             self.test_config.load_settings.size / 2.0 ** 20  # MB
         avg_throughput = round(data_size / self.spent_time)
-        self.reporter.post_to_sf(avg_throughput, metric=metric,
-                                 metric_info=metric_info)
+        self.reporter.post(avg_throughput, metric=metric,
+                           metric_info=metric_info)
 
     @with_stats
     def import_csv_cbtransfer(self):
@@ -379,8 +379,8 @@ class CbImportSampleTest(BackupRestoreTest):
         data_size = self.data_size / 2.0 ** 20
         avg_throughput = round(data_size / self.spent_time)
 
-        self.reporter.post_to_sf(avg_throughput, metric=metric,
-                                 metric_info=metric_info)
+        self.reporter.post(avg_throughput, metric=metric,
+                           metric_info=metric_info)
 
     def run(self):
         self.download_tools()

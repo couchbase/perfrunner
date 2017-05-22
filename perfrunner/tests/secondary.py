@@ -190,7 +190,7 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
 
     def _report_kpi(self, time_elapsed, index_type, unit="min"):
 
-        self.reporter.post_to_sf(
+        self.reporter.post(
             *self.metrics.get_indexing_meta(value=time_elapsed,
                                             index_type=index_type,
                                             unit=unit)
@@ -280,7 +280,7 @@ class MultipleIncrementalSecondaryIndexTest(InitialandIncrementalSecondaryIndexT
         usage_diff = float(usage_diff) / 2 ** 30
         usage_diff = round(usage_diff, 2)
 
-        self.reporter.post_to_sf(
+        self.reporter.post(
             *self.metrics.get_memory_meta(value=usage_diff,
                                           memory_type=memory_type)
         )
@@ -384,7 +384,7 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
     """
 
     def _report_kpi(self, scan_thr):
-        self.reporter.post_to_sf(
+        self.reporter.post(
             round(scan_thr, 1)
         )
 
@@ -454,7 +454,7 @@ class InitialIncrementalScanThroughputTest(InitialandIncrementalDGMSecondaryInde
             self.report_throughput_kpi(*args)
 
     def report_throughput_kpi(self, scan_thr):
-        self.reporter.post_to_sf(
+        self.reporter.post(
             round(scan_thr, 1)
         )
 
@@ -558,7 +558,7 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
                   'secondary_debugstats_index': True}
 
     def _report_kpi(self, *args):
-        self.reporter.post_to_sf(
+        self.reporter.post(
             *self.metrics.calc_secondary_scan_latency(percentile=90)
         )
 
@@ -635,7 +635,7 @@ class InitialIncrementalScanLatencyTest(InitialandIncrementalDGMSecondaryIndexTe
             self.report_latency_kpi()
 
     def report_latency_kpi(self):
-        self.reporter.post_to_sf(
+        self.reporter.post(
             *self.metrics.calc_secondary_scan_latency(percentile=90)
         )
 
@@ -681,7 +681,7 @@ class SecondaryIndexingDocIndexingLatencyTest(SecondaryIndexingScanLatencyTest):
                   'secondary_debugstats_index': True, "secondary_index_latency": True}
 
     def _report_kpi(self):
-        self.reporter.post_to_sf(
+        self.reporter.post(
             *self.metrics.calc_observe_latency(percentile=90)
         )
 
@@ -708,7 +708,9 @@ class SecondaryNumConnectionsTest(SecondaryIndexTest):
         self.config_data = self.get_data_from_config_json('tests/gsi/config_template.json')
 
     def _report_kpi(self, connections):
-        self.reporter.post_to_sf(value=connections)
+        self.reporter.post(
+            value=connections
+        )
 
     @with_stats
     def apply_scanworkload_steps(self):
@@ -757,7 +759,9 @@ class SecondaryIndexingMultiScanTest(SecondaryIndexingScanLatencyTest):
 
     def _report_kpi(self, multifilter_time, independent_time):
         time_diff = independent_time - multifilter_time
-        self.reporter.post_to_sf(round(time_diff, 2))
+        self.reporter.post(
+            round(time_diff, 2)
+        )
 
     @staticmethod
     def read_duration_from_results():
@@ -825,4 +829,6 @@ class SecondaryRebalanceTest(SecondaryIndexTest, RebalanceTest):
         self._rebalance(services="index")
 
     def _report_kpi(self, rebalance_time):
-        self.reporter.post_to_sf(rebalance_time)
+        self.reporter.post(
+            rebalance_time
+        )

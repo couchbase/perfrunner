@@ -87,7 +87,9 @@ class RebalanceTest(PerfTest):
         return True
 
     def _report_kpi(self, rebalance_time):
-        self.reporter.post_to_sf(rebalance_time)
+        self.reporter.post(
+            rebalance_time
+        )
 
     @with_delayed_posting
     def rebalance(self):
@@ -238,7 +240,9 @@ class HardFailoverTest(FailoverTest):
             t_start = self.convert_time(t_start)
             t_end = self.convert_time(t_end)
             delta = int(1000 * (t_end - t_start))  # s -> ms
-            self.reporter.post_to_sf(delta)
+            self.reporter.post(
+                delta
+            )
 
     @with_delay
     def rebalance(self):
@@ -268,7 +272,9 @@ class GracefulFailoverTest(FailoverTest):
             t_start = self.convert_time(t_start)
             t_end = self.convert_time(t_end)
             delta = int(1000 * (t_end - t_start))  # s -> ms
-            self.reporter.post_to_sf(delta)
+            self.reporter.post(
+                delta
+            )
 
     @with_delay
     def rebalance(self):
@@ -299,7 +305,9 @@ class AutoFailoverTest(FailoverTest):
             t_start = self.convert_time(t_start)
             t_end = self.convert_time(t_end)
             delta = int(1000 * (t_end - t_start))  # s -> ms
-            self.reporter.post_to_sf(delta)
+            self.reporter.post(
+                delta
+            )
 
     @with_delay
     def rebalance(self):
@@ -324,7 +332,9 @@ class FailureDetectionTest(FailoverTest):
         if t_failover:
             t_failover = self.convert_time(t_failover)
             delta = round(t_failover - self.t_failure, 1)
-            self.reporter.post_to_sf(delta)
+            self.reporter.post(
+                delta
+            )
 
     @with_delay
     def rebalance(self):
@@ -463,7 +473,9 @@ class RebalanceWithXdcrTest(RebalanceTest, XdcrInitTest):
 
     def _report_kpi(self, *args):
         rate = self.metrics.calc_avg_replication_rate(self.time_elapsed)
-        self.reporter.post_to_sf(value=rate)
+        self.reporter.post(
+            value=rate
+        )
 
     def check_rebalance(self):
         pass

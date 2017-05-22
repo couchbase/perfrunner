@@ -60,10 +60,10 @@ class SFReporter:
         requests.post('http://{}/api/v1/benchmarks'.format(StatsSettings.SHOWFAST),
                       json.dumps(benchmark))
 
-    def post_to_sf(self,
-                   value: Union[float, int],
-                   metric: str = None,
-                   metric_info: dict = None) -> None:
+    def post(self,
+             value: Union[float, int],
+             metric: str = None,
+             metric_info: dict = None) -> None:
         if metric is None:
             metric = self.test.test_config.name
         metric = '{}_{}'.format(metric, self.test.cluster_spec.name)

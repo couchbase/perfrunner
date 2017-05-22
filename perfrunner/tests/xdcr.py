@@ -72,10 +72,12 @@ class XdcrTest(PerfTest):
             self.remote.filter_wan(src_list, dest_list)
 
     def _report_kpi(self):
-        self.reporter.post_to_sf(*self.metrics.calc_xdcr_lag())
+        self.reporter.post(
+            *self.metrics.calc_xdcr_lag()
+        )
 
         if self.test_config.stats_settings.post_cpu:
-            self.reporter.post_to_sf(
+            self.reporter.post(
                 *self.metrics.calc_cpu_utilization()
             )
 
@@ -181,4 +183,4 @@ class XdcrInitTest(UniDirXdcrTest):
 
     def _report_kpi(self):
         rate = self.metrics.calc_avg_replication_rate(self.time_elapsed)
-        self.reporter.post_to_sf(rate)
+        self.reporter.post(rate)

@@ -11,7 +11,7 @@
              "Type" : "Range",
              "Bucket" : "bucket-1",
              "High" : [
-                "000028"
+                "ffffff"
              ],
              "Id" : 1,
              "Inclusion" : 3,

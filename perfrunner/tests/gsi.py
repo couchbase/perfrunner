@@ -84,7 +84,7 @@ class InitialIndexTest(IndexTest):
         self.wait_for_persistence()
 
         self.create_index()
-        from_ts, to_ts = self.init_index()
-        time_elapsed = round((to_ts - from_ts) / 1000.0 / 60, 2)  # ms -> min
+        time_elapsed = self.init_index()
+        time_elapsed = round(time_elapsed / 60, 2)  # s -> min
 
         self.report_kpi(time_elapsed)

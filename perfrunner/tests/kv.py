@@ -194,10 +194,8 @@ class FlusherTest(KVTest):
 
         self.access_bg()
         self.start_persistence()
-        from_ts, to_ts = self.drain()
-        time_elapsed = (to_ts - from_ts) / 1000.0
+        time_elapsed = self.drain()
 
-        self.reporter.finish('Drain', time_elapsed)
         self.report_kpi(time_elapsed)
 
 
@@ -510,9 +508,7 @@ class CompactionTest(KVTest):
 
         self.access_bg()
 
-        from_ts, to_ts = self.compact()
-        time_elapsed = (to_ts - from_ts) / 1000
-        time_elapsed = self.reporter.finish('Full compaction', time_elapsed)
+        time_elapsed = self.compact()
 
         self.report_kpi(time_elapsed)
 

@@ -225,8 +225,7 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
         self.load()
         self.wait_for_persistence()
         self.compact_bucket()
-        from_ts, to_ts = self.build_secondaryindex()
-        time_elapsed = (to_ts - from_ts) / 1000.0
+        time_elapsed = self.build_secondaryindex()
         time_elapsed = self.reporter.finish('Initial secondary index', time_elapsed)
         self.print_index_disk_usage()
         if not self.incremental_only:
@@ -235,8 +234,7 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
     def run(self):
         self.load_and_build_initial_index()
 
-        from_ts, to_ts = self.build_incrindex()
-        time_elapsed = (to_ts - from_ts) / 1000.0
+        time_elapsed = self.build_incrindex()
         time_elapsed = self.reporter.finish('Incremental secondary index', time_elapsed)
         self.print_index_disk_usage()
         self.report_kpi(time_elapsed, 'Incremental')
@@ -254,13 +252,11 @@ class InitialandIncrementalDGMSecondaryIndexTest(InitialandIncrementalSecondaryI
     def run(self):
         self.load_and_build_initial_index()
 
-        from_ts, to_ts = self.build_incrindex()
-        time_elapsed = (to_ts - from_ts) / 1000.0
+        time_elapsed = self.build_incrindex()
         self.reporter.finish('First incremental secondary index', time_elapsed)
         self.print_index_disk_usage()
 
-        from_ts, to_ts = self.build_incrindex()
-        time_elapsed = (to_ts - from_ts) / 1000.0
+        time_elapsed = self.build_incrindex()
         time_elapsed = self.reporter.finish('Second incremental secondary index', time_elapsed)
         self.print_index_disk_usage()
 
@@ -345,8 +341,7 @@ class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSeco
         initial_nodes = self.test_config.cluster.initial_nodes
         nodes_after[0] = initial_nodes[0] + 1
         self.rebalance(initial_nodes[0], nodes_after[0])
-        from_ts, to_ts = self.build_secondaryindex()
-        time_elapsed = (to_ts - from_ts) / 1000.0
+        time_elapsed = self.build_secondaryindex()
         time_elapsed = self.reporter.finish('Initial secondary index', time_elapsed)
         self.print_index_disk_usage()
         self.report_kpi(time_elapsed, 'Initial')
@@ -358,8 +353,7 @@ class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSeco
         initial_nodes[0] += 1
         nodes_after[0] += 1
         self.rebalance(initial_nodes[0], nodes_after[0])
-        from_ts, to_ts = self.build_incrindex()
-        time_elapsed = (to_ts - from_ts) / 1000.0
+        time_elapsed = self.build_incrindex()
         time_elapsed = self.reporter.finish('Incremental secondary index', time_elapsed)
         self.print_index_disk_usage()
         self.report_kpi(time_elapsed, 'Incremental')

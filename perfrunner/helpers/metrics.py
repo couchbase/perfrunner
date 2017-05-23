@@ -66,7 +66,6 @@ class MetricHelper:
 
     def bulk_n1ql_throughput(self, time_elapsed: float) -> float:
         items = self.test_config.load_settings.items / 4
-        time_elapsed /= 1000  # ms -> s
         return round(items / time_elapsed)
 
     def avg_fts_throughput(self,

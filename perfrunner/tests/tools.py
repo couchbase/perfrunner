@@ -81,8 +81,7 @@ class BackupTest(BackupRestoreTest):
     def run(self):
         super().run()
 
-        from_ts, to_ts = self.backup()
-        self.time_elapsed = (to_ts - from_ts) / 1000.0  # seconds
+        self.time_elapsed = self.backup()
 
         self.report_kpi()
 
@@ -157,8 +156,7 @@ class RestoreTest(BackupTest):
 
         self.flush_buckets()
 
-        from_ts, to_ts = self.restore()
-        self.time_elapsed = (to_ts - from_ts) / 1000  # seconds
+        self.time_elapsed = self.restore()
 
         self.report_kpi()
 

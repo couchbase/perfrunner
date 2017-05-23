@@ -164,8 +164,7 @@ class N1QLBulkTest(N1QLTest):
 
         self.build_index()
 
-        from_ts, to_ts = self.access()
-        time_elapsed = to_ts - from_ts
+        time_elapsed = self.access()
 
         self.report_kpi(time_elapsed)
 

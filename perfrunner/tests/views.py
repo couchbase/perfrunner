@@ -66,8 +66,7 @@ class InitialIndexTest(IndexTest):
         self.wait_for_persistence()
 
         self.define_ddocs()
-        from_ts, to_ts = self.init_index()
-        time_elapsed = (to_ts - from_ts) / 1000.0
+        time_elapsed = self.init_index()
 
         time_elapsed = self.reporter.finish('Initial index', time_elapsed)
         self.report_kpi(time_elapsed)
@@ -100,8 +99,7 @@ class InitialAndIncrementalIndexTest(InitialIndexTest):
         self.access()
         self.wait_for_persistence()
 
-        from_ts, to_ts = self.incr_index()
-        time_elapsed = (to_ts - from_ts) / 1000.0
+        time_elapsed = self.incr_index()
 
         time_elapsed = self.reporter.finish('Incremental index', time_elapsed)
         self.report_kpi(time_elapsed, index_type='Incremental')

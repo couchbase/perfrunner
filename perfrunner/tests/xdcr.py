@@ -176,9 +176,9 @@ class XdcrInitTest(UniDirXdcrTest):
 
         self.configure_wan()
 
-        from_ts, to_ts = self.init_xdcr()
-        self.time_elapsed = (to_ts - from_ts) / 1000.0
+        self.time_elapsed = self.init_xdcr()
         self.reporter.finish('Initial replication', self.time_elapsed)
+
         self.report_kpi()
 
     def _report_kpi(self):

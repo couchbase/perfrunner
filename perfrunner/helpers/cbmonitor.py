@@ -1,8 +1,6 @@
 import time
-from calendar import timegm
 from collections import OrderedDict
 from copy import copy
-from datetime import datetime
 from multiprocessing import Process
 from typing import Callable
 
@@ -52,7 +50,7 @@ def timeit(method: Callable, *args, **kwargs) -> float:
 
 
 @decorator
-def with_stats(method: Callable, *args, **kwargs):
+def with_stats(method: Callable, *args, **kwargs) -> float:
     test = args[0]
 
     stats_enabled = test.test_config.stats_settings.enabled
@@ -63,18 +61,16 @@ def with_stats(method: Callable, *args, **kwargs):
         test.cbagent.update_metadata()
         test.cbagent.start()
 
-    from_ts = datetime.utcnow()
+    t0 = time.time()
     method(*args, **kwargs)
-    to_ts = datetime.utcnow()
+    t1 = time.time() - t0
 
     if stats_enabled:
         test.cbagent.stop()
         test.cbagent.reconstruct()
         test.snapshots = test.cbagent.add_snapshot()
 
-    from_ts = timegm(from_ts.timetuple()) * 1000  # -> ms
-    to_ts = timegm(to_ts.timetuple()) * 1000  # -> ms
-    return from_ts, to_ts
+    return t1 - t0  # Elapsed time in seconds
 
 
 class CbAgent:

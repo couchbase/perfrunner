@@ -12,6 +12,7 @@ setup(
             'perfrunner = perfrunner.__main__:main',
             'spring = spring.__main__:main',
             'recovery = perfrunner.utils.recovery:main',
+            'templater = perfrunner.utils.templater:main',
         ],
     },
     ext_modules=[

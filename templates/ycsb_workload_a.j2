@@ -1,0 +1,23 @@
+[test_case]
+test = perfrunner.tests.ycsb2.YCSBTest
+
+[stats]
+enabled = 0
+
+[cluster]
+mem_quota = {{ mem_quota }}
+initial_nodes = 1
+num_buckets = 1
+
+[load]
+workload_path = workloads/workloada
+items = 1000000
+workers = 20
+
+[access]
+workload_path = workloads/workloada
+items = 1000000
+ops = 1000000000
+time = 600
+workers = 20
+worker_instances = {{ worker_instances }}

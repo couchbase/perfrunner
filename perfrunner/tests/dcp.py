@@ -1,7 +1,5 @@
 import re
 
-from logger import logger
-
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import PerfTest
@@ -53,5 +51,4 @@ class DCPThroughputTest(PerfTest):
 
         throughput = self.get_throughput()
 
-        logger.info("Throughput = {}".format(throughput))
         self.report_kpi(throughput)

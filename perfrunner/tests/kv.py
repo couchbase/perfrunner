@@ -5,7 +5,7 @@ from time import sleep
 from logger import logger
 from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
 
-from perfrunner.helpers.cbmonitor import with_stats
+from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.worker import (
     pillowfight_data_load_task,
     pillowfight_task,
@@ -178,6 +178,7 @@ class FlusherTest(KVTest):
             mc.start_persistence()
 
     @with_stats
+    @timeit
     def drain(self):
         for master in self.cluster_spec.yield_masters():
             for bucket in self.test_config.buckets:
@@ -227,10 +228,10 @@ class WarmupTest(PerfTest):
         self.remote.stop_server()
         self.remote.drop_caches()
 
-        self.reporter.start()
-        self._warmup()
-        self.time_elapsed = self.reporter.finish('Warmup')
+        time_elapsed = self._warmup()
+        self.time_elapsed = self.reporter.finish('Warmup', time_elapsed)
 
+    @timeit
     def _warmup(self):
         self.remote.start_server()
         for master in self.cluster_spec.yield_masters():
@@ -281,7 +282,7 @@ class FragmentationTest(PerfTest):
                     self.master_node, self.test_config.buckets[0],
                     password).run()
 
-    def calc_fragmentation_ratio(self):
+    def calc_fragmentation_ratio(self) -> float:
         ratios = []
         for target in self.target_iterator:
             host = target.node.split(':')[0]
@@ -296,8 +297,10 @@ class FragmentationTest(PerfTest):
         return ratio
 
     def _report_kpi(self):
+        ratio = self.calc_fragmentation_ratio()
+
         self.reporter.post(
-            self.calc_fragmentation_ratio()
+            ratio
         )
 
     def run(self):
@@ -356,7 +359,10 @@ class RevABTest(FragmentationTest):
 
     def _report_kpi(self):
         fragmentation_ratio = self.calc_fragmentation_ratio()
-        self.reporter.post(fragmentation_ratio)
+
+        self.reporter.post(
+            fragmentation_ratio
+        )
         self.reporter.post(
             *self.metrics.max_memcached_rss()
         )
@@ -437,7 +443,7 @@ class ThroughputTest(KVTest):
     def compact_bucket(self):
         pass
 
-    def _measure_curr_ops(self):
+    def _measure_curr_ops(self) -> int:
         ops = 0
         for bucket in self.test_config.buckets:
             for server in self.cluster_spec.yield_servers():
@@ -459,7 +465,9 @@ class ThroughputTest(KVTest):
     def _report_kpi(self):
         throughput = self.total_ops // self.test_config.access_settings.time
 
-        self.reporter.post(throughput)
+        self.reporter.post(
+            throughput
+        )
 
 
 class PillowFightTest(PerfTest):
@@ -494,11 +502,14 @@ class PillowFightTest(PerfTest):
 class CompactionTest(KVTest):
 
     @with_stats
+    @timeit
     def compact(self):
         self.compact_bucket()
 
     def _report_kpi(self, time_elapsed):
-        self.reporter.post(time_elapsed)
+        self.reporter.post(
+            time_elapsed
+        )
 
     def run(self):
         self.load()

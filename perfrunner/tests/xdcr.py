@@ -1,4 +1,4 @@
-from perfrunner.helpers.cbmonitor import with_stats
+from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.misc import target_hash
 from perfrunner.settings import TargetSettings
 from perfrunner.tests import PerfTest, TargetIterator
@@ -163,9 +163,15 @@ class XdcrInitTest(UniDirXdcrTest):
         super(UniDirXdcrTest, self).load(target_iterator=src_target_iterator)
 
     @with_stats
+    @timeit
     def init_xdcr(self):
         self.enable_xdcr()
         self.monitor_replication()
+
+    def _report_kpi(self):
+        self.reporter.post(
+            self.metrics.avg_replication_rate(self.time_elapsed)
+        )
 
     def run(self):
         if self.test_config.restore_settings.snapshot and self.build > '4':
@@ -180,7 +186,3 @@ class XdcrInitTest(UniDirXdcrTest):
         self.reporter.finish('Initial replication', self.time_elapsed)
 
         self.report_kpi()
-
-    def _report_kpi(self):
-        rate = self.metrics.avg_replication_rate(self.time_elapsed)
-        self.reporter.post(rate)

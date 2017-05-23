@@ -6,7 +6,7 @@ import time
 from logger import logger
 
 from cbagent.stores import SerieslyStore
-from perfrunner.helpers.cbmonitor import with_stats
+from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.local import kill_process, run_cbindexperf
 from perfrunner.tests import PerfTest, TargetIterator
 from perfrunner.tests.rebalance import RebalanceTest
@@ -76,6 +76,7 @@ class SecondaryIndexTest(PerfTest):
             logger.info('Existing 2i latency stats file removed')
 
     @with_stats
+    @timeit
     def build_secondaryindex(self):
         return self._build_secondaryindex()
 
@@ -189,7 +190,6 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
     """
 
     def _report_kpi(self, time_elapsed, index_type, unit="min"):
-
         self.reporter.post(
             *self.metrics.get_indexing_meta(value=time_elapsed,
                                             index_type=index_type,
@@ -200,6 +200,7 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
         self.build_secondaryindex()
 
     @with_stats
+    @timeit
     def build_incrindex(self):
         self.access()
 

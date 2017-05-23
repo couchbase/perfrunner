@@ -1,4 +1,4 @@
-from perfrunner.helpers.cbmonitor import with_stats
+from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.tests import PerfTest, TargetIterator
 
 
@@ -145,6 +145,7 @@ class N1QLJoinTest(N1QLThroughputTest):
 class N1QLBulkTest(N1QLTest):
 
     @with_stats
+    @timeit
     def access(self, *args):
         statement = self.test_config.access_settings.n1ql_queries[0]['statement']
 

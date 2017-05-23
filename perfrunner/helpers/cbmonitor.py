@@ -61,16 +61,14 @@ def with_stats(method: Callable, *args, **kwargs) -> float:
         test.cbagent.update_metadata()
         test.cbagent.start()
 
-    t0 = time.time()
-    method(*args, **kwargs)
-    t1 = time.time() - t0
+    r = method(*args, **kwargs)
 
     if stats_enabled:
         test.cbagent.stop()
         test.cbagent.reconstruct()
         test.snapshots = test.cbagent.add_snapshot()
 
-    return t1 - t0  # Elapsed time in seconds
+    return r
 
 
 class CbAgent:

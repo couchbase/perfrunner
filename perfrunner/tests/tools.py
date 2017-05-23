@@ -7,7 +7,7 @@ import requests
 from logger import logger
 
 from perfrunner.helpers import local
-from perfrunner.helpers.cbmonitor import with_stats
+from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.tests import PerfTest
 from perfrunner.utils.install import CouchbaseInstaller
 
@@ -55,6 +55,7 @@ class BackupTest(BackupRestoreTest):
     """
 
     @with_stats
+    @timeit
     def backup(self, mode=None):
         local.backup(
             master_node=self.master_node,
@@ -135,6 +136,7 @@ class RestoreTest(BackupTest):
     """
 
     @with_stats
+    @timeit
     def restore(self):
         local.restore(cluster_spec=self.cluster_spec,
                       master_node=self.master_node,

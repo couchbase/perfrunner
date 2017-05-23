@@ -1,4 +1,4 @@
-from perfrunner.helpers.cbmonitor import with_stats
+from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.tests import PerfTest
 from perfrunner.workloads.viewgen import ViewGen, ViewGenDev
 
@@ -81,10 +81,12 @@ class InitialAndIncrementalIndexTest(InitialIndexTest):
     """
 
     @with_stats
+    @timeit
     def init_index(self):
         super(InitialIndexTest, self).build_index()
 
     @with_stats
+    @timeit
     def incr_index(self):
         super(InitialIndexTest, self).build_index()
 

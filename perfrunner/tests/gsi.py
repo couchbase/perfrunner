@@ -1,6 +1,6 @@
 from threading import Thread
 
-from perfrunner.helpers.cbmonitor import with_stats
+from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.local import run_kvgen
 from perfrunner.tests import PerfTest
 
@@ -55,12 +55,14 @@ class IndexTest(PerfTest):
                                                storage=storage)
 
     @with_stats
+    @timeit
     def init_index(self):
         for name, servers in self.cluster_spec.yield_servers_by_role('index'):
             for server in servers:
                 self.monitor.monitor_indexing(server)
 
     @with_stats
+    @timeit
     def incr_index(self):
         for name, servers in self.cluster_spec.yield_servers_by_role('index'):
             for server in servers:

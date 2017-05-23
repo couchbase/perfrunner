@@ -30,18 +30,17 @@ def with_delay(rebalance, *args, **kwargs):
     logger.info('Sleeping for {} seconds before finishing'
                 .format(test.rebalance_settings.stop_after))
     time.sleep(test.rebalance_settings.stop_after)
-    test.worker_manager.terminate()
 
 
 @decorator
-def with_reporter(rebalance, *args, **kwargs):
+def with_timer(rebalance, *args, **kwargs):
     test = args[0]
 
-    test.reporter.start()
+    t0 = time.time()
 
     rebalance(*args, **kwargs)
 
-    test.rebalance_time = test.reporter.finish('Rebalance')
+    test.rebalance_time = time.time() - t0  # Rebalance time in seconds
 
 
 @decorator
@@ -79,6 +78,7 @@ class RebalanceTest(PerfTest):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.rebalance_settings = self.test_config.rebalance_settings
+        self.rebalance_time = 0
 
     def is_balanced(self):
         for master in self.cluster_spec.yield_masters():
@@ -97,7 +97,7 @@ class RebalanceTest(PerfTest):
 
     @with_stats
     @with_delay
-    @with_reporter
+    @with_timer
     def _rebalance(self, services=None):
         clusters = self.cluster_spec.yield_clusters()
         initial_nodes = self.test_config.cluster.initial_nodes
@@ -181,7 +181,7 @@ class RecoveryTest(RebalanceKVTest):
     @with_delayed_posting
     @with_stats
     @with_delay
-    @with_reporter
+    @with_timer
     def rebalance(self):
         clusters = self.cluster_spec.yield_clusters()
         initial_nodes = self.test_config.cluster.initial_nodes

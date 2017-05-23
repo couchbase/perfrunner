@@ -47,7 +47,6 @@ class PerfTest:
         self.cbagent = CbAgent(self, verbose=verbose)
         self.metrics = MetricHelper(self)
         self.reporter = Reporter(self)
-        self.reports = {}
         self.snapshots = []
 
         if self.test_config.test_case.use_workers:

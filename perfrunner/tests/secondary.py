@@ -380,7 +380,7 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
 
     def _report_kpi(self, scan_thr):
         self.reporter.post(
-            round(scan_thr, 1)
+            *self.metrics.scan_throughput(scan_thr)
         )
 
     def run(self):
@@ -450,7 +450,7 @@ class InitialIncrementalScanThroughputTest(InitialandIncrementalDGMSecondaryInde
 
     def report_throughput_kpi(self, scan_thr):
         self.reporter.post(
-            round(scan_thr, 1)
+            *self.metrics.scan_throughput(scan_thr)
         )
 
     def run(self):
@@ -704,7 +704,7 @@ class SecondaryNumConnectionsTest(SecondaryIndexTest):
 
     def _report_kpi(self, connections):
         self.reporter.post(
-            value=connections
+            *self.metrics.gsi_connections(connections)
         )
 
     @with_stats
@@ -755,7 +755,7 @@ class SecondaryIndexingMultiScanTest(SecondaryIndexingScanLatencyTest):
     def _report_kpi(self, multifilter_time, independent_time):
         time_diff = independent_time - multifilter_time
         self.reporter.post(
-            round(time_diff, 2)
+            *self.metrics.multi_scan_diff(time_diff)
         )
 
     @staticmethod
@@ -825,5 +825,5 @@ class SecondaryRebalanceTest(SecondaryIndexTest, RebalanceTest):
 
     def _report_kpi(self, rebalance_time):
         self.reporter.post(
-            rebalance_time
+            *self.metrics.rebalance_time(rebalance_time)
         )

@@ -68,6 +68,11 @@ class IndexTest(PerfTest):
             for server in servers:
                 self.monitor.monitor_indexing(server)
 
+    def _report_kpi(self, indexing_time: float):
+        self.reporter.post(
+            *self.metrics.indexing_time(indexing_time)
+        )
+
     def run(self):
         self.load()
         self.wait_for_persistence()
@@ -87,6 +92,5 @@ class InitialIndexTest(IndexTest):
 
         self.create_index()
         time_elapsed = self.init_index()
-        time_elapsed = round(time_elapsed / 60, 2)  # s -> min
 
         self.report_kpi(time_elapsed)

@@ -6,21 +6,14 @@ from perfrunner.tests.rebalance import RebalanceKVTest
 
 class DCPThroughputTest(DailyTest, _DCPThroughputTest):
 
-    def _report_kpi(self, throughput):
-        self.reporter.post_to_daily(metric='Avg Throughput (items/sec)',
-                                    value=throughput)
+    pass
 
 
 class PillowFightTest(DailyTest, _PillowFightTest):
 
-    def _report_kpi(self):
-        self.reporter.post_to_daily(
-            *self.metrics.max_ops()
-        )
+    pass
 
 
 class RebalanceTest(DailyTest, RebalanceKVTest):
 
-    def _report_kpi(self, rebalance_time):
-        self.reporter.post_to_daily(metric='Rebalance Time (min)',
-                                    value=rebalance_time)
+    pass

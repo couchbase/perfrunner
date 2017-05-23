@@ -115,7 +115,7 @@ class BgFetcherTest(KVTest):
 
     def _report_kpi(self):
         self.reporter.post(
-            self.metrics.avg_bg_wait_time()
+            *self.metrics.avg_bg_wait_time()
         )
 
 
@@ -129,7 +129,7 @@ class DrainTest(KVTest):
 
     def _report_kpi(self):
         self.reporter.post(
-            self.metrics.avg_disk_write_queue()
+            *self.metrics.avg_disk_write_queue()
         )
 
 
@@ -186,7 +186,7 @@ class FlusherTest(KVTest):
 
     def _report_kpi(self, time_elapsed):
         self.reporter.post(
-            self.metrics.max_drain_rate(time_elapsed)
+            *self.metrics.max_drain_rate(time_elapsed)
         )
 
     def run(self):
@@ -228,8 +228,7 @@ class WarmupTest(PerfTest):
         self.remote.stop_server()
         self.remote.drop_caches()
 
-        time_elapsed = self._warmup()
-        self.time_elapsed = self.reporter.finish('Warmup', time_elapsed)
+        return self._warmup()
 
     @timeit
     def _warmup(self):
@@ -238,8 +237,10 @@ class WarmupTest(PerfTest):
             for bucket in self.test_config.buckets:
                 self.monitor.monitor_warmup(self.memcached, master, bucket)
 
-    def _report_kpi(self):
-        self.reporter.post(self.time_elapsed)
+    def _report_kpi(self, time_elapsed):
+        self.reporter.post(
+            *self.metrics.elapsed_time(time_elapsed)
+        )
 
     def run(self):
         self.load()
@@ -249,9 +250,9 @@ class WarmupTest(PerfTest):
         self.access()
         self.wait_for_persistence()
 
-        self.warmup()
+        time_elapsed = self.warmup()
 
-        self.report_kpi()
+        self.report_kpi(time_elapsed)
 
 
 class FragmentationTest(PerfTest):
@@ -300,7 +301,7 @@ class FragmentationTest(PerfTest):
         ratio = self.calc_fragmentation_ratio()
 
         self.reporter.post(
-            ratio
+            *self.metrics.fragmentation_ratio(ratio)
         )
 
     def run(self):
@@ -361,7 +362,7 @@ class RevABTest(FragmentationTest):
         fragmentation_ratio = self.calc_fragmentation_ratio()
 
         self.reporter.post(
-            fragmentation_ratio
+            *self.metrics.fragmentation_ratio(fragmentation_ratio)
         )
         self.reporter.post(
             *self.metrics.max_memcached_rss()
@@ -463,10 +464,8 @@ class ThroughputTest(KVTest):
         self.total_ops = self._measure_curr_ops() - curr_ops
 
     def _report_kpi(self):
-        throughput = self.total_ops // self.test_config.access_settings.time
-
         self.reporter.post(
-            throughput
+            *self.metrics.kv_throughput(self.total_ops)
         )
 
 
@@ -487,7 +486,7 @@ class PillowFightTest(PerfTest):
 
     def _report_kpi(self):
         self.reporter.post(
-            self.metrics.max_ops()
+            *self.metrics.max_ops()
         )
 
     def run(self):
@@ -508,7 +507,7 @@ class CompactionTest(KVTest):
 
     def _report_kpi(self, time_elapsed):
         self.reporter.post(
-            time_elapsed
+            *self.metrics.elapsed_time(time_elapsed)
         )
 
     def run(self):
@@ -532,7 +531,7 @@ class MemoryOverheadTest(PillowFightTest):
 
     def _report_kpi(self):
         self.reporter.post(
-            self.metrics.memory_overhead(key_size=self.PF_KEY_SIZE)
+            *self.metrics.memory_overhead(key_size=self.PF_KEY_SIZE)
         )
 
     @with_stats

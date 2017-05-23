@@ -88,7 +88,7 @@ class RebalanceTest(PerfTest):
 
     def _report_kpi(self, rebalance_time):
         self.reporter.post(
-            rebalance_time
+            *self.metrics.rebalance_time(rebalance_time)
         )
 
     @with_delayed_posting
@@ -241,7 +241,7 @@ class HardFailoverTest(FailoverTest):
             t_end = self.convert_time(t_end)
             delta = int(1000 * (t_end - t_start))  # s -> ms
             self.reporter.post(
-                delta
+                *self.metrics.failover_time(delta)
             )
 
     @with_delay
@@ -273,7 +273,7 @@ class GracefulFailoverTest(FailoverTest):
             t_end = self.convert_time(t_end)
             delta = int(1000 * (t_end - t_start))  # s -> ms
             self.reporter.post(
-                delta
+                *self.metrics.failover_time(delta)
             )
 
     @with_delay
@@ -306,7 +306,7 @@ class AutoFailoverTest(FailoverTest):
             t_end = self.convert_time(t_end)
             delta = int(1000 * (t_end - t_start))  # s -> ms
             self.reporter.post(
-                delta
+                *self.metrics.failover_time(delta)
             )
 
     @with_delay
@@ -333,7 +333,7 @@ class FailureDetectionTest(FailoverTest):
             t_failover = self.convert_time(t_failover)
             delta = round(t_failover - self.t_failure, 1)
             self.reporter.post(
-                delta
+                *self.metrics.failover_time(delta)
             )
 
     @with_delay
@@ -472,9 +472,8 @@ class RebalanceWithXdcrTest(RebalanceTest, XdcrInitTest):
         PerfTest.load(self, target_iterator=dest_target_iterator)
 
     def _report_kpi(self, *args):
-        rate = self.metrics.avg_replication_rate(self.time_elapsed)
         self.reporter.post(
-            value=rate
+            *self.metrics.avg_replication_rate(self.time_elapsed)
         )
 
     def check_rebalance(self):

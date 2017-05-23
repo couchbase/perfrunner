@@ -28,6 +28,14 @@ class YCSBTest(PerfTest):
         self.report_kpi()
 
 
+class YCSBThroughputTest(YCSBTest):
+
+    def _report_kpi(self):
+        self.reporter.post(
+            *self.metrics.ycsb_throughput()
+        )
+
+
 class YCSBN1QLTest(YCSBTest, N1QLTest):
 
     def run(self):
@@ -42,3 +50,8 @@ class YCSBN1QLTest(YCSBTest, N1QLTest):
         self.access()
 
         self.report_kpi()
+
+
+class YCSBN1QLThroughputTest(YCSBN1QLTest, YCSBThroughputTest):
+
+    pass

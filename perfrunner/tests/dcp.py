@@ -1,5 +1,3 @@
-import re
-
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import PerfTest
@@ -13,9 +11,9 @@ class DCPThroughputTest(PerfTest):
 
     OUTPUT_FILE = "dcpstatsfile"
 
-    def _report_kpi(self, throughput):
+    def _report_kpi(self):
         self.reporter.post(
-            value=throughput
+            *self.metrics.dcp_throughput()
         )
 
     @with_stats
@@ -33,22 +31,10 @@ class DCPThroughputTest(PerfTest):
                 output_file=self.OUTPUT_FILE,
             )
 
-    def get_throughput(self):
-        # get throughput from OUTPUT_FILE for posting to showfast
-        with open(self.OUTPUT_FILE) as fh:
-            output_text = fh.read()
-            groups = re.search(
-                r"Throughput = [^\d]*(\d*).*?",
-                output_text)
-            throughput = int(groups.group(1))
-        return throughput
-
     def run(self):
         self.load()
         self.wait_for_persistence()
 
         self.access()
 
-        throughput = self.get_throughput()
-
-        self.report_kpi(throughput)
+        self.report_kpi()

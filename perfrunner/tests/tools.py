@@ -65,12 +65,12 @@ class BackupTest(BackupRestoreTest):
             compression=self.test_config.backup_settings.compression
         )
 
-    def _report_kpi(self):
+    def _report_kpi(self, time_elapsed):
         edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
         backup_size = local.calc_backup_size(self.cluster_spec)
 
         self.reporter.post(
-            *self.metrics.bnr_throughput(self.time_elapsed,
+            *self.metrics.bnr_throughput(time_elapsed,
                                          edition,
                                          tool='backup')
         )
@@ -82,9 +82,9 @@ class BackupTest(BackupRestoreTest):
     def run(self):
         super().run()
 
-        self.time_elapsed = self.backup()
+        time_elapsed = self.backup()
 
-        self.report_kpi()
+        self.report_kpi(time_elapsed)
 
 
 class BackupUnderLoadTest(BackupTest):
@@ -101,9 +101,9 @@ class BackupUnderLoadTest(BackupTest):
 
         self.access_bg()
 
-        self.backup()
+        time_elapsed = self.backup()
 
-        self.report_kpi()
+        self.report_kpi(time_elapsed)
 
 
 class IncrementalBackupUnderLoadTest(BackupTest):
@@ -123,9 +123,9 @@ class IncrementalBackupUnderLoadTest(BackupTest):
         self.access_bg()
         time.sleep(self.MUTATION_TIME)
 
-        self.backup(mode='diff')
+        time_elapsed = self.backup(mode='diff')
 
-        self.report_kpi()
+        self.report_kpi(time_elapsed)
 
 
 class RestoreTest(BackupTest):
@@ -142,11 +142,11 @@ class RestoreTest(BackupTest):
                       master_node=self.master_node,
                       wrapper=self.rest.is_community(self.master_node))
 
-    def _report_kpi(self):
+    def _report_kpi(self, time_elapsed):
         edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
 
         self.reporter.post(
-            *self.metrics.bnr_throughput(self.time_elapsed,
+            *self.metrics.bnr_throughput(time_elapsed,
                                          edition,
                                          tool='restore')
         )
@@ -158,9 +158,9 @@ class RestoreTest(BackupTest):
 
         self.flush_buckets()
 
-        self.time_elapsed = self.restore()
+        time_elapsed = self.restore()
 
-        self.report_kpi()
+        self.report_kpi(time_elapsed)
 
 
 class RestoreAfterIncrementalBackupTest(RestoreTest):
@@ -185,9 +185,9 @@ class RestoreAfterIncrementalBackupTest(RestoreTest):
 
         self.flush_buckets()
 
-        self.restore()
+        time_elapsed = self.restore()
 
-        self.report_kpi()
+        self.report_kpi(time_elapsed)
 
 
 class CbExportImportTest(BackupRestoreTest):
@@ -253,7 +253,7 @@ class CbExportImportTest(BackupRestoreTest):
             self.test_config.load_settings.size / 2.0 ** 20  # MB
         avg_throughput = round(data_size / self.spent_time)
         self.reporter.post(avg_throughput, metric=metric,
-                           metric_info=metric_info)
+                           metric_info=metric_info)  # FIXME
 
     def _yield_line_delimited_json(self, path):
         """Read a line-delimited json file yielding each row as a record."""
@@ -324,7 +324,7 @@ class CbImportCETest(CbExportImportTest):
             self.test_config.load_settings.size / 2.0 ** 20  # MB
         avg_throughput = round(data_size / self.spent_time)
         self.reporter.post(avg_throughput, metric=metric,
-                           metric_info=metric_info)
+                           metric_info=metric_info)  # FIXME
 
     @with_stats
     def import_csv_cbtransfer(self):
@@ -380,7 +380,7 @@ class CbImportSampleTest(BackupRestoreTest):
         avg_throughput = round(data_size / self.spent_time)
 
         self.reporter.post(avg_throughput, metric=metric,
-                           metric_info=metric_info)
+                           metric_info=metric_info)  # FIXME
 
     def run(self):
         self.download_tools()

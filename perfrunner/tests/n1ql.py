@@ -156,7 +156,7 @@ class N1QLBulkTest(N1QLTest):
 
     def _report_kpi(self, time_elapsed):
         self.reporter.post(
-            self.metrics.bulk_n1ql_throughput(time_elapsed)
+            *self.metrics.bulk_n1ql_throughput(time_elapsed)
         )
 
     def run(self):

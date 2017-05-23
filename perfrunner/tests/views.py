@@ -58,7 +58,7 @@ class InitialIndexTest(IndexTest):
 
     def _report_kpi(self, time_elapsed):
         self.reporter.post(
-            time_elapsed
+            *self.metrics.elapsed_time(time_elapsed)
         )
 
     def run(self):
@@ -68,7 +68,6 @@ class InitialIndexTest(IndexTest):
         self.define_ddocs()
         time_elapsed = self.init_index()
 
-        time_elapsed = self.reporter.finish('Initial index', time_elapsed)
         self.report_kpi(time_elapsed)
 
 
@@ -103,7 +102,6 @@ class InitialAndIncrementalIndexTest(InitialIndexTest):
 
         time_elapsed = self.incr_index()
 
-        time_elapsed = self.reporter.finish('Incremental index', time_elapsed)
         self.report_kpi(time_elapsed, index_type='Incremental')
 
 
@@ -164,7 +162,7 @@ class QueryThroughputTest(QueryTest):
 
     def _report_kpi(self):
         self.reporter.post(
-            self.metrics.avg_couch_views_ops()
+            *self.metrics.avg_couch_views_ops()
         )
 
 

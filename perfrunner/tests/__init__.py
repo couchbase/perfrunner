@@ -9,7 +9,7 @@ from perfrunner.helpers.metrics import MetricHelper
 from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper
-from perfrunner.helpers.reporter import Reporter
+from perfrunner.helpers.reporter import ShowFastReporter
 from perfrunner.helpers.rest import RestHelper
 from perfrunner.helpers.restore import RestoreHelper
 from perfrunner.helpers.worker import spring_task, WorkerManager
@@ -46,7 +46,7 @@ class PerfTest:
 
         self.cbagent = CbAgent(self, verbose=verbose)
         self.metrics = MetricHelper(self)
-        self.reporter = Reporter(self)
+        self.reporter = ShowFastReporter(cluster_spec, test_config, self.build)
         self.snapshots = []
 
         if self.test_config.test_case.use_workers:

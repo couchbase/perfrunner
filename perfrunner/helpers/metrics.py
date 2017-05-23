@@ -1,5 +1,6 @@
 import glob
-from typing import Dict, Tuple, Union
+import re
+from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
 from logger import logger
@@ -8,51 +9,84 @@ from seriesly import Seriesly
 from perfrunner.settings import StatsSettings
 
 
-Metric = Tuple[Union[float, int], str, Dict[str, str]]
-DailyMetric = Tuple[str, Union[float, int]]
+Metric = Tuple[
+    Union[float, int],  # Value
+    List[str],          # Snapshots
+    Dict[str, str],     # Metric info
+]
+
+DailyMetric = Tuple[
+    str,                # Metric
+    Union[float, int],  # Value
+    List[str],          # Snapshots
+]
+
+
+def s2m(seconds: float) -> float:
+    """Converts seconds to minutes."""
+    return round(seconds / 60, 2)
+
+
+def get_query_params(metric: str) -> Dict[str, Any]:
+    """Convert metric definition to Seriesly query params. E.g.:
+
+        'avg_xdc_ops' -> {'ptr': '/xdc_ops',
+                          'group': 1000000000000, 'reducer': 'avg'}
+
+    Where group is constant."""
+    return {
+        'ptr': '/{}'.format(metric[4:]),
+        'reducer': metric[:3],
+        'group': 1000000000000,
+    }
 
 
 class MetricHelper:
 
     def __init__(self, test):
         self.test = test
-        self.seriesly = Seriesly(StatsSettings.SERIESLY)
         self.test_config = test.test_config
-        self.title = test.test_config.test_case.title
         self.cluster_spec = test.cluster_spec
-        self.build = test.build
 
-    @staticmethod
-    def _get_query_params(metric: str) -> dict:
-        """Convert metric definition to Seriesly query params. E.g.:
+        self.seriesly = Seriesly(StatsSettings.SERIESLY)
 
-            'avg_xdc_ops' -> {'ptr': '/xdc_ops',
-                              'group': 1000000000000, 'reducer': 'avg'}
+    @property
+    def _title(self) -> str:
+        return self.test_config.test_case.title
 
-        Where group is constant."""
-        return {'ptr': '/{}'.format(metric[4:]),
-                'reducer': metric[:3],
-                'group': 1000000000000}
+    @property
+    def _snapshots(self) -> List[str]:
+        return self.test.snapshots
 
-    def _get_metric_info(self, title: str, order_by: str = '') -> Dict[str, str]:
+    @property
+    def _num_nodes(self):
+        return self.test_config.cluster.initial_nodes[0]
+
+    def _metric_info(self,
+                     metric_id: str = None,
+                     title: str = None,
+                     order_by: str = '') -> Dict[str, str]:
         return {
-            'title': title,
+            'id': metric_id or self.test_config.name,
+            'title': title or self._title,
             'orderBy': order_by,
         }
 
     def ycsb_queries(self, value: float, name: str, title: str) -> Metric:
-        metric = '{}_{}'.format(self.test_config.name, name)
-        title = '{} , {}'.format(title, self.title)
-        metric_info = self._get_metric_info(title)
-        return value, metric, metric_info
+        metric_id = '{}_{}'.format(self.test_config.name, name)
+        title = '{}, {}'.format(title, self.test_config.test_case.title)
+        metric_info = self._metric_info(metric_id, title)
+
+        return value, self._snapshots, metric_info
 
     def avg_n1ql_throughput(self) -> Metric:
-        metric = '{}_avg_query_requests'.format(self.test_config.name)
-        title = 'Avg. Query Throughput (queries/sec), {}'.format(self.title)
-        metric_info = self._get_metric_info(title)
+        metric_id = '{}_avg_query_requests'.format(self.test_config.name)
+        title = 'Avg. Query Throughput (queries/sec), {}'.format(self._title)
+        metric_info = self._metric_info(metric_id, title)
 
-        queries = self._avg_n1ql_throughput()
-        return queries, metric, metric_info
+        throughput = self._avg_n1ql_throughput()
+
+        return throughput, self._snapshots, metric_info
 
     def _avg_n1ql_throughput(self) -> int:
         test_time = self.test_config.access_settings.time
@@ -64,19 +98,19 @@ class MetricHelper:
             total_requests = vitals['requests.count']
             return int(total_requests / test_time)
 
-    def bulk_n1ql_throughput(self, time_elapsed: float) -> float:
-        items = self.test_config.load_settings.items / 4
-        return round(items / time_elapsed)
+    def bulk_n1ql_throughput(self, time_elapsed: float) -> Metric:
+        metric_info = self._metric_info()
 
-    def avg_fts_throughput(self,
-                           order_by: str,
-                           name: str = 'FTS') -> Metric:
-        metric = '{}_avg_query_requests'.format(self.test_config.name)
+        items = self.test_config.load_settings.items / 4
+        throughput = round(items / time_elapsed)
+
+        return throughput, self._snapshots, metric_info
+
+    def avg_fts_throughput(self, order_by: str, name: str = 'FTS') -> Metric:
+        metric_id = '{}_avg_query_requests'.format(self.test_config.name)
         title = 'Query Throughput (queries/sec), {}, {} node, {}'.\
-                format(self.title,
-                       self.test_config.cluster.initial_nodes[0],
-                       name)
-        metric_info = self._get_metric_info(title, order_by=order_by)
+            format(self._title, self._num_nodes, name)
+        metric_info = self._metric_info(metric_id, title, order_by)
 
         if name == 'FTS':
             total_queries = 0
@@ -93,12 +127,13 @@ class MetricHelper:
             total_queries = all_stats["_all"]["total"]["search"]["query_total"]
 
         time_taken = self.test_config.access_settings.time
-        qps = total_queries / float(time_taken)
-        if qps < 100:
-            qps = round(qps, 2)
+        throughput = total_queries / float(time_taken)
+        if throughput < 100:
+            throughput = round(throughput, 2)
         else:
-            qps = round(qps)
-        return qps, metric, metric_info
+            throughput = round(throughput)
+
+        return throughput, self._snapshots, metric_info
 
     def latency_fts_queries(self,
                             percentile: int,
@@ -109,63 +144,71 @@ class MetricHelper:
         if percentile == 0:
             metric_id = '{}_average'.format(self.test_config.name)
             title = 'Average query latency (ms), {}, {} node, {}'.\
-                    format(self.title,
-                           self.test_config.cluster.initial_nodes[0],
-                           name)
+                format(self._title, self._num_nodes, name)
         else:
             metric_id = self.test_config.name
             title = '{}th percentile query latency (ms), {}, {} node, {}'. \
-                    format(percentile,
-                           self.title,
-                           self.test_config.cluster.initial_nodes[0],
-                           name)
+                format(percentile, self._title, self._num_nodes, name)
 
-        metric_info = self._get_metric_info(title, order_by=order_by)
+        metric_info = self._metric_info(metric_id, title, order_by)
+
         timings = []
         db = '{}{}'.format(dbname, self.test.cbagent.cluster_ids[0])
         data = self.seriesly[db].get_all()
         timings += [v[metric] for v in data.values()]
+
         if percentile == 0:
-            fts_latency = np.average(timings)
+            latency = np.average(timings)
         else:
-            fts_latency = np.percentile(timings, percentile)
-        return round(fts_latency), metric_id, metric_info
+            latency = np.percentile(timings, percentile)
+
+        latency = round(latency)
+
+        return latency, self._snapshots, metric_info
 
     def fts_index(self,
                   elapsed_time: float,
                   order_by: str,
                   name: str ='FTS') -> Metric:
-        metric = self.test_config.name
+        metric_id = self.test_config.name
         title = 'Index build time(sec), {}, {} node, {}'.\
-                format(self.title,
-                       self.test_config.cluster.initial_nodes[0],
-                       name)
-        metric_info = self._get_metric_info(title, order_by=order_by)
-        return round(elapsed_time, 1), metric, metric_info
+            format(self._title, self._num_nodes, name)
+        metric_info = self._metric_info(metric_id, title, order_by)
+
+        index_time = round(elapsed_time, 1)
+
+        return index_time, self._snapshots, metric_info
 
     def fts_index_size(self,
                        index_size_raw: int,
                        order_by: str,
                        name: str = 'FTS') -> Metric:
-        metric = "{}_indexsize".format(self.test_config.name)
+        metric_id = "{}_indexsize".format(self.test_config.name)
         title = 'Index size (MB), {}, {} node, {}'.\
-                format(self.title,
-                       self.test_config.cluster.initial_nodes[0],
-                       name)
-        metric_info = self._get_metric_info(title, order_by=order_by)
+                format(self._title, self._num_nodes, name)
+        metric_info = self._metric_info(metric_id, title, order_by)
+
         index_size_mb = int(index_size_raw / (1024 ** 2))
-        return index_size_mb, metric, metric_info
+
+        return index_size_mb, self._snapshots, metric_info
 
     def fts_rebalance_time(self,
                            reb_time: float,
                            order_by: str,
                            name: str = 'FTS') -> Metric:
-        metric = "{}_reb".format(self.test_config.name)
-        title = 'Rebalance time (min), {}, {}'.format(self.title, name)
-        metric_info = self._get_metric_info(title, order_by=order_by)
-        return reb_time, metric, metric_info
+        metric_id = "{}_reb".format(self.test_config.name)
+        title = 'Rebalance time (min), {}, {}'.format(self._title, name)
+        metric_info = self._metric_info(metric_id, title, order_by)
 
-    def max_ops(self) -> int:
+        return reb_time, self._snapshots, metric_info
+
+    def max_ops(self) -> Metric:
+        metric_info = self._metric_info()
+        throughput = self._max_ops()
+
+        return throughput, self._snapshots, metric_info
+
+    def _max_ops(self) -> int:
         values = []
         for bucket in self.test_config.buckets:
             db = 'ns_server{}{}'.format(self.test.cbagent.cluster_ids[0], bucket)
@@ -174,10 +217,10 @@ class MetricHelper:
         return int(np.percentile(values, 90))
 
     def xdcr_lag(self, percentile: int = 95) -> Metric:
-        metric = '{}_{}th_xdc_lag'.format(self.test_config.name, percentile)
+        metric_id = '{}_{}th_xdc_lag'.format(self.test_config.name, percentile)
         title = '{}th percentile replication lag (ms), {}'.format(
-            percentile, self.title)
-        metric_info = self._get_metric_info(title)
+            percentile, self._title)
+        metric_info = self._metric_info(metric_id, title)
 
         timings = []
         for bucket in self.test_config.buckets:
@@ -186,9 +229,16 @@ class MetricHelper:
             timings += [v['xdcr_lag'] for v in data.values()]
         lag = round(np.percentile(timings, percentile), 1)
 
-        return lag, metric, metric_info
+        return lag, self._snapshots, metric_info
 
-    def avg_replication_rate(self, time_elapsed: float) -> float:
+    def avg_replication_rate(self, time_elapsed: float) -> Metric:
+        metric_info = self._metric_info()
+
+        rate = self._avg_replication_rate(time_elapsed)
+
+        return rate, self._snapshots, metric_info
+
+    def _avg_replication_rate(self, time_elapsed: float) -> float:
         initial_items = self.test_config.load_settings.ops or \
             self.test_config.load_settings.items
         num_buckets = self.test_config.cluster.num_buckets
@@ -196,26 +246,31 @@ class MetricHelper:
 
         return round(avg_replication_rate)
 
-    def max_drain_rate(self, time_elapsed: float) -> float:
-        items_per_node = self.test_config.load_settings.items / \
-            self.test_config.cluster.initial_nodes[0]
-        drain_rate = items_per_node / time_elapsed
+    def max_drain_rate(self, time_elapsed: float) -> Metric:
+        metric_info = self._metric_info()
 
-        return round(drain_rate)
+        items_per_node = self.test_config.load_settings.items / self._num_nodes
+        drain_rate = round(items_per_node / time_elapsed)
 
-    def avg_disk_write_queue(self) -> float:
-        query_params = self._get_query_params('avg_disk_write_queue')
+        return drain_rate, self._snapshots, metric_info
 
+    def avg_disk_write_queue(self) -> Metric:
+        metric_info = self._metric_info()
+
+        query_params = get_query_params('avg_disk_write_queue')
         disk_write_queue = 0
         for bucket in self.test_config.buckets:
             db = 'ns_server{}{}'.format(self.test.cbagent.cluster_ids[0], bucket)
             data = self.seriesly[db].query(query_params)
             disk_write_queue += list(data.values())[0][0]
+        disk_write_queue = round(disk_write_queue / 10 ** 6, 2)
 
-        return round(disk_write_queue / 10 ** 6, 2)
+        return disk_write_queue, self._snapshots, metric_info
 
-    def avg_bg_wait_time(self) -> float:
-        query_params = self._get_query_params('avg_avg_bg_wait_time')
+    def avg_bg_wait_time(self) -> Metric:
+        metric_info = self._metric_info()
+
+        query_params = get_query_params('avg_avg_bg_wait_time')
 
         avg_bg_wait_time = []
         for bucket in self.test_config.buckets:
@@ -223,32 +278,34 @@ class MetricHelper:
             data = self.seriesly[db].query(query_params)
             avg_bg_wait_time.append(list(data.values())[0][0])
         avg_bg_wait_time = np.mean(avg_bg_wait_time) / 10 ** 3  # us -> ms
+        avg_bg_wait_time = round(avg_bg_wait_time, 2)
 
-        return round(avg_bg_wait_time, 2)
+        return avg_bg_wait_time, self._snapshots, metric_info
 
-    def avg_couch_views_ops(self) -> float:
-        query_params = self._get_query_params('avg_couch_views_ops')
+    def avg_couch_views_ops(self) -> Metric:
+        metric_info = self._metric_info()
+
+        query_params = get_query_params('avg_couch_views_ops')
 
         couch_views_ops = 0
         for bucket in self.test_config.buckets:
             db = 'ns_server{}{}'.format(self.test.cbagent.cluster_ids[0], bucket)
             data = self.seriesly[db].query(query_params)
             couch_views_ops += list(data.values())[0][0]
+        couch_views_ops = round(couch_views_ops)
 
-        if self.build < '2.5.0':
-            couch_views_ops /= self.test_config.cluster.initial_nodes[0]
-
-        return round(couch_views_ops)
+        return couch_views_ops, self._snapshots, metric_info
 
     def query_latency(self, percentile: int) -> Metric:
-        metric = self.test_config.name
+        metric_id = self.test_config.name
         title = '{}th percentile query latency (ms), {}'.format(percentile,
-                                                                self.title)
+                                                                self._title)
 
-        metric_info = self._get_metric_info(title)
-        query_latency = self._query_latency(percentile)
+        metric_info = self._metric_info(metric_id, title)
 
-        return query_latency, metric, metric_info
+        latency = self._query_latency(percentile)
+
+        return latency, self._snapshots, metric_info
 
     def _query_latency(self, percentile: int) -> float:
         timings = []
@@ -263,10 +320,10 @@ class MetricHelper:
         return int(query_latency)
 
     def secondary_scan_latency(self, percentile: int) -> Metric:
-        metric = self.test_config.name
+        metric_id = self.test_config.name
         title = '{}th percentile secondary scan latency (ms), {}'.format(percentile,
-                                                                         self.title)
-        metric_info = self._get_metric_info(title)
+                                                                         self._title)
+        metric_info = self._metric_info(metric_id, title)
 
         timings = []
         cluster = ""
@@ -279,25 +336,26 @@ class MetricHelper:
         timings += [value['Nth-latency'] for value in data.values()]
         timings = list(map(int, timings))
         logger.info("Number of samples are {}".format(len(timings)))
-        secondary_scan_latency = np.percentile(timings, percentile) / 1000000
+        scan_latency = np.percentile(timings, percentile) / 1e6
+        scan_latency = round(scan_latency, 2)
 
-        return round(secondary_scan_latency, 2), metric, metric_info
+        return scan_latency, self._snapshots, metric_info
 
     def kv_latency(self,
                    operation: str,
                    percentile: int = 99,
                    dbname: str = 'spring_latency') -> Metric:
-        metric = '{}_{}_{}th'.format(self.test_config.name,
-                                     operation,
-                                     percentile)
+        metric_id = '{}_{}_{}th'.format(self.test_config.name,
+                                        operation,
+                                        percentile)
         title = '{}th percentile {} {}'.format(percentile,
                                                operation.upper(),
-                                               self.title)
-        metric_info = self._get_metric_info(title)
+                                               self._title)
+        metric_info = self._metric_info(metric_id, title)
 
         latency = self._kv_latency(operation, percentile, dbname)
 
-        return latency, metric, metric_info
+        return latency, self._snapshots, metric_info
 
     def _kv_latency(self,
                     operation: str,
@@ -314,9 +372,9 @@ class MetricHelper:
         return round(np.percentile(timings, percentile), 2)
 
     def observe_latency(self, percentile: int) -> Metric:
-        metric = '{}_{}th'.format(self.test_config.name, percentile)
-        title = '{}th percentile {}'.format(percentile, self.title)
-        metric_info = self._get_metric_info(title)
+        metric_id = '{}_{}th'.format(self.test_config.name, percentile)
+        title = '{}th percentile {}'.format(percentile, self._title)
+        metric_info = self._metric_info(metric_id, title)
 
         timings = []
         for bucket in self.test_config.buckets:
@@ -325,31 +383,31 @@ class MetricHelper:
             timings += [v['latency_observe'] for v in data.values()]
         latency = round(np.percentile(timings, percentile), 2)
 
-        return latency, metric, metric_info
+        return latency, self._snapshots, metric_info
 
     def cpu_utilization(self) -> Metric:
-        metric = '{}_avg_cpu'.format(self.test_config.name)
+        metric_id = '{}_avg_cpu'.format(self.test_config.name)
         title = 'Avg. CPU utilization (%)'
-        title = '{}, {}'.format(title, self.title)
-        metric_info = self._get_metric_info(title)
+        title = '{}, {}'.format(title, self._title)
+        metric_info = self._metric_info(metric_id, title)
 
         cluster = self.test.cbagent.cluster_ids[0]
         bucket = self.test_config.buckets[0]
 
-        query_params = self._get_query_params('avg_cpu_utilization_rate')
+        query_params = get_query_params('avg_cpu_utilization_rate')
         db = 'ns_server{}{}'.format(cluster, bucket)
         data = self.seriesly[db].query(query_params)
-        cpu_utilazion = round(list(data.values())[0][0])
+        cpu_utilization = round(list(data.values())[0][0])
 
-        return cpu_utilazion, metric, metric_info
+        return cpu_utilization, self._snapshots, metric_info
 
     def mem_used(self, max_min: str = 'max') -> Metric:
-        metric = '{}_{}_mem_used'.format(self.test_config.name, max_min)
+        metric_id = '{}_{}_mem_used'.format(self.test_config.name, max_min)
         title = '{}. mem_used (MB), {}'.format(max_min.title(),
-                                               self.title)
-        metric_info = self._get_metric_info(title)
+                                               self._title)
+        metric_info = self._metric_info(metric_id, title)
 
-        query_params = self._get_query_params('max_mem_used')
+        query_params = get_query_params('max_mem_used')
 
         mem_used = []
         for bucket in self.test_config.buckets:
@@ -361,14 +419,14 @@ class MetricHelper:
             )
         mem_used = eval(max_min)(mem_used)
 
-        return mem_used, metric, metric_info
+        return mem_used, self._snapshots, metric_info
 
     def max_beam_rss(self) -> Metric:
-        metric = 'beam_rss_max_{}'.format(self.test_config.name)
-        title = 'Max. beam.smp RSS (MB), {}'.format(self.title)
-        metric_info = self._get_metric_info(title)
+        metric_id = 'beam_rss_max_{}'.format(self.test_config.name)
+        title = 'Max. beam.smp RSS (MB), {}'.format(self._title)
+        metric_info = self._metric_info(metric_id, title)
 
-        query_params = self._get_query_params('max_beam.smp_rss')
+        query_params = get_query_params('max_beam.smp_rss')
 
         max_rss = 0
         for cluster_name, servers in self.cluster_spec.yield_clusters():
@@ -381,16 +439,16 @@ class MetricHelper:
                 rss = round(list(data.values())[0][0] / 1024 ** 2)
                 max_rss = max(max_rss, rss)
 
-        return max_rss, metric, metric_info
+        return max_rss, self._snapshots, metric_info
 
     def max_memcached_rss(self) -> Metric:
-        metric = '{}_memcached_rss'.format(self.test_config.name)
+        metric_id = '{}_memcached_rss'.format(self.test_config.name)
         title = 'Max. memcached RSS (MB),{}'.format(
-            self.title.split(',')[-1]
+            self._title.split(',')[-1]
         )
-        metric_info = self._get_metric_info(title)
+        metric_info = self._metric_info(metric_id, title)
 
-        query_params = self._get_query_params('max_memcached_rss')
+        query_params = get_query_params('max_memcached_rss')
 
         max_rss = 0
         for (cluster_name, servers), initial_nodes in zip(
@@ -406,16 +464,16 @@ class MetricHelper:
                 rss = round(list(data.values())[0][0] / 1024 ** 2)
                 max_rss = max(max_rss, rss)
 
-        return max_rss, metric, metric_info
+        return max_rss, self._snapshots, metric_info
 
     def avg_memcached_rss(self) -> Metric:
-        metric = '{}_avg_memcached_rss'.format(self.test_config.name)
+        metric_id = '{}_avg_memcached_rss'.format(self.test_config.name)
         title = 'Avg. memcached RSS (MB),{}'.format(
-            self.title.split(',')[-1]
+            self._title.split(',')[-1]
         )
-        metric_info = self._get_metric_info(title)
+        metric_info = self._metric_info(metric_id, title)
 
-        query_params = self._get_query_params('avg_memcached_rss')
+        query_params = get_query_params('avg_memcached_rss')
 
         rss = list()
         for (cluster_name, servers), initial_nodes in zip(
@@ -431,65 +489,69 @@ class MetricHelper:
                 rss.append(round(list(data.values())[0][0] / 1024 ** 2))
 
         avg_rss = sum(rss) // len(rss)
-        return avg_rss, metric, metric_info
 
-    def memory_overhead(self, key_size: int = 20):
+        return avg_rss, self._snapshots, metric_info
+
+    def memory_overhead(self, key_size: int = 20) -> Metric:
+        metric_info = self._metric_info()
+
         item_size = key_size + self.test_config.load_settings.size
         user_data = self.test_config.load_settings.items * item_size
         user_data *= self.test_config.bucket.replica_number + 1
         user_data /= 2 ** 20
 
         mem_used, _, _ = self.avg_memcached_rss()
-        mem_used *= self.test_config.cluster.initial_nodes[0]
+        mem_used *= self._num_nodes
 
-        overhead = 100 * (mem_used / user_data - 1)
-        return int(overhead)
+        overhead = int(100 * (mem_used / user_data - 1))
+
+        return overhead, self._snapshots, metric_info
 
     def get_indexing_meta(self,
                           value: float,
                           index_type: str,
                           unit: str = "min") -> Metric:
-        metric = '{}_{}'.format(self.test_config.name, index_type.lower())
-        title = '{} index ({}), {}'.format(index_type, unit, self.title)
-        metric_info = self._get_metric_info(title)
+        metric_id = '{}_{}'.format(self.test_config.name, index_type.lower())
+        title = '{} index ({}), {}'.format(index_type, unit, self._title)
+        metric_info = self._metric_info(metric_id, title)
         metric_info['category'] = index_type.lower()
 
-        return value, metric, metric_info
+        value = s2m(value)
+
+        return value, self._snapshots, metric_info
 
     def get_memory_meta(self,
                         value: float,
                         memory_type: str) -> Metric:
-        metric = '{}_{}'.format(self.test_config.name,
-                                memory_type.replace(" ", "").lower())
-        title = '{} (GB), {}'.format(memory_type, self.title)
-        metric_info = self._get_metric_info(title)
+        metric_id = '{}_{}'.format(self.test_config.name,
+                                   memory_type.replace(" ", "").lower())
+        title = '{} (GB), {}'.format(memory_type, self._title)
+        metric_info = self._metric_info(metric_id, title)
 
-        return value, metric, metric_info
+        return value, self._snapshots, metric_info
 
     def bnr_throughput(self,
                        time_elapsed: float,
                        edition: str,
                        tool: str) -> Metric:
-        metric = '{}_{}_thr_{}'.format(self.test_config.name, tool, edition)
+        metric_id = '{}_{}_thr_{}'.format(self.test_config.name, tool, edition)
         title = '{} full {} throughput (Avg. MB/sec), {}'.format(
-            edition, tool, self.title)
-        metric_info = self._get_metric_info(title)
+            edition, tool, self._title)
+        metric_info = self._metric_info(metric_id, title)
 
         data_size = self.test_config.load_settings.items * \
             self.test_config.load_settings.size / 2 ** 20  # MB
 
         avg_throughput = round(data_size / time_elapsed)
 
-        return avg_throughput, metric, metric_info
+        return avg_throughput, self._snapshots, metric_info
 
-    def backup_size(self,
-                    size: float,
-                    edition: str) -> Metric:
-        metric = '{}_size_{}'.format(self.test_config.name, edition)
-        title = '{} backup size (GB), {}'.format(edition, self.title)
-        metric_info = self._get_metric_info(title)
+    def backup_size(self, size: float, edition: str) -> Metric:
+        metric_id = '{}_size_{}'.format(self.test_config.name, edition)
+        title = '{} backup size (GB), {}'.format(edition, self._title)
+        metric_info = self._metric_info(metric_id, title)
 
-        return size, metric, metric_info
+        return size, self._snapshots, metric_info
 
     def verify_series_in_limits(self,
                                 db: str,
@@ -510,7 +572,7 @@ class MetricHelper:
                 return False
         return True
 
-    def parse_ycsb_throughput(self) -> int:
+    def _parse_ycsb_throughput(self) -> int:
         throughput = 0
         for filename in glob.glob("YCSB/ycsb_run_*.log"):
             with open(filename) as fh:
@@ -519,24 +581,115 @@ class MetricHelper:
                         throughput += int(float(line.split()[-1]))
         return throughput
 
+    def _parse_dcp_throughput(self, output_file: str = 'dcpstatsfile') -> int:
+        # Get throughput from OUTPUT_FILE for posting to showfast
+        with open(output_file) as fh:
+            output_text = fh.read()
+            groups = re.search(
+                r"Throughput = [^\d]*(\d*).*?",
+                output_text)
+            return int(groups.group(1))
+
+    def dcp_throughput(self) -> Metric:
+        metric_info = self._metric_info()
+
+        throughput = self._parse_dcp_throughput()
+
+        return throughput, self._snapshots, metric_info
+
+    def fragmentation_ratio(self, ratio: float) -> Metric:
+        metric_info = self._metric_info()
+
+        return ratio, self._snapshots, metric_info
+
+    def elapsed_time(self, time_elapsed: float) -> Metric:
+        metric_info = self._metric_info()
+
+        time_elapsed = s2m(time_elapsed)
+
+        return time_elapsed, self._snapshots, metric_info
+
+    def kv_throughput(self, total_ops: int) -> Metric:
+        metric_info = self._metric_info()
+
+        throughput = total_ops // self.test_config.access_settings.time
+
+        return throughput, self._snapshots, metric_info
+
+    def ycsb_throughput(self, total_ops: int) -> Metric:
+        metric_info = self._metric_info()
+
+        throughput = self._parse_ycsb_throughput()
+
+        return throughput, self._snapshots, metric_info
+
+    def indexing_time(self, indexing_time: float) -> Metric:
+        return self.elapsed_time(indexing_time)
+
+    def rebalance_time(self, rebalance_time: float) -> Metric:
+        return self.elapsed_time(rebalance_time)
+
+    def failover_time(self, delta: float) -> Metric:
+        metric_info = self._metric_info()
+
+        return delta, self._snapshots, metric_info
+
+    def gsi_connections(self, num_connections: int) -> Metric:
+        metric_info = self._metric_info()
+
+        return num_connections, self._snapshots, metric_info
+
+    def scan_throughput(self, throughput: float) -> Metric:
+        metric_info = self._metric_info()
+
+        throughput = round(throughput, 1)
+
+        return throughput, self._snapshots, metric_info
+
+    def multi_scan_diff(self, time_diff: float):
+        metric_info = self._metric_info()
+
+        time_diff = round(time_diff, 2)
+
+        return time_diff, self._snapshots, metric_info
+
 
 class DailyMetricHelper(MetricHelper):
 
+    def indexing_time(self, time_elapsed: float) -> DailyMetric:
+        return 'Initial Indexing Time (min)', \
+            s2m(time_elapsed), \
+            self._snapshots
+
+    def dcp_throughput(self) -> DailyMetric:
+        return 'Avg Throughput (items/sec)', \
+            self._parse_dcp_throughput(), \
+            self._snapshots
+
+    def rebalance_time(self, rebalance_time: float) -> DailyMetric:
+        return 'Rebalance Time (min)', \
+            s2m(rebalance_time), \
+            self._snapshots
+
     def avg_n1ql_throughput(self) -> DailyMetric:
         return 'Avg Query Throughput (queries/sec)', \
-            self._avg_n1ql_throughput()
+            self._avg_n1ql_throughput(), \
+            self._snapshots
 
     def max_ops(self) -> DailyMetric:
         return 'Max Throughput (ops/sec)', \
-            super().max_ops()
+            super()._max_ops(), \
+            self._snapshots
 
     def avg_replication_rate(self, time_elapsed: float) -> DailyMetric:
         return 'Avg XDCR Rate (items/sec)', \
-            super().avg_replication_rate(time_elapsed)
+            super()._avg_replication_rate(time_elapsed), \
+            self._snapshots
 
     def ycsb_throughput(self) -> DailyMetric:
         return 'Avg Throughput (ops/sec)', \
-            self.parse_ycsb_throughput()
+            self._parse_ycsb_throughput(), \
+            self._snapshots
 
     def backup_throughput(self, time_elapsed: float) -> DailyMetric:
         data_size = self.test_config.load_settings.items * \
@@ -544,4 +697,5 @@ class DailyMetricHelper(MetricHelper):
         throughput = round(data_size / time_elapsed)
 
         return 'Avg Throughput (MB/sec)', \
-            throughput
+            throughput, \
+            self._snapshots

@@ -1,19 +1,13 @@
 from perfdaily import DailyTest
-from perfrunner.tests.ycsb2 import YCSBN1QLTest as _YCSBN1QLTest
-from perfrunner.tests.ycsb2 import YCSBTest as _YCSBTest
+from perfrunner.tests.ycsb2 import YCSBN1QLThroughputTest as N1QLThroughputTest
+from perfrunner.tests.ycsb2 import YCSBThroughputTest as ThroughputTest
 
 
-class YCSBThroughputTest(DailyTest, _YCSBTest):
+class YCSBThroughputTest(DailyTest, ThroughputTest):
 
-    def _report_kpi(self):
-        self.reporter.post_to_daily(
-            *self.metrics.ycsb_throughput()
-        )
+    pass
 
 
-class YCSBN1QLThroughputTest(DailyTest, _YCSBN1QLTest):
+class YCSBN1QLThroughputTest(DailyTest, N1QLThroughputTest):
 
-    def _report_kpi(self):
-        self.reporter.post_to_daily(
-            *self.metrics.ycsb_throughput()
-        )
+    pass

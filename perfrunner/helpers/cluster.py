@@ -261,7 +261,7 @@ class ClusterManager:
 
         for master in self.masters():
             for bucket in self.test_config.buckets:
-                bucket_roles = tuple(role.format(bucket=bucket) for role in roles)
+                bucket_roles = [role.format(bucket=bucket) for role in roles]
                 self.rest.add_rbac_user(
                     host_port=master,
                     bucket_name=bucket,

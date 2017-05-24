@@ -176,11 +176,11 @@ class RebalanceBaselineForFTS(RebalanceTest):
 
 class RecoveryTest(RebalanceKVTest):
 
-    @with_delayed_posting
-    @with_stats
-    @with_delay
-    @with_timer
-    def rebalance(self):
+    def failover(self):
+        logger.info('Sleeping {} seconds before triggering failover'
+                    .format(self.rebalance_settings.delay_before_failover))
+        time.sleep(self.rebalance_settings.delay_before_failover)
+
         clusters = self.cluster_spec.yield_clusters()
         initial_nodes = self.test_config.cluster.initial_nodes
         failed_nodes = self.rebalance_settings.failed_nodes
@@ -203,14 +203,31 @@ class RecoveryTest(RebalanceKVTest):
                 for host_port in failed:
                     self.rest.set_delta_recovery_type(master, host_port)
 
-            logger.info('Sleeping for {} seconds after failover'
-                        .format(self.rebalance_settings.sleep_after_failover))
-            time.sleep(self.rebalance_settings.sleep_after_failover)
+    @with_delayed_posting
+    @with_stats
+    @with_delay
+    @with_timer
+    def rebalance(self):
+        clusters = self.cluster_spec.yield_clusters()
+        initial_nodes = self.test_config.cluster.initial_nodes
 
-            self.reporter.start()
-            self.rest.rebalance(master, known_nodes=servers[:initial_nodes],
+        for (_, servers), initial_nodes in zip(clusters, initial_nodes):
+            master = servers[0]
+
+            self.rest.rebalance(master,
+                                known_nodes=servers[:initial_nodes],
                                 ejected_nodes=[])
             self.monitor.monitor_rebalance(master)
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.hot_load()
+
+        self.access_bg()
+        self.failover()
+        self.rebalance()
 
 
 class FailoverTest(RebalanceKVTest):

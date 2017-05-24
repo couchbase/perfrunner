@@ -282,7 +282,7 @@ class RebalanceSettings:
     SWAP = 0
     FAILOVER = 'hard'  # Atl: graceful
     DELTA_RECOVERY = 0  # Full recovery by default
-    SLEEP_AFTER_FAILOVER = 600
+    DELAY_BEFORE_FAILOVER = 600
     START_AFTER = 1200
     STOP_AFTER = 1200
 
@@ -294,8 +294,8 @@ class RebalanceSettings:
 
         self.failed_nodes = int(options.get('failed_nodes', 1))
         self.failover = options.get('failover', self.FAILOVER)
-        self.sleep_after_failover = int(options.get('sleep_after_failover',
-                                                    self.SLEEP_AFTER_FAILOVER))
+        self.delay_before_failover = int(options.get('delay_before_failover',
+                                                     self.DELAY_BEFORE_FAILOVER))
         self.delta_recovery = int(options.get('delta_recovery',
                                               self.DELTA_RECOVERY))
 

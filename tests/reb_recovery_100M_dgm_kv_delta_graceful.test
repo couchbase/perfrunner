@@ -37,6 +37,6 @@ working_set_access = 98
 failed_nodes = 1
 failover = graceful
 delta_recovery = 1
-sleep_after_failover = 1200
+delay_before_failover = 1200
 start_after = 1200
 stop_after = 1200

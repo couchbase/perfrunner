@@ -43,16 +43,6 @@ def with_timer(rebalance, *args, **kwargs):
     test.rebalance_time = time.time() - t0  # Rebalance time in seconds
 
 
-@decorator
-def with_delayed_posting(rebalance, *args, **kwargs):
-    test = args[0]
-
-    rebalance(*args, **kwargs)
-
-    if test.is_balanced():
-        test.report_kpi(test.rebalance_time)
-
-
 class RebalanceTest(PerfTest):
 
     """
@@ -86,12 +76,11 @@ class RebalanceTest(PerfTest):
                 return False
         return True
 
-    def _report_kpi(self, rebalance_time):
+    def _report_kpi(self):
         self.reporter.post(
-            *self.metrics.rebalance_time(rebalance_time)
+            *self.metrics.rebalance_time(self.rebalance_time)
         )
 
-    @with_delayed_posting
     def rebalance(self):
         self._rebalance()
 
@@ -161,6 +150,9 @@ class RebalanceKVTest(RebalanceTest):
         self.access_bg()
         self.rebalance()
 
+        if self.is_balanced():
+            self.report_kpi()
+
 
 class RebalanceBaselineForFTS(RebalanceTest):
 
@@ -171,7 +163,11 @@ class RebalanceBaselineForFTS(RebalanceTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
+
         self.rebalance()
+
+        if self.is_balanced():
+            self.report_kpi()
 
 
 class RecoveryTest(RebalanceKVTest):
@@ -203,7 +199,6 @@ class RecoveryTest(RebalanceKVTest):
                 for host_port in failed:
                     self.rest.set_delta_recovery_type(master, host_port)
 
-    @with_delayed_posting
     @with_stats
     @with_delay
     @with_timer
@@ -226,8 +221,12 @@ class RecoveryTest(RebalanceKVTest):
         self.hot_load()
 
         self.access_bg()
+
         self.failover()
         self.rebalance()
+
+        if self.is_balanced():
+            self.report_kpi()
 
 
 class FailoverTest(RebalanceKVTest):
@@ -386,6 +385,9 @@ class RebalanceWithQueriesTest(RebalanceTest, QueryTest):
         self.access_bg()
         self.rebalance()
 
+        if self.is_balanced():
+            self.report_kpi()
+
 
 class RebalanceWithXDCRTest(RebalanceTest, XdcrTest):
 
@@ -431,7 +433,11 @@ class RebalanceWithUniDirXdcrTest(RebalanceTest, UniDirXdcrTest):
         self.hot_load()
 
         self.access_bg()
+
         self.rebalance()
+
+        if self.is_balanced():
+            self.report_kpi()
 
 
 class RebalanceWithXdcrTest(RebalanceTest, XdcrInitTest):

@@ -227,7 +227,6 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
         self.wait_for_persistence()
         self.compact_bucket()
         time_elapsed = self.build_secondaryindex()
-        time_elapsed = self.reporter.finish('Initial secondary index', time_elapsed)
         self.print_index_disk_usage()
         if not self.incremental_only:
             self.report_kpi(time_elapsed, 'Initial')
@@ -236,7 +235,6 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
         self.load_and_build_initial_index()
 
         time_elapsed = self.build_incrindex()
-        time_elapsed = self.reporter.finish('Incremental secondary index', time_elapsed)
         self.print_index_disk_usage()
         self.report_kpi(time_elapsed, 'Incremental')
 
@@ -254,11 +252,9 @@ class InitialandIncrementalDGMSecondaryIndexTest(InitialandIncrementalSecondaryI
         self.load_and_build_initial_index()
 
         time_elapsed = self.build_incrindex()
-        self.reporter.finish('First incremental secondary index', time_elapsed)
         self.print_index_disk_usage()
 
         time_elapsed = self.build_incrindex()
-        time_elapsed = self.reporter.finish('Second incremental secondary index', time_elapsed)
         self.print_index_disk_usage()
 
         self.report_kpi(time_elapsed, 'Incremental')
@@ -343,7 +339,6 @@ class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSeco
         nodes_after[0] = initial_nodes[0] + 1
         self.rebalance(initial_nodes[0], nodes_after[0])
         time_elapsed = self.build_secondaryindex()
-        time_elapsed = self.reporter.finish('Initial secondary index', time_elapsed)
         self.print_index_disk_usage()
         self.report_kpi(time_elapsed, 'Initial')
 
@@ -355,7 +350,6 @@ class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSeco
         nodes_after[0] += 1
         self.rebalance(initial_nodes[0], nodes_after[0])
         time_elapsed = self.build_incrindex()
-        time_elapsed = self.reporter.finish('Incremental secondary index', time_elapsed)
         self.print_index_disk_usage()
         self.report_kpi(time_elapsed, 'Incremental')
 

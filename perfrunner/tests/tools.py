@@ -62,7 +62,7 @@ class BackupTest(BackupRestoreTest):
             cluster_spec=self.cluster_spec,
             wrapper=self.rest.is_community(self.master_node),
             mode=mode,
-            compression=self.test_config.backup_settings.compression
+            compression=self.test_config.backup_settings.compression,
         )
 
     def _report_kpi(self, time_elapsed):
@@ -85,6 +85,17 @@ class BackupTest(BackupRestoreTest):
         time_elapsed = self.backup()
 
         self.report_kpi(time_elapsed)
+
+
+class BackupSizeTest(BackupTest):
+
+    def _report_kpi(self, *args):
+        edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
+        backup_size = local.calc_backup_size(self.cluster_spec)
+
+        self.reporter.post(
+            *self.metrics.backup_size(backup_size, edition)
+        )
 
 
 class BackupUnderLoadTest(BackupTest):

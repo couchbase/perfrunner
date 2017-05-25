@@ -149,7 +149,7 @@ class PerfTest:
                  task: Callable = spring_task) -> None:
         settings = self.test_config.hot_load_settings
 
-        self.run_phase('load phase',
+        self.run_phase('hot load phase',
                        task, settings, self.target_iterator)
 
     def access(self,

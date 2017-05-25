@@ -1,6 +1,6 @@
 [test_case]
-test = perfrunner.tests.rebalance.RebalanceWithXdcrTest
-title = Avg. replication throughput (docs/sec), Rebalance-in, 2->2 -> 1->2 UniDir, 1 bucket x 200M x 1KB
+test = perfrunner.tests.rebalance.RebalanceWithXdcrInitTest
+title = Avg. initial XDCR rate (items/sec), Rebalance-in, 2->2 -> 1->2 UniDir, 1 bucket x 200M x 1KB
 component = xdcr
 category = reb
 
@@ -29,5 +29,3 @@ replication_type = unidir
 
 [rebalance]
 nodes_after = 2 2
-start_after = 10
-stop_after = 10

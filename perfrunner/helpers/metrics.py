@@ -200,6 +200,8 @@ class MetricHelper:
         title = 'Rebalance time (min), {}, {}'.format(self._title, name)
         metric_info = self._metric_info(metric_id, title, order_by)
 
+        reb_time = s2m(reb_time)
+
         return reb_time, self._snapshots, metric_info
 
     def max_ops(self) -> Metric:

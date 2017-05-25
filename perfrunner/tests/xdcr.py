@@ -71,7 +71,7 @@ class XdcrTest(PerfTest):
             self.remote.enable_wan()
             self.remote.filter_wan(src_list, dest_list)
 
-    def _report_kpi(self):
+    def _report_kpi(self, *args):
         self.reporter.post(
             *self.metrics.xdcr_lag()
         )

@@ -1,4 +1,3 @@
-import multiprocessing
 import time
 
 import dateutil.parser
@@ -76,18 +75,21 @@ class RebalanceTest(PerfTest):
                 return False
         return True
 
-    def _report_kpi(self):
+    def monitor_progress(self, master):
+        self.monitor.monitor_rebalance(master)
+
+    def _report_kpi(self, *args):
         self.reporter.post(
             *self.metrics.rebalance_time(self.rebalance_time)
         )
 
-    def rebalance(self):
-        self._rebalance()
-
     @with_stats
     @with_delay
     @with_timer
-    def _rebalance(self, services=None):
+    def rebalance(self, services=None):
+        self._rebalance(services)
+
+    def _rebalance(self, services):
         clusters = self.cluster_spec.yield_clusters()
         initial_nodes = self.test_config.cluster.initial_nodes
         nodes_after = self.rebalance_settings.nodes_after
@@ -130,7 +132,7 @@ class RebalanceTest(PerfTest):
 
             self.rest.rebalance(master, known_nodes, ejected_nodes)
 
-            self.monitor.monitor_rebalance(master)
+            self.monitor_progress(master)
 
 
 class RebalanceKVTest(RebalanceTest):
@@ -192,7 +194,7 @@ class RecoveryTest(RebalanceKVTest):
                     self.rest.fail_over(master, host_port)
                 else:
                     self.rest.graceful_fail_over(master, host_port)
-                    self.monitor.monitor_rebalance(master)
+                    self.monitor_progress(master)
                 self.rest.add_back(master, host_port)
 
             if self.rebalance_settings.delta_recovery:
@@ -202,7 +204,7 @@ class RecoveryTest(RebalanceKVTest):
     @with_stats
     @with_delay
     @with_timer
-    def rebalance(self):
+    def rebalance(self, *args):
         clusters = self.cluster_spec.yield_clusters()
         initial_nodes = self.test_config.cluster.initial_nodes
 
@@ -212,7 +214,7 @@ class RecoveryTest(RebalanceKVTest):
             self.rest.rebalance(master,
                                 known_nodes=servers[:initial_nodes],
                                 ejected_nodes=[])
-            self.monitor.monitor_rebalance(master)
+            self.monitor_progress(master)
 
     def run(self):
         self.load()
@@ -259,7 +261,7 @@ class HardFailoverTest(FailoverTest):
             )
 
     @with_delay
-    def rebalance(self):
+    def rebalance(self, *args):
         clusters = self.cluster_spec.yield_clusters()
         initial_nodes = self.test_config.cluster.initial_nodes
         failed_nodes = self.rebalance_settings.failed_nodes
@@ -291,7 +293,7 @@ class GracefulFailoverTest(FailoverTest):
             )
 
     @with_delay
-    def rebalance(self):
+    def rebalance(self, *args):
         clusters = self.cluster_spec.yield_clusters()
         initial_nodes = self.test_config.cluster.initial_nodes
         failed_nodes = self.rebalance_settings.failed_nodes
@@ -304,7 +306,7 @@ class GracefulFailoverTest(FailoverTest):
 
             for host_port in failed:
                 self.rest.graceful_fail_over(master, host_port)
-                self.monitor.monitor_rebalance(master)
+                self.monitor_progress(master)
 
 
 class AutoFailoverTest(FailoverTest):
@@ -324,7 +326,7 @@ class AutoFailoverTest(FailoverTest):
             )
 
     @with_delay
-    def rebalance(self):
+    def rebalance(self, *args):
         clusters = self.cluster_spec.yield_clusters()
         initial_nodes = self.test_config.cluster.initial_nodes
         failed_nodes = self.rebalance_settings.failed_nodes
@@ -351,7 +353,7 @@ class FailureDetectionTest(FailoverTest):
             )
 
     @with_delay
-    def rebalance(self):
+    def rebalance(self, *args):
         clusters = self.cluster_spec.yield_clusters()
         initial_nodes = self.test_config.cluster.initial_nodes
         failed_nodes = self.rebalance_settings.failed_nodes
@@ -440,70 +442,36 @@ class RebalanceWithUniDirXdcrTest(RebalanceTest, UniDirXdcrTest):
             self.report_kpi()
 
 
-class RebalanceWithXdcrTest(RebalanceTest, XdcrInitTest):
-
-    @with_stats
-    def rebalance(self):
-        clusters = self.cluster_spec.yield_clusters()
-        initial_nodes = self.test_config.cluster.initial_nodes
-        nodes_after = self.rebalance_settings.nodes_after
-        group_number = self.test_config.cluster.group_number or 1
-        self.master = None
-        for (_, servers), initial_nodes, nodes_after in zip(clusters,
-                                                            initial_nodes,
-                                                            nodes_after):
-            master = servers[0]
-            groups = group_number > 1 and self.rest.get_server_groups(master) or {}
-
-            new_nodes = []
-            known_nodes = servers[:initial_nodes]
-            ejected_nodes = []
-            if nodes_after > initial_nodes:  # rebalance-in
-                new_nodes = enumerate(
-                    servers[initial_nodes:nodes_after],
-                    start=initial_nodes
-                )
-                known_nodes = servers[:nodes_after]
-            elif nodes_after < initial_nodes:  # rebalance-out
-                ejected_nodes = servers[nodes_after:initial_nodes]
-            else:
-                continue
-
-            for i, host_port in new_nodes:
-                group = server_group(servers[:nodes_after], group_number, i)
-                uri = groups.get(group)
-                self.rest.add_node(master, host_port, uri=uri)
-            self.rest.rebalance(master, known_nodes, ejected_nodes)
-            self.master = master
-
-        self.enable_xdcr()
-        start = time.time()
-        if self.master:
-            p = multiprocessing.Process(target=self.monitor.monitor_rebalance, args=(self.master,))
-            p.start()
-        self.monitor_replication()
-        self.time_elapsed = int(time.time() - start)
+class RebalanceWithXdcrInitTest(RebalanceTest, XdcrInitTest):
 
     def load_dest(self):
+        if self.test_config.cluster.initial_nodes[1] == \
+                self.rebalance_settings.nodes_after[1]:
+            return
+
         dest_target_iterator = DestTargetIterator(self.cluster_spec,
                                                   self.test_config)
         PerfTest.load(self, target_iterator=dest_target_iterator)
 
-    def _report_kpi(self, *args):
-        self.reporter.post(
-            *self.metrics.avg_replication_rate(self.time_elapsed)
-        )
+    def rebalance(self, *args):
+        self._rebalance(services=None)
 
     def check_rebalance(self):
         pass
 
+    def monitor_progress(self, *args):
+        pass
+
+    def _report_kpi(self, time_elapsed):
+        XdcrInitTest._report_kpi(self, time_elapsed)
+
     def run(self):
         self.load()
-        if self.test_config.cluster.initial_nodes[1] != self.rebalance_settings.nodes_after[1]:
-            self.load_dest()
+        self.load_dest()
 
         self.wait_for_persistence()
 
         self.rebalance()
 
-        self.report_kpi()
+        time_elapsed = self.init_xdcr()
+        self.report_kpi(time_elapsed)

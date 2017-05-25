@@ -803,7 +803,6 @@ class SecondaryRebalanceTest(SecondaryIndexTest, RebalanceTest):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.rebalance_settings = self.test_config.rebalance_settings
-        self.rebalance_time = 0
 
     def run(self):
         self.load()
@@ -812,12 +811,12 @@ class SecondaryRebalanceTest(SecondaryIndexTest, RebalanceTest):
         self._build_secondaryindex()
         self.run_access_for_2i(run_in_background=True)
         self.rebalance_indexer()
-        self.report_kpi(self.rebalance_time)
+        self.report_kpi()
 
     def rebalance_indexer(self):
-        self._rebalance(services="index")
+        self.rebalance(services="index")
 
-    def _report_kpi(self, rebalance_time):
+    def _report_kpi(self):
         self.reporter.post(
-            *self.metrics.rebalance_time(rebalance_time)
+            *self.metrics.rebalance_time(self.rebalance_time)
         )

@@ -196,7 +196,6 @@ class FTSRebalanceTest(FTStest, RebalanceTest):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.rebalance_settings = self.test_config.rebalance_settings
-        self.rebalance_time = 0
 
     def run(self):
         self.cleanup_and_restore()
@@ -204,21 +203,20 @@ class FTSRebalanceTest(FTStest, RebalanceTest):
         self.wait_for_index()
         self.check_rec_presist()
         self.access_bg_test()
-        self.report_rebalance(self.rebalance_time)
+        self.rebalance_fts()
+        self.report_kpi()
 
-    @with_stats
     def access_bg_test(self):
         access_settings = self.test_config.access_settings
         access_settings.fts_config = self.test_config.fts_settings
         self.access_bg(settings=access_settings)
-        self.rebalance_fts()
 
     def rebalance_fts(self):
-        self._rebalance(services="kv,fts")
+        self.rebalance(services="kv,fts")
 
-    def report_rebalance(self, rebalance_time):
+    def _report_kpi(self):
         self.reporter.post(
-            *self.metrics.fts_rebalance_time(reb_time=rebalance_time,
+            *self.metrics.fts_rebalance_time(reb_time=self.rebalance_time,
                                              order_by=self.order_by)
         )
 

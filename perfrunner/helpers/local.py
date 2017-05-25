@@ -181,24 +181,6 @@ def import_sample_data(master_node, cluster_spec, bucket='', edition='EE'):
     local(cmd, capture=False)
 
 
-def cbtransfer_import_data(master_node, cluster_spec, bucket=''):
-    bf = "/data/json_lines_ce"
-    files = local("ls {} | grep export_csv".format(bf), capture=True).split()
-
-    logger.info('import from: {}/{}'.format(bf, files))
-    size = 0
-    for f in files:
-        cmd = \
-            './opt/couchbase/bin/cbtransfer {}/{} http://{} -u {} -p {} -B {}' \
-            .format(bf, f, master_node, cluster_spec.rest_credentials[0],
-                    cluster_spec.rest_credentials[1], bucket)
-
-        logger.info('Running: {}'.format(cmd))
-        local(cmd, capture=False)
-        size += os.path.getsize("{}/{}".format(bf, f))
-    return size
-
-
 def run_cbc_pillowfight(host, bucket, password,
                         num_items, num_threads, num_cycles, size, writes,
                         populate=False, use_ssl=False):

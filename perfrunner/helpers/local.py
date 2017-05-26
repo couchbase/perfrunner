@@ -14,7 +14,7 @@ def extract_cb(filename):
 
 
 def cleanup(backup_dir):
-    logger.info("Cleaning the disk before backup")
+    logger.info("Cleaning the disk before backup/export")
 
     # Remove files from the directory, if any.
     local('rm -fr {}/*'.format(backup_dir))
@@ -24,6 +24,11 @@ def cleanup(backup_dir):
         os.makedirs(backup_dir)  # Otherwise fstrim won't find the device
     if platform == "linux2":
         local('fstrim -v {0} && fstrim -v {0}'.format(backup_dir))
+
+
+def drop_caches():
+    logger.info('Dropping memory cache')
+    local('sync && echo 3 > /proc/sys/vm/drop_caches', capture=False)
 
 
 def backup(master_node, cluster_spec, wrapper=False, mode=None,

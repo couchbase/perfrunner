@@ -147,6 +147,8 @@ class RestoreTest(BackupTest):
     @with_stats
     @timeit
     def restore(self):
+        local.drop_caches()
+
         local.restore(cluster_spec=self.cluster_spec,
                       master_node=self.master_node,
                       wrapper=self.rest.is_community(self.master_node))
@@ -218,6 +220,8 @@ class ExportImportTest(BackupRestoreTest):
             import_file = os.path.join(self.cluster_spec.backup, import_file)
         if self.test_config.export_settings.format != 'sample':
             import_file = 'file://{}'.format(import_file)
+
+        local.drop_caches()
 
         local.cbimport(master_node=self.master_node,
                        cluster_spec=self.cluster_spec,

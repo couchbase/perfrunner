@@ -6,10 +6,8 @@ class SecondaryStats(Collector):
     COLLECTOR = "secondary_stats"
 
     def _get_secondary_stats(self, bucket):
-        server = self.master_node
-        server = server.split(':')[0]
         uri = "/pools/default/buckets/@index-{}/stats".format(bucket)
-        samples = self.get_http(path=uri, server=server)
+        samples = self.get_http(path=uri)
         stats = dict()
         for metric, values in samples['op']['samples'].items():
             metric = metric.replace('/', '_')

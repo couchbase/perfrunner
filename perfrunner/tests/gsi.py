@@ -17,13 +17,13 @@ class IndexTest(PerfTest):
     NUM_KVGEN_INSTANCES = 5
 
     def kvgen(self):
-        master = self.master_node.split(':')[0]
         num_docs = self.test_config.load_settings.items // self.NUM_KVGEN_INSTANCES
 
         threads = []
         for i in range(self.NUM_KVGEN_INSTANCES):
             prefix = 'prefix-{}'.format(i)
-            thread = Thread(target=run_kvgen, args=(master, num_docs, prefix))
+            thread = Thread(target=run_kvgen, args=(self.master_node, num_docs,
+                                                    prefix))
             threads.append(thread)
 
         return threads
@@ -48,7 +48,7 @@ class IndexTest(PerfTest):
             for server in servers:
                 for bucket in self.test_config.buckets:
                     for name, field in indexes.items():
-                        self.rest.create_index(host_port=server,
+                        self.rest.create_index(host=server,
                                                bucket=bucket,
                                                name=name,
                                                field=field,

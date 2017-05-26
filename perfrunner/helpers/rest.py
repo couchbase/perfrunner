@@ -59,57 +59,56 @@ class RestHelper:
     def put(self, **kwargs):
         return self._put(**kwargs)
 
-    def set_data_path(self, host_port: str, data_path: str, index_path: str):
-        logger.info('Configuring data paths: {}'.format(host_port))
+    def set_data_path(self, host: str, data_path: str, index_path: str):
+        logger.info('Configuring data paths: {}'.format(host))
 
-        api = 'http://{}/nodes/self/controller/settings'.format(host_port)
+        api = 'http://{}:8091/nodes/self/controller/settings'.format(host)
         data = {
             'path': data_path, 'index_path': index_path
         }
         self.post(url=api, data=data)
 
-    def set_auth(self, host_port: str):
-        logger.info('Configuring cluster authentication: {}'.format(host_port))
+    def set_auth(self, host: str):
+        logger.info('Configuring cluster authentication: {}'.format(host))
 
-        api = 'http://{}/settings/web'.format(host_port)
+        api = 'http://{}:8091/settings/web'.format(host)
         data = {
             'username': self.rest_username, 'password': self.rest_password,
             'port': 'SAME'
         }
         self.post(url=api, data=data)
 
-    def rename(self, host_port: str):
-        logger.info('Changing server name: {}'.format(host_port))
+    def rename(self, host: str):
+        logger.info('Changing server name: {}'.format(host))
 
-        api = 'http://{}/node/controller/rename'.format(host_port)
-        data = {'hostname': host_port.split(':')[0]}
+        api = 'http://{}:8091/node/controller/rename'.format(host)
+        data = {'hostname': host}
 
         self.post(url=api, data=data)
 
-    def set_mem_quota(self, host_port: str, mem_quota: str):
+    def set_mem_quota(self, host: str, mem_quota: str):
         logger.info('Configuring data RAM quota: {} MB'.format(mem_quota))
 
-        api = 'http://{}/pools/default'.format(host_port)
+        api = 'http://{}:8091/pools/default'.format(host)
         data = {'memoryQuota': mem_quota}
         self.post(url=api, data=data)
 
-    def set_index_mem_quota(self, host_port: str, mem_quota: int):
+    def set_index_mem_quota(self, host: str, mem_quota: int):
         logger.info('Configuring index RAM quota: {} MB'.format(mem_quota))
 
-        api = 'http://{}/pools/default'.format(host_port)
+        api = 'http://{}:8091/pools/default'.format(host)
         data = {'indexMemoryQuota': mem_quota}
         self.post(url=api, data=data)
 
-    def set_fts_index_mem_quota(self, host_port: str, mem_quota: int):
+    def set_fts_index_mem_quota(self, host: str, mem_quota: int):
         logger.info('Configuring FTS RAM quota: {} MB'.format(mem_quota))
 
-        api = 'http://{}/pools/default'.format(host_port)
+        api = 'http://{}:8091/pools/default'.format(host)
         data = {'ftsMemoryQuota': mem_quota}
         self.post(url=api, data=data)
 
-    def set_query_settings(self, host_port: str, override_settings: dict):
-        host = host_port.replace('8091', '8093')
-        api = 'http://{}/admin/settings'.format(host)
+    def set_query_settings(self, host: str, override_settings: dict):
+        api = 'http://{}:8093/admin/settings'.format(host)
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
 
         settings = self.get(url=api).json()
@@ -122,11 +121,10 @@ class RestHelper:
             logger.info('Changing query setting {} to {}'.format(override, value))
         self.post(url=api, data=json.dumps(settings), headers=headers)
 
-    def set_index_settings(self, host_port: str, settings: dict):
-        logger.info('Changing indexer settings for {}'.format(host_port))
+    def set_index_settings(self, host: str, settings: dict):
+        logger.info('Changing indexer settings for {}'.format(host))
 
-        host = host_port.replace('8091', '9102')
-        api = 'http://{}/settings'.format(host)
+        api = 'http://{}:9102/settings'.format(host)
 
         curr_settings = self.get(url=api).json()
         for option, value in settings.items():
@@ -136,22 +134,19 @@ class RestHelper:
             else:
                 logger.warn('Skipping unknown option: {}'.format(option))
 
-    def get_index_settings(self, host_port: str) -> dict:
-        host = host_port.replace('8091', '9102')
-        api = 'http://{}/settings?internal=ok'.format(host)
+    def get_index_settings(self, host: str) -> dict:
+        api = 'http://{}:9102/settings?internal=ok'.format(host)
 
         return self.get(url=api).json()
 
-    def get_gsi_stats(self, host_port: str) -> dict:
-        host = host_port.replace('8091', '9102')
-        api = 'http://{}/stats'.format(host)
+    def get_gsi_stats(self, host: str) -> dict:
+        api = 'http://{}:9102/stats'.format(host)
 
         return self.get(url=api).json()
 
-    def create_index(self, host_port: str, bucket: str, name: str, field: str,
+    def create_index(self, host: str, bucket: str, name: str, field: str,
                      storage: str = 'memdb'):
-        host = host_port.replace('8091', '9102')
-        api = 'http://{}/createIndex'.format(host)
+        api = 'http://{}:9102/createIndex'.format(host)
         data = {
             'index': {
                 'bucket': bucket,
@@ -171,22 +166,22 @@ class RestHelper:
         logger.info('Creating index {}'.format(misc.pretty_dict(data)))
         self.post(url=api, data=json.dumps(data))
 
-    def set_services(self, host_port: str, services: str):
+    def set_services(self, host: str, services: str):
         logger.info('Configuring services on master node {}: {}'
-                    .format(host_port, misc.pretty_dict(services)))
+                    .format(host, misc.pretty_dict(services)))
 
-        api = 'http://{}/node/controller/setupServices'.format(host_port)
+        api = 'http://{}:8091/node/controller/setupServices'.format(host)
         data = {'services': services}
         self.post(url=api, data=data)
 
-    def add_node(self, host_port: str, new_host: str,
+    def add_node(self, host: str, new_host: str,
                  services: str = None, uri: str = None):
         logger.info('Adding new node: {}'.format(new_host))
 
         if uri:
-            api = 'http://{}{}'.format(host_port, uri)
+            api = 'http://{}:8091{}'.format(host, uri)
         else:
-            api = 'http://{}/controller/addNode'.format(host_port)
+            api = 'http://{}:8091/controller/addNode'.format(host)
         data = {
             'hostname': new_host,
             'user': self.rest_username,
@@ -195,11 +190,11 @@ class RestHelper:
         }
         self.post(url=api, data=data)
 
-    def rebalance(self, host_port: str, known_nodes: List[str],
+    def rebalance(self, host: str, known_nodes: List[str],
                   ejected_nodes: List[str]):
         logger.info('Starting rebalance')
 
-        api = 'http://{}/controller/rebalance'.format(host_port)
+        api = 'http://{}:8091/controller/rebalance'.format(host)
         known_nodes = ','.join(map(self.get_otp_node_name, known_nodes))
         ejected_nodes = ','.join(map(self.get_otp_node_name, ejected_nodes))
         data = {
@@ -208,37 +203,37 @@ class RestHelper:
         }
         self.post(url=api, data=data)
 
-    def get_counters(self, host_port: str) -> dict:
-        api = 'http://{}/pools/default'.format(host_port)
+    def get_counters(self, host: str) -> dict:
+        api = 'http://{}:8091/pools/default'.format(host)
         return self.get(url=api).json()['counters']
 
-    def is_not_balanced(self, host_port: str) -> int:
-        counters = self.get_counters(host_port)
+    def is_not_balanced(self, host: str) -> int:
+        counters = self.get_counters(host)
         return counters.get('rebalance_start') - counters.get('rebalance_success')
 
-    def get_failover_counter(self, host_port: str) -> int:
-        counters = self.get_counters(host_port)
+    def get_failover_counter(self, host: str) -> int:
+        counters = self.get_counters(host)
         return counters.get('failover_node')
 
-    def get_tasks(self, host_port: str) -> dict:
-        api = 'http://{}/pools/default/tasks'.format(host_port)
+    def get_tasks(self, host: str) -> dict:
+        api = 'http://{}:8091/pools/default/tasks'.format(host)
         return self.get(url=api).json()
 
-    def get_task_status(self, host_port: str, task_type: str) -> [bool, float]:
-        for task in self.get_tasks(host_port):
+    def get_task_status(self, host: str, task_type: str) -> [bool, float]:
+        for task in self.get_tasks(host):
             if task['type'] == task_type:
                 is_running = task['status'] == 'running'
                 progress = task.get('progress')
                 return is_running, progress
         return False, 0
 
-    def create_bucket(self, host_port: str, name: str, password: str,
+    def create_bucket(self, host: str, name: str, password: str,
                       ram_quota: int, replica_number: int, replica_index: int,
                       eviction_policy: str, bucket_type: str,
                       conflict_resolution_type: str = None):
         logger.info('Adding new bucket: {}'.format(name))
 
-        api = 'http://{}/pools/default/buckets'.format(host_port)
+        api = 'http://{}:8091/pools/default/buckets'.format(host)
 
         data = {
             'name': name,
@@ -261,16 +256,16 @@ class RestHelper:
 
         self.post(url=api, data=data)
 
-    def flush_bucket(self, host_port: str, bucket: str):
+    def flush_bucket(self, host: str, bucket: str):
         logger.info('Flushing bucket: {}'.format(bucket))
 
-        api = 'http://{}/pools/default/buckets/{}/controller/doFlush'.format(host_port, bucket)
+        api = 'http://{}:8091/pools/default/buckets/{}/controller/doFlush'.format(host, bucket)
         self.post(url=api)
 
-    def configure_auto_compaction(self, host_port, settings):
+    def configure_auto_compaction(self, host, settings):
         logger.info('Applying auto-compaction settings: {}'.format(settings))
 
-        api = 'http://{}/controller/setAutoCompaction'.format(host_port)
+        api = 'http://{}:8091/controller/setAutoCompaction'.format(host)
         data = {
             'databaseFragmentationThreshold[percentage]': settings.db_percentage,
             'viewFragmentationThreshold[percentage]': settings.view_percentage,
@@ -278,29 +273,29 @@ class RestHelper:
         }
         self.post(url=api, data=data)
 
-    def get_auto_compaction_settings(self, host_port: str) -> dict:
-        api = 'http://{}/settings/autoCompaction'.format(host_port)
+    def get_auto_compaction_settings(self, host: str) -> dict:
+        api = 'http://{}:8091/settings/autoCompaction'.format(host)
         return self.get(url=api).json()
 
-    def get_bucket_stats(self, host_port: str, bucket: str) -> dict:
-        api = 'http://{}/pools/default/buckets/{}/stats'.format(host_port,
-                                                                bucket)
+    def get_bucket_stats(self, host: str, bucket: str) -> dict:
+        api = 'http://{}:8091/pools/default/buckets/{}/stats'.format(host,
+                                                                     bucket)
         return self.get(url=api).json()
 
-    def get_xdcr_stats(self, host_port: str, bucket: str) -> dict:
-        api = 'http://{}/pools/default/buckets/@xdcr-{}/stats'.format(host_port,
-                                                                      bucket)
+    def get_xdcr_stats(self, host: str, bucket: str) -> dict:
+        api = 'http://{}:8091/pools/default/buckets/@xdcr-{}/stats'.format(host,
+                                                                           bucket)
         return self.get(url=api).json()
 
-    def add_remote_cluster(self, host_port: str, remote_host_port: str,
+    def add_remote_cluster(self, host: str, remote_host: str,
                            name: str, certificate: str = None):
         logger.info('Adding remote cluster {} with reference {}'.format(
-            remote_host_port, name
+            remote_host, name
         ))
 
-        api = 'http://{}/pools/default/remoteClusters'.format(host_port)
+        api = 'http://{}:8091/pools/default/remoteClusters'.format(host)
         data = {
-            'hostname': remote_host_port, 'name': name,
+            'hostname': remote_host, 'name': name,
             'username': self.rest_username, 'password': self.rest_password
         }
         if certificate:
@@ -309,192 +304,192 @@ class RestHelper:
             })
         self.post(url=api, data=data)
 
-    def get_remote_clusters(self, host_port: str) -> List[Dict]:
+    def get_remote_clusters(self, host: str) -> List[Dict]:
         logger.info('Getting remote clusters')
 
-        api = 'http://{}/pools/default/remoteClusters'.format(host_port)
+        api = 'http://{}:8091/pools/default/remoteClusters'.format(host)
         return self.get(url=api).json()
 
-    def start_replication(self, host_port: str, params: dict):
+    def start_replication(self, host: str, params: dict):
         logger.info('Starting replication with parameters {}'.format(params))
 
-        api = 'http://{}/controller/createReplication'.format(host_port)
+        api = 'http://{}:8091/controller/createReplication'.format(host)
         self.post(url=api, data=params)
 
-    def trigger_bucket_compaction(self, host_port: str, bucket: str):
+    def trigger_bucket_compaction(self, host: str, bucket: str):
         logger.info('Triggering bucket {} compaction'.format(bucket))
 
-        api = 'http://{}/pools/default/buckets/{}/controller/compactBucket'\
-            .format(host_port, bucket)
+        api = 'http://{}:8091/pools/default/buckets/{}/controller/compactBucket'\
+            .format(host, bucket)
         self.post(url=api)
 
-    def trigger_index_compaction(self, host_port: str, bucket: str, ddoc: str):
+    def trigger_index_compaction(self, host: str, bucket: str, ddoc: str):
         logger.info('Triggering ddoc {} compaction, bucket {}'.format(
             ddoc, bucket
         ))
 
-        api = 'http://{}/pools/default/buckets/{}/ddocs/_design%2F{}/controller/compactView'\
-            .format(host_port, bucket, ddoc)
+        api = 'http://{}:8091/pools/default/buckets/{}/ddocs/_design%2F{}/controller/compactView'\
+            .format(host, bucket, ddoc)
         self.post(url=api)
 
-    def create_ddoc(self, host_port: str, bucket: str, ddoc_name: str, ddoc: dict):
+    def create_ddoc(self, host: str, bucket: str, ddoc_name: str, ddoc: dict):
         logger.info('Creating new ddoc {}, bucket {}'.format(
             ddoc_name, bucket
         ))
 
-        api = 'http://{}/couchBase/{}/_design/{}'.format(
-            host_port, bucket, ddoc_name)
+        api = 'http://{}:8091/couchBase/{}/_design/{}'.format(
+            host, bucket, ddoc_name)
         data = json.dumps(ddoc)
         headers = {'Content-type': 'application/json'}
         self.put(url=api, data=data, headers=headers)
 
-    def query_view(self, host_port: str, bucket: str, ddoc_name: str,
+    def query_view(self, host: str, bucket: str, ddoc_name: str,
                    view_name: str, params: dict):
         logger.info('Querying view: {}/_design/{}/_view/{}'.format(
             bucket, ddoc_name, view_name
         ))
 
-        api = 'http://{}/couchBase/{}/_design/{}/_view/{}'.format(
-            host_port, bucket, ddoc_name, view_name)
+        api = 'http://{}:8091/couchBase/{}/_design/{}/_view/{}'.format(
+            host, bucket, ddoc_name, view_name)
         self.get(url=api, params=params)
 
-    def get_version(self, host_port: str) -> str:
+    def get_version(self, host: str) -> str:
         logger.info('Getting Couchbase Server version')
 
-        api = 'http://{}/pools/'.format(host_port)
+        api = 'http://{}:8091/pools/'.format(host)
         r = self.get(url=api).json()
         return r['implementationVersion'] \
             .replace('-rel-enterprise', '') \
             .replace('-enterprise', '') \
             .replace('-community', '')
 
-    def is_community(self, host_port: str) -> bool:
+    def is_community(self, host: str) -> bool:
         logger.info('Getting Couchbase Server edition')
 
-        api = 'http://{}/pools/'.format(host_port)
+        api = 'http://{}:8091/pools/'.format(host)
         r = self.get(url=api).json()
         return 'community' in r['implementationVersion']
 
-    def get_memcached_port(self, host_port: str) -> int:
-        logger.info('Getting memcached port from {}'.format(host_port))
+    def get_memcached_port(self, host: str) -> int:
+        logger.info('Getting memcached port from {}'.format(host))
 
-        api = 'http://{}/nodes/self'.format(host_port)
+        api = 'http://{}:8091/nodes/self'.format(host)
         r = self.get(url=api).json()
         return r['ports']['direct']
 
-    def get_otp_node_name(self, host_port: str) -> str:
-        logger.info('Getting OTP node name from {}'.format(host_port))
+    def get_otp_node_name(self, host: str) -> str:
+        logger.info('Getting OTP node name from {}'.format(host))
 
-        api = 'http://{}/nodes/self'.format(host_port)
+        api = 'http://{}:8091/nodes/self'.format(host)
         r = self.get(url=api).json()
         return r['otpNode']
 
-    def set_internal_settings(self, host_port: str, data: dict):
+    def set_internal_settings(self, host: str, data: dict):
         logger.info('Updating internal settings: {}'.format(data))
 
-        api = 'http://{}/internalSettings'.format(host_port)
+        api = 'http://{}:8091/internalSettings'.format(host)
         self.post(url=api, data=data)
 
-    def set_xdcr_cluster_settings(self, host_port: str, data: dict):
+    def set_xdcr_cluster_settings(self, host: str, data: dict):
         logger.info('Updating xdcr cluster settings: {}'.format(data))
 
-        api = 'http://{}/settings/replications'.format(host_port)
+        api = 'http://{}:8091/settings/replications'.format(host)
         self.post(url=api, data=data)
 
-    def run_diag_eval(self, host_port: str, cmd: str):
-        api = 'http://{}/diag/eval'.format(host_port)
+    def run_diag_eval(self, host: str, cmd: str):
+        api = 'http://{}:8091/diag/eval'.format(host)
         self.post(url=api, data=cmd)
 
-    def enable_auto_failover(self, host_port: str):
+    def enable_auto_failover(self, host: str):
         logger.info('Enabling auto-failover with the minimum timeout')
 
-        api = 'http://{}/settings/autoFailover'.format(host_port)
+        api = 'http://{}:8091/settings/autoFailover'.format(host)
         for timeout in 5, 30:
             data = {'enabled': 'true', 'timeout': timeout}
             r = self._post(url=api, data=data)
             if r.status_code == 200:
                 break
 
-    def create_server_group(self, host_port: str, name: str):
+    def create_server_group(self, host: str, name: str):
         logger.info('Creating server group: {}'.format(name))
 
-        api = 'http://{}/pools/default/serverGroups'.format(host_port)
+        api = 'http://{}:8091/pools/default/serverGroups'.format(host)
         data = {'name': name}
         self.post(url=api, data=data)
 
-    def get_server_groups(self, host_port: str) -> dict:
+    def get_server_groups(self, host: str) -> dict:
         logger.info('Getting server groups')
 
-        api = 'http://{}/pools/default/serverGroups'.format(host_port)
+        api = 'http://{}:8091/pools/default/serverGroups'.format(host)
         return {
             g['name']: g['addNodeURI'] for g in self.get(url=api).json()['groups']
         }
 
-    def get_certificate(self, host_port: str) -> str:
+    def get_certificate(self, host: str) -> str:
         logger.info('Getting remote certificate')
 
-        api = 'http://{}/pools/default/certificate'.format(host_port)
+        api = 'http://{}:8091/pools/default/certificate'.format(host)
         return self.get(url=api).text
 
-    def fail_over(self, host_port: str, node: str):
+    def fail_over(self, host: str, node: str):
         logger.info('Failing over node: {}'.format(node))
 
-        api = 'http://{}/controller/failOver'.format(host_port)
+        api = 'http://{}:8091/controller/failOver'.format(host)
         data = {'otpNode': self.get_otp_node_name(node)}
         self.post(url=api, data=data)
 
-    def graceful_fail_over(self, host_port: str, node: str):
+    def graceful_fail_over(self, host: str, node: str):
         logger.info('Gracefully failing over node: {}'.format(node))
 
-        api = 'http://{}/controller/startGracefulFailover'.format(host_port)
+        api = 'http://{}:8091/controller/startGracefulFailover'.format(host)
         data = {'otpNode': self.get_otp_node_name(node)}
         self.post(url=api, data=data)
 
-    def add_back(self, host_port: str, node: str):
+    def add_back(self, host: str, node: str):
         logger.info('Adding node back: {}'.format(node))
 
-        api = 'http://{}/controller/reAddNode'.format(host_port)
+        api = 'http://{}:8091/controller/reAddNode'.format(host)
         data = {'otpNode': self.get_otp_node_name(node)}
         self.post(url=api, data=data)
 
-    def set_delta_recovery_type(self, host_port: str, node: str):
+    def set_delta_recovery_type(self, host: str, node: str):
         logger.info('Enabling delta recovery: {}'.format(node))
 
-        api = 'http://{}/controller/setRecoveryType'.format(host_port)
+        api = 'http://{}:8091/controller/setRecoveryType'.format(host)
         data = {
             'otpNode': self.get_otp_node_name(node),
             'recoveryType': 'delta'  # alt: full
         }
         self.post(url=api, data=data)
 
-    def node_statuses(self, host_port: str) -> dict:
-        api = 'http://{}/nodeStatuses'.format(host_port)
+    def node_statuses(self, host: str) -> dict:
+        api = 'http://{}:8091/nodeStatuses'.format(host)
         data = self.get(url=api).json()
         return {node: info['status'] for node, info in data.items()}
 
-    def node_statuses_v2(self, host_port: str) -> dict:
-        api = 'http://{}/pools/default'.format(host_port)
+    def node_statuses_v2(self, host: str) -> dict:
+        api = 'http://{}:8091/pools/default'.format(host)
         data = self.get(url=api).json()
         return {node['hostname']: node['status'] for node in data['nodes']}
 
-    def get_node_stats(self, host_port: str, bucket: str) -> Iterator:
-        api = 'http://{}/pools/default/buckets/{}/nodes'.format(host_port,
-                                                                bucket)
+    def get_node_stats(self, host: str, bucket: str) -> Iterator:
+        api = 'http://{}:8091/pools/default/buckets/{}/nodes'.format(host,
+                                                                     bucket)
         data = self.get(url=api).json()
         for server in data['servers']:
-            api = 'http://{}{}'.format(host_port, server['stats']['uri'])
+            api = 'http://{}:8091{}'.format(host, server['stats']['uri'])
             data = self.get(url=api).json()
             yield data['hostname'], data['op']['samples']
 
-    def get_vbmap(self, host_port: str, bucket: str) -> dict:
-        logger.info('Reading vbucket map: {}/{}'.format(host_port, bucket))
-        api = 'http://{}/pools/default/buckets/{}'.format(host_port, bucket)
+    def get_vbmap(self, host: str, bucket: str) -> dict:
+        logger.info('Reading vbucket map: {}/{}'.format(host, bucket))
+        api = 'http://{}:8091/pools/default/buckets/{}'.format(host, bucket)
         data = self.get(url=api).json()
 
         return data['vBucketServerMap']['vBucketMap']
 
-    def get_server_list(self, host_port: str, bucket: str) -> List[str]:
-        api = 'http://{}/pools/default/buckets/{}'.format(host_port, bucket)
+    def get_server_list(self, host: str, bucket: str) -> List[str]:
+        api = 'http://{}:8091/pools/default/buckets/{}'.format(host, bucket)
         data = self.get(url=api).json()
 
         return [server.split(':')[0]
@@ -557,34 +552,34 @@ class RestHelper:
         api = 'http://{}:9102/stats/storage/mm'.format(host)
         return self.get(url=api).text
 
-    def set_master_password(self, host_port: str, password: str = 'password'):
-        logger.info('Setting master password at {}'.format(host_port))
+    def set_master_password(self, host: str, password: str = 'password'):
+        logger.info('Setting master password at {}'.format(host))
 
-        api = 'http://{}/node/controller/changeMasterPassword'.format(host_port)
+        api = 'http://{}:8091/node/controller/changeMasterPassword'.format(host)
         data = {
             'newPassword': password,
         }
         self.post(url=api, data=data)
 
-    def enable_audit(self, host_port: str):
+    def enable_audit(self, host: str):
         logger.info('Enabling audit')
 
-        api = 'http://{}/settings/audit'.format(host_port)
+        api = 'http://{}:8091/settings/audit'.format(host)
         data = {
             'auditdEnabled': 'true',
         }
         self.post(url=api, data=data)
 
-    def get_rbac_roles(self, host_port: str) -> List[dict]:
+    def get_rbac_roles(self, host: str) -> List[dict]:
         logger.info('Getting the existing RBAC roles')
 
-        api = 'http://{}/settings/rbac/roles'.format(host_port)
+        api = 'http://{}:8091/settings/rbac/roles'.format(host)
 
         return self.get(url=api).json()
 
-    def add_rbac_user(self, host_port: str, bucket_name: str, password: str,
+    def add_rbac_user(self, host: str, bucket: str, password: str,
                       roles: List[str]):
-        logger.info('Adding an RBAC user: {}, roles: {}'.format(bucket_name,
+        logger.info('Adding an RBAC user: {}, roles: {}'.format(bucket,
                                                                 roles))
         data = {
             'password': password,
@@ -592,9 +587,9 @@ class RestHelper:
         }
 
         for domain in 'local', 'builtin':
-            api = 'http://{}/settings/rbac/users/{}/{}'.format(host_port,
-                                                               domain,
-                                                               bucket_name)
+            api = 'http://{}:8091/settings/rbac/users/{}/{}'.format(host,
+                                                                    domain,
+                                                                    bucket)
             r = self._put(url=api, data=data)
             if r.status_code == 200:
                 break

@@ -65,7 +65,7 @@ def new_cbagent_settings(test: PerfTest):
     else:
         buckets = test.test_config.buckets[:1]
     if hasattr(test, 'ALL_HOSTNAMES'):
-        hostnames = tuple(test.cluster_spec.hostnames)
+        hostnames = tuple(test.cluster_spec.servers)
     else:
         hostnames = None
 
@@ -90,7 +90,7 @@ def new_cbagent_settings(test: PerfTest):
 
     for servers in test.cluster_spec.servers_by_role('index'):
         if servers:
-            settings.index_node = servers[0].split(':')[0]
+            settings.index_node = servers[0]
 
     return settings
 
@@ -124,8 +124,7 @@ class CbAgent:
                                               self.test.build.replace('.', ''),
                                               phase,
                                               uhex()[:4])
-            master = servers[0].split(':')[0]
-            self.cluster_map[cluster_id] = master
+            self.cluster_map[cluster_id] = servers[0]
         self.test.cbmonitor_clusters = list(self.cluster_map.keys())
 
     def add_collectors(self,
@@ -244,7 +243,7 @@ class CbAgent:
             settings.cluster = cluster_id
             settings.master_node = master_node
             prefix = self.test.target_iterator.prefix or \
-                target_hash(settings.master_node.split(':')[0])
+                target_hash(settings.master_node)
 
             collector = cls(settings,
                             self.test.test_config.access_settings,

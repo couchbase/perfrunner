@@ -202,27 +202,26 @@ def run_cbc_pillowfight(host, bucket, password,
     local(cmd, capture=False)
 
 
-def run_dcptest_script(host_port, username, password, bucket,
+def run_dcptest_script(host, username, password, bucket,
                        num_items, num_connections, output_file):
     cmd = './dcptest ' \
-        '-kvaddrs {kvaddrs} ' \
+        '-kvaddrs {host}:11210 ' \
         '-buckets {bucket} ' \
         '-nummessages {num_items} ' \
         '-numconnections {num_connections} ' \
         '-outputfile {outputfile} ' \
-        '{host_port} > dcptest.log 2>&1'
+        '{host}:8091 > dcptest.log 2>&1'
 
-    cmd = cmd.format(kvaddrs=host_port.replace('8091', '11210'), bucket=bucket,
-                     num_items=num_items, num_connections=num_connections,
-                     outputfile=output_file, host_port=host_port)
+    cmd = cmd.format(host=host, bucket=bucket, num_items=num_items,
+                     num_connections=num_connections, outputfile=output_file)
 
-    cbauth_path = 'http://{user}:{password}@{host}'.format(host=host_port,
+    cbauth = 'http://{user}:{password}@{host}:8091'.format(host=host,
                                                            user=username,
                                                            password=password)
 
     logger.info('Running: {}'.format(cmd))
 
-    with shell_env(CBAUTH_REVRPC_URL=cbauth_path):
+    with shell_env(CBAUTH_REVRPC_URL=cbauth):
         local(cmd, capture=False)
 
 

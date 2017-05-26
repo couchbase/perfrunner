@@ -20,8 +20,7 @@ class Elastictest(PerfTest):
         super().__init__(cluster_spec, test_config, verbose)
 
         self.index_definition = get_json_from_file(self.test_config.fts_settings.index_configfile)
-        self.host_port = list(self.cluster_spec.servers)[0]
-        self.host = self.host_port.split(':')[0]
+        self.host = list(self.cluster_spec.servers)[0]
         self.url = "{}:{}".format(self.host, "9200")
         self.elastic_index = self.test_config.fts_settings.name
         self.header = {'Content-Type': 'application/json'}
@@ -48,9 +47,9 @@ class Elastictest(PerfTest):
                           data={'username': 'Administrator', 'password': 'password',
                                 'hostname': '{}:9091'.format(self.host), 'name': 'Elastic'},
                           auth=HTTPBasicAuth('Administrator', 'password'))
-        api = "http://{}/controller/createReplication?fromBucket=bucket-1&" \
+        api = "http://{}:8091/controller/createReplication?fromBucket=bucket-1&" \
               "toCluster=Elastic&toBucket={}&replicationType=continuous&type=capi".\
-            format(self.host_port, self.elastic_index)
+            format(self.host, self.elastic_index)
         resp = requests.post(url=api,
                              auth=('Administrator', 'password'))
         if not resp.status_code == 200:

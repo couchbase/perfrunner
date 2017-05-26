@@ -85,7 +85,7 @@ class SecondaryIndexTest(PerfTest):
         self.remote.build_secondary_index(self.index_nodes, self.bucket,
                                           self.indexes, self.storage)
         time_elapsed = self.monitor.wait_for_secindex_init_build(
-            self.index_nodes[0].split(':')[0],
+            self.index_nodes[0],
             list(self.indexes.keys()),
         )
         return time_elapsed
@@ -123,12 +123,12 @@ class SecondaryIndexTest(PerfTest):
         logger.info("{}".format(text))
         logger.info("Disk usage:\n{}".format(self.remote.get_disk_usage(index)))
         logger.info("Index storage stats:\n{}".format(
-            self.rest.get_index_storage_stats(self.index_nodes[0].split(':')[0])))
+            self.rest.get_index_storage_stats(self.index_nodes[0])))
         logger.info("Indexer heap profile:\n{}".format(
-            self.remote.get_indexer_heap_profile(self.index_nodes[0].split(':')[0])))
+            self.remote.get_indexer_heap_profile(self.index_nodes[0])))
         if self.storage == 'plasma':
             logger.info("Index storage stats mm:\n{}".format(
-                self.rest.get_index_storage_stats_mm(self.index_nodes[0].split(':')[0])))
+                self.rest.get_index_storage_stats_mm(self.index_nodes[0])))
 
         return self.remote.get_disk_usage(index, human_readable=False)
 
@@ -322,8 +322,8 @@ class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSeco
                 start=initial_nodes
             )
             known_nodes = servers[:nodes_after]
-            for i, host_port in new_nodes:
-                self.rest.add_node(master, host_port)
+            for i, node in new_nodes:
+                self.rest.add_node(master, node)
 
             self.rest.rebalance(master, known_nodes, ejected_nodes)
 
@@ -401,8 +401,8 @@ class SecondaryIndexingThroughputRebalanceTest(SecondaryIndexingThroughputTest):
                 start=initial_nodes
             )
             known_nodes = servers[:nodes_after]
-            for i, host_port in new_nodes:
-                self.rest.add_node(master, host_port)
+            for i, node in new_nodes:
+                self.rest.add_node(master, node)
 
             self.rest.rebalance(master, known_nodes, ejected_nodes)
 
@@ -573,8 +573,8 @@ class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest
                 start=initial_nodes
             )
             known_nodes = servers[:nodes_after]
-            for i, host_port in new_nodes:
-                self.rest.add_node(master, host_port)
+            for i, node in new_nodes:
+                self.rest.add_node(master, node)
 
             self.rest.rebalance(master, known_nodes, ejected_nodes)
 
@@ -702,7 +702,7 @@ class SecondaryNumConnectionsTest(SecondaryIndexTest):
                 self.curr_connections = (self.curr_connections / len(self.remote.kv_hosts)) * len(self.remote.kv_hosts)
                 logger.info("try for num-connections: {}".format(self.curr_connections))
                 self.remote.run_cbindexperf(self.index_nodes[0], self.config_data, self.curr_connections)
-                status = self.monitor.wait_for_num_connections(self.index_nodes[0].split(':')[0], self.curr_connections)
+                status = self.monitor.wait_for_num_connections(self.index_nodes[0], self.curr_connections)
             except Exception as e:
                 logger.info("Got error {}".format(e))
                 status = False

@@ -40,7 +40,7 @@ class Monitor(RestHelper):
         self.cluster_spec = cluster_spec
         self.remote = RemoteHelper(cluster_spec, test_config, verbose)
 
-    def monitor_rebalance(self, host_port):
+    def monitor_rebalance(self, host):
         logger.info('Monitoring rebalance status')
 
         is_running = True
@@ -49,7 +49,7 @@ class Monitor(RestHelper):
         while is_running:
             time.sleep(self.POLLING_INTERVAL)
 
-            is_running, progress = self.get_task_status(host_port,
+            is_running, progress = self.get_task_status(host,
                                                         task_type='rebalance')
             if progress == last_progress:
                 if time.time() - last_progress_time > self.REBALANCE_TIMEOUT:
@@ -64,12 +64,12 @@ class Monitor(RestHelper):
 
         logger.info('Rebalance completed')
 
-    def _wait_for_empty_queues(self, host_port, bucket, queues, stats_function):
+    def _wait_for_empty_queues(self, host, bucket, queues, stats_function):
         metrics = list(queues)
 
         start_time = time.time()
         while metrics:
-            bucket_stats = stats_function(host_port, bucket)
+            bucket_stats = stats_function(host, bucket)
             # As we are changing metrics in the loop; take a copy of it to
             # iterate over.
             for metric in list(metrics):
@@ -87,52 +87,52 @@ class Monitor(RestHelper):
             if time.time() - start_time > self.TIMEOUT:
                 raise Exception('Queue got stuck')
 
-    def monitor_disk_queues(self, host_port, bucket):
+    def monitor_disk_queues(self, host, bucket):
         logger.info('Monitoring disk queues: {}'.format(bucket))
-        self._wait_for_empty_queues(host_port, bucket, self.DISK_QUEUES,
+        self._wait_for_empty_queues(host, bucket, self.DISK_QUEUES,
                                     self.get_bucket_stats)
 
-    def monitor_dcp_queues(self, host_port, bucket):
+    def monitor_dcp_queues(self, host, bucket):
         logger.info('Monitoring DCP queues: {}'.format(bucket))
-        self._wait_for_empty_queues(host_port, bucket, self.DCP_QUEUES,
+        self._wait_for_empty_queues(host, bucket, self.DCP_QUEUES,
                                     self.get_bucket_stats)
 
-    def _wait_for_xdcr_to_start(self, host_port: str):
+    def _wait_for_xdcr_to_start(self, host: str):
         is_running = False
         while not is_running:
             time.sleep(self.POLLING_INTERVAL)
-            is_running, _ = self.get_task_status(host_port, task_type='xdcr')
+            is_running, _ = self.get_task_status(host, task_type='xdcr')
 
-    def monitor_xdcr_queues(self, host_port: str, bucket: str):
+    def monitor_xdcr_queues(self, host: str, bucket: str):
         logger.info('Monitoring XDCR queues: {}'.format(bucket))
-        self._wait_for_xdcr_to_start(host_port)
-        self._wait_for_empty_queues(host_port, bucket, self.XDCR_QUEUES,
+        self._wait_for_xdcr_to_start(host)
+        self._wait_for_empty_queues(host, bucket, self.XDCR_QUEUES,
                                     self.get_xdcr_stats)
 
-    def _get_num_items(self, host_port: str, bucket: str) -> bool:
-        stats = self.get_bucket_stats(host_port=host_port, bucket=bucket)
+    def _get_num_items(self, host: str, bucket: str) -> bool:
+        stats = self.get_bucket_stats(host=host, bucket=bucket)
         return stats['op']['samples'].get('curr_items')[-1]
 
-    def monitor_num_items(self, host_port: str, bucket: str, num_items: int):
+    def monitor_num_items(self, host: str, bucket: str, num_items: int):
         logger.info('Checking the number of items in {}'.format(bucket))
         retries = 0
         while retries < self.MAX_RETRY:
-            if self._get_num_items(host_port, bucket) == num_items:
+            if self._get_num_items(host, bucket) == num_items:
                 break
             time.sleep(self.POLLING_INTERVAL)
             retries += 1
         else:
             raise Exception('Mismatch in the number of items: {}'
-                            .format(self._get_num_items(host_port, bucket)))
+                            .format(self._get_num_items(host, bucket)))
 
-    def monitor_task(self, host_port, task_type):
+    def monitor_task(self, host, task_type):
         logger.info('Monitoring task: {}'.format(task_type))
         time.sleep(self.MONITORING_DELAY)
 
         while True:
             time.sleep(self.POLLING_INTERVAL)
 
-            tasks = [task for task in self.get_tasks(host_port)
+            tasks = [task for task in self.get_tasks(host)
                      if task.get('type') == task_type]
             if tasks:
                 for task in tasks:
@@ -144,12 +144,11 @@ class Monitor(RestHelper):
                 break
         logger.info('Task {} successfully completed'.format(task_type))
 
-    def monitor_warmup(self, memcached, host_port, bucket):
+    def monitor_warmup(self, memcached, host, bucket):
         logger.info('Monitoring warmup status: {}@{}'.format(bucket,
-                                                             host_port))
+                                                             host))
 
-        host = host_port.split(':')[0]
-        memcached_port = self.get_memcached_port(host_port)
+        memcached_port = self.get_memcached_port(host)
 
         while True:
             stats = memcached.get_stats(host, memcached_port, bucket, 'warmup')
@@ -164,15 +163,15 @@ class Monitor(RestHelper):
                     logger.info('No warmup stats are available, continue polling')
                     time.sleep(self.POLLING_INTERVAL)
 
-    def monitor_node_health(self, host_port):
+    def monitor_node_health(self, host):
         logger.info('Monitoring node health')
 
         for retry in range(self.MAX_RETRY):
             unhealthy_nodes = {
-                n for n, status in self.node_statuses(host_port).items()
+                n for n, status in self.node_statuses(host).items()
                 if status != 'healthy'
             } | {
-                n for n, status in self.node_statuses_v2(host_port).items()
+                n for n, status in self.node_statuses_v2(host).items()
                 if status != 'healthy'
             }
             if unhealthy_nodes:
@@ -184,7 +183,7 @@ class Monitor(RestHelper):
                 unhealthy_nodes
             ))
 
-    def monitor_indexing(self, host_port):
+    def monitor_indexing(self, host):
         logger.info('Monitoring indexing progress')
 
         pending_docs = 1
@@ -192,7 +191,7 @@ class Monitor(RestHelper):
             time.sleep(self.POLLING_INTERVAL_INDEXING * 5)
 
             pending_docs = 0
-            stats = self.get_gsi_stats(host_port)
+            stats = self.get_gsi_stats(host)
             for metric, value in stats.items():
                 if 'num_docs_queued' in metric or 'num_docs_pending' in metric:
                     pending_docs += value
@@ -266,10 +265,8 @@ class Monitor(RestHelper):
         logger.info('expecting {} num_docs_indexed for indexes {}'.format(numitems, indexes))
 
         # collect num_docs_indexed information globally from all index nodes
-        hosts = [node.split(':')[0] for node in index_nodes]
-
         def get_num_docs_indexed():
-            data = self.get_index_stats(hosts)
+            data = self.get_index_stats(index_nodes)
             num_indexed = []
             for index in indexes:
                 key = "" + bucket + ":" + index + ":num_docs_indexed"
@@ -278,7 +275,7 @@ class Monitor(RestHelper):
             return num_indexed
 
         def get_num_docs_index_pending():
-            data = self.get_index_stats(hosts)
+            data = self.get_index_stats(index_nodes)
             num_pending = []
             for index in indexes:
                 key = "" + bucket + ":" + index + ":num_docs_pending"
@@ -311,9 +308,8 @@ class Monitor(RestHelper):
         return True
 
     def wait_for_recovery(self, index_nodes, bucket, index):
-        hosts = [node.split(':')[0] for node in index_nodes]
         for retry in range(self.MAX_RETRY_RECOVERY):
-            response = self.get_index_stats(hosts)
+            response = self.get_index_stats(index_nodes)
             item = "{}:{}:disk_load_duration".format(bucket, index)
             if item in response:
                 return response[item]
@@ -324,10 +320,9 @@ class Monitor(RestHelper):
     def wait_for_indexer(self):
         # Get first cluster, its index nodes
         servers = next(self.cluster_spec.servers_by_role('index'))
-        index_node = servers[0].split(':')[0]
         for retry in range(self.MAX_RETRY):
             time.sleep(self.POLLING_INTERVAL_MACHINE_UP)
-            if self.remote.is_up(index_node):
+            if self.remote.is_up(servers[0]):
                 logger.info('Indexer is back...!')
                 return
             else:

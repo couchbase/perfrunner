@@ -69,12 +69,6 @@ class ClusterSpec(Config):
             for server in servers:
                 yield server
 
-    @property
-    def hostnames(self) -> Iterator[str]:
-        for _, servers in self.clusters:
-            for server in servers:
-                yield server.split(':')[0]
-
     def servers_by_role(self, role: str) -> Iterator[List[str]]:
         for _, servers in self.config.items('clusters'):
             has_service = []
@@ -88,7 +82,7 @@ class ClusterSpec(Config):
         for _, servers in self.config.items('clusters'):
             for server in servers.split():
                 if 'fts' in server.split(',')[1:]:
-                    yield server.split(':')[0]
+                    yield server
 
     @property
     def kv_servers(self) -> Iterator[str]:
@@ -97,7 +91,7 @@ class ClusterSpec(Config):
                 if ',' in server:
                     continue
                 else:
-                    yield server.split(':')[0]
+                    yield server
 
     @property
     def roles(self) -> dict:
@@ -869,9 +863,9 @@ class TestConfig(Config):
 
 class TargetSettings:
 
-    def __init__(self, host_port: str, bucket: str, password: str, prefix: str):
+    def __init__(self, host: str, bucket: str, password: str, prefix: str):
         self.password = password
-        self.node = host_port
+        self.node = host
         self.bucket = bucket
         self.prefix = prefix
 
@@ -892,5 +886,5 @@ class TargetIterator:
         for master in self.cluster_spec.masters:
             for bucket in self.test_config.buckets:
                 if self.prefix is None:
-                    prefix = target_hash(master.split(':')[0])
+                    prefix = target_hash(master)
                 yield TargetSettings(master, bucket, password, prefix)

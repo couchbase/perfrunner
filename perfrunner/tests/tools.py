@@ -36,7 +36,7 @@ class BackupRestoreTest(PerfTest):
     def flush_buckets(self):
         for i in range(self.test_config.cluster.num_buckets):
             bucket = 'bucket-{}'.format(i + 1)
-            self.rest.flush_bucket(host_port=self.master_node, bucket=bucket)
+            self.rest.flush_bucket(self.master_node, bucket)
 
     def run(self):
         self.download_tools()

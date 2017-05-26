@@ -6,10 +6,7 @@ class N1QLStats(Collector):
     COLLECTOR = "n1ql_stats"
 
     def _get_n1ql_stats(self):
-        server = self.master_node
-        server = server.split(':')[0]
-        samples = self.get_http(path="/pools/default/buckets/@query/stats",
-                                server=server)
+        samples = self.get_http(path="/pools/default/buckets/@query/stats")
         stats = dict()
         for metric, values in samples['op']['samples'].items():
             metric = metric.replace('/', '_')

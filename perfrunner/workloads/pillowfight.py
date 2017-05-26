@@ -5,9 +5,7 @@ from perfrunner.settings import PhaseSettings, TargetSettings
 def pillowfight_data_load(workload_settings: PhaseSettings,
                           target: TargetSettings,
                           *args):
-    host, _ = target.node.split(':')
-
-    run_cbc_pillowfight(host=host,
+    run_cbc_pillowfight(host=target.node,
                         bucket=target.bucket,
                         password=target.password,
                         num_items=workload_settings.items,
@@ -22,9 +20,7 @@ def pillowfight_data_load(workload_settings: PhaseSettings,
 def pillowfight_workload(workload_settings: PhaseSettings,
                          target: TargetSettings,
                          *args):
-    host, _ = target.node.split(':')
-
-    run_cbc_pillowfight(host=host,
+    run_cbc_pillowfight(host=target.node,
                         bucket=target.bucket,
                         password=target.password,
                         num_items=workload_settings.items,

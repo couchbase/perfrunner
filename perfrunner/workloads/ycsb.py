@@ -5,9 +5,7 @@ from perfrunner.settings import PhaseSettings, TargetSettings
 def ycsb_data_load(workload_settings: PhaseSettings,
                    target: TargetSettings,
                    *args):
-    host = target.node.split(':')[0]
-
-    run_ycsb(host=host,
+    run_ycsb(host=target.node,
              bucket=target.bucket,
              password=target.password,
              action='load',
@@ -20,9 +18,7 @@ def ycsb_workload(workload_settings: PhaseSettings,
                   target: TargetSettings,
                   timer: int,
                   instance: int):
-    host = target.node.split(':')[0]
-
-    run_ycsb(host=host,
+    run_ycsb(host=target.node,
              bucket=target.bucket,
              password=target.password,
              action='run',

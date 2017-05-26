@@ -99,12 +99,10 @@ class ClusterManager:
                 groups = self.rest.get_server_groups(master)
             else:
                 groups = {}
-            for i, host_port in enumerate(servers[1:initial_nodes],
-                                          start=1):
+            for i, node in enumerate(servers[1:initial_nodes], start=1):
                 uri = groups.get(server_group(servers[:initial_nodes],
                                               self.group_number, i))
-                self.rest.add_node(master, host_port, self.roles[host_port],
-                                   uri)
+                self.rest.add_node(master, node, self.roles[node], uri)
 
     def rebalance(self):
         for (_, servers), initial_nodes in zip(self.cluster_spec.clusters,
@@ -122,7 +120,7 @@ class ClusterManager:
         for master in self.cluster_spec.masters:
             for bucket_name in self.test_config.buckets:
                 self.rest.create_bucket(
-                    host_port=master,
+                    host=master,
                     name=bucket_name,
                     ram_quota=ram_quota,
                     password=self.test_config.bucket.password,
@@ -260,8 +258,8 @@ class ClusterManager:
             for bucket in self.test_config.buckets:
                 bucket_roles = [role.format(bucket=bucket) for role in roles]
                 self.rest.add_rbac_user(
-                    host_port=master,
-                    bucket_name=bucket,
+                    host=master,
+                    bucket=bucket,
                     password=self.test_config.bucket.password,
                     roles=bucket_roles,
                 )

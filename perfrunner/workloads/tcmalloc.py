@@ -109,7 +109,7 @@ class WorkloadGen:
 
     NUM_ITERATIONS = 5
 
-    def __init__(self, num_items, host_port, bucket, password, small=True):
+    def __init__(self, num_items, host, bucket, password, small=True):
         self.num_items = num_items
         if small:
             self.kv_cls = KeyValueIterator
@@ -120,7 +120,6 @@ class WorkloadGen:
         self.kv_iterator = self.kv_cls(self.num_items)
         self.field_iterator = self.field_cls(self.num_items)
 
-        host, port = host_port.split(':')
         self.cb = Connection(bucket=bucket, host=host, password=password)
 
         self.fraction = 1

@@ -168,8 +168,7 @@ class Worker:
                                                       self.ws.size_variation_max)
 
     def init_db(self):
-        host, port = self.ts.node.split(':')
-        params = {'bucket': self.ts.bucket, 'host': host, 'port': port,
+        params = {'bucket': self.ts.bucket, 'host': self.ts.node, 'port': 8091,
                   'username': self.ts.bucket, 'password': self.ts.password,
                   'use_ssl': self.ws.use_ssl}
 
@@ -342,8 +341,7 @@ class SubDocWorker(KVWorker):
     NAME = 'sub-doc-worker'
 
     def init_db(self):
-        host, port = self.ts.node.split(':')
-        params = {'bucket': self.ts.bucket, 'host': host, 'port': port,
+        params = {'bucket': self.ts.bucket, 'host': self.ts.node, 'port': 8091,
                   'username': self.ts.bucket, 'password': self.ts.password}
         self.cb = SubDocGen(**params)
 
@@ -366,8 +364,7 @@ class AsyncKVWorker(KVWorker):
     NUM_CONNECTIONS = 8
 
     def init_db(self):
-        host, port = self.ts.node.split(':')
-        params = {'bucket': self.ts.bucket, 'host': host, 'port': port,
+        params = {'bucket': self.ts.bucket, 'host': self.ts.node, 'port': 8091,
                   'username': self.ts.bucket, 'password': self.ts.password}
 
         self.cbs = [CBAsyncGen(**params) for _ in range(self.NUM_CONNECTIONS)]
@@ -783,12 +780,11 @@ class WorkloadGen:
         lock = Lock()
         worker_type, total_workers = worker_factory(self.ws)
         if name == 'fts' and total_workers:
-            master_host = self.ts.node.split(":")[0]
             auth = HTTPBasicAuth(self.ws.fts_config.username, self.ts.password)
             if self.ws.fts_config.elastic:
-                self.ws.query_gen = ElasticGen(master_host, self.ws.fts_config, auth)
+                self.ws.query_gen = ElasticGen(self.ts.node, self.ws.fts_config, auth)
             else:
-                self.ws.query_gen = FtsGen(master_host, self.ws.fts_config, auth)
+                self.ws.query_gen = FtsGen(self.ts.node, self.ws.fts_config, auth)
 
         for sid in range(total_workers):
             args = (sid, lock, curr_ops, curr_items, deleted_items,

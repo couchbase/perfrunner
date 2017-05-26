@@ -125,10 +125,10 @@ class RebalanceTest(PerfTest):
             else:
                 continue
 
-            for i, host_port in new_nodes:
+            for i, node in new_nodes:
                 group = server_group(servers[:nodes_after], group_number, i)
                 uri = groups.get(group)
-                self.rest.add_node(master, host_port, services=services, uri=uri)
+                self.rest.add_node(master, node, services=services, uri=uri)
 
             self.rest.rebalance(master, known_nodes, ejected_nodes)
 
@@ -189,17 +189,17 @@ class RecoveryTest(RebalanceKVTest):
 
             failed = servers[initial_nodes - failed_nodes:initial_nodes]
 
-            for host_port in failed:
+            for node in failed:
                 if self.rebalance_settings.failover == 'hard':
-                    self.rest.fail_over(master, host_port)
+                    self.rest.fail_over(master, node)
                 else:
-                    self.rest.graceful_fail_over(master, host_port)
+                    self.rest.graceful_fail_over(master, node)
                     self.monitor_progress(master)
-                self.rest.add_back(master, host_port)
+                self.rest.add_back(master, node)
 
             if self.rebalance_settings.delta_recovery:
-                for host_port in failed:
-                    self.rest.set_delta_recovery_type(master, host_port)
+                for node in failed:
+                    self.rest.set_delta_recovery_type(master, node)
 
     @with_stats
     @with_delay
@@ -247,10 +247,8 @@ class FailoverTest(RebalanceKVTest):
 class HardFailoverTest(FailoverTest):
 
     def _report_kpi(self, *args):
-        master_node = self.master_node.split(':')[0]
-
-        t_start = self.remote.detect_hard_failover_start(master_node)
-        t_end = self.remote.detect_failover_end(master_node)
+        t_start = self.remote.detect_hard_failover_start(self.master_node)
+        t_end = self.remote.detect_failover_end(self.master_node)
 
         if t_end and t_start:
             t_start = self.convert_time(t_start)
@@ -272,17 +270,15 @@ class HardFailoverTest(FailoverTest):
 
             failed = servers[initial_nodes - failed_nodes:initial_nodes]
 
-            for host_port in failed:
-                self.rest.fail_over(master, host_port)
+            for node in failed:
+                self.rest.fail_over(master, node)
 
 
 class GracefulFailoverTest(FailoverTest):
 
     def _report_kpi(self, *args):
-        master_node = self.master_node.split(':')[0]
-
-        t_start = self.remote.detect_graceful_failover_start(master_node)
-        t_end = self.remote.detect_failover_end(master_node)
+        t_start = self.remote.detect_graceful_failover_start(self.master_node)
+        t_end = self.remote.detect_failover_end(self.master_node)
 
         if t_end and t_start:
             t_start = self.convert_time(t_start)
@@ -304,18 +300,16 @@ class GracefulFailoverTest(FailoverTest):
 
             failed = servers[initial_nodes - failed_nodes:initial_nodes]
 
-            for host_port in failed:
-                self.rest.graceful_fail_over(master, host_port)
+            for node in failed:
+                self.rest.graceful_fail_over(master, node)
                 self.monitor_progress(master)
 
 
 class AutoFailoverTest(FailoverTest):
 
     def _report_kpi(self, *args):
-        master_node = self.master_node.split(':')[0]
-
-        t_start = self.remote.detect_hard_failover_start(master_node)
-        t_end = self.remote.detect_failover_end(master_node)
+        t_start = self.remote.detect_hard_failover_start(self.master_node)
+        t_end = self.remote.detect_failover_end(self.master_node)
 
         if t_end and t_start:
             t_start = self.convert_time(t_start)
@@ -335,15 +329,14 @@ class AutoFailoverTest(FailoverTest):
                                                initial_nodes):
             failed = servers[initial_nodes - failed_nodes:initial_nodes]
 
-            for host_port in failed:
-                self.remote.shutdown(host_port.split(':')[0])
+            for node in failed:
+                self.remote.shutdown(node)
 
 
 class FailureDetectionTest(FailoverTest):
 
     def _report_kpi(self, *args):
-        master_node = self.master_node.split(':')[0]
-        t_failover = self.remote.detect_auto_failover(master_node)
+        t_failover = self.remote.detect_auto_failover(self.master_node)
 
         if t_failover:
             t_failover = self.convert_time(t_failover)
@@ -363,8 +356,8 @@ class FailureDetectionTest(FailoverTest):
             failed = servers[initial_nodes - failed_nodes:initial_nodes]
 
             self.t_failure = time.time()
-            for host_port in failed:
-                self.remote.shutdown(host_port.split(':')[0])
+            for node in failed:
+                self.remote.shutdown(node)
 
 
 class RebalanceWithQueriesTest(RebalanceTest, QueryTest):

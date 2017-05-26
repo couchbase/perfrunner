@@ -46,5 +46,5 @@ def index_node(task, *args, **kwargs):
     servers = next(self.cluster_spec.servers_by_role('index'))
     if not servers:
         raise RuntimeError("No index nodes specified for cluster")
-    with settings(host_string=servers[0].split(':')[0]):
+    with settings(host_string=servers[0]):
         return task(*args, **kwargs)

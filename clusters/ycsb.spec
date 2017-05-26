@@ -1,5 +1,5 @@
 [clusters]
-ycsb = 172.23.123.38:8091
+ycsb = 172.23.123.38
 
 
 [clients]

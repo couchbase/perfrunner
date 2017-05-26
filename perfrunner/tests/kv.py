@@ -183,11 +183,10 @@ class FlusherTest(KVTest):
 
     def mc_iterator(self):
         password = self.test_config.bucket.password
-        for host_port in self.cluster_spec.servers:
-            host = host_port.split(':')[0]
-            memcached_port = self.rest.get_memcached_port(host_port)
+        for server in self.cluster_spec.servers:
+            memcached_port = self.rest.get_memcached_port(server)
             for bucket in self.test_config.buckets:
-                mc = MemcachedClient(host=host, port=memcached_port)
+                mc = MemcachedClient(host=server, port=memcached_port)
                 try:
                     mc.sasl_auth_plain(user=bucket, password=password)
                     yield mc
@@ -311,9 +310,8 @@ class FragmentationTest(PerfTest):
     def calc_fragmentation_ratio(self) -> float:
         ratios = []
         for target in self.target_iterator:
-            host = target.node.split(':')[0]
             port = self.rest.get_memcached_port(target.node)
-            stats = self.memcached.get_stats(host, port, target.bucket,
+            stats = self.memcached.get_stats(target.node, port, target.bucket,
                                              stats='memory')
             ratio = int(stats[b'mem_used']) / int(stats[b'total_heap_bytes'])
             ratios.append(ratio)
@@ -360,8 +358,7 @@ class RevABTest(FragmentationTest):
     @with_stats
     def load(self, *args):
         for target in self.target_iterator:
-            host, port = target.node.split(':')
-            conn = {'host': host, 'port': port,
+            conn = {'host': target.node, 'port': 8091,
                     'bucket': target.bucket, 'password': target.password}
 
             threads = list()
@@ -421,12 +418,11 @@ class PathoGenTest(FragmentationTest):
     @with_stats
     def access(self, *args):
         for target in self.target_iterator:
-            host, port = target.node.split(':')
             pg = PathoGen(num_items=self.test_config.load_settings.items,
                           num_workers=self.test_config.load_settings.workers,
                           num_iterations=self.test_config.load_settings.iterations,
                           frozen_mode=False,
-                          host=host, port=port,
+                          host=target.node, port=8091,
                           bucket=target.bucket, password=target.password)
             pg.run()
 
@@ -452,12 +448,11 @@ class PathoGenFrozenTest(PathoGenTest):
     @with_stats
     def access(self):
         for target in self.target_iterator:
-            host, port = target.node.split(':')
             pg = PathoGen(num_items=self.test_config.load_settings.items,
                           num_workers=self.test_config.load_settings.workers,
                           num_iterations=self.test_config.load_settings.iterations,
                           frozen_mode=True,
-                          host=host, port=port,
+                          host=target.node, port=8091,
                           bucket=target.bucket, password=target.password)
             pg.run()
 
@@ -473,10 +468,9 @@ class ThroughputTest(KVTest):
         ops = 0
         for bucket in self.test_config.buckets:
             for server in self.cluster_spec.servers:
-                host = server.split(':')[0]
                 port = self.rest.get_memcached_port(server)
 
-                stats = self.memcached.get_stats(host, port, bucket, stats='')
+                stats = self.memcached.get_stats(server, port, bucket, stats='')
                 ops += int(stats[b'cmd_total_ops'])
         return ops
 

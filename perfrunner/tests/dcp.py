@@ -22,7 +22,7 @@ class DCPThroughputTest(PerfTest):
 
         for target in self.target_iterator:
             local.run_dcptest_script(
-                host_port=target.node,
+                host=target.node,
                 username=username,
                 password=password,
                 bucket=target.bucket,

@@ -1,6 +1,6 @@
 [clusters]
 hera =
-    172.23.96.123:8091
+    172.23.96.123
 
 [clients]
 hosts =

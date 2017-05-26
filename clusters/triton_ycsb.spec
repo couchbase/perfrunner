@@ -1,6 +1,6 @@
 [clusters]
 triton =
-    172.23.132.15:8091,kv,index,n1ql
+    172.23.132.15,kv,index,n1ql
 
 [clients]
 hosts =

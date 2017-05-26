@@ -1,9 +1,9 @@
 [clusters]
 ycsb2 =
-    172.23.100.190:8091,kv,n1ql,index
-    172.23.100.191:8091,kv,n1ql,index
-    172.23.100.192:8091,kv,n1ql,index
-    172.23.100.193:8091,kv,n1ql,index
+    172.23.100.190,kv,n1ql,index
+    172.23.100.191,kv,n1ql,index
+    172.23.100.192,kv,n1ql,index
+    172.23.100.193,kv,n1ql,index
 
 [clients]
 hosts =

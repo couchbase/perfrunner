@@ -32,7 +32,7 @@ def main():
     remote = RemoteHelper(cluster_spec, test_config=None, verbose=False)
 
     remote.collect_info()
-    for hostname in cluster_spec.hostnames:
+    for hostname in cluster_spec.servers:
         for fname in glob.glob('{}/*.zip'.format(hostname)):
             shutil.move(fname, '{}.zip'.format(hostname))
 

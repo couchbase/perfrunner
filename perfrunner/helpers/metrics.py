@@ -93,7 +93,7 @@ class MetricHelper:
         test_time = self.test_config.access_settings.time
 
         for servers in self.cluster_spec.servers_by_role('n1ql'):
-            query_node = servers[0].split(':')[0]
+            query_node = servers[0]
 
             vitals = self.test.rest.get_query_stats(query_node)
             total_requests = vitals['requests.count']
@@ -436,7 +436,7 @@ class MetricHelper:
             cluster = list(filter(lambda name: name.startswith(cluster_name),
                                   self.test.cbmonitor_clusters))[0]
             for server in servers:
-                hostname = server.split(':')[0].replace('.', '')
+                hostname = server.replace('.', '')
                 db = 'atop{}{}'.format(cluster, hostname)  # Legacy
                 data = self.seriesly[db].query(query_params)
                 rss = round(list(data.values())[0][0] / 1024 ** 2)
@@ -461,7 +461,7 @@ class MetricHelper:
             cluster = list(filter(lambda name: name.startswith(cluster_name),
                                   self.test.cbmonitor_clusters))[0]
             for server in servers[:initial_nodes]:
-                hostname = server.split(':')[0].replace('.', '')
+                hostname = server.replace('.', '')
                 db = 'atop{}{}'.format(cluster, hostname)
                 data = self.seriesly[db].query(query_params)
                 rss = round(list(data.values())[0][0] / 1024 ** 2)
@@ -486,7 +486,7 @@ class MetricHelper:
             cluster = list(filter(lambda name: name.startswith(cluster_name),
                                   self.test.cbmonitor_clusters))[0]
             for server in servers[:initial_nodes]:
-                hostname = server.split(':')[0].replace('.', '')
+                hostname = server.replace('.', '')
                 db = 'atop{}{}'.format(cluster, hostname)
                 data = self.seriesly[db].query(query_params)
                 rss.append(round(list(data.values())[0][0] / 1024 ** 2))

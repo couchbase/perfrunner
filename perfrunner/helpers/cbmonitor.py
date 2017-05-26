@@ -296,6 +296,7 @@ class CbAgent:
             requests.get(url=url)
 
     def add_snapshot(self):
+        self.test.cbmonitor_snapshots = []
         for cluster_id in self.test.cbmonitor_clusters:
             self.settings.cluster = cluster_id
             md_client = MetadataClient(self.settings)

@@ -40,7 +40,7 @@ class PerfTest:
         self.rest = RestHelper(cluster_spec)
         self.remote = RemoteHelper(cluster_spec, test_config, verbose)
 
-        self.master_node = next(cluster_spec.yield_masters())
+        self.master_node = next(cluster_spec.masters)
         self.build = self.rest.get_version(self.master_node)
 
         self.metrics = MetricHelper(self)
@@ -75,7 +75,7 @@ class PerfTest:
             fh.write(cert)
 
     def check_rebalance(self) -> None:
-        for master in self.cluster_spec.yield_masters():
+        for master in self.cluster_spec.masters:
             if self.rest.is_not_balanced(master):
                 logger.interrupt('The cluster is not balanced')
 
@@ -85,7 +85,7 @@ class PerfTest:
                     self.rebalance_settings.graceful_failover:
                 return
 
-        for master in self.cluster_spec.yield_masters():
+        for master in self.cluster_spec.masters:
             num_failovers = self.rest.get_failover_counter(master)
             if num_failovers:
                 logger.interrupt(

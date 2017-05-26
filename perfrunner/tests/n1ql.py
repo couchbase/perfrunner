@@ -11,7 +11,7 @@ class N1QLTest(PerfTest):
     }
 
     def build_index(self):
-        for name, servers in self.cluster_spec.yield_servers_by_role('n1ql'):
+        for servers in self.cluster_spec.servers_by_role('n1ql'):
             query_node = servers[0].split(':')[0]
             for bucket, index in zip(self.test_config.buckets,
                                      self.test_config.n1ql_settings.indexes):
@@ -149,7 +149,7 @@ class N1QLBulkTest(N1QLTest):
     def access(self, *args):
         statement = self.test_config.access_settings.n1ql_queries[0]['statement']
 
-        for name, servers in self.cluster_spec.yield_servers_by_role('n1ql'):
+        for servers in self.cluster_spec.servers_by_role('n1ql'):
             query_node = servers[0].split(':')[0]
 
             self.rest.exec_n1ql_statement(query_node, statement)
@@ -174,7 +174,7 @@ class N1QLMixedThroughputTest(N1QLThroughputTest):
 
     def build_index(self):
         bucket = self.test_config.buckets[0]
-        for name, servers in self.cluster_spec.yield_servers_by_role('n1ql'):
+        for servers in self.cluster_spec.servers_by_role('n1ql'):
             query_node = servers[0].split(':')[0]
             for index in self.test_config.n1ql_settings.indexes:
                 self.create_index(query_node, bucket, index)

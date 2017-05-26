@@ -323,8 +323,7 @@ class Monitor(RestHelper):
 
     def wait_for_indexer(self):
         # Get first cluster, its index nodes
-        (cluster_name, servers) = \
-            next(self.cluster_spec.yield_servers_by_role('index'))
+        servers = next(self.cluster_spec.servers_by_role('index'))
         index_node = servers[0].split(':')[0]
         for retry in range(self.MAX_RETRY):
             time.sleep(self.POLLING_INTERVAL_MACHINE_UP)

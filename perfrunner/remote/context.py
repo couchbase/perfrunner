@@ -43,10 +43,8 @@ def kv_node_cbindexperf(task, *args, **kwargs):
 def index_node(task, *args, **kwargs):
     self = args[0]
     # Get first cluster, its index nodes
-    (cluster_name, servers) = \
-        next(self.cluster_spec.yield_servers_by_role('index'))
+    servers = next(self.cluster_spec.servers_by_role('index'))
     if not servers:
-        raise RuntimeError(
-            "No index nodes specified for cluster {}".format(cluster_name))
+        raise RuntimeError("No index nodes specified for cluster")
     with settings(host_string=servers[0].split(':')[0]):
         return task(*args, **kwargs)

@@ -91,7 +91,7 @@ class YCSBdata(PerfTest):
     def __init__(self, cluster_spec, test_config, verbose):
         super().__init__(cluster_spec, test_config, verbose, )
         self.ycsb = test_config.ycsb_settings
-        self.hosts = [x.rpartition(':')[0] for x in self.cluster_spec.yield_servers()]
+        self.hosts = list(self.cluster_spec.hostnames)
 
     def create_load_cmd(self, action='load', jvm=True, mypid=0):
         """

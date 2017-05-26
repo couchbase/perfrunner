@@ -92,7 +92,7 @@ class MetricHelper:
     def _avg_n1ql_throughput(self) -> int:
         test_time = self.test_config.access_settings.time
 
-        for name, servers in self.cluster_spec.yield_servers_by_role('n1ql'):
+        for servers in self.cluster_spec.servers_by_role('n1ql'):
             query_node = servers[0].split(':')[0]
 
             vitals = self.test.rest.get_query_stats(query_node)
@@ -432,7 +432,7 @@ class MetricHelper:
         query_params = get_query_params('max_beam.smp_rss')
 
         max_rss = 0
-        for cluster_name, servers in self.cluster_spec.yield_clusters():
+        for cluster_name, servers in self.cluster_spec.clusters:
             cluster = list(filter(lambda name: name.startswith(cluster_name),
                                   self.test.cbmonitor_clusters))[0]
             for server in servers:
@@ -455,7 +455,7 @@ class MetricHelper:
 
         max_rss = 0
         for (cluster_name, servers), initial_nodes in zip(
-                self.cluster_spec.yield_clusters(),
+                self.cluster_spec.clusters,
                 self.test_config.cluster.initial_nodes,
         ):
             cluster = list(filter(lambda name: name.startswith(cluster_name),
@@ -480,7 +480,7 @@ class MetricHelper:
 
         rss = list()
         for (cluster_name, servers), initial_nodes in zip(
-                self.cluster_spec.yield_clusters(),
+                self.cluster_spec.clusters,
                 self.test_config.cluster.initial_nodes,
         ):
             cluster = list(filter(lambda name: name.startswith(cluster_name),

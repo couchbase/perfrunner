@@ -11,8 +11,8 @@ class Remote:
 
     def __init__(self, cluster_spec, test_config, os):
         self.os = os
-        self.hosts = tuple(cluster_spec.yield_hostnames())
-        self.kv_hosts = tuple(cluster_spec.yield_kv_servers())
+        self.hosts = tuple(cluster_spec.hostnames)
+        self.kv_hosts = tuple(cluster_spec.kv_servers)
         self.cluster_spec = cluster_spec
         self.test_config = test_config
 

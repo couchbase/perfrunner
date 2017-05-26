@@ -42,7 +42,7 @@ class XdcrTest(PerfTest):
             self.rest.start_replication(m1, params)
 
     def enable_xdcr(self):
-        m1, m2 = self.cluster_spec.yield_masters()
+        m1, m2 = self.cluster_spec.masters
 
         if self.settings.replication_type == 'unidir':
             self._start_replication(m1, m2)
@@ -61,7 +61,7 @@ class XdcrTest(PerfTest):
 
     def configure_wan(self):
         if self.settings.wan_enabled:
-            hostnames = tuple(self.cluster_spec.yield_hostnames())
+            hostnames = tuple(self.cluster_spec.hostnames)
             src_list = [
                 hostname for hostname in hostnames[len(hostnames) // 2:]
             ]
@@ -107,7 +107,7 @@ class SrcTargetIterator(TargetIterator):
     def __iter__(self):
         password = self.test_config.bucket.password
         prefix = self.prefix
-        src_master = next(self.cluster_spec.yield_masters())
+        src_master = next(self.cluster_spec.masters)
         for bucket in self.test_config.buckets:
             if self.prefix is None:
                 prefix = target_hash(src_master, bucket)
@@ -119,7 +119,7 @@ class DestTargetIterator(TargetIterator):
     def __iter__(self):
         password = self.test_config.bucket.password
         prefix = self.prefix
-        masters = self.cluster_spec.yield_masters()
+        masters = self.cluster_spec.masters
         src_master = next(masters)
         dest_master = next(masters)
         for bucket in self.test_config.buckets:

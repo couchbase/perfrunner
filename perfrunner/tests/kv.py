@@ -183,7 +183,7 @@ class FlusherTest(KVTest):
 
     def mc_iterator(self):
         password = self.test_config.bucket.password
-        for host_port in self.cluster_spec.yield_servers():
+        for host_port in self.cluster_spec.servers:
             host = host_port.split(':')[0]
             memcached_port = self.rest.get_memcached_port(host_port)
             for bucket in self.test_config.buckets:
@@ -205,7 +205,7 @@ class FlusherTest(KVTest):
     @with_stats
     @timeit
     def drain(self):
-        for master in self.cluster_spec.yield_masters():
+        for master in self.cluster_spec.masters:
             for bucket in self.test_config.buckets:
                 self.monitor.monitor_disk_queue(master, bucket)
 
@@ -258,7 +258,7 @@ class WarmupTest(PerfTest):
     @timeit
     def _warmup(self):
         self.remote.start_server()
-        for master in self.cluster_spec.yield_masters():
+        for master in self.cluster_spec.masters:
             for bucket in self.test_config.buckets:
                 self.monitor.monitor_warmup(self.memcached, master, bucket)
 
@@ -472,7 +472,7 @@ class ThroughputTest(KVTest):
     def _measure_curr_ops(self) -> int:
         ops = 0
         for bucket in self.test_config.buckets:
-            for server in self.cluster_spec.yield_servers():
+            for server in self.cluster_spec.servers:
                 host = server.split(':')[0]
                 port = self.rest.get_memcached_port(server)
 

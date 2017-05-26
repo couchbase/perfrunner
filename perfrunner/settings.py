@@ -53,47 +53,46 @@ class Config:
 
 class ClusterSpec(Config):
 
-    @safe
-    def yield_clusters(self) -> Iterator:
+    @property
+    def clusters(self) -> Iterator:
         for cluster_name, servers in self.config.items('clusters'):
             yield cluster_name, [s.split(',', 1)[0] for s in servers.split()]
 
-    @safe
-    def yield_masters(self) -> Iterator:
-        for _, servers in self.yield_clusters():
+    @property
+    def masters(self) -> Iterator[str]:
+        for _, servers in self.clusters:
             yield servers[0]
 
-    @safe
-    def yield_servers(self) -> Iterator:
-        for _, servers in self.yield_clusters():
+    @property
+    def servers(self) -> Iterator[str]:
+        for _, servers in self.clusters:
             for server in servers:
                 yield server
 
-    @safe
-    def yield_hostnames(self) -> Iterator:
-        for _, servers in self.yield_clusters():
+    @property
+    def hostnames(self) -> Iterator[str]:
+        for _, servers in self.clusters:
             for server in servers:
                 yield server.split(':')[0]
 
-    @safe
-    def yield_servers_by_role(self, role: str) -> Iterator:
-        for name, servers in self.config.items('clusters'):
+    def servers_by_role(self, role: str) -> Iterator[List[str]]:
+        for _, servers in self.config.items('clusters'):
             has_service = []
             for server in servers.split():
                 if role in server.split(',')[1:]:
                     has_service.append(server.split(',')[0])
-            yield name, has_service
+            yield has_service
 
-    @safe
-    def yield_fts_servers(self) -> Iterator:
-        for name, servers in self.config.items('clusters'):
+    @property
+    def fts_servers(self) -> Iterator[str]:
+        for _, servers in self.config.items('clusters'):
             for server in servers.split():
                 if 'fts' in server.split(',')[1:]:
                     yield server.split(':')[0]
 
-    @safe
-    def yield_kv_servers(self) -> Iterator:
-        for name, servers in self.config.items('clusters'):
+    @property
+    def kv_servers(self) -> Iterator[str]:
+        for _, servers in self.config.items('clusters'):
             for server in servers.split():
                 if ',' in server:
                     continue
@@ -101,31 +100,26 @@ class ClusterSpec(Config):
                     yield server.split(':')[0]
 
     @property
-    @safe
     def roles(self) -> dict:
         server_roles = {}
         for _, node in self.config.items('clusters'):
             for server in node.split():
-                name = server.split(',', 1)[0]
+                role = server.split(',', 1)[0]
                 if ',' in server:
-                    server_roles[name] = server.split(',', 1)[1]
+                    server_roles[role] = server.split(',', 1)[1]
                 else:  # For backward compatibility, set to kv if not specified
-                    server_roles[name] = 'kv'
-
+                    server_roles[role] = 'kv'
         return server_roles
 
     @property
-    @safe
     def workers(self) -> List[str]:
         return self.config.get('clients', 'hosts').split()
 
     @property
-    @safe
     def client_credentials(self) -> List[str]:
         return self.config.get('clients', 'credentials').split(':')
 
     @property
-    @safe
     def paths(self) -> Tuple[str, str]:
         data_path = self.config.get('storage', 'data')
         index_path = self.config.get('storage', 'index')
@@ -137,12 +131,10 @@ class ClusterSpec(Config):
         return self.config.get('storage', 'backup')
 
     @property
-    @safe
     def rest_credentials(self) -> List[str]:
         return self.config.get('credentials', 'rest').split(':')
 
     @property
-    @safe
     def ssh_credentials(self) -> List[str]:
         return self.config.get('credentials', 'ssh').split(':')
 
@@ -897,7 +889,7 @@ class TargetIterator:
     def __iter__(self) -> Iterator:
         password = self.test_config.bucket.password
         prefix = self.prefix
-        for master in self.cluster_spec.yield_masters():
+        for master in self.cluster_spec.masters:
             for bucket in self.test_config.buckets:
                 if self.prefix is None:
                     prefix = target_hash(master.split(':')[0])

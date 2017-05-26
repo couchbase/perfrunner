@@ -20,11 +20,7 @@ class ClusterManager:
         self.monitor = Monitor(cluster_spec, test_config, verbose)
         self.memcached = MemcachedHelper(test_config)
 
-        self.clusters = cluster_spec.yield_clusters
-        self.servers = cluster_spec.yield_servers
-        self.masters = cluster_spec.yield_masters
-
-        self.master_node = next(self.masters())
+        self.master_node = next(self.cluster_spec.masters)
 
         self.initial_nodes = test_config.cluster.initial_nodes
         self.mem_quota = test_config.cluster.mem_quota
@@ -34,25 +30,26 @@ class ClusterManager:
         self.roles = cluster_spec.roles
 
     def is_compatible(self, min_release):
-        version = self.rest.get_version(self.master_node)
-        return version >= min_release
+        for master in self.cluster_spec.masters:
+            version = self.rest.get_version(master)
+            return version >= min_release
 
     def set_data_path(self):
         if self.cluster_spec.paths:
             data_path, index_path = self.cluster_spec.paths
-            for server in self.servers():
+            for server in self.cluster_spec.servers:
                 self.rest.set_data_path(server, data_path, index_path)
 
     def rename(self):
-        for server in self.servers():
+        for server in self.cluster_spec.servers:
             self.rest.rename(server)
 
     def set_auth(self):
-        for server in self.servers():
+        for server in self.cluster_spec.servers:
             self.rest.set_auth(server)
 
     def set_mem_quota(self):
-        for master in self.cluster_spec.yield_masters():
+        for master in self.cluster_spec.masters:
             self.rest.set_mem_quota(master, self.mem_quota)
             self.rest.set_index_mem_quota(master, self.index_mem_quota)
             if self.is_compatible(min_release='4.5.0'):
@@ -60,14 +57,14 @@ class ClusterManager:
 
     def set_query_settings(self):
         settings = self.test_config.n1ql_settings.settings
-        for _, servers in self.cluster_spec.yield_servers_by_role('n1ql'):
+        for servers in self.cluster_spec.servers_by_role('n1ql'):
             for server in servers:
                 if settings:
                     self.rest.set_query_settings(server, settings)
 
     def set_index_settings(self):
         settings = self.test_config.gsi_settings.settings
-        for _, servers in self.cluster_spec.yield_servers_by_role('index'):
+        for servers in self.cluster_spec.servers_by_role('index'):
             for server in servers:
                 if settings:
                     self.rest.set_index_settings(server, settings)
@@ -79,19 +76,19 @@ class ClusterManager:
         if not self.is_compatible(min_release='4.0.0'):
             return
 
-        for (_, servers), initial_nodes in zip(self.clusters(),
+        for (_, servers), initial_nodes in zip(self.cluster_spec.clusters,
                                                self.initial_nodes):
             master = servers[0]
             self.rest.set_services(master, self.roles[master])
 
     def create_server_groups(self):
-        for master in self.masters():
+        for master in self.cluster_spec.masters:
             for i in range(1, self.group_number):
                 name = 'Group {}'.format(i + 1)
                 self.rest.create_server_group(master, name=name)
 
     def add_nodes(self):
-        for (_, servers), initial_nodes in zip(self.clusters(),
+        for (_, servers), initial_nodes in zip(self.cluster_spec.clusters,
                                                self.initial_nodes):
 
             if initial_nodes < 2:  # Single-node cluster
@@ -110,7 +107,7 @@ class ClusterManager:
                                    uri)
 
     def rebalance(self):
-        for (_, servers), initial_nodes in zip(self.clusters(),
+        for (_, servers), initial_nodes in zip(self.cluster_spec.clusters,
                                                self.initial_nodes):
             master = servers[0]
             known_nodes = servers[:initial_nodes]
@@ -122,7 +119,7 @@ class ClusterManager:
     def create_buckets(self):
         ram_quota = self.mem_quota // self.test_config.cluster.num_buckets
 
-        for master in self.masters():
+        for master in self.cluster_spec.masters:
             for bucket_name in self.test_config.buckets:
                 self.rest.create_bucket(
                     host_port=master,
@@ -138,7 +135,7 @@ class ClusterManager:
 
     def configure_auto_compaction(self):
         compaction_settings = self.test_config.compaction
-        for master in self.masters():
+        for master in self.cluster_spec.masters:
             self.rest.configure_auto_compaction(master, compaction_settings)
             settings = self.rest.get_auto_compaction_settings(master)
             logger.info('Auto-compaction settings: {}'
@@ -146,14 +143,14 @@ class ClusterManager:
 
     def configure_internal_settings(self):
         internal_settings = self.test_config.internal_settings
-        for master in self.masters():
+        for master in self.cluster_spec.masters:
             for parameter, value in internal_settings.items():
                 self.rest.set_internal_settings(master,
                                                 {parameter: int(value)})
 
     def configure_xdcr_settings(self):
         xdcr_cluster_settings = self.test_config.xdcr_cluster_settings
-        for master in self.masters():
+        for master in self.cluster_spec.masters:
             for parameter, value in xdcr_cluster_settings.items():
                 self.rest.set_xdcr_cluster_settings(master,
                                                     {parameter: int(value)})
@@ -177,7 +174,7 @@ class ClusterManager:
 
         for option, value in self.test_config.bucket_extras.items():
             logger.info('Changing {} to {}'.format(option, value))
-            for master in self.masters():
+            for master in self.cluster_spec.masters:
                 for bucket in self.test_config.buckets:
                     diag_eval = cmd.format(bucket, option, value)
                     self.rest.run_diag_eval(master, diag_eval)
@@ -190,19 +187,19 @@ class ClusterManager:
         self.remote.restart()
 
     def enable_auto_failover(self):
-        for master in self.masters():
+        for master in self.cluster_spec.masters:
             self.rest.enable_auto_failover(master)
 
     def wait_until_warmed_up(self):
         if self.test_config.bucket.bucket_type == 'ephemeral':
             return
 
-        for master in self.cluster_spec.yield_masters():
+        for master in self.cluster_spec.masters:
             for bucket in self.test_config.buckets:
                 self.monitor.monitor_warmup(self.memcached, master, bucket)
 
     def wait_until_healthy(self):
-        for master in self.cluster_spec.yield_masters():
+        for master in self.cluster_spec.masters:
             self.monitor.monitor_node_health(master)
 
     def enable_secrets(self):
@@ -211,7 +208,7 @@ class ClusterManager:
                 self.rest.is_community(self.master_node):
             return
 
-        for server in self.servers():
+        for server in self.cluster_spec.servers:
             self.rest.set_master_password(server)
         self.remote.set_master_password()
 
@@ -220,7 +217,7 @@ class ClusterManager:
                 self.rest.is_community(self.master_node):
             return
 
-        for master in self.cluster_spec.yield_masters():
+        for master in self.cluster_spec.masters:
             self.rest.enable_audit(master)
 
     def generate_ce_roles(self) -> List[str]:
@@ -259,7 +256,7 @@ class ClusterManager:
         else:
             roles = self.generate_ee_roles()
 
-        for master in self.masters():
+        for master in self.cluster_spec.masters:
             for bucket in self.test_config.buckets:
                 bucket_roles = [role.format(bucket=bucket) for role in roles]
                 self.rest.add_rbac_user(

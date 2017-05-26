@@ -30,7 +30,7 @@ class FTStest(PerfTest):
         self.order_by = self.test_config.fts_settings.order_by
 
         initial_nodes = test_config.cluster.initial_nodes[0]
-        all_fts_hosts = [x for x in self.cluster_spec.yield_fts_servers()]
+        all_fts_hosts = list(self.cluster_spec.fts_servers)
         self.active_fts_hosts = all_fts_hosts[:initial_nodes]
         self.fts_master_host = self.active_fts_hosts[0]
         self.fts_port = 8094

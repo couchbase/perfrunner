@@ -29,7 +29,7 @@ class RestoreHelper:
 
     def fetch_maps(self):
         rest = RestHelper(self.cluster_spec)
-        master_node = next(self.cluster_spec.yield_masters())
+        master_node = next(self.cluster_spec.masters)
 
         maps = {}
         for bucket in self.test_config.buckets:

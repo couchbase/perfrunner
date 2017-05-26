@@ -43,11 +43,9 @@ class SecondaryIndexTest(PerfTest):
         self.secondary_statsfile = self.test_config.stats_settings.secondary_statsfile
 
         # Get first cluster, its index nodes, and first bucket
-        (cluster_name, servers) = \
-            next(self.cluster_spec.yield_servers_by_role('index'))
+        servers = next(self.cluster_spec.servers_by_role('index'))
         if not servers:
-            raise RuntimeError(
-                "No index nodes specified for cluster {}".format(cluster_name))
+            raise RuntimeError("No index nodes specified for cluster")
         self.index_nodes = servers
 
         self.bucket = self.test_config.buckets[0]
@@ -316,8 +314,7 @@ class MultipleIncrementalSecondaryIndexTest(InitialandIncrementalSecondaryIndexT
 class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSecondaryIndexTest):
 
     def rebalance(self, initial_nodes, nodes_after):
-        clusters = self.cluster_spec.yield_clusters()
-        for _, servers in clusters:
+        for _, servers in self.cluster_spec.clusters:
             master = servers[0]
             ejected_nodes = []
             new_nodes = enumerate(
@@ -342,10 +339,8 @@ class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSeco
         self.print_index_disk_usage()
         self.report_kpi(time_elapsed, 'Initial')
 
-        master = []
-        for _, servers in self.cluster_spec.yield_clusters():
-            master = servers[0]
-        self.monitor.monitor_rebalance(master)
+        for master in self.cluster_spec.masters:
+            self.monitor.monitor_rebalance(master)
         initial_nodes[0] += 1
         nodes_after[0] += 1
         self.rebalance(initial_nodes[0], nodes_after[0])
@@ -398,8 +393,7 @@ class SecondaryIndexingThroughputRebalanceTest(SecondaryIndexingThroughputTest):
     and reports the average scan throughput"""
 
     def rebalance(self, initial_nodes, nodes_after):
-        clusters = self.cluster_spec.yield_clusters()
-        for _, servers in clusters:
+        for _, servers in self.cluster_spec.clusters:
             master = servers[0]
             ejected_nodes = []
             new_nodes = enumerate(
@@ -571,8 +565,7 @@ class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest
     """
 
     def rebalance(self, initial_nodes, nodes_after):
-        clusters = self.cluster_spec.yield_clusters()
-        for _, servers in clusters:
+        for _, servers in self.cluster_spec.clusters:
             master = servers[0]
             ejected_nodes = []
             new_nodes = enumerate(

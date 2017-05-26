@@ -25,13 +25,13 @@ class IndexTest(PerfTest):
         self.ddocs = ViewGen().generate_ddocs(index_settings.views, options)
 
     def define_ddocs(self):
-        for master in self.cluster_spec.yield_masters():
+        for master in self.cluster_spec.masters:
             for bucket in self.test_config.buckets:
                 for ddoc_name, ddoc in self.ddocs.items():
                     self.rest.create_ddoc(master, bucket, ddoc_name, ddoc)
 
     def build_index(self):
-        for master in self.cluster_spec.yield_masters():
+        for master in self.cluster_spec.masters:
             for bucket in self.test_config.buckets:
                 for ddoc_name, ddoc in self.ddocs.items():
                     for view_name in ddoc['views']:
@@ -39,7 +39,7 @@ class IndexTest(PerfTest):
                                              ddoc_name, view_name,
                                              params={'limit': 10})
 
-        for master in self.cluster_spec.yield_masters():
+        for master in self.cluster_spec.masters:
             self.monitor.monitor_task(master, 'indexer')
 
 

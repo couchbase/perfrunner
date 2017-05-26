@@ -70,7 +70,7 @@ class RebalanceTest(PerfTest):
         self.rebalance_time = 0
 
     def is_balanced(self):
-        for master in self.cluster_spec.yield_masters():
+        for master in self.cluster_spec.masters:
             if self.rest.is_not_balanced(master):
                 return False
         return True
@@ -90,7 +90,7 @@ class RebalanceTest(PerfTest):
         self._rebalance(services)
 
     def _rebalance(self, services):
-        clusters = self.cluster_spec.yield_clusters()
+        clusters = self.cluster_spec.clusters
         initial_nodes = self.test_config.cluster.initial_nodes
         nodes_after = self.rebalance_settings.nodes_after
         swap = self.rebalance_settings.swap
@@ -179,7 +179,7 @@ class RecoveryTest(RebalanceKVTest):
                     .format(self.rebalance_settings.delay_before_failover))
         time.sleep(self.rebalance_settings.delay_before_failover)
 
-        clusters = self.cluster_spec.yield_clusters()
+        clusters = self.cluster_spec.clusters
         initial_nodes = self.test_config.cluster.initial_nodes
         failed_nodes = self.rebalance_settings.failed_nodes
 
@@ -205,7 +205,7 @@ class RecoveryTest(RebalanceKVTest):
     @with_delay
     @with_timer
     def rebalance(self, *args):
-        clusters = self.cluster_spec.yield_clusters()
+        clusters = self.cluster_spec.clusters
         initial_nodes = self.test_config.cluster.initial_nodes
 
         for (_, servers), initial_nodes in zip(clusters, initial_nodes):
@@ -262,7 +262,7 @@ class HardFailoverTest(FailoverTest):
 
     @with_delay
     def rebalance(self, *args):
-        clusters = self.cluster_spec.yield_clusters()
+        clusters = self.cluster_spec.clusters
         initial_nodes = self.test_config.cluster.initial_nodes
         failed_nodes = self.rebalance_settings.failed_nodes
 
@@ -294,7 +294,7 @@ class GracefulFailoverTest(FailoverTest):
 
     @with_delay
     def rebalance(self, *args):
-        clusters = self.cluster_spec.yield_clusters()
+        clusters = self.cluster_spec.clusters
         initial_nodes = self.test_config.cluster.initial_nodes
         failed_nodes = self.rebalance_settings.failed_nodes
 
@@ -327,7 +327,7 @@ class AutoFailoverTest(FailoverTest):
 
     @with_delay
     def rebalance(self, *args):
-        clusters = self.cluster_spec.yield_clusters()
+        clusters = self.cluster_spec.clusters
         initial_nodes = self.test_config.cluster.initial_nodes
         failed_nodes = self.rebalance_settings.failed_nodes
 
@@ -354,7 +354,7 @@ class FailureDetectionTest(FailoverTest):
 
     @with_delay
     def rebalance(self, *args):
-        clusters = self.cluster_spec.yield_clusters()
+        clusters = self.cluster_spec.clusters
         initial_nodes = self.test_config.cluster.initial_nodes
         failed_nodes = self.rebalance_settings.failed_nodes
 

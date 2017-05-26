@@ -1,7 +1,8 @@
 [test_case]
-test = perfrunner.tests.tools.CbExportImportTest
-title = (Avg. MB/sec), 1 bucket x 3M x 20KB, Idle
+test = perfrunner.tests.tools.ExportTest
+title = Export JSON Lines (Avg. MB/sec), 1 bucket x 60M x 1KB, Idle
 component = tools
+category = export
 
 [cluster]
 mem_quota = 52428
@@ -12,11 +13,10 @@ num_buckets = 1
 db_percentage = 100
 
 [load]
-items = 3000000
-size = 20480
+items = 60000000
+size = 1024
 workers = 40
 doc_gen = import_export_simple
 
-[export_import]
-type = json
-format = list
+[export]
+format = lines

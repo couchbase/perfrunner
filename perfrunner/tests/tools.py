@@ -1,5 +1,3 @@
-import csv
-import json
 import os
 import time
 
@@ -201,164 +199,73 @@ class RestoreAfterIncrementalBackupTest(RestoreTest):
         self.report_kpi(time_elapsed)
 
 
-class CbExportImportTest(BackupRestoreTest):
-
-    """
-    After a typical workload we export all nodes, measure time it takes to
-    perform export.
-    Then we flush the bucket and import the data, measure time it takes to
-    perform import
-    """
+class ExportImportTest(BackupRestoreTest):
 
     @with_stats
+    @timeit
     def export(self):
-        t0 = time.time()
-        local.export(master_node=self.master_node,
-                     cluster_spec=self.cluster_spec,
-                     frmt=self.test_config.export_import_settings.format,
-                     bucket='bucket-1')
-        self.spent_time = time.time() - t0
-
-        self.data_size = local.calc_backup_size(self.cluster_spec)
-
-        logger.info('Export completed in {:.1f} sec, Export size is {} GB'
-                    .format(self.spent_time, self.data_size))
+        local.cbexport(master_node=self.master_node,
+                       cluster_spec=self.cluster_spec,
+                       bucket=self.test_config.buckets[0],
+                       data_format=self.test_config.export_settings.format)
 
     @with_stats
-    def import_data(self, tp=None, frmt=None):
-        t0 = time.time()
-        tp = tp
-        frmt = frmt
-        if not tp:
-            tp = self.test_config.export_import_settings.type
-        if frmt is None:
-            frmt = self.test_config.export_import_settings.format
-        local.import_data(master_node=self.master_node,
-                          cluster_spec=self.cluster_spec,
-                          tp=tp,
-                          frmt=frmt,
-                          bucket='bucket-1')
-        self.spent_time = time.time() - t0
+    @timeit
+    def import_data(self):
+        import_file = self.test_config.export_settings.import_file
+        if import_file is None:
+            import_file = 'data.{}'.format(self.test_config.export_settings.type)
+            import_file = os.path.join(self.cluster_spec.backup, import_file)
+        if self.test_config.export_settings.format != 'sample':
+            import_file = 'file://{}'.format(import_file)
 
-        logger.info('Import completed in {:.1f} sec, Import size is {} GB'
-                    .format(self.spent_time, self.data_size))
+        local.cbimport(master_node=self.master_node,
+                       cluster_spec=self.cluster_spec,
+                       data_type=self.test_config.export_settings.type,
+                       data_format=self.test_config.export_settings.format,
+                       bucket=self.test_config.buckets[0],
+                       import_file=import_file)
 
-    def _report_kpi(self, prefix=''):
-        extra = ''
-        if self.test_config.load_settings.doc_gen == 'import_export_array':
-            extra = "Array Docs "
-        if self.test_config.load_settings.doc_gen == 'import_export_nested':
-            extra = "Nested Docs "
-        metric_info = {
-            'title': prefix + " " + extra + " " +
-            self.test_config.test_case.title,
-            'category': prefix.split()[0].lower(),
-        }
-        metric = self.test_config.name
-        # replace 'expimp' on import or export
-        metric = metric.replace('expimp', prefix.split()[0].lower())
-        if "CSV" in prefix:
-            metric = metric.replace('json', 'csv')
+    def _report_kpi(self, time_elapsed: float):
+        self.reporter.post(
+            *self.metrics.import_and_export_throughput(time_elapsed)
+        )
 
-        data_size = self.test_config.load_settings.items * \
-            self.test_config.load_settings.size / 2.0 ** 20  # MB
-        avg_throughput = round(data_size / self.spent_time)
-        self.reporter.post(avg_throughput, metric=metric,
-                           metric_info=metric_info)  # FIXME
 
-    def _yield_line_delimited_json(self, path):
-        """Read a line-delimited json file yielding each row as a record."""
-        with open(path, 'r') as f:
-            for line in f:
-                yield json.loads(line)
+class ExportTest(ExportImportTest):
 
     def run(self):
         super().run()
+
+        time_elapsed = self.export()
+
+        self.report_kpi(time_elapsed)
+
+
+class ImportTest(ExportImportTest):
+
+    def run(self):
+        super().run()
+
         self.export()
-        settings = self.test_config.export_import_settings
-        if self.test_config.load_settings.size != 20480 and \
-            self.test_config.load_settings.doc_gen not in \
-                ['import_export_nested', 'import_export_array']:
-            # only import
-            self.report_kpi("Export {} {}".format(settings.type.upper(),
-                                                  settings.format.title()))
 
         self.flush_buckets()
 
-        self.import_data()
+        time_elapsed = self.import_data()
 
-        self.report_kpi("Import {} {}".format(settings.type.upper(),
-                                              settings.format.title()))
-
-        if self.test_config.export_import_settings.format == 'lines':
-            self.convert_json_in_csv()
-            self.flush_buckets()
-            self.import_data('csv', '')
-            self.report_kpi("Import CSV")
-
-    def convert_json_in_csv(self):
-        import_file = "{}/{}.{}".format(
-            self.cluster_spec.backup,
-            self.test_config.export_import_settings.format,
-            self.test_config.export_import_settings.type)
-        data = self._yield_line_delimited_json(import_file)
-
-        export_file = os.path.join(self.cluster_spec.backup, 'export.csv')
-        with open(export_file, 'w') as csv_file:
-            output = csv.writer(csv_file)
-            header = ""
-
-            for row in data:
-                if not header:
-                    header = row
-                    output.writerow(list(header.keys()))
-                output.writerow(list(row.values()))
+        self.report_kpi(time_elapsed)
 
 
-class CbImportSampleTest(BackupRestoreTest):
+class ImportSampleDataTest(ExportImportTest):
 
-    """
-    Measure time to perform import zip file with sample.
-    """
-
-    @with_stats
-    def import_sample_data(self):
-        t0 = time.time()
-        edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
-        local.import_sample_data(master_node=self.master_node,
-                                 cluster_spec=self.cluster_spec,
-                                 bucket='bucket-1', edition=edition)
-        self.spent_time = time.time() - t0
-
-        import_file = "/data/import/beer-sample.zip"
-
-        self.data_size = os.path.getsize(import_file)
-
-        logger.info('Import completed in {:.1f} sec, Import size is {} GB'
-                    .format(self.spent_time, self.data_size / 2 ** 30))
-
-    def _report_kpi(self, prefix=''):
-        edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
-        metric_info = {
-            'title': edition + " " + prefix + " " + self.test_config.test_case.title,
-            'category': prefix.split()[0].lower(),
-        }
-        metric = self.test_config.name
-        metric = metric.replace('expimp', prefix.split()[0].lower()) +\
-            "_" + edition.lower()
-
-        data_size = self.data_size / 2.0 ** 20
-        avg_throughput = round(data_size / self.spent_time)
-
-        self.reporter.post(avg_throughput, metric=metric,
-                           metric_info=metric_info)  # FIXME
+    def _report_kpi(self, time_elapsed: float):
+        self.reporter.post(
+            *self.metrics.import_file_throughput(time_elapsed)
+        )
 
     def run(self):
         self.download_tools()
 
-        settings = self.test_config.export_import_settings
+        time_elapsed = self.import_data()
 
-        self.import_sample_data()
-
-        self.report_kpi("Import {} {}".format(settings.type.upper(),
-                                              settings.format.title()))
+        self.report_kpi(time_elapsed)

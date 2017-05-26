@@ -1,7 +1,8 @@
 [test_case]
-test = perfrunner.tests.tools.CbExportImportTest
-title = (Avg. MB/sec), 1 bucket x 60M x 1KB, Idle
+test = perfrunner.tests.tools.ImportTest
+title = Import JSON List Nested Docs (Avg. MB/sec), 1 bucket x 60M x 1KB, Idle
 component = tools
+category = import
 
 [cluster]
 mem_quota = 52428
@@ -15,8 +16,8 @@ db_percentage = 100
 items = 60000000
 size = 1024
 workers = 40
-doc_gen = import_export_simple
+doc_gen = import_export_nested
 
-[export_import]
-type = json
+[export]
 format = list
+type = json

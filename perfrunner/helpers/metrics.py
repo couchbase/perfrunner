@@ -1,4 +1,5 @@
 import glob
+import os
 import re
 from typing import Any, Dict, List, Tuple, Union
 
@@ -555,6 +556,25 @@ class MetricHelper:
 
         return size, self._snapshots, metric_info
 
+    def import_and_export_throughput(self, time_elapsed: float) -> Metric:
+        metric_info = self._metric_info()
+
+        data_size = self.test_config.load_settings.items * \
+            self.test_config.load_settings.size / 2 ** 20  # MB
+
+        avg_throughput = round(data_size / time_elapsed)
+
+        return avg_throughput, self._snapshots, metric_info
+
+    def import_file_throughput(self, time_elapsed: float) -> Metric:
+        metric_info = self._metric_info()
+
+        import_file = self.test_config.export_settings.import_file
+        data_size = os.path.getsize(import_file) / 2.0 ** 20
+        avg_throughput = round(data_size / time_elapsed)
+
+        return avg_throughput, self._snapshots, metric_info
+
     def verify_series_in_limits(self,
                                 db: str,
                                 expected_number: int,
@@ -618,7 +638,7 @@ class MetricHelper:
 
         return throughput, self._snapshots, metric_info
 
-    def ycsb_throughput(self, total_ops: int) -> Metric:
+    def ycsb_throughput(self) -> Metric:
         metric_info = self._metric_info()
 
         throughput = self._parse_ycsb_throughput()

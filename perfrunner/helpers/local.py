@@ -4,6 +4,8 @@ from sys import platform
 from fabric.api import lcd, local, quiet, shell_env
 from logger import logger
 
+from perfrunner.settings import ClusterSpec
+
 
 def extract_cb(filename):
     cmd = 'rpm2cpio ./{} | cpio -idm'.format(filename)
@@ -119,64 +121,46 @@ def cbbackupmgr_restore(master_node, cluster_spec):
     local(cmd)
 
 
-def export(master_node, cluster_spec, tp='json', frmt=None, bucket='default'):
-    export_file = "{}/{}.{}".format(cluster_spec.backup, frmt, tp)
+def cbexport(master_node: str, cluster_spec: ClusterSpec, bucket: str,
+             data_format: str):
+    export_path = os.path.join(cluster_spec.backup, 'data.json')
 
     cleanup(cluster_spec.backup)
 
-    logger.info('export into: {}'.format(export_file))
-
     cmd = \
-        './opt/couchbase/bin/cbexport {} -c http://{} --username {} ' \
-        '--password {} --format {} --output {} -b {} -t 16' \
-        .format(tp, master_node, cluster_spec.rest_credentials[0],
-                cluster_spec.rest_credentials[1],
-                frmt, export_file, bucket)
+        './opt/couchbase/bin/cbexport json --format {} ' \
+        '--output {} --threads 16 ' \
+        '--cluster http://{} --username {} --password {} --bucket {}'.format(
+            data_format,
+            export_path,
+            master_node,
+            cluster_spec.rest_credentials[0],
+            cluster_spec.rest_credentials[1],
+            bucket,
+        )
 
     logger.info('Running: {}'.format(cmd))
     local(cmd, capture=False)
 
 
-def import_data(master_node, cluster_spec, tp='json', frmt=None, bucket=''):
-    import_file = "{}/{}.{}".format(cluster_spec.backup, frmt, tp)
-    if not frmt:
-        import_file = "{}/export.{}".format(cluster_spec.backup, tp)
-
-    logger.info('import from: {}'.format(import_file))
-
+def cbimport(master_node: str, cluster_spec: ClusterSpec, data_type: str,
+             data_format: str, bucket: str, import_file: str):
     cmd = \
-        './opt/couchbase/bin/cbimport {} -c http://{} -u {} -p {} ' \
-        '--dataset file://{} -b {} -g "#MONO_INCR#" -l LOG -t 16' \
-        .format(tp, master_node, cluster_spec.rest_credentials[0],
-                cluster_spec.rest_credentials[1], import_file, bucket)
+        './opt/couchbase/bin/cbimport {} ' \
+        '--dataset {} --bucket {} ' \
+        '--generate-key "#MONO_INCR#" --threads 16 ' \
+        '--cluster http://{} --username {} --password {} ' \
+        ''.format(
+            data_type,
+            import_file,
+            bucket,
+            master_node,
+            cluster_spec.rest_credentials[0],
+            cluster_spec.rest_credentials[1],
+        )
+    if data_type == 'json':
+        cmd += ' --format {}'.format(data_format)
 
-    if frmt:
-        cmd += ' --format {}'.format(frmt)
-    logger.info('Running: {}'.format(cmd))
-    local(cmd, capture=False)
-
-
-def import_sample_data(master_node, cluster_spec, bucket='', edition='EE'):
-    """
-    To generate sample zip with 60m files we need ~10 hours and 250 G of disk.
-    Please use generate_samples.py tool to generate and put it under
-    /data/import/ folder
-    """
-    import_file = "/data/import/beer-sample.zip"
-
-    logger.info('import from: {}'.format(import_file))
-    if edition == 'EE':
-        cmd = \
-            './opt/couchbase/bin/cbimport json -c http://{} -u {} ' \
-            '-p {} -d {} -b {} -g "#MONO_INCR#" -l LOG -t 16 -f sample' \
-            .format(master_node, cluster_spec.rest_credentials[0],
-                    cluster_spec.rest_credentials[1], import_file, bucket)
-    else:
-        # MB-21945 in 4.7
-        cmd = \
-            './opt/couchbase/bin/cbdocloader -c http://{} -u {} -p {} -b {} -m 40000 -d {}' \
-            .format(master_node, cluster_spec.rest_credentials[0],
-                    cluster_spec.rest_credentials[1], bucket, import_file)
     logger.info('Running: {}'.format(cmd))
     local(cmd, capture=False)
 

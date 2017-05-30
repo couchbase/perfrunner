@@ -4,7 +4,7 @@ from unittest import TestCase
 
 from perfrunner.settings import ClusterSpec, TestConfig
 from perfrunner.workloads.tcmalloc import KeyValueIterator, LargeIterator
-from spring.docgen import Document, SequentialKey, UnorderedKey, ZipfKey
+from spring import docgen
 from spring.wgen import Worker
 
 
@@ -44,7 +44,7 @@ SpringSettings = namedtuple('SprintSettings', ('items', 'workers'))
 class SpringTest(TestCase):
 
     def test_spring_imports(self):
-        self.assertEqual(Document.SIZE_VARIATION, 0.25)
+        self.assertEqual(docgen.Document.SIZE_VARIATION, 0.25)
         self.assertEqual(Worker.BATCH_SIZE, 100)
 
     def test_seq_key_generator(self):
@@ -52,7 +52,7 @@ class SpringTest(TestCase):
 
         keys = []
         for worker in range(settings.workers):
-            generator = SequentialKey(worker, settings, prefix='test')
+            generator = docgen.SequentialKey(worker, settings, prefix='test')
             keys += [key for key in generator]
 
         expected_keys = ['test-%012d' % i for i in range(1, settings.items + 1)]
@@ -64,7 +64,7 @@ class SpringTest(TestCase):
 
         keys = []
         for worker in range(settings.workers):
-            generator = UnorderedKey(worker, settings, prefix='test')
+            generator = docgen.UnorderedKey(worker, settings, prefix='test')
             keys += [key for key in generator]
 
         expected_keys = ['test-%012d' % i for i in range(1, settings.items + 1)]
@@ -73,10 +73,36 @@ class SpringTest(TestCase):
 
     def test_zipf_generator(self):
         num_items = 10 ** 4
-        generator = ZipfKey(prefix='')
+        generator = docgen.ZipfKey(prefix='')
 
         for i in range(10 ** 5):
             key = generator.next(curr_deletes=0, curr_items=num_items)
             key = int(key)
             self.assertLessEqual(key, num_items)
             self.assertGreaterEqual(key, 1)
+
+    def doc_generators(self, size: int):
+        for dg in (
+            docgen.ReverseLookupDocument(avg_size=size, prefix='n1ql'),
+            docgen.ReverseRangeLookupDocument(avg_size=size, prefix='n1ql',
+                                              range_distance=100),
+            docgen.ExtReverseLookupDocument(avg_size=size, prefix='n1ql',
+                                            num_docs=10 ** 6),
+            docgen.ArrayIndexingDocument(avg_size=size, prefix='n1ql',
+                                         array_size=10, num_docs=10 ** 6),
+            docgen.ProfileDocument(avg_size=size, prefix='n1ql'),
+        ):
+            yield dg
+
+    def test_doc_size(self):
+        size = 1024
+        key_gen = docgen.NewOrderedKey(prefix='n1ql', expiration=0)
+
+        for dg in self.doc_generators(size=size):
+            for i in range(10 ** 4):
+                key, _ = key_gen.next(i)
+                doc = dg.next(key=key)
+                actual_size = len(str(doc))
+                self.assertAlmostEqual(actual_size, size,
+                                       delta=size * 0.05,  # 5% variation
+                                       msg=dg.__class__.__name__)

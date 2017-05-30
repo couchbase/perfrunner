@@ -497,6 +497,11 @@ class LargeDocument(NestedDocument):
 
 class ReverseLookupDocument(NestedDocument):
 
+    OVERHEAD = 420
+
+    def _size(self) -> float:
+        return self.avg_size - self.OVERHEAD
+
     def __init__(self, avg_size: int, prefix: str):
         super().__init__(avg_size)
         self.prefix = prefix
@@ -548,6 +553,8 @@ class ReverseLookupDocument(NestedDocument):
 
 class ReverseRangeLookupDocument(ReverseLookupDocument):
 
+    OVERHEAD = 480
+
     def __init__(self, avg_size: int, prefix: str, range_distance: int):
         super().__init__(avg_size, prefix)
         if self.prefix is None:
@@ -594,7 +601,7 @@ class ReverseRangeLookupDocument(ReverseLookupDocument):
 
 class ExtReverseLookupDocument(ReverseLookupDocument):
 
-    OVERHEAD = 650
+    OVERHEAD = 500
 
     def __init__(self, avg_size: int, prefix: str, num_docs: int):
         super().__init__(avg_size, prefix)
@@ -687,6 +694,8 @@ class ArrayIndexingDocument(ReverseLookupDocument):
     ARRAY_CAP = 100
 
     ARRAY_SIZE = 10
+
+    OVERHEAD = 530
 
     def __init__(self, avg_size: int, prefix: str, array_size: int, num_docs: int):
         super().__init__(avg_size, prefix)

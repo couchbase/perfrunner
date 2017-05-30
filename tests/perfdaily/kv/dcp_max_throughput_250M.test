@@ -1,6 +1,7 @@
 [test_case]
 test = perfdaily.kv.DCPThroughputTest
 title = DCP, 250M x 1KB items, DGM
+threshold = -15
 component = KV
 
 [cluster]

@@ -9,6 +9,7 @@ import (
 	"math"
 	"math/rand"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -23,8 +24,6 @@ var (
 	clientBootTime = 5 // Seconds
 
 	requestCounter = platform.NewAlignedUint64(0)
-
-	letterRunes = []rune("0123456789abcdef")
 )
 
 type Job struct {
@@ -43,13 +42,16 @@ func Init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-func RandString(n uint32) []interface{} {
-	b := make([]rune, n)
-	for i := range b {
-		b[i] = letterRunes[rand.Intn(16)]
+func RandString(n uint32, low string, high string) []interface{} {
+	if lowInt, err := strconv.ParseInt(low, 16, 64); err == nil {
+		if highInt, err := strconv.ParseInt(high, 16, 64); err == nil {
+			randomInt := rand.Intn(int(highInt - lowInt - 2))
+			lowInt2 := int(lowInt) + randomInt
+			format := fmt.Sprintf("%%%03dx", n)
+			low = fmt.Sprintf(format, lowInt2)
+		}
 	}
-	return []interface{}{string(b)}
-
+	return []interface{}{low}
 }
 
 func RunJob(client *qclient.GsiClient, job *Job, aggrQ chan *JobResult) {
@@ -101,10 +103,11 @@ func RunJob(client *qclient.GsiClient, job *Job, aggrQ chan *JobResult) {
 		err = client.ScanAll(spec.DefnId, requestID, spec.Limit, cons, nil, callb)
 	case "Range":
 		requestID := os.Args[0] + uuid
+		low := spec.Low
 		if spec.RandomLen > 0 {
-			spec.Low = RandString(spec.RandomLen)
+			low = RandString(spec.RandomLen, spec.Low[0].(string), spec.High[0].(string))
 		}
-		err = client.Range(spec.DefnId, requestID, spec.Low, spec.High,
+		err = client.Range(spec.DefnId, requestID, low, spec.High,
 			qclient.Inclusion(spec.Inclusion), false, spec.Limit, cons, nil, callb)
 	case "Lookup":
 		requestID := os.Args[0] + uuid

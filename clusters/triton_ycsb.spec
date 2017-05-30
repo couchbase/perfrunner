@@ -19,4 +19,4 @@ ssh = root:couchbase
 OS = CentOS 7
 CPU = E5-2680 v3 (48 vCPU)
 Memory = 256GB
-Disk = SSD
+Disk = Samsung SM863

@@ -24,4 +24,4 @@ ssh = Administrator:Membase123
 OS = Windows Server 2012
 CPU = Data: E5-2630 v2 (24 vCPU), Query & Index: E5-2680 v3 (48 vCPU)
 Memory = Data: 64GB, Query & Index: 256GB
-Disk = SSD
+Disk = Samsung Pro 850

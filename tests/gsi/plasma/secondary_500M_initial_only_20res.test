@@ -32,6 +32,6 @@ doc_gen = small_plasma
 [secondary]
 indexes = myindex:alt_email
 run_recovery_test = 1
-restrict_kernel_memory = 27193M
+restrict_kernel_memory = 32193M
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800

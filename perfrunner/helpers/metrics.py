@@ -556,6 +556,16 @@ class MetricHelper:
 
         return size, self._snapshots, metric_info
 
+    def merge_throughput(self, time_elapsed: float) -> Metric:
+        metric_info = self._metric_info()
+
+        data_size = 2 * self.test_config.load_settings.items * \
+            self.test_config.load_settings.size / 2 ** 20  # MB
+
+        avg_throughput = round(data_size / time_elapsed)
+
+        return avg_throughput, self._snapshots, metric_info
+
     def import_and_export_throughput(self, time_elapsed: float) -> Metric:
         metric_info = self._metric_info()
 

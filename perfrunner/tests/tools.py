@@ -125,6 +125,39 @@ class BackupUnderLoadTest(BackupTest):
         self.report_kpi(time_elapsed)
 
 
+class MergeTest(BackupRestoreTest):
+
+    @timeit
+    def merge(self):
+        snapshots = local.get_backup_snapshots(self.cluster_spec)
+
+        local.drop_caches()
+
+        local.cbbackupmgr_merge(self.cluster_spec, snapshots)
+
+    def _report_kpi(self, time_elapsed):
+        self.reporter.post(
+            *self.metrics.merge_throughput(time_elapsed)
+        )
+
+    def run(self):
+        self.download_tools()
+
+        self.load()
+        self.wait_for_persistence()
+        self.backup()  # 1st snapshot
+
+        self.flush_buckets()
+
+        self.load()
+        self.wait_for_persistence()
+        self.backup(mode=True)  # 2nd snapshot
+
+        time_elapsed = self.merge()
+
+        self.report_kpi(time_elapsed)
+
+
 class IncrementalBackupUnderLoadTest(BackupTest):
 
     """

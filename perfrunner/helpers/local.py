@@ -1,5 +1,7 @@
 import os.path
+from datetime import date
 from sys import platform
+from typing import List
 
 from fabric.api import lcd, local, quiet, shell_env
 from logger import logger
@@ -28,7 +30,7 @@ def cleanup(backup_dir):
 
 def drop_caches():
     logger.info('Dropping memory cache')
-    local('sync && echo 3 > /proc/sys/vm/drop_caches', capture=False)
+    local('sync && echo 3 > /proc/sys/vm/drop_caches')
 
 
 def backup(master_node, cluster_spec, wrapper=False, mode=None,
@@ -78,6 +80,35 @@ def cbbackupmgr_backup(master_node, cluster_spec, mode, compression):
 
     if compression:
         cmd = '{} --value-compression compressed'.format(cmd)
+
+    logger.info('Running: {}'.format(cmd))
+    local(cmd)
+
+
+def get_backup_snapshots(cluster_spec: ClusterSpec) -> List[str]:
+    cmd = \
+        './opt/couchbase/bin/cbbackupmgr list ' \
+        '--archive {} --repo default '.format(
+            cluster_spec.backup,
+        )
+
+    pattern = '+ {}-'.format(date.today().year)
+    snapshots = []
+    for line in local(cmd, capture=True).split('\n'):
+        if pattern in line:
+            snapshot = line.strip().split()[-1]
+            snapshots.append(snapshot)
+    return snapshots
+
+
+def cbbackupmgr_merge(cluster_spec: ClusterSpec, snapshots: List[str]):
+    cmd = \
+        './opt/couchbase/bin/cbbackupmgr merge ' \
+        '--archive {} --repo default --start {} --end {}'.format(
+            cluster_spec.backup,
+            snapshots[0],
+            snapshots[1],
+        )
 
     logger.info('Running: {}'.format(cmd))
     local(cmd)
@@ -145,7 +176,7 @@ def cbexport(master_node: str, cluster_spec: ClusterSpec, bucket: str,
         )
 
     logger.info('Running: {}'.format(cmd))
-    local(cmd, capture=False)
+    local(cmd)
 
 
 def cbimport(master_node: str, cluster_spec: ClusterSpec, data_type: str,
@@ -167,7 +198,7 @@ def cbimport(master_node: str, cluster_spec: ClusterSpec, data_type: str,
         cmd += ' --format {}'.format(data_format)
 
     logger.info('Running: {}'.format(cmd))
-    local(cmd, capture=False)
+    local(cmd)
 
 
 def run_cbc_pillowfight(host, bucket, password,
@@ -199,7 +230,7 @@ def run_cbc_pillowfight(host, bucket, password,
                      num_cycles=num_cycles, size=size, writes=writes)
 
     logger.info('Running: {}'.format(cmd))
-    local(cmd, capture=False)
+    local(cmd)
 
 
 def run_dcptest_script(host, username, password, bucket,
@@ -222,7 +253,7 @@ def run_dcptest_script(host, username, password, bucket,
     logger.info('Running: {}'.format(cmd))
 
     with shell_env(CBAUTH_REVRPC_URL=cbauth):
-        local(cmd, capture=False)
+        local(cmd)
 
 
 def run_kvgen(hostname, num_docs, prefix):
@@ -231,7 +262,7 @@ def run_kvgen(hostname, num_docs, prefix):
                                                             prefix)
     logger.info('Running: {}'.format(cmd))
     with shell_env(GOGC='300'):
-        local(cmd, capture=False)
+        local(cmd)
 
 
 def run_ycsb(host, bucket, password, action, workload, items, workers,
@@ -262,7 +293,7 @@ def run_ycsb(host, bucket, password, action, workload, items, workers,
 
     logger.info('Running: {}'.format(cmd))
     with lcd('YCSB'):
-        local(cmd, capture=False)
+        local(cmd)
 
 
 def run_cbindexperf(path_to_tool, node, rest_username, rest_password, configfile, run_in_background=False):

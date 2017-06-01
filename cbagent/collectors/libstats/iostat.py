@@ -29,7 +29,7 @@ class IOstat(RemoteStats):
 
     def get_iostat(self, device):
         stdout = self.run(
-            "iostat -xk 1 2 -N {} | grep -v '^$' | tail -n 2".format(device)
+            "iostat -dkxyN 1 1 {} | grep -v '^$' | tail -n 2".format(device)
         )
         stdout = stdout.split()
         header = stdout[:len(stdout) // 2]

@@ -38,6 +38,22 @@ class BackupRestoreTest(PerfTest):
             bucket = 'bucket-{}'.format(i + 1)
             self.rest.flush_bucket(self.master_node, bucket)
 
+    def backup(self, mode=None):
+        local.backup(
+            master_node=self.master_node,
+            cluster_spec=self.cluster_spec,
+            wrapper=self.rest.is_community(self.master_node),
+            mode=mode,
+            compression=self.test_config.backup_settings.compression,
+        )
+
+    def restore(self):
+        local.drop_caches()
+
+        local.restore(cluster_spec=self.cluster_spec,
+                      master_node=self.master_node,
+                      wrapper=self.rest.is_community(self.master_node))
+
     def run(self):
         self.download_tools()
 
@@ -55,13 +71,7 @@ class BackupTest(BackupRestoreTest):
     @with_stats
     @timeit
     def backup(self, mode=None):
-        local.backup(
-            master_node=self.master_node,
-            cluster_spec=self.cluster_spec,
-            wrapper=self.rest.is_community(self.master_node),
-            mode=mode,
-            compression=self.test_config.backup_settings.compression,
-        )
+        super().backup(mode)
 
     def _report_kpi(self, time_elapsed):
         edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
@@ -137,7 +147,7 @@ class IncrementalBackupUnderLoadTest(BackupTest):
         self.report_kpi(time_elapsed)
 
 
-class RestoreTest(BackupTest):
+class RestoreTest(BackupRestoreTest):
 
     """
     After a typical workload we backup all nodes then restore and measure time
@@ -147,11 +157,7 @@ class RestoreTest(BackupTest):
     @with_stats
     @timeit
     def restore(self):
-        local.drop_caches()
-
-        local.restore(cluster_spec=self.cluster_spec,
-                      master_node=self.master_node,
-                      wrapper=self.rest.is_community(self.master_node))
+        super().restore()
 
     def _report_kpi(self, time_elapsed):
         edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
@@ -163,7 +169,7 @@ class RestoreTest(BackupTest):
         )
 
     def run(self):
-        super(BackupTest, self).run()
+        super().run()
 
         self.backup()
 
@@ -184,7 +190,7 @@ class RestoreAfterIncrementalBackupTest(RestoreTest):
     """
 
     def run(self):
-        super(BackupTest, self).run()
+        super(RestoreTest, self).run()
 
         self.backup()
 
@@ -203,16 +209,12 @@ class RestoreAfterIncrementalBackupTest(RestoreTest):
 
 class ExportImportTest(BackupRestoreTest):
 
-    @with_stats
-    @timeit
     def export(self):
         local.cbexport(master_node=self.master_node,
                        cluster_spec=self.cluster_spec,
                        bucket=self.test_config.buckets[0],
                        data_format=self.test_config.export_settings.format)
 
-    @with_stats
-    @timeit
     def import_data(self):
         import_file = self.test_config.export_settings.import_file
         if import_file is None:
@@ -238,6 +240,11 @@ class ExportImportTest(BackupRestoreTest):
 
 class ExportTest(ExportImportTest):
 
+    @with_stats
+    @timeit
+    def export(self):
+        super().export()
+
     def run(self):
         super().run()
 
@@ -247,6 +254,11 @@ class ExportTest(ExportImportTest):
 
 
 class ImportTest(ExportImportTest):
+
+    @with_stats
+    @timeit
+    def import_data(self):
+        super().import_data()
 
     def run(self):
         super().run()
@@ -260,7 +272,7 @@ class ImportTest(ExportImportTest):
         self.report_kpi(time_elapsed)
 
 
-class ImportSampleDataTest(ExportImportTest):
+class ImportSampleDataTest(ImportTest):
 
     def _report_kpi(self, time_elapsed: float):
         self.reporter.post(

@@ -82,7 +82,7 @@ class ClusterSpec(Config):
         for _, servers in self.config.items('clusters'):
             for server in servers.split():
                 if 'fts' in server.split(',')[1:]:
-                    yield server
+                    yield server.split(',')[0]
 
     @property
     def kv_servers(self) -> Iterator[str]:

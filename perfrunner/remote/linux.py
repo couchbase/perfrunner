@@ -56,7 +56,7 @@ class RemoteLinux(Remote):
 
     def build_index(self, index_node, bucket_indexes):
         all_indexes = ",".join(bucket_indexes)
-        cmd_str = "-auth=Administrator:password -server {index_node} -type build -indexes {all_indexes}" \
+        cmd_str = "-auth=Administrator:password -server {index_node}:8091 -type build -indexes {all_indexes}" \
             .format(index_node=index_node, all_indexes=all_indexes)
 
         self.run_cbindex_command(cmd_str)
@@ -66,7 +66,7 @@ class RemoteLinux(Remote):
         bucket_indexes = []
 
         for index, field in indexes.items():
-            cmd = "-auth=Administrator:password  -server {index_node}  -type create -bucket {bucket}" \
+            cmd = "-auth=Administrator:password  -server {index_node}:8091  -type create -bucket {bucket}" \
                   "  -fields={field}".format(index_node=index_nodes[0], bucket=bucket, field=field)
 
             if storage == 'memdb' or storage == 'plasma':

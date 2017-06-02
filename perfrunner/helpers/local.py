@@ -298,7 +298,7 @@ def run_ycsb(host, bucket, password, action, workload, items, workers,
 
 def run_cbindexperf(path_to_tool, node, rest_username, rest_password, configfile, run_in_background=False):
     logger.info('Initiating scan workload')
-    cmdstr = "{} -cluster {} -auth=\"{}:{}\" -configfile {} -resultfile result.json " \
+    cmdstr = "{} -cluster {}:8091 -auth=\"{}:{}\" -configfile {} -resultfile result.json " \
              "-statsfile /root/statsfile" \
         .format(path_to_tool, node, rest_username, rest_password, configfile)
     if run_in_background:

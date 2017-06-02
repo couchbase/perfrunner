@@ -5,7 +5,6 @@ from decorator import decorator
 from logger import logger
 
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.helpers.misc import server_group
 from perfrunner.tests import PerfTest
 from perfrunner.tests.views import QueryTest
 from perfrunner.tests.xdcr import (
@@ -95,40 +94,29 @@ class RebalanceTest(PerfTest):
         nodes_after = self.rebalance_settings.nodes_after
         swap = self.rebalance_settings.swap
 
-        group_number = self.test_config.cluster.group_number or 1
-
         for (_, servers), initial_nodes, nodes_after in zip(clusters,
                                                             initial_nodes,
                                                             nodes_after):
             master = servers[0]
-            groups = group_number > 1 and self.rest.get_server_groups(master) or {}
 
             new_nodes = []
             known_nodes = servers[:initial_nodes]
             ejected_nodes = []
 
             if nodes_after > initial_nodes:  # rebalance-in
-                new_nodes = enumerate(
-                    servers[initial_nodes:nodes_after],
-                    start=initial_nodes
-                )
+                new_nodes = servers[initial_nodes:nodes_after],
                 known_nodes = servers[:nodes_after]
             elif nodes_after < initial_nodes:  # rebalance-out
                 ejected_nodes = servers[nodes_after:initial_nodes]
             elif swap:
-                new_nodes = enumerate(
-                    servers[initial_nodes:initial_nodes + swap],
-                    start=initial_nodes - swap
-                )
+                new_nodes = servers[initial_nodes:initial_nodes + swap]
                 known_nodes = servers[:initial_nodes + swap]
                 ejected_nodes = servers[initial_nodes - swap:initial_nodes]
             else:
                 continue
 
-            for i, node in new_nodes:
-                group = server_group(servers[:nodes_after], group_number, i)
-                uri = groups.get(group)
-                self.rest.add_node(master, node, services=services, uri=uri)
+            for node in new_nodes:
+                self.rest.add_node(master, node, services=services)
 
             self.rest.rebalance(master, known_nodes, ejected_nodes)
 

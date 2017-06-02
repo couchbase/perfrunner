@@ -19,11 +19,6 @@ def target_hash(*args):
     return str_hash[:6]
 
 
-def server_group(servers, group_number, i):
-    group_id = 1 + i // ((len(servers) + 1) // group_number)
-    return 'Group {}'.format(group_id)
-
-
 def retry(catch=(), iterations=5, wait=10):
     """
     This is a general purpose decorator for retrying a function while

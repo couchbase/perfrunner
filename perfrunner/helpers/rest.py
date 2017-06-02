@@ -174,14 +174,10 @@ class RestHelper:
         data = {'services': services}
         self.post(url=api, data=data)
 
-    def add_node(self, host: str, new_host: str,
-                 services: str = None, uri: str = None):
+    def add_node(self, host: str, new_host: str, services: str = None):
         logger.info('Adding new node: {}'.format(new_host))
 
-        if uri:
-            api = 'http://{}:8091{}'.format(host, uri)
-        else:
-            api = 'http://{}:8091/controller/addNode'.format(host)
+        api = 'http://{}:8091/controller/addNode'.format(host)
         data = {
             'hostname': new_host,
             'user': self.rest_username,
@@ -409,21 +405,6 @@ class RestHelper:
             r = self._post(url=api, data=data)
             if r.status_code == 200:
                 break
-
-    def create_server_group(self, host: str, name: str):
-        logger.info('Creating server group: {}'.format(name))
-
-        api = 'http://{}:8091/pools/default/serverGroups'.format(host)
-        data = {'name': name}
-        self.post(url=api, data=data)
-
-    def get_server_groups(self, host: str) -> dict:
-        logger.info('Getting server groups')
-
-        api = 'http://{}:8091/pools/default/serverGroups'.format(host)
-        return {
-            g['name']: g['addNodeURI'] for g in self.get(url=api).json()['groups']
-        }
 
     def get_certificate(self, host: str) -> str:
         logger.info('Getting remote certificate')

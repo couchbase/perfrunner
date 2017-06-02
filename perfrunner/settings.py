@@ -159,7 +159,6 @@ class TestCaseSettings:
 
 class ClusterSettings:
 
-    GROUP_NUMBER = 1
     NUM_BUCKETS = 1
     INDEX_MEM_QUOTA = 256
     FTS_INDEX_MEM_QUOTA = 512
@@ -177,8 +176,6 @@ class ClusterSettings:
         self.num_buckets = int(options.get('num_buckets',
                                            self.NUM_BUCKETS))
         self.num_vbuckets = options.get('num_vbuckets')
-        self.group_number = int(options.get('group_number',
-                                            self.GROUP_NUMBER))
         self.throttle_cpu = int(options.get('throttle_cpu',
                                             self.THROTTLE_CPU))
 

@@ -3,7 +3,7 @@ from typing import List
 from logger import logger
 
 from perfrunner.helpers.memcached import MemcachedHelper
-from perfrunner.helpers.misc import pretty_dict, server_group
+from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import RestHelper
@@ -26,7 +26,6 @@ class ClusterManager:
         self.mem_quota = test_config.cluster.mem_quota
         self.index_mem_quota = test_config.cluster.index_mem_quota
         self.fts_mem_quota = test_config.cluster.fts_index_mem_quota
-        self.group_number = test_config.cluster.group_number or 1
 
     def is_compatible(self, min_release):
         for master in self.cluster_spec.masters:
@@ -78,12 +77,6 @@ class ClusterManager:
         for master in self.cluster_spec.masters:
             self.rest.set_services(master, self.cluster_spec.roles[master])
 
-    def create_server_groups(self):
-        for master in self.cluster_spec.masters:
-            for i in range(1, self.group_number):
-                name = 'Group {}'.format(i + 1)
-                self.rest.create_server_group(master, name=name)
-
     def add_nodes(self):
         for (_, servers), initial_nodes in zip(self.cluster_spec.clusters,
                                                self.initial_nodes):
@@ -92,14 +85,9 @@ class ClusterManager:
                 continue
 
             master = servers[0]
-            if self.group_number > 1:
-                groups = self.rest.get_server_groups(master)
-            else:
-                groups = {}
-            for i, node in enumerate(servers[1:initial_nodes], start=1):
-                uri = groups.get(server_group(servers[:initial_nodes],
-                                              self.group_number, i))
-                self.rest.add_node(master, node, self.cluster_spec.roles[node], uri)
+            for node in servers[1:initial_nodes]:
+                roles = self.cluster_spec.roles[node]
+                self.rest.add_node(master, node, roles)
 
     def rebalance(self):
         for (_, servers), initial_nodes in zip(self.cluster_spec.clusters,

@@ -27,7 +27,6 @@ class ClusterManager:
         self.index_mem_quota = test_config.cluster.index_mem_quota
         self.fts_mem_quota = test_config.cluster.fts_index_mem_quota
         self.group_number = test_config.cluster.group_number or 1
-        self.roles = cluster_spec.roles
 
     def is_compatible(self, min_release):
         for master in self.cluster_spec.masters:
@@ -72,14 +71,12 @@ class ClusterManager:
                 curr_settings = pretty_dict(curr_settings)
                 logger.info("Index settings: {}".format(curr_settings))
 
-    def set_services(self):
+    def set_services_on_master(self):
         if not self.is_compatible(min_release='4.0.0'):
             return
 
-        for (_, servers), initial_nodes in zip(self.cluster_spec.clusters,
-                                               self.initial_nodes):
-            master = servers[0]
-            self.rest.set_services(master, self.roles[master])
+        for master in self.cluster_spec.masters:
+            self.rest.set_services(master, self.cluster_spec.roles[master])
 
     def create_server_groups(self):
         for master in self.cluster_spec.masters:
@@ -102,7 +99,7 @@ class ClusterManager:
             for i, node in enumerate(servers[1:initial_nodes], start=1):
                 uri = groups.get(server_group(servers[:initial_nodes],
                                               self.group_number, i))
-                self.rest.add_node(master, node, self.roles[node], uri)
+                self.rest.add_node(master, node, self.cluster_spec.roles[node], uri)
 
     def rebalance(self):
         for (_, servers), initial_nodes in zip(self.cluster_spec.clusters,

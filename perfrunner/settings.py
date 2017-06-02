@@ -56,7 +56,7 @@ class ClusterSpec(Config):
     @property
     def clusters(self) -> Iterator:
         for cluster_name, servers in self.config.items('clusters'):
-            yield cluster_name, [s.split(',', 1)[0] for s in servers.split()]
+            yield cluster_name, [s.split(',')[0] for s in servers.split()]
 
     @property
     def masters(self) -> Iterator[str]:
@@ -98,11 +98,11 @@ class ClusterSpec(Config):
         server_roles = {}
         for _, node in self.config.items('clusters'):
             for server in node.split():
-                role = server.split(',', 1)[0]
+                hostname = server.split(',', 1)[0]
                 if ',' in server:
-                    server_roles[role] = server.split(',', 1)[1]
+                    server_roles[hostname] = server.split(',', 1)[1]
                 else:  # For backward compatibility, set to kv if not specified
-                    server_roles[role] = 'kv'
+                    server_roles[hostname] = 'kv'
         return server_roles
 
     @property

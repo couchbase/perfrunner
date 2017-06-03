@@ -51,7 +51,7 @@ def cbbackupwrapper(master_node, cluster_spec, mode):
     if mode:
         postfix = '-m {}'.format(mode)
 
-    cmd = './cbbackupwrapper http://{} {} -u {} -p {} -P 16 {}'.format(
+    cmd = './cbbackupwrapper http://{}:8091 {} -u {} -p {} -P 16 {}'.format(
         master_node,
         cluster_spec.backup,
         cluster_spec.rest_credentials[0],

@@ -16,7 +16,8 @@
              "Id" : 1,
              "Inclusion" : 3,
              "Index" : "myindex",
-             "NInterval" : 100
+             "NInterval" : 100,
+             "RandomLen" : 12
            }
        ]
 }

@@ -501,7 +501,7 @@ class EvictionTest(KVTest):
             for hostname, _ in self.rest.get_node_stats(self.master_node,
                                                         bucket):
                 host = hostname.split(':')[0]
-                port = self.rest.get_memcached_port(hostname)
+                port = self.rest.get_memcached_port(host)
 
                 stats = self.memcached.get_stats(host, port, bucket, stats='')
 

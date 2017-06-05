@@ -132,7 +132,7 @@ def restore(master_node, cluster_spec, wrapper=False):
 
 
 def cbrestorewrapper(master_node, cluster_spec):
-    cmd = './cbrestorewrapper {} http://{} -u {} -p {}'.format(
+    cmd = './cbrestorewrapper {} http://{}:8091 -u {} -p {}'.format(
         cluster_spec.backup,
         master_node,
         cluster_spec.rest_credentials[0],

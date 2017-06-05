@@ -36,7 +36,7 @@ key_length = 16
 
 [secondary]
 indexes = myindex:city
-restrict_kernel_memory = 51567M
+restrict_kernel_memory = 53567M
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
 cbindexperf_configfile = tests/gsi/plasma/config/config_scanthr_dgm_plasma.json

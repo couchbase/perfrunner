@@ -155,9 +155,11 @@ class RemoteLinux(Remote):
         logger.info('Uninstalling Couchbase Server')
         if self.package == 'deb':
             run('yes | apt-get remove couchbase-server', quiet=True)
+            run('yes | apt-get remove couchbase-server-dbg', quiet=True)
             run('yes | apt-get remove couchbase-server-community', quiet=True)
         else:
             run('yes | yum remove couchbase-server', quiet=True)
+            run('yes | yum remove couchbase-server-debuginfo', quiet=True)
             run('yes | yum remove couchbase-server-community', quiet=True)
 
     def upload_iss_files(self, release: str):

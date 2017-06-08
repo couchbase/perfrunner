@@ -1,4 +1,4 @@
-from optparse import OptionParser
+from argparse import ArgumentParser
 
 from logger import logger
 
@@ -6,27 +6,21 @@ from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import ClusterSpec
 
 
-def get_options():
-    usage = '%prog -c cluster'
+def get_args():
+    parser = ArgumentParser()
 
-    parser = OptionParser(usage)
+    parser.add_argument('-c', '--cluster', dest='cluster_spec_fname',
+                        required=True,
+                        help='path to the cluster specification file')
 
-    parser.add_option('-c', dest='cluster_spec_fname',
-                      help='path to the cluster specification file',
-                      metavar='cluster.spec')
-
-    options, args = parser.parse_args()
-    if not options.cluster_spec_fname:
-        parser.error('Please specify a cluster specification')
-
-    return options, args
+    return parser.parse_args()
 
 
 def main():
-    options, args = get_options()
+    args = get_args()
 
     cluster_spec = ClusterSpec()
-    cluster_spec.parse(options.cluster_spec_fname, args)
+    cluster_spec.parse(args.cluster_spec_fname)
 
     remote = RemoteHelper(cluster_spec, test_config=None, verbose=False)
 

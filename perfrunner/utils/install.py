@@ -1,5 +1,5 @@
+from argparse import ArgumentParser
 from collections import namedtuple
-from optparse import OptionParser
 from typing import Iterator
 
 import requests
@@ -110,30 +110,33 @@ class CouchbaseInstaller:
         self.install_package()
 
 
+def get_args():
+    parser = ArgumentParser()
+
+    parser.add_argument('-v', '--url', dest='version',
+                        required=True,
+                        help='the build version or the HTTP URL to a package')
+    parser.add_argument('-c', '--cluster', dest='cluster_spec_fname',
+                        required=True,
+                        help='the path to a cluster specification file')
+    parser.add_argument('-e', dest='edition',
+                        choices=['enterprise', 'community'],
+                        default='enterprise',
+                        help='the cluster edition')
+    parser.add_argument('--verbose', dest='verbose',
+                        action='store_true',
+                        help='enable verbose logging')
+
+    return parser.parse_args()
+
+
 def main():
-    usage = '%prog -c cluster -b build'
-
-    parser = OptionParser(usage)
-
-    parser.add_option('-v', '--url', dest='version',
-                      help='the build version or the HTTP URL to a package')
-    parser.add_option('-c', dest='cluster_spec_fname',
-                      help='the path to a cluster specification file')
-    parser.add_option('-e', dest='edition', default='enterprise',
-                      help='the cluster edition (community or enterprise)')
-    parser.add_option('--verbose', dest='verbose', action='store_true',
-                      help='enable verbose logging')
-
-    options, args = parser.parse_args()
-
-    if not (options.cluster_spec_fname and options.version):
-        parser.error('Missing mandatory parameter. Either specify both cluster '
-                     'spec and version.')
+    args = get_args()
 
     cluster_spec = ClusterSpec()
-    cluster_spec.parse(fname=options.cluster_spec_fname)
+    cluster_spec.parse(fname=args.cluster_spec_fname)
 
-    installer = CouchbaseInstaller(cluster_spec, options)
+    installer = CouchbaseInstaller(cluster_spec, args)
     installer.install()
 
 

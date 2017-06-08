@@ -1,39 +1,41 @@
-from optparse import OptionParser
+from argparse import ArgumentParser
 
 from perfrunner.helpers.cluster import ClusterManager
 from perfrunner.settings import ClusterSpec, TestConfig
 
 
-def get_options():
-    usage = '%prog -c cluster -t test_config'
+def get_args():
+    parser = ArgumentParser()
 
-    parser = OptionParser(usage)
+    parser.add_argument('-c', '--cluster', dest='cluster_spec_fname',
+                        required=True,
+                        help='path to the cluster specification file')
+    parser.add_argument('-t', '--test', dest='test_config_fname',
+                        required=True,
+                        help='path to test test configuration file')
+    parser.add_argument('--verbose', dest='verbose',
+                        action='store_true',
+                        help='enable verbose logging')
+    parser.add_argument('override',
+                        nargs='?',
+                        help='custom cluster settings')
 
-    parser.add_option('-c', dest='cluster_spec_fname',
-                      help='path to cluster specification file',
-                      metavar='cluster.spec')
-    parser.add_option('-t', dest='test_config_fname',
-                      help='path to test configuration file',
-                      metavar='my_test.test')
-    parser.add_option('--verbose', dest='verbose', action='store_true',
-                      help='enable verbose logging')
-
-    options, args = parser.parse_args()
-    if not options.cluster_spec_fname or not options.test_config_fname:
+    args = parser.parse_args()
+    if not args.cluster_spec_fname or not args.test_config_fname:
         parser.error('Missing mandatory parameter')
 
-    return options, args
+    return args
 
 
 def main():
-    options, args = get_options()
+    args = get_args()
 
     cluster_spec = ClusterSpec()
-    cluster_spec.parse(options.cluster_spec_fname, args)
+    cluster_spec.parse(args.cluster_spec_fname, override=args.override)
     test_config = TestConfig()
-    test_config.parse(options.test_config_fname, args)
+    test_config.parse(args.test_config_fname, override=args.override)
 
-    cm = ClusterManager(cluster_spec, test_config, options.verbose)
+    cm = ClusterManager(cluster_spec, test_config, args.verbose)
 
     # Individual nodes
     cm.indexer_restrict_memory()

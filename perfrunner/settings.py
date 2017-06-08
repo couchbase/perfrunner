@@ -25,23 +25,27 @@ class Config:
         self.config = ConfigParser()
         self.name = ''
 
-    def parse(self, fname: str, override=()) -> None:
-        if override:
-            override = [x for x in csv.reader(
-                ' '.join(override).split(','), delimiter='.')]
-
+    def parse(self, fname: str, override=None) -> None:
         logger.info('Reading configuration file: {}'.format(fname))
         if not os.path.isfile(fname):
             logger.interrupt("File doesn't exist: {}".format(fname))
         self.config.optionxform = str
         self.config.read(fname)
+
+        basename = os.path.basename(fname)
+        self.name = os.path.splitext(basename)[0]
+
+        if override is not None:
+            self.override(override)
+
+    def override(self, override: str):
+        override = [x for x in csv.reader(override.split(','),
+                                          delimiter='.')]
+
         for section, option, value in override:
             if not self.config.has_section(section):
                 self.config.add_section(section)
             self.config.set(section, option, value)
-
-        basename = os.path.basename(fname)
-        self.name = os.path.splitext(basename)[0]
 
     @safe
     def _get_options_as_dict(self, section: str) -> dict:

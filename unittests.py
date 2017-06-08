@@ -12,14 +12,20 @@ class SettingsTest(TestCase):
 
     def test_stale_update_after(self):
         test_config = TestConfig()
-        test_config.parse('tests/query_lat_20M_basic.test', [])
+        test_config.parse('tests/query_lat_20M_basic.test')
         query_params = test_config.access_settings.query_params
         self.assertEqual(query_params, {'stale': 'false'})
 
     def test_cluster_specs(self):
         for file_name in glob.glob("clusters/*.spec"):
             cluster_spec = ClusterSpec()
-            cluster_spec.parse(file_name, override=())
+            cluster_spec.parse(file_name, override=None)
+
+    def test_override(self):
+        test_config = TestConfig()
+        test_config.parse('tests/query_lat_20M_basic.test',
+                          override='cluster.mem_quota.5555')
+        self.assertEqual(test_config.cluster.mem_quota, 5555)
 
 
 class WorkloadTest(TestCase):

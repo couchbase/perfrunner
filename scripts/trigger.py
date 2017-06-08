@@ -1,5 +1,5 @@
 import sys
-from optparse import OptionParser
+from argparse import ArgumentParser
 
 import requests
 from logger import logger
@@ -45,11 +45,17 @@ def rpm_package_exists(release: str, build: str) -> bool:
     return r.status_code == 200
 
 
-def main():
-    parser = OptionParser()
+def get_args():
+    parser = ArgumentParser()
 
-    parser.add_option('-r', '--release', dest='release', default='spock')
-    options, _ = parser.parse_args()
+    parser.add_argument('-r', '--release', dest='release',
+                        default='spock')
+
+    return parser.parse_args()
+
+
+def main():
+    args = get_args()
 
     latest = None
     build = read_latest()
@@ -60,11 +66,11 @@ def main():
 
         logger.info('Checking build {}'.format(build))
 
-        if not build_exists(options.release, build):
+        if not build_exists(args.release, build):
             missing += 1
             continue
 
-        if rpm_package_exists(options.release, build):
+        if rpm_package_exists(args.release, build):
             latest = build
 
     if latest:

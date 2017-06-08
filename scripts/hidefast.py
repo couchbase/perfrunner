@@ -1,4 +1,4 @@
-from optparse import OptionParser
+from argparse import ArgumentParser
 from queue import LifoQueue
 from typing import Iterator, List
 
@@ -62,18 +62,27 @@ def hide(components: List[str], max_builds: int):
         hide_benchmark(b['id'])
 
 
+def get_args():
+    parser = ArgumentParser()
+
+    parser.add_argument('-c', '--components', dest='components',
+                        required=True,
+                        type=str,
+                        help='comma separated list of components')
+    parser.add_argument('-m', '--max-builds', dest='max_builds',
+                        default=8,
+                        required=True,
+                        type=int,
+                        help='maximum number of builds per release')
+
+    return parser.parse_args()
+
+
 def main():
-    parser = OptionParser()
+    args = get_args()
 
-    parser.add_option('-c', '--components', dest='components', default=[],
-                      type='str', help='comma separated list of components')
-    parser.add_option('-m', '--max-builds', dest='max_builds', default=8,
-                      type='int', help='maximum number of builds per release')
-
-    options, args = parser.parse_args()
-
-    hide(components=options.components.split(','),
-         max_builds=options.max_builds)
+    hide(components=args.components.split(','),
+         max_builds=args.max_builds)
 
 
 if __name__ == '__main__':

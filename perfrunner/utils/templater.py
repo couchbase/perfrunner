@@ -1,4 +1,4 @@
-from optparse import OptionParser
+from argparse import ArgumentParser
 
 from jinja2 import Environment, FileSystemLoader, Template
 
@@ -53,21 +53,21 @@ def store_cfg(content: str):
 
 
 def main():
-    parser = OptionParser()
+    parser = ArgumentParser()
 
-    parser.add_option('--instance', dest='instance', type='choice',
-                      choices=list(MEMORY_QUOTAS),
-                      help='EC2 instance type')
-    parser.add_option('--template', dest='template', type='choice',
-                      choices=list(TEMPLATES),
-                      help='Template name')
-    parser.add_option('--threads', dest='threads', type=int,
-                      default=1,
-                      help='Total number of workload generator threads')
+    parser.add_argument('--instance', dest='instance', type=str,
+                        choices=list(MEMORY_QUOTAS),
+                        help='EC2 instance type')
+    parser.add_argument('--template', dest='template', type=str,
+                        choices=list(TEMPLATES),
+                        help='Template name')
+    parser.add_argument('--threads', dest='threads', type=int,
+                        default=1,
+                        help='Total number of workload generator threads')
 
-    options, _ = parser.parse_args()
+    args = parser.parse_args()
 
-    render(options.template, options.instance, options.threads)
+    render(args.template, args.instance, args.threads)
 
 
 if __name__ == '__main__':

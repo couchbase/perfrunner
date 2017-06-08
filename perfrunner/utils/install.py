@@ -28,6 +28,7 @@ PKG_PATTERNS = {
         'couchbase-server-{edition}_{release}-ubuntu{os}_amd64.deb',
     ),
     'exe': (
+        'couchbase-server-{edition}_{release}-{build}-windows_amd64.msi',
         'couchbase-server-{edition}_{release}-{build}-windows_amd64.exe',
         'couchbase-server-{edition}_{release}-windows_amd64.exe',
     ),

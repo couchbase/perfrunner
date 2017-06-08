@@ -17,9 +17,9 @@ class RemoteWindows(Remote):
 
     MAX_RETRIES = 5
 
-    TIMEOUT = 600
+    TIMEOUT = 300
 
-    SLEEP_TIME = 60  # crutch
+    SLEEP_TIME = 30  # crutch
 
     PROCESSES = ('erl*', 'epmd*')
 
@@ -76,37 +76,52 @@ class RemoteWindows(Remote):
     def kill_installer(self):
         run('taskkill /F /T /IM setup.exe', warn_only=True, quiet=True)
 
+    def uninstall_exe(self, local_ip: str):
+        script = './setup.exe -s -f1"C:\\uninstall.iss"'
+
+        for retry in range(self.MAX_RETRIES):
+            self.kill_installer()
+
+            try:
+                r = run(script, quiet=True, timeout=self.TIMEOUT)
+            except CommandTimeout:
+                logger.warn("Script timed out on {}. Retrying.".format(local_ip))
+                continue
+
+            if r.return_code:  # Non-zero return code
+                logger.warn('Script failed on {}. Retrying.'.format(local_ip))
+                continue
+
+            return
+
+        logger.warn('Script failed with no more retries on {}'.format(local_ip))
+
+    def uninstall_msi(self):
+        run('msiexec /x setup.msi /n /q', warn_only=True, timeout=self.TIMEOUT)
+
+    def monitor_remaining_files(self, local_ip: str):
+        t0 = time.time()
+        while self.exists(self.VERSION_FILE) and \
+                time.time() - t0 < self.TIMEOUT:
+            logger.info('Waiting for all files to be removed on {}'
+                        .format(local_ip))
+            time.sleep(5)
+
     def clean_installation(self):
         with settings(warn_only=True):
             run('rm -fr {}'.format(self.CB_DIR))
 
     @all_hosts
     def uninstall_couchbase(self):
+        logger.info('Uninstalling Couchbase Server')
         local_ip = self.detect_ip()
-        logger.info('Uninstalling Package on {}'.format(local_ip))
 
         if self.exists(self.VERSION_FILE):
-            for retry in range(self.MAX_RETRIES):
-                self.kill_installer()
-                try:
-                    r = run('./setup.exe -s -f1"C:\\uninstall.iss"',
-                            warn_only=True, quiet=True, timeout=self.TIMEOUT)
-                    if not r.return_code:
-                        t0 = time.time()
-                        while self.exists(self.VERSION_FILE) and \
-                                time.time() - t0 < self.TIMEOUT:
-                            logger.info('Waiting for Uninstaller to finish on {}'.format(local_ip))
-                            time.sleep(5)
-                        break
-                    else:
-                        logger.warn('Uninstall script failed to run on {}'.format(local_ip))
-                except CommandTimeout:
-                    logger.warn("Uninstall command timed out - retrying on {} ({} of {})"
-                                .format(local_ip, retry, self.MAX_RETRIES))
-                    continue
+            if self.exists('setup.msi'):
+                self.uninstall_msi()
             else:
-                logger.warn('Uninstaller failed with no more retries on {}'
-                            .format(local_ip))
+                self.uninstall_exe(local_ip)
+            self.monitor_remaining_files(local_ip)
         else:
             logger.info('Package not present on {}'.format(local_ip))
 
@@ -121,25 +136,37 @@ class RemoteWindows(Remote):
         put('iss/uninstall_{}.iss'.format(release),
             '/cygdrive/c/uninstall.iss')
 
+    def download_package(self, url: str, ext: str):
+        run('rm -fr setup.*')
+        self.wget(url, outfile='setup.{}'.format(ext))
+
+    def install_exe(self):
+        run('chmod +x setup.exe', quiet=True)
+        run('./setup.exe -s -f1"C:\\install.iss"')
+
+    def install_msi(self):
+        run('msiexec /i setup.msi /n /q')
+
+    def monitor_new_files(self, local_ip: str):
+        while not self.exists(self.VERSION_FILE):
+            logger.info('Checking files on {}'.format(local_ip))
+            time.sleep(5)
+
     @all_hosts
     def install_couchbase(self, url: str):
-        self.kill_installer()
-        run('rm -fr setup.exe')
-        self.wget(url, outfile='setup.exe')
-        run('chmod +x setup.exe')
-
+        logger.info('Installing the package')
         local_ip = self.detect_ip()
 
-        logger.info('Installing Package on {}'.format(local_ip))
-        try:
-            run('./setup.exe -s -f1"C:\\install.iss"')
-        except:
-            logger.error('Install script failed on {}'.format(local_ip))
-            raise
+        self.kill_installer()
 
-        while not self.exists(self.VERSION_FILE):
-            logger.info('Waiting for Installer to finish on {}'.format(local_ip))
-            time.sleep(5)
+        if 'msi' in url:
+            self.download_package(url, ext='msi')
+            self.install_msi()
+        else:
+            self.download_package(url, ext='exe')
+            self.install_exe()
+
+        self.monitor_new_files(local_ip)
 
         logger.info('Sleeping for {} seconds'.format(self.SLEEP_TIME))
         time.sleep(self.SLEEP_TIME)

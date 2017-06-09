@@ -218,7 +218,9 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
                                                            list(self.indexes.keys())[0])
             if recovery_time == -1:
                 raise Exception('Indexer failed to recover...!!!')
-            self.report_kpi(recovery_time, 'Recovery', "ms")
+            # Convert recovery time to second
+            recovery_time /= 1000
+            self.report_kpi(recovery_time, 'Recovery')
 
     def load_and_build_initial_index(self):
         self.load()

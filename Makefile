@@ -2,6 +2,7 @@
 
 SHELL := /bin/bash
 
+PATH := ${GOPATH}/bin:$(PATH)
 PYTHON := python3.5
 ENV := env
 GOVENDOR := ${GOPATH}/bin/govendor
@@ -48,7 +49,9 @@ vendor-sync: go-tools
 	${GOVENDOR} sync
 
 go-tools:
+	go version
 	go get -u github.com/kardianos/govendor
+	go get -u golang.org/x/tools/cmd/goyacc
 
 memblock:
 	gcc -o memblock c/memblock/memblock.c

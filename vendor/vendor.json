@@ -69,45 +69,45 @@
 			"revisionTime": "2016-09-29T22:34:09Z"
 		},
 		{
-			"checksumSHA1": "L4J5WrvGXak3507pRAmI5VlqXyM=",
+			"checksumSHA1": "0yux2YRRps+BBLqo7dZSwRC3T6E=",
 			"path": "github.com/couchbase/gometa/action",
-			"revision": "7da5634cce1de744293acf27bb2aecc13ee50cc5",
+			"revision": "ca8042790dd04f2648b8bd301cd2b0bd70d0214d",
 			"revisionTime": "2016-10-18T03:37:07Z"
 		},
 		{
-			"checksumSHA1": "byoUXS64xlj0HEr7n6YjhNcxZ9E=",
+			"checksumSHA1": "WJKGm7YjQKCwFO1dyFvTkugk8wo=",
 			"path": "github.com/couchbase/gometa/common",
-			"revision": "7da5634cce1de744293acf27bb2aecc13ee50cc5",
+			"revision": "ca8042790dd04f2648b8bd301cd2b0bd70d0214d",
 			"revisionTime": "2016-10-18T03:37:07Z"
 		},
 		{
 			"checksumSHA1": "MoHb713nF6FJcBsU2y0+8xdcs/c=",
 			"path": "github.com/couchbase/gometa/log",
-			"revision": "7da5634cce1de744293acf27bb2aecc13ee50cc5",
+			"revision": "ca8042790dd04f2648b8bd301cd2b0bd70d0214d",
 			"revisionTime": "2016-10-18T03:37:07Z"
 		},
 		{
 			"checksumSHA1": "aqJKZzfrOF2BNKBSfgQif/d1DSI=",
 			"path": "github.com/couchbase/gometa/message",
-			"revision": "7da5634cce1de744293acf27bb2aecc13ee50cc5",
+			"revision": "ca8042790dd04f2648b8bd301cd2b0bd70d0214d",
 			"revisionTime": "2016-10-18T03:37:07Z"
 		},
 		{
 			"checksumSHA1": "ld4omlVq30AYHUW+fDWssU69vXA=",
 			"path": "github.com/couchbase/gometa/protocol",
-			"revision": "7da5634cce1de744293acf27bb2aecc13ee50cc5",
+			"revision": "ca8042790dd04f2648b8bd301cd2b0bd70d0214d",
 			"revisionTime": "2016-10-18T03:37:07Z"
 		},
 		{
 			"checksumSHA1": "Xsi1eizGyiD5YIgjFUt0KEgXYRY=",
 			"path": "github.com/couchbase/gometa/repository",
-			"revision": "7da5634cce1de744293acf27bb2aecc13ee50cc5",
+			"revision": "ca8042790dd04f2648b8bd301cd2b0bd70d0214d",
 			"revisionTime": "2016-10-18T03:37:07Z"
 		},
 		{
-			"checksumSHA1": "i81hTE9qEK2BbHXgIO+wWbglQBE=",
+			"checksumSHA1": "H+G1DIbaTJM9/rbP0vs1Efmfi9Q=",
 			"path": "github.com/couchbase/gometa/server",
-			"revision": "7da5634cce1de744293acf27bb2aecc13ee50cc5",
+			"revision": "ca8042790dd04f2648b8bd301cd2b0bd70d0214d",
 			"revisionTime": "2016-10-18T03:37:07Z"
 		},
 		{
@@ -117,110 +117,120 @@
 			"revisionTime": "2016-03-11T02:08:04Z"
 		},
 		{
-			"checksumSHA1": "D4SUsGTOk/ZmLVaEbVOkttE8t3Q=",
+			"checksumSHA1": "tjzOdMI5pYjeskXbMnBkkb4lvPs=",
 			"path": "github.com/couchbase/indexing",
-			"revision": "07cefbba716bde9805302e31e3ab9dcca34dafe9",
+			"revision": "ed87885e8200c7a0bff86f7a3e0ce3b60ad1e045",
 			"tree": true
 		},
 		{
-			"checksumSHA1": "saATJIo30yDb7/6z0VqWP1VESlk=",
+			"checksumSHA1": "xkXWM+SnQ6yYZ2BMY7t3Px+8hqU=",
 			"path": "github.com/couchbase/indexing/secondary/common",
-			"revision": "07cefbba716bde9805302e31e3ab9dcca34dafe9"
+			"revision": "ed87885e8200c7a0bff86f7a3e0ce3b60ad1e045"
 		},
 		{
-			"checksumSHA1": "1gzGprNfHB6qlh6EEGMn1XTnkoY=",
+			"checksumSHA1": "EEwxJVDBRfTuFmTpwnoX5qqqztA=",
 			"path": "github.com/couchbase/indexing/secondary/dcp",
-			"revision": "07cefbba716bde9805302e31e3ab9dcca34dafe9"
+			"revision": "ed87885e8200c7a0bff86f7a3e0ce3b60ad1e045"
 		},
 		{
-			"checksumSHA1": "W91imfHfk6Mm/LrNVQ/OE1Tk8ZQ=",
+			"checksumSHA1": "P8UsyKbr9PQ9v/XgTmF1D/jxw1E=",
 			"path": "github.com/couchbase/indexing/secondary/dcp/transport",
-			"revision": "07cefbba716bde9805302e31e3ab9dcca34dafe9"
+			"revision": "ed87885e8200c7a0bff86f7a3e0ce3b60ad1e045"
 		},
 		{
-			"checksumSHA1": "FaNGNaGJFcvTPRIvMrt+kS8ippQ=",
+			"checksumSHA1": "hO1JEah+FsD4VBQ5LiJIOZoIu9o=",
 			"path": "github.com/couchbase/indexing/secondary/dcp/transport/client",
-			"revision": "07cefbba716bde9805302e31e3ab9dcca34dafe9"
+			"revision": "ed87885e8200c7a0bff86f7a3e0ce3b60ad1e045"
 		},
 		{
 			"checksumSHA1": "99u12gl5Nb+Nsefrfqg4G84QZRA=",
 			"path": "github.com/couchbase/indexing/secondary/fdb",
-			"revision": "07cefbba716bde9805302e31e3ab9dcca34dafe9"
+			"revision": "ed87885e8200c7a0bff86f7a3e0ce3b60ad1e045"
 		},
 		{
 			"checksumSHA1": "FYGZsRQL8yTBldXYefsBFAcZNxY=",
 			"path": "github.com/couchbase/indexing/secondary/logging",
-			"revision": "07cefbba716bde9805302e31e3ab9dcca34dafe9",
+			"revision": "ed87885e8200c7a0bff86f7a3e0ce3b60ad1e045",
 			"revisionTime": "2016-08-31T10:04:57Z"
 		},
 		{
-			"checksumSHA1": "9hIwccBzuzcR5vWLX9bTXDo1H0M=",
+			"checksumSHA1": "BGSYf7LbQta8KD9YdHiFadYSr3k=",
 			"path": "github.com/couchbase/indexing/secondary/platform",
-			"revision": "07cefbba716bde9805302e31e3ab9dcca34dafe9"
+			"revision": "ed87885e8200c7a0bff86f7a3e0ce3b60ad1e045"
 		},
 		{
-			"checksumSHA1": "bOzo4epgLP99O9L1eCiBgOwRC0U=",
+			"checksumSHA1": "SJhdYrZc+KrlB3Pu1+UVMQXnEjE=",
 			"path": "github.com/couchbase/indexing/secondary/stats",
-			"revision": "07cefbba716bde9805302e31e3ab9dcca34dafe9"
+			"revision": "ed87885e8200c7a0bff86f7a3e0ce3b60ad1e045"
 		},
 		{
-			"checksumSHA1": "rFXvSnqB16YPpXW7wMt5jw0a8IY=",
+			"checksumSHA1": "WMmE48kxaiWkcnpj0/DSDpxhOa8=",
 			"path": "github.com/couchbase/query/algebra",
-			"revision": "4a903dcc8f035fdaf22753296d7f7a0e57b1d03c",
+			"revision": "b8a53ed17be00adc79c81c6c3b245ded45c3a4f1",
 			"revisionTime": "2016-11-13T20:09:36Z"
 		},
 		{
-			"checksumSHA1": "JG1FacaLXqTxVk6QPoOsjDKgT7w=",
+			"checksumSHA1": "Z37SOplB0vWKCHaU/YhOSW2XJHs=",
+			"path": "github.com/couchbase/query/auth",
+			"revision": "b8a53ed17be00adc79c81c6c3b245ded45c3a4f1"
+		},
+		{
+			"checksumSHA1": "sUZK9ne/4uei5xteutUSyQ32peQ=",
 			"path": "github.com/couchbase/query/datastore",
-			"revision": "4a903dcc8f035fdaf22753296d7f7a0e57b1d03c",
+			"revision": "b8a53ed17be00adc79c81c6c3b245ded45c3a4f1",
 			"revisionTime": "2016-11-13T20:09:36Z"
 		},
 		{
-			"checksumSHA1": "H+Ltz9W/qmhLpmrLBQ6T2HAxllY=",
+			"checksumSHA1": "NqnhHcSgXhJYoWnMuc+BU+W6Aks=",
+			"path": "github.com/couchbase/query/distributed",
+			"revision": "b8a53ed17be00adc79c81c6c3b245ded45c3a4f1"
+		},
+		{
+			"checksumSHA1": "hH11/SPKzpvFPlgLz2ynk2yrUAo=",
 			"path": "github.com/couchbase/query/errors",
-			"revision": "4a903dcc8f035fdaf22753296d7f7a0e57b1d03c",
+			"revision": "b8a53ed17be00adc79c81c6c3b245ded45c3a4f1",
 			"revisionTime": "2016-11-13T20:09:36Z"
 		},
 		{
-			"checksumSHA1": "f55DVKcqREse7IGaQeb28HXguhY=",
+			"checksumSHA1": "cRRX+2+oetw9fHlMcvCTfZfwzd0=",
 			"path": "github.com/couchbase/query/expression",
-			"revision": "4a903dcc8f035fdaf22753296d7f7a0e57b1d03c",
+			"revision": "b8a53ed17be00adc79c81c6c3b245ded45c3a4f1",
 			"revisionTime": "2016-11-13T20:09:36Z"
 		},
 		{
 			"checksumSHA1": "t5muFOeIxj8w/8Z//meWJRVGqd0=",
 			"path": "github.com/couchbase/query/expression/parser",
-			"revision": "4a903dcc8f035fdaf22753296d7f7a0e57b1d03c",
+			"revision": "b8a53ed17be00adc79c81c6c3b245ded45c3a4f1",
 			"revisionTime": "2016-11-13T20:09:36Z"
 		},
 		{
-			"checksumSHA1": "uF0TBRPIJ8kmQylA41JMP54zP5Q=",
+			"checksumSHA1": "l/154HQoj6N0f/kU5ZtjpfDPfak=",
 			"path": "github.com/couchbase/query/logging",
-			"revision": "4a903dcc8f035fdaf22753296d7f7a0e57b1d03c",
+			"revision": "b8a53ed17be00adc79c81c6c3b245ded45c3a4f1",
 			"revisionTime": "2016-11-13T20:09:36Z"
 		},
 		{
-			"checksumSHA1": "ZWZTztoZ9zWg4s1GKzuEpHlTAiY=",
+			"checksumSHA1": "25HBiSOj8iJMsywovrsDcDaiyQM=",
 			"path": "github.com/couchbase/query/parser/n1ql",
-			"revision": "4a903dcc8f035fdaf22753296d7f7a0e57b1d03c",
+			"revision": "b8a53ed17be00adc79c81c6c3b245ded45c3a4f1",
 			"revisionTime": "2016-11-13T20:09:36Z"
 		},
 		{
 			"checksumSHA1": "sUT8LoItpinWzoKBMz34E8dopCw=",
 			"path": "github.com/couchbase/query/timestamp",
-			"revision": "4a903dcc8f035fdaf22753296d7f7a0e57b1d03c",
+			"revision": "b8a53ed17be00adc79c81c6c3b245ded45c3a4f1",
 			"revisionTime": "2016-11-13T20:09:36Z"
 		},
 		{
-			"checksumSHA1": "1tJJ2a2SPvOXcz+G/ZBCW4IdAU4=",
+			"checksumSHA1": "gCF4zluzZ8/n83n6vCRd5Fyu3Ck=",
 			"path": "github.com/couchbase/query/util",
-			"revision": "4a903dcc8f035fdaf22753296d7f7a0e57b1d03c",
+			"revision": "b8a53ed17be00adc79c81c6c3b245ded45c3a4f1",
 			"revisionTime": "2016-11-13T20:09:36Z"
 		},
 		{
-			"checksumSHA1": "7EFdUe9fCRTDPBgNMAX+5soM+Nk=",
+			"checksumSHA1": "Yg8+tA9JSGLmQCHjXTxLRQRy+80=",
 			"path": "github.com/couchbase/query/value",
-			"revision": "4a903dcc8f035fdaf22753296d7f7a0e57b1d03c",
+			"revision": "b8a53ed17be00adc79c81c6c3b245ded45c3a4f1",
 			"revisionTime": "2016-11-13T20:09:36Z"
 		},
 		{
@@ -242,7 +252,7 @@
 			"revisionTime": "2016-11-09T07:27:36Z"
 		},
 		{
-			"checksumSHA1": "aNn/aAzETmQRhpnEUI3TMIuxGhM=",
+			"checksumSHA1": "dhaHZDbgd66Fqwe6eB4lKM87ITs=",
 			"path": "github.com/prataprc/collatejson",
 			"revision": "46052fc647ed2085a32cc3518df7694208117d6b",
 			"revisionTime": "2015-07-31T12:14:20Z"
@@ -270,6 +280,11 @@
 			"path": "github.com/prataprc/monster/common",
 			"revision": "0dd50682c6b825556b4f1682c0b1db3f7af4af1d",
 			"revisionTime": "2016-08-12T11:08:18Z"
+		},
+		{
+			"checksumSHA1": "eCBHaFtMiLmJjvYgxv7wUBnED2c=",
+			"path": "github.com/andelf/go-curl",
+			"revision": "f8b334df3789fbdf98df3b3b22815e958b956c19"
 		}
 	],
 	"rootPath": "github.com/couchbase/perfrunner"

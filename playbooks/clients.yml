@@ -22,6 +22,7 @@
       - python3-dev
       - sshpass
       - rpm2cpio
+      - libcurl4-openssl-dev
   - name: adding Couchbase repository
     apt: deb=http://packages.couchbase.com/releases/couchbase-release/couchbase-release-1.0-2-amd64.deb
   - name: installing libcouchbase

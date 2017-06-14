@@ -11,15 +11,6 @@ def multi_node_task(task, *args, **kargs):
             return execute(parallel(task), *args, hosts=self.hosts, **kargs)
 
 
-@decorator
-def single_node_task(task, *args, **kargs):
-    self = args[0]
-    with settings(user=self.user, password=self.password, warn_only=True,
-                  host_string=self.hosts[0]):
-        with hide("running", "output"):
-            return task(*args, **kargs)
-
-
 def run_local(*args, **kwargs):
     """Run a local command with the same API as a remote command
 

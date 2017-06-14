@@ -1,16 +1,18 @@
 [test_case]
 test = perfrunner.tests.kv.PillowFightTest
-title = Max ops/sec, cbc-pillowfight, 2 nodes, 50/50 R/W, 512B binary items, Memcached
+title = Max ops/sec, cbc-pillowfight, 1 node, 50/50 R/W, 512B binary items, Ephemeral
 component = kv
 category = max_ops
 
 [cluster]
 mem_quota = 51200
-initial_nodes = 2
+initial_nodes = 1
 num_buckets = 1
 
 [bucket]
-bucket_type = memcached
+bucket_type = ephemeral
+eviction_policy = nruEviction
+replica_number = 0
 
 [load]
 size = 512

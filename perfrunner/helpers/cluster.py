@@ -174,7 +174,7 @@ class ClusterManager:
             self.rest.enable_auto_failover(master)
 
     def wait_until_warmed_up(self):
-        if self.test_config.bucket.bucket_type == 'ephemeral':
+        if self.test_config.bucket.bucket_type in ('ephemeral', 'memcached'):
             return
 
         for master in self.cluster_spec.masters:

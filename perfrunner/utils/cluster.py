@@ -20,11 +20,7 @@ def get_args():
                         nargs='?',
                         help='custom cluster settings')
 
-    args = parser.parse_args()
-    if not args.cluster_spec_fname or not args.test_config_fname:
-        parser.error('Missing mandatory parameter')
-
-    return args
+    return parser.parse_args()
 
 
 def main():

@@ -4,6 +4,9 @@ title = Import CSV (Avg. MB/sec), 1 bucket x 60M x 1KB, Idle
 component = tools
 category = import
 
+[stats]
+client_processes = cbimport
+
 [cluster]
 mem_quota = 52428
 initial_nodes = 4

@@ -4,6 +4,9 @@ title = EE merge throughput (Avg. MB/sec), 100M x 100M docs (overlapping keys)
 component = tools
 category = backup
 
+[stats]
+client_processes = cbbackupmgr
+
 [cluster]
 mem_quota = 52428
 initial_nodes = 4

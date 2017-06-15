@@ -1,4 +1,3 @@
-import re
 from cbagent.collectors import Collector
 
 
@@ -23,32 +22,18 @@ class SecondaryStorageStats(Collector):
         server = self.index_node
         port = '9102'
         uri = "/stats/storage"
-        samples = self.get_http(path=uri, server=server, port=port, json=False)
+        samples = self.get_http(path=uri, server=server, port=port)
         index_stats = dict()
-        stats = dict()
-        data = samples.split("\n")
+        for sample in samples:
+            stats = dict()
+            index = sample["Index"].split(":")[1]
 
-        index = "unknown"
-        store = "unknown"
-
-        for line in data:
-            if "Index Instance" in line:
-                index_data = re.findall(":.*", line)
-                index = index_data[0].split()[0][1:]
-                index_stats[index] = dict()
-                stats = dict()
-                continue
-            if "Store" in line:
-                store = re.findall("[a-zA-Z]+", line)[0]
-                continue
-            data = line.split("=")
-            if len(data) == 2:
-                metric = data[0].strip()
-                if metric in self.METRICS:
-                    key = store + "_" + metric
-                    stats[key] = float(data[1].strip().replace("%", ""))
+            for store in sample["Stats"]:
+                for metric, value in sample["Stats"][store].items():
+                    if metric in self.METRICS:
+                        key = store + "_" + metric
+                        stats[key] = value
             index_stats[index] = stats
-
         return index_stats
 
     def sample(self):

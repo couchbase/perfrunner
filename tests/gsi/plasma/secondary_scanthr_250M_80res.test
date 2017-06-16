@@ -11,7 +11,7 @@ lat_interval = 0.5
 
 [cluster]
 mem_quota = 12000
-index_mem_quota = 64242
+index_mem_quota = 62444
 initial_nodes = 11
 num_buckets = 1
 
@@ -36,7 +36,7 @@ key_length = 16
 
 [secondary]
 indexes = myindex:city
-restrict_kernel_memory = 85303M
+restrict_kernel_memory = 83055M
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
 cbindexperf_configfile = tests/gsi/plasma/config/config_scanthr_dgm_plasma.json

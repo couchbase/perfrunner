@@ -36,7 +36,14 @@ class IOstat(RemoteStats):
         return data
 
     @parallel_task(server_side=True)
-    def get_samples(self, partitions):
+    def get_server_samples(self, partitions: dict) -> dict:
+        return self.get_samples(partitions['server'])
+
+    @parallel_task(server_side=False)
+    def get_client_samples(self, partitions: dict) -> dict:
+        return self.get_samples(partitions['client'])
+
+    def get_samples(self, partitions: dict) -> dict:
         samples = {}
 
         for purpose, partition in partitions.items():
@@ -45,4 +52,5 @@ class IOstat(RemoteStats):
             for shorthand, metric, multiplier in self.METRICS:
                 key = "{}_{}".format(purpose, shorthand)
                 samples[key] = float(data[metric]) * multiplier
+
         return samples

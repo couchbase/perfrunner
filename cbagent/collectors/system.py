@@ -68,7 +68,10 @@ class IO(System):
                               password=self.ssh_password)
 
     def sample(self):
-        for node, stats in self.sampler.get_samples(self.partitions).items():
+        for node, stats in self.sampler.get_server_samples(self.partitions).items():
+            self.add_stats(node, stats)
+
+        for node, stats in self.sampler.get_client_samples(self.partitions).items():
             self.add_stats(node, stats)
 
 

@@ -225,9 +225,14 @@ class CbAgent:
 
     def add_iostat(self):
         data_path, index_path = self.test.cluster_spec.paths
-        partitions = {'data': data_path}
-        if hasattr(self.test, 'ddocs'):  # all instances of IndexTest have it
-            partitions['index'] = index_path
+        partitions = {
+            'client': {},
+            'server': {'data': data_path},
+        }
+        if self.test.test_config.test_case.component == 'views':
+            partitions['server']['index'] = index_path
+        elif self.test.test_config.test_case.component == 'tools':
+            partitions['client']['tools'] = self.test.cluster_spec.backup
 
         for cluster_id, master_node in self.cluster_map.items():
             settings = copy(self.settings)

@@ -385,14 +385,14 @@ class RemoteLinux(Remote):
     def get_disk_usage(self, path, human_readable=True):
         logger.info('Get disk usage')
         if human_readable:
-            return run("du -h {}".format(path), pty=True)
+            return run("du -h {}".format(path))
         data = run("du -sb {}/@2i".format(path))
         return int(data.split()[0])
 
     @index_node
     def get_indexer_process_memory(self):
         logger.info('Get indexer process memory')
-        data = run("ps -eo rss,comm | grep indexer", pty=True)
+        data = run("ps -eo rss,comm | grep indexer")
         return int(data.split()[0])
 
     @index_node
@@ -403,7 +403,7 @@ class RemoteLinux(Remote):
 
     @index_node
     def check_process_running(self, process):
-        pid = run("pidof {}".format(process), pty=True)
+        pid = run("pidof {}".format(process))
         if not pid:
             logger.info('Process {} is not running.'.format(process))
             return False
@@ -424,7 +424,7 @@ class RemoteLinux(Remote):
     def get_indexer_heap_profile(self, indexer):
         logger.info('Get indexer heap profile')
         cmd = "go tool pprof --text http://{}:9102/debug/pprof/heap".format(indexer)
-        return run(cmd, pty=True)
+        return run(cmd)
 
     @index_node
     def restrict_memory_kernel_parameter(self, size):

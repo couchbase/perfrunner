@@ -5,7 +5,7 @@ component = xdcr
 category = init_multi
 
 [stats]
-monitored_processes = goxdcr
+server_processes = goxdcr
 
 [cluster]
 mem_quota = 51200

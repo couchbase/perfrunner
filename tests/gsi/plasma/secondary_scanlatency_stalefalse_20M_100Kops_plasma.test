@@ -6,7 +6,7 @@ category = lat
 sub_category = Plasma
 
 [stats]
-monitored_processes = projector
+server_processes = projector
 lat_interval = 0.5
 
 [cluster]

@@ -1,7 +1,4 @@
-from cbagent.collectors.libstats.remotestats import (
-    RemoteStats,
-    multi_node_task,
-)
+from cbagent.collectors.libstats.remotestats import RemoteStats, parallel_task
 
 
 class PSStats(RemoteStats):
@@ -11,16 +8,23 @@ class PSStats(RemoteStats):
         ("vsize", 1024),
     )
 
-    def __init__(self, hosts, user, password):
-        super().__init__(hosts, user, password)
-        self.ps_cmd = "ps -eo pid,rss,vsize,comm | " \
-                      "grep {} | grep -v grep | sort -n -k 2 | tail -n 1"
-        self.top_cmd = "top -bn2 -d1 -p {} | grep {}"
+    PS_CMD = "ps -eo pid,rss,vsize,comm | " \
+        "grep {} | grep -v grep | sort -n -k 2 | tail -n 1"
 
-    @multi_node_task
+    TOP_CMD = "top -b n2 -d1 -p {0} | grep {0}"
+
+    @parallel_task(server_side=True)
+    def get_server_samples(self, process):
+        return self.get_samples(process)
+
+    @parallel_task(server_side=False)
+    def get_client_samples(self, process):
+        return self.get_samples(process)
+
     def get_samples(self, process):
         samples = {}
-        stdout = self.run(self.ps_cmd.format(process))
+
+        stdout = self.run(self.PS_CMD.format(process))
         if stdout:
             for i, value in enumerate(stdout.split()[1:1 + len(self.METRICS)]):
                 metric, multiplier = self.METRICS[i]
@@ -29,7 +33,8 @@ class PSStats(RemoteStats):
             pid = stdout.split()[0]
         else:
             return samples
-        stdout = self.run(self.top_cmd.format(pid, process))
+
+        stdout = self.run(self.TOP_CMD.format(pid))
         if stdout:
             title = "{}_cpu".format(process)
             samples[title] = float(stdout.split()[8])

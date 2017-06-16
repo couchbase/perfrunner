@@ -6,7 +6,7 @@ category = incremental
 sub_category = PlasmaDGM
 
 [stats]
-monitored_processes = projector
+server_processes = projector
 
 [cluster]
 mem_quota = 30000

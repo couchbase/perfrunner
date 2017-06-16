@@ -78,13 +78,14 @@ def new_cbagent_settings(test: PerfTest):
         'buckets': buckets,
         'indexes': test.test_config.gsi_settings.indexes,
         'hostnames': hostnames,
-        'monitored_processes': test.test_config.stats_settings.monitored_processes,
+        'client_processes': test.test_config.stats_settings.client_processes,
+        'server_processes': test.test_config.stats_settings.server_processes,
         'bucket_password': test.test_config.bucket.password,
+        'workers': test.cluster_spec.workers,
     })()
 
-    if test.cluster_spec.ssh_credentials:
-        settings.ssh_username, settings.ssh_password = \
-            test.cluster_spec.ssh_credentials
+    settings.ssh_username, settings.ssh_password = \
+        test.cluster_spec.ssh_credentials
     settings.rest_username, settings.rest_password = \
         test.cluster_spec.rest_credentials
 

@@ -5,7 +5,7 @@ component = secondary
 sub_category = PlasmaDGM
 
 [stats]
-monitored_processes = projector
+server_processes = projector
 lat_interval = 0.5
 
 [cluster]

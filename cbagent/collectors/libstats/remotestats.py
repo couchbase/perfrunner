@@ -1,37 +1,33 @@
 from decorator import decorator
-from fabric.api import hide, local, parallel, quiet, run, settings
+from fabric.api import hide, parallel, run, settings
 from fabric.tasks import execute
 
 
-@decorator
-def multi_node_task(task, *args, **kargs):
-    self = args[0]
-    with settings(user=self.user, password=self.password, warn_only=True):
-        with hide("running", "output"):
-            return execute(parallel(task), *args, hosts=self.hosts, **kargs)
+def parallel_task(server_side=True):
 
+    @decorator
+    def _parallel_task(task, *args, **kargs):
+        self = args[0]
 
-def run_local(*args, **kwargs):
-    """Run a local command with the same API as a remote command
+        if server_side:
+            hosts = self.hosts
+        else:
+            hosts = self.workers
 
-    Don't pass on the keyword arguments as the ones for the remote call
-    (`run`) are not compatible with the `local` call.
-    """
-    if kwargs.get('quiet', None):
-        with quiet():
-            return local(*args, capture=True)
-    else:
-        return local(*args, capture=True)
+        with settings(user=self.user, password=self.password, warn_only=True):
+            with hide("running", "output"):
+                return execute(parallel(task), *args, hosts=hosts, **kargs)
+
+    return _parallel_task
 
 
 class RemoteStats:
 
-    def __init__(self, hosts, user, password):
+    def __init__(self, hosts, workers, user, password):
         self.hosts = hosts
         self.user = user
         self.password = password
-        # Run commands locally if no remote credentials were given
-        if user is not None and password is not None:
-            self.run = run
-        else:
-            self.run = run_local
+        self.workers = workers
+
+    def run(self, *args, **kwargs):
+        return run(*args, **kwargs)

@@ -200,11 +200,12 @@ class StatsSettings:
     SERIESLY = 'cbmonitor.sc.couchbase.com'
     SHOWFAST = 'showfast.sc.couchbase.com'
 
-    MONITORED_PROCESSES = ['beam.smp',
-                           'cbft',
-                           'cbq-engine',
-                           'indexer',
-                           'memcached']
+    CLIENT_PROCESSES = []
+    SERVER_PROCESSES = ['beam.smp',
+                        'cbft',
+                        'cbq-engine',
+                        'indexer',
+                        'memcached']
 
     def __init__(self, options: dict):
         self.enabled = int(options.get('enabled', self.ENABLED))
@@ -219,8 +220,10 @@ class StatsSettings:
         self.secondary_statsfile = options.get('secondary_statsfile',
                                                self.SECONDARY_STATSFILE)
 
-        self.monitored_processes = self.MONITORED_PROCESSES + \
-            options.get('monitored_processes', '').split()
+        self.client_processes = self.CLIENT_PROCESSES + \
+            options.get('client_processes', '').split()
+        self.server_processes = self.SERVER_PROCESSES + \
+            options.get('server_processes', '').split()
 
 
 class BucketSettings:

@@ -6,7 +6,7 @@ category = ongoing
 
 [stats]
 post_cpu = 1
-monitored_processes = goxdcr
+server_processes = goxdcr
 
 [cluster]
 mem_quota = 204800

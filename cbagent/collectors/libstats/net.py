@@ -1,9 +1,6 @@
 from collections import defaultdict
 
-from cbagent.collectors.libstats.remotestats import (
-    RemoteStats,
-    multi_node_task,
-)
+from cbagent.collectors.libstats.remotestats import RemoteStats, parallel_task
 
 
 class NetStat(RemoteStats):
@@ -43,7 +40,7 @@ class NetStat(RemoteStats):
             "TIME_WAIT": raw_data["06"],
         }
 
-    @multi_node_task
+    @parallel_task(server_side=True)
     def get_samples(self):
         dev_stats = self.get_dev_stats()
         tcp_stats = self.get_tcp_stats()

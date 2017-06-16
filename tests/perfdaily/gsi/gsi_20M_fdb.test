@@ -6,7 +6,7 @@ threshold = 10
 use_workers = 0
 
 [stats]
-monitored_processes = projector
+server_processes = projector
 
 [cluster]
 mem_quota = 51200

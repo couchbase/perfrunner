@@ -1,7 +1,4 @@
-from cbagent.collectors.libstats.remotestats import (
-    RemoteStats,
-    multi_node_task,
-)
+from cbagent.collectors.libstats.remotestats import RemoteStats, parallel_task
 
 
 class TPStats(RemoteStats):
@@ -10,11 +7,11 @@ class TPStats(RemoteStats):
         ("rss", 1),    # already in bytes
     )
 
-    def __init__(self, hosts, user, password):
-        super().__init__(hosts, user, password)
+    def __init__(self, hosts, workers, user, password):
+        super().__init__(hosts, workers, user, password)
         self.typeperf_cmd = "typeperf \"\\Process(*{}*)\\Working Set\" -sc 1|sed '3q;d'"
 
-    @multi_node_task
+    @parallel_task(server_side=True)
     def get_samples(self, process):
         samples = {}
         if process == "beam.smp":

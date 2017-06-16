@@ -1,7 +1,4 @@
-from cbagent.collectors.libstats.remotestats import (
-    RemoteStats,
-    multi_node_task,
-)
+from cbagent.collectors.libstats.remotestats import RemoteStats, parallel_task
 
 
 class IOstat(RemoteStats):
@@ -38,7 +35,7 @@ class IOstat(RemoteStats):
             data[header[i]] = value
         return data
 
-    @multi_node_task
+    @parallel_task(server_side=True)
     def get_samples(self, partitions):
         samples = {}
 

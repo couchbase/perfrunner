@@ -6,7 +6,7 @@ category = thr
 sub_category = Plasma
 
 [stats]
-monitored_processes = projector
+server_processes = projector
 
 [cluster]
 mem_quota = 30000

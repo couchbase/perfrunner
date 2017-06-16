@@ -4,7 +4,7 @@ title = 1 -> 1 UniDir, 25M x 1KB items
 component = XDCR
 
 [stats]
-monitored_processes = goxdcr
+server_processes = goxdcr
 
 [cluster]
 mem_quota = 51200

@@ -7,7 +7,7 @@ use_workers = 0
 
 [stats]
 interval = 1
-monitored_processes = projector
+server_processes = projector
 
 [cluster]
 mem_quota = 51200

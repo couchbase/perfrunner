@@ -12,7 +12,7 @@ class System(Collector):
 
     def update_metadata(self):
         self.mc.add_cluster()
-        for node in self.nodes:
+        for node in self.nodes + self.workers:
             self.mc.add_server(node)
 
     def add_stats(self, node, stats):
@@ -39,12 +39,17 @@ class PS(System):
         super().__init__(settings)
 
         self.sampler = PSStats(hosts=self.nodes,
+                               workers=self.workers,
                                user=self.ssh_username,
                                password=self.ssh_password)
 
     def sample(self):
-        for process in self.settings.monitored_processes:
-            for node, stats in self.sampler.get_samples(process).items():
+        for process in self.settings.server_processes:
+            for node, stats in self.sampler.get_server_samples(process).items():
+                self.add_stats(node, stats)
+
+        for process in self.settings.client_processes:
+            for node, stats in self.sampler.get_client_samples(process).items():
                 self.add_stats(node, stats)
 
 
@@ -58,6 +63,7 @@ class IO(System):
         self.partitions = settings.partitions
 
         self.sampler = IOstat(hosts=self.nodes,
+                              workers=self.workers,
                               user=self.ssh_username,
                               password=self.ssh_password)
 
@@ -74,6 +80,7 @@ class Net(System):
         super().__init__(settings)
 
         self.sampler = NetStat(hosts=self.nodes,
+                               workers=self.workers,
                                user=self.ssh_username,
                                password=self.ssh_password)
 
@@ -88,5 +95,6 @@ class TypePerf(PS):
         super().__init__(settings)
 
         self.sampler = TPStats(hosts=self.nodes,
+                               workers=self.workers,
                                user=self.ssh_username,
                                password=self.ssh_password)

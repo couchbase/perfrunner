@@ -5,7 +5,7 @@ component = secondary
 sub_category = Plasma
 
 [stats]
-monitored_processes = projector
+server_processes = projector
 
 [cluster]
 mem_quota = 40000

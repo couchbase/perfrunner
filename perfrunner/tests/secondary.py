@@ -32,7 +32,6 @@ class SecondaryIndexTest(PerfTest):
         self.max_num_connections = self.test_config.gsi_settings.max_num_connections
         self.run_recovery_test = self.test_config.gsi_settings.run_recovery_test
         self.incremental_only = self.test_config.gsi_settings.incremental_only
-        self.block_memory = self.test_config.gsi_settings.block_memory
         self.incremental_load_iterations = self.test_config.gsi_settings.incremental_load_iterations
         self.scan_time = self.test_config.gsi_settings.scan_time
 
@@ -48,21 +47,11 @@ class SecondaryIndexTest(PerfTest):
         self.index_nodes = servers
 
         self.bucket = self.test_config.buckets[0]
-        self._block_memory()
         self.target_iterator = TargetIterator(self.cluster_spec, self.test_config, "gsi")
 
         if self.storage == "plasma":
             self.COLLECTORS["secondary_storage_stats"] = True
             self.COLLECTORS["secondary_storage_stats_mm"] = True
-
-    def _block_memory(self):
-        if self.block_memory > 0:
-            self.remote.block_memory(self.block_memory)
-
-    def check_memory_blocker(self):
-        if self.block_memory > 0:
-            if not self.remote.check_process_running("memblock"):
-                raise Exception('memblock is not running, might have been killed!!!')
 
     def remove_statsfile(self):
         rmfile = "rm -f {}".format(self.test_config.stats_settings.secondary_statsfile)
@@ -171,8 +160,7 @@ class SecondaryIndexTest(PerfTest):
 
     def __exit__(self, *args, **kwargs):
         super().__exit__(*args, **kwargs)
-        if self.block_memory > 0:
-            self.remote.kill_process_on_index_node("memblock")
+
         if self.test_config.gsi_settings.restrict_kernel_memory:
             self.remote.reset_memory_kernel_parameter()
             self.remote.reboot()
@@ -238,7 +226,6 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
         self.report_kpi(time_elapsed, 'Incremental')
 
         self.run_recovery_scenario()
-        self.check_memory_blocker()
 
 
 class InitialandIncrementalDGMSecondaryIndexTest(InitialandIncrementalSecondaryIndexTest):
@@ -258,7 +245,6 @@ class InitialandIncrementalDGMSecondaryIndexTest(InitialandIncrementalSecondaryI
 
         self.report_kpi(time_elapsed, 'Incremental')
         self.run_recovery_scenario()
-        self.check_memory_blocker()
 
 
 class MultipleIncrementalSecondaryIndexTest(InitialandIncrementalSecondaryIndexTest):
@@ -309,7 +295,6 @@ class MultipleIncrementalSecondaryIndexTest(InitialandIncrementalSecondaryIndexT
         self.report_kpi(self.disk_usage[6] - self.disk_usage[4], 'Disk usage difference')
 
         self.run_recovery_scenario()
-        self.check_memory_blocker()
 
 
 class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSecondaryIndexTest):
@@ -359,7 +344,6 @@ class InitialSecondaryIndexTest(InitialandIncrementalSecondaryIndexTest):
         self.load_and_build_initial_index()
 
         self.run_recovery_scenario()
-        self.check_memory_blocker()
 
 
 class SecondaryIndexingThroughputTest(SecondaryIndexTest):
@@ -456,7 +440,6 @@ class InitialIncrementalScanThroughputTest(InitialandIncrementalDGMSecondaryInde
 
         self.run_recovery_test = self.run_recovery_test_local
         self.run_recovery_scenario()
-        self.check_memory_blocker()
 
 
 class InitialIncrementalMovingScanThroughputTest(InitialIncrementalScanThroughputTest):
@@ -529,7 +512,6 @@ class InitialIncrementalMovingScanThroughputTest(InitialIncrementalScanThroughpu
 
         self.run_recovery_test = self.run_recovery_test_local
         self.run_recovery_scenario()
-        self.check_memory_blocker()
 
 
 class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
@@ -633,7 +615,6 @@ class InitialIncrementalScanLatencyTest(InitialandIncrementalDGMSecondaryIndexTe
 
         self.run_recovery_test = self.run_recovery_test_local
         self.run_recovery_scenario()
-        self.check_memory_blocker()
 
 
 class InitialIncrementalMovingScanLatencyTest(InitialIncrementalScanLatencyTest):

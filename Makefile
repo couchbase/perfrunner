@@ -53,5 +53,3 @@ kvgen: vendor-sync
 rachell:
 	go build ./go/rachell
 
-memblock:
-	gcc -o memblock c/memblock/memblock.c

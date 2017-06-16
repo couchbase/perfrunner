@@ -531,7 +531,6 @@ class GSISettings:
     STEP_NUM_CONNECTIONS = 0
     MAX_NUM_CONNECTIONS = 0
     RUN_RECOVERY_TEST = 0
-    BLOCK_MEMORY = 0
     RESTRICT_KERNEL_MEMORY = 0
     INCREMENTAL_LOAD_ITERATIONS = 0
     SCAN_TIME = 1200
@@ -563,7 +562,6 @@ class GSISettings:
                                                  self.RUN_RECOVERY_TEST))
         self.incremental_only = int(options.get('incremental_only',
                                                 self.INCREMENTAL_ONLY))
-        self.block_memory = int(options.get('block_memory', self.BLOCK_MEMORY))
         self.restrict_kernel_memory = options.get('restrict_kernel_memory',
                                                   self.RESTRICT_KERNEL_MEMORY)
         self.incremental_load_iterations = int(options.get('incremental_load_iterations',

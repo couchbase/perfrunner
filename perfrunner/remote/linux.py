@@ -24,7 +24,7 @@ class RemoteLinux(Remote):
 
     PROCESSES = ('beam.smp', 'memcached', 'epmd', 'cbq-engine', 'indexer',
                  'cbft', 'goport', 'goxdcr', 'couch_view_index_updater',
-                 'moxi', 'spring', 'memblock')
+                 'moxi', 'spring')
 
     @property
     def package(self):
@@ -394,12 +394,6 @@ class RemoteLinux(Remote):
         logger.info('Get indexer process memory')
         data = run("ps -eo rss,comm | grep indexer")
         return int(data.split()[0])
-
-    @index_node
-    def block_memory(self, size):
-        put('memblock', '/tmp', mode=0o755)
-        logger.info('Blocking memory for {} bytes'.format(size))
-        run("/tmp/memblock {} 2>/dev/null >/dev/null &".format(size), pty=False)
 
     @index_node
     def check_process_running(self, process):

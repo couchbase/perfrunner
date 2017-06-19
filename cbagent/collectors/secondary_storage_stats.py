@@ -26,6 +26,8 @@ class SecondaryStorageStats(Collector):
         index_stats = dict()
         for sample in samples:
             stats = dict()
+            if "Index" not in sample:
+                continue
             index = sample["Index"].split(":")[1]
 
             for store in sample["Stats"]:

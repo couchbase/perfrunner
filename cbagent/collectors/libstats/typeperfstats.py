@@ -12,7 +12,7 @@ class TPStats(RemoteStats):
         self.typeperf_cmd = "typeperf \"\\Process(*{}*)\\Working Set\" -sc 1|sed '3q;d'"
 
     @parallel_task(server_side=True)
-    def get_samples(self, process):
+    def get_server_samples(self, process):
         samples = {}
         if process == "beam.smp":
             stdout = self.run(self.typeperf_cmd.format("erl"))
@@ -31,3 +31,6 @@ class TPStats(RemoteStats):
             title = "{}_{}".format(process, metric)
             samples[title] = float(sum_rss) * multiplier
             return samples
+
+    def get_client_samples(self, process):
+        pass

@@ -7,7 +7,7 @@ LOGGING_CONFIG = {
     'formatters': {
         'standard': {
             'format': '%(asctime)s - %(levelname)s - %(message)s',
-            'datefmt': '[%Y-%m-%dT%H:%M:%S]',
+            'datefmt': '%Y-%m-%dT%H:%M:%S',
         },
     },
     'handlers': {

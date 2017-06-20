@@ -6,7 +6,7 @@ LOGGING_CONFIG = {
     'disable_existing_loggers': False,
     'formatters': {
         'standard': {
-            'format': '%(asctime)s - %(levelname)s - %(message)s',
+            'format': '%(asctime)s [%(levelname)s] %(message)s',
             'datefmt': '%Y-%m-%dT%H:%M:%S',
         },
     },

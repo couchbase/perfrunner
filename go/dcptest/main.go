@@ -122,6 +122,7 @@ func startBucket(cluster, bucketn string, wg *sync.WaitGroup) int {
 		"genChanSize":    10000,
 		"dataChanSize":   10000,
 		"numConnections": options.numConnections,
+		"activeVbOnly":   true,
 	}
 	dcpFeed, err := b.StartDcpFeedOver(
 		couchbase.NewDcpFeedName("rawupr"),

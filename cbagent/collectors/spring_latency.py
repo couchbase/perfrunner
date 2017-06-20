@@ -1,9 +1,8 @@
 from time import sleep, time
 from uuid import uuid4
 
-from logger import logger
-
 from cbagent.collectors import Latency, ObserveIndexLatency
+from logger import logger
 from spring.cbgen import CBGen, SubDocGen
 from spring.docgen import Document, NestedDocument, UniformKey, WorkingSetKey
 

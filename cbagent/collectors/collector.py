@@ -1,16 +1,13 @@
-import logging
 import socket
 import sys
 import time
 from threading import Thread
 
 import requests
-from logger import logger
 
 from cbagent.metadata_client import MetadataClient
 from cbagent.stores import SerieslyStore
-
-logging.getLogger("requests").setLevel(logging.ERROR)
+from logger import logger
 
 
 class Collector:

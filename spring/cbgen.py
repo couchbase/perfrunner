@@ -1,6 +1,5 @@
 import itertools
 import json
-import logging
 from random import choice, randint, shuffle
 from threading import Thread
 from time import sleep, time
@@ -19,12 +18,12 @@ from couchbase.exceptions import (
     TimeoutError,
 )
 from decorator import decorator
-from logger import logger
 from txcouchbase.connection import Connection as TxConnection
 
-experimental.enable()
+from logger import logger
 
-logging.getLogger("urllib3").setLevel(logging.WARNING)
+
+experimental.enable()
 
 
 @decorator

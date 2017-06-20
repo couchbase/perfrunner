@@ -2,9 +2,9 @@ import random
 from threading import Thread
 from time import sleep
 
-from logger import logger
 from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
 
+from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.worker import (
     pillowfight_data_load_task,

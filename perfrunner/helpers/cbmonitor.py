@@ -6,7 +6,6 @@ from typing import Callable, Union
 
 import requests
 from decorator import decorator
-from logger import logger
 
 from cbagent.collectors import (
     IO,
@@ -38,6 +37,7 @@ from cbagent.collectors import (
     XdcrStats,
 )
 from cbagent.metadata_client import MetadataClient
+from logger import logger
 from perfrunner.helpers.misc import target_hash, uhex
 from perfrunner.settings import StatsSettings
 from perfrunner.tests import PerfTest

@@ -1,8 +1,8 @@
 from collections import defaultdict
 
 import requests
-from logger import logger
 
+from logger import logger
 from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.tests import PerfTest

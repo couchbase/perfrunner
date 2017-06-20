@@ -1,8 +1,8 @@
 from multiprocessing import Event, Manager, Process
 
 import numpy as np
-from logger import logger
 
+from logger import logger
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import PerfTest
 

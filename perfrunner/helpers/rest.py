@@ -5,10 +5,10 @@ from typing import Callable, Dict, Iterator, List
 
 import requests
 from decorator import decorator
-from logger import logger
 from requests.exceptions import ConnectionError
 
-import perfrunner.helpers.misc as misc
+from logger import logger
+from perfrunner.helpers.misc import pretty_dict
 from perfrunner.settings import BucketSettings, ClusterSpec
 
 MAX_RETRY = 20
@@ -163,12 +163,12 @@ class RestHelper:
             'type': 'create',
             'version': 1,
         }
-        logger.info('Creating index {}'.format(misc.pretty_dict(data)))
+        logger.info('Creating index {}'.format(pretty_dict(data)))
         self.post(url=api, data=json.dumps(data))
 
     def set_services(self, host: str, services: str):
         logger.info('Configuring services on master node {}: {}'
-                    .format(host, misc.pretty_dict(services)))
+                    .format(host, pretty_dict(services)))
 
         api = 'http://{}:8091/node/controller/setupServices'.format(host)
         data = {'services': services}
@@ -248,7 +248,7 @@ class RestHelper:
         if conflict_resolution_type:
             data['conflictResolutionType'] = conflict_resolution_type
 
-        logger.info('Bucket configuration: {}'.format(misc.pretty_dict(data)))
+        logger.info('Bucket configuration: {}'.format(pretty_dict(data)))
 
         self.post(url=api, data=data)
 

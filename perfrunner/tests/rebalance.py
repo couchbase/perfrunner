@@ -2,8 +2,8 @@ import time
 
 import dateutil.parser
 from decorator import decorator
-from logger import logger
 
+from logger import logger
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import PerfTest
 from perfrunner.tests.views import QueryTest

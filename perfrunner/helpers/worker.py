@@ -4,9 +4,9 @@ from itertools import cycle
 from typing import Callable
 
 from celery import Celery
-from logger import logger
 from sqlalchemy import create_engine
 
+from logger import logger
 from perfrunner import celerylocal, celeryremote
 from perfrunner.helpers import local
 from perfrunner.helpers.remote import RemoteHelper

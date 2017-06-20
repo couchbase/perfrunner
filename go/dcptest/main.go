@@ -222,7 +222,6 @@ loop:
 			for bucket, m := range counts {
 				logging.Infof("%q %s\n", bucket, sprintCounts(m))
 			}
-			logging.Infof("\n")
 		}
 	}
 }

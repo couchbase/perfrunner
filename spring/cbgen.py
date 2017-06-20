@@ -31,8 +31,17 @@ def quiet(method, *args, **kwargs):
     try:
         return method(*args, **kwargs)
     except (ConnectError, CouchbaseError, HTTPError, KeyExistsError,
-            NotFoundError, TemporaryFailError, TimeoutError) as e:
+            NotFoundError, TimeoutError) as e:
         logger.warn('{}: {}'.format(method, e))
+
+
+@decorator
+def backoff(method, *args, **kwargs):
+    while True:
+        try:
+            return method(*args, **kwargs)
+        except TemporaryFailError:
+            sleep(1)
 
 
 class CBAsyncGen:
@@ -110,6 +119,7 @@ class CBGen(CBAsyncGen):
             sleep(self.NODES_UPDATE_INTERVAL)
 
     @quiet
+    @backoff
     def create(self, *args, **kwargs):
         super().create(*args, **kwargs)
 
@@ -118,6 +128,7 @@ class CBGen(CBAsyncGen):
         super().read(*args, **kwargs)
 
     @quiet
+    @backoff
     def update(self, *args, **kwargs):
         super().update(*args, **kwargs)
 

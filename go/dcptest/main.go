@@ -114,12 +114,6 @@ func main() {
 }
 
 func startBucket(cluster, bucketn string, wg *sync.WaitGroup) int {
-	defer func() {
-		if r := recover(); r != nil {
-			logging.Errorf("%s:\n%s\n", r, logging.StackTrace())
-		}
-	}()
-
 	logging.Infof("Connecting with %q\n", bucketn)
 	b, err := common.ConnectBucket(cluster, "default", bucketn)
 	mf(err, "bucket")
@@ -262,7 +256,6 @@ func printFlogs(vbnos []uint16, flogs couchbase.FailoverLog) {
 
 func writeStatsFile(timeTaken time.Duration, throughput float64) {
 	str := fmt.Sprintf("The call took %v seconds to run.\nThroughput = %f\n", timeTaken.Seconds(), throughput)
-	fmt.Printf(str)
 	// write the whole body at once
 	err := ioutil.WriteFile(options.outputFile, []byte(str), 0777)
 	if err != nil {

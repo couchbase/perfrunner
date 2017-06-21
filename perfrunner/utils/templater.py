@@ -2,6 +2,8 @@ from argparse import ArgumentParser
 
 from jinja2 import Environment, FileSystemLoader, Template
 
+from logger import logger
+
 
 MEMORY_QUOTAS = {
     'c3.4xlarge': 24576,  # 30GB RAM
@@ -48,6 +50,7 @@ def render_template(t: Template, mem_quota: int, worker_instances: int) -> str:
 
 
 def store_cfg(content: str):
+    logger.info('Creating a new configuration file: {}'.format(OUTPUT_FILE))
     with open(OUTPUT_FILE, 'w') as f:
         f.write(content)
 

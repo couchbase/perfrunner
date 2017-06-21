@@ -105,7 +105,7 @@ class Elastictest(PerfTest):
                 if (attempts * self.WAIT_TIME) >= self.INDEX_WAIT_MAX:
                     raise RuntimeError("Failed to create index")
 
-    def check_es_presist(self):
+    def check_es_persist(self):
         translog_size = 1
         while translog_size != 0:
             r = self.requests.get("http://{}/_stats".format(self.url))
@@ -124,7 +124,7 @@ class ElasticIndexTest(Elastictest):
             self.wait_for_index()
             end_time = time.time()
             self.index_time_taken = end_time - start_time
-            self.check_es_presist()
+            self.check_es_persist()
             self.calculate_index_size()
 
         def calculate_index_size(self):

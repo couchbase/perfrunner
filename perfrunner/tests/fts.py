@@ -54,7 +54,7 @@ class FTStest(PerfTest):
         self.cleanup_and_restore()
         self.create_index()
         self.wait_for_index()
-        self.check_rec_presist()
+        self.check_rec_persist()
         self.access_bg_test()
         self.report_kpi()
 
@@ -79,7 +79,7 @@ class FTStest(PerfTest):
         logger.info('Created the Index definition : {}'.
                     format(self.index_definition))
 
-    def check_rec_presist(self):
+    def check_rec_persist(self):
         rec_memory = self.fts_doccount
         self.fts_url = "http://{}:{}/api/nsstats".format(self.fts_master_host, self.fts_port)
         key = ':'.join([self.test_config.buckets[0], self.fts_index, 'num_recs_to_persist'])
@@ -135,7 +135,7 @@ class FtsIndexTest(FTStest):
             self.wait_for_index()
             end_time = time.time()
             self.index_time_taken = end_time - start_time
-            self.check_rec_presist()
+            self.check_rec_persist()
             self.calculate_index_size()
 
         def calculate_index_size(self):
@@ -201,7 +201,7 @@ class FTSRebalanceTest(FTStest, RebalanceTest):
         self.cleanup_and_restore()
         self.create_index()
         self.wait_for_index()
-        self.check_rec_presist()
+        self.check_rec_persist()
         self.access_bg_test()
         self.rebalance_fts()
         self.report_kpi()

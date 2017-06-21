@@ -8,7 +8,7 @@ Rationale
 Create a set of documents and then update their sizes to
 each different size class of the underlying allocator. Do this across
 different threads (different CouchbaseClient objects), to emulate
-diferent clients accessing them, and to cause malloc/free in memcached
+different clients accessing them, and to cause malloc/free in memcached
 across different threads.
 
 Implementation
@@ -89,7 +89,7 @@ is that they will end up with multiple pages which are assigned to
 particular size (e.g. 16 bytes), but only a small fraction of each
 page is actually occupied - for example two pages could exist for 16B
 allocations, but after running in freeze mode there is just one slot
-occupied on each page - so 32/8192 bytes are acutally used, with 8160B
+occupied on each page - so 32/8192 bytes are actually used, with 8160B
 "unused" or fragmented.
 """
 
@@ -238,7 +238,7 @@ class Worker(multiprocessing.Process):
         """
 
         # We defer creating the Couchbase object until we are actually
-        # 'in' the seperate process here.
+        # 'in' the separate process here.
         self._connect()
 
         while True:
@@ -308,7 +308,7 @@ class Supervisor(Worker):
         logger.info('Starting PathoGen supervisor')
 
         # We defer creating the Couchbase object until we are actually
-        # 'in' the seperate process here.
+        # 'in' the separate process here.
         self._connect()
 
         # Create initial list of documents on the 'finished' queue

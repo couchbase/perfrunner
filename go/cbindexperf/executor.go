@@ -65,7 +65,7 @@ func RunJob(client *qclient.GsiClient, job *Job, aggrQ chan *JobResult) {
 	}
 
 	errFn := func(e string) {
-		fmt.Printf("REQ:%d scan error occured: %s\n", spec.Id, e)
+		fmt.Printf("REQ:%d scan error occurred: %s\n", spec.Id, e)
 		if result != nil {
 			atomic.AddUint64(&result.ErrorCount, 1)
 		}

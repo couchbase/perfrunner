@@ -108,7 +108,7 @@ After the fitting script is done running, check the corresponding
 dK-2 distance, which indicates the closest synthetic graph.
 
 Example usage (to excluding the pickling process, simple replace
-the occurences of 'fitModel.py' with 'fitModel_noPicking.py'):
+the occurrences of 'fitModel.py' with 'fitModel_noPicking.py'):
 -----------------------------------------------------------
 To run coarse fitting for the Nearest Neighbor model..
 

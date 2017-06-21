@@ -57,9 +57,11 @@ def main():
 
     parser.add_argument('--instance', dest='instance', type=str,
                         choices=list(MEMORY_QUOTAS),
+                        required=True,
                         help='EC2 instance type')
     parser.add_argument('--template', dest='template', type=str,
                         choices=list(TEMPLATES),
+                        required=True,
                         help='Template name')
     parser.add_argument('--threads', dest='threads', type=int,
                         default=1,

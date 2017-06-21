@@ -32,7 +32,7 @@ def quiet(method, *args, **kwargs):
         return method(*args, **kwargs)
     except (ConnectError, CouchbaseError, HTTPError, KeyExistsError,
             NotFoundError, TimeoutError) as e:
-        logger.warn('{}: {}'.format(method, e))
+        logger.warn('{}, error: {}, args: {}'.format(method, e, args))
 
 
 @decorator

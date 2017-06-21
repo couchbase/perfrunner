@@ -47,7 +47,12 @@
             "type_field": "type"
         },
         "store": {
-            "kvStoreName": "mossStore"
+            "kvStoreName": "mossStore",
+            "mossStoreOptions": {
+                "CompactionMaxSegments": 20,
+                "CompactionPercentage": 999999,
+                "CompactionLevelMultiplier": 999999
+            }
         }
     },
     "sourceParams": {

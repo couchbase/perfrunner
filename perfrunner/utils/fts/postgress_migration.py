@@ -10,7 +10,6 @@ from threading import Thread
 
 from couchbase.bucket import Bucket
 from couchbase.exceptions import NotFoundError
-
 import psycopg2
 
 

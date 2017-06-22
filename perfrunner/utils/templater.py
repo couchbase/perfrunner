@@ -2,6 +2,7 @@ import csv
 from argparse import ArgumentParser
 
 from jinja2 import Environment, FileSystemLoader, Template
+
 from logger import logger
 
 MEMORY_QUOTAS = {

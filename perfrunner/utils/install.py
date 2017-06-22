@@ -4,9 +4,9 @@ from typing import Iterator
 
 import requests
 import validators
-from logger import logger
 from requests.exceptions import ConnectionError
 
+from logger import logger
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import ClusterSpec
 

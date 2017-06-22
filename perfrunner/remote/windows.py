@@ -2,8 +2,8 @@ import time
 
 from fabric.api import get, put, run, settings, show
 from fabric.exceptions import CommandTimeout
-from logger import logger
 
+from logger import logger
 from perfrunner.helpers.misc import uhex
 from perfrunner.remote import Remote
 from perfrunner.remote.context import all_hosts

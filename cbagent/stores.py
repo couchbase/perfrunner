@@ -1,9 +1,10 @@
 import socket
 
 from decorator import decorator
-from logger import logger
 from seriesly import Seriesly
 from seriesly.exceptions import BadRequest, ConnectionError
+
+from logger import logger
 
 
 def _memoize(method, self, db):

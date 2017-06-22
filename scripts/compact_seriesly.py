@@ -1,6 +1,6 @@
-from logger import logger
 from seriesly import Seriesly
 
+from logger import logger
 from perfrunner.settings import StatsSettings
 
 

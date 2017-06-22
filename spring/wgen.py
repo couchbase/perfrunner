@@ -7,12 +7,12 @@ from random import randint
 
 from couchbase.exceptions import ValueFormatError
 from decorator import decorator
-from logger import logger
 from numpy import random
 from psutil import cpu_count
 from requests.auth import HTTPBasicAuth
 from twisted.internet import reactor
 
+from logger import logger
 from perfrunner.helpers.sync import SyncHotWorkload
 from spring.cbgen import CBAsyncGen, CBGen, ElasticGen, FtsGen, SubDocGen
 from spring.docgen import (

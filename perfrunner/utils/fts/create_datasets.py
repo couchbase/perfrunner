@@ -1,5 +1,4 @@
 import random
-
 from couchbase.bucket import Bucket
 
 

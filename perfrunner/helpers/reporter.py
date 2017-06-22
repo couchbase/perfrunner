@@ -9,6 +9,7 @@ from logger import logger
 from perfrunner.helpers.misc import pretty_dict, uhex
 from perfrunner.settings import ClusterSpec, StatsSettings, TestConfig
 
+
 JSON = Dict[str, Any]
 
 

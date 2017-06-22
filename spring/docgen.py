@@ -6,8 +6,8 @@ from itertools import cycle
 from typing import List, Tuple
 
 import numpy as np
-from fastdocgen import build_achievements
 
+from fastdocgen import build_achievements
 from spring.dictionary import (
     NUM_STATES,
     NUM_STREET_SUFFIXES,

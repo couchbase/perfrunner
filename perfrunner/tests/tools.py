@@ -127,6 +127,7 @@ class BackupUnderLoadTest(BackupTest):
 
 class MergeTest(BackupRestoreTest):
 
+    @with_stats
     @timeit
     def merge(self):
         snapshots = local.get_backup_snapshots(self.cluster_spec)

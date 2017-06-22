@@ -1,0 +1,20 @@
+[clusters]
+aws =
+    {% for server in servers -%}
+          {{server}}
+    {% endfor %}
+
+[clients]
+hosts =
+    {% for client in clients -%}
+          {{client}}
+    {% endfor %}
+credentials = ubuntu:{{ key }}
+
+[storage]
+data = /data
+index = /data
+
+[credentials]
+rest = Administrator:password
+ssh =  ec2-user:{{ key }}

@@ -34,6 +34,7 @@ gofmt:
 test: pep8 misspell gofmt nose
 
 vendor-sync:
+	go version
 	go get -u github.com/kardianos/govendor
 	govendor sync
 

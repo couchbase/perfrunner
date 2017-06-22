@@ -538,7 +538,7 @@ class MetricHelper:
                        edition: str,
                        tool: str) -> Metric:
         metric_id = '{}_{}_thr_{}'.format(self.test_config.name, tool, edition)
-        title = '{} full {} throughput (Avg. MB/sec), {}'.format(
+        title = '{} {} throughput (Avg. MB/sec), {}'.format(
             edition, tool, self._title)
         metric_info = self._metric_info(metric_id, title)
 

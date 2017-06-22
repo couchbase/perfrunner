@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.XATTRTest
-title = XATTR latency (ms), 1 bucket x 20M x 1KB
+title = XATTR latency (ms), 4 nodes, 1 bucket x 20M x 1KB
 component = kv
 category = subdoc
 

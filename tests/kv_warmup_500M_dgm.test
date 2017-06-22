@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.WarmupTest
-title = Warmup time (min), 1 bucket x 500M x 1KB
+title = Warmup time (min), 4 nodes, 1 bucket x 500M x 1KB
 component = kv
 category = warmup
 

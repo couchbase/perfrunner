@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.ThroughputTest
-title = Average ops/sec, 80/20 R/W, 500M x 1KB, value ejection, 5%% cache miss rate, no compaction
+title = Average ops/sec, 4 nodes, 80/20 R/W, 1 bucket x 500M x 1KB, value ejection, 5%% cache miss rate, no compaction
 component = kv
 category = storage
 

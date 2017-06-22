@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.tools.MergeTest
-title = EE merge throughput (Avg. MB/sec), 100M x 100M docs (overlapping keys)
+title = EE merge throughput (Avg. MB/sec), 4 nodes, 100M x 100M docs (overlapping keys)
 component = tools
 category = backup
 

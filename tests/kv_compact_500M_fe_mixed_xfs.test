@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.CompactionTest
-title = Full compaction time (min), 1 bucket x 500M x 1KB, 20/80 R/W, 100K ops/sec, XFS
+title = Full compaction time (min), 4 nodes, 1 bucket x 500M x 1KB, 20/80 R/W, 100K ops/sec, XFS
 component = kv
 category = compact
 

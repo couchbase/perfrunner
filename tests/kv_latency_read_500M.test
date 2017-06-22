@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.ReadLatencyTest
-title = latency (ms), mixed, 1 bucket x 500M x 1KB, DGM, 10K ops/sec, 10%% cache miss rate
+title = latency (ms), 4 nodes, 1 bucket x 500M x 1KB, DGM, 10K ops/sec, 10%% cache miss rate
 component = kv
 category = latency
 

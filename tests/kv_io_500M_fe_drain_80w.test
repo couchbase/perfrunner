@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.InitialLoadTest
-title = Avg. write queue (10⁶ items), 500M x 1KB, full ejection, 220K ops/sec, initial load, no compaction
+title = Avg. write queue (10⁶ items), 4 nodes, 1 bucket x 500M x 1KB, full ejection, 220K ops/sec, initial load, no compaction
 component = kv
 category = storage
 

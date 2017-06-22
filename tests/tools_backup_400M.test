@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.tools.BackupTest
-title = 1 bucket x 400M x 1KB, Heavy DGM, Idle
+title = 4 nodes, 1 bucket x 400M x 1KB, Heavy DGM, Idle
 component = tools
 category = backup
 

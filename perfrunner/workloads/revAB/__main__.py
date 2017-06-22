@@ -10,9 +10,9 @@ from multiprocessing import Pool
 from optparse import OptionParser
 from threading import Thread
 
+from logger import logger
 from twisted.internet import reactor
 
-from logger import logger
 from perfrunner.workloads.revAB.async import AsyncGen
 from perfrunner.workloads.revAB.graph import PersonIterator, generate_graph
 from perfrunner.workloads.revAB.sync import SyncGen

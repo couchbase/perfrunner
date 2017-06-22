@@ -3,8 +3,9 @@ import json
 import subprocess
 import time
 
-from cbagent.stores import SerieslyStore
 from logger import logger
+
+from cbagent.stores import SerieslyStore
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.local import kill_process, run_cbindexperf
 from perfrunner.tests import PerfTest, TargetIterator

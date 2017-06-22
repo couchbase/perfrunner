@@ -3,10 +3,9 @@ import random
 from couchbase import FMT_UTF8, exceptions
 from couchbase._libcouchbase import LCB_NOT_STORED
 from couchbase.experimental import enable as enable_experimental
+from logger import logger
 from twisted.internet import reactor
 from txcouchbase.connection import Connection as TxCouchbase
-
-from logger import logger
 
 count = 0
 enable_experimental()

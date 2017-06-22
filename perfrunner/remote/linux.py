@@ -5,8 +5,8 @@ from urllib.parse import urlparse
 from fabric import state
 from fabric.api import get, put, run, settings
 from fabric.exceptions import CommandTimeout, NetworkError
-
 from logger import logger
+
 from perfrunner.helpers.misc import uhex
 from perfrunner.remote import Remote
 from perfrunner.remote.context import (

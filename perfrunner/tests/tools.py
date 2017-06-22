@@ -2,8 +2,8 @@ import os
 import time
 
 import requests
-
 from logger import logger
+
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.tests import PerfTest

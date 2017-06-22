@@ -4,10 +4,10 @@ import time
 from threading import Thread
 
 import requests
+from logger import logger
 
 from cbagent.metadata_client import MetadataClient
 from cbagent.stores import SerieslyStore
-from logger import logger
 
 
 class Collector:

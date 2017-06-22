@@ -5,9 +5,9 @@ from typing import Callable, Dict, Iterator, List
 
 import requests
 from decorator import decorator
+from logger import logger
 from requests.exceptions import ConnectionError
 
-from logger import logger
 from perfrunner.helpers.misc import pretty_dict
 from perfrunner.settings import BucketSettings, ClusterSpec
 

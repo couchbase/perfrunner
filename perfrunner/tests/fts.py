@@ -2,9 +2,9 @@ import json
 import time
 
 import requests
+from logger import logger
 from requests.auth import HTTPBasicAuth
 
-from logger import logger
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import get_json_from_file
 from perfrunner.tests import PerfTest

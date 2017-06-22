@@ -4,11 +4,10 @@ import re
 from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
+from logger import logger
 from seriesly import Seriesly
 
-from logger import logger
 from perfrunner.settings import StatsSettings
-
 
 Metric = Tuple[
     Union[float, int],  # Value

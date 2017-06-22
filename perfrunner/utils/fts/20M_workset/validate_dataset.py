@@ -1,6 +1,6 @@
 import json
-import requests
 
+import requests
 
 dataset = open("l_l.txt").read().splitlines()
 result_dataset = list()

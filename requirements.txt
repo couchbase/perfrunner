@@ -1,4 +1,5 @@
 ansible==2.3.0.0
+apache-libcloud
 awscli==1.10.58
 billiard==3.5.0.2
 celery==3.1.25

@@ -731,3 +731,19 @@ class DailyMetricHelper(MetricHelper):
         return 'Avg Throughput (MB/sec)', \
             throughput, \
             self._snapshots
+
+    def avg_fts_throughput(self, *args, **kwargs) -> DailyMetric:
+        total_queries = 0
+        for host in self.test.active_fts_hosts:
+            all_stats = self.test.rest.get_fts_stats(host)
+            key = "{}:{}:{}".format(self.test_config.buckets[0],
+                                    self.test.fts_index,
+                                    "total_queries")
+            if key in all_stats:
+                total_queries += all_stats[key]
+
+        throughput = total_queries // self.test_config.access_settings.time
+
+        return 'Avg Query Throughput (queries/sec)', \
+            throughput, \
+            self._snapshots

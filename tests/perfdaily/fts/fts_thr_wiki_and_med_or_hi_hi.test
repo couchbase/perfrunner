@@ -1,7 +1,7 @@
 [test_case]
 test = perfdaily.fts.FTSThroughputTest
 title = AndMedOrHighHigh, Wiki 1M, no KV load
-component = fts
+component = FTS
 
 [cluster]
 initial_nodes = 1

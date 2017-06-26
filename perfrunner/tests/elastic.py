@@ -1,12 +1,8 @@
-import json
 import time
-import requests
-from requests.auth import HTTPBasicAuth
 
 from logger import logger
-from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.helpers.misc import get_json_from_file
-from perfrunner.helpers.rest import RestHelper
+from perfrunner.helpers.cbmonitor import timeit, with_stats
+from perfrunner.helpers.misc import read_json
 from perfrunner.tests import PerfTest
 
 
@@ -19,131 +15,125 @@ class ElasticTest(PerfTest):
     def __init__(self, cluster_spec, test_config, verbose):
         super().__init__(cluster_spec, test_config, verbose)
 
-        self.index_definition = get_json_from_file(self.test_config.fts_settings.index_configfile)
-        self.host = list(self.cluster_spec.servers)[0]
-        self.url = '{}:{}'.format(self.host, '9200')
-        self.elastic_index = self.test_config.fts_settings.name
-        self.header = {'Content-Type': 'application/json'}
-        self.requests = requests.session()
-        self.elastic_doccount = self.test_config.fts_settings.items
-        self.index_time_taken = 0
-        self.index_size_raw = 0
-        self.index_url = 'http://{}/{}'.format(self.url, self.elastic_index)
-        self.rest = RestHelper(cluster_spec)
+        self.index_name = self.test_config.fts_settings.name
         self.order_by = self.test_config.fts_settings.order_by
+
+    def delete_index(self):
+        self.rest.delete_elastic_index(self.master_node, self.index_name)
+
+    def create_index(self):
+        definition = read_json(self.test_config.fts_settings.index_configfile)
+
+        self.rest.create_elastic_index(self.master_node, self.index_name,
+                                       definition)
+
+    def restore(self):
+        logger.info('Restoring data')
+        self.remote.cbrestorefts(self.test_config.fts_settings.storage,
+                                 self.test_config.fts_settings.repo)
+
+    def cleanup_and_restore(self):
+        self.delete_index()
+        self.restore()
+        self.wait_for_persistence()
+
+    def enable_replication(self):
+        self.rest.add_remote_cluster(
+            host=self.master_node,
+            remote_host='{}:9091'.format(self.master_node),
+            name='Elastic',
+        )
+        self.rest.start_replication(
+            host=self.master_node,
+            params={
+                'replicationType': 'continuous',
+                'toBucket': self.index_name,
+                'fromBucket': self.test_config.buckets[0],
+                'toCluster': 'Elastic',
+                'type': 'capi',
+            },
+        )
+
+    def wait_for_index(self):
+        logger.info(' Waiting for Elasticsearch index to be completed.')
+        attempts = 0
+        while True:
+            count = self.rest.get_elastic_doc_count(self.master_node,
+                                                    self.index_name)
+            if count >= self.test_config.fts_settings.items:
+                logger.info('Finished at document count {}'.format(count))
+                return
+            else:
+                if not attempts % 10:
+                    logger.info('(progress) indexed documents count {}'.format(count))
+                attempts += 1
+                time.sleep(self.WAIT_TIME)
+                if attempts * self.WAIT_TIME >= self.INDEX_WAIT_MAX:
+                    raise RuntimeError('Failed to create index')
+
+    def wait_for_index_persistence(self):
+        pending_items = -1
+        while pending_items:
+            stats = self.rest.get_elastic_stats(self.master_node)
+            pending_items = stats['indices'][self.index_name]['total']['translog']['operations']
+            logger.info('Records to persist: {}'.format(pending_items))
+            time.sleep(self.WAIT_TIME * 10)
 
     @with_stats
     def access(self, *args):
         super().sleep()
 
-    def access_bg_test(self):
+    def access_bg(self, *args):
         access_settings = self.test_config.access_settings
         access_settings.fts_config = self.test_config.fts_settings
-        self.access_bg(settings=access_settings)
-        self.access()
-
-    def addelastic(self):
-        requests.post(url='http://{}:8091/pools/default/remoteClusters'.format(self.host),
-                          data={'username': 'Administrator', 'password': 'password',
-                                'hostname': '{}:9091'.format(self.host), 'name': 'Elastic'},
-                          auth=HTTPBasicAuth('Administrator', 'password'))
-        api = 'http://{}:8091/controller/createReplication?fromBucket=bucket-1&' \
-              'toCluster=Elastic&toBucket={}&replicationType=continuous&type=capi'.\
-            format(self.host, self.elastic_index)
-        resp = requests.post(url=api,
-                             auth=('Administrator', 'password'))
-        if not resp.status_code == 200:
-            raise RuntimeError('Failed to create rebalance')
-
-    def load(self, *args):
-        logger.info('load/restore data to bucket')
-        self.remote.cbrestorefts(self.test_config.fts_settings.storage, self.test_config.fts_settings.repo)
+        super().access_bg(settings=access_settings)
 
     def run(self):
         self.cleanup_and_restore()
+
         self.create_index()
-        self.addelastic()
+        self.enable_replication()
         self.wait_for_index()
-        self.access_bg_test()
+        self.wait_for_index_persistence()
+
+        self.access_bg()
+        self.access()
+
         self.report_kpi()
-
-    def cleanup_and_restore(self):
-        self.delete_index()
-        self.load()
-        self.wait_for_persistence()
-        self.compact_bucket()
-
-    def delete_index(self):
-        logger.info('Deleting Elasticsearch index')
-        self.requests.delete(self.index_url)
-
-    def create_index(self):
-        logger.info('Creating Elasticsearch index')
-        r = self.requests.put(self.index_url,
-                              data=json.dumps(self.index_definition, ensure_ascii=False))
-        if not r.status_code == 200:
-            logger.info('URL: %s' % self.index_url)
-            logger.error(r.text)
-            raise RuntimeError('Failed to create Elasticsearch index')
-        time.sleep(self.WAIT_TIME)
-
-    def wait_for_index(self):
-        logger.info(' Waiting for Elasticsearch index to be completed')
-        attempts = 0
-        while True:
-            r = self.requests.get(url=self.index_url + '/_count')
-            if r.status_code != 200:
-                raise RuntimeError('Failed to fetch document count of index. Status {}'.format(r.status_code))
-            count = int(r.json()['count'])
-            if count >= self.elastic_doccount:
-                logger.info('Finished at document count {}'.format(count))
-                return
-            else:
-                if not attempts % 10:
-                    logger.info('(progress) idexed documents count {}'.format(count))
-                attempts += 1
-                time.sleep(self.WAIT_TIME)
-                if (attempts * self.WAIT_TIME) >= self.INDEX_WAIT_MAX:
-                    raise RuntimeError('Failed to create index')
-
-    def check_es_persist(self):
-        translog_size = 1
-        while translog_size != 0:
-            r = self.requests.get('http://{}/_stats'.format(self.url))
-            translog_size = r.json()['indices'][self.elastic_index]['total']['translog']['operations']
-            logger.info('Translog size (expected to be 0): {}'.format(translog_size))
-            time.sleep(self.WAIT_TIME * 10)
 
 
 class ElasticIndexTest(ElasticTest):
 
-    def index_test(self):
+    @with_stats
+    @timeit
+    def build_index(self):
         self.create_index()
-        self.addelastic()
-        start_time = time.time()
+        self.enable_replication()
         self.wait_for_index()
-        end_time = time.time()
-        self.index_time_taken = end_time - start_time
-        self.check_es_persist()
-        self.calculate_index_size()
 
-    def calculate_index_size(self):
-        r = self.requests.get('http://{}/_stats'.format(self.url))
-        self.index_size_raw += r.json()['indices'][self.elastic_index]['total']['store']['size_in_bytes']
+    def calculate_index_size(self) -> int:
+        stats = self.rest.get_elastic_stats(self.master_node)
+        return stats['indices'][self.index_name]['total']['store']['size_in_bytes']
 
     def run(self):
         self.cleanup_and_restore()
-        self.index_test()
-        self.report_kpi()
 
-    def _report_kpi(self):
+        time_elapsed = self.build_index()
+
+        self.wait_for_index_persistence()
+
+        size = self.calculate_index_size()
+
+        self.report_kpi(time_elapsed, size)
+
+    def _report_kpi(self, time_elapsed: int, size: int):
         self.reporter.post(
-            *self.metrics.fts_index(self.index_time_taken,
+            *self.metrics.fts_index(time_elapsed,
                                     order_by=self.order_by,
                                     name=' Elasticsearch 1.7')
         )
         self.reporter.post(
-            *self.metrics.fts_index_size(self.index_size_raw,
+            *self.metrics.fts_index_size(size,
                                          order_by=self.order_by,
                                          name=' Elasticsearch 1.7')
         )

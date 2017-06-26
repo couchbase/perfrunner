@@ -1,12 +1,8 @@
-import json
 import time
 
-import requests
-from requests.auth import HTTPBasicAuth
-
 from logger import logger
-from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.helpers.misc import get_json_from_file, pretty_dict
+from perfrunner.helpers.cbmonitor import timeit, with_stats
+from perfrunner.helpers.misc import pretty_dict, read_json
 from perfrunner.tests import PerfTest
 from perfrunner.tests.rebalance import RebalanceTest
 
@@ -20,146 +16,125 @@ class FTSTest(PerfTest):
     def __init__(self, cluster_spec, test_config, verbose):
         super().__init__(cluster_spec, test_config, verbose)
 
-        self.index_definition = get_json_from_file(self.test_config.fts_settings.index_configfile)
-        self.fts_index = self.test_config.fts_settings.name
-        self.header = {'Content-Type': 'application/json'}
-        self.requests = requests.session()
-        self.fts_doccount = self.test_config.fts_settings.items
-        self.index_time_taken = 0
-        self.index_size_raw = 0
-        self.auth = HTTPBasicAuth('Administrator', 'password')
+        self.index_name = self.test_config.fts_settings.name
         self.order_by = self.test_config.fts_settings.order_by
 
         initial_nodes = test_config.cluster.initial_nodes[0]
         all_fts_hosts = list(self.cluster_spec.fts_servers)
         self.active_fts_hosts = all_fts_hosts[:initial_nodes]
         self.fts_master_host = self.active_fts_hosts[0]
-        self.fts_port = 8094
-        self.prepare_index()
+
+    def delete_index(self):
+        self.rest.delete_fts_index(self.fts_master_host, self.index_name)
+
+    def create_index(self):
+        definition = read_json(self.test_config.fts_settings.index_configfile)
+        definition.update({
+            'name': self.index_name,
+            'sourceName': self.test_config.buckets[0],
+        })
+        logger.info('Index definition: {}'.format(pretty_dict(definition)))
+
+        self.rest.create_fts_index(self.fts_master_host, self.index_name,
+                                   definition)
+
+    def restore(self):
+        logger.info('Restoring data')
+        self.remote.cbrestorefts(self.test_config.fts_settings.storage,
+                                 self.test_config.fts_settings.repo)
+
+    def cleanup_and_restore(self):
+        self.delete_index()
+        self.restore()
+        self.wait_for_persistence()
+
+    def wait_for_index(self):
+        logger.info('Waiting for indexing to be completed.')
+        attempts = 0
+        while True:
+            count = self.rest.get_fts_doc_count(self.fts_master_host,
+                                                self.index_name)
+            if count >= self.test_config.fts_settings.items:
+                logger.info('Finished at document count {}'.format(count))
+                return
+            else:
+                if not attempts % 10:
+                    logger.info('(progress) indexed documents count {}'.format(count))
+                attempts += 1
+                time.sleep(self.WAIT_TIME)
+                if attempts * self.WAIT_TIME >= self.INDEX_WAIT_MAX:
+                    raise RuntimeError('Failed to create index')
+
+    def wait_for_index_persistence(self):
+        key = '{}:{}:{}'.format(self.test_config.buckets[0],
+                                self.index_name,
+                                'num_recs_to_persist')
+        pending_items = -1
+        while pending_items:
+            stats = self.rest.get_fts_stats(self.fts_master_host)
+            pending_items = stats[key]
+            logger.info('Records to persist: {}'.format(pending_items))
+            time.sleep(self.WAIT_TIME)
 
     @with_stats
     def access(self, *args):
         super().sleep()
 
-    def access_bg_test(self):
+    def access_bg(self, *args):
         access_settings = self.test_config.access_settings
         access_settings.fts_config = self.test_config.fts_settings
-        self.access_bg(settings=access_settings)
-        self.access()
-
-    def load(self, *args):
-        logger.info('Restoring data')
-        self.remote.cbrestorefts(self.test_config.fts_settings.storage,
-                                 self.test_config.fts_settings.repo)
+        super().access_bg(settings=access_settings)
 
     def run(self):
         self.cleanup_and_restore()
+
         self.create_index()
         self.wait_for_index()
-        self.check_rec_persist()
-        self.access_bg_test()
+        self.wait_for_index_persistence()
+
+        self.access_bg()
+        self.access()
+
         self.report_kpi()
-
-    def cleanup_and_restore(self):
-        self.delete_index()
-        self.load()
-        self.wait_for_persistence()
-        self.compact_bucket()
-
-    def delete_index(self):
-        self.requests.delete(self.index_url,
-                             auth=(self.rest.rest_username,
-                                   self.rest.rest_password),
-                             headers=self.header)
-
-    def prepare_index(self):
-        self.index_definition['name'] = self.fts_index
-        self.index_definition['sourceName'] = self.test_config.buckets[0]
-        self.index_url = 'http://{}:{}/api/index/{}'.format(self.fts_master_host,
-                                                            self.fts_port,
-                                                            self.fts_index)
-        logger.info('Index definition: {}'
-                    .format(pretty_dict(self.index_definition)))
-
-    def check_rec_persist(self):
-        rec_memory = self.fts_doccount
-        self.fts_url = 'http://{}:{}/api/nsstats'.format(self.fts_master_host, self.fts_port)
-        key = ':'.join([self.test_config.buckets[0], self.fts_index, 'num_recs_to_persist'])
-        while rec_memory != 0:
-            logger.info('Records to persist: %s' % rec_memory)
-            r = self.requests.get(url=self.fts_url, auth=self.auth)
-            time.sleep(self.WAIT_TIME)
-            rec_memory = r.json()[key]
-
-    def create_index(self):
-        r = self.requests.put(self.index_url,
-                              data=json.dumps(self.index_definition, ensure_ascii=False),
-                              auth=(self.rest.rest_username, self.rest.rest_password),
-                              headers=self.header)
-        if not r.status_code == 200:
-            logger.info('URL: %s' % self.index_url)
-            logger.info('data: %s' % self.index_definition)
-            logger.info('HEADER: %s' % self.header)
-            logger.error(r.text)
-            raise RuntimeError('Failed to create FTS index')
-        time.sleep(self.WAIT_TIME)
-
-    def wait_for_index(self):
-        logger.info(' Waiting for Index to be completed')
-        attempts = 0
-        while True:
-            r = self.requests.get(url=self.index_url + '/count', auth=self.auth)
-            if r.status_code != 200:
-                raise RuntimeError('Failed to fetch document count of index. Status {}'.format(r.status_code))
-            count = int(r.json()['count'])
-            if count >= self.fts_doccount:
-                logger.info('Finished at document count {}'.format(count))
-                return
-            else:
-                if not attempts % 10:
-                    logger.info('(progress) idexed documents count {}'.format(count))
-                attempts += 1
-                time.sleep(self.WAIT_TIME)
-                if (attempts * self.WAIT_TIME) >= self.INDEX_WAIT_MAX:
-                    raise RuntimeError('Failed to create Index')
 
 
 class FTSIndexTest(FTSTest):
 
     COLLECTORS = {'fts_stats': True}
 
-    INDEX_SIZE_METRIC = 'num_bytes_used_disk'
-
     @with_stats
-    def index_test(self):
+    @timeit
+    def build_index(self):
         self.create_index()
-        start_time = time.time()
         self.wait_for_index()
-        end_time = time.time()
-        self.index_time_taken = end_time - start_time
-        self.check_rec_persist()
-        self.calculate_index_size()
 
-    def calculate_index_size(self):
+    def calculate_index_size(self) -> int:
+        metric = '{}:{}:{}'.format(self.test_config.buckets[0],
+                                   self.index_name,
+                                   'num_bytes_used_disk')
+        size = 0
         for host in self.active_fts_hosts:
-            r = self.requests.get('http://{}:{}/api/nsstats'.format(host, self.fts_port))
-            self.index_size_raw += r.json()['{}:{}:{}'.format(self.test_config.buckets[0],
-                                                              self.fts_index,
-                                                              self.INDEX_SIZE_METRIC)]
+            stats = self.rest.get_fts_stats(host)
+            size += stats[metric]
+        return size
 
     def run(self):
         self.cleanup_and_restore()
-        self.index_test()
-        self.report_kpi()
 
-    def _report_kpi(self):
+        time_elapsed = self.build_index()
+
+        self.wait_for_index_persistence()
+
+        size = self.calculate_index_size()
+
+        self.report_kpi(time_elapsed, size)
+
+    def _report_kpi(self, time_elapsed: int, size: int):
         self.reporter.post(
-            *self.metrics.fts_index(self.index_time_taken,
-                                    order_by=self.order_by)
+            *self.metrics.fts_index(time_elapsed, order_by=self.order_by)
         )
         self.reporter.post(
-            *self.metrics.fts_index_size(self.index_size_raw,
-                                         order_by=self.order_by)
+            *self.metrics.fts_index_size(size, order_by=self.order_by)
         )
 
 
@@ -205,17 +180,15 @@ class FTSRebalanceTest(FTSTest, RebalanceTest):
 
     def run(self):
         self.cleanup_and_restore()
+
         self.create_index()
         self.wait_for_index()
-        self.check_rec_persist()
-        self.access_bg_test()
-        self.rebalance_fts()
-        self.report_kpi()
+        self.wait_for_index_persistence()
 
-    def access_bg_test(self):
-        access_settings = self.test_config.access_settings
-        access_settings.fts_config = self.test_config.fts_settings
-        self.access_bg(settings=access_settings)
+        self.access_bg()
+        self.rebalance_fts()
+
+        self.report_kpi()
 
     def rebalance_fts(self):
         self.rebalance(services='kv,fts')

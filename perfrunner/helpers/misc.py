@@ -72,6 +72,6 @@ def retry(catch=(), iterations=5, wait=10):
     return retry_decorator
 
 
-def get_json_from_file(file_name):
-    with open(file_name) as fh:
+def read_json(filename: str):
+    with open(filename) as fh:
         return json.load(fh)

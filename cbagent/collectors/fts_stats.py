@@ -1,5 +1,7 @@
 import time
 
+from requests.auth import HTTPBasicAuth
+
 from cbagent.collectors import Collector
 from perfrunner.helpers import rest
 from spring.cbgen import ElasticGen, FtsGen
@@ -51,17 +53,17 @@ class FTSCollector(Collector):
         super().__init__(settings)
         self.cbft_stats = dict()
         self.fts_settings = test.test_config.fts_settings
-        self.fts_index_name = test.fts_index
+        self.fts_index_name = test.index_name
         self.allbuckets = [x for x in self.get_buckets()]
         self.active_fts_hosts = test.active_fts_hosts
         self.master_node = settings.master_node
         self.rest = rest.RestHelper(test.cluster_spec)
-        self.test = test
         self.fts_client = self.init_client(test.test_config)
         self.interval = settings.lat_interval
 
     def init_client(self, test_config):
-        return FtsGen(self.master_node, test_config.fts_settings, self.test.auth)
+        auth = HTTPBasicAuth(self.auth[0], self.auth[1])
+        return FtsGen(self.master_node, test_config.fts_settings, auth=auth)
 
     def collect_stats(self):
         for host in self.active_fts_hosts:

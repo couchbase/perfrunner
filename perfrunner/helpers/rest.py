@@ -59,6 +59,12 @@ class RestHelper:
     def put(self, **kwargs):
         return self._put(**kwargs)
 
+    def _delete(self, **kwargs):
+        return requests.delete(auth=self.auth, **kwargs)
+
+    def delete(self, **kwargs):
+        return self._delete(**kwargs)
+
     def set_data_path(self, host: str, data_path: str, index_path: str):
         logger.info('Configuring data paths: {}'.format(host))
 
@@ -495,17 +501,58 @@ class RestHelper:
         response = self.get(url=api)
         return response.json()
 
+    def delete_fts_index(self, host: str, index: str):
+        logger.info('Deleting FTS index: {}'.format(index))
+
+        api = 'http://{}:8094/api/index/{}'.format(host, index)
+
+        self.delete(url=api)
+
+    def create_fts_index(self, host: str, index: str, definition: dict):
+        logger.info('Creating a new FTS index: {}'.format(index))
+
+        api = 'http://{}:8094/api/index/{}'.format(host, index)
+        headers = {'Content-Type': 'application/json'}
+        data = json.dumps(definition, ensure_ascii=False)
+
+        self.put(url=api, data=data, headers=headers)
+
+    def get_fts_doc_count(self, host: str, index: str) -> int:
+        api = 'http://{}:8094/api/index/{}/count'.format(host, index)
+
+        response = self.get(url=api).json()
+        return response['count']
+
     def get_fts_stats(self, host: str) -> dict:
         api = 'http://{}:8094/api/nsstats'.format(host)
         response = self.get(url=api)
-        if response.status_code == 200:
-            return response.json()
+        return response.json()
 
     def get_elastic_stats(self, host: str) -> dict:
         api = "http://{}:9200/_stats".format(host)
         response = self.get(url=api)
-        if response.status_code == 200:
-            return response.json()
+        return response.json()
+
+    def delete_elastic_index(self, host: str, index: str):
+        logger.info('Deleting Elasticsearch index: {}'.format(index))
+
+        api = 'http://{}:9200/{}'.format(host, index)
+
+        self.delete(url=api)
+
+    def create_elastic_index(self, host: str, index: str, definition: dict):
+        logger.info('Creating a new Elasticsearch index: {}'.format(index))
+
+        api = 'http://{}:9200/{}'.format(host, index)
+        headers = {'Content-Type': 'application/json'}
+        data = json.dumps(definition, ensure_ascii=False)
+
+        self.put(url=api, data=data, headers=headers)
+
+    def get_elastic_doc_count(self, host: str, index: str) -> int:
+        api = "http://{}:9200/{}/_count".format(host, index)
+        response = self.get(url=api).json()
+        return response['count']
 
     def get_index_status(self, host: str) -> dict:
         api = 'http://{}:9102/getIndexStatus'.format(host)

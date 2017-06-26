@@ -118,13 +118,13 @@ class MetricHelper:
             for host in self.test.active_fts_hosts:
                 all_stats = self.test.rest.get_fts_stats(host)
                 key = "{}:{}:{}".format(self.test_config.buckets[0],
-                                        self.test.fts_index,
+                                        self.test.index_name,
                                         "total_queries")
                 if key in all_stats:
                     total_queries += all_stats[key]
 
         else:
-            all_stats = self.test.rest.get_elastic_stats(self.test.fts_master_host)
+            all_stats = self.test.rest.get_elastic_stats(self.test.master_host)
             total_queries = all_stats["_all"]["total"]["search"]["query_total"]
 
         time_taken = self.test_config.access_settings.time
@@ -737,7 +737,7 @@ class DailyMetricHelper(MetricHelper):
         for host in self.test.active_fts_hosts:
             all_stats = self.test.rest.get_fts_stats(host)
             key = "{}:{}:{}".format(self.test_config.buckets[0],
-                                    self.test.fts_index,
+                                    self.test.index_name,
                                     "total_queries")
             if key in all_stats:
                 total_queries += all_stats[key]

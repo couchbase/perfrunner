@@ -258,10 +258,17 @@ class RemoteLinux(Remote):
 
     @single_host
     def cbrestorefts(self, archive_path, repo_path):
-        cmd = "cd /opt/couchbase/bin && ./cbbackupmgr restore --archive {} --repo {} " \
-              " --host http://localhost:8091 --username Administrator " \
-              "--password password --disable-ft-indexes --disable-gsi-indexes".\
-            format(archive_path, repo_path)
+        cmd = \
+            "/opt/couchbase/bin/cbbackupmgr restore " \
+            "--archive {} --repo {} --threads 30 " \
+            "--cluster http://localhost:8091 " \
+            "--username Administrator --password password " \
+            "--disable-ft-indexes --disable-gsi-indexes".format(
+                archive_path,
+                repo_path,
+            )
+
+        logger.info("Running: {}".format(cmd))
         run(cmd)
 
     @single_client

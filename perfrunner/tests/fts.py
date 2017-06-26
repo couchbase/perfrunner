@@ -6,7 +6,7 @@ from requests.auth import HTTPBasicAuth
 
 from logger import logger
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.helpers.misc import get_json_from_file
+from perfrunner.helpers.misc import get_json_from_file, pretty_dict
 from perfrunner.tests import PerfTest
 from perfrunner.tests.rebalance import RebalanceTest
 
@@ -76,8 +76,8 @@ class FTStest(PerfTest):
         self.index_url = "http://{}:{}/api/index/{}".format(self.fts_master_host,
                                                             self.fts_port,
                                                             self.fts_index)
-        logger.info('Created the Index definition : {}'.
-                    format(self.index_definition))
+        logger.info('Index definition: {}'
+                    .format(pretty_dict(self.index_definition)))
 
     def check_rec_persist(self):
         rec_memory = self.fts_doccount

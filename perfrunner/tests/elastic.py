@@ -1,5 +1,3 @@
-import time
-
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.misc import read_json
@@ -7,10 +5,6 @@ from perfrunner.tests import PerfTest
 
 
 class ElasticTest(PerfTest):
-
-    INDEX_WAIT_MAX = 2400
-
-    WAIT_TIME = 1
 
     def __init__(self, cluster_spec, test_config, verbose):
         super().__init__(cluster_spec, test_config, verbose)
@@ -55,29 +49,12 @@ class ElasticTest(PerfTest):
         )
 
     def wait_for_index(self):
-        logger.info(' Waiting for Elasticsearch index to be completed.')
-        attempts = 0
-        while True:
-            count = self.rest.get_elastic_doc_count(self.master_node,
+        self.monitor.monitor_elastic_indexing_queue(self.master_node,
                                                     self.index_name)
-            if count >= self.test_config.fts_settings.items:
-                logger.info('Finished at document count {}'.format(count))
-                return
-            else:
-                if not attempts % 10:
-                    logger.info('(progress) indexed documents count {}'.format(count))
-                attempts += 1
-                time.sleep(self.WAIT_TIME)
-                if attempts * self.WAIT_TIME >= self.INDEX_WAIT_MAX:
-                    raise RuntimeError('Failed to create index')
 
     def wait_for_index_persistence(self):
-        pending_items = -1
-        while pending_items:
-            stats = self.rest.get_elastic_stats(self.master_node)
-            pending_items = stats['indices'][self.index_name]['total']['translog']['operations']
-            logger.info('Records to persist: {}'.format(pending_items))
-            time.sleep(self.WAIT_TIME * 10)
+        self.monitor.monitor_elastic_index_persistence(self.master_node,
+                                                       self.index_name)
 
     @with_stats
     def access(self, *args):

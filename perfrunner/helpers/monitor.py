@@ -38,6 +38,7 @@ class Monitor(RestHelper):
     def __init__(self, cluster_spec, test_config, verbose):
         super().__init__(cluster_spec=cluster_spec)
         self.cluster_spec = cluster_spec
+        self.test_config = test_config
         self.remote = RemoteHelper(cluster_spec, test_config, verbose)
 
     def monitor_rebalance(self, host):
@@ -85,7 +86,7 @@ class Monitor(RestHelper):
             if metrics:
                 time.sleep(self.POLLING_INTERVAL)
             if time.time() - start_time > self.TIMEOUT:
-                raise Exception('Queue got stuck')
+                raise Exception('Monitoring got stuck')
 
     def monitor_disk_queues(self, host, bucket):
         logger.info('Monitoring disk queues: {}'.format(bucket))
@@ -329,3 +330,44 @@ class Monitor(RestHelper):
                 logger.info('Waiting for indexer...')
         else:
             logger.interrupt('Indexer is not up!!!')
+
+    def monitor_fts_indexing_queue(self, host: str, index: str):
+        logger.info('Waiting for indexing to finish')
+
+        count = 0
+        while count < self.test_config.fts_settings.items:
+            count = self.get_fts_doc_count(host, index)
+            logger.info('FTS indexed documents: {:,}'.format(count))
+            time.sleep(self.POLLING_INTERVAL)
+
+    def monitor_fts_index_persistence(self, host: str, index: str):
+        logger.info('Waiting for index to be persisted')
+
+        key = '{}:{}:{}'.format(self.test_config.buckets[0],
+                                index,
+                                'num_recs_to_persist')
+        pending_items = -1
+        while pending_items:
+            stats = self.get_fts_stats(host)
+            pending_items = stats[key]
+            logger.info('Records to persist: {:,}'.format(pending_items))
+            time.sleep(self.POLLING_INTERVAL)
+
+    def monitor_elastic_indexing_queue(self, host: str, index: str):
+        logger.info(' Waiting for indexing to finish')
+
+        count = 0
+        while count < self.test_config.fts_settings.items:
+            count = self.get_elastic_doc_count(host, index)
+            logger.info('Elasticsearch indexed documents: {:,}'.format(count))
+            time.sleep(self.POLLING_INTERVAL)
+
+    def monitor_elastic_index_persistence(self, host: str, index: str):
+        logger.info('Waiting for index to be persisted')
+
+        pending_items = -1
+        while pending_items:
+            stats = self.get_elastic_stats(host)
+            pending_items = stats['indices'][index]['total']['translog']['operations']
+            logger.info('Records to persist: {:,}'.format(pending_items))
+            time.sleep(self.POLLING_INTERVAL)

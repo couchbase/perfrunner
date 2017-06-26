@@ -1,5 +1,3 @@
-import time
-
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.misc import pretty_dict, read_json
@@ -8,10 +6,6 @@ from perfrunner.tests.rebalance import RebalanceTest
 
 
 class FTSTest(PerfTest):
-
-    INDEX_WAIT_MAX = 2400
-
-    WAIT_TIME = 1
 
     def __init__(self, cluster_spec, test_config, verbose):
         super().__init__(cluster_spec, test_config, verbose)
@@ -49,32 +43,12 @@ class FTSTest(PerfTest):
         self.wait_for_persistence()
 
     def wait_for_index(self):
-        logger.info('Waiting for indexing to be completed.')
-        attempts = 0
-        while True:
-            count = self.rest.get_fts_doc_count(self.fts_master_host,
+        self.monitor.monitor_fts_indexing_queue(self.fts_master_host,
                                                 self.index_name)
-            if count >= self.test_config.fts_settings.items:
-                logger.info('Finished at document count {}'.format(count))
-                return
-            else:
-                if not attempts % 10:
-                    logger.info('(progress) indexed documents count {}'.format(count))
-                attempts += 1
-                time.sleep(self.WAIT_TIME)
-                if attempts * self.WAIT_TIME >= self.INDEX_WAIT_MAX:
-                    raise RuntimeError('Failed to create index')
 
     def wait_for_index_persistence(self):
-        key = '{}:{}:{}'.format(self.test_config.buckets[0],
-                                self.index_name,
-                                'num_recs_to_persist')
-        pending_items = -1
-        while pending_items:
-            stats = self.rest.get_fts_stats(self.fts_master_host)
-            pending_items = stats[key]
-            logger.info('Records to persist: {}'.format(pending_items))
-            time.sleep(self.WAIT_TIME)
+        self.monitor.monitor_fts_index_persistence(self.fts_master_host,
+                                                   self.index_name)
 
     @with_stats
     def access(self, *args):

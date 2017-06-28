@@ -1,7 +1,6 @@
 import itertools
 
 from logger import logger
-
 from perfrunner.workloads.revAB.fittingCode import socialModels
 
 

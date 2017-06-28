@@ -9,7 +9,6 @@ from seriesly import Seriesly
 from logger import logger
 from perfrunner.settings import StatsSettings
 
-
 Metric = Tuple[
     Union[float, int],  # Value
     List[str],          # Snapshots

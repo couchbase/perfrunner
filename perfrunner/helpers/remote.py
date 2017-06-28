@@ -1,7 +1,7 @@
 from fabric import state
 from fabric.api import run, settings
-from logger import logger
 
+from logger import logger
 from perfrunner.remote.linux import RemoteLinux
 from perfrunner.remote.windows import RemoteWindows
 

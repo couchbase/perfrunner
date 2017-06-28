@@ -10,8 +10,8 @@ import requests
 import xmltodict
 from fabric.api import env, execute, run, shell_env
 from fabric.context_managers import cd
-from logger import logger
 
+from logger import logger
 from perfrunner.helpers.misc import pretty_dict, uhex
 from perfrunner.settings import StatsSettings
 

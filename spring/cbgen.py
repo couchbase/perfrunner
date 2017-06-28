@@ -22,7 +22,6 @@ from txcouchbase.connection import Connection as TxConnection
 
 from logger import logger
 
-
 experimental.enable()
 
 

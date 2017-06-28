@@ -1,7 +1,6 @@
 import time
 
 from logger import logger
-
 from perfrunner.helpers import misc
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import RestHelper

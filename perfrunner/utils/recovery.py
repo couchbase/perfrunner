@@ -1,7 +1,6 @@
 from argparse import ArgumentParser
 
 from logger import logger
-
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import ClusterSpec
 

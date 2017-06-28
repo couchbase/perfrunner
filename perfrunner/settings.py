@@ -4,8 +4,8 @@ from configparser import ConfigParser, NoOptionError, NoSectionError
 from typing import Iterator, List, Tuple
 
 from decorator import decorator
-from logger import logger
 
+from logger import logger
 from perfrunner.helpers.misc import target_hash
 
 REPO = 'https://github.com/couchbase/perfrunner'

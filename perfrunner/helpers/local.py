@@ -4,8 +4,8 @@ from sys import platform
 from typing import List
 
 from fabric.api import lcd, local, quiet, shell_env
-from logger import logger
 
+from logger import logger
 from perfrunner.settings import ClusterSpec
 
 

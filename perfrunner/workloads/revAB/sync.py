@@ -11,6 +11,7 @@ from couchbase._libcouchbase import (
     LCB_NETWORK_ERROR,
     LCB_NOT_STORED,
 )
+
 from logger import logger
 
 totals_lock = threading.Lock()

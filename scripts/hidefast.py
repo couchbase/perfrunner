@@ -3,6 +3,7 @@ from queue import LifoQueue
 from typing import Iterator, List
 
 import requests
+
 from logger import logger
 
 BASE_URL = 'http://showfast.sc.couchbase.com'

@@ -1,7 +1,6 @@
 from typing import List
 
 from logger import logger
-
 from perfrunner.helpers.memcached import MemcachedHelper
 from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.monitor import Monitor

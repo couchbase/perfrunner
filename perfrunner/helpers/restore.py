@@ -4,8 +4,8 @@ from threading import Thread
 
 from fabric import state
 from fabric.api import run, settings
-from logger import logger
 
+from logger import logger
 from perfrunner.helpers.cluster import ClusterManager
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import RestHelper

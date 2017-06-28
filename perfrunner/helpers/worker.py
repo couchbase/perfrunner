@@ -23,7 +23,6 @@ from perfrunner.workloads.pillowfight import (
 )
 from perfrunner.workloads.ycsb import ycsb_data_load, ycsb_workload
 
-
 celery = Celery('workers')
 if '--remote' in sys.argv or '-C' in sys.argv:
     # -C flag is a hack to distinguish local and remote workers!

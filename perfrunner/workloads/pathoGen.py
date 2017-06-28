@@ -98,6 +98,7 @@ import random
 import time
 
 from couchbase import FMT_BYTES, Couchbase, exceptions
+
 from logger import logger
 
 # TCMalloc size classes

@@ -16,6 +16,7 @@ replica_number = 0
 [secondary]
 indexer.settings.storage_mode = plasma
 indexes = by_capped_small:capped_small
+restrict_kernel_memory = 32768M
 
 [load]
 items = 150000000

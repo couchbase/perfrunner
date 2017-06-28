@@ -324,12 +324,12 @@ class Monitor(RestHelper):
         for retry in range(self.MAX_RETRY):
             time.sleep(self.POLLING_INTERVAL_MACHINE_UP)
             if self.remote.is_up(servers[0]):
-                logger.info('Indexer is back...!')
+                logger.info('Indexer is back')
                 return
             else:
-                logger.info('Waiting for indexer...')
+                logger.info('Waiting for indexer')
         else:
-            logger.interrupt('Indexer is not up!!!')
+            logger.interrupt('Indexer is not up')
 
     def monitor_fts_indexing_queue(self, host: str, index: str):
         logger.info('Waiting for indexing to finish')

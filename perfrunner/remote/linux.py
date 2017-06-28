@@ -427,29 +427,32 @@ class RemoteLinux(Remote):
         cmd = "go tool pprof --text http://{}:9102/debug/pprof/heap".format(indexer)
         return run(cmd)
 
-    @index_node
-    def restrict_memory_kernel_parameter(self, size):
-        change_option_cmd = "sed -i 's/quiet/quiet mem={}/' /etc/default/grub".format(size)
-        logger.info('Changing kernel memory to {}'.format(size))
-        run(change_option_cmd)
-        run("grub2-mkconfig -o /boot/grub2/grub.cfg")
+    def grub_config(self):
+        logger.info('Changing GRUB configuration')
+        run('grub2-mkconfig -o /boot/grub2/grub.cfg')
 
-    @index_node
-    def reset_memory_kernel_parameter(self):
-        change_option_cmd = "sed -ir 's/ mem=[0-9]*[kmgKMG]//' /etc/default/grub"
-        run(change_option_cmd)
-        run("grub2-mkconfig -o /boot/grub2/grub.cfg")
-
-    @index_node
     def reboot(self):
-        logger.info('Rebooting indexer...')
-        run("reboot", warn_only=True, pty=False)
+        logger.info('Rebooting the node')
+        run('reboot', quiet=True, pty=False)
 
-    @staticmethod
-    def is_up(host_string: str) -> bool:
+    @index_node
+    def tune_memory_settings(self, size):
+        logger.info('Changing kernel memory to {}'.format(size))
+        run("sed -i 's/quiet/quiet mem={}/' /etc/default/grub".format(size))
+        self.grub_config()
+        self.reboot()
+
+    @index_node
+    def reset_memory_settings(self):
+        logger.info('Resetting kernel memory settings')
+        run("sed -ir 's/ mem=[0-9]*[kmgKMG]//' /etc/default/grub")
+        self.grub_config()
+        self.reboot()
+
+    def is_up(self, host_string: str) -> bool:
         with settings(host_string=host_string):
             try:
-                result = run("ls")
-                return result.return_code == 0  # 0 mean success
+                result = run(":")
+                return result.return_code == 0  # 0 means success
             except NetworkError:
                 return False

@@ -158,14 +158,6 @@ class SecondaryIndexTest(PerfTest):
         rowps = num_rows / duration_s
         return scansps, rowps
 
-    def __exit__(self, *args, **kwargs):
-        super().__exit__(*args, **kwargs)
-
-        if self.test_config.gsi_settings.restrict_kernel_memory:
-            self.remote.reset_memory_kernel_parameter()
-            self.remote.reboot()
-            self.monitor.wait_for_indexer()
-
 
 class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
     """

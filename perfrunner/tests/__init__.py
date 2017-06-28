@@ -56,18 +56,22 @@ class PerfTest:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.test_config.cluster.throttle_cpu:
-            self.remote.enable_cpu()
-
         if self.test_config.test_case.use_workers:
             self.worker_manager.terminate()
 
         self.remote.unset_master_password()
 
+        if self.test_config.cluster.throttle_cpu:
+            self.remote.enable_cpu()
+
         if exc_type != KeyboardInterrupt:
             self.check_core_dumps()
             self.check_rebalance()
             self.check_failover()
+
+        if self.test_config.gsi_settings.restrict_kernel_memory:
+            self.remote.reset_memory_settings()
+            self.monitor.wait_for_indexer()
 
     def download_certificate(self) -> None:
         cert = self.rest.get_certificate(self.master_node)

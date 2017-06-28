@@ -259,8 +259,7 @@ class ClusterManager:
             self.remote.disable_cpu()
 
     def indexer_restrict_memory(self):
-        if self.test_config.gsi_settings.restrict_kernel_memory:
-            self.remote.restrict_memory_kernel_parameter(
-                self.test_config.gsi_settings.restrict_kernel_memory)
-            self.remote.reboot()
+        kernel_memory = self.test_config.gsi_settings.restrict_kernel_memory
+        if kernel_memory:
+            self.remote.tune_memory_settings(size=kernel_memory)
             self.monitor.wait_for_indexer()

@@ -175,7 +175,7 @@ def run_standalone_test():
                 r"incrmental index build time[^\d]*(\d*).*?seconds",
                 output_text)
             incremental_time = int(groups.group(1))
-            logger.info("Grepped intial build time {}".format(initial_time))
+            logger.info("Grepped initial build time {}".format(initial_time))
             logger.info("Grepped incremental build time {}".format(
                 incremental_time))
             if initial_time:

@@ -1,9 +1,9 @@
 SHELL := /bin/bash
 
 PATH := ${GOPATH}/bin:$(PATH)
-PYTHON := python3.5
-ENV := env
 
+ENV := env
+PYTHON := python3.5
 PYTHON_PROJECTS := cbagent perfdaily perfrunner scripts spring
 
 all:
@@ -27,7 +27,7 @@ test:
 
 misspell:
 	go get -u github.com/client9/misspell/cmd/misspell
-	misspell cbagent go perfdaily perfrunner scripts spring
+	misspell -error go ${PYTHON_PROJECTS}
 
 gofmt:
 	gofmt -e -d -s go && ! gofmt -l go | read
@@ -54,4 +54,3 @@ kvgen: vendor-sync
 
 rachell:
 	go build ./go/rachell
-

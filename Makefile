@@ -1,5 +1,3 @@
-.PHONY: build
-
 SHELL := /bin/bash
 
 PATH := ${GOPATH}/bin:$(PATH)
@@ -8,7 +6,7 @@ ENV := env
 
 PYTHON_PROJECTS := cbagent perfdaily perfrunner scripts spring
 
-build:
+all:
 	virtualenv --quiet --python ${PYTHON} ${ENV}
 	${ENV}/bin/pip install --upgrade --quiet pip wheel
 	${ENV}/bin/pip install --quiet -r requirements.txt
@@ -24,7 +22,7 @@ pep8:
 	${ENV}/bin/isort --quiet --check-only --recursive ${PYTHON_PROJECTS}
 	${ENV}/bin/pydocstyle ${PYTHON_PROJECTS}
 
-nose:
+test:
 	${ENV}/bin/nosetests -v --with-coverage --cover-package=cbagent,perfrunner,spring unittests.py
 
 misspell:
@@ -34,7 +32,7 @@ misspell:
 gofmt:
 	gofmt -e -d -s go && ! gofmt -l go | read
 
-test: pep8 misspell gofmt nose
+check: pep8 misspell gofmt test
 
 vendor-sync:
 	go version

@@ -93,6 +93,7 @@ class ViewGen:
 
     def generate_ddocs(self, pattern, options=None):
         """Generate dictionary with design documents and views.
+
         Pattern looks like:
             [8, 8, 8] -- 8 ddocs (8 views, 8 views, 8 views)
             [2, 2, 4] -- 3 ddocs (2 views, 2 views, 4 views)
@@ -376,7 +377,7 @@ class ViewGenDev:
     }
 
     def generate_ddocs(self, index_type):
-        """Return ddoc definition based on index type"""
+        """Return ddoc definition based on index type."""
         return {
             'ddoc': {
                 'views': self.MAP_FUNCS[index_type]

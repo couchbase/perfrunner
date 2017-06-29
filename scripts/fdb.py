@@ -12,16 +12,22 @@ benchmark = {
 
 
 def set_documents(line):
-    """Example:
-        # documents (i.e. working set size): 80000000
+    """Extract the number of documents.
+
+    Parsed line:
+
+    # documents (i.e. working set size): 80000000
     """
     num_docs = int(line.split()[6])
     benchmark['group'] += ': {}M docs'.format(num_docs / 10 ** 6)
 
 
 def set_workload(line):
-    """Example:
-        write ratio: 80 % (synchronous)
+    """Extract the workload type.
+
+    Parsed line:
+
+    write ratio: 80 % (synchronous)
     """
     ratio = int(line.split()[2])
     if ratio < 50:
@@ -33,23 +39,34 @@ def set_workload(line):
 
 
 def set_compaction(line):
-    """Example: compaction threshold: 100 % (period: 60 seconds, auto)"""
+    """Extract the compaction threshold.
+
+    Parsed line:
+
+    compaction threshold: 100 % (period: 60 seconds, auto)
+    """
     threshold = int(line.split()[2])
     benchmark['group'] += ', {}% compaction threshold'.format(threshold)
 
 
 def set_cbr(line):
-    """Example:
-        block reuse threshold: 65 %
+    """Extract the CBR threshold.
+
+    Parsed line:
+
+    block reuse threshold: 65 %
     """
     threshold = int(line.split()[3])
     benchmark['group'] += ', {}% CBR threshold'.format(threshold)
 
 
 def set_throughput(line):
-    """Example:
-        34858349 reads (9682.83 ops/sec, 826.20 us/read)
-        139437362 writes (38732.42 ops/sec, 103.27 us/write)
+    """Extract the rate of operations.
+
+    Parsed line:
+
+    34858349 reads (9682.83 ops/sec, 826.20 us/read)
+    139437362 writes (38732.42 ops/sec, 103.27 us/write)
     """
     if 'writes' in line:
         benchmark['metric'] = 'Write throughput, ops/sec'

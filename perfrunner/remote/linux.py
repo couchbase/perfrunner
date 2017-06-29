@@ -34,10 +34,12 @@ class RemoteLinux(Remote):
             return 'rpm'
 
     @single_host
-    def detect_centos_release(self):
-        """Possible values:
-            CentOS release 6.x (Final)
-            CentOS Linux release 7.2.1511 (Core)
+    def detect_centos_release(self) -> str:
+        """Detect CentOS release (e.g., 6 or 7).
+
+        Possible values:
+        - CentOS release 6.x (Final)
+        - CentOS Linux release 7.2.1511 (Core)
         """
         return run('cat /etc/redhat-release').split()[-2][0]
 

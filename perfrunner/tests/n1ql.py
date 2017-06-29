@@ -32,8 +32,7 @@ class N1QLTest(PerfTest):
         self.worker_manager.wait_for_workers()
 
     def load(self, *args):
-        """Important: the test creates two data sets with different key
-        prefixes.
+        """Create two data sets with different key prefixes.
 
         In order to run the N1QL tests we need to satisfy two contradicting
         requirements:
@@ -46,7 +45,8 @@ class N1QLTest(PerfTest):
         * 50% of documents are being randomly mutated. These documents are not
         used for queries.
         * 50% of documents remain unchanged. Only these documents are used for
-        queries."""
+        queries.
+        """
         load_settings = self.test_config.load_settings
         load_settings.items //= 2
 

@@ -43,19 +43,19 @@ def with_timer(rebalance, *args, **kwargs):
 
 class RebalanceTest(PerfTest):
 
-    """
-    This class implements methods required for rebalance management. See child
-    classes for workflow details.
+    """Implement methods required for rebalance management.
+
+    See child classes for workflow details.
 
     Here is rebalance phase timeline:
 
-        start stats collection ->
-            sleep X minutes (observe pre-rebalance characteristics) ->
-                trigger rebalance stopwatch ->
-                    start rebalance -> wait for rebalance to finish ->
-                trigger rebalance stopwatch ->
-            sleep X minutes (observe post-rebalance characteristics) ->
-        stop stats collection.
+    start stats collection ->
+        sleep X minutes (observe pre-rebalance characteristics) ->
+            trigger rebalance stopwatch ->
+                start rebalance -> wait for rebalance to finish ->
+            trigger rebalance stopwatch ->
+        sleep X minutes (observe post-rebalance characteristics) ->
+    stop stats collection.
 
     The timeline is implemented via a long chain of decorators.
 
@@ -124,10 +124,6 @@ class RebalanceTest(PerfTest):
 
 
 class RebalanceKVTest(RebalanceTest):
-
-    """
-    Workflow definition for KV rebalance tests.
-    """
 
     COLLECTORS = {'latency': True}
 
@@ -350,10 +346,6 @@ class FailureDetectionTest(FailoverTest):
 
 class RebalanceWithQueriesTest(RebalanceTest, QueryTest):
 
-    """
-    Workflow definition for KV + Index rebalance tests.
-    """
-
     COLLECTORS = {'latency': True, 'query_latency': True}
 
     def run(self):
@@ -374,10 +366,6 @@ class RebalanceWithQueriesTest(RebalanceTest, QueryTest):
 
 class RebalanceWithXDCRTest(RebalanceTest, XdcrTest):
 
-    """
-    Workflow definition for KV + bidir XDCR rebalance tests.
-    """
-
     COLLECTORS = {'latency': True, 'xdcr_lag': True, 'xdcr_stats': True}
 
     def run(self):
@@ -395,10 +383,6 @@ class RebalanceWithXDCRTest(RebalanceTest, XdcrTest):
 
 
 class RebalanceWithUniDirXdcrTest(RebalanceTest, UniDirXdcrTest):
-
-    """
-    Workflow definition for KV + unidir XDCR rebalance tests.
-    """
 
     COLLECTORS = {'latency': True, 'xdcr_lag': True, 'xdcr_stats': True}
 

@@ -34,13 +34,11 @@ class Generator:
 
 class NewOrderedKey(Generator):
 
-    """
-    NewOrderedKey generates ordered keys with an optional common prefix. These
-    keys are usually used for inserting new documents into the database.
+    """Generate ordered keys with an optional common prefix.
 
-    Example:
+    These keys are usually used for inserting new documents into the database.
 
-        "38d7cd-000072438963"
+    Example: "38d7cd-000072438963"
 
     The suffix is a 12 characters long string consisting of digits from 0 to 9.
 
@@ -63,9 +61,7 @@ class NewOrderedKey(Generator):
 
 class KeyForRemoval(Generator):
 
-    """
-    KeyForRemoval picks a still existing key at the beginning of the key space.
-    """
+    """Pick an existing key at the beginning of the key space."""
 
     def __init__(self, prefix: str):
         self.prefix = prefix
@@ -77,18 +73,18 @@ class KeyForRemoval(Generator):
 
 class UniformKey(Generator):
 
-    """
-    UniformKey randomly samples an existing key from the entire key space using
-    discrete uniform distribution.
+    """Randomly sample an existing key from the entire key space.
 
-        |<-------------------- key space -------------------->|
+    Sampling uses discrete uniform distribution.
 
-        |xxxxxxxxx|...........................................|
+    |<-------------------- key space -------------------->|
 
-                  ^                                           ^
-                  |                                           |
+    |xxxxxxxxx|...........................................|
 
-              curr_deletes                                curr_items
+              ^                                           ^
+              |                                           |
+
+          curr_deletes                                curr_items
 
     This generator should not be used when the key access pattern is important.
     """
@@ -104,8 +100,8 @@ class UniformKey(Generator):
 
 class WorkingSetKey(Generator):
 
-    """
-    WorkingSetKey extends UniformKey and samples keys from the working set.
+    """Extend UniformKey by sampling keys from the fixed working set.
+
     Working set is a subset of the entire key space.
 
     There are two options that characterize the working set:
@@ -115,16 +111,16 @@ class WorkingSetKey(Generator):
     probability at which the keys from the working set are being used. This
     parameter implements deterministic cache miss ratio.
 
-        |<--------------------------- key space ------------------------->|
+    |<--------------------------- key space ------------------------->|
 
-                |<----------- cold items ---------->|<---- hot items ---->|
+            |<----------- cold items ---------->|<---- hot items ---->|
 
-        |xxxxxxx|.........................................................|
+    |xxxxxxx|.........................................................|
 
-                ^                                                         ^
-                |                                                         |
+            ^                                                         ^
+            |                                                         |
 
-            curr_deletes                                              curr_items
+        curr_deletes                                              curr_items
     """
 
     def __init__(self, working_set: int, working_set_access: int, prefix: str):
@@ -206,7 +202,8 @@ class ZipfKey(Generator):
 
 class SequentialKey(Generator):
 
-    """
+    """Sequentially generate new keys equally divided the workers.
+
     SequentialKey equally divides the key space between the workers and
     sequentially iterates over a given part of the key space (based on the
     sequential worker identifier).
@@ -228,7 +225,8 @@ class SequentialKey(Generator):
 
 class SequentialHotKey(Generator):
 
-    """
+    """Sequentially generate existing keys equally divided the workers.
+
     SequentialHotKey equally divides the working set between the workers and
     sequentially iterates over a given part of the working set (based on the
     sequential worker identifier).
@@ -255,8 +253,7 @@ class SequentialHotKey(Generator):
 
 class UnorderedKey(Generator):
 
-    """
-    UnorderedKey improves SequentialKey by randomizing the order of insertions.
+    """Improve SequentialKey by randomizing the order of insertions.
 
     The key space is still the same.
     """
@@ -681,8 +678,7 @@ class RefDocument(ReverseLookupDocument):
 
 class ArrayIndexingDocument(ReverseLookupDocument):
 
-    """ArrayIndexingDocument extends ReverseLookupDocument by adding two new
-    fields achievements1 and achievements2.
+    """Extend ReverseLookupDocument by adding two new fields.
 
     achievements1 is a variable-length array (default length is 10). Every
     instance of achievements1 is unique. This field is useful for single lookups.
@@ -703,7 +699,9 @@ class ArrayIndexingDocument(ReverseLookupDocument):
         self.num_docs = num_docs
 
     def _build_achievements1(self, seq_id: int) -> List[int]:
-        """Every document reserves a range of numbers that can be used for a
+        """Build an array of integers.
+
+        Every document reserves a range of numbers that can be used for a
         new array.
 
         The left side of range is always based on sequential document ID.
@@ -739,7 +737,9 @@ class ArrayIndexingDocument(ReverseLookupDocument):
         return [offset + i for i in range(self.array_size)]
 
     def _build_achievements2(self, seq_id: int) -> List[int]:
-        """achievements2 is very similar to achievements1. However, in case of
+        """Build an array of integers.
+
+        achievements2 is very similar to achievements1. However, in case of
         achievements2 ranges overlap so that multiple documents case satisfy the
         same queries. Overlapping is achieving by integer division using
         ARRAY_CAP constant.
@@ -843,9 +843,7 @@ class ProfileDocument(ReverseLookupDocument):
 
 class ImportExportDocument(ReverseLookupDocument):
 
-    """ImportExportDocument extends ReverseLookupDocument by adding
-     25 fields with random size
-    """
+    """Extend ReverseLookupDocument by adding 25 fields with random size."""
 
     OVERHEAD = 1022
 
@@ -899,8 +897,9 @@ class ImportExportDocument(ReverseLookupDocument):
 
 class ImportExportDocumentArray(ImportExportDocument):
 
-    """ImportExportDocumentArray extends ImportExportDocument by adding array docs as:
-     25 fields of random size. Have an array with at least 10 items in five fields.
+    """Extend ImportExportDocument by adding array docs.
+
+    The documents contain 25 top-level fields with variable-size arrays.
     """
 
     OVERHEAD = 0
@@ -972,8 +971,9 @@ class ImportExportDocumentArray(ImportExportDocument):
 
 class ImportExportDocumentNested(ImportExportDocument):
 
-    """ImportExportDocumentNested extends ImportExportDocument by adding nested docs as:
-     25 fields of random size. Nest each document. Five levels.
+    """Extend ImportExportDocument by adding nested docs.
+
+    The documents contain 25 top-level fields (5 nested sub-documents).
     """
 
     def next(self, key: str) -> dict:

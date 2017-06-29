@@ -1,9 +1,9 @@
-"""
-For creating the wiki dataset.
-1. downlowd file : http://people.apache.org/~mikemccand/enwiki-20120502-lines-1k.txt.lzma
+"""Create the wiki data set.
+
+Steps:
+1. download file : http://people.apache.org/~mikemccand/enwiki-20120502-lines-1k.txt.lzma
 2. split on 2 parts
 3. run the Docgen.start_load()
-
 """
 
 import concurrent.futures

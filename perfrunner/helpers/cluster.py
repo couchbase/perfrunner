@@ -149,8 +149,11 @@ class ClusterManager:
             self.remote.restart_with_alternative_num_vbuckets(num_vbuckets)
 
     def restart_with_alternative_bucket_options(self):
-        """Apply custom buckets settings (e.g., max_num_shards or max_num_auxio)
-        using "/diag/eval" and restart the entire cluster."""
+        """Apply custom buckets settings.
+
+        Tune bucket settings (e.g., max_num_shards or max_num_auxio) using
+        "/diag/eval" and restart the entire cluster.
+        """
         cmd = 'ns_bucket:update_bucket_props("{}", ' \
               '[{{extra_config_string, "{}={}"}}]).'
 

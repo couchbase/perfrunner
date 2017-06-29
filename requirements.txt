@@ -16,6 +16,7 @@ networkx==1.9
 numpy==1.12.1
 pep8-naming==0.4.1
 psutil==5.2.0
+pydocstyle==2.0.0
 pycrypto==2.6.1
 python-dateutil==2.6.0
 requests==2.1.0

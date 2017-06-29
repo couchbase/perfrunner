@@ -6,8 +6,7 @@ from perfrunner.tests import PerfTest, TargetIterator
 
 class XdcrTest(PerfTest):
 
-    """
-    Base XDCR test and also full implementation of bi-directional case.
+    """Implementat bi-directional XDCR cases.
 
     As a base class it implements several methods for XDCR management and WAN
     configuration.
@@ -130,10 +129,6 @@ class DestTargetIterator(TargetIterator):
 
 class UniDirXdcrTest(XdcrTest):
 
-    """
-    Uni-directional XDCR benchmarks.
-    """
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.target_iterator = TargetIterator(self.cluster_spec,
@@ -149,8 +144,8 @@ class UniDirXdcrTest(XdcrTest):
 
 class XdcrInitTest(UniDirXdcrTest):
 
-    """
-    The test covers scenario when 2 cluster are synced up for the first time.
+    """Run initial XDCR.
+
     There is no ongoing workload and compaction is usually disabled.
     """
 

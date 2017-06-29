@@ -23,17 +23,20 @@ DailyMetric = Tuple[
 
 
 def s2m(seconds: float) -> float:
-    """Converts seconds to minutes."""
+    """Convert seconds to minutes."""
     return round(seconds / 60, 2)
 
 
 def get_query_params(metric: str) -> Dict[str, Any]:
-    """Convert metric definition to Seriesly query params. E.g.:
+    """Convert metric definition to Seriesly query params.
 
-        'avg_xdc_ops' -> {'ptr': '/xdc_ops',
-                          'group': 1000000000000, 'reducer': 'avg'}
+    Example:
 
-    Where group is constant."""
+    'avg_xdc_ops' -> {'ptr': '/xdc_ops',
+                      'group': 1000000000000, 'reducer': 'avg'}
+
+    Where group is constant.
+    """
     return {
         'ptr': '/{}'.format(metric[4:]),
         'reducer': metric[:3],

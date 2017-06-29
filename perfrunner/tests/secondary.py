@@ -13,10 +13,10 @@ from perfrunner.tests.rebalance import RebalanceTest
 
 class SecondaryIndexTest(PerfTest):
 
-    """
-    The test measures time it takes to build secondary index. This is just a
-    base class, actual measurements happen in initial and incremental secondary
-    indexing tests. It benchmarks dumb/bulk indexing.
+    """Measure time it takes to build secondary index.
+
+    This is just a base class, actual measurements happen in initial and
+    incremental secondary indexing tests. It benchmarks dumb/bulk indexing.
     """
 
     COLLECTORS = {'secondary_stats': True, 'secondary_debugstats': True,
@@ -67,7 +67,7 @@ class SecondaryIndexTest(PerfTest):
         return self._build_secondaryindex()
 
     def _build_secondaryindex(self):
-        """call cbindex create command"""
+        """Call cbindex create command."""
         logger.info('building secondary index..')
 
         self.remote.build_secondary_index(self.index_nodes, self.bucket,
@@ -160,10 +160,11 @@ class SecondaryIndexTest(PerfTest):
 
 
 class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
-    """
-    The test measures time it takes to build index for the first time as well as
-    incremental build. There is no disabling of index updates in incremental building,
-    index updating is conurrent to KV incremental load.
+
+    """Measures time it takes to build index (both initial and incremental).
+
+    There is no disabling of index updates in incremental building, index
+    updating is conurrent to KV incremental load.
     """
 
     def _report_kpi(self, time_elapsed, index_type, unit="min"):
@@ -221,11 +222,9 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
 
 
 class InitialandIncrementalDGMSecondaryIndexTest(InitialandIncrementalSecondaryIndexTest):
-    """
-    The test measures time it takes to build index for the first time as well as
-    incremental build. There is no disabling of index updates in incremental building,
-    index updating is conurrent to KV incremental load.
-    """
+
+    """Run InitialandIncrementalSecondaryIndexTest in DGM mode."""
+
     def run(self):
         self.load_and_build_initial_index()
 
@@ -328,9 +327,8 @@ class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSeco
 
 
 class InitialSecondaryIndexTest(InitialandIncrementalSecondaryIndexTest):
-    """
-    The test measures time it takes to build index for the first time
-    """
+
+    """Measures time it takes to build index for the first time."""
 
     def run(self):
         self.load_and_build_initial_index()
@@ -339,10 +337,8 @@ class InitialSecondaryIndexTest(InitialandIncrementalSecondaryIndexTest):
 
 
 class SecondaryIndexingThroughputTest(SecondaryIndexTest):
-    """
-    The test applies scan workload against the 2i server and measures
-    and reports the average scan throughput
-    """
+
+    """Apply scan workload and measure the average scan throughput."""
 
     def _report_kpi(self, scan_thr):
         self.reporter.post(
@@ -365,9 +361,8 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
 
 
 class SecondaryIndexingThroughputRebalanceTest(SecondaryIndexingThroughputTest):
-    """
-    The test applies scan workload against the 2i server and measures
-    and reports the average scan throughput"""
+
+    """Measure the average scan throughput during rebalance."""
 
     def rebalance(self, initial_nodes, nodes_after):
         for _, servers in self.cluster_spec.clusters:
@@ -435,10 +430,9 @@ class InitialIncrementalScanThroughputTest(InitialandIncrementalDGMSecondaryInde
 
 
 class InitialIncrementalMovingScanThroughputTest(InitialIncrementalScanThroughputTest):
-    """
-    The test applies scan workload against the 2i server and measures
-    scan throughput for moving workload
-    """
+
+    """Apply moving scan workload and measure the scan throughput."""
+
     def __init__(self, *args):
         super().__init__(*args)
         self.scan_thr = []
@@ -448,16 +442,16 @@ class InitialIncrementalMovingScanThroughputTest(InitialIncrementalScanThroughpu
             config_data = json.load(config_file)
         return config_data['ScanSpecs'][0]['NInterval'], config_data['Concurrency']
 
-    """
-    get_throughput function parses statsfile created by cbindexperf, and
-    calculates throughput.
-    interval- number of scans after which entry made in statsfile
-    concurrency- number of concurrent routines making scans
-    Format for statsfile is-
-    id:1, rows:0, duration:8632734534, Nth-latency:16686556
-    id:1, rows:0, duration:3403693509, Nth-latency:6859285
-    """
     def get_throughput(self) -> float:
+        """Parse statsfile created by cbindexperf and calculate the throughput.
+
+        interval - number of scans after which entry made in statsfile
+        concurrency - number of concurrent routines making scans
+
+        Format for statsfile is-
+        id:1, rows:0, duration:8632734534, Nth-latency:16686556
+        id:1, rows:0, duration:3403693509, Nth-latency:6859285
+        """
         duration = 0
         lines = 0
         with open(self.secondary_statsfile, 'r') as csvfile:
@@ -468,18 +462,14 @@ class InitialIncrementalMovingScanThroughputTest(InitialIncrementalScanThroughpu
         interval, concurrency = self.get_config()
         return lines * interval / (duration / 1000000000 / concurrency)
 
-    """
-    Calculating average throughput from list of throughputs
-    """
     def calc_throughput(self) -> float:
+        """Calculate average throughput from list of throughput's."""
         logger.info('Throughputs collected over hot workloads: {}'.format(self.scan_thr))
         return sum(self.scan_thr) / len(self.scan_thr)
 
-    """
-    Apply moving scan workload and collect throughput for each load
-    """
     @with_stats
     def apply_scanworkload(self, path_to_tool="/opt/couchbase/bin/cbindexperf"):
+        """Apply moving scan workload and collect throughput for each load."""
         rest_username, rest_password = self.cluster_spec.rest_credentials
 
         t = 0
@@ -507,10 +497,9 @@ class InitialIncrementalMovingScanThroughputTest(InitialIncrementalScanThroughpu
 
 
 class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
-    """
-    The test applies scan workload against the 2i server and measures
-    and reports the average scan throughput
-    """
+
+    """Apply scan workload and measure the scan latency."""
+
     COLLECTORS = {'secondary_stats': True, 'secondary_latency': True,
                   'secondary_debugstats': True, 'secondary_debugstats_bucket': True,
                   'secondary_debugstats_index': True}
@@ -534,10 +523,8 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
 
 
 class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest):
-    """
-    The test applies scan workload against the 2i server and measures
-    and reports the average scan throughput
-    """
+
+    """Apply scan workload and measure the scan latency during rebalance."""
 
     def rebalance(self, initial_nodes, nodes_after):
         for _, servers in self.cluster_spec.clusters:
@@ -571,11 +558,14 @@ class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest
 
 
 class InitialIncrementalScanLatencyTest(InitialandIncrementalDGMSecondaryIndexTest):
+
+    """Apply scan workload and measure the scan latency.
+
+    The test perform initial index build, then incremental index build and then
+    applies scan workload against the 2i server and measures scan latency for
+    moving workload.
     """
-    The test perform initial index build, then incremental index build and
-    then applies scan workload against the 2i server and measures
-    scan latency for moving workload
-    """
+
     COLLECTORS = {'secondary_stats': True, 'secondary_latency': True,
                   'secondary_debugstats': True, 'secondary_debugstats_bucket': True,
                   'secondary_debugstats_index': True}
@@ -626,11 +616,6 @@ class InitialIncrementalMovingScanLatencyTest(InitialIncrementalScanLatencyTest)
 
 
 class SecondaryIndexingDocIndexingLatencyTest(SecondaryIndexingScanLatencyTest):
-    """
-    The test applies scan workload against the 2i server and measures
-    and reports the average scan latency end to end, meaning since doc
-    is added till it gets reflected in query
-    """
 
     COLLECTORS = {'secondary_stats': True, 'secondary_latency': True,
                   'secondary_debugstats': True, 'secondary_debugstats_bucket': True,
@@ -653,10 +638,8 @@ class SecondaryIndexingDocIndexingLatencyTest(SecondaryIndexingScanLatencyTest):
 
 
 class SecondaryNumConnectionsTest(SecondaryIndexTest):
-    """
-    This test applies scan workload against a 2i server and measures
-    the number of connections it can create.
-    """
+
+    """Apply scan workload and measure the number of connections."""
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -705,10 +688,7 @@ class SecondaryNumConnectionsTest(SecondaryIndexTest):
 
 
 class SecondaryIndexingMultiScanTest(SecondaryIndexingScanLatencyTest):
-    """
-    The test applies scan workload against the 2i server and measures
-    and reports the average scan throughput
-    """
+
     COLLECTORS = {'secondary_stats': True,
                   'secondary_debugstats': True, 'secondary_debugstats_bucket': True,
                   'secondary_debugstats_index': True}
@@ -761,9 +741,8 @@ class SecondaryIndexingMultiScanTest(SecondaryIndexingScanLatencyTest):
 
 
 class SecondaryRebalanceTest(SecondaryIndexTest, RebalanceTest):
-    """
-    Measure swap rebalance time for indexer.
-    """
+
+    """Measure swap rebalance time for indexer."""
 
     COLLECTORS = {}
 

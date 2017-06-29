@@ -6,6 +6,8 @@ PATH := ${GOPATH}/bin:$(PATH)
 PYTHON := python3.5
 ENV := env
 
+PYTHON_PROJECTS := cbagent perfdaily perfrunner scripts spring
+
 build:
 	virtualenv --quiet --python ${PYTHON} ${ENV}
 	${ENV}/bin/pip install --upgrade --quiet pip wheel
@@ -18,8 +20,9 @@ clean:
 	find . -name '*.pyc' -o -name '*.pyo' -o -name __pycache__ | xargs rm -fr
 
 pep8:
-	${ENV}/bin/flake8 --statistics cbagent perfdaily perfrunner scripts spring
-	${ENV}/bin/isort --quiet --check-only --recursive cbagent perfdaily perfrunner scripts spring
+	${ENV}/bin/flake8 --statistics ${PYTHON_PROJECTS}
+	${ENV}/bin/isort --quiet --check-only --recursive ${PYTHON_PROJECTS}
+	${ENV}/bin/pydocstyle ${PYTHON_PROJECTS}
 
 nose:
 	${ENV}/bin/nosetests -v --with-coverage --cover-package=cbagent,perfrunner,spring unittests.py

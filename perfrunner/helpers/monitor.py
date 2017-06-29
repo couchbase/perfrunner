@@ -234,10 +234,7 @@ class Monitor(RestHelper):
         indexes_ready = [0 for _ in indexes]
 
         def get_index_status(json2i, index):
-            """
-            Return json2i["status"][k]["status"] if json2i["status"][k]["name"]
-            matches the desired index.
-            """
+            """Return the index status."""
             for d in json2i["status"]:
                 if d["name"] == index:
                     return d["status"]

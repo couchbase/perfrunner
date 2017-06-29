@@ -12,10 +12,6 @@ from perfrunner.utils.install import CouchbaseInstaller
 
 class BackupRestoreTest(PerfTest):
 
-    """
-    The base CB backup /restore class.
-    """
-
     def download_tools(self):
         if self.rest.is_community(self.master_node):
             edition = 'community'
@@ -63,11 +59,6 @@ class BackupRestoreTest(PerfTest):
 
 class BackupTest(BackupRestoreTest):
 
-    """
-    After a typical workload we backup all nodes and measure time it takes to
-    perform backup.
-    """
-
     @with_stats
     @timeit
     def backup(self, mode=None):
@@ -107,11 +98,6 @@ class BackupSizeTest(BackupTest):
 
 
 class BackupUnderLoadTest(BackupTest):
-
-    """
-    After a typical workload we backup all nodes and measure time it takes to
-    perform backup when workload running.
-    """
 
     def run(self):
         super(BackupTest, self).run()
@@ -161,11 +147,6 @@ class MergeTest(BackupRestoreTest):
 
 class IncrementalBackupUnderLoadTest(BackupTest):
 
-    """
-    After a typical workload we backup all nodes then perform incremental backup
-    when workload running.
-    """
-
     MUTATION_TIME = 300
 
     def run(self):
@@ -182,11 +163,6 @@ class IncrementalBackupUnderLoadTest(BackupTest):
 
 
 class RestoreTest(BackupRestoreTest):
-
-    """
-    After a typical workload we backup all nodes then restore and measure time
-    it takes to perform restore.
-    """
 
     @with_stats
     @timeit
@@ -215,13 +191,6 @@ class RestoreTest(BackupRestoreTest):
 
 
 class RestoreAfterIncrementalBackupTest(RestoreTest):
-
-    """
-    After a typical workload we backup all nodes. After access load we backup
-    again (incremental backup).
-
-    Incremental Restore and measure time it takes to perform restore.
-    """
 
     def run(self):
         super(RestoreTest, self).run()

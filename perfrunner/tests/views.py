@@ -5,9 +5,10 @@ from perfrunner.workloads.viewgen import ViewGen, ViewGenDev
 
 class IndexTest(PerfTest):
 
-    """
-    The test measures time it takes to build index (views). This is just a base
-    class, actual measurements happen in initial and incremental indexing tests.
+    """Measures time it takes to build index (views).
+
+    This is just a base class, actual measurements happen in initial and
+    incremental indexing tests.
 
     It doesn't differentiate index types and basically benchmarks dumb/bulk
     indexing.
@@ -45,9 +46,9 @@ class IndexTest(PerfTest):
 
 class InitialIndexTest(IndexTest):
 
-    """
-    The test measures time it takes to build index for the first time. Scenario
-    is pretty straightforward, there are only two phases:
+    """Measure time it takes to build index for the first time.
+
+    Scenario is pretty straightforward, there are only two phases:
     -- Initial data load
     -- Index building
     """
@@ -73,10 +74,10 @@ class InitialIndexTest(IndexTest):
 
 class InitialAndIncrementalIndexTest(InitialIndexTest):
 
-    """
-    Extended version of initial indexing test which also has access phase for
-    data/index mutation. It is critical to disable automatic index updates so
-    that we can control index building.
+    """Extend the initial indexing test by adding a phase with data mutations.
+
+    It is critical to disable automatic index updates so that we can control
+    index building.
     """
 
     @with_stats
@@ -107,8 +108,8 @@ class InitialAndIncrementalIndexTest(InitialIndexTest):
 
 class IndexByTypeTest(IndexTest):
 
-    """
-    Unlike base test this one introduces measurements per different index type.
+    """Introduces measurements per different index type.
+
     It only used as a base class for view query tests (in order to get separate
     measurements for different types of queries).
     """
@@ -122,9 +123,9 @@ class IndexByTypeTest(IndexTest):
 
 class QueryTest(IndexTest):
 
-    """
-    The base test which defines workflow for different view query tests. Access
-    phase represents mixed KV workload and queries on views.
+    """Defines workflow for different view query tests.
+
+    Access phase represents mixed KV workload and queries on views.
     """
 
     COLLECTORS = {'query_latency': True}
@@ -152,10 +153,7 @@ class QueryTest(IndexTest):
 
 class QueryThroughputTest(QueryTest):
 
-    """
-    The test adds a simple step to the workflow: post-test calculation of
-    average query throughput.
-    """
+    """Add post-test calculation of average query throughput."""
 
     COLLECTORS = {}
 
@@ -167,7 +165,9 @@ class QueryThroughputTest(QueryTest):
 
 class QueryLatencyTest(QueryTest):
 
-    """The basic test for bulk latency measurements. Bulk means a mix of
+    """Measure bulk view query latency.
+
+    Bulk means a mix of
     equality, range, group, and etc. The most reasonable test for update_after
     (stale) queries.
 
@@ -182,9 +182,10 @@ class QueryLatencyTest(QueryTest):
 
 class IndexLatencyTest(QueryTest):
 
-    """
-    Measurement of end-to-end latency which is defined as time it takes for a
-    document to appear in view output after it is stored in KV.
+    """Measurement end-to-end indexing latency.
+
+    Indexing latency is time it takes for a document to appear in view output
+    after it is stored in KV.
 
     The test only adds calculation phase. See cbagent project for details.
     """
@@ -198,9 +199,5 @@ class IndexLatencyTest(QueryTest):
 
 
 class QueryLatencyByTypeTest(IndexByTypeTest, QueryLatencyTest):
-
-    """
-    Per query type latency measurements.
-    """
 
     pass

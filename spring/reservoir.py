@@ -7,11 +7,9 @@ from logger import logger
 
 class Reservoir:
 
-    """
-    Implementation of Algorithm R.
+    """Implement Algorithm R.
 
-        https://www.cs.umd.edu/~samir/498/vitter.pdf
-
+    See also https://www.cs.umd.edu/~samir/498/vitter.pdf
     """
 
     MAX_CAPACITY = 10 ** 5

@@ -20,9 +20,7 @@ def target_hash(*args):
 
 
 def retry(catch=(), iterations=5, wait=10):
-    """
-    This is a general purpose decorator for retrying a function while
-    discarding a tuple of exceptions that the function might throw.
+    """Retry a function while discarding the specified exceptions.
 
     'catch' is a tuple of exceptions. Passing in a list is also fine.
 

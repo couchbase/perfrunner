@@ -6,11 +6,13 @@ from cbagent.collectors.libstats.remotestats import RemoteStats, parallel_task
 class NetStat(RemoteStats):
 
     def detect_iface(self):
-        """Examples of output:
+        """Detect the active newtwork interface.
 
-            default via 172.23.100.1 dev enp5s0f0 onlink
-            default via 172.23.96.1 dev enp6s0  proto static  metric 1024
-            default via 172.23.100.1 dev em1  proto static
+        Examples of ip output:
+
+        default via 172.23.100.1 dev enp5s0f0 onlink
+        default via 172.23.96.1 dev enp6s0  proto static  metric 1024
+        default via 172.23.100.1 dev em1  proto static
         """
         stdout = self.run("ip route list | grep default")
         return stdout.strip().split()[4]

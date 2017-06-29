@@ -94,20 +94,6 @@ class YCSBdata(PerfTest):
         self.hosts = list(self.cluster_spec.servers)
 
     def create_load_cmd(self, action='load', jvm=True, mypid=0):
-        """
-        The ycsb command looks like
-           ./bin/ycsb run couchbase2 -jvm-args=-Dcom.couchbase.connectTimeout=15000
-           -jvm-args=-Dcom.couchbase.kvTimeout=60000
-           -s -P workloads/workloada  -threads 7 -p couchbase.host=172.23.123.38 -p recordcount=100000 -p
-            operationcount=100000
-            -p maxexecutiontime=1000 -p couchbase.upsert=true -p couchbase.queryEndpoints=1  -p
-            couchbase.epoll=true
-            -p couchbase.boost=0 -p exportfile=rundata.json
-
-        ./bin/ycsb load couchbase2 -jvm-args=-Dcom.couchbase.connectTimeout=300000
-        -jvm-args=-Dcom.couchbase.kvTimeout=60000 -P workloads/workloada -p
-        couchbase.host=172.23.123.38 -threads 6 -p recordcount=100000 -exportfile=loaddata.json
-        """
         commandlist = [
             '/' + self.ycsb.path + '_' + str(mypid) + '/bin/ycsb',
             action,

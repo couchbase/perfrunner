@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-
-"""PathoGen: Attempt to create pathologically bad workloads for malloc fragmentation.
+"""Create pathologically bad workloads for malloc fragmentation.
 
 Rationale
 =========
@@ -115,6 +113,7 @@ SIZES = (8, 16, 32, 48, 64, 80, 96, 112, 128, 144, 160, 176, 192,
 
 
 class AlwaysPromote:
+
     """Promotion policy for baseline case - always promote."""
 
     def __init__(self, num_items, num_iterations, max_size):
@@ -137,8 +136,9 @@ class Freeze:
         self.max_size = max_size
 
     def build_generator(self, i):
-        """Returns a sequence of sizes which ramps from minimum to maximum
-        size. If 'freeze' is true, then freeze the sequence at a random position, i.e.
+        """Return a sequence of sizes which ramps from minimum to maximum size.
+
+        If 'freeze' is true, then freeze the sequence at a random position, i.e.
         don't ramp all the way up to max_size.
         """
         if self.rng.random() < self.freeze_probability:
@@ -147,15 +147,11 @@ class Freeze:
             return SequenceIterator(self.max_size)
 
     def _calc_freeze_probability(self, num_iterations, final_fraction):
-        """Return the freeze probability (per iteration) required to obtain
-        an the fiven aggregate final frozen fraction.
-        """
+        """Return the freeze probability (per iteration)."""
         return 1.0 - (final_fraction ** (1.0 / num_iterations))
 
 
 class PathoGen:
-
-    """Main generator class, responsible for orchestrating the process."""
 
     def __init__(self, num_items, num_workers, num_iterations, frozen_mode,
                  host, port, bucket, password):
@@ -233,13 +229,13 @@ class Worker(multiprocessing.Process):
                                         password=self.password)
 
     def run(self):
-        """Run a Worker. They run essentially forever, taking document
-        size iterators from the input queue and adding them to the
-        output queue for the next guy.
-        """
+        """Run a Worker.
 
-        # We defer creating the Couchbase object until we are actually
-        # 'in' the separate process here.
+        They run essentially forever, taking document size iterators from the
+        input queue and adding them to the output queue for the next guy.
+        """
+        # We defer creating the Couchbase object until we are actually 'in' the
+        # separate process here.
         self._connect()
 
         while True:
@@ -301,10 +297,11 @@ class Supervisor(Worker):
         self.max_size = max_size
 
     def run(self):
-        """Run the Supervisor. This is similar to Worker, except that
-        completed documents are not added back to the output
-        queue. When the last document is seen as completed, a new
-        iteration is started.
+        """Run the Supervisor.
+
+        This is similar to Worker, except that completed documents are not
+        added back to the output queue. When the last document is seen as
+        completed, a new iteration is started.
         """
         logger.info('Starting PathoGen supervisor')
 

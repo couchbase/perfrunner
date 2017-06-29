@@ -19,37 +19,29 @@ class CloudBase(object):
     INTERVAL_TIME = 60
 
     def list_all_nodes(self, driver: get_driver) -> List:
-        """ List all nodes present with the account
-
-        :param It takes the driver as input
-        """
+        """List all nodes present with the account."""
         return driver.list_nodes()
 
     @abc.abstractmethod
     def launch_all_nodes(self) -> None:
-        """
-        Launch all nodes required by the user
-        """
+        """Launch all nodes required by the user."""
         return None
 
     @abc.abstractmethod
     def destroy_all_nodes(self) -> None:
-        """
-        Destroy list of nodes present with the Account
-        """
+        """Destroy list of nodes present with the Account."""
         return None
 
     @abc.abstractmethod
     def status_check(self) -> bool:
-        """
-        Check status of the cluster, if the nodes are in RUNNING/PENDING state
-        """
+        """Check if the nodes are in RUNNING/PENDING state."""
         return False
 
     def scheduler(self) -> bool:
-        """
-        This code will start a scheduler to check instance status in every 30 seconds,
-        The event will run until all instance are up or max waiting time is exceeded.
+        """Start a scheduler to check instance status in every 30 seconds.
+
+        The event will run until all instance are up or max waiting time is
+        exceeded.
         """
         start_time = time.time()
         retry = 0
@@ -70,28 +62,26 @@ class CloudBase(object):
 
     @abc.abstractmethod
     def start_phase(self) -> None:
-        """It is the start phase of the test.
-        After start phase it will write instance details to a file
+        """Start the test.
 
+        After the start phase it will write instance details to a file.
         """
-        return None
+        return
 
     @abc.abstractmethod
     def end_phase(self) -> None:
         """End of tests all steps.
-        End phase will use the file created by start phase and parse for instanceID.
-        The instanceID will be used to terminate the nodes. point to be noted here is
-        nodes will be terminated, not shut down.
 
+        End phase will use the file created by start phase and parse for
+        instanceID. The instanceID will be used to terminate the nodes. point to
+        be noted here is nodes will be terminated, not shut down.
         """
-        return None
+        return
 
     @abc.abstractmethod
     def log_nodes(self) -> None:
-        """
-        Get all nodes and log into a CSV file
-        """
-        return None
+        """Get all nodes and log into a CSV file."""
+        return
 
 
 class AwsProvider(CloudBase):

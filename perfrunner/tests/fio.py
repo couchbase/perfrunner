@@ -28,9 +28,9 @@ class FIOTest(PerfTest):
 
     @staticmethod
     def _parse(results):
-        """Terse output parsing is based on the following guide:
+        """Parse the test output.
 
-            https://github.com/axboe/fio/blob/master/HOWTO
+        See also https://github.com/axboe/fio/blob/master/HOWTO
         """
         stats = defaultdict(int)
         for host, output in results.items():

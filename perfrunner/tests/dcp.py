@@ -5,10 +5,6 @@ from perfrunner.tests import PerfTest
 
 class DCPThroughputTest(PerfTest):
 
-    """
-    The test measures time to get number of dcp messages and calculates throughput.
-    """
-
     OUTPUT_FILE = "dcpstatsfile"
 
     def _report_kpi(self):

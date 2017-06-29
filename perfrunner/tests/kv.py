@@ -19,15 +19,6 @@ from perfrunner.workloads.tcmalloc import WorkloadGen
 
 class KVTest(PerfTest):
 
-    """
-    The most basic KV workflow:
-        Initial data load ->
-            Persistence and intra-cluster replication (for consistency) ->
-                Data compaction (for consistency) ->
-                    "Hot" load or working set warm up ->
-                        "access" phase or active workload
-    """
-
     @with_stats
     def access(self, *args):
         super().sleep()
@@ -47,9 +38,7 @@ class KVTest(PerfTest):
 
 class MixedLatencyTest(KVTest):
 
-    """
-    Enables reporting of GET and SET latency.
-    """
+    """Enable reporting of GET and SET latency."""
 
     COLLECTORS = {'latency': True}
 
@@ -65,9 +54,7 @@ class MixedLatencyTest(KVTest):
 
 class DurabilityTest(KVTest):
 
-    """
-    Enables reporting of persistTo=1 and replicateTo=1 latency.
-    """
+    """Enable reporting of persistTo=1 and replicateTo=1 latency."""
 
     COLLECTORS = {'durability': True}
 
@@ -81,9 +68,7 @@ class DurabilityTest(KVTest):
 
 class ReadLatencyTest(MixedLatencyTest):
 
-    """
-    Enables reporting of GET latency.
-    """
+    """Enable reporting of GET latency."""
 
     COLLECTORS = {'latency': True}
 
@@ -95,18 +80,14 @@ class ReadLatencyTest(MixedLatencyTest):
 
 class SubDocTest(MixedLatencyTest):
 
-    """
-    Enables reporting of SubDoc latency.
-    """
+    """Enable reporting of SubDoc latency."""
 
     COLLECTORS = {'subdoc_latency': True}
 
 
 class XATTRTest(MixedLatencyTest):
 
-    """
-    Enables reporting of XATTR latency.
-    """
+    """Enable reporting of XATTR latency."""
 
     COLLECTORS = {'xattr_latency': True}
 
@@ -130,9 +111,7 @@ class XATTRTest(MixedLatencyTest):
 
 class BgFetcherTest(KVTest):
 
-    """
-    Enables reporting of average BgFetcher wait time (disk fetches).
-    """
+    """Enable reporting of average BgFetcher wait time (disk fetches)."""
 
     COLLECTORS = {'latency': True}
 
@@ -146,9 +125,7 @@ class BgFetcherTest(KVTest):
 
 class DrainTest(KVTest):
 
-    """
-    Enables reporting of average disk write queue size.
-    """
+    """Enable reporting of average disk write queue size."""
 
     ALL_BUCKETS = True
 
@@ -172,10 +149,11 @@ class InitialLoadTest(DrainTest):
 
 class FlusherTest(KVTest):
 
-    """
-    The maximum drain rate benchmark. Data set is loaded while persistence is
-    disabled. After that persistence is enabled and ep-engine commits data with
-    maximum possible speed (using very large batches).
+    """Measure the maximum drain rate benchmark.
+
+    Data set is loaded while persistence is disabled. After that persistence is
+    enabled and ep-engine commits data with maximum possible speed (using very
+    large batches).
 
     Please notice that measured drain rate has nothing to do with typical
     production characteristics. It only used as baseline / reference.
@@ -226,9 +204,7 @@ class FlusherTest(KVTest):
 
 class BeamRssTest(KVTest):
 
-    """
-    Enables reporting of Erlang (beam.smp process) memory usage.
-    """
+    """Enable reporting of Erlang (beam.smp process) memory usage."""
 
     def _report_kpi(self):
         self.reporter.post(
@@ -238,11 +214,7 @@ class BeamRssTest(KVTest):
 
 class WarmupTest(PerfTest):
 
-    """
-    After typical workload we restart all nodes and measure the time it takes
-    to perform cluster warm up (internal technology, not to be confused with
-    "hot" load phase).
-    """
+    """Measure the time it takes to perform cluster warm up."""
 
     def access(self, *args, **kwargs):
         super().sleep()
@@ -281,8 +253,9 @@ class WarmupTest(PerfTest):
 
 class FragmentationTest(PerfTest):
 
-    """
-    This test implements the append-only scenario:
+    """Implement the append-only workload.
+
+    Scenario:
     1. Single node.
     2. Load X items, 700-1400 bytes, average 1KB (11-22 fields).
     3. Append data
@@ -334,10 +307,6 @@ class FragmentationTest(PerfTest):
 
 
 class FragmentationLargeTest(FragmentationTest):
-
-    """
-    The same as base test but large documents are used.
-    """
 
     @with_stats
     def load_and_append(self):
@@ -413,8 +382,6 @@ class MemUsedTest(KVTest):
 
 class PathoGenTest(FragmentationTest):
 
-    """Pathologically bad malloc test. See pathoGen.py for full details."""
-
     @with_stats
     def access(self, *args):
         for target in self.target_iterator:
@@ -441,9 +408,6 @@ class PathoGenTest(FragmentationTest):
 
 
 class PathoGenFrozenTest(PathoGenTest):
-
-    """Pathologically bad mmalloc test, Frozen mode. See pathoGen.py for full
-    details."""
 
     @with_stats
     def access(self):
@@ -520,7 +484,7 @@ class EvictionTest(KVTest):
 
 class PillowFightTest(PerfTest):
 
-    """Uses cbc-pillowfight from libcouchbase to drive cluster."""
+    """Use cbc-pillowfight from libcouchbase to drive cluster."""
 
     ALL_BUCKETS = True
 

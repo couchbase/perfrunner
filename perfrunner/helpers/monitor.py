@@ -305,6 +305,7 @@ class Monitor(RestHelper):
         return True
 
     def wait_for_recovery(self, index_nodes, bucket, index):
+        time.sleep(self.MONITORING_DELAY)
         for retry in range(self.MAX_RETRY_RECOVERY):
             response = self.get_index_stats(index_nodes)
             item = "{}:{}:disk_load_duration".format(bucket, index)

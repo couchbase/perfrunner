@@ -4,6 +4,9 @@ title = DCP, 250M x 1KB items, DGM
 threshold = -15
 component = KV
 
+[stats]
+client_processes = dcptest
+
 [cluster]
 mem_quota = 51200
 initial_nodes = 1

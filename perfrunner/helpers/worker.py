@@ -124,7 +124,8 @@ class RemoteWorkerManager:
 
 class LocalWorkerManager(RemoteWorkerManager):
 
-    SQLITE_DBS = 'perfrunner.db', 'results.db'
+    BROKER_DB = 'perfrunner.db'
+    RESULTS_DB = 'results.db'
 
     def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):
         self.cluster_spec = cluster_spec
@@ -133,18 +134,33 @@ class LocalWorkerManager(RemoteWorkerManager):
         self.terminate()
         self.tune_sqlite()
         self.start()
+        self.ensure_queue_exists()
 
     def next_queue(self) -> str:
         return 'local'
 
     def tune_sqlite(self):
-        for db in self.SQLITE_DBS:
+        for db in self.BROKER_DB, self.RESULTS_DB:
             engine = create_engine('sqlite:///{}'.format(db))
             engine.execute('PRAGMA synchronous=OFF;')
 
+    def ensure_queue_exists(self):
+        engine = create_engine('sqlite:///{}'.format(self.BROKER_DB))
+        query = 'SELECT COUNT(*) FROM kombu_queue WHERE name = "{}"'\
+            .format(self.next_queue())
+
+        while True:
+            if 'kombu_queue' not in engine.table_names():
+                continue
+
+            for count, in engine.execute(query):
+                if count:
+                    logger.info('Local Celery worker is ready')
+                    return
+
     def start(self):
         logger.info('Starting local Celery worker')
-        local.start_celery_worker(queue='local')
+        local.start_celery_worker(queue=self.next_queue())
 
     def init_ycsb_repo(self):
         local.clone_ycsb(repo=self.test_config.ycsb_settings.repo,

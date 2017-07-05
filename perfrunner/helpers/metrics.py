@@ -94,12 +94,11 @@ class MetricHelper:
     def _avg_n1ql_throughput(self) -> int:
         test_time = self.test_config.access_settings.time
 
-        for servers in self.cluster_spec.servers_by_role('n1ql'):
-            query_node = servers[0]
+        query_node = self.cluster_spec.servers_by_role('n1ql')[0]
+        vitals = self.test.rest.get_query_stats(query_node)
+        total_requests = vitals['requests.count']
 
-            vitals = self.test.rest.get_query_stats(query_node)
-            total_requests = vitals['requests.count']
-            return int(total_requests / test_time)
+        return int(total_requests / test_time)
 
     def bulk_n1ql_throughput(self, time_elapsed: float) -> Metric:
         metric_info = self._metric_info()

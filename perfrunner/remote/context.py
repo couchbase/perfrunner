@@ -31,9 +31,6 @@ def single_client(task, *args, **kwargs):
 @decorator
 def index_node(task, *args, **kwargs):
     self = args[0]
-    # Get first cluster, its index nodes
-    servers = next(self.cluster_spec.servers_by_role('index'))
-    if not servers:
-        raise RuntimeError("No index nodes specified for cluster")
-    with settings(host_string=servers[0]):
+    index_node = self.cluster_spec.servers_by_role('index')[0]
+    with settings(host_string=index_node):
         return task(*args, **kwargs)

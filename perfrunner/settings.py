@@ -74,29 +74,22 @@ class ClusterSpec(Config):
             for server in servers:
                 yield server
 
-    def servers_by_role(self, role: str) -> Iterator[List[str]]:
+    def servers_by_role(self, role: str) -> List[str]:
+        has_service = []
         for _, servers in self.config.items('clusters'):
-            has_service = []
             for server in servers.split():
-                if role in server.split(':')[1]:
-                    host = server.split(':')[0]
+                host, roles = server.split(':')
+                if role in roles:
                     has_service.append(host)
-            yield has_service
-
-    @property
-    def fts_servers(self) -> Iterator[str]:
-        for _, servers in self.config.items('clusters'):
-            for server in servers.split():
-                if 'fts' in server.split(':')[1]:
-                    yield server.split(':')[0]
+        return has_service
 
     @property
     def roles(self) -> dict:
         server_roles = {}
-        for _, node in self.config.items('clusters'):
-            for server in node.split():
-                hostname = server.split(':')[0]
-                server_roles[hostname] = server.split(':')[1]
+        for _, servers in self.config.items('clusters'):
+            for server in servers.split():
+                host, roles = server.split(':')
+                server_roles[host] = roles
         return server_roles
 
     @property

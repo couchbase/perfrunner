@@ -40,11 +40,7 @@ class SecondaryIndexTest(PerfTest):
 
         self.secondary_statsfile = self.test_config.stats_settings.secondary_statsfile
 
-        # Get first cluster, its index nodes, and first bucket
-        servers = next(self.cluster_spec.servers_by_role('index'))
-        if not servers:
-            raise RuntimeError("No index nodes specified for cluster")
-        self.index_nodes = servers
+        self.index_nodes = self.cluster_spec.servers_by_role('index')
 
         self.bucket = self.test_config.buckets[0]
         self.target_iterator = TargetIterator(self.cluster_spec, self.test_config, "gsi")

@@ -316,17 +316,18 @@ class Monitor(RestHelper):
         return -1
 
     def wait_for_indexer(self):
-        # Get first cluster, its index nodes
-        servers = next(self.cluster_spec.servers_by_role('index'))
         for retry in range(self.MAX_RETRY):
+            logger.info('Waiting for Index nodes')
             time.sleep(self.POLLING_INTERVAL_MACHINE_UP)
-            if self.remote.is_up(servers[0]):
-                logger.info('Indexer is back')
-                return
+
+            for server in self.cluster_spec.servers_by_role('index'):
+                if not self.remote.is_up(server):
+                    break
             else:
-                logger.info('Waiting for indexer')
-        else:
-            logger.interrupt('Indexer is not up')
+                logger.info('All Index nodes are back')
+                return
+
+        logger.interrupt('Index nodes are not up')
 
     def monitor_fts_indexing_queue(self, host: str, index: str):
         logger.info('Waiting for indexing to finish')

@@ -89,9 +89,8 @@ def new_cbagent_settings(test: PerfTest):
     settings.rest_username, settings.rest_password = \
         test.cluster_spec.rest_credentials
 
-    for servers in test.cluster_spec.servers_by_role('index'):
-        if servers:
-            settings.index_node = servers[0]
+    if test.cluster_spec.servers_by_role('index'):
+        settings.index_node = test.cluster_spec.servers_by_role('index')[0]
 
     return settings
 

@@ -1,6 +1,5 @@
 [clusters]
-ycsb = 172.23.123.38
-
+ycsb = 172.23.123.38:kv
 
 [clients]
 hosts =

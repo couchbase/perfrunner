@@ -60,7 +60,8 @@ class ClusterSpec(Config):
     @property
     def clusters(self) -> Iterator:
         for cluster_name, servers in self.config.items('clusters'):
-            yield cluster_name, [s.split(',')[0] for s in servers.split()]
+            hosts = [s.split(':')[0] for s in servers.split()]
+            yield cluster_name, hosts
 
     @property
     def masters(self) -> Iterator[str]:
@@ -77,24 +78,23 @@ class ClusterSpec(Config):
         for _, servers in self.config.items('clusters'):
             has_service = []
             for server in servers.split():
-                if role in server.split(',')[1:]:
-                    has_service.append(server.split(',')[0])
+                if role in server.split(':')[1]:
+                    host = server.split(':')[0]
+                    has_service.append(host)
             yield has_service
 
     @property
     def fts_servers(self) -> Iterator[str]:
         for _, servers in self.config.items('clusters'):
             for server in servers.split():
-                if 'fts' in server.split(',')[1:]:
-                    yield server.split(',')[0]
+                if 'fts' in server.split(':')[1]:
+                    yield server.split(':')[0]
 
     @property
     def kv_servers(self) -> Iterator[str]:
         for _, servers in self.config.items('clusters'):
             for server in servers.split():
-                if ',' in server:
-                    continue
-                else:
+                if 'kv' in server.split(':')[1]:
                     yield server
 
     @property
@@ -102,11 +102,8 @@ class ClusterSpec(Config):
         server_roles = {}
         for _, node in self.config.items('clusters'):
             for server in node.split():
-                hostname = server.split(',', 1)[0]
-                if ',' in server:
-                    server_roles[hostname] = server.split(',', 1)[1]
-                else:  # For backward compatibility, set to kv if not specified
-                    server_roles[hostname] = 'kv'
+                hostname = server.split(':')[0]
+                server_roles[hostname] = server.split(':')[1]
         return server_roles
 
     @property

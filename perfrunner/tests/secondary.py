@@ -637,56 +637,6 @@ class SecondaryIndexingDocIndexingLatencyTest(SecondaryIndexingScanLatencyTest):
         self.report_kpi()
 
 
-class SecondaryNumConnectionsTest(SecondaryIndexTest):
-
-    """Apply scan workload and measure the number of connections."""
-
-    def __init__(self, *args):
-        super().__init__(*args)
-        self.curr_connections = self.init_num_connections
-        self.config_data = self.get_data_from_config_json('tests/gsi/config_template.json')
-
-    def _report_kpi(self, connections):
-        self.reporter.post(
-            *self.metrics.gsi_connections(connections)
-        )
-
-    @with_stats
-    def apply_scanworkload_steps(self):
-        logger.info('Initiating scan workload with stats output')
-        while self.curr_connections <= self.max_num_connections:
-            try:
-                self.curr_connections = (self.curr_connections / len(self.remote.kv_hosts)) * len(self.remote.kv_hosts)
-                logger.info("try for num-connections: {}".format(self.curr_connections))
-                self.remote.run_cbindexperf(self.index_nodes[0], self.config_data, self.curr_connections)
-                status = self.monitor.wait_for_num_connections(self.index_nodes[0], self.curr_connections)
-            except Exception as e:
-                logger.info("Got error {}".format(e))
-                status = False
-                break
-            finally:
-                self.remote.kill_process_on_kv_nodes("cbindexperf")
-            time.sleep(5)
-            self.curr_connections += self.step_num_connections
-            if not status:
-                break
-        ret_val = self.curr_connections - self.step_num_connections
-        if not status:
-            ret_val -= self.step_num_connections
-        return ret_val if ret_val > self.init_num_connections else 0
-
-    def run(self):
-        self.load()
-        self.wait_for_persistence()
-        self.compact_bucket()
-        self.build_secondaryindex()
-
-        connections = self.apply_scanworkload_steps()
-        logger.info('Connections: {}'.format(connections))
-
-        self.report_kpi(connections)
-
-
 class SecondaryIndexingMultiScanTest(SecondaryIndexingScanLatencyTest):
 
     COLLECTORS = {'secondary_stats': True,

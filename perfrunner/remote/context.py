@@ -29,17 +29,6 @@ def single_client(task, *args, **kwargs):
 
 
 @decorator
-def kv_node_cbindexperf(task, *args, **kwargs):
-    count = 0
-    self = args[0]
-    for host in self.kv_hosts:
-        count += 1
-        with settings(host_string=host):
-            kwargs["host_num"] = count
-            task(*args, **kwargs)
-
-
-@decorator
 def index_node(task, *args, **kwargs):
     self = args[0]
     # Get first cluster, its index nodes

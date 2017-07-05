@@ -91,13 +91,6 @@ class ClusterSpec(Config):
                     yield server.split(':')[0]
 
     @property
-    def kv_servers(self) -> Iterator[str]:
-        for _, servers in self.config.items('clusters'):
-            for server in servers.split():
-                if 'kv' in server.split(':')[1]:
-                    yield server
-
-    @property
     def roles(self) -> dict:
         server_roles = {}
         for _, node in self.config.items('clusters'):

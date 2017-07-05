@@ -1,4 +1,3 @@
 [flake8]
-ignore = E731
 max-line-length = 120
 exclude = perfrunner/utils/fts,perfrunner/workloads/revAB/fittingCode,cbagent/collectors/__init__.py

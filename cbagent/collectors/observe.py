@@ -1,6 +1,5 @@
 from threading import Thread
 from time import sleep, time
-from uuid import uuid4
 
 from couchbase.bucket import Bucket
 from couchbase.n1ql import N1QLQuery
@@ -9,8 +8,7 @@ from decorator import decorator
 from cbagent.collectors import Latency
 from cbagent.collectors.libstats.pool import Pool
 from logger import logger
-
-uhex = lambda: uuid4().hex
+from perfrunner.helpers.misc import uhex
 
 
 @decorator

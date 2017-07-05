@@ -1,11 +1,9 @@
 from time import time
-from uuid import uuid4
 
 from couchbase import Couchbase
 
 from cbagent.collectors import Collector
-
-uhex = lambda: uuid4().hex
+from perfrunner.helpers.misc import uhex
 
 
 class Latency(Collector):

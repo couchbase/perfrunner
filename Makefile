@@ -14,7 +14,7 @@ all:
 	pwd > ${ENV}/lib/${PYTHON}/site-packages/perfrunner.pth
 
 clean:
-	rm -fr build perfrunner.egg-info dist dcptest kvgen cbindexperf rachell *.db *.log
+	rm -fr build perfrunner.egg-info dist dcptest kvgen cbindexperf rachell *.db *.log .coverage
 	find . -name '*.pyc' -o -name '*.pyo' -o -name __pycache__ | xargs rm -fr
 
 pep8:

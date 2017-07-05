@@ -45,39 +45,47 @@ class RemoteLinux(Remote):
     def detect_ubuntu_release(self):
         return run('lsb_release -sr').strip()
 
-    def run_cbindex_command(self, command):
-        command_path = '/opt/couchbase/bin/cbindex'
-        command = "{path} {cmd}".format(path=command_path, cmd=command)
-        logger.info('Submitting cbindex command {}'.format(command))
+    def run_cbindex_command(self, options):
+        cmd = "/opt/couchbase/bin/cbindex {options}".format(options=options)
 
-        status = run(command, shell_escape=False, pty=False)
-        if status:
-            logger.info('Command status {}'.format(status))
+        logger.info('Running: {}'.format(cmd))
+        run(cmd, shell_escape=False, pty=False)
 
     def build_index(self, index_node, bucket_indexes):
         all_indexes = ",".join(bucket_indexes)
-        cmd_str = "-auth=Administrator:password -server {index_node}:8091 -type build -indexes {all_indexes}" \
-            .format(index_node=index_node, all_indexes=all_indexes)
+        options = \
+            "-auth=Administrator:password " \
+            "-server {index_node}:8091 " \
+            "-type build " \
+            "-indexes {all_indexes}".format(index_node=index_node,
+                                            all_indexes=all_indexes)
 
-        self.run_cbindex_command(cmd_str)
+        self.run_cbindex_command(options)
 
     def create_index(self, index_nodes, bucket, indexes, storage):
         # Remember what bucket:index was created
         bucket_indexes = []
 
         for index, field in indexes.items():
-            cmd = "-auth=Administrator:password  -server {index_node}:8091  -type create -bucket {bucket}" \
-                  "  -fields={field}".format(index_node=index_nodes[0], bucket=bucket, field=field)
+            options = \
+                "-auth=Administrator:password " \
+                "-server {index_node}:8091 " \
+                "-type create " \
+                "-bucket {bucket} " \
+                "-fields={field}".format(index_node=index_nodes[0],
+                                         bucket=bucket,
+                                         field=field)
 
             if storage == 'memdb' or storage == 'plasma':
-                cmd = '{cmd} -using {db}'.format(cmd=cmd, db=storage)
+                options = '{options} -using {db}'.format(options=options,
+                                                         db=storage)
 
             with_str = r'{\\\"defer_build\\\":true}'
-            final_cmd = "{cmd} -index {index} -with=\\\"{with_str}\\\"" \
-                .format(cmd=cmd, index=index, with_str=with_str)
+            options = "{options} -index {index} -with=\\\"{with_str}\\\"" \
+                .format(options=options, index=index, with_str=with_str)
 
             bucket_indexes.append("{}:{}".format(bucket, index))
-            self.run_cbindex_command(final_cmd)
+            self.run_cbindex_command(options)
 
         return bucket_indexes
 

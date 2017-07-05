@@ -86,10 +86,24 @@ class CloudBase(object):
 
 class AwsProvider(CloudBase):
 
-    Cluster = {'server': {'size': 'm4.2xlarge', 'ami': 'ami-d6fee9af', 'instance': 1,
-                          'name': 'cb_server', 'instance_id': set(), 'security_group': ['perf-server']},
-               'client': {'size': 'c3.2xlarge', 'ami': 'ami-09c3cc70', 'instance': 1,
-                          'name': 'cb_client', 'instance_id': set(), 'security_group': ['perf-clients']}}
+    Cluster = {
+        'server': {
+            'size': 'm4.2xlarge',
+            'ami': 'ami-d6fee9af',
+            'instance': 1,
+            'name': 'cb_server',
+            'instance_id': set(),
+            'security_group': ['perf-server'],
+        },
+        'client': {
+            'size': 'c3.2xlarge',
+            'ami': 'ami-09c3cc70',
+            'instance': 1,
+            'name': 'cb_client',
+            'instance_id': set(),
+            'security_group': ['perf-clients'],
+        },
+    }
 
     def __init__(self, args: argparse.Namespace):
         self.instance_id_list = set()

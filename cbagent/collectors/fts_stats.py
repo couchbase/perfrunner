@@ -12,42 +12,43 @@ class FTSCollector(Collector):
     COLLECTOR = "fts_stats"
     COLLECTOR_TOTALS = "fts_totals"
 
-    METRICS = ("batch_merge_count",
-               "doc_count",
-               "iterator_next_count",
-               "iterator_seek_count",
-               "num_bytes_live_data",
-               "num_bytes_used_disk",
-               "num_mutations_to_index",
-               "num_pindexes",
-               "num_pindexes_actual",
-               "num_pindexes_target",
-               "num_recs_to_persist",
-               "reader_get_count",
-               "reader_multi_get_count",
-               "reader_prefix_iterator_count",
-               "reader_range_iterator_count",
-               "timer_batch_store_count",
-               "timer_data_delete_count",
-               "timer_data_update_count",
-               "timer_opaque_get_count",
-               "timer_opaque_set_count",
-               "timer_rollback_count",
-               "timer_snapshot_start_count",
-               "total_bytes_indexed",
-               "total_bytes_query_results",
-               "total_compactions",
-               "total_queries",
-               "total_queries_error",
-               "total_queries_slow",
-               "total_queries_timeout",
-               "total_request_time",
-               "total_term_searchers",
-               "writer_execute_batch_count",
-               "num_bytes_used_ram",
-               "pct_cpu_gc",
-               "total_gc",
-               )
+    METRICS = (
+        "batch_merge_count",
+        "doc_count",
+        "iterator_next_count",
+        "iterator_seek_count",
+        "num_bytes_live_data",
+        "num_bytes_used_disk",
+        "num_bytes_used_ram",
+        "num_mutations_to_index",
+        "num_pindexes",
+        "num_pindexes_actual",
+        "num_pindexes_target",
+        "num_recs_to_persist",
+        "pct_cpu_gc",
+        "reader_get_count",
+        "reader_multi_get_count",
+        "reader_prefix_iterator_count",
+        "reader_range_iterator_count",
+        "timer_batch_store_count",
+        "timer_data_delete_count",
+        "timer_data_update_count",
+        "timer_opaque_get_count",
+        "timer_opaque_set_count",
+        "timer_rollback_count",
+        "timer_snapshot_start_count",
+        "total_bytes_indexed",
+        "total_bytes_query_results",
+        "total_compactions",
+        "total_gc",
+        "total_queries",
+        "total_queries_error",
+        "total_queries_slow",
+        "total_queries_timeout",
+        "total_request_time",
+        "total_term_searchers",
+        "writer_execute_batch_count",
+    )
 
     def __init__(self, settings, test):
         super().__init__(settings)
@@ -104,7 +105,10 @@ class FTSCollector(Collector):
             totals = dict()
             for host in self.active_fts_hosts:
                 if host in samples:
-                    self.store.append(samples[host], cluster=self.cluster, server=host, collector=self.COLLECTOR)
+                    self.store.append(samples[host],
+                                      cluster=self.cluster,
+                                      server=host,
+                                      collector=self.COLLECTOR)
 
                     for metric in self.METRICS:
                         if metric not in totals:

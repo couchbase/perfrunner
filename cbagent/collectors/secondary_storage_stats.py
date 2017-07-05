@@ -5,10 +5,28 @@ class SecondaryStorageStats(Collector):
 
     COLLECTOR = "secondary_storage_stats"
 
-    METRICS = "memory_size", "num_cached_pages", "num_pages", "num_pages_swapout", "num_pages_swapin", \
-              "bytes_incoming", "bytes_written", "write_amp", "lss_fragmentation", "cache_hits", "cache_misses", \
-              "cache_hit_ratio", "resident_ratio", "allocated", "freed", "reclaimed", "reclaim_pending", \
-              "rcache_hits", "rcache_misses", "rcache_hit_ratio"
+    METRICS = (
+        "allocated",
+        "bytes_incoming",
+        "bytes_written",
+        "cache_hit_ratio",
+        "cache_hits",
+        "cache_misses",
+        "freed",
+        "lss_fragmentation",
+        "memory_size",
+        "num_cached_pages",
+        "num_pages",
+        "num_pages_swapin",
+        "num_pages_swapout",
+        "rcache_hit_ratio",
+        "rcache_hits",
+        "rcache_misses",
+        "reclaimed",
+        "reclaim_pending",
+        "resident_ratio",
+        "write_amp",
+    )
 
     def __init__(self, settings):
         super().__init__(settings)

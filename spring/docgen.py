@@ -165,10 +165,11 @@ class MovingWorkingSetKey(Generator):
 
         if timer_elapse.value:
             timer_elapse.value = 0
-            # Create next hot_load_start, add working_set_move_docs and then modulus
-            # to prevent going beyond num_docs
-            current_hot_load_start.value = int((current_hot_load_start.value + self.working_set_moving_docs)
-                                               % (num_existing_items - num_hot_items))
+            # Create next hot_load_start, add working_set_move_docs and then
+            # modulus to prevent going beyond num_docs
+            num_items = num_existing_items - num_hot_items
+            offset = current_hot_load_start.value + self.working_set_moving_docs
+            current_hot_load_start.value = int(offset % num_items)
 
         if self.working_set_access == 100 or \
                 random.randint(0, 100) <= self.working_set_access:

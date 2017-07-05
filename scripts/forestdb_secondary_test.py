@@ -210,7 +210,8 @@ def get_args():
 
     parser.add_argument('--version', dest="version", required=True)
     parser.add_argument('--host', dest="host", required=True)
-    parser.add_argument('--remote_workdir', dest="remote_workdir", default="/tmp/standalone_forestdb")
+    parser.add_argument('--remote_workdir', dest="remote_workdir",
+                        default="/tmp/standalone_forestdb")
     parser.add_argument('--run-only', dest="run_only", action="store_true")
     parser.add_argument('--post-to-sf', dest="post_to_sf", type=int, default=0)
     parser.add_argument('--iniFile', dest="iniFile", default=None)

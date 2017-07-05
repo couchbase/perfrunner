@@ -357,11 +357,11 @@ class Supervisor(Worker):
             # frozen at their last size.
             finished_items = [(ii, sz) for (ii, sz) in finished_items if sz == self.max_size]
 
-            logger.info('Completed iteration {}/{}, frozen {}/{} documents (aggregate). sleeping for {}s'.format(
+            logger.info('Completed iteration {}/{}, frozen {}/{} documents (aggregate)'.format(
                 iteration + 1, self.num_iterations,
-                self.num_items - len(finished_items), self.num_items,
-                self.SLEEP_TIME))
+                self.num_items - len(finished_items), self.num_items))
             # Sleep at end of iteration to give disk write queue chance to drain.
+            logger.info('Sleeping for {}s'.format(self.SLEEP_TIME))
             time.sleep(self.SLEEP_TIME)
 
         # All iterations complete. Send a special null generator

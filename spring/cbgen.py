@@ -270,7 +270,8 @@ class FtsGen(CBGen):
                         for terms in line.split():
 
                             tmp_key = next(keytypes)
-                            temp_query[tmp_key].append({"field": self.settings.field, "term": terms})
+                            temp_query[tmp_key].append({"field": self.settings.field,
+                                                        "term": terms})
 
                         if query_type == '1_conjuncts_2_disjuncts':
                             for k, v in self.bool_map.items():
@@ -284,7 +285,8 @@ class FtsGen(CBGen):
 
                     elif query_type == 'numeric':
                         if freq.strip() == 'max_min':
-                            temp_query['max'], temp_query['min'] = [float(k) for k in tosearch.split(':')]
+                            temp_query['max'], temp_query['min'] = \
+                                [float(k) for k in tosearch.split(':')]
                         elif freq.strip() == 'max':
                             temp_query['max'] = float(tosearch)
                         else:
@@ -404,11 +406,23 @@ class ElasticGen(FtsGen):
                         start_date, end_date = freq.split(':')
                         tmp_query = {"term": {"text": term}}
                         self.query_template['size'] = self.settings.query_size
-                        self.query_template['aggs'] = {"perf_elastic_index": {"date_range": {
-                                                       "field": self.settings.field,
-                                                       "format": "YYYY-MM-DD",
-                                                       "ranges": [{"from": start_date, "to": end_date}]
-                                                       }, "aggs": {"terms_count": {"terms": {"field": "text"}}}}}
+                        self.query_template['aggs'] = {
+                            "perf_elastic_index": {
+                                "date_range": {
+                                    "field": self.settings.field,
+                                    "format": "YYYY-MM-DD",
+                                    "ranges": [
+                                        {
+                                            "from": start_date,
+                                            "to": end_date,
+                                        },
+                                    ]
+                                },
+                                "aggs": {
+                                    "terms_count": {"terms": {"field": "text"}},
+                                },
+                            },
+                        }
 
                     else:
                         tmp_query_txt[self.settings.field] = term

@@ -86,17 +86,21 @@ class SecondaryIndexTest(PerfTest):
             return json.load(fh)
 
     def validate_num_connections(self):
-        db = SerieslyStore.build_dbname(self.cbmonitor_clusters[0], None, None, None, "secondary_debugstats")
+        db = SerieslyStore.build_dbname(self.cbmonitor_clusters[0],
+                                        None, None, None, "secondary_debugstats")
         config_data = self.get_data_from_config_json(self.configfile)
         # Expecting few extra connections(Number of GSi clients) than concurrency in config file
-        ret = self.metrics.verify_series_in_limits(db, config_data["Concurrency"] + 5, "num_connections")
+        ret = self.metrics.verify_series_in_limits(db,
+                                                   config_data["Concurrency"] + 5,
+                                                   "num_connections")
         if not ret:
             raise Exception('Validation for num_connections failed')
 
     @with_stats
     def apply_scanworkload(self, path_to_tool="/opt/couchbase/bin/cbindexperf"):
         rest_username, rest_password = self.cluster_spec.rest_credentials
-        status = run_cbindexperf(path_to_tool, self.index_nodes[0], rest_username, rest_password, self.configfile)
+        status = run_cbindexperf(path_to_tool, self.index_nodes[0],
+                                 rest_username, rest_password, self.configfile)
         if status != 0:
             raise Exception('Scan workload could not be applied')
         else:
@@ -117,8 +121,8 @@ class SecondaryIndexTest(PerfTest):
         return self.remote.get_disk_usage(index, human_readable=False)
 
     def change_scan_range(self, iteration):
-        num_hot_items = \
-            int(self.test_config.access_settings.items * self.test_config.access_settings.working_set / 100.0)
+        working_set = self.test_config.access_settings.working_set / 100
+        num_hot_items = int(self.test_config.access_settings.items * working_set)
 
         with open(self.configfile, "r") as jsonFile:
             data = json.load(jsonFile)
@@ -263,7 +267,8 @@ class MultipleIncrementalSecondaryIndexTest(InitialandIncrementalSecondaryIndexT
                                                       list(self.indexes.keys()),
                                                       numitems)
             self.disk_usage[i] = \
-                self.print_index_disk_usage(text="After running incremental load for {} iteration/s =>\n".format(i))
+                self.print_index_disk_usage(
+                    text="After running incremental load for {} iteration/s =>\n".format(i))
             self.memory_usage[i] = self.remote.get_indexer_process_memory()
             time.sleep(30)
 

@@ -97,7 +97,9 @@ class SyncGen:
                         logger.info('RC1 {}'.format(v.rc))
                         raise
 
-        except (exceptions.TimeoutError, exceptions.TemporaryFailError, exceptions.NetworkError) as e:
+        except (exceptions.TimeoutError,
+                exceptions.TemporaryFailError,
+                exceptions.NetworkError) as e:
             # Similar to above, crack and retry failed.
             for k, v in e.all_results.items():
                 if v.success:

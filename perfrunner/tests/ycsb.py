@@ -141,10 +141,10 @@ class YCSBTest(YCSBdata):
                 for idx in range(0, length):
                     if self.ycsb.index == "primary":
                         statement = "create primary index i" \
-                                    + str(idx) + " on `" + self.ycsb.bucket.split('=')[1] + "`"
+                            + str(idx) + " on `" + self.ycsb.bucket.split('=')[1] + "`"
                     else:
                         statement = "create index wle_idx_" \
-                                    + str(idx) + " on `" + self.ycsb.bucket.split('=')[1] + "`(meta().id)'"
+                            + str(idx) + " on `" + self.ycsb.bucket.split('=')[1] + "`(meta().id)'"
                     self.rest.exec_n1ql_statement(host, statement)
                 break
 

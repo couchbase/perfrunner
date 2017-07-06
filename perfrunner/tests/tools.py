@@ -1,32 +1,14 @@
 import os
 import time
 
-import requests
-
-from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.tests import PerfTest
-from perfrunner.utils.install import CouchbaseInstaller
 
 
 class BackupRestoreTest(PerfTest):
 
-    def download_tools(self):
-        if self.rest.is_community(self.master_node):
-            edition = 'community'
-        else:
-            edition = 'enterprise'
-
-        options = type("Options", (), {"verbose": False, "version": self.build})
-        installer = CouchbaseInstaller(self.cluster_spec, options=options)
-        url = installer.find_package(edition=edition)
-
-        logger.info('Downloading "{}"'.format(url))
-        with open('couchbase.rpm', 'wb') as fh:
-            resp = requests.get(url)
-            fh.write(resp.content)
-
+    def extract_tools(self):
         local.extract_cb(filename='couchbase.rpm')
 
     def flush_buckets(self):
@@ -51,7 +33,7 @@ class BackupRestoreTest(PerfTest):
                       wrapper=self.rest.is_community(self.master_node))
 
     def run(self):
-        self.download_tools()
+        self.extract_tools()
 
         self.load()
         self.wait_for_persistence()
@@ -128,7 +110,7 @@ class MergeTest(BackupRestoreTest):
         )
 
     def run(self):
-        self.download_tools()
+        self.extract_tools()
 
         self.load()
         self.wait_for_persistence()
@@ -283,7 +265,7 @@ class ImportSampleDataTest(ImportTest):
         )
 
     def run(self):
-        self.download_tools()
+        self.extract_tools()
 
         time_elapsed = self.import_data()
 

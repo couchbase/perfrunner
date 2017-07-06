@@ -89,6 +89,16 @@ class CouchbaseInstaller:
             return True
         return False
 
+    def download(self):
+        """Download and save a copy of the specified package."""
+        if self.remote.package == 'rpm':
+            logger.info('Saving a local copy of {}'.format(self.url))
+            with open('couchbase.rpm', 'wb') as fh:
+                resp = requests.get(self.url)
+                fh.write(resp.content)
+        else:
+            logger.interrupt('Unsupported package format')
+
     def kill_processes(self):
         self.remote.kill_processes()
 
@@ -126,6 +136,9 @@ def get_args():
     parser.add_argument('--verbose',
                         action='store_true',
                         help='enable verbose logging')
+    parser.add_argument('--local-copy',
+                        action='store_true',
+                        help='save a local copy of a package')
 
     return parser.parse_args()
 
@@ -138,6 +151,9 @@ def main():
 
     installer = CouchbaseInstaller(cluster_spec, args)
     installer.install()
+
+    if args.local_copy:
+        installer.download()
 
 
 if __name__ == '__main__':

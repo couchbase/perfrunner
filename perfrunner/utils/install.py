@@ -113,17 +113,17 @@ class CouchbaseInstaller:
 def get_args():
     parser = ArgumentParser()
 
-    parser.add_argument('-v', '--url', dest='version',
+    parser.add_argument('-v', '--version', '--url',
                         required=True,
                         help='the build version or the HTTP URL to a package')
-    parser.add_argument('-c', '--cluster', dest='cluster_spec_fname',
+    parser.add_argument('-c', '--cluster',
                         required=True,
                         help='the path to a cluster specification file')
-    parser.add_argument('-e', dest='edition',
+    parser.add_argument('-e', '--edition',
                         choices=['enterprise', 'community'],
                         default='enterprise',
                         help='the cluster edition')
-    parser.add_argument('--verbose', dest='verbose',
+    parser.add_argument('--verbose',
                         action='store_true',
                         help='enable verbose logging')
 
@@ -134,7 +134,7 @@ def main():
     args = get_args()
 
     cluster_spec = ClusterSpec()
-    cluster_spec.parse(fname=args.cluster_spec_fname)
+    cluster_spec.parse(fname=args.cluster)
 
     installer = CouchbaseInstaller(cluster_spec, args)
     installer.install()

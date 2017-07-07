@@ -270,13 +270,12 @@ def run_ycsb(host, bucket, password, action, workload, items, workers,
     cmd = 'bin/ycsb {action} couchbase2 ' \
         '-P {workload} ' \
         '-p recordcount={items} ' \
-        '-p insertstart={insertstart} ' \
+        '-p writeallfields=true ' \
         '-p threadcount={workers} ' \
         '-p couchbase.host={host} ' \
         '-p couchbase.bucket={bucket} ' \
         '-p couchbase.password={password} ' \
         '-p couchbase.upsert=true ' \
-        '-p couchbase.writeallfields=true ' \
         '-p couchbase.boost=48 ' \
         '-p couchbase.epoll=true ' \
         '-p exportfile=ycsb_{action}_{instance}.log'
@@ -291,7 +290,7 @@ def run_ycsb(host, bucket, password, action, workload, items, workers,
     cmd = cmd.format(host=host, bucket=bucket, password=password,
                      action=action, workload=workload,
                      items=items, ops=ops, workers=workers, time=time,
-                     insertstart=instance * items, instance=instance)
+                     instance=instance)
 
     logger.info('Running: {}'.format(cmd))
     with lcd('YCSB'):

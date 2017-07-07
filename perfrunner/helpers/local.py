@@ -275,6 +275,7 @@ def run_ycsb(host, bucket, password, action, workload, items, workers,
         '-p couchbase.host={host} ' \
         '-p couchbase.bucket={bucket} ' \
         '-p couchbase.password={password} ' \
+        '-p couchbase.writeallfields=true ' \
         '-p couchbase.boost=48 ' \
         '-p couchbase.epoll=true ' \
         '-p exportfile=ycsb_{action}_{instance}.log'

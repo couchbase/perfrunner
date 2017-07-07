@@ -79,6 +79,10 @@ class RemoteWorkerManager:
         self.terminate()
         self.start()
 
+    @property
+    def is_remote(self) -> bool:
+        return True
+
     def next_queue(self) -> str:
         return next(self.queues)
 
@@ -90,11 +94,6 @@ class RemoteWorkerManager:
             logger.info('Starting remote Celery worker, host={}'.format(worker))
             perfrunner_home = os.path.join(self.WORKER_HOME, 'perfrunner')
             self.remote.start_celery_worker(worker, perfrunner_home)
-
-    def init_ycsb_repo(self):
-        self.remote.clone_ycsb(repo=self.test_config.ycsb_settings.repo,
-                               branch=self.test_config.ycsb_settings.branch,
-                               worker_home=self.WORKER_HOME)
 
     def run_tasks(self,
                   task: Callable,
@@ -136,6 +135,10 @@ class LocalWorkerManager(RemoteWorkerManager):
         self.start()
         self.ensure_queue_exists()
 
+    @property
+    def is_remote(self) -> bool:
+        return False
+
     def next_queue(self) -> str:
         return 'local'
 
@@ -161,10 +164,6 @@ class LocalWorkerManager(RemoteWorkerManager):
     def start(self):
         logger.info('Starting local Celery worker')
         local.start_celery_worker(queue=self.next_queue())
-
-    def init_ycsb_repo(self):
-        local.clone_ycsb(repo=self.test_config.ycsb_settings.repo,
-                         branch=self.test_config.ycsb_settings.branch)
 
     def terminate(self):
         logger.info('Terminating Celery workers')

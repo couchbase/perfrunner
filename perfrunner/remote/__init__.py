@@ -1,4 +1,4 @@
-from fabric.api import cd, run, settings, shell_env
+from fabric.api import cd, get, run, settings, shell_env
 from logger import logger
 
 from perfrunner.remote.context import all_clients
@@ -54,3 +54,9 @@ class Remote:
         logger.info('Cloning YCSB repository: {}'.format(repo))
         with cd(worker_home), cd('perfrunner'):
             run('git clone -q -b {} {}'.format(branch, repo))
+
+    @all_clients
+    def get_export_files(self, worker_home: str):
+        logger.info('Collecting YCSB export files')
+        with cd(worker_home), cd('perfrunner'):
+            get('YCSB/ycsb_run_*.log', local_path='YCSB/')

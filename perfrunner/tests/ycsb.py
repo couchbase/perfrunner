@@ -1,3 +1,5 @@
+import os
+
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.worker import ycsb_data_load_task, ycsb_task
@@ -15,6 +17,11 @@ class YCSBTest(PerfTest):
         else:
             local.clone_ycsb(repo=self.test_config.ycsb_settings.repo,
                              branch=self.test_config.ycsb_settings.branch)
+
+    def collect_export_files(self):
+        if self.worker_manager.is_remote:
+            os.mkdir('YCSB')
+            self.remote.get_export_files(self.worker_manager.WORKER_HOME)
 
     def load(self, *args, **kwargs):
         PerfTest.load(self, task=ycsb_data_load_task)
@@ -38,6 +45,8 @@ class YCSBTest(PerfTest):
 class YCSBThroughputTest(YCSBTest):
 
     def _report_kpi(self):
+        self.collect_export_files()
+
         self.reporter.post(
             *self.metrics.ycsb_throughput()
         )

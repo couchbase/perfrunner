@@ -65,7 +65,7 @@ def new_cbagent_settings(test: PerfTest):
     else:
         buckets = test.test_config.buckets[:1]
     if hasattr(test, 'ALL_HOSTNAMES'):
-        hostnames = tuple(test.cluster_spec.servers)
+        hostnames = test.cluster_spec.servers
     else:
         hostnames = None
 

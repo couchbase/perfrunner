@@ -69,10 +69,12 @@ class ClusterSpec(Config):
             yield servers[0]
 
     @property
-    def servers(self) -> Iterator[str]:
-        for _, servers in self.clusters:
-            for server in servers:
-                yield server
+    def servers(self) -> List[str]:
+        servers = []
+        for _, cluster_servers in self.clusters:
+            for server in cluster_servers:
+                servers.append(server)
+        return servers
 
     def servers_by_role(self, role: str) -> List[str]:
         has_service = []

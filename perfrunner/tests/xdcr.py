@@ -60,7 +60,7 @@ class XdcrTest(PerfTest):
 
     def configure_wan(self):
         if self.settings.wan_enabled:
-            hostnames = tuple(self.cluster_spec.servers)
+            hostnames = self.cluster_spec.servers
             src_list = [
                 hostname for hostname in hostnames[len(hostnames) // 2:]
             ]

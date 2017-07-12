@@ -264,7 +264,7 @@ class RemoteLinux(Remote):
             '/opt/couchbase/etc/couchbase/static_config')
 
     @single_host
-    def cbrestorefts(self, archive_path, repo_path):
+    def restore_fts(self, archive_path, repo_path):
         cmd = \
             "/opt/couchbase/bin/cbbackupmgr restore " \
             "--archive {} --repo {} --threads 30 " \

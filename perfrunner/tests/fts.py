@@ -34,8 +34,8 @@ class FTSTest(PerfTest):
 
     def restore(self):
         logger.info('Restoring data')
-        self.remote.cbrestorefts(self.test_config.fts_settings.storage,
-                                 self.test_config.fts_settings.repo)
+        self.remote.restore_fts(self.test_config.fts_settings.storage,
+                                self.test_config.fts_settings.repo)
 
     def cleanup_and_restore(self):
         self.delete_index()

@@ -144,8 +144,8 @@ class RebalanceBaselineForFTS(RebalanceTest):
 
     def load(self, *args):
         logger.info('load/restore data to bucket')
-        self.remote.cbrestorefts(self.test_config.fts_settings.storage,
-                                 self.test_config.fts_settings.repo)
+        self.remote.restore_fts(self.test_config.fts_settings.storage,
+                                self.test_config.fts_settings.repo)
 
     def run(self):
         self.load()

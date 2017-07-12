@@ -13,6 +13,7 @@ mem_quota = 30000
 index_mem_quota = 35512
 initial_nodes = 11
 num_buckets = 1
+restrict_kernel_memory = 49390M
 
 [compaction]
 db_percentage = 100
@@ -36,7 +37,6 @@ key_length = 16
 [secondary]
 indexes = myindex:city
 incremental_load_iterations = 6
-restrict_kernel_memory = 49390M
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
 

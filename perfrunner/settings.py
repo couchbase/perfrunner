@@ -149,8 +149,11 @@ class TestCaseSettings:
 class ClusterSettings:
 
     NUM_BUCKETS = 1
+
     INDEX_MEM_QUOTA = 256
     FTS_INDEX_MEM_QUOTA = 512
+
+    RESTRICT_KERNEL_MEMORY = 0
     THROTTLE_CPU = 0
 
     def __init__(self, options: dict):
@@ -167,6 +170,8 @@ class ClusterSettings:
         self.num_vbuckets = options.get('num_vbuckets')
         self.throttle_cpu = int(options.get('throttle_cpu',
                                             self.THROTTLE_CPU))
+        self.restrict_kernel_memory = options.get('restrict_kernel_memory',
+                                                  self.RESTRICT_KERNEL_MEMORY)
 
 
 class StatsSettings:
@@ -516,7 +521,6 @@ class GSISettings:
     STEP_NUM_CONNECTIONS = 0
     MAX_NUM_CONNECTIONS = 0
     RUN_RECOVERY_TEST = 0
-    RESTRICT_KERNEL_MEMORY = 0
     INCREMENTAL_LOAD_ITERATIONS = 0
     SCAN_TIME = 1200
     INCREMENTAL_ONLY = 0
@@ -547,8 +551,6 @@ class GSISettings:
                                                  self.RUN_RECOVERY_TEST))
         self.incremental_only = int(options.get('incremental_only',
                                                 self.INCREMENTAL_ONLY))
-        self.restrict_kernel_memory = options.get('restrict_kernel_memory',
-                                                  self.RESTRICT_KERNEL_MEMORY)
         self.incremental_load_iterations = int(options.get('incremental_load_iterations',
                                                            self.INCREMENTAL_LOAD_ITERATIONS))
         self.scan_time = int(options.get('scan_time', self.SCAN_TIME))

@@ -13,6 +13,7 @@ mem_quota = 15000
 index_mem_quota = 35754
 initial_nodes = 11
 num_buckets = 1
+restrict_kernel_memory = 51693M
 
 [compaction]
 db_percentage = 100
@@ -39,7 +40,6 @@ cbindexperf_configfile = tests/gsi/plasma/config/config_scanthr_plasma.json
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
 indexer.settings.gc_percent = 200
-restrict_kernel_memory = 51693M
 
 [access]
 creates = 10

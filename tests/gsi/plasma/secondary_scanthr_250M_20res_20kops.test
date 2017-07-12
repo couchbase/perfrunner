@@ -14,6 +14,7 @@ mem_quota = 12000
 index_mem_quota = 14885
 initial_nodes = 11
 num_buckets = 1
+restrict_kernel_memory = 29607M
 
 [compaction]
 db_percentage = 100
@@ -37,7 +38,6 @@ key_length = 16
 [secondary]
 indexes = myindex:city
 incremental_only = 1
-restrict_kernel_memory = 29607M
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
 cbindexperf_configfile = tests/gsi/plasma/config/config_scanthr_dgm_plasma.json

@@ -5,13 +5,13 @@ from fabric.api import execute, parallel, settings
 @decorator
 def all_hosts(task, *args, **kwargs):
     self = args[0]
-    return execute(parallel(task), *args, hosts=self.hosts, **kwargs)
+    return execute(parallel(task), *args, hosts=self.cluster_spec.servers, **kwargs)
 
 
 @decorator
 def single_host(task, *args, **kwargs):
     self = args[0]
-    with settings(host_string=self.hosts[0]):
+    with settings(host_string=self.cluster_spec.servers[0]):
         return task(*args, **kwargs)
 
 

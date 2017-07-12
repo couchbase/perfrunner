@@ -11,7 +11,6 @@ class Remote:
 
     def __init__(self, cluster_spec, test_config, os):
         self.os = os
-        self.hosts = cluster_spec.servers
         self.cluster_spec = cluster_spec
         self.test_config = test_config
 

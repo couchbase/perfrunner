@@ -22,13 +22,6 @@ def all_clients(task, *args, **kwargs):
 
 
 @decorator
-def single_client(task, *args, **kwargs):
-    self = args[0]
-    with settings(host_string=self.cluster_spec.workers[0]):
-        return task(*args, **kwargs)
-
-
-@decorator
 def index_node(task, *args, **kwargs):
     self = args[0]
     index_node = self.cluster_spec.servers_by_role('index')[0]

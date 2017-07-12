@@ -325,3 +325,8 @@ def start_celery_worker(queue):
 def clone_ycsb(repo: str, branch: str):
     logger.info('Cloning YCSB repository: {}'.format(repo))
     local('git clone -q -b {} {}'.format(branch, repo))
+
+
+def get_indexer_heap_profile(indexer: str) -> str:
+    cmd = 'go tool pprof --text http://{}:9102/debug/pprof/heap'.format(indexer)
+    return local(cmd, capture=True)

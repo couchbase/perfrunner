@@ -6,7 +6,11 @@ import time
 from cbagent.stores import SerieslyStore
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
-from perfrunner.helpers.local import kill_process, run_cbindexperf
+from perfrunner.helpers.local import (
+    get_indexer_heap_profile,
+    kill_process,
+    run_cbindexperf,
+)
 from perfrunner.tests import PerfTest, TargetIterator
 from perfrunner.tests.rebalance import RebalanceTest
 
@@ -113,7 +117,7 @@ class SecondaryIndexTest(PerfTest):
         logger.info("Index storage stats:\n{}".format(
             self.rest.get_index_storage_stats(self.index_nodes[0])))
         logger.info("Indexer heap profile:\n{}".format(
-            self.remote.get_indexer_heap_profile(self.index_nodes[0])))
+            get_indexer_heap_profile(self.index_nodes[0])))
         if self.storage == 'plasma':
             logger.info("Index storage stats mm:\n{}".format(
                 self.rest.get_index_storage_stats_mm(self.index_nodes[0])))

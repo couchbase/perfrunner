@@ -7,12 +7,7 @@ from fabric.exceptions import CommandTimeout, NetworkError
 from logger import logger
 from perfrunner.helpers.misc import uhex
 from perfrunner.remote import Remote
-from perfrunner.remote.context import (
-    all_hosts,
-    index_node,
-    single_client,
-    single_host,
-)
+from perfrunner.remote.context import all_hosts, index_node, single_host
 
 
 class RemoteLinux(Remote):
@@ -365,12 +360,6 @@ class RemoteLinux(Remote):
     def unset_master_password(self):
         logger.info('Disabling encrypted secrets')
         run('systemctl unset-environment CB_MASTER_PASSWORD')
-
-    @single_client
-    def get_indexer_heap_profile(self, indexer):
-        logger.info('Get indexer heap profile')
-        cmd = "go tool pprof --text http://{}:9102/debug/pprof/heap".format(indexer)
-        return run(cmd)
 
     def grub_config(self):
         logger.info('Changing GRUB configuration')

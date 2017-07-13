@@ -356,15 +356,6 @@ class RemoteLinux(Remote):
         data = run("ps -eo rss,comm | grep indexer")
         return int(data.split()[0])
 
-    @index_node
-    def check_process_running(self, process):
-        pid = run("pidof {}".format(process))
-        if not pid:
-            logger.info('Process {} is not running.'.format(process))
-            return False
-        logger.info('Process {} is running, with pid {}'.format(process, pid))
-        return True
-
     @all_hosts
     def set_master_password(self, password='password'):
         logger.info('Enabling encrypted secrets')

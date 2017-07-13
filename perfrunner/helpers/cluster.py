@@ -67,12 +67,12 @@ class ClusterManager:
             curr_settings = pretty_dict(curr_settings)
             logger.info("Index settings: {}".format(curr_settings))
 
-    def set_services_on_master(self):
+    def set_services(self):
         if not self.is_compatible(min_release='4.0.0'):
             return
 
-        for master in self.cluster_spec.masters:
-            self.rest.set_services(master, self.cluster_spec.roles[master])
+        for server in self.cluster_spec.servers:
+            self.rest.set_services(server, self.cluster_spec.roles[server])
 
     def add_nodes(self):
         for (_, servers), initial_nodes in zip(self.cluster_spec.clusters,

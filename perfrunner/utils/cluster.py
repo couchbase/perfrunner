@@ -43,7 +43,7 @@ def main():
 
     cm.configure_internal_settings()
     cm.set_data_path()
-    cm.set_services_on_master()
+    cm.set_services()
     cm.rename()
     cm.set_mem_quota()
     cm.set_auth()

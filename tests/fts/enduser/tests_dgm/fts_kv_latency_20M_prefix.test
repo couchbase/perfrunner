@@ -1,0 +1,37 @@
+[test_case]
+test = perfrunner.tests.fts.FTSLatencyTest
+title = PrefixQuery, 20M docs, 500 updates/sec kv load, 64GB RAM
+component = fts
+category = dgmlatency
+
+
+[stats]
+lat_interval = 0.1
+
+[access]
+time = 1200
+fts_updates_swap = 100
+workers = 2
+throughput = 500
+
+[cluster]
+mem_quota = 80000
+initial_nodes = 2
+num_buckets = 1
+fts_index_mem_quota = 20000
+restrict_kernel_memory = 40G
+
+[fts]
+items = 20000000
+name  = perf_fts_index
+port = 8094
+worker= 1
+type = prefix
+query_file = tests/fts/enduser/data/prefix.txt
+query_size = 10
+logfile = /tmp/fts_prefix_enduser.txt
+orderby = q0b00001110
+backup_path = /fts/backup
+repo_path = fts_generic_20M
+field = text
+index_configfile = tests/fts/enduser/index/leveled.json

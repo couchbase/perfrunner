@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.ycsb.YCSBThroughputTest
-title = Avg Throughput (ops/sec), Workload A, 20M items, 3 nodes
+title = Avg Throughput (ops/sec), Workload A, 20M items, 3 nodes, throttled CPU
 component = YCSB
 category = workloada
 
@@ -8,6 +8,7 @@ category = workloada
 mem_quota = 40960
 initial_nodes = 3
 num_buckets = 1
+throttle_cpu = 1
 
 [load]
 workload_path = workloads/workloada

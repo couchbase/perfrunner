@@ -1,0 +1,32 @@
+[test_case]
+test = perfrunner.tests.ycsb.YCSBN1QLThroughputTest
+title = Avg Throughput (queries/sec), Workload E, MOI, 4 nodes
+component = YCSB
+category = workloade
+
+[ycsb]
+repo = git://github.com/couchbaselabs/YCSB.git
+branch = latest
+
+[cluster]
+mem_quota = 20480
+index_mem_quota = 30720
+initial_nodes = 4
+num_buckets = 1
+
+[load]
+workload_path = workloads/workloade
+items = 20000000
+workers = 160
+
+[n1ql]
+indexes =
+    primary_idx::CREATE PRIMARY INDEX {name} ON `{bucket}`;
+
+[access]
+workload_path = workloads/workloade
+items = 20000000
+ops = 1000000000
+time = 1200
+workers = 120
+worker_instances = 5

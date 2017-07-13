@@ -58,4 +58,6 @@ class Remote:
     def get_export_files(self, worker_home: str):
         logger.info('Collecting YCSB export files')
         with cd(worker_home), cd('perfrunner'):
-            get('YCSB/ycsb_run_*.log', local_path='YCSB/')
+            r = run('stat YCSB/ycsb_run_*.log', quiet=True)
+            if not r.return_code:
+                get('YCSB/ycsb_run_*.log', local_path='YCSB/')

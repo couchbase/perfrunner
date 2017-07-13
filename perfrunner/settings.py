@@ -675,26 +675,12 @@ class FtsSettings:
         return str(self.__dict__)
 
 
-class YcsbSettings:
+class YCSBSettings:
 
     REPO = 'git://github.com/brianfrankcooper/YCSB.git'
     BRANCH = 'master'
 
     def __init__(self, options: dict):
-        self.sdk = options.get("sdk")
-        self.bucket = options.get("bucket")
-        self.jvm = options.get("jvm-args")
-        self.threads = options.get("threads")
-        self.parameters = options.get("parameters")
-        self.workload = options.get("workload_path")
-        self.size = options.get("size")
-        self.reccount = options.get("recordcount")
-        self.opcount = options.get("operationcount")
-        self.path = options.get("path")
-        self.log_file = options.get("export_file")
-        self.log_path = options.get("export_file_path")
-        self.index = options.get("index")
-
         self.repo = options.get('repo', self.REPO)
         self.branch = options.get('branch', self.BRANCH)
 
@@ -836,9 +822,9 @@ class TestConfig(Config):
         return FtsSettings(options)
 
     @property
-    def ycsb_settings(self) -> YcsbSettings:
+    def ycsb_settings(self) -> YCSBSettings:
         options = self._get_options_as_dict('ycsb')
-        return YcsbSettings(options)
+        return YCSBSettings(options)
 
     def get_n1ql_query_definition(self, query_name: str) -> dict:
         return self._get_options_as_dict('n1ql-{}'.format(query_name))

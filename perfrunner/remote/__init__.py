@@ -1,6 +1,6 @@
 from fabric.api import cd, get, run, settings, shell_env
-from logger import logger
 
+from logger import logger
 from perfrunner.remote.context import all_clients
 from perfrunner.settings import REPO
 

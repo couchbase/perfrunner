@@ -7,7 +7,11 @@ from fabric.exceptions import CommandTimeout, NetworkError
 from logger import logger
 from perfrunner.helpers.misc import uhex
 from perfrunner.remote import Remote
-from perfrunner.remote.context import all_hosts, index_node, single_host
+from perfrunner.remote.context import (
+    all_servers,
+    master_server,
+    servers_by_role,
+)
 
 
 class RemoteLinux(Remote):
@@ -25,7 +29,7 @@ class RemoteLinux(Remote):
         else:
             return 'rpm'
 
-    @single_host
+    @master_server
     def detect_centos_release(self) -> str:
         """Detect CentOS release (e.g., 6 or 7).
 
@@ -35,7 +39,7 @@ class RemoteLinux(Remote):
         """
         return run('cat /etc/redhat-release').split()[-2][0]
 
-    @single_host
+    @master_server
     def detect_ubuntu_release(self):
         return run('lsb_release -sr').strip()
 
@@ -83,7 +87,7 @@ class RemoteLinux(Remote):
 
         return bucket_indexes
 
-    @single_host
+    @master_server
     def build_secondary_index(self, index_nodes, bucket, indexes, storage):
         logger.info('building secondary indexes')
 
@@ -93,22 +97,22 @@ class RemoteLinux(Remote):
         # build indexes
         self.build_index(index_nodes[0], bucket_indexes)
 
-    @all_hosts
+    @all_servers
     def reset_swap(self):
         logger.info('Resetting swap')
         run('swapoff --all && swapon --all')
 
-    @all_hosts
+    @all_servers
     def drop_caches(self):
         logger.info('Dropping memory cache')
         run('sync && echo 3 > /proc/sys/vm/drop_caches')
 
-    @all_hosts
+    @all_servers
     def set_swappiness(self):
         logger.info('Changing swappiness to 0')
         run('sysctl vm.swappiness=0')
 
-    @all_hosts
+    @all_servers
     def disable_thp(self):
         for path in (
             '/sys/kernel/mm/transparent_hugepage/enabled',
@@ -117,7 +121,7 @@ class RemoteLinux(Remote):
         ):
             run('echo never > {}'.format(path), quiet=True)
 
-    @all_hosts
+    @all_servers
     def collect_info(self):
         logger.info('Running cbcollect_info')
 
@@ -134,13 +138,13 @@ class RemoteLinux(Remote):
             get('{}'.format(fname))
             run('rm -f {}'.format(fname))
 
-    @all_hosts
+    @all_servers
     def clean_data(self):
         for path in self.cluster_spec.paths:
             run('rm -fr {}/*'.format(path))
         run('rm -fr {}'.format(self.CB_DIR))
 
-    @all_hosts
+    @all_servers
     def kill_processes(self):
         logger.info('Killing {}'.format(', '.join(self.PROCESSES)))
         run('killall -9 {}'.format(' '.join(self.PROCESSES)),
@@ -152,7 +156,7 @@ class RemoteLinux(Remote):
             run('killall -9 {}'.format(' '.join(self.PROCESSES)),
                 warn_only=True, quiet=True)
 
-    @all_hosts
+    @all_servers
     def uninstall_couchbase(self):
         logger.info('Uninstalling Couchbase Server')
         if self.package == 'deb':
@@ -167,7 +171,7 @@ class RemoteLinux(Remote):
     def upload_iss_files(self, release: str):
         pass
 
-    @all_hosts
+    @all_servers
     def install_couchbase(self, url: str):
         self.wget(url, outdir='/tmp')
         filename = urlparse(url).path.split('/')[-1]
@@ -179,12 +183,12 @@ class RemoteLinux(Remote):
         else:
             run('yes | rpm -i /tmp/{}'.format(filename))
 
-    @all_hosts
+    @all_servers
     def restart(self):
         logger.info('Restarting server')
         run('systemctl restart couchbase-server', pty=False)
 
-    @all_hosts
+    @all_servers
     def restart_with_alternative_num_vbuckets(self, num_vbuckets):
         logger.info('Changing number of vbuckets to {}'.format(num_vbuckets))
         run('systemctl set-environment COUCHBASE_NUM_VBUCKETS={}'
@@ -192,12 +196,12 @@ class RemoteLinux(Remote):
         run('systemctl restart couchbase-server', pty=False)
         run('systemctl unset-environment COUCHBASE_NUM_VBUCKETS')
 
-    @all_hosts
+    @all_servers
     def stop_server(self):
         logger.info('Stopping Couchbase Server')
         run('systemctl stop couchbase-server', pty=False)
 
-    @all_hosts
+    @all_servers
     def start_server(self):
         logger.info('Starting Couchbase Server')
         run('systemctl start couchbase-server', pty=False)
@@ -210,13 +214,13 @@ class RemoteLinux(Remote):
         stdout = run('ifdata -pa {}'.format(_if))
         return stdout.strip()
 
-    @all_hosts
+    @all_servers
     def disable_wan(self):
         logger.info('Disabling WAN effects')
         _if = self.detect_if()
         run('tc qdisc del dev {} root'.format(_if), warn_only=True, quiet=True)
 
-    @all_hosts
+    @all_servers
     def enable_wan(self):
         logger.info('Enabling WAN effects')
         _if = self.detect_if()
@@ -229,7 +233,7 @@ class RemoteLinux(Remote):
         ):
             run(cmd.format(_if))
 
-    @all_hosts
+    @all_servers
     def filter_wan(self, src_list, dest_list):
         logger.info('Filtering WAN effects')
         _if = self.detect_if()
@@ -243,7 +247,7 @@ class RemoteLinux(Remote):
             run('tc filter add dev {} protocol ip prio 1 u32 '
                 'match ip dst {} flowid 1:11'.format(_if, ip))
 
-    @all_hosts
+    @all_servers
     def detect_core_dumps(self):
         # Based on kernel.core_pattern = /data/core-%e-%p
         r = run('ls /data/core*', quiet=True)
@@ -252,13 +256,13 @@ class RemoteLinux(Remote):
         else:
             return []
 
-    @all_hosts
+    @all_servers
     def tune_log_rotation(self):
         logger.info('Tune log rotation so that it happens less frequently')
         run('sed -i "s/num_files, [0-9]*/num_files, 50/" '
             '/opt/couchbase/etc/couchbase/static_config')
 
-    @single_host
+    @master_server
     def restore_fts(self, archive_path, repo_path):
         cmd = \
             "/opt/couchbase/bin/cbbackupmgr restore " \
@@ -273,7 +277,7 @@ class RemoteLinux(Remote):
         logger.info("Running: {}".format(cmd))
         run(cmd)
 
-    @all_hosts
+    @all_servers
     def fio(self, config):
         logger.info('Running fio job: {}'.format(config))
         filename = os.path.basename(config)
@@ -317,7 +321,7 @@ class RemoteLinux(Remote):
     def num_cores(self):
         return int(run('lscpu | grep socket').strip().split()[-1])
 
-    @all_hosts
+    @all_servers
     def disable_cpu(self):
         logger.info('Throttling CPU resources')
         reserved_cores = {i for i in range(0, 2 * self.num_cores, 2)}
@@ -326,37 +330,35 @@ class RemoteLinux(Remote):
         for i in all_cores - reserved_cores:
             run('echo 0 > /sys/devices/system/cpu/cpu{}/online'.format(i))
 
-    @all_hosts
+    @all_servers
     def enable_cpu(self):
         logger.info('Enabling all CPU cores')
         for i in range(self.num_vcpu):
             run('echo 1 > /sys/devices/system/cpu/cpu{}/online'.format(i))
 
-    @index_node
+    @servers_by_role(roles=['index'])
     def kill_process_on_index_node(self, process):
         logger.info('Killing following process on index node: {}'.format(process))
         run("killall {}".format(process))
 
-    @index_node
-    def get_disk_usage(self, path, human_readable=True):
-        logger.info('Get disk usage')
-        if human_readable:
-            return run("du -h {}".format(path))
-        data = run("du -sb {}/@2i".format(path))
-        return int(data.split()[0])
+    def get_disk_usage(self, host, path, human_readable=True):
+        with settings(host_string=host):
+            if human_readable:
+                return run("du -h {}".format(path))
+            data = run("du -sb {}/@2i".format(path))
+            return int(data.split()[0])
 
-    @index_node
-    def get_indexer_process_memory(self):
-        logger.info('Get indexer process memory')
-        data = run("ps -eo rss,comm | grep indexer")
-        return int(data.split()[0])
+    def get_indexer_rss(self, host):
+        with settings(host_string=host):
+            data = run("ps -eo rss,comm | grep indexer")
+            return int(data.split()[0])
 
-    @all_hosts
+    @all_servers
     def set_master_password(self, password='password'):
         logger.info('Enabling encrypted secrets')
         run('systemctl set-environment CB_MASTER_PASSWORD={}'.format(password))
 
-    @all_hosts
+    @all_servers
     def unset_master_password(self):
         logger.info('Disabling encrypted secrets')
         run('systemctl unset-environment CB_MASTER_PASSWORD')
@@ -369,14 +371,14 @@ class RemoteLinux(Remote):
         logger.info('Rebooting the node')
         run('reboot', quiet=True, pty=False)
 
-    @index_node
+    @servers_by_role(roles=['index'])
     def tune_memory_settings(self, size):
         logger.info('Changing kernel memory to {}'.format(size))
         run("sed -i 's/quiet/quiet mem={}/' /etc/default/grub".format(size))
         self.grub_config()
         self.reboot()
 
-    @index_node
+    @servers_by_role(roles=['index'])
     def reset_memory_settings(self):
         logger.info('Resetting kernel memory settings')
         run("sed -ir 's/ mem=[0-9]*[kmgKMG]//' /etc/default/grub")

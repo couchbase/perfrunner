@@ -111,18 +111,25 @@ class SecondaryIndexTest(PerfTest):
             logger.info('Scan workload applied')
 
     def print_index_disk_usage(self, text=""):
-        (data, index) = self.cluster_spec.paths
-        logger.info("{}".format(text))
-        logger.info("Disk usage:\n{}".format(self.remote.get_disk_usage(index)))
-        logger.info("Index storage stats:\n{}".format(
-            self.rest.get_index_storage_stats(self.index_nodes[0])))
-        logger.info("Indexer heap profile:\n{}".format(
-            get_indexer_heap_profile(self.index_nodes[0])))
-        if self.storage == 'plasma':
-            logger.info("Index storage stats mm:\n{}".format(
-                self.rest.get_index_storage_stats_mm(self.index_nodes[0])))
+        if text:
+            logger.info("{}".format(text))
 
-        return self.remote.get_disk_usage(index, human_readable=False)
+        data_path, index_path = self.cluster_spec.paths
+        disk_usage = self.remote.get_disk_usage(self.index_nodes[0], index_path)
+        logger.info("Disk usage:\n{}".format(disk_usage))
+
+        storage_stats = self.rest.get_index_storage_stats(self.index_nodes[0])
+        logger.info("Index storage stats:\n{}".format(storage_stats))
+
+        heap_profile = get_indexer_heap_profile(self.index_nodes[0])
+        logger.info("Indexer heap profile:\n{}".format(heap_profile))
+
+        if self.storage == 'plasma':
+            stats = self.rest.get_index_storage_stats_mm(self.index_nodes[0])
+            logger.info("Index storage stats mm:\n{}".format(stats))
+
+        return self.remote.get_disk_usage(self.index_nodes[0], index_path,
+                                          human_readable=False)
 
     def change_scan_range(self, iteration):
         working_set = self.test_config.access_settings.working_set / 100
@@ -273,7 +280,7 @@ class MultipleIncrementalSecondaryIndexTest(InitialandIncrementalSecondaryIndexT
             self.disk_usage[i] = \
                 self.print_index_disk_usage(
                     text="After running incremental load for {} iteration/s =>\n".format(i))
-            self.memory_usage[i] = self.remote.get_indexer_process_memory()
+            self.memory_usage[i] = self.remote.get_indexer_rss(self.index_nodes[0])
             time.sleep(30)
 
     def run(self):

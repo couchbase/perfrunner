@@ -6,7 +6,7 @@ from fabric.exceptions import CommandTimeout
 from logger import logger
 from perfrunner.helpers.misc import uhex
 from perfrunner.remote import Remote
-from perfrunner.remote.context import all_hosts
+from perfrunner.remote.context import all_servers
 
 
 class RemoteWindows(Remote):
@@ -47,7 +47,7 @@ class RemoteWindows(Remote):
     def detect_ip(self):
         return run('ipconfig | findstr IPv4').split(': ')[1]
 
-    @all_hosts
+    @all_servers
     def collect_info(self):
         logger.info('Running cbcollect_info')
 
@@ -60,14 +60,14 @@ class RemoteWindows(Remote):
             get('{}'.format(fname))
             run('rm -f {}'.format(fname))
 
-    @all_hosts
+    @all_servers
     def clean_data(self):
         for path in self.cluster_spec.paths:
             path = path.replace(':', '').replace('\\', '/')
             path = '/cygdrive/{}'.format(path)
             run('rm -fr {}/*'.format(path))
 
-    @all_hosts
+    @all_servers
     def kill_processes(self):
         logger.info('Killing {}'.format(', '.join(self.PROCESSES)))
         run('taskkill /F /T /IM {}'.format(' /IM '.join(self.PROCESSES)),
@@ -111,7 +111,7 @@ class RemoteWindows(Remote):
         with settings(warn_only=True):
             run('rm -fr {}'.format(self.CB_DIR))
 
-    @all_hosts
+    @all_servers
     def uninstall_couchbase(self):
         logger.info('Uninstalling Couchbase Server')
         local_ip = self.detect_ip()
@@ -128,7 +128,7 @@ class RemoteWindows(Remote):
         logger.info('Removing files on {}'.format(local_ip))
         self.clean_installation()
 
-    @all_hosts
+    @all_servers
     def upload_iss_files(self, release: str):
         logger.info('Copying {} ISS files'.format(release))
         put('iss/install_{}.iss'.format(release),
@@ -152,7 +152,7 @@ class RemoteWindows(Remote):
             logger.info('Checking files on {}'.format(local_ip))
             time.sleep(5)
 
-    @all_hosts
+    @all_servers
     def install_couchbase(self, url: str):
         logger.info('Installing the package')
         local_ip = self.detect_ip()
@@ -186,24 +186,24 @@ class RemoteWindows(Remote):
     def filter_wan(self, *args):
         pass
 
-    @all_hosts
+    @all_servers
     def detect_core_dumps(self):
         return []
 
     def tune_log_rotation(self):
         pass
 
-    @all_hosts
+    @all_servers
     def stop_server(self):
         logger.info('Stopping Couchbase Server')
         run('net stop CouchbaseServer')
 
-    @all_hosts
+    @all_servers
     def start_server(self):
         logger.info('Starting Couchbase Server')
         run('net start CouchbaseServer')
 
-    @all_hosts
+    @all_servers
     def get_system_backup_version(self):
         # Return version of the latest system state backup
         stdout = run('wbadmin get versions | grep identifier')

@@ -1,29 +1,49 @@
+from typing import Callable, List
+
 from decorator import decorator
 from fabric.api import execute, parallel, settings
 
 
 @decorator
-def all_hosts(task, *args, **kwargs):
-    self = args[0]
-    return execute(parallel(task), *args, hosts=self.cluster_spec.servers, **kwargs)
+def all_servers(task, *args, **kwargs):
+    """Execute the decorated function on all remote server nodes."""
+    helper = args[0]
+
+    hosts = helper.cluster_spec.servers
+
+    return execute(parallel(task), *args, hosts=hosts, **kwargs)
 
 
 @decorator
-def single_host(task, *args, **kwargs):
+def master_server(task: Callable, *args, **kwargs):
+    """Execute the decorated function on master node."""
     self = args[0]
     with settings(host_string=self.cluster_spec.servers[0]):
         return task(*args, **kwargs)
 
 
-@decorator
-def all_clients(task, *args, **kwargs):
-    self = args[0]
-    return execute(parallel(task), *args, hosts=self.cluster_spec.workers, **kwargs)
+def servers_by_role(roles: List[str]):
+    """Execute the decorated function on remote server nodes filtered by role.
+    """
+
+    @decorator
+    def wrapper(task, *args, **kwargs):
+        helper = args[0]
+
+        hosts = []
+        for role in roles:
+            hosts += helper.cluster_spec.servers_by_role(role=role)
+
+        execute(parallel(task), *args, hosts=hosts, **kwargs)
+
+    return wrapper
 
 
 @decorator
-def index_node(task, *args, **kwargs):
-    self = args[0]
-    index_node = self.cluster_spec.servers_by_role('index')[0]
-    with settings(host_string=index_node):
-        return task(*args, **kwargs)
+def all_clients(task: Callable, *args, **kwargs):
+    """Execute the decorated function on all remote client machines."""
+    helper = args[0]
+
+    hosts = helper.cluster_spec.workers
+
+    execute(parallel(task), *args, hosts=hosts, **kwargs)

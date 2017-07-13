@@ -260,8 +260,8 @@ class ClusterManager:
         if self.test_config.cluster.throttle_cpu:
             self.remote.disable_cpu()
 
-    def indexer_restrict_memory(self):
+    def tune_memory_settings(self):
         kernel_memory = self.test_config.cluster.restrict_kernel_memory
         if kernel_memory:
             self.remote.tune_memory_settings(size=kernel_memory)
-            self.monitor.wait_for_indexer()
+            self.monitor.wait_for_servers()

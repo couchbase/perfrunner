@@ -71,7 +71,7 @@ class PerfTest:
 
         if self.test_config.cluster.restrict_kernel_memory:
             self.remote.reset_memory_settings()
-            self.monitor.wait_for_indexer()
+            self.monitor.wait_for_servers()
 
     def download_certificate(self) -> None:
         cert = self.rest.get_certificate(self.master_node)

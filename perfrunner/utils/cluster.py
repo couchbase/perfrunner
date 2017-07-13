@@ -34,7 +34,7 @@ def main():
     cm = ClusterManager(cluster_spec, test_config, args.verbose)
 
     # Individual nodes
-    cm.indexer_restrict_memory()
+    cm.tune_memory_settings()
     cm.throttle_cpu()
     cm.remote.disable_wan()
     cm.enable_secrets()

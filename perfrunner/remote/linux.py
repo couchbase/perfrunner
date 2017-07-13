@@ -371,14 +371,14 @@ class RemoteLinux(Remote):
         logger.info('Rebooting the node')
         run('reboot', quiet=True, pty=False)
 
-    @servers_by_role(roles=['index'])
+    @servers_by_role(roles=['fts', 'index'])
     def tune_memory_settings(self, size):
         logger.info('Changing kernel memory to {}'.format(size))
         run("sed -i 's/quiet/quiet mem={}/' /etc/default/grub".format(size))
         self.grub_config()
         self.reboot()
 
-    @servers_by_role(roles=['index'])
+    @servers_by_role(roles=['fts', 'index'])
     def reset_memory_settings(self):
         logger.info('Resetting kernel memory settings')
         run("sed -ir 's/ mem=[0-9]*[kmgKMG]//' /etc/default/grub")

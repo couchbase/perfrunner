@@ -315,19 +315,19 @@ class Monitor(RestHelper):
                 time.sleep(self.POLLING_INTERVAL)
         return -1
 
-    def wait_for_indexer(self):
+    def wait_for_servers(self):
         for retry in range(self.MAX_RETRY):
-            logger.info('Waiting for Index nodes')
+            logger.info('Waiting for all servers to be available')
             time.sleep(self.POLLING_INTERVAL_MACHINE_UP)
 
-            for server in self.cluster_spec.servers_by_role('index'):
+            for server in self.cluster_spec.servers:
                 if not self.remote.is_up(server):
                     break
             else:
-                logger.info('All Index nodes are back')
+                logger.info('All nodes are up')
                 return
 
-        logger.interrupt('Index nodes are not up')
+        logger.interrupt('Some nodes are still down')
 
     def monitor_fts_indexing_queue(self, host: str, index: str):
         logger.info('Waiting for indexing to finish')

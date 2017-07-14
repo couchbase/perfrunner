@@ -72,7 +72,9 @@ class ClusterManager:
             return
 
         for server in self.cluster_spec.servers:
-            self.rest.set_services(server, self.cluster_spec.roles[server])
+            roles = self.cluster_spec.roles[server]
+            if 'kv' in roles:
+                self.rest.set_services(server, roles)
 
     def add_nodes(self):
         for (_, servers), initial_nodes in zip(self.cluster_spec.clusters,

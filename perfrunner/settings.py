@@ -1,7 +1,7 @@
 import csv
 import os.path
 from configparser import ConfigParser, NoOptionError, NoSectionError
-from typing import Iterator, List, Tuple
+from typing import Dict, Iterator, List, Tuple
 
 from decorator import decorator
 
@@ -86,7 +86,7 @@ class ClusterSpec(Config):
         return has_service
 
     @property
-    def roles(self) -> dict:
+    def roles(self) -> Dict[str, str]:
         server_roles = {}
         for _, servers in self.config.items('clusters'):
             for server in servers.split():

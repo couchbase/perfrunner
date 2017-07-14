@@ -1,7 +1,8 @@
 ansible==2.3.1.0
-apache-libcloud==2.0.0
 awscli==1.10.58
 billiard==3.5.0.2
+boto3==1.4.4
+botocore==1.5.84
 celery==3.1.25
 cffi==1.7.0
 couchbase==2.2.1
@@ -19,7 +20,6 @@ pep8-naming==0.4.1
 psutil==5.2.0
 pydocstyle==2.0.0
 pycrypto==2.6.1
-python-dateutil==2.6.0
 requests==2.1.0
 sqlalchemy==1.1.7
 twisted==16.2.0

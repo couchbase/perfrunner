@@ -28,6 +28,12 @@ LOGGING_CONFIG = {
             'level': logging.INFO,
             'propagate': True,
         },
+        'boto3': {
+            'level': logging.WARNING,
+        },
+        'botocore': {
+            'level': logging.WARNING,
+        },
         'paramiko': {
             'level': logging.WARNING,
         },

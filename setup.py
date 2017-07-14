@@ -6,7 +6,7 @@ setup(
     name='perfrunner',
     entry_points={
         'console_scripts': [
-            'cloudrunner = perfrunner.utils.cloud.cloudrunner:main',
+            'cloudrunner = perfrunner.utils.cloudrunner:main',
             'cluster = perfrunner.utils.cluster:main',
             'compact = perfrunner.utils.compact:main',
             'debug = perfrunner.utils.debug:main',

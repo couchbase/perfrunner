@@ -330,3 +330,8 @@ def clone_ycsb(repo: str, branch: str):
 def get_indexer_heap_profile(indexer: str) -> str:
     cmd = 'go tool pprof --text http://{}:9102/debug/pprof/heap'.format(indexer)
     return local(cmd, capture=True)
+
+
+def govendor_fetch(path: str, revision: str, package: str):
+    logger.info('Fetching: {} with revision {} and package as {}'.format(path, revision, package))
+    local('govendor fetch {}/{}@{}'.format(path, package, revision))

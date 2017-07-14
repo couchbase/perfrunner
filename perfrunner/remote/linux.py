@@ -392,3 +392,8 @@ class RemoteLinux(Remote):
                 return result.return_code == 0  # 0 means success
             except NetworkError:
                 return False
+
+    @master_server
+    def get_manifest(self):
+        logger.info('Getting manifest from host node')
+        get("{}/manifest.xml".format(self.CB_DIR), local_path="./")

@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.ycsb.YCSBThroughputTest
-title = Avg Throughput (ops/sec), Workload A, 3 nodes
+title = Avg Throughput (ops/sec), Workload A, 3 nodes, throttled CPU, Ephemeral, no replication
 component = YCSB
 category = workloada
 
@@ -8,6 +8,12 @@ category = workloada
 mem_quota = 40960
 initial_nodes = 3
 num_buckets = 1
+throttle_cpu = 1
+
+[bucket]
+bucket_type = ephemeral
+eviction_policy = nruEviction
+replica_number = 0
 
 [load]
 workload_path = workloads/workloada

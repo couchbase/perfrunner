@@ -34,11 +34,9 @@ def main():
     cm = ClusterManager(cluster_spec, test_config, args.verbose)
 
     # Individual nodes
-    cm.disable_secrets()
     cm.tune_memory_settings()
     cm.throttle_cpu()
     cm.remote.disable_wan()
-    cm.enable_secrets()
     cm.tune_logging()
     cm.restart_with_alternative_num_vbuckets()
 

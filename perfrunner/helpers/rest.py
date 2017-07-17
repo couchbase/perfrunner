@@ -580,15 +580,6 @@ class RestHelper:
         api = 'http://{}:9102/stats/storage/mm'.format(host)
         return self.get(url=api).text
 
-    def set_master_password(self, host: str, password: str = 'password'):
-        logger.info('Setting master password at {}'.format(host))
-
-        api = 'http://{}:8091/node/controller/changeMasterPassword'.format(host)
-        data = {
-            'newPassword': password,
-        }
-        self.post(url=api, data=data)
-
     def enable_audit(self, host: str):
         logger.info('Enabling audit')
 

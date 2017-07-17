@@ -353,16 +353,6 @@ class RemoteLinux(Remote):
             data = run("ps -eo rss,comm | grep indexer")
             return int(data.split()[0])
 
-    @all_servers
-    def set_master_password(self, password='password'):
-        logger.info('Enabling encrypted secrets')
-        run('systemctl set-environment CB_MASTER_PASSWORD={}'.format(password))
-
-    @all_servers
-    def unset_master_password(self):
-        logger.info('Disabling encrypted secrets')
-        run('systemctl unset-environment CB_MASTER_PASSWORD')
-
     def grub_config(self):
         logger.info('Changing GRUB configuration')
         run('grub2-mkconfig -o /boot/grub2/grub.cfg')

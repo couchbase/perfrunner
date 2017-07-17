@@ -59,8 +59,6 @@ class PerfTest:
         if self.test_config.test_case.use_workers:
             self.worker_manager.terminate()
 
-        self.remote.unset_master_password()
-
         if self.test_config.cluster.throttle_cpu:
             self.remote.enable_cpu()
 

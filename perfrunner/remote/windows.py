@@ -220,6 +220,3 @@ class RemoteWindows(Remote):
 
     def enable_cpu(self):
         pass
-
-    def unset_master_password(self):
-        pass

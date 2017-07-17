@@ -187,19 +187,6 @@ class ClusterManager:
         for master in self.cluster_spec.masters:
             self.monitor.monitor_node_health(master)
 
-    def disable_secrets(self):
-        self.remote.unset_master_password()
-
-    def enable_secrets(self):
-        if not self.is_compatible(min_release='4.6.0') or \
-                self.remote.os == 'Cygwin' or \
-                self.rest.is_community(self.master_node):
-            return
-
-        for server in self.cluster_spec.servers:
-            self.rest.set_master_password(server)
-        self.remote.set_master_password()
-
     def enable_audit(self):
         if not self.is_compatible(min_release='4.0.0') or \
                 self.rest.is_community(self.master_node):

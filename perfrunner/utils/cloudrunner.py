@@ -118,7 +118,8 @@ def get_args():
                         choices=['c3.2xlarge', 'c3.4xlarge', 'c3.8xlarge'])
     parser.add_argument('--server-type',
                         default='m4.2xlarge',
-                        choices=['m4.2xlarge', 'm4.4xlarge'])
+                        choices=['m4.2xlarge', 'm4.4xlarge', 'r4.2xlarge',
+                                 'r4.4xlarge'])
     parser.add_argument('action',
                         choices=['launch', 'terminate'])
 

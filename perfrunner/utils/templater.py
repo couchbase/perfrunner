@@ -7,8 +7,10 @@ from logger import logger
 from perfrunner.utils.cloudrunner import CloudRunner
 
 MEMORY_QUOTAS = {
-    'm4.2xlarge': 26624,  # 32GB RAM
-    'm4.4xlarge': 56320,  # 64GB RAM
+    'm4.2xlarge': 26624,   # 32GB RAM
+    'm4.4xlarge': 56320,   # 64GB RAM
+    'r4.2xlarge': 54272,   # 61GB RAM
+    'r4.4xlarge': 102400,  # 122GB RAM
 }
 
 OUTPUT_FILE = 'custom'

@@ -57,6 +57,16 @@ def render_spec(template: str):
     store_cfg(content, '.spec')
 
 
+def render_inventory():
+    with open(CloudRunner.EC2_META) as fp:
+        meta = yaml.load(fp)
+        servers = meta.get('servers', {}).values()
+
+    content = render_template(get_templates('inventory.ini'),
+                              servers=servers)
+    store_cfg(content, '.ini')
+
+
 def estimate_num_clients(template: str, threads: int) -> int:
     return max(1, threads // THREADS_PER_CLIENT[template])
 
@@ -89,6 +99,7 @@ def main():
         render_test(args.template, args.instance, args.threads)
     else:
         render_spec(args.template)
+        render_inventory()
 
 
 if __name__ == '__main__':

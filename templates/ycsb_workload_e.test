@@ -1,0 +1,30 @@
+[test_case]
+test = perfrunner.tests.ycsb.YCSBN1QLThroughputTest
+
+[cluster]
+mem_quota = {{ mem_quota }}
+initial_nodes = 1
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+
+[secondary]
+indexer.settings.storage_mode = memory_optimized
+
+[n1ql]
+indexes =
+    primary_idx::CREATE PRIMARY INDEX {name} ON `{bucket}`;
+
+[load]
+workload_path = workloads/workloade
+items = 1000000
+workers = 20
+
+[access]
+workload_path = workloads/workloade
+items = 1000000
+ops = 1000000000
+time = 600
+workers = 20
+worker_instances = {{ worker_instances }}

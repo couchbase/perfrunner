@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.ycsb.YCSBTest
+test = perfrunner.tests.ycsb.YCSBThroughputTest
 
 [cluster]
 mem_quota = {{ mem_quota }}

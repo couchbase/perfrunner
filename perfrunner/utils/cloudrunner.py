@@ -28,12 +28,31 @@ class CloudRunner:
         'SubnetId': 'subnet-40406509',  # PerfVPC
     }
 
+    DEVICE_SETTINGS = {
+        'BlockDeviceMappings': [
+            {
+                'DeviceName': '/dev/sdb',
+                'Ebs': {
+                    'Encrypted': False,
+                    'DeleteOnTermination': True,
+                    'Iops': 20000,
+                    'VolumeSize': 500,
+                    'VolumeType': 'io1',
+                }
+            },
+        ],
+    }
+
     MONITORING_INTERVAL = 2  # seconds
 
     def __init__(self):
         self.ec2 = boto3.resource('ec2', region_name=self.AWS_REGION)
 
     def launch(self, count: int, group: str, instance_type: str) -> List[str]:
+        default_settings = self.EC2_SETTINGS
+        if group == 'servers':
+            default_settings.update(**self.DEVICE_SETTINGS)
+
         instances = self.ec2.create_instances(
             ImageId=self.AMI[group],
             InstanceType=instance_type,

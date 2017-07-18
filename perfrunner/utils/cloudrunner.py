@@ -23,7 +23,6 @@ class CloudRunner:
         'KeyName': 'perf-jenkins',
         'Placement': {
             'AvailabilityZone': 'us-west-2a',
-            'GroupName': 'couchbase-vpc',
         },
         'SecurityGroupIds': ['sg-1aed4460'],  # internal-couchbase
         'SubnetId': 'subnet-40406509',  # PerfVPC

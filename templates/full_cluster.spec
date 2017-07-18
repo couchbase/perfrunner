@@ -1,15 +1,15 @@
 [clusters]
 aws =
     {% for server in servers -%}
-          {{server}}
+        {{server}}:kv,index,n1ql
     {% endfor %}
 
 [clients]
 hosts =
     {% for client in clients -%}
-          {{client}}
+        {{client}}
     {% endfor %}
-credentials = ubuntu:{{ key }}
+credentials = root:couchbase
 
 [storage]
 data = /data
@@ -17,4 +17,4 @@ index = /data
 
 [credentials]
 rest = Administrator:password
-ssh =  ec2-user:{{ key }}
+ssh =  root:couchbase

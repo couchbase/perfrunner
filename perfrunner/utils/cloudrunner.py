@@ -114,8 +114,8 @@ def get_args():
                         default=0,
                         type=int)
     parser.add_argument('--client-type',
-                        default='c3.2xlarge',
-                        choices=['c3.2xlarge', 'c3.4xlarge', 'c3.8xlarge'])
+                        default='c3.4xlarge',
+                        choices=['c3.4xlarge', 'c3.8xlarge'])
     parser.add_argument('--server-type',
                         default='m4.2xlarge',
                         choices=['m4.2xlarge', 'm4.4xlarge', 'r4.2xlarge',

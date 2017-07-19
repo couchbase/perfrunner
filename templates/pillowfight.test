@@ -12,4 +12,5 @@ workers = 20
 [access]
 iterations = 10000
 updates = 50
+workers = {{ workers }}
 worker_instances = {{ worker_instances }}

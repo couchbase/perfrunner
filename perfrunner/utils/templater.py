@@ -43,6 +43,7 @@ def render_test(template: str, instance: str, threads: int):
     worker_instances = estimate_num_clients(template, threads)
     content = render_template(get_templates(template),
                               mem_quota=mem_quota,
+                              workers=THREADS_PER_CLIENT[template],
                               worker_instances=worker_instances)
     store_cfg(content, '.test')
 

@@ -5,7 +5,6 @@ test = perfrunner.tests.ycsb.YCSBN1QLThroughputTest
 mem_quota = {{ mem_quota * 3 // 4}}
 index_mem_quota = {{ mem_quota // 4 }}
 initial_nodes = 1
-num_buckets = 1
 
 [bucket]
 replica_number = 0
@@ -19,13 +18,9 @@ indexes =
 
 [load]
 workload_path = workloads/workloade
-items = 1000000
-workers = 20
+workers = 40
 
 [access]
 workload_path = workloads/workloade
-items = 1000000
 ops = 1000000000
-time = 600
-workers = 20
 worker_instances = {{ worker_instances }}

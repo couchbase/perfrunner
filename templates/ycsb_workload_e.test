@@ -2,7 +2,8 @@
 test = perfrunner.tests.ycsb.YCSBN1QLThroughputTest
 
 [cluster]
-mem_quota = {{ mem_quota }}
+mem_quota = {{ mem_quota * 3 // 4}}
+index_mem_quota = {{ mem_quota // 4 }}
 initial_nodes = 1
 num_buckets = 1
 

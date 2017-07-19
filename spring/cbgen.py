@@ -308,11 +308,12 @@ class FtsGen(CBGen):
                     elif query_type == "facet":
 
                         start_date, end_date = freq.split(':')
-                        temp_query["query"] = tosearch
+                        temp_query["query"] = "text:{}".format(tosearch)
                         temp_query["boost"] = 1
                         self.query_template['fields'] = ["*"]
                         self.query_template["facets"] = {self.settings.field:
-                                                         {"size": 5, "field": self.settings.field,
+                                                         {"size": self.settings.query_size,
+                                                          "field": self.settings.field,
                                                           "date_ranges": [{"name": "end",
                                                                            "end": end_date},
                                                                           {"name": "start",

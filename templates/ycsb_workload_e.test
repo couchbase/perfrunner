@@ -14,7 +14,7 @@ indexer.settings.storage_mode = memory_optimized
 
 [n1ql]
 indexes =
-    primary_idx::CREATE PRIMARY INDEX {name} ON `{bucket}`;
+    primary_idx::CREATE PRIMARY INDEX {name} ON `{bucket}` WITH {{ "nodes": [ {index_nodes} ] }};
 
 [load]
 workload_path = workloads/workloade

@@ -12,16 +12,27 @@ class N1QLTest(PerfTest):
 
     def build_index(self):
         query_node = self.cluster_spec.servers_by_role('n1ql')[0]
+
+        initial_nodes = self.test_config.cluster.initial_nodes[0]
+        index_nodes = self.cluster_spec.servers_by_role('index')[:initial_nodes]
+
         for bucket, index in zip(self.test_config.buckets,
                                  self.test_config.n1ql_settings.indexes):
-            self.create_index(query_node, bucket, index)
+            self.create_index(bucket, index, query_node, index_nodes)
 
-    def create_index(self, query_node, bucket, index):
-        index_name, index_query = index.split('::')
+    def create_index(self, bucket, index, query_node, index_nodes=None):
+        index_name, statement = index.split('::')
         if not index_name:
             return
-        query = index_query.format(name=index_name, bucket=bucket)
-        self.rest.exec_n1ql_statement(query_node, query)
+
+        if index_nodes is not None:
+            index_nodes = ', '.join('"{}:8091"'.format(n) for n in index_nodes)
+
+        statement = statement.format(name=index_name,
+                                     bucket=bucket,
+                                     index_nodes=index_nodes)
+
+        self.rest.exec_n1ql_statement(query_node, statement)
 
         self.monitor.monitor_index_state(host=query_node, index_name=index_name)
 
@@ -173,7 +184,7 @@ class N1QLMixedThroughputTest(N1QLThroughputTest):
         bucket = self.test_config.buckets[0]
         query_node = self.cluster_spec.servers_by_role('n1ql')[0]
         for index in self.test_config.n1ql_settings.indexes:
-            self.create_index(query_node, bucket, index)
+            self.create_index(bucket, index, query_node)
 
 
 class N1QLDGMTest:

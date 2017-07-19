@@ -12,9 +12,11 @@ replica_number = 0
 [secondary]
 indexer.settings.storage_mode = memory_optimized
 
+{% raw %}
 [n1ql]
 indexes =
     primary_idx::CREATE PRIMARY INDEX {name} ON `{bucket}` WITH {{ "nodes": [ {index_nodes} ] }};
+{% endraw %}
 
 [load]
 workload_path = workloads/workloade

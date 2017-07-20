@@ -679,7 +679,7 @@ class FtsSettings:
 
 class YCSBSettings:
 
-    REPO = 'git://github.com/brianfrankcooper/YCSB.git'
+    REPO = 'git://github.com/couchbaselabs/YCSB.git'
     BRANCH = 'master'
 
     def __init__(self, options: dict):

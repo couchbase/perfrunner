@@ -223,11 +223,6 @@ class FailoverTest(RebalanceKVTest):
         t = dateutil.parser.parse(time_str, ignoretz=True)
         return float(t.strftime('%s.%f'))
 
-    def run(self):
-        super().run()
-
-        self.report_kpi()
-
 
 class HardFailoverTest(FailoverTest):
 

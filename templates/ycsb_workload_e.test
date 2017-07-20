@@ -15,7 +15,7 @@ indexer.settings.storage_mode = memory_optimized
 {% raw %}
 [n1ql]
 indexes =
-    primary_idx::CREATE PRIMARY INDEX {name} ON `{bucket}` WITH {{ "nodes": [ {index_nodes} ] }};
+    primary_idx::CREATE PRIMARY INDEX {name}_{hash} ON `{bucket}` WITH {{ "nodes": [ "{index_node}:8091" ] }};
 {% endraw %}
 
 [load]

@@ -1,4 +1,5 @@
 from perfrunner.helpers.cbmonitor import timeit, with_stats
+from perfrunner.helpers.misc import target_hash
 from perfrunner.tests import PerfTest, TargetIterator
 
 
@@ -18,19 +19,18 @@ class N1QLTest(PerfTest):
 
         for bucket, index in zip(self.test_config.buckets,
                                  self.test_config.n1ql_settings.indexes):
-            self.create_index(bucket, index, query_node, index_nodes)
+            for index_node in index_nodes:
+                self.create_index(bucket, index, query_node, index_node)
 
-    def create_index(self, bucket, index, query_node, index_nodes=None):
+    def create_index(self, bucket, index, query_node, index_node=None):
         index_name, statement = index.split('::')
         if not index_name:
             return
 
-        if index_nodes is not None:
-            index_nodes = ', '.join('"{}:8091"'.format(n) for n in index_nodes)
-
         statement = statement.format(name=index_name,
+                                     hash=target_hash(index_node),
                                      bucket=bucket,
-                                     index_nodes=index_nodes)
+                                     index_node=index_node)
 
         self.rest.exec_n1ql_statement(query_node, statement)
 

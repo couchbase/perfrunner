@@ -4,7 +4,6 @@ title = Low Term, 20M docs, 500 updates/sec kv load
 component = fts
 category = nondgmthroughput
 
-
 [access]
 time = 600
 fts_updates_swap = 100

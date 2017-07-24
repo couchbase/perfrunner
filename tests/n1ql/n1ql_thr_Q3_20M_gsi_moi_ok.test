@@ -3,6 +3,7 @@ test = perfrunner.tests.n1ql.N1QLThroughputTest
 title = Q3, Range Scan, MOI, not_bounded
 component = n1ql
 category = Q1_Q3_thr
+sub_category = MOI
 
 [cluster]
 mem_quota = 20480

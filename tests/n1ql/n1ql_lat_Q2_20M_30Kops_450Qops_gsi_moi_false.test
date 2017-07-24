@@ -3,6 +3,7 @@ test = perfrunner.tests.n1ql.N1QLLatencyTest
 title = Q2, Singleton Unique Lookup, 450 queries/sec, MOI, request_plus
 component = n1ql
 category = Q1_Q3_lat
+sub_category = MOI
 
 [cluster]
 mem_quota = 20480

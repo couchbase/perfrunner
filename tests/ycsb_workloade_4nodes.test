@@ -1,8 +1,8 @@
 [test_case]
 test = perfrunner.tests.ycsb.YCSBN1QLThroughputTest
 title = Avg Throughput (queries/sec), Workload E, MOI, 4 nodes
-component = YCSB
-category = workloade
+component = n1ql
+category = ycsb
 
 [cluster]
 mem_quota = 40960

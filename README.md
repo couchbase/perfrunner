@@ -18,7 +18,7 @@ Note, you should be able to install both client and server system dependencies u
 
 First clone the perfrunner repo with the command below:
 
-    git clone https://github.com/couchbaselabs/perfrunner.git
+    git clone https://github.com/couchbase/perfrunner.git
 
 As some components are written in Go, make sure that perfrunner is placed inside $GOPATH/src.
 See also [How to Write Go Code](https://golang.org/doc/code.html).

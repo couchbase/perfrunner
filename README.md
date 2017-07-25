@@ -20,16 +20,12 @@ First clone the perfrunner repo with the command below:
 
     git clone https://github.com/couchbaselabs/perfrunner.git
 
+As some components are written in Go, make sure that perfrunner is placed inside $GOPATH/src.
+See also [How to Write Go Code](https://golang.org/doc/code.html).
+
 Once inside the perfrunner directory create a virtual environment for all of the perfrunner dependencies and install all of the dependencies so that you can run perfrunner:
 
     make
-
-To run DCP tests, one more step is required to build DCP client:
-
-    make dcptest
-
-As DCP client is a Go application, make sure that perfrunner is placed inside $GOPATH/src.
-See also [How to Write Go Code](https://golang.org/doc/code.html).
 
 Cluster installation and setup
 ------------------------------
@@ -75,4 +71,3 @@ Related projects
 * [showfast](https://github.com/couchbaselabs/showfast)
 * [seriesly](https://github.com/dustin/seriesly)
 * [seriesly client](https://github.com/pavel-paulau/seriesly-python-client)
-* [moveit](https://github.com/pavel-paulau/moveit)

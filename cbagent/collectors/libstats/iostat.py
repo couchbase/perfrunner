@@ -1,7 +1,7 @@
 from cbagent.collectors.libstats.remotestats import RemoteStats, parallel_task
 
 
-class IOstat(RemoteStats):
+class IOStat(RemoteStats):
 
     METRICS = (
         ("rps", "r/s", 1),

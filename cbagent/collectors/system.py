@@ -1,6 +1,7 @@
 from cbagent.collectors import Collector
-from cbagent.collectors.libstats.iostat import IOstat
+from cbagent.collectors.libstats.iostat import IOStat
 from cbagent.collectors.libstats.net import NetStat
+from cbagent.collectors.libstats.pcstat import PCStat
 from cbagent.collectors.libstats.psstats import PSStats
 from cbagent.collectors.libstats.typeperfstats import TPStats
 
@@ -62,7 +63,7 @@ class IO(System):
 
         self.partitions = settings.partitions
 
-        self.sampler = IOstat(hosts=self.nodes,
+        self.sampler = IOStat(hosts=self.nodes,
                               workers=self.workers,
                               user=self.ssh_username,
                               password=self.ssh_password)
@@ -72,6 +73,25 @@ class IO(System):
             self.add_stats(node, stats)
 
         for node, stats in self.sampler.get_client_samples(self.partitions).items():
+            self.add_stats(node, stats)
+
+
+class PageCache(System):
+
+    COLLECTOR = "pcstat"
+
+    def __init__(self, settings):
+        super().__init__(settings)
+
+        self.partitions = settings.partitions
+
+        self.sampler = PCStat(hosts=self.nodes,
+                              workers=self.workers,
+                              user=self.ssh_username,
+                              password=self.ssh_password)
+
+    def sample(self):
+        for node, stats in self.sampler.get_server_samples(self.partitions).items():
             self.add_stats(node, stats)
 
 

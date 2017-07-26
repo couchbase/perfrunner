@@ -21,6 +21,7 @@ from cbagent.collectors import (
     NSServerOverview,
     ObserveIndexLatency,
     ObserveSecondaryIndexLatency,
+    PageCache,
     ReservoirQueryLatency,
     SecondaryDebugStats,
     SecondaryDebugStatsBucket,
@@ -128,19 +129,20 @@ class CbAgent:
         self.test.cbmonitor_clusters = list(self.cluster_map.keys())
 
     def add_collectors(self,
-                       elastic_stats=False,
                        durability=False,
+                       elastic_stats=False,
                        fts_latency=False,
                        fts_stats=False,
+                       index_latency=False,
                        iostat=True,
                        latency=False,
-                       index_latency=False,
                        n1ql_latency=False,
                        n1ql_stats=False,
                        net=True,
+                       page_cache=False,
                        query_latency=False,
-                       secondary_debugstats=False,
                        secondary_debugstats_bucket=False,
+                       secondary_debugstats=False,
                        secondary_debugstats_index=False,
                        secondary_index_latency=False,
                        secondary_latency=False,
@@ -163,7 +165,9 @@ class CbAgent:
             if net:
                 self.add_collector(Net)
             if iostat:
-                self.add_iostat()
+                self.add_io_collector(IO)
+            if page_cache:
+                self.add_io_collector(PageCache)
         else:
             self.add_collector(TypePerf)
 
@@ -222,7 +226,7 @@ class CbAgent:
             collector = cls(settings, *args)
             self.collectors.append(collector)
 
-    def add_iostat(self):
+    def add_io_collector(self, cls):
         data_path, index_path = self.test.cluster_spec.paths
         partitions = {
             'client': {},
@@ -239,7 +243,7 @@ class CbAgent:
             settings.master_node = master_node
             settings.partitions = partitions
 
-            collector = IO(settings)
+            collector = cls(settings)
             self.collectors.append(collector)
 
     def add_latency_collector(self, cls):

@@ -36,7 +36,7 @@ class CloudRunner:
                     'Encrypted': False,
                     'DeleteOnTermination': True,
                     'Iops': 20000,
-                    'VolumeSize': 500,
+                    'VolumeSize': 1000,
                     'VolumeType': 'io1',
                 }
             },

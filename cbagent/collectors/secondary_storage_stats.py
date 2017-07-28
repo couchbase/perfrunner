@@ -26,6 +26,8 @@ class SecondaryStorageStats(Collector):
         "reclaim_pending",
         "resident_ratio",
         "write_amp",
+        "mvcc_purge_ratio",
+        "memory_quota",
     )
 
     def __init__(self, settings):

@@ -132,13 +132,6 @@ def main():
     cr = CloudRunner()
 
     if args.action == 'launch':
-        if args.num_clients:
-            instance_ids = cr.launch(count=args.num_clients,
-                                     group='clients',
-                                     instance_type=args.client_type,)
-            cr.monitor_instances(instance_ids)
-            ips = cr.get_ips(instance_ids)
-            cr.store_ips(ips, group='clients')
         if args.num_servers:
             instance_ids = cr.launch(count=args.num_servers,
                                      group='servers',
@@ -146,6 +139,13 @@ def main():
             cr.monitor_instances(instance_ids)
             ips = cr.get_ips(instance_ids)
             cr.store_ips(ips, group='servers')
+        if args.num_clients:
+            instance_ids = cr.launch(count=args.num_clients,
+                                     group='clients',
+                                     instance_type=args.client_type,)
+            cr.monitor_instances(instance_ids)
+            ips = cr.get_ips(instance_ids)
+            cr.store_ips(ips, group='clients')
     else:
         instance_ids = cr.read_ids()
         cr.terminate(instance_ids)

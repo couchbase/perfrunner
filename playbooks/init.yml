@@ -13,6 +13,8 @@
       - htop
       - iotop
       - iperf
+      - kernel-devel
+      - kernel-headers
       - java-1.8.0-openjdk
       - lsof
       - moreutils

@@ -255,3 +255,6 @@ class ClusterManager:
         if kernel_memory:
             self.remote.tune_memory_settings(size=kernel_memory)
             self.monitor.wait_for_servers()
+
+    def flush_iptables(self):
+        self.remote.flush_iptables()

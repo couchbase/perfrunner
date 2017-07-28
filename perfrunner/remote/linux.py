@@ -122,6 +122,11 @@ class RemoteLinux(Remote):
             run('echo never > {}'.format(path), quiet=True)
 
     @all_servers
+    def flush_iptables(self):
+        logger.info('Flushing iptables rules')
+        run('iptables -F')
+
+    @all_servers
     def collect_info(self):
         logger.info('Running cbcollect_info')
 

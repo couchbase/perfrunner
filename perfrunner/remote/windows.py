@@ -44,6 +44,9 @@ class RemoteWindows(Remote):
     def disable_thp(self):
         pass
 
+    def flush_iptables(self):
+        pass
+
     def detect_ip(self):
         return run('ipconfig | findstr IPv4').split(': ')[1]
 

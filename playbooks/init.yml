@@ -29,11 +29,6 @@
 
 - hosts: kv:index:n1ql
   tasks:
-  - name: flushing iptables rules
-    shell: iptables -F
-
-- hosts: kv:index:n1ql
-  tasks:
   - name: creating new "couchbase" group
     group: name=couchbase
   - name: creating new "couchbase" user

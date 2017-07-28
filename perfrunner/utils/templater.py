@@ -22,12 +22,14 @@ TEMPLATES = (
     'kv_cluster.spec',
     'pillowfight.test',
     'ycsb_workload_a.test',
+    'ycsb_workload_d.test',
     'ycsb_workload_e.test',
 )
 
 THREADS_PER_CLIENT = {
     'pillowfight.test': 20,
     'ycsb_workload_a.test': 20,
+    'ycsb_workload_d.test': 20,
     'ycsb_workload_e.test': 20,
 }
 

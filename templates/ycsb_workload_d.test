@@ -1,0 +1,19 @@
+[test_case]
+test = perfrunner.tests.ycsb.YCSBThroughputTest
+
+[cluster]
+mem_quota = {{ mem_quota }}
+initial_nodes = 1
+
+[bucket]
+eviction_policy = fullEviction
+
+[load]
+workload_path = workloads/workloadd
+workers = 40
+
+[access]
+workload_path = workloads/workloadd
+ops = 1000000000
+workers = {{ workers }}
+worker_instances = {{ worker_instances }}

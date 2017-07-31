@@ -107,7 +107,7 @@ class BgFetcherTest(KVTest):
 
     """Enable reporting of average BgFetcher wait time (disk fetches)."""
 
-    COLLECTORS = {'net': False}
+    COLLECTORS = {'net': False, 'page_cache': True}
 
     ALL_BUCKETS = True
 
@@ -121,7 +121,7 @@ class DrainTest(KVTest):
 
     """Enable reporting of average disk write queue size."""
 
-    COLLECTORS = {'net': False}
+    COLLECTORS = {'net': False, 'page_cache': True}
 
     ALL_BUCKETS = True
 
@@ -157,7 +157,7 @@ class WarmupTest(PerfTest):
 
     """Measure the time it takes to perform cluster warm up."""
 
-    COLLECTORS = {'net': False}
+    COLLECTORS = {'net': False, 'page_cache': True}
 
     def access(self, *args, **kwargs):
         super().sleep()

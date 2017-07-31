@@ -2,8 +2,6 @@ import random
 from threading import Thread
 from time import sleep
 
-from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
-
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.worker import (
@@ -143,61 +141,6 @@ class InitialLoadTest(DrainTest):
         self.load()
 
         self.report_kpi()
-
-
-class FlusherTest(KVTest):
-
-    """Measure the maximum drain rate benchmark.
-
-    Data set is loaded while persistence is disabled. After that persistence is
-    enabled and ep-engine commits data with maximum possible speed (using very
-    large batches).
-
-    Please notice that measured drain rate has nothing to do with typical
-    production characteristics. It only used as baseline / reference.
-    """
-
-    def mc_iterator(self):
-        password = self.test_config.bucket.password
-        for server in self.cluster_spec.servers:
-            memcached_port = self.rest.get_memcached_port(server)
-            for bucket in self.test_config.buckets:
-                mc = MemcachedClient(host=server, port=memcached_port)
-                try:
-                    mc.sasl_auth_plain(user=bucket, password=password)
-                    yield mc
-                except MemcachedError:
-                    logger.warn('Auth failure')
-
-    def stop_persistence(self):
-        for mc in self.mc_iterator():
-            mc.stop_persistence()
-
-    def start_persistence(self):
-        for mc in self.mc_iterator():
-            mc.start_persistence()
-
-    @with_stats
-    @timeit
-    def drain(self):
-        for master in self.cluster_spec.masters:
-            for bucket in self.test_config.buckets:
-                self.monitor.monitor_disk_queue(master, bucket)
-
-    def _report_kpi(self, time_elapsed):
-        self.reporter.post(
-            *self.metrics.max_drain_rate(time_elapsed)
-        )
-
-    def run(self):
-        self.stop_persistence()
-        self.load()
-
-        self.access_bg()
-        self.start_persistence()
-        time_elapsed = self.drain()
-
-        self.report_kpi(time_elapsed)
 
 
 class BeamRssTest(KVTest):

@@ -26,7 +26,6 @@ class KVTest(PerfTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
-        self.compact_bucket()
 
         self.hot_load()
 
@@ -47,9 +46,6 @@ class MixedLatencyTest(KVTest):
             self.reporter.post(
                 *self.metrics.kv_latency(operation=operation)
             )
-
-    def compact_bucket(self):
-        pass
 
 
 class DurabilityTest(KVTest):
@@ -425,9 +421,6 @@ class ThroughputTest(KVTest):
 
     COLLECTORS = {'latency': True}
 
-    def compact_bucket(self):
-        pass
-
     def _measure_curr_ops(self) -> int:
         ops = 0
         for bucket in self.test_config.buckets:
@@ -455,9 +448,6 @@ class ThroughputTest(KVTest):
 class EvictionTest(KVTest):
 
     COLLECTORS = {}
-
-    def compact_bucket(self):
-        pass
 
     def _measure_ejected_items(self) -> int:
         ejected_items = 0

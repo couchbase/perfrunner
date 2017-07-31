@@ -109,7 +109,7 @@ class BgFetcherTest(KVTest):
 
     """Enable reporting of average BgFetcher wait time (disk fetches)."""
 
-    COLLECTORS = {'latency': True}
+    COLLECTORS = {'net': False}
 
     ALL_BUCKETS = True
 
@@ -122,6 +122,8 @@ class BgFetcherTest(KVTest):
 class DrainTest(KVTest):
 
     """Enable reporting of average disk write queue size."""
+
+    COLLECTORS = {'net': False}
 
     ALL_BUCKETS = True
 
@@ -212,6 +214,8 @@ class WarmupTest(PerfTest):
 
     """Measure the time it takes to perform cluster warm up."""
 
+    COLLECTORS = {'net': False}
+
     def access(self, *args, **kwargs):
         super().sleep()
 
@@ -268,6 +272,8 @@ class FragmentationTest(PerfTest):
     Scenario described above allows to spot issues with memory/allocator
     fragmentation.
     """
+
+    COLLECTORS = {'net': False}
 
     @with_stats
     def load_and_append(self):
@@ -447,7 +453,7 @@ class ThroughputTest(KVTest):
 
 class EvictionTest(KVTest):
 
-    COLLECTORS = {}
+    COLLECTORS = {'net': False}
 
     def _measure_ejected_items(self) -> int:
         ejected_items = 0
@@ -502,6 +508,8 @@ class PillowFightTest(PerfTest):
 
 
 class CompactionTest(KVTest):
+
+    COLLECTORS = {'net': False}
 
     @with_stats
     @timeit

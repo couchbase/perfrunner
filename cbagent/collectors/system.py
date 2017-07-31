@@ -83,7 +83,7 @@ class PageCache(System):
     def __init__(self, settings):
         super().__init__(settings)
 
-        self.partitions = settings.partitions
+        self.partitions = settings.partitions['server']
 
         self.sampler = PCStat(hosts=self.nodes,
                               workers=self.workers,
@@ -91,7 +91,7 @@ class PageCache(System):
                               password=self.ssh_password)
 
     def sample(self):
-        for node, stats in self.sampler.get_server_samples(self.partitions).items():
+        for node, stats in self.sampler.get_samples(self.partitions).items():
             self.add_stats(node, stats)
 
 

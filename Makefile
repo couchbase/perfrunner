@@ -14,7 +14,7 @@ all:
 	pwd > ${ENV}/lib/${PYTHON}/site-packages/perfrunner.pth
 
 clean:
-	rm -fr build perfrunner.egg-info dist dcptest kvgen cbindexperf rachell *.db *.log .coverage
+	rm -fr build perfrunner.egg-info dist cachestat dcptest kvgen cbindexperf rachell *.db *.log .coverage
 	find . -name '*.pyc' -o -name '*.pyo' -o -name __pycache__ | xargs rm -fr
 
 pep8:
@@ -38,6 +38,9 @@ vendor-sync:
 	go version
 	go get -u github.com/kardianos/govendor
 	govendor sync
+
+cachestat:
+	go build ./go/cachestats
 
 dcptest: vendor-sync
 	go build ./go/dcptest

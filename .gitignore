@@ -41,6 +41,8 @@ env/
 
 vendor/github.com
 
+cachestat
+!cachestat/
 cbindexperf
 !cbindexperf/
 dcptest

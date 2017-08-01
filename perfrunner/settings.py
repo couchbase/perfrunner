@@ -196,6 +196,7 @@ class StatsSettings:
                         'cbq-engine',
                         'indexer',
                         'memcached']
+    TRACED_PROCESSES = []
 
     def __init__(self, options: dict):
         self.enabled = int(options.get('enabled', self.ENABLED))
@@ -214,6 +215,8 @@ class StatsSettings:
             options.get('client_processes', '').split()
         self.server_processes = self.SERVER_PROCESSES + \
             options.get('server_processes', '').split()
+        self.traced_processes = self.TRACED_PROCESSES + \
+            options.get('traced_processes', '').split()
 
 
 class BucketSettings:

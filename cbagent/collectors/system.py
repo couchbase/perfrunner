@@ -3,6 +3,7 @@ from cbagent.collectors.libstats.iostat import IOStat
 from cbagent.collectors.libstats.net import NetStat
 from cbagent.collectors.libstats.pcstat import PCStat
 from cbagent.collectors.libstats.psstats import PSStats
+from cbagent.collectors.libstats.sysdig import SysdigStat
 from cbagent.collectors.libstats.typeperfstats import TPStats
 
 
@@ -121,3 +122,21 @@ class TypePerf(PS):
                                workers=self.workers,
                                user=self.ssh_username,
                                password=self.ssh_password)
+
+
+class Sysdig(System):
+
+    COLLECTOR = "sysdig"
+
+    def __init__(self, settings):
+        super().__init__(settings)
+
+        self.sampler = SysdigStat(hosts=self.nodes,
+                                  workers=self.workers,
+                                  user=self.ssh_username,
+                                  password=self.ssh_password)
+
+    def sample(self):
+        processes = self.settings.traced_processes
+        for node, stats in self.sampler.get_samples(processes).items():
+            self.add_stats(node, stats)

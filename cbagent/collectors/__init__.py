@@ -29,5 +29,5 @@ from cbagent.collectors.spring_latency import (
     SubdocLatency,
     XATTRLatency,
 )
-from cbagent.collectors.system import IO, Net, PageCache, PS, TypePerf
+from cbagent.collectors.system import IO, Net, PageCache, PS, Sysdig, TypePerf
 from cbagent.collectors.xdcr_lag import XdcrLag

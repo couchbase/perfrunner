@@ -32,6 +32,7 @@ from cbagent.collectors import (
     SecondaryStorageStatsMM,
     SpringLatency,
     SubdocLatency,
+    Sysdig,
     TypePerf,
     XATTRLatency,
     XdcrLag,
@@ -81,6 +82,7 @@ def new_cbagent_settings(test: PerfTest):
         'hostnames': hostnames,
         'client_processes': test.test_config.stats_settings.client_processes,
         'server_processes': test.test_config.stats_settings.server_processes,
+        'traced_processes': test.test_config.stats_settings.traced_processes,
         'bucket_password': test.test_config.bucket.password,
         'workers': test.cluster_spec.workers,
     })()
@@ -162,6 +164,7 @@ class CbAgent:
 
         if self.test.remote.os != 'Cygwin':
             self.add_collector(PS)
+            self.add_collector(Sysdig)
             if net:
                 self.add_collector(Net)
             if iostat:

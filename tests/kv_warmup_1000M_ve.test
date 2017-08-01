@@ -1,0 +1,28 @@
+[test_case]
+test = perfrunner.tests.kv.WarmupTest
+title = Warmup time (min), 4 nodes, 1B x 1KB, value ejection
+component = kv
+category = warmup
+
+[stats]
+interval = 1
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+
+[load]
+items = 1000000000
+size = 1024
+workers = 80
+
+[access]
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+throughput = 20000
+items = 1000000000
+workers = 20
+time = 3600

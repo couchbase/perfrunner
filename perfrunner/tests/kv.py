@@ -37,17 +37,32 @@ class KVTest(PerfTest):
         self.report_kpi()
 
 
-class MixedLatencyTest(KVTest):
+class ReadLatencyTest(KVTest):
 
-    """Enable reporting of GET and SET latency."""
+    """Enable reporting of GET latency."""
 
     COLLECTORS = {'latency': True}
+
+    def _report_kpi(self):
+        self.reporter.post(
+            *self.metrics.kv_latency(operation='get')
+        )
+
+
+class MixedLatencyTest(ReadLatencyTest):
+
+    """Enable reporting of GET and SET latency."""
 
     def _report_kpi(self):
         for operation in ('get', 'set'):
             self.reporter.post(
                 *self.metrics.kv_latency(operation=operation)
             )
+
+
+class ReadLatencyDGMTest(ReadLatencyTest):
+
+    COLLECTORS = {'latency': True, 'net': False, 'page_cache': True}
 
 
 class DurabilityTest(KVTest):
@@ -62,18 +77,6 @@ class DurabilityTest(KVTest):
                 *self.metrics.kv_latency(operation=operation,
                                          dbname='durability')
             )
-
-
-class ReadLatencyTest(MixedLatencyTest):
-
-    """Enable reporting of GET latency."""
-
-    COLLECTORS = {'latency': True}
-
-    def _report_kpi(self):
-        self.reporter.post(
-            *self.metrics.kv_latency(operation='get')
-        )
 
 
 class SubDocTest(MixedLatencyTest):
@@ -113,8 +116,6 @@ class BgFetcherTest(KVTest):
 
     COLLECTORS = {'net': False, 'page_cache': True}
 
-    ALL_BUCKETS = True
-
     def _report_kpi(self):
         self.reporter.post(
             *self.metrics.avg_bg_wait_time()
@@ -126,8 +127,6 @@ class DrainTest(KVTest):
     """Enable reporting of average disk write queue size."""
 
     COLLECTORS = {'net': False, 'page_cache': True}
-
-    ALL_BUCKETS = True
 
     def _report_kpi(self):
         self.reporter.post(

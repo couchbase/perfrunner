@@ -2,7 +2,7 @@
 test = perfrunner.tests.kv.SubDocTest
 title = Sub-document latency (ms), 4 nodes, 1 bucket x 20M x 1KB
 component = kv
-category = subdoc
+category = latency
 
 [stats]
 lat_interval = 0.1

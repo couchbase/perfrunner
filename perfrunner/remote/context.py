@@ -23,9 +23,7 @@ def master_server(task: Callable, *args, **kwargs):
 
 
 def servers_by_role(roles: List[str]):
-    """Execute the decorated function on remote server nodes filtered by role.
-    """
-
+    """Execute the decorated function on remote server nodes filtered by role."""
     @decorator
     def wrapper(task, *args, **kwargs):
         helper = args[0]

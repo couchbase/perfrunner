@@ -1,5 +1,3 @@
-import random
-from threading import Thread
 from time import sleep
 
 from logger import logger
@@ -10,8 +8,6 @@ from perfrunner.helpers.worker import (
 )
 from perfrunner.tests import PerfTest
 from perfrunner.workloads.pathoGen import PathoGen
-from perfrunner.workloads.revAB.__main__ import produce_ab
-from perfrunner.workloads.revAB.graph import PersonIterator, generate_graph
 from perfrunner.workloads.tcmalloc import WorkloadGen
 
 
@@ -259,56 +255,6 @@ class FragmentationLargeTest(FragmentationTest):
         WorkloadGen(self.test_config.load_settings.items,
                     self.master_node, self.test_config.buckets[0], password,
                     small=False).run()
-
-
-class RevABTest(FragmentationTest):
-
-    def generate_graph(self):
-        random.seed(0)
-        self.graph = generate_graph(self.test_config.load_settings.items)
-        self.graph_keys = self.graph.nodes()
-        random.shuffle(self.graph_keys)
-
-    @with_stats
-    def load(self, *args):
-        for target in self.target_iterator:
-            conn = {'host': target.node, 'port': 8091,
-                    'bucket': target.bucket, 'password': target.password}
-
-            threads = list()
-            for seqid in range(self.test_config.load_settings.workers):
-                iterator = PersonIterator(
-                    self.graph,
-                    self.graph_keys,
-                    seqid,
-                    self.test_config.load_settings.workers,
-                )
-                t = Thread(
-                    target=produce_ab,
-                    args=(iterator,
-                          self.test_config.load_settings.iterations,
-                          conn),
-                )
-                threads.append(t)
-                t.start()
-            for t in threads:
-                t.join()
-
-    def _report_kpi(self):
-        fragmentation_ratio = self.calc_fragmentation_ratio()
-
-        self.reporter.post(
-            *self.metrics.fragmentation_ratio(fragmentation_ratio)
-        )
-        self.reporter.post(
-            *self.metrics.max_memcached_rss()
-        )
-
-    def run(self):
-        self.generate_graph()
-        self.load()
-
-        self.report_kpi()
 
 
 class MemUsedTest(KVTest):

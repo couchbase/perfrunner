@@ -1,0 +1,20 @@
+---
+- hosts: kv:index:n1ql
+  tasks:
+  - name: import Draios GPG key
+    rpm_key:
+      state: present
+      key: https://s3.amazonaws.com/download.draios.com/DRAIOS-GPG-KEY.public
+
+  - name: add Draios repository
+    yum_repository:
+      name: draios
+      baseurl: http://download.draios.com/stable/rpm/$basearch
+      description: Draios YUM repository
+      gpgcheck: yes
+      enabled: yes
+
+  - name: install the latest version of sysdig
+    yum:
+      name: sysdig
+      state: latest

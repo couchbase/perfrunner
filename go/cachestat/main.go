@@ -96,9 +96,10 @@ func reportStats(stats *pageCacheStats) {
 		misses = 0
 	}
 	hits := total - misses
+	rate := total / float64(sampleTime.Seconds())
 	ratio := 100 * hits / total
 
-	fmt.Println(ratio)
+	fmt.Println(rate, ratio)
 }
 
 func analyze_traces() error {

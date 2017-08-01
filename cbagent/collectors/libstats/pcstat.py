@@ -17,15 +17,21 @@ class PCStat(RemoteStats):
             percents.append(float(percent))
         return numpy.average(percents)
 
-    def get_cachestat(self):
+    def get_cachestat(self) -> [float, float]:
         stdout = self.run('cachestat')
-        return float(stdout)
+        total_hits, hit_ratio = stdout.split()
+        return float(total_hits), float(hit_ratio)
 
     @parallel_task(server_side=True)
     def get_samples(self, partitions: dict) -> dict:
-        samples = {}
+        total_hits, hit_ratio = self.get_cachestat()
+        samples = {
+            'page_cache_hit_ratio': hit_ratio,
+            'page_cache_total_hits': total_hits,
+        }
+
         for purpose, partition in partitions.items():
             key = "{}_avg_page_cache_rr".format(purpose)
             samples[key] = self.get_pcstat(partition)
-        samples['page_cache_hit_ratio'] = self.get_cachestat()
+
         return samples

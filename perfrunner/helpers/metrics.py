@@ -267,7 +267,7 @@ class MetricHelper:
             db = 'ns_server{}{}'.format(self.test.cbmonitor_clusters[0], bucket)
             data = self.seriesly[db].query(query_params)
             disk_write_queue += list(data.values())[0][0]
-        disk_write_queue = round(disk_write_queue / 10 ** 6, 2)
+        disk_write_queue = int(disk_write_queue)
 
         return disk_write_queue, self._snapshots, metric_info
 

@@ -21,7 +21,7 @@ indexer.settings.storage_mode = memory_optimized
 [load]
 workload_path = workloads/workloade
 items = 10000000
-workers = 160
+workers = 120
 
 [n1ql]
 indexes =

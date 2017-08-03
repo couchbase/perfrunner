@@ -22,7 +22,10 @@ class MemcachedHelper:
         self.password = test_config.bucket.password
 
     @retry
-    def get_stats(self, host, port, bucket, stats):
+    def get_stats(self, host, port, bucket, stats=''):
         mc = MemcachedClient(host=host, port=port)
         mc.sasl_auth_plain(user=bucket, password=self.password)
         return mc.stats(stats)
+
+    def reset_stats(self, host, port, bucket):
+        self.get_stats(host, port, bucket, 'reset')

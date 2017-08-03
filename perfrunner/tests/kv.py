@@ -17,11 +17,19 @@ class KVTest(PerfTest):
     def access(self, *args):
         super().sleep()
 
+    def reset_kv_stats(self):
+        for server in self.cluster_spec.servers:
+            for bucket in self.test_config.buckets:
+                port = self.rest.get_memcached_port(server)
+                self.memcached.reset_stats(server, port, bucket)
+
     def run(self):
         self.load()
         self.wait_for_persistence()
 
         self.hot_load()
+
+        self.reset_kv_stats()
 
         self.access_bg()
         self.access()
@@ -261,6 +269,9 @@ class MemUsedTest(KVTest):
 
     ALL_BUCKETS = True
 
+    def reset_kv_stats(self):
+        pass
+
     def _report_kpi(self):
         for metric in ('max', 'min'):
             self.reporter.post(
@@ -322,21 +333,15 @@ class ThroughputTest(KVTest):
             for server in self.cluster_spec.servers:
                 port = self.rest.get_memcached_port(server)
 
-                stats = self.memcached.get_stats(server, port, bucket, stats='')
+                stats = self.memcached.get_stats(server, port, bucket)
                 ops += int(stats[b'cmd_total_ops'])
         return ops
 
-    @with_stats
-    def access(self):
-        curr_ops = self._measure_curr_ops()
-
-        super().sleep()
-
-        self.total_ops = self._measure_curr_ops() - curr_ops
-
     def _report_kpi(self):
+        total_ops = self._measure_curr_ops()
+
         self.reporter.post(
-            *self.metrics.kv_throughput(self.total_ops)
+            *self.metrics.kv_throughput(total_ops)
         )
 
 
@@ -352,7 +357,7 @@ class EvictionTest(KVTest):
                 host = hostname.split(':')[0]
                 port = self.rest.get_memcached_port(host)
 
-                stats = self.memcached.get_stats(host, port, bucket, stats='')
+                stats = self.memcached.get_stats(host, port, bucket)
 
                 ejected_items += int(stats[b'vb_active_auto_delete_count'])
                 ejected_items += int(stats[b'vb_pending_auto_delete_count'])

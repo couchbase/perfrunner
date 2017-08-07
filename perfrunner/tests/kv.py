@@ -349,6 +349,9 @@ class EvictionTest(KVTest):
 
     COLLECTORS = {'net': False}
 
+    def reset_kv_stats(self):
+        pass
+
     def _measure_ejected_items(self) -> int:
         ejected_items = 0
         for bucket in self.test_config.buckets:

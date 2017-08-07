@@ -1,5 +1,6 @@
 from cbagent.collectors import Collector
 from cbagent.collectors.libstats.iostat import IOStat
+from cbagent.collectors.libstats.meminfo import MemInfo
 from cbagent.collectors.libstats.net import NetStat
 from cbagent.collectors.libstats.pcstat import PCStat
 from cbagent.collectors.libstats.psstats import PSStats
@@ -139,4 +140,21 @@ class Sysdig(System):
     def sample(self):
         processes = self.settings.traced_processes
         for node, stats in self.sampler.get_samples(processes).items():
+            self.add_stats(node, stats)
+
+
+class Memory(System):
+
+    COLLECTOR = 'meminfo'
+
+    def __init__(self, settings):
+        super().__init__(settings)
+
+        self.sampler = MemInfo(hosts=self.nodes,
+                               workers=self.workers,
+                               user=self.ssh_username,
+                               password=self.ssh_password)
+
+    def sample(self):
+        for node, stats in self.sampler.get_samples().items():
             self.add_stats(node, stats)

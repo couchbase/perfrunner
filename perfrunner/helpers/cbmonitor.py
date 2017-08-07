@@ -15,6 +15,7 @@ from cbagent.collectors import (
     ElasticStats,
     FTSCollector,
     FTSLatencyCollector,
+    Memory,
     N1QLStats,
     Net,
     NSServer,
@@ -138,6 +139,7 @@ class CbAgent:
                        index_latency=False,
                        iostat=True,
                        latency=False,
+                       memory=True,
                        n1ql_latency=False,
                        n1ql_stats=False,
                        net=True,
@@ -165,6 +167,8 @@ class CbAgent:
         if self.test.remote.os != 'Cygwin':
             self.add_collector(PS)
             self.add_collector(Sysdig)
+            if memory:
+                self.add_collector(Memory)
             if net:
                 self.add_collector(Net)
             if iostat:

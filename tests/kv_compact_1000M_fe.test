@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.CompactionTest
-title = Full compaction time (min), 4 nodes, 1B x 1KB, 100K ops/sec (20/80 R/W), 5% cache miss ratio
+title = Full compaction time (min), 4 nodes, 1B x 1KB, 100K ops/sec (20/80 R/W), 5%% cache miss ratio
 component = kv
 category = compact
 

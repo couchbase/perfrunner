@@ -25,6 +25,13 @@ class BackupRestoreTest(PerfTest):
             compression=self.test_config.backup_settings.compression,
         )
 
+    def compact(self):
+        snapshots = local.get_backup_snapshots(self.cluster_spec)
+        local.compact(self.cluster_spec,
+                      snapshots,
+                      self.rest.is_community(self.master_node)
+                      )
+
     def restore(self):
         local.drop_caches()
 
@@ -77,6 +84,15 @@ class BackupSizeTest(BackupTest):
         self.reporter.post(
             *self.metrics.backup_size(backup_size, edition)
         )
+
+
+class BackupTestWithCompact(BackupTest):
+
+    @with_stats
+    @timeit
+    def backup(self, mode=None):
+        super().backup(mode)
+        super().compact()
 
 
 class BackupUnderLoadTest(BackupTest):

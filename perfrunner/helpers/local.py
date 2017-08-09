@@ -46,6 +46,12 @@ def backup(master_node, cluster_spec, wrapper=False, mode=None,
         cbbackupmgr_backup(master_node, cluster_spec, mode, compression)
 
 
+def compact(cluster_spec, snapshots, wrapper=False):
+    if wrapper:
+        return
+    cbbackupmgr_compact(cluster_spec, snapshots)
+
+
 def cbbackupwrapper(master_node, cluster_spec, mode):
     postfix = ''
     if mode:
@@ -152,6 +158,17 @@ def cbbackupmgr_restore(master_node, cluster_spec):
             master_node,
             cluster_spec.rest_credentials[0],
             cluster_spec.rest_credentials[1],
+        )
+    logger.info('Running: {}'.format(cmd))
+    local(cmd)
+
+
+def cbbackupmgr_compact(cluster_spec, snapshots):
+    cmd = \
+        './opt/couchbase/bin/cbbackupmgr compact ' \
+        '--archive {} --repo default --backup {}'.format(
+            cluster_spec.backup,
+            snapshots[0]
         )
     logger.info('Running: {}'.format(cmd))
     local(cmd)

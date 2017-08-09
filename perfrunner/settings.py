@@ -193,7 +193,6 @@ class StatsSettings:
     SECONDARY_STATSFILE = '/root/statsfile'
 
     CBMONITOR = 'cbmonitor.sc.couchbase.com'
-    SERIESLY = 'cbmonitor.sc.couchbase.com'
     SHOWFAST = 'showfast.sc.couchbase.com'
 
     CLIENT_PROCESSES = []

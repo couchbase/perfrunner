@@ -1,52 +1,48 @@
-import socket
+import json
+from typing import List
 
-from decorator import decorator
-from seriesly import Seriesly
-from seriesly.exceptions import BadRequest, ConnectionError
-
-from logger import logger
+from requests import Session
 
 
-def _memoize(method, self, db):
-    if db not in method.cache:
-        method.cache[db] = method(self, db)
-    return method.cache[db]
+class PerfStore:
 
-
-def memoize(method):
-    method.cache = {}
-    return decorator(_memoize, method)
-
-
-class SerieslyStore:
-
-    def __init__(self, host):
-        self.seriesly = Seriesly(host)
+    def __init__(self, host: str):
+        self.session = Session()
+        self.base_url = 'http://{}:8080'.format(host)
+        self.dbs = set()
 
     @staticmethod
-    def build_dbname(cluster, server, bucket, index, collector):
+    def build_dbname(cluster: str,
+                     server: str = None,
+                     bucket: str = None,
+                     index: str = None,
+                     collector: str = None) -> str:
         db_name = (collector or "") + cluster + (bucket or "") + (index or "") + (server or "")
         for char in "[]/\;.,><&*:%=+@!#^()|?^'\"":
             db_name = db_name.replace(char, "")
         return db_name
 
-    @memoize
-    def _get_db(self, db_name):
-        try:
-            existing_dbs = self.seriesly.list_dbs()
-        except ConnectionError as e:
-            logger.interrupt("seriesly not available: {}".format(e))
-        else:
-            if db_name not in existing_dbs:
-                logger.info("Creating a new database: {}".format(db_name))
-                self.seriesly.create_db(db_name)
-            return self.seriesly[db_name]
+    def push(self, db: str, data: dict, timestamp: str):
+        url = '{}/{}'.format(self.base_url, db)
+        if timestamp is not None:
+            url = '{}?ts={}'.format(url, timestamp)
+        self.session.post(url=url, data=json.dumps(data))
+
+    def get_values(self, db: str, metric) -> List[float]:
+        url = '{}/{}/{}'.format(self.base_url, db, metric)
+
+        data = self.session.get(url).json()
+        return [d[1] for d in data]
+
+    def find_dbs(self, db: str) -> List[str]:
+        urls = []
+        for name in self.session.get(self.base_url).json():
+            if db in name:
+                url = '{}/{}'.format(self.base_url, name)
+                urls.append(url)
+        return urls
 
     def append(self, data, cluster=None, server=None, bucket=None, index=None,
                collector=None, timestamp=None):
-        db_name = self.build_dbname(cluster, server, bucket, index, collector)
-        db = self._get_db(db_name)
-        try:
-            db.append(data, timestamp=timestamp)
-        except (BadRequest, socket.error):  # Ignore bad requests
-            pass
+        db = self.build_dbname(cluster, server, bucket, index, collector)
+        self.push(db, data, timestamp)

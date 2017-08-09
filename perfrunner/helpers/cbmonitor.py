@@ -38,8 +38,9 @@ from cbagent.collectors import (
     XdcrStats,
 )
 from cbagent.metadata_client import MetadataClient
+from cbagent.stores import PerfStore
 from logger import logger
-from perfrunner.helpers.misc import uhex
+from perfrunner.helpers.misc import pretty_dict, uhex
 from perfrunner.settings import StatsSettings
 from perfrunner.tests import PerfTest
 
@@ -71,8 +72,7 @@ def new_cbagent_settings(test: PerfTest):
         hostnames = None
 
     settings = type('settings', (object,), {
-        'seriesly_host': StatsSettings.SERIESLY,
-        'cbmonitor_host_port': StatsSettings.CBMONITOR,
+        'cbmonitor_host': StatsSettings.CBMONITOR,
         'interval': test.test_config.stats_settings.interval,
         'lat_interval': test.test_config.stats_settings.lat_interval,
         'secondary_statsfile': test.test_config.stats_settings.secondary_statsfile,
@@ -116,7 +116,8 @@ class CbAgent:
         if self.test.test_config.stats_settings.enabled:
             self.stop()
             self.reconstruct()
-            self.add_snapshot()
+            self.find_time_series()
+            self.add_snapshots()
 
     def init_clusters(self, phase: str):
         self.cluster_map = OrderedDict()
@@ -294,19 +295,25 @@ class CbAgent:
             if hasattr(collector, 'reconstruct'):
                 collector.reconstruct()
 
-    def trigger_reports(self, snapshot: str):
-        for report_type in ('html', ):
-            url = 'http://{}/reports/{}/?snapshot={}'.format(
-                self.settings.cbmonitor_host_port, report_type, snapshot)
-            logger.info(url)
-            requests.get(url=url)
+    def trigger_report(self, snapshot: str):
+        url = 'http://{}/reports/html/?snapshot={}'.format(
+            self.settings.cbmonitor_host, snapshot)
+        logger.info('HTML report: {}'.format(url))
+        requests.get(url=url)
 
-    def add_snapshot(self):
+    def add_snapshots(self):
         self.test.cbmonitor_snapshots = []
         for cluster_id in self.test.cbmonitor_clusters:
             self.settings.cluster = cluster_id
             md_client = MetadataClient(self.settings)
             md_client.add_snapshot(cluster_id)
-            self.trigger_reports(cluster_id)
+            self.trigger_report(cluster_id)
 
             self.test.cbmonitor_snapshots.append(cluster_id)
+
+    def find_time_series(self):
+        store = PerfStore(host=StatsSettings.CBMONITOR)
+        dbs = []
+        for cluster_id in self.test.cbmonitor_clusters:
+            dbs += store.find_dbs(cluster_id)
+        logger.info('Time series: {}'.format(pretty_dict(dbs)))

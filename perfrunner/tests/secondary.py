@@ -3,7 +3,6 @@ import json
 import subprocess
 import time
 
-from cbagent.stores import SerieslyStore
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.local import (
@@ -90,13 +89,9 @@ class SecondaryIndexTest(PerfTest):
             return json.load(fh)
 
     def validate_num_connections(self):
-        db = SerieslyStore.build_dbname(self.cbmonitor_clusters[0],
-                                        None, None, None, "secondary_debugstats")
         config_data = self.get_data_from_config_json(self.configfile)
         # Expecting few extra connections(Number of GSi clients) than concurrency in config file
-        ret = self.metrics.verify_series_in_limits(db,
-                                                   config_data["Concurrency"] + 5,
-                                                   "num_connections")
+        ret = self.metrics.verify_series_in_limits(config_data["Concurrency"] + 5)
         if not ret:
             raise Exception('Validation for num_connections failed')
 

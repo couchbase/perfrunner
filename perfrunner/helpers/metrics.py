@@ -1,11 +1,11 @@
 import glob
 import os
 import re
-from typing import Any, Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
-from seriesly import Seriesly
 
+from cbagent.stores import PerfStore
 from logger import logger
 from perfrunner.settings import StatsSettings
 
@@ -29,23 +29,6 @@ def s2m(seconds: float) -> float:
     return round(seconds / 60, 2)
 
 
-def get_query_params(metric: str) -> Dict[str, Any]:
-    """Convert metric definition to Seriesly query params.
-
-    Example:
-
-    'avg_xdc_ops' -> {'ptr': '/xdc_ops',
-                      'group': 1000000000000, 'reducer': 'avg'}
-
-    Where group is constant.
-    """
-    return {
-        'ptr': '/{}'.format(metric[4:]),
-        'reducer': metric[:3],
-        'group': 1000000000000,
-    }
-
-
 class MetricHelper:
 
     def __init__(self, test):
@@ -53,7 +36,7 @@ class MetricHelper:
         self.test_config = test.test_config
         self.cluster_spec = test.cluster_spec
 
-        self.seriesly = Seriesly(StatsSettings.SERIESLY)
+        self.store = PerfStore(StatsSettings.CBMONITOR)
 
     @property
     def _title(self) -> str:
@@ -156,10 +139,9 @@ class MetricHelper:
 
         metric_info = self._metric_info(metric_id, title, order_by)
 
-        timings = []
         db = '{}{}'.format(dbname, self.test.cbmonitor_clusters[0])
-        data = self.seriesly[db].get_all()
-        timings += [v[metric] for v in data.values()]
+
+        timings = self.store.get_values(db, metric)
 
         if percentile == 0:
             latency = np.average(timings)
@@ -217,9 +199,11 @@ class MetricHelper:
     def _max_ops(self) -> int:
         values = []
         for bucket in self.test_config.buckets:
-            db = 'ns_server{}{}'.format(self.test.cbmonitor_clusters[0], bucket)
-            data = self.seriesly[db].get_all()
-            values += [v['ops'] for v in data.values()]
+            db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
+                                         collector='ns_server',
+                                         bucket=bucket)
+            values += self.store.get_values(db, metric='ops')
+
         return int(np.percentile(values, 90))
 
     def xdcr_lag(self, percentile: Number = 95) -> Metric:
@@ -228,12 +212,14 @@ class MetricHelper:
             percentile, self._title)
         metric_info = self._metric_info(metric_id, title)
 
-        timings = []
+        values = []
         for bucket in self.test_config.buckets:
-            db = 'xdcr_lag{}{}'.format(self.test.cbmonitor_clusters[0], bucket)
-            data = self.seriesly[db].get_all()
-            timings += [v['xdcr_lag'] for v in data.values()]
-        lag = round(np.percentile(timings, percentile), 1)
+            db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
+                                         collector='xdcr_lag',
+                                         bucket=bucket)
+            values += self.store.get_values(db, metric='xdcr_lag')
+
+        lag = round(np.percentile(values, percentile), 1)
 
         return lag, self._snapshots, metric_info
 
@@ -263,27 +249,28 @@ class MetricHelper:
     def avg_disk_write_queue(self) -> Metric:
         metric_info = self._metric_info()
 
-        query_params = get_query_params('avg_disk_write_queue')
-        disk_write_queue = 0
+        values = []
         for bucket in self.test_config.buckets:
-            db = 'ns_server{}{}'.format(self.test.cbmonitor_clusters[0], bucket)
-            data = self.seriesly[db].query(query_params)
-            disk_write_queue += list(data.values())[0][0]
-        disk_write_queue = int(disk_write_queue)
+            db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
+                                         collector='ns_server',
+                                         bucket=bucket)
+            values += self.store.get_values(db, metric='avg_disk_write_queue')
+
+        disk_write_queue = int(np.average(values))
 
         return disk_write_queue, self._snapshots, metric_info
 
     def avg_bg_wait_time(self) -> Metric:
         metric_info = self._metric_info()
 
-        query_params = get_query_params('avg_avg_bg_wait_time')
-
-        avg_bg_wait_time = []
+        values = []
         for bucket in self.test_config.buckets:
-            db = 'ns_server{}{}'.format(self.test.cbmonitor_clusters[0], bucket)
-            data = self.seriesly[db].query(query_params)
-            avg_bg_wait_time.append(list(data.values())[0][0])
-        avg_bg_wait_time = np.mean(avg_bg_wait_time) / 10 ** 3  # us -> ms
+            db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
+                                         collector='ns_server',
+                                         bucket=bucket)
+            values += self.store.get_values(db, metric='avg_avg_bg_wait_time')
+
+        avg_bg_wait_time = np.mean(values) / 10 ** 3  # us -> ms
         avg_bg_wait_time = round(avg_bg_wait_time, 2)
 
         return avg_bg_wait_time, self._snapshots, metric_info
@@ -291,14 +278,14 @@ class MetricHelper:
     def avg_couch_views_ops(self) -> Metric:
         metric_info = self._metric_info()
 
-        query_params = get_query_params('avg_couch_views_ops')
-
-        couch_views_ops = 0
+        values = []
         for bucket in self.test_config.buckets:
-            db = 'ns_server{}{}'.format(self.test.cbmonitor_clusters[0], bucket)
-            data = self.seriesly[db].query(query_params)
-            couch_views_ops += list(data.values())[0][0]
-        couch_views_ops = round(couch_views_ops)
+            db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
+                                         collector='ns_server',
+                                         bucket=bucket)
+            values += self.store.get_values(db, metric='avg_couch_views_ops')
+
+        couch_views_ops = int(np.average(values))
 
         return couch_views_ops, self._snapshots, metric_info
 
@@ -314,13 +301,14 @@ class MetricHelper:
         return latency, self._snapshots, metric_info
 
     def _query_latency(self, percentile: Number) -> float:
-        timings = []
+        values = []
         for bucket in self.test_config.buckets:
-            db = 'spring_query_latency{}{}'.format(self.test.cbmonitor_clusters[0],
-                                                   bucket)
-            data = self.seriesly[db].get_all()
-            timings += [value['latency_query'] for value in data.values()]
-        query_latency = np.percentile(timings, percentile)
+            db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
+                                         collector='spring_query_latency',
+                                         bucket=bucket)
+            values += self.store.get_values(db, metric='latency_query')
+
+        query_latency = np.percentile(values, percentile)
         if query_latency < 100:
             return round(query_latency, 1)
         return int(query_latency)
@@ -331,15 +319,14 @@ class MetricHelper:
                                                                          self._title)
         metric_info = self._metric_info(metric_id, title)
 
-        timings = []
         cluster = ""
         for cid in self.test.cbmonitor_clusters:
             if "apply_scanworkload" in cid:
                 cluster = cid
                 break
-        db = 'secondaryscan_latency{}'.format(cluster)
-        data = self.seriesly[db].get_all()
-        timings += [value['Nth-latency'] for value in data.values()]
+        db = self.store.build_dbname(cluster=cluster,
+                                     collector='secondaryscan_latency')
+        timings = self.store.get_values(db, metric='Nth-latency')
         timings = list(map(int, timings))
         logger.info("Number of samples are {}".format(len(timings)))
         scan_latency = np.percentile(timings, percentile) / 1e6
@@ -350,7 +337,7 @@ class MetricHelper:
     def kv_latency(self,
                    operation: str,
                    percentile: Number = 99,
-                   dbname: str = 'spring_latency') -> Metric:
+                   collector: str = 'spring_latency') -> Metric:
         metric_id = '{}_{}_{}th'.format(self.test_config.name,
                                         operation,
                                         percentile)
@@ -360,22 +347,21 @@ class MetricHelper:
                                                self._title)
         metric_info = self._metric_info(metric_id, title)
 
-        latency = self._kv_latency(operation, percentile, dbname)
+        latency = self._kv_latency(operation, percentile, collector)
 
         return latency, self._snapshots, metric_info
 
     def _kv_latency(self,
                     operation: str,
                     percentile: Number,
-                    dbname: str) -> float:
+                    collector: str) -> float:
         timings = []
-        op_key = 'latency_{}'.format(operation)
+        metric = 'latency_{}'.format(operation)
         for bucket in self.test_config.buckets:
-            db = '{}{}{}'.format(dbname, self.test.cbmonitor_clusters[0], bucket)
-            data = self.seriesly[db].get_all()
-            timings += [
-                v[op_key] for v in data.values() if op_key in v
-            ]
+            db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
+                                         collector=collector,
+                                         bucket=bucket)
+            timings += self.store.get_values(db, metric=metric)
 
         latency = np.percentile(timings, percentile)
         if latency > 100:
@@ -389,9 +375,11 @@ class MetricHelper:
 
         timings = []
         for bucket in self.test_config.buckets:
-            db = 'observe{}{}'.format(self.test.cbmonitor_clusters[0], bucket)
-            data = self.seriesly[db].get_all()
-            timings += [v['latency_observe'] for v in data.values()]
+            db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
+                                         collector='observe',
+                                         bucket=bucket)
+            timings += self.store.get_values(db, metric='latency_observe')
+
         latency = round(np.percentile(timings, percentile), 2)
 
         return latency, self._snapshots, metric_info
@@ -405,39 +393,19 @@ class MetricHelper:
         cluster = self.test.cbmonitor_clusters[0]
         bucket = self.test_config.buckets[0]
 
-        query_params = get_query_params('avg_cpu_utilization_rate')
-        db = 'ns_server{}{}'.format(cluster, bucket)
-        data = self.seriesly[db].query(query_params)
-        cpu_utilization = round(list(data.values())[0][0])
+        db = self.store.build_dbname(cluster=cluster,
+                                     collector='ns_server',
+                                     bucket=bucket)
+        values = self.store.get_values(db, metric='cpu_utilization_rate')
+
+        cpu_utilization = int(np.average(values))
 
         return cpu_utilization, self._snapshots, metric_info
-
-    def mem_used(self, max_min: str = 'max') -> Metric:
-        metric_id = '{}_{}_mem_used'.format(self.test_config.name, max_min)
-        title = '{}. mem_used (MB), {}'.format(max_min.title(),
-                                               self._title)
-        metric_info = self._metric_info(metric_id, title)
-
-        query_params = get_query_params('max_mem_used')
-
-        mem_used = []
-        for bucket in self.test_config.buckets:
-            db = 'ns_server{}{}'.format(self.test.cbmonitor_clusters[0], bucket)
-            data = self.seriesly[db].query(query_params)
-
-            mem_used.append(
-                round(list(data.values())[0][0] / 1024 ** 2)  # -> MB
-            )
-        mem_used = eval(max_min)(mem_used)
-
-        return mem_used, self._snapshots, metric_info
 
     def max_beam_rss(self) -> Metric:
         metric_id = 'beam_rss_max_{}'.format(self.test_config.name)
         title = 'Max. beam.smp RSS (MB), {}'.format(self._title)
         metric_info = self._metric_info(metric_id, title)
-
-        query_params = get_query_params('max_beam.smp_rss')
 
         max_rss = 0
         for cluster_name, servers in self.cluster_spec.clusters:
@@ -445,9 +413,11 @@ class MetricHelper:
                                   self.test.cbmonitor_clusters))[0]
             for server in servers:
                 hostname = server.replace('.', '')
-                db = 'atop{}{}'.format(cluster, hostname)  # Legacy
-                data = self.seriesly[db].query(query_params)
-                rss = round(list(data.values())[0][0] / 1024 ** 2)
+                db = self.store.build_dbname(cluster=cluster,
+                                             collector='atop',
+                                             server=hostname)
+                values = self.store.get_values(db, metric='beam.smp_rss')
+                rss = round(max(values) / 1024 ** 2)
                 max_rss = max(max_rss, rss)
 
         return max_rss, self._snapshots, metric_info
@@ -459,8 +429,6 @@ class MetricHelper:
         )
         metric_info = self._metric_info(metric_id, title)
 
-        query_params = get_query_params('max_memcached_rss')
-
         max_rss = 0
         for (cluster_name, servers), initial_nodes in zip(
                 self.cluster_spec.clusters,
@@ -470,9 +438,11 @@ class MetricHelper:
                                   self.test.cbmonitor_clusters))[0]
             for server in servers[:initial_nodes]:
                 hostname = server.replace('.', '')
-                db = 'atop{}{}'.format(cluster, hostname)
-                data = self.seriesly[db].query(query_params)
-                rss = round(list(data.values())[0][0] / 1024 ** 2)
+                db = self.store.build_dbname(cluster=cluster,
+                                             collector='atop',
+                                             server=hostname)
+                values = self.store.get_values(db, metric='memcached_rss')
+                rss = round(max(values) / 1024 ** 2)
                 max_rss = max(max_rss, rss)
 
         return max_rss, self._snapshots, metric_info
@@ -484,9 +454,7 @@ class MetricHelper:
         )
         metric_info = self._metric_info(metric_id, title)
 
-        query_params = get_query_params('avg_memcached_rss')
-
-        rss = list()
+        rss = []
         for (cluster_name, servers), initial_nodes in zip(
                 self.cluster_spec.clusters,
                 self.test_config.cluster.initial_nodes,
@@ -495,11 +463,13 @@ class MetricHelper:
                                   self.test.cbmonitor_clusters))[0]
             for server in servers[:initial_nodes]:
                 hostname = server.replace('.', '')
-                db = 'atop{}{}'.format(cluster, hostname)
-                data = self.seriesly[db].query(query_params)
-                rss.append(round(list(data.values())[0][0] / 1024 ** 2))
 
-        avg_rss = sum(rss) // len(rss)
+                db = self.store.build_dbname(cluster=cluster,
+                                             collector='atop',
+                                             server=hostname)
+                rss += self.store.get_values(db, metric='memcached_rss')
+
+        avg_rss = int(np.average(rss) / 1024 ** 2)
 
         return avg_rss, self._snapshots, metric_info
 
@@ -593,23 +563,16 @@ class MetricHelper:
 
         return avg_throughput, self._snapshots, metric_info
 
-    def verify_series_in_limits(self,
-                                db: str,
-                                expected_number: int,
-                                metric: str,
-                                larger_is_better: bool = False) -> bool:
-        values = []
-        data = self.seriesly[db].get_all()
-        values += [value[metric] for value in data.values()]
+    def verify_series_in_limits(self, expected_number: int) -> bool:
+        db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
+                                     collector='secondary_debugstats')
+        values = self.store.get_values(db, metric='num_connections')
         values = list(map(float, values))
-        logger.info("Number of samples for {} are {}".format(metric, len(values)))
+        logger.info("Number of samples: {}".format(len(values)))
         logger.info("Sample values: {}".format(values))
 
-        if larger_is_better and any(value < expected_number for value in values):
-                return False
-        else:
-            if any(value > expected_number for value in values):
-                return False
+        if any(value > expected_number for value in values):
+            return False
         return True
 
     def _parse_ycsb_throughput(self) -> int:

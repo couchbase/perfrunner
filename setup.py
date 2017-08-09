@@ -8,7 +8,6 @@ setup(
         'console_scripts': [
             'cloudrunner = perfrunner.utils.cloudrunner:main',
             'cluster = perfrunner.utils.cluster:main',
-            'compact = perfrunner.utils.compact:main',
             'debug = perfrunner.utils.debug:main',
             'go_dependencies = perfrunner.utils.go_dependencies:main',
             'hidefast = perfrunner.utils.hidefast:main',

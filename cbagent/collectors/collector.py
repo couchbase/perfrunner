@@ -6,7 +6,7 @@ from threading import Thread
 import requests
 
 from cbagent.metadata_client import MetadataClient
-from cbagent.stores import SerieslyStore
+from cbagent.stores import PerfStore
 from logger import logger
 
 
@@ -32,7 +32,7 @@ class Collector:
         self.ssh_password = getattr(settings, 'ssh_password', None)
         self.secondary_statsfile = settings.secondary_statsfile
 
-        self.store = SerieslyStore(settings.seriesly_host)
+        self.store = PerfStore(settings.cbmonitor_host)
         self.mc = MetadataClient(settings)
 
         self.metrics = set()

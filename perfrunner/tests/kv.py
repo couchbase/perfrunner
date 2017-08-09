@@ -121,7 +121,7 @@ class DurabilityTest(KVTest):
         for operation in ('replicate_to', 'persist_to'):
             self.reporter.post(
                 *self.metrics.kv_latency(operation=operation,
-                                         dbname='durability')
+                                         collector='durability')
             )
 
 
@@ -304,23 +304,6 @@ class FragmentationLargeTest(FragmentationTest):
         WorkloadGen(self.test_config.load_settings.items,
                     self.master_node, self.test_config.buckets[0], password,
                     small=False).run()
-
-
-class MemUsedTest(KVTest):
-
-    ALL_BUCKETS = True
-
-    def reset_kv_stats(self):
-        pass
-
-    def _report_kpi(self):
-        for metric in ('max', 'min'):
-            self.reporter.post(
-                *self.metrics.mem_used(metric)
-            )
-            self.reporter.post(
-                *self.metrics.mem_used(metric)
-            )
 
 
 class PathoGenTest(FragmentationTest):

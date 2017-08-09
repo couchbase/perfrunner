@@ -45,8 +45,7 @@ class MetadataClient(RestClient):
     def __init__(self, settings):
         super(MetadataClient, self).__init__()
         self.settings = settings
-        self.base_url = "http://{}/cbmonitor".format(
-            settings.cbmonitor_host_port)
+        self.base_url = "http://{}/cbmonitor".format(settings.cbmonitor_host)
 
     def get_clusters(self):
         url = self.base_url + "/get_clusters/"
@@ -74,7 +73,6 @@ class MetadataClient(RestClient):
         url = self.base_url + "/add_cluster/"
         data = {"name": self.settings.cluster}
 
-        logger.info("Adding cluster: {}".format(self.settings.cluster))
         self.post(url, data)
 
     def add_server(self, address):
@@ -84,14 +82,11 @@ class MetadataClient(RestClient):
         url = self.base_url + "/add_server/"
         data = {"address": address, "cluster": self.settings.cluster}
 
-        logger.info("Adding server: {}".format(address))
         self.post(url, data)
 
     def add_bucket(self, name):
         if name in self.get_buckets():
             return
-
-        logger.info("Adding bucket: {}".format(name))
 
         url = self.base_url + "/add_bucket/"
         data = {"name": name, "cluster": self.settings.cluster}
@@ -101,15 +96,11 @@ class MetadataClient(RestClient):
         if name in self.get_indexes():
             return
 
-        logger.info("Adding Index: {}".format(name))
-
         url = self.base_url + "/add_index/"
         data = {"name": name, "cluster": self.settings.cluster}
         self.post(url, data)
 
     def add_metric(self, name, bucket=None, index=None, server=None, collector=None):
-        logger.debug("Adding metric: {}".format(name))
-
         url = self.base_url + "/add_metric/"
         data = {"name": name, "cluster": self.settings.cluster}
         for extra_param in ("bucket", "index", "server", "collector"):
@@ -118,8 +109,6 @@ class MetadataClient(RestClient):
         self.post(url, data)
 
     def add_snapshot(self, name):
-        logger.info("Adding snapshot: {}".format(name))
-
         url = self.base_url + "/add_snapshot/"
         data = {"cluster": self.settings.cluster, "name": name}
         self.post(url, data)

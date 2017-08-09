@@ -69,5 +69,3 @@ Related projects
 
 * [cbmonitor](https://github.com/couchbase/cbmonitor)
 * [showfast](https://github.com/couchbaselabs/showfast)
-* [seriesly](https://github.com/dustin/seriesly)
-* [seriesly client](https://github.com/pavel-paulau/seriesly-python-client)

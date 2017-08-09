@@ -2,7 +2,7 @@
 test = perfrunner.tests.kv.ThroughputTest
 title = Average ops/sec, 4 nodes, 80/20 R/W, 1 bucket x 1B x 1KB, full ejection, 5%% cache miss rate
 component = kv
-category = storage
+category = dgm
 
 [cluster]
 mem_quota = 51200

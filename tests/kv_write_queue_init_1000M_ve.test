@@ -2,7 +2,7 @@
 test = perfrunner.tests.kv.InitialLoadTest
 title = Avg. write queue (items), 4 nodes, 1B x 1KB, value ejection, ~220K ops/sec, initial load, no compaction
 component = kv
-category = storage
+category = dgm
 
 [cluster]
 mem_quota = 51200

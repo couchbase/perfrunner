@@ -1,0 +1,47 @@
+[test_case]
+test = perfrunner.tests.ycsb.YCSBSOETest
+title = Avg Throughput (queries/sec), Workload SH2, 4 node
+component = n1ql
+category = soe
+
+[cluster]
+mem_quota = 15000
+index_mem_quota = 35000
+initial_nodes = 4
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+
+[secondary]
+indexer.settings.storage_mode = memory_optimized
+
+[load]
+workload_path = workloads/soe/workloadsh2
+items = 10000000
+recorded_load_cache_size = 100000
+workers = 100
+worker_instances = 4
+inserts_per_workerinstance = 10000000
+
+[n1ql]
+indexes =
+    ix9::CREATE INDEX {name}_{hash} ON `{bucket}`(address.geo_region, age_group, DATE_PART_STR(dob,'year')) WITH {{ "nodes": [ "{index_node}:8091" ] }};
+
+[access]
+workload_path = workloads/soe/workloadsh2
+items = 10000000
+recorded_load_cache_size = 100000
+ops = 500000000
+time = 600
+workers = 100
+worker_instances = 4
+inserts_per_workerinstance = 10000000
+
+[ycsb]
+branch = soe
+
+[restore]
+backup_storage = /backups
+backup_repo = soe10M
+

@@ -7,7 +7,7 @@ from perfrunner.settings import REPO
 
 class Remote:
 
-    CLIENT_PROCESSES = 'celery', 'cbc-pillowfight'
+    CLIENT_PROCESSES = 'celery', 'cbc-pillowfight', 'memcached'
 
     def __init__(self, cluster_spec, test_config, os):
         self.os = os
@@ -49,7 +49,8 @@ class Remote:
 
     @all_clients
     def clone_ycsb(self, repo: str, branch: str, worker_home: str):
-        logger.info('Cloning YCSB repository: {}'.format(repo))
+        logger.info('Cloning YCSB repository: {} branch {}'.format(
+            repo, branch))
         with cd(worker_home), cd('perfrunner'):
             run('git clone -q -b {} {}'.format(branch, repo))
 

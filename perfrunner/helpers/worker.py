@@ -91,6 +91,9 @@ class RemoteWorkerManager:
     def next_worker(self) -> str:
         return next(self.workers)
 
+    def reset_workers(self):
+        self.workers = cycle(self.cluster_spec.workers)
+
     def start(self):
         logger.info('Initializing remote worker environment')
         self.remote.init_repo(self.WORKER_HOME)
@@ -116,11 +119,12 @@ class RemoteWorkerManager:
                   target_iterator: TargetIterator,
                   timer: int = None):
         self.async_results = []
-
+        self.reset_workers()
         for target in target_iterator:
             for instance in range(task_settings.worker_instances):
                 worker = self.next_worker()
-                logger.info('Running task on {}'.format(worker))
+                logger.info('Starting task on {} with instance {}'.format(
+                    worker, instance))
                 async_result = task.apply_async(
                     args=(task_settings, target, timer, instance),
                     queue=worker, expires=timer,

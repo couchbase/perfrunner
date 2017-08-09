@@ -268,7 +268,7 @@ class RemoteLinux(Remote):
             '/opt/couchbase/etc/couchbase/static_config')
 
     @master_server
-    def restore_fts(self, archive_path, repo_path):
+    def restore_without_index(self, archive_path, repo_path):
         cmd = \
             "/opt/couchbase/bin/cbbackupmgr restore " \
             "--archive {} --repo {} --threads 30 " \

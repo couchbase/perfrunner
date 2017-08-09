@@ -347,6 +347,9 @@ class PhaseSettings:
     SIZE_VARIATION_MIN = 1
     SIZE_VARIATION_MAX = 1024
 
+    RECORDED_LOAD_CACHE_SIZE = 0
+    INSERTS_PER_WORKERINSTANCE = 0
+
     def __init__(self, options: dict):
         # Common settings
         self.time = int(options.get('time', self.TIME))
@@ -438,6 +441,10 @@ class PhaseSettings:
 
         # YCSB settings
         self.workload_path = options.get('workload_path')
+        self.recorded_load_cache_size = int(options.get('recorded_load_cache_size',
+                                                        self.RECORDED_LOAD_CACHE_SIZE))
+        self.inserts_per_workerinstance = int(options.get('inserts_per_workerinstance',
+                                                          self.INSERTS_PER_WORKERINSTANCE))
 
         # Subdoc & XATTR
         self.subdoc_field = options.get('subdoc_field')
@@ -470,9 +477,13 @@ class HotLoadSettings(PhaseSettings):
 class RestoreSettings:
 
     SNAPSHOT = None
+    BACKUP_STORAGE = '/backups'
+    BACKUP_REPO = ''
 
     def __init__(self, options):
         self.snapshot = options.get('snapshot', self.SNAPSHOT)
+        self.backup_storage = options.get('backup_storage', self.BACKUP_STORAGE)
+        self.backup_repo = options.get('backup_repo', self.BACKUP_REPO)
 
     def __str__(self) -> str:
         return str(self.__dict__)

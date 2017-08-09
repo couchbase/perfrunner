@@ -1,5 +1,4 @@
 from perfrunner.helpers.cbmonitor import timeit, with_stats
-from perfrunner.helpers.misc import target_hash
 from perfrunner.tests import PerfTest, TargetIterator
 
 
@@ -10,31 +9,6 @@ class N1QLTest(PerfTest):
         'n1ql_stats': True,
         'secondary_stats': True,
     }
-
-    def build_index(self):
-        query_node = self.cluster_spec.servers_by_role('n1ql')[0]
-
-        initial_nodes = self.test_config.cluster.initial_nodes[0]
-        index_nodes = self.cluster_spec.servers_by_role('index')[:initial_nodes]
-
-        for bucket, index in zip(self.test_config.buckets,
-                                 self.test_config.n1ql_settings.indexes):
-            for index_node in index_nodes:
-                self.create_index(bucket, index, query_node, index_node)
-
-    def create_index(self, bucket, index, query_node, index_node=None):
-        index_name, statement = index.split('::')
-        if not index_name:
-            return
-
-        statement = statement.format(name=index_name,
-                                     hash=target_hash(index_node),
-                                     bucket=bucket,
-                                     index_node=index_node)
-
-        self.rest.exec_n1ql_statement(query_node, statement)
-
-        self.monitor.monitor_index_state(host=query_node, index_name=index_name)
 
     @with_stats
     def access(self, *args):
@@ -71,6 +45,12 @@ class N1QLTest(PerfTest):
         access_settings = self.test_config.access_settings
         access_settings.items //= 2
         super().access_bg(settings=access_settings)
+
+    def build_index(self):
+        self.index.build()
+
+    def create_index(self, bucket, index, query_node, index_node=None):
+        self.index.create_index(bucket, index, query_node, index_node)
 
     def run(self):
         self.load()

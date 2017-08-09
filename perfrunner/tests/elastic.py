@@ -23,8 +23,8 @@ class ElasticTest(PerfTest):
 
     def restore(self):
         logger.info('Restoring data')
-        self.remote.restore_fts(self.test_config.fts_settings.storage,
-                                self.test_config.fts_settings.repo)
+        self.remote.restore_without_index(self.test_config.fts_settings.storage,
+                                          self.test_config.fts_settings.repo)
 
     def cleanup_and_restore(self):
         self.delete_index()

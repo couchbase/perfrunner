@@ -1,9 +1,12 @@
 import os.path
+import socket
+import time
 from datetime import date
 from sys import platform
 from typing import List
 
-from fabric.api import lcd, local, quiet, shell_env
+from fabric.api import lcd, local, quiet, settings, shell_env
+from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
 
 from logger import logger
 from perfrunner.settings import ClusterSpec
@@ -283,35 +286,77 @@ def run_kvgen(hostname, num_docs, prefix):
 
 
 def run_ycsb(host, bucket, password, action, workload, items, workers,
-             ops=None, time=None, instance=0):
+             soe_params=None, ops=None, time=None, instance=0):
     cmd = 'bin/ycsb {action} couchbase2 ' \
-        '-P {workload} ' \
-        '-p recordcount={items} ' \
-        '-p writeallfields=true ' \
-        '-p threadcount={workers} ' \
-        '-p couchbase.host={host} ' \
-        '-p couchbase.bucket={bucket} ' \
-        '-p couchbase.password={password} ' \
-        '-p couchbase.upsert=true ' \
-        '-p couchbase.boost=48 ' \
-        '-p couchbase.epoll=true ' \
-        '-p exportfile=ycsb_{action}_{instance}.log'
+          '-P {workload} ' \
+          '-p writeallfields=true ' \
+          '-threads {workers} ' \
+          '-p couchbase.host={host} ' \
+          '-p couchbase.bucket={bucket} ' \
+          '-p couchbase.password={password} ' \
+          '-p couchbase.upsert=true ' \
+          '-p couchbase.boost=48 ' \
+          '-p couchbase.epoll=true ' \
+          '-p exportfile=ycsb_{action}_{instance}.log '
 
     if ops is not None:
-        cmd += ' -p operationcount={ops}'
+        cmd += ' -p operationcount={ops} '
     if time is not None:
-        cmd += ' -p maxexecutiontime={time}'
-
-    cmd += ' 2>ycsb_{instance}_stderr.log'
+        cmd += ' -p maxexecutiontime={time} '
 
     cmd = cmd.format(host=host, bucket=bucket, password=password,
                      action=action, workload=workload,
                      items=items, ops=ops, workers=workers, time=time,
                      instance=instance)
 
+    if soe_params is None:
+        cmd += ' -p recordcount={items} '.format(items=items)
+    else:
+        cmd += ' -p totalrecordcount={totalrecordcount} '.format(totalrecordcount=items)
+        cmd += ' -p recordcount={items} '.format(items=soe_params['recorded_load_cache_size'])
+        cmd += ' -p insertstart={insertstart} '.format(insertstart=soe_params['insertstart'])
+
+    cmd += ' 2>ycsb_{action}_{instance}_stderr.log '.format(action=action, instance=instance)
     logger.info('Running: {}'.format(cmd))
     with lcd('YCSB'):
         local(cmd)
+
+
+def restart_memcached(mem_limit=10000, port=8000):
+    cmd1 = 'killall -9 memcached'
+    logger.info('Running: {}'.format(cmd1))
+    with settings(warn_only=True):
+        result = local(cmd1, capture=True)
+
+    for counter in range(5):
+        time.sleep(2)
+        with settings(warn_only=True):
+            result = local('pgrep memcached', capture=True)
+        if result.return_code == 1:
+            break
+        else:
+            logger.info('memcached still running')
+    else:
+        raise Exception('memcached was not kill properly')
+
+    cmd2 = 'memcached -u root -m {mem_limit} -l localhost -p {port} -d'
+    cmd2 = cmd2.format(mem_limit=mem_limit, port=port)
+    logger.info('Running: {}'.format(cmd2))
+    result = local(cmd2, capture=True)
+
+    for counter in range(5):
+        try:
+            time.sleep(2)
+            mc = MemcachedClient(host='localhost', port=port)
+            mc.stats()
+            mc.close()
+            break
+        except (EOFError, socket.error, MemcachedError):
+            logger.info('Can not connect to memcached')
+    else:
+        raise Exception('memcached did not start properly')
+
+    logger.info('memcached restarted')
 
 
 def run_cbindexperf(path_to_tool, node, rest_username, rest_password,
@@ -340,7 +385,7 @@ def start_celery_worker(queue):
 
 
 def clone_ycsb(repo: str, branch: str):
-    logger.info('Cloning YCSB repository: {}'.format(repo))
+    logger.info('Cloning YCSB repository: {} branch: {}'.format(repo, branch))
     local('git clone -q -b {} {}'.format(branch, repo))
 
 

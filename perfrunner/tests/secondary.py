@@ -534,6 +534,31 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
         self.validate_num_connections()
 
 
+class SecondaryIndexingScanLatencyLongevityTest(SecondaryIndexingScanLatencyTest):
+
+    @with_stats
+    def apply_scanworkload(self, path_to_tool="/opt/couchbase/bin/cbindexperf"):
+        rest_username, rest_password = self.cluster_spec.rest_credentials
+
+        t = 0
+        while t < self.scan_time:
+            run_cbindexperf(path_to_tool, self.index_nodes[0], rest_username,
+                            rest_password, self.configfile, run_in_background=True)
+            time.sleep(3600)
+            kill_process("cbindexperf")
+            t += 3600
+
+    def run(self):
+        self.remove_statsfile()
+        self.load()
+        self.wait_for_persistence()
+        self.compact_bucket()
+        self.build_secondaryindex()
+        self.run_access_for_2i(run_in_background=True)
+        self.apply_scanworkload(path_to_tool="./cbindexperf")
+        self.print_index_disk_usage()
+
+
 class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest):
 
     """Apply scan workload and measure the scan latency during rebalance."""

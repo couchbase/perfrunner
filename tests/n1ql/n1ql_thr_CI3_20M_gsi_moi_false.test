@@ -2,7 +2,7 @@
 test = perfrunner.tests.n1ql.N1QLThroughputTest
 title = CI3, Range Scan, Covering, MOI, request_plus
 component = n1ql
-category = CI_thr
+category = Q1_Q3_thr
 
 [cluster]
 mem_quota = 20480

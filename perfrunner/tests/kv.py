@@ -64,6 +64,11 @@ class ReadLatencyDGMTest(ReadLatencyTest):
 
     COLLECTORS = {'latency': True, 'net': False, 'page_cache': True}
 
+    def _report_kpi(self):
+        self.reporter.post(
+            *self.metrics.kv_latency(operation='get', percentile=99.9)
+        )
+
 
 class DurabilityTest(KVTest):
 

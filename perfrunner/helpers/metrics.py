@@ -9,16 +9,18 @@ from seriesly import Seriesly
 from logger import logger
 from perfrunner.settings import StatsSettings
 
+Number = Union[float, int]
+
 Metric = Tuple[
-    Union[float, int],  # Value
-    List[str],          # Snapshots
-    Dict[str, str],     # Metric info
+    Number,          # Value
+    List[str],       # Snapshots
+    Dict[str, str],  # Metric info
 ]
 
 DailyMetric = Tuple[
-    str,                # Metric
-    Union[float, int],  # Value
-    List[str],          # Snapshots
+    str,        # Metric
+    Number,     # Value
+    List[str],  # Snapshots
 ]
 
 
@@ -138,7 +140,7 @@ class MetricHelper:
         return throughput, self._snapshots, metric_info
 
     def latency_fts_queries(self,
-                            percentile: int,
+                            percentile: Number,
                             dbname: str,
                             metric: str,
                             order_by: str,
@@ -220,7 +222,7 @@ class MetricHelper:
             values += [v['ops'] for v in data.values()]
         return int(np.percentile(values, 90))
 
-    def xdcr_lag(self, percentile: int = 95) -> Metric:
+    def xdcr_lag(self, percentile: Number = 95) -> Metric:
         metric_id = '{}_{}th_xdc_lag'.format(self.test_config.name, percentile)
         title = '{}th percentile replication lag (ms), {}'.format(
             percentile, self._title)
@@ -300,7 +302,7 @@ class MetricHelper:
 
         return couch_views_ops, self._snapshots, metric_info
 
-    def query_latency(self, percentile: int) -> Metric:
+    def query_latency(self, percentile: Number) -> Metric:
         metric_id = self.test_config.name
         title = '{}th percentile query latency (ms), {}'.format(percentile,
                                                                 self._title)
@@ -311,7 +313,7 @@ class MetricHelper:
 
         return latency, self._snapshots, metric_info
 
-    def _query_latency(self, percentile: int) -> float:
+    def _query_latency(self, percentile: Number) -> float:
         timings = []
         for bucket in self.test_config.buckets:
             db = 'spring_query_latency{}{}'.format(self.test.cbmonitor_clusters[0],
@@ -323,7 +325,7 @@ class MetricHelper:
             return round(query_latency, 1)
         return int(query_latency)
 
-    def secondary_scan_latency(self, percentile: int) -> Metric:
+    def secondary_scan_latency(self, percentile: Number) -> Metric:
         metric_id = self.test_config.name
         title = '{}th percentile secondary scan latency (ms), {}'.format(percentile,
                                                                          self._title)
@@ -347,11 +349,12 @@ class MetricHelper:
 
     def kv_latency(self,
                    operation: str,
-                   percentile: int = 99,
+                   percentile: Number = 99,
                    dbname: str = 'spring_latency') -> Metric:
         metric_id = '{}_{}_{}th'.format(self.test_config.name,
                                         operation,
                                         percentile)
+        metric_id = metric_id.replace('.', '')
         title = '{}th percentile {} {}'.format(percentile,
                                                operation.upper(),
                                                self._title)
@@ -363,7 +366,7 @@ class MetricHelper:
 
     def _kv_latency(self,
                     operation: str,
-                    percentile: int,
+                    percentile: Number,
                     dbname: str) -> float:
         timings = []
         op_key = 'latency_{}'.format(operation)
@@ -373,9 +376,13 @@ class MetricHelper:
             timings += [
                 v[op_key] for v in data.values() if op_key in v
             ]
-        return round(np.percentile(timings, percentile), 2)
 
-    def observe_latency(self, percentile: int) -> Metric:
+        latency = np.percentile(timings, percentile)
+        if latency > 100:
+            return round(latency)
+        return round(latency, 2)
+
+    def observe_latency(self, percentile: Number) -> Metric:
         metric_id = '{}_{}th'.format(self.test_config.name, percentile)
         title = '{}th percentile {}'.format(percentile, self._title)
         metric_info = self._metric_info(metric_id, title)

@@ -1,3 +1,4 @@
+import os
 import sys
 from argparse import ArgumentParser
 
@@ -7,24 +8,28 @@ from logger import logger
 
 BASE_URL = 'http://172.23.120.24/builds/latestbuilds/couchbase-server'
 
-CHECKPOINT = '/home/latest'
+CHECKPOINT_DIR = '/home/'
 
 MAX_MISSING = 3
 
 RELEASES = {
     'spock': '5.0.0',
+    'vulcan': '5.1.0',
 }
 
 
-def read_latest() -> int:
-    with open(CHECKPOINT) as f:
+def read_latest(release: str) -> int:
+    checkpoint = os.path.join(CHECKPOINT_DIR, release)
+    with open(checkpoint) as f:
         build = f.read()
         return int(build)
 
 
-def store_latest(build: int):
+def store_latest(release: str, build: int):
     logger.info('Storing build {}'.format(build))
-    with open(CHECKPOINT, 'w') as f:
+
+    checkpoint = os.path.join(CHECKPOINT_DIR, release)
+    with open(checkpoint, 'w') as f:
         f.write(str(build))
 
 
@@ -49,8 +54,7 @@ def rpm_package_exists(release: str, build: str) -> bool:
 def get_args():
     parser = ArgumentParser()
 
-    parser.add_argument('-r', '--release', dest='release',
-                        default='spock')
+    parser.add_argument('-r', '--release', dest='release', default='spock')
 
     return parser.parse_args()
 
@@ -59,7 +63,7 @@ def main():
     args = get_args()
 
     latest = None
-    build = read_latest()
+    build = read_latest(release=args.release)
     missing = 0
 
     while missing < MAX_MISSING:
@@ -75,7 +79,7 @@ def main():
             latest = build
 
     if latest:
-        store_latest(build=latest)
+        store_latest(release=args.release, build=latest)
     else:
         sys.exit('No new build found')
 

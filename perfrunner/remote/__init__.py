@@ -24,7 +24,7 @@ class Remote:
 
     @all_clients
     def clean_clients(self, temp_dir):
-        run('killall -2 {}'.format(' '.join(self.CLIENT_PROCESSES)), quiet=True)
+        run('killall -9 {}'.format(' '.join(self.CLIENT_PROCESSES)), quiet=True)
 
         run('rm -fr {}'.format(temp_dir))
 

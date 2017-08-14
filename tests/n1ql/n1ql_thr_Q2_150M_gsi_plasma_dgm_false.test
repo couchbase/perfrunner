@@ -11,6 +11,9 @@ initial_nodes = 6
 num_buckets = 1
 restrict_kernel_memory = 32768M
 
+[compaction]
+db_percentage = 100
+
 [bucket]
 replica_number = 0
 

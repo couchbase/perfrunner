@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.xdcr.XdcrInitTest
+test = perfrunner.tests.xdcr.UniDirXdcrInitTest
 title = Avg. initial XDCR rate (items/sec), 5 -> 5 UniDir, 1 bucket x 1G x 1KB
 component = xdcr
 category = init_multi
@@ -23,6 +23,3 @@ db_percentage = 100
 items = 1000000000
 size = 1024
 workers = 80
-
-[xdcr]
-replication_type = unidir

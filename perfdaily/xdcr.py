@@ -1,7 +1,7 @@
 from perfdaily import DailyTest
-from perfrunner.tests.xdcr import XdcrInitTest as _XdcrInitTest
+from perfrunner.tests.xdcr import UniDirXdcrInitTest
 
 
-class XdcrInitTest(DailyTest, _XdcrInitTest):
+class XdcrInitTest(DailyTest, UniDirXdcrInitTest):
 
     pass

@@ -6,7 +6,7 @@ from perfrunner.tests import PerfTest, TargetIterator
 
 class XdcrTest(PerfTest):
 
-    """Implementat bi-directional XDCR cases.
+    """Implement bi-directional XDCR cases.
 
     As a base class it implements several methods for XDCR management and WAN
     configuration.
@@ -34,20 +34,14 @@ class XdcrTest(PerfTest):
                 'fromBucket': bucket,
                 'toCluster': name
             }
-            if self.settings.replication_protocol:
-                params['type'] = self.settings.replication_protocol
             if self.settings.filter_expression:
                 params['filterExpression'] = self.settings.filter_expression
             self.rest.start_replication(m1, params)
 
     def enable_xdcr(self):
         m1, m2 = self.cluster_spec.masters
-
-        if self.settings.replication_type == 'unidir':
-            self._start_replication(m1, m2)
-        if self.settings.replication_type == 'bidir':
-            self._start_replication(m1, m2)
-            self._start_replication(m2, m1)
+        self._start_replication(m1, m2)
+        self._start_replication(m2, m1)
 
     def monitor_replication(self):
         for target in self.target_iterator:
@@ -141,8 +135,12 @@ class UniDirXdcrTest(XdcrTest):
                                                 prefix='symmetric')
         super().load(target_iterator=src_target_iterator)
 
+    def enable_xdcr(self):
+        m1, m2 = self.cluster_spec.masters
+        self._start_replication(m1, m2)
 
-class XdcrInitTest(UniDirXdcrTest):
+
+class XdcrInitTest(XdcrTest):
 
     """Run initial XDCR.
 
@@ -150,11 +148,6 @@ class XdcrInitTest(UniDirXdcrTest):
     """
 
     COLLECTORS = {'xdcr_stats': True}
-
-    def load(self):
-        src_target_iterator = SrcTargetIterator(self.cluster_spec,
-                                                self.test_config)
-        super(UniDirXdcrTest, self).load(target_iterator=src_target_iterator)
 
     @with_stats
     @timeit
@@ -178,3 +171,15 @@ class XdcrInitTest(UniDirXdcrTest):
 
         time_elapsed = self.init_xdcr()
         self.report_kpi(time_elapsed)
+
+
+class UniDirXdcrInitTest(XdcrInitTest):
+
+    def enable_xdcr(self):
+        m1, m2 = self.cluster_spec.masters
+        self._start_replication(m1, m2)
+
+    def load(self, *args):
+        src_target_iterator = SrcTargetIterator(self.cluster_spec,
+                                                self.test_config)
+        super(XdcrInitTest, self).load(target_iterator=src_target_iterator)

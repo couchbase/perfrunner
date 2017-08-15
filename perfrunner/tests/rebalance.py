@@ -9,8 +9,8 @@ from perfrunner.tests import PerfTest
 from perfrunner.tests.views import QueryTest
 from perfrunner.tests.xdcr import (
     DestTargetIterator,
+    UniDirXdcrInitTest,
     UniDirXdcrTest,
-    XdcrInitTest,
     XdcrTest,
 )
 
@@ -403,7 +403,7 @@ class RebalanceWithUniDirXdcrTest(RebalanceTest, UniDirXdcrTest):
             self.report_kpi()
 
 
-class RebalanceWithXdcrInitTest(RebalanceTest, XdcrInitTest):
+class RebalanceWithXdcrInitTest(RebalanceTest, UniDirXdcrInitTest):
 
     def load_dest(self):
         if self.test_config.cluster.initial_nodes[1] == \
@@ -424,7 +424,7 @@ class RebalanceWithXdcrInitTest(RebalanceTest, XdcrInitTest):
         pass
 
     def _report_kpi(self, time_elapsed):
-        XdcrInitTest._report_kpi(self, time_elapsed)
+        UniDirXdcrInitTest._report_kpi(self, time_elapsed)
 
     def run(self):
         self.load()

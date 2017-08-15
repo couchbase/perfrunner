@@ -29,9 +29,6 @@ items = 1000000000
 workers = 40
 working_set = 5
 
-[xdcr]
-replication_type = unidir
-
 [access]
 creates = 5
 reads = 50

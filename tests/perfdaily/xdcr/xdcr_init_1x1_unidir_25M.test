@@ -22,6 +22,3 @@ view_percentage = 100
 items = 25000000
 size = 1024
 workers = 80
-
-[xdcr]
-replication_type = unidir

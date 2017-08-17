@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.CompactionTest
-title = Full compaction time (min), 4 nodes, 1B x 1KB, 100K ops/sec (20/80 R/W), 5%% cache miss ratio
+title = Full compaction time (min), 4 nodes, 1B x 1KB, 15K ops/sec (90/10 R/W), 5%% cache miss rate
 component = kv
 category = compact
 
@@ -27,12 +27,13 @@ working_set = 5
 
 [access]
 creates = 0
-reads = 20
-updates = 80
+reads = 90
+updates = 10
 deletes = 0
 items = 1000000000
 working_set = 5
 working_set_access = 95
-workers = 40
-throughput = 100000
+workers = 15
+throughput = 15000
+time = 3600
 async = 1

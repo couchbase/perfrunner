@@ -75,11 +75,8 @@ class XdcrTest(PerfTest):
             )
 
     def run(self):
-        if self.test_config.restore_settings.snapshot and self.build > '4':
-            self.restore()
-        else:
-            self.load()
-            self.wait_for_persistence()
+        self.load()
+        self.wait_for_persistence()
 
         self.enable_xdcr()
         self.monitor_replication()
@@ -161,11 +158,8 @@ class XdcrInitTest(XdcrTest):
         )
 
     def run(self):
-        if self.test_config.restore_settings.snapshot and self.build > '4':
-            self.restore()
-        else:
-            self.load()
-            self.wait_for_persistence()
+        self.load()
+        self.wait_for_persistence()
 
         self.configure_wan()
 

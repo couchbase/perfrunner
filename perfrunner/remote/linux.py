@@ -226,17 +226,17 @@ class RemoteLinux(Remote):
         run('tc qdisc del dev {} root'.format(_if), warn_only=True, quiet=True)
 
     @all_servers
-    def enable_wan(self):
+    def enable_wan(self, delay: int):
         logger.info('Enabling WAN effects')
         _if = self.detect_if()
         for cmd in (
             'tc qdisc add dev {} handle 1: root htb',
             'tc class add dev {} parent 1: classid 1:1 htb rate 1gbit',
             'tc class add dev {} parent 1:1 classid 1:11 htb rate 1gbit',
-            'tc qdisc add dev {} parent 1:11 handle 10: netem delay 40ms 2ms '
+            'tc qdisc add dev {} parent 1:11 handle 10: netem delay {}ms 2ms '
             'loss 0.005% 50% duplicate 0.005% corrupt 0.005%',
         ):
-            run(cmd.format(_if))
+            run(cmd.format(_if, delay))
 
     @all_servers
     def filter_wan(self, src_list, dest_list):

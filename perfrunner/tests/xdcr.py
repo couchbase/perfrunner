@@ -53,7 +53,7 @@ class XdcrTest(PerfTest):
         super().sleep()
 
     def configure_wan(self):
-        if self.settings.wan_enabled:
+        if self.settings.wan_delay:
             hostnames = self.cluster_spec.servers
             src_list = [
                 hostname for hostname in hostnames[len(hostnames) // 2:]
@@ -61,7 +61,7 @@ class XdcrTest(PerfTest):
             dest_list = [
                 hostname for hostname in hostnames[:len(hostnames) // 2]
             ]
-            self.remote.enable_wan()
+            self.remote.enable_wan(self.settings.wan_delay)
             self.remote.filter_wan(src_list, dest_list)
 
     def _report_kpi(self, *args):

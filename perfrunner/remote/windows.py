@@ -183,7 +183,7 @@ class RemoteWindows(Remote):
     def disable_wan(self):
         pass
 
-    def enable_wan(self):
+    def enable_wan(self, *args):
         pass
 
     def filter_wan(self, *args):

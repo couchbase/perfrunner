@@ -1,0 +1,31 @@
+[test_case]
+test = perfrunner.tests.xdcr.UniDirXdcrTest
+title = 4 -> 4 UniDir, 1 bucket x 500K x 300KB, 700 updates/sec, WAN 40±4 ms
+component = xdcr
+category = ongoing
+
+[stats]
+server_processes = goxdcr
+
+[cluster]
+mem_quota = 204800
+initial_nodes = 4 4
+num_buckets = 1
+
+[xdcr]
+wan_delay = 20
+
+[load]
+items = 500000
+size = 307200
+workers = 40
+
+[access]
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+throughput = 700
+items = 500000
+workers = 4
+time = 3600

@@ -276,7 +276,7 @@ class CbAgent:
             dest_cluster = reversed_clusters[i]
             settings.dest_master_node = self.cluster_map[dest_cluster]
 
-            collector = XdcrLag(settings)
+            collector = XdcrLag(settings, self.test.test_config.access_settings)
             self.collectors.append(collector)
 
             if self.test.test_config.xdcr_settings.replication_type == 'unidir':

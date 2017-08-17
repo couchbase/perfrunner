@@ -14,7 +14,7 @@ class SpringLatency(Latency):
     METRICS = "latency_set", "latency_get"
 
     def __init__(self, settings, workload, prefix=None):
-        super(Latency, self).__init__(settings)
+        super().__init__(settings)
 
         self.interval = settings.lat_interval
 

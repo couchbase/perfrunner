@@ -10,9 +10,6 @@ class ReservoirQueryLatency(Latency):
 
     METRICS = "latency_query",
 
-    def __init__(self, settings):
-        super(Latency, self).__init__(settings)
-
     def collect(self):
         pass
 

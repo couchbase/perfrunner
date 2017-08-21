@@ -1,5 +1,3 @@
-from time import sleep
-
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.worker import (
@@ -448,4 +446,4 @@ class MemoryOverheadTest(PillowFightTest):
 
     @with_stats
     def access(self, *args):
-        sleep(self.test_config.access_settings.time)
+        self.sleep()

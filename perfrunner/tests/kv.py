@@ -336,7 +336,8 @@ class ThroughputTest(KVTest):
                 port = self.rest.get_memcached_port(server)
 
                 stats = self.memcached.get_stats(server, port, bucket)
-                ops += int(stats[b'cmd_total_ops'])
+                for stat in b'cmd_get', b'cmd_set':
+                    ops += int(stats[stat])
         return ops
 
     def _report_kpi(self):

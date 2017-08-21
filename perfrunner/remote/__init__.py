@@ -44,7 +44,7 @@ class Remote:
                                             C_FORCE_ROOT='1'):
                 run('ulimit -n 10240; '
                     'nohup env/bin/celery worker '
-                    '-A perfrunner.helpers.worker -Q {0} -n {0} -C '
+                    '-A perfrunner.helpers.worker -Q {0} -n {0} -C --discard '
                     '&>worker_{0}.log &'.format(worker), pty=False)
 
     @all_clients

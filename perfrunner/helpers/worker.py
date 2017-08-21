@@ -69,10 +69,11 @@ class RemoteWorkerManager:
 
     WORKER_HOME = '/tmp/perfrunner'
 
-    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):
+    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig,
+                 verbose: bool):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
-        self.remote = RemoteHelper(cluster_spec, test_config)
+        self.remote = RemoteHelper(cluster_spec, test_config, verbose)
 
         self.queues = cycle(self.cluster_spec.workers)
 
@@ -126,7 +127,8 @@ class LocalWorkerManager(RemoteWorkerManager):
     BROKER_DB = 'perfrunner.db'
     RESULTS_DB = 'results.db'
 
-    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):
+    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig,
+                 verbose: bool):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
 

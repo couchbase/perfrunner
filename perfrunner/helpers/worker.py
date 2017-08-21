@@ -75,7 +75,7 @@ class RemoteWorkerManager:
         self.test_config = test_config
         self.remote = RemoteHelper(cluster_spec, test_config, verbose)
 
-        self.queues = cycle(self.cluster_spec.workers)
+        self.workers = cycle(self.cluster_spec.workers)
 
         self.terminate()
         self.start()
@@ -84,8 +84,8 @@ class RemoteWorkerManager:
     def is_remote(self) -> bool:
         return True
 
-    def next_queue(self) -> str:
-        return next(self.queues)
+    def next_worker(self) -> str:
+        return next(self.workers)
 
     def start(self):
         logger.info('Initializing remote worker environment')
@@ -101,21 +101,23 @@ class RemoteWorkerManager:
                   task_settings: PhaseSettings,
                   target_iterator: TargetIterator,
                   timer: int = None):
-        self.callbacks = []
+        self.async_results = []
 
         for target in target_iterator:
             for instance in range(task_settings.worker_instances):
-                callback = task.apply_async(
+                worker = self.next_worker()
+                logger.info('Running task on {}'.format(worker))
+                async_result = task.apply_async(
                     args=(task_settings, target, timer, instance),
-                    queue=self.next_queue(), expires=timer,
+                    queue=worker, expires=timer,
                 )
-                self.callbacks.append(callback)
+                self.async_results.append(async_result)
 
     def wait_for_workers(self):
         logger.info('Waiting for all tasks to finish')
-        for callback in self.callbacks:
-            callback.get()
-        logger.info('All workers are done')
+        for async_result in self.async_results:
+            async_result.get()
+        logger.info('All tasks are done')
 
     def terminate(self):
         logger.info('Terminating Celery workers')
@@ -141,7 +143,7 @@ class LocalWorkerManager(RemoteWorkerManager):
     def is_remote(self) -> bool:
         return False
 
-    def next_queue(self) -> str:
+    def next_worker(self) -> str:
         return 'local'
 
     def tune_sqlite(self):
@@ -152,7 +154,7 @@ class LocalWorkerManager(RemoteWorkerManager):
     def ensure_queue_exists(self):
         engine = create_engine('sqlite:///{}'.format(self.BROKER_DB))
         query = 'SELECT COUNT(*) FROM kombu_queue WHERE name = "{}"'\
-            .format(self.next_queue())
+            .format(self.next_worker())
 
         while True:
             if 'kombu_queue' not in engine.table_names():
@@ -165,7 +167,7 @@ class LocalWorkerManager(RemoteWorkerManager):
 
     def start(self):
         logger.info('Starting local Celery worker')
-        local.start_celery_worker(queue=self.next_queue())
+        local.start_celery_worker(queue=self.next_worker())
 
     def terminate(self):
         logger.info('Terminating Celery workers')

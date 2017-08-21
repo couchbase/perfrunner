@@ -23,13 +23,12 @@ class Remote:
             run('wget -N "{}" -P {}'.format(url, outdir))
 
     @all_clients
-    def clean_clients(self, temp_dir):
+    def terminate_client_processes(self):
         run('killall -9 {}'.format(' '.join(self.CLIENT_PROCESSES)), quiet=True)
-
-        run('rm -fr {}'.format(temp_dir))
 
     @all_clients
     def init_repo(self, worker_home: str):
+        run('rm -fr {}'.format(worker_home))
         run('mkdir -p {}'.format(worker_home))
 
         with cd(worker_home):

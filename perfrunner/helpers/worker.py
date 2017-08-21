@@ -121,7 +121,7 @@ class RemoteWorkerManager:
 
     def terminate(self):
         logger.info('Terminating Celery workers')
-        self.remote.clean_clients(self.WORKER_HOME)
+        self.remote.terminate_client_processes()
 
 
 class LocalWorkerManager(RemoteWorkerManager):

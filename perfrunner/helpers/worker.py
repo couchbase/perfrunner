@@ -1,5 +1,6 @@
 import os.path
 import sys
+import time
 from itertools import cycle
 from typing import Callable
 
@@ -69,6 +70,8 @@ class RemoteWorkerManager:
 
     WORKER_HOME = '/tmp/perfrunner'
 
+    PING_INTERVAL = 1
+
     def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig,
                  verbose: bool):
         self.cluster_spec = cluster_spec
@@ -79,6 +82,7 @@ class RemoteWorkerManager:
 
         self.terminate()
         self.start()
+        self.wait_until_workers_are_ready()
 
     @property
     def is_remote(self) -> bool:
@@ -95,6 +99,16 @@ class RemoteWorkerManager:
             logger.info('Starting remote Celery worker, host={}'.format(worker))
             perfrunner_home = os.path.join(self.WORKER_HOME, 'perfrunner')
             self.remote.start_celery_worker(worker, perfrunner_home)
+
+    def wait_until_workers_are_ready(self):
+        workers = ['celery@{}'.format(worker)
+                   for worker in self.cluster_spec.workers]
+        while True:
+            responses = celery.control.ping(workers)
+            if len(responses) == len(workers):
+                break
+            time.sleep(self.PING_INTERVAL)
+        logger.info('All remote Celery workers are ready')
 
     def run_tasks(self,
                   task: Callable,
@@ -142,7 +156,7 @@ class LocalWorkerManager(RemoteWorkerManager):
         self.terminate()
         self.tune_sqlite()
         self.start()
-        self.ensure_queue_exists()
+        self.wait_until_workers_are_ready()
 
     @property
     def is_remote(self) -> bool:
@@ -156,7 +170,7 @@ class LocalWorkerManager(RemoteWorkerManager):
             engine = create_engine('sqlite:///{}'.format(db))
             engine.execute('PRAGMA synchronous=OFF;')
 
-    def ensure_queue_exists(self):
+    def wait_until_workers_are_ready(self):
         engine = create_engine('sqlite:///{}'.format(self.BROKER_DB))
         query = 'SELECT COUNT(*) FROM kombu_queue WHERE name = "{}"'\
             .format(self.next_worker())

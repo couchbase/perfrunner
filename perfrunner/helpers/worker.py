@@ -114,7 +114,7 @@ class RemoteWorkerManager:
     def wait_for_workers(self):
         logger.info('Waiting for all tasks to finish')
         for callback in self.callbacks:
-            callback.wait()
+            callback.get()
         logger.info('All workers are done')
 
     def terminate(self):

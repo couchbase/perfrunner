@@ -54,6 +54,14 @@ class Remote:
             run('git clone -q -b {} {}'.format(branch, repo))
 
     @all_clients
+    def get_celery_logs(self, worker_home: str):
+        logger.info('Collecting remote Celery logs')
+        with cd(worker_home), cd('perfrunner'):
+            r = run('stat worker_*.log', quiet=True)
+            if not r.return_code:
+                get('worker_*.log', local_path='celery/')
+
+    @all_clients
     def get_export_files(self, worker_home: str):
         logger.info('Collecting YCSB export files')
         with cd(worker_home), cd('perfrunner'):

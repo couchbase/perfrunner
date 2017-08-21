@@ -119,6 +119,11 @@ class RemoteWorkerManager:
             async_result.get()
         logger.info('All tasks are done')
 
+    def download_celery_logs(self):
+        if not os.path.exists('celery'):
+            os.mkdir('celery')
+        self.remote.get_celery_logs(self.WORKER_HOME)
+
     def terminate(self):
         logger.info('Terminating Celery workers')
         self.remote.terminate_client_processes()
@@ -168,6 +173,9 @@ class LocalWorkerManager(RemoteWorkerManager):
     def start(self):
         logger.info('Starting local Celery worker')
         local.start_celery_worker(queue=self.next_worker())
+
+    def download_celery_logs(self):
+        pass
 
     def terminate(self):
         logger.info('Terminating Celery workers')

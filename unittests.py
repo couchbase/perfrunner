@@ -27,6 +27,12 @@ class SettingsTest(TestCase):
                           override='cluster.mem_quota.5555')
         self.assertEqual(test_config.cluster.mem_quota, 5555)
 
+    def test_soe_backup_repo(self):
+        for file_name in glob.glob("tests/soe/*.test"):
+            test_config = TestConfig()
+            test_config.parse(file_name)
+            self.assertNotEqual(test_config.restore_settings.backup_repo, '')
+
 
 class WorkloadTest(TestCase):
 

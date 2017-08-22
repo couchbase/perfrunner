@@ -1,4 +1,5 @@
 import argparse
+import copy
 import time
 from typing import Dict, Iterator, List
 
@@ -49,16 +50,16 @@ class CloudRunner:
         self.ec2 = boto3.resource('ec2', region_name=self.AWS_REGION)
 
     def launch(self, count: int, group: str, instance_type: str) -> List[str]:
-        default_settings = self.EC2_SETTINGS
+        instance_settings = copy.deepcopy(self.EC2_SETTINGS)
         if group == 'servers':
-            default_settings.update(**self.DEVICE_SETTINGS)
+            instance_settings.update(**self.DEVICE_SETTINGS)
 
         instances = self.ec2.create_instances(
             ImageId=self.AMI[group],
             InstanceType=instance_type,
             MaxCount=count,
             MinCount=count,
-            **self.EC2_SETTINGS,
+            **instance_settings,
         )
         return [instance.instance_id for instance in instances]
 

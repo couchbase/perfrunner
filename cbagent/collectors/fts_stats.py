@@ -60,7 +60,6 @@ class FTSCollector(Collector):
         self.master_node = settings.master_node
         self.rest = rest.RestHelper(test.cluster_spec)
         self.fts_client = self.init_client(test.test_config)
-        self.interval = settings.lat_interval
 
     def init_client(self, test_config):
         auth = HTTPBasicAuth(self.auth[0], self.auth[1])

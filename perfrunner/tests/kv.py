@@ -58,7 +58,7 @@ class MixedLatencyTest(ReadLatencyTest):
             )
 
 
-class ReadLatencyDGMTest(ReadLatencyTest):
+class ReadLatencyDGMTest(KVTest):
 
     COLLECTORS = {'latency': True, 'net': False, 'page_cache': True}
 
@@ -66,6 +66,21 @@ class ReadLatencyDGMTest(ReadLatencyTest):
         self.reporter.post(
             *self.metrics.kv_latency(operation='get', percentile=99.9)
         )
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.hot_load()
+
+        self.reset_kv_stats()
+
+        self.compact_bucket(wait=False)
+
+        self.access_bg()
+        self.access()
+
+        self.report_kpi()
 
 
 class DurabilityTest(KVTest):

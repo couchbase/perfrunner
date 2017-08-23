@@ -106,12 +106,13 @@ class PerfTest:
         if core_dumps:
             logger.interrupt(pretty_dict(core_dumps))
 
-    def compact_bucket(self) -> None:
+    def compact_bucket(self, wait: bool = True) -> None:
         for target in self.target_iterator:
             self.rest.trigger_bucket_compaction(target.node, target.bucket)
 
-        for target in self.target_iterator:
-            self.monitor.monitor_task(target.node, 'bucket_compaction')
+        if wait:
+            for target in self.target_iterator:
+                self.monitor.monitor_task(target.node, 'bucket_compaction')
 
     def wait_for_persistence(self) -> None:
         for target in self.target_iterator:

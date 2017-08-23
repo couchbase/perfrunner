@@ -123,8 +123,7 @@ class RemoteWorkerManager:
         for target in target_iterator:
             for instance in range(task_settings.worker_instances):
                 worker = self.next_worker()
-                logger.info('Starting task on {} with instance {}'.format(
-                    worker, instance))
+                logger.info('Running the task on {}'.format(worker))
                 async_result = task.apply_async(
                     args=(task_settings, target, timer, instance),
                     queue=worker, expires=timer,
@@ -167,7 +166,7 @@ class LocalWorkerManager(RemoteWorkerManager):
         return False
 
     def next_worker(self) -> str:
-        return 'local'
+        return 'localhost'
 
     def tune_sqlite(self):
         for db in self.BROKER_DB, self.RESULTS_DB:

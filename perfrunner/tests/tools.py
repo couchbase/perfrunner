@@ -1,5 +1,4 @@
 import os
-import time
 
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
@@ -143,23 +142,6 @@ class MergeTest(BackupRestoreTest):
         self.report_kpi(time_elapsed)
 
 
-class IncrementalBackupUnderLoadTest(BackupTest):
-
-    MUTATION_TIME = 300
-
-    def run(self):
-        super(BackupTest, self).run()
-
-        self.backup()
-
-        self.access_bg()
-        time.sleep(self.MUTATION_TIME)
-
-        time_elapsed = self.backup(mode='diff')
-
-        self.report_kpi(time_elapsed)
-
-
 class RestoreTest(BackupRestoreTest):
 
     @with_stats
@@ -180,26 +162,6 @@ class RestoreTest(BackupRestoreTest):
         super().run()
 
         self.backup()
-
-        self.flush_buckets()
-
-        time_elapsed = self.restore()
-
-        self.report_kpi(time_elapsed)
-
-
-class RestoreAfterIncrementalBackupTest(RestoreTest):
-
-    def run(self):
-        super(RestoreTest, self).run()
-
-        self.backup()
-
-        workload = self.test_config.access_settings
-        workload.seq_updates = True
-        self.access(workload)
-
-        self.backup(mode='diff')
 
         self.flush_buckets()
 

@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.ycsb.YCSBSOETest
-title = Avg Throughput (queries/sec), Workload SC, 4 node
+title = Avg Throughput (queries/sec), Workload SD, 4 node
 component = n1ql
 category = soe
 

@@ -39,7 +39,8 @@ class WorkloadSettings:
 
         self.use_ssl = False
 
-        self.seq_updates = False
+        self.seq_upserts = False
+        self.rand_upserts = False
         self.working_set_move_time = 0
         self.hash_keys = False
 

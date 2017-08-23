@@ -43,6 +43,7 @@ from spring.docgen import (
     SmallPlasmaDocument,
     String,
     UniformKey,
+    UnorderedKey,
     VaryingItemSizePlasmaDocument,
     WorkingSetKey,
 )
@@ -472,6 +473,15 @@ class SeqUpdatesWorker(Worker):
             self.cb.update(key, doc)
 
 
+class RandUpdatesWorker(Worker):
+
+    def run(self, sid, *args):
+        for key in UnorderedKey(sid, self.ws, self.ts.prefix):
+            doc = self.docs.next(key)
+            key = self.hash_keys.hash_it(key)
+            self.cb.update(key, doc)
+
+
 class SeqXATTRUpdatesWorker(XATTRWorker):
 
     def run(self, sid, *args):
@@ -486,10 +496,12 @@ class WorkerFactory:
     def __new__(cls, settings):
         if getattr(settings, 'async', None):
             worker = AsyncKVWorker
-        elif getattr(settings, 'seq_updates') and \
+        elif getattr(settings, 'seq_upserts') and \
                 getattr(settings, 'xattr_field', None):
             worker = SeqXATTRUpdatesWorker
-        elif getattr(settings, 'seq_updates', None):
+        elif getattr(settings, 'rand_upserts', None):
+            worker = RandUpdatesWorker
+        elif getattr(settings, 'seq_upserts', None):
             worker = SeqUpdatesWorker
         elif getattr(settings, 'seq_reads', None):
             worker = SeqReadsWorker

@@ -308,7 +308,8 @@ class PhaseSettings:
     OPS = 0
 
     SEQ_READS = False
-    SEQ_UPDATES = False
+    SEQ_UPSERTS = False
+    RAND_UPSERTS = False
 
     ITERATIONS = 1
 
@@ -389,7 +390,9 @@ class PhaseSettings:
         self.key_length = int(options.get('key_length', self.KEY_LENGTH))
 
         self.seq_reads = self.SEQ_READS
-        self.seq_updates = self.SEQ_UPDATES
+        self.seq_upserts = self.SEQ_UPSERTS
+        self.rand_upserts = bool(int(options.get('RAND_UPSERTS',
+                                                 self.RAND_UPSERTS)))
 
         self.iterations = int(options.get('iterations', self.ITERATIONS))
 
@@ -454,13 +457,12 @@ class PhaseSettings:
 class LoadSettings(PhaseSettings):
 
     CREATES = 100
-    SEQ_UPDATES = True
+    SEQ_UPSERTS = True
 
 
 class HotLoadSettings(PhaseSettings):
 
     SEQ_READS = True
-    SEQ_UPDATES = False
 
     def __init__(self, options: dict):
         if 'size' in options:

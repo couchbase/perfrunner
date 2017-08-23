@@ -16,6 +16,7 @@ interval = 1
 items = 500000000
 size = 1024
 workers = 40
+rand_upserts = 1
 
 [access]
 creates = 0

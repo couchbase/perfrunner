@@ -19,6 +19,7 @@ db_percentage = 100
 items = 1000000000
 size = 1024
 workers = 80
+rand_upserts = 1
 
 [hot_load]
 items = 1000000000

@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	baseURL = "http://%s:8091/settings/rbac/users/builtin/%s"
+	baseURL = "http://%s:8091/settings/rbac/users/local/%s"
 )
 
 var (
@@ -23,7 +23,7 @@ var (
 
 func newBody() io.Reader {
 	form := url.Values{}
-	form.Add("roles", "data_reader_writer[*],query_select[*]")
+	form.Add("roles", "data_writer[*],data_reader[*],query_select[*]")
 	form.Add("password", "Pa$$w0rd")
 
 	return strings.NewReader(form.Encode())

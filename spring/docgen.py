@@ -322,23 +322,38 @@ class HashKeys:
         return key
 
 
-class Document(Generator):
-
-    SIZE_VARIATION = 0.25  # 25%
-
-    OVERHEAD = 225  # Minimum size due to static fields, body size is variable
+class String(Generator):
 
     def __init__(self, avg_size: int):
         self.avg_size = avg_size
-
-    @classmethod
-    def _get_variation_coeff(cls) -> float:
-        return np.random.uniform(1 - cls.SIZE_VARIATION, 1 + cls.SIZE_VARIATION)
 
     @staticmethod
     def _build_alphabet(key: str) -> str:
         _key = key.encode('utf-8')
         return md5(_key).hexdigest() + md5(_key[::-1]).hexdigest()
+
+    @staticmethod
+    def _build_string(alphabet: str, length: float) -> str:
+        length_int = int(length)
+        num_slices = int(math.ceil(length / 64))  # 64 == len(alphabet)
+        body = num_slices * alphabet
+        return body[:length_int]
+
+    def next(self, key) -> str:
+        alphabet = self._build_alphabet(key)
+
+        return self._build_string(alphabet, self.avg_size)
+
+
+class Document(String):
+
+    SIZE_VARIATION = 0.25  # 25%
+
+    OVERHEAD = 225  # Minimum size due to static fields, body size is variable
+
+    @classmethod
+    def _get_variation_coeff(cls) -> float:
+        return np.random.uniform(1 - cls.SIZE_VARIATION, 1 + cls.SIZE_VARIATION)
 
     @staticmethod
     def _build_name(alphabet: str) -> str:
@@ -405,13 +420,6 @@ class Document(Generator):
     def _build_achievements(alphabet: str) -> List[int]:
         return build_achievements(alphabet) or [0]
 
-    @staticmethod
-    def _build_body(alphabet: str, length: float) -> str:
-        length_int = int(length)
-        num_slices = int(math.ceil(length / 64))  # 64 == len(alphabet)
-        body = num_slices * alphabet
-        return body[:length_int]
-
     def _size(self) -> float:
         if self.avg_size <= self.OVERHEAD:
             return 0
@@ -430,7 +438,7 @@ class Document(Generator):
             'coins': self._build_coins(alphabet),
             'category': self._build_category(alphabet),
             'achievements': self._build_achievements(alphabet),
-            'body': self._build_body(alphabet, size),
+            'body': self._build_string(alphabet, size),
         }
 
 
@@ -471,7 +479,7 @@ class NestedDocument(Document):
             'achievements': self._build_achievements(alphabet),
             'gmtime': self._build_gmtime(alphabet),
             'year': self._build_year(alphabet),
-            'body': self._build_body(alphabet, size),
+            'body': self._build_string(alphabet, size),
         }
 
 
@@ -543,7 +551,7 @@ class ReverseLookupDocument(NestedDocument):
             'achievements': self._build_achievements(alphabet),
             'gmtime': self._build_gmtime(alphabet),
             'year': self._build_year(alphabet),
-            'body': self._build_body(alphabet, size),
+            'body': self._build_string(alphabet, size),
             'capped_small': self._build_capped(alphabet, seq_id, 100),
             'topics': self._build_topics(seq_id),
         }
@@ -590,7 +598,7 @@ class ReverseRangeLookupDocument(ReverseLookupDocument):
             'achievements': self._build_achievements(alphabet),
             'gmtime': self._build_gmtime(alphabet),
             'year': self._build_year(alphabet),
-            'body': self._build_body(alphabet, size),
+            'body': self._build_string(alphabet, size),
             'capped_small': self._build_capped(alphabet, seq_id, 100),
             'capped_small_range': self._build_capped(alphabet, seq_id + (self.distance * 100), 100),
             'topics': self._build_topics(seq_id),
@@ -775,7 +783,7 @@ class ArrayIndexingDocument(ReverseLookupDocument):
             'achievements2': self._build_achievements2(seq_id),
             'gmtime': self._build_gmtime(alphabet),
             'year': self._build_year(alphabet),
-            'body': self._build_body(alphabet, size),
+            'body': self._build_string(alphabet, size),
             'capped_small': self._build_capped(alphabet, seq_id, 100),
             'topics': self._build_topics(seq_id),
         }
@@ -838,7 +846,7 @@ class ProfileDocument(ReverseLookupDocument):
                 'zip': self._build_zip(seq_id),
                 'realm': self._build_realm(alphabet),
             },
-            'body': self._build_body(alphabet, size),
+            'body': self._build_string(alphabet, size),
         }
 
 
@@ -888,7 +896,7 @@ class ImportExportDocument(ReverseLookupDocument):
             'achievements': self._build_achievements(alphabet),
             'gmtime': self._build_gmtime(alphabet) * random.randint(0, 9),
             'year': self._build_year(alphabet) * random.randint(0, 5),
-            'body': self._build_body(alphabet, size),
+            'body': self._build_string(alphabet, size),
             'capped_small': self._build_capped(
                 alphabet, seq_id, 100) * random.randint(0, 5),
             'alt_capped_small': self._build_capped(
@@ -962,7 +970,7 @@ class ImportExportDocumentArray(ImportExportDocument):
             'achievements': self._build_achievements(alphabet),
             'gmtime': self._build_gmtime(alphabet) * random.randint(0, 9),
             'year': self._build_year(alphabet) * random.randint(0, 5),
-            'body': self._random_array(self._build_body(alphabet, size), 7),
+            'body': self._random_array(self._build_string(alphabet, size), 7),
             'capped_small': self._build_capped(
                 alphabet, seq_id, 100) * random.randint(0, 5),
             'alt_capped_small': self._build_capped(
@@ -1024,7 +1032,7 @@ class ImportExportDocumentNested(ImportExportDocument):
             'achievements': self._build_achievements(alphabet),
             'gmtime': self._build_gmtime(alphabet) * random.randint(0, 2),
             'year': self._build_year(alphabet) * random.randint(0, 2),
-            'body': self._build_body(alphabet, size),
+            'body': self._build_string(alphabet, size),
             'capped_small': self._build_capped(
                 alphabet, seq_id, 10) * random.randint(0, 2),
             'alt_capped_small': self._build_capped(
@@ -1047,7 +1055,7 @@ class GSIMultiIndexDocument(Document):
             'coins': self._build_coins(alphabet),
             'category': self._build_category(alphabet),
             'achievements': self._build_achievements(alphabet),
-            'body': self._build_body(alphabet, size),
+            'body': self._build_string(alphabet, size),
         }
 
 
@@ -1104,7 +1112,7 @@ class LargeItemPlasmaDocument(PlasmaDocument):
             'coins': self._build_coins(alphabet),
             'category': self._build_category(alphabet),
             'achievements': self._build_achievements(alphabet),
-            'body': self._build_body(alphabet, size),
+            'body': self._build_string(alphabet, size),
         }
 
 
@@ -1130,5 +1138,5 @@ class VaryingItemSizePlasmaDocument(PlasmaDocument):
             'coins': self._build_coins(alphabet),
             'category': self._build_category(alphabet),
             'achievements': self._build_achievements(alphabet),
-            'body': self._build_body(alphabet, size),
+            'body': self._build_string(alphabet, size),
         }

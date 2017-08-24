@@ -41,6 +41,7 @@ from spring.docgen import (
     SequentialKey,
     SequentialPlasmaDocument,
     SmallPlasmaDocument,
+    String,
     UniformKey,
     UnorderedKey,
     VaryingItemSizePlasmaDocument,
@@ -112,6 +113,8 @@ class Worker:
     def init_docs(self):
         if not hasattr(self.ws, 'doc_gen') or self.ws.doc_gen == 'basic':
             self.docs = Document(self.ws.size)
+        elif self.ws.doc_gen == 'string':
+            self.docs = String(self.ws.size)
         elif self.ws.doc_gen == 'nested':
             self.docs = NestedDocument(self.ws.size)
         elif self.ws.doc_gen == 'reverse_lookup':

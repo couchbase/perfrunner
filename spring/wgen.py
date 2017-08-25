@@ -43,7 +43,6 @@ from spring.docgen import (
     SmallPlasmaDocument,
     String,
     UniformKey,
-    UnorderedKey,
     VaryingItemSizePlasmaDocument,
     WorkingSetKey,
 )
@@ -463,7 +462,7 @@ class SeqReadsWorker(Worker):
 class SeqUpdatesWorker(Worker):
 
     def run(self, sid, *args):
-        for key in UnorderedKey(sid, self.ws, self.ts.prefix):
+        for key in SequentialKey(sid, self.ws, self.ts.prefix):
             doc = self.docs.next(key)
             key = self.hash_keys.hash_it(key)
             self.cb.update(key, doc)

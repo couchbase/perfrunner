@@ -53,6 +53,24 @@ class DGMTest(KVTest):
         self.report_kpi()
 
 
+class DGMCompactedTest(KVTest):
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.hot_load()
+
+        self.reset_kv_stats()
+
+        self.compact_bucket()
+
+        self.access_bg()
+        self.access()
+
+        self.report_kpi()
+
+
 class ReadLatencyTest(KVTest):
 
     """Enable reporting of GET latency."""
@@ -77,6 +95,16 @@ class MixedLatencyTest(ReadLatencyTest):
 
 
 class ReadLatencyDGMTest(DGMTest):
+
+    COLLECTORS = {'latency': True, 'net': False, 'page_cache': True}
+
+    def _report_kpi(self):
+        self.reporter.post(
+            *self.metrics.kv_latency(operation='get', percentile=99.9)
+        )
+
+
+class ReadLatencyDGMCompactedTest(DGMCompactedTest):
 
     COLLECTORS = {'latency': True, 'net': False, 'page_cache': True}
 

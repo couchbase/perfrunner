@@ -35,6 +35,24 @@ class KVTest(PerfTest):
         self.report_kpi()
 
 
+class DGMTest(KVTest):
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.hot_load()
+
+        self.reset_kv_stats()
+
+        self.compact_bucket(wait=False)
+
+        self.access_bg()
+        self.access()
+
+        self.report_kpi()
+
+
 class ReadLatencyTest(KVTest):
 
     """Enable reporting of GET latency."""
@@ -58,7 +76,7 @@ class MixedLatencyTest(ReadLatencyTest):
             )
 
 
-class ReadLatencyDGMTest(KVTest):
+class ReadLatencyDGMTest(DGMTest):
 
     COLLECTORS = {'latency': True, 'net': False, 'page_cache': True}
 
@@ -66,21 +84,6 @@ class ReadLatencyDGMTest(KVTest):
         self.reporter.post(
             *self.metrics.kv_latency(operation='get', percentile=99.9)
         )
-
-    def run(self):
-        self.load()
-        self.wait_for_persistence()
-
-        self.hot_load()
-
-        self.reset_kv_stats()
-
-        self.compact_bucket(wait=False)
-
-        self.access_bg()
-        self.access()
-
-        self.report_kpi()
 
 
 class DurabilityTest(KVTest):
@@ -128,7 +131,7 @@ class XATTRTest(MixedLatencyTest):
         self.report_kpi()
 
 
-class BgFetcherTest(KVTest):
+class BgFetcherTest(DGMTest):
 
     """Enable reporting of average BgFetcher wait time (disk fetches)."""
 
@@ -140,7 +143,7 @@ class BgFetcherTest(KVTest):
         )
 
 
-class DrainTest(KVTest):
+class DrainTest(DGMTest):
 
     """Enable reporting of average disk write queue size."""
 

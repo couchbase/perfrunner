@@ -109,9 +109,10 @@ class ReadLatencyDGMCompactedTest(DGMCompactedTest):
     COLLECTORS = {'latency': True, 'net': False, 'page_cache': True}
 
     def _report_kpi(self):
-        self.reporter.post(
-            *self.metrics.kv_latency(operation='get', percentile=99.9)
-        )
+        for percentile in 99.9, 99.99:
+            self.reporter.post(
+                *self.metrics.kv_latency(operation='get', percentile=percentile)
+            )
 
 
 class DurabilityTest(KVTest):

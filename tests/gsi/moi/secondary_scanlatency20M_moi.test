@@ -30,7 +30,6 @@ max_num_auxio = 16
 items = 20000000
 size = 1024
 workers = 100
-parallel_workload = 1
 
 [secondary]
 indexes = myindex:alt_email
@@ -47,6 +46,5 @@ deletes = 10
 ops = 300000000
 items = 20000000
 existing_items = 20000000
-parallel_workload = 1
 throughput = 100000
 workers = 80

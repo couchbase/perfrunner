@@ -330,7 +330,6 @@ class PhaseSettings:
     WORKERS = 0
     QUERY_WORKERS = 0
     N1QL_WORKERS = 0
-    SPRING_WORKERS = 100
     WORKER_INSTANCES = 1
 
     N1QL_OP = 'read'
@@ -340,8 +339,6 @@ class PhaseSettings:
     NUM_CATEGORIES = 10 ** 6
     NUM_REPLIES = 100
     RANGE_DISTANCE = 10
-
-    PARALLEL_WORKLOAD = False
 
     ITEM_SIZE = 64
     SIZE_VARIATION_MIN = 1
@@ -425,11 +422,6 @@ class PhaseSettings:
         # 2i settings
         self.existing_items = int(options.get('existing_items',
                                               self.EXISTING_ITEMS))
-        self.spring_workers = int(options.get('spring_workers',
-                                              self.SPRING_WORKERS))
-        self.parallel_workload = bool(int(options.get('parallel_workload',
-                                                      self.PARALLEL_WORKLOAD)))
-
         self.item_size = int(options.get('item_size', self.ITEM_SIZE))
         self.size_variation_min = int(options.get('size_variation_min',
                                                   self.SIZE_VARIATION_MIN))

@@ -263,11 +263,6 @@ class KVWorker(Worker):
                 key = self.keys_for_removal.next(deleted_items_tmp)
                 key = self.hash_keys.hash_it(key)
                 cmds.append((cb.delete, (key, )))
-            elif op == 'cas':
-                key = self.existing_keys.next(curr_items_spot, deleted_spot)
-                doc = self.docs.next(key)
-                key = self.hash_keys.hash_it(key)
-                cmds.append((cb.cas, (key, doc)))
             elif op == 'fus':
                 key = self.fts_keys.next()
                 key = self.hash_keys.hash_it(key)

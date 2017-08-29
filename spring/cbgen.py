@@ -63,10 +63,6 @@ class CBAsyncGen:
     def update(self, key, doc):
         return self.client.set(key, doc)
 
-    def cas(self, key, doc):
-        cas = self.client.get(key).cas
-        return self.client.set(key, doc, cas=cas)
-
     def delete(self, key):
         return self.client.delete(key)
 
@@ -130,10 +126,6 @@ class CBGen(CBAsyncGen):
     @backoff
     def update(self, *args, **kwargs):
         super().update(*args, **kwargs)
-
-    @quiet
-    def cas(self, *args, **kwargs):
-        super().cas(*args, **kwargs)
 
     @quiet
     def delete(self, *args, **kwargs):

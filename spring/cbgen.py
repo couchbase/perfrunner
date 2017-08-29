@@ -139,15 +139,14 @@ class CBGen(CBAsyncGen):
     def delete(self, *args, **kwargs):
         super().delete(*args, **kwargs)
 
-    def query(self, ddoc, view, query):
+    def view_query(self, ddoc, view, query):
         node = choice(self.server_nodes).replace('8091', '8092')
         url = 'http://{}/{}/_design/{}/_view/{}?{}'.format(
             node, self.client.bucket, ddoc, view, query.encoded
         )
         t0 = time()
-        resp = self.session.get(url=url)
-        latency = time() - t0
-        return resp.text, latency
+        self.session.get(url=url)
+        return time() - t0
 
     @quiet
     def n1ql_query(self, query):

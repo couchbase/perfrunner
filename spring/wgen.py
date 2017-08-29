@@ -535,7 +535,7 @@ class ViewWorker(Worker):
             doc = self.docs.next(key)
             ddoc_name, view_name, query = self.new_queries.next(doc)
 
-            _, latency = self.cb.query(ddoc_name, view_name, query=query)
+            latency = self.cb.view_query(ddoc_name, view_name, query=query)
 
             self.reservoir.update(latency)
 

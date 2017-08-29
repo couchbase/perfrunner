@@ -129,14 +129,14 @@ class SubDocTest(MixedLatencyTest):
 
     """Enable reporting of SubDoc latency."""
 
-    COLLECTORS = {'subdoc_latency': True}
+    COLLECTORS = {'latency': True}
 
 
 class XATTRTest(MixedLatencyTest):
 
     """Enable reporting of XATTR latency."""
 
-    COLLECTORS = {'xattr_latency': True}
+    COLLECTORS = {'latency': True}
 
     def add_xattr(self):
         access_settings = self.test_config.access_settings
@@ -365,8 +365,6 @@ class PathoGenFrozenTest(PathoGenTest):
 
 
 class ThroughputTest(KVTest):
-
-    COLLECTORS = {'latency': True}
 
     def _measure_curr_ops(self) -> int:
         ops = 0

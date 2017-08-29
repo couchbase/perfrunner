@@ -43,6 +43,13 @@ def backoff(method, *args, **kwargs):
             sleep(1)
 
 
+@decorator
+def timeit(method, *args, **kwargs) -> int:
+    t0 = time()
+    method(*args, **kwargs)
+    return time() - t0
+
+
 class CBAsyncGen:
 
     TIMEOUT = 60  # seconds
@@ -119,11 +126,13 @@ class CBGen(CBAsyncGen):
         super().create(*args, **kwargs)
 
     @quiet
+    @timeit
     def read(self, *args, **kwargs):
         super().read(*args, **kwargs)
 
     @quiet
     @backoff
+    @timeit
     def update(self, *args, **kwargs):
         super().update(*args, **kwargs)
 
@@ -131,40 +140,42 @@ class CBGen(CBAsyncGen):
     def delete(self, *args, **kwargs):
         super().delete(*args, **kwargs)
 
+    @timeit
     def view_query(self, ddoc, view, query):
         node = choice(self.server_nodes).replace('8091', '8092')
         url = 'http://{}/{}/_design/{}/_view/{}?{}'.format(
             node, self.client.bucket, ddoc, view, query.encoded
         )
-        t0 = time()
         self.session.get(url=url)
-        return time() - t0
 
     @quiet
+    @timeit
     def n1ql_query(self, query):
-        t0 = time()
         tuple(self.client.n1ql_query(query))
-        return time() - t0
 
 
 class SubDocGen(CBGen):
 
     @quiet
+    @timeit
     def read(self, key: str, field: str):
         self.client.lookup_in(key, subdocument.get(path=field))
 
     @quiet
+    @timeit
     def update(self, key: str, field: str, doc: dict):
         new_field_value = doc[field]
         self.client.mutate_in(key, subdocument.upsert(path=field,
                                                       value=new_field_value))
 
     @quiet
+    @timeit
     def read_xattr(self, key: str, field: str):
         self.client.lookup_in(key, subdocument.get(path=field,
                                                    xattr=True))
 
     @quiet
+    @timeit
     def update_xattr(self, key: str, field: str, doc: dict):
         self.client.mutate_in(key, subdocument.upsert(path=field,
                                                       value=doc,

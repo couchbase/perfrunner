@@ -6,14 +6,14 @@ from cbagent.collectors.fts_stats import (
     FTSLatencyCollector,
     ElasticStats,
 )
-from cbagent.collectors.latency import Latency
+from cbagent.collectors.latency import Latency, KVLatency, QueryLatency
 from cbagent.collectors.observe import (
+    DurabilityLatency,
     ObserveIndexLatency,
     ObserveSecondaryIndexLatency,
 )
 from cbagent.collectors.n1ql_stats import N1QLStats
 from cbagent.collectors.ns_server import NSServer, NSServerOverview, XdcrStats
-from cbagent.collectors.reservoir import ReservoirQueryLatency
 from cbagent.collectors.secondary_debugstats import (
     SecondaryDebugStats,
     SecondaryDebugStatsBucket,
@@ -23,12 +23,6 @@ from cbagent.collectors.secondary_latency import SecondaryLatencyStats
 from cbagent.collectors.secondary_stats import SecondaryStats
 from cbagent.collectors.secondary_storage_stats import SecondaryStorageStats
 from cbagent.collectors.secondary_storage_stats_mm import SecondaryStorageStatsMM
-from cbagent.collectors.spring_latency import (
-    DurabilityLatency,
-    SpringLatency,
-    SubdocLatency,
-    XATTRLatency,
-)
 from cbagent.collectors.system import (
     IO,
     Memory,

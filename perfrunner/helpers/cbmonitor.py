@@ -15,6 +15,7 @@ from cbagent.collectors import (
     ElasticStats,
     FTSCollector,
     FTSLatencyCollector,
+    KVLatency,
     Memory,
     N1QLStats,
     Net,
@@ -23,7 +24,7 @@ from cbagent.collectors import (
     ObserveIndexLatency,
     ObserveSecondaryIndexLatency,
     PageCache,
-    ReservoirQueryLatency,
+    QueryLatency,
     SecondaryDebugStats,
     SecondaryDebugStatsBucket,
     SecondaryDebugStatsIndex,
@@ -31,17 +32,14 @@ from cbagent.collectors import (
     SecondaryStats,
     SecondaryStorageStats,
     SecondaryStorageStatsMM,
-    SpringLatency,
-    SubdocLatency,
     Sysdig,
     TypePerf,
-    XATTRLatency,
     XdcrLag,
     XdcrStats,
 )
 from cbagent.metadata_client import MetadataClient
 from logger import logger
-from perfrunner.helpers.misc import target_hash, uhex
+from perfrunner.helpers.misc import uhex
 from perfrunner.settings import StatsSettings
 from perfrunner.tests import PerfTest
 
@@ -179,16 +177,12 @@ class CbAgent:
             self.add_collector(TypePerf)
 
         if latency:
-            self.add_latency_collector(SpringLatency)
+            self.add_collector(KVLatency)
         if durability:
-            self.add_latency_collector(DurabilityLatency)
-        if subdoc_latency:
-            self.add_latency_collector(SubdocLatency)
-        if xattr_latency:
-            self.add_latency_collector(XATTRLatency)
+            self.add_durability_collector()
 
         if query_latency or n1ql_latency:
-            self.add_collector(ReservoirQueryLatency)
+            self.add_collector(QueryLatency)
         if n1ql_stats:
             self.add_collector(N1QLStats)
 
@@ -253,17 +247,14 @@ class CbAgent:
             collector = cls(settings)
             self.collectors.append(collector)
 
-    def add_latency_collector(self, cls):
+    def add_durability_collector(self):
         for cluster_id, master_node in self.cluster_map.items():
             settings = copy(self.settings)
             settings.cluster = cluster_id
             settings.master_node = master_node
-            prefix = self.test.target_iterator.prefix or \
-                target_hash(settings.master_node)
 
-            collector = cls(settings,
-                            self.test.test_config.access_settings,
-                            prefix)
+            collector = DurabilityLatency(settings,
+                                          self.test.test_config.access_settings)
             self.collectors.append(collector)
 
     def add_xdcr_lag(self):

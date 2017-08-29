@@ -198,7 +198,12 @@ class KVWorker(Worker):
 
     NAME = 'kv-worker'
 
-    def gen_cmd_sequence(self, cb=None, extras=None):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.reservoir = Reservoir(num_workers=self.ws.workers)
+
+    def gen_cmd_sequence(self, cb=None, extras=None) -> list:
         ops = \
             ['c'] * self.ws.creates + \
             ['r'] * self.ws.reads + \
@@ -234,17 +239,17 @@ class KVWorker(Worker):
                 key, ttl = self.new_keys.next(curr_items_tmp)
                 doc = self.docs.next(key)
                 key = self.hash_keys.hash_it(key)
-                cmds.append((cb.create, (key, doc, ttl)))
+                cmds.append((None, cb.create, (key, doc, ttl)))
             elif op == 'r':
                 key = self.existing_keys.next(curr_items_spot, deleted_spot)
                 key = self.hash_keys.hash_it(key)
 
                 if extras == 'subdoc':
-                    cmds.append((cb.read, (key, self.ws.subdoc_field)))
+                    cmds.append(('get', cb.read, (key, self.ws.subdoc_field)))
                 elif extras == 'xattr':
-                    cmds.append((cb.read_xattr, (key, self.ws.xattr_field)))
+                    cmds.append(('get', cb.read_xattr, (key, self.ws.xattr_field)))
                 else:
-                    cmds.append((cb.read, (key, )))
+                    cmds.append(('get', cb.read, (key, )))
             elif op == 'u':
                 key = self.existing_keys.next(curr_items_spot, deleted_spot,
                                               self.current_hot_load_start,
@@ -253,24 +258,24 @@ class KVWorker(Worker):
                 key = self.hash_keys.hash_it(key)
 
                 if extras == 'subdoc':
-                    cmds.append((cb.update, (key, self.ws.subdoc_field, doc)))
+                    cmds.append(('set', cb.update, (key, self.ws.subdoc_field, doc)))
                 elif extras == 'xattr':
-                    cmds.append((cb.update_xattr, (key, self.ws.xattr_field, doc)))
+                    cmds.append(('set', cb.update_xattr, (key, self.ws.xattr_field, doc)))
                 else:
-                    cmds.append((cb.update, (key, doc)))
+                    cmds.append(('set', cb.update, (key, doc)))
             elif op == 'd':
                 deleted_items_tmp += 1
                 key = self.keys_for_removal.next(deleted_items_tmp)
                 key = self.hash_keys.hash_it(key)
-                cmds.append((cb.delete, (key, )))
+                cmds.append((None, cb.delete, (key, )))
             elif op == 'fus':
                 key = self.fts_keys.next()
                 key = self.hash_keys.hash_it(key)
-                cmds.append((self.do_fts_updates_swap, (key,)))
+                cmds.append((None, self.do_fts_updates_swap, (key,)))
             elif op == 'fur':
                 key = self.fts_keys.next()
                 key = self.hash_keys.hash_it(key)
-                cmds.append((self.do_fts_updates_reverse, (key,)))
+                cmds.append((None, self.do_fts_updates_reverse, (key,)))
         return cmds
 
     def do_fts_updates_swap(self, key):
@@ -297,8 +302,10 @@ class KVWorker(Worker):
 
     @with_sleep
     def do_batch(self, *args, **kwargs):
-        for cmd, args in self.gen_cmd_sequence():
-            cmd(*args)
+        for cmd, func, args in self.gen_cmd_sequence():
+            latency = func(*args)
+            if latency is not None:
+                self.reservoir.update(operation=cmd, value=latency)
 
     def run_condition(self, curr_ops):
         return curr_ops.value < self.ws.ops and not self.time_to_stop()
@@ -331,6 +338,8 @@ class KVWorker(Worker):
             logger.info('Interrupted: {}-{}'.format(self.NAME, self.sid))
         else:
             logger.info('Finished: {}-{}'.format(self.NAME, self.sid))
+
+        self.reservoir.dump(filename='{}-{}'.format(self.NAME, self.sid))
 
 
 class SubDocWorker(KVWorker):
@@ -393,8 +402,8 @@ class AsyncKVWorker(KVWorker):
         with self.lock:
             self.curr_ops.value += self.BATCH_SIZE
 
-        for cmd, args in self.gen_cmd_sequence(cb):
-            d = cmd(*args)
+        for _, func, args in self.gen_cmd_sequence(cb):
+            d = func(*args)
             d.addCallback(self.restart, cb, i)
             d.addErrback(self.log_and_restart, cb, i)
 
@@ -532,7 +541,7 @@ class ViewWorker(Worker):
 
             latency = self.cb.view_query(ddoc_name, view_name, query=query)
 
-            self.reservoir.update(latency)
+            self.reservoir.update(operation='query', value=latency)
 
     def run(self, sid, lock, curr_ops, curr_items, deleted_items, *args):
         self.cb.start_updater()
@@ -634,7 +643,7 @@ class N1QLWorker(Worker):
             query = self.new_queries.next(key, doc)
 
             latency = self.cb.n1ql_query(query)
-            self.reservoir.update(latency)
+            self.reservoir.update(operation='query', value=latency)
 
     def create(self):
         with self.lock:
@@ -648,7 +657,7 @@ class N1QLWorker(Worker):
             query = self.new_queries.next(key, doc)
 
             latency = self.cb.n1ql_query(query)
-            self.reservoir.update(latency)
+            self.reservoir.update(operation='query', value=latency)
 
     def update(self):
         with self.lock:
@@ -661,7 +670,7 @@ class N1QLWorker(Worker):
             query = self.new_queries.next(key, doc)
 
             latency = self.cb.n1ql_query(query)
-            self.reservoir.update(latency)
+            self.reservoir.update(operation='query', value=latency)
 
     @with_sleep
     def do_batch(self):

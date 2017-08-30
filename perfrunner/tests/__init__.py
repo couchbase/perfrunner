@@ -166,7 +166,7 @@ class PerfTest:
             settings = self.test_config.access_settings
 
         self.run_phase('access phase',
-                       task, settings, self.target_iterator)
+                       task, settings, self.target_iterator, settings.time)
 
     def access_bg(self, task: Callable = spring_task,
                   settings: PhaseSettings = None,

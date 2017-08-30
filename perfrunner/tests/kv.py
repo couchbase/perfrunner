@@ -13,7 +13,7 @@ class KVTest(PerfTest):
 
     @with_stats
     def access(self, *args):
-        super().sleep()
+        super().access(*args)
 
     def reset_kv_stats(self):
         for server in self.cluster_spec.servers:
@@ -29,7 +29,6 @@ class KVTest(PerfTest):
 
         self.reset_kv_stats()
 
-        self.access_bg()
         self.access()
 
         self.report_kpi()
@@ -47,7 +46,6 @@ class DGMTest(KVTest):
 
         self.compact_bucket(wait=False)
 
-        self.access_bg()
         self.access()
 
         self.report_kpi()
@@ -65,7 +63,6 @@ class DGMCompactedTest(KVTest):
 
         self.compact_bucket()
 
-        self.access_bg()
         self.access()
 
         self.report_kpi()
@@ -154,7 +151,6 @@ class XATTRTest(MixedLatencyTest):
 
         self.add_xattr()
 
-        self.access_bg()
         self.access()
 
         self.report_kpi()
@@ -212,9 +208,6 @@ class WarmupTest(PerfTest):
 
     COLLECTORS = {'net': False, 'page_cache': True}
 
-    def access(self, *args, **kwargs):
-        super().sleep()
-
     @with_stats
     def warmup(self):
         self.remote.stop_server()
@@ -238,7 +231,6 @@ class WarmupTest(PerfTest):
         self.load()
         self.wait_for_persistence()
 
-        self.access_bg()
         self.access()
         self.wait_for_persistence()
 

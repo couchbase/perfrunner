@@ -77,18 +77,10 @@ class CLIParser(ArgumentParser):
         )
         self.add_argument(
             '-g', dest='generator', type=str, default='basic', metavar='',
-            help='document generator ("basic" or "nested")'
+            help='document generator (e.g., "basic" or "nested")'
         )
         self.add_argument('--async', action='store_true', default=False,
                           help='enable asynchronous mode')
-        self.add_argument(
-            '--data', dest='data', type=str, default='', metavar='',
-            help='file to use as input (instead of a document generator)'
-        )
-        self.add_argument(
-            '-m', dest='dimensionality', type=int, default=0, metavar='',
-            help='dimensionality of the data',
-        )
 
     def parse_args(self, *args):
         args = super().parse_args()

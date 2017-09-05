@@ -142,6 +142,7 @@ class XATTRTest(MixedLatencyTest):
     def add_xattr(self):
         access_settings = self.test_config.access_settings
         access_settings.seq_updates = True
+        access_settings.time = None
 
         PerfTest.access(self, settings=access_settings)
 

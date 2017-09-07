@@ -1,0 +1,25 @@
+[test_case]
+test = perfrunner.tests.rebalance.RebalanceKVTest
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 3
+num_vbuckets = 4
+
+[compaction]
+db_percentage = 100
+
+[bucket]
+eviction_policy = fullEviction
+replica_number = 0
+
+[load]
+items = 800000000
+size = 512
+workers = 10
+key_fmtr = hex
+
+[rebalance]
+nodes_after = 4
+start_after = 60
+stop_after = 60

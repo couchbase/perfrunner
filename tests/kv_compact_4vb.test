@@ -1,0 +1,20 @@
+[test_case]
+test = perfrunner.tests.kv.CompactionTest
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 4
+num_vbuckets = 4
+
+[compaction]
+db_percentage = 100
+
+[bucket]
+eviction_policy = fullEviction
+replica_number = 0
+
+[load]
+items = 800000000
+size = 512
+workers = 10
+key_fmtr = hex

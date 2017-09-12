@@ -835,7 +835,7 @@ class WorkloadGen:
         sync = SyncHotWorkload(current_hot_load_start, timer_elapse)
         sync.start_timer(self.ws)
 
-        if self.timer:
+        if self.timer and self.ws.ops == float('inf'):
             time.sleep(self.timer)
             self.shutdown_event.set()
         self.wait_for_all_workers()

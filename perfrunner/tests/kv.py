@@ -96,7 +96,7 @@ class ReadLatencyDGMTest(DGMTest):
 
     def _report_kpi(self):
         self.reporter.post(
-            *self.metrics.kv_latency(operation='get', percentile=99.9)
+            *self.metrics.kv_latency(operation='get')
         )
 
 

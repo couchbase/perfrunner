@@ -4,9 +4,6 @@ title = Sub-document latency (ms), 4 nodes, 1 bucket x 20M x 1KB
 component = kv
 category = latency
 
-[stats]
-lat_interval = 0.1
-
 [cluster]
 mem_quota = 40960
 initial_nodes = 4

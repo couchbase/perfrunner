@@ -113,6 +113,13 @@ class RestHelper:
         data = {'ftsMemoryQuota': mem_quota}
         self.post(url=api, data=data)
 
+    def set_analytics_mem_quota(self, host: str, mem_quota: int):
+        logger.info('Configuring CBAS RAM quota: {} MB'.format(mem_quota))
+
+        api = 'http://{}:8091/pools/default'.format(host)
+        data = {'cbasMemoryQuota': mem_quota}
+        self.post(url=api, data=data)
+
     def set_query_settings(self, host: str, override_settings: dict):
         api = 'http://{}:8093/admin/settings'.format(host)
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
@@ -612,3 +619,27 @@ class RestHelper:
             r = self._put(url=api, data=data)
             if r.status_code == 200:
                 break
+
+    def analytics_node_active(self, host: str) -> bool:
+        logger.info('Check if analytics node is active')
+
+        api = 'http://{}:8095/analytics/cluster'.format(host)
+
+        status = self.get(url=api).json()
+        return status["state"] == "ACTIVE"
+
+    def set_analytics_loglevel(self, analytics_node: str, analytics_log_level: str):
+        logger.info('Set analytics node {} loglevel to {}'.format(analytics_node,
+                                                                  analytics_log_level))
+
+        api = 'http://{}:8095/analytics/node/config'.format(analytics_node)
+        data = {
+            'logLevel': analytics_log_level,
+        }
+        self.put(url=api, data=data)
+
+    def restart_analytics(self, analytics_node: str):
+        logger.info('Restart analytics node {}'.format(analytics_node))
+
+        api = 'http://{}:8095/analytics/cluster/restart'.format(analytics_node)
+        self.post(url=api)

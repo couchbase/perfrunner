@@ -55,6 +55,7 @@ def main():
     cm.enable_auto_failover()
     cm.configure_auto_compaction()
     cm.enable_audit()
+    cm.tune_analytics_logging()
 
     if cm.test_config.cluster.num_buckets:
         cm.create_buckets()

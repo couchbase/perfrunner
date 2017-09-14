@@ -22,6 +22,8 @@ class RemoteLinux(Remote):
                  'cbft', 'goport', 'goxdcr', 'couch_view_index_updater',
                  'moxi', 'spring')
 
+    PROCESS_ARGUMENTS = ('couchbase/bin/cbas', 'couchbase/lib/cbas/runtime/bin/java')
+
     @property
     def package(self):
         if self.os.upper() in ('UBUNTU', 'DEBIAN'):
@@ -151,6 +153,10 @@ class RemoteLinux(Remote):
 
     @all_servers
     def kill_processes(self):
+        for arg in self.PROCESS_ARGUMENTS:
+            logger.info('Killing process with argument {}'.format(arg))
+            run('pkill -f {}'.format(arg),
+                warn_only=True, quiet=True)
         logger.info('Killing {}'.format(', '.join(self.PROCESSES)))
         run('killall -9 {}'.format(' '.join(self.PROCESSES)),
             warn_only=True, quiet=True)
@@ -168,10 +174,12 @@ class RemoteLinux(Remote):
             run('yes | apt-get remove couchbase-server', quiet=True)
             run('yes | apt-get remove couchbase-server-dbg', quiet=True)
             run('yes | apt-get remove couchbase-server-community', quiet=True)
+            run('yes | apt-get remove couchbase-server-analytics', quiet=True)
         else:
             run('yes | yum remove couchbase-server', quiet=True)
             run('yes | yum remove couchbase-server-debuginfo', quiet=True)
             run('yes | yum remove couchbase-server-community', quiet=True)
+            run('yes | yum remove couchbase-server-analytics', quiet=True)
 
     def upload_iss_files(self, release: str):
         pass

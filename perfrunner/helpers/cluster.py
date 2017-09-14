@@ -25,6 +25,7 @@ class ClusterManager:
         self.mem_quota = test_config.cluster.mem_quota
         self.index_mem_quota = test_config.cluster.index_mem_quota
         self.fts_mem_quota = test_config.cluster.fts_index_mem_quota
+        self.analytics_mem_quota = test_config.cluster.analytics_mem_quota
 
     def is_compatible(self, min_release):
         for master in self.cluster_spec.masters:
@@ -51,6 +52,8 @@ class ClusterManager:
             self.rest.set_index_mem_quota(master, self.index_mem_quota)
             if self.is_compatible(min_release='4.5.0'):
                 self.rest.set_fts_index_mem_quota(master, self.fts_mem_quota)
+            if self.analytics_mem_quota:
+                self.rest.set_analytics_mem_quota(master, self.analytics_mem_quota)
 
     def set_query_settings(self):
         settings = self.test_config.n1ql_settings.settings
@@ -171,6 +174,12 @@ class ClusterManager:
         self.remote.tune_log_rotation()
         self.remote.restart()
 
+    def tune_analytics_logging(self):
+        for analytics_node in self.cluster_spec.servers_by_role("cbas"):
+            self.rest.set_analytics_loglevel(analytics_node,
+                                             self.test_config.cluster.analytics_log_level)
+            self.rest.restart_analytics(analytics_node)
+
     def enable_auto_failover(self):
         for master in self.cluster_spec.masters:
             self.rest.enable_auto_failover(master)
@@ -186,6 +195,8 @@ class ClusterManager:
     def wait_until_healthy(self):
         for master in self.cluster_spec.masters:
             self.monitor.monitor_node_health(master)
+        for analytics_node in self.cluster_spec.servers_by_role("cbas"):
+            self.monitor.monitor_analytics_node_active(analytics_node)
 
     def enable_audit(self):
         if not self.is_compatible(min_release='4.0.0') or \

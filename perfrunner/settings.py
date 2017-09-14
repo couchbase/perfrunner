@@ -152,6 +152,8 @@ class ClusterSettings:
 
     INDEX_MEM_QUOTA = 256
     FTS_INDEX_MEM_QUOTA = 512
+    ANALYTICS_MEM_QUOTA = 0
+    ANALYTICS_LOG_LEVEL = "WARNING"
 
     RESTRICT_KERNEL_MEMORY = 0
     THROTTLE_CPU = 0
@@ -162,6 +164,10 @@ class ClusterSettings:
                                                self.INDEX_MEM_QUOTA))
         self.fts_index_mem_quota = int(options.get('fts_index_mem_quota',
                                                    self.FTS_INDEX_MEM_QUOTA))
+        self.analytics_mem_quota = int(options.get('analytics_mem_quota',
+                                                   self.ANALYTICS_MEM_QUOTA))
+        self.analytics_log_level = options.get('analytics_log_level',
+                                               self.ANALYTICS_LOG_LEVEL)
         self.initial_nodes = [
             int(nodes) for nodes in options.get('initial_nodes').split()
         ]

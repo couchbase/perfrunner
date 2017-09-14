@@ -183,6 +183,20 @@ class Monitor(RestHelper):
                 unhealthy_nodes
             ))
 
+    def monitor_analytics_node_active(self, host):
+        logger.info('Monitoring analytics node health')
+
+        for retry in range(self.MAX_RETRY):
+            active = self.analytics_node_active(host)
+            if active:
+                break
+            else:
+                time.sleep(self.POLLING_INTERVAL)
+        else:
+            logger.interrupt('Analytcs node still not health: {}'.format(
+                host
+            ))
+
     def monitor_indexing(self, host):
         logger.info('Monitoring indexing progress')
 

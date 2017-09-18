@@ -510,7 +510,7 @@ class ViewWorkerFactory:
 
 class ViewWorker(Worker):
 
-    NAME = 'view-worker'
+    NAME = 'query-worker'
 
     def __init__(self, workload_settings, target_settings, shutdown_event):
         super().__init__(workload_settings, target_settings, shutdown_event)
@@ -575,7 +575,7 @@ class N1QLWorkerFactory:
 
 class N1QLWorker(Worker):
 
-    NAME = 'n1ql-worker'
+    NAME = 'query-worker'
 
     def __init__(self, workload_settings, target_settings, shutdown_event):
         self.new_queries = N1QLQueryGen(workload_settings.n1ql_queries)

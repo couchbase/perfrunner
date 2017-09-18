@@ -29,12 +29,13 @@ class KVLatency(Latency):
 
     METRICS = "latency_get", "latency_set"
 
+    PATTERN = '*-worker-*'
+
     def collect(self):
         pass
 
-    @staticmethod
-    def read_stats() -> Iterator:
-        for filename in glob.glob('*-worker-*'):
+    def read_stats(self) -> Iterator:
+        for filename in glob.glob(self.PATTERN):
             with open(filename) as fh:
                 reader = csv.reader(fh)
                 for operation, timestamp, latency in reader:
@@ -56,3 +57,5 @@ class QueryLatency(KVLatency):
     COLLECTOR = "spring_query_latency"
 
     METRICS = "latency_query",
+
+    PATTERN = 'query-worker-*'

@@ -8,20 +8,25 @@
   - name: killing the processes
     shell: 'killall -I -g -q -s SIGKILL {{item}} || true'
     with_items:
-     - epmd
-     - beam.smp
-     - cbq-engine
-     - cbft
-     - couch_view_index_updater
-     - goport
-     - goxdcr
-     - java
-     - indexer
-     - memcached
-     - moxi
+      - epmd
+      - beam.smp
+      - cbq-engine
+      - cbft
+      - couch_view_index_updater
+      - goport
+      - goxdcr
+      - java
+      - indexer
+      - memcached
+      - moxi
+      - mongod
+      - mongos
 
-  - name: uninstalling the Couchbase Server package
-    yum: name=couchbase-server state=absent
+  - name: uninstalling the database packages
+    yum: state=absent name={{item}}
+    with_items:
+      - 'couchbase*'
+      - 'mongodb*'
 
   - name: removing Couchbase Server files
     file: path={{ couhcbase_home }} state=absent

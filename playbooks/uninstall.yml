@@ -21,12 +21,14 @@
       - moxi
       - mongod
       - mongos
+      - mysqld
 
   - name: uninstalling the database packages
     yum: state=absent name={{item}}
     with_items:
       - 'couchbase*'
       - 'mongodb*'
+      - 'MariaDB*'
 
   - name: removing Couchbase Server files
     file: path={{ couhcbase_home }} state=absent

@@ -1,0 +1,22 @@
+- hosts: kv:index:n1ql
+  tasks:
+  - name: adding YUM repository
+    yum_repository:
+      description: MariaDB YUM repo
+      name: MariaDB
+      baseurl: http://yum.mariadb.org/10.2/centos7-amd64
+      gpgkey: https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
+      gpgcheck: yes
+
+  - name: installing the latest version of MariaDB
+    yum:
+      name: MariaDB-server
+      state: present
+
+  - name: initializing the MariaDB data directory
+    command: mysql_install_db --user=couchbase --ldata=/data/
+
+  - name: starting the MariaDB service
+    service:
+      name: mysqld
+      state: started

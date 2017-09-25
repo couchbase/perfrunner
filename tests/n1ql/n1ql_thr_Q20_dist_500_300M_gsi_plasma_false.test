@@ -1,0 +1,50 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1QLThroughputTest
+title = Q20, Count (100K matches), 300M docs, Plasma, request_plus
+component = n1ql
+category = count
+sub_category = Plasma
+
+[cluster]
+mem_quota = 40960
+index_mem_quota = 300000
+initial_nodes = 6
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+
+[bucket]
+replica_number = 0
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[load]
+items = 300000000
+size = 1024
+workers = 80
+doc_gen = reverse_range_lookup
+range_distance = 500
+
+[n1ql]
+indexes =
+    by_capped_small::CREATE INDEX {name} ON `{bucket}`(capped_small);
+
+[access]
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+throughput = 30000
+items = 300000000
+workers = 20
+time = 1200
+n1ql_queries = aggregation-query
+n1ql_throughput = 1000000
+n1ql_workers = 768
+
+[n1ql-aggregation-query]
+statement = SELECT COUNT(*) FROM `bucket-1` WHERE capped_small > $1 AND capped_small < $2;
+args = ["{capped_small}","{capped_small_range}"]
+scan_consistency = request_plus

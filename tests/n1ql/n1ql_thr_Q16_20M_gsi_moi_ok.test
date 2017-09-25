@@ -3,6 +3,7 @@ test = perfrunner.tests.n1ql.N1QLThroughputTest
 title = Q16, Index Projection, MOI, not_bounded
 component = n1ql
 category = API2
+sub_category = MOI
 
 [cluster]
 mem_quota = 20480

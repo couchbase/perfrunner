@@ -3,6 +3,7 @@ test = perfrunner.tests.n1ql.N1QLThroughputTest
 title = Q20, Count (10K matches), 300M docs, MOI, request_plus
 component = n1ql
 category = count
+sub_category = MOI
 
 [cluster]
 mem_quota = 40960

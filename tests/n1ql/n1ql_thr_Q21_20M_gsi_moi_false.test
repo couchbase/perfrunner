@@ -3,6 +3,7 @@ test = perfrunner.tests.n1ql.N1QLThroughputTest
 title = Q21, COUNT DISTINCT, MOI, request_plus
 component = n1ql
 category = API2
+sub_category = MOI
 
 [cluster]
 mem_quota = 20480

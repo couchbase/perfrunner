@@ -3,6 +3,7 @@ test = perfrunner.tests.n1ql.N1QLThroughputTest
 title = CI17, Range Scan with Limit, Covering, MOI, request_plus
 component = n1ql
 category = pagination
+sub_category = MOI
 
 [cluster]
 mem_quota = 20480

@@ -3,6 +3,7 @@ test = perfrunner.tests.n1ql.N1QLThroughputTest
 title = Q19, Composite Filters (1000 -> 1), MOI, not_bounded, API1
 component = n1ql
 category = API2
+sub_category = MOI
 
 [cluster]
 mem_quota = 40960

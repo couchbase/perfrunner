@@ -42,3 +42,6 @@
   - name: removing the files remaining in the "{{ index_dir }}" directory
     shell: rm -fr {{ index_dir }}/*
     when: index.stat.exists
+
+  - name: removing MySQL installation (if any)
+    shell: rm -fr /var/lib/mysql

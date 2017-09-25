@@ -133,6 +133,9 @@ class RemoteWindows(Remote):
 
     @all_servers
     def upload_iss_files(self, release: str):
+        if release > "5.0":
+            logger.info('Copying ISS files skipped for release {}'.format(release))
+            return
         logger.info('Copying {} ISS files'.format(release))
         put('iss/install_{}.iss'.format(release),
             '/cygdrive/c/install.iss')

@@ -54,3 +54,37 @@ class IOStat(RemoteStats):
                 samples[key] = float(data[metric]) * multiplier
 
         return samples
+
+
+class DiskStats(IOStat):
+
+    def get_disk_stats(self, device: str):
+        device_name = device.split('/')[-1]
+
+        # https://www.kernel.org/doc/Documentation/ABI/testing/procfs-diskstats
+        stdout = self.run("grep '{}' /proc/diskstats".format(device_name))
+        stats = stdout.split()
+        sectors_read, sectors_written = int(stats[5]), int(stats[9])
+
+        # https://www.kernel.org/doc/Documentation/block/queue-sysfs.txt
+        parent = self.run('lsblk -no pkname {}'.format(device)).strip()
+        stdout = self.run('cat /sys/block/{}/queue/hw_sector_size'.format(parent))
+        sector_size = int(stdout)
+
+        return sectors_read * sector_size, sectors_written * sector_size
+
+    @parallel_task(server_side=True)
+    def get_server_samples(self, partitions: dict) -> dict:
+        return self.get_samples(partitions['server'])
+
+    def get_samples(self, partitions: dict) -> dict:
+        samples = {}
+
+        for purpose, partition in partitions.items():
+            device = self.get_device_name(partition)
+            bytes_read, bytes_written = self.get_disk_stats(device)
+
+            samples[purpose + '_bytes_read'] = bytes_read
+            samples[purpose + '_bytes_written'] = bytes_written
+
+        return samples

@@ -92,7 +92,7 @@ class MixedLatencyTest(ReadLatencyTest):
 
 class ReadLatencyDGMTest(DGMTest):
 
-    COLLECTORS = {'latency': True, 'net': False}
+    COLLECTORS = {'disk': True, 'latency': True, 'net': False}
 
     def _report_kpi(self):
         self.reporter.post(
@@ -102,7 +102,7 @@ class ReadLatencyDGMTest(DGMTest):
 
 class ReadLatencyDGMCompactedTest(DGMCompactedTest):
 
-    COLLECTORS = {'latency': True, 'net': False}
+    COLLECTORS = {'disk': True, 'latency': True, 'net': False}
 
     def _report_kpi(self):
         for percentile in 99.9, 99.99:
@@ -160,7 +160,7 @@ class BgFetcherTest(DGMTest):
 
     """Enable reporting of average BgFetcher wait time (disk fetches)."""
 
-    COLLECTORS = {'net': False}
+    COLLECTORS = {'disk': True, 'net': False}
 
     def _report_kpi(self):
         self.reporter.post(
@@ -172,7 +172,7 @@ class DrainTest(DGMTest):
 
     """Enable reporting of average disk write queue size."""
 
-    COLLECTORS = {'net': False}
+    COLLECTORS = {'disk': True, 'net': False}
 
     def _report_kpi(self):
         self.reporter.post(

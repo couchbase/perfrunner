@@ -11,6 +11,7 @@ from cbagent.collectors import (
     IO,
     PS,
     ActiveTasks,
+    Disk,
     DurabilityLatency,
     ElasticStats,
     FTSCollector,
@@ -131,6 +132,7 @@ class CbAgent:
         self.test.cbmonitor_clusters = list(self.cluster_map.keys())
 
     def add_collectors(self,
+                       disk=False,
                        durability=False,
                        elastic_stats=False,
                        fts_latency=False,
@@ -152,8 +154,6 @@ class CbAgent:
                        secondary_stats=False,
                        secondary_storage_stats=False,
                        secondary_storage_stats_mm=False,
-                       subdoc_latency=False,
-                       xattr_latency=False,
                        xdcr_lag=False,
                        xdcr_stats=False):
         self.collectors = []
@@ -170,6 +170,8 @@ class CbAgent:
                 self.add_collector(Memory)
             if net:
                 self.add_collector(Net)
+            if disk:
+                self.add_io_collector(Disk)
             if iostat:
                 self.add_io_collector(IO)
             if page_cache:

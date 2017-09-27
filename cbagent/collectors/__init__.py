@@ -24,6 +24,7 @@ from cbagent.collectors.secondary_stats import SecondaryStats
 from cbagent.collectors.secondary_storage_stats import SecondaryStorageStats
 from cbagent.collectors.secondary_storage_stats_mm import SecondaryStorageStatsMM
 from cbagent.collectors.system import (
+    Disk,
     IO,
     Memory,
     Net,

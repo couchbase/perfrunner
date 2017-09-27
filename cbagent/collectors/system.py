@@ -1,5 +1,5 @@
 from cbagent.collectors import Collector
-from cbagent.collectors.libstats.iostat import IOStat
+from cbagent.collectors.libstats.iostat import DiskStats, IOStat
 from cbagent.collectors.libstats.meminfo import MemInfo
 from cbagent.collectors.libstats.net import NetStat
 from cbagent.collectors.libstats.pcstat import PCStat
@@ -75,6 +75,31 @@ class IO(System):
             self.add_stats(node, stats)
 
         for node, stats in self.sampler.get_client_samples(self.partitions).items():
+            self.add_stats(node, stats)
+
+
+class Disk(System):
+
+    COLLECTOR = "disk"
+
+    def __init__(self, settings):
+        super().__init__(settings)
+
+        self.partitions = settings.partitions
+
+        self.sampler = DiskStats(hosts=self.nodes,
+                                 workers=self.workers,
+                                 user=self.ssh_username,
+                                 password=self.ssh_password)
+
+        self.initial_stats = {}
+
+    def sample(self):
+        for node, stats in self.sampler.get_server_samples(self.partitions).items():
+            if not self.initial_stats.get(node):
+                self.initial_stats[node] = stats.copy()
+            for metric, value in stats.items():
+                stats[metric] -= self.initial_stats[node][metric]
             self.add_stats(node, stats)
 
 

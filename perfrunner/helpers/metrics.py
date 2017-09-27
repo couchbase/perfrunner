@@ -254,7 +254,7 @@ class MetricHelper:
             db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
                                          collector='ns_server',
                                          bucket=bucket)
-            values += self.store.get_values(db, metric='avg_disk_write_queue')
+            values += self.store.get_values(db, metric='disk_write_queue')
 
         disk_write_queue = int(np.average(values))
 
@@ -268,7 +268,7 @@ class MetricHelper:
             db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
                                          collector='ns_server',
                                          bucket=bucket)
-            values += self.store.get_values(db, metric='avg_avg_bg_wait_time')
+            values += self.store.get_values(db, metric='avg_bg_wait_time')
 
         avg_bg_wait_time = np.mean(values) / 10 ** 3  # us -> ms
         avg_bg_wait_time = round(avg_bg_wait_time, 2)
@@ -283,7 +283,7 @@ class MetricHelper:
             db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
                                          collector='ns_server',
                                          bucket=bucket)
-            values += self.store.get_values(db, metric='avg_couch_views_ops')
+            values += self.store.get_values(db, metric='couch_views_ops')
 
         couch_views_ops = int(np.average(values))
 

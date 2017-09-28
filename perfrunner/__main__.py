@@ -17,7 +17,7 @@ def get_args():
     parser.add_argument('--remote', dest='remote', action='store_true',
                         help='use remote workers as workload generators')
     parser.add_argument('override',
-                        nargs='?',
+                        nargs='*',
                         help='custom cluster and/or test settings')
 
     return parser.parse_args()

@@ -48,10 +48,10 @@ For instance:
 
     env/bin/perfrunner -c clusters/vesta.spec -t tests/comp_bucket_20M.test
 
-Overriding the test settings (comma-separated section.option.value trios):
+Overriding the test settings (space-separated section.option.value trios):
 
     env/bin/perfrunner -c clusters/vesta.spec -t tests/comp_bucket_20M.test \
-        load.size.512,cluster.initial_nodes.3 4
+        "load.size.512" "cluster.initial_nodes.3 4"
 
 `--verbose` flag enables Fabric logging.
 

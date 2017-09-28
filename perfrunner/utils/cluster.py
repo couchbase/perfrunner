@@ -17,7 +17,7 @@ def get_args():
                         action='store_true',
                         help='enable verbose logging')
     parser.add_argument('override',
-                        nargs='?',
+                        nargs='*',
                         help='custom cluster settings')
 
     return parser.parse_args()

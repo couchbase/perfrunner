@@ -24,7 +24,7 @@ class SettingsTest(TestCase):
     def test_override(self):
         test_config = TestConfig()
         test_config.parse('tests/query_lat_20M_basic.test',
-                          override='cluster.mem_quota.5555')
+                          override=['cluster.mem_quota.5555'])
         self.assertEqual(test_config.cluster.mem_quota, 5555)
 
     def test_soe_backup_repo(self):

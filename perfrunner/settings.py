@@ -38,9 +38,8 @@ class Config:
         if override is not None:
             self.override(override)
 
-    def override(self, override: str):
-        override = [x for x in csv.reader(override.split(','),
-                                          delimiter='.')]
+    def override(self, override: List[str]):
+        override = [x for x in csv.reader(override, delimiter='.')]
 
         for section, option, value in override:
             if not self.config.has_section(section):

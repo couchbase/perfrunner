@@ -19,6 +19,7 @@ class WorkloadSettings:
         self.items = options.items
         self.working_set = options.working_set
         self.working_set_access = options.working_set_access
+        self.working_set_moving_docs = 0
 
         self.async = options.async
 

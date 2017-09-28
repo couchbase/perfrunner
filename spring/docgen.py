@@ -15,6 +15,8 @@ from spring.dictionary import (
 )
 from spring.settings import WorkloadSettings
 
+PRIME = 971
+
 
 class Generator:
 
@@ -86,7 +88,8 @@ class UniformKey(Generator):
         self.prefix = prefix
 
     def next(self, curr_items: int, curr_deletes: int, *args) -> str:
-        key = np.random.random_integers(low=1 + curr_deletes, high=curr_items)
+        key = np.random.random_integers(low=curr_deletes,
+                                        high=curr_items - 1)
         key = '%012d' % key
         return self.add_prefix(key)
 
@@ -116,45 +119,39 @@ class WorkingSetKey(Generator):
         curr_deletes                                              curr_items
     """
 
-    def __init__(self, working_set: int, working_set_access: int, prefix: str):
-        self.working_set = working_set
-        self.working_set_access = working_set_access
+    def __init__(self, ws: WorkloadSettings, prefix: str):
+        self.num_hot_items = int(ws.items * ws.working_set / 100)
+        self.working_set_access = ws.working_set_access
         self.prefix = prefix
 
     def next(self, curr_items: int, curr_deletes: int, *args) -> str:
-        num_existing_items = curr_items - curr_deletes
-        num_hot_items = int(num_existing_items * self.working_set / 100)
-        num_cold_items = num_existing_items - num_hot_items
+        num_cold_items = curr_items - self.num_hot_items
 
-        left_boundary = 1 + curr_deletes
         if random.randint(0, 100) <= self.working_set_access:  # cache hit
-            left_boundary += num_cold_items
+            left_boundary = num_cold_items
             right_boundary = curr_items
         else:  # cache miss
-            right_boundary = left_boundary + num_cold_items
+            left_boundary = curr_deletes
+            right_boundary = num_cold_items
 
-        key = np.random.random_integers(low=left_boundary, high=right_boundary)
+        key = np.random.random_integers(low=left_boundary,
+                                        high=right_boundary - 1)
         key = '%012d' % key
         return self.add_prefix(key)
 
 
 class MovingWorkingSetKey(Generator):
 
-    def __init__(self, working_set: int, working_set_access: int, prefix: str,
-                 working_set_move_time: int, working_set_moving_docs: int):
-        self.working_set = working_set
-        self.working_set_access = working_set_access
+    def __init__(self, ws: WorkloadSettings, prefix: str):
+        self.working_set = ws.working_set
+        self.working_set_access = ws.working_set_access
+        self.working_set_moving_docs = ws.working_set_moving_docs
         self.prefix = prefix
-        self.working_set_move_time = working_set_move_time
-        self.working_set_moving_docs = working_set_moving_docs
 
     def next(self, curr_items: int, curr_deletes: int,
              current_hot_load_start: int, timer_elapse: int) -> str:
         num_existing_items = curr_items - curr_deletes
         num_hot_items = int(num_existing_items * self.working_set / 100)
-        num_cold_items = num_existing_items - num_hot_items
-
-        left_boundary = 1 + curr_deletes
 
         if timer_elapse.value:
             timer_elapse.value = 0
@@ -164,17 +161,10 @@ class MovingWorkingSetKey(Generator):
             offset = current_hot_load_start.value + self.working_set_moving_docs
             current_hot_load_start.value = int(offset % num_items)
 
-        if self.working_set_access == 100 or \
-                random.randint(0, 100) <= self.working_set_access:
-            left_boundary += current_hot_load_start.value
-            right_boundary = left_boundary + num_hot_items
-            key = np.random.random_integers(left_boundary, right_boundary)
-        else:
-            cold_key_offset = np.random.random_integers(0, num_cold_items)
-            if cold_key_offset > left_boundary + current_hot_load_start.value:
-                key = left_boundary + cold_key_offset + num_hot_items
-            else:
-                key = left_boundary + cold_key_offset
+        left_boundary = curr_deletes + current_hot_load_start.value
+        right_boundary = left_boundary + num_hot_items
+        key = np.random.random_integers(low=left_boundary,
+                                        high=right_boundary - 1)
         key = '%012d' % key
         return self.add_prefix(key)
 
@@ -189,7 +179,7 @@ class ZipfKey(Generator):
     def next(self, curr_items: int, curr_deletes: int, *args) -> str:
         key = curr_items - np.random.zipf(a=self.ALPHA)
         if key <= curr_deletes:
-            key = curr_items
+            key = curr_items - 1
         key = '%012d' % key
         return self.add_prefix(key)
 
@@ -211,7 +201,7 @@ class SequentialKey(Generator):
         self.prefix = prefix
 
     def __iter__(self) -> Iterator[str]:
-        for seq_id in range(1 + self.sid, 1 + self.ws.items, self.ws.workers):
+        for seq_id in range(self.sid, self.ws.items, self.ws.workers):
             key = '%012d' % seq_id
             key = self.add_prefix(key)
             yield key
@@ -236,8 +226,8 @@ class HotKey(Generator):
         num_hot_keys = int(self.ws.items * self.ws.working_set / 100)
         num_cold_items = self.ws.items - num_hot_keys
 
-        for seq_id in range(1 + num_cold_items + self.sid,
-                            1 + self.ws.items,
+        for seq_id in range(num_cold_items + self.sid,
+                            self.ws.items,
                             self.ws.workers):
             key = '%012d' % seq_id
             key = self.add_prefix(key)
@@ -251,8 +241,6 @@ class UnorderedKey(Generator):
     The key space is still the same.
     """
 
-    PRIME = 971
-
     def __init__(self, sid: int, ws: WorkloadSettings, prefix: str):
         self.sid = sid
         self.ws = ws
@@ -263,8 +251,8 @@ class UnorderedKey(Generator):
 
         key_id = 0
         for _ in range(keys_per_workers):
-            key_id = (key_id + self.PRIME) % keys_per_workers
-            key = '%012d' % (key_id + 1 + self.sid * keys_per_workers)
+            key_id = (key_id + PRIME) % keys_per_workers
+            key = '%012d' % (key_id + self.sid * keys_per_workers)
             key = self.add_prefix(key)
             yield key
 
@@ -278,11 +266,11 @@ class KeyForCASUpdate(Generator):
     def next(self, sid: int, curr_items: int) -> str:
         per_worker_items = curr_items // self.n1ql_workers
 
-        left_boundary = 1 + sid * per_worker_items
+        left_boundary = sid * per_worker_items
         right_boundary = left_boundary + per_worker_items
 
         key = np.random.random_integers(low=left_boundary,
-                                        high=right_boundary)
+                                        high=right_boundary - 1)
         key = '%012d' % key
         return self.add_prefix(key)
 

@@ -91,15 +91,9 @@ class Worker:
         self.new_keys = NewOrderedKey(prefix=self.ts.prefix)
 
         if self.ws.working_set_move_time:
-            self.existing_keys = MovingWorkingSetKey(self.ws.working_set,
-                                                     self.ws.working_set_access,
-                                                     self.ts.prefix,
-                                                     self.ws.working_set_move_time,
-                                                     self.ws.working_set_moving_docs)
+            self.existing_keys = MovingWorkingSetKey(self.ws, self.ts.prefix)
         elif self.ws.working_set < 100:
-            self.existing_keys = WorkingSetKey(self.ws.working_set,
-                                               self.ws.working_set_access,
-                                               self.ts.prefix)
+            self.existing_keys = WorkingSetKey(self.ws, self.ts.prefix)
         else:
             self.existing_keys = UniformKey(self.ts.prefix)
 
@@ -238,9 +232,9 @@ class KVWorker(Worker):
         cmds = []
         for op in ops:
             if op == 'c':
-                curr_items_tmp += 1
                 key = self.new_keys.next(curr_items_tmp)
                 doc = self.docs.next(key)
+                curr_items_tmp += 1
                 key = self.hash_keys.hash_it(key)
                 cmds.append((None, cb.create, (key, doc)))
             elif op == 'r':
@@ -267,8 +261,8 @@ class KVWorker(Worker):
                 else:
                     cmds.append(('set', cb.update, (key, doc)))
             elif op == 'd':
-                deleted_items_tmp += 1
                 key = self.keys_for_removal.next(deleted_items_tmp)
+                deleted_items_tmp += 1
                 key = self.hash_keys.hash_it(key)
                 cmds.append((None, cb.delete, (key, )))
             elif op == 'fus':

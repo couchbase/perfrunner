@@ -21,6 +21,6 @@ updates = 50
 deletes = 0
 throughput = 10000
 items = 20000000
-workers = 24
+workers = 12
 subdoc_field = city
 time = 3600

@@ -464,7 +464,7 @@ class SeqReadsWorker(Worker):
             self.cb.read(key)
 
 
-class SeqUpdatesWorker(Worker):
+class SeqUpsertsWorker(Worker):
 
     def run(self, sid, *args):
         for key in SequentialKey(sid, self.ws, self.ts.prefix):
@@ -473,7 +473,7 @@ class SeqUpdatesWorker(Worker):
             self.cb.update(key, doc)
 
 
-class RandUpdatesWorker(Worker):
+class RandUpsertsWorker(Worker):
 
     def run(self, sid, *args):
         for key in UnorderedKey(sid, self.ws, self.ts.prefix):
@@ -500,9 +500,9 @@ class WorkerFactory:
                 getattr(settings, 'xattr_field', None):
             worker = SeqXATTRUpdatesWorker
         elif getattr(settings, 'rand_upserts', None):
-            worker = RandUpdatesWorker
+            worker = RandUpsertsWorker
         elif getattr(settings, 'seq_upserts', None):
-            worker = SeqUpdatesWorker
+            worker = SeqUpsertsWorker
         elif getattr(settings, 'seq_reads', None):
             worker = SeqReadsWorker
         elif getattr(settings, 'subdoc_field', None):

@@ -391,7 +391,7 @@ class PhaseSettings:
 
         self.seq_reads = self.SEQ_READS
         self.seq_upserts = self.SEQ_UPSERTS
-        self.rand_upserts = bool(int(options.get('RAND_UPSERTS',
+        self.rand_upserts = bool(int(options.get('rand_upserts',
                                                  self.RAND_UPSERTS)))
 
         self.iterations = int(options.get('iterations', self.ITERATIONS))

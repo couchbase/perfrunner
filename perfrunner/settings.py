@@ -156,6 +156,8 @@ class ClusterSettings:
 
     RESTRICT_KERNEL_MEMORY = 0
     ONLINE_CORES = 0
+    EVENTING_BUCKET_MEM_QUOTA = 0
+    EVENTING_BUCKETS = 0
 
     def __init__(self, options: dict):
         self.mem_quota = int(options.get('mem_quota'))
@@ -172,6 +174,10 @@ class ClusterSettings:
         ]
         self.num_buckets = int(options.get('num_buckets',
                                            self.NUM_BUCKETS))
+        self.eventing_bucket_mem_quota = int(options.get('eventing_bucket_mem_quota',
+                                                         self.EVENTING_BUCKET_MEM_QUOTA))
+        self.eventing_buckets = int(options.get('eventing_buckets',
+                                                self.EVENTING_BUCKETS))
         self.num_vbuckets = options.get('num_vbuckets')
         self.online_cores = int(options.get('online_cores',
                                             self.ONLINE_CORES))
@@ -686,6 +692,22 @@ class FtsSettings:
         return str(self.__dict__)
 
 
+class EventingSettings:
+
+    def __init__(self, options: dict):
+        self.functions = {}
+        if options.get('functions') is not None:
+            for function_def in options.get('functions').split(','):
+                name, filename = function_def.split(':')
+                self.functions[name.strip()] = filename.strip()
+
+        self.worker_count = int(options.get("worker_count", 3))
+        self.cpp_worker_thread_count = int(options.get("cpp_worker_thread_count", 2))
+
+    def __str__(self) -> str:
+        return str(self.__dict__)
+
+
 class YCSBSettings:
 
     REPO = 'git://github.com/couchbaselabs/YCSB.git'
@@ -724,6 +746,12 @@ class TestConfig(Config):
     def buckets(self) -> List[str]:
         return [
             'bucket-{}'.format(i + 1) for i in range(self.cluster.num_buckets)
+        ]
+
+    @property
+    def eventing_buckets(self) -> List[str]:
+        return [
+            'eventing-bucket-{}'.format(i + 1) for i in range(self.cluster.eventing_buckets)
         ]
 
     @property
@@ -836,6 +864,11 @@ class TestConfig(Config):
     def ycsb_settings(self) -> YCSBSettings:
         options = self._get_options_as_dict('ycsb')
         return YCSBSettings(options)
+
+    @property
+    def eventing_settings(self) -> EventingSettings:
+        options = self._get_options_as_dict('eventing')
+        return EventingSettings(options)
 
     def get_n1ql_query_definition(self, query_name: str) -> dict:
         return self._get_options_as_dict('n1ql-{}'.format(query_name))

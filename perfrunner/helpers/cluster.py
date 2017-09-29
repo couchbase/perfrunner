@@ -9,7 +9,6 @@ from perfrunner.helpers.rest import RestHelper
 
 
 class ClusterManager:
-
     def __init__(self, cluster_spec, test_config, verbose=False):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
@@ -102,7 +101,11 @@ class ClusterManager:
         self.wait_until_healthy()
 
     def create_buckets(self):
-        ram_quota = self.mem_quota // self.test_config.cluster.num_buckets
+        if self.test_config.cluster.eventing_bucket_mem_quota:
+            ram_quota = (self.mem_quota - self.test_config.cluster.eventing_bucket_mem_quota) \
+                        // self.test_config.cluster.num_buckets
+        else:
+            ram_quota = self.mem_quota // self.test_config.cluster.num_buckets
 
         for master in self.cluster_spec.masters:
             for bucket_name in self.test_config.buckets:
@@ -116,6 +119,35 @@ class ClusterManager:
                     eviction_policy=self.test_config.bucket.eviction_policy,
                     bucket_type=self.test_config.bucket.bucket_type,
                     conflict_resolution_type=self.test_config.bucket.conflict_resolution_type,
+                )
+
+        if self.test_config.cluster.eventing_bucket_mem_quota:
+            ram_quota = self.test_config.cluster.eventing_bucket_mem_quota - 1000 \
+                        // self.test_config.cluster.eventing_buckets
+            for master in self.cluster_spec.masters:
+                # Create buckets for eventing operations
+                for bucket_name in self.test_config.eventing_buckets:
+                    self.rest.create_bucket(
+                        host=master,
+                        name=bucket_name,
+                        ram_quota=ram_quota,
+                        password=self.test_config.bucket.password,
+                        replica_number=self.test_config.bucket.replica_number,
+                        replica_index=self.test_config.bucket.replica_index,
+                        eviction_policy=self.test_config.bucket.eviction_policy,
+                        bucket_type=self.test_config.bucket.bucket_type,
+                        conflict_resolution_type=self.test_config.bucket.conflict_resolution_type,
+                    )
+                # Create eventing metadata bucket
+                self.rest.create_bucket(
+                    host=master,
+                    name="eventing",
+                    ram_quota=1000,
+                    password="password",
+                    replica_number=0,
+                    replica_index=0,
+                    eviction_policy="valueOnly",
+                    bucket_type="membase",
                 )
 
     def configure_auto_compaction(self):

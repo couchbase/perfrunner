@@ -13,6 +13,7 @@ from perfrunner.settings import BucketSettings, ClusterSpec
 
 MAX_RETRY = 20
 RETRY_DELAY = 10
+EVENTING_PORT = 25000
 
 
 @decorator
@@ -643,3 +644,39 @@ class RestHelper:
 
         api = 'http://{}:8095/analytics/cluster/restart'.format(analytics_node)
         self.post(url=api)
+
+    def create_function(self, node: str, payload: str, name: str):
+        logger.info('Set function code {} \n on node {}'.format(payload, node))
+
+        api = 'http://{}:8091/_p/event/saveAppTempStore/?name={}'\
+            .format(node, name)
+        self.post(url=api, data=payload)
+
+    def deploy_function(self, node: str, payload: str, name: str):
+        logger.info('Set function code {} \n on node {}'.format(payload, node))
+
+        api = 'http://{}:8091/_p/event/setApplication/?name={}'\
+            .format(node, name)
+        self.post(url=api, data=payload)
+
+    def enable_function(self, node: str, payload: str, name: str):
+        logger.info('Enable function code {} \n on node {}'.format(payload, node))
+
+        api = 'http://@{}:8091/_p/event/setSettings/?name={}'\
+            .format(node, name)
+        self.post(url=api, data=payload)
+
+    def get_num_events_processed(self, node: str, name: str):
+        logger.info('get stats on node {} for {}'.format(node, name))
+
+        api = 'http://@{}:{}/getEventProcessingStats?name={}'\
+            .format(node, EVENTING_PORT, name)
+        data = self.get(url=api).json()
+        logger.info(data)
+        return data["DCP_MUTATION"]
+
+    def get_deployed_apps(self, node: str):
+        logger.info('get deployed apps on node {}'.format(node))
+
+        api = 'http://@{}:{}/getDeployedApps'.format(node, EVENTING_PORT)
+        return self.get(url=api).json()

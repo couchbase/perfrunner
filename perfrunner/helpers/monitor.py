@@ -378,3 +378,14 @@ class Monitor(RestHelper):
             pending_items = stats['indices'][index]['total']['translog']['operations']
             logger.info('Records to persist: {:,}'.format(pending_items))
             time.sleep(self.POLLING_INTERVAL)
+
+    def wait_for_bootstrap(self, node: str, function: str):
+        logger.info('Waiting for bootstrap of eventing function: {} '.format(function))
+        retry = 1
+        while retry < self.MAX_RETRY:
+            if function in self.get_deployed_apps(node):
+                break
+            time.sleep(self.POLLING_INTERVAL)
+            retry += 1
+        if retry == self.MAX_RETRY:
+            logger.info('Failed to bootstrap function: {}'.format(function))

@@ -1,0 +1,38 @@
+{
+  "depcfg": {
+    "buckets": [
+      {
+        "alias": "bucket1",
+        "bucket_name": "eventing-bucket-1"
+      }
+    ],
+    "metadata_bucket": "eventing",
+    "source_bucket": "bucket-1"
+  },
+  "settings": {
+    "checkpoint_interval": 10000,
+    "sock_batch_size": 100,
+    "worker_count": 16,
+    "skip_timer_threshold": 86400,
+    "tick_duration": 5000,
+    "timer_processing_tick_interval": 500,
+    "timer_worker_pool_size": 3,
+    "deadline_timeout": 3,
+    "execution_timeout": 1,
+    "log_level": "INFO",
+    "rbacuser": "eventing",
+    "rbacpass": "password",
+    "dcp_stream_boundary": "everything",
+    "cleanup_timers": false,
+    "rbacrole": "admin",
+    "processing_status": true,
+    "deployment_status": true,
+    "enable_recursive_mutation": false,
+    "lcb_inst_capacity": 5,
+    "cpp_worker_thread_count": 1,
+    "description": "Perf test"
+  },
+  "appname": "perf-test",
+  "appcode": "function OnUpdate(doc, meta) {\n}\nfunction OnDelete(doc) {\n}",
+  "actionsVisible": true
+}

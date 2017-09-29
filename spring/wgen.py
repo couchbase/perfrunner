@@ -5,7 +5,6 @@ from collections import defaultdict
 from multiprocessing import Event, Lock, Process, Value
 from random import randint
 
-from couchbase.exceptions import ValueFormatError
 from decorator import decorator
 from numpy import random
 from psutil import cpu_count
@@ -335,7 +334,7 @@ class KVWorker(Worker):
                     curr_ops.value += self.BATCH_SIZE
                 self.do_batch()
                 self.report_progress(curr_ops.value)
-        except (KeyboardInterrupt, ValueFormatError):
+        except KeyboardInterrupt:
             logger.info('Interrupted: {}-{}'.format(self.NAME, self.sid))
         else:
             logger.info('Finished: {}-{}'.format(self.NAME, self.sid))
@@ -571,8 +570,8 @@ class ViewWorker(Worker):
             logger.info('Started: {}-{}'.format(self.NAME, self.sid))
             while not self.time_to_stop():
                 self.do_batch()
-        except (KeyboardInterrupt, ValueFormatError, AttributeError) as e:
-            logger.info('Interrupted: {}-{}, {}'.format(self.NAME, self.sid, e))
+        except KeyboardInterrupt:
+            logger.info('Interrupted: {}-{}'.format(self.NAME, self.sid))
         else:
             logger.info('Finished: {}-{}'.format(self.NAME, self.sid))
 
@@ -707,8 +706,8 @@ class N1QLWorker(Worker):
             logger.info('Started: {}-{}'.format(self.NAME, self.sid))
             while not self.time_to_stop():
                 self.do_batch()
-        except (KeyboardInterrupt, ValueFormatError, AttributeError) as e:
-            logger.info('Interrupted: {}-{}-{}'.format(self.NAME, self.sid, e))
+        except KeyboardInterrupt:
+            logger.info('Interrupted: {}-{}'.format(self.NAME, self.sid))
         else:
             logger.info('Finished: {}-{}'.format(self.NAME, self.sid))
 
@@ -772,8 +771,8 @@ class FtsWorker(Worker):
             logger.info('Started: {}-{}'.format(self.NAME, self.sid))
             while not self.time_to_stop():
                 self.do_batch()
-        except (KeyboardInterrupt, ValueFormatError, AttributeError) as e:
-            logger.info('Interrupted: {}-{}-{}'.format(self.NAME, self.sid, e))
+        except KeyboardInterrupt:
+            logger.info('Interrupted: {}-{}'.format(self.NAME, self.sid))
         else:
             logger.info('Finished: {}-{}'.format(self.NAME, self.sid))
 

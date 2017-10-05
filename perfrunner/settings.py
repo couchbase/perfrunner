@@ -155,7 +155,7 @@ class ClusterSettings:
     ANALYTICS_LOG_LEVEL = "WARNING"
 
     RESTRICT_KERNEL_MEMORY = 0
-    THROTTLE_CPU = 0
+    ONLINE_CORES = 0
 
     def __init__(self, options: dict):
         self.mem_quota = int(options.get('mem_quota'))
@@ -173,8 +173,8 @@ class ClusterSettings:
         self.num_buckets = int(options.get('num_buckets',
                                            self.NUM_BUCKETS))
         self.num_vbuckets = options.get('num_vbuckets')
-        self.throttle_cpu = int(options.get('throttle_cpu',
-                                            self.THROTTLE_CPU))
+        self.online_cores = int(options.get('online_cores',
+                                            self.ONLINE_CORES))
         self.restrict_kernel_memory = options.get('restrict_kernel_memory',
                                                   self.RESTRICT_KERNEL_MEMORY)
 

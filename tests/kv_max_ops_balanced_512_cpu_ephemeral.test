@@ -8,7 +8,7 @@ category = max_ops
 mem_quota = 51200
 initial_nodes = 2
 num_buckets = 1
-throttle_cpu = 1
+online_cores = 5
 
 [bucket]
 bucket_type = ephemeral

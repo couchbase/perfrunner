@@ -1,4 +1,6 @@
 import os.path
+from collections import defaultdict
+from typing import Dict, List
 from urllib.parse import urlparse
 
 from fabric.api import get, put, run, settings
@@ -328,20 +330,28 @@ class RemoteLinux(Remote):
 
     @property
     def num_vcpu(self):
-        return int(run('lscpu -a -e | wc -l')) - 1
+        return int(run('lscpu --all --extended | wc -l')) - 1  # Minus header
 
-    @property
-    def num_cores(self):
-        return int(run('lscpu | grep socket').strip().split()[-1])
+    def get_cpu_map(self) -> Dict[str, List]:
+        cores = run('lscpu --all --parse=socket,core,cpu | grep -v "#"')
+
+        cpu_map = defaultdict(list)
+        for cpu_info in cores.split():
+            socket, core, cpu = cpu_info.split(',')
+            core_id = (int(socket) << 10) + int(core)  # sort by socket, core
+            cpu_map[core_id].append(cpu)
+        return cpu_map
 
     @all_servers
-    def disable_cpu(self):
+    def disable_cpu(self, online_cores: int):
         logger.info('Throttling CPU resources')
-        reserved_cores = {i for i in range(0, 2 * self.num_cores, 2)}
-        all_cores = {i for i in range(self.num_vcpu)}
 
-        for i in all_cores - reserved_cores:
-            run('echo 0 > /sys/devices/system/cpu/cpu{}/online'.format(i))
+        cpu_map = self.get_cpu_map()
+        offline_cores = sorted(cpu_map)[online_cores:]
+
+        for core in offline_cores:
+            for cpu in cpu_map[core]:
+                run('echo 0 > /sys/devices/system/cpu/cpu{}/online'.format(cpu))
 
     @all_servers
     def enable_cpu(self):

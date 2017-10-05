@@ -63,7 +63,7 @@ class PerfTest:
             self.worker_manager.download_celery_logs()
             self.worker_manager.terminate()
 
-        if self.test_config.cluster.throttle_cpu:
+        if self.test_config.cluster.online_cores:
             self.remote.enable_cpu()
 
         if exc_type != KeyboardInterrupt:

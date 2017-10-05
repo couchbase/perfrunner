@@ -8,7 +8,7 @@ category = ycsb
 mem_quota = 40960
 initial_nodes = 3
 num_buckets = 1
-throttle_cpu = 1
+online_cores = 6
 
 [load]
 workload_path = workloads/workloada

@@ -7,7 +7,7 @@ component = YCSB
 mem_quota = 20480
 initial_nodes = 1
 num_buckets = 1
-throttle_cpu = 1
+online_cores = 6
 
 [bucket]
 replica_number = 0

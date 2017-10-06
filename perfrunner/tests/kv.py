@@ -34,39 +34,6 @@ class KVTest(PerfTest):
         self.report_kpi()
 
 
-class DGMTest(KVTest):
-
-    def run(self):
-        self.load()
-        self.wait_for_persistence()
-
-        self.hot_load()
-
-        self.reset_kv_stats()
-
-        self.compact_bucket(wait=False)
-
-        self.access()
-
-        self.report_kpi()
-
-
-class DGMCompactedTest(KVTest):
-
-    def run(self):
-        self.load()
-        self.wait_for_persistence()
-        self.compact_bucket()
-
-        self.hot_load()
-
-        self.reset_kv_stats()
-
-        self.access()
-
-        self.report_kpi()
-
-
 class ReadLatencyTest(KVTest):
 
     """Enable reporting of GET latency."""
@@ -90,7 +57,55 @@ class MixedLatencyTest(ReadLatencyTest):
             )
 
 
+class DGMTest(KVTest):
+
+    COLLECTORS = {'disk': True, 'net': False}
+
+
+class DGMCompactionTest(DGMTest):
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.hot_load()
+
+        self.reset_kv_stats()
+
+        self.compact_bucket(wait=False)
+
+        self.access()
+
+        self.report_kpi()
+
+
+class DGMCompactedTest(DGMTest):
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.compact_bucket()
+
+        self.hot_load()
+
+        self.reset_kv_stats()
+
+        self.access()
+
+        self.report_kpi()
+
+
 class ReadLatencyDGMTest(DGMTest):
+
+    COLLECTORS = {'disk': True, 'latency': True, 'net': False}
+
+    def _report_kpi(self):
+        self.reporter.post(
+            *self.metrics.kv_latency(operation='get')
+        )
+
+
+class ReadLatencyDGMCompactionTest(DGMCompactionTest):
 
     COLLECTORS = {'disk': True, 'latency': True, 'net': False}
 
@@ -160,8 +175,6 @@ class BgFetcherTest(DGMTest):
 
     """Enable reporting of average BgFetcher wait time (disk fetches)."""
 
-    COLLECTORS = {'disk': True, 'net': False}
-
     def _report_kpi(self):
         self.reporter.post(
             *self.metrics.avg_bg_wait_time()
@@ -171,8 +184,6 @@ class BgFetcherTest(DGMTest):
 class DrainTest(DGMTest):
 
     """Enable reporting of average disk write queue size."""
-
-    COLLECTORS = {'disk': True, 'net': False}
 
     def _report_kpi(self):
         self.reporter.post(

@@ -1,0 +1,37 @@
+[test_case]
+test = perfrunner.tests.rebalance.RebalanceKVTest
+
+[cluster]
+mem_quota = 215040
+initial_nodes = 7
+num_buckets = 1
+
+[bucket]
+eviction_policy = fullEviction
+
+[load]
+items = 10000000000
+size = 1024
+workers = 80
+
+[hot_load]
+items = 10000000000
+workers = 80
+working_set = 5
+
+[access]
+creates = 5
+reads = 90
+updates = 5
+deletes = 0
+throughput = 10000
+items = 10000000000
+workers = 25
+working_set = 5
+working_set_access = 98
+
+[rebalance]
+nodes_after = 7
+swap = 1
+start_after = 3600
+stop_after = 3600

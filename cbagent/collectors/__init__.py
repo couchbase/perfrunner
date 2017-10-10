@@ -1,6 +1,7 @@
 from cbagent.collectors.collector import Collector
 
 from cbagent.collectors.active_tasks import ActiveTasks
+from cbagent.collectors.eventing_stats import EventingStats
 from cbagent.collectors.fts_stats import (
     FTSCollector,
     FTSLatencyCollector,

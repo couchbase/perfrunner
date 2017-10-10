@@ -6,7 +6,7 @@ category = thr
 sub_category = Function
 
 [stats]
-server_processes = projector
+server_processes = projector eventing-produc
 
 [cluster]
 mem_quota = 50000

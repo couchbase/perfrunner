@@ -14,6 +14,7 @@ from cbagent.collectors import (
     Disk,
     DurabilityLatency,
     ElasticStats,
+    EventingStats,
     FTSCollector,
     FTSLatencyCollector,
     KVLatency,
@@ -135,6 +136,7 @@ class CbAgent:
                        disk=False,
                        durability=False,
                        elastic_stats=False,
+                       eventing_stats=False,
                        fts_latency=False,
                        fts_stats=False,
                        index_latency=False,
@@ -191,6 +193,9 @@ class CbAgent:
 
         if index_latency:
             self.add_collector(ObserveIndexLatency)
+
+        if eventing_stats:
+            self.add_collector(EventingStats, self.test)
 
         if elastic_stats:
             self.add_collector(ElasticStats, self.test)

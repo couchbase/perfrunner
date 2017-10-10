@@ -14,6 +14,7 @@ class Monitor(RestHelper):
     POLLING_INTERVAL = 2
     POLLING_INTERVAL_INDEXING = 1
     POLLING_INTERVAL_MACHINE_UP = 10
+    POLLING_INTERVAL_CBAS_SYNCING = 15
     REBALANCE_TIMEOUT = 3600 * 2
     TIMEOUT = 3600 * 12
 
@@ -389,3 +390,108 @@ class Monitor(RestHelper):
             retry += 1
         if retry == self.MAX_RETRY:
             logger.info('Failed to bootstrap function: {}'.format(function))
+
+    def get_bigfun_dataset_number(self, bucket_name: str, cbas_node: str,
+                                  tablesufix: str, filter: str) -> int:
+        query = "SELECT COUNT(*) FROM `{tablesufix}{bucket}`{filter};".format(tablesufix=tablesufix,
+                                                                              bucket=bucket_name,
+                                                                              filter=filter)
+        response = self.run_analytics_query(cbas_node, query)
+        return response["results"][0]["$1"]
+
+    def get_cbas_bigfun_number(self, bucket_name: str, cbas_node: str,
+                               gbuser_filter: str, gbmsg_filter: str, cmsg_filter: str) -> int:
+        num_items_synced = 0
+        num_items_synced = num_items_synced + self.get_bigfun_dataset_number(
+            bucket_name, cbas_node, "GleambookUsers", gbuser_filter)
+        num_items_synced = num_items_synced + self.get_bigfun_dataset_number(
+            bucket_name, cbas_node, "GleambookMessages", gbmsg_filter)
+        num_items_synced = num_items_synced + self.get_bigfun_dataset_number(
+            bucket_name, cbas_node, "ChirpMessages", cmsg_filter)
+        return num_items_synced
+
+    def _get_bigfun_retry_sleep_interval(self, retry: int) -> int:
+        if retry < 12:
+            sleep_sec = 10
+        elif retry < 42:
+            sleep_sec = 60
+        else:
+            sleep_sec = 300
+        return sleep_sec
+
+    def monitor_bigfun_data_synced(self, master_node: str, bucket_name: str, cbas_node: str):
+        logger.info('Waiting {master} {bucket} data synced to {cbas}'.format(master=master_node,
+                                                                             bucket=bucket_name,
+                                                                             cbas=cbas_node))
+        retry = 0
+        while True:
+            num_items = self._get_num_items(master_node, bucket_name)
+            num_items_synced = self.get_cbas_bigfun_number(bucket_name, cbas_node, "", "", "")
+            if num_items == num_items_synced:
+                logger.info('{master} {bucket} {number} to cbas'.format(master=master_node,
+                                                                        bucket=bucket_name,
+                                                                        number=num_items_synced))
+                break
+            time.sleep(self._get_bigfun_retry_sleep_interval(retry))
+            retry += 1
+
+    def monitor_bigfun_data_deleted(self, master_node: str, bucket_name: str, cbas_node: str):
+        logger.info('Waiting {master} {bucket} delete to {cbas}'.format(master=master_node,
+                                                                        bucket=bucket_name,
+                                                                        cbas=cbas_node))
+        retry = 0
+        while True:
+            num_items = self._get_num_items(master_node, bucket_name)
+            num_items_synced = self.get_cbas_bigfun_number(bucket_name, cbas_node, "", "", "")
+            if 0 == num_items_synced and 0 == num_items:
+                logger.info('{master} {bucket} {number} to cbas'.format(master=master_node,
+                                                                        bucket=bucket_name,
+                                                                        number=num_items_synced))
+                break
+            time.sleep(self._get_bigfun_retry_sleep_interval(retry))
+            retry += 1
+
+    def monitor_bigfun_data_synced_update_non_index(self, master_node: str,
+                                                    bucket_name: str, cbas_node: str):
+        logger.info('Waiting {master} {bucket} data synced to {cbas}'.format(master=master_node,
+                                                                             bucket=bucket_name,
+                                                                             cbas=cbas_node))
+        retry = 0
+        while True:
+            num_items = self._get_num_items(master_node, bucket_name)
+            num_items_synced = \
+                self.get_cbas_bigfun_number(bucket_name, cbas_node,
+                                            "where contains(alias, \"alias_update\")",
+                                            "where contains(message, \"message_update\")",
+                                            "where contains(message_text, \"message_text_update\")")
+            if num_items == num_items_synced:
+                logger.info('{master} {bucket} {number} to cbas'.format(master=master_node,
+                                                                        bucket=bucket_name,
+                                                                        number=num_items_synced))
+                break
+            time.sleep(self._get_bigfun_retry_sleep_interval(retry))
+            retry += 1
+
+    def monitor_bigfun_data_synced_update_index(self, master_node: str,
+                                                bucket_name: str, cbas_node: str):
+        logger.info('Waiting {master} {bucket} data synced to {cbas}'.format(master=master_node,
+                                                                             bucket=bucket_name,
+                                                                             cbas=cbas_node))
+        retry = 0
+        while True:
+            num_items = self._get_num_items(master_node, bucket_name)
+            num_items_synced = \
+                self.get_cbas_bigfun_number(bucket_name, cbas_node,
+                                            "where user_since >= \"1992-01-01T00:00:00\""
+                                            " and user_since <= \"1996-01-01T00:00:00\"",
+                                            "where author_id >= \"000000000000001\""
+                                            " and author_id <= \"000000000001000\"",
+                                            "where send_time >= \"1992-01-01T00:00:00\""
+                                            " and send_time <= \"1996-01-01T00:00:00\"")
+            if num_items == num_items_synced:
+                logger.info('{master} {bucket} {number} to cbas'.format(master=master_node,
+                                                                        bucket=bucket_name,
+                                                                        number=num_items_synced))
+                break
+            time.sleep(self._get_bigfun_retry_sleep_interval(retry))
+            retry += 1

@@ -1,0 +1,23 @@
+[test_case]
+test = perfrunner.tests.cbas.CBASBigfunTest
+title = Load small scale bigfun data into Couchbase for CBAS investigation.
+component = cbas
+category = latency
+
+[cluster]
+mem_quota = 51200
+analytics_mem_quota = 51200
+analytics_iodevices = 1
+initial_nodes = 4
+num_buckets = 1
+
+[bigfun]
+socialgen_repo=git://github.com/huiwangcouchbase/socialGen.git
+socialgen_branch=master
+loader_repo=git://github.com/huiwangcouchbase/loader.git
+loader_branch=master
+workers=40
+user_docs=10000000
+
+[access]
+time = 60

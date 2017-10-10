@@ -84,6 +84,17 @@ class ClusterSpec(Config):
                     has_service.append(host)
         return has_service
 
+    def servers_by_master_by_role(self, master: str, role: str) -> List[str]:
+        has_service = []
+        for _, servers in self.config.items('clusters'):
+            serverslist = servers.split()
+            if serverslist[0].split(':')[0] == master:
+                for server in serverslist:
+                    host, roles = server.split(':')
+                    if role in roles:
+                        has_service.append(host)
+        return has_service
+
     @property
     def roles(self) -> Dict[str, str]:
         server_roles = {}
@@ -153,6 +164,7 @@ class ClusterSettings:
     FTS_INDEX_MEM_QUOTA = 512
     ANALYTICS_MEM_QUOTA = 0
     ANALYTICS_LOG_LEVEL = "WARNING"
+    ANALYTICS_IODEVICES = 0
 
     EVENTING_BUCKET_MEM_QUOTA = 0
     EVENTING_BUCKETS = 0
@@ -170,6 +182,8 @@ class ClusterSettings:
                                                    self.ANALYTICS_MEM_QUOTA))
         self.analytics_log_level = options.get('analytics_log_level',
                                                self.ANALYTICS_LOG_LEVEL)
+        self.analytics_iodevices = int(options.get('analytics_iodevices',
+                                                   self.ANALYTICS_IODEVICES))
         self.initial_nodes = [
             int(nodes) for nodes in options.get('initial_nodes').split()
         ]
@@ -722,6 +736,26 @@ class YCSBSettings:
         return str(self.__dict__)
 
 
+class BigfunSettings:
+    SOCIALGEN_REPO = 'git://github.com/huiwangcouchbase/socialGen.git'
+    SOCIALGEN_BRANCH = 'master'
+    LOADER_REPO = 'git://github.com/huiwangcouchbase/loader.git'
+    LOADER_BRANCH = 'master'
+    WORKERS = 20
+    USER_DOCS = 10000
+
+    def __init__(self, options: dict):
+        self.socialgen_repo = options.get('socialgen_repo', self.SOCIALGEN_REPO)
+        self.socialgen_branch = options.get('socialgen_branch', self.SOCIALGEN_BRANCH)
+        self.loader_repo = options.get('loader_repo', self.LOADER_REPO)
+        self.loader_branch = options.get('loader_branch', self.LOADER_BRANCH)
+        self.workers = int(options.get('workers', self.WORKERS))
+        self.user_docs = int(options.get('user_docs', self.USER_DOCS))
+
+    def __str__(self) -> str:
+        return str(self.__dict__)
+
+
 class TestConfig(Config):
 
     @property
@@ -870,6 +904,11 @@ class TestConfig(Config):
     def eventing_settings(self) -> EventingSettings:
         options = self._get_options_as_dict('eventing')
         return EventingSettings(options)
+
+    @property
+    def bigfun_settings(self) -> BigfunSettings:
+        options = self._get_options_as_dict('bigfun')
+        return BigfunSettings(options)
 
     def get_n1ql_query_definition(self, query_name: str) -> dict:
         return self._get_options_as_dict('n1ql-{}'.format(query_name))

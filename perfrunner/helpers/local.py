@@ -322,6 +322,76 @@ def run_ycsb(host, bucket, password, action, workload, items, workers,
         local(cmd)
 
 
+def run_bigfun_single_script(host, bucket, password, op, instance, tablename, id, arg):
+    with lcd('loader'):
+        cmd = "bash ./target/loader-1.0-SNAPSHOT-binary-assembly/bin/loader.sh" \
+              " /workspace/bigfundata" \
+              " {clientn} {op} {tablename} {id}" \
+              " {cbhost} {bucket} {password} {arg}" \
+              " > loader_{tablename}_{cbhost}_{bucket}_{clientn}_{op}.log" \
+              " 2> loader_{tablename}_{cbhost}_{bucket}_{clientn}_{op}.err".format(
+                                                        op=op,
+                                                        clientn=instance,
+                                                        cbhost=host,
+                                                        bucket=bucket,
+                                                        password=password,
+                                                        tablename=tablename,
+                                                        id=id,
+                                                        arg=arg)
+        local(cmd)
+
+
+def run_bigfun_script(host, bucket, password, op, instance, guarg, gmarg, cmarg):
+    run_bigfun_single_script(host, bucket, password, op, instance,
+                             "gbook_users", "id", guarg)
+    run_bigfun_single_script(host, bucket, password, op, instance,
+                             "gbook_messages", "message_id", gmarg)
+    run_bigfun_single_script(host, bucket, password, op, instance,
+                             "chirp_messages", "chirpid", cmarg)
+
+
+def run_bigfun_query_script(host, bucket, password, instance, concurrent, repeat):
+    with lcd('loader'):
+        cmd = "bash ./target/loader-1.0-SNAPSHOT-binary-assembly/bin/query.sh" \
+              " /workspace/bigfundata" \
+              " {clientn} {tablesufix} {host} {user} {password} {concurrent} {repeat}" \
+              " > query_{host}_{bucket}_{clientn}_{concurrent}_{repeat}.log" \
+              " 2> query_{host}_{bucket}_{clientn}_{concurrent}_{repeat}.err".format(
+                                                        clientn=instance,
+                                                        tablesufix=bucket,
+                                                        host=host,
+                                                        user=bucket,
+                                                        bucket=bucket,
+                                                        password=password,
+                                                        concurrent=concurrent,
+                                                        repeat=repeat)
+        local(cmd)
+
+
+def run_bigfun(host, bucket, password, action,
+               time=None, instance=0, workers=0):
+    if action == "insert":
+        run_bigfun_script(host, bucket, password, "insert", instance, "", "", "")
+    elif action == "delete":
+        run_bigfun_script(host, bucket, password, "delete", instance, "", "", "")
+    elif action == "update_non_index":
+        run_bigfun_script(host, bucket, password, "update", instance,
+                          "-U alias#string#alias_update%d#1#100 ",
+                          "-U message#string#message_update%d#1#100",
+                          "-U message_text#string#message_text_update%d#1#100")
+    elif action == "update_index":
+        run_bigfun_script(host, bucket, password, "update", instance,
+                          "-U user_since#time#1992-01-01T00:00:00#1996-01-01T00:00:00",
+                          "-U author_id#string#%015d#1#1000",
+                          "-U send_time#time#1992-01-01T00:00:00#1996-01-01T00:00:00")
+    elif action == "query":
+        run_bigfun_query_script(host, bucket, password, instance, workers, 3)
+    elif action == "wait":
+        with lcd('loader'):
+            cmd = "sleep {seconds}".format(seconds=time)
+            local(cmd)
+
+
 def restart_memcached(mem_limit=10000, port=8000):
     cmd1 = 'killall -9 memcached'
     logger.info('Running: {}'.format(cmd1))
@@ -387,6 +457,33 @@ def start_celery_worker(queue):
 def clone_ycsb(repo: str, branch: str):
     logger.info('Cloning YCSB repository: {} branch: {}'.format(repo, branch))
     local('git clone -q -b {} {}'.format(branch, repo))
+
+
+def clone_bigfun(socialgen_repo: str, socialgen_branch: str,
+                 loader_repo: str, loader_branch: str):
+    logger.info('Cloning socialGen repository: {} branch {}'.format(
+        socialgen_repo, socialgen_branch))
+    logger.info('Cloning loader repository: {} branch {}'.format(
+        loader_repo, loader_branch))
+    local('git clone -q -b {} {}'.format(socialgen_branch, socialgen_repo))
+    local('git clone -q -b {} {}'.format(loader_branch, loader_repo))
+    with lcd('socialGen'):
+        cmd = "mvn clean package"
+        local(cmd)
+    with lcd('loader'):
+        cmd = "mvn clean package"
+        local(cmd)
+
+
+def generate_doctemplates(workers: int, user_docs: int, clientn: int):
+    logger.info('Generating document templates workers {} docs {} client {}'.format(
+        workers, user_docs, clientn))
+    with lcd('socialGen'):
+        cmd = "bash ./scripts/initb.sh /workspace/bigfundata {partitions} {clientn} {users}" \
+              " -f JSON -k STRING#%015d > socialGen.log".format(users=user_docs,
+                                                                partitions=workers,
+                                                                clientn=clientn)
+        local(cmd)
 
 
 def get_indexer_heap_profile(indexer: str) -> str:

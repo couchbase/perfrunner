@@ -60,6 +60,20 @@ class MetricHelper:
             'orderBy': order_by,
         }
 
+    def cbas_sync_latency(self, value_sec: float, name: str, title: str) -> Metric:
+        metric_id = '{}_{}'.format(self.test_config.name, name)
+        title = '{}, {}'.format(title, self.test_config.test_case.title)
+        metric_info = self._metric_info(metric_id, title)
+
+        return value_sec, self._snapshots, metric_info
+
+    def cbas_query_latency(self, value_ms: float, name: str, title: str) -> Metric:
+        metric_id = '{}_{}'.format(self.test_config.name, name)
+        title = '{}, {}'.format(title, self.test_config.test_case.title)
+        metric_info = self._metric_info(metric_id, title)
+
+        return value_ms, self._snapshots, metric_info
+
     def ycsb_queries(self, value: float, name: str, title: str) -> Metric:
         metric_id = '{}_{}'.format(self.test_config.name, name)
         title = '{}, {}'.format(title, self.test_config.test_case.title)
@@ -583,6 +597,34 @@ class MetricHelper:
                     if line.startswith('[OVERALL], Throughput(ops/sec)'):
                         throughput += int(float(line.split()[-1]))
         return throughput
+
+    def parse_cbas_query_latencies(self) -> Dict[str, float]:
+        query_count_dict = {}
+        query_exe_time_dict = {}
+        pattern = re.compile("[^\t]+")
+        for filename in glob.glob("loader/*.query.result"):
+            with open(filename) as fh:
+                for line in fh.readlines():
+                    if line.startswith('CBAS success query'):
+                        line = line.replace("\n", "")
+                        parts = pattern.findall(line)
+                        if len(parts) >= 10:
+                            query = parts[1]
+                            exe_time = 0.0
+                            exe_time_str = parts[9]
+                            if exe_time_str.endswith("ms"):
+                                exe_time = float(exe_time_str.replace("ms", ""))
+                            elif exe_time_str.endswith("s"):
+                                exe_time = float(exe_time_str.replace("s", "")) * 1000
+                            if query in query_count_dict:
+                                query_count_dict[query] = query_count_dict[query] + 1
+                                query_exe_time_dict[query] = query_exe_time_dict[query] + exe_time
+                            else:
+                                query_count_dict[query] = 1
+                                query_exe_time_dict[query] = exe_time
+        for query in query_exe_time_dict:
+            query_exe_time_dict[query] = query_exe_time_dict[query] / query_count_dict[query]
+        return query_exe_time_dict
 
     def _parse_dcp_throughput(self, output_file: str = 'dcpstatsfile') -> int:
         # Get throughput from OUTPUT_FILE for posting to showfast

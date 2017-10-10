@@ -18,6 +18,14 @@ from perfrunner.settings import (
     TestConfig,
 )
 from perfrunner.workloads import spring_workload
+from perfrunner.workloads.cbas import (
+    cbas_bigfun_data_delete,
+    cbas_bigfun_data_insert,
+    cbas_bigfun_data_query,
+    cbas_bigfun_data_update_index,
+    cbas_bigfun_data_update_non_index,
+    cbas_bigfun_wait,
+)
 from perfrunner.workloads.pillowfight import (
     pillowfight_data_load,
     pillowfight_workload,
@@ -55,6 +63,36 @@ def ycsb_data_load_task(*args):
 @celery.task
 def ycsb_task(*args):
     ycsb_workload(*args)
+
+
+@celery.task
+def cbas_bigfun_data_delete_task(*args):
+    cbas_bigfun_data_delete(*args)
+
+
+@celery.task
+def cbas_bigfun_data_insert_task(*args):
+    cbas_bigfun_data_insert(*args)
+
+
+@celery.task
+def cbas_bigfun_data_query_task(*args):
+    cbas_bigfun_data_query(*args)
+
+
+@celery.task
+def cbas_bigfun_data_update_index_task(*args):
+    cbas_bigfun_data_update_index(*args)
+
+
+@celery.task
+def cbas_bigfun_data_update_non_index_task(*args):
+    cbas_bigfun_data_update_non_index(*args)
+
+
+@celery.task
+def cbas_bigfun_wait_task(*args):
+    cbas_bigfun_wait(*args)
 
 
 class WorkerManager:

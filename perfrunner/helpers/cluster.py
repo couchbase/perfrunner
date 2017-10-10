@@ -212,6 +212,30 @@ class ClusterManager:
                                              self.test_config.cluster.analytics_log_level)
             self.rest.restart_analytics(analytics_node)
 
+    def set_cbas_iodevices(self):
+        if self.test_config.cluster.analytics_iodevices:
+            analytics_data_base_path = "/var/couchbase/lib/data"
+            analytics_data_base_path, index_path = self.cluster_spec.paths
+            analytics_data_path = analytics_data_base_path + "/@analytics"
+            for analytics_node in self.cluster_spec.servers_by_role("cbas"):
+                self.remote.create_directory(analytics_node, analytics_data_path)
+                self.remote.allow_all_access(analytics_node, analytics_data_path)
+            iodevices_file = analytics_data_path + "/iodevices.txt"
+            iodevices = ""
+            for i in range(self.test_config.cluster.analytics_iodevices):
+                for analytics_node in self.cluster_spec.servers_by_role("cbas"):
+                    self.remote.create_directory(analytics_node,
+                                                 analytics_data_path + "/iodev{}".format(i))
+                    self.remote.allow_all_access(analytics_node,
+                                                 analytics_data_path + "/iodev{}".format(i))
+                if i == 0:
+                    device = analytics_data_path + "/iodev{}".format(i)
+                else:
+                    device = "," + analytics_data_path + "/iodev{}".format(i)
+                iodevices = iodevices + device
+            for analytics_node in self.cluster_spec.servers_by_role("cbas"):
+                self.remote.set_cbas_iodevices(analytics_node, iodevices_file, iodevices)
+
     def enable_auto_failover(self):
         for master in self.cluster_spec.masters:
             self.rest.enable_auto_failover(master)

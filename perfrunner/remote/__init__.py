@@ -34,9 +34,6 @@ class Remote:
         with cd(worker_home):
             run('git clone -q {}'.format(REPO))
 
-            with cd('perfrunner'):
-                run('make')
-
     def start_celery_worker(self, worker, worker_home):
         with settings(host_string=worker):
             with cd(worker_home), shell_env(PYTHONOPTIMIZE='1',
@@ -47,12 +44,28 @@ class Remote:
                     '-l INFO -Q {0} -n {0} -C --discard '
                     '&>worker_{0}.log &'.format(worker), pty=False)
 
-    @all_clients
-    def clone_ycsb(self, repo: str, branch: str, worker_home: str):
-        logger.info('Cloning YCSB repository: {} branch {}'.format(
+    def clone_git_repo(self, repo: str, branch: str, worker_home: str):
+        logger.info('Cloning repository: {} branch {}'.format(
             repo, branch))
         with cd(worker_home), cd('perfrunner'):
             run('git clone -q -b {} {}'.format(branch, repo))
+
+    @all_clients
+    def clone_ycsb(self, repo: str, branch: str, worker_home: str):
+        self.clone_git_repo(repo=repo, branch=branch, worker_home=worker_home)
+
+    @all_clients
+    def clone_bigfun(self, socialgen_repo: str, socialgen_branch: str,
+                     loader_repo: str, loader_branch: str, worker_home: str):
+        self.clone_git_repo(repo=socialgen_repo, branch=socialgen_branch, worker_home=worker_home)
+        self.clone_git_repo(repo=loader_repo, branch=loader_branch, worker_home=worker_home)
+        with cd(worker_home), cd('perfrunner'):
+            with cd('socialGen'):
+                cmd = "mvn clean package"
+                run(cmd)
+            with cd('loader'):
+                cmd = "mvn clean package"
+                run(cmd)
 
     @all_clients
     def get_celery_logs(self, worker_home: str):
@@ -69,3 +82,23 @@ class Remote:
             r = run('stat YCSB/ycsb_run_*.log', quiet=True)
             if not r.return_code:
                 get('YCSB/ycsb_run_*.log', local_path='YCSB/')
+
+    @all_clients
+    def get_bigfun_export_files(self, worker_home: str):
+        logger.info('Collecting Bigfun export files')
+        with cd(worker_home), cd('perfrunner'):
+            r = run('stat loader/*.result', quiet=True)
+            if not r.return_code:
+                get('loader/*.result', local_path='loader/')
+
+    def generate_doctemplates(self, host: str, worker_home: str, workers: int,
+                              user_docs: int, clientn: int):
+        with settings(host_string=host):
+            with cd(worker_home), cd('perfrunner'):
+                with cd('socialGen'):
+                    cmd = "bash ./scripts/initb.sh /workspace/bigfundata" \
+                          " {partitions} {clientn} {users}" \
+                          " -f JSON -k STRING#%015d > socialGen.log".format(users=user_docs,
+                                                                            partitions=workers,
+                                                                            clientn=clientn)
+                    run(cmd)

@@ -5,8 +5,11 @@ from perfrunner.tests import PerfTest, TargetIterator
 class N1QLTest(PerfTest):
 
     COLLECTORS = {
+        'iostat': False,
+        'memory': False,
         'n1ql_latency': True,
         'n1ql_stats': True,
+        'net': False,
         'secondary_stats': True,
     }
 
@@ -172,6 +175,7 @@ class N1QLDGMTest:
     COLLECTORS = {
         'n1ql_latency': True,
         'n1ql_stats': True,
+        'net': False,
         'secondary_stats': True,
         'secondary_storage_stats': True,
     }

@@ -58,17 +58,16 @@ class CBAsyncGen:
         self.client = TxConnection(quiet=True, **kwargs)
         self.client.timeout = self.TIMEOUT
 
-    def create(self, key, doc):
-        extra_params = {}
-        return self.client.set(key, doc, **extra_params)
-
-    def read(self, key):
-        return self.client.get(key)
-
-    def update(self, key, doc):
+    def create(self, key: str, doc: dict):
         return self.client.set(key, doc)
 
-    def delete(self, key):
+    def read(self, key: str):
+        return self.client.get(key)
+
+    def update(self, key: str, doc: dict):
+        return self.client.set(key, doc)
+
+    def delete(self, key: str):
         return self.client.delete(key)
 
 

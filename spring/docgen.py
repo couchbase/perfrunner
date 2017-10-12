@@ -14,8 +14,6 @@ from spring.dictionary import (
     STREET_SUFFIX,
 )
 
-ASCII_A_OFFSET = 97
-
 
 class Generator:
 

@@ -26,4 +26,4 @@ size = 1024
 workers = 80
 
 [xdcr]
-filter_expression = 7
+filter_expression = .*[13579]$

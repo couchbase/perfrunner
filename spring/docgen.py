@@ -342,7 +342,7 @@ class Document(String):
 
     SIZE_VARIATION = 0.25  # 25%
 
-    OVERHEAD = 225  # Minimum size due to static fields, body size is variable
+    OVERHEAD = 205  # Minimum size due to static fields, body size is variable
 
     @classmethod
     def _get_variation_coeff(cls) -> float:

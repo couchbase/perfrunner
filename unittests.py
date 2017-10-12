@@ -127,6 +127,18 @@ class SpringTest(TestCase):
             self.assertAlmostEqual(actual_size, size,
                                    delta=size * doc_gen.SIZE_VARIATION)
 
+    def test_small_documents(self):
+        key_gen = docgen.NewOrderedKey(prefix='test')
+        doc_gen = docgen.Document(avg_size=150)
+
+        for i in range(10 ** 3):
+            key = key_gen.next(i)
+            doc = doc_gen.next(key=key)
+            size = len(str(doc))
+
+            self.assertEqual(doc["body"], "")
+            self.assertAlmostEqual(size, doc_gen.OVERHEAD, delta=20)
+
     def test_hot_keys(self):
         ws = WorkloadSettings(items=10 ** 4, workers=40, working_set=10,
                               working_set_access=100)

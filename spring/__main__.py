@@ -38,10 +38,6 @@ class CLIParser(ArgumentParser):
             help='percentage of "delete" operations (0 by default)',
         )
         self.add_argument(
-            '-e', dest='expiration', type=int, default=0, metavar='',
-            help='percentage of new items that expire (0 by default)',
-        )
-        self.add_argument(
             '-o', dest='ops', type=int, default=float('inf'), metavar='',
             help='total number of operations (infinity by default)'
         )
@@ -92,9 +88,6 @@ class CLIParser(ArgumentParser):
 
         if not 0 <= args.working_set <= 100:
             self.error('Invalid working set [-w] percentage.')
-
-        if not 0 <= args.expiration <= 100:
-            self.error('Invalid expiration [-e] percentage.')
 
         if not 0 <= args.working_set_access <= 100:
             self.error('Invalid access percentage [-W].')

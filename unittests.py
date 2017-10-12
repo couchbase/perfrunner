@@ -108,11 +108,11 @@ class SpringTest(TestCase):
 
     def test_doc_size(self):
         size = 1024
-        key_gen = docgen.NewOrderedKey(prefix='n1ql', expiration=0)
+        key_gen = docgen.NewOrderedKey(prefix='n1ql')
 
         for dg in self.doc_generators(size=size):
             for i in range(10 ** 4):
-                key, _ = key_gen.next(i)
+                key = key_gen.next(i)
                 doc = dg.next(key=key)
                 actual_size = len(str(doc))
                 self.assertAlmostEqual(actual_size, size,

@@ -319,7 +319,6 @@ class PhaseSettings:
     ITEMS = 0
     EXISTING_ITEMS = 0
     SIZE = 2048
-    EXPIRATION = 0
 
     WORKING_SET = 100
     WORKING_SET_ACCESS = 100
@@ -375,7 +374,6 @@ class PhaseSettings:
         self.ops = float(options.get('ops', self.OPS))
         self.throughput = float(options.get('throughput', self.THROUGHPUT))
 
-        self.expiration = int(options.get('expiration', self.EXPIRATION))
         self.working_set = float(options.get('working_set', self.WORKING_SET))
         self.working_set_access = int(options.get('working_set_access',
                                                   self.WORKING_SET_ACCESS))

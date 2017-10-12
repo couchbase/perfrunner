@@ -87,8 +87,7 @@ class Worker:
         self.init_db()
 
     def init_keys(self):
-        self.new_keys = NewOrderedKey(prefix=self.ts.prefix,
-                                      expiration=self.ws.expiration)
+        self.new_keys = NewOrderedKey(prefix=self.ts.prefix)
 
         if self.ws.working_set_move_time:
             self.existing_keys = MovingWorkingSetKey(self.ws.working_set,
@@ -236,10 +235,10 @@ class KVWorker(Worker):
         for op in ops:
             if op == 'c':
                 curr_items_tmp += 1
-                key, ttl = self.new_keys.next(curr_items_tmp)
+                key = self.new_keys.next(curr_items_tmp)
                 doc = self.docs.next(key)
                 key = self.hash_keys.hash_it(key)
-                cmds.append((None, cb.create, (key, doc, ttl)))
+                cmds.append((None, cb.create, (key, doc)))
             elif op == 'r':
                 key = self.existing_keys.next(curr_items_spot, deleted_spot)
                 key = self.hash_keys.hash_it(key)
@@ -600,8 +599,7 @@ class N1QLWorker(Worker):
         self.init_creds()
 
     def init_keys(self):
-        self.new_keys = NewOrderedKey(prefix='n1ql',
-                                      expiration=self.ws.expiration)
+        self.new_keys = NewOrderedKey(prefix='n1ql')
 
         self.existing_keys = UniformKey(prefix='n1ql')
 
@@ -663,7 +661,7 @@ class N1QLWorker(Worker):
 
         for _ in range(self.ws.n1ql_batch_size):
             curr_items_tmp += 1
-            key, ttl = self.new_keys.next(curr_items=curr_items_tmp)
+            key = self.new_keys.next(curr_items=curr_items_tmp)
             doc = self.docs.next(key)
             query = self.new_queries.next(key, doc)
 

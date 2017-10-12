@@ -58,10 +58,8 @@ class CBAsyncGen:
         self.client = TxConnection(quiet=True, **kwargs)
         self.client.timeout = self.TIMEOUT
 
-    def create(self, key, doc, ttl=None):
+    def create(self, key, doc):
         extra_params = {}
-        if ttl is None:
-            extra_params['ttl'] = ttl
         return self.client.set(key, doc, **extra_params)
 
     def read(self, key):

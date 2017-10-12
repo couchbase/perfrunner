@@ -2,7 +2,6 @@ import math
 import random
 import time
 from hashlib import md5
-from itertools import cycle
 from typing import List, Tuple
 
 import numpy as np
@@ -45,18 +44,13 @@ class NewOrderedKey(Generator):
     This key pattern is rather uncommon in real-world scenarios.
     """
 
-    def __init__(self, prefix: str, expiration: int):
+    def __init__(self, prefix: str):
         self.prefix = prefix
-        self.expiration = expiration
-        self.ttls = cycle(range(150, 450, 30))
 
-    def next(self, curr_items) -> Tuple[str, int]:
+    def next(self, curr_items) -> str:
         key = '%012d' % curr_items
         key = self.add_prefix(key)
-        ttl = None
-        if self.expiration and random.randint(1, 100) <= self.expiration:
-            ttl = next(self.ttls)
-        return key, ttl
+        return key
 
 
 class KeyForRemoval(Generator):

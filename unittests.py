@@ -152,7 +152,7 @@ class SpringTest(TestCase):
 
         hot_keys = set()
         for worker in range(ws.workers):
-            for key in docgen.SequentialHotKey(sid=worker, ws=ws, prefix='test'):
+            for key in docgen.HotKey(sid=worker, ws=ws, prefix='test'):
                 self.assertNotIn(key, hot_keys)
                 self.assertIn(key, keys)
                 hot_keys.add(key)

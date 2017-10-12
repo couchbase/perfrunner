@@ -217,13 +217,12 @@ class SequentialKey(Generator):
             yield key
 
 
-class SequentialHotKey(Generator):
+class HotKey(Generator):
 
-    """Sequentially generate existing keys equally divided the workers.
+    """Generate the existing keys equally divided between the workers.
 
-    SequentialHotKey equally divides the working set between the workers and
-    sequentially iterates over a given part of the working set (based on the
-    sequential worker identifier).
+    HotKey equally divides the working set between the workers and iterates over
+    a given part of the working set (based on the sequential worker identifier).
 
     This generator is used for warming up the working set.
     """

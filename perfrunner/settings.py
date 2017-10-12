@@ -306,7 +306,7 @@ class PhaseSettings:
 
     OPS = 0
 
-    SEQ_READS = False
+    HOT_READS = False
     SEQ_UPSERTS = False
     RAND_UPSERTS = False
 
@@ -386,7 +386,7 @@ class PhaseSettings:
         self.hash_keys = int(options.get('hash_keys', self.HASH_KEYS))
         self.key_length = int(options.get('key_length', self.KEY_LENGTH))
 
-        self.seq_reads = self.SEQ_READS
+        self.hot_reads = self.HOT_READS
         self.seq_upserts = self.SEQ_UPSERTS
         self.rand_upserts = bool(int(options.get('rand_upserts',
                                                  self.RAND_UPSERTS)))
@@ -459,7 +459,7 @@ class LoadSettings(PhaseSettings):
 
 class HotLoadSettings(PhaseSettings):
 
-    SEQ_READS = True
+    HOT_READS = True
 
     def __init__(self, options: dict):
         if 'size' in options:

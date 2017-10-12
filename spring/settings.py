@@ -42,6 +42,7 @@ class WorkloadSettings:
         self.rand_upserts = False
         self.working_set_move_time = 0
         self.hash_keys = False
+        self.key_length = 0
 
 
 class TargetSettings:

@@ -4,6 +4,7 @@ import time
 from collections import defaultdict
 from multiprocessing import Event, Lock, Process, Value
 from random import randint
+from typing import Callable, List, Tuple
 
 from decorator import decorator
 from numpy import random
@@ -193,6 +194,9 @@ class Worker:
         random.seed(seed=self.sid * 9901)
 
 
+Sequence = List[Tuple[str, Callable, Tuple]]
+
+
 class KVWorker(Worker):
 
     NAME = 'kv-worker'
@@ -202,7 +206,7 @@ class KVWorker(Worker):
 
         self.reservoir = Reservoir(num_workers=self.ws.workers)
 
-    def gen_cmd_sequence(self, cb=None, extras=None) -> list:
+    def gen_cmd_sequence(self, cb=None, extras=None) -> Sequence:
         ops = \
             ['c'] * self.ws.creates + \
             ['r'] * self.ws.reads + \

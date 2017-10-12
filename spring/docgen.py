@@ -2,7 +2,7 @@ import math
 import random
 import time
 from hashlib import md5
-from typing import List, Tuple
+from typing import Iterator, List, Tuple
 
 import numpy as np
 from fastdocgen import build_achievements
@@ -13,6 +13,7 @@ from spring.dictionary import (
     STATES,
     STREET_SUFFIX,
 )
+from spring.settings import WorkloadSettings
 
 
 class Generator:
@@ -204,12 +205,12 @@ class SequentialKey(Generator):
     This generator is used for loading data.
     """
 
-    def __init__(self, sid: int, ws, prefix: str):
+    def __init__(self, sid: int, ws: WorkloadSettings, prefix: str):
         self.sid = sid
         self.ws = ws
         self.prefix = prefix
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         for seq_id in range(1 + self.sid, 1 + self.ws.items, self.ws.workers):
             key = '%012d' % seq_id
             key = self.add_prefix(key)
@@ -227,7 +228,7 @@ class SequentialHotKey(Generator):
     This generator is used for warming up the working set.
     """
 
-    def __init__(self, sid: int, ws, prefix: str):
+    def __init__(self, sid: int, ws: WorkloadSettings, prefix: str):
         self.sid = sid
         self.ws = ws
         self.prefix = prefix
@@ -253,7 +254,7 @@ class UnorderedKey(Generator):
 
     PRIME = 971
 
-    def __init__(self, sid, ws, prefix):
+    def __init__(self, sid: int, ws: WorkloadSettings, prefix: str):
         self.sid = sid
         self.ws = ws
         self.prefix = prefix
@@ -289,7 +290,7 @@ class KeyForCASUpdate(Generator):
 
 class FTSKey(Generator):
 
-    def __init__(self, ws):
+    def __init__(self, ws: WorkloadSettings):
         self.mutate_items = 0
         if ws.fts_config:
             self.mutate_items = ws.fts_config.mutate_items
@@ -300,8 +301,8 @@ class FTSKey(Generator):
 
 class HashKeys:
 
-    def __init__(self, workload_settings):
-        self.ws = workload_settings
+    def __init__(self, ws: WorkloadSettings):
+        self.ws = ws
 
     def hash_it(self, key: str) -> str:
         if self.ws.hash_keys:

@@ -1,11 +1,10 @@
 import glob
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 from unittest import TestCase
 
 from perfrunner.settings import ClusterSpec, TestConfig
 from perfrunner.workloads.tcmalloc import KeyValueIterator, LargeIterator
 from spring import docgen
-from spring.wgen import Worker
 
 
 class SettingsTest(TestCase):
@@ -50,48 +49,44 @@ class WorkloadTest(TestCase):
         self.assertAlmostEqual(size, LargeIterator.FIELD_SIZE, delta=16)
 
 
-SpringSettings = namedtuple('SprintSettings', ('items', 'workers'))
+WorkloadSettings = namedtuple('WorkloadSettings', ('items',
+                                                   'workers',
+                                                   'working_set',
+                                                   'working_set_access',
+                                                   ))
 
 
 class SpringTest(TestCase):
 
-    def test_spring_imports(self):
-        self.assertEqual(docgen.Document.SIZE_VARIATION, 0.25)
-        self.assertEqual(Worker.BATCH_SIZE, 100)
+    def test_kew_ordered_keys(self):
+        ws = WorkloadSettings(items=10 ** 4, workers=40, working_set=10,
+                              working_set_access=100)
 
-    def test_seq_key_generator(self):
-        settings = SpringSettings(items=10 ** 5, workers=25)
+        keys = set()
+        for worker in range(ws.workers):
+            for key in docgen.SequentialKey(sid=worker, ws=ws, prefix='test'):
+                keys.add(key)
 
-        keys = []
-        for worker in range(settings.workers):
-            generator = docgen.SequentialKey(worker, settings, prefix='test')
-            keys += [key for key in generator]
-
-        expected_keys = ['test-%012d' % i for i in range(1, settings.items + 1)]
-
-        self.assertEqual(sorted(keys), expected_keys)
-
-    def test_unordered_key_generator(self):
-        settings = SpringSettings(items=10 ** 5, workers=25)
-
-        keys = []
-        for worker in range(settings.workers):
-            generator = docgen.UnorderedKey(worker, settings, prefix='test')
-            keys += [key for key in generator]
-
-        expected_keys = ['test-%012d' % i for i in range(1, settings.items + 1)]
-
-        self.assertEqual(sorted(keys), expected_keys)
+        key_gen = docgen.NewOrderedKey(prefix='test')
+        for op in range(1, 10 ** 3):
+            key = key_gen.next(ws.items + op)
+            self.assertNotIn(key, keys)
 
     def test_zipf_generator(self):
-        num_items = 10 ** 4
-        generator = docgen.ZipfKey(prefix='')
+        ws = WorkloadSettings(items=10 ** 3, workers=40, working_set=10,
+                              working_set_access=100)
 
-        for i in range(10 ** 5):
-            key = generator.next(curr_deletes=0, curr_items=num_items)
-            key = int(key)
-            self.assertLessEqual(key, num_items)
-            self.assertGreaterEqual(key, 1)
+        keys = set()
+        for worker in range(ws.workers):
+            for key in docgen.UnorderedKey(sid=worker, ws=ws, prefix='test'):
+                self.assertNotIn(key, keys)
+                keys.add(key)
+        self.assertEqual(len(keys), ws.items)
+
+        key_gen = docgen.ZipfKey(prefix='test')
+        for op in range(10 ** 4):
+            key = key_gen.next(curr_deletes=100, curr_items=ws.items)
+            self.assertIn(key, keys)
 
     def doc_generators(self, size: int):
         for dg in (
@@ -103,6 +98,7 @@ class SpringTest(TestCase):
             docgen.ArrayIndexingDocument(avg_size=size, prefix='n1ql',
                                          array_size=10, num_docs=10 ** 6),
             docgen.ProfileDocument(avg_size=size, prefix='n1ql'),
+            docgen.String(avg_size=size)
         ):
             yield dg
 
@@ -118,3 +114,78 @@ class SpringTest(TestCase):
                 self.assertAlmostEqual(actual_size, size,
                                        delta=size * 0.05,  # 5% variation
                                        msg=dg.__class__.__name__)
+
+    def test_doc_size_variation(self):
+        size = 512
+        key_gen = docgen.NewOrderedKey(prefix='test')
+        doc_gen = docgen.Document(avg_size=size)
+
+        for i in range(10 ** 4):
+            key = key_gen.next(i)
+            doc = doc_gen.next(key=key)
+            actual_size = len(str(doc))
+            self.assertAlmostEqual(actual_size, size,
+                                   delta=size * doc_gen.SIZE_VARIATION)
+
+    def test_hot_keys(self):
+        ws = WorkloadSettings(items=10 ** 4, workers=40, working_set=10,
+                              working_set_access=100)
+
+        keys = set()
+        for worker in range(ws.workers):
+            for key in docgen.UnorderedKey(sid=worker, ws=ws, prefix='test'):
+                self.assertNotIn(key, keys)
+                keys.add(key)
+        self.assertEqual(len(keys), ws.items)
+
+        hot_keys = set()
+        for worker in range(ws.workers):
+            for key in docgen.SequentialHotKey(sid=worker, ws=ws, prefix='test'):
+                self.assertNotIn(key, hot_keys)
+                self.assertIn(key, keys)
+                hot_keys.add(key)
+        self.assertEqual(len(hot_keys), ws.working_set * ws.items // 100)
+
+    def test_uniform_keys(self):
+        ws = WorkloadSettings(items=10 ** 3, workers=10, working_set=100,
+                              working_set_access=100)
+
+        keys = set()
+        for worker in range(ws.workers):
+            for key in docgen.UnorderedKey(sid=worker, ws=ws, prefix='test'):
+                keys.add(key)
+
+        key_gen = docgen.UniformKey(prefix='test')
+        for op in range(10 ** 4):
+            key = key_gen.next(curr_items=ws.items, curr_deletes=100)
+            self.assertIn(key, keys)
+
+    def test_working_set_keys(self):
+        ws = WorkloadSettings(items=10 ** 3, workers=10, working_set=90,
+                              working_set_access=100)
+
+        keys = set()
+        for worker in range(ws.workers):
+            for key in docgen.UnorderedKey(sid=worker, ws=ws, prefix='test'):
+                keys.add(key)
+
+        key_gen = docgen.WorkingSetKey(prefix='test',
+                                       working_set=ws.working_set,
+                                       working_set_access=50)
+        for op in range(10 ** 4):
+            key = key_gen.next(curr_items=ws.items, curr_deletes=100)
+            self.assertIn(key, keys)
+
+    def test_key_for_removal(self):
+        ws = WorkloadSettings(items=10 ** 3, workers=20, working_set=100,
+                              working_set_access=100)
+
+        keys = set()
+        for worker in range(ws.workers):
+            for key in docgen.UnorderedKey(sid=worker, ws=ws, prefix='test'):
+                keys.add(key)
+
+        key_gen = docgen.KeyForRemoval(prefix='test')
+        for op in range(1, 100):
+            key = key_gen.next(op)
+            self.assertIn(key, keys)

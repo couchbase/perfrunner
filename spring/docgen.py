@@ -8,6 +8,7 @@ import spooky
 
 from fastdocgen import build_achievements
 from spring.dictionary import (
+    LOREM,
     NUM_STATES,
     NUM_STREET_SUFFIXES,
     STATES,
@@ -455,21 +456,47 @@ class NestedDocument(Document):
         }
 
 
-class LargeDocument(NestedDocument):
+class LargeDocument(Document):
+
+    OVERHEAD = 680
+
+    TEXT_LENGTH = 128
+
+    @staticmethod
+    def _build_string(alphabet: str, length: float) -> str:
+        length_int = int(length)
+        num_slices = int(math.ceil(length / 32))  # 32 == len(alphabet)
+        body = ''
+        for i in range(num_slices):
+            body += hex_digest(alphabet)
+        return body[:length_int]
 
     def next(self, key: Key) -> dict:
         alphabet = self._build_alphabet(key.string)
+        size = self._size() / 3
+        offset = (PRIME * key.number) % (len(LOREM) - self.TEXT_LENGTH)
+
         return {
-            'nest1': super().next(key),
-            'nest2': super(NestedDocument, self).next(key),
+            'id': alphabet,
+            'revered_id': alphabet[::-1],
+            'code': hex_digest(alphabet),
             'name': self._build_name(alphabet),
             'email': self._build_email(alphabet),
-            'alt_email': self._build_alt_email(alphabet),
             'city': self._build_city(alphabet),
+            'county': self._build_county(alphabet),
+            'state': self._build_state(alphabet),
+            'full_state': self._build_full_state(alphabet),
+            'country': self._build_country(alphabet),
             'realm': self._build_realm(alphabet),
             'coins': self._build_coins(alphabet),
             'category': self._build_category(alphabet),
             'achievements': self._build_achievements(alphabet),
+            'gmtime': self._build_gmtime(alphabet),
+            'year': self._build_year(alphabet),
+            'padding': self._build_string(alphabet, size),
+            'notes': self._build_string(alphabet[::-1], size),
+            'text': self._build_string(alphabet[:16], size),
+            'lorem': LOREM[offset:offset + self.TEXT_LENGTH],
         }
 
 

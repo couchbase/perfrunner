@@ -27,7 +27,7 @@ test:
 
 misspell:
 	go get -u github.com/client9/misspell/cmd/misspell
-	misspell -error go ${PYTHON_PROJECTS}
+	find go ${PYTHON_PROJECTS} -type f -not -name "*.txt" | xargs misspell -error
 
 gofmt:
 	gofmt -e -d -s go && ! gofmt -l go | read

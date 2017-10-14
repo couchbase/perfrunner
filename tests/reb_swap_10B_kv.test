@@ -15,6 +15,8 @@ eviction_policy = fullEviction
 items = 10000000000
 size = 1024
 workers = 80
+key_fmtr = hex
+doc_gen = large
 
 [hot_load]
 items = 10000000000

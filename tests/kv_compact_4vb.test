@@ -18,3 +18,4 @@ items = 800000000
 size = 512
 workers = 10
 key_fmtr = hex
+doc_gen = large

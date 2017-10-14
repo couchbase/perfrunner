@@ -145,7 +145,7 @@ class Worker:
         elif self.ws.doc_gen == 'import_export_nested':
             self.docs = ImportExportDocumentNested(self.ws.size,
                                                    self.ts.prefix)
-        elif self.ws.doc_gen == 'large_subdoc':
+        elif self.ws.doc_gen == 'large':
             self.docs = LargeDocument(self.ws.size)
         elif self.ws.doc_gen == 'gsi_multiindex':
             self.docs = GSIMultiIndexDocument(self.ws.size)

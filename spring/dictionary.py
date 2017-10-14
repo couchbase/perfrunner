@@ -136,3 +136,6 @@ STREET_SUFFIX = (
 )
 
 NUM_STREET_SUFFIXES = len(STREET_SUFFIX)
+
+with open('spring/dictionary.txt') as fh:
+    LOREM = fh.read()

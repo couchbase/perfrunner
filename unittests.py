@@ -1,7 +1,10 @@
 import glob
+import json
 from collections import defaultdict, namedtuple
 from multiprocessing import Value
 from unittest import TestCase
+
+import snappy
 
 from perfrunner.settings import ClusterSpec, TestConfig
 from perfrunner.workloads.tcmalloc import KeyValueIterator, LargeIterator
@@ -167,6 +170,36 @@ class SpringTest(TestCase):
 
             self.assertEqual(doc["body"], "")
             self.assertAlmostEqual(size, doc_gen.OVERHEAD, delta=20)
+
+    def test_large_documents(self):
+        size = 1024
+        key_gen = docgen.NewOrderedKey(prefix='test', fmtr='decimal')
+        doc_gen = docgen.LargeDocument(avg_size=size)
+
+        for i in range(10 ** 4):
+            key = key_gen.next(i)
+            doc = doc_gen.next(key=key)
+            value = json.dumps(doc)
+            actual_size = len(value)
+
+            self.assertAlmostEqual(actual_size, size,
+                                   delta=size * doc_gen.SIZE_VARIATION,
+                                   msg=value)
+
+    def test_compression_ratio(self):
+        size = 1024
+        key_gen = docgen.NewOrderedKey(prefix='test', fmtr='decimal')
+        doc_gen = docgen.LargeDocument(avg_size=size)
+
+        for i in range(10 ** 4):
+            key = key_gen.next(i)
+            doc = doc_gen.next(key)
+            value = json.dumps(doc)
+
+            compressed = snappy.compress(value)
+            ratio = len(value) / len(compressed)
+
+            self.assertLess(ratio, 1.75, value)
 
     def test_hot_keys(self):
         ws = WorkloadSettings(items=10 ** 4, workers=40, working_set=10,

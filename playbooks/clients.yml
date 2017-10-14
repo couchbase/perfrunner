@@ -12,6 +12,7 @@
       - golang-go
       - htop
       - libffi-dev
+      - libsnappy-dev
       - libssl-dev
       - linux-tools-generic
       - maven

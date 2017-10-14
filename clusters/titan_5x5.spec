@@ -14,8 +14,8 @@ titan_c2 =
 
 [clients]
 hosts =
-    172.23.96.110
-    172.23.96.111
+    172.23.97.208
+    172.23.97.209
 credentials = root:couchbase
 
 [storage]

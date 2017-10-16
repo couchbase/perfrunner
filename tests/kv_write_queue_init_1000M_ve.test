@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.InitialLoadTest
-title = Avg. write queue (items), 4 nodes, 1B x 1KB, value ejection, ~220K ops/sec, initial load, no compaction
+title = Avg. write queue (items), 4 nodes, 1B x 1KB, value ejection, ~200K inserts/sec, initial load
 component = kv
 category = dgm
 

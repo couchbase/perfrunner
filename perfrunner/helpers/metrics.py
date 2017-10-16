@@ -698,13 +698,13 @@ class MetricHelper:
 
         return time_diff, self._snapshots, metric_info
 
-    def function_throughput(self, time) -> Metric:
+    def function_throughput(self, time: int, event_name: str) -> Metric:
         metric_info = self._metric_info()
 
         throughput = 0
         for name, file in self.test.functions.items():
             throughput += self.test.rest.get_num_events_processed(
-                node=self.test.function_nodes[0], name=name)
+                event=event_name, node=self.test.function_nodes[0], name=name)
         throughput /= len(self.test.functions)
         throughput /= time
         throughput = round(throughput, 1)

@@ -10,6 +10,8 @@ class Monitor(RestHelper):
 
     MAX_RETRY = 60
     MAX_RETRY_RECOVERY = 1200
+    MAX_RETRY_TIMER_EVENT = 1200
+    POLLING_INTERVAL_TIMER_EVENT = 1
     MONITORING_DELAY = 5
     POLLING_INTERVAL = 2
     POLLING_INTERVAL_INDEXING = 1
@@ -514,3 +516,15 @@ class Monitor(RestHelper):
                 break
             time.sleep(self._get_bigfun_retry_sleep_interval(retry))
             retry += 1
+
+    def wait_for_timer_event(self, node: str, function: str):
+        logger.info('Waiting for timer events to start processing: {} '.format(function))
+        retry = 1
+        while retry < self.MAX_RETRY_TIMER_EVENT:
+            if 0 < self.get_num_events_processed(
+                    event="DOC_TIMER_EVENTS", node=node, name=function):
+                break
+            time.sleep(self.POLLING_INTERVAL_TIMER_EVENT)
+            retry += 1
+        if retry == self.MAX_RETRY_TIMER_EVENT:
+            logger.info('Failed to get timer event for function: {}'.format(function))

@@ -683,14 +683,16 @@ class RestHelper:
             .format(node, name)
         self.post(url=api, data=payload)
 
-    def get_num_events_processed(self, node: str, name: str):
+    def get_num_events_processed(self, event: str, node: str, name: str):
         logger.info('get stats on node {} for {}'.format(node, name))
 
         api = 'http://{}:{}/getEventProcessingStats?name={}'\
             .format(node, EVENTING_PORT, name)
         data = self.get(url=api).json()
         logger.info(data)
-        return data["DCP_MUTATION"]
+        if event in data:
+            return data[event]
+        return 0
 
     def get_deployed_apps(self, node: str):
         logger.info('get deployed apps on node {}'.format(node))

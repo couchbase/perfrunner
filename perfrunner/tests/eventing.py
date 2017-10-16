@@ -22,6 +22,8 @@ class EventingTest(PerfTest):
         self.functions = self.test_config.eventing_settings.functions
         self.worker_count = self.test_config.eventing_settings.worker_count
         self.cpp_worker_thread_count = self.test_config.eventing_settings.cpp_worker_thread_count
+        self.timer_worker_pool_size = self.test_config.eventing_settings.timer_worker_pool_size
+        self.time = self.test_config.access_settings.time
 
         self.function_nodes = self.cluster_spec.servers_by_role('eventing')
 
@@ -41,6 +43,7 @@ class EventingTest(PerfTest):
 
         func["settings"]["worker_count"] = self.worker_count
         func["settings"]["cpp_worker_thread_count"] = self.cpp_worker_thread_count
+        func["settings"]["timer_worker_pool_size"] = self.timer_worker_pool_size
         for name, filename in self.functions.items():
             with open(filename, 'r') as myfile:
                 code = myfile.read()
@@ -51,19 +54,9 @@ class EventingTest(PerfTest):
             self.rest.deploy_function(node=self.function_nodes[0], payload=function, name=name)
             self.monitor.wait_for_bootstrap(node=self.function_nodes[0], function=name)
 
-    def enable_function(self):
-        with open(self.FUNCTION_ENABLE_SAMPLE_FILE) as f:
-            func = json.load(f)
-
-        func["worker_count"] = self.worker_count
-        for name, filename in self.functions.items():
-            function = json.dumps(func)
-            self.rest.enable_function(node=self.function_nodes[0], payload=function, name=name)
-            self.monitor.wait_for_bootstrap(node=self.function_nodes[0], function=name)
-
     @timeit
     @with_stats
-    def load_and_wait(self):
+    def load_access_and_wait(self):
         self.load()
         self.access_bg()
         self.sleep()
@@ -71,7 +64,7 @@ class EventingTest(PerfTest):
     def run(self):
         self.set_functions()
 
-        time_elapsed = self.load_and_wait()
+        time_elapsed = self.load_access_and_wait()
 
         self.report_kpi(time_elapsed)
 
@@ -79,5 +72,33 @@ class EventingTest(PerfTest):
 class FunctionsThroughputTest(EventingTest):
     def _report_kpi(self, time_elapsed):
         self.reporter.post(
-            *self.metrics.function_throughput(time_elapsed)
+            *self.metrics.function_throughput(time_elapsed, "DCP_MUTATION")
+        )
+
+
+class TimerTest(EventingTest):
+
+    @with_stats
+    def process_timer_events(self):
+        for name, filename in self.functions.items():
+            self.monitor.wait_for_timer_event(node=self.function_nodes[0],
+                                              function=name)
+            break
+        self.sleep()
+
+    def run(self):
+        self.set_functions()
+
+        self.load()
+
+        self.process_timer_events()
+
+        self.report_kpi(self.time)
+
+
+class TimerThroughputTest(TimerTest):
+
+    def _report_kpi(self, time_elapsed):
+        self.reporter.post(
+            *self.metrics.function_throughput(time_elapsed, "DOC_TIMER_EVENTS")
         )

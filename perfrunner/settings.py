@@ -753,6 +753,7 @@ class EventingSettings:
 
         self.worker_count = int(options.get("worker_count", 3))
         self.cpp_worker_thread_count = int(options.get("cpp_worker_thread_count", 2))
+        self.timer_worker_pool_size = int(options.get("timer_worker_pool_size", 1))
 
     def __str__(self) -> str:
         return str(self.__dict__)

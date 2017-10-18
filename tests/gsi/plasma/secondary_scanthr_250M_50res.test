@@ -32,8 +32,7 @@ items = 250000000
 size = 17
 workers = 100
 doc_gen = sequential_plasma
-hash_keys = 1
-key_length = 16
+key_fmtr = hash
 
 [secondary]
 indexes = myindex:city

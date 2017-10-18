@@ -342,8 +342,8 @@ class PhaseSettings:
     ITERATIONS = 1
 
     ASYNC = False
-    HASH_KEYS = 0
-    KEY_LENGTH = 0  # max can be 32
+
+    KEY_FMTR = 'decimal'
 
     ITEMS = 0
     EXISTING_ITEMS = 0
@@ -412,8 +412,7 @@ class PhaseSettings:
                                                        self.WORKING_SET_MOVE_DOCS))
         self.workers = int(options.get('workers', self.WORKERS))
         self.async = bool(int(options.get('async', self.ASYNC)))
-        self.hash_keys = int(options.get('hash_keys', self.HASH_KEYS))
-        self.key_length = int(options.get('key_length', self.KEY_LENGTH))
+        self.key_fmtr = options.get('key_fmtr', self.KEY_FMTR)
 
         self.hot_reads = self.HOT_READS
         self.seq_upserts = self.SEQ_UPSERTS
@@ -857,6 +856,7 @@ class TestConfig(Config):
         hot_load.num_categories = load.num_categories
         hot_load.num_replies = load.num_replies
         hot_load.size = load.size
+        hot_load.key_fmtr = load.key_fmtr
         return hot_load
 
     @property
@@ -914,8 +914,7 @@ class TestConfig(Config):
         access.num_categories = load_settings.num_categories
         access.num_replies = load_settings.num_replies
         access.size = load_settings.size
-        access.hash_keys = load_settings.hash_keys
-        access.key_length = load_settings.key_length
+        access.key_fmtr = load_settings.key_fmtr
 
         return access
 

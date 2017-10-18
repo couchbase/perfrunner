@@ -20,7 +20,6 @@ from spring.docgen import (
     ExtReverseLookupDocument,
     FTSKey,
     GSIMultiIndexDocument,
-    HashKeys,
     HotKey,
     ImportExportDocument,
     ImportExportDocumentArray,
@@ -87,20 +86,21 @@ class Worker:
         self.init_db()
 
     def init_keys(self):
-        self.new_keys = NewOrderedKey(prefix=self.ts.prefix)
+        self.new_keys = NewOrderedKey(prefix=self.ts.prefix,
+                                      fmtr=self.ws.key_fmtr)
 
         if self.ws.working_set_move_time:
-            self.existing_keys = MovingWorkingSetKey(self.ws, self.ts.prefix)
+            self.existing_keys = MovingWorkingSetKey(self.ws,
+                                                     self.ts.prefix)
         elif self.ws.working_set < 100:
-            self.existing_keys = WorkingSetKey(self.ws, self.ts.prefix)
+            self.existing_keys = WorkingSetKey(self.ws,
+                                               self.ts.prefix)
         else:
-            self.existing_keys = UniformKey(self.ts.prefix)
+            self.existing_keys = UniformKey(self.ts.prefix, self.ws.key_fmtr)
 
-        self.keys_for_removal = KeyForRemoval(self.ts.prefix)
+        self.keys_for_removal = KeyForRemoval(self.ts.prefix, self.ws.key_fmtr)
 
         self.fts_keys = FTSKey(self.ws)
-
-        self.hash_keys = HashKeys(self.ws)
 
     def init_docs(self):
         if not hasattr(self.ws, 'doc_gen') or self.ws.doc_gen == 'basic':
@@ -234,44 +234,39 @@ class KVWorker(Worker):
                 key = self.new_keys.next(curr_items_tmp)
                 doc = self.docs.next(key)
                 curr_items_tmp += 1
-                key = self.hash_keys.hash_it(key)
-                cmds.append((None, cb.create, (key, doc)))
+                cmds.append((None, cb.create, (key.string, doc)))
             elif op == 'r':
-                key = self.existing_keys.next(curr_items_spot, deleted_spot)
-                key = self.hash_keys.hash_it(key)
+                key = self.existing_keys.next(curr_items_spot,
+                                              deleted_spot)
 
                 if extras == 'subdoc':
-                    cmds.append(('get', cb.read, (key, self.ws.subdoc_field)))
+                    cmds.append(('get', cb.read, (key.string, self.ws.subdoc_field)))
                 elif extras == 'xattr':
-                    cmds.append(('get', cb.read_xattr, (key, self.ws.xattr_field)))
+                    cmds.append(('get', cb.read_xattr, (key.string, self.ws.xattr_field)))
                 else:
-                    cmds.append(('get', cb.read, (key, )))
+                    cmds.append(('get', cb.read, (key.string, )))
             elif op == 'u':
                 key = self.existing_keys.next(curr_items_spot, deleted_spot,
                                               self.current_hot_load_start,
                                               self.timer_elapse)
                 doc = self.docs.next(key)
-                key = self.hash_keys.hash_it(key)
 
                 if extras == 'subdoc':
-                    cmds.append(('set', cb.update, (key, self.ws.subdoc_field, doc)))
+                    cmds.append(('set', cb.update, (key.string, self.ws.subdoc_field, doc)))
                 elif extras == 'xattr':
-                    cmds.append(('set', cb.update_xattr, (key, self.ws.xattr_field, doc)))
+                    cmds.append(('set', cb.update_xattr, (key.string, self.ws.xattr_field, doc)))
                 else:
-                    cmds.append(('set', cb.update, (key, doc)))
+                    cmds.append(('set', cb.update, (key.string, doc)))
             elif op == 'd':
                 key = self.keys_for_removal.next(deleted_items_tmp)
                 deleted_items_tmp += 1
-                key = self.hash_keys.hash_it(key)
-                cmds.append((None, cb.delete, (key, )))
+                cmds.append((None, cb.delete, (key.string, )))
             elif op == 'fus':
                 key = self.fts_keys.next()
-                key = self.hash_keys.hash_it(key)
-                cmds.append((None, self.do_fts_updates_swap, (key,)))
+                cmds.append((None, self.do_fts_updates_swap, (key, )))
             elif op == 'fur':
                 key = self.fts_keys.next()
-                key = self.hash_keys.hash_it(key)
-                cmds.append((None, self.do_fts_updates_reverse, (key,)))
+                cmds.append((None, self.do_fts_updates_reverse, (key, )))
         return cmds
 
     def do_fts_updates_swap(self, key):
@@ -455,8 +450,7 @@ class HotReadsWorker(Worker):
         set_cpu_afinity(sid)
 
         for key in HotKey(sid, self.ws, self.ts.prefix):
-            key = self.hash_keys.hash_it(key)
-            self.cb.read(key)
+            self.cb.read(key.string)
 
 
 class SeqUpsertsWorker(Worker):
@@ -464,8 +458,7 @@ class SeqUpsertsWorker(Worker):
     def run(self, sid, *args):
         for key in SequentialKey(sid, self.ws, self.ts.prefix):
             doc = self.docs.next(key)
-            key = self.hash_keys.hash_it(key)
-            self.cb.update(key, doc)
+            self.cb.update(key.string, doc)
 
 
 class RandUpsertsWorker(Worker):
@@ -473,8 +466,7 @@ class RandUpsertsWorker(Worker):
     def run(self, sid, *args):
         for key in UnorderedKey(sid, self.ws, self.ts.prefix):
             doc = self.docs.next(key)
-            key = self.hash_keys.hash_it(key)
-            self.cb.update(key, doc)
+            self.cb.update(key.string, doc)
 
 
 class SeqXATTRUpdatesWorker(XATTRWorker):
@@ -482,8 +474,7 @@ class SeqXATTRUpdatesWorker(XATTRWorker):
     def run(self, sid, *args):
         for key in SequentialKey(sid, self.ws, self.ts.prefix):
             doc = self.docs.next(key)
-            key = self.hash_keys.hash_it(key)
-            self.cb.update_xattr(key, self.ws.xattr_field, doc)
+            self.cb.update_xattr(key.string, self.ws.xattr_field, doc)
 
 
 class WorkerFactory:
@@ -584,7 +575,7 @@ class N1QLWorker(Worker):
 
     NAME = 'query-worker'
 
-    def __init__(self, workload_settings, target_settings, shutdown_event):
+    def __init__(self, workload_settings, target_settings, shutdown_event=None):
         self.new_queries = N1QLQueryGen(workload_settings.n1ql_queries)
         self.total_workers = workload_settings.n1ql_workers
         self.throughput = workload_settings.n1ql_throughput
@@ -596,12 +587,13 @@ class N1QLWorker(Worker):
         self.init_creds()
 
     def init_keys(self):
-        self.new_keys = NewOrderedKey(prefix='n1ql')
+        self.new_keys = NewOrderedKey(prefix='n1ql', fmtr=self.ws.key_fmtr)
 
-        self.existing_keys = UniformKey(prefix='n1ql')
+        self.existing_keys = UniformKey(prefix='n1ql', fmtr=self.ws.key_fmtr)
 
-        self.keys_for_cas_update = KeyForCASUpdate(self.total_workers,
-                                                   prefix='n1ql')
+        self.keys_for_cas_update = KeyForCASUpdate(total_workers=self.total_workers,
+                                                   prefix='n1ql',
+                                                   fmtr=self.ws.key_fmtr)
 
     def init_docs(self):
         if self.ws.doc_gen == 'reverse_lookup':
@@ -646,7 +638,7 @@ class N1QLWorker(Worker):
             key = self.existing_keys.next(curr_items=curr_items_tmp,
                                           curr_deletes=0)
             doc = self.docs.next(key)
-            query = self.new_queries.next(key, doc)
+            query = self.new_queries.next(key.string, doc)
 
             latency = self.cb.n1ql_query(query)
             self.reservoir.update(operation='query', value=latency)
@@ -660,7 +652,7 @@ class N1QLWorker(Worker):
             curr_items_tmp += 1
             key = self.new_keys.next(curr_items=curr_items_tmp)
             doc = self.docs.next(key)
-            query = self.new_queries.next(key, doc)
+            query = self.new_queries.next(key.string, doc)
 
             latency = self.cb.n1ql_query(query)
             self.reservoir.update(operation='query', value=latency)
@@ -673,7 +665,7 @@ class N1QLWorker(Worker):
             key = self.keys_for_cas_update.next(sid=self.sid,
                                                 curr_items=curr_items_tmp)
             doc = self.docs.next(key)
-            query = self.new_queries.next(key, doc)
+            query = self.new_queries.next(key.string, doc)
 
             latency = self.cb.n1ql_query(query)
             self.reservoir.update(operation='query', value=latency)

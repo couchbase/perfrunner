@@ -63,6 +63,39 @@ class NSServerOverview(NSServer):
         self.update_metric_metadata(self.METRICS)
 
 
+class NSServerSystem(NSServer):
+
+    COLLECTOR = "ns_server_system"
+
+    def _get_system_stats(self):
+        all_stats = self.get_http(path='/pools/default')
+
+        server_stats = {}
+        for node in all_stats["nodes"]:
+            stats = {}
+            server = node["hostname"].split(":")[0]
+            cpu_util = node["systemStats"]["cpu_utilization_rate"]
+            stats["cpu_utilization_rate"] = cpu_util
+            server_stats[server] = stats
+        return server_stats
+
+    def sample(self):
+        server_stats = self._get_system_stats()
+        if not server_stats:
+            return
+
+        for server, stats in server_stats.items():
+            self.store.append(stats, cluster=self.cluster,
+                              server=server,
+                              collector=self.COLLECTOR)
+
+    def update_metadata(self):
+        self.mc.add_cluster()
+
+        for node in self.get_nodes():
+            self.mc.add_server(node)
+
+
 class XdcrStats(Collector):
 
     COLLECTOR = "xdcr_stats"

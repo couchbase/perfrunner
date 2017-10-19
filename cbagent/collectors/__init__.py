@@ -14,7 +14,7 @@ from cbagent.collectors.observe import (
     ObserveSecondaryIndexLatency,
 )
 from cbagent.collectors.n1ql_stats import N1QLStats
-from cbagent.collectors.ns_server import NSServer, NSServerOverview, XdcrStats
+from cbagent.collectors.ns_server import NSServer, NSServerOverview, NSServerSystem, XdcrStats
 from cbagent.collectors.secondary_debugstats import (
     SecondaryDebugStats,
     SecondaryDebugStatsBucket,

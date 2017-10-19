@@ -23,6 +23,7 @@ from cbagent.collectors import (
     Net,
     NSServer,
     NSServerOverview,
+    NSServerSystem,
     ObserveIndexLatency,
     ObserveSecondaryIndexLatency,
     PageCache,
@@ -146,6 +147,7 @@ class CbAgent:
                        n1ql_latency=False,
                        n1ql_stats=False,
                        net=True,
+                       ns_server_system=False,
                        page_cache=False,
                        query_latency=False,
                        secondary_debugstats_bucket=False,
@@ -196,6 +198,9 @@ class CbAgent:
 
         if eventing_stats:
             self.add_collector(EventingStats, self.test)
+
+        if ns_server_system:
+            self.add_collector(NSServerSystem)
 
         if elastic_stats:
             self.add_collector(ElasticStats, self.test)

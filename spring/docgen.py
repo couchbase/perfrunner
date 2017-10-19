@@ -15,7 +15,13 @@ from spring.dictionary import (
 )
 from spring.settings import WorkloadSettings
 
-PRIME = 971
+PRIME = 4889388631
+
+MAX_PRIME = 25191867719
+
+OFFSET = 25000000000
+
+HASH_LENGTH = 16
 
 
 def decimal_fmtr(key: int, prefix: str) -> str:
@@ -25,21 +31,36 @@ def decimal_fmtr(key: int, prefix: str) -> str:
     return key
 
 
+def hash_fmtr(key: int, prefix: str) -> str:
+    key = decimal_fmtr(key, prefix)
+    key = key.encode('utf-8')
+    key = md5(key).hexdigest()
+    return key[:HASH_LENGTH]
+
+
+def hex_fmtr(key: int, prefix: str) -> str:
+    key = OFFSET + (key * PRIME) % MAX_PRIME  # hash
+    key = '%036x' % int(key) ** 4  # int() prevents overflow
+    if prefix:
+        return '%s-%s' % (prefix, key)
+    return key
+
+
 class Key:
 
-    def __init__(self, number: int, prefix: str, fmtr: str):
+    def __init__(self, number: int, prefix: str, fmtr: str, hit: bool = False):
         self.number = number
         self.prefix = prefix
+        self.hit = hit
         self.fmtr = fmtr
 
     @property
     def string(self) -> str:
-        key = decimal_fmtr(self.number, self.prefix)
         if self.fmtr == 'hash':
-            key = key.encode('utf-8')
-            key = md5(key).hexdigest()
-            return key[:16]
-        return key
+            return hash_fmtr(self.number, self.prefix)
+        if self.fmtr == 'hex':
+            return hex_fmtr(self.number, self.prefix)
+        return decimal_fmtr(self.number, self.prefix)
 
 
 class NewOrderedKey:
@@ -50,7 +71,8 @@ class NewOrderedKey:
 
     Example: "38d7cd-000072438963"
 
-    The suffix is a 12 characters long string consisting of digits from 0 to 9.
+    The suffix is a 12 or 43 characters long string consisting of decimal or
+    hexadecimal digits.
 
     This key pattern is rather uncommon in real-world scenarios.
     """
@@ -138,15 +160,17 @@ class WorkingSetKey:
         num_cold_items = curr_items - self.num_hot_items
 
         if random.randint(0, 100) <= self.working_set_access:  # cache hit
+            hit = True
             left_boundary = num_cold_items
             right_boundary = curr_items
         else:  # cache miss
+            hit = False
             left_boundary = curr_deletes
             right_boundary = num_cold_items
 
         number = np.random.random_integers(low=left_boundary,
                                            high=right_boundary - 1)
-        return Key(number=number, prefix=self.prefix, fmtr=self.fmtr)
+        return Key(number=number, prefix=self.prefix, fmtr=self.fmtr, hit=hit)
 
 
 class MovingWorkingSetKey:
@@ -237,28 +261,6 @@ class HotKey:
                             self.ws.items,
                             self.ws.workers):
             yield Key(number=seq_id, prefix=self.prefix, fmtr=self.ws.key_fmtr)
-
-
-class UnorderedKey:
-
-    """Improve SequentialKey by randomizing the order of insertions.
-
-    The key space is still the same.
-    """
-
-    def __init__(self, sid: int, ws: WorkloadSettings, prefix: str):
-        self.sid = sid
-        self.ws = ws
-        self.prefix = prefix
-
-    def __iter__(self) -> Iterator[Key]:
-        keys_per_workers = self.ws.items // self.ws.workers
-
-        number = 0
-        for _ in range(keys_per_workers):
-            number = (number + PRIME) % keys_per_workers
-            number = number + self.sid * keys_per_workers
-            yield Key(number=number, prefix=self.prefix, fmtr=self.ws.key_fmtr)
 
 
 class KeyForCASUpdate:

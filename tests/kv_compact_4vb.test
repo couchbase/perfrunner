@@ -17,5 +17,4 @@ replica_number = 0
 items = 800000000
 size = 512
 workers = 10
-rand_upserts = 1
 key_fmtr = hex

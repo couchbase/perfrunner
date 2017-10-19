@@ -16,7 +16,7 @@ interval = 1
 items = 500000000
 size = 1024
 workers = 40
-rand_upserts = 1
+key_fmtr = hex
 
 [access]
 creates = 0

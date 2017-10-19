@@ -85,21 +85,6 @@ class SpringTest(TestCase):
 
         self.assertEqual(sorted(keys), expected)
 
-    def test_unordered_key_generator(self):
-        ws = WorkloadSettings(items=10 ** 5, workers=25, working_set=100,
-                              working_set_access=100, working_set_moving_docs=0,
-                              key_fmtr='decimal')
-
-        keys = []
-        for worker in range(ws.workers):
-            generator = docgen.UnorderedKey(worker, ws, prefix='test')
-            keys += [key.string for key in generator]
-
-        expected = [docgen.Key(number=i, prefix='test', fmtr='decimal').string
-                    for i in range(ws.items)]
-
-        self.assertEqual(sorted(keys), expected)
-
     def test_new_ordered_keys(self):
         ws = WorkloadSettings(items=10 ** 4, workers=40, working_set=10,
                               working_set_access=100, working_set_moving_docs=0,
@@ -122,7 +107,7 @@ class SpringTest(TestCase):
 
         keys = set()
         for worker in range(ws.workers):
-            for key in docgen.UnorderedKey(sid=worker, ws=ws, prefix='test'):
+            for key in docgen.SequentialKey(sid=worker, ws=ws, prefix='test'):
                 self.assertNotIn(key, keys)
                 keys.add(key.string)
         self.assertEqual(len(keys), ws.items)
@@ -190,7 +175,7 @@ class SpringTest(TestCase):
 
         keys = set()
         for worker in range(ws.workers):
-            for key in docgen.UnorderedKey(sid=worker, ws=ws, prefix='test'):
+            for key in docgen.SequentialKey(sid=worker, ws=ws, prefix='test'):
                 self.assertNotIn(key.string, keys)
                 keys.add(key.string)
         self.assertEqual(len(keys), ws.items)
@@ -210,7 +195,7 @@ class SpringTest(TestCase):
 
         keys = set()
         for worker in range(ws.workers):
-            for key in docgen.UnorderedKey(sid=worker, ws=ws, prefix='test'):
+            for key in docgen.SequentialKey(sid=worker, ws=ws, prefix='test'):
                 keys.add(key.string)
 
         key_gen = docgen.UniformKey(prefix='test',
@@ -226,7 +211,7 @@ class SpringTest(TestCase):
 
         keys = set()
         for worker in range(ws.workers):
-            for key in docgen.UnorderedKey(sid=worker, ws=ws, prefix='test'):
+            for key in docgen.SequentialKey(sid=worker, ws=ws, prefix='test'):
                 keys.add(key.string)
 
         key_gen = docgen.WorkingSetKey(ws=ws, prefix='test')
@@ -263,7 +248,7 @@ class SpringTest(TestCase):
 
         keys = set()
         for worker in range(ws.workers):
-            for key in docgen.UnorderedKey(sid=worker, ws=ws, prefix='test'):
+            for key in docgen.SequentialKey(sid=worker, ws=ws, prefix='test'):
                 keys.add(key.string)
 
         cases = defaultdict(set)
@@ -283,7 +268,7 @@ class SpringTest(TestCase):
 
         keys = set()
         for worker in range(ws.workers):
-            for key in docgen.UnorderedKey(sid=worker, ws=ws, prefix='test'):
+            for key in docgen.SequentialKey(sid=worker, ws=ws, prefix='test'):
                 keys.add(key.string)
 
         key_gen = docgen.KeyForRemoval(prefix='test', fmtr='decimal')
@@ -298,7 +283,7 @@ class SpringTest(TestCase):
 
         keys = set()
         for worker in range(ws.workers):
-            for key in docgen.UnorderedKey(sid=worker, ws=ws, prefix=''):
+            for key in docgen.SequentialKey(sid=worker, ws=ws, prefix=''):
                 keys.add(key.string)
 
         expected = [docgen.Key(number=i, prefix='', fmtr='decimal').string
@@ -313,7 +298,74 @@ class SpringTest(TestCase):
 
         keys = set()
         for worker in range(ws.workers):
-            for key in docgen.UnorderedKey(sid=worker, ws=ws, prefix='test'):
+            for key in docgen.SequentialKey(sid=worker, ws=ws, prefix='test'):
                 self.assertNotIn(key.string, keys)
                 self.assertEqual(len(key.string), 16)
                 keys.add(key.string)
+
+    def test_new_working_set_hits(self):
+        ws = WorkloadSettings(items=10 ** 3, workers=40, working_set=20,
+                              working_set_access=100, working_set_moving_docs=0,
+                              key_fmtr='hex')
+
+        hot_keys = set()
+        for worker in range(ws.workers):
+            for key in docgen.HotKey(sid=worker, ws=ws, prefix='test'):
+                hot_keys.add(key.string)
+        hot_keys = sorted(hot_keys)
+
+        wsk = docgen.WorkingSetKey(ws=ws, prefix='test')
+        hits = set()
+        news_items = 10
+        for op in range(10 ** 5):
+            key = wsk.next(curr_items=ws.items + news_items, curr_deletes=100)
+            if key.hit:
+                hits.add(key.string)
+
+        overlap = set(hot_keys) & hits
+        self.assertEqual(len(overlap),
+                         ws.items * (ws.working_set / 100) - news_items)
+
+    def test_working_set_hits(self):
+        ws = WorkloadSettings(items=10 ** 3, workers=40, working_set=20,
+                              working_set_access=100, working_set_moving_docs=0,
+                              key_fmtr='hex')
+
+        keys = set()
+        for worker in range(ws.workers):
+            for key in docgen.SequentialKey(sid=worker, ws=ws, prefix='test'):
+                keys.add(key.string)
+        keys = sorted(keys)
+
+        hot_keys = set()
+        for worker in range(ws.workers):
+            for key in docgen.HotKey(sid=worker, ws=ws, prefix='test'):
+                hot_keys.add(key.string)
+        hot_keys = sorted(hot_keys)
+
+        wsk = docgen.WorkingSetKey(ws=ws, prefix='test')
+        for op in range(10 ** 5):
+            key = wsk.next(curr_items=ws.items, curr_deletes=100)
+            self.assertIn(key.string, keys)
+            if key.hit:
+                self.assertIn(key.string, hot_keys)
+            else:
+                self.assertNotIn(key.string, hot_keys)
+
+    def test_working_set_deletes(self):
+        ws = WorkloadSettings(items=10 ** 3, workers=40, working_set=20,
+                              working_set_access=50, working_set_moving_docs=0,
+                              key_fmtr='hex')
+
+        keys_for_removal = docgen.KeyForRemoval(prefix='test',
+                                                fmtr=ws.key_fmtr)
+        removed_keys = set()
+        for i in range(100):
+            key = keys_for_removal.next(i)
+            removed_keys.add(key.string)
+        removed_keys = sorted(removed_keys)
+
+        wsk = docgen.WorkingSetKey(ws=ws, prefix='test')
+        for op in range(10 ** 5):
+            key = wsk.next(curr_items=ws.items + 100, curr_deletes=100)
+            self.assertNotIn(key.string, removed_keys)

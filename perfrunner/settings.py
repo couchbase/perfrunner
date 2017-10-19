@@ -337,7 +337,6 @@ class PhaseSettings:
 
     HOT_READS = False
     SEQ_UPSERTS = False
-    RAND_UPSERTS = False
 
     ITERATIONS = 1
 
@@ -416,8 +415,6 @@ class PhaseSettings:
 
         self.hot_reads = self.HOT_READS
         self.seq_upserts = self.SEQ_UPSERTS
-        self.rand_upserts = bool(int(options.get('rand_upserts',
-                                                 self.RAND_UPSERTS)))
 
         self.iterations = int(options.get('iterations', self.ITERATIONS))
 

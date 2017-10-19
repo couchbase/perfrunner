@@ -176,9 +176,6 @@ class PerfTest:
         if target_iterator is None:
             target_iterator = self.target_iterator
 
-        settings.index_type = self.test_config.index_settings.index_type
-        settings.ddocs = getattr(self, 'ddocs', None)
-
         self.run_phase('background access phase',
                        task, settings, target_iterator, settings.time, False)
 

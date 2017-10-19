@@ -136,6 +136,13 @@ class QueryTest(IndexTest):
 
         self.worker_manager.wait_for_workers()
 
+    def access_bg(self, *args):
+        settings = self.test_config.access_settings
+        settings.index_type = self.test_config.index_settings.index_type
+        settings.ddocs = self.ddocs
+
+        super().access_bg(settings=settings)
+
     def run(self):
         self.load()
         self.wait_for_persistence()

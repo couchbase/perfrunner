@@ -369,3 +369,19 @@ class SpringTest(TestCase):
         for op in range(10 ** 5):
             key = wsk.next(curr_items=ws.items + 100, curr_deletes=100)
             self.assertNotIn(key.string, removed_keys)
+
+    def test_collisions(self):
+        ws = WorkloadSettings(items=10 ** 5, workers=25, working_set=100,
+                              working_set_access=100, working_set_moving_docs=0,
+                              key_fmtr='decimal')
+
+        keys = []
+        for worker in range(ws.workers):
+            generator = docgen.SequentialKey(worker, ws, prefix='test')
+            keys += [key.string for key in generator]
+
+        hashes = set()
+        for key in keys:
+            _hash = docgen.hex_digest(key)
+            self.assertNotIn(_hash, hashes)
+            hashes.add(_hash)

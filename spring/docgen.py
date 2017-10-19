@@ -1,12 +1,12 @@
 import math
 import random
 import time
-from hashlib import md5
 from typing import Iterator, List, Tuple
 
 import numpy as np
-from fastdocgen import build_achievements
+import spooky
 
+from fastdocgen import build_achievements
 from spring.dictionary import (
     NUM_STATES,
     NUM_STREET_SUFFIXES,
@@ -24,6 +24,10 @@ OFFSET = 25000000000
 HASH_LENGTH = 16
 
 
+def hex_digest(key: str) -> str:
+    return '%032x' % spooky.hash128(key)
+
+
 def decimal_fmtr(key: int, prefix: str) -> str:
     key = '%012d' % key
     if prefix:
@@ -33,8 +37,7 @@ def decimal_fmtr(key: int, prefix: str) -> str:
 
 def hash_fmtr(key: int, prefix: str) -> str:
     key = decimal_fmtr(key, prefix)
-    key = key.encode('utf-8')
-    key = md5(key).hexdigest()
+    key = hex_digest(key)
     return key[:HASH_LENGTH]
 
 
@@ -299,8 +302,7 @@ class String:
 
     @staticmethod
     def _build_alphabet(key: str) -> str:
-        _key = key.encode('utf-8')
-        return md5(_key).hexdigest() + md5(_key[::-1]).hexdigest()
+        return hex_digest(key) + hex_digest(key[::-1])
 
     @staticmethod
     def _build_string(alphabet: str, length: float) -> str:
@@ -319,7 +321,7 @@ class Document(String):
 
     SIZE_VARIATION = 0.25  # 25%
 
-    OVERHEAD = 205  # Minimum size due to static fields, body size is variable
+    OVERHEAD = 210  # Minimum size due to static fields, body size is variable
 
     @classmethod
     def _get_variation_coeff(cls) -> float:

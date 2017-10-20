@@ -812,9 +812,8 @@ class WorkloadGen:
                 time.sleep(2)
 
     def wait_for_all_workers(self):
-        for processes in self.worker_processes:
-            for process in processes:
-                process.join()
+        for process in self.worker_processes:
+            process.join()
 
     def run(self):
         curr_items = Value('L', self.ws.items)

@@ -400,19 +400,19 @@ class RemoteLinux(Remote):
         logger.info('Rebooting the node')
         run('reboot', quiet=True, pty=False)
 
-    @servers_by_role(roles=['fts', 'index'])
-    def tune_memory_settings(self, size):
+    def tune_memory_settings(self, host_string: str, size: str):
         logger.info('Changing kernel memory to {}'.format(size))
-        run("sed -i 's/quiet/quiet mem={}/' /etc/default/grub".format(size))
-        self.grub_config()
-        self.reboot()
+        with settings(host_string=host_string):
+            run("sed -i 's/quiet/quiet mem={}/' /etc/default/grub".format(size))
+            self.grub_config()
+            self.reboot()
 
-    @servers_by_role(roles=['fts', 'index'])
-    def reset_memory_settings(self):
+    def reset_memory_settings(self, host_string: str):
         logger.info('Resetting kernel memory settings')
-        run("sed -ir 's/ mem=[0-9]*[kmgKMG]//' /etc/default/grub")
-        self.grub_config()
-        self.reboot()
+        with settings(host_string=host_string):
+            run("sed -ir 's/ mem=[0-9]*[kmgKMG]//' /etc/default/grub")
+            self.grub_config()
+            self.reboot()
 
     def is_up(self, host_string: str) -> bool:
         with settings(host_string=host_string):

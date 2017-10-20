@@ -9,6 +9,7 @@ from perfrunner.helpers.rest import RestHelper
 
 
 class ClusterManager:
+
     def __init__(self, cluster_spec, test_config, verbose=False):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
@@ -320,8 +321,17 @@ class ClusterManager:
     def tune_memory_settings(self):
         kernel_memory = self.test_config.cluster.kernel_mem_limit
         if kernel_memory:
-            self.remote.tune_memory_settings(size=kernel_memory)
+            for service in self.test_config.cluster.kernel_mem_limit_services:
+                for server in self.cluster_spec.servers_by_role(service):
+                    self.remote.tune_memory_settings(host_string=server,
+                                                     size=kernel_memory)
             self.monitor.wait_for_servers()
+
+    def reset_memory_settings(self):
+        for service in self.test_config.cluster.kernel_mem_limit_services:
+            for server in self.cluster_spec.servers_by_role(service):
+                self.remote.reset_memory_settings(host_string=server)
+        self.monitor.wait_for_servers()
 
     def flush_iptables(self):
         self.remote.flush_iptables()

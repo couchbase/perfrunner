@@ -3,6 +3,7 @@ from typing import Callable
 
 from logger import logger
 
+from perfrunner.helpers.cluster import ClusterManager
 from perfrunner.helpers.index import IndexHelper
 from perfrunner.helpers.memcached import MemcachedHelper
 from perfrunner.helpers.metrics import MetricHelper
@@ -36,6 +37,7 @@ class PerfTest:
 
         self.target_iterator = TargetIterator(cluster_spec, test_config)
 
+        self.cluster = ClusterManager(cluster_spec, test_config)
         self.memcached = MemcachedHelper(test_config)
         self.monitor = Monitor(cluster_spec, test_config, verbose)
         self.rest = RestHelper(cluster_spec)
@@ -72,7 +74,13 @@ class PerfTest:
             self.check_failover()
 
         if self.test_config.cluster.kernel_mem_limit:
-            self.remote.reset_memory_settings()
+            self.cluster.reset_memory_settings()
+
+    def reset_memory_settings(self):
+        if self.test_config.cluster.kernel_mem_limit:
+            for service in self.test_config.cluster.kernel_mem_limit_services:
+                for server in self.cluster_spec.servers_by_role(service):
+                    self.remote.reset_memory_settings(host_string=server)
             self.monitor.wait_for_servers()
 
     def download_certificate(self) -> None:

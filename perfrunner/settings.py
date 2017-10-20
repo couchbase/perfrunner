@@ -170,6 +170,7 @@ class ClusterSettings:
     EVENTING_BUCKETS = 0
 
     KERNEL_MEM_LIMIT = 0
+    KERNEL_MEM_LIMIT_SERVICES = 'fts', 'index'
     ONLINE_CORES = 0
 
     def __init__(self, options: dict):
@@ -198,6 +199,12 @@ class ClusterSettings:
                                             self.ONLINE_CORES))
         self.kernel_mem_limit = options.get('kernel_mem_limit',
                                             self.KERNEL_MEM_LIMIT)
+
+        kernel_mem_limit_services = options.get('kernel_mem_limit_services')
+        if kernel_mem_limit_services:
+            self.kernel_mem_limit_services = kernel_mem_limit_services.split()
+        else:
+            self.kernel_mem_limit_services = self.KERNEL_MEM_LIMIT_SERVICES
 
 
 class StatsSettings:

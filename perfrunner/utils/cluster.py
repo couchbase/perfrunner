@@ -43,9 +43,9 @@ def main():
 
     cm.configure_internal_settings()
     cm.set_data_path()
+    cm.set_mem_quota()
     cm.set_services()
     cm.rename()
-    cm.set_mem_quota()
     cm.set_auth()
     cm.configure_xdcr_settings()
     cm.set_cbas_iodevices()

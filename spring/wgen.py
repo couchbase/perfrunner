@@ -815,8 +815,6 @@ class WorkloadGen:
         for processes in self.worker_processes:
             for process in processes:
                 process.join()
-                if process.exitcode:
-                    logger.interrupt('Worker finished with non-zero exit code')
 
     def run(self):
         curr_items = Value('L', self.ws.items)

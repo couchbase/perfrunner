@@ -1,7 +1,6 @@
 import json
 import os
 import time
-from collections import defaultdict
 from multiprocessing import Event, Lock, Process, Value
 from random import randint
 from typing import Callable, List, Tuple
@@ -780,7 +779,7 @@ class WorkloadGen:
         self.ts = target_settings
         self.timer = timer
         self.shutdown_event = timer and Event() or None
-        self.worker_processes = defaultdict(list)
+        self.worker_processes = []
 
     def start_workers(self,
                       worker_factory,
@@ -807,13 +806,13 @@ class WorkloadGen:
 
             worker_process = Process(target=worker.run, args=args)
             worker_process.start()
-            self.worker_processes[name].append(worker_process)
+            self.worker_processes.append(worker_process)
 
             if getattr(self.ws, 'async', False):
                 time.sleep(2)
 
     def wait_for_all_workers(self):
-        for processes in self.worker_processes.values():
+        for processes in self.worker_processes:
             for process in processes:
                 process.join()
                 if process.exitcode:

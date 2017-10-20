@@ -73,7 +73,7 @@ class ClusterManager:
         if not self.is_compatible(min_release='4.0.0'):
             return
 
-        for server in self.cluster_spec.servers:
+        for server in self.cluster_spec.masters:
             roles = self.cluster_spec.roles[server]
             if 'kv' in roles:
                 self.rest.set_services(server, roles)

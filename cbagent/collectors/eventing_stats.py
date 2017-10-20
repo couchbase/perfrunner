@@ -11,7 +11,7 @@ class EventingStats(Collector):
         self.functions = test.functions
 
     def _get_processing_stats(self, function_name="perf-test1"):
-        port = '25000'
+        port = '8096'
         uri = "/getEventProcessingStats?name={}".format(function_name)
         samples = self.get_http(path=uri, server=self.eventing_node, port=port)
         return samples

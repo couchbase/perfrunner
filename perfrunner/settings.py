@@ -154,10 +154,11 @@ class ClusterSettings:
     ANALYTICS_MEM_QUOTA = 0
     ANALYTICS_LOG_LEVEL = "WARNING"
 
-    RESTRICT_KERNEL_MEMORY = 0
-    ONLINE_CORES = 0
     EVENTING_BUCKET_MEM_QUOTA = 0
     EVENTING_BUCKETS = 0
+
+    KERNEL_MEM_LIMIT = 0
+    ONLINE_CORES = 0
 
     def __init__(self, options: dict):
         self.mem_quota = int(options.get('mem_quota'))
@@ -181,8 +182,8 @@ class ClusterSettings:
         self.num_vbuckets = options.get('num_vbuckets')
         self.online_cores = int(options.get('online_cores',
                                             self.ONLINE_CORES))
-        self.restrict_kernel_memory = options.get('restrict_kernel_memory',
-                                                  self.RESTRICT_KERNEL_MEMORY)
+        self.kernel_mem_limit = options.get('kernel_mem_limit',
+                                            self.KERNEL_MEM_LIMIT)
 
 
 class StatsSettings:

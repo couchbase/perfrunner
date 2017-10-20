@@ -9,7 +9,7 @@ mem_quota = 53248
 index_mem_quota = 20480
 initial_nodes = 6
 num_buckets = 1
-restrict_kernel_memory = 32768M
+kernel_mem_limit = 32768M
 
 [compaction]
 db_percentage = 100

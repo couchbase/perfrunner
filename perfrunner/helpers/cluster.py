@@ -294,7 +294,7 @@ class ClusterManager:
             self.remote.disable_cpu(self.test_config.cluster.online_cores)
 
     def tune_memory_settings(self):
-        kernel_memory = self.test_config.cluster.restrict_kernel_memory
+        kernel_memory = self.test_config.cluster.kernel_mem_limit
         if kernel_memory:
             self.remote.tune_memory_settings(size=kernel_memory)
             self.monitor.wait_for_servers()

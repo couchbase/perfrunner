@@ -71,7 +71,7 @@ class PerfTest:
             self.check_rebalance()
             self.check_failover()
 
-        if self.test_config.cluster.restrict_kernel_memory:
+        if self.test_config.cluster.kernel_mem_limit:
             self.remote.reset_memory_settings()
             self.monitor.wait_for_servers()
 

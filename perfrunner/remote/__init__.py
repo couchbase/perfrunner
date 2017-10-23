@@ -34,6 +34,9 @@ class Remote:
         with cd(worker_home):
             run('git clone -q {}'.format(REPO))
 
+            with cd('perfrunner'):
+                run('make')
+
     def start_celery_worker(self, worker, worker_home):
         with settings(host_string=worker):
             with cd(worker_home), shell_env(PYTHONOPTIMIZE='1',

@@ -707,6 +707,7 @@ class MetricHelper:
                 node=self.test.function_nodes[0], name=name)
         throughput /= len(self.test.functions)
         throughput /= time
+        throughput = round(throughput, 1)
 
         return throughput, self._snapshots, metric_info
 

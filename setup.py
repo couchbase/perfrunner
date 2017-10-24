@@ -17,6 +17,7 @@ setup(
             'spring = spring.__main__:main',
             'templater = perfrunner.utils.templater:main',
             'trigger = perfrunner.utils.trigger:main',
+            'sg_install = perfrunner.utils.syncgateway.install:main'
         ],
     },
     ext_modules=[

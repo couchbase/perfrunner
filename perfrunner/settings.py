@@ -8,7 +8,7 @@ from decorator import decorator
 from logger import logger
 from perfrunner.helpers.misc import target_hash
 
-REPO = 'https://github.com/couchbase/perfrunner'
+REPO = 'https://github.com/agyryk/perfrunner'
 
 
 @decorator
@@ -443,6 +443,9 @@ class PhaseSettings:
         # FTS settings
         self.fts_config = None
 
+        # Syncgateway settings
+        self.syncgateway_settings = None
+
         # YCSB settings
         self.workload_path = options.get('workload_path')
         self.recorded_load_cache_size = int(options.get('recorded_load_cache_size',
@@ -722,6 +725,61 @@ class YCSBSettings:
         return str(self.__dict__)
 
 
+class SyncgatewaySettings:
+    REPO = 'git://github.com/couchbaselabs/YCSB.git'
+    BRANCH = 'syncgateway-weekly'
+    WORKLOAD = 'workloads/syncgateway_blank'
+    USERS = 100
+    CHANNELS = 1
+    CHANNLES_PER_USER = 1
+    CHANNELS_PER_DOC = 1
+    DOCUMENTS = 1000000
+    ROUNDTRIP_WRITE = "false"
+    READ_MODE = 'documents'          # |documents|changes
+    FEED_READING_MODE = 'withdocs'   # |withdocs|idsonly
+    FEED_MODE = 'longpoll'           # |longpoll|normal
+    INSERT_MODE = 'byuser'           # |byuser|bydic
+    AUTH = "true"
+    READPROPORTION = 1
+    UPDATEPROPORTION = 0
+    INSERTPROPORTION = 0
+    REQUESTDISTRIBUTION = 'zipfian'  # |zipfian|uniform
+    LOG_TITE = 'sync_gateway_default'
+    THREADS = 10
+    INSERTSTART=0
+    MAX_INSERTS_PER_INSTANCE = 1000000
+
+
+    def __init__(self, options: dict):
+        self.repo = options.get('repo', self.REPO)
+        self.branch = options.get('branch', self.BRANCH)
+        self.workload = options.get('workload', self.WORKLOAD)
+        self.users = options.get('users', self.USERS)
+        self.channels = options.get('channels', self.CHANNELS)
+        self.channels_per_user = options.get('channels_per_user', self.CHANNLES_PER_USER)
+        self.channels_per_doc = options.get('channels_per_doc', self.CHANNELS_PER_DOC)
+        self.documents = options.get('documents', self.DOCUMENTS)
+        self.roundtrip_write = options.get('roundtrip_write', self.ROUNDTRIP_WRITE)
+        self.read_mode = options.get('read_mode', self.READ_MODE)
+        self.feed_mode = options.get('feed_mode', self.FEED_MODE)
+        self.feed_reading_mode = options.get('feed_reading_mode', self.FEED_READING_MODE)
+        self.auth = options.get('auth', self.AUTH)
+        self.readproportion = options.get('readproportion', self.READPROPORTION)
+        self.updateproportion = options.get('updateproportion', self.UPDATEPROPORTION)
+        self.insertproportion = options.get('insertproportion', self.INSERTPROPORTION)
+        self.requestdistribution = options.get('requestdistribution', self.REQUESTDISTRIBUTION)
+        self.log_title = options.get('log_title', self.LOG_TITE)
+        self.instances_per_client = options.get('instances_per_client', '0')
+        self.threads_per_instance = 1
+        self.threads = options.get('threads', self.THREADS)
+        self.insertstart = options.get('inserstart', self.INSERTSTART)
+        self.max_inserts_per_instance = options.get('max_inserts_per_instance', self.MAX_INSERTS_PER_INSTANCE)
+        self.insert_mode = options.get('insert_mode', self.INSERT_MODE)
+
+
+    def __str__(self) -> str:
+        return str(self.__dict_)
+
 class TestConfig(Config):
 
     @property
@@ -877,6 +935,11 @@ class TestConfig(Config):
     @property
     def fio(self) -> dict:
         return self._get_options_as_dict('fio')
+
+    @property
+    def syncgateway_settings(self) -> SyncgatewaySettings:
+        options = self._get_options_as_dict('syncgateway')
+        return SyncgatewaySettings(options)
 
 
 class TargetSettings:

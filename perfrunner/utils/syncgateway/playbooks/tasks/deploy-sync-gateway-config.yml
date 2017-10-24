@@ -1,0 +1,11 @@
+- name: SYNC GATEWAY | Copy sync gateway config to host
+  become: yes
+  template: src={{ sync_gateway_config_filepath }} dest=/home/sync_gateway/sync_gateway.json owner=sync_gateway group=sync_gateway mode=0644 force=true
+
+- name: SYNC GATEWAY | Check deployed config
+  become: yes
+  shell: cat /home/sync_gateway/sync_gateway.json
+  register: out
+
+- name: SYNC GATEWAY | Print deployed config
+  debug: var=out.stdout

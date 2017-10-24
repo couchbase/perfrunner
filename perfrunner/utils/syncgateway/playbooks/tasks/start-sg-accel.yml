@@ -1,0 +1,10 @@
+- debug: msg="Starting sg_accel with config {{ sync_gateway_config_filepath }}"
+
+- name: SG ACCEL | Start sg_accel service
+  become: yes
+  service: name=sg_accel state=started
+
+- name: SG ACCEL | Wait until sg_accel to listen on port
+  become: yes
+  wait_for: port=4985 timeout=60
+

@@ -1,0 +1,26 @@
+---
+- hosts: sync_gateways
+  any_errors_fatal: true
+  become: yes
+
+  tasks:
+
+  # Remove sync_gateway
+  - include: tasks/remove-sync-gateway.yml
+
+  # Remove sync_gateway
+  - include: tasks/remove-sg-accel.yml
+
+  # Remove nginx
+  - include: tasks/remove-nginx.yml
+
+  # Delete sync_gateway and sg_accel uses
+  - include: tasks/clean-users.yml
+
+  # Check no sync_gateways or accels running
+  - name: ALL | verify no sg_accel or sgs are running on 4985
+    wait_for: port=4985 delay=1 state=stopped
+
+  # Check no servers are running
+  #- name: ALL | verify no servers not listening on port 8081
+  #  wait_for: port=8091 delay=1 state=stopped

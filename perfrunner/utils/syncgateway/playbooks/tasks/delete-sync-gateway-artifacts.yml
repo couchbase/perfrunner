@@ -1,0 +1,4 @@
+# Delete logs and .pindex files
+- name: SYNC GATEWAY | Delete sync_gateway logs
+  become: yes
+  shell: rm -rf /home/sync_gateway/*

@@ -322,6 +322,12 @@ def run_ycsb(host, bucket, password, action, workload, items, workers,
         local(cmd)
 
 
+def run_cmd(path, command, parameters, output_file):
+    cmd = "{} {} 2>{}".format(command, parameters, output_file)
+    logger.info('Running : {}'.format(cmd))
+    #with lcd(path):
+        #local(cmd)
+
 def restart_memcached(mem_limit=10000, port=8000):
     cmd1 = 'killall -9 memcached'
     logger.info('Running: {}'.format(cmd1))

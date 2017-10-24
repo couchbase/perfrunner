@@ -1,0 +1,38 @@
+# Stop sync_gateway service
+- name: SG ACCEL | Stop sg_accel service
+  service: name=sg_accel state=stopped
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+  ignore_errors: yes
+
+- name: SG ACCEL | Stop sg_accel for CentOS 6
+  shell: /sbin/initctl stop sg_accel
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "6"
+  ignore_errors: yes
+
+# Remove sg_accel package
+- name: SG ACCEL | Uninstall sg_accel rpm
+  shell: rpm -e couchbase-sg-accel
+  ignore_errors: yes
+
+# Remove sg_accel service
+- name: SG ACCEL | Remove sg_accel service
+  file: path=/usr/lib/systemd/system/sg_accel.service state=absent
+  ignore_errors: yes
+
+# Delete sg_accel binary
+- name: SG ACCEL | Delete sg_accel binary
+  file: path=/opt/couchbase-sg-accel state=absent
+  ignore_errors: yes
+
+# Remove sg accel source
+- name: SG ACCEL | Remove sg accel source
+  shell: rm -rf /home/centos/*
+  ignore_errors: yes
+
+- name: SG ACCEL | Remove sg accel source .repo directory
+  shell: rm -rf /home/centos/.repo
+  ignore_errors: yes
+
+- name: SG ACCEL | Remove tmp logging dir (log rotation tests)
+  shell: rm -rf /tmp/sg_logs
+  ignore_errors: yes

@@ -1,0 +1,13 @@
+- name: SYNC GATEWAY | check sync_gateway service status for CentOS 7
+  become: yes
+  shell: service sync_gateway status
+  register: output
+  failed_when: output.stdout | search("dead")
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+
+- name: SYNC GATEWAY | check sync_gateway service status for CentOS 6
+  become: yes
+  shell: /sbin/initctl status sync_gateway
+  register: output
+  failed_when: output.stdout | search("dead")
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "6"

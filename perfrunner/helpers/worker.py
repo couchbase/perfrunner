@@ -23,6 +23,12 @@ from perfrunner.workloads.pillowfight import (
     pillowfight_workload,
 )
 from perfrunner.workloads.ycsb import ycsb_data_load, ycsb_workload
+from perfrunner.workloads.syncgateway import (
+    syncgateway_load_users,
+    syncgateway_init_users,
+    syncgateway_load_docs,
+    syncgateway_run_test,
+)
 
 celery = Celery('workers')
 if '--remote' in sys.argv or '-C' in sys.argv:
@@ -57,6 +63,25 @@ def ycsb_task(*args):
     ycsb_workload(*args)
 
 
+@celery.task
+def syncgateway_task_load_users(*args):
+    syncgateway_load_users(*args)
+
+
+@celery.task
+def syncgateway_task_init_users(*args):
+    syncgateway_init_users(*args)
+
+
+@celery.task
+def syncgateway_task_load_docs(*args):
+    syncgateway_load_docs(*args)
+
+
+@celery.task
+def syncgateway_task_run_test(*args):
+    syncgateway_run_test(*args)
+
 class WorkerManager:
 
     def __new__(cls, *args, **kwargs):
@@ -79,6 +104,7 @@ class RemoteWorkerManager:
         self.remote = RemoteHelper(cluster_spec, test_config, verbose)
 
         self.workers = cycle(self.cluster_spec.workers)
+        self.all_clients = self.cluster_spec.workers
 
         self.terminate()
         self.start()
@@ -130,6 +156,40 @@ class RemoteWorkerManager:
                 )
                 self.async_results.append(async_result)
 
+    def run_sg_tasks(self,
+                  task: Callable,
+                  task_settings: PhaseSettings,
+                  timer: int = None,
+                  distrubute: bool = False,
+                  phase: str = ""):
+        self.async_results = []
+        self.reset_workers()
+
+        if distrubute:
+            total_threads = int(task_settings.syncgateway_settings.threads)
+            total_clients = int(len(self.all_clients))
+            instances_per_client = int(task_settings.syncgateway_settings.instances_per_client)
+            total_instances = total_clients * instances_per_client
+            threads_per_instance = int(total_threads/total_instances) or 1
+            worker_id = 0
+            for instance in range(instances_per_client):
+                for client in self.all_clients:
+                    worker_id += 1
+                    logger.info('Running the \'{}\' by worker #{} on client {}'.format(phase, worker_id, client))
+                    task_settings.syncgateway_settings.threads_per_instance = str(threads_per_instance)
+                    async_result = task.apply_async(
+                        args=(task_settings, timer, worker_id, self.cluster_spec),
+                        queue=client, expires=timer,
+                    )
+                    self.async_results.append(async_result)
+        else:
+            client = self.all_clients[0]
+            logger.info('Running sigle-instance task \'{}\' on client {}'.format(phase, client))
+            async_result = task.apply_async(
+                args=(task_settings, timer, 0, self.cluster_spec), queue=client, expires=timer,
+            )
+            self.async_results.append(async_result)
+
     def wait_for_workers(self):
         logger.info('Waiting for all tasks to finish')
         for async_result in self.async_results:
@@ -155,11 +215,12 @@ class LocalWorkerManager(RemoteWorkerManager):
                  verbose: bool):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
-
         self.terminate()
         self.tune_sqlite()
         self.start()
         self.wait_until_workers_are_ready()
+        self.all_clients = ('localhost',)
+
 
     @property
     def is_remote(self) -> bool:

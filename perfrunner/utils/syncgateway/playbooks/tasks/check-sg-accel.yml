@@ -1,0 +1,13 @@
+- name: SG ACCEL | check sg_accel service status for CentOS 7
+  become: yes
+  shell: service sg_accel status
+  register: output
+  failed_when: output.stdout | search("dead")
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+
+- name: SG ACCEL | check sg_accel service status for CentOS 6
+  become: yes
+  shell: /sbin/initctl status sg_accel
+  register: output
+  failed_when: output.stdout | search("dead")
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "6"

@@ -1,0 +1,24 @@
+# Fetch sg accel logs for CentOS
+- name: SG ACCEL | Check if sg_accel access log is present
+  become: yes
+  stat:
+    path: '/home/sg_accel/logs/sg_accel_access.log'
+  register: pa
+
+- name: SG ACCEL | Fetch sg_accel access logs
+  become: yes
+  # Do not validate checksum as this is just a passive grab of the logs. Since they are continuously being appended to, the checksum may fail
+  fetch: src=/home/sg_accel/logs/sg_accel_access.log dest=/tmp/sg_logs/{{ inventory_hostname }}/ fail_on_missing=yes flat=yes validate_checksum=no
+  when: pa.stat.exists
+
+- name: SG ACCEL | Check if sg_accel error log is present
+  become: yes
+  stat:
+    path: '/home/sg_accel/logs/sg_accel_error.log'
+  register: pe
+
+- name: SG ACCEL | Fetch sg_accel error logs
+  become: yes
+  # Do not validate checksum as this is just a passive grab of the logs. Since they are continuously being appended to, the checksum may fail
+  fetch: src=/home/sg_accel/logs/sg_accel_error.log dest=/tmp/sg_logs/{{ inventory_hostname }}/ fail_on_missing=yes flat=yes validate_checksum=no
+  when: pe.stat.exists

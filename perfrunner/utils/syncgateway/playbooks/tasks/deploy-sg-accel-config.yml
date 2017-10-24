@@ -1,0 +1,11 @@
+- name: SG ACCEL | copy sg_accel config to host
+  become: yes
+  template: src={{ sync_gateway_config_filepath }} dest=/home/sg_accel/sg_accel.json owner=sg_accel group=sg_accel mode=0644 force=true
+
+- name: SG ACCEL | Check deployed config
+  become: yes
+  shell: cat /home/sg_accel/sg_accel.json
+  register: out
+
+- name: SG ACCEL | Print deployed config
+  debug: var=out.stdout

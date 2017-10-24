@@ -1,0 +1,4 @@
+# Delete logs and .pindex files
+- name: SG ACCEL | delete sg_accel artifacts
+  become: yes
+  shell: rm -rf /home/sg_accel/*

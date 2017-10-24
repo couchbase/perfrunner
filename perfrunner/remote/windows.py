@@ -226,3 +226,6 @@ class RemoteWindows(Remote):
 
     def enable_cpu(self):
         pass
+
+    def clear_wtmp(self):
+        pass

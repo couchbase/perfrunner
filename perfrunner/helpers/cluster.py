@@ -335,3 +335,6 @@ class ClusterManager:
 
     def flush_iptables(self):
         self.remote.flush_iptables()
+
+    def clear_login_history(self):
+        self.remote.clear_wtmp()

@@ -426,3 +426,7 @@ class RemoteLinux(Remote):
     def get_manifest(self):
         logger.info('Getting manifest from host node')
         get("{}/manifest.xml".format(self.CB_DIR), local_path="./")
+
+    @all_servers
+    def clear_wtmp(self):
+        run('echo > /var/log/wtmp')

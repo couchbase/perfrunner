@@ -35,6 +35,7 @@ def main():
 
     # Individual nodes
     cm.flush_iptables()
+    cm.clear_login_history()
     cm.tune_memory_settings()
     cm.throttle_cpu()
     cm.remote.disable_wan()

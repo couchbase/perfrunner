@@ -737,6 +737,31 @@ class MetricHelper:
 
         return throughput, self._snapshots, metric_info
 
+    def function_latency(self, percentile: float, latency_stats: dict) -> Metric:
+        """Calculate eventing function latency stats.
+
+        We get latency stats in format of- time:number of events processed in that time(samples)
+        In this method we get latency stats then calculate percentile latency using-
+        Calculate total number of samples.
+        Keep adding sample until we get required percentile number.
+        For now it calculates for one function only
+        """
+        metric_info = self._metric_info()
+        latency = 0
+        for name, stats in latency_stats.items():
+            total_samples = 0
+            for time, samples in stats.items():
+                total_samples += samples
+            latency_samples = 0
+            for time, samples in stats.items():
+                latency_samples += samples
+                if latency_samples >= (total_samples * percentile / 100):
+                    latency = float(time) / 1000
+                    break
+
+        latency = round(latency, 1)
+        return latency, self._snapshots, metric_info
+
 
 class DailyMetricHelper(MetricHelper):
 

@@ -708,3 +708,9 @@ class RestHelper:
             'timeout': timeout,
         }
         return self.post(url=api, data=data).json()
+
+    def get_latency_stats(self, node: str, name: str):
+        logger.info('get latency stats on node {} for {}'.format(node, name))
+
+        api = 'http://{}:{}/getLatencyStats?name={}'.format(node, EVENTING_PORT, name)
+        return self.get(url=api).json()

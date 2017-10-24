@@ -1,6 +1,8 @@
 import json
 
+from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
+from perfrunner.helpers.misc import pretty_dict
 from perfrunner.tests import PerfTest, TargetIterator
 
 
@@ -54,6 +56,17 @@ class EventingTest(PerfTest):
             self.rest.deploy_function(node=self.eventing_nodes[0], payload=function, name=name)
             self.monitor.wait_for_bootstrap(node=self.eventing_nodes[0], function=name)
 
+    def process_latency_stats(self):
+        latency_stats = {}
+        for name, file in self.functions.items():
+            stats = self.monitor.wait_for_latency_stats(
+                node=self.eventing_nodes[0], name=name)
+            logger.info("Latency stats for function {function}:".
+                        format(function=name))
+            pretty_dict(stats)
+            latency_stats[name] = stats
+        return latency_stats
+
     @timeit
     @with_stats
     def load_access_and_wait(self):
@@ -101,4 +114,12 @@ class TimerThroughputTest(TimerTest):
     def _report_kpi(self, time_elapsed):
         self.reporter.post(
             *self.metrics.function_throughput(time_elapsed, "DOC_TIMER_EVENTS")
+        )
+
+
+class FunctionsLatencyTest(EventingTest):
+    def _report_kpi(self, time_elapsed):
+        latency_stats = self.process_latency_stats()
+        self.reporter.post(
+            *self.metrics.function_latency(percentile=99.0, latency_stats=latency_stats)
         )

@@ -419,6 +419,25 @@ class Monitor(RestHelper):
             sleep_sec = 300
         return sleep_sec
 
+    def monitor_bigfun_data_synced_1st_part(self, master_node: str,
+                                            bucket_name: str, cbas_node: str):
+        logger.info('Waiting {master} {bucket} 1st part data synced to {cbas}'.format(
+                                                          master=master_node,
+                                                          bucket=bucket_name,
+                                                          cbas=cbas_node))
+        retry = 0
+        while True:
+            num_items = self.test_config.bigfun_settings.user_docs
+            num_items_synced = self.get_bigfun_dataset_number(bucket_name, cbas_node,
+                                                              "GleambookUsers", "")
+            if num_items == num_items_synced:
+                logger.info('{master} {bucket} {number} to cbas'.format(master=master_node,
+                                                                        bucket=bucket_name,
+                                                                        number=num_items_synced))
+                break
+            time.sleep(self._get_bigfun_retry_sleep_interval(retry))
+            retry += 1
+
     def monitor_bigfun_data_synced(self, master_node: str, bucket_name: str, cbas_node: str):
         logger.info('Waiting {master} {bucket} data synced to {cbas}'.format(master=master_node,
                                                                              bucket=bucket_name,

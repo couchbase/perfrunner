@@ -237,6 +237,11 @@ class RestHelper:
                 return is_running, progress
         return False, 0
 
+    def delete_bucket(self, host: str, name: str):
+        logger.info('Deleting new bucket: {}'.format(name))
+        api = 'http://{host}:8091/pools/default/buckets/{bucket}'.format(host=host, bucket=name)
+        self.delete(url=api)
+
     def create_bucket(self, host: str, name: str, password: str,
                       ram_quota: int, replica_number: int, replica_index: int,
                       eviction_policy: str, bucket_type: str,
@@ -399,6 +404,18 @@ class RestHelper:
 
         api = 'http://{}:8091/internalSettings'.format(host)
         self.post(url=api, data=data)
+
+    def set_cbas_cluster_settings(self, host: str, data: dict):
+        logger.info('Updating cbas cluster settings: {} on {}'.format(data, host))
+
+        api = 'http://{}:8095/analytics/cc/config'.format(host)
+        self.put(url=api, data=data)
+
+    def set_cbas_node_settings(self, host: str, data: dict):
+        logger.info('Updating cbas node settings: {} on {}'.format(data, host))
+
+        api = 'http://{}:8095/analytics/node/config'.format(host)
+        self.put(url=api, data=data)
 
     def set_xdcr_cluster_settings(self, host: str, data: dict):
         logger.info('Updating xdcr cluster settings: {}'.format(data))
@@ -604,6 +621,16 @@ class RestHelper:
 
         return self.get(url=api).json()
 
+    def delete_rbac_user(self, host: str, bucket: str):
+        logger.info('Deleting an RBAC user: {}'.format(bucket))
+        for domain in 'local', 'builtin':
+            api = 'http://{}:8091/settings/rbac/users/{}/{}'.format(host,
+                                                                    domain,
+                                                                    bucket)
+            r = self._delete(url=api)
+            if r.status_code == 200:
+                break
+
     def add_rbac_user(self, host: str, bucket: str, password: str,
                       roles: List[str]):
         logger.info('Adding an RBAC user: {}, roles: {}'.format(bucket,
@@ -628,16 +655,6 @@ class RestHelper:
 
         status = self.get(url=api).json()
         return status["state"] == "ACTIVE"
-
-    def set_analytics_loglevel(self, analytics_node: str, analytics_log_level: str):
-        logger.info('Set analytics node {} loglevel to {}'.format(analytics_node,
-                                                                  analytics_log_level))
-
-        api = 'http://{}:8095/analytics/node/config'.format(analytics_node)
-        data = {
-            'logLevel': analytics_log_level,
-        }
-        self.put(url=api, data=data)
 
     def restart_analytics(self, analytics_node: str):
         logger.info('Restart analytics node {}'.format(analytics_node))

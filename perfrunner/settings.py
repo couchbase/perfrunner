@@ -163,8 +163,7 @@ class ClusterSettings:
     INDEX_MEM_QUOTA = 256
     FTS_INDEX_MEM_QUOTA = 512
     ANALYTICS_MEM_QUOTA = 0
-    ANALYTICS_LOG_LEVEL = "WARNING"
-    ANALYTICS_IODEVICES = 0
+    ANALYTICS_IODEVICES = []
 
     EVENTING_BUCKET_MEM_QUOTA = 0
     EVENTING_BUCKETS = 0
@@ -181,10 +180,12 @@ class ClusterSettings:
                                                    self.FTS_INDEX_MEM_QUOTA))
         self.analytics_mem_quota = int(options.get('analytics_mem_quota',
                                                    self.ANALYTICS_MEM_QUOTA))
-        self.analytics_log_level = options.get('analytics_log_level',
-                                               self.ANALYTICS_LOG_LEVEL)
-        self.analytics_iodevices = int(options.get('analytics_iodevices',
-                                                   self.ANALYTICS_IODEVICES))
+        analytics_iodevices = options.get('analytics_iodevices')
+        if analytics_iodevices:
+            self.analytics_iodevices = analytics_iodevices.split(',')
+        else:
+            self.analytics_iodevices = self.ANALYTICS_IODEVICES
+
         self.initial_nodes = [
             int(nodes) for nodes in options.get('initial_nodes').split()
         ]
@@ -549,6 +550,33 @@ class IndexSettings:
         return str(self.__dict__)
 
 
+class CBASSettings:
+
+    def __init__(self, options: dict):
+        self.cluster_settings = {}
+        self.node_settings = {}
+        for option in options:
+            value = options.get(option)
+            if option.startswith('cluster.'):
+                option = option.replace('cluster.', '')
+                if option.startswith('enforceFrameWriterProtocol'):
+                    self.cluster_settings[option] = ('true' == value)
+                else:
+                    self.cluster_settings[option] = int(value)
+            elif option.startswith('node.'):
+                option = option.replace('node.', '')
+                if option.startswith('logLevel') or \
+                        option.startswith('jvmArgs'):
+                    self.node_settings[option] = value
+                elif option.startswith('storageLsmBloomfilterFalsepositiverate'):
+                    self.node_settings[option] = float(value)
+                else:
+                    self.node_settings[option] = int(value)
+
+    def __str__(self) -> str:
+        return str(self.cluster_settings) + str(self.node_settings)
+
+
 class GSISettings:
 
     STALE = 'true'
@@ -750,6 +778,8 @@ class BigfunSettings:
     LOADER_BRANCH = 'master'
     WORKERS = 20
     USER_DOCS = 10000
+    CLEANUP_WHEN_DISCONNECTED = 'true'
+    CLEANUP_METHOD = 'flush'
 
     def __init__(self, options: dict):
         self.socialgen_repo = options.get('socialgen_repo', self.SOCIALGEN_REPO)
@@ -758,6 +788,10 @@ class BigfunSettings:
         self.loader_branch = options.get('loader_branch', self.LOADER_BRANCH)
         self.workers = int(options.get('workers', self.WORKERS))
         self.user_docs = int(options.get('user_docs', self.USER_DOCS))
+        self.cleanup_when_disconnected = ('true' == options.get('cleanup_when_disconnected',
+                                                                self.CLEANUP_WHEN_DISCONNECTED))
+        self.cleanup_method = options.get('cleanup_method',
+                                          self.CLEANUP_METHOD)
 
     def __str__(self) -> str:
         return str(self.__dict__)
@@ -853,6 +887,11 @@ class TestConfig(Config):
     def backup_settings(self) -> BackupSettings:
         options = self._get_options_as_dict('backup')
         return BackupSettings(options)
+
+    @property
+    def cbas_settings(self) -> CBASSettings:
+        options = self._get_options_as_dict('cbas_settings')
+        return CBASSettings(options)
 
     @property
     def export_settings(self) -> ExportSettings:

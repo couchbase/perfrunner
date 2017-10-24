@@ -70,6 +70,22 @@ class ClusterManager:
             curr_settings = pretty_dict(curr_settings)
             logger.info("Index settings: {}".format(curr_settings))
 
+    def set_cbas_settings(self):
+        settings = self.test_config.cbas_settings.node_settings
+        for analytics_node in self.cluster_spec.servers_by_role("cbas"):
+            for parameter, value in settings.items():
+                self.rest.set_cbas_node_settings(analytics_node,
+                                                 {parameter: value})
+        settings = self.test_config.cbas_settings.cluster_settings
+        for master_node in self.cluster_spec.masters:
+            analytics_nodes = self.cluster_spec.servers_by_master_by_role(master_node, "cbas")
+            if len(analytics_nodes):
+                analytics_node = analytics_nodes[0]
+                for parameter, value in settings.items():
+                    self.rest.set_cbas_cluster_settings(analytics_node,
+                                                        {parameter: value})
+                self.rest.restart_analytics(analytics_node)
+
     def set_services(self):
         if not self.is_compatible(min_release='4.0.0'):
             return
@@ -100,6 +116,18 @@ class ClusterManager:
             self.rest.rebalance(master, known_nodes, ejected_nodes)
             self.monitor.monitor_rebalance(master)
         self.wait_until_healthy()
+
+    def flush_buckets(self):
+        for master in self.cluster_spec.masters:
+            for bucket_name in self.test_config.buckets:
+                self.rest.flush_bucket(host=master,
+                                       bucket=bucket_name)
+
+    def delete_buckets(self):
+        for master in self.cluster_spec.masters:
+            for bucket_name in self.test_config.buckets:
+                self.rest.delete_bucket(host=master,
+                                        name=bucket_name)
 
     def create_buckets(self):
         if self.test_config.cluster.eventing_bucket_mem_quota:
@@ -207,14 +235,7 @@ class ClusterManager:
         self.remote.tune_log_rotation()
         self.remote.restart()
 
-    def tune_analytics_logging(self):
-        for analytics_node in self.cluster_spec.servers_by_role("cbas"):
-            self.rest.set_analytics_loglevel(analytics_node,
-                                             self.test_config.cluster.analytics_log_level)
-            self.rest.restart_analytics(analytics_node)
-
     def set_cbas_iodevices(self):
-        if self.test_config.cluster.analytics_iodevices:
             analytics_data_base_path = "/var/couchbase/lib/data"
             analytics_data_base_path, index_path = self.cluster_spec.paths
             analytics_data_path = analytics_data_base_path + "/@analytics"
@@ -222,20 +243,17 @@ class ClusterManager:
                 self.remote.create_directory(analytics_node, analytics_data_path)
                 self.remote.allow_all_access(analytics_node, analytics_data_path)
             iodevices_file = analytics_data_path + "/iodevices.txt"
-            iodevices = ""
-            for i in range(self.test_config.cluster.analytics_iodevices):
-                for analytics_node in self.cluster_spec.servers_by_role("cbas"):
-                    self.remote.create_directory(analytics_node,
-                                                 analytics_data_path + "/iodev{}".format(i))
-                    self.remote.allow_all_access(analytics_node,
-                                                 analytics_data_path + "/iodev{}".format(i))
-                if i == 0:
-                    device = analytics_data_path + "/iodev{}".format(i)
-                else:
-                    device = "," + analytics_data_path + "/iodev{}".format(i)
-                iodevices = iodevices + device
+            iodevices = []
+            if not len(self.test_config.cluster.analytics_iodevices):
+                iodevices.append(analytics_data_path + "/iodev0")
+            else:
+                for iodev in self.test_config.cluster.analytics_iodevices:
+                    iodevices.append(iodev)
+
             for analytics_node in self.cluster_spec.servers_by_role("cbas"):
-                self.remote.set_cbas_iodevices(analytics_node, iodevices_file, iodevices)
+                self.remote.set_cbas_iodevices(analytics_node,
+                                               iodevices_file,
+                                               ','.join(iodevices))
 
     def enable_auto_failover(self):
         for master in self.cluster_spec.masters:
@@ -289,6 +307,17 @@ class ClusterManager:
                 roles.append(role + '[{bucket}]')
 
         return roles
+
+    def delete_rbac_users(self):
+        if not self.is_compatible(min_release='5.0'):
+            return
+
+        for master in self.cluster_spec.masters:
+            for bucket in self.test_config.buckets:
+                self.rest.delete_rbac_user(
+                    host=master,
+                    bucket=bucket
+                )
 
     def add_rbac_users(self):
         if not self.is_compatible(min_release='5.0'):

@@ -1,6 +1,6 @@
 [test_case]
-test = perfrunner.tests.cbas.CBASBigfunDataSetTest
-title = Syncing latency for BigFun small dataset
+test = perfrunner.tests.cbas.CBASBigfunDataSetP2Test
+title = Syncing latency for BigFun small dataset P2 test cases
 component = cbas
 category = latency
 

@@ -7,17 +7,15 @@ category = latency
 [cluster]
 mem_quota = 4096
 analytics_mem_quota = 4096
-analytics_iodevices = 1
 initial_nodes = 3
 num_buckets = 1
 
+[cbas_settings]
+node.logLevel=WARNING
+
 [bigfun]
-socialgen_repo=git://github.com/huiwangcouchbase/socialGen.git
-socialgen_branch=master
-loader_repo=git://github.com/huiwangcouchbase/loader.git
-loader_branch=master
 workers=20
-user_docs=500000
+user_docs=50000
 
 [access]
 time = 60

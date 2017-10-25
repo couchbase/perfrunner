@@ -1,7 +1,7 @@
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import PerfTest
 from perfrunner.helpers.worker import syncgateway_task_init_users, syncgateway_task_load_users, \
-    syncgateway_task_load_docs, syncgateway_task_run_test, syncgateway_start_memcached
+    syncgateway_task_load_docs, syncgateway_task_run_test, syncgateway_task_start_memcached
 
 from perfrunner.helpers import local
 
@@ -81,7 +81,7 @@ class SGPerfTest(PerfTest):
         self.worker_manager.wait_for_workers()
 
     def start_memcached(self):
-        self.run_sg_phase("start memcached", syncgateway_start_memcached, self.settings, self.settings.time, False)
+        self.run_sg_phase("start memcached", syncgateway_task_start_memcached, self.settings, self.settings.time, False)
 
     def load_users(self):
         self.run_sg_phase("load users", syncgateway_task_load_users, self.settings, self.settings.time, False)

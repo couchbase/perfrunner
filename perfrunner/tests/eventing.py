@@ -14,7 +14,7 @@ class EventingTest(PerfTest):
 
     FUNCTION_SAMPLE_FILE = "tests/eventing/config/function_sample.json"
     FUNCTION_ENABLE_SAMPLE_FILE = "tests/eventing/config/enable_function_sample.json"
-    COLLECTORS = {'eventing_stats': True}
+    COLLECTORS = {'eventing_stats': True, 'ns_server_system': True}
 
     def __init__(self, *args):
         super().__init__(*args)

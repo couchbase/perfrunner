@@ -75,7 +75,7 @@ class NSServerSystem(NSServer):
             stats = {}
             server = node["hostname"].split(":")[0]
             cpu_util = node["systemStats"]["cpu_utilization_rate"]
-            stats["cpu_utilization_rate"] = cpu_util
+            stats["cpu_utilization"] = cpu_util
             server_stats[server] = stats
         return server_stats
 

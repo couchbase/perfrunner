@@ -62,7 +62,7 @@ def syncgateway_load_users(workload_settings: PhaseSettings, timer: int, worker_
                                 insertstart=get_offset(workload_settings, worker_id))
 
     f = open("/tmp/worker-loadusers-{}.log".format(worker_id), "w")
-    f.write("{}{} {} > {}".format(BINARY_PATH, BINARY_NAME, params, log_file_name))
+    f.write("{}/{} {} > {}".format(BINARY_PATH, BINARY_NAME, params, log_file_name))
     f.close()
     run_cmd(BINARY_PATH, BINARY_NAME, params, log_file_name)
 
@@ -78,7 +78,7 @@ def syncgateway_load_docs(workload_settings: PhaseSettings, timer: int, worker_i
                                   insertstart=get_offset(workload_settings, worker_id))
 
     f = open("/tmp/worker-loaddocs-{}.log".format(worker_id), "w")
-    f.write("{}{} {} > {}".format(BINARY_PATH, BINARY_NAME, params, log_file_name))
+    f.write("{}/{} {} > {}".format(BINARY_PATH, BINARY_NAME, params, log_file_name))
     f.close()
     run_cmd(BINARY_PATH, BINARY_NAME, params, log_file_name)
 
@@ -96,7 +96,7 @@ def syncgateway_init_users(workload_settings: PhaseSettings, timer: int, worker_
                                   sequence_start = int(sgs.users) + int(sgs.documents) + 1)
 
     f = open("/tmp/worker-initusers-{}.log".format(worker_id), "w")
-    f.write("{}{} {} > {}".format(BINARY_PATH, BINARY_NAME, params, log_file_name))
+    f.write("{}/{} {} > {}".format(BINARY_PATH, BINARY_NAME, params, log_file_name))
     f.close()
     run_cmd(BINARY_PATH, BINARY_NAME, params, log_file_name)
 
@@ -123,6 +123,6 @@ def syncgateway_run_test(workload_settings: PhaseSettings, timer: int, worker_id
                                  insertproportion=sgs.insertproportion)
 
     f = open("/tmp/worker-runtest-{}.log".format(worker_id), "w")
-    f.write("{}{} {} > {}".format(BINARY_PATH, BINARY_NAME, params, log_file_name))
+    f.write("{}/{} {} > {}".format(BINARY_PATH, BINARY_NAME, params, log_file_name))
     f.close()
     run_cmd(BINARY_PATH, BINARY_NAME, params, log_file_name)

@@ -733,6 +733,7 @@ class SyncgatewaySettings:
     CHANNELS = 1
     CHANNLES_PER_USER = 1
     CLIENTS = 4
+    NODES = 4
     CHANNELS_PER_DOC = 1
     DOCUMENTS = 1000000
     ROUNDTRIP_WRITE = "false"
@@ -776,6 +777,7 @@ class SyncgatewaySettings:
         self.max_inserts_per_instance = options.get('max_inserts_per_instance', self.MAX_INSERTS_PER_INSTANCE)
         self.insert_mode = options.get('insert_mode', self.INSERT_MODE)
         self.clients = options.get('clients', self.CLIENTS)
+        self.nodes = options.get('nodes', self.NODES)
 
     def __str__(self) -> str:
         return str(self.__dict_)

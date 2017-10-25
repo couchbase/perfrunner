@@ -15,6 +15,7 @@ time = 600
 workers = 0
 
 [syncgateway]
+nodes = 4
 threads = 100
 clients = 4
 instances_per_client = 4

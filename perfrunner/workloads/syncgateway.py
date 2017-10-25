@@ -1,5 +1,5 @@
 from perfrunner.settings import PhaseSettings, ClusterSpec
-from perfrunner.helpers.local import run_cmd
+from perfrunner.helpers.local import run_cmd, restart_memcached
 
 
 BINARY_NAME = "ycsb/bin"
@@ -23,7 +23,7 @@ INIT_USERS_CMD = " run syncgateway -s -P {workload} -p recordcount={total_docs} 
                  "-p syncgateway.sequencestart={sequence_start} -p syncgateway.initusers=true " \
                  "-p insertstart={insertstart} -p readproportion=1 -p syncgateway.feedmode=normal"
 
-RUN_TEST_CMD = "bin/ycsb run syncgateway -s -P {workload} -p recordcount={total_docs} -p operationcount=100000000 " \
+RUN_TEST_CMD = " run syncgateway -s -P {workload} -p recordcount={total_docs} -p operationcount=100000000 " \
                "-p maxexecutiontime={time} -threads {threads} -p syncgateway.host={hosts} -p syncgateway.auth={auth} " \
                "-p memcached.host={memcached_host} -p syncgateway.totalusers={total_users} " \
                "-p syncgateway.roundtrip={roundtrip} -p insertstart={insertstart} " \
@@ -39,8 +39,12 @@ def get_offset(workload_settings, worker_id):
     return int(workload_settings.syncgateway_settings.insertstart) + local_offset
 
 
-def get_hosts(cluster):
-    return ','.join(cluster.initial_nodes)
+def get_hosts(cluster, workload_settings):
+    return ','.join(cluster.servers[:workload_settings.syncgateway_settings.nodes])
+
+
+def syncgateway_start_memcached(workload_settings: PhaseSettings, timer: int, worker_id: int, cluster: ClusterSpec):
+    restart_memcached(mem_limit=20000, port=8000, mem_host=cluster.workers[0])
 
 
 def syncgateway_load_users(workload_settings: PhaseSettings, timer: int, worker_id: int, cluster: ClusterSpec):

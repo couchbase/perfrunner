@@ -325,10 +325,10 @@ def run_ycsb(host, bucket, password, action, workload, items, workers,
 def run_cmd(path, command, parameters, output_file):
     cmd = "{} {} 2>{}".format(command, parameters, output_file)
     logger.info('Running : {}'.format(cmd))
-    #with lcd(path):
-        #local(cmd)
+    with lcd(path):
+        local(cmd)
 
-def restart_memcached(mem_limit=10000, port=8000):
+def restart_memcached(mem_limit=10000, port=8000, mem_host='localhost'):
     cmd1 = 'killall -9 memcached'
     logger.info('Running: {}'.format(cmd1))
     with settings(warn_only=True):
@@ -345,15 +345,15 @@ def restart_memcached(mem_limit=10000, port=8000):
     else:
         raise Exception('memcached was not kill properly')
 
-    cmd2 = 'memcached -u root -m {mem_limit} -l localhost -p {port} -d'
-    cmd2 = cmd2.format(mem_limit=mem_limit, port=port)
+    cmd2 = 'memcached -u root -m {mem_limit} -l {memhost} -p {port} -d'
+    cmd2 = cmd2.format(mem_limit=mem_limit, port=port, memhost=mem_host)
     logger.info('Running: {}'.format(cmd2))
     result = local(cmd2, capture=True)
 
     for counter in range(5):
         try:
             time.sleep(2)
-            mc = MemcachedClient(host='localhost', port=port)
+            mc = MemcachedClient(host=mem_host, port=port)
             mc.stats()
             mc.close()
             break

@@ -28,6 +28,7 @@ from perfrunner.workloads.syncgateway import (
     syncgateway_init_users,
     syncgateway_load_docs,
     syncgateway_run_test,
+    syncgateway_start_memcached,
 )
 
 celery = Celery('workers')
@@ -82,6 +83,10 @@ def syncgateway_task_load_docs(*args):
 def syncgateway_task_run_test(*args):
     syncgateway_run_test(*args)
 
+@celery.task
+def syncgateway_task_start_memcached(*args):
+    syncgateway_start_memcached(*args)
+
 class WorkerManager:
 
     def __new__(cls, *args, **kwargs):
@@ -102,9 +107,7 @@ class RemoteWorkerManager:
         self.cluster_spec = cluster_spec
         self.test_config = test_config
         self.remote = RemoteHelper(cluster_spec, test_config, verbose)
-
         self.workers = cycle(self.cluster_spec.workers)
-
         self.terminate()
         self.start()
         self.wait_until_workers_are_ready()
@@ -166,7 +169,7 @@ class RemoteWorkerManager:
 
         if distrubute:
             total_threads = int(task_settings.syncgateway_settings.threads)
-            total_clients = int(len(self.all_clients))
+            total_clients = int(task_settings.syncgateway_settings.clients)
             instances_per_client = int(task_settings.syncgateway_settings.instances_per_client)
             total_instances = total_clients * instances_per_client
             threads_per_instance = int(total_threads/total_instances) or 1

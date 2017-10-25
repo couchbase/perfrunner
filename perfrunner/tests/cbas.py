@@ -1,4 +1,5 @@
 import os
+import time
 
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
@@ -6,7 +7,9 @@ from perfrunner.helpers.misc import target_hash
 from perfrunner.helpers.worker import (
     cbas_bigfun_data_delete_task,
     cbas_bigfun_data_insert_task,
+    cbas_bigfun_data_mixload_task,
     cbas_bigfun_data_query_task,
+    cbas_bigfun_data_ttl_task,
     cbas_bigfun_data_update_index_task,
     cbas_bigfun_data_update_non_index_task,
     cbas_bigfun_wait_task,
@@ -269,6 +272,10 @@ class CBASBigfunTest(PerfTest):
     def delete(self, *args, **kwargs):
         PerfTest.trigger_tasks(self, task=cbas_bigfun_data_delete_task)
 
+    def ttl(self, *args, **kwargs):
+        PerfTest.trigger_tasks(self, task=cbas_bigfun_data_ttl_task)
+
+    @timeit
     def query(self, *args, **kwargs):
         PerfTest.trigger_tasks(self, task=cbas_bigfun_data_query_task,
                                target_iterator=self.cbas_target_iterator)
@@ -401,6 +408,32 @@ class CBASBigfunDataSetTest(CBASBigfunTest):
             )
 
 
+class CBASBigfunDataSetTTLTest(CBASBigfunTest):
+
+    @with_stats
+    def access(self, *args, **kwargs):
+        self.start_cbas_sync()
+
+        self.initial_sync_latency = self.monitor_cbas_synced()
+
+        self.ttl()
+
+        self.ttl_sync_latency = self.monitor_cbas_synced_deleted()
+
+        self.insert()
+
+        self.monitor_cbas_synced()
+
+    def _report_kpi(self):
+        self.collect_export_files()
+        if self.ttl_sync_latency is not None:
+            self.reporter.post(
+                *self.metrics.cbas_sync_latency(self.ttl_sync_latency,
+                                                "ttl_sync_latency_sec",
+                                                "ttl  sync latency in second")
+            )
+
+
 class CBASBigfunQueryTest(CBASBigfunTest):
 
     @with_stats
@@ -410,6 +443,37 @@ class CBASBigfunQueryTest(CBASBigfunTest):
         self.monitor_cbas_synced()
 
         self.query()
+
+    def _report_kpi(self):
+        self.collect_export_files()
+        query_latencies = self.metrics.parse_cbas_query_latencies()
+        for key, value in query_latencies.items():
+            self.reporter.post(
+                *self.metrics.cbas_query_latency(
+                    value,
+                    key,
+                    "Query latency in MS: " + key)
+            )
+
+
+class CBASBigfunQueryWithBGTest(CBASBigfunTest):
+
+    @with_stats
+    def access(self, *args, **kwargs):
+        self.start_cbas_sync()
+
+        self.monitor_cbas_synced()
+
+        # cbas_bigfun_data_mixload_task is used to trigger backgroup mutation.
+        # all mutation are within 1/10 of the whole dataset to avoid too much
+        # impact on the query and too much memory usage in current loader tool
+        # We will need more test cases to cover wider mutaion
+        self.access_bg(task=cbas_bigfun_data_mixload_task)
+
+        querytime = self.query()
+
+        if self.test_config.access_settings.time > querytime:
+            time.sleep(self.test_config.access_settings.time - querytime)
 
     def _report_kpi(self):
         self.collect_export_files()

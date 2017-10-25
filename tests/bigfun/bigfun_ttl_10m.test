@@ -1,0 +1,19 @@
+[test_case]
+test = perfrunner.tests.cbas.CBASBigfunDataSetTTLTest
+title = TTL sync latency for BigFun large dataset (10M users + 50M messages + 100M chirp messages)
+component = cbas
+category = latency
+
+[cluster]
+mem_quota = 51200
+analytics_mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+
+[cbas_settings]
+node.logLevel=WARNING
+
+[bigfun]
+workers=40
+user_docs=10000000
+

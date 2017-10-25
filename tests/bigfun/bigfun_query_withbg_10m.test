@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.cbas.CBASBigfunQueryTest
+test = perfrunner.tests.cbas.CBASBigfunQueryWithBGTest
 title = Average query latency for BigFun large dataset (10M users + 50M messages + 100M chirp messages) - CBAS test 3 parallel queries
 component = cbas
 category = latency
@@ -21,3 +21,4 @@ user_docs=10000000
 workers=20
 bigfun_query_workers=3
 items=10000000
+time=300

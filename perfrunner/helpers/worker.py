@@ -21,7 +21,9 @@ from perfrunner.workloads import spring_workload
 from perfrunner.workloads.cbas import (
     cbas_bigfun_data_delete,
     cbas_bigfun_data_insert,
+    cbas_bigfun_data_mixload,
     cbas_bigfun_data_query,
+    cbas_bigfun_data_ttl,
     cbas_bigfun_data_update_index,
     cbas_bigfun_data_update_non_index,
     cbas_bigfun_wait,
@@ -63,6 +65,16 @@ def ycsb_data_load_task(*args):
 @celery.task
 def ycsb_task(*args):
     ycsb_workload(*args)
+
+
+@celery.task
+def cbas_bigfun_data_ttl_task(*args):
+    cbas_bigfun_data_ttl(*args)
+
+
+@celery.task
+def cbas_bigfun_data_mixload_task(*args):
+    cbas_bigfun_data_mixload(*args)
 
 
 @celery.task

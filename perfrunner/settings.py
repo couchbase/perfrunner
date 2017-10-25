@@ -379,6 +379,12 @@ class PhaseSettings:
     RECORDED_LOAD_CACHE_SIZE = 0
     INSERTS_PER_WORKERINSTANCE = 0
 
+    BIGFUN_QUERY_WORKERS = 3
+    BIGFUN_MIX_INSERTS = 10
+    BIGFUN_MIX_UPDATES = 80
+    BIGFUN_MIX_DELETES = 10
+    BIGFUN_MIX_INTERVAL = 20
+
     def __init__(self, options: dict):
         # Common settings
         self.time = int(options.get('time', self.TIME))
@@ -471,6 +477,14 @@ class PhaseSettings:
         # Subdoc & XATTR
         self.subdoc_field = options.get('subdoc_field')
         self.xattr_field = options.get('xattr_field')
+
+        # Bigfun settings
+        self.bigfun_query_workers = int(options.get('bigfun_query_workers',
+                                                    self.BIGFUN_QUERY_WORKERS))
+        self.bigfun_mix_inserts = int(options.get('bigfun_mix_inserts', self.BIGFUN_MIX_INSERTS))
+        self.bigfun_mix_updates = int(options.get('bigfun_mix_updates', self.BIGFUN_MIX_UPDATES))
+        self.bigfun_mix_deletes = int(options.get('bigfun_mix_deletes', self.BIGFUN_MIX_DELETES))
+        self.bigfun_mix_interval = int(options.get('bigfun_mix_interval', self.BIGFUN_MIX_INTERVAL))
 
     def __str__(self) -> str:
         return str(self.__dict__)

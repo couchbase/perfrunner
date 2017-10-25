@@ -341,6 +341,34 @@ def run_bigfun_single_script(host, bucket, password, op, instance, tablename, id
         local(cmd)
 
 
+def run_bigfun_mix_mode_script(host, bucket, password,
+                               instance, datapath,
+                               interval_ms, duration_sec,
+                               gudoc, gmdoc, cmdoc,
+                               guarg, gmarg, cmarg):
+    with lcd('loader'):
+        cmd = 'bash ./target/loader-1.0-SNAPSHOT-binary-assembly/bin/mixloadall.sh' \
+              ' {host} {bucket} {password}' \
+              ' {instance} {datapath}' \
+              ' {interval_ms} {duration_sec}' \
+              ' {gudoc} {gmdoc} {cmdoc}' \
+              ' "{guarg}" "{gmarg}" "{cmarg}"'.format(
+                                                host=host,
+                                                bucket=bucket,
+                                                password=password,
+                                                instance=instance,
+                                                datapath=datapath,
+                                                interval_ms=interval_ms,
+                                                duration_sec=duration_sec,
+                                                gudoc=gudoc,
+                                                gmdoc=gmdoc,
+                                                cmdoc=cmdoc,
+                                                guarg=guarg,
+                                                gmarg=gmarg,
+                                                cmarg=cmarg)
+        local(cmd)
+
+
 def run_bigfun_script(host, bucket, password, op, instance, guarg, gmarg, cmarg):
     run_bigfun_single_script(host, bucket, password, op, instance,
                              "gbook_users", "id", guarg)
@@ -368,12 +396,14 @@ def run_bigfun_query_script(host, bucket, password, instance, concurrent, repeat
         local(cmd)
 
 
-def run_bigfun(host, bucket, password, action,
-               time=None, instance=0, workers=0):
+def run_bigfun(host, bucket, password, action, gudocnum=0, interval=0,
+               time=None, instance=0, workers=0, inserts=0, deletes=0, updates=0):
     if action == "insert":
         run_bigfun_script(host, bucket, password, "insert", instance, "", "", "")
     elif action == "delete":
         run_bigfun_script(host, bucket, password, "delete", instance, "", "", "")
+    elif action == "ttl":
+        run_bigfun_script(host, bucket, password, "ttl", instance, "-t 1#2", "-t 1#2", "-t 1#2")
     elif action == "update_non_index":
         run_bigfun_script(host, bucket, password, "update", instance,
                           "-U alias#string#alias_update%d#1#100 ",
@@ -390,6 +420,32 @@ def run_bigfun(host, bucket, password, action,
         with lcd('loader'):
             cmd = "sleep {seconds}".format(seconds=time)
             local(cmd)
+    elif action == "mix":
+        id_per_table = gudocnum * 20
+        gu_insert_start = 4 * id_per_table
+        gm_insert_start = 5 * id_per_table
+        cm_insert_start = 7 * id_per_table
+        inmem_ratio = 0.1
+        if int((gudocnum * inmem_ratio) / workers) < 100:
+            inmem_ratio = 0.5
+        gu_doc_inmem = int(gudocnum * inmem_ratio / workers)
+        gm_doc_inmem = int((gudocnum * 5 * inmem_ratio) / workers)
+        cm_doc_inmem = int((gudocnum * 10 * inmem_ratio) / workers)
+        insert_range_per_partition = int(id_per_table / workers)
+        arg = "-t 1#2 -ip {insertportion} -dp {deleteportion}" \
+              " -up {updateportion} -tp {ttlportion}" \
+              " -qp 0 -md 10 -ir {insertrange}".format(insertportion=inserts,
+                                                       deleteportion=deletes,
+                                                       updateportion=updates,
+                                                       ttlportion=0,
+                                                       insertrange=insert_range_per_partition)
+        run_bigfun_mix_mode_script(host, bucket, password,
+                                   instance, "/workspace/bigfundata",
+                                   interval, time,
+                                   gu_doc_inmem, gm_doc_inmem, cm_doc_inmem,
+                                   arg + " -is {insertstart}".format(insertstart=gu_insert_start),
+                                   arg + " -is {insertstart}".format(insertstart=gm_insert_start),
+                                   arg + " -is {insertstart}".format(insertstart=cm_insert_start))
 
 
 def restart_memcached(mem_limit=10000, port=8000):

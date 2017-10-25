@@ -52,7 +52,7 @@ def syncgateway_start_memcached(workload_settings: PhaseSettings, timer: int, wo
 
 def syncgateway_load_users(workload_settings: PhaseSettings, timer: int, worker_id: int, cluster: ClusterSpec):
     sgs = workload_settings.syncgateway_settings
-    log_file_name = "{}(loadusers).log".format(sgs.log_title)
+    log_file_name = "{}_loadusers_.log".format(sgs.log_title)
     params = LOAD_USERS_CMD.format(workload=sgs.workload,
                                 hosts=get_hosts(cluster, workload_settings),
                                 memcached_host=cluster.workers[0],
@@ -69,7 +69,7 @@ def syncgateway_load_users(workload_settings: PhaseSettings, timer: int, worker_
 
 def syncgateway_load_docs(workload_settings: PhaseSettings, timer: int, worker_id: int, cluster: ClusterSpec):
     sgs = workload_settings.syncgateway_settings
-    log_file_name = "{}(loaddocs).log".format(sgs.log_title)
+    log_file_name = "{}_loaddocs_.log".format(sgs.log_title)
     params = LOAD_DOCS_CMD.format(workload=sgs.workload,
                                   hosts=get_hosts(cluster, workload_settings),
                                   total_docs=sgs.documents,
@@ -85,7 +85,7 @@ def syncgateway_load_docs(workload_settings: PhaseSettings, timer: int, worker_i
 
 def syncgateway_init_users(workload_settings: PhaseSettings, timer: int, worker_id: int, cluster: ClusterSpec):
     sgs = workload_settings.syncgateway_settings
-    log_file_name = "{}(initusers).log".format(sgs.log_title)
+    log_file_name = "{}_initusers_.log".format(sgs.log_title)
     params = INIT_USERS_CMD.format(workload=sgs.workload,
                                   hosts=get_hosts(cluster, workload_settings),
                                   total_docs=sgs.documents,
@@ -104,7 +104,7 @@ def syncgateway_init_users(workload_settings: PhaseSettings, timer: int, worker_
 
 def syncgateway_run_test(workload_settings: PhaseSettings, timer: int, worker_id: int, cluster: ClusterSpec):
     sgs = workload_settings.syncgateway_settings
-    log_file_name = "{}(runtest).log".format(sgs.log_title)
+    log_file_name = "{}_runtest_.log".format(sgs.log_title)
     params = RUN_TEST_CMD.format(workload=sgs.workload,
                                  hosts=get_hosts(cluster, workload_settings),
                                  total_docs=sgs.documents,

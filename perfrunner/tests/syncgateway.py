@@ -98,7 +98,7 @@ class SGPerfTest(PerfTest):
 
 
     def run(self):
-        #self.download_ycsb()
+        self.download_ycsb()
         self.start_memcached()
         self.load_users()
         self.load_docs()

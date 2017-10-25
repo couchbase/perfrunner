@@ -323,7 +323,7 @@ def run_ycsb(host, bucket, password, action, workload, items, workers,
 
 
 def run_cmd(path, command, parameters, output_file):
-    cmd = "{} {} 2>{}".format(command, parameters, output_file)
+    cmd = " {} {} 2>{}".format(command, parameters, output_file)
     logger.info('Running : {}'.format(cmd))
     with lcd(path):
         local(cmd)

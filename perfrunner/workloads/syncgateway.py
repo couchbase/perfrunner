@@ -51,7 +51,7 @@ def syncgateway_load_users(workload_settings: PhaseSettings, timer: int, worker_
     sgs = workload_settings.syncgateway_settings
     log_file_name = "{}(loadusers).log".format(sgs.log_title)
     params = LOAD_USERS_CMD.format(workload=sgs.workload,
-                                hosts=get_hosts(cluster),
+                                hosts=get_hosts(cluster, workload_settings),
                                 memcached_host=cluster.workers[0],
                                 total_users=sgs.users,
                                 total_channels=sgs.channels,
@@ -68,7 +68,7 @@ def syncgateway_load_docs(workload_settings: PhaseSettings, timer: int, worker_i
     sgs = workload_settings.syncgateway_settings
     log_file_name = "{}(loaddocs).log".format(sgs.log_title)
     params = LOAD_DOCS_CMD.format(workload=sgs.workload,
-                                  hosts=get_hosts(cluster),
+                                  hosts=get_hosts(cluster, workload_settings),
                                   total_docs=sgs.documents,
                                   memcached_host=cluster.workers[0],
                                   total_users=sgs.users,
@@ -84,7 +84,7 @@ def syncgateway_init_users(workload_settings: PhaseSettings, timer: int, worker_
     sgs = workload_settings.syncgateway_settings
     log_file_name = "{}(initusers).log".format(sgs.log_title)
     params = INIT_USERS_CMD.format(workload=sgs.workload,
-                                  hosts=get_hosts(cluster),
+                                  hosts=get_hosts(cluster, workload_settings),
                                   total_docs=sgs.documents,
                                   memcached_host=cluster.workers[0],
                                   auth=sgs.auth,
@@ -103,7 +103,7 @@ def syncgateway_run_test(workload_settings: PhaseSettings, timer: int, worker_id
     sgs = workload_settings.syncgateway_settings
     log_file_name = "{}(runtest).log".format(sgs.log_title)
     params = RUN_TEST_CMD.format(workload=sgs.workload,
-                                 hosts=get_hosts(cluster),
+                                 hosts=get_hosts(cluster, workload_settings),
                                  total_docs=sgs.documents,
                                  memcached_host=cluster.workers[0],
                                  auth=sgs.auth,

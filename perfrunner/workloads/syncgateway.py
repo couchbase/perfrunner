@@ -40,7 +40,7 @@ def get_offset(workload_settings, worker_id):
 
 
 def get_hosts(cluster, workload_settings):
-    return ','.join(cluster.servers[:workload_settings.syncgateway_settings.nodes])
+    return ','.join(cluster.servers[:int(workload_settings.syncgateway_settings.nodes)])
 
 
 def syncgateway_start_memcached(workload_settings: PhaseSettings, timer: int, worker_id: int, cluster: ClusterSpec):

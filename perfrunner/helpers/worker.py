@@ -175,7 +175,7 @@ class RemoteWorkerManager:
             threads_per_instance = int(total_threads/total_instances) or 1
             worker_id = 0
             for instance in range(instances_per_client):
-                for client in self.cluster_spec.workers[:task_settings.syncgateway_settings.clients]:
+                for client in self.cluster_spec.workers[:total_clients]:
                     worker_id += 1
                     logger.info('Running the \'{}\' by worker #{} on client {}'.format(phase, worker_id, client))
                     task_settings.syncgateway_settings.threads_per_instance = str(threads_per_instance)

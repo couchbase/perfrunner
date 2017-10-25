@@ -44,6 +44,9 @@ def get_hosts(cluster, workload_settings):
 
 
 def syncgateway_start_memcached(workload_settings: PhaseSettings, timer: int, worker_id: int, cluster: ClusterSpec):
+    f = open("/tmp/worker-startmemcached-{}.log".format(worker_id), "w")
+    f.write(cluster.workers[0])
+    f.close()
     restart_memcached(mem_limit=20000, port=8000, mem_host=cluster.workers[0])
 
 

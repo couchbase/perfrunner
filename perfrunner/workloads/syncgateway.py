@@ -2,7 +2,7 @@ from perfrunner.settings import PhaseSettings, ClusterSpec
 from perfrunner.helpers.local import run_cmd, restart_memcached
 
 
-BINARY_NAME = "ycsb/bin"
+BINARY_NAME = "bin/ycsb"
 BINARY_PATH = "YCSB"
 
 LOAD_USERS_CMD = " load syncgateway -s -P {workload} -p syncgateway.loadmode=users -threads 50 " \

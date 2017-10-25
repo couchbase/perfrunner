@@ -38,8 +38,10 @@ def get_offset(workload_settings, worker_id):
     local_offset = worker_id * max_inserts
     return int(workload_settings.syncgateway_settings.insertstart) + local_offset
 
+
 def get_hosts(cluster):
-    return ','.join(cluster.servers)
+    return ','.join(cluster.initial_nodes)
+
 
 def syncgateway_load_users(workload_settings: PhaseSettings, timer: int, worker_id: int, cluster: ClusterSpec):
     sgs = workload_settings.syncgateway_settings

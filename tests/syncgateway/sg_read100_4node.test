@@ -15,9 +15,10 @@ time = 600
 workers = 0
 
 [syncgateway]
-threads=100
-instances_per_client=4
-workload_path =  workloads/syncgateway_blank
+threads = 100
+clients = 4
+instances_per_client = 4
+workload_path = workloads/syncgateway_blank
 branch = syncgateway-weekly
 users = 1000
 channels = 100
@@ -35,3 +36,4 @@ updateproportion=0
 insertproportion=0
 requestdistribution = zipfian
 log_title = sync_gateway_1node_reads
+

@@ -104,7 +104,6 @@ class RemoteWorkerManager:
         self.remote = RemoteHelper(cluster_spec, test_config, verbose)
 
         self.workers = cycle(self.cluster_spec.workers)
-        self.all_clients = self.cluster_spec.workers
 
         self.terminate()
         self.start()
@@ -173,7 +172,7 @@ class RemoteWorkerManager:
             threads_per_instance = int(total_threads/total_instances) or 1
             worker_id = 0
             for instance in range(instances_per_client):
-                for client in self.all_clients:
+                for client in self.cluster_spec.workers[:task_settings.syncgateway_settings.clients]:
                     worker_id += 1
                     logger.info('Running the \'{}\' by worker #{} on client {}'.format(phase, worker_id, client))
                     task_settings.syncgateway_settings.threads_per_instance = str(threads_per_instance)
@@ -183,7 +182,7 @@ class RemoteWorkerManager:
                     )
                     self.async_results.append(async_result)
         else:
-            client = self.all_clients[0]
+            client = self.cluster_spec.workers[0]
             logger.info('Running sigle-instance task \'{}\' on client {}'.format(phase, client))
             async_result = task.apply_async(
                 args=(task_settings, timer, 0, self.cluster_spec), queue=client, expires=timer,

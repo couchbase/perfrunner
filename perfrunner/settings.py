@@ -732,6 +732,7 @@ class SyncgatewaySettings:
     USERS = 100
     CHANNELS = 1
     CHANNLES_PER_USER = 1
+    CLIENTS = 4
     CHANNELS_PER_DOC = 1
     DOCUMENTS = 1000000
     ROUNDTRIP_WRITE = "false"
@@ -748,7 +749,6 @@ class SyncgatewaySettings:
     THREADS = 10
     INSERTSTART=0
     MAX_INSERTS_PER_INSTANCE = 1000000
-
 
     def __init__(self, options: dict):
         self.repo = options.get('repo', self.REPO)
@@ -769,16 +769,17 @@ class SyncgatewaySettings:
         self.insertproportion = options.get('insertproportion', self.INSERTPROPORTION)
         self.requestdistribution = options.get('requestdistribution', self.REQUESTDISTRIBUTION)
         self.log_title = options.get('log_title', self.LOG_TITE)
-        self.instances_per_client = options.get('instances_per_client', '0')
+        self.instances_per_client = options.get('instances_per_client', 0)
         self.threads_per_instance = 1
         self.threads = options.get('threads', self.THREADS)
         self.insertstart = options.get('inserstart', self.INSERTSTART)
         self.max_inserts_per_instance = options.get('max_inserts_per_instance', self.MAX_INSERTS_PER_INSTANCE)
         self.insert_mode = options.get('insert_mode', self.INSERT_MODE)
-
+        self.clients = options.get('clients', self.CLIENTS)
 
     def __str__(self) -> str:
         return str(self.__dict_)
+
 
 class TestConfig(Config):
 

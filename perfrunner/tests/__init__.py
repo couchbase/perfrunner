@@ -76,6 +76,9 @@ class PerfTest:
         if self.test_config.cluster.kernel_mem_limit:
             self.cluster.reset_memory_settings()
 
+        if exc_type == KeyboardInterrupt:
+            return True
+
     def reset_memory_settings(self):
         if self.test_config.cluster.kernel_mem_limit:
             for service in self.test_config.cluster.kernel_mem_limit_services:

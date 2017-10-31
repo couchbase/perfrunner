@@ -220,22 +220,28 @@ class MetricHelper:
 
         return int(np.percentile(values, 90))
 
-    def xdcr_lag(self, percentile: Number = 95) -> Metric:
-        metric_id = '{}_{}th_xdc_lag'.format(self.test_config.name, percentile)
-        title = '{}th percentile replication lag (ms), {}'.format(
-            percentile, self._title)
+    def lag_collector_metric(self, collector, percentile: Number = 95) -> Metric:
+        metric_id = '{}_{}th_{}'.format(self.test_config.name, percentile, collector)
+        title = '{}th percentile {} (ms), {}'.format(
+            percentile, collector, self._title)
         metric_info = self._metric_info(metric_id, title)
 
         values = []
         for bucket in self.test_config.buckets:
             db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
-                                         collector='xdcr_lag',
+                                         collector=collector,
                                          bucket=bucket)
-            values += self.store.get_values(db, metric='xdcr_lag')
+            values += self.store.get_values(db, metric=collector)
 
         lag = round(np.percentile(values, percentile), 1)
 
         return lag, self._snapshots, metric_info
+
+    def xdcr_lag(self, percentile: Number = 95) -> Metric:
+        return self.lag_collector_metric('xdcr_lag', percentile)
+
+    def cbas_lag(self, percentile: Number = 95) -> Metric:
+        return self.lag_collector_metric('cbas_lag', percentile)
 
     def avg_replication_rate(self, time_elapsed: float) -> Metric:
         metric_info = self._metric_info()

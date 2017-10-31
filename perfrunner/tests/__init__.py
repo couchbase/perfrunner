@@ -196,7 +196,8 @@ class PerfTest:
     def trigger_tasks(self,
                       task: Callable = spring_task,
                       settings: PhaseSettings = None,
-                      target_iterator: TargetIterator = None) -> None:
+                      target_iterator: TargetIterator = None,
+                      wait: bool = True) -> None:
         if settings is None:
             settings = self.test_config.access_settings
 
@@ -204,7 +205,7 @@ class PerfTest:
             target_iterator = self.target_iterator
 
         self.run_phase('trigger task phase',
-                       task, settings, target_iterator, settings.time)
+                       task, settings, target_iterator, settings.time, wait)
 
     def access_bg(self, task: Callable = spring_task,
                   settings: PhaseSettings = None,

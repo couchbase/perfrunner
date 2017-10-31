@@ -84,11 +84,13 @@ class ClusterSpec(Config):
                     has_service.append(host)
         return has_service
 
-    def servers_by_master_by_role(self, master: str, role: str) -> List[str]:
+    def servers_by_master_by_role(self, master: str, role: str, initial_nodes: int=-1) -> List[str]:
         has_service = []
         for _, servers in self.config.items('clusters'):
             serverslist = servers.split()
             if serverslist[0].split(':')[0] == master:
+                if initial_nodes != -1:
+                    serverslist = serverslist[0:initial_nodes]
                 for server in serverslist:
                     host, roles = server.split(':')
                     if role in roles:
@@ -566,6 +568,23 @@ class IndexSettings:
         return str(self.__dict__)
 
 
+# This is for test that is used for test developers
+# to try new test approaches
+# Keep the code here in case need to try something
+# later
+class UnitTestSettings:
+
+    RAISE_EXCEPTION = 0
+    SLEEP_SEC = 30
+
+    def __init__(self, options: dict):
+        self.raise_exception = bool(int(options.get('raise_exception', self.RAISE_EXCEPTION)))
+        self.sleep_sec = int(options.get('sleep_sec', self.SLEEP_SEC))
+
+    def __str__(self) -> str:
+        return str(self.__dict__)
+
+
 class CBASSettings:
 
     def __init__(self, options: dict):
@@ -909,6 +928,11 @@ class TestConfig(Config):
     def cbas_settings(self) -> CBASSettings:
         options = self._get_options_as_dict('cbas_settings')
         return CBASSettings(options)
+
+    @property
+    def unittest_settings(self) -> UnitTestSettings:
+        options = self._get_options_as_dict('unit_test')
+        return UnitTestSettings(options)
 
     @property
     def export_settings(self) -> ExportSettings:

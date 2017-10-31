@@ -78,10 +78,14 @@ class ClusterManager:
 
     def set_cbas_settings(self):
         settings = self.test_config.cbas_settings.node_settings
-        for analytics_node in self.cluster_spec.servers_by_role("cbas"):
-            for parameter, value in settings.items():
-                self.rest.set_cbas_node_settings(analytics_node,
-                                                 {parameter: value})
+        for (_, servers), initial_nodes in zip(self.cluster_spec.clusters,
+                                               self.initial_nodes):
+            master = servers[0]
+            for analytics_node in self.cluster_spec.servers_by_master_by_role(master, "cbas",
+                                                                              initial_nodes):
+                for parameter, value in settings.items():
+                    self.rest.set_cbas_node_settings(analytics_node,
+                                                     {parameter: value})
         settings = self.test_config.cbas_settings.cluster_settings
         for master_node in self.cluster_spec.masters:
             analytics_nodes = self.cluster_spec.servers_by_master_by_role(master_node, "cbas")
@@ -274,8 +278,13 @@ class ClusterManager:
     def wait_until_healthy(self):
         for master in self.cluster_spec.masters:
             self.monitor.monitor_node_health(master)
-        for analytics_node in self.cluster_spec.servers_by_role("cbas"):
-            self.monitor.monitor_analytics_node_active(analytics_node)
+
+        for (_, servers), initial_nodes in zip(self.cluster_spec.clusters,
+                                               self.initial_nodes):
+            master = servers[0]
+            for analytics_node in self.cluster_spec.servers_by_master_by_role(master, "cbas",
+                                                                              initial_nodes):
+                self.monitor.monitor_analytics_node_active(analytics_node)
 
     def enable_audit(self):
         if not self.is_compatible(min_release='4.0.0') or \

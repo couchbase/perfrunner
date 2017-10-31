@@ -88,6 +88,9 @@ class RebalanceTest(PerfTest):
     def rebalance(self, services=None):
         self._rebalance(services)
 
+    def post_rebalance_newnodes(self, newnodes):
+        pass
+
     def _rebalance(self, services):
         clusters = self.cluster_spec.clusters
         initial_nodes = self.test_config.cluster.initial_nodes
@@ -119,8 +122,8 @@ class RebalanceTest(PerfTest):
                 self.rest.add_node(master, node, services=services)
 
             self.rest.rebalance(master, known_nodes, ejected_nodes)
-
             self.monitor_progress(master)
+            self.post_rebalance_newnodes(new_nodes)
 
 
 class RebalanceKVTest(RebalanceTest):
@@ -192,6 +195,14 @@ class RecoveryTest(RebalanceKVTest):
     @with_delay
     @with_timer
     def rebalance(self, *args):
+        self._rebalance(*args)
+
+    def _rebalance(self, *args):
+        """Add this function.
+
+        So that recovery test's rebalance can be called without decrator
+        and it's callable within access.
+        """
         clusters = self.cluster_spec.clusters
         initial_nodes = self.test_config.cluster.initial_nodes
 

@@ -1,6 +1,7 @@
 from cbagent.collectors.collector import Collector
 
 from cbagent.collectors.active_tasks import ActiveTasks
+from cbagent.collectors.cbas_lag import CBASLag
 from cbagent.collectors.eventing_stats import (
     EventingPerNodeStats,
     EventingStats

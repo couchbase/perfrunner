@@ -1,6 +1,9 @@
 import os
+import sys
+import threading
 import time
 
+from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.misc import target_hash
@@ -16,6 +19,7 @@ from perfrunner.helpers.worker import (
 )
 from perfrunner.settings import TargetSettings
 from perfrunner.tests import PerfTest, TargetIterator
+from perfrunner.tests.rebalance import RebalanceTest, RecoveryTest
 
 
 class CBASTargetIterator(TargetIterator):
@@ -32,6 +36,8 @@ class CBASTargetIterator(TargetIterator):
 
 
 class CBASBigfunTest(PerfTest):
+
+    CBASMETRIC_CLASSNAME = "CBASBigfunMetricInfo"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -219,6 +225,9 @@ class CBASBigfunTest(PerfTest):
 
     @timeit
     def monitor_cbas_synced(self):
+        self._monitor_cbas_synced()
+
+    def _monitor_cbas_synced(self):
         for target in self.target_iterator:
             master_node = target.node
             bucket = target.bucket
@@ -434,17 +443,45 @@ class CBASBigfunDataSetTTLTest(CBASBigfunTest):
             )
 
 
-class CBASBigfunQueryTest(CBASBigfunTest):
+class CBASBigfunStableStateTest(CBASBigfunTest):
 
-    @with_stats
-    def access(self, *args, **kwargs):
+    """Stable state CBAS syncing test.
+
+    Test after initial syncing of CBAS data
+    test that measures latency of CBAS data
+    syncing in ms (via "cbas_lag" collector)
+    """
+
+    COLLECTORS = {'cbas_lag': True}
+
+    def run(self):
+        self.download_bigfun()
+
+        self.generate_doctemplates()
+
+        self.load()
+
         self.start_cbas_sync()
 
         self.monitor_cbas_synced()
 
+        self.access()
+
+        self.report_kpi()
+
+    def _report_kpi(self):
+            self.reporter.post(
+                *self.metrics.cbas_lag())
+
+
+class CBASBigfunQueryTest(CBASBigfunStableStateTest):
+
+    @with_stats
+    def access(self, *args, **kwargs):
         self.query()
 
     def _report_kpi(self):
+        super()._report_kpi()
         self.collect_export_files()
         query_latencies = self.metrics.parse_cbas_query_latencies()
         for key, value in query_latencies.items():
@@ -456,18 +493,16 @@ class CBASBigfunQueryTest(CBASBigfunTest):
             )
 
 
-class CBASBigfunQueryWithBGTest(CBASBigfunTest):
+class CBASBigfunQueryWithBGTest(CBASBigfunQueryTest):
 
     @with_stats
     def access(self, *args, **kwargs):
-        self.start_cbas_sync()
+        """cbas_bigfun_data_mixload_task is used to trigger backgroup mutation.
 
-        self.monitor_cbas_synced()
-
-        # cbas_bigfun_data_mixload_task is used to trigger backgroup mutation.
-        # all mutation are within 1/10 of the whole dataset to avoid too much
-        # impact on the query and too much memory usage in current loader tool
-        # We will need more test cases to cover wider mutaion
+        All mutation are within 1/10 of the whole dataset to avoid too much
+        impact on the query and too much memory usage in current loader tool
+        We will need more test cases to cover wider mutaion
+        """
         self.access_bg(task=cbas_bigfun_data_mixload_task)
 
         querytime = self.query()
@@ -475,15 +510,263 @@ class CBASBigfunQueryWithBGTest(CBASBigfunTest):
         if self.test_config.access_settings.time > querytime:
             time.sleep(self.test_config.access_settings.time - querytime)
 
+
+class CBASRebalanceTest(RebalanceTest):
+
+    REBALANCE_SERVICES = None
+
+    def post_rebalance_newnodes(self, new_nodes):
+        """If we rebalanced-in new cbas nodes, need to apply cbas node settings to them."""
+        if self.REBALANCE_SERVICES == 'cbas':
+            settings = self.test_config.cbas_settings.node_settings
+            for analytics_node in new_nodes:
+                for parameter, value in settings.items():
+                    self.rest.set_cbas_node_settings(analytics_node,
+                                                     {parameter: value})
+                self.rest.restart_analytics(analytics_node)
+
+
+class CBASBigfunQueryWithBGRebalanceTest(CBASBigfunQueryTest, CBASRebalanceTest):
+
+    """Test measure query latency, cbas_lag during kv node rebalance."""
+
+    REBALANCE_SERVICES = None
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.rebalance_settings = self.test_config.rebalance_settings
+        self.rebalance_time = 0
+        self.rebalance_latency = 0
+        self.thr_exceptions = []
+
+    def query_thr(self):
+        try:
+            self.query()
+        except:
+            self.thr_exceptions.append(sys.exc_info())
+
+    def rebalance_thr(self):
+        try:
+            t0 = time.time()
+            self._rebalance(services=self.REBALANCE_SERVICES)
+            if not self.is_balanced():
+                raise Exception("cluster was not rebalanced after rebalance job")
+            self.rebalance_latency = time.time() - t0  # Rebalance time in seconds
+        except:
+            self.thr_exceptions.append(sys.exc_info())
+
+    @with_stats
+    def access(self, *args, **kwargs):
+        self.access_bg(task=cbas_bigfun_data_mixload_task)
+        t0 = time.time()
+        thr1 = threading.Thread(target=self.query_thr)
+        thr2 = threading.Thread(target=self.rebalance_thr)
+        thr1.start()
+        thr2.start()
+        thr1.join()
+        thr2.join()
+        if len(self.thr_exceptions) > 0:
+            raise self.thr_exceptions[0][1]
+        if self.test_config.access_settings.time > (time.time() - t0):
+            time.sleep(self.test_config.access_settings.time - (time.time() - t0))
+
+    def _report_kpi(self):
+        CBASBigfunQueryTest._report_kpi(self)
+        if self.rebalance_latency is not None:
+            self.reporter.post(
+                *self.metrics.rebalance_time(self.rebalance_latency)
+            )
+
+
+class CBASBigfunQueryWithBGRebalanceCBASTest(CBASBigfunQueryWithBGRebalanceTest):
+
+    """Test measure query latency, cbas_lag during cbas node rebalance."""
+
+    REBALANCE_SERVICES = 'cbas'
+
+
+class CBASBigfunDataSyncRebalanceTest(CBASBigfunTest, CBASRebalanceTest):
+
+    """Test measure initial cbas sync latency during kv node rebalance."""
+
+    REBALANCE_SERVICES = None
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.rebalance_settings = self.test_config.rebalance_settings
+        self.rebalance_time = 0
+        self.rebalance_latency = 0
+        self.initial_sync_latency = 0
+        self.thr_exceptions = []
+
+    def cbas_sync_thr(self):
+        try:
+            t0 = time.time()
+            self._monitor_cbas_synced()
+            self.initial_sync_latency = time.time() - t0  # CBAS sync time in seconds
+        except:
+            self.thr_exceptions.append(sys.exc_info())
+
+    def rebalance_thr(self):
+        try:
+            t0 = time.time()
+            self._rebalance(services=self.REBALANCE_SERVICES)
+            if not self.is_balanced():
+                raise Exception("cluster was not rebalanced after rebalance job")
+            self.rebalance_latency = time.time() - t0  # Rebalance time in seconds
+        except:
+            self.thr_exceptions.append(sys.exc_info())
+
+    @with_stats
+    def access(self, *args, **kwargs):
+        self.start_cbas_sync()
+        thr1 = threading.Thread(target=self.cbas_sync_thr)
+        thr2 = threading.Thread(target=self.rebalance_thr)
+        thr1.start()
+        thr2.start()
+        thr1.join()
+        thr2.join()
+        if len(self.thr_exceptions) > 0:
+            raise self.thr_exceptions[0][1]
+
     def _report_kpi(self):
         self.collect_export_files()
-        query_latencies = self.metrics.parse_cbas_query_latencies()
-        for key, value in query_latencies.items():
+        if self.initial_sync_latency is not None:
             self.reporter.post(
-                *self.metrics.cbas_query_latency(
-                    value,
-                    key,
-                    "Query latency in MS: " + key)
+                *self.metrics.cbas_sync_latency(self.initial_sync_latency,
+                                                "initial_sync_latency_sec",
+                                                "Initial sync latency in second")
+            )
+        if self.rebalance_latency is not None:
+            self.reporter.post(
+                *self.metrics.rebalance_time(self.rebalance_latency)
+            )
+
+
+class CBASBigfunDataSyncRebalanceCBASTest(CBASBigfunDataSyncRebalanceTest):
+
+    """Test measure initial cbas sync latency during cbas node rebalance."""
+
+    REBALANCE_SERVICES = 'cbas'
+
+
+class CBASBigfunQueryWithBGRecoveryTest(CBASBigfunQueryTest, RecoveryTest):
+
+    """Test measure cbas query latency, cbas_lag during kv node failover and recovery."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.rebalance_settings = self.test_config.rebalance_settings
+        self.rebalance_time = 0
+        self.reovery_latency = 0
+        self.thr_exceptions = []
+
+    def query_thr(self):
+        try:
+            self.query()
+        except:
+            self.thr_exceptions.append(sys.exc_info())
+
+    def recovery_thr(self):
+        try:
+            self.failover()
+            logger.info('Sleeping for {} seconds before rebalance'
+                        .format(self.test_config.rebalance_settings.start_after))
+            time.sleep(self.test_config.rebalance_settings.start_after)
+            t0 = time.time()
+            self._rebalance()
+            if not self.is_balanced():
+                raise Exception("cluster was not rebalanced after recovery job")
+            self.reovery_latency = time.time() - t0  # Rebalance time in seconds
+            logger.info('Sleeping for {} seconds after rebalance'
+                        .format(self.test_config.rebalance_settings.stop_after))
+            time.sleep(self.test_config.rebalance_settings.stop_after)
+        except:
+            self.thr_exceptions.append(sys.exc_info())
+
+    @with_stats
+    def access(self, *args, **kwargs):
+        self.access_bg(task=cbas_bigfun_data_mixload_task)
+        t0 = time.time()
+        thr1 = threading.Thread(target=self.query_thr)
+        thr2 = threading.Thread(target=self.recovery_thr)
+        thr1.start()
+        thr2.start()
+        thr1.join()
+        thr2.join()
+        if len(self.thr_exceptions) > 0:
+            raise self.thr_exceptions[0][1]
+        if self.test_config.access_settings.time > (time.time() - t0):
+            time.sleep(self.test_config.access_settings.time - (time.time() - t0))
+
+    def _report_kpi(self):
+        CBASBigfunQueryTest._report_kpi(self)
+        if self.reovery_latency is not None:
+            self.reporter.post(
+                *self.metrics.rebalance_time(self.reovery_latency)
+            )
+
+
+class CBASBigfunDataSyncRecoveryTest(CBASBigfunTest, RecoveryTest):
+
+    """Test measure cbas initial syncing latency during kv node failover and recovery."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.rebalance_settings = self.test_config.rebalance_settings
+        self.rebalance_time = 0
+        self.recovery_latency = 0
+        self.initial_sync_latency = 0
+        self.thr_exceptions = []
+
+    def cbas_sync_thr(self):
+        try:
+            t0 = time.time()
+            self._monitor_cbas_synced()
+            self.initial_sync_latency = time.time() - t0  # CBAS sync time in seconds
+        except:
+            self.thr_exceptions.append(sys.exc_info())
+
+    def recovery_thr(self):
+        try:
+            self.failover()
+            logger.info('Sleeping for {} seconds before rebalance'
+                        .format(self.test_config.rebalance_settings.start_after))
+            time.sleep(self.test_config.rebalance_settings.start_after)
+            t0 = time.time()
+            self._rebalance()
+            if not self.is_balanced():
+                raise Exception("cluster was not rebalanced after recovery job")
+            self.recovery_latency = time.time() - t0  # Rebalance time in seconds
+            logger.info('Sleeping for {} seconds after rebalance'
+                        .format(self.test_config.rebalance_settings.stop_after))
+            time.sleep(self.test_config.rebalance_settings.stop_after)
+        except:
+            self.thr_exceptions.append(sys.exc_info())
+
+    @with_stats
+    def access(self, *args, **kwargs):
+        self.start_cbas_sync()
+        thr1 = threading.Thread(target=self.cbas_sync_thr)
+        thr2 = threading.Thread(target=self.recovery_thr)
+        thr1.start()
+        thr2.start()
+        thr1.join()
+        thr2.join()
+        if len(self.thr_exceptions) > 0:
+            raise self.thr_exceptions[0][1]
+
+    def _report_kpi(self):
+        self.collect_export_files()
+        if self.initial_sync_latency is not None:
+            self.reporter.post(
+                *self.metrics.cbas_sync_latency(self.initial_sync_latency,
+                                                "initial_sync_latency_sec",
+                                                "Initial sync latency in second")
+            )
+        if self.recovery_latency is not None:
+            self.reporter.post(
+                *self.metrics.rebalance_time(self.recovery_latency)
             )
 
 

@@ -124,9 +124,10 @@ func startBucket(cluster, bucketn string, wg *sync.WaitGroup) int {
 		"numConnections": options.numConnections,
 		"activeVbOnly":   true,
 	}
+	flags := uint32(0x0)
 	dcpFeed, err := b.StartDcpFeedOver(
 		couchbase.NewDcpFeedName("rawupr"),
-		uint32(0), options.kvAddress, 0xABCD, dcpConfig)
+		uint32(0), flags, options.kvAddress, 0xABCD, dcpConfig)
 	mf(err, "- upr")
 
 	vbnos := listOfVbnos()

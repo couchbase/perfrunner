@@ -1,6 +1,7 @@
 from threading import Thread
 from time import sleep, time
 
+import numpy
 from couchbase.bucket import Bucket
 from couchbase.n1ql import N1QLQuery
 from decorator import decorator
@@ -9,7 +10,7 @@ from cbagent.collectors import Latency
 from cbagent.collectors.libstats.pool import Pool
 from logger import logger
 from perfrunner.helpers.misc import uhex
-from spring.docgen import Document
+from spring.docgen import Document, Key
 
 
 @decorator
@@ -162,26 +163,32 @@ class DurabilityLatency(ObserveIndexLatency, Latency):
 
         self.pools = self.init_pool(settings)
 
+    @staticmethod
+    def gen_key() -> Key:
+        return Key(number=numpy.random.random_integers(0, 10 ** 9),
+                   prefix='endure',
+                   fmtr='hex')
+
     def endure(self, pool, metric):
         client = pool.get_client()
 
-        key = uhex()
+        key = self.gen_key()
         doc = self.new_docs.next(key)
 
         t0 = time()
 
-        client.upsert(key, doc)
+        client.upsert(key.string, doc)
         if metric == "latency_persist_to":
-            client.endure(key, persist_to=1, replicate_to=0, interval=0.010,
+            client.endure(key.string, persist_to=1, replicate_to=0, interval=0.010,
                           timeout=120)
         else:
-            client.endure(key, persist_to=0, replicate_to=1, interval=0.001)
+            client.endure(key.string, persist_to=0, replicate_to=1, interval=0.001)
 
         latency = 1000 * (time() - t0)  # Latency in ms
 
         sleep_time = max(0, self.MAX_POLLING_INTERVAL - latency)
 
-        client.delete(key)
+        client.delete(key.string)
         pool.release_client(client)
         return {metric: latency}, sleep_time
 

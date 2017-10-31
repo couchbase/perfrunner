@@ -1,11 +1,11 @@
 from time import sleep, time
 
+import numpy
 from couchbase.bucket import Bucket
 
 from cbagent.collectors import Latency
 from logger import logger
-from perfrunner.helpers.misc import uhex
-from spring.docgen import Document
+from spring.docgen import Document, Key
 
 
 def new_client(host, bucket, password, timeout):
@@ -49,17 +49,23 @@ class XdcrLag(Latency):
 
         self.new_docs = Document(workload.size)
 
+    @staticmethod
+    def gen_key() -> Key:
+        return Key(number=numpy.random.random_integers(0, 10 ** 9),
+                   prefix='xdcr',
+                   fmtr='hex')
+
     def measure(self, src_client, dst_client):
-        key = "xdcr_{}".format(uhex())
+        key = self.gen_key()
         doc = self.new_docs.next(key)
 
         polling_interval = self.INITIAL_POLLING_INTERVAL
 
-        src_client.upsert(key, doc)
+        src_client.upsert(key.string, doc)
 
         t0 = time()
         while time() - t0 < self.TIMEOUT:
-            if dst_client.get(key, quiet=True).success:
+            if dst_client.get(key.string, quiet=True).success:
                 break
             sleep(polling_interval)
             polling_interval *= 1.05  # increase interval by 5%
@@ -68,8 +74,8 @@ class XdcrLag(Latency):
                         .format(self.TIMEOUT))
         t1 = time()
 
-        src_client.remove(key, quiet=True)
-        dst_client.remove(key, quiet=True)
+        src_client.remove(key.string, quiet=True)
+        dst_client.remove(key.string, quiet=True)
 
         return {'xdcr_lag': (t1 - t0) * 1000}  # s -> ms
 

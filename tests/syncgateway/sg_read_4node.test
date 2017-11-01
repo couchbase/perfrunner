@@ -16,9 +16,9 @@ workers = 0
 
 [syncgateway]
 nodes = 4
-threads = 100
+threads = 800
 clients = 4
-instances_per_client = 4
+instances_per_client = 5
 workload_path = workloads/syncgateway_blank
 ycsb_repo = git://github.com/couchbaselabs/YCSB.git
 ycsb_branch = syncgateway-weekly
@@ -26,11 +26,11 @@ users = 100
 channels = 1
 channels_per_user = 1
 channels_per_doc = 1
-documents = 100000
+documents = 1000000
 roundtrip_write = true
 read_mode = documents
-feed_reading_mode = with_docs
-feed_mode = longpoll
+feed_reading_mode = idsonly
+feed_mode = normal
 insert_mode = bykey
 auth = true
 readproportion=1

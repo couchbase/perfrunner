@@ -99,7 +99,6 @@ class SGPerfTest(PerfTest):
     def run_test(self):
         self.run_sg_phase("run test", syncgateway_task_run_test, self.settings, self.settings.time, True)
 
-
     def run(self):
         self.download_ycsb()
         self.start_memcached()
@@ -108,7 +107,6 @@ class SGPerfTest(PerfTest):
         self.init_users()
         self.run_test()
         #self.report_kpi()
-
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         #if self.test_config.test_case.use_workers:

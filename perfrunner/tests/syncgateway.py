@@ -103,7 +103,7 @@ class SGPerfTest(PerfTest):
         self.load_users()
         self.load_docs()
         self.init_users()
-        #self.run_test()
+        self.run_test()
         #self.report_kpi()
 
 

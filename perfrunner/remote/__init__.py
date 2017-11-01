@@ -60,7 +60,7 @@ class Remote:
                     dir = 'mkdir YCSB_{}'.format(instance+1)
                     run('cd {}'.format(dir))
                     run('git clone -q -b {} {}'.format(branch, repo))
-                    run('..')
+                    run('cd ..')
 
     @all_clients
     def get_celery_logs(self, worker_home: str):

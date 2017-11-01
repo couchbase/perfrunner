@@ -61,6 +61,18 @@ class PerfTest:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        failure = self.check_failures()
+
+        self.tear_down()
+
+        if exc_type == KeyboardInterrupt:
+            logger.warn('The test was interrupted')
+            return True
+
+        if failure:
+            logger.interrupt(failure)
+
+    def tear_down(self):
         if self.test_config.test_case.use_workers:
             self.worker_manager.download_celery_logs()
             self.worker_manager.terminate()
@@ -68,17 +80,8 @@ class PerfTest:
         if self.test_config.cluster.online_cores:
             self.remote.enable_cpu()
 
-        if exc_type != KeyboardInterrupt:
-            self.check_core_dumps()
-            self.check_rebalance()
-            self.check_failover()
-
         if self.test_config.cluster.kernel_mem_limit:
             self.cluster.reset_memory_settings()
-
-        if exc_type == KeyboardInterrupt:
-            logger.warn('The test was interrupted')
-            return True
 
     def reset_memory_settings(self):
         if self.test_config.cluster.kernel_mem_limit:
@@ -87,17 +90,22 @@ class PerfTest:
                     self.remote.reset_memory_settings(host_string=server)
             self.monitor.wait_for_servers()
 
+    def check_failures(self) -> str:
+        failure = self.check_core_dumps()
+        failure = self.check_rebalance() or failure
+        return self.check_failover() or failure
+
     def download_certificate(self) -> None:
         cert = self.rest.get_certificate(self.master_node)
         with open(self.ROOT_CERTIFICATE, 'w') as fh:
             fh.write(cert)
 
-    def check_rebalance(self) -> None:
+    def check_rebalance(self) -> str:
         for master in self.cluster_spec.masters:
             if self.rest.is_not_balanced(master):
-                logger.interrupt('The cluster is not balanced')
+                return 'The cluster is not balanced'
 
-    def check_failover(self) -> None:
+    def check_failover(self) -> str:
         if hasattr(self, 'rebalance_settings'):
             if self.rebalance_settings.failover or \
                     self.rebalance_settings.graceful_failover:
@@ -106,17 +114,15 @@ class PerfTest:
         for master in self.cluster_spec.masters:
             num_failovers = self.rest.get_failover_counter(master)
             if num_failovers:
-                logger.interrupt(
-                    'Failover happened {} time(s)'.format(num_failovers)
-                )
+                return 'Failover happened {} time(s)'.format(num_failovers)
 
-    def check_core_dumps(self) -> None:
+    def check_core_dumps(self) -> str:
         dumps_per_host = self.remote.detect_core_dumps()
         core_dumps = {
             host: dumps for host, dumps in dumps_per_host.items() if dumps
         }
         if core_dumps:
-            logger.interrupt(pretty_dict(core_dumps))
+            return pretty_dict(core_dumps)
 
     def compact_bucket(self, wait: bool = True) -> None:
         for target in self.target_iterator:

@@ -8,7 +8,7 @@ def uhex():
     return uuid4().hex
 
 
-def pretty_dict(d):
+def pretty_dict(d: dict) -> str:
     return json.dumps(d, indent=4, sort_keys=True,
                       default=lambda o: o.__dict__)
 

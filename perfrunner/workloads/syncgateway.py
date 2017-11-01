@@ -56,8 +56,8 @@ def syncgateway_load_users(workload_settings: PhaseSettings, timer: int, worker_
                                 total_channels=sgs.channels,
                                 channels_per_user=sgs.channels_per_user,
                                 insertstart=get_offset(workload_settings, worker_id))
-
-    run_cmd(BINARY_PATH, BINARY_NAME, params, log_file_name)
+    path = "{}_{}".format(BINARY_PATH, worker_id)
+    run_cmd(path, BINARY_NAME, params, log_file_name)
 
 
 def syncgateway_load_docs(workload_settings: PhaseSettings, timer: int, worker_id: int, cluster: ClusterSpec):
@@ -72,7 +72,8 @@ def syncgateway_load_docs(workload_settings: PhaseSettings, timer: int, worker_i
                                   channels_per_user=sgs.channels_per_user,
                                   insertstart=get_offset(workload_settings, worker_id))
 
-    run_cmd(BINARY_PATH, BINARY_NAME, params, log_file_name)
+    path = "{}_{}".format(BINARY_PATH, worker_id)
+    run_cmd(path, BINARY_NAME, params, log_file_name)
 
 
 def syncgateway_init_users(workload_settings: PhaseSettings, timer: int, worker_id: int, cluster: ClusterSpec):
@@ -87,7 +88,8 @@ def syncgateway_init_users(workload_settings: PhaseSettings, timer: int, worker_
                                   insertstart=get_offset(workload_settings, worker_id),
                                   sequence_start = int(sgs.users) + int(sgs.documents) + 1)
 
-    run_cmd(BINARY_PATH, BINARY_NAME, params, log_file_name)
+    path = "{}_{}".format(BINARY_PATH, worker_id)
+    run_cmd(path, BINARY_NAME, params, log_file_name)
 
 
 
@@ -111,4 +113,5 @@ def syncgateway_run_test(workload_settings: PhaseSettings, timer: int, worker_id
                                  updateproportion=sgs.updateproportion,
                                  insertproportion=sgs.insertproportion)
 
-    run_cmd(BINARY_PATH, BINARY_NAME, params, log_file_name)
+    path = "{}_{}".format(BINARY_PATH, worker_id)
+    run_cmd(path, BINARY_NAME, params, log_file_name)

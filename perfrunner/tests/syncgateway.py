@@ -65,11 +65,12 @@ class SGPerfTest(PerfTest):
         self.settings = self.test_config.access_settings
         self.settings.syncgateway_settings = self.test_config.syncgateway_settings
 
-    def download_ycsb(self):
+    def download_ycsb(self, instances=0):
         if self.worker_manager.is_remote:
             self.remote.clone_ycsb(repo=self.test_config.syncgateway_settings.repo,
                                    branch=self.test_config.syncgateway_settings.branch,
-                                   worker_home=self.worker_manager.WORKER_HOME)
+                                   worker_home=self.worker_manager.WORKER_HOME,
+                                   ycsb_instances=instances)
         else:
             local.clone_ycsb(repo=self.test_config.syncgateway_settings.repo,
                              branch=self.test_config.syncgateway_settings.branch)

@@ -56,7 +56,10 @@ def syncgateway_load_users(workload_settings: PhaseSettings, timer: int, worker_
                                 total_channels=sgs.channels,
                                 channels_per_user=sgs.channels_per_user,
                                 insertstart=get_offset(workload_settings, worker_id))
-    path = "{}_{}".format(BINARY_PATH, worker_id)
+
+    path = BINARY_PATH
+    if worker_id:
+        path = "{}_{}".format(path, worker_id)
     run_cmd(path, BINARY_NAME, params, log_file_name)
 
 
@@ -72,9 +75,10 @@ def syncgateway_load_docs(workload_settings: PhaseSettings, timer: int, worker_i
                                   channels_per_user=sgs.channels_per_user,
                                   insertstart=get_offset(workload_settings, worker_id))
 
-    path = "{}_{}".format(BINARY_PATH, worker_id)
+    path = BINARY_PATH
+    if worker_id:
+        path = "{}_{}".format(path, worker_id)
     run_cmd(path, BINARY_NAME, params, log_file_name)
-
 
 def syncgateway_init_users(workload_settings: PhaseSettings, timer: int, worker_id: int, cluster: ClusterSpec):
     sgs = workload_settings.syncgateway_settings
@@ -88,9 +92,10 @@ def syncgateway_init_users(workload_settings: PhaseSettings, timer: int, worker_
                                   insertstart=get_offset(workload_settings, worker_id),
                                   sequence_start = int(sgs.users) + int(sgs.documents) + 1)
 
-    path = "{}_{}".format(BINARY_PATH, worker_id)
+    path = BINARY_PATH
+    if worker_id:
+        path = "{}_{}".format(path, worker_id)
     run_cmd(path, BINARY_NAME, params, log_file_name)
-
 
 
 def syncgateway_run_test(workload_settings: PhaseSettings, timer: int, worker_id: int, cluster: ClusterSpec):
@@ -113,5 +118,7 @@ def syncgateway_run_test(workload_settings: PhaseSettings, timer: int, worker_id
                                  updateproportion=sgs.updateproportion,
                                  insertproportion=sgs.insertproportion)
 
-    path = "{}_{}".format(BINARY_PATH, worker_id)
+    path = BINARY_PATH
+    if worker_id:
+        path = "{}_{}".format(path, worker_id)
     run_cmd(path, BINARY_NAME, params, log_file_name)

@@ -770,7 +770,7 @@ class SyncgatewaySettings:
         self.insertproportion = options.get('insertproportion', self.INSERTPROPORTION)
         self.requestdistribution = options.get('requestdistribution', self.REQUESTDISTRIBUTION)
         self.log_title = options.get('log_title', self.LOG_TITE)
-        self.instances_per_client = options.get('instances_per_client', 0)
+        self.instances_per_client = options.get('instances_per_client', 1)
         self.threads_per_instance = 1
         self.threads = options.get('threads', self.THREADS)
         self.insertstart = options.get('inserstart', self.INSERTSTART)

@@ -51,13 +51,14 @@ class Remote:
     def clone_ycsb(self, repo: str, branch: str, worker_home: str, ycsb_instances: int):
         logger.info('Cloning YCSB repository: {} branch {}'.format(
             repo, branch))
-        with cd(worker_home), cd('perfrunner'):
-            run('git clone -q -b {} {}'.format(branch, repo))
 
         for instance in range(ycsb_instances):
             with cd(worker_home), cd('perfrunner'):
                 run('git clone -q -b {} {}'.format(branch, repo))
                 run('mv YCSB YCSB_{}'.format(instance+1))
+
+        with cd(worker_home), cd('perfrunner'):
+            run('git clone -q -b {} {}'.format(branch, repo))
 
     @all_clients
     def get_celery_logs(self, worker_home: str):

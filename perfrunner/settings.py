@@ -740,7 +740,7 @@ class SyncgatewaySettings:
     READ_MODE = 'documents'          # |documents|changes
     FEED_READING_MODE = 'withdocs'   # |withdocs|idsonly
     FEED_MODE = 'longpoll'           # |longpoll|normal
-    INSERT_MODE = 'byuser'           # |byuser|bydic
+    INSERT_MODE = 'byuser'           # |byuser|bydoc
     AUTH = "true"
     READPROPORTION = 1
     UPDATEPROPORTION = 0

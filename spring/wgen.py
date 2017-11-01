@@ -5,6 +5,7 @@ from multiprocessing import Event, Lock, Process, Value
 from random import randint
 from typing import Callable, List, Tuple
 
+import twisted
 from decorator import decorator
 from numpy import random
 from psutil import cpu_count
@@ -46,6 +47,13 @@ from spring.docgen import (
 )
 from spring.querygen import N1QLQueryGen, ViewQueryGen, ViewQueryGenByType
 from spring.reservoir import Reservoir
+
+
+def err(*args, **kwargs):
+    pass
+
+
+twisted.python.log.err = err
 
 
 @decorator

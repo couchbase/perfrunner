@@ -159,13 +159,19 @@ class CbAgent:
                        secondary_storage_stats=False,
                        secondary_storage_stats_mm=False,
                        xdcr_lag=False,
-                       xdcr_stats=False):
+                       xdcr_stats=False,
+                       ns_server=True,
+                       ns_server_overview=True,
+                       active_tasks=True):
         self.collectors = []
         self.processes = []
 
-        self.add_collector(NSServer)
-        self.add_collector(NSServerOverview)
-        self.add_collector(ActiveTasks)
+        if ns_server:
+            self.add_collector(NSServer)
+        if ns_server_overview:
+            self.add_collector(NSServerOverview)
+        if active_tasks:
+            self.add_collector(ActiveTasks)
 
         if self.test.remote.os != 'Cygwin':
             self.add_collector(PS)

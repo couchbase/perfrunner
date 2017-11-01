@@ -30,6 +30,9 @@ from perfrunner.settings import (
 
 class SGPerfTest(PerfTest):
 
+    COLLECTORS = {'disk': False, 'ns_server': False, 'ns_server_overview': False, 'active_tasks': False}
+    ALL_HOSTNAMES = True
+
     def __init__(self,
                  cluster_spec: ClusterSpec,
                  test_config: TestConfig,

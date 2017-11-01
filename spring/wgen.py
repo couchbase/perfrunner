@@ -212,6 +212,7 @@ class KVWorker(Worker):
             ['r'] * self.ws.reads + \
             ['u'] * self.ws.updates + \
             ['d'] * self.ws.deletes + \
+            ['ru'] * (self.ws.reads_and_updates // 2) + \
             ['fus'] * self.ws.fts_updates_swap + \
             ['fur'] * self.ws.fts_updates_reverse
         random.shuffle(ops)
@@ -243,8 +244,7 @@ class KVWorker(Worker):
                 curr_items_tmp += 1
                 cmds.append((None, cb.create, (key.string, doc)))
             elif op == 'r':
-                key = self.existing_keys.next(curr_items_spot,
-                                              deleted_spot)
+                key = self.existing_keys.next(curr_items_spot, deleted_spot)
 
                 if extras == 'subdoc':
                     cmds.append(('get', cb.read, (key.string, self.ws.subdoc_field)))
@@ -253,7 +253,8 @@ class KVWorker(Worker):
                 else:
                     cmds.append(('get', cb.read, (key.string, )))
             elif op == 'u':
-                key = self.existing_keys.next(curr_items_spot, deleted_spot,
+                key = self.existing_keys.next(curr_items_spot,
+                                              deleted_spot,
                                               self.current_hot_load_start,
                                               self.timer_elapse)
                 doc = self.docs.next(key)
@@ -268,6 +269,12 @@ class KVWorker(Worker):
                 key = self.keys_for_removal.next(deleted_items_tmp)
                 deleted_items_tmp += 1
                 cmds.append((None, cb.delete, (key.string, )))
+            elif op == 'ru':
+                key = self.existing_keys.next(curr_items_spot, deleted_spot)
+                doc = self.docs.next(key)
+
+                cmds.append(('get', cb.read, (key.string, )))
+                cmds.append(('set', cb.update, (key.string, doc)))
             elif op == 'fus':
                 key = self.fts_keys.next()
                 cmds.append((None, self.do_fts_updates_swap, (key, )))

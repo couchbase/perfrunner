@@ -331,6 +331,7 @@ class PhaseSettings:
     READS = 0
     UPDATES = 0
     DELETES = 0
+    READS_AND_UPDATES = 0
     FTS_UPDATES = 0
 
     OPS = 0
@@ -400,6 +401,8 @@ class PhaseSettings:
         self.reads = int(options.get('reads', self.READS))
         self.updates = int(options.get('updates', self.UPDATES))
         self.deletes = int(options.get('deletes', self.DELETES))
+        self.reads_and_updates = int(options.get('reads_and_updates',
+                                                 self.READS_AND_UPDATES))
         self.fts_updates_swap = int(options.get('fts_updates_swap',
                                                 self.FTS_UPDATES))
         self.fts_updates_reverse = int(options.get('fts_updates_reverse',

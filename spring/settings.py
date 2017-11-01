@@ -26,6 +26,8 @@ class WorkloadSettings:
         self.workers = options.workers
 
         # Stubs for library compatibility
+        self.reads_and_updates = 0
+
         self.query_workers = 0
         self.n1ql_workers = 0
 

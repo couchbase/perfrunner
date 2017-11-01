@@ -77,6 +77,7 @@ class PerfTest:
             self.cluster.reset_memory_settings()
 
         if exc_type == KeyboardInterrupt:
+            logger.warn('The test was interrupted')
             return True
 
     def reset_memory_settings(self):

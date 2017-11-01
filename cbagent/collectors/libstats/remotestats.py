@@ -1,3 +1,5 @@
+import sys
+
 from decorator import decorator
 from fabric.api import hide, parallel, run, settings
 from fabric.tasks import execute
@@ -30,4 +32,7 @@ class RemoteStats:
         self.workers = workers
 
     def run(self, *args, **kwargs):
-        return run(*args, **kwargs)
+        try:
+            return run(*args, **kwargs)
+        except KeyboardInterrupt:
+            sys.exit()

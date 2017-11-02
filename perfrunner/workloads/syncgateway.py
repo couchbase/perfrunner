@@ -59,7 +59,9 @@ def syncgateway_load_users(workload_settings: PhaseSettings, timer: int, worker_
 
     path = BINARY_PATH
     if worker_id:
-        path = "{}_{}".format(path, worker_id)
+        instances = workload_settings.syncgateway_settings.instances_per_client
+        instance_id =  (worker_id + instances - 1) / instances
+        path = "{}_{}".format(path, instance_id)
     run_cmd(path, BINARY_NAME, params, log_file_name)
 
 
@@ -77,7 +79,9 @@ def syncgateway_load_docs(workload_settings: PhaseSettings, timer: int, worker_i
 
     path = BINARY_PATH
     if worker_id:
-        path = "{}_{}".format(path, worker_id)
+        instances = workload_settings.syncgateway_settings.instances_per_client
+        instance_id =  (worker_id + instances - 1) / instances
+        path = "{}_{}".format(path, instance_id)
     run_cmd(path, BINARY_NAME, params, log_file_name)
 
 def syncgateway_init_users(workload_settings: PhaseSettings, timer: int, worker_id: int, cluster: ClusterSpec):
@@ -94,9 +98,10 @@ def syncgateway_init_users(workload_settings: PhaseSettings, timer: int, worker_
 
     path = BINARY_PATH
     if worker_id:
-        path = "{}_{}".format(path, worker_id)
+        instances = workload_settings.syncgateway_settings.instances_per_client
+        instance_id =  (worker_id + instances - 1) / instances
+        path = "{}_{}".format(path, instance_id)
     run_cmd(path, BINARY_NAME, params, log_file_name)
-
 
 def syncgateway_run_test(workload_settings: PhaseSettings, timer: int, worker_id: int, cluster: ClusterSpec):
     sgs = workload_settings.syncgateway_settings
@@ -120,5 +125,7 @@ def syncgateway_run_test(workload_settings: PhaseSettings, timer: int, worker_id
 
     path = BINARY_PATH
     if worker_id:
-        path = "{}_{}".format(path, worker_id)
+        instances = workload_settings.syncgateway_settings.instances_per_client
+        instance_id =  (worker_id + instances - 1) / instances
+        path = "{}_{}".format(path, instance_id)
     run_cmd(path, BINARY_NAME, params, log_file_name)

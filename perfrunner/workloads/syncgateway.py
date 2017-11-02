@@ -46,6 +46,7 @@ def get_hosts(cluster, workload_settings):
 def syncgateway_start_memcached(workload_settings: PhaseSettings, timer: int, worker_id: int, cluster: ClusterSpec):
     restart_memcached(mem_limit=20000, port=8000, mem_host=cluster.workers[0])
 
+
 def syncgateway_load_users(workload_settings: PhaseSettings, timer: int, worker_id: int, cluster: ClusterSpec):
     sgs = workload_settings.syncgateway_settings
     log_file_name = "{}_loadusers_.log".format(sgs.log_title)
@@ -57,11 +58,7 @@ def syncgateway_load_users(workload_settings: PhaseSettings, timer: int, worker_
                                 channels_per_user=sgs.channels_per_user,
                                 insertstart=get_offset(workload_settings, worker_id))
 
-    path = BINARY_PATH
-    if worker_id:
-        instances = int(workload_settings.syncgateway_settings.instances_per_client)
-        instance_id =  (worker_id + instances - 1) / instances
-        path = "{}_{}".format(path, instance_id)
+    path = getInstanceHome(workload_settings, worker_id)
     run_cmd(path, BINARY_NAME, params, log_file_name)
 
 
@@ -77,12 +74,9 @@ def syncgateway_load_docs(workload_settings: PhaseSettings, timer: int, worker_i
                                   channels_per_user=sgs.channels_per_user,
                                   insertstart=get_offset(workload_settings, worker_id))
 
-    path = BINARY_PATH
-    if worker_id:
-        instances = int(workload_settings.syncgateway_settings.instances_per_client)
-        instance_id =  (worker_id + instances - 1) / instances
-        path = "{}_{}".format(path, instance_id)
+    path = getInstanceHome(workload_settings, worker_id)
     run_cmd(path, BINARY_NAME, params, log_file_name)
+
 
 def syncgateway_init_users(workload_settings: PhaseSettings, timer: int, worker_id: int, cluster: ClusterSpec):
     sgs = workload_settings.syncgateway_settings
@@ -96,12 +90,9 @@ def syncgateway_init_users(workload_settings: PhaseSettings, timer: int, worker_
                                   insertstart=get_offset(workload_settings, worker_id),
                                   sequence_start = int(sgs.users) + int(sgs.documents) + 1)
 
-    path = BINARY_PATH
-    if worker_id:
-        instances = int(workload_settings.syncgateway_settings.instances_per_client)
-        instance_id =  (worker_id + instances - 1) / instances
-        path = "{}_{}".format(path, instance_id)
+    path = getInstanceHome(workload_settings, worker_id)
     run_cmd(path, BINARY_NAME, params, log_file_name)
+
 
 def syncgateway_run_test(workload_settings: PhaseSettings, timer: int, worker_id: int, cluster: ClusterSpec):
     sgs = workload_settings.syncgateway_settings
@@ -123,9 +114,14 @@ def syncgateway_run_test(workload_settings: PhaseSettings, timer: int, worker_id
                                  updateproportion=sgs.updateproportion,
                                  insertproportion=sgs.insertproportion)
 
+    path = getInstanceHome(workload_settings, worker_id)
+    run_cmd(path, BINARY_NAME, params, log_file_name)
+
+
+def getInstanceHome(workload_settings, worker_id):
     path = BINARY_PATH
     if worker_id:
         instances = int(workload_settings.syncgateway_settings.instances_per_client)
-        instance_id =  (worker_id + instances - 1) / instances
+        instance_id =  int((worker_id + instances - 1) / instances)
         path = "{}_{}".format(path, instance_id)
-    run_cmd(path, BINARY_NAME, params, log_file_name)
+    return path

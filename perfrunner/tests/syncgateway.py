@@ -31,6 +31,7 @@ class SGPerfTest(PerfTest):
 
     COLLECTORS = {'disk': False, 'ns_server': False, 'ns_server_overview': False, 'active_tasks': False}
     ALL_HOSTNAMES = True
+    LOCAL_DIR = "YCSB"
 
     def __init__(self,
                  cluster_spec: ClusterSpec,
@@ -60,10 +61,11 @@ class SGPerfTest(PerfTest):
 
     def collect_execution_logs(self):
         if self.worker_manager.is_remote:
-            if not os.path.exists("YCSB"):
-                os.makedirs("YCSB")
+            if os.path.exists(self.LOCAL_DIR):
+                os.removedirs(self.LOCAL_DIR)
+            os.makedirs(self.LOCAL_DIR)
             self.remote.get_syncgateway_YCSB_logs(self.worker_manager.WORKER_HOME,
-                                                  self.test_config.syncgateway_settings)
+                                                  self.test_config.syncgateway_settings, self.LOCAL_DIR)
 
     def run_sg_phase(self,
                   phase: str,
@@ -92,7 +94,7 @@ class SGPerfTest(PerfTest):
 
     def _report_kpi(self):
         self.collect_execution_logs()
-        for f in glob.glob('YCSB/*runtest*.result'):
+        for f in glob.glob('{}/*runtest*.result'.format(self.LOCAL_DIR)):
             with open(f, 'r') as fout:
                 logger.info(f)
                 logger.info(fout.read())

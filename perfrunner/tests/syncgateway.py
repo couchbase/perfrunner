@@ -45,13 +45,8 @@ class SGPerfTest(PerfTest):
         self.test_config = test_config
         self.memcached = MemcachedHelper(test_config)
         #self.monitor = Monitor(cluster_spec, test_config, verbose)
-        #self.rest = RestHelper(cluster_spec)
         self.remote = RemoteHelper(cluster_spec, test_config, verbose)
-
-        #self.master_node = next(cluster_spec.masters)
-        #self.build = self.rest.get_sg_version(self.master_node)
-        self.build = "sg.1.5.0.234"
-
+        self.build = os.environ.get('SGBUILD') or "0.0.0-000"
         self.metrics = MetricHelper(self)
         self.reporter = ShowFastReporter(cluster_spec, test_config, self.build)
 

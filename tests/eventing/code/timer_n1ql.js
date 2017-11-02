@@ -5,4 +5,6 @@ function OnUpdate(doc, meta) {
 function timerCallback(docid) {
 	var query = SELECT * FROM `bucket-1` USE KEYS[:docid];
 	query.execQuery();
+	query = UPSERT INTO `eventing-bucket-1` ( KEY, VALUE ) VALUES ( :docId, 'Hello World');
+	query.execQuery();
 }

@@ -12,7 +12,7 @@ server_processes = projector eventing-produc
 mem_quota = 50000
 initial_nodes = 5
 num_buckets = 1
-eventing_bucket_mem_quota = 2000
+eventing_bucket_mem_quota = 10000
 eventing_buckets = 1
 online_cores = 8
 
@@ -26,17 +26,18 @@ view_percentage = 100
 [load]
 items = 20000000
 size = 1024
-workers = 160
+workers = 100
 
 [eventing]
 functions = perf-test1:tests/eventing/code/n1qlop.js
 worker_count = 16
-cpp_worker_thread_count = 2
+cpp_worker_thread_count = 12
 
 [access]
 updates = 100
 items = 20000000
 existing_items = 20000000
-workers = 100
+workers = 10
 async = 1
-time = 600
+time = 5000
+throughput = 10000

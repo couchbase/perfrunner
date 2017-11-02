@@ -79,7 +79,7 @@ class SGPerfTest(PerfTest):
             if not os.path.exists("YCSB"):
                 os.makedirs("YCSB")
             self.remote.get_syncgateway_YCSB_logs(self.worker_manager.WORKER_HOME,
-                                                  int(self.test_config.syncgateway_settings.instances_per_client))
+                                                  int(self.test_config.syncgateway_settings))
 
     def run_sg_phase(self,
                   phase: str,

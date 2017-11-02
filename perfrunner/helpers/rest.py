@@ -123,7 +123,6 @@ class RestHelper:
 
     def set_query_settings(self, host: str, override_settings: dict):
         api = 'http://{}:8093/admin/settings'.format(host)
-        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
 
         settings = self.get(url=api).json()
         for override, value in override_settings.items():
@@ -132,12 +131,15 @@ class RestHelper:
                              .format(override, value))
                 continue
             settings[override] = value
-            logger.info('Changing query setting {} to {}'.format(override, value))
-        self.post(url=api, data=json.dumps(settings), headers=headers)
+            logger.info('Changing {} to {}'.format(override, value))
+        self.post(url=api, data=json.dumps(settings))
+
+    def get_query_settings(self, host: str):
+        api = 'http://{}:8093/admin/settings'.format(host)
+
+        return self.get(url=api).json()
 
     def set_index_settings(self, host: str, settings: dict):
-        logger.info('Changing indexer settings for {}'.format(host))
-
         api = 'http://{}:9102/settings'.format(host)
 
         curr_settings = self.get(url=api).json()

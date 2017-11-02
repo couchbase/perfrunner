@@ -56,19 +56,25 @@ class ClusterManager:
                 self.rest.set_analytics_mem_quota(master, self.analytics_mem_quota)
 
     def set_query_settings(self):
-        settings = self.test_config.n1ql_settings.settings
-        for server in self.cluster_spec.servers_by_role('n1ql'):
+        query_nodes = self.cluster_spec.servers_by_role('n1ql')
+        if query_nodes:
+            settings = self.test_config.n1ql_settings.settings
             if settings:
-                self.rest.set_query_settings(server, settings)
+                self.rest.set_query_settings(query_nodes[0], settings)
+            settings = self.rest.get_query_settings(query_nodes[0])
+            settings = pretty_dict(settings)
+            logger.info('Query settings: {}'.format(settings))
 
     def set_index_settings(self):
-        settings = self.test_config.gsi_settings.settings
-        for server in self.cluster_spec.servers_by_role('index'):
+        index_nodes = self.cluster_spec.servers_by_role('index')
+        if index_nodes:
+            settings = self.test_config.gsi_settings.settings
             if settings:
-                self.rest.set_index_settings(server, settings)
-            curr_settings = self.rest.get_index_settings(server)
-            curr_settings = pretty_dict(curr_settings)
-            logger.info("Index settings: {}".format(curr_settings))
+                self.rest.set_index_settings(index_nodes[0], settings)
+
+            settings = self.rest.get_index_settings(index_nodes[0])
+            settings = pretty_dict(settings)
+            logger.info('Index settings: {}'.format(settings))
 
     def set_cbas_settings(self):
         settings = self.test_config.cbas_settings.node_settings
@@ -90,10 +96,9 @@ class ClusterManager:
         if not self.is_compatible(min_release='4.0.0'):
             return
 
-        for server in self.cluster_spec.servers:
-            roles = self.cluster_spec.roles[server]
-            if 'kv' in roles:
-                self.rest.set_services(server, roles)
+        for master in self.cluster_spec.masters:
+            roles = self.cluster_spec.roles[master]
+            self.rest.set_services(master, roles)
 
     def add_nodes(self):
         for (_, servers), initial_nodes in zip(self.cluster_spec.clusters,

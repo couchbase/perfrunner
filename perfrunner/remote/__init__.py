@@ -82,8 +82,8 @@ class Remote:
         with cd(worker_home), cd('perfrunner'):
             r = run('stat YCSB/*.log', quiet=True)
             if not r.return_code:
-                get('*.log', local_path='YCSB/')
+                get('YCSB/*.log', local_path='YCSB/')
             for i in range(instances):
                 r = run('stat YCSB_{}/*.log'.format(i), quiet=True)
                 if not r.return_code:
-                    get('*.log', local_path='YCSB/')
+                    get('YCSB_{}/*.log'.format(i), local_path='YCSB/')

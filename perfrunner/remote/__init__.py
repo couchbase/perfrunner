@@ -75,3 +75,15 @@ class Remote:
             r = run('stat YCSB/ycsb_run_*.log', quiet=True)
             if not r.return_code:
                 get('YCSB/ycsb_run_*.log', local_path='YCSB/')
+
+    @all_clients
+    def get_syncgateway_YCSB_logs(self, worker_home: str, instances: int):
+        logger.info('Collecting YCSB logs')
+        with cd(worker_home), cd('perfrunner'):
+            r = run('stat YCSB/ycsb_run_*.log', quiet=True)
+            if not r.return_code:
+                get('*.log', local_path='YCSB/')
+            for i in range(instances):
+                r = run('stat YCSB_{}/ycsb_run_*.log'.format(i), quiet=True)
+                if not r.return_code:
+                    get('*.log', local_path='YCSB/')

@@ -1,3 +1,6 @@
+import os
+import glob
+
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import PerfTest
 from perfrunner.helpers.worker import syncgateway_task_init_users, syncgateway_task_load_users, \
@@ -39,14 +42,10 @@ class SGPerfTest(PerfTest):
                  verbose: bool):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
-
-        #self.target_iterator = TargetIterator(cluster_spec, test_config)
-
         self.memcached = MemcachedHelper(test_config)
         #self.monitor = Monitor(cluster_spec, test_config, verbose)
         #self.rest = RestHelper(cluster_spec)
         self.remote = RemoteHelper(cluster_spec, test_config, verbose)
-        #self.index = IndexHelper(cluster_spec, test_config, self.rest, self.monitor)
 
         #self.master_node = next(cluster_spec.masters)
         #self.build = self.rest.get_sg_version(self.master_node)
@@ -75,6 +74,12 @@ class SGPerfTest(PerfTest):
             local.clone_ycsb(repo=self.test_config.syncgateway_settings.repo,
                              branch=self.test_config.syncgateway_settings.branch)
 
+    def collect_execution_logs(self):
+        if self.worker_manager.is_remote:
+            os.mkdir('YCSB')
+            self.remote.get_syncgateway_YCSB_logs(self.worker_manager.WORKER_HOME,
+                                                  int(self.test_config.syncgateway_settings.instances_per_client))
+
     def run_sg_phase(self,
                   phase: str,
                   task: Callable, settings: PhaseSettings,
@@ -100,6 +105,26 @@ class SGPerfTest(PerfTest):
     def run_test(self):
         self.run_sg_phase("run test", syncgateway_task_run_test, self.settings, self.settings.time, True)
 
+
+    def _report_kpi(self):
+        self.collect_execution_logs()
+        logger.info("Init and data load logs:")
+        for f in glob.glob('*[!runtest]*.log'):
+            with open(f, 'r') as fout:
+                logger.info(f)
+                logger.info(fout.read())
+
+        logger.info("Runtime logs:")
+        for f in glob.glob('*runtest*.log'):
+            with open(f, 'r') as fout:
+                logger.info(f)
+                logger.info(fout.read())
+
+        #self.reporter.post(
+            #*self.metrics.ycsb_throughput()
+        #)
+
+
     def run(self):
         self.download_ycsb()
         self.start_memcached()
@@ -107,7 +132,7 @@ class SGPerfTest(PerfTest):
         self.load_docs()
         self.init_users()
         self.run_test()
-        #self.report_kpi()
+        self.report_kpi()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         #if self.test_config.test_case.use_workers:

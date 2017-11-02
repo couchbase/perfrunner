@@ -109,14 +109,7 @@ class SGPerfTest(PerfTest):
 
     def _report_kpi(self):
         self.collect_execution_logs()
-        logger.info("Init and data load logs:")
-        for f in glob.glob('YCSB/*[!runtest]*.log'):
-            with open(f, 'r') as fout:
-                logger.info(f)
-                logger.info(fout.read())
-
-        logger.info("Runtime logs:")
-        for f in glob.glob('YCSB/*runtest*.log'):
+        for f in glob.glob('YCSB/*runtest*.result'):
             with open(f, 'r') as fout:
                 logger.info(f)
                 logger.info(fout.read())

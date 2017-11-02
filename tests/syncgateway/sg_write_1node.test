@@ -15,8 +15,8 @@ time = 120
 workers = 0
 
 [syncgateway]
-nodes = 4
-threads = 100
+nodes = 1
+threads = 50
 clients = 4
 instances_per_client = 5
 workload_path = workloads/syncgateway_blank

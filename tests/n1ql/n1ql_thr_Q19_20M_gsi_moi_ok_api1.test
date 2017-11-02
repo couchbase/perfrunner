@@ -30,7 +30,7 @@ range_distance = 4
 [n1ql]
 indexes =
     by_capped_small::CREATE INDEX {name} ON `{bucket}`(capped_small, email);
-query.settings.max-index-api = 1
+max-index-api = 1
 
 [access]
 creates = 0

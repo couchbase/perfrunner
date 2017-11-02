@@ -83,7 +83,13 @@ class Remote:
             r = run('stat YCSB/*.log', quiet=True)
             if not r.return_code:
                 get('YCSB/*.log', local_path='YCSB/')
+            r = run('stat YCSB/*.result', quiet=True)
+            if not r.return_code:
+                get('YCSB/*.result', local_path='YCSB/')
             for i in range(instances):
                 r = run('stat YCSB_{}/*.log'.format(i+1), quiet=True)
                 if not r.return_code:
                     get('YCSB_{}/*.log'.format(i+1), local_path='YCSB/')
+                r = run('stat YCSB_{}/*.result'.format(i+1), quiet=True)
+                if not r.return_code:
+                    get('YCSB_{}/*.result'.format(i+1), local_path='YCSB/')

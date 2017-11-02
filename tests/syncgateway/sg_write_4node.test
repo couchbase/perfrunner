@@ -11,7 +11,7 @@ num_buckets = 1
 
 
 [access]
-time = 600
+time = 120
 workers = 0
 
 [syncgateway]
@@ -26,7 +26,7 @@ users = 1000
 channels = 100
 channels_per_user = 10
 channels_per_doc = 1
-documents = 1000000
+documents = 100000
 roundtrip_write = true
 insert_mode = byuser
 auth = true

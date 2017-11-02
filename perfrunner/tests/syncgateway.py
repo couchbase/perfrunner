@@ -8,19 +8,15 @@ from perfrunner.helpers.worker import syncgateway_task_init_users, syncgateway_t
 
 from perfrunner.helpers import local
 
-import time
 from typing import Callable
 
 from logger import logger
 
-from perfrunner.helpers.index import IndexHelper
 from perfrunner.helpers.memcached import MemcachedHelper
 from perfrunner.helpers.metrics import MetricHelper
 from perfrunner.helpers.misc import pretty_dict
-from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.reporter import ShowFastReporter
-from perfrunner.helpers.rest import RestHelper
 from perfrunner.helpers.worker import  WorkerManager
 
 from perfrunner.settings import (
@@ -48,9 +44,7 @@ class SGPerfTest(PerfTest):
         self.metrics = MetricHelper(self)
         self.reporter = ShowFastReporter(cluster_spec, test_config, self.build)
         if self.test_config.test_case.use_workers:
-            self.worker_manager = WorkerManager(cluster_spec, test_config,
-                                                verbose)
-
+            self.worker_manager = WorkerManager(cluster_spec, test_config, verbose)
         self.settings = self.test_config.access_settings
         self.settings.syncgateway_settings = self.test_config.syncgateway_settings
 

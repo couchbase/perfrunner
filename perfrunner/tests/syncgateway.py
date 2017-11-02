@@ -1,4 +1,5 @@
 import os
+import shutil
 import glob
 
 from perfrunner.helpers.cbmonitor import with_stats
@@ -62,7 +63,7 @@ class SGPerfTest(PerfTest):
     def collect_execution_logs(self):
         if self.worker_manager.is_remote:
             if os.path.exists(self.LOCAL_DIR):
-                os.removedirs(self.LOCAL_DIR)
+                shutil.rmtree(self.LOCAL_DIR, ignore_errors=True)
             os.makedirs(self.LOCAL_DIR)
             self.remote.get_syncgateway_YCSB_logs(self.worker_manager.WORKER_HOME,
                                                   self.test_config.syncgateway_settings, self.LOCAL_DIR)

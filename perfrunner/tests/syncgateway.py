@@ -36,7 +36,6 @@ class SGPerfTest(PerfTest):
     COLLECTORS = {'disk': False, 'ns_server': False, 'ns_server_overview': False, 'active_tasks': False}
     ALL_HOSTNAMES = True
 
-
     def __init__(self,
                  cluster_spec: ClusterSpec,
                  test_config: TestConfig,
@@ -44,15 +43,10 @@ class SGPerfTest(PerfTest):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
         self.memcached = MemcachedHelper(test_config)
-        #self.monitor = Monitor(cluster_spec, test_config, verbose)
         self.remote = RemoteHelper(cluster_spec, test_config, verbose)
         self.build = os.environ.get('SGBUILD') or "0.0.0-000"
         self.metrics = MetricHelper(self)
         self.reporter = ShowFastReporter(cluster_spec, test_config, self.build)
-
-        #self.cbmonitor_snapshots = []
-        #self.cbmonitor_clusters = []
-
         if self.test_config.test_case.use_workers:
             self.worker_manager = WorkerManager(cluster_spec, test_config,
                                                 verbose)
@@ -123,17 +117,12 @@ class SGPerfTest(PerfTest):
         self.report_kpi()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        #if self.test_config.test_case.use_workers:
-            #self.worker_manager.download_celery_logs()
-            #self.worker_manager.terminate()
+        if self.test_config.test_case.use_workers:
+            self.worker_manager.download_celery_logs()
+            self.worker_manager.terminate()
 
         if self.test_config.cluster.online_cores:
             self.remote.enable_cpu()
-
-        #if exc_type != KeyboardInterrupt:
-            #self.check_core_dumps()
-            #self.check_rebalance()
-            #self.check_failover()
 
         if self.test_config.cluster.kernel_mem_limit:
             self.remote.reset_memory_settings()

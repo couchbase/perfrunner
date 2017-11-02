@@ -76,7 +76,8 @@ class SGPerfTest(PerfTest):
 
     def collect_execution_logs(self):
         if self.worker_manager.is_remote:
-            os.mkdir('YCSB')
+            if not os.path.exists("YCSB"):
+                os.makedirs("YCSB")
             self.remote.get_syncgateway_YCSB_logs(self.worker_manager.WORKER_HOME,
                                                   int(self.test_config.syncgateway_settings.instances_per_client))
 

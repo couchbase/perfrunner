@@ -112,8 +112,8 @@ class SGPerfTest(PerfTest):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.test_config.test_case.use_workers:
-            self.worker_manager.download_celery_logs()
-            self.worker_manager.terminate()
+            #self.worker_manager.download_celery_logs()
+            #self.worker_manager.terminate()
 
         if self.test_config.cluster.online_cores:
             self.remote.enable_cpu()

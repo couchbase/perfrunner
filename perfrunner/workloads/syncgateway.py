@@ -121,7 +121,7 @@ def syncgateway_run_test(workload_settings: PhaseSettings, timer: int, worker_id
 def getInstanceHome(workload_settings, worker_id):
     path = BINARY_PATH
     if worker_id:
-        instances = int(workload_settings.syncgateway_settings.instances_per_client)
+        instances = int(workload_settings.syncgateway_settings.clients)
         instance_id =  int((worker_id + instances - 1) / instances)
         path = "{}_{}".format(path, instance_id)
     return path

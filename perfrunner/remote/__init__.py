@@ -78,7 +78,7 @@ class Remote:
 
     @all_clients
     def get_syncgateway_YCSB_logs(self, worker_home, sgs):
-        instances = sgs.instances_per_client
+        instances = int(sgs.instances_per_client)
         pattern = "{}*".format(sgs.log_title)
         logger.info('Collecting YCSB logs')
         with cd(worker_home), cd('perfrunner'):

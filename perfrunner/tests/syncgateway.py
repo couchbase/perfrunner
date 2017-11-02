@@ -36,6 +36,7 @@ class SGPerfTest(PerfTest):
     COLLECTORS = {'disk': False, 'ns_server': False, 'ns_server_overview': False, 'active_tasks': False}
     ALL_HOSTNAMES = True
 
+
     def __init__(self,
                  cluster_spec: ClusterSpec,
                  test_config: TestConfig,
@@ -51,7 +52,7 @@ class SGPerfTest(PerfTest):
         #self.build = self.rest.get_sg_version(self.master_node)
         self.build = "sg.1.5.0.234"
 
-        #self.metrics = MetricHelper(self)
+        self.metrics = MetricHelper(self)
         self.reporter = ShowFastReporter(cluster_spec, test_config, self.build)
 
         #self.cbmonitor_snapshots = []
@@ -106,7 +107,6 @@ class SGPerfTest(PerfTest):
     def run_test(self):
         self.run_sg_phase("run test", syncgateway_task_run_test, self.settings, self.settings.time, True)
 
-
     def _report_kpi(self):
         self.collect_execution_logs()
         for f in glob.glob('YCSB/*runtest*.result'):
@@ -114,10 +114,9 @@ class SGPerfTest(PerfTest):
                 logger.info(f)
                 logger.info(fout.read())
 
-        #self.reporter.post(
-            #*self.metrics.ycsb_throughput()
-        #)
-
+        self.reporter.post(
+            *self.metrics.sg_throughput()
+        )
 
     def run(self):
         self.download_ycsb()

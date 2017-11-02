@@ -584,6 +584,27 @@ class MetricHelper:
                         throughput += int(float(line.split()[-1]))
         return throughput
 
+    def _parse_sg_throughput(self) -> int:
+        throughput = 0
+        for filename in glob.glob("YCSB/*_runtest_*.result"):
+            with open(filename) as fh:
+                for line in fh.readlines():
+                    if line.startswith('[OVERALL], Throughput(ops/sec)'):
+                        throughput += int(float(line.split()[-1]))
+        return throughput
+
+    def _parse_sg_latency(self, metric_name) -> float:
+        lat = 0
+        count = 0
+        for filename in glob.glob("YCSB/*_runtest_*.result"):
+            with open(filename) as fh:
+                for line in fh.readlines():
+                    if line.startswith(metric_name):
+                        lat += int(float(line.split()[-1]))
+                        count += 1
+        return lat / count
+
+
     def _parse_dcp_throughput(self, output_file: str = 'dcpstatsfile') -> int:
         # Get throughput from OUTPUT_FILE for posting to showfast
         with open(output_file) as fh:
@@ -625,6 +646,16 @@ class MetricHelper:
         throughput = self._parse_ycsb_throughput()
 
         return throughput, self._snapshots, metric_info
+
+    def sg_throughput(self) -> Metric:
+        metric_info = self._metric_info()
+        throughput = self._parse_sg_throughput()
+        return throughput, self._snapshots, metric_info
+
+    def sg_latency(self, metric_name) -> Metric:
+        metric_info = self._metric_info()
+        lat = self._parse_sg_latency(metric_name)
+        return lat, self._snapshots, metric_info
 
     def indexing_time(self, indexing_time: float) -> Metric:
         return self.elapsed_time(indexing_time)

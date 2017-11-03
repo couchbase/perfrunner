@@ -371,3 +371,6 @@ class ClusterManager:
 
     def clear_login_history(self):
         self.remote.clear_wtmp()
+
+    def disable_wan(self):
+        self.remote.disable_wan()

@@ -35,10 +35,10 @@ def main():
 
     # Individual nodes
     cm.flush_iptables()
+    cm.disable_wan()
     cm.clear_login_history()
     cm.tune_memory_settings()
     cm.throttle_cpu()
-    cm.remote.disable_wan()
     cm.tune_logging()
     cm.restart_with_alternative_num_vbuckets()
 

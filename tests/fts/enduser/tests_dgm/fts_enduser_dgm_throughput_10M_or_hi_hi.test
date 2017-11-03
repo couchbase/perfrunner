@@ -2,7 +2,8 @@
 test = perfrunner.tests.fts.FTSThroughputTest
 title = OrHighHigh, 10M docs, 500 updates/sec kv load, 16GB RAM
 component = fts
-category = dgmthroughput
+category = end_user_dgm
+sub_category = Throughput
 
 [access]
 time = 600

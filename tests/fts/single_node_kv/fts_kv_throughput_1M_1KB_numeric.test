@@ -2,7 +2,8 @@
 test = perfrunner.tests.fts.FTSThroughputTest
 title = NumericRangeQuery, numeric 1M, 1K sets/sec kv load
 component = fts
-category = kvthroughput
+category = benchmark_kv
+sub_category = Throughput
 
 [access]
 fts_updates_swap = 100

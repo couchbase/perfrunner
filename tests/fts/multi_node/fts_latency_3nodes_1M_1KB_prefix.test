@@ -2,7 +2,8 @@
 test = perfrunner.tests.fts.FTSLatencyTest
 title = PrefixQuery, no kv-load, wiki 1M x 1KB
 component = fts
-category = latency3
+category = benchmark_3_nodes
+sub_category = Latency
 
 [stats]
 lat_interval = 0.1

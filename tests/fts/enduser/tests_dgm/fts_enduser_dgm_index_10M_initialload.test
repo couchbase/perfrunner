@@ -2,7 +2,8 @@
 test = perfrunner.tests.fts.FTSIndexTest
 title = wiki 10M, 16GB RAM
 component = fts
-category = dgmindex
+category = end_user_dgm
+sub_category = Index
 
 [cluster]
 mem_quota = 80000

@@ -2,7 +2,8 @@
 test = perfrunner.tests.fts.FTSLatencyTest
 title = NumericRangeQuery, 10M docs, 500 updates/sec kv load
 component = fts
-category = nondgmlatency
+category = end_user_non_dgm
+sub_category = Latency
 
 [stats]
 lat_interval = 0.1

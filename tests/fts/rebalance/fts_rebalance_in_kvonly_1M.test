@@ -2,7 +2,8 @@
 test = perfrunner.tests.rebalance.RebalanceBaselineForFTS
 title = Rebalance-in (min), 2 -> 3, KV only, wiki 1M
 component = fts
-category = rebalance
+category = benchmark
+sub_category = Rebalance
 
 [cluster]
 mem_quota = 40960

@@ -2,7 +2,8 @@
 test = perfrunner.tests.fts.FTSLatencyTest
 title = AndHighOrMedMed, wiki 1M x 1KB, 1K sets/sec kv load
 component = fts
-category = kvlatency
+category = benchmark_kv
+sub_category = Latency
 
 [stats]
 lat_interval = 0.1

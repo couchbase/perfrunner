@@ -2,7 +2,8 @@
 test = perfrunner.tests.elastic.ElasticThroughputTest
 title = AndHighOrMedMed, no kv-load, wiki 1M x 1KB
 component = fts
-category = throughput3
+category = benchmark_3_nodes
+sub_category = Throughput
 
 
 [access]

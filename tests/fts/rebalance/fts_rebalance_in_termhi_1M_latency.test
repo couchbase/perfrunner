@@ -2,7 +2,8 @@
 test = perfrunner.tests.fts.FTSRebalanceTestLatency
 title = Rebalance-in, 2 -> 3, KV and FTS, wiki 1M, High term, 1 worker
 component = fts
-category = rebalance
+category = benchmark
+sub_category = Rebalance
 
 [cluster]
 mem_quota = 40960

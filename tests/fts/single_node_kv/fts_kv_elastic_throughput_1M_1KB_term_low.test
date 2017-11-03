@@ -2,7 +2,8 @@
 test = perfrunner.tests.elastic.ElasticThroughputTest
 title = Low Term, wiki 1M x 1KB, 1K sets/sec kv load
 component = fts
-category = kvthroughput
+category = benchmark_kv
+sub_category = Throughput
 
 [fts]
 items = 1000000

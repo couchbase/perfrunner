@@ -2,7 +2,8 @@
 test = perfrunner.tests.elastic.ElasticThroughputTest
 title =  NumericRangeQuery, no kv-load, wiki 1M x 1KB
 component = fts
-category = throughput
+category = benchmark
+sub_category = Throughput
 
 
 [fts]

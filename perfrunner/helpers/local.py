@@ -452,7 +452,7 @@ def restart_memcached(mem_limit=10000, port=8000):
     cmd1 = 'killall -9 memcached'
     logger.info('Running: {}'.format(cmd1))
     with settings(warn_only=True):
-        result = local(cmd1, capture=True)
+        local(cmd1, capture=True)
 
     for counter in range(5):
         time.sleep(2)
@@ -468,7 +468,7 @@ def restart_memcached(mem_limit=10000, port=8000):
     cmd2 = 'memcached -u root -m {mem_limit} -l localhost -p {port} -d'
     cmd2 = cmd2.format(mem_limit=mem_limit, port=port)
     logger.info('Running: {}'.format(cmd2))
-    result = local(cmd2, capture=True)
+    local(cmd2, capture=True)
 
     for counter in range(5):
         try:

@@ -235,7 +235,7 @@ class InitialandIncrementalDGMSecondaryIndexTest(InitialandIncrementalSecondaryI
     def run(self):
         self.load_and_build_initial_index()
 
-        time_elapsed = self.build_incrindex()
+        self.build_incrindex()
         self.print_index_disk_usage()
 
         time_elapsed = self.build_incrindex()

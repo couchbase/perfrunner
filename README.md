@@ -12,7 +12,8 @@ Before using perfrunner you should install the requirements listed in the requir
 * virtualenv
 * libcouchbase
 * libffi
-* libssl-dev
+* libsnappy
+* libssl
 
 Note, you should be able to install both client and server system dependencies using the Ansible playbooks (namely, clients.yml and init.yml).
 

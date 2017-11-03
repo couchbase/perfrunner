@@ -104,7 +104,7 @@ class RebalanceTest(PerfTest):
             ejected_nodes = []
 
             if nodes_after > initial_nodes:  # rebalance-in
-                new_nodes = servers[initial_nodes:nodes_after],
+                new_nodes = servers[initial_nodes:nodes_after]
                 known_nodes = servers[:nodes_after]
             elif nodes_after < initial_nodes:  # rebalance-out
                 ejected_nodes = servers[nodes_after:initial_nodes]

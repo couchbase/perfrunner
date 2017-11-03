@@ -172,6 +172,8 @@ class ClusterSettings:
     KERNEL_MEM_LIMIT_SERVICES = 'fts', 'index'
     ONLINE_CORES = 0
 
+    IPv6 = 0
+
     def __init__(self, options: dict):
         self.mem_quota = int(options.get('mem_quota'))
         self.index_mem_quota = int(options.get('index_mem_quota',
@@ -198,6 +200,7 @@ class ClusterSettings:
         self.num_vbuckets = options.get('num_vbuckets')
         self.online_cores = int(options.get('online_cores',
                                             self.ONLINE_CORES))
+        self.ipv6 = int(options.get('ipv6', self.IPv6))
         self.kernel_mem_limit = options.get('kernel_mem_limit',
                                             self.KERNEL_MEM_LIMIT)
 

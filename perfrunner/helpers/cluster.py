@@ -374,3 +374,7 @@ class ClusterManager:
 
     def disable_wan(self):
         self.remote.disable_wan()
+
+    def enable_ipv6(self):
+        if self.test_config.cluster.ipv6:
+            self.remote.enable_ipv6()

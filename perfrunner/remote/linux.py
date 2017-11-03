@@ -435,3 +435,9 @@ class RemoteLinux(Remote):
     @all_servers
     def clear_wtmp(self):
         run('echo > /var/log/wtmp')
+
+    @all_servers
+    def enable_ipv6(self):
+        logger.info('Enabling IPv6')
+        run('sed -i "s/{ipv6, false}/{ipv6, true}/" '
+            '/opt/couchbase/etc/couchbase/static_config')

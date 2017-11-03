@@ -20,10 +20,14 @@ class MemcachedHelper:
 
     def __init__(self, test_config):
         self.password = test_config.bucket.password
+        if test_config.cluster.ipv6:
+            self.family = socket.AF_INET6
+        else:
+            self.family = socket.AF_INET
 
     @retry
     def get_stats(self, host, port, bucket, stats=''):
-        mc = MemcachedClient(host=host, port=port)
+        mc = MemcachedClient(host=host, port=port, family=self.family)
         mc.sasl_auth_plain(user=bucket, password=self.password)
         return mc.stats(stats)
 

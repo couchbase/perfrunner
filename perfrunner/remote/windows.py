@@ -229,3 +229,6 @@ class RemoteWindows(Remote):
 
     def clear_wtmp(self):
         pass
+
+    def enable_ipv6(self):
+        pass

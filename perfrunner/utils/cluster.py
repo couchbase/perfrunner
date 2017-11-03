@@ -39,6 +39,7 @@ def main():
     cm.clear_login_history()
     cm.tune_memory_settings()
     cm.throttle_cpu()
+    cm.enable_ipv6()
     cm.tune_logging()
     cm.restart_with_alternative_num_vbuckets()
 

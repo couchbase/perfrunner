@@ -241,24 +241,23 @@ class ClusterManager:
         self.remote.restart()
 
     def set_cbas_iodevices(self):
-            analytics_data_base_path = "/var/couchbase/lib/data"
-            analytics_data_base_path, index_path = self.cluster_spec.paths
-            analytics_data_path = analytics_data_base_path + "/@analytics"
-            for analytics_node in self.cluster_spec.servers_by_role("cbas"):
-                self.remote.create_directory(analytics_node, analytics_data_path)
-                self.remote.allow_all_access(analytics_node, analytics_data_path)
-            iodevices_file = analytics_data_path + "/iodevices.txt"
-            iodevices = []
-            if not len(self.test_config.cluster.analytics_iodevices):
-                iodevices.append(analytics_data_path + "/iodev0")
-            else:
-                for iodev in self.test_config.cluster.analytics_iodevices:
-                    iodevices.append(iodev)
+        analytics_data_base_path, index_path = self.cluster_spec.paths
+        analytics_data_path = analytics_data_base_path + "/@analytics"
+        for analytics_node in self.cluster_spec.servers_by_role("cbas"):
+            self.remote.create_directory(analytics_node, analytics_data_path)
+            self.remote.allow_all_access(analytics_node, analytics_data_path)
+        iodevices_file = analytics_data_path + "/iodevices.txt"
+        iodevices = []
+        if not len(self.test_config.cluster.analytics_iodevices):
+            iodevices.append(analytics_data_path + "/iodev0")
+        else:
+            for iodev in self.test_config.cluster.analytics_iodevices:
+                iodevices.append(iodev)
 
-            for analytics_node in self.cluster_spec.servers_by_role("cbas"):
-                self.remote.set_cbas_iodevices(analytics_node,
-                                               iodevices_file,
-                                               ','.join(iodevices))
+        for analytics_node in self.cluster_spec.servers_by_role("cbas"):
+            self.remote.set_cbas_iodevices(analytics_node,
+                                           iodevices_file,
+                                           ','.join(iodevices))
 
     def enable_auto_failover(self):
         for master in self.cluster_spec.masters:

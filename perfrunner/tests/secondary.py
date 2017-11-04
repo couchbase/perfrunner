@@ -212,7 +212,7 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
     def load_and_build_initial_index(self):
         self.load()
         self.wait_for_persistence()
-        self.compact_bucket()
+
         time_elapsed = self.build_secondaryindex()
         self.print_index_disk_usage()
         if not self.incremental_only:
@@ -282,7 +282,7 @@ class MultipleIncrementalSecondaryIndexTest(InitialandIncrementalSecondaryIndexT
     def run(self):
         self.load()
         self.wait_for_persistence()
-        self.compact_bucket()
+
         self._build_secondaryindex()
 
         self.build_incrindex_multiple_times(self.incremental_load_iterations)
@@ -315,7 +315,7 @@ class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSeco
     def run(self):
         self.load()
         self.wait_for_persistence()
-        self.compact_bucket()
+
         nodes_after = [0]
         initial_nodes = self.test_config.cluster.initial_nodes
         nodes_after[0] = initial_nodes[0] + 1
@@ -356,7 +356,7 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
-        self.compact_bucket()
+
         self.build_secondaryindex()
         self.run_access_for_2i(run_in_background=True)
         self.apply_scanworkload(path_to_tool="./cbindexperf")
@@ -389,7 +389,7 @@ class SecondaryIndexingThroughputRebalanceTest(SecondaryIndexingThroughputTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
-        self.compact_bucket()
+
         self.build_secondaryindex()
         self.run_access_for_2i(run_in_background=True)
         nodes_after = [0]
@@ -521,7 +521,7 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
         self.remove_statsfile()
         self.load()
         self.wait_for_persistence()
-        self.compact_bucket()
+
         self.build_secondaryindex()
         self.run_access_for_2i(run_in_background=True)
         self.apply_scanworkload(path_to_tool="./cbindexperf")
@@ -548,7 +548,7 @@ class SecondaryIndexingScanLatencyLongevityTest(SecondaryIndexingScanLatencyTest
         self.remove_statsfile()
         self.load()
         self.wait_for_persistence()
-        self.compact_bucket()
+
         self.build_secondaryindex()
         self.run_access_for_2i(run_in_background=True)
         self.apply_scanworkload(path_to_tool="./cbindexperf")
@@ -577,7 +577,7 @@ class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest
         self.remove_statsfile()
         self.load()
         self.wait_for_persistence()
-        self.compact_bucket()
+
         nodes_after = [0]
         initial_nodes = self.test_config.cluster.initial_nodes
         nodes_after[0] = initial_nodes[0] + 1
@@ -663,7 +663,7 @@ class SecondaryIndexingDocIndexingLatencyTest(SecondaryIndexingScanLatencyTest):
         self.remove_statsfile()
         self.load()
         self.wait_for_persistence()
-        self.compact_bucket()
+
         self._build_secondaryindex()
         self.run_access_for_2i(run_in_background=True)
         self.apply_scanworkload()
@@ -709,7 +709,7 @@ class SecondaryIndexingMultiScanTest(SecondaryIndexingScanLatencyTest):
         self.remove_statsfile()
         self.load()
         self.wait_for_persistence()
-        self.compact_bucket()
+
         self.build_secondaryindex()
 
         self.run_access_for_2i(run_in_background=True)
@@ -736,7 +736,7 @@ class SecondaryRebalanceTest(SecondaryIndexTest, RebalanceTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
-        self.compact_bucket()
+
         self._build_secondaryindex()
         self.run_access_for_2i(run_in_background=True)
         self.rebalance_indexer()

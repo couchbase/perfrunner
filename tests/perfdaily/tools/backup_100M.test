@@ -3,6 +3,9 @@ test = perfdaily.tools.BackupTest
 title = Backup, 100M x 1KB items, DGM, Idle
 component = Tools
 
+[stats]
+client_processes = cbbackupmgr
+
 [cluster]
 mem_quota = 52428
 initial_nodes = 4

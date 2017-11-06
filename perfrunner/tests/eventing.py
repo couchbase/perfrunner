@@ -25,7 +25,7 @@ class EventingTest(PerfTest):
         self.timer_worker_pool_size = self.test_config.eventing_settings.timer_worker_pool_size
         self.time = self.test_config.access_settings.time
 
-        self.function_nodes = self.cluster_spec.servers_by_role('eventing')
+        self.eventing_nodes = self.cluster_spec.servers_by_role('eventing')
 
         for master in self.cluster_spec.masters:
             self.rest.add_rbac_user(
@@ -50,9 +50,9 @@ class EventingTest(PerfTest):
                 func["appname"] = name
                 func["appcode"] = code
             function = json.dumps(func)
-            self.rest.create_function(node=self.function_nodes[0], payload=function, name=name)
-            self.rest.deploy_function(node=self.function_nodes[0], payload=function, name=name)
-            self.monitor.wait_for_bootstrap(node=self.function_nodes[0], function=name)
+            self.rest.create_function(node=self.eventing_nodes[0], payload=function, name=name)
+            self.rest.deploy_function(node=self.eventing_nodes[0], payload=function, name=name)
+            self.monitor.wait_for_bootstrap(node=self.eventing_nodes[0], function=name)
 
     @timeit
     @with_stats
@@ -81,7 +81,7 @@ class TimerTest(EventingTest):
     @with_stats
     def process_timer_events(self):
         for name, filename in self.functions.items():
-            self.monitor.wait_for_timer_event(node=self.function_nodes[0],
+            self.monitor.wait_for_timer_event(node=self.eventing_nodes[0],
                                               function=name)
             break
         self.sleep()

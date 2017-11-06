@@ -739,7 +739,7 @@ class ArrayIndexingDocument(ReverseLookupDocument):
             offset += 2 * seq_id * self.array_size
             offset += random.randint(1, self.array_size)
 
-        return [offset + i for i in range(self.array_size)]
+        return [int(offset + i) for i in range(self.array_size)]
 
     def _build_achievements2(self, seq_id: int) -> List[int]:
         """Build an array of integers.
@@ -755,7 +755,7 @@ class ArrayIndexingDocument(ReverseLookupDocument):
             offset += (2 * seq_id) // self.ARRAY_CAP * self.ARRAY_SIZE
             offset += random.randint(1, self.ARRAY_SIZE)
 
-        return [offset + i for i in range(self.ARRAY_SIZE)]
+        return [int(offset + i) for i in range(self.ARRAY_SIZE)]
 
     def next(self, key: Key) -> dict:
         alphabet = self._build_alphabet(key.string)

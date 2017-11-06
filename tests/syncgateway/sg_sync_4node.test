@@ -16,7 +16,7 @@ workers = 0
 
 [syncgateway]
 nodes = 4
-threads = 100
+threads = 800
 clients = 4
 instances_per_client = 5
 workload_path = workloads/syncgateway_blank
@@ -26,7 +26,7 @@ users = 1000
 channels = 100
 channels_per_user = 10
 channels_per_doc = 1
-documents = 1000000
+documents = 100000
 roundtrip_write = true
 read_mode = changesonly
 feed_reading_mode = withdocs

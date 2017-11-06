@@ -11,30 +11,30 @@ num_buckets = 1
 
 
 [access]
-time = 120
+time = 420
 workers = 0
 
 [syncgateway]
 nodes = 4
-threads = 400
+threads = 100
 clients = 4
 instances_per_client = 5
 workload_path = workloads/syncgateway_blank
 ycsb_repo = git://github.com/couchbaselabs/YCSB.git
 ycsb_branch = syncgateway-weekly
-users = 1000
-channels = 100
-channels_per_user = 10
+users = 10000
+channels = 1000
+channels_per_user = 100
 channels_per_doc = 1
 documents = 100000
-roundtrip_write = true
+roundtrip_write = false
 read_mode = changesonly
 feed_reading_mode = withdocs
-feed_mode = normal
+feed_mode = longpoll
 insert_mode = byuser
 auth = true
-readproportion=0.995
+readproportion=0.999
 updateproportion=0
-insertproportion=0.005
+insertproportion=0.001
 requestdistribution = zipfian
 log_title = sync_gateway_1node_reads

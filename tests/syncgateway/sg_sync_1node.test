@@ -11,7 +11,7 @@ num_buckets = 1
 
 
 [access]
-time = 600
+time = 420
 workers = 0
 
 [syncgateway]
@@ -26,11 +26,11 @@ users = 10000
 channels = 1000
 channels_per_user = 100
 channels_per_doc = 1
-documents = 1000000
+documents = 100000
 roundtrip_write = true
 read_mode = changesonly
 feed_reading_mode = withdocs
-feed_mode = normal
+feed_mode = longpoll
 insert_mode = byuser
 auth = true
 readproportion=0.999

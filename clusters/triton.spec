@@ -1,11 +1,11 @@
 [clusters]
 triton =
-    172.23.132.17:kv
-    172.23.132.18:kv
-    172.23.132.19:kv
-    172.23.132.20:kv
-    172.23.132.15:index
-    172.23.132.16:n1ql
+    triton-srv-01.perf.couchbase.com:kv
+    triton-srv-02.perf.couchbase.com:kv
+    triton-srv-03.perf.couchbase.com:kv
+    triton-srv-04.perf.couchbase.com:kv
+    triton-srv-05.perf.couchbase.com:index
+    triton-srv-06.perf.couchbase.com:n1ql
 
 [clients]
 hosts =

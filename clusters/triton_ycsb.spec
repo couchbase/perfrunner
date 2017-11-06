@@ -1,10 +1,10 @@
 [clusters]
 triton =
-    172.23.132.15:kv,index,n1ql
+    triton-srv-05.perf.couchbase.com:kv,index,n1ql
 
 [clients]
 hosts =
-    172.23.132.14
+    triton-cnt-01.perf.couchbase.com
 credentials = root:couchbase
 
 [storage]

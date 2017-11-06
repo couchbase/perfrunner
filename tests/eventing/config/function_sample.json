@@ -27,7 +27,7 @@
     "rbacrole": "admin",
     "processing_status": true,
     "deployment_status": true,
-    "enable_recursive_mutation": false,
+    "enable_recursive_mutation": true,
     "lcb_inst_capacity": 5,
     "cpp_worker_thread_count": 1,
     "description": "Perf test"

@@ -26,7 +26,7 @@ view_percentage = 100
 [load]
 items = 20000000
 size = 1024
-workers = 2
+workers = 100
 
 [eventing]
 functions = perf-test1:tests/eventing/code/bktop.js
@@ -34,9 +34,8 @@ worker_count = 16
 cpp_worker_thread_count = 4
 
 [access]
-throughput = 5000
 updates = 100
 items = 20000000
 existing_items = 20000000
-workers = 5
+workers = 100
 time = 600

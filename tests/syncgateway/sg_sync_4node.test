@@ -16,7 +16,7 @@ workers = 0
 
 [syncgateway]
 nodes = 4
-threads = 200
+threads = 400
 clients = 4
 instances_per_client = 5
 workload_path = workloads/syncgateway_blank
@@ -33,8 +33,8 @@ feed_reading_mode = withdocs
 feed_mode = normal
 insert_mode = byuser
 auth = true
-readproportion=0.99
+readproportion=0.995
 updateproportion=0
-insertproportion=0.01
+insertproportion=0.005
 requestdistribution = zipfian
 log_title = sync_gateway_1node_reads

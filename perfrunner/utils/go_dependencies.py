@@ -66,7 +66,7 @@ def main():
     cluster_spec = ClusterSpec()
     cluster_spec.parse(args.cluster)
 
-    remote = RemoteHelper(cluster_spec, None, args.verbose)
+    remote = RemoteHelper(cluster_spec, args.verbose)
     remote.get_manifest()
     projects = parse_manifest()
     fetch(projects)

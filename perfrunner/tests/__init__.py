@@ -41,7 +41,7 @@ class PerfTest:
         self.memcached = MemcachedHelper(test_config)
         self.monitor = Monitor(cluster_spec, test_config, verbose)
         self.rest = RestHelper(cluster_spec)
-        self.remote = RemoteHelper(cluster_spec, test_config, verbose)
+        self.remote = RemoteHelper(cluster_spec, verbose)
         self.index = IndexHelper(cluster_spec, test_config, self.rest, self.monitor)
 
         self.master_node = next(cluster_spec.masters)

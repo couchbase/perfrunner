@@ -21,7 +21,7 @@ class FIOTest(PerfTest):
     def __init__(self, cluster_spec, test_config, verbose):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
-        self.remote = RemoteHelper(cluster_spec, test_config, verbose)
+        self.remote = RemoteHelper(cluster_spec, verbose)
 
     def __exit__(self, *args, **kwargs):
         pass

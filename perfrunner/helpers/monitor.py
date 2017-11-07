@@ -41,7 +41,7 @@ class Monitor(RestHelper):
         super().__init__(cluster_spec=cluster_spec)
         self.cluster_spec = cluster_spec
         self.test_config = test_config
-        self.remote = RemoteHelper(cluster_spec, test_config, verbose)
+        self.remote = RemoteHelper(cluster_spec, verbose)
 
     def monitor_rebalance(self, host):
         logger.info('Monitoring rebalance status')

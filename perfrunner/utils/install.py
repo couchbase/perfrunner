@@ -41,7 +41,7 @@ Build = namedtuple('Build', ['filename', 'url'])
 class CouchbaseInstaller:
 
     def __init__(self, cluster_spec, options):
-        self.remote = RemoteHelper(cluster_spec, None, options.verbose)
+        self.remote = RemoteHelper(cluster_spec, options.verbose)
         self.options = options
 
     @property

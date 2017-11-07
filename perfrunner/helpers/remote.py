@@ -8,7 +8,7 @@ from perfrunner.remote.windows import RemoteWindows
 
 class RemoteHelper:
 
-    def __new__(cls, cluster_spec, test_config, verbose=False):
+    def __new__(cls, cluster_spec, verbose=False):
         if not cluster_spec.ssh_credentials:
             return None
 
@@ -18,9 +18,9 @@ class RemoteHelper:
 
         os = cls.detect_os(cluster_spec)
         if os == 'Cygwin':
-            return RemoteWindows(cluster_spec, test_config, os)
+            return RemoteWindows(cluster_spec, os)
         else:
-            return RemoteLinux(cluster_spec, test_config, os)
+            return RemoteLinux(cluster_spec, os)
 
     @staticmethod
     def detect_os(cluster_spec):

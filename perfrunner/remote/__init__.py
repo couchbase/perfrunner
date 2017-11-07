@@ -9,10 +9,9 @@ class Remote:
 
     CLIENT_PROCESSES = 'celery', 'cbc-pillowfight', 'memcached'
 
-    def __init__(self, cluster_spec, test_config, os):
+    def __init__(self, cluster_spec, os):
         self.os = os
         self.cluster_spec = cluster_spec
-        self.test_config = test_config
 
     @staticmethod
     def wget(url, outdir='/tmp', outfile=None):

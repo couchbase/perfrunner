@@ -21,7 +21,7 @@ def main():
     cluster_spec = ClusterSpec()
     cluster_spec.parse(args.cluster_spec_fname)
 
-    remote = RemoteHelper(cluster_spec, test_config=None, verbose=False)
+    remote = RemoteHelper(cluster_spec, verbose=False)
 
     logger.info('Recovering system state')
     for host, version in remote.get_system_backup_version().items():

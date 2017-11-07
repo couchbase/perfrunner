@@ -23,7 +23,7 @@ def main():
     cluster_spec = ClusterSpec()
     cluster_spec.parse(args.cluster_spec_fname)
 
-    remote = RemoteHelper(cluster_spec, test_config=None, verbose=False)
+    remote = RemoteHelper(cluster_spec, verbose=False)
 
     remote.collect_info()
     for hostname in cluster_spec.servers:

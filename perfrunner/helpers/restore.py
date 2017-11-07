@@ -19,7 +19,7 @@ class RestoreHelper:
 
         self.snapshot = self.test_config.restore_settings.snapshot
 
-        self.remote = RemoteHelper(self.cluster_spec, self.test_config)
+        self.remote = RemoteHelper(self.cluster_spec)
 
     def __enter__(self):
         return self

@@ -15,7 +15,7 @@ class ClusterManager:
         self.test_config = test_config
 
         self.rest = RestHelper(cluster_spec)
-        self.remote = RemoteHelper(cluster_spec, test_config, verbose)
+        self.remote = RemoteHelper(cluster_spec, verbose)
         self.monitor = Monitor(cluster_spec, test_config, verbose)
         self.memcached = MemcachedHelper(test_config)
 

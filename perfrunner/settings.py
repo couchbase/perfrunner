@@ -206,7 +206,8 @@ class StatsSettings:
                         'cbft',
                         'cbq-engine',
                         'indexer',
-                        'memcached']
+                        'memcached',
+                        'sync_gateway']
     TRACED_PROCESSES = []
 
     def __init__(self, options: dict):

@@ -181,7 +181,7 @@ class BgFetcherTest(DGMTest):
         )
 
 
-class DrainTest(DGMTest):
+class DrainTest(DGMCompactionTest):
 
     """Enable reporting of average disk write queue size."""
 

@@ -147,6 +147,13 @@ class PerfTest:
             rh.restore()
             rh.warmup()
 
+    def reset_kv_stats(self):
+        master_node = next(self.cluster_spec.masters)
+        for bucket in self.test_config.buckets:
+            for server in self.rest.get_server_list(master_node, bucket):
+                port = self.rest.get_memcached_port(server)
+                self.memcached.reset_stats(server, port, bucket)
+
     def run_phase(self,
                   phase: str,
                   task: Callable, settings: PhaseSettings,

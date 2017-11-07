@@ -15,12 +15,6 @@ class KVTest(PerfTest):
     def access(self, *args):
         super().access(*args)
 
-    def reset_kv_stats(self):
-        for server in self.cluster_spec.servers:
-            for bucket in self.test_config.buckets:
-                port = self.rest.get_memcached_port(server)
-                self.memcached.reset_stats(server, port, bucket)
-
     def run(self):
         self.load()
         self.wait_for_persistence()

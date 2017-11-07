@@ -133,6 +133,8 @@ class RebalanceKVTest(RebalanceTest):
 
         self.hot_load()
 
+        self.reset_kv_stats()
+
         self.access_bg()
         self.rebalance()
 

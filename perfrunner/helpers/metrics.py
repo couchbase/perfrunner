@@ -600,10 +600,11 @@ class MetricHelper:
             with open(filename) as fh:
                 for line in fh.readlines():
                     if line.startswith(metric_name):
-                        lat += int(float(line.split()[-1]))
+                        lat += float(line.split()[-1])
                         count += 1
-        return lat / count
-
+        if count > 0:
+            return lat / count
+        return 0
 
     def _parse_dcp_throughput(self, output_file: str = 'dcpstatsfile') -> int:
         # Get throughput from OUTPUT_FILE for posting to showfast

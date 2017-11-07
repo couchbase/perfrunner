@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.syncgateway.SGRead
-title = Reads, 1 node, 1M docs, 1K users, 1 channel,
+title = 1 node, 1M docs, 1K users, 1 channel
 component = sync_gateway
 category = read
 

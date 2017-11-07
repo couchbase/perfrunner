@@ -140,7 +140,7 @@ class SGSync(SGPerfTest):
         )
 
         self.reporter.post(
-            *self.metrics.sg_latency('Sync, round-trip write Latency, 95p (ms)', '[INSERT], 95thPercentileLatency(us)')
+            *self.metrics.sg_latency('[INSERT], 95thPercentileLatency(us)', 'Sync, round-trip write Latency, 95p (ms)')
         )
 
 class SGWrite(SGPerfTest):

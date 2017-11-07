@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.syncgateway.SGWrite
-title = Round-Trip Writes, 1 node, 1M docs, 1K users, 100 channels, 10 channels per doc
+title = 1 node, 1M docs, 1K users, 100 channels, 10 channels per doc
 component = sync_gateway
 category = write
 
@@ -23,17 +23,17 @@ workload_path = workloads/syncgateway_blank
 ycsb_repo = git://github.com/couchbaselabs/YCSB.git
 ycsb_branch = syncgateway-weekly
 users = 1000
-channels = 1
-channels_per_user = 1
-channels_per_doc = 1
+channels = 100
+channels_per_user = 10
+channels_per_doc = 10
 documents = 100000
 roundtrip_write = true
 feed_reading_mode = idsonly
 insert_mode = byuser
 auth = true
-readproportion=0.99
+readproportion=0
 updateproportion=0
-insertproportion=0.01
+insertproportion=1
 requestdistribution = zipfian
-log_title = sync_gateway_4node_sync
+log_title = sync_gateway_1node_writes
 

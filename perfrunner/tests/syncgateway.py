@@ -93,16 +93,6 @@ class SGPerfTest(PerfTest):
     def run_test(self):
         self.run_sg_phase("run test", syncgateway_task_run_test, self.settings, self.settings.time, True)
 
-    def _report_kpi(self):
-        self.collect_execution_logs()
-        for f in glob.glob('{}/*runtest*.result'.format(self.LOCAL_DIR)):
-            with open(f, 'r') as fout:
-                logger.info(f)
-                logger.info(fout.read())
-
-        self.reporter.post(
-            *self.metrics.sg_throughput()
-        )
 
     def run(self):
         self.download_ycsb()
@@ -124,3 +114,43 @@ class SGPerfTest(PerfTest):
         if self.test_config.cluster.kernel_mem_limit:
             self.remote.reset_memory_settings()
             self.monitor.wait_for_servers()
+
+class SGRead(SGPerfTest):
+    def _report_kpi(self):
+        self.collect_execution_logs()
+        for f in glob.glob('{}/*runtest*.result'.format(self.LOCAL_DIR)):
+            with open(f, 'r') as fout:
+                logger.info(f)
+                logger.info(fout.read())
+
+        self.reporter.post(
+            *self.metrics.sg_throughput("Read, GET doc by id Throughput (req/sec)")
+        )
+
+class SGSync(SGPerfTest):
+    def _report_kpi(self):
+        self.collect_execution_logs()
+        for f in glob.glob('{}/*runtest*.result'.format(self.LOCAL_DIR)):
+            with open(f, 'r') as fout:
+                logger.info(f)
+                logger.info(fout.read())
+
+        self.reporter.post(
+            *self.metrics.sg_throughput('Sync, GET docs by _changes Throughput (reg/sec)')
+        )
+
+        self.reporter.post(
+            *self.metrics.sg_latency('Sync, round-trip write Latency, 95p (ms)', '[INSERT], 95thPercentileLatency(us)')
+        )
+
+class SGWrite(SGPerfTest):
+    def _report_kpi(self):
+        self.collect_execution_logs()
+        for f in glob.glob('{}/*runtest*.result'.format(self.LOCAL_DIR)):
+            with open(f, 'r') as fout:
+                logger.info(f)
+                logger.info(fout.read())
+
+        self.reporter.post(
+            *self.metrics.sg_throughput("Write, Insert doc Throughput (req/sec)")
+        )

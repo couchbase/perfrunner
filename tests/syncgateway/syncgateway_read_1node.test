@@ -1,8 +1,8 @@
 [test_case]
-test = perfrunner.tests.syncgateway.SGPerfTest
-title = Avg Throughput (queries/sec), Reads, 1M docs, 10K users, 1000 channels
-component = mobile
-category = sync_gateway_1node
+test = perfrunner.tests.syncgateway.SGRead
+title = Reads, 1 node, 1M docs, 1K users, 1 channel,
+component = sync_gateway
+category = read
 
 [cluster]
 mem_quota = 25000
@@ -11,29 +11,31 @@ num_buckets = 1
 
 
 [access]
-time = 120
+time = 600
 workers = 0
 
 [syncgateway]
-nodes = 4
-threads = 100
+nodes = 1
+threads = 800
 clients = 4
 instances_per_client = 5
 workload_path = workloads/syncgateway_blank
 ycsb_repo = git://github.com/couchbaselabs/YCSB.git
 ycsb_branch = syncgateway-weekly
 users = 1000
-channels = 100
-channels_per_user = 10
+channels = 1
+channels_per_user = 1
 channels_per_doc = 1
-documents = 100000
+documents = 1000000
 roundtrip_write = true
+read_mode = documents
 feed_reading_mode = idsonly
-insert_mode = byuser
+feed_mode = normal
+insert_mode = bykey
 auth = true
-readproportion=0
+readproportion=1
 updateproportion=0
-insertproportion=1
+insertproportion=0
 requestdistribution = zipfian
 log_title = sync_gateway_1node_reads
 

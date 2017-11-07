@@ -647,14 +647,24 @@ class MetricHelper:
 
         return throughput, self._snapshots, metric_info
 
-    def sg_throughput(self) -> Metric:
-        metric_info = self._metric_info()
+    def sg_throughput(self, title) -> Metric:
+        metric_id = '{}_throughput'.format(self.test_config.name)
+        metric_title = "{}, {}".format(title, self._title)
+        metric_info = self._metric_info(metric_id, metric_title)
         throughput = self._parse_sg_throughput()
         return throughput, self._snapshots, metric_info
 
-    def sg_latency(self, metric_name) -> Metric:
-        metric_info = self._metric_info()
-        lat = self._parse_sg_latency(metric_name)
+    def sg_latency(self, metric_name, title) -> Metric:
+        metric_id = '{}_latency'.format(self.test_config.name)
+        metric_title = "{}, {}".format(title, self._title)
+        metric_info = self._metric_info(metric_id, metric_title)
+
+        lat = float( self._parse_sg_latency(metric_name) / 1000)
+        if lat < 10:
+            lat = round(lat, 2)
+        else:
+            lat = round(lat)
+
         return lat, self._snapshots, metric_info
 
     def indexing_time(self, indexing_time: float) -> Metric:

@@ -1,7 +1,7 @@
 [test_case]
 test = perfrunner.tests.syncgateway.SGWrite
 title = 1 node, 1M docs, 1K users, 100 channels, 10 channels per doc
-component = sync_gateway
+component = syncgateway
 category = write
 
 [cluster]

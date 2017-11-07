@@ -124,7 +124,7 @@ class SGRead(SGPerfTest):
                 logger.info(fout.read())
 
         self.reporter.post(
-            *self.metrics.sg_throughput("Read, GET doc by id Throughput (req/sec)")
+            *self.metrics.sg_throughput("Throughput (req/sec), GET doc by id")
         )
 
 class SGSync(SGPerfTest):
@@ -136,11 +136,12 @@ class SGSync(SGPerfTest):
                 logger.info(fout.read())
 
         self.reporter.post(
-            *self.metrics.sg_throughput('Sync, GET docs by _changes Throughput (reg/sec)')
+            *self.metrics.sg_throughput('Throughput (req/sec), GET docs via _changes')
         )
 
         self.reporter.post(
-            *self.metrics.sg_latency('[INSERT], 95thPercentileLatency(us)', 'Sync, round-trip write Latency, 95p (ms)')
+            *self.metrics.sg_latency('[INSERT], 95thPercentileLatency(us)',
+                                     'Latency, round-trip write, 95 percentile (ms)')
         )
 
 class SGWrite(SGPerfTest):
@@ -152,5 +153,5 @@ class SGWrite(SGPerfTest):
                 logger.info(fout.read())
 
         self.reporter.post(
-            *self.metrics.sg_throughput("Write, Insert doc Throughput (req/sec)")
+            *self.metrics.sg_throughput("Throughput (req/sec), POST doc")
         )

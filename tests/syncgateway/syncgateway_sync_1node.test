@@ -11,7 +11,7 @@ num_buckets = 1
 
 
 [access]
-time = 420
+time = 600
 workers = 0
 
 [syncgateway]

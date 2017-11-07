@@ -66,6 +66,7 @@ class NSServerOverview(NSServer):
 class NSServerSystem(NSServer):
 
     COLLECTOR = "ns_server_system"
+    METRICS = 'cpu_utilization',
 
     def _get_system_stats(self):
         all_stats = self.get_http(path='/pools/default')
@@ -74,8 +75,7 @@ class NSServerSystem(NSServer):
         for node in all_stats["nodes"]:
             stats = {}
             server = node["hostname"].split(":")[0]
-            cpu_util = node["systemStats"]["cpu_utilization_rate"]
-            stats["cpu_utilization"] = cpu_util
+            stats["cpu_utilization"] = node["systemStats"]["cpu_utilization_rate"]
             server_stats[server] = stats
         return server_stats
 
@@ -94,6 +94,7 @@ class NSServerSystem(NSServer):
 
         for node in self.get_nodes():
             self.mc.add_server(node)
+            self.update_metric_metadata(self.METRICS, server=node)
 
 
 class XdcrStats(Collector):

@@ -1,3 +1,5 @@
+import glob
+import shutil
 import time
 from typing import Callable
 
@@ -81,7 +83,16 @@ class PerfTest:
             self.remote.enable_cpu()
 
         if self.test_config.cluster.kernel_mem_limit:
+            self.collect_logs()
+
             self.cluster.reset_memory_settings()
+
+    def collect_logs(self):
+        self.remote.collect_info()
+
+        for hostname in self.cluster_spec.servers:
+            for fname in glob.glob('{}/*.zip'.format(hostname)):
+                shutil.move(fname, '{}.zip'.format(hostname))
 
     def reset_memory_settings(self):
         if self.test_config.cluster.kernel_mem_limit:

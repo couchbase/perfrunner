@@ -83,7 +83,7 @@ class SyncGatewayStats(Collector):
         self.metrics = set()
         self.updater = None
 
-        self.cg_settings = settings.syncgateway_settings
+        self.cg_settings = test.settings.syncgateway_settings
         self.hosts = test.cluster_spec.servers[:int(self.cg_settings.nodes)]
         self.rest = rest.RestHelper(test.cluster_spec)
         self.sg_stats = dict()

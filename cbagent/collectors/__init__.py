@@ -7,6 +7,8 @@ from cbagent.collectors.fts_stats import (
     FTSLatencyCollector,
     ElasticStats,
 )
+
+from cbagent.collectors.syncgateway_stats import SyncGatewayStats
 from cbagent.collectors.latency import Latency, KVLatency, QueryLatency
 from cbagent.collectors.observe import (
     DurabilityLatency,

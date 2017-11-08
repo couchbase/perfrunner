@@ -39,6 +39,7 @@ from cbagent.collectors import (
     TypePerf,
     XdcrLag,
     XdcrStats,
+    SyncGatewayStats,
 )
 from cbagent.metadata_client import MetadataClient
 from cbagent.stores import PerfStore
@@ -162,7 +163,9 @@ class CbAgent:
                        xdcr_stats=False,
                        ns_server=True,
                        ns_server_overview=True,
-                       active_tasks=True):
+                       active_tasks=True,
+                       syncgateway_stats=False):
+
         self.collectors = []
         self.processes = []
 
@@ -214,6 +217,9 @@ class CbAgent:
             self.add_collector(FTSLatencyCollector, self.test)
         if fts_stats:
             self.add_collector(FTSCollector, self.test)
+
+        if syncgateway_stats:
+            self.add_collector(SyncGatewayStats, self.test)
 
         if secondary_debugstats:
             self.add_collector(SecondaryDebugStats)

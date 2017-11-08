@@ -30,7 +30,9 @@ from perfrunner.settings import (
 
 class SGPerfTest(PerfTest):
 
-    COLLECTORS = {'disk': False, 'ns_server': False, 'ns_server_overview': False, 'active_tasks': False}
+    COLLECTORS = {'disk': False, 'ns_server': False, 'ns_server_overview': False, 'active_tasks': False,
+                  'syncgateway_stats': True}
+
     ALL_HOSTNAMES = True
     LOCAL_DIR = "YCSB"
 

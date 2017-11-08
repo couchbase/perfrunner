@@ -518,21 +518,23 @@ class RestHelper:
 
     def create_fts_index(self, host: str, index: str, definition: dict):
         logger.info('Creating a new FTS index: {}'.format(index))
-
         api = 'http://{}:8094/api/index/{}'.format(host, index)
         headers = {'Content-Type': 'application/json'}
         data = json.dumps(definition, ensure_ascii=False)
-
         self.put(url=api, data=data, headers=headers)
 
     def get_fts_doc_count(self, host: str, index: str) -> int:
         api = 'http://{}:8094/api/index/{}/count'.format(host, index)
-
         response = self.get(url=api).json()
         return response['count']
 
     def get_fts_stats(self, host: str) -> dict:
         api = 'http://{}:8094/api/nsstats'.format(host)
+        response = self.get(url=api)
+        return response.json()
+
+    def get_sg_stats(self, host: str) -> dict:
+        api = 'http://{}:4985/_expvar'.format(host)
         response = self.get(url=api)
         return response.json()
 
@@ -543,18 +545,14 @@ class RestHelper:
 
     def delete_elastic_index(self, host: str, index: str):
         logger.info('Deleting Elasticsearch index: {}'.format(index))
-
         api = 'http://{}:9200/{}'.format(host, index)
-
         self.delete(url=api)
 
     def create_elastic_index(self, host: str, index: str, definition: dict):
         logger.info('Creating a new Elasticsearch index: {}'.format(index))
-
         api = 'http://{}:9200/{}'.format(host, index)
         headers = {'Content-Type': 'application/json'}
         data = json.dumps(definition, ensure_ascii=False)
-
         self.put(url=api, data=data, headers=headers)
 
     def get_elastic_doc_count(self, host: str, index: str) -> int:

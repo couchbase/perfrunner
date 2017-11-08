@@ -107,13 +107,14 @@ class SyncGatewayStats(Collector):
             self.sg_stats[host] = self.rest.get_sg_stats(host)
 
     def measure(self):
-        stats = dict
+        stats = dict()
         stats["_totals"] = dict()
         for metric in self.METRICS:
             for host in self.hosts:
                 if host not in stats:
                     stats[host] = dict()
                 stats[host][metric] = float(self.get_metric_value_by_name(metric))
+                #stats[host][metric] = 0
                 if metric not in stats["_totals"]:
                     stats["_totals"][metric] = 0
                 stats["_totals"][metric] += stats[host][metric]

@@ -1,6 +1,7 @@
 from cbagent.collectors import Collector
 from perfrunner.helpers import rest
-
+from cbagent.metadata_client import MetadataClient
+from cbagent.stores import PerfStore
 
 class SyncGatewayStats(Collector):
     COLLECTOR_NODE = "syncgateway_node_stats"
@@ -63,7 +64,25 @@ class SyncGatewayStats(Collector):
     )
 
     def __init__(self, settings, test):
-        super().__init__(settings)
+        self.interval = settings.interval
+        self.cluster = settings.cluster
+        self.master_node = settings.master_node
+        self.auth = (settings.rest_username, settings.rest_password)
+
+        self.buckets = settings.buckets
+        self.indexes = settings.indexes
+        self.hostnames = settings.hostnames
+        self.workers = settings.workers
+        self.ssh_username = getattr(settings, 'ssh_username', None)
+        self.ssh_password = getattr(settings, 'ssh_password', None)
+        self.secondary_statsfile = settings.secondary_statsfile
+
+        self.store = PerfStore(settings.cbmonitor_host)
+        self.mc = MetadataClient(settings)
+
+        self.metrics = set()
+        self.updater = None
+
         self.cg_settings = settings.syncgateway_settings
         self.hosts = test.cluster_spec.servers[:int(self.cg_settings.nodes)]
         self.rest = rest.RestHelper(test.cluster_spec)

@@ -61,6 +61,9 @@ class FTSCollector(Collector):
         self.rest = rest.RestHelper(test.cluster_spec)
         self.fts_client = self.init_client(test.test_config)
 
+    def get_nodes(self):
+        return list()
+
     def init_client(self, test_config):
         auth = HTTPBasicAuth(self.auth[0], self.auth[1])
         return FtsGen(self.master_node, test_config.fts_settings, auth=auth)

@@ -131,4 +131,4 @@ class SyncGatewayStats(Collector):
                               collector=self.COLLECTOR_NODE)
         self.store.append(samples["_totals"],
                           cluster=self.cluster,
-                          collector=self.COLLECTOR_SERVER)
+                          collector=self.COLLECTOR_CLUSTER)

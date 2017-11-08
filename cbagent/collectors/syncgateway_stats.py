@@ -90,9 +90,9 @@ class SyncGatewayStats(Collector):
 
     def get_metric_value_by_name(self, host, metic_name):
         g, m = metic_name.split("__")
-        if g in self.sg_stats:
-            if m in self.sg_stats[m]:
-                return self.sg_stats[g][m]
+        if g in self.sg_stats[host]:
+            if m in self.sg_stats[host][m]:
+                return self.sg_stats[host][g][m]
         return 0
 
     def update_metadata(self):
@@ -113,7 +113,7 @@ class SyncGatewayStats(Collector):
             for host in self.hosts:
                 if host not in stats:
                     stats[host] = dict()
-                stats[host][metric] = float(self.get_metric_value_by_name(metric))
+                stats[host][metric] = float(self.get_metric_value_by_name(host, metric))
                 #stats[host][metric] = 0
                 if metric not in stats["_totals"]:
                     stats["_totals"][metric] = 0

@@ -6,6 +6,7 @@ from cbagent.stores import PerfStore
 class SyncGatewayStats(Collector):
     COLLECTOR_NODE = "syncgateway_node_stats"
     COLLECTOR_CLUSTER = "syncgateway_cluster_stats"
+    REPORT_STATS_PER_NODE = False
 
     METRICS = (
         "syncGateway_changeCache__lag-queue-0000ms",
@@ -114,7 +115,6 @@ class SyncGatewayStats(Collector):
                 if host not in stats:
                     stats[host] = dict()
                 stats[host][metric] = float(self.get_metric_value_by_name(host, metric))
-                #stats[host][metric] = 0
                 if metric not in stats["_totals"]:
                     stats["_totals"][metric] = 0
                 stats["_totals"][metric] += stats[host][metric]
@@ -124,11 +124,12 @@ class SyncGatewayStats(Collector):
         self.collect_stats()
         self.update_metric_metadata(self.METRICS)
         samples = self.measure()
-        for host in self.hosts:
-            self.store.append(samples[host],
-                              cluster=self.cluster,
-                              server=host,
-                              collector=self.COLLECTOR_NODE)
+        if self.REPORT_STATS_PER_NODE:
+            for host in self.hosts:
+                self.store.append(samples[host],
+                                  cluster=self.cluster,
+                                  server=host,
+                                  collector=self.COLLECTOR_NODE)
         self.store.append(samples["_totals"],
                           cluster=self.cluster,
                           collector=self.COLLECTOR_CLUSTER)

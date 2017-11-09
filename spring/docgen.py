@@ -124,8 +124,7 @@ class UniformKey:
         self.fmtr = fmtr
 
     def next(self, curr_items: int, curr_deletes: int, *args) -> Key:
-        number = np.random.random_integers(low=curr_deletes,
-                                           high=curr_items - 1)
+        number = random.randrange(curr_deletes, curr_items)
         return Key(number=number, prefix=self.prefix, fmtr=self.fmtr)
 
 
@@ -172,8 +171,7 @@ class WorkingSetKey:
             left_boundary = curr_deletes
             right_boundary = num_cold_items
 
-        number = np.random.random_integers(low=left_boundary,
-                                           high=right_boundary - 1)
+        number = random.randrange(left_boundary, right_boundary)
         return Key(number=number, prefix=self.prefix, fmtr=self.fmtr, hit=hit)
 
 
@@ -201,8 +199,7 @@ class MovingWorkingSetKey:
 
         left_boundary = curr_deletes + current_hot_load_start.value
         right_boundary = left_boundary + num_hot_items
-        number = np.random.random_integers(low=left_boundary,
-                                           high=right_boundary - 1)
+        number = random.randrange(left_boundary, right_boundary)
         return Key(number=number, prefix=self.prefix, fmtr=self.fmtr)
 
 

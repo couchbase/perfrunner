@@ -80,6 +80,8 @@ class Worker:
 
     BATCH_SIZE = 100
 
+    NAME = 'worker'
+
     def __init__(self, workload_settings, target_settings, shutdown_event=None):
         self.ws = workload_settings
         self.ts = target_settings
@@ -91,6 +93,8 @@ class Worker:
         self.init_keys()
         self.init_docs()
         self.init_db()
+
+        self.reservoir = Reservoir(num_workers=self.ws.workers)
 
     def init_keys(self):
         self.new_keys = NewOrderedKey(prefix=self.ts.prefix,
@@ -193,6 +197,9 @@ class Worker:
     def seed(self):
         random.seed(seed=self.sid * 9901)
 
+    def dump_stats(self):
+        self.reservoir.dump(filename='{}-{}'.format(self.NAME, self.sid))
+
 
 Sequence = List[Tuple[str, Callable, Tuple]]
 
@@ -200,11 +207,6 @@ Sequence = List[Tuple[str, Callable, Tuple]]
 class KVWorker(Worker):
 
     NAME = 'kv-worker'
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.reservoir = Reservoir(num_workers=self.ws.workers)
 
     def gen_cmd_sequence(self, cb=None, extras=None) -> Sequence:
         ops = \
@@ -344,7 +346,7 @@ class KVWorker(Worker):
         else:
             logger.info('Finished: {}-{}'.format(self.NAME, self.sid))
 
-        self.reservoir.dump(filename='{}-{}'.format(self.NAME, self.sid))
+        self.dump_stats()
 
 
 class SubDocWorker(KVWorker):
@@ -566,7 +568,7 @@ class ViewWorker(Worker):
         else:
             logger.info('Finished: {}-{}'.format(self.NAME, self.sid))
 
-        self.reservoir.dump(filename='{}-{}'.format(self.NAME, self.sid))
+        self.dump_stats()
 
 
 class N1QLWorkerFactory:
@@ -584,11 +586,11 @@ class N1QLWorker(Worker):
         self.total_workers = workload_settings.n1ql_workers
         self.throughput = workload_settings.n1ql_throughput
 
-        self.reservoir = Reservoir(num_workers=workload_settings.n1ql_workers)
-
         super().__init__(workload_settings, target_settings, shutdown_event)
 
         self.init_creds()
+
+        self.reservoir = Reservoir(num_workers=self.ws.n1ql_workers)
 
     def init_keys(self):
         self.new_keys = NewOrderedKey(prefix='n1ql', fmtr=self.ws.key_fmtr)
@@ -702,7 +704,7 @@ class N1QLWorker(Worker):
         else:
             logger.info('Finished: {}-{}'.format(self.NAME, self.sid))
 
-        self.reservoir.dump(filename='{}-{}'.format(self.NAME, self.sid))
+        self.dump_stats()
 
 
 class FtsWorkerFactory:

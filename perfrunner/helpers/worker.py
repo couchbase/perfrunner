@@ -1,4 +1,5 @@
 import os.path
+import signal
 import sys
 import time
 from itertools import cycle
@@ -191,6 +192,9 @@ class RemoteWorkerManager:
             os.mkdir('celery')
         self.remote.get_celery_logs(self.WORKER_HOME)
 
+    def abort(self):
+        pass
+
     def terminate(self):
         logger.info('Terminating Celery workers')
         self.remote.terminate_client_processes()
@@ -243,6 +247,17 @@ class LocalWorkerManager(RemoteWorkerManager):
 
     def download_celery_logs(self):
         pass
+
+    @property
+    def pid(self) -> int:
+        with open('worker.pid') as f:
+            pid = f.read()
+        return int(pid)
+
+    def abort(self):
+        logger.info('Interrupting Celery workers')
+        os.kill(self.pid, signal.SIGPWR)
+        self.wait_for_workers()
 
     def terminate(self):
         logger.info('Terminating Celery workers')

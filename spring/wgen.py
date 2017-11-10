@@ -1,8 +1,10 @@
 import json
 import os
+import signal
 import time
 from multiprocessing import Event, Lock, Process, Value
 from random import randint
+from threading import Timer
 from typing import Callable, List, Tuple
 
 import twisted
@@ -775,7 +777,7 @@ class WorkloadGen:
     def __init__(self, workload_settings, target_settings, timer=None, *args):
         self.ws = workload_settings
         self.ts = target_settings
-        self.timer = timer
+        self.timer = timer and Timer(timer, self.abort) or None
         self.shutdown_event = timer and Event() or None
         self.worker_processes = []
 
@@ -809,11 +811,46 @@ class WorkloadGen:
             if getattr(self.ws, 'async', False):
                 time.sleep(2)
 
-    def wait_for_all_workers(self):
+    def set_signal_handler(self):
+        """Abort the execution upon receiving a signal from perfrunner."""
+        signal.signal(signal.SIGPWR, self.abort)
+
+    def abort(self, *args):
+        """Triggers the shutdown event."""
+        self.shutdown_event.set()
+
+    @staticmethod
+    def store_pid():
+        """Store PID of the current Celery worker."""
+        pid = os.getpid()
+        with open('worker.pid', 'w') as f:
+            f.write(str(pid))
+
+    def start_timers(self):
+        """Start the optional timers."""
+        if self.timer is not None and self.ws.ops == float('inf'):
+            self.timer.start()
+
+        if self.ws.working_set_move_time:
+            self.sync.start_timer(self.ws)
+
+    def stop_timers(self):
+        """Cancel all the active timers."""
+        if self.timer is not None:
+            self.timer.cancel()
+
+        if self.ws.working_set_move_time:
+            self.sync.stop_timer()
+
+    def wait_for_completion(self):
+        """Wait until the sub-processes terminate."""
         for process in self.worker_processes:
             process.join()
 
-    def run(self):
+    def start_all_workers(self):
+        """Start all the workers groups."""
+        logger.info('Starting all workers')
+
         curr_items = Value('L', self.ws.items)
         deleted_items = Value('L', 0)
         current_hot_load_start = Value('L', 0)
@@ -821,8 +858,7 @@ class WorkloadGen:
 
         if self.ws.working_set_move_time:
             current_hot_load_start.value = int(self.ws.items * self.ws.working_set / 100)
-
-        logger.info('Starting all workers')
+            self.sync = SyncHotWorkload(current_hot_load_start, timer_elapse)
 
         self.start_workers(WorkerFactory,
                            'kv', curr_items, deleted_items,
@@ -833,12 +869,15 @@ class WorkloadGen:
                            'n1ql', curr_items, deleted_items)
         self.start_workers(FtsWorkerFactory, 'fts')
 
-        sync = SyncHotWorkload(current_hot_load_start, timer_elapse)
-        sync.start_timer(self.ws)
+    def run(self):
+        self.start_all_workers()
 
-        if self.timer and self.ws.ops == float('inf'):
-            time.sleep(self.timer)
-            self.shutdown_event.set()
-        self.wait_for_all_workers()
+        self.start_timers()
 
-        sync.stop_timer()
+        self.store_pid()
+
+        self.set_signal_handler()
+
+        self.wait_for_completion()
+
+        self.stop_timers()

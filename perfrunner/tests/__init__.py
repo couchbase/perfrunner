@@ -191,7 +191,8 @@ class PerfTest:
             settings = self.test_config.access_settings
 
         self.run_phase('access phase',
-                       task, settings, self.target_iterator, settings.time)
+                       task, settings, self.target_iterator,
+                       timer=settings.time)
 
     def trigger_tasks(self,
                       task: Callable = spring_task,
@@ -205,7 +206,8 @@ class PerfTest:
             target_iterator = self.target_iterator
 
         self.run_phase('trigger task phase',
-                       task, settings, target_iterator, settings.time, wait)
+                       task, settings, target_iterator,
+                       timer=settings.time, wait=wait)
 
     def access_bg(self, task: Callable = spring_task,
                   settings: PhaseSettings = None,
@@ -216,7 +218,8 @@ class PerfTest:
             target_iterator = self.target_iterator
 
         self.run_phase('background access phase',
-                       task, settings, target_iterator, settings.time, False)
+                       task, settings, target_iterator,
+                       timer=settings.time, wait=False)
 
     def sleep(self) -> None:
         access_settings = self.test_config.access_settings

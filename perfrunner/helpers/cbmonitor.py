@@ -15,6 +15,7 @@ from cbagent.collectors import (
     Disk,
     DurabilityLatency,
     ElasticStats,
+    EventingConsumerStats,
     EventingPerNodeStats,
     EventingStats,
     FTSCollector,
@@ -202,6 +203,7 @@ class CbAgent:
         if eventing_stats:
             self.add_collector(EventingStats, self.test)
             self.add_collector(EventingPerNodeStats, self.test)
+            self.add_collector(EventingConsumerStats, self.test)
 
         if ns_server_system:
             self.add_collector(NSServerSystem)

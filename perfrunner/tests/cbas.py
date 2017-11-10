@@ -1,8 +1,9 @@
+import concurrent.futures
 import os
-import sys
-import threading
+import re
 import time
 
+from cbagent.collectors import CBASLag
 from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
@@ -77,6 +78,14 @@ class CBASBigfunTest(PerfTest):
                     self.test_config.bigfun_settings.user_docs,
                     0)
 
+    def execute_tasks(self, *tasks):
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
+        results = []
+        for c in tasks:
+            results.append(executor.submit(c))
+        for r in results:
+            r.result()
+
     def collect_export_files(self):
         logger.info('Collecting files to export.')
         if self.worker_manager.is_remote:
@@ -111,33 +120,36 @@ class CBASBigfunTest(PerfTest):
         self.create_bigfun_dataset_2nd_part(cbas_node, bucket_name)
 
     def create_bigfun_index_1st_part(self, cbas_node: str, bucket_name: str):
-        logger.info('Create bigfun usrSinceIx index on GleambookUsers{}'.format(bucket_name))
-        query = "CREATE INDEX usrSinceIx ON" \
-                " `GleambookUsers{bucket}`(user_since: string);".format(bucket=bucket_name)
-        self.rest.run_analytics_query(cbas_node, query)
+        if self.test_config.bigfun_settings.create_index:
+            logger.info('Create bigfun usrSinceIx index on GleambookUsers{}'.format(bucket_name))
+            query = "CREATE INDEX usrSinceIx ON" \
+                    " `GleambookUsers{bucket}`(user_since: string);".format(bucket=bucket_name)
+            self.rest.run_analytics_query(cbas_node, query)
 
     def create_bigfun_index_2nd_part(self, cbas_node: str, bucket_name: str):
-        logger.info('Create bigfun authorIdIx index on GleambookMessages{}'.format(bucket_name))
-        query = "CREATE INDEX authorIdIx ON" \
-                " `GleambookMessages{bucket}`(author_id: string);".format(bucket=bucket_name)
-        self.rest.run_analytics_query(cbas_node, query)
-        logger.info('Create bigfun sndTimeIx index on ChirpMessages{}'.format(bucket_name))
-        query = "CREATE INDEX sndTimeIx ON" \
-                " `ChirpMessages{bucket}`(send_time: string);".format(bucket=bucket_name)
-        self.rest.run_analytics_query(cbas_node, query)
+        if self.test_config.bigfun_settings.create_index:
+            logger.info('Create bigfun authorIdIx index on GleambookMessages{}'.format(bucket_name))
+            query = "CREATE INDEX authorIdIx ON" \
+                    " `GleambookMessages{bucket}`(author_id: string);".format(bucket=bucket_name)
+            self.rest.run_analytics_query(cbas_node, query)
+            logger.info('Create bigfun sndTimeIx index on ChirpMessages{}'.format(bucket_name))
+            query = "CREATE INDEX sndTimeIx ON" \
+                    " `ChirpMessages{bucket}`(send_time: string);".format(bucket=bucket_name)
+            self.rest.run_analytics_query(cbas_node, query)
 
     def create_bigfun_index(self, cbas_node: str, bucket_name: str):
         self.create_bigfun_index_1st_part(cbas_node, bucket_name)
         self.create_bigfun_index_2nd_part(cbas_node, bucket_name)
 
     def drop_bigfun_index(self, cbas_node: str, bucket_name: str):
-        logger.info('Drop all bigfun indexes on bucket {}'.format(bucket_name))
-        query = "DROP INDEX `GleambookUsers{bucket}`.usrSinceIx".format(bucket=bucket_name)
-        self.rest.run_analytics_query(cbas_node, query)
-        query = "DROP INDEX `GleambookMessages{bucket}`.authorIdIx".format(bucket=bucket_name)
-        self.rest.run_analytics_query(cbas_node, query)
-        query = "DROP INDEX `ChirpMessages{bucket}`.sndTimeIx".format(bucket=bucket_name)
-        self.rest.run_analytics_query(cbas_node, query)
+        if self.test_config.bigfun_settings.create_index:
+            logger.info('Drop all bigfun indexes on bucket {}'.format(bucket_name))
+            query = "DROP INDEX `GleambookUsers{bucket}`.usrSinceIx".format(bucket=bucket_name)
+            self.rest.run_analytics_query(cbas_node, query)
+            query = "DROP INDEX `GleambookMessages{bucket}`.authorIdIx".format(bucket=bucket_name)
+            self.rest.run_analytics_query(cbas_node, query)
+            query = "DROP INDEX `ChirpMessages{bucket}`.sndTimeIx".format(bucket=bucket_name)
+            self.rest.run_analytics_query(cbas_node, query)
 
     def connect_bigfun_bucket(self, cbas_node: str, bucket_name: str):
         logger.info('Connect bigfun bucket {}'.format(bucket_name))
@@ -346,13 +358,19 @@ class CBASBigfunTest(PerfTest):
 
         self.report_kpi()
 
-    def _report_kpi(self):
+    def tear_down(self):
         self.collect_export_files()
+        super().tear_down()
+
+    def _report_kpi(self):
+        orderby_step = 0
+        orderby_step += 1
         if self.initial_load_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(self.initial_load_latency,
                                            "initial_load_latency_sec",
-                                           "Initial document injestion latency (second)")
+                                           "Initial document injestion latency (second)",
+                                           CBASBigfunTest.__name__ + '{0:02d}'.format(orderby_step))
             )
 
 
@@ -410,109 +428,151 @@ class CBASBigfunDataSetTest(CBASBigfunTest):
         self.reconnect_delete_sync_latency = self.monitor_cbas_synced_deleted()
 
     def _report_kpi(self):
+        orderby_step = 0
+        orderby_step += 1
         super()._report_kpi()
         if self.initial_sync_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(self.initial_sync_latency,
                                            "initial_sync_latency_sec",
-                                           "Initial Analytics sync latency (second)")
+                                           "Initial Analytics sync latency (second)",
+                                           CBASBigfunDataSetTest.__name__ +
+                                           '{0:02d}'.format(orderby_step))
             )
+        orderby_step += 1
         if self.restart_sync_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(self.restart_sync_latency,
                                            "restart_cbas_sync_sec",
-                                           "Restart Analytics sync latency (second)")
+                                           "Restart Analytics sync latency (second)",
+                                           CBASBigfunDataSetTest.__name__ +
+                                           '{0:02d}'.format(orderby_step))
             )
+        orderby_step += 1
         if self.update_non_indexed_field_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(self.update_non_indexed_field_latency,
                                            "update_non_indexed_field_latency_sec",
-                                           "Update nonindexed document field latency (second)")
+                                           "Update nonindexed document field latency (second)",
+                                           CBASBigfunDataSetTest.__name__ +
+                                           '{0:02d}'.format(orderby_step))
             )
+        orderby_step += 1
         if self.non_index_update_sync_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(
                     self.non_index_update_sync_latency,
                     "non_index_update_sync_latency_sec",
-                    "Nonindex update Analytics sync latency (second)")
+                    "Nonindex update Analytics sync latency (second)",
+                    CBASBigfunDataSetTest.__name__ + '{0:02d}'.format(orderby_step))
             )
+        orderby_step += 1
         if self.update_indexed_field_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(self.update_indexed_field_latency,
                                            "update_indexed_field_latency_sec",
-                                           "Update indexed document field latency (second)")
+                                           "Update indexed document field latency (second)",
+                                           CBASBigfunDataSetTest.__name__ +
+                                           '{0:02d}'.format(orderby_step))
             )
+        orderby_step += 1
         if self.index_update_sync_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(self.index_update_sync_latency,
                                            "index_update_sync_latency_sec",
-                                           "Index update Analytics sync latency (second)")
+                                           "Index update Analytics sync latency (second)",
+                                           CBASBigfunDataSetTest.__name__ +
+                                           '{0:02d}'.format(orderby_step))
             )
+        orderby_step += 1
         if self.delete_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(self.delete_latency,
                                            "delete_latency_sec",
-                                           "Delete document latency (second)")
+                                           "Delete document latency (second)",
+                                           CBASBigfunDataSetTest.__name__ +
+                                           '{0:02d}'.format(orderby_step))
             )
+        orderby_step += 1
         if self.delete_sync_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(self.delete_sync_latency,
                                            "delete_sync_latency_sec",
-                                           "Delete Analytics sync latency (second)")
+                                           "Delete Analytics sync latency (second)",
+                                           CBASBigfunDataSetTest.__name__ +
+                                           '{0:02d}'.format(orderby_step))
             )
+        orderby_step += 1
         if self.reinsert_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(self.reinsert_latency,
                                            "reinsert_latency_sec",
-                                           "Reinsert document latency (second)")
+                                           "Reinsert document latency (second)",
+                                           CBASBigfunDataSetTest.__name__ +
+                                           '{0:02d}'.format(orderby_step))
             )
+        orderby_step += 1
         if self.reinsert_sync_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(self.reinsert_sync_latency,
                                            "reinsert_sync_latency_sec",
-                                           "Reinsert Analytics sync latency (second)")
+                                           "Reinsert Analytics sync latency (second)",
+                                           CBASBigfunDataSetTest.__name__ +
+                                           '{0:02d}'.format(orderby_step))
             )
+        orderby_step += 1
         if self.disconnect_update_indexed_field_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(
                     self.disconnect_update_indexed_field_latency,
                     "disconnect_update_indexed_field_latency_sec",
-                    "Update indexed document field latency (second) with cbas disconnected")
+                    "Update indexed document field latency (second) with cbas disconnected",
+                    CBASBigfunDataSetTest.__name__ + '{0:02d}'.format(orderby_step))
             )
+        orderby_step += 1
         if self.reconnect_index_update_sync_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(
                     self.reconnect_index_update_sync_latency,
                     "reconnect_index_update_sync_latency_sec",
-                    "Index update Analytics sync latency (second) with cbas reconnected")
+                    "Index update Analytics sync latency (second) with cbas reconnected",
+                    CBASBigfunDataSetTest.__name__ + '{0:02d}'.format(orderby_step))
             )
+        orderby_step += 1
         if self.disconnect_update_non_indexed_field_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(
                     self.disconnect_update_non_indexed_field_latency,
                     "disconnect_update_non_indexed_field_latency_sec",
-                    "Update non indexed document field latency (second) with cbas disconnected")
+                    "Update non indexed document field latency (second) with cbas disconnected",
+                    CBASBigfunDataSetTest.__name__ + '{0:02d}'.format(orderby_step))
             )
+        orderby_step += 1
         if self.reconnect_non_index_update_sync_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(
                     self.reconnect_non_index_update_sync_latency,
                     "reconnect_non_index_update_sync_latency_sec",
-                    "Non index update Analytics sync latency (second) with cbas reconnected")
+                    "Non index update Analytics sync latency (second) with cbas reconnected",
+                    CBASBigfunDataSetTest.__name__ + '{0:02d}'.format(orderby_step))
             )
+        orderby_step += 1
         if self.disconnect_delete_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(
                     self.disconnect_delete_latency,
                     "disconnect_delete_latency_sec",
-                    "Delete document latency (second) with cbas disconnected")
+                    "Delete document latency (second) with cbas disconnected",
+                    CBASBigfunDataSetTest.__name__ + '{0:02d}'.format(orderby_step))
             )
+        orderby_step += 1
         if self.reconnect_delete_sync_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(
                     self.reconnect_delete_sync_latency,
                     "reconnect_delete_sync_latency_sec",
-                    "Delete Analytics sync latency (second) with cbas reconnected")
+                    "Delete Analytics sync latency (second) with cbas reconnected",
+                    CBASBigfunDataSetTest.__name__ + '{0:02d}'.format(orderby_step))
             )
 
 
@@ -533,24 +593,34 @@ class CBASBigfunDataSetTTLTest(CBASBigfunTest):
         self.monitor_cbas_synced()
 
     def _report_kpi(self):
+        orderby_step = 0
+        orderby_step += 1
         super()._report_kpi()
         if self.initial_sync_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(self.initial_sync_latency,
                                            "initial_sync_latency_sec",
-                                           "Initial Analytics sync latency (second)")
+                                           "Initial Analytics sync latency (second)",
+                                           CBASBigfunDataSetTTLTest.__name__ +
+                                           '{0:02d}'.format(orderby_step))
             )
+        orderby_step += 1
         if self.ttl_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(self.ttl_latency,
                                            "ttl_latency_sec",
-                                           "TTL document update latency (second)")
+                                           "TTL document update latency (second)",
+                                           CBASBigfunDataSetTTLTest.__name__ +
+                                           '{0:02d}'.format(orderby_step))
             )
+        orderby_step += 1
         if self.ttl_sync_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(self.ttl_sync_latency,
                                            "ttl_sync_latency_sec",
-                                           "TTL Analytics sync latency (second)")
+                                           "TTL Analytics sync latency (second)",
+                                           CBASBigfunDataSetTTLTest.__name__ +
+                                           '{0:02d}'.format(orderby_step))
             )
 
 
@@ -581,14 +651,26 @@ class CBASBigfunStableStateTest(CBASBigfunTest):
         self.report_kpi()
 
     def _report_kpi(self):
+        orderby_step = 0
+        orderby_step += 1
+        max_lag = self.metrics.get_percentile_value_of_collector('cbas_lag', 100)
+        if max_lag > CBASLag.TIMEOUT * 1000:
+            raise Exception('Maximum cbas lag is {}, this indicates data lost'.format(max_lag))
         super()._report_kpi()
         if self.initial_sync_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(self.initial_sync_latency,
                                            "initial_sync_latency_sec",
-                                           "Initial Analytics sync latency (second)")
+                                           "Initial Analytics sync latency (second)",
+                                           CBASBigfunStableStateTest.__name__ +
+                                           '{0:02d}'.format(orderby_step))
             )
-        self.reporter.post(*self.metrics.cbas_lag())
+        orderby_step += 1
+        self.reporter.post(*self.metrics.cbas_lag(
+            CBASBigfunStableStateTest.__name__ + '{0:02d}'.format(orderby_step)))
+        orderby_step += 1
+        self.reporter.post(*self.metrics.cbas_lag(
+            CBASBigfunStableStateTest.__name__ + '{0:02d}'.format(orderby_step), 100))
 
 
 class CBASBigfunQueryTest(CBASBigfunStableStateTest):
@@ -599,35 +681,53 @@ class CBASBigfunQueryTest(CBASBigfunStableStateTest):
     def access(self, *args, **kwargs):
         self.query()
 
+    def query_thr(self):
+        logger.info('Start query')
+        self.query()
+        logger.info('Done query')
+
     def _report_kpi(self):
-        super()._report_kpi()
+        orderby_step = 0
+        orderby_step += 1
+        self.collect_export_files()
         query_stats = self.metrics.parse_cbas_query_highlevel_metrics()
+        if query_stats['success_query_rate'] < 1.0:
+            raise Exception('Query failed')
+        super()._report_kpi()
         self.reporter.post(
             *self.metrics.cbas_query_metric(
                 query_stats['total_query_number'],
                 'total_query_number',
-                'Total query number')
+                'Total query number',
+                CBASBigfunQueryTest.__name__ + '{0:02d}'.format(orderby_step))
         )
+        orderby_step += 1
         self.reporter.post(
             *self.metrics.cbas_query_metric(
                 query_stats['success_query_rate'],
                 'success_query_rate',
-                'Success query rate')
+                'Success query rate',
+                CBASBigfunQueryTest.__name__ + '{0:02d}'.format(orderby_step),
+                2)
         )
+        orderby_step += 1
         self.reporter.post(
             *self.metrics.cbas_query_metric(
                 query_stats['avg_query_latency'],
                 'avg_query_latency',
-                'Avg query latency (ms)')
+                'Avg query latency (ms)',
+                CBASBigfunQueryTest.__name__ + '{0:02d}'.format(orderby_step))
         )
+        orderby_step += 1
         if self.REPORT_QUERY_DETAIL:
             query_latencies = self.metrics.parse_cbas_query_latencies()
             for key, value in query_latencies.items():
                 self.reporter.post(
                     *self.metrics.cbas_query_metric(
                         value,
-                        key.replace(' ', '_'),
-                        "Avg query latency (ms) " + key)
+                        re.sub('[ \(\)&]', '_', key),
+                        "Avg query latency (ms) " + key,
+                        CBASBigfunQueryTest.__name__ + '{0:02d}'.format(orderby_step) + key)
                 )
 
 
@@ -657,14 +757,34 @@ class CBASRebalanceTest(RebalanceTest):
     REBALANCE_SERVICES = None
 
     def post_rebalance_new_nodes(self, new_nodes):
-        """If we rebalanced-in new cbas nodes, need to apply cbas node settings to them."""
+        """If we rebalanced in new cbas nodes, need to apply cbas node settings to them."""
         if self.REBALANCE_SERVICES == 'cbas':
             settings = self.test_config.cbas_settings.node_settings
             for analytics_node in new_nodes:
                 for parameter, value in settings.items():
                     self.rest.set_cbas_node_settings(analytics_node,
                                                      {parameter: value})
-                self.rest.restart_analytics(analytics_node)
+                """Right now product will restart all node, avoid restarting for now"""
+                """self.rest.restart_analytics(analytics_node)"""
+
+    def rebalance_thr(self):
+        logger.info('Start rebalancing')
+        self.rebalance_latency = self._rebalance(services=self.REBALANCE_SERVICES)
+        if not self.is_balanced():
+            raise Exception("cluster was not rebalanced after rebalance job")
+        logger.info('Finished rebalancing')
+
+    def _report_kpi(self):
+        orderby_step = 0
+        orderby_step += 1
+        if self.rebalance_latency is not None:
+            self.reporter.post(
+                *self.metrics.cbas_latency(self.rebalance_latency,
+                                           "rebalance_latency_sec",
+                                           "Rebalance latency (second)",
+                                           CBASRebalanceTest.__name__ +
+                                           '{0:02d}'.format(orderby_step))
+            )
 
 
 class CBASBigfunQueryWithBGRebalanceTest(CBASBigfunQueryTest, CBASRebalanceTest):
@@ -680,42 +800,14 @@ class CBASBigfunQueryWithBGRebalanceTest(CBASBigfunQueryTest, CBASRebalanceTest)
         self.rebalance_settings = self.test_config.rebalance_settings
         self.rebalance_time = 0
         self.rebalance_latency = 0
-        self.thr_exceptions = []
-
-    def query_thr(self):
-        try:
-            logger.info('Start query')
-            self.query()
-            logger.info('Finished query')
-        except Exception:
-            self.thr_exceptions.append(sys.exc_info())
-
-    def rebalance_thr(self):
-        try:
-            logger.info('Start rebalancing')
-            t0 = time.time()
-            self._rebalance(services=self.REBALANCE_SERVICES)
-            if not self.is_balanced():
-                raise Exception("cluster was not rebalanced after rebalance job")
-            self.rebalance_latency = time.time() - t0  # Rebalance time in seconds
-            logger.info('Finished rebalancing')
-        except Exception:
-            self.thr_exceptions.append(sys.exc_info())
 
     @with_stats
     def access(self, *args, **kwargs):
         logger.info('Start CBAS bigfun mixload task')
         self.access_bg(task=cbas_bigfun_data_mixload_task)
         t0 = time.time()
-        thr1 = threading.Thread(target=self.query_thr)
-        thr2 = threading.Thread(target=self.rebalance_thr)
-        thr1.start()
-        thr2.start()
-        thr1.join()
-        thr2.join()
+        self.execute_tasks(self.query_thr, self.rebalance_thr)
         logger.info('Query and rebalance are done')
-        if len(self.thr_exceptions) > 0:
-            raise self.thr_exceptions[0][1]
         if self.test_config.access_settings.time > (time.time() - t0):
             logger.info('Sleep for {} seconds'.format(self.test_config.access_settings.time -
                                                       (time.time() - t0)))
@@ -723,12 +815,7 @@ class CBASBigfunQueryWithBGRebalanceTest(CBASBigfunQueryTest, CBASRebalanceTest)
 
     def _report_kpi(self):
         CBASBigfunQueryTest._report_kpi(self)
-        if self.rebalance_latency is not None:
-            self.reporter.post(
-                *self.metrics.cbas_latency(self.rebalance_latency,
-                                           "rebalance_latency_sec",
-                                           "Rebalance latency (second)")
-            )
+        CBASRebalanceTest._report_kpi(self)
 
 
 class CBASBigfunQueryWithBGRebalanceCBASTest(CBASBigfunQueryWithBGRebalanceTest):
@@ -750,57 +837,31 @@ class CBASBigfunDataSyncRebalanceTest(CBASBigfunTest, CBASRebalanceTest):
         self.rebalance_time = 0
         self.rebalance_latency = 0
         self.initial_sync_latency = 0
-        self.thr_exceptions = []
 
     def cbas_sync_thr(self):
-        try:
-            logger.info('Start monitoring CBAS syncing')
-            t0 = time.time()
-            self._monitor_cbas_synced()
-            self.initial_sync_latency = time.time() - t0  # CBAS sync time in seconds
-            logger.info('Finished monitoring CBAS syncing')
-        except Exception:
-            self.thr_exceptions.append(sys.exc_info())
-
-    def rebalance_thr(self):
-        try:
-            logger.info('Start rebalancing')
-            t0 = time.time()
-            self._rebalance(services=self.REBALANCE_SERVICES)
-            if not self.is_balanced():
-                raise Exception("cluster was not rebalanced after rebalance job")
-            self.rebalance_latency = time.time() - t0  # Rebalance time in seconds
-            logger.info('Finished rebalancing')
-        except Exception:
-            self.thr_exceptions.append(sys.exc_info())
+        logger.info('Start monitoring CBAS syncing')
+        self.initial_sync_latency = self.monitor_cbas_synced()
+        logger.info('Finished monitoring CBAS syncing')
 
     @with_stats
     def access(self, *args, **kwargs):
         logger.info('Start syncing')
         self.start_cbas_sync()
-        thr1 = threading.Thread(target=self.cbas_sync_thr)
-        thr2 = threading.Thread(target=self.rebalance_thr)
-        thr1.start()
-        thr2.start()
-        thr1.join()
-        thr2.join()
+        self.execute_tasks(self.cbas_sync_thr, self.rebalance_thr)
         logger.info('Done syncing and rebalancing')
-        if len(self.thr_exceptions) > 0:
-            raise self.thr_exceptions[0][1]
 
     def _report_kpi(self):
+        orderby_step = 0
+        orderby_step += 1
         CBASBigfunTest._report_kpi(self)
+        CBASRebalanceTest._report_kpi(self)
         if self.initial_sync_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(self.initial_sync_latency,
                                            "initial_sync_latency_sec",
-                                           "Initial Analytics sync latency (second)")
-            )
-        if self.rebalance_latency is not None:
-            self.reporter.post(
-                *self.metrics.cbas_latency(self.rebalance_latency,
-                                           "rebalance_latency_sec",
-                                           "Rebalance latency (second)")
+                                           "Initial Analytics sync latency (second)",
+                                           CBASBigfunDataSyncRebalanceTest.__name__ +
+                                           '{0:02d}'.format(orderby_step))
             )
 
 
@@ -811,7 +872,56 @@ class CBASBigfunDataSyncRebalanceCBASTest(CBASBigfunDataSyncRebalanceTest):
     REBALANCE_SERVICES = 'cbas'
 
 
-class CBASBigfunQueryWithBGRecoveryTest(CBASBigfunQueryTest, RecoveryTest):
+class CBASRecoveryTest(RecoveryTest):
+
+    def failover_step(self):
+        logger.info('Start failover')
+        logger.info('Sleeping {} seconds before triggering failover'
+                    .format(self.rebalance_settings.delay_before_failover))
+        time.sleep(self.rebalance_settings.delay_before_failover)
+        t0 = time.time()
+        self._failover()
+        self.failover_latency = time.time() - t0  # Failover time in seconds
+        logger.info('Sleeping for {} seconds before rebalance'
+                    .format(self.test_config.rebalance_settings.start_after))
+
+    def rebalance_step(self):
+        time.sleep(self.test_config.rebalance_settings.start_after)
+        t0 = time.time()
+        self._rebalance()
+        if not self.is_balanced():
+            raise Exception("cluster was not rebalanced after recovery job")
+        self.recovery_latency = time.time() - t0  # Rebalance time in seconds
+        logger.info('Sleeping for {} seconds after rebalance'
+                    .format(self.test_config.rebalance_settings.stop_after))
+        time.sleep(self.test_config.rebalance_settings.stop_after)
+        logger.info('Done failover')
+
+    def recovery_thr(self):
+        self.failover_step()
+        self.rebalance_step()
+
+    def _report_kpi(self):
+        orderby_step = 0
+        orderby_step += 1
+        self.reporter.post(
+            *self.metrics.cbas_latency(self.failover_latency,
+                                       "failover_latency_sec",
+                                       "Failover latency (second)",
+                                       CBASRecoveryTest.__name__ +
+                                       '{0:02d}'.format(orderby_step))
+        )
+        orderby_step += 1
+        self.reporter.post(
+            *self.metrics.cbas_latency(self.recovery_latency,
+                                       "reovery_latency_sec",
+                                       "Reovery latency (second)",
+                                       CBASRecoveryTest.__name__ +
+                                       '{0:02d}'.format(orderby_step))
+        )
+
+
+class CBASBigfunQueryWithBGRecoveryTest(CBASBigfunQueryTest, CBASRecoveryTest):
 
     """Test measure cbas query latency, cbas_lag during kv node failover and recovery."""
 
@@ -822,54 +932,14 @@ class CBASBigfunQueryWithBGRecoveryTest(CBASBigfunQueryTest, RecoveryTest):
         self.rebalance_settings = self.test_config.rebalance_settings
         self.rebalance_time = 0
         self.recovery_latency = 0
-        self.thr_exceptions = []
-
-    def query_thr(self):
-        try:
-            logger.info('Start query')
-            self.query()
-            logger.info('Done query')
-        except Exception:
-            self.thr_exceptions.append(sys.exc_info())
-
-    def recovery_thr(self):
-        try:
-            logger.info('Start failover')
-            logger.info('Sleeping {} seconds before triggering failover'
-                        .format(self.rebalance_settings.delay_before_failover))
-            time.sleep(self.rebalance_settings.delay_before_failover)
-            t0 = time.time()
-            self._failover()
-            self.failover_latency = time.time() - t0  # Failover time in seconds
-            logger.info('Sleeping for {} seconds before rebalance'
-                        .format(self.test_config.rebalance_settings.start_after))
-            time.sleep(self.test_config.rebalance_settings.start_after)
-            t0 = time.time()
-            self._rebalance()
-            if not self.is_balanced():
-                raise Exception("cluster was not rebalanced after recovery job")
-            self.recovery_latency = time.time() - t0  # Rebalance time in seconds
-            logger.info('Sleeping for {} seconds after rebalance'
-                        .format(self.test_config.rebalance_settings.stop_after))
-            time.sleep(self.test_config.rebalance_settings.stop_after)
-            logger.info('Done failover')
-        except Exception:
-            self.thr_exceptions.append(sys.exc_info())
 
     @with_stats
     def access(self, *args, **kwargs):
         logger.info('Start CBAS bigfun mixload')
         self.access_bg(task=cbas_bigfun_data_mixload_task)
         t0 = time.time()
-        thr1 = threading.Thread(target=self.query_thr)
-        thr2 = threading.Thread(target=self.recovery_thr)
-        thr1.start()
-        thr2.start()
-        thr1.join()
-        thr2.join()
+        self.execute_tasks(self.query_thr, self.recovery_thr)
         logger.info('Done query and failover')
-        if len(self.thr_exceptions) > 0:
-            raise self.thr_exceptions[0][1]
         if self.test_config.access_settings.time > (time.time() - t0):
             logger.info('Sleep {} seconds'.format(self.test_config.access_settings.time -
                                                   (time.time() - t0)))
@@ -877,21 +947,10 @@ class CBASBigfunQueryWithBGRecoveryTest(CBASBigfunQueryTest, RecoveryTest):
 
     def _report_kpi(self):
         CBASBigfunQueryTest._report_kpi(self)
-        if self.failover_latency is not None:
-            self.reporter.post(
-                *self.metrics.cbas_latency(self.failover_latency,
-                                           "failover_latency_sec",
-                                           "Failover latency (second)")
-            )
-        if self.recovery_latency is not None:
-            self.reporter.post(
-                *self.metrics.cbas_latency(self.recovery_latency,
-                                           "reovery_latency_sec",
-                                           "Reovery latency (second)")
-            )
+        CBASRecoveryTest._report_kpi(self)
 
 
-class CBASBigfunDataSyncRecoveryTest(CBASBigfunTest, RecoveryTest):
+class CBASBigfunDataSyncRecoveryTest(CBASBigfunTest, CBASRecoveryTest):
 
     """Test measure cbas initial syncing latency during kv node failover and recovery."""
 
@@ -901,75 +960,33 @@ class CBASBigfunDataSyncRecoveryTest(CBASBigfunTest, RecoveryTest):
         self.rebalance_time = 0
         self.recovery_latency = 0
         self.initial_sync_latency = 0
-        self.thr_exceptions = []
 
     def cbas_sync_thr(self):
-        try:
-            logger.info('Start monitoring CBAS syncing')
-            t0 = time.time()
-            self._monitor_cbas_synced()
-            self.initial_sync_latency = time.time() - t0  # CBAS sync time in seconds
-            logger.info('Done monitoring CBAS syncing')
-        except Exception:
-            self.thr_exceptions.append(sys.exc_info())
-
-    def recovery_thr(self):
-        try:
-            logger.info('Start failover')
-            logger.info('Sleeping {} seconds before triggering failover'
-                        .format(self.rebalance_settings.delay_before_failover))
-            time.sleep(self.rebalance_settings.delay_before_failover)
-            t0 = time.time()
-            self._failover()
-            self.failover_latency = time.time() - t0  # Failover time in seconds
-            logger.info('Sleeping for {} seconds before rebalance'
-                        .format(self.test_config.rebalance_settings.start_after))
-            time.sleep(self.test_config.rebalance_settings.start_after)
-            t0 = time.time()
-            self._rebalance()
-            if not self.is_balanced():
-                raise Exception("cluster was not rebalanced after recovery job")
-            self.recovery_latency = time.time() - t0  # Rebalance time in seconds
-            logger.info('Sleeping for {} seconds after rebalance'
-                        .format(self.test_config.rebalance_settings.stop_after))
-            time.sleep(self.test_config.rebalance_settings.stop_after)
-            logger.info('Finish failover')
-        except Exception:
-            self.thr_exceptions.append(sys.exc_info())
+        logger.info('Start monitoring CBAS syncing')
+        t0 = time.time()
+        self._monitor_cbas_synced()
+        self.initial_sync_latency = time.time() - t0  # CBAS sync time in seconds
+        logger.info('Done monitoring CBAS syncing')
 
     @with_stats
     def access(self, *args, **kwargs):
         logger.info('Start syncing')
         self.start_cbas_sync()
-        thr1 = threading.Thread(target=self.cbas_sync_thr)
-        thr2 = threading.Thread(target=self.recovery_thr)
-        thr1.start()
-        thr2.start()
-        thr1.join()
-        thr2.join()
+        self.execute_tasks(self.cbas_sync_thr, self.recovery_thr)
         logger.info('Done syncing and failover')
-        if len(self.thr_exceptions) > 0:
-            raise self.thr_exceptions[0][1]
 
     def _report_kpi(self):
+        orderby_step = 0
+        orderby_step += 1
         CBASBigfunTest._report_kpi(self)
+        CBASRecoveryTest._report_kpi(self)
         if self.initial_sync_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(self.initial_sync_latency,
                                            "initial_sync_latency_sec",
-                                           "Initial Analytics sync latency (second)")
-            )
-        if self.failover_latency is not None:
-            self.reporter.post(
-                *self.metrics.cbas_latency(self.failover_latency,
-                                           "failover_latency_sec",
-                                           "Failover latency (second)")
-            )
-        if self.recovery_latency is not None:
-            self.reporter.post(
-                *self.metrics.cbas_latency(self.recovery_latency,
-                                           "reovery_latency_sec",
-                                           "Reovery latency (second)")
+                                           "Initial Analytics sync latency (second)",
+                                           CBASBigfunDataSyncRecoveryTest.__name__ +
+                                           '{0:02d}'.format(orderby_step))
             )
 
 
@@ -996,30 +1013,43 @@ class CBASBigfunDataSetP2Test(CBASBigfunTest):
         self.connect_bucket()
 
     def _report_kpi(self):
+        orderby_step = 0
+        orderby_step += 1
         super()._report_kpi()
         if self.sync_latency_1st_part is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(self.sync_latency_1st_part,
                                            "sync_latency_1st_part_sec",
-                                           "1st part Analytics sync latency (second)")
+                                           "1st part Analytics sync latency (second)",
+                                           CBASBigfunDataSetP2Test.__name__ +
+                                           '{0:02d}'.format(orderby_step))
             )
+        orderby_step += 1
         if self.sync_latency_2nd_part is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(self.sync_latency_2nd_part,
                                            "sync_latency_2nd_part_sec",
-                                           "2nd part Analytics sync latency (second)")
+                                           "2nd part Analytics sync latency (second)",
+                                           CBASBigfunDataSetP2Test.__name__ +
+                                           '{0:02d}'.format(orderby_step))
             )
+        orderby_step += 1
         if self.drop_index_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(self.drop_index_latency,
                                            "drop_index_latency_sec",
-                                           "Drop index latency (second)")
+                                           "Drop index latency (second)",
+                                           CBASBigfunDataSetP2Test.__name__ +
+                                           '{0:02d}'.format(orderby_step))
             )
+        orderby_step += 1
         if self.create_index_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(self.create_index_latency,
                                            "create_index_latency_sec",
-                                           "Create index latency (second)")
+                                           "Create index latency (second)",
+                                           CBASBigfunDataSetP2Test.__name__ +
+                                           '{0:02d}'.format(orderby_step))
             )
 
 
@@ -1062,28 +1092,41 @@ class CBASBigfunCleanupBucketTest(CBASBigfunTest):
         self.reinsert_sync_latency = self.monitor_cbas_synced()
 
     def _report_kpi(self):
+        orderby_step = 0
+        orderby_step += 1
         super()._report_kpi()
         if self.initial_sync_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(self.initial_sync_latency,
                                            "initial_sync_latency_sec",
-                                           "Initial Analytics sync latency (second)")
+                                           "Initial Analytics sync latency (second)",
+                                           CBASBigfunCleanupBucketTest.__name__ +
+                                           '{0:02d}'.format(orderby_step))
             )
+        orderby_step += 1
         if self.cleanup_bucket_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(self.cleanup_bucket_latency,
                                            "cleanup_bucket_latency_sec",
-                                           "Cleanup bucket Analytics sync latency (second)")
+                                           "Cleanup bucket Analytics sync latency (second)",
+                                           CBASBigfunCleanupBucketTest.__name__ +
+                                           '{0:02d}'.format(orderby_step))
             )
+        orderby_step += 1
         if self.reinsert_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(self.reinsert_latency,
                                            "reinsert_latency_sec",
-                                           "Reinsert document latency (second)")
+                                           "Reinsert document latency (second)",
+                                           CBASBigfunCleanupBucketTest.__name__ +
+                                           '{0:02d}'.format(orderby_step))
             )
+        orderby_step += 1
         if self.reinsert_sync_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(self.reinsert_sync_latency,
                                            "reinsert_sync_latency_sec",
-                                           "Reinsert Analytics sync latency (second)")
+                                           "Reinsert Analytics sync latency (second)",
+                                           CBASBigfunCleanupBucketTest.__name__ +
+                                           '{0:02d}'.format(orderby_step))
             )

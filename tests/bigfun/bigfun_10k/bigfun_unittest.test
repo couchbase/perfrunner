@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.dummytests.TestMultiThreaded
-title = UnitTest for multithreading in perfrunner.
+title = UnitTest for multithreading in perfrunner
 component = test
 sub_category = latency
 

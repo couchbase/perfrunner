@@ -817,6 +817,7 @@ class BigfunSettings:
     USER_DOCS = 10000
     CLEANUP_WHEN_DISCONNECTED = 'true'
     CLEANUP_METHOD = 'flush'
+    CREATE_INDEX = 1
 
     def __init__(self, options: dict):
         self.socialgen_repo = options.get('socialgen_repo', self.SOCIALGEN_REPO)
@@ -829,6 +830,7 @@ class BigfunSettings:
                                                                 self.CLEANUP_WHEN_DISCONNECTED))
         self.cleanup_method = options.get('cleanup_method',
                                           self.CLEANUP_METHOD)
+        self.create_index = bool(int(options.get('create_index', self.CREATE_INDEX)))
 
     def __str__(self) -> str:
         return str(self.__dict__)

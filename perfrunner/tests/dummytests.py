@@ -1,5 +1,4 @@
-import sys
-import threading
+import concurrent.futures
 import time
 
 from perfrunner.helpers.cbmonitor import with_stats
@@ -24,40 +23,31 @@ class TestMultiThreaded(PerfTest):
         self.thread2_latency = 0
         self.raise_exception = self.test_config.unittest_settings.raise_exception
         self.sleep_sec = self.test_config.unittest_settings.sleep_sec
-        self.thr_exceptions = []
+
+    def execute_tasks(self, *tasks):
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
+        results = []
+        for c in tasks:
+            results.append(executor.submit(c))
+        for r in results:
+            r.result()
 
     def method_thr1(self):
-        try:
-            t0 = time.time()
-            if self.raise_exception:
-                raise Exception("Thread1 exception")
-            else:
-                time.sleep(self.sleep_sec)
-            self.thread1_latency = time.time() - t0  # Rebalance time in seconds
-        except Exception:
-            self.thr_exceptions.append(sys.exc_info())
+        t0 = time.time()
+        time.sleep(self.sleep_sec)
+        self.thread1_latency = time.time() - t0  # Rebalance time in seconds
 
     def method_thr2(self):
-        try:
-            t0 = time.time()
-            if self.raise_exception:
-                raise Exception("Thread1 exception")
-            else:
-                time.sleep(self.sleep_sec)
-            self.thread2_latency = time.time() - t0  # Rebalance time in seconds
-        except Exception:
-            self.thr_exceptions.append(sys.exc_info())
+        t0 = time.time()
+        if self.raise_exception:
+            raise Exception("Thread2 exception")
+        else:
+            time.sleep(self.sleep_sec)
+        self.thread2_latency = time.time() - t0  # Rebalance time in seconds
 
     @with_stats
     def access(self, *args, **kwargs):
-        thr1 = threading.Thread(target=self.method_thr1)
-        thr2 = threading.Thread(target=self.method_thr2)
-        thr1.start()
-        thr2.start()
-        thr1.join()
-        thr2.join()
-        if len(self.thr_exceptions) > 0:
-            raise self.thr_exceptions[0][1]
+        self.execute_tasks(self.method_thr1, self.method_thr2)
 
     def run(self):
         self.access()

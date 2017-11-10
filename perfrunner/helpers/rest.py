@@ -5,8 +5,9 @@ from typing import Callable, Dict, Iterator, List
 
 import requests
 from decorator import decorator
-from requests.exceptions import ConnectionError
+from requests.exceptions import ConnectionError, Timeout
 
+import perfrunner.helpers.misc
 from logger import logger
 from perfrunner.helpers.misc import pretty_dict
 from perfrunner.settings import BucketSettings, ClusterSpec
@@ -707,13 +708,14 @@ class RestHelper:
         api = 'http://{}:{}/getExecutionStats?name={}'.format(node, EVENTING_PORT, name)
         return self.get(url=api).json()
 
-    def run_analytics_query(self, analytics_node: str, query: str, timeout: str='300s') -> dict:
+    @perfrunner.helpers.misc.retry(catch=[Timeout], iterations=3, wait=1)
+    def run_analytics_query(self, analytics_node: str, query: str, timeout: int=300) -> dict:
         api = 'http://{}:8095/analytics/service'.format(analytics_node)
         data = {
             'statement': query,
-            'timeout': timeout,
+            'timeout': '{}s'.format(timeout),
         }
-        return self.post(url=api, data=data).json()
+        return self.post(url=api, data=data, timeout=timeout).json()
 
     def get_latency_stats(self, node: str, name: str):
         logger.info('get latency stats on node {} for {}'.format(node, name))

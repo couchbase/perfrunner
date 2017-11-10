@@ -1,4 +1,5 @@
 import glob
+import math
 import os
 import re
 from typing import Dict, List, Tuple, Union
@@ -60,17 +61,23 @@ class MetricHelper:
             'orderBy': order_by,
         }
 
-    def cbas_latency(self, value_sec: float, name: str, title: str) -> Metric:
+    def cbas_latency(self, value_sec: float, name: str,
+                     title: str, order_by_in_test: str,
+                     round_digits: int = 0) -> Metric:
         metric_id = '{}_{}'.format(self.test_config.name, name)
+        order_by = '{}_{}'.format(self.test_config.name, order_by_in_test)
         title = '{}, {}'.format(self.test_config.test_case.title, title)
-        metric_info = self._metric_info(metric_id, title)
-        return round(value_sec, 2), self._snapshots, metric_info
+        metric_info = self._metric_info(metric_id, title, order_by)
+        return round(value_sec, round_digits), self._snapshots, metric_info
 
-    def cbas_query_metric(self, value: float, name: str, title: str) -> Metric:
+    def cbas_query_metric(self, value: float, name: str,
+                          title: str, order_by_in_test: str,
+                          round_digits: int = 0) -> Metric:
         metric_id = '{}_{}'.format(self.test_config.name, name)
+        order_by = '{}_q_{}'.format(self.test_config.name, order_by_in_test)
         title = '{}, {}'.format(self.test_config.test_case.title, title)
-        metric_info = self._metric_info(metric_id, title)
-        return round(value, 4), self._snapshots, metric_info
+        metric_info = self._metric_info(metric_id, title, order_by)
+        return round(value, round_digits), self._snapshots, metric_info
 
     def ycsb_queries(self, value: float, name: str, title: str) -> Metric:
         metric_id = '{}_{}'.format(self.test_config.name, name)
@@ -215,28 +222,30 @@ class MetricHelper:
 
         return int(np.percentile(values, 90))
 
-    def lag_collector_metric(self, collector, percentile: Number = 95) -> Metric:
-        metric_id = '{}_{}th_{}'.format(self.test_config.name, percentile, collector)
-        title = '{}th percentile {} (ms), {}'.format(
-            percentile, collector, self._title)
-        metric_info = self._metric_info(metric_id, title)
-
+    def get_percentile_value_of_collector(self, collector, percentile):
         values = []
         for bucket in self.test_config.buckets:
             db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
                                          collector=collector,
                                          bucket=bucket)
             values += self.store.get_values(db, metric=collector)
+        return np.percentile(values, percentile)
 
-        lag = round(np.percentile(values, percentile), 1)
-
-        return lag, self._snapshots, metric_info
+    def lag_collector_metric(self, collector, collector_title,
+                             order_by, percentile: Number = 95) -> Metric:
+        metric_id = '{}_{}th_{}'.format(self.test_config.name, percentile, collector)
+        title = '{}th percentile {} (ms), {}'.format(
+            percentile, collector_title, self._title)
+        metric_info = self._metric_info(metric_id, title, order_by)
+        lag = self.get_percentile_value_of_collector(collector, percentile)
+        return round(lag, 1), self._snapshots, metric_info
 
     def xdcr_lag(self, percentile: Number = 95) -> Metric:
-        return self.lag_collector_metric('xdcr_lag', percentile)
+        return self.lag_collector_metric('xdcr_lag', 'replication lag', '', percentile)
 
-    def cbas_lag(self, percentile: Number = 98) -> Metric:
-        return self.lag_collector_metric('cbas_lag', percentile)
+    def cbas_lag(self, order_by_in_test, percentile: Number = 98) -> Metric:
+        order_by = '{}_{}'.format(self.test_config.name, order_by_in_test)
+        return self.lag_collector_metric('cbas_lag', 'cbas sync lag', order_by, percentile)
 
     def avg_replication_rate(self, time_elapsed: float) -> Metric:
         metric_info = self._metric_info()
@@ -614,7 +623,8 @@ class MetricHelper:
         if len(query_stats) != 4:
             raise Exception('Wrong query result file format')
         return {'total_query_number': float(query_stats[0] + query_stats[2]),
-                'success_query_rate': query_stats[0] / (query_stats[0] + query_stats[2]),
+                'success_query_rate': math.floor((query_stats[0] * 100) /
+                                                 (query_stats[0] + query_stats[2])) / 100,
                 'avg_query_latency': (query_stats[1] + query_stats[3]) /
                                      (query_stats[0] + query_stats[2])}
 
@@ -646,8 +656,6 @@ class MetricHelper:
                             else:
                                 query_count_dict[query] = 1
                                 query_exe_time_dict[query] = exe_time
-                    elif line.startswith('CBAS failed query'):
-                        raise Exception('Query {} failed'.format(line))
         for query in query_exe_time_dict:
             query_exe_time_dict[query] = query_exe_time_dict[query] / query_count_dict[query]
         return query_exe_time_dict

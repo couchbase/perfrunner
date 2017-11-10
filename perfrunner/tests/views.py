@@ -132,16 +132,11 @@ class QueryTest(IndexTest):
 
     @with_stats
     def access(self, *args):
-        super().sleep()
-
-        self.worker_manager.wait_for_workers()
-
-    def access_bg(self, *args):
         settings = self.test_config.access_settings
         settings.index_type = self.test_config.index_settings.index_type
         settings.ddocs = self.ddocs
 
-        super().access_bg(settings=settings)
+        super().access(settings=settings)
 
     def run(self):
         self.load()
@@ -152,7 +147,6 @@ class QueryTest(IndexTest):
         self.define_ddocs()
         self.build_index()
 
-        self.access_bg()
         self.access()
 
         self.report_kpi()

@@ -24,7 +24,7 @@ INIT_USERS_CMD = " run syncgateway -s -P {workload} -p recordcount={total_docs} 
                  "-p insertstart={insertstart} -p readproportion=1 -p syncgateway.feedmode=normal " \
                  "-p exportfile={exportfile}"
 
-RUN_TEST_CMD = " run syncgateway -s -P {workload} -p recordcount={total_docs} -p operationcount=100000000 " \
+RUN_TEST_CMD = " run syncgateway -s -P {workload} -p recordcount={total_docs} -p operationcount=999999999 " \
                "-p maxexecutiontime={time} -threads {threads} -p syncgateway.host={hosts} -p syncgateway.auth={auth} " \
                "-p memcached.host={memcached_host} -p syncgateway.totalusers={total_users} " \
                "-p syncgateway.roundtrip={roundtrip} -p insertstart={insertstart} " \

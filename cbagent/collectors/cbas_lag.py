@@ -1,22 +1,12 @@
 from time import sleep, time
 
 import numpy
-from couchbase.bucket import Bucket
 
 from cbagent.collectors.latency import Latency
+from cbagent.collectors.xdcr_lag import new_client
 from logger import logger
 from perfrunner.helpers import rest
 from spring.docgen import Key
-
-
-def new_client(host, bucket, password, timeout):
-    connection_string = 'couchbase://{}/{}?password={}'
-    connection_string = connection_string.format(host,
-                                                 bucket,
-                                                 password)
-    client = Bucket(connection_string=connection_string)
-    client.timeout = timeout
-    return client
 
 
 class CBASBigfunMetricInfo:

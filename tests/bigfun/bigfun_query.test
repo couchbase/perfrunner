@@ -15,9 +15,9 @@ node.logLevel=WARNING
 
 [bigfun]
 workers=20
-user_docs=500
+user_docs=5000
 
 [access]
 workers=20
 bigfun_query_workers=3
-items=500
+items=5000

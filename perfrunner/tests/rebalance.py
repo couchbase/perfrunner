@@ -88,7 +88,7 @@ class RebalanceTest(PerfTest):
     def rebalance(self, services=None):
         self._rebalance(services)
 
-    def post_rebalance_newnodes(self, newnodes):
+    def post_rebalance_new_nodes(self, new_nodes):
         pass
 
     def _rebalance(self, services):
@@ -123,7 +123,7 @@ class RebalanceTest(PerfTest):
 
             self.rest.rebalance(master, known_nodes, ejected_nodes)
             self.monitor_progress(master)
-            self.post_rebalance_newnodes(new_nodes)
+            self.post_rebalance_new_nodes(new_nodes)
 
 
 class RebalanceKVTest(RebalanceTest):

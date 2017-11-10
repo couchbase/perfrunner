@@ -470,8 +470,7 @@ class CBASBigfunStableStateTest(CBASBigfunTest):
         self.report_kpi()
 
     def _report_kpi(self):
-            self.reporter.post(
-                *self.metrics.cbas_lag())
+        self.reporter.post(*self.metrics.cbas_lag())
 
 
 class CBASBigfunQueryTest(CBASBigfunStableStateTest):
@@ -515,7 +514,7 @@ class CBASRebalanceTest(RebalanceTest):
 
     REBALANCE_SERVICES = None
 
-    def post_rebalance_newnodes(self, new_nodes):
+    def post_rebalance_new_nodes(self, new_nodes):
         """If we rebalanced-in new cbas nodes, need to apply cbas node settings to them."""
         if self.REBALANCE_SERVICES == 'cbas':
             settings = self.test_config.cbas_settings.node_settings

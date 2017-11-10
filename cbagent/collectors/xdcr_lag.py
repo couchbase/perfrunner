@@ -3,7 +3,7 @@ from time import sleep, time
 import numpy
 from couchbase.bucket import Bucket
 
-from cbagent.collectors import Latency
+from cbagent.collectors.latency import Latency
 from logger import logger
 from spring.docgen import Document, Key
 

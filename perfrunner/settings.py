@@ -568,11 +568,13 @@ class IndexSettings:
         return str(self.__dict__)
 
 
-# This is for test that is used for test developers
-# to try new test approaches
-# Keep the code here in case need to try something
-# later
 class UnitTestSettings:
+
+    """For test developers to try new test approaches.
+
+    Keep the code here in case need to try something
+    later
+    """
 
     RAISE_EXCEPTION = 0
     SLEEP_SEC = 30

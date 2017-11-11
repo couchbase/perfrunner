@@ -183,8 +183,7 @@ class RestHelper:
         self.post(url=api, data=json.dumps(data))
 
     def set_services(self, host: str, services: str):
-        logger.info('Configuring services on {}: {}'
-                    .format(host, pretty_dict(services)))
+        logger.info('Configuring services on {}: {}'.format(host, services))
 
         api = 'http://{}:8091/node/controller/setupServices'.format(host)
         data = {'services': services}

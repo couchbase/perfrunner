@@ -415,7 +415,7 @@ class Monitor(RestHelper):
     def _get_bigfun_retry_sleep_interval(self, retry: int) -> int:
         if retry < 12:
             sleep_sec = 10
-        elif retry < 42:
+        elif retry < 22:
             sleep_sec = 60
         else:
             sleep_sec = 300
@@ -423,60 +423,62 @@ class Monitor(RestHelper):
 
     def monitor_bigfun_data_synced_1st_part(self, master_node: str,
                                             bucket_name: str, cbas_node: str):
-        logger.info('Waiting {master} {bucket} 1st part data synced to {cbas}'.format(
-                                                          master=master_node,
-                                                          bucket=bucket_name,
-                                                          cbas=cbas_node))
+        logger.info('Waiting for data in {bucket} to be synced to CBAS node {cbas}'.format(
+            bucket=bucket_name,
+            cbas=cbas_node))
         retry = 0
         while True:
             num_items = self.test_config.bigfun_settings.user_docs
             num_items_synced = self.get_bigfun_dataset_number(bucket_name, cbas_node,
                                                               "GleambookUsers", "")
+            logger.info('For {bucket}, CB has {cbitems} docs, CBAS has {number} docs'.format(
+                bucket=bucket_name,
+                cbitems=num_items,
+                number=num_items_synced))
             if num_items == num_items_synced:
-                logger.info('{master} {bucket} {number} to cbas'.format(master=master_node,
-                                                                        bucket=bucket_name,
-                                                                        number=num_items_synced))
                 break
             time.sleep(self._get_bigfun_retry_sleep_interval(retry))
             retry += 1
 
     def monitor_bigfun_data_synced(self, master_node: str, bucket_name: str, cbas_node: str):
-        logger.info('Waiting {master} {bucket} data synced to {cbas}'.format(master=master_node,
-                                                                             bucket=bucket_name,
-                                                                             cbas=cbas_node))
+        logger.info('Waiting for data in {bucket} to be synced to CBAS node {cbas}'.format(
+            bucket=bucket_name,
+            cbas=cbas_node))
         retry = 0
         while True:
             num_items = self._get_num_items(master_node, bucket_name)
             num_items_synced = self.get_cbas_bigfun_number(bucket_name, cbas_node, "", "", "")
+            logger.info('For {bucket}, CB has {cbitems} docs, CBAS has {number} docs'.format(
+                bucket=bucket_name,
+                cbitems=num_items,
+                number=num_items_synced))
             if num_items == num_items_synced:
-                logger.info('{master} {bucket} {number} to cbas'.format(master=master_node,
-                                                                        bucket=bucket_name,
-                                                                        number=num_items_synced))
                 break
             time.sleep(self._get_bigfun_retry_sleep_interval(retry))
             retry += 1
 
     def monitor_bigfun_data_deleted(self, master_node: str, bucket_name: str, cbas_node: str):
-        logger.info('Waiting {master} {bucket} delete to {cbas}'.format(master=master_node,
-                                                                        bucket=bucket_name,
-                                                                        cbas=cbas_node))
+        logger.info('Waiting for data in {bucket} to be cleaned up on CBAS node {cbas}'.format(
+            bucket=bucket_name,
+            cbas=cbas_node))
         retry = 0
         while True:
             num_items = self._get_num_items(master_node, bucket_name)
             num_items_synced = self.get_cbas_bigfun_number(bucket_name, cbas_node, "", "", "")
+            logger.info('For {bucket}, CB has {cbitems} docs, CBAS has {number} docs'.format(
+                bucket=bucket_name,
+                cbitems=num_items,
+                number=num_items_synced))
             if 0 == num_items_synced and 0 == num_items:
-                logger.info('{master} {bucket} {number} to cbas'.format(master=master_node,
-                                                                        bucket=bucket_name,
-                                                                        number=num_items_synced))
                 break
             time.sleep(self._get_bigfun_retry_sleep_interval(retry))
             retry += 1
 
     def monitor_bigfun_data_synced_update_non_index(self, master_node: str,
                                                     bucket_name: str, cbas_node: str):
-        logger.info('Waiting {master} {bucket} data synced to {cbas}'.format(master=master_node,
-                                                                             bucket=bucket_name,
-                                                                             cbas=cbas_node))
+        logger.info('Waiting for data in {bucket} to be synced to CBAS node {cbas}'.format(
+            bucket=bucket_name,
+            cbas=cbas_node))
         retry = 0
         while True:
             num_items = self._get_num_items(master_node, bucket_name)
@@ -485,19 +487,20 @@ class Monitor(RestHelper):
                                             "where contains(alias, \"alias_update\")",
                                             "where contains(message, \"message_update\")",
                                             "where contains(message_text, \"message_text_update\")")
+            logger.info('For {bucket}, CB has {cbitems} docs, CBAS has {number} docs'.format(
+                bucket=bucket_name,
+                cbitems=num_items,
+                number=num_items_synced))
             if num_items == num_items_synced:
-                logger.info('{master} {bucket} {number} to cbas'.format(master=master_node,
-                                                                        bucket=bucket_name,
-                                                                        number=num_items_synced))
                 break
             time.sleep(self._get_bigfun_retry_sleep_interval(retry))
             retry += 1
 
     def monitor_bigfun_data_synced_update_index(self, master_node: str,
                                                 bucket_name: str, cbas_node: str):
-        logger.info('Waiting {master} {bucket} data synced to {cbas}'.format(master=master_node,
-                                                                             bucket=bucket_name,
-                                                                             cbas=cbas_node))
+        logger.info('Waiting for data in {bucket} to be synced to CBAS node {cbas}'.format(
+            bucket=bucket_name,
+            cbas=cbas_node))
         retry = 0
         while True:
             num_items = self._get_num_items(master_node, bucket_name)
@@ -509,10 +512,11 @@ class Monitor(RestHelper):
                                             " and author_id <= \"000000000001000\"",
                                             "where send_time >= \"1992-01-01T00:00:00\""
                                             " and send_time <= \"1996-01-01T00:00:00\"")
+            logger.info('For {bucket}, CB has {cbitems} docs, CBAS has {number} docs'.format(
+                bucket=bucket_name,
+                cbitems=num_items,
+                number=num_items_synced))
             if num_items == num_items_synced:
-                logger.info('{master} {bucket} {number} to cbas'.format(master=master_node,
-                                                                        bucket=bucket_name,
-                                                                        number=num_items_synced))
                 break
             time.sleep(self._get_bigfun_retry_sleep_interval(retry))
             retry += 1

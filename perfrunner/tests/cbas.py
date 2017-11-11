@@ -46,6 +46,7 @@ class CBASBigfunTest(PerfTest):
                                                        prefix=None)
 
     def download_bigfun(self):
+        logger.info('Downloading bigfun git repo.')
         if self.worker_manager.is_remote:
             self.remote.clone_bigfun(
                 socialgen_repo=self.test_config.bigfun_settings.socialgen_repo,
@@ -60,6 +61,8 @@ class CBASBigfunTest(PerfTest):
                                loader_branch=self.test_config.bigfun_settings.loader_branch)
 
     def generate_doctemplates(self):
+        logger.info('Generating bigfun dataset with {} users splitted to {} partitions.'.format(
+            self.test_config.bigfun_settings.user_docs, self.test_config.bigfun_settings.workers))
         if self.worker_manager.is_remote:
             for clientn in range(len(self.cluster_spec.workers)):
                 self.remote.generate_doctemplates(
@@ -75,25 +78,30 @@ class CBASBigfunTest(PerfTest):
                     0)
 
     def collect_export_files(self):
+        logger.info('Collecting files to export.')
         if self.worker_manager.is_remote:
             if not os.path.exists('loader'):
                 os.mkdir('loader')
             self.remote.get_bigfun_export_files(self.worker_manager.WORKER_HOME)
 
     def create_bigfun_bucket(self, cbas_node: str, bucket_name: str):
+        logger.info('Create bigfun bucket {}'.format(bucket_name))
         query = "CREATE BUCKET `{bucket}`" \
                 " WITH {{\"name\":\"{bucket}\"}};".format(bucket=bucket_name)
         self.rest.run_analytics_query(cbas_node, query)
 
     def create_bigfun_dataset_1st_part(self, cbas_node: str, bucket_name: str):
+        logger.info('Create bigfun GleambookUsers dataset on bucket {}'.format(bucket_name))
         query = "CREATE SHADOW DATASET `GleambookUsers{bucket}` ON `{bucket}`" \
                 " WHERE `id` is not UNKNOWN;".format(bucket=bucket_name)
         self.rest.run_analytics_query(cbas_node, query)
 
     def create_bigfun_dataset_2nd_part(self, cbas_node: str, bucket_name: str):
+        logger.info('Create bigfun GleambookMessages dataset on bucket {}'.format(bucket_name))
         query = "CREATE SHADOW DATASET `GleambookMessages{bucket}` ON `{bucket}`" \
                 " WHERE `message_id` is not UNKNOWN;".format(bucket=bucket_name)
         self.rest.run_analytics_query(cbas_node, query)
+        logger.info('Create bigfun ChirpMessages dataset on bucket {}'.format(bucket_name))
         query = "CREATE SHADOW DATASET `ChirpMessages{bucket}` ON `{bucket}`" \
                 " WHERE `chirpid` is not UNKNOWN;".format(bucket=bucket_name)
         self.rest.run_analytics_query(cbas_node, query)
@@ -103,14 +111,17 @@ class CBASBigfunTest(PerfTest):
         self.create_bigfun_dataset_2nd_part(cbas_node, bucket_name)
 
     def create_bigfun_index_1st_part(self, cbas_node: str, bucket_name: str):
+        logger.info('Create bigfun usrSinceIx index on GleambookUsers{}'.format(bucket_name))
         query = "CREATE INDEX usrSinceIx ON" \
                 " `GleambookUsers{bucket}`(user_since: string);".format(bucket=bucket_name)
         self.rest.run_analytics_query(cbas_node, query)
 
     def create_bigfun_index_2nd_part(self, cbas_node: str, bucket_name: str):
+        logger.info('Create bigfun authorIdIx index on GleambookMessages{}'.format(bucket_name))
         query = "CREATE INDEX authorIdIx ON" \
                 " `GleambookMessages{bucket}`(author_id: string);".format(bucket=bucket_name)
         self.rest.run_analytics_query(cbas_node, query)
+        logger.info('Create bigfun sndTimeIx index on ChirpMessages{}'.format(bucket_name))
         query = "CREATE INDEX sndTimeIx ON" \
                 " `ChirpMessages{bucket}`(send_time: string);".format(bucket=bucket_name)
         self.rest.run_analytics_query(cbas_node, query)
@@ -120,6 +131,7 @@ class CBASBigfunTest(PerfTest):
         self.create_bigfun_index_2nd_part(cbas_node, bucket_name)
 
     def drop_bigfun_index(self, cbas_node: str, bucket_name: str):
+        logger.info('Drop all bigfun indexes on bucket {}'.format(bucket_name))
         query = "DROP INDEX `GleambookUsers{bucket}`.usrSinceIx".format(bucket=bucket_name)
         self.rest.run_analytics_query(cbas_node, query)
         query = "DROP INDEX `GleambookMessages{bucket}`.authorIdIx".format(bucket=bucket_name)
@@ -128,14 +140,17 @@ class CBASBigfunTest(PerfTest):
         self.rest.run_analytics_query(cbas_node, query)
 
     def connect_bigfun_bucket(self, cbas_node: str, bucket_name: str):
+        logger.info('Connect bigfun bucket {}'.format(bucket_name))
         query = "CONNECT BUCKET `{bucket}`;".format(bucket=bucket_name)
         self.rest.run_analytics_query(cbas_node, query)
 
     def disconnect_bigfun_bucket(self, cbas_node: str, bucket_name: str):
+        logger.info('Disconnect bigfun bucket {}'.format(bucket_name))
         query = "DISCONNECT BUCKET `{bucket}`;".format(bucket=bucket_name)
         self.rest.run_analytics_query(cbas_node, query)
 
     def drop_bigfun_dataset(self, cbas_node: str, bucket_name: str):
+        logger.info('Drop bigfun dataset on bucket {}'.format(bucket_name))
         query = "DROP DATASET `GleambookUsers{bucket}`;".format(bucket=bucket_name)
         self.rest.run_analytics_query(cbas_node, query)
         query = "DROP DATASET `GleambookMessages{bucket}`;".format(bucket=bucket_name)
@@ -145,6 +160,7 @@ class CBASBigfunTest(PerfTest):
 
     @timeit
     def create_bigfun_indexes(self):
+        logger.info('Create bigfun dataset indexes')
         for target in self.target_iterator:
             bucket_name = target.bucket
             master_node = target.node
@@ -153,6 +169,7 @@ class CBASBigfunTest(PerfTest):
 
     @timeit
     def drop_bigfun_indexes(self):
+        logger.info('Drop bigfun dataset indexes')
         for target in self.target_iterator:
             bucket_name = target.bucket
             master_node = target.node
@@ -160,6 +177,7 @@ class CBASBigfunTest(PerfTest):
             self.drop_bigfun_index(cbas_node, bucket_name)
 
     def start_cbas_sync(self):
+        logger.info('Start CBAS bigfun data set syncing')
         for target in self.target_iterator:
             bucket_name = target.bucket
             master_node = target.node
@@ -170,6 +188,7 @@ class CBASBigfunTest(PerfTest):
             self.connect_bigfun_bucket(cbas_node, bucket_name)
 
     def start_cbas_sync_1st_part(self):
+        logger.info('Start CBAS bigfun data set 1st part syncing')
         for target in self.target_iterator:
             bucket_name = target.bucket
             master_node = target.node
@@ -180,6 +199,7 @@ class CBASBigfunTest(PerfTest):
             self.connect_bigfun_bucket(cbas_node, bucket_name)
 
     def start_cbas_sync_2nd_part(self):
+        logger.info('Start CBAS bigfun data set 2nd part syncing')
         for target in self.target_iterator:
             bucket_name = target.bucket
             master_node = target.node
@@ -189,6 +209,7 @@ class CBASBigfunTest(PerfTest):
             self.connect_bigfun_bucket(cbas_node, bucket_name)
 
     def restart_cbas_sync(self):
+        logger.info('Restart CBAS bigfun data set syncing')
         for target in self.target_iterator:
             bucket_name = target.bucket
             master_node = target.node
@@ -200,6 +221,7 @@ class CBASBigfunTest(PerfTest):
             self.connect_bigfun_bucket(cbas_node, bucket_name)
 
     def disconnect_bucket(self):
+        logger.info('Disconnect CBAS bigfun data set')
         for target in self.target_iterator:
             bucket_name = target.bucket
             master_node = target.node
@@ -207,6 +229,7 @@ class CBASBigfunTest(PerfTest):
             self.disconnect_bigfun_bucket(cbas_node, bucket_name)
 
     def connect_bucket(self):
+        logger.info('Connect CBAS bigfun data set')
         for target in self.target_iterator:
             bucket_name = target.bucket
             master_node = target.node
@@ -215,6 +238,7 @@ class CBASBigfunTest(PerfTest):
 
     @timeit
     def monitor_cbas_synced_1st_part(self):
+        logger.info('Monitoring bigfun data 1st part syncing.')
         for target in self.target_iterator:
             master_node = target.node
             bucket = target.bucket
@@ -228,6 +252,7 @@ class CBASBigfunTest(PerfTest):
         self._monitor_cbas_synced()
 
     def _monitor_cbas_synced(self):
+        logger.info('Monitoring bigfun full data syncing.')
         for target in self.target_iterator:
             master_node = target.node
             bucket = target.bucket
@@ -238,6 +263,7 @@ class CBASBigfunTest(PerfTest):
 
     @timeit
     def monitor_cbas_synced_update_non_indexed_field(self):
+        logger.info('Monitoring bigfun non index data update syncing.')
         for target in self.target_iterator:
             master_node = target.node
             bucket = target.bucket
@@ -248,6 +274,7 @@ class CBASBigfunTest(PerfTest):
 
     @timeit
     def monitor_cbas_synced_update_indexed_field(self):
+        logger.info('Monitoring bigfun index data update syncing.')
         for target in self.target_iterator:
             master_node = target.node
             bucket = target.bucket
@@ -258,6 +285,7 @@ class CBASBigfunTest(PerfTest):
 
     @timeit
     def monitor_cbas_synced_deleted(self):
+        logger.info('Monitoring bigfun data delete syncing.')
         for target in self.target_iterator:
             master_node = target.node
             bucket = target.bucket
@@ -267,25 +295,32 @@ class CBASBigfunTest(PerfTest):
                                                      cbas_node)
 
     def load(self, *args, **kwargs):
+        logger.info('Start task for loading bigfun data.')
         PerfTest.load(self, task=cbas_bigfun_data_insert_task)
 
     def insert(self, *args, **kwargs):
+        logger.info('Start task for inserting bigfun data.')
         PerfTest.trigger_tasks(self, task=cbas_bigfun_data_insert_task)
 
     def update_non_indexed_field(self, *args, **kwargs):
+        logger.info('Start task for updating bigfun non index data.')
         PerfTest.trigger_tasks(self, task=cbas_bigfun_data_update_non_index_task)
 
     def update_indexed_field(self, *args, **kwargs):
+        logger.info('Start task for updating bigfun index data.')
         PerfTest.trigger_tasks(self, task=cbas_bigfun_data_update_index_task)
 
     def delete(self, *args, **kwargs):
+        logger.info('Start task for deleting bigfun data.')
         PerfTest.trigger_tasks(self, task=cbas_bigfun_data_delete_task)
 
     def ttl(self, *args, **kwargs):
+        logger.info('Start task for setting bigfun data TTL.')
         PerfTest.trigger_tasks(self, task=cbas_bigfun_data_ttl_task)
 
     @timeit
     def query(self, *args, **kwargs):
+        logger.info('Start task for querying bigfun data.')
         PerfTest.trigger_tasks(self, task=cbas_bigfun_data_query_task,
                                target_iterator=self.cbas_target_iterator)
 
@@ -502,11 +537,14 @@ class CBASBigfunQueryWithBGTest(CBASBigfunQueryTest):
         impact on the query and too much memory usage in current loader tool
         We will need more test cases to cover wider mutaion
         """
+        logger.info('Start CBAS bigfun mix load task')
         self.access_bg(task=cbas_bigfun_data_mixload_task)
 
         querytime = self.query()
 
         if self.test_config.access_settings.time > querytime:
+            logger.info('Sleep for {} seconds'.format(self.test_config.access_settings.time -
+                                                      querytime))
             time.sleep(self.test_config.access_settings.time - querytime)
 
 
@@ -540,22 +578,27 @@ class CBASBigfunQueryWithBGRebalanceTest(CBASBigfunQueryTest, CBASRebalanceTest)
 
     def query_thr(self):
         try:
+            logger.info('Start query')
             self.query()
+            logger.info('Finished query')
         except:
             self.thr_exceptions.append(sys.exc_info())
 
     def rebalance_thr(self):
         try:
+            logger.info('Start rebalancing')
             t0 = time.time()
             self._rebalance(services=self.REBALANCE_SERVICES)
             if not self.is_balanced():
                 raise Exception("cluster was not rebalanced after rebalance job")
             self.rebalance_latency = time.time() - t0  # Rebalance time in seconds
+            logger.info('Finished rebalancing')
         except:
             self.thr_exceptions.append(sys.exc_info())
 
     @with_stats
     def access(self, *args, **kwargs):
+        logger.info('Start CBAS bigfun mixload task')
         self.access_bg(task=cbas_bigfun_data_mixload_task)
         t0 = time.time()
         thr1 = threading.Thread(target=self.query_thr)
@@ -564,9 +607,12 @@ class CBASBigfunQueryWithBGRebalanceTest(CBASBigfunQueryTest, CBASRebalanceTest)
         thr2.start()
         thr1.join()
         thr2.join()
+        logger.info('Query and rebalance are done')
         if len(self.thr_exceptions) > 0:
             raise self.thr_exceptions[0][1]
         if self.test_config.access_settings.time > (time.time() - t0):
+            logger.info('Sleep for {} seconds'.format(self.test_config.access_settings.time -
+                                                      (time.time() - t0)))
             time.sleep(self.test_config.access_settings.time - (time.time() - t0))
 
     def _report_kpi(self):
@@ -600,24 +646,29 @@ class CBASBigfunDataSyncRebalanceTest(CBASBigfunTest, CBASRebalanceTest):
 
     def cbas_sync_thr(self):
         try:
+            logger.info('Start monitoring CBAS syncing')
             t0 = time.time()
             self._monitor_cbas_synced()
             self.initial_sync_latency = time.time() - t0  # CBAS sync time in seconds
+            logger.info('Finished monitoring CBAS syncing')
         except:
             self.thr_exceptions.append(sys.exc_info())
 
     def rebalance_thr(self):
         try:
+            logger.info('Start rebalancing')
             t0 = time.time()
             self._rebalance(services=self.REBALANCE_SERVICES)
             if not self.is_balanced():
                 raise Exception("cluster was not rebalanced after rebalance job")
             self.rebalance_latency = time.time() - t0  # Rebalance time in seconds
+            logger.info('Finished rebalancing')
         except:
             self.thr_exceptions.append(sys.exc_info())
 
     @with_stats
     def access(self, *args, **kwargs):
+        logger.info('Start syncing')
         self.start_cbas_sync()
         thr1 = threading.Thread(target=self.cbas_sync_thr)
         thr2 = threading.Thread(target=self.rebalance_thr)
@@ -625,6 +676,7 @@ class CBASBigfunDataSyncRebalanceTest(CBASBigfunTest, CBASRebalanceTest):
         thr2.start()
         thr1.join()
         thr2.join()
+        logger.info('Done syncing and rebalancing')
         if len(self.thr_exceptions) > 0:
             raise self.thr_exceptions[0][1]
 
@@ -662,12 +714,15 @@ class CBASBigfunQueryWithBGRecoveryTest(CBASBigfunQueryTest, RecoveryTest):
 
     def query_thr(self):
         try:
+            logger.info('Start query')
             self.query()
+            logger.info('Done query')
         except:
             self.thr_exceptions.append(sys.exc_info())
 
     def recovery_thr(self):
         try:
+            logger.info('Start failover')
             self.failover()
             logger.info('Sleeping for {} seconds before rebalance'
                         .format(self.test_config.rebalance_settings.start_after))
@@ -680,11 +735,13 @@ class CBASBigfunQueryWithBGRecoveryTest(CBASBigfunQueryTest, RecoveryTest):
             logger.info('Sleeping for {} seconds after rebalance'
                         .format(self.test_config.rebalance_settings.stop_after))
             time.sleep(self.test_config.rebalance_settings.stop_after)
+            logger.info('Done failover')
         except:
             self.thr_exceptions.append(sys.exc_info())
 
     @with_stats
     def access(self, *args, **kwargs):
+        logger.info('Start CBAS bigfun mixload')
         self.access_bg(task=cbas_bigfun_data_mixload_task)
         t0 = time.time()
         thr1 = threading.Thread(target=self.query_thr)
@@ -693,9 +750,12 @@ class CBASBigfunQueryWithBGRecoveryTest(CBASBigfunQueryTest, RecoveryTest):
         thr2.start()
         thr1.join()
         thr2.join()
+        logger.info('Done query and failover')
         if len(self.thr_exceptions) > 0:
             raise self.thr_exceptions[0][1]
         if self.test_config.access_settings.time > (time.time() - t0):
+            logger.info('Sleep {} seconds'.format(self.test_config.access_settings.time -
+                                                  (time.time() - t0)))
             time.sleep(self.test_config.access_settings.time - (time.time() - t0))
 
     def _report_kpi(self):
@@ -720,14 +780,17 @@ class CBASBigfunDataSyncRecoveryTest(CBASBigfunTest, RecoveryTest):
 
     def cbas_sync_thr(self):
         try:
+            logger.info('Start monitoring CBAS syncing')
             t0 = time.time()
             self._monitor_cbas_synced()
             self.initial_sync_latency = time.time() - t0  # CBAS sync time in seconds
+            logger.info('Done monitoring CBAS syncing')
         except:
             self.thr_exceptions.append(sys.exc_info())
 
     def recovery_thr(self):
         try:
+            logger.info('Start failover')
             self.failover()
             logger.info('Sleeping for {} seconds before rebalance'
                         .format(self.test_config.rebalance_settings.start_after))
@@ -740,11 +803,13 @@ class CBASBigfunDataSyncRecoveryTest(CBASBigfunTest, RecoveryTest):
             logger.info('Sleeping for {} seconds after rebalance'
                         .format(self.test_config.rebalance_settings.stop_after))
             time.sleep(self.test_config.rebalance_settings.stop_after)
+            logger.info('Finish failover')
         except:
             self.thr_exceptions.append(sys.exc_info())
 
     @with_stats
     def access(self, *args, **kwargs):
+        logger.info('Start syncing')
         self.start_cbas_sync()
         thr1 = threading.Thread(target=self.cbas_sync_thr)
         thr2 = threading.Thread(target=self.recovery_thr)
@@ -752,6 +817,7 @@ class CBASBigfunDataSyncRecoveryTest(CBASBigfunTest, RecoveryTest):
         thr2.start()
         thr1.join()
         thr2.join()
+        logger.info('Done syncing and failover')
         if len(self.thr_exceptions) > 0:
             raise self.thr_exceptions[0][1]
 
@@ -836,12 +902,17 @@ class CBASBigfunCleanupBucketTest(CBASBigfunTest):
             self.disconnect_bucket()
 
         if self.cleanup_method == 'flush':
+            logger.info('Start flushing buckets')
             self.cluster.flush_buckets()
+            logger.info('Done flushing buckets')
         elif self.cleanup_method == 'delete':
+            logger.info('Start deleting and recreating buckets')
             self.cluster.delete_buckets()
             self.cluster.delete_rbac_users()
             self.cluster.create_buckets()
             self.cluster.add_rbac_users()
+            self.cluster.wait_until_warmed_up()
+            logger.info('Done deleting and recreating buckets')
 
         if self.cleanup_when_disconnected:
             self.connect_bucket()

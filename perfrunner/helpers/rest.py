@@ -702,8 +702,6 @@ class RestHelper:
         return self.get(url=api).json()
 
     def run_analytics_query(self, analytics_node: str, query: str, timeout: str='300s') -> dict:
-        logger.info('Run query {} on analytics node {} with timeout {}'.format(
-            query, analytics_node, timeout))
         api = 'http://{}:8095/analytics/service'.format(analytics_node)
         data = {
             'statement': query,

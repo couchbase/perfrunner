@@ -96,8 +96,6 @@ class Worker:
         self.init_docs()
         self.init_db()
 
-        self.reservoir = Reservoir(num_workers=self.ws.workers)
-
     def init_keys(self):
         self.new_keys = NewOrderedKey(prefix=self.ts.prefix,
                                       fmtr=self.ws.key_fmtr)
@@ -209,6 +207,11 @@ Sequence = List[Tuple[str, Callable, Tuple]]
 class KVWorker(Worker):
 
     NAME = 'kv-worker'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.reservoir = Reservoir(num_workers=self.ws.workers)
 
     def gen_cmd_sequence(self, cb=None, extras=None) -> Sequence:
         ops = \

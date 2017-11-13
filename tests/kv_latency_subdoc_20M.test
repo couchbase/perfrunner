@@ -13,6 +13,7 @@ num_buckets = 1
 items = 20000000
 size = 1024
 workers = 80
+doc_gen = large
 
 [access]
 creates = 0

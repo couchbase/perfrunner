@@ -1,0 +1,32 @@
+[test_case]
+test = perfrunner.tests.cbas.CBASBigfunQueryWithBGRecoveryTest
+title = Query with background traffic (BigFun 10K dataset) (3 parallel queries) (data node failover and recovery)
+component = analytics
+sub_category = BigFun 10K
+category = QueryBgRecovery
+
+[cluster]
+mem_quota = 4096
+analytics_mem_quota = 4096
+initial_nodes = 3
+num_buckets = 1
+
+[cbas_settings]
+node_logLevel=WARNING
+
+[bigfun]
+workers=20
+user_docs=5000
+
+[access]
+workers=20
+bigfun_query_workers=3
+items=5000
+time=300
+
+[rebalance]
+failed_nodes = 1
+failover = graceful
+delay_before_failover = 60
+start_after = 60
+stop_after = 60

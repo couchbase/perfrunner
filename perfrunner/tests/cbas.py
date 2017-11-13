@@ -296,24 +296,31 @@ class CBASBigfunTest(PerfTest):
 
     def load(self, *args, **kwargs):
         logger.info('Start task for loading bigfun data.')
+        t0 = time.time()
         PerfTest.load(self, task=cbas_bigfun_data_insert_task)
+        self.initial_load_latency = time.time() - t0
 
+    @timeit
     def insert(self, *args, **kwargs):
         logger.info('Start task for inserting bigfun data.')
         PerfTest.trigger_tasks(self, task=cbas_bigfun_data_insert_task)
 
+    @timeit
     def update_non_indexed_field(self, *args, **kwargs):
         logger.info('Start task for updating bigfun non index data.')
         PerfTest.trigger_tasks(self, task=cbas_bigfun_data_update_non_index_task)
 
+    @timeit
     def update_indexed_field(self, *args, **kwargs):
         logger.info('Start task for updating bigfun index data.')
         PerfTest.trigger_tasks(self, task=cbas_bigfun_data_update_index_task)
 
+    @timeit
     def delete(self, *args, **kwargs):
         logger.info('Start task for deleting bigfun data.')
         PerfTest.trigger_tasks(self, task=cbas_bigfun_data_delete_task)
 
+    @timeit
     def ttl(self, *args, **kwargs):
         logger.info('Start task for setting bigfun data TTL.')
         PerfTest.trigger_tasks(self, task=cbas_bigfun_data_ttl_task)
@@ -341,6 +348,12 @@ class CBASBigfunTest(PerfTest):
 
     def _report_kpi(self):
         self.collect_export_files()
+        if self.initial_load_latency is not None:
+            self.reporter.post(
+                *self.metrics.cbas_latency(self.initial_load_latency,
+                                           "initial_load_latency_sec",
+                                           "Initial document injestion latency (second)")
+            )
 
 
 class CBASBigfunDataSetTest(CBASBigfunTest):
@@ -355,25 +368,25 @@ class CBASBigfunDataSetTest(CBASBigfunTest):
 
         self.restart_sync_latency = self.monitor_cbas_synced()
 
-        self.update_non_indexed_field()
+        self.update_non_indexed_field_latency = self.update_non_indexed_field()
 
         self.non_index_update_sync_latency = self.monitor_cbas_synced_update_non_indexed_field()
 
-        self.update_indexed_field()
+        self.update_indexed_field_latency = self.update_indexed_field()
 
         self.index_update_sync_latency = self.monitor_cbas_synced_update_indexed_field()
 
-        self.delete()
+        self.delete_latency = self.delete()
 
         self.delete_sync_latency = self.monitor_cbas_synced_deleted()
 
-        self.insert()
+        self.reinsert_latency = self.insert()
 
-        self.monitor_cbas_synced()
+        self.reinsert_sync_latency = self.monitor_cbas_synced()
 
         self.disconnect_bucket()
 
-        self.update_indexed_field()
+        self.disconnect_update_indexed_field_latency = self.update_indexed_field()
 
         self.connect_bucket()
 
@@ -381,7 +394,7 @@ class CBASBigfunDataSetTest(CBASBigfunTest):
 
         self.disconnect_bucket()
 
-        self.update_non_indexed_field()
+        self.disconnect_update_non_indexed_field_latency = self.update_non_indexed_field()
 
         self.connect_bucket()
 
@@ -390,65 +403,116 @@ class CBASBigfunDataSetTest(CBASBigfunTest):
 
         self.disconnect_bucket()
 
-        self.delete()
+        self.disconnect_delete_latency = self.delete()
 
         self.connect_bucket()
 
         self.reconnect_delete_sync_latency = self.monitor_cbas_synced_deleted()
 
     def _report_kpi(self):
-        self.collect_export_files()
+        super()._report_kpi()
         if self.initial_sync_latency is not None:
             self.reporter.post(
-                *self.metrics.cbas_sync_latency(self.initial_sync_latency,
-                                                "initial_sync_latency_sec",
-                                                "Initial sync latency in second")
+                *self.metrics.cbas_latency(self.initial_sync_latency,
+                                           "initial_sync_latency_sec",
+                                           "Initial Analytics sync latency (second)")
             )
         if self.restart_sync_latency is not None:
             self.reporter.post(
-                *self.metrics.cbas_sync_latency(self.restart_sync_latency,
-                                                "restart_cbas_sync_sec",
-                                                "Restart cbas sync in second")
+                *self.metrics.cbas_latency(self.restart_sync_latency,
+                                           "restart_cbas_sync_sec",
+                                           "Restart Analytics sync latency (second)")
+            )
+        if self.update_non_indexed_field_latency is not None:
+            self.reporter.post(
+                *self.metrics.cbas_latency(self.update_non_indexed_field_latency,
+                                           "update_non_indexed_field_latency_sec",
+                                           "Update nonindexed document field latency (second)")
             )
         if self.non_index_update_sync_latency is not None:
             self.reporter.post(
-                *self.metrics.cbas_sync_latency(
+                *self.metrics.cbas_latency(
                     self.non_index_update_sync_latency,
                     "non_index_update_sync_latency_sec",
-                    "Nonindex update sync latency in second")
+                    "Nonindex update Analytics sync latency (second)")
+            )
+        if self.update_indexed_field_latency is not None:
+            self.reporter.post(
+                *self.metrics.cbas_latency(self.update_indexed_field_latency,
+                                           "update_indexed_field_latency_sec",
+                                           "Update indexed document field latency (second)")
             )
         if self.index_update_sync_latency is not None:
             self.reporter.post(
-                *self.metrics.cbas_sync_latency(self.index_update_sync_latency,
-                                                "index_update_sync_latency_sec",
-                                                "Index update sync latency in second")
+                *self.metrics.cbas_latency(self.index_update_sync_latency,
+                                           "index_update_sync_latency_sec",
+                                           "Index update Analytics sync latency (second)")
+            )
+        if self.delete_latency is not None:
+            self.reporter.post(
+                *self.metrics.cbas_latency(self.delete_latency,
+                                           "delete_latency_sec",
+                                           "Delete document latency (second)")
             )
         if self.delete_sync_latency is not None:
             self.reporter.post(
-                *self.metrics.cbas_sync_latency(self.delete_sync_latency,
-                                                "delete_sync_latency_sec",
-                                                "Delete sync latency in second")
+                *self.metrics.cbas_latency(self.delete_sync_latency,
+                                           "delete_sync_latency_sec",
+                                           "Delete Analytics sync latency (second)")
+            )
+        if self.reinsert_latency is not None:
+            self.reporter.post(
+                *self.metrics.cbas_latency(self.reinsert_latency,
+                                           "reinsert_latency_sec",
+                                           "Reinsert document latency (second)")
+            )
+        if self.reinsert_sync_latency is not None:
+            self.reporter.post(
+                *self.metrics.cbas_latency(self.reinsert_sync_latency,
+                                           "reinsert_sync_latency_sec",
+                                           "Reinsert Analytics sync latency (second)")
+            )
+        if self.disconnect_update_indexed_field_latency is not None:
+            self.reporter.post(
+                *self.metrics.cbas_latency(
+                    self.disconnect_update_indexed_field_latency,
+                    "disconnect_update_indexed_field_latency_sec",
+                    "Update indexed document field latency (second) with cbas disconnected")
             )
         if self.reconnect_index_update_sync_latency is not None:
             self.reporter.post(
-                *self.metrics.cbas_sync_latency(
+                *self.metrics.cbas_latency(
                     self.reconnect_index_update_sync_latency,
                     "reconnect_index_update_sync_latency_sec",
-                    "Reconnect index update sync latency in second")
+                    "Index update Analytics sync latency (second) with cbas reconnected")
+            )
+        if self.disconnect_update_non_indexed_field_latency is not None:
+            self.reporter.post(
+                *self.metrics.cbas_latency(
+                    self.disconnect_update_non_indexed_field_latency,
+                    "disconnect_update_non_indexed_field_latency_sec",
+                    "Update non indexed document field latency (second) with cbas disconnected")
             )
         if self.reconnect_non_index_update_sync_latency is not None:
             self.reporter.post(
-                *self.metrics.cbas_sync_latency(
+                *self.metrics.cbas_latency(
                     self.reconnect_non_index_update_sync_latency,
                     "reconnect_non_index_update_sync_latency_sec",
-                    "Reconnect non index update sync latency in second")
+                    "Non index update Analytics sync latency (second) with cbas reconnected")
+            )
+        if self.disconnect_delete_latency is not None:
+            self.reporter.post(
+                *self.metrics.cbas_latency(
+                    self.disconnect_delete_latency,
+                    "disconnect_delete_latency_sec",
+                    "Delete document latency (second) with cbas disconnected")
             )
         if self.reconnect_delete_sync_latency is not None:
             self.reporter.post(
-                *self.metrics.cbas_sync_latency(
+                *self.metrics.cbas_latency(
                     self.reconnect_delete_sync_latency,
                     "reconnect_delete_sync_latency_sec",
-                    "Reconnect delete sync latency in second")
+                    "Delete Analytics sync latency (second) with cbas reconnected")
             )
 
 
@@ -460,7 +524,7 @@ class CBASBigfunDataSetTTLTest(CBASBigfunTest):
 
         self.initial_sync_latency = self.monitor_cbas_synced()
 
-        self.ttl()
+        self.ttl_latency = self.ttl()
 
         self.ttl_sync_latency = self.monitor_cbas_synced_deleted()
 
@@ -469,12 +533,24 @@ class CBASBigfunDataSetTTLTest(CBASBigfunTest):
         self.monitor_cbas_synced()
 
     def _report_kpi(self):
-        self.collect_export_files()
+        super()._report_kpi()
+        if self.initial_sync_latency is not None:
+            self.reporter.post(
+                *self.metrics.cbas_latency(self.initial_sync_latency,
+                                           "initial_sync_latency_sec",
+                                           "Initial Analytics sync latency (second)")
+            )
+        if self.ttl_latency is not None:
+            self.reporter.post(
+                *self.metrics.cbas_latency(self.ttl_latency,
+                                           "ttl_latency_sec",
+                                           "TTL document update latency (second)")
+            )
         if self.ttl_sync_latency is not None:
             self.reporter.post(
-                *self.metrics.cbas_sync_latency(self.ttl_sync_latency,
-                                                "ttl_sync_latency_sec",
-                                                "ttl  sync latency in second")
+                *self.metrics.cbas_latency(self.ttl_sync_latency,
+                                           "ttl_sync_latency_sec",
+                                           "TTL Analytics sync latency (second)")
             )
 
 
@@ -498,17 +574,26 @@ class CBASBigfunStableStateTest(CBASBigfunTest):
 
         self.start_cbas_sync()
 
-        self.monitor_cbas_synced()
+        self.initial_sync_latency = self.monitor_cbas_synced()
 
         self.access()
 
         self.report_kpi()
 
     def _report_kpi(self):
+        super()._report_kpi()
+        if self.initial_sync_latency is not None:
+            self.reporter.post(
+                *self.metrics.cbas_latency(self.initial_sync_latency,
+                                           "initial_sync_latency_sec",
+                                           "Initial Analytics sync latency (second)")
+            )
         self.reporter.post(*self.metrics.cbas_lag())
 
 
 class CBASBigfunQueryTest(CBASBigfunStableStateTest):
+
+    REPORT_QUERY_DETAIL = True
 
     @with_stats
     def access(self, *args, **kwargs):
@@ -516,15 +601,34 @@ class CBASBigfunQueryTest(CBASBigfunStableStateTest):
 
     def _report_kpi(self):
         super()._report_kpi()
-        self.collect_export_files()
-        query_latencies = self.metrics.parse_cbas_query_latencies()
-        for key, value in query_latencies.items():
-            self.reporter.post(
-                *self.metrics.cbas_query_latency(
-                    value,
-                    key,
-                    "Query latency in MS: " + key)
-            )
+        query_stats = self.metrics.parse_cbas_query_highlevel_metrics()
+        self.reporter.post(
+            *self.metrics.cbas_query_metric(
+                query_stats['total_query_number'],
+                'total_query_number',
+                'Total query number')
+        )
+        self.reporter.post(
+            *self.metrics.cbas_query_metric(
+                query_stats['success_query_rate'],
+                'success_query_rate',
+                'Success query rate')
+        )
+        self.reporter.post(
+            *self.metrics.cbas_query_metric(
+                query_stats['avg_query_latency'],
+                'avg_query_latency',
+                'Avg query latency (ms)')
+        )
+        if self.REPORT_QUERY_DETAIL:
+            query_latencies = self.metrics.parse_cbas_query_latencies()
+            for key, value in query_latencies.items():
+                self.reporter.post(
+                    *self.metrics.cbas_query_metric(
+                        value,
+                        key.replace(' ', '_'),
+                        "Avg query latency (ms) " + key)
+                )
 
 
 class CBASBigfunQueryWithBGTest(CBASBigfunQueryTest):
@@ -569,6 +673,8 @@ class CBASBigfunQueryWithBGRebalanceTest(CBASBigfunQueryTest, CBASRebalanceTest)
 
     REBALANCE_SERVICES = None
 
+    REPORT_QUERY_DETAIL = False
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.rebalance_settings = self.test_config.rebalance_settings
@@ -581,7 +687,7 @@ class CBASBigfunQueryWithBGRebalanceTest(CBASBigfunQueryTest, CBASRebalanceTest)
             logger.info('Start query')
             self.query()
             logger.info('Finished query')
-        except:
+        except Exception:
             self.thr_exceptions.append(sys.exc_info())
 
     def rebalance_thr(self):
@@ -593,7 +699,7 @@ class CBASBigfunQueryWithBGRebalanceTest(CBASBigfunQueryTest, CBASRebalanceTest)
                 raise Exception("cluster was not rebalanced after rebalance job")
             self.rebalance_latency = time.time() - t0  # Rebalance time in seconds
             logger.info('Finished rebalancing')
-        except:
+        except Exception:
             self.thr_exceptions.append(sys.exc_info())
 
     @with_stats
@@ -619,7 +725,9 @@ class CBASBigfunQueryWithBGRebalanceTest(CBASBigfunQueryTest, CBASRebalanceTest)
         CBASBigfunQueryTest._report_kpi(self)
         if self.rebalance_latency is not None:
             self.reporter.post(
-                *self.metrics.rebalance_time(self.rebalance_latency)
+                *self.metrics.cbas_latency(self.rebalance_latency,
+                                           "rebalance_latency_sec",
+                                           "Rebalance latency (second)")
             )
 
 
@@ -651,7 +759,7 @@ class CBASBigfunDataSyncRebalanceTest(CBASBigfunTest, CBASRebalanceTest):
             self._monitor_cbas_synced()
             self.initial_sync_latency = time.time() - t0  # CBAS sync time in seconds
             logger.info('Finished monitoring CBAS syncing')
-        except:
+        except Exception:
             self.thr_exceptions.append(sys.exc_info())
 
     def rebalance_thr(self):
@@ -663,7 +771,7 @@ class CBASBigfunDataSyncRebalanceTest(CBASBigfunTest, CBASRebalanceTest):
                 raise Exception("cluster was not rebalanced after rebalance job")
             self.rebalance_latency = time.time() - t0  # Rebalance time in seconds
             logger.info('Finished rebalancing')
-        except:
+        except Exception:
             self.thr_exceptions.append(sys.exc_info())
 
     @with_stats
@@ -681,16 +789,18 @@ class CBASBigfunDataSyncRebalanceTest(CBASBigfunTest, CBASRebalanceTest):
             raise self.thr_exceptions[0][1]
 
     def _report_kpi(self):
-        self.collect_export_files()
+        CBASBigfunTest._report_kpi(self)
         if self.initial_sync_latency is not None:
             self.reporter.post(
-                *self.metrics.cbas_sync_latency(self.initial_sync_latency,
-                                                "initial_sync_latency_sec",
-                                                "Initial sync latency in second")
+                *self.metrics.cbas_latency(self.initial_sync_latency,
+                                           "initial_sync_latency_sec",
+                                           "Initial Analytics sync latency (second)")
             )
         if self.rebalance_latency is not None:
             self.reporter.post(
-                *self.metrics.rebalance_time(self.rebalance_latency)
+                *self.metrics.cbas_latency(self.rebalance_latency,
+                                           "rebalance_latency_sec",
+                                           "Rebalance latency (second)")
             )
 
 
@@ -705,11 +815,13 @@ class CBASBigfunQueryWithBGRecoveryTest(CBASBigfunQueryTest, RecoveryTest):
 
     """Test measure cbas query latency, cbas_lag during kv node failover and recovery."""
 
+    REPORT_QUERY_DETAIL = False
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.rebalance_settings = self.test_config.rebalance_settings
         self.rebalance_time = 0
-        self.reovery_latency = 0
+        self.recovery_latency = 0
         self.thr_exceptions = []
 
     def query_thr(self):
@@ -717,13 +829,18 @@ class CBASBigfunQueryWithBGRecoveryTest(CBASBigfunQueryTest, RecoveryTest):
             logger.info('Start query')
             self.query()
             logger.info('Done query')
-        except:
+        except Exception:
             self.thr_exceptions.append(sys.exc_info())
 
     def recovery_thr(self):
         try:
             logger.info('Start failover')
-            self.failover()
+            logger.info('Sleeping {} seconds before triggering failover'
+                        .format(self.rebalance_settings.delay_before_failover))
+            time.sleep(self.rebalance_settings.delay_before_failover)
+            t0 = time.time()
+            self._failover()
+            self.failover_latency = time.time() - t0  # Failover time in seconds
             logger.info('Sleeping for {} seconds before rebalance'
                         .format(self.test_config.rebalance_settings.start_after))
             time.sleep(self.test_config.rebalance_settings.start_after)
@@ -731,12 +848,12 @@ class CBASBigfunQueryWithBGRecoveryTest(CBASBigfunQueryTest, RecoveryTest):
             self._rebalance()
             if not self.is_balanced():
                 raise Exception("cluster was not rebalanced after recovery job")
-            self.reovery_latency = time.time() - t0  # Rebalance time in seconds
+            self.recovery_latency = time.time() - t0  # Rebalance time in seconds
             logger.info('Sleeping for {} seconds after rebalance'
                         .format(self.test_config.rebalance_settings.stop_after))
             time.sleep(self.test_config.rebalance_settings.stop_after)
             logger.info('Done failover')
-        except:
+        except Exception:
             self.thr_exceptions.append(sys.exc_info())
 
     @with_stats
@@ -760,9 +877,17 @@ class CBASBigfunQueryWithBGRecoveryTest(CBASBigfunQueryTest, RecoveryTest):
 
     def _report_kpi(self):
         CBASBigfunQueryTest._report_kpi(self)
-        if self.reovery_latency is not None:
+        if self.failover_latency is not None:
             self.reporter.post(
-                *self.metrics.rebalance_time(self.reovery_latency)
+                *self.metrics.cbas_latency(self.failover_latency,
+                                           "failover_latency_sec",
+                                           "Failover latency (second)")
+            )
+        if self.recovery_latency is not None:
+            self.reporter.post(
+                *self.metrics.cbas_latency(self.recovery_latency,
+                                           "reovery_latency_sec",
+                                           "Reovery latency (second)")
             )
 
 
@@ -785,13 +910,18 @@ class CBASBigfunDataSyncRecoveryTest(CBASBigfunTest, RecoveryTest):
             self._monitor_cbas_synced()
             self.initial_sync_latency = time.time() - t0  # CBAS sync time in seconds
             logger.info('Done monitoring CBAS syncing')
-        except:
+        except Exception:
             self.thr_exceptions.append(sys.exc_info())
 
     def recovery_thr(self):
         try:
             logger.info('Start failover')
-            self.failover()
+            logger.info('Sleeping {} seconds before triggering failover'
+                        .format(self.rebalance_settings.delay_before_failover))
+            time.sleep(self.rebalance_settings.delay_before_failover)
+            t0 = time.time()
+            self._failover()
+            self.failover_latency = time.time() - t0  # Failover time in seconds
             logger.info('Sleeping for {} seconds before rebalance'
                         .format(self.test_config.rebalance_settings.start_after))
             time.sleep(self.test_config.rebalance_settings.start_after)
@@ -804,7 +934,7 @@ class CBASBigfunDataSyncRecoveryTest(CBASBigfunTest, RecoveryTest):
                         .format(self.test_config.rebalance_settings.stop_after))
             time.sleep(self.test_config.rebalance_settings.stop_after)
             logger.info('Finish failover')
-        except:
+        except Exception:
             self.thr_exceptions.append(sys.exc_info())
 
     @with_stats
@@ -822,16 +952,24 @@ class CBASBigfunDataSyncRecoveryTest(CBASBigfunTest, RecoveryTest):
             raise self.thr_exceptions[0][1]
 
     def _report_kpi(self):
-        self.collect_export_files()
+        CBASBigfunTest._report_kpi(self)
         if self.initial_sync_latency is not None:
             self.reporter.post(
-                *self.metrics.cbas_sync_latency(self.initial_sync_latency,
-                                                "initial_sync_latency_sec",
-                                                "Initial sync latency in second")
+                *self.metrics.cbas_latency(self.initial_sync_latency,
+                                           "initial_sync_latency_sec",
+                                           "Initial Analytics sync latency (second)")
+            )
+        if self.failover_latency is not None:
+            self.reporter.post(
+                *self.metrics.cbas_latency(self.failover_latency,
+                                           "failover_latency_sec",
+                                           "Failover latency (second)")
             )
         if self.recovery_latency is not None:
             self.reporter.post(
-                *self.metrics.rebalance_time(self.recovery_latency)
+                *self.metrics.cbas_latency(self.recovery_latency,
+                                           "reovery_latency_sec",
+                                           "Reovery latency (second)")
             )
 
 
@@ -858,30 +996,30 @@ class CBASBigfunDataSetP2Test(CBASBigfunTest):
         self.connect_bucket()
 
     def _report_kpi(self):
-        self.collect_export_files()
+        super()._report_kpi()
         if self.sync_latency_1st_part is not None:
             self.reporter.post(
-                *self.metrics.cbas_sync_latency(self.sync_latency_1st_part,
-                                                "sync_latency_1st_part_sec",
-                                                "Sync latency of 1st part in second")
+                *self.metrics.cbas_latency(self.sync_latency_1st_part,
+                                           "sync_latency_1st_part_sec",
+                                           "1st part Analytics sync latency (second)")
             )
         if self.sync_latency_2nd_part is not None:
             self.reporter.post(
-                *self.metrics.cbas_sync_latency(self.sync_latency_2nd_part,
-                                                "sync_latency_2nd_part_sec",
-                                                "Sync latency of 2nd part in second")
+                *self.metrics.cbas_latency(self.sync_latency_2nd_part,
+                                           "sync_latency_2nd_part_sec",
+                                           "2nd part Analytics sync latency (second)")
             )
         if self.drop_index_latency is not None:
             self.reporter.post(
-                *self.metrics.cbas_sync_latency(self.drop_index_latency,
-                                                "drop_index_latency_sec",
-                                                "Drop index latency in second")
+                *self.metrics.cbas_latency(self.drop_index_latency,
+                                           "drop_index_latency_sec",
+                                           "Drop index latency (second)")
             )
         if self.create_index_latency is not None:
             self.reporter.post(
-                *self.metrics.cbas_sync_latency(self.create_index_latency,
-                                                "create_index_latency_sec",
-                                                "Create index latency in second")
+                *self.metrics.cbas_latency(self.create_index_latency,
+                                           "create_index_latency_sec",
+                                           "Create index latency (second)")
             )
 
 
@@ -896,7 +1034,7 @@ class CBASBigfunCleanupBucketTest(CBASBigfunTest):
     def access(self, *args, **kwargs):
         self.start_cbas_sync()
 
-        self.monitor_cbas_synced()
+        self.initial_sync_latency = self.monitor_cbas_synced()
 
         if self.cleanup_when_disconnected:
             self.disconnect_bucket()
@@ -919,21 +1057,33 @@ class CBASBigfunCleanupBucketTest(CBASBigfunTest):
 
         self.cleanup_bucket_latency = self.monitor_cbas_synced_deleted()
 
-        self.insert()
+        self.reinsert_latency = self.insert()
 
-        self.insert_after_cleanup_bucket_latency = self.monitor_cbas_synced()
+        self.reinsert_sync_latency = self.monitor_cbas_synced()
 
     def _report_kpi(self):
-        self.collect_export_files()
+        super()._report_kpi()
+        if self.initial_sync_latency is not None:
+            self.reporter.post(
+                *self.metrics.cbas_latency(self.initial_sync_latency,
+                                           "initial_sync_latency_sec",
+                                           "Initial Analytics sync latency (second)")
+            )
         if self.cleanup_bucket_latency is not None:
             self.reporter.post(
-                *self.metrics.cbas_sync_latency(self.cleanup_bucket_latency,
-                                                "cleanup_bucket_latency_sec",
-                                                "Cleanup bucket latency in second")
+                *self.metrics.cbas_latency(self.cleanup_bucket_latency,
+                                           "cleanup_bucket_latency_sec",
+                                           "Cleanup bucket Analytics sync latency (second)")
             )
-        if self.insert_after_cleanup_bucket_latency is not None:
+        if self.reinsert_latency is not None:
             self.reporter.post(
-                *self.metrics.cbas_sync_latency(self.insert_after_cleanup_bucket_latency,
-                                                "insert_after_cleanup_bucket_latency_sec",
-                                                "Insert after cleanup bucket latency in second")
+                *self.metrics.cbas_latency(self.reinsert_latency,
+                                           "reinsert_latency_sec",
+                                           "Reinsert document latency (second)")
+            )
+        if self.reinsert_sync_latency is not None:
+            self.reporter.post(
+                *self.metrics.cbas_latency(self.reinsert_sync_latency,
+                                           "reinsert_sync_latency_sec",
+                                           "Reinsert Analytics sync latency (second)")
             )

@@ -168,7 +168,9 @@ class RecoveryTest(RebalanceKVTest):
         logger.info('Sleeping {} seconds before triggering failover'
                     .format(self.rebalance_settings.delay_before_failover))
         time.sleep(self.rebalance_settings.delay_before_failover)
+        self._failover()
 
+    def _failover(self):
         clusters = self.cluster_spec.clusters
         initial_nodes = self.test_config.cluster.initial_nodes
         failed_nodes = self.rebalance_settings.failed_nodes

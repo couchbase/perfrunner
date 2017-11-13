@@ -1,0 +1,15 @@
+[test_case]
+test = perfrunner.tests.dummytests.TestMultiThreaded
+title = UnitTest for multithreading in perfrunner.
+component = analytics
+sub_category = latency
+
+[cluster]
+mem_quota = 4096
+analytics_mem_quota = 4096
+initial_nodes = 3
+num_buckets = 1
+
+[unit_test]
+raise_exception=1
+

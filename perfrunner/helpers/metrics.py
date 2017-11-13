@@ -60,34 +60,29 @@ class MetricHelper:
             'orderBy': order_by,
         }
 
-    def cbas_sync_latency(self, value_sec: float, name: str, title: str) -> Metric:
+    def cbas_latency(self, value_sec: float, name: str, title: str) -> Metric:
         metric_id = '{}_{}'.format(self.test_config.name, name)
-        title = '{}, {}'.format(title, self.test_config.test_case.title)
+        title = '{}, {}'.format(self.test_config.test_case.title, title)
         metric_info = self._metric_info(metric_id, title)
+        return round(value_sec, 2), self._snapshots, metric_info
 
-        return value_sec, self._snapshots, metric_info
-
-    def cbas_query_latency(self, value_ms: float, name: str, title: str) -> Metric:
+    def cbas_query_metric(self, value: float, name: str, title: str) -> Metric:
         metric_id = '{}_{}'.format(self.test_config.name, name)
-        title = '{}, {}'.format(title, self.test_config.test_case.title)
+        title = '{}, {}'.format(self.test_config.test_case.title, title)
         metric_info = self._metric_info(metric_id, title)
-
-        return value_ms, self._snapshots, metric_info
+        return round(value, 4), self._snapshots, metric_info
 
     def ycsb_queries(self, value: float, name: str, title: str) -> Metric:
         metric_id = '{}_{}'.format(self.test_config.name, name)
         title = '{}, {}'.format(title, self.test_config.test_case.title)
         metric_info = self._metric_info(metric_id, title)
-
         return value, self._snapshots, metric_info
 
     def avg_n1ql_throughput(self) -> Metric:
         metric_id = '{}_avg_query_requests'.format(self.test_config.name)
         title = 'Avg. Query Throughput (queries/sec), {}'.format(self._title)
         metric_info = self._metric_info(metric_id, title)
-
         throughput = self._avg_n1ql_throughput()
-
         return throughput, self._snapshots, metric_info
 
     def _avg_n1ql_throughput(self) -> int:
@@ -240,7 +235,7 @@ class MetricHelper:
     def xdcr_lag(self, percentile: Number = 95) -> Metric:
         return self.lag_collector_metric('xdcr_lag', percentile)
 
-    def cbas_lag(self, percentile: Number = 95) -> Metric:
+    def cbas_lag(self, percentile: Number = 98) -> Metric:
         return self.lag_collector_metric('cbas_lag', percentile)
 
     def avg_replication_rate(self, time_elapsed: float) -> Metric:
@@ -604,6 +599,25 @@ class MetricHelper:
                         throughput += int(float(line.split()[-1]))
         return throughput
 
+    def parse_cbas_query_highlevel_metrics(self) -> Dict[str, float]:
+        query_stats = []
+        for filename in glob.glob("loader/*.query.result"):
+            with open(filename) as fh:
+                for line in fh.readlines():
+                    line = line.replace("\n", "")
+                    if line.startswith('queryNumber='):
+                        line = line.replace("queryNumber=", "")
+                        query_stats.append(int(line))
+                    elif line.startswith('queryLatency='):
+                        line = line.replace("queryLatency=", "")
+                        query_stats.append(int(line))
+        if len(query_stats) != 4:
+            raise Exception('Wrong query result file format')
+        return {'total_query_number': float(query_stats[0] + query_stats[2]),
+                'success_query_rate': query_stats[0] / (query_stats[0] + query_stats[2]),
+                'avg_query_latency': (query_stats[1] + query_stats[3]) /
+                                     (query_stats[0] + query_stats[2])}
+
     def parse_cbas_query_latencies(self) -> Dict[str, float]:
         query_count_dict = {}
         query_exe_time_dict = {}
@@ -615,7 +629,11 @@ class MetricHelper:
                         line = line.replace("\n", "")
                         parts = pattern.findall(line)
                         if len(parts) >= 10:
-                            query = parts[1]
+                            match = re.search('/\*([^\*]*)\*/', parts[1])
+                            if match:
+                                query = match.group(1)
+                            else:
+                                query = parts[1]
                             exe_time = 0.0
                             exe_time_str = parts[9]
                             if exe_time_str.endswith("ms"):
@@ -628,6 +646,8 @@ class MetricHelper:
                             else:
                                 query_count_dict[query] = 1
                                 query_exe_time_dict[query] = exe_time
+                    elif line.startswith('CBAS failed query'):
+                        raise Exception('Query {} failed'.format(line))
         for query in query_exe_time_dict:
             query_exe_time_dict[query] = query_exe_time_dict[query] / query_count_dict[query]
         return query_exe_time_dict

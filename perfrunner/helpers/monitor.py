@@ -114,7 +114,10 @@ class Monitor(RestHelper):
 
     def _get_num_items(self, host: str, bucket: str) -> bool:
         stats = self.get_bucket_stats(host=host, bucket=bucket)
-        return stats['op']['samples'].get('curr_items')[-1]
+        curr_items = stats['op']['samples'].get('curr_items')
+        if curr_items:
+            return curr_items[-1]
+        return 0
 
     def monitor_num_items(self, host: str, bucket: str, num_items: int):
         logger.info('Checking the number of items in {}'.format(bucket))

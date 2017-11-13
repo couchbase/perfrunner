@@ -600,8 +600,8 @@ class CBASSettings:
                     self.cluster_settings[option] = ('true' == value)
                 else:
                     self.cluster_settings[option] = int(value)
-            elif option.startswith('node.'):
-                option = option.replace('node.', '')
+            elif option.startswith('node_'):
+                option = option.replace('node_', '')
                 if option.startswith('logLevel') or \
                         option.startswith('jvmArgs'):
                     self.node_settings[option] = value

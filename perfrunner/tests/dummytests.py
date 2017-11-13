@@ -34,7 +34,7 @@ class TestMultiThreaded(PerfTest):
             else:
                 time.sleep(self.sleep_sec)
             self.thread1_latency = time.time() - t0  # Rebalance time in seconds
-        except:
+        except Exception:
             self.thr_exceptions.append(sys.exc_info())
 
     def method_thr2(self):
@@ -45,7 +45,7 @@ class TestMultiThreaded(PerfTest):
             else:
                 time.sleep(self.sleep_sec)
             self.thread2_latency = time.time() - t0  # Rebalance time in seconds
-        except:
+        except Exception:
             self.thr_exceptions.append(sys.exc_info())
 
     @with_stats

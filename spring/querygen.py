@@ -224,9 +224,13 @@ class N1QLQueryGen:
 
     def next(self, key, doc):
         statement, args, scan_consistency = next(self.queries)
-        args = args.format(key=key, **doc)
+        if 'key' in args:
+            args = [key]
+        else:
+            args = args.format(**doc)
+            args = eval(args)
 
-        n1ql_query = N1QLQuery(statement, *eval(args))
+        n1ql_query = N1QLQuery(statement, *args)
         n1ql_query.cross_bucket = True
         n1ql_query.adhoc = False
         n1ql_query.consistency = scan_consistency or 'not_bounded'

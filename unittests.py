@@ -9,6 +9,7 @@ import snappy
 from perfrunner.settings import ClusterSpec, TestConfig
 from perfrunner.workloads.tcmalloc import KeyValueIterator, LargeIterator
 from spring import docgen
+from spring.querygen import N1QLQueryGen
 
 
 class SettingsTest(TestCase):
@@ -509,3 +510,31 @@ class SpringTest(TestCase):
             _hash = docgen.hex_digest(key)
             self.assertNotIn(_hash, hashes)
             hashes.add(_hash)
+
+    def test_n1ql_query_gen_q1(self):
+        queries = [{
+            'statement': 'SELECT * FROM `bucket-1` USE KEYS[$1];',
+            'args': '["{key}"]',
+        }]
+
+        qg = N1QLQueryGen(queries=queries)
+
+        for key in 'n1ql-0123456789', 'n1ql-9876543210':
+            query = qg.next(key, doc={})
+            self.assertEqual(query.adhoc, False)
+            self.assertEqual(query.consistency, 'not_bounded')
+            self.assertEqual(query._body['args'], [key])
+
+    def test_n1ql_query_gen_q2(self):
+        queries = [{
+            'statement': 'SELECT * FROM `bucket-1` WHERE email = $1;',
+            'args': '["{email}"]',
+            'scan_consistency': 'request_plus',
+        }]
+
+        qg = N1QLQueryGen(queries=queries)
+
+        for doc in {'email': 'a@a.com'}, {'email': 'b@b.com'}:
+            query = qg.next(key='n1ql-0123456789', doc=doc)
+            self.assertEqual(query.consistency, 'request_plus')
+            self.assertEqual(query._body['args'], [doc['email']])

@@ -1,4 +1,3 @@
-import copy
 from itertools import cycle
 
 from couchbase.n1ql import N1QLQuery
@@ -214,19 +213,22 @@ class ViewQueryGenByType:
 class N1QLQueryGen:
 
     def __init__(self, queries):
+        queries = [
+            (query['statement'], query['args'], query.get('scan_consistency'))
+            for query in queries
+        ]
         self.queries = cycle(queries)
 
     def generate_query(self):
         return
 
     def next(self, key, doc):
-        query = copy.deepcopy(next(self.queries))
-        args = query['args'].format(key=key, **doc)
+        statement, args, scan_consistency = next(self.queries)
+        args = args.format(key=key, **doc)
 
-        n1ql_query = N1QLQuery(query['statement'], *eval(args))
+        n1ql_query = N1QLQuery(statement, *eval(args))
         n1ql_query.cross_bucket = True
         n1ql_query.adhoc = False
-        n1ql_query.consistency = query.get('scan_consistency',
-                                           'not_bounded')
+        n1ql_query.consistency = scan_consistency or 'not_bounded'
 
         return n1ql_query

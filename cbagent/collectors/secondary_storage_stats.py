@@ -28,6 +28,9 @@ class SecondaryStorageStats(Collector):
         "write_amp",
         "mvcc_purge_ratio",
         "memory_quota",
+        "lss_blk_read_bs",
+        "lss_blk_gc_reads_bs",
+        "lss_blk_rdr_reads_bs",
     )
 
     def __init__(self, settings):

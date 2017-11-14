@@ -548,3 +548,16 @@ class Monitor(RestHelper):
             else:
                 break
         return latency_stats
+
+    def wait_for_execution_stats(self, node: str, name: str):
+        logger.info('Wait for execution stats on node {} for {}'.format(node, name))
+
+        retry = 1
+        execution_stats = {}
+        while retry < self.MAX_RETRY:
+            execution_stats = self.get_execution_stats(node, name)
+            if not execution_stats:
+                time.sleep(self.POLLING_INTERVAL)
+            else:
+                break
+        return execution_stats

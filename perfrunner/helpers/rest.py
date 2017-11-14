@@ -701,6 +701,12 @@ class RestHelper:
         api = 'http://{}:{}/getDeployedApps'.format(node, EVENTING_PORT)
         return self.get(url=api).json()
 
+    def get_execution_stats(self, node: str, name: str):
+        logger.info('get execution stats on node {}'.format(node))
+
+        api = 'http://{}:{}/getExecutionStats?name={}'.format(node, EVENTING_PORT, name)
+        return self.get(url=api).json()
+
     def run_analytics_query(self, analytics_node: str, query: str, timeout: str='300s') -> dict:
         api = 'http://{}:8095/analytics/service'.format(analytics_node)
         data = {

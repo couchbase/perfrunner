@@ -74,12 +74,26 @@ class EventingTest(PerfTest):
         self.access_bg()
         self.sleep()
 
+    def validate_failures(self):
+        for name, file in self.functions.items():
+            for node in self.eventing_nodes:
+                stats = self.monitor.wait_for_execution_stats(node=node, name=name)
+                logger.info("Execution stats for {node} and {function}: {stats}"
+                            .format(node=node, function=name, stats=stats))
+                for stat, value in stats.items():
+                    if "success" not in stat and value != 0:
+                        raise Exception(
+                            '{function}: {node}: {stat} is not zero'.format(
+                                function=name, node=node, stat=stat))
+
     def run(self):
         self.set_functions()
 
         time_elapsed = self.load_access_and_wait()
 
         self.report_kpi(time_elapsed)
+
+        self.validate_failures()
 
 
 class FunctionsThroughputTest(EventingTest):
@@ -107,6 +121,8 @@ class TimerTest(EventingTest):
         self.process_timer_events()
 
         self.report_kpi(self.time)
+
+        self.validate_failures()
 
 
 class TimerThroughputTest(TimerTest):

@@ -138,7 +138,6 @@ class SettingsTest(TestCase):
             self.assertEqual(test_config.test_case.sub_category, 'Throughput')
 
 
-
 class WorkloadTest(TestCase):
 
     def test_value_size(self):

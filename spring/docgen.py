@@ -906,10 +906,9 @@ class ImportExportDocumentArray(ImportExportDocument):
     def _random_array(self, value: str, num: int):
         if value == '':
             return []
-        l = len(value)
-        if l < num:
+        if len(value) < num:
             return [value] * 5
-        scope = sorted(random.sample(range(l), num))
+        scope = sorted(random.sample(range(len(value)), num))
         result = [value[0 if i == 0 else scope[i - 1]:i + scope[i]] for i in range(num)]
         return result
 

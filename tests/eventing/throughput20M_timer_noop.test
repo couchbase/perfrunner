@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.eventing.TimerThroughputTest
-title = 1 bucket x 20M x 1KB, single timer-NOOP, Eventing
+title = 1 bucket x 20M x 1KB, single timer-NOOP
 component = eventing
 category = thr
 sub_category = Timer

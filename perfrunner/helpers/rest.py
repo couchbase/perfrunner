@@ -1,6 +1,7 @@
 import json
 import time
 from collections import namedtuple
+from json import JSONDecodeError
 from typing import Callable, Dict, Iterator, List
 
 import requests
@@ -690,10 +691,16 @@ class RestHelper:
 
         api = 'http://{}:{}/getEventProcessingStats?name={}'\
             .format(node, EVENTING_PORT, name)
-        data = self.get(url=api).json()
+        data = {}
+        try:
+            data = self.get(url=api).json()
+        except JSONDecodeError as e:
+            logger.warn("JSONDecodeError in get_num_events_processed: {}"
+                        .format(e))
         logger.info(data)
         if event in data:
             return data[event]
+
         return 0
 
     def get_deployed_apps(self, node: str):

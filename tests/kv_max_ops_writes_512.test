@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.PillowFightTest
-title = Max ops/sec, cbc-pillowfight, 2 nodes, 20/80 R/W, 512B binary items
+title = Max ops/sec, cbc-pillowfight, 2 nodes, 20/80 R/W, 512B JSON items
 component = kv
 category = max_ops
 
@@ -13,6 +13,7 @@ num_buckets = 1
 size = 512
 items = 20000000
 workers = 50
+doc_gen = json
 
 [access]
 items = 20000000

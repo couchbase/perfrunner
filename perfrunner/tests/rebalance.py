@@ -128,6 +128,8 @@ class RebalanceTest(PerfTest):
 
 class RebalanceKVTest(RebalanceTest):
 
+    ALL_HOSTNAMES = True
+
     COLLECTORS = {'latency': True}
 
     def run(self):

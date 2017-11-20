@@ -359,6 +359,12 @@ class RebalanceWithQueriesTest(RebalanceTest, QueryTest):
 
     COLLECTORS = {'latency': True, 'query_latency': True}
 
+    def access_bg(self, *args):
+        settings = self.test_config.access_settings
+        settings.ddocs = self.ddocs
+
+        super().access_bg(settings=settings)
+
     def run(self):
         self.load()
         self.wait_for_persistence()

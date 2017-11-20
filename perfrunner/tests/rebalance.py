@@ -1,10 +1,9 @@
 import time
 
 import dateutil.parser
-from decorator import decorator
 
 from logger import logger
-from perfrunner.helpers.cbmonitor import with_stats
+from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.tests import PerfTest
 from perfrunner.tests.views import QueryTest
 from perfrunner.tests.xdcr import (
@@ -13,32 +12,6 @@ from perfrunner.tests.xdcr import (
     UniDirXdcrTest,
     XdcrTest,
 )
-
-
-@decorator
-def with_delay(rebalance, *args, **kwargs):
-    test = args[0]
-
-    logger.info('Sleeping for {} seconds before taking actions'
-                .format(test.rebalance_settings.start_after))
-    time.sleep(test.rebalance_settings.start_after)
-
-    rebalance(*args, **kwargs)
-
-    logger.info('Sleeping for {} seconds before finishing'
-                .format(test.rebalance_settings.stop_after))
-    time.sleep(test.rebalance_settings.stop_after)
-
-
-@decorator
-def with_timer(rebalance, *args, **kwargs):
-    test = args[0]
-
-    t0 = time.time()
-
-    rebalance(*args, **kwargs)
-
-    test.rebalance_time = time.time() - t0  # Rebalance time in seconds
 
 
 class RebalanceTest(PerfTest):
@@ -82,15 +55,7 @@ class RebalanceTest(PerfTest):
             *self.metrics.rebalance_time(self.rebalance_time)
         )
 
-    @with_stats
-    @with_delay
-    @with_timer
-    def rebalance(self, services=None):
-        self._rebalance(services)
-
-    def post_rebalance_new_nodes(self, new_nodes):
-        pass
-
+    @timeit
     def _rebalance(self, services):
         clusters = self.cluster_spec.clusters
         initial_nodes = self.test_config.cluster.initial_nodes
@@ -124,6 +89,27 @@ class RebalanceTest(PerfTest):
             self.rest.rebalance(master, known_nodes, ejected_nodes)
             self.monitor_progress(master)
             self.post_rebalance_new_nodes(new_nodes)
+
+    def pre_rebalance(self):
+        """Execute additional steps before rebalance."""
+        logger.info('Sleeping for {} seconds before taking actions'
+                    .format(self.rebalance_settings.start_after))
+        time.sleep(self.rebalance_settings.start_after)
+
+    def post_rebalance(self):
+        """Execute additional steps after rebalance."""
+        logger.info('Sleeping for {} seconds before finishing'
+                    .format(self.rebalance_settings.stop_after))
+        time.sleep(self.rebalance_settings.stop_after)
+
+    def post_rebalance_new_nodes(self, new_nodes):
+        pass
+
+    @with_stats
+    def rebalance(self, services=None):
+        self.pre_rebalance()
+        self.rebalance_time = self._rebalance(services)
+        self.post_rebalance()
 
 
 class RebalanceKVTest(RebalanceTest):
@@ -167,9 +153,7 @@ class RebalanceBaselineForFTS(RebalanceTest):
 class RecoveryTest(RebalanceTest):
 
     def failover(self):
-        logger.info('Sleeping {} seconds before triggering failover'
-                    .format(self.rebalance_settings.delay_before_failover))
-        time.sleep(self.rebalance_settings.delay_before_failover)
+        self.pre_failover()
         self._failover()
 
     def _failover(self):
@@ -194,6 +178,11 @@ class RecoveryTest(RebalanceTest):
             if self.rebalance_settings.delta_recovery:
                 for node in failed:
                     self.rest.set_delta_recovery_type(master, node)
+
+    def pre_failover(self):
+        logger.info('Sleeping {} seconds before triggering failover'
+                    .format(self.rebalance_settings.delay_before_failover))
+        time.sleep(self.rebalance_settings.delay_before_failover)
 
     def _rebalance(self, *args):
         """Recover cluster after failover."""
@@ -231,8 +220,13 @@ class FailoverTest(RebalanceTest):
         t = dateutil.parser.parse(time_str, ignoretz=True)
         return float(t.strftime('%s.%f'))
 
-    def failover(self):
+    def _failover(self):
         pass
+
+    def failover(self):
+        self.pre_rebalance()
+        self._failover()
+        self.post_rebalance()
 
     def run(self):
         self.load()
@@ -261,8 +255,7 @@ class HardFailoverTest(FailoverTest):
                 *self.metrics.failover_time(delta)
             )
 
-    @with_delay
-    def failover(self, *args):
+    def _failover(self, *args):
         clusters = self.cluster_spec.clusters
         initial_nodes = self.test_config.cluster.initial_nodes
         failed_nodes = self.rebalance_settings.failed_nodes
@@ -291,8 +284,7 @@ class GracefulFailoverTest(FailoverTest):
                 *self.metrics.failover_time(delta)
             )
 
-    @with_delay
-    def failover(self, *args):
+    def _failover(self, *args):
         clusters = self.cluster_spec.clusters
         initial_nodes = self.test_config.cluster.initial_nodes
         failed_nodes = self.rebalance_settings.failed_nodes
@@ -322,8 +314,7 @@ class AutoFailoverTest(FailoverTest):
                 *self.metrics.failover_time(delta)
             )
 
-    @with_delay
-    def failover(self, *args):
+    def _failover(self, *args):
         clusters = self.cluster_spec.clusters
         initial_nodes = self.test_config.cluster.initial_nodes
         failed_nodes = self.rebalance_settings.failed_nodes
@@ -348,8 +339,7 @@ class FailureDetectionTest(FailoverTest):
                 *self.metrics.failover_time(delta)
             )
 
-    @with_delay
-    def failover(self, *args):
+    def _failover(self, *args):
         clusters = self.cluster_spec.clusters
         initial_nodes = self.test_config.cluster.initial_nodes
         failed_nodes = self.rebalance_settings.failed_nodes

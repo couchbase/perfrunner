@@ -697,8 +697,18 @@ class MetricHelper:
     def indexing_time(self, indexing_time: float) -> Metric:
         return self.elapsed_time(indexing_time)
 
+    @property
+    def rebalance_order_by(self) -> str:
+        order_by = ''
+        for num_nodes in self.test_config.cluster.initial_nodes:
+            order_by += '{:03d}'.format(num_nodes)
+        order_by += '{:018d}'.format(self.test_config.load_settings.items)
+        return order_by
+
     def rebalance_time(self, rebalance_time: float) -> Metric:
-        return self.elapsed_time(rebalance_time)
+        metric = self.elapsed_time(rebalance_time)
+        metric[-1]['orderBy'] = self.rebalance_order_by
+        return metric
 
     def failover_time(self, delta: float) -> Metric:
         metric_info = self._metric_info()

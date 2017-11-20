@@ -118,6 +118,10 @@ class RebalanceKVTest(RebalanceTest):
 
     COLLECTORS = {'latency': True}
 
+    def post_rebalance(self):
+        super().post_rebalance()
+        self.worker_manager.abort()
+
     def run(self):
         self.load()
         self.wait_for_persistence()

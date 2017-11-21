@@ -188,6 +188,7 @@ class RecoveryTest(RebalanceTest):
                     .format(self.rebalance_settings.delay_before_failover))
         time.sleep(self.rebalance_settings.delay_before_failover)
 
+    @timeit
     def _rebalance(self, *args):
         """Recover cluster after failover."""
         clusters = self.cluster_spec.clusters

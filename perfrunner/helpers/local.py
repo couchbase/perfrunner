@@ -233,9 +233,9 @@ def run_cbc_pillowfight(host, bucket, password,
         '--max-size {size} ' \
 
     if use_ssl:
-        cmd += '--spec couchbases://{host}/{bucket} --certpath root.pem '
+        cmd += '--spec couchbases://{host}/{bucket}?ipv6=allow --certpath root.pem '
     else:
-        cmd += '--spec couchbase://{host}/{bucket} '
+        cmd += '--spec couchbase://{host}/{bucket}?ipv6=allow '
 
     if populate:
         cmd += '--populate-only'

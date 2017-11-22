@@ -67,6 +67,14 @@ class EventingTest(PerfTest):
             latency_stats[name] = stats
         return latency_stats
 
+    def get_success_stats(self):
+        on_update_success = 0
+        for name, file in self.functions.items():
+            for node in self.eventing_nodes:
+                stats = self.monitor.wait_for_execution_stats(node=node, name=name)
+                on_update_success += stats["on_update_success"]
+        return on_update_success
+
     @timeit
     @with_stats
     def load_access_and_wait(self):
@@ -98,8 +106,11 @@ class EventingTest(PerfTest):
 
 class FunctionsThroughputTest(EventingTest):
     def _report_kpi(self, time_elapsed):
+        events_successfully_processed = self.get_success_stats()
         self.reporter.post(
-            *self.metrics.function_throughput(time_elapsed, "DCP_MUTATION")
+            *self.metrics.function_throughput(time=time_elapsed,
+                                              event_name=None,
+                                              events_processed=events_successfully_processed)
         )
 
 
@@ -129,7 +140,9 @@ class TimerThroughputTest(TimerTest):
 
     def _report_kpi(self, time_elapsed):
         self.reporter.post(
-            *self.metrics.function_throughput(time_elapsed, "DOC_TIMER_EVENTS")
+            *self.metrics.function_throughput(time=time_elapsed,
+                                              event_name="DOC_TIMER_EVENTS",
+                                              events_processed=0)
         )
 
 

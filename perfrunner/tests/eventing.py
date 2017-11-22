@@ -25,6 +25,7 @@ class EventingTest(PerfTest):
         self.worker_count = self.test_config.eventing_settings.worker_count
         self.cpp_worker_thread_count = self.test_config.eventing_settings.cpp_worker_thread_count
         self.timer_worker_pool_size = self.test_config.eventing_settings.timer_worker_pool_size
+        self.memory_quota = self.test_config.eventing_settings.memory_quota
         self.time = self.test_config.access_settings.time
 
         self.eventing_nodes = self.cluster_spec.servers_by_role('eventing')
@@ -46,6 +47,7 @@ class EventingTest(PerfTest):
         func["settings"]["worker_count"] = self.worker_count
         func["settings"]["cpp_worker_thread_count"] = self.cpp_worker_thread_count
         func["settings"]["timer_worker_pool_size"] = self.timer_worker_pool_size
+        func["settings"]["memory_quota"] = self.memory_quota
         for name, filename in self.functions.items():
             with open(filename, 'r') as myfile:
                 code = myfile.read()

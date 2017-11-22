@@ -34,6 +34,7 @@ functions = perf-test1:tests/eventing/code/timer_noop.js
 worker_count = 16
 cpp_worker_thread_count = 2
 timer_worker_pool_size = 16
+memory_quota = 20480000000
 
 [access]
 time = 1200

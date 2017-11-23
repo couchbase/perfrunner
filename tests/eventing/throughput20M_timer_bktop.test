@@ -10,7 +10,7 @@ server_processes = projector
 
 [cluster]
 mem_quota = 50000
-initial_nodes = 4
+initial_nodes = 5
 num_buckets = 1
 eventing_bucket_mem_quota = 5000
 eventing_buckets = 1
@@ -32,7 +32,7 @@ workers = 160
 [eventing]
 functions = perf-test1:tests/eventing/code/timer_bktop.js
 worker_count = 16
-cpp_worker_thread_count = 1
+cpp_worker_thread_count = 2
 timer_worker_pool_size = 16
 
 [access]

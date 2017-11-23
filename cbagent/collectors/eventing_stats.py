@@ -76,7 +76,7 @@ class EventingConsumerStats(EventingPerNodeStats):
              "| grep '{}' " \
              "| awk 'BEGIN {{FS = \" \"}} ; {{sum+=$2}} END {{print sum}}'"
 
-    TOP_CMD = "top - b n1 - d1 - p {} " \
+    TOP_CMD = "top -b n1 -d1 -p{} " \
               "| grep '{}' " \
               "| awk 'BEGIN {{FS = \" \"}} ; {{sum+=$9}} END {{print sum}}'"
 
@@ -98,20 +98,32 @@ class EventingConsumerStats(EventingPerNodeStats):
             stats[node] = {}
             if pids:
                 grep_text_ps = ""
-                pid_list_top = ""
-                grep_text_top = "^\s*"
+                pid_list_top = []
+                pid_list_top_str = ""
+                grep_text_top = []
+                grep_text_top_str = "^\s*"
+                counter = 0
+                # run top command in batches of 20 pids as per top command limitation
                 for pid in pids.values():
                     grep_text_ps += '^[[:space:]]*{}\|'.format(pid)
-                    pid_list_top += '{},'.format(pid)
-                    grep_text_top += '{}\|'.format(pid)
+                    pid_list_top_str += '{},'.format(pid)
+                    grep_text_top_str += '{}\|'.format(pid)
+                    counter += 1
+                    if counter == 20:
+                        counter = 0
+                        pid_list_top.append(pid_list_top_str[:-1])
+                        grep_text_top.append(grep_text_top_str[:-2])
+                        pid_list_top_str = ""
+                        grep_text_top_str = "^\s*"
                 grep_text_ps = grep_text_ps[:-2]
-                pid_list_top = pid_list_top[:-1]
-                grep_text_top = grep_text_top[:-2]
                 with settings(host_string=node):
                     rss_used = run(self.PS_CMD.format(grep_text_ps))
-                    cpu_used = run(self.TOP_CMD.format(pid_list_top, grep_text_top))
-                stats[node]["eventing_consumer_rss"] = float(rss_used)
-                stats[node]["eventing_consumer_cpu"] = float(cpu_used)
+                    cpu_used = 0
+                    for pid_list, grep_text in zip(pid_list_top, grep_text_top):
+                        cpu_used += float(run(self.TOP_CMD.format(pid_list, grep_text)))
+                # convert rss to bytes as ps commands gives rss in KB
+                stats[node]["eventing_consumer_rss"] = float(rss_used) * 1024
+                stats[node]["eventing_consumer_cpu"] = cpu_used
         return stats
 
     def sample(self):

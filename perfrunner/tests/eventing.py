@@ -58,7 +58,7 @@ class EventingTest(PerfTest):
             function = json.dumps(func)
             self.rest.create_function(node=self.eventing_nodes[0], payload=function, name=name)
             self.rest.deploy_function(node=self.eventing_nodes[0], payload=function, name=name)
-            self.monitor.wait_for_bootstrap(node=self.eventing_nodes[0], function=name)
+            self.monitor.wait_for_bootstrap(nodes=self.eventing_nodes, function=name)
 
     def process_latency_stats(self):
         latency_stats = {}
@@ -117,6 +117,47 @@ class FunctionsThroughputTest(EventingTest):
             *self.metrics.function_throughput(time=time_elapsed,
                                               event_name=None,
                                               events_processed=events_successfully_processed)
+        )
+
+
+class FunctionsScalingThroughputTest(EventingTest):
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.on_update_success = 0
+
+    def get_on_update_success(self):
+        on_update_success = 0
+        for node in self.eventing_nodes:
+            stats = self.rest.get_eventing_stats(node=node)
+            for stat in stats:
+                logger.info("Execution stats for {node}: {stats}"
+                            .format(node=node,
+                                    stats=pretty_dict(stat["execution_stats"])))
+                on_update_success += stat["execution_stats"]["on_update_success"]
+        return on_update_success
+
+    @with_stats
+    def execute_handler(self):
+        on_update_success = self.get_on_update_success()
+        self.sleep()
+        self.on_update_success = \
+            self.get_on_update_success() - on_update_success
+
+    def run(self):
+        self.load()
+        self.set_functions()
+
+        self.execute_handler()
+
+        self.report_kpi(self.test_config.access_settings.time)
+        self.validate_failures()
+
+    def _report_kpi(self, time_elapsed):
+        self.reporter.post(
+            *self.metrics.function_throughput(time=time_elapsed,
+                                              event_name=None,
+                                              events_processed=self.on_update_success)
         )
 
 

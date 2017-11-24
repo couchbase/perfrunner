@@ -729,3 +729,9 @@ class RestHelper:
 
         api = 'http://{}:{}/getLatencyStats?name={}'.format(node, EVENTING_PORT, name)
         return self.get(url=api).json()
+
+    def get_eventing_stats(self, node: str):
+        logger.info('get eventing stats on node {}'.format(node))
+
+        api = 'http://{}:{}/api/v1/stats'.format(node, EVENTING_PORT)
+        return self.get(url=api).json()

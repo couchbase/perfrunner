@@ -11,6 +11,7 @@ class Monitor(RestHelper):
     MAX_RETRY = 60
     MAX_RETRY_RECOVERY = 1200
     MAX_RETRY_TIMER_EVENT = 2400
+    MAX_RETRY_BOOTSTRAP = 1200
     POLLING_INTERVAL_TIMER_EVENT = 1
     MONITORING_DELAY = 5
     POLLING_INTERVAL = 2
@@ -385,16 +386,18 @@ class Monitor(RestHelper):
             logger.info('Records to persist: {:,}'.format(pending_items))
             time.sleep(self.POLLING_INTERVAL)
 
-    def wait_for_bootstrap(self, node: str, function: str):
+    def wait_for_bootstrap(self, nodes: list, function: str):
         logger.info('Waiting for bootstrap of eventing function: {} '.format(function))
-        retry = 1
-        while retry < self.MAX_RETRY:
-            if function in self.get_deployed_apps(node):
-                break
-            time.sleep(self.POLLING_INTERVAL)
-            retry += 1
-        if retry == self.MAX_RETRY:
-            logger.info('Failed to bootstrap function: {}'.format(function))
+        for node in nodes:
+            retry = 1
+            while retry < self.MAX_RETRY_BOOTSTRAP:
+                if function in self.get_deployed_apps(node):
+                    break
+                time.sleep(self.POLLING_INTERVAL)
+                retry += 1
+            if retry == self.MAX_RETRY_BOOTSTRAP:
+                logger.info('Failed to bootstrap function: {}, node: {}'.
+                            format(function, node))
 
     def get_bigfun_dataset_number(self, bucket_name: str, cbas_node: str,
                                   tablesufix: str, filter: str) -> int:

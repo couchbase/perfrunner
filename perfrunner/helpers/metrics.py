@@ -770,11 +770,9 @@ class MetricHelper:
         metric_info = self._metric_info()
         latency = 0
         for name, stats in latency_stats.items():
-            total_samples = 0
-            for time, samples in stats.items():
-                total_samples += samples
+            total_samples = sum([sample for time, sample in stats])
             latency_samples = 0
-            for time, samples in stats.items():
+            for time, samples in stats:
                 latency_samples += samples
                 if latency_samples >= (total_samples * percentile / 100):
                     latency = float(time) / 1000

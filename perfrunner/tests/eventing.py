@@ -63,9 +63,9 @@ class EventingTest(PerfTest):
         for name, file in self.functions.items():
             stats = self.monitor.wait_for_latency_stats(
                 node=self.eventing_nodes[0], name=name)
-            logger.info("Latency stats for function {function}:".
-                        format(function=name))
-            pretty_dict(stats)
+            logger.info("Latency stats for function {function}:{stats}".
+                        format(function=name, stats=pretty_dict(stats)))
+            stats = sorted(stats.items(), key=lambda x: int(x[0]))
             latency_stats[name] = stats
         return latency_stats
 
@@ -74,6 +74,8 @@ class EventingTest(PerfTest):
         for name, file in self.functions.items():
             for node in self.eventing_nodes:
                 stats = self.monitor.wait_for_execution_stats(node=node, name=name)
+                logger.info("Execution stats for {node} and {function}: {stats}"
+                            .format(node=node, function=name, stats=pretty_dict(stats)))
                 on_update_success += stats["on_update_success"]
         return on_update_success
 
@@ -89,7 +91,7 @@ class EventingTest(PerfTest):
             for node in self.eventing_nodes:
                 stats = self.monitor.wait_for_execution_stats(node=node, name=name)
                 logger.info("Execution stats for {node} and {function}: {stats}"
-                            .format(node=node, function=name, stats=stats))
+                            .format(node=node, function=name, stats=pretty_dict(stats)))
                 for stat, value in stats.items():
                     if "success" not in stat and value != 0:
                         raise Exception(

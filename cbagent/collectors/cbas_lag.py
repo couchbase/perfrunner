@@ -60,7 +60,7 @@ class CBASLag(Latency):
 
     INITIAL_POLLING_INTERVAL = 0.01  # 10 ms
 
-    TIMEOUT = 600  # 10 minutes
+    TIMEOUT = 600  # 10 minutes for default cbas lag timeouts.
 
     MAX_SAMPLING_INTERVAL = 0.25  # 250 ms
 
@@ -69,6 +69,7 @@ class CBASLag(Latency):
 
         self.interval = self.MAX_SAMPLING_INTERVAL
         self.cbas_test = cbas_test
+        self.TIMEOUT = cbas_test.test_config.cbas_settings.cbas_lag_timeout
         self.settings = settings
         self.rest = None
         self.cbas_metric = None
@@ -109,11 +110,11 @@ class CBASLag(Latency):
             sleep(polling_interval)
             polling_interval *= 1.05  # increase interval by 5%
         else:
-            logger.warn('CBAS sampling timed out after {} seconds'
-                        .format(self.TIMEOUT))
+            logger.warn('CBAS sampling timed out after {} seconds when querying for key {}'
+                        .format(self.TIMEOUT, key.string))
         t1 = time()
-
-        src_client.remove(key.string, quiet=True)
+        if t1 - t0 < self.TIMEOUT:
+            src_client.remove(key.string, quiet=True)
         return {'cbas_lag': (t1 - t0) * 1000}  # s -> ms
 
     def sample(self):

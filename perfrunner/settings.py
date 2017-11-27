@@ -593,7 +593,13 @@ class UnitTestSettings:
 
 class CBASSettings:
 
+    CBAS_LAG_TIMEOUT = 600
+
+    VERIFY_LAG = 1
+
     def __init__(self, options: dict):
+        self.cbas_lag_timeout = int(options.get('cbas_lag_timeout', self.CBAS_LAG_TIMEOUT))
+        self.verify_lag = bool(int(options.get('verify_lag', self.VERIFY_LAG)))
         self.cluster_settings = {}
         self.node_settings = {}
         for option in options:

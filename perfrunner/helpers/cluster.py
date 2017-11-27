@@ -36,7 +36,14 @@ class ClusterManager:
         if self.cluster_spec.paths:
             data_path, index_path = self.cluster_spec.paths
             for server in self.cluster_spec.servers:
-                self.rest.set_data_path(server, data_path, index_path)
+                roles = self.cluster_spec.roles[server]
+                if roles == 'cbas':
+                    iodevices = data_path + "/@analytics/iodev0"
+                    if self.test_config.cluster.analytics_iodevices:
+                        iodevices = ','.join(self.test_config.cluster.analytics_iodevices)
+                    self.rest.set_analytics_path(server, iodevices)
+                else:
+                    self.rest.set_data_path(server, data_path, index_path)
 
     def rename(self):
         for server in self.cluster_spec.servers:
@@ -243,25 +250,6 @@ class ClusterManager:
     def tune_logging(self):
         self.remote.tune_log_rotation()
         self.remote.restart()
-
-    def set_cbas_iodevices(self):
-        analytics_data_base_path, index_path = self.cluster_spec.paths
-        analytics_data_path = analytics_data_base_path + "/@analytics"
-        for analytics_node in self.cluster_spec.servers_by_role("cbas"):
-            self.remote.create_directory(analytics_node, analytics_data_path)
-            self.remote.allow_all_access(analytics_node, analytics_data_path)
-        iodevices_file = analytics_data_path + "/iodevices.txt"
-        iodevices = []
-        if not len(self.test_config.cluster.analytics_iodevices):
-            iodevices.append(analytics_data_path + "/iodev0")
-        else:
-            for iodev in self.test_config.cluster.analytics_iodevices:
-                iodevices.append(iodev)
-
-        for analytics_node in self.cluster_spec.servers_by_role("cbas"):
-            self.remote.set_cbas_iodevices(analytics_node,
-                                           iodevices_file,
-                                           ','.join(iodevices))
 
     def enable_auto_failover(self):
         for master in self.cluster_spec.masters:

@@ -77,6 +77,15 @@ class RestHelper:
         }
         self.post(url=api, data=data)
 
+    def set_analytics_path(self, host: str, analytics_path: str):
+        logger.info('Configuring analytics path: {} to {}'.format(host, analytics_path))
+
+        api = 'http://{}:8091/nodes/self/controller/settings'.format(host)
+        data = {
+            'cbas_path': analytics_path
+        }
+        self.post(url=api, data=data)
+
     def set_auth(self, host: str):
         logger.info('Configuring cluster authentication: {}'.format(host))
 

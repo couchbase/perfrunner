@@ -50,7 +50,6 @@ def main():
     cm.rename()
     cm.set_auth()
     cm.configure_xdcr_settings()
-    cm.set_cbas_iodevices()
 
     # Cluster
     cm.add_nodes()

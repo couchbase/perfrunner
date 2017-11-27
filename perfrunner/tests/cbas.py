@@ -653,9 +653,10 @@ class CBASBigfunStableStateTest(CBASBigfunTest):
     def _report_kpi(self):
         orderby_step = 0
         orderby_step += 1
-        max_lag = self.metrics.get_percentile_value_of_collector('cbas_lag', 100)
-        if max_lag > CBASLag.TIMEOUT * 1000:
-            raise Exception('Maximum cbas lag is {}, this indicates data lost'.format(max_lag))
+        if self.test_config.cbas_settings.verify_lag:
+            max_lag = self.metrics.get_percentile_value_of_collector('cbas_lag', 100)
+            if max_lag > self.test_config.cbas_settings.cbas_lag_timeout * 1000:
+                raise Exception('Maximum cbas lag is {}, this indicates data lost'.format(max_lag))
         super()._report_kpi()
         if self.initial_sync_latency is not None:
             self.reporter.post(
@@ -768,11 +769,13 @@ class CBASRebalanceTest(RebalanceTest):
                 """self.rest.restart_analytics(analytics_node)"""
 
     def rebalance_thr(self):
+        self.pre_rebalance()
         logger.info('Start rebalancing')
         self.rebalance_latency = self._rebalance(services=self.REBALANCE_SERVICES)
         if not self.is_balanced():
             raise Exception("cluster was not rebalanced after rebalance job")
         logger.info('Finished rebalancing')
+        self.post_rebalance()
 
     def _report_kpi(self):
         orderby_step = 0

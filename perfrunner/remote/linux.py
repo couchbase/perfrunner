@@ -364,12 +364,6 @@ class RemoteLinux(Remote):
         logger.info('Killing following process on index node: {}'.format(process))
         run("killall {}".format(process))
 
-    def set_cbas_iodevices(self, host, iodevices_file, iodevices):
-        with settings(host_string=host):
-            logger.info('Set analytics iodevices file: {} with content {}'.format(
-                        iodevices_file, iodevices))
-            run('echo "{}" > {}'.format(iodevices, iodevices_file))
-
     def create_directory(self, host, path):
         with settings(host_string=host):
             logger.info('Create path: {}'.format(path))

@@ -541,6 +541,8 @@ class Monitor(RestHelper):
 
         retry = 1
         latency_stats = {}
+        self.get_latency_stats(node, name)
+        time.sleep(self.MONITORING_DELAY)
         while retry < self.MAX_RETRY:
             latency_stats = self.get_latency_stats(node, name)
             if not latency_stats:
@@ -554,6 +556,8 @@ class Monitor(RestHelper):
 
         retry = 1
         execution_stats = {}
+        self.get_execution_stats(node, name)
+        time.sleep(self.MONITORING_DELAY)
         while retry < self.MAX_RETRY:
             execution_stats = self.get_execution_stats(node, name)
             if not execution_stats:

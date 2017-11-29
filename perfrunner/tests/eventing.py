@@ -154,5 +154,5 @@ class FunctionsLatencyTest(EventingTest):
     def _report_kpi(self, time_elapsed):
         latency_stats = self.process_latency_stats()
         self.reporter.post(
-            *self.metrics.function_latency(percentile=99.0, latency_stats=latency_stats)
+            *self.metrics.function_latency(percentile=80.0, latency_stats=latency_stats)
         )

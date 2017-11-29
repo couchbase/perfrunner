@@ -46,8 +46,8 @@ class EventingPerNodeStats(EventingStats):
         stats = {}
         for node in self.eventing_nodes:
             remaining_events = self.get_http(path=uri, server=node,
-                                             port=self.EVENTING_PORT, json=False)
-            remaining_events = int(remaining_events)
+                                             port=self.EVENTING_PORT)
+            remaining_events = remaining_events["dcp_backlog"]
             stats[node] = {"DcpEventsRemaining": remaining_events}
         return stats
 

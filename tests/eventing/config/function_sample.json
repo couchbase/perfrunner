@@ -30,6 +30,7 @@
     "enable_recursive_mutation": true,
     "lcb_inst_capacity": 5,
     "cpp_worker_thread_count": 1,
+    "worker_queue_cap": 100000,
     "description": "Perf test"
   },
   "appname": "perf-test",

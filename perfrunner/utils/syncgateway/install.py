@@ -18,7 +18,7 @@ def main():
 
     _version =  _build.split("-")[0]
 
-    base_url = "http://latestbuilds.hq.couchbase.com/couchbase-sync-gateway/{}/{}".format(_version, _build)
+    base_url = "http://latestbuilds.service.couchbase.com/builds/latestbuilds/sync_gateway/{}/{}".format(_version, _build)
     sg_package_name = "couchbase-sync-gateway-enterprise_{}_x86_64.rpm".format(_build)
     accel_package_name = "couchbase-sg-accel-enterprise_{}_x86_64.rpm".format(_build)
 

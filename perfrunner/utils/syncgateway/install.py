@@ -16,7 +16,7 @@ def main():
         elif item == "--uninstall":
             _uninstall = True
 
-    _version =  _build.split("-")[0]
+    _version, _build = _build.split("-")
 
     base_url = "http://latestbuilds.service.couchbase.com/builds/latestbuilds/sync_gateway/{}/{}".format(_version, _build)
     sg_package_name = "couchbase-sync-gateway-enterprise_{}_x86_64.rpm".format(_build)

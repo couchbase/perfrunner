@@ -1,0 +1,27 @@
+[test_case]
+test = perfrunner.tests.kv.DrainTest
+title = Avg. write queue (items), 4 nodes, 1B x 1KB, full ejection, 100K inserts/sec, initial load
+component = kv
+category = dgm
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+
+[bucket]
+eviction_policy = fullEviction
+
+[load]
+size = 1024
+key_fmtr = hex
+doc_gen = large
+
+[access]
+creates = 100
+reads = 0
+updates = 0
+deletes = 0
+workers = 100
+ops = 1000000000
+throughput = 100000

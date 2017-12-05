@@ -78,7 +78,7 @@ class CBGen(CBAsyncGen):
     TIMEOUT = 10  # seconds
 
     def __init__(self, use_ssl=False, **kwargs):
-        connection_string = 'couchbase://{}/{}?password={}'
+        connection_string = 'couchbase://{}/{}?ipv6=allow&password={}'
 
         if use_ssl:
             connection_string = connection_string.replace('couchbase',

@@ -782,6 +782,11 @@ class FtsSettings:
 
 
 class EventingSettings:
+    WORKER_COUNT = 3
+    CPP_WORKER_THREAD_COUNT = 2
+    TIMER_WORKER_POOL_SIZE = 1
+    MEMORY_QUOTA = 256
+    WORKER_QUEUE_CAP = 1000000
 
     def __init__(self, options: dict):
         self.functions = {}
@@ -790,10 +795,14 @@ class EventingSettings:
                 name, filename = function_def.split(':')
                 self.functions[name.strip()] = filename.strip()
 
-        self.worker_count = int(options.get("worker_count", 3))
-        self.cpp_worker_thread_count = int(options.get("cpp_worker_thread_count", 2))
-        self.timer_worker_pool_size = int(options.get("timer_worker_pool_size", 1))
-        self.memory_quota = int(options.get("memory_quota", 268435456))
+        self.worker_count = int(options.get("worker_count", self.WORKER_COUNT))
+        self.cpp_worker_thread_count = int(options.get("cpp_worker_thread_count",
+                                                       self.CPP_WORKER_THREAD_COUNT))
+        self.timer_worker_pool_size = int(options.get("timer_worker_pool_size",
+                                                      self.TIMER_WORKER_POOL_SIZE))
+        self.memory_quota = int(options.get("memory_quota", self.MEMORY_QUOTA))
+        self.worker_queue_cap = int(options.get("worker_queue_cap",
+                                                self.WORKER_QUEUE_CAP))
 
     def __str__(self) -> str:
         return str(self.__dict__)

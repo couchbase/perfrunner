@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.eventing.TimerThroughputTest
-title = 1 bucket x 50M x 1KB, single timer-BucketOp
+title = 1 bucket x 100M x 1KB, single timer-BucketOp
 component = eventing
 category = thr
 sub_category = Timer
@@ -25,7 +25,7 @@ db_percentage = 100
 view_percentage = 100
 
 [load]
-items = 50000000
+items = 100000000
 size = 1024
 workers = 160
 
@@ -38,4 +38,4 @@ memory_quota = 20480
 worker_queue_cap = 100000
 
 [access]
-time = 500
+time = 900

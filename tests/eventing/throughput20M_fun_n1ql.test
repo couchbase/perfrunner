@@ -30,8 +30,9 @@ workers = 100
 
 [eventing]
 functions = perf-test1:tests/eventing/code/n1qlop.js
-worker_count = 160
-cpp_worker_thread_count = 2
+worker_count = 16
+cpp_worker_thread_count = 10
+worker_queue_cap = 100000
 
 [access]
 updates = 100

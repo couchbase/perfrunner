@@ -114,6 +114,7 @@ class CBGen(CBAsyncGen):
         super().create(*args, **kwargs)
 
     @quiet
+    @backoff
     @timeit
     def read(self, *args, **kwargs):
         super().read(*args, **kwargs)

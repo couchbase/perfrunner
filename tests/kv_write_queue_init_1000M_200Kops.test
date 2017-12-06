@@ -1,6 +1,6 @@
 [test_case]
-test = perfrunner.tests.kv.DrainTest
-title = Avg. write queue (items), 4 nodes, 1B x 1KB, full ejection, 200K inserts/sec, initial load
+test = perfrunner.tests.kv.IngestionTest
+title = Avg. write queue (items), 4 nodes, 1B x 1KB, full ejection, 200K inserts/sec
 component = kv
 category = dgm
 
@@ -16,6 +16,8 @@ eviction_policy = fullEviction
 size = 1024
 key_fmtr = hex
 doc_gen = large
+workers = 100
+items = 1000000000
 
 [access]
 creates = 100
@@ -23,5 +25,6 @@ reads = 0
 updates = 0
 deletes = 0
 workers = 100
+items = 1000000000
 ops = 1000000000
 throughput = 200000

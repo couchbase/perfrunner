@@ -197,6 +197,17 @@ class InitialLoadTest(DrainTest):
         self.report_kpi()
 
 
+class IngestionTest(KVTest):
+
+    COLLECTORS = {'disk': True, 'net': False}
+
+    @with_stats
+    def access(self, *args, **kwargs):
+        super().access(*args, **kwargs)
+
+        self.wait_for_persistence()
+
+
 class BeamRssTest(KVTest):
 
     """Enable reporting of Erlang (beam.smp process) memory usage."""

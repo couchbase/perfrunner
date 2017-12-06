@@ -8,15 +8,7 @@ import requests
 import urllib3
 from couchbase import experimental, subdocument
 from couchbase.bucket import Bucket
-from couchbase.exceptions import (
-    ConnectError,
-    CouchbaseError,
-    HTTPError,
-    KeyExistsError,
-    NotFoundError,
-    TemporaryFailError,
-    TimeoutError,
-)
+from couchbase.exceptions import CouchbaseError, TemporaryFailError
 from decorator import decorator
 from txcouchbase.connection import Connection as TxConnection
 
@@ -29,8 +21,7 @@ experimental.enable()
 def quiet(method, *args, **kwargs):
     try:
         return method(*args, **kwargs)
-    except (ConnectError, CouchbaseError, HTTPError, KeyExistsError,
-            NotFoundError, TimeoutError) as e:
+    except CouchbaseError as e:
         logger.warn('Function: {}, error: {}'.format(method.__name__, e))
 
 

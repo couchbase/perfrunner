@@ -89,7 +89,7 @@ class DGMCompactedTest(DGMTest):
         self.report_kpi()
 
 
-class ReadLatencyDGMTest(DGMTest):
+class ReadLatencyDGMTest(KVTest):
 
     COLLECTORS = {'disk': True, 'latency': True, 'net': False}
 
@@ -97,6 +97,15 @@ class ReadLatencyDGMTest(DGMTest):
         self.reporter.post(
             *self.metrics.kv_latency(operation='get')
         )
+
+
+class MixedLatencyDGMTest(ReadLatencyDGMTest):
+
+    def _report_kpi(self):
+        for operation in ('get', 'set'):
+            self.reporter.post(
+                *self.metrics.kv_latency(operation=operation)
+            )
 
 
 class ReadLatencyDGMCompactionTest(DGMCompactionTest):

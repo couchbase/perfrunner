@@ -207,6 +207,11 @@ class IngestionTest(KVTest):
 
         self.wait_for_persistence()
 
+    def _report_kpi(self):
+        self.reporter.post(
+            *self.metrics.avg_total_queue_age()
+        )
+
 
 class BeamRssTest(KVTest):
 

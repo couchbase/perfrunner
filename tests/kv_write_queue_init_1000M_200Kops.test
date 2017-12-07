@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.IngestionTest
-title = Avg. write queue (items), 4 nodes, 1B x 1KB, full ejection, 200K inserts/sec
+title = Avg. write latency (sec), 4 nodes, 1B x 1KB, full ejection, 200K inserts/sec
 component = kv
 category = dgm
 

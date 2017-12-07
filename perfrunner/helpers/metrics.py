@@ -284,6 +284,20 @@ class MetricHelper:
 
         return disk_write_queue, self._snapshots, metric_info
 
+    def avg_total_queue_age(self) -> Metric:
+        metric_info = self._metric_info()
+
+        values = []
+        for bucket in self.test_config.buckets:
+            db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
+                                         collector='ns_server',
+                                         bucket=bucket)
+            values += self.store.get_values(db, metric='vb_avg_total_queue_age')
+
+        avg_total_queue_age = int(np.average(values))
+
+        return avg_total_queue_age, self._snapshots, metric_info
+
     def avg_bg_wait_time(self) -> Metric:
         metric_info = self._metric_info()
 

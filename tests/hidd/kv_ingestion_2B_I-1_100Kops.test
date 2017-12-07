@@ -1,8 +1,9 @@
 [test_case]
 test = perfrunner.tests.kv.IngestionTest
-title = Avg. write latency (sec), 4 nodes, 1B x 1KB, full ejection, 200K inserts/sec
+title = Avg. write latency (sec), Workload I-1, 4 nodes, 2B x 1KB, 100K inserts/sec
 component = kv
-category = dgm
+category = hidd
+sub_category = Ingestion
 
 [cluster]
 mem_quota = 20480
@@ -29,4 +30,4 @@ deletes = 0
 workers = 100
 items = 1000000000
 ops = 1000000000
-throughput = 200000
+throughput = 100000

@@ -642,7 +642,8 @@ class MetricHelper:
                 'avg_query_latency': (query_stats[1] + query_stats[3]) /
                                      (query_stats[0] + query_stats[2])}
 
-    def parse_cbas_query_latencies(self) -> Dict[str, float]:
+    def parse_cbas_query_result_latencies(self):
+        results = []
         query_count_dict = {}
         query_exe_time_dict = {}
         pattern = re.compile("[^\t]+")
@@ -658,6 +659,8 @@ class MetricHelper:
                                 query = match.group(1)
                             else:
                                 query = parts[1]
+                            result = float(parts[5])
+                            results.append((query, result))
                             exe_time = 0.0
                             exe_time_str = parts[9]
                             if exe_time_str.endswith("ms"):
@@ -672,7 +675,7 @@ class MetricHelper:
                                 query_exe_time_dict[query] = exe_time
         for query in query_exe_time_dict:
             query_exe_time_dict[query] = query_exe_time_dict[query] / query_count_dict[query]
-        return query_exe_time_dict
+        return results, query_exe_time_dict
 
     def _parse_dcp_throughput(self, output_file: str = 'dcpstatsfile') -> int:
         # Get throughput from OUTPUT_FILE for posting to showfast

@@ -3,7 +3,6 @@ import os
 import re
 import time
 
-from cbagent.collectors import CBASLag
 from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
@@ -42,6 +41,35 @@ class CBASBigfunTest(PerfTest):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.bigfun_query_verify_table = {
+            'Q3 Temporal range scan (User user_since range 14 years)':
+                [self.test_config.bigfun_settings.user_docs * 0.9,
+                 self.test_config.bigfun_settings.user_docs * 1.1],
+            'Q3 Temporal range scan (User user_since range 14 years'
+            ' skip user_since index)':
+                [self.test_config.bigfun_settings.user_docs * 0.9,
+                 self.test_config.bigfun_settings.user_docs * 1.1],
+            'Q12 Select equi-join (User message join user_since range'
+            ' 14 years send_time range 14 years)':
+                [self.test_config.bigfun_settings.user_docs * 5 * 0.9,
+                 self.test_config.bigfun_settings.user_docs * 5 * 1.1],
+            'Q12 Select equi-join (User message join user_since range'
+            ' 14 years send_time range 14 years skip user_since index)':
+                [self.test_config.bigfun_settings.user_docs * 5 * 0.9,
+                 self.test_config.bigfun_settings.user_docs * 5 * 1.1],
+            'Q13 Select left-outer equi-join (User message nested join'
+            ' user_since range 14 years send_time range 14 years)':
+                [self.test_config.bigfun_settings.user_docs * 0.9,
+                 self.test_config.bigfun_settings.user_docs * 1.1],
+            'Q13 Select left-outer equi-join (User message nested join'
+            ' user_since range 14 years send_time range 14 years skip user_since index)':
+                [self.test_config.bigfun_settings.user_docs * 0.9,
+                 self.test_config.bigfun_settings.user_docs * 1.1],
+            'Q13 Select left-outer equi-join indexnl (User message nested join'
+            ' user_since range 14 years send_time range 14 years skip user_since index)':
+                [self.test_config.bigfun_settings.user_docs * 0.9,
+                 self.test_config.bigfun_settings.user_docs * 1.1]
+        }
         self.cbas_target_iterator = CBASTargetIterator(self.cluster_spec,
                                                        self.test_config,
                                                        prefix=None)
@@ -347,6 +375,9 @@ class CBASBigfunTest(PerfTest):
     def access(self, *args, **kwargs):
         PerfTest.access(self, task=cbas_bigfun_wait_task)
 
+    def verify(self):
+        pass
+
     def run(self):
         self.download_bigfun()
 
@@ -356,6 +387,8 @@ class CBASBigfunTest(PerfTest):
 
         self.access()
 
+        self.verify()
+
         self.report_kpi()
 
     def tear_down(self):
@@ -363,8 +396,7 @@ class CBASBigfunTest(PerfTest):
         super().tear_down()
 
     def _report_kpi(self):
-        orderby_step = 0
-        orderby_step += 1
+        orderby_step = 1
         if self.initial_load_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(self.initial_load_latency,
@@ -428,8 +460,7 @@ class CBASBigfunDataSetTest(CBASBigfunTest):
         self.reconnect_delete_sync_latency = self.monitor_cbas_synced_deleted()
 
     def _report_kpi(self):
-        orderby_step = 0
-        orderby_step += 1
+        orderby_step = 1
         super()._report_kpi()
         if self.initial_sync_latency is not None:
             self.reporter.post(
@@ -593,8 +624,7 @@ class CBASBigfunDataSetTTLTest(CBASBigfunTest):
         self.monitor_cbas_synced()
 
     def _report_kpi(self):
-        orderby_step = 0
-        orderby_step += 1
+        orderby_step = 1
         super()._report_kpi()
         if self.initial_sync_latency is not None:
             self.reporter.post(
@@ -635,6 +665,12 @@ class CBASBigfunStableStateTest(CBASBigfunTest):
 
     COLLECTORS = {'cbas_lag': True}
 
+    def verify(self):
+        if self.test_config.cbas_settings.verify_lag:
+            max_lag = self.metrics.get_percentile_value_of_collector('cbas_lag', 100)
+            if max_lag > self.test_config.cbas_settings.cbas_lag_timeout * 1000:
+                raise Exception('Maximum cbas lag is {}, this indicates data lost'.format(max_lag))
+
     def run(self):
         self.download_bigfun()
 
@@ -648,15 +684,12 @@ class CBASBigfunStableStateTest(CBASBigfunTest):
 
         self.access()
 
+        self.verify()
+
         self.report_kpi()
 
     def _report_kpi(self):
-        orderby_step = 0
-        orderby_step += 1
-        if self.test_config.cbas_settings.verify_lag:
-            max_lag = self.metrics.get_percentile_value_of_collector('cbas_lag', 100)
-            if max_lag > self.test_config.cbas_settings.cbas_lag_timeout * 1000:
-                raise Exception('Maximum cbas lag is {}, this indicates data lost'.format(max_lag))
+        orderby_step = 1
         super()._report_kpi()
         if self.initial_sync_latency is not None:
             self.reporter.post(
@@ -687,14 +720,25 @@ class CBASBigfunQueryTest(CBASBigfunStableStateTest):
         self.query()
         logger.info('Done query')
 
-    def _report_kpi(self):
-        orderby_step = 0
-        orderby_step += 1
+    def verify(self):
+        super().verify()
         self.collect_export_files()
         query_stats = self.metrics.parse_cbas_query_highlevel_metrics()
         if query_stats['success_query_rate'] < 1.0:
             raise Exception('Query failed')
+        query_results, query_latencies = self.metrics.parse_cbas_query_result_latencies()
+        for q, r in query_results:
+            if q in self.bigfun_query_verify_table:
+                range = self.bigfun_query_verify_table[q]
+                if r < range[0] or r > range[1]:
+                    raise Exception('{} has invalid result count {} not in range {} - {}'.
+                                    format(q, r, range[0], range[1]))
+
+    def _report_kpi(self):
+        orderby_step = 1
         super()._report_kpi()
+        self.collect_export_files()
+        query_stats = self.metrics.parse_cbas_query_highlevel_metrics()
         self.reporter.post(
             *self.metrics.cbas_query_metric(
                 query_stats['total_query_number'],
@@ -721,7 +765,7 @@ class CBASBigfunQueryTest(CBASBigfunStableStateTest):
         )
         orderby_step += 1
         if self.REPORT_QUERY_DETAIL:
-            query_latencies = self.metrics.parse_cbas_query_latencies()
+            query_results, query_latencies = self.metrics.parse_cbas_query_result_latencies()
             for key, value in query_latencies.items():
                 self.reporter.post(
                     *self.metrics.cbas_query_metric(
@@ -778,8 +822,7 @@ class CBASRebalanceTest(RebalanceTest):
         self.post_rebalance()
 
     def _report_kpi(self):
-        orderby_step = 0
-        orderby_step += 1
+        orderby_step = 1
         if self.rebalance_latency is not None:
             self.reporter.post(
                 *self.metrics.cbas_latency(self.rebalance_latency,
@@ -854,8 +897,7 @@ class CBASBigfunDataSyncRebalanceTest(CBASBigfunTest, CBASRebalanceTest):
         logger.info('Done syncing and rebalancing')
 
     def _report_kpi(self):
-        orderby_step = 0
-        orderby_step += 1
+        orderby_step = 1
         CBASBigfunTest._report_kpi(self)
         CBASRebalanceTest._report_kpi(self)
         if self.initial_sync_latency is not None:
@@ -905,8 +947,7 @@ class CBASRecoveryTest(RecoveryTest):
         self.rebalance_step()
 
     def _report_kpi(self):
-        orderby_step = 0
-        orderby_step += 1
+        orderby_step = 1
         self.reporter.post(
             *self.metrics.cbas_latency(self.failover_latency,
                                        "failover_latency_sec",
@@ -979,8 +1020,7 @@ class CBASBigfunDataSyncRecoveryTest(CBASBigfunTest, CBASRecoveryTest):
         logger.info('Done syncing and failover')
 
     def _report_kpi(self):
-        orderby_step = 0
-        orderby_step += 1
+        orderby_step = 1
         CBASBigfunTest._report_kpi(self)
         CBASRecoveryTest._report_kpi(self)
         if self.initial_sync_latency is not None:
@@ -1016,8 +1056,7 @@ class CBASBigfunDataSetP2Test(CBASBigfunTest):
         self.connect_bucket()
 
     def _report_kpi(self):
-        orderby_step = 0
-        orderby_step += 1
+        orderby_step = 1
         super()._report_kpi()
         if self.sync_latency_1st_part is not None:
             self.reporter.post(
@@ -1095,8 +1134,7 @@ class CBASBigfunCleanupBucketTest(CBASBigfunTest):
         self.reinsert_sync_latency = self.monitor_cbas_synced()
 
     def _report_kpi(self):
-        orderby_step = 0
-        orderby_step += 1
+        orderby_step = 1
         super()._report_kpi()
         if self.initial_sync_latency is not None:
             self.reporter.post(

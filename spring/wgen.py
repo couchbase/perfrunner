@@ -46,6 +46,7 @@ from spring.docgen import (
     UniformKey,
     VaryingItemSizePlasmaDocument,
     WorkingSetKey,
+    ZipfKey,
 )
 from spring.querygen import N1QLQueryGen, ViewQueryGen, ViewQueryGenByType
 from spring.reservoir import Reservoir
@@ -106,6 +107,8 @@ class Worker:
         elif self.ws.working_set < 100:
             self.existing_keys = WorkingSetKey(self.ws,
                                                self.ts.prefix)
+        elif self.ws.request_distribution == 'zipf':
+            self.existing_keys = ZipfKey(self.ts.prefix, self.ws.key_fmtr)
         else:
             self.existing_keys = UniformKey(self.ts.prefix, self.ws.key_fmtr)
 

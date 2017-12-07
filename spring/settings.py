@@ -44,6 +44,7 @@ class WorkloadSettings:
         self.seq_upserts = False
         self.working_set_move_time = 0
         self.key_fmtr = 'decimal'
+        self.request_distribution = 'uniform'
 
 
 class TargetSettings:

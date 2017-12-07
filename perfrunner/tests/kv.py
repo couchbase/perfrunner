@@ -203,7 +203,7 @@ class IngestionTest(KVTest):
 
     @with_stats
     def access(self, *args, **kwargs):
-        super().access(*args, **kwargs)
+        super(KVTest, self).access(*args, **kwargs)
 
         self.wait_for_persistence()
 

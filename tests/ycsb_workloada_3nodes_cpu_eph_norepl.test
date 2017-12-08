@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.ycsb.YCSBThroughputTest
-title = Avg Throughput (ops/sec), Workload A, 3 nodes, throttled CPU, Ephemeral, no replication
+title = Avg Throughput (ops/sec), Workload A, 3 nodes, 12 vCPU, Ephemeral, no replication
 component = kv
 category = ycsb
 

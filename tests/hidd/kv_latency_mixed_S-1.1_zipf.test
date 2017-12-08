@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.kv.MixedLatencyDGMTest
+test = perfrunner.tests.kv.ReadLatencyDGMTest
 title = latency (ms), Workload S-1.1, 4 nodes, 2B x 1KB, 15K ops/sec (90/10 R/W), Zipfian distribution
 component = kv
 category = hidd

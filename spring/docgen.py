@@ -218,6 +218,22 @@ class ZipfKey:
         return Key(number=number, prefix=self.prefix, fmtr=self.fmtr)
 
 
+class PowerKey:
+
+    ALPHA = 50
+
+    def __init__(self, prefix: str, fmtr: str):
+        self.prefix = prefix
+        self.fmtr = fmtr
+
+    def next(self, curr_items: int, curr_deletes: int, *args) -> Key:
+        r = np.random.power(a=self.ALPHA)
+
+        number = curr_deletes + int(r * (curr_items - curr_deletes - 1))
+
+        return Key(number=number, prefix=self.prefix, fmtr=self.fmtr)
+
+
 class SequentialKey:
 
     """Sequentially generate new keys equally divided the workers.

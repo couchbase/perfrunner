@@ -212,6 +212,23 @@ class SpringTest(TestCase):
             key = key_gen.next(curr_deletes=100, curr_items=ws.items)
             self.assertIn(key.string, keys)
 
+    def test_power_generator(self):
+        ws = WorkloadSettings(items=10 ** 3, workers=40, working_set=10,
+                              working_set_access=100, working_set_moving_docs=0,
+                              key_fmtr='decimal')
+
+        keys = set()
+        for worker in range(ws.workers):
+            for key in docgen.SequentialKey(sid=worker, ws=ws, prefix='test'):
+                self.assertNotIn(key, keys)
+                keys.add(key.string)
+        self.assertEqual(len(keys), ws.items)
+
+        key_gen = docgen.PowerKey(prefix='test', fmtr='decimal')
+        for op in range(10 ** 4):
+            key = key_gen.next(curr_deletes=100, curr_items=ws.items)
+            self.assertIn(key.string, keys)
+
     def doc_generators(self, size: int):
         for dg in (
             docgen.ReverseLookupDocument(avg_size=size, prefix='n1ql'),

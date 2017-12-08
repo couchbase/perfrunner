@@ -203,34 +203,28 @@ class MovingWorkingSetKey:
         return Key(number=number, prefix=self.prefix, fmtr=self.fmtr)
 
 
-class ZipfKey:
+class ContinuousKey:
 
-    ALPHA = 1.9
-
-    def __init__(self, prefix: str, fmtr: str):
+    def __init__(self, prefix: str, fmtr: str, alpha: float):
         self.prefix = prefix
         self.fmtr = fmtr
+        self.alpha = alpha
+
+
+class ZipfKey(ContinuousKey):
 
     def next(self, curr_items: int, curr_deletes: int, *args) -> Key:
-        number = curr_items - np.random.zipf(a=self.ALPHA)
+        number = curr_items - np.random.zipf(a=self.alpha)
         if number <= curr_deletes:
             number = curr_items - 1
         return Key(number=number, prefix=self.prefix, fmtr=self.fmtr)
 
 
-class PowerKey:
-
-    ALPHA = 50
-
-    def __init__(self, prefix: str, fmtr: str):
-        self.prefix = prefix
-        self.fmtr = fmtr
+class PowerKey(ContinuousKey):
 
     def next(self, curr_items: int, curr_deletes: int, *args) -> Key:
-        r = np.random.power(a=self.ALPHA)
-
+        r = np.random.power(a=self.alpha)
         number = curr_deletes + int(r * (curr_items - curr_deletes - 1))
-
         return Key(number=number, prefix=self.prefix, fmtr=self.fmtr)
 
 

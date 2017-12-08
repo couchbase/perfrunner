@@ -35,6 +35,7 @@ from spring.docgen import (
     MovingWorkingSetKey,
     NestedDocument,
     NewOrderedKey,
+    PowerKey,
     ProfileDocument,
     RefDocument,
     ReverseLookupDocument,
@@ -107,8 +108,14 @@ class Worker:
         elif self.ws.working_set < 100:
             self.existing_keys = WorkingSetKey(self.ws,
                                                self.ts.prefix)
-        elif self.ws.request_distribution == 'zipf':
-            self.existing_keys = ZipfKey(self.ts.prefix, self.ws.key_fmtr)
+        elif self.ws.power_alpha:
+            self.existing_keys = PowerKey(self.ts.prefix,
+                                          self.ws.key_fmtr,
+                                          self.ws.power_alpha)
+        elif self.ws.zipf_alpha:
+            self.existing_keys = ZipfKey(self.ts.prefix,
+                                         self.ws.key_fmtr,
+                                         self.ws.zipf_alpha)
         else:
             self.existing_keys = UniformKey(self.ts.prefix, self.ws.key_fmtr)
 

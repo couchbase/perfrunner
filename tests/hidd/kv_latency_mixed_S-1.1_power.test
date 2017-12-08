@@ -35,5 +35,5 @@ deletes = 0
 items = 2000000000
 workers = 40
 throughput = 15000
-request_distribution = power
+power_alpha = 225
 time = 21600

@@ -331,7 +331,8 @@ class PhaseSettings:
     USE_SSL = 0
 
     DOC_GEN = 'basic'
-    REQUEST_DISTRIBUTION = 'uniform'
+    POWER_ALPHA = 0
+    ZIPF_ALPHA = 0
 
     CREATES = 0
     READS = 0
@@ -399,8 +400,8 @@ class PhaseSettings:
 
         # KV settings
         self.doc_gen = options.get('doc_gen', self.DOC_GEN)
-        self.request_distribution = options.get('request_distribution',
-                                                self.REQUEST_DISTRIBUTION)
+        self.power_alpha = float(options.get('power_alpha', self.POWER_ALPHA))
+        self.zipf_alpha = float(options.get('zipf_alpha', self.ZIPF_ALPHA))
 
         self.size = int(options.get('size', self.SIZE))
         self.items = int(options.get('items', self.ITEMS))

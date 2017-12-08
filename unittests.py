@@ -207,7 +207,7 @@ class SpringTest(TestCase):
                 keys.add(key.string)
         self.assertEqual(len(keys), ws.items)
 
-        key_gen = docgen.ZipfKey(prefix='test', fmtr='decimal')
+        key_gen = docgen.ZipfKey(prefix='test', fmtr='decimal', alpha=1.5)
         for op in range(10 ** 4):
             key = key_gen.next(curr_deletes=100, curr_items=ws.items)
             self.assertIn(key.string, keys)
@@ -224,10 +224,32 @@ class SpringTest(TestCase):
                 keys.add(key.string)
         self.assertEqual(len(keys), ws.items)
 
-        key_gen = docgen.PowerKey(prefix='test', fmtr='decimal')
+        key_gen = docgen.PowerKey(prefix='test', fmtr=ws.key_fmtr, alpha=100)
         for op in range(10 ** 4):
             key = key_gen.next(curr_deletes=100, curr_items=ws.items)
             self.assertIn(key.string, keys)
+
+    def test_power_generator_cache_miss(self):
+        num_ops = 10 ** 5
+        ws = WorkloadSettings(items=10 ** 5, workers=40, working_set=1,
+                              working_set_access=90, working_set_moving_docs=0,
+                              key_fmtr='hex')
+
+        hot_keys = set()
+        for worker in range(ws.workers):
+            for key in docgen.HotKey(sid=worker, ws=ws, prefix='test'):
+                hot_keys.add(key.string)
+
+        key_gen = docgen.PowerKey(prefix='test', fmtr=ws.key_fmtr, alpha=240)
+        misses = 0
+        for op in range(num_ops):
+            key = key_gen.next(curr_deletes=100, curr_items=ws.items)
+            if key.string not in hot_keys:
+                misses += 1
+
+        hit_rate = 100 * (1 - misses / num_ops)
+
+        self.assertGreaterEqual(hit_rate, ws.working_set_access)
 
     def doc_generators(self, size: int):
         for dg in (

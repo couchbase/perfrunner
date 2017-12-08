@@ -17,6 +17,8 @@ eventing_buckets = 1
 online_cores = 12
 
 [bucket]
+bucket_type = ephemeral
+eviction_policy = nruEviction
 replica_number=0
 
 [compaction]

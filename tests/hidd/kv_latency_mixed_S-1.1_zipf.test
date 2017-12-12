@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.ReadLatencyDGMTest
-title = latency (ms), Workload S-1.1, 4 nodes, 2B x 1KB, 15K ops/sec (90/10 R/W), Zipfian distribution
+title = latency (ms), Workload S-1.1, 4 nodes, 2B x 1KB, 15K ops/sec (90/10 R/W), Zipfian distribution (α=1.2)
 component = kv
 category = hidd
 sub_category = Steady
@@ -35,5 +35,5 @@ deletes = 0
 items = 2000000000
 workers = 40
 throughput = 15000
-zipf_alpha = 1.5
+zipf_alpha = 1.2
 time = 43200

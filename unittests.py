@@ -251,6 +251,28 @@ class SpringTest(TestCase):
 
         self.assertAlmostEqual(hit_rate, ws.working_set_access, delta=0.5)
 
+    def test_zipf_generator_cache_miss(self):
+        num_ops = 10 ** 5
+        ws = WorkloadSettings(items=10 ** 5, workers=40, working_set=1.6,
+                              working_set_access=90, working_set_moving_docs=0,
+                              key_fmtr='hex')
+
+        hot_keys = set()
+        for worker in range(ws.workers):
+            for key in docgen.HotKey(sid=worker, ws=ws, prefix='test'):
+                hot_keys.add(key.string)
+
+        key_gen = docgen.ZipfKey(prefix='test', fmtr=ws.key_fmtr, alpha=1.23)
+        misses = 0
+        for op in range(num_ops):
+            key = key_gen.next(curr_deletes=100, curr_items=ws.items)
+            if key.string not in hot_keys:
+                misses += 1
+
+        hit_rate = 100 * (1 - misses / num_ops)
+
+        self.assertAlmostEqual(hit_rate, ws.working_set_access, delta=0.5)
+
     def doc_generators(self, size: int):
         for dg in (
             docgen.ReverseLookupDocument(avg_size=size, prefix='n1ql'),

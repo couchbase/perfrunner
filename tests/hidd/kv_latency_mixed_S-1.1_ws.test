@@ -37,4 +37,4 @@ workers = 40
 throughput = 15000
 working_set = 1
 working_set_access = 90
-time = 21600
+time = 43200

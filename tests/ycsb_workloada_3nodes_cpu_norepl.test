@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.ycsb.YCSBThroughputTest
-title = Avg Throughput (ops/sec), Workload A, 3 nodes, no replication
+title = Avg Throughput (ops/sec), Workload A, 3 nodes, 12 vCPU, no replication
 component = kv
 category = ycsb
 
@@ -8,8 +8,9 @@ category = ycsb
 mem_quota = 40960
 initial_nodes = 3
 num_buckets = 1
+online_cores = 6
 
-[buclet]
+[bucket]
 replica_number = 0
 
 [load]

@@ -28,9 +28,9 @@ workers = 100
 working_set = 1.6
 
 [access]
-creates = 0
+creates = 5
 reads = 90
-updates = 10
+updates = 5
 deletes = 0
 items = 2000000000
 workers = 40

@@ -1,7 +1,6 @@
 import json
 import time
 from collections import namedtuple
-from json import JSONDecodeError
 from typing import Callable, Dict, Iterator, List
 
 import requests
@@ -698,14 +697,13 @@ class RestHelper:
     def get_num_events_processed(self, event: str, node: str, name: str):
         logger.info('get stats on node {} for {}'.format(node, name))
 
-        api = 'http://{}:{}/getEventProcessingStats?name={}'\
-            .format(node, EVENTING_PORT, name)
         data = {}
-        try:
-            data = self.get(url=api).json()
-        except JSONDecodeError as e:
-            logger.warn("JSONDecodeError in get_num_events_processed: {}"
-                        .format(e))
+        all_stats = self.get_eventing_stats(node=node)
+        for stat in all_stats:
+            if name == stat["function_name"]:
+                data = stat["event_processing_stats"]
+                break
+
         logger.info(data)
         if event in data:
             return data[event]
@@ -718,12 +716,6 @@ class RestHelper:
         api = 'http://{}:{}/getDeployedApps'.format(node, EVENTING_PORT)
         return self.get(url=api).json()
 
-    def get_execution_stats(self, node: str, name: str):
-        logger.info('get execution stats on node {}'.format(node))
-
-        api = 'http://{}:{}/getExecutionStats?name={}'.format(node, EVENTING_PORT, name)
-        return self.get(url=api).json()
-
     @perfrunner.helpers.misc.retry(catch=[Timeout], iterations=3, wait=1)
     def run_analytics_query(self, analytics_node: str, query: str, timeout: int=300) -> dict:
         api = 'http://{}:8095/analytics/service'.format(analytics_node)
@@ -733,14 +725,11 @@ class RestHelper:
         }
         return self.post(url=api, data=data, timeout=timeout).json()
 
-    def get_latency_stats(self, node: str, name: str):
-        logger.info('get latency stats on node {} for {}'.format(node, name))
-
-        api = 'http://{}:{}/getLatencyStats?name={}'.format(node, EVENTING_PORT, name)
-        return self.get(url=api).json()
-
-    def get_eventing_stats(self, node: str):
+    def get_eventing_stats(self, node: str, full_stats=False):
         logger.info('get eventing stats on node {}'.format(node))
 
         api = 'http://{}:{}/api/v1/stats'.format(node, EVENTING_PORT)
+        if full_stats:
+            api += "?type=full"
+
         return self.get(url=api).json()

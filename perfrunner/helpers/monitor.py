@@ -538,33 +538,3 @@ class Monitor(RestHelper):
             retry += 1
         if retry == self.MAX_RETRY_TIMER_EVENT:
             logger.info('Failed to get timer event for function: {}'.format(function))
-
-    def wait_for_latency_stats(self, node: str, name: str):
-        logger.info('Wait for latency stats on node {} for {}'.format(node, name))
-
-        retry = 1
-        latency_stats = {}
-        self.get_latency_stats(node, name)
-        time.sleep(self.MONITORING_DELAY)
-        while retry < self.MAX_RETRY:
-            latency_stats = self.get_latency_stats(node, name)
-            if not latency_stats:
-                time.sleep(self.POLLING_INTERVAL)
-            else:
-                break
-        return latency_stats
-
-    def wait_for_execution_stats(self, node: str, name: str):
-        logger.info('Wait for execution stats on node {} for {}'.format(node, name))
-
-        retry = 1
-        execution_stats = {}
-        self.get_execution_stats(node, name)
-        time.sleep(self.MONITORING_DELAY)
-        while retry < self.MAX_RETRY:
-            execution_stats = self.get_execution_stats(node, name)
-            if not execution_stats:
-                time.sleep(self.POLLING_INTERVAL)
-            else:
-                break
-        return execution_stats

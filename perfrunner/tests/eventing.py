@@ -61,24 +61,23 @@ class EventingTest(PerfTest):
             self.monitor.wait_for_bootstrap(nodes=self.eventing_nodes, function=name)
 
     def process_latency_stats(self):
-        latency_stats = {}
-        for name, file in self.functions.items():
-            stats = self.monitor.wait_for_latency_stats(
-                node=self.eventing_nodes[0], name=name)
-            logger.info("Latency stats for function {function}:{stats}".
-                        format(function=name, stats=pretty_dict(stats)))
-            stats = sorted(stats.items(), key=lambda x: int(x[0]))
-            latency_stats[name] = stats
-        return latency_stats
+        ret_val = {}
+        all_stats = self.rest.get_eventing_stats(node=self.eventing_nodes[0])
+        for stat in all_stats:
+            latency_stats = stat["latency_stats"]
+            ret_val[stat["function_name"]] = sorted(latency_stats.items(), key=lambda x: int(x[0]))
 
-    def get_success_stats(self):
+        return ret_val
+
+    def get_on_update_success(self):
         on_update_success = 0
-        for name, file in self.functions.items():
-            for node in self.eventing_nodes:
-                stats = self.monitor.wait_for_execution_stats(node=node, name=name)
-                logger.info("Execution stats for {node} and {function}: {stats}"
-                            .format(node=node, function=name, stats=pretty_dict(stats)))
-                on_update_success += stats["on_update_success"]
+        for node in self.eventing_nodes:
+            stats = self.rest.get_eventing_stats(node=node)
+            for stat in stats:
+                logger.info("Execution stats for {node}: {stats}"
+                            .format(node=node,
+                                    stats=pretty_dict(stat["execution_stats"])))
+                on_update_success += stat["execution_stats"]["on_update_success"]
         return on_update_success
 
     @timeit
@@ -89,16 +88,28 @@ class EventingTest(PerfTest):
         self.sleep()
 
     def validate_failures(self):
-        for name, file in self.functions.items():
-            for node in self.eventing_nodes:
-                stats = self.monitor.wait_for_execution_stats(node=node, name=name)
-                logger.info("Execution stats for {node} and {function}: {stats}"
-                            .format(node=node, function=name, stats=pretty_dict(stats)))
-                for stat, value in stats.items():
-                    if "success" not in stat and value != 0:
+        for node in self.eventing_nodes:
+            all_stats = self.rest.get_eventing_stats(node=node, full_stats=True)
+            logger.info("All stats for {node} : {stats}"
+                        .format(node=node,
+                                stats=pretty_dict(all_stats)))
+            for function_stats in all_stats:
+                execution_stats = function_stats["execution_stats"]
+                failure_stats = function_stats["failure_stats"]
+
+                # Validate Execution stats
+                for stat, value in execution_stats.items():
+                    if "failure" in stat and value != 0:
                         raise Exception(
                             '{function}: {node}: {stat} is not zero'.format(
-                                function=name, node=node, stat=stat))
+                                function=function_stats["function_name"], node=node, stat=stat))
+
+                # Validate Failure stats
+                for stat, value in failure_stats.items():
+                    if value != 0:
+                        raise Exception(
+                            '{function}: {node}: {stat} is not zero'.format(
+                                function=function_stats["function_name"], node=node, stat=stat))
 
     def run(self):
         self.set_functions()
@@ -112,7 +123,7 @@ class EventingTest(PerfTest):
 
 class FunctionsThroughputTest(EventingTest):
     def _report_kpi(self, time_elapsed):
-        events_successfully_processed = self.get_success_stats()
+        events_successfully_processed = self.get_on_update_success()
         self.reporter.post(
             *self.metrics.function_throughput(time=time_elapsed,
                                               event_name=None,
@@ -125,17 +136,6 @@ class FunctionsScalingThroughputTest(EventingTest):
     def __init__(self, *args):
         super().__init__(*args)
         self.on_update_success = 0
-
-    def get_on_update_success(self):
-        on_update_success = 0
-        for node in self.eventing_nodes:
-            stats = self.rest.get_eventing_stats(node=node)
-            for stat in stats:
-                logger.info("Execution stats for {node}: {stats}"
-                            .format(node=node,
-                                    stats=pretty_dict(stat["execution_stats"])))
-                on_update_success += stat["execution_stats"]["on_update_success"]
-        return on_update_success
 
     @with_stats
     def execute_handler(self):

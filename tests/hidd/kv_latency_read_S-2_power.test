@@ -1,0 +1,39 @@
+[test_case]
+test = perfrunner.tests.kv.ReadLatencyDGMTest
+title = latency (ms), Workload S-2, 10 nodes, 10B x 1KB, 37.5K ops/sec (90/10 R/W), Power distribution (α=380)
+component = kv
+category = hidd
+sub_category = Steady
+
+[cluster]
+mem_quota = 20480
+initial_nodes = 10
+num_buckets = 1
+kernel_mem_limit = 34G
+kernel_mem_limit_services = kv
+
+[bucket]
+eviction_policy = fullEviction
+
+[load]
+items = 10000000000
+size = 1024
+workers = 100
+key_fmtr = hex
+doc_gen = large
+
+[hot_load]
+items = 10000000000
+workers = 100
+working_set = 0.6
+
+[access]
+creates = 5
+reads = 90
+updates = 5
+deletes = 0
+items = 10000000000
+workers = 40
+throughput = 37500
+power_alpha = 380
+time = 43200

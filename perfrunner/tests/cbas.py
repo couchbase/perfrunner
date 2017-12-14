@@ -666,10 +666,22 @@ class CBASBigfunStableStateTest(CBASBigfunTest):
     COLLECTORS = {'cbas_lag': True}
 
     def verify(self):
-        if self.test_config.cbas_settings.verify_lag:
-            max_lag = self.metrics.get_percentile_value_of_collector('cbas_lag', 100)
-            if max_lag > self.test_config.cbas_settings.cbas_lag_timeout * 1000:
-                raise Exception('Maximum cbas lag is {}, this indicates data lost'.format(max_lag))
+        lag_timeouts = self.metrics.count_overthreshold_value_of_collector(
+            'cbas_lag',
+            self.test_config.cbas_settings.cbas_lag_timeout * 1000)
+        if lag_timeouts > self.test_config.cbas_settings.allow_lag_timeouts:
+            raise Exception(
+                'CBAS lag detection failed {} times, larger than {}, '
+                'this indicates data lost'.format(
+                    lag_timeouts,
+                    self.test_config.cbas_settings.allow_lag_timeouts))
+        lags = self.metrics.get_collector_values('cbas_lag')
+        if lags[-1] >= self.test_config.cbas_settings.cbas_lag_timeout * 1000:
+            raise Exception(
+                'Latest cbas lag sample {} larger then {}, '
+                'this indicates data lost'.format(
+                    lags[-1],
+                    self.test_config.cbas_settings.cbas_lag_timeout * 1000))
 
     def run(self):
         self.download_bigfun()

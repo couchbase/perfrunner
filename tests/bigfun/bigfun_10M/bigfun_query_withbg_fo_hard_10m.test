@@ -15,7 +15,7 @@ num_buckets = 1
 [cbas_settings]
 node_logLevel=WARNING
 cbas_lag_timeout=3600
-verify_lag=0
+allow_lag_timeouts=1
 
 [bigfun]
 workers=40

@@ -222,13 +222,21 @@ class MetricHelper:
 
         return int(np.percentile(values, 90))
 
-    def get_percentile_value_of_collector(self, collector, percentile):
+    def get_collector_values(self, collector):
         values = []
         for bucket in self.test_config.buckets:
             db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
                                          collector=collector,
                                          bucket=bucket)
             values += self.store.get_values(db, metric=collector)
+        return values
+
+    def count_overthreshold_value_of_collector(self, collector, threshold):
+        values = self.get_collector_values(collector)
+        return sum(v >= threshold for v in values)
+
+    def get_percentile_value_of_collector(self, collector, percentile):
+        values = self.get_collector_values(collector)
         return np.percentile(values, percentile)
 
     def lag_collector_metric(self, collector, collector_title,

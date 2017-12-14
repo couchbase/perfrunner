@@ -115,6 +115,9 @@ class CBASLag(Latency):
         t1 = time()
         if t1 - t0 < self.TIMEOUT:
             src_client.remove(key.string, quiet=True)
+        else:
+            logger.warn('CBAS lag {} over {}'
+                        .format(t1 - t0, self.TIMEOUT))
         return {'cbas_lag': (t1 - t0) * 1000}  # s -> ms
 
     def sample(self):

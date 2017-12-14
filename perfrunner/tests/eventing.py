@@ -62,7 +62,7 @@ class EventingTest(PerfTest):
 
     def process_latency_stats(self):
         ret_val = {}
-        all_stats = self.rest.get_eventing_stats(node=self.eventing_nodes[0])
+        all_stats = self.rest.get_eventing_stats(node=self.eventing_nodes[0], full_stats=True)
         for stat in all_stats:
             latency_stats = stat["latency_stats"]
             ret_val[stat["function_name"]] = sorted(latency_stats.items(), key=lambda x: int(x[0]))

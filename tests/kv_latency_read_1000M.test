@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.ReadLatencyDGMCompactionTest
-title = latency (ms), 4 nodes, 1B x 1KB, 15K ops/sec (90/10 R/W), 5%% cache miss rate
+title = latency (ms), 4 nodes, 1B x 1KB, 15K ops/sec (90/10 R/W), 5%% cache miss rate, during compaction
 component = kv
 category = dgm
 

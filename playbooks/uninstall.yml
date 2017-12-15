@@ -22,6 +22,7 @@
       - mongod
       - mongos
       - mysqld
+      - sync_gateway
 
   - name: uninstalling the database packages
     yum: state=absent name={{item}}

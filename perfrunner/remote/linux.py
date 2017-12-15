@@ -22,7 +22,7 @@ class RemoteLinux(Remote):
 
     PROCESSES = ('beam.smp', 'memcached', 'epmd', 'cbq-engine', 'indexer',
                  'cbft', 'goport', 'goxdcr', 'couch_view_index_updater',
-                 'moxi', 'spring')
+                 'moxi', 'spring', 'sync_gateway')
 
     PROCESS_ARGUMENTS = ('couchbase/bin/cbas', 'couchbase/lib/cbas/runtime/bin/java')
 

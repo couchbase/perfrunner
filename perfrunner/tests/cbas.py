@@ -90,7 +90,7 @@ class CBASBigfunTest(PerfTest):
                                loader_branch=self.test_config.bigfun_settings.loader_branch)
 
     def generate_doctemplates(self):
-        logger.info('Generating bigfun dataset with {} users splitted to {} partitions.'.format(
+        logger.info('Generating bigfun dataset with {} users split to {} partitions.'.format(
             self.test_config.bigfun_settings.user_docs, self.test_config.bigfun_settings.workers))
         if self.worker_manager.is_remote:
             for clientn in range(len(self.cluster_spec.workers)):
@@ -401,7 +401,7 @@ class CBASBigfunTest(PerfTest):
             self.reporter.post(
                 *self.metrics.cbas_latency(self.initial_load_latency,
                                            "initial_load_latency_sec",
-                                           "Initial document injestion latency (second)",
+                                           "Initial document ingestion latency (second)",
                                            CBASBigfunTest.__name__ + '{0:02d}'.format(orderby_step))
             )
 
@@ -484,7 +484,7 @@ class CBASBigfunDataSetTest(CBASBigfunTest):
             self.reporter.post(
                 *self.metrics.cbas_latency(self.update_non_indexed_field_latency,
                                            "update_non_indexed_field_latency_sec",
-                                           "Update nonindexed document field latency (second)",
+                                           "Update non-indexed document field latency (second)",
                                            CBASBigfunDataSetTest.__name__ +
                                            '{0:02d}'.format(orderby_step))
             )
@@ -792,21 +792,21 @@ class CBASBigfunQueryWithBGTest(CBASBigfunQueryTest):
 
     @with_stats
     def access(self, *args, **kwargs):
-        """cbas_bigfun_data_mixload_task is used to trigger backgroup mutation.
+        """cbas_bigfun_data_mixload_task is used to trigger background mutation.
 
         All mutation are within 1/10 of the whole dataset to avoid too much
         impact on the query and too much memory usage in current loader tool
-        We will need more test cases to cover wider mutaion
+        We will need more test cases to cover wider mutation
         """
         logger.info('Start CBAS bigfun mix load task')
         self.access_bg(task=cbas_bigfun_data_mixload_task)
 
-        querytime = self.query()
+        query_time = self.query()
 
-        if self.test_config.access_settings.time > querytime:
+        if self.test_config.access_settings.time > query_time:
             logger.info('Sleep for {} seconds'.format(self.test_config.access_settings.time -
-                                                      querytime))
-            time.sleep(self.test_config.access_settings.time - querytime)
+                                                      query_time))
+            time.sleep(self.test_config.access_settings.time - query_time)
 
 
 class CBASRebalanceTest(RebalanceTest):
@@ -970,8 +970,8 @@ class CBASRecoveryTest(RecoveryTest):
         orderby_step += 1
         self.reporter.post(
             *self.metrics.cbas_latency(self.recovery_latency,
-                                       "reovery_latency_sec",
-                                       "Reovery latency (second)",
+                                       "recovery_latency_sec",
+                                       "Recovery latency (second)",
                                        CBASRecoveryTest.__name__ +
                                        '{0:02d}'.format(orderby_step))
         )

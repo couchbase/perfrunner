@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.xdcr.UniDirXdcrInitTest
-title = Avg. initial XDCR rate (items/sec), 5 -> 5 UniDir, 1 bucket x 1G x 1KB, DGM, Compaction
+title = Avg. initial XDCR rate (items/sec), 5 -> 5 UniDir, 1 bucket x 1G x 1KB, DGM
 component = xdcr
 category = init_multi
 

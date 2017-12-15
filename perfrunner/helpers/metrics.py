@@ -298,21 +298,6 @@ class MetricHelper:
 
         return avg_total_queue_age, self._snapshots, metric_info
 
-    def avg_bg_wait_time(self) -> Metric:
-        metric_info = self._metric_info()
-
-        values = []
-        for bucket in self.test_config.buckets:
-            db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
-                                         collector='ns_server',
-                                         bucket=bucket)
-            values += self.store.get_values(db, metric='avg_bg_wait_time')
-
-        avg_bg_wait_time = np.mean(values) / 10 ** 3  # us -> ms
-        avg_bg_wait_time = round(avg_bg_wait_time, 2)
-
-        return avg_bg_wait_time, self._snapshots, metric_info
-
     def avg_couch_views_ops(self) -> Metric:
         metric_info = self._metric_info()
 
@@ -439,26 +424,6 @@ class MetricHelper:
         cpu_utilization = int(np.average(values))
 
         return cpu_utilization, self._snapshots, metric_info
-
-    def max_beam_rss(self) -> Metric:
-        metric_id = 'beam_rss_max_{}'.format(self.test_config.name)
-        title = 'Max. beam.smp RSS (MB), {}'.format(self._title)
-        metric_info = self._metric_info(metric_id, title)
-
-        max_rss = 0
-        for cluster_name, servers in self.cluster_spec.clusters:
-            cluster = list(filter(lambda name: name.startswith(cluster_name),
-                                  self.test.cbmonitor_clusters))[0]
-            for server in servers:
-                hostname = server.replace('.', '')
-                db = self.store.build_dbname(cluster=cluster,
-                                             collector='atop',
-                                             server=hostname)
-                values = self.store.get_values(db, metric='beam.smp_rss')
-                rss = round(max(values) / 1024 ** 2)
-                max_rss = max(max_rss, rss)
-
-        return max_rss, self._snapshots, metric_info
 
     def max_memcached_rss(self) -> Metric:
         metric_id = '{}_memcached_rss'.format(self.test_config.name)

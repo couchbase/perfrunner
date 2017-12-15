@@ -174,16 +174,6 @@ class XATTRTest(MixedLatencyTest):
         self.report_kpi()
 
 
-class BgFetcherTest(DGMTest):
-
-    """Enable reporting of average BgFetcher wait time (disk fetches)."""
-
-    def _report_kpi(self):
-        self.reporter.post(
-            *self.metrics.avg_bg_wait_time()
-        )
-
-
 class DrainTest(DGMCompactionTest):
 
     """Enable reporting of average disk write queue size."""
@@ -219,16 +209,6 @@ class IngestionTest(KVTest):
     def _report_kpi(self):
         self.reporter.post(
             *self.metrics.avg_total_queue_age()
-        )
-
-
-class BeamRssTest(KVTest):
-
-    """Enable reporting of Erlang (beam.smp process) memory usage."""
-
-    def _report_kpi(self):
-        self.reporter.post(
-            *self.metrics.max_beam_rss()
         )
 
 

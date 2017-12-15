@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.kv.ReadLatencyDGMTest
-title = latency (ms), 4 nodes, 1B x 1KB, 15K ops/sec (90/10 R/W), Power distribution (α=25)
+title = latency (ms), 4 nodes, 1B x 1KB, 15K ops/sec (50/50 R/W), Power distribution (α=25)
 component = kv
 category = dgm
 
@@ -26,8 +26,8 @@ working_set = 10
 
 [access]
 creates = 0
-reads = 90
-updates = 10
+reads = 50
+updates = 50
 deletes = 0
 items = 1000000000
 workers = 40

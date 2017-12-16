@@ -13,7 +13,6 @@ initial_nodes = 4
 num_buckets = 1
 
 [cbas_settings]
-node_logLevel=WARNING
 cbas_lag_timeout=600
 
 [bigfun]

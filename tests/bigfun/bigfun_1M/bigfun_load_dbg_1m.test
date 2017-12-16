@@ -13,7 +13,6 @@ num_buckets = 1
 analytics_iodevices=/data/@analytics/iodev0,/data/@analytics/iodev1,/data/@analytics/iodev2,/data/@analytics/iodev3
 
 [cbas_settings]
-node_logLevel=WARNING
 node_jvmArgs=-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9010 -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Xverify:none
 
 [bigfun]

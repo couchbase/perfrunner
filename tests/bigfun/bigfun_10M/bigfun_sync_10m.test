@@ -12,9 +12,6 @@ analytics_iodevices=/data/@analytics/iodev0,/data/@analytics/iodev1,/data/@analy
 initial_nodes = 4
 num_buckets = 1
 
-[cbas_settings]
-node_logLevel=WARNING
-
 [bigfun]
 workers=40
 user_docs=10000000

@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.xdcr.UniDirXdcrTest
-title = 5 -> 5 UniDir, 2 buckets x 500M x 1KB, 40K updates/sec
+title = 5 -> 5 (2 source nozzles, 4 target nozzles), 2 buckets x 500M x 1KB, 40K updates/sec
 component = xdcr
 category = ongoing
 
@@ -14,8 +14,8 @@ initial_nodes = 5 5
 num_buckets = 2
 
 [xdcr_cluster]
-sourceNozzlePerNode = 4
-targetNozzlePerNode = 64
+sourceNozzlePerNode = 2
+targetNozzlePerNode = 4
 optimisticReplicationThreshold = 0
 
 [load]

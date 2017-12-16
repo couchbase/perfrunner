@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.xdcr.UniDirXdcrInitTest
-title = Avg. initial XDCR rate (items/sec), 5 -> 5 UniDir, 1 bucket x 250M x 1KB
+title = Avg. initial XDCR rate (items/sec), 5 -> 5 (2 source nozzles, 4 target nozzles), 1 bucket x 250M x 1KB
 component = xdcr
 category = init_multi
 
@@ -13,8 +13,8 @@ initial_nodes = 5 5
 num_buckets = 1
 
 [xdcr_cluster]
-sourceNozzlePerNode = 4
-targetNozzlePerNode = 64
+sourceNozzlePerNode = 2
+targetNozzlePerNode = 4
 
 [load]
 items = 250000000

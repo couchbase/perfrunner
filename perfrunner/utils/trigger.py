@@ -14,7 +14,7 @@ MAX_MISSING = 3
 
 RELEASES = {
     'spock': '5.0.0',
-    'vulcan': '5.1.0',
+    'vulcan': '5.5.0',
 }
 
 

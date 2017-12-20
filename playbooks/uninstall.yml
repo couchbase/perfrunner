@@ -1,7 +1,7 @@
 ---
 - hosts: kv:index:n1ql
   vars:
-    couhcbase_home: /opt/couchbase
+    couchbase_home: /opt/couchbase
     data_dir: /data
     index_dir: /index
   tasks:
@@ -32,7 +32,7 @@
       - 'MariaDB*'
 
   - name: removing Couchbase Server files
-    file: path={{ couhcbase_home }} state=absent
+    file: path={{ couchbase_home }} state=absent
 
   - name: removing the files remaining in the "{{ data_dir }}" directory
     shell: rm -fr {{ data_dir }}/*

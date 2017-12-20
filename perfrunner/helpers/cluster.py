@@ -330,11 +330,19 @@ class ClusterManager:
             roles = self.generate_ee_roles()
 
         for master in self.cluster_spec.masters:
+            admin_user, admin_password = self.cluster_spec.rest_credentials
+            self.rest.add_rbac_user(
+                host=master,
+                user=admin_user,
+                password=admin_password,
+                roles=['admin'],
+            )
+
             for bucket in self.test_config.buckets:
                 bucket_roles = [role.format(bucket=bucket) for role in roles]
                 self.rest.add_rbac_user(
                     host=master,
-                    bucket=bucket,
+                    user=bucket,  # Backward compatibility
                     password=self.test_config.bucket.password,
                     roles=bucket_roles,
                 )

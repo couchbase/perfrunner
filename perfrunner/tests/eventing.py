@@ -34,7 +34,7 @@ class EventingTest(PerfTest):
         for master in self.cluster_spec.masters:
             self.rest.add_rbac_user(
                 host=master,
-                bucket="eventing",
+                user="eventing",
                 password="password",
                 roles=['admin'],
             )

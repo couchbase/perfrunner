@@ -642,9 +642,9 @@ class RestHelper:
             if r.status_code == 200:
                 break
 
-    def add_rbac_user(self, host: str, bucket: str, password: str,
+    def add_rbac_user(self, host: str, user: str, password: str,
                       roles: List[str]):
-        logger.info('Adding an RBAC user: {}, roles: {}'.format(bucket,
+        logger.info('Adding an RBAC user: {}, roles: {}'.format(user,
                                                                 roles))
         data = {
             'password': password,
@@ -654,7 +654,7 @@ class RestHelper:
         for domain in 'local', 'builtin':
             api = 'http://{}:8091/settings/rbac/users/{}/{}'.format(host,
                                                                     domain,
-                                                                    bucket)
+                                                                    user)
             r = self._put(url=api, data=data)
             if r.status_code == 200:
                 break

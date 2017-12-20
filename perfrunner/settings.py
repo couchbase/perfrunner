@@ -829,9 +829,9 @@ class YCSBSettings:
 
 
 class BigfunSettings:
-    SOCIALGEN_REPO = 'git://github.com/huiwangcouchbase/socialGen.git'
+    SOCIALGEN_REPO = 'git://github.com/couchbaselabs/socialGen.git'
     SOCIALGEN_BRANCH = 'master'
-    LOADER_REPO = 'git://github.com/huiwangcouchbase/loader.git'
+    LOADER_REPO = 'git://github.com/couchbaselabs/loader.git'
     LOADER_BRANCH = 'master'
     WORKERS = 20
     USER_DOCS = 10000

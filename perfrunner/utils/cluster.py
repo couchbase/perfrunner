@@ -45,7 +45,7 @@ def main():
 
     cm.configure_internal_settings()
     cm.set_data_path()
-    cm.set_mem_quota()
+    cm.set_mem_quotas()
     cm.set_services()
     cm.rename()
     cm.set_auth()
@@ -61,6 +61,8 @@ def main():
 
     if cm.test_config.cluster.num_buckets:
         cm.create_buckets()
+        cm.create_eventing_buckets()
+        cm.create_eventing_metadata_bucket()
         cm.add_rbac_users()
 
     cm.restart_with_alternative_bucket_options()

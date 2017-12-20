@@ -22,10 +22,6 @@ class ClusterManager:
         self.master_node = next(self.cluster_spec.masters)
 
         self.initial_nodes = test_config.cluster.initial_nodes
-        self.mem_quota = test_config.cluster.mem_quota
-        self.index_mem_quota = test_config.cluster.index_mem_quota
-        self.fts_mem_quota = test_config.cluster.fts_index_mem_quota
-        self.analytics_mem_quota = test_config.cluster.analytics_mem_quota
 
     def is_compatible(self, min_release):
         for master in self.cluster_spec.masters:
@@ -53,14 +49,18 @@ class ClusterManager:
         for server in self.cluster_spec.servers:
             self.rest.set_auth(server)
 
-    def set_mem_quota(self):
+    def set_mem_quotas(self):
         for master in self.cluster_spec.masters:
-            self.rest.set_mem_quota(master, self.mem_quota)
-            self.rest.set_index_mem_quota(master, self.index_mem_quota)
-            if self.is_compatible(min_release='4.5.0'):
-                self.rest.set_fts_index_mem_quota(master, self.fts_mem_quota)
-            if self.analytics_mem_quota:
-                self.rest.set_analytics_mem_quota(master, self.analytics_mem_quota)
+            self.rest.set_mem_quota(master,
+                                    self.test_config.cluster.mem_quota)
+            self.rest.set_index_mem_quota(master,
+                                          self.test_config.cluster.index_mem_quota)
+            if self.test_config.cluster.fts_index_mem_quota:
+                self.rest.set_fts_index_mem_quota(master,
+                                                  self.test_config.cluster.fts_index_mem_quota)
+            if self.test_config.cluster.analytics_mem_quota:
+                self.rest.set_analytics_mem_quota(master,
+                                                  self.test_config.cluster.analytics_mem_quota)
 
     def set_query_settings(self):
         query_nodes = self.cluster_spec.servers_by_role('n1ql')
@@ -146,18 +146,17 @@ class ClusterManager:
                                         name=bucket_name)
 
     def create_buckets(self):
+        mem_quota = self.test_config.cluster.mem_quota
         if self.test_config.cluster.eventing_bucket_mem_quota:
-            ram_quota = (self.mem_quota - self.test_config.cluster.eventing_bucket_mem_quota) \
-                        // self.test_config.cluster.num_buckets
-        else:
-            ram_quota = self.mem_quota // self.test_config.cluster.num_buckets
+            mem_quota -= self.test_config.cluster.eventing_bucket_mem_quota
+        per_bucket_quota = mem_quota // self.test_config.cluster.num_buckets
 
         for master in self.cluster_spec.masters:
             for bucket_name in self.test_config.buckets:
                 self.rest.create_bucket(
                     host=master,
                     name=bucket_name,
-                    ram_quota=ram_quota,
+                    ram_quota=per_bucket_quota,
                     password=self.test_config.bucket.password,
                     replica_number=self.test_config.bucket.replica_number,
                     replica_index=self.test_config.bucket.replica_index,
@@ -166,34 +165,43 @@ class ClusterManager:
                     conflict_resolution_type=self.test_config.bucket.conflict_resolution_type,
                 )
 
-        if self.test_config.cluster.eventing_bucket_mem_quota:
-            ram_quota = self.test_config.cluster.eventing_bucket_mem_quota - 1000 \
-                        // self.test_config.cluster.eventing_buckets
-            for master in self.cluster_spec.masters:
-                # Create buckets for eventing operations
-                for bucket_name in self.test_config.eventing_buckets:
-                    self.rest.create_bucket(
-                        host=master,
-                        name=bucket_name,
-                        ram_quota=ram_quota,
-                        password=self.test_config.bucket.password,
-                        replica_number=self.test_config.bucket.replica_number,
-                        replica_index=self.test_config.bucket.replica_index,
-                        eviction_policy=self.test_config.bucket.eviction_policy,
-                        bucket_type=self.test_config.bucket.bucket_type,
-                        conflict_resolution_type=self.test_config.bucket.conflict_resolution_type,
-                    )
-                # Create eventing metadata bucket
+    def create_eventing_buckets(self):
+        if not self.test_config.cluster.eventing_bucket_mem_quota:
+            return
+
+        mem_quota = self.test_config.cluster.eventing_bucket_mem_quota - \
+            self.test_config.cluster.EVENTING_METADATA_MEM_QUOTA
+        per_bucket_quota = mem_quota // self.test_config.cluster.eventing_buckets
+
+        for master in self.cluster_spec.masters:
+            for bucket_name in self.test_config.eventing_buckets:
                 self.rest.create_bucket(
                     host=master,
-                    name="eventing",
-                    ram_quota=1000,
-                    password="password",
-                    replica_number=0,
-                    replica_index=0,
-                    eviction_policy="valueOnly",
-                    bucket_type="membase",
+                    name=bucket_name,
+                    ram_quota=per_bucket_quota,
+                    password=self.test_config.bucket.password,
+                    replica_number=self.test_config.bucket.replica_number,
+                    replica_index=self.test_config.bucket.replica_index,
+                    eviction_policy=self.test_config.bucket.eviction_policy,
+                    bucket_type=self.test_config.bucket.bucket_type,
+                    conflict_resolution_type=self.test_config.bucket.conflict_resolution_type,
                 )
+
+    def create_eventing_metadata_bucket(self):
+        if not self.test_config.cluster.eventing_bucket_mem_quota:
+            return
+
+        for master in self.cluster_spec.masters:
+            self.rest.create_bucket(
+                host=master,
+                name=self.test_config.cluster.EVENTING_METADATA_BUCKET_NAME,
+                ram_quota=self.test_config.cluster.EVENTING_METADATA_MEM_QUOTA,
+                password=self.test_config.bucket.password,
+                replica_number=self.test_config.bucket.REPLICA_NUMBER,
+                replica_index=self.test_config.bucket.REPLICA_INDEX,
+                eviction_policy=self.test_config.bucket.EVICTION_POLICY,
+                bucket_type=self.test_config.bucket.BUCKET_TYPE,
+            )
 
     def configure_auto_compaction(self):
         compaction_settings = self.test_config.compaction

@@ -609,8 +609,7 @@ class MetricHelper:
                         query_stats.append(int(line))
         if len(query_stats) != 4:
             raise Exception('Wrong query result file format')
-        return {'total_query_number': float(query_stats[0] + query_stats[2]),
-                'success_query_rate': math.floor((query_stats[0] * 100) /
+        return {'success_query_rate': math.floor((query_stats[0] * 100) /
                                                  (query_stats[0] + query_stats[2])) / 100,
                 'avg_query_latency': (query_stats[1] + query_stats[3]) /
                                      (query_stats[0] + query_stats[2])}

@@ -749,25 +749,10 @@ class CBASBigfunQueryTest(CBASBigfunStableStateTest):
     def _report_kpi(self):
         orderby_step = 1
         super()._report_kpi()
+
         self.collect_export_files()
         query_stats = self.metrics.parse_cbas_query_highlevel_metrics()
-        self.reporter.post(
-            *self.metrics.cbas_query_metric(
-                query_stats['total_query_number'],
-                'total_query_number',
-                'Total query number',
-                CBASBigfunQueryTest.__name__ + '{0:02d}'.format(orderby_step))
-        )
-        orderby_step += 1
-        self.reporter.post(
-            *self.metrics.cbas_query_metric(
-                query_stats['success_query_rate'],
-                'success_query_rate',
-                'Success query rate',
-                CBASBigfunQueryTest.__name__ + '{0:02d}'.format(orderby_step),
-                2)
-        )
-        orderby_step += 1
+
         self.reporter.post(
             *self.metrics.cbas_query_metric(
                 query_stats['avg_query_latency'],

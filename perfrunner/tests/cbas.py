@@ -782,7 +782,7 @@ class CBASBigfunQueryTest(CBASBigfunStableStateTest):
                 self.reporter.post(
                     *self.metrics.cbas_query_metric(
                         value,
-                        re.sub('[ \(\)&]', '_', key),
+                        re.sub('[ ()&]', '_', key),
                         "Avg query latency (ms) " + key,
                         CBASBigfunQueryTest.__name__ + '{0:02d}'.format(orderby_step) + key)
                 )

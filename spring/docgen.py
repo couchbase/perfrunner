@@ -531,7 +531,7 @@ class ReverseLookupDocument(NestedDocument):
             return '%s' % alphabet[offset:offset + 6]
 
         index = seq_id // num_unique
-        return '%s_%s_%s' % (self.prefix, num_unique, index)
+        return '%s_%d_%d' % (self.prefix, num_unique, index)
 
     def _build_topics(self, seq_id: int) -> List[str]:
         return []
@@ -580,7 +580,7 @@ class ReverseRangeLookupDocument(ReverseLookupDocument):
             return '%s' % alphabet[offset:offset + 6]
 
         index = seq_id // num_unique
-        return '%s_%s_%12s' % (self.prefix, num_unique, index)
+        return '%s_%d_%012d' % (self.prefix, num_unique, index)
 
     def next(self, key: Key) -> dict:
         alphabet = self._build_alphabet(key.string)

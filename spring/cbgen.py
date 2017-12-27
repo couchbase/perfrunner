@@ -80,8 +80,8 @@ class CBGen(CBAsyncGen):
                                                      kwargs['bucket'],
                                                      kwargs['password'])
 
-        self.client = Bucket(connection_string=connection_string)
-        self.client.timeout = self.TIMEOUT
+        self.client = Bucket(connection_string=connection_string,
+                             timeout=self.TIMEOUT)
 
         self.session = requests.Session()
         self.session.auth = (kwargs['username'], kwargs['password'])

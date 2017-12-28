@@ -2,7 +2,7 @@
 test = perfrunner.tests.cbas.CBASBigfunDataSyncRebalanceCBASTest
 
 [showfast]
-title = Sync data (BigFun 10K dataset) (cbas node rebalance in) 
+title = Sync data (BigFun 10K dataset) (cbas node rebalance in)
 component = analytics
 sub_category = BigFun 10K
 category = SyncREB

@@ -2,7 +2,7 @@
 test = perfrunner.tests.cbas.CBASBigfunDataSetTest
 
 [showfast]
-title = Sync data (BigFun 10M dataset) 
+title = Sync data (BigFun 10M dataset)
 component = analytics
 sub_category = BigFun 10M
 category = Sync

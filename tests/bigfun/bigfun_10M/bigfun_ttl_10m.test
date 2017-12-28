@@ -2,7 +2,7 @@
 test = perfrunner.tests.cbas.CBASBigfunDataSetTTLTest
 
 [showfast]
-title = TTL update (BigFun 10M dataset) 
+title = TTL update (BigFun 10M dataset)
 component = analytics
 sub_category = BigFun 10M
 category = Sync

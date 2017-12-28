@@ -4,7 +4,7 @@ test = perfrunner.tests.cbas.CBASBigfunQueryTest
 [showfast]
 title = Query without background traffic (BigFun 10K dataset) (3 parallel queries)
 component = analytics
-sub_category = BigFun 10K  
+sub_category = BigFun 10K
 category = Query
 
 [cluster]

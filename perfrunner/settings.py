@@ -226,8 +226,6 @@ class StatsSettings:
 
     POST_CPU = 0
 
-    SECONDARY_STATSFILE = '/root/statsfile'
-
     CBMONITOR = 'cbmonitor.sc.couchbase.com'
     SHOWFAST = 'showfast.sc.couchbase.com'
 
@@ -248,9 +246,6 @@ class StatsSettings:
                                               self.LAT_INTERVAL))
 
         self.post_cpu = int(options.get('post_cpu', self.POST_CPU))
-
-        self.secondary_statsfile = options.get('secondary_statsfile',
-                                               self.SECONDARY_STATSFILE)
 
         self.client_processes = self.CLIENT_PROCESSES + \
             options.get('client_processes', '').split()

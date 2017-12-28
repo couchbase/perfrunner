@@ -26,6 +26,8 @@ class SecondaryIndexTest(PerfTest):
     COLLECTORS = {'secondary_stats': True, 'secondary_debugstats': True,
                   'secondary_debugstats_bucket': True, 'secondary_debugstats_index': True}
 
+    SECONDARY_STATS_FILE = '/root/statsfile'
+
     def __init__(self, *args):
         super().__init__(*args)
 
@@ -39,8 +41,6 @@ class SecondaryIndexTest(PerfTest):
         self.storage = self.test_config.gsi_settings.storage
         self.indexes = self.test_config.gsi_settings.indexes
 
-        self.secondary_statsfile = self.test_config.stats_settings.secondary_statsfile
-
         self.index_nodes = self.cluster_spec.servers_by_role('index')
 
         self.bucket = self.test_config.buckets[0]
@@ -51,7 +51,7 @@ class SecondaryIndexTest(PerfTest):
             self.COLLECTORS["secondary_storage_stats_mm"] = True
 
     def remove_statsfile(self):
-        rmfile = "rm -f {}".format(self.test_config.stats_settings.secondary_statsfile)
+        rmfile = "rm -f {}".format(self.SECONDARY_STATS_FILE)
         status = subprocess.call(rmfile, shell=True)
         if status != 0:
             raise Exception('existing 2i latency stats file could not be removed')
@@ -459,7 +459,7 @@ class InitialIncrementalMovingScanThroughputTest(InitialIncrementalScanThroughpu
         """
         duration = 0
         lines = 0
-        with open(self.secondary_statsfile, 'r') as csvfile:
+        with open(self.SECONDARY_STATS_FILE, 'r') as csvfile:
             csv_reader = csv.reader(csvfile, delimiter=',')
             for row in csv_reader:
                 duration += int(row[2].split(":")[1])

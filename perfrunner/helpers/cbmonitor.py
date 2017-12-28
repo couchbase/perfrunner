@@ -81,7 +81,6 @@ def new_cbagent_settings(test: PerfTest):
         'cbmonitor_host': StatsSettings.CBMONITOR,
         'interval': test.test_config.stats_settings.interval,
         'lat_interval': test.test_config.stats_settings.lat_interval,
-        'secondary_statsfile': test.test_config.stats_settings.secondary_statsfile,
         'buckets': buckets,
         'indexes': test.test_config.gsi_settings.indexes,
         'hostnames': hostnames,

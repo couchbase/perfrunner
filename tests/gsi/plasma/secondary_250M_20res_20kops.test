@@ -49,7 +49,6 @@ scan_time = 1500
 updates = 100
 ops = 60000000
 items = 250000000
-existing_items = 250000000
 throughput = 20000
 workers = 100
 working_set = 20

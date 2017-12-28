@@ -292,8 +292,7 @@ class CbAgent:
             collector = XdcrLag(settings, self.test.test_config.access_settings)
             self.collectors.append(collector)
 
-            if self.test.test_config.xdcr_settings.replication_type == 'unidir':
-                break
+            break
 
     def add_cbas_lag(self):
         for cluster_id, master_node in self.cluster_map.items():

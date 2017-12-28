@@ -356,7 +356,6 @@ class PhaseSettings:
     KEY_FMTR = 'decimal'
 
     ITEMS = 0
-    EXISTING_ITEMS = 0
     SIZE = 2048
 
     WORKING_SET = 100
@@ -471,8 +470,6 @@ class PhaseSettings:
             self.n1ql_queries = options.get('n1ql_queries').strip().split(',')
 
         # 2i settings
-        self.existing_items = int(options.get('existing_items',
-                                              self.EXISTING_ITEMS))
         self.item_size = int(options.get('item_size', self.ITEM_SIZE))
         self.size_variation_min = int(options.get('size_variation_min',
                                                   self.SIZE_VARIATION_MIN))
@@ -518,12 +515,10 @@ class HotLoadSettings(PhaseSettings):
 
 class RestoreSettings:
 
-    SNAPSHOT = None
     BACKUP_STORAGE = '/backups'
     BACKUP_REPO = ''
 
     def __init__(self, options):
-        self.snapshot = options.get('snapshot', self.SNAPSHOT)
         self.backup_storage = options.get('backup_storage', self.BACKUP_STORAGE)
         self.backup_repo = options.get('backup_repo', self.BACKUP_REPO)
 
@@ -533,20 +528,15 @@ class RestoreSettings:
 
 class XDCRSettings:
 
-    XDCR_REPLICATION_TYPE = 'unidir'
-    XDCR_USE_SSL = False
+    USE_SSL = False
     WAN_DELAY = 0
-    FILTER_EXPRESSION = None
 
     def __init__(self, options: dict):
-        self.replication_type = options.get('replication_type',
-                                            self.XDCR_REPLICATION_TYPE)
         self.use_ssl = int(options.get('use_ssl',
-                                       self.XDCR_USE_SSL))
+                                       self.USE_SSL))
         self.wan_delay = int(options.get('wan_delay',
                                          self.WAN_DELAY))
-        self.filter_expression = options.get('filter_expression',
-                                             self.FILTER_EXPRESSION)
+        self.filter_expression = options.get('filter_expression')
 
     def __str__(self) -> str:
         return str(self.__dict__)
@@ -602,12 +592,8 @@ class CBASSettings:
 
 class GSISettings:
 
-    STALE = 'true'
     CBINDEXPERF_CONFIGFILE = ''
     CBINDEXPERF_CONFIGFILES = ''
-    INIT_NUM_CONNECTIONS = 0
-    STEP_NUM_CONNECTIONS = 0
-    MAX_NUM_CONNECTIONS = 0
     RUN_RECOVERY_TEST = 0
     INCREMENTAL_LOAD_ITERATIONS = 0
     SCAN_TIME = 1200
@@ -624,17 +610,10 @@ class GSISettings:
                     field = ','.join(field.split(' '))
                 self.indexes[name] = field
 
-        self.stale = options.get('stale', self.STALE)
         self.cbindexperf_configfile = options.get('cbindexperf_configfile',
                                                   self.CBINDEXPERF_CONFIGFILE)
         self.cbindexperf_configfiles = options.get('cbindexperf_configfiles',
                                                    self.CBINDEXPERF_CONFIGFILES)
-        self.init_num_connections = int(options.get('init_num_connections',
-                                                    self.INIT_NUM_CONNECTIONS))
-        self.step_num_connections = int(options.get('step_num_connections',
-                                                    self.STEP_NUM_CONNECTIONS))
-        self.max_num_connections = int(options.get('max_num_connections',
-                                                   self.MAX_NUM_CONNECTIONS))
         self.run_recovery_test = int(options.get('run_recovery_test',
                                                  self.RUN_RECOVERY_TEST))
         self.incremental_only = int(options.get('incremental_only',
@@ -671,12 +650,10 @@ class GSISettings:
 class DCPSettings:
 
     NUM_CONNECTIONS = 4
-    BUCKET = "bucket-1"
 
     def __init__(self, options: dict):
         self.num_connections = int(options.get('num_connections',
                                                self.NUM_CONNECTIONS))
-        self.bucket = options.get('bucket', self.BUCKET)
 
     def __str__(self) -> str:
         return str(self.__dict__)
@@ -797,6 +774,7 @@ class YCSBSettings:
 
 
 class BigfunSettings:
+
     SOCIALGEN_REPO = 'git://github.com/couchbaselabs/socialGen.git'
     SOCIALGEN_BRANCH = 'master'
     LOADER_REPO = 'git://github.com/couchbaselabs/loader.git'

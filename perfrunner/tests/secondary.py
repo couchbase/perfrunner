@@ -31,9 +31,6 @@ class SecondaryIndexTest(PerfTest):
 
         self.configfile = self.test_config.gsi_settings.cbindexperf_configfile
         self.configfiles = self.test_config.gsi_settings.cbindexperf_configfiles.split(",")
-        self.init_num_connections = self.test_config.gsi_settings.init_num_connections
-        self.step_num_connections = self.test_config.gsi_settings.step_num_connections
-        self.max_num_connections = self.test_config.gsi_settings.max_num_connections
         self.run_recovery_test = self.test_config.gsi_settings.run_recovery_test
         self.incremental_only = self.test_config.gsi_settings.incremental_only
         self.incremental_load_iterations = self.test_config.gsi_settings.incremental_load_iterations

@@ -40,6 +40,5 @@ indexer.settings.max_cpu_percent = 4800
 updates = 100
 ops = 5000000000
 items = 5000000000
-existing_items = 5000000000
 workers = 100
 throughput = 100000

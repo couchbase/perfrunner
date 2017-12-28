@@ -40,7 +40,6 @@ memory_quota = 20480
 [access]
 updates = 100
 items = 50000000
-existing_items = 50000000
 workers = 1
 throughput = 100
 time = 300

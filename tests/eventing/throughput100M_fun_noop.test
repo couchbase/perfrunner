@@ -40,6 +40,5 @@ cpp_worker_thread_count = 2
 [access]
 updates = 100
 items = 100000000
-existing_items = 100000000
 workers = 100
 time = 1200

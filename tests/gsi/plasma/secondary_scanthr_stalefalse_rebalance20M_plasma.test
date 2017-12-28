@@ -43,7 +43,6 @@ indexer.settings.gc_percent = 200
 [access]
 updates = 100
 items = 20000000
-existing_items = 20000000
 ops = 300000000
 throughput = 100000
 workers = 80

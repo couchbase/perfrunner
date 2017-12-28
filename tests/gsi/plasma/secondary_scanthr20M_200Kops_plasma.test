@@ -44,6 +44,5 @@ creates = 10
 updates = 80
 deletes = 10
 items = 20000000
-existing_items = 20000000
 workers = 100
 throughput = 200000

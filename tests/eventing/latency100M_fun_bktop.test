@@ -41,7 +41,6 @@ worker_queue_cap = 100000
 [access]
 updates = 100
 items = 100000000
-existing_items = 100000000
 workers = 100
 throughput = 100000
 time = 1200

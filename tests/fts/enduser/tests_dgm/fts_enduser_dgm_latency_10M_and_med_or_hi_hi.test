@@ -23,7 +23,6 @@ num_buckets = 1
 fts_index_mem_quota = 10000
 kernel_mem_limit = 16G
 
-
 [fts]
 items = 10000000
 name  = perf_fts_index

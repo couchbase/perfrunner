@@ -7,7 +7,6 @@ component = fts
 category = end_user_non_dgm
 sub_category = Throughput
 
-
 [access]
 fts_updates_swap = 100
 workers = 2

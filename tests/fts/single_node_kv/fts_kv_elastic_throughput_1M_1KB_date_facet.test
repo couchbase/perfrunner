@@ -7,7 +7,6 @@ component = fts
 category = benchmark_kv
 sub_category = Throughput
 
-
 [access]
 time = 600
 fts_updates_swap = 100

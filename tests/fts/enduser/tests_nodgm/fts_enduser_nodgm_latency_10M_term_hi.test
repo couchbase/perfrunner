@@ -7,7 +7,6 @@ component = fts
 category = end_user_non_dgm
 sub_category = Latency
 
-
 [stats]
 lat_interval = 0.1
 
@@ -22,7 +21,6 @@ mem_quota = 80000
 initial_nodes = 2
 num_buckets = 1
 fts_index_mem_quota = 10000
-
 
 [fts]
 items = 10000000

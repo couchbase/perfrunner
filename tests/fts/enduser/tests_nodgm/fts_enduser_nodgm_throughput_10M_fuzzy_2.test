@@ -7,13 +7,11 @@ component = fts
 category = end_user_non_dgm
 sub_category = Throughput
 
-
 [access]
 time = 600
 fts_updates_swap = 100
 workers = 2
 throughput = 500
-
 
 [cluster]
 mem_quota = 80000

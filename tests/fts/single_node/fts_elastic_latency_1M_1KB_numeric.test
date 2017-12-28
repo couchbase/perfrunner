@@ -29,7 +29,6 @@ index_configfile = tests/fts/index/elastic_6shards.json
 [access]
 time = 600
 
-
 [cluster]
 mem_quota = 51024
 initial_nodes = 1

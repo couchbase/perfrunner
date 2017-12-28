@@ -10,7 +10,6 @@ sub_category = Throughput
 [access]
 time = 600
 
-
 [fts]
 items = 1000000
 name  = perf_elastic_index

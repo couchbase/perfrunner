@@ -26,7 +26,6 @@ repo_path = fts_wiki
 field = text
 index_configfile = tests/fts/index/elastic_6shards.json
 
-
 [access]
 time = 1200
 
@@ -34,5 +33,4 @@ time = 1200
 mem_quota = 51024
 initial_nodes = 3
 num_buckets = 1
-
 

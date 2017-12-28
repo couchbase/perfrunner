@@ -7,7 +7,6 @@ component = fts
 category = benchmark_3_nodes
 sub_category = Throughput
 
-
 [fts]
 items = 3273681
 name  = perf_elastic_index

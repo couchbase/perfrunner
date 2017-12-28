@@ -10,7 +10,6 @@ sub_category = Latency
 [stats]
 lat_interval = 0.1
 
-
 [access]
 time = 1200
 fts_updates_swap = 100

@@ -18,7 +18,6 @@ initial_nodes = 1
 num_buckets = 1
 fts_index_mem_quota = 20000
 
-
 [fts]
 items = 1000000
 name  = perf_fts_index

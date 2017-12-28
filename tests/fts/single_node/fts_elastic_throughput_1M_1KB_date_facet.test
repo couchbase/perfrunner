@@ -7,7 +7,6 @@ component = fts
 category = benchmark
 sub_category = Throughput
 
-
 [access]
 time = 600
 

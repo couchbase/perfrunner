@@ -22,7 +22,6 @@ nodes_after = 3
 start_after = 180
 stop_after = 180
 
-
 [fts]
 items = 17386753
 name  = perf_fts_index

@@ -9,8 +9,6 @@ category = kvlatency
 [stats]
 lat_interval = 0.01
 
-
-
 [cluster]
 mem_quota = 51024
 initial_nodes = 1

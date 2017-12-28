@@ -31,4 +31,3 @@ mem_quota = 51024
 initial_nodes = 3
 num_buckets = 1
 
-

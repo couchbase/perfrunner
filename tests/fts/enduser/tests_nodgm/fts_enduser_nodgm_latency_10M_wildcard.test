@@ -7,7 +7,6 @@ component = fts
 category = end_user_non_dgm
 sub_category = Latency
 
-
 [stats]
 lat_interval = 0.1
 

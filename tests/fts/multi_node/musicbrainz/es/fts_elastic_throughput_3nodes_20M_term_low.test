@@ -14,7 +14,6 @@ mem_quota = 51024
 initial_nodes = 3
 num_buckets = 1
 
-
 [fts]
 items = 17386753
 name  = perf_fts_index

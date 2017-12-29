@@ -527,12 +527,12 @@ class Monitor(RestHelper):
             time.sleep(self._get_bigfun_retry_sleep_interval(retry))
             retry += 1
 
-    def wait_for_timer_event(self, node: str, function: str):
+    def wait_for_timer_event(self, node: str, function: str, event="DOC_TIMER_EVENTS"):
         logger.info('Waiting for timer events to start processing: {} '.format(function))
         retry = 1
         while retry < self.MAX_RETRY_TIMER_EVENT:
             if 0 < self.get_num_events_processed(
-                    event="DOC_TIMER_EVENTS", node=node, name=function):
+                    event=event, node=node, name=function):
                 break
             time.sleep(self.POLLING_INTERVAL_TIMER_EVENT)
             retry += 1

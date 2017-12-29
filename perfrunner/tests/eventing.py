@@ -193,6 +193,26 @@ class TimerThroughputTest(TimerTest):
         )
 
 
+class CronTimerThroughputTest(TimerTest):
+    EVENT_NAME = "CRON_TIMER_EVENTS"
+
+    @with_stats
+    def process_timer_events(self):
+        for name, filename in self.functions.items():
+            self.monitor.wait_for_timer_event(node=self.eventing_nodes[0],
+                                              function=name,
+                                              event=self.EVENT_NAME)
+            break
+        self.sleep()
+
+    def _report_kpi(self, time_elapsed):
+        self.reporter.post(
+            *self.metrics.function_throughput(time=time_elapsed,
+                                              event_name=self.EVENT_NAME,
+                                              events_processed=0)
+        )
+
+
 class FunctionsLatencyTest(EventingTest):
     def _report_kpi(self, time_elapsed):
         latency_stats = self.process_latency_stats()

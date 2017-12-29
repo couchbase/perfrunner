@@ -7,7 +7,7 @@ import requests
 
 from logger import logger
 from perfrunner.helpers.misc import pretty_dict, uhex
-from perfrunner.settings import ClusterSpec, StatsSettings, TestConfig
+from perfrunner.settings import SHOWFAST_HOST, ClusterSpec, TestConfig
 
 JSON = Dict[str, Any]
 
@@ -30,7 +30,7 @@ class ShowFastReporter(Reporter):
         cluster['Name'] = self.cluster_spec.name
 
         logger.info('Adding a cluster: {}'.format(pretty_dict(cluster)))
-        requests.post('http://{}/api/v1/clusters'.format(StatsSettings.SHOWFAST),
+        requests.post('http://{}/api/v1/clusters'.format(SHOWFAST_HOST),
                       json.dumps(cluster))
 
     def _post_metric(self, metric: JSON) -> None:
@@ -44,7 +44,7 @@ class ShowFastReporter(Reporter):
         })
 
         logger.info('Adding a metric: {}'.format(pretty_dict(metric)))
-        requests.post('http://{}/api/v1/metrics'.format(StatsSettings.SHOWFAST),
+        requests.post('http://{}/api/v1/metrics'.format(SHOWFAST_HOST),
                       json.dumps(metric))
 
     def _generate_benchmark(self,
@@ -68,7 +68,7 @@ class ShowFastReporter(Reporter):
     @staticmethod
     def _post_benchmark(benchmark: JSON) -> None:
         logger.info('Adding a benchmark: {}'.format(pretty_dict(benchmark)))
-        requests.post('http://{}/api/v1/benchmarks'.format(StatsSettings.SHOWFAST),
+        requests.post('http://{}/api/v1/benchmarks'.format(SHOWFAST_HOST),
                       json.dumps(benchmark))
 
     def post(self,
@@ -92,7 +92,7 @@ class DailyReporter(Reporter):
     def _post_daily_benchmark(benchmark: JSON) -> None:
         logger.info('Adding a benchmark: {}'.format(pretty_dict(benchmark)))
         requests.post(
-            'http://{}/daily/api/v1/benchmarks'.format(StatsSettings.SHOWFAST),
+            'http://{}/daily/api/v1/benchmarks'.format(SHOWFAST_HOST),
             json.dumps(benchmark))
 
     @staticmethod

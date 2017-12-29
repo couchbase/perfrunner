@@ -8,6 +8,8 @@ from decorator import decorator
 from logger import logger
 from perfrunner.helpers.misc import target_hash
 
+CBMONITOR_HOST = 'cbmonitor.sc.couchbase.com'
+SHOWFAST_HOST = 'showfast.sc.couchbase.com'
 REPO = 'https://github.com/couchbase/perfrunner'
 
 
@@ -225,9 +227,6 @@ class StatsSettings:
     LAT_INTERVAL = 1
 
     POST_CPU = 0
-
-    CBMONITOR = 'cbmonitor.sc.couchbase.com'
-    SHOWFAST = 'showfast.sc.couchbase.com'
 
     CLIENT_PROCESSES = []
     SERVER_PROCESSES = ['beam.smp',

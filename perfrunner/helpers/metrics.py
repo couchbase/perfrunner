@@ -8,7 +8,7 @@ import numpy as np
 
 from cbagent.stores import PerfStore
 from logger import logger
-from perfrunner.settings import StatsSettings
+from perfrunner.settings import CBMONITOR_HOST
 
 Number = Union[float, int]
 
@@ -37,7 +37,7 @@ class MetricHelper:
         self.test_config = test.test_config
         self.cluster_spec = test.cluster_spec
 
-        self.store = PerfStore(StatsSettings.CBMONITOR)
+        self.store = PerfStore(CBMONITOR_HOST)
 
     @property
     def _title(self) -> str:

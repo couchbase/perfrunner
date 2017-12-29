@@ -47,7 +47,7 @@ from cbagent.metadata_client import MetadataClient
 from cbagent.stores import PerfStore
 from logger import logger
 from perfrunner.helpers.misc import pretty_dict, uhex
-from perfrunner.settings import StatsSettings
+from perfrunner.settings import CBMONITOR_HOST
 from perfrunner.tests import PerfTest
 
 
@@ -78,7 +78,7 @@ def new_cbagent_settings(test: PerfTest):
         hostnames = None
 
     settings = type('settings', (object,), {
-        'cbmonitor_host': StatsSettings.CBMONITOR,
+        'cbmonitor_host': CBMONITOR_HOST,
         'interval': test.test_config.stats_settings.interval,
         'lat_interval': test.test_config.stats_settings.lat_interval,
         'buckets': buckets,
@@ -341,7 +341,7 @@ class CbAgent:
             self.test.cbmonitor_snapshots.append(cluster_id)
 
     def find_time_series(self):
-        store = PerfStore(host=StatsSettings.CBMONITOR)
+        store = PerfStore(host=CBMONITOR_HOST)
         dbs = []
         for cluster_id in self.test.cbmonitor_clusters:
             dbs += store.find_dbs(cluster_id)

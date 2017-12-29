@@ -515,14 +515,6 @@ class HotLoadSettings(PhaseSettings):
 
     HOT_READS = True
 
-    def __init__(self, options: dict):
-        if 'size' in options:
-            logger.interrupt(
-                "The document `size` may only be set in the [load] "
-                "and not in the [hot_load] section")
-
-        super(HotLoadSettings, self).__init__(options)
-
 
 class RestoreSettings:
 
@@ -710,14 +702,6 @@ class N1QLSettings:
 class AccessSettings(PhaseSettings):
 
     OPS = float('inf')
-
-    def __init__(self, options):
-        if 'size' in options:
-            logger.interrupt(
-                "The document `size` may only be set in the [load] "
-                "and not in the [access] section")
-
-        super(AccessSettings, self).__init__(options)
 
     def define_queries(self, config) -> None:
         queries = []

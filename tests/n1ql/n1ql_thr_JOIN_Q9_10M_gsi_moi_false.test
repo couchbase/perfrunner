@@ -47,6 +47,6 @@ n1ql_workers = 720
 doc_gen = ext_reverse_lookup,join
 
 [n1ql-index-join]
-statement = SELECT u.name, t.title FROM `bucket-1` u JOIN `bucket-2` t ON KEY t.owner FOR u WHERE u.email = $1;
+statement = SELECT u.name, t.title FROM `bucket-1` u JOIN `bucket-2` t ON META(u).id = t.owner WHERE u.email = $1;
 scan_consistency = request_plus
 args = ["{email}"]

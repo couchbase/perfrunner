@@ -575,25 +575,6 @@ class IndexSettings:
         return str(self.__dict__)
 
 
-class UnitTestSettings:
-
-    """For test developers to try new test approaches.
-
-    Keep the code here in case need to try something
-    later
-    """
-
-    RAISE_EXCEPTION = 0
-    SLEEP_SEC = 30
-
-    def __init__(self, options: dict):
-        self.raise_exception = bool(int(options.get('raise_exception', self.RAISE_EXCEPTION)))
-        self.sleep_sec = int(options.get('sleep_sec', self.SLEEP_SEC))
-
-    def __str__(self) -> str:
-        return str(self.__dict__)
-
-
 class CBASSettings:
 
     CBAS_LAG_TIMEOUT = 600
@@ -960,11 +941,6 @@ class TestConfig(Config):
     def cbas_settings(self) -> CBASSettings:
         options = self._get_options_as_dict('cbas_settings')
         return CBASSettings(options)
-
-    @property
-    def unittest_settings(self) -> UnitTestSettings:
-        options = self._get_options_as_dict('unit_test')
-        return UnitTestSettings(options)
 
     @property
     def export_settings(self) -> ExportSettings:

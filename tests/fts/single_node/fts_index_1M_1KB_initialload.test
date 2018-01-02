@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.fts.FTSIndexTest
+
+[showfast]
 title = wiki 1M x 1KB
 component = fts
 category = benchmark

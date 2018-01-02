@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLDGMLatencyTest
+
+[showfast]
 title = Q2, Singleton Unique Lookup, 450 queries/sec, Plasma, request_plus
 component = n1ql
 category = dgm

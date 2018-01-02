@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.fts.FTSThroughputTest
+
+[showfast]
 title = TermDateFacets, no kv-load, wiki 1M x 1KB
 component = fts
 category = benchmark_3_nodes

@@ -1,9 +1,11 @@
 [test_case]
 test = perfrunner.tests.kv.PathoGenFrozenTest
+use_workers = 0
+
+[showfast]
 title = Max RSS (MB), 1 bucket x 1M, PathoGen Frozen 8B -> 8192B
 component = kv
 category = memory
-use_workers = 0
 
 [cluster]
 mem_quota = 8192

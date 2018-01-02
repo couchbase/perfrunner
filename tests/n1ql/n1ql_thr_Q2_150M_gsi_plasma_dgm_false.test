@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLDGMThroughputTest
+
+[showfast]
 title = Q2, Singleton Unique Lookup, Plasma, DGM, request_plus
 component = n1ql
 category = dgm

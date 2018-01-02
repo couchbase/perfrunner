@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.rebalance.RebalanceBaselineForFTS
+
+[showfast]
 title = Rebalance-in (min), 2 -> 3, KV only, music 20M
 component = fts
 category = rebalance

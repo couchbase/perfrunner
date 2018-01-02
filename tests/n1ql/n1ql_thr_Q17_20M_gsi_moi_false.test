@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
+
+[showfast]
 title = Q17, Range Scan with Limit, MOI, request_plus
 component = n1ql
 category = pagination

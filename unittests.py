@@ -51,92 +51,92 @@ class SettingsTest(TestCase):
         for file in glob.glob("tests/fts/enduser/tests_dgm/*latency*.test"):
             test_config = TestConfig()
             test_config.parse(file)
-            self.assertEqual(test_config.test_case.category, 'end_user_dgm')
-            self.assertEqual(test_config.test_case.sub_category, 'Latency')
+            self.assertEqual(test_config.showfast.category, 'end_user_dgm')
+            self.assertEqual(test_config.showfast.sub_category, 'Latency')
 
         for file in glob.glob("tests/fts/enduser/tests_dgm/*throughput*.test"):
             test_config = TestConfig()
             test_config.parse(file)
-            self.assertEqual(test_config.test_case.category, 'end_user_dgm')
-            self.assertEqual(test_config.test_case.sub_category, 'Throughput')
+            self.assertEqual(test_config.showfast.category, 'end_user_dgm')
+            self.assertEqual(test_config.showfast.sub_category, 'Throughput')
 
         for file in glob.glob("tests/fts/enduser/tests_dgm/*index*.test"):
             test_config = TestConfig()
             test_config.parse(file)
-            self.assertEqual(test_config.test_case.category, 'end_user_dgm')
-            self.assertEqual(test_config.test_case.sub_category, 'Index')
+            self.assertEqual(test_config.showfast.category, 'end_user_dgm')
+            self.assertEqual(test_config.showfast.sub_category, 'Index')
 
         for file in glob.glob("tests/fts/enduser/tests_nodgm/*latency*.test"):
             test_config = TestConfig()
             test_config.parse(file)
-            self.assertEqual(test_config.test_case.category, 'end_user_non_dgm')
-            self.assertEqual(test_config.test_case.sub_category, 'Latency')
+            self.assertEqual(test_config.showfast.category, 'end_user_non_dgm')
+            self.assertEqual(test_config.showfast.sub_category, 'Latency')
 
         for file in glob.glob("tests/fts/enduser/tests_nodgm/*throughput*.test"):
             test_config = TestConfig()
             test_config.parse(file)
-            self.assertEqual(test_config.test_case.category, 'end_user_non_dgm')
-            self.assertEqual(test_config.test_case.sub_category, 'Throughput')
+            self.assertEqual(test_config.showfast.category, 'end_user_non_dgm')
+            self.assertEqual(test_config.showfast.sub_category, 'Throughput')
 
         for file in glob.glob("tests/fts/enduser/tests_nodgm/*index*.test"):
             test_config = TestConfig()
             test_config.parse(file)
-            self.assertEqual(test_config.test_case.category, 'end_user_non_dgm')
-            self.assertEqual(test_config.test_case.sub_category, 'Index')
+            self.assertEqual(test_config.showfast.category, 'end_user_non_dgm')
+            self.assertEqual(test_config.showfast.sub_category, 'Index')
 
         for file in glob.glob("tests/fts/multi_node/*latency*.test"):
             test_config = TestConfig()
             test_config.parse(file)
-            self.assertEqual(test_config.test_case.category, 'benchmark_3_nodes')
-            self.assertEqual(test_config.test_case.sub_category, 'Latency')
+            self.assertEqual(test_config.showfast.category, 'benchmark_3_nodes')
+            self.assertEqual(test_config.showfast.sub_category, 'Latency')
 
         for file in glob.glob("tests/fts/multi_node/*throughput*.test"):
             test_config = TestConfig()
             test_config.parse(file)
-            self.assertEqual(test_config.test_case.category, 'benchmark_3_nodes')
-            self.assertEqual(test_config.test_case.sub_category, 'Throughput')
+            self.assertEqual(test_config.showfast.category, 'benchmark_3_nodes')
+            self.assertEqual(test_config.showfast.sub_category, 'Throughput')
 
         for file in glob.glob("tests/fts/multi_node/*index*.test"):
             test_config = TestConfig()
             test_config.parse(file)
-            self.assertEqual(test_config.test_case.category, 'benchmark_3_nodes')
-            self.assertEqual(test_config.test_case.sub_category, 'Index')
+            self.assertEqual(test_config.showfast.category, 'benchmark_3_nodes')
+            self.assertEqual(test_config.showfast.sub_category, 'Index')
 
         for file in glob.glob("tests/fts/rebalance/*.test"):
             test_config = TestConfig()
             test_config.parse(file)
-            self.assertEqual(test_config.test_case.category, 'benchmark')
-            self.assertEqual(test_config.test_case.sub_category, 'Rebalance')
+            self.assertEqual(test_config.showfast.category, 'benchmark')
+            self.assertEqual(test_config.showfast.sub_category, 'Rebalance')
 
         for file in glob.glob("tests/fts/single_node/*latency*.test"):
             test_config = TestConfig()
             test_config.parse(file)
-            self.assertEqual(test_config.test_case.category, 'benchmark')
-            self.assertEqual(test_config.test_case.sub_category, 'Latency')
+            self.assertEqual(test_config.showfast.category, 'benchmark')
+            self.assertEqual(test_config.showfast.sub_category, 'Latency')
 
         for file in glob.glob("tests/fts/single_node/*throughput*.test"):
             test_config = TestConfig()
             test_config.parse(file)
-            self.assertEqual(test_config.test_case.category, 'benchmark')
-            self.assertEqual(test_config.test_case.sub_category, 'Throughput')
+            self.assertEqual(test_config.showfast.category, 'benchmark')
+            self.assertEqual(test_config.showfast.sub_category, 'Throughput')
 
         for file in glob.glob("tests/fts/single_node/*index*.test"):
             test_config = TestConfig()
             test_config.parse(file)
-            self.assertEqual(test_config.test_case.category, 'benchmark')
-            self.assertEqual(test_config.test_case.sub_category, 'Index')
+            self.assertEqual(test_config.showfast.category, 'benchmark')
+            self.assertEqual(test_config.showfast.sub_category, 'Index')
 
         for file in glob.glob("tests/fts/single_node_kv/*latency*.test"):
             test_config = TestConfig()
             test_config.parse(file)
-            self.assertEqual(test_config.test_case.category, 'benchmark_kv')
-            self.assertEqual(test_config.test_case.sub_category, 'Latency')
+            self.assertEqual(test_config.showfast.category, 'benchmark_kv')
+            self.assertEqual(test_config.showfast.sub_category, 'Latency')
 
         for file in glob.glob("tests/fts/single_node_kv/*throughput*.test"):
             test_config = TestConfig()
             test_config.parse(file)
-            self.assertEqual(test_config.test_case.category, 'benchmark_kv')
-            self.assertEqual(test_config.test_case.sub_category, 'Throughput')
+            self.assertEqual(test_config.showfast.category, 'benchmark_kv')
+            self.assertEqual(test_config.showfast.sub_category, 'Throughput')
 
 
 class WorkloadTest(TestCase):

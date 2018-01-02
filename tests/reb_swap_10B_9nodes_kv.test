@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.rebalance.RebalanceKVTest
+
+[showfast]
 title = Rebalance-swap (min), 9 -> 9, 10B x 1KB, 15K ops/sec (90/10 R/W), 10%% cache miss rate
 component = reb
 category = kv

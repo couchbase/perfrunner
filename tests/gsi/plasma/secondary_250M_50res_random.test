@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.secondary.InitialandIncrementalDGMSecondaryIndexTest
+
+[showfast]
 title = 1 bucket x 250M, single 2i index, 100K KV ops/sec, random workload, 50%% Resident, PLASMA
 component = secondary
 sub_category = PlasmaDGM

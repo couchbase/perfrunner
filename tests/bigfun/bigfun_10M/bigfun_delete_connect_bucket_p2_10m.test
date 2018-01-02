@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.cbas.CBASBigfunCleanupBucketTest
+
+[showfast]
 title = Delete connected bucket (BigFun 10M dataset) 
 component = analytics
 sub_category = BigFun 10M

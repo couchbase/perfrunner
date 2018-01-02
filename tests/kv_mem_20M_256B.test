@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.kv.MemoryOverheadTest
+
+[showfast]
 title = Memory overhead (%%), 1 bucket x 20M x 256B
 component = kv
 category = memory

@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.rebalance.RebalanceKVTest
+
+[showfast]
 title = Rebalance-swap (min), 3 -> 3 / 1, 1 bucket x 100M x 2KB, 10K ops/sec
 component = reb
 category = kv

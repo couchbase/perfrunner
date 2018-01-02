@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.cbas.CBASBigfunTest
+
+[showfast]
 title = Load 10M dataset bigfun data into Couchbase for CBAS investigation
 component = analytics
 sub_category = BigFun 10M

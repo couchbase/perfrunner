@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.secondary.SecondaryIndexingThroughputTest
+
+[showfast]
 title = Secondary index scan stale=false throughput (scanps), 1 bucket x 20M x 1KB, 100K KV ops/sec, single index, MOI
 component = secondary
 category = thr

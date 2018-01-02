@@ -255,9 +255,9 @@ class CbAgent:
             'client': {},
             'server': {'data': data_path},
         }
-        if self.test.test_config.test_case.component == 'views':
+        if self.test.test_config.showfast.component == 'views':
             partitions['server']['index'] = index_path
-        elif self.test.test_config.test_case.component == 'tools':
+        elif self.test.test_config.showfast.component == 'tools':
             partitions['client']['tools'] = self.test.cluster_spec.backup
 
         for cluster_id, master_node in self.cluster_map.items():

@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.fts.FTSIndexTest
+
+[showfast]
 title = wiki 10M x 1KB, 16GB RAM
 component = fts
 category = end_user_non_dgm

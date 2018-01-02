@@ -41,7 +41,7 @@ class MetricHelper:
 
     @property
     def _title(self) -> str:
-        return self.test_config.test_case.title
+        return self.test_config.showfast.title
 
     @property
     def _snapshots(self) -> List[str]:
@@ -66,7 +66,7 @@ class MetricHelper:
                      round_digits: int = 0) -> Metric:
         metric_id = '{}_{}'.format(self.test_config.name, name)
         order_by = '{}_{}'.format(self.test_config.name, order_by_in_test)
-        title = '{}, {}'.format(self.test_config.test_case.title, title)
+        title = '{}, {}'.format(self.test_config.showfast.title, title)
         metric_info = self._metric_info(metric_id, title, order_by)
         return round(value_sec, round_digits), self._snapshots, metric_info
 
@@ -75,13 +75,13 @@ class MetricHelper:
                           round_digits: int = 0) -> Metric:
         metric_id = '{}_{}'.format(self.test_config.name, name)
         order_by = '{}_q_{}'.format(self.test_config.name, order_by_in_test)
-        title = '{}, {}'.format(self.test_config.test_case.title, title)
+        title = '{}, {}'.format(self.test_config.showfast.title, title)
         metric_info = self._metric_info(metric_id, title, order_by)
         return round(value, round_digits), self._snapshots, metric_info
 
     def ycsb_queries(self, value: float, name: str, title: str) -> Metric:
         metric_id = '{}_{}'.format(self.test_config.name, name)
-        title = '{}, {}'.format(title, self.test_config.test_case.title)
+        title = '{}, {}'.format(title, self.test_config.showfast.title)
         metric_info = self._metric_info(metric_id, title)
         return value, self._snapshots, metric_info
 

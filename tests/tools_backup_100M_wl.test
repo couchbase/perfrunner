@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.tools.BackupUnderLoadTest
+
+[showfast]
 title = 4 nodes, 1 bucket x 100M x 1KB, DGM, 50K ops/sec
 component = tools
 category = backup

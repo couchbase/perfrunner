@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.ycsb.YCSBN1QLThroughputTest
+
+[showfast]
 title = Avg Throughput (queries/sec), Workload E, Plasma, 4 nodes
 component = n1ql
 category = ycsb

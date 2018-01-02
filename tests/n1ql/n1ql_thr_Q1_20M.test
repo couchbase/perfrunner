@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
+
+[showfast]
 title = Q1, Key-Value Lookup
 component = n1ql
 category = Q1_Q3_thr

@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.fts.FTSRebalanceTestThroughput
+
+[showfast]
 title = Rebalance-in, 2 -> 3, KV and FTS, music 20M, Med term, 60 workers
 component = fts
 category = rebalance

@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.xdcr.UniDirXdcrTest
+
+[showfast]
 title = 5 -> 5 (2 source nozzles, 4 target nozzles), 1 bucket x 1B x 1KB, 40K updates/sec, WAN 80±4 ms
 component = xdcr
 category = ongoing

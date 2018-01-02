@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.cbas.CBASBigfunQueryWithBGRebalanceCBASTest
+
+[showfast]
 title = Query with background traffic (BigFun 10M dataset) (3 parallel queries) (cbas node rebalance in)
 component = analytics
 sub_category = BigFun 10M

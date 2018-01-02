@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.cbas.CBASBigfunDataSyncRebalanceTest
+
+[showfast]
 title = Sync data (BigFun 10M dataset) (data node rebalance in)
 component = analytics
 sub_category = BigFun 10M

@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.elastic.ElasticLatencyTest
+
+[showfast]
 title = Low Term, no kv-load, musicbrainz 20M
 component = fts
 category = latency3

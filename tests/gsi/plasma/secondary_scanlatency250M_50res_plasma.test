@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.secondary.SecondaryIndexingMovingScanLatencyTest
+
+[showfast]
 title = Secondary index scan latency(ms), 1 bucket x 250M, 100K KV ops/sec, single index, 50%% Resident, PLASMA
 component = secondary
 category = lat

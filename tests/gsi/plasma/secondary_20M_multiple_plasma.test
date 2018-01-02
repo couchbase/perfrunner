@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
+
+[showfast]
 title = 1 bucket x 20M x 1KB,five 2i indexes, 100K KV ops/sec, no mutations during initial build only, PLASMA
 component = secondary
 sub_category = Plasma

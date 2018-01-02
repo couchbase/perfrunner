@@ -1,5 +1,7 @@
 [test_case]
 test = perfdaily.kv.RebalanceTest
+
+[showfast]
 title = Rebalance 3 -> 4, 100M x 1KB items, DGM, 10K mixed ops/sec
 component = KV
 threshold = 15

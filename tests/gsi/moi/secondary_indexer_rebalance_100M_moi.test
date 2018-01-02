@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.secondary.SecondaryRebalanceTest
+
+[showfast]
 title = GSI swap rebalance time(min), 1 bucket x 100M x 1KB, 100K KV ops/sec, single 2i index, MOI
 component = secondary
 category = lat

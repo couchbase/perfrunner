@@ -1,5 +1,7 @@
 [test_case]
 test = perfdaily.n1ql.N1QLThroughputTest
+
+[showfast]
 title = Q2, Singleton Unique Lookup, 5M docs, Plasma, not_bounded
 component = N1QL
 

@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
+
+[showfast]
 title = UP3, Key-Value Update
 component = n1ql
 category = iud

@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.eventing.FunctionsScalingThroughputTest
+
+[showfast]
 title = 1 bucket x 1B x 1KB, single function-BucketOp, 6KV + 1Eventing node
 component = eventing
 category = thr

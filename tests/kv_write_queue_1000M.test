@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.kv.DrainTest
+
+[showfast]
 title = Avg. write queue (items), 4 nodes, 1B x 1KB, 15K ops/sec (50/50 R/W), 5%% cache miss rate
 component = kv
 category = dgm

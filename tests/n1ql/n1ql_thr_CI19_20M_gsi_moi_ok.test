@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
+
+[showfast]
 title = CI19, Composite Filters (1000 -> 1), Covered, MOI, not_bounded
 component = n1ql
 category = API2

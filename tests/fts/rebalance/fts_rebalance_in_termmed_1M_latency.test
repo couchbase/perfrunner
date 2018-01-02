@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.fts.FTSRebalanceTestLatency
+
+[showfast]
 title = Rebalance-in, 2 -> 3, KV and FTS, wiki 1M, Med term, 1 worker
 component = fts
 category = benchmark

@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLLatencyTest
+
+[showfast]
 title = Q20, Count (2M matches), 300M docs, MOI, not_bounded
 component = n1ql
 category = count

@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.rebalance.GracefulFailoverTest
+
+[showfast]
 title = Graceful failover (ms), 4 -> 3, 1 bucket x 100M x 2KB, 10K ops/sec
 component = reb
 category = failover

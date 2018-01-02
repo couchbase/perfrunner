@@ -1,5 +1,7 @@
 [test_case]
 test = perfdaily.xdcr.XdcrInitTest
+
+[showfast]
 title = 1 -> 1 UniDir, 25M x 1KB items, Optimistic
 component = XDCR
 

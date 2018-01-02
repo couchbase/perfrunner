@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.views.QueryLatencyByTypeTest
+
+[showfast]
 title = 1 node, 20M docs, 3 views, 100 updates/sec, 100 queries/sec, stale=false, compute-intensive queries
 component = views
 category = by_type

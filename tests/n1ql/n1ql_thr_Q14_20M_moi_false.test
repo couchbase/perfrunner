@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
+
+[showfast]
 title = Q14, Exact + Text Search, MOI, request_plus
 component = n1ql
 category = tokens

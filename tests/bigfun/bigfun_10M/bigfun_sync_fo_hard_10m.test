@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.cbas.CBASBigfunDataSyncRecoveryTest
+
+[showfast]
 title = Sync data (BigFun 10M dataset) (data node hard failover and recover)
 component = analytics
 sub_category = BigFun 10M

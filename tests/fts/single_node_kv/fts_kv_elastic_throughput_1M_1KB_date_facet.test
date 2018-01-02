@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.elastic.ElasticThroughputTest
+
+[showfast]
 title =  TermDateFacets, wiki 1M x 1KB, 1K sets/sec kv load
 component = fts
 category = benchmark_kv

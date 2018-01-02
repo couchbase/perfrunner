@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.secondary.SecondaryIndexingThroughputTest
+
+[showfast]
 title = Secondary index scan stale=false throughput (scanps), 1 bucket x 20M x 1KB, 18K ops/sec, 3.6K mutations/sec, single index, FDB
 component = secondary
 category = thr

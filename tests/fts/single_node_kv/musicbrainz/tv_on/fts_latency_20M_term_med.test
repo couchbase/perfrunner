@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.fts.FTSLatencyTest
+
+[showfast]
 title = Med Term, 1K sets/sec kv load, musicbrainz 20M
 component = fts
 category = kvlatency

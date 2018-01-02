@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.elastic.ElasticLatencyTest
+
+[showfast]
 title = TermDateFacets, no kv-load, wiki 1M x 1KB, raw latency
 component = fts
 category = latency

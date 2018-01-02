@@ -1,9 +1,11 @@
 [test_case]
 test = perfrunner.tests.kv.PathoGenTest
+use_workers = 0
+
+[showfast]
 title = Max RSS (MB), 1 bucket x 10K, PathoGen 8B -> 256KB
 component = kv
 category = memory
-use_workers = 0
 
 [cluster]
 mem_quota = 8192

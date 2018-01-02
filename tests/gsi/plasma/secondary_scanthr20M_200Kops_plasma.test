@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.secondary.SecondaryIndexingThroughputTest
+
+[showfast]
 title = Secondary index scan throughput (scanps), 24 rows per scan, 1 bucket x 20M x 1KB, 200K KV ops/sec, single index, PLASMA
 component = secondary
 category = thr

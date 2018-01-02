@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.rebalance.RecoveryTest
+
+[showfast]
 title = Full recovery after graceful failover (min), 3 -> 4, 1 bucket x 100M x 2KB, 10K ops/sec
 component = reb
 category = recovery

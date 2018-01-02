@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLJoinTest
+
+[showfast]
 title = Q9, Inner Index Join, MOI, request_plus
 component = n1ql
 category = join_unnest

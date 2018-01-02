@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
+
+[showfast]
 title = CI6, Group By Query (1K matches), MOI, not_bounded
 component = n1ql
 category = Q5_Q7_thr

@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.xdcr.UniDirXdcrInitTest
+
+[showfast]
 title = Avg. initial XDCR rate (items/sec), 1 -> 1 (2 source nozzles, 4 target nozzles), 1 bucket x 100M x 1KB, LWW, Optimistic
 component = xdcr
 category = init_single

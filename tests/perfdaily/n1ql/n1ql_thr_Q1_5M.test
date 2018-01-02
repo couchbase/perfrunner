@@ -1,5 +1,7 @@
 [test_case]
 test = perfdaily.n1ql.N1QLThroughputTest
+
+[showfast]
 title = Q1, Key-Value Lookup, 5M docs
 component = N1QL
 

@@ -140,22 +140,25 @@ class ClusterSpec(Config):
 
 class TestCaseSettings:
 
-    THRESHOLD = -10
-
     USE_WORKERS = 1
 
     def __init__(self, options: dict):
         self.test_module = '.'.join(options.get('test').split('.')[:-1])
         self.test_class = options.get('test').split('.')[-1]
+        self.use_workers = int(options.get('use_workers', self.USE_WORKERS))
 
+
+class ShowFastSettings:
+
+    THRESHOLD = -10
+
+    def __init__(self, options: dict):
         self.title = options.get('title')
         self.component = options.get('component', '')
         self.category = options.get('category', '')
         self.sub_category = options.get('sub_category', '')
 
         self.threshold = int(options.get("threshold", self.THRESHOLD))
-
-        self.use_workers = int(options.get('use_workers', self.USE_WORKERS))
 
 
 class ClusterSettings:
@@ -862,6 +865,11 @@ class TestConfig(Config):
     def test_case(self) -> TestCaseSettings:
         options = self._get_options_as_dict('test_case')
         return TestCaseSettings(options)
+
+    @property
+    def showfast(self) -> ShowFastSettings:
+        options = self._get_options_as_dict('showfast')
+        return ShowFastSettings(options)
 
     @property
     def cluster(self) -> ClusterSettings:

@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.xdcr.UniDirXdcrTest
+
+[showfast]
 title = 4 -> 4 UniDir, 1 bucket x 500K x 300KB, 700 updates/sec, WAN 40±4 ms
 component = xdcr
 category = ongoing

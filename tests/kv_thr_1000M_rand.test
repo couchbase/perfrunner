@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.kv.ThroughputTest
+
+[showfast]
 title = Max ops/sec, 4 nodes, R & U, 1 bucket x 1B x 1KB, full ejection, random access
 component = kv
 category = dgm

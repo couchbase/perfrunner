@@ -1,5 +1,7 @@
 [test_case]
 test = perfdaily.n1ql.N1QLThroughputTest
+
+[showfast]
 title = Q3, Range Scan, 5M docs, MOI, not_bounded
 component = N1QL
 

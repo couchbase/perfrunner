@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.rebalance.RebalanceKVTest
+
+[showfast]
 title = Rebalance-in (min), 9 -> 10, 500M x 1KB, 50K ops/sec, Ephemeral
 component = reb
 category = kv

@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.eventing.FunctionsLatencyTest
+
+[showfast]
 title = 80th percentile latency(ms), 1 bucket x 100M x 1KB, single function-BucketOp
 component = eventing
 category = lat

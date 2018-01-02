@@ -1,5 +1,7 @@
 [test_case]
 test = perfdaily.tools.BackupTest
+
+[showfast]
 title = Backup, 100M x 1KB items, DGM, Idle
 component = Tools
 

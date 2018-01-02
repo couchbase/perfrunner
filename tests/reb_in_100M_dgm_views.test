@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.rebalance.RebalanceWithQueriesTest
+
+[showfast]
 title = Rebalance-in (min), 3 -> 4, 1 bucket x 100M x 2KB, DGM, 1 x 1 views, 10K ops/sec, 400 queries/sec
 component = reb
 category = views

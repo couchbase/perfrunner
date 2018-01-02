@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.views.QueryThroughputTest
+
+[showfast]
 title = Query throughput (qps), 4 nodes, 1 bucket x 20M x 2KB, non-DGM, 4 x 1 views, 500 mutations/sec/node
 component = views
 category = throughput

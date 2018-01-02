@@ -1,9 +1,11 @@
 [test_case]
 test = perfdaily.gsi.InitialIndexTest
+use_workers = 0
+
+[showfast]
 title = 200M docs, 1 index, Plasma
 component = GSI
 threshold = 10
-use_workers = 0
 
 [stats]
 interval = 1

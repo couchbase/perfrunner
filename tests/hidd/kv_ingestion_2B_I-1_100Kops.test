@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.kv.IngestionTest
+
+[showfast]
 title = Avg. write latency (sec), Workload I-1, 4 nodes, 2B x 1KB, 100K inserts/sec
 component = kv
 category = hidd

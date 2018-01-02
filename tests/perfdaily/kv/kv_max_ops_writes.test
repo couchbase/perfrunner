@@ -1,5 +1,7 @@
 [test_case]
 test = perfdaily.kv.PillowFightTest
+
+[showfast]
 title = Pillowfight, 20/80 R/W, 256B binary items
 component = KV
 

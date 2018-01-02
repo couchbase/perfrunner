@@ -1,5 +1,7 @@
 [test_case]
 test = perfdaily.fts.FTSThroughputTest
+
+[showfast]
 title = Med Term, Wiki 1M, no KV load
 component = FTS
 

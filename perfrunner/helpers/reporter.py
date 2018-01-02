@@ -35,12 +35,12 @@ class ShowFastReporter(Reporter):
 
     def _post_metric(self, metric: JSON) -> None:
         if 'category' not in metric:
-            metric['category'] = self.test_config.test_case.category
+            metric['category'] = self.test_config.showfast.category
 
         metric.update({
             'cluster': self.cluster_spec.name,
-            'component': self.test_config.test_case.component,
-            'subCategory': self.test_config.test_case.sub_category,
+            'component': self.test_config.showfast.component,
+            'subCategory': self.test_config.showfast.sub_category,
         })
 
         logger.info('Adding a metric: {}'.format(pretty_dict(metric)))
@@ -106,12 +106,12 @@ class DailyReporter(Reporter):
         benchmark = {
             'build': self.build,
             'buildURL': os.environ.get('BUILD_URL', ''),
-            'component': self.test_config.test_case.component,
+            'component': self.test_config.showfast.component,
             'dateTime': time.strftime('%Y-%m-%d %H:%M'),
             'metric': metric,
             'snapshots': snapshots,
-            'testCase': self.test_config.test_case.title,
-            'threshold': self.test_config.test_case.threshold,
+            'testCase': self.test_config.showfast.title,
+            'threshold': self.test_config.showfast.threshold,
             'value': value,
         }
 

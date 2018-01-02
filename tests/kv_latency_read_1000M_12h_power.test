@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.kv.ReadLatencyDGMTest
+
+[showfast]
 title = latency (ms), 4 nodes, 1B x 1KB, 15K ops/sec (90/10 R/W), Power distribution (α=25)
 component = kv
 category = dgm

@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.fts.FTSLatencyTest
+
+[showfast]
 title = AndHighHigh, 10M docs, 500 updates/sec kv load
 component = fts
 category = end_user_non_dgm

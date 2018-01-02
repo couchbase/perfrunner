@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.n1ql.N1QLThroughputTest
+
+[showfast]
 title = Q21, COUNT DISTINCT, MOI, not_bounded, API1
 component = n1ql
 category = API2

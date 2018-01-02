@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.dcp.DCPThroughputTest
+
+[showfast]
 title = DCP Throughput, 1 node, 1 bucket x 250M x 1KB, 8 connections, no mutations
 component = kv
 category = dcp

@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.elastic.ElasticLatencyTest
+
+[showfast]
 title = AndHighHigh, no kv-load, wiki 1M x 1KB
 component = fts
 category = benchmark

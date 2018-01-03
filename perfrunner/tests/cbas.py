@@ -1046,7 +1046,7 @@ class CBASBigfunDataSetP2Test(CBASBigfunTest):
 
         self.disconnect_bucket()
 
-        self.drop_index_latency = self.drop_bigfun_indexes()
+        self.drop_bigfun_indexes()
 
         self.create_index_latency = self.create_bigfun_indexes()
 
@@ -1072,15 +1072,7 @@ class CBASBigfunDataSetP2Test(CBASBigfunTest):
                                            CBASBigfunDataSetP2Test.__name__ +
                                            '{0:02d}'.format(orderby_step))
             )
-        orderby_step += 1
-        if self.drop_index_latency is not None:
-            self.reporter.post(
-                *self.metrics.cbas_latency(self.drop_index_latency,
-                                           "drop_index_latency_sec",
-                                           "Drop index latency (second)",
-                                           CBASBigfunDataSetP2Test.__name__ +
-                                           '{0:02d}'.format(orderby_step))
-            )
+
         orderby_step += 1
         if self.create_index_latency is not None:
             self.reporter.post(
@@ -1124,7 +1116,7 @@ class CBASBigfunCleanupBucketTest(CBASBigfunTest):
         if self.cleanup_when_disconnected:
             self.connect_bucket()
 
-        self.cleanup_bucket_latency = self.monitor_cbas_synced_deleted()
+        self.monitor_cbas_synced_deleted()
 
         self.reinsert_latency = self.insert()
 
@@ -1138,15 +1130,6 @@ class CBASBigfunCleanupBucketTest(CBASBigfunTest):
                 *self.metrics.cbas_latency(self.initial_sync_latency,
                                            "initial_sync_latency_sec",
                                            "Initial Analytics sync latency (second)",
-                                           CBASBigfunCleanupBucketTest.__name__ +
-                                           '{0:02d}'.format(orderby_step))
-            )
-        orderby_step += 1
-        if self.cleanup_bucket_latency is not None:
-            self.reporter.post(
-                *self.metrics.cbas_latency(self.cleanup_bucket_latency,
-                                           "cleanup_bucket_latency_sec",
-                                           "Cleanup bucket Analytics sync latency (second)",
                                            CBASBigfunCleanupBucketTest.__name__ +
                                            '{0:02d}'.format(orderby_step))
             )

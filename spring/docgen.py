@@ -628,6 +628,11 @@ class ExtReverseLookupDocument(ReverseLookupDocument):
             decimal_fmtr((seq_id + 29) % self.num_docs, self.prefix),
         ]
 
+    def next(self, key: Key) -> dict:
+        doc = super().next(key)
+        doc['name'] = key.string
+        return doc
+
 
 class JoinedDocument(ReverseLookupDocument):
 

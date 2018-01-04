@@ -14,7 +14,6 @@ from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.reporter import ShowFastReporter
 from perfrunner.helpers.rest import RestHelper
-from perfrunner.helpers.restore import RestoreHelper
 from perfrunner.helpers.worker import spring_task, WorkerManager
 from perfrunner.settings import (
     ClusterSpec,
@@ -152,11 +151,6 @@ class PerfTest:
         for target in self.target_iterator:
             self.monitor.monitor_num_items(target.node, target.bucket,
                                            self.test_config.load_settings.items)
-
-    def restore(self) -> None:
-        with RestoreHelper(self.cluster_spec, self.test_config) as rh:
-            rh.restore()
-            rh.warmup()
 
     def reset_kv_stats(self):
         master_node = next(self.cluster_spec.masters)

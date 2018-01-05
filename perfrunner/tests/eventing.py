@@ -1,4 +1,5 @@
 import json
+import time
 
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
@@ -28,8 +29,10 @@ class EventingTest(PerfTest):
         self.memory_quota = self.test_config.eventing_settings.memory_quota
         self.worker_queue_cap = self.test_config.eventing_settings.worker_queue_cap
         self.time = self.test_config.access_settings.time
+        self.rebalance_settings = self.test_config.rebalance_settings
 
-        self.eventing_nodes = self.cluster_spec.servers_by_role('eventing')
+        self.eventing_nodes = self.rest.get_active_nodes_by_role(master_node=self.master_node,
+                                                                 role='eventing')
 
         for master in self.cluster_spec.masters:
             self.rest.add_rbac_user(
@@ -128,6 +131,77 @@ class FunctionsThroughputTest(EventingTest):
             *self.metrics.function_throughput(time=time_elapsed,
                                               event_name=None,
                                               events_processed=events_successfully_processed)
+        )
+
+
+class FunctionsRebalanceThroughputTest(EventingTest):
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.on_update_success = 0
+
+    def pre_rebalance(self):
+        """Execute additional steps before rebalance."""
+        logger.info('Sleeping for {} seconds before taking actions'
+                    .format(self.rebalance_settings.start_after))
+        time.sleep(self.rebalance_settings.start_after)
+
+    def post_rebalance(self):
+        """Execute additional steps after rebalance."""
+        logger.info('Sleeping for {} seconds before finishing'
+                    .format(self.rebalance_settings.stop_after))
+        time.sleep(self.rebalance_settings.stop_after)
+
+    def rebalance(self, initial_nodes, nodes_after):
+        for _, servers in self.cluster_spec.clusters:
+            master = servers[0]
+            ejected_nodes = []
+            new_nodes = enumerate(
+                servers[initial_nodes:nodes_after],
+                start=initial_nodes
+            )
+            known_nodes = servers[:nodes_after]
+            for i, node in new_nodes:
+                roles = self.cluster_spec.roles[node]
+                self.rest.add_node(master, node, roles)
+                if "eventing" in roles:
+                    self.eventing_nodes.append(node)
+
+            self.rest.rebalance(master, known_nodes, ejected_nodes)
+
+    @timeit
+    def rebalance_time(self):
+        initial_nodes = self.test_config.cluster.initial_nodes
+        self.rebalance(initial_nodes[0], self.rebalance_settings.nodes_after[0])
+        self.monitor.monitor_rebalance(self.master_node)
+
+    @with_stats
+    def execute_handler(self):
+        self.pre_rebalance()
+
+        on_update_success = self.get_on_update_success()
+        time_taken = self.rebalance_time()
+        self.on_update_success = \
+            self.get_on_update_success() - on_update_success
+
+        self.post_rebalance()
+        return time_taken
+
+    def run(self):
+        self.set_functions()
+        self.load()
+        self.access_bg()
+
+        time_taken = self.execute_handler()
+
+        self.report_kpi(time_taken)
+        self.validate_failures()
+
+    def _report_kpi(self, time_elapsed):
+        self.reporter.post(
+            *self.metrics.function_throughput(time=time_elapsed,
+                                              event_name=None,
+                                              events_processed=self.on_update_success)
         )
 
 

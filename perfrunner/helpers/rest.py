@@ -42,6 +42,7 @@ class RestHelper:
     def __init__(self, cluster_spec: ClusterSpec):
         self.rest_username, self.rest_password = cluster_spec.rest_credentials
         self.auth = self.rest_username, self.rest_password
+        self.cluster_spec = cluster_spec
 
     @retry
     def get(self, **kwargs):
@@ -733,3 +734,11 @@ class RestHelper:
             api += "?type=full"
 
         return self.get(url=api).json()
+
+    def get_active_nodes_by_role(self, master_node: str, role: str):
+        active_nodes = self.node_statuses(master_node)
+        active_nodes_by_role = []
+        for node in self.cluster_spec.servers_by_role(role):
+            if node + ":8091" in active_nodes:
+                active_nodes_by_role.append(node)
+        return active_nodes_by_role

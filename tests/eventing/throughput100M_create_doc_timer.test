@@ -1,5 +1,7 @@
 [test_case]
 test = perfrunner.tests.eventing.FunctionsThroughputTest
+
+[showfast]
 title = 1 bucket x 50M x 1KB, single function-CreateDocTimer
 component = eventing
 category = thr

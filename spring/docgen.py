@@ -1142,3 +1142,15 @@ class VaryingItemSizePlasmaDocument(PlasmaDocument):
             'achievements': self._build_achievements(alphabet),
             'body': self._build_string(alphabet, size),
         }
+
+
+class EventingSmallDocument(Document):
+
+    def next(self, key: Key) -> dict:
+        alphabet = self._build_alphabet(key.string)
+
+        return {
+            'name': self._build_name(alphabet),
+            'alt_email': self._build_alt_email(alphabet),
+            'coins': self._build_coins(alphabet),
+        }

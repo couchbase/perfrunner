@@ -20,6 +20,7 @@ from spring.cbgen import CBAsyncGen, CBGen, ElasticGen, FtsGen, SubDocGen
 from spring.docgen import (
     ArrayIndexingDocument,
     Document,
+    EventingSmallDocument,
     ExtReverseLookupDocument,
     FTSKey,
     GSIMultiIndexDocument,
@@ -182,6 +183,8 @@ class Worker:
             self.docs = VaryingItemSizePlasmaDocument(self.ws.size,
                                                       self.ws.size_variation_min,
                                                       self.ws.size_variation_max)
+        elif self.ws.doc_gen == 'eventing_small':
+            self.docs = EventingSmallDocument(self.ws.size)
 
     def init_db(self):
         params = {'bucket': self.ts.bucket, 'host': self.ts.node, 'port': 8091,

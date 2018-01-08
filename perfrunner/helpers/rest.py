@@ -81,7 +81,7 @@ class RestHelper:
 
         api = 'http://{}:8091/nodes/self/controller/settings'.format(host)
         data = {
-            'cbas_path': analytics_path
+            'cbas_path': analytics_path.split(",")
         }
         self.post(url=api, data=data)
 

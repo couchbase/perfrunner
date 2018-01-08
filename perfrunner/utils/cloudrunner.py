@@ -13,7 +13,7 @@ class CloudRunner:
 
     AMI = {
         'clients': 'ami-59b61321',
-        'servers': 'ami-652f311c',
+        'servers': 'ami-83b400fb',
     }
 
     AWS_REGION = 'us-west-2'
@@ -116,11 +116,20 @@ def get_args():
                         type=int)
     parser.add_argument('--client-type',
                         default='c3.4xlarge',
-                        choices=['c3.4xlarge', 'c3.8xlarge'])
+                        choices=['c3.4xlarge',
+                                 'c3.8xlarge'])
     parser.add_argument('--server-type',
                         default='m4.2xlarge',
-                        choices=['m4.2xlarge', 'm4.4xlarge', 'm4.10xlarge',
-                                 'm4.16xlarge', 'r4.2xlarge', 'r4.4xlarge',
+                        choices=['c4.4xlarge',
+                                 'c4.8xlarge',
+                                 'c5.4xlarge',
+                                 'c5.9xlarge',
+                                 'm4.2xlarge',
+                                 'm4.4xlarge',
+                                 'm4.10xlarge',
+                                 'm4.16xlarge',
+                                 'r4.2xlarge',
+                                 'r4.4xlarge',
                                  'r4.8xlarge'])
     parser.add_argument('action',
                         choices=['launch', 'terminate'])

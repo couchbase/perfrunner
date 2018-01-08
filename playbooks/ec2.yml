@@ -4,6 +4,14 @@
     data_dir: /data
     disk: /dev/xvdb
   tasks:
+  - stat: path=/dev/nvme1n1
+    register: nvme
+
+  - name: using NVME drive if it's available
+    set_fact:
+      disk: /dev/nvme1n1
+    when: nvme.stat.exists
+
   - name: re-creating filesystem
     filesystem:
       fstype: "xfs"

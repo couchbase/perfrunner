@@ -1,7 +1,9 @@
 function OnUpdate(doc, meta) {
-	expiry = Math.round((new Date()).getTime() / 1000) + 1800;
+	expiry = fixed_expiry
+	expiry = expiry + Math.floor((Math.random() * fuzz_factor) + 1);
 	docTimer(timerCallback, meta.id, expiry);
 }
+
 function timerCallback(docId) {
 	var query = SELECT * FROM `bucket-1` USE KEYS[:docId];
 	query.execQuery();

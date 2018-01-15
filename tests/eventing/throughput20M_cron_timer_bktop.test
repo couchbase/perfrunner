@@ -39,6 +39,7 @@ cpp_worker_thread_count = 10
 timer_worker_pool_size = 16
 memory_quota = 20480
 worker_queue_cap = 100000
+timer_timeout = 2400
 
 [access]
 time = 900

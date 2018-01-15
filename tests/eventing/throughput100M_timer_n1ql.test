@@ -36,9 +36,10 @@ workers = 160
 functions = perf-test1:tests/eventing/code/timer_n1ql.js
 worker_count = 16
 cpp_worker_thread_count = 10
-timer_worker_pool_size = 16
+timer_worker_pool_size = 1
 memory_quota = 20480
 worker_queue_cap = 100000
+timer_timeout = 3000
 
 [access]
-time = 900
+time = 600

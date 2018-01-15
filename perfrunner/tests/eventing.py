@@ -1,3 +1,4 @@
+import calendar
 import json
 import time
 
@@ -28,6 +29,8 @@ class EventingTest(PerfTest):
         self.timer_worker_pool_size = self.test_config.eventing_settings.timer_worker_pool_size
         self.memory_quota = self.test_config.eventing_settings.memory_quota
         self.worker_queue_cap = self.test_config.eventing_settings.worker_queue_cap
+        self.timer_timeout = self.test_config.eventing_settings.timer_timeout
+        self.timer_fuzz = self.test_config.eventing_settings.timer_fuzz
         self.time = self.test_config.access_settings.time
         self.rebalance_settings = self.test_config.rebalance_settings
 
@@ -56,6 +59,10 @@ class EventingTest(PerfTest):
         for name, filename in self.functions.items():
             with open(filename, 'r') as myfile:
                 code = myfile.read()
+                if self.timer_timeout:
+                    expiry = calendar.timegm(time.gmtime()) + self.timer_timeout
+                    code = code.replace("fixed_expiry", str(expiry))
+                    code = code.replace("fuzz_factor", str(self.timer_fuzz))
                 func["appname"] = name
                 func["appcode"] = code
             function = json.dumps(func)

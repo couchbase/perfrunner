@@ -735,6 +735,8 @@ class EventingSettings:
     TIMER_WORKER_POOL_SIZE = 1
     MEMORY_QUOTA = 256
     WORKER_QUEUE_CAP = 1000000
+    TIMER_TIMEOUT = 0
+    TIMER_FUZZ = 0
 
     def __init__(self, options: dict):
         self.functions = {}
@@ -751,6 +753,11 @@ class EventingSettings:
         self.memory_quota = int(options.get("memory_quota", self.MEMORY_QUOTA))
         self.worker_queue_cap = int(options.get("worker_queue_cap",
                                                 self.WORKER_QUEUE_CAP))
+        self.timer_timeout = int(options.get("timer_timeout",
+                                             self.TIMER_TIMEOUT))
+
+        self.timer_fuzz = int(options.get("timer_fuzz",
+                                          self.TIMER_FUZZ))
 
     def __str__(self) -> str:
         return str(self.__dict__)

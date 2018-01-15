@@ -1,11 +1,11 @@
 [test_case]
-test = perfrunner.tests.eventing.FunctionsRebalanceThroughputTest
+test = perfrunner.tests.eventing.TimerRebalanceThroughputTest
 
 [showfast]
-title = Functions executed/sec, 1 bucket x 50M x 1KB, eventing node Rebalance, single function-BucketOp
+title = Timers executed/sec, 1 bucket x 50M x 1KB, KV node Rebalance, single function-BucketOp
 component = eventing
 category = thr
-sub_category = Function
+sub_category = Timer
 
 [stats]
 server_processes = projector eventing-produc
@@ -20,8 +20,8 @@ online_cores = 12
 
 [rebalance]
 nodes_after = 5
-start_after = 180
-stop_after = 180
+start_after = 10
+stop_after = 10
 
 [bucket]
 bucket_type = ephemeral
@@ -38,13 +38,11 @@ size = 1024
 workers = 100
 
 [eventing]
-functions = perf-test1:tests/eventing/code/bktop.js
-worker_count = 32
-cpp_worker_thread_count = 2
+functions = perf-test1:tests/eventing/code/timer_bktop.js
+worker_count = 16
+cpp_worker_thread_count = 10
+timer_worker_pool_size = 16
+memory_quota = 20480
 worker_queue_cap = 100000
 
-[access]
-updates = 100
-items = 50000000
-workers = 100
 

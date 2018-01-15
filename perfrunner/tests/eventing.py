@@ -90,6 +90,14 @@ class EventingTest(PerfTest):
                 on_update_success += stat["execution_stats"]["on_update_success"]
         return on_update_success
 
+    def get_timer_events(self, event_name: str, function_name: str):
+        timer_events = 0
+        for node in self.eventing_nodes:
+            events = self.rest.get_num_events_processed(
+                event=event_name, node=node, name=function_name)
+            timer_events += events
+        return timer_events
+
     @timeit
     @with_stats
     def load_access_and_wait(self):
@@ -141,11 +149,7 @@ class FunctionsThroughputTest(EventingTest):
         )
 
 
-class FunctionsRebalanceThroughputTest(EventingTest):
-
-    def __init__(self, *args):
-        super().__init__(*args)
-        self.on_update_success = 0
+class EventingRebalance(EventingTest):
 
     def pre_rebalance(self):
         """Execute additional steps before rebalance."""
@@ -181,6 +185,13 @@ class FunctionsRebalanceThroughputTest(EventingTest):
         initial_nodes = self.test_config.cluster.initial_nodes
         self.rebalance(initial_nodes[0], self.rebalance_settings.nodes_after[0])
         self.monitor.monitor_rebalance(self.master_node)
+
+
+class FunctionsRebalanceThroughputTest(EventingRebalance):
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.on_update_success = 0
 
     @with_stats
     def execute_handler(self):
@@ -291,6 +302,52 @@ class CronTimerThroughputTest(TimerTest):
             *self.metrics.function_throughput(time=time_elapsed,
                                               event_name=self.EVENT_NAME,
                                               events_processed=0)
+        )
+
+
+class TimerRebalanceThroughputTest(EventingRebalance):
+    EVENT_NAME = "DOC_TIMER_EVENTS"
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.timer_events = 0
+        self.function_names = []
+        for name, filename in self.functions.items():
+            self.function_names.append(name)
+
+    @with_stats
+    def execute_handler(self):
+        self.pre_rebalance()
+
+        timer_events = self.get_timer_events(self.EVENT_NAME, self.function_names[0])
+        time_taken = self.rebalance_time()
+        self.timer_events = \
+            self.get_timer_events(self.EVENT_NAME, self.function_names[0]) - timer_events
+
+        self.post_rebalance()
+        return time_taken
+
+    def wait_for_timer_event(self):
+        for name, filename in self.functions.items():
+            self.monitor.wait_for_timer_event(node=self.eventing_nodes[0],
+                                              function=name)
+            break
+
+    def run(self):
+        self.set_functions()
+        self.load()
+        self.wait_for_timer_event()
+
+        time_taken = self.execute_handler()
+
+        self.report_kpi(time_taken)
+        self.validate_failures()
+
+    def _report_kpi(self, time_elapsed):
+        self.reporter.post(
+            *self.metrics.function_throughput(time=time_elapsed,
+                                              event_name=None,
+                                              events_processed=self.timer_events)
         )
 
 

@@ -2,7 +2,7 @@
 test = perfrunner.tests.eventing.TimerThroughputTest
 
 [showfast]
-title = 1 bucket x 20M x 1KB, 5 timers-NOOP
+title = Timers executed/sec, 1 bucket x 20M x 1KB, 5 timers-NOOP
 component = eventing
 category = thr
 sub_category = Timer

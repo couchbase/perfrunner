@@ -2,7 +2,7 @@
 test = perfrunner.tests.eventing.FunctionsThroughputTest
 
 [showfast]
-title = 1 bucket x 20M x 1KB, 5 functions-NOOP
+title = Functions executed/sec, 1 bucket x 20M x 1KB, 5 functions-NOOP
 component = eventing
 category = thr
 sub_category = Function

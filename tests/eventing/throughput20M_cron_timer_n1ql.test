@@ -1,6 +1,8 @@
 [test_case]
 test = perfrunner.tests.eventing.CronTimerThroughputTest
-title = 1 bucket x 20M x 1KB, single Cron timer-N1QL
+
+[showfast]
+title = Timers executed/sec, 1 bucket x 20M x 1KB, single Cron timer-N1QL
 component = eventing
 category = thr
 sub_category = Timer

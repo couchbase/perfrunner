@@ -731,9 +731,7 @@ class MetricHelper:
 
         return time_diff, self._snapshots, metric_info
 
-    def function_throughput(self, time: int, event_name: str, events_processed: int) -> Metric:
-        metric_info = self._metric_info()
-
+    def get_functions_throughput(self, time: int, event_name: str, events_processed: int) -> float:
         throughput = 0
         if event_name:
             for name, file in self.test.functions.items():
@@ -743,7 +741,12 @@ class MetricHelper:
             throughput = events_processed
         throughput /= len(self.test.functions)
         throughput /= time
-        throughput = round(throughput, 1)
+        return round(throughput, 0)
+
+    def function_throughput(self, time: int, event_name: str, events_processed: int) -> Metric:
+        metric_info = self._metric_info()
+
+        throughput = self.get_functions_throughput(time, event_name, events_processed)
 
         return throughput, self._snapshots, metric_info
 
@@ -830,5 +833,16 @@ class DailyMetricHelper(MetricHelper):
         throughput = total_queries // self.test_config.access_settings.time
 
         return 'Avg Query Throughput (queries/sec)', \
+            throughput, \
+            self._snapshots
+
+    def function_throughput(self, time: int, event_name: str, events_processed: int) -> DailyMetric:
+        throughput = self.get_functions_throughput(time, event_name, events_processed)
+
+        metric = "Avg Throughput (functions executed/sec)"
+        if "timer" in self._title:
+            metric = "Avg Throughput (timers executed/sec)"
+
+        return metric, \
             throughput, \
             self._snapshots

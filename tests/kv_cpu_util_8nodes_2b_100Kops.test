@@ -1,0 +1,29 @@
+[test_case]
+test = perfrunner.tests.kv.CpuUtilizationTest
+
+[showcast]
+title = 8 nodes, 2 buckets x 50M x 1KB, 200K ops/sec, 24 vCPU
+component = kv
+category = cpu
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 9
+num_buckets = 2
+online_cores = 12
+
+[load]
+items = 50000000
+size = 1024
+workers = 80
+doc_gen = large
+
+[access]
+creates = 0
+reads = 20
+updates = 80
+deletes = 0
+throughput = 100000
+items = 50000000
+workers = 50
+time = 3600

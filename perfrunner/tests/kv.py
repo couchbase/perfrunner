@@ -478,3 +478,11 @@ class MemoryOverheadTest(PillowFightTest):
     @with_stats
     def access(self, *args):
         self.sleep()
+
+
+class CpuUtilizationTest(KVTest):
+
+    def _report_kpi(self, *args, **kwargs):
+        self.reporter.post(
+            *self.metrics.cpu_utilization()
+        )

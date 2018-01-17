@@ -688,13 +688,6 @@ class RestHelper:
             .format(node, name)
         self.post(url=api, data=payload)
 
-    def enable_function(self, node: str, payload: str, name: str):
-        logger.info('Enable function code {} \n on node {}'.format(payload, node))
-
-        api = 'http://{}:8091/_p/event/setSettings/?name={}'\
-            .format(node, name)
-        self.post(url=api, data=payload)
-
     def get_num_events_processed(self, event: str, node: str, name: str):
         logger.info('get stats on node {} for {}'.format(node, name))
 

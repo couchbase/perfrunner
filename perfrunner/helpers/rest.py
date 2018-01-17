@@ -674,19 +674,20 @@ class RestHelper:
         api = 'http://{}:8095/analytics/cluster/restart'.format(analytics_node)
         self.post(url=api)
 
-    def create_function(self, node: str, payload: str, name: str):
-        logger.info('Set function code {} \n on node {}'.format(payload, node))
+    def create_function(self, node: str, func: dict, name: str):
+        logger.info('Creating function on node {}: {}'.format(node,
+                                                              pretty_dict(func)))
 
-        api = 'http://{}:8091/_p/event/saveAppTempStore/?name={}'\
-            .format(node, name)
-        self.post(url=api, data=payload)
+        api = 'http://{}:8091/_p/event/saveAppTempStore/?name={}'.format(node,
+                                                                         name)
+        self.post(url=api, data=func)
 
-    def deploy_function(self, node: str, payload: str, name: str):
-        logger.info('Set function code {} \n on node {}'.format(payload, node))
+    def deploy_function(self, node: str, func: dict, name: str):
+        logger.info('Deploying function on node {}'.format(node))
 
-        api = 'http://{}:8091/_p/event/setApplication/?name={}'\
-            .format(node, name)
-        self.post(url=api, data=payload)
+        api = 'http://{}:8091/_p/event/setApplication/?name={}'.format(node,
+                                                                       name)
+        self.post(url=api, data=json.dumps(func))
 
     def get_num_events_processed(self, event: str, node: str, name: str):
         logger.info('get stats on node {} for {}'.format(node, name))

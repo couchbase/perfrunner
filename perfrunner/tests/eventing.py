@@ -65,10 +65,12 @@ class EventingTest(PerfTest):
                     code = code.replace("fuzz_factor", str(self.timer_fuzz))
                 func["appname"] = name
                 func["appcode"] = code
-            function = json.dumps(func)
-            self.rest.create_function(node=self.eventing_nodes[0], payload=function, name=name)
-            self.rest.deploy_function(node=self.eventing_nodes[0], payload=function, name=name)
-            self.monitor.wait_for_bootstrap(nodes=self.eventing_nodes, function=name)
+            self.rest.create_function(node=self.eventing_nodes[0],
+                                      func=func, name=name)
+            self.rest.deploy_function(node=self.eventing_nodes[0],
+                                      func=func, name=name)
+            self.monitor.wait_for_bootstrap(nodes=self.eventing_nodes,
+                                            function=name)
 
     def process_latency_stats(self):
         ret_val = {}

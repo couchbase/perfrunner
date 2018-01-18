@@ -16,6 +16,7 @@ mem_quota = 51200
 index_mem_quota = 204800
 initial_nodes = 6
 num_buckets = 1
+ipv6 = 1
 
 [secondary]
 indexer.settings.storage_mode = plasma

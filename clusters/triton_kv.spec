@@ -1,9 +1,9 @@
 [clusters]
 triton =
-    triton-srv-01.perf.couchbase.com:kv
-    triton-srv-02.perf.couchbase.com:kv
-    triton-srv-03.perf.couchbase.com:kv
-    triton-srv-04.perf.couchbase.com:kv
+    triton-srv-01-ip6.perf.couchbase.com:kv
+    triton-srv-02-ip6.perf.couchbase.com:kv
+    triton-srv-03-ip6.perf.couchbase.com:kv
+    triton-srv-04-ip6.perf.couchbase.com:kv
 
 [clients]
 hosts =

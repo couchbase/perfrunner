@@ -1,14 +1,14 @@
 [clusters]
 triton =
-    triton-srv-01.perf.couchbase.com:kv
-    triton-srv-02.perf.couchbase.com:kv
-    triton-srv-03.perf.couchbase.com:kv
-    triton-srv-04.perf.couchbase.com:kv
-    triton-srv-05.perf.couchbase.com:eventing
+    triton-srv-01-ip6.perf.couchbase.com:kv
+    triton-srv-02-ip6.perf.couchbase.com:kv
+    triton-srv-03-ip6.perf.couchbase.com:kv
+    triton-srv-04-ip6.perf.couchbase.com:kv
+    triton-srv-05-ip6.perf.couchbase.com:eventing
 
 [clients]
 hosts =
-    172.23.132.14
+    triton-cnt-01.perf.couchbase.com
 credentials = root:couchbase
 
 [storage]
@@ -21,6 +21,6 @@ ssh = root:couchbase
 
 [parameters]
 OS = CentOS 7
-CPU = Data: E5-2630 v4 (40 vCPU), Query & Index: E5-2680 v3 (48 vCPU)
-Memory = Data & Query: 64GB, Index: 256GB
+CPU = Data: E5-2630 v4 (40 vCPU), Eventing: E5-2680 v3 (48 vCPU)
+Memory = Data: 64GB, Eventing: 256GB
 Disk = Samsung SM863

@@ -12,6 +12,7 @@ server_processes = goxdcr
 mem_quota = 51200
 initial_nodes = 1 1
 num_buckets = 1
+ipv6 = 1
 
 [bucket]
 replica_number = 0

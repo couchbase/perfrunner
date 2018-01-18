@@ -10,6 +10,7 @@ mem_quota = 20480
 initial_nodes = 1
 num_buckets = 1
 online_cores = 6
+ipv6 = 1
 
 [bucket]
 bucket_type = ephemeral

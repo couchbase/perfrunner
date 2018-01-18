@@ -1,6 +1,6 @@
 [clusters]
 triton =
-    triton-srv-05.perf.couchbase.com:kv,fts
+    triton-srv-05-ip6.perf.couchbase.com:kv,fts
 
 [clients]
 hosts =

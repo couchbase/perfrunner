@@ -10,6 +10,7 @@ mem_quota = 51200
 initial_nodes = 2
 num_buckets = 1
 online_cores = 5
+ipv6 = 1
 
 [load]
 workload_path = workloads/workloadd

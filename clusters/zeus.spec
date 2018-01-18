@@ -1,15 +1,15 @@
 [clusters]
 zeus =
-    172.23.96.25:kv
-    172.23.96.26:kv
-    172.23.96.27:kv
-    172.23.96.28:kv
-    172.23.100.210:n1ql
-    172.23.100.211:index
+    zeus-srv-01.perf.couchbase.com:kv
+    zeus-srv-02.perf.couchbase.com:kv
+    zeus-srv-03.perf.couchbase.com:kv
+    zeus-srv-04.perf.couchbase.com:kv
+    zeus-srv-05.perf.couchbase.com:n1ql
+    zeus-srv-06.perf.couchbase.com:index
 
 [clients]
 hosts =
-    172.23.100.212
+    zeus-cnt-01.perf.couchbase.com
 credentials = root:couchbase
 
 [storage]

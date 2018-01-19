@@ -14,7 +14,7 @@ all:
 	pwd > ${ENV}/lib/${PYTHON}/site-packages/perfrunner.pth
 
 clean:
-	rm -fr build perfrunner.egg-info dist cachestat dcptest kvgen cbindexperf rachell *.db *.log .coverage *.pid
+	rm -fr build perfrunner.egg-info dist cachestat dcptest kvgen cbindexperf rachell loader *.db *.log .coverage *.pid
 	find . -name '*.pyc' -o -name '*.pyo' -o -name __pycache__ | xargs rm -fr
 
 pep8:
@@ -57,3 +57,6 @@ kvgen: vendor-sync
 
 rachell:
 	go build ./go/rachell
+
+loader:
+	go build ./go/loader

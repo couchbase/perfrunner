@@ -2,7 +2,7 @@
 test = perfrunner.tests.n1ql.N1QLThroughputTest
 
 [showfast]
-title = Q15, Sub-document Search, MOI, request_plus
+title = Q15, Sub-document Search, MOI, not_bounded
 component = n1ql
 category = tokens
 

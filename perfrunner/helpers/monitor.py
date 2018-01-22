@@ -345,33 +345,41 @@ class Monitor(RestHelper):
 
         logger.interrupt('Some nodes are still down')
 
-    def monitor_fts_indexing_queue(self, host: str, index: str):
+    def monitor_fts_indexing_queue(self, host: str, index: str, items: int):
         logger.info('Waiting for indexing to finish')
-
         count = 0
-        while count < self.test_config.fts_settings.items:
+        while count < items:
             count = self.get_fts_doc_count(host, index)
             logger.info('FTS indexed documents: {:,}'.format(count))
             time.sleep(self.POLLING_INTERVAL)
 
-    def monitor_fts_index_persistence(self, host: str, index: str):
+    def monitor_fts_index_persistence(self, hosts: list, index: str):
         logger.info('Waiting for index to be persisted')
-
-        key = '{}:{}:{}'.format(self.test_config.buckets[0],
-                                index,
-                                'num_recs_to_persist')
-        pending_items = -1
+        pending_items = 1
         while pending_items:
-            stats = self.get_fts_stats(host)
-            pending_items = stats[key]
-            logger.info('Records to persist: {:,}'.format(pending_items))
+            persist = 0
+            compact = 0
+            for host in hosts:
+                stats = self.get_fts_stats(host)
+
+                metric = '{}:{}:{}'.format(self.test_config.buckets[0],
+                                           index, 'num_recs_to_persist')
+                persist += stats[metric]
+
+                metric = '{}:{}:{}'.format(self.test_config.buckets[0],
+                                           index, 'total_compactions')
+                compact += stats[metric]
+
+            pending_items = persist or compact
+            logger.info('Records to persist: {:,}'.format(persist))
+            logger.info('Ongoing compactions: {:,}'.format(compact))
             time.sleep(self.POLLING_INTERVAL)
 
     def monitor_elastic_indexing_queue(self, host: str, index: str):
         logger.info(' Waiting for indexing to finish')
-
+        items = int(self.test_config.fts_settings.test_total_docs)
         count = 0
-        while count < self.test_config.fts_settings.items:
+        while count < items:
             count = self.get_elastic_doc_count(host, index)
             logger.info('Elasticsearch indexed documents: {:,}'.format(count))
             time.sleep(self.POLLING_INTERVAL)

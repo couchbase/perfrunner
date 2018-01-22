@@ -9,9 +9,10 @@ from cbagent.collectors.eventing_stats import (
 )
 from cbagent.collectors.fts_stats import (
     FTSCollector,
-    FTSLatencyCollector,
     ElasticStats,
 )
+from cbagent.collectors.jts_stats import JTSCollector
+
 from cbagent.collectors.latency import Latency, KVLatency, QueryLatency
 from cbagent.collectors.observe import (
     DurabilityLatency,

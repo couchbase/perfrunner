@@ -19,7 +19,7 @@ from cbagent.collectors import (
     EventingPerNodeStats,
     EventingStats,
     FTSCollector,
-    FTSLatencyCollector,
+    JTSCollector,
     KVLatency,
     Memory,
     N1QLStats,
@@ -140,8 +140,8 @@ class CbAgent:
                        durability=False,
                        elastic_stats=False,
                        eventing_stats=False,
-                       fts_latency=False,
                        fts_stats=False,
+                       jts_stats=False,
                        index_latency=False,
                        iostat=True,
                        latency=False,
@@ -207,13 +207,12 @@ class CbAgent:
         if ns_server_system:
             self.add_collector(NSServerSystem)
 
-        if elastic_stats:
-            self.add_collector(ElasticStats, self.test)
-        if fts_latency:
-            self.add_collector(FTSLatencyCollector, self.test)
         if fts_stats:
             self.add_collector(FTSCollector, self.test)
-
+        if elastic_stats:
+            self.add_collector(ElasticStats, self.test)
+        if jts_stats:
+            self.add_collector(JTSCollector, self.test)
         if secondary_debugstats:
             self.add_collector(SecondaryDebugStats)
         if secondary_debugstats_bucket:
@@ -244,7 +243,6 @@ class CbAgent:
             settings = copy(self.settings)
             settings.cluster = cluster_id
             settings.master_node = master_node
-
             collector = cls(settings, *args)
             self.collectors.append(collector)
 

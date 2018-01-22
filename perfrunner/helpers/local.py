@@ -2,6 +2,7 @@ import os.path
 import socket
 import time
 from datetime import date
+from glob import glob
 from sys import platform
 from typing import List
 
@@ -325,6 +326,20 @@ def run_ycsb(host, bucket, password, action, workload, items, workers,
         local(cmd)
 
 
+def run_custom_cmd(path, binary, params):
+    logger.info("Executing command {} {}".format(binary, params))
+    cmd = "{} {}".format(binary, params)
+    with lcd(path):
+        local(cmd)
+
+
+def get_jts_logs(jts_home: str, local_dir: str):
+    logger.info("Collecting remote JTS logs")
+    source_dir = "JTS/logs".format(jts_home)
+    for file in glob("{}".format(source_dir)):
+        local("cp -r {} {}/".format(file, local_dir))
+
+
 def run_bigfun_single_script(host, bucket, password, op, instance, tablename, id, arg):
     with lcd('loader'):
         cmd = "bash ./target/loader-1.0-SNAPSHOT-binary-assembly/bin/loader.sh" \
@@ -516,6 +531,12 @@ def start_celery_worker(queue):
 def clone_ycsb(repo: str, branch: str):
     logger.info('Cloning YCSB repository: {} branch: {}'.format(repo, branch))
     local('git clone -q -b {} {}'.format(branch, repo))
+
+
+def clone_jts(repo: str, branch: str, worker_home: str, jts_home: str):
+    local('git clone -q -b {} {}'.format(branch, repo))
+    with lcd(jts_home):
+        local('mvn install')
 
 
 def clone_bigfun(socialgen_repo: str, socialgen_branch: str,

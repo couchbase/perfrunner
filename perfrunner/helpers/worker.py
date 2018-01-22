@@ -29,6 +29,7 @@ from perfrunner.workloads.cbas import (
     cbas_bigfun_data_update_non_index,
     cbas_bigfun_wait,
 )
+from perfrunner.workloads.jts import jts_run, jts_warmup
 from perfrunner.workloads.pillowfight import (
     pillowfight_data_load,
     pillowfight_workload,
@@ -106,6 +107,16 @@ def cbas_bigfun_data_update_non_index_task(*args):
 @celery.task
 def cbas_bigfun_wait_task(*args):
     cbas_bigfun_wait(*args)
+
+
+@celery.task
+def jts_run_task(*args):
+    jts_run(*args)
+
+
+@celery.task
+def jts_warmup_task(*args):
+    jts_warmup(*args)
 
 
 class WorkerManager:

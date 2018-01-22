@@ -109,65 +109,6 @@ class MetricHelper:
 
         return throughput, self._snapshots, metric_info
 
-    def avg_fts_throughput(self, order_by: str, name: str = 'FTS') -> Metric:
-        metric_id = '{}_avg_query_requests'.format(self.test_config.name)
-        title = 'Query Throughput (queries/sec), {}, {} node, {}'.\
-            format(self._title, self._num_nodes, name)
-        metric_info = self._metric_info(metric_id, title, order_by)
-
-        if name == 'FTS':
-            total_queries = 0
-            for host in self.test.active_fts_hosts:
-                all_stats = self.test.rest.get_fts_stats(host)
-                key = "{}:{}:{}".format(self.test_config.buckets[0],
-                                        self.test.index_name,
-                                        "total_queries")
-                if key in all_stats:
-                    total_queries += all_stats[key]
-
-        else:
-            all_stats = self.test.rest.get_elastic_stats(self.test.master_host)
-            total_queries = all_stats["_all"]["total"]["search"]["query_total"]
-
-        time_taken = self.test_config.access_settings.time
-        throughput = total_queries / float(time_taken)
-        if throughput < 100:
-            throughput = round(throughput, 2)
-        else:
-            throughput = round(throughput)
-
-        return throughput, self._snapshots, metric_info
-
-    def latency_fts_queries(self,
-                            percentile: Number,
-                            dbname: str,
-                            metric: str,
-                            order_by: str,
-                            name='FTS') -> Metric:
-        if percentile == 0:
-            metric_id = '{}_average'.format(self.test_config.name)
-            title = 'Average query latency (ms), {}, {} node, {}'.\
-                format(self._title, self._num_nodes, name)
-        else:
-            metric_id = self.test_config.name
-            title = '{}th percentile query latency (ms), {}, {} node, {}'. \
-                format(percentile, self._title, self._num_nodes, name)
-
-        metric_info = self._metric_info(metric_id, title, order_by)
-
-        db = '{}{}'.format(dbname, self.test.cbmonitor_clusters[0])
-
-        timings = self.store.get_values(db, metric)
-
-        if percentile == 0:
-            latency = np.average(timings)
-        else:
-            latency = np.percentile(timings, percentile)
-
-        latency = round(latency)
-
-        return latency, self._snapshots, metric_info
-
     def fts_index(self,
                   elapsed_time: float,
                   order_by: str,
@@ -205,6 +146,40 @@ class MetricHelper:
         reb_time = s2m(reb_time)
 
         return reb_time, self._snapshots, metric_info
+
+    def jts_throughput(self, orderby) -> Metric:
+        metric_id = '{}_{}'.format(self.test_config.name, "jts_throughput")
+        metric_id = metric_id.replace('.', '')
+        title = "Average Throughput (q/sec), {}".format(self._title)
+        metric_info = self._metric_info(metric_id, title, orderby)
+        timings = self._jts_metric(collector="jts_stats", metric="jts_throughput")
+        thr = round(np.average(timings), 2)
+        if thr > 100:
+            thr = round(thr)
+        return thr, self._snapshots, metric_info
+
+    def jts_latency(self, orderby, percentile=50) -> Metric:
+        prefix = "Average latency (ms)"
+        if percentile != 50:
+            prefix = "{}th percentile latency (ms)".format(percentile)
+        metric_id = '{}_{}'.format(self.test_config.name, "jts_latency")
+        metric_id = metric_id.replace('.', '')
+        title = "{}, {}".format(prefix, self._title)
+        metric_info = self._metric_info(metric_id, title, orderby)
+        timings = self._jts_metric(collector="jts_stats", metric="jts_latency")
+        lat = round(np.percentile(timings, percentile), 2)
+        if lat > 100:
+            lat = round(lat)
+        return lat, self._snapshots, metric_info
+
+    def _jts_metric(self, collector, metric):
+        timings = []
+        for bucket in self.test_config.buckets:
+            db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
+                                         collector=collector,
+                                         bucket=bucket)
+            timings += self.store.get_values(db, metric=metric)
+        return timings
 
     def max_ops(self) -> Metric:
         metric_info = self._metric_info()
@@ -820,17 +795,11 @@ class DailyMetricHelper(MetricHelper):
             throughput, \
             self._snapshots
 
-    def avg_fts_throughput(self, *args, **kwargs) -> DailyMetric:
-        total_queries = 0
-        for host in self.test.active_fts_hosts:
-            all_stats = self.test.rest.get_fts_stats(host)
-            key = "{}:{}:{}".format(self.test_config.buckets[0],
-                                    self.test.index_name,
-                                    "total_queries")
-            if key in all_stats:
-                total_queries += all_stats[key]
-
-        throughput = total_queries // self.test_config.access_settings.time
+    def avg_fts_throughput(self) -> DailyMetric:
+        timings = self._jts_metric(collector="jts_stats", metric="jts_throughput")
+        throughput = round(np.average(timings), 2)
+        if throughput > 100:
+            throughput = round(throughput)
 
         return 'Avg Query Throughput (queries/sec)', \
             throughput, \

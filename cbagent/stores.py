@@ -30,7 +30,6 @@ class PerfStore:
 
     def get_values(self, db: str, metric) -> List[float]:
         url = '{}/{}/{}'.format(self.base_url, db, metric)
-
         data = self.session.get(url).json()
         return [d[1] for d in data]
 

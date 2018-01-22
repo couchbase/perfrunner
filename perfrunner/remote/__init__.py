@@ -1,5 +1,5 @@
 from fabric.api import cd, get, run, settings, shell_env
-
+from glob import glob
 from logger import logger
 from perfrunner.remote.context import all_clients
 from perfrunner.settings import REPO
@@ -36,7 +36,6 @@ class Remote:
 
         with cd(worker_home):
             run('git clone -q {}'.format(REPO))
-
             with cd('perfrunner'):
                 run('make')
 
@@ -61,6 +60,12 @@ class Remote:
         self.clone_git_repo(repo=repo, branch=branch, worker_home=worker_home)
 
     @all_clients
+    def clone_jts(self, repo: str, branch: str, worker_home: str, jts_home: str):
+        self.clone_git_repo(repo, branch, worker_home)
+        with cd(worker_home), cd('perfrunner'), cd(jts_home):
+            run('mvn install')
+
+    @all_clients
     def clone_bigfun(self, socialgen_repo: str, socialgen_branch: str,
                      loader_repo: str, loader_branch: str, worker_home: str):
         self.clone_git_repo(repo=socialgen_repo, branch=socialgen_branch, worker_home=worker_home)
@@ -72,6 +77,14 @@ class Remote:
             with cd('loader'):
                 cmd = "mvn clean package"
                 run(cmd)
+
+    @all_clients
+    def get_jts_logs(self, worker_home: str, jts_home: str, local_dir: str):
+        logger.info("Collecting remote JTS logs")
+        jts_logs_dir = "{}/logs".format(jts_home)
+        with cd(worker_home):
+            for file in glob("{}/*/*".format(jts_logs_dir)):
+                get(file, local_path=local_dir)
 
     @all_clients
     def get_celery_logs(self, worker_home: str):

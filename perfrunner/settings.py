@@ -159,8 +159,8 @@ class ShowFastSettings:
         self.component = options.get('component', '')
         self.category = options.get('category', '')
         self.sub_category = options.get('sub_category', '')
-
         self.threshold = int(options.get("threshold", self.THRESHOLD))
+        self.orderby = options.get("orderby", 'q0b00000000')
 
 
 class ClusterSettings:
@@ -472,9 +472,6 @@ class PhaseSettings:
         self.size_variation_max = int(options.get('size_variation_max',
                                                   self.SIZE_VARIATION_MAX))
 
-        # FTS settings
-        self.fts_config = None
-
         # YCSB settings
         self.workload_path = options.get('workload_path')
         self.recorded_load_cache_size = int(options.get('recorded_load_cache_size',
@@ -502,6 +499,45 @@ class LoadSettings(PhaseSettings):
 
     CREATES = 100
     SEQ_UPSERTS = True
+
+
+class JTSAccessSettings(PhaseSettings):
+    JTS_REPO = "https://github.com/couchbaselabs/JTS"
+    JTS_REPO_BRANCH = "master"
+    JTS_HOME_DIR = "JTS"
+    JTS_RUN_CMD = "java -jar target/JTS-1.0-jar-with-dependencies.jar"
+    JTS_LOGS_DIR = "JTSlogs"
+
+    def __init__(self, options: dict):
+        self.jts_repo = self.JTS_REPO
+        self.jts_repo_branch = self.JTS_REPO_BRANCH
+        self.jts_home_dir = self.JTS_HOME_DIR
+        self.jts_run_cmd = self.JTS_RUN_CMD
+        self.jts_logs_dir = self.JTS_LOGS_DIR
+        self.jts_instances = options.get("jts_instances", "1")
+        self.test_total_docs = options.get("test_total_docs", "1000000")
+        self.test_query_workers = options.get("test_query_workers", "10")
+        self.test_kv_workers = options.get("test_kv_workers", "0")
+        self.test_kv_throughput_goal = options.get("test_kv_throughput_goal", "1000")
+        self.test_data_file = options.get("test_data_file", "../tests/fts/low.txt")
+        self.test_driver = options.get("test_driver", "couchbase")
+        self.test_stats_limit = options.get("test_stats_limit", "1000000")
+        self.test_stats_aggregation_step = options.get("test_stats_aggregation_step", "1000")
+        self.test_debug = options.get("test_debug", "false")
+        self.test_query_type = options.get("test_query_type", "term")
+        self.test_query_limit = options.get("test_query_limit", "10")
+        self.test_query_field = options.get("test_query_field", "text")
+        self.test_mutation_field = options.get("test_mutation_field", "text2")
+        self.test_worker_type = options.get("test_worker_type", "latency")
+        self.couchbase_index_name = options.get("couchbase_index_name", "perf_fts_index")
+        self.couchbase_index_configfile = options.get("couchbase_index_configfile")
+        self.worker_instances = int(self.jts_instances)
+        self.time = options.get('test_duration', "600")
+        self.warmup_query_workers = options.get("warmup_query_workers", "10")
+        self.warmup_time = options.get('warmup_time', "0")
+
+    def __str__(self) -> str:
+        return str(self.__dict__)
 
 
 class HotLoadSettings(PhaseSettings):
@@ -701,32 +737,6 @@ class ExportSettings:
         self.type = options.get('type', self.TYPE)
         self.format = options.get('format', self.FORMAT)
         self.import_file = options.get('import_file')
-
-
-class FtsSettings:
-
-    def __init__(self, options: dict):
-        self.port = options.get("port", "8094")
-        self.name = options.get("name")
-        self.items = int(options.get("items", 0))
-        self.mutate_items = int(options.get("mutate_items", self.items >> 1))
-        self.worker = int(options.get("worker", 0))
-        self.query = options.get("query", '')
-        self.query_size = int(options.get("query_size", 10))
-        self.throughput = 0
-        self.elastic = bool(int(options.get("elastic", 0)))
-        self.query_file = options.get("query_file", None)
-        self.type = options.get("type", "match")
-        self.logfile = options.get("logfile", None)
-        self.order_by = options.get("orderby", "")
-        self.storage = options.get("backup_path")
-        self.repo = options.get("repo_path")
-        self.field = options.get("field", None)
-        self.index_configfile = options.get("index_configfile", None)
-        self.username = options.get("username", "Administrator")
-
-    def __str__(self) -> str:
-        return str(self.__dict__)
 
 
 class EventingSettings:
@@ -950,9 +960,9 @@ class TestConfig(Config):
         return self._get_options_as_dict('xdcr_cluster')
 
     @property
-    def fts_settings(self) -> FtsSettings:
-        options = self._get_options_as_dict('fts')
-        return FtsSettings(options)
+    def jts_access_settings(self) -> JTSAccessSettings:
+        options = self._get_options_as_dict('jts')
+        return JTSAccessSettings(options)
 
     @property
     def ycsb_settings(self) -> YCSBSettings:

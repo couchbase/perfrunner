@@ -54,16 +54,10 @@ class YCSBThroughputTest(YCSBTest):
 
 class YCSBSOETest(YCSBThroughputTest):
 
-    def restore(self):
-        self.remote.restore_without_index(
-            self.test_config.restore_settings.backup_storage,
-            self.test_config.restore_settings.backup_repo,
-        )
-        self.wait_for_persistence()
-
     def run(self):
         self.download_ycsb()
         self.restore()
+        self.wait_for_persistence()
         self.index.build(one_index_per_bucket=False)
         self.load()
         self.access()

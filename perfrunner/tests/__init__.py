@@ -134,6 +134,12 @@ class PerfTest:
         if core_dumps:
             return pretty_dict(core_dumps)
 
+    def restore(self):
+        self.remote.restore_data(
+            self.test_config.restore_settings.backup_storage,
+            self.test_config.restore_settings.backup_repo,
+        )
+
     def compact_bucket(self, wait: bool = True) -> None:
         for target in self.target_iterator:
             self.rest.trigger_bucket_compaction(target.node, target.bucket)

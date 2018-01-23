@@ -1,13 +1,13 @@
 [clusters]
 leto =
-    172.23.100.29:kv
-    172.23.100.30:kv
-    172.23.100.31:kv
-    172.23.100.32:kv
+    leto-srv-01.perf.couchbase.com:kv
+    leto-srv-02.perf.couchbase.com:kv
+    leto-srv-03.perf.couchbase.com:kv
+    leto-srv-04.perf.couchbase.com:kv
 
 [clients]
 hosts =
-    172.23.100.213
+    leto-cnt-01.perf.couchbase.com
 credentials = root:couchbase
 
 [storage]

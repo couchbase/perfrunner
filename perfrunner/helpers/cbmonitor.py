@@ -11,7 +11,6 @@ from cbagent.collectors import (
     IO,
     PS,
     ActiveTasks,
-    CBASLag,
     Disk,
     DurabilityLatency,
     ElasticStats,
@@ -161,8 +160,7 @@ class CbAgent:
                        secondary_storage_stats=False,
                        secondary_storage_stats_mm=False,
                        xdcr_lag=False,
-                       xdcr_stats=False,
-                       cbas_lag=False):
+                       xdcr_stats=False):
         self.collectors = []
         self.processes = []
 
@@ -235,9 +233,6 @@ class CbAgent:
         if xdcr_stats:
             self.add_collector(XdcrStats)
 
-        if cbas_lag:
-            self.add_cbas_lag()
-
     def add_collector(self, cls, *args):
         for cluster_id, master_node in self.cluster_map.items():
             settings = copy(self.settings)
@@ -290,16 +285,6 @@ class CbAgent:
             self.collectors.append(collector)
 
             break
-
-    def add_cbas_lag(self):
-        for cluster_id, master_node in self.cluster_map.items():
-            settings = copy(self.settings)
-            settings.cluster = cluster_id
-            settings.master_node = master_node
-            settings.cbas_node = self.test.cluster_spec.servers_by_master_by_role(
-                master_node, 'cbas')[0]
-            collector = CBASLag(settings, self.test)
-            self.collectors.append(collector)
 
     def update_metadata(self):
         for collector in self.collectors:

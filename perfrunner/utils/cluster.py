@@ -57,7 +57,6 @@ def main():
     cm.enable_auto_failover()
     cm.configure_auto_compaction()
     cm.enable_audit()
-    cm.set_cbas_settings()
 
     if cm.test_config.cluster.num_buckets:
         cm.create_buckets()

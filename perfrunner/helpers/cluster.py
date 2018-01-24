@@ -29,17 +29,14 @@ class ClusterManager:
             return version >= min_release
 
     def set_data_path(self):
-        if self.cluster_spec.paths:
-            data_path, index_path = self.cluster_spec.paths
-            for server in self.cluster_spec.servers:
-                roles = self.cluster_spec.roles[server]
-                if roles == 'cbas':
-                    iodevices = data_path + "/@analytics/iodev0"
-                    if self.test_config.cluster.analytics_iodevices:
-                        iodevices = ','.join(self.test_config.cluster.analytics_iodevices)
-                    self.rest.set_analytics_path(server, iodevices)
-                else:
-                    self.rest.set_data_path(server, data_path, index_path)
+        data_path, index_path = self.cluster_spec.paths
+        for server in self.cluster_spec.servers:
+            roles = self.cluster_spec.roles[server]
+            if roles == 'cbas':
+                io_devices = ','.join(self.test_config.cluster.analytics_io_devices)
+                self.rest.set_analytics_path(server, io_devices)
+            else:
+                self.rest.set_data_path(server, data_path, index_path)
 
     def rename(self):
         for server in self.cluster_spec.servers:
@@ -82,26 +79,6 @@ class ClusterManager:
             settings = self.rest.get_index_settings(index_nodes[0])
             settings = pretty_dict(settings)
             logger.info('Index settings: {}'.format(settings))
-
-    def set_cbas_settings(self):
-        settings = self.test_config.cbas_settings.node_settings
-        for (_, servers), initial_nodes in zip(self.cluster_spec.clusters,
-                                               self.initial_nodes):
-            master = servers[0]
-            for analytics_node in self.cluster_spec.servers_by_master_by_role(master, "cbas",
-                                                                              initial_nodes):
-                for parameter, value in settings.items():
-                    self.rest.set_cbas_node_settings(analytics_node,
-                                                     {parameter: value})
-        settings = self.test_config.cbas_settings.cluster_settings
-        for master_node in self.cluster_spec.masters:
-            analytics_nodes = self.cluster_spec.servers_by_master_by_role(master_node, "cbas")
-            if len(analytics_nodes):
-                analytics_node = analytics_nodes[0]
-                for parameter, value in settings.items():
-                    self.rest.set_cbas_cluster_settings(analytics_node,
-                                                        {parameter: value})
-                self.rest.restart_analytics(analytics_node)
 
     def set_services(self):
         if not self.is_compatible(min_release='4.0.0'):
@@ -275,11 +252,8 @@ class ClusterManager:
         for master in self.cluster_spec.masters:
             self.monitor.monitor_node_health(master)
 
-        for (_, servers), initial_nodes in zip(self.cluster_spec.clusters,
-                                               self.initial_nodes):
-            master = servers[0]
-            for analytics_node in self.cluster_spec.servers_by_master_by_role(master, "cbas",
-                                                                              initial_nodes):
+            for analytics_node in self.rest.get_active_nodes_by_role(master,
+                                                                     'cbas'):
                 self.monitor.monitor_analytics_node_active(analytics_node)
 
     def enable_audit(self):

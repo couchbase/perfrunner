@@ -1,5 +1,4 @@
 import glob
-import math
 import os
 import re
 from typing import Dict, List, Tuple, Union
@@ -27,7 +26,13 @@ DailyMetric = Tuple[
 
 def s2m(seconds: float) -> float:
     """Convert seconds to minutes."""
-    return round(seconds / 60, 2)
+    return round(seconds / 60, 1)
+
+
+def strip(s: str) -> str:
+    for c in ' &()':
+        s = s.replace(c, '')
+    return s.lower()
 
 
 class MetricHelper:
@@ -60,24 +65,6 @@ class MetricHelper:
             'title': title or self._title,
             'orderBy': order_by,
         }
-
-    def cbas_latency(self, value_sec: float, name: str,
-                     title: str, order_by_in_test: str,
-                     round_digits: int = 0) -> Metric:
-        metric_id = '{}_{}'.format(self.test_config.name, name)
-        order_by = '{}_{}'.format(self.test_config.name, order_by_in_test)
-        title = '{}, {}'.format(self.test_config.showfast.title, title)
-        metric_info = self._metric_info(metric_id, title, order_by)
-        return round(value_sec, round_digits), self._snapshots, metric_info
-
-    def cbas_query_metric(self, value: float, name: str,
-                          title: str, order_by_in_test: str,
-                          round_digits: int = 0) -> Metric:
-        metric_id = '{}_{}'.format(self.test_config.name, name)
-        order_by = '{}_q_{}'.format(self.test_config.name, order_by_in_test)
-        title = '{}, {}'.format(self.test_config.showfast.title, title)
-        metric_info = self._metric_info(metric_id, title, order_by)
-        return round(value, round_digits), self._snapshots, metric_info
 
     def ycsb_queries(self, value: float, name: str, title: str) -> Metric:
         metric_id = '{}_{}'.format(self.test_config.name, name)
@@ -225,10 +212,6 @@ class MetricHelper:
 
     def xdcr_lag(self, percentile: Number = 95) -> Metric:
         return self.lag_collector_metric('xdcr_lag', 'replication lag', '', percentile)
-
-    def cbas_lag(self, order_by_in_test, percentile: Number = 98) -> Metric:
-        order_by = '{}_{}'.format(self.test_config.name, order_by_in_test)
-        return self.lag_collector_metric('cbas_lag', 'cbas sync lag', order_by, percentile)
 
     def avg_replication_rate(self, time_elapsed: float) -> Metric:
         metric_info = self._metric_info()
@@ -570,60 +553,6 @@ class MetricHelper:
                         throughput += int(float(line.split()[-1]))
         return throughput
 
-    def parse_cbas_query_highlevel_metrics(self) -> Dict[str, float]:
-        query_stats = []
-        for filename in glob.glob("loader/*.query.result"):
-            with open(filename) as fh:
-                for line in fh.readlines():
-                    line = line.replace("\n", "")
-                    if line.startswith('queryNumber='):
-                        line = line.replace("queryNumber=", "")
-                        query_stats.append(int(line))
-                    elif line.startswith('queryLatency='):
-                        line = line.replace("queryLatency=", "")
-                        query_stats.append(int(line))
-        if len(query_stats) != 4:
-            raise Exception('Wrong query result file format')
-        return {'success_query_rate': math.floor((query_stats[0] * 100) /
-                                                 (query_stats[0] + query_stats[2])) / 100,
-                'avg_query_latency': (query_stats[1] + query_stats[3]) /
-                                     (query_stats[0] + query_stats[2])}
-
-    def parse_cbas_query_result_latencies(self):
-        results = []
-        query_count_dict = {}
-        query_exe_time_dict = {}
-        pattern = re.compile("[^\t]+")
-        for filename in glob.glob("loader/*.query.result"):
-            with open(filename) as fh:
-                for line in fh.readlines():
-                    if line.startswith('CBAS success query'):
-                        line = line.replace("\n", "")
-                        parts = pattern.findall(line)
-                        if len(parts) >= 10:
-                            match = re.search('/\*([^\*]*)\*/', parts[1])
-                            if match:
-                                query = match.group(1)
-                            else:
-                                query = parts[1]
-                            result = float(parts[5])
-                            results.append((query, result))
-                            exe_time = 0.0
-                            exe_time_str = parts[9]
-                            if exe_time_str.endswith("ms"):
-                                exe_time = float(exe_time_str.replace("ms", ""))
-                            elif exe_time_str.endswith("s"):
-                                exe_time = float(exe_time_str.replace("s", "")) * 1000
-                            if query in query_count_dict:
-                                query_count_dict[query] = query_count_dict[query] + 1
-                                query_exe_time_dict[query] = query_exe_time_dict[query] + exe_time
-                            else:
-                                query_count_dict[query] = 1
-                                query_exe_time_dict[query] = exe_time
-        for query in query_exe_time_dict:
-            query_exe_time_dict[query] = query_exe_time_dict[query] / query_count_dict[query]
-        return results, query_exe_time_dict
-
     def _parse_dcp_throughput(self, output_file: str = 'dcpstatsfile') -> int:
         # Get throughput from OUTPUT_FILE for posting to showfast
         with open(output_file) as fh:
@@ -746,6 +675,21 @@ class MetricHelper:
                     break
 
         latency = round(latency, 1)
+        return latency, self._snapshots, metric_info
+
+    def analytics_latency(self, query: dict, latency: int) -> Metric:
+        metric_id = self.test_config.name + strip(query['description'])
+
+        title = 'Avg. query latency (ms), {} {}, {}'.format(query['name'],
+                                                            query['description'],
+                                                            self._title)
+
+        order_by = '{:05d}'.format(int(query['name'][1:]))
+
+        metric_info = self._metric_info(metric_id,
+                                        title,
+                                        order_by)
+
         return latency, self._snapshots, metric_info
 
 

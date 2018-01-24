@@ -1,5 +1,5 @@
 ---
-- hosts: kv:index:n1ql
+- hosts: kv:index:n1ql:analytics
   vars:
     data_dir: /data
     disk: /dev/sdb1

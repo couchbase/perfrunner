@@ -1,0 +1,36 @@
+[test_case]
+test = perfrunner.tests.analytics.BigFunQueryTest
+use_workers = 0
+
+[showfast]
+component = analytics
+category = latency
+sub_category = BigFUN 10M
+title = 2 nodes, BigFUN 10M users (160M docs), 8 IO devices
+
+[cluster]
+mem_quota = 51200
+analytics_mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+analytics_io_devices =
+    /data/@analytics/iodev0
+    /data/@analytics/iodev1
+    /data/@analytics/iodev2
+    /data/@analytics/iodev3
+    /data/@analytics/iodev4
+    /data/@analytics/iodev5
+    /data/@analytics/iodev6
+    /data/@analytics/iodev7
+
+[bucket]
+replica_number = 0
+eviction_policy = fullEviction
+
+[restore]
+backup_storage = /backups
+backup_repo = bigfun10M
+
+[access]
+ops = 9
+workers = 3

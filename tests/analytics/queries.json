@@ -1,0 +1,67 @@
+[
+  {
+    "name": "Q2",
+    "description": "Record id range scan (500 rows)",
+    "statement": "SELECT VALUE u FROM `GleambookUsers` u WHERE META().id >= \"000000000000001\" AND META().id <= \"000000000000500\";"
+  },
+  {
+    "name": "Q3",
+    "description": "Temporal range scan (1 month)",
+    "statement": "SELECT VALUE u FROM `GleambookUsers` u WHERE u.user_since >= \"2000-01-01T00:00:00\" AND u.user_since < \"2000-02-01T00:00:00\";"
+  },
+  {
+    "name": "Q3",
+    "description": "Temporal range scan (1 year)",
+    "statement": "SELECT VALUE u FROM `GleambookUsers` u WHERE u.user_since >= \"2000-01-01T00:00:00\" AND u.user_since < \"2001-01-01T00:00:00\";"
+  },
+  {
+    "name": "Q4",
+    "description": "Existential quantification (1 month)",
+    "statement": "SELECT VALUE u FROM `GleambookUsers` u where u.user_since >= \"2000-01-01T00:00:00\" AND u.user_since < \"2000-02-01T00:00:00\" AND (SOME e IN u.employment SATISFIES e.end_date IS UNKNOWN);"
+  },
+  {
+    "name": "Q4",
+    "description": "Existential quantification (1 year)",
+    "statement": "SELECT VALUE u FROM `GleambookUsers` u where u.user_since >= \"2000-01-01T00:00:00\" AND u.user_since < \"2001-01-01T00:00:00\" AND (SOME e IN u.employment SATISFIES e.end_date IS UNKNOWN);"
+  },
+  {
+    "name": "Q6",
+    "description": "Global aggregation (1 year)",
+    "statement": "ARRAY_AVG((SELECT VALUE LENGTH(cm.message_text) FROM `ChirpMessages` cm WHERE cm.send_time >= \"2000-01-01T00:00:00\" AND cm.send_time < \"2001-01-01T00:00:00\"));"
+  },
+  {
+    "name": "Q7",
+    "description": "Grouping & aggregation (1 year)",
+    "statement": "SELECT cm.user.screen_name AS username, AVG(LENGTH(cm.user.message_text)) AS avg FROM `ChirpMessages` cm WHERE cm.send_time >= \"2000-01-01T00:00:00\" AND cm.send_time < \"2001-01-01T00:00:00\" GROUP BY cm.user.screen_name;"
+  },
+  {
+    "name": "Q8",
+    "description": "Top-K (1 year)",
+    "statement": "SELECT cm.user.screen_name AS username, AVG(LENGTH(cm.user.message_text)) AS avg FROM `ChirpMessages` cm WHERE cm.send_time >= \"2000-01-01T00:00:00\" AND cm.send_time < \"2001-01-01T00:00:00\" GROUP BY cm.user.screen_name ORDER BY avg LIMIT 10;"
+  },
+  {
+    "name": "Q10",
+    "description": "Text containment search (1 year)",
+    "statement": "SELECT cm.send_time AS time, cm.message_text AS chirp FROM `ChirpMessages` cm WHERE CONTAINS(cm.message_text, \"screen\") ORDER BY cm.send_time DESC LIMIT 10;"
+  },
+  {
+    "name": "Q12",
+    "description": "Select equi-join (1 year)",
+    "statement": "SELECT u.name AS username, m.message AS message FROM `GleambookUsers` u, `GleambookMessages` m WHERE TO_STRING(META(u).id) = m.author_id AND u.user_since >= \"2000-01-01T00:00:00\" AND u.user_since < \"2001-01-01T00:00:00\" AND m.send_time >= \"2000-01-01T00:00:00\" AND m.send_time < \"2001-01-01T00:00:00\";"
+  },
+  {
+    "name": "Q13",
+    "description": "Select left-outer equi-join (1 year)",
+    "statement": "SELECT u.name AS username, (SELECT m.message FROM `GleambookMessages` m WHERE TO_STRING(META(u).id) = m.author_id AND m.send_time >= \"2000-01-01T00:00:00\" AND m.send_time < \"2001-01-01T00:00:00\") AS m FROM `GleambookUsers` u WHERE u.user_since >= \"2000-01-01T00:00:00\" AND u.user_since < \"2001-01-01T00:00:00\";"
+  },
+  {
+    "name": "Q14",
+    "description": "Select join with grouping aggregation (1 year)",
+    "statement": "SELECT META(u).id AS id, COUNT(*) AS count FROM `GleambookUsers` u, `GleambookMessages` m WHERE TO_STRING(META(u).id) = m.author_id AND u.user_since >= \"2000-01-01T00:00:00\" AND u.user_since < \"2001-01-01T00:00:00\" AND m.send_time >= \"2000-01-01T00:00:00\" AND m.send_time < \"2001-01-01T00:00:00\"  GROUP BY META(u).id;"
+  },
+  {
+    "name": "Q15",
+    "description": "Select join with Top-K (1 year)",
+    "statement": "SELECT META(u).id AS id, COUNT(*) AS count FROM `GleambookUsers` u, `GleambookMessages` m WHERE TO_STRING(META(u).id) = m.author_id AND u.user_since >= \"2000-01-01T00:00:00\" AND u.user_since < \"2001-01-01T00:00:00\" AND m.send_time >= \"2000-01-01T00:00:00\" AND m.send_time < \"2001-01-01T00:00:00\" GROUP BY META(u).id ORDER BY count LIMIT 10;"
+  }
+]

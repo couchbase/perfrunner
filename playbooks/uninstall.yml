@@ -1,5 +1,5 @@
 ---
-- hosts: kv:index:n1ql
+- hosts: kv:index:n1ql:analytics
   vars:
     couchbase_home: /opt/couchbase
     data_dir: /data

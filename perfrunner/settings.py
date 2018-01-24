@@ -86,19 +86,6 @@ class ClusterSpec(Config):
                     has_service.append(host)
         return has_service
 
-    def servers_by_master_by_role(self, master: str, role: str, initial_nodes: int=-1) -> List[str]:
-        has_service = []
-        for _, servers in self.config.items('clusters'):
-            serverslist = servers.split()
-            if serverslist[0].split(':')[0] == master:
-                if initial_nodes != -1:
-                    serverslist = serverslist[0:initial_nodes]
-                for server in serverslist:
-                    host, roles = server.split(':')
-                    if role in roles:
-                        has_service.append(host)
-        return has_service
-
     @property
     def roles(self) -> Dict[str, str]:
         server_roles = {}
@@ -170,7 +157,8 @@ class ClusterSettings:
     INDEX_MEM_QUOTA = 256
     FTS_INDEX_MEM_QUOTA = 0
     ANALYTICS_MEM_QUOTA = 0
-    ANALYTICS_IODEVICES = []
+
+    ANALYTICS_IO_DEVICES = []
 
     EVENTING_BUCKET_MEM_QUOTA = 0
     EVENTING_METADATA_MEM_QUOTA = 1024
@@ -191,11 +179,11 @@ class ClusterSettings:
                                                    self.FTS_INDEX_MEM_QUOTA))
         self.analytics_mem_quota = int(options.get('analytics_mem_quota',
                                                    self.ANALYTICS_MEM_QUOTA))
-        analytics_iodevices = options.get('analytics_iodevices')
-        if analytics_iodevices:
-            self.analytics_iodevices = analytics_iodevices.split(',')
+        analytics_io_devices = options.get('analytics_io_devices')
+        if analytics_io_devices:
+            self.analytics_io_devices = analytics_io_devices.split()
         else:
-            self.analytics_iodevices = self.ANALYTICS_IODEVICES
+            self.analytics_io_devices = self.ANALYTICS_IO_DEVICES
 
         self.initial_nodes = [
             int(nodes) for nodes in options.get('initial_nodes').split()
@@ -385,12 +373,6 @@ class PhaseSettings:
     RECORDED_LOAD_CACHE_SIZE = 0
     INSERTS_PER_WORKERINSTANCE = 0
 
-    BIGFUN_QUERY_WORKERS = 3
-    BIGFUN_MIX_INSERTS = 10
-    BIGFUN_MIX_UPDATES = 80
-    BIGFUN_MIX_DELETES = 10
-    BIGFUN_MIX_INTERVAL = 20
-
     def __init__(self, options: dict):
         # Common settings
         self.time = int(options.get('time', self.TIME))
@@ -482,14 +464,6 @@ class PhaseSettings:
         # Subdoc & XATTR
         self.subdoc_field = options.get('subdoc_field')
         self.xattr_field = options.get('xattr_field')
-
-        # Bigfun settings
-        self.bigfun_query_workers = int(options.get('bigfun_query_workers',
-                                                    self.BIGFUN_QUERY_WORKERS))
-        self.bigfun_mix_inserts = int(options.get('bigfun_mix_inserts', self.BIGFUN_MIX_INSERTS))
-        self.bigfun_mix_updates = int(options.get('bigfun_mix_updates', self.BIGFUN_MIX_UPDATES))
-        self.bigfun_mix_deletes = int(options.get('bigfun_mix_deletes', self.BIGFUN_MIX_DELETES))
-        self.bigfun_mix_interval = int(options.get('bigfun_mix_interval', self.BIGFUN_MIX_INTERVAL))
 
     def __str__(self) -> str:
         return str(self.__dict__)
@@ -592,39 +566,6 @@ class IndexSettings:
 
     def __str__(self) -> str:
         return str(self.__dict__)
-
-
-class CBASSettings:
-
-    CBAS_LAG_TIMEOUT = 600
-
-    ALLOW_LAG_TIMEOUTS = 0
-
-    def __init__(self, options: dict):
-        self.cbas_lag_timeout = int(options.get('cbas_lag_timeout', self.CBAS_LAG_TIMEOUT))
-        self.allow_lag_timeouts = int(options.get('allow_lag_timeouts', self.ALLOW_LAG_TIMEOUTS))
-        self.cluster_settings = {}
-        self.node_settings = {}
-        for option in options:
-            value = options.get(option)
-            if option.startswith('cluster.'):
-                option = option.replace('cluster.', '')
-                if option.startswith('enforceFrameWriterProtocol'):
-                    self.cluster_settings[option] = ('true' == value)
-                else:
-                    self.cluster_settings[option] = int(value)
-            elif option.startswith('node_'):
-                option = option.replace('node_', '')
-                if option.startswith('logLevel') or \
-                        option.startswith('jvmArgs'):
-                    self.node_settings[option] = value
-                elif option.startswith('storageLsmBloomfilterFalsepositiverate'):
-                    self.node_settings[option] = float(value)
-                else:
-                    self.node_settings[option] = int(value)
-
-    def __str__(self) -> str:
-        return str(self.cluster_settings) + str(self.node_settings)
 
 
 class GSISettings:
@@ -791,35 +732,6 @@ class YCSBSettings:
         return str(self.__dict__)
 
 
-class BigfunSettings:
-
-    SOCIALGEN_REPO = 'git://github.com/couchbaselabs/socialGen.git'
-    SOCIALGEN_BRANCH = 'master'
-    LOADER_REPO = 'git://github.com/couchbaselabs/loader.git'
-    LOADER_BRANCH = 'master'
-    WORKERS = 20
-    USER_DOCS = 10000
-    CLEANUP_WHEN_DISCONNECTED = 'true'
-    CLEANUP_METHOD = 'flush'
-    CREATE_INDEX = 1
-
-    def __init__(self, options: dict):
-        self.socialgen_repo = options.get('socialgen_repo', self.SOCIALGEN_REPO)
-        self.socialgen_branch = options.get('socialgen_branch', self.SOCIALGEN_BRANCH)
-        self.loader_repo = options.get('loader_repo', self.LOADER_REPO)
-        self.loader_branch = options.get('loader_branch', self.LOADER_BRANCH)
-        self.workers = int(options.get('workers', self.WORKERS))
-        self.user_docs = int(options.get('user_docs', self.USER_DOCS))
-        self.cleanup_when_disconnected = ('true' == options.get('cleanup_when_disconnected',
-                                                                self.CLEANUP_WHEN_DISCONNECTED))
-        self.cleanup_method = options.get('cleanup_method',
-                                          self.CLEANUP_METHOD)
-        self.create_index = bool(int(options.get('create_index', self.CREATE_INDEX)))
-
-    def __str__(self) -> str:
-        return str(self.__dict__)
-
-
 class TestConfig(Config):
 
     @property
@@ -923,11 +835,6 @@ class TestConfig(Config):
         return BackupSettings(options)
 
     @property
-    def cbas_settings(self) -> CBASSettings:
-        options = self._get_options_as_dict('cbas_settings')
-        return CBASSettings(options)
-
-    @property
     def export_settings(self) -> ExportSettings:
         options = self._get_options_as_dict('export')
         return ExportSettings(options)
@@ -983,11 +890,6 @@ class TestConfig(Config):
     def eventing_settings(self) -> EventingSettings:
         options = self._get_options_as_dict('eventing')
         return EventingSettings(options)
-
-    @property
-    def bigfun_settings(self) -> BigfunSettings:
-        options = self._get_options_as_dict('bigfun')
-        return BigfunSettings(options)
 
     def get_n1ql_query_definition(self, query_name: str) -> dict:
         return self._get_options_as_dict('n1ql-{}'.format(query_name))

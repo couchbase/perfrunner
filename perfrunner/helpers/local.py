@@ -340,132 +340,6 @@ def get_jts_logs(jts_home: str, local_dir: str):
         local("cp -r {} {}/".format(file, local_dir))
 
 
-def run_bigfun_single_script(host, bucket, password, op, instance, tablename, id, arg):
-    with lcd('loader'):
-        cmd = "bash ./target/loader-1.0-SNAPSHOT-binary-assembly/bin/loader.sh" \
-              " /workspace/bigfundata" \
-              " {clientn} {op} {tablename} {id}" \
-              " {cbhost} {bucket} {password} {arg}" \
-              " > loader_{tablename}_{cbhost}_{bucket}_{clientn}_{op}.log" \
-              " 2> loader_{tablename}_{cbhost}_{bucket}_{clientn}_{op}.err".format(
-                                                        op=op,
-                                                        clientn=instance,
-                                                        cbhost=host,
-                                                        bucket=bucket,
-                                                        password=password,
-                                                        tablename=tablename,
-                                                        id=id,
-                                                        arg=arg)
-        local(cmd)
-
-
-def run_bigfun_mix_mode_script(host, bucket, password,
-                               instance, datapath,
-                               interval_ms, duration_sec,
-                               gudoc, gmdoc, cmdoc,
-                               guarg, gmarg, cmarg):
-    with lcd('loader'):
-        cmd = 'bash ./target/loader-1.0-SNAPSHOT-binary-assembly/bin/mixloadall.sh' \
-              ' {host} {bucket} {password}' \
-              ' {instance} {datapath}' \
-              ' {interval_ms} {duration_sec}' \
-              ' {gudoc} {gmdoc} {cmdoc}' \
-              ' "{guarg}" "{gmarg}" "{cmarg}"'.format(
-                                                host=host,
-                                                bucket=bucket,
-                                                password=password,
-                                                instance=instance,
-                                                datapath=datapath,
-                                                interval_ms=interval_ms,
-                                                duration_sec=duration_sec,
-                                                gudoc=gudoc,
-                                                gmdoc=gmdoc,
-                                                cmdoc=cmdoc,
-                                                guarg=guarg,
-                                                gmarg=gmarg,
-                                                cmarg=cmarg)
-        local(cmd)
-
-
-def run_bigfun_script(host, bucket, password, op, instance, guarg, gmarg, cmarg):
-    run_bigfun_single_script(host, bucket, password, op, instance,
-                             "gbook_users", "id", guarg)
-    run_bigfun_single_script(host, bucket, password, op, instance,
-                             "gbook_messages", "message_id", gmarg)
-    run_bigfun_single_script(host, bucket, password, op, instance,
-                             "chirp_messages", "chirpid", cmarg)
-
-
-def run_bigfun_query_script(host, bucket, password, instance, concurrent, repeat):
-    with lcd('loader'):
-        cmd = "bash ./target/loader-1.0-SNAPSHOT-binary-assembly/bin/query.sh" \
-              " /workspace/bigfundata" \
-              " {clientn} {tablesufix} {host} {user} {password} {concurrent} {repeat}" \
-              " > query_{host}_{bucket}_{clientn}_{concurrent}_{repeat}.log" \
-              " 2> query_{host}_{bucket}_{clientn}_{concurrent}_{repeat}.err".format(
-                                                        clientn=instance,
-                                                        tablesufix=bucket,
-                                                        host=host,
-                                                        user=bucket,
-                                                        bucket=bucket,
-                                                        password=password,
-                                                        concurrent=concurrent,
-                                                        repeat=repeat)
-        local(cmd)
-
-
-def run_bigfun(host, bucket, password, action, gudocnum=0, interval=0,
-               time=None, instance=0, workers=0, inserts=0, deletes=0, updates=0):
-    if action == "insert":
-        run_bigfun_script(host, bucket, password, "insert", instance, "", "", "")
-    elif action == "delete":
-        run_bigfun_script(host, bucket, password, "delete", instance, "", "", "")
-    elif action == "ttl":
-        run_bigfun_script(host, bucket, password, "ttl", instance, "-t 1#2", "-t 1#2", "-t 1#2")
-    elif action == "update_non_index":
-        run_bigfun_script(host, bucket, password, "update", instance,
-                          "-U alias#string#alias_update%d#1#100 ",
-                          "-U message#string#message_update%d#1#100",
-                          "-U message_text#string#message_text_update%d#1#100")
-    elif action == "update_index":
-        run_bigfun_script(host, bucket, password, "update", instance,
-                          "-U user_since#time#1992-01-01T00:00:00#1996-01-01T00:00:00",
-                          "-U author_id#string#%015d#1#1000",
-                          "-U send_time#time#1992-01-01T00:00:00#1996-01-01T00:00:00")
-    elif action == "query":
-        run_bigfun_query_script(host, bucket, password, instance, workers, 3)
-    elif action == "wait":
-        with lcd('loader'):
-            cmd = "sleep {seconds}".format(seconds=time)
-            local(cmd)
-    elif action == "mix":
-        id_per_table = gudocnum * 20
-        gu_insert_start = 4 * id_per_table
-        gm_insert_start = 5 * id_per_table
-        cm_insert_start = 7 * id_per_table
-        inmem_ratio = 0.1
-        if int((gudocnum * inmem_ratio) / workers) < 100:
-            inmem_ratio = 0.5
-        gu_doc_inmem = int(gudocnum * inmem_ratio / workers)
-        gm_doc_inmem = int((gudocnum * 5 * inmem_ratio) / workers)
-        cm_doc_inmem = int((gudocnum * 10 * inmem_ratio) / workers)
-        insert_range_per_partition = int(id_per_table / workers)
-        arg = "-t 1#2 -ip {insertportion} -dp {deleteportion}" \
-              " -up {updateportion} -tp {ttlportion}" \
-              " -qp 0 -md 10 -ir {insertrange}".format(insertportion=inserts,
-                                                       deleteportion=deletes,
-                                                       updateportion=updates,
-                                                       ttlportion=0,
-                                                       insertrange=insert_range_per_partition)
-        run_bigfun_mix_mode_script(host, bucket, password,
-                                   instance, "/workspace/bigfundata",
-                                   interval, time,
-                                   gu_doc_inmem, gm_doc_inmem, cm_doc_inmem,
-                                   arg + " -is {insertstart}".format(insertstart=gu_insert_start),
-                                   arg + " -is {insertstart}".format(insertstart=gm_insert_start),
-                                   arg + " -is {insertstart}".format(insertstart=cm_insert_start))
-
-
 def restart_memcached(mem_limit=10000, port=8000):
     cmd1 = 'killall -9 memcached'
     logger.info('Running: {}'.format(cmd1))
@@ -539,31 +413,41 @@ def clone_jts(repo: str, branch: str, worker_home: str, jts_home: str):
         local('mvn install')
 
 
-def clone_bigfun(socialgen_repo: str, socialgen_branch: str,
-                 loader_repo: str, loader_branch: str):
-    logger.info('Cloning socialGen repository: {} branch {}'.format(
-        socialgen_repo, socialgen_branch))
-    logger.info('Cloning loader repository: {} branch {}'.format(
-        loader_repo, loader_branch))
+def clone_social_gen(socialgen_repo: str, socialgen_branch: str):
+    logger.info('Cloning socialGen repository: {} branch: {}'.format(socialgen_repo,
+                                                                     socialgen_branch))
     local('git clone -q -b {} {}'.format(socialgen_branch, socialgen_repo))
-    local('git clone -q -b {} {}'.format(loader_branch, loader_repo))
+
+
+def generate_bigfun_data(user_docs: int):
+    logger.info('Generating socialGen documents for {} users'.format(user_docs))
     with lcd('socialGen'):
-        cmd = "mvn clean package"
-        local(cmd)
-    with lcd('loader'):
-        cmd = "mvn clean package"
+        cmd = \
+            "./scripts/initb.sh data 1 0 {users} " \
+            "-f JSON -k STRING#%015d > socialGen.log".format(
+                users=user_docs)
+        local('mvn clean package')
         local(cmd)
 
 
-def generate_doctemplates(workers: int, user_docs: int, clientn: int):
-    logger.info('Generating document templates workers {} docs {} client {}'.format(
-        workers, user_docs, clientn))
-    with lcd('socialGen'):
-        cmd = "bash ./scripts/initb.sh /workspace/bigfundata {partitions} {clientn} {users}" \
-              " -f JSON -k STRING#%015d > socialGen.log".format(users=user_docs,
-                                                                partitions=workers,
-                                                                clientn=clientn)
-        local(cmd)
+def run_loader(hostname: str, bucket: str, password: str, workers: int,
+               table: str, path: str = 'socialGen/data/p1'):
+    logger.info('Loading socialGen documents ("{}" table)'.format(table))
+    cmd = \
+        "./loader -hostname {hostname} -bucket {bucket} -password {password} " \
+        "-workers {workers} -table {table} -path {path} > loader.log".format(
+            hostname=hostname,
+            bucket=bucket,
+            password=password,
+            workers=workers,
+            table=table,
+            path=path)
+    local(cmd)
+
+
+def load_bigfun_data(hostname: str, bucket: str, password: str, workers: int):
+    for table in 'gbook_users', 'gbook_messages', 'chirp_messages':
+        run_loader(hostname, bucket, password, workers, table)
 
 
 def get_indexer_heap_profile(indexer: str) -> str:

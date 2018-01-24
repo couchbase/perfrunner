@@ -19,16 +19,6 @@ from perfrunner.settings import (
     TestConfig,
 )
 from perfrunner.workloads import spring_workload
-from perfrunner.workloads.cbas import (
-    cbas_bigfun_data_delete,
-    cbas_bigfun_data_insert,
-    cbas_bigfun_data_mixload,
-    cbas_bigfun_data_query,
-    cbas_bigfun_data_ttl,
-    cbas_bigfun_data_update_index,
-    cbas_bigfun_data_update_non_index,
-    cbas_bigfun_wait,
-)
 from perfrunner.workloads.jts import jts_run, jts_warmup
 from perfrunner.workloads.pillowfight import (
     pillowfight_data_load,
@@ -67,46 +57,6 @@ def ycsb_data_load_task(*args):
 @celery.task
 def ycsb_task(*args):
     ycsb_workload(*args)
-
-
-@celery.task
-def cbas_bigfun_data_ttl_task(*args):
-    cbas_bigfun_data_ttl(*args)
-
-
-@celery.task
-def cbas_bigfun_data_mixload_task(*args):
-    cbas_bigfun_data_mixload(*args)
-
-
-@celery.task
-def cbas_bigfun_data_delete_task(*args):
-    cbas_bigfun_data_delete(*args)
-
-
-@celery.task
-def cbas_bigfun_data_insert_task(*args):
-    cbas_bigfun_data_insert(*args)
-
-
-@celery.task
-def cbas_bigfun_data_query_task(*args):
-    cbas_bigfun_data_query(*args)
-
-
-@celery.task
-def cbas_bigfun_data_update_index_task(*args):
-    cbas_bigfun_data_update_index(*args)
-
-
-@celery.task
-def cbas_bigfun_data_update_non_index_task(*args):
-    cbas_bigfun_data_update_non_index(*args)
-
-
-@celery.task
-def cbas_bigfun_wait_task(*args):
-    cbas_bigfun_wait(*args)
 
 
 @celery.task

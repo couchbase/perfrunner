@@ -88,7 +88,6 @@ class RebalanceTest(PerfTest):
 
             self.rest.rebalance(master, known_nodes, ejected_nodes)
             self.monitor_progress(master)
-            self.post_rebalance_new_nodes(new_nodes)
 
     def pre_rebalance(self):
         """Execute additional steps before rebalance."""
@@ -101,9 +100,6 @@ class RebalanceTest(PerfTest):
         logger.info('Sleeping for {} seconds before finishing'
                     .format(self.rebalance_settings.stop_after))
         time.sleep(self.rebalance_settings.stop_after)
-
-    def post_rebalance_new_nodes(self, new_nodes):
-        pass
 
     @with_stats
     def rebalance(self, services=None):

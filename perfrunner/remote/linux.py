@@ -157,8 +157,7 @@ class RemoteLinux(Remote):
     def kill_processes(self):
         for arg in self.PROCESS_ARGUMENTS:
             logger.info('Killing process with argument {}'.format(arg))
-            run('pkill -f {}'.format(arg),
-                warn_only=True, quiet=True)
+            run('pkill -f {}'.format(arg), warn_only=True, quiet=True)
         logger.info('Killing {}'.format(', '.join(self.PROCESSES)))
         run('killall -9 {}'.format(' '.join(self.PROCESSES)),
             warn_only=True, quiet=True)

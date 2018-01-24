@@ -5,15 +5,16 @@ from typing import Callable, Dict, Iterator, List
 
 import requests
 from decorator import decorator
-from requests.exceptions import ConnectionError, Timeout
+from requests.exceptions import ConnectionError
 
-import perfrunner.helpers.misc
 from logger import logger
 from perfrunner.helpers.misc import pretty_dict
 from perfrunner.settings import BucketSettings, ClusterSpec
 
 MAX_RETRY = 20
 RETRY_DELAY = 10
+
+ANALYTICS_PORT = 8095
 EVENTING_PORT = 8096
 
 
@@ -126,7 +127,7 @@ class RestHelper:
         self.post(url=api, data=data)
 
     def set_analytics_mem_quota(self, host: str, mem_quota: int):
-        logger.info('Configuring CBAS RAM quota: {} MB'.format(mem_quota))
+        logger.info('Configuring Analytics RAM quota: {} MB'.format(mem_quota))
 
         api = 'http://{}:8091/pools/default'.format(host)
         data = {'cbasMemoryQuota': mem_quota}
@@ -417,18 +418,6 @@ class RestHelper:
         api = 'http://{}:8091/internalSettings'.format(host)
         self.post(url=api, data=data)
 
-    def set_cbas_cluster_settings(self, host: str, data: dict):
-        logger.info('Updating cbas cluster settings: {} on {}'.format(data, host))
-
-        api = 'http://{}:8095/analytics/cc/config'.format(host)
-        self.put(url=api, data=data)
-
-    def set_cbas_node_settings(self, host: str, data: dict):
-        logger.info('Updating cbas node settings: {} on {}'.format(data, host))
-
-        api = 'http://{}:8095/analytics/node/config'.format(host)
-        self.put(url=api, data=data)
-
     def set_xdcr_cluster_settings(self, host: str, data: dict):
         logger.info('Updating xdcr cluster settings: {}'.format(data))
 
@@ -661,18 +650,24 @@ class RestHelper:
                 break
 
     def analytics_node_active(self, host: str) -> bool:
-        logger.info('Check if analytics node is active')
+        logger.info('Checking if analytics node is active: {}'.format(host))
 
-        api = 'http://{}:8095/analytics/cluster'.format(host)
+        api = 'http://{}:{}/analytics/cluster'.format(host, ANALYTICS_PORT)
 
         status = self.get(url=api).json()
         return status["state"] == "ACTIVE"
 
-    def restart_analytics(self, analytics_node: str):
-        logger.info('Restart analytics node {}'.format(analytics_node))
+    def exec_analytics_statement(self, analytics_node: str, statement: str):
+        api = 'http://{}:{}/analytics/service'.format(analytics_node,
+                                                      ANALYTICS_PORT)
+        data = {
+            'statement': statement
+        }
+        self.post(url=api, data=data)
 
-        api = 'http://{}:8095/analytics/cluster/restart'.format(analytics_node)
-        self.post(url=api)
+    def get_analytics_stats(self, analytics_node: str):
+        api = 'http://{}:9110/analytics/node/stats'.format(analytics_node)
+        return self.get(url=api).json()
 
     def create_function(self, node: str, func: dict, name: str):
         logger.info('Creating function on node {}: {}'.format(node,
@@ -711,15 +706,6 @@ class RestHelper:
         api = 'http://{}:{}/getDeployedApps'.format(node, EVENTING_PORT)
         return self.get(url=api).json()
 
-    @perfrunner.helpers.misc.retry(catch=[Timeout], iterations=3, wait=1)
-    def run_analytics_query(self, analytics_node: str, query: str, timeout: int=300) -> dict:
-        api = 'http://{}:8095/analytics/service'.format(analytics_node)
-        data = {
-            'statement': query,
-            'timeout': '{}s'.format(timeout),
-        }
-        return self.post(url=api, data=data, timeout=timeout).json()
-
     def get_eventing_stats(self, node: str, full_stats=False):
         logger.info('get eventing stats on node {}'.format(node))
 
@@ -729,7 +715,7 @@ class RestHelper:
 
         return self.get(url=api).json()
 
-    def get_active_nodes_by_role(self, master_node: str, role: str):
+    def get_active_nodes_by_role(self, master_node: str, role: str) -> List[str]:
         active_nodes = self.node_statuses(master_node)
         active_nodes_by_role = []
         for node in self.cluster_spec.servers_by_role(role):

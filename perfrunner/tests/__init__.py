@@ -195,6 +195,16 @@ class PerfTest:
         self.run_phase('hot load phase',
                        task, settings, self.target_iterator)
 
+    def xattr_load(self,
+                   task: Callable = spring_task,
+                   target_iterator: TargetIterator = None) -> None:
+        if target_iterator is None:
+            target_iterator = self.target_iterator
+        settings = self.test_config.xattr_load_settings
+
+        self.run_phase('xattr phase',
+                       task, settings, target_iterator)
+
     def access(self,
                task: Callable = spring_task,
                settings: PhaseSettings = None) -> None:

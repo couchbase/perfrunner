@@ -156,18 +156,10 @@ class XATTRTest(MixedLatencyTest):
 
     COLLECTORS = {'latency': True}
 
-    def add_xattr(self):
-        access_settings = self.test_config.access_settings
-        access_settings.seq_upserts = True
-        access_settings.time = None
-
-        PerfTest.access(self, settings=access_settings)
-
     def run(self):
         self.load()
+        self.xattr_load()
         self.wait_for_persistence()
-
-        self.add_xattr()
 
         self.access()
 

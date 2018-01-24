@@ -189,3 +189,22 @@ class N1QLDGMThroughputTest(N1QLDGMTest, N1QLThroughputTest):
 class N1QLDGMLatencyTest(N1QLDGMTest, N1QLLatencyTest):
 
     pass
+
+
+class N1QLXattrThroughputTest(N1QLThroughputTest):
+
+    def xattr_load(self, *args, **kwargs):
+        iterator = TargetIterator(self.cluster_spec, self.test_config, 'n1ql')
+        super().xattr_load(target_iterator=iterator)
+
+    def run(self):
+        self.load()
+        self.xattr_load()
+        self.wait_for_persistence()
+
+        self.build_index()
+
+        self.access_bg()
+        self.access()
+
+        self.report_kpi()

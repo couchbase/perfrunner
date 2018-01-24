@@ -545,6 +545,11 @@ class HotLoadSettings(PhaseSettings):
     HOT_READS = True
 
 
+class XattrLoadSettings(PhaseSettings):
+
+    SEQ_UPSERTS = True
+
+
 class RestoreSettings:
 
     BACKUP_STORAGE = '/backups'
@@ -881,6 +886,11 @@ class TestConfig(Config):
         hot_load.size = load.size
         hot_load.key_fmtr = load.key_fmtr
         return hot_load
+
+    @property
+    def xattr_load_settings(self) -> XattrLoadSettings:
+        options = self._get_options_as_dict('xattr_load')
+        return XattrLoadSettings(options)
 
     @property
     def xdcr_settings(self) -> XDCRSettings:

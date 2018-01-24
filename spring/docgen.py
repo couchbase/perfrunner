@@ -670,6 +670,10 @@ class JoinedDocument(ReverseLookupDocument):
             for idx in range(self.num_replies)
         ]
 
+    def _build_sub_capped(self, alphabet: str, seq_id: int, num_unique: int) -> str:
+        ref_id = seq_id % (self.num_docs // 4)
+        return self._build_capped(alphabet, ref_id, num_unique)
+
     def next(self, key: Key) -> dict:
         alphabet = self._build_alphabet(key.string)
 
@@ -677,6 +681,7 @@ class JoinedDocument(ReverseLookupDocument):
             'owner': self._build_owner(key.number),
             'title': self._build_title(alphabet),
             'capped': self._build_capped(alphabet, key.number, 100),
+            'sub_capped': self._build_sub_capped(alphabet, key.number, 100),
             'categories': self._build_categories(key.number),
             'replies': self._build_replies(key.number),
         }

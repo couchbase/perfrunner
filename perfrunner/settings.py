@@ -157,6 +157,7 @@ class ClusterSettings:
     INDEX_MEM_QUOTA = 256
     FTS_INDEX_MEM_QUOTA = 0
     ANALYTICS_MEM_QUOTA = 0
+    EVENTING_MEM_QUOTA = 0
 
     ANALYTICS_IO_DEVICES = []
 
@@ -179,6 +180,9 @@ class ClusterSettings:
                                                    self.FTS_INDEX_MEM_QUOTA))
         self.analytics_mem_quota = int(options.get('analytics_mem_quota',
                                                    self.ANALYTICS_MEM_QUOTA))
+        self.eventing_mem_quota = int(options.get('eventing_mem_quota',
+                                                  self.EVENTING_MEM_QUOTA))
+
         analytics_io_devices = options.get('analytics_io_devices')
         if analytics_io_devices:
             self.analytics_io_devices = analytics_io_devices.split()

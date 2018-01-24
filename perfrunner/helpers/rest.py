@@ -133,6 +133,13 @@ class RestHelper:
         data = {'cbasMemoryQuota': mem_quota}
         self.post(url=api, data=data)
 
+    def set_eventing_mem_quota(self, host: str, mem_quota: int):
+        logger.info('Configuring eventing RAM quota: {} MB'.format(mem_quota))
+
+        api = 'http://{}:8091/pools/default'.format(host)
+        data = {'eventingMemoryQuota': mem_quota}
+        self.post(url=api, data=data)
+
     def set_query_settings(self, host: str, override_settings: dict):
         api = 'http://{}:8093/admin/settings'.format(host)
 

@@ -58,6 +58,9 @@ class ClusterManager:
             if self.test_config.cluster.analytics_mem_quota:
                 self.rest.set_analytics_mem_quota(master,
                                                   self.test_config.cluster.analytics_mem_quota)
+            if self.test_config.cluster.eventing_mem_quota:
+                self.rest.set_eventing_mem_quota(master,
+                                                 self.test_config.cluster.eventing_mem_quota)
 
     def set_query_settings(self):
         query_nodes = self.cluster_spec.servers_by_role('n1ql')

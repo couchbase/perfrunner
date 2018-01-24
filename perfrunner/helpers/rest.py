@@ -680,7 +680,7 @@ class RestHelper:
 
         api = 'http://{}:8091/_p/event/saveAppTempStore/?name={}'.format(node,
                                                                          name)
-        self.post(url=api, data=func)
+        self.post(url=api, data=json.dumps(func))
 
     def deploy_function(self, node: str, func: dict, name: str):
         logger.info('Deploying function on node {}'.format(node))

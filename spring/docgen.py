@@ -292,17 +292,6 @@ class KeyForCASUpdate:
         return Key(number=number, prefix=self.prefix, fmtr=self.fmtr)
 
 
-class FTSKey:
-
-    def __init__(self, ws: WorkloadSettings):
-        self.mutate_items = 0
-        if ws.fts_config:
-            self.mutate_items = ws.fts_config.mutate_items
-
-    def next(self) -> str:
-        return hex(random.randint(0, self.mutate_items))[2:]
-
-
 class String:
 
     def __init__(self, avg_size: int):

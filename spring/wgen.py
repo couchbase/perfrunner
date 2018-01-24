@@ -1,9 +1,7 @@
-import json
 import os
 import signal
 import time
 from multiprocessing import Event, Lock, Process, Value
-from random import randint
 from threading import Timer
 from typing import Callable, List, Tuple
 
@@ -11,18 +9,16 @@ import twisted
 from decorator import decorator
 from numpy import random
 from psutil import cpu_count
-from requests.auth import HTTPBasicAuth
 from twisted.internet import reactor
 
 from logger import logger
 from perfrunner.helpers.sync import SyncHotWorkload
-from spring.cbgen import CBAsyncGen, CBGen, ElasticGen, FtsGen, SubDocGen
+from spring.cbgen import CBAsyncGen, CBGen, SubDocGen
 from spring.docgen import (
     ArrayIndexingDocument,
     Document,
     EventingSmallDocument,
     ExtReverseLookupDocument,
-    FTSKey,
     GSIMultiIndexDocument,
     HotKey,
     ImportExportDocument,
@@ -121,8 +117,6 @@ class Worker:
             self.existing_keys = UniformKey(self.ts.prefix, self.ws.key_fmtr)
 
         self.keys_for_removal = KeyForRemoval(self.ts.prefix, self.ws.key_fmtr)
-
-        self.fts_keys = FTSKey(self.ws)
 
     def init_docs(self):
         if not hasattr(self.ws, 'doc_gen') or self.ws.doc_gen == 'basic':
@@ -232,9 +226,7 @@ class KVWorker(Worker):
             ['r'] * self.ws.reads + \
             ['u'] * self.ws.updates + \
             ['d'] * self.ws.deletes + \
-            ['ru'] * (self.ws.reads_and_updates // 2) + \
-            ['fus'] * self.ws.fts_updates_swap + \
-            ['fur'] * self.ws.fts_updates_reverse
+            ['ru'] * (self.ws.reads_and_updates // 2)
         random.shuffle(ops)
 
         curr_items_tmp = curr_items_spot = self.curr_items.value
@@ -295,35 +287,7 @@ class KVWorker(Worker):
 
                 cmds.append(('get', cb.read, (key.string, )))
                 cmds.append(('set', cb.update, (key.string, doc)))
-            elif op == 'fus':
-                key = self.fts_keys.next()
-                cmds.append((None, self.do_fts_updates_swap, (key, )))
-            elif op == 'fur':
-                key = self.fts_keys.next()
-                cmds.append((None, self.do_fts_updates_reverse, (key, )))
         return cmds
-
-    def do_fts_updates_swap(self, key):
-        doc = self.cb.client.get(key).value
-        if 'text' in doc and 'text2' in doc:
-            tmp = doc["text2"]
-            doc["text2"] = doc["text"]
-            doc["text"] = tmp
-        elif 'time' in doc:
-            if randint(0, 1):
-                doc["time"] = int(doc["time"]) >> 1
-            else:
-                doc["time"] = int(doc["time"]) << 1
-        else:
-            return
-        self.cb.client.set(key, doc)
-
-    def do_fts_updates_reverse(self, key):
-        doc = self.cb.client.get(key).value
-        words = doc["name"].split(' ')
-        if len(words):
-            doc["name"] = ' '.join(words[::-1])
-            self.cb.client.set(key, doc)
 
     @with_sleep
     def do_batch(self, *args, **kwargs):
@@ -725,69 +689,6 @@ class N1QLWorker(Worker):
         self.dump_stats()
 
 
-class FtsWorkerFactory:
-
-    def __new__(cls, workload_settings):
-        if workload_settings.fts_config:
-            return FtsWorker, workload_settings.fts_config.worker
-        return FtsWorker, 0
-
-
-class FtsWorker(Worker):
-
-    NAME = "fts-es-worker"
-
-    def __init__(self, workload_settings, target_settings, shutdown_event=None):
-        super().__init__(workload_settings, target_settings, shutdown_event)
-        self.query_gen = workload_settings.query_gen
-        self.query_list = workload_settings.query_gen.query_list
-        self.query_list_size = len(workload_settings.query_gen.query_list)
-
-    def init_keys(self):
-        pass
-
-    def init_docs(self):
-        pass
-
-    def init_db(self):
-        pass
-
-    def do_check_result(self, r):
-        result = json.loads(r.data.decode('utf-8'))
-        if self.ws.fts_config.elastic:
-            return result["hits"]["total"] == 0
-        return result['total_hits'] == 0
-
-    def validate_response(self, r, args):
-        if not self.ws.fts_config.logfile:
-            return
-
-        if r.status not in range(200, 203) or self.do_check_result(r):
-            with open(self.ws.fts_config.logfile, 'a') as f:
-                f.write(str(args))
-                f.write(str(r.status_code))
-                f.write(str(r.data))
-
-    def do_batch(self):
-        for i in range(self.BATCH_SIZE):
-            args = self.query_list[random.randint(self.query_list_size - 1)]
-            response = self.query_gen.execute_query(args)
-            if self.sid == 0:
-                self.validate_response(response, args)
-
-    def run(self, sid, *args):
-        logger.info("Started {}".format(self.NAME))
-        self.sid = sid
-        try:
-            logger.info('Started: {}-{}'.format(self.NAME, self.sid))
-            while not self.time_to_stop():
-                self.do_batch()
-        except KeyboardInterrupt:
-            logger.info('Interrupted: {}-{}'.format(self.NAME, self.sid))
-        else:
-            logger.info('Finished: {}-{}'.format(self.NAME, self.sid))
-
-
 class WorkloadGen:
 
     def __init__(self, workload_settings, target_settings, timer=None, *args):
@@ -807,12 +708,6 @@ class WorkloadGen:
         curr_ops = Value('L', 0)
         lock = Lock()
         worker_type, total_workers = worker_factory(self.ws)
-        if name == 'fts' and total_workers:
-            auth = HTTPBasicAuth(self.ws.fts_config.username, self.ts.password)
-            if self.ws.fts_config.elastic:
-                self.ws.query_gen = ElasticGen(self.ts.node, self.ws.fts_config, auth)
-            else:
-                self.ws.query_gen = FtsGen(self.ts.node, self.ws.fts_config, auth)
 
         for sid in range(total_workers):
             args = (sid, lock, curr_ops, curr_items, deleted_items,
@@ -883,7 +778,6 @@ class WorkloadGen:
                            'view', curr_items, deleted_items)
         self.start_workers(N1QLWorkerFactory,
                            'n1ql', curr_items, deleted_items)
-        self.start_workers(FtsWorkerFactory, 'fts')
 
     def run(self):
         self.start_all_workers()

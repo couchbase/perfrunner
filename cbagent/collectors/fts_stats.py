@@ -1,6 +1,5 @@
 from cbagent.collectors import Collector
 from perfrunner.helpers import rest
-from spring.cbgen import ElasticGen
 
 
 class FTSCollector(Collector):
@@ -106,9 +105,6 @@ class ElasticStats(FTSCollector):
         super().__init__(settings, test)
         self.interval = settings.lat_interval
         self.host = settings.master_node
-
-    def init_client(self, test_config):
-        return ElasticGen(self.host, test_config.fts_settings)
 
     def collect_stats(self):
         self.cbft_stats = self.rest.get_elastic_stats(self.host)

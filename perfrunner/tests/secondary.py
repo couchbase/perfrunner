@@ -107,8 +107,8 @@ class SecondaryIndexTest(PerfTest):
         if text:
             logger.info("{}".format(text))
 
-        data_path, index_path = self.cluster_spec.paths
-        disk_usage = self.remote.get_disk_usage(self.index_nodes[0], index_path)
+        disk_usage = self.remote.get_disk_usage(self.index_nodes[0],
+                                                self.cluster_spec.index_path)
         logger.info("Disk usage:\n{}".format(disk_usage))
 
         storage_stats = self.rest.get_index_storage_stats(self.index_nodes[0])
@@ -121,7 +121,8 @@ class SecondaryIndexTest(PerfTest):
             stats = self.rest.get_index_storage_stats_mm(self.index_nodes[0])
             logger.info("Index storage stats mm:\n{}".format(stats))
 
-        return self.remote.get_disk_usage(self.index_nodes[0], index_path,
+        return self.remote.get_disk_usage(self.index_nodes[0],
+                                          self.cluster_spec.index_path,
                                           human_readable=False)
 
     def change_scan_range(self, iteration):

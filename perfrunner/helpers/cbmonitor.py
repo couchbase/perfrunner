@@ -242,13 +242,12 @@ class CbAgent:
             self.collectors.append(collector)
 
     def add_io_collector(self, cls):
-        data_path, index_path = self.test.cluster_spec.paths
         partitions = {
             'client': {},
-            'server': {'data': data_path},
+            'server': {'data': self.test.cluster_spec.data_path},
         }
         if self.test.test_config.showfast.component == 'views':
-            partitions['server']['index'] = index_path
+            partitions['server']['index'] = self.test.cluster_spec.index_paths
         elif self.test.test_config.showfast.component == 'tools':
             partitions['client']['tools'] = self.test.cluster_spec.backup
 

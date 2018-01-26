@@ -45,6 +45,8 @@ def main():
 
     cm.configure_internal_settings()
     cm.set_data_path()
+    cm.set_index_path()
+    cm.set_analytics_path()
     cm.set_mem_quotas()
     cm.set_services()
     cm.rename()

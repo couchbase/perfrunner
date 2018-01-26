@@ -69,21 +69,30 @@ class RestHelper:
     def delete(self, **kwargs):
         return self._delete(**kwargs)
 
-    def set_data_path(self, host: str, data_path: str, index_path: str):
-        logger.info('Configuring data paths: {}'.format(host))
+    def set_data_path(self, host: str, data_path: str):
+        logger.info('Configuring data path: {}'.format(host))
 
         api = 'http://{}:8091/nodes/self/controller/settings'.format(host)
         data = {
-            'path': data_path, 'index_path': index_path
+            'path': data_path,
         }
         self.post(url=api, data=data)
 
-    def set_analytics_path(self, host: str, analytics_path: str):
-        logger.info('Configuring analytics path: {} to {}'.format(host, analytics_path))
+    def set_index_path(self, host: str, index_path: str):
+        logger.info('Configuring index path: {}'.format(host))
 
         api = 'http://{}:8091/nodes/self/controller/settings'.format(host)
         data = {
-            'cbas_path': analytics_path.split(",")
+            'index_path': index_path,
+        }
+        self.post(url=api, data=data)
+
+    def set_analytics_paths(self, host: str, analytics_paths: List[str]):
+        logger.info('Configuring analytics path: {}'.format(host))
+
+        api = 'http://{}:8091/nodes/self/controller/settings'.format(host)
+        data = {
+            'cbas_path': analytics_paths,
         }
         self.post(url=api, data=data)
 

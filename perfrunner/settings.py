@@ -1,7 +1,7 @@
 import csv
 import os.path
 from configparser import ConfigParser, NoOptionError, NoSectionError
-from typing import Dict, Iterator, List, Tuple
+from typing import Dict, Iterator, List
 
 from decorator import decorator
 
@@ -104,15 +104,22 @@ class ClusterSpec(Config):
         return self.config.get('clients', 'credentials').split(':')
 
     @property
-    def paths(self) -> Tuple[str, str]:
-        data_path = self.config.get('storage', 'data')
-        index_path = self.config.get('storage', 'index')
-        return data_path, index_path
+    def data_path(self) -> str:
+        return self.config.get('storage', 'data')
 
     @property
-    @safe
+    def index_path(self) -> str:
+        return self.config.get('storage', 'index', fallback=None)
+
+    @property
+    def paths(self) -> Iterator[str]:
+        for path in self.data_path, self.index_path:
+            if path is not None:
+                yield path
+
+    @property
     def backup(self) -> str:
-        return self.config.get('storage', 'backup')
+        return self.config.get('storage', 'backup', fallback=None)
 
     @property
     def rest_credentials(self) -> List[str]:

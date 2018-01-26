@@ -29,14 +29,18 @@ class ClusterManager:
             return version >= min_release
 
     def set_data_path(self):
-        data_path, index_path = self.cluster_spec.paths
         for server in self.cluster_spec.servers:
-            roles = self.cluster_spec.roles[server]
-            if roles == 'cbas':
-                io_devices = ','.join(self.test_config.cluster.analytics_io_devices)
-                self.rest.set_analytics_path(server, io_devices)
-            else:
-                self.rest.set_data_path(server, data_path, index_path)
+            self.rest.set_data_path(server, self.cluster_spec.data_path)
+
+    def set_index_path(self):
+        if self.cluster_spec.index_path:
+            for server in self.cluster_spec.servers:
+                self.rest.set_index_path(server, self.cluster_spec.index_path)
+
+    def set_analytics_path(self):
+        for server in self.cluster_spec.servers_by_role('cbas'):
+            self.rest.set_analytics_paths(server,
+                                          self.test_config.cluster.analytics_io_devices)
 
     def rename(self):
         for server in self.cluster_spec.servers:

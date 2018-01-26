@@ -4,7 +4,6 @@ hosts =
 
 [storage]
 data = /opt/couchbase/var/lib/couchbase/data
-index = /opt/couchbase/var/lib/couchbase/data
 
 [credentials]
 rest = Administrator:password

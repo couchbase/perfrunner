@@ -21,7 +21,6 @@ credentials = root:couchbase
 
 [storage]
 data = /data
-index = /data
 
 [credentials]
 rest = Administrator:password

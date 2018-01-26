@@ -10,8 +10,8 @@ hosts =
 credentials = root:couchbase
 
 [storage]
-data=/data
-index=/data
+data = /data
+index = /data
 
 [credentials]
 rest = Administrator:password

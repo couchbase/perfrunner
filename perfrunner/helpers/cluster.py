@@ -38,9 +38,13 @@ class ClusterManager:
                 self.rest.set_index_path(server, self.cluster_spec.index_path)
 
     def set_analytics_path(self):
+        paths = []
+        for path in self.cluster_spec.analytics_paths:
+            for i in range(self.test_config.analytics_settings.num_io_devices):
+                io_device = '{}/dev{}'.format(path, i)
+                paths.append(io_device)
         for server in self.cluster_spec.servers_by_role('cbas'):
-            self.rest.set_analytics_paths(server,
-                                          self.test_config.cluster.analytics_io_devices)
+            self.rest.set_analytics_paths(server, paths)
 
     def rename(self):
         for server in self.cluster_spec.servers:

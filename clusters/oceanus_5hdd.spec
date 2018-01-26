@@ -12,7 +12,7 @@ credentials = root:couchbase
 
 [storage]
 data = /data
-analytics = /data1
+analytics = /data3 /data4 /data5 /data6 /data7
 
 [credentials]
 rest = Administrator:password
@@ -22,4 +22,4 @@ ssh = root:couchbase
 OS = CentOS 7
 CPU = E5-2680 v3 (48 vCPU)
 Memory = 64 GB
-Disk = Samsung SM863
+Disk = 5 x Seagate HDD

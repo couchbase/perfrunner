@@ -112,8 +112,15 @@ class ClusterSpec(Config):
         return self.config.get('storage', 'index', fallback=None)
 
     @property
+    def analytics_paths(self) -> List[str]:
+        analytics_paths = self.config.get('storage', 'analytics', fallback=None)
+        if analytics_paths is not None:
+            return analytics_paths.split()
+        return []
+
+    @property
     def paths(self) -> Iterator[str]:
-        for path in self.data_path, self.index_path:
+        for path in set([self.data_path, self.index_path] + self.analytics_paths):
             if path is not None:
                 yield path
 
@@ -166,8 +173,6 @@ class ClusterSettings:
     ANALYTICS_MEM_QUOTA = 0
     EVENTING_MEM_QUOTA = 0
 
-    ANALYTICS_IO_DEVICES = []
-
     EVENTING_BUCKET_MEM_QUOTA = 0
     EVENTING_METADATA_MEM_QUOTA = 1024
     EVENTING_METADATA_BUCKET_NAME = 'eventing'
@@ -190,15 +195,10 @@ class ClusterSettings:
         self.eventing_mem_quota = int(options.get('eventing_mem_quota',
                                                   self.EVENTING_MEM_QUOTA))
 
-        analytics_io_devices = options.get('analytics_io_devices')
-        if analytics_io_devices:
-            self.analytics_io_devices = analytics_io_devices.split()
-        else:
-            self.analytics_io_devices = self.ANALYTICS_IO_DEVICES
-
         self.initial_nodes = [
             int(nodes) for nodes in options.get('initial_nodes').split()
         ]
+
         self.num_buckets = int(options.get('num_buckets',
                                            self.NUM_BUCKETS))
         self.eventing_bucket_mem_quota = int(options.get('eventing_bucket_mem_quota',
@@ -730,6 +730,15 @@ class EventingSettings:
         return str(self.__dict__)
 
 
+class AnalyticsSettings:
+
+    NUM_IO_DEVICES = 1
+
+    def __init__(self, options: dict):
+        self.num_io_devices = int(options.get('num_io_devices',
+                                              self.NUM_IO_DEVICES))
+
+
 class YCSBSettings:
 
     REPO = 'git://github.com/couchbaselabs/YCSB.git'
@@ -901,6 +910,11 @@ class TestConfig(Config):
     def eventing_settings(self) -> EventingSettings:
         options = self._get_options_as_dict('eventing')
         return EventingSettings(options)
+
+    @property
+    def analytics_settings(self) -> AnalyticsSettings:
+        options = self._get_options_as_dict('analytics')
+        return AnalyticsSettings(options)
 
     def get_n1ql_query_definition(self, query_name: str) -> dict:
         return self._get_options_as_dict('n1ql-{}'.format(query_name))

@@ -739,7 +739,7 @@ class DailyMetricHelper(MetricHelper):
             throughput, \
             self._snapshots
 
-    def avg_fts_throughput(self) -> DailyMetric:
+    def jts_throughput(self, orderby) -> DailyMetric:
         timings = self._jts_metric(collector="jts_stats", metric="jts_throughput")
         throughput = round(np.average(timings), 2)
         if throughput > 100:

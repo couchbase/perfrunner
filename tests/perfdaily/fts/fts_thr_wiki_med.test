@@ -2,7 +2,7 @@
 test = perfdaily.fts.FTSThroughputTest
 
 [showfast]
-title = Med Term, Wiki 1M, no KV load
+title = Med Term, Wiki 1M
 component = FTS
 
 [cluster]

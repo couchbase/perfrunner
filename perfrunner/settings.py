@@ -753,8 +753,8 @@ class SyncgatewaySettings:
     MAX_INSERTS_PER_INSTANCE = 1000000
 
     def __init__(self, options: dict):
-        self.repo = options.get('repo', self.REPO)
-        self.branch = options.get('branch', self.BRANCH)
+        self.repo = options.get('ycsb_repo', self.REPO)
+        self.branch = options.get('ycsb_branch', self.BRANCH)
         self.workload = options.get('workload', self.WORKLOAD)
         self.users = options.get('users', self.USERS)
         self.channels = options.get('channels', self.CHANNELS)

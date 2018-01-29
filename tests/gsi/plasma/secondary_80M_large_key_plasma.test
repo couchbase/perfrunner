@@ -24,7 +24,7 @@ replica_number=0
 replica_index=0
 
 [bucket_extras]
-max_num_auxio = 16
+num_auxio_threads = 16
 
 [load]
 items = 80000000

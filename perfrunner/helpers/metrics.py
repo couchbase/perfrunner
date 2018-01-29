@@ -104,26 +104,18 @@ class MetricHelper:
 
         return throughput, self._snapshots, metric_info
 
-    def fts_index(self,
-                  elapsed_time: float,
-                  order_by: str,
-                  name: str ='FTS') -> Metric:
+    def fts_index(self, elapsed_time: float, order_by: str) -> Metric:
         metric_id = self.test_config.name
-        title = 'Index build time(sec), {}, {} node, {}'.\
-            format(self._title, self._num_nodes, name)
+        title = 'Index build time(sec), {}'.format(self._title)
         metric_info = self._metric_info(metric_id, title, order_by)
 
         index_time = round(elapsed_time, 1)
 
         return index_time, self._snapshots, metric_info
 
-    def fts_index_size(self,
-                       index_size_raw: int,
-                       order_by: str,
-                       name: str = 'FTS') -> Metric:
+    def fts_index_size(self, index_size_raw: int, order_by: str) -> Metric:
         metric_id = "{}_indexsize".format(self.test_config.name)
-        title = 'Index size (MB), {}, {} node, {}'.\
-                format(self._title, self._num_nodes, name)
+        title = 'Index size (MB), {}'.format(self._title)
         metric_info = self._metric_info(metric_id, title, order_by)
 
         index_size_mb = int(index_size_raw / (1024 ** 2))

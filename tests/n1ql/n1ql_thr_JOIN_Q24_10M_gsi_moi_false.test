@@ -1,0 +1,52 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1QLJoinTest
+
+[showfast]
+title = Q24, Inner Index Join Non-equal Predicates, MOI, request_plus
+component = n1ql
+category = join_unnest
+
+[cluster]
+mem_quota = 51200
+index_mem_quota = 200000
+initial_nodes = 6
+num_buckets = 2
+
+[compaction]
+db_percentage = 100
+
+[bucket]
+replica_number = 0
+
+[secondary]
+indexer.settings.storage_mode = memory_optimized
+
+[load]
+items = 10000000
+size = 1024
+workers = 80
+doc_gen = ext_reverse_lookup,join
+
+[n1ql]
+indexes =
+    by_email::CREATE INDEX {name} ON `bucket-1`(email);
+    by_owner::CREATE INDEX {name} ON `bucket-2`(owner, moderator);
+
+[access]
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+throughput = 15000
+items = 10000000
+workers = 20
+time = 1200
+n1ql_gen = ext_reverse_lookup
+n1ql_queries = index-join
+n1ql_workers = 240
+doc_gen = ext_reverse_lookup,join
+
+[n1ql-index-join]
+statement = SELECT u.name, t.title FROM `bucket-1` u JOIN `bucket-2` t ON u.name = t.owner AND u.name < t.moderator WHERE u.email = $1;
+scan_consistency = request_plus
+args = ["{email}"]

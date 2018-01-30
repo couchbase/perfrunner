@@ -668,6 +668,7 @@ class JoinedDocument(ReverseLookupDocument):
 
         return {
             'owner': self._build_owner(key.number),
+            'moderator': self._build_owner(key.number + 1),
             'title': self._build_title(alphabet),
             'capped': self._build_capped(alphabet, key.number, 100),
             'sub_capped': self._build_sub_capped(alphabet, key.number, 100),

@@ -169,6 +169,12 @@ class RemoteLinux(Remote):
             run('killall -9 {}'.format(' '.join(self.PROCESSES)),
                 warn_only=True, quiet=True)
 
+    def set_write_permissions(self, mask: str, host: str, path: str):
+        with settings(host_string=host):
+            logger.info('Setting permissions {} to CB data folder {} on host {}'
+                        .format(mask, path, host))
+            run('chmod {} {}'.format(mask, path))
+
     @all_servers
     def uninstall_couchbase(self):
         logger.info('Uninstalling Couchbase Server')

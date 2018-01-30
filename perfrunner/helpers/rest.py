@@ -449,7 +449,11 @@ class RestHelper:
 
         api = 'http://{}:8091/settings/autoFailover'.format(host)
         for timeout in 5, 30:
-            data = {'enabled': 'true', 'timeout': timeout}
+            data = {'enabled': 'true',
+                    'timeout': timeout,
+                    'failoverOnDataDiskIssues[enabled]': 'true',
+                    'failoverOnDataDiskIssues[timePeriod]': 10
+                    }
             r = self._post(url=api, data=data)
             if r.status_code == 200:
                 break

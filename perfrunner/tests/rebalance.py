@@ -354,6 +354,35 @@ class FailureDetectionTest(FailoverTest):
                 self.remote.shutdown(node)
 
 
+class DiskFailureDetectionTest(FailureDetectionTest):
+
+    def _failover(self, *args):
+        clusters = self.cluster_spec.clusters
+        initial_nodes = self.test_config.cluster.initial_nodes
+        failed_nodes = self.rebalance_settings.failed_nodes
+
+        for (_, servers), initial_nodes in zip(clusters,
+                                               initial_nodes):
+            failed = servers[initial_nodes - failed_nodes:initial_nodes]
+
+            self.t_failure = time.time()
+            for node in failed:
+                self.remote.set_write_permissions("0444", node, self.cluster_spec.data_path)
+
+    def restore(self, *args):
+        clusters = self.cluster_spec.clusters
+        initial_nodes = self.test_config.cluster.initial_nodes
+
+        for (_, servers), initial_nodes in zip(clusters,
+                                               initial_nodes):
+            for node in servers:
+                self.remote.set_write_permissions("0755", node, self.cluster_spec.data_path)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.restore()
+        super().__exit__(exc_type, exc_val, exc_tb)
+
+
 class RebalanceWithQueriesTest(RebalanceTest, QueryTest):
 
     COLLECTORS = {'latency': True, 'query_latency': True}

@@ -2,7 +2,7 @@
 test = perfrunner.tests.eventing.FunctionsThroughputTest
 
 [showfast]
-title = Functions executed/sec, 1 bucket x 20M x 1KB, single function-NOOP
+title = Functions executed/sec, 1 bucket x 20M x 1KB, 5 functions-BucketOp
 component = eventing
 category = thr
 sub_category = Function
@@ -33,7 +33,7 @@ size = 1024
 workers = 160
 
 [eventing]
-functions = perf-test1:tests/eventing/code/noop.js
+functions = perf-test1:tests/eventing/code/bktop.js,perf-test2:tests/eventing/code/bktop.js,perf-test3:tests/eventing/code/bktop.js,perf-test4:tests/eventing/code/bktop.js,perf-test5:tests/eventing/code/bktop.js
 worker_count = 16
 cpp_worker_thread_count = 2
 

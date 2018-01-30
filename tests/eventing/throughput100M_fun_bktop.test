@@ -40,6 +40,6 @@ worker_queue_cap = 100000
 
 [access]
 updates = 100
-items = 20000000
+items = 100000000
 workers = 100
 time = 1200

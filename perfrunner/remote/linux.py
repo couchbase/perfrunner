@@ -24,7 +24,7 @@ class RemoteLinux(Remote):
                  'cbft', 'goport', 'goxdcr', 'couch_view_index_updater',
                  'moxi', 'spring', 'sync_gateway')
 
-    PROCESS_ARGUMENTS = ('couchbase/bin/cbas', 'couchbase/lib/cbas/runtime/bin/java')
+    PROCESS_PATTERNS = ('cbas', )
 
     @property
     def package(self):
@@ -155,12 +155,13 @@ class RemoteLinux(Remote):
 
     @all_servers
     def kill_processes(self):
-        for arg in self.PROCESS_ARGUMENTS:
-            logger.info('Killing process with argument {}'.format(arg))
-            run('pkill -f {}'.format(arg), warn_only=True, quiet=True)
-        logger.info('Killing {}'.format(', '.join(self.PROCESSES)))
-        run('killall -9 {}'.format(' '.join(self.PROCESSES)),
-            warn_only=True, quiet=True)
+        logger.info('Killing processes that match pattern: {}'
+                    .format(', '.join(self.PROCESS_PATTERNS)))
+        for pattern in self.PROCESS_PATTERNS:
+            run('pkill -9 -f {}'.format(pattern), quiet=True)
+
+        logger.info('Killing processes: {}'.format(', '.join(self.PROCESSES)))
+        run('killall -9 {}'.format(' '.join(self.PROCESSES)), quiet=True)
 
     def shutdown(self, host):
         with settings(host_string=host):

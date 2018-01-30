@@ -9,9 +9,6 @@ mem_quota = 25000
 initial_nodes = 6
 num_buckets = 1
 
-[secondary]
-indexer.settings.storage_mode = plasma
-
 [access]
 time = 600
 workers = 0

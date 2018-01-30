@@ -9,7 +9,6 @@ mem_quota = 25000
 initial_nodes = 4
 num_buckets = 1
 
-
 [access]
 time = 600
 workers = 0
@@ -38,4 +37,3 @@ updateproportion=0
 insertproportion=0
 requestdistribution = zipfian
 log_title = sync_gateway_1node_reads
-

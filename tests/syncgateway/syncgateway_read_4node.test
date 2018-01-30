@@ -9,7 +9,6 @@ mem_quota = 25000
 initial_nodes = 4
 num_buckets = 1
 
-
 [access]
 time = 600
 workers = 0

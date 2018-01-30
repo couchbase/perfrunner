@@ -29,7 +29,7 @@ doc_gen = reverse_lookup
 items = 10000000
 size = 1024
 workers = 80
-xattr_field = field
+xattr_field = user
 
 [access]
 items = 20000000
@@ -40,5 +40,5 @@ worker_instances = 2
 time = 1200
 
 [n1ql-key-value-lookup]
-statement = SELECT META().xattrs.field FROM `bucket-1` USE KEYS[$1];
+statement = SELECT META().xattrs.`user` FROM `bucket-1` USE KEYS[$1];
 args = ["{key}"]

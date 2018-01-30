@@ -29,7 +29,7 @@ doc_gen = reverse_lookup
 
 [n1ql]
 indexes =
-    by_year::CREATE INDEX {name} ON `{bucket}`(year);
+    by_year::CREATE INDEX {name} ON `bucket-1`(year);
 
 [access]
 n1ql_queries = bulk-delete

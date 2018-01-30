@@ -27,7 +27,7 @@ inserts_per_workerinstance = 10000000
 
 [n1ql]
 indexes =
-    ix7::CREATE INDEX {name} ON `{bucket}`(address.zip, month, order_list, sale_price)
+    ix7::CREATE INDEX {name} ON `bucket-1`(address.zip, month, order_list, sale_price)
 
 [access]
 workload_path = workloads/soe/workloadsl2

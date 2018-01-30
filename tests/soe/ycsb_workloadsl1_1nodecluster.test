@@ -27,7 +27,7 @@ inserts_per_workerinstance = 10000000
 
 [n1ql]
 indexes =
-    ix6::CREATE INDEX {name} ON `{bucket}`(address.zip, order_list)
+    ix6::CREATE INDEX {name} ON `bucket-1`(address.zip, order_list)
 
 [access]
 workload_path = workloads/soe/workloadsl1

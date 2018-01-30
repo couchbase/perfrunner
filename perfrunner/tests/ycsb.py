@@ -52,15 +52,19 @@ class YCSBThroughputTest(YCSBTest):
         )
 
 
-class YCSBSOETest(YCSBThroughputTest):
+class YCSBSOETest(YCSBThroughputTest, N1QLTest):
 
     def run(self):
         self.download_ycsb()
         self.restore()
         self.wait_for_persistence()
-        self.index.build(one_index_per_bucket=False)
+
+        self.build_indexes()
+
         self.load()
+
         self.access()
+
         self.report_kpi()
 
 
@@ -73,7 +77,7 @@ class YCSBN1QLTest(YCSBTest, N1QLTest):
         self.wait_for_persistence()
         self.check_num_items()
 
-        self.build_index()
+        self.build_indexes()
 
         self.access()
 

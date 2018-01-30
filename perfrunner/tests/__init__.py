@@ -6,7 +6,6 @@ from typing import Callable
 from logger import logger
 
 from perfrunner.helpers.cluster import ClusterManager
-from perfrunner.helpers.index import IndexHelper
 from perfrunner.helpers.memcached import MemcachedHelper
 from perfrunner.helpers.metrics import MetricHelper
 from perfrunner.helpers.misc import pretty_dict
@@ -43,7 +42,6 @@ class PerfTest:
         self.monitor = Monitor(cluster_spec, test_config, verbose)
         self.rest = RestHelper(cluster_spec)
         self.remote = RemoteHelper(cluster_spec, verbose)
-        self.index = IndexHelper(cluster_spec, test_config, self.rest, self.monitor)
 
         self.master_node = next(cluster_spec.masters)
         self.build = self.rest.get_version(self.master_node)

@@ -28,7 +28,7 @@ inserts_per_workerinstance = 10000000
 
 [n1ql]
 indexes =
-    primary_idx::CREATE PRIMARY INDEX {name}_{hash} ON `{bucket}` WITH {{ "nodes": [ "{index_node}:8091" ] }};
+    primary_idx::CREATE PRIMARY INDEX {name}_{hash} ON `bucket-1` WITH {{ "nodes": [ "{index_node}:8091" ] }};
 
 [access]
 workload_path = workloads/soe/workloadsd

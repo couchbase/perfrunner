@@ -1,4 +1,5 @@
 from perfrunner.helpers.cbmonitor import timeit, with_stats
+from perfrunner.helpers.misc import target_hash
 from perfrunner.tests import PerfTest, TargetIterator
 
 
@@ -49,17 +50,31 @@ class N1QLTest(PerfTest):
         access_settings.items //= 2
         super().access_bg(settings=access_settings)
 
-    def build_index(self):
-        self.index.build()
+    def build_indexes(self):
+        index_nodes = self.rest.get_active_nodes_by_role(self.master_node,
+                                                         'index')
+        query_node = self.cluster_spec.servers_by_role('n1ql')[0]
 
-    def create_index(self, bucket, index, query_node, index_node=None):
-        self.index.create_index(bucket, index, query_node, index_node)
+        for index in self.test_config.n1ql_settings.indexes:
+            for index_node in index_nodes:
+                self.build_index(index, query_node, index_node)
+
+    def build_index(self, index: str, query_node: str, index_node: str = None):
+        index_name, statement = index.split('::')
+
+        statement = statement.format(name=index_name,
+                                     hash=target_hash(index_node),
+                                     index_node=index_node)
+
+        self.rest.exec_n1ql_statement(query_node, statement)
+
+        self.monitor.monitor_index_state(host=query_node, index_name=index_name)
 
     def run(self):
         self.load()
         self.wait_for_persistence()
 
-        self.build_index()
+        self.build_indexes()
 
         self.access_bg()
         self.access()
@@ -154,20 +169,11 @@ class N1QLBulkTest(N1QLTest):
         self.load()
         self.wait_for_persistence()
 
-        self.build_index()
+        self.build_indexes()
 
         time_elapsed = self.access()
 
         self.report_kpi(time_elapsed)
-
-
-class N1QLMixedThroughputTest(N1QLThroughputTest):
-
-    def build_index(self):
-        bucket = self.test_config.buckets[0]
-        query_node = self.cluster_spec.servers_by_role('n1ql')[0]
-        for index in self.test_config.n1ql_settings.indexes:
-            self.create_index(bucket, index, query_node)
 
 
 class N1QLDGMTest:
@@ -202,7 +208,7 @@ class N1QLXattrThroughputTest(N1QLThroughputTest):
         self.xattr_load()
         self.wait_for_persistence()
 
-        self.build_index()
+        self.build_indexes()
 
         self.access_bg()
         self.access()

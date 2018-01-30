@@ -29,8 +29,7 @@ doc_gen = ext_reverse_lookup,join,ref
 
 [n1ql]
 indexes =
-    ::
-    by_capped::CREATE INDEX {name} ON `{bucket}`(capped);
+    by_capped::CREATE INDEX {name} ON `bucket-2`(capped);
 
 [access]
 creates = 0

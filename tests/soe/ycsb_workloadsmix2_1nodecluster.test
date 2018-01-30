@@ -27,14 +27,14 @@ inserts_per_workerinstance = 10000000
 
 [n1ql]
 indexes =
-    primary_idx::CREATE PRIMARY INDEX {name} ON `{bucket}`
-    ix3::CREATE INDEX {name} ON `{bucket}`(address.prev_address.zip) WITH {{ "nodes": [ "{index_node}:8091" ] }};
-    ix4::CREATE INDEX {name} ON `{bucket}`(DISTINCT devices) WITH {{ "nodes": [ "{index_node}:8091" ] }};
-    ix5::CREATE INDEX {name} ON `{bucket}`(DISTINCT ARRAY (DISTINCT ARRAY (v.country || "." || c) FOR c IN v.cities END) FOR v IN visited_places END) WITH {{ "nodes": [ "{index_node}:8091" ] }};
-    ix6::CREATE INDEX {name} ON `{bucket}`(address.zip, order_list) WITH {{ "nodes": [ "{index_node}:8091" ] }};
-    ix7::CREATE INDEX {name} ON `{bucket}`(address.zip, month, order_list, sale_price) WITH {{ "nodes": [ "{index_node}:8091" ] }};
-    ix8::CREATE INDEX {name} ON `{bucket}`(address.geo_region) WITH {{ "nodes": [ "{index_node}:8091" ] }};
-    ix9::CREATE INDEX {name} ON `{bucket}`(address.geo_region, age_group, DATE_PART_STR(dob,'year')) WITH {{ "nodes": [ "{index_node}:8091" ] }};
+    primary_idx::CREATE PRIMARY INDEX {name} ON `bucket-1`
+    ix3::CREATE INDEX {name} ON `bucket-1`(address.prev_address.zip) WITH {{ "nodes": [ "{index_node}:8091" ] }};
+    ix4::CREATE INDEX {name} ON `bucket-1`(DISTINCT devices) WITH {{ "nodes": [ "{index_node}:8091" ] }};
+    ix5::CREATE INDEX {name} ON `bucket-1`(DISTINCT ARRAY (DISTINCT ARRAY (v.country || "." || c) FOR c IN v.cities END) FOR v IN visited_places END) WITH {{ "nodes": [ "{index_node}:8091" ] }};
+    ix6::CREATE INDEX {name} ON `bucket-1`(address.zip, order_list) WITH {{ "nodes": [ "{index_node}:8091" ] }};
+    ix7::CREATE INDEX {name} ON `bucket-1`(address.zip, month, order_list, sale_price) WITH {{ "nodes": [ "{index_node}:8091" ] }};
+    ix8::CREATE INDEX {name} ON `bucket-1`(address.geo_region) WITH {{ "nodes": [ "{index_node}:8091" ] }};
+    ix9::CREATE INDEX {name} ON `bucket-1`(address.geo_region, age_group, DATE_PART_STR(dob,'year')) WITH {{ "nodes": [ "{index_node}:8091" ] }};
 
 [access]
 workload_path = workloads/soe/workloadsmix2

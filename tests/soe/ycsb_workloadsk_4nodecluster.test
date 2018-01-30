@@ -28,7 +28,7 @@ inserts_per_workerinstance = 10000000
 
 [n1ql]
 indexes =
-    ix5::CREATE INDEX {name}_{hash} ON `{bucket}`(DISTINCT ARRAY (DISTINCT ARRAY (v.country || "." || c) FOR c IN v.cities END) FOR v IN visited_places END) WITH {{ "nodes": [ "{index_node}:8091" ] }};
+    ix5::CREATE INDEX {name}_{hash} ON `bucket-1`(DISTINCT ARRAY (DISTINCT ARRAY (v.country || "." || c) FOR c IN v.cities END) FOR v IN visited_places END) WITH {{ "nodes": [ "{index_node}:8091" ] }};
 
 [access]
 workload_path = workloads/soe/workloadsk

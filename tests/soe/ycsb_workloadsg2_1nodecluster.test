@@ -27,7 +27,7 @@ inserts_per_workerinstance = 10000000
 
 [n1ql]
 indexes =
-    ix8::CREATE INDEX {name} ON `{bucket}`(address.geo_region);
+    ix8::CREATE INDEX {name} ON `bucket-1`(address.geo_region);
 
 [access]
 workload_path = workloads/soe/workloadsg2

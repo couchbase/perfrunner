@@ -201,6 +201,7 @@ class N1QLXattrThroughputTest(N1QLThroughputTest):
 
     def xattr_load(self, *args, **kwargs):
         iterator = TargetIterator(self.cluster_spec, self.test_config, 'n1ql')
+        super().xattr_load()
         super().xattr_load(target_iterator=iterator)
 
     def run(self):

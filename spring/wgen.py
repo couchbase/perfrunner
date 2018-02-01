@@ -700,7 +700,6 @@ class WorkloadGen:
 
     def start_workers(self,
                       worker_factory,
-                      name,
                       curr_items=None,
                       deleted_items=None,
                       current_hot_load_start=None,
@@ -772,12 +771,12 @@ class WorkloadGen:
             self.sync = SyncHotWorkload(current_hot_load_start, timer_elapse)
 
         self.start_workers(WorkerFactory,
-                           'kv', curr_items, deleted_items,
+                           curr_items, deleted_items,
                            current_hot_load_start, timer_elapse)
         self.start_workers(ViewWorkerFactory,
-                           'view', curr_items, deleted_items)
+                           curr_items, deleted_items)
         self.start_workers(N1QLWorkerFactory,
-                           'n1ql', curr_items, deleted_items)
+                           curr_items, deleted_items)
 
     def run(self):
         self.start_all_workers()

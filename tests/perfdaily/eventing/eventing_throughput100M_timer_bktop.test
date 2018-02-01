@@ -4,7 +4,6 @@ test = perfdaily.eventing.TimerThroughputTest
 [showfast]
 title = 100M docs, single timer-BucketOp
 component = Eventing
-threshold = 10
 
 [stats]
 server_processes = projector eventing-produc

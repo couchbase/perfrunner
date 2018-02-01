@@ -4,7 +4,6 @@ test = perfdaily.eventing.FunctionsThroughputTest
 [showfast]
 title = 100M docs, single function-BucketOp
 component = Eventing
-threshold = 10
 
 [stats]
 server_processes = projector eventing-produc

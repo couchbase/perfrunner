@@ -20,6 +20,10 @@ class EventingTest(PerfTest):
 
     COLLECTORS = {'eventing_stats': True, 'ns_server_system': True}
 
+    STAT_REQ_FIELDS = ["event_processing_stats", "events_remaining", "execution_stats",
+                       "failure_stats", "function_name", "latency_stats", "lcb_exception_stats",
+                       "planner_stats", "plasma_stats", "vb_distribution_stats"]
+
     def __init__(self, *args):
         super().__init__(*args)
 
@@ -110,9 +114,13 @@ class EventingTest(PerfTest):
     def validate_failures(self):
         for node in self.eventing_nodes:
             all_stats = self.rest.get_eventing_stats(node=node, full_stats=True)
-            logger.info("All stats for {node} : {stats}"
+
+            req_stats = [{key: fun_stat[key]
+                          for key in self.STAT_REQ_FIELDS} for fun_stat in all_stats]
+
+            logger.info("Required stats for {node} : {stats}"
                         .format(node=node,
-                                stats=pretty_dict(all_stats)))
+                                stats=pretty_dict(req_stats)))
             for function_stats in all_stats:
                 execution_stats = function_stats["execution_stats"]
                 failure_stats = function_stats["failure_stats"]

@@ -130,8 +130,10 @@ class RemoteWorkerManager:
                   task_settings: PhaseSettings,
                   target_iterator: TargetIterator,
                   timer: int = None):
+        if self.test_config.test_case.reset_workers:
+            self.reset_workers()
+
         self.async_results = []
-        self.reset_workers()
         for target in target_iterator:
             for instance in range(task_settings.workload_instances):
                 worker = self.next_worker()

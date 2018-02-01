@@ -14,12 +14,6 @@ class N1QLTest(PerfTest):
         'secondary_stats': True,
     }
 
-    @with_stats
-    def access(self, *args):
-        super().sleep()
-
-        self.worker_manager.wait_for_workers()
-
     def load(self, *args):
         """Create two data sets with different key prefixes.
 
@@ -44,11 +38,21 @@ class N1QLTest(PerfTest):
         super().load(settings=load_settings)
 
     def access_bg(self, *args):
+        access_settings = self.test_config.access_settings
+        access_settings.items //= 2
+        access_settings.n1ql_workers = 0
+
+        super().access_bg(settings=access_settings)
+
+    @with_stats
+    def access(self, *args):
         self.download_certificate()
 
         access_settings = self.test_config.access_settings
         access_settings.items //= 2
-        super().access_bg(settings=access_settings)
+        access_settings.workers = 0
+
+        super().access(settings=access_settings)
 
     def build_indexes(self):
         index_nodes = self.rest.get_active_nodes_by_role(self.master_node,
@@ -143,6 +147,12 @@ class N1QLJoinTest(N1QLThroughputTest):
 
             super(N1QLTest, self).access_bg(settings=access_settings,
                                             target_iterator=(target, ))
+
+    @ with_stats
+    def access(self, *args):
+        super().sleep()
+
+        self.worker_manager.wait_for_workers()
 
     def _report_kpi(self):
         self.reporter.post(

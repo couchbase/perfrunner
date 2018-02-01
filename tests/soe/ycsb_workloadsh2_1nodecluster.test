@@ -1,5 +1,6 @@
 [test_case]
 test = perfrunner.tests.ycsb.YCSBSOETest
+reset_workers = 1
 
 [showfast]
 title = Avg Throughput (queries/sec), Workload SH2, 1 node

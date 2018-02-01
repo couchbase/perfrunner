@@ -144,11 +144,14 @@ class ClusterSpec(Config):
 class TestCaseSettings:
 
     USE_WORKERS = 1
+    RESET_WORKERS = 0
 
     def __init__(self, options: dict):
         self.test_module = '.'.join(options.get('test').split('.')[:-1])
         self.test_class = options.get('test').split('.')[-1]
+
         self.use_workers = int(options.get('use_workers', self.USE_WORKERS))
+        self.reset_workers = int(options.get('reset_workers', self.RESET_WORKERS))
 
 
 class ShowFastSettings:

@@ -36,7 +36,7 @@ items = 20000000
 workers = 0
 n1ql_queries = key-value-lookup
 n1ql_workers = 480
-worker_instances = 2
+workload_instances = 2
 time = 1200
 
 [n1ql-key-value-lookup]

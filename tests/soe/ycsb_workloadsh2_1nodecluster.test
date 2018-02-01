@@ -36,7 +36,7 @@ recorded_load_cache_size = 25000
 ops = 500000000
 time = 600
 workers = 100
-worker_instances = 1
+workload_instances = 1
 inserts_per_workerinstance = 10000000
 
 [ycsb]

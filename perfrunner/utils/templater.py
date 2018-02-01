@@ -52,11 +52,11 @@ def get_templates(template: str) -> Template:
 
 def render_test(template: str, instance: str, threads: int):
     mem_quota = MEMORY_QUOTAS[instance]
-    worker_instances = estimate_num_clients(template, threads)
+    workload_instances = estimate_num_clients(template, threads)
     content = render_template(get_templates(template),
                               mem_quota=mem_quota,
                               workers=THREADS_PER_CLIENT[template],
-                              worker_instances=worker_instances)
+                              workload_instances=workload_instances)
     store_cfg(content, '.test')
 
 

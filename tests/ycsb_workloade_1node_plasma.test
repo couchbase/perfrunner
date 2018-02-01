@@ -37,4 +37,4 @@ items = 20000000
 ops = 1000000000
 time = 1200
 workers = 120
-worker_instances = 2
+workload_instances = 2

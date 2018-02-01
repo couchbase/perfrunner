@@ -133,7 +133,7 @@ class RemoteWorkerManager:
         self.async_results = []
         self.reset_workers()
         for target in target_iterator:
-            for instance in range(task_settings.worker_instances):
+            for instance in range(task_settings.workload_instances):
                 worker = self.next_worker()
                 logger.info('Running the task on {}'.format(worker))
                 async_result = task.apply_async(

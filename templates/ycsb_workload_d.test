@@ -16,4 +16,4 @@ workers = 40
 workload_path = workloads/workloadd
 ops = 1000000000
 workers = {{ workers }}
-worker_instances = {{ worker_instances }}
+workload_instances = {{ workload_instances }}

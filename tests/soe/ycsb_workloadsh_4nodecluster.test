@@ -23,7 +23,7 @@ workload_path = workloads/soe/workloadsh
 items = 10000000
 recorded_load_cache_size = 100000
 workers = 100
-worker_instances = 4
+workload_instances = 4
 inserts_per_workerinstance = 10000000
 
 [n1ql]
@@ -37,7 +37,7 @@ recorded_load_cache_size = 100000
 ops = 500000000
 time = 600
 workers = 100
-worker_instances = 4
+workload_instances = 4
 inserts_per_workerinstance = 10000000
 
 [ycsb]

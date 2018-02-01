@@ -367,7 +367,7 @@ class PhaseSettings:
     WORKERS = 0
     QUERY_WORKERS = 0
     N1QL_WORKERS = 0
-    WORKER_INSTANCES = 1
+    WORKLOAD_INSTANCES = 1
 
     N1QL_OP = 'read'
     N1QL_BATCH_SIZE = 100
@@ -427,8 +427,8 @@ class PhaseSettings:
 
         self.iterations = int(options.get('iterations', self.ITERATIONS))
 
-        self.worker_instances = int(options.get('worker_instances',
-                                                self.WORKER_INSTANCES))
+        self.workload_instances = int(options.get('workload_instances',
+                                                  self.WORKLOAD_INSTANCES))
 
         # Views settings
         self.ddocs = None
@@ -516,7 +516,7 @@ class JTSAccessSettings(PhaseSettings):
         self.test_worker_type = options.get("test_worker_type", "latency")
         self.couchbase_index_name = options.get("couchbase_index_name", "perf_fts_index")
         self.couchbase_index_configfile = options.get("couchbase_index_configfile")
-        self.worker_instances = int(self.jts_instances)
+        self.workload_instances = int(self.jts_instances)
         self.time = options.get('test_duration', "600")
         self.warmup_query_workers = options.get("warmup_query_workers", "10")
         self.warmup_time = options.get('warmup_time', "0")

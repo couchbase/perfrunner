@@ -35,7 +35,6 @@ workers = 160
 functions = perf-test1:tests/eventing/code/bktop.js
 worker_count = 32
 cpp_worker_thread_count = 2
-worker_queue_cap = 100000
 
 [access]
 time = 100

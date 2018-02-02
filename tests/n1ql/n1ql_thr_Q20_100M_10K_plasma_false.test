@@ -2,7 +2,7 @@
 test = perfrunner.tests.n1ql.N1QLThroughputTest
 
 [showfast]
-title = Q20, Count (1K matches), 100M docs, Plasma, request_plus
+title = Q20, Count (10K matches), 100M docs, Plasma, request_plus
 component = n1ql
 category = count
 sub_category = Plasma

@@ -2,7 +2,7 @@
 test = perfrunner.tests.n1ql.N1QLThroughputTest
 
 [showfast]
-title = Q20, Count (1K matches), 100M docs, MOI, not_bounded
+title = Q20, Count (10K matches), 100M docs, MOI, not_bounded
 component = n1ql
 category = count
 sub_category = MOI

@@ -8,7 +8,6 @@ from perfrunner.settings import REPO
 class Remote:
 
     CLIENT_PROCESSES = 'celery', 'cbc-pillowfight', 'memcached'
-    CLIENT_PROCESSES_ARGS = ['loader']
 
     def __init__(self, cluster_spec, os):
         self.os = os
@@ -24,9 +23,6 @@ class Remote:
 
     @all_clients
     def terminate_client_processes(self):
-        for arg in self.CLIENT_PROCESSES_ARGS:
-            logger.info('Killing client process with argument {}'.format(arg))
-            run('pkill -f {}'.format(arg), warn_only=True, quiet=True)
         run('killall -9 {}'.format(' '.join(self.CLIENT_PROCESSES)), quiet=True)
 
     @all_clients

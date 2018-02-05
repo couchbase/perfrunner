@@ -76,7 +76,8 @@ class MetricHelper:
     def n1ql_query_id(self) -> str:
         query_id = self._title.split(',')[0]
         query_id = query_id.split()[0]
-        query_id = query_id.replace('CI', '').replace('Q', '')
+        for prefix in 'CI', 'Q', 'UP', 'DL', 'AGG':
+            query_id = query_id.replace(prefix, '')
         return '{:05d}'.format(int(query_id))
 
     def avg_n1ql_throughput(self) -> Metric:

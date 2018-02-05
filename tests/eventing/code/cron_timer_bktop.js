@@ -1,5 +1,5 @@
 function OnUpdate(doc, meta) {
-	expiry = fixed_expiry
+	var expiry = fixed_expiry;
 	expiry = expiry + Math.floor((Math.random() * fuzz_factor) + 1);
 	cronTimer(timerCallback, meta.id, expiry);
 }

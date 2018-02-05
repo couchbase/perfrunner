@@ -75,6 +75,7 @@ class MetricHelper:
     @property
     def n1ql_query_id(self) -> str:
         query_id = self._title.split(',')[0]
+        query_id = query_id.split()[0]
         query_id = query_id.replace('CI', '').replace('Q', '')
         return '{:05d}'.format(int(query_id))
 

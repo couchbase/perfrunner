@@ -31,7 +31,6 @@ class EventingTest(PerfTest):
         self.worker_count = self.test_config.eventing_settings.worker_count
         self.cpp_worker_thread_count = self.test_config.eventing_settings.cpp_worker_thread_count
         self.timer_worker_pool_size = self.test_config.eventing_settings.timer_worker_pool_size
-        self.memory_quota = self.test_config.eventing_settings.memory_quota
         self.worker_queue_cap = self.test_config.eventing_settings.worker_queue_cap
         self.timer_timeout = self.test_config.eventing_settings.timer_timeout
         self.timer_fuzz = self.test_config.eventing_settings.timer_fuzz
@@ -66,7 +65,6 @@ class EventingTest(PerfTest):
         func["settings"]["worker_count"] = self.worker_count
         func["settings"]["cpp_worker_thread_count"] = self.cpp_worker_thread_count
         func["settings"]["timer_worker_pool_size"] = self.timer_worker_pool_size
-        func["settings"]["memory_quota"] = self.memory_quota
         func["settings"]["worker_queue_cap"] = self.worker_queue_cap
         for name, filename in self.functions.items():
             with open(filename, 'r') as myfile:

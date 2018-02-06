@@ -711,7 +711,6 @@ class EventingSettings:
     WORKER_COUNT = 3
     CPP_WORKER_THREAD_COUNT = 2
     TIMER_WORKER_POOL_SIZE = 1
-    MEMORY_QUOTA = 256
     WORKER_QUEUE_CAP = 100000
     TIMER_TIMEOUT = 0
     TIMER_FUZZ = 0
@@ -728,7 +727,6 @@ class EventingSettings:
                                                        self.CPP_WORKER_THREAD_COUNT))
         self.timer_worker_pool_size = int(options.get("timer_worker_pool_size",
                                                       self.TIMER_WORKER_POOL_SIZE))
-        self.memory_quota = int(options.get("memory_quota", self.MEMORY_QUOTA))
         self.worker_queue_cap = int(options.get("worker_queue_cap",
                                                 self.WORKER_QUEUE_CAP))
         self.timer_timeout = int(options.get("timer_timeout",

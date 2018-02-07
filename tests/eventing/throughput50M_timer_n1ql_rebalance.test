@@ -2,7 +2,7 @@
 test = perfrunner.tests.eventing.TimerRebalanceThroughputTest
 
 [showfast]
-title = Timers executed/sec, 1 bucket x 50M x 1KB, KV node Rebalance, single timer-BucketOp
+title = Timers executed/sec, 1 bucket x 50M x 1KB, KV node Rebalance, single timer-N1QL
 component = eventing
 category = thr
 sub_category = Timer
@@ -39,6 +39,6 @@ size = 1024
 workers = 100
 
 [eventing]
-functions = perf-test1:tests/eventing/code/timer_bktop.js
+functions = perf-test1:tests/eventing/code/timer_n1ql.js
 worker_count = 16
 cpp_worker_thread_count = 10

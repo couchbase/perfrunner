@@ -659,6 +659,13 @@ class MetricHelper:
 
         return throughput, self._snapshots, metric_info
 
+    def eventing_rebalance_time(self, time: int) -> Metric:
+        title_split = self._title.split(sep=",", maxsplit=2)
+        title = "Rebalance Time(sec)," + title_split[1]
+        metric_info = self._metric_info(title=title)
+
+        return time, self._snapshots, metric_info
+
     def function_latency(self, percentile: float, latency_stats: dict) -> Metric:
         """Calculate eventing function latency stats.
 

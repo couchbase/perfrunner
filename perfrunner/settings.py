@@ -731,7 +731,6 @@ class EventingSettings:
                                                 self.WORKER_QUEUE_CAP))
         self.timer_timeout = int(options.get("timer_timeout",
                                              self.TIMER_TIMEOUT))
-
         self.timer_fuzz = int(options.get("timer_fuzz",
                                           self.TIMER_FUZZ))
 

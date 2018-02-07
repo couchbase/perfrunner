@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.eventing.TimerRebalanceThroughputTest
+test = perfrunner.tests.eventing.TimerRebalanceTimeThroughputTest
 
 [showfast]
 title = Timers executed/sec, 1 bucket x 50M x 1KB, eventing node Rebalance, single timer-BucketOp

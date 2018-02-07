@@ -335,6 +335,8 @@ class FunctionsRebalanceThroughputTest(EventingRebalance):
             self.get_on_update_success() - on_update_success
 
         self.post_rebalance()
+        time_taken = round(time_taken, 2)
+        logger.info("Time taken for rebalance: {}sec".format(time_taken))
         return time_taken
 
     def run(self):
@@ -352,6 +354,14 @@ class FunctionsRebalanceThroughputTest(EventingRebalance):
             *self.metrics.function_throughput(time=time_elapsed,
                                               event_name=None,
                                               events_processed=self.on_update_success)
+        )
+
+
+class FunctionsRebalanceTimeThroughputTest(FunctionsRebalanceThroughputTest):
+    def _report_kpi(self, time_elapsed):
+        super()._report_kpi(time_elapsed)
+        self.reporter.post(
+            *self.metrics.eventing_rebalance_time(time=time_elapsed)
         )
 
 
@@ -457,6 +467,8 @@ class TimerRebalanceThroughputTest(EventingRebalance):
             self.get_timer_events(self.EVENT_NAME, self.function_names[0]) - timer_events
 
         self.post_rebalance()
+        time_taken = round(time_taken, 2)
+        logger.info("Time taken for rebalance: {}sec".format(time_taken))
         return time_taken
 
     def wait_for_timer_event(self):
@@ -480,6 +492,14 @@ class TimerRebalanceThroughputTest(EventingRebalance):
             *self.metrics.function_throughput(time=time_elapsed,
                                               event_name=None,
                                               events_processed=self.timer_events)
+        )
+
+
+class TimerRebalanceTimeThroughputTest(TimerRebalanceThroughputTest):
+    def _report_kpi(self, time_elapsed):
+        super()._report_kpi(time_elapsed)
+        self.reporter.post(
+            *self.metrics.eventing_rebalance_time(time=time_elapsed)
         )
 
 

@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.eventing.FunctionsRebalanceThroughputTest
+test = perfrunner.tests.eventing.FunctionsRebalanceTimeThroughputTest
 
 [showfast]
 title = Functions executed/sec, 1 bucket x 50M x 1KB, eventing node Rebalance, single function-BucketOp

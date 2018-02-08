@@ -8,6 +8,7 @@ class PerfStore:
 
     def __init__(self, host: str):
         self.session = Session()
+        self.async_session = None
         self.base_url = 'http://{}:8080'.format(host)
         self.dbs = set()
 
@@ -28,6 +29,13 @@ class PerfStore:
             url = '{}?ts={}'.format(url, timestamp)
         self.session.post(url=url, data=json.dumps(data))
 
+    async def async_push(self, db: str, data: dict, timestamp: str):
+        url = '{}/{}'.format(self.base_url, db)
+        if timestamp is not None:
+            url = '{}?ts={}'.format(url, timestamp)
+        async with self.async_session.post(url=url, json=data) as response:
+            return await response.json()
+
     def get_values(self, db: str, metric) -> List[float]:
         url = '{}/{}/{}'.format(self.base_url, db, metric)
         data = self.session.get(url).json()
@@ -45,3 +53,8 @@ class PerfStore:
                collector=None, timestamp=None):
         db = self.build_dbname(cluster, server, bucket, index, collector)
         self.push(db, data, timestamp)
+
+    async def append_async(self, data, cluster=None, server=None, bucket=None,
+                           index=None, collector=None, timestamp=None):
+        db = self.build_dbname(cluster, server, bucket, index, collector)
+        return await self.async_push(db, data, timestamp)

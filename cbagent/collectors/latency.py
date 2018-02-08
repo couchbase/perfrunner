@@ -1,6 +1,9 @@
+import asyncio
 import csv
 import glob
 from typing import Iterator
+
+from aiohttp import ClientSession
 
 from cbagent.collectors import Collector
 
@@ -41,15 +44,23 @@ class KVLatency(Latency):
                 for operation, timestamp, latency in reader:
                     yield operation, timestamp, latency
 
-    def reconstruct(self):
-        for bucket in self.get_buckets():
+    async def post_results(self, bucket: str):
+        async with ClientSession() as self.store.async_session:
             for operation, timestamp, latency in self.read_stats():
                 data = {
                     'latency_' + operation: float(latency) * 1000,  # Latency in ms
                 }
-                self.store.append(data=data, timestamp=int(timestamp),
-                                  cluster=self.cluster, bucket=bucket,
-                                  collector=self.COLLECTOR)
+                await self.store.append_async(data=data,
+                                              timestamp=int(timestamp),
+                                              cluster=self.cluster,
+                                              bucket=bucket,
+                                              collector=self.COLLECTOR)
+
+    def reconstruct(self):
+        loop = asyncio.get_event_loop()
+        for bucket in self.get_buckets():
+            loop.run_until_complete(self.post_results(bucket))
+        loop.close()
 
 
 class QueryLatency(KVLatency):

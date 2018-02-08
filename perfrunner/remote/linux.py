@@ -329,7 +329,7 @@ class RemoteLinux(Remote):
 
     def detect_failover_end(self, host):
         with settings(host_string=host):
-            r = run('grep "Failed over \'" '
+            r = run('grep "Failed over .*: ok" '
                     '/opt/couchbase/var/lib/couchbase/logs/info.log', quiet=True)
             if not r.return_code:
                 return r.strip().split(',')[1]

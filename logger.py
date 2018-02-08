@@ -40,9 +40,6 @@ LOGGING_CONFIG = {
         'requests': {
             'level': logging.ERROR,
         },
-        'urllib3': {
-            'level': logging.WARNING,
-        },
     },
     'version': 1,
 }

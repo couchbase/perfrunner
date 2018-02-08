@@ -243,6 +243,27 @@ class InitialandIncrementalDGMSecondaryIndexTest(InitialandIncrementalSecondaryI
         self.run_recovery_scenario()
 
 
+class InitialandSingleIncrementalDGMSecondaryIndexTest(InitialandIncrementalSecondaryIndexTest):
+
+    """Run InitialandIncrementalSecondaryIndexTest in DGM mode."""
+
+    @with_stats
+    def after_test(self):
+        time.sleep(900)
+
+    def run(self):
+        self.load_and_build_initial_index()
+
+        time_elapsed = self.build_incrindex()
+        self.print_index_disk_usage()
+
+        self.after_test()
+        self.print_index_disk_usage()
+
+        self.report_kpi(time_elapsed, 'Incremental')
+        self.run_recovery_scenario()
+
+
 class MultipleIncrementalSecondaryIndexTest(InitialandIncrementalSecondaryIndexTest):
 
     def __init__(self, *args):

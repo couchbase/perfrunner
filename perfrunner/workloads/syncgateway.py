@@ -107,7 +107,7 @@ def syncgateway_run_test(workload_settings: PhaseSettings, timer: int, worker_id
     res_file_name = "{}_runtest_{}.result".format(sgs.log_title, worker_id)
     params = RUN_TEST_CMD.format(workload=sgs.workload,
                                  hosts=get_hosts(cluster, workload_settings),
-                                 total_docs=sgs.documents,
+                                 total_docs=sgs.documents_workset,
                                  memcached_host=cluster.workers[0],
                                  auth=sgs.auth,
                                  total_users=sgs.users,

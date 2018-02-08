@@ -761,6 +761,7 @@ class SyncgatewaySettings:
         self.channels_per_user = options.get('channels_per_user', self.CHANNLES_PER_USER)
         self.channels_per_doc = options.get('channels_per_doc', self.CHANNELS_PER_DOC)
         self.documents = options.get('documents', self.DOCUMENTS)
+        self.documents_workset = options.get("documents_workset", self.DOCUMENTS)
         self.roundtrip_write = options.get('roundtrip_write', self.ROUNDTRIP_WRITE)
         self.read_mode = options.get('read_mode', self.READ_MODE)
         self.feed_mode = options.get('feed_mode', self.FEED_MODE)
@@ -779,6 +780,7 @@ class SyncgatewaySettings:
         self.insert_mode = options.get('insert_mode', self.INSERT_MODE)
         self.clients = options.get('clients', self.CLIENTS)
         self.nodes = options.get('nodes', self.NODES)
+
 
     def __str__(self) -> str:
         return str(self.__dict_)

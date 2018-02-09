@@ -39,6 +39,3 @@ items = 10000000
 workers = 160
 ops = 10000000
 time = 600
-
-[ycsb]
-branch = unstable

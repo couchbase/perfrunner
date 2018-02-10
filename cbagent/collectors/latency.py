@@ -57,7 +57,7 @@ class KVLatency(Latency):
                                               collector=self.COLLECTOR)
 
     def reconstruct(self):
-        loop = asyncio.new_event_loop()
+        loop = asyncio.get_event_loop()
         for bucket in self.get_buckets():
             loop.run_until_complete(self.post_results(bucket))
         loop.close()

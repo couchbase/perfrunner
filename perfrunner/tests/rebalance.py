@@ -385,8 +385,6 @@ class DiskFailureDetectionTest(FailureDetectionTest):
 
 class RebalanceWithQueriesTest(RebalanceTest, QueryTest):
 
-    COLLECTORS = {'latency': True, 'query_latency': True}
-
     def access_bg(self, *args):
         settings = self.test_config.access_settings
         settings.ddocs = self.ddocs
@@ -411,7 +409,7 @@ class RebalanceWithQueriesTest(RebalanceTest, QueryTest):
 
 class RebalanceWithXDCRTest(RebalanceTest, XdcrTest):
 
-    COLLECTORS = {'latency': True, 'xdcr_lag': True, 'xdcr_stats': True}
+    COLLECTORS = {'xdcr_lag': True, 'xdcr_stats': True}
 
     def run(self):
         self.load()
@@ -429,7 +427,7 @@ class RebalanceWithXDCRTest(RebalanceTest, XdcrTest):
 
 class RebalanceWithUniDirXdcrTest(RebalanceTest, UniDirXdcrTest):
 
-    COLLECTORS = {'latency': True, 'xdcr_lag': True, 'xdcr_stats': True}
+    COLLECTORS = {'xdcr_lag': True, 'xdcr_stats': True}
 
     def run(self):
         self.load()

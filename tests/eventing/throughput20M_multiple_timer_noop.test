@@ -40,4 +40,4 @@ cpp_worker_thread_count = 2
 timer_timeout = 2400
 
 [access]
-time = 360
+time = 150

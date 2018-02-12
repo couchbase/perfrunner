@@ -411,7 +411,7 @@ class Monitor(RestHelper):
                             format(function, node))
 
     def get_num_analytics_items(self, data_node: str, bucket: str) -> int:
-        stats_key = '{}:all:incoming-records-count-total'.format(bucket)
+        stats_key = '{}:all:incoming_records_count_total'.format(bucket)
         num_items = 0
         for node in self.get_active_nodes_by_role(data_node, 'cbas'):
             stats = self.get_analytics_stats(node)

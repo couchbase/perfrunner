@@ -214,7 +214,7 @@ class N1QLQueryGen:
 
     def __init__(self, queries):
         queries = [
-            (query['statement'], query['args'], query.get('scan_consistency'))
+            (query['statement'], query['args'], query.get('scan_consistency'), query.get('ad_hoc'))
             for query in queries
         ]
         self.queries = cycle(queries)
@@ -223,7 +223,7 @@ class N1QLQueryGen:
         return
 
     def next(self, key, doc):
-        statement, args, scan_consistency = next(self.queries)
+        statement, args, scan_consistency, ad_hoc = next(self.queries)
         if 'key' in args:
             args = [key]
         else:
@@ -232,7 +232,7 @@ class N1QLQueryGen:
 
         n1ql_query = N1QLQuery(statement, *args)
         n1ql_query.cross_bucket = True
-        n1ql_query.adhoc = False
+        n1ql_query.adhoc = bool(ad_hoc)
         n1ql_query.consistency = scan_consistency or 'not_bounded'
 
         return n1ql_query

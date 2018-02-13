@@ -1,0 +1,40 @@
+[test_case]
+test = perfrunner.tests.n1ql.TpcDsLatencyTest
+
+[showfast]
+title = AG3, Aggregation query, Plasma, not_bounded
+component = n1ql
+category = aggregation
+
+[cluster]
+mem_quota = 50000
+index_mem_quota = 400000
+initial_nodes = 6
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[restore]
+import_file = /home/backups/tpc-ds.json
+
+[load]
+doc_gen = tpc_ds
+
+[n1ql]
+indexes =
+    ag3::CREATE INDEX {name} ON `bucket-1`(item.manufacturer_id, DATE_PART_STR(sold_date, 'month'), DATE_PART_STR(sold_date, 'year'), item.brand, sales_price);
+
+[access]
+items = 1000000
+time = 600
+n1ql_queries = aggregation
+n1ql_workers = 10
+
+[n1ql-aggregation]
+statement = SELECT DATE_PART_STR(sold_date, 'year') AS year, item.brand, SUM(sales_price) AS sum_agg FROM `bucket-1` WHERE item.manufacturer_id = $1 AND DATE_PART_STR(sold_date, 'month') = $2 GROUP BY DATE_PART_STR(sold_date, 'year'), item.brand ORDER BY DATE_PART_STR(sold_date, 'year'), sum_agg DESC, item.brand;
+scan_consistency = not_bounded
+args = [{manufacturer_id}, {month}]

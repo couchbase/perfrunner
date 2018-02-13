@@ -41,6 +41,7 @@ from spring.docgen import (
     SequentialPlasmaDocument,
     SmallPlasmaDocument,
     String,
+    TpcDsDocument,
     UniformKey,
     VaryingItemSizePlasmaDocument,
     WorkingSetKey,
@@ -612,6 +613,8 @@ class N1QLWorker(Worker):
                                               prefix='n1ql',
                                               array_size=self.ws.array_size,
                                               num_docs=self.ws.items)
+        elif self.ws.doc_gen == 'tpc_ds':
+            self.docs = TpcDsDocument()
 
     def init_creds(self):
         for bucket in getattr(self.ws, 'buckets', []):

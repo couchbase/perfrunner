@@ -1,0 +1,42 @@
+[test_case]
+test = perfrunner.tests.n1ql.TpcDsThroughputTest
+
+[showfast]
+title = AG7, Aggregation query, Plasma, not_bounded
+component = n1ql
+category = aggregation
+
+[cluster]
+mem_quota = 50000
+index_mem_quota = 400000
+initial_nodes = 6
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[restore]
+import_file = /home/backups/tpc-ds.json
+
+[load]
+doc_gen = tpc_ds
+
+[n1ql]
+indexes =
+    ag7::CREATE INDEX {name} ON `bucket-1`(customer.zip, customer.preferred_flag);
+
+[access]
+items = 1000000
+time = 600
+n1ql_queries = aggregation
+n1ql_batch_size = 10
+n1ql_workers = 120
+
+[n1ql-aggregation]
+statement = SELECT customer.zip FROM `bucket-1` WHERE customer.zip IN $1 AND customer.preferred_flag = true GROUP BY customer.zip HAVING COUNT(1) > 10;
+scan_consistency = not_bounded
+args = [{zip_codes}]
+ad_hoc = true

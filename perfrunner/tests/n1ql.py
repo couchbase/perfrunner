@@ -225,3 +225,25 @@ class N1QLXattrThroughputTest(N1QLThroughputTest):
         self.access()
 
         self.report_kpi()
+
+
+class TpcDsTest(N1QLTest):
+
+    def run(self):
+        self.import_data()
+
+        self.build_indexes()
+
+        self.access()
+
+        self.report_kpi()
+
+
+class TpcDsLatencyTest(TpcDsTest, N1QLLatencyTest):
+
+    pass
+
+
+class TpcDsThroughputTest(TpcDsTest, N1QLThroughputTest):
+
+    pass

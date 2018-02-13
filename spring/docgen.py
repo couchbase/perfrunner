@@ -8,11 +8,18 @@ import spooky
 
 from fastdocgen import build_achievements
 from spring.dictionary import (
+    CATEGORIES,
+    COUNTIES,
+    EDUCATION_STATUSES,
+    GENDERS,
     LOREM,
+    MARITAL_STATUSES,
     NUM_STATES,
     NUM_STREET_SUFFIXES,
     STATES,
     STREET_SUFFIX,
+    YEARS,
+    ZIP_CODES,
 )
 from spring.settings import WorkloadSettings
 
@@ -1148,4 +1155,81 @@ class EventingSmallDocument(Document):
             'name': self._build_name(alphabet),
             'alt_email': self._build_alt_email(alphabet),
             'coins': self._build_coins(alphabet),
+        }
+
+
+class TpcDsDocument:
+
+    @property
+    def categories(self) -> List[str]:
+        return random.sample(CATEGORIES, 2)
+
+    @property
+    def counties(self) -> List[str]:
+        return random.sample(COUNTIES, 10)
+
+    @property
+    def day_of_year(self) -> int:
+        return random.randint(1, 180)
+
+    @property
+    def education_status(self) -> str:
+        idx = random.randint(0, len(EDUCATION_STATUSES) - 1)
+        return EDUCATION_STATUSES[idx]
+
+    @property
+    def gender(self) -> str:
+        idx = random.randint(0, len(GENDERS) - 1)
+        return GENDERS[idx]
+
+    @property
+    def manufacturer_id(self) -> int:
+        return random.randint(1, 1000)
+
+    @property
+    def marital_status(self) -> str:
+        idx = random.randint(0, len(MARITAL_STATUSES) - 1)
+        return MARITAL_STATUSES[idx]
+
+    @property
+    def month(self) -> int:
+        return random.randint(1, 7)
+
+    @property
+    def sales_price(self) -> int:
+        return random.randint(35, 40)
+
+    @property
+    def state(self) -> str:
+        idx = random.randint(0, NUM_STATES - 1)
+        return STATES[idx][0]
+
+    @property
+    def quarter(self) -> int:
+        return random.randint(1, 4)
+
+    @property
+    def year(self) -> int:
+        idx = random.randint(0, len(YEARS) - 1)
+        return YEARS[idx]
+
+    @property
+    def zip_codes(self) -> List[str]:
+        return random.sample(ZIP_CODES, 50)
+
+    def next(self, *args) -> dict:
+        return {
+            'categories': self.categories,
+            'counties': self.counties,
+            'day_of_year': self.day_of_year,
+            'education_status': self.education_status,
+            'gender': self.gender,
+            'manufacturer_id': self.manufacturer_id,
+            'marital_status': self.marital_status,
+            'month': self.month,
+            'sales_price': self.sales_price,
+            'state': self.state,
+            'quarter': self.quarter,
+            'year': self.year,
+            'zip_codes': self.zip_codes,
         }

@@ -133,10 +133,18 @@ class PerfTest:
             return pretty_dict(core_dumps)
 
     def restore(self):
+        logger.info('Restoring data')
         self.remote.restore_data(
             self.test_config.restore_settings.backup_storage,
             self.test_config.restore_settings.backup_repo,
         )
+
+    def import_data(self):
+        logger.info('Importing data')
+        for bucket in self.test_config.buckets:
+            self.remote.import_data(
+                self.test_config.restore_settings.import_file, bucket,
+            )
 
     def compact_bucket(self, wait: bool = True) -> None:
         for target in self.target_iterator:

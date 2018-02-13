@@ -284,15 +284,31 @@ class RemoteLinux(Remote):
             '/opt/couchbase/etc/couchbase/static_config')
 
     @master_server
-    def restore_data(self, archive_path, repo_path):
+    def restore_data(self, archive_path: str, repo_path: str):
         cmd = \
             "/opt/couchbase/bin/cbbackupmgr restore " \
-            "--archive {} --repo {} --threads 30 " \
+            "--archive {} --repo {} --threads 24 " \
             "--cluster http://localhost:8091 " \
             "--username Administrator --password password " \
             "--disable-ft-indexes --disable-gsi-indexes".format(
                 archive_path,
                 repo_path,
+            )
+
+        logger.info("Running: {}".format(cmd))
+        run(cmd)
+
+    @master_server
+    def import_data(self, import_file: str, bucket: str):
+        cmd = \
+            "/opt/couchbase/bin/cbimport json " \
+            "--dataset file://{} --threads 24 " \
+            "--cluster http://localhost:8091 " \
+            "--bucket {} " \
+            "--username Administrator --password password " \
+            "--generate-key '#MONO_INCR#' --format lines".format(
+                import_file,
+                bucket,
             )
 
         logger.info("Running: {}".format(cmd))

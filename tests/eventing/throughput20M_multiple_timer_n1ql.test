@@ -1,0 +1,43 @@
+[test_case]
+test = perfrunner.tests.eventing.TimerThroughputTest
+
+[showfast]
+title = Timers executed/sec, 1 bucket x 20M x 1KB, 5 timers-N1QL
+component = eventing
+category = thr
+sub_category = Timer
+
+[stats]
+server_processes = projector eventing-produc
+
+[cluster]
+mem_quota = 50000
+eventing_mem_quota = 40960
+initial_nodes = 5
+num_buckets = 1
+eventing_bucket_mem_quota = 2000
+eventing_buckets = 1
+online_cores = 12
+
+[bucket]
+bucket_type = ephemeral
+eviction_policy = nruEviction
+replica_number=0
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[load]
+items = 20000000
+size = 1024
+workers = 160
+
+[eventing]
+functions = perf-test1:tests/eventing/code/timer_n1ql.js,perf-test2:tests/eventing/code/timer_n1ql.js,perf-test3:tests/eventing/code/timer_n1ql.js,perf-test4:tests/eventing/code/timer_n1ql.js,perf-test5:tests/eventing/code/timer_n1ql.js
+worker_count = 16
+cpp_worker_thread_count = 10
+timer_timeout = 2400
+
+[access]
+time = 360

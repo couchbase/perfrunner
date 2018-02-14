@@ -104,8 +104,8 @@ class EventingTest(PerfTest):
             timer_events += events
         return timer_events
 
-    @timeit
     @with_stats
+    @timeit
     def load_access_and_wait(self):
         self.load()
         self.access_bg()
@@ -156,6 +156,53 @@ class FunctionsThroughputTest(EventingTest):
             *self.metrics.function_throughput(time=time_elapsed,
                                               event_name=None,
                                               events_processed=events_successfully_processed)
+        )
+
+
+class FunctionsIndexThroughputTest(EventingTest):
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.on_update_success = 0
+
+    @with_stats
+    @timeit
+    def access_and_wait(self):
+        self.create_index()
+        self.access_bg()
+        self.sleep()
+
+    def create_index(self):
+        storage = self.test_config.gsi_settings.storage
+        indexes = self.test_config.gsi_settings.indexes
+
+        for server in self.cluster_spec.servers_by_role('index'):
+            for bucket in self.test_config.buckets:
+                for name, field in indexes.items():
+                    self.rest.create_index(host=server,
+                                           bucket=bucket,
+                                           name=name,
+                                           field=field,
+                                           storage=storage)
+
+    def run(self):
+        self.set_functions()
+
+        self.load()
+
+        on_update_success = self.get_on_update_success()
+        time_elapsed = self.access_and_wait()
+        self.on_update_success = \
+            self.get_on_update_success() - on_update_success
+
+        self.report_kpi(time_elapsed)
+
+        self.validate_failures()
+
+    def _report_kpi(self, time_elapsed):
+        self.reporter.post(
+            *self.metrics.function_throughput(time=time_elapsed,
+                                              event_name=None,
+                                              events_processed=self.on_update_success)
         )
 
 

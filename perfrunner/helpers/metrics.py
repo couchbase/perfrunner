@@ -73,7 +73,10 @@ class MetricHelper:
         return value, self._snapshots, metric_info
 
     @property
-    def n1ql_query_id(self) -> str:
+    def query_id(self) -> str:
+        if 'views' in self._title:
+            return ''
+
         query_id = self._title.split(',')[0]
         query_id = query_id.split()[0]
         for prefix in 'CI', 'Q', 'UP', 'DL', 'AG':
@@ -85,7 +88,7 @@ class MetricHelper:
         title = 'Avg. Query Throughput (queries/sec), {}'.format(self._title)
 
         metric_info = self._metric_info(metric_id, title,
-                                        order_by=self.n1ql_query_id)
+                                        order_by=self.query_id)
         throughput = self._avg_n1ql_throughput()
         return throughput, self._snapshots, metric_info
 
@@ -284,7 +287,8 @@ class MetricHelper:
         metric_id = self.test_config.name
         title = '{}th percentile query latency (ms), {}'.format(percentile,
                                                                 self._title)
-        metric_info = self._metric_info(metric_id, title)
+        metric_info = self._metric_info(metric_id, title,
+                                        order_by=self.query_id)
 
         latency = self._query_latency(percentile)
 

@@ -4,7 +4,7 @@ test = perfrunner.tests.n1ql.N1QLXattrThroughputTest
 [showfast]
 title = Q2 XATTR, Singleton Unique Lookup, MOI, request_plus
 component = n1ql
-category = Q1_Q3_thr
+category = Q1_Q3
 sub_category = MOI
 
 [cluster]

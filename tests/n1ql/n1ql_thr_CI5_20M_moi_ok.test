@@ -4,7 +4,7 @@ test = perfrunner.tests.n1ql.N1QLThroughputTest
 [showfast]
 title = CI5, Aggregation Query, Covering, MOI, not_bounded
 component = n1ql
-category = Q5_Q7_thr
+category = Q5_Q7
 
 [cluster]
 mem_quota = 20480

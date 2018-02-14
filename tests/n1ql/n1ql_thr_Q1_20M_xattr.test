@@ -4,7 +4,7 @@ test = perfrunner.tests.n1ql.N1QLXattrThroughputTest
 [showfast]
 title = Q1, XATTR Lookup
 component = n1ql
-category = Q1_Q3_thr
+category = Q1_Q3
 sub_category = KV
 
 [cluster]

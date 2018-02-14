@@ -4,7 +4,7 @@ test = perfrunner.tests.n1ql.N1QLLatencyTest
 [showfast]
 title = Q1, Key-Value Lookup, 10K queries/sec, TLS
 component = n1ql
-category = Q1_Q3_lat
+category = Q1_Q3
 sub_category = KV
 
 [cluster]

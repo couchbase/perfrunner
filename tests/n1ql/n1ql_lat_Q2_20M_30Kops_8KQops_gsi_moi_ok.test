@@ -4,7 +4,7 @@ test = perfrunner.tests.n1ql.N1QLLatencyTest
 [showfast]
 title = Q2, Singleton Unique Lookup, 8K queries/sec, MOI, not_bounded
 component = n1ql
-category = Q1_Q3_lat
+category = Q1_Q3
 sub_category = MOI
 
 [cluster]

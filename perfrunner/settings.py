@@ -387,6 +387,8 @@ class PhaseSettings:
     RECORDED_LOAD_CACHE_SIZE = 0
     INSERTS_PER_WORKERINSTANCE = 0
 
+    EPOLL = 'true'
+
     def __init__(self, options: dict):
         # Common settings
         self.time = int(options.get('time', self.TIME))
@@ -474,10 +476,15 @@ class PhaseSettings:
                                                         self.RECORDED_LOAD_CACHE_SIZE))
         self.inserts_per_workerinstance = int(options.get('inserts_per_workerinstance',
                                                           self.INSERTS_PER_WORKERINSTANCE))
+        self.epoll = options.get("epoll", self.EPOLL)
 
         # Subdoc & XATTR
         self.subdoc_field = options.get('subdoc_field')
         self.xattr_field = options.get('xattr_field')
+
+        # Client Certificate Auth settings
+        self.cert_keystore_file = options.get("cert_keystore_file", "")
+        self.cert_keystore_password = options.get("cert_keystore_password", "")
 
     def __str__(self) -> str:
         return str(self.__dict__)

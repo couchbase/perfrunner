@@ -1,0 +1,45 @@
+[test_case]
+test = perfrunner.tests.ycsb.YCSBN1QLThroughputTest
+
+[showfast]
+title = Avg Throughput (queries/sec), Workload E, MOI, x.509 Client Auth, 4 nodes
+component = n1ql
+category = ycsb
+sub_category = MOI
+
+[cluster]
+mem_quota = 40960
+index_mem_quota = 10240
+initial_nodes = 4
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+
+[bucket]
+replica_number = 0
+
+[secondary]
+indexer.settings.storage_mode = memory_optimized
+
+[load]
+workload_path = workloads/workloade
+items = 20000
+workers = 40
+
+[n1ql]
+indexes =
+    primary_idx::CREATE PRIMARY INDEX {name}_{hash} ON `bucket-1` WITH {{ "nodes": [ "{index_node}:8091" ] }};
+
+[access]
+workload_path = workloads/workloade
+items = 20000
+ops = 1000000000
+time = 1200
+workers = 4
+workload_instances = 2
+cert_keystore_file = ../certificates/client.keystore
+cert_keystore_password = storepass
+
+[ycsb]
+branch = tmp-x509

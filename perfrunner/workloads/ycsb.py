@@ -22,7 +22,8 @@ def ycsb_data_load(workload_settings: PhaseSettings,
              items=workload_settings.items,
              workers=workload_settings.workers,
              soe_params=soe_params,
-             instance=instance)
+             instance=instance,
+             epoll=workload_settings.epoll)
 
 
 def ycsb_workload(workload_settings: PhaseSettings,
@@ -43,7 +44,10 @@ def ycsb_workload(workload_settings: PhaseSettings,
              workload=workload_settings.workload_path,
              items=workload_settings.items,
              workers=workload_settings.workers,
+             cert_keystore_file=workload_settings.cert_keystore_file,
+             cert_keystore_password=workload_settings.cert_keystore_password,
              soe_params=soe_params,
              ops=int(workload_settings.ops),
              time=workload_settings.time,
-             instance=instance)
+             instance=instance,
+             epoll=workload_settings.epoll)

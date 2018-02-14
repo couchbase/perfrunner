@@ -1,0 +1,31 @@
+[test_case]
+test = perfrunner.tests.ycsb.YCSBThroughputTest
+
+[showfast]
+title = Avg Throughput (ops/sec), Workload A, 3 nodes, x.509 Client Auth, 12 vCPU,
+component = kv
+category = ycsb
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 3
+num_buckets = 1
+online_cores = 6
+
+[load]
+workload_path = workloads/workloada
+items = 20000000
+workers = 160
+
+[access]
+workload_path = workloads/workloada
+items = 20000000
+ops = 1000000000
+time = 1800
+workers = 120
+workload_instances = 6
+cert_keystore_file = ../certificates/client.keystore
+cert_keystore_password = storepass
+
+[ycsb]
+branch = tmp-x509

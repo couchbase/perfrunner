@@ -376,3 +376,11 @@ class ClusterManager:
     def enable_ipv6(self):
         if self.test_config.cluster.ipv6:
             self.remote.enable_ipv6()
+
+    def set_x509_certificates(self):
+        if self.test_config.access_settings.cert_keystore_file:
+            self.remote.setup_x509()
+            for host in self.cluster_spec.servers:
+                self.rest.upload_cluster_certificate(host)
+                self.rest.reload_cluster_certificate(host)
+                self.rest.enable_certificate_auth(host)

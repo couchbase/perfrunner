@@ -289,18 +289,18 @@ def run_kvgen(hostname, num_docs, prefix):
         local(cmd)
 
 
-def run_ycsb(host, bucket, password, action, workload, items, workers,
-             soe_params=None, ops=None, time=None, instance=0):
+def run_ycsb(host, bucket, password, action, workload, items, workers, epoll,
+             cert_keystore_file=None, cert_keystore_password=None, soe_params=None,
+             ops=None, time=None, instance=0):
     cmd = 'bin/ycsb {action} couchbase2 ' \
           '-P {workload} ' \
           '-p writeallfields=true ' \
           '-threads {workers} ' \
           '-p couchbase.host={host} ' \
           '-p couchbase.bucket={bucket} ' \
-          '-p couchbase.password={password} ' \
           '-p couchbase.upsert=true ' \
+          '-p couchbase.epoll={epoll} ' \
           '-p couchbase.boost=48 ' \
-          '-p couchbase.epoll=true ' \
           '-p exportfile=ycsb_{action}_{instance}.log '
 
     if ops is not None:
@@ -308,10 +308,18 @@ def run_ycsb(host, bucket, password, action, workload, items, workers,
     if time is not None:
         cmd += ' -p maxexecutiontime={time} '
 
-    cmd = cmd.format(host=host, bucket=bucket, password=password,
+    if cert_keystore_file:
+        cmd = "{} -p couchbase.certKeystoreFile={}".format(cmd, cert_keystore_file)
+    else:
+        cmd = "{} -p couchbase.password={} ".format(cmd, password)
+
+    if cert_keystore_password:
+        cmd = "{} -p couchbase.certKeystorePassword={}".format(cmd, cert_keystore_password)
+
+    cmd = cmd.format(host=host, bucket=bucket,
                      action=action, workload=workload,
-                     items=items, ops=ops, workers=workers, time=time,
-                     instance=instance)
+                     items=items, ops=ops, workers=workers,
+                     time=time, epoll=epoll, instance=instance)
 
     if soe_params is None:
         cmd += ' -p recordcount={items} '.format(items=items)

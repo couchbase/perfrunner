@@ -69,7 +69,7 @@ def main():
     cm.restart_with_alternative_bucket_options()
     cm.set_index_settings()
     cm.set_query_settings()
-
+    cm.set_x509_certificates()
     cm.wait_until_healthy()
     cm.wait_until_warmed_up()
 

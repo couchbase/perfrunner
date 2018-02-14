@@ -457,3 +457,10 @@ class RemoteLinux(Remote):
         logger.info('Enabling IPv6')
         run('sed -i "s/{ipv6, false}/{ipv6, true}/" '
             '/opt/couchbase/etc/couchbase/static_config')
+
+    @all_servers
+    def setup_x509(self):
+        logger.info('Setting up x.509 certificates')
+        put("certificates/inbox", "/opt/couchbase/var/lib/couchbase/")
+        run('chmod a+x /opt/couchbase/var/lib/couchbase/inbox/chain.pem')
+        run('chmod a+x /opt/couchbase/var/lib/couchbase/inbox/pkey.key')

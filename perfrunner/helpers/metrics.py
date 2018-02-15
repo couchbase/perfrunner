@@ -682,6 +682,13 @@ class MetricHelper:
         latency = round(latency, 1)
         return latency, self._snapshots, metric_info
 
+    def function_time(self, time: int, initials: str) -> Metric:
+        title = initials + ", " + self._title
+        metric_info = self._metric_info(title=title)
+        time = s2m(seconds=time)
+
+        return time, self._snapshots, metric_info
+
     def analytics_latency(self, query: dict, latency: int) -> Metric:
         metric_id = self.test_config.name + strip(query['description'])
 

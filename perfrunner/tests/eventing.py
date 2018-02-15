@@ -51,7 +51,15 @@ class EventingTest(PerfTest):
 
         self.target_iterator = TargetIterator(self.cluster_spec, self.test_config, "eventing")
 
-    def set_functions(self):
+    @timeit
+    def deploy_and_bootstrap(self, func, name):
+        self.rest.deploy_function(node=self.eventing_nodes[0],
+                                  func=func, name=name)
+
+        self.monitor.wait_for_bootstrap(nodes=self.eventing_nodes,
+                                        function=name)
+
+    def set_functions(self) -> float:
         with open(self.FUNCTION_SAMPLE_FILE) as f:
             func = json.load(f)
 
@@ -71,10 +79,8 @@ class EventingTest(PerfTest):
                 func["appcode"] = code
             self.rest.create_function(node=self.eventing_nodes[0],
                                       func=func, name=name)
-            self.rest.deploy_function(node=self.eventing_nodes[0],
-                                      func=func, name=name)
-            self.monitor.wait_for_bootstrap(nodes=self.eventing_nodes,
-                                            function=name)
+            time_to_deploy = self.deploy_and_bootstrap(func, name)
+            return time_to_deploy
 
     def process_latency_stats(self):
         ret_val = {}
@@ -147,6 +153,38 @@ class EventingTest(PerfTest):
         self.report_kpi(time_elapsed)
 
         self.validate_failures()
+
+
+class FunctionsTimeTest(EventingTest):
+    @timeit
+    def process_all_docs(self):
+        self.monitor.wait_for_all_mutations_processed(host=self.master_node,
+                                                      bucket1=self.test_config.buckets[0],
+                                                      bucket2=self.test_config.eventing_buckets[0]
+                                                      )
+
+    @with_stats
+    def apply_function(self):
+        time_to_deploy = self.set_functions()
+        time_to_process = self.process_all_docs()
+        return time_to_deploy, time_to_deploy + time_to_process
+
+    def run(self):
+        self.load()
+
+        time_to_deploy, time_to_process = self.apply_function()
+
+        self.report_kpi(time_to_deploy, time_to_process)
+
+        self.validate_failures()
+
+    def _report_kpi(self, time_to_deploy, time_to_process):
+        self.reporter.post(
+            *self.metrics.function_time(time=time_to_deploy, initials="Bootstrap time(sec)")
+        )
+        self.reporter.post(
+            *self.metrics.function_time(time=time_to_process, initials="Processing time(sec)")
+        )
 
 
 class FunctionsThroughputTest(EventingTest):

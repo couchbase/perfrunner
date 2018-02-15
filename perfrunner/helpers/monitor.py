@@ -19,7 +19,7 @@ class Monitor(RestHelper):
     POLLING_INTERVAL_INDEXING = 1
     POLLING_INTERVAL_MACHINE_UP = 10
     POLLING_INTERVAL_ANALYTICS = 15
-    POLLING_INTERVAL_TIMER_EVENT = 1
+    POLLING_INTERVAL_EVENTING = 1
 
     REBALANCE_TIMEOUT = 3600 * 6
     TIMEOUT = 3600 * 12
@@ -439,7 +439,19 @@ class Monitor(RestHelper):
             if 0 < self.get_num_events_processed(
                     event=event, node=node, name=function):
                 break
-            time.sleep(self.POLLING_INTERVAL_TIMER_EVENT)
+            time.sleep(self.POLLING_INTERVAL_EVENTING)
             retry += 1
         if retry == self.MAX_RETRY_TIMER_EVENT:
             logger.info('Failed to get timer event for function: {}'.format(function))
+
+    def wait_for_all_mutations_processed(self, host: str, bucket1: str, bucket2: str):
+        logger.info('Waiting for mutations to be processed of eventing function')
+        retry = 1
+        while retry < self.MAX_RETRY_BOOTSTRAP:
+            if self._get_num_items(host=host, bucket=bucket1) == \
+                    self._get_num_items(host=host, bucket=bucket2):
+                break
+            retry += 1
+            time.sleep(self.POLLING_INTERVAL_EVENTING)
+        if retry == self.MAX_RETRY_BOOTSTRAP:
+            logger.info('Failed to process all mutations... TIMEOUT')

@@ -92,7 +92,7 @@ class FTSThroughputTest(FTSTest):
     COLLECTORS = {'jts_stats': True, 'fts_stats': True}
 
     def report_kpi(self):
-        self.reporter.post(*self.metrics.jts_throughput(self.showfast.orderby))
+        self.reporter.post(*self.metrics.jts_throughput(self.showfast.order_by))
 
     def run(self):
         self.cleanup_and_restore()
@@ -110,7 +110,7 @@ class FTSLatencyTest(FTSTest):
     COLLECTORS = {'jts_stats': True, 'fts_stats': True}
 
     def report_kpi(self):
-        self.reporter.post(*self.metrics.jts_latency(self.showfast.orderby,
+        self.reporter.post(*self.metrics.jts_latency(self.showfast.order_by,
                                                      percentile=80))
 
     def run(self):
@@ -129,10 +129,10 @@ class FTSIndexTest(FTSTest):
 
     def report_kpi(self, time_elapsed: int, size: int):
         self.reporter.post(
-            *self.metrics.fts_index(time_elapsed, order_by=self.showfast.orderby)
+            *self.metrics.fts_index(time_elapsed, order_by=self.showfast.order_by)
         )
         self.reporter.post(
-            *self.metrics.fts_index_size(size, order_by=self.showfast.orderby)
+            *self.metrics.fts_index_size(size, order_by=self.showfast.order_by)
         )
 
     @with_stats

@@ -139,25 +139,25 @@ class MetricHelper:
 
         return reb_time, self._snapshots, metric_info
 
-    def jts_throughput(self, orderby) -> Metric:
+    def jts_throughput(self, order_by) -> Metric:
         metric_id = '{}_{}'.format(self.test_config.name, "jts_throughput")
         metric_id = metric_id.replace('.', '')
         title = "Average Throughput (q/sec), {}".format(self._title)
-        metric_info = self._metric_info(metric_id, title, orderby)
+        metric_info = self._metric_info(metric_id, title, order_by)
         timings = self._jts_metric(collector="jts_stats", metric="jts_throughput")
         thr = round(np.average(timings), 2)
         if thr > 100:
             thr = round(thr)
         return thr, self._snapshots, metric_info
 
-    def jts_latency(self, orderby, percentile=50) -> Metric:
+    def jts_latency(self, order_by, percentile=50) -> Metric:
         prefix = "Average latency (ms)"
         if percentile != 50:
             prefix = "{}th percentile latency (ms)".format(percentile)
         metric_id = '{}_{}'.format(self.test_config.name, "jts_latency")
         metric_id = metric_id.replace('.', '')
         title = "{}, {}".format(prefix, self._title)
-        metric_info = self._metric_info(metric_id, title, orderby)
+        metric_info = self._metric_info(metric_id, title, order_by)
         timings = self._jts_metric(collector="jts_stats", metric="jts_latency")
         lat = round(np.percentile(timings, percentile), 2)
         if lat > 100:
@@ -219,7 +219,9 @@ class MetricHelper:
         return self.lag_collector_metric('xdcr_lag', 'replication lag', '', percentile)
 
     def avg_replication_rate(self, time_elapsed: float) -> Metric:
-        metric_info = self._metric_info()
+        metric_info = self._metric_info(
+            order_by=self.test_config.showfast.order_by,
+        )
 
         rate = self._avg_replication_rate(time_elapsed)
 
@@ -744,7 +746,7 @@ class DailyMetricHelper(MetricHelper):
             throughput, \
             self._snapshots
 
-    def jts_throughput(self, orderby) -> DailyMetric:
+    def jts_throughput(self, order_by) -> DailyMetric:
         timings = self._jts_metric(collector="jts_stats", metric="jts_throughput")
         throughput = round(np.average(timings), 2)
         if throughput > 100:

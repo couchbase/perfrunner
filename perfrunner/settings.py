@@ -164,7 +164,7 @@ class ShowFastSettings:
         self.category = options.get('category', '')
         self.sub_category = options.get('sub_category', '')
         self.threshold = int(options.get("threshold", self.THRESHOLD))
-        self.orderby = options.get("orderby", 'q0b00000000')
+        self.order_by = options.get("orderby", 'q0b00000000')
 
 
 class ClusterSettings:

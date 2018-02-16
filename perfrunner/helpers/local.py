@@ -235,6 +235,8 @@ def run_cbc_pillowfight(host, bucket, password,
 
     if doc_gen == 'json':
         cmd += '--json '
+    elif doc_gen == 'json_snappy':
+        cmd += '--json --compress --compress '
 
     if use_ssl:
         cmd += '--spec couchbases://{host}/{bucket}?ipv6=allow --certpath root.pem '

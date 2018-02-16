@@ -175,7 +175,9 @@ class MetricHelper:
         return timings
 
     def max_ops(self) -> Metric:
-        metric_info = self._metric_info()
+        metric_info = self._metric_info(
+            order_by=self.test_config.showfast.order_by,
+        )
         throughput = self._max_ops()
 
         return throughput, self._snapshots, metric_info

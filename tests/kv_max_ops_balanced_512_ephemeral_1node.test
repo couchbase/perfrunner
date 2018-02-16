@@ -5,6 +5,7 @@ test = perfrunner.tests.kv.PillowFightTest
 title = Max ops/sec, cbc-pillowfight, 1 node, 50/50 R/W, 512B JSON items, Ephemeral
 component = kv
 category = max_ops
+orderby = mixed
 
 [cluster]
 mem_quota = 51200

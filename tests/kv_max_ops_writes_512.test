@@ -5,6 +5,7 @@ test = perfrunner.tests.kv.PillowFightTest
 title = Max ops/sec, cbc-pillowfight, 2 nodes, 20/80 R/W, 512B JSON items
 component = kv
 category = max_ops
+orderby = writes
 
 [cluster]
 mem_quota = 51200

@@ -2,7 +2,7 @@
 test = perfrunner.tests.kv.PillowFightTest
 
 [showfast]
-title = Max ops/sec, cbc-pillowfight, 2 nodes, 80/20 R/W, 512B JSON items, TLS
+title = Max ops/sec, cbc-pillowfight, 2 nodes, 80/20 R/W, 512B JSON items, Snappy
 component = kv
 category = max_ops
 orderby = reads
@@ -16,11 +16,10 @@ num_buckets = 1
 size = 512
 items = 20000000
 workers = 50
-doc_gen = json
+doc_gen = json_snappy
 
 [access]
 items = 20000000
-iterations = 10000
+iterations = 40000
 workers = 50
 updates = 20
-use_ssl = 1

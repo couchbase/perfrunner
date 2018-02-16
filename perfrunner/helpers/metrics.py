@@ -206,17 +206,15 @@ class MetricHelper:
         values = self.get_collector_values(collector)
         return np.percentile(values, percentile)
 
-    def lag_collector_metric(self, collector, collector_title,
-                             order_by, percentile: Number = 95) -> Metric:
-        metric_id = '{}_{}th_{}'.format(self.test_config.name, percentile, collector)
-        title = '{}th percentile {} (ms), {}'.format(
-            percentile, collector_title, self._title)
-        metric_info = self._metric_info(metric_id, title, order_by)
-        lag = self.get_percentile_value_of_collector(collector, percentile)
-        return round(lag, 1), self._snapshots, metric_info
-
     def xdcr_lag(self, percentile: Number = 95) -> Metric:
-        return self.lag_collector_metric('xdcr_lag', 'replication lag', '', percentile)
+        metric_id = '{}_{}th_xdcr_lag'.format(self.test_config.name, percentile)
+        title = '{}th percentile replication lag (ms), {}'.format(percentile,
+                                                                  self._title)
+        metric_info = self._metric_info(metric_id, title)
+
+        xdcr_lag = self.get_percentile_value_of_collector('xdcr_lag', percentile)
+
+        return round(xdcr_lag, 1), self._snapshots, metric_info
 
     def avg_replication_rate(self, time_elapsed: float) -> Metric:
         metric_info = self._metric_info(

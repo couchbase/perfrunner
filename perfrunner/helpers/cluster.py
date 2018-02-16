@@ -151,6 +151,7 @@ class ClusterManager:
                     eviction_policy=self.test_config.bucket.eviction_policy,
                     bucket_type=self.test_config.bucket.bucket_type,
                     conflict_resolution_type=self.test_config.bucket.conflict_resolution_type,
+                    compression_mode=self.test_config.bucket.compression_mode,
                 )
 
     def create_eventing_buckets(self):

@@ -281,6 +281,8 @@ class BucketSettings:
 
         self.conflict_resolution_type = options.get('conflict_resolution_type')
 
+        self.compression_mode = options.get('compression_mode')
+
 
 class CompactionSettings:
 

@@ -271,10 +271,17 @@ class RestHelper:
         api = 'http://{host}:8091/pools/default/buckets/{bucket}'.format(host=host, bucket=name)
         self.delete(url=api)
 
-    def create_bucket(self, host: str, name: str, password: str,
-                      ram_quota: int, replica_number: int, replica_index: int,
-                      eviction_policy: str, bucket_type: str,
-                      conflict_resolution_type: str = None):
+    def create_bucket(self,
+                      host: str,
+                      name: str,
+                      password: str,
+                      ram_quota: int,
+                      replica_number: int,
+                      replica_index: int,
+                      eviction_policy: str,
+                      bucket_type: str,
+                      conflict_resolution_type: str = None,
+                      compression_mode: str = None):
         logger.info('Adding new bucket: {}'.format(name))
 
         api = 'http://{}:8091/pools/default/buckets'.format(host)
@@ -295,6 +302,9 @@ class RestHelper:
 
         if conflict_resolution_type:
             data['conflictResolutionType'] = conflict_resolution_type
+
+        if compression_mode:
+            data['compressionMode'] = compression_mode
 
         logger.info('Bucket configuration: {}'.format(pretty_dict(data)))
 

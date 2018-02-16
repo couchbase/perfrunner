@@ -244,6 +244,27 @@ class FunctionsIndexThroughputTest(EventingTest):
         )
 
 
+class FunctionsThroughputIndexN1QLTest(FunctionsIndexThroughputTest):
+    def run(self):
+        self.set_functions()
+
+        self.create_index()
+
+        time_elapsed = self.load_access_and_wait()
+
+        self.report_kpi(time_elapsed)
+
+        self.validate_failures()
+
+    def _report_kpi(self, time_elapsed):
+        events_successfully_processed = self.get_on_update_success()
+        self.reporter.post(
+            *self.metrics.function_throughput(time=time_elapsed,
+                                              event_name=None,
+                                              events_processed=events_successfully_processed)
+        )
+
+
 class EventingRebalance(EventingTest):
 
     def pre_rebalance(self):

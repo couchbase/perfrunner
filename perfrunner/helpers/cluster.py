@@ -2,7 +2,7 @@ from typing import List
 
 from logger import logger
 from perfrunner.helpers.memcached import MemcachedHelper
-from perfrunner.helpers.misc import pretty_dict
+from perfrunner.helpers.misc import maybe_atoi, pretty_dict
 from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import RestHelper
@@ -212,7 +212,7 @@ class ClusterManager:
         for master in self.cluster_spec.masters:
             for parameter, value in xdcr_cluster_settings.items():
                 self.rest.set_xdcr_cluster_settings(master,
-                                                    {parameter: int(value)})
+                                                    {parameter: maybe_atoi(value)})
 
     def tweak_memory(self):
         self.remote.reset_swap()

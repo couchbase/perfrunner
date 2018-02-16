@@ -6,7 +6,7 @@ from typing import Dict, Iterator, List
 from decorator import decorator
 
 from logger import logger
-from perfrunner.helpers.misc import target_hash
+from perfrunner.helpers.misc import maybe_atoi, target_hash
 
 CBMONITOR_HOST = 'cbmonitor.sc.couchbase.com'
 SHOWFAST_HOST = 'showfast.sc.couchbase.com'
@@ -631,13 +631,10 @@ class GSISettings:
                     option.startswith('projector') or \
                     option.startswith('queryport.client.settings'):
                 value = options.get(option)
-                try:
-                    if '.' in value:
-                        self.settings[option] = float(value)
-                    else:
-                        self.settings[option] = int(value)
-                except ValueError:
-                    self.settings[option] = value
+                if '.' in value:
+                    self.settings[option] = maybe_atoi(value, t=float)
+                else:
+                    self.settings[option] = maybe_atoi(value, t=int)
 
         if self.settings:
             if self.settings['indexer.settings.storage_mode'] == 'forestdb' or \

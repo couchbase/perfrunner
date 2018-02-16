@@ -1,6 +1,7 @@
 import json
 import time
 from hashlib import md5
+from typing import Union
 from uuid import uuid4
 
 
@@ -73,3 +74,10 @@ def retry(catch=(), iterations=5, wait=10):
 def read_json(filename: str):
     with open(filename) as fh:
         return json.load(fh)
+
+
+def maybe_atoi(a: str, t=int) -> Union[int, float, str]:
+    try:
+        return t(a)
+    except ValueError:
+        return a

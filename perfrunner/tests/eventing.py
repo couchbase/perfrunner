@@ -178,10 +178,14 @@ class FunctionsTimeTest(EventingTest):
 
     def _report_kpi(self, time_to_deploy, time_to_process):
         self.reporter.post(
-            *self.metrics.function_time(time=time_to_deploy, initials="Bootstrap time(sec)")
+            *self.metrics.function_time(time=time_to_deploy,
+                                        time_type="bootstrap",
+                                        initials="Bootstrap time(min)")
         )
         self.reporter.post(
-            *self.metrics.function_time(time=time_to_process, initials="Processing time(sec)")
+            *self.metrics.function_time(time=time_to_process,
+                                        time_type="processing",
+                                        initials="Processing time(min)")
         )
 
 

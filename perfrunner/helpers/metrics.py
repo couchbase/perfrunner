@@ -705,6 +705,21 @@ class MetricHelper:
 
         return latency, self._snapshots, metric_info
 
+    def get_max_rss_values(self, function_name: str, server: str):
+        ratio = 1024 * 1024
+        db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
+                                     collector='eventing_consumer_stats',
+                                     bucket=function_name, server=server)
+        rss_list = self.store.get_values(db, metric='eventing_consumer_rss')
+        max_consumer_rss = round(max(rss_list) / ratio, 2)
+
+        db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
+                                     collector='atop', server=server)
+        rss_list = self.store.get_values(db, metric='eventing-produc_rss')
+        max_producer_rss = round(max(rss_list) / ratio, 2)
+
+        return max_consumer_rss, max_producer_rss
+
 
 class DailyMetricHelper(MetricHelper):
 

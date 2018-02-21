@@ -143,6 +143,20 @@ class EventingTest(PerfTest):
                             '{function}: {node}: {stat} is not zero'.format(
                                 function=function_stats["function_name"], node=node, stat=stat))
 
+    def print_max_rss_values(self):
+        for node in self.eventing_nodes:
+            for name, filename in self.functions.items():
+                max_consumer_rss, max_producer_rss = \
+                    self.metrics.get_max_rss_values(function_name=name, server=node)
+                logger.info("Max Consumer rss is {}MB on {} for function {}".
+                            format(max_consumer_rss, node, name))
+                logger.info("Max Producer rss is {}MB on {} for function {}".
+                            format(max_producer_rss, node, name))
+
+    def post_test(self):
+        self.validate_failures()
+        self.print_max_rss_values()
+
     def run(self):
         self.set_functions()
 
@@ -150,7 +164,7 @@ class EventingTest(PerfTest):
 
         self.report_kpi(time_elapsed)
 
-        self.validate_failures()
+        self.post_test()
 
 
 class FunctionsTimeTest(EventingTest):
@@ -174,7 +188,7 @@ class FunctionsTimeTest(EventingTest):
 
         self.report_kpi(time_to_deploy, time_to_process)
 
-        self.validate_failures()
+        self.post_test()
 
     def _report_kpi(self, time_to_deploy, time_to_process):
         self.reporter.post(
@@ -236,7 +250,7 @@ class FunctionsIndexThroughputTest(EventingTest):
 
         self.report_kpi(time_elapsed)
 
-        self.validate_failures()
+        self.post_test()
 
     def _report_kpi(self, time_elapsed):
         self.reporter.post(
@@ -256,7 +270,7 @@ class FunctionsThroughputIndexN1QLTest(FunctionsIndexThroughputTest):
 
         self.report_kpi(time_elapsed)
 
-        self.validate_failures()
+        self.post_test()
 
     def _report_kpi(self, time_elapsed):
         events_successfully_processed = self.get_on_update_success()
@@ -331,7 +345,7 @@ class FunctionsRebalanceThroughputTest(EventingRebalance):
         time_taken = self.execute_handler()
 
         self.report_kpi(time_taken)
-        self.validate_failures()
+        self.post_test()
 
     def _report_kpi(self, time_elapsed):
         self.reporter.post(
@@ -361,7 +375,7 @@ class FunctionsScalingThroughputTest(EventingTest):
         self.execute_handler()
 
         self.report_kpi(self.test_config.access_settings.time)
-        self.validate_failures()
+        self.post_test()
 
     def _report_kpi(self, time_elapsed):
         self.reporter.post(
@@ -390,7 +404,7 @@ class TimerTest(EventingTest):
 
         self.report_kpi(self.time)
 
-        self.validate_failures()
+        self.post_test()
 
 
 class TimerThroughputTest(TimerTest):
@@ -459,7 +473,7 @@ class TimerRebalanceThroughputTest(EventingRebalance):
         time_taken = self.execute_handler()
 
         self.report_kpi(time_taken)
-        self.validate_failures()
+        self.post_test()
 
     def _report_kpi(self, time_elapsed):
         self.reporter.post(

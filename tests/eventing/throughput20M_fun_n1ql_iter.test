@@ -2,7 +2,7 @@
 test = perfrunner.tests.eventing.FunctionsThroughputIndexN1QLTest
 
 [showfast]
-title = Functions executed/sec, 1 bucket x 20M x 1KB, single function-N1QL
+title = Functions executed/sec, 1 bucket x 20M x 1KB, single function-N1QL iter(24 rows/query)
 component = eventing
 category = thr
 sub_category = Function

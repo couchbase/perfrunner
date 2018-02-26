@@ -12,15 +12,27 @@ class EventingStats(Collector):
         super().__init__(settings)
         self.eventing_node = test.eventing_nodes[0]
         self.functions = test.functions
+        self.eventing_nodes = test.eventing_nodes
 
-    def _get_processing_stats(self, function_name):
-        uri = "/getAggEventProcessingStats?name={}".format(function_name)
-        samples = self.get_http(path=uri, server=self.eventing_node, port=self.EVENTING_PORT)
+    def get_eventing_stats(self, server, full_stats=False):
+        api = '/api/v1/stats'
+        if full_stats:
+            api += "?type=full"
+        return self.get_http(server=server, port=self.EVENTING_PORT, path=api)
+
+    def _get_processing_stats(self):
+        samples = {}
+        for node in self.eventing_nodes:
+            stats = self.get_eventing_stats(server=node)
+            for fun_stat in stats:
+                samples[fun_stat["function_name"]] = fun_stat["event_processing_stats"]
+
         return samples
 
     def sample(self):
+        all_stats = self._get_processing_stats()
         for name, function in self.functions.items():
-            stats = self._get_processing_stats(function_name=name)
+            stats = all_stats[name]
             if stats:
                 self.update_metric_metadata(stats.keys(), bucket=name)
                 self.store.append(stats, cluster=self.cluster,
@@ -39,27 +51,25 @@ class EventingPerNodeStats(EventingStats):
 
     def __init__(self, settings, test):
         super().__init__(settings, test)
-        self.eventing_nodes = test.eventing_nodes
 
-    def _get_dcp_events_remaining_stats(self, function_name):
-        uri = "/getDcpEventsRemaining?name={}".format(function_name)
-        stats = {}
+    def _get_dcp_events_remaining_stats(self):
+        events_remaining_stats = {}
         for node in self.eventing_nodes:
-            remaining_events = self.get_http(path=uri, server=node,
-                                             port=self.EVENTING_PORT)
-            remaining_events = remaining_events["dcp_backlog"]
-            stats[node] = {"DcpEventsRemaining": remaining_events}
-        return stats
+            stats = self.get_eventing_stats(server=node)
+            events_remaining = 0
+            for fun_stat in stats:
+                events_remaining += fun_stat["events_remaining"]["dcp_backlog"]
+                events_remaining_stats[node] = {"DcpEventsRemaining": events_remaining}
+        return events_remaining_stats
 
     def sample(self):
-        for name, function in self.functions.items():
-            server_stats = self._get_dcp_events_remaining_stats(function_name=name)
-            if server_stats:
-                for server, stats in server_stats.items():
-                    self.update_metric_metadata(stats.keys(), server=server)
-                    self.store.append(stats, cluster=self.cluster,
-                                      server=server,
-                                      collector=self.COLLECTOR)
+        server_stats = self._get_dcp_events_remaining_stats()
+        if server_stats:
+            for server, stats in server_stats.items():
+                self.update_metric_metadata(stats.keys(), server=server)
+                self.store.append(stats, cluster=self.cluster,
+                                  server=server,
+                                  collector=self.COLLECTOR)
 
     def update_metadata(self):
         self.mc.add_cluster()
@@ -84,12 +94,15 @@ class EventingConsumerStats(EventingPerNodeStats):
         super().__init__(settings, test)
 
     def _get_consumer_pids(self, function_name):
-        uri = "/getConsumerPids?name={}".format(function_name)
         node_pids = {}
         for node in self.eventing_nodes:
-            pids = self.get_http(path=uri, server=node,
-                                 port=self.EVENTING_PORT)
-            node_pids[node] = pids
+            stats = self.get_eventing_stats(server=node)
+            worker_pids = {}
+            for fun_stat in stats:
+                if fun_stat["function_name"] == function_name:
+                    worker_pids = fun_stat["worker_pids"]
+                    break
+            node_pids[node] = worker_pids
         return node_pids
 
     def _get_pid_stats(self, node_pids):

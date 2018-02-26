@@ -66,6 +66,7 @@ class EventingTest(PerfTest):
         func["settings"]["cpp_worker_thread_count"] = self.cpp_worker_thread_count
         func["settings"]["timer_worker_pool_size"] = self.timer_worker_pool_size
         func["settings"]["worker_queue_cap"] = self.worker_queue_cap
+        time_to_deploy = 0
         for name, filename in self.functions.items():
             with open(filename, 'r') as myfile:
                 code = myfile.read()
@@ -77,8 +78,8 @@ class EventingTest(PerfTest):
                 func["appcode"] = code
             self.rest.create_function(node=self.eventing_nodes[0],
                                       func=func, name=name)
-            time_to_deploy = self.deploy_and_bootstrap(func, name)
-            return time_to_deploy
+            time_to_deploy += self.deploy_and_bootstrap(func, name)
+        return time_to_deploy
 
     def process_latency_stats(self):
         ret_val = {}

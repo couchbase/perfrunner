@@ -1,5 +1,5 @@
 [clusters]
-hestia =
+themis =
     172.23.96.16:kv,n1ql
     172.23.96.17:kv,n1ql
     172.23.96.20:kv,n1ql

@@ -99,7 +99,8 @@ class MetricHelper:
         vitals = self.test.rest.get_query_stats(query_node)
         total_requests = vitals['requests.count']
 
-        return int(total_requests / test_time)
+        throughput = total_requests / test_time
+        return round(throughput, throughput < 1 and 1 or 0)
 
     def bulk_n1ql_throughput(self, time_elapsed: float) -> Metric:
         metric_info = self._metric_info()

@@ -5,6 +5,7 @@ test = perfrunner.tests.n1ql.TpcDsLatencyTest
 title = AG6, Aggregation query, Plasma, not_bounded
 component = n1ql
 category = aggregation
+sub_category = Latency
 
 [cluster]
 mem_quota = 50000

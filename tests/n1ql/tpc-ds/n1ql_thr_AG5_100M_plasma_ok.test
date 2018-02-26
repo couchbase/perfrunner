@@ -5,6 +5,7 @@ test = perfrunner.tests.n1ql.TpcDsThroughputTest
 title = AG5, Aggregation query, Plasma, not_bounded
 component = n1ql
 category = aggregation
+sub_category = Throughput
 
 [cluster]
 mem_quota = 50000

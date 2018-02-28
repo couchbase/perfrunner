@@ -182,9 +182,15 @@ class Worker:
             self.docs = EventingSmallDocument(self.ws.size)
 
     def init_db(self):
-        params = {'bucket': self.ts.bucket, 'host': self.ts.node, 'port': 8091,
-                  'username': self.ts.bucket, 'password': self.ts.password,
-                  'use_ssl': self.ws.use_ssl}
+        params = {
+            'bucket': self.ts.bucket,
+            'host': self.ts.node,
+            'port': 8091,
+            'username': self.ts.bucket,
+            'password': self.ts.password,
+            'use_ssl': self.ws.use_ssl,
+            'n1ql_timeout': self.ws.n1ql_timeout,
+        }
 
         try:
             self.cb = CBGen(**params)

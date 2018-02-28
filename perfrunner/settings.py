@@ -376,6 +376,7 @@ class PhaseSettings:
 
     N1QL_OP = 'read'
     N1QL_BATCH_SIZE = 100
+    N1QL_TIMEOUT = 0
 
     ARRAY_SIZE = 10
     NUM_CATEGORIES = 10 ** 6
@@ -462,6 +463,8 @@ class PhaseSettings:
         self.num_replies = int(options.get('num_replies', self.NUM_REPLIES))
         self.range_distance = int(options.get('range_distance',
                                               self.RANGE_DISTANCE))
+        self.n1ql_timeout = int(options.get('n1ql_timeout', self.N1QL_TIMEOUT))
+
         if 'n1ql_queries' in options:
             self.n1ql_queries = options.get('n1ql_queries').strip().split(',')
 

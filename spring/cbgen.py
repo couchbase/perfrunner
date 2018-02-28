@@ -65,7 +65,7 @@ class CBGen(CBAsyncGen):
 
     TIMEOUT = 10  # seconds
 
-    def __init__(self, use_ssl=False, **kwargs):
+    def __init__(self, use_ssl=False, n1ql_timeout=None, **kwargs):
         connection_string = 'couchbase://{}/{}?ipv6=allow&password={}'
 
         if use_ssl:
@@ -77,8 +77,10 @@ class CBGen(CBAsyncGen):
                                                      kwargs['bucket'],
                                                      kwargs['password'])
 
-        self.client = Bucket(connection_string=connection_string,
-                             timeout=self.TIMEOUT)
+        self.client = Bucket(connection_string=connection_string)
+        self.client.timeout = self.TIMEOUT
+        if n1ql_timeout:
+            self.client.n1ql_timeout = n1ql_timeout
 
         self.session = requests.Session()
         self.session.auth = (kwargs['username'], kwargs['password'])

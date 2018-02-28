@@ -37,6 +37,8 @@ class WorkloadSettings:
 
         self.use_ssl = False
 
+        self.n1ql_timeout = 0
+
         self.seq_upserts = False
         self.working_set_move_time = 0
         self.key_fmtr = 'decimal'

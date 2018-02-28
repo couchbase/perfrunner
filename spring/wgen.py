@@ -188,7 +188,7 @@ class Worker:
             'port': 8091,
             'username': self.ts.bucket,
             'password': self.ts.password,
-            'use_ssl': self.ws.use_ssl,
+            'ssl_mode': self.ws.ssl_mode,
             'n1ql_timeout': self.ws.n1ql_timeout,
         }
 

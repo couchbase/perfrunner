@@ -754,18 +754,18 @@ class RestHelper:
         return active_nodes_by_role
 
     def upload_cluster_certificate(self, node):
-        logger.info("Uploading cluster certificate to {}:".format(node))
+        logger.info("Uploading cluster certificate to {}".format(node))
         api = 'http://{}:8091/controller/uploadClusterCA'.format(node)
         data = open('./certificates/inbox/ca.pem', 'rb').read()
         self.post(url=api, data=data)
 
     def reload_cluster_certificate(self, node):
-        logger.info("Reloading certificate on {}:".format(node))
+        logger.info("Reloading certificate on {}".format(node))
         api = 'http://{}:8091/node/controller/reloadCertificate'.format(node)
         self.post(url=api)
 
     def enable_certificate_auth(self, node):
-        logger.info("Enabling certificate-based client auth on {}:".format(node))
+        logger.info("Enabling certificate-based client auth on {}".format(node))
         api = 'http://{}:8091/settings/clientCertAuth'.format(node)
         data = open('./certificates/inbox/config.json', 'rb').read()
         self.post(url=api, data=data)

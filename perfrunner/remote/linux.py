@@ -3,13 +3,14 @@ from collections import defaultdict
 from typing import Dict, List
 from urllib.parse import urlparse
 
-from fabric.api import get, put, run, settings
+from fabric.api import get, put, quiet, run, settings
 from fabric.exceptions import CommandTimeout, NetworkError
 
 from logger import logger
 from perfrunner.helpers.misc import uhex
 from perfrunner.remote import Remote
 from perfrunner.remote.context import (
+    all_clients,
     all_servers,
     master_server,
     servers_by_role,
@@ -464,3 +465,17 @@ class RemoteLinux(Remote):
         put("certificates/inbox", "/opt/couchbase/var/lib/couchbase/")
         run('chmod a+x /opt/couchbase/var/lib/couchbase/inbox/chain.pem')
         run('chmod a+x /opt/couchbase/var/lib/couchbase/inbox/pkey.key')
+
+    @all_clients
+    def generate_ssl_keystore(self, root_certificate, keystore_file, storepass, worker_home):
+        logger.info('Generating SSL keystore')
+        remote_keystore = "{}/perfrunner/{}".format(worker_home, keystore_file)
+        remote_root_cert = "{}/perfrunner/{}".format(worker_home, root_certificate)
+        put(root_certificate, remote_root_cert)
+
+        with quiet():
+            run("keytool -delete -keystore {} -alias couchbase -storepass storepass"
+                .format(remote_keystore))
+        run("keytool -importcert -file {} -storepass {} -trustcacerts "
+            "-noprompt -keystore {} -alias couchbase"
+            .format(remote_root_cert, storepass, remote_keystore))

@@ -22,6 +22,9 @@ replica_number = 0
 sourceNozzlePerNode = 2
 targetNozzlePerNode = 4
 
+[xdcr]
+ssl_mode = data
+
 [load]
 items = 100000000
 size = 1024

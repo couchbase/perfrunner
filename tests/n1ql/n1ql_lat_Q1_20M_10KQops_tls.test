@@ -32,7 +32,7 @@ n1ql_queries = key-value-lookup
 n1ql_throughput = 10000
 n1ql_workers = 200
 time = 1200
-use_ssl = 1
+ssl_mode = data
 
 [n1ql-key-value-lookup]
 statement = SELECT * FROM `bucket-1` USE KEYS[$1];

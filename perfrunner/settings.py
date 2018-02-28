@@ -331,8 +331,6 @@ class PhaseSettings:
 
     TIME = 3600 * 24
 
-    USE_SSL = 0
-
     DOC_GEN = 'basic'
     POWER_ALPHA = 0
     ZIPF_ALPHA = 0
@@ -392,10 +390,14 @@ class PhaseSettings:
 
     EPOLL = 'true'
 
+    SSL_MODE = 'none'
+    SSL_AUTH_KEYSTORE = "certificates/auth.keystore"
+    SSL_DATA_KEYSTORE = "certificates/data.keystore"
+    SSL_KEYSTOREPASS = "storepass"
+
     def __init__(self, options: dict):
         # Common settings
         self.time = int(options.get('time', self.TIME))
-        self.use_ssl = bool(int(options.get('use_ssl', self.USE_SSL)))
 
         # KV settings
         self.doc_gen = options.get('doc_gen', self.DOC_GEN)
@@ -487,9 +489,13 @@ class PhaseSettings:
         self.subdoc_field = options.get('subdoc_field')
         self.xattr_field = options.get('xattr_field')
 
-        # Client Certificate Auth settings
-        self.cert_keystore_file = options.get("cert_keystore_file", "")
-        self.cert_keystore_password = options.get("cert_keystore_password", "")
+        # SSL settings
+        self.ssl_mode = (options.get('ssl_mode', self.SSL_MODE))
+        self.ssl_keystore_password = self.SSL_KEYSTOREPASS
+        if self.ssl_mode == 'auth':
+            self.ssl_keystore_file = self.SSL_AUTH_KEYSTORE
+        else:
+            self.ssl_keystore_file = self.SSL_DATA_KEYSTORE
 
     def __str__(self) -> str:
         return str(self.__dict__)
@@ -567,12 +573,11 @@ class RestoreSettings:
 
 class XDCRSettings:
 
-    USE_SSL = False
+    SSL_MODE = 'none'
     WAN_DELAY = 0
 
     def __init__(self, options: dict):
-        self.use_ssl = int(options.get('use_ssl',
-                                       self.USE_SSL))
+        self.ssl_mode = options.get('ssl_mode', self.SSL_MODE)
         self.wan_delay = int(options.get('wan_delay',
                                          self.WAN_DELAY))
         self.filter_expression = options.get('filter_expression')

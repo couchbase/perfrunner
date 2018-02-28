@@ -2,7 +2,7 @@
 test = perfrunner.tests.ycsb.YCSBN1QLThroughputTest
 
 [showfast]
-title = Avg Throughput (queries/sec), Workload E, MOI, SSL, X.509 Auth, 4 nodes
+title = Avg Throughput (queries/sec), Workload E, MOI, SSL, 4 nodes
 component = n1ql
 category = ycsb
 sub_category = MOI
@@ -38,7 +38,7 @@ ops = 1000000000
 time = 600
 workers = 120
 workload_instances = 6
-ssl_mode = auth
+ssl_mode = data
 
 [ycsb]
 branch = tmp-x509

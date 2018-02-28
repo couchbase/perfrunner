@@ -224,7 +224,7 @@ def cbimport(master_node: str, cluster_spec: ClusterSpec, data_type: str,
 
 def run_cbc_pillowfight(host, bucket, password,
                         num_items, num_threads, num_cycles, size, writes,
-                        populate=False, use_ssl=False, doc_gen='binary'):
+                        populate=False, ssl_mode='none', doc_gen='binary'):
     cmd = 'cbc-pillowfight ' \
         '--password {password} ' \
         '--batch-size 1000 ' \
@@ -238,7 +238,7 @@ def run_cbc_pillowfight(host, bucket, password,
     elif doc_gen == 'json_snappy':
         cmd += '--json --compress --compress '
 
-    if use_ssl:
+    if ssl_mode == 'data':
         cmd += '--spec couchbases://{host}/{bucket}?ipv6=allow --certpath root.pem '
     else:
         cmd += '--spec couchbase://{host}/{bucket}?ipv6=allow '
@@ -292,8 +292,8 @@ def run_kvgen(hostname, num_docs, prefix):
 
 
 def run_ycsb(host, bucket, password, action, workload, items, workers, epoll,
-             cert_keystore_file=None, cert_keystore_password=None, soe_params=None,
-             ops=None, time=None, instance=0):
+             ssl_keystore_file='', ssl_keystore_password='', soe_params=None,
+             ops=None, time=None, instance=0, ssl_mode='none'):
     cmd = 'bin/ycsb {action} couchbase2 ' \
           '-P {workload} ' \
           '-p writeallfields=true ' \
@@ -303,25 +303,24 @@ def run_ycsb(host, bucket, password, action, workload, items, workers, epoll,
           '-p couchbase.upsert=true ' \
           '-p couchbase.epoll={epoll} ' \
           '-p couchbase.boost=48 ' \
-          '-p exportfile=ycsb_{action}_{instance}.log '
+          '-p exportfile=ycsb_{action}_{instance}.log ' \
+          '-p couchbase.sslMode={ssl_mode} ' \
+          '-p couchbase.certKeystoreFile=../{ssl_keystore_file} ' \
+          '-p couchbase.certKeystorePassword={ssl_keystore_password} ' \
+          '-p couchbase.password={password} '
 
     if ops is not None:
         cmd += ' -p operationcount={ops} '
     if time is not None:
         cmd += ' -p maxexecutiontime={time} '
 
-    if cert_keystore_file:
-        cmd = "{} -p couchbase.certKeystoreFile={}".format(cmd, cert_keystore_file)
-    else:
-        cmd = "{} -p couchbase.password={} ".format(cmd, password)
-
-    if cert_keystore_password:
-        cmd = "{} -p couchbase.certKeystorePassword={}".format(cmd, cert_keystore_password)
-
     cmd = cmd.format(host=host, bucket=bucket,
                      action=action, workload=workload,
                      items=items, ops=ops, workers=workers,
-                     time=time, epoll=epoll, instance=instance)
+                     time=time, epoll=epoll, instance=instance,
+                     ssl_mode=ssl_mode, password=password,
+                     ssl_keystore_file=ssl_keystore_file,
+                     ssl_keystore_password=ssl_keystore_password)
 
     if soe_params is None:
         cmd += ' -p recordcount={items} '.format(items=items)
@@ -468,3 +467,13 @@ def get_indexer_heap_profile(indexer: str) -> str:
 def govendor_fetch(path: str, revision: str, package: str):
     logger.info('Fetching: {} with revision {} and package as {}'.format(path, revision, package))
     local('govendor fetch {}/{}@{}'.format(path, package, revision))
+
+
+def generate_ssl_keystore(self, root_certificate, keystore_file, storepass):
+    logger.info('Generating SSL keystore')
+    with quiet():
+        local("keytool -delete -keystore {} -alias couchbase -storepass storepass"
+              .format(keystore_file))
+    local("keytool -importcert -file {} -storepass {} -trustcacerts "
+          "-noprompt -keystore {} -alias couchbase"
+          .format(root_certificate, storepass, keystore_file))

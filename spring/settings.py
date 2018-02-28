@@ -35,7 +35,7 @@ class WorkloadSettings:
         self.ddocs = {}
         self.query_params = {}
 
-        self.use_ssl = False
+        self.ssl_mode = 'none'
 
         self.n1ql_timeout = 0
 

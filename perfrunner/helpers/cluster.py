@@ -379,9 +379,10 @@ class ClusterManager:
             self.remote.enable_ipv6()
 
     def set_x509_certificates(self):
-        if self.test_config.access_settings.cert_keystore_file:
+        if self.test_config.access_settings.ssl_mode == "auth":
             self.remote.setup_x509()
             for host in self.cluster_spec.servers:
                 self.rest.upload_cluster_certificate(host)
+            for host in self.cluster_spec.servers:
                 self.rest.reload_cluster_certificate(host)
                 self.rest.enable_certificate_auth(host)

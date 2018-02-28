@@ -24,7 +24,7 @@ class XdcrTest(PerfTest):
 
     def _start_replication(self, m1, m2):
         name = target_hash(m1, m2)
-        certificate = self.settings.use_ssl and self.rest.get_certificate(m2)
+        certificate = self.settings.ssl_mode == 'data' and self.rest.get_certificate(m2)
         self.rest.add_remote_cluster(m1, m2, name, certificate)
 
         for bucket in self.test_config.buckets:

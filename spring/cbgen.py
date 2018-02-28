@@ -42,7 +42,7 @@ class CBAsyncGen:
 
     TIMEOUT = 60  # seconds
 
-    def __init__(self, use_ssl=False, **kwargs):
+    def __init__(self, ssl_mode='none', **kwargs):
         self.client = TxConnection(quiet=True, **kwargs)
         self.client.timeout = self.TIMEOUT
 
@@ -65,10 +65,10 @@ class CBGen(CBAsyncGen):
 
     TIMEOUT = 10  # seconds
 
-    def __init__(self, use_ssl=False, n1ql_timeout=None, **kwargs):
+    def __init__(self, ssl_mode='none', n1ql_timeout=None, **kwargs):
         connection_string = 'couchbase://{}/{}?ipv6=allow&password={}'
 
-        if use_ssl:
+        if ssl_mode == 'data':
             connection_string = connection_string.replace('couchbase',
                                                           'couchbases')
             connection_string += '&certpath=root.pem'

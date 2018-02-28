@@ -23,4 +23,4 @@ items = 20000000
 iterations = 10000
 workers = 50
 updates = 20
-use_ssl = 1
+ssl_mode = data

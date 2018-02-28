@@ -30,7 +30,23 @@ class YCSBTest(PerfTest):
     def access(self, *args, **kwargs):
         PerfTest.access(self, task=ycsb_task)
 
+    def generate_keystore(self):
+        if self.worker_manager.is_remote:
+            self.remote.generate_ssl_keystore(self.ROOT_CERTIFICATE,
+                                              self.test_config.access_settings
+                                              .ssl_keystore_file,
+                                              self.test_config.access_settings
+                                              .ssl_keystore_password,
+                                              self.worker_manager.WORKER_HOME)
+        else:
+            local.generate_ssl_keystore(self.ROOT_CERTIFICATE,
+                                        self.test_config.access_settings.ssl_keystore_file,
+                                        self.test_config.access_settings.ssl_keystore_password)
+
     def run(self):
+        if self.test_config.access_settings.ssl_mode == 'data':
+            self.download_certificate()
+            self.generate_keystore()
         self.download_ycsb()
 
         self.load()
@@ -71,6 +87,9 @@ class YCSBSOETest(YCSBThroughputTest, N1QLTest):
 class YCSBN1QLTest(YCSBTest, N1QLTest):
 
     def run(self):
+        if self.test_config.access_settings.ssl_mode == 'data':
+            self.download_certificate()
+            self.generate_keystore()
         self.download_ycsb()
 
         self.load()

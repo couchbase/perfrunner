@@ -6,12 +6,7 @@ from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.tests import PerfTest
 from perfrunner.tests.views import QueryTest
-from perfrunner.tests.xdcr import (
-    DestTargetIterator,
-    UniDirXdcrInitTest,
-    UniDirXdcrTest,
-    XdcrTest,
-)
+from perfrunner.tests.xdcr import DestTargetIterator, UniDirXdcrInitTest
 
 
 class RebalanceTest(PerfTest):
@@ -401,46 +396,6 @@ class RebalanceWithQueriesTest(RebalanceTest, QueryTest):
         self.build_index()
 
         self.access_bg()
-        self.rebalance()
-
-        if self.is_balanced():
-            self.report_kpi()
-
-
-class RebalanceWithXDCRTest(RebalanceTest, XdcrTest):
-
-    COLLECTORS = {'xdcr_lag': True, 'xdcr_stats': True}
-
-    def run(self):
-        self.load()
-        self.wait_for_persistence()
-
-        self.enable_xdcr()
-        self.monitor_replication()
-        self.wait_for_persistence()
-
-        self.hot_load()
-
-        self.access_bg()
-        self.rebalance()
-
-
-class RebalanceWithUniDirXdcrTest(RebalanceTest, UniDirXdcrTest):
-
-    COLLECTORS = {'xdcr_lag': True, 'xdcr_stats': True}
-
-    def run(self):
-        self.load()
-        self.wait_for_persistence()
-
-        self.enable_xdcr()
-        self.monitor_replication()
-        self.wait_for_persistence()
-
-        self.hot_load()
-
-        self.access_bg()
-
         self.rebalance()
 
         if self.is_balanced():

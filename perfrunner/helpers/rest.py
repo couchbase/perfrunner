@@ -341,20 +341,20 @@ class RestHelper:
                                                                            bucket)
         return self.get(url=api).json()
 
-    def add_remote_cluster(self, host: str, remote_host: str,
-                           name: str, certificate: str = None):
-        logger.info('Adding remote cluster {} with reference {}'.format(
-            remote_host, name
-        ))
+    def add_remote_cluster(self, local_host: str, remote_host: str, name: str,
+                           certificate: str):
+        logger.info('Adding remote cluster: {}'.format(remote_host))
 
-        api = 'http://{}:8091/pools/default/remoteClusters'.format(host)
+        api = 'http://{}:8091/pools/default/remoteClusters'.format(local_host)
         data = {
-            'hostname': remote_host, 'name': name,
-            'username': self.rest_username, 'password': self.rest_password
+            'hostname': remote_host,
+            'name': name,
+            'username': self.rest_username,
+            'password': self.rest_password
         }
         if certificate:
             data.update({
-                'demandEncryption': 1, 'certificate': certificate
+                'demandEncryption': 1, 'certificate': certificate,
             })
         self.post(url=api, data=data)
 
@@ -364,7 +364,7 @@ class RestHelper:
         api = 'http://{}:8091/pools/default/remoteClusters'.format(host)
         return self.get(url=api).json()
 
-    def start_replication(self, host: str, params: dict):
+    def create_replication(self, host: str, params: dict):
         logger.info('Starting replication with parameters {}'.format(params))
 
         api = 'http://{}:8091/controller/createReplication'.format(host)

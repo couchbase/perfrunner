@@ -6,42 +6,39 @@ from perfrunner.tests import PerfTest, TargetIterator
 
 class XdcrTest(PerfTest):
 
-    """Implement bi-directional XDCR cases.
+    ALL_BUCKETS = True
 
-    As a base class it implements several methods for XDCR management and WAN
-    configuration.
-
-    "run" workflow is common for both uni-directional and bi-directional cases.
-    """
+    CLUSTER_NAME = 'perf'
 
     COLLECTORS = {'xdcr_lag': True, 'xdcr_stats': True}
 
-    ALL_BUCKETS = True
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.settings = self.test_config.xdcr_settings
+        self.xdcr_settings = self.test_config.xdcr_settings
 
-    def _start_replication(self, m1, m2):
-        name = target_hash(m1, m2)
-        certificate = self.settings.ssl_mode == 'data' and self.rest.get_certificate(m2)
-        self.rest.add_remote_cluster(m1, m2, name, certificate)
-
-        for bucket in self.test_config.buckets:
-            params = {
-                'replicationType': 'continuous',
-                'toBucket': bucket,
-                'fromBucket': bucket,
-                'toCluster': name
-            }
-            if self.settings.filter_expression:
-                params['filterExpression'] = self.settings.filter_expression
-            self.rest.start_replication(m1, params)
-
-    def enable_xdcr(self):
+    def add_remote_cluster(self):
         m1, m2 = self.cluster_spec.masters
-        self._start_replication(m1, m2)
-        self._start_replication(m2, m1)
+        certificate = self.xdcr_settings.ssl_mode == 'data' and self.rest.get_certificate(m2)
+        self.rest.add_remote_cluster(m1, m2, self.CLUSTER_NAME, certificate)
+
+    def replication_params(self, from_bucket: str, to_bucket: str):
+        params = {
+            'replicationType': 'continuous',
+            'fromBucket': from_bucket,
+            'toBucket': to_bucket,
+            'toCluster': self.CLUSTER_NAME,
+        }
+        if self.xdcr_settings.filter_expression:
+            params.update({
+                'filterExpression': self.xdcr_settings.filter_expression,
+            })
+        return params
+
+    def create_replication(self):
+        for bucket in self.test_config.buckets:
+            params = self.replication_params(from_bucket=bucket,
+                                             to_bucket=bucket)
+            self.rest.create_replication(self.master_node, params)
 
     def monitor_replication(self):
         for target in self.target_iterator:
@@ -53,7 +50,7 @@ class XdcrTest(PerfTest):
         super().sleep()
 
     def configure_wan(self):
-        if self.settings.wan_delay:
+        if self.xdcr_settings.wan_delay:
             hostnames = self.cluster_spec.servers
             src_list = [
                 hostname for hostname in hostnames[len(hostnames) // 2:]
@@ -61,7 +58,7 @@ class XdcrTest(PerfTest):
             dest_list = [
                 hostname for hostname in hostnames[:len(hostnames) // 2]
             ]
-            self.remote.enable_wan(self.settings.wan_delay)
+            self.remote.enable_wan(self.xdcr_settings.wan_delay)
             self.remote.filter_wan(src_list, dest_list)
 
     def _report_kpi(self, *args):
@@ -78,7 +75,8 @@ class XdcrTest(PerfTest):
         self.load()
         self.wait_for_persistence()
 
-        self.enable_xdcr()
+        self.add_remote_cluster()
+        self.create_replication()
         self.monitor_replication()
         self.wait_for_persistence()
 
@@ -132,10 +130,6 @@ class UniDirXdcrTest(XdcrTest):
                                                 prefix='symmetric')
         super().load(target_iterator=src_target_iterator)
 
-    def enable_xdcr(self):
-        m1, m2 = self.cluster_spec.masters
-        self._start_replication(m1, m2)
-
 
 class XdcrInitTest(XdcrTest):
 
@@ -149,7 +143,8 @@ class XdcrInitTest(XdcrTest):
     @with_stats
     @timeit
     def init_xdcr(self):
-        self.enable_xdcr()
+        self.add_remote_cluster()
+        self.create_replication()
         self.monitor_replication()
 
     def _report_kpi(self, time_elapsed):
@@ -168,10 +163,6 @@ class XdcrInitTest(XdcrTest):
 
 
 class UniDirXdcrInitTest(XdcrInitTest):
-
-    def enable_xdcr(self):
-        m1, m2 = self.cluster_spec.masters
-        self._start_replication(m1, m2)
 
     def load(self, *args):
         src_target_iterator = SrcTargetIterator(self.cluster_spec,

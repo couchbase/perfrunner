@@ -1,5 +1,5 @@
 ---
-- hosts: kv:index:n1ql
+- hosts: kv:index:n1ql:analytics
   tasks:
   - name: upgrading packages on the system
     yum: state=latest name=epel-release
@@ -27,7 +27,7 @@
       - vim
       - wget
 
-- hosts: kv:index:n1ql
+- hosts: kv:index:n1ql:analytics
   tasks:
   - name: creating new "couchbase" group
     group: name=couchbase

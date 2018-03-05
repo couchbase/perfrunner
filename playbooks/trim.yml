@@ -3,6 +3,7 @@
   vars:
     data_dir: /data
     disk: /dev/sdb1
+    opts: ""
   tasks:
   - name: umounting data parition
     mount:
@@ -15,6 +16,7 @@
     filesystem:
       fstype: "{{ fstype | default('ext4') }}"
       dev: "{{ disk }}"
+      opts: "{{ opts }}"
       force: yes
 
   - name: mounting data parition

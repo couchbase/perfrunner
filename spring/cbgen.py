@@ -1,6 +1,8 @@
+from collections import defaultdict
 from random import choice
-from threading import Thread
+from threading import Thread, Timer
 from time import sleep, time
+from typing import Callable
 
 import requests
 from couchbase import experimental, subdocument
@@ -14,12 +16,57 @@ from logger import logger
 experimental.enable()
 
 
+class ErrorTracker:
+
+    MSG = 'Function: {}, error: {}'
+
+    MSG_REPEATED = 'Function: {}, error: {}, repeated {} times'
+
+    QUIET_PERIOD = 10  # 10 seconds
+
+    def __init__(self):
+        self.errors = defaultdict(int)
+
+    def track(self, method: str, exc: CouchbaseError):
+        if type(exc) not in self.errors:
+            self.warn(method, exc)  # Always warn upon the first occurrence
+            self.check_later(method, exc)
+        self.incr(exc)
+
+    def incr(self, exc: CouchbaseError):
+        self.errors[type(exc)] += 1
+
+    def reset(self, exc: CouchbaseError):
+        self.errors[type(exc)] = 0
+
+    def check_later(self, method: str, exc: CouchbaseError):
+        Timer(self.QUIET_PERIOD, self.maybe_warn, args=(method, exc)).start()
+
+    def warn(self, method: str, exc: CouchbaseError, count: int = 0):
+        if count:
+            logger.warn(self.MSG_REPEATED.format(method, exc, count))
+        else:
+            logger.warn(self.MSG.format(method, exc))
+
+    def maybe_warn(self, method: str, exc: CouchbaseError):
+        count = self.errors[type(exc)]
+        if count > 1:
+            self.reset(exc)
+            self.warn(method, exc, count)
+            self.check_later(method, exc)
+        else:  # Not repeated, hence stop tracking it
+            self.errors.pop(type(exc))
+
+
+error_tracker = ErrorTracker()
+
+
 @decorator
-def quiet(method, *args, **kwargs):
+def quiet(method: Callable, *args, **kwargs):
     try:
         return method(*args, **kwargs)
     except CouchbaseError as e:
-        logger.warn('Function: {}, error: {}'.format(method.__name__, e))
+        error_tracker.track(method.__name__, e)
 
 
 @decorator

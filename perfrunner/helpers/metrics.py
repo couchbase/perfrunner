@@ -730,6 +730,13 @@ class MetricHelper:
 
         return max_consumer_rss, max_producer_rss
 
+    def avg_ingestion_rate(self, num_items: int, time_elapsed: float) -> Metric:
+        metric_info = self._metric_info()
+
+        rate = round(num_items / time_elapsed)
+
+        return rate, self._snapshots, metric_info
+
 
 class DailyMetricHelper(MetricHelper):
 

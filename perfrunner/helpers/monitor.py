@@ -116,7 +116,7 @@ class Monitor(RestHelper):
         self._wait_for_empty_queues(host, bucket, self.XDCR_QUEUES,
                                     self.get_xdcr_stats)
 
-    def _get_num_items(self, host: str, bucket: str) -> bool:
+    def _get_num_items(self, host: str, bucket: str) -> int:
         stats = self.get_bucket_stats(host=host, bucket=bucket)
         curr_items = stats['op']['samples'].get('curr_items')
         if curr_items:
@@ -418,7 +418,7 @@ class Monitor(RestHelper):
             num_items += stats[stats_key]
         return num_items
 
-    def monitor_data_synced(self, data_node: str, bucket: str):
+    def monitor_data_synced(self, data_node: str, bucket: str) -> int:
         logger.info('Waiting for data to be synced from {}'.format(data_node))
 
         num_items = self._get_num_items(data_node, bucket)
@@ -431,6 +431,8 @@ class Monitor(RestHelper):
             logger.info('Analytics has {:,} docs (target is {:,})'.format(
                 num_analytics_items, num_items))
             time.sleep(self.POLLING_INTERVAL_ANALYTICS)
+
+        return num_items
 
     def wait_for_timer_event(self, node: str, function: str, event="DOC_TIMER_EVENTS"):
         logger.info('Waiting for timer events to start processing: {} '.format(function))

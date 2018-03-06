@@ -12,6 +12,7 @@ class BigFunTest(PerfTest):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.num_items = 0
         self.analytics_node = self.cluster_spec.servers_by_role('cbas')[0]
 
     def create_bucket(self, bucket: str):
@@ -52,8 +53,8 @@ class BigFunTest(PerfTest):
             self.create_index()
             self.connect_bucket(target.bucket)
 
-            self.monitor.monitor_data_synced(target.node,
-                                             target.bucket)
+            self.num_items += self.monitor.monitor_data_synced(target.node,
+                                                               target.bucket)
 
     def access(self, *args, **kwargs) -> Iterator:
         analytics_nodes = self.rest.get_active_nodes_by_role(self.master_node, 'cbas')
@@ -71,7 +72,7 @@ class BigFunSyncTest(BigFunTest):
 
     def _report_kpi(self, sync_time: int):
         self.reporter.post(
-            *self.metrics.elapsed_time(sync_time)
+            *self.metrics.avg_ingestion_rate(self.num_items, sync_time)
         )
 
     @with_stats

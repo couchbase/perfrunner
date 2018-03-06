@@ -6,7 +6,7 @@ use_workers = 0
 component = analytics
 category = sync
 sub_category = BigFUN 10M
-title = Initial sync time (min), 2 nodes, BigFUN 10M users (160M docs), 8 IO devices, 3 indexes
+title = Avg. ingestion rate (items/sec), 2 nodes, BigFUN 10M users (160M docs), 8 IO devices per node, 3 indexes
 
 [cluster]
 mem_quota = 51200

@@ -37,7 +37,7 @@ workers = 160
 functions = perf-test1:tests/eventing/code/timer_n1ql.js,perf-test2:tests/eventing/code/timer_n1ql.js,perf-test3:tests/eventing/code/timer_n1ql.js,perf-test4:tests/eventing/code/timer_n1ql.js,perf-test5:tests/eventing/code/timer_n1ql.js
 worker_count = 16
 cpp_worker_thread_count = 10
-timer_timeout = 2400
+timer_timeout = 3600
 
 [access]
 time = 360

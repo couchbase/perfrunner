@@ -101,6 +101,18 @@ class EventingTest(PerfTest):
                 on_update_success += stat["execution_stats"]["on_update_success"]
         return on_update_success
 
+    def get_doc_timer_responses(self):
+        doc_timer_responses = 0
+        for node in self.eventing_nodes:
+            stats = self.rest.get_eventing_stats(node=node)
+            for stat in stats:
+                logger.info("Event processing stats for {node}: {stats}"
+                            .format(node=node,
+                                    stats=pretty_dict(stat["event_processing_stats"])))
+                doc_timer_responses += \
+                    stat["event_processing_stats"]["DOC_TIMER_RESPONSES_RECEIVED"]
+        return doc_timer_responses
+
     def get_timer_events(self, event_name: str, function_name: str):
         timer_events = 0
         for node in self.eventing_nodes:
@@ -207,6 +219,16 @@ class FunctionsTimeTest(EventingTest):
 class FunctionsThroughputTest(EventingTest):
     def _report_kpi(self, time_elapsed):
         events_successfully_processed = self.get_on_update_success()
+        self.reporter.post(
+            *self.metrics.function_throughput(time=time_elapsed,
+                                              event_name=None,
+                                              events_processed=events_successfully_processed)
+        )
+
+
+class CreateDocTimerThroughputTest(EventingTest):
+    def _report_kpi(self, time_elapsed):
+        events_successfully_processed = self.get_doc_timer_responses()
         self.reporter.post(
             *self.metrics.function_throughput(time=time_elapsed,
                                               event_name=None,

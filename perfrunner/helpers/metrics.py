@@ -49,6 +49,10 @@ class MetricHelper:
         return self.test_config.showfast.title
 
     @property
+    def _order_by(self) -> str:
+        return self.test_config.showfast.order_by
+
+    @property
     def _snapshots(self) -> List[str]:
         return self.test.cbmonitor_snapshots
 
@@ -59,11 +63,11 @@ class MetricHelper:
     def _metric_info(self,
                      metric_id: str = None,
                      title: str = None,
-                     order_by: str = '') -> Dict[str, str]:
+                     order_by: str = None) -> Dict[str, str]:
         return {
             'id': metric_id or self.test_config.name,
             'title': title or self._title,
-            'orderBy': order_by,
+            'orderBy': order_by or self._order_by,
         }
 
     def ycsb_queries(self, value: float, name: str, title: str) -> Metric:
@@ -110,55 +114,43 @@ class MetricHelper:
 
         return throughput, self._snapshots, metric_info
 
-    def fts_index(self, elapsed_time: float, order_by: str) -> Metric:
+    def fts_index(self, elapsed_time: float) -> Metric:
         metric_id = self.test_config.name
         title = 'Index build time(sec), {}'.format(self._title)
-        metric_info = self._metric_info(metric_id, title, order_by)
+        metric_info = self._metric_info(metric_id, title)
 
         index_time = round(elapsed_time, 1)
 
         return index_time, self._snapshots, metric_info
 
-    def fts_index_size(self, index_size_raw: int, order_by: str) -> Metric:
+    def fts_index_size(self, index_size_raw: int) -> Metric:
         metric_id = "{}_indexsize".format(self.test_config.name)
         title = 'Index size (MB), {}'.format(self._title)
-        metric_info = self._metric_info(metric_id, title, order_by)
+        metric_info = self._metric_info(metric_id, title)
 
         index_size_mb = int(index_size_raw / (1024 ** 2))
 
         return index_size_mb, self._snapshots, metric_info
 
-    def fts_rebalance_time(self,
-                           reb_time: float,
-                           order_by: str,
-                           name: str = 'FTS') -> Metric:
-        metric_id = "{}_reb".format(self.test_config.name)
-        title = 'Rebalance time (min), {}, {}'.format(self._title, name)
-        metric_info = self._metric_info(metric_id, title, order_by)
-
-        reb_time = s2m(reb_time)
-
-        return reb_time, self._snapshots, metric_info
-
-    def jts_throughput(self, order_by) -> Metric:
+    def jts_throughput(self) -> Metric:
         metric_id = '{}_{}'.format(self.test_config.name, "jts_throughput")
         metric_id = metric_id.replace('.', '')
         title = "Average Throughput (q/sec), {}".format(self._title)
-        metric_info = self._metric_info(metric_id, title, order_by)
+        metric_info = self._metric_info(metric_id, title)
         timings = self._jts_metric(collector="jts_stats", metric="jts_throughput")
         thr = round(np.average(timings), 2)
         if thr > 100:
             thr = round(thr)
         return thr, self._snapshots, metric_info
 
-    def jts_latency(self, order_by, percentile=50) -> Metric:
+    def jts_latency(self, percentile=50) -> Metric:
         prefix = "Average latency (ms)"
         if percentile != 50:
             prefix = "{}th percentile latency (ms)".format(percentile)
         metric_id = '{}_{}'.format(self.test_config.name, "jts_latency")
         metric_id = metric_id.replace('.', '')
         title = "{}, {}".format(prefix, self._title)
-        metric_info = self._metric_info(metric_id, title, order_by)
+        metric_info = self._metric_info(metric_id, title)
         timings = self._jts_metric(collector="jts_stats", metric="jts_latency")
         lat = round(np.percentile(timings, percentile), 2)
         if lat > 100:
@@ -175,9 +167,7 @@ class MetricHelper:
         return timings
 
     def max_ops(self) -> Metric:
-        metric_info = self._metric_info(
-            order_by=self.test_config.showfast.order_by,
-        )
+        metric_info = self._metric_info()
         throughput = self._max_ops()
 
         return throughput, self._snapshots, metric_info
@@ -220,9 +210,7 @@ class MetricHelper:
         return round(xdcr_lag, 1), self._snapshots, metric_info
 
     def avg_replication_rate(self, time_elapsed: float) -> Metric:
-        metric_info = self._metric_info(
-            order_by=self.test_config.showfast.order_by,
-        )
+        metric_info = self._metric_info()
 
         rate = self._avg_replication_rate(time_elapsed)
 
@@ -784,7 +772,7 @@ class DailyMetricHelper(MetricHelper):
             throughput, \
             self._snapshots
 
-    def jts_throughput(self, order_by) -> DailyMetric:
+    def jts_throughput(self) -> DailyMetric:
         timings = self._jts_metric(collector="jts_stats", metric="jts_throughput")
         throughput = round(np.average(timings), 2)
         if throughput > 100:

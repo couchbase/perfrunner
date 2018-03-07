@@ -1,0 +1,30 @@
+[test_case]
+test = perfrunner.tests.analytics.BigFunRebalanceTest
+use_workers = 0
+
+[showfast]
+component = analytics
+category = rebalance
+sub_category = BigFUN 20M
+title = Rebalance-in (min), 3 -> 4 nodes, BigFUN 20M users (320M docs), 8 IO devices per node
+
+[cluster]
+mem_quota = 20480
+analytics_mem_quota = 20480
+initial_nodes = 5
+num_buckets = 1
+
+[analytics]
+num_io_devices = 4
+
+[bucket]
+eviction_policy = fullEviction
+
+[restore]
+backup_storage = /backups
+backup_repo = bigfun20M
+
+[rebalance]
+nodes_after = 6
+start_after = 0
+stop_after = 0

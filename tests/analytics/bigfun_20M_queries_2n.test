@@ -8,6 +8,9 @@ category = latency
 sub_category = BigFUN 20M
 title = 2 nodes, BigFUN 20M users (320M docs), 8 IO devices per node
 
+[stats]
+server_processes = java
+
 [cluster]
 mem_quota = 20480
 analytics_mem_quota = 20480

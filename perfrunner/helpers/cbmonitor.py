@@ -250,6 +250,9 @@ class CbAgent:
             partitions['server']['index'] = self.test.cluster_spec.index_path
         elif self.test.test_config.showfast.component == 'tools':
             partitions['client']['tools'] = self.test.cluster_spec.backup
+        elif self.test.test_config.showfast.component == 'analytics':
+            for i, path in enumerate(self.test.cluster_spec.analytics_paths):
+                partitions['server']['analytics{}'.format(i)] = path
 
         for cluster_id, master_node in self.cluster_map.items():
             settings = copy(self.settings)

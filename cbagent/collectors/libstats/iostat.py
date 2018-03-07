@@ -1,3 +1,5 @@
+from typing import Dict, Union
+
 from cbagent.collectors.libstats.remotestats import RemoteStats, parallel_task
 
 
@@ -13,18 +15,17 @@ class IOStat(RemoteStats):
         ("util", "%util", 1),
     )
 
-    def get_device_name(self, partition):
-        for path in (partition, '/'):
-            stdout = self.run("df '{}'| head -2 | tail -1".format(path),
-                              warn_only=True, quiet=True)
-            if not stdout.return_code:
-                name = stdout.split()[0]
-                if name.startswith('/dev/mapper/'):
-                    return name.split('/dev/mapper/')[1]
-                else:
-                    return name
+    def get_device_name(self, path: str) -> Union[None, str]:
+        stdout = self.run("df '{}' | head -2 | tail -1".format(path),
+                          quiet=True)
+        if not stdout.return_code:
+            name = stdout.split()[0]
+            if name.startswith('/dev/mapper/'):  # LVM
+                return name.split('/dev/mapper/')[1]
+            else:
+                return name
 
-    def get_iostat(self, device):
+    def get_iostat(self, device: str) -> Dict[str, str]:
         stdout = self.run(
             "iostat -dkxyN 1 1 {} | grep -v '^$' | tail -n 2".format(device)
         )
@@ -43,15 +44,16 @@ class IOStat(RemoteStats):
     def get_client_samples(self, partitions: dict) -> dict:
         return self.get_samples(partitions['client'])
 
-    def get_samples(self, partitions: dict) -> dict:
+    def get_samples(self, partitions: Dict[str, str]) -> Dict[str, float]:
         samples = {}
 
-        for purpose, partition in partitions.items():
-            device = self.get_device_name(partition)
-            data = self.get_iostat(device)
-            for shorthand, metric, multiplier in self.METRICS:
-                key = "{}_{}".format(purpose, shorthand)
-                samples[key] = float(data[metric]) * multiplier
+        for purpose, path in partitions.items():
+            device = self.get_device_name(path)
+            if device is not None:
+                stats = self.get_iostat(device)
+                for metric, column, multiplier in self.METRICS:
+                    key = "{}_{}".format(purpose, metric)
+                    samples[key] = float(stats[column]) * multiplier
 
         return samples
 
@@ -82,9 +84,10 @@ class DiskStats(IOStat):
 
         for purpose, partition in partitions.items():
             device = self.get_device_name(partition)
-            bytes_read, bytes_written = self.get_disk_stats(device)
+            if device is not None:
+                bytes_read, bytes_written = self.get_disk_stats(device)
 
-            samples[purpose + '_bytes_read'] = bytes_read
-            samples[purpose + '_bytes_written'] = bytes_written
+                samples[purpose + '_bytes_read'] = bytes_read
+                samples[purpose + '_bytes_written'] = bytes_written
 
         return samples

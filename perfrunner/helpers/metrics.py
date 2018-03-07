@@ -707,7 +707,7 @@ class MetricHelper:
                                                             query['description'],
                                                             self._title)
 
-        order_by = '{:05d}'.format(int(query['name'][1:]))
+        order_by = '{:05d}'.format(int(query['name'][2:]))
 
         metric_info = self._metric_info(metric_id,
                                         title,

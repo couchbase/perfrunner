@@ -17,6 +17,7 @@ setup(
             'spring = spring.__main__:main',
             'templater = perfrunner.utils.templater:main',
             'trigger = perfrunner.utils.trigger:main',
+            'verify_logs = perfrunner.utils.verify_logs:main',
         ],
     },
     ext_modules=[

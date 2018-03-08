@@ -5,6 +5,8 @@ from fabric.api import env, hide, parallel, run, settings
 from fabric.tasks import execute
 
 env.shell = '/bin/bash -l -c -o pipefail'
+env.keepalive = 60
+env.timeout = 60
 
 
 def parallel_task(server_side=True):

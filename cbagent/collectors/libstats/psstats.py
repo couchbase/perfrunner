@@ -24,7 +24,7 @@ class PSStats(RemoteStats):
     def get_samples(self, process):
         samples = {}
 
-        stdout = self.run(self.PS_CMD.format(process))
+        stdout = self.run(self.PS_CMD.format(process), quiet=True)
         if stdout:
             for i, value in enumerate(stdout.split()[1:1 + len(self.METRICS)]):
                 metric, multiplier = self.METRICS[i]
@@ -34,7 +34,7 @@ class PSStats(RemoteStats):
         else:
             return samples
 
-        stdout = self.run(self.TOP_CMD.format(pid))
+        stdout = self.run(self.TOP_CMD.format(pid), quiet=True)
         if stdout:
             title = "{}_cpu".format(process)
             samples[title] = float(stdout.split()[8])

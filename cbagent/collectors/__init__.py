@@ -1,6 +1,7 @@
 from cbagent.collectors.collector import Collector
 
 from cbagent.collectors.active_tasks import ActiveTasks
+from cbagent.collectors.analytics import AnalyticsStats
 from cbagent.collectors.eventing_stats import (
     EventingConsumerStats,
     EventingPerNodeStats,
@@ -11,7 +12,6 @@ from cbagent.collectors.fts_stats import (
     ElasticStats,
 )
 from cbagent.collectors.jts_stats import JTSCollector
-
 from cbagent.collectors.latency import Latency, KVLatency, QueryLatency
 from cbagent.collectors.observe import (
     DurabilityLatency,

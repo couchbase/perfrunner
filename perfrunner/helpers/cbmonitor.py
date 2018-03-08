@@ -11,6 +11,7 @@ from cbagent.collectors import (
     IO,
     PS,
     ActiveTasks,
+    AnalyticsStats,
     Disk,
     DurabilityLatency,
     ElasticStats,
@@ -135,14 +136,15 @@ class CbAgent:
         self.test.cbmonitor_clusters = list(self.cluster_map.keys())
 
     def add_collectors(self,
+                       analytics=False,
                        disk=False,
                        durability=False,
                        elastic_stats=False,
                        eventing_stats=False,
                        fts_stats=False,
-                       jts_stats=False,
                        index_latency=False,
                        iostat=True,
+                       jts_stats=False,
                        latency=False,
                        memory=True,
                        n1ql_latency=False,
@@ -211,6 +213,7 @@ class CbAgent:
             self.add_collector(ElasticStats, self.test)
         if jts_stats:
             self.add_collector(JTSCollector, self.test)
+
         if secondary_debugstats:
             self.add_collector(SecondaryDebugStats)
         if secondary_debugstats_bucket:
@@ -232,6 +235,9 @@ class CbAgent:
             self.add_xdcr_lag()
         if xdcr_stats:
             self.add_collector(XdcrStats)
+
+        if analytics:
+            self.add_collector(AnalyticsStats, self.test.analytics_nodes)
 
     def add_collector(self, cls, *args):
         for cluster_id, master_node in self.cluster_map.items():

@@ -9,17 +9,21 @@ from perfrunner.workloads.bigfun import bigfun
 
 class BigFunTest(PerfTest):
 
+    COLLECTORS = {'analytics': True}
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.num_items = 0
-        self.analytics_node = self.cluster_spec.servers_by_role('cbas')[0]
+
+        self.analytics_nodes = self.rest.get_active_nodes_by_role(self.master_node,
+                                                                  'cbas')
 
     def create_bucket(self, bucket: str):
         logger.info('Creating a new bucket: {}'.format(bucket))
         statement = 'CREATE BUCKET `{bucket}` WITH {{"name": "{bucket}"}};'\
             .format(bucket=bucket)
-        self.rest.exec_analytics_statement(self.analytics_node, statement)
+        self.rest.exec_analytics_statement(self.analytics_nodes[0], statement)
 
     def create_datasets(self, bucket: str):
         logger.info('Creating datasets')
@@ -30,7 +34,8 @@ class BigFunTest(PerfTest):
         ):
             statement = "CREATE SHADOW DATASET `{}` ON `{}` WHERE `{}` IS NOT UNKNOWN;"\
                 .format(dataset, bucket, key)
-            self.rest.exec_analytics_statement(self.analytics_node, statement)
+            self.rest.exec_analytics_statement(self.analytics_nodes[0],
+                                               statement)
 
     def create_index(self):
         logger.info('Creating indexes')
@@ -39,12 +44,14 @@ class BigFunTest(PerfTest):
             "CREATE INDEX authorIdIdx ON `GleambookMessages`(author_id: string);",
             "CREATE INDEX sndTimeIdx  ON `ChirpMessages`(send_time: string);",
         ):
-            self.rest.exec_analytics_statement(self.analytics_node, statement)
+            self.rest.exec_analytics_statement(self.analytics_nodes[0],
+                                               statement)
 
     def connect_bucket(self, bucket: str):
         logger.info('Connecting the bucket: {}'.format(bucket))
         statement = 'CONNECT BUCKET `{}`;'.format(bucket)
-        self.rest.exec_analytics_statement(self.analytics_node, statement)
+        self.rest.exec_analytics_statement(self.analytics_nodes[0],
+                                           statement)
 
     def sync(self):
         for target in self.target_iterator:
@@ -57,9 +64,8 @@ class BigFunTest(PerfTest):
                                                                target.bucket)
 
     def access(self, *args, **kwargs) -> Iterator:
-        analytics_nodes = self.rest.get_active_nodes_by_role(self.master_node, 'cbas')
         return bigfun(self.rest,
-                      nodes=analytics_nodes,
+                      nodes=self.analytics_nodes,
                       concurrency=self.test_config.access_settings.workers,
                       num_requests=int(self.test_config.access_settings.ops))
 

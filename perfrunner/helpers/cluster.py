@@ -33,9 +33,8 @@ class ClusterManager:
             self.rest.set_data_path(server, self.cluster_spec.data_path)
 
     def set_index_path(self):
-        if self.cluster_spec.index_path:
-            for server in self.cluster_spec.servers:
-                self.rest.set_index_path(server, self.cluster_spec.index_path)
+        for server in self.cluster_spec.servers:
+            self.rest.set_index_path(server, self.cluster_spec.index_path)
 
     def set_analytics_path(self):
         paths = []

@@ -109,7 +109,8 @@ class ClusterSpec(Config):
 
     @property
     def index_path(self) -> str:
-        return self.config.get('storage', 'index', fallback=None)
+        return self.config.get('storage', 'index',
+                               fallback=self.config.get('storage', 'data'))
 
     @property
     def analytics_paths(self) -> List[str]:

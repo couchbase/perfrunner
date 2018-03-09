@@ -1,4 +1,4 @@
-from typing import Iterator
+from typing import List, Tuple
 
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
@@ -63,11 +63,13 @@ class BigFunTest(PerfTest):
             self.num_items += self.monitor.monitor_data_synced(target.node,
                                                                target.bucket)
 
-    def access(self, *args, **kwargs) -> Iterator:
-        return bigfun(self.rest,
-                      nodes=self.analytics_nodes,
-                      concurrency=self.test_config.access_settings.workers,
-                      num_requests=int(self.test_config.access_settings.ops))
+    @with_stats
+    def access(self, *args, **kwargs) -> List[Tuple[dict, int]]:
+        results = bigfun(self.rest,
+                         nodes=self.analytics_nodes,
+                         concurrency=self.test_config.access_settings.workers,
+                         num_requests=int(self.test_config.access_settings.ops))
+        return [(query, latency) for query, latency in results]
 
     def run(self):
         self.restore()
@@ -102,7 +104,7 @@ class BigFunSyncNoIndexTest(BigFunSyncTest):
 
 class BigFunQueryTest(BigFunTest):
 
-    def _report_kpi(self, results: Iterator):
+    def _report_kpi(self, results: List[Tuple[dict, int]]):
         for query, latency in results:
             self.reporter.post(
                 *self.metrics.analytics_latency(query, latency)

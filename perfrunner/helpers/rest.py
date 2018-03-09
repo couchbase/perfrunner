@@ -46,27 +46,27 @@ class RestHelper:
         self.cluster_spec = cluster_spec
 
     @retry
-    def get(self, **kwargs):
+    def get(self, **kwargs) -> requests.Response:
         return requests.get(auth=self.auth, **kwargs)
 
-    def _post(self, **kwargs):
+    def _post(self, **kwargs) -> requests.Response:
         return requests.post(auth=self.auth, **kwargs)
 
     @retry
-    def post(self, **kwargs):
+    def post(self, **kwargs) -> requests.Response:
         return self._post(**kwargs)
 
-    def _put(self, **kwargs):
+    def _put(self, **kwargs) -> requests.Response:
         return requests.put(auth=self.auth, **kwargs)
 
     @retry
-    def put(self, **kwargs):
+    def put(self, **kwargs) -> requests.Response:
         return self._put(**kwargs)
 
-    def _delete(self, **kwargs):
+    def _delete(self, **kwargs) -> requests.Response:
         return requests.delete(auth=self.auth, **kwargs)
 
-    def delete(self, **kwargs):
+    def delete(self, **kwargs) -> requests.Response:
         return self._delete(**kwargs)
 
     def set_data_path(self, host: str, path: str):
@@ -687,13 +687,14 @@ class RestHelper:
         status = self.get(url=api).json()
         return status["state"] == "ACTIVE"
 
-    def exec_analytics_statement(self, analytics_node: str, statement: str):
+    def exec_analytics_statement(self, analytics_node: str,
+                                 statement: str) -> requests.Response:
         api = 'http://{}:{}/analytics/service'.format(analytics_node,
                                                       ANALYTICS_PORT)
         data = {
             'statement': statement
         }
-        self.post(url=api, data=data)
+        return self.post(url=api, data=data)
 
     def get_analytics_stats(self, analytics_node: str):
         api = 'http://{}:9110/analytics/node/stats'.format(analytics_node)

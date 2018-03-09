@@ -6,13 +6,24 @@ from typing import Iterator, List
 
 import numpy
 
+from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.rest import RestHelper
+
+
+def store_metrics(statement: str, metrics: dict):
+    with open('bigfun.log', 'a') as fh:
+        fh.write(pretty_dict({
+            'statement': statement, 'metrics': metrics,
+        }))
+        fh.write('\n')
 
 
 def run_query(rest: RestHelper, node: str, statement: str) -> float:
     t0 = time.time()
-    rest.exec_analytics_statement(node, statement)
-    return time.time() - t0  # Latency in seconds
+    response = rest.exec_analytics_statement(node, statement)
+    latency = time.time() - t0  # Latency in seconds
+    store_metrics(statement, response.json()['metrics'])
+    return latency
 
 
 def run_concurrent_queries(rest: RestHelper,

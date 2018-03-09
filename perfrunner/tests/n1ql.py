@@ -59,20 +59,22 @@ class N1QLTest(PerfTest):
                                                          'index')
         query_node = self.cluster_spec.servers_by_role('n1ql')[0]
 
-        for index in self.test_config.n1ql_settings.indexes:
+        for name, statement in self.test_config.n1ql_settings.indexes.items():
             for index_node in index_nodes:
-                self.build_index(index, query_node, index_node)
+                self.build_index(name, statement, query_node, index_node)
 
-    def build_index(self, index: str, query_node: str, index_node: str = None):
-        index_name, statement = index.split('::')
-
-        statement = statement.format(name=index_name,
+    def build_index(self,
+                    name: str,
+                    statement: str,
+                    query_node: str,
+                    index_node: str):
+        statement = statement.format(name=name,
                                      hash=target_hash(index_node),
                                      index_node=index_node)
 
         self.rest.exec_n1ql_statement(query_node, statement)
 
-        self.monitor.monitor_index_state(host=query_node, index_name=index_name)
+        self.monitor.monitor_index_state(host=query_node, index_name=name)
 
     def run(self):
         self.load()
@@ -228,6 +230,15 @@ class N1QLXattrThroughputTest(N1QLThroughputTest):
 
 
 class TpcDsTest(N1QLTest):
+
+    COLLECTORS = {
+        'iostat': False,
+        'memory': False,
+        'n1ql_latency': True,
+        'n1ql_stats': True,
+        'net': False,
+        'secondary_debugstats_index': True,
+    }
 
     def run(self):
         self.import_data()

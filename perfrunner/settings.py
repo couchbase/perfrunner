@@ -672,9 +672,11 @@ class DCPSettings:
 class N1QLSettings:
 
     def __init__(self, options: dict):
-        self.indexes = []
+        self.indexes = {}
         if 'indexes' in options:
-            self.indexes = options.get('indexes').strip().split('\n')
+            for index in options.get('indexes').strip().split('\n'):
+                name, statement = index.split('::')
+                self.indexes[name] = statement
 
         self.settings = {}
         for option in options:

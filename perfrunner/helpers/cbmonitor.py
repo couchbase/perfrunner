@@ -82,7 +82,6 @@ def new_cbagent_settings(test: PerfTest):
         'interval': test.test_config.stats_settings.interval,
         'lat_interval': test.test_config.stats_settings.lat_interval,
         'buckets': buckets,
-        'indexes': test.test_config.gsi_settings.indexes,
         'hostnames': hostnames,
         'client_processes': test.test_config.stats_settings.client_processes,
         'server_processes': test.test_config.stats_settings.server_processes,
@@ -97,6 +96,10 @@ def new_cbagent_settings(test: PerfTest):
         test.cluster_spec.rest_credentials
 
     if test.cluster_spec.servers_by_role('index'):
+        if test.test_config.gsi_settings.indexes:
+            settings.indexes = test.test_config.gsi_settings.indexes
+        else:
+            settings.indexes = test.test_config.n1ql_settings.indexes
         settings.index_node = test.cluster_spec.servers_by_role('index')[0]
 
     return settings

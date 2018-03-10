@@ -3,10 +3,11 @@ test = perfrunner.tests.analytics.BigFunQueryTest
 use_workers = 0
 
 [showfast]
+title = 4 nodes, BigFUN 20M users (320M docs), SSD
 component = analytics
 category = latency
 sub_category = BigFUN 20M
-title = 4 nodes, BigFUN 20M users (320M docs)
+orderby = _ssd
 
 [stats]
 server_processes = java

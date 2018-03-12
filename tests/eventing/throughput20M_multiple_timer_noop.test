@@ -37,7 +37,7 @@ workers = 160
 functions = perf-test1:tests/eventing/code/timer_noop.js,perf-test2:tests/eventing/code/timer_noop.js,perf-test3:tests/eventing/code/timer_noop.js,perf-test4:tests/eventing/code/timer_noop.js,perf-test5:tests/eventing/code/timer_noop.js
 worker_count = 16
 cpp_worker_thread_count = 2
-timer_timeout = 4500
+timer_timeout = 5400
 
 [access]
 time = 150

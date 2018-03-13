@@ -267,13 +267,25 @@ class ClusterManager:
                                                                      'cbas'):
                 self.monitor.monitor_analytics_node_active(analytics_node)
 
+    def gen_disabled_audit_events(self, master: str) -> List[str]:
+        curr_settings = self.rest.get_audit_settings(master)
+        curr_disabled = {str(event) for event in curr_settings['disabled']}
+        disabled = curr_disabled - self.test_config.audit_settings.extra_events
+        return list(disabled)
+
     def enable_audit(self):
         if not self.is_compatible(min_release='4.0.0') or \
                 self.rest.is_community(self.master_node):
             return
 
+        if not self.test_config.audit_settings.enabled:
+            return
+
         for master in self.cluster_spec.masters:
-            self.rest.enable_audit(master)
+            disabled = []
+            if self.test_config.audit_settings.extra_events:
+                disabled = self.gen_disabled_audit_events(master)
+            self.rest.enable_audit(master, disabled)
 
     def generate_ce_roles(self) -> List[str]:
         return ['admin']

@@ -757,6 +757,18 @@ class AnalyticsSettings:
                                               self.NUM_IO_DEVICES))
 
 
+class AuditSettings:
+
+    ENABLED = True
+
+    EXTRA_EVENTS = ''
+
+    def __init__(self, options: dict):
+        self.enabled = bool(options.get('enabled', self.ENABLED))
+        self.extra_events = set(options.get('extra_events',
+                                            self.EXTRA_EVENTS).split())
+
+
 class YCSBSettings:
 
     REPO = 'git://github.com/couchbaselabs/YCSB.git'
@@ -933,6 +945,11 @@ class TestConfig(Config):
     def analytics_settings(self) -> AnalyticsSettings:
         options = self._get_options_as_dict('analytics')
         return AnalyticsSettings(options)
+
+    @property
+    def audit_settings(self) -> AuditSettings:
+        options = self._get_options_as_dict('audit')
+        return AuditSettings(options)
 
     def get_n1ql_query_definition(self, query_name: str) -> dict:
         return self._get_options_as_dict('n1ql-{}'.format(query_name))

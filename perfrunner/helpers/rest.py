@@ -636,13 +636,21 @@ class RestHelper:
         api = 'http://{}:9102/stats/storage/mm'.format(host)
         return self.get(url=api).text
 
-    def enable_audit(self, host: str):
+    def get_audit_settings(self, host: str) -> dict:
+        logger.info('Getting current audit settings')
+
+        api = 'http://{}:8091/settings/audit'.format(host)
+        return self.get(url=api).json()
+
+    def enable_audit(self, host: str, disabled: List[str]):
         logger.info('Enabling audit')
 
         api = 'http://{}:8091/settings/audit'.format(host)
         data = {
             'auditdEnabled': 'true',
         }
+        if disabled:
+            data['disabled'] = ','.join(disabled)
         self.post(url=api, data=data)
 
     def get_rbac_roles(self, host: str) -> List[dict]:

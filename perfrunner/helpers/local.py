@@ -472,3 +472,17 @@ def generate_ssl_keystore(root_certificate, keystore_file, storepass):
     local("keytool -importcert -file {} -storepass {} -trustcacerts "
           "-noprompt -keystore {} -alias couchbase"
           .format(root_certificate, storepass, keystore_file))
+
+
+def build_java_dcp_client():
+    with lcd('java-dcp-client'):
+        local('perf/build.sh')
+
+
+def run_java_dcp_client(connection_string: str, messages: int, config_file: str):
+    cmd = 'perf/run.sh {} {} {} > java_dcp.log'.format(connection_string,
+                                                       messages,
+                                                       config_file)
+    with lcd('java-dcp-client'):
+        logger.info('Running: {}'.format(cmd))
+        local(cmd)

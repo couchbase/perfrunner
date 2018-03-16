@@ -800,6 +800,21 @@ class YCSBSettings:
         return str(self.__dict__)
 
 
+class JavaDCPSettings:
+
+    REPO = 'git://github.com/couchbase/java-dcp-client.git'
+
+    BRANCH = 'master'
+
+    def __init__(self, options: dict):
+        self.config = options.get('config')
+        self.repo = options.get('repo', self.REPO)
+        self.branch = options.get('branch', self.BRANCH)
+
+    def __str__(self) -> str:
+        return str(self.__dict__)
+
+
 class TestConfig(Config):
 
     @property
@@ -980,6 +995,11 @@ class TestConfig(Config):
     @property
     def fio(self) -> dict:
         return self._get_options_as_dict('fio')
+
+    @property
+    def java_dcp_settings(self) -> JavaDCPSettings:
+        options = self._get_options_as_dict('java_dcp')
+        return JavaDCPSettings(options)
 
 
 class TargetSettings:

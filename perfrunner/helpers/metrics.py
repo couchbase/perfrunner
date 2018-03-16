@@ -1,6 +1,5 @@
 import glob
 import os
-import re
 from typing import Dict, List, Tuple, Union
 
 import numpy as np
@@ -549,19 +548,10 @@ class MetricHelper:
                         throughput += int(float(line.split()[-1]))
         return throughput
 
-    def _parse_dcp_throughput(self, output_file: str = 'dcpstatsfile') -> int:
-        # Get throughput from OUTPUT_FILE for posting to showfast
-        with open(output_file) as fh:
-            output_text = fh.read()
-            groups = re.search(
-                r"Throughput = [^\d]*(\d*).*?",
-                output_text)
-            return int(groups.group(1))
-
-    def dcp_throughput(self) -> Metric:
+    def dcp_throughput(self, time_elapsed: float) -> Metric:
         metric_info = self._metric_info()
 
-        throughput = self._parse_dcp_throughput()
+        throughput = round(self.test_config.load_settings.items / time_elapsed)
 
         return throughput, self._snapshots, metric_info
 
@@ -733,9 +723,11 @@ class DailyMetricHelper(MetricHelper):
             s2m(time_elapsed), \
             self._snapshots
 
-    def dcp_throughput(self) -> DailyMetric:
+    def dcp_throughput(self, time_elapsed: float) -> DailyMetric:
+        throughput = round(self.test_config.load_settings.items / time_elapsed)
+
         return 'Avg Throughput (items/sec)', \
-            self._parse_dcp_throughput(), \
+            throughput, \
             self._snapshots
 
     def rebalance_time(self, rebalance_time: float) -> DailyMetric:

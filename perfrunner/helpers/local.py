@@ -259,18 +259,19 @@ def run_cbc_pillowfight(host, bucket, password,
     local(cmd)
 
 
-def run_dcptest(host, username, password, bucket, num_items, num_connections,
-                output_file):
+def run_dcptest(host, username, password, bucket, num_items, num_connections):
     cmd = './dcptest ' \
         '-kvaddrs {host}:11210 ' \
         '-buckets {bucket} ' \
         '-nummessages {num_items} ' \
         '-numconnections {num_connections} ' \
-        '-outputfile {outputfile} ' \
+        '-outputfile dcpstatsfile ' \
         '{host}:8091 > dcptest.log 2>&1'
 
-    cmd = cmd.format(host=host, bucket=bucket, num_items=num_items,
-                     num_connections=num_connections, outputfile=output_file)
+    cmd = cmd.format(host=host,
+                     bucket=bucket,
+                     num_items=num_items,
+                     num_connections=num_connections)
 
     cbauth = 'http://{user}:{password}@{host}:8091'.format(host=host,
                                                            user=username,

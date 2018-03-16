@@ -51,11 +51,11 @@ class Remote:
             run('git clone -q -b {} {}'.format(branch, repo))
 
     @all_clients
-    def clone_ycsb(self, repo: str, branch: str, worker_home: str):
+    def init_ycsb(self, repo: str, branch: str, worker_home: str):
         self.clone_git_repo(repo=repo, branch=branch, worker_home=worker_home)
 
     @all_clients
-    def clone_jts(self, repo: str, branch: str, worker_home: str, jts_home: str):
+    def init_jts(self, repo: str, branch: str, worker_home: str, jts_home: str):
         self.clone_git_repo(repo, branch, worker_home)
         with cd(worker_home), cd('perfrunner'), cd(jts_home):
             run('mvn install')

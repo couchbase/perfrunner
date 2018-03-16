@@ -17,7 +17,7 @@ class DCPThroughputTest(PerfTest):
         username, password = self.cluster_spec.rest_credentials
 
         for target in self.target_iterator:
-            local.run_dcptest_script(
+            local.run_dcptest(
                 host=target.node,
                 username=username,
                 password=password,

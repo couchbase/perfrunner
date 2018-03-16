@@ -259,8 +259,8 @@ def run_cbc_pillowfight(host, bucket, password,
     local(cmd)
 
 
-def run_dcptest_script(host, username, password, bucket,
-                       num_items, num_connections, output_file):
+def run_dcptest(host, username, password, bucket, num_items, num_connections,
+                output_file):
     cmd = './dcptest ' \
         '-kvaddrs {host}:11210 ' \
         '-buckets {bucket} ' \
@@ -411,21 +411,15 @@ def start_celery_worker(queue):
               '-A perfrunner.helpers.worker -Q {} > worker.log &'.format(queue))
 
 
-def clone_ycsb(repo: str, branch: str):
-    logger.info('Cloning YCSB repository: {} branch: {}'.format(repo, branch))
+def clone_git_repo(repo: str, branch: str):
+    logger.info('Cloning repository: {} branch: {}'.format(repo, branch))
     local('git clone -q -b {} {}'.format(branch, repo))
 
 
-def clone_jts(repo: str, branch: str, worker_home: str, jts_home: str):
-    local('git clone -q -b {} {}'.format(branch, repo))
+def init_jts(repo: str, branch: str, jts_home: str):
+    clone_git_repo(repo, branch)
     with lcd(jts_home):
         local('mvn install')
-
-
-def clone_social_gen(socialgen_repo: str, socialgen_branch: str):
-    logger.info('Cloning socialGen repository: {} branch: {}'.format(socialgen_repo,
-                                                                     socialgen_branch))
-    local('git clone -q -b {} {}'.format(socialgen_branch, socialgen_repo))
 
 
 def generate_bigfun_data(user_docs: int):
@@ -469,7 +463,7 @@ def govendor_fetch(path: str, revision: str, package: str):
     local('govendor fetch {}/{}@{}'.format(path, package, revision))
 
 
-def generate_ssl_keystore(self, root_certificate, keystore_file, storepass):
+def generate_ssl_keystore(root_certificate, keystore_file, storepass):
     logger.info('Generating SSL keystore')
     with quiet():
         local("keytool -delete -keystore {} -alias couchbase -storepass storepass"

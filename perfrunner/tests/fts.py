@@ -20,15 +20,14 @@ class JTSTest(PerfTest):
 
     def download_jts(self):
         if self.worker_manager.is_remote:
-            self.remote.clone_jts(repo=self.access.jts_repo,
-                                  branch=self.access.jts_repo_branch,
-                                  worker_home=self.worker_manager.WORKER_HOME,
-                                  jts_home=self.access.jts_home_dir)
+            self.remote.init_jts(repo=self.access.jts_repo,
+                                 branch=self.access.jts_repo_branch,
+                                 worker_home=self.worker_manager.WORKER_HOME,
+                                 jts_home=self.access.jts_home_dir)
         else:
-            local.clone_jts(repo=self.access.jts_repo,
-                            branch=self.access.jts_repo_branch,
-                            worker_home=self.worker_manager.WORKER_HOME,
-                            jts_home=self.access.jts_home_dir)
+            local.init_jts(repo=self.access.jts_repo,
+                           branch=self.access.jts_repo_branch,
+                           jts_home=self.access.jts_home_dir)
 
     @with_stats
     def run_test(self):

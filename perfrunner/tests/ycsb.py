@@ -11,12 +11,12 @@ class YCSBTest(PerfTest):
 
     def download_ycsb(self):
         if self.worker_manager.is_remote:
-            self.remote.clone_ycsb(repo=self.test_config.ycsb_settings.repo,
-                                   branch=self.test_config.ycsb_settings.branch,
-                                   worker_home=self.worker_manager.WORKER_HOME)
+            self.remote.init_ycsb(repo=self.test_config.ycsb_settings.repo,
+                                  branch=self.test_config.ycsb_settings.branch,
+                                  worker_home=self.worker_manager.WORKER_HOME)
         else:
-            local.clone_ycsb(repo=self.test_config.ycsb_settings.repo,
-                             branch=self.test_config.ycsb_settings.branch)
+            local.clone_git_repo(repo=self.test_config.ycsb_settings.repo,
+                                 branch=self.test_config.ycsb_settings.branch)
 
     def collect_export_files(self):
         if self.worker_manager.is_remote:

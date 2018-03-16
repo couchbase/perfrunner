@@ -10,6 +10,7 @@ from perfrunner.helpers.memcached import MemcachedHelper
 from perfrunner.helpers.metrics import MetricHelper
 from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.monitor import Monitor
+from perfrunner.helpers.profiler import Profiler
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.reporter import ShowFastReporter
 from perfrunner.helpers.rest import RestHelper
@@ -42,6 +43,7 @@ class PerfTest:
         self.monitor = Monitor(cluster_spec, test_config, verbose)
         self.rest = RestHelper(cluster_spec)
         self.remote = RemoteHelper(cluster_spec, verbose)
+        self.profiler = Profiler(cluster_spec, test_config)
 
         self.master_node = next(cluster_spec.masters)
         self.build = self.rest.get_version(self.master_node)

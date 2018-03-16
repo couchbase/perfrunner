@@ -1,5 +1,6 @@
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.misc import target_hash
+from perfrunner.helpers.profiler import with_profiles
 from perfrunner.tests import PerfTest, TargetIterator
 
 
@@ -45,6 +46,7 @@ class N1QLTest(PerfTest):
         super().access_bg(settings=access_settings)
 
     @with_stats
+    @with_profiles
     def access(self, *args):
         self.download_certificate()
 

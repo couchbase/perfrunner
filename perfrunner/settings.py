@@ -969,6 +969,15 @@ class TargetSettings:
         self.bucket = bucket
         self.prefix = prefix
 
+    @property
+    def connection_string(self) -> str:
+        return 'couchbase://{username}:{password}@{host}/{bucket}'.format(
+            username=self.bucket,  # Backward compatibility
+            password=self.password,
+            host=self.node,
+            bucket=self.bucket,
+        )
+
 
 class TargetIterator:
 
@@ -980,7 +989,7 @@ class TargetIterator:
         self.test_config = test_config
         self.prefix = prefix
 
-    def __iter__(self) -> Iterator:
+    def __iter__(self) -> Iterator[TargetSettings]:
         password = self.test_config.bucket.password
         prefix = self.prefix
         for master in self.cluster_spec.masters:

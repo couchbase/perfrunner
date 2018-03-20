@@ -23,12 +23,28 @@
       "default_datetime_parser": "dateTimeOptional",
       "default_field": "_all",
       "default_mapping": {
-        "display_order": "0",
-        "dynamic": true,
-        "enabled": true
+        "dynamic": false,
+        "enabled": true,
+        "properties": {
+          "time": {
+            "dynamic": false,
+            "enabled": true,
+            "fields": [
+              {
+                "analyzer": "",
+                "include_in_all": true,
+                "include_term_vectors": true,
+                "index": true,
+                "name": "time",
+                "store": false,
+                "type": "number"
+              }
+            ]
+          }
+        }
       },
       "default_type": "_default",
-      "index_dynamic": true,
+      "index_dynamic": false,
       "store_dynamic": false,
       "type_field": "type"
     },
@@ -47,4 +63,3 @@
     "feedBufferSizeBytes": 0
   }
 }
-

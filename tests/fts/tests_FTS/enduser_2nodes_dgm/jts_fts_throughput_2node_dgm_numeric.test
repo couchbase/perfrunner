@@ -12,8 +12,8 @@ orderby = q0b00001100
 mem_quota = 51024
 initial_nodes = 3
 num_buckets = 1
-fts_index_mem_quota = 6000
-kernel_mem_limit = 10G
+fts_index_mem_quota = 4000
+kernel_mem_limit = 8G
 
 [jts]
 jts_instances = 4

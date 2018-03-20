@@ -96,16 +96,16 @@ class CBAsyncGen:
         self.client.timeout = self.TIMEOUT
 
     def create(self, key: str, doc: dict):
-        return self.client.set(key, doc)
+        return self.client.upsert(key, doc)
 
     def read(self, key: str):
         return self.client.get(key)
 
     def update(self, key: str, doc: dict):
-        return self.client.set(key, doc)
+        return self.client.upsert(key, doc)
 
     def delete(self, key: str):
-        return self.client.delete(key)
+        return self.client.remove(key)
 
 
 class CBGen(CBAsyncGen):

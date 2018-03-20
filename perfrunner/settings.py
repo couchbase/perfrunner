@@ -653,9 +653,7 @@ class GSISettings:
 
         self.settings = {}
         for option in options:
-            if option.startswith('indexer') or \
-                    option.startswith('projector') or \
-                    option.startswith('queryport.client.settings'):
+            if option.startswith(('indexer', 'projector', 'queryport')):
                 value = options.get(option)
                 if '.' in value:
                     self.settings[option] = maybe_atoi(value, t=float)

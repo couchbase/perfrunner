@@ -2,7 +2,7 @@
 test = perfrunner.tests.n1ql.TpcDsLatencyTest
 
 [showfast]
-title = AG4, Aggregation query, Plasma, not_bounded
+title = AG4, Aggregation query, Plasma, not_bounded, partitioned
 component = n1ql
 category = aggregation
 sub_category = Latency
@@ -28,7 +28,7 @@ doc_gen = tpc_ds
 
 [n1ql]
 indexes =
-    ag4::CREATE INDEX {name} ON `bucket-1`(DATE_PART_STR(sold_date, 'year'), customer.preferred_flag, customer.birth_country, wholesale_cost, sales_price);
+    ag4::CREATE INDEX {name} ON `bucket-1`(DATE_PART_STR(sold_date, 'year'), customer.preferred_flag, customer.birth_country, wholesale_cost, sales_price) PARTITION BY HASH(customer.birth_country);
 
 [access]
 items = 1000000

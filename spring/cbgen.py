@@ -8,6 +8,8 @@ import requests
 from couchbase import experimental, subdocument
 from couchbase.bucket import Bucket
 from couchbase.exceptions import CouchbaseError, TemporaryFailError
+from couchbase.n1ql import N1QLQuery
+from couchbase.views.params import Query
 from decorator import decorator
 from txcouchbase.connection import Connection as TxConnection
 
@@ -70,7 +72,7 @@ def quiet(method: Callable, *args, **kwargs):
 
 
 @decorator
-def backoff(method, *args, **kwargs):
+def backoff(method: Callable, *args, **kwargs):
     while True:
         try:
             return method(*args, **kwargs)
@@ -79,7 +81,7 @@ def backoff(method, *args, **kwargs):
 
 
 @decorator
-def timeit(method, *args, **kwargs) -> int:
+def timeit(method: Callable, *args, **kwargs) -> int:
     t0 = time()
     method(*args, **kwargs)
     return time() - t0
@@ -89,7 +91,7 @@ class CBAsyncGen:
 
     TIMEOUT = 60  # seconds
 
-    def __init__(self, ssl_mode='none', **kwargs):
+    def __init__(self, ssl_mode: str = 'none', **kwargs):
         self.client = TxConnection(quiet=True, **kwargs)
         self.client.timeout = self.TIMEOUT
 
@@ -112,7 +114,7 @@ class CBGen(CBAsyncGen):
 
     TIMEOUT = 10  # seconds
 
-    def __init__(self, ssl_mode='none', n1ql_timeout=None, **kwargs):
+    def __init__(self, ssl_mode: str = 'none', n1ql_timeout: int = None, **kwargs):
         connection_string = 'couchbase://{}/{}?ipv6=allow&password={}'
 
         if ssl_mode == 'data':
@@ -176,7 +178,7 @@ class CBGen(CBAsyncGen):
         super().delete(*args, **kwargs)
 
     @timeit
-    def view_query(self, ddoc, view, query):
+    def view_query(self, ddoc: str, view: str, query: Query):
         node = choice(self.server_nodes).replace('8091', '8092')
         url = 'http://{}/{}/_design/{}/_view/{}?{}'.format(
             node, self.client.bucket, ddoc, view, query.encoded
@@ -185,7 +187,7 @@ class CBGen(CBAsyncGen):
 
     @quiet
     @timeit
-    def n1ql_query(self, query):
+    def n1ql_query(self, query: N1QLQuery):
         tuple(self.client.n1ql_query(query))
 
 

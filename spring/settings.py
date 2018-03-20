@@ -48,7 +48,7 @@ class WorkloadSettings:
 
 class TargetSettings:
 
-    def __init__(self, target_uri, prefix):
+    def __init__(self, target_uri: str, prefix: str):
         params = urlparse(target_uri)
         if not params.hostname or not params.port or not params.path:
             logger.interrupt('Invalid connection URI')

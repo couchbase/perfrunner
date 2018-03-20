@@ -14,7 +14,7 @@ class Reservoir:
 
     MAX_CAPACITY = 10 ** 5
 
-    def __init__(self, num_workers=1):
+    def __init__(self, num_workers: int = 1):
         self.capacity = self.MAX_CAPACITY // num_workers
         self.values = []
         self.count = 0  # Total items to sample
@@ -34,7 +34,7 @@ class Reservoir:
             if r < self.capacity:
                 self.values[r] = (operation, timestamp, value)
 
-    def dump(self, filename):
+    def dump(self, filename: str):
         """Write all measurements to a local CSV file."""
         logger.info('Writing measurements to {}'.format(filename))
         with open(filename, 'w') as fh:

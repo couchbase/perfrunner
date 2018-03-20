@@ -1,4 +1,5 @@
 from itertools import cycle
+from typing import List, Tuple
 
 from couchbase.n1ql import N1QLQuery
 from couchbase.views.params import Query
@@ -25,7 +26,7 @@ class ViewQueryGen:
         'experts_coins_by_name': 9,
     }
 
-    def __init__(self, ddocs, params):
+    def __init__(self, ddocs: dict, params: dict):
         self.params = dict(self.PARAMS, **params)
 
         self.view_sequence = []
@@ -37,7 +38,12 @@ class ViewQueryGen:
         self.view_sequence = cycle(self.view_sequence)
 
     @staticmethod
-    def generate_params(category, city, realm, name, coins, **kwargs):
+    def generate_params(category: str,
+                        city: str,
+                        realm: str,
+                        name: str,
+                        coins: float,
+                        **kwargs) -> dict:
         return {
             'id_by_city': {
                 'key': city,
@@ -78,7 +84,7 @@ class ViewQueryGen:
             },
         }
 
-    def next(self, doc):
+    def next(self, doc: dict) -> Tuple[str, str, Query]:
         ddoc_name, view_name = next(self.view_sequence)
         params = self.generate_params(**doc)[view_name]
         params = dict(self.params, **params)
@@ -132,14 +138,24 @@ class ViewQueryGenByType:
         ),
     }
 
-    def __init__(self, index_type, params):
+    def __init__(self, index_type: str, params: dict):
         self.params = dict(self.PARAMS, **params)
 
         self.view_sequence = cycle(self.VIEWS_PER_TYPE[index_type])
 
     @staticmethod
-    def generate_params(city, county, country, realm, state, full_state, coins,
-                        category, year, achievements, gmtime, **kwargs):
+    def generate_params(city: dict,
+                        county: dict,
+                        country: dict,
+                        realm: dict,
+                        state: dict,
+                        full_state: dict,
+                        coins: dict,
+                        category: str,
+                        year: int,
+                        achievements: List[int],
+                        gmtime: Tuple[int],
+                        **kwargs) -> dict:
         return {
             'name_and_street_by_city': {
                 'key': city['f']['f'],
@@ -203,7 +219,7 @@ class ViewQueryGenByType:
             },
         }
 
-    def next(self, doc):
+    def next(self, doc: dict) -> Tuple[str, str, Query]:
         view_name = next(self.view_sequence)
         params = self.generate_params(**doc)[view_name]
         params = dict(self.params, **params)
@@ -212,7 +228,7 @@ class ViewQueryGenByType:
 
 class N1QLQueryGen:
 
-    def __init__(self, queries):
+    def __init__(self, queries: dict):
         queries = [
             (query['statement'], query['args'], query.get('scan_consistency'), query.get('ad_hoc'))
             for query in queries
@@ -222,7 +238,7 @@ class N1QLQueryGen:
     def generate_query(self):
         return
 
-    def next(self, key, doc):
+    def next(self, key: str, doc: dict) -> N1QLQuery:
         statement, args, scan_consistency, ad_hoc = next(self.queries)
         if 'key' in args:
             args = [key]

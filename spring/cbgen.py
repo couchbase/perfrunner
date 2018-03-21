@@ -89,7 +89,7 @@ class CBAsyncGen:
 
     TIMEOUT = 60  # seconds
 
-    def __init__(self, ssl_mode: str = 'none', **kwargs):
+    def __init__(self, **kwargs):
         self.client = TxConnection(quiet=True, **kwargs)
         self.client.timeout = self.TIMEOUT
 

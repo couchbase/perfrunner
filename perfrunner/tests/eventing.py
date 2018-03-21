@@ -151,7 +151,7 @@ class EventingTest(PerfTest):
 
                 # Validate Failure stats
                 for stat, value in failure_stats.items():
-                    if value != 0:
+                    if value != 0 and stat != "timestamp":
                         raise Exception(
                             '{function}: {node}: {stat} is not zero'.format(
                                 function=function_stats["function_name"], node=node, stat=stat))

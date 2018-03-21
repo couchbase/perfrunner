@@ -3,7 +3,7 @@ test = perfrunner.tests.analytics.BigFunRebalanceTest
 use_workers = 0
 
 [showfast]
-title = Rebalance-in (min), 3 -> 4 nodes, BigFUN 20M users (320M docs)
+title = Rebalance-in (min), 3 -> 4 nodes, BigFUN 20M users (320M docs), SSD
 component = analytics
 category = rebalance
 sub_category = BigFUN 20M

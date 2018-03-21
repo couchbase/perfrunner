@@ -3,7 +3,7 @@ test = perfrunner.tests.analytics.BigFunRebalanceTest
 use_workers = 0
 
 [showfast]
-title = Rebalance-out (min), 4 -> 3 nodes, BigFUN 20M users (320M docs), SSD
+title = Rebalance-out (min), 4 -> 3 nodes, BigFUN 20M users (320M docs), HDD
 component = analytics
 category = rebalance
 sub_category = BigFUN 20M
@@ -18,7 +18,7 @@ initial_nodes = 6
 num_buckets = 1
 
 [analytics]
-num_io_devices = 4
+num_io_devices = 1
 
 [bucket]
 eviction_policy = fullEviction

@@ -2,6 +2,7 @@ import os
 
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import with_stats
+from perfrunner.helpers.profiler import with_profiles
 from perfrunner.helpers.worker import ycsb_data_load_task, ycsb_task
 from perfrunner.tests import PerfTest
 from perfrunner.tests.n1ql import N1QLTest
@@ -27,6 +28,7 @@ class YCSBTest(PerfTest):
         PerfTest.load(self, task=ycsb_data_load_task)
 
     @with_stats
+    @with_profiles
     def access(self, *args, **kwargs):
         PerfTest.access(self, task=ycsb_task)
 

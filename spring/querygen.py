@@ -2,7 +2,7 @@ from itertools import cycle
 from typing import List, Tuple
 
 from couchbase.n1ql import N1QLQuery
-from couchbase.views.params import Query
+from couchbase.views.params import ViewQuery
 from numpy import random
 
 
@@ -84,11 +84,11 @@ class ViewQueryGen:
             },
         }
 
-    def next(self, doc: dict) -> Tuple[str, str, Query]:
+    def next(self, doc: dict) -> Tuple[str, str, ViewQuery]:
         ddoc_name, view_name = next(self.view_sequence)
         params = self.generate_params(**doc)[view_name]
         params = dict(self.params, **params)
-        return ddoc_name, view_name, Query(**params)
+        return ddoc_name, view_name, ViewQuery(**params)
 
 
 class ViewQueryGenByType:
@@ -219,11 +219,11 @@ class ViewQueryGenByType:
             },
         }
 
-    def next(self, doc: dict) -> Tuple[str, str, Query]:
+    def next(self, doc: dict) -> Tuple[str, str, ViewQuery]:
         view_name = next(self.view_sequence)
         params = self.generate_params(**doc)[view_name]
         params = dict(self.params, **params)
-        return self.DDOC_NAME, view_name, Query(**params)
+        return self.DDOC_NAME, view_name, ViewQuery(**params)
 
 
 class N1QLQueryGen:

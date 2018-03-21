@@ -537,8 +537,6 @@ class ViewWorker(Worker):
             self.reservoir.update(operation='query', value=latency)
 
     def run(self, sid, lock, curr_ops, curr_items, deleted_items, *args):
-        self.cb.start_updater()
-
         if self.throughput < float('inf'):
             self.target_time = float(self.BATCH_SIZE) * self.total_workers / \
                 self.throughput

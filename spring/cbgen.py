@@ -1,15 +1,13 @@
 from collections import defaultdict
-from random import choice
-from threading import Thread, Timer
+from threading import Timer
 from time import sleep, time
 from typing import Callable
 
-import requests
 from couchbase import experimental, subdocument
 from couchbase.bucket import Bucket
 from couchbase.exceptions import CouchbaseError, TemporaryFailError
 from couchbase.n1ql import N1QLQuery
-from couchbase.views.params import Query
+from couchbase.views.params import ViewQuery
 from decorator import decorator
 from txcouchbase.connection import Connection as TxConnection
 
@@ -110,8 +108,6 @@ class CBAsyncGen:
 
 class CBGen(CBAsyncGen):
 
-    NODES_UPDATE_INTERVAL = 15
-
     TIMEOUT = 10  # seconds
 
     def __init__(self, ssl_mode: str = 'none', n1ql_timeout: int = None, **kwargs):
@@ -130,31 +126,6 @@ class CBGen(CBAsyncGen):
         self.client.timeout = self.TIMEOUT
         if n1ql_timeout:
             self.client.n1ql_timeout = n1ql_timeout
-
-        self.session = requests.Session()
-        self.session.auth = (kwargs['username'], kwargs['password'])
-        self.server_nodes = ['{}:{}'.format(kwargs['host'],
-                                            kwargs.get('port', 8091))]
-        self.nodes_url = 'http://{}:{}/pools/default/buckets/{}/nodes'.format(
-            kwargs['host'],
-            kwargs.get('port', 8091),
-            kwargs['bucket'],
-        )
-
-    def start_updater(self):
-        self.t = Thread(target=self._get_list_of_servers)
-        self.t.daemon = True
-        self.t.start()
-
-    def _get_list_of_servers(self):
-        while True:
-            try:
-                nodes = self.session.get(self.nodes_url).json()
-            except Exception as e:
-                logger.warn('Failed to get list of servers: {}'.format(e))
-                continue
-            self.server_nodes = [n['hostname'] for n in nodes['servers']]
-            sleep(self.NODES_UPDATE_INTERVAL)
 
     @quiet
     @backoff
@@ -178,12 +149,8 @@ class CBGen(CBAsyncGen):
         super().delete(*args, **kwargs)
 
     @timeit
-    def view_query(self, ddoc: str, view: str, query: Query):
-        node = choice(self.server_nodes).replace('8091', '8092')
-        url = 'http://{}/{}/_design/{}/_view/{}?{}'.format(
-            node, self.client.bucket, ddoc, view, query.encoded
-        )
-        self.session.get(url=url)
+    def view_query(self, ddoc: str, view: str, query: ViewQuery):
+        tuple(self.client.query(ddoc, view, query=query))
 
     @quiet
     @timeit

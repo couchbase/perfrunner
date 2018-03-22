@@ -19,6 +19,7 @@ class FTSCollector(Collector):
         "num_pindexes_actual",
         "num_pindexes_target",
         "num_recs_to_persist",
+        "num_files_on_disk",
         "pct_cpu_gc",
         "reader_get_count",
         "reader_multi_get_count",

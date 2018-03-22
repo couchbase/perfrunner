@@ -19,8 +19,14 @@ class XdcrTest(PerfTest):
 
     def add_remote_cluster(self):
         m1, m2 = self.cluster_spec.masters
-        certificate = self.xdcr_settings.ssl_mode == 'data' and self.rest.get_certificate(m2)
-        self.rest.add_remote_cluster(m1, m2, self.CLUSTER_NAME, certificate)
+        certificate = self.xdcr_settings.demand_encryption and \
+            self.rest.get_certificate(m2)
+        secure_type = self.xdcr_settings.secure_type
+        self.rest.add_remote_cluster(local_host=m1,
+                                     remote_host=m2,
+                                     name=self.CLUSTER_NAME,
+                                     secure_type=secure_type,
+                                     certificate=certificate)
 
     def replication_params(self, from_bucket: str, to_bucket: str):
         params = {

@@ -341,22 +341,28 @@ class RestHelper:
                                                                            bucket)
         return self.get(url=api).json()
 
-    def add_remote_cluster(self, local_host: str, remote_host: str, name: str,
+    def add_remote_cluster(self,
+                           local_host: str,
+                           remote_host: str,
+                           name: str,
+                           secure_type: str,
                            certificate: str):
-        logger.info('Adding remote cluster: {}'.format(remote_host))
+        logger.info('Adding a remote cluster: {}'.format(remote_host))
 
         api = 'http://{}:8091/pools/default/remoteClusters'.format(local_host)
-        data = {
-            'hostname': remote_host,
+        payload = {
             'name': name,
+            'hostname': remote_host,
             'username': self.rest_username,
-            'password': self.rest_password
+            'password': self.rest_password,
         }
+        if secure_type:
+            payload['secureType'] = secure_type
         if certificate:
-            data.update({
-                'demandEncryption': 1, 'certificate': certificate,
-            })
-        self.post(url=api, data=data)
+            payload['demandEncryption'] = 1
+            payload['certificate'] = certificate
+
+        self.post(url=api, data=payload)
 
     def get_remote_clusters(self, host: str) -> List[Dict]:
         logger.info('Getting remote clusters')

@@ -594,14 +594,14 @@ class RestoreSettings:
 
 class XDCRSettings:
 
-    SSL_MODE = 'none'
     WAN_DELAY = 0
 
     def __init__(self, options: dict):
-        self.ssl_mode = options.get('ssl_mode', self.SSL_MODE)
+        self.demand_encryption = options.get('demand_encryption')
+        self.filter_expression = options.get('filter_expression')
+        self.secure_type = options.get('secure_type')
         self.wan_delay = int(options.get('wan_delay',
                                          self.WAN_DELAY))
-        self.filter_expression = options.get('filter_expression')
 
     def __str__(self) -> str:
         return str(self.__dict__)

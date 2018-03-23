@@ -259,6 +259,7 @@ class ClusterManager:
                 'query_insert',
                 'query_select',
                 'query_update',
+                'views_admin',
         ):
             if role in existing_roles:
                 roles.append(role + '[{bucket}]')

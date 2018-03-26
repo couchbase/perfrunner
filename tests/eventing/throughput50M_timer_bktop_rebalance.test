@@ -42,3 +42,4 @@ workers = 100
 functions = perf-test1:tests/eventing/code/timer_bktop.js
 worker_count = 16
 cpp_worker_thread_count = 10
+timer_timeout = 3600

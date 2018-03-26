@@ -549,6 +549,10 @@ class RestHelper:
         response = self.post(url=api, data=data)
         return response.json()
 
+    def explain_n1ql_statement(self, host: str, statement: str):
+        statement = 'EXPLAIN {}'.format(statement)
+        return self.exec_n1ql_statement(host, statement)
+
     def get_query_stats(self, host: str) -> dict:
         logger.info('Getting query engine stats')
 

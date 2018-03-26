@@ -1,5 +1,6 @@
+from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
-from perfrunner.helpers.misc import target_hash
+from perfrunner.helpers.misc import pretty_dict, target_hash
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.tests import PerfTest, TargetIterator
 
@@ -14,6 +15,11 @@ class N1QLTest(PerfTest):
         'net': False,
         'secondary_stats': True,
     }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.query_nodes = self.cluster_spec.servers_by_role('n1ql')
 
     def load(self, *args):
         """Create two data sets with different key prefixes.
@@ -59,30 +65,37 @@ class N1QLTest(PerfTest):
     def build_indexes(self):
         index_nodes = self.rest.get_active_nodes_by_role(self.master_node,
                                                          'index')
-        query_node = self.cluster_spec.servers_by_role('n1ql')[0]
 
         for name, statement in self.test_config.n1ql_settings.indexes.items():
             for index_node in index_nodes:
-                self.build_index(name, statement, query_node, index_node)
+                self.build_index(name, statement, index_node)
 
-    def build_index(self,
-                    name: str,
-                    statement: str,
-                    query_node: str,
-                    index_node: str):
+    def build_index(self, name: str, statement: str, index_node: str):
         statement = statement.format(name=name,
                                      hash=target_hash(index_node),
                                      index_node=index_node)
 
-        self.rest.exec_n1ql_statement(query_node, statement)
+        self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
 
-        self.monitor.monitor_index_state(host=query_node, index_name=name)
+        self.monitor.monitor_index_state(host=self.query_nodes[0],
+                                         index_name=name)
+
+    def store_plans(self):
+        logger.info('Storing query plans')
+
+        for i, query in enumerate(self.test_config.access_settings.n1ql_queries):
+            plan = self.rest.explain_n1ql_statement(self.query_nodes[0],
+                                                    query['statement'])
+            with open('query_plan_{}.json'.format(i), 'w') as fh:
+                fh.write(pretty_dict(plan))
 
     def run(self):
         self.load()
         self.wait_for_persistence()
 
         self.build_indexes()
+
+        self.store_plans()
 
         self.access_bg()
         self.access()
@@ -171,8 +184,7 @@ class N1QLBulkTest(N1QLTest):
     def access(self, *args):
         statement = self.test_config.access_settings.n1ql_queries[0]['statement']
 
-        query_node = self.cluster_spec.servers_by_role('n1ql')[0]
-        self.rest.exec_n1ql_statement(query_node, statement)
+        self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
 
     def _report_kpi(self, time_elapsed):
         self.reporter.post(
@@ -184,6 +196,8 @@ class N1QLBulkTest(N1QLTest):
         self.wait_for_persistence()
 
         self.build_indexes()
+
+        self.store_plans()
 
         time_elapsed = self.access()
 
@@ -225,6 +239,8 @@ class N1QLXattrThroughputTest(N1QLThroughputTest):
 
         self.build_indexes()
 
+        self.store_plans()
+
         self.access_bg()
         self.access()
 
@@ -246,6 +262,8 @@ class TpcDsTest(N1QLTest):
         self.import_data()
 
         self.build_indexes()
+
+        self.store_plans()
 
         self.access()
 

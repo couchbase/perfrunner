@@ -22,7 +22,7 @@ class Profiler:
         'fts':   8094,
         'index': 9102,
         'kv':    9998,  # goxdcr
-        'n1ql':  6060,
+        'n1ql':  8093,
     }
 
     ENDPOINTS = {

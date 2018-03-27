@@ -1,5 +1,6 @@
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.misc import target_hash
+from perfrunner.helpers.profiler import with_profiles
 from perfrunner.settings import TargetSettings
 from perfrunner.tests import PerfTest, TargetIterator
 
@@ -141,6 +142,7 @@ class XdcrInitTest(XdcrTest):
     COLLECTORS = {'xdcr_stats': True}
 
     @with_stats
+    @with_profiles
     @timeit
     def init_xdcr(self):
         self.add_remote_cluster()

@@ -170,7 +170,7 @@ class RestHelper:
     def set_index_settings(self, host: str, settings: dict):
         api = 'http://{}:9102/settings'.format(host)
 
-        curr_settings = self.get(url=api).json()
+        curr_settings = self.get_index_settings(host)
         for option, value in settings.items():
             if option in curr_settings:
                 logger.info('Changing {} to {}'.format(option, value))

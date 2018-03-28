@@ -63,6 +63,7 @@ class Profiler:
         timer = Timer(function=self.profile,
                       interval=self.test_config.profiling_settings.interval,
                       kwargs=kwargs)
+        timer.daemon = True
         timer.start()
 
     def schedule(self):

@@ -267,3 +267,18 @@ class TpcDsLatencyTest(TpcDsTest, N1QLLatencyTest):
 class TpcDsThroughputTest(TpcDsTest, N1QLThroughputTest):
 
     pass
+
+
+class TpcDsIndexTest(TpcDsTest):
+
+    COLLECTORS = {}
+
+    @with_stats
+    @with_profiles
+    def build_indexes(self):
+        super().build_indexes()
+
+    def run(self):
+        self.import_data()
+
+        self.build_indexes()

@@ -27,7 +27,7 @@ doc_gen = tpc_ds
 
 [n1ql]
 indexes =
-    ag8::CREATE INDEX {name} ON `bucket-1`(customer.county, DATE_PART_STR(sold_date, 'year'), DATE_PART_STR(sold_date, 'month'), customer.gender, customer.marital_status, customer.education_status, customer.purchase_estimate, customer.credit_rating, customer.dep_count, customer.dep_employed_count, customer.dep_college_count);
+    CREATE INDEX ag8 ON `bucket-1`(customer.county, DATE_PART_STR(sold_date, 'year'), DATE_PART_STR(sold_date, 'month'), customer.gender, customer.marital_status, customer.education_status, customer.purchase_estimate, customer.credit_rating, customer.dep_count, customer.dep_employed_count, customer.dep_college_count);
 
 [access]
 items = 1000000

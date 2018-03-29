@@ -237,27 +237,13 @@ class Monitor(RestHelper):
 
         logger.info('Indexing completed')
 
-    def monitor_index_state(self, host, index_name):
-        logger.info('Monitoring index state')
+    def monitor_indexing_state(self, host: str):
+        logger.info('Monitoring the state of indexes')
 
-        statement = 'SELECT state FROM system:indexes WHERE name = "{}"'\
-            .format(index_name)
-
-        is_building = True
-        while is_building:
+        statement = 'SELECT state FROM system:indexes WHERE state != "online"'
+        while self.exec_n1ql_statement(host, statement)['results']:
             time.sleep(self.POLLING_INTERVAL)
-
-            response = self.exec_n1ql_statement(host, statement)
-            if response['status'] == 'success':
-                for result in response['results']:
-                    if result['state'] != 'online':
-                        break
-                else:
-                    is_building = False
-            else:
-                logger.error(response['status'])
-
-        logger.info('Index "{}" is online'.format(index_name))
+        logger.info('All indexes are online')
 
     def wait_for_secindex_init_build(self, host, indexes):
         # POLL until initial index build is complete

@@ -27,7 +27,7 @@ doc_gen = tpc_ds
 
 [n1ql]
 indexes =
-    ag6::CREATE INDEX {name} ON `bucket-1`(customer.gender, customer.marital_status, customer.education_status, item.id, quantity, list_price, coupon_amt, sales_price);
+    CREATE INDEX ag6 ON `bucket-1`(customer.gender, customer.marital_status, customer.education_status, item.id, quantity, list_price, coupon_amt, sales_price);
 
 [access]
 items = 1000000

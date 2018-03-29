@@ -29,7 +29,7 @@ inserts_per_workerinstance = 10000000
 
 [n1ql]
 indexes =
-    ix4::CREATE INDEX {name}_{hash} ON `bucket-1`(DISTINCT devices) WITH {{ "nodes": [ "{index_node}:8091" ] }}
+    CREATE INDEX sj ON `bucket-1`(DISTINCT devices) WITH {"num_replica": 3}
 
 [access]
 workload_path = workloads/soe/workloadsj

@@ -539,8 +539,6 @@ class RestHelper:
                 for server in data['vBucketServerMap']['serverList']]
 
     def exec_n1ql_statement(self, host: str, statement: str) -> dict:
-        logger.info('Executing N1QL statement: {}'.format(statement))
-
         api = 'http://{}:8093/query/service'.format(host)
         data = {
             'statement': statement,

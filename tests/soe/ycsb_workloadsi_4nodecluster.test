@@ -29,7 +29,7 @@ inserts_per_workerinstance = 10000000
 
 [n1ql]
 indexes =
-    ix3::CREATE INDEX {name}_{hash} ON `bucket-1`(address.prev_address.zip) WITH {{ "nodes": [ "{index_node}:8091" ] }};
+    CREATE INDEX si ON `bucket-1`(address.prev_address.zip) WITH {"num_replica": 3};
 
 [access]
 workload_path = workloads/soe/workloadsi

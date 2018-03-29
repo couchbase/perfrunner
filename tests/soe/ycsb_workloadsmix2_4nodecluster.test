@@ -29,14 +29,15 @@ inserts_per_workerinstance = 10000000
 
 [n1ql]
 indexes =
-    primary_idx::CREATE PRIMARY INDEX {name}_{hash} ON `bucket-1` WITH {{ "nodes": [ "{index_node}:8091" ] }}
-    ix3::CREATE INDEX {name}_{hash} ON `bucket-1`(address.prev_address.zip) WITH {{ "nodes": [ "{index_node}:8091" ] }};
-    ix4::CREATE INDEX {name}_{hash} ON `bucket-1`(DISTINCT devices) WITH {{ "nodes": [ "{index_node}:8091" ] }};
-    ix5::CREATE INDEX {name}_{hash} ON `bucket-1`(DISTINCT ARRAY (DISTINCT ARRAY (v.country || "." || c) FOR c IN v.cities END) FOR v IN visited_places END) WITH {{ "nodes": [ "{index_node}:8091" ] }};
-    ix6::CREATE INDEX {name}_{hash} ON `bucket-1`(address.zip, order_list) WITH {{ "nodes": [ "{index_node}:8091" ] }};
-    ix7::CREATE INDEX {name}_{hash} ON `bucket-1`(address.zip, month, order_list, sale_price) WITH {{ "nodes": [ "{index_node}:8091" ] }};
-    ix8::CREATE INDEX {name}_{hash} ON `bucket-1`(address.geo_region) WITH {{ "nodes": [ "{index_node}:8091" ] }};
-    ix9::CREATE INDEX {name}_{hash} ON `bucket-1`(address.geo_region, age_group, DATE_PART_STR(dob,'year')) WITH {{ "nodes": [ "{index_node}:8091" ] }};
+    CREATE PRIMARY INDEX primary_idx ON `bucket-1` WITH {"num_replica": 3, "defer_build": true}
+    CREATE INDEX idx1 ON `bucket-1`(address.prev_address.zip) WITH {"num_replica": 3, "defer_build": true};
+    CREATE INDEX idx2 ON `bucket-1`(DISTINCT devices) WITH {"num_replica": 3, "defer_build": true};
+    CREATE INDEX idx3 ON `bucket-1`(DISTINCT ARRAY (DISTINCT ARRAY (v.country || "." || c) FOR c IN v.cities END) FOR v IN visited_places END) WITH {"num_replica": 3, "defer_build": true};
+    CREATE INDEX idx4 ON `bucket-1`(address.zip, order_list) WITH {"num_replica": 3, "defer_build": true};
+    CREATE INDEX idx5 ON `bucket-1`(address.zip, month, order_list, sale_price) WITH {"num_replica": 3, "defer_build": true};
+    CREATE INDEX idx6 ON `bucket-1`(address.geo_region) WITH {"num_replica": 3, "defer_build": true};
+    CREATE INDEX idx7 ON `bucket-1`(address.geo_region, age_group, DATE_PART_STR(dob,'year')) WITH {"num_replica": 3, "defer_build": true};
+    BUILD  INDEX ON `bucket-1`(primary_index, idx1, idx2, idx3, idx4, idx5, idx6, idx7);
 
 [access]
 workload_path = workloads/soe/workloadsmix2

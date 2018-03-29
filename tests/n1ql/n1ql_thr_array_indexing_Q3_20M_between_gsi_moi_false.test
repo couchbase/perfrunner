@@ -29,7 +29,7 @@ doc_gen = array_indexing
 
 [n1ql]
 indexes =
-    by_achievements2::CREATE INDEX {name} ON `bucket-1`(DISTINCT ARRAY i FOR i IN achievements2 END);
+    CREATE INDEX by_achievements2 ON `bucket-1`(DISTINCT ARRAY i FOR i IN achievements2 END);
 
 [access]
 creates = 0

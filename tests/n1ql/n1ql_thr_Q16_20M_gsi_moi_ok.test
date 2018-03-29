@@ -30,7 +30,7 @@ doc_gen = reverse_lookup
 
 [n1ql]
 indexes =
-    idx::CREATE INDEX {name} ON `bucket-1`(email, name, street, city, county, country, `realm`, capped_small, alt_email);
+    CREATE INDEX idx ON `bucket-1`(email, name, street, city, county, country, `realm`, capped_small, alt_email);
 
 [access]
 creates = 0

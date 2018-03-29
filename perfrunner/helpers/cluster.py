@@ -72,7 +72,7 @@ class ClusterManager:
     def set_query_settings(self):
         query_nodes = self.cluster_spec.servers_by_role('n1ql')
         if query_nodes:
-            settings = self.test_config.n1ql_settings.settings
+            settings = self.test_config.n1ql_settings.cbq_settings
             if settings:
                 self.rest.set_query_settings(query_nodes[0], settings)
             settings = self.rest.get_query_settings(query_nodes[0])

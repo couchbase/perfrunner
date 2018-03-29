@@ -30,7 +30,7 @@ doc_gen = reverse_lookup
 
 [n1ql]
 indexes =
-    idx::CREATE INDEX {name} ON `bucket-1`(capped_small, year);
+    CREATE INDEX idx ON `bucket-1`(capped_small, year);
 
 [access]
 creates = 0

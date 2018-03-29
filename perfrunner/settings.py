@@ -1,5 +1,6 @@
 import csv
 import os.path
+import re
 from configparser import ConfigParser, NoOptionError, NoSectionError
 from typing import Dict, Iterator, List
 
@@ -688,17 +689,24 @@ class DCPSettings:
 class N1QLSettings:
 
     def __init__(self, options: dict):
-        self.indexes = {}
-        if 'indexes' in options:
-            for index in options.get('indexes').strip().split('\n'):
-                name, statement = index.split('::')
-                self.indexes[name] = statement
+        self.index_statements = self.split_statements(options.get('indexes'))
 
-        self.settings = {}
-        for option in options:
-            if option != 'indexes':
-                value = options.get(option)
-                self.settings[option] = int(value)
+        self.cbq_settings = {
+            option: maybe_atoi(value)
+            for option, value in options.items() if option != 'indexes'
+        }
+
+    def split_statements(self, statements: str) -> List[str]:
+        if statements:
+            return statements.strip().split('\n')
+        return []
+
+    @property
+    def indexes(self) -> Iterator[str]:
+        for statement in self.index_statements:
+            match = re.search(r'CREATE .*INDEX (.*) ON', statement)
+            if match:
+                yield match.group(1)
 
     def __str__(self) -> str:
         return str(self.__dict__)

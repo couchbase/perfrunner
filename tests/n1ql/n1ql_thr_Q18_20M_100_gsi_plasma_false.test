@@ -30,7 +30,7 @@ doc_gen = reverse_lookup
 
 [n1ql]
 indexes =
-    by_capped_small::CREATE INDEX {name} ON `bucket-1`(capped_small);
+    CREATE INDEX by_capped_small ON `bucket-1`(capped_small);
 
 [access]
 creates = 0

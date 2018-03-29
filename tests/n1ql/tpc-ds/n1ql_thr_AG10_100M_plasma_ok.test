@@ -27,7 +27,7 @@ doc_gen = tpc_ds
 
 [n1ql]
 indexes =
-    ag10::CREATE INDEX {name} ON `bucket-1`(customer.zip, DATE_PART_STR(sold_date, 'year'), DATE_PART_STR(sold_date, 'quarter'), sales_price);
+    CREATE INDEX ag10 ON `bucket-1`(customer.zip, DATE_PART_STR(sold_date, 'year'), DATE_PART_STR(sold_date, 'quarter'), sales_price);
 
 [access]
 items = 1000000

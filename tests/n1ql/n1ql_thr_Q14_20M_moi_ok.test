@@ -29,7 +29,7 @@ doc_gen = profile
 
 [n1ql]
 indexes =
-    tokens_idx::CREATE INDEX {name} ON `bucket-1`(address.zip, DISTINCT ARRAY s FOR s IN TOKENS(address.street) END);
+    CREATE INDEX tokens_idx ON `bucket-1`(address.zip, DISTINCT ARRAY s FOR s IN TOKENS(address.street) END);
 
 [access]
 creates = 0

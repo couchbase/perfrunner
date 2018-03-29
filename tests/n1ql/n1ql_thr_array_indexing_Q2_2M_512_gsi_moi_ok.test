@@ -31,7 +31,7 @@ array_size = 512
 
 [n1ql]
 indexes =
-    by_achievements1::CREATE INDEX {name} ON `bucket-1`(DISTINCT ARRAY i FOR i IN achievements1 END);
+    CREATE INDEX by_achievements1 ON `bucket-1`(DISTINCT ARRAY i FOR i IN achievements1 END);
 
 [access]
 creates = 0

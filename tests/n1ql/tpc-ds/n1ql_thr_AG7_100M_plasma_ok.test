@@ -27,7 +27,7 @@ doc_gen = tpc_ds
 
 [n1ql]
 indexes =
-    ag7::CREATE INDEX {name} ON `bucket-1`(customer.zip, customer.preferred_flag);
+    CREATE INDEX ag7 ON `bucket-1`(customer.zip, customer.preferred_flag);
 
 [access]
 items = 1000000

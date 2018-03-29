@@ -29,7 +29,7 @@ doc_gen = join
 
 [n1ql]
 indexes =
-    by_replies::CREATE INDEX {name} ON `bucket-1`(ALL ARRAY r.`user` FOR r IN replies END, title);
+    CREATE INDEX by_replies ON `bucket-1`(ALL ARRAY r.`user` FOR r IN replies END, title);
 
 [access]
 creates = 0

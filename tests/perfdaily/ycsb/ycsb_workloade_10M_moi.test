@@ -31,7 +31,7 @@ workers = 120
 
 [n1ql]
 indexes =
-    primary_idx::CREATE PRIMARY INDEX {name} ON `bucket-1`;
+    CREATE PRIMARY INDEX primary_idx ON `bucket-1`;
 
 [access]
 workload_path = workloads/workloade

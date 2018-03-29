@@ -29,7 +29,7 @@ inserts_per_workerinstance = 10000000
 
 [n1ql]
 indexes =
-    ix9::CREATE INDEX {name}_{hash} ON `bucket-1`(address.geo_region, age_group, DATE_PART_STR(dob,'year')) WITH {{ "nodes": [ "{index_node}:8091" ] }};
+    CREATE INDEX sh2 ON `bucket-1`(address.geo_region, age_group, DATE_PART_STR(dob,'year')) WITH {"num_replica": 3};
 
 [access]
 workload_path = workloads/soe/workloadsh2

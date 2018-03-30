@@ -22,7 +22,7 @@ class EventingTest(PerfTest):
 
     STAT_REQ_FIELDS = ["event_processing_stats", "events_remaining", "execution_stats",
                        "failure_stats", "function_name", "latency_stats", "lcb_exception_stats",
-                       "planner_stats", "plasma_stats", "vb_distribution_stats"]
+                       "planner_stats", "plasma_stats"]
 
     def __init__(self, *args):
         super().__init__(*args)

@@ -556,6 +556,7 @@ class JTSAccessSettings(PhaseSettings):
         self.test_worker_type = options.get("test_worker_type", "latency")
         self.couchbase_index_name = options.get("couchbase_index_name", "perf_fts_index")
         self.couchbase_index_configfile = options.get("couchbase_index_configfile")
+        self.couchbase_index_type = options.get("couchbase_index_type")
         self.workload_instances = int(self.jts_instances)
         self.time = options.get('test_duration', "600")
         self.warmup_query_workers = options.get("warmup_query_workers", "10")

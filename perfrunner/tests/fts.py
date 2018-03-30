@@ -5,6 +5,7 @@ from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.misc import pretty_dict, read_json
+from perfrunner.helpers.profiler import with_profiles
 from perfrunner.helpers.worker import jts_run_task, jts_warmup_task
 from perfrunner.tests import PerfTest
 
@@ -30,6 +31,7 @@ class JTSTest(PerfTest):
                            jts_home=self.access.jts_home_dir)
 
     @with_stats
+    @with_profiles
     def run_test(self):
         self.run_phase('jts run phase', jts_run_task, self.access, self.target_iterator)
         self._download_logs()
@@ -67,6 +69,8 @@ class FTSTest(JTSTest):
             'name': self.access.couchbase_index_name,
             'sourceName': self.test_config.buckets[0],
         })
+        if self.access.couchbase_index_type:
+            definition["params"]["store"]["indexType"] = self.access.couchbase_index_type
         logger.info('Index definition: {}'.format(pretty_dict(definition)))
         self.rest.create_fts_index(self.fts_master_node,
                                    self.access.couchbase_index_name, definition)

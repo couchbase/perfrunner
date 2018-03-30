@@ -6,6 +6,7 @@ from decorator import decorator
 from sshtunnel import SSHTunnelForwarder
 
 from logger import logger
+from perfrunner.helpers.rest import RestHelper
 from perfrunner.settings import ClusterSpec, TestConfig
 
 
@@ -31,8 +32,11 @@ class Profiler:
     }
 
     def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):
-        self.cluster_spec = cluster_spec
         self.test_config = test_config
+
+        self.rest = RestHelper(cluster_spec)
+
+        self.master_node = next(cluster_spec.masters)
 
         self.ssh_username, self.ssh_password = cluster_spec.ssh_credentials
 
@@ -69,6 +73,7 @@ class Profiler:
     def schedule(self):
         for service in self.test_config.profiling_settings.services:
             logger.info('Scheduling profiling of "{}" services'.format(service))
-            for server in self.cluster_spec.servers_by_role(role=service):
+            for server in self.rest.get_active_nodes_by_role(self.master_node,
+                                                             role=service):
                 for profile in self.test_config.profiling_settings.profiles:
                     self.timer(host=server, service=service, profile=profile)

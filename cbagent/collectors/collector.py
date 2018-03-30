@@ -97,15 +97,6 @@ class Collector:
                 continue
             yield hostname
 
-    def get_indexes(self):
-        pool = self.get_http(path="/indexStatus")
-        for index in pool["indexes"]:
-            if self.indexes and index["index"] not in self.indexes:
-                continue
-            index_name = index["index"]
-            bucket_name = index["bucket"]
-            yield index_name, bucket_name
-
     def _update_metric_metadata(self, metrics, bucket=None, index=None, server=None):
         for metric in metrics:
             metric = metric.replace('/', '_')

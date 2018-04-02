@@ -173,6 +173,20 @@ class Monitor(RestHelper):
                     logger.info('No warmup stats are available, continue polling')
                     time.sleep(self.POLLING_INTERVAL)
 
+    def monitor_compression(self, memcached, host, bucket):
+        logger.info('Monitoring active compression status')
+
+        memcached_port = self.get_memcached_port(host)
+
+        json_docs = -1
+        while json_docs:
+            stats = memcached.get_stats(host, memcached_port, bucket)
+            json_docs = int(stats[b'ep_active_datatype_json'])
+            if json_docs:
+                logger.info('Still uncompressed: {:,} items'.format(json_docs))
+                time.sleep(self.POLLING_INTERVAL)
+        logger.info('All items are compressed')
+
     def monitor_node_health(self, host):
         logger.info('Monitoring node health')
 

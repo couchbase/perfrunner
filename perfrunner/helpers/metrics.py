@@ -715,6 +715,13 @@ class MetricHelper:
 
         return rate, self._snapshots, metric_info
 
+    def compression_throughput(self, time_elapsed: float) -> Metric:
+        metric_info = self._metric_info()
+
+        throughput = round(self.test_config.load_settings.items / time_elapsed)
+
+        return throughput, self._snapshots, metric_info
+
 
 class DailyMetricHelper(MetricHelper):
 

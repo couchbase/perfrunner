@@ -415,7 +415,7 @@ class PillowFightTest(PerfTest):
 
         PerfTest.access(self, task=pillowfight_task)
 
-    def _report_kpi(self):
+    def _report_kpi(self, *args):
         self.reporter.post(
             *self.metrics.max_ops()
         )
@@ -427,6 +427,30 @@ class PillowFightTest(PerfTest):
         self.access()
 
         self.report_kpi()
+
+
+class CompressionTest(PillowFightTest):
+
+    COLLECTORS = {'iostat': False, 'net': False}
+
+    @with_stats
+    @timeit
+    def wait_for_compression(self):
+        for master in self.cluster_spec.masters:
+            for bucket in self.test_config.buckets:
+                self.monitor.monitor_compression(self.memcached, master, bucket)
+
+    def _report_kpi(self, time_elapsed: float):
+        self.reporter.post(
+            *self.metrics.compression_throughput(time_elapsed)
+        )
+
+    def run(self):
+        self.load()
+
+        time_elapsed = self.wait_for_compression()
+
+        self.report_kpi(time_elapsed)
 
 
 class CompactionTest(KVTest):

@@ -9,7 +9,7 @@ PYTHON_PROJECTS := cbagent perfdaily perfrunner scripts spring
 all:
 	virtualenv --quiet --python ${PYTHON} ${ENV}
 	${ENV}/bin/pip install --upgrade --quiet pip wheel
-	${ENV}/bin/pip install --quiet -r requirements.txt
+	${ENV}/bin/pip install --quiet --no-warn-script-location -r requirements.txt
 	${ENV}/bin/python setup.py --quiet install
 	pwd > ${ENV}/lib/${PYTHON}/site-packages/perfrunner.pth
 

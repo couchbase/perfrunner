@@ -37,7 +37,7 @@ indexes =
     CREATE INDEX idx5 ON `bucket-1`(DISTINCT ARRAY (DISTINCT ARRAY (v.country || "." || c) FOR c IN v.cities END) FOR v IN visited_places END) WITH {"num_replica": 3, "defer_build": true};
     CREATE INDEX idx6 ON `bucket-1`(address.zip, order_list) WITH {"num_replica": 3, "defer_build": true};
     CREATE INDEX idx7 ON `bucket-1`(address.zip, month, order_list, sale_price) WITH {"num_replica": 3, "defer_build": true};
-    BUILD  INDEX ON `bucket-1`(primary_index, idx1, idx2, idx3, idx4, idx5, idx6, idx7);
+    BUILD  INDEX ON `bucket-1`(primary_idx, idx1, idx2, idx3, idx4, idx5, idx6, idx7);
 
 [access]
 workload_path = workloads/soe/workloadsmix

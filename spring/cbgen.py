@@ -40,7 +40,9 @@ class ErrorTracker:
         self.errors[type(exc)] = 0
 
     def check_later(self, method: str, exc: CouchbaseError):
-        Timer(self.QUIET_PERIOD, self.maybe_warn, args=(method, exc)).start()
+        timer = Timer(self.QUIET_PERIOD, self.maybe_warn, args=[method, exc])
+        timer.daemon = True
+        timer.start()
 
     def warn(self, method: str, exc: CouchbaseError, count: int = 0):
         if count:

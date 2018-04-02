@@ -1,3 +1,4 @@
+import random
 from collections import defaultdict
 from threading import Timer
 from time import sleep, time
@@ -73,11 +74,14 @@ def quiet(method: Callable, *args, **kwargs):
 
 @decorator
 def backoff(method: Callable, *args, **kwargs):
+    retry_delay = 0.1  # Start with 100 ms
     while True:
         try:
             return method(*args, **kwargs)
         except TemporaryFailError:
-            sleep(1)
+            sleep(retry_delay)
+            # Increase exponentially with jitter
+            retry_delay *= 1 + 0.1 * random.random()
 
 
 @decorator

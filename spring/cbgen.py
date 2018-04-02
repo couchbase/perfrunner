@@ -81,7 +81,7 @@ def backoff(method: Callable, *args, **kwargs):
 
 
 @decorator
-def timeit(method: Callable, *args, **kwargs) -> int:
+def timeit(method: Callable, *args, **kwargs) -> float:
     t0 = time()
     method(*args, **kwargs)
     return time() - t0

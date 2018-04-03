@@ -242,6 +242,7 @@ class ClusterManager:
         return ['admin']
 
     def generate_ee_roles(self) -> List[str]:
+
         existing_roles = {r['role']
                           for r in self.rest.get_rbac_roles(self.master_node)}
 
@@ -264,7 +265,7 @@ class ClusterManager:
             if role in existing_roles:
                 roles.append(role + '[{bucket}]')
 
-        return roles
+        return ['admin']
 
     def add_rbac_users(self):
         if not self.is_compatible(min_release='5.0'):

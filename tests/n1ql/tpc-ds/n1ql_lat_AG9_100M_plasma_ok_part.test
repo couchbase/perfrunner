@@ -28,6 +28,7 @@ doc_gen = tpc_ds
 [n1ql]
 indexes =
     CREATE INDEX ag9 ON `bucket-1`(item.category, DATE_PART_STR(sold_date, 'day_of_year'), sales_price) PARTITION BY HASH(item.category);
+max-parallelism = 4
 
 [access]
 items = 1000000

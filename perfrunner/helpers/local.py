@@ -163,7 +163,7 @@ def cbrestorewrapper(master_node: str, cluster_spec: ClusterSpec):
 def cbbackupmgr_restore(master_node: str, cluster_spec: ClusterSpec,
                         threads: int, archive: str = '', repo: str = 'default'):
     cmd = \
-        './opt/couchbase/bin/cbbackupmgr restore ' \
+        './opt/couchbase/bin/cbbackupmgr restore --force-updates ' \
         '--archive {} --repo {} --threads {} ' \
         '--host http://{} --username {} --password {}'.format(
             archive or cluster_spec.backup,

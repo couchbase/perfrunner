@@ -44,11 +44,21 @@ class BigFunTest(PerfTest):
             self.rest.exec_analytics_statement(self.analytics_nodes[0],
                                                statement)
 
+    def disconnect_bucket(self, bucket: str):
+        logger.info('Disconnecting the bucket: {}'.format(bucket))
+        statement = 'DISCONNECT BUCKET `{}`;'.format(bucket)
+        self.rest.exec_analytics_statement(self.analytics_nodes[0],
+                                           statement)
+
     def connect_bucket(self, bucket: str):
         logger.info('Connecting the bucket: {}'.format(bucket))
         statement = 'CONNECT BUCKET `{}`;'.format(bucket)
         self.rest.exec_analytics_statement(self.analytics_nodes[0],
                                            statement)
+
+    def disconnect(self):
+        for target in self.target_iterator:
+            self.disconnect_bucket(target.bucket)
 
     def sync(self):
         for target in self.target_iterator:
@@ -59,6 +69,12 @@ class BigFunTest(PerfTest):
 
             self.num_items += self.monitor.monitor_data_synced(target.node,
                                                                target.bucket)
+
+    def re_sync(self):
+        for target in self.target_iterator:
+            self.connect_bucket(target.bucket)
+
+            self.monitor.monitor_data_synced(target.node, target.bucket)
 
     @with_stats
     def access(self, *args, **kwargs) -> List[Tuple[dict, int]]:
@@ -97,6 +113,27 @@ class BigFunSyncNoIndexTest(BigFunSyncTest):
 
     def create_index(self):
         pass
+
+
+class BigFunIncrSyncTest(BigFunTest):
+
+    @with_stats
+    @timeit
+    def re_sync(self):
+        super().re_sync()
+
+    def run(self):
+        super().run()
+
+        self.sync()
+
+        self.disconnect()
+
+        super().run()
+
+        sync_time = self.re_sync()
+
+        self.report_kpi(sync_time)
 
 
 class BigFunQueryTest(BigFunTest):

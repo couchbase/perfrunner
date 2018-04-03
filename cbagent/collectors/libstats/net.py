@@ -1,11 +1,11 @@
-from collections import defaultdict
+from typing import Dict
 
 from cbagent.collectors.libstats.remotestats import RemoteStats, parallel_task
 
 
 class NetStat(RemoteStats):
 
-    def detect_iface(self):
+    def detect_iface(self) -> str:
         """Detect the active newtwork interface.
 
         Examples of ip output:
@@ -17,7 +17,7 @@ class NetStat(RemoteStats):
         stdout = self.run("ip route list | grep default")
         return stdout.strip().split()[4]
 
-    def get_dev_stats(self):
+    def get_dev_stats(self) -> Dict[str, int]:
         iface = self.detect_iface()
         cmd = "grep {} /proc/net/dev".format(iface)
         stdout = self.run("{0}; sleep 1; {0}".format(cmd))
@@ -31,19 +31,18 @@ class NetStat(RemoteStats):
             "out_packets_per_sec": s2[9] - s1[9],
         }
 
-    def get_tcp_stats(self):
-        stdout = self.run("cat /proc/net/tcp")
-        raw_data = defaultdict(int)
-        for conn in stdout.split("\n"):
-            state = conn.split()[3]
-            raw_data[state] += 1
-        return {
-            "ESTABLISHED": raw_data["01"],
-            "TIME_WAIT": raw_data["06"],
-        }
+    def get_tcp_stats(self) -> Dict[str, int]:
+        stats = {}
+        for state in 'established', 'time-wait':
+            cmd = 'ss --tcp -o state {} | wc -l'.format(state)
+            stdout = self.run(cmd)
+            num_connections = int(stdout.strip())
+            metric = state.upper().replace('-', '_')
+            stats[metric] = num_connections - 1  # Subtract header
+        return stats
 
     @parallel_task(server_side=True)
-    def get_samples(self):
+    def get_samples(self) -> Dict[str, int]:
         dev_stats = self.get_dev_stats()
         tcp_stats = self.get_tcp_stats()
         return dict(dev_stats, **tcp_stats)

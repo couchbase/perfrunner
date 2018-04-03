@@ -12,7 +12,6 @@ class N1QLTest(PerfTest):
         'memory': False,
         'n1ql_latency': True,
         'n1ql_stats': True,
-        'net': False,
         'secondary_stats': True,
     }
 

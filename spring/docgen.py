@@ -305,20 +305,20 @@ class String:
         self.avg_size = avg_size
 
     @staticmethod
-    def _build_alphabet(key: str) -> str:
+    def build_alphabet(key: str) -> str:
         return hex_digest(key) + hex_digest(key[::-1])
 
     @staticmethod
-    def _build_string(alphabet: str, length: float) -> str:
+    def build_string(alphabet: str, length: float) -> str:
         length_int = int(length)
         num_slices = int(math.ceil(length / 64))  # 64 == len(alphabet)
         body = num_slices * alphabet
         return body[:length_int]
 
     def next(self, key: Key) -> str:
-        alphabet = self._build_alphabet(key.string)
+        alphabet = self.build_alphabet(key.string)
 
-        return self._build_string(alphabet, self.avg_size)
+        return self.build_string(alphabet, self.avg_size)
 
 
 class Document(String):
@@ -332,68 +332,68 @@ class Document(String):
         return np.random.uniform(1 - cls.SIZE_VARIATION, 1 + cls.SIZE_VARIATION)
 
     @staticmethod
-    def _build_name(alphabet: str) -> str:
+    def build_name(alphabet: str) -> str:
         return '%s %s' % (alphabet[:6], alphabet[6:12])  # % is faster than format()
 
     @staticmethod
-    def _build_email(alphabet: str) -> str:
+    def build_email(alphabet: str) -> str:
         return '%s@%s.com' % (alphabet[12:18], alphabet[18:24])
 
     @staticmethod
-    def _build_alt_email(alphabet: str) -> str:
+    def build_alt_email(alphabet: str) -> str:
         name = random.randint(1, 9)
         domain = random.randint(12, 18)
         return '%s@%s.com' % (alphabet[name:name + 6], alphabet[domain:domain + 6])
 
     @staticmethod
-    def _build_city(alphabet: str) -> str:
+    def build_city(alphabet: str) -> str:
         return alphabet[24:30]
 
     @staticmethod
-    def _build_realm(alphabet: str) -> str:
+    def build_realm(alphabet: str) -> str:
         return alphabet[30:36]
 
     @staticmethod
-    def _build_country(alphabet: str) -> str:
+    def build_country(alphabet: str) -> str:
         return alphabet[42:48]
 
     @staticmethod
-    def _build_county(alphabet: str) -> str:
+    def build_county(alphabet: str) -> str:
         return alphabet[48:54]
 
     @staticmethod
-    def _build_street(alphabet: str) -> str:
+    def build_street(alphabet: str) -> str:
         return alphabet[54:62]
 
     @staticmethod
-    def _build_coins(alphabet: str) -> float:
+    def build_coins(alphabet: str) -> float:
         return max(0.1, int(alphabet[36:40], 16) / 100)
 
     @staticmethod
-    def _build_gmtime(alphabet: str) -> Tuple[int]:
+    def build_gmtime(alphabet: str) -> Tuple[int]:
         seconds = 396 * 24 * 3600 * (int(alphabet[63], 16) % 12)
         return tuple(time.gmtime(seconds))
 
     @staticmethod
-    def _build_year(alphabet: str) -> int:
+    def build_year(alphabet: str) -> int:
         return 1985 + int(alphabet[62], 16)
 
     @staticmethod
-    def _build_state(alphabet: str) -> str:
+    def build_state(alphabet: str) -> str:
         idx = alphabet.find('7') % NUM_STATES
         return STATES[idx][0]
 
     @staticmethod
-    def _build_full_state(alphabet: str) -> str:
+    def build_full_state(alphabet: str) -> str:
         idx = alphabet.find('8') % NUM_STATES
         return STATES[idx][1]
 
     @staticmethod
-    def _build_category(alphabet: str) -> int:
+    def build_category(alphabet: str) -> int:
         return int(alphabet[41], 16) % 3
 
     @staticmethod
-    def _build_achievements(alphabet: str) -> List[int]:
+    def build_achievements(alphabet: str) -> List[int]:
         return build_achievements(alphabet) or [0]
 
     def _size(self) -> float:
@@ -402,19 +402,19 @@ class Document(String):
         return self._get_variation_coeff() * (self.avg_size - self.OVERHEAD)
 
     def next(self, key: Key) -> dict:
-        alphabet = self._build_alphabet(key.string)
+        alphabet = self.build_alphabet(key.string)
         size = self._size()
 
         return {
-            'name': self._build_name(alphabet),
-            'email': self._build_email(alphabet),
-            'alt_email': self._build_alt_email(alphabet),
-            'city': self._build_city(alphabet),
-            'realm': self._build_realm(alphabet),
-            'coins': self._build_coins(alphabet),
-            'category': self._build_category(alphabet),
-            'achievements': self._build_achievements(alphabet),
-            'body': self._build_string(alphabet, size),
+            'name': self.build_name(alphabet),
+            'email': self.build_email(alphabet),
+            'alt_email': self.build_alt_email(alphabet),
+            'city': self.build_city(alphabet),
+            'realm': self.build_realm(alphabet),
+            'coins': self.build_coins(alphabet),
+            'category': self.build_category(alphabet),
+            'achievements': self.build_achievements(alphabet),
+            'body': self.build_string(alphabet, size),
         }
 
 
@@ -436,26 +436,26 @@ class NestedDocument(Document):
             return 2048 / np.random.beta(a=2.2, b=1.0)
 
     def next(self, key: Key):
-        alphabet = self._build_alphabet(key.string)
+        alphabet = self.build_alphabet(key.string)
         size = self._size()
 
         return {
-            'name': {'f': {'f': {'f': self._build_name(alphabet)}}},
-            'email': {'f': {'f': self._build_email(alphabet)}},
-            'alt_email': {'f': {'f': self._build_alt_email(alphabet)}},
-            'street': {'f': {'f': self._build_street(alphabet)}},
-            'city': {'f': {'f': self._build_city(alphabet)}},
-            'county': {'f': {'f': self._build_county(alphabet)}},
-            'state': {'f': self._build_state(alphabet)},
-            'full_state': {'f': self._build_full_state(alphabet)},
-            'country': {'f': self._build_country(alphabet)},
-            'realm': {'f': self._build_realm(alphabet)},
-            'coins': {'f': self._build_coins(alphabet)},
-            'category': self._build_category(alphabet),
-            'achievements': self._build_achievements(alphabet),
-            'gmtime': self._build_gmtime(alphabet),
-            'year': self._build_year(alphabet),
-            'body': self._build_string(alphabet, size),
+            'name': {'f': {'f': {'f': self.build_name(alphabet)}}},
+            'email': {'f': {'f': self.build_email(alphabet)}},
+            'alt_email': {'f': {'f': self.build_alt_email(alphabet)}},
+            'street': {'f': {'f': self.build_street(alphabet)}},
+            'city': {'f': {'f': self.build_city(alphabet)}},
+            'county': {'f': {'f': self.build_county(alphabet)}},
+            'state': {'f': self.build_state(alphabet)},
+            'full_state': {'f': self.build_full_state(alphabet)},
+            'country': {'f': self.build_country(alphabet)},
+            'realm': {'f': self.build_realm(alphabet)},
+            'coins': {'f': self.build_coins(alphabet)},
+            'category': self.build_category(alphabet),
+            'achievements': self.build_achievements(alphabet),
+            'gmtime': self.build_gmtime(alphabet),
+            'year': self.build_year(alphabet),
+            'body': self.build_string(alphabet, size),
         }
 
 
@@ -466,7 +466,7 @@ class LargeDocument(Document):
     TEXT_LENGTH = 128
 
     @staticmethod
-    def _build_string(alphabet: str, length: float) -> str:
+    def build_string(alphabet: str, length: float) -> str:
         length_int = int(length)
         num_slices = int(math.ceil(length / 32))  # 32 == len(alphabet)
         body = ''
@@ -475,7 +475,7 @@ class LargeDocument(Document):
         return body[:length_int]
 
     def next(self, key: Key) -> dict:
-        alphabet = self._build_alphabet(key.string)
+        alphabet = self.build_alphabet(key.string)
         size = self._size() / 3
         offset = (PRIME * key.number) % (len(LOREM) - self.TEXT_LENGTH)
 
@@ -483,22 +483,22 @@ class LargeDocument(Document):
             'id': alphabet,
             'revered_id': alphabet[::-1],
             'code': hex_digest(alphabet),
-            'name': self._build_name(alphabet),
-            'email': self._build_email(alphabet),
-            'city': self._build_city(alphabet),
-            'county': self._build_county(alphabet),
-            'state': self._build_state(alphabet),
-            'full_state': self._build_full_state(alphabet),
-            'country': self._build_country(alphabet),
-            'realm': self._build_realm(alphabet),
-            'coins': self._build_coins(alphabet),
-            'category': self._build_category(alphabet),
-            'achievements': self._build_achievements(alphabet),
-            'gmtime': self._build_gmtime(alphabet),
-            'year': self._build_year(alphabet),
-            'padding': self._build_string(alphabet, size),
-            'notes': self._build_string(alphabet[::-1], size),
-            'text': self._build_string(alphabet[:16], size),
+            'name': self.build_name(alphabet),
+            'email': self.build_email(alphabet),
+            'city': self.build_city(alphabet),
+            'county': self.build_county(alphabet),
+            'state': self.build_state(alphabet),
+            'full_state': self.build_full_state(alphabet),
+            'country': self.build_country(alphabet),
+            'realm': self.build_realm(alphabet),
+            'coins': self.build_coins(alphabet),
+            'category': self.build_category(alphabet),
+            'achievements': self.build_achievements(alphabet),
+            'gmtime': self.build_gmtime(alphabet),
+            'year': self.build_year(alphabet),
+            'padding': self.build_string(alphabet, size),
+            'notes': self.build_string(alphabet[::-1], size),
+            'text': self.build_string(alphabet[:16], size),
             'lorem': LOREM[offset:offset + self.TEXT_LENGTH],
         }
 
@@ -517,11 +517,11 @@ class ReverseLookupDocument(NestedDocument):
 
     def build_email(self, alphabet: str) -> str:
         if self.is_random:
-            return self._build_alt_email(alphabet)
+            return self.build_alt_email(alphabet)
         else:
-            return self._build_email(alphabet)
+            return super().build_email(alphabet)
 
-    def _build_capped(self, alphabet: str, seq_id: int, num_unique: int) -> str:
+    def build_capped(self, alphabet: str, seq_id: int, num_unique: int) -> str:
         if self.is_random:
             offset = random.randint(1, 9)
             return '%s' % alphabet[offset:offset + 6]
@@ -529,32 +529,32 @@ class ReverseLookupDocument(NestedDocument):
         index = seq_id // num_unique
         return '%s_%d_%d' % (self.prefix, num_unique, index)
 
-    def _build_topics(self, seq_id: int) -> List[str]:
+    def build_topics(self, seq_id: int) -> List[str]:
         return []
 
     def next(self, key: Key) -> dict:
-        alphabet = self._build_alphabet(key.string)
+        alphabet = self.build_alphabet(key.string)
         size = self._size()
 
         return {
-            'name': self._build_name(alphabet),
+            'name': self.build_name(alphabet),
             'email': self.build_email(alphabet),
-            'alt_email': self._build_alt_email(alphabet),
-            'street': self._build_street(alphabet),
-            'city': self._build_city(alphabet),
-            'county': self._build_county(alphabet),
-            'state': self._build_state(alphabet),
-            'full_state': self._build_full_state(alphabet),
-            'country': self._build_country(alphabet),
-            'realm': self._build_realm(alphabet),
-            'coins': self._build_coins(alphabet),
-            'category': self._build_category(alphabet),
-            'achievements': self._build_achievements(alphabet),
-            'gmtime': self._build_gmtime(alphabet),
-            'year': self._build_year(alphabet),
-            'body': self._build_string(alphabet, size),
-            'capped_small': self._build_capped(alphabet, key.number, 100),
-            'topics': self._build_topics(key.number),
+            'alt_email': self.build_alt_email(alphabet),
+            'street': self.build_street(alphabet),
+            'city': self.build_city(alphabet),
+            'county': self.build_county(alphabet),
+            'state': self.build_state(alphabet),
+            'full_state': self.build_full_state(alphabet),
+            'country': self.build_country(alphabet),
+            'realm': self.build_realm(alphabet),
+            'coins': self.build_coins(alphabet),
+            'category': self.build_category(alphabet),
+            'achievements': self.build_achievements(alphabet),
+            'gmtime': self.build_gmtime(alphabet),
+            'year': self.build_year(alphabet),
+            'body': self.build_string(alphabet, size),
+            'capped_small': self.build_capped(alphabet, key.number, 100),
+            'topics': self.build_topics(key.number),
         }
 
 
@@ -570,7 +570,7 @@ class ReverseRangeLookupDocument(ReverseLookupDocument):
         # both exclusive.
         self.distance = range_distance + 1
 
-    def _build_capped(self, alphabet: str, seq_id: int, num_unique: int) -> str:
+    def build_capped(self, alphabet: str, seq_id: int, num_unique: int) -> str:
         if self.is_random:
             offset = random.randint(1, 9)
             return '%s' % alphabet[offset:offset + 6]
@@ -579,31 +579,31 @@ class ReverseRangeLookupDocument(ReverseLookupDocument):
         return '%s_%d_%012d' % (self.prefix, num_unique, index)
 
     def next(self, key: Key) -> dict:
-        alphabet = self._build_alphabet(key.string)
+        alphabet = self.build_alphabet(key.string)
         size = self._size()
 
         return {
-            'name': self._build_name(alphabet),
+            'name': self.build_name(alphabet),
             'email': self.build_email(alphabet),
-            'alt_email': self._build_alt_email(alphabet),
-            'street': self._build_street(alphabet),
-            'city': self._build_city(alphabet),
-            'county': self._build_county(alphabet),
-            'state': self._build_state(alphabet),
-            'full_state': self._build_full_state(alphabet),
-            'country': self._build_country(alphabet),
-            'realm': self._build_realm(alphabet),
-            'coins': self._build_coins(alphabet),
-            'category': self._build_category(alphabet),
-            'achievements': self._build_achievements(alphabet),
-            'gmtime': self._build_gmtime(alphabet),
-            'year': self._build_year(alphabet),
-            'body': self._build_string(alphabet, size),
-            'capped_small': self._build_capped(alphabet, key.number, 100),
-            'capped_small_range': self._build_capped(alphabet,
-                                                     key.number + (self.distance * 100),
-                                                     100),
-            'topics': self._build_topics(key.number),
+            'alt_email': self.build_alt_email(alphabet),
+            'street': self.build_street(alphabet),
+            'city': self.build_city(alphabet),
+            'county': self.build_county(alphabet),
+            'state': self.build_state(alphabet),
+            'full_state': self.build_full_state(alphabet),
+            'country': self.build_country(alphabet),
+            'realm': self.build_realm(alphabet),
+            'coins': self.build_coins(alphabet),
+            'category': self.build_category(alphabet),
+            'achievements': self.build_achievements(alphabet),
+            'gmtime': self.build_gmtime(alphabet),
+            'year': self.build_year(alphabet),
+            'body': self.build_string(alphabet, size),
+            'capped_small': self.build_capped(alphabet, key.number, 100),
+            'capped_small_range': self.build_capped(alphabet,
+                                                    key.number + (self.distance * 100),
+                                                    100),
+            'topics': self.build_topics(key.number),
         }
 
 
@@ -615,7 +615,7 @@ class ExtReverseLookupDocument(ReverseLookupDocument):
         super().__init__(avg_size, prefix)
         self.num_docs = num_docs
 
-    def _build_topics(self, seq_id: int) -> List[str]:
+    def build_topics(self, seq_id: int) -> List[str]:
         """1:4 reference to JoinedDocument keys."""
         return [
             decimal_fmtr((seq_id + 11) % self.num_docs, self.prefix),
@@ -639,15 +639,15 @@ class JoinedDocument(ReverseLookupDocument):
         self.num_docs = num_docs
         self.num_replies = num_replies
 
-    def _build_owner(self, seq_id: int) -> str:
+    def build_owner(self, seq_id: int) -> str:
         """4:1 reference to ReverseLookupDocument keys."""
         ref_id = seq_id % (self.num_docs // 4)
         return decimal_fmtr(ref_id, self.prefix)
 
-    def _build_title(self, alphabet: str) -> str:
+    def build_title(self, alphabet: str) -> str:
         return alphabet[:32]
 
-    def _build_categories(self, seq_id: int) -> List[str]:
+    def build_categories(self, seq_id: int) -> List[str]:
         """1:4 reference to RefDocument keys."""
         return [
             decimal_fmtr((seq_id + 11) % self.num_categories, self.prefix),
@@ -656,42 +656,42 @@ class JoinedDocument(ReverseLookupDocument):
             decimal_fmtr((seq_id + 29) % self.num_categories, self.prefix),
         ]
 
-    def _build_user(self, seq_id: int, idx: int) -> str:
+    def build_user(self, seq_id: int, idx: int) -> str:
         return decimal_fmtr((seq_id + idx + 537) % self.num_docs, self.prefix)
 
-    def _build_replies(self, seq_id: int) -> List[dict]:
+    def build_replies(self, seq_id: int) -> List[dict]:
         """1:N references to ReverseLookupDocument keys."""
         return [
-            {'user': self._build_user(seq_id, idx)}
+            {'user': self.build_user(seq_id, idx)}
             for idx in range(self.num_replies)
         ]
 
-    def _build_sub_capped(self, alphabet: str, seq_id: int, num_unique: int) -> str:
+    def build_sub_capped(self, alphabet: str, seq_id: int, num_unique: int) -> str:
         ref_id = seq_id % (self.num_docs // 4)
-        return self._build_capped(alphabet, ref_id, num_unique)
+        return self.build_capped(alphabet, ref_id, num_unique)
 
     def next(self, key: Key) -> dict:
-        alphabet = self._build_alphabet(key.string)
+        alphabet = self.build_alphabet(key.string)
 
         return {
-            'owner': self._build_owner(key.number),
-            'moderator': self._build_owner(key.number + 1),
-            'title': self._build_title(alphabet),
-            'capped': self._build_capped(alphabet, key.number, 100),
-            'sub_capped': self._build_sub_capped(alphabet, key.number, 100),
-            'categories': self._build_categories(key.number),
-            'replies': self._build_replies(key.number),
+            'owner': self.build_owner(key.number),
+            'moderator': self.build_owner(key.number + 1),
+            'title': self.build_title(alphabet),
+            'capped': self.build_capped(alphabet, key.number, 100),
+            'sub_capped': self.build_sub_capped(alphabet, key.number, 100),
+            'categories': self.build_categories(key.number),
+            'replies': self.build_replies(key.number),
         }
 
 
 class RefDocument(ReverseLookupDocument):
 
-    def _build_ref_name(self, seq_id: int) -> str:
+    def build_ref_name(self, seq_id: int) -> str:
         return decimal_fmtr(seq_id, self.prefix)
 
     def next(self, key: Key) -> dict:
         return {
-            'name': self._build_ref_name(key.number),
+            'name': self.build_ref_name(key.number),
         }
 
 
@@ -717,7 +717,7 @@ class ArrayIndexingDocument(ReverseLookupDocument):
         self.array_size = array_size
         self.num_docs = num_docs
 
-    def _build_achievements1(self, seq_id: int) -> List[int]:
+    def build_achievements1(self, seq_id: int) -> List[int]:
         """Build an array of integers.
 
         Every document reserves a range of numbers that can be used for a
@@ -755,7 +755,7 @@ class ArrayIndexingDocument(ReverseLookupDocument):
 
         return [int(offset + i) for i in range(self.array_size)]
 
-    def _build_achievements2(self, seq_id: int) -> List[int]:
+    def build_achievements2(self, seq_id: int) -> List[int]:
         """Build an array of integers.
 
         achievements2 is very similar to achievements1. However, in case of
@@ -772,29 +772,29 @@ class ArrayIndexingDocument(ReverseLookupDocument):
         return [int(offset + i) for i in range(self.ARRAY_SIZE)]
 
     def next(self, key: Key) -> dict:
-        alphabet = self._build_alphabet(key.string)
+        alphabet = self.build_alphabet(key.string)
         size = self._size()
 
         return {
-            'name': self._build_name(alphabet),
-            'email': self._build_email(alphabet),
-            'alt_email': self._build_alt_email(alphabet),
-            'street': self._build_street(alphabet),
-            'city': self._build_city(alphabet),
-            'county': self._build_county(alphabet),
-            'state': self._build_state(alphabet),
-            'full_state': self._build_full_state(alphabet),
-            'country': self._build_country(alphabet),
-            'realm': self._build_realm(alphabet),
-            'coins': self._build_coins(alphabet),
-            'category': self._build_category(alphabet),
-            'achievements1': self._build_achievements1(key.number + 1),
-            'achievements2': self._build_achievements2(key.number + 1),
-            'gmtime': self._build_gmtime(alphabet),
-            'year': self._build_year(alphabet),
-            'body': self._build_string(alphabet, size),
-            'capped_small': self._build_capped(alphabet, key.number, 100),
-            'topics': self._build_topics(key.number),
+            'name': self.build_name(alphabet),
+            'email': self.build_email(alphabet),
+            'alt_email': self.build_alt_email(alphabet),
+            'street': self.build_street(alphabet),
+            'city': self.build_city(alphabet),
+            'county': self.build_county(alphabet),
+            'state': self.build_state(alphabet),
+            'full_state': self.build_full_state(alphabet),
+            'country': self.build_country(alphabet),
+            'realm': self.build_realm(alphabet),
+            'coins': self.build_coins(alphabet),
+            'category': self.build_category(alphabet),
+            'achievements1': self.build_achievements1(key.number + 1),
+            'achievements2': self.build_achievements2(key.number + 1),
+            'gmtime': self.build_gmtime(alphabet),
+            'year': self.build_year(alphabet),
+            'body': self.build_string(alphabet, size),
+            'capped_small': self.build_capped(alphabet, key.number, 100),
+            'topics': self.build_topics(key.number),
         }
 
 
@@ -802,19 +802,19 @@ class ProfileDocument(ReverseLookupDocument):
 
     OVERHEAD = 390
 
-    def _build_capped(self, *args):
-        capped = super()._build_capped(*args)
+    def build_capped(self, *args):
+        capped = super().build_capped(*args)
         return capped.replace('_', '')
 
-    def _build_zip(self, seq_id: int) -> str:
+    def build_zip(self, seq_id: int) -> str:
         if self.is_random:
             zip_code = random.randint(70000, 90000)
         else:
             zip_code = 70000 + seq_id % 20000
         return str(zip_code)
 
-    def _build_long_street(self, alphabet: str, seq_id: int, capped_small: str,
-                           capped_large: str) -> str:
+    def build_long_street(self, alphabet: str, seq_id: int, capped_small: str,
+                          capped_large: str) -> str:
         if self.is_random:
             num = random.randint(0, 1000)
             idx = random.randint(0, NUM_STREET_SUFFIXES - 1)
@@ -826,35 +826,35 @@ class ProfileDocument(ReverseLookupDocument):
         return '%d %s %s %s' % (num, capped_small, capped_large, suffix)
 
     def next(self, key: Key) -> dict:
-        alphabet = self._build_alphabet(key.string)
+        alphabet = self.build_alphabet(key.string)
         size = self._size()
 
-        category = self._build_category(alphabet) + 1
-        capped_large = self._build_capped(alphabet, key.number, 1000 * category)
-        capped_small = self._build_capped(alphabet, key.number, 10)
+        category = self.build_category(alphabet) + 1
+        capped_large = self.build_capped(alphabet, key.number, 1000 * category)
+        capped_small = self.build_capped(alphabet, key.number, 10)
 
         return {
-            'first_name': self._build_name(alphabet),
-            'last_name': self._build_street(alphabet),
+            'first_name': self.build_name(alphabet),
+            'last_name': self.build_street(alphabet),
             'email': self.build_email(alphabet),
-            'balance': self._build_coins(alphabet),
+            'balance': self.build_coins(alphabet),
             'date': {
-                'gmtime': self._build_gmtime(alphabet),
-                'year': self._build_year(alphabet),
+                'gmtime': self.build_gmtime(alphabet),
+                'year': self.build_year(alphabet),
             },
             'capped_large': capped_large,
             'address': {
-                'street': self._build_long_street(alphabet,
-                                                  key.number,
-                                                  capped_small,
-                                                  capped_large),
-                'city': self._build_city(alphabet),
-                'county': self._build_county(alphabet),
-                'state': self._build_state(alphabet),
-                'zip': self._build_zip(key.number),
-                'realm': self._build_realm(alphabet),
+                'street': self.build_long_street(alphabet,
+                                                 key.number,
+                                                 capped_small,
+                                                 capped_large),
+                'city': self.build_city(alphabet),
+                'county': self.build_county(alphabet),
+                'state': self.build_state(alphabet),
+                'zip': self.build_zip(key.number),
+                'realm': self.build_realm(alphabet),
             },
-            'body': self._build_string(alphabet, size),
+            'body': self.build_string(alphabet, size),
         }
 
 
@@ -865,48 +865,48 @@ class ImportExportDocument(ReverseLookupDocument):
     OVERHEAD = 1022
 
     def next(self, key: Key) -> dict:
-        alphabet = self._build_alphabet(key.string)
+        alphabet = self.build_alphabet(key.string)
         size = self._size()
         return {
-            'name': self._build_name(alphabet) * random.randint(0, 5),
+            'name': self.build_name(alphabet) * random.randint(0, 5),
             'email': self.build_email(alphabet) * random.randint(0, 5),
-            'alt_email': self._build_alt_email(
+            'alt_email': self.build_alt_email(
                 alphabet) * random.randint(0, 5),
-            'street': self._build_street(alphabet) * random.randint(0, 9),
-            'city': self._build_city(alphabet) * random.randint(0, 9),
-            'county': self._build_county(alphabet) * random.randint(0, 5),
-            'state': self._build_state(alphabet) * random.randint(0, 5),
-            'full_state': self._build_full_state(
+            'street': self.build_street(alphabet) * random.randint(0, 9),
+            'city': self.build_city(alphabet) * random.randint(0, 9),
+            'county': self.build_county(alphabet) * random.randint(0, 5),
+            'state': self.build_state(alphabet) * random.randint(0, 5),
+            'full_state': self.build_full_state(
                 alphabet) * random.randint(0, 5),
-            'country': self._build_country(
+            'country': self.build_country(
                 alphabet) * random.randint(0, 5),
-            'realm': self._build_realm(
+            'realm': self.build_realm(
                 alphabet) * random.randint(0, 9),
-            'alt_street': self._build_street(
+            'alt_street': self.build_street(
                 alphabet) * random.randint(0, 9),
-            'alt_city': self._build_city(
+            'alt_city': self.build_city(
                 alphabet) * random.randint(0, 9),
-            'alt_county': self._build_county(
+            'alt_county': self.build_county(
                 alphabet) * random.randint(0, 5),
-            'alt_state': self._build_state(
+            'alt_state': self.build_state(
                 alphabet) * random.randint(0, 5),
-            'alt_full_state': self._build_full_state(
+            'alt_full_state': self.build_full_state(
                 alphabet) * random.randint(0, 5),
-            'alt_country': self._build_country(
+            'alt_country': self.build_country(
                 alphabet) * random.randint(0, 5),
-            'alt_realm': self._build_realm(
+            'alt_realm': self.build_realm(
                 alphabet) * random.randint(0, 9),
-            'coins': self._build_coins(
+            'coins': self.build_coins(
                 alphabet) * random.randint(0, 999),
-            'category': self._build_category(
+            'category': self.build_category(
                 alphabet) * random.randint(0, 5),
-            'achievements': self._build_achievements(alphabet),
-            'gmtime': self._build_gmtime(alphabet) * random.randint(0, 9),
-            'year': self._build_year(alphabet) * random.randint(0, 5),
-            'body': self._build_string(alphabet, size),
-            'capped_small': self._build_capped(
+            'achievements': self.build_achievements(alphabet),
+            'gmtime': self.build_gmtime(alphabet) * random.randint(0, 9),
+            'year': self.build_year(alphabet) * random.randint(0, 5),
+            'body': self.build_string(alphabet, size),
+            'capped_small': self.build_capped(
                 alphabet, key.number, 100) * random.randint(0, 5),
-            'alt_capped_small': self._build_capped(
+            'alt_capped_small': self.build_capped(
                 alphabet, key.number, 100) * random.randint(0, 5),
         }
 
@@ -930,55 +930,55 @@ class ImportExportDocumentArray(ImportExportDocument):
         return result
 
     def next(self, key: Key) -> dict:
-        alphabet = self._build_alphabet(key.string)
+        alphabet = self.build_alphabet(key.string)
         size = self._size()
 
         # 25 Fields of random size. Have an array with at least 10 items in five fields.
         return {
-            'name': self._random_array(self._build_name(
+            'name': self._random_array(self.build_name(
                 alphabet) * random.randint(0, 9), 5),
             'email': self.build_email(
                 alphabet) * random.randint(0, 5),
-            'alt_email': self._build_alt_email(
+            'alt_email': self.build_alt_email(
                 alphabet) * random.randint(0, 9),
-            'street': self._random_array(self._build_street(
+            'street': self._random_array(self.build_street(
                 alphabet) * random.randint(0, 9), 5),
-            'city': self._random_array(self._build_city(
+            'city': self._random_array(self.build_city(
                 alphabet) * random.randint(0, 9), 5),
-            'county': self._random_array(self._build_county(
+            'county': self._random_array(self.build_county(
                 alphabet) * random.randint(0, 9), 5),
-            'state': self._random_array(self._build_state(
+            'state': self._random_array(self.build_state(
                 alphabet) * random.randint(0, 9), 5),
-            'full_state': self._random_array(self._build_full_state(
+            'full_state': self._random_array(self.build_full_state(
                 alphabet) * random.randint(0, 9), 5),
-            'country': self._random_array(self._build_country(
+            'country': self._random_array(self.build_country(
                 alphabet) * random.randint(0, 9), 5),
-            'realm': self._build_realm(alphabet) * random.randint(0, 9),
-            'alt_street': self._random_array(self._build_street(
+            'realm': self.build_realm(alphabet) * random.randint(0, 9),
+            'alt_street': self._random_array(self.build_street(
                 alphabet) * random.randint(0, 9), 5),
-            'alt_city': self._random_array(self._build_city(
+            'alt_city': self._random_array(self.build_city(
                 alphabet) * random.randint(0, 9), 5),
-            'alt_county': self._build_county(
+            'alt_county': self.build_county(
                 alphabet) * random.randint(0, 9),
-            'alt_state': self._build_state(
+            'alt_state': self.build_state(
                 alphabet) * random.randint(0, 9),
-            'alt_full_state': self._build_full_state(
+            'alt_full_state': self.build_full_state(
                 alphabet) * random.randint(0, 9),
-            'alt_country': self._build_country(
+            'alt_country': self.build_country(
                 alphabet) * random.randint(0, 9),
-            'alt_realm': self._build_realm(
+            'alt_realm': self.build_realm(
                 alphabet) * random.randint(0, 9),
-            'coins': self._build_coins(
+            'coins': self.build_coins(
                 alphabet) * random.randint(0, 999),
-            'category': self._build_category(
+            'category': self.build_category(
                 alphabet) * random.randint(0, 9),
-            'achievements': self._build_achievements(alphabet),
-            'gmtime': self._build_gmtime(alphabet) * random.randint(0, 9),
-            'year': self._build_year(alphabet) * random.randint(0, 5),
-            'body': self._random_array(self._build_string(alphabet, size), 7),
-            'capped_small': self._build_capped(
+            'achievements': self.build_achievements(alphabet),
+            'gmtime': self.build_gmtime(alphabet) * random.randint(0, 9),
+            'year': self.build_year(alphabet) * random.randint(0, 5),
+            'body': self._random_array(self.build_string(alphabet, size), 7),
+            'capped_small': self.build_capped(
                 alphabet, key.number, 100) * random.randint(0, 5),
-            'alt_capped_small': self._build_capped(
+            'alt_capped_small': self.build_capped(
                 alphabet, key.number, 100) * random.randint(0, 5),
         }
 
@@ -991,55 +991,55 @@ class ImportExportDocumentNested(ImportExportDocument):
     """
 
     def next(self, key: Key) -> dict:
-        alphabet = self._build_alphabet(key.string)
+        alphabet = self.build_alphabet(key.string)
         size = self._size()
 
         return {
-            'name': {'n': {'a': {'m': {'e': self._build_name(
+            'name': {'n': {'a': {'m': {'e': self.build_name(
                 alphabet) * random.randint(0, 3)}}}},
             'email': {'e': {'m': {'a': {'i': self.build_email(
                 alphabet) * random.randint(0, 3)}}}},
-            'alt_email': {'a': {'l': {'t': {'e': self._build_alt_email(
+            'alt_email': {'a': {'l': {'t': {'e': self.build_alt_email(
                 alphabet) * random.randint(0, 3)}}}},
-            'street': {'s': {'t': {'r': {'e': self._build_street(
+            'street': {'s': {'t': {'r': {'e': self.build_street(
                 alphabet) * random.randint(0, 3)}}}},
-            'city': {'c': {'i': {'t': {'y': self._build_city(
+            'city': {'c': {'i': {'t': {'y': self.build_city(
                 alphabet) * random.randint(0, 3)}}}},
-            'county': {'c': {'o': {'u': {'n': self._build_county(
+            'county': {'c': {'o': {'u': {'n': self.build_county(
                 alphabet) * random.randint(0, 3)}}}},
-            'state': {'s': {'t': {'a': {'t': self._build_state(
+            'state': {'s': {'t': {'a': {'t': self.build_state(
                 alphabet) * random.randint(0, 3)}}}},
-            'full_state': {'f': {'u': {'l': {'l': self._build_full_state(
+            'full_state': {'f': {'u': {'l': {'l': self.build_full_state(
                 alphabet) * random.randint(0, 3)}}}},
-            'country': {'c': {'o': {'u': {'n': self._build_country(
+            'country': {'c': {'o': {'u': {'n': self.build_country(
                 alphabet) * random.randint(0, 3)}}}},
-            'realm': {'r': {'e': {'a': {'l': self._build_realm(
+            'realm': {'r': {'e': {'a': {'l': self.build_realm(
                 alphabet) * random.randint(0, 3)}}}},
-            'alt_street': {'a': {'l': {'t': {'s': self._build_street(
+            'alt_street': {'a': {'l': {'t': {'s': self.build_street(
                 alphabet) * random.randint(0, 3)}}}},
-            'alt_city': {'a': {'l': {'t': {'c': self._build_city(
+            'alt_city': {'a': {'l': {'t': {'c': self.build_city(
                 alphabet) * random.randint(0, 3)}}}},
-            'alt_county': {'e': {'m': {'a': {'i': self._build_county(
+            'alt_county': {'e': {'m': {'a': {'i': self.build_county(
                 alphabet) * random.randint(0, 3)}}}},
-            'alt_state': {'e': {'m': {'a': {'i': self._build_state(
+            'alt_state': {'e': {'m': {'a': {'i': self.build_state(
                 alphabet) * random.randint(0, 3)}}}},
-            'alt_full_state': {'e': {'m': {'a': {'i': self._build_full_state(
+            'alt_full_state': {'e': {'m': {'a': {'i': self.build_full_state(
                 alphabet) * random.randint(0, 2)}}}},
-            'alt_country': {'e': {'m': {'a': {'i': self._build_country(
+            'alt_country': {'e': {'m': {'a': {'i': self.build_country(
                 alphabet) * random.randint(0, 2)}}}},
-            'alt_realm': {'e': {'m': {'a': {'i': self._build_realm(
+            'alt_realm': {'e': {'m': {'a': {'i': self.build_realm(
                 alphabet) * random.randint(0, 3)}}}},
-            'coins': {'e': {'m': {'a': {'i': self._build_coins(
+            'coins': {'e': {'m': {'a': {'i': self.build_coins(
                 alphabet) * random.randint(0, 99)}}}},
-            'category': {'e': {'m': {'a': {'i': self._build_category(
+            'category': {'e': {'m': {'a': {'i': self.build_category(
                 alphabet) * random.randint(0, 3)}}}},
-            'achievements': self._build_achievements(alphabet),
-            'gmtime': self._build_gmtime(alphabet) * random.randint(0, 2),
-            'year': self._build_year(alphabet) * random.randint(0, 2),
-            'body': self._build_string(alphabet, size),
-            'capped_small': self._build_capped(
+            'achievements': self.build_achievements(alphabet),
+            'gmtime': self.build_gmtime(alphabet) * random.randint(0, 2),
+            'year': self.build_year(alphabet) * random.randint(0, 2),
+            'body': self.build_string(alphabet, size),
+            'capped_small': self.build_capped(
                 alphabet, key.number, 10) * random.randint(0, 2),
-            'alt_capped_small': self._build_capped(
+            'alt_capped_small': self.build_capped(
                 alphabet, key.number, 10) * random.randint(0, 2),
         }
 
@@ -1047,19 +1047,19 @@ class ImportExportDocumentNested(ImportExportDocument):
 class GSIMultiIndexDocument(Document):
 
     def next(self, key: Key) -> dict:
-        alphabet = self._build_alphabet(key.string)
+        alphabet = self.build_alphabet(key.string)
         size = self._size()
 
         return {
-            'name': self._build_alt_email(alphabet),
-            'email': self._build_email(alphabet),
-            'alt_email': self._build_alt_email(alphabet),
-            'city': self._build_alt_email(alphabet),
-            'realm': self._build_realm(alphabet),
-            'coins': self._build_coins(alphabet),
-            'category': self._build_category(alphabet),
-            'achievements': self._build_achievements(alphabet),
-            'body': self._build_string(alphabet, size),
+            'name': self.build_alt_email(alphabet),
+            'email': self.build_email(alphabet),
+            'alt_email': self.build_alt_email(alphabet),
+            'city': self.build_alt_email(alphabet),
+            'realm': self.build_realm(alphabet),
+            'coins': self.build_coins(alphabet),
+            'category': self.build_category(alphabet),
+            'achievements': self.build_achievements(alphabet),
+            'body': self.build_string(alphabet, size),
         }
 
 
@@ -1079,17 +1079,17 @@ class PlasmaDocument(Document):
 class SmallPlasmaDocument(PlasmaDocument):
 
     def next(self, key: Key) -> dict:
-        alphabet = self._build_alphabet(key.string)
+        alphabet = self.build_alphabet(key.string)
 
         return {
-            'alt_email': self._build_alt_email(alphabet)
+            'alt_email': self.build_alt_email(alphabet)
         }
 
 
 class SequentialPlasmaDocument(PlasmaDocument):
 
     def next(self, key: Key) -> dict:
-        alphabet = self._build_alphabet(key.string)
+        alphabet = self.build_alphabet(key.string)
         number = key.string[-12:]
 
         return {
@@ -1104,19 +1104,19 @@ class LargeItemPlasmaDocument(PlasmaDocument):
         self.item_size = item_size
 
     def next(self, key: Key) -> dict:
-        alphabet = self._build_alphabet(key.string)
+        alphabet = self.build_alphabet(key.string)
         size = self._size()
 
         return {
-            'name': self._build_name(alphabet),
-            'email': self._build_email(alphabet),
-            'alt_email': self._build_alt_email(alphabet),
+            'name': self.build_name(alphabet),
+            'email': self.build_email(alphabet),
+            'alt_email': self.build_alt_email(alphabet),
             'city': self.build_item(alphabet=alphabet, size=self.item_size),
-            'realm': self._build_realm(alphabet),
-            'coins': self._build_coins(alphabet),
-            'category': self._build_category(alphabet),
-            'achievements': self._build_achievements(alphabet),
-            'body': self._build_string(alphabet, size),
+            'realm': self.build_realm(alphabet),
+            'coins': self.build_coins(alphabet),
+            'category': self.build_category(alphabet),
+            'achievements': self.build_achievements(alphabet),
+            'body': self.build_string(alphabet, size),
         }
 
 
@@ -1129,32 +1129,32 @@ class VaryingItemSizePlasmaDocument(PlasmaDocument):
         self.size_variation_max = size_variation_max
 
     def next(self, key: Key) -> dict:
-        alphabet = self._build_alphabet(key.string)
+        alphabet = self.build_alphabet(key.string)
         size = self._size()
         length = random.randint(self.size_variation_min, self.size_variation_max)
 
         return {
-            'name': self._build_name(alphabet),
-            'email': self._build_email(alphabet),
-            'alt_email': self._build_alt_email(alphabet),
+            'name': self.build_name(alphabet),
+            'email': self.build_email(alphabet),
+            'alt_email': self.build_alt_email(alphabet),
             'city': self.build_item(alphabet=alphabet, size=length),
-            'realm': self._build_realm(alphabet),
-            'coins': self._build_coins(alphabet),
-            'category': self._build_category(alphabet),
-            'achievements': self._build_achievements(alphabet),
-            'body': self._build_string(alphabet, size),
+            'realm': self.build_realm(alphabet),
+            'coins': self.build_coins(alphabet),
+            'category': self.build_category(alphabet),
+            'achievements': self.build_achievements(alphabet),
+            'body': self.build_string(alphabet, size),
         }
 
 
 class EventingSmallDocument(Document):
 
     def next(self, key: Key) -> dict:
-        alphabet = self._build_alphabet(key.string)
+        alphabet = self.build_alphabet(key.string)
 
         return {
-            'name': self._build_name(alphabet),
-            'alt_email': self._build_alt_email(alphabet),
-            'coins': self._build_coins(alphabet),
+            'name': self.build_name(alphabet),
+            'alt_email': self.build_alt_email(alphabet),
+            'coins': self.build_coins(alphabet),
         }
 
 

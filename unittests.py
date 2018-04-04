@@ -572,6 +572,9 @@ class SpringTest(TestCase):
             self.assertNotIn(_hash, hashes)
             hashes.add(_hash)
 
+
+class QueryTest(TestCase):
+
     def test_n1ql_query_gen_q1(self):
         queries = [{
             'statement': 'SELECT * FROM `bucket-1` USE KEYS[$1];',

@@ -228,7 +228,7 @@ class ViewQueryGenByType:
 
 class N1QLQueryGen:
 
-    def __init__(self, queries: dict):
+    def __init__(self, queries: List[dict]):
         queries = [
             (query['statement'], query['args'], query.get('scan_consistency'), query.get('ad_hoc'))
             for query in queries

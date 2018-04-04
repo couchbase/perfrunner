@@ -1,0 +1,43 @@
+[test_case]
+test = perfrunner.tests.rebalance.RebalanceKVTest
+
+[showfast]
+title = Rebalance time (min), 3 -> 3 (swap 1), 2B x 1KB, 15K ops/sec (90/10 R/W), Power distribution (α=140)
+
+[cluster]
+mem_quota = 20480
+initial_nodes = 3
+num_buckets = 1
+kernel_mem_limit = 34G
+kernel_mem_limit_services = kv
+
+[bucket]
+eviction_policy = fullEviction
+
+[load]
+items = 2000000000
+size = 1024
+workers = 100
+key_fmtr = hex
+doc_gen = large
+
+[hot_load]
+items = 2000000000
+workers = 100
+working_set = 1.6
+
+[access]
+creates = 5
+reads = 90
+updates = 5
+deletes = 0
+items = 2000000000
+workers = 40
+throughput = 15000
+power_alpha = 140
+
+[rebalance]
+nodes_after = 3
+swap = 1
+start_after = 1800
+stop_after = 1800

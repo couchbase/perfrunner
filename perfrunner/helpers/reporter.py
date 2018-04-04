@@ -20,7 +20,7 @@ class Reporter:
                  build: str):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
-        self.build = build
+        self.build = build + test_config.showfast.build_label
 
 
 class ShowFastReporter(Reporter):

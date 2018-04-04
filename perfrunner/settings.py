@@ -166,7 +166,7 @@ class ShowFastSettings:
         self.category = options.get('category', '')
         self.sub_category = options.get('sub_category', '')
         self.order_by = options.get('orderby', '')
-
+        self.build_label = options.get('build_label', '')
         self.threshold = int(options.get("threshold", self.THRESHOLD))
 
 

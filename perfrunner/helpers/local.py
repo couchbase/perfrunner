@@ -1,4 +1,4 @@
-import os.path
+import os
 import socket
 import time
 from datetime import date
@@ -13,13 +13,13 @@ from logger import logger
 from perfrunner.settings import ClusterSpec
 
 
-def extract_cb(filename):
+def extract_cb(filename: str):
     cmd = 'rpm2cpio ./{} | cpio -idm'.format(filename)
     with quiet():
         local(cmd)
 
 
-def cleanup(backup_dir):
+def cleanup(backup_dir: str):
     logger.info("Cleaning the disk before backup/export")
 
     # Remove files from the directory, if any.
@@ -37,8 +37,8 @@ def drop_caches():
     local('sync && echo 3 > /proc/sys/vm/drop_caches')
 
 
-def backup(master_node, cluster_spec, wrapper=False, mode=None,
-           compression=False):
+def backup(master_node:  str, cluster_spec: ClusterSpec, wrapper: bool = False,
+           mode: str = None, compression: bool = False):
     logger.info('Creating a new backup: {}'.format(cluster_spec.backup))
 
     if not mode:
@@ -50,13 +50,15 @@ def backup(master_node, cluster_spec, wrapper=False, mode=None,
         cbbackupmgr_backup(master_node, cluster_spec, mode, compression)
 
 
-def compact(cluster_spec, snapshots, wrapper=False):
+def compact(cluster_spec: ClusterSpec,
+            snapshots: List[str],
+            wrapper: bool = False):
     if wrapper:
         return
     cbbackupmgr_compact(cluster_spec, snapshots)
 
 
-def cbbackupwrapper(master_node, cluster_spec, mode):
+def cbbackupwrapper(master_node: str, cluster_spec: ClusterSpec, mode: str):
     postfix = ''
     if mode:
         postfix = '-m {}'.format(mode)
@@ -73,7 +75,8 @@ def cbbackupwrapper(master_node, cluster_spec, mode):
         local(cmd)
 
 
-def cbbackupmgr_backup(master_node, cluster_spec, mode, compression):
+def cbbackupmgr_backup(master_node: str, cluster_spec: ClusterSpec, mode: str,
+                       compression: bool):
     if not mode:
         local('./opt/couchbase/bin/cbbackupmgr config '
               '--archive {} --repo default'.format(cluster_spec.backup))
@@ -124,7 +127,7 @@ def cbbackupmgr_merge(cluster_spec: ClusterSpec, snapshots: List[str]):
     local(cmd)
 
 
-def calc_backup_size(cluster_spec) -> float:
+def calc_backup_size(cluster_spec: ClusterSpec) -> float:
     backup_size = local('du -sb0 {}'.format(cluster_spec.backup), capture=True)
     backup_size = backup_size.split()[0]
     backup_size = float(backup_size) / 2 ** 30  # B -> GB
@@ -132,7 +135,7 @@ def calc_backup_size(cluster_spec) -> float:
     return round(backup_size)
 
 
-def restore(master_node, cluster_spec, wrapper=False):
+def restore(master_node: str, cluster_spec: ClusterSpec, wrapper: bool = False):
     logger.info('Restore from {}'.format(cluster_spec.backup))
 
     if wrapper:
@@ -141,7 +144,7 @@ def restore(master_node, cluster_spec, wrapper=False):
         cbbackupmgr_restore(master_node, cluster_spec)
 
 
-def cbrestorewrapper(master_node, cluster_spec):
+def cbrestorewrapper(master_node: str, cluster_spec: ClusterSpec):
     cmd = './cbrestorewrapper {} http://{}:8091 -u {} -p {}'.format(
         cluster_spec.backup,
         master_node,
@@ -153,7 +156,7 @@ def cbrestorewrapper(master_node, cluster_spec):
         local(cmd)
 
 
-def cbbackupmgr_restore(master_node, cluster_spec):
+def cbbackupmgr_restore(master_node: str, cluster_spec: ClusterSpec):
     cmd = \
         './opt/couchbase/bin/cbbackupmgr restore ' \
         '--archive {} --repo default  --threads 16 ' \
@@ -167,7 +170,7 @@ def cbbackupmgr_restore(master_node, cluster_spec):
     local(cmd)
 
 
-def cbbackupmgr_compact(cluster_spec, snapshots):
+def cbbackupmgr_compact(cluster_spec: ClusterSpec, snapshots: List[str]):
     cmd = \
         './opt/couchbase/bin/cbbackupmgr compact ' \
         '--archive {} --repo default --backup {}'.format(
@@ -222,9 +225,10 @@ def cbimport(master_node: str, cluster_spec: ClusterSpec, data_type: str,
     local(cmd)
 
 
-def run_cbc_pillowfight(host, bucket, password,
-                        num_items, num_threads, num_cycles, size, writes,
-                        populate=False, ssl_mode='none', doc_gen='binary'):
+def run_cbc_pillowfight(host: str, bucket: str, password: str,
+                        num_items: int, num_threads: int, num_cycles: int,
+                        size: int, writes: int, populate: bool = False,
+                        ssl_mode: str ='none', doc_gen: str = 'binary'):
     cmd = 'cbc-pillowfight ' \
         '--password {password} ' \
         '--batch-size 1000 ' \
@@ -259,7 +263,8 @@ def run_cbc_pillowfight(host, bucket, password,
     local(cmd)
 
 
-def run_dcptest(host, username, password, bucket, num_items, num_connections):
+def run_dcptest(host: str, username: str, password: str, bucket: str,
+                num_items: int, num_connections: int):
     cmd = './dcptest ' \
         '-kvaddrs {host}:11210 ' \
         '-buckets {bucket} ' \
@@ -283,7 +288,7 @@ def run_dcptest(host, username, password, bucket, num_items, num_connections):
         local(cmd)
 
 
-def run_kvgen(hostname, num_docs, prefix):
+def run_kvgen(hostname: str, num_docs: int, prefix: str):
     cmd = './kvgen -hostname {} -docs {} -prefix {}'.format(hostname,
                                                             num_docs,
                                                             prefix)
@@ -292,9 +297,11 @@ def run_kvgen(hostname, num_docs, prefix):
         local(cmd)
 
 
-def run_ycsb(host, bucket, password, action, workload, items, workers, epoll,
-             ssl_keystore_file='', ssl_keystore_password='', soe_params=None,
-             ops=None, time=None, instance=0, ssl_mode='none'):
+def run_ycsb(host: str, bucket: str, password: str, action: str, workload: str,
+             items: int, workers: int, epoll: str, ssl_keystore_file: str ='',
+             ssl_keystore_password: str = '', soe_params: dict = None,
+             ops: int = None, time: int = None, instance: int = 0,
+             ssl_mode: str = 'none'):
     cmd = 'bin/ycsb {action} couchbase2 ' \
           '-P {workload} ' \
           '-p writeallfields=true ' \
@@ -336,7 +343,7 @@ def run_ycsb(host, bucket, password, action, workload, items, workers, epoll,
         local(cmd)
 
 
-def run_custom_cmd(path, binary, params):
+def run_custom_cmd(path: str, binary: str, params: str):
     logger.info("Executing command {} {}".format(binary, params))
     cmd = "{} {}".format(binary, params)
     with lcd(path):
@@ -350,7 +357,7 @@ def get_jts_logs(jts_home: str, local_dir: str):
         local("cp -r {} {}/".format(file, local_dir))
 
 
-def restart_memcached(mem_limit=10000, port=8000):
+def restart_memcached(mem_limit: int = 10000, port: int = 8000):
     cmd1 = 'killall -9 memcached'
     logger.info('Running: {}'.format(cmd1))
     with settings(warn_only=True):
@@ -387,8 +394,9 @@ def restart_memcached(mem_limit=10000, port=8000):
     logger.info('memcached restarted')
 
 
-def run_cbindexperf(path_to_tool, node, rest_username, rest_password,
-                    configfile, run_in_background=False):
+def run_cbindexperf(path_to_tool: str, node: str, rest_username: str,
+                    rest_password: str, configfile: str,
+                    run_in_background: bool = False):
     logger.info('Initiating scan workload')
     cmdstr = "{} -cluster {}:8091 -auth=\"{}:{}\" -configfile {} -resultfile result.json " \
              "-statsfile /root/statsfile" \
@@ -400,13 +408,13 @@ def run_cbindexperf(path_to_tool, node, rest_username, rest_password,
     return ret.return_code
 
 
-def kill_process(process):
+def kill_process(process: str):
     logger.info('Killing the following process: {}'.format(process))
     with quiet():
         local("killall -9 {}".format(process))
 
 
-def start_celery_worker(queue):
+def start_celery_worker(queue: str):
     with shell_env(PYTHONOPTIMIZE='1', PYTHONWARNINGS='ignore', C_FORCE_ROOT='1'):
         local('nohup env/bin/celery worker '
               '-A perfrunner.helpers.worker -Q {} > worker.log &'.format(queue))

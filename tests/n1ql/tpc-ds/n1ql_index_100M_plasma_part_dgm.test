@@ -1,0 +1,38 @@
+[test_case]
+test = perfrunner.tests.n1ql.TpcDsIndexTest
+
+[stats]
+server_processes = projector
+
+[cluster]
+mem_quota = 51200
+index_mem_quota = 25600
+initial_nodes = 6
+num_buckets = 1
+kernel_mem_limit = 34G
+
+[bucket]
+replica_number = 0
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[restore]
+import_file = /home/backups/tpc-ds.json
+
+[load]
+doc_gen = tpc_ds
+
+[n1ql]
+indexes =
+    CREATE INDEX ag1 ON `bucket-1`(DATE_PART_STR(sold_date, 'year'), customer.state, store, quantity) PARTITION BY HASH(store) WITH {"defer_build": true};
+    CREATE INDEX ag2 ON `bucket-1`(DATE_PART_STR(sold_date, 'year'), DATE_PART_STR(sold_date, 'week'), WEEKDAY_STR(sold_date), sales_price) PARTITION BY HASH(sold_date) WITH {"defer_build": true};
+    CREATE INDEX ag3 ON `bucket-1`(item.manufacturer_id, DATE_PART_STR(sold_date, 'month'), DATE_PART_STR(sold_date, 'year'), item.brand, sales_price) PARTITION BY HASH(sold_date) WITH {"defer_build": true};
+    CREATE INDEX ag4 ON `bucket-1`(DATE_PART_STR(sold_date, 'year'), customer.preferred_flag, customer.birth_country, wholesale_cost, sales_price) PARTITION BY HASH(customer.birth_country) WITH {"defer_build": true};
+    CREATE INDEX ag5 ON `bucket-1`(DATE_PART_STR(sold_date, 'year'), DATE_PART_STR(sold_date, 'month'), sales_price, customer.state) PARTITION BY HASH(customer.state) WITH {"defer_build": true};
+    CREATE INDEX ag6 ON `bucket-1`(customer.gender, customer.marital_status, customer.education_status, item.id, quantity, list_price, coupon_amt, sales_price) PARTITION BY HASH(item.id) WITH {"defer_build": true};
+    CREATE INDEX ag7 ON `bucket-1`(customer.zip, customer.preferred_flag) PARTITION BY HASH(customer.zip) WITH {"defer_build": true};
+    CREATE INDEX ag8 ON `bucket-1`(customer.county, DATE_PART_STR(sold_date, 'year'), DATE_PART_STR(sold_date, 'month'), customer.gender, customer.marital_status, customer.education_status, customer.purchase_estimate, customer.credit_rating, customer.dep_count, customer.dep_employed_count, customer.dep_college_count) PARTITION BY HASH(customer.county) WITH {"defer_build": true};
+    CREATE INDEX ag9 ON `bucket-1`(item.category, DATE_PART_STR(sold_date, 'day_of_year'), sales_price) PARTITION BY HASH(item.category) WITH {"defer_build": true};
+    CREATE INDEX ag10 ON `bucket-1`(customer.zip, DATE_PART_STR(sold_date, 'year'), DATE_PART_STR(sold_date, 'quarter'), sales_price) PARTITION BY HASH(customer.zip) WITH {"defer_build": true};
+    BUILD  INDEX ON `bucket-1`(ag1, ag2, ag3, ag4, ag5, ag6, ag7, ag8, ag9, ag10);

@@ -72,7 +72,7 @@ class BigFunTest(PerfTest):
         return [(query, latency) for query, latency in results]
 
     def run(self):
-        self.restore()
+        self.restore_local()
         self.wait_for_persistence()
 
 

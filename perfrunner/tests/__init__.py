@@ -5,6 +5,7 @@ from typing import Callable
 
 from logger import logger
 
+from perfrunner.helpers import local
 from perfrunner.helpers.cluster import ClusterManager
 from perfrunner.helpers.memcached import MemcachedHelper
 from perfrunner.helpers.metrics import MetricHelper
@@ -139,6 +140,16 @@ class PerfTest:
         self.remote.restore_data(
             self.test_config.restore_settings.backup_storage,
             self.test_config.restore_settings.backup_repo,
+        )
+
+    def restore_local(self):
+        logger.info('Restoring data')
+        local.extract_cb(filename='couchbase.rpm')
+        local.cbbackupmgr_restore(
+            master_node=self.master_node,
+            cluster_spec=self.cluster_spec,
+            archive=self.test_config.restore_settings.backup_storage,
+            repo=self.test_config.restore_settings.backup_repo,
         )
 
     def import_data(self):

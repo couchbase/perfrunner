@@ -270,7 +270,11 @@ class TpcDsThroughputTest(TpcDsTest, N1QLThroughputTest):
 
 class TpcDsIndexTest(TpcDsTest):
 
-    COLLECTORS = {}
+    COLLECTORS = {
+        'memory': False,
+        'net': False,
+        'secondary_debugstats_index': True,
+    }
 
     @with_stats
     @with_profiles

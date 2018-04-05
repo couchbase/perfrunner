@@ -12,13 +12,13 @@ import (
 )
 
 const (
-	baseURL = "http://%s:8091/settings/rbac/users/local/%s"
+	baseURL = "http://%s/settings/rbac/users/local/%s"
 )
 
 var (
-	numUsers, numWorkers      int
-	hostname, admin, password string
-	httpClient                *http.Client
+	numUsers, numWorkers     int
+	address, admin, password string
+	httpClient               *http.Client
 )
 
 func newBody() io.Reader {
@@ -32,7 +32,7 @@ func newBody() io.Reader {
 func addUser(user string) error {
 	log.Printf("Adding a new user: %s\n", user)
 
-	req, err := http.NewRequest("PUT", fmt.Sprintf(baseURL, hostname, user), newBody())
+	req, err := http.NewRequest("PUT", fmt.Sprintf(baseURL, address, user), newBody())
 	if err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func main() {
 	flag.IntVar(&numUsers, "users", 30000, "Number of users to create")
 	flag.IntVar(&numWorkers, "workers", 500, "Number of workers to use")
 
-	flag.StringVar(&hostname, "hostname", "127.0.0.1", "Target hostname")
+	flag.StringVar(&address, "address", "127.0.0.1:8091", "Target address")
 	flag.StringVar(&admin, "admin", "Administrator", "Administrator username")
 	flag.StringVar(&password, "password", "password", "Administrator password")
 

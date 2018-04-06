@@ -32,6 +32,7 @@ from spring.docgen import (
     MovingWorkingSetKey,
     NestedDocument,
     NewOrderedKey,
+    PackageDocument,
     PowerKey,
     ProfileDocument,
     RefDocument,
@@ -180,6 +181,8 @@ class Worker:
                                                       self.ws.size_variation_max)
         elif self.ws.doc_gen == 'eventing_small':
             self.docs = EventingSmallDocument(self.ws.size)
+        elif self.ws.doc_gen == 'package':
+            self.docs = PackageDocument(self.ws.size)
 
     def init_db(self):
         params = {
@@ -619,6 +622,8 @@ class N1QLWorker(Worker):
                                               num_docs=self.ws.items)
         elif self.ws.doc_gen == 'tpc_ds':
             self.docs = TpcDsDocument()
+        elif self.ws.doc_gen == 'package':
+            self.docs = PackageDocument(self.ws.size)
 
     def init_creds(self):
         for bucket in getattr(self.ws, 'buckets', []):

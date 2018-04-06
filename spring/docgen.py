@@ -1,6 +1,7 @@
 import math
 import random
 import time
+from datetime import datetime
 from typing import Iterator, List, Tuple
 
 import numpy as np
@@ -16,6 +17,7 @@ from spring.dictionary import (
     MARITAL_STATUSES,
     NUM_STATES,
     NUM_STREET_SUFFIXES,
+    PACKAGE_STATUSES,
     STATES,
     STREET_SUFFIX,
     YEARS,
@@ -1232,4 +1234,57 @@ class TpcDsDocument:
             'quarter': self.quarter,
             'year': self.year,
             'zip_codes': self.zip_codes,
+        }
+
+
+class PackageDocument(Document):
+
+    @staticmethod
+    def build_account_id(key: int, repeated: int) -> str:
+        return '%016x' % spooky.hash64(str(key // repeated))
+
+    @property
+    def package_status(self) -> str:
+        idx = random.randint(0, len(PACKAGE_STATUSES) - 1)
+        return PACKAGE_STATUSES[idx]
+
+    @staticmethod
+    def build_bcdn_number(key: str) -> str:
+        return '%032x' % spooky.hash128(key)
+
+    @staticmethod
+    def build_shipping_date(key: int) -> str:
+        return datetime.fromtimestamp(key).strftime('%Y-%m-%d %H:%M:%S')
+
+    @staticmethod
+    def address(key: int, alphabet: str) -> str:
+        suffix = STREET_SUFFIX[key % len(STREET_SUFFIX)]
+        return '%d %s %s' % (int(alphabet[:4], 16), alphabet[50:], suffix)
+
+    @property
+    def postal_code(self) -> str:
+        idx = random.randint(0, len(ZIP_CODES) - 1)
+        return ZIP_CODES[idx]
+
+    @property
+    def weight(self) -> float:
+        return round(10 ** 14 * random.random(), 2)
+
+    @property
+    def charges(self) -> float:
+        return round(10 ** 2 * random.random(), 2)
+
+    def next(self, key: Key) -> dict:
+        alphabet = self.build_alphabet(key.string)
+
+        return {
+            'minorAccountId': self.build_account_id(key.number, 10 ** 6),
+            'majorAccountId': self.build_account_id(key.number, 10 ** 7),
+            'packageStatus': self.package_status,
+            'bcdnNumber': self.build_bcdn_number(key.string),
+            'shippingDate': self.build_shipping_date(key.number),
+            'address': self.address(key.number, alphabet),
+            'postalCode': self.postal_code,
+            'weight': self.weight,
+            'charges': self.charges,
         }

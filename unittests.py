@@ -572,6 +572,19 @@ class SpringTest(TestCase):
             self.assertNotIn(_hash, hashes)
             hashes.add(_hash)
 
+    def test_package_doc(self):
+        ws = WorkloadSettings(items=10 ** 6, workers=100, working_set=15,
+                              working_set_access=50, working_set_moving_docs=0,
+                              key_fmtr='hex')
+
+        generator = docgen.PackageDocument(avg_size=0)
+        dates = set()
+        for key in docgen.SequentialKey(sid=50, ws=ws, prefix='test'):
+            doc = generator.next(key)
+            dates.add(doc['shippingDate'])
+            self.assertEqual(doc['minorAccountId'], doc['majorAccountId'])
+        self.assertEqual(len(dates), ws.items // ws.workers)
+
 
 class QueryTest(TestCase):
 

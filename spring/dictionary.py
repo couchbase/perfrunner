@@ -9296,5 +9296,15 @@ ZIP_CODES = (
     "97441",
 )
 
+PACKAGE_STATUSES = (
+    'Manifest',
+    'In-Transit',
+    'Exception',
+    'Out for Delivery',
+    'Ready for Pickup',
+    'Delivered',
+    'Void',
+)
+
 with open('spring/dictionary.txt') as fh:
     LOREM = fh.read()

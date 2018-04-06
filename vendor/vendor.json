@@ -3,10 +3,39 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "eCBHaFtMiLmJjvYgxv7wUBnED2c=",
+			"path": "github.com/andelf/go-curl",
+			"revision": "f8b334df3789fbdf98df3b3b22815e958b956c19"
+		},
+		{
 			"checksumSHA1": "oJGkod8y/3GTbKfazzQM+nQOPR0=",
 			"path": "github.com/golang/protobuf/proto",
 			"revision": "4bd1920723d7b7c925de087aa32e2187708897f7",
 			"revisionTime": "2016-11-09T07:27:36Z"
+		},
+		{
+			"checksumSHA1": "p/8vSviYF91gFflhrt5vkyksroo=",
+			"path": "github.com/golang/snappy",
+			"revision": "553a641470496b2327abcac10b36396bd98e45c9",
+			"revisionTime": "2017-02-15T23:32:05Z"
+		},
+		{
+			"checksumSHA1": "uFNLkTxk8BkHTk0Jcub2lj2BX4M=",
+			"path": "github.com/google/uuid",
+			"revision": "dec09d789f3dba190787f8b4454c7d3c936fed9e",
+			"revisionTime": "2017-11-29T19:10:14Z"
+		},
+		{
+			"checksumSHA1": "1oyWi12mt8Ij4x9EWTTanAsvoHc=",
+			"path": "github.com/opentracing/opentracing-go",
+			"revision": "328fceb7548c744337cd010914152b74eaf4c4ab",
+			"revisionTime": "2018-03-15T23:26:11Z"
+		},
+		{
+			"checksumSHA1": "tnkdNJbJxNKuPZMWapP1xhKIIGw=",
+			"path": "github.com/opentracing/opentracing-go/log",
+			"revision": "328fceb7548c744337cd010914152b74eaf4c4ab",
+			"revisionTime": "2018-03-15T23:26:11Z"
 		},
 		{
 			"checksumSHA1": "dhaHZDbgd66Fqwe6eB4lKM87ITs=",
@@ -39,9 +68,82 @@
 			"revisionTime": "2016-08-12T11:08:18Z"
 		},
 		{
-			"checksumSHA1": "eCBHaFtMiLmJjvYgxv7wUBnED2c=",
-			"path": "github.com/andelf/go-curl",
-			"revision": "f8b334df3789fbdf98df3b3b22815e958b956c19"
+			"checksumSHA1": "GtamqiJoL7PGHsN454AoffBFMa8=",
+			"path": "golang.org/x/net/context",
+			"revision": "b3c676e531a6dc479fa1b35ac961c13f5e2b4d2e",
+			"revisionTime": "2018-03-20T04:45:06Z"
+		},
+		{
+			"checksumSHA1": "9pU0E/UV32KU6ci2x6BqCPWeseI=",
+			"path": "golang.org/x/net/http2",
+			"revision": "b3c676e531a6dc479fa1b35ac961c13f5e2b4d2e",
+			"revisionTime": "2018-03-20T04:45:06Z"
+		},
+		{
+			"checksumSHA1": "LW///cttbVyQo4Qh11kdIt0VMjs=",
+			"path": "golang.org/x/net/http2/hpack",
+			"revision": "b3c676e531a6dc479fa1b35ac961c13f5e2b4d2e",
+			"revisionTime": "2018-03-20T04:45:06Z"
+		},
+		{
+			"checksumSHA1": "RcrB7tgYS/GMW4QrwVdMOTNqIU8=",
+			"path": "golang.org/x/net/idna",
+			"revision": "b3c676e531a6dc479fa1b35ac961c13f5e2b4d2e",
+			"revisionTime": "2018-03-20T04:45:06Z"
+		},
+		{
+			"checksumSHA1": "3xyuaSNmClqG4YWC7g0isQIbUTc=",
+			"path": "golang.org/x/net/lex/httplex",
+			"revision": "b3c676e531a6dc479fa1b35ac961c13f5e2b4d2e",
+			"revisionTime": "2018-03-20T04:45:06Z"
+		},
+		{
+			"checksumSHA1": "CbpjEkkOeh0fdM/V8xKDdI0AA88=",
+			"path": "golang.org/x/text/secure/bidirule",
+			"revision": "2cb43934f0eece38629746959acc633cba083fe4",
+			"revisionTime": "2018-03-27T13:30:03Z"
+		},
+		{
+			"checksumSHA1": "ziMb9+ANGRJSSIuxYdRbA+cDRBQ=",
+			"path": "golang.org/x/text/transform",
+			"revision": "2cb43934f0eece38629746959acc633cba083fe4",
+			"revisionTime": "2018-03-27T13:30:03Z"
+		},
+		{
+			"checksumSHA1": "w8kDfZ1Ug+qAcVU0v8obbu3aDOY=",
+			"path": "golang.org/x/text/unicode/bidi",
+			"revision": "2cb43934f0eece38629746959acc633cba083fe4",
+			"revisionTime": "2018-03-27T13:30:03Z"
+		},
+		{
+			"checksumSHA1": "BCNYmf4Ek93G4lk5x3ucNi/lTwA=",
+			"path": "golang.org/x/text/unicode/norm",
+			"revision": "2cb43934f0eece38629746959acc633cba083fe4",
+			"revisionTime": "2018-03-27T13:30:03Z"
+		},
+		{
+			"checksumSHA1": "nwWnL7vtunONjS9AkkyTTKmXcuI=",
+			"path": "gopkg.in/couchbase/gocb.v1",
+			"revision": "80515054af093947da8fe671f4cd9051acb3d725",
+			"revisionTime": "2018-03-23T18:48:40Z"
+		},
+		{
+			"checksumSHA1": "YioXyQhnS0gzoFFiZG1+7fy5Z60=",
+			"path": "gopkg.in/couchbase/gocbcore.v7",
+			"revision": "d7d7739c944e1215608411cdcfc76b7008274722",
+			"revisionTime": "2018-03-22T21:08:48Z"
+		},
+		{
+			"checksumSHA1": "iN5KS+2AYwlTvHeQlERJlk3QNsg=",
+			"path": "gopkg.in/couchbaselabs/gocbconnstr.v1",
+			"revision": "710456e087a6d497e87f41d0a9d98d6a75672186",
+			"revisionTime": "2017-08-24T23:00:22Z"
+		},
+		{
+			"checksumSHA1": "F4pFTVdjF0XZVWbdFHIPJKdVPFM=",
+			"path": "gopkg.in/couchbaselabs/jsonx.v1",
+			"revision": "5b7baa20429a46a5543ee259664cc86502738cad",
+			"revisionTime": "2016-12-13T19:40:16Z"
 		}
 	],
 	"rootPath": "github.com/couchbase/perfrunner"

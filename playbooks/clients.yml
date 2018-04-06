@@ -26,7 +26,7 @@
       - libcurl4-openssl-dev
       - memcached
   - name: adding Couchbase repository
-    apt: deb=http://packages.couchbase.com/releases/couchbase-release/couchbase-release-1.0-2-amd64.deb
+    apt: deb=http://packages.couchbase.com/releases/couchbase-release/couchbase-release-1.0-4-amd64.deb
   - name: installing libcouchbase
     apt: name={{item}} update_cache=yes
     with_items:

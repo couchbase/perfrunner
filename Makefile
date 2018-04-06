@@ -6,6 +6,8 @@ ENV := env
 PYTHON := python3.5
 PYTHON_PROJECTS := cbagent perfdaily perfrunner scripts spring
 
+.PHONY: docker
+
 all:
 	virtualenv --quiet --python ${PYTHON} ${ENV}
 	${ENV}/bin/pip install --upgrade --quiet pip wheel
@@ -60,3 +62,6 @@ rachell:
 
 loader:
 	go build ./go/loader
+
+docker:
+	docker build -t docker.io/perflab/perfrunner docker

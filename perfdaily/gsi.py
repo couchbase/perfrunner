@@ -1,7 +1,7 @@
 from perfdaily import DailyTest
-from perfrunner.tests.gsi import InitialIndexTest as _InitialIndexTest
+from perfrunner.tests.gsi import FastInitialIndexTest
 
 
-class InitialIndexTest(DailyTest, _InitialIndexTest):
+class InitialIndexTest(DailyTest, FastInitialIndexTest):
 
     pass

@@ -1,8 +1,6 @@
-from threading import Thread
-
 from perfrunner.helpers.cbmonitor import timeit, with_stats
-from perfrunner.helpers.local import run_kvgen
 from perfrunner.tests import PerfTest
+from perfrunner.workloads.kvgen import kvgen
 
 
 class IndexTest(PerfTest):
@@ -13,32 +11,6 @@ class IndexTest(PerfTest):
         'secondary_debugstats_bucket': True,
         'secondary_debugstats_index': True,
     }
-
-    NUM_KVGEN_INSTANCES = 5
-
-    def kvgen(self):
-        num_docs = self.test_config.load_settings.items // self.NUM_KVGEN_INSTANCES
-
-        threads = []
-        for i in range(self.NUM_KVGEN_INSTANCES):
-            prefix = 'prefix-{}'.format(i)
-            thread = Thread(target=run_kvgen, args=(self.master_node, num_docs,
-                                                    prefix))
-            threads.append(thread)
-
-        return threads
-
-    def load(self, *args):
-        threads = self.kvgen()
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
-
-    def bg_load(self):
-        threads = self.kvgen()
-        for t in threads:
-            t.start()
 
     @with_stats
     @timeit
@@ -62,7 +34,7 @@ class IndexTest(PerfTest):
 
         self.init_index()
 
-        self.bg_load()
+        self.access_bg()
         self.incr_index()
 
 
@@ -75,3 +47,17 @@ class InitialIndexTest(IndexTest):
         time_elapsed = self.init_index()
 
         self.report_kpi(time_elapsed)
+
+
+class FastIndexTest(PerfTest):
+
+    def load(self, *args):
+        kvgen(self.master_node, self.test_config.load_settings.items, wait=True)
+
+    def access_bg(self, *args):
+        kvgen(self.master_node, self.test_config.load_settings.items, wait=False)
+
+
+class FastInitialIndexTest(FastIndexTest, InitialIndexTest):
+
+    pass

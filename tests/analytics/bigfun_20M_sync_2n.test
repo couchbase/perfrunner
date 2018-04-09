@@ -27,3 +27,4 @@ eviction_policy = fullEviction
 [restore]
 backup_storage = /backups
 backup_repo = bigfun20M
+threads = 8

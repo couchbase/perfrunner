@@ -55,9 +55,7 @@ class JTSTest(PerfTest):
 class FTSTest(JTSTest):
     def __init__(self, cluster_spec, test_config, verbose):
         super().__init__(cluster_spec, test_config, verbose)
-        self.all_fts_nodes = \
-            self.cluster_spec.servers_by_role('fts')[:test_config.cluster.initial_nodes[0]]
-        self.fts_master_node = self.all_fts_nodes[0]
+        self.fts_master_node = self.fts_nodes[0]
 
     def delete_index(self):
         self.rest.delete_fts_index(self.fts_master_node,
@@ -81,7 +79,7 @@ class FTSTest(JTSTest):
                                                 int(self.access.test_total_docs))
 
     def wait_for_index_persistence(self):
-        self.monitor.monitor_fts_index_persistence(self.all_fts_nodes,
+        self.monitor.monitor_fts_index_persistence(self.fts_nodes,
                                                    self.access.couchbase_index_name)
 
     def cleanup_and_restore(self):
@@ -148,7 +146,7 @@ class FTSIndexTest(FTSTest):
                                    self.access.couchbase_index_name,
                                    'num_bytes_used_disk')
         size = 0
-        for host in self.all_fts_nodes:
+        for host in self.fts_nodes:
             stats = self.rest.get_fts_stats(host)
             size += stats[metric]
         return size

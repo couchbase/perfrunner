@@ -44,7 +44,7 @@ class IndexTest(PerfTest):
         storage = self.test_config.gsi_settings.storage
         indexes = self.test_config.gsi_settings.indexes
 
-        for server in self.cluster_spec.servers_by_role('index'):
+        for server in self.index_nodes:
             for bucket in self.test_config.buckets:
                 for name, field in indexes.items():
                     self.rest.create_index(host=server,
@@ -56,13 +56,13 @@ class IndexTest(PerfTest):
     @with_stats
     @timeit
     def init_index(self):
-        for server in self.cluster_spec.servers_by_role('index'):
+        for server in self.index_nodes:
             self.monitor.monitor_indexing(server)
 
     @with_stats
     @timeit
     def incr_index(self):
-        for server in self.cluster_spec.servers_by_role('index'):
+        for server in self.index_nodes:
             self.monitor.monitor_indexing(server)
 
     def _report_kpi(self, indexing_time: float):

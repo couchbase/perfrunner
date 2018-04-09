@@ -15,11 +15,6 @@ class N1QLTest(PerfTest):
         'secondary_stats': True,
     }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.query_nodes = self.cluster_spec.servers_by_role('n1ql')
-
     def load(self, *args):
         """Create two data sets with different key prefixes.
 

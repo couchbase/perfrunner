@@ -1,7 +1,7 @@
 import glob
 import shutil
 import time
-from typing import Callable
+from typing import Callable, List
 
 from logger import logger
 
@@ -73,6 +73,26 @@ class PerfTest:
 
         if failure:
             logger.interrupt(failure)
+
+    @property
+    def query_nodes(self) -> List[str]:
+        return self.rest.get_active_nodes_by_role(self.master_node, 'n1ql')
+
+    @property
+    def index_nodes(self) -> List[str]:
+        return self.rest.get_active_nodes_by_role(self.master_node, 'index')
+
+    @property
+    def fts_nodes(self) -> List[str]:
+        return self.rest.get_active_nodes_by_role(self.master_node, 'fts')
+
+    @property
+    def analytics_nodes(self) -> List[str]:
+        return self.rest.get_active_nodes_by_role(self.master_node, 'cbas')
+
+    @property
+    def eventing_nodes(self) -> List[str]:
+        return self.rest.get_active_nodes_by_role(self.master_node, 'eventing')
 
     def tear_down(self):
         if self.test_config.test_case.use_workers:

@@ -50,11 +50,11 @@ class FTSCollector(Collector):
         self.cbft_stats = dict()
         self.fts_index_name = test.access.couchbase_index_name
         self.allbuckets = [x for x in self.get_buckets()]
-        self.all_fts_nodes = test.all_fts_nodes
+        self.fts_nodes = test.fts_nodes
         self.rest = rest.RestHelper(test.cluster_spec)
 
     def collect_stats(self):
-        for host in self.all_fts_nodes:
+        for host in self.fts_nodes:
             self.cbft_stats[host] = self.rest.get_fts_stats(host)
 
     def get_fts_stats_by_name(self, host, bucket, index, name):
@@ -69,7 +69,7 @@ class FTSCollector(Collector):
     def measure(self):
         stats = dict()
         for metric in self.METRICS:
-            for host in self.all_fts_nodes:
+            for host in self.fts_nodes:
                 if host not in stats:
                     stats[host] = dict()
                 stats[host][metric] = self.get_fts_stats_by_name(host,
@@ -80,14 +80,14 @@ class FTSCollector(Collector):
     def update_metadata(self):
         self.mc.add_cluster()
         for metric in self.METRICS:
-            for host in self.all_fts_nodes:
+            for host in self.fts_nodes:
                 self.mc.add_metric(metric, server=host, collector=self.COLLECTOR)
 
     def sample(self):
         self.collect_stats()
         self.update_metric_metadata(self.METRICS)
         samples = self.measure()
-        for host in self.all_fts_nodes:
+        for host in self.fts_nodes:
             if host in samples:
                 self.store.append(samples[host],
                                   cluster=self.cluster,

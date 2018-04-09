@@ -16,9 +16,6 @@ class BigFunTest(PerfTest):
 
         self.num_items = 0
 
-        self.analytics_nodes = self.rest.get_active_nodes_by_role(self.master_node,
-                                                                  'cbas')
-
     def create_bucket(self, bucket: str):
         logger.info('Creating a new bucket: {}'.format(bucket))
         statement = 'CREATE BUCKET `{bucket}` WITH {{"name": "{bucket}"}};'\

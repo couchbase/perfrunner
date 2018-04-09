@@ -41,8 +41,6 @@ class SecondaryIndexTest(PerfTest):
         self.storage = self.test_config.gsi_settings.storage
         self.indexes = self.test_config.gsi_settings.indexes
 
-        self.index_nodes = self.cluster_spec.servers_by_role('index')
-
         self.bucket = self.test_config.buckets[0]
         self.target_iterator = TargetIterator(self.cluster_spec, self.test_config, "gsi")
 

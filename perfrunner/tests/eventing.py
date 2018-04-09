@@ -37,9 +37,6 @@ class EventingTest(PerfTest):
         self.time = self.test_config.access_settings.time
         self.rebalance_settings = self.test_config.rebalance_settings
 
-        self.eventing_nodes = self.rest.get_active_nodes_by_role(master_node=self.master_node,
-                                                                 role='eventing')
-
         for master in self.cluster_spec.masters:
             self.rest.add_rbac_user(
                 host=master,
@@ -252,7 +249,7 @@ class FunctionsIndexThroughputTest(EventingTest):
         storage = self.test_config.gsi_settings.storage
         indexes = self.test_config.gsi_settings.indexes
 
-        for server in self.cluster_spec.servers_by_role('index'):
+        for server in self.index_nodes:
             for bucket in self.test_config.buckets:
                 for name, field in indexes.items():
                     self.rest.create_index(host=server,

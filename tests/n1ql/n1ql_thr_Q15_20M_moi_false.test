@@ -27,8 +27,8 @@ size = 1024
 workers = 80
 doc_gen = profile
 
-[n1ql]
-indexes =
+[index]
+statements =
     CREATE INDEX tokens_idx ON `bucket-1`(DISTINCT ARRAY s FOR s IN TOKENS(address) END);
 
 [access]

@@ -28,8 +28,8 @@ size = 1024
 workers = 80
 doc_gen = reverse_lookup
 
-[n1ql]
-indexes =
+[index]
+statements =
     CREATE INDEX idx ON `bucket-1`(capped_small, year);
 
 [access]

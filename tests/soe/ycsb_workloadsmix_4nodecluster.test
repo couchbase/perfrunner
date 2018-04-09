@@ -27,8 +27,8 @@ workers = 100
 workload_instances = 4
 inserts_per_workerinstance = 10000000
 
-[n1ql]
-indexes =
+[index]
+statements =
     CREATE PRIMARY INDEX primary_idx ON `bucket-1` WITH {"num_replica": 3, "defer_build": true}
     CREATE INDEX idx1 ON `bucket-1`(address.zip) WITH {"num_replica": 3, "defer_build": true};
     CREATE INDEX idx2 ON `bucket-1`(address.country, age_group, DATE_PART_STR(dob,'year')) WITH {"num_replica": 3, "defer_build": true};

@@ -693,12 +693,18 @@ class DCPSettings:
 class N1QLSettings:
 
     def __init__(self, options: dict):
-        self.index_statements = self.split_statements(options.get('indexes'))
-
         self.cbq_settings = {
-            option: maybe_atoi(value)
-            for option, value in options.items() if option != 'indexes'
+            option: maybe_atoi(value) for option, value in options.items()
         }
+
+    def __str__(self) -> str:
+        return str(self.__dict__)
+
+
+class IndexSettings:
+
+    def __init__(self, options: dict):
+        self.statements = self.split_statements(options.get('statements'))
 
     def split_statements(self, statements: str) -> List[str]:
         if statements:
@@ -707,7 +713,7 @@ class N1QLSettings:
 
     @property
     def indexes(self) -> Iterator[str]:
-        for statement in self.index_statements:
+        for statement in self.statements:
             match = re.search(r'CREATE .*INDEX (.*) ON', statement)
             if match:
                 yield match.group(1)
@@ -922,6 +928,11 @@ class TestConfig(Config):
     def dcp_settings(self) -> DCPSettings:
         options = self._get_options_as_dict('dcp')
         return DCPSettings(options)
+
+    @property
+    def index_settings(self) -> IndexSettings:
+        options = self._get_options_as_dict('index')
+        return IndexSettings(options)
 
     @property
     def n1ql_settings(self) -> N1QLSettings:

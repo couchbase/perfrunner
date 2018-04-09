@@ -29,8 +29,8 @@ doc_gen = array_indexing
 doc_partitions = 1
 array_size = 10
 
-[n1ql]
-indexes =
+[index]
+statements =
     CREATE INDEX by_achievements1 ON `bucket-1`(DISTINCT ARRAY i FOR i IN achievements1 END);
 
 [access]

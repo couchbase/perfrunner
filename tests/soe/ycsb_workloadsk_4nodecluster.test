@@ -27,8 +27,8 @@ workers = 100
 workload_instances = 4
 inserts_per_workerinstance = 10000000
 
-[n1ql]
-indexes =
+[index]
+statements =
     CREATE INDEX sk ON `bucket-1`(DISTINCT ARRAY (DISTINCT ARRAY (v.country || "." || c) FOR c IN v.cities END) FOR v IN visited_places END) WITH {"num_replica": 3};
 
 [access]

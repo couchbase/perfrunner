@@ -27,8 +27,8 @@ workers = 100
 workload_instances = 4
 inserts_per_workerinstance = 10000000
 
-[n1ql]
-indexes =
+[index]
+statements =
     CREATE INDEX sj ON `bucket-1`(DISTINCT devices) WITH {"num_replica": 3}
 
 [access]

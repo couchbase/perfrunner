@@ -26,8 +26,8 @@ import_file = /home/backups/tpc-ds.json
 [load]
 doc_gen = tpc_ds
 
-[n1ql]
-indexes =
+[index]
+statements =
     CREATE INDEX ag2 ON `bucket-1`(DATE_PART_STR(sold_date, 'year'), DATE_PART_STR(sold_date, 'week'), WEEKDAY_STR(sold_date), sales_price);
 
 [access]

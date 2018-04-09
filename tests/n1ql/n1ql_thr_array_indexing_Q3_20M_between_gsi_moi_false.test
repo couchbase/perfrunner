@@ -27,8 +27,8 @@ size = 1024
 workers = 80
 doc_gen = array_indexing
 
-[n1ql]
-indexes =
+[index]
+statements =
     CREATE INDEX by_achievements2 ON `bucket-1`(DISTINCT ARRAY i FOR i IN achievements2 END);
 
 [access]

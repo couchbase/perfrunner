@@ -56,12 +56,6 @@ class N1QLTest(PerfTest):
 
         super().access(settings=access_settings)
 
-    def build_indexes(self):
-        logger.info('Creating and building indexes')
-
-        for statement in self.test_config.n1ql_settings.index_statements:
-            self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
-
     def store_plans(self):
         logger.info('Storing query plans')
 
@@ -75,7 +69,7 @@ class N1QLTest(PerfTest):
         self.load()
         self.wait_for_persistence()
 
-        self.build_indexes()
+        self.create_indexes()
         self.wait_for_indexing()
 
         self.store_plans()
@@ -178,7 +172,7 @@ class N1QLBulkTest(N1QLTest):
         self.load()
         self.wait_for_persistence()
 
-        self.build_indexes()
+        self.create_indexes()
         self.wait_for_indexing()
 
         self.store_plans()
@@ -221,7 +215,7 @@ class N1QLXattrThroughputTest(N1QLThroughputTest):
         self.xattr_load()
         self.wait_for_persistence()
 
-        self.build_indexes()
+        self.create_indexes()
         self.wait_for_indexing()
 
         self.store_plans()
@@ -246,7 +240,7 @@ class TpcDsTest(N1QLTest):
     def run(self):
         self.import_data()
 
-        self.build_indexes()
+        self.create_indexes()
         self.wait_for_indexing()
 
         self.store_plans()
@@ -276,11 +270,11 @@ class TpcDsIndexTest(TpcDsTest):
 
     @with_stats
     @with_profiles
-    def build_indexes(self):
-        super().build_indexes()
+    def create_indexes(self):
+        super().create_indexes()
 
     def run(self):
         self.import_data()
 
-        self.build_indexes()
+        self.create_indexes()
         self.wait_for_indexing()

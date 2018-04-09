@@ -27,8 +27,8 @@ size = 1024
 workers = 80
 doc_gen = join
 
-[n1ql]
-indexes =
+[index]
+statements =
     CREATE INDEX by_replies ON `bucket-1`(ALL ARRAY r.`user` FOR r IN replies END, title);
 
 [access]

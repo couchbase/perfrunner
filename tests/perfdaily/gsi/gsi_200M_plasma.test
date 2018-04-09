@@ -20,7 +20,6 @@ ipv6 = 1
 
 [secondary]
 indexer.settings.storage_mode = plasma
-indexes = by_email:email
 
 [compaction]
 db_percentage = 100
@@ -30,3 +29,7 @@ replica_number = 0
 
 [load]
 items = 200000000
+
+[index]
+statements =
+    CREATE INDEX by_email ON `bucket-1`(email);

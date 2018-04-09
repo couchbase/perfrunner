@@ -34,8 +34,8 @@ size = 1024
 workers = 80
 xattr_field = user
 
-[n1ql]
-indexes =
+[index]
+statements =
     CREATE INDEX by_email ON `bucket-1`(META().xattrs.`user`.email);
 
 [access]

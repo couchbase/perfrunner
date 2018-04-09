@@ -28,8 +28,8 @@ size = 1024
 workers = 80
 doc_gen = reverse_lookup
 
-[n1ql]
-indexes =
+[index]
+statements =
     CREATE PRIMARY INDEX primary_idx ON `bucket-1`;
 
 [access]

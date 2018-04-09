@@ -27,8 +27,8 @@ size = 1024
 workers = 80
 doc_gen = ext_reverse_lookup,join,ref
 
-[n1ql]
-indexes =
+[index]
+statements =
     CREATE INDEX by_capped ON `bucket-2`(capped);
 
 [access]

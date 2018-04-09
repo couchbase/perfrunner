@@ -22,8 +22,8 @@ import_file = /home/backups/tpc-ds.json
 [load]
 doc_gen = tpc_ds
 
-[n1ql]
-indexes =
+[index]
+statements =
     CREATE INDEX ag1 ON `bucket-1`(DATE_PART_STR(sold_date, 'year'), customer.state, store, quantity) PARTITION BY HASH(store) WITH {"defer_build": true};
     CREATE INDEX ag2 ON `bucket-1`(DATE_PART_STR(sold_date, 'year'), DATE_PART_STR(sold_date, 'week'), WEEKDAY_STR(sold_date), sales_price) PARTITION BY HASH(sold_date) WITH {"defer_build": true};
     CREATE INDEX ag3 ON `bucket-1`(item.manufacturer_id, DATE_PART_STR(sold_date, 'month'), DATE_PART_STR(sold_date, 'year'), item.brand, sales_price) PARTITION BY HASH(sold_date) WITH {"defer_build": true};

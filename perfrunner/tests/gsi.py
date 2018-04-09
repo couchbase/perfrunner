@@ -40,22 +40,10 @@ class IndexTest(PerfTest):
         for t in threads:
             t.start()
 
-    def create_index(self):
-        storage = self.test_config.gsi_settings.storage
-        indexes = self.test_config.gsi_settings.indexes
-
-        for server in self.index_nodes:
-            for bucket in self.test_config.buckets:
-                for name, field in indexes.items():
-                    self.rest.create_index(host=server,
-                                           bucket=bucket,
-                                           name=name,
-                                           field=field,
-                                           storage=storage)
-
     @with_stats
     @timeit
     def init_index(self):
+        self.create_indexes()
         self.wait_for_indexing()
 
     @with_stats
@@ -72,7 +60,6 @@ class IndexTest(PerfTest):
         self.load()
         self.wait_for_persistence()
 
-        self.create_index()
         self.init_index()
 
         self.bg_load()
@@ -85,7 +72,6 @@ class InitialIndexTest(IndexTest):
         self.load()
         self.wait_for_persistence()
 
-        self.create_index()
         time_elapsed = self.init_index()
 
         self.report_kpi(time_elapsed)

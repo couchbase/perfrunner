@@ -27,8 +27,8 @@ workers = 100
 workload_instances = 4
 inserts_per_workerinstance = 10000000
 
-[n1ql]
-indexes =
+[index]
+statements =
     CREATE INDEX sg2 ON `bucket-1`(address.geo_region) WITH {"num_replica": 3};
 
 [access]

@@ -100,7 +100,7 @@ def new_cbagent_settings(test: PerfTest):
         if test.test_config.gsi_settings.indexes:
             settings.indexes = test.test_config.gsi_settings.indexes
         else:
-            settings.indexes = test.test_config.n1ql_settings.indexes
+            settings.indexes = test.test_config.index_settings.indexes
         settings.index_node = test.cluster_spec.servers_by_role('index')[0]
 
     return settings

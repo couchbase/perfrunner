@@ -249,6 +249,12 @@ class PerfTest:
         self.run_phase('xattr phase',
                        task, settings, target_iterator)
 
+    def create_indexes(self):
+        logger.info('Creating and building indexes')
+
+        for statement in self.test_config.index_settings.statements:
+            self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+
     def access(self,
                task: Callable = spring_task,
                settings: PhaseSettings = None) -> None:

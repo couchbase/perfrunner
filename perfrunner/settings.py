@@ -583,10 +583,14 @@ class RestoreSettings:
     BACKUP_REPO = ''
     IMPORT_FILE = ''
 
+    THREADS = 16
+
     def __init__(self, options):
         self.backup_storage = options.get('backup_storage', self.BACKUP_STORAGE)
         self.backup_repo = options.get('backup_repo', self.BACKUP_REPO)
         self.import_file = options.get('import_file', self.IMPORT_FILE)
+
+        self.threads = options.get('threads', self.THREADS)
 
     def __str__(self) -> str:
         return str(self.__dict__)
@@ -728,8 +732,12 @@ class BackupSettings:
 
     COMPRESSION = False
 
+    THREADS = 16
+
     def __init__(self, options: dict):
         self.compression = int(options.get('compression', self.COMPRESSION))
+
+        self.threads = int(options.get('threads', self.THREADS))
 
 
 class ExportSettings:

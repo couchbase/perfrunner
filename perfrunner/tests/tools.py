@@ -19,6 +19,7 @@ class BackupRestoreTest(PerfTest):
         local.backup(
             master_node=self.master_node,
             cluster_spec=self.cluster_spec,
+            threads=self.test_config.backup_settings.threads,
             wrapper=self.rest.is_community(self.master_node),
             mode=mode,
             compression=self.test_config.backup_settings.compression,
@@ -36,6 +37,7 @@ class BackupRestoreTest(PerfTest):
 
         local.restore(cluster_spec=self.cluster_spec,
                       master_node=self.master_node,
+                      threads=self.test_config.restore_settings.threads,
                       wrapper=self.rest.is_community(self.master_node))
 
     def run(self):
@@ -176,7 +178,8 @@ class ExportImportTest(BackupRestoreTest):
         local.cbexport(master_node=self.master_node,
                        cluster_spec=self.cluster_spec,
                        bucket=self.test_config.buckets[0],
-                       data_format=self.test_config.export_settings.format)
+                       data_format=self.test_config.export_settings.format,
+                       threads=self.test_config.restore_settings.threads)
 
     def import_data(self):
         import_file = self.test_config.export_settings.import_file
@@ -193,7 +196,8 @@ class ExportImportTest(BackupRestoreTest):
                        data_type=self.test_config.export_settings.type,
                        data_format=self.test_config.export_settings.format,
                        bucket=self.test_config.buckets[0],
-                       import_file=import_file)
+                       import_file=import_file,
+                       threads=self.test_config.backup_settings.threads)
 
     def _report_kpi(self, time_elapsed: float):
         self.reporter.post(

@@ -37,17 +37,17 @@ def drop_caches():
     local('sync && echo 3 > /proc/sys/vm/drop_caches')
 
 
-def backup(master_node:  str, cluster_spec: ClusterSpec, wrapper: bool = False,
-           mode: str = None, compression: bool = False):
+def backup(master_node:  str, cluster_spec: ClusterSpec, threads: int,
+           wrapper: bool = False, mode: str = None, compression: bool = False):
     logger.info('Creating a new backup: {}'.format(cluster_spec.backup))
 
     if not mode:
         cleanup(cluster_spec.backup)
 
     if wrapper:
-        cbbackupwrapper(master_node, cluster_spec, mode)
+        cbbackupwrapper(master_node, cluster_spec, threads, mode)
     else:
-        cbbackupmgr_backup(master_node, cluster_spec, mode, compression)
+        cbbackupmgr_backup(master_node, cluster_spec, threads, mode, compression)
 
 
 def compact(cluster_spec: ClusterSpec,
@@ -58,16 +58,18 @@ def compact(cluster_spec: ClusterSpec,
     cbbackupmgr_compact(cluster_spec, snapshots)
 
 
-def cbbackupwrapper(master_node: str, cluster_spec: ClusterSpec, mode: str):
+def cbbackupwrapper(master_node: str, cluster_spec: ClusterSpec, threads: int,
+                    mode: str):
     postfix = ''
     if mode:
         postfix = '-m {}'.format(mode)
 
-    cmd = './cbbackupwrapper http://{}:8091 {} -u {} -p {} -P 16 {}'.format(
+    cmd = './cbbackupwrapper http://{}:8091 {} -u {} -p {} -P {} {}'.format(
         master_node,
         cluster_spec.backup,
         cluster_spec.rest_credentials[0],
         cluster_spec.rest_credentials[1],
+        threads,
         postfix,
     )
     logger.info('Running: {}'.format(cmd))
@@ -75,17 +77,18 @@ def cbbackupwrapper(master_node: str, cluster_spec: ClusterSpec, mode: str):
         local(cmd)
 
 
-def cbbackupmgr_backup(master_node: str, cluster_spec: ClusterSpec, mode: str,
-                       compression: bool):
+def cbbackupmgr_backup(master_node: str, cluster_spec: ClusterSpec,
+                       threads: int, mode: str, compression: bool):
     if not mode:
         local('./opt/couchbase/bin/cbbackupmgr config '
               '--archive {} --repo default'.format(cluster_spec.backup))
 
     cmd = \
         './opt/couchbase/bin/cbbackupmgr backup ' \
-        '--archive {} --repo default  --threads 16 ' \
+        '--archive {} --repo default --threads {} ' \
         '--host http://{} --username {} --password {}'.format(
             cluster_spec.backup,
+            threads,
             master_node,
             cluster_spec.rest_credentials[0],
             cluster_spec.rest_credentials[1],
@@ -135,13 +138,14 @@ def calc_backup_size(cluster_spec: ClusterSpec) -> float:
     return round(backup_size)
 
 
-def restore(master_node: str, cluster_spec: ClusterSpec, wrapper: bool = False):
+def restore(master_node: str, cluster_spec: ClusterSpec, threads: int,
+            wrapper: bool = False):
     logger.info('Restore from {}'.format(cluster_spec.backup))
 
     if wrapper:
         cbrestorewrapper(master_node, cluster_spec)
     else:
-        cbbackupmgr_restore(master_node, cluster_spec)
+        cbbackupmgr_restore(master_node, cluster_spec, threads)
 
 
 def cbrestorewrapper(master_node: str, cluster_spec: ClusterSpec):
@@ -157,13 +161,14 @@ def cbrestorewrapper(master_node: str, cluster_spec: ClusterSpec):
 
 
 def cbbackupmgr_restore(master_node: str, cluster_spec: ClusterSpec,
-                        archive: str = '', repo: str = 'default'):
+                        threads: int, archive: str = '', repo: str = 'default'):
     cmd = \
         './opt/couchbase/bin/cbbackupmgr restore ' \
-        '--archive {} --repo {}  --threads 16 ' \
+        '--archive {} --repo {} --threads {} ' \
         '--host http://{} --username {} --password {}'.format(
             archive or cluster_spec.backup,
             repo,
+            threads,
             master_node,
             cluster_spec.rest_credentials[0],
             cluster_spec.rest_credentials[1],
@@ -184,17 +189,18 @@ def cbbackupmgr_compact(cluster_spec: ClusterSpec, snapshots: List[str]):
 
 
 def cbexport(master_node: str, cluster_spec: ClusterSpec, bucket: str,
-             data_format: str):
+             data_format: str, threads: int):
     export_path = os.path.join(cluster_spec.backup, 'data.json')
 
     cleanup(cluster_spec.backup)
 
     cmd = \
         './opt/couchbase/bin/cbexport json --format {} ' \
-        '--output {} --threads 16 ' \
+        '--output {} --threads {} ' \
         '--cluster http://{} --username {} --password {} --bucket {}'.format(
             data_format,
             export_path,
+            threads,
             master_node,
             cluster_spec.rest_credentials[0],
             cluster_spec.rest_credentials[1],
@@ -205,17 +211,18 @@ def cbexport(master_node: str, cluster_spec: ClusterSpec, bucket: str,
     local(cmd)
 
 
-def cbimport(master_node: str, cluster_spec: ClusterSpec, data_type: str,
-             data_format: str, bucket: str, import_file: str):
+def cbimport(master_node: str, cluster_spec: ClusterSpec, bucket: str,
+             data_type: str, data_format: str, import_file: str, threads: int):
     cmd = \
         './opt/couchbase/bin/cbimport {} ' \
         '--dataset {} --bucket {} ' \
-        '--generate-key "#MONO_INCR#" --threads 16 ' \
+        '--generate-key "#MONO_INCR#" --threads {} ' \
         '--cluster http://{} --username {} --password {} ' \
         ''.format(
             data_type,
             import_file,
             bucket,
+            threads,
             master_node,
             cluster_spec.rest_credentials[0],
             cluster_spec.rest_credentials[1],

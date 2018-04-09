@@ -148,6 +148,7 @@ class PerfTest:
         local.cbbackupmgr_restore(
             master_node=self.master_node,
             cluster_spec=self.cluster_spec,
+            threads=self.test_config.restore_settings.threads,
             archive=self.test_config.restore_settings.backup_storage,
             repo=self.test_config.restore_settings.backup_repo,
         )

@@ -56,14 +56,12 @@ class IndexTest(PerfTest):
     @with_stats
     @timeit
     def init_index(self):
-        for server in self.index_nodes:
-            self.monitor.monitor_indexing(server)
+        self.wait_for_indexing()
 
     @with_stats
     @timeit
     def incr_index(self):
-        for server in self.index_nodes:
-            self.monitor.monitor_indexing(server)
+        self.wait_for_indexing()
 
     def _report_kpi(self, indexing_time: float):
         self.reporter.post(

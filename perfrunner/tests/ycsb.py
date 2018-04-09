@@ -78,6 +78,7 @@ class YCSBSOETest(YCSBThroughputTest, N1QLTest):
         self.wait_for_persistence()
 
         self.build_indexes()
+        self.wait_for_indexing()
 
         self.load()
 
@@ -99,6 +100,7 @@ class YCSBN1QLTest(YCSBTest, N1QLTest):
         self.check_num_items()
 
         self.build_indexes()
+        self.wait_for_indexing()
 
         self.access()
 

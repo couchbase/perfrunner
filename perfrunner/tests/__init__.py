@@ -193,6 +193,10 @@ class PerfTest:
             self.monitor.monitor_disk_queues(target.node, target.bucket)
             self.monitor.monitor_dcp_queues(target.node, target.bucket)
 
+    def wait_for_indexing(self) -> None:
+        for server in self.index_nodes:
+            self.monitor.monitor_indexing(server)
+
     def check_num_items(self) -> None:
         for target in self.target_iterator:
             self.monitor.monitor_num_items(target.node, target.bucket,

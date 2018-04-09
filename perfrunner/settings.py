@@ -611,7 +611,7 @@ class XDCRSettings:
         return str(self.__dict__)
 
 
-class IndexSettings:
+class ViewsSettings:
 
     VIEWS = '[1]'
     DISABLED_UPDATES = 0
@@ -909,9 +909,9 @@ class TestConfig(Config):
         return XDCRSettings(options)
 
     @property
-    def index_settings(self) -> IndexSettings:
-        options = self._get_options_as_dict('index')
-        return IndexSettings(options)
+    def views_settings(self) -> ViewsSettings:
+        options = self._get_options_as_dict('views')
+        return ViewsSettings(options)
 
     @property
     def gsi_settings(self) -> GSISettings:

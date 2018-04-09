@@ -19,7 +19,7 @@ items = 20000000
 size = 2048
 workers = 40
 
-[index]
+[views]
 views = [4, 4, 4, 4]
 disabled_updates = 1
 

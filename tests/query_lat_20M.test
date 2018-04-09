@@ -19,7 +19,7 @@ items = 20000000
 size = 2048
 workers = 40
 
-[index]
+[views]
 views = [1, 1, 1, 1]
 
 [access]

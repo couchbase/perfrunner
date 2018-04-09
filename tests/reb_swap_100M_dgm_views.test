@@ -24,7 +24,7 @@ items = 100000000
 workers = 40
 working_set = 5
 
-[index]
+[views]
 views = [1]
 
 [access]

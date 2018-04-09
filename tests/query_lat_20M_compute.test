@@ -20,7 +20,7 @@ size = 1024
 workers = 80
 doc_gen = nested
 
-[index]
+[views]
 index_type = compute
 
 [access]

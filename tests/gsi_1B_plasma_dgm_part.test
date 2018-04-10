@@ -1,0 +1,40 @@
+[test_case]
+test = perfrunner.tests.gsi.IndexTest
+
+[stats]
+server_processes = projector
+
+[cluster]
+mem_quota = 204800
+index_mem_quota = 102400
+initial_nodes = 10
+num_buckets = 1
+kernel_mem_limit = 130G
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[load]
+key_fmtr = hex
+doc_gen = package
+workers = 100
+items = 1000000000
+
+[index]
+statements =
+    CREATE INDEX idx1 ON `bucket-1`(bcdnNumber, packageStatus, shippingDate) PARTITION BY HASH(bcdnNumber) WITH {"defer_build": true};
+    CREATE INDEX idx2 ON `bucket-1`(minorAccountId, packageStatus) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx3 ON `bucket-1`(minorAccountId, address, weight) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx4 ON `bucket-1`(shippingDate, minorAccountId, postalCode) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    BUILD  INDEX ON `bucket-1`(idx1, idx2, idx3, idx4);
+
+[access]
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+items = 1000000000
+workers = 10
+throughput = 10000
+power_alpha = 140
+time = 3600

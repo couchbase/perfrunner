@@ -17,13 +17,13 @@ class IndexTest(PerfTest):
     def __init__(self, *args):
         super().__init__(*args)
 
-        index_settings = self.test_config.index_settings
-        if index_settings.disabled_updates:
+        views_settings = self.test_config.views_settings
+        if views_settings.disabled_updates:
             options = {'updateMinChanges': 0, 'replicaUpdateMinChanges': 0}
         else:
             options = None
 
-        self.ddocs = ViewGen().generate_ddocs(index_settings.views, options)
+        self.ddocs = ViewGen().generate_ddocs(views_settings.views, options)
 
     def define_ddocs(self):
         for master in self.cluster_spec.masters:
@@ -117,7 +117,7 @@ class IndexByTypeTest(IndexTest):
     def __init__(self, *args):
         super().__init__(*args)
 
-        index_type = self.test_config.index_settings.index_type
+        index_type = self.test_config.views_settings.index_type
         self.ddocs = ViewGenDev().generate_ddocs(index_type)
 
 
@@ -133,7 +133,7 @@ class QueryTest(IndexTest):
     @with_stats
     def access(self, *args):
         settings = self.test_config.access_settings
-        settings.index_type = self.test_config.index_settings.index_type
+        settings.index_type = self.test_config.views_settings.index_type
         settings.ddocs = self.ddocs
 
         super().access(settings=settings)

@@ -8,6 +8,7 @@ import numpy
 
 from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.rest import RestHelper
+from perfrunner.workloads.bigfun.query_gen import new_statement
 
 
 def store_metrics(statement: str, metrics: dict):
@@ -34,7 +35,7 @@ def run_concurrent_queries(rest: RestHelper,
     with ThreadPoolExecutor(max_workers=concurrency) as executor:
         nodes = cycle(nodes)
         futures = [
-            executor.submit(run_query, rest, next(nodes), query['statement'])
+            executor.submit(run_query, rest, next(nodes), new_statement(query))
             for _ in range(num_requests)
         ]
         timings = []

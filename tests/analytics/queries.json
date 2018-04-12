@@ -2,26 +2,31 @@
   {
     "name": "BF03",
     "description": "Temporal range scan (1M matches)",
-    "statement": "SELECT VALUE u FROM `GleambookUsers` u WHERE u.user_since >= \"2001-01-01T00:00:00\" AND u.user_since < \"2001-09-25T19:28:00\";"
+    "statement": "SELECT VALUE u FROM `GleambookUsers` u WHERE u.user_since >= \"{}\" AND u.user_since < \"{}\";",
+    "matches": 1e6
   },
   {
     "name": "BF04",
     "description": "Existential quantification (1M matches)",
-    "statement": "SELECT VALUE u FROM `GleambookUsers` u WHERE u.user_since >= \"2000-01-01T00:00:00\" AND u.user_since < \"2000-12-04T01:10:00\" AND (SOME e IN u.employment SATISFIES e.end_date IS UNKNOWN);"
+    "statement": "SELECT VALUE u FROM `GleambookUsers` u WHERE u.user_since >= \"{}\" AND u.user_since < \"{}\" AND (SOME e IN u.employment SATISFIES e.end_date IS UNKNOWN);",
+    "matches": 1e6
   },
   {
     "name": "BF08",
     "description": "Top-K (1M matches)",
-    "statement": "SELECT cm.user.screen_name AS username, AVG(LENGTH(cm.message_text)) AS avg FROM `ChirpMessages` cm WHERE cm.send_time >= \"2000-01-01T00:00:00\" AND cm.send_time < \"2000-01-27T17:54:02\" GROUP BY cm.user.screen_name ORDER BY avg LIMIT 10;"
+    "statement": "SELECT cm.user.screen_name AS username, AVG(LENGTH(cm.message_text)) AS avg FROM `ChirpMessages` cm WHERE cm.send_time >= \"{}\" AND cm.send_time < \"{}\" GROUP BY cm.user.screen_name ORDER BY avg LIMIT 10;",
+    "matches": 1e6
   },
   {
     "name": "BF14",
     "description": "Select join with grouping aggregation (1M matches)",
-    "statement": "SELECT META(u).id AS id, COUNT(*) AS count FROM `GleambookUsers` u, `GleambookMessages` m WHERE TO_STRING(META(u).id) = m.author_id AND u.user_since >= \"2001-01-01T00:00:00\" AND u.user_since < \"2001-09-25T19:28:00\" AND m.send_time >= \"2002-01-01T00:00:00\" AND m.send_time < \"2002-02-23T12:00:00\" GROUP BY META(u).id;"
+    "statement": "SELECT META(u).id AS id, COUNT(*) AS count FROM `GleambookUsers` u, `GleambookMessages` m WHERE TO_STRING(META(u).id) = m.author_id AND u.user_since >= \"{}\" AND u.user_since < \"{}\" AND m.send_time >= \"{}\" AND m.send_time < \"{}\" GROUP BY META(u).id;",
+    "matches": 1e6
   },
   {
     "name": "BF15",
     "description": "Select join with Top-K (1M matches)",
-    "statement": "SELECT META(u).id AS id, COUNT(*) AS count FROM `GleambookUsers` u, `GleambookMessages` m WHERE TO_STRING(META(u).id) = m.author_id AND u.user_since >= \"2001-01-01T00:00:00\" AND u.user_since < \"2001-09-25T19:28:00\" AND m.send_time >= \"2002-01-01T00:00:00\" AND m.send_time < \"2002-02-23T12:00:00\" GROUP BY META(u).id ORDER BY count LIMIT 10;"
+    "statement": "SELECT META(u).id AS id, COUNT(*) AS count FROM `GleambookUsers` u, `GleambookMessages` m WHERE TO_STRING(META(u).id) = m.author_id AND u.user_since >= \"{}\" AND u.user_since < \"{}\" AND m.send_time >= \"{}\" AND m.send_time < \"{}\" GROUP BY META(u).id ORDER BY count LIMIT 10;",
+    "matches": 1e6
   }
 ]

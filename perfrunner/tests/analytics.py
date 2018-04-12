@@ -4,7 +4,7 @@ from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.tests import PerfTest
 from perfrunner.tests.rebalance import RebalanceTest
-from perfrunner.workloads.bigfun import bigfun
+from perfrunner.workloads.bigfun.driver import bigfun
 
 
 class BigFunTest(PerfTest):

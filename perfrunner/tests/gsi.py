@@ -21,6 +21,7 @@ class IndexTest(PerfTest):
     @with_stats
     @timeit
     def incr_index(self):
+        self.access()
         self.wait_for_indexing()
 
     def _report_kpi(self, indexing_time: float):
@@ -34,7 +35,6 @@ class IndexTest(PerfTest):
 
         self.init_index()
 
-        self.access_bg()
         self.incr_index()
 
 
@@ -54,7 +54,7 @@ class FastIndexTest(PerfTest):
     def load(self, *args):
         kvgen(self.master_node, self.test_config.load_settings.items, wait=True)
 
-    def access_bg(self, *args):
+    def access(self, *args):
         kvgen(self.master_node, self.test_config.load_settings.items, wait=False)
 
 

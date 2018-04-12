@@ -81,3 +81,11 @@ def maybe_atoi(a: str, t=int) -> Union[int, float, str]:
         return t(a)
     except ValueError:
         return a
+
+
+def human_format(number: float) -> str:
+    magnitude = 0
+    while abs(number) >= 1e3:
+        magnitude += 1
+        number /= 1e3
+    return '{:.0f}{}'.format(number, ['', 'K', 'M', 'G', 'T', 'P'][magnitude])

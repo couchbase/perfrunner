@@ -1,8 +1,11 @@
+import json
 import random
 from datetime import datetime
-from typing import List
+from typing import Iterator, List
 
 import dateutil.parser as parser
+
+from perfrunner.helpers.misc import human_format
 
 MIN_DATE = "2000-01-01T00:00:00"
 MAX_DATE = "2014-08-29T23:59:59"
@@ -36,6 +39,16 @@ STATEMENTS = {
             'ORDER BY count '
             'LIMIT 10;',
 }
+
+DESCRIPTIONS = {
+    'BF03': 'Temporal range scan ({} matches)',
+    'BF04': 'Existential quantification ({} matches)',
+    'BF08': 'Top-K ({} matches)',
+    'BF14': 'Select join with grouping aggregation ({} matches)',
+    'BF15': 'Select join with Top-K ({} matches)',
+}
+
+QUERIES = 'tests/analytics/queries.json'
 
 
 def iso2seconds(dt: str) -> int:
@@ -97,16 +110,45 @@ def bf15params(num_matches: float) -> List[str]:
     return bf14params(num_matches)
 
 
-def new_params(name: str, num_matches: float) -> List[str]:
+def new_params(qid: str, num_matches: float) -> List[str]:
     return {
         'BF03': bf03params(num_matches),
         'BF04': bf04params(num_matches),
         'BF08': bf08params(num_matches),
         'BF14': bf14params(num_matches),
         'BF15': bf15params(num_matches),
-    }[name]
+    }[qid]
 
 
-def new_statement(query: dict) -> str:
-    params = new_params(query['name'], query['matches'])
-    return STATEMENTS[query['name']].format(*params)
+def new_statement(qid: str, num_matches: float) -> str:
+    params = new_params(qid, num_matches)
+    return STATEMENTS[qid].format(*params)
+
+
+def new_description(qid: str, num_matches: float) -> str:
+    template = DESCRIPTIONS[qid]
+    return template.format(human_format(num_matches))
+
+
+class Query:
+
+    def __init__(self, qid: str, num_matches: float):
+        self.id = qid
+        self.num_matches = num_matches
+
+    @property
+    def statement(self) -> str:
+        return new_statement(self.id, self.num_matches)
+
+    @property
+    def description(self) -> str:
+        return new_description(self.id, self.num_matches)
+
+
+def new_queries() -> Iterator[Query]:
+    with open(QUERIES) as fh:
+        queries = json.load(fh)
+
+    for query in queries:
+        for num_matches in query['matches']:
+            yield Query(query['id'], num_matches)

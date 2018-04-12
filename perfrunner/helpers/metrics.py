@@ -7,6 +7,7 @@ import numpy as np
 from cbagent.stores import PerfStore
 from logger import logger
 from perfrunner.settings import CBMONITOR_HOST
+from perfrunner.workloads.bigfun.query_gen import Query
 
 Number = Union[float, int]
 
@@ -678,14 +679,14 @@ class MetricHelper:
 
         return time, self._snapshots, metric_info
 
-    def analytics_latency(self, query: dict, latency: int) -> Metric:
-        metric_id = self.test_config.name + strip(query['description'])
+    def analytics_latency(self, query: Query, latency: int) -> Metric:
+        metric_id = self.test_config.name + strip(query.description)
 
-        title = 'Avg. query latency (ms), {} {}, {}'.format(query['name'],
-                                                            query['description'],
+        title = 'Avg. query latency (ms), {} {}, {}'.format(query.id,
+                                                            query.description,
                                                             self._title)
 
-        order_by = '{:05d}_{}'.format(int(query['name'][2:]), self._order_by)
+        order_by = '{:05d}_{}'.format(int(query.id[2:]), self._order_by)
 
         metric_info = self._metric_info(metric_id,
                                         title,

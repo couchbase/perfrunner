@@ -5,6 +5,7 @@ from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.tests import PerfTest
 from perfrunner.tests.rebalance import RebalanceTest
 from perfrunner.workloads.bigfun.driver import bigfun
+from perfrunner.workloads.bigfun.query_gen import Query
 
 
 class BigFunTest(PerfTest):
@@ -77,7 +78,7 @@ class BigFunTest(PerfTest):
             self.monitor.monitor_data_synced(target.node, target.bucket)
 
     @with_stats
-    def access(self, *args, **kwargs) -> List[Tuple[dict, int]]:
+    def access(self, *args, **kwargs) -> List[Tuple[Query, int]]:
         results = bigfun(self.rest,
                          nodes=self.analytics_nodes,
                          concurrency=self.test_config.access_settings.workers,
@@ -143,7 +144,7 @@ class BigFunIncrSyncTest(BigFunTest):
 
 class BigFunQueryTest(BigFunTest):
 
-    def _report_kpi(self, results: List[Tuple[dict, int]]):
+    def _report_kpi(self, results: List[Tuple[Query, int]]):
         for query, latency in results:
             self.reporter.post(
                 *self.metrics.analytics_latency(query, latency)

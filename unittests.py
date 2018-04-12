@@ -7,6 +7,7 @@ from unittest import TestCase
 import snappy
 
 from perfrunner.settings import ClusterSpec, TestConfig
+from perfrunner.workloads.bigfun.query_gen import new_queries
 from perfrunner.workloads.tcmalloc import KeyValueIterator, LargeIterator
 from spring import docgen
 from spring.querygen import N1QLQueryGen
@@ -615,3 +616,13 @@ class QueryTest(TestCase):
             query = qg.next(key='n1ql-0123456789', doc=doc)
             self.assertEqual(query.consistency, 'request_plus')
             self.assertEqual(query._body['args'], [doc['email']])
+
+
+class BigFunTest(TestCase):
+
+    def test_unique_statements(self):
+        for query in new_queries():
+            statements = set()
+            for i in range(10):
+                self.assertNotIn(query.statement, statements)
+                statements.add(query.statement)

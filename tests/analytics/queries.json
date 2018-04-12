@@ -1,27 +1,22 @@
 [
   {
-    "name": "BF03",
-    "description": "Temporal range scan (1M matches)",
-    "matches": 1e6
+    "id": "BF03",
+    "matches": [1e6]
   },
   {
-    "name": "BF04",
-    "description": "Existential quantification (1M matches)",
-    "matches": 1e6
+    "id": "BF04",
+    "matches": [1e6]
   },
   {
-    "name": "BF08",
-    "description": "Top-K (1M matches)",
-    "matches": 1e6
+    "id": "BF08",
+    "matches": [1e6]
   },
   {
-    "name": "BF14",
-    "description": "Select join with grouping aggregation (1M matches)",
-    "matches": 1e6
+    "id": "BF14",
+    "matches": [1e6]
   },
   {
-    "name": "BF15",
-    "description": "Select join with Top-K (1M matches)",
-    "matches": 1e6
+    "id": "BF15",
+    "matches": [1e6]
   }
 ]

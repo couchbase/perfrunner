@@ -37,9 +37,9 @@ class BigFunTest(PerfTest):
     def create_index(self):
         logger.info('Creating indexes')
         for statement in (
-            "CREATE INDEX usrSinceIdx ON `GleambookUsers`(user_since: string);",
-            "CREATE INDEX authorIdIdx ON `GleambookMessages`(author_id: string);",
-            "CREATE INDEX sndTimeIdx  ON `ChirpMessages`(send_time: string);",
+            "CREATE INDEX usrSinceIdx   ON `GleambookUsers`(user_since: string);",
+            "CREATE INDEX gbmSndTimeIdx ON `GleambookMessages`(send_time: string);",
+            "CREATE INDEX cmSndTimeIdx  ON `ChirpMessages`(send_time: string);",
         ):
             self.rest.exec_analytics_statement(self.analytics_nodes[0],
                                                statement)

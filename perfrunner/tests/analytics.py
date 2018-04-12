@@ -117,6 +117,11 @@ class BigFunSyncNoIndexTest(BigFunSyncTest):
 
 class BigFunIncrSyncTest(BigFunTest):
 
+    def _report_kpi(self, sync_time: int):
+        self.reporter.post(
+            *self.metrics.avg_ingestion_rate(self.num_items, sync_time)
+        )
+
     @with_stats
     @timeit
     def re_sync(self):

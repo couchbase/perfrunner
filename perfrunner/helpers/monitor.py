@@ -221,18 +221,26 @@ class Monitor(RestHelper):
                 host
             ))
 
+    def is_index_ready(self, host: str) -> bool:
+        for status in self.get_index_status(host)['status']:
+            if status['status'] != 'Ready':
+                return False
+        return True
+
+    def estimate_pending_docs(self, host: str) -> int:
+        stats = self.get_gsi_stats(host)
+        pending_docs = 0
+        for metric, value in stats.items():
+            if 'num_docs_queued' in metric or 'num_docs_pending' in metric:
+                pending_docs += value
+        return pending_docs
+
     def monitor_indexing(self, host):
         logger.info('Monitoring indexing progress')
 
-        pending_docs = 1
-        while pending_docs:
+        while not self.is_index_ready(host):
             time.sleep(self.POLLING_INTERVAL_INDEXING * 5)
-
-            pending_docs = 0
-            stats = self.get_gsi_stats(host)
-            for metric, value in stats.items():
-                if 'num_docs_queued' in metric or 'num_docs_pending' in metric:
-                    pending_docs += value
+            pending_docs = self.estimate_pending_docs(host)
             logger.info('Pending docs: {:,}'.format(pending_docs))
 
         logger.info('Indexing completed')

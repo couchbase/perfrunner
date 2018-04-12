@@ -7,6 +7,36 @@ import dateutil.parser as parser
 MIN_DATE = "2000-01-01T00:00:00"
 MAX_DATE = "2014-08-29T23:59:59"
 
+STATEMENTS = {
+    'BF03': 'SELECT VALUE u '
+            'FROM `GleambookUsers` u '
+            'WHERE u.user_since >= "{}" AND u.user_since < "{}";',
+    'BF04': 'SELECT VALUE u '
+            'FROM `GleambookUsers` u '
+            'WHERE u.user_since >= "{}" AND u.user_since < "{}" '
+            'AND (SOME e IN u.employment SATISFIES e.end_date IS UNKNOWN);',
+    'BF08': 'SELECT cm.user.screen_name AS username, AVG(LENGTH(cm.message_text)) AS avg '
+            'FROM `ChirpMessages` cm '
+            'WHERE cm.send_time >= "{}" AND cm.send_time < "{}" '
+            'GROUP BY cm.user.screen_name '
+            'ORDER BY avg '
+            'LIMIT 10;',
+    'BF14': 'SELECT META(u).id AS id, COUNT(*) AS count '
+            'FROM `GleambookUsers` u, `GleambookMessages` m '
+            'WHERE TO_STRING(META(u).id) = m.author_id '
+            'AND u.user_since >= "{}" AND u.user_since < "{}" '
+            'AND m.send_time >= "{}" AND m.send_time < "{}" '
+            'GROUP BY META(u).id;',
+    'BF15': 'SELECT META(u).id AS id, COUNT(*) AS count '
+            'FROM `GleambookUsers` u, `GleambookMessages` m '
+            'WHERE TO_STRING(META(u).id) = m.author_id '
+            'AND u.user_since >= "{}" AND u.user_since < "{}" '
+            'AND m.send_time >= "{}" AND m.send_time < "{}" '
+            'GROUP BY META(u).id '
+            'ORDER BY count '
+            'LIMIT 10;',
+}
+
 
 def iso2seconds(dt: str) -> int:
     return int(parser.parse(dt).strftime('%s'))
@@ -79,4 +109,4 @@ def new_params(name: str, num_matches: float) -> List[str]:
 
 def new_statement(query: dict) -> str:
     params = new_params(query['name'], query['matches'])
-    return query['statement'].format(*params)
+    return STATEMENTS[query['name']].format(*params)

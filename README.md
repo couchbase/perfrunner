@@ -11,6 +11,7 @@ Before using perfrunner you should install the requirements listed in the requir
 * Python 3.5
 * virtualenv
 * libcouchbase
+* libcurl4-gnutls-dev
 * libffi
 * libsnappy
 * libssl

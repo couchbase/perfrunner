@@ -1,5 +1,5 @@
 ---
-- hosts: kv
+- hosts: kv:index
   vars:
     grub_cfg: /boot/grub2/grub.cfg
     grub_defaults: /etc/default/grub

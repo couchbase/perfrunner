@@ -160,6 +160,12 @@ class BigFunQueryTest(BigFunTest):
         self.report_kpi(results)
 
 
+class BigFunQueryNoIndexTest(BigFunQueryTest):
+
+    def create_index(self):
+        pass
+
+
 class BigFunRebalanceTest(BigFunTest, RebalanceTest):
 
     ALL_HOSTNAMES = True

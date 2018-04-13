@@ -263,7 +263,9 @@ class StatsSettings:
 
 class ProfilingSettings:
 
-    DELAY = 300  # 5 minutes
+    INTERVAL = 300  # 5 minutes
+
+    NUM_PROFILES = 1
 
     PROFILES = 'cpu'
 
@@ -272,8 +274,10 @@ class ProfilingSettings:
     def __init__(self, options: dict):
         self.services = options.get('services',
                                     self.SERVICES).split()
-        self.delay = int(options.get('delay',
-                                     self.DELAY))
+        self.interval = int(options.get('interval',
+                                        self.INTERVAL))
+        self.num_profiles = int(options.get('num_profiles',
+                                            self.NUM_PROFILES))
         self.profiles = options.get('profiles',
                                     self.PROFILES).split(',')
 

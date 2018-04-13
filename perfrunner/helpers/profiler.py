@@ -1,4 +1,4 @@
-from threading import Timer
+import threading
 from typing import Callable
 
 import requests
@@ -6,6 +6,7 @@ from decorator import decorator
 from sshtunnel import SSHTunnelForwarder
 
 from logger import logger
+from perfrunner.helpers.misc import uhex
 from perfrunner.helpers.rest import RestHelper
 from perfrunner.settings import ClusterSpec, TestConfig
 
@@ -15,6 +16,24 @@ def with_profiles(method: Callable, *args, **kwargs):
     test = args[0]
     test.profiler.schedule()
     return method(*args, **kwargs)
+
+
+class Timer(threading.Timer):
+
+    def __init__(self, interval, function, num_runs=1, args=None, kwargs=None):
+        super().__init__(interval, function, args, kwargs)
+        self.num_runs = num_runs
+        self.daemon = True
+
+    def run(self):
+        super().run()
+        self.repeat()
+
+    def repeat(self):
+        self.num_runs -= 1
+        if self.num_runs:
+            self.finished.clear()
+            self.run()
 
 
 class Profiler:
@@ -50,7 +69,8 @@ class Profiler:
         )
 
     def save(self, host: str, service: str, profile: str, content: bytes):
-        with open('{}_{}_{}.pprof'.format(host, service, profile), 'wb') as fh:
+        fname = '{}_{}_{}_{}.pprof'.format(host, service, profile, uhex()[:6])
+        with open(fname, 'wb') as fh:
             fh.write(content)
 
     def profile(self, host: str, service: str, profile: str):
@@ -65,10 +85,12 @@ class Profiler:
             self.save(host, service, profile, response.content)
 
     def timer(self, **kwargs):
-        timer = Timer(function=self.profile,
-                      interval=self.test_config.profiling_settings.delay,
-                      kwargs=kwargs)
-        timer.daemon = True
+        timer = Timer(
+            function=self.profile,
+            interval=self.test_config.profiling_settings.interval,
+            num_runs=self.test_config.profiling_settings.num_profiles,
+            kwargs=kwargs,
+        )
         timer.start()
 
     def schedule(self):

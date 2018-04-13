@@ -5,7 +5,7 @@ from typing import Union
 from uuid import uuid4
 
 
-def uhex():
+def uhex() -> str:
     return uuid4().hex
 
 

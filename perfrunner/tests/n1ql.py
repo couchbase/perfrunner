@@ -272,9 +272,9 @@ class TpcDsIndexTest(TpcDsTest):
     @with_profiles
     def create_indexes(self):
         super().create_indexes()
+        self.wait_for_indexing()
 
     def run(self):
         self.import_data()
 
         self.create_indexes()
-        self.wait_for_indexing()

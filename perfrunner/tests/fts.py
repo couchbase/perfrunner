@@ -1,4 +1,4 @@
-import os.path
+import os
 import shutil
 
 from logger import logger

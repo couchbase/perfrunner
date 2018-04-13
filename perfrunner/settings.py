@@ -1,5 +1,5 @@
 import csv
-import os.path
+import os
 import re
 from configparser import ConfigParser, NoOptionError, NoSectionError
 from typing import Dict, Iterator, List

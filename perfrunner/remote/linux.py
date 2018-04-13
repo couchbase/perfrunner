@@ -1,4 +1,4 @@
-import os.path
+import os
 from collections import defaultdict
 from typing import Dict, List
 from urllib.parse import urlparse

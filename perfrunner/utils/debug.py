@@ -1,5 +1,5 @@
 import glob
-import os.path
+import os
 import shutil
 from argparse import ArgumentParser
 

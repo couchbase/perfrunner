@@ -48,7 +48,7 @@ DESCRIPTIONS = {
     'BF15': 'Select join with Top-K ({} matches)',
 }
 
-QUERIES = 'tests/analytics/queries.json'
+QUERIES = 'perfrunner/workloads/bigfun/queries.json'
 
 
 def iso2seconds(dt: str) -> int:

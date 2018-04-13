@@ -53,5 +53,5 @@ def bigfun(rest: RestHelper,
                                          query,
                                          concurrency,
                                          num_requests)
-        avg_latency = round(1000 * numpy.mean(timings))  # Latency in ms
+        avg_latency = int(1000 * numpy.mean(timings))  # Latency in ms
         yield query, avg_latency

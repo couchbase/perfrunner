@@ -271,7 +271,7 @@ class ProfilingSettings:
 
     def __init__(self, options: dict):
         self.services = options.get('services',
-                                    self.SERVICES).split(',')
+                                    self.SERVICES).split()
         self.delay = int(options.get('delay',
                                      self.DELAY))
         self.profiles = options.get('profiles',

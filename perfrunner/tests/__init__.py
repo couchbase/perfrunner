@@ -277,7 +277,7 @@ class PerfTest:
     def access_bg(self,
                   task: Callable = spring_task,
                   settings: PhaseSettings = None,
-                  target_iterator: Iterable = None):
+                  target_iterator: Iterable = None) -> None:
         if settings is None:
             settings = self.test_config.access_settings
         if target_iterator is None:

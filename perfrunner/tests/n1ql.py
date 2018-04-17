@@ -185,7 +185,7 @@ class N1QLBulkTest(N1QLTest):
         self.report_kpi(time_elapsed)
 
 
-class N1QLDGMTest:
+class N1QLDGMTest(PerfTest):
 
     COLLECTORS = {
         'n1ql_latency': True,
@@ -194,6 +194,32 @@ class N1QLDGMTest:
         'secondary_stats': True,
         'secondary_storage_stats': True,
     }
+
+    def access_bg(self, *args):
+        access_settings = self.test_config.access_settings
+        access_settings.n1ql_workers = 0
+
+        PerfTest.access_bg(self, settings=access_settings)
+
+    @with_stats
+    @with_profiles
+    def access(self, *args):
+        access_settings = self.test_config.access_settings
+        access_settings.workers = 0
+
+        PerfTest.access(self, settings=access_settings)
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.create_indexes()
+        self.wait_for_indexing()
+
+        self.access_bg()
+        self.access()
+
+        self.report_kpi()
 
 
 class N1QLDGMThroughputTest(N1QLDGMTest, N1QLThroughputTest):

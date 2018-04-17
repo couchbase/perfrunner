@@ -1,7 +1,7 @@
 import json
 import time
 from hashlib import md5
-from typing import Union
+from typing import Any, Union
 from uuid import uuid4
 
 
@@ -9,7 +9,7 @@ def uhex() -> str:
     return uuid4().hex
 
 
-def pretty_dict(d: dict) -> str:
+def pretty_dict(d: Any) -> str:
     return json.dumps(d, indent=4, sort_keys=True,
                       default=lambda o: o.__dict__)
 

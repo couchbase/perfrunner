@@ -1,7 +1,7 @@
 import glob
 import shutil
 import time
-from typing import Callable, Iterable, List
+from typing import Callable, Iterable, List, Optional
 
 from logger import logger
 
@@ -136,7 +136,7 @@ class PerfTest:
             if self.rest.is_not_balanced(master):
                 return 'The cluster is not balanced'
 
-    def check_failover(self) -> str:
+    def check_failover(self) -> Optional[str]:
         if hasattr(self, 'rebalance_settings'):
             if self.rebalance_settings.failover or \
                     self.rebalance_settings.graceful_failover:
@@ -210,6 +210,17 @@ class PerfTest:
                 port = self.rest.get_memcached_port(server)
                 self.memcached.reset_stats(server, port, bucket)
 
+    def create_indexes(self):
+        logger.info('Creating and building indexes')
+
+        for statement in self.test_config.index_settings.statements:
+            self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+
+    def sleep(self) -> None:
+        access_settings = self.test_config.access_settings
+        logger.info('Running phase for {} seconds'.format(access_settings.time))
+        time.sleep(access_settings.time)
+
     def run_phase(self,
                   phase: str,
                   task: Callable, settings: PhaseSettings,
@@ -250,16 +261,11 @@ class PerfTest:
         self.run_phase('xattr phase',
                        task, settings, target_iterator)
 
-    def create_indexes(self):
-        logger.info('Creating and building indexes')
-
-        for statement in self.test_config.index_settings.statements:
-            self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
-
     def access(self,
                task: Callable = spring_task,
                settings: PhaseSettings = None,
-               target_iterator: Iterable = None) -> None:
+               target_iterator: Iterable = None,
+               wait: bool = True) -> None:
         if settings is None:
             settings = self.test_config.access_settings
         if target_iterator is None:
@@ -267,24 +273,10 @@ class PerfTest:
 
         self.run_phase('access phase',
                        task, settings, target_iterator,
-                       timer=settings.time)
+                       timer=settings.time, wait=wait)
 
-    def access_bg(self, task: Callable = spring_task,
-                  settings: PhaseSettings = None,
-                  target_iterator: Iterable = None) -> None:
-        if settings is None:
-            settings = self.test_config.access_settings
-        if target_iterator is None:
-            target_iterator = self.target_iterator
-
-        self.run_phase('background access phase',
-                       task, settings, target_iterator,
-                       timer=settings.time, wait=False)
-
-    def sleep(self) -> None:
-        access_settings = self.test_config.access_settings
-        logger.info('Running phase for {} seconds'.format(access_settings.time))
-        time.sleep(access_settings.time)
+    def access_bg(self, *args, **kwargs):
+        self.access(*args, **kwargs, wait=False)
 
     def report_kpi(self, *args, **kwargs) -> None:
         if self.test_config.stats_settings.enabled:

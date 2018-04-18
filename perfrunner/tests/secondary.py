@@ -73,12 +73,6 @@ class SecondaryIndexTest(PerfTest):
         )
         return time_elapsed
 
-    def run_access_for_2i(self, run_in_background=False):
-        if run_in_background:
-            self.access_bg()
-        else:
-            self.access()
-
     @staticmethod
     def get_data_from_config_json(config_file_name):
         with open(config_file_name) as fh:
@@ -375,7 +369,7 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
         self.wait_for_persistence()
 
         self.build_secondaryindex()
-        self.run_access_for_2i(run_in_background=True)
+        self.access_bg()
         self.apply_scanworkload(path_to_tool="./cbindexperf")
         scan_thr, row_thr = self.read_scanresults()
         logger.info('Scan throughput: {}'.format(scan_thr))
@@ -408,7 +402,7 @@ class SecondaryIndexingThroughputRebalanceTest(SecondaryIndexingThroughputTest):
         self.wait_for_persistence()
 
         self.build_secondaryindex()
-        self.run_access_for_2i(run_in_background=True)
+        self.access_bg()
         nodes_after = [0]
         initial_nodes = self.test_config.cluster.initial_nodes
         nodes_after[0] = initial_nodes[0] + 1
@@ -441,7 +435,7 @@ class InitialIncrementalScanThroughputTest(InitialandIncrementalDGMSecondaryInde
     def run(self):
         self.remove_statsfile()
         super().run()
-        self.run_access_for_2i(run_in_background=True)
+        self.access_bg()
         self.apply_scanworkload(path_to_tool="./cbindexperf")
         scan_thr, row_thr = self.read_scanresults()
         logger.info('Scan throughput: {}'.format(scan_thr))
@@ -510,7 +504,7 @@ class InitialIncrementalMovingScanThroughputTest(InitialIncrementalScanThroughpu
     def run(self):
         self.remove_statsfile()
         InitialandIncrementalDGMSecondaryIndexTest.run(self)
-        self.run_access_for_2i(run_in_background=True)
+        self.access_bg()
         self.apply_scanworkload(path_to_tool="./cbindexperf")
         scan_throughput = self.calc_throughput()
         self.print_index_disk_usage()
@@ -540,7 +534,7 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
         self.wait_for_persistence()
 
         self.build_secondaryindex()
-        self.run_access_for_2i(run_in_background=True)
+        self.access_bg()
         self.apply_scanworkload(path_to_tool="./cbindexperf")
         self.print_index_disk_usage()
         self.report_kpi()
@@ -567,7 +561,7 @@ class SecondaryIndexingScanLatencyLongevityTest(SecondaryIndexingScanLatencyTest
         self.wait_for_persistence()
 
         self.build_secondaryindex()
-        self.run_access_for_2i(run_in_background=True)
+        self.access_bg()
         self.apply_scanworkload(path_to_tool="./cbindexperf")
         self.print_index_disk_usage()
 
@@ -599,7 +593,7 @@ class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest
         initial_nodes = self.test_config.cluster.initial_nodes
         nodes_after[0] = initial_nodes[0] + 1
         self.build_secondaryindex()
-        self.run_access_for_2i(run_in_background=True)
+        self.access_bg()
         self.rebalance(initial_nodes[0], nodes_after[0])
         self.apply_scanworkload(path_to_tool="./cbindexperf")
         self.print_index_disk_usage()
@@ -639,7 +633,7 @@ class InitialIncrementalScanLatencyTest(InitialandIncrementalDGMSecondaryIndexTe
     def run(self):
         self.remove_statsfile()
         super().run()
-        self.run_access_for_2i(run_in_background=True)
+        self.access_bg()
         self.apply_scanworkload(path_to_tool="./cbindexperf")
         self.print_index_disk_usage()
         self.report_kpi()
@@ -682,7 +676,7 @@ class SecondaryIndexingDocIndexingLatencyTest(SecondaryIndexingScanLatencyTest):
         self.wait_for_persistence()
 
         self._build_secondaryindex()
-        self.run_access_for_2i(run_in_background=True)
+        self.access_bg()
         self.apply_scanworkload()
         self.report_kpi()
 
@@ -729,7 +723,7 @@ class SecondaryIndexingMultiScanTest(SecondaryIndexingScanLatencyTest):
 
         self.build_secondaryindex()
 
-        self.run_access_for_2i(run_in_background=True)
+        self.access_bg()
 
         multifilter_time = self.apply_scan_multifilter_workload()
         logger.info("Multifilter time taken: {}".format(multifilter_time))
@@ -755,7 +749,7 @@ class SecondaryRebalanceTest(SecondaryIndexTest, RebalanceTest):
         self.wait_for_persistence()
 
         self._build_secondaryindex()
-        self.run_access_for_2i(run_in_background=True)
+        self.access_bg()
         self.rebalance_indexer()
         self.report_kpi()
 

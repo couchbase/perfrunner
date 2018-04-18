@@ -54,7 +54,7 @@ class XdcrTest(PerfTest):
 
     @with_stats
     def access(self, *args):
-        super().sleep()
+        super().access(*args)
 
     def configure_wan(self):
         if self.xdcr_settings.wan_delay:
@@ -91,7 +91,6 @@ class XdcrTest(PerfTest):
 
         self.configure_wan()
 
-        self.access_bg()
         self.access()
 
         self.report_kpi()

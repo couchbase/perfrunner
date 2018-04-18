@@ -30,10 +30,12 @@ class ClusterManager:
 
     def set_data_path(self):
         for server in self.cluster_spec.servers:
+            self.remote.change_owner(server, self.cluster_spec.data_path)
             self.rest.set_data_path(server, self.cluster_spec.data_path)
 
     def set_index_path(self):
         for server in self.cluster_spec.servers:
+            self.remote.change_owner(server, self.cluster_spec.data_path)
             self.rest.set_index_path(server, self.cluster_spec.index_path)
 
     def set_analytics_path(self):
@@ -43,6 +45,7 @@ class ClusterManager:
                 io_device = '{}/dev{}'.format(path, i)
                 paths.append(io_device)
         for server in self.cluster_spec.servers_by_role('cbas'):
+            self.remote.change_owner(server, self.cluster_spec.data_path)
             self.rest.set_analytics_paths(server, paths)
 
     def rename(self):

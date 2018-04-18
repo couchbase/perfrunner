@@ -36,19 +36,6 @@
 
 - hosts: kv:index:n1ql
   tasks:
-  - name: creating the "/data" directory
-    file: path=/data  owner=couchbase group=couchbase
-
-- hosts: kv
-  tasks:
-  - stat: path=/index
-    register: index
-  - name: creating the "/index" directory
-    file: path=/index owner=couchbase group=couchbase
-    when: index.stat.exists
-
-- hosts: kv:index:n1ql
-  tasks:
    - name: changing location of core dumps
      sysctl:
       name: kernel.core_pattern

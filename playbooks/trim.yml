@@ -28,6 +28,3 @@
 
   - name: discarding unused blocks
     shell: fstrim -v {{ data_dir }}
-
-  - name: ensuring ownership of "{{ data_dir }}" directory
-    file: path={{ data_dir }} owner=couchbase group=couchbase

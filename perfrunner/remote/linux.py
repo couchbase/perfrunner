@@ -387,20 +387,9 @@ class RemoteLinux(Remote):
         logger.info('Killing following process on index node: {}'.format(process))
         run("killall {}".format(process))
 
-    def create_directory(self, host, path):
+    def change_owner(self, host, path, owner='couchbase'):
         with settings(host_string=host):
-            logger.info('Create path: {}'.format(path))
-            run('mkdir -p "{}"'.format(path))
-
-    def allow_all_access(self, host, path):
-        with settings(host_string=host):
-            logger.info('Allow all to access path: {}'.format(path))
-            run('chmod +777 "{}"'.format(path))
-
-    def change_owner(self, host, path, owner):
-        with settings(host_string=host):
-            logger.info('Change owner for path {} to {}'.format(path, owner))
-            run('chown {} "{}"'.format(owner, path))
+            run('chown -R {0}:{0} {1}'.format(owner, path))
 
     def get_disk_usage(self, host, path, human_readable=True):
         with settings(host_string=host):

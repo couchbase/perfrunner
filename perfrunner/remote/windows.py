@@ -232,3 +232,6 @@ class RemoteWindows(Remote):
 
     def enable_ipv6(self):
         pass
+
+    def change_owner(self, *args):
+        pass

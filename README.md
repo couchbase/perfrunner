@@ -16,7 +16,7 @@ Before using perfrunner you should install the requirements listed in the requir
 * libsnappy
 * libssl
 
-Note, you should be able to install both client and server system dependencies using the Ansible playbooks (namely, clients.yml and init.yml).
+Note, you should be able to install both client and server system dependencies using the Ansible playbooks (namely, clients.yml and servers.yml).
 
 First clone the perfrunner repo with the command below:
 

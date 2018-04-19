@@ -96,6 +96,7 @@ class Worker:
         self.init_keys()
         self.init_docs()
         self.init_db()
+        self.init_creds()
 
     def init_keys(self):
         self.new_keys = NewOrderedKey(prefix=self.ts.prefix,
@@ -116,9 +117,15 @@ class Worker:
                                          self.ws.key_fmtr,
                                          self.ws.zipf_alpha)
         else:
-            self.existing_keys = UniformKey(self.ts.prefix, self.ws.key_fmtr)
+            self.existing_keys = UniformKey(self.ts.prefix,
+                                            self.ws.key_fmtr)
 
-        self.keys_for_removal = KeyForRemoval(self.ts.prefix, self.ws.key_fmtr)
+        self.keys_for_removal = KeyForRemoval(self.ts.prefix,
+                                              self.ws.key_fmtr)
+
+        self.keys_for_cas_update = KeyForCASUpdate(self.ws.n1ql_workers,
+                                                   self.ts.prefix,
+                                                   self.ws.key_fmtr)
 
     def init_docs(self):
         if not hasattr(self.ws, 'doc_gen') or self.ws.doc_gen == 'basic':
@@ -132,8 +139,8 @@ class Worker:
                                               self.ts.prefix)
         elif self.ws.doc_gen == 'reverse_range_lookup':
             self.docs = ReverseRangeLookupDocument(self.ws.size,
-                                                   prefix='n1ql',
-                                                   range_distance=self.ws.range_distance)
+                                                   self.ts.prefix,
+                                                   self.ws.range_distance)
         elif self.ws.doc_gen == 'ext_reverse_lookup':
             self.docs = ExtReverseLookupDocument(self.ws.size,
                                                  self.ts.prefix,
@@ -181,6 +188,8 @@ class Worker:
                                                       self.ws.size_variation_max)
         elif self.ws.doc_gen == 'eventing_small':
             self.docs = EventingSmallDocument(self.ws.size)
+        elif self.ws.doc_gen == 'tpc_ds':
+            self.docs = TpcDsDocument()
         elif self.ws.doc_gen == 'package':
             self.docs = PackageDocument(self.ws.size)
 
@@ -199,6 +208,10 @@ class Worker:
             self.cb = CBGen(**params)
         except Exception as e:
             raise SystemExit(e)
+
+    def init_creds(self):
+        for bucket in getattr(self.ws, 'buckets', []):
+            self.cb.client.add_bucket_creds(bucket, self.ts.password)
 
     def report_progress(self, curr_ops):  # only first worker
         if not self.sid and self.ws.ops < float('inf') and \
@@ -511,9 +524,6 @@ class ViewWorker(Worker):
     def __init__(self, workload_settings, target_settings, shutdown_event):
         super().__init__(workload_settings, target_settings, shutdown_event)
 
-        self.total_workers = self.ws.query_workers
-        self.throughput = self.ws.query_throughput
-
         self.reservoir = Reservoir(num_workers=self.ws.query_workers)
 
         if workload_settings.index_type is None:
@@ -540,9 +550,9 @@ class ViewWorker(Worker):
             self.reservoir.update(operation='query', value=latency)
 
     def run(self, sid, lock, curr_ops, curr_items, deleted_items, *args):
-        if self.throughput < float('inf'):
-            self.target_time = float(self.BATCH_SIZE) * self.total_workers / \
-                self.throughput
+        if self.ws.query_throughput < float('inf'):
+            self.target_time = float(self.BATCH_SIZE) * self.ws.query_workers / \
+                self.ws.query_throughput
         else:
             self.target_time = None
         self.sid = sid
@@ -572,62 +582,11 @@ class N1QLWorker(Worker):
     NAME = 'query-worker'
 
     def __init__(self, workload_settings, target_settings, shutdown_event=None):
-        self.new_queries = N1QLQueryGen(workload_settings.n1ql_queries)
-        self.total_workers = workload_settings.n1ql_workers
-        self.throughput = workload_settings.n1ql_throughput
-
         super().__init__(workload_settings, target_settings, shutdown_event)
 
-        self.init_creds()
+        self.new_queries = N1QLQueryGen(workload_settings.n1ql_queries)
 
         self.reservoir = Reservoir(num_workers=self.ws.n1ql_workers)
-
-    def init_keys(self):
-        self.new_keys = NewOrderedKey(prefix='n1ql', fmtr=self.ws.key_fmtr)
-
-        self.existing_keys = UniformKey(prefix='n1ql', fmtr=self.ws.key_fmtr)
-
-        self.keys_for_cas_update = KeyForCASUpdate(total_workers=self.total_workers,
-                                                   prefix='n1ql',
-                                                   fmtr=self.ws.key_fmtr)
-
-    def init_docs(self):
-        if self.ws.doc_gen == 'reverse_lookup':
-            self.docs = ReverseLookupDocument(self.ws.size,
-                                              prefix='n1ql')
-        elif self.ws.doc_gen == 'reverse_range_lookup':
-            self.docs = ReverseRangeLookupDocument(self.ws.size,
-                                                   prefix='n1ql',
-                                                   range_distance=self.ws.range_distance)
-        elif self.ws.doc_gen == 'ext_reverse_lookup':
-            self.docs = ExtReverseLookupDocument(self.ws.size,
-                                                 prefix='n1ql',
-                                                 num_docs=self.ws.items)
-        elif self.ws.doc_gen == 'join':
-            self.docs = JoinedDocument(self.ws.size,
-                                       prefix='n1ql',
-                                       num_docs=self.ws.items,
-                                       num_categories=self.ws.num_categories,
-                                       num_replies=self.ws.num_replies)
-        elif self.ws.doc_gen == 'ref':
-            self.docs = RefDocument(self.ws.size,
-                                    prefix='n1ql')
-        elif self.ws.doc_gen == 'profile':
-            self.docs = ProfileDocument(self.ws.size,
-                                        prefix='n1ql')
-        elif self.ws.doc_gen == 'array_indexing':
-            self.docs = ArrayIndexingDocument(self.ws.size,
-                                              prefix='n1ql',
-                                              array_size=self.ws.array_size,
-                                              num_docs=self.ws.items)
-        elif self.ws.doc_gen == 'tpc_ds':
-            self.docs = TpcDsDocument()
-        elif self.ws.doc_gen == 'package':
-            self.docs = PackageDocument(self.ws.size)
-
-    def init_creds(self):
-        for bucket in getattr(self.ws, 'buckets', []):
-            self.cb.client.add_bucket_creds(bucket, self.ts.password)
 
     def read(self):
         curr_items_tmp = self.curr_items.value
@@ -680,9 +639,9 @@ class N1QLWorker(Worker):
             self.update()
 
     def run(self, sid, lock, curr_ops, curr_items, *args):
-        if self.throughput < float('inf'):
-            self.target_time = self.ws.n1ql_batch_size * self.total_workers / \
-                float(self.throughput)
+        if self.ws.n1ql_throughput < float('inf'):
+            self.target_time = self.ws.n1ql_batch_size * self.ws.n1ql_workers / \
+                float(self.ws.n1ql_throughput)
         else:
             self.target_time = None
         self.lock = lock

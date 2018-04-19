@@ -29,19 +29,23 @@ class WorkloadSettings:
         self.reads_and_updates = 0
 
         self.query_workers = 0
-        self.n1ql_workers = 0
-
+        self.query_throughput = 0
         self.index_type = None
         self.ddocs = {}
         self.query_params = {}
 
         self.ssl_mode = 'none'
 
+        self.n1ql_workers = 0
         self.n1ql_timeout = 0
+        self.n1ql_throughput = 0
 
         self.seq_upserts = False
+
         self.working_set_move_time = 0
+
         self.key_fmtr = 'decimal'
+
         self.power_alpha = 0
         self.zipf_alpha = 0
 

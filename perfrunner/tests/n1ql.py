@@ -54,7 +54,10 @@ class N1QLTest(PerfTest):
         access_settings.items //= 2
         access_settings.workers = 0
 
-        super().access(settings=access_settings)
+        iterator = TargetIterator(self.cluster_spec, self.test_config, 'n1ql')
+
+        super().access(settings=access_settings,
+                       target_iterator=iterator)
 
     def store_plans(self):
         logger.info('Storing query plans')

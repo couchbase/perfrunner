@@ -1,7 +1,7 @@
 import glob
 import shutil
 import time
-from typing import Callable, List
+from typing import Callable, Iterable, List
 
 from logger import logger
 
@@ -213,7 +213,7 @@ class PerfTest:
     def run_phase(self,
                   phase: str,
                   task: Callable, settings: PhaseSettings,
-                  target_iterator: TargetIterator,
+                  target_iterator: Iterable,
                   timer: int = None,
                   wait: bool = True) -> None:
         logger.info('Running {}: {}'.format(phase, pretty_dict(settings)))
@@ -224,7 +224,7 @@ class PerfTest:
     def load(self,
              task: Callable = spring_task,
              settings: PhaseSettings = None,
-             target_iterator: TargetIterator = None) -> None:
+             target_iterator: Iterable = None) -> None:
         if settings is None:
             settings = self.test_config.load_settings
         if target_iterator is None:
@@ -242,7 +242,7 @@ class PerfTest:
 
     def xattr_load(self,
                    task: Callable = spring_task,
-                   target_iterator: TargetIterator = None) -> None:
+                   target_iterator: Iterable = None) -> None:
         if target_iterator is None:
             target_iterator = self.target_iterator
         settings = self.test_config.xattr_load_settings
@@ -258,17 +258,20 @@ class PerfTest:
 
     def access(self,
                task: Callable = spring_task,
-               settings: PhaseSettings = None) -> None:
+               settings: PhaseSettings = None,
+               target_iterator: Iterable = None) -> None:
         if settings is None:
             settings = self.test_config.access_settings
+        if target_iterator is None:
+            target_iterator = self.target_iterator
 
         self.run_phase('access phase',
-                       task, settings, self.target_iterator,
+                       task, settings, target_iterator,
                        timer=settings.time)
 
     def access_bg(self, task: Callable = spring_task,
                   settings: PhaseSettings = None,
-                  target_iterator: TargetIterator = None) -> None:
+                  target_iterator: Iterable = None) -> None:
         if settings is None:
             settings = self.test_config.access_settings
         if target_iterator is None:

@@ -2,7 +2,7 @@ import csv
 import os
 import re
 from configparser import ConfigParser, NoOptionError, NoSectionError
-from typing import Dict, Iterator, List
+from typing import Dict, Iterable, Iterator, List
 
 from decorator import decorator
 
@@ -1051,7 +1051,7 @@ class TargetSettings:
         )
 
 
-class TargetIterator:
+class TargetIterator(Iterable):
 
     def __init__(self,
                  cluster_spec: ClusterSpec,

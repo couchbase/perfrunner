@@ -264,8 +264,7 @@ class PerfTest:
     def access(self,
                task: Callable = spring_task,
                settings: PhaseSettings = None,
-               target_iterator: Iterable = None,
-               wait: bool = True) -> None:
+               target_iterator: Iterable = None) -> None:
         if settings is None:
             settings = self.test_config.access_settings
         if target_iterator is None:
@@ -273,10 +272,20 @@ class PerfTest:
 
         self.run_phase('access phase',
                        task, settings, target_iterator,
-                       timer=settings.time, wait=wait)
+                       timer=settings.time)
 
-    def access_bg(self, *args, **kwargs):
-        self.access(*args, **kwargs, wait=False)
+    def access_bg(self,
+                  task: Callable = spring_task,
+                  settings: PhaseSettings = None,
+                  target_iterator: Iterable = None):
+        if settings is None:
+            settings = self.test_config.access_settings
+        if target_iterator is None:
+            target_iterator = self.target_iterator
+
+        self.run_phase('background access phase',
+                       task, settings, target_iterator,
+                       timer=settings.time, wait=False)
 
     def report_kpi(self, *args, **kwargs) -> None:
         if self.test_config.stats_settings.enabled:

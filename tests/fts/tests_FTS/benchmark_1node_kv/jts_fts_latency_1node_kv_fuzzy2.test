@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.fts.FTSThroughputTest
+test = perfrunner.tests.fts.FTSLatencyTest
 
 [showfast]
 title = FuzzyQuery, fuzziness 2, 1K sets/sec kv, wiki 1M x 1KB, 1 node, FTS

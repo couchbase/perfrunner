@@ -6,7 +6,7 @@ title = FuzzyQuery, fuzziness 2, no kv-load, wiki 1M x 1KB, 1 node, FTS
 component = jts
 category = benchmark
 sub_category = Throughput
-orderby = q0b00000111
+orderby = q0b00001011
 
 [cluster]
 mem_quota = 51024

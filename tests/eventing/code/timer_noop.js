@@ -1,5 +1,5 @@
 function OnUpdate(doc, meta) {
-	docTimer(timerCallback, meta.id, fixed_expiry);
+	docTimer(timerCallback, fixed_expiry, meta.id);
 }
 
 function timerCallback(docid) {

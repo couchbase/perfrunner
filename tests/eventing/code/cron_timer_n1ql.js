@@ -1,5 +1,5 @@
 function OnUpdate(doc, meta) {
-	cronTimer(timerCallback, meta.id, fixed_expiry);
+	cronTimer(timerCallback, fixed_expiry, meta.id);
 }
 
 function timerCallback(docId) {

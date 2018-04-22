@@ -195,6 +195,9 @@ class N1QLDGMTest(PerfTest):
         'secondary_storage_stats': True,
     }
 
+    def load(self, *args):
+        PerfTest.load(*args)
+
     def access_bg(self, *args):
         access_settings = self.test_config.access_settings
         access_settings.n1ql_workers = 0

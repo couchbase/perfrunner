@@ -196,7 +196,7 @@ class N1QLDGMTest(PerfTest):
     }
 
     def load(self, *args):
-        PerfTest.load(*args)
+        PerfTest.load(self, *args)
 
     def access_bg(self, *args):
         access_settings = self.test_config.access_settings

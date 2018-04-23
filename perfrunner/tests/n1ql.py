@@ -56,8 +56,7 @@ class N1QLTest(PerfTest):
 
         iterator = TargetIterator(self.cluster_spec, self.test_config, 'n1ql')
 
-        super().access(settings=access_settings,
-                       target_iterator=iterator)
+        super().access(settings=access_settings, target_iterator=iterator)
 
     def store_plans(self):
         logger.info('Storing query plans')
@@ -137,19 +136,23 @@ class N1QLJoinTest(N1QLThroughputTest):
             access_settings = self.test_config.access_settings
             access_settings.doc_gen = doc_gen
             access_settings.items //= 2
-            access_settings.buckets = self.test_config.buckets
-
-            if doc_gen != access_settings.n1ql_gen:
-                access_settings.n1ql_workers = 0
+            access_settings.n1ql_workers = 0
 
             super(N1QLTest, self).access_bg(settings=access_settings,
                                             target_iterator=(target, ))
 
-    @ with_stats
+    @with_stats
     def access(self, *args):
-        super().sleep()
+        access_settings = self.test_config.access_settings
+        access_settings.items //= 2
+        access_settings.workers = 0
+        access_settings.buckets = self.test_config.buckets
+        access_settings.doc_gen = self.test_config.access_settings.n1ql_gen
 
-        self.worker_manager.wait_for_workers()
+        iterator = TargetIterator(self.cluster_spec, self.test_config, 'n1ql')
+
+        super(N1QLTest, self).access(settings=access_settings,
+                                     target_iterator=iterator)
 
     def _report_kpi(self):
         self.reporter.post(

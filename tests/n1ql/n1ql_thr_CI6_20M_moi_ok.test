@@ -26,7 +26,7 @@ items = 20000000
 size = 1024
 workers = 80
 doc_gen = reverse_range_lookup
-range_distance = 5
+range_distance = 10
 
 [index]
 statements =

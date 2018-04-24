@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.n1ql.N1QLJoinTest
+test = perfrunner.tests.n1ql.N1QLJoinThroughputTest
 
 [showfast]
 title = Q12, UNNEST 100, MOI, request_plus

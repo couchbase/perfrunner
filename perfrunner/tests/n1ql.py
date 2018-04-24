@@ -98,7 +98,7 @@ class N1QLThroughputTest(N1QLTest):
         )
 
 
-class N1QLJoinTest(N1QLThroughputTest):
+class N1QLJoinTest(N1QLTest):
 
     ALL_BUCKETS = True
 
@@ -154,10 +154,15 @@ class N1QLJoinTest(N1QLThroughputTest):
         super(N1QLTest, self).access(settings=access_settings,
                                      target_iterator=iterator)
 
-    def _report_kpi(self):
-        self.reporter.post(
-            *self.metrics.avg_n1ql_throughput()
-        )
+
+class N1QLJoinThroughputTest(N1QLJoinTest, N1QLThroughputTest):
+
+    pass
+
+
+class N1QLJoinLatencyTest(N1QLJoinTest, N1QLLatencyTest):
+
+    pass
 
 
 class N1QLBulkTest(N1QLTest):

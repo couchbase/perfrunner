@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.n1ql.N1QLJoinTest
+test = perfrunner.tests.n1ql.N1QLJoinThroughputTest
 
 [showfast]
 title = Q24, Inner Index Join Non-equal Predicates, MOI, not_bounded

@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.n1ql.N1QLJoinTest
+test = perfrunner.tests.n1ql.N1QLJoinThroughputTest
 
 [showfast]
 title = Q25, Left Outer Index Join, MOI, not_bounded

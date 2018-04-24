@@ -564,7 +564,7 @@ class JTSAccessSettings(PhaseSettings):
         self.couchbase_index_type = options.get("couchbase_index_type")
         self.workload_instances = int(self.jts_instances)
         self.time = options.get('test_duration', "600")
-        self.warmup_query_workers = options.get("warmup_query_workers", "10")
+        self.warmup_query_workers = options.get("warmup_query_workers", "0")
         self.warmup_time = options.get('warmup_time', "0")
 
     def __str__(self) -> str:

@@ -37,7 +37,8 @@ class JTSTest(PerfTest):
         self._download_logs()
 
     def warmup(self):
-        self.run_phase('jts warmup phase', jts_warmup_task, self.access, self.target_iterator)
+        if int(self.access.warmup_query_workers) > 0:
+            self.run_phase('jts warmup phase', jts_warmup_task, self.access, self.target_iterator)
 
     def _download_logs(self):
         local_dir = self.access.jts_logs_dir

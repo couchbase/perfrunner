@@ -413,6 +413,7 @@ class PhaseSettings:
     INSERTS_PER_WORKERINSTANCE = 0
 
     EPOLL = 'true'
+    BOOST = 48
 
     SSL_MODE = 'none'
     SSL_AUTH_KEYSTORE = "certificates/auth.keystore"
@@ -508,6 +509,7 @@ class PhaseSettings:
         self.inserts_per_workerinstance = int(options.get('inserts_per_workerinstance',
                                                           self.INSERTS_PER_WORKERINSTANCE))
         self.epoll = options.get("epoll", self.EPOLL)
+        self.boost = options.get('boost', self.BOOST)
 
         # Subdoc & XATTR
         self.subdoc_field = options.get('subdoc_field')

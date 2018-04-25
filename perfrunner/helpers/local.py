@@ -306,11 +306,22 @@ def run_kvgen(hostname: str, num_docs: int, prefix: str):
         local(cmd)
 
 
-def run_ycsb(host: str, bucket: str, password: str, action: str, workload: str,
-             items: int, workers: int, epoll: str, ssl_keystore_file: str ='',
-             ssl_keystore_password: str = '', soe_params: dict = None,
-             ops: int = None, time: int = None, instance: int = 0,
-             ssl_mode: str = 'none'):
+def run_ycsb(host: str,
+             bucket: str,
+             password: str,
+             action: str,
+             workload: str,
+             items: int,
+             workers: int,
+             epoll: str,
+             boost: int,
+             ssl_keystore_file: str ='',
+             ssl_keystore_password: str = '',
+             ssl_mode: str = 'none',
+             soe_params: dict = None,
+             ops: int = None,
+             execution_time: int = None,
+             instance: int = 0):
     cmd = 'bin/ycsb {action} couchbase2 ' \
           '-P {workload} ' \
           '-p writeallfields=true ' \
@@ -319,7 +330,7 @@ def run_ycsb(host: str, bucket: str, password: str, action: str, workload: str,
           '-p couchbase.bucket={bucket} ' \
           '-p couchbase.upsert=true ' \
           '-p couchbase.epoll={epoll} ' \
-          '-p couchbase.boost=48 ' \
+          '-p couchbase.boost={boost} ' \
           '-p exportfile=ycsb_{action}_{instance}.log ' \
           '-p couchbase.sslMode={ssl_mode} ' \
           '-p couchbase.certKeystoreFile=../{ssl_keystore_file} ' \
@@ -328,13 +339,20 @@ def run_ycsb(host: str, bucket: str, password: str, action: str, workload: str,
 
     if ops is not None:
         cmd += ' -p operationcount={ops} '
-    if time is not None:
-        cmd += ' -p maxexecutiontime={time} '
+    if execution_time is not None:
+        cmd += ' -p maxexecutiontime={execution_time} '
 
-    cmd = cmd.format(host=host, bucket=bucket,
-                     action=action, workload=workload,
-                     items=items, ops=ops, workers=workers,
-                     time=time, epoll=epoll, instance=instance,
+    cmd = cmd.format(host=host,
+                     bucket=bucket,
+                     action=action,
+                     workload=workload,
+                     items=items,
+                     ops=ops,
+                     workers=workers,
+                     execution_time=execution_time,
+                     epoll=epoll,
+                     boost=boost,
+                     instance=instance,
                      ssl_mode=ssl_mode, password=password,
                      ssl_keystore_file=ssl_keystore_file,
                      ssl_keystore_password=ssl_keystore_password)

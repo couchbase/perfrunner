@@ -9,7 +9,7 @@ component = YCSB
 mem_quota = 20480
 initial_nodes = 1
 num_buckets = 1
-online_cores = 6
+online_cores = 4
 ipv6 = 1
 
 [bucket]
@@ -23,6 +23,11 @@ workers = 120
 [access]
 workload_path = workloads/workloada
 items = 10000000
-workers = 160
+workers = 72
 ops = 1000000000
 time = 600
+boost = 12
+
+[stats]
+interval = 1
+client_processes = java

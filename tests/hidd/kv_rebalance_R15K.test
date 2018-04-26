@@ -1,0 +1,41 @@
+[test_case]
+test = perfrunner.tests.rebalance.RebalanceKVTest
+
+[showfast]
+title = Rebalance-swap (min), 9 -> 9, 750M x 15KB, 100 reads/sec
+component = reb
+category = kv
+sub_category = DGM
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 9
+num_buckets = 1
+kernel_mem_limit = 65G
+kernel_mem_limit_services = kv
+
+[bucket]
+eviction_policy = fullEviction
+
+[load]
+items = 750000000
+size = 15360
+workers = 100
+key_fmtr = hex
+doc_gen = incompressible
+
+[access]
+creates = 0
+reads = 100
+updates = 0
+deletes = 0
+items = 750000000
+workers = 1
+throughput = 100
+power_alpha = 10
+
+[rebalance]
+nodes_after = 9
+swap = 1
+start_after = 300
+stop_after = 300

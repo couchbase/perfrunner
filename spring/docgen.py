@@ -12,6 +12,7 @@ from spring.dictionary import (
     CATEGORIES,
     COUNTIES,
     EDUCATION_STATUSES,
+    GARBAGE,
     GENDERS,
     LOREM,
     MARITAL_STATUSES,
@@ -321,6 +322,19 @@ class String:
         alphabet = self.build_alphabet(key.string)
 
         return self.build_string(alphabet, self.avg_size)
+
+
+class IncompressibleString(String):
+
+    @staticmethod
+    def build_alphabet(*args) -> str:
+        return GARBAGE
+
+    @staticmethod
+    def build_string(alphabet: str, length: float):
+        length_int = int(length)
+        offset = random.randint(a=0, b=len(alphabet) - length_int)
+        return alphabet[offset:offset + length_int]
 
 
 class Document(String):

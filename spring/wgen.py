@@ -24,6 +24,7 @@ from spring.docgen import (
     ImportExportDocument,
     ImportExportDocumentArray,
     ImportExportDocumentNested,
+    IncompressibleString,
     JoinedDocument,
     KeyForCASUpdate,
     KeyForRemoval,
@@ -192,6 +193,8 @@ class Worker:
             self.docs = TpcDsDocument()
         elif self.ws.doc_gen == 'package':
             self.docs = PackageDocument(self.ws.size)
+        elif self.ws.doc_gen == 'incompressible':
+            self.docs = IncompressibleString(self.ws.size)
 
     def init_db(self):
         params = {

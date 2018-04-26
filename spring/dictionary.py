@@ -9308,3 +9308,7 @@ PACKAGE_STATUSES = (
 
 with open('spring/dictionary.txt') as fh:
     LOREM = fh.read()
+
+
+with open('spring/garbage.txt') as fh:
+    GARBAGE = fh.read()

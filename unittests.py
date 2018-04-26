@@ -586,6 +586,12 @@ class SpringTest(TestCase):
             self.assertEqual(doc['minorAccountId'], doc['majorAccountId'])
         self.assertEqual(len(dates), ws.items // ws.workers)
 
+    def test_incompressible_docs(self):
+        size = 15 * 1024
+        generator = docgen.IncompressibleString(avg_size=size)
+        doc = generator.next(key=docgen.Key(number=0, prefix='', fmtr=''))
+        self.assertEqual(len(doc), size)
+
 
 class QueryTest(TestCase):
 

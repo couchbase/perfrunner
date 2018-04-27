@@ -28,7 +28,7 @@ class Config:
         self.config = ConfigParser()
         self.name = ''
 
-    def parse(self, fname: str, override=None) -> None:
+    def parse(self, fname: str, override=None):
         logger.info('Reading configuration file: {}'.format(fname))
         if not os.path.isfile(fname):
             logger.interrupt("File doesn't exist: {}".format(fname))
@@ -732,7 +732,7 @@ class AccessSettings(PhaseSettings):
 
     OPS = float('inf')
 
-    def define_queries(self, config) -> None:
+    def define_queries(self, config):
         queries = []
         for query_name in self.n1ql_queries:
             query = config.get_n1ql_query_definition(query_name)

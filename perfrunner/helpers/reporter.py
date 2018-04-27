@@ -25,7 +25,7 @@ class Reporter:
 
 class ShowFastReporter(Reporter):
 
-    def _post_cluster(self) -> None:
+    def _post_cluster(self):
         cluster = self.cluster_spec.parameters
         cluster['Name'] = self.cluster_spec.name
 
@@ -33,7 +33,7 @@ class ShowFastReporter(Reporter):
         requests.post('http://{}/api/v1/clusters'.format(SHOWFAST_HOST),
                       json.dumps(cluster))
 
-    def _post_metric(self, metric: JSON) -> None:
+    def _post_metric(self, metric: JSON):
         if 'category' not in metric:
             metric['category'] = self.test_config.showfast.category
 
@@ -62,11 +62,11 @@ class ShowFastReporter(Reporter):
         }
 
     @staticmethod
-    def _log_benchmark(benchmark: JSON) -> None:
+    def _log_benchmark(benchmark: JSON):
         logger.info('Dry run: {}'.format(pretty_dict(benchmark)))
 
     @staticmethod
-    def _post_benchmark(benchmark: JSON) -> None:
+    def _post_benchmark(benchmark: JSON):
         logger.info('Adding a benchmark: {}'.format(pretty_dict(benchmark)))
         requests.post('http://{}/api/v1/benchmarks'.format(SHOWFAST_HOST),
                       json.dumps(benchmark))
@@ -74,7 +74,7 @@ class ShowFastReporter(Reporter):
     def post(self,
              value: Union[float, int],
              snapshots: List[str],
-             metric: JSON) -> None:
+             metric: JSON):
         metric['id'] = '{}_{}'.format(metric['id'], self.cluster_spec.name)
         benchmark = self._generate_benchmark(metric['id'], value, snapshots)
 
@@ -89,20 +89,20 @@ class ShowFastReporter(Reporter):
 class DailyReporter(Reporter):
 
     @staticmethod
-    def _post_daily_benchmark(benchmark: JSON) -> None:
+    def _post_daily_benchmark(benchmark: JSON):
         logger.info('Adding a benchmark: {}'.format(pretty_dict(benchmark)))
         requests.post(
             'http://{}/daily/api/v1/benchmarks'.format(SHOWFAST_HOST),
             json.dumps(benchmark))
 
     @staticmethod
-    def _log_daily_benchmark(benchmark: JSON) -> None:
+    def _log_daily_benchmark(benchmark: JSON):
         logger.info('Dry run: {}'.format(pretty_dict(benchmark)))
 
     def post(self,
              metric: str,
              value: Union[float, int],
-             snapshots: List[str]) -> None:
+             snapshots: List[str]):
         benchmark = {
             'build': self.build,
             'buildURL': os.environ.get('BUILD_URL', ''),

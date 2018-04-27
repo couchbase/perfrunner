@@ -126,7 +126,7 @@ class PerfTest:
         failure = self.check_rebalance() or failure
         return self.check_failover() or failure
 
-    def download_certificate(self) -> None:
+    def download_certificate(self):
         cert = self.rest.get_certificate(self.master_node)
         with open(self.ROOT_CERTIFICATE, 'w') as fh:
             fh.write(cert)
@@ -180,7 +180,7 @@ class PerfTest:
                 self.test_config.restore_settings.import_file, bucket,
             )
 
-    def compact_bucket(self, wait: bool = True) -> None:
+    def compact_bucket(self, wait: bool = True):
         for target in self.target_iterator:
             self.rest.trigger_bucket_compaction(target.node, target.bucket)
 
@@ -188,17 +188,17 @@ class PerfTest:
             for target in self.target_iterator:
                 self.monitor.monitor_task(target.node, 'bucket_compaction')
 
-    def wait_for_persistence(self) -> None:
+    def wait_for_persistence(self):
         for target in self.target_iterator:
             self.monitor.monitor_disk_queues(target.node, target.bucket)
             self.monitor.monitor_dcp_queues(target.node, target.bucket)
 
-    def wait_for_indexing(self) -> None:
+    def wait_for_indexing(self):
         if self.test_config.index_settings.statements:
             for server in self.index_nodes:
                 self.monitor.monitor_indexing(server)
 
-    def check_num_items(self) -> None:
+    def check_num_items(self):
         for target in self.target_iterator:
             self.monitor.monitor_num_items(target.node, target.bucket,
                                            self.test_config.load_settings.items)
@@ -216,7 +216,7 @@ class PerfTest:
         for statement in self.test_config.index_settings.statements:
             self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
 
-    def sleep(self) -> None:
+    def sleep(self):
         access_settings = self.test_config.access_settings
         logger.info('Running phase for {} seconds'.format(access_settings.time))
         time.sleep(access_settings.time)
@@ -226,7 +226,7 @@ class PerfTest:
                   task: Callable, settings: PhaseSettings,
                   target_iterator: Iterable,
                   timer: int = None,
-                  wait: bool = True) -> None:
+                  wait: bool = True):
         logger.info('Running {}: {}'.format(phase, pretty_dict(settings)))
         self.worker_manager.run_tasks(task, settings, target_iterator, timer)
         if wait:
@@ -235,7 +235,7 @@ class PerfTest:
     def load(self,
              task: Callable = spring_task,
              settings: PhaseSettings = None,
-             target_iterator: Iterable = None) -> None:
+             target_iterator: Iterable = None):
         if settings is None:
             settings = self.test_config.load_settings
         if target_iterator is None:
@@ -245,7 +245,7 @@ class PerfTest:
                        task, settings, target_iterator)
 
     def hot_load(self,
-                 task: Callable = spring_task) -> None:
+                 task: Callable = spring_task):
         settings = self.test_config.hot_load_settings
 
         self.run_phase('hot load phase',
@@ -253,7 +253,7 @@ class PerfTest:
 
     def xattr_load(self,
                    task: Callable = spring_task,
-                   target_iterator: Iterable = None) -> None:
+                   target_iterator: Iterable = None):
         if target_iterator is None:
             target_iterator = self.target_iterator
         settings = self.test_config.xattr_load_settings
@@ -264,7 +264,7 @@ class PerfTest:
     def access(self,
                task: Callable = spring_task,
                settings: PhaseSettings = None,
-               target_iterator: Iterable = None) -> None:
+               target_iterator: Iterable = None):
         if settings is None:
             settings = self.test_config.access_settings
         if target_iterator is None:
@@ -277,7 +277,7 @@ class PerfTest:
     def access_bg(self,
                   task: Callable = spring_task,
                   settings: PhaseSettings = None,
-                  target_iterator: Iterable = None) -> None:
+                  target_iterator: Iterable = None):
         if settings is None:
             settings = self.test_config.access_settings
         if target_iterator is None:
@@ -287,9 +287,9 @@ class PerfTest:
                        task, settings, target_iterator,
                        timer=settings.time, wait=False)
 
-    def report_kpi(self, *args, **kwargs) -> None:
+    def report_kpi(self, *args, **kwargs):
         if self.test_config.stats_settings.enabled:
             self._report_kpi(*args, **kwargs)
 
-    def _report_kpi(self, *args, **kwargs) -> None:
+    def _report_kpi(self, *args, **kwargs):
         pass

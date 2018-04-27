@@ -712,7 +712,7 @@ class RestHelper:
         }
         return self.post(url=api, data=data)
 
-    def get_analytics_stats(self, analytics_node: str):
+    def get_analytics_stats(self, analytics_node: str) -> dict:
         api = 'http://{}:9110/analytics/node/stats'.format(analytics_node)
         return self.get(url=api).json()
 
@@ -731,7 +731,7 @@ class RestHelper:
                                                                        name)
         self.post(url=api, data=json.dumps(func))
 
-    def get_num_events_processed(self, event: str, node: str, name: str):
+    def get_num_events_processed(self, event: str, node: str, name: str) -> int:
         logger.info('get stats on node {} for {}'.format(node, name))
 
         data = {}
@@ -753,7 +753,7 @@ class RestHelper:
         api = 'http://{}:{}/getDeployedApps'.format(node, EVENTING_PORT)
         return self.get(url=api).json()
 
-    def get_eventing_stats(self, node: str, full_stats=False):
+    def get_eventing_stats(self, node: str, full_stats: bool = False) -> dict:
         logger.info('get eventing stats on node {}'.format(node))
 
         api = 'http://{}:{}/api/v1/stats'.format(node, EVENTING_PORT)
@@ -770,18 +770,18 @@ class RestHelper:
                 active_nodes_by_role.append(node)
         return active_nodes_by_role
 
-    def upload_cluster_certificate(self, node):
+    def upload_cluster_certificate(self, node: str):
         logger.info("Uploading cluster certificate to {}".format(node))
         api = 'http://{}:8091/controller/uploadClusterCA'.format(node)
         data = open('./certificates/inbox/ca.pem', 'rb').read()
         self.post(url=api, data=data)
 
-    def reload_cluster_certificate(self, node):
+    def reload_cluster_certificate(self, node: str):
         logger.info("Reloading certificate on {}".format(node))
         api = 'http://{}:8091/node/controller/reloadCertificate'.format(node)
         self.post(url=api)
 
-    def enable_certificate_auth(self, node):
+    def enable_certificate_auth(self, node: str):
         logger.info("Enabling certificate-based client auth on {}".format(node))
         api = 'http://{}:8091/settings/clientCertAuth'.format(node)
         data = open('./certificates/inbox/config.json', 'rb').read()

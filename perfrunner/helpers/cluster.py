@@ -6,11 +6,13 @@ from perfrunner.helpers.misc import maybe_atoi, pretty_dict
 from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import RestHelper
+from perfrunner.settings import ClusterSpec, TestConfig
 
 
 class ClusterManager:
 
-    def __init__(self, cluster_spec, test_config, verbose=False):
+    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig,
+                 verbose: bool = False):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
 
@@ -23,7 +25,7 @@ class ClusterManager:
 
         self.initial_nodes = test_config.cluster.initial_nodes
 
-    def is_compatible(self, min_release):
+    def is_compatible(self, min_release: str) -> bool:
         for master in self.cluster_spec.masters:
             version = self.rest.get_version(master)
             return version >= min_release

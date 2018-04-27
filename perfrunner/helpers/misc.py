@@ -14,13 +14,13 @@ def pretty_dict(d: Any) -> str:
                       default=lambda o: o.__dict__)
 
 
-def target_hash(*args):
+def target_hash(*args: str) -> str:
     int_hash = hash(args)
     str_hash = md5(hex(int_hash).encode('utf-8')).hexdigest()
     return str_hash[:6]
 
 
-def retry(catch=(), iterations=5, wait=10):
+def retry(catch: tuple = (), iterations: int = 5, wait: int = 10):
     """Retry a function while discarding the specified exceptions.
 
     'catch' is a tuple of exceptions. Passing in a list is also fine.
@@ -71,7 +71,7 @@ def retry(catch=(), iterations=5, wait=10):
     return retry_decorator
 
 
-def read_json(filename: str):
+def read_json(filename: str) -> dict:
     with open(filename) as fh:
         return json.load(fh)
 

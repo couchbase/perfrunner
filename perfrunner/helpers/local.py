@@ -499,7 +499,8 @@ def govendor_fetch(path: str, revision: str, package: str):
     local('govendor fetch {}/{}@{}'.format(path, package, revision))
 
 
-def generate_ssl_keystore(root_certificate, keystore_file, storepass):
+def generate_ssl_keystore(root_certificate: str, keystore_file: str,
+                          storepass: str):
     logger.info('Generating SSL keystore')
     with quiet():
         local("keytool -delete -keystore {} -alias couchbase -storepass storepass"

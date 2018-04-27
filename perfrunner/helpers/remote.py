@@ -4,11 +4,12 @@ from fabric.api import run, settings
 from logger import logger
 from perfrunner.remote.linux import RemoteLinux
 from perfrunner.remote.windows import RemoteWindows
+from perfrunner.settings import ClusterSpec
 
 
 class RemoteHelper:
 
-    def __new__(cls, cluster_spec, verbose=False):
+    def __new__(cls, cluster_spec: ClusterSpec, verbose: bool = False):
         if not cluster_spec.ssh_credentials:
             return None
 
@@ -23,7 +24,7 @@ class RemoteHelper:
             return RemoteLinux(cluster_spec, os)
 
     @staticmethod
-    def detect_os(cluster_spec):
+    def detect_os(cluster_spec: ClusterSpec):
         logger.info('Detecting OS')
         with settings(host_string=cluster_spec.servers[0]):
             os = run('python -c "import platform; print platform.dist()[0]"')

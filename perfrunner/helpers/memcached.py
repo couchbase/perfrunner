@@ -4,6 +4,8 @@ import time
 from decorator import decorator
 from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
 
+from perfrunner.settings import TestConfig
+
 SOCKET_RETRY_INTERVAL = 2
 
 
@@ -18,7 +20,7 @@ def retry(method, *args, **kwargs):
 
 class MemcachedHelper:
 
-    def __init__(self, test_config):
+    def __init__(self, test_config: TestConfig):
         self.password = test_config.bucket.password
         if test_config.cluster.ipv6:
             self.family = socket.AF_INET6
@@ -26,10 +28,10 @@ class MemcachedHelper:
             self.family = socket.AF_INET
 
     @retry
-    def get_stats(self, host, port, bucket, stats=''):
+    def get_stats(self, host: str, port: int, bucket: str, stats: str = '') -> dict:
         mc = MemcachedClient(host=host, port=port, family=self.family)
         mc.sasl_auth_plain(user=bucket, password=self.password)
         return mc.stats(stats)
 
-    def reset_stats(self, host, port, bucket):
+    def reset_stats(self, host: str, port: int, bucket: str):
         self.get_stats(host, port, bucket, 'reset')

@@ -2,7 +2,7 @@
 test = perfdaily.ycsb.YCSBThroughputTest
 
 [showfast]
-title = Workload A, 10M items, single node, Ephemeral, 4 vCPU
+title = Workload A, 10M items, single node, Ephemeral, 8 vCPU
 component = YCSB
 
 [cluster]

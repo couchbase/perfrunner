@@ -48,7 +48,7 @@ class Profiler:
     ENDPOINTS = {
         'cpu':  'http://127.0.0.1:{}/debug/pprof/profile',
         'heap': 'http://127.0.0.1:{}/debug/pprof/heap',
-        'goroutine': 'http://127.0.0.1:{}/debug/pprof/goroutine',
+        'goroutine': 'http://127.0.0.1:{}/debug/pprof/goroutine?debug=2',
     }
 
     def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):

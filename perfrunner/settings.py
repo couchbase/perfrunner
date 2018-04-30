@@ -781,7 +781,7 @@ class SyncgatewaySettings:
         self.insert_mode = options.get('insert_mode', self.INSERT_MODE)
         self.clients = options.get('clients', self.CLIENTS)
         self.nodes = options.get('nodes', self.NODES)
-        self.starchannel=options.get('starchannel', self.STAR)
+        self.starchannel = options.get('starchannel', self.STAR)
 
 
     def __str__(self) -> str:

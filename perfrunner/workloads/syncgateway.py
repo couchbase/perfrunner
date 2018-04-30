@@ -60,7 +60,7 @@ def syncgateway_load_users(workload_settings: PhaseSettings, timer: int, worker_
                                    channels_per_user=sgs.channels_per_user,
                                    insertstart=get_offset(workload_settings, worker_id),
                                    exportfile=res_file_name,
-                                   starchannel=sgs.startchannel)
+                                   starchannel=sgs.starchannel)
 
     path = getInstanceHome(workload_settings, worker_id)
     run_cmd(path, BINARY_NAME, params, log_file_name)

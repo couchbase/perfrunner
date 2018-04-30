@@ -8,7 +8,7 @@ BINARY_PATH = "YCSB"
 LOAD_USERS_CMD = " load syncgateway -s -P {workload} -p syncgateway.loadmode=users -threads 50 " \
                  "-p syncgateway.host={hosts} -p memcached.host={memcached_host} -p recordcount={total_users} " \
                  "-p syncgateway.channels={total_channels} -p syncgateway.channelsperuser={channels_per_user} " \
-                 "-p insertstart={insertstart} -p exportfile={exportfile}"
+                 "-p insertstart={insertstart} -p exportfile={exportfile} -p syncgateway.starchannel={starchannel}"
 
 LOAD_DOCS_CMD = " load syncgateway -s -P {workload} -p recordcount={total_docs} -threads 50 " \
                 "-p syncgateway.host={hosts} -p syncgateway.auth=false " \
@@ -59,7 +59,8 @@ def syncgateway_load_users(workload_settings: PhaseSettings, timer: int, worker_
                                    total_channels=sgs.channels,
                                    channels_per_user=sgs.channels_per_user,
                                    insertstart=get_offset(workload_settings, worker_id),
-                                   exportfile=res_file_name)
+                                   exportfile=res_file_name,
+                                   starchannel=sgs.startchannel)
 
     path = getInstanceHome(workload_settings, worker_id)
     run_cmd(path, BINARY_NAME, params, log_file_name)

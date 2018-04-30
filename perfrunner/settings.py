@@ -751,6 +751,7 @@ class SyncgatewaySettings:
     THREADS = 10
     INSERTSTART=0
     MAX_INSERTS_PER_INSTANCE = 1000000
+    STAR = "false"
 
     def __init__(self, options: dict):
         self.repo = options.get('ycsb_repo', self.REPO)
@@ -780,6 +781,7 @@ class SyncgatewaySettings:
         self.insert_mode = options.get('insert_mode', self.INSERT_MODE)
         self.clients = options.get('clients', self.CLIENTS)
         self.nodes = options.get('nodes', self.NODES)
+        self.starchannel=options.get('starchannel', self.STAR)
 
 
     def __str__(self) -> str:

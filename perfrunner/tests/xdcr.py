@@ -53,6 +53,7 @@ class XdcrTest(PerfTest):
                 self.monitor.monitor_xdcr_queues(target.node, target.bucket)
 
     @with_stats
+    @with_profiles
     def access(self, *args):
         super().access(*args)
 

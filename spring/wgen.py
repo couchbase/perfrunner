@@ -20,6 +20,7 @@ from spring.docgen import (
     EventingSmallDocument,
     ExtReverseLookupDocument,
     GSIMultiIndexDocument,
+    HashJoinDocument,
     HotKey,
     ImportExportDocument,
     ImportExportDocumentArray,
@@ -146,6 +147,10 @@ class Worker:
             self.docs = ExtReverseLookupDocument(self.ws.size,
                                                  self.ts.prefix,
                                                  self.ws.items)
+        elif self.ws.doc_gen == 'hash_join':
+            self.docs = HashJoinDocument(self.ws.size,
+                                         self.ts.prefix,
+                                         self.ws.range_distance)
         elif self.ws.doc_gen == 'join':
             self.docs = JoinedDocument(self.ws.size,
                                        self.ts.prefix,

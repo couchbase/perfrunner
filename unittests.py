@@ -281,6 +281,8 @@ class SpringTest(TestCase):
                                               range_distance=100),
             docgen.ExtReverseLookupDocument(avg_size=size, prefix='n1ql',
                                             num_docs=10 ** 6),
+            docgen.HashJoinDocument(avg_size=size, prefix='n1ql',
+                                    range_distance=1000),
             docgen.ArrayIndexingDocument(avg_size=size, prefix='n1ql',
                                          array_size=10, num_docs=10 ** 6),
             docgen.ProfileDocument(avg_size=size, prefix='n1ql'),

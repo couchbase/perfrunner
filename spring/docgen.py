@@ -623,6 +623,40 @@ class ReverseRangeLookupDocument(ReverseLookupDocument):
         }
 
 
+class HashJoinDocument(ReverseRangeLookupDocument):
+
+    OVERHEAD = 415
+
+    def next(self, key: Key) -> dict:
+        alphabet = self.build_alphabet(key.string)
+        size = self._size()
+        capped_range = key.number + self.distance * 100
+
+        return {
+            'name': self.build_name(alphabet),
+            'email': self.build_email(alphabet),
+            'street': self.build_street(alphabet),
+            'city': self.build_city(alphabet),
+            'county': self.build_county(alphabet),
+            'state': self.build_state(alphabet),
+            'full_state': self.build_full_state(alphabet),
+            'country': self.build_country(alphabet),
+            'realm': self.build_realm(alphabet),
+            'coins': self.build_coins(alphabet),
+            'category': self.build_category(alphabet),
+            'year': self.build_year(alphabet),
+            'body': self.build_string(alphabet, size),
+            'capped_100': self.build_capped(alphabet, key.number,
+                                            num_unique=100),
+            'capped_100_range': self.build_capped(alphabet, capped_range,
+                                                  num_unique=100),
+            'capped_1K': self.build_capped(alphabet, key.number,
+                                           num_unique=1000),
+            'capped_10K': self.build_capped(alphabet, key.number,
+                                            num_unique=10000),
+        }
+
+
 class ExtReverseLookupDocument(ReverseLookupDocument):
 
     OVERHEAD = 500

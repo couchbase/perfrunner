@@ -42,4 +42,4 @@ updateproportion=0
 insertproportion=0.1
 requestdistribution = zipfian
 log_title = sync_gateway_1node_sync
-starchannel.true
+starchannel = true

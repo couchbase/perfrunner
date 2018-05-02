@@ -257,12 +257,14 @@ def run_cbc_pillowfight(host: str, bucket: str, password: str,
         cmd += '--spec couchbase://{host}/{bucket}?ipv6=allow '
 
     if populate:
-        cmd += '--populate-only'
+        cmd += '--populate-only '
     else:
         cmd += \
             '--set-pct {writes} ' \
             '--num-cycles {num_cycles} ' \
-            '--no-population'
+            '--no-population '
+
+    cmd += ' 2> /dev/null'
 
     cmd = cmd.format(host=host, bucket=bucket, password=password,
                      num_items=num_items, num_threads=num_threads,

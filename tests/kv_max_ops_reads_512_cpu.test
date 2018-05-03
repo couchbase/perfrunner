@@ -2,7 +2,7 @@
 test = perfrunner.tests.kv.PillowFightTest
 
 [showfast]
-title = Max ops/sec, cbc-pillowfight, 2 nodes, 80/20 R/W, 512B JSON items, 10 vCPU
+title = Max ops/sec, cbc-pillowfight, 2 nodes, 80/20 R/W, 512B JSON items, 1K batch size, 10 vCPU
 component = kv
 category = max_ops
 orderby = reads

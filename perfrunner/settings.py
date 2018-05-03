@@ -371,6 +371,8 @@ class PhaseSettings:
     HOT_READS = False
     SEQ_UPSERTS = False
 
+    BATCH_SIZE = 1000
+
     ITERATIONS = 1
 
     ASYNC = False
@@ -461,6 +463,8 @@ class PhaseSettings:
         self.seq_upserts = self.SEQ_UPSERTS
 
         self.iterations = int(options.get('iterations', self.ITERATIONS))
+
+        self.batch_size = int(options.get('batch_size', self.BATCH_SIZE))
 
         self.workload_instances = int(options.get('workload_instances',
                                                   self.WORKLOAD_INSTANCES))

@@ -236,11 +236,12 @@ def cbimport(master_node: str, cluster_spec: ClusterSpec, bucket: str,
 
 def run_cbc_pillowfight(host: str, bucket: str, password: str,
                         num_items: int, num_threads: int, num_cycles: int,
-                        size: int, writes: int, populate: bool = False,
-                        ssl_mode: str ='none', doc_gen: str = 'binary'):
+                        size: int, batch_size: int, writes: int,
+                        populate: bool = False, doc_gen: str = 'binary',
+                        ssl_mode: str = 'none'):
     cmd = 'cbc-pillowfight ' \
         '--password {password} ' \
-        '--batch-size 1000 ' \
+        '--batch-size {batch_size} ' \
         '--num-items {num_items} ' \
         '--num-threads {num_threads} ' \
         '--min-size {size} ' \
@@ -268,7 +269,8 @@ def run_cbc_pillowfight(host: str, bucket: str, password: str,
 
     cmd = cmd.format(host=host, bucket=bucket, password=password,
                      num_items=num_items, num_threads=num_threads,
-                     num_cycles=num_cycles, size=size, writes=writes)
+                     num_cycles=num_cycles, size=size, batch_size=batch_size,
+                     writes=writes)
 
     logger.info('Running: {}'.format(cmd))
     local(cmd)

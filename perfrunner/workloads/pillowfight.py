@@ -14,9 +14,11 @@ def pillowfight_data_load(workload_settings: PhaseSettings,
                         size=workload_settings.size,
                         batch_size=workload_settings.batch_size,
                         writes=workload_settings.creates,
+                        persist_to=workload_settings.persist_to,
+                        replicate_to=workload_settings.replicate_to,
                         doc_gen=workload_settings.doc_gen,
                         ssl_mode=workload_settings.ssl_mode,
-                        populate=True,)
+                        populate=True)
 
 
 def pillowfight_workload(workload_settings: PhaseSettings,
@@ -31,5 +33,7 @@ def pillowfight_workload(workload_settings: PhaseSettings,
                         size=workload_settings.size,
                         batch_size=workload_settings.batch_size,
                         writes=workload_settings.updates,
+                        persist_to=workload_settings.persist_to,
+                        replicate_to=workload_settings.replicate_to,
                         doc_gen=workload_settings.doc_gen,
                         ssl_mode=workload_settings.ssl_mode)

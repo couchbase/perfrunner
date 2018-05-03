@@ -234,18 +234,29 @@ def cbimport(master_node: str, cluster_spec: ClusterSpec, bucket: str,
     local(cmd)
 
 
-def run_cbc_pillowfight(host: str, bucket: str, password: str,
-                        num_items: int, num_threads: int, num_cycles: int,
-                        size: int, batch_size: int, writes: int,
-                        populate: bool = False, doc_gen: str = 'binary',
-                        ssl_mode: str = 'none'):
+def run_cbc_pillowfight(host: str,
+                        bucket: str,
+                        password: str,
+                        num_items: int,
+                        num_threads: int,
+                        num_cycles: int,
+                        size: int,
+                        batch_size: int,
+                        writes: int,
+                        persist_to: int,
+                        replicate_to: int,
+                        doc_gen: str = 'binary',
+                        ssl_mode: str = 'none',
+                        populate: bool = False):
     cmd = 'cbc-pillowfight ' \
         '--password {password} ' \
         '--batch-size {batch_size} ' \
         '--num-items {num_items} ' \
         '--num-threads {num_threads} ' \
         '--min-size {size} ' \
-        '--max-size {size} '
+        '--max-size {size} ' \
+        '--persist-to {persist_to} ' \
+        '--replicate-to {replicate_to} '
 
     if doc_gen == 'json':
         cmd += '--json '
@@ -267,9 +278,16 @@ def run_cbc_pillowfight(host: str, bucket: str, password: str,
 
     cmd += ' 2> /dev/null'
 
-    cmd = cmd.format(host=host, bucket=bucket, password=password,
-                     num_items=num_items, num_threads=num_threads,
-                     num_cycles=num_cycles, size=size, batch_size=batch_size,
+    cmd = cmd.format(host=host,
+                     bucket=bucket,
+                     password=password,
+                     num_items=num_items,
+                     num_threads=num_threads,
+                     num_cycles=num_cycles,
+                     size=size,
+                     batch_size=batch_size,
+                     persist_to=persist_to,
+                     replicate_to=replicate_to,
                      writes=writes)
 
     logger.info('Running: {}'.format(cmd))
@@ -319,6 +337,8 @@ def run_ycsb(host: str,
              workers: int,
              epoll: str,
              boost: int,
+             persist_to: int,
+             replicate_to: int,
              ssl_keystore_file: str ='',
              ssl_keystore_password: str = '',
              ssl_mode: str = 'none',
@@ -335,11 +355,13 @@ def run_ycsb(host: str,
           '-p couchbase.upsert=true ' \
           '-p couchbase.epoll={epoll} ' \
           '-p couchbase.boost={boost} ' \
-          '-p exportfile=ycsb_{action}_{instance}.log ' \
+          '-p couchbase.persistTo={persist_to} ' \
+          '-p couchbase.replicateTo={replicate_to} ' \
           '-p couchbase.sslMode={ssl_mode} ' \
           '-p couchbase.certKeystoreFile=../{ssl_keystore_file} ' \
           '-p couchbase.certKeystorePassword={ssl_keystore_password} ' \
-          '-p couchbase.password={password} '
+          '-p couchbase.password={password} ' \
+          '-p exportfile=ycsb_{action}_{instance}.log '
 
     if ops is not None:
         cmd += ' -p operationcount={ops} '
@@ -356,6 +378,8 @@ def run_ycsb(host: str,
                      execution_time=execution_time,
                      epoll=epoll,
                      boost=boost,
+                     persist_to=persist_to,
+                     replicate_to=replicate_to,
                      instance=instance,
                      ssl_mode=ssl_mode, password=password,
                      ssl_keystore_file=ssl_keystore_file,

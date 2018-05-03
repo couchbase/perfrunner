@@ -422,6 +422,9 @@ class PhaseSettings:
     SSL_DATA_KEYSTORE = "certificates/data.keystore"
     SSL_KEYSTOREPASS = "storepass"
 
+    PERSIST_TO = 0
+    REPLICATE_TO = 0
+
     def __init__(self, options: dict):
         # Common settings
         self.time = int(options.get('time', self.TIME))
@@ -526,6 +529,12 @@ class PhaseSettings:
             self.ssl_keystore_file = self.SSL_AUTH_KEYSTORE
         else:
             self.ssl_keystore_file = self.SSL_DATA_KEYSTORE
+
+        # Durability settings
+        self.persist_to = int(options.get('persist_to',
+                                          self.PERSIST_TO))
+        self.replicate_to = int(options.get('replicate_to',
+                                            self.REPLICATE_TO))
 
     def __str__(self) -> str:
         return str(self.__dict__)

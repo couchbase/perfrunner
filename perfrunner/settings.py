@@ -746,6 +746,7 @@ class SyncgatewaySettings:
     READPROPORTION = 1
     UPDATEPROPORTION = 0
     INSERTPROPORTION = 0
+    SCANPROPORTION = 0
     REQUESTDISTRIBUTION = 'zipfian'  # |zipfian|uniform
     LOG_TITE = 'sync_gateway_default'
     THREADS = 10
@@ -771,6 +772,7 @@ class SyncgatewaySettings:
         self.readproportion = options.get('readproportion', self.READPROPORTION)
         self.updateproportion = options.get('updateproportion', self.UPDATEPROPORTION)
         self.insertproportion = options.get('insertproportion', self.INSERTPROPORTION)
+        self.scanproportion = options.get('scanproportion', self.SCANPROPORTION)
         self.requestdistribution = options.get('requestdistribution', self.REQUESTDISTRIBUTION)
         self.log_title = options.get('log_title', self.LOG_TITE)
         self.instances_per_client = options.get('instances_per_client', 1)

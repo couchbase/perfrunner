@@ -31,6 +31,7 @@ RUN_TEST_CMD = " run syncgateway -s -P {workload} -p recordcount={total_docs} -p
                "-p syncgateway.readmode={read_mode} -p syncgateway.insertmode={insert_mode} " \
                "-p syncgateway.sequencestart={sequence_start} -p syncgateway.initusers=false " \
                "-p readproportion={readproportion} -p updateproportion={updateproportion} " \
+               "-p scanproportion={scanproporion} " \
                "-p insertproportion={insertproportion} -p exportfile={exportfile} -p syncgateway.feedmode={feedmode}"
 
 
@@ -122,6 +123,7 @@ def syncgateway_run_test(workload_settings: PhaseSettings, timer: int, worker_id
                                  readproportion=sgs.readproportion,
                                  updateproportion=sgs.updateproportion,
                                  insertproportion=sgs.insertproportion,
+                                 scanproportion=sgs.scanproportion,
                                  exportfile=res_file_name,
                                  feedmode=sgs.feed_mode)
 

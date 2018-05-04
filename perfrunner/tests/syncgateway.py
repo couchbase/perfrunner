@@ -129,6 +129,19 @@ class SGRead(SGPerfTest):
             *self.metrics.sg_throughput("Throughput (req/sec), GET doc by id")
         )
 
+
+class SGAuth(SGPerfTest):
+    def _report_kpi(self):
+        self.collect_execution_logs()
+        for f in glob.glob('{}/*runtest*.result'.format(self.LOCAL_DIR)):
+            with open(f, 'r') as fout:
+                logger.info(f)
+                logger.info(fout.read())
+
+        self.reporter.post(
+            *self.metrics.sg_throughput("Throughput (req/sec), POST auth")
+        )
+
 class SGSync(SGPerfTest):
     def _report_kpi(self):
         self.collect_execution_logs()

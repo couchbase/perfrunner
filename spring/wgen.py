@@ -3,7 +3,7 @@ import signal
 import time
 from multiprocessing import Event, Lock, Process, Value
 from threading import Timer
-from typing import Callable, List, Tuple
+from typing import Callable, List, Tuple, Union
 
 import twisted
 from decorator import decorator
@@ -239,6 +239,8 @@ class Worker:
         self.reservoir.dump(filename='{}-{}'.format(self.NAME, self.sid))
 
 
+Client = Union[CBAsyncGen, CBGen, SubDocGen]
+
 Sequence = List[Tuple[str, Callable, Tuple]]
 
 
@@ -251,73 +253,86 @@ class KVWorker(Worker):
 
         self.reservoir = Reservoir(num_workers=self.ws.workers)
 
-    def gen_cmd_sequence(self, cb=None, extras=None) -> Sequence:
+    @property
+    def random_ops(self) -> List[str]:
         ops = \
             ['c'] * self.ws.creates + \
             ['r'] * self.ws.reads + \
             ['u'] * self.ws.updates + \
             ['d'] * self.ws.deletes + \
-            ['ru'] * (self.ws.reads_and_updates // 2)
+            ['m'] * (self.ws.reads_and_updates // 2)
         random.shuffle(ops)
+        return ops
 
-        curr_items_tmp = curr_items_spot = self.curr_items.value
-        if self.ws.creates:
-            with self.lock:
-                self.curr_items.value += self.ws.creates
-                curr_items_tmp = self.curr_items.value - self.ws.creates
-            curr_items_spot = (curr_items_tmp -
-                               self.ws.creates * self.ws.workers)
+    def create_args(self, cb: Client,
+                    curr_items: int) -> Sequence:
+        key = self.new_keys.next(curr_items)
+        doc = self.docs.next(key)
 
-        deleted_items_tmp = deleted_spot = 0
-        if self.ws.deletes:
-            with self.lock:
-                self.deleted_items.value += self.ws.deletes
-                deleted_items_tmp = self.deleted_items.value - self.ws.deletes
-            deleted_spot = (deleted_items_tmp +
-                            self.ws.deletes * self.ws.workers)
+        return [('set', cb.create, (key.string, doc))]
 
+    def read_args(self, cb: Client,
+                  curr_items: int, deleted_items: int) -> Sequence:
+        key = self.existing_keys.next(curr_items, deleted_items)
+
+        return [('get', cb.read, (key.string, ))]
+
+    def update_args(self, cb: Client,
+                    curr_items: int, deleted_items: int) -> Sequence:
+        key = self.existing_keys.next(curr_items,
+                                      deleted_items,
+                                      self.current_hot_load_start,
+                                      self.timer_elapse)
+        doc = self.docs.next(key)
+
+        return [('set', cb.update, (key.string, doc))]
+
+    def delete_args(self, cb: Client,
+                    deleted_items: int) -> Sequence:
+        key = self.keys_for_removal.next(deleted_items)
+        return [('delete', cb.delete, (key.string, ))]
+
+    def modify_args(self, cb: Client,
+                    curr_items: int, deleted_items: int) -> Sequence:
+        key = self.existing_keys.next(curr_items, deleted_items)
+        doc = self.docs.next(key)
+
+        return [
+            ('get', cb.read, (key.string,)),
+            ('set', cb.update, (key.string, doc)),
+        ]
+
+    def gen_cmd_sequence(self, cb: Client = None) -> Sequence:
         if not cb:
             cb = self.cb
 
+        curr_items = self.ws.items
+        if self.ws.creates:
+            with self.lock:
+                curr_items = self.curr_items.value
+                self.curr_items.value += self.ws.creates
+
+        deleted_items = 0
+        if self.ws.deletes:
+            with self.lock:
+                deleted_items = self.deleted_items.value + \
+                    self.ws.deletes * self.ws.workers
+                self.deleted_items.value += self.ws.deletes
+
         cmds = []
-        for op in ops:
+        for op in self.random_ops:
             if op == 'c':
-                key = self.new_keys.next(curr_items_tmp)
-                doc = self.docs.next(key)
-                curr_items_tmp += 1
-                cmds.append((None, cb.create, (key.string, doc)))
+                cmds += self.create_args(cb, curr_items)
+                curr_items += 1
             elif op == 'r':
-                key = self.existing_keys.next(curr_items_spot, deleted_spot)
-
-                if extras == 'subdoc':
-                    cmds.append(('get', cb.read, (key.string, self.ws.subdoc_field)))
-                elif extras == 'xattr':
-                    cmds.append(('get', cb.read_xattr, (key.string, self.ws.xattr_field)))
-                else:
-                    cmds.append(('get', cb.read, (key.string, )))
+                cmds += self.read_args(cb, curr_items, deleted_items)
             elif op == 'u':
-                key = self.existing_keys.next(curr_items_spot,
-                                              deleted_spot,
-                                              self.current_hot_load_start,
-                                              self.timer_elapse)
-                doc = self.docs.next(key)
-
-                if extras == 'subdoc':
-                    cmds.append(('set', cb.update, (key.string, self.ws.subdoc_field, doc)))
-                elif extras == 'xattr':
-                    cmds.append(('set', cb.update_xattr, (key.string, self.ws.xattr_field, doc)))
-                else:
-                    cmds.append(('set', cb.update, (key.string, doc)))
+                cmds += self.update_args(cb, curr_items, deleted_items)
             elif op == 'd':
-                key = self.keys_for_removal.next(deleted_items_tmp)
-                deleted_items_tmp += 1
-                cmds.append((None, cb.delete, (key.string, )))
-            elif op == 'ru':
-                key = self.existing_keys.next(curr_items_spot, deleted_spot)
-                doc = self.docs.next(key)
-
-                cmds.append(('get', cb.read, (key.string, )))
-                cmds.append(('set', cb.update, (key.string, doc)))
+                cmds += self.delete_args(cb, deleted_items)
+                deleted_items += 1
+            elif op == 'm':
+                cmds += self.modify_args(cb, curr_items, deleted_items)
         return cmds
 
     @with_sleep
@@ -371,16 +386,42 @@ class SubDocWorker(KVWorker):
                   'username': self.ts.bucket, 'password': self.ts.password}
         self.cb = SubDocGen(**params)
 
-    def gen_cmd_sequence(self, cb=None, *args):
-        return super().gen_cmd_sequence(cb, extras='subdoc')
+    def read_args(self, cb: Client,
+                  curr_items: int, deleted_items: int) -> Sequence:
+        key = self.existing_keys.next(curr_items, deleted_items)
+
+        return [('get', cb.read, (key.string, self.ws.subdoc_field))]
+
+    def update_args(self, cb: Client,
+                    curr_items: int, deleted_items: int) -> Sequence:
+        key = self.existing_keys.next(curr_items,
+                                      deleted_items,
+                                      self.current_hot_load_start,
+                                      self.timer_elapse)
+        doc = self.docs.next(key)
+
+        return [('set', cb.update, (key.string, self.ws.subdoc_field, doc))]
 
 
 class XATTRWorker(SubDocWorker):
 
     NAME = 'xattr-worker'
 
-    def gen_cmd_sequence(self, cb=None, *args):
-        return super(SubDocWorker, self).gen_cmd_sequence(cb, extras='xattr')
+    def read_args(self, cb: Client,
+                  curr_items: int, deleted_items: int) -> Sequence:
+        key = self.existing_keys.next(curr_items, deleted_items)
+
+        return [('get', cb.read_xattr, (key.string, self.ws.xattr_field))]
+
+    def update_args(self, cb: Client,
+                    curr_items: int, deleted_items: int) -> Sequence:
+        key = self.existing_keys.next(curr_items,
+                                      deleted_items,
+                                      self.current_hot_load_start,
+                                      self.timer_elapse)
+        doc = self.docs.next(key)
+
+        return [('set', cb.update_xattr, (key.string, self.ws.xattr_field, doc))]
 
 
 class AsyncKVWorker(KVWorker):
@@ -597,12 +638,12 @@ class N1QLWorker(Worker):
         self.reservoir = Reservoir(num_workers=self.ws.n1ql_workers)
 
     def read(self):
-        curr_items_tmp = self.curr_items.value
+        curr_items = self.curr_items.value
         if self.ws.doc_gen == 'ext_reverse_lookup':
-            curr_items_tmp //= 4
+            curr_items //= 4
 
         for _ in range(self.ws.n1ql_batch_size):
-            key = self.existing_keys.next(curr_items=curr_items_tmp,
+            key = self.existing_keys.next(curr_items=curr_items,
                                           curr_deletes=0)
             doc = self.docs.next(key)
             query = self.new_queries.next(key.string, doc)
@@ -612,12 +653,12 @@ class N1QLWorker(Worker):
 
     def create(self):
         with self.lock:
+            curr_items = self.curr_items.value
             self.curr_items.value += self.ws.n1ql_batch_size
-            curr_items_tmp = self.curr_items.value - self.ws.n1ql_batch_size
 
         for _ in range(self.ws.n1ql_batch_size):
-            curr_items_tmp += 1
-            key = self.new_keys.next(curr_items=curr_items_tmp)
+            curr_items += 1
+            key = self.new_keys.next(curr_items=curr_items)
             doc = self.docs.next(key)
             query = self.new_queries.next(key.string, doc)
 
@@ -626,11 +667,11 @@ class N1QLWorker(Worker):
 
     def update(self):
         with self.lock:
-            curr_items_tmp = self.curr_items.value
+            curr_items = self.curr_items.value
 
         for _ in range(self.ws.n1ql_batch_size):
             key = self.keys_for_cas_update.next(sid=self.sid,
-                                                curr_items=curr_items_tmp)
+                                                curr_items=curr_items)
             doc = self.docs.next(key)
             query = self.new_queries.next(key.string, doc)
 

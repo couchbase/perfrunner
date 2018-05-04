@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.syncgateway.SGSync
-title = 1 node, 1M docs, 100K users, 100K channels, 20 channels per user, 20 writes/sec, channels query (no SG cache)
+title = 1 node, 1M docs, 100K users, 100K channels, 20 channels per user, 90/10 R/W, channels query (no SG cache)
 component = syncgateway
 category = sync
 

@@ -590,7 +590,11 @@ class MetricHelper:
             with open(filename) as fh:
                 for line in fh.readlines():
                     if line.startswith('[OVERALL], Throughput(ops/sec)'):
-                        throughput += int(float(line.split()[-1]))
+                        throughput += float(line.split()[-1])
+        if throughput < 1:
+            throughput = round(throughput, 2)
+        else:
+            throughput = round(throughput, 0)
         return throughput
 
     def _parse_sg_latency(self, metric_name) -> float:

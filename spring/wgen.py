@@ -268,14 +268,16 @@ class KVWorker(Worker):
                     curr_items: int) -> Sequence:
         key = self.new_keys.next(curr_items)
         doc = self.docs.next(key)
+        args = key.string, doc, self.ws.persist_to, self.ws.replicate_to
 
-        return [('set', cb.create, (key.string, doc))]
+        return [('set', cb.create, args)]
 
     def read_args(self, cb: Client,
                   curr_items: int, deleted_items: int) -> Sequence:
         key = self.existing_keys.next(curr_items, deleted_items)
+        args = key.string,
 
-        return [('get', cb.read, (key.string, ))]
+        return [('get', cb.read, args)]
 
     def update_args(self, cb: Client,
                     curr_items: int, deleted_items: int) -> Sequence:
@@ -284,23 +286,25 @@ class KVWorker(Worker):
                                       self.current_hot_load_start,
                                       self.timer_elapse)
         doc = self.docs.next(key)
+        args = key.string, doc, self.ws.persist_to, self.ws.replicate_to
 
-        return [('set', cb.update, (key.string, doc))]
+        return [('set', cb.update, args)]
 
     def delete_args(self, cb: Client,
                     deleted_items: int) -> Sequence:
         key = self.keys_for_removal.next(deleted_items)
-        return [('delete', cb.delete, (key.string, ))]
+        args = key.string,
+
+        return [('delete', cb.delete, args)]
 
     def modify_args(self, cb: Client,
                     curr_items: int, deleted_items: int) -> Sequence:
         key = self.existing_keys.next(curr_items, deleted_items)
         doc = self.docs.next(key)
+        read_args = key.string,
+        update_args = key.string, doc, self.ws.persist_to, self.ws.replicate_to
 
-        return [
-            ('get', cb.read, (key.string,)),
-            ('set', cb.update, (key.string, doc)),
-        ]
+        return [('get', cb.read, read_args), ('set', cb.update, update_args)]
 
     def gen_cmd_sequence(self, cb: Client = None) -> Sequence:
         if not cb:
@@ -389,8 +393,9 @@ class SubDocWorker(KVWorker):
     def read_args(self, cb: Client,
                   curr_items: int, deleted_items: int) -> Sequence:
         key = self.existing_keys.next(curr_items, deleted_items)
+        read_args = key.string, self.ws.subdoc_field
 
-        return [('get', cb.read, (key.string, self.ws.subdoc_field))]
+        return [('get', cb.read, read_args)]
 
     def update_args(self, cb: Client,
                     curr_items: int, deleted_items: int) -> Sequence:
@@ -399,8 +404,9 @@ class SubDocWorker(KVWorker):
                                       self.current_hot_load_start,
                                       self.timer_elapse)
         doc = self.docs.next(key)
+        update_args = key.string, self.ws.subdoc_field, doc
 
-        return [('set', cb.update, (key.string, self.ws.subdoc_field, doc))]
+        return [('set', cb.update, update_args)]
 
 
 class XATTRWorker(SubDocWorker):
@@ -420,8 +426,9 @@ class XATTRWorker(SubDocWorker):
                                       self.current_hot_load_start,
                                       self.timer_elapse)
         doc = self.docs.next(key)
+        update_args = key.string, self.ws.xattr_field, doc
 
-        return [('set', cb.update_xattr, (key.string, self.ws.xattr_field, doc))]
+        return [('set', cb.update_xattr, update_args)]
 
 
 class AsyncKVWorker(KVWorker):

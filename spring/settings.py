@@ -28,6 +28,9 @@ class WorkloadSettings:
         # Stubs for library compatibility
         self.reads_and_updates = 0
 
+        self.persist_to = 0
+        self.replicate_to = 0
+
         self.query_workers = 0
         self.query_throughput = 0
         self.index_type = None

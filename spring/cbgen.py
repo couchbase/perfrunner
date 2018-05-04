@@ -99,14 +99,20 @@ class CBAsyncGen:
         self.client = TxConnection(quiet=True, **kwargs)
         self.client.timeout = self.TIMEOUT
 
-    def create(self, key: str, doc: dict):
-        return self.client.upsert(key, doc)
+    def create(self, key: str, doc: dict, persist_to: int = 0,
+               replicate_to: int = 0):
+        return self.client.upsert(key, doc,
+                                  persist_to=persist_to,
+                                  replicate_to=replicate_to)
 
     def read(self, key: str):
         return self.client.get(key)
 
-    def update(self, key: str, doc: dict):
-        return self.client.upsert(key, doc)
+    def update(self, key: str, doc: dict, persist_to: int = 0,
+               replicate_to: int = 0):
+        return self.client.upsert(key, doc,
+                                  persist_to=persist_to,
+                                  replicate_to=replicate_to)
 
     def delete(self, key: str):
         return self.client.remove(key)

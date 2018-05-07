@@ -735,6 +735,7 @@ class WorkloadGen:
             worker = worker_type(self.ws, self.ts, self.shutdown_event)
 
             worker_process = Process(target=worker.run, args=args)
+            worker_process.daemon = True
             worker_process.start()
             self.worker_processes.append(worker_process)
 

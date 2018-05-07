@@ -114,19 +114,19 @@ def syncgateway_init_users(workload_settings: PhaseSettings, timer: int, worker_
 
 def syncgateway_grant_access(workload_settings: PhaseSettings, timer: int, worker_id: int, cluster: ClusterSpec):
     sgs = workload_settings.syncgateway_settings
-    log_file_name = "{}_initusers_{}.log".format(sgs.log_title, worker_id)
-    res_file_name = "{}_initusers_{}.result".format(sgs.log_title, worker_id)
-    params = INIT_USERS_CMD.format(workload=sgs.workload,
-                                  hosts=get_hosts(cluster, workload_settings),
-                                  total_docs=sgs.documents,
-                                  memcached_host=cluster.workers[0],
-                                  auth=sgs.auth,
-                                  total_users=sgs.users,
-                                  insertstart=get_offset(workload_settings, worker_id),
-                                  sequence_start = int(sgs.users) + int(sgs.documents) + 1,
-                                  exportfile=res_file_name,
-                                  grant_access=sgs.grant_access,
-                                  channels_per_grant=sgs.channels_per_grant)
+    log_file_name = "{}_grantaccess_{}.log".format(sgs.log_title, worker_id)
+    res_file_name = "{}_grantaccess_{}.result".format(sgs.log_title, worker_id)
+    params = GRANT_ACCESS_CMD.format(workload=sgs.workload,
+                                     hosts=get_hosts(cluster, workload_settings),
+                                     total_docs=sgs.documents,
+                                     memcached_host=cluster.workers[0],
+                                     auth=sgs.auth,
+                                     total_users=sgs.users,
+                                     insertstart=get_offset(workload_settings, worker_id),
+                                     sequence_start = int(sgs.users) + int(sgs.documents) + 1,
+                                     exportfile=res_file_name,
+                                     grant_access=sgs.grant_access,
+                                     channels_per_grant=sgs.channels_per_grant)
 
     path = getInstanceHome(workload_settings, worker_id)
     run_cmd(path, BINARY_NAME, params, log_file_name)

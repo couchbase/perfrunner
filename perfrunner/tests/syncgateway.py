@@ -86,7 +86,8 @@ class SGPerfTest(PerfTest):
         self.run_sg_phase("load users", syncgateway_task_load_users, self.settings, self.settings.time, False)
 
     def init_users(self):
-        self.run_sg_phase("init users", syncgateway_task_init_users, self.settings, self.settings.time, False)
+        if self.test_config.syncgateway_settings.auth == 'true':
+            self.run_sg_phase("init users", syncgateway_task_init_users, self.settings, self.settings.time, False)
 
     def load_docs(self):
         self.run_sg_phase("load docs", syncgateway_task_load_docs, self.settings, self.settings.time, False)

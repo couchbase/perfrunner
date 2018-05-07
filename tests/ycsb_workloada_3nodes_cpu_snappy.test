@@ -25,5 +25,6 @@ workload_path = workloads/workloada
 items = 20000000
 ops = 1000000000
 time = 1800
-workers = 120
+boost = 12
+workers = 96
 workload_instances = 6

@@ -753,6 +753,8 @@ class SyncgatewaySettings:
     INSERTSTART=0
     MAX_INSERTS_PER_INSTANCE = 1000000
     STAR = "false"
+    GRANT_ACCESS = "false"
+    CHANNELS_PER_GRANT = 1
 
     def __init__(self, options: dict):
         self.repo = options.get('ycsb_repo', self.REPO)
@@ -784,6 +786,8 @@ class SyncgatewaySettings:
         self.clients = options.get('clients', self.CLIENTS)
         self.nodes = options.get('nodes', self.NODES)
         self.starchannel = options.get('starchannel', self.STAR)
+        self.grant_access = options.get('grant_access', self.GRANT_ACCESS)
+        self.channels_per_grant = options.get('channels_per_grant', self.CHANNELS_PER_GRANT)
 
 
     def __str__(self) -> str:

@@ -29,6 +29,7 @@ from perfrunner.workloads.syncgateway import (
     syncgateway_load_docs,
     syncgateway_run_test,
     syncgateway_start_memcached,
+    syncgateway_grant_access
 )
 
 celery = Celery('workers')
@@ -72,6 +73,12 @@ def syncgateway_task_load_users(*args):
 @celery.task
 def syncgateway_task_init_users(*args):
     syncgateway_init_users(*args)
+
+
+@celery.task
+def syncgateway_task_grant_access(*args):
+    syncgateway_grant_access(*args)
+
 
 
 @celery.task

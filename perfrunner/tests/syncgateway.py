@@ -5,7 +5,8 @@ import glob
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import PerfTest
 from perfrunner.helpers.worker import syncgateway_task_init_users, syncgateway_task_load_users, \
-    syncgateway_task_load_docs, syncgateway_task_run_test, syncgateway_task_start_memcached
+    syncgateway_task_load_docs, syncgateway_task_run_test, syncgateway_task_start_memcached, \
+    syncgateway_task_grant_access
 
 from perfrunner.helpers import local
 
@@ -89,6 +90,11 @@ class SGPerfTest(PerfTest):
         if self.test_config.syncgateway_settings.auth == 'true':
             self.run_sg_phase("init users", syncgateway_task_init_users, self.settings, self.settings.time, False)
 
+    def grant_access(self):
+        if self.test_config.syncgateway_settings.grant_access == 'true':
+            self.run_sg_phase("grant access to  users", syncgateway_task_grant_access, self.settings,
+                              self.settings.time, False)
+
     def load_docs(self):
         self.run_sg_phase("load docs", syncgateway_task_load_docs, self.settings, self.settings.time, False)
 
@@ -103,6 +109,7 @@ class SGPerfTest(PerfTest):
         self.load_users()
         self.load_docs()
         self.init_users()
+        self.grant_access()
         self.run_test()
         self.report_kpi()
 

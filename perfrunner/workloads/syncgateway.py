@@ -24,6 +24,15 @@ INIT_USERS_CMD = " run syncgateway -s -P {workload} -p recordcount={total_docs} 
                  "-p insertstart={insertstart} -p readproportion=1 -p syncgateway.feedmode=normal " \
                  "-p exportfile={exportfile}"
 
+GRANT_ACCESS_CMD = " run syncgateway -s -P {workload} -p recordcount={total_docs} -p operationcount=50 " \
+                 "-p maxexecutiontime=36000 -threads 50 -p syncgateway.host={hosts} " \
+                 "-p syncgateway.auth={auth} -p memcached.host={memcached_host} " \
+                 "-p syncgateway.totalusers={total_users} -p syncgateway.runmode=changesonly " \
+                 "-p syncgateway.sequencestart={sequence_start} " \
+                 "-p insertstart={insertstart} -p readproportion=1 -p syncgateway.feedmode=normal " \
+                 "-p exportfile={exportfile} -p syncgateway.channelspergrant={channels_per_grant} " \
+                 "-p syncgateway.grantaccesstoall={grant_access}"
+
 RUN_TEST_CMD = " run syncgateway -s -P {workload} -p recordcount={total_docs} -p operationcount=999999999 " \
                "-p maxexecutiontime={time} -threads {threads} -p syncgateway.host={hosts} -p syncgateway.auth={auth} " \
                "-p memcached.host={memcached_host} -p syncgateway.totalusers={total_users} " \
@@ -89,7 +98,7 @@ def syncgateway_init_users(workload_settings: PhaseSettings, timer: int, worker_
     sgs = workload_settings.syncgateway_settings
     log_file_name = "{}_initusers_{}.log".format(sgs.log_title, worker_id)
     res_file_name = "{}_initusers_{}.result".format(sgs.log_title, worker_id)
-    params = INIT_USERS_CMD.format(workload=sgs.workload,
+    params = GRANT_ACCESS_CMD.format(workload=sgs.workload,
                                   hosts=get_hosts(cluster, workload_settings),
                                   total_docs=sgs.documents,
                                   memcached_host=cluster.workers[0],
@@ -101,6 +110,27 @@ def syncgateway_init_users(workload_settings: PhaseSettings, timer: int, worker_
 
     path = getInstanceHome(workload_settings, worker_id)
     run_cmd(path, BINARY_NAME, params, log_file_name)
+
+
+def syncgateway_grant_access(workload_settings: PhaseSettings, timer: int, worker_id: int, cluster: ClusterSpec):
+    sgs = workload_settings.syncgateway_settings
+    log_file_name = "{}_initusers_{}.log".format(sgs.log_title, worker_id)
+    res_file_name = "{}_initusers_{}.result".format(sgs.log_title, worker_id)
+    params = INIT_USERS_CMD.format(workload=sgs.workload,
+                                  hosts=get_hosts(cluster, workload_settings),
+                                  total_docs=sgs.documents,
+                                  memcached_host=cluster.workers[0],
+                                  auth=sgs.auth,
+                                  total_users=sgs.users,
+                                  insertstart=get_offset(workload_settings, worker_id),
+                                  sequence_start = int(sgs.users) + int(sgs.documents) + 1,
+                                  exportfile=res_file_name,
+                                  grant_access=sgs.grant_access,
+                                  channels_per_grant=sgs.channels_per_grant)
+
+    path = getInstanceHome(workload_settings, worker_id)
+    run_cmd(path, BINARY_NAME, params, log_file_name)
+
 
 
 def syncgateway_run_test(workload_settings: PhaseSettings, timer: int, worker_id: int, cluster: ClusterSpec):

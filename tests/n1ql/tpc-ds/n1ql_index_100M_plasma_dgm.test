@@ -1,6 +1,12 @@
 [test_case]
 test = perfrunner.tests.n1ql.TpcDsIndexTest
 
+[showfast]
+title = Initial Indexing Time (min), 10 indexes, DGM, not-partitioned, Plasma
+component = n1ql
+category = aggregation
+sub_category = Indexing
+
 [stats]
 server_processes = projector
 

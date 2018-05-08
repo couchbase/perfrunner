@@ -310,11 +310,19 @@ class TpcDsIndexTest(TpcDsTest):
 
     @with_stats
     @with_profiles
+    @timeit
     def create_indexes(self):
         super().create_indexes()
         self.wait_for_indexing()
 
+    def _report_kpi(self, indexing_time: float):
+        self.reporter.post(
+            *self.metrics.indexing_time(indexing_time)
+        )
+
     def run(self):
         self.import_data()
 
-        self.create_indexes()
+        time_elapsed = self.create_indexes()
+
+        self.report_kpi(time_elapsed)

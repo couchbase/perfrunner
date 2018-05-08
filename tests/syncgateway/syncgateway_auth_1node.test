@@ -11,7 +11,7 @@ initial_nodes = 4
 num_buckets = 1
 
 [access]
-time = 600
+time = 240
 workers = 0
 
 [secondary]
@@ -25,9 +25,9 @@ instances_per_client = 5
 workload_path = workloads/syncgateway_blank
 ycsb_repo = git://github.com/couchbaselabs/YCSB.git
 ycsb_branch = syncgateway-weekly
-users = 10000
-channels = 1000
-channels_per_user = 100
+users = 1000000
+channels = 10000
+channels_per_user = 1
 channels_per_doc = 1
 documents = 10000
 roundtrip_write = true
@@ -38,7 +38,7 @@ insert_mode = byuser
 auth = false
 initusers = false
 grant_access = true
-channels_per_grant = 30
+channels_per_grant = 50
 readproportion=0
 updateproportion=0
 insertproportion=0

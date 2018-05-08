@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.syncgateway.SGAuth
-title = 1 node, 1M docs, 10K users, 1000 channel, 100 channels per user, 20 writes/sec
+title = 1 node, 1M users, 10K channel, 50 channels per user, access query
 component = syncgateway
 category = sync
 

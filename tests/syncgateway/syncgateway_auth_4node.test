@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.syncgateway.SGAuth
-title = 1 node, 1M docs, 10K users, 1000 channel, 100 channels per user, 20 writes/sec
+title = 1 node, 1M users, 10K channel, 50 channels per user, access query
 component = syncgateway
 category = sync
 
@@ -26,7 +26,7 @@ workload_path = workloads/syncgateway_blank
 ycsb_repo = git://github.com/couchbaselabs/YCSB.git
 ycsb_branch = syncgateway-weekly
 users = 1000000
-channels = 1000
+channels = 10000
 channels_per_user = 1
 channels_per_doc = 1
 documents = 10000

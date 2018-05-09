@@ -44,7 +44,8 @@ class PS(System):
         self.sampler = PSStats(hosts=self.nodes,
                                workers=self.workers,
                                user=self.ssh_username,
-                               password=self.ssh_password)
+                               password=self.ssh_password,
+                               interval=self.interval)
 
     def sample(self):
         for process in self.settings.server_processes:

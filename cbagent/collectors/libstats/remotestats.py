@@ -29,11 +29,12 @@ def parallel_task(server_side=True):
 
 class RemoteStats:
 
-    def __init__(self, hosts, workers, user, password):
+    def __init__(self, hosts, workers, user, password, interval=None):
         self.hosts = hosts
         self.user = user
         self.password = password
         self.workers = workers
+        self.interval = interval
 
     def run(self, *args, **kwargs):
         try:

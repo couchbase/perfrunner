@@ -11,7 +11,7 @@ class PSStats(RemoteStats):
     PS_CMD = "ps -eo pid,rss,vsize,comm | " \
         "grep {} | grep -v grep | sort -n -k 2 | tail -n 1"
 
-    TOP_CMD = "top -b n2 -d1 -p {0} | grep '^\s*{0}'"
+    TOP_CMD = "top -b -n2 -d1 -p {0} | grep '^\s*{0}' | tail -n 1"
 
     @parallel_task(server_side=True)
     def get_server_samples(self, process):

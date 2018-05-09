@@ -47,25 +47,21 @@ pipeline {
                 build_all(testCases['N1QL'])
             }
         }
-
         stage('Tools') {
             steps {
                 build_all(testCases['Tools'])
             }
         }
-
         stage('XDCR') {
             steps {
                 build_all(testCases['XDCR'])
             }
         }
-
         stage('YCSB') {
             steps {
                 build_all(testCases['YCSB'])
             }
         }
-
         stage('Notifications') {
             steps {
                 build job: 'triton-notification', parameters: [string(name: 'version', value: params.version)]

@@ -634,3 +634,16 @@ class BigFunTest(TestCase):
             for i in range(10):
                 self.assertNotIn(query.statement, statements)
                 statements.add(query.statement)
+
+
+class PipelineTest(TestCase):
+
+    def test_stages(self):
+        stages = {'KV', 'KV-DGM', 'N1QL', 'Rebalance', 'Rebalance-Large-Scale',
+                  'Tools', 'Views', 'XDCR', 'YCSB'}
+        for pipeline in ('tests/pipelines/weekly-watson.json',
+                         'tests/pipelines/weekly-spock.json',
+                         'tests/pipelines/weekly-vulcan.json'):
+            with open(pipeline) as fh:
+                test_cases = json.load(fh)
+                self.assertEqual(stages, set(test_cases), pipeline)

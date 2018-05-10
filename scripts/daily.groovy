@@ -2,7 +2,7 @@ currentBuild.description = params.version
 
 def testCases = null
 
-def build_all(tests) {
+def buildTests(tests) {
     for ( test in tests ) {
         build job: 'triton', propagate: false, parameters: [
             string(name: 'test_config', value: test['test_config']),
@@ -24,42 +24,42 @@ pipeline {
         }
         stage('Eventing') {
             steps {
-                build_all(testCases['Eventing'])
+                buildTests(testCases['Eventing'])
             }
         }
         stage('FTS') {
             steps {
-                build_all(testCases['FTS'])
+                buildTests(testCases['FTS'])
             }
         }
         stage('GSI') {
             steps {
-                build_all(testCases['GSI'])
+                buildTests(testCases['GSI'])
             }
         }
         stage('KV') {
             steps {
-                build_all(testCases['KV'])
+                buildTests(testCases['KV'])
             }
         }
         stage('N1QL') {
             steps {
-                build_all(testCases['N1QL'])
+                buildTests(testCases['N1QL'])
             }
         }
         stage('Tools') {
             steps {
-                build_all(testCases['Tools'])
+                buildTests(testCases['Tools'])
             }
         }
         stage('XDCR') {
             steps {
-                build_all(testCases['XDCR'])
+                buildTests(testCases['XDCR'])
             }
         }
         stage('YCSB') {
             steps {
-                build_all(testCases['YCSB'])
+                buildTests(testCases['YCSB'])
             }
         }
         stage('Notifications') {

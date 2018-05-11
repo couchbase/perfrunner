@@ -49,7 +49,7 @@ pipeline {
                 stage('KV-DGM') {
                     when { expression { return params.KV } }
                     steps {
-                        buildComponent('KV', testCases)
+                        buildComponent('KV-DGM', testCases)
                     }
                 }
                 stage('N1QL') {

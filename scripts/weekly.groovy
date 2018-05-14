@@ -1,6 +1,6 @@
 currentBuild.description = params.version
 
-def testCases = []
+def testCases = [:]
 
 def buildTests(tests) {
     for ( test in tests ) {

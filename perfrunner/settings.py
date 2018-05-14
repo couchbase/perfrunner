@@ -731,11 +731,13 @@ class IndexSettings:
         return []
 
     @property
-    def indexes(self) -> Iterator[str]:
+    def indexes(self) -> List[str]:
+        indexes = []
         for statement in self.statements:
             match = re.search(r'CREATE .*INDEX (.*) ON', statement)
             if match:
-                yield match.group(1)
+                indexes.append(match.group(1))
+        return indexes
 
     def __str__(self) -> str:
         return str(self.__dict__)

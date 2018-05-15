@@ -1,0 +1,16 @@
+{
+    "Analytics": [],
+    "Eventing": [],
+    "FTS": [],
+    "GSI": [],
+    "DCP": [],
+    "KV": [],
+    "KV-DGM": [],
+    "N1QL": [],
+    "Rebalance": [],
+    "Rebalance-Large-Scale": [],
+    "Tools": [],
+    "Views": [],
+    "XDCR": [],
+    "YCSB": []
+}

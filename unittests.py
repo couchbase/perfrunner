@@ -644,7 +644,8 @@ class PipelineTest(TestCase):
                   'Views', 'XDCR', 'YCSB'}
         for pipeline in ('tests/pipelines/weekly-watson.json',
                          'tests/pipelines/weekly-spock.json',
-                         'tests/pipelines/weekly-vulcan.json'):
+                         'tests/pipelines/weekly-vulcan.json',
+                         'tests/pipelines/weekly-alice.json'):
             with open(pipeline) as fh:
                 test_cases = json.load(fh)
                 self.assertEqual(stages, set(test_cases), pipeline)

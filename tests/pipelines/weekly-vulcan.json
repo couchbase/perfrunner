@@ -84,7 +84,9 @@
         {"job": "iris",              "cluster": "iris.spec", "test_config": "tpc-ds/n1ql_lat_AG10_100M_plasma_ok.test"},
         {"job": "iris",              "cluster": "iris.spec", "test_config": "tpc-ds/n1ql_thr_AG10_100M_plasma_ok.test"}
     ],
-    "Rebalance": [],
+    "Rebalance": [
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_failover_100M_dgm_kv_disk.test"}
+    ],
     "Rebalance-Large-Scale": [],
     "Tools": [],
     "Views": [],

@@ -92,19 +92,18 @@
         {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql_thr_Q21_20M_gsi_moi_ok.test"}
     ],
     "Rebalance": [
-        {"job": "hera", "cluster": "hera.spec", "test_config": "reb_in_100M_dgm_kv.test"},
-        {"job": "hera", "cluster": "hera.spec", "test_config": "reb_out_100M_dgm_kv.test"},
-        {"job": "hera", "cluster": "hera.spec", "test_config": "reb_swap_100M_dgm_kv.test"},
-        {"job": "hera", "cluster": "hera.spec", "test_config": "reb_recovery_100M_dgm_kv_delta.test"},
-        {"job": "hera", "cluster": "hera.spec", "test_config": "reb_recovery_100M_dgm_kv_delta_graceful.test"},
-        {"job": "hera", "cluster": "hera.spec", "test_config": "reb_recovery_100M_dgm_kv.test"},
-        {"job": "hera", "cluster": "hera.spec", "test_config": "reb_failover_100M_dgm_kv.test"},
-        {"job": "hera", "cluster": "hera.spec", "test_config": "reb_failover_100M_dgm_kv_graceful.test"},
-        {"job": "hera", "cluster": "hera.spec", "test_config": "reb_failover_100M_dgm_kv_hard.test"},
-        {"job": "hera", "cluster": "hera.spec", "test_config": "reb_failover_100M_dgm_kv_auto.test"},
-        {"job": "hera", "cluster": "hera.spec", "test_config": "reb_failover_100M_dgm_kv_disk.test"},
-        {"job": "hera", "cluster": "hera.spec", "test_config": "reb_in_100M_dgm_views.test"},
-        {"job": "hera", "cluster": "hera.spec", "test_config": "reb_swap_100M_dgm_views.test"}
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_in_100M_dgm_kv.test"},
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_out_100M_dgm_kv.test"},
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_swap_100M_dgm_kv.test"},
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_recovery_100M_dgm_kv_delta.test"},
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_recovery_100M_dgm_kv_delta_graceful.test"},
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_recovery_100M_dgm_kv.test"},
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_failover_100M_dgm_kv.test"},
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_failover_100M_dgm_kv_graceful.test"},
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_failover_100M_dgm_kv_hard.test"},
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_failover_100M_dgm_kv_auto.test"},
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_in_100M_dgm_views.test"},
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_swap_100M_dgm_views.test"}
     ],
     "Rebalance-Large-Scale": [
         {"job": "titan-reb", "cluster": "titan.spec", "test_config": "reb_in_1B_4nodes_kv.test"},

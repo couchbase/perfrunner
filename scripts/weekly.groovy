@@ -44,6 +44,7 @@ pipeline {
                     when { expression { return params.KV } }
                     steps {
                         buildComponent('KV', testCases)
+                        buildComponent('DCP', testCases)
                     }
                 }
                 stage('KV-DGM') {

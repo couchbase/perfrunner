@@ -1,4 +1,5 @@
 {
+    "DCP": [],
     "KV": [
         {"job": "ares", "cluster": "ares.spec", "test_config": "kv_max_ops_reads_512.test"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "kv_max_ops_balanced_512.test"},

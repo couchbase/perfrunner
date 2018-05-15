@@ -639,8 +639,8 @@ class BigFunTest(TestCase):
 class PipelineTest(TestCase):
 
     def test_stages(self):
-        stages = {'KV', 'KV-DGM', 'N1QL', 'Rebalance', 'Rebalance-Large-Scale',
-                  'Tools', 'Views', 'XDCR', 'YCSB'}
+        stages = {'DCP', 'KV', 'KV-DGM', 'N1QL', 'Rebalance',
+                  'Rebalance-Large-Scale', 'Tools', 'Views', 'XDCR', 'YCSB'}
         for pipeline in ('tests/pipelines/weekly-watson.json',
                          'tests/pipelines/weekly-spock.json',
                          'tests/pipelines/weekly-vulcan.json'):

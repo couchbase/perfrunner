@@ -46,6 +46,24 @@ pipeline {
                         buildComponent('Analytics', testCases)
                     }
                 }
+                stage('Eventing') {
+                    when { expression { return params.Eventing } }
+                    steps {
+                        buildComponent('Eventing', testCases)
+                    }
+                }
+                stage('FTS') {
+                    when { expression { return params.FTS } }
+                    steps {
+                        buildComponent('FTS', testCases)
+                    }
+                }
+                stage('GSI') {
+                    when { expression { return params.GSI } }
+                    steps {
+                        buildComponent('GSI', testCases)
+                    }
+                }
                 stage('KV') {
                     when { expression { return params.KV } }
                     steps {

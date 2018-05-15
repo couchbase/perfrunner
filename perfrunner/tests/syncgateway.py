@@ -150,9 +150,18 @@ class SGAuth(SGPerfTest):
             *self.metrics.sg_throughput("Throughput (req/sec), POST auth")
         )
 
+
+class SGAuthLatency(SGPerfTest):
+    def _report_kpi(self):
+        self.collect_execution_logs()
+        for f in glob.glob('{}/*runtest*.result'.format(self.LOCAL_DIR)):
+            with open(f, 'r') as fout:
+                logger.info(f)
+                logger.info(fout.read())
+
         self.reporter.post(
             *self.metrics.sg_latency('[SCAN], 95thPercentileLatency(us)',
-                                     'Latency, auth post, 95 percentile (ms)')
+                                     'Latency, POST auth, 95 percentile (ms)')
         )
 
 class SGSync(SGPerfTest):

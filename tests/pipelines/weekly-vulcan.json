@@ -1,4 +1,22 @@
 {
+    "Analytics": [
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_1n.test"},
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_2n.test"},
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_4n.test"},
+        {"job": "oceanus", "cluster": "oceanus_hdd.spec", "test_config": "bigfun_20M_sync_1n_1io.test"},
+        {"job": "oceanus", "cluster": "oceanus_hdd.spec", "test_config": "bigfun_20M_sync_2n_1io.test"},
+        {"job": "oceanus", "cluster": "oceanus_hdd.spec", "test_config": "bigfun_20M_sync_4n_1io.test"},
+
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_2n.test"},
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n.test"},
+        {"job": "oceanus", "cluster": "oceanus_hdd.spec", "test_config": "bigfun_20M_queries_2n_1io.test"},
+        {"job": "oceanus", "cluster": "oceanus_hdd.spec", "test_config": "bigfun_20M_queries_4n_1io.test"},
+
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_reb_in.test"},
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_reb_out.test"},
+        {"job": "oceanus", "cluster": "oceanus_hdd.spec", "test_config": "bigfun_20M_reb_in_1io.test"},
+        {"job": "oceanus", "cluster": "oceanus_hdd.spec", "test_config": "bigfun_20M_reb_out_1io.test"}
+    ],
     "DCP": [
         {"job": "ares-dcp", "cluster": "ares.spec", "test_config": "dcp/java_dcp_throughput_1n_250M_compressed.test"},
         {"job": "ares-dcp", "cluster": "ares.spec", "test_config": "dcp/java_dcp_throughput_1n_250M_uncompressed.test"},

@@ -40,6 +40,12 @@ pipeline {
         }
         stage('Weekly') {
             parallel {
+                stage('Analytics') {
+                    when { expression { return params.Analytics } }
+                    steps {
+                        buildComponent('Analytics', testCases)
+                    }
+                }
                 stage('KV') {
                     when { expression { return params.KV } }
                     steps {

@@ -11,6 +11,7 @@ from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import ClusterSpec
 
 LOCATIONS = (
+    'http://172.23.120.24/builds/latestbuilds/couchbase-server/alice/{build}/',
     'http://172.23.120.24/builds/latestbuilds/couchbase-server/vulcan/{build}/',
     'http://172.23.120.24/builds/latestbuilds/couchbase-server/spock/{build}/',
     'http://172.23.120.24/builds/latestbuilds/couchbase-server/watson/{build}/',

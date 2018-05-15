@@ -2,7 +2,7 @@
 test = perfrunner.tests.syncgateway.SGAuthLatency
 title = 1 node, 1M users, 10K channel, 50 channels per user, access query
 component = syncgateway
-category = sync
+category = query
 
 [cluster]
 mem_quota = 25000

@@ -1,6 +1,6 @@
 [test_case]
-test = perfrunner.tests.syncgateway.SGSyncQueryThroughput
-title = 4 nodes, 1M docs, 10K users, 100K channels, * channel, 90/10 R/W, channels query (no SG cache)
+test = perfrunner.tests.syncgateway.SGSyncQueryLatency
+title = 1 node, 1M docs, 100K users, 100K channels, 20 channels per user, 90/10 R/W, channels query (no SG cache)
 component = syncgateway
 category = query
 
@@ -19,20 +19,20 @@ workers = 0
 indexer.settings.storage_mode = memory_optimized
 
 [syncgateway]
-nodes = 4
-threads = 20
-clients = 4
-instances_per_client = 5
+nodes = 1
+threads = 1
+clients = 1
+instances_per_client = 1
 workload_path = workloads/syncgateway_blank
 ycsb_repo = git://github.com/couchbaselabs/YCSB.git
 ycsb_branch = syncgateway-weekly
-users = 10000
+users = 100000
 channels = 100000
 channels_per_user = 20
 channels_per_doc = 1
 documents = 1000000
 roundtrip_write = true
-read_mode = 200changes
+read_mode = allchanges
 feed_reading_mode = withdocs
 feed_mode = longpoll
 insert_mode = byuser
@@ -41,5 +41,4 @@ readproportion=0.9
 updateproportion=0
 insertproportion=0.1
 requestdistribution = zipfian
-log_title = sync_gateway_4node_sync
-starchannel = true
+log_title = sync_gateway_1node_sync

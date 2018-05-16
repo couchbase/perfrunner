@@ -36,6 +36,8 @@
 
   - name: removing the files remaining in the "{{ data_dir }}" directory
     shell: rm -fr {{ data_dir }}/*
+    args:
+      warn: no
 
   - stat: path={{ index_dir }}
     register: index
@@ -43,6 +45,10 @@
   - name: removing the files remaining in the "{{ index_dir }}" directory
     shell: rm -fr {{ index_dir }}/*
     when: index.stat.exists
+    args:
+      warn: no
 
   - name: removing MySQL installation (if any)
     shell: rm -fr /var/lib/mysql
+    args:
+      warn: no

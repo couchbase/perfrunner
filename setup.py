@@ -10,6 +10,7 @@ setup(
             'cluster = perfrunner.utils.cluster:main',
             'debug = perfrunner.utils.debug:main',
             'go_dependencies = perfrunner.utils.go_dependencies:main',
+            'jenkins = perfrunner.utils.jenkins:main',
             'hidefast = perfrunner.utils.hidefast:main',
             'install = perfrunner.utils.install:main',
             'perfrunner = perfrunner.__main__:main',

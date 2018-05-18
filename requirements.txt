@@ -21,6 +21,7 @@ psutil==5.2.2
 pydocstyle==2.1.1
 pycrypto==2.6.1
 python-dateutil==2.6.1
+python-jenkins==1.0.0
 python-snappy==0.5.1
 requests==2.18.4
 spooky==2.0.0

@@ -37,11 +37,18 @@ class JenkinsScanner:
         return Bucket(connection_string=self.connection_string)
 
     def store_build_info(self, attributes: dict):
+        key = self.generate_key(attributes)
         try:
-            self.bucket.insert(key=attributes['url'], value=attributes)
+            self.bucket.insert(key=key, value=attributes)
             logger.info('Added: {}'.format(attributes['url']))
         except KeyExistsError:
             logger.info('Skipped: {}'.format(attributes['url']))
+
+    @staticmethod
+    def generate_key(attributes: dict) -> str:
+        return '_'.join((attributes['cluster'],
+                         attributes['test_config'],
+                         attributes['version']))
 
     def map_jobs(self) -> JobMapping:
         job_mapping = defaultdict(list)

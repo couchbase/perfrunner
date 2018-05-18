@@ -61,7 +61,7 @@ class JenkinsScanner:
         for component, jobs in job_mapping.items():
             for job in jobs:
                 test_config = job['test_config']
-                test_configs[test_config] = component
+                test_configs[test_config] = component.split('-')[0]
 
         return test_configs
 

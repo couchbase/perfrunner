@@ -19,6 +19,7 @@ setup(
             'templater = perfrunner.utils.templater:main',
             'trigger = perfrunner.utils.trigger:main',
             'verify_logs = perfrunner.utils.verify_logs:main',
+            'weekly = perfrunner.utils.weekly:main',
         ],
     },
     ext_modules=[

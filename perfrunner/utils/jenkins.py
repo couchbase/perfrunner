@@ -5,8 +5,10 @@ from typing import Dict, Iterator, List, Tuple
 
 import jenkins
 from couchbase.bucket import Bucket
+from couchbase.n1ql import N1QLQuery
 
 from logger import logger
+from perfrunner.utils.weekly import Weekly
 
 JobMapping = Dict[str, List[Dict[str, str]]]
 
@@ -21,9 +23,20 @@ class JenkinsScanner:
 
     JENKINS_URL = 'http://perf.jenkins.couchbase.com'
 
+    STATUS_QUERY = """
+        SELECT component,
+               COUNT(CASE WHEN (success = true) THEN 1 ELSE NULL END) AS passed,
+               COUNT(CASE WHEN (success = false) THEN 1 ELSE NULL END) AS failed
+        FROM jenkins
+        WHERE version = $1
+          AND success IS NOT NULL
+        GROUP BY component;
+    """
+
     def __init__(self):
         self.bucket = self.new_bucket()
         self.jenkins = jenkins.Jenkins(self.JENKINS_URL)
+        self.weekly = Weekly()
         self.jobs = set()
 
     @property
@@ -112,7 +125,7 @@ class JenkinsScanner:
             if build_parameters:
                 yield job_name, build_info, build_parameters
 
-    def run(self):
+    def scan(self):
         jobs = self.map_jobs()
         test_configs = self.map_test_configs(jobs)
 
@@ -128,10 +141,27 @@ class JenkinsScanner:
                                                    build_parameters)
                 self.store_build_info(attributes)
 
+    def update_status(self):
+        for build in self.weekly.builds:
+            logger.info('Updating status of build {}'.format(build))
+
+            n1ql_query = N1QLQuery(self.STATUS_QUERY, build)
+            for status in self.bucket.n1ql_query(n1ql_query):
+                status = {
+                    'build': build,
+                    'component': status['component'],
+                    'test_status': {
+                        'passed': status['passed'],
+                        'failed': status['failed'],
+                    },
+                }
+                self.weekly.update_status(status)
+
 
 def main():
     scanner = JenkinsScanner()
-    scanner.run()
+    scanner.scan()
+    scanner.update_status()
 
 
 if __name__ == '__main__':

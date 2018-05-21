@@ -244,16 +244,12 @@ class SGMixQueryLatency(SGPerfTest):
     def run(self):
         self.download_ycsb()
         self.start_memcached()
-        self.load_users()
         self.load_docs()
-        self.init_users()
-
+        
         #auth preps
         mixsettings = copy.deepcopy(self.settings)
         mixsettings.users = "1000000"
         mixsettings.channels = "10000"
-        mixsettings.channels_per_user = "1"
-        mixsettings.channels_per_doc = "1"
         mixsettings.documents = "1000000"
         mixsettings.auth = "false"
         mixsettings.initusers = "false"
@@ -269,5 +265,6 @@ class SGMixQueryLatency(SGPerfTest):
         self.run_sg_phase("grant access to  users", syncgateway_task_grant_access, mixsettings,
                           self.settings.time, False)
 
+        self.init_users()
         self.run_test()
         self.report_kpi()

@@ -210,7 +210,6 @@ class SGSyncQueryLatency(SGPerfTest):
                                      'Latency (ms), GET docs via _changes, 95 percentile')
         )
 
-
 class SGWrite(SGPerfTest):
     def _report_kpi(self):
         self.collect_execution_logs()
@@ -222,6 +221,7 @@ class SGWrite(SGPerfTest):
         self.reporter.post(
             *self.metrics.sg_throughput("Throughput (req/sec), POST doc")
         )
+
 
 class SGMixQueryLatency(SGPerfTest):
     def _report_kpi(self):
@@ -238,33 +238,5 @@ class SGMixQueryLatency(SGPerfTest):
 
         self.reporter.post(
             *self.metrics.sg_latency('[SCAN], 95thPercentileLatency(us)',
-                                     'Latency (ms), POST auth, 95 percentile')
+                                     'Latency (ms), grant new access then auth, 95 percentile')
         )
-
-    def run(self):
-        self.download_ycsb()
-        self.start_memcached()
-        self.load_docs()
-        
-        #auth preps
-        mixsettings = copy.deepcopy(self.settings)
-        mixsettings.users = "1000000"
-        mixsettings.channels = "10000"
-        mixsettings.documents = "1000000"
-        mixsettings.auth = "false"
-        mixsettings.initusers = "false"
-        mixsettings.channels_per_grant = "50"
-        mixsettings.log_title = "sync_gateway_1node_auth"
-        mixsettings.readproportion = "0"
-        mixsettings.updateproportion = "0"
-        mixsettings.insertproportion = "1"
-        mixsettings.scanproportion = "0"
-
-
-        self.run_sg_phase("load users", syncgateway_task_load_users, mixsettings, self.settings.time, False)
-        self.run_sg_phase("grant access to  users", syncgateway_task_grant_access, mixsettings,
-                          self.settings.time, False)
-
-        self.init_users()
-        self.run_test()
-        self.report_kpi()

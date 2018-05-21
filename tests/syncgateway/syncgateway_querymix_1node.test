@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.syncgateway.SGSyncQueryLatency
+test = perfrunner.tests.syncgateway.SGMixQueryLatency
 title = 1 node, 1M users, 10K channel, 50 channels per user, 60/40 R/W, access and channels queries
 component = syncgateway
 category = querymix

@@ -223,7 +223,7 @@ class SGWrite(SGPerfTest):
             *self.metrics.sg_throughput("Throughput (req/sec), POST doc")
         )
 
-class SGSyncQueryLatency:
+class SGMixQueryLatency(SGPerfTest):
     def _report_kpi(self):
         self.collect_execution_logs()
         for f in glob.glob('{}/*runtest*.result'.format(self.LOCAL_DIR)):

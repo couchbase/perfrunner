@@ -123,8 +123,9 @@ class JenkinsScanner:
         for job_name, build_info, build_parameters in self.build_ext_info():
             test_config = build_parameters['test_config']
             component = test_configs.get(test_config)
+            result = build_info['result']
 
-            if component is not None:
+            if result is not None and component is not None:
                 attributes = self.merge_attributes(component,
                                                    job_name,
                                                    build_info,

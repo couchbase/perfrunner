@@ -259,6 +259,11 @@ class SGSyncQueryLatency:
         mixsettings.initusers = "false"
         mixsettings.channels_per_grant = "50"
         mixsettings.log_title = "sync_gateway_1node_auth"
+        mixsettings.readproportion = "0"
+        mixsettings.updateproportion = "0"
+        mixsettings.insertproportion = "1"
+        mixsettings.scanproportion = "0"
+
 
         self.run_sg_phase("load users", syncgateway_task_load_users, mixsettings, self.settings.time, False)
         self.run_sg_phase("grant access to  users", syncgateway_task_grant_access, mixsettings,

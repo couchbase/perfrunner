@@ -5,7 +5,6 @@ from typing import Dict, Iterator, List, Tuple
 
 import jenkins
 from couchbase.bucket import Bucket
-from couchbase.exceptions import KeyExistsError
 
 from logger import logger
 
@@ -38,11 +37,8 @@ class JenkinsScanner:
 
     def store_build_info(self, attributes: dict):
         key = self.generate_key(attributes)
-        try:
-            self.bucket.insert(key=key, value=attributes)
-            logger.info('Added: {}'.format(attributes['url']))
-        except KeyExistsError:
-            logger.info('Skipped: {}'.format(attributes['url']))
+        self.bucket.upsert(key=key, value=attributes)
+        logger.info('Added: {}'.format(attributes['url']))
 
     @staticmethod
     def generate_key(attributes: dict) -> str:
@@ -103,7 +99,7 @@ class JenkinsScanner:
         for job_name in self.jobs:
             job_info = self.jenkins.get_job_info(job_name,
                                                  fetch_all_builds=True)
-            for build in job_info['builds']:
+            for build in sorted(job_info['builds'], key=lambda b: b['number']):
                 build_number = build['number']
                 yield job_name, self.jenkins.get_build_info(job_name,
                                                             build_number)

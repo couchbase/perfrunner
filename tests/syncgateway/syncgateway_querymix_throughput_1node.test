@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.syncgateway.SGMixQueryLatency
+test = perfrunner.tests.syncgateway.SGMixQueryThroughput
 title = 1 node, 1M users, 10K channel, 50 channels per user, 60/40 R/W, access and channels queries
 component = syncgateway
 category = querymix
@@ -19,9 +19,9 @@ indexer.settings.storage_mode = memory_optimized
 
 [syncgateway]
 nodes = 1
-threads = 1
+threads = 50
 clients = 1
-instances_per_client = 1
+instances_per_client = 5
 workload_path = workloads/syncgateway_blank
 ycsb_repo = git://github.com/couchbaselabs/YCSB.git
 ycsb_branch = syncgateway-weekly-querymix

@@ -1,6 +1,7 @@
 import os
 import shutil
 import glob
+import copy
 
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import PerfTest
@@ -221,3 +222,47 @@ class SGWrite(SGPerfTest):
         self.reporter.post(
             *self.metrics.sg_throughput("Throughput (req/sec), POST doc")
         )
+
+class SGSyncQueryLatency:
+    def _report_kpi(self):
+        self.collect_execution_logs()
+        for f in glob.glob('{}/*runtest*.result'.format(self.LOCAL_DIR)):
+            with open(f, 'r') as fout:
+                logger.info(f)
+                logger.info(fout.read())
+
+        self.reporter.post(
+            *self.metrics.sg_latency('[READ], 95thPercentileLatency(us)',
+                                     'Latency (ms), GET docs via _changes, 95 percentile')
+        )
+
+        self.reporter.post(
+            *self.metrics.sg_latency('[SCAN], 95thPercentileLatency(us)',
+                                     'Latency (ms), POST auth, 95 percentile')
+        )
+
+    def run(self):
+        self.download_ycsb()
+        self.start_memcached()
+        self.load_users()
+        self.load_docs()
+        self.init_users()
+
+        #auth preps
+        mixsettings = copy.deepcopy(self.settings)
+        mixsettings.users = "1000000"
+        mixsettings.channels = "10000"
+        mixsettings.channels_per_user = "1"
+        mixsettings.channels_per_doc = "1"
+        mixsettings.documents = "1000000"
+        mixsettings.auth = "false"
+        mixsettings.initusers = "false"
+        mixsettings.channels_per_grant = "50"
+        mixsettings.log_title = "sync_gateway_1node_auth"
+
+        self.run_sg_phase("load users", syncgateway_task_load_users, mixsettings, self.settings.time, False)
+        self.run_sg_phase("grant access to  users", syncgateway_task_grant_access, mixsettings,
+                          self.settings.time, False)
+
+        self.run_test()
+        self.report_kpi()

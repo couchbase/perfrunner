@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.syncgateway.SGMixQueryThroughput
-title = 4 nodes, 1M users, 10K channel, 50 channels per user, channels/access mixed scenario, 40/40/20 (Read/Write/Auth)
+title = 4 nodes, 100K users, 100K channels, 20 channels per user, channels/access mixed scenario, 40/40/20 (Read/Write/Auth)
 component = syncgateway
 category = querymix
 
@@ -11,7 +11,7 @@ initial_nodes = 4
 num_buckets = 1
 
 [access]
-time = 240
+time = 600
 workers = 0
 
 [secondary]
@@ -19,7 +19,7 @@ indexer.settings.storage_mode = memory_optimized
 
 [syncgateway]
 nodes = 1
-threads = 50
+threads = 100
 clients = 1
 instances_per_client = 5
 workload_path = workloads/syncgateway_blank
@@ -43,5 +43,5 @@ scanproportion=0.2
 requestdistribution = zipfian
 log_title = sync_gateway_1node_sync
 grant_access = true
-channels_per_grant = 10
+channels_per_grant = 20
 grant_access_in_scan = true

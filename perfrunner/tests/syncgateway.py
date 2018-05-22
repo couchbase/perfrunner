@@ -223,25 +223,6 @@ class SGWrite(SGPerfTest):
         )
 
 
-class SGMixQueryLatency(SGPerfTest):
-    def _report_kpi(self):
-        self.collect_execution_logs()
-        for f in glob.glob('{}/*runtest*.result'.format(self.LOCAL_DIR)):
-            with open(f, 'r') as fout:
-                logger.info(f)
-                logger.info(fout.read())
-
-        self.reporter.post(
-            *self.metrics.sg_latency('[READ], 95thPercentileLatency(us)',
-                                     'Latency (ms), GET docs via _changes, 95 percentile')
-        )
-
-        self.reporter.post(
-            *self.metrics.sg_latency('[SCAN], 95thPercentileLatency(us)',
-                                     'Latency (ms), grant new access then auth, 95 percentile')
-        )
-
-
 class SGMixQueryThroughput(SGPerfTest):
     def _report_kpi(self):
         self.collect_execution_logs()
@@ -251,6 +232,6 @@ class SGMixQueryThroughput(SGPerfTest):
                 logger.info(fout.read())
 
         self.reporter.post(
-            *self.metrics.sg_throughput("Throughput (req/sec), POST doc")
+            *self.metrics.sg_throughput("Throughput (req/sec)")
         )
 

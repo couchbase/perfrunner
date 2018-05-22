@@ -754,6 +754,7 @@ class SyncgatewaySettings:
     MAX_INSERTS_PER_INSTANCE = 1000000
     STAR = "false"
     GRANT_ACCESS = "false"
+    GRANT_ACCESS_IN_SCAN = "false"
     CHANNELS_PER_GRANT = 1
 
     def __init__(self, options: dict):
@@ -788,6 +789,7 @@ class SyncgatewaySettings:
         self.starchannel = options.get('starchannel', self.STAR)
         self.grant_access = options.get('grant_access', self.GRANT_ACCESS)
         self.channels_per_grant = options.get('channels_per_grant', self.CHANNELS_PER_GRANT)
+        self.grant_access_in_scan = options.get('grant_access_in_scan', self.GRANT_ACCESS_IN_SCAN)
 
 
     def __str__(self) -> str:

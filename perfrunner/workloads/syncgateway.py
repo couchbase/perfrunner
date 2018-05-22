@@ -41,7 +41,8 @@ RUN_TEST_CMD = " run syncgateway -s -P {workload} -p recordcount={total_docs} -p
                "-p syncgateway.sequencestart={sequence_start} -p syncgateway.initusers=false " \
                "-p readproportion={readproportion} -p updateproportion={updateproportion} " \
                "-p scanproportion={scanproportion} " \
-               "-p insertproportion={insertproportion} -p exportfile={exportfile} -p syncgateway.feedmode={feedmode}"
+               "-p insertproportion={insertproportion} -p exportfile={exportfile} " \
+               "-p syncgateway.feedmode={feedmode} -p syncgateway.grantaccessinscan={grant_access_in_scan}"
 
 
 def get_offset(workload_settings, worker_id):
@@ -155,7 +156,8 @@ def syncgateway_run_test(workload_settings: PhaseSettings, timer: int, worker_id
                                  insertproportion=sgs.insertproportion,
                                  scanproportion=sgs.scanproportion,
                                  exportfile=res_file_name,
-                                 feedmode=sgs.feed_mode)
+                                 feedmode=sgs.feed_mode,
+                                 grant_access_in_scan=sgs.grant_access_in_scan)
 
     path = getInstanceHome(workload_settings, worker_id)
     run_cmd(path, BINARY_NAME, params, log_file_name)

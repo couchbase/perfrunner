@@ -6,7 +6,7 @@ title = Low Term, no kv-load, wiki 1M x 1KB, 1 node, FTS
 component = jts
 category = benchmark
 sub_category = Latency
-orderby = q0b00000010
+orderby = q0b00000018
 
 [cluster]
 mem_quota = 51024

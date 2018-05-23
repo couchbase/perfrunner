@@ -6,7 +6,7 @@ title = WildcardQuery, no kv-load, wiki 1M x 1KB, 3 node, FTS
 component = jts
 category = benchmark_3_nodes
 sub_category = Latency
-orderby = q0b00001111
+orderby = q0b00001114
 
 [cluster]
 mem_quota = 51024

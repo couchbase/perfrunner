@@ -6,7 +6,7 @@ title = PrefixQuery, 1K sets/sec kv, wiki 1M x 1KB, 1 node, FTS
 component = jts
 category = benchmark_kv
 sub_category = Throughput
-orderby = q0b00001110
+orderby = q0b00001112
 
 [cluster]
 mem_quota = 51024

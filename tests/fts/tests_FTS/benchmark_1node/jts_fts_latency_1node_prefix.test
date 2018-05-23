@@ -6,7 +6,7 @@ title = PrefixQuery, no kv-load, wiki 1M x 1KB, 1 node, FTS
 component = jts
 category = benchmark
 sub_category = Latency
-orderby = q0b00001110
+orderby = q0b00001112
 
 [cluster]
 mem_quota = 51024

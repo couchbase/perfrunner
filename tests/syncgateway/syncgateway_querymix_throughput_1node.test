@@ -43,5 +43,5 @@ scanproportion=0.2
 requestdistribution = zipfian
 log_title = sync_gateway_1node_sync
 grant_access = true
-channels_per_grant = 20
+channels_per_grant = 1
 grant_access_in_scan = true

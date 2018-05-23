@@ -1,5 +1,5 @@
 import json
-from typing import List
+from typing import Dict, List
 
 from requests import Session
 
@@ -40,6 +40,10 @@ class PerfStore:
         url = '{}/{}/{}'.format(self.base_url, db, metric)
         data = self.session.get(url).json()
         return [d[1] for d in data]
+
+    def get_summary(self, db: str, metric: str) -> Dict[str, float]:
+        url = '{}/{}/{}/summary'.format(self.base_url, db, metric)
+        return self.session.get(url).json()
 
     def find_dbs(self, db: str) -> List[str]:
         urls = []

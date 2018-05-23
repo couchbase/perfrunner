@@ -101,6 +101,7 @@ class JenkinsScanner:
                          build_parameters: dict) -> dict:
         build_parameters.update({
             'component': component,
+            'duration': build_info['duration'],
             'job': job,
             'success': build_info['result'] == 'SUCCESS',
             'timestamp': build_info['timestamp'],

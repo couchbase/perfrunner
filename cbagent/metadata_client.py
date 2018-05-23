@@ -1,3 +1,5 @@
+from typing import Dict, List
+
 import requests
 from decorator import decorator
 
@@ -47,23 +49,32 @@ class MetadataClient(RestClient):
         self.settings = settings
         self.base_url = "http://{}/cbmonitor".format(settings.cbmonitor_host)
 
-    def get_clusters(self):
+    def get_clusters(self) -> List[str]:
         url = self.base_url + "/get_clusters/"
         return self.get(url, {})
 
-    def get_servers(self):
+    def get_servers(self) -> List[str]:
         url = self.base_url + "/get_servers/"
         params = {"cluster": self.settings.cluster}
         return self.get(url, params)
 
-    def get_buckets(self):
+    def get_buckets(self) -> List[str]:
         url = self.base_url + "/get_buckets/"
         params = {"cluster": self.settings.cluster}
         return self.get(url, params)
 
-    def get_indexes(self):
+    def get_indexes(self) -> List[str]:
         url = self.base_url + "/get_indexes/"
         params = {"cluster": self.settings.cluster}
+        return self.get(url, params)
+
+    def get_metrics(self, bucket: str = None, index: str = None,
+                    server: str = None) -> List[Dict[str, str]]:
+        url = self.base_url + "/get_metrics/"
+        params = {"cluster": self.settings.cluster}
+        for extra_param in "bucket", "index", "server":
+            if eval(extra_param) is not None:
+                params[extra_param] = eval(extra_param)
         return self.get(url, params)
 
     def add_cluster(self):
@@ -75,7 +86,7 @@ class MetadataClient(RestClient):
 
         self.post(url, data)
 
-    def add_server(self, address):
+    def add_server(self, address: str):
         if address in self.get_servers():
             return
 
@@ -84,7 +95,7 @@ class MetadataClient(RestClient):
 
         self.post(url, data)
 
-    def add_bucket(self, name):
+    def add_bucket(self, name: str):
         if name in self.get_buckets():
             return
 
@@ -92,7 +103,7 @@ class MetadataClient(RestClient):
         data = {"name": name, "cluster": self.settings.cluster}
         self.post(url, data)
 
-    def add_index(self, name):
+    def add_index(self, name: str):
         if name in self.get_indexes():
             return
 
@@ -100,15 +111,16 @@ class MetadataClient(RestClient):
         data = {"name": name, "cluster": self.settings.cluster}
         self.post(url, data)
 
-    def add_metric(self, name, bucket=None, index=None, server=None, collector=None):
+    def add_metric(self, name: str, bucket: str = None, index: str = None,
+                   server: str = None, collector: str = None):
         url = self.base_url + "/add_metric/"
         data = {"name": name, "cluster": self.settings.cluster}
-        for extra_param in ("bucket", "index", "server", "collector"):
+        for extra_param in "bucket", "index", "server", "collector":
             if eval(extra_param) is not None:
                 data[extra_param] = eval(extra_param)
         self.post(url, data)
 
-    def add_snapshot(self, name):
+    def add_snapshot(self, name: str):
         url = self.base_url + "/add_snapshot/"
         data = {"cluster": self.settings.cluster, "name": name}
         self.post(url, data)

@@ -70,6 +70,18 @@ class YCSBThroughputTest(YCSBTest):
         )
 
 
+class YCSBLatencyTest(YCSBTest):
+
+    def _report_kpi(self):
+        self.collect_export_files()
+
+        latency_dic = self.metrics.ycsb_get_latency()
+        for key, value in latency_dic.items():
+            self.reporter.post(
+                *self.metrics.ycsb_latency(key)
+            )
+
+
 class YCSBSOETest(YCSBThroughputTest, N1QLTest):
 
     def run(self):
@@ -105,6 +117,11 @@ class YCSBN1QLTest(YCSBTest, N1QLTest):
         self.access()
 
         self.report_kpi()
+
+
+class YCSBN1QLLatencyTest(YCSBN1QLTest, YCSBLatencyTest):
+
+    pass
 
 
 class YCSBN1QLThroughputTest(YCSBN1QLTest, YCSBThroughputTest):

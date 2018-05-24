@@ -549,6 +549,23 @@ class MetricHelper:
                         throughput += int(float(line.split()[-1]))
         return throughput
 
+    def _parse_ycsb_latency(self) -> int:
+        lat_dic = {}
+        fc = 1
+        for filename in glob.glob("YCSB/ycsb_run_*.log"):
+            with open(filename) as fh:
+                for line in fh.readlines():
+                    if line.find('95thPercentileLatency(us)') >= 1:
+                        io_type = line.split('[')[1].split(']')[0]
+                        if io_type in lat_dic:
+                            lat = ((lat_dic[io_type])*(fc-1) + (int(float(line.split()[-1]))))/fc
+                            lat_dic.update({io_type: lat})
+                        else:
+                            lat = int(float(line.split()[-1]))
+                            lat_dic.update({io_type: lat})
+            fc += 1
+        return lat_dic
+
     def dcp_throughput(self, time_elapsed: float) -> Metric:
         metric_info = self._metric_info()
 
@@ -581,6 +598,17 @@ class MetricHelper:
         throughput = self._parse_ycsb_throughput()
 
         return throughput, self._snapshots, metric_info
+
+    def ycsb_latency(self,
+                     io_type: str) -> Metric:
+        metric_info = self._metric_info()
+        latency_dic = self._parse_ycsb_latency()
+        latency = latency_dic[io_type]
+        return latency, self._snapshots, metric_info
+
+    def ycsb_get_latency(self) -> Metric:
+        latency_dic = self._parse_ycsb_latency()
+        return latency_dic
 
     def indexing_time(self, indexing_time: float) -> Metric:
         return self.elapsed_time(indexing_time)

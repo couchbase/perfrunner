@@ -16,6 +16,7 @@ setup(
             'perfrunner = perfrunner.__main__:main',
             'recovery = perfrunner.utils.recovery:main',
             'spring = spring.__main__:main',
+            'stats = perfrunner.utils.stats:main',
             'templater = perfrunner.utils.templater:main',
             'trigger = perfrunner.utils.trigger:main',
             'verify_logs = perfrunner.utils.verify_logs:main',

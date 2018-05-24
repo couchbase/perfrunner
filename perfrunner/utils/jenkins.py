@@ -33,6 +33,12 @@ class JenkinsScanner:
         GROUP BY component;
     """
 
+    BUILD_QUERY = """
+        SELECT component, test_config, `cluster`, url
+        FROM jenkins
+        WHERE version = $1;
+    """
+
     def __init__(self):
         self.bucket = self.new_bucket()
         self.jenkins = jenkins.Jenkins(self.JENKINS_URL)
@@ -157,6 +163,11 @@ class JenkinsScanner:
                     },
                 }
                 self.weekly.update_status(status)
+
+    def find_builds(self, version: str) -> Iterator[dict]:
+        n1ql_query = N1QLQuery(self.BUILD_QUERY, version)
+        for build in self.bucket.n1ql_query(n1ql_query):
+            yield build
 
 
 def main():

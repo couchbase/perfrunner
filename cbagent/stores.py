@@ -45,6 +45,11 @@ class PerfStore:
         url = '{}/{}/{}/summary'.format(self.base_url, db, metric)
         return self.session.get(url).json()
 
+    def exists(self, db: str, metric: str) -> bool:
+        url = '{}/{}/{}'.format(self.base_url, db, metric)
+        response = self.session.get(url)
+        return response.status_code == 200
+
     def find_dbs(self, db: str) -> List[str]:
         urls = []
         for name in self.session.get(self.base_url).json():

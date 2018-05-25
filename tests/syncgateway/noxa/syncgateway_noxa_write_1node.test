@@ -1,9 +1,9 @@
 [test_case]
 test = perfrunner.tests.syncgateway.SGWrite
-title = 4 nodes, 1M docs, 1K users, 100 channels, 10 channels per doc
+title = 1 node, 1M docs, 1K users, 100 channels, 10 channels per doc
 component = syncgateway
 category = write
-sub_category = xattr
+sub_category = noxa
 
 [cluster]
 mem_quota = 25000
@@ -20,8 +20,8 @@ workers = 0
 indexer.settings.storage_mode = memory_optimized
 
 [syncgateway]
-nodes = 4
-threads = 200
+nodes = 1
+threads = 50
 clients = 4
 instances_per_client = 5
 workload_path = workloads/syncgateway_blank
@@ -40,5 +40,5 @@ readproportion=0
 updateproportion=0
 insertproportion=1
 requestdistribution = zipfian
-log_title = sync_gateway_4node_writes
+log_title = sync_gateway_1node_writes
 

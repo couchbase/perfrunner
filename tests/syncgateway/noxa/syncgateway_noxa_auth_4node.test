@@ -1,9 +1,9 @@
 [test_case]
-test = perfrunner.tests.syncgateway.SGWrite
-title = 4 nodes, 1M docs, 1K users, 100 channels, 10 channels per doc
+test = perfrunner.tests.syncgateway.SGAuthThroughput
+title = 1 node, 1M users, 10K channel, 50 channels per user, access query
 component = syncgateway
-category = write
-sub_category = xattr
+category = query
+sub_category = noxa
 
 [cluster]
 mem_quota = 25000
@@ -11,9 +11,8 @@ index_mem_quota = 25000
 initial_nodes = 4
 num_buckets = 1
 
-
 [access]
-time = 600
+time = 240
 workers = 0
 
 [secondary]
@@ -27,18 +26,23 @@ instances_per_client = 5
 workload_path = workloads/syncgateway_blank
 ycsb_repo = git://github.com/couchbaselabs/YCSB.git
 ycsb_branch = syncgateway-weekly
-users = 1000
-channels = 100
-channels_per_user = 10
-channels_per_doc = 10
-documents = 1000000
+users = 1000000
+channels = 10000
+channels_per_user = 1
+channels_per_doc = 1
+documents = 10000
 roundtrip_write = true
-feed_reading_mode = idsonly
+read_mode = changes
+feed_reading_mode = withdocs
+feed_mode = longpoll
 insert_mode = byuser
-auth = true
+auth = false
+initusers = false
+grant_access = true
+channels_per_grant = 50
 readproportion=0
 updateproportion=0
-insertproportion=1
+insertproportion=0
+scanproportion=1
 requestdistribution = zipfian
-log_title = sync_gateway_4node_writes
-
+log_title = sync_gateway_1node_auth

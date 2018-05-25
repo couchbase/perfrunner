@@ -1,16 +1,15 @@
 [test_case]
-test = perfrunner.tests.syncgateway.SGSync
-title = 4 nodes, 1M docs, 10K users, 1K channels, 100 channels per user, 20 writes/sec
+test = perfrunner.tests.syncgateway.SGMixQueryThroughput
+title = 1 node, 100K users, 100K channels, 20 channels per user, channels/access mixed scenario, 40/40/20 (Read/Write/Auth)
 component = syncgateway
-category = sync
-sub_category = xattr
+category = query
+sub_category = noxa
 
 [cluster]
 mem_quota = 25000
 index_mem_quota = 25000
 initial_nodes = 4
 num_buckets = 1
-
 
 [access]
 time = 600
@@ -20,26 +19,30 @@ workers = 0
 indexer.settings.storage_mode = memory_optimized
 
 [syncgateway]
-nodes = 4
-threads = 400
-clients = 4
+nodes = 1
+threads = 100
+clients = 1
 instances_per_client = 5
 workload_path = workloads/syncgateway_blank
 ycsb_repo = git://github.com/couchbaselabs/YCSB.git
 ycsb_branch = syncgateway-weekly
-users = 10000
-channels = 1000
-channels_per_user = 100
+users = 100000
+channels = 100000
+channels_per_user = 20
 channels_per_doc = 1
 documents = 1000000
-roundtrip_write = true
-read_mode = changes
+roundtrip_write = false
+read_mode = allchanges
 feed_reading_mode = withdocs
 feed_mode = longpoll
 insert_mode = byuser
 auth = true
-readproportion=0.999
+readproportion=0.4
 updateproportion=0
-insertproportion=0.001
+insertproportion=0.4
+scanproportion=0.2
 requestdistribution = zipfian
-log_title = sync_gateway_4node_sync
+log_title = sync_gateway_1node_sync
+grant_access = true
+channels_per_grant = 1
+grant_access_in_scan = true

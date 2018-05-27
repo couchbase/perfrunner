@@ -144,6 +144,8 @@ class BigFunIncrSyncTest(BigFunTest):
 
 class BigFunQueryTest(BigFunTest):
 
+    QUERIES = 'perfrunner/workloads/bigfun/queries_with_index.json'
+
     def _report_kpi(self, results: List[Tuple[Query, int]]):
         for query, latency in results:
             self.reporter.post(
@@ -161,6 +163,8 @@ class BigFunQueryTest(BigFunTest):
 
 
 class BigFunQueryNoIndexTest(BigFunQueryTest):
+
+    QUERIES = 'perfrunner/workloads/bigfun/queries_without_index.json'
 
     def create_index(self):
         pass

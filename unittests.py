@@ -6,6 +6,7 @@ from unittest import TestCase
 
 import snappy
 
+from perfrunner.tests.analytics import BigFunQueryTest
 from perfrunner.settings import ClusterSpec, TestConfig
 from perfrunner.workloads.bigfun.query_gen import new_queries
 from perfrunner.workloads.tcmalloc import KeyValueIterator, LargeIterator
@@ -629,7 +630,7 @@ class QueryTest(TestCase):
 class BigFunTest(TestCase):
 
     def test_unique_statements(self):
-        for query in new_queries():
+        for query in new_queries(BigFunQueryTest.QUERIES):
             statements = set()
             for i in range(10):
                 self.assertNotIn(query.statement, statements)

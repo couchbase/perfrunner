@@ -46,8 +46,9 @@ def run_concurrent_queries(rest: RestHelper,
 def bigfun(rest: RestHelper,
            nodes: List[str],
            concurrency: int,
-           num_requests: int) -> Iterator:
-    for query in new_queries():
+           num_requests: int,
+           query_set: str) -> Iterator:
+    for query in new_queries(query_set):
         timings = run_concurrent_queries(rest,
                                          nodes,
                                          query,

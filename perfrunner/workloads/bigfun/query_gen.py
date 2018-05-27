@@ -48,8 +48,6 @@ DESCRIPTIONS = {
     'BF15': 'Select join with Top-K ({} matches)',
 }
 
-QUERIES = 'perfrunner/workloads/bigfun/queries.json'
-
 
 def iso2seconds(dt: str) -> int:
     return int(parser.parse(dt).strftime('%s'))
@@ -145,8 +143,8 @@ class Query:
         return new_description(self.id, self.num_matches)
 
 
-def new_queries() -> Iterator[Query]:
-    with open(QUERIES) as fh:
+def new_queries(query_set: str) -> Iterator[Query]:
+    with open(query_set) as fh:
         queries = json.load(fh)
 
     for query in queries:

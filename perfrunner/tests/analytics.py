@@ -77,14 +77,6 @@ class BigFunTest(PerfTest):
 
             self.monitor.monitor_data_synced(target.node, target.bucket)
 
-    @with_stats
-    def access(self, *args, **kwargs) -> List[Tuple[Query, int]]:
-        results = bigfun(self.rest,
-                         nodes=self.analytics_nodes,
-                         concurrency=self.test_config.access_settings.workers,
-                         num_requests=int(self.test_config.access_settings.ops))
-        return [(query, latency) for query, latency in results]
-
     def run(self):
         self.restore_local()
         self.wait_for_persistence()
@@ -145,6 +137,15 @@ class BigFunIncrSyncTest(BigFunTest):
 class BigFunQueryTest(BigFunTest):
 
     QUERIES = 'perfrunner/workloads/bigfun/queries_with_index.json'
+
+    @with_stats
+    def access(self, *args, **kwargs) -> List[Tuple[Query, int]]:
+        results = bigfun(self.rest,
+                         nodes=self.analytics_nodes,
+                         concurrency=self.test_config.access_settings.workers,
+                         num_requests=int(self.test_config.access_settings.ops),
+                         query_set=self.QUERIES)
+        return [(query, latency) for query, latency in results]
 
     def _report_kpi(self, results: List[Tuple[Query, int]]):
         for query, latency in results:

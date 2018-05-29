@@ -16,6 +16,7 @@ from perfrunner.helpers.sync import SyncHotWorkload
 from spring.cbgen import CBAsyncGen, CBGen, SubDocGen
 from spring.docgen import (
     ArrayIndexingDocument,
+    BigFunDocument,
     Document,
     EventingSmallDocument,
     ExtReverseLookupDocument,
@@ -200,6 +201,8 @@ class Worker:
             self.docs = PackageDocument(self.ws.size)
         elif self.ws.doc_gen == 'incompressible':
             self.docs = IncompressibleString(self.ws.size)
+        elif self.ws.doc_gen == 'big_fun':
+            self.docs = BigFunDocument()
 
     def init_db(self):
         params = {

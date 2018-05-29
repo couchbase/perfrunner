@@ -326,3 +326,24 @@ class TpcDsIndexTest(TpcDsTest):
         time_elapsed = self.create_indexes()
 
         self.report_kpi(time_elapsed)
+
+
+class BigFUNLatencyTest(N1QLLatencyTest):
+
+    COLLECTORS = {
+        'n1ql_latency': True,
+        'n1ql_stats': True,
+        'net': False,
+        'secondary_debugstats_index': True,
+    }
+
+    def run(self):
+        self.restore()
+        self.wait_for_persistence()
+
+        self.create_indexes()
+        self.wait_for_indexing()
+
+        self.access()
+
+        self.report_kpi()

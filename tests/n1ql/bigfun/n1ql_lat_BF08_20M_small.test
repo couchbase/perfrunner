@@ -1,0 +1,46 @@
+[test_case]
+test = perfrunner.tests.n1ql.BigFUNLatencyTest
+
+[showfast]
+title = BF08, Top-K (100 matches)
+component = n1ql
+category = bigfun
+
+[cluster]
+mem_quota = 20480
+index_mem_quota = 20480
+initial_nodes = 6
+num_buckets = 1
+
+[bucket]
+eviction_policy = fullEviction
+replica_number = 0
+
+[secondary]
+indexer.settings.storage_mode = plasma
+projector.maxCpuPercent = 2400
+
+[restore]
+backup_storage = /backups
+backup_repo = bigfun20M
+
+[index]
+statements =
+    CREATE INDEX bf08 ON `bucket-1`(send_time, `user`.screen_name, LENGTH(message_text)) PARTITION BY HASH(`user`.screen_name) WHERE `chirpid` IS NOT MISSING;
+
+[n1ql]
+max-parallelism = 8
+
+[load]
+doc_gen = big_fun
+
+[access]
+items = 320000000
+n1ql_queries = bigfun
+n1ql_workers = 1
+n1ql_timeout = 300
+time = 1200
+
+[n1ql-bigfun]
+statement = SELECT `user`.screen_name AS username, AVG(LENGTH(message_text)) AS avg FROM `bucket-1` WHERE `chirpid` IS NOT MISSING AND send_time >= $1 AND send_time < $2 GROUP BY `user`.screen_name ORDER BY avg LIMIT 10;
+args = ["{send_time_small[0]}", "{send_time_small[1]}"]

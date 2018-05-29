@@ -8,6 +8,7 @@ import numpy as np
 import spooky
 
 from fastdocgen import build_achievements
+from perfrunner.workloads.bigfun import query_gen
 from spring.dictionary import (
     CATEGORIES,
     COUNTIES,
@@ -1335,4 +1336,17 @@ class PackageDocument(Document):
             'postalCode': self.postal_code,
             'weight': self.weight,
             'charges': self.charges,
+        }
+
+
+class BigFunDocument:
+
+    def next(self, *args) -> dict:
+        return {
+            'user_since_small': query_gen.bf03params(num_matches=1e2),
+            'user_since_medium': query_gen.bf03params(num_matches=1e4),
+            'user_since_large': query_gen.bf03params(num_matches=1e6),
+            'send_time_small': query_gen.bf08params(num_matches=1e2),
+            'send_time_medium': query_gen.bf08params(num_matches=1e4),
+            'send_time_large': query_gen.bf08params(num_matches=1e6),
         }

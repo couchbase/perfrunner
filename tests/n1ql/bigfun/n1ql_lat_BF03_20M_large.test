@@ -1,0 +1,48 @@
+[test_case]
+test = perfrunner.tests.n1ql.BigFUNLatencyTest
+
+[showfast]
+title = BF03, Temporal range scan (1M matches)
+component = n1ql
+category = bigfun
+
+[cluster]
+mem_quota = 20480
+index_mem_quota = 20480
+initial_nodes = 6
+num_buckets = 1
+
+[bucket]
+eviction_policy = fullEviction
+replica_number = 0
+
+[secondary]
+indexer.settings.storage_mode = plasma
+projector.maxCpuPercent = 2400
+
+[restore]
+backup_storage = /backups
+backup_repo = bigfun20M
+
+[index]
+statements =
+    CREATE INDEX bf03 ON `bucket-1`(user_since) WHERE `id` IS NOT MISSING;
+
+[n1ql]
+pipeline-batch = 100
+pipeline-cap = 10000
+
+[load]
+doc_gen = big_fun
+
+[access]
+items = 320000000
+n1ql_queries = bigfun
+n1ql_workers = 1
+n1ql_batch_size = 1
+n1ql_timeout = 300
+time = 1200
+
+[n1ql-bigfun]
+statement = SELECT u FROM `bucket-1` u WHERE `id` IS NOT MISSING AND u.user_since >= $1 AND u.user_since < $2;
+args = ["{user_since_large[0]}", "{user_since_large[1]}"]

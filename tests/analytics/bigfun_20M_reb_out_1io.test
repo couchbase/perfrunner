@@ -6,7 +6,6 @@ use_workers = 0
 title = Rebalance-out (min), 4 -> 3 nodes, BigFUN 20M users (320M docs), HDD
 component = analytics
 category = rebalance
-sub_category = BigFUN 20M
 
 [stats]
 server_processes = java

@@ -6,7 +6,7 @@ use_workers = 0
 title = Avg. ingestion rate (items/sec), 2 nodes, BigFUN 20M users (320M docs), 3 indexes, SSD
 component = analytics
 category = sync
-sub_category = BigFUN 20M
+sub_category = Initial
 orderby = _ssd
 
 [stats]

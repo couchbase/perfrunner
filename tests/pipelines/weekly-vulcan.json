@@ -9,8 +9,8 @@
 
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_2n.test"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n.test"},
-        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_2n_no_index.test.test"},
-        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_no_index.test.test"},
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_2n_no_index.test"},
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_no_index.test"},
 
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_reb_in.test"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_reb_out.test"},

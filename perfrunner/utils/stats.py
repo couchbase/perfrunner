@@ -1,4 +1,3 @@
-import uuid
 from collections import namedtuple
 from typing import Dict, Iterator, Optional
 
@@ -53,8 +52,18 @@ class StatsScanner:
     def new_bucket(self) -> Bucket:
         return Bucket(connection_string=self.connection_string)
 
+    @staticmethod
+    def generate_key(attributes: dict) -> str:
+        return ''.join((attributes['cluster'],
+                        attributes['test_config'],
+                        attributes['version'],
+                        attributes['metric'],
+                        attributes.get('bucket', ''),
+                        attributes.get('server', ''),
+                        attributes.get('index', '')))
+
     def store_metric_info(self, attributes: dict):
-        key = uuid.uuid4().hex
+        key = self.generate_key(attributes)
         self.bucket.upsert(key=key, value=attributes)
 
     def get_summary(self, db: str, metric: str) -> Optional[Dict[str, float]]:

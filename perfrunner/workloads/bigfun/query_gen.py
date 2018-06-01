@@ -24,6 +24,11 @@ STATEMENTS = {
             'GROUP BY cm.user.screen_name '
             'ORDER BY avg '
             'LIMIT 10;',
+    'BF10': 'SELECT VALUE cm '
+            'FROM ChirpMessages cm '
+            'WHERE (SOME e IN cm.employment SATISFIES e.doesnt_exist IS NOT UNKNOWN);',
+    'BF11': 'SELECT DISTINCT 1 '
+            'FROM (SELECT * FROM ChirpMessages cm ORDER BY send_time ) AS foo;',
     'BF14': 'SELECT META(u).id AS id, COUNT(*) AS count '
             'FROM `GleambookUsers` u, `GleambookMessages` m '
             'WHERE TO_STRING(META(u).id) = m.author_id '
@@ -44,6 +49,8 @@ DESCRIPTIONS = {
     'BF03': 'Temporal range scan ({} matches)',
     'BF04': 'Existential quantification ({} matches)',
     'BF08': 'Top-K ({} matches)',
+    'BF10': 'Full scan',
+    'BF11': 'Full sort',
     'BF14': 'Select join with grouping aggregation ({} matches)',
     'BF15': 'Select join with Top-K ({} matches)',
 }
@@ -113,6 +120,8 @@ def new_params(qid: str, num_matches: float) -> List[str]:
         'BF03': bf03params(num_matches),
         'BF04': bf04params(num_matches),
         'BF08': bf08params(num_matches),
+        'BF10': [],
+        'BF11': [],
         'BF14': bf14params(num_matches),
         'BF15': bf15params(num_matches),
     }[qid]

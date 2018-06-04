@@ -3,6 +3,7 @@ from collections import defaultdict
 from threading import Timer
 from time import sleep, time
 from typing import Callable
+from urllib import parse
 
 from couchbase import experimental, subdocument
 from couchbase.bucket import Bucket
@@ -123,16 +124,19 @@ class CBGen(CBAsyncGen):
     TIMEOUT = 10  # seconds
 
     def __init__(self, ssl_mode: str = 'none', n1ql_timeout: int = None, **kwargs):
-        connection_string = 'couchbase://{}/{}?ipv6=allow&password={}'
+
+        connection_string = 'couchbase://{host}/{bucket}?password={password}&{params}'
+        connstr_params = parse.urlencode(kwargs["connstr_params"])
 
         if ssl_mode == 'data':
             connection_string = connection_string.replace('couchbase',
                                                           'couchbases')
             connection_string += '&certpath=root.pem'
 
-        connection_string = connection_string.format(kwargs['host'],
-                                                     kwargs['bucket'],
-                                                     kwargs['password'])
+        connection_string = connection_string.format(host=kwargs['host'],
+                                                     bucket=kwargs['bucket'],
+                                                     password=kwargs['password'],
+                                                     params=connstr_params)
 
         self.client = Bucket(connection_string=connection_string)
         self.client.timeout = self.TIMEOUT

@@ -213,6 +213,7 @@ class Worker:
             'password': self.ts.password,
             'ssl_mode': self.ws.ssl_mode,
             'n1ql_timeout': self.ws.n1ql_timeout,
+            'connstr_params': self.ws.connstr_params
         }
 
         try:

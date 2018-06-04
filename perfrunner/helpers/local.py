@@ -1,6 +1,7 @@
 import os
 import socket
 import time
+import urllib.parse
 from datetime import date
 from glob import glob
 from sys import platform
@@ -245,6 +246,7 @@ def run_cbc_pillowfight(host: str,
                         writes: int,
                         persist_to: int,
                         replicate_to: int,
+                        connstr_params: dict,
                         doc_gen: str = 'binary',
                         ssl_mode: str = 'none',
                         populate: bool = False):
@@ -264,9 +266,9 @@ def run_cbc_pillowfight(host: str,
         cmd += '--json --compress --compress '
 
     if ssl_mode == 'data':
-        cmd += '--spec couchbases://{host}/{bucket}?ipv6=allow --certpath root.pem '
+        cmd += '--spec "couchbases://{host}/{bucket}?{params}" --certpath root.pem '
     else:
-        cmd += '--spec couchbase://{host}/{bucket}?ipv6=allow '
+        cmd += '--spec "couchbase://{host}/{bucket}?{params}" '
 
     if populate:
         cmd += '--populate-only '
@@ -276,11 +278,14 @@ def run_cbc_pillowfight(host: str,
             '--num-cycles {num_cycles} ' \
             '--no-population '
 
-    cmd += ' 2> /dev/null'
+    cmd += ' > /dev/null 2>&1'
+
+    params = urllib.parse.urlencode(connstr_params)
 
     cmd = cmd.format(host=host,
                      bucket=bucket,
                      password=password,
+                     params=params,
                      num_items=num_items,
                      num_threads=num_threads,
                      num_cycles=num_cycles,
@@ -291,7 +296,7 @@ def run_cbc_pillowfight(host: str,
                      writes=writes)
 
     logger.info('Running: {}'.format(cmd))
-    local(cmd)
+    local(cmd, shell='/bin/bash')
 
 
 def run_dcptest(host: str, username: str, password: str, bucket: str,

@@ -433,6 +433,8 @@ class PhaseSettings:
 
     CBCOLLECT = 0
 
+    CONNSTR_PARAMS = "{'ipv6': 'allow', 'enable_tracing': 'false'}"
+
     def __init__(self, options: dict):
         # Common settings
         self.time = int(options.get('time', self.TIME))
@@ -479,6 +481,8 @@ class PhaseSettings:
 
         self.workload_instances = int(options.get('workload_instances',
                                                   self.WORKLOAD_INSTANCES))
+
+        self.connstr_params = eval(options.get('connstr_params', self.CONNSTR_PARAMS))
 
         # Views settings
         self.ddocs = None

@@ -5,6 +5,10 @@ test = perfdaily.kv.PillowFightTest
 title = Pillowfight, 50/50 R/W, 256B binary items, Ephemeral
 component = KV
 
+[stats]
+interval = 1
+client_processes = cbc-pillowfight
+
 [cluster]
 mem_quota = 51200
 initial_nodes = 2

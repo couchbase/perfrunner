@@ -99,7 +99,12 @@
         {"job": "iris",              "cluster": "iris.spec", "test_config": "tpc-ds/n1ql_lat_AG9_100M_plasma_ok_part.test"},
         {"job": "iris",              "cluster": "iris.spec", "test_config": "tpc-ds/n1ql_thr_AG9_100M_plasma_ok.test"},
         {"job": "iris",              "cluster": "iris.spec", "test_config": "tpc-ds/n1ql_lat_AG10_100M_plasma_ok.test"},
-        {"job": "iris",              "cluster": "iris.spec", "test_config": "tpc-ds/n1ql_thr_AG10_100M_plasma_ok.test"}
+        {"job": "iris",              "cluster": "iris.spec", "test_config": "tpc-ds/n1ql_thr_AG10_100M_plasma_ok.test"},
+
+        {"job": "iris-dgm",          "cluster": "iris.spec", "test_config": "tpc-ds/n1ql_index_100M_plasma.test"},
+        {"job": "iris-dgm",          "cluster": "iris.spec", "test_config": "tpc-ds/n1ql_index_100M_plasma_part.test"},
+        {"job": "iris-dgm",          "cluster": "iris.spec", "test_config": "tpc-ds/n1ql_index_100M_plasma_dgm.test"},
+        {"job": "iris-dgm",          "cluster": "iris.spec", "test_config": "tpc-ds/n1ql_index_100M_plasma_part_dgm.test"}
     ],
     "Rebalance": [
         {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_failover_100M_dgm_kv_disk.test"}

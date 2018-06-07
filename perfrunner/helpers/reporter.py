@@ -20,7 +20,7 @@ class Reporter:
                  build: str):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
-        self.build = build + test_config.syncgateway.build_label
+        self.build = build + test_config.syncgateway_settings.build_label
 
 
 class ShowFastReporter(Reporter):

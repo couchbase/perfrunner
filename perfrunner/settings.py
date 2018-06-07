@@ -790,6 +790,8 @@ class SyncgatewaySettings:
         self.grant_access = options.get('grant_access', self.GRANT_ACCESS)
         self.channels_per_grant = options.get('channels_per_grant', self.CHANNELS_PER_GRANT)
         self.grant_access_in_scan = options.get('grant_access_in_scan', self.GRANT_ACCESS_IN_SCAN)
+        self.build_label = options.get('build_label', '')
+
 
 
     def __str__(self) -> str:

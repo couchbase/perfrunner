@@ -63,7 +63,7 @@ class PerfTest:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        failure = self.check_failures()
+        failure = self.debug()
 
         self.tear_down()
 
@@ -121,7 +121,7 @@ class PerfTest:
                     self.remote.reset_memory_settings(host_string=server)
             self.monitor.wait_for_servers()
 
-    def check_failures(self) -> str:
+    def debug(self) -> str:
         failure = self.check_core_dumps()
         failure = self.check_rebalance() or failure
         return self.check_failover() or failure

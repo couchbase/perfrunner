@@ -163,9 +163,10 @@ class EventingTest(PerfTest):
                 logger.info("Max Producer rss is {}MB on {} for function {}".
                             format(max_producer_rss, node, name))
 
-    def post_test(self):
-        self.validate_failures()
+    def debug(self):
         self.print_max_rss_values()
+        self.validate_failures()
+        return super().debug()
 
     def run(self):
         self.set_functions()
@@ -173,8 +174,6 @@ class EventingTest(PerfTest):
         time_elapsed = self.load_access_and_wait()
 
         self.report_kpi(time_elapsed)
-
-        self.post_test()
 
 
 class FunctionsTimeTest(EventingTest):
@@ -197,8 +196,6 @@ class FunctionsTimeTest(EventingTest):
         time_to_deploy, time_to_process = self.apply_function()
 
         self.report_kpi(time_to_deploy, time_to_process)
-
-        self.post_test()
 
     def _report_kpi(self, time_to_deploy, time_to_process):
         self.reporter.post(
@@ -270,8 +267,6 @@ class FunctionsIndexThroughputTest(EventingTest):
 
         self.report_kpi(time_elapsed)
 
-        self.post_test()
-
     def _report_kpi(self, time_elapsed):
         self.reporter.post(
             *self.metrics.function_throughput(time=time_elapsed,
@@ -289,8 +284,6 @@ class FunctionsThroughputIndexN1QLTest(FunctionsIndexThroughputTest):
         time_elapsed = self.load_access_and_wait()
 
         self.report_kpi(time_elapsed)
-
-        self.post_test()
 
     def _report_kpi(self, time_elapsed):
         events_successfully_processed = self.get_on_update_success()
@@ -367,7 +360,6 @@ class FunctionsRebalanceThroughputTest(EventingRebalance):
         time_taken = self.execute_handler()
 
         self.report_kpi(time_taken)
-        self.post_test()
 
     def _report_kpi(self, time_elapsed):
         self.reporter.post(
@@ -405,7 +397,6 @@ class FunctionsScalingThroughputTest(EventingTest):
         self.execute_handler()
 
         self.report_kpi(self.test_config.access_settings.time)
-        self.post_test()
 
     def _report_kpi(self, time_elapsed):
         self.reporter.post(
@@ -433,8 +424,6 @@ class TimerTest(EventingTest):
         self.process_timer_events()
 
         self.report_kpi(self.time)
-
-        self.post_test()
 
 
 class TimerThroughputTest(TimerTest):
@@ -505,7 +494,6 @@ class TimerRebalanceThroughputTest(EventingRebalance):
         time_taken = self.execute_handler()
 
         self.report_kpi(time_taken)
-        self.post_test()
 
     def _report_kpi(self, time_elapsed):
         self.reporter.post(

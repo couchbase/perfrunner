@@ -1,10 +1,11 @@
 import glob
 import json
 from collections import defaultdict
-from typing import Dict, Iterator, List, Tuple
+from typing import Dict, Iterator, List, Optional, Tuple
 
 import jenkins
 from couchbase.bucket import Bucket
+from couchbase.exceptions import NotFoundError
 from couchbase.n1ql import N1QLQuery
 
 from logger import logger
@@ -53,6 +54,16 @@ class JenkinsScanner:
 
     def new_bucket(self) -> Bucket:
         return Bucket(connection_string=self.connection_string)
+
+    def get_checkpoint(self, job_name: str) -> Optional[int]:
+        try:
+            return self.bucket.get(job_name).value
+        except NotFoundError:
+            return 0
+
+    def add_checkpoint(self, job_name: str, build_number: int):
+        self.bucket.upsert(key=job_name, value=build_number, persist_to=1)
+        logger.info('Added checkpoint for {}'.format(job_name))
 
     def store_build_info(self, attributes: dict):
         key = self.generate_key(attributes)
@@ -117,12 +128,17 @@ class JenkinsScanner:
 
     def build_info(self) -> Iterator[Tuple[str, dict]]:
         for job_name in self.jobs:
-            job_info = self.jenkins.get_job_info(job_name,
-                                                 fetch_all_builds=True)
+            checkpoint = self.get_checkpoint(job_name)
+            job_info = self.jenkins.get_job_info(job_name, fetch_all_builds=True)
+
             for build in sorted(job_info['builds'], key=lambda b: b['number']):
                 build_number = build['number']
-                yield job_name, self.jenkins.get_build_info(job_name,
-                                                            build_number)
+                if build_number > checkpoint:
+                    checkpoint = build_number
+                    yield job_name, self.jenkins.get_build_info(job_name,
+                                                                build_number)
+
+            self.add_checkpoint(job_name, checkpoint)
 
     def build_ext_info(self) -> Iterator[Tuple[str, dict, dict]]:
         for job_name, build_info in self.build_info():

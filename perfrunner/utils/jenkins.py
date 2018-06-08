@@ -129,16 +129,18 @@ class JenkinsScanner:
     def build_info(self) -> Iterator[Tuple[str, dict]]:
         for job_name in self.jobs:
             checkpoint = self.get_checkpoint(job_name)
+            new_checkpoint = checkpoint
+
             job_info = self.jenkins.get_job_info(job_name, fetch_all_builds=True)
 
             for build in sorted(job_info['builds'], key=lambda b: b['number']):
                 build_number = build['number']
                 if build_number > checkpoint:
-                    checkpoint = build_number
+                    new_checkpoint = max(new_checkpoint, build_number)
                     yield job_name, self.jenkins.get_build_info(job_name,
                                                                 build_number)
 
-            self.add_checkpoint(job_name, checkpoint)
+            self.add_checkpoint(job_name, new_checkpoint)
 
     def build_ext_info(self) -> Iterator[Tuple[str, dict, dict]]:
         for job_name, build_info in self.build_info():

@@ -502,3 +502,14 @@ class CpuUtilizationTest(KVTest):
         self.reporter.post(
             *self.metrics.cpu_utilization()
         )
+
+
+class KVImport(PerfTest):
+
+    @with_stats
+    def load(self, *args):
+        self.restore_local()
+        self.wait_for_persistence()
+
+    def run(self):
+        self.load()

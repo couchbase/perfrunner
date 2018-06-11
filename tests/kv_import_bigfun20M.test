@@ -1,0 +1,16 @@
+[test_case]
+test = perfrunner.tests.kv.KVImport
+
+[cluster]
+mem_quota = 20480
+index_mem_quota = 20480
+initial_nodes = 2
+num_buckets = 1
+
+[bucket]
+eviction_policy = fullEviction
+
+[restore]
+backup_storage = /backups
+backup_repo = bigfun20M
+threads = 16

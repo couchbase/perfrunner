@@ -210,7 +210,7 @@ class ClusterManager:
         for master in self.cluster_spec.masters:
             for parameter, value in internal_settings.items():
                 self.rest.set_internal_settings(master,
-                                                {parameter: int(value)})
+                                                {parameter: maybe_atoi(value)})
 
     def configure_xdcr_settings(self):
         xdcr_cluster_settings = self.test_config.xdcr_cluster_settings

@@ -136,9 +136,11 @@ class JenkinsScanner:
             for build in sorted(job_info['builds'], key=lambda b: b['number']):
                 build_number = build['number']
                 if build_number > checkpoint:
-                    new_checkpoint = max(new_checkpoint, build_number)
-                    yield job_name, self.jenkins.get_build_info(job_name,
-                                                                build_number)
+                    build_info = self.jenkins.get_build_info(job_name,
+                                                             build_number)
+                    if build_info['result'] is not None:
+                        new_checkpoint = max(new_checkpoint, build_number)
+                        yield job_name, build_info
 
             self.add_checkpoint(job_name, new_checkpoint)
 
@@ -157,9 +159,8 @@ class JenkinsScanner:
         for job_name, build_info, build_parameters in self.build_ext_info():
             test_config = build_parameters['test_config']
             component = test_configs.get(test_config)
-            result = build_info['result']
 
-            if result is not None and component is not None:
+            if component is not None:
                 attributes = self.merge_attributes(component,
                                                    job_name,
                                                    build_info,

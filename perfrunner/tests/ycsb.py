@@ -1,4 +1,5 @@
 import os
+import time
 
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import with_stats
@@ -32,6 +33,21 @@ class YCSBTest(PerfTest):
     def access(self, *args, **kwargs):
         PerfTest.access(self, task=ycsb_task)
 
+    def access_bg(self, *args, **kwargs):
+        PerfTest.access_bg(self, task=ycsb_task)
+
+    @with_stats
+    def collect_cb(self):
+        duration = self.test_config.access_settings.time
+        self.cb_start = duration*0.6
+        time.sleep(self.cb_start)
+        start_time = time.time()
+        self.remote.collect_info()
+        end_time = time.time()
+        self.cb_time = round(end_time - start_time)
+        self.worker_manager.wait_for_workers()
+        return
+
     def generate_keystore(self):
         if self.worker_manager.is_remote:
             self.remote.generate_ssl_keystore(self.ROOT_CERTIFICATE,
@@ -55,7 +71,11 @@ class YCSBTest(PerfTest):
         self.wait_for_persistence()
         self.check_num_items()
 
-        self.access()
+        if self.test_config.access_settings.cbcollect == 1:
+            self.access_bg()
+            self.collect_cb()
+        else:
+            self.access()
 
         self.report_kpi()
 
@@ -114,7 +134,11 @@ class YCSBN1QLTest(YCSBTest, N1QLTest):
         self.create_indexes()
         self.wait_for_indexing()
 
-        self.access()
+        if self.test_config.access_settings.cbcollect == 1:
+            self.access_bg()
+            self.collect_cb()
+        else:
+            self.access()
 
         self.report_kpi()
 

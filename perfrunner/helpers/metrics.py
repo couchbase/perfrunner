@@ -547,6 +547,7 @@ class MetricHelper:
                 for line in fh.readlines():
                     if line.startswith('[OVERALL], Throughput(ops/sec)'):
                         throughput += int(float(line.split()[-1]))
+                        break
         return throughput
 
     def _parse_ycsb_latency(self) -> int:
@@ -563,6 +564,43 @@ class MetricHelper:
                         else:
                             lat = int(float(line.split()[-1]))
                             lat_dic.update({io_type: lat})
+            fc += 1
+        return lat_dic
+
+    def _parse_ycsb_latency_cbcollect(self):
+        lat_dic = {}
+        fc = 1
+        cb_time = int(self.test.cb_time)
+        cb_start = int(self.test.cb_start * 1000)
+        strsearch = cb_start
+        for filename in glob.glob("YCSB/ycsb_run_*.log"):
+            fh2 = open(filename)
+            list1 = fh2.readlines()
+            list1_length = len(list1)
+            fh = open(filename)
+            count = 1
+            for x in range(list1_length):
+                line = fh.readline()
+                if line.find('], {},'.format(strsearch)) >= 1:
+                    io_type = line.split('[')[1].split(']')[0]
+                    num = 1
+                    total = 0
+                    if fc > 1:
+                        oldavg = lat_dic[io_type]
+
+                    while line.find(io_type):
+                        total += int(float(line.split()[-1]))
+                        avg = int(total / num)
+                        lat_dic.update({io_type: avg})
+                        num += 1
+                        count += 1
+                        if num == cb_time:
+                            if fc > 1:
+                                newavg = int((oldavg * (fc - 1) + lat_dic[io_type]) / fc)
+                                lat_dic.update({io_type: newavg})
+                            break
+                        line = fh.readline()
+                x += count
             fc += 1
         return lat_dic
 
@@ -600,14 +638,25 @@ class MetricHelper:
         return throughput, self._snapshots, metric_info
 
     def ycsb_latency(self,
-                     io_type: str) -> Metric:
-        metric_info = self._metric_info()
-        latency_dic = self._parse_ycsb_latency()
-        latency = latency_dic[io_type]
+                     io_type: str
+                     ) -> Metric:
+        if self.test_config.access_settings.cbcollect:
+            title = 'Average {} {}'. format(io_type, self._title)
+            latency_dic = self._parse_ycsb_latency_cbcollect()
+        else:
+            title = '95th percentile {} {}'.format(io_type, self._title)
+            latency_dic = self._parse_ycsb_latency()
+        metric_id = '{}_{}'.format(self.test_config.name, io_type)
+        metric_info = self._metric_info(title=title, metric_id=metric_id)
+        latency = latency_dic[io_type] / 1000
         return latency, self._snapshots, metric_info
 
-    def ycsb_get_latency(self) -> Metric:
-        latency_dic = self._parse_ycsb_latency()
+    def ycsb_get_latency(self,
+                         ) -> Metric:
+        if self.test_config.access_settings.cbcollect:
+            latency_dic = self._parse_ycsb_latency_cbcollect()
+        else:
+            latency_dic = self._parse_ycsb_latency()
         return latency_dic
 
     def indexing_time(self, indexing_time: float) -> Metric:

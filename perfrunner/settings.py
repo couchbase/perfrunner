@@ -425,6 +425,8 @@ class PhaseSettings:
     PERSIST_TO = 0
     REPLICATE_TO = 0
 
+    CBCOLLECT = 0
+
     def __init__(self, options: dict):
         # Common settings
         self.time = int(options.get('time', self.TIME))
@@ -535,6 +537,10 @@ class PhaseSettings:
                                           self.PERSIST_TO))
         self.replicate_to = int(options.get('replicate_to',
                                             self.REPLICATE_TO))
+
+        # CbCollect Setting
+        self.cbcollect = int(options.get('cbcollect',
+                                         self.CBCOLLECT))
 
     def __str__(self) -> str:
         return str(self.__dict__)

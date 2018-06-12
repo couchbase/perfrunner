@@ -225,8 +225,8 @@ def cbimport(master_node: str, cluster_spec: ClusterSpec, bucket: str,
             threads,
             master_node,
             cluster_spec.rest_credentials[0],
-            cluster_spec.rest_credentials[1],
-        )
+            cluster_spec.rest_credentials[1])
+
     if data_type == 'json':
         cmd += ' --format {}'.format(data_format)
 
@@ -345,6 +345,7 @@ def run_ycsb(host: str,
              soe_params: dict = None,
              ops: int = None,
              execution_time: int = None,
+             cbcollect: int = 0,
              instance: int = 0):
     cmd = 'bin/ycsb {action} couchbase2 ' \
           '-P {workload} ' \
@@ -367,6 +368,8 @@ def run_ycsb(host: str,
         cmd += ' -p operationcount={ops} '
     if execution_time is not None:
         cmd += ' -p maxexecutiontime={execution_time} '
+    if cbcollect:
+        cmd += '-p measurementtype=timeseries '
 
     cmd = cmd.format(host=host,
                      bucket=bucket,

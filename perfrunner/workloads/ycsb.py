@@ -57,4 +57,5 @@ def ycsb_workload(workload_settings: PhaseSettings,
              execution_time=workload_settings.time,
              ssl_keystore_file=workload_settings.ssl_keystore_file,
              ssl_keystore_password=workload_settings.ssl_keystore_password,
-             ssl_mode=workload_settings.ssl_mode)
+             ssl_mode=workload_settings.ssl_mode,
+             cbcollect=workload_settings.cbcollect)

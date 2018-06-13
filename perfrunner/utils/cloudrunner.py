@@ -12,7 +12,7 @@ from logger import logger
 class CloudRunner:
 
     AMI = {
-        'clients': 'ami-59b61321',
+        'clients': 'ami-dbf9baa3',
         'servers': 'ami-83b400fb',
     }
 

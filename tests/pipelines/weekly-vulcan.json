@@ -35,7 +35,10 @@
         {"job": "themis", "cluster": "themis.spec",                     "test_config": "throughput100M_64byte_fun_bktop.test"},
         {"job": "themis", "cluster": "themis_eventing_index_n1ql.spec", "test_config": "throughput20M_fun_n1ql_iter.test"},
         {"job": "themis", "cluster": "themis_eventing_rebalance.spec",  "test_config": "throughput50M_fun_bktop_eventing_rebalance.test"},
-        {"job": "themis", "cluster": "themis.spec",                     "test_config": "throughput50M_fun_bktop_rebalance.test"}
+        {"job": "themis", "cluster": "themis.spec",                     "test_config": "throughput50M_fun_bktop_rebalance.test"},
+        {"job": "themis", "cluster": "themis.spec",                     "test_config": "throughput100M_1MB_fun_bktop.test"},
+        {"job": "themis", "cluster": "themis.spec",                     "test_config": "throughput100M_fun_2x128_log.test"},
+        {"job": "themis", "cluster": "themis.spec",                     "test_config": "throughput100M_fun_1x512_log.test"}
     ],
     "FTS": [],
     "GSI": [],

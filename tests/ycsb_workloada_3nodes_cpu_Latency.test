@@ -2,7 +2,7 @@
 test = perfrunner.tests.ycsb.YCSBLatencyTest
 
 [showfast]
-title = Latency (ms), Workload A, 3 nodes, 12 vCPU , CBCollect
+title = Latency (ms), Workload A, 3 nodes, 12 vCPU
 component = kv
 category = ycsb
 
@@ -25,5 +25,3 @@ time = 1800
 boost = 12
 workers = 96
 workload_instances = 6
-cbcollect = 1
-epoll = false

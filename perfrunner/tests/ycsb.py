@@ -46,7 +46,6 @@ class YCSBTest(PerfTest):
         end_time = time.time()
         self.cb_time = round(end_time - start_time)
         self.worker_manager.wait_for_workers()
-        return
 
     def generate_keystore(self):
         if self.worker_manager.is_remote:
@@ -71,7 +70,7 @@ class YCSBTest(PerfTest):
         self.wait_for_persistence()
         self.check_num_items()
 
-        if self.test_config.access_settings.cbcollect == 1:
+        if self.test_config.access_settings.cbcollect:
             self.access_bg()
             self.collect_cb()
         else:
@@ -134,7 +133,7 @@ class YCSBN1QLTest(YCSBTest, N1QLTest):
         self.create_indexes()
         self.wait_for_indexing()
 
-        if self.test_config.access_settings.cbcollect == 1:
+        if self.test_config.access_settings.cbcollect:
             self.access_bg()
             self.collect_cb()
         else:

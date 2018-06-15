@@ -556,7 +556,7 @@ class MetricHelper:
         for filename in glob.glob("YCSB/ycsb_run_*.log"):
             with open(filename) as fh:
                 for line in fh.readlines():
-                    if line.find('95thPercentileLatency(us)') >= 1:
+                    if line.find('AverageLatency(us)') >= 1:
                         io_type = line.split('[')[1].split(']')[0]
                         if io_type in lat_dic:
                             lat = ((lat_dic[io_type])*(fc-1) + (int(float(line.split()[-1]))))/fc
@@ -565,6 +565,8 @@ class MetricHelper:
                             lat = int(float(line.split()[-1]))
                             lat_dic.update({io_type: lat})
             fc += 1
+        if 'CLEANUP' in lat_dic:
+            del lat_dic['CLEANUP']
         return lat_dic
 
     def _parse_ycsb_latency_cbcollect(self):
@@ -602,6 +604,8 @@ class MetricHelper:
                         line = fh.readline()
                 x += count
             fc += 1
+        if 'CLEANUP' in lat_dic:
+            del lat_dic['CLEANUP']
         return lat_dic
 
     def dcp_throughput(self, time_elapsed: float) -> Metric:

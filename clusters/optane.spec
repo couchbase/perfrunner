@@ -1,5 +1,5 @@
 [clusters]
-oceanus =
+optane =
     172.23.124.4:kv,cbas
     172.23.124.38:kv,cbas
 

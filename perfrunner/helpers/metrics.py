@@ -645,11 +645,10 @@ class MetricHelper:
                      io_type: str
                      ) -> Metric:
         if self.test_config.access_settings.cbcollect:
-            title = 'Average {} {}'. format(io_type, self._title)
             latency_dic = self._parse_ycsb_latency_cbcollect()
         else:
-            title = '95th percentile {} {}'.format(io_type, self._title)
             latency_dic = self._parse_ycsb_latency()
+        title = 'Average {} {}'.format(io_type, self._title)
         metric_id = '{}_{}'.format(self.test_config.name, io_type)
         metric_info = self._metric_info(title=title, metric_id=metric_id)
         latency = latency_dic[io_type] / 1000

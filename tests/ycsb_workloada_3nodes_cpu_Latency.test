@@ -20,7 +20,7 @@ workers = 160
 [access]
 workload_path = workloads/workloada
 items = 20000000
-ops = 10000000000
+ops = 7000000000
 time = 7200
 boost = 12
 workers = 96

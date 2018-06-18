@@ -199,9 +199,12 @@ class PerfTest:
                 self.monitor.monitor_indexing(server)
 
     def check_num_items(self):
+        num_items = self.test_config.load_settings.items * (
+            1 + self.test_config.bucket.replica_number
+        )
         for target in self.target_iterator:
             self.monitor.monitor_num_items(target.node, target.bucket,
-                                           self.test_config.load_settings.items)
+                                           num_items)
 
     def reset_kv_stats(self):
         master_node = next(self.cluster_spec.masters)

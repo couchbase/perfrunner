@@ -20,10 +20,9 @@ workers = 160
 [access]
 workload_path = workloads/workloada
 items = 20000000
-ops = 5000000000
+throughput = 900000
 time = 7200
 boost = 12
 workers = 96
 workload_instances = 6
 cbcollect = 1
-epoll = false

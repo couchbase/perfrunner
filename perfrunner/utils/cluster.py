@@ -34,7 +34,6 @@ def main():
     cm = ClusterManager(cluster_spec, test_config, args.verbose)
 
     # Individual nodes
-    cm.flush_iptables()
     cm.disable_wan()
     cm.clear_login_history()
     cm.tune_memory_settings()
@@ -42,6 +41,7 @@ def main():
     cm.enable_ipv6()
     cm.tune_logging()
     cm.restart_with_alternative_num_vbuckets()
+    cm.flush_iptables()
 
     cm.configure_internal_settings()
     cm.set_data_path()

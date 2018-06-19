@@ -367,6 +367,7 @@ class PhaseSettings:
     FTS_UPDATES = 0
 
     OPS = 0
+    TARGET = 0
 
     HOT_READS = False
     SEQ_UPSERTS = False
@@ -451,6 +452,7 @@ class PhaseSettings:
                                                    self.FTS_UPDATES))
 
         self.ops = float(options.get('ops', self.OPS))
+        self.target = float(options.get('target', self.TARGET))
         self.throughput = float(options.get('throughput', self.THROUGHPUT))
 
         self.working_set = float(options.get('working_set', self.WORKING_SET))

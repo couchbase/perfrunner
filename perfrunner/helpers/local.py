@@ -335,6 +335,7 @@ def run_ycsb(host: str,
              workload: str,
              items: int,
              workers: int,
+             target: int,
              epoll: str,
              boost: int,
              persist_to: int,
@@ -351,6 +352,7 @@ def run_ycsb(host: str,
           '-P {workload} ' \
           '-p writeallfields=true ' \
           '-threads {workers} ' \
+          '-p target={target} ' \
           '-p couchbase.host={host} ' \
           '-p couchbase.bucket={bucket} ' \
           '-p couchbase.upsert=true ' \
@@ -378,6 +380,7 @@ def run_ycsb(host: str,
                      items=items,
                      ops=ops,
                      workers=workers,
+                     target=target,
                      execution_time=execution_time,
                      epoll=epoll,
                      boost=boost,

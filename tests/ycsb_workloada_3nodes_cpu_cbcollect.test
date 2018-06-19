@@ -20,8 +20,9 @@ workers = 160
 [access]
 workload_path = workloads/workloada
 items = 20000000
-throughput = 900000
+target = 900000
 time = 7200
+ops = 0
 boost = 12
 workers = 96
 workload_instances = 6

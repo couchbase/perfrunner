@@ -15,15 +15,15 @@ class IOStat(RemoteStats):
         ("util", "%util", 1),
     )
 
-    def get_device_name(self, path: str) -> Union[None, str]:
+    def get_device_name(self, path: str) -> [Union[None, str], bool]:
         stdout = self.run("df '{}' | head -2 | tail -1".format(path),
                           quiet=True)
         if not stdout.return_code:
             name = stdout.split()[0]
             if name.startswith('/dev/mapper/'):  # LVM
-                return name.split('/dev/mapper/')[1]
+                return name.split('/dev/mapper/')[1], True
             else:
-                return name
+                return name, False
 
     def get_iostat(self, device: str) -> Dict[str, str]:
         stdout = self.run(
@@ -48,7 +48,7 @@ class IOStat(RemoteStats):
         samples = {}
 
         for purpose, path in partitions.items():
-            device = self.get_device_name(path)
+            device, _ = self.get_device_name(path)
             if device is not None:
                 stats = self.get_iostat(device)
                 for metric, column, multiplier in self.METRICS:
@@ -83,8 +83,8 @@ class DiskStats(IOStat):
         samples = {}
 
         for purpose, partition in partitions.items():
-            device = self.get_device_name(partition)
-            if device is not None:
+            device, lvm = self.get_device_name(partition)
+            if device is not None and not lvm:
                 bytes_read, bytes_written = self.get_disk_stats(device)
 
                 samples[purpose + '_bytes_read'] = bytes_read

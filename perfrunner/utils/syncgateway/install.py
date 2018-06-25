@@ -1,5 +1,6 @@
 import sys
 import os
+import re
 from perfrunner.utils.syncgateway.ansible_runner import AnsibleRunner
 from logger import logger
 
@@ -17,11 +18,11 @@ def main():
         elif item == "--uninstall":
             _uninstall = True
 
-    if _build.find("-"):
+    if re.match('2.0.0', _build):
+        base_url = "http://latestbuilds.service.couchbase.com/builds/releases/mobile/couchbase-sync-gateway/2.0.0"
+    else:
         v, b = _build.split("-")
         base_url = "http://latestbuilds.service.couchbase.com/builds/latestbuilds/sync_gateway/{}/{}".format(v, b)
-    elif _build.find("2.0.0"):
-        base_url = "http://latestbuilds.service.couchbase.com/builds/releases/mobile/couchbase-sync-gateway/2.0.0"
     sg_package_name = "couchbase-sync-gateway-enterprise_{}_x86_64.rpm".format(_build)
     accel_package_name = "couchbase-sg-accel-enterprise_{}_x86_64.rpm".format(_build)
 

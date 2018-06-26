@@ -550,60 +550,97 @@ class MetricHelper:
                         break
         return throughput
 
-    def _parse_ycsb_latency(self) -> int:
+    def _ycsb_perc_calc(self, _temp: [], io_type: str, percentile: str, lat_dic: {}, _fc: int):
+        pio_type = '{}th Percentile {}'.format(percentile, io_type)
+        p_lat = round(np.percentile(_temp, percentile) / 1000, 3)
+        if _fc > 1:
+            p_lat = round(((((lat_dic[pio_type] * (_fc - 1)) + p_lat) / _fc) / 1000), 3)
+        lat_dic.update({pio_type: p_lat})
+        return lat_dic
+
+    def _ycsb_avg_calc(self, _temp: [], io_type: str, lat_dic: {}, _fc: int):
+        aio_type = 'Average {}'.format(io_type)
+        a_lat = round((sum(_temp) / len(_temp)) / 1000, 3)
+        if _fc > 1:
+            a_lat = ((lat_dic[aio_type] * (_fc - 1)) + a_lat) / _fc
+        lat_dic.update({aio_type: a_lat})
+        return lat_dic
+
+    def _parse_ycsb_latency(self, percentile: str) -> int:
         lat_dic = {}
-        fc = 1
+        _temp = []
+        _fc = 1
         for filename in glob.glob("YCSB/ycsb_run_*.log"):
-            with open(filename) as fh:
-                for line in fh.readlines():
-                    if line.find('AverageLatency(us)') >= 1:
-                        io_type = line.split('[')[1].split(']')[0]
-                        if io_type in lat_dic:
-                            lat = ((lat_dic[io_type])*(fc-1) + (int(float(line.split()[-1]))))/fc
-                            lat_dic.update({io_type: lat})
-                        else:
-                            lat = int(float(line.split()[-1]))
-                            lat_dic.update({io_type: lat})
-            fc += 1
+            fh2 = open(filename)
+            _l1 = fh2.readlines()
+            _l1_len = len(_l1)
+            fh = open(filename)
+            _c = 0
+            for x in range(_l1_len - 1):
+                line = fh.readline()
+                if line.find('], 1000,') >= 1:
+                    io_type = line.split('[')[1].split(']')[0]
+                    _n = 0
+                    while (line.startswith('[{}]'.format(io_type))):
+                        lat = float(line.split()[-1])
+                        _temp.append(lat)
+                        line = fh.readline()
+                        _n += 1
+                    _temp.sort()
+                    lat_dic = self._ycsb_perc_calc(_temp=_temp,
+                                                   io_type=io_type,
+                                                   lat_dic=lat_dic,
+                                                   _fc=_fc,
+                                                   percentile=percentile)
+                    lat_dic = self._ycsb_avg_calc(_temp=_temp,
+                                                  io_type=io_type,
+                                                  lat_dic=lat_dic,
+                                                  _fc=_fc)
+                    _temp.clear()
+                    _c += _n
+                _c += 1
+                x += _c
+            _fc += 1
         if 'CLEANUP' in lat_dic:
             del lat_dic['CLEANUP']
         return lat_dic
 
-    def _parse_ycsb_latency_cbcollect(self):
+    def _parse_ycsb_latency_cbcollect(self, percentile: str):
         lat_dic = {}
-        fc = 1
-        cb_time = int(self.test.cb_time)
-        cb_start = int(self.test.cb_start * 1000)
-        strsearch = cb_start
+        _temp = []
+        _fc = 1
+        _cbtime = int(self.test.cb_time)
+        _cbstart = int(self.test.cb_start * 1000)
         for filename in glob.glob("YCSB/ycsb_run_*.log"):
             fh2 = open(filename)
             list1 = fh2.readlines()
             list1_length = len(list1)
             fh = open(filename)
-            count = 1
-            for x in range(list1_length):
+            _c = 0
+            for x in range(list1_length-1):
                 line = fh.readline()
-                if line.find('], {},'.format(strsearch)) >= 1:
+                if line.find('], {},'.format(_cbstart)) >= 1:
                     io_type = line.split('[')[1].split(']')[0]
-                    num = 1
-                    total = 0
-                    if fc > 1:
-                        oldavg = lat_dic[io_type]
-
-                    while line.find(io_type):
-                        total += int(float(line.split()[-1]))
-                        avg = int(total / num)
-                        lat_dic.update({io_type: avg})
-                        num += 1
-                        count += 1
-                        if num == cb_time:
-                            if fc > 1:
-                                newavg = int((oldavg * (fc - 1) + lat_dic[io_type]) / fc)
-                                lat_dic.update({io_type: newavg})
-                            break
-                        line = fh.readline()
-                x += count
-            fc += 1
+                    for y in range(_cbtime):
+                        lat = int(float(line.split()[-1]))
+                        _temp.append(lat)
+                        if y < _cbtime-1:
+                            line = fh.readline()
+                    _temp.sort()
+                    lat_dic = self._ycsb_perc_calc(_temp=_temp,
+                                                   io_type=io_type,
+                                                   lat_dic=lat_dic,
+                                                   _fc=_fc,
+                                                   percentile=percentile)
+                    lat_dic = self._ycsb_avg_calc(_temp=_temp,
+                                                  io_type=io_type,
+                                                  lat_dic=lat_dic,
+                                                  _fc=_fc)
+                    _temp.clear()
+                    _c += _cbtime
+                _c += 1
+                x += _c
+            _fc += 1
         if 'CLEANUP' in lat_dic:
             del lat_dic['CLEANUP']
         return lat_dic
@@ -642,24 +679,21 @@ class MetricHelper:
         return throughput, self._snapshots, metric_info
 
     def ycsb_latency(self,
-                     io_type: str
+                     io_type: str,
+                     latency: int,
                      ) -> Metric:
-        if self.test_config.access_settings.cbcollect:
-            latency_dic = self._parse_ycsb_latency_cbcollect()
-        else:
-            latency_dic = self._parse_ycsb_latency()
-        title = 'Average {} {}'.format(io_type, self._title)
-        metric_id = '{}_{}'.format(self.test_config.name, io_type)
+        title = '{} {}'.format(io_type, self._title)
+        metric_id = '{}_{}'.format(self.test_config.name, io_type.replace(' ', '_').casefold())
         metric_info = self._metric_info(title=title, metric_id=metric_id)
-        latency = latency_dic[io_type] / 1000
         return latency, self._snapshots, metric_info
 
     def ycsb_get_latency(self,
+                         percentile: str,
                          ) -> Metric:
         if self.test_config.access_settings.cbcollect:
-            latency_dic = self._parse_ycsb_latency_cbcollect()
+            latency_dic = self._parse_ycsb_latency_cbcollect(percentile)
         else:
-            latency_dic = self._parse_ycsb_latency()
+            latency_dic = self._parse_ycsb_latency(percentile)
         return latency_dic
 
     def indexing_time(self, indexing_time: float) -> Metric:

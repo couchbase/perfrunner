@@ -426,6 +426,8 @@ class PhaseSettings:
     PERSIST_TO = 0
     REPLICATE_TO = 0
 
+    TIMESERIES = 0
+
     CBCOLLECT = 0
 
     def __init__(self, options: dict):
@@ -452,7 +454,6 @@ class PhaseSettings:
                                                    self.FTS_UPDATES))
 
         self.ops = float(options.get('ops', self.OPS))
-        self.target = float(options.get('target', self.TARGET))
         self.throughput = float(options.get('throughput', self.THROUGHPUT))
 
         self.working_set = float(options.get('working_set', self.WORKING_SET))
@@ -521,6 +522,7 @@ class PhaseSettings:
                                                           self.INSERTS_PER_WORKERINSTANCE))
         self.epoll = options.get("epoll", self.EPOLL)
         self.boost = options.get('boost', self.BOOST)
+        self.target = float(options.get('target', self.TARGET))
 
         # Subdoc & XATTR
         self.subdoc_field = options.get('subdoc_field')
@@ -539,10 +541,12 @@ class PhaseSettings:
                                           self.PERSIST_TO))
         self.replicate_to = int(options.get('replicate_to',
                                             self.REPLICATE_TO))
-
         # CbCollect Setting
         self.cbcollect = int(options.get('cbcollect',
                                          self.CBCOLLECT))
+        # Latency Setting
+        self.timeseries = int(options.get('timeseries',
+                                          self.TIMESERIES))
 
     def __str__(self) -> str:
         return str(self.__dict__)

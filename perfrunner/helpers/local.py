@@ -347,6 +347,7 @@ def run_ycsb(host: str,
              ops: int = None,
              execution_time: int = None,
              cbcollect: int = 0,
+             timeseries: int = 0,
              instance: int = 0):
     cmd = 'bin/ycsb {action} couchbase2 ' \
           '-P {workload} ' \
@@ -370,7 +371,7 @@ def run_ycsb(host: str,
         cmd += ' -p operationcount={ops} '
     if execution_time is not None:
         cmd += ' -p maxexecutiontime={execution_time} '
-    if cbcollect:
+    if timeseries or cbcollect:
         cmd += '-p measurementtype=timeseries '
 
     cmd = cmd.format(host=host,

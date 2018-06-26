@@ -94,10 +94,10 @@ class YCSBLatencyTest(YCSBTest):
     def _report_kpi(self):
         self.collect_export_files()
 
-        latency_dic = self.metrics.ycsb_get_latency()
+        latency_dic = self.metrics.ycsb_get_latency(percentile=99)
         for key, value in latency_dic.items():
             self.reporter.post(
-                *self.metrics.ycsb_latency(key)
+                *self.metrics.ycsb_latency(key, latency_dic[key])
             )
 
 

@@ -562,7 +562,7 @@ class MetricHelper:
         aio_type = 'Average {}'.format(io_type)
         a_lat = round((sum(_temp) / len(_temp)) / 1000, 3)
         if _fc > 1:
-            a_lat = ((lat_dic[aio_type] * (_fc - 1)) + a_lat) / _fc
+            a_lat = round((((lat_dic[aio_type] * (_fc - 1)) + a_lat) / _fc), 3)
         lat_dic.update({aio_type: a_lat})
         return lat_dic
 

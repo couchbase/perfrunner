@@ -554,7 +554,7 @@ class MetricHelper:
         pio_type = '{}th Percentile {}'.format(percentile, io_type)
         p_lat = round(np.percentile(_temp, percentile) / 1000, 3)
         if _fc > 1:
-            p_lat = round(((((lat_dic[pio_type] * (_fc - 1)) + p_lat) / _fc) / 1000), 3)
+            p_lat = round((((lat_dic[pio_type] * (_fc - 1)) + p_lat) / _fc), 3)
         lat_dic.update({pio_type: p_lat})
         return lat_dic
 
@@ -622,7 +622,7 @@ class MetricHelper:
                 if line.find('], {},'.format(_cbstart)) >= 1:
                     io_type = line.split('[')[1].split(']')[0]
                     for y in range(_cbtime):
-                        lat = int(float(line.split()[-1]))
+                        lat = float(line.split()[-1])
                         _temp.append(lat)
                         if y < _cbtime-1:
                             line = fh.readline()

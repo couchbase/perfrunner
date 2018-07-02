@@ -133,14 +133,14 @@ class RemoteLinux(Remote):
 
     @all_servers
     def collect_info(self):
-        logger.info('Running cbcollect_info')
+        logger.info('Running cbcollect_info with redaction')
 
         run('rm -f /tmp/*.zip')
 
         fname = '/tmp/{}.zip'.format(uhex())
         try:
-            r = run('{}/bin/cbcollect_info {}'.format(self.CB_DIR, fname),
-                    warn_only=True, timeout=1200)
+            r = run('{}/bin/cbcollect_info --log-redaction-level=partial {}'
+                    .format(self.CB_DIR, fname), warn_only=True, timeout=1200)
         except CommandTimeout:
             logger.error('cbcollect_info timed out')
             return

@@ -1,6 +1,7 @@
 import os
 import time
 
+from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.profiler import with_profiles
@@ -45,6 +46,7 @@ class YCSBTest(PerfTest):
         self.remote.collect_info()
         end_time = time.time()
         self.cb_time = round(end_time - start_time)
+        logger.info('cbcollect_info execution time', self.cb_time)
         self.worker_manager.wait_for_workers()
 
     def generate_keystore(self):

@@ -84,6 +84,7 @@ class ShowFastReporter(Reporter):
             self._post_cluster()
         else:
             self._log_benchmark(benchmark)
+            self._log_benchmark(metric)
 
 
 class DailyReporter(Reporter):

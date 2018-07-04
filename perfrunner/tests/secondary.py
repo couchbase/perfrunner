@@ -37,6 +37,7 @@ class SecondaryIndexTest(PerfTest):
         self.incremental_only = self.test_config.gsi_settings.incremental_only
         self.incremental_load_iterations = self.test_config.gsi_settings.incremental_load_iterations
         self.scan_time = self.test_config.gsi_settings.scan_time
+        self.report_initial_build_time = self.test_config.gsi_settings.report_initial_build_time
 
         self.storage = self.test_config.gsi_settings.storage
         self.indexes = self.test_config.gsi_settings.indexes
@@ -57,7 +58,6 @@ class SecondaryIndexTest(PerfTest):
             logger.info('Existing 2i latency stats file removed')
 
     @with_stats
-    @timeit
     def build_secondaryindex(self):
         return self._build_secondaryindex()
 
@@ -89,6 +89,9 @@ class SecondaryIndexTest(PerfTest):
     @with_stats
     def apply_scanworkload(self, path_to_tool="/opt/couchbase/bin/cbindexperf"):
         rest_username, rest_password = self.cluster_spec.rest_credentials
+        with open(self.configfile, 'r') as fp:
+            config_file_content = fp.read()
+        logger.info("cbindexperf config file: \n" + config_file_content)
         status = run_cbindexperf(path_to_tool, self.index_nodes[0],
                                  rest_username, rest_password, self.configfile)
         if status != 0:
@@ -147,7 +150,9 @@ class SecondaryIndexTest(PerfTest):
     def read_scanresults(self):
         with open('{}'.format(self.configfile)) as config_file:
             configdata = json.load(config_file)
-        numscans = configdata['ScanSpecs'][0]['Repeat']
+        numscans = 0
+        for scanspec in configdata['ScanSpecs']:
+            numscans += scanspec['Repeat']
 
         with open('result.json') as result_file:
             resdata = json.load(result_file)
@@ -359,6 +364,58 @@ class InitialSecondaryIndexTest(InitialandIncrementalSecondaryIndexTest):
         # Adding sleep to get log cleaner catch up
         time.sleep(600)
         self.run_recovery_scenario()
+
+
+class SecondaryIndexingScanTest(SecondaryIndexTest):
+
+    """Apply moving scan workload and measure scan latency and average scan throughput."""
+
+    COLLECTORS = {'secondary_stats': True, 'secondary_latency': True,
+                  'secondary_debugstats': True, 'secondary_debugstats_bucket': True,
+                  'secondary_debugstats_index': True}
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.scan_thr = []
+
+    def _report_kpi(self,
+                    scan_thr: float = 0,
+                    time_elapsed: float = 0):
+
+        if time_elapsed != 0:
+            if self.report_initial_build_time:
+                title = str(self.test_config.showfast.title).split(",", 1)[1].strip()
+                self.reporter.post(
+                    *self.metrics.get_indexing_meta(value=time_elapsed,
+                                                    index_type="Initial",
+                                                    unit="min",
+                                                    name=title)
+                )
+        else:
+            self.reporter.post(
+                *self.metrics.scan_throughput(scan_thr)
+            )
+            self.reporter.post(
+                *self.metrics.secondary_scan_latency(percentile=90)
+            )
+            self.reporter.post(
+                *self.metrics.secondary_scan_latency(percentile=95)
+            )
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        initial_index_time = self.build_secondaryindex()
+        self.report_kpi(0, initial_index_time)
+        self.access_bg()
+        self.apply_scanworkload(path_to_tool="./cbindexperf")
+        scan_thr, row_thr = self.read_scanresults()
+        logger.info('Scan throughput: {}'.format(scan_thr))
+        logger.info('Rows throughput: {}'.format(row_thr))
+        self.print_index_disk_usage()
+        self.report_kpi(scan_thr, 0)
+        self.validate_num_connections()
 
 
 class SecondaryIndexingThroughputTest(SecondaryIndexTest):
@@ -649,6 +706,61 @@ class InitialIncrementalScanLatencyTest(InitialandIncrementalDGMSecondaryIndexTe
         self.apply_scanworkload(path_to_tool="./cbindexperf")
         self.print_index_disk_usage()
         self.report_kpi()
+        self.validate_num_connections()
+
+        self.run_recovery_test = self.run_recovery_test_local
+        self.run_recovery_scenario()
+
+
+class InitialIncrementalScanTest(InitialandIncrementalDGMSecondaryIndexTest):
+
+    """Apply scan workload and measure the scan latency.
+
+    The test perform initial index build, then incremental index build and then
+    applies scan workload against the 2i server and measures scan latency for
+    moving workload.
+    """
+
+    COLLECTORS = {'secondary_stats': True, 'secondary_latency': True,
+                  'secondary_debugstats': True, 'secondary_debugstats_bucket': True,
+                  'secondary_debugstats_index': True}
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.run_recovery_test_local = self.run_recovery_test
+        self.run_recovery_test = 0
+
+    def _report_kpi(self, *args):
+        if len(args) == 1:
+            self.report_scan_kpi(*args)
+        else:
+            super()._report_kpi(*args)
+
+    def report_throughput_kpi(self, scan_thr):
+        self.reporter.post(
+            *self.metrics.scan_throughput(scan_thr)
+        )
+
+    def report_scan_kpi(self, scan_thr):
+        self.reporter.post(
+            *self.metrics.secondary_scan_latency(percentile=90)
+        )
+        self.reporter.post(
+            *self.metrics.secondary_scan_latency(percentile=95)
+        )
+        self.reporter.post(
+            *self.metrics.scan_throughput(scan_thr)
+        )
+
+    def run(self):
+        self.remove_statsfile()
+        super().run()
+        self.access_bg()
+        self.apply_scanworkload(path_to_tool="./cbindexperf")
+        scan_thr, row_thr = self.read_scanresults()
+        logger.info('Scan throughput: {}'.format(scan_thr))
+        logger.info('Rows throughput: {}'.format(row_thr))
+        self.report_kpi(scan_thr)
         self.validate_num_connections()
 
         self.run_recovery_test = self.run_recovery_test_local

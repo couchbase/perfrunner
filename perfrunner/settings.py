@@ -720,6 +720,7 @@ class GSISettings:
     INCREMENTAL_LOAD_ITERATIONS = 0
     SCAN_TIME = 1200
     INCREMENTAL_ONLY = 0
+    REPORT_INITIAL_BUILD_TIME = 0
 
     def __init__(self, options: dict):
         self.indexes = {}
@@ -743,6 +744,8 @@ class GSISettings:
         self.incremental_load_iterations = int(options.get('incremental_load_iterations',
                                                            self.INCREMENTAL_LOAD_ITERATIONS))
         self.scan_time = int(options.get('scan_time', self.SCAN_TIME))
+        self.report_initial_build_time = int(options.get('report_initial_build_time',
+                                                         self.REPORT_INITIAL_BUILD_TIME))
 
         self.settings = {}
         for option in options:

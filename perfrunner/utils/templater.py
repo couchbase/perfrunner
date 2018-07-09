@@ -21,6 +21,8 @@ MEMORY_QUOTAS = {
     'r4.2xlarge':  54272,   # 61GB RAM
     'r4.4xlarge':  102400,  # 122GB RAM
     'r4.8xlarge':  209920,  # 244GB RAM
+
+    'i3.8xlarge':  209920,   # 244GB RAM
 }
 
 OUTPUT_FILE = 'custom'

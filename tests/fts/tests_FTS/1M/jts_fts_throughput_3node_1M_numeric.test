@@ -37,3 +37,6 @@ couchbase_index_configfile = tests/fts/index/fts_numeric.json
 [restore]
 backup_storage =  /fts/backup
 backup_repo =  fts_numeric
+
+[profiling]
+services = fts

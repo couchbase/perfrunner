@@ -38,3 +38,6 @@ couchbase_index_configfile = tests/fts/index/fts_tvectors_off.json
 [restore]
 backup_storage =  /fts/backup
 backup_repo =  fts_wiki
+
+[profiling]
+services = fts

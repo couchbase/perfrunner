@@ -131,7 +131,8 @@ def get_args():
                                  'r4.2xlarge',
                                  'r4.4xlarge',
                                  'r4.8xlarge',
-                                 'i3.8xlarge'])
+                                 'i3.8xlarge',
+                                 'i3.4xlarge'])
     parser.add_argument('action',
                         choices=['launch', 'terminate'])
 

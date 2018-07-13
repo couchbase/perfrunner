@@ -1,8 +1,8 @@
 [test_case]
-test = perfrunner.tests.ycsb.YCSBN1QLThroughputTest
+test = perfrunner.tests.ycsb.YCSBN1QLLatencyTest
 
 [showfast]
-title = Avg Throughput (queries/sec), Workload E, MOI, {{server_instances}} nodes, AWS, {{instance}}
+title = Latency (ms), Workload E, MOI, {{server_instances}} nodes, AWS, {{instance}}
 component = n1ql
 category = ycsb
 sub_category = MOI
@@ -10,8 +10,11 @@ sub_category = MOI
 [cluster]
 mem_quota = {{ mem_quota * 3 // 4}}
 index_mem_quota = {{ mem_quota // 4 }}
-initial_nodes = 1
+initial_nodes = {{server_instances}}
 num_buckets = 1
+
+[compaction]
+db_percentage = 100
 
 [bucket]
 replica_number = 0
@@ -32,3 +35,4 @@ workload_path = workloads/workloade
 ops = 1000000000
 workers = {{ workers }}
 workload_instances = {{ workload_instances }}
+timeseries = 1

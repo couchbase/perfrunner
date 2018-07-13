@@ -1,8 +1,8 @@
 [test_case]
-test = perfrunner.tests.ycsb.YCSBThroughputTest
+test = perfrunner.tests.ycsb.YCSBLatencyTest
 
 [showfast]
-title = Avg Throughput (queries/sec), Workload A, MOI, {{server_instances}} nodes, AWS, {{instance}}
+title = Latency (ms), Workload A, MOI, {{server_instances}} nodes, AWS, {{instance}}
 component = kv
 category = ycsb
 

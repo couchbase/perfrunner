@@ -423,6 +423,12 @@ class RestHelper:
             .replace('-enterprise', '') \
             .replace('-community', '')
 
+    def supports_rbac(self, host: str) -> bool:
+        """Return true if the cluster supports RBAC."""
+        rbac_url = 'http://{}:8091/settings/rbac/roles'.format(host)
+        r = requests.get(auth=self.auth, url=rbac_url)
+        return r.status_code == requests.codes.ok
+
     def is_community(self, host: str) -> bool:
         logger.info('Getting Couchbase Server edition')
 

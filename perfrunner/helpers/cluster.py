@@ -333,7 +333,8 @@ class ClusterManager:
                 )
 
     def add_rbac_users(self):
-        if not self.is_compatible(min_release='5.0'):
+        if not self.rest.supports_rbac(self.master_node):
+            logger.info('RBAC not supported - skipping adding RBAC users')
             return
 
         if self.rest.is_community(self.master_node):

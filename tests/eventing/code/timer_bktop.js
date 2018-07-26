@@ -1,6 +1,9 @@
 function OnUpdate(doc, meta) {
-	docTimer(timerCallback, fixed_expiry, meta.id);
+    var fireAt = new Date(fixed_expiry);
+    createTimer(timerCallback, fireAt, meta.id);
 }
-function timerCallback(docid) {
-	bucket1[docid]=docid;
+
+function timerCallback() {
+    var temp = new Date().getTime();
+    bucket1[temp]=temp;
 }

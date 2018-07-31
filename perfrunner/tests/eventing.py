@@ -64,9 +64,8 @@ class EventingTest(PerfTest):
             with open(filename, 'r') as myfile:
                 code = myfile.read()
                 if self.timer_timeout:
-                    expiry = calendar.timegm(time.gmtime()) + self.timer_timeout
+                    expiry = (calendar.timegm(time.gmtime()) + self.timer_timeout) * 1000
                     code = code.replace("fixed_expiry", str(expiry))
-                    code = code.replace("fuzz_factor", str(self.timer_fuzz))
                 func["appname"] = name
                 func["appcode"] = code
             self.rest.create_function(node=self.eventing_nodes[0],

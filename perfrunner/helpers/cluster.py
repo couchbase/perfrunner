@@ -191,8 +191,8 @@ class ClusterManager:
                 name=self.test_config.cluster.EVENTING_METADATA_BUCKET_NAME,
                 ram_quota=self.test_config.cluster.EVENTING_METADATA_MEM_QUOTA,
                 password=self.test_config.bucket.password,
-                replica_number=self.test_config.bucket.REPLICA_NUMBER,
-                replica_index=self.test_config.bucket.REPLICA_INDEX,
+                replica_number=self.test_config.bucket.replica_number,
+                replica_index=self.test_config.bucket.replica_index,
                 eviction_policy=self.test_config.bucket.EVICTION_POLICY,
                 bucket_type=self.test_config.bucket.BUCKET_TYPE,
             )

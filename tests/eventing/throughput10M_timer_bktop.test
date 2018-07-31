@@ -2,7 +2,7 @@
 test = perfrunner.tests.eventing.TimerThroughputTest
 
 [showfast]
-title = Timers executed/sec, 1 bucket x 20M x 1KB, 5 timers-NOOP
+title = Timers executed/sec, 1 bucket x 10M x 1KB, single timer-BucketOp
 component = eventing
 category = thr
 sub_category = Timer
@@ -11,11 +11,11 @@ sub_category = Timer
 server_processes = projector eventing-produc
 
 [cluster]
-mem_quota = 55000
-eventing_mem_quota = 40960
+mem_quota = 50000
+eventing_mem_quota = 20480
 initial_nodes = 5
 num_buckets = 1
-eventing_bucket_mem_quota = 35000
+eventing_bucket_mem_quota = 20000
 eventing_buckets = 1
 online_cores = 12
 
@@ -29,15 +29,15 @@ db_percentage = 100
 view_percentage = 100
 
 [load]
-items = 20000000
+items = 10000000
 size = 1024
 workers = 160
 
 [eventing]
-functions = perf-test1:tests/eventing/code/timer_noop.js,perf-test2:tests/eventing/code/timer_noop.js,perf-test3:tests/eventing/code/timer_noop.js,perf-test4:tests/eventing/code/timer_noop.js,perf-test5:tests/eventing/code/timer_noop.js
+functions = perf-test1:tests/eventing/code/timer_bktop.js
 worker_count = 16
-cpp_worker_thread_count = 2
-timer_timeout = 8000
+cpp_worker_thread_count = 10
+timer_timeout = 1500
 
 [access]
-time = 150
+time = 300

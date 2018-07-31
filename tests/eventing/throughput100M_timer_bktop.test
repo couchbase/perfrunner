@@ -11,11 +11,11 @@ sub_category = Timer
 server_processes = projector eventing-produc
 
 [cluster]
-mem_quota = 50000
+mem_quota = 55000
 eventing_mem_quota = 20480
 initial_nodes = 5
 num_buckets = 1
-eventing_bucket_mem_quota = 5000
+eventing_bucket_mem_quota = 35000
 eventing_buckets = 1
 online_cores = 12
 
@@ -37,7 +37,7 @@ workers = 160
 functions = perf-test1:tests/eventing/code/timer_bktop.js
 worker_count = 16
 cpp_worker_thread_count = 10
-timer_timeout = 6000
+timer_timeout = 7200
 
 [access]
-time = 400
+time = 1000

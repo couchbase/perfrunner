@@ -1,6 +1,10 @@
 [test_case]
 test = perfrunner.tests.syncgateway.SGRead
+<<<<<<< HEAD
 title = 1 node, 1M docs, 1K users, 1 channel, revCache, SSl
+=======
+title = 1 node, 1M docs, 1K users, 1 channel, revCache
+>>>>>>> 52b2fb66dd3778214e8f59dbcf77897847a11ade
 component = syncgateway
 category = read
 sub_category = xattr

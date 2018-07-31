@@ -17,6 +17,7 @@
     "deployment_status": true,
     "enable_recursive_mutation": true,
     "cpp_worker_thread_count": 1,
+    "breakpad_on": false,
     "description": "Perf test"
   },
   "appname": "perf-test",

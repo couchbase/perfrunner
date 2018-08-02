@@ -39,7 +39,8 @@ def parse_manifest() -> Dict[str, Project]:
 
 
 def fetch(projects: Dict[str, Project]):
-    for name, project in projects.items():
+    od = collections.OrderedDict(sorted(projects.items()))
+    for name, project in od.items():
         if name in REQUIRED_PROJECTS:
             package_str = "^"
         else:

@@ -180,7 +180,7 @@ class ClusterSettings:
     EVENTING_MEM_QUOTA = 0
 
     EVENTING_BUCKET_MEM_QUOTA = 0
-    EVENTING_METADATA_MEM_QUOTA = 25600
+    EVENTING_METADATA_BUCKET_MEM_QUOTA = 0
     EVENTING_METADATA_BUCKET_NAME = 'eventing'
     EVENTING_BUCKETS = 0
 
@@ -209,6 +209,9 @@ class ClusterSettings:
                                            self.NUM_BUCKETS))
         self.eventing_bucket_mem_quota = int(options.get('eventing_bucket_mem_quota',
                                                          self.EVENTING_BUCKET_MEM_QUOTA))
+        self.eventing_metadata_bucket_mem_quota = \
+            int(options.get('eventing_metadata_bucket_mem_quota',
+                            self.EVENTING_METADATA_BUCKET_MEM_QUOTA))
         self.eventing_buckets = int(options.get('eventing_buckets',
                                                 self.EVENTING_BUCKETS))
         self.num_vbuckets = options.get('num_vbuckets')

@@ -2,19 +2,20 @@
 test = perfrunner.tests.eventing.FunctionsThroughputTest
 
 [showfast]
-title = Functions executed/sec, 1 bucket x 100K x 1MB, single function-BucketOp
+title = Functions executed/sec, 1 bucket x 100K x 1MB, 4KV + 1Eventing node, single function-BucketOp
 component = eventing
 category = thr
 sub_category = Function
 
 [stats]
-server_processes = projector eventing-produc
+server_processes = eventing-produc
 
 [cluster]
 mem_quota = 50000
 initial_nodes = 5
 num_buckets = 1
-eventing_bucket_mem_quota = 35000
+eventing_bucket_mem_quota = 1000
+eventing_metadata_bucket_mem_quota = 1000
 eventing_buckets = 1
 online_cores = 12
 

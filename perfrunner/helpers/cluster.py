@@ -140,8 +140,9 @@ class ClusterManager:
 
     def create_buckets(self):
         mem_quota = self.test_config.cluster.mem_quota
-        if self.test_config.cluster.eventing_bucket_mem_quota:
-            mem_quota -= self.test_config.cluster.eventing_bucket_mem_quota
+        if self.test_config.cluster.eventing_metadata_bucket_mem_quota:
+            mem_quota -= (self.test_config.cluster.eventing_metadata_bucket_mem_quota +
+                          self.test_config.cluster.eventing_bucket_mem_quota)
         per_bucket_quota = mem_quota // self.test_config.cluster.num_buckets
 
         for master in self.cluster_spec.masters:
@@ -163,9 +164,9 @@ class ClusterManager:
         if not self.test_config.cluster.eventing_bucket_mem_quota:
             return
 
-        mem_quota = self.test_config.cluster.eventing_bucket_mem_quota - \
-            self.test_config.cluster.EVENTING_METADATA_MEM_QUOTA
-        per_bucket_quota = mem_quota // self.test_config.cluster.eventing_buckets
+        per_bucket_quota = \
+            self.test_config.cluster.eventing_bucket_mem_quota \
+            // self.test_config.cluster.eventing_buckets
 
         for master in self.cluster_spec.masters:
             for bucket_name in self.test_config.eventing_buckets:
@@ -182,14 +183,14 @@ class ClusterManager:
                 )
 
     def create_eventing_metadata_bucket(self):
-        if not self.test_config.cluster.eventing_bucket_mem_quota:
+        if not self.test_config.cluster.eventing_metadata_bucket_mem_quota:
             return
 
         for master in self.cluster_spec.masters:
             self.rest.create_bucket(
                 host=master,
                 name=self.test_config.cluster.EVENTING_METADATA_BUCKET_NAME,
-                ram_quota=self.test_config.cluster.EVENTING_METADATA_MEM_QUOTA,
+                ram_quota=self.test_config.cluster.eventing_metadata_bucket_mem_quota,
                 password=self.test_config.bucket.password,
                 replica_number=self.test_config.bucket.replica_number,
                 replica_index=self.test_config.bucket.replica_index,

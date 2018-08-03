@@ -66,6 +66,7 @@ class EventingTest(PerfTest):
                 if self.timer_timeout:
                     expiry = (calendar.timegm(time.gmtime()) + self.timer_timeout) * 1000
                     code = code.replace("fixed_expiry", str(expiry))
+                    code = code.replace("fuzz_factor", str(self.timer_fuzz))
                 func["appname"] = name
                 func["appcode"] = code
             self.rest.create_function(node=self.eventing_nodes[0],
@@ -93,7 +94,7 @@ class EventingTest(PerfTest):
                 on_update_success += stat["execution_stats"]["on_update_success"]
         return on_update_success
 
-    def get_doc_timer_responses(self):
+    def get_timer_responses(self):
         doc_timer_responses = 0
         for node in self.eventing_nodes:
             stats = self.rest.get_eventing_stats(node=node)
@@ -121,6 +122,7 @@ class EventingTest(PerfTest):
         self.sleep()
 
     def validate_failures(self):
+        ignore_failures = ["uv_try_write_failure_counter", ]
         for node in self.eventing_nodes:
             all_stats = self.rest.get_eventing_stats(node=node)
 
@@ -133,7 +135,7 @@ class EventingTest(PerfTest):
 
                 # Validate Execution stats
                 for stat, value in execution_stats.items():
-                    if "failure" in stat and value != 0:
+                    if "failure" in stat and value != 0 and stat not in ignore_failures:
                         raise Exception(
                             '{function}: {node}: {stat} is not zero'.format(
                                 function=function_stats["function_name"], node=node, stat=stat))
@@ -212,9 +214,9 @@ class FunctionsThroughputTest(EventingTest):
         )
 
 
-class CreateDocTimerThroughputTest(EventingTest):
+class CreateTimerThroughputTest(EventingTest):
     def _report_kpi(self, time_elapsed):
-        events_successfully_processed = self.get_doc_timer_responses()
+        events_successfully_processed = self.get_timer_responses()
         self.reporter.post(
             *self.metrics.function_throughput(time=time_elapsed,
                                               event_name=None,

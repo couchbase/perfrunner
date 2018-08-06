@@ -1,6 +1,13 @@
 {
     "Analytics": [],
-    "Eventing": [],
+    "Eventing": [
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_timer_bktop.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput50M_timer_bktop_512bytes_context.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_timer_noop.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput50M_timer_noop_512bytes_context.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_create_timer.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput50M_create_timer_512bytes_context.test"}
+    ],
     "FTS": [],
     "GSI": [],
     "KV": [],

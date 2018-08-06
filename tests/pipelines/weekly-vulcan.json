@@ -32,7 +32,7 @@
         {"job": "themis", "cluster": "themis.spec",                     "test_config": "throughput50M_fun_bktop_rebalance.test"},
         {"job": "themis", "cluster": "themis.spec",                     "test_config": "throughput100M_1MB_fun_bktop.test"},
         {"job": "themis", "cluster": "themis.spec",                     "test_config": "throughput100M_fun_2x128_log.test"},
-        {"job": "themis", "cluster": "themis.spec",                     "test_config": "throughput100M_fun_1x512_log.test"}
+        {"job": "themis", "cluster": "themis.spec",                     "test_config": "latency100M_fun_2x128_log.test"}
     ],
     "FTS": [
         {"job": "atlas-sdk", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/jts_fts_index_3node_1M_initial.test"},

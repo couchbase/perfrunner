@@ -24,6 +24,7 @@ class IOStat(RemoteStats):
                 return name.split('/dev/mapper/')[1], True
             else:
                 return name, False
+        return None, None
 
     def get_iostat(self, device: str) -> Dict[str, str]:
         stdout = self.run(

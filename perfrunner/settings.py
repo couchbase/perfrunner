@@ -827,10 +827,12 @@ class EventingSettings:
 class AnalyticsSettings:
 
     NUM_IO_DEVICES = 1
+    DEFAULT_LOG_LEVEL = "WARN"
 
     def __init__(self, options: dict):
         self.num_io_devices = int(options.get('num_io_devices',
                                               self.NUM_IO_DEVICES))
+        self.log_level = options.get("log_level", self.DEFAULT_LOG_LEVEL)
 
 
 class AuditSettings:

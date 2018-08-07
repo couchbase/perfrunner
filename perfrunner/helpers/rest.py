@@ -722,6 +722,33 @@ class RestHelper:
         api = 'http://{}:9110/analytics/node/stats'.format(analytics_node)
         return self.get(url=api).json()
 
+    def set_analytics_logging_level(self, analytics_node: str, log_level: str):
+        logger.info('Setting log level \"{}\" for analytics'.format(log_level))
+        api = 'http://{}:{}/analytics/config/service'.format(analytics_node, ANALYTICS_PORT)
+        data = {
+            'logLevel': log_level
+        }
+        r = self.put(url=api, data=data)
+        if r.status_code not in (200, 202,):
+            logger.warning('Unexpected request status code {}'.
+                           format(r.status_code))
+
+    def restart_analytics_cluster(self, analytics_node: str):
+        logger.info('Restarting analytics cluster')
+        api = 'http://{}:{}/analytics/cluster/restart'.format(analytics_node, ANALYTICS_PORT)
+        r = self.post(url=api)
+        if r.status_code not in (200, 202,):
+            logger.warning('Unexpected request status code {}'.
+                           format(r.status_code))
+
+    def validate_analytics_logging_level(self, analytics_node: str, log_level: str):
+        logger.info('Checking that analytics log level is set to {}'.format(log_level))
+        api = 'http://{}:{}/analytics/config/service'.format(analytics_node, ANALYTICS_PORT)
+        response = self.get(url=api).json()
+        if "logLevel" in response:
+            return response["logLevel"] == log_level
+        return False
+
     def create_function(self, node: str, func: dict, name: str):
         logger.info('Creating function on node {}: {}'.format(node,
                                                               pretty_dict(func)))

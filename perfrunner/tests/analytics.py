@@ -17,12 +17,6 @@ class BigFunTest(PerfTest):
 
         self.num_items = 0
 
-    def create_bucket(self, bucket: str):
-        logger.info('Creating a new bucket: {}'.format(bucket))
-        statement = 'CREATE BUCKET `{bucket}` WITH {{"name": "{bucket}"}};'\
-            .format(bucket=bucket)
-        self.rest.exec_analytics_statement(self.analytics_nodes[0], statement)
-
     def create_datasets(self, bucket: str):
         logger.info('Creating datasets')
         for dataset, key in (
@@ -30,7 +24,7 @@ class BigFunTest(PerfTest):
             ('GleambookMessages', 'message_id'),
             ('ChirpMessages', 'chirpid'),
         ):
-            statement = "CREATE SHADOW DATASET `{}` ON `{}` WHERE `{}` IS NOT UNKNOWN;"\
+            statement = "CREATE DATASET `{}` ON `{}` WHERE `{}` IS NOT UNKNOWN;"\
                 .format(dataset, bucket, key)
             self.rest.exec_analytics_statement(self.analytics_nodes[0],
                                                statement)
@@ -51,9 +45,9 @@ class BigFunTest(PerfTest):
         self.rest.exec_analytics_statement(self.analytics_nodes[0],
                                            statement)
 
-    def connect_bucket(self, bucket: str):
-        logger.info('Connecting the bucket: {}'.format(bucket))
-        statement = 'CONNECT BUCKET `{}`;'.format(bucket)
+    def connect_buckets(self):
+        logger.info('Connecting all buckets')
+        statement = "CONNECT link Local"
         self.rest.exec_analytics_statement(self.analytics_nodes[0],
                                            statement)
 
@@ -63,23 +57,29 @@ class BigFunTest(PerfTest):
 
     def sync(self):
         for target in self.target_iterator:
-            self.create_bucket(target.bucket)
             self.create_datasets(target.bucket)
             self.create_index()
-            self.connect_bucket(target.bucket)
-
+        self.connect_buckets()
+        for target in self.target_iterator:
             self.num_items += self.monitor.monitor_data_synced(target.node,
                                                                target.bucket)
 
     def re_sync(self):
         for target in self.target_iterator:
             self.connect_bucket(target.bucket)
-
             self.monitor.monitor_data_synced(target.node, target.bucket)
+
+    def set_analytics_logging_level(self):
+        log_level = self.test_config.analytics_settings.log_level
+        self.rest.set_analytics_logging_level(self.analytics_nodes[0], log_level)
+        self.rest.restart_analytics_cluster(self.analytics_nodes[0])
+        if not self.rest.validate_analytics_logging_level(self.analytics_nodes[0], log_level):
+            logger.error('Failed to set logging level {}'.format(log_level))
 
     def run(self):
         self.restore_local()
         self.wait_for_persistence()
+        self.set_analytics_logging_level()
 
 
 class BigFunSyncTest(BigFunTest):

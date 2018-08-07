@@ -33,8 +33,8 @@ workers = 160
 
 [eventing]
 functions = perf-test1:tests/eventing/code/1x512_log.js
-worker_count = 16
-cpp_worker_thread_count = 10
+worker_count = 24
+cpp_worker_thread_count = 2
 
 [access]
 updates = 100

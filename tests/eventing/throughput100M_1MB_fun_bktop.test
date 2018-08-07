@@ -33,7 +33,7 @@ workers = 100
 
 [eventing]
 functions = perf-test1:tests/eventing/code/bktop.js
-worker_count = 1
+worker_count = 24
 cpp_worker_thread_count = 2
 
 [access]

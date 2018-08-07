@@ -150,12 +150,15 @@ class EventingTest(PerfTest):
     def print_max_rss_values(self):
         for node in self.eventing_nodes:
             for name, filename in self.functions.items():
-                max_consumer_rss, max_producer_rss = \
-                    self.metrics.get_max_rss_values(function_name=name, server=node)
-                logger.info("Max Consumer rss is {}MB on {} for function {}".
-                            format(max_consumer_rss, node, name))
-                logger.info("Max Producer rss is {}MB on {} for function {}".
-                            format(max_producer_rss, node, name))
+                try:
+                    max_consumer_rss, max_producer_rss = \
+                        self.metrics.get_max_rss_values(function_name=name, server=node)
+                    logger.info("Max Consumer rss is {}MB on {} for function {}".
+                                format(max_consumer_rss, node, name))
+                    logger.info("Max Producer rss is {}MB on {} for function {}".
+                                format(max_producer_rss, node, name))
+                except ValueError:
+                    logger.info("Failed to get max rss on {}".format(node))
 
     def debug(self):
         self.print_max_rss_values()

@@ -37,7 +37,7 @@ functions = perf-test1:tests/eventing/code/timer_bktop_512bytes_context.js
 worker_count = 24
 cpp_worker_thread_count = 2
 timer_timeout = 3000
-timer_fuzz = 5000
+timer_fuzz = 2500
 
 [access]
 time = 600

@@ -756,7 +756,7 @@ class MetricHelper:
         return throughput, self._snapshots, metric_info
 
     def eventing_rebalance_time(self, time: int) -> Metric:
-        title_split = self._title.split(sep=",", maxsplit=2)
+        title_split = self._title.split(sep=",", maxsplit=1)
         title = "Rebalance Time(sec)," + title_split[1]
         metric_id = '{}_rebalance_time'.format(self.test_config.name)
         metric_info = self._metric_info(metric_id=metric_id, title=title)

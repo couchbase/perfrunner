@@ -1,6 +1,7 @@
 {
     "Eventing": [
-        {"cluster": "triton_eventing.spec", "test_config": "eventing/eventing_throughput100M_fun_bktop.test"}
+        {"cluster": "triton_eventing.spec", "test_config": "eventing/eventing_throughput100M_fun_bktop.test"},
+        {"cluster": "triton_eventing.spec", "test_config": "eventing/throughput50M_timer_bktop_512bytes_context.test"}
     ],
     "FTS": [
         {"cluster": "triton_fts.spec", "test_config": "fts/fts_thr_wiki_med.test"},

@@ -2,9 +2,9 @@
 test = perfrunner.tests.eventing.FunctionsScalingThroughputTest
 
 [showfast]
-title = 1 bucket x 1B x 1KB, single function-BucketOp, 6KV + 4Eventing nodes
+title = 1 bucket x 1B x 1KB, 6KV + 1Eventing node, single function-BucketOp
 component = eventing
-category = thr
+category = scaling
 sub_category = Function
 
 [stats]
@@ -12,9 +12,10 @@ server_processes = projector eventing-produc
 
 [cluster]
 mem_quota = 240000
-initial_nodes = 10
+initial_nodes = 7
 num_buckets = 1
-eventing_bucket_mem_quota = 35000
+eventing_bucket_mem_quota = 30000
+eventing_metadata_bucket_mem_quota = 1000
 eventing_buckets = 1
 
 [bucket]
@@ -33,8 +34,8 @@ workers = 160
 
 [eventing]
 functions = perf-test1:tests/eventing/code/bktop.js
-worker_count = 32
-cpp_worker_thread_count = 4
+worker_count = 48
+cpp_worker_thread_count = 2
 
 [access]
-time = 420
+time = 1200

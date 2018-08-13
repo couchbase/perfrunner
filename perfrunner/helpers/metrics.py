@@ -740,8 +740,9 @@ class MetricHelper:
         throughput = 0
         if event_name:
             for name, file in self.test.functions.items():
-                throughput += self.test.rest.get_num_events_processed(
-                    event=event_name, node=self.test.eventing_nodes[0], name=name)
+                for node in self.test.eventing_nodes:
+                    throughput += self.test.rest.get_num_events_processed(
+                        event=event_name, node=node, name=name)
         else:
             throughput = events_processed
         throughput /= len(self.test.functions)

@@ -30,7 +30,7 @@ test_query_type = match_phrase
 test_query_limit = 10
 test_query_field = text
 test_mutation_field = text2
-test_worker_type = latency
+test_worker_type = validatedLatency
 couchbase_index_name = perf_fts_index
 couchbase_index_configfile = tests/fts/index/fts_tvectors_on.json
 

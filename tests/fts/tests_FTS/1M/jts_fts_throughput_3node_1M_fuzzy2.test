@@ -30,7 +30,7 @@ test_query_type = fuzzy
 test_query_limit = 10
 test_query_field = text
 test_mutation_field = text2
-test_worker_type = throughput
+test_worker_type = validatedThroughput
 couchbase_index_name = perf_fts_index
 couchbase_index_configfile = tests/fts/index/fts_tvectors_off.json
 

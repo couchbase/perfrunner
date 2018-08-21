@@ -733,6 +733,17 @@ class RestHelper:
             logger.warning('Unexpected request status code {}'.
                            format(r.status_code))
 
+    def set_analytics_page_size(self, analytics_node: str, page_size: str):
+        logger.info('Setting buffer cache page size \"{}\" for analytics'.format(page_size))
+        api = 'http://{}:{}/analytics/config/service'.format(analytics_node, ANALYTICS_PORT)
+        data = {
+            'storageBuffercachePagesize': page_size
+        }
+        r = self.put(url=api, data=data)
+        if r.status_code not in (200, 202,):
+            logger.warning('Unexpected request status code {}'.
+                           format(r.status_code))
+
     def restart_analytics_cluster(self, analytics_node: str):
         logger.info('Restarting analytics cluster')
         api = 'http://{}:{}/analytics/cluster/restart'.format(analytics_node, ANALYTICS_PORT)

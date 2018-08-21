@@ -76,10 +76,14 @@ class BigFunTest(PerfTest):
         if not self.rest.validate_analytics_logging_level(self.analytics_nodes[0], log_level):
             logger.error('Failed to set logging level {}'.format(log_level))
 
+    def set_buffer_cache_page_size(self):
+        page_size = self.test_config.analytics_settings.storage_buffer_cache_pagesize
+        self.rest.set_analytics_page_size(self.analytics_nodes[0], page_size)
+        self.rest.restart_analytics_cluster(self.analytics_nodes[0])
+
     def run(self):
         self.restore_local()
         self.wait_for_persistence()
-        self.set_analytics_logging_level()
 
 
 class BigFunSyncTest(BigFunTest):

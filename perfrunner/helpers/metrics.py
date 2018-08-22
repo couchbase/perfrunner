@@ -147,7 +147,7 @@ class MetricHelper:
         prefix = "Average latency (ms)"
         if percentile != 50:
             prefix = "{}th percentile latency (ms)".format(percentile)
-        metric_id = '{}_{}'.format(self.test_config.name, "jts_latency")
+        metric_id = '{}_{}_{}th'.format(self.test_config.name, "jts_latency", percentile)
         metric_id = metric_id.replace('.', '')
         title = "{}, {}".format(prefix, self._title)
         metric_info = self._metric_info(metric_id, title)

@@ -113,6 +113,7 @@ class FTSLatencyTest(FTSTest):
 
     def report_kpi(self):
         self.reporter.post(*self.metrics.jts_latency(percentile=80))
+        self.reporter.post(*self.metrics.jts_latency(percentile=95))
 
     def run(self):
         self.cleanup_and_restore()

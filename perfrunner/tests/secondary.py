@@ -106,7 +106,9 @@ class SecondaryIndexTest(PerfTest):
         storage_stats = self.rest.get_index_storage_stats(self.index_nodes[0])
         logger.info("Index storage stats:\n{}".format(storage_stats))
 
-        heap_profile = get_indexer_heap_profile(self.index_nodes[0])
+        heap_profile = get_indexer_heap_profile(self.index_nodes[0],
+                                                self.rest.rest_username,
+                                                self.rest.rest_password)
         logger.info("Indexer heap profile:\n{}".format(heap_profile))
 
         if self.storage == 'plasma':

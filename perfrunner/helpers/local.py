@@ -524,8 +524,10 @@ def load_bigfun_data(hostname: str, bucket: str, password: str, workers: int):
         run_loader(hostname, bucket, password, workers, table)
 
 
-def get_indexer_heap_profile(indexer: str) -> str:
-    cmd = 'go tool pprof --text http://{}:9102/debug/pprof/heap'.format(indexer)
+def get_indexer_heap_profile(indexer: str, user: str, password: str) -> str:
+    cmd = 'go tool pprof --text http://{}:{}@{}:9102/debug/pprof/heap'.format(user,
+                                                                              password,
+                                                                              indexer)
     return local(cmd, capture=True)
 
 

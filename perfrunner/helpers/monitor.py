@@ -461,3 +461,31 @@ class Monitor(RestHelper):
             time.sleep(self.POLLING_INTERVAL_EVENTING)
         if retry == self.MAX_RETRY_BOOTSTRAP:
             logger.info('Failed to process all mutations... TIMEOUT')
+
+    def wait_for_all_timer_creation(self, node: str, function: str):
+        logger.info('Waiting for all timers to be created by : {} '.format(function))
+        retry = 1
+        events_processed = {}
+        while retry < self.MAX_RETRY_TIMER_EVENT:
+            events_processed = self.get_num_events_processed(event="ALL",
+                                                             node=node, name=function)
+            if events_processed["DCP_MUTATION"] == events_processed["TIMER_RESPONSES_RECEIVED"]:
+                break
+            time.sleep(self.POLLING_INTERVAL_EVENTING)
+            retry += 1
+        if retry == self.MAX_RETRY_TIMER_EVENT:
+            logger.info('Got only {} timers created for function: {}'.format(
+                events_processed["TIMER_RESPONSES_RECEIVED"], function))
+
+    def wait_for_function_undeploy(self, node: str, function: str):
+        logger.info('Waiting for {} function to undeploy'.format(function))
+        retry = 1
+        while retry < self.MAX_RETRY_TIMER_EVENT:
+            op = self.get_running_apps(node)
+            logger.info(op)
+            if function not in op:
+                break
+            time.sleep(self.POLLING_INTERVAL_EVENTING)
+            retry += 1
+        if retry == self.MAX_RETRY_TIMER_EVENT:
+            logger.info('Function {} failed to deploy...!!!'.format(function))

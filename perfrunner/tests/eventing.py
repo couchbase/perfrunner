@@ -69,8 +69,6 @@ class EventingTest(PerfTest):
                     code = code.replace("fuzz_factor", str(self.timer_fuzz))
                 func["appname"] = name
                 func["appcode"] = code
-            self.rest.create_function(node=self.eventing_nodes[0],
-                                      func=func, name=name)
             time_to_deploy += self.deploy_and_bootstrap(func, name)
         return time_to_deploy
 
@@ -121,6 +119,19 @@ class EventingTest(PerfTest):
         self.access_bg()
         self.sleep()
 
+    @timeit
+    def undeploy_function(self, name):
+        func = '{"processing_status":false, "deployment_status":false}'
+        self.rest.undeploy_function(node=self.eventing_nodes[0],
+                                    func=func, name=name)
+        self.monitor.wait_for_function_undeploy(node=self.eventing_nodes[0], function=name)
+
+    def undeploy(self) -> int:
+        time_to_undeploy = 0
+        for name, filename in self.functions.items():
+            time_to_undeploy += self.undeploy_function(name=name)
+        return time_to_undeploy
+
     def validate_failures(self):
         ignore_failures = ["uv_try_write_failure_counter", ]
         for node in self.eventing_nodes:
@@ -157,7 +168,7 @@ class EventingTest(PerfTest):
                                 format(max_consumer_rss, node, name))
                     logger.info("Max Producer rss is {}MB on {} for function {}".
                                 format(max_producer_rss, node, name))
-                except ValueError:
+                except (ValueError, IndexError):
                     logger.info("Failed to get max rss on {}".format(node))
 
     def debug(self):
@@ -431,6 +442,32 @@ class TimerThroughputTest(TimerTest):
                                               event_name="TIMER_EVENTS",
                                               events_processed=0)
         )
+
+
+class TimerUndeployTest(TimerTest):
+
+    def _report_kpi(self, time_to_undeploy):
+        self.reporter.post(
+            *self.metrics.function_time(time=time_to_undeploy,
+                                        time_type="undeploy",
+                                        initials="Time to undeploy(min)")
+        )
+
+    def wait_for_all_timers_creation(self):
+        for name, filename in self.functions.items():
+            self.monitor.wait_for_all_timer_creation(node=self.eventing_nodes[0],
+                                                     function=name)
+
+    def run(self):
+        self.set_functions()
+
+        self.load()
+
+        self.wait_for_all_timers_creation()
+
+        time_to_undeploy = self.undeploy()
+
+        self.report_kpi(time_to_undeploy)
 
 
 class TimerRebalanceThroughputTest(EventingRebalance):

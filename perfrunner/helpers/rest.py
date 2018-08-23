@@ -760,22 +760,17 @@ class RestHelper:
             return response["logLevel"] == log_level
         return False
 
-    def create_function(self, node: str, func: dict, name: str):
-        logger.info('Creating function on node {}: {}'.format(node,
-                                                              pretty_dict(func)))
-
-        api = 'http://{}:8091/_p/event/saveAppTempStore/?name={}'.format(node,
-                                                                         name)
-        self.post(url=api, data=json.dumps(func))
-
     def deploy_function(self, node: str, func: dict, name: str):
-        logger.info('Deploying function on node {}'.format(node))
-
-        api = 'http://{}:8091/_p/event/setApplication/?name={}'.format(node,
-                                                                       name)
+        logger.info('Deploying function on node {}: {}'.format(node, pretty_dict(func)))
+        api = 'http://{}:8096/api/v1/functions/{}'.format(node, name)
         self.post(url=api, data=json.dumps(func))
 
-    def get_num_events_processed(self, event: str, node: str, name: str) -> int:
+    def undeploy_function(self, node: str, func: dict, name: str):
+        logger.info('Un-deploying function on node {}: {}'.format(node, pretty_dict(func)))
+        api = 'http://{}:8096/api/v1/functions/{}/settings/'.format(node, name)
+        self.post(url=api, data=func)
+
+    def get_num_events_processed(self, event: str, node: str, name: str):
         logger.info('get stats on node {} for {}'.format(node, name))
 
         data = {}
@@ -786,6 +781,8 @@ class RestHelper:
                 break
 
         logger.info(data)
+        if event == "ALL":
+            return data
         if event in data:
             return data[event]
 
@@ -795,6 +792,12 @@ class RestHelper:
         logger.info('get deployed apps on node {}'.format(node))
 
         api = 'http://{}:{}/getDeployedApps'.format(node, EVENTING_PORT)
+        return self.get(url=api).json()
+
+    def get_running_apps(self, node: str):
+        logger.info('get running apps on node {}'.format(node))
+
+        api = 'http://{}:{}/getRunningApps'.format(node, EVENTING_PORT)
         return self.get(url=api).json()
 
     def get_eventing_stats(self, node: str, full_stats: bool = False) -> dict:

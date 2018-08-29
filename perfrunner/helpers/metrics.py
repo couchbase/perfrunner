@@ -299,7 +299,7 @@ class MetricHelper:
         return int(query_latency)
 
     def secondary_scan_latency(self, percentile: Number) -> Metric:
-        metric_id = self.test_config.name
+        metric_id = "{}_{}th".format(self.test_config.name, percentile)
         title = '{}th percentile secondary scan latency (ms), {}'.format(percentile,
                                                                          self._title)
         metric_info = self._metric_info(metric_id, title)

@@ -12,7 +12,7 @@ server_processes = eventing-produc
 
 [cluster]
 mem_quota = 55000
-eventing_mem_quota = 20480
+eventing_mem_quota = 24576
 initial_nodes = 4
 num_buckets = 1
 eventing_bucket_mem_quota = 8000

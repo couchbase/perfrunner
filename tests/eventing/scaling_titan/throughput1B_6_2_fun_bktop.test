@@ -14,6 +14,7 @@ server_processes = projector eventing-produc
 mem_quota = 240000
 initial_nodes = 8
 num_buckets = 1
+eventing_mem_quota = 48960
 eventing_bucket_mem_quota = 30000
 eventing_metadata_bucket_mem_quota = 1000
 eventing_buckets = 1

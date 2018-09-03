@@ -13,7 +13,7 @@ lat_interval = 0.5
 
 [cluster]
 mem_quota = 12000
-index_mem_quota = 62683
+index_mem_quota = 57000
 initial_nodes = 6
 num_buckets = 1
 kernel_mem_limit = 83354M

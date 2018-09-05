@@ -390,8 +390,13 @@ class SubDocWorker(KVWorker):
     NAME = 'sub-doc-worker'
 
     def init_db(self):
-        params = {'bucket': self.ts.bucket, 'host': self.ts.node, 'port': 8091,
-                  'username': self.ts.bucket, 'password': self.ts.password}
+        params = {'bucket': self.ts.bucket,
+                  'host': self.ts.node,
+                  'port': 8091,
+                  'username': self.ts.bucket,
+                  'password': self.ts.password,
+                  'connstr_params': self.ws.connstr_params}
+
         self.cb = SubDocGen(**params)
 
     def read_args(self, cb: Client,

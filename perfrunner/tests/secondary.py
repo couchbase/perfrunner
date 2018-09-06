@@ -353,7 +353,10 @@ class InitialSecondaryIndexTest(InitialandIncrementalSecondaryIndexTest):
 
     def run(self):
         self.load_and_build_initial_index()
+        self.print_index_disk_usage()
 
+        # Adding sleep to get log cleaner catch up
+        time.sleep(600)
         self.run_recovery_scenario()
 
 

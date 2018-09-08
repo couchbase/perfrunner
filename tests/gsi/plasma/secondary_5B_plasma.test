@@ -23,9 +23,6 @@ view_percentage = 100
 replica_number=0
 replica_index=0
 
-[bucket_extras]
-num_auxio_threads = 16
-
 [load]
 items = 5000000000
 workers = 100

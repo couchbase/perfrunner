@@ -2,7 +2,7 @@
 test = perfrunner.tests.eventing.FunctionsRebalanceThroughputTest
 
 [showfast]
-title = Functions executed/sec, 1 bucket x 50M x 1KB, KV node Rebalance, 4KV + 1Eventing node, single function-BucketOp
+title = Functions executed/sec, 1 bucket x 50M x 1KB, KV Rebalance, 3KV > 4KV + 1Eventing node, single function-BucketOp
 component = eventing
 category = thr
 sub_category = Function

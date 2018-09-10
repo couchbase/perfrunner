@@ -11,7 +11,7 @@ sub_category = Timer
 server_processes = eventing-produc
 
 [cluster]
-mem_quota = 240000
+mem_quota = 224000
 eventing_mem_quota = 48960
 initial_nodes = 10
 num_buckets = 1

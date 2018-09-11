@@ -1,7 +1,16 @@
 {
-    "Eventing": [],
-    "FTS": [],
-    "GSI": [],
+    "Eventing": [
+        {"cluster": "triton_eventing.spec", "test_config": "eventing/eventing_throughput100M_fun_bktop.test"},
+        {"cluster": "triton_eventing.spec", "test_config": "eventing/throughput50M_timer_bktop_512bytes_context.test"}
+    ],
+    "FTS": [
+        {"cluster": "triton_fts.spec", "test_config": "fts/fts_thr_wiki_med.test"},
+        {"cluster": "triton_fts.spec", "test_config": "fts/fts_thr_wiki_and_med_or_hi_hi.test"}
+    ],
+    "GSI": [
+        {"cluster": "triton.spec", "test_config": "gsi/gsi_200M_moi.test"},
+        {"cluster": "triton.spec", "test_config": "gsi/gsi_200M_plasma.test"}
+    ],
     "KV": [
         {"cluster": "triton_kv.spec", "test_config": "kv/dcp_max_throughput_250M.test"},
         {"cluster": "triton_kv.spec", "test_config": "kv/kv_max_ops_mixed.test"},

@@ -438,7 +438,7 @@ class Monitor(RestHelper):
 
         return num_items
 
-    def wait_for_timer_event(self, node: str, function: str, event="TIMER_EVENTS"):
+    def wait_for_timer_event(self, node: str, function: str, event="timer_events"):
         logger.info('Waiting for timer events to start processing: {} '.format(function))
         retry = 1
         while retry < self.MAX_RETRY_TIMER_EVENT:
@@ -469,13 +469,13 @@ class Monitor(RestHelper):
         while retry < self.MAX_RETRY_TIMER_EVENT:
             events_processed = self.get_num_events_processed(event="ALL",
                                                              node=node, name=function)
-            if events_processed["DCP_MUTATION"] == events_processed["TIMER_RESPONSES_RECEIVED"]:
+            if events_processed["dcp_mutation"] == events_processed["timer_responses_received"]:
                 break
             time.sleep(self.POLLING_INTERVAL_EVENTING)
             retry += 1
         if retry == self.MAX_RETRY_TIMER_EVENT:
             logger.info('Got only {} timers created for function: {}'.format(
-                events_processed["TIMER_RESPONSES_RECEIVED"], function))
+                events_processed["timer_responses_received"], function))
 
     def wait_for_function_undeploy(self, node: str, function: str):
         logger.info('Waiting for {} function to undeploy'.format(function))

@@ -101,7 +101,7 @@ class EventingTest(PerfTest):
                             .format(node=node,
                                     stats=pretty_dict(stat["event_processing_stats"])))
                 doc_timer_responses += \
-                    stat["event_processing_stats"]["TIMER_RESPONSES_RECEIVED"]
+                    stat["event_processing_stats"]["timer_responses_received"]
         return doc_timer_responses
 
     def get_timer_events(self, event_name: str, function_name: str):
@@ -439,7 +439,7 @@ class TimerThroughputTest(TimerTest):
     def _report_kpi(self, time_elapsed):
         self.reporter.post(
             *self.metrics.function_throughput(time=time_elapsed,
-                                              event_name="TIMER_EVENTS",
+                                              event_name="timer_events",
                                               events_processed=0)
         )
 
@@ -471,7 +471,7 @@ class TimerUndeployTest(TimerTest):
 
 
 class TimerRebalanceThroughputTest(EventingRebalance):
-    EVENT_NAME = "TIMER_EVENTS"
+    EVENT_NAME = "timer_events"
 
     def __init__(self, *args):
         super().__init__(*args)

@@ -20,6 +20,8 @@ def main():
 
     if re.match('2.0.0', _build):
         base_url = "http://172.23.120.24/builds/releases/mobile/couchbase-sync-gateway/2.0.0"
+    elif re.match('1.5.1', _build):
+        base_url = "http://172.23.120.24/builds/releases/mobile/couchbase-sync-gateway/1.5.1"
     else:
         v, b = _build.split("-")
         base_url = "http://172.23.120.24/builds/latestbuilds/sync_gateway/{}/{}".format(v, b)

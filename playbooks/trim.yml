@@ -4,6 +4,7 @@
     data_dir: /data
     disk: /dev/sdb1
     opts: ""
+    to_trim: 1
   tasks:
   - name: umounting data parition
     mount:
@@ -28,3 +29,4 @@
 
   - name: discarding unused blocks
     shell: fstrim -v {{ data_dir }}
+    when: to_trim == 1

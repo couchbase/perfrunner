@@ -24,7 +24,7 @@ workload_path = workloads/soe/workloadsg2
 items = 10000000
 recorded_load_cache_size = 100000
 workers = 100
-workload_instances = 4
+workload_instances = 6
 inserts_per_workerinstance = 10000000
 
 [index]

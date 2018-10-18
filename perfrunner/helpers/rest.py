@@ -242,6 +242,15 @@ class RestHelper:
         }
         self.post(url=api, data=data)
 
+    def increase_bucket_limit(self, host: str, num_buckets: int):
+        logger.info('increasing bucket limit to {}'.format(num_buckets))
+
+        api = 'http://{}:8091/internalSettings'.format(host)
+        data = {
+            'maxBucketCount': num_buckets
+        }
+        self.post(url=api, data=data)
+
     def get_counters(self, host: str) -> dict:
         api = 'http://{}:8091/pools/default'.format(host)
         return self.get(url=api).json()['counters']

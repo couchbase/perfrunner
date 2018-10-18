@@ -1,0 +1,313 @@
+[test_case]
+test = perfrunner.tests.multibucket.MultibucketN1QLRebalanceXdcrEventingAnalyticsTest
+
+[showfast]
+title = 30 Bucket test
+component = multi_bucket
+sub_category = BRQXA
+
+[stats]
+server_processes = goxdcr
+
+[cluster]
+mem_quota = 23040
+index_mem_quota = 40960
+fts_index_mem_quota = 40960
+analytics_mem_quota = 40960
+eventing_mem_quota = 40960
+initial_nodes = 8 2
+num_buckets = 30
+eventing_bucket_mem_quota = 1536
+eventing_metadata_bucket_mem_quota = 1024
+eventing_buckets = 1
+
+[xdcr_cluster]
+sourceNozzlePerNode = 2
+targetNozzlePerNode = 2
+optimisticReplicationThreshold = 0
+
+[xdcr]
+wan_delay = 40
+
+[bucket]
+replica_number=1
+replica_index=0
+
+[compaction]
+db_percentage = 10
+
+[secondary]
+indexer.settings.storage_mode = plasma
+indexer.numPartitions = 2
+
+[eventing]
+functions = perf-test1:tests/eventing/code/bktop.js
+
+[load]
+items = 1000000
+size = 1024
+workers = 10
+key_fmtr = hex
+doc_gen = multibucket
+
+[access]
+creates = 1
+items = 1000000
+throughput = 1
+spring_batch_size = 1
+workers = 1
+n1ql_queries = range-scan1,range-scan2,range-scan3,range-scan4,range-scan5,range-scan6,range-scan7,range-scan8,range-scan9,range-scan10,range-scan11,range-scan12,range-scan13,range-scan14,range-scan15,range-scan16,range-scan17,range-scan18,range-scan19,range-scan20,range-scan21,range-scan22,range-scan23,range-scan24,range-scan25,range-scan26,range-scan27,range-scan28,range-scan29,range-scan30
+n1ql_batch_size = 1
+n1ql_workers = 1
+n1ql_throughput = 1
+
+[jts]
+couchbase_index_configfile = tests/multi_bucket/fts/index/fts_index.json
+
+[index]
+statements =
+    CREATE INDEX idx11 ON `bucket-1`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx12 ON `bucket-1`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx21 ON `bucket-2`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx22 ON `bucket-2`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx31 ON `bucket-3`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx32 ON `bucket-3`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx41 ON `bucket-4`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx42 ON `bucket-4`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx51 ON `bucket-5`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx52 ON `bucket-5`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx61 ON `bucket-6`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx62 ON `bucket-6`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx71 ON `bucket-7`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx72 ON `bucket-7`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx81 ON `bucket-8`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx82 ON `bucket-8`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx91 ON `bucket-9`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx92 ON `bucket-9`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx101 ON `bucket-10`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx102 ON `bucket-10`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx111 ON `bucket-11`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx112 ON `bucket-11`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx121 ON `bucket-12`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx122 ON `bucket-12`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx131 ON `bucket-13`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx132 ON `bucket-13`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx141 ON `bucket-14`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx142 ON `bucket-14`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx151 ON `bucket-15`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx152 ON `bucket-15`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx161 ON `bucket-16`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx162 ON `bucket-16`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx171 ON `bucket-17`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx172 ON `bucket-17`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx181 ON `bucket-18`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx182 ON `bucket-18`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx191 ON `bucket-19`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx192 ON `bucket-19`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx201 ON `bucket-20`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx202 ON `bucket-20`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx211 ON `bucket-21`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx212 ON `bucket-21`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx221 ON `bucket-22`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx222 ON `bucket-22`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx231 ON `bucket-23`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx232 ON `bucket-23`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx241 ON `bucket-24`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx242 ON `bucket-24`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx251 ON `bucket-25`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx252 ON `bucket-25`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx261 ON `bucket-26`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx262 ON `bucket-26`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx271 ON `bucket-27`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx272 ON `bucket-27`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx281 ON `bucket-28`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx282 ON `bucket-28`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx291 ON `bucket-29`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx292 ON `bucket-29`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx301 ON `bucket-30`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx302 ON `bucket-30`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    BUILD INDEX ON `bucket-1`(idx11, idx12);
+    BUILD INDEX ON `bucket-2`(idx21, idx22);
+    BUILD INDEX ON `bucket-3`(idx31, idx32);
+    BUILD INDEX ON `bucket-4`(idx41, idx42);
+    BUILD INDEX ON `bucket-5`(idx51, idx52);
+    BUILD INDEX ON `bucket-6`(idx61, idx62);
+    BUILD INDEX ON `bucket-7`(idx71, idx72);
+    BUILD INDEX ON `bucket-8`(idx81, idx82);
+    BUILD INDEX ON `bucket-9`(idx91, idx92);
+    BUILD INDEX ON `bucket-10`(idx101, idx102);
+    BUILD INDEX ON `bucket-11`(idx111, idx112);
+    BUILD INDEX ON `bucket-12`(idx121, idx122);
+    BUILD INDEX ON `bucket-13`(idx131, idx132);
+    BUILD INDEX ON `bucket-14`(idx141, idx142);
+    BUILD INDEX ON `bucket-15`(idx151, idx152);
+    BUILD INDEX ON `bucket-16`(idx161, idx162);
+    BUILD INDEX ON `bucket-17`(idx171, idx172);
+    BUILD INDEX ON `bucket-18`(idx181, idx182);
+    BUILD INDEX ON `bucket-19`(idx191, idx192);
+    BUILD INDEX ON `bucket-20`(idx201, idx202);
+    BUILD INDEX ON `bucket-21`(idx211, idx212);
+    BUILD INDEX ON `bucket-22`(idx221, idx222);
+    BUILD INDEX ON `bucket-23`(idx231, idx232);
+    BUILD INDEX ON `bucket-24`(idx241, idx242);
+    BUILD INDEX ON `bucket-25`(idx251, idx252);
+    BUILD INDEX ON `bucket-26`(idx261, idx262);
+    BUILD INDEX ON `bucket-27`(idx271, idx272);
+    BUILD INDEX ON `bucket-28`(idx281, idx282);
+    BUILD INDEX ON `bucket-29`(idx291, idx292);
+    BUILD INDEX ON `bucket-30`(idx301, idx302);
+
+[n1ql-range-scan1]
+statement = SELECT email, alt_email FROM `bucket-1` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan2]
+statement = SELECT email, alt_email FROM `bucket-2` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan3]
+statement = SELECT email, alt_email FROM `bucket-3` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan4]
+statement = SELECT email, alt_email FROM `bucket-4` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan5]
+statement = SELECT email, alt_email FROM `bucket-5` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan6]
+statement = SELECT email, alt_email FROM `bucket-6` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan7]
+statement = SELECT email, alt_email FROM `bucket-7` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan8]
+statement = SELECT email, alt_email FROM `bucket-8` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan9]
+statement = SELECT email, alt_email FROM `bucket-9` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan10]
+statement = SELECT email, alt_email FROM `bucket-10` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan11]
+statement = SELECT email, alt_email FROM `bucket-11` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan12]
+statement = SELECT email, alt_email FROM `bucket-12` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan13]
+statement = SELECT email, alt_email FROM `bucket-13` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan14]
+statement = SELECT email, alt_email FROM `bucket-14` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan15]
+statement = SELECT email, alt_email FROM `bucket-15` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan16]
+statement = SELECT email, alt_email FROM `bucket-16` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan17]
+statement = SELECT email, alt_email FROM `bucket-17` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan18]
+statement = SELECT email, alt_email FROM `bucket-18` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan19]
+statement = SELECT email, alt_email FROM `bucket-19` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan20]
+statement = SELECT email, alt_email FROM `bucket-20` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan21]
+statement = SELECT email, alt_email FROM `bucket-21` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan22]
+statement = SELECT email, alt_email FROM `bucket-22` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan23]
+statement = SELECT email, alt_email FROM `bucket-23` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan24]
+statement = SELECT email, alt_email FROM `bucket-24` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan25]
+statement = SELECT email, alt_email FROM `bucket-25` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan26]
+statement = SELECT email, alt_email FROM `bucket-26` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan27]
+statement = SELECT email, alt_email FROM `bucket-27` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan28]
+statement = SELECT email, alt_email FROM `bucket-28` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan29]
+statement = SELECT email, alt_email FROM `bucket-29` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan30]
+statement = SELECT email, alt_email FROM `bucket-30` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[rebalance]
+nodes_after = 9 2
+start_after = 600
+stop_after = 600

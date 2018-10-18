@@ -126,6 +126,10 @@ class ClusterManager:
             self.monitor.monitor_rebalance(master)
         self.wait_until_healthy()
 
+    def increase_bucket_limit(self, num_buckets: int):
+        for master in self.cluster_spec.masters:
+            self.rest.increase_bucket_limit(master, num_buckets)
+
     def flush_buckets(self):
         for master in self.cluster_spec.masters:
             for bucket_name in self.test_config.buckets:
@@ -140,6 +144,9 @@ class ClusterManager:
 
     def create_buckets(self):
         mem_quota = self.test_config.cluster.mem_quota
+        if self.test_config.cluster.num_buckets > 7:
+            self.increase_bucket_limit(self.test_config.cluster.num_buckets + 3)
+
         if self.test_config.cluster.eventing_metadata_bucket_mem_quota:
             mem_quota -= (self.test_config.cluster.eventing_metadata_bucket_mem_quota +
                           self.test_config.cluster.eventing_bucket_mem_quota)
@@ -360,6 +367,7 @@ class ClusterManager:
 
             for bucket in self.test_config.buckets:
                 bucket_roles = [role.format(bucket=bucket) for role in roles]
+                bucket_roles.append("admin")
                 self.rest.add_rbac_user(
                     host=master,
                     user=bucket,  # Backward compatibility

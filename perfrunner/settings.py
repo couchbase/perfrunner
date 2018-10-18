@@ -87,6 +87,15 @@ class ClusterSpec(Config):
                     has_service.append(host)
         return has_service
 
+    def servers_by_role_from_first_cluster(self, role: str) -> List[str]:
+        has_service = []
+        servers = self.config.items('clusters')[0][1]
+        for server in servers.split():
+            host, roles = server.split(':')
+            if role in roles:
+                has_service.append(host)
+        return has_service
+
     @property
     def roles(self) -> Dict[str, str]:
         server_roles = {}
@@ -374,6 +383,7 @@ class PhaseSettings:
     DELETES = 0
     READS_AND_UPDATES = 0
     FTS_UPDATES = 0
+    TTL = 0
 
     OPS = 0
     TARGET = 0
@@ -382,6 +392,7 @@ class PhaseSettings:
     SEQ_UPSERTS = False
 
     BATCH_SIZE = 1000
+    SPRING_BATCH_SIZE = 100
 
     ITERATIONS = 1
 
@@ -457,6 +468,7 @@ class PhaseSettings:
         self.reads = int(options.get('reads', self.READS))
         self.updates = int(options.get('updates', self.UPDATES))
         self.deletes = int(options.get('deletes', self.DELETES))
+        self.ttl = int(options.get('ttl', self.TTL))
         self.reads_and_updates = int(options.get('reads_and_updates',
                                                  self.READS_AND_UPDATES))
         self.fts_updates_swap = int(options.get('fts_updates_swap',
@@ -484,6 +496,7 @@ class PhaseSettings:
         self.iterations = int(options.get('iterations', self.ITERATIONS))
 
         self.batch_size = int(options.get('batch_size', self.BATCH_SIZE))
+        self.spring_batch_size = int(options.get('spring_batch_size', self.SPRING_BATCH_SIZE))
 
         self.workload_instances = int(options.get('workload_instances',
                                                   self.WORKLOAD_INSTANCES))

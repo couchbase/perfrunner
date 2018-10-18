@@ -127,6 +127,8 @@ class Collector:
                 time.sleep(self.interval - delta)
             except KeyboardInterrupt:
                 sys.exit()
+            except IndexError:
+                pass
             except Exception as e:
                 logger.warn("Unexpected exception in {}: {}"
                             .format(self.__class__.__name__, e))

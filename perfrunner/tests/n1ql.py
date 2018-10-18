@@ -13,6 +13,7 @@ class N1QLTest(PerfTest):
         'n1ql_latency': True,
         'n1ql_stats': True,
         'secondary_stats': True,
+        'ns_server_system': True
     }
 
     def load(self, *args):
@@ -57,6 +58,17 @@ class N1QLTest(PerfTest):
         iterator = TargetIterator(self.cluster_spec, self.test_config, 'n1ql')
 
         super().access(settings=access_settings, target_iterator=iterator)
+
+    def access_n1ql_bg(self, *args):
+        self.download_certificate()
+
+        access_settings = self.test_config.access_settings
+        access_settings.items //= 2
+        access_settings.workers = 0
+
+        iterator = TargetIterator(self.cluster_spec, self.test_config, 'n1ql')
+
+        super().access_bg(settings=access_settings, target_iterator=iterator)
 
     def store_plans(self):
         logger.info('Storing query plans')

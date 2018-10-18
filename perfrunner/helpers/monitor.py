@@ -8,7 +8,7 @@ from perfrunner.helpers.rest import RestHelper
 
 class Monitor(RestHelper):
 
-    MAX_RETRY = 60
+    MAX_RETRY = 150
     MAX_RETRY_RECOVERY = 1200
     MAX_RETRY_TIMER_EVENT = 18000
     MAX_RETRY_BOOTSTRAP = 1200
@@ -360,8 +360,10 @@ class Monitor(RestHelper):
             logger.info('FTS indexed documents: {:,}'.format(count))
             time.sleep(self.POLLING_INTERVAL)
 
-    def monitor_fts_index_persistence(self, hosts: list, index: str):
+    def monitor_fts_index_persistence(self, hosts: list, index: str, bkt: str = None):
         logger.info('Waiting for index to be persisted')
+        if not bkt:
+            bkt = self.test_config.buckets[0]
         pending_items = 1
         while pending_items:
             persist = 0
@@ -369,12 +371,10 @@ class Monitor(RestHelper):
             for host in hosts:
                 stats = self.get_fts_stats(host)
 
-                metric = '{}:{}:{}'.format(self.test_config.buckets[0],
-                                           index, 'num_recs_to_persist')
+                metric = '{}:{}:{}'.format(bkt, index, 'num_recs_to_persist')
                 persist += stats[metric]
 
-                metric = '{}:{}:{}'.format(self.test_config.buckets[0],
-                                           index, 'total_compactions')
+                metric = '{}:{}:{}'.format(bkt, index, 'total_compactions')
                 compact += stats[metric]
 
             pending_items = persist or compact

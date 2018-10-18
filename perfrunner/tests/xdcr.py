@@ -175,4 +175,4 @@ class UniDirXdcrInitTest(XdcrInitTest):
     def load(self, *args):
         src_target_iterator = SrcTargetIterator(self.cluster_spec,
                                                 self.test_config)
-        super(XdcrInitTest, self).load(target_iterator=src_target_iterator)
+        XdcrInitTest.load(self, target_iterator=src_target_iterator)

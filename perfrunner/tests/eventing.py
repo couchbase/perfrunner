@@ -48,17 +48,21 @@ class EventingTest(PerfTest):
         self.target_iterator = TargetIterator(self.cluster_spec, self.test_config, "eventing")
 
     @timeit
-    def deploy_and_bootstrap(self, func, name):
+    def deploy_and_bootstrap(self, func, name, wait_for_bootstrap):
         self.rest.deploy_function(node=self.eventing_nodes[0],
                                   func=func, name=name)
-
-        self.monitor.wait_for_bootstrap(nodes=self.eventing_nodes,
-                                        function=name)
+        if wait_for_bootstrap:
+            self.monitor.wait_for_bootstrap(nodes=self.eventing_nodes,
+                                            function=name)
 
     def set_functions(self) -> float:
         with open(self.config_file) as f:
             func = json.load(f)
 
+        return self.set_functions_with_config(func=func)
+
+    def set_functions_with_config(self, func, override_name: bool = True,
+                                  wait_for_bootstrap: bool = True):
         func["settings"]["worker_count"] = self.worker_count
         func["settings"]["cpp_worker_thread_count"] = self.cpp_worker_thread_count
         func["settings"]["timer_worker_pool_size"] = self.timer_worker_pool_size
@@ -74,9 +78,10 @@ class EventingTest(PerfTest):
                     expiry = (calendar.timegm(time.gmtime()) + self.timer_timeout) * 1000
                     code = code.replace("fixed_expiry", str(expiry))
                     code = code.replace("fuzz_factor", str(self.timer_fuzz))
-                func["appname"] = name
+                if override_name:
+                    func["appname"] = name
                 func["appcode"] = code
-            time_to_deploy += self.deploy_and_bootstrap(func, name)
+            time_to_deploy += self.deploy_and_bootstrap(func, func["appname"], wait_for_bootstrap)
         return time_to_deploy
 
     def process_latency_stats(self):

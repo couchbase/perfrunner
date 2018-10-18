@@ -33,6 +33,7 @@ from spring.docgen import (
     LargeDocument,
     LargeItemPlasmaDocument,
     MovingWorkingSetKey,
+    MultiBucketDocument,
     NestedDocument,
     NewOrderedKey,
     PackageDocument,
@@ -83,8 +84,6 @@ def set_cpu_afinity(sid):
 class Worker:
 
     CORRECTION_FACTOR = 0.975  # empiric!
-
-    BATCH_SIZE = 100
 
     NAME = 'worker'
 
@@ -203,6 +202,8 @@ class Worker:
             self.docs = IncompressibleString(self.ws.size)
         elif self.ws.doc_gen == 'big_fun':
             self.docs = BigFunDocument()
+        elif self.ws.doc_gen == 'multibucket':
+            self.docs = MultiBucketDocument(self.ws.size)
 
     def init_db(self):
         params = {
@@ -272,7 +273,7 @@ class KVWorker(Worker):
                     curr_items: int) -> Sequence:
         key = self.new_keys.next(curr_items)
         doc = self.docs.next(key)
-        args = key.string, doc, self.ws.persist_to, self.ws.replicate_to
+        args = key.string, doc, self.ws.persist_to, self.ws.replicate_to, self.ws.ttl
 
         return [('set', cb.create, args)]
 
@@ -290,7 +291,7 @@ class KVWorker(Worker):
                                       self.current_hot_load_start,
                                       self.timer_elapse)
         doc = self.docs.next(key)
-        args = key.string, doc, self.ws.persist_to, self.ws.replicate_to
+        args = key.string, doc, self.ws.persist_to, self.ws.replicate_to, self.ws.ttl
 
         return [('set', cb.update, args)]
 
@@ -306,7 +307,7 @@ class KVWorker(Worker):
         key = self.existing_keys.next(curr_items, deleted_items)
         doc = self.docs.next(key)
         read_args = key.string,
-        update_args = key.string, doc, self.ws.persist_to, self.ws.replicate_to
+        update_args = key.string, doc, self.ws.persist_to, self.ws.replicate_to, self.ws.ttl
 
         return [('get', cb.read, read_args), ('set', cb.update, update_args)]
 
@@ -357,7 +358,7 @@ class KVWorker(Worker):
             current_hot_load_start=None, timer_elapse=None):
 
         if self.ws.throughput < float('inf'):
-            self.target_time = float(self.BATCH_SIZE) * self.ws.workers / \
+            self.target_time = float(self.ws.spring_batch_size) * self.ws.workers / \
                 self.ws.throughput
         else:
             self.target_time = None
@@ -374,7 +375,7 @@ class KVWorker(Worker):
         try:
             while self.run_condition(curr_ops):
                 with lock:
-                    curr_ops.value += self.BATCH_SIZE
+                    curr_ops.value += self.ws.spring_batch_size
                 self.do_batch()
                 self.report_progress(curr_ops.value)
         except KeyboardInterrupt:
@@ -455,7 +456,7 @@ class AsyncKVWorker(KVWorker):
 
     def restart(self, _, cb, i):
         self.counter[i] += 1
-        if self.counter[i] == self.BATCH_SIZE:
+        if self.counter[i] == self.ws.spring_batch_size:
             actual_time = time.time() - self.time_started
             if self.target_time is not None:
                 delta = self.target_time - actual_time
@@ -477,7 +478,7 @@ class AsyncKVWorker(KVWorker):
         self.time_started = time.time()
 
         with self.lock:
-            self.curr_ops.value += self.BATCH_SIZE
+            self.curr_ops.value += self.ws.spring_batch_size
 
         for _, func, args in self.gen_cmd_sequence(cb):
             d = func(*args)
@@ -506,7 +507,7 @@ class AsyncKVWorker(KVWorker):
         set_cpu_afinity(sid)
 
         if self.ws.throughput < float('inf'):
-            self.target_time = (self.BATCH_SIZE * self.ws.workers /
+            self.target_time = (self.ws.spring_batch_size * self.ws.workers /
                                 float(self.ws.throughput))
         else:
             self.target_time = None
@@ -605,7 +606,7 @@ class ViewWorker(Worker):
         deleted_spot = \
             self.deleted_items.value + self.ws.deletes * self.ws.workers
 
-        for _ in range(self.BATCH_SIZE):
+        for _ in range(self.ws.spring_batch_size):
             key = self.existing_keys.next(curr_items_spot, deleted_spot)
             doc = self.docs.next(key)
             ddoc_name, view_name, query = self.new_queries.next(doc)
@@ -616,7 +617,7 @@ class ViewWorker(Worker):
 
     def run(self, sid, lock, curr_ops, curr_items, deleted_items, *args):
         if self.ws.query_throughput < float('inf'):
-            self.target_time = float(self.BATCH_SIZE) * self.ws.query_workers / \
+            self.target_time = float(self.ws.spring_batch_size) * self.ws.query_workers / \
                 self.ws.query_throughput
         else:
             self.target_time = None

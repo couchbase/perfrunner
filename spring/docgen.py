@@ -1350,3 +1350,29 @@ class BigFunDocument:
             'send_time_medium': query_gen.bf08params(num_matches=1e4),
             'send_time_large': query_gen.bf08params(num_matches=1e6),
         }
+
+
+class MultiBucketDocument(Document):
+
+    def __init__(self, avg_size: int):
+        super().__init__(avg_size)
+        with open("tests/fts/data/benchmark/phrase.txt") as fp:
+            data = fp.read()
+        self.words = data.split()
+
+    def get_words(self, num: int):
+        factor = random.randint(0, 4)
+        num = num - 2 + factor
+        return " ".join(random.sample(self.words, num))
+
+    def next(self, key: Key) -> dict:
+        alphabet = self.build_alphabet(key.string)
+
+        return {
+            'name': self.build_name(alphabet),
+            'email': self.build_email(alphabet),
+            'alt_email': self.build_alt_email(alphabet),
+            'fts_more_words': self.get_words(140),
+            'fts_less_words': self.get_words(3),
+            'category': self.build_category(alphabet),
+        }

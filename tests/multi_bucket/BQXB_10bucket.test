@@ -1,0 +1,219 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1QLWithXdcrInitBackupTest
+
+[showfast]
+title = 3 -> 3 (2 source nozzles, 4 target nozzles), Initial index, Backup, 10 bucket x 300K x 1KB, 1000 KV ops/sec
+component = multi_bucket
+sub_category = BQXB
+
+[stats]
+server_processes = goxdcr
+client_processes = cbbackupmgr
+
+[cluster]
+mem_quota = 45000
+index_mem_quota = 100000
+initial_nodes = 5 3
+num_buckets = 10
+
+[xdcr_cluster]
+sourceNozzlePerNode = 2
+targetNozzlePerNode = 4
+optimisticReplicationThreshold = 0
+
+[xdcr]
+wan_delay = 40
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[bucket]
+replica_number=1
+replica_index=0
+
+[secondary]
+indexer.settings.storage_mode = plasma
+indexer.numPartitions = 2
+
+[load]
+items = 300000
+size = 1024
+workers = 10
+key_fmtr = hex
+
+[index]
+statements =
+    CREATE INDEX idx11 ON `bucket-1`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx12 ON `bucket-1`(name, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx13 ON `bucket-1`(city, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx14 ON `bucket-1`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx15 ON `bucket-1`(alt_email, coins) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx16 ON `bucket-1`(coins, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx17 ON `bucket-1`(alt_email, category) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx18 ON `bucket-1`(alt_email, email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx19 ON `bucket-1`(email, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx10 ON `bucket-1`(city, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx21 ON `bucket-2`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx22 ON `bucket-2`(name, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx23 ON `bucket-2`(city, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx24 ON `bucket-2`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx25 ON `bucket-2`(alt_email, coins) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx26 ON `bucket-2`(coins, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx27 ON `bucket-2`(alt_email, category) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx28 ON `bucket-2`(alt_email, email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx29 ON `bucket-2`(email, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx20 ON `bucket-2`(city, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx31 ON `bucket-3`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx32 ON `bucket-3`(name, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx33 ON `bucket-3`(city, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx34 ON `bucket-3`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx35 ON `bucket-3`(alt_email, coins) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx36 ON `bucket-3`(coins, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx37 ON `bucket-3`(alt_email, category) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx38 ON `bucket-3`(alt_email, email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx39 ON `bucket-3`(email, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx30 ON `bucket-3`(city, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx41 ON `bucket-4`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx42 ON `bucket-4`(name, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx43 ON `bucket-4`(city, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx44 ON `bucket-4`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx45 ON `bucket-4`(alt_email, coins) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx46 ON `bucket-4`(coins, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx47 ON `bucket-4`(alt_email, category) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx48 ON `bucket-4`(alt_email, email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx49 ON `bucket-4`(email, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx40 ON `bucket-4`(city, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx51 ON `bucket-5`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx52 ON `bucket-5`(name, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx53 ON `bucket-5`(city, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx54 ON `bucket-5`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx55 ON `bucket-5`(alt_email, coins) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx56 ON `bucket-5`(coins, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx57 ON `bucket-5`(alt_email, category) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx58 ON `bucket-5`(alt_email, email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx59 ON `bucket-5`(email, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx50 ON `bucket-5`(city, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx61 ON `bucket-6`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx62 ON `bucket-6`(name, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx63 ON `bucket-6`(city, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx64 ON `bucket-6`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx65 ON `bucket-6`(alt_email, coins) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx66 ON `bucket-6`(coins, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx67 ON `bucket-6`(alt_email, category) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx68 ON `bucket-6`(alt_email, email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx69 ON `bucket-6`(email, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx60 ON `bucket-6`(city, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx71 ON `bucket-7`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx72 ON `bucket-7`(name, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx73 ON `bucket-7`(city, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx74 ON `bucket-7`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx75 ON `bucket-7`(alt_email, coins) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx76 ON `bucket-7`(coins, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx77 ON `bucket-7`(alt_email, category) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx78 ON `bucket-7`(alt_email, email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx79 ON `bucket-7`(email, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx70 ON `bucket-7`(city, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx81 ON `bucket-8`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx82 ON `bucket-8`(name, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx83 ON `bucket-8`(city, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx84 ON `bucket-8`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx85 ON `bucket-8`(alt_email, coins) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx86 ON `bucket-8`(coins, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx87 ON `bucket-8`(alt_email, category) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx88 ON `bucket-8`(alt_email, email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx89 ON `bucket-8`(email, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx80 ON `bucket-8`(city, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx91 ON `bucket-9`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx92 ON `bucket-9`(name, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx93 ON `bucket-9`(city, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx94 ON `bucket-9`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx95 ON `bucket-9`(alt_email, coins) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx96 ON `bucket-9`(coins, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx97 ON `bucket-9`(alt_email, category) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx98 ON `bucket-9`(alt_email, email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx99 ON `bucket-9`(email, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx90 ON `bucket-9`(city, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx101 ON `bucket-10`(alt_email, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx102 ON `bucket-10`(name, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx103 ON `bucket-10`(city, name) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx104 ON `bucket-10`(alt_email, city) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx105 ON `bucket-10`(alt_email, coins) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx106 ON `bucket-10`(coins, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx107 ON `bucket-10`(alt_email, category) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx108 ON `bucket-10`(alt_email, email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx109 ON `bucket-10`(email, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    CREATE INDEX idx100 ON `bucket-10`(city, alt_email) PARTITION BY HASH(META().id) WITH {"defer_build": true};
+    BUILD INDEX ON `bucket-1`(idx11, idx12, idx13, idx14, idx15, idx16, idx17, idx18, idx19, idx10);
+    BUILD INDEX ON `bucket-2`(idx21, idx22, idx23, idx24, idx25, idx26, idx27, idx28, idx29, idx20);
+    BUILD INDEX ON `bucket-3`(idx31, idx32, idx33, idx34, idx35, idx36, idx37, idx38, idx39, idx30);
+    BUILD INDEX ON `bucket-4`(idx41, idx42, idx43, idx44, idx45, idx46, idx47, idx48, idx49, idx40);
+    BUILD INDEX ON `bucket-5`(idx51, idx52, idx53, idx54, idx55, idx56, idx57, idx58, idx59, idx50);
+    BUILD INDEX ON `bucket-6`(idx61, idx62, idx63, idx64, idx65, idx66, idx67, idx68, idx69, idx60);
+    BUILD INDEX ON `bucket-7`(idx71, idx72, idx73, idx74, idx75, idx76, idx77, idx78, idx79, idx70);
+    BUILD INDEX ON `bucket-8`(idx81, idx82, idx83, idx84, idx85, idx86, idx87, idx88, idx89, idx80);
+    BUILD INDEX ON `bucket-9`(idx91, idx92, idx93, idx94, idx95, idx96, idx97, idx98, idx99, idx90);
+    BUILD INDEX ON `bucket-10`(idx101, idx102, idx103, idx104, idx105, idx106, idx107, idx108, idx109, idx100);
+
+
+[access]
+updates = 5
+reads = 5
+items = 300000
+throughput = 1000
+spring_batch_size = 10
+workers = 1
+n1ql_queries = range-scan1,range-scan2,range-scan3,range-scan4,range-scan5,range-scan6,range-scan7,range-scan8,range-scan9,range-scan10
+n1ql_batch_size = 12
+n1ql_workers = 1
+n1ql_throughput = 12
+
+[n1ql-range-scan1]
+statement = SELECT name AS _name, alt_email AS _alt_email FROM `bucket-1` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan2]
+statement = SELECT name AS _name, alt_email AS _alt_email FROM `bucket-2` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan3]
+statement = SELECT name AS _name, alt_email AS _alt_email FROM `bucket-3` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan4]
+statement = SELECT name AS _name, alt_email AS _alt_email FROM `bucket-4` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan5]
+statement = SELECT name AS _name, alt_email AS _alt_email FROM `bucket-5` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan6]
+statement = SELECT name AS _name, alt_email AS _alt_email FROM `bucket-6` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan7]
+statement = SELECT name AS _name, alt_email AS _alt_email FROM `bucket-7` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan8]
+statement = SELECT name AS _name, alt_email AS _alt_email FROM `bucket-8` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan9]
+statement = SELECT name AS _name, alt_email AS _alt_email FROM `bucket-9` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []
+
+[n1ql-range-scan10]
+statement = SELECT name AS _name, alt_email AS _alt_email FROM `bucket-10` WHERE alt_email > 'a0' limit 1;
+scan_consistency = not_bounded
+args = []

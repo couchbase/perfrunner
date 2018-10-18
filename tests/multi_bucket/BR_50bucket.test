@@ -1,0 +1,40 @@
+[test_case]
+test = perfrunner.tests.rebalance.RebalanceSimpleKVTest
+
+[showfast]
+title = Rebalance-in (min), 3 -> 4, 50 bucket x 60K x 1KB, 100 KV ops/sec
+component = multi_bucket
+sub_category = BR
+
+[cluster]
+mem_quota = 45000
+index_mem_quota = 100000
+initial_nodes = 3
+num_buckets = 50
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[bucket]
+replica_number=1
+replica_index=0
+
+[load]
+items = 60000
+size = 1024
+workers = 10
+key_fmtr = hex
+
+[access]
+updates = 1
+reads = 1
+items = 60000
+throughput = 100
+spring_batch_size = 2
+workers = 1
+
+[rebalance]
+nodes_after = 4
+start_after = 600
+stop_after = 600

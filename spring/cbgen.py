@@ -101,19 +101,21 @@ class CBAsyncGen:
         self.client.timeout = self.TIMEOUT
 
     def create(self, key: str, doc: dict, persist_to: int = 0,
-               replicate_to: int = 0):
+               replicate_to: int = 0, ttl: int = 0):
         return self.client.upsert(key, doc,
                                   persist_to=persist_to,
-                                  replicate_to=replicate_to)
+                                  replicate_to=replicate_to,
+                                  ttl=ttl)
 
     def read(self, key: str):
         return self.client.get(key)
 
     def update(self, key: str, doc: dict, persist_to: int = 0,
-               replicate_to: int = 0):
+               replicate_to: int = 0, ttl: int = 0):
         return self.client.upsert(key, doc,
                                   persist_to=persist_to,
-                                  replicate_to=replicate_to)
+                                  replicate_to=replicate_to,
+                                  ttl=ttl)
 
     def delete(self, key: str):
         return self.client.remove(key)
@@ -142,6 +144,7 @@ class CBGen(CBAsyncGen):
         self.client.timeout = self.TIMEOUT
         if n1ql_timeout:
             self.client.n1ql_timeout = n1ql_timeout
+        logger.info("Connection string: {}".format(connection_string))
 
     @quiet
     @backoff

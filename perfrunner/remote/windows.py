@@ -6,7 +6,7 @@ from fabric.exceptions import CommandTimeout
 from logger import logger
 from perfrunner.helpers.misc import uhex
 from perfrunner.remote import Remote
-from perfrunner.remote.context import all_servers
+from perfrunner.remote.context import all_servers, master_server
 
 
 class RemoteWindows(Remote):
@@ -181,6 +181,10 @@ class RemoteWindows(Remote):
         pass
 
     def restart_with_alternative_num_vbuckets(self, num_vbuckets):
+        pass
+
+    @master_server
+    def enable_nonlocal_diag_eval(self):
         pass
 
     def disable_wan(self):

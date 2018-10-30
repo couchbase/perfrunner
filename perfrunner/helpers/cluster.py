@@ -237,6 +237,9 @@ class ClusterManager:
         Tune bucket settings (e.g., max_num_shards or max_num_auxio) using
         "/diag/eval" and restart the entire cluster.
         """
+        if self.test_config.bucket_extras:
+            self.remote.enable_nonlocal_diag_eval()
+
         cmd = 'ns_bucket:update_bucket_props("{}", ' \
               '[{{extra_config_string, "{}={}"}}]).'
 
@@ -246,6 +249,7 @@ class ClusterManager:
                 for bucket in self.test_config.buckets:
                     diag_eval = cmd.format(bucket, option, value)
                     self.rest.run_diag_eval(master, diag_eval)
+
         if self.test_config.bucket_extras:
             self.remote.restart()
             self.wait_until_healthy()

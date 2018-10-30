@@ -218,6 +218,12 @@ class RemoteLinux(Remote):
         run('systemctl restart couchbase-server', pty=False)
         run('systemctl unset-environment COUCHBASE_NUM_VBUCKETS')
 
+    @master_server
+    def enable_nonlocal_diag_eval(self):
+        logger.info('Enabling non-local diag/eval')
+        run("curl localhost:8091/diag/eval -u Administrator:password "
+            "-d 'ns_config:set(allow_nonlocal_eval, true).'", pty=False)
+
     @all_servers
     def stop_server(self):
         logger.info('Stopping Couchbase Server')

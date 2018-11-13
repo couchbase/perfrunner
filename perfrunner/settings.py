@@ -804,6 +804,7 @@ class EventingSettings:
     WORKER_QUEUE_CAP = 100000
     TIMER_TIMEOUT = 0
     TIMER_FUZZ = 0
+    CONFIG_FILE = "tests/eventing/config/function_sample.json"
 
     def __init__(self, options: dict):
         self.functions = {}
@@ -823,6 +824,7 @@ class EventingSettings:
                                              self.TIMER_TIMEOUT))
         self.timer_fuzz = int(options.get("timer_fuzz",
                                           self.TIMER_FUZZ))
+        self.config_file = options.get("config_file", self.CONFIG_FILE)
 
     def __str__(self) -> str:
         return str(self.__dict__)

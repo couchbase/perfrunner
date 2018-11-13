@@ -16,8 +16,6 @@ class EventingTest(PerfTest):
     to measure eventing performance parameters.
     """
 
-    FUNCTION_SAMPLE_FILE = "tests/eventing/config/function_sample.json"
-
     COLLECTORS = {'eventing_stats': True, 'ns_server_system': True}
 
     def __init__(self, *args):
@@ -30,6 +28,7 @@ class EventingTest(PerfTest):
         self.worker_queue_cap = self.test_config.eventing_settings.worker_queue_cap
         self.timer_timeout = self.test_config.eventing_settings.timer_timeout
         self.timer_fuzz = self.test_config.eventing_settings.timer_fuzz
+        self.config_file = self.test_config.eventing_settings.config_file
         self.time = self.test_config.access_settings.time
         self.rebalance_settings = self.test_config.rebalance_settings
 
@@ -52,7 +51,7 @@ class EventingTest(PerfTest):
                                         function=name)
 
     def set_functions(self) -> float:
-        with open(self.FUNCTION_SAMPLE_FILE) as f:
+        with open(self.config_file) as f:
             func = json.load(f)
 
         func["settings"]["worker_count"] = self.worker_count

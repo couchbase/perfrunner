@@ -32,7 +32,12 @@
         {"job": "ares", "cluster": "ares.spec", "test_config": "kv_fragmentation_5M.test"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "kv_mem_20M_1024B.test"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "kv_mem_20M_1024B_norepl.test"},
-        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_mem_20M_256B.test"}
+        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_mem_20M_256B.test"},
+        {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "kv_fragmentation_pathoGen_frozen.test"},
+        {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "kv_fragmentation_5M.test"},
+        {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "kv_max_ops_reads_512.test"},
+        {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "kv_max_ops_balanced_512.test"},
+        {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "kv_max_ops_writes_512.test"}
     ],
     "KV-DGM": [
         {"job": "hera", "cluster": "hera.spec", "test_config": "kv_latency_read_1000M.test"},
@@ -103,7 +108,12 @@
         {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql_thr_CI19_20M_gsi_moi_false.test"},
         {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql_thr_CI19_20M_gsi_moi_ok.test"},
         {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql_thr_Q21_20M_gsi_moi_false.test"},
-        {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql_thr_Q21_20M_gsi_moi_ok.test"}
+        {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql_thr_Q21_20M_gsi_moi_ok.test"},
+        {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q1_20M_1workload_inst.test"},
+        {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q2_20M_gsi_moi_false.test"},
+        {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q2_20M_gsi_moi_ok.test"},
+        {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q3_20M_gsi_moi_false.test"},
+        {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q3_20M_gsi_moi_ok.test"}
     ],
     "Rebalance": [
         {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_in_100M_dgm_kv.test"},
@@ -173,7 +183,8 @@
 
         {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_5x5_unidir_1G_dgm.test"},
         {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_5x5_unidir_500M_dgm_2b.test"},
-        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_5x5_unidir_1G_dgm_wan.test"}
+        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_5x5_unidir_1G_dgm_wan.test"},
+        {"job": "zeus",  "cluster": "zeus_2x2.spec",  "test_config": "xdcr_init_2x2_unidir_25M.test"}
     ],
     "YCSB": []
 }

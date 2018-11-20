@@ -4,7 +4,7 @@ arke =
     172.23.97.13:kv
     172.23.97.14:kv
     172.23.97.15:kv
-    172.23.97.18:query
+    172.23.97.18:n1ql
     172.23.97.19:index
     172.23.97.20:index
 
@@ -23,7 +23,6 @@ ssh = root:couchbase
 
 [parameters]
 OS = CentOS 7
-CPU = E5-2630 v2 (24 kv, 49 index vCPU)
-Memory = 256 GB index, 64 GB query
+CPU = Data: E5-2630 v2 (24 vCPU), Query & Index: E5-2680 v3 (48 vCPU)
+Memory = Data & Query: 64GB, Index: 256GB
 Disk = Samsung SM863
-

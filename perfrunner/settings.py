@@ -292,6 +292,8 @@ class BucketSettings:
     REPLICA_INDEX = 0
     EVICTION_POLICY = 'valueOnly'  # alt: fullEviction
     BUCKET_TYPE = 'membase'  # alt: ephemeral
+    FAILOVER_MIN = 5
+    FAILOVER_MAX = 30
 
     def __init__(self, options: dict):
         self.password = options.get('password', self.PASSWORD)
@@ -309,6 +311,10 @@ class BucketSettings:
         self.conflict_resolution_type = options.get('conflict_resolution_type')
 
         self.compression_mode = options.get('compression_mode')
+
+        self.failover_min = int(options.get('failover_min', self.FAILOVER_MIN))
+
+        self.failover_max = int(options.get('failover_max', self.FAILOVER_MAX))
 
 
 class CompactionSettings:

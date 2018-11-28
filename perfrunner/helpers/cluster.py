@@ -259,8 +259,10 @@ class ClusterManager:
         self.remote.restart()
 
     def enable_auto_failover(self):
+        failover_min = self.test_config.bucket.failover_min
+        failover_max = self.test_config.bucket.failover_max
         for master in self.cluster_spec.masters:
-            self.rest.enable_auto_failover(master)
+            self.rest.enable_auto_failover(master, failover_min, failover_max)
 
     def wait_until_warmed_up(self):
         if self.test_config.bucket.bucket_type in ('ephemeral', 'memcached'):

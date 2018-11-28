@@ -12,6 +12,10 @@ initial_nodes = 3
 num_buckets = 1
 ipv6 = 1
 
+[bucket]
+failover_min = 60
+failover_max = 120
+
 [load]
 items = 100000000
 size = 1024

@@ -1,0 +1,30 @@
+[test_case]
+test = perfrunner.tests.kv.MixedLatencyDGMTest
+
+[cluster]
+mem_quota = 6144
+initial_nodes = 2
+num_buckets = 1
+num_vbuckets = 256
+kernel_mem_limit = 12G
+kernel_mem_limit_services = kv
+
+[bucket]
+eviction_policy = fullEviction
+
+[load]
+items = 250000000
+size = 1024
+workers = 100
+key_fmtr = hex
+doc_gen = large
+
+[access]
+creates = 33
+reads = 34
+updates = 33
+deletes = 0
+items = 250000000
+workers = 80
+throughput = 20000
+time = 3600

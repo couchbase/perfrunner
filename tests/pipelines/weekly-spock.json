@@ -38,7 +38,10 @@
         {"job": "ares", "cluster": "ares.spec", "test_config": "kv_max_ops_balanced_512_cpu_ephemeral.test"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "kv_mem_20M_1024B_ephemeral.test"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "kv_max_ops_nru_ephemeral.test"},
-        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_latency_xattr_20M.test"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "kv_latency_xattr_20M.test"}
+
+    ],
+    "KV-Windows":[
         {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "kv_max_ops_balanced_512_ephemeral.test"}
     ],
     "KV-DGM": [],
@@ -70,13 +73,16 @@
         {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql_thr_Q3_150M_gsi_plasma_dgm_false.test"},
         {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql_thr_Q3_150M_gsi_plasma_dgm_ok.test"},
         {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql_lat_Q2_150M_30Kops_450Qops_gsi_plasma_dgm_false.test"},
-        {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql_lat_Q2_150M_30Kops_8KQops_gsi_plasma_dgm_ok.test"},
+        {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql_lat_Q2_150M_30Kops_8KQops_gsi_plasma_dgm_ok.test"}
 
+    ],
+    "N1QL-Windows": [
         {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q2_20M_gsi_plasma_false.test"},
         {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q2_20M_gsi_plasma_ok.test"},
         {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q3_20M_gsi_plasma_false.test"},
         {"job": "zeus",              "cluster": "zeus.spec", "test_config": "n1ql/n1ql_thr_Q3_20M_gsi_plasma_ok.test"}
     ],
+    "N1QL-Arke": [],
     "Rebalance": [],
     "Rebalance-Large-Scale": [
         {"job": "titan", "cluster": "titan.spec", "test_config": "reb_in_500M_kv.test"},
@@ -91,6 +97,7 @@
         {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_init_2x2_unidir_100M_ephemeral.test"},
         {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_init_1x1_unidir_100M_limit.test"}
     ],
+    "XDCR-Windows": [],
     "YCSB": [
         {"job": "hebe", "cluster": "hebe_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_eph.test"},
         {"job": "hebe", "cluster": "hebe_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_eph_norepl.test"},

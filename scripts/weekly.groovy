@@ -74,6 +74,12 @@ pipeline {
                         buildComponent('DCP', testCases)
                     }
                 }
+                stage('KV-Windows') {
+                    when { expression { return params.KV } }
+                    steps {
+                        buildComponent('KV-Windows', testCases)
+                    }
+                }
                 stage('KV-DGM') {
                     when { expression { return params.KV } }
                     steps {
@@ -84,6 +90,18 @@ pipeline {
                     when { expression { return params.N1QL } }
                     steps {
                         buildComponent('N1QL', testCases)
+                    }
+                }
+                stage('N1QL-Windows') {
+                    when { expression { return params.N1QL } }
+                    steps {
+                        buildComponent('N1QL-Windows', testCases)
+                    }
+                }
+                stage('N1QL-Arke') {
+                    when { expression { return params.N1QL } }
+                    steps {
+                        buildComponent('N1QL-Arke', testCases)
                     }
                 }
                 stage('Tools') {
@@ -114,6 +132,12 @@ pipeline {
                     when { expression { return params.XDCR } }
                     steps {
                         buildComponent('XDCR', testCases)
+                    }
+                }
+                stage('XDCR-Windows') {
+                    when { expression { return params.XDCR } }
+                    steps {
+                        buildComponent('XDCR-Windows', testCases)
                     }
                 }
                 stage('YCSB') {

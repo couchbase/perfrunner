@@ -77,6 +77,7 @@
         {"job": "ares-dcp", "cluster": "ares.spec", "test_config": "dcp/java_dcp_throughput_4n_1B_compressed.test"},
         {"job": "ares-dcp", "cluster": "ares.spec", "test_config": "dcp/java_dcp_throughput_4n_1B_uncompressed.test"}
     ],
+    "KV-Windows":[],
     "KV-DGM": [],
     "N1QL": [
         {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql_thr_CI6_20M_moi_ok_part.test"},
@@ -85,8 +86,10 @@
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql_thr_Q1_20M_xattr.test"},
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql_thr_Q1_20M_audit.test"},
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql_thr_Q2_20M_gsi_moi_ok_xattr.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql_thr_Q2_20M_gsi_moi_false_xattr.test"},
-
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql_thr_Q2_20M_gsi_moi_false_xattr.test"}
+    ],
+    "N1QL-Windows": [],
+    "N1QL-Arke":[
         {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql_thr_JOIN_Q8_10M_gsi_moi_false.test"},
         {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql_thr_JOIN_Q8_10M_gsi_moi_ok.test"},
         {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql_thr_JOIN_Q9_10M_gsi_moi_false.test"},
@@ -145,6 +148,7 @@
     "XDCR": [
         {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_init_1x1_unidir_100M_scram_sha.test"}
     ],
+    "XDCR-Windows": [],
     "YCSB": [
         {"job": "hebe", "cluster": "hebe.spec", "test_config": "ycsb_workloade_1node_part.test"},
         {"job": "hebe", "cluster": "hebe.spec", "test_config": "ycsb_workloade_4nodes_part.test"}

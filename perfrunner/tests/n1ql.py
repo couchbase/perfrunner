@@ -141,6 +141,7 @@ class N1QLJoinTest(N1QLTest):
             super(N1QLTest, self).access_bg(settings=access_settings,
                                             target_iterator=(target, ))
 
+    @with_profiles
     @with_stats
     def access(self, *args):
         access_settings = self.test_config.access_settings

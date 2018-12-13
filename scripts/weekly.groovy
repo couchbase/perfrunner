@@ -13,7 +13,7 @@ def buildTests(tests) {
 }
 
 def buildComponent(component, testCases) {
-    for ( release in ['watson', 'spock', 'vulcan', 'alice'] ) {
+    for ( release in ['watson', 'spock', 'vulcan', 'alice', 'mad-hatter'] ) {
         if ( testCases.containsKey(release) ) {
             buildTests(testCases[release][component])
         }
@@ -37,6 +37,9 @@ pipeline {
                     }
                     if ( params.alice_test_suite != '' ) {
                         testCases['alice']  = readJSON file: params.alice_test_suite
+                    }
+                    if ( params.mad-hatter_test_suite != '' ) {
+                        testCases['mad-hatter']  = readJSON file: params.mad-hatter_test_suite
                     }
                 }
             }

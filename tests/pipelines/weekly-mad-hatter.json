@@ -1,0 +1,23 @@
+{
+    "Analytics": [],
+    "Eventing": [
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_fun_bktop_src_bkt_mut.test"}
+    ],
+    "FTS": [],
+    "GSI": [],
+    "KV": [],
+    "KV-DGM": [],
+    "KV-Windows":[],
+    "N1QL": [],
+    "N1QL-Arke": [],
+    "N1QL-Windows": [],
+    "Rebalance": [],
+    "Rebalance-Large-Scale": [],
+    "Tools": [],
+    "Views": [],
+    "XDCR": [],
+    "XDCR-Windows": [],
+    "YCSB": []
+
+
+}

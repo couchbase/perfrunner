@@ -93,6 +93,15 @@ class ReadLatencyDGMTest(KVTest):
 
     COLLECTORS = {'disk': True, 'latency': True, 'net': False}
 
+    @with_stats
+    def custom_load(self, *args):
+        super().load(*args)
+
+    def load(self, *args):
+        self.COLLECTORS["latency"] = False
+        self.custom_load()
+        self.COLLECTORS["latency"] = True
+
     def _report_kpi(self):
         self.reporter.post(
             *self.metrics.kv_latency(operation='get')

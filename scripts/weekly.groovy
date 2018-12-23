@@ -38,8 +38,8 @@ pipeline {
                     if ( params.alice_test_suite != '' ) {
                         testCases['alice']  = readJSON file: params.alice_test_suite
                     }
-                    if ( params.mad-hatter_test_suite != '' ) {
-                        testCases['mad-hatter']  = readJSON file: params.mad-hatter_test_suite
+                    if ( params.madhatter_test_suite != '' ) {
+                        testCases['mad-hatter']  = readJSON file: params.madhatter_test_suite
                     }
                 }
             }

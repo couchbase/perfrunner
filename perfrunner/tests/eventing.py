@@ -103,13 +103,16 @@ class EventingTest(PerfTest):
                     stat["event_processing_stats"]["timer_responses_received"]
         return doc_timer_responses
 
-    def get_timer_events(self, event_name: str, function_name: str):
-        timer_events = 0
+    def get_timer_msg_counter(self):
+        timer_msg_counter = 0
         for node in self.eventing_nodes:
-            events = self.rest.get_num_events_processed(
-                event=event_name, node=node, name=function_name)
-            timer_events += events
-        return timer_events
+            stats = self.rest.get_eventing_stats(node=node)
+            for stat in stats:
+                logger.info("Execution stats for {node}: {stats}"
+                            .format(node=node,
+                                    stats=pretty_dict(stat["execution_stats"])))
+                timer_msg_counter += stat["execution_stats"]["timer_msg_counter"]
+        return timer_msg_counter
 
     @with_stats
     @timeit
@@ -436,10 +439,11 @@ class TimerTest(EventingTest):
 class TimerThroughputTest(TimerTest):
 
     def _report_kpi(self, time_elapsed):
+        timer_msg_counter = self.get_timer_msg_counter()
         self.reporter.post(
             *self.metrics.function_throughput(time=time_elapsed,
-                                              event_name="timer_events",
-                                              events_processed=0)
+                                              event_name=None,
+                                              events_processed=timer_msg_counter)
         )
 
 
@@ -470,11 +474,10 @@ class TimerUndeployTest(TimerTest):
 
 
 class TimerRebalanceThroughputTest(EventingRebalance):
-    EVENT_NAME = "timer_events"
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.timer_events = 0
+        self.timer_msg_counter = 0
         self.function_names = []
         for name, filename in self.functions.items():
             self.function_names.append(name)
@@ -483,10 +486,10 @@ class TimerRebalanceThroughputTest(EventingRebalance):
     def execute_handler(self):
         self.pre_rebalance()
 
-        timer_events = self.get_timer_events(self.EVENT_NAME, self.function_names[0])
+        timer_msg_counter = self.get_timer_msg_counter()
         time_taken = self.rebalance_time()
-        self.timer_events = \
-            self.get_timer_events(self.EVENT_NAME, self.function_names[0]) - timer_events
+        self.timer_msg_counter = \
+            self.get_timer_msg_counter() - timer_msg_counter
 
         self.post_rebalance()
         time_taken = round(time_taken, 2)
@@ -512,7 +515,7 @@ class TimerRebalanceThroughputTest(EventingRebalance):
         self.reporter.post(
             *self.metrics.function_throughput(time=time_elapsed,
                                               event_name=None,
-                                              events_processed=self.timer_events)
+                                              events_processed=self.timer_msg_counter)
         )
 
 

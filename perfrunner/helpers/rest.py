@@ -788,17 +788,16 @@ class RestHelper:
 
         return 0
 
-    def get_deployed_apps(self, node: str):
-        logger.info('get deployed apps on node {}'.format(node))
+    def get_apps_with_status(self, node: str, status: str):
+        logger.info('get apps with status {} on node {}'.format(status, node))
 
-        api = 'http://{}:{}/getDeployedApps'.format(node, EVENTING_PORT)
-        return self.get(url=api).json()
-
-    def get_running_apps(self, node: str):
-        logger.info('get running apps on node {}'.format(node))
-
-        api = 'http://{}:{}/getRunningApps'.format(node, EVENTING_PORT)
-        return self.get(url=api).json()
+        api = 'http://{}:{}//api/v1/status'.format(node, EVENTING_PORT)
+        data = self.get(url=api).json()
+        apps = []
+        for app in data["apps"]:
+            if app["composite_status"] == status:
+                apps.append(app["name"])
+        return apps
 
     def get_eventing_stats(self, node: str, full_stats: bool = False) -> dict:
         logger.info('get eventing stats on node {}'.format(node))

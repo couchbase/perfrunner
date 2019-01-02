@@ -406,7 +406,7 @@ class Monitor(RestHelper):
         for node in nodes:
             retry = 1
             while retry < self.MAX_RETRY_BOOTSTRAP:
-                if function in self.get_deployed_apps(node):
+                if function in self.get_apps_with_status(node, "deployed"):
                     break
                 time.sleep(self.POLLING_INTERVAL)
                 retry += 1
@@ -481,11 +481,10 @@ class Monitor(RestHelper):
         logger.info('Waiting for {} function to undeploy'.format(function))
         retry = 1
         while retry < self.MAX_RETRY_TIMER_EVENT:
-            op = self.get_running_apps(node)
-            logger.info(op)
-            if function not in op:
+            op = self.get_apps_with_status(node, "undeployed")
+            if function in op:
                 break
             time.sleep(self.POLLING_INTERVAL_EVENTING)
             retry += 1
         if retry == self.MAX_RETRY_TIMER_EVENT:
-            logger.info('Function {} failed to deploy...!!!'.format(function))
+            logger.info('Function {} failed to undeploy...!!!'.format(function))

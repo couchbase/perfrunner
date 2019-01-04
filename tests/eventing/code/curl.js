@@ -9,7 +9,7 @@ function OnUpdate(doc, meta) {
     };
 
     try {
-        var response = cURL('POST', onekb, request);
+        var response = curl('POST', onekb, request);
     } catch (e) {
         log('error ', e);
     }

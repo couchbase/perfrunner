@@ -1,0 +1,44 @@
+[test_case]
+test = perfrunner.tests.n1ql.TpcDsLatencyTest
+
+[showfast]
+title = WF4, Windowing query, Plasma, not_bounded
+component = n1ql
+category = windowing
+sub_category = Latency
+
+[cluster]
+mem_quota = 50000
+index_mem_quota = 300000
+initial_nodes = 6
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+
+[secondary]
+indexer.settings.storage_mode = plasma
+indexer.settings.scan_timeout = 300000
+
+[restore]
+import_file = /home/backups/tpc-ds.json
+
+[load]
+doc_gen = tpc_ds
+
+[index]
+statements =
+    CREATE INDEX wf4 ON `bucket-1`(DATE_PART_STR(sold_date, 'year'), customer.preferred_flag, customer.birth_country, wholesale_cost, sales_price);
+
+[access]
+items = 1000000
+time = 600
+n1ql_queries = windowing
+n1ql_batch_size = 1
+n1ql_workers = 4
+n1ql_timeout = 300
+
+[n1ql-windowing]
+statement = SELECT customer.birth_country AS country, SUM(wholesale_cost - sales_price) AS year_total, MAX(SUM(wholesale_cost - sales_price)) OVER (PARTITION BY customer.birth_country) as max_for_country, MAX(SUM(wholesale_cost - sales_price)) OVER () as max_total, MIN(SUM(wholesale_cost - sales_price)) OVER (PARTITION BY customer.birth_country) as min_for_country, MIN(SUM(wholesale_cost - sales_price)) OVER () as min_total FROM `bucket-1`  WHERE DATE_PART_STR(sold_date, "year") = $1 AND customer.preferred_flag = true  GROUP BY customer.birth_country;
+scan_consistency = not_bounded
+args = [{year}]

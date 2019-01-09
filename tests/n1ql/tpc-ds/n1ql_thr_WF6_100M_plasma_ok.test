@@ -1,0 +1,42 @@
+[test_case]
+test = perfrunner.tests.n1ql.TpcDsThroughputTest
+
+[showfast]
+title = WF6, Windowing query, Plasma, not_bounded
+component = n1ql
+category = windowing
+sub_category = Throughput
+
+[cluster]
+mem_quota = 50000
+index_mem_quota = 300000
+initial_nodes = 6
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[restore]
+import_file = /home/backups/tpc-ds.json
+
+[load]
+doc_gen = tpc_ds
+
+[index]
+statements =
+    CREATE INDEX wf6 ON `bucket-1`(customer.gender, customer.marital_status, customer.education_status, item.id, quantity, list_price, coupon_amt, sales_price);
+
+[access]
+items = 1000000
+time = 600
+n1ql_queries = windowing
+n1ql_batch_size = 1
+n1ql_workers = 60
+
+[n1ql-windowing]
+statement = SELECT item.id, AVG(quantity) AS avg_quantity, AVG(list_price) AS avg_list_price, AVG(coupon_amt) AS avg_coupon_amt, AVG(sales_price) AS avg_sales_price, NTH_VALUE(MIN(quantity), 2) OVER (PARTITION BY item.id ORDER BY item.id ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)  as n_val_on_quantity, AVG(avg(list_price)) OVER (PARTITION BY item.id ORDER BY item.id DESC RANGE BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING)  as avg_list_price_over, SUM(sum(sales_price)) OVER (PARTITION BY item.id ORDER BY item.id RANGE BETWEEN UNBOUNDED PRECEDING AND  CURRENT ROW) as total_sales_price FROM `bucket-1` WHERE customer.gender = $1 AND customer.marital_status = $2 AND customer.education_status = $3 GROUP BY item.id ORDER BY item.id LIMIT 100;
+scan_consistency = not_bounded
+args = ["{gender}", "{marital_status}", "{education_status}"]

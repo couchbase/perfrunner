@@ -1,0 +1,42 @@
+[test_case]
+test = perfrunner.tests.n1ql.TpcDsLatencyTest
+
+[showfast]
+title = WF5, Windowing query, Plasma, not_bounded
+component = n1ql
+category = windowing
+sub_category = Latency
+
+[cluster]
+mem_quota = 50000
+index_mem_quota = 300000
+initial_nodes = 6
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[restore]
+import_file = /home/backups/tpc-ds.json
+
+[load]
+doc_gen = tpc_ds
+
+[index]
+statements =
+    CREATE INDEX wf5 ON `bucket-1`(DATE_PART_STR(sold_date, 'year'), DATE_PART_STR(sold_date, 'month'), sales_price, customer.state);
+
+[access]
+items = 1000000
+time = 600
+n1ql_queries = windowing
+n1ql_batch_size = 1
+n1ql_workers = 4
+
+[n1ql-windowing]
+statement = SELECT customer.state, cnt FROM `bucket-1` WHERE DATE_PART_STR(sold_date, 'year') = $1 AND DATE_PART_STR(sold_date, 'month') = $2 AND sales_price > $3 GROUP BY customer.state LETTING cnt = COUNT(1) HAVING cnt >= 10 ORDER BY cnt, customer.state;
+scan_consistency = not_bounded
+args = [{year}, {month}, {sales_price}]

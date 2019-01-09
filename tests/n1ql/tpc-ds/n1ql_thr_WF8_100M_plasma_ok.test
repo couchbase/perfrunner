@@ -1,0 +1,43 @@
+[test_case]
+test = perfrunner.tests.n1ql.TpcDsThroughputTest
+
+[showfast]
+title = WF8, Windowing query, Plasma, not_bounded
+component = n1ql
+category = windowing
+sub_category = Throughput
+
+[cluster]
+mem_quota = 50000
+index_mem_quota = 300000
+initial_nodes = 6
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[restore]
+import_file = /home/backups/tpc-ds.json
+
+[load]
+doc_gen = tpc_ds
+
+[index]
+statements =
+    CREATE INDEX wf8 ON `bucket-1`(customer.county, DATE_PART_STR(sold_date, 'year'), DATE_PART_STR(sold_date, 'month'), customer.gender, customer.marital_status, customer.education_status, customer.purchase_estimate, customer.credit_rating, customer.dep_count, customer.dep_employed_count, customer.dep_college_count);
+
+[access]
+items = 1000000
+time = 600
+n1ql_queries = windowing
+n1ql_batch_size = 1
+n1ql_workers = 60
+
+[n1ql-windowing]
+statement = SELECT customer.gender, customer.marital_status, customer.education_status, customer.purchase_estimate, customer.credit_rating, customer.dep_count, customer.dep_employed_count, customer.dep_college_count, COUNT(1) AS cnt, COUNT(1) OVER (PARTITION BY customer.gender, customer.marital_status, customer.education_status, customer.purchase_estimate, customer.credit_rating, customer.dep_count, customer.dep_employed_count, customer.dep_college_count ORDER BY customer.credit_rating) as deep_count FROM `bucket-1` WHERE customer.county IN $1 AND DATE_PART_STR(sold_date, 'year') = $2 AND DATE_PART_STR(sold_date, 'month') BETWEEN $3  AND $3 + 3 GROUP BY customer.gender, customer.marital_status, customer.education_status, customer.purchase_estimate, customer.credit_rating, customer.dep_count, customer.dep_employed_count, customer.dep_college_count ORDER BY customer.gender, customer.marital_status, customer.education_status, customer.purchase_estimate, customer.credit_rating, customer.dep_count, customer.dep_employed_count, customer.dep_college_count LIMIT 100;
+scan_consistency = not_bounded
+args = [{counties}, {year}, {month}]
+ad_hoc = true

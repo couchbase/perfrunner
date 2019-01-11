@@ -11,7 +11,7 @@
     "curl": [
         {
           "hostname": "http://172.23.96.38/cgi-bin/1kb_text.py",
-          "value": "onekb",
+          "value": "requestUrl",
           "is_auth": false,
           "username": "",
           "password": ""

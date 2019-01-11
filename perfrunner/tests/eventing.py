@@ -31,6 +31,7 @@ class EventingTest(PerfTest):
         self.config_file = self.test_config.eventing_settings.config_file
         self.time = self.test_config.access_settings.time
         self.rebalance_settings = self.test_config.rebalance_settings
+        self.request_url = self.test_config.eventing_settings.request_url
 
         for master in self.cluster_spec.masters:
             self.rest.add_rbac_user(
@@ -58,6 +59,9 @@ class EventingTest(PerfTest):
         func["settings"]["cpp_worker_thread_count"] = self.cpp_worker_thread_count
         func["settings"]["timer_worker_pool_size"] = self.timer_worker_pool_size
         func["settings"]["worker_queue_cap"] = self.worker_queue_cap
+        if "curl" in func["depcfg"]:
+            func["depcfg"]["curl"][0]["hostname"] = self.request_url
+
         time_to_deploy = 0
         for name, filename in self.functions.items():
             with open(filename, 'r') as myfile:

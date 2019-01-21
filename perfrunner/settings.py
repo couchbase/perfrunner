@@ -230,6 +230,25 @@ class StatsSettings:
         self.traced_processes = self.TRACED_PROCESSES + \
             options.get('traced_processes', '').split()
 
+class ProfilingSettings:
+
+    INTERVAL = 300  # 5 minutes
+
+    NUM_PROFILES = 1
+
+    PROFILES = 'cpu'
+
+    SERVICES = ''
+
+    def __init__(self, options: dict):
+        self.services = options.get('services',
+                                    self.SERVICES).split()
+        self.interval = int(options.get('interval',
+                                        self.INTERVAL))
+        self.num_profiles = int(options.get('num_profiles',
+                                            self.NUM_PROFILES))
+        self.profiles = options.get('profiles',
+                                    self.PROFILES).split(',')
 
 class BucketSettings:
 
@@ -923,6 +942,11 @@ class TestConfig(Config):
     def stats_settings(self) -> StatsSettings:
         options = self._get_options_as_dict('stats')
         return StatsSettings(options)
+
+    @property
+    def profiling_settings(self) -> ProfilingSettings:
+        options = self._get_options_as_dict('profiling')
+        return ProfilingSettings(options)
 
     @property
     def internal_settings(self) -> dict:

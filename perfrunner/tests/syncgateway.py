@@ -21,6 +21,8 @@ from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.reporter import ShowFastReporter
 from perfrunner.helpers.worker import  WorkerManager
+from perfrunner.helpers.profiler import Profiler, with_profiles
+from perfrunner.helpers.cluster import ClusterManager
 
 from perfrunner.settings import (
     ClusterSpec,
@@ -53,6 +55,8 @@ class SGPerfTest(PerfTest):
             self.worker_manager = WorkerManager(cluster_spec, test_config, verbose)
         self.settings = self.test_config.access_settings
         self.settings.syncgateway_settings = self.test_config.syncgateway_settings
+        self.profiler = Profiler(cluster_spec, test_config)
+        self.cluster = ClusterManager(cluster_spec, test_config)
 
     def download_ycsb(self):
         if self.worker_manager.is_remote:
@@ -100,6 +104,7 @@ class SGPerfTest(PerfTest):
         self.run_sg_phase("load docs", syncgateway_task_load_docs, self.settings, self.settings.time, False)
 
     @with_stats
+    @with_profiles
     def run_test(self):
         self.run_sg_phase("run test", syncgateway_task_run_test, self.settings, self.settings.time, True)
 

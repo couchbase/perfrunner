@@ -38,30 +38,13 @@ class SyncGatewayStats(Collector):
         "syncGateway_rest__requests_0800ms",
         "syncGateway_rest__requests_0900ms",
         "syncGateway_rest__requests_1000ms",
-        "syncGateway_stats__bulkApi_BulkDocsPerDocRollingMean",
-        "syncGateway_stats__bulkApi.BulkDocsRollingMean",
-        "syncGateway_stats__bulkApi.BulkGetPerDocRollingMean",
-        "syncGateway_stats__bulkApi.BulkGetRollingMean",
-        "syncGateway_stats__changesFeeds_active",
-        "syncGateway_stats__changesFeeds_total",
-        "syncGateway_stats__goroutines_highWaterMark",
-        "syncGateway_stats__handler.CheckAuthRollingMean",
-        "syncGateway_stats__indexReader.getChanges.Count",
-        "syncGateway_stats__indexReader.getChanges.Time",
-        "syncGateway_stats__indexReader.getChanges.UseCached",
-        "syncGateway_stats__indexReader.getChanges.UseIndexed",
-        "syncGateway_stats__indexReader.numReaders.OneShot",
-        "syncGateway_stats__indexReader.numReaders.Persistent",
-        "syncGateway_stats__indexReader.pollPrincipals.Count",
-        "syncGateway_stats__indexReader.pollPrincipals.Time:",
-        "syncGateway_stats__indexReader.pollReaders.Count",
-        "syncGateway_stats__indexReader.pollReaders.Time",
-        "syncGateway_stats__indexReader.seqHasher.GetClockTime",
-        "syncGateway_stats__indexReader.seqHasher.GetHash",
-        "syncGateway_stats__requests_active",
-        "syncGateway_stats__requests_total",
-        "syncGateway_stats__revisionCache_hits",
-        "syncGateway_stats__revisionCache_misses",
+        "syncgateway__global__resource_utilization__process_cpu_percent_utilization",
+        "syncgateway__global__resource_utilization__go_memstats_heapinuse",
+        "syncgateway__per_db__db__database__doc_writes_bytes_blip",
+        "syncgateway__per_db__db__database__doc_reads_bytes_blip",
+        "syncgateway__per_db__db__cache__rev_cache_hits",
+        "syncgateway__per_db__db__rev_cache_misses",
+        "syncgateway__per_db__db__chan_cache_misses",
     )
 
     def __init__(self, settings, test):
@@ -89,11 +72,28 @@ class SyncGatewayStats(Collector):
         self.rest = rest.RestHelper(test.cluster_spec)
         self.sg_stats = dict()
 
-    def get_metric_value_by_name(self, host, metic_name):
-        g, m = metic_name.split("__")
-        if g in self.sg_stats[host]:
-            if m in self.sg_stats[host][g]:
-                return self.sg_stats[host][g][m]
+    def get_metric_value_by_name(self, host,  metic_name):
+        metric_array = metic_name.split("__")
+        if len(metric_array) == 2:
+            g, m = metic_name.split("__")
+            if g in self.sg_stats[host]:
+                if m in self.sg_stats[host][g]:
+                    return self.sg_stats[host][g][m]
+        if len(metric_array) == 4:
+            i, j, k, l = metic_name.split("__")
+            if i in self.sg_stats[host]:
+                if j in self.sg_stats[host][i]:
+                    if k in self.sg_stats[host][i][j]:
+                        if l in self.sg_stats[host][i][j][k]:
+                            return self.sg_stats[host][i][j][k][l]
+        if len(metric_array) == 5:
+            i, j, k, l, m = metic_name.split("__")
+            if i in self.sg_stats[host]:
+                if j in self.sg_stats[host][i]:
+                    if k in self.sg_stats[host][i][j]:
+                        if l in self.sg_stats[host][i][j][k]:
+                            if m in self.sg_stats[host][i][j][k][l]:
+                                return self.sg_stats[host][i][j][k][l][m]
         return 0
 
     def update_metadata(self):

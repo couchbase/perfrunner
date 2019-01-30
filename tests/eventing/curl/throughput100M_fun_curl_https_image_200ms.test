@@ -1,10 +1,10 @@
 [test_case]
-test = perfrunner.tests.eventing.FunctionsLatencyTest
+test = perfrunner.tests.eventing.FunctionsThroughputTest
 
 [showfast]
-title = 80th percentile latency(ms), 1 bucket x 100M x 1KB, 4KV + 1Eventing node, 5s delay, single function-curl https image
+title = Functions executed/sec, 1 bucket x 100M x 1KB, 4KV + 1Eventing node, 5sec delay, single function-curl https image
 component = eventing
-category = lat
+category = thr
 sub_category = Function
 
 [stats]
@@ -37,11 +37,10 @@ functions = perf-test1:tests/eventing/code/curl_image.js
 worker_count = 24
 cpp_worker_thread_count = 2
 config_file = tests/eventing/config/function_curl.json
-request_url = https://172.23.96.38/cgi-bin/image/100kb_image_5s.py
+request_url = https://172.23.96.38/cgi-bin/image/100kb_image_200ms.py
 
 [access]
 updates = 100
 items = 100000000
 workers = 20
-throughput = 100000
 time = 1200

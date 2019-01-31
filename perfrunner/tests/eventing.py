@@ -5,6 +5,10 @@ import time
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.misc import pretty_dict
+from perfrunner.helpers.worker import (
+    pillowfight_data_load_task,
+    pillowfight_task,
+)
 from perfrunner.tests import PerfTest, TargetIterator
 
 
@@ -232,6 +236,16 @@ class FunctionsThroughputTest(EventingTest):
                                               event_name=None,
                                               events_processed=events_successfully_processed)
         )
+
+
+class FunctionsPillowfightThroughputTest(FunctionsThroughputTest):
+    def load(self, *args):
+        PerfTest.load(self, task=pillowfight_data_load_task)
+
+    def access_bg(self, *args):
+        self.download_certificate()
+
+        PerfTest.access_bg(self, task=pillowfight_task)
 
 
 class CreateTimerThroughputTest(EventingTest):

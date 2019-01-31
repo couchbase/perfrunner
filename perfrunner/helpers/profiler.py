@@ -91,6 +91,12 @@ class Profiler:
                 filename = '{}_{}_{}_{}.pprof'.format(host, service, profile, uhex()[:6])
                 url = 'http://{}:4985/_heap'.format(host)
                 requests.post(url=url, data=json.dumps({"file": filename}))
+
+            if profile == 'goroutine':
+                url = 'http://{}:4985/_debug/pprof/goroutine'.format(host)
+                response = requests.get(url=url)
+                self.save(host, service, profile, response.content)
+
             self.copy_profiles(host=host)
 
     def timer(self, **kwargs):

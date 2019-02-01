@@ -92,7 +92,7 @@
     shell: rpm -i /tmp/{{ couchbase_sync_gateway_package }}
 
   - name: SYNC GATEWAY | wait until sync gateway to listen on port
-    wait_for: port=4985 timeout=120
+    wait_for: port=4985 timeout=360
 
 # Install and launch sg_accel service
 - hosts: sg_accels

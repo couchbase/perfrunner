@@ -80,8 +80,9 @@ class SecondaryIndexTest(PerfTest):
 
     def validate_num_connections(self):
         config_data = self.get_data_from_config_json(self.configfile)
-        # Expecting few extra connections(Number of GSi clients) than concurrency in config file
-        ret = self.metrics.verify_series_in_limits(config_data["Concurrency"] + 5)
+        # Expecting connections = Number of GSi clients * concurrency in config file
+        ret = self.metrics.verify_series_in_limits(config_data["Concurrency"] *
+                                                   config_data["Clients"])
         if not ret:
             raise Exception('Validation for num_connections failed')
 

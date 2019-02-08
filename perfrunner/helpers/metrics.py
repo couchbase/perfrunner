@@ -774,8 +774,9 @@ class MetricHelper:
         metric_info = self._metric_info(metric_id=metric_id, title=title)
         return time, self._snapshots, metric_info
 
-    def function_latency(self, percentile: float, latency_stats: dict) -> Metric:
-        """Calculate eventing function latency stats.
+    @staticmethod
+    def eventing_get_percentile_latency(percentile: float, stats: dict) ->float:
+        """Calculate percentile latency.
 
         We get latency stats in format of- time:number of events processed in that time(samples)
         In this method we get latency stats then calculate percentile latency using-
@@ -783,17 +784,33 @@ class MetricHelper:
         Keep adding sample until we get required percentile number.
         For now it calculates for one function only
         """
+        latency = 0
+
+        total_samples = sum([sample for time, sample in stats])
+        latency_samples = 0
+        for time, samples in stats:
+            latency_samples += samples
+            if latency_samples >= (total_samples * percentile / 100):
+                latency = float(time) / 1000
+                break
+
+        latency = round(latency, 1)
+        return latency
+
+    def function_latency(self, percentile: float, latency_stats: dict) -> Metric:
+        """Calculate eventing function latency from stats."""
         metric_info = self._metric_info()
         latency = 0
+        curl_latency = 0
         for name, stats in latency_stats.items():
-            total_samples = sum([sample for time, sample in stats])
-            latency_samples = 0
-            for time, samples in stats:
-                latency_samples += samples
-                if latency_samples >= (total_samples * percentile / 100):
-                    latency = float(time) / 1000
-                    break
+            if name.startswith("curl_latency_"):
+                curl_latency = self.eventing_get_percentile_latency(percentile, stats)
+                logger.info("Curl percentile latency is {}ms".format(curl_latency))
+            else:
+                latency = self.eventing_get_percentile_latency(percentile, stats)
+                logger.info("On update percentile latency is {}ms".format(latency))
 
+        latency -= curl_latency
         latency = round(latency, 1)
         return latency, self._snapshots, metric_info
 

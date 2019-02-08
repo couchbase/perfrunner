@@ -91,6 +91,10 @@ class EventingTest(PerfTest):
             latency_stats = stat["latency_stats"]
             ret_val[stat["function_name"]] = sorted(latency_stats.items(), key=lambda x: int(x[0]))
 
+            curl_latency_stats = stat["curl_latency_stats"]
+            ret_val["curl_latency_" + stat["function_name"]] = \
+                sorted(curl_latency_stats.items(), key=lambda x: int(x[0]))
+
         return ret_val
 
     def get_on_update_success(self):

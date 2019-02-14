@@ -29,9 +29,9 @@ def main():
     elif 'toy' in _build:
         base_url = "http://mobile.jenkins.couchbase.com/view/Sync_Gateway/job/" \
                    "sgw-toy-build/{}/artifact".format(_build.split("/")[7])
-        _toy_build = _build.split("_")[2]
-        sg_package_name = "couchbase-sync-gateway-enterprise_{}_x86_64.rpm".format(_toy_build)
-        accel_package_name = "couchbase-sg-accel-enterprise_{}_x86_64.rpm".format(_toy_build)
+        _build = _build.split("_")[2]
+        sg_package_name = "couchbase-sync-gateway-enterprise_{}_x86_64.rpm".format(_build)
+        accel_package_name = "couchbase-sg-accel-enterprise_{}_x86_64.rpm".format(_build)
     else:
         v, b = _build.split("-")
         base_url = "http://172.23.120.24/builds/latestbuilds/sync_gateway/{}/{}".format(v, b)

@@ -23,6 +23,7 @@ from perfrunner.helpers.reporter import ShowFastReporter
 from perfrunner.helpers.worker import  WorkerManager
 from perfrunner.helpers.profiler import Profiler, with_profiles
 from perfrunner.helpers.cluster import ClusterManager
+from perfrunner.helpers.rest import RestHelper
 
 from perfrunner.settings import (
     ClusterSpec,
@@ -48,7 +49,9 @@ class SGPerfTest(PerfTest):
         self.test_config = test_config
         self.memcached = MemcachedHelper(test_config)
         self.remote = RemoteHelper(cluster_spec, test_config, verbose)
-        self.build = os.environ.get('SGBUILD') or "0.0.0-000"
+    #   self.build = os.environ.get('SGBUILD') or "0.0.0-000"
+        self.master_node = next(cluster_spec.masters)
+        self.build = self.rest.get_sgversion(self.master_node)
         self.metrics = MetricHelper(self)
         self.reporter = ShowFastReporter(cluster_spec, test_config, self.build)
         if self.test_config.test_case.use_workers:

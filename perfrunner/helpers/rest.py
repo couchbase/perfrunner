@@ -373,6 +373,15 @@ class RestHelper:
             .replace('-enterprise', '') \
             .replace('-community', '')
 
+    def get_sgversion(self, host: str) -> str:
+        logger.info('Getting SG  Server version')
+
+        api = 'http://{}:4985'.format(host)
+        r = self.get(url=api).json()
+        return r['version'] \
+            .replace('Couchbase Sync Gateway/', '') \
+            .replace(') EE', '').replace('(', '-').split(';')[0]
+
     def is_community(self, host: str) -> bool:
         logger.info('Getting Couchbase Server edition')
 

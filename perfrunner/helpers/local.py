@@ -403,3 +403,6 @@ def get_indexer_heap_profile(indexer: str) -> str:
 def govendor_fetch(path: str, revision: str, package: str):
     logger.info('Fetching: {} with revision {} and package as {}'.format(path, revision, package))
     local('govendor fetch {}/{}@{}'.format(path, package, revision))
+
+def get_sg_logs(host: str, ssh_user: str, ssh_pass: str):
+    os.system('sshpass -p {} scp {}@{}:/home/sync_gateway/*logs.tar.gz ./'.format(ssh_pass, ssh_user, host))

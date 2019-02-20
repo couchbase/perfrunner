@@ -240,6 +240,8 @@ class ProfilingSettings:
 
     SERVICES = ''
 
+    CPU_INTERVAL = 10  # 10 seconds
+
     def __init__(self, options: dict):
         self.services = options.get('services',
                                     self.SERVICES).split()
@@ -249,6 +251,7 @@ class ProfilingSettings:
                                             self.NUM_PROFILES))
         self.profiles = options.get('profiles',
                                     self.PROFILES).split(',')
+        self.cpu_interval = int(options.get('cpu_interval', self.CPU_INTERVAL))
 
 class BucketSettings:
 

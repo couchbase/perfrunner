@@ -410,3 +410,9 @@ class RemoteLinux(Remote):
     def get_manifest(self):
         logger.info('Getting manifest from host node')
         get("{}/manifest.xml".format(self.CB_DIR), local_path="./")
+
+    @master_server
+    def compress_sg_logs(self):
+        print('Compressing Syncgateway log folders')
+        cmd = 'tar cvzf /home/sync_gateway/syncgateway_logs.tar.gz /home/sync_gateway/logs'
+        run(cmd)

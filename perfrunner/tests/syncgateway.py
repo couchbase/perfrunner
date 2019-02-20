@@ -112,6 +112,15 @@ class SGPerfTest(PerfTest):
     def run_test(self):
         self.run_sg_phase("run test", syncgateway_task_run_test, self.settings, self.settings.time, True)
 
+    def compress_sg_logs(self):
+        self.remote.compress_sg_logs()
+
+    def get_sg_logs(self):
+        initial_nodes = int(self.test_config.syncgateway_settings.nodes)
+        ssh_user, ssh_pass = self.cluster_spec.ssh_credentials
+        for _server in range(initial_nodes):
+            server = self.cluster_spec.servers[_server]
+            local.get_sg_logs(host=server, ssh_user=ssh_user, ssh_pass=ssh_pass)
 
     def run(self):
         self.download_ycsb()

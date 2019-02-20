@@ -84,7 +84,7 @@ class Profiler:
                 url = 'http://{}:4985/_profile'.format(host)
                 filename = '{}_{}_{}_{}.pprof'.format(host, service, profile, uhex()[:6])
                 requests.post(url=url, data=json.dumps({"file": filename}))
-                time.sleep(30)
+                time.sleep(self.test_config.profiling_settings.cpu_interval)
                 requests.post(url=url, data=json.dumps({}))
 
             if profile == 'sg_heap':

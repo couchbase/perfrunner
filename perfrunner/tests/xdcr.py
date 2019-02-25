@@ -176,3 +176,26 @@ class UniDirXdcrInitTest(XdcrInitTest):
         src_target_iterator = SrcTargetIterator(self.cluster_spec,
                                                 self.test_config)
         XdcrInitTest.load(self, target_iterator=src_target_iterator)
+
+
+class AdvFilterXdcrTest(XdcrInitTest):
+
+    def load(self, *args):
+        src_target_iterator = SrcTargetIterator(self.cluster_spec,
+                                                self.test_config)
+        super(XdcrInitTest, self).load(target_iterator=src_target_iterator)
+
+    def xattr_load(self, *args):
+        src_target_iterator = SrcTargetIterator(self.cluster_spec,
+                                                self.test_config)
+        super(XdcrInitTest, self).xattr_load(target_iterator=src_target_iterator)
+
+    def run(self):
+        self.load()
+        self.xattr_load()
+        self.wait_for_persistence()
+
+        self.configure_wan()
+
+        time_elapsed = self.init_xdcr()
+        self.report_kpi(time_elapsed)

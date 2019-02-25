@@ -1,0 +1,39 @@
+[test_case]
+test = perfrunner.tests.xdcr.UniDirXdcrInitTest
+
+[showfast]
+title = Avg. initial XDCR rate (items/sec), 1 -> 1 (2 source nozzles, 4 target nozzles), 1 bucket x 100M x 1KB, Adv Filter, matching body (~100%% of the items)
+component = xdcr
+category = init_single
+orderby = filter
+
+[stats]
+server_processes = goxdcr
+
+[cluster]
+mem_quota = 204800
+initial_nodes = 1 1
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+
+[xdcr_cluster]
+sourceNozzlePerNode = 2
+targetNozzlePerNode = 4
+optimisticReplicationThreshold = 10240
+
+[load]
+items = 100000000
+size = 1024
+workers = 80
+doc_gen = large
+
+[xattr_load]
+items = 2000
+size = 1024
+workers = 1
+xattr_field = city
+
+[xdcr]
+filter_expression = city EXISTS

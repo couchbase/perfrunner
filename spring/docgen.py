@@ -1376,3 +1376,51 @@ class MultiBucketDocument(Document):
             'fts_less_words': self.get_words(3),
             'category': self.build_category(alphabet),
         }
+
+
+class AdvFilterDocument(Document):
+
+    OVERHEAD = 680
+
+    TEXT_LENGTH = 128
+
+    @staticmethod
+    def build_string(alphabet: str, length: float) -> str:
+        length_int = int(length)
+        num_slices = int(math.ceil(length / 32))  # 32 == len(alphabet)
+        body = ''
+        for i in range(num_slices):
+            body += hex_digest(alphabet)
+        return body[:length_int]
+
+    def next(self, key: Key) -> dict:
+        alphabet = self.build_alphabet(key.string)
+        size = self._size() / 3
+        offset = (PRIME * key.number) % (len(LOREM) - self.TEXT_LENGTH)
+        identifier = key.string.split("-")[1]
+
+        return {
+            'id': alphabet,
+            'revered_id': alphabet[::-1],
+            'code': hex_digest(alphabet),
+            'name': self.build_name(alphabet),
+            'email': self.build_email(alphabet),
+            'city': self.build_city(alphabet),
+            'county': self.build_county(alphabet),
+            'state': self.build_state(alphabet),
+            'full_state': self.build_full_state(alphabet),
+            'country': self.build_country(alphabet),
+            'realm': self.build_realm(alphabet),
+            'coins': self.build_coins(alphabet),
+            'category': self.build_category(alphabet),
+            'achievements': self.build_achievements(alphabet),
+            'gmtime': self.build_gmtime(alphabet),
+            'year': self.build_year(alphabet),
+            'padding': self.build_string(alphabet, size),
+            'notes': self.build_string(alphabet[::-1], size),
+            'text': self.build_string(alphabet[:16], size),
+            'lorem': LOREM[offset:offset + self.TEXT_LENGTH],
+            'identifier1': identifier,
+            'identifier2': {'n': {'a': {'m': {'e': {'s': self.build_name(
+                       alphabet) * random.randint(0, 3)}}}}},
+        }

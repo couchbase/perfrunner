@@ -15,6 +15,7 @@ from logger import logger
 from perfrunner.helpers.sync import SyncHotWorkload
 from spring.cbgen import CBAsyncGen, CBGen, SubDocGen
 from spring.docgen import (
+    AdvFilterDocument,
     ArrayIndexingDocument,
     BigFunDocument,
     Document,
@@ -204,6 +205,8 @@ class Worker:
             self.docs = BigFunDocument()
         elif self.ws.doc_gen == 'multibucket':
             self.docs = MultiBucketDocument(self.ws.size)
+        elif self.ws.doc_gen == 'advancedfilter':
+            self.docs = AdvFilterDocument(self.ws.size)
 
     def init_db(self):
         params = {

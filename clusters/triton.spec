@@ -10,6 +10,7 @@ triton =
 [clients]
 hosts =
     172.23.132.14
+    172.23.132.13
 credentials = root:couchbase
 
 [storage]

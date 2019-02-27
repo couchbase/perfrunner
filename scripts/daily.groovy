@@ -2,9 +2,9 @@ currentBuild.description = params.version
 
 def testCases = null
 
-def buildTests(tests) {
+def buildTests(tests, job_name) {
     for ( test in tests ) {
-        build job: 'triton', propagate: false, parameters: [
+        build job: job_name, propagate: false, parameters: [
             string(name: 'test_config', value: test['test_config']),
             string(name: 'cluster', value: test['cluster']),
             string(name: 'version', value: params.version)
@@ -24,42 +24,42 @@ pipeline {
         }
         stage('Eventing') {
             steps {
-                buildTests(testCases['Eventing'])
+                buildTests(testCases['Eventing'], 'triton')
             }
         }
         stage('FTS') {
             steps {
-                buildTests(testCases['FTS'])
+                buildTests(testCases['FTS'], 'triton')
             }
         }
         stage('GSI') {
             steps {
-                buildTests(testCases['GSI'])
+                buildTests(testCases['GSI'], 'triton')
             }
         }
         stage('KV') {
             steps {
-                buildTests(testCases['KV'])
+                buildTests(testCases['KV'], 'triton')
             }
         }
         stage('N1QL') {
             steps {
-                buildTests(testCases['N1QL'])
+                buildTests(testCases['N1QL'], 'triton-multiclient')
             }
         }
         stage('Tools') {
             steps {
-                buildTests(testCases['Tools'])
+                buildTests(testCases['Tools'], 'triton')
             }
         }
         stage('XDCR') {
             steps {
-                buildTests(testCases['XDCR'])
+                buildTests(testCases['XDCR'], 'triton')
             }
         }
         stage('YCSB') {
             steps {
-                buildTests(testCases['YCSB'])
+                buildTests(testCases['YCSB'], 'triton')
             }
         }
         stage('Notifications') {

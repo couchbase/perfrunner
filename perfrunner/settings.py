@@ -8,7 +8,7 @@ from decorator import decorator
 from logger import logger
 from perfrunner.helpers.misc import target_hash
 
-REPO = 'https://github.com/agyryk/perfrunner'
+REPO = 'https://github.com/sharujayaram/perfrunner'
 
 
 @decorator

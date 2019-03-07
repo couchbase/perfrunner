@@ -25,13 +25,13 @@ optimisticReplicationThreshold = 10240
 
 [load]
 items = 100000000
-size = 1024
+size = 512
 workers = 80
 doc_gen = advancedfilter
 
 [xattr_load]
 items = 100000000
-size = 1024
+size = 512
 workers = 80
-doc_gen = advancedfilter
+doc_gen = advancedfilterxattr
 xattr_field = city

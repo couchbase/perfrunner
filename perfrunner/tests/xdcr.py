@@ -195,6 +195,8 @@ class AdvFilterXdcrTest(XdcrInitTest):
         self.xattr_load()
         self.wait_for_persistence()
 
+        self.compact_bucket(wait=True)
+
         self.configure_wan()
 
         time_elapsed = self.init_xdcr()

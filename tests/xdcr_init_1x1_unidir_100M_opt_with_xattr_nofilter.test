@@ -21,17 +21,16 @@ replica_number = 0
 [xdcr_cluster]
 sourceNozzlePerNode = 2
 targetNozzlePerNode = 4
-optimisticReplicationThreshold = 10240
 
 [load]
 items = 100000000
-size = 512
+size = 1024
 workers = 80
 doc_gen = advancedfilter
 
 [xattr_load]
 items = 100000000
-size = 512
+size = 1024
 workers = 80
 doc_gen = advancedfilterxattr
 xattr_field = city

@@ -16,6 +16,7 @@ from perfrunner.helpers.sync import SyncHotWorkload
 from spring.cbgen import CBAsyncGen, CBGen, SubDocGen
 from spring.docgen import (
     AdvFilterDocument,
+    AdvFilterXattrBody,
     ArrayIndexingDocument,
     BigFunDocument,
     Document,
@@ -207,6 +208,8 @@ class Worker:
             self.docs = MultiBucketDocument(self.ws.size)
         elif self.ws.doc_gen == 'advancedfilter':
             self.docs = AdvFilterDocument(self.ws.size)
+        elif self.ws.doc_gen == 'advancedfilterxattr':
+            self.docs = AdvFilterXattrBody(self.ws.size)
 
     def init_db(self):
         params = {

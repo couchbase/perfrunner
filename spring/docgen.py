@@ -1424,3 +1424,17 @@ class AdvFilterDocument(Document):
             'identifier2': {'n': {'a': {'m': {'e': {'s': self.build_name(
                        alphabet) * random.randint(0, 3)}}}}},
         }
+
+
+class AdvFilterXattrBody(AdvFilterDocument):
+
+    def next(self, key: Key) -> dict:
+        alphabet = self.build_alphabet(key.string)
+        size = self._size() / 3
+        identifier = key.string.split("-")[1]
+
+        return {
+            'identifier1': identifier,
+            'city': self.build_city(alphabet),
+            'text': self.build_string(alphabet[:16], size),
+        }

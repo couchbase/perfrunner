@@ -1,0 +1,21 @@
+[test_case]
+test = perfrunner.tests.kv.KeyFraggerTest
+use_workers = 0
+
+[showfast]
+title = Max RSS (MB), 1 bucket x 100K, KeyFragger
+component = kv
+category = memory
+
+[cluster]
+mem_quota = 8192
+initial_nodes = 1
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+
+[load]
+items = 100000
+workers = 7
+iterations = 40

@@ -5,6 +5,7 @@ from perfrunner.helpers.worker import (
     pillowfight_task,
 )
 from perfrunner.tests import PerfTest
+from perfrunner.workloads.keyFragger import KeyFragger
 from perfrunner.workloads.pathoGen import PathoGen
 from perfrunner.workloads.tcmalloc import WorkloadGen
 
@@ -357,6 +358,44 @@ class PathoGenFrozenTest(PathoGenTest):
                           bucket=target.bucket, password=target.password)
             pg.run()
 
+class KeyFraggerTest(FragmentationTest):
+
+    @with_stats
+    def access(self, *args):
+        for target in self.target_iterator:
+            pg = KeyFragger(num_items=self.test_config.load_settings.items,
+                          num_workers=self.test_config.load_settings.workers,
+                          num_iterations=self.test_config.load_settings.iterations,
+                          frozen_mode=False,
+                          host=target.node, port=8091,
+                          bucket=target.bucket, password=target.password)
+            pg.run()
+
+    def _report_kpi(self):
+        self.reporter.post(
+            *self.metrics.avg_memcached_rss()
+        )
+        self.reporter.post(
+            *self.metrics.max_memcached_rss()
+        )
+
+    def run(self):
+        self.access()
+
+        self.report_kpi()
+
+class KeyFraggerFrozenTest(PathoGenTest):
+
+    @with_stats
+    def access(self):
+        for target in self.target_iterator:
+            pg = KeyFragger(num_items=self.test_config.load_settings.items,
+                          num_workers=self.test_config.load_settings.workers,
+                          num_iterations=self.test_config.load_settings.iterations,
+                          frozen_mode=True,
+                          host=target.node, port=8091,
+                          bucket=target.bucket, password=target.password)
+            pg.run()
 
 class ThroughputTest(KVTest):
 

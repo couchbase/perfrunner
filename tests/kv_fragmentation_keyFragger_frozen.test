@@ -1,0 +1,21 @@
+[test_case]
+test = perfrunner.tests.kv.KeyFraggerFrozenTest
+use_workers = 0
+
+[showfast]
+title = Max RSS (MB), 1 bucket x 1M, KeyFragger Frozen
+component = kv
+category = memory
+
+[cluster]
+mem_quota = 8192
+initial_nodes = 1
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+
+[load]
+items = 2000000
+workers = 21
+iterations = 20

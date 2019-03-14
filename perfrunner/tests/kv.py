@@ -5,6 +5,7 @@ from perfrunner.helpers.worker import (
     pillowfight_task,
 )
 from perfrunner.tests import PerfTest
+from perfrunner.workloads.keyFragger import KeyFragger
 from perfrunner.workloads.pathoGen import PathoGen
 from perfrunner.workloads.tcmalloc import WorkloadGen
 
@@ -350,6 +351,7 @@ class PathoGenTest(FragmentationTest):
         self.reporter.post(
             *self.metrics.max_memcached_rss()
         )
+        super()._report_kpi()
 
     def run(self):
         self.access()
@@ -368,6 +370,44 @@ class PathoGenFrozenTest(PathoGenTest):
                           frozen_mode=True,
                           host=target.node, port=8091,
                           bucket=target.bucket, password=target.password)
+            pg.run()
+
+
+class KeyFraggerTest(PathoGenTest):
+
+    @with_stats
+    def access(self, *args):
+        for target in self.target_iterator:
+            pg = KeyFragger(
+                batches=self.test_config.load_settings.batches,
+                batch_size=self.test_config.load_settings.batch_size,
+                num_workers=self.test_config.load_settings.workers,
+                num_iterations=self.test_config.load_settings.iterations,
+                frozen_mode=False,
+                host=target.node,
+                port=8091,
+                bucket=target.bucket,
+                password=target.password,
+                sleep_when_done=420)
+            pg.run()
+
+
+class KeyFraggerFrozenTest(PathoGenTest):
+
+    @with_stats
+    def access(self):
+        for target in self.target_iterator:
+            pg = KeyFragger(
+                batches=self.test_config.load_settings.batches,
+                batch_size=self.test_config.load_settings.batch_size,
+                num_workers=self.test_config.load_settings.workers,
+                num_iterations=self.test_config.load_settings.iterations,
+                frozen_mode=True,
+                host=target.node,
+                port=8091,
+                bucket=target.bucket,
+                password=target.password,
+                sleep_when_done=420)
             pg.run()
 
 

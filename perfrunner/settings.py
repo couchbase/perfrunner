@@ -392,6 +392,7 @@ class PhaseSettings:
     SEQ_UPSERTS = False
 
     BATCH_SIZE = 1000
+    BATCHES = 1
     SPRING_BATCH_SIZE = 100
 
     ITERATIONS = 1
@@ -499,6 +500,7 @@ class PhaseSettings:
         self.iterations = int(options.get('iterations', self.ITERATIONS))
 
         self.batch_size = int(options.get('batch_size', self.BATCH_SIZE))
+        self.batches = int(options.get('batches', self.BATCHES))
         self.spring_batch_size = int(options.get('spring_batch_size', self.SPRING_BATCH_SIZE))
 
         self.workload_instances = int(options.get('workload_instances',

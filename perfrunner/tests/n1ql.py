@@ -360,3 +360,37 @@ class BigFUNLatencyTest(N1QLLatencyTest):
         self.access()
 
         self.report_kpi()
+
+
+class N1QLFunctionTest(N1QLTest):
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.create_functions()
+        self.create_indexes()
+        self.wait_for_indexing()
+
+        self.store_plans()
+
+        self.access_bg()
+        self.access()
+
+        self.report_kpi()
+
+
+class N1QLFunctionLatencyTest(N1QLFunctionTest):
+
+    def _report_kpi(self):
+        self.reporter.post(
+            *self.metrics.query_latency(percentile=90)
+        )
+
+
+class N1QLFunctionThroughputTest(N1QLFunctionTest):
+
+    def _report_kpi(self):
+        self.reporter.post(
+            *self.metrics.avg_n1ql_throughput()
+        )

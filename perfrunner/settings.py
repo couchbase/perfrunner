@@ -787,6 +787,10 @@ class IndexSettings:
         return str(self.__dict__)
 
 
+class N1QLFunctionSettings(IndexSettings):
+    pass
+
+
 class AccessSettings(PhaseSettings):
 
     OPS = float('inf')
@@ -1006,6 +1010,11 @@ class TestConfig(Config):
     def index_settings(self) -> IndexSettings:
         options = self._get_options_as_dict('index')
         return IndexSettings(options)
+
+    @property
+    def n1ql_function_settings(self) -> N1QLFunctionSettings:
+        options = self._get_options_as_dict('n1ql_function')
+        return N1QLFunctionSettings(options)
 
     @property
     def n1ql_settings(self) -> N1QLSettings:

@@ -76,6 +76,7 @@ class ClusterManager:
                                                  self.test_config.cluster.eventing_mem_quota)
 
     def set_query_settings(self):
+        logger.info('Setting query settings')
         query_nodes = self.cluster_spec.servers_by_role('n1ql')
         if query_nodes:
             settings = self.test_config.n1ql_settings.cbq_settings
@@ -86,6 +87,7 @@ class ClusterManager:
             logger.info('Query settings: {}'.format(settings))
 
     def set_index_settings(self):
+        logger.info('Setting index settings')
         index_nodes = self.cluster_spec.servers_by_role('index')
         if index_nodes:
             settings = self.test_config.gsi_settings.settings
@@ -413,6 +415,7 @@ class ClusterManager:
             self.remote.enable_ipv6()
 
     def set_x509_certificates(self):
+        logger.info('Setting x509 settings')
         if self.test_config.access_settings.ssl_mode == "auth":
             self.remote.setup_x509()
             for host in self.cluster_spec.servers:

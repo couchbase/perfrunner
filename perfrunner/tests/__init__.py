@@ -219,6 +219,12 @@ class PerfTest:
         for statement in self.test_config.index_settings.statements:
             self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
 
+    def create_functions(self):
+        logger.info('Creating n1ql functions')
+
+        for statement in self.test_config.n1ql_function_settings.statements:
+            self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+
     def sleep(self):
         access_settings = self.test_config.access_settings
         logger.info('Running phase for {} seconds'.format(access_settings.time))

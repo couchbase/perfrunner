@@ -1,0 +1,47 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1QLFunctionLatencyTest
+
+[showfast]
+title = Q2, Empty function
+component = n1ql
+category = Q1_Q3
+sub_category = UDF
+
+[cluster]
+mem_quota = 20480
+index_mem_quota = 100000
+initial_nodes = 6
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+
+[bucket]
+replica_number = 0
+
+[load]
+items = 20000000
+size = 1024
+workers = 80
+doc_gen = reverse_lookup
+
+[n1ql_function]
+statements =
+    CREATE FUNCTION func() { (1) };
+
+[access]
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+throughput = 30000
+items = 20000000
+workers = 20
+time = 1200
+n1ql_queries = empty-function
+n1ql_workers = 240
+n1ql_throughput = 8000
+
+[n1ql-empty-function]
+statement = execute function func();
+args = []

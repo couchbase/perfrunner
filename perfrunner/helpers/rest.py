@@ -275,6 +275,14 @@ class RestHelper:
                 return is_running, progress
         return False, 0
 
+    def get_xdcrlink_status(self, host: str, task_type: str, uuid: str) -> [bool, float]:
+        for task in self.get_tasks(host):
+            if task['type'] == task_type and uuid in task['target']:
+                is_running = task['status'] == 'running'
+                progress = task.get('progress')
+                return is_running, progress
+        return False, 0
+
     def delete_bucket(self, host: str, name: str):
         logger.info('Deleting new bucket: {}'.format(name))
         api = 'http://{host}:8091/pools/default/buckets/{bucket}'.format(host=host, bucket=name)

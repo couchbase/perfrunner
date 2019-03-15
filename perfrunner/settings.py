@@ -656,6 +656,8 @@ class RestoreSettings:
 class XDCRSettings:
 
     WAN_DELAY = 0
+    NUM_XDCR_LINKS = 1
+    XDCR_LINKS_PRIORITY = 'HIGH'
 
     def __init__(self, options: dict):
         self.demand_encryption = options.get('demand_encryption')
@@ -663,6 +665,10 @@ class XDCRSettings:
         self.secure_type = options.get('secure_type')
         self.wan_delay = int(options.get('wan_delay',
                                          self.WAN_DELAY))
+
+        self.num_xdcr_links = int(options.get('num_xdcr_links', self.NUM_XDCR_LINKS))
+        self.xdcr_links_priority = options.get('xdcr_links_priority',
+                                               self.XDCR_LINKS_PRIORITY).split(',')
 
     def __str__(self) -> str:
         return str(self.__dict__)

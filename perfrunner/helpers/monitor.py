@@ -94,6 +94,29 @@ class Monitor(RestHelper):
             if time.time() - start_time > self.TIMEOUT:
                 raise Exception('Monitoring got stuck')
 
+    def _wait_for_completeness(self, host, bucket, xdcr_link, stats_function):
+        metrics = []
+        metrics.append(xdcr_link)
+
+        start_time = time.time()
+
+        while metrics:
+            bucket_stats = stats_function(host, bucket)
+
+            for metric in metrics:
+                stats = bucket_stats['op']['samples'].get(metric)
+                if stats:
+                    last_value = stats[0]
+                    if last_value != 100:
+                        logger.info('{} : {}'.format(metric, last_value))
+                    elif last_value == 100:
+                        logger.info('{} Completed 100 %'.format(metric))
+                        metrics.remove(metric)
+            if metrics:
+                time.sleep(self.POLLING_INTERVAL)
+            if time.time() - start_time > self.TIMEOUT:
+                raise Exception('Monitoring got stuck')
+
     def monitor_disk_queues(self, host, bucket):
         logger.info('Monitoring disk queues: {}'.format(bucket))
         self._wait_for_empty_queues(host, bucket, self.DISK_QUEUES,
@@ -110,11 +133,24 @@ class Monitor(RestHelper):
             time.sleep(self.POLLING_INTERVAL)
             is_running, _ = self.get_task_status(host, task_type='xdcr')
 
+    def xdcr_link_starttime(self, host: str, uuid: str):
+        is_running = False
+        while not is_running:
+            time.sleep(self.POLLING_INTERVAL)
+            is_running, _ = self.get_xdcrlink_status(host, task_type='xdcr', uuid=uuid)
+        return time.time()
+
     def monitor_xdcr_queues(self, host: str, bucket: str):
         logger.info('Monitoring XDCR queues: {}'.format(bucket))
         self._wait_for_xdcr_to_start(host)
         self._wait_for_empty_queues(host, bucket, self.XDCR_QUEUES,
                                     self.get_xdcr_stats)
+
+    def monitor_xdcr_completeness(self, host: str, bucket: str, xdcr_link: str):
+        logger.info('Monitoring XDCR Link Completeness: {}'.format(bucket))
+        self._wait_for_completeness(host=host, bucket=bucket, xdcr_link=xdcr_link,
+                                    stats_function=self.get_xdcr_stats)
+        return time.time()
 
     def _get_num_items(self, host: str, bucket: str, total: bool = False) -> int:
         stats = self.get_bucket_stats(host=host, bucket=bucket)

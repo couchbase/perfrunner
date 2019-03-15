@@ -216,6 +216,17 @@ class MetricHelper:
 
         return rate, self._snapshots, metric_info
 
+    def avg_replication_multilink(self, time_elapsed: float, xdcr_link: str) -> Metric:
+
+        metric_id = self.test_config.name + '_' + xdcr_link
+        title = self.test_config.showfast.title + ', ' + xdcr_link
+
+        metric_info = self._metric_info(metric_id=metric_id, title=title)
+
+        rate = self._avg_replication_rate(time_elapsed)
+
+        return rate, self._snapshots, metric_info
+
     def _avg_replication_rate(self, time_elapsed: float) -> float:
         initial_items = self.test_config.load_settings.ops or \
             self.test_config.load_settings.items
@@ -897,7 +908,8 @@ class DailyMetricHelper(MetricHelper):
             throughput, \
             self._snapshots
 
-    def function_throughput(self, time: int, event_name: str, events_processed: int) -> DailyMetric:
+    def function_throughput(self, time: int, event_name: str,
+                            events_processed: int) -> DailyMetric:
         throughput = self.get_functions_throughput(time, event_name, events_processed)
 
         metric = "Avg Throughput (functions executed/sec)"

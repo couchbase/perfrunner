@@ -37,3 +37,5 @@ from cbagent.collectors.system import (
     TypePerf,
 )
 from cbagent.collectors.xdcr_lag import XdcrLag
+
+from cbagent.collectors.sgimport_latency import SGImport_latency

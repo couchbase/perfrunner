@@ -223,10 +223,37 @@ class MetricHelper:
 
         return lag, self._snapshots, metric_info
 
+    def sgimport_latency(self, percentile: Number = 95) -> Metric:
+        metric_id = '{}_{}th_sgimport_latency'.format(self.test_config.name, percentile)
+        title = '{}th percentile sgimport latency (ms), {}'.format(
+            percentile, self._title)
+        metric_info = self._metric_info(metric_id, title)
+
+        values = []
+        for bucket in self.test_config.buckets:
+            db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
+                                         collector='sgimport_latency',
+                                         bucket=bucket)
+            values += self.store.get_values(db, metric='sgimport_latency')
+
+        lag = round(np.percentile(values, percentile), 1)
+
+        return lag, self._snapshots, metric_info
+
     def avg_replication_rate(self, time_elapsed: float) -> Metric:
         metric_info = self._metric_info()
 
         rate = self._avg_replication_rate(time_elapsed)
+
+        return rate, self._snapshots, metric_info
+
+    def sgimport_items_per_sec(self, time_elapsed: float) -> Metric:
+        initial_items = self.test_config.load_settings.ops or \
+                        self.test_config.load_settings.items
+
+        metric_info = self._metric_info()
+
+        rate = initial_items / time_elapsed
 
         return rate, self._snapshots, metric_info
 

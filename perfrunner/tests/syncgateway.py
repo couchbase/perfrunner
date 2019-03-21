@@ -2,12 +2,14 @@ import os
 import shutil
 import glob
 import copy
+import time
 
-from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.tests import PerfTest
+from perfrunner.helpers.misc import target_hash
+from perfrunner.helpers.cbmonitor import with_stats, timeit
+from perfrunner.tests import PerfTest, TargetIterator
 from perfrunner.helpers.worker import syncgateway_task_init_users, syncgateway_task_load_users, \
     syncgateway_task_load_docs, syncgateway_task_run_test, syncgateway_task_start_memcached, \
-    syncgateway_task_grant_access
+    syncgateway_task_grant_access, pillowfight_data_load_task, pillowfight_task
 
 from perfrunner.helpers import local
 
@@ -20,10 +22,12 @@ from perfrunner.helpers.metrics import MetricHelper
 from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.reporter import ShowFastReporter
-from perfrunner.helpers.worker import  WorkerManager
+from perfrunner.helpers.worker import WorkerManager
 from perfrunner.helpers.profiler import Profiler, with_profiles
 from perfrunner.helpers.cluster import ClusterManager
 from perfrunner.helpers.rest import RestHelper
+from perfrunner.helpers.monitor import Monitor
+from perfrunner.settings import TargetSettings
 
 from perfrunner.settings import (
     ClusterSpec,
@@ -61,6 +65,8 @@ class SGPerfTest(PerfTest):
         self.settings.syncgateway_settings = self.test_config.syncgateway_settings
         self.profiler = Profiler(cluster_spec, test_config)
         self.cluster = ClusterManager(cluster_spec, test_config)
+        self.target_iterator = TargetIterator(cluster_spec, test_config)
+        self.monitor = Monitor(cluster_spec, test_config, verbose)
 
     def download_ycsb(self):
         if self.worker_manager.is_remote:
@@ -253,3 +259,89 @@ class SGMixQueryThroughput(SGPerfTest):
             *self.metrics.sg_throughput("Throughput (req/sec)")
         )
 
+class SGTargetIterator(TargetIterator):
+
+    def __iter__(self):
+        password = self.test_config.bucket.password
+        prefix = self.prefix
+        src_master = next(self.cluster_spec.masters)
+        for bucket in self.test_config.buckets:
+            if self.prefix is None:
+                prefix = target_hash(src_master, bucket)
+            yield TargetSettings(src_master, bucket, password, prefix)
+
+
+class CBTargetIterator(TargetIterator):
+
+    def __iter__(self):
+        password = self.test_config.bucket.password
+        prefix = self.prefix
+        masters = self.cluster_spec.masters
+        src_master = next(masters)
+        dest_master = next(masters)
+        for bucket in self.test_config.buckets:
+            if self.prefix is None:
+                prefix = target_hash(src_master, bucket)
+            yield TargetSettings(dest_master, bucket, password, prefix)
+
+
+class SGImport_load(PerfTest):
+
+    def load(self, *args):
+        PerfTest.load(self, task=pillowfight_data_load_task)
+
+    def run(self):
+        self.load()
+
+
+class SGImportThroughputTest(SGPerfTest):
+
+    COLLECTORS = {'disk': False, 'ns_server': False, 'ns_server_overview': False, 'active_tasks': False,
+                  'syncgateway_stats': True}
+
+    def _report_kpi(self, time_elapsed):
+        self.reporter.post(
+            *self.metrics.sgimport_items_per_sec(time_elapsed)
+        )
+
+    @timeit
+    @with_stats
+    def monitor_sg_import(self):
+        host = self.cluster_spec.servers[0]
+        import_docs = self.test_config.load_settings.items
+        self.monitor.monitor_sgimport_queues(host, import_docs)
+
+    def run(self):
+        time_elapsed = self.monitor_sg_import()
+        self.report_kpi(time_elapsed)
+
+
+class SGImportLatencyTest(SGPerfTest):
+
+    COLLECTORS = {'disk': False, 'ns_server': False, 'ns_server_overview': False, 'active_tasks': False,
+                  'syncgateway_stats': True, 'sgimport_latency': True}
+
+    def _report_kpi(self, *args):
+        self.reporter.post(
+            *self.metrics.sgimport_latency()
+        )
+
+    def load(self, *args):
+        cb_target_iterator = CBTargetIterator(self.cluster_spec,
+                                              self.test_config,
+                                              prefix='symmetric')
+        super().load(task=pillowfight_data_load_task, target_iterator=cb_target_iterator)
+
+    @with_stats
+    @with_profiles
+    def access_bg(self, *args):
+        cb_target_iterator = CBTargetIterator(self.cluster_spec,
+                                              self.test_config,
+                                              prefix='symmetric')
+        super().access_bg(task=pillowfight_task, target_iterator=cb_target_iterator)
+
+    def run(self):
+
+        self.load()
+        self.access_bg()
+        self.report_kpi()

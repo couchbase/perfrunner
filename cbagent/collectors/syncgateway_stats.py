@@ -45,6 +45,7 @@ class SyncGatewayStats(Collector):
         "syncgateway__per_db__db__cache__rev_cache_hits",
         "syncgateway__per_db__db__rev_cache_misses",
         "syncgateway__per_db__db__chan_cache_misses",
+        "syncGateway_import__import_count",
     )
 
     def __init__(self, settings, test):

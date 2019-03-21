@@ -109,6 +109,33 @@ class Monitor(RestHelper):
         self._wait_for_empty_queues(host, bucket, self.XDCR_QUEUES,
                                     self.get_xdcr_stats)
 
+    def monitor_sgimport_queues(self, host: str, import_docs: int):
+        logger.info('Monitoring SGImport items:')
+        self._wait_for_sg_import_start(host)
+        self._wait_for_sg_import_complete(host, import_docs)
+
+    def _wait_for_sg_import_start(self, host: str):
+        while True:
+            time.sleep(self.POLLING_INTERVAL)
+            stats = self.get_sg_stats(host=host)
+            import_docs = int(stats['syncGateway_import']['import_count'])
+            if import_docs >= 1:
+                logger.info('importing docs has started')
+                break
+        return 0
+
+    def _wait_for_sg_import_complete(self, host:str, import_docs:int):
+        import_docs = import_docs
+        logger.info('Monitoring syncgateway import status :')
+
+        while True:
+            time.sleep(self.POLLING_INTERVAL)
+            stats = self.get_sg_stats(host=host)
+            imports = int(stats['syncGateway_import']['import_count'])
+            logger.info('Docs imported: {}'.format(imports))
+            if imports == import_docs:
+                break
+
     def _get_num_items(self, host: str, bucket: str) -> bool:
         stats = self.get_bucket_stats(host=host, bucket=bucket)
         return stats['op']['samples'].get('curr_items')[-1]

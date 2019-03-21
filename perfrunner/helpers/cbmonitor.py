@@ -40,6 +40,7 @@ from cbagent.collectors import (
     XdcrLag,
     XdcrStats,
     SyncGatewayStats,
+    SGImport_latency,
 )
 from cbagent.metadata_client import MetadataClient
 from cbagent.stores import PerfStore
@@ -99,7 +100,6 @@ def new_cbagent_settings(test: PerfTest):
         settings.index_node = test.cluster_spec.servers_by_role('index')[0]
 
     return settings
-
 
 class CbAgent:
 
@@ -164,7 +164,8 @@ class CbAgent:
                        ns_server=True,
                        ns_server_overview=True,
                        active_tasks=True,
-                       syncgateway_stats=False):
+                       syncgateway_stats=False,
+                       sgimport_latency=False):
 
         self.collectors = []
         self.processes = []
@@ -243,6 +244,9 @@ class CbAgent:
         if xdcr_stats:
             self.add_collector(XdcrStats)
 
+        if sgimport_latency:
+            self.add_sgimport_latency()
+
     def add_collector(self, cls, *args):
         for cluster_id, master_node in self.cluster_map.items():
             settings = copy(self.settings)
@@ -297,6 +301,16 @@ class CbAgent:
 
             if self.test.test_config.xdcr_settings.replication_type == 'unidir':
                 break
+
+    def add_sgimport_latency(self):
+        reversed_clusters = list(reversed(self.test.cbmonitor_clusters))
+
+        for i, cluster_id in enumerate(self.cluster_map):
+            settings = copy(self.settings)
+
+            settings.cluster = cluster_id
+            collector = SGImport_latency(settings, self.test.cluster_spec, self.test.test_config.access_settings)
+            self.collectors.append(collector)
 
     def update_metadata(self):
         for collector in self.collectors:

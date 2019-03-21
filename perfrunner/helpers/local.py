@@ -223,7 +223,7 @@ def cbimport(master_node: str, cluster_spec: ClusterSpec, data_type: str,
 
 def run_cbc_pillowfight(host, bucket, password,
                         num_items, num_threads, num_cycles, size, writes,
-                        populate=False, use_ssl=False):
+                        populate=False, doc_gen='binary', use_ssl=False):
     cmd = 'cbc-pillowfight ' \
         '--password {password} ' \
         '--batch-size 1000 ' \
@@ -231,6 +231,9 @@ def run_cbc_pillowfight(host, bucket, password,
         '--num-threads {num_threads} ' \
         '--min-size {size} ' \
         '--max-size {size} ' \
+
+    if doc_gen == 'json':
+        cmd += '--json '
 
     if use_ssl:
         cmd += '--spec couchbases://{host}/{bucket} --certpath root.pem '

@@ -24,7 +24,7 @@ class SecondaryStorageStatsMM(SecondaryStats):
                     v = s.split(":")
                     if v[0].strip() in self.METRICS:
                         key = "mm_" + v[0].strip().lower()
-                        stats[key] = int(v[1])
+                        stats[key] = int(v[1].split("(")[0])
         return stats
 
     def sample(self):

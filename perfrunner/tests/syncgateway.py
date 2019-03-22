@@ -9,7 +9,8 @@ from perfrunner.helpers.cbmonitor import with_stats, timeit
 from perfrunner.tests import PerfTest, TargetIterator
 from perfrunner.helpers.worker import syncgateway_task_init_users, syncgateway_task_load_users, \
     syncgateway_task_load_docs, syncgateway_task_run_test, syncgateway_task_start_memcached, \
-    syncgateway_task_grant_access, pillowfight_data_load_task, pillowfight_task
+    syncgateway_task_grant_access, pillowfight_data_load_task, pillowfight_task, ycsb_data_load_task, \
+    ycsb_task
 
 from perfrunner.helpers import local
 
@@ -340,8 +341,13 @@ class SGImportLatencyTest(SGPerfTest):
                                               prefix='symmetric')
         super().access_bg(task=pillowfight_task, target_iterator=cb_target_iterator)
 
+    @with_stats
+    @with_profiles
+    def sleepmethod(self):
+        time.sleep(600)
+        
     def run(self):
 
         self.load()
-        self.access_bg()
+        self.sleepmethod()
         self.report_kpi()

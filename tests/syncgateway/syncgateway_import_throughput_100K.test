@@ -2,8 +2,8 @@
 test = perfrunner.tests.syncgateway.SGImportThroughputTest
 title = 1 node, 1M docs, 1K users, 1 channel
 component = syncgateway
-category = read
-sub_category = xattr
+category = import
+sub_category = Throughput
 
 [cluster]
 mem_quota = 25000

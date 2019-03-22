@@ -10,6 +10,8 @@ mem_quota = 25000
 index_mem_quota = 25000
 initial_nodes = 7
 num_buckets = 1
+online_cores = 16
+kernel_mem_limit = 32G
 
 [load]
 items = 100000

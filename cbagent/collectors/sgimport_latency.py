@@ -68,10 +68,12 @@ class SGImport_latency(Collector):
         self.new_docs = Document(1024)
 
     def sg_changefeed(self, host: str, key: str):
-        db = 'db'
-        api = 'http://{}:4985/db/_changes'.format(host, db, key)
-        data = {'limit': 1, 'doc_ids': key, 'filter': '_doc_ids', 'feed': 'normal'}
-        print('change feed key:', key)
+        sg_db = 'db'
+        api = 'http://{}:4985/{}/_changes'.format(host, sg_db)
+        key_array = []
+        key_array.append(key)
+        data = {'limit': 1, 'doc_ids': key_array, 'filter': '_doc_ids', 'feed': 'normal'}
+        print('change feed key:', key, data)
         response = requests.post(url=api, data=json.dumps(data))
         print('response:', response)
         if len(response.json()['results']) >= 1:

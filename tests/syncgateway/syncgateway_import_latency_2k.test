@@ -12,7 +12,7 @@ initial_nodes = 7
 num_buckets = 1
 
 [load]
-items = 100000
+items = 1000000
 size = 1024
 workers = 1
 doc_gen = json
@@ -24,9 +24,9 @@ creates = 100
 reads = 0
 updates = 0
 deletes = 0
-items = 100000
+items = 1000000
 workers = 1
-worker_instances = 10
+worker_instances = 1
 doc_gen = json
 throughput = 150
 time = 120

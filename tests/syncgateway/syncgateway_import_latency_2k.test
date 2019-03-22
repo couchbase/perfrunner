@@ -1,9 +1,9 @@
 [test_case]
 test = perfrunner.tests.syncgateway.SGImportLatencyTest
-title = 1 node, 1M docs, 1K users, 1 channel
+title = Import Latency(ms), 2k Throughput, 3 SG Nodes
 component = syncgateway
-category = read
-sub_category = xattr
+category = import
+sub_category = Latency
 
 [cluster]
 mem_quota = 25000
@@ -20,7 +20,7 @@ iterations = 1
 worker_instances = 1
 
 [access]
-creates = 1
+creates = 100
 reads = 0
 updates = 0
 deletes = 0

@@ -319,6 +319,15 @@ class SGImportThroughputTest(SGPerfTest):
 
 class SGImportLatencyTest(SGPerfTest):
 
+    def download_ycsb(self):
+        if self.worker_manager.is_remote:
+            self.remote.clone_ycsb(repo=self.test_config.ycsb_settings.repo,
+                                   branch=self.test_config.ycsb_settings.branch,
+                                   worker_home=self.worker_manager.WORKER_HOME)
+        else:
+            local.clone_ycsb(repo=self.test_config.ycsb_settings.repo,
+                             branch=self.test_config.ycsb_settings.branch)
+
     COLLECTORS = {'disk': False, 'ns_server': False, 'ns_server_overview': False, 'active_tasks': False,
                   'syncgateway_stats': True, 'sgimport_latency': True}
 
@@ -343,6 +352,7 @@ class SGImportLatencyTest(SGPerfTest):
 
     def run(self):
 
+        self.download_ycsb()
         self.load()
         self.access()
         self.report_kpi()

@@ -71,8 +71,9 @@ class SGImport_latency(Collector):
         db = 'db'
         api = 'http://{}:4985/db/_changes'.format(host, db, key)
         data = {'limit': 1, 'doc_ids': key, 'filter': '_doc_ids', 'feed': 'normal'}
+        print('change feed key:', key)
         response = requests.post(url=api, data=json.dumps(data))
-
+        print('response:', response)
         if len(response.json()['results']) >= 1:
             if key == response.json()['results'][0]['id']:
                 return 1
@@ -84,6 +85,7 @@ class SGImport_latency(Collector):
     def measure(self, src_client):
 
         key = "sgimport_{}".format(uhex())
+        print('key:', key)
 
         doc = self.new_docs.next(key)
 

@@ -36,7 +36,7 @@ class SGImport_latency(Collector):
 
     INITIAL_POLLING_INTERVAL = 0.001  # 1 ms
 
-    TIMEOUT = 600  # 10 minutes
+    TIMEOUT = 3600  # 10 minutes
 
     MAX_SAMPLING_INTERVAL = 0.25  # 250 ms
 
@@ -73,9 +73,7 @@ class SGImport_latency(Collector):
         key_array = []
         key_array.append(key)
         data = {'limit': 1, 'doc_ids': key_array, 'filter': '_doc_ids', 'feed': 'normal'}
-        print('change feed key:', key, data)
         response = requests.post(url=api, data=json.dumps(data))
-        print('response:', response)
         if len(response.json()['results']) >= 1:
             if key == response.json()['results'][0]['id']:
                 return 1
@@ -87,7 +85,6 @@ class SGImport_latency(Collector):
     def measure(self, src_client):
 
         key = "sgimport_{}".format(uhex())
-        print('key:', key)
 
         doc = self.new_docs.next(key)
 
@@ -108,7 +105,7 @@ class SGImport_latency(Collector):
         t1 = time()
 
         src_client.remove(key, quiet=True)
-
+        print('time taken (t1 - t0): ', (t1 - t0) * 1000)
         return {'sgimport_latency': (t1 - t0) * 1000}  # s -> ms
 
     def sample(self):

@@ -341,13 +341,8 @@ class SGImportLatencyTest(SGPerfTest):
                                               prefix='symmetric')
         super().access_bg(task=pillowfight_task, target_iterator=cb_target_iterator)
 
-    @with_stats
-    @with_profiles
-    def sleepmethod(self):
-        time.sleep(600)
-        
     def run(self):
 
         self.load()
-        self.sleepmethod()
+        self.access_bg()
         self.report_kpi()

@@ -331,18 +331,18 @@ class SGImportLatencyTest(SGPerfTest):
         cb_target_iterator = CBTargetIterator(self.cluster_spec,
                                               self.test_config,
                                               prefix='symmetric')
-        super().load(task=pillowfight_data_load_task, target_iterator=cb_target_iterator)
+        super().load(task=ycsb_data_load_task, target_iterator=cb_target_iterator)
 
     @with_stats
     @with_profiles
-    def access_bg(self, *args):
+    def access(self, *args):
         cb_target_iterator = CBTargetIterator(self.cluster_spec,
                                               self.test_config,
                                               prefix='symmetric')
-        super().access_bg(task=pillowfight_task, target_iterator=cb_target_iterator)
+        super().access_bg(task=ycsb_task, target_iterator=cb_target_iterator)
 
     def run(self):
 
         self.load()
-        self.access_bg()
+        self.access()
         self.report_kpi()

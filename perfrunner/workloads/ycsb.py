@@ -21,7 +21,10 @@ def ycsb_data_load(workload_settings: PhaseSettings,
              workload=workload_settings.workload_path,
              items=workload_settings.items,
              workers=workload_settings.workers,
+             target=int(workload_settings.target),
              soe_params=soe_params,
+             epoll=workload_settings.epoll,
+             boost=workload_settings.boost,
              instance=instance)
 
 
@@ -43,7 +46,10 @@ def ycsb_workload(workload_settings: PhaseSettings,
              workload=workload_settings.workload_path,
              items=workload_settings.items,
              workers=workload_settings.workers,
+             target=int(workload_settings.target),
              soe_params=soe_params,
+             epoll=workload_settings.epoll,
+             boost=workload_settings.boost,
              ops=int(workload_settings.ops),
              time=workload_settings.time,
              instance=instance)

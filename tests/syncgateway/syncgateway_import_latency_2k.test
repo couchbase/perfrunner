@@ -12,6 +12,7 @@ initial_nodes = 7
 num_buckets = 1
 
 [load]
+workload_path = workloads/workloada
 items = 1000000
 size = 1024
 workers = 1
@@ -20,16 +21,13 @@ iterations = 1
 worker_instances = 1
 
 [access]
-creates = 100
-reads = 0
-updates = 0
-deletes = 0
+workload_path = workloads/workloada
 items = 1000000
 workers = 1
-worker_instances = 1
-doc_gen = json
-throughput = 150
-time = 120
+time = 180
+boost = 12
+ops = 10000000
+target = 2000
 
 [secondary]
 indexer.settings.storage_mode = memory_optimized

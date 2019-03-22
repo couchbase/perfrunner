@@ -288,16 +288,19 @@ def run_kvgen(hostname, num_docs, prefix):
         local(cmd)
 
 
-def run_ycsb(host, bucket, password, action, workload, items, workers,
+def run_ycsb(host, bucket, password, action, workload, items, workers, target, epoll, boost,
              soe_params=None, ops=None, time=None, instance=0):
     cmd = 'bin/ycsb {action} couchbase2 ' \
           '-P {workload} ' \
           '-p writeallfields=true ' \
           '-threads {workers} ' \
+          '-p target={target} ' \
           '-p couchbase.host={host} ' \
           '-p couchbase.bucket={bucket} ' \
           '-p couchbase.password={password} ' \
           '-p couchbase.upsert=true ' \
+          '-p couchbase.epoll={epoll} ' \
+          '-p couchbase.boost={boost} ' \
           '-p couchbase.boost=48 ' \
           '-p couchbase.epoll=true ' \
           '-p exportfile=ycsb_{action}_{instance}.log '
@@ -308,7 +311,7 @@ def run_ycsb(host, bucket, password, action, workload, items, workers,
         cmd += ' -p maxexecutiontime={time} '
 
     cmd = cmd.format(host=host, bucket=bucket, password=password,
-                     action=action, workload=workload,
+                     action=action, workload=workload, target=target, epoll=epoll, boost=boost,
                      items=items, ops=ops, workers=workers, time=time,
                      instance=instance)
 

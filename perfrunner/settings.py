@@ -350,6 +350,8 @@ class PhaseSettings:
     EXISTING_ITEMS = 0
     SIZE = 2048
 
+    TARGET = 0
+
     WORKING_SET = 100
     WORKING_SET_ACCESS = 100
     WORKING_SET_MOVE_TIME = 0
@@ -380,6 +382,9 @@ class PhaseSettings:
 
     RECORDED_LOAD_CACHE_SIZE = 0
     INSERTS_PER_WORKERINSTANCE = 0
+
+    EPOLL = 'true'
+    BOOST = 48
 
     def __init__(self, options: dict):
         # Common settings
@@ -475,6 +480,11 @@ class PhaseSettings:
                                                         self.RECORDED_LOAD_CACHE_SIZE))
         self.inserts_per_workerinstance = int(options.get('inserts_per_workerinstance',
                                                           self.INSERTS_PER_WORKERINSTANCE))
+        self.epoll = options.get("epoll", self.EPOLL)
+        self.boost = options.get('boost', self.BOOST)
+
+        self.target = float(options.get('target', self.TARGET))
+
 
         # Subdoc & XATTR
         self.subdoc_field = options.get('subdoc_field')

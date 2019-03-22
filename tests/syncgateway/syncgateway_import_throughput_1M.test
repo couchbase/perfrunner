@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.syncgateway.SGImportThroughputTest
-title = 1 node, 1M docs, 1K users, 1 channel
+title = Avg Throughput (items/sec), 3 node, 1M docs, 1K docsize
 component = syncgateway
 category = import
 sub_category = Throughput

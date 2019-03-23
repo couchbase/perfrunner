@@ -253,7 +253,7 @@ class MetricHelper:
 
         metric_info = self._metric_info()
 
-        rate = initial_items / time_elapsed
+        rate = round(initial_items / time_elapsed)
 
         return rate, self._snapshots, metric_info
 

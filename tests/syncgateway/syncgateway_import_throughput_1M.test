@@ -14,7 +14,7 @@ online_cores = 16
 kernel_mem_limit = 65G
 
 [load]
-items = 100000
+items = 1000000
 size = 1024
 workers = 10
 doc_gen = json
@@ -26,7 +26,7 @@ creates = 1
 reads = 0
 updates = 0
 deletes = 0
-items = 100000
+items = 1000000
 workers = 10
 worker_instances = 10
 doc_gen = json

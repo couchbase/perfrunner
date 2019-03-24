@@ -300,9 +300,9 @@ class SGImportThroughputTest(SGPerfTest):
     COLLECTORS = {'disk': False, 'ns_server': False, 'ns_server_overview': False, 'active_tasks': False,
                   'syncgateway_stats': True}
 
-    def _report_kpi(self, time_elapsed):
+    def _report_kpi(self, time_elapsed, initial_items):
         self.reporter.post(
-            *self.metrics.sgimport_items_per_sec(time_elapsed=time_elapsed, initial_items=time_elapsed)
+            *self.metrics.sgimport_items_per_sec(time_elapsed=time_elapsed, initial_items=initial_items)
         )
 
     @with_stats

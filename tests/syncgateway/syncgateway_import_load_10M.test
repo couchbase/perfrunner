@@ -10,6 +10,7 @@ mem_quota = 55000
 index_mem_quota = 110000
 initial_nodes = 7
 num_buckets = 1
+online_cores = 8
 
 [load]
 items = 10000000

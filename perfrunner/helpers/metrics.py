@@ -247,9 +247,8 @@ class MetricHelper:
 
         return rate, self._snapshots, metric_info
 
-    def sgimport_items_per_sec(self, time_elapsed: float) -> Metric:
-        initial_items = self.test_config.load_settings.ops or \
-                        self.test_config.load_settings.items
+    def sgimport_items_per_sec(self, time_elapsed: float, initial_items: int) -> Metric:
+        initial_items = initial_items
 
         metric_info = self._metric_info()
 

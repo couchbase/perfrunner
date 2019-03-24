@@ -302,19 +302,19 @@ class SGImportThroughputTest(SGPerfTest):
 
     def _report_kpi(self, time_elapsed):
         self.reporter.post(
-            *self.metrics.sgimport_items_per_sec(time_elapsed)
+            *self.metrics.sgimport_items_per_sec(time_elapsed=time_elapsed, initial_items=time_elapsed)
         )
 
-    @timeit
     @with_stats
     def monitor_sg_import(self):
         host = self.cluster_spec.servers[0]
-        import_docs = self.test_config.load_settings.items
-        self.monitor.monitor_sgimport_queues(host, import_docs)
+        expected_docs = self.test_config.load_settings.items
+        time_elapsed, initial_items = self.monitor.monitor_sgimport_queues(host, expected_docs)
+        return time_elapsed, initial_items
 
     def run(self):
-        time_elapsed = self.monitor_sg_import()
-        self.report_kpi(time_elapsed)
+        time_elapsed, initial_items = self.monitor_sg_import()
+        self.report_kpi(time_elapsed, initial_items)
 
 
 class SGImportLatencyTest(SGPerfTest):

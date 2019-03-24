@@ -109,23 +109,28 @@ class Monitor(RestHelper):
         self._wait_for_empty_queues(host, bucket, self.XDCR_QUEUES,
                                     self.get_xdcr_stats)
 
-    def monitor_sgimport_queues(self, host: str, import_docs: int):
+    def monitor_sgimport_queues(self, host: str, expected_docs: int):
         logger.info('Monitoring SGImport items:')
-        self._wait_for_sg_import_start(host)
-        self._wait_for_sg_import_complete(host, import_docs)
+        initial_items, start_time = self._wait_for_sg_import_start(host)
+        time_taken = self._wait_for_sg_import_complete(host, expected_docs, start_time)
+        return time_taken, initial_items
+
 
     def _wait_for_sg_import_start(self, host: str):
+        logger.info('Checking if import process started')
+
         while True:
             time.sleep(self.POLLING_INTERVAL)
             stats = self.get_sg_stats(host=host)
             import_docs = int(stats['syncGateway_import']['import_count'])
             if import_docs >= 1:
                 logger.info('importing docs has started')
+                return import_docs, time.time()
                 break
-        return 0
 
-    def _wait_for_sg_import_complete(self, host:str, import_docs:int):
-        import_docs = import_docs
+    def _wait_for_sg_import_complete(self, host: str, expected_docs: int, start_time):
+        expected_docs = expected_docs
+        start_time = start_time
         logger.info('Monitoring syncgateway import status :')
 
         while True:
@@ -133,7 +138,10 @@ class Monitor(RestHelper):
             stats = self.get_sg_stats(host=host)
             imports = int(stats['syncGateway_import']['import_count'])
             logger.info('Docs imported: {}'.format(imports))
-            if imports == import_docs:
+            if imports == expected_docs:
+                end_time = time.time()
+                time_taken = end_time - start_time
+                return time_taken
                 break
 
     def _get_num_items(self, host: str, bucket: str) -> bool:

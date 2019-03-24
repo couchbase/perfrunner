@@ -247,12 +247,12 @@ class MetricHelper:
 
         return rate, self._snapshots, metric_info
 
-    def sgimport_items_per_sec(self, time_elapsed: float, initial_items: int) -> Metric:
-        initial_items = initial_items
+    def sgimport_items_per_sec(self, time_elapsed: float, items_in_range: int) -> Metric:
+        items_in_range = items_in_range
 
         metric_info = self._metric_info()
 
-        rate = round(initial_items / time_elapsed)
+        rate = round(items_in_range / time_elapsed)
 
         return rate, self._snapshots, metric_info
 

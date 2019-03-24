@@ -112,8 +112,9 @@ class Monitor(RestHelper):
     def monitor_sgimport_queues(self, host: str, expected_docs: int):
         logger.info('Monitoring SGImport items:')
         initial_items, start_time = self._wait_for_sg_import_start(host)
+        items_in_range = expected_docs - initial_items
         time_taken = self._wait_for_sg_import_complete(host, expected_docs, start_time)
-        return time_taken, initial_items
+        return time_taken, items_in_range
 
 
     def _wait_for_sg_import_start(self, host: str):

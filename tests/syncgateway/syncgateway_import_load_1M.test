@@ -6,11 +6,10 @@ category = read
 sub_category = xattr
 
 [cluster]
-mem_quota = 25000
-index_mem_quota = 50000
+mem_quota = 55000
+index_mem_quota = 110000
 initial_nodes = 7
 num_buckets = 1
-online_cores = 16
 
 [load]
 items = 1000000

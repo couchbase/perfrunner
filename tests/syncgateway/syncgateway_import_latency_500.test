@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.syncgateway.SGImportLatencyTest
-title = Import Latency(ms), 2K Throughput, 3 SG Nodes
+title = Import Latency(ms), 500 Throughput, 3 SG Nodes
 component = syncgateway
 category = import
 sub_category = Latency
@@ -13,9 +13,9 @@ num_buckets = 1
 
 [load]
 workload_path = workloads/workloada
-items = 7200000
-workers = 10
-target = 2000
+items = 1800000
+workers = 1
+target = 500
 
 [access]
 workload_path = workloads/workloada

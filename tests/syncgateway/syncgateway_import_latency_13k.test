@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.syncgateway.SGImportLatencyTest
-title = Import Latency(ms), 2K Throughput, 3 SG Nodes
+title = Import Latency(ms), 13K Throughput, 3 SG Nodes
 component = syncgateway
 category = import
 sub_category = Latency

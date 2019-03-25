@@ -323,7 +323,8 @@ class SGImportLatencyTest(SGPerfTest):
         if self.worker_manager.is_remote:
             self.remote.clone_ycsb(repo=self.test_config.ycsb_settings.repo,
                                    branch=self.test_config.ycsb_settings.branch,
-                                   worker_home=self.worker_manager.WORKER_HOME)
+                                   worker_home=self.worker_manager.WORKER_HOME,
+                                   ycsb_instances=1)
         else:
             local.clone_ycsb(repo=self.test_config.ycsb_settings.repo,
                              branch=self.test_config.ycsb_settings.branch)

@@ -336,6 +336,8 @@ class SGImportLatencyTest(SGPerfTest):
             *self.metrics.sgimport_latency()
         )
 
+    @with_stats
+    @with_profiles
     def load(self, *args):
         cb_target_iterator = CBTargetIterator(self.cluster_spec,
                                               self.test_config,
@@ -351,8 +353,6 @@ class SGImportLatencyTest(SGPerfTest):
         super().access_bg(task=ycsb_task, target_iterator=cb_target_iterator)
 
     def run(self):
-
         self.download_ycsb()
         self.load()
-        self.access()
         self.report_kpi()

@@ -13,24 +13,17 @@ num_buckets = 1
 
 [load]
 workload_path = workloads/workloada
-items = 1000000
-size = 1024
-workers = 1
-doc_gen = json
-iterations = 1
-worker_instances = 1
+items = 1000
+workers = 10
 
 [access]
 workload_path = workloads/workloada
-items = 1000000
-workers = 1
-time = 180
+items = 1000
+workers = 10
+time = 7200
 boost = 12
-ops = 10000000
-target = 2000
-
-[secondary]
-indexer.settings.storage_mode = memory_optimized
+ops = 0
+target = 4000
 
 [syncgateway]
 nodes = 3

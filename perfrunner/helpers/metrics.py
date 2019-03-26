@@ -182,6 +182,14 @@ class MetricHelper:
 
         return int(np.percentile(values, 90))
 
+    def get_percentile_value_of_node_metric(self, collector, metric, server, percentile):
+        values = []
+        db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
+                                     collector=collector,
+                                     server=server)
+        values += self.store.get_values(db, metric=metric)
+        return int(np.percentile(values, percentile))
+
     def get_collector_values(self, collector):
         values = []
         for bucket in self.test_config.buckets:

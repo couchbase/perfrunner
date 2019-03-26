@@ -282,13 +282,16 @@ class FragmentationTest(PerfTest):
                     password).run()
 
     def calc_fragmentation_ratio(self) -> float:
-        ratios = []
+        ratios = list()
         for target in self.target_iterator:
             port = self.rest.get_memcached_port(target.node)
-            stats = self.memcached.get_stats(target.node, port, target.bucket,
-                                             stats='memory')
-            ratio = int(stats[b'mem_used']) / int(stats[b'total_heap_bytes'])
-            ratios.append(ratio)
+            stats = self.memcached.get_stats(target.node, port, target.bucket, stats='memory')
+            mem_used = int(stats[b'mem_used'])
+            memcache_rss = self.metrics.get_percentile_value_of_node_metric("atop",
+                                                                            "memcached_rss",
+                                                                            target.node, 99)
+            ratios.append(mem_used / memcache_rss)
+
         ratio = 100 * (1 - sum(ratios) / len(ratios))
         ratio = round(ratio, 1)
         logger.info('Fragmentation: {}'.format(ratio))

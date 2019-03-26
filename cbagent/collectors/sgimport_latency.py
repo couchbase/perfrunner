@@ -86,20 +86,17 @@ class SGImport_latency(Collector):
     def measure(self, src_client):
 
         key = "sgimport_{}".format(uhex())
-        print('upsert key', key)
 
         doc = self.new_docs.next(key)
 
         polling_interval = self.INITIAL_POLLING_INTERVAL
 
         src_client.upsert(key, doc)
-        print('doc inserterd', key)
 
         t0 = time()
-        print('time t0 of key {} is {}', key, t0)
+
         while time() - t0 < self.TIMEOUT:
             if self.sg_changefeed(host=self.sg_host, key=key) == 1:
-                print('key matched', key)
                 break
             sleep(polling_interval)
             polling_interval *= 1.05  # increase interval by 5%
@@ -107,7 +104,7 @@ class SGImport_latency(Collector):
             logger.warn('SG import sampling timed out after {} seconds'
                         .format(self.TIMEOUT))
         t1 = time()
-        print('time t1 of key {} is {}', key, t1)
+
         src_client.remove(key, quiet=True)
         print('time taken (t1 - t0): in ms', (t1 - t0) * 1000)
         return {'sgimport_latency': (t1 - t0) * 1000}  # s -> ms

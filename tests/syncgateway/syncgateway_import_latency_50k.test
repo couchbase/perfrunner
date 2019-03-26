@@ -14,7 +14,7 @@ num_buckets = 1
 [load]
 workload_path = workloads/workloada
 items = 30000000
-workers = 1
+workers = 20
 target = 25000
 
 [access]

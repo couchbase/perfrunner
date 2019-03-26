@@ -74,7 +74,6 @@ class SGImport_latency(Collector):
         key_array.append(key)
         data = {'limit': 1, 'doc_ids': key_array, 'filter': '_doc_ids', 'feed': 'normal'}
         response = requests.post(url=api, data=json.dumps(data))
-        print('printing response json', response.json())
         if len(response.json()['results']) >= 1:
             if key == response.json()['results'][0]['id']:
                 return 1

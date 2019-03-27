@@ -36,7 +36,7 @@ class SGImport_latency(Collector):
 
     INITIAL_POLLING_INTERVAL = 0.001  # 1 ms
 
-    TIMEOUT = 3600  # 10 minutes
+    TIMEOUT = 3600  # 1hr minutes
 
     MAX_SAMPLING_INTERVAL = 0.25  # 250 ms
 
@@ -67,22 +67,42 @@ class SGImport_latency(Collector):
 
         self.new_docs = Document(1024)
 
-    def sg_changefeed(self, host: str, key: str):
+    def sg_changefeed(self, host: str, key: str, last_sequence: int):
         sg_db = 'db'
         api = 'http://{}:4985/{}/_changes'.format(host, sg_db)
-        key_array = []
-        key_array.append(key)
-        data = {'limit': 1, 'doc_ids': key_array, 'filter': '_doc_ids', 'feed': 'normal'}
-        response = requests.post(url=api, data=json.dumps(data))
-        if len(response.json()['results']) >= 1:
-            if key == response.json()['results'][0]['id']:
-                return 1
-            else:
-                return 0
-        else:
-            return 0
 
-    def measure(self, src_client):
+        last_sequence_str = "{}".format(last_sequence)
+
+        data = {'filter': 'sync_gateway/bychannel', 'feed': 'normal', "channels": "*", "since": last_sequence_str}
+
+        t1 = time()
+        response = requests.post(url=api, data=json.dumps(data))
+
+        last_sequence = last_sequence + len(response.json()['results'])
+        print('last_sequence in sg_changefeed', last_sequence)
+
+        record_found = 0
+        for record in response.json()['results']:
+            if record['id'] == key:
+                print(' record found', key)
+                record_found = 1
+                break
+        if record_found == 1:
+            return 1, t1, last_sequence
+        else:
+            return 0, t1, last_sequence
+
+    def get_lastsequence(self, host: str):
+        sg_db = 'db'
+        api = 'http://{}:4985/{}/_changes'.format(host, sg_db)
+
+        data = {'filter': 'sync_gateway/bychannel', 'feed': 'normal', "channels": '*', "since": '0'}
+        response = requests.post(url=api, data=json.dumps(data))
+
+        last_sequence = len(response.json()['results']) + 3
+        return last_sequence
+
+    def measure(self, src_client, last_sequence: int):
 
         key = "sgimport_{}".format(uhex())
 
@@ -92,25 +112,36 @@ class SGImport_latency(Collector):
 
         src_client.upsert(key, doc)
 
-        t0 = time()
+        print('last_sequence at the begining of measure', last_sequence)
+        print('key insterted:', key)
 
+        t0 = time()
+        t1 = t0
         while time() - t0 < self.TIMEOUT:
-            if self.sg_changefeed(host=self.sg_host, key=key) == 1:
+            status_code, time_stamp, last_sequence = self.sg_changefeed(host=self.sg_host,
+                                                                        key=key,
+                                                                        last_sequence=last_sequence)
+            print('status_code, time_stamp, last_sequence in while loop', status_code, time_stamp, last_sequence)
+            if status_code == 1:
+                t1 = time_stamp
+                print('t1 after assignment', t1)
                 break
+            last_sequence = last_sequence
+            print('assigning last_sequence to last_sequence', last_sequence)
             sleep(polling_interval)
             polling_interval *= 1.05  # increase interval by 5%
         else:
             logger.warn('SG import sampling timed out after {} seconds'
                         .format(self.TIMEOUT))
-        t1 = time()
 
-        src_client.remove(key, quiet=True)
         print('time taken (t1 - t0): in ms', (t1 - t0) * 1000)
         return {'sgimport_latency': (t1 - t0) * 1000}  # s -> ms
 
     def sample(self):
         for bucket, src_client in self.clients:
-            lags = self.measure(src_client)
+            last_sequence = self.get_lastsequence(host=self.sg_host)
+            print('last sequencid at the begining', last_sequence)
+            lags = self.measure(src_client, last_sequence=last_sequence)
             self.store.append(lags,
                               cluster=self.cluster,
                               bucket=bucket,

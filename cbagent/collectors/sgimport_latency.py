@@ -99,7 +99,8 @@ class SGImport_latency(Collector):
         data = {'filter': 'sync_gateway/bychannel', 'feed': 'normal', "channels": '*', "since": '0'}
         response = requests.post(url=api, data=json.dumps(data))
 
-        last_sequence = len(response.json()['results']) + 3
+        last_sequence = len(response.json()['results'])
+
         return last_sequence
 
     def measure(self, src_client, last_sequence: int):

@@ -79,12 +79,13 @@ class SGImport_latency(Collector):
         response = requests.post(url=api, data=json.dumps(data))
 
         last_sequence = last_sequence + len(response.json()['results'])
-        print('last_sequence in sg_changefeed', last_sequence)
+        #print('last_sequence in sg_changefeed', last_sequence)
 
         record_found = 0
         for record in response.json()['results']:
             if record['id'] == key:
-                print(' record found', key)
+                #print(record)
+                #print(' record found', key)
                 record_found = 1
                 break
         if record_found == 1:
@@ -113,36 +114,36 @@ class SGImport_latency(Collector):
 
         src_client.upsert(key, doc)
 
-        print('last_sequence at the begining of measure', last_sequence)
-        print('key insterted:', key)
+        #print('last_sequence at the begining of measure', last_sequence)
+        #print('key insterted:', key)
 
         t0 = time()
-        print('value of t0', t0,key)
+        #print('value of t0', t0,key)
         t1 = t0
         while time() - t0 < self.TIMEOUT:
             status_code, time_stamp, last_sequence = self.sg_changefeed(host=self.sg_host,
                                                                         key=key,
                                                                         last_sequence=last_sequence)
-            print('status_code, time_stamp, last_sequence in while loop', status_code, time_stamp, last_sequence)
+            #print('status_code, time_stamp, last_sequence in while loop', status_code, time_stamp, last_sequence)
             if status_code == 1:
                 t1 = time_stamp
-                print('t1 after assignment', t1, key)
+                #print('t1 after assignment', t1, key)
                 break
             last_sequence = last_sequence
-            print('assigning last_sequence to last_sequence', last_sequence)
+            #print('assigning last_sequence to last_sequence', last_sequence)
             sleep(polling_interval)
             polling_interval *= 1.05  # increase interval by 5%
         else:
             logger.warn('SG import sampling timed out after {} seconds'
                         .format(self.TIMEOUT))
 
-        print('time taken (t1 - t0): in ms', (t1 - t0) * 1000)
+        #print('time taken (t1 - t0): in ms', (t1 - t0) * 1000)
         return {'sgimport_latency': (t1 - t0) * 1000}  # s -> ms
 
     def sample(self):
         for bucket, src_client in self.clients:
             last_sequence = self.get_lastsequence(host=self.sg_host)
-            print('last sequencid at the begining', last_sequence)
+            #print('last sequencid at the begining', last_sequence)
             lags = self.measure(src_client, last_sequence=last_sequence)
             self.store.append(lags,
                               cluster=self.cluster,

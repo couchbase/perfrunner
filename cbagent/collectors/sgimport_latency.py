@@ -117,6 +117,7 @@ class SGImport_latency(Collector):
         print('key insterted:', key)
 
         t0 = time()
+        print('value of t0', t0,key)
         t1 = t0
         while time() - t0 < self.TIMEOUT:
             status_code, time_stamp, last_sequence = self.sg_changefeed(host=self.sg_host,
@@ -125,7 +126,7 @@ class SGImport_latency(Collector):
             print('status_code, time_stamp, last_sequence in while loop', status_code, time_stamp, last_sequence)
             if status_code == 1:
                 t1 = time_stamp
-                print('t1 after assignment', t1)
+                print('t1 after assignment', t1, key)
                 break
             last_sequence = last_sequence
             print('assigning last_sequence to last_sequence', last_sequence)

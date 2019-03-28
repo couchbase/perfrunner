@@ -85,6 +85,8 @@ class SGImport_latency(Collector):
 
         if response.status_code == 200:
             t1 = time()
+            print('doc found:', t1)
+
         else:
             t1 = time() + 36000
 
@@ -92,6 +94,7 @@ class SGImport_latency(Collector):
 
     def insert_doc(self, src_client, key: str, doc):
         src_client.upsert(key, doc)
+        print('doc insterted:', key, time())
         return time()
 
 
@@ -109,6 +112,7 @@ class SGImport_latency(Collector):
     def measure(self, src_client):
 
         key = "sgimport_{}".format(uhex())
+        print('printing key:', key)
 
         doc = self.new_docs.next(key)
 
@@ -118,6 +122,7 @@ class SGImport_latency(Collector):
             future1 = executor.submit(self.check_longpoll_changefeed, host=self.sg_host, last_sequence=last_sequence)
             future2 = executor.submit(self.insert_doc, src_client=src_client, key=key, doc=doc)
             t1, t0 = future1.result(), future2.result()
+        print('t1 and t0 at the end of parallel execution', t1, t0)
 
         return {'sgimport_latency': (t1 - t0) * 1000}  # s -> ms
 

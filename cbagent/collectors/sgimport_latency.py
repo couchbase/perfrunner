@@ -107,6 +107,8 @@ class SGImport_latency(Collector):
 
         last_sequence = response.json()['update_seq']
 
+        print('last sequence', last_sequence)
+
         return last_sequence
 
     def measure(self, src_client):

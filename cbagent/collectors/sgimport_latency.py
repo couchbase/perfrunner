@@ -70,6 +70,8 @@ class SGImport_latency(Collector):
         self.new_docs = Document(1024)
 
     def check_longpoll_changefeed(self, host: str, last_sequence: int):
+
+        print('entered check_longpoll_changefeed')
         sg_db = 'db'
         api = 'http://{}:4985/{}/_changes'.format(host, sg_db)
 
@@ -93,6 +95,7 @@ class SGImport_latency(Collector):
         return t1
 
     def insert_doc(self, src_client, key: str, doc):
+        print('entered insert_doc')
         src_client.upsert(key, doc)
         print('doc insterted:', key, time())
         return time()
@@ -117,6 +120,8 @@ class SGImport_latency(Collector):
         print('printing key:', key)
 
         doc = self.new_docs.next(key)
+
+        print('printing doc:', doc)
 
         last_sequence = self.get_lastsequence(host=self.sg_host)
 

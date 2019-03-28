@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.syncgateway.SGImportLatencyTest
-title = , CB ingestion rate 50K docs/sec, 3 SG Nodes (1 import, 2 non-import), total docs 30000000
+title = , CB ingestion rate 50K docs/sec, 3 SG Nodes (1 import, 2 non-import), total docs 60000000
 component = syncgateway
 category = import
 sub_category = Latency
@@ -13,9 +13,9 @@ num_buckets = 1
 
 [load]
 workload_path = workloads/workloada
-items = 30000000
-workers = 20
-target = 25000
+items = 60000000
+workers = 50
+target = 50000
 
 [access]
 workload_path = workloads/workloada

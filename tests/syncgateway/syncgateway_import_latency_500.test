@@ -13,7 +13,7 @@ num_buckets = 1
 
 [load]
 workload_path = workloads/workloada
-items = 1800000
+items = 150000
 workers = 10
 target = 500
 

@@ -1,10 +1,11 @@
 import requests
 import json
 
+from concurrent.futures import ProcessPoolExecutor as Executor
+
 from time import sleep, time
 
 from couchbase.bucket import Bucket
-import couchbase.subdocument as sd
 
 from cbagent.collectors import Latency, Collector
 from logger import logger
@@ -68,40 +69,42 @@ class SGImport_latency(Collector):
 
         self.new_docs = Document(1024)
 
-    def sg_changefeed(self, host: str, key: str, last_sequence: int):
+    def check_longpoll_changefeed(self, host: str, last_sequence: int):
         sg_db = 'db'
         api = 'http://{}:4985/{}/_changes'.format(host, sg_db)
 
         last_sequence_str = "{}".format(last_sequence)
 
-        data = {'filter': 'sync_gateway/bychannel', 'feed': 'normal', "channels": "*", "since": last_sequence_str}
+        data = {'filter': 'sync_gateway/bychannel',
+                'feed': 'longpoll',
+                "channels": "123",
+                "since": last_sequence_str,
+                "heartbeat": 3600000}
 
-        t1 = time()
         response = requests.post(url=api, data=json.dumps(data))
 
-        last_sequence = last_sequence + len(response.json()['results'])
-
-        record_found = 0
-        for record in response.json()['results']:
-            if record['id'] == key:
-                record_found = 1
-                break
-        if record_found == 1:
-            return 1, t1, last_sequence
+        if response.status_code == 200:
+            t1 = time()
         else:
-            return 0, t1, last_sequence
+            t1 = time() + 36000
+
+        return t1
+
+    def insert_doc(self, src_client, key: str, doc):
+        src_client.upsert(key, doc)
+        return time()
+
+
 
     def get_lastsequence(self, host: str):
         sg_db = 'db'
-        api = 'http://{}:4985/{}/_changes'.format(host, sg_db)
+        api = 'http://{}:4985/{}'.format(host, sg_db)
 
-        data = {'filter': 'sync_gateway/bychannel', 'feed': 'normal', "channels": '*', "since": '0'}
-        response = requests.post(url=api, data=json.dumps(data))
+        response = requests.get(url=api)
 
-        last_sequence = len(response.json()['results'])
+        last_sequence = response.json()['update_seq']
 
         return last_sequence
-
 
     def measure(self, src_client):
 
@@ -109,21 +112,13 @@ class SGImport_latency(Collector):
 
         doc = self.new_docs.next(key)
 
-        polling_interval = self.INITIAL_POLLING_INTERVAL
+        last_sequence = self.get_lastsequence(host=self.sg_host)
 
-        src_client.upsert(key, doc)
+        with Executor() as executor:
+            future1 = executor.submit(self.check_longpoll_changefeed, host=self.sg_host, last_sequence=last_sequence)
+            future2 = executor.submit(self.insert_doc, src_client=src_client, key=key, doc=doc)
+            t1, t0 = future1.result(), future2.result()
 
-        t0 = time()
-
-        while time() - t0 < self.TIMEOUT:
-            if src_client.lookup_in(key, sd.exists(path='_sync', xattr=True)):
-                break
-            sleep(polling_interval)
-            polling_interval *= 1.05  # increase interval by 5%
-        else:
-            logger.warn('SG import sampling timed out after {} seconds'
-                        .format(self.TIMEOUT))
-        t1 = time()
         return {'sgimport_latency': (t1 - t0) * 1000}  # s -> ms
 
     def sample(self):

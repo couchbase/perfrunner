@@ -419,6 +419,7 @@ class Document(String):
             'category': self._build_category(alphabet),
             'achievements': self._build_achievements(alphabet),
             'body': self._build_string(alphabet, size),
+            'channel': '123',
         }
 
 
@@ -1119,4 +1120,5 @@ class VaryingItemSizePlasmaDocument(PlasmaDocument):
             'category': self._build_category(alphabet),
             'achievements': self._build_achievements(alphabet),
             'body': self._build_string(alphabet, size),
+            'channels': '123',
         }

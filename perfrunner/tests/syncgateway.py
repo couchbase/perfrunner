@@ -12,8 +12,6 @@ from perfrunner.helpers.worker import syncgateway_task_init_users, syncgateway_t
     syncgateway_task_grant_access, pillowfight_data_load_task, pillowfight_task, ycsb_data_load_task, \
     ycsb_task
 
-from perfrunner.helpers.cbmonitor import CbAgent
-
 from perfrunner.helpers import local
 
 from typing import Callable
@@ -282,7 +280,7 @@ class CBTargetIterator(TargetIterator):
         password = self.test_config.bucket.password
         prefix = self.prefix
         masters = self.cluster_spec.masters
-        cb_master = self.cluster_spec.servers[self.test_config.syncgateway_settings.nodes]
+        cb_master = self.cluster_spec.servers[int(self.test_config.syncgateway_settings.nodes)]
         src_master = next(masters)
         dest_master = next(masters)
         for bucket in self.test_config.buckets:

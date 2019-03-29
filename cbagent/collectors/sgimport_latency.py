@@ -59,7 +59,11 @@ class SGImport_latency(Collector):
 
         self.clients = []
 
-        self.sg_host, self.cb_host = self.cluster_spec.masters
+        #self.sg_host, self.cb_host = self.cluster_spec.masters
+
+        self.cb_host = self.cluster_spec.servers[int(self.test_config.syncgateway_settings.nodes)]
+
+        self.sg_host = settings.master_node
 
         src_client = new_client(host=self.cb_host,
                                 bucket='bucket-1',

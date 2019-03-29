@@ -85,6 +85,7 @@ class SGImport_latency(Collector):
                 "heartbeat": 3600000}
 
         response = requests.post(url=api, data=json.dumps(data))
+        t1 = time()
         print('printing the response', response.json())
         record_found = 0
         if response.status_code == 200:
@@ -95,8 +96,6 @@ class SGImport_latency(Collector):
                     break
             if record_found != 1:
                 self.check_longpoll_changefeed(host=host, key=key, last_sequence=last_sequence)
-        t1 = time()
-        print('doc found:', t1)
         return t1
 
     def insert_doc(self, src_client, key: str, doc):
@@ -134,12 +133,11 @@ class SGImport_latency(Collector):
 
         last_sequence = self.get_lastsequence(host=self.sg_host)
 
-        sleep(10)
         executor = ThreadPoolExecutor(max_workers=2)
         future1 = executor.submit(self.check_longpoll_changefeed, host=self.sg_host, key=key, last_sequence=last_sequence)
         future2 = executor.submit(self.insert_doc, src_client=src_client, key=key, doc=doc)
         t1, t0 = future1.result(), future2.result()
-        #print('t1 and t0 at the end of parallel execution', t1, t0)
+        print('t1 and t0 at the end of parallel execution', t1, t0, (t1-t0))
 
         return {'sgimport_latency': (t1 - t0) * 1000}  # s -> ms
 

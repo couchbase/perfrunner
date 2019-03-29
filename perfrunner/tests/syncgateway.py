@@ -12,6 +12,8 @@ from perfrunner.helpers.worker import syncgateway_task_init_users, syncgateway_t
     syncgateway_task_grant_access, pillowfight_data_load_task, pillowfight_task, ycsb_data_load_task, \
     ycsb_task
 
+from perfrunner.helpers.cbmonitor import CbAgent
+
 from perfrunner.helpers import local
 
 from typing import Callable
@@ -68,6 +70,8 @@ class SGPerfTest(PerfTest):
         self.cluster = ClusterManager(cluster_spec, test_config)
         self.target_iterator = TargetIterator(cluster_spec, test_config)
         self.monitor = Monitor(cluster_spec, test_config, verbose)
+
+
 
     def download_ycsb(self):
         if self.worker_manager.is_remote:
@@ -278,12 +282,13 @@ class CBTargetIterator(TargetIterator):
         password = self.test_config.bucket.password
         prefix = self.prefix
         masters = self.cluster_spec.masters
+        cb_master = self.cluster_spec.servers[self.test_config.syncgateway_settings.nodes]
         src_master = next(masters)
         dest_master = next(masters)
         for bucket in self.test_config.buckets:
             if self.prefix is None:
-                prefix = target_hash(src_master, bucket)
-            yield TargetSettings(dest_master, bucket, password, prefix)
+                prefix = target_hash(cb_master, bucket)
+            yield TargetSettings(cb_master, bucket, password, prefix)
 
 
 class SGImport_load(PerfTest):

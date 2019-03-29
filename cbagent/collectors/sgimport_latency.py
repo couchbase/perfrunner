@@ -72,7 +72,7 @@ class SGImport_latency(Collector):
 
     def check_longpoll_changefeed(self, host: str, last_sequence: int):
 
-        print('entered check_longpoll_changefeed')
+        #print('entered check_longpoll_changefeed')
         sg_db = 'db'
         api = 'http://{}:4985/{}/_changes'.format(host, sg_db)
 
@@ -88,7 +88,7 @@ class SGImport_latency(Collector):
 
         if response.status_code == 200:
             t1 = time()
-            print('doc found:', t1)
+            #print('doc found:', t1)
 
         else:
             t1 = time() + 36000
@@ -96,9 +96,9 @@ class SGImport_latency(Collector):
         return t1
 
     def insert_doc(self, src_client, key: str, doc):
-        print('entered insert_doc')
+        #print('entered insert_doc')
         src_client.upsert(key, doc)
-        print('doc insterted:', key, time())
+        #print('doc insterted:', key, time())
         return time()
 
 
@@ -111,18 +111,18 @@ class SGImport_latency(Collector):
 
         last_sequence = response.json()['update_seq']
 
-        print('last sequence', last_sequence)
+        #print('last sequence', last_sequence)
 
         return last_sequence
 
     def measure(self, src_client):
 
         key = "sgimport_{}".format(uhex())
-        print('printing key:', key)
+        #print('printing key:', key)
 
         doc = self.new_docs.next(key)
 
-        print('printing doc:', doc)
+        #print('printing doc:', doc)
 
         last_sequence = self.get_lastsequence(host=self.sg_host)
 
@@ -130,7 +130,7 @@ class SGImport_latency(Collector):
         future1 = executor.submit(self.check_longpoll_changefeed, host=self.sg_host, last_sequence=last_sequence)
         future2 = executor.submit(self.insert_doc, src_client=src_client, key=key, doc=doc)
         t1, t0 = future1.result(), future2.result()
-        print('t1 and t0 at the end of parallel execution', t1, t0)
+        #print('t1 and t0 at the end of parallel execution', t1, t0)
 
         return {'sgimport_latency': (t1 - t0) * 1000}  # s -> ms
 

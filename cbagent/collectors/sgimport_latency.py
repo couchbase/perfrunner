@@ -108,9 +108,15 @@ class SGImport_latency(Collector):
         sg_db = 'db'
         api = 'http://{}:4985/{}'.format(host, sg_db)
 
-        response = requests.get(url=api)
+        data = {'filter': 'sync_gateway/bychannel',
+                'feed': 'normal',
+                "channels": "123",
+                "since": 0,
+                "heartbeat": 3600000}
 
-        last_sequence = response.json()['update_seq']
+        response = requests.post(url=api, data=json.dumps(data))
+
+        last_sequence = response.json()['last_seq']
 
         print('last sequence', last_sequence)
 
@@ -122,8 +128,6 @@ class SGImport_latency(Collector):
         print('printing key:', key)
 
         doc = self.new_docs.next(key)
-
-        #print('printing doc:', doc)
 
         last_sequence = self.get_lastsequence(host=self.sg_host)
 

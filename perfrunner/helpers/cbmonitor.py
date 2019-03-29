@@ -309,7 +309,8 @@ class CbAgent:
             settings = copy(self.settings)
 
             settings.cluster = cluster_id
-            collector = SGImport_latency(settings, self.test.cluster_spec, self.test.test_config.access_settings)
+            collector = SGImport_latency(settings, self.test.cluster_spec,
+                                         self.test.test_config.syncgateway_settings)
             self.collectors.append(collector)
 
     def update_metadata(self):

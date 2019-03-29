@@ -46,6 +46,7 @@ class SGImport_latency(Collector):
     def __init__(self, settings,
                  cluster_spec: ClusterSpec,
                  test_config: TestConfig
+
                  ):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
@@ -61,9 +62,9 @@ class SGImport_latency(Collector):
 
         #self.sg_host, self.cb_host = self.cluster_spec.masters
 
-        self.cb_host = self.cluster_spec.servers[int(self.test_config.syncgateway_settings.nodes)]
+        self.cb_host = self.cluster_spec.servers[int(self.test_config.nodes)]
 
-        self.sg_host = settings.master_node
+        self.sg_host = next(self.cluster_spec.masters)
 
         src_client = new_client(host=self.cb_host,
                                 bucket='bucket-1',

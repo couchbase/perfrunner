@@ -30,7 +30,7 @@ view_percentage = 100
 [load]
 items = 100000000
 size = 1024
-workers = 20
+workers = 22
 
 [eventing]
 functions = perf-test1:tests/eventing/code/curl_json.js
@@ -42,6 +42,6 @@ request_url = https://172.23.96.38/cgi-bin/json/1kb_text_200ms.py
 [access]
 updates = 100
 items = 100000000
-workers = 20
+workers = 22
 throughput = 100000
 time = 1200

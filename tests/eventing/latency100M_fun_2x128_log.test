@@ -30,7 +30,7 @@ view_percentage = 100
 [load]
 items = 100000000
 size = 1024
-workers = 160
+workers = 22
 
 [eventing]
 functions = perf-test1:tests/eventing/code/2x128_log.js

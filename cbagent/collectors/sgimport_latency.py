@@ -70,7 +70,7 @@ class SGImport_latency(Collector):
 
         self.new_docs = Document(1024)
 
-    def check_longpoll_changefeed(self, host: str, last_sequence: int):
+    def check_longpoll_changefeed(self, host: str, key: str, last_sequence: int):
 
         #print('entered check_longpoll_changefeed')
         sg_db = 'db'
@@ -86,14 +86,17 @@ class SGImport_latency(Collector):
 
         response = requests.post(url=api, data=json.dumps(data))
         print('printing the response', response.json())
-
+        record_found = 0
         if response.status_code == 200:
-            t1 = time()
-            print('doc found:', t1)
-
-        else:
-            t1 = time() + 36000
-
+            for record in response.json()['results']:
+                if record['id'] == key:
+                    print('found key', key, time())
+                    record_found = 1
+                    break
+            if record_found != 1:
+                self.check_longpoll_changefeed(host=host, key=key, last_sequence=last_sequence)
+        t1 = time()
+        print('doc found:', t1)
         return t1
 
     def insert_doc(self, src_client, key: str, doc):
@@ -131,8 +134,9 @@ class SGImport_latency(Collector):
 
         last_sequence = self.get_lastsequence(host=self.sg_host)
 
+        sleep(10)
         executor = ThreadPoolExecutor(max_workers=2)
-        future1 = executor.submit(self.check_longpoll_changefeed, host=self.sg_host, last_sequence=last_sequence)
+        future1 = executor.submit(self.check_longpoll_changefeed, host=self.sg_host, key=key, last_sequence=last_sequence)
         future2 = executor.submit(self.insert_doc, src_client=src_client, key=key, doc=doc)
         t1, t0 = future1.result(), future2.result()
         #print('t1 and t0 at the end of parallel execution', t1, t0)

@@ -110,13 +110,13 @@ class SGImport_latency(Collector):
 
         data = {'filter': 'sync_gateway/bychannel',
                 'feed': 'normal',
-                "channels": "123",
-                "since": 0,
+                "channels": '123',
+                "since": '0',
                 "heartbeat": 3600000}
 
         response = requests.post(url=api, data=json.dumps(data))
 
-        last_sequence = response.json()['last_seq']
+        last_sequence = int(response.json()['last_seq'])
 
         print('last sequence', last_sequence)
 

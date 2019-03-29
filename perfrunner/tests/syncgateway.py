@@ -280,9 +280,9 @@ class CBTargetIterator(TargetIterator):
         password = self.test_config.bucket.password
         prefix = self.prefix
         masters = self.cluster_spec.masters
-        cb_master = self.cluster_spec.servers[int(self.test_config.syncgateway_settings.nodes)]
-        src_master = next(masters)
-        dest_master = next(masters)
+        cb_master = self.cluster_spec.servers[3]
+        #src_master = next(masters)
+        #dest_master = next(masters)
         for bucket in self.test_config.buckets:
             if self.prefix is None:
                 prefix = target_hash(cb_master, bucket)

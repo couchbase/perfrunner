@@ -85,10 +85,11 @@ class SGImport_latency(Collector):
                 "heartbeat": 3600000}
 
         response = requests.post(url=api, data=json.dumps(data))
+        print('printing the response',rresponse.json())
 
         if response.status_code == 200:
             t1 = time()
-            #print('doc found:', t1)
+            print('doc found:', t1)
 
         else:
             t1 = time() + 36000
@@ -98,7 +99,7 @@ class SGImport_latency(Collector):
     def insert_doc(self, src_client, key: str, doc):
         #print('entered insert_doc')
         src_client.upsert(key, doc)
-        #print('doc insterted:', key, time())
+        print('doc insterted:', key, time())
         return time()
 
 
@@ -111,14 +112,14 @@ class SGImport_latency(Collector):
 
         last_sequence = response.json()['update_seq']
 
-        #print('last sequence', last_sequence)
+        print('last sequence', last_sequence)
 
         return last_sequence
 
     def measure(self, src_client):
 
         key = "sgimport_{}".format(uhex())
-        #print('printing key:', key)
+        print('printing key:', key)
 
         doc = self.new_docs.next(key)
 

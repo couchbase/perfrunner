@@ -85,7 +85,7 @@ class SGImport_latency(Collector):
                 "heartbeat": 3600000}
 
         response = requests.post(url=api, data=json.dumps(data))
-        print('printing the response',rresponse.json())
+        print('printing the response', response.json())
 
         if response.status_code == 200:
             t1 = time()

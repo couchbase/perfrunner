@@ -2,6 +2,7 @@ import requests
 import json
 
 from concurrent.futures import ProcessPoolExecutor as Executor
+from concurrent.futures import ThreadPoolExecutor
 
 from time import sleep, time
 
@@ -125,10 +126,10 @@ class SGImport_latency(Collector):
 
         last_sequence = self.get_lastsequence(host=self.sg_host)
 
-        with Executor() as executor:
-            future1 = executor.submit(self.check_longpoll_changefeed, host=self.sg_host, last_sequence=last_sequence)
-            future2 = executor.submit(self.insert_doc, src_client=src_client, key=key, doc=doc)
-            t1, t0 = future1.result(), future2.result()
+        executor = ThreadPoolExecutor(max_workers=2)
+        future1 = executor.submit(self.check_longpoll_changefeed, host=self.sg_host, last_sequence=last_sequence)
+        future2 = executor.submit(self.insert_doc, src_client=src_client, key=key, doc=doc)
+        t1, t0 = future1.result(), future2.result()
         print('t1 and t0 at the end of parallel execution', t1, t0)
 
         return {'sgimport_latency': (t1 - t0) * 1000}  # s -> ms

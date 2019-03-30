@@ -139,7 +139,7 @@ class Monitor(RestHelper):
             stats = self.get_sg_stats(host=host)
             imports = int(stats['syncGateway_import']['import_count'])
             logger.info('Docs imported: {}'.format(imports))
-            if imports == expected_docs:
+            if imports >= expected_docs:
                 end_time = time.time()
                 time_taken = end_time - start_time
                 return time_taken

@@ -1,21 +1,19 @@
 [clusters]
-hebe_sg =
+hebe =
     172.23.97.21:kv,index,n1ql
     172.23.97.22:kv,index,n1ql
     172.23.97.23:kv,index,n1ql
-
-hebe_cb =
-    172.23.97.24:kv
-    172.23.97.25:kv
-    172.23.97.26:kv
-    172.23.97.27:kv
-    172.23.97.28:kv
-    172.23.97.29:n1ql
-    172.23.97.30:index
+    172.23.97.24:kv,index,n1ql
+    172.23.97.25:kv,index,n1ql
+    172.23.97.26:kv,index,n1ql
+    172.23.97.27:kv,index,n1ql
+    172.23.97.28:kv,index,n1ql
+    172.23.97.29:kv,index,n1ql
+    172.23.97.30:kv,index,n1ql
 
 [clients]
 hosts =
-    172.23.97.36
+    172.23.97.31
 credentials = root:couchbase
 
 [storage]

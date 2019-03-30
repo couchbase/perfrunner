@@ -13,7 +13,7 @@ hebe =
 
 [clients]
 hosts =
-    172.23.97.36
+    172.23.97.31
 credentials = root:couchbase
 
 [storage]

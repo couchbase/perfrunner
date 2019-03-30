@@ -46,7 +46,6 @@ class SGImport_latency(Collector):
     def __init__(self, settings,
                  cluster_spec: ClusterSpec,
                  test_config: TestConfig
-
                  ):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
@@ -76,6 +75,7 @@ class SGImport_latency(Collector):
         self.new_docs = Document(1024)
 
     def check_longpoll_changefeed(self, host: str, key: str, last_sequence: int):
+        
 
         #print('entered check_longpoll_changefeed')
         sg_db = 'db'
@@ -91,7 +91,7 @@ class SGImport_latency(Collector):
 
         response = requests.post(url=api, data=json.dumps(data))
         t1 = time()
-        print('printing the response', response.json())
+        #print('printing the response', response.json())
         record_found = 0
         if response.status_code == 200:
             for record in response.json()['results']:
@@ -106,7 +106,7 @@ class SGImport_latency(Collector):
     def insert_doc(self, src_client, key: str, doc):
         #print('entered insert_doc')
         src_client.upsert(key, doc)
-        print('doc insterted:', key, time())
+        #print('doc insterted:', key, time())
         return time()
 
 
@@ -125,14 +125,14 @@ class SGImport_latency(Collector):
 
         last_sequence = int(response.json()['last_seq'])
 
-        print('last sequence', last_sequence)
+        #print('last sequence', last_sequence)
 
         return last_sequence
 
     def measure(self, src_client):
 
         key = "sgimport_{}".format(uhex())
-        print('printing key:', key)
+        #print('printing key:', key)
 
         doc = self.new_docs.next(key)
 
@@ -142,7 +142,7 @@ class SGImport_latency(Collector):
         future1 = executor.submit(self.check_longpoll_changefeed, host=self.sg_host, key=key, last_sequence=last_sequence)
         future2 = executor.submit(self.insert_doc, src_client=src_client, key=key, doc=doc)
         t1, t0 = future1.result(), future2.result()
-        print('t1 and t0 at the end of parallel execution', t1, t0, (t1-t0))
+        #print('t1 and t0 at the end of parallel execution', t1, t0, (t1-t0))
 
         return {'sgimport_latency': (t1 - t0) * 1000}  # s -> ms
 

@@ -149,4 +149,4 @@ class SGImport_latency(Collector):
 
     def update_metadata(self):
         self.mc.add_cluster()
-        self.mc.add_metric(self.METRICS, server=self.cluster_spec.servers[1], collector=self.COLLECTOR)
+        self.mc.add_metric(self.METRICS, bucket=self.cluster_spec.servers[0], collector=self.COLLECTOR)

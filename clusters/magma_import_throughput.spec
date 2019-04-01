@@ -1,5 +1,5 @@
 [clusters]
-hebe =
+magma =
     172.23.97.21:kv,index,n1ql
     172.23.97.22:kv,index,n1ql
     172.23.97.23:kv,index,n1ql

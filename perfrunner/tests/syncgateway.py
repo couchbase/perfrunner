@@ -69,6 +69,8 @@ class SGPerfTest(PerfTest):
         self.target_iterator = TargetIterator(cluster_spec, test_config)
         self.monitor = Monitor(cluster_spec, test_config, verbose)
 
+
+
     def download_ycsb(self):
         if self.worker_manager.is_remote:
             self.remote.clone_ycsb(repo=self.test_config.syncgateway_settings.repo,
@@ -338,6 +340,11 @@ class SGImportLatencyTest(SGPerfTest):
             *self.metrics.sgimport_latency()
         )
 
+    def monitor_sg_import(self):
+        host = self.cluster_spec.servers[0]
+        expected_docs = self.test_config.load_settings.items + 360
+        self.monitor.monitor_sgimport_queues(host, expected_docs)
+
     @with_stats
     @with_profiles
     def load(self, *args):
@@ -345,6 +352,7 @@ class SGImportLatencyTest(SGPerfTest):
                                               self.test_config,
                                               prefix='symmetric')
         super().load(task=ycsb_data_load_task, target_iterator=cb_target_iterator)
+        self.monitor_sg_import()
 
     @with_stats
     @with_profiles

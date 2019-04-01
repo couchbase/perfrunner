@@ -35,7 +35,7 @@ class SGImport_latency(Collector):
 
     COLLECTOR = "sgimport_latency"
 
-    METRICS = "sgimport_latency",
+    METRICS = "sgimport_latency"
 
     INITIAL_POLLING_INTERVAL = 0.001  # 1 ms
 
@@ -74,7 +74,7 @@ class SGImport_latency(Collector):
 
         self.new_docs = Document(1024)
 
-    def check_longpoll_changefeed(self, host: str, key: str, last_sequence: int):
+    def check_longpoll_changefeed(self, host: str, key: str, last_sequence: str):
 
         sg_db = 'db'
         api = 'http://{}:4985/{}/_changes'.format(host, sg_db)
@@ -119,7 +119,7 @@ class SGImport_latency(Collector):
 
         response = requests.post(url=api, data=json.dumps(data))
 
-        last_sequence = int(response.json()['last_seq'])
+        last_sequence = response.json()['last_seq']
 
         return last_sequence
 

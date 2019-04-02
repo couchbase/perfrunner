@@ -1,0 +1,42 @@
+[test_case]
+test = perfrunner.tests.xdcr.AdvFilterXdcrTest
+
+[showfast]
+title = Avg. initial XDCR rate (items/sec), 1 -> 1 (2 source nozzles, 4 target nozzles), 1 bucket x 100M x 1KB, Adv Filter, matching xattr, compression active
+component = xdcr
+category = init_single
+orderby = filter
+
+[stats]
+server_processes = goxdcr
+
+[cluster]
+mem_quota = 204800
+initial_nodes = 1 1
+num_buckets = 1
+
+[bucket]
+compression_mode = active
+
+[bucket]
+replica_number = 0
+
+[xdcr_cluster]
+sourceNozzlePerNode = 2
+targetNozzlePerNode = 4
+
+[load]
+items = 100000000
+size = 1024
+workers = 80
+doc_gen = advancedfilter
+
+[xattr_load]
+items = 100000000
+size = 1024
+workers = 80
+doc_gen = advancedfilterxattr
+xattr_field = city
+
+[xdcr]
+filter_expression = META().xattrs.city.city EXISTS

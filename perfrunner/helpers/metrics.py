@@ -230,11 +230,9 @@ class MetricHelper:
         metric_info = self._metric_info(metric_id, title)
 
         values = []
-        for bucket in self.test_config.buckets:
-            db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
-                                         collector='sgimport_latency',
-                                         bucket=bucket)
-            values += self.store.get_values(db, metric='sgimport_latency')
+
+        db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0], collector='sgimport_latency')
+        values += self.store.get_values(db, metric='sgimport_latency')
 
         lag = round(np.percentile(values, percentile), 1)
 

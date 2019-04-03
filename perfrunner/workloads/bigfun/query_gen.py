@@ -27,7 +27,7 @@ STATEMENTS = {
     'BF10': 'SELECT VALUE cm '
             'FROM ChirpMessages cm '
             'WHERE (SOME e IN cm.employment SATISFIES e.doesnt_exist IS NOT UNKNOWN);',
-    'BF11': 'SELECT DISTINCT 1 '
+    'BF11': 'SELECT DISTINCT VALUE 1 '
             'FROM (SELECT * FROM ChirpMessages cm ORDER BY send_time ) AS foo;',
     'BF14': 'SELECT META(u).id AS id, COUNT(*) AS count '
             'FROM `GleambookUsers` u, `GleambookMessages` m '

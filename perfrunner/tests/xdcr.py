@@ -252,7 +252,7 @@ class XdcrPriorityThroughputTest(XdcrTest):
         for bucket in self.test_config.buckets:
             params = self.replication_params(from_bucket=bucket,
                                              to_bucket=bucket,
-                                             remote_cluster=link_name,
+                                             link_name=link_name,
                                              priority=priority)
             self.rest.create_replication(self.master_node, params)
 
@@ -381,6 +381,36 @@ class XdcrPriorityLatencyTest(XdcrPriorityThroughputTest):
         self.hot_load()
 
         self.configure_wan()
+
+        self.access()
+
+        self.report_kpi()
+
+
+class XdcrBackfillLatencyTest(XdcrPriorityLatencyTest):
+
+    def run(self):
+        num_xdcr_links = self.test_config.xdcr_settings.num_xdcr_links
+        xdcr_links_priority1, xdcr_links_priority2 = \
+            self.test_config.xdcr_settings.xdcr_links_priority
+
+        self.load()
+
+        self.wait_for_persistence()
+
+        self.add_remote_clusters(num_xdcr_links=num_xdcr_links)
+
+        self.create_replication('link2', xdcr_links_priority2)
+
+        self.monitor_replication()
+
+        self.wait_for_persistence()
+
+        self.hot_load()
+
+        self.configure_wan()
+
+        self.create_replication('link1', xdcr_links_priority1)
 
         self.access()
 

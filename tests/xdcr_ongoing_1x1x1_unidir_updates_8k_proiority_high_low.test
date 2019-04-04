@@ -1,0 +1,44 @@
+[test_case]
+test = perfrunner.tests.xdcr.XdcrPriorityLatencyTest
+
+[showfast]
+title = 1 -> 2 (2 source nozzles, 4 target nozzles), Priority (High, Low), 1 bucket x 1B x 1KB, 8K updates/sec
+component = xdcr
+category = ongoing
+orderby = default
+
+[stats]
+server_processes = goxdcr
+
+[cluster]
+mem_quota = 204800
+initial_nodes = 1 1 1
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+
+[xdcr_cluster]
+sourceNozzlePerNode = 2
+targetNozzlePerNode = 4
+
+[load]
+items = 100000000
+size = 1024
+workers = 50
+doc_gen = large
+
+[access]
+creates = 0
+reads = 20
+updates = 80
+throughput = 10000
+items = 100000000
+workers = 50
+working_set = 10
+working_set_access = 98
+time = 3600
+
+[xdcr]
+num_xdcr_links = 2
+xdcr_links_priority = High,Low

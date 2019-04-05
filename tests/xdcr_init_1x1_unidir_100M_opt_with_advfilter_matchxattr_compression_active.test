@@ -16,10 +16,8 @@ initial_nodes = 1 1
 num_buckets = 1
 
 [bucket]
-compression_mode = active
-
-[bucket]
 replica_number = 0
+compression_mode = active
 
 [xdcr_cluster]
 sourceNozzlePerNode = 2

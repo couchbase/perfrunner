@@ -527,9 +527,20 @@ class MetricHelper:
 
         return avg_throughput, self._snapshots, metric_info
 
-    def backup_size(self, size: float, edition: str) -> Metric:
-        metric_id = '{}_size_{}'.format(self.test_config.name, edition)
-        title = '{} backup size (GB), {}'.format(edition, self._title)
+    def backup_size(self, size: float,
+                    edition: str,
+                    tool: str = None) -> Metric:
+        # To avoid duplicating existing metrics, only label with tool if some
+        # new parameter has been used. In future should look to purge all
+        # existing and replace.
+        if tool:
+            prefix = '{}_{}'.format(self.test_config.name, tool)
+        else:
+            prefix = self.test_config.name
+        metric_id = '{}_size_{}'.format(prefix, edition)
+        title = '{} {} backup size (GB), {}'.format(edition,
+                                                    tool if tool else '',
+                                                    self._title)
         metric_info = self._metric_info(metric_id, title)
 
         return size, self._snapshots, metric_info

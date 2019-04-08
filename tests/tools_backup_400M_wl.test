@@ -38,3 +38,6 @@ workers = 20
 working_set = 5
 working_set_access = 98
 time = 18000
+
+[backup]
+threads = 16

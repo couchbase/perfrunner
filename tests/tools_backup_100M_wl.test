@@ -31,3 +31,6 @@ throughput = 50000
 items = 100000000
 workers = 10
 time = 18000
+
+[backup]
+threads = 16

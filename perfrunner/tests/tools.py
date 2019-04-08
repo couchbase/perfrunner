@@ -23,6 +23,9 @@ class BackupRestoreTest(PerfTest):
             wrapper=self.rest.is_community(self.master_node),
             mode=mode,
             compression=self.test_config.backup_settings.compression,
+            storage_type=self.test_config.backup_settings.storage_type,
+            sink_type=self.test_config.backup_settings.sink_type,
+            shards=self.test_config.backup_settings.shards
         )
 
     def compact(self):
@@ -58,14 +61,26 @@ class BackupTest(BackupRestoreTest):
         edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
         backup_size = local.calc_backup_size(self.cluster_spec)
 
+        backing_store = self.test_config.backup_settings.storage_type
+        sink_type = self.test_config.backup_settings.sink_type
+
+        tool = 'backup'
+        if backing_store:
+            tool += '-' + backing_store
+        elif sink_type:
+            tool += '-' + sink_type
+
         self.reporter.post(
             *self.metrics.bnr_throughput(time_elapsed,
                                          edition,
-                                         tool='backup')
+                                         tool=tool)
         )
 
         self.reporter.post(
-            *self.metrics.backup_size(backup_size, edition)
+            *self.metrics.backup_size(backup_size,
+                                      edition,
+                                      tool=tool if backing_store or sink_type
+                                      else None)
         )
 
     def run(self):

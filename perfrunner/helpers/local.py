@@ -39,16 +39,19 @@ def drop_caches():
 
 
 def backup(master_node:  str, cluster_spec: ClusterSpec, threads: int,
-           wrapper: bool = False, mode: str = None, compression: bool = False):
+           wrapper: bool = False, mode: str = None, compression: bool = False,
+           storage_type: str = None, sink_type: str = None,
+           shards: int = None):
     logger.info('Creating a new backup: {}'.format(cluster_spec.backup))
 
     if not mode:
         cleanup(cluster_spec.backup)
 
     if wrapper:
-        cbbackupwrapper(master_node, cluster_spec, threads, mode)
+        cbbackupwrapper(master_node, cluster_spec, 16, mode)
     else:
-        cbbackupmgr_backup(master_node, cluster_spec, threads, mode, compression)
+        cbbackupmgr_backup(master_node, cluster_spec, threads, mode,
+                           compression, storage_type, sink_type, shards)
 
 
 def compact(cluster_spec: ClusterSpec,
@@ -59,8 +62,8 @@ def compact(cluster_spec: ClusterSpec,
     cbbackupmgr_compact(cluster_spec, snapshots)
 
 
-def cbbackupwrapper(master_node: str, cluster_spec: ClusterSpec, threads: int,
-                    mode: str):
+def cbbackupwrapper(master_node: str, cluster_spec: ClusterSpec,
+                    threads: int, mode: str):
     postfix = ''
     if mode:
         postfix = '-m {}'.format(mode)
@@ -79,24 +82,25 @@ def cbbackupwrapper(master_node: str, cluster_spec: ClusterSpec, threads: int,
 
 
 def cbbackupmgr_backup(master_node: str, cluster_spec: ClusterSpec,
-                       threads: int, mode: str, compression: bool):
+                       threads: int, mode: str, compression: bool,
+                       storage_type: str, sink_type: str, shards: int):
     if not mode:
         local('./opt/couchbase/bin/cbbackupmgr config '
               '--archive {} --repo default'.format(cluster_spec.backup))
 
-    cmd = \
-        './opt/couchbase/bin/cbbackupmgr backup ' \
-        '--archive {} --repo default --threads {} ' \
-        '--host http://{} --username {} --password {}'.format(
-            cluster_spec.backup,
-            threads,
-            master_node,
-            cluster_spec.rest_credentials[0],
-            cluster_spec.rest_credentials[1],
-        )
+    flags = ['--archive {}'.format(cluster_spec.backup),
+             '--repo default',
+             '--host http://{}'.format(master_node),
+             '--username {}'.format(cluster_spec.rest_credentials[0]),
+             '--password {}'.format(cluster_spec.rest_credentials[1]),
+             '--threads {}'.format(threads) if threads else None,
+             '--storage {}'.format(storage_type) if storage_type else None,
+             '--sink {}'.format(sink_type) if sink_type else None,
+             '--value-compression compressed' if compression else None,
+             '--shards {}'.format(shards) if shards else None]
 
-    if compression:
-        cmd = '{} --value-compression compressed'.format(cmd)
+    cmd = './opt/couchbase/bin/cbbackupmgr backup {}'.format(
+        ' '.join(filter(None, flags)))
 
     logger.info('Running: {}'.format(cmd))
     local(cmd)

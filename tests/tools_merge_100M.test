@@ -24,3 +24,6 @@ db_percentage = 100
 items = 100000000
 size = 1024
 workers = 100
+
+[backup]
+threads = 16

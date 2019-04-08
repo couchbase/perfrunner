@@ -807,12 +807,19 @@ class BackupSettings:
 
     COMPRESSION = False
 
-    THREADS = 16
+    # Undefined test parameters will use backup's default
+    THREADS = None
+    STORAGE_TYPE = None
+    SINK_TYPE = None
+    SHARDS = None
 
     def __init__(self, options: dict):
         self.compression = int(options.get('compression', self.COMPRESSION))
 
         self.threads = int(options.get('threads', self.THREADS))
+        self.storage_type = options.get('storage_type', self.STORAGE_TYPE)
+        self.sink_type = options.get('sink_type', self.SINK_TYPE)
+        self.shards = options.get('shards', self.SHARDS)
 
 
 class ExportSettings:

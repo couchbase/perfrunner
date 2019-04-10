@@ -120,10 +120,14 @@ class Monitor(RestHelper):
     def _wait_for_sg_import_start(self, host: str):
         logger.info('Checking if import process started')
 
+        import_docs = 0
         while True:
             time.sleep(self.POLLING_INTERVAL)
             stats = self.get_sg_stats(host=host)
-            import_docs = int(stats['syncGateway_import']['import_count'])
+            if 'syncGateway_import' in stats.keys():
+                import_docs = int(stats['syncGateway_import']['import_count'])
+            elif 'shared_bucket_import' in stats['syncgateway']['per_db']['db'].keys():
+                import_docs = int(stats['syncgateway']['per_db']['db']['shared_bucket_import']['import_count'])
             if import_docs >= 1:
                 logger.info('importing docs has started')
                 return import_docs, time.time()
@@ -134,10 +138,15 @@ class Monitor(RestHelper):
         start_time = start_time
         logger.info('Monitoring syncgateway import status :')
 
+        imports = 0
+
         while True:
             time.sleep(self.POLLING_INTERVAL)
             stats = self.get_sg_stats(host=host)
-            imports = int(stats['syncGateway_import']['import_count'])
+            if 'syncGateway_import' in stats.keys():
+                imports = int(stats['syncGateway_import']['import_count'])
+            elif 'shared_bucket_import' in stats['syncgateway']['per_db']['db'].keys():
+                imports = int(stats['syncgateway']['per_db']['db']['shared_bucket_import']['import_count'])
             logger.info('Docs imported: {}'.format(imports))
             if imports >= expected_docs:
                 end_time = time.time()

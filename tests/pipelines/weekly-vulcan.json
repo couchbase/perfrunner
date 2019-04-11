@@ -143,7 +143,9 @@
         {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_failover_100M_dgm_kv_disk.test"}
     ],
     "Rebalance-Large-Scale": [],
-    "Tools": [],
+    "Tools": [
+        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_sqlite.test"}
+    ],
     "Views": [],
     "XDCR": [
         {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_init_1x1_unidir_100M_scram_sha.test"}

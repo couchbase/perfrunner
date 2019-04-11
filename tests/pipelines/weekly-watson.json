@@ -143,6 +143,7 @@
     ],
     "Tools": [
         {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_blackhole.test"},
         {"job": "leto", "cluster": "leto.spec", "test_config": "tools_restore_100M.test"},
         {"job": "leto", "cluster": "leto.spec", "test_config": "tools_restore_400M.test"},
         {"job": "leto", "cluster": "leto.spec", "test_config": "tools_merge_100M.test"},

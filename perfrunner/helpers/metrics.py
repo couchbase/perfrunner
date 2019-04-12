@@ -166,6 +166,22 @@ class MetricHelper:
             timings += self.store.get_values(db, metric=metric)
         return timings
 
+    def avg_ops(self) -> Metric:
+        metric_info = self._metric_info()
+        throughput = self._avg_ops()
+
+        return throughput, self._snapshots, metric_info
+
+    def _avg_ops(self) -> int:
+        values = []
+        for bucket in self.test_config.buckets:
+            db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
+                                         collector='ns_server',
+                                         bucket=bucket)
+            values += self.store.get_values(db, metric='ops')
+
+        return int(np.average(values))
+
     def max_ops(self) -> Metric:
         metric_info = self._metric_info()
         throughput = self._max_ops()

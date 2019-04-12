@@ -1,0 +1,30 @@
+[test_case]
+test = perfrunner.tests.kv.ThroughputDGMCompactedTest
+
+[cluster]
+mem_quota = 8192
+initial_nodes = 2
+num_buckets = 1
+num_vbuckets = 256
+kernel_mem_limit = 16G
+kernel_mem_limit_services = kv
+
+[bucket]
+eviction_policy = fullEviction
+replica_number=0
+
+[load]
+items = 250000000
+size = 1024
+workers = 100
+key_fmtr = hex
+doc_gen = large
+
+[access]
+creates = 0
+reads = 100
+updates = 0
+deletes = 0
+items = 250000000
+workers = 100
+time = 3600

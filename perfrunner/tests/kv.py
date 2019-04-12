@@ -138,6 +138,16 @@ class ReadLatencyDGMCompactedTest(DGMCompactedTest):
             )
 
 
+class ThroughputDGMCompactedTest(DGMCompactedTest):
+
+    COLLECTORS = {'disk': True, 'latency': True, 'net': False}
+
+    def _report_kpi(self):
+        self.reporter.post(
+            *self.metrics.avg_ops()
+        )
+
+
 class DurabilityTest(KVTest):
 
     """Enable reporting of persistTo=1 and replicateTo=1 latency."""

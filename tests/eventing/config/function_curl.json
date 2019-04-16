@@ -14,7 +14,9 @@
           "value": "requestUrl",
           "is_auth": false,
           "username": "",
-          "password": ""
+          "password": "",
+          "cookies" : "allow",
+          "auth_type": "no-auth"
         }
       ]
   },

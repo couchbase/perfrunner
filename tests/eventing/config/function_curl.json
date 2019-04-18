@@ -15,7 +15,7 @@
           "is_auth": false,
           "username": "",
           "password": "",
-          "cookies" : "allow",
+          "allow_cookies" : true,
           "auth_type": "no-auth"
         }
       ]

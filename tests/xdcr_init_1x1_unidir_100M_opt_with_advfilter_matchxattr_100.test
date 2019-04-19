@@ -36,4 +36,4 @@ doc_gen = advancedfilterxattr
 xattr_field = city
 
 [xdcr]
-filter_expression = META().xattrs.city.city EXISTS
+filter_expression = META().xattrs.city.EXISTS(city)

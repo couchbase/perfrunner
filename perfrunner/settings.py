@@ -438,9 +438,6 @@ class PhaseSettings:
     EPOLL = 'true'
     BOOST = 48
 
-    YCSB_FIELD_COUNT = 10
-    YCSB_FIELD_LENGTH = 1024
-
     SSL_MODE = 'none'
     SSL_AUTH_KEYSTORE = "certificates/auth.keystore"
     SSL_DATA_KEYSTORE = "certificates/data.keystore"
@@ -552,8 +549,6 @@ class PhaseSettings:
         self.epoll = options.get("epoll", self.EPOLL)
         self.boost = options.get('boost', self.BOOST)
         self.target = float(options.get('target', self.TARGET))
-        self.field_count = int(options.get('field_count', self.YCSB_FIELD_COUNT))
-        self.field_length = int(options.get('field_length', self.YCSB_FIELD_LENGTH))
 
         # Subdoc & XATTR
         self.subdoc_field = options.get('subdoc_field')
@@ -1052,8 +1047,6 @@ class TestConfig(Config):
         access.num_replies = load_settings.num_replies
         access.size = load_settings.size
         access.key_fmtr = load_settings.key_fmtr
-        access.field_count = load_settings.field_count
-        access.field_length = load_settings.field_length
 
         return access
 

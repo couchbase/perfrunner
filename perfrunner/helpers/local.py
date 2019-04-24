@@ -353,16 +353,12 @@ def run_ycsb(host: str,
              execution_time: int = None,
              cbcollect: int = 0,
              timeseries: int = 0,
-             instance: int = 0,
-             fieldlength: int = 1024,
-             fieldcount: int = 10):
+             instance: int = 0):
     cmd = 'bin/ycsb {action} couchbase2 ' \
           '-P {workload} ' \
           '-p writeallfields=true ' \
           '-threads {workers} ' \
           '-p target={target} ' \
-          '-p fieldlength={fieldlength} ' \
-          '-p fieldcount={fieldcount} ' \
           '-p couchbase.host={host} ' \
           '-p couchbase.bucket={bucket} ' \
           '-p couchbase.upsert=true ' \
@@ -399,9 +395,7 @@ def run_ycsb(host: str,
                      instance=instance,
                      ssl_mode=ssl_mode, password=password,
                      ssl_keystore_file=ssl_keystore_file,
-                     ssl_keystore_password=ssl_keystore_password,
-                     fieldlength=fieldlength,
-                     fieldcount=fieldcount)
+                     ssl_keystore_password=ssl_keystore_password)
 
     if soe_params is None:
         cmd += ' -p recordcount={items} '.format(items=items)

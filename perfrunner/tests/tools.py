@@ -76,12 +76,13 @@ class BackupTest(BackupRestoreTest):
                                          tool=tool)
         )
 
-        self.reporter.post(
-            *self.metrics.backup_size(backup_size,
-                                      edition,
-                                      tool=tool if backing_store or sink_type
-                                      else None)
-        )
+        if sink_type != 'blackhole':
+            self.reporter.post(
+                *self.metrics.backup_size(
+                    backup_size,
+                    edition,
+                    tool=tool if backing_store or sink_type else None)
+            )
 
     def run(self):
         super().run()

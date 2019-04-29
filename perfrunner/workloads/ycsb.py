@@ -27,7 +27,9 @@ def ycsb_data_load(workload_settings: PhaseSettings,
              epoll=workload_settings.epoll,
              boost=workload_settings.boost,
              persist_to=workload_settings.persist_to,
-             replicate_to=workload_settings.replicate_to)
+             replicate_to=workload_settings.replicate_to,
+             fieldlength=workload_settings.field_length,
+             fieldcount=workload_settings.field_count)
 
 
 def ycsb_workload(workload_settings: PhaseSettings,
@@ -61,4 +63,6 @@ def ycsb_workload(workload_settings: PhaseSettings,
              ssl_keystore_password=workload_settings.ssl_keystore_password,
              ssl_mode=workload_settings.ssl_mode,
              timeseries=workload_settings.timeseries,
-             cbcollect=workload_settings.cbcollect)
+             cbcollect=workload_settings.cbcollect,
+             fieldlength=workload_settings.field_length,
+             fieldcount=workload_settings.field_count)

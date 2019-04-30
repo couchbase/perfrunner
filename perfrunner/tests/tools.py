@@ -209,11 +209,28 @@ class MergeTest(BackupRestoreTest):
 
         local.drop_caches()
 
-        local.cbbackupmgr_merge(self.cluster_spec, snapshots)
+        # Pre build 6.5.0-3198 there was no threads flag in merge. To ensure
+        # tests run across versions, omit this flag pre this build.
+        version, build_number = self.build.split('-')
+        build = tuple(map(int, version.split('.'))) + (int(build_number),)
+
+        if build < (6, 5, 0, 3198):
+            threads = None
+        else:
+            threads = self.test_config.backup_settings.threads
+
+        local.cbbackupmgr_merge(self.cluster_spec,
+                                snapshots,
+                                self.test_config.backup_settings.storage_type,
+                                threads)
 
     def _report_kpi(self, time_elapsed):
+        tool = 'cbbackupmgr'
+        if self.test_config.backup_settings.storage_type:
+            tool += '-' + self.test_config.backup_settings.storage_type
+
         self.reporter.post(
-            *self.metrics.merge_throughput(time_elapsed)
+            *self.metrics.merge_throughput(time_elapsed, tool)
         )
 
     def run(self):
@@ -222,8 +239,6 @@ class MergeTest(BackupRestoreTest):
         self.load()
         self.wait_for_persistence()
         self.backup()  # 1st snapshot
-
-        self.flush_buckets()
 
         self.load()
         self.wait_for_persistence()

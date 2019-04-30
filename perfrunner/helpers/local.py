@@ -123,14 +123,18 @@ def get_backup_snapshots(cluster_spec: ClusterSpec) -> List[str]:
     return snapshots
 
 
-def cbbackupmgr_merge(cluster_spec: ClusterSpec, snapshots: List[str]):
-    cmd = \
-        './opt/couchbase/bin/cbbackupmgr merge ' \
-        '--archive {} --repo default --start {} --end {}'.format(
-            cluster_spec.backup,
-            snapshots[0],
-            snapshots[1],
-        )
+def cbbackupmgr_merge(cluster_spec: ClusterSpec, snapshots: List[str],
+                      storage_type: str, threads: int):
+
+    flags = ['--archive {}'.format(cluster_spec.backup),
+             '--repo default',
+             '--start {}'.format(snapshots[0]),
+             '--end {}'.format(snapshots[1]),
+             '--storage {}'.format(storage_type) if storage_type else None,
+             '--threads {}'.format(threads) if threads else None]
+
+    cmd = './opt/couchbase/bin/cbbackupmgr merge {}'.format(
+        ' '.join(filter(None, flags)))
 
     logger.info('Running: {}'.format(cmd))
     local(cmd)

@@ -600,10 +600,10 @@ class JTSAccessSettings(PhaseSettings):
 
     def __init__(self, options: dict):
         self.jts_repo = self.JTS_REPO
-        self.jts_repo_branch = self.JTS_REPO_BRANCH
         self.jts_home_dir = self.JTS_HOME_DIR
         self.jts_run_cmd = self.JTS_RUN_CMD
         self.jts_logs_dir = self.JTS_LOGS_DIR
+        self.jts_repo_branch = options.get("jts_repo_branch", self.JTS_REPO_BRANCH)
         self.jts_instances = options.get("jts_instances", "1")
         self.test_total_docs = options.get("test_total_docs", "1000000")
         self.test_query_workers = options.get("test_query_workers", "10")

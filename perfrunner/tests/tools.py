@@ -169,10 +169,19 @@ class RestoreTest(BackupRestoreTest):
     def _report_kpi(self, time_elapsed):
         edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
 
+        backing_store = self.test_config.backup_settings.storage_type
+        sink_type = self.test_config.backup_settings.sink_type
+
+        tool = 'restore'
+        if backing_store:
+            tool += '-' + backing_store
+        elif sink_type:
+            tool += '-' + sink_type
+
         self.reporter.post(
             *self.metrics.bnr_throughput(time_elapsed,
                                          edition,
-                                         tool='restore')
+                                         tool=tool)
         )
 
     def run(self):

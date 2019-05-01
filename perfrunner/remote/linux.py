@@ -139,7 +139,7 @@ class RemoteLinux(Remote):
 
         fname = '/tmp/{}.zip'.format(uhex())
         try:
-            r = run('{}/bin/cbcollect_info --log-redaction-level=partial {}'
+            r = run('{}/bin/cbcollect_info {}'
                     .format(self.CB_DIR, fname), warn_only=True, timeout=1200)
         except CommandTimeout:
             logger.error('cbcollect_info timed out')

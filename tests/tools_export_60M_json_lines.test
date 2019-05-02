@@ -24,4 +24,5 @@ workers = 40
 doc_gen = import_export_simple
 
 [export]
+threads = 16
 format = lines

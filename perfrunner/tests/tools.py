@@ -200,11 +200,16 @@ class RestoreTest(BackupRestoreTest):
 class ExportImportTest(BackupRestoreTest):
 
     def export(self):
+
+        export_settings = self.test_config.export_settings
+
         local.cbexport(master_node=self.master_node,
                        cluster_spec=self.cluster_spec,
                        bucket=self.test_config.buckets[0],
-                       data_format=self.test_config.export_settings.format,
-                       threads=self.test_config.restore_settings.threads)
+                       data_format=export_settings.format,
+                       threads=export_settings.threads,
+                       key_field=export_settings.key_field,
+                       log_file=export_settings.log_file)
 
     def import_data(self):
         import_file = self.test_config.export_settings.import_file
@@ -216,13 +221,22 @@ class ExportImportTest(BackupRestoreTest):
 
         local.drop_caches()
 
+        export_settings = self.test_config.export_settings
+
         local.cbimport(master_node=self.master_node,
                        cluster_spec=self.cluster_spec,
-                       data_type=self.test_config.export_settings.type,
-                       data_format=self.test_config.export_settings.format,
+                       data_type=export_settings.type,
+                       data_format=export_settings.format,
                        bucket=self.test_config.buckets[0],
                        import_file=import_file,
-                       threads=self.test_config.backup_settings.threads)
+                       threads=export_settings.threads,
+                       field_separator=export_settings.field_separator,
+                       limit_rows=export_settings.limit_rows,
+                       skip_rows=export_settings.skip_rows,
+                       infer_types=export_settings.infer_types,
+                       omit_empty=export_settings.omit_empty,
+                       errors_log=export_settings.errors_log,
+                       log_file=export_settings.log_file)
 
     def _report_kpi(self, time_elapsed: float):
         self.reporter.post(

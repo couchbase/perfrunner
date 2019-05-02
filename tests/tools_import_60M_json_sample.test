@@ -18,6 +18,7 @@ num_buckets = 1
 db_percentage = 100
 
 [export]
+threads = 16
 format = sample
 type = json
 import_file = /data/import/sample.zip

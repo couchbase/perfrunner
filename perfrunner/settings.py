@@ -830,13 +830,34 @@ class BackupSettings:
 
 class ExportSettings:
 
+    THREADS = None
+    IMPORT_FILE = None
     TYPE = 'json'  # csv or json
     FORMAT = 'lines'  # lines, list
+    KEY_FIELD = None
+    LOG_FILE = None
+    FIELD_SEPARATOR = None
+    LIMIT_ROWS = False
+    SKIP_ROWS = False
+    INFER_TYPES = False
+    OMIT_EMPTY = False
+    ERRORS_LOG = None  # error log file
 
     def __init__(self, options: dict):
+        self.threads = options.get('threads', self.THREADS)
         self.type = options.get('type', self.TYPE)
         self.format = options.get('format', self.FORMAT)
-        self.import_file = options.get('import_file')
+        self.import_file = options.get('import_file', self.IMPORT_FILE)
+        self.key_field = options.get('key_field', self.KEY_FIELD)
+        self.log_file = options.get('log_file', self.LOG_FILE)
+        self.log_file = options.get('log_file', self.LOG_FILE)
+        self.field_separator = options.get('field_separator',
+                                           self.FIELD_SEPARATOR)
+        self.limit_rows = int(options.get('limit_rows', self.LIMIT_ROWS))
+        self.skip_rows = int(options.get('skip_rows', self.SKIP_ROWS))
+        self.infer_types = int(options.get('infer_types', self.INFER_TYPES))
+        self.omit_empty = int(options.get('omit_empty', self.OMIT_EMPTY))
+        self.errors_log = options.get('errors_log', self.ERRORS_LOG)
 
 
 class EventingSettings:

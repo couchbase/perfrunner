@@ -24,5 +24,6 @@ workers = 40
 doc_gen = import_export_nested
 
 [export]
+threads = 16
 format = list
 type = json

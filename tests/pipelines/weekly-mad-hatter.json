@@ -37,7 +37,17 @@
     "Rebalance-Large-Scale": [],
     "Tools": [],
     "Views": [],
-    "XDCR": [],
+    "XDCR": [
+        {"job": "titan", "cluster": "titan_1x1x1.spec", "test_config": "xdcr_init_1x1_unidir_100M_2links_proiority_high_high.test"},
+        {"job": "titan", "cluster": "titan_1x1x1.spec", "test_config": "xdcr_init_1x1_unidir_100M_2links_proiority_high_low.test"},
+        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt_with_advfilter_arraymatch_100.test"},
+        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt_with_advfilter_matchbody_100.test"},
+        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt_with_advfilter_matchxattr_100.test"},
+        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt_with_advfilter_matchxattr_compression_active.test"},
+        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt_with_xattr_nofilter.test"},
+        {"job": "titan", "cluster": "titan_1x1x1.spec", "test_config": "xdcr_ongoing_1x1x1_unidir_updates_8k_proiority_high_high.test"},
+        {"job": "titan", "cluster": "titan_1x1x1.spec", "test_config": "xdcr_ongoing_backfill_1x1x1_unidir_updates_8k_proiority_low_high.test"}
+    ],
     "XDCR-Windows": [],
     "YCSB": []
 

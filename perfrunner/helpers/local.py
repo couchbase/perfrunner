@@ -232,7 +232,7 @@ def cbimport(master_node: str, cluster_spec: ClusterSpec, bucket: str,
              '--bucket {}'.format(bucket),
              '--username {}'.format(cluster_spec.rest_credentials[0]),
              '--password {}'.format(cluster_spec.rest_credentials[1]),
-             '--generate-key #MONO_INCR#',
+             '--generate-key "#MONO_INCR#"',
              '--threads {}'.format(threads) if threads else None,
              '--field-separator {}'.format(field_separator) if field_separator
              else None,

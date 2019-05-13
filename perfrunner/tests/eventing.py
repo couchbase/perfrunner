@@ -152,7 +152,8 @@ class EventingTest(PerfTest):
         return time_to_undeploy
 
     def validate_failures(self):
-        ignore_failures = ["uv_try_write_failure_counter", ]
+        ignore_failures = ["uv_try_write_failure_counter", "on_update_failure",
+                           "bucket_op_exception_count", "timestamp"]
         for node in self.eventing_nodes:
             all_stats = self.rest.get_eventing_stats(node=node)
 
@@ -172,7 +173,7 @@ class EventingTest(PerfTest):
 
                 # Validate Failure stats
                 for stat, value in failure_stats.items():
-                    if value != 0 and stat != "timestamp":
+                    if value != 0 and stat not in ignore_failures:
                         raise Exception(
                             '{function}: {node}: {stat} is not zero'.format(
                                 function=function_stats["function_name"], node=node, stat=stat))

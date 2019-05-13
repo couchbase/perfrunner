@@ -527,6 +527,19 @@ class MetricHelper:
 
         return avg_throughput, self._snapshots, metric_info
 
+    def tool_time(self,
+                  time_elapsed: float,
+                  edition: str,
+                  tool: str) -> Metric:
+
+        metric_id = '{}_{}_time_{}'.format(
+            self.test_config.name, tool, edition)
+        title = '{} {} time elapsed (minutes), {}'.format(
+            edition, tool, self._title)
+        metric_info = self._metric_info(metric_id, title)
+
+        return time_elapsed, self._snapshots, metric_info
+
     def backup_size(self, size: float,
                     edition: str,
                     tool: str = None) -> Metric:

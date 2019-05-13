@@ -136,12 +136,13 @@ def cbbackupmgr_merge(cluster_spec: ClusterSpec, snapshots: List[str]):
     local(cmd)
 
 
-def calc_backup_size(cluster_spec: ClusterSpec) -> float:
+def calc_backup_size(cluster_spec: ClusterSpec,
+                     rounded: bool = True) -> float:
     backup_size = local('du -sb0 {}'.format(cluster_spec.backup), capture=True)
     backup_size = backup_size.split()[0]
     backup_size = float(backup_size) / 2 ** 30  # B -> GB
 
-    return round(backup_size)
+    return round(backup_size) if rounded else backup_size
 
 
 def restore(master_node: str, cluster_spec: ClusterSpec, threads: int,

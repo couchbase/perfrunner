@@ -2,6 +2,7 @@ import os
 
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
+from perfrunner.settings import LoadSettings, TargetIterator
 from perfrunner.tests import PerfTest
 
 
@@ -124,6 +125,74 @@ class BackupUnderLoadTest(BackupTest):
         time_elapsed = self.backup()
 
         self.report_kpi(time_elapsed)
+
+
+class BackupIncrementalTest(BackupRestoreTest):
+
+    @timeit
+    @with_stats
+    def backup_with_stats(self, mode=False):
+        super().backup(mode=mode)
+
+    def _report_kpi(self, time_elapsed: int, backup_size: float):
+        edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
+        backing_store = self.test_config.backup_settings.storage_type
+        sink_type = self.test_config.backup_settings.sink_type
+
+        tool = 'backup-incremental'
+        if backing_store:
+            tool += '-' + backing_store
+        elif sink_type:
+            tool += '-' + sink_type
+
+        self.reporter.post(
+            *self.metrics.tool_time(time_elapsed,
+                                    edition,
+                                    tool=tool)
+        )
+
+        if sink_type != 'blackhole':
+            self.reporter.post(
+                *self.metrics.backup_size(
+                    backup_size,
+                    edition,
+                    tool=tool)
+            )
+
+    def run(self):
+        self.extract_tools()
+
+        self.load()
+        self.wait_for_persistence()
+        self.backup()
+
+        initial_backup_size = local.calc_backup_size(self.cluster_spec,
+                                                     rounded=False)
+
+        self.access()
+        self.wait_for_persistence()
+
+        # Define a secondary load. For this we borrow the 'creates' field,
+        # since load doesn't normally use this anyway.
+        inc_load = self.test_config.load_settings.creates
+        workers = self.test_config.load_settings.workers
+        size = self.test_config.load_settings.size
+
+        # New key prefix needed to create incremental dataset.
+        self.load(settings=LoadSettings({"items": inc_load,
+                                         "workers": workers,
+                                         "size": size}),
+                  target_iterator=TargetIterator(self.cluster_spec,
+                                                 self.test_config,
+                                                 prefix='inc-'))
+        self.wait_for_persistence()
+
+        inc_backup_time = self.backup_with_stats(mode=True)
+        total_backup_size = local.calc_backup_size(self.cluster_spec,
+                                                   rounded=False)
+        inc_backup_size = round(total_backup_size - initial_backup_size, 2)
+
+        self._report_kpi(inc_backup_time, inc_backup_size)
 
 
 class MergeTest(BackupRestoreTest):

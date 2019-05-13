@@ -1,0 +1,35 @@
+[test_case]
+test = perfrunner.tests.tools.BackupIncrementalTest
+
+[showfast]
+title = 4 nodes, 1 bucket x 100M x 1KB, DGM, Idle
+component = tools
+category = backup
+sub_category = SQLite
+
+[stats]
+client_processes = cbbackupmgr
+
+[cluster]
+mem_quota = 52428
+initial_nodes = 4
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+
+[load]
+items = 400000000
+size = 1024
+workers = 100
+creates = 80000000
+
+[access]
+creates = 100000
+deletes = 100000
+workers = 100
+time = 40
+
+[backup]
+threads = 16
+storage_type = sqlite

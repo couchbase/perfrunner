@@ -30,7 +30,8 @@ def ycsb_data_load(workload_settings: PhaseSettings,
              persist_to=workload_settings.persist_to,
              replicate_to=workload_settings.replicate_to,
              fieldlength=workload_settings.field_length,
-             fieldcount=workload_settings.field_count)
+             fieldcount=workload_settings.field_count,
+             durability=workload_settings.durability)
 
 
 def ycsb_workload(workload_settings: PhaseSettings,
@@ -67,4 +68,5 @@ def ycsb_workload(workload_settings: PhaseSettings,
              timeseries=workload_settings.timeseries,
              cbcollect=workload_settings.cbcollect,
              fieldlength=workload_settings.field_length,
-             fieldcount=workload_settings.field_count)
+             fieldcount=workload_settings.field_count,
+             durability=workload_settings.durability)

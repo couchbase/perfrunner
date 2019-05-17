@@ -1,4 +1,5 @@
 import os
+import shutil
 import socket
 import time
 import urllib.parse
@@ -371,7 +372,8 @@ def run_ycsb(host: str,
              timeseries: int = 0,
              instance: int = 0,
              fieldlength: int = 1024,
-             fieldcount: int = 10):
+             fieldcount: int = 10,
+             durability: int = None):
     cmd = 'bin/ycsb {action} {ycsb_client} ' \
           '-P {workload} ' \
           '-p writeallfields=true ' \
@@ -384,13 +386,17 @@ def run_ycsb(host: str,
           '-p couchbase.upsert=true ' \
           '-p couchbase.epoll={epoll} ' \
           '-p couchbase.boost={boost} ' \
-          '-p couchbase.persistTo={persist_to} ' \
-          '-p couchbase.replicateTo={replicate_to} ' \
           '-p couchbase.sslMode={ssl_mode} ' \
           '-p couchbase.certKeystoreFile=../{ssl_keystore_file} ' \
           '-p couchbase.certKeystorePassword={ssl_keystore_password} ' \
           '-p couchbase.password={password} ' \
           '-p exportfile=ycsb_{action}_{instance}.log '
+
+    if durability is None:
+        cmd += '-p couchbase.persistTo={persist_to} '
+        cmd += '-p couchbase.replicateTo={replicate_to} '
+    else:
+        cmd += '-p couchbase.durability={durability} '.format(durability=durability)
 
     if ops is not None:
         cmd += ' -p operationcount={ops} '
@@ -418,7 +424,8 @@ def run_ycsb(host: str,
                      ssl_keystore_file=ssl_keystore_file,
                      ssl_keystore_password=ssl_keystore_password,
                      fieldlength=fieldlength,
-                     fieldcount=fieldcount)
+                     fieldcount=fieldcount,
+                     durability=durability)
 
     if soe_params is None:
         cmd += ' -p recordcount={items} '.format(items=items)
@@ -511,6 +518,11 @@ def start_celery_worker(queue: str):
 
 
 def clone_git_repo(repo: str, branch: str):
+    repo_name = repo.split("/")[-1].split(".")[0]
+    logger.info('checking if repo {} exists...'.format(repo_name))
+    if os.path.exists("{}".format(repo_name)):
+        logger.info('repo {} exists...removing...'.format(repo_name))
+        shutil.rmtree(repo_name, ignore_errors=True)
     logger.info('Cloning repository: {} branch: {}'.format(repo, branch))
     local('git clone -q -b {} {}'.format(branch, repo))
 

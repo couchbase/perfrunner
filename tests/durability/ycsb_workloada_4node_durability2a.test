@@ -1,0 +1,38 @@
+[test_case]
+test = perfrunner.tests.ycsb.YCSBThroughputTest
+
+[showfast]
+title = Avg Throughput (queries/sec), Workload A, replicate_to=0 persist_to=0, 4 nodes
+component = kv
+category = ycsb
+
+[cluster]
+mem_quota = 62000
+initial_nodes = 4
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+
+[bucket]
+replica_number = 2
+
+[load]
+workload_path = workloads/workloada
+items = 20000000
+workers = 40
+ycsb_client = couchbase2
+
+[access]
+workload_path = workloads/workloada
+replicate_to = 0
+persist_to = 0
+items = 20000000
+ops = 100000000
+time = 1200
+workers = 25
+workload_instances = 4
+ycsb_client = couchbase2
+
+[ycsb]
+branch = couchbase3-new-durability

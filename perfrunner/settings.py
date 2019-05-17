@@ -458,6 +458,8 @@ class PhaseSettings:
 
     YCSB_CLIENT = 'couchbase2'
 
+    DURABILITY = None
+
     def __init__(self, options: dict):
         # Common settings
         self.time = int(options.get('time', self.TIME))
@@ -577,6 +579,11 @@ class PhaseSettings:
                                           self.PERSIST_TO))
         self.replicate_to = int(options.get('replicate_to',
                                             self.REPLICATE_TO))
+        if options.get('durability', self.DURABILITY) is not None:
+            self.durability = int(options.get('durability', self.DURABILITY))
+        else:
+            self.durability = self.DURABILITY
+
         # CbCollect Setting
         self.cbcollect = int(options.get('cbcollect',
                                          self.CBCOLLECT))

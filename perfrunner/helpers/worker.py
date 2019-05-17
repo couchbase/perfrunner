@@ -219,7 +219,7 @@ class LocalWorkerManager(RemoteWorkerManager):
 
     def abort(self):
         logger.info('Interrupting Celery workers')
-        os.kill(self.pid, signal.SIGPWR)
+        os.kill(self.pid, signal.SIGTERM)
         self.wait_for_workers()
 
     def terminate(self):

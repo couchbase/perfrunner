@@ -166,8 +166,11 @@ class Monitor(RestHelper):
         logger.info('Checking the number of items in {}'.format(bucket))
         retries = 0
         while retries < self.MAX_RETRY:
-            if self._get_num_items(host, bucket, total=True) == num_items:
+            curr_items = self._get_num_items(host, bucket, total=True)
+            if curr_items == num_items:
                 break
+            else:
+                logger.info('{}(curr_items) != {}(num_items)'.format(curr_items, num_items))
             time.sleep(self.POLLING_INTERVAL)
             retries += 1
         else:

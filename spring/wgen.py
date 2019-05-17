@@ -767,7 +767,7 @@ class WorkloadGen:
 
     def set_signal_handler(self):
         """Abort the execution upon receiving a signal from perfrunner."""
-        signal.signal(signal.SIGPWR, self.abort)
+        signal.signal(signal.SIGTERM, self.abort)
 
     def abort(self, *args):
         """Triggers the shutdown event."""

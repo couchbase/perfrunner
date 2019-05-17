@@ -1,3 +1,4 @@
+import shutil
 from fabric.api import cd, get, run, settings, shell_env
 from glob import glob
 from logger import logger
@@ -52,6 +53,7 @@ class Remote:
 
     @all_clients
     def init_ycsb(self, repo: str, branch: str, worker_home: str):
+        shutil.rmtree("YCSB", ignore_errors=True)
         self.clone_git_repo(repo=repo, branch=branch, worker_home=worker_home)
 
     @all_clients

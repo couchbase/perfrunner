@@ -1,4 +1,5 @@
 import os
+import shutil
 import time
 
 from perfrunner.helpers import local
@@ -22,6 +23,7 @@ class YCSBTest(PerfTest):
 
     def collect_export_files(self):
         if self.worker_manager.is_remote:
+            shutil.rmtree("YCSB", ignore_errors=True)
             os.mkdir('YCSB')
             self.remote.get_export_files(self.worker_manager.WORKER_HOME)
 

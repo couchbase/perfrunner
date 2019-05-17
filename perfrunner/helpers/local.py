@@ -352,6 +352,7 @@ def run_ycsb(host: str,
              bucket: str,
              password: str,
              action: str,
+             ycsb_client: str,
              workload: str,
              items: int,
              workers: int,
@@ -371,7 +372,7 @@ def run_ycsb(host: str,
              instance: int = 0,
              fieldlength: int = 1024,
              fieldcount: int = 10):
-    cmd = 'bin/ycsb {action} couchbase2 ' \
+    cmd = 'bin/ycsb {action} {ycsb_client} ' \
           '-P {workload} ' \
           '-p writeallfields=true ' \
           '-threads {workers} ' \
@@ -401,6 +402,7 @@ def run_ycsb(host: str,
     cmd = cmd.format(host=host,
                      bucket=bucket,
                      action=action,
+                     ycsb_client=ycsb_client,
                      workload=workload,
                      items=items,
                      ops=ops,

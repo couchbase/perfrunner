@@ -456,6 +456,8 @@ class PhaseSettings:
 
     CONNSTR_PARAMS = "{'ipv6': 'allow', 'enable_tracing': 'false'}"
 
+    YCSB_CLIENT = 'couchbase2'
+
     def __init__(self, options: dict):
         # Common settings
         self.time = int(options.get('time', self.TIME))
@@ -556,6 +558,7 @@ class PhaseSettings:
         self.target = float(options.get('target', self.TARGET))
         self.field_count = int(options.get('field_count', self.YCSB_FIELD_COUNT))
         self.field_length = int(options.get('field_length', self.YCSB_FIELD_LENGTH))
+        self.ycsb_client = options.get('ycsb_client', self.YCSB_CLIENT)
 
         # Subdoc & XATTR
         self.subdoc_field = options.get('subdoc_field')

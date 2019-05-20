@@ -109,13 +109,47 @@ class BackupSizeTest(BackupTest):
         )
 
 
-class BackupTestWithCompact(BackupTest):
+class BackupTestWithCompact(BackupRestoreTest):
 
-    @with_stats
     @timeit
-    def backup(self, mode=None):
-        super().backup(mode)
+    def compact(self):
         super().compact()
+
+    def _report_kpi(self, time_elapsed: float, backup_size_difference: float):
+        edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
+        backup_size = local.calc_backup_size(self.cluster_spec)
+        backing_store = self.test_config.backup_settings.storage_type
+
+        tool = 'compact'
+        if backing_store:
+            tool += '-' + backing_store
+
+        self.reporter.post(
+            *self.metrics.compact_size_diff(
+                backup_size,
+                edition,
+                tool)
+        )
+
+        self.reporter.post(
+            *self.metrics.tool_time(
+                time_elapsed,
+                edition,
+                tool)
+        )
+
+    def run(self):
+        super().run()
+
+        self.backup()
+        self.wait_for_persistence()
+
+        initial_size = local.calc_backup_size(self.cluster_spec)
+        compact_time = self.compact()
+        compacted_size = local.calc_backup_size(self.cluster_spec)
+        size_diff = initial_size - compacted_size
+
+        self.report_kpi(compact_time, size_diff)
 
 
 class BackupUnderLoadTest(BackupTest):

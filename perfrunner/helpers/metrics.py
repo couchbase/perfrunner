@@ -587,6 +587,16 @@ class MetricHelper:
 
         return avg_throughput, self._snapshots, metric_info
 
+    def compact_size_diff(self, size_diff: float,
+                          edition: str,
+                          tool: str) -> Metric:
+
+        prefix = '{}_{}'.format(self.test_config.name, tool)
+        metric_id = '{}_size_diff_{}'.format(prefix, edition)
+        title = '{} {} compact size difference (GB), ()'.format(edition,
+                                                                tool)
+        return size_diff, self._snapshots, self._metric_info(metric_id, title)
+
     def import_and_export_throughput(self, time_elapsed: float) -> Metric:
         metric_info = self._metric_info()
 

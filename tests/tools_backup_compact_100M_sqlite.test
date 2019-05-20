@@ -2,9 +2,10 @@
 test = perfrunner.tests.tools.BackupTestWithCompact
 
 [showfast]
-title = 4 nodes, 1 bucket x 100M x 1KB, DGM, Idle, Compaction
+title = 4 nodes, 1 bucket x 100M x 1KB, DGM, Idle
 component = tools
-category = backup
+category = compact
+sub_category = SQLite
 
 [stats]
 client_processes = cbbackupmgr
@@ -24,3 +25,4 @@ workers = 100
 
 [backup]
 threads = 16
+storage_type = sqlite

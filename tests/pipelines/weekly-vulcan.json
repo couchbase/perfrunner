@@ -146,7 +146,9 @@
     "Tools": [
         {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_sqlite.test"},
         {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_incremental_100M_forestdb.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_incremental_100M_sqlite.test"}
+        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_incremental_100M_sqlite.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_list_100M_forestdb.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_list_100M_sqlite.test"}
     ],
     "Views": [],
     "XDCR": [

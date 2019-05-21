@@ -195,6 +195,21 @@ def cbbackupmgr_compact(cluster_spec: ClusterSpec, snapshots: List[str]):
     local(cmd)
 
 
+def cbbackupmgr_list(cluster_spec: ClusterSpec, snapshots: List[str],
+                     bucket: str = None):
+
+    flags = ['--archive {}'.format(cluster_spec.backup),
+             '--repo default',
+             '--backup {}'.format(snapshots[0]),
+             '--bucket {}'.format(bucket) if bucket else None]
+
+    cmd = './opt/couchbase/bin/cbbackupmgr list {}'.format(
+        ' '.join(filter(None, flags)))
+
+    logger.info('Running: {}'.format(cmd))
+    local(cmd)
+
+
 def cbexport(master_node: str, cluster_spec: ClusterSpec, bucket: str,
              data_format: str, threads: int, key_field: str = None,
              log_file: str = None):

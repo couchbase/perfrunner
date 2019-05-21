@@ -44,6 +44,11 @@ class BackupRestoreTest(PerfTest):
                       threads=self.test_config.restore_settings.threads,
                       wrapper=self.rest.is_community(self.master_node))
 
+    def backup_list(self):
+        snapshots = local.get_backup_snapshots(self.cluster_spec)
+        local.cbbackupmgr_list(cluster_spec=self.cluster_spec,
+                               snapshots=snapshots)
+
     def run(self):
         self.extract_tools()
 
@@ -264,6 +269,36 @@ class RestoreTest(BackupRestoreTest):
         time_elapsed = self.restore()
 
         self.report_kpi(time_elapsed)
+
+
+class ListTest(BackupRestoreTest):
+
+    def _report_kpi(self, time_elapsed: float):
+
+        edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
+        backing_store = self.test_config.backup_settings.storage_type
+
+        tool = 'list'
+        if backing_store:
+            tool += '-' + backing_store
+
+        self.reporter.post(
+            *self.metrics.tool_time(time_elapsed,
+                                    edition,
+                                    tool=tool))
+
+    @with_stats
+    @timeit
+    def backup_list(self):
+        super().backup_list()
+
+    def run(self):
+        super().run()
+
+        self.backup()
+        local.drop_caches()
+        list_time = self.backup_list()
+        self.report_kpi(list_time)
 
 
 class ExportImportTest(BackupRestoreTest):

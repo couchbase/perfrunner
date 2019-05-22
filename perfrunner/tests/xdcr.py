@@ -319,10 +319,24 @@ class XdcrPriorityThroughputTest(XdcrTest):
 
         return new_result_map
 
-    def _report_kpi(self, time_elapsed, xdcr_link):
+    def _report_kpi(self, throughput, xdcr_link):
         self.reporter.post(
-            *self.metrics.avg_replication_multilink(time_elapsed, xdcr_link)
+            *self.metrics.avg_replication_throughput(throughput, xdcr_link)
         )
+
+    @with_stats
+    @with_profiles
+    def wait_for_replication(self, cluster_map: map):
+        xdcr_link1 = cluster_map.get('link1')
+        xdcr_link2 = cluster_map.get('link2')
+        for target in self.target_iterator:
+            if self.rest.get_remote_clusters(target.node):
+                start_time, link1_endtime, link2_items = \
+                    self.monitor.monitor_xdcr_changes_left(host=target.node,
+                                                           bucket=target.bucket,
+                                                           xdcrlink1=xdcr_link1,
+                                                           xdcrlink2=xdcr_link2)
+        return start_time, link1_endtime, link2_items
 
     def run(self):
 
@@ -335,15 +349,18 @@ class XdcrPriorityThroughputTest(XdcrTest):
 
         self.add_remote_clusters(num_xdcr_links=num_xdcr_links)
         uuid_list, cluster_map = self.get_cluster_uuid()
+
         self.create_replications(num_xdcr_links=num_xdcr_links,
                                  xdcr_links_priority=xdcr_links_priority)
 
-        results = self.monitor_parallel_replication(num_uuidlist=len(uuid_list),
-                                                    uuid_list=uuid_list)
-        result_map = self.map_link_xdcrtime(result_map=results, cluster_map=cluster_map)
+        start_time, link1_endtime, link2_items = \
+            self.wait_for_replication(cluster_map=cluster_map)
 
-        for key, value in result_map.items():
-            self.report_kpi(value, key)
+        link1_throughput = self.test_config.load_settings.items / (link1_endtime - start_time)
+        link2_throughput = link2_items / (link1_endtime - start_time)
+
+        self.report_kpi(link1_throughput, "link1")
+        self.report_kpi(link2_throughput, "link2")
 
 
 class XdcrPriorityLatencyTest(XdcrPriorityThroughputTest):

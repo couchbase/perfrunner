@@ -240,6 +240,14 @@ class MetricHelper:
 
         return rate, self._snapshots, metric_info
 
+    def avg_replication_throughput(self, throughput: float, xdcr_link: str) -> Metric:
+        metric_id = self.test_config.name + '_' + xdcr_link
+        title = self.test_config.showfast.title + ', ' + xdcr_link
+
+        metric_info = self._metric_info(metric_id=metric_id, title=title)
+
+        return round(throughput), self._snapshots, metric_info
+
     def avg_replication_multilink(self, time_elapsed: float, xdcr_link: str) -> Metric:
 
         metric_id = self.test_config.name + '_' + xdcr_link
@@ -823,7 +831,7 @@ class MetricHelper:
         return time, self._snapshots, metric_info
 
     @staticmethod
-    def eventing_get_percentile_latency(percentile: float, stats: dict) ->float:
+    def eventing_get_percentile_latency(percentile: float, stats: dict) -> float:
         """Calculate percentile latency.
 
         We get latency stats in format of- time:number of events processed in that time(samples)

@@ -94,6 +94,66 @@ class Monitor(RestHelper):
             if time.time() - start_time > self.TIMEOUT:
                 raise Exception('Monitoring got stuck')
 
+    def _wait_for_replication_completion(self, host, bucket, queues, stats_function, link1, link2):
+        metrics = list(queues)
+
+        completion_count = 0
+        link1_time = 0
+        link2_items = 0
+
+        link1_compelteness_str = \
+            'replications/{}/bucket-1/bucket-1/percent_completeness'.format(link1)
+        link2_compelteness_str = \
+            'replications/{}/bucket-1/bucket-1/percent_completeness'.format(link2)
+        link2_items_str = \
+            'replications/{}/bucket-1/bucket-1/docs_written'.format(link2)
+
+        start_time = time.time()
+
+        while metrics:
+            bucket_stats = stats_function(host, bucket)
+            # As we are changing metrics in the loop; take a copy of it to
+            # iterate over.
+            for metric in list(metrics):
+                stats = bucket_stats['op']['samples'].get(metric)
+                if stats:
+                    last_value = stats[-1]
+                    if last_value:
+                        logger.info('{} = {:,}'.format(metric, last_value))
+                        link1_completeness = \
+                            bucket_stats['op']['samples'].get(link1_compelteness_str)[-1]
+                        link2_completeness = \
+                            bucket_stats['op']['samples'].get(link2_compelteness_str)[-1]
+                        if link1_completeness == 100 or \
+                                link2_completeness == 100:
+                            if link1_completeness == 100:
+                                if completion_count == 0:
+                                    link1_time = time.time()
+                                    link2_items = \
+                                        bucket_stats['op']['samples'].get(link2_items_str)[-1]
+                                    completion_count = completion_count + 1
+                            elif link2_completeness == 100:
+                                if completion_count == 0:
+                                    link1_time = time.time()
+                                    link2_items = \
+                                        bucket_stats['op']['samples'].get(link2_items_str)[-1]
+                                    completion_count = completion_count + 1
+                        continue
+                    else:
+                        logger.info('{} reached 0'.format(metric))
+                        if completion_count == 0:
+                            link1_time = time.time()
+                            link2_items = \
+                                bucket_stats['op']['samples'].get(link2_items_str)[-1]
+                            completion_count = completion_count + 1
+                    metrics.remove(metric)
+            if metrics:
+                time.sleep(self.POLLING_INTERVAL)
+            if time.time() - start_time > self.TIMEOUT:
+                raise Exception('Monitoring got stuck')
+
+        return link1_time, link2_items
+
     def _wait_for_completeness(self, host, bucket, xdcr_link, stats_function):
         metrics = []
         metrics.append(xdcr_link)
@@ -145,6 +205,17 @@ class Monitor(RestHelper):
         self._wait_for_xdcr_to_start(host)
         self._wait_for_empty_queues(host, bucket, self.XDCR_QUEUES,
                                     self.get_xdcr_stats)
+
+    def monitor_xdcr_changes_left(self, host: str, bucket: str, xdcrlink1: str, xdcrlink2: str):
+        logger.info('Monitoring XDCR queues: {}'.format(bucket))
+        self._wait_for_xdcr_to_start(host)
+        start_time = time.time()
+        link1_time, link2_items = self._wait_for_replication_completion(host, bucket,
+                                                                        self.XDCR_QUEUES,
+                                                                        self.get_xdcr_stats,
+                                                                        xdcrlink1,
+                                                                        xdcrlink2)
+        return start_time, link1_time, link2_items
 
     def monitor_xdcr_completeness(self, host: str, bucket: str, xdcr_link: str):
         logger.info('Monitoring XDCR Link Completeness: {}'.format(bucket))

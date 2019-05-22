@@ -142,7 +142,6 @@
         {"job": "titan-reb", "cluster": "titan.spec", "test_config": "reb_swap_1B_9nodes_kv.test"}
     ],
     "Tools": [
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M.test"},
         {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_blackhole.test"},
         {"job": "leto", "cluster": "leto.spec", "test_config": "tools_restore_100M_forestdb.test"},
         {"job": "leto", "cluster": "leto.spec", "test_config": "tools_restore_100M_sqlite.test"},

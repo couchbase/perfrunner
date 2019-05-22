@@ -2,7 +2,7 @@
 test = perfrunner.tests.tools.BackupUnderLoadTest
 
 [showfast]
-title = 4 nodes, 1 bucket x 400M x 1KB, Heavy DGM, 10K ops/sec
+title = 4 nodes, 1 bucket x 100M x 1KB, DGM, 50K ops/sec
 component = tools
 category = backup
 
@@ -18,26 +18,20 @@ num_buckets = 1
 db_percentage = 100
 
 [load]
-items = 400000000
+items = 100000000
 size = 1024
 workers = 40
-
-[hot_load]
-items = 400000000
-workers = 40
-working_set = 5
 
 [access]
 creates = 0
 reads = 80
 updates = 20
 deletes = 0
-throughput = 10000
-items = 400000000
-workers = 20
-working_set = 5
-working_set_access = 98
+throughput = 50000
+items = 100000000
+workers = 10
 time = 18000
 
 [backup]
 threads = 16
+storage_type = forestdb

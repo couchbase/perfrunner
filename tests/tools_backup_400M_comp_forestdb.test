@@ -25,3 +25,4 @@ workers = 40
 [backup]
 compression = 1
 threads = 16
+storage_type = forestdb

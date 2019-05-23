@@ -24,8 +24,7 @@ workers = 40
 ycsb_client = couchbase3
 
 [access]
-replicate_to = 1
-persist_to = 2
+durability = 2
 workload_path = workloads/workloada
 items = 20000000
 ops = 100000000

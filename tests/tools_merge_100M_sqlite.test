@@ -4,7 +4,8 @@ test = perfrunner.tests.tools.MergeTest
 [showfast]
 title = EE merge throughput (Avg. MB/sec), 4 nodes, 100M x 100M docs (overlapping keys)
 component = tools
-category = backup
+category = merge
+sub_category = SQLite
 
 [stats]
 client_processes = cbbackupmgr

@@ -5,6 +5,7 @@ test = perfrunner.tests.tools.BackupTest
 title = 4 nodes, 1 bucket x 100M x 1KB, DGM, Idle
 component = tools
 category = backup
+sub_category = SQLite
 
 [stats]
 client_processes = cbbackupmgr

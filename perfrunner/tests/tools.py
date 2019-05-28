@@ -111,13 +111,13 @@ class BackupSizeTest(BackupTest):
 
 class BackupTestWithCompact(BackupRestoreTest):
 
+    @with_stats
     @timeit
     def compact(self):
         super().compact()
 
     def _report_kpi(self, time_elapsed: float, backup_size_difference: float):
         edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
-        backup_size = local.calc_backup_size(self.cluster_spec)
         backing_store = self.test_config.backup_settings.storage_type
 
         tool = 'compact'
@@ -126,7 +126,7 @@ class BackupTestWithCompact(BackupRestoreTest):
 
         self.reporter.post(
             *self.metrics.compact_size_diff(
-                backup_size,
+                backup_size_difference,
                 edition,
                 tool)
         )

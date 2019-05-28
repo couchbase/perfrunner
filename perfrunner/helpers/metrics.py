@@ -542,11 +542,11 @@ class MetricHelper:
 
         metric_id = '{}_{}_time_{}'.format(
             self.test_config.name, tool, edition)
-        title = '{} {} time elapsed (minutes), {}'.format(
+        title = '{} {} time elapsed (seconds), {}'.format(
             edition, tool, self._title)
         metric_info = self._metric_info(metric_id, title)
 
-        return time_elapsed, self._snapshots, metric_info
+        return round(time_elapsed), self._snapshots, metric_info
 
     def backup_size(self, size: float,
                     edition: str,
@@ -593,8 +593,9 @@ class MetricHelper:
 
         prefix = '{}_{}'.format(self.test_config.name, tool)
         metric_id = '{}_size_diff_{}'.format(prefix, edition)
-        title = '{} {} compact size difference (GB), ()'.format(edition,
-                                                                tool)
+        title = '{} {} compact size difference (GB), {}'.format(edition,
+                                                                tool,
+                                                                self._title)
         return size_diff, self._snapshots, self._metric_info(metric_id, title)
 
     def import_and_export_throughput(self, time_elapsed: float) -> Metric:

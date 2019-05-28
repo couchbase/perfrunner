@@ -2,7 +2,7 @@
 test = perfrunner.tests.tools.MergeTest
 
 [showfast]
-title = EE merge throughput (Avg. MB/sec), 4 nodes, 100M x 100M docs (overlapping keys)
+title = 4 nodes, 100M x 100M docs (overlapping keys)
 component = tools
 category = merge
 sub_category = ForestDB

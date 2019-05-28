@@ -568,17 +568,12 @@ class MetricHelper:
 
     def merge_throughput(self,
                          time_elapsed: float,
+                         edition: str,
                          tool: str = None) -> Metric:
-        # To avoid duplicating existing metrics, only label with tool if some
-        # new parameter has been used. In future should look to purge all
-        # existing and replace.
-        if tool:
-            metric_id = '{}_{}_thr'.format(self.test_config.name, tool)
-            title = 'merge throughput(GB), {}'.format(tool if tool else '',
-                                                      self._title)
-            metric_info = self._metric_info(metric_id, title)
-        else:
-            metric_info = self._metric_info()
+        metric_id = '{}_{}_thr_{}'.format(self.test_config.name, tool, edition)
+        title = '{} {} throughput (Avg. MB/sec), {}'.format(
+            edition, tool, self._title)
+        metric_info = self._metric_info(metric_id, title)
 
         data_size = 2 * self.test_config.load_settings.items * \
             self.test_config.load_settings.size / 2 ** 20  # MB

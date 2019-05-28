@@ -2,7 +2,7 @@
 test = perfrunner.tests.ycsb.YCSBThroughputTest
 
 [showfast]
-title = Avg Throughput (queries/sec), Workload A, Durability Majority, 4 nodes
+title = Avg Throughput (queries/sec), Workload A, SDK 3, replicate_to=1 persist_to=2, 4 nodes
 component = kv
 category = ycsb
 
@@ -24,7 +24,8 @@ workers = 40
 ycsb_client = couchbase3
 
 [access]
-durability = 0
+replicate_to = 1
+persist_to = 2
 workload_path = workloads/workloada
 items = 20000000
 ops = 100000000

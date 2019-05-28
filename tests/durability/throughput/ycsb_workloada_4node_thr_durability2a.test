@@ -2,7 +2,7 @@
 test = perfrunner.tests.ycsb.YCSBThroughputTest
 
 [showfast]
-title = Avg Throughput (queries/sec), Workload A, replicate_to=1 persist_to=0, 4 nodes
+title = Avg Throughput (queries/sec), Workload A, SDK 2, replicate_to=0 persist_to=0, 4 nodes
 component = kv
 category = ycsb
 
@@ -25,7 +25,7 @@ ycsb_client = couchbase2
 
 [access]
 workload_path = workloads/workloada
-replicate_to = 1
+replicate_to = 0
 persist_to = 0
 items = 20000000
 ops = 100000000

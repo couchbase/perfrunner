@@ -1,0 +1,40 @@
+[test_case]
+test = perfrunner.tests.ycsb.YCSBLatencyTest
+
+[showfast]
+title = Latency (ms), Workload A, SDK 2, replicate_to=1 persist_to=0, 4 nodes
+component = kv
+category = ycsb
+
+[cluster]
+mem_quota = 62000
+initial_nodes = 4
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+
+[bucket]
+replica_number = 2
+
+[load]
+workload_path = workloads/workloada
+items = 20000000
+workers = 40
+ycsb_client = couchbase2
+
+[access]
+workload_path = workloads/workloada
+replicate_to = 1
+persist_to = 0
+items = 20000000
+ops = 0
+target = 1000
+timeseries = 1
+time = 1200
+workers = 1
+workload_instances = 1
+ycsb_client = couchbase2
+
+[ycsb]
+branch = couchbase3-new-durability

@@ -626,7 +626,10 @@ class MetricHelper:
 
     def _parse_ycsb_throughput(self) -> int:
         throughput = 0
-        for filename in glob.glob("YCSB/ycsb_run_*.log"):
+        ycsb_log_files = [filename
+                          for filename in glob.glob("YCSB/ycsb_run_*.log")
+                          if "stderr" not in filename]
+        for filename in ycsb_log_files:
             with open(filename) as fh:
                 for line in fh.readlines():
                     if line.startswith('[OVERALL], Throughput(ops/sec)'):
@@ -654,7 +657,10 @@ class MetricHelper:
         lat_dic = {}
         _temp = []
         _fc = 1
-        for filename in glob.glob("YCSB/ycsb_run_*.log"):
+        ycsb_log_files = [filename
+                          for filename in glob.glob("YCSB/ycsb_run_*.log")
+                          if "stderr" not in filename]
+        for filename in ycsb_log_files:
             fh2 = open(filename)
             _l1 = fh2.readlines()
             _l1_len = len(_l1)
@@ -695,7 +701,10 @@ class MetricHelper:
         _fc = 1
         _cbtime = int(self.test.cb_time)
         _cbstart = int(self.test.cb_start * 1000)
-        for filename in glob.glob("YCSB/ycsb_run_*.log"):
+        ycsb_log_files = [filename
+                          for filename in glob.glob("YCSB/ycsb_run_*.log")
+                          if "stderr" not in filename]
+        for filename in ycsb_log_files:
             fh2 = open(filename)
             list1 = fh2.readlines()
             list1_length = len(list1)

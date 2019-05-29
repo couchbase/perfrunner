@@ -98,6 +98,18 @@ class BackupTest(BackupRestoreTest):
         self.report_kpi(time_elapsed)
 
 
+class BackupXATTRTest(BackupTest):
+
+    def run(self):
+        self.extract_tools()
+        self.load()
+        self.xattr_load()
+        self.wait_for_persistence()
+
+        time_elapsed = self.backup()
+        self.report_kpi(time_elapsed)
+
+
 class BackupSizeTest(BackupTest):
 
     def _report_kpi(self, *args):
@@ -334,6 +346,20 @@ class RestoreTest(BackupRestoreTest):
 
         time_elapsed = self.restore()
 
+        self.report_kpi(time_elapsed)
+
+
+class RestoreXATTRTest(RestoreTest):
+
+    def run(self):
+        self.extract_tools()
+        self.load()
+        self.xattr_load()
+        self.wait_for_persistence()
+
+        self.backup()
+        self.flush_buckets()
+        time_elapsed = self.restore()
         self.report_kpi(time_elapsed)
 
 

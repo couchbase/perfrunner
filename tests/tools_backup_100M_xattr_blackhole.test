@@ -1,0 +1,34 @@
+[test_case]
+test = perfrunner.tests.tools.BackupXATTRTest
+
+[showfast]
+title = 4 nodes, 1 bucket x 100M x 1KB, DGM, Idle
+component = tools
+category = backup
+sub_category = Blackhole
+
+[stats]
+client_processes = cbbackupmgr
+
+[cluster]
+mem_quota = 52428
+initial_nodes = 4
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+
+[load]
+items = 100000000
+size = 1024
+workers = 100
+
+[xattr_load]
+items = 100000000
+size = 1024
+workers = 100
+xattr_field = city
+
+[backup]
+threads = 16
+sink_type = blackhole

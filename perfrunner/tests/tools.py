@@ -237,6 +237,7 @@ class BackupIncrementalTest(BackupRestoreTest):
 class MergeTest(BackupRestoreTest):
 
     @timeit
+    @with_stats
     def merge(self):
         snapshots = local.get_backup_snapshots(self.cluster_spec)
 

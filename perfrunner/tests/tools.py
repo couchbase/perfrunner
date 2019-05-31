@@ -144,10 +144,13 @@ class BackupTestWithCompact(BackupRestoreTest):
         self.backup()
         self.wait_for_persistence()
 
-        initial_size = local.calc_backup_size(self.cluster_spec)
+        initial_size = local.calc_backup_size(self.cluster_spec,
+                                              rounded=False)
         compact_time = self.compact()
-        compacted_size = local.calc_backup_size(self.cluster_spec)
-        size_diff = initial_size - compacted_size
+        compacted_size = local.calc_backup_size(self.cluster_spec,
+                                                rounded=False)
+        # Size differences can be a little small, so go for more precision here
+        size_diff = round(initial_size - compacted_size, 2)
 
         self.report_kpi(compact_time, size_diff)
 

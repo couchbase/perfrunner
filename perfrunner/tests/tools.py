@@ -71,15 +71,14 @@ class BackupTest(BackupRestoreTest):
         sink_type = self.test_config.backup_settings.sink_type
 
         tool = 'backup'
+        storage = None
         if backing_store:
-            tool += '-' + backing_store
+            storage = backing_store
         elif sink_type:
-            tool += '-' + sink_type
+            storage = sink_type
 
         self.reporter.post(
-            *self.metrics.bnr_throughput(time_elapsed,
-                                         edition,
-                                         tool=tool)
+            *self.metrics.bnr_throughput(time_elapsed, edition, tool, storage)
         )
 
         if sink_type != 'blackhole':
@@ -87,7 +86,8 @@ class BackupTest(BackupRestoreTest):
                 *self.metrics.backup_size(
                     backup_size,
                     edition,
-                    tool=tool if backing_store or sink_type else None)
+                    tool if backing_store or sink_type else None,
+                    storage)
             )
 
     def run(self):
@@ -104,8 +104,15 @@ class BackupSizeTest(BackupTest):
         edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
         backup_size = local.calc_backup_size(self.cluster_spec)
 
+        backing_store = self.test_config.backup_settings.storage_type
+
+        tool = 'backup'
+        storage = None
+        if backing_store:
+            storage = backing_store
+
         self.reporter.post(
-            *self.metrics.backup_size(backup_size, edition)
+            *self.metrics.backup_size(backup_size, edition, tool, storage)
         )
 
 
@@ -121,21 +128,24 @@ class BackupTestWithCompact(BackupRestoreTest):
         backing_store = self.test_config.backup_settings.storage_type
 
         tool = 'compact'
-        if backing_store:
-            tool += '-' + backing_store
+        storage = None
+        if storage:
+            storage = backing_store
 
         self.reporter.post(
-            *self.metrics.compact_size_diff(
+            *self.metrics.tool_size_diff(
                 backup_size_difference,
                 edition,
-                tool)
+                tool,
+                storage)
         )
 
         self.reporter.post(
             *self.metrics.tool_time(
                 time_elapsed,
                 edition,
-                tool)
+                tool,
+                storage)
         )
 
     def run(self):
@@ -182,15 +192,17 @@ class BackupIncrementalTest(BackupRestoreTest):
         sink_type = self.test_config.backup_settings.sink_type
 
         tool = 'backup-incremental'
+        storage = None
         if backing_store:
-            tool += '-' + backing_store
+            storage = backing_store
         elif sink_type:
-            tool += '-' + sink_type
+            storage = sink_type
 
         self.reporter.post(
             *self.metrics.tool_time(time_elapsed,
                                     edition,
-                                    tool=tool)
+                                    tool=tool,
+                                    storage=storage)
         )
 
         if sink_type != 'blackhole':
@@ -239,8 +251,8 @@ class BackupIncrementalTest(BackupRestoreTest):
 
 class MergeTest(BackupRestoreTest):
 
-    @timeit
     @with_stats
+    @timeit
     def merge(self):
         snapshots = local.get_backup_snapshots(self.cluster_spec)
 
@@ -264,11 +276,13 @@ class MergeTest(BackupRestoreTest):
     def _report_kpi(self, time_elapsed):
         edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
         tool = 'merge'
+        storage = None
         if self.test_config.backup_settings.storage_type:
-            tool += '-' + self.test_config.backup_settings.storage_type
+            storage = self.test_config.backup_settings.storage_type
 
         self.reporter.post(
-            *self.metrics.merge_throughput(time_elapsed, edition, tool)
+            *self.metrics.merge_throughput(
+                time_elapsed, edition, tool, storage)
         )
 
     def run(self):
@@ -301,15 +315,14 @@ class RestoreTest(BackupRestoreTest):
         sink_type = self.test_config.backup_settings.sink_type
 
         tool = 'restore'
+        storage = None
         if backing_store:
-            tool += '-' + backing_store
+            storage = backing_store
         elif sink_type:
-            tool += '-' + sink_type
+            storage = sink_type
 
         self.reporter.post(
-            *self.metrics.bnr_throughput(time_elapsed,
-                                         edition,
-                                         tool=tool)
+            *self.metrics.bnr_throughput(time_elapsed, edition, tool, storage)
         )
 
     def run(self):
@@ -332,13 +345,12 @@ class ListTest(BackupRestoreTest):
         backing_store = self.test_config.backup_settings.storage_type
 
         tool = 'list'
+        storage = None
         if backing_store:
-            tool += '-' + backing_store
+            storage = backing_store
 
         self.reporter.post(
-            *self.metrics.tool_time(time_elapsed,
-                                    edition,
-                                    tool=tool))
+            *self.metrics.tool_time(time_elapsed, edition, tool, storage))
 
     @with_stats
     @timeit

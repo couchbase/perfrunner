@@ -88,9 +88,7 @@
         {"job": "titan", "cluster": "titan.spec", "test_config": "reb_in_500M_kv.test"},
         {"job": "titan", "cluster": "titan.spec", "test_config": "reb_in_500M_kv_ephemeral.test"}
     ],
-    "Tools": [
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_comp_size.test"}
-    ],
+    "Tools": [],
     "Views": [],
     "XDCR": [
         {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_init_1x1_unidir_100M_ephemeral.test"},

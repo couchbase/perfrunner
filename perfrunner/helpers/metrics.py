@@ -522,8 +522,13 @@ class MetricHelper:
     def bnr_throughput(self,
                        time_elapsed: float,
                        edition: str,
-                       tool: str) -> Metric:
-        metric_id = '{}_{}_thr_{}'.format(self.test_config.name, tool, edition)
+                       tool: str,
+                       storage: str = None) -> Metric:
+
+        tool_and_storage = tool + '-' + storage if storage else tool
+        metric_id = '{}_{}_thr_{}'.format(self.test_config.name,
+                                          tool_and_storage,
+                                          edition)
         title = '{} {} throughput (Avg. MB/sec), {}'.format(
             edition, tool, self._title)
         metric_info = self._metric_info(metric_id, title)
@@ -538,10 +543,12 @@ class MetricHelper:
     def tool_time(self,
                   time_elapsed: float,
                   edition: str,
-                  tool: str) -> Metric:
+                  tool: str,
+                  storage: str = None) -> Metric:
 
+        tool_and_storage = tool + '-' + storage if storage else tool
         metric_id = '{}_{}_time_{}'.format(
-            self.test_config.name, tool, edition)
+            self.test_config.name, tool_and_storage, edition)
         title = '{} {} time elapsed (seconds), {}'.format(
             edition, tool, self._title)
         metric_info = self._metric_info(metric_id, title)
@@ -550,18 +557,15 @@ class MetricHelper:
 
     def backup_size(self, size: float,
                     edition: str,
-                    tool: str = None) -> Metric:
-        # To avoid duplicating existing metrics, only label with tool if some
-        # new parameter has been used. In future should look to purge all
-        # existing and replace.
-        if tool:
-            prefix = '{}_{}'.format(self.test_config.name, tool)
-        else:
-            prefix = self.test_config.name
-        metric_id = '{}_size_{}'.format(prefix, edition)
-        title = '{} {} backup size (GB), {}'.format(edition,
-                                                    tool if tool else '',
-                                                    self._title)
+                    tool: str,
+                    storage: str = None) -> Metric:
+
+        tool_and_storage = tool + '-' + storage if storage else tool
+        metric_id = '{}_{}_size_{}'.format(
+            self.test_config.name, tool_and_storage, edition)
+        title = '{} {} size (GB), {}'.format(edition,
+                                             tool,
+                                             self._title)
         metric_info = self._metric_info(metric_id, title)
 
         return size, self._snapshots, metric_info
@@ -569,8 +573,12 @@ class MetricHelper:
     def merge_throughput(self,
                          time_elapsed: float,
                          edition: str,
-                         tool: str = None) -> Metric:
-        metric_id = '{}_{}_thr_{}'.format(self.test_config.name, tool, edition)
+                         tool: str = None,
+                         storage: str = None) -> Metric:
+
+        tool_and_storage = tool + '-' + storage if storage else tool
+        metric_id = '{}_{}_thr_{}'.format(
+            self.test_config.name, tool_and_storage, edition)
         title = '{} {} throughput (Avg. MB/sec), {}'.format(
             edition, tool, self._title)
         metric_info = self._metric_info(metric_id, title)
@@ -582,15 +590,17 @@ class MetricHelper:
 
         return avg_throughput, self._snapshots, metric_info
 
-    def compact_size_diff(self, size_diff: float,
-                          edition: str,
-                          tool: str) -> Metric:
+    def tool_size_diff(self, size_diff: float,
+                       edition: str,
+                       tool: str,
+                       storage: str = None) -> Metric:
 
-        prefix = '{}_{}'.format(self.test_config.name, tool)
-        metric_id = '{}_size_diff_{}'.format(prefix, edition)
-        title = '{} {} compact size difference (GB), {}'.format(edition,
-                                                                tool,
-                                                                self._title)
+        tool_and_storage = tool + '-' + storage if storage else tool
+        metric_id = '{}_{}_size_diff_{}'.format(
+            self.test_config.name, tool_and_storage, edition)
+        title = '{} {} size difference (GB), {}'.format(edition,
+                                                        tool,
+                                                        self._title)
         return size_diff, self._snapshots, self._metric_info(metric_id, title)
 
     def import_and_export_throughput(self, time_elapsed: float) -> Metric:

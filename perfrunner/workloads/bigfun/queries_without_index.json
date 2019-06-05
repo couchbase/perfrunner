@@ -18,5 +18,25 @@
   {
     "id": "BF14",
     "matches": [1e4]
+  },
+  {
+    "id": "WF01",
+    "matches": [0]
+  },
+  {
+    "id": "WF02",
+    "matches": [0]
+  },
+  {
+    "id": "WF03",
+    "matches": [0]
+  },
+  {
+    "id": "WF04",
+    "matches": [0]
+  },
+  {
+    "id": "WF05",
+    "matches": [0]
   }
 ]

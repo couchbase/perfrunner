@@ -43,6 +43,33 @@ STATEMENTS = {
             'GROUP BY META(u).id '
             'ORDER BY count '
             'LIMIT 10;',
+    'WF01': 'set `compiler.windowmemory` "4MB"; '
+            'SELECT subqry.id, subqry.wf FROM '
+            '(SELECT u.id AS id, ROW_NUMBER() '
+            'OVER(PARTITION BY meta(u).id) AS wf '
+            'FROM `GleambookUsers` u) subqry WHERE id < 100',
+    'WF02': 'set `compiler.windowmemory` "4MB"; '
+            'SELECT subqry.id, subqry.wf FROM '
+            '(SELECT u.id AS id, NTILE(3) '
+            'OVER(PARTITION BY SUBSTR(u.user_since, 0, 10)) AS wf '
+            'FROM `GleambookUsers` u) subqry WHERE id < 100',
+    'WF03': 'set `compiler.windowmemory` "4MB"; '
+            'SELECT subqry.id, subqry.wf FROM '
+            '(SELECT u.id AS id, NTILE(3) '
+            'OVER(PARTITION BY SUBSTR(u.user_since, 6, 4)) AS wf '
+            'FROM `GleambookUsers` u) subqry WHERE id < 100',
+    'WF04': 'set `compiler.windowmemory` "4MB"; '
+            'SELECT subqry.id, subqry.wf FROM '
+            '(SELECT u.id AS id, AVG(ARRAY_COUNT(u.friend_ids))'
+            ' OVER(PARTITION BY  SUBSTR(u.user_since, 6, 4) ORDER BY id '
+            'RANGE BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS wf '
+            'FROM `GleambookUsers` u) subqry WHERE id < 100',
+    'WF05': 'set `compiler.windowmemory` "4MB"; '
+            'SELECT subqry.id, subqry.wf FROM '
+            '(SELECT u.id as id, SUM(ARRAY_COUNT(u.friend_ids)) '
+            'OVER(PARTITION BY  SUBSTR(u.user_since, 6, 4) ORDER BY id '
+            'RANGE BETWEEN UNBOUNDED PRECEDING AND 0 FOLLOWING) AS wf '
+            'FROM `GleambookUsers` u) subqry WHERE id < 100',
 }
 
 DESCRIPTIONS = {
@@ -53,6 +80,11 @@ DESCRIPTIONS = {
     'BF11': 'Full sort',
     'BF14': 'Select join with grouping aggregation ({} matches)',
     'BF15': 'Select join with Top-K ({} matches)',
+    'WF01': 'Minimal streaming window function',
+    'WF02': 'Minimal window function with materialized partition in memory',
+    'WF03': 'Minimal window function with materialized partition spilling to disk',
+    'WF04': 'Windowed aggregate with small frame',
+    'WF05': 'Windowed aggregate with unbounded preceding frame',
 }
 
 
@@ -124,6 +156,11 @@ def new_params(qid: str, num_matches: float) -> List[str]:
         'BF11': [],
         'BF14': bf14params(num_matches),
         'BF15': bf15params(num_matches),
+        'WF01': [],
+        'WF02': [],
+        'WF03': [],
+        'WF04': [],
+        'WF05': [],
     }[qid]
 
 

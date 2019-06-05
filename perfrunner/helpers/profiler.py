@@ -1,8 +1,8 @@
-import threading
-from typing import Callable
-import time
 import json
 import os
+import threading
+import time
+from typing import Callable
 
 import requests
 from decorator import decorator
@@ -27,7 +27,6 @@ class Timer(threading.Timer):
         self.num_runs = num_runs
         self.daemon = True
         self.cluster_spec = ClusterSpec
-
 
     def run(self):
         super().run()
@@ -65,7 +64,6 @@ class Profiler:
         self.ssh_username, self.ssh_password = cluster_spec.ssh_credentials
         self.cluster_spec = cluster_spec
 
-
     def save(self, host: str, service: str, profile: str, content: bytes):
         fname = '{}_{}_{}_{}.pprof'.format(host, service, profile, uhex()[:6])
         with open(fname, 'wb') as fh:
@@ -77,7 +75,6 @@ class Profiler:
 
     def profile(self, host: str, service: str, profile: str):
         logger.info('Collecting {} profile on {}'.format(profile, host))
-
 
         if 'syncgateway' in self.test_config.profiling_settings.services:
             if profile == 'sg_cpu':

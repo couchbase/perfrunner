@@ -35,12 +35,12 @@ from cbagent.collectors import (
     SecondaryStats,
     SecondaryStorageStats,
     SecondaryStorageStatsMM,
+    SGImportLatency,
+    SyncGatewayStats,
     Sysdig,
     TypePerf,
     XdcrLag,
     XdcrStats,
-    SyncGatewayStats,
-    SGImport_latency,
 )
 from cbagent.metadata_client import MetadataClient
 from cbagent.stores import PerfStore
@@ -100,6 +100,7 @@ def new_cbagent_settings(test: PerfTest):
         settings.index_node = test.cluster_spec.servers_by_role('index')[0]
 
     return settings
+
 
 class CbAgent:
 
@@ -303,14 +304,14 @@ class CbAgent:
                 break
 
     def add_sgimport_latency(self):
-        reversed_clusters = list(reversed(self.test.cbmonitor_clusters))
+        # reversed_clusters = list(reversed(self.test.cbmonitor_clusters))
 
         for i, cluster_id in enumerate(self.cluster_map):
             settings = copy(self.settings)
 
             settings.cluster = cluster_id
-            collector = SGImport_latency(settings, self.test.cluster_spec,
-                                         self.test.test_config.syncgateway_settings)
+            collector = SGImportLatency(settings, self.test.cluster_spec,
+                                        self.test.test_config.syncgateway_settings)
             self.collectors.append(collector)
 
     def update_metadata(self):

@@ -1,7 +1,8 @@
 from cbagent.collectors import Collector
-from perfrunner.helpers import rest
 from cbagent.metadata_client import MetadataClient
 from cbagent.stores import PerfStore
+from perfrunner.helpers import rest
+
 
 class SyncGatewayStats(Collector):
     COLLECTOR_NODE = "syncgateway_node_stats"

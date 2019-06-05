@@ -43,7 +43,7 @@ class PerfTest:
         self.index = IndexHelper(cluster_spec, test_config, self.rest, self.monitor)
 
         self.master_node = next(cluster_spec.masters)
-        self.build = "5.0.1-1301" # self.rest.get_version(self.master_node)
+        self.build = "5.0.1-1301"  # self.rest.get_version(self.master_node)
 
         self.metrics = MetricHelper(self)
         self.reporter = ShowFastReporter(cluster_spec, test_config, self.build)

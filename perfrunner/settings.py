@@ -8,7 +8,8 @@ from decorator import decorator
 from logger import logger
 from perfrunner.helpers.misc import target_hash
 
-REPO = 'https://github.com/sharujayaram/perfrunner'
+REPO = 'https://github.com/couchbase/perfrunner'
+BRANCH = 'syncgateway'
 
 
 @decorator
@@ -230,6 +231,7 @@ class StatsSettings:
         self.traced_processes = self.TRACED_PROCESSES + \
             options.get('traced_processes', '').split()
 
+
 class ProfilingSettings:
 
     INTERVAL = 300  # 5 minutes
@@ -252,6 +254,7 @@ class ProfilingSettings:
         self.profiles = options.get('profiles',
                                     self.PROFILES).split(',')
         self.cpu_interval = int(options.get('cpu_interval', self.CPU_INTERVAL))
+
 
 class BucketSettings:
 
@@ -484,7 +487,6 @@ class PhaseSettings:
         self.boost = options.get('boost', self.BOOST)
 
         self.target = float(options.get('target', self.TARGET))
-
 
         # Subdoc & XATTR
         self.subdoc_field = options.get('subdoc_field')
@@ -782,7 +784,7 @@ class SyncgatewaySettings:
     REQUESTDISTRIBUTION = 'zipfian'  # |zipfian|uniform
     LOG_TITE = 'sync_gateway_default'
     THREADS = 10
-    INSERTSTART=0
+    INSERTSTART = 0
     MAX_INSERTS_PER_INSTANCE = 1000000
     STAR = "false"
     GRANT_ACCESS = "false"
@@ -814,7 +816,8 @@ class SyncgatewaySettings:
         self.threads_per_instance = 1
         self.threads = options.get('threads', self.THREADS)
         self.insertstart = options.get('inserstart', self.INSERTSTART)
-        self.max_inserts_per_instance = options.get('max_inserts_per_instance', self.MAX_INSERTS_PER_INSTANCE)
+        self.max_inserts_per_instance = options.get('max_inserts_per_instance',
+                                                    self.MAX_INSERTS_PER_INSTANCE)
         self.insert_mode = options.get('insert_mode', self.INSERT_MODE)
         self.clients = options.get('clients', self.CLIENTS)
         self.nodes = options.get('nodes', self.NODES)
@@ -823,8 +826,6 @@ class SyncgatewaySettings:
         self.channels_per_grant = options.get('channels_per_grant', self.CHANNELS_PER_GRANT)
         self.grant_access_in_scan = options.get('grant_access_in_scan', self.GRANT_ACCESS_IN_SCAN)
         self.build_label = options.get('build_label', '')
-
-
 
     def __str__(self) -> str:
         return str(self.__dict_)

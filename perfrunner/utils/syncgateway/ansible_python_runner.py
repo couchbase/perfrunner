@@ -1,27 +1,34 @@
 import os
 
-from ansible.inventory import Inventory
-from ansible.vars import VariableManager
-from ansible.executor import playbook_executor
-from ansible.utils.display import Display
-from ansible import constants
-from ansible.parsing.dataloader import DataLoader
 import ansible.inventory
+from ansible import constants
+from ansible.executor import playbook_executor
+from ansible.inventory import Inventory
+from ansible.parsing.dataloader import DataLoader
+from ansible.utils.display import Display
+from ansible.vars import VariableManager
 
 from logger import logger
 
 
 class Options(object):
-    """
-    Options class to replace Ansible OptParser
-    """
-    def __init__(self, verbosity=None, inventory=None, listhosts=None, subset=None, module_paths=None, extra_vars=None,
-                 forks=None, ask_vault_pass=None, vault_password_files=None, new_vault_password_file=None,
-                 output_file=None, tags=None, skip_tags=None, one_line=None, tree=None, ask_sudo_pass=None, ask_su_pass=None,
-                 sudo=None, sudo_user=None, become=None, become_method=None, become_user=None, become_ask_pass=None,
-                 ask_pass=None, private_key_file=None, remote_user=None, connection=None, timeout=None, ssh_common_args=None,
-                 sftp_extra_args=None, scp_extra_args=None, ssh_extra_args=None, poll_interval=None, seconds=None, check=None,
-                 syntax=None, diff=None, force_handlers=None, flush_cache=None, listtasks=None, listtags=None, module_path=None):
+
+    """Options class to replace Ansible OptParser."""
+
+    def __init__(self, verbosity=None, inventory=None, listhosts=None,
+                 subset=None, module_paths=None, extra_vars=None,
+                 forks=None, ask_vault_pass=None, vault_password_files=None,
+                 new_vault_password_file=None,
+                 output_file=None, tags=None, skip_tags=None, one_line=None,
+                 tree=None, ask_sudo_pass=None, ask_su_pass=None,
+                 sudo=None, sudo_user=None, become=None, become_method=None,
+                 become_user=None, become_ask_pass=None,
+                 ask_pass=None, private_key_file=None, remote_user=None,
+                 connection=None, timeout=None, ssh_common_args=None,
+                 sftp_extra_args=None, scp_extra_args=None, ssh_extra_args=None,
+                 poll_interval=None, seconds=None, check=None,
+                 syntax=None, diff=None, force_handlers=None, flush_cache=None,
+                 listtasks=None, listtags=None, module_path=None):
         self.verbosity = verbosity
         self.inventory = inventory
         self.listhosts = listhosts
@@ -33,8 +40,8 @@ class Options(object):
         self.vault_password_files = vault_password_files
         self.new_vault_password_file = new_vault_password_file
         self.output_file = output_file
-        #self.tags = tags
-        #self.skip_tags = skip_tags
+        # self.tags = tags
+        # self.skip_tags = skip_tags
         self.one_line = one_line
         self.tree = tree
         self.ask_sudo_pass = ask_sudo_pass
@@ -68,13 +75,16 @@ class Options(object):
 
 class Runner(object):
 
-    def __init__(self, inventory_filename, playbook, extra_vars, verbosity=0, subset=constants.DEFAULT_SUBSET):
+    def __init__(self, inventory_filename, playbook, extra_vars,
+                 verbosity=0, subset=constants.DEFAULT_SUBSET):
 
         if not os.path.exists(inventory_filename):
-            raise Exception("Cannot find inventory_filename: {}.  Current dir: {}".format(inventory_filename, os.getcwd()))
+            raise Exception("Cannot find inventory_filename: {}. "
+                            " Current dir: {}".format(inventory_filename, os.getcwd()))
 
         if not os.path.exists(playbook):
-            raise Exception("Cannot find playbook: {}.  Current dir: {}".format(playbook, os.getcwd()))
+            raise Exception("Cannot find playbook: {}. "
+                            " Current dir: {}".format(playbook, os.getcwd()))
 
         self.options = Options()
         self.options.verbosity = verbosity
@@ -123,7 +133,8 @@ class Runner(object):
         ansible.inventory.HOSTS_PATTERNS_CACHE = {}
 
         # Set inventory, using most of above objects
-        self.inventory = Inventory(loader=self.loader, variable_manager=self.variable_manager, host_list=inventory_filename)
+        self.inventory = Inventory(loader=self.loader, variable_manager=self.variable_manager,
+                                   host_list=inventory_filename)
         self.inventory.subset(self.options.subset)
         self.variable_manager.set_inventory(self.inventory)
 

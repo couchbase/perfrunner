@@ -175,7 +175,7 @@ class SpringTest(TestCase):
             size = len(str(doc))
 
             self.assertEqual(doc["body"], "")
-            self.assertAlmostEqual(size, doc_gen.OVERHEAD, delta=20)
+            self.assertAlmostEqual(size, doc_gen.OVERHEAD, delta=100)
 
     def test_hot_keys(self):
         ws = WorkloadSettings(items=10 ** 4, workers=40, working_set=10,

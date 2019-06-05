@@ -2,7 +2,7 @@ from fabric.api import cd, get, run, settings, shell_env
 
 from logger import logger
 from perfrunner.remote.context import all_clients
-from perfrunner.settings import REPO
+from perfrunner.settings import REPO, BRANCH
 
 
 class Remote:
@@ -32,7 +32,7 @@ class Remote:
         run('mkdir -p {}'.format(worker_home))
 
         with cd(worker_home):
-            run('git clone -q {}'.format(REPO))
+            run('git clone -q -b {} {}'.format(BRANCH, REPO))
 
             with cd('perfrunner'):
                 run('make')
@@ -77,7 +77,7 @@ class Remote:
                 get('YCSB/ycsb_run_*.log', local_path='YCSB/')
 
     @all_clients
-    def get_syncgateway_YCSB_logs(self, worker_home, sgs, local_dir):
+    def get_syncgateway_ycsb_logs(self, worker_home, sgs, local_dir):
         localpath = "{}/".format(local_dir)
         instances = int(sgs.instances_per_client)
         pattern = "{}*".format(sgs.log_title)

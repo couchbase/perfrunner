@@ -1,8 +1,9 @@
-import sys
 import os
 import re
-from perfrunner.utils.syncgateway.ansible_runner import AnsibleRunner
+import sys
+
 from logger import logger
+from perfrunner.utils.syncgateway.ansible_runner import AnsibleRunner
 
 
 def main():
@@ -68,6 +69,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-# env/bin/sg_install -build 1.5.0-582 -cluster perfrunner/utils/syncgateway/clusters/hebe_4node.cluster -config perfrunner/utils/syncgateway/configs/hebe_xattr_sync.config

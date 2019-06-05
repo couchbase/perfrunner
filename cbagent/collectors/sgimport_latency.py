@@ -1,25 +1,16 @@
-import requests
 import json
-
-from concurrent.futures import ProcessPoolExecutor as Executor
 from concurrent.futures import ThreadPoolExecutor
+from time import time
 
-from time import sleep, time
-
+import requests
 from couchbase.bucket import Bucket
 
-from cbagent.collectors import Latency, Collector
-from logger import logger
-from perfrunner.helpers.misc import uhex
-from spring.docgen import Document
+from cbagent.collectors import Collector
 from cbagent.metadata_client import MetadataClient
 from cbagent.stores import PerfStore
-from perfrunner.settings import (
-    ClusterSpec,
-    PhaseSettings,
-    TargetIterator,
-    TestConfig,
-)
+from perfrunner.helpers.misc import uhex
+from perfrunner.settings import ClusterSpec, PhaseSettings, TestConfig
+from spring.docgen import Document
 
 
 def new_client(host, bucket, password, timeout):
@@ -32,7 +23,7 @@ def new_client(host, bucket, password, timeout):
     return client
 
 
-class SGImport_latency(Collector):
+class SGImportLatency(Collector):
     COLLECTOR = "sgimport_latency"
 
     METRICS = "sgimport_latency"
@@ -71,7 +62,6 @@ class SGImport_latency(Collector):
         self.clients.append(('bucket-1', src_client))
 
         self.new_docs = Document(1024)
-
 
     def check_longpoll_changefeed(self, host: str, key: str, last_sequence: str):
 

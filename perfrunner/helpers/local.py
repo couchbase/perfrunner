@@ -334,6 +334,7 @@ def run_cmd(path, command, parameters, output_file):
     with lcd(path):
         local(cmd)
 
+
 def restart_memcached(mem_limit=10000, port=8000, mem_host='localhost'):
     cmd1 = 'killall -9 memcached'
     logger.info('Running: {}'.format(cmd1))
@@ -410,5 +411,8 @@ def govendor_fetch(path: str, revision: str, package: str):
     logger.info('Fetching: {} with revision {} and package as {}'.format(path, revision, package))
     local('govendor fetch {}/{}@{}'.format(path, package, revision))
 
+
 def get_sg_logs(host: str, ssh_user: str, ssh_pass: str):
-    os.system('sshpass -p {} scp {}@{}:/home/sync_gateway/*logs.tar.gz ./'.format(ssh_pass, ssh_user, host))
+    os.system('sshpass -p {} scp {}@{}:/home/sync_gateway/*logs.tar.gz ./'.format(ssh_pass,
+                                                                                  ssh_user,
+                                                                                  host))

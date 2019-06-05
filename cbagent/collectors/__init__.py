@@ -38,4 +38,4 @@ from cbagent.collectors.system import (
 )
 from cbagent.collectors.xdcr_lag import XdcrLag
 
-from cbagent.collectors.sgimport_latency import SGImport_latency
+from cbagent.collectors.sgimport_latency import SGImportLatency

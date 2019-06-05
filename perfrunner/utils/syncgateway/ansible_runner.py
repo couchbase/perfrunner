@@ -1,7 +1,8 @@
-from perfrunner.utils.syncgateway.ansible_python_runner import Runner
+import logging
 
 from ansible import constants
-import logging
+
+from perfrunner.utils.syncgateway.ansible_python_runner import Runner
 
 PLAYBOOKS_HOME = "perfrunner/utils/syncgateway/playbooks"
 

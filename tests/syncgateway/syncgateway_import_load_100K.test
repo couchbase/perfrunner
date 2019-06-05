@@ -1,16 +1,15 @@
 [test_case]
-test = perfrunner.tests.syncgateway.SGImport_load
+test = perfrunner.tests.syncgateway.SGImportLoad
 title = 1 node, 1M docs, 1K users, 1 channel
 component = syncgateway
 category = read
 sub_category = xattr
 
 [cluster]
-mem_quota = 55000
-index_mem_quota = 110000
-initial_nodes = 7
+mem_quota = 25000
+index_mem_quota = 25000
+initial_nodes = 5
 num_buckets = 1
-online_cores = 8
 
 [load]
 items = 100000

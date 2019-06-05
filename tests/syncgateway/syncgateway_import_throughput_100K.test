@@ -6,9 +6,9 @@ category = import
 sub_category = Throughput
 
 [cluster]
-mem_quota = 50000
-index_mem_quota = 100000
-initial_nodes = 7
+mem_quota = 25000
+index_mem_quota = 25000
+initial_nodes = 5
 num_buckets = 1
 
 [load]

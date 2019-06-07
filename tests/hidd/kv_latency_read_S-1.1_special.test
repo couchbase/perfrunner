@@ -1,0 +1,35 @@
+[test_case]
+test = perfrunner.tests.magma.ReadLatencyExtraAccessPhaseDGMTest
+
+[showfast]
+title = latency (ms), Workload S-1.1.special, 4 nodes, 3B x 1KB, 20K ops/sec (80/20 R/W)
+component = kv
+category = hidd
+sub_category = Steady
+
+[cluster]
+mem_quota = 20480
+initial_nodes = 4
+num_buckets = 1
+kernel_mem_limit = 34G
+kernel_mem_limit_services = kv
+
+[bucket]
+eviction_policy = fullEviction
+
+[load]
+items = 3000000000
+size = 1024
+workers = 100
+key_fmtr = hex
+doc_gen = large
+
+[access]
+creates = 10
+reads = 80
+updates = 10
+deletes = 0
+items = 3000000000
+workers = 40
+throughput = 20000
+time = 43200

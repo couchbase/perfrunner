@@ -1,4 +1,5 @@
 from logger import logger
+from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import pretty_dict, read_json
 from perfrunner.tests import PerfTest
 from perfrunner.tests.kv import ReadLatencyDGMTest, ThroughputDGMCompactedTest
@@ -150,3 +151,32 @@ class ThroughputDGMCompactedMagmaTest(ThroughputDGMCompactedTest):
         super().__init__(*args)
 
         self.collect_per_server_stats = self.test_config.magma_settings.collect_per_server_stats
+
+
+class ReadLatencyExtraAccessPhaseDGMTest(ReadLatencyDGMTest):
+
+    @with_stats
+    def extra_access(self):
+        logger.info("Starting first access phase")
+        access_settings = self.test_config.access_settings
+        access_settings.updates = 100
+        access_settings.creates = 0
+        access_settings.deletes = 0
+        access_settings.reads = 0
+        access_settings.workers = 100
+        access_settings.ops = access_settings.items
+        access_settings.time = 3600 * 24
+        access_settings.throughput = float('inf')
+        PerfTest.access(self, settings=access_settings)
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.extra_access()
+
+        self.reset_kv_stats()
+
+        self.access()
+
+        self.report_kpi()

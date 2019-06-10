@@ -35,6 +35,7 @@
                 "date_format": "dateTimeOptional",
                 "display_order": "1",
                 "include_in_all": true,
+		"docvalues": true,
                 "include_term_vectors": true,
                 "index": true,
                 "name": "date",
@@ -50,6 +51,7 @@
               {
                 "display_order": "0",
                 "include_in_all": true,
+		"docvalues": true,
                 "include_term_vectors": false,
                 "index": true,
                 "name": "text",

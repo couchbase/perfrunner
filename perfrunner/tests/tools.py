@@ -141,7 +141,7 @@ class BackupTestWithCompact(BackupRestoreTest):
 
         tool = 'compact'
         storage = None
-        if storage:
+        if backing_store:
             storage = backing_store
 
         self.reporter.post(

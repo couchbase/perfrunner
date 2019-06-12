@@ -1,5 +1,8 @@
 {
-    "Analytics": [],
+    "Analytics": [
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_2n_no_index_window_functions.test"},
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_no_index_window_functions.test"}
+    ],
     "Eventing": [
         {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_fun_bktop_src_bkt_mut.test"},
         {"job": "themis", "cluster": "themis.spec", "test_config": "latency100M_fun_bktop_src_bkt_mut.test"},

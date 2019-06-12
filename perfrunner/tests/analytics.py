@@ -175,6 +175,11 @@ class BigFunQueryNoIndexTest(BigFunQueryTest):
         pass
 
 
+class BigFunQueryNoIndexWindowFunctionsTest(BigFunQueryNoIndexTest):
+
+    QUERIES = 'perfrunner/workloads/bigfun/queries_without_index_window_functions.json'
+
+
 class BigFunRebalanceTest(BigFunTest, RebalanceTest):
 
     ALL_HOSTNAMES = True

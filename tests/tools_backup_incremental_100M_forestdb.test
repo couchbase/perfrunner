@@ -2,7 +2,7 @@
 test = perfrunner.tests.tools.BackupIncrementalTest
 
 [showfast]
-title = 4 nodes, 1 bucket x 100M x 1KB; 50% additional; 10% Upserts; 10% Deletes, DGM, Idle
+title = 4 nodes, 1 bucket x 100M x 1KB; 50%% additional; 10%% Upserts; 10%% Deletes, DGM, Idle
 component = tools
 category = backup
 sub_category = ForestDB

@@ -69,4 +69,5 @@ def ycsb_workload(workload_settings: PhaseSettings,
              cbcollect=workload_settings.cbcollect,
              fieldlength=workload_settings.field_length,
              fieldcount=workload_settings.field_count,
-             durability=workload_settings.durability)
+             durability=workload_settings.durability,
+             kv_endpoints=workload_settings.kv_endpoints)

@@ -460,6 +460,8 @@ class PhaseSettings:
 
     DURABILITY = None
 
+    YCSB_KV_ENDPOINTS = 1
+
     def __init__(self, options: dict):
         # Common settings
         self.time = int(options.get('time', self.TIME))
@@ -560,6 +562,7 @@ class PhaseSettings:
         self.target = float(options.get('target', self.TARGET))
         self.field_count = int(options.get('field_count', self.YCSB_FIELD_COUNT))
         self.field_length = int(options.get('field_length', self.YCSB_FIELD_LENGTH))
+        self.kv_endpoints = int(options.get('kv_endpoints', self.YCSB_KV_ENDPOINTS))
         self.ycsb_client = options.get('ycsb_client', self.YCSB_CLIENT)
 
         # Subdoc & XATTR

@@ -393,7 +393,9 @@ def run_ycsb(host: str,
              instance: int = 0,
              fieldlength: int = 1024,
              fieldcount: int = 10,
-             durability: int = None):
+             durability: int = None,
+             kv_endpoints: int = 1):
+
     cmd = 'bin/ycsb {action} {ycsb_client} ' \
           '-P {workload} ' \
           '-p writeallfields=true ' \
@@ -406,6 +408,7 @@ def run_ycsb(host: str,
           '-p couchbase.upsert=true ' \
           '-p couchbase.epoll={epoll} ' \
           '-p couchbase.boost={boost} ' \
+          '-p couchbase.kvEndpoints={kv_endpoints} ' \
           '-p couchbase.sslMode={ssl_mode} ' \
           '-p couchbase.certKeystoreFile=../{ssl_keystore_file} ' \
           '-p couchbase.certKeystorePassword={ssl_keystore_password} ' \
@@ -445,7 +448,8 @@ def run_ycsb(host: str,
                      ssl_keystore_password=ssl_keystore_password,
                      fieldlength=fieldlength,
                      fieldcount=fieldcount,
-                     durability=durability)
+                     durability=durability,
+                     kv_endpoints=kv_endpoints)
 
     if soe_params is None:
         cmd += ' -p recordcount={items} '.format(items=items)

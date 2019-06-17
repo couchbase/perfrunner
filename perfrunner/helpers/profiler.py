@@ -65,7 +65,8 @@ class Profiler:
         self.cluster_spec = cluster_spec
 
     def save(self, host: str, service: str, profile: str, content: bytes):
-        fname = '{}_{}_{}_{}.pprof'.format(host, service, profile, uhex()[:6])
+        fname = '{}_{}_{}_{}_{}.pprof'.format(host, service, profile,
+                                              time.strftime("%y%m%d%H%M%S"), uhex()[:6])
         with open(fname, 'wb') as fh:
             fh.write(content)
 
@@ -79,13 +80,15 @@ class Profiler:
         if 'syncgateway' in self.test_config.profiling_settings.services:
             if profile == 'sg_cpu':
                 url = 'http://{}:4985/_profile'.format(host)
-                filename = '{}_{}_{}_{}.pprof'.format(host, service, profile, uhex()[:6])
+                filename = '{}_{}_{}_{}_{}.pprof'.format(host, service, profile,
+                                                         time.strftime("%y%m%d%H%M%S"), uhex()[:6])
                 requests.post(url=url, data=json.dumps({"file": filename}))
                 time.sleep(self.test_config.profiling_settings.cpu_interval)
                 requests.post(url=url, data=json.dumps({}))
 
             if profile == 'sg_heap':
-                filename = '{}_{}_{}_{}.pprof'.format(host, service, profile, uhex()[:6])
+                filename = '{}_{}_{}_{}_{}.pprof'.format(host, service, profile,
+                                                         time.strftime("%y%m%d%H%M%S"), uhex()[:6])
                 url = 'http://{}:4985/_heap'.format(host)
                 requests.post(url=url, data=json.dumps({"file": filename}))
 

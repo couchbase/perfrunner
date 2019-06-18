@@ -375,3 +375,39 @@ class SGImportLatencyTest(SGPerfTest):
         self.download_ycsb()
         self.load()
         self.report_kpi()
+
+
+class SGSyncByUserWithAuth(SGSync):
+
+    def _report_kpi(self):
+        self.collect_execution_logs()
+        for f in glob.glob('{}/*runtest*.result'.format(self.LOCAL_DIR)):
+            with open(f, 'r') as fout:
+                logger.info(f)
+                logger.info(fout.read())
+
+        self.reporter.post(
+            *self.metrics.sg_throughput('Throughput (req/sec), SYNC docs via _changes')
+        )
+
+        self.reporter.post(
+            *self.metrics.sg_latency('[INSERT], 95thPercentileLatency(us)',
+                                     'Latency, round-trip write, 95 percentile (ms)')
+        )
+
+    def run(self):
+        self.download_ycsb()
+        self.start_memcached()
+        self.load_users()
+        self.init_users()
+        self.run_test()
+        self.report_kpi()
+
+
+class SGSyncByKeyNoAuth(SGSyncByUserWithAuth):
+
+    def run(self):
+        self.download_ycsb()
+        self.start_memcached()
+        self.run_test()
+        self.report_kpi()

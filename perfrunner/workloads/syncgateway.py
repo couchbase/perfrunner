@@ -8,15 +8,18 @@ LOAD_USERS_CMD = " load syncgateway -s -P {workload} -p syncgateway.loadmode=use
                  "-p syncgateway.host={hosts} -p memcached.host={memcached_host} " \
                  "-p recordcount={total_users} " \
                  "-p syncgateway.channels={total_channels} " \
+                 "-p syncgateway.totalusers={total_users} " \
                  "-p syncgateway.channelsperuser={channels_per_user} " \
                  "-p insertstart={insertstart} -p exportfile={exportfile} " \
                  "-p syncgateway.starchannel={starchannel}"
 
 LOAD_DOCS_CMD = " load syncgateway -s -P {workload} " \
                 "-p recordcount={total_docs} -threads 50 " \
+                "-p fieldcount={fieldcount} -p fieldlength={fieldlength} " \
                 "-p syncgateway.host={hosts} " \
                 "-p syncgateway.auth=false " \
                 "-p memcached.host={memcached_host} " \
+                "-p syncgateway.insertmode={insert_mode} " \
                 "-p syncgateway.totalusers={total_users} " \
                 "-p syncgateway.channels={total_channels} " \
                 "-p syncgateway.channelsperuser={channels_per_user} " \
@@ -53,8 +56,11 @@ GRANT_ACCESS_CMD = " run syncgateway -s -P {workload} " \
 
 RUN_TEST_CMD = " run syncgateway -s -P {workload} -p recordcount={total_docs} " \
                "-p operationcount=999999999 " \
+               "-p fieldcount={fieldcount} -p fieldlength={fieldlength} " \
                "-p maxexecutiontime={time} -threads {threads} " \
                "-p syncgateway.host={hosts} -p syncgateway.auth={auth} " \
+               "-p syncgateway.channels={total_channels} " \
+               "-p syncgateway.channelsperuser={channels_per_user} " \
                "-p memcached.host={memcached_host} -p syncgateway.totalusers={total_users} " \
                "-p syncgateway.roundtrip={roundtrip} -p insertstart={insertstart} " \
                "-p syncgateway.readmode={read_mode} -p syncgateway.insertmode={insert_mode} " \
@@ -113,9 +119,12 @@ def syncgateway_load_docs(workload_settings: PhaseSettings,
     params = LOAD_DOCS_CMD.format(workload=sgs.workload,
                                   hosts=get_hosts(cluster, workload_settings),
                                   total_docs=sgs.documents,
+                                  fieldlength=sgs.fieldlength,
+                                  fieldcount=sgs.fieldcount,
                                   memcached_host=cluster.workers[0],
                                   total_users=sgs.users,
                                   total_channels=sgs.channels,
+                                  insert_mode=sgs.insert_mode,
                                   channels_per_user=sgs.channels_per_user,
                                   insertstart=get_offset(workload_settings, worker_id),
                                   exportfile=res_file_name)
@@ -176,9 +185,13 @@ def syncgateway_run_test(workload_settings: PhaseSettings,
     params = RUN_TEST_CMD.format(workload=sgs.workload,
                                  hosts=get_hosts(cluster, workload_settings),
                                  total_docs=sgs.documents_workset,
+                                 fieldlength=sgs.fieldlength,
+                                 fieldcount=sgs.fieldcount,
                                  memcached_host=cluster.workers[0],
                                  auth=sgs.auth,
                                  total_users=sgs.users,
+                                 total_channels=sgs.channels,
+                                 channels_per_user=sgs.channels_per_user,
                                  insertstart=get_offset(workload_settings, worker_id),
                                  sequence_start=int(sgs.users) + int(sgs.documents) + 1,
                                  read_mode=sgs.read_mode,

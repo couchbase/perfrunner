@@ -790,6 +790,8 @@ class SyncgatewaySettings:
     GRANT_ACCESS = "false"
     GRANT_ACCESS_IN_SCAN = "false"
     CHANNELS_PER_GRANT = 1
+    FIELDCOUNT = 10
+    FIELDLENGTH = 100
 
     def __init__(self, options: dict):
         self.repo = options.get('ycsb_repo', self.REPO)
@@ -826,6 +828,8 @@ class SyncgatewaySettings:
         self.channels_per_grant = options.get('channels_per_grant', self.CHANNELS_PER_GRANT)
         self.grant_access_in_scan = options.get('grant_access_in_scan', self.GRANT_ACCESS_IN_SCAN)
         self.build_label = options.get('build_label', '')
+        self.fieldcount = options.get('fieldcount', self.FIELDCOUNT)
+        self.fieldlength = options.get('fieldlength', self.FIELDLENGTH)
 
     def __str__(self) -> str:
         return str(self.__dict_)

@@ -57,10 +57,11 @@ def backup(master_node:  str, cluster_spec: ClusterSpec, threads: int,
 
 def compact(cluster_spec: ClusterSpec,
             snapshots: List[str],
+            threads,
             wrapper: bool = False):
     if wrapper:
         return
-    cbbackupmgr_compact(cluster_spec, snapshots)
+    cbbackupmgr_compact(cluster_spec, snapshots, threads)
 
 
 def cbbackupwrapper(master_node: str, cluster_spec: ClusterSpec,
@@ -188,13 +189,17 @@ def cbbackupmgr_restore(master_node: str, cluster_spec: ClusterSpec,
     local(cmd)
 
 
-def cbbackupmgr_compact(cluster_spec: ClusterSpec, snapshots: List[str]):
-    cmd = \
-        './opt/couchbase/bin/cbbackupmgr compact ' \
-        '--archive {} --repo default --backup {}'.format(
-            cluster_spec.backup,
-            snapshots[0]
-        )
+def cbbackupmgr_compact(cluster_spec: ClusterSpec, snapshots: List[str],
+                        threads: int):
+
+    flags = ['--archive {}'.format(cluster_spec.backup),
+             '--repo default',
+             '--backup {}'.format(snapshots[0]),
+             '--threads {}'.format(threads) if threads else None]
+
+    cmd = './opt/couchbase/bin/cbbackupmgr compact {}'.format(
+        ' '.join(filter(None, flags)))
+
     logger.info('Running: {}'.format(cmd))
     local(cmd)
 

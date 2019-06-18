@@ -30,11 +30,21 @@ class BackupRestoreTest(PerfTest):
         )
 
     def compact(self):
+        # Pre build 6.5.0-3524 there was no threads flag in compact. To ensure
+        # tests run across versions, omit this flag pre this build.
+        version, build_number = self.build.split('-')
+        build = tuple(map(int, version.split('.'))) + (int(build_number),)
+
+        if build < (6, 5, 0, 3524):
+            threads = None
+        else:
+            threads = self.test_config.backup_settings.threads
+
         snapshots = local.get_backup_snapshots(self.cluster_spec)
         local.compact(self.cluster_spec,
                       snapshots,
-                      self.rest.is_community(self.master_node)
-                      )
+                      threads,
+                      self.rest.is_community(self.master_node))
 
     def restore(self):
         local.drop_caches()

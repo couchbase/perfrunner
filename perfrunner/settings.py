@@ -461,6 +461,7 @@ class PhaseSettings:
     DURABILITY = None
 
     YCSB_KV_ENDPOINTS = 1
+    YCSB_ENABLE_MUTATION_TOKEN = 'false'
 
     def __init__(self, options: dict):
         # Common settings
@@ -563,6 +564,8 @@ class PhaseSettings:
         self.field_count = int(options.get('field_count', self.YCSB_FIELD_COUNT))
         self.field_length = int(options.get('field_length', self.YCSB_FIELD_LENGTH))
         self.kv_endpoints = int(options.get('kv_endpoints', self.YCSB_KV_ENDPOINTS))
+        self.enable_mutation_token = options.get('enable_mutation_token',
+                                                 self.YCSB_ENABLE_MUTATION_TOKEN)
         self.ycsb_client = options.get('ycsb_client', self.YCSB_CLIENT)
 
         # Subdoc & XATTR

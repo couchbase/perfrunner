@@ -400,7 +400,7 @@ def run_ycsb(host: str,
              fieldcount: int = 10,
              durability: int = None,
              kv_endpoints: int = 1,
-             enable_mutation_token: str = 'none'):
+             enable_mutation_token: str = None):
 
     cmd = 'bin/ycsb {action} {ycsb_client} ' \
           '-P {workload} ' \
@@ -425,9 +425,9 @@ def run_ycsb(host: str,
         cmd += '-p couchbase.persistTo={persist_to} '
         cmd += '-p couchbase.replicateTo={replicate_to} '
     else:
-        cmd += '-p couchbase.durability={durability} '.format(durability=durability)
+        cmd += '-p couchbase.durability={durability} '
 
-    if enable_mutation_token is "true":
+    if enable_mutation_token is not None:
         cmd += '-p couchbase.enableMutationToken={enable_mutation_token} '
 
     if ops is not None:

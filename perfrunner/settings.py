@@ -461,7 +461,7 @@ class PhaseSettings:
     DURABILITY = None
 
     YCSB_KV_ENDPOINTS = 1
-    YCSB_ENABLE_MUTATION_TOKEN = 'false'
+    YCSB_ENABLE_MUTATION_TOKEN = None
 
     def __init__(self, options: dict):
         # Common settings

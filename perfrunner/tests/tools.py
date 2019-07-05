@@ -232,7 +232,8 @@ class BackupIncrementalTest(BackupRestoreTest):
                 *self.metrics.backup_size(
                     backup_size,
                     edition,
-                    tool=tool)
+                    tool=tool,
+                    storage=storage)
             )
 
     def run(self):

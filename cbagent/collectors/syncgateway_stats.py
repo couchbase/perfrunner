@@ -123,6 +123,10 @@ class SyncGatewayStats(Collector):
         "syncgateway__per_db__db__security__auth_failed_count",
         "syncgateway__per_db__db__security__total_auth_time",
 
+        "syncgateway__per_db__db__gsi_views__access_count",
+        "syncgateway__per_db__db__gsi_views__roleAccess_count",
+        "syncgateway__per_db__db__gsi_views__channels_count",
+
         # 2.1 stats
         "syncGateway_import__import_count",
     )

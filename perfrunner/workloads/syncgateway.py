@@ -20,6 +20,7 @@ LOAD_DOCS_CMD = " load syncgateway -s -P {workload} " \
                 "-p syncgateway.auth=false " \
                 "-p memcached.host={memcached_host} " \
                 "-p syncgateway.insertmode={insert_mode} " \
+                "-p syncgateway.roundtrip={roundtrip} " \
                 "-p syncgateway.totalusers={total_users} " \
                 "-p syncgateway.channels={total_channels} " \
                 "-p syncgateway.channelsperuser={channels_per_user} " \
@@ -123,6 +124,7 @@ def syncgateway_load_docs(workload_settings: PhaseSettings,
                                   fieldcount=sgs.fieldcount,
                                   memcached_host=cluster.workers[0],
                                   total_users=sgs.users,
+                                  roundtrip=sgs.roundtrip_write,
                                   total_channels=sgs.channels,
                                   insert_mode=sgs.insert_mode,
                                   channels_per_user=sgs.channels_per_user,

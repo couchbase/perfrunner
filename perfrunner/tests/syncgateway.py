@@ -411,3 +411,15 @@ class SGSyncByKeyNoAuth(SGSyncByUserWithAuth):
         self.start_memcached()
         self.run_test()
         self.report_kpi()
+
+
+class SGSyncInitialLoad(SGSyncByUserWithAuth):
+
+    def run(self):
+        self.download_ycsb()
+        self.start_memcached()
+        self.load_users()
+        self.load_docs()
+        self.init_users()
+        self.run_test()
+        self.report_kpi()

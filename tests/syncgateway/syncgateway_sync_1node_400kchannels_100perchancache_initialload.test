@@ -1,18 +1,20 @@
 [test_case]
-test = perfrunner.tests.syncgateway.SGRead
-title = 1 node, 1M docs, 1K users, 1 channel
+test = perfrunner.tests.syncgateway.SGSyncInitialLoad
+title = 1 node, channel cache (Max 2M, LWM 1.8M, HWM 1.9M), 400K users, 400K channels, RYOW 100
 component = syncgateway
-category = read
+category = sync
 sub_category = xattr
+orderby = 1
 
 [cluster]
 mem_quota = 25000
 index_mem_quota = 25000
-initial_nodes = 6
+initial_nodes = 4
 num_buckets = 1
 
+
 [access]
-time = 300
+time = 600
 workers = 0
 
 [secondary]
@@ -20,26 +22,25 @@ indexer.settings.storage_mode = memory_optimized
 
 [syncgateway]
 nodes = 1
-threads = 800
+threads = 100
 clients = 4
 instances_per_client = 5
 workload_path = workloads/syncgateway_blank
 ycsb_repo = git://github.com/couchbaselabs/YCSB.git
 ycsb_branch = syncgateway-weekly
-users = 1000
-channels = 1
+users = 400000
+channels = 400000
 channels_per_user = 1
 channels_per_doc = 1
 documents = 1000000
 roundtrip_write = true
-read_mode = documents
-feed_reading_mode = idsonly
-feed_mode = normal
+read_mode = changes
+feed_reading_mode = withdocs
+feed_mode = longpoll
 insert_mode = byuser
 auth = true
-readproportion=1
+readproportion=0
 updateproportion=0
-insertproportion=0
+insertproportion=1
 requestdistribution = zipfian
 log_title = sync_gateway_1node_reads
-

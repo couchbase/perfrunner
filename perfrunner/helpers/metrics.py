@@ -830,9 +830,11 @@ class MetricHelper:
 
         return num_connections, self._snapshots, metric_info
 
-    def scan_throughput(self, throughput: float) -> Metric:
-        metric_id = '{}_thr'.format(self.test_config.name)
-        metric_info = self._metric_info(metric_id=metric_id)
+    def scan_throughput(self, throughput: float, metric_id_append_str: str = None) -> Metric:
+        metric_info = self._metric_info()
+        if metric_id_append_str is not None:
+            metric_id = '{}_{}'.format(self.test_config.name, metric_id_append_str)
+            metric_info = self._metric_info(metric_id=metric_id)
         metric_info['category'] = "thr"
 
         throughput = round(throughput, 1)

@@ -393,7 +393,7 @@ class SecondaryIndexingScanTest(SecondaryIndexTest):
                 )
         else:
             self.reporter.post(
-                *self.metrics.scan_throughput(scan_thr)
+                *self.metrics.scan_throughput(scan_thr, metric_id_append_str="thr")
             )
             self.reporter.post(
                 *self.metrics.secondary_scan_latency(percentile=90)

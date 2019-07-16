@@ -475,3 +475,28 @@ class RemoteLinux(Remote):
         run("keytool -importcert -file {} -storepass {} -trustcacerts "
             "-noprompt -keystore {} -alias couchbase"
             .format(remote_root_cert, storepass, remote_keystore))
+
+    def set_auto_failover(self, host: str, enable: bool, timeout: int = 5):
+        logger.info('Setting auto failover: {} on {}'.format(enable, host))
+        cmd = "/opt/couchbase/bin/couchbase-cli setting-autofailover"
+        details = "--cluster {}:8091 -u Administrator -p password".format(host)
+        if enable:
+            logger.info("Enabling auto failover")
+            run("{} --enable-auto-failover 1 --auto-failover-timeout {} {}"
+                .format(cmd, timeout, details))
+        else:
+            logger.info("Disabling auto failover")
+            run("{} --enable-auto-failover 0 {}".format(cmd, details))
+
+    @master_server
+    def enable_n2n_encryption(self, host: str, level: str = None):
+        logger.info('Enabling node to node encryption on {}'.format(host))
+        self.set_auto_failover(host, False)
+        run("/opt/couchbase/bin/couchbase-cli node-to-node-encryption --enable "
+            "--cluster {}:8091 -u Administrator -p password".format(host))
+        self.set_encryption_level(host, level)
+
+    def set_encryption_level(self, host: str, level: str = "control"):
+        logger.info('Setting node to node encryption level: {} on {}'.format(level, host))
+        run("/opt/couchbase/bin/couchbase-cli setting-security --cluster-encryption-level {} --set"
+            " --cluster {}:8091 -u Administrator -p password".format(level, host))

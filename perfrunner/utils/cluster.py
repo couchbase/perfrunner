@@ -74,6 +74,7 @@ def main():
     cm.wait_until_warmed_up()
 
     cm.tweak_memory()
+    cm.enable_n2n_encryption()
 
 
 if __name__ == '__main__':

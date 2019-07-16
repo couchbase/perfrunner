@@ -235,6 +235,12 @@ class ClusterManager:
         self.remote.set_swappiness()
         self.remote.disable_thp()
 
+    def enable_n2n_encryption(self):
+        if self.test_config.cluster.enable_n2n_encryption:
+            for master in self.cluster_spec.masters:
+                self.remote.enable_n2n_encryption(master,
+                                                  self.test_config.cluster.enable_n2n_encryption)
+
     def restart_with_alternative_num_vbuckets(self):
         num_vbuckets = self.test_config.cluster.num_vbuckets
         if num_vbuckets is not None:

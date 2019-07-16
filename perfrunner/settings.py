@@ -196,6 +196,7 @@ class ClusterSettings:
     KERNEL_MEM_LIMIT = 0
     KERNEL_MEM_LIMIT_SERVICES = 'fts', 'index'
     ONLINE_CORES = 0
+    ENABLE_N2N_ENCRYPTION = None
 
     IPv6 = 0
 
@@ -229,6 +230,8 @@ class ClusterSettings:
         self.ipv6 = int(options.get('ipv6', self.IPv6))
         self.kernel_mem_limit = options.get('kernel_mem_limit',
                                             self.KERNEL_MEM_LIMIT)
+        self.enable_n2n_encryption = options.get('enable_n2n_encryption',
+                                                 self.ENABLE_N2N_ENCRYPTION)
 
         kernel_mem_limit_services = options.get('kernel_mem_limit_services')
         if kernel_mem_limit_services:

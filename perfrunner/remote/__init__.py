@@ -52,9 +52,21 @@ class Remote:
             run('git clone -q -b {} {}'.format(branch, repo))
 
     @all_clients
-    def init_ycsb(self, repo: str, branch: str, worker_home: str):
+    def init_ycsb(self, repo: str, branch: str, worker_home: str, sdk_version: None):
         shutil.rmtree("YCSB", ignore_errors=True)
         self.clone_git_repo(repo=repo, branch=branch, worker_home=worker_home)
+        if sdk_version is not None:
+            major_version = sdk_version.split(".")[0]
+            with cd(worker_home), cd('perfrunner'), cd('YCSB'):
+                cb_version = "couchbase"
+                if major_version is "1":
+                    cb_version += ""
+                else:
+                    cb_version += major_version
+                original_string = '<{0}.version>*.*.*<\/{0}.version>'.format(cb_version)
+                new_string = '<{0}.version>{1}<\/{0}.version>'.format(cb_version, sdk_version)
+                cmd = "sed -i 's/{}/{}/g' pom.xml".format(original_string, new_string)
+                run(cmd)
 
     @all_clients
     def init_jts(self, repo: str, branch: str, worker_home: str, jts_home: str):

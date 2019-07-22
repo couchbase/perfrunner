@@ -943,10 +943,12 @@ class YCSBSettings:
 
     REPO = 'git://github.com/couchbaselabs/YCSB.git'
     BRANCH = 'master'
+    SDK_VERSION = None
 
     def __init__(self, options: dict):
         self.repo = options.get('repo', self.REPO)
         self.branch = options.get('branch', self.BRANCH)
+        self.sdk_version = options.get('sdk_version', self.SDK_VERSION)
 
     def __str__(self) -> str:
         return str(self.__dict__)

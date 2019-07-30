@@ -1,0 +1,55 @@
+{
+  "type": "fulltext-index",
+  "name": "",
+  "uuid": "",
+  "sourceType": "couchbase",
+  "sourceName": "bucket-1",
+  "sourceUUID": "",
+  "planParams": {
+    "maxPartitionsPerPIndex": 1024,
+    "numReplicas": 0,
+    "indexPartitions": 1
+  },
+  "params": {
+    "doc_config": {
+      "docid_prefix_delim": "",
+      "docid_regexp": "",
+      "mode": "type_field",
+      "type_field": "type"
+    },
+    "mapping": {
+      "analysis": {},
+      "default_analyzer": "standard",
+      "default_datetime_parser": "dateTimeOptional",
+      "default_field": "_all",
+      "default_mapping": {
+        "dynamic": false,
+        "enabled": true,
+        "properties": {
+          "capped_small": {
+            "dynamic": false,
+            "enabled": true,
+            "fields": [
+              {
+                "include_in_all": true,
+                "index": true,
+                "name": "capped_small",
+                "type": "text"
+              }
+            ]
+          }
+        }
+      },
+      "default_type": "_default",
+      "docvalues_dynamic": true,
+      "index_dynamic": true,
+      "store_dynamic": false,
+      "type_field": "_type"
+    },
+    "store": {
+      "indexType": "scorch",
+      "kvStoreName": ""
+    }
+  },
+  "sourceParams": {}
+}

@@ -1,0 +1,50 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1QLThroughputTest
+
+[showfast]
+title = QF3, Range Scan, FTS, not_bounded
+component = search
+category = N1FTY
+sub_category = Throughput
+
+[cluster]
+mem_quota = 20480
+fts_index_mem_quota = 100000
+initial_nodes = 6
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+
+[bucket]
+replica_number = 0
+
+[load]
+items = 20000000
+size = 1024
+workers = 80
+doc_gen = reverse_lookup
+
+[index]
+couchbase_fts_index_name = perf_fts_index
+couchbase_fts_index_configfile = tests/n1ql/fts/index/fts_cf3_qf3_index.json
+
+[access]
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+throughput = 30000
+items = 20000000
+workers = 20
+time = 1200
+n1ql_queries = range-scan
+n1ql_workers = 240
+
+[n1ql-range-scan]
+statement = SELECT name AS _name, street AS _street FROM `bucket-1` AS t1 WHERE SEARCH(t1, {"explain": false, "query": {"field": "capped_small", "match": $1}, "score":"none"}, {"index":"perf_fts_index"})
+scan_consistency = not_bounded
+args = ["{capped_small}"]
+
+[profiling]
+services = n1ql

@@ -792,8 +792,15 @@ class N1QLSettings:
 
 class IndexSettings:
 
+    FTS_INDEX_NAME = ''
+    FTS_INDEX_CONFIG_FILE = ''
+
     def __init__(self, options: dict):
         self.statements = self.split_statements(options.get('statements'))
+        self.couchbase_fts_index_name = options.get('couchbase_fts_index_name',
+                                                    self.FTS_INDEX_NAME)
+        self.couchbase_fts_index_configfile = options.get('couchbase_fts_index_configfile',
+                                                          self.FTS_INDEX_CONFIG_FILE)
 
     def split_statements(self, statements: str) -> List[str]:
         if statements:

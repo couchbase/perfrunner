@@ -5,7 +5,7 @@ test = perfrunner.tests.secondary.SecondaryIndexingScanTest
 title = Secondary index scan throughput (scanps), 1 bucket x 1M x 2KB, 1K KV ops/sec, 100 indexes, MOI
 component = secondary
 category = thr
-sub_category = Plasma
+sub_category = MOI
 
 [stats]
 server_processes = projector

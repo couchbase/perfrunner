@@ -4,7 +4,7 @@ test = perfrunner.tests.secondary.SecondaryIndexingScanTest
 [showfast]
 title = Scan latency(ms), 1 bucket x 100M x 1KB, 10K KV ops/sec, 100 rows, indexer max_cpu_percent=3200, single index, PLASMA
 component = secondary
-sub_category = MOI
+sub_category = Plasma
 
 [stats]
 server_processes = projector

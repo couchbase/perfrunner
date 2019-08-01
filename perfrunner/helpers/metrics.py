@@ -341,10 +341,14 @@ class MetricHelper:
             return round(query_latency, 1)
         return int(query_latency)
 
-    def secondary_scan_latency(self, percentile: Number) -> Metric:
+    def secondary_scan_latency(self, percentile: Number, title: str = None) -> Metric:
         metric_id = "{}_{}th".format(self.test_config.name, percentile)
-        title = '{}th percentile secondary scan latency (ms), {}'.format(percentile,
-                                                                         self._title)
+        if title is None:
+            title = '{}th percentile secondary scan latency (ms), {}'.format(percentile,
+                                                                             self._title)
+        else:
+            title = '{}th percentile secondary scan latency (ms), {}'.format(percentile,
+                                                                             title)
         metric_info = self._metric_info(metric_id, title)
         metric_info['category'] = "lat"
 

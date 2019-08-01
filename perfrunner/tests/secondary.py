@@ -395,11 +395,12 @@ class SecondaryIndexingScanTest(SecondaryIndexTest):
             self.reporter.post(
                 *self.metrics.scan_throughput(scan_thr, metric_id_append_str="thr")
             )
+            title = str(self.test_config.showfast.title).split(",", 1)[1].strip()
             self.reporter.post(
-                *self.metrics.secondary_scan_latency(percentile=90)
+                *self.metrics.secondary_scan_latency(percentile=90, title=title)
             )
             self.reporter.post(
-                *self.metrics.secondary_scan_latency(percentile=95)
+                *self.metrics.secondary_scan_latency(percentile=95, title=title)
             )
 
     def run(self):

@@ -1,4 +1,7 @@
-{
+{   "Analytics": [
+        {"cluster": "triton_analytics.spec", "test_config": "analytics/bigfun_20M_sync_4n.test"},
+        {"cluster": "triton_analytics.spec", "test_config": "analytics/bigfun_20M_queries_4n.test"}
+    ],
     "Eventing": [
         {"cluster": "triton_eventing.spec", "test_config": "eventing/eventing_throughput100M_fun_bktop.test"},
         {"cluster": "triton_eventing.spec", "test_config": "eventing/throughput50M_timer_bktop_512bytes_context.test"}

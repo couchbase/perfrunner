@@ -22,6 +22,11 @@ pipeline {
                 }
             }
         }
+        stage('Analytics') {
+            steps {
+                buildTests(testCases['Analytics'], 'triton_analytics')
+            }
+        }
         stage('Eventing') {
             steps {
                 buildTests(testCases['Eventing'], 'triton')

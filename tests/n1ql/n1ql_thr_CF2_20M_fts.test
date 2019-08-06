@@ -2,7 +2,7 @@
 test = perfrunner.tests.n1ql.N1QLThroughputTest
 
 [showfast]
-title = CF3, Range Scan, FTS, not_bounded
+title = CF2, Range Scan, FTS, not_bounded
 component = jts
 category = N1FTY
 sub_category = Throughput
@@ -27,7 +27,7 @@ doc_gen = reverse_lookup
 
 [index]
 couchbase_fts_index_name = perf_fts_index
-couchbase_fts_index_configfile = tests/n1ql/fts/index/fts_cf3_qf3_index.json
+couchbase_fts_index_configfile = tests/n1ql/fts/index/fts_cf2_qf2_index.json
 
 [access]
 creates = 0
@@ -42,9 +42,9 @@ n1ql_queries = range-scan
 n1ql_workers = 240
 
 [n1ql-range-scan]
-statement = SELECT meta().id FROM `bucket-1` AS t1 WHERE SEARCH(t1, {"explain": false, "query": {"field": "capped_small", "match": $1}, "score":"none"}, {"index":"perf_fts_index"})
+statement = SELECT meta().id FROM `bucket-1` AS t1 WHERE SEARCH(t1, {"explain": false, "query": {"field": "email", "match": $1}, "score":"none"}, {"index":"perf_fts_index"})
 scan_consistency = not_bounded
-args = ["{capped_small}"]
+args = ["{email}"]
 
 [profiling]
 services = n1ql

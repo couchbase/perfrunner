@@ -3,7 +3,7 @@ test = perfrunner.tests.n1ql.N1QLThroughputTest
 
 [showfast]
 title = QF3, Range Scan, FTS, not_bounded
-component = search
+component = jts
 category = N1FTY
 sub_category = Throughput
 

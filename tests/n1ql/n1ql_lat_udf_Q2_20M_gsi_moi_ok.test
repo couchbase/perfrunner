@@ -2,7 +2,7 @@
 test = perfrunner.tests.n1ql.N1QLFunctionLatencyTest
 
 [showfast]
-title = Q2, Singleton Unique Lookup, MOI, not_bounded
+title = Q2, Singleton Unique Lookup, GSI, MOI, not_bounded
 component = n1ql
 category = Q1_Q3
 sub_category = UDF

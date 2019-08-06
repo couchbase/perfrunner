@@ -2,7 +2,7 @@
 test = perfrunner.tests.n1ql.N1QLFunctionThroughputTest
 
 [showfast]
-title = Q2, Singleton Unique Lookup, GSI, MOI, not_bounded
+title = Q2, Singleton Unique Lookup, Primary Index, MOI, not_bounded
 component = n1ql
 category = Q1_Q3
 sub_category = UDF
@@ -30,7 +30,7 @@ doc_gen = reverse_lookup
 
 [index]
 statements =
-    CREATE INDEX by_email ON `bucket-1`(email);
+    CREATE PRIMARY INDEX idx ON `bucket-1`;
 
 [n1ql_function]
 statements =

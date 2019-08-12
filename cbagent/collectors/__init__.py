@@ -12,6 +12,7 @@ from cbagent.collectors.fts_stats import (
     ElasticStats,
 )
 from cbagent.collectors.jts_stats import JTSCollector
+from cbagent.collectors.kvstore_stats import KVStoreStats
 from cbagent.collectors.latency import Latency, KVLatency, QueryLatency
 from cbagent.collectors.observe import (
     DurabilityLatency,

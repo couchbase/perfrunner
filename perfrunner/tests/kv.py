@@ -92,7 +92,7 @@ class DGMCompactedTest(DGMTest):
 
 class ReadLatencyDGMTest(KVTest):
 
-    COLLECTORS = {'disk': True, 'latency': True, 'net': False}
+    COLLECTORS = {'disk': True, 'latency': True, 'net': False, 'kvstore': True}
 
     @with_stats
     def custom_load(self, *args):

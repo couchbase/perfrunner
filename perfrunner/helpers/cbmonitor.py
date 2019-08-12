@@ -21,6 +21,7 @@ from cbagent.collectors import (
     FTSCollector,
     JTSCollector,
     KVLatency,
+    KVStoreStats,
     Memory,
     N1QLStats,
     Net,
@@ -149,6 +150,7 @@ class CbAgent:
                        index_latency=False,
                        iostat=True,
                        jts_stats=False,
+                       kvstore=False,
                        latency=False,
                        memory=True,
                        n1ql_latency=False,
@@ -242,6 +244,9 @@ class CbAgent:
 
         if analytics:
             self.add_collector(AnalyticsStats, self.test.analytics_nodes)
+
+        if kvstore:
+            self.add_collector(KVStoreStats)
 
     def add_collector(self, cls, *args):
         for cluster_id, master_node in self.cluster_map.items():

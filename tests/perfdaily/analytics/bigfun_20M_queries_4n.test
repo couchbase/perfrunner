@@ -26,7 +26,7 @@ num_io_devices = 4
 eviction_policy = fullEviction
 
 [restore]
-backup_storage = /workspace/backup
+backup_storage = /workspace
 backup_repo = bigfun20M
 threads = 8
 

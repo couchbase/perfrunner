@@ -1047,7 +1047,5 @@ class DailyMetricHelper(MetricHelper):
         return "Avg Ingestion Rate (items/sec)", rate, self._snapshots
 
     def analytics_latency(self, query: Query, latency: int) -> DailyMetric:
-        metric = 'Avg. query latency (ms), {} {}, {}'.format(query.id,
-                                                             query.description,
-                                                             self._order_by)
+        metric = 'Avg Latency {} {}'.format(query.id, query.description)
         return metric, latency,  self._snapshots

@@ -4,7 +4,7 @@ use_workers = 0
 
 [showfast]
 title = 4 nodes, BigFUN 20M users (320M docs), SSD
-component = analytics
+component = Analytics
 category = latency
 sub_category = With Index
 orderby = _ssd

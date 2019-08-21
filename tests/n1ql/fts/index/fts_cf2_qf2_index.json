@@ -26,8 +26,9 @@
                 "store": false,
                 "index": true,
                 "include_term_vectors": false,
-                "include_in_all": true,
-                "docvalues": false
+                "include_in_all": false,
+                "docvalues": false,
+                "analyzer": "keyword"
               }
             ]
           }

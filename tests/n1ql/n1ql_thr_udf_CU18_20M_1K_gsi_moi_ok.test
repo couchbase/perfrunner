@@ -2,10 +2,10 @@
 test = perfrunner.tests.n1ql.N1QLFunctionThroughputTest
 
 [showfast]
-title = Q2, Singleton Unique Lookup, Primary Index, MOI, not_bounded
+title = CU18, Range Scan with Limit and Offset (1K), Covering, MOI, not_bounded
 component = n1ql
-category = Q1_Q3
-sub_category = UDF
+category = UDF
+sub_category = MOI
 
 [cluster]
 mem_quota = 20480
@@ -30,11 +30,12 @@ doc_gen = reverse_lookup
 
 [index]
 statements =
-    CREATE PRIMARY INDEX idx ON `bucket-1`;
+    CREATE INDEX by_capped_small ON `bucket-1`(capped_small, name, email);
 
 [n1ql_function]
 statements =
-    CREATE FUNCTION func(vEmail) { (SELECT * FROM `bucket-1` WHERE email = vEmail) };
+    CREATE FUNCTION func(vCappedSmall) { (SELECT name, email FROM `bucket-1` WHERE capped_small > vCappedSmall ORDER BY capped_small OFFSET 1000 LIMIT 10) };
+
 
 [access]
 creates = 0
@@ -45,10 +46,10 @@ throughput = 30000
 items = 20000000
 workers = 20
 time = 1200
-n1ql_queries = singleton-unique-lookup
+n1ql_queries = page-query
 n1ql_workers = 240
 
-[n1ql-singleton-unique-lookup]
+[n1ql-page-query]
 statement = execute function func($1);
 scan_consistency = not_bounded
-args = ["{email}"]
+args = ["{capped_small}"]

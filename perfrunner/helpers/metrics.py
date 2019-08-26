@@ -83,7 +83,7 @@ class MetricHelper:
 
         query_id = self._title.split(',')[0]
         query_id = query_id.split()[0]
-        for prefix in 'QF', 'CF', 'CI', 'Q', 'UP', 'DL', 'AG', 'PI', 'BF', 'WF':
+        for prefix in 'CU', 'QU', 'QF', 'CF', 'CI', 'Q', 'UP', 'DL', 'AG', 'PI', 'BF', 'WF':
             query_id = query_id.replace(prefix, '')
         return '{:05d}'.format(int(query_id))
 

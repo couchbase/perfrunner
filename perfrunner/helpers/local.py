@@ -288,6 +288,7 @@ def run_cbc_pillowfight(host: str,
                         persist_to: int,
                         replicate_to: int,
                         connstr_params: dict,
+                        durability: int,
                         doc_gen: str = 'binary',
                         ssl_mode: str = 'none',
                         populate: bool = False):
@@ -319,6 +320,15 @@ def run_cbc_pillowfight(host: str,
             '--num-cycles {num_cycles} ' \
             '--no-population '
 
+    durability_options = {
+        0: 'none',
+        1: 'majority',
+        2: 'majority_and_persist_on_master',
+        3: 'persist_to_majority'}
+
+    if durability:
+        cmd += '--durability {durability} '
+
     cmd += ' > /dev/null 2>&1'
 
     params = urllib.parse.urlencode(connstr_params)
@@ -334,7 +344,9 @@ def run_cbc_pillowfight(host: str,
                      batch_size=batch_size,
                      persist_to=persist_to,
                      replicate_to=replicate_to,
-                     writes=writes)
+                     writes=writes,
+                     durability=durability_options[durability]
+                     if durability else None)
 
     logger.info('Running: {}'.format(cmd))
     local(cmd, shell='/bin/bash')

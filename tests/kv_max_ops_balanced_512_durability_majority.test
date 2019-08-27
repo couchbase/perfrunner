@@ -1,0 +1,27 @@
+[test_case]
+test = perfrunner.tests.kv.PillowFightTest
+
+[showfast]
+title = Max ops/sec, cbc-pillowfight, Majority Durability, 2 nodes, 50/50 R/W, 512B JSON items, 1K batch size
+component = kv
+category = max_ops
+orderby = mixed
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 2
+num_buckets = 1
+
+[load]
+size = 512
+items = 20000000
+workers = 50
+doc_gen = json
+durability = 1
+
+[access]
+items = 20000000
+iterations = 40000
+workers = 50
+updates = 50
+durability = 1

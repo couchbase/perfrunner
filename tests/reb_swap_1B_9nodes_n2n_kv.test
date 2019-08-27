@@ -1,0 +1,48 @@
+[test_case]
+test = perfrunner.tests.rebalance.RebalanceKVTest
+
+[showfast]
+title = Rebalance-swap (min), 9 -> 9, 1B x 1KB, 15K ops/sec (90/10 R/W), 10%% cache miss rate, n2n encryption level all
+component = reb
+category = kv
+sub_category = DGM
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 9
+num_buckets = 1
+kernel_mem_limit = 65G
+kernel_mem_limit_services = kv
+enable_n2n_encryption = all
+
+[bucket]
+eviction_policy = fullEviction
+
+[load]
+items = 1000000000
+size = 1024
+workers = 80
+key_fmtr = hex
+doc_gen = large
+
+[hot_load]
+items = 1000000000
+workers = 80
+working_set = 5
+
+[access]
+creates = 0
+reads = 90
+updates = 10
+deletes = 0
+throughput = 15000
+items = 1000000000
+workers = 40
+working_set = 5
+working_set_access = 90
+
+[rebalance]
+nodes_after = 9
+swap = 1
+start_after = 1800
+stop_after = 1800

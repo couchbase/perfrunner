@@ -1,0 +1,44 @@
+[test_case]
+test = perfrunner.tests.rebalance.RebalanceKVTest
+
+[showfast]
+title = Rebalance-swap (min), 3 -> 3 / 1, 1 bucket x 100M x 2KB, 10K ops/sec, n2n encryption level all
+component = reb
+category = kv
+sub_category = Sanity
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 3
+num_buckets = 1
+enable_n2n_encryption = all
+
+[compaction]
+db_percentage = 10
+
+[load]
+items = 100000000
+size = 2048
+workers = 40
+
+[hot_load]
+items = 100000000
+workers = 20
+working_set = 5
+
+[access]
+creates = 5
+reads = 50
+updates = 40
+deletes = 5
+throughput = 10000
+items = 100000000
+workers = 24
+working_set = 5
+working_set_access = 98
+
+[rebalance]
+nodes_after = 3
+swap = 1
+start_after = 1200
+stop_after = 1200

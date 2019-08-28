@@ -6,6 +6,7 @@ import time
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.local import (
+    extract_cb_deb,
     get_indexer_heap_profile,
     kill_process,
     run_cbindexperf,
@@ -44,6 +45,7 @@ class SecondaryIndexTest(PerfTest):
 
         self.bucket = self.test_config.buckets[0]
         self.target_iterator = TargetIterator(self.cluster_spec, self.test_config, "gsi")
+        extract_cb_deb(filename='couchbase.deb')
 
         if self.storage == "plasma":
             self.COLLECTORS["secondary_storage_stats"] = True
@@ -87,7 +89,7 @@ class SecondaryIndexTest(PerfTest):
             raise Exception('Validation for num_connections failed')
 
     @with_stats
-    def apply_scanworkload(self, path_to_tool="/opt/couchbase/bin/cbindexperf"):
+    def apply_scanworkload(self, path_to_tool="./opt/couchbase/bin/cbindexperf"):
         rest_username, rest_password = self.cluster_spec.rest_credentials
         with open(self.configfile, 'r') as fp:
             config_file_content = fp.read()
@@ -410,7 +412,7 @@ class SecondaryIndexingScanTest(SecondaryIndexTest):
         initial_index_time = self.build_secondaryindex()
         self.report_kpi(0, initial_index_time)
         self.access_bg()
-        self.apply_scanworkload(path_to_tool="./cbindexperf")
+        self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         scan_thr, row_thr = self.read_scanresults()
         logger.info('Scan throughput: {}'.format(scan_thr))
         logger.info('Rows throughput: {}'.format(row_thr))
@@ -434,7 +436,7 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
 
         self.build_secondaryindex()
         self.access_bg()
-        self.apply_scanworkload(path_to_tool="./cbindexperf")
+        self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         scan_thr, row_thr = self.read_scanresults()
         logger.info('Scan throughput: {}'.format(scan_thr))
         logger.info('Rows throughput: {}'.format(row_thr))
@@ -471,7 +473,7 @@ class SecondaryIndexingThroughputRebalanceTest(SecondaryIndexingThroughputTest):
         initial_nodes = self.test_config.cluster.initial_nodes
         nodes_after[0] = initial_nodes[0] + 1
         self.rebalance(initial_nodes[0], nodes_after[0])
-        self.apply_scanworkload(path_to_tool="./cbindexperf")
+        self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         scan_thr, row_thr = self.read_scanresults()
         logger.info('Scan throughput: {}'.format(scan_thr))
         logger.info('Rows throughput: {}'.format(row_thr))
@@ -500,7 +502,7 @@ class InitialIncrementalScanThroughputTest(InitialandIncrementalDGMSecondaryInde
         self.remove_statsfile()
         super().run()
         self.access_bg()
-        self.apply_scanworkload(path_to_tool="./cbindexperf")
+        self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         scan_thr, row_thr = self.read_scanresults()
         logger.info('Scan throughput: {}'.format(scan_thr))
         logger.info('Rows throughput: {}'.format(row_thr))
@@ -551,7 +553,7 @@ class InitialIncrementalMovingScanThroughputTest(InitialIncrementalScanThroughpu
         return sum(self.scan_thr) / len(self.scan_thr)
 
     @with_stats
-    def apply_scanworkload(self, path_to_tool="/opt/couchbase/bin/cbindexperf"):
+    def apply_scanworkload(self, path_to_tool="./opt/couchbase/bin/cbindexperf"):
         """Apply moving scan workload and collect throughput for each load."""
         rest_username, rest_password = self.cluster_spec.rest_credentials
 
@@ -569,7 +571,7 @@ class InitialIncrementalMovingScanThroughputTest(InitialIncrementalScanThroughpu
         self.remove_statsfile()
         InitialandIncrementalDGMSecondaryIndexTest.run(self)
         self.access_bg()
-        self.apply_scanworkload(path_to_tool="./cbindexperf")
+        self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         scan_throughput = self.calc_throughput()
         self.print_index_disk_usage()
         self.report_kpi(scan_throughput)
@@ -602,7 +604,7 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
 
         self.build_secondaryindex()
         self.access_bg()
-        self.apply_scanworkload(path_to_tool="./cbindexperf")
+        self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         self.print_index_disk_usage()
         self.report_kpi()
         self.validate_num_connections()
@@ -611,7 +613,7 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
 class SecondaryIndexingScanLatencyLongevityTest(SecondaryIndexingScanLatencyTest):
 
     @with_stats
-    def apply_scanworkload(self, path_to_tool="/opt/couchbase/bin/cbindexperf"):
+    def apply_scanworkload(self, path_to_tool="./opt/couchbase/bin/cbindexperf"):
         rest_username, rest_password = self.cluster_spec.rest_credentials
 
         t = 0
@@ -629,7 +631,7 @@ class SecondaryIndexingScanLatencyLongevityTest(SecondaryIndexingScanLatencyTest
 
         self.build_secondaryindex()
         self.access_bg()
-        self.apply_scanworkload(path_to_tool="./cbindexperf")
+        self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         self.print_index_disk_usage()
 
 
@@ -662,7 +664,7 @@ class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest
         self.build_secondaryindex()
         self.access_bg()
         self.rebalance(initial_nodes[0], nodes_after[0])
-        self.apply_scanworkload(path_to_tool="./cbindexperf")
+        self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         self.print_index_disk_usage()
         self.report_kpi()
         self.validate_num_connections()
@@ -704,7 +706,7 @@ class InitialIncrementalScanLatencyTest(InitialandIncrementalDGMSecondaryIndexTe
         self.remove_statsfile()
         super().run()
         self.access_bg()
-        self.apply_scanworkload(path_to_tool="./cbindexperf")
+        self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         self.print_index_disk_usage()
         self.report_kpi()
         self.validate_num_connections()
@@ -757,7 +759,7 @@ class InitialIncrementalScanTest(InitialandIncrementalDGMSecondaryIndexTest):
         self.remove_statsfile()
         super().run()
         self.access_bg()
-        self.apply_scanworkload(path_to_tool="./cbindexperf")
+        self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         scan_thr, row_thr = self.read_scanresults()
         logger.info('Scan throughput: {}'.format(scan_thr))
         logger.info('Rows throughput: {}'.format(row_thr))
@@ -771,7 +773,7 @@ class InitialIncrementalScanTest(InitialandIncrementalDGMSecondaryIndexTest):
 class InitialIncrementalMovingScanLatencyTest(InitialIncrementalScanLatencyTest):
 
     @with_stats
-    def apply_scanworkload(self, path_to_tool="/opt/couchbase/bin/cbindexperf"):
+    def apply_scanworkload(self, path_to_tool="./opt/couchbase/bin/cbindexperf"):
         rest_username, rest_password = self.cluster_spec.rest_credentials
 
         t = 0
@@ -826,7 +828,7 @@ class SecondaryIndexingMultiScanTest(SecondaryIndexingScanLatencyTest):
 
     def apply_scanworkload_configfile(self, configfile):
         self.configfile = configfile
-        return self.apply_scanworkload(path_to_tool="./cbindexperf")
+        return self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
 
     def apply_scanworkloads(self):
         total_time = 0

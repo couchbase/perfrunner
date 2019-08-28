@@ -7,6 +7,7 @@ import validators
 from requests.exceptions import ConnectionError
 
 from logger import logger
+from perfrunner.helpers.local import detect_ubuntu_release
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import ClusterSpec
 
@@ -63,20 +64,23 @@ class CouchbaseInstaller:
         if len(split) > 1:
             return split[1]
 
-    def find_package(self, edition: str) -> [str, str]:
-        for url in self.url_iterator(edition):
+    def find_package(self, edition: str,
+                     package: str = None, os_release: str = None) -> [str, str]:
+        for url in self.url_iterator(edition, package, os_release):
             if self.is_exist(url):
                 return url
         logger.interrupt('Target build not found')
 
-    def url_iterator(self, edition: str) -> Iterator[str]:
-        os_release = None
-        if self.remote.package == 'rpm':
-            os_release = self.remote.detect_centos_release()
-        elif self.remote.package == 'deb':
-            os_release = self.remote.detect_ubuntu_release()
+    def url_iterator(self, edition: str,
+                     package: str = None, os_release: str = None) -> Iterator[str]:
+        if package is None:
+            if self.remote.package == 'rpm':
+                os_release = self.remote.detect_centos_release()
+            elif self.remote.package == 'deb':
+                os_release = self.remote.detect_ubuntu_release()
+            package = self.remote.package
 
-        for pkg_pattern in PKG_PATTERNS[self.remote.package]:
+        for pkg_pattern in PKG_PATTERNS[package]:
             for loc_pattern in LOCATIONS:
                 url = loc_pattern + pkg_pattern
                 yield url.format(release=self.release, build=self.build,
@@ -98,6 +102,19 @@ class CouchbaseInstaller:
             logger.info('Saving a local copy of {}'.format(self.url))
             with open('couchbase.rpm', 'wb') as fh:
                 resp = requests.get(self.url)
+                fh.write(resp.content)
+        else:
+            logger.interrupt('Unsupported package format')
+
+    def download_local(self):
+        """Download and save a copy of the specified package."""
+        if RemoteHelper.detect_server_os("127.0.0.1").upper() in ('UBUNTU', 'DEBIAN'):
+            os_release = detect_ubuntu_release()
+            url = self.find_package(edition=self.options.edition,
+                                    package="deb", os_release=os_release)
+            logger.info('Saving a local copy of {}'.format(url))
+            with open('couchbase.deb', 'wb') as fh:
+                resp = requests.get(url)
                 fh.write(resp.content)
         else:
             logger.interrupt('Unsupported package format')
@@ -157,6 +174,7 @@ def main():
 
     if args.local_copy:
         installer.download()
+        installer.download_local()
 
 
 if __name__ == '__main__':

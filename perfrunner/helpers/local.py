@@ -21,6 +21,12 @@ def extract_cb(filename: str):
         local(cmd)
 
 
+def extract_cb_deb(filename: str):
+    cmd = 'ar p {} data.tar.xz | unxz | tar x'.format(filename)
+    with quiet():
+        local(cmd)
+
+
 def cleanup(backup_dir: str):
     logger.info("Cleaning the disk before backup/export")
 
@@ -645,3 +651,7 @@ def run_java_dcp_client(connection_string: str, messages: int, config_file: str)
     with lcd('java-dcp-client'):
         logger.info('Running: {}'.format(cmd))
         local(cmd)
+
+
+def detect_ubuntu_release():
+    return local('lsb_release -sr', capture=True).strip()

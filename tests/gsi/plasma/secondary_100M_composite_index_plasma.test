@@ -30,7 +30,7 @@ workers = 100
 doc_gen = gsi_multiindex
 
 [secondary]
-indexes = myindex:alt_email city coins
+indexes = myindex:alt_email,city,coins
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
 

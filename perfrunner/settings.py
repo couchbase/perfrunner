@@ -728,12 +728,10 @@ class GSISettings:
     def __init__(self, options: dict):
         self.indexes = {}
         if options.get('indexes') is not None:
-            for index_def in options.get('indexes').split(','):
+            for index_def in options.get('indexes').split('#'):
                 name, field = index_def.split(':')
-                if field.startswith('"'):
+                if '"' in field:
                     field = field.replace('"', '\\\"')
-                else:
-                    field = ','.join(field.split(' '))
                 self.indexes[name] = field
 
         self.cbindexperf_configfile = options.get('cbindexperf_configfile',

@@ -30,7 +30,7 @@ workers = 100
 doc_gen = gsi_multiindex
 
 [secondary]
-indexes = myindex1:alt_email,myindex2:city,myindex3:name,myindex4:coins,myindex5:achievements
+indexes = myindex1:alt_email#myindex2:city#myindex3:name#myindex4:coins#myindex5:achievements
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
 

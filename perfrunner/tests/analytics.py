@@ -81,6 +81,14 @@ class BigFunTest(PerfTest):
         self.rest.set_analytics_page_size(self.analytics_nodes[0], page_size)
         self.rest.restart_analytics_cluster(self.analytics_nodes[0])
 
+    def set_storage_compression_block(self):
+        storage_compression_block = self.test_config.analytics_settings.storage_compression_block
+        self.rest.set_analytics_storage_compression_block(self.analytics_nodes[0],
+                                                          storage_compression_block)
+        self.rest.restart_analytics_cluster(self.analytics_nodes[0])
+        self.rest.validate_analytics_setting(self.analytics_nodes[0], 'storageCompressionBlock',
+                                             storage_compression_block)
+
     def run(self):
         self.restore_local()
         self.wait_for_persistence()
@@ -104,6 +112,13 @@ class BigFunSyncTest(BigFunTest):
         sync_time = self.sync()
 
         self.report_kpi(sync_time)
+
+
+class BigFunSyncWithCompressionTest(BigFunSyncTest):
+
+    def run(self):
+        self.set_storage_compression_block()
+        super().run()
 
 
 class BigFunSyncNoIndexTest(BigFunSyncTest):
@@ -167,7 +182,22 @@ class BigFunQueryTest(BigFunTest):
         self.report_kpi(results)
 
 
+class BigFunQueryWithCompressionTest(BigFunQueryTest):
+
+    def run(self):
+        self.set_storage_compression_block()
+        super().run()
+
+
 class BigFunQueryNoIndexTest(BigFunQueryTest):
+
+    QUERIES = 'perfrunner/workloads/bigfun/queries_without_index.json'
+
+    def create_index(self):
+        pass
+
+
+class BigFunQueryNoIndexWithCompressionTest(BigFunQueryWithCompressionTest):
 
     QUERIES = 'perfrunner/workloads/bigfun/queries_without_index.json'
 

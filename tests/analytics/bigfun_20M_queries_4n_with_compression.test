@@ -1,0 +1,36 @@
+[test_case]
+test = perfrunner.tests.analytics.BigFunQueryWithCompressionTest
+use_workers = 0
+
+[showfast]
+title = 4 nodes, BigFUN 20M users (320M docs), SSD, Snappy
+component = analytics
+category = latency
+sub_category = With Index
+orderby = _ssd
+
+[stats]
+server_processes = java
+
+[cluster]
+mem_quota = 20480
+analytics_mem_quota = 20480
+initial_nodes = 6
+num_buckets = 1
+
+[analytics]
+num_io_devices = 4
+storage_compression_block = snappy
+
+[bucket]
+eviction_policy = fullEviction
+compression_mode = active
+
+[restore]
+backup_storage = /backups
+backup_repo = bigfun20M
+threads = 8
+
+[access]
+ops = 10
+workers = 1

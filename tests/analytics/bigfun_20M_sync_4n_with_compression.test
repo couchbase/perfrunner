@@ -1,0 +1,31 @@
+[test_case]
+test = perfrunner.tests.analytics.BigFunSyncWithCompressionTest
+use_workers = 0
+
+[showfast]
+title = Avg. ingestion rate (items/sec), 4 nodes, BigFUN 20M users (320M docs), 3 indexes, SSD
+component = analytics
+category = sync
+sub_category = Initial
+orderby = _ssd
+
+[stats]
+server_processes = java
+
+[cluster]
+mem_quota = 20480
+analytics_mem_quota = 20480
+initial_nodes = 6
+num_buckets = 1
+
+[analytics]
+num_io_devices = 4
+storage_compression_block = snappy
+
+[bucket]
+eviction_policy = fullEviction
+
+[restore]
+backup_storage = /backups
+backup_repo = bigfun20M
+threads = 8

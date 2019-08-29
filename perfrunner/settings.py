@@ -924,14 +924,17 @@ class EventingSettings:
 class AnalyticsSettings:
 
     NUM_IO_DEVICES = 1
-    DEFAULT_LOG_LEVEL = "WARN"
+    DEFAULT_LOG_LEVEL = "DEBUG"
     CACHE_PAGE_SIZE = 131072
+    STORAGE_COMPRESSION_BLOCK = None
 
     def __init__(self, options: dict):
         self.num_io_devices = int(options.get('num_io_devices',
                                               self.NUM_IO_DEVICES))
         self.log_level = options.get("log_level", self.DEFAULT_LOG_LEVEL)
         self.storage_buffer_cache_pagesize = options.get("cache_page_size", self.CACHE_PAGE_SIZE)
+        self.storage_compression_block = options.get("storage_compression_block",
+                                                     self.STORAGE_COMPRESSION_BLOCK)
 
 
 class AuditSettings:

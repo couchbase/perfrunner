@@ -761,6 +761,19 @@ class RestHelper:
             logger.warning('Unexpected request status code {}'.
                            format(r.status_code))
 
+    def set_analytics_storage_compression_block(self, analytics_node: str,
+                                                storage_compression_block: str):
+        logger.info('Setting storage compression block \"{}\" for analytics'
+                    .format(storage_compression_block))
+        api = 'http://{}:{}/analytics/config/service'.format(analytics_node, ANALYTICS_PORT)
+        data = {
+            'storageCompressionBlock': storage_compression_block
+        }
+        r = self.put(url=api, data=data)
+        if r.status_code not in (200, 202,):
+            logger.warning('Unexpected request status code {}'.
+                           format(r.status_code))
+
     def restart_analytics_cluster(self, analytics_node: str):
         logger.info('Restarting analytics cluster')
         api = 'http://{}:{}/analytics/cluster/restart'.format(analytics_node, ANALYTICS_PORT)
@@ -776,6 +789,18 @@ class RestHelper:
         if "logLevel" in response:
             return response["logLevel"] == log_level
         return False
+
+    def validate_analytics_setting(self, analytics_node: str, setting: str, value: str):
+        logger.info('Checking that analytics {} is set to {}'.format(setting, value))
+        api = 'http://{}:{}/analytics/config/service'.format(analytics_node, ANALYTICS_PORT)
+        response = self.get(url=api).json()
+        assert(str(response[setting]) == str(value))
+
+    def get_analytics_service_config(self, analytics_node: str):
+        logger.info('Grabbing analytics service config')
+        api = 'http://{}:{}/analytics/config/service'.format(analytics_node, ANALYTICS_PORT)
+        response = self.get(url=api).json()
+        return response
 
     def deploy_function(self, node: str, func: dict, name: str):
         logger.info('Deploying function on node {}: {}'.format(node, pretty_dict(func)))

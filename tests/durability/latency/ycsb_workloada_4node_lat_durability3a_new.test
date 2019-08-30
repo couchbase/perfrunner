@@ -4,7 +4,8 @@ test = perfrunner.tests.ycsb.YCSBLatencyTest
 [showfast]
 title = Latency (ms), Workload A, SDK 3, Durability Majority, 4 nodes
 component = kv
-category = ycsb
+category = durability
+sub_category = YCSB
 
 [cluster]
 mem_quota = 62000

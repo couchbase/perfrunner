@@ -19,7 +19,16 @@
         {"job": "secondary-plasma", "cluster": "nyx.spec", "test_config": "new_plasma/secondary_scan_plasma.test"},
         {"job": "secondary-plasma", "cluster": "nyx.spec", "test_config": "new_plasma/secondary_1M_multiple_plasma.test"}
     ],
-    "KV": [],
+    "KV": [
+        {"job": "hebe", "cluster": "hebe_kv.spec", "test_config": "durability/latency/ycsb_workloada_4node_lat_durability3a_new.test"},
+        {"job": "hebe", "cluster": "hebe_kv.spec", "test_config": "durability/latency/ycsb_workloada_4node_lat_durability3b_new.test"},
+        {"job": "hebe", "cluster": "hebe_kv.spec", "test_config": "durability/latency/ycsb_workloada_4node_lat_durability3c_new.test"},
+        {"job": "hebe", "cluster": "hebe_kv.spec", "test_config": "durability/latency/ycsb_workloada_4node_lat_durability3d_new.test"},
+
+        {"job": "hebe", "cluster": "hebe_kv.spec", "test_config": "durability/throughput/ycsb_workloada_4node_thr_durability3a_new.test"},
+        {"job": "hebe", "cluster": "hebe_kv.spec", "test_config": "durability/throughput/ycsb_workloada_4node_thr_durability3b_new.test"},
+        {"job": "hebe", "cluster": "hebe_kv.spec", "test_config": "durability/throughput/ycsb_workloada_4node_thr_durability3c_new.test"},
+        {"job": "hebe", "cluster": "hebe_kv.spec", "test_config": "durability/throughput/ycsb_workloada_4node_thr_durability3d_new.test"}],
     "KV-DGM": [],
     "KV-Windows":[],
     "N1QL": [],

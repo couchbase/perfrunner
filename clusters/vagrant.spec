@@ -7,4 +7,4 @@ data = /opt/couchbase/var/lib/couchbase/data
 
 [credentials]
 rest = Administrator:password
-ssh = root:couchbase
+ssh = root:puppet

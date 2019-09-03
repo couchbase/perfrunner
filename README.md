@@ -18,6 +18,12 @@ Before using perfrunner you should install the requirements listed in the requir
 
 Note, you should be able to install both client and server system dependencies using the Ansible playbooks (namely, clients.yml and servers.yml).
 
+    ansible-playbook ${playbook} -i ${ini_file}
+    
+For instance:
+    
+    ansible-playbook  playbooks/servers.yml -i clusters/vesta.ini
+
 First clone the perfrunner repo with the command below:
 
     git clone https://github.com/couchbase/perfrunner.git

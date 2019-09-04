@@ -31,7 +31,11 @@
         {"job": "hebe", "cluster": "hebe_kv.spec", "test_config": "durability/throughput/ycsb_workloada_4node_thr_durability3d_new.test"}],
     "KV-DGM": [],
     "KV-Windows":[],
-    "N1QL": [],
+    "N1QL": [
+        {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_array_indexing_cov_Q2_20M_gsi_plasma_false.test"},
+        {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_array_indexing_cov_Q2_20M_gsi_plasma_ok.test"},
+        {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_array_indexing_cov_Q3_20M_between_gsi_plasma_false.test"},
+        {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_array_indexing_cov_Q3_20M_between_gsi_plasma_ok.test"}],
     "N1QL-Arke": [
         {"job": "arke",              "cluster": "arke.spec", "test_config": "tpc-ds/n1ql_lat_WF1_100M_plasma_ok.test"},
         {"job": "arke",              "cluster": "arke.spec", "test_config": "tpc-ds/n1ql_thr_WF1_100M_plasma_ok.test"},

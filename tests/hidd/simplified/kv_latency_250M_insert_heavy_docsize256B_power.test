@@ -1,0 +1,30 @@
+[test_case]
+test = perfrunner.tests.kv.ReadLatencyDGMTest
+
+[cluster]
+mem_quota = 1536
+initial_nodes = 2
+num_buckets = 1
+num_vbuckets = 256
+kernel_mem_limit = 8G
+kernel_mem_limit_services = kv
+
+[bucket]
+eviction_policy = fullEviction
+
+[load]
+items = 250000000
+size = 256
+workers = 100
+key_fmtr = hex
+
+[access]
+creates = 90
+reads = 10
+updates = 0
+deletes = 0
+items = 250000000
+workers = 80
+throughput = 20000
+power_alpha = 10
+time = 3600

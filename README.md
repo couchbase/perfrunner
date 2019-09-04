@@ -35,6 +35,8 @@ Once inside the perfrunner directory create a virtual environment for all of the
 
     make
 
+Alternatively, you can make use of the supplied docker-compose file to run perfrunner in a Ubuntu Docker container, if you wish to avoid installing dependencies on your host machine. See [DOCKER-COMPOSE.md](docker/DOCKER-COMPOSE.md).
+
 Cluster installation and setup
 ------------------------------
 

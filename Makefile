@@ -65,3 +65,10 @@ loader:
 
 docker:
 	docker build -t docker.io/perflab/perfrunner docker
+
+CONTAINER_PASSWORD := puppet
+docker-compose:
+	docker-compose up -d --build perfrunner
+	docker exec -it perfrunner make
+	docker exec -it perfrunner sh -c "echo 'root:${CONTAINER_PASSWORD}' | chpasswd"
+	docker exec -it perfrunner /bin/bash

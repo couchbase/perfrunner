@@ -1,0 +1,6 @@
+perfrunner:
+  container_name: perfrunner
+  build: .
+  dockerfile: ./docker/compose.Dockerfile
+  volumes:
+      - .:/opt/perfrunner

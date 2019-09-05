@@ -5,7 +5,7 @@ test = perfrunner.tests.ycsb.YCSBThroughputTest
 title = Avg Throughput (queries/sec), Workload A, SDK 3, Durability Majority, 4 nodes
 component = kv
 category = durability
-sub_category = YCSB
+sub_category = Throughput
 
 [cluster]
 mem_quota = 62000

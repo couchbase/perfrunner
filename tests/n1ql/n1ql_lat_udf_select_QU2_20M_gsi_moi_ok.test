@@ -2,10 +2,10 @@
 test = perfrunner.tests.n1ql.N1QLFunctionLatencyTest
 
 [showfast]
-title = QU0, 10K queries/sec, Empty function
+title = QU2, Singleton Unique Lookup, 8K queries/sec, MOI, not_bounded, SELECT function
 component = n1ql
 category = UDF
-sub_category = Other
+sub_category = MOI
 
 [cluster]
 mem_quota = 20480
@@ -19,15 +19,22 @@ db_percentage = 100
 [bucket]
 replica_number = 0
 
+[secondary]
+indexer.settings.storage_mode = memory_optimized
+
 [load]
 items = 20000000
 size = 1024
 workers = 80
 doc_gen = reverse_lookup
 
+[index]
+statements =
+    CREATE INDEX by_email ON `bucket-1`(email);
+
 [n1ql_function]
 statements =
-    CREATE FUNCTION func() { (1) };
+    CREATE FUNCTION func(vEmail) { (SELECT * FROM `bucket-1` WHERE email = vEmail) };
 
 [access]
 creates = 0
@@ -38,10 +45,11 @@ throughput = 30000
 items = 20000000
 workers = 20
 time = 1200
-n1ql_queries = empty-function
+n1ql_queries = singleton-unique-lookup
 n1ql_workers = 240
-n1ql_throughput = 10000
+n1ql_throughput = 8000
 
-[n1ql-empty-function]
-statement = execute function func();
-args = []
+[n1ql-singleton-unique-lookup]
+statement = SELECT func($1);
+scan_consistency = not_bounded
+args = ["{email}"]

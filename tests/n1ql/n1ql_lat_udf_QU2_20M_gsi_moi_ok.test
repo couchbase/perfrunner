@@ -2,10 +2,10 @@
 test = perfrunner.tests.n1ql.N1QLFunctionLatencyTest
 
 [showfast]
-title = Q2, Singleton Unique Lookup, GSI, MOI, not_bounded
+title = QU2, Singleton Unique Lookup, 8K queries/sec, MOI, not_bounded
 component = n1ql
-category = Q1_Q3
-sub_category = UDF
+category = UDF
+sub_category = MOI
 
 [cluster]
 mem_quota = 20480

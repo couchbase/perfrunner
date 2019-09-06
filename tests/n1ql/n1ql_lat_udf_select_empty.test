@@ -2,7 +2,7 @@
 test = perfrunner.tests.n1ql.N1QLFunctionLatencyTest
 
 [showfast]
-title = QU0, 10K queries/sec, Empty function
+title = QU0, 10K queries/sec, Empty function, SELECT function
 component = n1ql
 category = UDF
 sub_category = Other
@@ -43,5 +43,5 @@ n1ql_workers = 240
 n1ql_throughput = 10000
 
 [n1ql-empty-function]
-statement = execute function func();
+statement = SELECT func();
 args = []

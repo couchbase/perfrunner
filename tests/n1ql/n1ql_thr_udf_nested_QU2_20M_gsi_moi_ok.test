@@ -2,7 +2,7 @@
 test = perfrunner.tests.n1ql.N1QLFunctionThroughputTest
 
 [showfast]
-title = QU2, Function calling another function, Singleton Unique Lookup, GSI, MOI, not_bounded
+title = QU2, Function calling another function, Singleton Unique Lookup, MOI, not_bounded
 component = n1ql
 category = UDF
 sub_category = MOI

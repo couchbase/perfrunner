@@ -1,11 +1,11 @@
 [test_case]
-test = perfrunner.tests.n1ql.N1QLFunctionThroughputTest
+test = perfrunner.tests.n1ql.N1QLFunctionLatencyTest
 
 [showfast]
-title = QU2, Singleton Unique Lookup, Primary Index, MOI, not_bounded
+title = QU2, Function calling another function, Singleton Unique Lookup, 8K queries/sec, MOI, not_bounded
 component = n1ql
-category = Q1_Q3
-sub_category = UDF
+category = UDF
+sub_category = MOI
 
 [cluster]
 mem_quota = 20480
@@ -30,11 +30,12 @@ doc_gen = reverse_lookup
 
 [index]
 statements =
-    CREATE PRIMARY INDEX idx ON `bucket-1`;
+    CREATE INDEX by_email ON `bucket-1`(email);
 
 [n1ql_function]
 statements =
-    CREATE FUNCTION func(vEmail) { (SELECT * FROM `bucket-1` WHERE email = vEmail) };
+    CREATE FUNCTION func1(vEmail) { (SELECT * FROM `bucket-1` WHERE email = vEmail) };
+    CREATE FUNCTION func2(vEmail) { (func1(vEmail)) };
 
 [access]
 creates = 0
@@ -47,8 +48,9 @@ workers = 20
 time = 1200
 n1ql_queries = singleton-unique-lookup
 n1ql_workers = 240
+n1ql_throughput = 8000
 
 [n1ql-singleton-unique-lookup]
-statement = execute function func($1);
+statement = execute function func2($1);
 scan_consistency = not_bounded
 args = ["{email}"]

@@ -2,7 +2,7 @@
 test = perfrunner.tests.ycsb.YCSBThroughputTest
 
 [showfast]
-title = Avg Throughput (queries/sec), Workload A, SDK 3, Durability Majority Persist Active, 4 nodes
+title = Avg Throughput (queries/sec), Workload A, SDK 3, Durability Majority, 4 nodes
 component = kv
 category = durability
 sub_category = Throughput

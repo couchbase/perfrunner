@@ -2,7 +2,7 @@
 test = perfrunner.tests.tools.RestoreXATTRTest
 
 [showfast]
-title = 4 nodes, 1 bucket x 100M x 1KB, DGM, Idle, XATTR
+title = 4 nodes, 1 bucket x 100M x 1KB, Idle, XATTR
 component = tools
 category = restore
 sub_category = ForestDB

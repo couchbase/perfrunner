@@ -2,7 +2,7 @@
 test = perfrunner.tests.tools.BackupTest
 
 [showfast]
-title = 4 nodes, 1 bucket x 100M x 1KB, DGM, Idle
+title = 4 nodes, 1 bucket x 100M x 1KB, Idle
 component = tools
 category = backup
 sub_category = SQLite

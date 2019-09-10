@@ -1,0 +1,40 @@
+[test_case]
+test = perfrunner.tests.ycsb.YCSBThroughputTest
+
+[showfast]
+title = Avg Throughput (queries/sec), SDK 3, Durability Persist Majority, 4 nodes,  Workload A, 6 Clients
+component = kv
+category = durability
+sub_category = Throughput
+
+[cluster]
+mem_quota = 62000
+initial_nodes = 4
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+
+[bucket]
+replica_number = 2
+
+[load]
+workload_path = workloads/workloada
+items = 20000000
+workers = 40
+ycsb_client = couchbase3
+
+[access]
+durability = 3
+workload_path = workloads/workloada
+items = 20000000
+ops = 100000000
+time = 1200
+workers = 64
+workload_instances = 6
+ycsb_client = couchbase3
+enable_mutation_token = true
+kv_endpoints = 16
+
+[ycsb]
+branch = couchbase3-new-durability

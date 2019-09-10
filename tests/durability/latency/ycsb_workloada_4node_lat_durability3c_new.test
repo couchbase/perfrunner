@@ -2,7 +2,7 @@
 test = perfrunner.tests.ycsb.YCSBLatencyTest
 
 [showfast]
-title = Latency (ms), Workload A, SDK 3, Durability Majority Persist Active, 4 nodes
+title = Latency (ms), SDK 3, Durability Majority Persist Active, 4 nodes, Workload A
 component = kv
 category = durability
 sub_category = Latency

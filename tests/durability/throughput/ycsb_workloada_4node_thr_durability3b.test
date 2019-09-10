@@ -2,9 +2,10 @@
 test = perfrunner.tests.ycsb.YCSBThroughputTest
 
 [showfast]
-title = Avg Throughput (queries/sec), Workload A, SDK 3, replicate_to=1 persist_to=0, 4 nodes
+title = Avg Throughput (queries/sec), SDK 3, replicate_to=1 persist_to=0, 4 nodes, Workload A
 component = kv
-category = ycsb
+category = durability
+sub_category = Throughput
 
 [cluster]
 mem_quota = 62000

@@ -51,7 +51,6 @@ class KVStoreStats(Collector):
         super().__init__(settings)
         extract_cb(filename='couchbase.rpm')
         self.collect_per_server_stats = test.collect_per_server_stats
-        print("collect_per_server_stats: {}".format(self.collect_per_server_stats))
 
     def _get_stats_from_server(self, bucket: str, server: str):
         stats = {}

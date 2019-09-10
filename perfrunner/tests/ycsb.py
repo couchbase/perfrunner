@@ -85,7 +85,7 @@ class YCSBTest(PerfTest):
 
 class YCSBThroughputTest(YCSBTest):
 
-    COLLECTORS = {'disk': True, 'net': False}
+    COLLECTORS = {'disk': True, 'net': False, 'kvstore': True}
 
     def _report_kpi(self):
         self.collect_export_files()

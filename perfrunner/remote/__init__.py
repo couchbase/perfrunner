@@ -56,6 +56,7 @@ class Remote:
         shutil.rmtree("YCSB", ignore_errors=True)
         self.clone_git_repo(repo=repo, branch=branch, worker_home=worker_home)
         if sdk_version is not None:
+            sdk_version = sdk_version.replace(":", ".")
             major_version = sdk_version.split(".")[0]
             with cd(worker_home), cd('perfrunner'), cd('YCSB'):
                 cb_version = "couchbase"

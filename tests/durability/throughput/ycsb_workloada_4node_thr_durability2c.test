@@ -6,6 +6,7 @@ title = Avg Throughput (queries/sec), SDK 2, replicate_to=1 persist_to=2, 4 node
 component = kv
 category = durability
 sub_category = Throughput
+order_by = c20
 
 [cluster]
 mem_quota = 62000

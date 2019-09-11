@@ -6,6 +6,7 @@ title = Avg Throughput (queries/sec), SDK 3, Durability None, 4 nodes, Workload 
 component = kv
 category = durability
 sub_category = Throughput
+order_by = a31
 
 [cluster]
 mem_quota = 62000

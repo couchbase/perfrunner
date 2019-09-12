@@ -22,10 +22,11 @@ replica_number = 0
 indexer.settings.storage_mode = plasma
 
 [load]
-items = 20000000
+items = 200000
 size = 1024
 workers = 80
-doc_gen = array_indexing
+array_size = 250
+doc_gen = array_indexing_range_scan
 
 [index]
 statements =
@@ -37,7 +38,7 @@ reads = 0
 updates = 100
 deletes = 0
 throughput = 30000
-items = 20000000
+items = 200000
 workers = 20
 time = 1200
 n1ql_queries = singleton-unique-lookup

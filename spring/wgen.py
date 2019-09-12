@@ -18,6 +18,8 @@ from spring.docgen import (
     AdvFilterDocument,
     AdvFilterXattrBody,
     ArrayIndexingDocument,
+    ArrayIndexingRangeScanDocument,
+    ArrayIndexingUniqueDocument,
     BigFunDocument,
     Document,
     EventingSmallDocument,
@@ -167,6 +169,16 @@ class Worker:
                                               self.ts.prefix,
                                               self.ws.array_size,
                                               self.ws.items)
+        elif self.ws.doc_gen == 'array_indexing_unique':
+            self.docs = ArrayIndexingUniqueDocument(self.ws.size,
+                                                    self.ts.prefix,
+                                                    self.ws.array_size,
+                                                    self.ws.items)
+        elif self.ws.doc_gen == 'array_indexing_range_scan':
+            self.docs = ArrayIndexingRangeScanDocument(self.ws.size,
+                                                       self.ts.prefix,
+                                                       self.ws.array_size,
+                                                       self.ws.items)
         elif self.ws.doc_gen == 'profile':
             self.docs = ProfileDocument(self.ws.size,
                                         self.ts.prefix)

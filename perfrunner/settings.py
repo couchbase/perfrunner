@@ -466,6 +466,11 @@ class PhaseSettings:
     YCSB_KV_ENDPOINTS = 1
     YCSB_ENABLE_MUTATION_TOKEN = None
 
+    YCSB_RETRY_STRATEGY = 'default'
+    YCSB_RETRY_LOWER = 1
+    YCSB_RETRY_UPPER = 500
+    YCSB_RETRY_FACTOR = 2
+
     def __init__(self, options: dict):
         # Common settings
         self.time = int(options.get('time', self.TIME))
@@ -592,6 +597,12 @@ class PhaseSettings:
             self.durability = int(options.get('durability', self.DURABILITY))
         else:
             self.durability = self.DURABILITY
+
+        # YCSB Retry Strategy settings
+        self.retry_strategy = options.get('retry_strategy', self.YCSB_RETRY_STRATEGY)
+        self.retry_lower = int(options.get('retry_lower', self.YCSB_RETRY_LOWER))
+        self.retry_upper = int(options.get('retry_upper', self.YCSB_RETRY_UPPER))
+        self.retry_factor = int(options.get('retry_factor', self.YCSB_RETRY_FACTOR))
 
         # CbCollect Setting
         self.cbcollect = int(options.get('cbcollect',

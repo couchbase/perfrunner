@@ -73,4 +73,8 @@ def ycsb_workload(workload_settings: PhaseSettings,
              fieldcount=workload_settings.field_count,
              durability=workload_settings.durability,
              kv_endpoints=workload_settings.kv_endpoints,
-             enable_mutation_token=workload_settings.enable_mutation_token)
+             enable_mutation_token=workload_settings.enable_mutation_token,
+             retry_strategy=workload_settings.retry_strategy,
+             retry_lower=workload_settings.retry_lower,
+             retry_upper=workload_settings.retry_upper,
+             retry_factor=workload_settings.retry_factor)

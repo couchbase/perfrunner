@@ -418,7 +418,11 @@ def run_ycsb(host: str,
              fieldcount: int = 10,
              durability: int = None,
              kv_endpoints: int = 1,
-             enable_mutation_token: str = None):
+             enable_mutation_token: str = None,
+             retry_strategy: str = 'default',
+             retry_lower: int = 1,
+             retry_upper: int = 500,
+             retry_factor: int = 2):
 
     cmd = 'bin/ycsb {action} {ycsb_client} ' \
           '-P {workload} ' \
@@ -437,7 +441,11 @@ def run_ycsb(host: str,
           '-p couchbase.certKeystoreFile=../{ssl_keystore_file} ' \
           '-p couchbase.certKeystorePassword={ssl_keystore_password} ' \
           '-p couchbase.password={password} ' \
-          '-p exportfile=ycsb_{action}_{instance}.log '
+          '-p exportfile=ycsb_{action}_{instance}.log ' \
+          '-p couchbase.retryStrategy={retry_strategy} ' \
+          '-p couchbase.retryLower={retry_lower} ' \
+          '-p couchbase.retryUpper={retry_upper} ' \
+          '-p couchbase.retryFactor={retry_factor} '
 
     if durability is None:
         cmd += '-p couchbase.persistTo={persist_to} '
@@ -477,7 +485,11 @@ def run_ycsb(host: str,
                      fieldcount=fieldcount,
                      durability=durability,
                      kv_endpoints=kv_endpoints,
-                     enable_mutation_token=enable_mutation_token)
+                     enable_mutation_token=enable_mutation_token,
+                     retry_strategy=retry_strategy,
+                     retry_lower=retry_lower,
+                     retry_upper=retry_upper,
+                     retry_factor=retry_factor)
 
     if soe_params is None:
         cmd += ' -p recordcount={items} '.format(items=items)

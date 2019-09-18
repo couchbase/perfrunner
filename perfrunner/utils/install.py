@@ -108,16 +108,18 @@ class CouchbaseInstaller:
 
     def download_local(self):
         """Download and save a copy of the specified package."""
-        if RemoteHelper.detect_server_os("127.0.0.1").upper() in ('UBUNTU', 'DEBIAN'):
-            os_release = detect_ubuntu_release()
-            url = self.find_package(edition=self.options.edition,
-                                    package="deb", os_release=os_release)
-            logger.info('Saving a local copy of {}'.format(url))
-            with open('couchbase.deb', 'wb') as fh:
-                resp = requests.get(url)
-                fh.write(resp.content)
-        else:
-            logger.interrupt('Unsupported package format')
+        try:
+            if RemoteHelper.detect_server_os("127.0.0.1").upper() in ('UBUNTU', 'DEBIAN'):
+                os_release = detect_ubuntu_release()
+
+                url = self.find_package(edition=self.options.edition,
+                                        package="deb", os_release=os_release)
+                logger.info('Saving a local copy of {}'.format(url))
+                with open('couchbase.deb', 'wb') as fh:
+                    resp = requests.get(url)
+                    fh.write(resp.content)
+        except (Exception, BaseException):
+            logger.info("Saving local copy for ubuntu failed, package may not present")
 
     def kill_processes(self):
         self.remote.kill_processes()

@@ -44,4 +44,4 @@ def all_clients(task: Callable, *args, **kwargs):
 
     hosts = helper.cluster_spec.workers
 
-    execute(parallel(task), *args, hosts=hosts, **kwargs)
+    return execute(parallel(task), *args, hosts=hosts, **kwargs)

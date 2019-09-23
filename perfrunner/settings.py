@@ -976,6 +976,17 @@ class YCSBSettings:
         return str(self.__dict__)
 
 
+class ClientSettings:
+
+    LIBCOUCHBASE = '2.9.3'
+
+    def __init__(self, options: dict):
+        self.libcouchbase = options.get('libcouchbase', self.LIBCOUCHBASE)
+
+    def __str__(self) -> str:
+        return str(self.__dict__)
+
+
 class JavaDCPSettings:
 
     REPO = 'git://github.com/couchbase/java-dcp-client.git'
@@ -1188,6 +1199,11 @@ class TestConfig(Config):
     def java_dcp_settings(self) -> JavaDCPSettings:
         options = self._get_options_as_dict('java_dcp')
         return JavaDCPSettings(options)
+
+    @property
+    def client_settings(self) -> ClientSettings:
+        options = self._get_options_as_dict('clients')
+        return ClientSettings(options)
 
 
 class TargetSettings:

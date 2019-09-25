@@ -5,15 +5,24 @@ from time import sleep, time
 from typing import Callable
 from urllib import parse
 
-from couchbase import experimental, subdocument
-from couchbase.bucket import Bucket
-from couchbase.exceptions import CouchbaseError, TemporaryFailError
-from couchbase.n1ql import N1QLQuery
-from couchbase.views.params import ViewQuery
 from decorator import decorator
 from txcouchbase.connection import Connection as TxConnection
 
 from logger import logger
+
+try:
+    from couchbase import experimental, subdocument
+    from couchbase.bucket import Bucket
+    from couchbase.exceptions import CouchbaseError, TemporaryFailError
+    from couchbase.n1ql import N1QLQuery
+    from couchbase.views.params import ViewQuery
+except ImportError:
+    from couchbase_v2 import experimental, subdocument
+    from couchbase_v2.bucket import Bucket
+    from couchbase_v2.exceptions import CouchbaseError, TemporaryFailError
+    from couchbase_v2.n1ql import N1QLQuery
+    from couchbase_v2.views.params import ViewQuery
+
 
 experimental.enable()
 

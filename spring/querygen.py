@@ -1,9 +1,14 @@
 from itertools import cycle
 from typing import List, Tuple
 
-from couchbase.n1ql import N1QLQuery
-from couchbase.views.params import ViewQuery
 from numpy import random
+
+try:
+    from couchbase.n1ql import N1QLQuery
+    from couchbase.views.params import ViewQuery
+except ImportError:
+    from couchbase_v2.n1ql import N1QLQuery
+    from couchbase_v2.views.params import ViewQuery
 
 
 class ViewQueryGen:

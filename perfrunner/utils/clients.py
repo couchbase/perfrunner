@@ -1,7 +1,8 @@
 from argparse import ArgumentParser
 
-from fabric.api import cd, run
+from fabric.api import cd, local, run
 
+from logger import logger
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.remote.context import all_clients
 from perfrunner.settings import ClusterSpec, TestConfig
@@ -77,11 +78,16 @@ class ClientInstaller:
 
     def install(self):
         for client, version in self.client_settings.items():
-            if any([current_version != version
-                    for current_version
-                    in self.detect_client_versions(client).values()]):
-                self.uninstall_clients(client)
-                self.install_clients(client, version)
+            if client == "libcouchbase":
+                if any([current_version != version
+                        for current_version
+                        in self.detect_client_versions(client).values()]):
+                    self.uninstall_clients(client)
+                    logger.info("Installing {} {}".format(client, version))
+                    self.install_clients(client, version)
+                    logger.info("Successfully installed {} {}".format(client, version))
+            elif client == "python_client":
+                local("env/bin/pip install couchbase=={}".format(version))
 
 
 def get_args():

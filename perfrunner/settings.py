@@ -979,9 +979,11 @@ class YCSBSettings:
 class ClientSettings:
 
     LIBCOUCHBASE = '2.9.3'
+    PYTHON_CLIENT = '2.5.0'
 
     def __init__(self, options: dict):
         self.libcouchbase = options.get('libcouchbase', self.LIBCOUCHBASE)
+        self.python_client = options.get('python_client', self.PYTHON_CLIENT)
 
     def __str__(self) -> str:
         return str(self.__dict__)

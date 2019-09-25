@@ -24,10 +24,11 @@ durability = 0
 
 [access]
 items = 20000000
-iterations = 40000
+iterations = 10000
 workers = 50
 updates = 80
 durability = 1
 
 [clients]
 libcouchbase = 3.0.0-alpha.5
+python_client = 3.0.0-alpha.5

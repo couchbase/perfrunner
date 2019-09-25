@@ -95,9 +95,16 @@ import multiprocessing
 import random
 import time
 
-from couchbase import FMT_BYTES, Couchbase, exceptions
-
 from logger import logger
+
+try:
+    from couchbase import FMT_BYTES, exceptions
+    from couchbase.cluster import Cluster, PasswordAuthenticator
+except ImportError:
+    from couchbase_v2 import exceptions
+    from couchbase_v2.cluster import Cluster, PasswordAuthenticator
+    from couchbase_core._libcouchbase import FMT_BYTES
+
 
 # TCMalloc size classes
 SIZES = (8, 16, 32, 48, 64, 80, 96, 112, 128, 144, 160, 176, 192,
@@ -223,10 +230,10 @@ class Worker(multiprocessing.Process):
 
     def _connect(self):
         """Establish a connection to the Couchbase cluster."""
-        self.client = Couchbase.connect(host=self.host,
-                                        port=self.port,
-                                        bucket=self.bucket,
-                                        password=self.password)
+        cluster = Cluster('http://{}:{}'.format(self.host, self.port))
+        authenticator = PasswordAuthenticator('Administrator', self.password)
+        cluster.authenticate(authenticator)
+        self.client = cluster.open_bucket(self.bucket)
 
     def run(self):
         """Run a Worker.

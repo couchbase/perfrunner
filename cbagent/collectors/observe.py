@@ -2,8 +2,6 @@ from threading import Thread
 from time import sleep, time
 
 import numpy
-from couchbase.bucket import Bucket
-from couchbase.n1ql import N1QLQuery
 from decorator import decorator
 
 from cbagent.collectors import Latency
@@ -11,6 +9,13 @@ from cbagent.collectors.libstats.pool import Pool
 from logger import logger
 from perfrunner.helpers.misc import uhex
 from spring.docgen import Document, Key
+
+try:
+    from couchbase.bucket import Bucket
+    from couchbase.n1ql import N1QLQuery
+except ImportError:
+    from couchbase_v2.bucket import Bucket
+    from couchbase_v2.n1ql import N1QLQuery
 
 
 @decorator

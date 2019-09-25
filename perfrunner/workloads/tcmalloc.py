@@ -1,11 +1,16 @@
 import random
 from hashlib import md5
 
-from couchbase import experimental
 from twisted.internet import reactor
 from txcouchbase.connection import Connection
 
 from logger import logger
+
+try:
+    from couchbase import experimental
+except ImportError:
+    from couchbase_v2 import experimental
+
 
 experimental.enable()
 

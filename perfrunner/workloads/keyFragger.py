@@ -50,10 +50,15 @@ import multiprocessing
 import random
 import time
 
-from couchbase import FMT_BYTES, exceptions
-from couchbase.cluster import Cluster, PasswordAuthenticator
-
 from logger import logger
+
+try:
+    from couchbase import FMT_BYTES, exceptions
+    from couchbase.cluster import Cluster, PasswordAuthenticator
+except ImportError:
+    from couchbase_v2 import exceptions
+    from couchbase_core._libcouchbase import FMT_BYTES
+    from couchbase_v2.cluster import Cluster, PasswordAuthenticator
 
 # Stored value overhead
 SV_SIZE = 56 + 2

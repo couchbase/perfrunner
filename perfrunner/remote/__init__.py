@@ -36,6 +36,14 @@ class Remote:
             with cd('perfrunner'):
                 run('make')
 
+    @all_clients
+    def install_clients(self, perfrunner_home, test_config):
+        client_settings = test_config.client_settings.__dict__
+        for client, version in client_settings.items():
+            if client == "python_client":
+                with cd(perfrunner_home):
+                    run("env/bin/pip install couchbase=={}".format(version), quiet=True)
+
     def start_celery_worker(self, worker, worker_home):
         with settings(host_string=worker):
             with cd(worker_home), shell_env(PYTHONOPTIMIZE='1',

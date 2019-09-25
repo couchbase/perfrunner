@@ -108,11 +108,12 @@ class RemoteWorkerManager:
 
     def start(self):
         logger.info('Initializing remote worker environment')
+        perfrunner_home = os.path.join(self.WORKER_HOME, 'perfrunner')
         self.remote.init_repo(self.WORKER_HOME)
+        self.remote.install_clients(perfrunner_home, self.test_config)
 
         for worker in self.cluster_spec.workers:
             logger.info('Starting remote Celery worker, host={}'.format(worker))
-            perfrunner_home = os.path.join(self.WORKER_HOME, 'perfrunner')
             self.remote.start_celery_worker(worker, perfrunner_home)
 
     def wait_until_workers_are_ready(self):

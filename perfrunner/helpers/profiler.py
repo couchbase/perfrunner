@@ -55,6 +55,8 @@ class Profiler:
         'goroutine': 'http://127.0.0.1:{}/debug/pprof/goroutine?debug=2',
         'sg_cpu': 'http://127.0.0.1:{}/_profile',
         'sg_heap': 'http://127.0.0.1:{}/_heap',
+        'sg_block': 'http://127.0.0.1:{}/debug/pprof/block',
+        'sg_mutex': 'http://127.0.0.1:{}/debug/pprof/mutex'
     }
 
     def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):
@@ -94,6 +96,16 @@ class Profiler:
 
             if profile == 'goroutine':
                 url = 'http://{}:4985/_debug/pprof/goroutine'.format(host)
+                response = requests.get(url=url)
+                self.save(host, service, profile, response.content)
+
+            if profile == 'sg_block':
+                url = 'http://{}:4985/_debug/pprof/block'.format(host)
+                response = requests.get(url=url)
+                self.save(host, service, profile, response.content)
+
+            if profile == 'sg_mutex':
+                url = 'http://{}:4985/_debug/pprof/mutex'.format(host)
                 response = requests.get(url=url)
                 self.save(host, service, profile, response.content)
 

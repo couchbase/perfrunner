@@ -607,14 +607,14 @@ class Monitor(RestHelper):
             logger.info('Got only {} timers created for function: {}'.format(
                 events_processed["timer_responses_received"], function))
 
-    def wait_for_function_undeploy(self, node: str, function: str):
-        logger.info('Waiting for {} function to undeploy'.format(function))
+    def wait_for_function_status(self, node: str, function: str, status: str):
+        logger.info('Waiting for {} function to {}'.format(function, status))
         retry = 1
         while retry < self.MAX_RETRY_TIMER_EVENT:
-            op = self.get_apps_with_status(node, "undeployed")
+            op = self.get_apps_with_status(node, status)
             if function in op:
                 break
             time.sleep(self.POLLING_INTERVAL_EVENTING)
             retry += 1
         if retry == self.MAX_RETRY_TIMER_EVENT:
-            logger.info('Function {} failed to undeploy...!!!'.format(function))
+            logger.info('Function {} failed to {}...!!!'.format(function, status))

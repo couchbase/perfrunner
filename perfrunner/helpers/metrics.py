@@ -1026,11 +1026,12 @@ class MetricHelper:
         latency = round(latency, 1)
         return latency, self._snapshots, metric_info
 
-    def function_time(self, time: int, time_type: str, initials: str) -> Metric:
+    def function_time(self, time: int, time_type: str, initials: str, unit: str = "min") -> Metric:
         title = initials + ", " + self._title
         metric_id = '{}_{}'.format(self.test_config.name, time_type.lower())
         metric_info = self._metric_info(metric_id=metric_id, title=title)
-        time = s2m(seconds=time)
+        if unit == "min":
+            time = s2m(seconds=time)
 
         return time, self._snapshots, metric_info
 

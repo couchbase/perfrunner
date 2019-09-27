@@ -811,8 +811,9 @@ class RestHelper:
         api = 'http://{}:8096/api/v1/functions/{}'.format(node, name)
         self.post(url=api, data=json.dumps(func))
 
-    def undeploy_function(self, node: str, func: dict, name: str):
-        logger.info('Un-deploying function on node {}: {}'.format(node, pretty_dict(func)))
+    def change_function_settings(self, node: str, func: dict, name: str):
+        logger.info('Changing function settings on on node {}: {}'.format(node,
+                                                                          pretty_dict(func)))
         api = 'http://{}:8096/api/v1/functions/{}/settings/'.format(node, name)
         self.post(url=api, data=func)
 

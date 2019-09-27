@@ -81,7 +81,11 @@ class EventingTest(PerfTest):
                 if override_name:
                     func["appname"] = name
                 func["appcode"] = code
-            time_to_deploy += self.deploy_and_bootstrap(func, func["appname"], wait_for_bootstrap)
+            temp_time_to_deploy = self.deploy_and_bootstrap(func, func["appname"],
+                                                            wait_for_bootstrap)
+            logger.info("Function {} deployed, time taken for deployment {}".
+                        format(name, temp_time_to_deploy))
+            time_to_deploy += temp_time_to_deploy
         return time_to_deploy
 
     def process_latency_stats(self):
@@ -144,15 +148,47 @@ class EventingTest(PerfTest):
     @timeit
     def undeploy_function(self, name):
         func = '{"processing_status":false, "deployment_status":false}'
-        self.rest.undeploy_function(node=self.eventing_nodes[0],
-                                    func=func, name=name)
-        self.monitor.wait_for_function_undeploy(node=self.eventing_nodes[0], function=name)
+        self.rest.change_function_settings(node=self.eventing_nodes[0],
+                                           func=func, name=name)
+        self.monitor.wait_for_function_status(node=self.eventing_nodes[0], function=name,
+                                              status="undeployed")
+
+    @timeit
+    def pause_function(self, name):
+        func = '{"processing_status":false, "deployment_status":true}'
+        self.rest.change_function_settings(node=self.eventing_nodes[0],
+                                           func=func, name=name)
+        self.monitor.wait_for_function_status(node=self.eventing_nodes[0], function=name,
+                                              status="paused")
+
+    @timeit
+    def resume_function(self, name):
+        func = '{"processing_status":true, "deployment_status":true}'
+        self.rest.change_function_settings(node=self.eventing_nodes[0],
+                                           func=func, name=name)
+        self.monitor.wait_for_function_status(node=self.eventing_nodes[0], function=name,
+                                              status="deployed")
 
     def undeploy(self) -> int:
         time_to_undeploy = 0
         for name, filename in self.functions.items():
             time_to_undeploy += self.undeploy_function(name=name)
+            logger.info("Function {} is undeployed.".format(name))
         return time_to_undeploy
+
+    def pause(self) -> int:
+        time_to_pause = 0
+        for name, filename in self.functions.items():
+            time_to_pause += self.pause_function(name=name)
+            logger.info("Function {} is paused.".format(name))
+        return time_to_pause
+
+    def resume(self) -> int:
+        time_to_resume = 0
+        for name, filename in self.functions.items():
+            time_to_resume += self.resume_function(name=name)
+            logger.info("Function {} is resumed.".format(name))
+        return time_to_resume
 
     def validate_failures(self):
         ignore_failures = ["uv_try_write_failure_counter", "on_update_failure",
@@ -238,6 +274,55 @@ class FunctionsTimeTest(EventingTest):
             *self.metrics.function_time(time=time_to_process,
                                         time_type="processing",
                                         initials="Processing time(min)")
+        )
+
+
+class FunctionsPhaseChangeTimeTest(EventingTest):
+    TIME_BETWEEN_PHASES = 300
+
+    @with_stats
+    def apply_function(self):
+        time_to_deploy = self.set_functions()
+        self.access_bg()
+        time.sleep(self.TIME_BETWEEN_PHASES)
+        time_to_pause = self.pause()
+        time.sleep(self.TIME_BETWEEN_PHASES)
+        time_to_resume = self.resume()
+        time.sleep(self.TIME_BETWEEN_PHASES)
+        time_to_undeploy = self.undeploy()
+        return time_to_deploy, time_to_pause, time_to_resume, time_to_undeploy
+
+    def run(self):
+        self.load()
+
+        time_to_deploy, time_to_pause, time_to_resume, time_to_undeploy = self.apply_function()
+
+        self.report_kpi(time_to_deploy, time_to_pause, time_to_resume, time_to_undeploy)
+
+    def _report_kpi(self, time_to_deploy, time_to_pause, time_to_resume, time_to_undeploy):
+        self.reporter.post(
+            *self.metrics.function_time(time=round(time_to_deploy, 1),
+                                        time_type="deploy",
+                                        initials="Deploy time(sec)",
+                                        unit="sec")
+        )
+        self.reporter.post(
+            *self.metrics.function_time(time=round(time_to_pause, 1),
+                                        time_type="pause",
+                                        initials="Pause time(sec)",
+                                        unit="sec")
+        )
+        self.reporter.post(
+            *self.metrics.function_time(time=round(time_to_resume, 1),
+                                        time_type="resume",
+                                        initials="Resume time(sec)",
+                                        unit="sec")
+        )
+        self.reporter.post(
+            *self.metrics.function_time(time=round(time_to_undeploy, 1),
+                                        time_type="undeploy",
+                                        initials="Undeploy time(sec)",
+                                        unit="sec")
         )
 
 

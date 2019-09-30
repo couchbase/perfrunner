@@ -471,6 +471,10 @@ class PhaseSettings:
     YCSB_RETRY_UPPER = 500
     YCSB_RETRY_FACTOR = 2
 
+    TRANSACTIONSENABLED = 0
+
+    NUM_ATRS = 1024
+
     def __init__(self, options: dict):
         # Common settings
         self.time = int(options.get('time', self.TIME))
@@ -575,6 +579,10 @@ class PhaseSettings:
         self.enable_mutation_token = options.get('enable_mutation_token',
                                                  self.YCSB_ENABLE_MUTATION_TOKEN)
         self.ycsb_client = options.get('ycsb_client', self.YCSB_CLIENT)
+        self.transactionsenabled = int(options.get('transactionsenabled', self.TRANSACTIONSENABLED))
+
+        # multiple of 1024
+        self.num_atrs = int(options.get('num_atrs', self.NUM_ATRS))
 
         # Subdoc & XATTR
         self.subdoc_field = options.get('subdoc_field')

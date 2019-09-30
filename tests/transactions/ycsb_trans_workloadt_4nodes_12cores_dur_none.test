@@ -1,0 +1,36 @@
+[test_case]
+test = perfrunner.tests.ycsb.YCSBThroughputTest
+
+[showfast]
+title = Avg Throughput (trans/sec), Workload T, 4 nodes, Durability None, 12 vCPU
+component = kv
+category = transactions
+sub_category = throughput
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 3
+num_buckets = 1
+online_cores = 6
+
+[load]
+workload_path = workloads/workloada
+ycsb_client = couchbase3
+items = 20000000
+workers = 160
+
+[access]
+workload_path = workloads/workloadta
+ycsb_client = couchbase3
+items = 20000000
+ops = 1000000000
+time = 1200
+boost = 12
+workers = 96
+workload_instances = 6
+transactionsenabled = 1
+num_atrs = 20480
+durability = 0
+
+[ycsb]
+branch = couchbase3-transactions-playground-new

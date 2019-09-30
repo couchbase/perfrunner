@@ -405,6 +405,7 @@ def run_ycsb(host: str,
              boost: int,
              persist_to: int,
              replicate_to: int,
+             num_atrs: int,
              ssl_keystore_file: str ='',
              ssl_keystore_password: str = '',
              ssl_mode: str = 'none',
@@ -413,6 +414,7 @@ def run_ycsb(host: str,
              execution_time: int = None,
              cbcollect: int = 0,
              timeseries: int = 0,
+             transactionsenabled: int = 0,
              instance: int = 0,
              fieldlength: int = 1024,
              fieldcount: int = 10,
@@ -463,6 +465,10 @@ def run_ycsb(host: str,
     if timeseries or cbcollect:
         cmd += '-p measurementtype=timeseries '
 
+    if transactionsenabled:
+        cmd += ' -p couchbase.transactionsEnabled=true '
+        cmd += ' -p couchbase.atrs={num_atrs}'
+
     cmd = cmd.format(host=host,
                      bucket=bucket,
                      action=action,
@@ -477,6 +483,7 @@ def run_ycsb(host: str,
                      boost=boost,
                      persist_to=persist_to,
                      replicate_to=replicate_to,
+                     num_atrs=num_atrs,
                      instance=instance,
                      ssl_mode=ssl_mode, password=password,
                      ssl_keystore_file=ssl_keystore_file,

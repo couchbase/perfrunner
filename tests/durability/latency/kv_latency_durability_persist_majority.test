@@ -2,7 +2,7 @@
 test = perfrunner.tests.kv.EnhancedDurabilityLatencyTest
 
 [showfast]
-title = latency (ms), 4 nodes, 1 bucket x 20M x 1KB, 10K ops/sec, Durability Persist Majority
+title = latency (ms), 4 nodes, 1 bucket x 20M x 1KB, 0/100 R/W, 10K ops/sec, Durability Persist Majority
 component = kv
 category = latency
 
@@ -18,10 +18,10 @@ workers = 80
 doc_gen = large
 
 [access]
-creates = 1
-reads = 1
-updates = 97
-deletes = 1
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
 throughput = 10000
 items = 20000000
 workers = 12

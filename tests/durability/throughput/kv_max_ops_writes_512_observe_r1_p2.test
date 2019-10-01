@@ -2,7 +2,7 @@
 test = perfrunner.tests.kv.PillowFightTest
 
 [showfast]
-title = Max ops/sec, cbc-pillowfight, 4 nodes, 1/99 R/W, 512B JSON items, 1K batch size, Persist Majority
+title = Max ops/sec, cbc-pillowfight, 4 nodes, 1/99 R/W, 512B JSON items, 1K batch size, ReplicateTo=1, PersistTo=2
 component = kv
 category = max_ops
 orderby = writes
@@ -20,14 +20,14 @@ size = 512
 items = 20000000
 workers = 50
 doc_gen = json
-durability = 0
 
 [access]
 items = 20000000
-iterations = 500
+iterations = 10000
 workers = 50
 updates = 99
-durability = 3
+replicate_to = 1
+persist_to = 2
 
 [clients]
 libcouchbase = 3.0.0-alpha.5

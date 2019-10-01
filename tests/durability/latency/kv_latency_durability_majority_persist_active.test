@@ -18,9 +18,9 @@ workers = 80
 doc_gen = large
 
 [access]
-creates = 49
+creates = 1
 reads = 1
-updates = 49
+updates = 97
 deletes = 1
 throughput = 10000
 items = 20000000

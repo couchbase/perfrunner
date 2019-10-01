@@ -116,6 +116,11 @@ class CBAsyncGen:
                                   replicate_to=replicate_to,
                                   ttl=ttl)
 
+    def create_durable(self, key: str, doc: dict, durability: int = None, ttl: int = 0):
+        return self.client.upsert(key, doc,
+                                  durability_level=durability,
+                                  ttl=ttl)
+
     def read(self, key: str):
         return self.client.get(key)
 
@@ -124,6 +129,11 @@ class CBAsyncGen:
         return self.client.upsert(key, doc,
                                   persist_to=persist_to,
                                   replicate_to=replicate_to,
+                                  ttl=ttl)
+
+    def update_durable(self, key: str, doc: dict, durability: int = None, ttl: int = 0):
+        return self.client.upsert(key, doc,
+                                  durability_level=durability,
                                   ttl=ttl)
 
     def delete(self, key: str):
@@ -162,6 +172,11 @@ class CBGen(CBAsyncGen):
 
     @quiet
     @backoff
+    def create_durable(self, *args, **kwargs):
+        super().create_durable(*args, **kwargs)
+
+    @quiet
+    @backoff
     @timeit
     def read(self, *args, **kwargs):
         super().read(*args, **kwargs)
@@ -171,6 +186,12 @@ class CBGen(CBAsyncGen):
     @timeit
     def update(self, *args, **kwargs):
         super().update(*args, **kwargs)
+
+    @quiet
+    @backoff
+    @timeit
+    def update_durable(self, *args, **kwargs):
+        super().update_durable(*args, **kwargs)
 
     @quiet
     def delete(self, *args, **kwargs):

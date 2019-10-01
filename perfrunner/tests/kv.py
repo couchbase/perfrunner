@@ -52,6 +52,17 @@ class MixedLatencyTest(ReadLatencyTest):
             )
 
 
+class EnhancedDurabilityLatencyTest(ReadLatencyTest):
+
+    """Enable reporting of SET latency."""
+
+    def _report_kpi(self):
+        for percentile in 50.00, 99.9:
+            self.reporter.post(
+                *self.metrics.kv_latency(operation='set', percentile=percentile)
+            )
+
+
 class DGMTest(KVTest):
 
     COLLECTORS = {'disk': True, 'net': False}

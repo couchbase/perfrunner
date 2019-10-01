@@ -98,7 +98,6 @@ class Worker:
         self.sid = 0
 
         self.next_report = 0.05  # report after every 5% of completion
-
         self.init_keys()
         self.init_docs()
         self.init_db()
@@ -273,7 +272,6 @@ class KVWorker(Worker):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
         self.reservoir = Reservoir(num_workers=self.ws.workers)
 
     @property
@@ -291,9 +289,12 @@ class KVWorker(Worker):
                     curr_items: int) -> Sequence:
         key = self.new_keys.next(curr_items)
         doc = self.docs.next(key)
-        args = key.string, doc, self.ws.persist_to, self.ws.replicate_to, self.ws.ttl
-
-        return [('set', cb.create, args)]
+        if self.ws.durability:
+            args = key.string, doc, self.ws.durability, self.ws.ttl
+            return [('set', cb.update_durable, args)]
+        else:
+            args = key.string, doc, self.ws.persist_to, self.ws.replicate_to, self.ws.ttl
+            return [('set', cb.update, args)]
 
     def read_args(self, cb: Client,
                   curr_items: int, deleted_items: int) -> Sequence:
@@ -309,9 +310,12 @@ class KVWorker(Worker):
                                       self.current_hot_load_start,
                                       self.timer_elapse)
         doc = self.docs.next(key)
-        args = key.string, doc, self.ws.persist_to, self.ws.replicate_to, self.ws.ttl
-
-        return [('set', cb.update, args)]
+        if self.ws.durability:
+            args = key.string, doc, self.ws.durability, self.ws.ttl
+            return [('set', cb.update_durable, args)]
+        else:
+            args = key.string, doc, self.ws.persist_to, self.ws.replicate_to, self.ws.ttl
+            return [('set', cb.update, args)]
 
     def delete_args(self, cb: Client,
                     deleted_items: int) -> Sequence:
@@ -374,7 +378,6 @@ class KVWorker(Worker):
 
     def run(self, sid, lock, curr_ops, curr_items, deleted_items,
             current_hot_load_start=None, timer_elapse=None):
-
         if self.ws.throughput < float('inf'):
             self.target_time = float(self.ws.spring_batch_size) * self.ws.workers / \
                 self.ws.throughput
@@ -765,11 +768,17 @@ class WorkloadGen:
 
         for sid in range(total_workers):
             args = (sid, lock, curr_ops, curr_items, deleted_items,
-                    current_hot_load_start, timer_elapse)
+                    current_hot_load_start, timer_elapse, worker_type,
+                    self.ws, self.ts, self.shutdown_event)
 
-            worker = worker_type(self.ws, self.ts, self.shutdown_event)
+            def run_worker(sid, lock, curr_ops, curr_items, deleted_items,
+                           current_hot_load_start, timer_elapse, worker_type,
+                           ws, ts, shutdown_event):
+                worker = worker_type(ws, ts, shutdown_event)
+                worker.run(sid, lock, curr_ops, curr_items, deleted_items,
+                           current_hot_load_start, timer_elapse)
 
-            worker_process = Process(target=worker.run, args=args)
+            worker_process = Process(target=run_worker, args=args)
             worker_process.daemon = True
             worker_process.start()
             self.worker_processes.append(worker_process)

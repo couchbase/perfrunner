@@ -40,6 +40,8 @@ ops = 1000000000
 time = 600
 workers = 64
 workload_instances = 6
+enable_mutation_token = true
+kv_endpoints = 16
 
 [sdktesting]
 enable_sdktest = 1

@@ -17,7 +17,7 @@ online_cores = 6
 workload_path = workloads/workloada
 ycsb_client = couchbase2
 items = 20000000
-workers = 160
+workers = 40
 
 [access]
 workload_path = workloads/workloada
@@ -28,6 +28,8 @@ time = 600
 boost = 12
 workers = 64
 workload_instances = 6
+enable_mutation_token = true
+kv_endpoints = 16
 
 [sdktesting]
 enable_sdktest = 1

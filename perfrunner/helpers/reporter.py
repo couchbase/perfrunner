@@ -51,6 +51,11 @@ class ShowFastReporter(Reporter):
                             metric: str,
                             value: Union[float, int],
                             snapshots: List[str]) -> JSON:
+
+        if self.test_config.sdktesting_settings.enable_sdktest:
+            self.sdk_version = self.test_config.ycsb_settings.sdk_version
+            self.build = self.sdk_version + ' : ' + self.build
+
         return {
             'build': self.build,
             'buildURL': os.environ.get('BUILD_URL'),

@@ -984,6 +984,17 @@ class YCSBSettings:
         return str(self.__dict__)
 
 
+class SDKTestingSettings:
+
+    ENABLE_SDKTEST = 0
+
+    def __init__(self, options: dict):
+        self.enable_sdktest = int(options.get('enable_sdktest', self.ENABLE_SDKTEST))
+
+    def __str__(self) -> str:
+        return str(self.__dict__)
+
+
 class ClientSettings:
 
     LIBCOUCHBASE = '2.9.3'
@@ -1182,6 +1193,11 @@ class TestConfig(Config):
     def ycsb_settings(self) -> YCSBSettings:
         options = self._get_options_as_dict('ycsb')
         return YCSBSettings(options)
+
+    @property
+    def sdktesting_settings(self) -> SDKTestingSettings:
+        options = self._get_options_as_dict('sdktesting')
+        return SDKTestingSettings(options)
 
     @property
     def eventing_settings(self) -> EventingSettings:

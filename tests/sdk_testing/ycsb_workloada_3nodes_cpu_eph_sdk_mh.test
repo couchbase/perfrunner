@@ -1,0 +1,43 @@
+[test_case]
+test = perfrunner.tests.ycsb.YCSBThroughputTest
+
+[showfast]
+title = Avg Throughput (ops/sec), Workload A, 3 nodes, 12 vCPU, Ephemeral
+component = sdk
+category = java
+sub_category = mad-hatter
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 3
+num_buckets = 1
+online_cores = 6
+
+[bucket]
+bucket_type = ephemeral
+eviction_policy = nruEviction
+
+[load]
+workload_path = workloads/workloada
+ycsb_client = couchbase2
+items = 20000000
+workers = 160
+
+[access]
+workload_path = workloads/workloada
+ycsb_client = couchbase2
+items = 20000000
+ops = 1000000000
+time = 600
+boost = 12
+workers = 64
+workload_instances = 6
+
+[sdktesting]
+enable_sdktest = 1
+
+[ycsb]
+branch = couchbase3-new-durability
+
+[stats]
+client_processes = java

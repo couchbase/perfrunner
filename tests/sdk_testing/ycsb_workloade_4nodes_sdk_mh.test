@@ -1,0 +1,51 @@
+[test_case]
+test = perfrunner.tests.ycsb.YCSBN1QLThroughputTest
+
+[showfast]
+title = Avg Throughput (queries/sec), Workload E, MOI, 4 nodes
+component = sdk
+category = java
+sub_category = mad-hatter
+
+[cluster]
+mem_quota = 40960
+index_mem_quota = 10240
+initial_nodes = 4
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+
+[bucket]
+replica_number = 0
+
+[secondary]
+indexer.settings.storage_mode = memory_optimized
+
+[load]
+workload_path = workloads/workloade
+ycsb_client = couchbase2
+items = 20000000
+workers = 40
+
+[index]
+statements =
+    CREATE PRIMARY INDEX primary_idx ON `bucket-1` WITH {"num_replica": 3};
+
+[access]
+workload_path = workloads/workloade
+ycsb_client = couchbase2
+items = 20000000
+ops = 1000000000
+time = 600
+workers = 64
+workload_instances = 6
+
+[sdktesting]
+enable_sdktest = 1
+
+[ycsb]
+branch = couchbase3-new-durability
+
+[stats]
+client_processes = java

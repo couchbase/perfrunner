@@ -94,6 +94,22 @@ class Monitor(RestHelper):
             if time.time() - start_time > self.TIMEOUT:
                 raise Exception('Monitoring got stuck')
 
+    def _wait_for_replica_count_match(self, host, bucket):
+        start_time = time.time()
+        bucket_info = self.get_bucket_info(host, bucket)
+        replica_number = int(bucket_info['replicaNumber'])
+        while replica_number:
+            bucket_stats = self.get_bucket_stats(host, bucket)
+            curr_items = bucket_stats['op']['samples'].get("curr_items")[-1]
+            replica_curr_items = bucket_stats['op']['samples'].get("vb_replica_curr_items")[-1]
+            logger.info("curr_items: {}, replica_curr_items: {}".format(curr_items,
+                                                                        replica_curr_items))
+            if (curr_items * replica_number) == replica_curr_items:
+                break
+            time.sleep(self.POLLING_INTERVAL)
+            if time.time() - start_time > self.TIMEOUT:
+                raise Exception('Replica items monitoring got stuck')
+
     def _wait_for_replication_completion(self, host, bucket, queues, stats_function, link1, link2):
         metrics = list(queues)
 
@@ -186,6 +202,10 @@ class Monitor(RestHelper):
         logger.info('Monitoring DCP queues: {}'.format(bucket))
         self._wait_for_empty_queues(host, bucket, self.DCP_QUEUES,
                                     self.get_bucket_stats)
+
+    def monitor_replica_count(self, host, bucket):
+        logger.info('Monitoring replica count match: {}'.format(bucket))
+        self._wait_for_replica_count_match(host, bucket)
 
     def _wait_for_xdcr_to_start(self, host: str):
         is_running = False

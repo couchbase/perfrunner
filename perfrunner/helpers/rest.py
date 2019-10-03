@@ -567,6 +567,10 @@ class RestHelper:
         return [server.split(':')[0]
                 for server in data['vBucketServerMap']['serverList']]
 
+    def get_bucket_info(self, host: str, bucket: str) -> List[str]:
+        api = 'http://{}:8091/pools/default/buckets/{}'.format(host, bucket)
+        return self.get(url=api).json()
+
     def exec_n1ql_statement(self, host: str, statement: str) -> dict:
         api = 'http://{}:8093/query/service'.format(host)
         data = {

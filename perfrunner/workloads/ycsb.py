@@ -35,7 +35,8 @@ def ycsb_data_load(workload_settings: PhaseSettings,
              kv_endpoints=workload_settings.kv_endpoints,
              enable_mutation_token=workload_settings.enable_mutation_token,
              transactionsenabled=workload_settings.transactionsenabled,
-             num_atrs=workload_settings.num_atrs)
+             num_atrs=workload_settings.num_atrs,
+             ycsb_jvm_args=workload_settings.ycsb_jvm_args)
 
 
 def ycsb_workload(workload_settings: PhaseSettings,
@@ -81,4 +82,5 @@ def ycsb_workload(workload_settings: PhaseSettings,
              retry_upper=workload_settings.retry_upper,
              retry_factor=workload_settings.retry_factor,
              transactionsenabled=workload_settings.transactionsenabled,
-             num_atrs=workload_settings.num_atrs)
+             num_atrs=workload_settings.num_atrs,
+             ycsb_jvm_args=workload_settings.ycsb_jvm_args)

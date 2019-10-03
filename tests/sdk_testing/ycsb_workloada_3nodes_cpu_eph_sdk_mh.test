@@ -19,21 +19,20 @@ eviction_policy = nruEviction
 
 [load]
 workload_path = workloads/workloada
-ycsb_client = couchbase2
 items = 20000000
 workers = 40
 
 [access]
 workload_path = workloads/workloada
-ycsb_client = couchbase2
 items = 20000000
 ops = 1000000000
 time = 600
 boost = 12
-workers = 64
+workers = 96
 workload_instances = 6
 enable_mutation_token = true
 kv_endpoints = 16
+ycsb_jvm_args = -Xms4096m -Xmx8192m
 
 [sdktesting]
 enable_sdktest = 1

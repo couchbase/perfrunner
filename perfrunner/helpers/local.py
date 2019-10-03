@@ -424,7 +424,8 @@ def run_ycsb(host: str,
              retry_strategy: str = 'default',
              retry_lower: int = 1,
              retry_upper: int = 500,
-             retry_factor: int = 2):
+             retry_factor: int = 2,
+             ycsb_jvm_args: str = None):
 
     cmd = 'bin/ycsb {action} {ycsb_client} ' \
           '-P {workload} ' \
@@ -469,6 +470,9 @@ def run_ycsb(host: str,
         cmd += ' -p couchbase.transactionsEnabled=true '
         cmd += ' -p couchbase.atrs={num_atrs}'
 
+    if ycsb_jvm_args is not None:
+        cmd += ' -jvm-args=\'{ycsb_jvm_args}\' '
+
     cmd = cmd.format(host=host,
                      bucket=bucket,
                      action=action,
@@ -496,7 +500,8 @@ def run_ycsb(host: str,
                      retry_strategy=retry_strategy,
                      retry_lower=retry_lower,
                      retry_upper=retry_upper,
-                     retry_factor=retry_factor)
+                     retry_factor=retry_factor,
+                     ycsb_jvm_args=ycsb_jvm_args)
 
     if soe_params is None:
         cmd += ' -p recordcount={items} '.format(items=items)
@@ -506,6 +511,7 @@ def run_ycsb(host: str,
         cmd += ' -p insertstart={insertstart} '.format(insertstart=soe_params['insertstart'])
 
     cmd += ' 2>ycsb_{action}_{instance}_stderr.log '.format(action=action, instance=instance)
+
     logger.info('Running: {}'.format(cmd))
     with lcd('YCSB'):
         local(cmd)

@@ -475,6 +475,8 @@ class PhaseSettings:
 
     NUM_ATRS = 1024
 
+    YCSB_JVM_ARGS = None
+
     def __init__(self, options: dict):
         # Common settings
         self.time = int(options.get('time', self.TIME))
@@ -618,6 +620,8 @@ class PhaseSettings:
         # Latency Setting
         self.timeseries = int(options.get('timeseries',
                                           self.TIMESERIES))
+
+        self.ycsb_jvm_args = options.get('ycsb_jvm_args', self.YCSB_JVM_ARGS)
 
     def __str__(self) -> str:
         return str(self.__dict__)

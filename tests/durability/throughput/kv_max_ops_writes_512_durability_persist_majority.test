@@ -2,7 +2,7 @@
 test = perfrunner.tests.kv.PillowFightTest
 
 [showfast]
-title = Max ops/sec, cbc-pillowfight, 4 nodes, 0/100 R/W, 512B JSON items, 1K batch size, Persist Majority
+title = Max ops/sec, cbc-pillowfight, 4 nodes, 0/100 R/W, 512B JSON items, batch size = 1, Persist Majority
 component = kv
 category = max_ops
 orderby = writes
@@ -18,14 +18,15 @@ replica_number = 2
 [load]
 size = 512
 items = 20000000
-workers = 50
+workers = 128
 doc_gen = json
 durability = 0
 
 [access]
+batch_size = 1
 items = 20000000
-iterations = 500
-workers = 50
+iterations = 50000
+workers = 128
 updates = 100
 durability = 3
 

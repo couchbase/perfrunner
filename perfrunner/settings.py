@@ -1039,6 +1039,43 @@ class JavaDCPSettings:
         return str(self.__dict__)
 
 
+class MagmaBenchmarkSettings:
+
+    NUM_KVSTORES = 1
+    WRITE_BATCHSIZE = 1000
+    KEY_LEN = 40
+    DOC_SIZE = 1024
+    NUM_DOCS = 100000000
+    NUM_WRITES = 100000000
+    NUM_READS = 10000000
+    NUM_READERS = 32
+    WRITECACHE_SIZE = 1048576
+    FS_CACHE_SIZE = 5368709120
+    WRITE_MULTIPLIER = 5
+    DATA_DIR = "/data"
+    ENGINE = "magma"
+    ENGINE_CONFIG = ""
+
+    def __init__(self, options: dict):
+        self.num_kvstores = int(options.get('num_kvstores', self.NUM_KVSTORES))
+        self.write_batchsize = int(options.get('write_batchsize', self.WRITE_BATCHSIZE))
+        self.key_len = int(options.get('key_len', self.KEY_LEN))
+        self.doc_size = int(options.get('doc_size', self.DOC_SIZE))
+        self.num_docs = int(options.get('num_docs', self.NUM_DOCS))
+        self.num_writes = int(options.get('num_writes', self.NUM_WRITES))
+        self.num_reads = int(options.get('num_reads', self.NUM_READS))
+        self.num_readers = int(options.get('num_readers', self.NUM_READERS))
+        self.writecache_size = int(options.get('writecache_size', self.WRITECACHE_SIZE))
+        self.fs_cache_size = int(options.get('fs_cache_size', self.FS_CACHE_SIZE))
+        self.write_multiplier = int(options.get('write_multiplier', self.WRITE_MULTIPLIER))
+        self.data_dir = options.get('data_dir', self.DATA_DIR)
+        self.engine = options.get('engine', self.ENGINE)
+        self.engine_config = options.get('engine_config', self.ENGINE_CONFIG)
+
+    def __str__(self) -> str:
+        return str(self.__dict__)
+
+
 class TestConfig(Config):
 
     @property
@@ -1251,6 +1288,11 @@ class TestConfig(Config):
     def client_settings(self) -> ClientSettings:
         options = self._get_options_as_dict('clients')
         return ClientSettings(options)
+
+    @property
+    def magma_benchmark_settings(self) -> MagmaBenchmarkSettings:
+        options = self._get_options_as_dict('magma_benchmark')
+        return MagmaBenchmarkSettings(options)
 
 
 class TargetSettings:

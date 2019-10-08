@@ -1,0 +1,31 @@
+[test_case]
+test = perfrunner.tests.magma.MagmaBenchmarkTest
+
+[showfast]
+title = Magma Benchmark, 25M docs
+component = kv
+category = hidd
+sub_category = Steady
+
+[cluster]
+mem_quota = 20480
+initial_nodes = 1
+num_buckets = 1
+kernel_mem_limit = 34G
+kernel_mem_limit_services = kv
+
+[magma_benchmark]
+num_kvstores=1
+write_batchsize=1000
+key_len=40
+doc_size=1024
+num_docs=25000000
+num_writes=25000000
+write_multiplier=5
+num_reads=2500000
+num_readers=32
+writecache_size=1048576
+fs_cache_size=1342177280
+data_dir=/data
+engine=magma
+engine_config='{"compactiontype":"","memory_quota":1073741824,"log_level":"warn"}'

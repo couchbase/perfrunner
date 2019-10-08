@@ -979,6 +979,13 @@ class MetricHelper:
         metric_info = self._metric_info(metric_id=metric_id, title=title)
         return time, self._snapshots, metric_info
 
+    def magma_benchmark_metrics(self, throughput: float, precision: int, benchmark: str) -> Metric:
+        title = "{}, {}".format(benchmark, self._title)
+        metric_id = '{}_{}'.format(self.test_config.name,
+                                   benchmark.replace(" ", "_").replace(",", ""))
+        metric_info = self._metric_info(metric_id=metric_id, title=title)
+        return round(throughput, precision), self._snapshots, metric_info
+
     @staticmethod
     def eventing_get_percentile_latency(percentile: float, stats: dict) -> float:
         """Calculate percentile latency.
@@ -1150,3 +1157,6 @@ class DailyMetricHelper(MetricHelper):
         matches = query.description.split("(")[1].split(")")[0]
         metric = 'Avg Latency {} {}'.format(query.id, matches)
         return metric, latency,  self._snapshots
+
+    def magma_benchmark_metrics(self, throughput: float, precision: int, benchmark: str) -> Metric:
+        return benchmark, round(throughput, precision), self._snapshots

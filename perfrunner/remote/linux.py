@@ -500,3 +500,10 @@ class RemoteLinux(Remote):
         logger.info('Setting node to node encryption level: {} on {}'.format(level, host))
         run("/opt/couchbase/bin/couchbase-cli setting-security --cluster-encryption-level {} --set"
             " --cluster {}:8091 -u Administrator -p password".format(level, host))
+
+    @master_server
+    def run_magma_benchmark(self, cmd: str, stats_file: str):
+        logger.info('Running magma benchmark cmd: {}'.format(cmd))
+        stdout = run(cmd)
+        logger.info(stdout)
+        get('{}'.format(stats_file), local_path="./")

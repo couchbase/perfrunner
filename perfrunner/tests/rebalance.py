@@ -128,6 +128,44 @@ class RebalanceKVTest(RebalanceTest):
             self.report_kpi()
 
 
+class RebalanceDurabilityTest(RebalanceTest):
+
+    ALL_HOSTNAMES = True
+
+    COLLECTORS = {'latency': True}
+
+    def post_rebalance(self):
+        super().post_rebalance()
+        self.worker_manager.abort()
+
+    @with_stats
+    def rebalance(self, services=None):
+        self.rebalance_time = self._rebalance(services)
+
+    def _report_kpi(self, *args):
+        for percentile in 50.00, 99.9:
+            self.reporter.post(
+                *self.metrics.kv_latency(operation='set', percentile=percentile)
+            )
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.hot_load()
+
+        self.reset_kv_stats()
+
+        self.access_bg()
+
+        self.pre_rebalance()
+        self.rebalance()
+        self.post_rebalance()
+
+        if self.is_balanced():
+            self.report_kpi()
+
+
 class RebalanceBaselineForFTS(RebalanceTest):
 
     def load(self, *args):

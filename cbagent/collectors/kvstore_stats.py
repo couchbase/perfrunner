@@ -10,10 +10,38 @@ class KVStoreStats(Collector):
     COLLECTOR = "kvstore_stats"
     CB_STATS_PORT = 11209
     METRICS_ACROSS_SHARDS = (
-        "CompactionBytesRead",
-        "CompactionBytesWritten",
-        "TotalBytesRead",
-        "TotalBytesWritten",
+        "BlockCacheMemUsed",
+        "BlockCacheHits",
+        "BlockCacheMisses",
+        "BloomFilterMemUsed",
+        "BytesIncoming",
+        "BytesOutgoing",
+        "BytesPerRead",
+        "IndexBlocksSize",
+        "MemoryQuota",
+        "NCommitBatches",
+        "NDeletes",
+        "NGets",
+        "NReadBytes",
+        "NReadBytesCompact",
+        "NReadBytesGet",
+        "NReadIOs",
+        "NReadIOsGet",
+        "NSets",
+        "NSyncs",
+        "NTablesCreated",
+        "NTablesDeleted",
+        "NWriteBytes",
+        "NWriteBytesCompact",
+        "NWriteIOs",
+        "TotalMemUsed",
+        "WriteCacheMemUsed"
+    )
+    METRICS_ONLY_ONCE = (
+        "ReadAmp",
+        "ReadAmpGet",
+        "ReadIOAmp",
+        "WriteAmp"
     )
 
     def __init__(self, settings):
@@ -42,6 +70,9 @@ class KVStoreStats(Collector):
                                     stats[metric] += metrics[metric]
                                 else:
                                     stats[metric] = metrics[metric]
+                        for metric in self.METRICS_ONLY_ONCE:
+                            if metric in metrics.keys():
+                                stats[metric] = metrics[metric]
                     break
         except Exception:
             pass

@@ -2,7 +2,7 @@
 test = perfrunner.tests.kv.EnhancedDurabilityLatencyTest
 
 [showfast]
-title = latency (ms), 4 nodes, 1 bucket x 20M x 1KB, 0/100 R/W, 10K ops/sec, Durability Majority Persist Active
+title = latency (ms), 4 nodes, 1 bucket x 20M x 1KB, 0/100 R/W, 10 threads, 200 ops/sec, ReplicateTo=0 PersistTo=0
 component = kv
 category = latency
 
@@ -22,12 +22,10 @@ creates = 0
 reads = 0
 updates = 100
 deletes = 0
-throughput = 10000
+throughput = 200
 items = 20000000
-workers = 12
+workers = 10
 time = 1200
-durability = 2
-
-[clients]
-libcouchbase = 3.0.0-alpha.5
-python_client = 3.0.0-alpha.5
+replicate_to = 0
+persist_to = 0
+connstr_params = {'ipv6': 'allow', 'enable_tracing': 'false', 'durability_interval': 0.02}

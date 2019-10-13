@@ -77,6 +77,12 @@ pipeline {
                         buildComponent('DCP', testCases)
                     }
                 }
+                stage('KV-Hebe') {
+                    when { expression { return params.KV } }
+                    steps {
+                        buildComponent('KV-Hebe', testCases)
+                    }
+                }
                 stage('KV-Windows') {
                     when { expression { return params.KV } }
                     steps {

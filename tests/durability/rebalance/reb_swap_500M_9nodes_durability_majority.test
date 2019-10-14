@@ -14,6 +14,10 @@ num_buckets = 1
 
 [bucket]
 eviction_policy = fullEviction
+replica_number = 2
+
+[compaction]
+db_percentage = 100
 
 [load]
 items = 500000000
@@ -27,7 +31,7 @@ creates = 0
 reads = 0
 updates = 100
 deletes = 0
-throughput = 50000
+throughput = 99999999
 items = 500000000
 workers = 125
 working_set = 5

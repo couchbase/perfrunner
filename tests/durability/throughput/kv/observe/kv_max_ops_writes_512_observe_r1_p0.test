@@ -15,6 +15,9 @@ num_buckets = 1
 [bucket]
 replica_number = 2
 
+[compaction]
+db_percentage = 100
+
 [load]
 size = 512
 items = 20000000
@@ -24,7 +27,7 @@ doc_gen = json
 [access]
 batch_size = 1
 items = 20000000
-iterations = 1000000
+iterations = 2000000
 workers = 128
 updates = 100
 replicate_to = 1

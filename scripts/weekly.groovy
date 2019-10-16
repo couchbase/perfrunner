@@ -78,9 +78,9 @@ pipeline {
                     }
                 }
                 stage('KV-Hercules') {
-                    when { expression { return params.KV-Hercules } }
+                    when { expression { return params.Hercules } }
                     steps {
-                        buildComponent('KV-Hebe', testCases)
+                        buildComponent('KV-Hercules', testCases)
                     }
                 }
                 stage('KV-Windows') {

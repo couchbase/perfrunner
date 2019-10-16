@@ -77,8 +77,8 @@ pipeline {
                         buildComponent('DCP', testCases)
                     }
                 }
-                stage('KV-Hebe') {
-                    when { expression { return params.KV } }
+                stage('KV-Hercules') {
+                    when { expression { return params.KV-Hercules } }
                     steps {
                         buildComponent('KV-Hebe', testCases)
                     }

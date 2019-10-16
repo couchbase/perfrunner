@@ -14,9 +14,6 @@ num_buckets = 1
 [bucket]
 replica_number = 2
 
-[compaction]
-db_percentage = 100
-
 [load]
 items = 20000000
 size = 1024

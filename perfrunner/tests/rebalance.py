@@ -134,13 +134,11 @@ class RebalanceDurabilityTest(RebalanceTest):
 
     COLLECTORS = {'latency': True}
 
-    def post_rebalance(self):
-        super().post_rebalance()
-        self.worker_manager.abort()
-
     @with_stats
     def rebalance(self, services=None):
+        self.access_bg()
         self.rebalance_time = self._rebalance(services)
+        self.worker_manager.abort()
 
     def _report_kpi(self, *args):
         for percentile in 50.00, 99.9:
@@ -151,16 +149,9 @@ class RebalanceDurabilityTest(RebalanceTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
-
         self.hot_load()
-
         self.reset_kv_stats()
-
-        self.access_bg()
-
-        self.pre_rebalance()
         self.rebalance()
-        self.post_rebalance()
 
         if self.is_balanced():
             self.report_kpi()

@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.kv.PillowFightTest
+test = perfrunner.tests.kv.PillowFightDurabilityTest
 
 [showfast]
 title = Max ops/sec, cbc-pillowfight, 4 nodes, 0/100 R/W, 512B JSON items, batch size = 1, Durability Majority

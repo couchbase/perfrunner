@@ -62,6 +62,18 @@ class EnhancedDurabilityLatencyTest(ReadLatencyTest):
                 *self.metrics.kv_latency(operation='set', percentile=percentile)
             )
 
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.compact_bucket()
+        self.hot_load()
+
+        self.reset_kv_stats()
+
+        self.access()
+
+        self.report_kpi()
+
 
 class DGMTest(KVTest):
 
@@ -497,6 +509,18 @@ class PillowFightTest(PerfTest):
         self.load()
         self.wait_for_persistence()
 
+        self.access()
+
+        self.report_kpi()
+
+
+class PillowFightDurabilityTest(PillowFightTest):
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.compact_bucket()
+        self.reset_kv_stats()
         self.access()
 
         self.report_kpi()

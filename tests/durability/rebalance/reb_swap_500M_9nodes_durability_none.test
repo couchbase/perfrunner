@@ -2,26 +2,25 @@
 test = perfrunner.tests.rebalance.RebalanceDurabilityTest
 
 [showfast]
-title = Rebalance-swap (min), 9 -> 9, 500M x 1KB, Unlimited Ops (0/100 R/W), 10%% cache miss rate, Durability None
+title = Rebalance-swap (min), 4 -> 4, 20M x 512B, Unlimited Ops (0/100 R/W), Durability None
 component = reb
 category = kv
 sub_category = Non-DGM
 
 [cluster]
-mem_quota = 220160
-initial_nodes = 9
+mem_quota = 51200
+initial_nodes = 4
 num_buckets = 1
 
 [bucket]
-eviction_policy = fullEviction
 replica_number = 2
 
 [load]
-items = 500000000
-size = 1024
-workers = 125
-key_fmtr = hex
-doc_gen = large
+size = 512
+items = 20000000
+workers = 128
+doc_gen = json
+durability = 0
 
 [access]
 creates = 0
@@ -30,13 +29,11 @@ updates = 100
 deletes = 0
 throughput = 99999999
 items = 500000000
-workers = 125
-working_set = 5
-working_set_access = 90
+workers = 128
 durability = 0
 
 [rebalance]
-nodes_after = 9
+nodes_after = 4
 swap = 1
 
 [clients]

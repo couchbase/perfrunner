@@ -135,7 +135,24 @@
         {"job": "titan", "cluster": "titan_1x1x1.spec", "test_config": "xdcr_ongoing_backfill_1x1x1_unidir_updates_8k_proiority_low_high.test"}
     ],
     "XDCR-Windows": [],
-    "YCSB": []
+    "YCSB": [
+        {"job": "hebe", "cluster": "hebe_kv.spec", "test_config": "durability/throughput/ycsb/enhanced/ycsb_workloada_4node_thr_durability3a_new.test"},
+        {"job": "hebe", "cluster": "hebe_kv.spec", "test_config": "durability/throughput/ycsb/enhanced/ycsb_workloada_4node_thr_durability3b_new.test"},
+        {"job": "hebe", "cluster": "hebe_kv.spec", "test_config": "durability/throughput/ycsb/enhanced/ycsb_workloada_4node_thr_durability3c_new.test"},
+        {"job": "hebe", "cluster": "hebe_kv.spec", "test_config": "durability/throughput/ycsb/enhanced/ycsb_workloada_4node_thr_durability3d_new.test"},
+        {"job": "hebe", "cluster": "hebe_kv.spec", "test_config": "durability/throughput/ycsb/enhanced/ycsb_workloada_4node_max_thr_durability3a_new.test"},
+        {"job": "hebe", "cluster": "hebe_kv.spec", "test_config": "durability/throughput/ycsb/enhanced/ycsb_workloada_4node_max_thr_durability3b_new.test"},
+        {"job": "hebe", "cluster": "hebe_kv.spec", "test_config": "durability/throughput/ycsb/enhanced/ycsb_workloada_4node_max_thr_durability3c_new.test"},
+        {"job": "hebe", "cluster": "hebe_kv.spec", "test_config": "durability/throughput/ycsb/enhanced/ycsb_workloada_4node_max_thr_durability3d_new.test"},
+        {"job": "hebe", "cluster": "hebe_kv.spec", "test_config": "durability/throughput/ycsb/observe/ycsb_workloada_4node_thr_durability2a.test"},
+        {"job": "hebe", "cluster": "hebe_kv.spec", "test_config": "durability/throughput/ycsb/observe/ycsb_workloada_4node_thr_durability2b.test"},
+        {"job": "hebe", "cluster": "hebe_kv.spec", "test_config": "durability/throughput/ycsb/observe/ycsb_workloada_4node_thr_durability2c.test"},
+        {"job": "hebe", "cluster": "hebe_kv.spec", "test_config": "durability/throughput/ycsb/observe/ycsb_workloada_4node_thr_durability2d.test"},
+        {"job": "hebe", "cluster": "hebe_kv.spec", "test_config": "durability/throughput/ycsb/observe/ycsb_workloada_4node_thr_durability3a.test"},
+        {"job": "hebe", "cluster": "hebe_kv.spec", "test_config": "durability/throughput/ycsb/observe/ycsb_workloada_4node_thr_durability3b.test"},
+        {"job": "hebe", "cluster": "hebe_kv.spec", "test_config": "durability/throughput/ycsb/observe/ycsb_workloada_4node_thr_durability3c.test"},
+        {"job": "hebe", "cluster": "hebe_kv.spec", "test_config": "durability/throughput/ycsb/observe/ycsb_workloada_4node_thr_durability3d.test"}
+    ]
 
 
 }

@@ -945,6 +945,14 @@ class EventingSettings:
         return str(self.__dict__)
 
 
+class MagmaSettings:
+    COLLECT_PER_SERVER_STATS = 0
+
+    def __init__(self, options: dict):
+        self.collect_per_server_stats = int(options.get("collect_per_server_stats",
+                                                        self.COLLECT_PER_SERVER_STATS))
+
+
 class AnalyticsSettings:
 
     NUM_IO_DEVICES = 1
@@ -1207,6 +1215,11 @@ class TestConfig(Config):
     def eventing_settings(self) -> EventingSettings:
         options = self._get_options_as_dict('eventing')
         return EventingSettings(options)
+
+    @property
+    def magma_settings(self) -> MagmaSettings:
+        options = self._get_options_as_dict('magma')
+        return MagmaSettings(options)
 
     @property
     def analytics_settings(self) -> AnalyticsSettings:

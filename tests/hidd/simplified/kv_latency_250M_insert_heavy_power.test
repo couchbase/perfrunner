@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.kv.ReadLatencyDGMTest
+test = perfrunner.tests.magma.ReadLatencyDGMMagmaTest
 
 [cluster]
 mem_quota = 6144

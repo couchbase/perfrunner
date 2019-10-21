@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.kv.MixedLatencyDGMTest
+test = perfrunner.tests.magma.MixedLatencyDGMTest
 
 [cluster]
 mem_quota = 6144

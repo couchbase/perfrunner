@@ -246,7 +246,7 @@ class CbAgent:
             self.add_collector(AnalyticsStats, self.test.analytics_nodes)
 
         if kvstore:
-            self.add_collector(KVStoreStats)
+            self.add_collector(KVStoreStats, self.test)
 
     def add_collector(self, cls, *args):
         for cluster_id, master_node in self.cluster_map.items():

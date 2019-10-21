@@ -44,9 +44,11 @@ class KVStoreStats(Collector):
         "WriteAmp"
     )
 
-    def __init__(self, settings):
+    def __init__(self, settings, test):
         super().__init__(settings)
         extract_cb(filename='couchbase.rpm')
+        self.collect_per_server_stats = test.collect_per_server_stats
+        print("collect_per_server_stats: {}".format(self.collect_per_server_stats))
 
     def _get_stats_from_server(self, bucket: str, server: str):
         stats = {}
@@ -84,14 +86,31 @@ class KVStoreStats(Collector):
         return node_stats
 
     def sample(self):
-        for node in self.nodes:
-            for bucket in self.get_buckets():
-                stats = self._get_kvstore_stats(bucket, node)
-                if stats:
-                    self.update_metric_metadata(stats.keys(), bucket=bucket)
-                    self.store.append(stats, cluster=self.cluster,
-                                      bucket=bucket, server=node,
-                                      collector=self.COLLECTOR)
+        if self.collect_per_server_stats:
+            for node in self.nodes:
+                for bucket in self.get_buckets():
+                    stats = self._get_kvstore_stats(bucket, node)
+                    if stats:
+                        self.update_metric_metadata(stats.keys(), server=node, bucket=bucket)
+                        self.store.append(stats, cluster=self.cluster,
+                                          bucket=bucket, server=node,
+                                          collector=self.COLLECTOR)
+
+        for bucket in self.get_buckets():
+            stats = {}
+            for node in self.nodes:
+                temp_stats = self._get_kvstore_stats(bucket, node)
+                for st in temp_stats:
+                    if st in stats:
+                        stats[st] += temp_stats[st]
+                    else:
+                        stats[st] = temp_stats[st]
+
+            if stats:
+                self.update_metric_metadata(stats.keys(), bucket=bucket)
+                self.store.append(stats, cluster=self.cluster,
+                                  bucket=bucket,
+                                  collector=self.COLLECTOR)
 
     def update_metadata(self):
         self.mc.add_cluster()

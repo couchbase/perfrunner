@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.kv.ThroughputDGMCompactedTest
+test = perfrunner.tests.magma.ThroughputDGMCompactedMagmaTest
 
 [cluster]
 mem_quota = 8192

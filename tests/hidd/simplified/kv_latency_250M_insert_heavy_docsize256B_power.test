@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.kv.ReadLatencyDGMTest
+test = perfrunner.tests.magma.ReadLatencyDGMMagmaTest
 
 [cluster]
 mem_quota = 1536
@@ -17,6 +17,9 @@ items = 250000000
 size = 256
 workers = 100
 key_fmtr = hex
+
+[magma]
+collect_per_server_stats = 0
 
 [access]
 creates = 90

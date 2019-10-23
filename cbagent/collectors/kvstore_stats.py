@@ -10,6 +10,8 @@ class KVStoreStats(Collector):
     COLLECTOR = "kvstore_stats"
     CB_STATS_PORT = 11209
     METRICS_ACROSS_SHARDS = (
+        "BlockCacheQuota",
+        "WriteCacheQuota",
         "BlockCacheMemUsed",
         "BlockCacheHits",
         "BlockCacheMisses",

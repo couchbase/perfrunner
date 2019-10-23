@@ -986,11 +986,15 @@ class YCSBSettings:
     REPO = 'git://github.com/couchbaselabs/YCSB.git'
     BRANCH = 'master'
     SDK_VERSION = None
+    LATENCY_PERCENTILES = [98]
 
     def __init__(self, options: dict):
         self.repo = options.get('repo', self.REPO)
         self.branch = options.get('branch', self.BRANCH)
         self.sdk_version = options.get('sdk_version', self.SDK_VERSION)
+        self.latency_percentiles = options.get('latency_percentiles', self.LATENCY_PERCENTILES)
+        if isinstance(self.latency_percentiles, str):
+            self.latency_percentiles = [int(x) for x in self.latency_percentiles.split(',')]
 
     def __str__(self) -> str:
         return str(self.__dict__)

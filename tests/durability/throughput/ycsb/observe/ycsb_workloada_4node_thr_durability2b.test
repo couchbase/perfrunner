@@ -6,7 +6,7 @@ title = Avg Throughput (ops/sec), SDK 2, replicate_to=1 persist_to=0, 4 nodes, W
 component = kv
 category = durability
 sub_category = Throughput
-order_by = b20
+orderby = b20
 
 [cluster]
 mem_quota = 62000
@@ -22,7 +22,7 @@ replica_number = 2
 [load]
 workload_path = workloads/workloada
 items = 20000000
-workers = 40
+workers = 128
 ycsb_client = couchbase2
 
 [access]
@@ -31,12 +31,12 @@ replicate_to = 1
 persist_to = 0
 items = 20000000
 ops = 100000000
-time = 300
-workers = 64
+time = 1200
+workers = 128
 workload_instances = 4
 ycsb_client = couchbase2
 enable_mutation_token = true
-kv_endpoints = 16
+kv_endpoints = 128
 
 [ycsb]
 branch = couchbase3-new-durability

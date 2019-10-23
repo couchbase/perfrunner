@@ -2,11 +2,11 @@
 test = perfrunner.tests.ycsb.YCSBThroughputTest
 
 [showfast]
-title = Avg Throughput (ops/sec), SDK 3, replicate_to=0 persist_to=0, 4 nodes, Workload A
+title = replicate_to=1 persist_to=2, YCSB SLO, SDK 3, replicate_to=1 persist_to=2, 4 nodes, Workload A
 component = kv
 category = durability
-sub_category = Throughput
-orderby = a30
+sub_category = SLO
+orderby = d301
 
 [cluster]
 mem_quota = 62000
@@ -26,17 +26,19 @@ workers = 128
 ycsb_client = couchbase3
 
 [access]
-replicate_to = 0
-persist_to = 0
+replicate_to = 1
+persist_to = 2
 workload_path = workloads/workloada
 items = 20000000
 ops = 100000000
 time = 1200
 workers = 128
-workload_instances = 4
+workload_instances = 1
 ycsb_client = couchbase3
 enable_mutation_token = true
-kv_endpoints = 128
+kv_endpoints = 16
+timeseries = 1
 
 [ycsb]
 branch = couchbase3-new-durability
+latency_percentiles = 98

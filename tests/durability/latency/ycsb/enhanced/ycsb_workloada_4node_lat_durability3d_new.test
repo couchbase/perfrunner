@@ -6,6 +6,7 @@ title = Latency (ms), SDK 3, Durability Persist Majority, 4 nodes, Workload A
 component = kv
 category = durability
 sub_category = Latency
+orderby = d31
 
 [cluster]
 mem_quota = 62000
@@ -21,7 +22,7 @@ replica_number = 2
 [load]
 workload_path = workloads/workloada
 items = 20000000
-workers = 40
+workers = 128
 ycsb_client = couchbase3
 
 [access]

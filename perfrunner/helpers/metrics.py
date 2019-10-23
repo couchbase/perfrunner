@@ -757,6 +757,96 @@ class MetricHelper:
             del lat_dic['CLEANUP']
         return lat_dic
 
+    def ycsb_get_max_latency(self):
+        max_lats = {}
+        ycsb_log_files = [filename
+                          for filename in glob.glob("YCSB/ycsb_run_*.log")
+                          if "stderr" not in filename]
+        for filename in ycsb_log_files:
+            fh = open(filename)
+            lines = fh.readlines()
+            num_lines = len(lines)
+
+            fh2 = open(filename)
+            for x in range(0, num_lines):
+                line = fh2.readline()
+                if line.find("], MaxLatency(us),") >= 1:
+                    parts = line.split(",")
+                    type = parts[0].replace("[", "").replace("]", "")
+                    if type == "CLEANUP"\
+                            or "FAILED" in type:
+                        continue
+                    value = parts[2].strip()
+                    max_lats[type] = max(float(value)/1000.0, max_lats.get(type, 0))
+
+        return max_lats
+
+    def ycsb_get_failed_ops(self):
+        failures = {"READ": 0, "UPDATE": 0}
+        ycsb_log_files = [filename
+                          for filename in glob.glob("YCSB/ycsb_run_*.log")
+                          if "stderr" not in filename]
+        for filename in ycsb_log_files:
+            fh = open(filename)
+            lines = fh.readlines()
+            num_lines = len(lines)
+
+            fh2 = open(filename)
+            for x in range(0, num_lines):
+                line = fh2.readline()
+                if line.find("-FAILED], Operations,") >= 1:
+                    parts = line.split(",")
+                    type = parts[0].replace("[", "").replace("]", "").split("-")[0]
+                    if type in ["READ", "UPDATE"]:
+                        value = parts[2].strip()
+                        failures[type] = int(value) + failures.get(type, 0)
+        return failures
+
+    def ycsb_get_gcs(self):
+        ycsb_log_files = [filename
+                          for filename in glob.glob("YCSB/ycsb_run_*.log")
+                          if "stderr" not in filename]
+        gcs = 0
+        for filename in ycsb_log_files:
+            fh = open(filename)
+            lines = fh.readlines()
+            num_lines = len(lines)
+            fh2 = open(filename)
+            for x in range(0, num_lines):
+                line = fh2.readline()
+                if line.find("[TOTAL_GCs], Count,") >= 0:
+                    gcs += int(line.split(",")[2].strip())
+
+        return gcs
+
+    def ycsb_gcs(self) -> Metric:
+        title = '{}, {}'.format("Garbage Collections", self._title)
+        metric_id = '{}_{}'\
+            .format(self.test_config.name, "Garbage Collections".replace(' ', '_').casefold())
+        metric_info = self._metric_info(title=title, metric_id=metric_id)
+        gcs = self.ycsb_get_gcs()
+        return gcs, self._snapshots, metric_info
+
+    def ycsb_failed_ops(self,
+                        io_type: str,
+                        failures: int,) -> Metric:
+        type = io_type + " Failures"
+        title = '{} {}'.format(type, self._title)
+        metric_id = '{}_{}'.format(self.test_config.name, type.replace(' ', '_').casefold())
+        metric_info = self._metric_info(title=title, metric_id=metric_id)
+        return failures, self._snapshots, metric_info
+
+    def ycsb_max_latency(self,
+                         io_type: str,
+                         max_latency: int,) -> Metric:
+
+        type = "Max Latency " + io_type
+        title = '{}, {}'.format(type, self._title)
+        metric_id = '{}_{}'.format(self.test_config.name, type.replace(' ', '_').casefold())
+        metric_info = self._metric_info(title=title, metric_id=metric_id)
+
+        return max_latency, self._snapshots, metric_info
+
     def dcp_throughput(self, time_elapsed: float) -> Metric:
         metric_info = self._metric_info()
 
@@ -785,6 +875,16 @@ class MetricHelper:
 
     def ycsb_throughput(self) -> Metric:
         metric_info = self._metric_info()
+
+        throughput = self._parse_ycsb_throughput()
+
+        return throughput, self._snapshots, metric_info
+
+    def ycsb_durability_throughput(self) -> Metric:
+        title = '{} {}'.format("Avg Throughput (ops/sec)", self._title)
+        metric_id = '{}_{}'\
+            .format(self.test_config.name, "Avg Throughput (ops/sec)".replace(' ', '_').casefold())
+        metric_info = self._metric_info(title=title, metric_id=metric_id)
 
         throughput = self._parse_ycsb_throughput()
 

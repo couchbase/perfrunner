@@ -881,9 +881,9 @@ class MetricHelper:
         return throughput, self._snapshots, metric_info
 
     def ycsb_durability_throughput(self) -> Metric:
-        title = '{} {}'.format("Avg Throughput (ops/sec)", self._title)
+        title = '{} {}'.format("Avg Throughput", self._title)
         metric_id = '{}_{}'\
-            .format(self.test_config.name, "Avg Throughput (ops/sec)".replace(' ', '_').casefold())
+            .format(self.test_config.name, "Avg Throughput".replace(' ', '_').casefold())
         metric_info = self._metric_info(title=title, metric_id=metric_id)
 
         throughput = self._parse_ycsb_throughput()

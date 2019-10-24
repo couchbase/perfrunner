@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.ycsb.YCSBThroughputTest
+test = perfrunner.tests.ycsb.YCSBDurabilityThroughputTest
 
 [showfast]
 title = replicate_to=1 persist_to=2, YCSB SLO, SDK 3, replicate_to=1 persist_to=2, 4 nodes, Workload A

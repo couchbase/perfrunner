@@ -142,8 +142,8 @@
     ],
     "N1QL-Windows": [],
     "Rebalance": [
-        {"job": "titan", "cluster": "titan.spec", "test_config": "durability/rebalance/reb_swap_500M_9nodes_durability_majority.test"},
-        {"job": "titan", "cluster": "titan.spec", "test_config": "durability/rebalance/reb_swap_500M_9nodes_durability_persist_majority.test"}],
+        {"job": "titan", "cluster": "titan.spec", "test_config": "durability/rebalance/reb_swap_20M_4nodes_durability_majority.test"},
+        {"job": "titan", "cluster": "titan.spec", "test_config": "durability/rebalance/reb_swap_20M_4nodes_durability_persist_majority.test"}],
     "Rebalance-Large-Scale": [],
     "Tools": [],
     "Views": [],

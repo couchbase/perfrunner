@@ -1,5 +1,5 @@
 [clusters]
-hebe =
+hercules =
     172.23.100.121:kv,index,n1ql
     172.23.100.122:kv,index,n1ql
     172.23.100.123:kv,index,n1ql

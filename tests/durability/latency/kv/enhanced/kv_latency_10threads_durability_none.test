@@ -2,9 +2,10 @@
 test = perfrunner.tests.kv.EnhancedDurabilityLatencyTest
 
 [showfast]
-title = latency (ms), 4 nodes, 1 bucket x 20M x 1KB, 0/100 R/W, 10 threads, 20 ops/sec, Durability None
+title = latency (ms), 4 nodes, 1 bucket x 20M x 1KB, 0/100 R/W, 10 threads, 200 ops/sec, Durability None
 component = kv
 category = latency
+orderby = 0010a
 
 [cluster]
 mem_quota = 40960

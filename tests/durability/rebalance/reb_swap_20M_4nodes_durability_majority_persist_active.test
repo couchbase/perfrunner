@@ -19,7 +19,7 @@ replica_number = 2
 size = 512
 items = 20000000
 workers = 128
-doc_gen = json
+doc_gen = large
 durability = 0
 
 [access]

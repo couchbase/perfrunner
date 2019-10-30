@@ -5,7 +5,7 @@ test = perfrunner.tests.kv.PillowFightDurabilityTest
 title = Max ops/sec, cbc-pillowfight, 4 nodes, 0/100 R/W, 512B JSON items, batch size = 1, Durability None
 component = kv
 category = max_ops
-orderby = writes
+orderby = za1
 
 [cluster]
 mem_quota = 51200

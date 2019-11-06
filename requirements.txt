@@ -8,7 +8,7 @@ celery==3.1.25
 cffi==1.7.0
 couchbase==2.5.0
 coverage==4.4.1
-cryptography==2.0.3
+cryptography==2.3
 decorator==4.1.2
 fabric3==1.14.post1
 flake8==3.5.0

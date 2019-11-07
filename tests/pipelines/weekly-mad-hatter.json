@@ -10,7 +10,8 @@
         {"job": "themis", "cluster": "themis.spec", "test_config": "latency100M_fun_bktop_src_bkt_mut.test"},
         {"job": "themis", "cluster": "themis.spec", "test_config": "curl/latency100M_fun_curl_https_json_200ms.test"},
         {"job": "themis", "cluster": "themis.spec", "test_config": "curl/throughput100M_fun_curl_https_json_200ms.test"},
-        {"job": "themis", "cluster": "themis_eventing_rebalance.spec", "test_config": "curl/throughput50M_fun_curl_https_json_eventing_rebalance.test"}
+        {"job": "themis", "cluster": "themis_eventing_rebalance.spec", "test_config": "curl/throughput50M_fun_curl_https_json_eventing_rebalance.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "phase_change_time10​0M_bktop.test"}
     ],
     "FTS": [],
     "GSI": [

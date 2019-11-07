@@ -14,6 +14,9 @@ initial_nodes = 1
 num_buckets = 1
 fts_index_mem_quota = 20000
 
+[bucket]
+replica_number=0
+
 [jts]
 jts_instances = 2
 test_duration = 600
@@ -37,3 +40,6 @@ couchbase_index_configfile = tests/fts/index/fts_tvectors_on.json
 [restore]
 backup_storage =  /fts/backup
 backup_repo =  fts_wiki
+
+[profiling]
+services = fts

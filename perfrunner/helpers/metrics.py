@@ -50,6 +50,10 @@ class MetricHelper:
     def _num_nodes(self):
         return self.test_config.cluster.initial_nodes[0]
 
+    @property
+    def _order_by(self) -> str:
+        return self.test_config.test_case.order_by
+
     def _metric_info(self,
                      metric_id: str = None,
                      title: str = None,
@@ -57,7 +61,7 @@ class MetricHelper:
         return {
             'id': metric_id or self.test_config.name,
             'title': title or self._title,
-            'orderBy': order_by,
+            'orderBy': order_by or self._order_by,
         }
 
     def ycsb_queries(self, value: float, name: str, title: str) -> Metric:
@@ -635,6 +639,19 @@ class MetricHelper:
             return lat / count
         return 0
 
+    def parses_sg_failures(self):
+        failed_ops = 0
+        for filename in glob.glob("YCSB/*_runtest_*.result"):
+            with open(filename) as fh:
+                for line in fh.readlines():
+                    if 'FAILED' in line:
+                        failed_ops = 1
+                        break
+        if failed_ops == 1:
+            return 1
+        else:
+            return 0
+
     def _parse_dcp_throughput(self, output_file: str = 'dcpstatsfile') -> int:
         # Get throughput from OUTPUT_FILE for posting to showfast
         with open(output_file) as fh:
@@ -679,14 +696,14 @@ class MetricHelper:
 
     def sg_throughput(self, title) -> Metric:
         metric_id = '{}_throughput'.format(self.test_config.name)
-        metric_title = "{}, {}".format(title, self._title)
+        metric_title = "{}{}".format(title, self._title)
         metric_info = self._metric_info(metric_id, metric_title)
         throughput = self._parse_sg_throughput()
         return throughput, self._snapshots, metric_info
 
     def sg_latency(self, metric_name, title) -> Metric:
         metric_id = '{}_latency'.format(self.test_config.name)
-        metric_title = "{}, {}".format(title, self._title)
+        metric_title = "{}{}".format(title, self._title)
         metric_info = self._metric_info(metric_id, metric_title)
 
         lat = float(self._parse_sg_latency(metric_name) / 1000)

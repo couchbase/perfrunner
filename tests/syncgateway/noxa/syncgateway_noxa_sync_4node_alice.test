@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.syncgateway.SGSync
-title = 4 nodes, 1M docs, 10K users, 1K channels, 100 channels per user, 20 writes/sec, Alice
+title = , 4 nodes, 1M docs, 10K users, 1K channels, 100 channels per user, 20 writes/sec, Alice
 component = syncgateway
 category = sync
 sub_category = non-xattr
@@ -43,3 +43,4 @@ updateproportion=0
 insertproportion=0.001
 requestdistribution = zipfian
 log_title = sync_gateway_4node_sync
+roundtrip_write_load = true

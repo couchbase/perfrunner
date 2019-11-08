@@ -1,5 +1,4 @@
 import os
-import re
 import sys
 
 from logger import logger
@@ -19,20 +18,9 @@ def main():
         elif item == "--uninstall":
             _uninstall = True
 
-    if re.match('2.0.0', _build):
-        base_url = "http://172.23.120.24/builds/releases/mobile/couchbase-sync-gateway/2.0.0"
-        sg_package_name = "couchbase-sync-gateway-enterprise_{}_x86_64.rpm".format(_build)
-        accel_package_name = "couchbase-sg-accel-enterprise_{}_x86_64.rpm".format(_build)
-    elif re.match('2.1.0', _build):
-        base_url = "http://172.23.120.24/builds/releases/mobile/couchbase-sync-gateway/2.1.0"
-        sg_package_name = "couchbase-sync-gateway-enterprise_{}_x86_64.rpm".format(_build)
-        accel_package_name = "couchbase-sg-accel-enterprise_{}_x86_64.rpm".format(_build)
-    elif re.match('2.1.1', _build):
-        base_url = "http://172.23.120.24/builds/releases/mobile/couchbase-sync-gateway/2.1.1"
-        sg_package_name = "couchbase-sync-gateway-enterprise_{}_x86_64.rpm".format(_build)
-        accel_package_name = "couchbase-sg-accel-enterprise_{}_x86_64.rpm".format(_build)
-    elif re.match('1.5.1', _build):
-        base_url = "http://172.23.120.24/builds/releases/mobile/couchbase-sync-gateway/1.5.1"
+    if "-" not in _build:
+        base_url = "http://172.23.120.24/builds/releases/mobile/" \
+                   "couchbase-sync-gateway/{}".format(_build)
         sg_package_name = "couchbase-sync-gateway-enterprise_{}_x86_64.rpm".format(_build)
         accel_package_name = "couchbase-sg-accel-enterprise_{}_x86_64.rpm".format(_build)
     elif 'toy' in _build:

@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.syncgateway.SGRead
-title = 4 nodes, 1M docs, 1K users, 1 channel, revCache
+title = , 4 nodes, cache hit 100%%
 component = syncgateway
 category = read
 sub_category = non-xattr

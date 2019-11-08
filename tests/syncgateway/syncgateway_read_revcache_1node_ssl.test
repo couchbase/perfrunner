@@ -1,10 +1,6 @@
 [test_case]
 test = perfrunner.tests.syncgateway.SGRead
-<<<<<<< HEAD
-title = 1 node, 1M docs, 1K users, 1 channel, revCache, SSl
-=======
-title = 1 node, 1M docs, 1K users, 1 channel, revCache
->>>>>>> 52b2fb66dd3778214e8f59dbcf77897847a11ade
+title = , 1 node, cache hit 100%%, SSl
 component = syncgateway
 category = read
 sub_category = xattr
@@ -36,7 +32,7 @@ channels_per_user = 1
 channels_per_doc = 1
 documents = 1000000
 documents_workset = 5000
-roundtrip_write = true
+roundtrip_write = false
 read_mode = documents
 feed_reading_mode = idsonly
 feed_mode = normal

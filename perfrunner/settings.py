@@ -145,6 +145,8 @@ class TestCaseSettings:
 
         self.use_workers = int(options.get('use_workers', self.USE_WORKERS))
 
+        self.order_by = options.get('orderby', '')
+
 
 class ClusterSettings:
 
@@ -792,6 +794,10 @@ class SyncgatewaySettings:
     CHANNELS_PER_GRANT = 1
     FIELDCOUNT = 10
     FIELDLENGTH = 100
+    REPLICATOR2 = "false"
+    BASIC_AUTH = "false"
+    IMPORT_NODES = 1
+    ROUNDTRIP_WRITE_LOAD = "false"
 
     def __init__(self, options: dict):
         self.repo = options.get('ycsb_repo', self.REPO)
@@ -830,6 +836,13 @@ class SyncgatewaySettings:
         self.build_label = options.get('build_label', '')
         self.fieldcount = options.get('fieldcount', self.FIELDCOUNT)
         self.fieldlength = options.get('fieldlength', self.FIELDLENGTH)
+
+        self.replicator2 = options.get('replicator2', self.REPLICATOR2)
+        self.basic_auth = options.get('basic_auth', self.BASIC_AUTH)
+
+        self.import_nodes = int(options.get('import_nodes', self.IMPORT_NODES))
+
+        self.roundtrip_write_load = options.get('roundtrip_write_load', self.ROUNDTRIP_WRITE_LOAD)
 
     def __str__(self) -> str:
         return str(self.__dict_)

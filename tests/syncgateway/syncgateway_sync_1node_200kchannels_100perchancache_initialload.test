@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.syncgateway.SGSyncInitialLoad
-title = 1 node, channel cache (Max 2M, LWM 1.8M, HWM 1.9M), 200K users, 200K channels, RYOW 100
+title = , 1 node, channel cache (Max 2M, LWM 1.8M, HWM 1.9M), 200K users, 200K channels, RYOW 100
 component = syncgateway
 category = sync
 sub_category = xattr
@@ -44,3 +44,4 @@ updateproportion=0
 insertproportion=1
 requestdistribution = zipfian
 log_title = sync_gateway_1node_reads
+roundtrip_write_load = true

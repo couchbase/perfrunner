@@ -14,6 +14,7 @@ LOCATIONS = (
     'http://172.23.120.24/builds/latestbuilds/couchbase-server/vulcan/{build}/',
     'http://172.23.120.24/builds/latestbuilds/couchbase-server/spock/{build}/',
     'http://172.23.120.24/builds/latestbuilds/couchbase-server/watson/{build}/',
+    'http://172.23.120.24/builds/latestbuilds/couchbase-server/mad-hatter/{build}/',
     'http://172.23.120.24/builds/releases/{release}/',
     'http://172.23.120.24/builds/releases/{release}/ce/',
 )

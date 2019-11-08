@@ -1,9 +1,10 @@
 [test_case]
 test = perfrunner.tests.syncgateway.SGRead
-title = with rev, 1 node, 1M docs, 1K users, 1 channel, SSL
+title = +rev, cache hit 0.5%%, SSL
 component = syncgateway
 category = read
 sub_category = xattr
+orderby = b61
 
 [cluster]
 mem_quota = 25000

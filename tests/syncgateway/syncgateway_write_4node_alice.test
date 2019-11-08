@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.syncgateway.SGWrite
-title = 4 nodes, 1M docs, 1K users, 100 channels, 10 channels per doc, Alice
+title = , 4 nodes, 1M docs, 1K users, 100 channels, 10 channels per doc, Alice
 component = syncgateway
 category = write
 sub_category = xattr
@@ -41,4 +41,4 @@ updateproportion=0
 insertproportion=1
 requestdistribution = zipfian
 log_title = sync_gateway_4node_writes
-
+roundtrip_write_load = true

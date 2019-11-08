@@ -1,6 +1,7 @@
 import glob
 import os
 import shutil
+from time import time
 from typing import Callable
 
 from logger import logger
@@ -136,6 +137,7 @@ class SGPerfTest(PerfTest):
             local.get_sg_logs(host=server, ssh_user=ssh_user, ssh_pass=ssh_pass)
 
     def run(self):
+        self.remote.remove_sglogs()
         self.download_ycsb()
         self.start_memcached()
         self.load_users()
@@ -302,10 +304,17 @@ class SGImportLoad(PerfTest):
         PerfTest.load(self, task=pillowfight_data_load_task)
 
     def run(self):
+        self.remote.remove_sglogs()
         self.load()
 
 
 class SGImportThroughputTest(SGPerfTest):
+
+    def load(self, *args):
+        cb_target_iterator = CBTargetIterator(self.cluster_spec,
+                                              self.test_config,
+                                              prefix='symmetric')
+        super().load(task=pillowfight_data_load_task, target_iterator=cb_target_iterator)
 
     COLLECTORS = {'disk': False, 'ns_server': False, 'ns_server_overview': False,
                   'active_tasks': False, 'syncgateway_stats': True}
@@ -317,14 +326,63 @@ class SGImportThroughputTest(SGPerfTest):
         )
 
     @with_stats
+    @with_profiles
     def monitor_sg_import(self):
         host = self.cluster_spec.servers[0]
         expected_docs = self.test_config.load_settings.items
         time_elapsed, items_in_range = self.monitor.monitor_sgimport_queues(host, expected_docs)
         return time_elapsed, items_in_range
 
+    def initial_import_count(self):
+        total_initial_docs = 0
+        for i in range(self.test_config.syncgateway_settings.import_nodes):
+            server = self.cluster_spec.servers[i]
+            import_count = self.monitor.get_import_count(host=server)
+            total_initial_docs += import_count
+        return total_initial_docs
+
+    @with_stats
+    @with_profiles
+    def monitor_sg_import_multinode(self):
+        expected_docs = self.test_config.load_settings.items
+        print("expected docs :", expected_docs)
+
+        initial_docs = self.initial_import_count()
+        print("initial docs imported :", initial_docs)
+
+        remaining_docs = expected_docs - initial_docs
+        print("remaining_docs : ", remaining_docs)
+
+        importing = True
+
+        start_time = time()
+
+        while importing:
+            total_count = 0
+            for i in range(self.test_config.syncgateway_settings.import_nodes):
+                server = self.cluster_spec.servers[i]
+                import_count = self.monitor.get_import_count(host=server)
+                print('import count : {} , host : {}'.format(import_count, server))
+                total_count += import_count
+            if total_count >= expected_docs:
+                importing = False
+
+        end_time = time()
+
+        time_elapsed = end_time - start_time
+
+        return time_elapsed, remaining_docs
+
     def run(self):
-        time_elapsed, items_in_range = self.monitor_sg_import()
+        self.remote.remove_sglogs()
+
+        self.load()
+
+        if self.test_config.syncgateway_settings.import_nodes > 1:
+            time_elapsed, items_in_range = self.monitor_sg_import_multinode()
+        else:
+            time_elapsed, items_in_range = self.monitor_sg_import()
+
         self.report_kpi(time_elapsed, items_in_range)
 
 
@@ -372,6 +430,7 @@ class SGImportLatencyTest(SGPerfTest):
         super().access_bg(task=ycsb_task, target_iterator=cb_target_iterator)
 
     def run(self):
+        self.remote.remove_sglogs()
         self.download_ycsb()
         self.load()
         self.report_kpi()
@@ -396,6 +455,7 @@ class SGSyncByUserWithAuth(SGSync):
         )
 
     def run(self):
+        self.remote.remove_sglogs()
         self.download_ycsb()
         self.start_memcached()
         self.load_users()
@@ -407,6 +467,7 @@ class SGSyncByUserWithAuth(SGSync):
 class SGSyncByKeyNoAuth(SGSyncByUserWithAuth):
 
     def run(self):
+        self.remote.remove_sglogs()
         self.download_ycsb()
         self.start_memcached()
         self.run_test()
@@ -416,6 +477,7 @@ class SGSyncByKeyNoAuth(SGSyncByUserWithAuth):
 class SGSyncInitialLoad(SGSyncByUserWithAuth):
 
     def run(self):
+        self.remote.remove_sglogs()
         self.download_ycsb()
         self.start_memcached()
         self.load_users()

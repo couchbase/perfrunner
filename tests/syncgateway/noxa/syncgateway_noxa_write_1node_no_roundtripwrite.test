@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.syncgateway.SGWrite
-title = 1 node, 1M docs, 1K users, 100 channels, 10 channels per doc, roudTripWrite false
+title = , 1 node, 1M docs, 1K users, 100 channels, 10 channels per doc, roudTripWrite false
 component = syncgateway
 category = write
 sub_category = non-xattr

@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.syncgateway.SGMixQueryThroughput
-title = 1 node, 100K users, 100K channels, 20 channels per user, channels/access mixed scenario, 40/40/20 (Read/Write/Auth), Alice
+title = , 1 node, 100K users, 100K channels, 20 channels per user, channels/access mixed scenario, 40/40/20 (Read/Write/Auth), Alice
 component = syncgateway
 category = query
 sub_category = xattr

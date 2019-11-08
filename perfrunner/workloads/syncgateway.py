@@ -18,9 +18,13 @@ LOAD_DOCS_CMD = " load syncgateway -s -P {workload} " \
                 "-p fieldcount={fieldcount} -p fieldlength={fieldlength} " \
                 "-p syncgateway.host={hosts} " \
                 "-p syncgateway.auth=false " \
+                "-p syncgateway.basic_auth={basic_auth} " \
+                "-p syncgateway.feedmode={feedmode} " \
+                "-p syncgateway.replicator2={replicator2} " \
                 "-p memcached.host={memcached_host} " \
                 "-p syncgateway.insertmode={insert_mode} " \
                 "-p syncgateway.roundtrip={roundtrip} " \
+                "-p syncgateway.feedmode={feedmode} " \
                 "-p syncgateway.totalusers={total_users} " \
                 "-p syncgateway.channels={total_channels} " \
                 "-p syncgateway.channelsperuser={channels_per_user} " \
@@ -70,6 +74,8 @@ RUN_TEST_CMD = " run syncgateway -s -P {workload} -p recordcount={total_docs} " 
                "-p scanproportion={scanproportion} " \
                "-p insertproportion={insertproportion} -p exportfile={exportfile} " \
                "-p syncgateway.feedmode={feedmode} " \
+               "-p syncgateway.basic_auth={basic_auth} " \
+               "-p syncgateway.replicator2={replicator2} " \
                "-p syncgateway.grantaccessinscan={grant_access_in_scan}"
 
 
@@ -124,7 +130,10 @@ def syncgateway_load_docs(workload_settings: PhaseSettings,
                                   fieldcount=sgs.fieldcount,
                                   memcached_host=cluster.workers[0],
                                   total_users=sgs.users,
-                                  roundtrip=sgs.roundtrip_write,
+                                  roundtrip=sgs.roundtrip_write_load,
+                                  feedmode=sgs.feed_mode,
+                                  replicator2=sgs.replicator2,
+                                  basic_auth=sgs.basic_auth,
                                   total_channels=sgs.channels,
                                   insert_mode=sgs.insert_mode,
                                   channels_per_user=sgs.channels_per_user,
@@ -198,6 +207,8 @@ def syncgateway_run_test(workload_settings: PhaseSettings,
                                  sequence_start=int(sgs.users) + int(sgs.documents) + 1,
                                  read_mode=sgs.read_mode,
                                  insert_mode=sgs.insert_mode,
+                                 replicator2=sgs.replicator2,
+                                 basic_auth=sgs.basic_auth,
                                  threads=sgs.threads_per_instance,
                                  time=timer,
                                  roundtrip=sgs.roundtrip_write,

@@ -416,3 +416,9 @@ class RemoteLinux(Remote):
         print('Compressing Syncgateway log folders')
         cmd = 'tar cvzf /home/sync_gateway/syncgateway_logs.tar.gz /home/sync_gateway/logs'
         run(cmd)
+
+    @all_servers
+    def remove_sglogs(self):
+        print('removing old sglogs')
+        cmd = 'rm -rf /var/tmp/sglogs/*log.gz'
+        run(cmd)

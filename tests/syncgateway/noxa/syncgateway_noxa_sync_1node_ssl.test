@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.syncgateway.SGSync
-title = 1 node, 1M docs, 10K users, 1000 channel, 100 channels per user, 20 writes/sec, SSL
+title = , 1 node, 1M docs, 10K users, 1000 channel, 100 channels per user, 20 writes/sec, SSL
 component = syncgateway
 category = sync
 sub_category = non-xattr
@@ -43,3 +43,4 @@ updateproportion=0
 insertproportion=0.001
 requestdistribution = zipfian
 log_title = sync_gateway_1node_reads
+roundtrip_write_load = true

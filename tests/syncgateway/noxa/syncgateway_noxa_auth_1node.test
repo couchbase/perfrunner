@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.syncgateway.SGAuthThroughput
-title = 1 node, 1M users, 10K channel, 50 channels per user, access query
+title = , 1 node, 1M users, 10K channel, 50 channels per user, access query
 component = syncgateway
 category = query
 sub_category = non-xattr
@@ -46,3 +46,4 @@ insertproportion=0
 scanproportion=1
 requestdistribution = zipfian
 log_title = sync_gateway_1node_auth
+roundtrip_write_load = true

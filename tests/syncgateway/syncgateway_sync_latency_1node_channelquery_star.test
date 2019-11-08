@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.syncgateway.SGSyncQueryLatency
-title = 1 node, 1M docs, 10K users, 100K channels, * channel, 90/10 R/W, channels query (no SG cache)
+title = , 1 node, 1M docs, 10K users, 100K channels, * channel, 90/10 R/W, channels query (no SG cache)
 component = syncgateway
 category = query
 sub_category = xattr
@@ -44,3 +44,4 @@ insertproportion=0.1
 requestdistribution = zipfian
 log_title = sync_gateway_1node_sync
 starchannel = true
+roundtrip_write_load = true

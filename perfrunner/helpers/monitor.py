@@ -157,6 +157,17 @@ class Monitor(RestHelper):
                 return time_taken
                 break
 
+    def get_import_count(self, host: str):
+        stats = self.get_sg_stats(host=host)
+        import_count = 0
+        if 'syncGateway_import' in stats.keys():
+            import_count = int(stats['syncGateway_import']['import_count'])
+        elif 'shared_bucket_import' in stats['syncgateway']['per_db']['db'].keys():
+            import_count = \
+                int(stats['syncgateway']['per_db']['db']['shared_bucket_import'
+                                                         '']['import_count'])
+        return import_count
+
     def _get_num_items(self, host: str, bucket: str) -> bool:
         stats = self.get_bucket_stats(host=host, bucket=bucket)
         return stats['op']['samples'].get('curr_items')[-1]

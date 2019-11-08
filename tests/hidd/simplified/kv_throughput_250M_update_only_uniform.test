@@ -11,7 +11,6 @@ kernel_mem_limit_services = kv
 
 [bucket]
 eviction_policy = fullEviction
-replica_number=0
 
 [load]
 items = 250000000
@@ -22,9 +21,9 @@ doc_gen = large
 
 [access]
 creates = 0
-reads = 100
-updates = 0
+reads = 0
+updates = 100
 deletes = 0
 items = 250000000
-workers = 100
+workers = 80
 time = 3600

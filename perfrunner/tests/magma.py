@@ -2,7 +2,7 @@ from logger import logger
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import pretty_dict, read_json
 from perfrunner.tests import PerfTest
-from perfrunner.tests.kv import ReadLatencyDGMTest, ThroughputDGMCompactedTest
+from perfrunner.tests.kv import ReadLatencyDGMTest
 
 
 class MagmaBenchmarkTest(PerfTest):
@@ -134,6 +134,14 @@ class ReadLatencyDGMMagmaTest(ReadLatencyDGMTest):
         self.collect_per_server_stats = self.test_config.magma_settings.collect_per_server_stats
 
 
+class ThroughputDGMMagmaTest(ReadLatencyDGMMagmaTest):
+
+    def _report_kpi(self):
+        self.reporter.post(
+            *self.metrics.avg_ops()
+        )
+
+
 class MixedLatencyDGMTest(ReadLatencyDGMMagmaTest):
 
     def _report_kpi(self):
@@ -143,14 +151,12 @@ class MixedLatencyDGMTest(ReadLatencyDGMMagmaTest):
             )
 
 
-class ThroughputDGMCompactedMagmaTest(ThroughputDGMCompactedTest):
+class WriteLatencyDGMTest(ReadLatencyDGMMagmaTest):
 
-    COLLECTORS = {'disk': True, 'latency': True, 'net': False, 'kvstore': True}
-
-    def __init__(self, *args):
-        super().__init__(*args)
-
-        self.collect_per_server_stats = self.test_config.magma_settings.collect_per_server_stats
+    def _report_kpi(self):
+        self.reporter.post(
+            *self.metrics.kv_latency(operation='set')
+        )
 
 
 class ReadLatencyExtraAccessPhaseDGMTest(ReadLatencyDGMTest):

@@ -37,7 +37,8 @@ class KVStoreStats(Collector):
         "NWriteBytesCompact",
         "NWriteIOs",
         "TotalMemUsed",
-        "WriteCacheMemUsed"
+        "WriteCacheMemUsed",
+        "NCompacts"
     )
     METRICS_ONLY_ONCE = (
         "ReadAmp",

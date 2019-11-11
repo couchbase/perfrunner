@@ -28,6 +28,7 @@ class DCPThroughputTest(PerfTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
+        self.compact_bucket()
 
         time_elapsed = self.access()
 

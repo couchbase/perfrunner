@@ -14,6 +14,9 @@ mem_quota = 204800
 initial_nodes = 2 1
 num_buckets = 1
 
+[bucket]
+replica_number = 0
+
 [xdcr_cluster]
 sourceNozzlePerNode = 2
 targetNozzlePerNode = 4

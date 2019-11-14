@@ -1,8 +1,11 @@
+import json
 from logger import logger
+
+from fabric.api import local
+
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import pretty_dict, read_json
 from perfrunner.tests import PerfTest
-from perfrunner.tests.kv import ReadLatencyDGMTest
 
 
 class MagmaBenchmarkTest(PerfTest):
@@ -124,9 +127,70 @@ class MagmaBenchmarkTest(PerfTest):
         self.report_kpi(create_metrics, read_metrics, write_metrics)
 
 
-class ReadLatencyDGMMagmaTest(ReadLatencyDGMTest):
+class KVTest(PerfTest):
+    CB_STATS_PORT = 11209
+
+    def print_kvstore_stats(self):
+        try:
+            cmd = "./opt/couchbase/bin/cbstats -a {}:{} -u Administrator -p password kvstore -j" \
+                .format(self.master_node, self.CB_STATS_PORT)
+            result = local(cmd, capture=True)
+            buckets_data = list(filter(lambda a: a != "", result.split("*")))
+            for data in buckets_data:
+                data = data.strip()
+                if data.startswith(self.test_config.buckets[0]):
+                    data = data.split("\n", 1)[1]
+                    data = data.replace("\"{", "{")
+                    data = data.replace("}\"", "}")
+                    data = data.replace("\\", "")
+                    data = json.loads(data)
+                    logger.info("kvstore stats: {}", pretty_dict(data))
+                    break
+        except Exception:
+            pass
+
+    @with_stats
+    def access(self, *args):
+        super().access(*args)
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.print_kvstore_stats()
+
+        self.hot_load()
+        self.print_kvstore_stats()
+
+        self.reset_kv_stats()
+
+        self.access()
+        self.print_kvstore_stats()
+
+        self.report_kpi()
+
+
+class ReadLatencyDGMTest(KVTest):
 
     COLLECTORS = {'disk': True, 'latency': True, 'net': False, 'kvstore': True}
+
+    @with_stats
+    def custom_load(self, *args):
+        super().load(*args)
+
+    def load(self, *args):
+        self.COLLECTORS["latency"] = False
+        self.custom_load()
+        self.COLLECTORS["latency"] = True
+
+    def _report_kpi(self):
+        self.reporter.post(
+            *self.metrics.kv_latency(operation='get')
+        )
+
+
+class ReadLatencyDGMMagmaTest(ReadLatencyDGMTest):
+
+    COLLECTORS = {'disk': True, 'latency': True, 'net': False}
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -178,11 +242,14 @@ class ReadLatencyExtraAccessPhaseDGMTest(ReadLatencyDGMTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
+        self.print_kvstore_stats()
 
         self.extra_access()
+        self.print_kvstore_stats()
 
         self.reset_kv_stats()
 
         self.access()
+        self.print_kvstore_stats()
 
         self.report_kpi()

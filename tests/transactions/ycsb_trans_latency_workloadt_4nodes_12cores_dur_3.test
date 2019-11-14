@@ -5,7 +5,7 @@ test = perfrunner.tests.ycsb.YCSBLatencyTest
 title = Latency(ms), Workload T, 4 nodes, Persist_to_Majority, 12 vCPU
 component = kv
 category = transaction
-sub_category = Throughput
+sub_category = Latency
 
 [cluster]
 mem_quota = 40960

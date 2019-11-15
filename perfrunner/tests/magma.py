@@ -144,7 +144,7 @@ class KVTest(PerfTest):
                     data = data.replace("}\"", "}")
                     data = data.replace("\\", "")
                     data = json.loads(data)
-                    logger.info("kvstore stats: {}", pretty_dict(data))
+                    logger.info("kvstore stats: {}".format(pretty_dict(data)))
                     break
         except Exception:
             pass
@@ -173,6 +173,11 @@ class ReadLatencyDGMTest(KVTest):
 
     COLLECTORS = {'disk': True, 'latency': True, 'net': False, 'kvstore': True}
 
+    def __init__(self, *args):
+        super().__init__(*args)
+
+        self.collect_per_server_stats = self.test_config.magma_settings.collect_per_server_stats
+
     @with_stats
     def custom_load(self, *args):
         super().load(*args)
@@ -188,17 +193,7 @@ class ReadLatencyDGMTest(KVTest):
         )
 
 
-class ReadLatencyDGMMagmaTest(ReadLatencyDGMTest):
-
-    COLLECTORS = {'disk': True, 'latency': True, 'net': False}
-
-    def __init__(self, *args):
-        super().__init__(*args)
-
-        self.collect_per_server_stats = self.test_config.magma_settings.collect_per_server_stats
-
-
-class ThroughputDGMMagmaTest(ReadLatencyDGMMagmaTest):
+class ThroughputDGMMagmaTest(ReadLatencyDGMTest):
 
     def _report_kpi(self):
         self.reporter.post(
@@ -206,7 +201,7 @@ class ThroughputDGMMagmaTest(ReadLatencyDGMMagmaTest):
         )
 
 
-class MixedLatencyDGMTest(ReadLatencyDGMMagmaTest):
+class MixedLatencyDGMTest(ReadLatencyDGMTest):
 
     def _report_kpi(self):
         for operation in ('get', 'set'):
@@ -215,7 +210,7 @@ class MixedLatencyDGMTest(ReadLatencyDGMMagmaTest):
             )
 
 
-class WriteLatencyDGMTest(ReadLatencyDGMMagmaTest):
+class WriteLatencyDGMTest(ReadLatencyDGMTest):
 
     def _report_kpi(self):
         self.reporter.post(

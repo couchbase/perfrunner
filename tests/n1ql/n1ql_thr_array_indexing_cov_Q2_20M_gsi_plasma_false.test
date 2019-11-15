@@ -20,6 +20,7 @@ replica_number = 0
 
 [secondary]
 indexer.settings.storage_mode = plasma
+scan_time = 1200
 
 [load]
 items = 200000
@@ -43,6 +44,7 @@ workers = 4
 time = 1200
 n1ql_queries = singleton-unique-lookup
 n1ql_workers = 720
+n1ql_timeout = 1200
 
 [n1ql-singleton-unique-lookup]
 statement = SELECT meta().id, achievements1 FROM `bucket-1` WHERE ANY i IN achievements1 SATISFIES i = $1 END;

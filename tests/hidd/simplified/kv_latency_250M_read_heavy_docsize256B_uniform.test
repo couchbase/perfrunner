@@ -1,12 +1,18 @@
 [test_case]
-test = perfrunner.tests.magma.ReadLatencyDGMMagmaTest
+test = perfrunner.tests.magma.ReadLatencyDGMTest
+
+[showfast]
+title = Throughput, Workload S0.2.1, 2 nodes, 250M x 256B, 20K ops/sec (5/90/5 C/R/W), Uniform distribution
+component = kv
+category = hidd
+sub_category = S0
 
 [cluster]
 mem_quota = 1536
 initial_nodes = 2
 num_buckets = 1
 num_vbuckets = 256
-kernel_mem_limit = 8G
+kernel_mem_limit = 6G
 kernel_mem_limit_services = kv
 
 [bucket]

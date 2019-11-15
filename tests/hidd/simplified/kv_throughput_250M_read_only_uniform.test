@@ -1,17 +1,22 @@
 [test_case]
 test = perfrunner.tests.magma.ThroughputDGMMagmaTest
 
+[showfast]
+title = Throughput, Workload S0.7, 2 nodes, 250M x 1KB, read only, Uniform distribution
+component = kv
+category = hidd
+sub_category = S0
+
 [cluster]
 mem_quota = 6144
 initial_nodes = 2
 num_buckets = 1
 num_vbuckets = 256
-kernel_mem_limit = 10G
+kernel_mem_limit = 10752M
 kernel_mem_limit_services = kv
 
 [bucket]
 eviction_policy = fullEviction
-replica_number=0
 
 [load]
 items = 250000000

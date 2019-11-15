@@ -1,12 +1,18 @@
 [test_case]
 test = perfrunner.tests.magma.WriteLatencyDGMTest
 
+[showfast]
+title = Throughput, Workload S0.5, 2 nodes, 250M x 1KB, 20K ops/sec (10/90 R/W), Power distribution (α=10)
+component = kv
+category = hidd
+sub_category = S0
+
 [cluster]
 mem_quota = 6144
 initial_nodes = 2
 num_buckets = 1
 num_vbuckets = 256
-kernel_mem_limit = 14G
+kernel_mem_limit = 10752M
 kernel_mem_limit_services = kv
 
 [bucket]

@@ -20,7 +20,8 @@ replica_number = 0
 
 [secondary]
 indexer.settings.storage_mode = plasma
-scan_time = 1200
+indexer.settings.scan_timeout = 1200000
+queryport.client.readDeadline = 1200000
 
 [load]
 items = 200000
@@ -33,6 +34,9 @@ doc_gen = array_indexing_range_scan
 statements =
     CREATE INDEX cov_array_idx ON `bucket-1`(DISTINCT ARRAY i FOR i IN achievements2 END, achievements2);
 
+[n1ql]
+timeout = 1200000
+
 [access]
 creates = 0
 reads = 0
@@ -44,7 +48,7 @@ workers = 20
 time = 1200
 n1ql_queries = singleton-unique-lookup
 n1ql_workers = 720
-n1ql_timeout = 1200
+n1ql_timeout = 1200000
 
 [n1ql-singleton-unique-lookup]
 statement = SELECT meta().id, achievements2 FROM `bucket-1` WHERE ANY i IN achievements2 SATISFIES i = $1 END;

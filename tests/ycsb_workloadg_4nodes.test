@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.ycsb.YCSBThroughputTest
+test = perfrunner.tests.ycsb.YCSBThroughputHIDDTest
 
 [showfast]
 title = Avg Throughput (ops/sec), Workload G, 4 nodes

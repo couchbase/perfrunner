@@ -517,6 +517,35 @@ def run_ycsb(host: str,
         local(cmd)
 
 
+def run_tpcds_loader(host: str,
+                     bucket: str,
+                     password: str,
+                     partitions: int,
+                     instance: int,
+                     scale_factor: int):
+
+    cmd = "java -jar tpcds.jar" \
+          " partitions={partitions}" \
+          " partition={partition}" \
+          " scalefactor={scalefactor}" \
+          " hostname={host}" \
+          " bucketname={bucket}" \
+          " username={user}" \
+          " password={password}"
+
+    cmd = cmd.format(
+        partitions=partitions,
+        partition=instance+1,
+        scalefactor=scale_factor,
+        host=host,
+        bucket=bucket,
+        user="Administrator",
+        password=password)
+
+    with lcd("cbas-perf-support"), lcd("tpcds-couchbase-loader"), lcd("target"):
+        local(cmd)
+
+
 def run_custom_cmd(path: str, binary: str, params: str):
     logger.info("Executing command {} {}".format(binary, params))
     cmd = "{} {}".format(binary, params)
@@ -602,6 +631,12 @@ def clone_git_repo(repo: str, branch: str):
         shutil.rmtree(repo_name, ignore_errors=True)
     logger.info('Cloning repository: {} branch: {}'.format(repo, branch))
     local('git clone -q -b {} {}'.format(branch, repo))
+
+
+def init_tpcds_couchbase_loader(repo: str, branch: str):
+    clone_git_repo(repo, branch)
+    with lcd("cbas-perf-support"), lcd("tpcds-couchbase-loader"):
+        local('mvn install')
 
 
 def init_jts(repo: str, branch: str, jts_home: str):

@@ -24,6 +24,10 @@ from perfrunner.workloads.pillowfight import (
     pillowfight_data_load,
     pillowfight_workload,
 )
+from perfrunner.workloads.tpcds import (
+    tpcds_initial_data_load,
+    tpcds_remaining_data_load,
+)
 from perfrunner.workloads.ycsb import ycsb_data_load, ycsb_workload
 
 celery = Celery('workers')
@@ -67,6 +71,16 @@ def jts_run_task(*args):
 @celery.task
 def jts_warmup_task(*args):
     jts_warmup(*args)
+
+
+@celery.task
+def tpcds_initial_data_load_task(*args):
+    tpcds_initial_data_load(*args)
+
+
+@celery.task
+def tpcds_remaining_data_load_task(*args):
+    tpcds_remaining_data_load(*args)
 
 
 class WorkerManager:
@@ -184,7 +198,7 @@ class LocalWorkerManager(RemoteWorkerManager):
         return False
 
     def next_worker(self) -> str:
-        return 'localhost'
+        return next(cycle(['localhost']))
 
     def tune_sqlite(self):
         for db in self.BROKER_DB, self.RESULTS_DB:

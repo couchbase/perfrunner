@@ -549,7 +549,7 @@ class Monitor(RestHelper):
         num_items = 0
         for node in self.get_active_nodes_by_role(data_node, 'cbas'):
             stats = self.get_analytics_stats(node)
-            num_items += stats[stats_key]
+            num_items += stats.get(stats_key, 0)
         return num_items
 
     def monitor_data_synced(self, data_node: str, bucket: str) -> int:

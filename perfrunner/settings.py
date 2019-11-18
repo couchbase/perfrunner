@@ -477,6 +477,8 @@ class PhaseSettings:
 
     YCSB_JVM_ARGS = None
 
+    TPCDS_SCALE_FACTOR = 1
+
     def __init__(self, options: dict):
         # Common settings
         self.time = int(options.get('time', self.TIME))
@@ -622,6 +624,7 @@ class PhaseSettings:
                                           self.TIMESERIES))
 
         self.ycsb_jvm_args = options.get('ycsb_jvm_args', self.YCSB_JVM_ARGS)
+        self.tpcds_scale_factor = int(options.get('tpcds_scale_factor', self.TPCDS_SCALE_FACTOR))
 
     def __str__(self) -> str:
         return str(self.__dict__)

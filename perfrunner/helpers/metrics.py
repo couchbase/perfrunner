@@ -696,15 +696,16 @@ class MetricHelper:
                         line = fh.readline()
                         _n += 1
                     _temp.sort()
-                    lat_dic = self._ycsb_perc_calc(_temp=_temp,
-                                                   io_type=io_type,
-                                                   lat_dic=lat_dic,
-                                                   _fc=_fc,
-                                                   percentile=percentile)
-                    lat_dic = self._ycsb_avg_calc(_temp=_temp,
-                                                  io_type=io_type,
-                                                  lat_dic=lat_dic,
-                                                  _fc=_fc)
+                    if "FAILED" not in io_type:
+                        lat_dic = self._ycsb_perc_calc(_temp=_temp,
+                                                       io_type=io_type,
+                                                       lat_dic=lat_dic,
+                                                       _fc=_fc,
+                                                       percentile=percentile)
+                        lat_dic = self._ycsb_avg_calc(_temp=_temp,
+                                                      io_type=io_type,
+                                                      lat_dic=lat_dic,
+                                                      _fc=_fc)
                     _temp.clear()
                     _c += _n
                 _c += 1
@@ -1041,6 +1042,26 @@ class MetricHelper:
         title = 'Avg. query latency (ms), {} {}, {}'.format(query.id,
                                                             query.description,
                                                             self._title)
+
+        order_by = '{}_{:05d}_{}'.format(query.id[:2], int(query.id[2:]), self._order_by)
+
+        metric_info = self._metric_info(metric_id,
+                                        title,
+                                        order_by)
+
+        return latency, self._snapshots, metric_info
+
+    def analytics_volume_latency(self,
+                                 query: Query,
+                                 latency: int,
+                                 with_index: bool = False) -> Metric:
+        metric_id = self.test_config.name + strip(query.description)
+
+        title = 'Avg. query latency (ms), {} {}, {}'
+        if with_index:
+            title = 'Avg. query latency (ms), {} {} with index, {}'
+
+        title = title.format(query.id, query.description, self._title)
 
         order_by = '{}_{:05d}_{}'.format(query.id[:2], int(query.id[2:]), self._order_by)
 

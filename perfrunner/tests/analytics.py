@@ -1,11 +1,15 @@
+import time
 from typing import List, Tuple
 
 from logger import logger
+from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
+from perfrunner.helpers.worker import tpcds_initial_data_load_task
 from perfrunner.tests import PerfTest
 from perfrunner.tests.rebalance import RebalanceTest
 from perfrunner.workloads.bigfun.driver import bigfun
 from perfrunner.workloads.bigfun.query_gen import Query
+from perfrunner.workloads.tpcdsfun.driver import tpcds
 
 
 class BigFunTest(PerfTest):
@@ -231,3 +235,240 @@ class BigFunRebalanceTest(BigFunTest, RebalanceTest):
 
         if self.is_balanced():
             self.report_kpi()
+
+
+class TPCDSTest(PerfTest):
+
+    TPCDS_DATASETS = [
+        "call_center",
+        "catalog_page",
+        "catalog_returns",
+        "catalog_sales",
+        "customer",
+        "customer_address",
+        "customer_demographics",
+        "date_dim",
+        "household_demographics",
+        "income_band",
+        "inventory",
+        "item",
+        "promotion",
+        "reason",
+        "ship_mode",
+        "store",
+        "store_returns",
+        "store_sales",
+        "time_dim",
+        "warehouse",
+        "web_page",
+        "web_returns",
+        "web_sales",
+        "web_site",
+    ]
+
+    TPCDS_INDEXES = [("c_customer_sk_idx",
+                      "customer(c_customer_sk:STRING)",
+                      "customer"),
+                     ("d_date_sk_idx",
+                      "date_dim(d_date_sk:STRING)",
+                      "date_dim"),
+                     ("d_date_idx",
+                      "date_dim(d_date:STRING)",
+                      "date_dim"),
+                     ("d_month_seq_idx",
+                      "date_dim(d_month_seq:BIGINT)",
+                      "date_dim"),
+                     ("d_year_idx",
+                      "date_dim(d_year:BIGINT)",
+                      "date_dim"),
+                     ("i_item_sk_idx",
+                      "item(i_item_sk:STRING)",
+                      "item"),
+                     ("s_state_idx",
+                      "store(s_state:STRING)",
+                      "store"),
+                     ("s_store_sk_idx",
+                      "store(s_store_sk:STRING)",
+                      "store"),
+                     ("sr_returned_date_sk_idx",
+                      "store_returns(sr_returned_date_sk:STRING)",
+                      "store_returns"),
+                     ("ss_sold_date_sk_idx",
+                      "store_sales(ss_sold_date_sk:STRING)",
+                      "store_sales")]
+
+    COLLECTORS = {'analytics': True}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.num_items = 0
+
+    def download_tpcds_couchbase_loader(self):
+        if self.worker_manager.is_remote:
+            self.remote.init_tpcds_couchbase_loader(
+                repo=self.test_config.tpcds_loader_settings.repo,
+                branch=self.test_config.tpcds_loader_settings.branch,
+                worker_home=self.worker_manager.WORKER_HOME)
+        else:
+            local.init_tpcds_couchbase_loader(
+                repo=self.test_config.tpcds_loader_settings.repo,
+                branch=self.test_config.tpcds_loader_settings.branch)
+
+    def set_max_active_writable_datasets(self):
+        self.rest.set_analytics_max_active_writable_datasets(self.analytics_nodes[0], 24)
+        self.rest.restart_analytics_cluster(self.analytics_nodes[0])
+        self.rest.validate_analytics_setting(self.analytics_nodes[0],
+                                             'storageMaxActiveWritableDatasets', 24)
+        time.sleep(5)
+
+    def load(self, *args, **kwargs):
+        PerfTest.load(self, task=tpcds_initial_data_load_task)
+
+    def create_datasets(self, bucket: str):
+        logger.info('Creating datasets')
+        for dataset in self.TPCDS_DATASETS:
+            statement = "CREATE DATASET `{}` ON `{}` WHERE table_name = '{}';" \
+                .format(dataset, bucket, dataset)
+            logger.info('Running: {}'.format(statement))
+            res = self.rest.exec_analytics_statement(
+                self.analytics_nodes[0], statement)
+            logger.info("Result: {}".format(str(res)))
+            time.sleep(5)
+
+    def create_indexes(self):
+        logger.info('Creating indexes')
+        for index in self.TPCDS_INDEXES:
+            statement = "CREATE INDEX {} ON {};".format(index[0], index[1])
+            logger.info('Running: {}'.format(statement))
+            res = self.rest.exec_analytics_statement(
+                self.analytics_nodes[0], statement)
+            logger.info("Result: {}".format(str(res)))
+            time.sleep(5)
+
+    def drop_indexes(self):
+        logger.info('Dropping indexes')
+        for index in self.TPCDS_INDEXES:
+            statement = "DROP INDEX {}.{};".format(index[2], index[0])
+            logger.info('Running: {}'.format(statement))
+            res = self.rest.exec_analytics_statement(
+                self.analytics_nodes[0], statement)
+            logger.info("Result: {}".format(str(res)))
+            time.sleep(5)
+
+    def connect_buckets(self):
+        logger.info('Connecting all buckets')
+        statement = "CONNECT link Local"
+        logger.info('Running: {}'.format(statement))
+        res = self.rest.exec_analytics_statement(
+            self.analytics_nodes[0], statement)
+        logger.info("Result: {}".format(str(res)))
+        time.sleep(5)
+
+    def create_primary_indexes(self):
+        logger.info('Creating primary indexes')
+        for dataset in self.TPCDS_DATASETS:
+            statement = "CREATE PRIMARY INDEX ON {};".format(dataset)
+            logger.info('Running: {}'.format(statement))
+            res = self.rest.exec_analytics_statement(
+                self.analytics_nodes[0], statement)
+            logger.info("Result: {}".format(str(res)))
+            time.sleep(5)
+
+    def drop_primary_indexes(self):
+        logger.info('Dropping primary indexes')
+        for dataset in self.TPCDS_DATASETS:
+            statement = "DROP INDEX {}.primary_idx_{};".format(dataset, dataset)
+            logger.info('Running: {}'.format(statement))
+            res = self.rest.exec_analytics_statement(
+                self.analytics_nodes[0], statement)
+            logger.info("Result: {}".format(str(res)))
+            time.sleep(5)
+
+    def sync(self):
+        for target in self.target_iterator:
+            self.create_datasets(target.bucket)
+        self.connect_buckets()
+        for target in self.target_iterator:
+            self.num_items += self.monitor.monitor_data_synced(target.node,
+                                                               target.bucket)
+
+    def run(self):
+        self.download_tpcds_couchbase_loader()
+        self.set_max_active_writable_datasets()
+        self.load()
+        self.wait_for_persistence()
+
+
+class TPCDSQueryTest(TPCDSTest):
+
+    COUNT_QUERIES = 'perfrunner/workloads/tpcdsfun/count_queries.json'
+    QUERIES = 'perfrunner/workloads/tpcdsfun/queries.json'
+
+    @with_stats
+    def access(self, *args, **kwargs) -> (List[Tuple[Query, int]], List[Tuple[Query, int]]):
+
+        logger.info('Running COUNT queries without primary key index')
+        results = tpcds(self.rest,
+                        nodes=self.analytics_nodes,
+                        concurrency=self.test_config.access_settings.workers,
+                        num_requests=int(self.test_config.access_settings.ops),
+                        query_set=self.COUNT_QUERIES)
+        count_without_index_results = [(query, latency) for query, latency in results]
+
+        self.create_primary_indexes()
+
+        logger.info('Running COUNT queries with primary key index')
+        results = tpcds(self.rest,
+                        nodes=self.analytics_nodes,
+                        concurrency=self.test_config.access_settings.workers,
+                        num_requests=int(self.test_config.access_settings.ops),
+                        query_set=self.COUNT_QUERIES)
+        count_with_index_results = [(query, latency) for query, latency in results]
+
+        self.drop_primary_indexes()
+
+        logger.info('Running queries without index')
+        results = tpcds(
+            self.rest,
+            nodes=self.analytics_nodes,
+            concurrency=self.test_config.access_settings.workers,
+            num_requests=int(self.test_config.access_settings.ops),
+            query_set=self.QUERIES)
+        without_index_results = [(query, latency) for query, latency in results]
+
+        self.create_indexes()
+
+        logger.info('Running queries with index')
+        results = tpcds(
+            self.rest,
+            nodes=self.analytics_nodes,
+            concurrency=self.test_config.access_settings.workers,
+            num_requests=int(self.test_config.access_settings.ops),
+            query_set=self.QUERIES)
+        with_index_results = [(query, latency) for query, latency in results]
+
+        return \
+            count_without_index_results, \
+            count_with_index_results, \
+            without_index_results, \
+            with_index_results
+
+    def _report_kpi(self, results: List[Tuple[Query, int]], with_index: bool):
+        for query, latency in results:
+            self.reporter.post(
+                *self.metrics.analytics_volume_latency(query, latency, with_index)
+            )
+
+    def run(self):
+        super().run()
+
+        self.sync()
+
+        count_results_no_index, count_results_with_index, results_no_index, \
+            results_with_index = self.access()
+
+        self.report_kpi(count_results_no_index, with_index=False)
+        self.report_kpi(count_results_with_index, with_index=True)
+        self.report_kpi(results_no_index, with_index=False)
+        self.report_kpi(results_with_index, with_index=True)

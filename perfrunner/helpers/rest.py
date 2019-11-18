@@ -778,6 +778,21 @@ class RestHelper:
             logger.warning('Unexpected request status code {}'.
                            format(r.status_code))
 
+    def set_analytics_max_active_writable_datasets(
+            self,
+            analytics_node: str,
+            max_writable: int):
+        logger.info('Setting max active writable datasets \"{}\" for analytics'
+                    .format(str(max_writable)))
+        api = 'http://{}:{}/analytics/config/service'.format(analytics_node, ANALYTICS_PORT)
+        data = {
+            'storageMaxActiveWritableDatasets': str(max_writable)
+        }
+        r = self.put(url=api, data=data)
+        if r.status_code not in (200, 202,):
+            logger.warning('Unexpected request status code {}'.
+                           format(r.status_code))
+
     def restart_analytics_cluster(self, analytics_node: str):
         logger.info('Restarting analytics cluster')
         api = 'http://{}:{}/analytics/cluster/restart'.format(analytics_node, ANALYTICS_PORT)

@@ -78,6 +78,15 @@ class Remote:
                 run(cmd)
 
     @all_clients
+    def init_tpcds_couchbase_loader(self, repo: str, branch: str, worker_home: str):
+        self.clone_git_repo(repo, branch, worker_home)
+        with cd(worker_home), \
+                cd('perfrunner'), \
+                cd("cbas-perf-support"), \
+                cd("tpcds-couchbase-loader"):
+            run('mvn install')
+
+    @all_clients
     def init_jts(self, repo: str, branch: str, worker_home: str, jts_home: str):
         self.clone_git_repo(repo, branch, worker_home)
         with cd(worker_home), cd('perfrunner'), cd(jts_home):

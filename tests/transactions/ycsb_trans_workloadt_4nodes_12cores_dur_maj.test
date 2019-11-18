@@ -35,3 +35,6 @@ kv_endpoints = 16
 
 [ycsb]
 branch = couchbase3-new-durability
+
+[stats]
+client_processes = java

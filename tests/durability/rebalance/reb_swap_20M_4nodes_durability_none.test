@@ -2,7 +2,7 @@
 test = perfrunner.tests.rebalance.RebalanceDurabilityTest
 
 [showfast]
-title = Rebalance-swap (min), 4 -> 4, 20M x 512B, Unlimited Ops (0/100 R/W), Durability None
+title = Latency during Rebalance-swap, 4 -> 4, 20M x 512B, Unlimited Ops (0/100 R/W), Durability None
 component = reb
 category = kv
 sub_category = Non-DGM

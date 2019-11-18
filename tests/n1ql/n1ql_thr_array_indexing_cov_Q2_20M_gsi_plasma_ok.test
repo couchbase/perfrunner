@@ -18,37 +18,28 @@ db_percentage = 100
 [bucket]
 replica_number = 0
 
-[secondary]
-indexer.settings.storage_mode = plasma
-indexer.settings.scan_timeout = 1200000
-queryport.client.readDeadline = 1200000
-
 [load]
 items = 200000
 size = 1024
 workers = 80
-array_size = 250
+array_size = 200
 doc_gen = array_indexing_unique
 
 [index]
 statements =
     CREATE INDEX cov_array_idx ON `bucket-1`(DISTINCT ARRAY i FOR i IN achievements1 END, achievements1);
 
-[n1ql]
-timeout = 1200000
-
 [access]
 creates = 0
 reads = 0
 updates = 100
 deletes = 0
-throughput = 30000
+throughput = 300
 items = 200000
 workers = 20
 time = 1200
 n1ql_queries = singleton-unique-lookup
-n1ql_workers = 240
-n1ql_timeout = 1200000
+n1ql_workers = 24
 
 [n1ql-singleton-unique-lookup]
 statement = SELECT meta().id, achievements1 FROM `bucket-1` WHERE ANY i IN achievements1 SATISFIES i = $1 END;

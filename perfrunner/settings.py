@@ -1078,6 +1078,18 @@ class MagmaBenchmarkSettings:
     def __str__(self) -> str:
         return str(self.__dict__)
 
+class TPCDSLoaderSettings:
+
+    REPO = 'git://github.com/couchbaselabs/cbas-perf-support.git'
+    BRANCH = 'master'
+
+    def __init__(self, options: dict):
+            self.repo = options.get('repo', self.REPO)
+        self.branch = options.get('branch', self.BRANCH)
+
+    def __str__(self) -> str:
+            return str(self.__dict__)
+
 
 class TestConfig(Config):
 
@@ -1296,6 +1308,11 @@ class TestConfig(Config):
     def magma_benchmark_settings(self) -> MagmaBenchmarkSettings:
         options = self._get_options_as_dict('magma_benchmark')
         return MagmaBenchmarkSettings(options)
+
+    @property
+    def tpcds_loader_settings(self) -> TPCDSLoaderSettings:
+        options = self._get_options_as_dict('TPCDSLoader')
+        return TPCDSLoaderSettings(options)
 
 
 class TargetSettings:

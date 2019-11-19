@@ -1084,7 +1084,7 @@ class TPCDSLoaderSettings:
     BRANCH = 'master'
 
     def __init__(self, options: dict):
-            self.repo = options.get('repo', self.REPO)
+        self.repo = options.get('repo', self.REPO)
         self.branch = options.get('branch', self.BRANCH)
 
     def __str__(self) -> str:

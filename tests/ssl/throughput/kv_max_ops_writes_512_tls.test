@@ -1,0 +1,26 @@
+[test_case]
+test = perfrunner.tests.kv.PillowFightTest
+
+[showfast]
+title = Max ops/sec, cbc-pillowfight, 2 nodes, 20/80 R/W, 512B JSON items, 1K batch size, TLS
+component = kv
+category = max_ops_ssl
+orderby = writes
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 2
+num_buckets = 1
+
+[load]
+size = 512
+items = 20000000
+workers = 50
+doc_gen = json
+
+[access]
+items = 20000000
+iterations = 40000
+workers = 50
+updates = 80
+ssl_mode = data

@@ -95,6 +95,12 @@ pipeline {
                         buildComponent('KV-DGM', testCases)
                     }
                 }
+                stage('KV-SSL') {
+                    when { expression { return params.SSL } }
+                    steps {
+                        buildComponent('KV-SSL', testCases)
+                    }
+                }
                 stage('N1QL') {
                     when { expression { return params.N1QL } }
                     steps {

@@ -1,0 +1,36 @@
+[test_case]
+test = perfrunner.tests.kv.PillowFightDurabilityTest
+
+[showfast]
+title = Max ops/sec, cbc-pillowfight, 4 nodes, 0/100 R/W, 512B JSON items, batch size = 1, Durability Majority Persist Active, TLS
+component = kv
+category = max_ops_ssl
+orderby = zc1
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+
+[bucket]
+replica_number = 2
+
+[load]
+size = 512
+items = 20000000
+workers = 128
+doc_gen = json
+durability = 0
+
+[access]
+batch_size = 1
+items = 20000000
+iterations = 100000
+workers = 128
+updates = 100
+durability = 2
+ssl_mode = data
+
+[clients]
+libcouchbase = 3.0.0-alpha.5
+python_client = 3.0.0-alpha.5

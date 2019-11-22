@@ -128,7 +128,13 @@ class MagmaBenchmarkTest(PerfTest):
 
 
 class KVTest(PerfTest):
+    COLLECTORS = {'disk': True, 'latency': True, 'net': False, 'kvstore': True}
     CB_STATS_PORT = 11209
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+        self.collect_per_server_stats = self.test_config.magma_settings.collect_per_server_stats
 
     def print_kvstore_stats(self):
         try:
@@ -153,30 +159,15 @@ class KVTest(PerfTest):
     def access(self, *args):
         super().access(*args)
 
-    def run(self):
-        self.load()
-        self.wait_for_persistence()
-        self.print_kvstore_stats()
+    @with_stats
+    def extra_access(self, access_settings):
+        logger.info("Starting first access phase")
+        self.COLLECTORS["latency"] = False
+        PerfTest.access(self, settings=access_settings)
+        self.COLLECTORS["latency"] = True
 
-        self.hot_load()
-        self.print_kvstore_stats()
-
-        self.reset_kv_stats()
-
-        self.access()
-        self.print_kvstore_stats()
-
-        self.report_kpi()
-
-
-class ReadLatencyDGMTest(KVTest):
-
-    COLLECTORS = {'disk': True, 'latency': True, 'net': False, 'kvstore': True}
-
-    def __init__(self, *args):
-        super().__init__(*args)
-
-        self.collect_per_server_stats = self.test_config.magma_settings.collect_per_server_stats
+    def run_extra_access(self):
+        pass
 
     @with_stats
     def custom_load(self, *args):
@@ -187,13 +178,47 @@ class ReadLatencyDGMTest(KVTest):
         self.custom_load()
         self.COLLECTORS["latency"] = True
 
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.print_kvstore_stats()
+
+        self.hot_load()
+
+        self.run_extra_access()
+        self.print_kvstore_stats()
+
+        self.reset_kv_stats()
+
+        self.access()
+        self.print_kvstore_stats()
+
+        self.report_kpi()
+
+
+class S0Test(KVTest):
+    def run_extra_access(self):
+        access_settings = self.test_config.access_settings
+        access_settings.updates = 100
+        access_settings.creates = 0
+        access_settings.deletes = 0
+        access_settings.reads = 0
+        access_settings.workers = 100
+        access_settings.ops = int(access_settings.items * 1.5)
+        access_settings.time = 3600 * 24
+        access_settings.throughput = float('inf')
+        self.extra_access(access_settings=access_settings)
+
+
+class ReadLatencyDGMTest(S0Test):
+
     def _report_kpi(self):
         self.reporter.post(
             *self.metrics.kv_latency(operation='get')
         )
 
 
-class ThroughputDGMMagmaTest(ReadLatencyDGMTest):
+class ThroughputDGMMagmaTest(S0Test):
 
     def _report_kpi(self):
         self.reporter.post(
@@ -201,7 +226,7 @@ class ThroughputDGMMagmaTest(ReadLatencyDGMTest):
         )
 
 
-class MixedLatencyDGMTest(ReadLatencyDGMTest):
+class MixedLatencyDGMTest(S0Test):
 
     def _report_kpi(self):
         for operation in ('get', 'set'):
@@ -210,7 +235,7 @@ class MixedLatencyDGMTest(ReadLatencyDGMTest):
             )
 
 
-class WriteLatencyDGMTest(ReadLatencyDGMTest):
+class WriteLatencyDGMTest(S0Test):
 
     def _report_kpi(self):
         self.reporter.post(
@@ -218,11 +243,9 @@ class WriteLatencyDGMTest(ReadLatencyDGMTest):
         )
 
 
-class ReadLatencyExtraAccessPhaseDGMTest(ReadLatencyDGMTest):
+class ReadLatencyS1DGMTest(ReadLatencyDGMTest):
 
-    @with_stats
-    def extra_access(self):
-        logger.info("Starting first access phase")
+    def run_extra_access(self):
         access_settings = self.test_config.access_settings
         access_settings.updates = 100
         access_settings.creates = 0
@@ -232,19 +255,4 @@ class ReadLatencyExtraAccessPhaseDGMTest(ReadLatencyDGMTest):
         access_settings.ops = access_settings.items
         access_settings.time = 3600 * 24
         access_settings.throughput = float('inf')
-        PerfTest.access(self, settings=access_settings)
-
-    def run(self):
-        self.load()
-        self.wait_for_persistence()
-        self.print_kvstore_stats()
-
-        self.extra_access()
-        self.print_kvstore_stats()
-
-        self.reset_kv_stats()
-
-        self.access()
-        self.print_kvstore_stats()
-
-        self.report_kpi()
+        self.extra_access(access_settings=access_settings)

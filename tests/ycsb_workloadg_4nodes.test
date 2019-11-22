@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.ycsb.YCSBThroughputHIDDTest
+test = perfrunner.tests.magma.YCSBThroughputHIDDTest
 
 [showfast]
 title = Avg Throughput (ops/sec), Workload G, 4 nodes
@@ -10,8 +10,6 @@ category = ycsb
 mem_quota = 102400
 initial_nodes = 4
 num_buckets = 1
-kernel_mem_limit = 128G
-kernel_mem_limit_services = kv
 
 [bucket]
 replica_number = 1

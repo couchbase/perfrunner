@@ -95,11 +95,6 @@ class YCSBThroughputTest(YCSBTest):
         )
 
 
-class YCSBThroughputHIDDTest(YCSBThroughputTest):
-
-    COLLECTORS = {'disk': True, 'net': False, 'kvstore': True}
-
-
 class YCSBDurabilityThroughputTest(YCSBTest):
 
     COLLECTORS = {'disk': True, 'net': True}

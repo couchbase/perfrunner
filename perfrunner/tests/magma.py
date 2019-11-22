@@ -1,11 +1,11 @@
 import json
 
-from fabric.api import local
-
 from logger import logger
 from perfrunner.helpers.cbmonitor import with_stats
+from perfrunner.helpers.local import extract_cb_deb, get_kvstore_stats
 from perfrunner.helpers.misc import pretty_dict, read_json
 from perfrunner.tests import PerfTest
+from perfrunner.tests.ycsb import YCSBThroughputTest
 
 
 class MagmaBenchmarkTest(PerfTest):
@@ -133,14 +133,13 @@ class KVTest(PerfTest):
 
     def __init__(self, *args):
         super().__init__(*args)
-
+        extract_cb_deb(filename='couchbase.deb')
         self.collect_per_server_stats = self.test_config.magma_settings.collect_per_server_stats
+        self.disk_stats = {}
 
     def print_kvstore_stats(self):
         try:
-            cmd = "./opt/couchbase/bin/cbstats -a {}:{} -u Administrator -p password kvstore -j" \
-                .format(self.master_node, self.CB_STATS_PORT)
-            result = local(cmd, capture=True)
+            result = get_kvstore_stats(self.master_node, self.CB_STATS_PORT, self.cluster_spec)
             buckets_data = list(filter(lambda a: a != "", result.split("*")))
             for data in buckets_data:
                 data = data.strip()
@@ -154,6 +153,55 @@ class KVTest(PerfTest):
                     break
         except Exception:
             pass
+
+    def get_disk_stats(self):
+        stats = {}
+        for server in self.cluster_spec.servers_by_role("kv"):
+            result = self.remote.get_disk_stats(server=server)
+            device = self.remote.get_device(server=server)
+            block_size = int(self.remote.get_device_block_size(server=server, device=device))
+            logger.info(result)
+            logger.info("Device:" + device)
+            device = device.split("/")[-1]
+
+            for device_data in result.split("\n"):
+                if device == device_data.split()[2]:
+                    values = device_data.split()
+                    stats[server] = {}
+                    stats[server]["nr"] = int(values[3])
+                    stats[server]["nrb"] = int(values[5]) * block_size
+                    stats[server]["nw"] = int(values[7])
+                    stats[server]["nwb"] = int(values[9]) * block_size
+                    break
+            else:
+                logger.info("Failed to get disk stats for {}".format(server))
+        return stats
+
+    def save_disk_stats(self):
+        self.disk_stats = self.get_disk_stats()
+
+    def print_amplifications(self, ops: int, doc_size: int):
+        now_stats = self.get_disk_stats()
+        logger.info("Saved stats: {}\nCurrent stats: {}".
+                    format(pretty_dict(self.disk_stats), pretty_dict(now_stats)))
+        if not bool(self.disk_stats) or not bool(now_stats):
+            logger.info("Either saved stats or current stats not present!")
+            return
+        ampl_stats = dict()
+        for server in self.cluster_spec.servers_by_role("kv"):
+            if (server not in now_stats.keys()) or (server not in self.disk_stats.keys()):
+                logger.info("Stats for {} not found!".format(server))
+                continue
+            ampl_stats["write_amp"] = \
+                (now_stats[server]["nwb"] - self.disk_stats[server]["nwb"]) / (ops * doc_size)
+            ampl_stats["write_io_per_set"] = \
+                (now_stats[server]["nw"] - self.disk_stats[server]["nw"]) / ops
+            ampl_stats["read_amp"] = \
+                (now_stats[server]["nr"] - self.disk_stats[server]["nr"]) / ops
+            ampl_stats["read_bytes_per_get"] = \
+                (now_stats[server]["nrb"] - self.disk_stats[server]["nrb"]) / ops
+            logger.info("Amplification stats for {}: {}".format(server, pretty_dict(ampl_stats)))
+        self.disk_stats = {}
 
     @with_stats
     def access(self, *args):
@@ -190,7 +238,10 @@ class KVTest(PerfTest):
 
         self.reset_kv_stats()
 
+        self.save_disk_stats()
         self.access()
+        self.print_amplifications(ops=self._measure_curr_ops(),
+                                  doc_size=self.test_config.access_settings.size)
         self.print_kvstore_stats()
 
         self.report_kpi()
@@ -256,3 +307,39 @@ class ReadLatencyS1DGMTest(ReadLatencyDGMTest):
         access_settings.time = 3600 * 24
         access_settings.throughput = float('inf')
         self.extra_access(access_settings=access_settings)
+
+
+class YCSBThroughputHIDDTest(YCSBThroughputTest, KVTest):
+
+    COLLECTORS = {'disk': True, 'net': True, 'kvstore': True}
+
+    def __init__(self, *args):
+        KVTest.__init__(self, *args)
+
+    def run(self):
+        if self.test_config.access_settings.ssl_mode == 'data':
+            self.download_certificate()
+            self.generate_keystore()
+        self.download_ycsb()
+
+        KVTest.save_disk_stats(self)
+        YCSBThroughputTest.load(self)
+        self.wait_for_persistence()
+        self.check_num_items()
+        KVTest.print_kvstore_stats(self)
+        self.print_amplifications(ops=self._measure_curr_ops(),
+                                  doc_size=self.test_config.access_settings.size)
+
+        self.reset_kv_stats()
+        KVTest.save_disk_stats(self)
+        if self.test_config.access_settings.cbcollect:
+            YCSBThroughputTest.access_bg(self)
+            self.collect_cb()
+        else:
+            YCSBThroughputTest.access(self)
+
+        KVTest.print_kvstore_stats(self)
+        self.print_amplifications(ops=self._measure_curr_ops(),
+                                  doc_size=self.test_config.access_settings.size)
+
+        self.report_kpi()

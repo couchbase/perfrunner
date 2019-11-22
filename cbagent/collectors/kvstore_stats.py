@@ -1,9 +1,7 @@
 import json
 
-from fabric.api import local
-
 from cbagent.collectors import Collector
-from perfrunner.helpers.local import extract_cb
+from perfrunner.helpers.local import extract_cb_deb, get_kvstore_stats
 
 
 class KVStoreStats(Collector):
@@ -49,15 +47,14 @@ class KVStoreStats(Collector):
 
     def __init__(self, settings, test):
         super().__init__(settings)
-        extract_cb(filename='couchbase.rpm')
+        extract_cb_deb(filename='couchbase.deb')
         self.collect_per_server_stats = test.collect_per_server_stats
+        self.cluster_spec = test.cluster_spec
 
     def _get_stats_from_server(self, bucket: str, server: str):
         stats = {}
         try:
-            cmd = "./opt/couchbase/bin/cbstats -a {}:{} -u Administrator -p password kvstore -j"\
-                .format(server, self.CB_STATS_PORT)
-            result = local(cmd, capture=True)
+            result = get_kvstore_stats(server, self.CB_STATS_PORT, self.cluster_spec)
             buckets_data = list(filter(lambda a: a != "", result.split("*")))
             for data in buckets_data:
                 data = data.strip()

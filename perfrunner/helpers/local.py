@@ -715,3 +715,9 @@ def run_java_dcp_client(connection_string: str, messages: int, config_file: str)
 
 def detect_ubuntu_release():
     return local('lsb_release -sr', capture=True).strip()
+
+
+def get_kvstore_stats(server: str, port: int, cluster_spec: ClusterSpec):
+    cmd = "./opt/couchbase/bin/cbstats -a {}:{} -u {} -p {} kvstore -j" \
+        .format(server, port, cluster_spec.rest_credentials[0], cluster_spec.rest_credentials[1])
+    return local(cmd, capture=True)

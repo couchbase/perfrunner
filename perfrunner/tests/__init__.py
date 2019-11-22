@@ -320,3 +320,14 @@ class PerfTest:
 
     def _report_kpi(self, *args, **kwargs):
         pass
+
+    def _measure_curr_ops(self) -> int:
+        ops = 0
+        for bucket in self.test_config.buckets:
+            for server in self.rest.get_active_nodes_by_role(self.master_node, "kv"):
+                port = self.rest.get_memcached_port(server)
+
+                stats = self.memcached.get_stats(server, port, bucket)
+                for stat in b'cmd_get', b'cmd_set':
+                    ops += int(stats[stat])
+        return ops

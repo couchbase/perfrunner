@@ -507,3 +507,24 @@ class RemoteLinux(Remote):
         stdout = run(cmd)
         logger.info(stdout)
         get('{}'.format(stats_file), local_path="./")
+
+    def get_disk_stats(self, server: str):
+        logger.info("Getting disk stats for {}".format(server))
+        stats = ""
+        with settings(host_string=server):
+            stats = run("cat /proc/diskstats")
+        return stats
+
+    def get_device(self, server: str):
+        logger.info("Getting device for {}".format(server))
+        device = ""
+        with settings(host_string=server):
+            device = run("realpath $(df -P /data | awk 'END{print $1}')")
+        return device
+
+    def get_device_block_size(self, server: str, device: str):
+        logger.info("Getting device block size for {} {}".format(server, device))
+        block_size = 0
+        with settings(host_string=server):
+            block_size = run("blockdev --getbsz {}".format(device))
+        return block_size

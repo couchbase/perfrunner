@@ -436,17 +436,6 @@ class KeyFraggerFrozenTest(PathoGenTest):
 
 class ThroughputTest(KVTest):
 
-    def _measure_curr_ops(self) -> int:
-        ops = 0
-        for bucket in self.test_config.buckets:
-            for server in self.cluster_spec.servers:
-                port = self.rest.get_memcached_port(server)
-
-                stats = self.memcached.get_stats(server, port, bucket)
-                for stat in b'cmd_get', b'cmd_set':
-                    ops += int(stats[stat])
-        return ops
-
     def _report_kpi(self):
         total_ops = self._measure_curr_ops()
 

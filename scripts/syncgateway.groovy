@@ -1,10 +1,10 @@
 currentBuild.description = params.version
 
-def testCases = null
+def testCases = [:]
 
-def buildTests(tests, job_name) {
+def buildTests(tests) {
     for ( test in tests ) {
-        build job: job_name, propagate: false, parameters: [
+        build job: test['job'], propagate: false, parameters: [
             string(name: 'sg_build', value: params.version),
             string(name: 'cb_build', value: test['cb_build']),
             string(name: 'sg_cluster_map', value: test['sg_cluster_map']),
@@ -15,9 +15,9 @@ def buildTests(tests, job_name) {
     }
 }
 
-def buildTestsImport(tests, job_name) {
+def buildTestsImport(tests) {
     for ( test in tests ) {
-        build job: job_name, propagate: false, parameters: [
+        build job: test['job'], propagate: false, parameters: [
             string(name: 'sg_build', value: params.version),
             string(name: 'cb_build', value: test['cb_build']),
             string(name: 'test_type', value: test['test_type']),
@@ -28,44 +28,77 @@ def buildTestsImport(tests, job_name) {
     }
 }
 
+
+def buildComponent(component, testCases) {
+    for ( release in ['cobalt', 'mercury'] ) {
+        if ( testCases.containsKey(release) ) {
+            buildTests(testCases[release][component])
+        }
+    }
+}
+
+def buildComponentImport(component, testCases) {
+    for ( release in ['cobalt', 'mercury'] ) {
+        if ( testCases.containsKey(release) ) {
+            buildTestsImport(testCases[release][component])
+        }
+    }
+}
+
+
 pipeline {
     agent {label 'master'}
     stages {
         stage('Setup') {
             steps {
                 script {
-                    testCases = readJSON file: params.test_suite
+                    if ( params.cobalt_test_suite != '' ) {
+                        testCases['cobalt'] = readJSON file: params.cobalt_test_suite
+                    }
+                    if ( params.mercury_test_suite != '' ) {
+                        testCases['mercury']  = readJSON file: params.mercury_test_suite
+                    }
                 }
             }
         }
-        stage('Read') {
-            steps {
-                buildTests(testCases['Read'], 'syncgteway-hebe-new')
-            }
-        }
-        stage('Write') {
-            steps {
-                buildTests(testCases['Write'], 'syncgteway-hebe-new')
-            }
-        }
-        stage('Sync') {
-            steps {
-                buildTests(testCases['Sync'], 'syncgteway-hebe-new')
-            }
-        }
-        stage('Query') {
-            steps {
-                buildTests(testCases['Query'], 'syncgteway-hebe-new')
-            }
-        }
-        stage('Import') {
-            steps {
-                buildTestsImport(testCases['Import'], 'hebe_sg_import')
-            }
-        }
-        stage('Replicate') {
-            steps {
-                buildTests(testCases['Replicate'], 'syncgteway-hebe')
+        stage('Weekly') {
+            parallel {
+                stage('Read') {
+                    when { expression { return params.Read } }
+                    steps {
+                        buildComponent('Read', testCases)
+                    }
+                }
+                stage('Write') {
+                    when { expression { return params.Write } }
+                    steps {
+                        buildComponent('Write', testCases)
+                    }
+                }
+                stage('Sync') {
+                    when { expression { return params.Sync } }
+                    steps {
+                        buildComponent('Sync', testCases)
+                    }
+                }
+                stage('Query') {
+                    when { expression { return params.Query } }
+                    steps {
+                        buildComponent('Query', testCases)
+                    }
+                }
+                stage('Replicate') {
+                    when { expression { return params.Replicate } }
+                    steps {
+                        buildComponent('Replicate', testCases)
+                    }
+                }
+                stage('Import') {
+                    when { expression { return params.Import } }
+                    steps {
+                        buildComponentImport('Import', testCases)
+                    }
+                }
             }
         }
     }

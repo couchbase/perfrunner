@@ -1078,6 +1078,7 @@ class MagmaBenchmarkSettings:
     def __str__(self) -> str:
         return str(self.__dict__)
 
+
 class TPCDSLoaderSettings:
 
     REPO = 'git://github.com/couchbaselabs/cbas-perf-support.git'

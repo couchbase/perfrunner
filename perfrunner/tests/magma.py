@@ -1,8 +1,8 @@
 import json
-from logger import logger
 
 from fabric.api import local
 
+from logger import logger
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import pretty_dict, read_json
 from perfrunner.tests import PerfTest

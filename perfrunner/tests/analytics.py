@@ -398,6 +398,7 @@ class TPCDSTest(PerfTest):
         self.set_max_active_writable_datasets()
         self.load()
         self.wait_for_persistence()
+        self.compact_bucket()
 
 
 class TPCDSQueryTest(TPCDSTest):

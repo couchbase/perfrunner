@@ -20,6 +20,7 @@ num_io_devices = 6
 
 [bucket]
 eviction_policy = fullEviction
+replica_number = 0
 
 [load]
 workload_instances = 20

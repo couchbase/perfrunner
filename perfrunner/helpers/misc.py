@@ -76,11 +76,16 @@ def read_json(filename: str) -> dict:
         return json.load(fh)
 
 
-def maybe_atoi(a: str, t=int) -> Union[int, float, str]:
-    try:
-        return t(a)
-    except ValueError:
-        return a
+def maybe_atoi(a: str, t=int) -> Union[int, float, str, bool]:
+    if a.lower() == 'false':
+        return False
+    elif a.lower() == 'true':
+        return True
+    else:
+        try:
+            return t(a)
+        except ValueError:
+            return a
 
 
 def human_format(number: float) -> str:

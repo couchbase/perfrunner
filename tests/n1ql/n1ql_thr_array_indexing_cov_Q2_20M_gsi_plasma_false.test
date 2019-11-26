@@ -39,10 +39,10 @@ updates = 100
 deletes = 0
 throughput = 300
 items = 200000
-workers = 4
+workers = 20
 time = 1200
 n1ql_queries = singleton-unique-lookup
-n1ql_workers = 72
+n1ql_workers = 720
 
 [n1ql-singleton-unique-lookup]
 statement = SELECT meta().id, achievements1 FROM `bucket-1` WHERE ANY i IN achievements1 SATISFIES i = $1 END;

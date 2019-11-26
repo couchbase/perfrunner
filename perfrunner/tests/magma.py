@@ -29,14 +29,14 @@ class MagmaBenchmarkTest(PerfTest):
               "--kvstore {NUM_KVSTORES} --ndocs {NUM_DOCS} " \
               "--batch-size {WRITE_BATCHSIZE} --keylen {KEY_LEN} --vallen {DOC_SIZE} " \
               "--nwrites {NUM_WRITES} --nreads {NUM_READS} --nreaders {NUM_READERS} " \
-              "--wcache-size {WRITECACHE_SIZE} --fs-cache-size {FS_CACHE_SIZE} " \
+              "--memquota {MEM_QUOTA} --fs-cache-size {FS_CACHE_SIZE} " \
               "--engine {ENGINE} --engine-config {ENGINE_CONFIG} --stats {STATS_FILE}"\
             .format(NUM_KVSTORES=self.settings.num_kvstores, NUM_DOCS=self.settings.num_docs,
                     WRITE_BATCHSIZE=self.settings.write_batchsize, KEY_LEN=self.settings.key_len,
                     DOC_SIZE=self.settings.doc_size,
                     NUM_WRITES=(self.settings.num_writes * write_multiplier),
                     NUM_READS=self.settings.num_reads, NUM_READERS=self.settings.num_readers,
-                    WRITECACHE_SIZE=self.settings.writecache_size,
+                    MEM_QUOTA=self.settings.memquota,
                     FS_CACHE_SIZE=self.settings.fs_cache_size, DATA_DIR=self.settings.data_dir,
                     ENGINE=self.settings.engine, ENGINE_CONFIG=self.settings.engine_config,
                     STATS_FILE=self.stats_file)

@@ -1,4 +1,7 @@
 import json
+from typing import Callable
+
+from decorator import decorator
 
 from logger import logger
 from perfrunner.helpers.cbmonitor import with_stats
@@ -6,6 +9,18 @@ from perfrunner.helpers.local import extract_cb_deb, get_kvstore_stats
 from perfrunner.helpers.misc import pretty_dict, read_json
 from perfrunner.tests import PerfTest
 from perfrunner.tests.ycsb import YCSBThroughputTest
+
+
+@decorator
+def with_console_stats(method: Callable, *args, **kwargs):
+    """Execute the decorated function to print disk amplification stats and kvstore stats."""
+    helper = args[0]
+    helper.reset_kv_stats()
+    helper.save_disk_stats()
+    method(*args, **kwargs)
+    helper.print_amplifications(ops=helper._measure_curr_ops(),
+                                doc_size=helper.test_config.access_settings.size)
+    helper.print_kvstore_stats()
 
 
 class MagmaBenchmarkTest(PerfTest):
@@ -149,7 +164,11 @@ class KVTest(PerfTest):
                     data = data.replace("}\"", "}")
                     data = data.replace("\\", "")
                     data = json.loads(data)
-                    logger.info("kvstore stats: {}".format(pretty_dict(data)))
+                    stats = {}
+                    for key, value in data.items():
+                        if key.startswith(("rw_0:", "rw_1:", "rw_2:", "rw_3:")):
+                            stats[key] = value
+                    logger.info("kvstore stats for first 4 shards: {}".format(pretty_dict(stats)))
                     break
         except Exception:
             pass
@@ -203,6 +222,7 @@ class KVTest(PerfTest):
             logger.info("Amplification stats for {}: {}".format(server, pretty_dict(ampl_stats)))
         self.disk_stats = {}
 
+    @with_console_stats
     @with_stats
     def access(self, *args):
         super().access(*args)
@@ -221,33 +241,28 @@ class KVTest(PerfTest):
     def custom_load(self, *args):
         super().load(*args)
 
+    @with_console_stats
     def load(self, *args):
         self.COLLECTORS["latency"] = False
         self.custom_load()
+        self.wait_for_persistence()
         self.COLLECTORS["latency"] = True
 
     def run(self):
         self.load()
-        self.wait_for_persistence()
-        self.print_kvstore_stats()
-
-        self.hot_load()
 
         self.run_extra_access()
-        self.print_kvstore_stats()
 
+        self.hot_load()
         self.reset_kv_stats()
 
-        self.save_disk_stats()
         self.access()
-        self.print_amplifications(ops=self._measure_curr_ops(),
-                                  doc_size=self.test_config.access_settings.size)
-        self.print_kvstore_stats()
 
         self.report_kpi()
 
 
 class S0Test(KVTest):
+    @with_console_stats
     def run_extra_access(self):
         access_settings = self.test_config.access_settings
         access_settings.updates = 100
@@ -295,7 +310,7 @@ class WriteLatencyDGMTest(S0Test):
 
 
 class ReadLatencyS1DGMTest(ReadLatencyDGMTest):
-
+    @with_console_stats
     def run_extra_access(self):
         access_settings = self.test_config.access_settings
         access_settings.updates = 100
@@ -326,9 +341,9 @@ class YCSBThroughputHIDDTest(YCSBThroughputTest, KVTest):
         YCSBThroughputTest.load(self)
         self.wait_for_persistence()
         self.check_num_items()
-        KVTest.print_kvstore_stats(self)
         self.print_amplifications(ops=self._measure_curr_ops(),
                                   doc_size=self.test_config.access_settings.size)
+        KVTest.print_kvstore_stats(self)
 
         self.reset_kv_stats()
         KVTest.save_disk_stats(self)
@@ -338,8 +353,8 @@ class YCSBThroughputHIDDTest(YCSBThroughputTest, KVTest):
         else:
             YCSBThroughputTest.access(self)
 
-        KVTest.print_kvstore_stats(self)
         self.print_amplifications(ops=self._measure_curr_ops(),
                                   doc_size=self.test_config.access_settings.size)
+        KVTest.print_kvstore_stats(self)
 
         self.report_kpi()

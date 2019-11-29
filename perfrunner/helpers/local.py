@@ -406,6 +406,10 @@ def run_ycsb(host: str,
              persist_to: int,
              replicate_to: int,
              num_atrs: int,
+             documentsintransaction: int,
+             transactionreadproportion: str,
+             transactionupdateproportion: str,
+             transactioninsertproportion: str,
              ssl_keystore_file: str ='',
              ssl_keystore_password: str = '',
              ssl_mode: str = 'none',
@@ -468,7 +472,11 @@ def run_ycsb(host: str,
 
     if transactionsenabled:
         cmd += ' -p couchbase.transactionsEnabled=true '
-        cmd += ' -p couchbase.atrs={num_atrs}'
+        cmd += ' -p couchbase.atrs={num_atrs} '
+        cmd += ' -p documentsintransaction={documentsintransaction} '
+        cmd += ' -p transactionreadproportion={transactionreadproportion} '
+        cmd += ' -p transactionupdateproportion={transactionupdateproportion} '
+        cmd += ' -p transactioninsertproportion={transactioninsertproportion} '
 
     if ycsb_jvm_args is not None:
         cmd += ' -jvm-args=\'{ycsb_jvm_args}\' '
@@ -484,6 +492,10 @@ def run_ycsb(host: str,
                      target=target,
                      execution_time=execution_time,
                      epoll=epoll,
+                     documentsintransaction=documentsintransaction,
+                     transactionreadproportion=transactionreadproportion,
+                     transactionupdateproportion=transactionupdateproportion,
+                     transactioninsertproportion=transactioninsertproportion,
                      boost=boost,
                      persist_to=persist_to,
                      replicate_to=replicate_to,

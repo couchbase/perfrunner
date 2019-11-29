@@ -479,6 +479,11 @@ class PhaseSettings:
 
     TPCDS_SCALE_FACTOR = 1
 
+    DOCUMENTSINTRANSACTION = 4
+    TRANSACTIONREADPROPORTION = 0.25
+    TRANSACTIONUPDATEPROPORTION = 0.75
+    TRANSACTIONINSERTPROPORTION = 0
+
     def __init__(self, options: dict):
         # Common settings
         self.time = int(options.get('time', self.TIME))
@@ -583,7 +588,18 @@ class PhaseSettings:
         self.enable_mutation_token = options.get('enable_mutation_token',
                                                  self.YCSB_ENABLE_MUTATION_TOKEN)
         self.ycsb_client = options.get('ycsb_client', self.YCSB_CLIENT)
-        self.transactionsenabled = int(options.get('transactionsenabled', self.TRANSACTIONSENABLED))
+
+        # trasnsaction settings
+        self.transactionsenabled = int(options.get('transactionsenabled',
+                                                   self.TRANSACTIONSENABLED))
+        self.documentsintransaction = int(options.get('documentsintransaction',
+                                                      self.DOCUMENTSINTRANSACTION))
+        self.transactionreadproportion = options.get('transactionreadproportion',
+                                                     self.TRANSACTIONREADPROPORTION)
+        self.transactionupdateproportion = options.get('transactionupdateproportion',
+                                                       self.TRANSACTIONUPDATEPROPORTION)
+        self.transactioninsertproportion = options.get('transactioninsertproportion',
+                                                       self.TRANSACTIONINSERTPROPORTION)
 
         # multiple of 1024
         self.num_atrs = int(options.get('num_atrs', self.NUM_ATRS))

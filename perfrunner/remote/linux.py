@@ -522,9 +522,9 @@ class RemoteLinux(Remote):
             device = run("realpath $(df -P /data | awk 'END{print $1}')")
         return device
 
-    def get_device_block_size(self, server: str, device: str):
-        logger.info("Getting device block size for {} {}".format(server, device))
-        block_size = 0
+    def get_device_sector_size(self, server: str, device: str):
+        logger.info("Getting device sector size for {} {}".format(server, device))
+        sector_size = 0
         with settings(host_string=server):
-            block_size = run("blockdev --getbsz {}".format(device))
-        return block_size
+            sector_size = run("blockdev --getss {}".format(device))
+        return sector_size

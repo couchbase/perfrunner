@@ -178,7 +178,7 @@ class KVTest(PerfTest):
         for server in self.cluster_spec.servers_by_role("kv"):
             result = self.remote.get_disk_stats(server=server)
             device = self.remote.get_device(server=server)
-            block_size = int(self.remote.get_device_block_size(server=server, device=device))
+            sector_size = int(self.remote.get_device_sector_size(server=server, device=device))
             logger.info(result)
             logger.info("Device:" + device)
             device = device.split("/")[-1]
@@ -188,9 +188,9 @@ class KVTest(PerfTest):
                     values = device_data.split()
                     stats[server] = {}
                     stats[server]["nr"] = int(values[3])
-                    stats[server]["nrb"] = int(values[5]) * block_size
+                    stats[server]["nrb"] = int(values[5]) * sector_size
                     stats[server]["nw"] = int(values[7])
-                    stats[server]["nwb"] = int(values[9]) * block_size
+                    stats[server]["nwb"] = int(values[9]) * sector_size
                     break
             else:
                 logger.info("Failed to get disk stats for {}".format(server))

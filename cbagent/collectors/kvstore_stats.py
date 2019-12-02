@@ -65,6 +65,8 @@ class KVStoreStats(Collector):
                     data = data.replace("\\", "")
                     data = json.loads(data)
                     for (shard, metrics) in data.items():
+                        if not shard.endswith(":magma"):
+                            continue
                         for metric in self.METRICS_ACROSS_SHARDS:
                             if metric in metrics.keys():
                                 if metric in stats:

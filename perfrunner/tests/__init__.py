@@ -331,3 +331,18 @@ class PerfTest:
                 for stat in b'cmd_get', b'cmd_set':
                     ops += int(stats[stat])
         return ops
+
+    def _measure_disk_ops(self):
+        ret_stats = dict()
+        for bucket in self.test_config.buckets:
+            for server in self.rest.get_active_nodes_by_role(self.master_node, "kv"):
+                ret_stats[server] = dict()
+                port = self.rest.get_memcached_port(server)
+
+                stats = self.memcached.get_stats(server, port, bucket)
+                ret_stats[server]["get_ops"] = int(stats[b'ep_bg_fetched'])
+                sets = int(stats[b'vb_active_ops_create']) + int(stats[b'vb_replica_ops_create'])
+                + int(stats[b'vb_pending_ops_create']) + int(stats[b'vb_active_ops_update'])
+                + int(stats[b'vb_replica_ops_update']) + int(stats[b'vb_pending_ops_update'])
+                ret_stats[server]["set_ops"] = sets
+        return ret_stats

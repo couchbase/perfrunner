@@ -18,7 +18,7 @@ def with_console_stats(method: Callable, *args, **kwargs):
     helper.reset_kv_stats()
     helper.save_disk_stats()
     method(*args, **kwargs)
-    helper.print_amplifications(ops=helper._measure_curr_ops(),
+    helper.print_amplifications(ops=helper._measure_disk_ops(),
                                 doc_size=helper.test_config.access_settings.size)
     helper.print_kvstore_stats()
 
@@ -199,27 +199,39 @@ class KVTest(PerfTest):
     def save_disk_stats(self):
         self.disk_stats = self.get_disk_stats()
 
-    def print_amplifications(self, ops: int, doc_size: int):
+    def print_amplifications(self, ops: dict, doc_size: int):
         now_stats = self.get_disk_stats()
+        logger.info("Ops: {}".format(pretty_dict(ops)))
         logger.info("Saved stats: {}\nCurrent stats: {}".
                     format(pretty_dict(self.disk_stats), pretty_dict(now_stats)))
         if not bool(self.disk_stats) or not bool(now_stats):
             logger.info("Either saved stats or current stats not present!")
             return
         ampl_stats = dict()
-        for server in self.cluster_spec.servers_by_role("kv"):
+        for server in self.rest.get_active_nodes_by_role(self.master_node, "kv"):
             if (server not in now_stats.keys()) or (server not in self.disk_stats.keys()):
                 logger.info("Stats for {} not found!".format(server))
                 continue
-            ampl_stats["write_amp"] = \
-                (now_stats[server]["nwb"] - self.disk_stats[server]["nwb"]) / (ops * doc_size)
-            ampl_stats["write_io_per_set"] = \
-                (now_stats[server]["nw"] - self.disk_stats[server]["nw"]) / ops
-            ampl_stats["read_amp"] = \
-                (now_stats[server]["nr"] - self.disk_stats[server]["nr"]) / ops
-            ampl_stats["read_bytes_per_get"] = \
-                (now_stats[server]["nrb"] - self.disk_stats[server]["nrb"]) / ops
+            get_ops, set_ops = ops[server]["get_ops"], ops[server]["set_ops"]
+            if set_ops:
+                ampl_stats["write_amp"] = \
+                    (now_stats[server]["nwb"] - self.disk_stats[server]["nwb"]) / \
+                    (set_ops * doc_size)
+                ampl_stats["write_io_per_set"] = \
+                    (now_stats[server]["nw"] - self.disk_stats[server]["nw"]) / set_ops
+                ampl_stats["read_bytes_per_set"] = \
+                    (now_stats[server]["nrb"] - self.disk_stats[server]["nrb"]) / set_ops
+                ampl_stats["read_io_per_set"] = \
+                    (now_stats[server]["nr"] - self.disk_stats[server]["nr"]) / set_ops
+            if get_ops:
+                ampl_stats["read_amp"] = \
+                    (now_stats[server]["nr"] - self.disk_stats[server]["nr"]) / get_ops
+                ampl_stats["read_bytes_per_get"] = \
+                    (now_stats[server]["nrb"] - self.disk_stats[server]["nrb"]) / get_ops
+
             logger.info("Amplification stats for {}: {}".format(server, pretty_dict(ampl_stats)))
+            logger.info("Note: read_bytes_per_set and read_io_per_set are "
+                        "valid for set only workload.")
         self.disk_stats = {}
 
     @with_console_stats
@@ -331,19 +343,23 @@ class YCSBThroughputHIDDTest(YCSBThroughputTest, KVTest):
     def __init__(self, *args):
         KVTest.__init__(self, *args)
 
+    @with_stats
+    def custom_load(self):
+        KVTest.save_disk_stats(self)
+        YCSBThroughputTest.load(self)
+        self.wait_for_persistence()
+        self.check_num_items()
+        self.print_amplifications(ops=self._measure_disk_ops(),
+                                  doc_size=self.test_config.access_settings.size)
+        KVTest.print_kvstore_stats(self)
+
     def run(self):
         if self.test_config.access_settings.ssl_mode == 'data':
             self.download_certificate()
             self.generate_keystore()
         self.download_ycsb()
 
-        KVTest.save_disk_stats(self)
-        YCSBThroughputTest.load(self)
-        self.wait_for_persistence()
-        self.check_num_items()
-        self.print_amplifications(ops=self._measure_curr_ops(),
-                                  doc_size=self.test_config.access_settings.size)
-        KVTest.print_kvstore_stats(self)
+        self.custom_load()
 
         self.reset_kv_stats()
         KVTest.save_disk_stats(self)
@@ -353,7 +369,7 @@ class YCSBThroughputHIDDTest(YCSBThroughputTest, KVTest):
         else:
             YCSBThroughputTest.access(self)
 
-        self.print_amplifications(ops=self._measure_curr_ops(),
+        self.print_amplifications(ops=self._measure_disk_ops(),
                                   doc_size=self.test_config.access_settings.size)
         KVTest.print_kvstore_stats(self)
 

@@ -31,5 +31,5 @@ reads = 0
 updates = 0
 deletes = 0
 items = 250000000
-workers = 80
+workers = 40
 time = 3600

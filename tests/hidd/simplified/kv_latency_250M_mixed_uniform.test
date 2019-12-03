@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.MixedLatencyDGMTest
 
 [showfast]
-title = Throughput, Workload S0.6, 2 nodes, 250M x 1KB, 20K ops/sec (33/34/33 C/R/W), Uniform distribution
+title = Latency, Workload S0.6, 2 nodes, 250M x 1KB, 20K ops/sec (33/34/33 C/R/W), Uniform distribution
 component = kv
 category = hidd
 sub_category = S0
@@ -31,6 +31,6 @@ reads = 34
 updates = 33
 deletes = 0
 items = 250000000
-workers = 80
+workers = 40
 throughput = 20000
 time = 3600

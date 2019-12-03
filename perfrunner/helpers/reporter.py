@@ -7,6 +7,7 @@ import requests
 
 from logger import logger
 from perfrunner.helpers.misc import pretty_dict, uhex
+from perfrunner.helpers.rest import RestHelper
 from perfrunner.settings import SHOWFAST_HOST, ClusterSpec, TestConfig
 
 JSON = Dict[str, Any]
@@ -21,6 +22,8 @@ class Reporter:
         self.cluster_spec = cluster_spec
         self.test_config = test_config
         self.build = build + test_config.showfast.build_label
+        self.master_node = next(self.cluster_spec.masters)
+        self.rest = RestHelper(cluster_spec)
 
 
 class ShowFastReporter(Reporter):
@@ -55,6 +58,10 @@ class ShowFastReporter(Reporter):
         if self.test_config.sdktesting_settings.enable_sdktest:
             self.sdk_version = self.test_config.ycsb_settings.sdk_version
             self.build = self.sdk_version + ' : ' + self.build
+
+        if self.test_config.access_settings.ssl_mode == 'data':
+            self.build = self.rest.get_minimum_tls_version(self.master_node) + ' : ' + self.build
+            logger.info('build: {}'.format(self.build))
 
         return {
             'build': self.build,

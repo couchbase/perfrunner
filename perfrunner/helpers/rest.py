@@ -894,3 +894,8 @@ class RestHelper:
         api = 'http://{}:8091/settings/clientCertAuth'.format(node)
         data = open('./certificates/inbox/config.json', 'rb').read()
         self.post(url=api, data=data)
+
+    def get_minimum_tls_version(self, node: str):
+        logger.info("Getting TLS version of {}".format(node))
+        api = 'http://{}:8091/settings/security'.format(node)
+        return self.get(url=api).json()['tlsMinVersion']

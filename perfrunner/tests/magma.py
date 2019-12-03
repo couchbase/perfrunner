@@ -18,8 +18,7 @@ def with_console_stats(method: Callable, *args, **kwargs):
     helper.reset_kv_stats()
     helper.save_disk_stats()
     method(*args, **kwargs)
-    helper.print_amplifications(ops=helper._measure_disk_ops(),
-                                doc_size=helper.test_config.access_settings.size)
+    helper.print_amplifications(doc_size=helper.test_config.access_settings.size)
     helper.print_kvstore_stats()
 
 
@@ -151,6 +150,7 @@ class KVTest(PerfTest):
         extract_cb_deb(filename='couchbase.deb')
         self.collect_per_server_stats = self.test_config.magma_settings.collect_per_server_stats
         self.disk_stats = {}
+        self.disk_ops = {}
 
     def print_kvstore_stats(self):
         try:
@@ -198,10 +198,13 @@ class KVTest(PerfTest):
 
     def save_disk_stats(self):
         self.disk_stats = self.get_disk_stats()
+        self.disk_ops = self._measure_disk_ops()
 
-    def print_amplifications(self, ops: dict, doc_size: int):
+    def print_amplifications(self, doc_size: int):
         now_stats = self.get_disk_stats()
-        logger.info("Ops: {}".format(pretty_dict(ops)))
+        now_ops = self._measure_disk_ops()
+        logger.info("Saved ops: {}\nCurrent ops: {}".
+                    format(pretty_dict(self.disk_ops), pretty_dict(now_ops)))
         logger.info("Saved stats: {}\nCurrent stats: {}".
                     format(pretty_dict(self.disk_stats), pretty_dict(now_stats)))
         if not bool(self.disk_stats) or not bool(now_stats):
@@ -212,7 +215,8 @@ class KVTest(PerfTest):
             if (server not in now_stats.keys()) or (server not in self.disk_stats.keys()):
                 logger.info("Stats for {} not found!".format(server))
                 continue
-            get_ops, set_ops = ops[server]["get_ops"], ops[server]["set_ops"]
+            get_ops = now_ops[server]["get_ops"] - self.disk_ops[server]["get_ops"]
+            set_ops = now_ops[server]["set_ops"] - self.disk_ops[server]["set_ops"]
             if set_ops:
                 ampl_stats["write_amp"] = \
                     (now_stats[server]["nwb"] - self.disk_stats[server]["nwb"]) / \
@@ -350,8 +354,7 @@ class YCSBThroughputHIDDTest(YCSBThroughputTest, KVTest):
         YCSBThroughputTest.load(self)
         self.wait_for_persistence()
         self.check_num_items()
-        self.print_amplifications(ops=self._measure_disk_ops(),
-                                  doc_size=self.test_config.access_settings.size)
+        self.print_amplifications(doc_size=self.test_config.access_settings.size)
         KVTest.print_kvstore_stats(self)
 
     def run(self):
@@ -370,8 +373,7 @@ class YCSBThroughputHIDDTest(YCSBThroughputTest, KVTest):
         else:
             YCSBThroughputTest.access(self)
 
-        self.print_amplifications(ops=self._measure_disk_ops(),
-                                  doc_size=self.test_config.access_settings.size)
+        self.print_amplifications(doc_size=self.test_config.access_settings.size)
         KVTest.print_kvstore_stats(self)
 
         self.report_kpi()

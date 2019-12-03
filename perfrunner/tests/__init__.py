@@ -341,8 +341,12 @@ class PerfTest:
 
                 stats = self.memcached.get_stats(server, port, bucket)
                 ret_stats[server]["get_ops"] = int(stats[b'ep_bg_fetched'])
-                sets = int(stats[b'vb_active_ops_create']) + int(stats[b'vb_replica_ops_create'])
-                + int(stats[b'vb_pending_ops_create']) + int(stats[b'vb_active_ops_update'])
-                + int(stats[b'vb_replica_ops_update']) + int(stats[b'vb_pending_ops_update'])
+                sets = \
+                    int(stats[b'vb_active_ops_create']) \
+                    + int(stats[b'vb_replica_ops_create']) \
+                    + int(stats[b'vb_pending_ops_create']) \
+                    + int(stats[b'vb_active_ops_update']) \
+                    + int(stats[b'vb_replica_ops_update']) \
+                    + int(stats[b'vb_pending_ops_update'])
                 ret_stats[server]["set_ops"] = sets
         return ret_stats

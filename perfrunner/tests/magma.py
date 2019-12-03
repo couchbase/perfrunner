@@ -5,7 +5,7 @@ from decorator import decorator
 
 from logger import logger
 from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.helpers.local import extract_cb_deb, get_kvstore_stats
+from perfrunner.helpers.local import extract_cb_deb, get_cbstats
 from perfrunner.helpers.misc import pretty_dict, read_json
 from perfrunner.tests import PerfTest
 from perfrunner.tests.ycsb import YCSBThroughputTest
@@ -154,7 +154,7 @@ class KVTest(PerfTest):
 
     def print_kvstore_stats(self):
         try:
-            result = get_kvstore_stats(self.master_node, self.CB_STATS_PORT, self.cluster_spec)
+            result = get_cbstats(self.master_node, self.CB_STATS_PORT, "kvstore", self.cluster_spec)
             buckets_data = list(filter(lambda a: a != "", result.split("*")))
             for data in buckets_data:
                 data = data.strip()

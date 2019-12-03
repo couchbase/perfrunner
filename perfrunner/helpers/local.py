@@ -729,7 +729,8 @@ def detect_ubuntu_release():
     return local('lsb_release -sr', capture=True).strip()
 
 
-def get_kvstore_stats(server: str, port: int, cluster_spec: ClusterSpec):
-    cmd = "./opt/couchbase/bin/cbstats -a {}:{} -u {} -p {} kvstore -j" \
-        .format(server, port, cluster_spec.rest_credentials[0], cluster_spec.rest_credentials[1])
+def get_cbstats(server: str, port: int, command: str, cluster_spec: ClusterSpec):
+    cmd = "./opt/couchbase/bin/cbstats -a {}:{} -u {} -p {} {} -j" \
+        .format(server, port, cluster_spec.rest_credentials[0],
+                cluster_spec.rest_credentials[1], command)
     return local(cmd, capture=True)

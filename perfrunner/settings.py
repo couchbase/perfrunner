@@ -456,6 +456,8 @@ class PhaseSettings:
     SSL_DATA_KEYSTORE = "certificates/data.keystore"
     SSL_KEYSTOREPASS = "storepass"
     SHOW_TLS_VERSION = False
+    CIPHER_LIST = None
+    MIN_TLS_VERSION = None
 
     PERSIST_TO = 0
     REPLICATE_TO = 0
@@ -630,6 +632,12 @@ class PhaseSettings:
         else:
             self.ssl_keystore_file = self.SSL_DATA_KEYSTORE
         self.show_tls_version = options.get('show_tls_version', self.SHOW_TLS_VERSION)
+        self.cipher_list = options.get('cipher_list', self.CIPHER_LIST)
+        if self.cipher_list:
+            self.cipher_list = self.cipher_list.split(',')
+
+        self.min_tls_version = options.get('min_tls_version',
+                                           self.MIN_TLS_VERSION)
 
         # Durability settings
         self.persist_to = int(options.get('persist_to',

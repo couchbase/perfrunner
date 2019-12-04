@@ -70,6 +70,8 @@ def main():
     cm.set_index_settings()
     cm.set_query_settings()
     cm.set_x509_certificates()
+    cm.set_cipher_suite()
+    cm.set_min_tls_version()
     cm.wait_until_healthy()
     cm.wait_until_warmed_up()
 

@@ -435,3 +435,23 @@ class ClusterManager:
             for host in self.cluster_spec.servers:
                 self.rest.reload_cluster_certificate(host)
                 self.rest.enable_certificate_auth(host)
+
+    def set_cipher_suite(self):
+        if self.test_config.access_settings.cipher_list:
+            check_cipher_suit = self.rest.get_cipher_suite(self.master_node)
+            logger.info('current cipher suit: {}'.format(check_cipher_suit))
+            self.rest.set_cipher_suite(
+                self.master_node, self.test_config.access_settings.cipher_list)
+            check_cipher_suit = self.rest.get_cipher_suite(self.master_node)
+            logger.info('new cipher suit: {}'.format(check_cipher_suit))
+
+    def set_min_tls_version(self):
+        if self.test_config.access_settings.min_tls_version:
+            check_tls_version = self.rest.get_minimum_tls_version(self.master_node)
+            logger.info('current tls version: {}'.format(check_tls_version))
+            self.rest.set_minimum_tls_version(
+                self.master_node,
+                self.test_config.access_settings.min_tls_version
+            )
+            check_tls_version = self.rest.get_minimum_tls_version(self.master_node)
+            logger.info('new tls version: {}'.format(check_tls_version))

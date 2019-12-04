@@ -917,3 +917,24 @@ class RestHelper:
             'num_writer_threads': thread
         }
         self.post(url=api, data=data)
+
+    def get_cipher_suite(self, node: str):
+        logger.info("Getting cipher suites of {}".format(node))
+        api = 'http://{}:8091/settings/security'.format(node)
+        return self.get(url=api).json()['cipherSuites']
+
+    def set_cipher_suite(self, node: str, cipher_list: list):
+        logger.info("Setting cipher list of {}".format(cipher_list))
+        api = 'http://{}:8091/settings/security'.format(node)
+        data = {
+            'cipherSuites': json.dumps(cipher_list)
+        }
+        self.post(url=api, data=data)
+
+    def set_minimum_tls_version(self, node: str, tls_version: str):
+        logger.info("Setting minimum TLS version of {}".format(tls_version))
+        api = 'http://{}:8091/settings/security'.format(node)
+        data = {
+            'tlsMinVersion': tls_version
+        }
+        self.post(url=api, data=data)

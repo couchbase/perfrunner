@@ -2,7 +2,7 @@
 test = perfrunner.tests.ycsb.YCSBLatencyTest
 
 [showfast]
-title = Latency(ms), Workload T, 4 nodes, Persist_to_Majority, 12 vCPU
+title = Latency(ms), Workload T, 4 nodes, Persist_Majority, 12 vCPU
 component = kv
 category = transaction
 sub_category = Latency
@@ -24,10 +24,10 @@ workload_path = workloads/workloadta
 ycsb_client = couchbase3
 items = 20000000
 ops = 1000000000
-time = 900
+time = 600
 boost = 12
-workers = 96
-workload_instances = 6
+workers = 1
+workload_instances = 1
 transactionsenabled = 1
 num_atrs = 20480
 durability = 3

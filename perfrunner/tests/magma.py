@@ -16,7 +16,7 @@ def with_console_stats(method: Callable, *args, **kwargs):
     """Execute the decorated function to print disk amplification stats and kvstore stats."""
     helper = args[0]
     helper.reset_kv_stats()
-    helper.save_disk_stats()
+    helper.save_stats()
     method(*args, **kwargs)
     helper.print_amplifications(doc_size=helper.test_config.access_settings.size)
     helper.print_kvstore_stats()
@@ -150,6 +150,7 @@ class KVTest(PerfTest):
         extract_cb_deb(filename='couchbase.deb')
         self.collect_per_server_stats = self.test_config.magma_settings.collect_per_server_stats
         self.disk_stats = {}
+        self.memcached_stats = {}
         self.disk_ops = {}
 
     def print_kvstore_stats(self):
@@ -196,47 +197,74 @@ class KVTest(PerfTest):
                 logger.info("Failed to get disk stats for {}".format(server))
         return stats
 
-    def save_disk_stats(self):
+    def get_memcached_stats(self):
+        stats = dict()
+        for server in self.rest.get_active_nodes_by_role(self.master_node, "kv"):
+            stats[server] = dict()
+            temp_stats = dict()
+            cmd_op = self.remote.get_memcached_io_stats(server=server)
+            for line in cmd_op.split("\n"):
+                values = line.split(":")
+                temp_stats[values[0]] = int(values[1].strip())
+            stats[server]["nw"] = temp_stats["syscw"]
+            stats[server]["nwb"] = temp_stats["wchar"]
+            stats[server]["nr"] = temp_stats["syscr"]
+            stats[server]["nrb"] = temp_stats["rchar"]
+
+        return stats
+
+    def save_stats(self):
         self.disk_stats = self.get_disk_stats()
         self.disk_ops = self._measure_disk_ops()
+        self.memcached_stats = self.get_memcached_stats()
 
-    def print_amplifications(self, doc_size: int):
-        now_stats = self.get_disk_stats()
-        now_ops = self._measure_disk_ops()
-        logger.info("Saved ops: {}\nCurrent ops: {}".
-                    format(pretty_dict(self.disk_ops), pretty_dict(now_ops)))
-        logger.info("Saved stats: {}\nCurrent stats: {}".
-                    format(pretty_dict(self.disk_stats), pretty_dict(now_stats)))
-        if not bool(self.disk_stats) or not bool(now_stats):
-            logger.info("Either saved stats or current stats not present!")
-            return
+    def _print_amplifications(self, old_stats, now_stats, now_ops, doc_size, stat_type):
         ampl_stats = dict()
         for server in self.rest.get_active_nodes_by_role(self.master_node, "kv"):
-            if (server not in now_stats.keys()) or (server not in self.disk_stats.keys()):
-                logger.info("Stats for {} not found!".format(server))
+            if (server not in now_stats.keys()) or (server not in old_stats.keys()):
+                logger.info("{} stats for {} not found!".format(stat_type, server))
                 continue
             get_ops = now_ops[server]["get_ops"] - self.disk_ops[server]["get_ops"]
             set_ops = now_ops[server]["set_ops"] - self.disk_ops[server]["set_ops"]
             if set_ops:
                 ampl_stats["write_amp"] = \
-                    (now_stats[server]["nwb"] - self.disk_stats[server]["nwb"]) / \
+                    (now_stats[server]["nwb"] - old_stats[server]["nwb"]) / \
                     (set_ops * doc_size)
                 ampl_stats["write_io_per_set"] = \
-                    (now_stats[server]["nw"] - self.disk_stats[server]["nw"]) / set_ops
+                    (now_stats[server]["nw"] - old_stats[server]["nw"]) / set_ops
                 ampl_stats["read_bytes_per_set"] = \
-                    (now_stats[server]["nrb"] - self.disk_stats[server]["nrb"]) / set_ops
+                    (now_stats[server]["nrb"] - old_stats[server]["nrb"]) / set_ops
                 ampl_stats["read_io_per_set"] = \
-                    (now_stats[server]["nr"] - self.disk_stats[server]["nr"]) / set_ops
+                    (now_stats[server]["nr"] - old_stats[server]["nr"]) / set_ops
             if get_ops:
                 ampl_stats["read_amp"] = \
-                    (now_stats[server]["nr"] - self.disk_stats[server]["nr"]) / get_ops
+                    (now_stats[server]["nr"] - old_stats[server]["nr"]) / get_ops
                 ampl_stats["read_bytes_per_get"] = \
-                    (now_stats[server]["nrb"] - self.disk_stats[server]["nrb"]) / get_ops
+                    (now_stats[server]["nrb"] - old_stats[server]["nrb"]) / get_ops
 
-            logger.info("Amplification stats for {}: {}".format(server, pretty_dict(ampl_stats)))
+            logger.info("{} Amplification stats for {}: {}".format(stat_type, server,
+                                                                   pretty_dict(ampl_stats)))
             logger.info("Note: read_bytes_per_set and read_io_per_set are "
                         "valid for set only workload.")
-        self.disk_stats = {}
+
+    def print_amplifications(self, doc_size: int):
+        now_ops = self._measure_disk_ops()
+        logger.info("Saved ops: {}\nCurrent ops: {}".
+                    format(pretty_dict(self.disk_ops), pretty_dict(now_ops)))
+
+        now_disk_stats = self.get_disk_stats()
+        logger.info("Saved disk stats: {}\nCurrent disk stats: {}".
+                    format(pretty_dict(self.disk_stats), pretty_dict(now_disk_stats)))
+
+        self._print_amplifications(old_stats=self.disk_stats, now_stats=now_disk_stats,
+                                   now_ops=now_ops, doc_size=doc_size, stat_type="Actual")
+
+        now_memcached_ops = self.get_memcached_stats()
+        logger.info("Saved memcached stats: {}\nCurrent memcached stats: {}".
+                    format(pretty_dict(self.memcached_stats), pretty_dict(now_memcached_ops)))
+
+        self._print_amplifications(old_stats=self.memcached_stats, now_stats=now_memcached_ops,
+                                   now_ops=now_ops, doc_size=doc_size, stat_type="Virtual")
 
     @with_console_stats
     @with_stats
@@ -350,7 +378,7 @@ class YCSBThroughputHIDDTest(YCSBThroughputTest, KVTest):
 
     @with_stats
     def custom_load(self):
-        KVTest.save_disk_stats(self)
+        KVTest.save_stats(self)
         YCSBThroughputTest.load(self)
         self.wait_for_persistence()
         self.check_num_items()
@@ -366,7 +394,7 @@ class YCSBThroughputHIDDTest(YCSBThroughputTest, KVTest):
         self.custom_load()
 
         self.reset_kv_stats()
-        KVTest.save_disk_stats(self)
+        KVTest.save_stats(self)
         if self.test_config.access_settings.cbcollect:
             YCSBThroughputTest.access_bg(self)
             self.collect_cb()

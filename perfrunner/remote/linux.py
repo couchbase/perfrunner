@@ -528,3 +528,10 @@ class RemoteLinux(Remote):
         with settings(host_string=server):
             sector_size = run("blockdev --getss {}".format(device))
         return sector_size
+
+    def get_memcached_io_stats(self, server: str):
+        logger.info("Getting memcached stats for {}".format(server))
+        stats = ""
+        with settings(host_string=server):
+            stats = run("cat /proc/`pidof memcached`/io")
+        return stats

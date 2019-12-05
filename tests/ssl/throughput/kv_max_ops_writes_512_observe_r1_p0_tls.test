@@ -34,5 +34,5 @@ ssl_mode = data
 show_tls_version = true
 
 [clients]
-libcouchbase = 3.0.0-beta.2
-python_client = 3.0.0-beta.2
+libcouchbase = 3.0.0
+python_client = 3.0.0-beta.3

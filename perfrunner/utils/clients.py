@@ -63,6 +63,25 @@ LIBCOUCHBASE_PACKAGES = [{"version": "3.0.0-alpha.5",
                                "libcouchbase3-libev_3.0.0~beta.2-1_amd64.deb "
                                "libcouchbase3-tools_3.0.0~beta.2-1_amd64.deb "
                                "libcouchbase-dev_3.0.0~beta.2-1_amd64.deb"]},
+                         {"version": "3.0.0",
+                          "os": "ubuntu",
+                          "package": "libcouchbase-3.0.0_ubuntu1604_xenial_amd64",
+                          "package_path": "libcouchbase-3.0.0_ubuntu1604_xenial_amd64",
+                          "format": "tar",
+                          "install_cmds":
+                              ["grep -qxF "
+                               "'deb http://us.archive.ubuntu.com/ubuntu/ bionic main restricted' "
+                               "/etc/apt/sources.list || echo "
+                               "'deb http://us.archive.ubuntu.com/ubuntu/ bionic main restricted' "
+                               ">> /etc/apt/sources.list",
+                               "sudo apt-get update -y",
+                               "sudo apt-get install libevent-core-2.1 libev4 -y ",
+                               "sudo dpkg -i libcouchbase3_3.0.0-1_amd64.deb "
+                               "libcouchbase3-libevent_3.0.0-1_amd64.deb "
+                               "libcouchbase-dbg_3.0.0-1_amd64.deb "
+                               "libcouchbase3-libev_3.0.0-1_amd64.deb "
+                               "libcouchbase3-tools_3.0.0-1_amd64.deb "
+                               "libcouchbase-dev_3.0.0-1_amd64.deb"]},
                          {"version": "2.10.4",
                           "os": "ubuntu",
                           "package": "libcouchbase-2.10.4_ubuntu1604_amd64",

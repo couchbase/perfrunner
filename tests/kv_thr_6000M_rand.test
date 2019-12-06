@@ -1,0 +1,33 @@
+[test_case]
+test = perfrunner.tests.kv.ThroughputTest
+
+[showfast]
+title = Max ops/sec, 4 nodes, R & U, 1 bucket x 6B x 1KB, full ejection, random access
+component = kv
+category = dgm
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+
+[bucket]
+eviction_policy = fullEviction
+
+[load]
+items = 6000000000
+size = 1024
+workers = 80
+key_fmtr = hex
+doc_gen = large
+
+[access]
+creates = 0
+reads = 0
+updates = 0
+deletes = 0
+reads_and_updates = 100
+workers = 40
+items = 6000000000
+time = 3600
+async = 1

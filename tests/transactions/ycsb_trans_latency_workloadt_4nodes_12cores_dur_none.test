@@ -6,6 +6,7 @@ title = Latency(ms), Workload T, 4 nodes, Durability None, 12 vCPU
 component = kv
 category = transaction
 sub_category = Latency
+orderby = a1
 
 [cluster]
 mem_quota = 40960

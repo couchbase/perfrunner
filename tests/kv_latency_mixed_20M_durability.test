@@ -5,6 +5,7 @@ test = perfrunner.tests.kv.DurabilityTest
 title = latency (ms), 4 nodes, 1 bucket x 20M x 1KB, 10K ops/sec
 component = kv
 category = latency
+orderby = z1
 
 [cluster]
 mem_quota = 40960

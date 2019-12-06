@@ -1,12 +1,12 @@
 [test_case]
-test = perfrunner.tests.ycsb.YCSBThroughputTest
+test = perfrunner.tests.ycsb.YCSBLatencyTest
 
 [showfast]
-title = Avg Throughput (trans/sec), Workload T, 4 nodes, Majority_Persist_Active, 48 vCPU
+title = Latency(ms), Workload T, 4 nodes, Persist_Majority, 48 vCPU
 component = kv
 category = transaction
-sub_category = Throughput
-orderby = c1
+sub_category = Latency
+orderby = d1
 
 [cluster]
 mem_quota = 40960
@@ -25,14 +25,15 @@ workload_path = workloads/workloadta
 ycsb_client = couchbase3
 items = 20000000
 ops = 1000000000
-time = 900
+time = 600
 boost = 12
-workers = 384
-workload_instances = 6
+workers = 1
+workload_instances = 1
 transactionsenabled = 1
 num_atrs = 20480
-durability = 2
+durability = 3
 kv_endpoints = 16
+timeseries = 1
 
 [ycsb]
 branch = couchbase3-new-durability

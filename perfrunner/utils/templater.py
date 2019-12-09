@@ -23,7 +23,9 @@ MEMORY_QUOTAS = {
     'r4.8xlarge':  209920,  # 244GB RAM
 
     'i3.8xlarge':  [209920, '32vCPU', '4 x 1900 NVMe SSD', 'RHEL 7.3'],   # 244GB RAM
-    'i3.4xlarge':  [102400, '16vCPU', '2 x 1.9 NVMe SSD', 'RHEL 7.3']     # 122 GB RAM
+    'i3.4xlarge':  [102400, '16vCPU', '2 x 1.9 NVMe SSD', 'RHEL 7.3'],  # 122 GB RAM
+
+    'i3en.3xlarge': [40960, '12vCPU', '1 x 7500 NVMe SSD', 'RHEL 7.1']
 }
 
 OUTPUT_FILE = 'custom'

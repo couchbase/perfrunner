@@ -1006,6 +1006,7 @@ class YCSBSettings:
     BRANCH = 'master'
     SDK_VERSION = None
     LATENCY_PERCENTILES = [98]
+    AVERAGE_LATENCY = 0
 
     def __init__(self, options: dict):
         self.repo = options.get('repo', self.REPO)
@@ -1014,6 +1015,7 @@ class YCSBSettings:
         self.latency_percentiles = options.get('latency_percentiles', self.LATENCY_PERCENTILES)
         if isinstance(self.latency_percentiles, str):
             self.latency_percentiles = [int(x) for x in self.latency_percentiles.split(',')]
+        self.average_latency = int(options.get('average_latency', self.AVERAGE_LATENCY))
 
     def __str__(self) -> str:
         return str(self.__dict__)

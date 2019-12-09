@@ -27,3 +27,7 @@ boost = 12
 workers = 96
 timeseries = 1
 workload_instances = 6
+
+[ycsb]
+latency_percentiles = 99
+average_latency = 1

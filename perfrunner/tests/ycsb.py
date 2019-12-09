@@ -169,6 +169,18 @@ class YCSBLatencyTest(YCSBTest):
                         *self.metrics.ycsb_latency(key, latency_dic[key])
                     )
 
+        if self.test_config.ycsb_settings.average_latency == 1:
+            latency_dic = self.metrics.ycsb_get_latency(
+                percentile=99)
+
+            for key, value in latency_dic.items():
+                if "Average" in key \
+                        and "CLEANUP" not in key \
+                        and "FAILED" not in key:
+                    self.reporter.post(
+                        *self.metrics.ycsb_latency(key, latency_dic[key])
+                    )
+
 
 class YCSBSOETest(YCSBThroughputTest, N1QLTest):
 

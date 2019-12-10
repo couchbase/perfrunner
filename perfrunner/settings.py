@@ -304,6 +304,7 @@ class BucketSettings:
     REPLICA_INDEX = 0
     EVICTION_POLICY = 'valueOnly'  # alt: fullEviction
     BUCKET_TYPE = 'membase'  # alt: ephemeral
+    AUTOFAILOVER_ENABLED = 'true'
     FAILOVER_MIN = 5
     FAILOVER_MAX = 30
 
@@ -323,6 +324,11 @@ class BucketSettings:
         self.conflict_resolution_type = options.get('conflict_resolution_type')
 
         self.compression_mode = options.get('compression_mode')
+
+        if options.get('autofailover_enabled', self.AUTOFAILOVER_ENABLED).lower() == "false":
+            self.autofailover_enabled = 'false'
+        else:
+            self.autofailover_enabled = 'true'
 
         self.failover_min = int(options.get('failover_min', self.FAILOVER_MIN))
 

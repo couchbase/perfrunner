@@ -483,14 +483,16 @@ class RestHelper:
         api = 'http://{}:8091/diag/eval'.format(host)
         self.post(url=api, data=cmd)
 
-    def enable_auto_failover(self, host: str, failover_min: int, failover_max: int):
+    def set_auto_failover(self, host: str, enabled: str,
+                          failover_min: int, failover_max: int):
         logger.info('Enabling auto-failover with the minimum timeout')
 
         api = 'http://{}:8091/settings/autoFailover'.format(host)
+
         for timeout in failover_min, failover_max:
-            data = {'enabled': 'true',
+            data = {'enabled': enabled,
                     'timeout': timeout,
-                    'failoverOnDataDiskIssues[enabled]': 'true',
+                    'failoverOnDataDiskIssues[enabled]': enabled,
                     'failoverOnDataDiskIssues[timePeriod]': 10
                     }
             r = self._post(url=api, data=data)

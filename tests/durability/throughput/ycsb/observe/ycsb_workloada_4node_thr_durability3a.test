@@ -36,7 +36,7 @@ workers = 128
 workload_instances = 4
 ycsb_client = couchbase3
 enable_mutation_token = true
-kv_endpoints = 128
+kv_endpoints = 8
 
 [ycsb]
 branch = couchbase3-new-durability

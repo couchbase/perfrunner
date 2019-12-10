@@ -36,7 +36,7 @@ workers = 128
 workload_instances = 1
 ycsb_client = couchbase3
 enable_mutation_token = true
-kv_endpoints = 128
+kv_endpoints = 32
 timeseries = 1
 
 [ycsb]

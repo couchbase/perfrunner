@@ -24,3 +24,4 @@ iterations = 40000
 workers = 50
 updates = 50
 ssl_mode = data
+show_tls_version = true

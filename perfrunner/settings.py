@@ -449,6 +449,7 @@ class PhaseSettings:
     SSL_AUTH_KEYSTORE = "certificates/auth.keystore"
     SSL_DATA_KEYSTORE = "certificates/data.keystore"
     SSL_KEYSTOREPASS = "storepass"
+    SHOW_TLS_VERSION = False
 
     PERSIST_TO = 0
     REPLICATE_TO = 0
@@ -615,6 +616,7 @@ class PhaseSettings:
             self.ssl_keystore_file = self.SSL_AUTH_KEYSTORE
         else:
             self.ssl_keystore_file = self.SSL_DATA_KEYSTORE
+        self.show_tls_version = options.get('show_tls_version', self.SHOW_TLS_VERSION)
 
         # Durability settings
         self.persist_to = int(options.get('persist_to',

@@ -59,7 +59,7 @@ class ShowFastReporter(Reporter):
             self.sdk_version = self.test_config.ycsb_settings.sdk_version
             self.build = self.sdk_version + ' : ' + self.build
 
-        if self.test_config.access_settings.ssl_mode == 'data':
+        if self.test_config.access_settings.show_tls_version:
             self.build = self.rest.get_minimum_tls_version(self.master_node) + ' : ' + self.build
             logger.info('build: {}'.format(self.build))
 

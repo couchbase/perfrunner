@@ -21,6 +21,7 @@ num_io_devices = 6
 [bucket]
 eviction_policy = fullEviction
 replica_number = 0
+autofailover_enabled = false
 
 [load]
 workload_instances = 20

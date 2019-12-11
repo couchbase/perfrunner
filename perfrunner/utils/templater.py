@@ -22,10 +22,12 @@ MEMORY_QUOTAS = {
     'r4.4xlarge':  102400,  # 122GB RAM
     'r4.8xlarge':  209920,  # 244GB RAM
 
-    'i3.8xlarge':  [209920, '32vCPU', '4 x 1900 NVMe SSD', 'RHEL 7.3'],   # 244GB RAM
-    'i3.4xlarge':  [102400, '16vCPU', '2 x 1.9 NVMe SSD', 'RHEL 7.3'],  # 122 GB RAM
+    'i3.8xlarge':  [209920, '32vCPU', '4 x 1900 NVMe SSD', 'RHEL 7.3', 249856],   # 244GB RAM
+    'i3.4xlarge':  [102400, '16vCPU', '2 x 1.9 NVMe SSD', 'RHEL 7.3', 124928],  # 122 GB RAM
 
-    'i3en.3xlarge': [40960, '12vCPU', '1 x 7500 NVMe SSD', 'RHEL 7.1']
+    'i3en.3xlarge': [81920, '12vCPU', '1 x 7500 NVMe SSD', 'RHEL 7.1', 98304],  # 96GB RAM
+
+    'c5d.12xlarge': [81920, '48vCPU', '1 x 1800 NVMe SSD', 'RHEL 7.1', 98304]  # 96GB RAM
 }
 
 OUTPUT_FILE = 'custom'
@@ -79,7 +81,7 @@ def render_spec(template: str, instance: str):
         meta = yaml.load(fp)
         clients = meta.get('clients', {}).values()
         servers = meta.get('servers', {}).values()
-    mem_quota = MEMORY_QUOTAS[instance][0]/1024
+    mem_quota = MEMORY_QUOTAS[instance][4]/1024
     cpu_info = MEMORY_QUOTAS[instance][1]
     storage_info = MEMORY_QUOTAS[instance][2]
     os_info = MEMORY_QUOTAS[instance][3]

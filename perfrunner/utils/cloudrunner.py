@@ -133,7 +133,8 @@ def get_args():
                                  'r4.8xlarge',
                                  'i3.8xlarge',
                                  'i3.4xlarge',
-                                 'i3en.3xlarge'])
+                                 'i3en.3xlarge',
+                                 'c5d.12xlarge'])
     parser.add_argument('action',
                         choices=['launch', 'terminate'])
 

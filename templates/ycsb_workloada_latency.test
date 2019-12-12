@@ -19,3 +19,7 @@ workload_path = workloads/workloada
 ops = 1000000000
 workers = {{ workers }}
 workload_instances = {{ workload_instances }}
+
+[ycsb]
+latency_percentiles = 99
+average_latency = 1

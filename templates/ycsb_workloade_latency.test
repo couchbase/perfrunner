@@ -36,3 +36,7 @@ ops = 1000000000
 workers = {{ workers }}
 workload_instances = {{ workload_instances }}
 timeseries = 1
+
+[ycsb]
+latency_percentiles = 99
+average_latency = 1

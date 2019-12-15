@@ -491,6 +491,8 @@ class PhaseSettings:
     TRANSACTIONUPDATEPROPORTION = 0.75
     TRANSACTIONINSERTPROPORTION = 0
 
+    REQUESTDISTRIBUTION = 'zipfian'
+
     def __init__(self, options: dict):
         # Common settings
         self.time = int(options.get('time', self.TIME))
@@ -607,6 +609,8 @@ class PhaseSettings:
                                                        self.TRANSACTIONUPDATEPROPORTION)
         self.transactioninsertproportion = options.get('transactioninsertproportion',
                                                        self.TRANSACTIONINSERTPROPORTION)
+        self.requestdistribution = options.get('requestdistribution',
+                                               self.REQUESTDISTRIBUTION)
 
         # multiple of 1024
         self.num_atrs = int(options.get('num_atrs', self.NUM_ATRS))

@@ -39,6 +39,7 @@ def ycsb_data_load(workload_settings: PhaseSettings,
              transactionreadproportion=workload_settings.transactionreadproportion,
              transactionupdateproportion=workload_settings.transactionupdateproportion,
              transactioninsertproportion=workload_settings.transactioninsertproportion,
+             requestdistribution=workload_settings.requestdistribution,
              num_atrs=workload_settings.num_atrs,
              ycsb_jvm_args=workload_settings.ycsb_jvm_args)
 
@@ -90,5 +91,6 @@ def ycsb_workload(workload_settings: PhaseSettings,
              transactionreadproportion=workload_settings.transactionreadproportion,
              transactionupdateproportion=workload_settings.transactionupdateproportion,
              transactioninsertproportion=workload_settings.transactioninsertproportion,
+             requestdistribution=workload_settings.requestdistribution,
              num_atrs=workload_settings.num_atrs,
              ycsb_jvm_args=workload_settings.ycsb_jvm_args)

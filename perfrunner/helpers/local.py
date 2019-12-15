@@ -410,6 +410,7 @@ def run_ycsb(host: str,
              transactionreadproportion: str,
              transactionupdateproportion: str,
              transactioninsertproportion: str,
+             requestdistribution: str,
              ssl_keystore_file: str ='',
              ssl_keystore_password: str = '',
              ssl_mode: str = 'none',
@@ -438,6 +439,7 @@ def run_ycsb(host: str,
           '-p target={target} ' \
           '-p fieldlength={fieldlength} ' \
           '-p fieldcount={fieldcount} ' \
+          '-p requestdistribution={requestdistribution} ' \
           '-p couchbase.host={host} ' \
           '-p couchbase.bucket={bucket} ' \
           '-p couchbase.upsert=true ' \
@@ -496,6 +498,7 @@ def run_ycsb(host: str,
                      transactionreadproportion=transactionreadproportion,
                      transactionupdateproportion=transactionupdateproportion,
                      transactioninsertproportion=transactioninsertproportion,
+                     requestdistribution=requestdistribution,
                      boost=boost,
                      persist_to=persist_to,
                      replicate_to=replicate_to,

@@ -1,0 +1,10 @@
+{
+    "KV": [
+        {"cluster": "triton_kv.spec", "test_config": "kv/dcp_max_throughput_250M.test"},
+        {"cluster": "triton_kv.spec", "test_config": "kv/kv_max_ops_mixed.test"},
+        {"cluster": "triton_kv.spec", "test_config": "kv/kv_max_ops_reads.test"},
+        {"cluster": "triton_kv.spec", "test_config": "kv/kv_max_ops_writes.test"},
+        {"cluster": "triton_kv.spec", "test_config": "kv/kv_max_ops_mixed_ephemeral.test"},
+        {"cluster": "triton_kv.spec", "test_config": "kv/reb_in_100M.test"}
+    ]
+}

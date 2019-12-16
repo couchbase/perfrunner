@@ -17,7 +17,6 @@ RELEASES = {
     'vulcan': '5.5.6',
     'alice': '6.0.4',
     'mad-hatter': '6.5.0',
-    'mad-hatter-651': '6.5.1',
     'cheshire-cat': '7.0.0'
 }
 
@@ -44,8 +43,7 @@ def build_exists(release: str, build: str) -> bool:
     return r.status_code == 200
 
 
-def rpm_package_exists(release: str, build: str) -> bool:
-    semver = RELEASES[release]
+def rpm_package_exists(release: str, build: str, semver: str) -> bool:
     package = 'couchbase-server-enterprise-{semver}-{build}-centos7.x86_64.rpm'\
         .format(semver=semver, build=build)
     url = '{}/{release}/{build}/{package}'.format(
@@ -58,7 +56,9 @@ def rpm_package_exists(release: str, build: str) -> bool:
 def get_args():
     parser = ArgumentParser()
 
-    parser.add_argument('-r', '--release', dest='release', default='spock')
+    parser.add_argument('-r', '--release', dest='release', default='mad-hatter')
+    parser.add_argument('-s', '--subrelease', dest='subrelease', default='mad-hatter')
+    parser.add_argument('-l', '--relserver', dest='relserver', default='6.5.0')
 
     return parser.parse_args()
 
@@ -67,7 +67,7 @@ def main():
     args = get_args()
 
     latest = None
-    build = read_latest(release=args.release)
+    build = read_latest(release=args.subrelease)
     missing = 0
 
     while missing < MAX_MISSING:
@@ -79,11 +79,11 @@ def main():
             missing += 1
             continue
 
-        if rpm_package_exists(args.release, build):
+        if rpm_package_exists(args.release, build, args.relserver):
             latest = build
 
     if latest:
-        store_latest(release=args.release, build=latest)
+        store_latest(release=args.subrelease, build=latest)
     else:
         sys.exit('No new build found')
 

@@ -14,6 +14,9 @@ initial_nodes = 4
 num_buckets = 1
 online_cores = 6
 
+[bucket]
+replica_number = 2
+
 [load]
 workload_path = workloads/workloada
 ycsb_client = couchbase3
@@ -32,8 +35,9 @@ workload_instances = 1
 transactionsenabled = 1
 num_atrs = 20480
 durability = 3
-kv_endpoints = 16
+kv_endpoints = 64
 timeseries = 1
+requestdistribution = uniform
 
 [ycsb]
 branch = couchbase3-new-durability

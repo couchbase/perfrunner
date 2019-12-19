@@ -901,3 +901,19 @@ class RestHelper:
         logger.info("Getting TLS version of {}".format(node))
         api = 'http://{}:8091/settings/security'.format(node)
         return self.get(url=api).json()['tlsMinVersion']
+
+    def set_num_reader_threads(self, node: str, thread: int):
+        logger.info('Setting num_reader_threads to {}'.format(thread))
+        api = 'http://{}:8091/pools/default/settings/memcached/global'.format(node)
+        data = {
+            'num_reader_threads': thread
+        }
+        self.post(url=api, data=data)
+
+    def set_num_writer_threads(self, node: str, thread: int):
+        logger.info('Setting num_writer_threads to {}'.format(thread))
+        api = 'http://{}:8091/pools/default/settings/memcached/global'.format(node)
+        data = {
+            'num_writer_threads': thread
+        }
+        self.post(url=api, data=data)

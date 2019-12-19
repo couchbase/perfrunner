@@ -259,11 +259,16 @@ class ClusterManager:
               '[{{extra_config_string, "{}={}"}}]).'
 
         for option, value in self.test_config.bucket_extras.items():
-            logger.info('Changing {} to {}'.format(option, value))
-            for master in self.cluster_spec.masters:
-                for bucket in self.test_config.buckets:
-                    diag_eval = cmd.format(bucket, option, value)
-                    self.rest.run_diag_eval(master, diag_eval)
+            if option == 'num_writer_threads':
+                self.rest.set_num_writer_threads(self.master_node, int(value))
+            elif option == 'num_reader_threads':
+                self.rest.set_num_reader_threads(self.master_node, int(value))
+            else:
+                logger.info('Changing {} to {}'.format(option, value))
+                for master in self.cluster_spec.masters:
+                    for bucket in self.test_config.buckets:
+                        diag_eval = cmd.format(bucket, option, value)
+                        self.rest.run_diag_eval(master, diag_eval)
 
         if self.test_config.bucket_extras:
             self.remote.restart()

@@ -1,0 +1,32 @@
+[test_case]
+test = perfrunner.tests.kv.PillowFightTest
+
+[showfast]
+title = Max ops/sec, cbc-pillowfight, 2 nodes, 50/50 R/W, 512B JSON items, 1K batch size, 10 vCPU
+component = sdk
+category = libc
+sub_category = mad-hatter
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 2
+num_buckets = 1
+online_cores = 5
+
+[load]
+size = 512
+items = 20000000
+workers = 50
+doc_gen = json
+
+[access]
+items = 20000000
+iterations = 40000
+workers = 50
+updates = 50
+
+[stats]
+client_processes = java
+
+[sdktesting]
+enable_sdktest = 1

@@ -1,0 +1,31 @@
+[test_case]
+test = perfrunner.tests.kv.PillowFightTest
+
+[showfast]
+title = Max ops/sec, cbc-pillowfight, 2 nodes, 20/80 R/W, 512B JSON items, 1K batch size, Snappy
+component = sdk
+category = libc
+sub_category = mad-hatter
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 2
+num_buckets = 1
+
+[load]
+size = 512
+items = 20000000
+workers = 50
+doc_gen = json_snappy
+
+[access]
+items = 20000000
+iterations = 40000
+workers = 50
+updates = 80
+
+[stats]
+client_processes = java
+
+[sdktesting]
+enable_sdktest = 1

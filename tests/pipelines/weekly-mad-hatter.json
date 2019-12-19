@@ -101,7 +101,16 @@
         {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "durability/latency/ycsb/observe/ycsb_workloada_4node_lat_durability3a.test"},
         {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "durability/latency/ycsb/observe/ycsb_workloada_4node_lat_durability3b.test"},
         {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "durability/latency/ycsb/observe/ycsb_workloada_4node_lat_durability3c.test"},
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "durability/latency/ycsb/observe/ycsb_workloada_4node_lat_durability3d.test"}],
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "durability/latency/ycsb/observe/ycsb_workloada_4node_lat_durability3d.test"},
+        {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/ycsb_trans_workloadt_4nodes_48cores_dur_none.test"},
+        {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/ycsb_trans_workloadt_4nodes_48cores_dur_maj.test"},
+        {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/ycsb_trans_workloadt_4nodes_48cores_dur_2.test"},
+        {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/ycsb_trans_workloadt_4nodes_48cores_dur_3.test"},
+        {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/ycsb_trans_latency_workloadt_4nodes_48cores_dur_none.test"},
+        {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/ycsb_trans_latency_workloadt_4nodes_48cores_dur_maj.test"},
+        {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/ycsb_trans_latency_workloadt_4nodes_48cores_dur_2.test"},
+        {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/ycsb_trans_latency_workloadt_4nodes_48cores_dur_3.test"}
+    ],
     "KV-DGM": [],
     "KV-Windows": [],
     "KV-SSL": [
@@ -136,7 +145,15 @@
         {"job": "iris-dp",              "cluster": "iris.spec", "test_config": "n1ql_lat_udf_QU2_20M_gsi_moi_ok.test"},
         {"job": "iris-dp",              "cluster": "iris.spec", "test_config": "n1ql_lat_udf_QU3_20M_gsi_moi_ok.test"},
         {"job": "iris-dp",              "cluster": "iris.spec", "test_config": "n1ql_lat_udf_select_empty.test"},
-        {"job": "iris-dp",              "cluster": "iris.spec", "test_config": "n1ql_lat_udf_select_QU2_20M_gsi_moi_ok.test"}
+        {"job": "iris-dp",              "cluster": "iris.spec", "test_config": "n1ql_lat_udf_select_QU2_20M_gsi_moi_ok.test"},
+        {"job": "iris",              "cluster": "iris_fts.spec", "test_config": "n1ql_thr_CF2_20M_fts.test"},
+        {"job": "iris",              "cluster": "iris_fts.spec", "test_config": "n1ql_thr_QF2_20M_fts.test"},
+        {"job": "iris",              "cluster": "iris_fts.spec", "test_config": "n1ql_thr_CF3_20M_fts.test"},
+        {"job": "iris",              "cluster": "iris_fts.spec", "test_config": "n1ql_thr_QF3_20M_fts.test"},
+        {"job": "iris",              "cluster": "iris_fts.spec", "test_config": "n1ql_lat_CF3_20M_fts.test"},
+        {"job": "iris",              "cluster": "iris_fts.spec", "test_config": "n1ql_lat_QF2_20M_fts.test"},
+        {"job": "iris",              "cluster": "iris_fts.spec", "test_config": "n1ql_lat_QF3_20M_fts.test"},
+        {"job": "iris",              "cluster": "iris_fts.spec", "test_config": "n1ql_lat_CF2_20M_fts.test"}
     ],
     "N1QL-Arke": [
         {"job": "arke",              "cluster": "arke.spec", "test_config": "tpc-ds/n1ql_lat_WF1_100M_plasma_ok.test"},
@@ -176,7 +193,8 @@
         {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt_with_advfilter_matchxattr_compression_active.test"},
         {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt_with_xattr_nofilter.test"},
         {"job": "titan", "cluster": "titan_1x1x1.spec", "test_config": "xdcr_ongoing_1x1x1_unidir_updates_8k_proiority_high_high.test"},
-        {"job": "titan", "cluster": "titan_1x1x1.spec", "test_config": "xdcr_ongoing_backfill_1x1x1_unidir_updates_8k_proiority_low_high.test"}
+        {"job": "titan", "cluster": "titan_1x1x1.spec", "test_config": "xdcr_ongoing_backfill_1x1x1_unidir_updates_8k_proiority_low_high.test"},
+        {"job": "titan", "cluster": "titan_1x1x1.spec", "test_config": "xdcr_ongoing_1x1x1_unidir_updates_8k_proiority_low_high.test"}
     ],
     "XDCR-Windows": [],
     "YCSB": [

@@ -5,7 +5,7 @@ test = perfrunner.tests.kv.PillowFightTest
 title = Max ops/sec, cbc-pillowfight, 2 nodes, 80/20 R/W, 512B JSON items, 1K batch size, 10 vCPU, TLS
 component = kv
 category = max_ops_ssl
-orderby = reads
+orderby = reads2
 
 [cluster]
 mem_quota = 51200

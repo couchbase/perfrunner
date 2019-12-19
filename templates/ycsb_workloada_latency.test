@@ -2,7 +2,7 @@
 test = perfrunner.tests.ycsb.YCSBLatencyTest
 
 [showfast]
-title = Latency (ms), Workload A, MOI, {{server_instances}} nodes, AWS, {{instance}}
+title = Latency (ms), Workload A, {{server_instances}} nodes, AWS, {{instance}}
 component = kv
 category = ycsb
 

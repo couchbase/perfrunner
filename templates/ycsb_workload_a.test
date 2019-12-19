@@ -2,7 +2,7 @@
 test = perfrunner.tests.ycsb.YCSBThroughputTest
 
 [showfast]
-title = Avg Throughput (queries/sec), Workload A, MOI, {{server_instances}} nodes, AWS, {{instance}}
+title = Avg Throughput (queries/sec), Workload A, {{server_instances}} nodes, AWS, {{instance}}
 component = kv
 category = ycsb
 

@@ -109,7 +109,11 @@ class KVStoreStats(Collector):
                     stats = self._get_kvstore_stats(bucket, node)
                     for metric in self.METRICS_AVERAGE_PER_NODE_PER_SHARD:
                         if metric in stats:
-                            stats[metric] /= num_shards
+                            if stats[metric] / num_shards >= 50:
+                                stats[metric] = 50
+                            else:
+                                stats[metric] /= num_shards
+
                     if stats:
                         self.update_metric_metadata(stats.keys(), server=node, bucket=bucket)
                         self.store.append(stats, cluster=self.cluster,
@@ -130,7 +134,10 @@ class KVStoreStats(Collector):
 
             for metric in self.METRICS_AVERAGE_PER_NODE_PER_SHARD:
                 if metric in stats:
-                    stats[metric] /= (num_shards * num_nodes)
+                    if stats[metric]/(num_shards * num_nodes) >= 50:
+                        stats[metric] = 50
+                    else:
+                        stats[metric] /= (num_shards * num_nodes)
 
             if stats:
                 self.update_metric_metadata(stats.keys(), bucket=bucket)

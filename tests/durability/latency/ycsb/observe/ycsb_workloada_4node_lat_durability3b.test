@@ -37,6 +37,7 @@ time = 1200
 workers = 1
 workload_instances = 1
 ycsb_client = couchbase3
+enable_mutation_token = true
 
 [ycsb]
 branch = couchbase3-new-durability

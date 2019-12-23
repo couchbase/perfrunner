@@ -31,6 +31,6 @@ reads = 34
 updates = 33
 deletes = 0
 items = 250000000
-workers = 40
+workers = 60
 throughput = 20000
 time = 3600

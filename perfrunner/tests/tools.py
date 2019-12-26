@@ -64,6 +64,7 @@ class BackupRestoreTest(PerfTest):
 
         self.load()
         self.wait_for_persistence()
+        self.compact_bucket(wait=True)
 
 
 class BackupTest(BackupRestoreTest):
@@ -115,6 +116,7 @@ class BackupXATTRTest(BackupTest):
         self.load()
         self.xattr_load()
         self.wait_for_persistence()
+        self.compact_bucket(wait=True)
 
         time_elapsed = self.backup()
         self.report_kpi(time_elapsed)
@@ -241,6 +243,7 @@ class BackupIncrementalTest(BackupRestoreTest):
 
         self.load()
         self.wait_for_persistence()
+        self.compact_bucket(wait=True)
         self.backup()
 
         initial_backup_size = local.calc_backup_size(self.cluster_spec,

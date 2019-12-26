@@ -165,6 +165,7 @@ class XdcrInitTest(XdcrTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
+        self.compact_bucket(wait=True)
 
         self.configure_wan()
 

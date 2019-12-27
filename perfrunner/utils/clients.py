@@ -11,6 +11,7 @@ LIBCOUCHBASE_BASE_URL = "https://github.com/couchbase/libcouchbase/releases/down
 LIBCOUCHBASE_PACKAGES = [{"version": "3.0.0-alpha.5",
                           "os": "ubuntu",
                           "package": "libcouchbase-3.0.0+alpha.5_ubuntu1604_xenial_amd64",
+                          "package_path": "libcouchbase-3.0.0+alpha.5_ubuntu1604_xenial_amd64",
                           "format": "tar",
                           "install_cmds":
                               ["grep -qxF "
@@ -29,6 +30,7 @@ LIBCOUCHBASE_PACKAGES = [{"version": "3.0.0-alpha.5",
                          {"version": "2.9.3",
                           "os": "ubuntu",
                           "package": "libcouchbase-2.9.3_ubuntu1604_amd64",
+                          "package_path": "libcouchbase-2.9.3_ubuntu1604_amd64",
                           "format": "tar",
                           "install_cmds": [
                               "grep -qxF "
@@ -41,7 +43,164 @@ LIBCOUCHBASE_PACKAGES = [{"version": "3.0.0-alpha.5",
                               "sudo dpkg -i libcouchbase2-core_2.9.3-1_amd64.deb "
                               "libcouchbase2-libevent_2.9.3-1_amd64.deb "
                               "libcouchbase-dev_2.9.3-1_amd64.deb "
-                              "libcouchbase2-bin_2.9.3-1_amd64.deb"]}]
+                              "libcouchbase2-bin_2.9.3-1_amd64.deb"]},
+                         {"version": "3.0.0-beta.2",
+                          "os": "ubuntu",
+                          "package": "libcouchbase-3.0.0_beta.2_ubuntu1604_xenial_amd64",
+                          "package_path": "libcouchbase-3.0.0~beta.2_ubuntu1604_xenial_amd64",
+                          "format": "tar",
+                          "install_cmds":
+                              ["grep -qxF "
+                               "'deb http://us.archive.ubuntu.com/ubuntu/ bionic main restricted' "
+                               "/etc/apt/sources.list || echo "
+                               "'deb http://us.archive.ubuntu.com/ubuntu/ bionic main restricted' "
+                               ">> /etc/apt/sources.list",
+                               "sudo apt-get update -y",
+                               "sudo apt-get install libevent-core-2.1 libev4 -y ",
+                               "sudo dpkg -i libcouchbase3_3.0.0~beta.2-1_amd64.deb "
+                               "libcouchbase3-libevent_3.0.0~beta.2-1_amd64.deb "
+                               "libcouchbase-dbg_3.0.0~beta.2-1_amd64.deb "
+                               "libcouchbase3-libev_3.0.0~beta.2-1_amd64.deb "
+                               "libcouchbase3-tools_3.0.0~beta.2-1_amd64.deb "
+                               "libcouchbase-dev_3.0.0~beta.2-1_amd64.deb"]},
+                         {"version": "2.10.4",
+                          "os": "ubuntu",
+                          "package": "libcouchbase-2.10.4_ubuntu1604_amd64",
+                          "package_path": "libcouchbase-2.10.4_ubuntu1604_amd64",
+                          "format": "tar",
+                          "install_cmds": [
+                              "grep -qxF "
+                              "'deb http://us.archive.ubuntu.com/ubuntu/ bionic main restricted' "
+                              "/etc/apt/sources.list || echo "
+                              "'deb http://us.archive.ubuntu.com/ubuntu/ bionic main restricted' "
+                              ">> /etc/apt/sources.list",
+                              "sudo apt-get update -y",
+                              "sudo apt-get install libevent-core-2.1 libev4 -y ",
+                              "sudo dpkg -i libcouchbase2-core_2.10.4-1_amd64.deb "
+                              "libcouchbase2-libevent_2.10.4-1_amd64.deb "
+                              "libcouchbase-dev_2.10.4-1_amd64.deb "
+                              "libcouchbase2-bin_2.10.4-1_amd64.deb"]},
+                         {"version": "2.10.5",
+                          "os": "ubuntu",
+                          "package": "libcouchbase-2.10.5_ubuntu1604_amd64",
+                          "package_path": "libcouchbase-2.10.5_ubuntu1604_amd64",
+                          "format": "tar",
+                          "install_cmds": [
+                              "grep -qxF "
+                              "'deb http://us.archive.ubuntu.com/ubuntu/ bionic main restricted' "
+                              "/etc/apt/sources.list || echo "
+                              "'deb http://us.archive.ubuntu.com/ubuntu/ bionic main restricted' "
+                              ">> /etc/apt/sources.list",
+                              "sudo apt-get update -y",
+                              "sudo apt-get install libevent-core-2.1 libev4 -y ",
+                              "sudo dpkg -i libcouchbase2-core_2.10.5-1_amd64.deb "
+                              "libcouchbase2-libevent_2.10.5-1_amd64.deb "
+                              "libcouchbase-dev_2.10.5-1_amd64.deb "
+                              "libcouchbase2-bin_2.10.5-1_amd64.deb"]},
+                         {"version": "2.10.0",
+                          "os": "ubuntu",
+                          "package": "libcouchbase-2.10.0_ubuntu1604_amd64",
+                          "package_path": "libcouchbase-2.10.0_ubuntu1604_amd64",
+                          "format": "tar",
+                          "install_cmds": [
+                              "grep -qxF "
+                              "'deb http://us.archive.ubuntu.com/ubuntu/ bionic main restricted' "
+                              "/etc/apt/sources.list || echo "
+                              "'deb http://us.archive.ubuntu.com/ubuntu/ bionic main restricted' "
+                              ">> /etc/apt/sources.list",
+                              "sudo apt-get update -y",
+                              "sudo apt-get install libevent-core-2.1 libev4 -y ",
+                              "sudo dpkg -i libcouchbase2-core_2.10.0-1_amd64.deb "
+                              "libcouchbase2-libevent_2.10.0-1_amd64.deb "
+                              "libcouchbase-dev_2.10.0-1_amd64.deb "
+                              "libcouchbase2-bin_2.10.0-1_amd64.deb"]},
+                         {"version": "2.9.5",
+                          "os": "ubuntu",
+                          "package": "libcouchbase-2.9.5_ubuntu1604_amd64",
+                          "package_path": "libcouchbase-2.9.5_ubuntu1604_amd64",
+                          "format": "tar",
+                          "install_cmds": [
+                              "grep -qxF "
+                              "'deb http://us.archive.ubuntu.com/ubuntu/ bionic main restricted' "
+                              "/etc/apt/sources.list || echo "
+                              "'deb http://us.archive.ubuntu.com/ubuntu/ bionic main restricted' "
+                              ">> /etc/apt/sources.list",
+                              "sudo apt-get update -y",
+                              "sudo apt-get install libevent-core-2.1 libev4 -y ",
+                              "sudo dpkg -i libcouchbase2-core_2.9.5-1_amd64.deb "
+                              "libcouchbase2-libevent_2.9.5-1_amd64.deb "
+                              "libcouchbase-dev_2.9.5-1_amd64.deb "
+                              "libcouchbase2-bin_2.9.5-1_amd64.deb"]},
+                         {"version": "2.10.3",
+                          "os": "ubuntu",
+                          "package": "libcouchbase-2.10.3_ubuntu1604_amd64",
+                          "package_path": "libcouchbase-2.10.3_ubuntu1604_amd64",
+                          "format": "tar",
+                          "install_cmds": [
+                              "grep -qxF "
+                              "'deb http://us.archive.ubuntu.com/ubuntu/ bionic main restricted' "
+                              "/etc/apt/sources.list || echo "
+                              "'deb http://us.archive.ubuntu.com/ubuntu/ bionic main restricted' "
+                              ">> /etc/apt/sources.list",
+                              "sudo apt-get update -y",
+                              "sudo apt-get install libevent-core-2.1 libev4 -y ",
+                              "sudo dpkg -i libcouchbase2-core_2.10.3-1_amd64.deb "
+                              "libcouchbase2-libevent_2.10.3-1_amd64.deb "
+                              "libcouchbase-dev_2.10.3-1_amd64.deb "
+                              "libcouchbase2-bin_2.10.3-1_amd64.deb"]},
+                         {"version": "2.10.1",
+                          "os": "ubuntu",
+                          "package": "libcouchbase-2.10.1_ubuntu1604_amd64",
+                          "package_path": "libcouchbase-2.10.1_ubuntu1604_amd64",
+                          "format": "tar",
+                          "install_cmds": [
+                              "grep -qxF "
+                              "'deb http://us.archive.ubuntu.com/ubuntu/ bionic main restricted' "
+                              "/etc/apt/sources.list || echo "
+                              "'deb http://us.archive.ubuntu.com/ubuntu/ bionic main restricted' "
+                              ">> /etc/apt/sources.list",
+                              "sudo apt-get update -y",
+                              "sudo apt-get install libevent-core-2.1 libev4 -y ",
+                              "sudo dpkg -i libcouchbase2-core_2.10.1-1_amd64.deb "
+                              "libcouchbase2-libevent_2.10.1-1_amd64.deb "
+                              "libcouchbase-dev_2.10.1-1_amd64.deb "
+                              "libcouchbase2-bin_2.10.1-1_amd64.deb"]},
+                         {"version": "3.0.0-beta.1",
+                          "os": "ubuntu",
+                          "package": "libcouchbase-3.0.0+beta.1_ubuntu1604_xenial_amd64",
+                          "package_path": "libcouchbase-3.0.0+beta.1_ubuntu1604_xenial_amd64",
+                          "format": "tar",
+                          "install_cmds":
+                              ["grep -qxF "
+                               "'deb http://us.archive.ubuntu.com/ubuntu/ bionic main restricted' "
+                               "/etc/apt/sources.list || echo "
+                               "'deb http://us.archive.ubuntu.com/ubuntu/ bionic main restricted' "
+                               ">> /etc/apt/sources.list",
+                               "sudo apt-get update -y",
+                               "sudo apt-get install libevent-core-2.1 libev4 -y ",
+                               "sudo dpkg -i libcouchbase3_3.0.0+beta.1-1_amd64.deb "
+                               "libcouchbase3-libevent_3.0.0+beta.1-1_amd64.deb "
+                               "libcouchbase-dbg_3.0.0+beta.1-1_amd64.deb "
+                               "libcouchbase3-libev_3.0.0+beta.1-1_amd64.deb "
+                               "libcouchbase3-tools_3.0.0+beta.1-1_amd64.deb "
+                               "libcouchbase-dev_3.0.0+beta.1-1_amd64.deb"]},
+                         {"version": "2.9.0",
+                          "os": "ubuntu",
+                          "package": "libcouchbase-2.9.0_ubuntu1604_amd64",
+                          "package_path": "libcouchbase-2.9.0_ubuntu1604_amd64",
+                          "format": "tar",
+                          "install_cmds": [
+                              "grep -qxF "
+                              "'deb http://us.archive.ubuntu.com/ubuntu/ bionic main restricted' "
+                              "/etc/apt/sources.list || echo "
+                              "'deb http://us.archive.ubuntu.com/ubuntu/ bionic main restricted' "
+                              ">> /etc/apt/sources.list",
+                              "sudo apt-get update -y",
+                              "sudo apt-get install libevent-core-2.1 libev4 -y ",
+                              "sudo dpkg -i libcouchbase2-core_2.9.0-1_amd64.deb "
+                              "libcouchbase2-libevent_2.9.0-1_amd64.deb "
+                              "libcouchbase-dev_2.9.0-1_amd64.deb "
+                              "libcouchbase2-bin_2.9.0-1_amd64.deb"]}]
 
 
 class ClientInstaller:
@@ -78,6 +237,7 @@ class ClientInstaller:
     def install_clients(self, client: str, version: str):
         client_package_info = self.client_package_info(client, version)
         package = client_package_info['package']
+        package_path = client_package_info['package_path']
         package_format = client_package_info['format']
         package_version = client_package_info['version']
         install_cmds = client_package_info['install_cmds']
@@ -87,7 +247,7 @@ class ClientInstaller:
                 run("wget {}/{}/{}.{}".format(LIBCOUCHBASE_BASE_URL,
                                               package_version, package, package_format))
                 run("tar xf {}.{}".format(package, package_format))
-            with cd("/tmp/{}".format(package)):
+            with cd("/tmp/{}".format(package_path)):
                 for cmd in install_cmds:
                     run(cmd)
 

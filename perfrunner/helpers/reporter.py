@@ -56,7 +56,15 @@ class ShowFastReporter(Reporter):
                             snapshots: List[str]) -> JSON:
 
         if self.test_config.sdktesting_settings.enable_sdktest:
-            self.sdk_version = self.test_config.ycsb_settings.sdk_version
+            self.sdk_type = self.test_config.sdktesting_settings.sdk_type[-1]
+
+            if self.sdk_type == 'java':
+                self.sdk_version = self.test_config.ycsb_settings.sdk_version
+            elif self.sdk_type == 'libc':
+                self.sdk_version = self.test_config.client_settings.libcouchbase
+            elif self.sdk_type == 'python':
+                self.sdk_version = self.test_config.client_settings.python_client
+
             self.build = self.sdk_version + ' : ' + self.build
 
         if self.test_config.access_settings.show_tls_version:

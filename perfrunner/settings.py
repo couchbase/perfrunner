@@ -1036,9 +1036,11 @@ class YCSBSettings:
 class SDKTestingSettings:
 
     ENABLE_SDKTEST = 0
+    SDK_TYPE = ['java', 'libc', 'python']
 
     def __init__(self, options: dict):
         self.enable_sdktest = int(options.get('enable_sdktest', self.ENABLE_SDKTEST))
+        self.sdk_type = self.SDK_TYPE + options.get('sdk_type', '').split()
 
     def __str__(self) -> str:
         return str(self.__dict__)

@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.MixedLatencyDGMTest
 
 [showfast]
-title = Latency, Workload S0.6, 2 nodes, 250M x 1KB, 20K ops/sec (33/34/33 C/R/W), Uniform distribution
+title = Latency(ms), Workload S0.6, 2 nodes, 250M x 1KB, 20K ops/sec (33/34/33 C/R/W), Uniform distribution
 component = kv
 category = hidd
 sub_category = S0

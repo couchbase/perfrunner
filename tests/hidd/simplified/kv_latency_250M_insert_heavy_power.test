@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.WriteLatencyDGMTest
 
 [showfast]
-title = Latency, Workload S0.4, 2 nodes, 250M x 1KB, 20K ops/sec (90/10 C/R), Power distribution (α=10)
+title = Latency(ms), Workload S0.4, 2 nodes, 250M x 1KB, 20K ops/sec (90/10 C/R), Power distribution (α=10)
 component = kv
 category = hidd
 sub_category = S0

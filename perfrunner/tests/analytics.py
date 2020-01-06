@@ -161,11 +161,20 @@ class BigFunQueryTest(BigFunTest):
 
     QUERIES = 'perfrunner/workloads/bigfun/queries_with_index.json'
 
+    def warmup(self) -> List[Tuple[Query, int]]:
+        results = bigfun(self.rest,
+                         nodes=self.analytics_nodes,
+                         concurrency=self.test_config.access_settings.analytics_warmup_workers,
+                         num_requests=int(self.test_config.access_settings.analytics_warmup_ops),
+                         query_set=self.QUERIES)
+
+        return [(query, latency) for query, latency in results]
+
     @with_stats
     def access(self, *args, **kwargs) -> List[Tuple[Query, int]]:
         results = bigfun(self.rest,
                          nodes=self.analytics_nodes,
-                         concurrency=self.test_config.access_settings.workers,
+                         concurrency=int(self.test_config.access_settings.workers),
                          num_requests=int(self.test_config.access_settings.ops),
                          query_set=self.QUERIES)
         return [(query, latency) for query, latency in results]
@@ -181,6 +190,10 @@ class BigFunQueryTest(BigFunTest):
 
         self.sync()
 
+        logger.info('Running warmup phase')
+        self.warmup()
+
+        logger.info('Running access phase')
         results = self.access()
 
         self.report_kpi(results)

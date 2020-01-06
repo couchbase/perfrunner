@@ -10,7 +10,7 @@ from logger import logger
 from perfrunner.helpers.misc import maybe_atoi, target_hash
 
 CBMONITOR_HOST = 'cbmonitor.sc.couchbase.com'
-SHOWFAST_HOST = 'showfast.sc.couchbase.com'
+SHOWFAST_HOST = 'showfast.sc.couchbase.com'  # 'localhost:8000'
 REPO = 'https://github.com/couchbase/perfrunner'
 
 
@@ -493,6 +493,9 @@ class PhaseSettings:
 
     REQUESTDISTRIBUTION = 'zipfian'
 
+    ANALYTICS_WARMUP_OPS = 0
+    ANALYTICS_WARMUP_WORKERS = 0
+
     def __init__(self, options: dict):
         # Common settings
         self.time = int(options.get('time', self.TIME))
@@ -653,6 +656,11 @@ class PhaseSettings:
 
         self.ycsb_jvm_args = options.get('ycsb_jvm_args', self.YCSB_JVM_ARGS)
         self.tpcds_scale_factor = int(options.get('tpcds_scale_factor', self.TPCDS_SCALE_FACTOR))
+
+        self.analytics_warmup_ops = int(options.get('analytics_warmup_ops',
+                                                    self.ANALYTICS_WARMUP_OPS))
+        self.analytics_warmup_workers = int(options.get('analytics_warmup_workers',
+                                                        self.ANALYTICS_WARMUP_WORKERS))
 
     def __str__(self) -> str:
         return str(self.__dict__)

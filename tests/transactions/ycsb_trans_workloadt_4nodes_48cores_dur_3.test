@@ -30,13 +30,16 @@ items = 20000000
 ops = 1000000000
 time = 900
 boost = 12
-workers = 384
+workers = 128
 workload_instances = 6
 transactionsenabled = 1
 num_atrs = 20480
 durability = 3
-kv_endpoints = 64
+kv_endpoints = 128
 requestdistribution = uniform
 
 [ycsb]
 branch = couchbase3-new-durability
+
+[stats]
+client_processes = java

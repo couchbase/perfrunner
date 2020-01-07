@@ -41,6 +41,7 @@ requestdistribution = uniform
 
 [ycsb]
 branch = couchbase3-new-durability
+average_latency = 1
 
 [stats]
 client_processes = java

@@ -34,7 +34,7 @@ workload_instances = 6
 transactionsenabled = 1
 num_atrs = 20480
 durability = 2
-kv_endpoints = 16
+kv_endpoints = 128
 requestdistribution = uniform
 
 [ycsb]

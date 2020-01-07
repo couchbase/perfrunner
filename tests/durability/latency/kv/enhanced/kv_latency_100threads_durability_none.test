@@ -33,5 +33,5 @@ time = 1200
 durability = 0
 
 [clients]
-libcouchbase = 3.0.0-alpha.5
-python_client = 3.0.0-alpha.5
+libcouchbase = 3.0.0-beta.2
+python_client = 3.0.0-beta.2

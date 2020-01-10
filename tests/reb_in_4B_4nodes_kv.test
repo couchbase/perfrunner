@@ -2,30 +2,30 @@
 test = perfrunner.tests.rebalance.RebalanceKVTest
 
 [showfast]
-title = Rebalance-in (min), 4 -> 5, 6B x 1KB, 15K ops/sec (90/10 R/W), 10%% cache miss rate
+title = Rebalance-in (min), 4 -> 5, 4B x 1KB, 15K ops/sec (90/10 R/W), 10%% cache miss rate
 component = reb
 category = kv
 sub_category = DGM
 
 [cluster]
-mem_quota = 51200
+mem_quota = 204800
 initial_nodes = 4
 num_buckets = 1
-kernel_mem_limit = 65G
+kernel_mem_limit = 248G
 kernel_mem_limit_services = kv
 
 [bucket]
 eviction_policy = fullEviction
 
 [load]
-items = 6000000000
+items = 4000000000
 size = 1024
 workers = 80
 key_fmtr = hex
 doc_gen = large
 
 [hot_load]
-items = 6000000000
+items = 4000000000
 workers = 80
 working_set = 5
 
@@ -35,7 +35,7 @@ reads = 90
 updates = 10
 deletes = 0
 throughput = 15000
-items = 6000000000
+items = 4000000000
 workers = 40
 working_set = 5
 working_set_access = 90

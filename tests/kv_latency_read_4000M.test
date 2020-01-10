@@ -1,13 +1,13 @@
 [test_case]
-test = perfrunner.tests.kv.ReadLatencyDGMCompactedTest
+test = perfrunner.tests.kv.ReadLatencyDGMCompactionTest
 
 [showfast]
-title = latency (ms), 4 nodes, 6B x 1KB, 15K ops/sec (90/10 R/W), 5%% cache miss rate, no compaction
+title = latency (ms), 4 nodes, 4B x 1KB, 15K ops/sec (90/10 R/W), 5%% cache miss rate, during compaction
 component = kv
 category = dgm
 
 [cluster]
-mem_quota = 51200
+mem_quota = 204800
 initial_nodes = 4
 num_buckets = 1
 
@@ -18,14 +18,14 @@ db_percentage = 100
 eviction_policy = fullEviction
 
 [load]
-items = 6000000000
+items = 4000000000
 size = 1024
 workers = 80
 key_fmtr = hex
 doc_gen = large
 
 [hot_load]
-items = 6000000000
+items = 4000000000
 workers = 100
 working_set = 5
 
@@ -34,7 +34,7 @@ creates = 0
 reads = 90
 updates = 10
 deletes = 0
-items = 6000000000
+items = 4000000000
 working_set = 5
 working_set_access = 95
 workers = 40

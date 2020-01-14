@@ -1,0 +1,35 @@
+[test_case]
+test = perfrunner.tests.dcp.JavaDCPThroughputTest
+
+[showfast]
+title = DCP Throughput, 1 node, 100M x 1KB, Java client, compression enabled, Magma
+component = hidd
+category = single
+
+[stats]
+client_processes = java
+
+[cluster]
+mem_quota = 128
+initial_nodes = 1
+num_buckets = 1
+enable_cpu_cores = false
+
+[bucket]
+replica_number = 0
+eviction_policy = fullEviction
+backend_storage = magma
+
+[bucket_extras]
+num_reader_threads = 64
+num_writer_threads = 64
+
+[load]
+items = 100000000
+size = 1024
+workers = 128
+key_fmtr = hex
+doc_gen = large
+
+[java_dcp]
+config = perf/config/compression-enabled.properties

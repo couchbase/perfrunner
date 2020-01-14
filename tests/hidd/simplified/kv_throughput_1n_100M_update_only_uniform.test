@@ -1,0 +1,39 @@
+[test_case]
+test = perfrunner.tests.magma.ThroughputDGMMagmaTest
+
+[showfast]
+title = Throughput, 1 nodes, 100M x 1KB, update only, Uniform distribution
+component = hidd
+category = single
+
+[cluster]
+mem_quota = 128
+initial_nodes = 1
+num_buckets = 1
+enable_cpu_cores = false
+
+[bucket]
+eviction_policy = fullEviction
+replica_number = 0
+backend_storage = magma
+
+[bucket_extras]
+num_reader_threads = 64
+num_writer_threads = 64
+
+[load]
+items = 100000000
+size = 1024
+workers = 128
+key_fmtr = hex
+doc_gen = large
+
+[access]
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+items = 100000000
+workers = 128
+time = 3600
+requestdistribution = uniform

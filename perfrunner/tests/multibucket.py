@@ -15,13 +15,13 @@ from perfrunner.tests.tools import BackupRestoreTest
 from perfrunner.tests.xdcr import SrcTargetIterator, UniDirXdcrInitTest
 
 
-class MultibucketN1QLRebalanceXdcrEventingAnalyticsTest(RebalanceKVTest,
-                                                        UniDirXdcrInitTest,
-                                                        N1QLTest,
-                                                        EventingTest,
-                                                        BigFunTest,
-                                                        FTSTest,
-                                                        BackupRestoreTest):
+class HighBucketDensityTest(RebalanceKVTest,
+                            UniDirXdcrInitTest,
+                            N1QLTest,
+                            EventingTest,
+                            BigFunTest,
+                            FTSTest,
+                            BackupRestoreTest):
 
     COLLECTORS = {
         'iostat': True,

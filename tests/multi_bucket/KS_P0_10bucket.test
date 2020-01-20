@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.multibucket.MultibucketN1QLRebalanceXdcrEventingAnalyticsTest
+test = perfrunner.tests.multibucket.HighBucketDensityTest
 
 [showfast]
 title = 10 Bucket test

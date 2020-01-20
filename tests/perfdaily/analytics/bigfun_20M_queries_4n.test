@@ -31,5 +31,7 @@ backup_repo = bigfun20M
 threads = 8
 
 [access]
-ops = 10
+analytics_warmup_ops = 10
+analytics_warmup_workers = 1
+ops = 30
 workers = 1

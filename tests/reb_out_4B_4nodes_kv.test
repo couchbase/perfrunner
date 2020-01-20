@@ -2,7 +2,7 @@
 test = perfrunner.tests.rebalance.RebalanceKVTest
 
 [showfast]
-title = Rebalance-out (min), 5 -> 4, 4B x 1KB, 15K ops/sec (90/10 R/W), 10% cache miss rate
+title = Rebalance-out (min), 5 -> 4, 4B x 1KB, 15K ops/sec (90/10 R/W), 10%% cache miss rate
 component = reb
 category = kv
 sub_category = DGM

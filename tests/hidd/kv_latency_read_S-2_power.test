@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.kv.ReadLatencyDGMTest
+test = perfrunner.tests.magma.ReadLatencyDGMTest
 
 [showfast]
 title = latency (ms), Workload S-2, 10 nodes, 10B x 1KB, 37.5K ops/sec (90/10 R/W), Power distribution (α=380)
@@ -20,13 +20,13 @@ eviction_policy = fullEviction
 [load]
 items = 10000000000
 size = 1024
-workers = 100
+workers = 128
 key_fmtr = hex
 doc_gen = large
 
 [hot_load]
 items = 10000000000
-workers = 100
+workers = 128
 working_set = 0.6
 
 [access]
@@ -35,7 +35,7 @@ reads = 90
 updates = 5
 deletes = 0
 items = 10000000000
-workers = 40
+workers = 128
 throughput = 37500
 power_alpha = 380
 time = 43200

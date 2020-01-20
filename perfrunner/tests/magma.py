@@ -303,7 +303,7 @@ class KVTest(PerfTest):
         self.report_kpi()
 
 
-class S0Test(KVTest):
+class StabilityBootstrap(KVTest):
     @with_console_stats
     def run_extra_access(self):
         access_settings = self.test_config.access_settings
@@ -311,15 +311,17 @@ class S0Test(KVTest):
         access_settings.creates = 0
         access_settings.deletes = 0
         access_settings.reads = 0
-        access_settings.ops = int(access_settings.items * 1.5)
+        access_settings.workers = 128
+        access_settings.ops = int(access_settings.items * 1.2)
         access_settings.time = 3600 * 24
         access_settings.throughput = float('inf')
+        access_settings.requestdistribution = 'uniform'
         self.COLLECTORS["latency"] = False
         self.extra_access(access_settings=access_settings)
         self.COLLECTORS["latency"] = True
 
 
-class ReadLatencyDGMTest(S0Test):
+class ReadLatencyDGMTest(StabilityBootstrap):
 
     def _report_kpi(self):
         self.reporter.post(
@@ -327,7 +329,7 @@ class ReadLatencyDGMTest(S0Test):
         )
 
 
-class ThroughputDGMMagmaTest(S0Test):
+class ThroughputDGMMagmaTest(StabilityBootstrap):
 
     def _report_kpi(self):
         self.reporter.post(
@@ -335,7 +337,7 @@ class ThroughputDGMMagmaTest(S0Test):
         )
 
 
-class MixedLatencyDGMTest(S0Test):
+class MixedLatencyDGMTest(StabilityBootstrap):
 
     def _report_kpi(self):
         for operation in ('get', 'set'):
@@ -344,29 +346,12 @@ class MixedLatencyDGMTest(S0Test):
             )
 
 
-class WriteLatencyDGMTest(S0Test):
+class WriteLatencyDGMTest(StabilityBootstrap):
 
     def _report_kpi(self):
         self.reporter.post(
             *self.metrics.kv_latency(operation='set')
         )
-
-
-class ReadLatencyS1DGMTest(ReadLatencyDGMTest):
-    @with_console_stats
-    def run_extra_access(self):
-        access_settings = self.test_config.access_settings
-        access_settings.updates = 100
-        access_settings.creates = 0
-        access_settings.deletes = 0
-        access_settings.reads = 0
-        access_settings.workers = 100
-        access_settings.ops = access_settings.items
-        access_settings.time = 3600 * 24
-        access_settings.throughput = float('inf')
-        self.COLLECTORS["latency"] = False
-        self.extra_access(access_settings=access_settings)
-        self.COLLECTORS["latency"] = True
 
 
 class YCSBThroughputHIDDTest(YCSBThroughputTest, KVTest):

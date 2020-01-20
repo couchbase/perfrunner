@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.magma.ReadLatencyS1DGMTest
+test = perfrunner.tests.magma.ReadLatencyDGMTest
 
 [showfast]
 title = latency (ms), Workload S-1.1.special, 4 nodes, 3B x 1KB, 20K ops/sec (80/20 R/W)
@@ -20,7 +20,7 @@ eviction_policy = fullEviction
 [load]
 items = 3000000000
 size = 1024
-workers = 100
+workers = 128
 key_fmtr = hex
 doc_gen = large
 
@@ -30,6 +30,6 @@ reads = 80
 updates = 10
 deletes = 0
 items = 3000000000
-workers = 40
+workers = 128
 throughput = 20000
 time = 43200

@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.kv.ReadLatencyDGMTest
+test = perfrunner.tests.magma.ReadLatencyDGMTest
 
 [showfast]
 title = latency (ms), Workload S-1.1, 4 nodes, 2B x 1KB, 15K ops/sec (90/10 R/W), Zipfian distribution (α=1.2)
@@ -20,13 +20,13 @@ eviction_policy = fullEviction
 [load]
 items = 2000000000
 size = 1024
-workers = 100
+workers = 128
 key_fmtr = hex
 doc_gen = large
 
 [hot_load]
 items = 2000000000
-workers = 100
+workers = 128
 working_set = 1
 
 [access]
@@ -35,7 +35,7 @@ reads = 90
 updates = 5
 deletes = 0
 items = 2000000000
-workers = 40
+workers = 128
 throughput = 15000
 zipf_alpha = 1.2
 time = 43200

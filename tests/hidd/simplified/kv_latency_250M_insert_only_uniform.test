@@ -1,8 +1,8 @@
 [test_case]
-test = perfrunner.tests.magma.ThroughputDGMMagmaTest
+test = perfrunner.tests.magma.WriteLatencyDGMTest
 
 [showfast]
-title = Throughput, Workload S0.8, 2 nodes, 250M x 1KB, insert only, Uniform distribution
+title = Latency(ms), Workload S0.8, 2 nodes, 250M x 1KB, 20K ops/sec, insert only, Uniform distribution
 component = kv
 category = hidd
 sub_category = S0
@@ -32,5 +32,6 @@ updates = 0
 deletes = 0
 items = 250000000
 workers = 60
+throughput = 20000
 time = 3600
 requestdistribution = uniform

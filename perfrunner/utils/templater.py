@@ -27,7 +27,10 @@ MEMORY_QUOTAS = {
 
     'i3en.3xlarge': [81920, '12vCPU', '1 x 7500 NVMe SSD', 'RHEL 7.1', 98304],  # 96GB RAM
 
-    'c5d.12xlarge': [81920, '48vCPU', '1 x 1800 NVMe SSD', 'RHEL 7.1', 98304]  # 96GB RAM
+    'c5d.12xlarge': [81920, '48vCPU', '1 x 1800 NVMe SSD', 'RHEL 7.1', 98304],  # 96GB RAM
+
+    'r5.2xlarge': [56320, '8vCPU', '', 'RHEL 7.1', 65536],  # 64GB RAM
+    'r5.4xlarge': [102400, '16vCPU', '', 'RHEL 7.1', 131072]  # 128GB RAM
 }
 
 OUTPUT_FILE = 'custom'

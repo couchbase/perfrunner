@@ -22,6 +22,8 @@ class IOStat(RemoteStats):
             name = stdout.split()[0]
             if name.startswith('/dev/mapper/'):  # LVM
                 return name.split('/dev/mapper/')[1], True
+            elif name.startswith('/dev/md'):  # Software RAID
+                return name, True
             else:
                 return name, False
         return None, None
@@ -84,8 +86,8 @@ class DiskStats(IOStat):
         samples = {}
 
         for purpose, partition in partitions.items():
-            device, lvm = self.get_device_name(partition)
-            if device is not None and not lvm:
+            device, lvm_swraid = self.get_device_name(partition)
+            if device is not None and not lvm_swraid:
                 bytes_read, bytes_written = self.get_disk_stats(device)
 
                 samples[purpose + '_bytes_read'] = bytes_read

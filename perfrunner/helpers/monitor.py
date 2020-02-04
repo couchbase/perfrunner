@@ -271,7 +271,7 @@ class Monitor(RestHelper):
 
     def monitor_task(self, host, task_type):
         logger.info('Monitoring task: {}'.format(task_type))
-        time.sleep(self.MONITORING_DELAY)
+        time.sleep(self.MONITORING_DELAY * 2)
 
         while True:
             time.sleep(self.POLLING_INTERVAL)

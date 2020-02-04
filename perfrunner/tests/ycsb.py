@@ -134,12 +134,12 @@ class YCSBDurabilityThroughputTest(YCSBTest):
                         and "CLEANUP" not in key \
                         and "FAILED" not in key:
                     self.reporter.post(
-                        *self.metrics.ycsb_latency(key, latency_dic[key])
+                        *self.metrics.ycsb_slo_latency(key, latency_dic[key])
                     )
 
         for key, value in self.metrics.ycsb_get_max_latency().items():
             self.reporter.post(
-                *self.metrics.ycsb_max_latency(key, value)
+                *self.metrics.ycsb_slo_max_latency(key, value)
             )
 
         for key, value in self.metrics.ycsb_get_failed_ops().items():

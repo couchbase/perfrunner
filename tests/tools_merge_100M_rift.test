@@ -1,0 +1,31 @@
+[test_case]
+test = perfrunner.tests.tools.MergeTest
+
+[showfast]
+title = 4 nodes, 100M x 100M docs (overlapping keys)
+component = tools
+category = merge
+sub_category = Rift
+
+[stats]
+client_processes = cbbackupmgr
+
+[cluster]
+mem_quota = 52428
+initial_nodes = 4
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+
+[compaction]
+db_percentage = 100
+
+[load]
+items = 100000000
+size = 1024
+workers = 100
+
+[backup]
+threads = 16
+storage_type = rift

@@ -843,7 +843,8 @@ class MetricHelper:
 
         max_type = "Max " + io_type + " Latency (ms)"
         title = '{}, {}'.format(max_type, self._title)
-        metric_id = '{}_{}'.format(self.test_config.name, max_type.replace(' ', '_').casefold())
+        metric_id = '{}_{}'.format(self.test_config.name, max_type.replace(' ', '_')
+                                   .replace('(', '').replace(')', '').casefold())
         metric_info = self._metric_info(title=title, metric_id=metric_id, chirality=-1)
 
         return max_latency, self._snapshots, metric_info
@@ -905,7 +906,8 @@ class MetricHelper:
                          latency: int,
                          ) -> Metric:
         title = '{} Latency (ms), {}'.format(io_type, self._title)
-        metric_id = '{}_{}'.format(self.test_config.name, io_type.replace(' ', '_').casefold())
+        metric_id = '{}_{}'.format(self.test_config.name, io_type.replace(' ', '_')
+                                   .replace('(', '').replace(')', '').casefold())
         metric_info = self._metric_info(title=title, metric_id=metric_id, chirality=-1)
         return latency, self._snapshots, metric_info
 

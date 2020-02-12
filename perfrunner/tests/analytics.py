@@ -22,6 +22,7 @@ class BigFunTest(PerfTest):
         self.num_items = 0
 
     def create_datasets(self, bucket: str):
+        self.disconnect_link()
         logger.info('Creating datasets')
         for dataset, key in (
             ('GleambookUsers', 'id'),
@@ -52,6 +53,12 @@ class BigFunTest(PerfTest):
     def connect_buckets(self):
         logger.info('Connecting all buckets')
         statement = "CONNECT link Local"
+        self.rest.exec_analytics_statement(self.analytics_nodes[0],
+                                           statement)
+
+    def disconnect_link(self):
+        logger.info('DISCONNECT LINK Local')
+        statement = "DISCONNECT LINK Local"
         self.rest.exec_analytics_statement(self.analytics_nodes[0],
                                            statement)
 

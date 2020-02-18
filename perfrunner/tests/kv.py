@@ -19,7 +19,7 @@ class KVTest(PerfTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
-
+        self.compact_bucket()
         self.hot_load()
 
         self.reset_kv_stats()

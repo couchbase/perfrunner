@@ -316,8 +316,8 @@ class StabilityBootstrap(KVTest):
         access_settings.time = 3600 * 24
         access_settings.throughput = float('inf')
         access_settings.requestdistribution = 'uniform'
-        access_settings.power_alpha = 0
-        access_settings.zipf_alpha = 0
+        access_settings.power_alpha = 0.0
+        access_settings.zipf_alpha = 0.0
         self.COLLECTORS["latency"] = False
         self.extra_access(access_settings=access_settings)
         self.COLLECTORS["latency"] = True

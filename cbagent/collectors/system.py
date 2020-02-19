@@ -6,7 +6,7 @@ from cbagent.collectors.libstats.pcstat import PCStat
 from cbagent.collectors.libstats.psstats import PSStats
 from cbagent.collectors.libstats.sysdig import SysdigStat
 from cbagent.collectors.libstats.typeperfstats import TPStats
-
+from cbagent.collectors.libstats.vmstat import VMStat
 
 class System(Collector):
 
@@ -177,6 +177,23 @@ class Memory(System):
         super().__init__(settings)
 
         self.sampler = MemInfo(hosts=self.nodes,
+                               workers=self.workers,
+                               user=self.ssh_username,
+                               password=self.ssh_password)
+
+    def sample(self):
+        for node, stats in self.sampler.get_samples().items():
+            self.add_stats(node, stats)
+
+
+class VMSTAT(System):
+
+    COLLECTOR = 'vmstat'
+
+    def __init__(self, settings):
+        super().__init__(settings)
+
+        self.sampler = VMStat(hosts=self.nodes,
                                workers=self.workers,
                                user=self.ssh_username,
                                password=self.ssh_password)

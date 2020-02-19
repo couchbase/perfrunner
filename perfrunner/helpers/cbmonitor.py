@@ -41,6 +41,7 @@ from cbagent.collectors import (
     SecondaryStorageStatsMM,
     Sysdig,
     TypePerf,
+    VMSTAT,
     XdcrLag,
     XdcrStats,
 )
@@ -167,6 +168,7 @@ class CbAgent:
                        secondary_stats=False,
                        secondary_storage_stats=False,
                        secondary_storage_stats_mm=False,
+                       vmstat=True,
                        xdcr_lag=False,
                        xdcr_stats=False):
         self.collectors = []
@@ -189,6 +191,8 @@ class CbAgent:
                 self.add_io_collector(IO)
             if page_cache:
                 self.add_io_collector(PageCache)
+            if vmstat:
+                self.add_collector(VMSTAT)
         else:
             self.add_collector(TypePerf)
 

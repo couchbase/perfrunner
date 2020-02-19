@@ -39,5 +39,6 @@ from cbagent.collectors.system import (
     PS,
     Sysdig,
     TypePerf,
+    VMSTAT,
 )
 from cbagent.collectors.xdcr_lag import XdcrLag

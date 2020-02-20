@@ -168,7 +168,7 @@ class CbAgent:
                        secondary_stats=False,
                        secondary_storage_stats=False,
                        secondary_storage_stats_mm=False,
-                       vmstat=True,
+                       vmstat=False,
                        xdcr_lag=False,
                        xdcr_stats=False):
         self.collectors = []

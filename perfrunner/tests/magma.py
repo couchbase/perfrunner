@@ -142,7 +142,7 @@ class MagmaBenchmarkTest(PerfTest):
 
 
 class KVTest(PerfTest):
-    COLLECTORS = {'disk': True, 'latency': True, 'net': False, 'kvstore': True}
+    COLLECTORS = {'disk': True, 'latency': True, 'net': False, 'kvstore': True, 'vmstat': True}
     CB_STATS_PORT = 11209
 
     def __init__(self, *args):
@@ -358,7 +358,7 @@ class WriteLatencyDGMTest(StabilityBootstrap):
 
 class YCSBThroughputHIDDTest(YCSBThroughputTest, KVTest):
 
-    COLLECTORS = {'disk': True, 'net': True, 'kvstore': True}
+    COLLECTORS = {'disk': True, 'net': True, 'kvstore': True, 'vmstat': True}
 
     def __init__(self, *args):
         KVTest.__init__(self, *args)

@@ -176,11 +176,12 @@ func startBucket(cluster, bucketn string, wg *sync.WaitGroup) int {
 func startDcp(dcpFeed *couchbase.DcpFeed, flogs couchbase.FailoverLog, wg *sync.WaitGroup) {
 	start, end := uint64(0), uint64(0xFFFFFFFFFFFFFFFF)
 	snapStart, snapEnd := uint64(0), uint64(0)
+	manifest, scope, collection := "", "", []string{}
 	for vbno, flog := range flogs {
 		x := flog[len(flog)-1] // map[uint16][][2]uint64
 		opaque, flags, vbuuid := uint16(vbno), uint32(0), x[0]
 		err := dcpFeed.DcpRequestStream(
-			vbno, opaque, flags, vbuuid, start, end, snapStart, snapEnd)
+			vbno, opaque, flags, vbuuid, start, end, snapStart, snapEnd, manifest, scope, collection)
 		mf(err, fmt.Sprintf("stream-req for %v failed", vbno))
 	}
 	logging.Infof("Done startDCP\n")

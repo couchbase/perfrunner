@@ -312,7 +312,7 @@ class StabilityBootstrap(KVTest):
         access_settings.deletes = 0
         access_settings.reads = 0
         access_settings.workers = 128
-        access_settings.ops = int(access_settings.items * 1.2)
+        access_settings.ops = access_settings.items
         access_settings.time = 3600 * 24
         access_settings.throughput = float('inf')
         access_settings.requestdistribution = 'uniform'

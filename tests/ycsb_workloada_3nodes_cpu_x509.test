@@ -26,6 +26,7 @@ boost = 12
 workers = 96
 workload_instances = 6
 ssl_mode = auth
+ycsb_jvm_args = "-Djdk.tls.client.protocols=TLSv1.2"
 
 [ycsb]
 branch = tmp-x509

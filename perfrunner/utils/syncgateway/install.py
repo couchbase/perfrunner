@@ -19,7 +19,7 @@ def main():
             _uninstall = True
 
     if "-" not in _build:
-        base_url = "http://172.23.120.24/builds/releases/mobile/" \
+        base_url = "http://latestbuilds.service.couchbase.com/builds/releases/mobile/" \
                    "couchbase-sync-gateway/{}".format(_build)
         sg_package_name = "couchbase-sync-gateway-enterprise_{}_x86_64.rpm".format(_build)
         accel_package_name = "couchbase-sg-accel-enterprise_{}_x86_64.rpm".format(_build)
@@ -31,7 +31,7 @@ def main():
         accel_package_name = "couchbase-sg-accel-enterprise_{}_x86_64.rpm".format(_build)
     else:
         v, b = _build.split("-")
-        base_url = "http://172.23.120.24/builds/latestbuilds/sync_gateway/{}/{}".format(v, b)
+        base_url = "http://latestbuilds.service.couchbase.com/builds/latestbuilds/sync_gateway/{}/{}".format(v, b)
         sg_package_name = "couchbase-sync-gateway-enterprise_{}_x86_64.rpm".format(_build)
         accel_package_name = "couchbase-sg-accel-enterprise_{}_x86_64.rpm".format(_build)
 

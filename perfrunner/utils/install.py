@@ -11,12 +11,12 @@ from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import ClusterSpec
 
 LOCATIONS = (
-    'http://latestbuilds.service.couchbase.com/builds/latestbuilds/couchbase-server/vulcan/{build}/',
-    'http://latestbuilds.service.couchbase.com/builds/latestbuilds/couchbase-server/spock/{build}/',
-    'http://latestbuilds.service.couchbase.com/builds/latestbuilds/couchbase-server/watson/{build}/',
-    'http://latestbuilds.service.couchbase.com/builds/latestbuilds/couchbase-server/mad-hatter/{build}/',
-    'http://latestbuilds.service.couchbase.com/builds/releases/{release}/',
-    'http://latestbuilds.service.couchbase.com/builds/releases/{release}/ce/',
+    'http://172.23.126.166/builds/latestbuilds/couchbase-server/vulcan/{build}/',
+    'http://172.23.126.166/builds/latestbuilds/couchbase-server/spock/{build}/',
+    'http://172.23.126.166/builds/latestbuilds/couchbase-server/watson/{build}/',
+    'http://172.23.126.166/builds/latestbuilds/couchbase-server/mad-hatter/{build}/',
+    'http://172.23.126.166/builds/releases/{release}/',
+    'http://172.23.126.166/builds/releases/{release}/ce/',
 )
 
 PKG_PATTERNS = {

@@ -8,6 +8,7 @@ from cbagent.collectors.libstats.sysdig import SysdigStat
 from cbagent.collectors.libstats.typeperfstats import TPStats
 from cbagent.collectors.libstats.vmstat import VMStat
 
+
 class System(Collector):
 
     def get_nodes(self):
@@ -194,9 +195,9 @@ class VMSTAT(System):
         super().__init__(settings)
 
         self.sampler = VMStat(hosts=self.nodes,
-                               workers=self.workers,
-                               user=self.ssh_username,
-                               password=self.ssh_password)
+                              workers=self.workers,
+                              user=self.ssh_username,
+                              password=self.ssh_password)
 
     def sample(self):
         for node, stats in self.sampler.get_samples().items():

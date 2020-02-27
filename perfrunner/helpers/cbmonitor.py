@@ -10,6 +10,7 @@ from decorator import decorator
 from cbagent.collectors import (
     IO,
     PS,
+    VMSTAT,
     ActiveTasks,
     AnalyticsStats,
     Disk,
@@ -41,7 +42,6 @@ from cbagent.collectors import (
     SecondaryStorageStatsMM,
     Sysdig,
     TypePerf,
-    VMSTAT,
     XdcrLag,
     XdcrStats,
 )

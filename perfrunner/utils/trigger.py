@@ -6,7 +6,7 @@ import requests
 
 from logger import logger
 
-BASE_URL = 'http://172.23.120.24/builds/latestbuilds/couchbase-server'
+BASE_URL = 'http://172.23.126.166/builds/latestbuilds/couchbase-server'
 
 CHECKPOINT_DIR = '/home/'
 

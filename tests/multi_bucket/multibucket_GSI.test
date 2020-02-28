@@ -1,0 +1,65 @@
+[test_case]
+test = perfrunner.tests.multibucket.MultibucketGSI
+
+[showfast]
+title = 30 Bucket test
+component = multibkt
+
+[stats]
+server_processes = goxdcr
+
+[cluster]
+mem_quota = 23040
+index_mem_quota = 40960
+fts_index_mem_quota = 40960
+analytics_mem_quota = 40960
+eventing_mem_quota = 40960
+initial_nodes = 9 2
+num_buckets = 30
+eventing_bucket_mem_quota = 1536
+eventing_metadata_bucket_mem_quota = 1024
+eventing_buckets = 1
+
+[bucket]
+replica_number=1
+replica_index=0
+
+[compaction]
+db_percentage = 10
+
+[secondary]
+indexer.settings.storage_mode = plasma
+indexer.numPartitions = 2
+
+[load]
+items = 1000000
+size = 1024
+workers = 10
+key_fmtr = hex
+doc_gen = multibucket
+
+[index]
+statements =
+    CREATE PRIMARY INDEX `idx11` ON `bucket-1` USING GSI;
+    CREATE PRIMARY INDEX `idx12` ON `bucket-1` USING GSI;
+    CREATE PRIMARY INDEX `idx13` ON `bucket-1` USING GSI;
+    CREATE PRIMARY INDEX `idx14` ON `bucket-1` USING GSI;
+    CREATE PRIMARY INDEX `idx15` ON `bucket-1` USING GSI;
+    CREATE PRIMARY INDEX `idx16` ON `bucket-1` USING GSI;
+    CREATE PRIMARY INDEX `idx17` ON `bucket-1` USING GSI;
+    CREATE PRIMARY INDEX `idx18` ON `bucket-1` USING GSI;
+    CREATE PRIMARY INDEX `idx19` ON `bucket-1` USING GSI;
+    CREATE PRIMARY INDEX `idx10` ON `bucket-1` USING GSI;
+    BUILD INDEX ON `bucket-1`(idx11, idx12, idx13, idx14, idx15, idx16, idx17, idx18, idx19, idx10);
+
+[access]
+creates = 1
+items = 1000000
+throughput = 1
+spring_batch_size = 1
+workers = 1
+
+[rebalance]
+nodes_after = 10 2
+start_after = 600
+stop_after = 600

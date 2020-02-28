@@ -304,8 +304,8 @@ class Monitor(RestHelper):
                     logger.info('Warmpup status: {}'.format(state))
                     time.sleep(self.POLLING_INTERVAL)
             else:
-                    logger.info('No warmup stats are available, continue polling')
-                    time.sleep(self.POLLING_INTERVAL)
+                logger.info('No warmup stats are available, continue polling')
+                time.sleep(self.POLLING_INTERVAL)
 
     def monitor_compression(self, memcached, host, bucket):
         logger.info('Monitoring active compression status')

@@ -456,7 +456,7 @@ def run_ycsb(host: str,
              transactionupdateproportion: str,
              transactioninsertproportion: str,
              requestdistribution: str,
-             ssl_keystore_file: str ='',
+             ssl_keystore_file: str = '',
              ssl_keystore_password: str = '',
              ssl_mode: str = 'none',
              soe_params: dict = None,
@@ -665,7 +665,7 @@ def run_custom_cmd(path: str, binary: str, params: str):
 
 def get_jts_logs(jts_home: str, local_dir: str):
     logger.info("Collecting remote JTS logs")
-    source_dir = "JTS/logs".format(jts_home)
+    source_dir = "{}/logs".format(jts_home)
     for file in glob("{}".format(source_dir)):
         local("cp -r {} {}/".format(file, local_dir))
 
@@ -733,7 +733,7 @@ def start_celery_worker(queue: str):
               '-A perfrunner.helpers.worker -Q {} > worker.log &'.format(queue))
 
 
-def clone_git_repo(repo: str, branch: str, commit: str=None):
+def clone_git_repo(repo: str, branch: str, commit: str = None):
     repo_name = repo.split("/")[-1].split(".")[0]
     logger.info('checking if repo {} exists...'.format(repo_name))
     if os.path.exists("{}".format(repo_name)):
@@ -818,7 +818,7 @@ def build_java_dcp_client():
 
 
 def run_java_dcp_client(connection_string: str, messages: int,
-                        config_file: str, instance: int=None, collections: list=None):
+                        config_file: str, instance: int = None, collections: list = None):
 
     cmd = 'perf/run.sh {} {} {} '.format(connection_string,
                                          messages,

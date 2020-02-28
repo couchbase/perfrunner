@@ -296,7 +296,6 @@ class HighBucketDensityTest(RebalanceKVTest,
         logger.info("Index build time: {} min".format(index_build_time / 60))
 
         self.init_only_xdcr()
-
         """
         Commenting out wait for xdcr init as it is very slow
         time_elapsed = self.init_xdcr()
@@ -317,3 +316,83 @@ class HighBucketDensityTest(RebalanceKVTest,
         Keeping this at end as FTS swap rebalance fails - MB-32547
         """
         self.run_fts_rebalance()
+
+
+class MultibucketEventing(HighBucketDensityTest):
+    COLLECTORS = {
+        'iostat': True,
+        'memory': True,
+        'ns_server_system': True}
+
+    def add_eventing_functions(self):
+        with open(self.config_file) as f:
+            func = json.load(f)
+        func["settings"]["dcp_stream_boundary"] = "from_now"
+
+        """
+        Commenting out as second function deployment is failing MB-32437
+        """
+        for bkt in self.test_config.buckets:
+            func["depcfg"]["source_bucket"] = bkt
+            func["appname"] = bkt + "-test1"
+            self.set_functions_with_config(func=func, override_name=False, wait_for_bootstrap=True)
+
+    def access_and_rebalance(self, src_target_iterator: SrcTargetIterator):
+
+        time.sleep(self.SLEEP_TIME_BETWEEN_REBALNCE)
+
+        src_target_iterator_access = SrcTargetIterator(self.cluster_spec,
+                                                       self.test_config,
+                                                       "access")
+        PerfTest.access_bg(self, target_iterator=src_target_iterator_access)
+
+        access_settings = self.test_config.access_settings
+        access_settings.spring_batch_size = 5
+        access_settings.creates = 0
+        access_settings.updates = 1
+        access_settings.reads = 3
+        access_settings.deletes = 1
+        access_settings.throughput = 5
+        PerfTest.access_bg(self, settings=access_settings,
+                           target_iterator=src_target_iterator)
+
+        self.rebalance()
+
+    @with_stats
+    def run_kv_rebalance(self):
+        src_target_iterator = SrcTargetIterator(self.cluster_spec,
+                                                self.test_config,
+                                                "initial")
+        self.access_and_rebalance(src_target_iterator)
+        self.rebalance_out_node("kv")
+        self.swap_node("kv")
+
+    def run(self):
+        src_target_iterator = SrcTargetIterator(self.cluster_spec,
+                                                self.test_config,
+                                                "initial")
+        PerfTest.load(self, target_iterator=src_target_iterator)
+
+        self.wait_for_persistence()
+        self.add_eventing_functions()
+        self.run_kv_rebalance()
+        self.run_eventing_rebalance()
+
+
+class MultibucketGSI(HighBucketDensityTest):
+    COLLECTORS = {
+        'iostat': True,
+        'memory': True,
+        'ns_server_system': True,
+        'secondary_stats': True}
+
+    # This is to verify the bug : MB-39144
+
+    def run(self):
+        # PerfTest.load(self, target_iterator=src_target_iterator)
+        # self.wait_for_persistence()
+        t0 = time.time()
+        self.create_indexes()
+        self.wait_for_indexing()
+        index_build_time = time.time() - t0
+        logger.info("Index build time: {} min".format(index_build_time / 60))

@@ -138,7 +138,7 @@ class ElasticStats(FTSCollector):
     def update_metadata(self):
         self.mc.add_cluster()
         for metric in self.METRICS:
-                self.mc.add_metric(metric, collector=self.COLLECTOR)
+            self.mc.add_metric(metric, collector=self.COLLECTOR)
 
     def sample(self):
         self.collect_stats()

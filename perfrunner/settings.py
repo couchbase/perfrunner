@@ -1318,7 +1318,7 @@ class TPCDSLoaderSettings:
         self.branch = options.get('branch', self.BRANCH)
 
     def __str__(self) -> str:
-            return str(self.__dict__)
+        return str(self.__dict__)
 
 
 class TestConfig(Config):

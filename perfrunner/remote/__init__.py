@@ -65,7 +65,7 @@ class Remote:
                     '-l INFO -Q {0} -n {0} -C --discard '
                     '&>worker_{0}.log &'.format(worker), pty=False)
 
-    def clone_git_repo(self, repo: str, branch: str, worker_home: str, commit: str=None):
+    def clone_git_repo(self, repo: str, branch: str, worker_home: str, commit: str = None):
         logger.info('Cloning repository: {} branch {}'.format(repo, branch))
         with cd(worker_home), cd('perfrunner'):
             run('git clone -q -b {} {}'.format(branch, repo))
@@ -101,7 +101,7 @@ class Remote:
             run('mvn install')
 
     @all_clients
-    def init_java_dcp_client(self, repo: str, branch: str, worker_home: str, commit: str=None):
+    def init_java_dcp_client(self, repo: str, branch: str, worker_home: str, commit: str = None):
         self.clone_git_repo(repo, branch, worker_home, commit)
         with cd(worker_home), cd('perfrunner'), cd("java-dcp-client"):
             run('perf/build.sh')

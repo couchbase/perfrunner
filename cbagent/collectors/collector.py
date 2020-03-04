@@ -112,6 +112,7 @@ class Collector:
             )
             self.updater.daemon = True
             self.updater.start()
+            self.updater.join()
 
     def sample(self):
         raise NotImplementedError

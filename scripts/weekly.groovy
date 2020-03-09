@@ -13,7 +13,7 @@ def buildTests(tests) {
 }
 
 def buildComponent(component, testCases) {
-    for ( release in ['watson', 'spock', 'vulcan', 'alice', 'mad-hatter'] ) {
+    for ( release in ['watson', 'spock', 'vulcan', 'alice', 'mad-hatter', 'cheshire-cat'] ) {
         if ( testCases.containsKey(release) ) {
             buildTests(testCases[release][component])
         }

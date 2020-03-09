@@ -41,6 +41,9 @@ pipeline {
                     if ( params.madhatter_test_suite != '' ) {
                         testCases['mad-hatter']  = readJSON file: params.madhatter_test_suite
                     }
+                    if ( params.cheshire_cat_test_suite != '' ) {
+                        testCases['cheshire-cat']  = readJSON file: params.cheshire_cat_test_suite
+                    }
                 }
             }
         }

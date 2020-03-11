@@ -69,10 +69,22 @@ pipeline {
                         buildComponent('Read', testCases)
                     }
                 }
+                stage('noxa_Read') {
+                    when { expression { return params.noxa_Read } }
+                    steps {
+                        buildComponent('noxa_Read', testCases)
+                    }
+                }
                 stage('Write') {
                     when { expression { return params.Write } }
                     steps {
                         buildComponent('Write', testCases)
+                    }
+                }
+                stage('noxa_Write') {
+                    when { expression { return params.noxa_Write } }
+                    steps {
+                        buildComponent('noxa_Write', testCases)
                     }
                 }
                 stage('Sync') {
@@ -81,10 +93,22 @@ pipeline {
                         buildComponent('Sync', testCases)
                     }
                 }
+                stage('noxa_Sync') {
+                    when { expression { return params.noxa_Sync } }
+                    steps {
+                        buildComponent('noxa_Sync', testCases)
+                    }
+                }
                 stage('Query') {
                     when { expression { return params.Query } }
                     steps {
                         buildComponent('Query', testCases)
+                    }
+                }
+                stage('noxa_Query') {
+                    when { expression { return params.noxa_Query } }
+                    steps {
+                        buildComponent('noxa_Query', testCases)
                     }
                 }
                 stage('Replicate') {

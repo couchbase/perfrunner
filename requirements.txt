@@ -19,7 +19,7 @@ nose==1.3.7
 numpy==1.14.2
 paramiko==2.4.2
 pep8-naming==0.5.0
-psutil==5.2.2
+psutil==5.6.6
 pydocstyle==2.1.1
 pycrypto==2.6.1
 python-dateutil==2.6.1

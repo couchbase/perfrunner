@@ -1,0 +1,39 @@
+[test_case]
+test = perfrunner.tests.magma.PillowFightDGMTest
+
+[showfast]
+title = Max ops/sec, cbc-pillowfight, 4 nodes, 0/100 R/W, 512B JSON items, batch size = 1, Persist Majority, Magma
+component = hidd
+category = durability
+
+[cluster]
+mem_quota = 10240
+initial_nodes = 4
+num_buckets = 1
+kernel_mem_limit = 20480M
+kernel_mem_limit_services = kv
+
+[bucket]
+replica_number = 2
+
+[bucket_extras]
+backend = magma
+
+[load]
+size = 512
+items = 1000000000
+workers = 128
+doc_gen = json
+durability = 0
+
+[access]
+batch_size = 1
+items = 1000000000
+iterations = 100000
+workers = 128
+updates = 100
+durability = 3
+
+[clients]
+libcouchbase = 3.0.0-beta.2
+python_client = 3.0.0-beta.2

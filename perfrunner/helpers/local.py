@@ -27,6 +27,13 @@ def extract_cb_deb(filename: str):
         local(cmd)
 
 
+def extract_cb_any(filename: str):
+    if os.path.exists("{}.deb".format(filename)):
+        extract_cb_deb("{}.deb".format(filename))
+    else:
+        extract_cb("{}.rpm".format(filename))
+
+
 def cleanup(backup_dir: str):
     logger.info("Cleaning the disk before backup/export")
 

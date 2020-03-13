@@ -4,10 +4,16 @@ from typing import Callable
 from decorator import decorator
 
 from logger import logger
-from perfrunner.helpers.cbmonitor import with_stats
-from perfrunner.helpers.local import extract_cb_deb, get_cbstats
+from perfrunner.helpers import local
+from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.misc import pretty_dict, read_json
+from perfrunner.helpers.worker import (
+    pillowfight_data_load_task,
+    pillowfight_task,
+)
 from perfrunner.tests import PerfTest
+from perfrunner.tests.rebalance import RebalanceKVTest
+from perfrunner.tests.tools import BackupTest
 from perfrunner.tests.ycsb import YCSBThroughputTest
 
 
@@ -147,7 +153,7 @@ class KVTest(PerfTest):
 
     def __init__(self, *args):
         super().__init__(*args)
-        extract_cb_deb(filename='couchbase.deb')
+        local.extract_cb_any(filename='couchbase')
         self.collect_per_server_stats = self.test_config.magma_settings.collect_per_server_stats
         self.disk_stats = {}
         self.memcached_stats = {}
@@ -155,7 +161,8 @@ class KVTest(PerfTest):
 
     def print_kvstore_stats(self):
         try:
-            result = get_cbstats(self.master_node, self.CB_STATS_PORT, "kvstore", self.cluster_spec)
+            result = local.get_cbstats(self.master_node, self.CB_STATS_PORT, "kvstore",
+                                       self.cluster_spec)
             buckets_data = list(filter(lambda a: a != "", result.split("*")))
             for data in buckets_data:
                 data = data.strip()
@@ -318,6 +325,7 @@ class StabilityBootstrap(KVTest):
         access_settings.requestdistribution = 'uniform'
         access_settings.power_alpha = 0.0
         access_settings.zipf_alpha = 0.0
+        access_settings.durability = None
         self.COLLECTORS["latency"] = False
         self.extra_access(access_settings=access_settings)
         self.COLLECTORS["latency"] = True
@@ -356,6 +364,95 @@ class WriteLatencyDGMTest(StabilityBootstrap):
         )
 
 
+class EnhancedDurabilityLatencyDGMTest(StabilityBootstrap):
+
+    def _report_kpi(self):
+        for percentile in 50.00, 99.9:
+            self.reporter.post(
+                *self.metrics.kv_latency(operation='set', percentile=percentile)
+            )
+
+
+class PillowFightDGMTest(StabilityBootstrap):
+
+    """Use cbc-pillowfight from libcouchbase to drive cluster."""
+
+    ALL_BUCKETS = True
+
+    def load(self, *args):
+        PerfTest.load(self, task=pillowfight_data_load_task)
+
+    @with_stats
+    def access(self, *args):
+        self.download_certificate()
+
+        PerfTest.access(self, task=pillowfight_task)
+
+    @with_stats
+    def extra_access(self, access_settings):
+        logger.info("Starting first access phase")
+        PerfTest.access(self, settings=access_settings, task=pillowfight_task)
+
+    def _report_kpi(self, *args):
+        self.reporter.post(
+            *self.metrics.max_ops()
+        )
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.run_extra_access()
+
+        self.hot_load()
+        self.reset_kv_stats()
+
+        self.access()
+
+        self.report_kpi()
+
+
+class WarmupDGMTest(StabilityBootstrap):
+
+    @with_stats
+    def warmup(self):
+        self.remote.stop_server()
+        self.remote.drop_caches()
+
+        return self._warmup()
+
+    @timeit
+    def _warmup(self):
+        self.remote.start_server()
+        for master in self.cluster_spec.masters:
+            for bucket in self.test_config.buckets:
+                self.monitor.monitor_warmup(self.memcached, master, bucket)
+
+    def _report_kpi(self, time_elapsed):
+        self.reporter.post(
+            *self.metrics.elapsed_time(time_elapsed)
+        )
+
+    def run(self):
+        self.load()
+
+        self.run_extra_access()
+
+        self.hot_load()
+        self.reset_kv_stats()
+
+        self.access()
+        self.wait_for_persistence()
+
+        self.COLLECTORS["kvstore"] = False
+        self.COLLECTORS["disk"] = False
+        self.COLLECTORS["latency"] = False
+        self.COLLECTORS["vmstat"] = False
+        time_elapsed = self.warmup()
+
+        self.report_kpi(time_elapsed)
+
+
 class YCSBThroughputHIDDTest(YCSBThroughputTest, KVTest):
 
     COLLECTORS = {'disk': True, 'net': True, 'kvstore': True, 'vmstat': True}
@@ -392,3 +489,111 @@ class YCSBThroughputHIDDTest(YCSBThroughputTest, KVTest):
         KVTest.print_kvstore_stats(self)
 
         self.report_kpi()
+
+
+class JavaDCPThroughputDGMTest(KVTest):
+
+    def _report_kpi(self, time_elapsed: float):
+        self.reporter.post(
+            *self.metrics.dcp_throughput(time_elapsed)
+        )
+
+    def init_java_dcp_client(self):
+        local.clone_git_repo(repo=self.test_config.java_dcp_settings.repo,
+                             branch=self.test_config.java_dcp_settings.branch)
+        local.build_java_dcp_client()
+
+    @with_stats
+    @timeit
+    def access(self, *args):
+        for target in self.target_iterator:
+            local.run_java_dcp_client(
+                connection_string=target.connection_string,
+                messages=self.test_config.load_settings.items,
+                config_file=self.test_config.java_dcp_settings.config,
+            )
+
+    def run(self):
+        self.init_java_dcp_client()
+
+        self.load()
+
+        self.reset_kv_stats()
+
+        time_elapsed = self.access()
+
+        self.report_kpi(time_elapsed)
+
+
+class RebalanceKVDGMTest(RebalanceKVTest):
+
+    @with_stats
+    def run_extra_access(self):
+        access_settings = self.test_config.access_settings
+        access_settings.updates = 100
+        access_settings.creates = 0
+        access_settings.deletes = 0
+        access_settings.reads = 0
+        access_settings.workers = 128
+        access_settings.ops = access_settings.items
+        access_settings.time = 3600 * 24
+        access_settings.throughput = float('inf')
+        access_settings.requestdistribution = 'uniform'
+        access_settings.power_alpha = 0.0
+        access_settings.zipf_alpha = 0.0
+        access_settings.durability = None
+        self.COLLECTORS["latency"] = False
+        logger.info("Starting first access phase")
+        PerfTest.access(self, settings=access_settings)
+        self.COLLECTORS["latency"] = True
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.run_extra_access()
+
+        self.hot_load()
+
+        self.reset_kv_stats()
+
+        self.access_bg()
+        self.rebalance()
+
+        if self.is_balanced():
+            self.report_kpi()
+
+
+class BackupTestDGM(BackupTest):
+
+    @with_stats
+    def run_extra_access(self):
+        access_settings = self.test_config.access_settings
+        access_settings.updates = 100
+        access_settings.creates = 0
+        access_settings.deletes = 0
+        access_settings.reads = 0
+        access_settings.workers = 128
+        access_settings.ops = access_settings.items
+        access_settings.time = 3600 * 24
+        access_settings.throughput = float('inf')
+        access_settings.requestdistribution = 'uniform'
+        access_settings.power_alpha = 0.0
+        access_settings.zipf_alpha = 0.0
+        access_settings.durability = None
+        self.COLLECTORS["latency"] = False
+        logger.info("Starting first access phase")
+        PerfTest.access(self, settings=access_settings)
+        self.COLLECTORS["latency"] = True
+
+    def run(self):
+        self.extract_tools()
+
+        self.load()
+        self.wait_for_persistence()
+
+        self.run_extra_access()
+
+        time_elapsed = self.backup()
+
+        self.report_kpi(time_elapsed)

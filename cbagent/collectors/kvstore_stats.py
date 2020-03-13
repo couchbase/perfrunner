@@ -1,7 +1,7 @@
 import json
 
 from cbagent.collectors import Collector
-from perfrunner.helpers.local import extract_cb_deb, get_cbstats
+from perfrunner.helpers.local import extract_cb_any, get_cbstats
 
 
 class KVStoreStats(Collector):
@@ -51,7 +51,7 @@ class KVStoreStats(Collector):
 
     def __init__(self, settings, test):
         super().__init__(settings)
-        extract_cb_deb(filename='couchbase.deb')
+        extract_cb_any(filename='couchbase')
         self.collect_per_server_stats = test.collect_per_server_stats
         self.cluster_spec = test.cluster_spec
 

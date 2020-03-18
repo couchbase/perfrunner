@@ -27,6 +27,7 @@ from spring.docgen import (
     GSIMultiIndexDocument,
     HashJoinDocument,
     HotKey,
+    HundredIndexDocument,
     ImportExportDocument,
     ImportExportDocumentArray,
     ImportExportDocumentNested,
@@ -221,6 +222,10 @@ class Worker:
             self.docs = AdvFilterDocument(self.ws.size)
         elif self.ws.doc_gen == 'advancedfilterxattr':
             self.docs = AdvFilterXattrBody(self.ws.size)
+        elif self.ws.doc_gen == 'hundred_index_doc':
+            self.docs = HundredIndexDocument(self.ws.size,
+                                             self.ws.size_variation_min,
+                                             self.ws.size_variation_max)
 
     def init_db(self):
         params = {

@@ -1288,6 +1288,43 @@ class VaryingItemSizePlasmaDocument(PlasmaDocument):
         }
 
 
+class HundredIndexDocument(PlasmaDocument):
+
+    def __init__(self, avg_size: int, size_variation_min: int,
+                 size_variation_max: int):
+        super().__init__(avg_size)
+        self.size_variation_min = size_variation_min
+        self.size_variation_max = size_variation_max
+
+    def next(self, key: Key) -> dict:
+        alphabet = self.build_alphabet(key.string)
+        size = self._size()
+        length = random.randint(self.size_variation_min, self.size_variation_max)
+
+        return {
+            'field1': self.build_name(alphabet),
+            'field2': self.build_email(alphabet),
+            'field3': self.build_alt_email(alphabet),
+            'field4': self.build_item(alphabet=alphabet, size=length),
+            'field5': self.build_realm(alphabet),
+            'field6': self.build_coins(alphabet),
+            'field7': self.build_category(alphabet),
+            'field8': self.build_achievements(alphabet),
+            'field9': self.build_string(alphabet, size),
+            'field10': self.build_name(alphabet),
+            'field11': self.build_email(alphabet),
+            'field12': self.build_alt_email(alphabet),
+            'field13': self.build_item(alphabet=alphabet, size=length),
+            'field14': self.build_realm(alphabet),
+            'field15': self.build_coins(alphabet),
+            'field16': self.build_category(alphabet),
+            'field17': self.build_achievements(alphabet),
+            'field18': self.build_string(alphabet, size),
+            'field19': self.build_category(alphabet),
+            'field20': self.build_achievements(alphabet),
+        }
+
+
 class EventingSmallDocument(Document):
 
     def next(self, key: Key) -> dict:

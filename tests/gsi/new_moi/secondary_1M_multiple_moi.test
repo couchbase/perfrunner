@@ -28,7 +28,7 @@ replica_index=0
 items = 1000000
 size = 1024
 workers = 100
-doc_gen = gsi_large_index
+doc_gen = hundred_index_doc
 report_initial_build_time = 1
 
 [secondary]

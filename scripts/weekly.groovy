@@ -164,6 +164,12 @@ pipeline {
                         buildComponent('YCSB', testCases)
                     }
                 }
+                stage('Magma-Legacy') {
+                    when { expression { return params.MagmaLegacy } }
+                    steps {
+                        buildComponent('Magma-Legacy', testCases)
+                    }
+                }
             }
         }
     }

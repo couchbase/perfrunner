@@ -17,5 +17,14 @@
         {"job": "leto", "cluster": "leto.spec", "test_config": "tools_restore_100M_rift.test"},
         {"job": "leto", "cluster": "leto.spec", "test_config": "tools_restore_400M_sqlite.test"},
         {"job": "leto", "cluster": "leto.spec", "test_config": "tools_restore_400M_rift.test"}
+    ],
+    "Magma-Legacy": [
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "durability/latency/ycsb/enhanced/ycsb_workloada_4node_lat_durability3d_magma.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "durability/throughput/ycsb/enhanced/ycsb_workloada_4node_thr_durability3d_magma.test"},
+        {"job": "titan-reb", "cluster": "titan.spec", "test_config": "reb_in_1B_4nodes_kv_magma.test"},
+        {"job": "titan-reb", "cluster": "titan.spec", "test_config": "reb_swap_1B_4nodes_kv_magma.test"},
+        {"job": "titan-reb", "cluster": "titan.spec", "test_config": "reb_out_1B_4nodes_kv_magma.test"},
+        {"job": "hera", "cluster": "hera.spec", "test_config": "kv_latency_read_1000M_compacted_magma.test"},
+        {"job": "hera", "cluster": "hera.spec", "test_config": "kv_thr_1000M_5cm_fe_read_comp_magma.test"}
     ]
 }

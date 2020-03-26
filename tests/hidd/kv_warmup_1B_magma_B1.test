@@ -16,8 +16,8 @@ kernel_mem_limit_services = kv
 [stats]
 interval = 1
 
-[bucket_extras]
-backend = magma
+[bucket]
+backend_storage = magma
 
 [load]
 items = 1000000000

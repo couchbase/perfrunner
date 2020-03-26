@@ -307,6 +307,7 @@ class BucketSettings:
     AUTOFAILOVER_ENABLED = 'true'
     FAILOVER_MIN = 5
     FAILOVER_MAX = 30
+    BACKEND_STORAGE = None
 
     def __init__(self, options: dict):
         self.password = options.get('password', self.PASSWORD)
@@ -333,6 +334,8 @@ class BucketSettings:
         self.failover_min = int(options.get('failover_min', self.FAILOVER_MIN))
 
         self.failover_max = int(options.get('failover_max', self.FAILOVER_MAX))
+
+        self.backend_storage = options.get('backend_storage', self.BACKEND_STORAGE)
 
 
 class CompactionSettings:

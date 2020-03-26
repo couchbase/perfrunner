@@ -165,6 +165,7 @@ class ClusterManager:
                     replica_index=self.test_config.bucket.replica_index,
                     eviction_policy=self.test_config.bucket.eviction_policy,
                     bucket_type=self.test_config.bucket.bucket_type,
+                    backend_storage=self.test_config.bucket.backend_storage,
                     conflict_resolution_type=self.test_config.bucket.conflict_resolution_type,
                     compression_mode=self.test_config.bucket.compression_mode,
                 )

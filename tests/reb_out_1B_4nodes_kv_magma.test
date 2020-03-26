@@ -16,9 +16,7 @@ kernel_mem_limit_services = kv
 
 [bucket]
 eviction_policy = fullEviction
-
-[bucket_extras]
-backend = magma
+backend_storage = magma
 
 [load]
 items = 1000000000

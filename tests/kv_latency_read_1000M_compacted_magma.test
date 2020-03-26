@@ -16,9 +16,7 @@ db_percentage = 100
 
 [bucket]
 eviction_policy = fullEviction
-
-[bucket_extras]
-backend = magma
+backend_storage = magma
 
 [load]
 items = 1000000000

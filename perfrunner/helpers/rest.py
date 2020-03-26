@@ -297,6 +297,7 @@ class RestHelper:
                       replica_index: int,
                       eviction_policy: str,
                       bucket_type: str,
+                      backend_storage: str = None,
                       conflict_resolution_type: str = None,
                       compression_mode: str = None):
         logger.info('Adding new bucket: {}'.format(name))
@@ -322,6 +323,9 @@ class RestHelper:
 
         if compression_mode:
             data['compressionMode'] = compression_mode
+
+        if backend_storage:
+            data['storageBackend'] = backend_storage
 
         logger.info('Bucket configuration: {}'.format(pretty_dict(data)))
 

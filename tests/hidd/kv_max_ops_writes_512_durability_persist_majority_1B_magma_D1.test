@@ -15,9 +15,7 @@ kernel_mem_limit_services = kv
 
 [bucket]
 replica_number = 2
-
-[bucket_extras]
-backend = magma
+backend_storage = magma
 
 [load]
 size = 512

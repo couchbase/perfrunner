@@ -8,9 +8,7 @@ category = dcp
 
 [stats]
 client_processes = java
-
-[bucket_extras]
-backend = magma
+backend_storage = magma
 
 [cluster]
 mem_quota = 10240

@@ -14,6 +14,9 @@ num_buckets = 1
 kernel_mem_limit = 34G
 kernel_mem_limit_services = kv
 
+[bucket]
+backend_storage = magma
+
 [magma_benchmark]
 num_kvstores=1
 write_batchsize=1000

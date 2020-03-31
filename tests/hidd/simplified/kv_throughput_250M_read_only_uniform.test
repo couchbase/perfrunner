@@ -12,7 +12,7 @@ mem_quota = 6144
 initial_nodes = 2
 num_buckets = 1
 num_vbuckets = 256
-kernel_mem_limit = 10752M
+kernel_mem_limit = 14G
 kernel_mem_limit_services = kv
 
 [bucket]

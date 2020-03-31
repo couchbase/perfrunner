@@ -1,18 +1,24 @@
 import random
 from hashlib import md5
 
+import pkg_resources
 from twisted.internet import reactor
-from txcouchbase.connection import Connection
 
 from logger import logger
 
-try:
+cb_version = pkg_resources.get_distribution("couchbase").version
+if cb_version[0] == '2':
+    from txcouchbase.connection import Connection
     from couchbase import experimental
-except ImportError:
+    experimental.enable()
+elif cb_version == '3.0.0b3':
+    from txcouchbase.connection import Connection
     from couchbase_v2 import experimental
-
-
-experimental.enable()
+    experimental.enable()
+else:
+    from couchbase_core.cluster import PasswordAuthenticator
+    from couchbase.cluster import ClusterOptions
+    from txcouchbase.cluster import TxCluster
 
 
 class SmallIterator:
@@ -115,8 +121,23 @@ class WorkloadGen:
 
     NUM_ITERATIONS = 5
 
-    def __init__(self, num_items, host, bucket, password, small=True):
-        self.num_items = num_items
+    def __init__(self, num_items, host, bucket, password, collections=None, small=True):
+        if collections:
+            self.use_collections = True
+        else:
+            self.use_collections = False
+
+        self.collections_list = []
+        if collections:
+            target_scope_collections = collections[bucket]
+            for scope in target_scope_collections.keys():
+                for collection in target_scope_collections[scope].keys():
+                    if target_scope_collections[scope][collection]['load'] == 1 and \
+                                    target_scope_collections[scope][collection]['access'] == 1:
+                        self.collections_list.append(scope+":"+collection)
+
+        self.num_targets = len(self.collections_list)
+        self.num_items = num_items // max(self.num_targets, 1)
         if small:
             self.kv_cls = KeyValueIterator
             self.field_cls = NewFieldIterator
@@ -126,7 +147,27 @@ class WorkloadGen:
         self.kv_iterator = self.kv_cls(self.num_items)
         self.field_iterator = self.field_cls(self.num_items)
 
-        self.cb = Connection(bucket=bucket, host=host, password=password)
+        self.collections_map = {}
+
+        cb_version = pkg_resources.get_distribution("couchbase").version
+        if cb_version[0] == '2' or cb_version == '3.0.0b3':
+            self.cb = Connection(bucket=bucket, host=host, password=password)
+        else:
+            connection_string = 'couchbase://{host}?password={password}'
+            connection_string = connection_string.format(host=host,
+                                                         password=password)
+            pass_auth = PasswordAuthenticator(bucket, password)
+            cluster = TxCluster(connection_string=connection_string,
+                                options=ClusterOptions(pass_auth))
+            self.bucket = cluster.bucket(bucket)
+            for scope_collection in self.collections_list:
+                scope, collection = scope_collection.split(":")
+                if scope == "_default" and collection == "_default":
+                    self.collections_map[scope_collection] = \
+                        self.bucket.default_collection()
+                else:
+                    self.collections_map[scope_collection] = \
+                        self.bucket.scope(scope).collection(collection)
 
         self.fraction = 1
         self.iteration = 0
@@ -136,49 +177,76 @@ class WorkloadGen:
 
     def _on_set(self, *args):
         self.counter += 1
-        if self.counter == self.kv_cls.BATCH_SIZE:
+        if self.counter == self.kv_cls.BATCH_SIZE * self.num_targets:
             self._set()
 
     def _set(self, *args):
         self.counter = 0
         try:
             for k, v in self.kv_iterator.next():
-                d = self.cb.set(k, v)
-                d.addCallback(self._on_set)
-                d.addErrback(self._interrupt)
+                if self.use_collections:
+                    for collection in self.collections_map.keys():
+                        coll = self.collections_map[collection]
+                        d = coll.upsert(k, v)
+                        d.addCallback(self._on_set)
+                        d.addErrback(self._interrupt)
+                else:
+                    d = self.cb.set(k, v)
+                    d.addCallback(self._on_set)
+                    d.addErrback(self._interrupt)
         except StopIteration:
             logger.info('Started iteration: {}-{}'.format(self.iteration,
                                                           self.fraction))
             self._append()
 
     def run(self):
-        logger.info('Running initial load: {} items'.format(self.num_items))
-
-        d = self.cb.connect()
-        d.addCallback(self._set)
-        d.addErrback(self._interrupt)
+        if self.use_collections:
+            logger.info('Running initial load: {} items per collection'.format(self.num_items))
+            d = self.bucket.on_connect()
+            d.addCallback(self._set)
+            d.addErrback(self._interrupt)
+        else:
+            logger.info('Running initial load: {} items'.format(self.num_items))
+            d = self.cb.connect()
+            d.addCallback(self._set)
+            d.addErrback(self._interrupt)
 
         reactor.run()
 
     def _on_append(self, *args):
         self.counter += 1
-        if self.counter == self.field_cls.BATCH_SIZE:
+        if self.counter == self.field_cls.BATCH_SIZE * self.num_targets:
             self._append()
 
-    def _on_get(self, rv, f):
-        v = rv.value
-        v.append(f)
-        d = self.cb.set(rv.key, v)
-        d.addCallback(self._on_append)
-        d.addErrback(self._interrupt)
+    def _on_get(self, rv, f, collection=None, key=None):
+        if collection:
+            v = rv.content
+            v.append(f)
+            coll = self.collections_map[collection]
+            d = coll.upsert(key, v)
+            d.addCallback(self._on_append)
+            d.addErrback(self._interrupt)
+        else:
+            v = rv.value
+            v.append(f)
+            d = self.cb.set(rv.key, v)
+            d.addCallback(self._on_append)
+            d.addErrback(self._interrupt)
 
     def _append(self, *args):
         self.counter = 0
         try:
             for k, f in self.field_iterator.next():
-                d = self.cb.get(k)
-                d.addCallback(self._on_get, f)
-                d.addErrback(self._interrupt)
+                if self.use_collections:
+                    for collection in self.collections_map.keys():
+                        coll = self.collections_map[collection]
+                        d = coll.get(k)
+                        d.addCallback(self._on_get, f, collection, k)
+                        d.addErrback(self._interrupt)
+                else:
+                    d = self.cb.get(k)
+                    d.addCallback(self._on_get, f)
+                    d.addErrback(self._interrupt)
         except StopIteration:
             logger.info('Finished iteration: {}-{}'.format(self.iteration,
                                                            self.fraction))

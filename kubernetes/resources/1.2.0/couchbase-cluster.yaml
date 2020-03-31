@@ -1,0 +1,48 @@
+apiVersion: couchbase.com/v1
+kind: CouchbaseCluster
+metadata:
+  name: cb-example-perf
+spec:
+  nodeSelector:
+    type: worker
+  baseImage: couchbase/server
+  version: enterprise-6.5.0
+  antiAffinity: true
+  authSecret: cb-example-auth
+  exposeAdminConsole: true
+  adminConsoleServices:
+    - data
+  exposedFeatures:
+    - client
+  cluster:
+    dataServiceMemoryQuota: 40960
+    autoFailoverTimeout: 120
+    autoFailoverMaxCount: 3
+    autoFailoverOnDataDiskIssues: true
+    autoFailoverOnDataDiskIssuesTimePeriod: 120
+    autoFailoverServerGroup: false
+  buckets:
+    - name: default
+      type: couchbase
+      memoryQuota: 40960
+      replicas: 1
+      ioPriority: high
+      evictionPolicy: valueOnly
+      conflictResolution: seqno
+      enableFlush: true
+      enableIndexReplica: false
+  servers:
+    - size: 3
+      name: data
+      services:
+        - data
+      pod:
+        nodeSelector:
+          type: worker
+        resources:
+          limits:
+            cpu: 12000m
+            memory: 60Gi
+          requests:
+           cpu: 12000m
+           memory: 60Gi

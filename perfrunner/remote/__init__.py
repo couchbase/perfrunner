@@ -42,7 +42,11 @@ class Remote:
         for client, version in client_settings.items():
             if client == "python_client":
                 with cd(perfrunner_home):
-                    run("env/bin/pip install couchbase=={}".format(version), quiet=True)
+                    if 'review.couchbase.org' in version or "github" in version:
+                        run("env/bin/pip install {} --no-cache-dir".format(version), quiet=True)
+                    else:
+                        run("env/bin/pip install couchbase=={} "
+                            "--no-cache-dir".format(version), quiet=True)
 
     def start_celery_worker(self, worker, worker_home):
         with settings(host_string=worker):
@@ -54,10 +58,13 @@ class Remote:
                     '-l INFO -Q {0} -n {0} -C --discard '
                     '&>worker_{0}.log &'.format(worker), pty=False)
 
-    def clone_git_repo(self, repo: str, branch: str, worker_home: str):
+    def clone_git_repo(self, repo: str, branch: str, worker_home: str, commit: str=None):
         logger.info('Cloning repository: {} branch {}'.format(repo, branch))
         with cd(worker_home), cd('perfrunner'):
             run('git clone -q -b {} {}'.format(branch, repo))
+        if commit:
+            with cd(worker_home), cd('perfrunner'), cd(repo):
+                run('git checkout {}'.format(commit))
 
     @all_clients
     def init_ycsb(self, repo: str, branch: str, worker_home: str, sdk_version: None):
@@ -85,6 +92,12 @@ class Remote:
                 cd("cbas-perf-support"), \
                 cd("tpcds-couchbase-loader"):
             run('mvn install')
+
+    @all_clients
+    def init_java_dcp_client(self, repo: str, branch: str, worker_home: str, commit: str=None):
+        self.clone_git_repo(repo, branch, worker_home, commit)
+        with cd(worker_home), cd('perfrunner'), cd("java-dcp-client"):
+            run('perf/build.sh')
 
     @all_clients
     def init_jts(self, repo: str, branch: str, worker_home: str, jts_home: str):

@@ -1,0 +1,38 @@
+[test_case]
+test = perfrunner.tests.dcp.JavaDCPCollectionThroughputTest
+
+[showfast]
+title = DCP Throughput, 1 node, 250M x 1KB, Java client, compression enabled, s=1 c=1
+component = kv
+category = dcp
+
+[stats]
+client_processes = java
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 1
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+eviction_policy = fullEviction
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
+
+[load]
+items = 250000000
+size = 1024
+workers = 40
+key_fmtr = hex
+doc_gen = large
+
+[access]
+items = 250000000
+
+[java_dcp]
+commit = fb61bd8f4c63a2cda1a988fa1700bf7e3df16ec9
+config = perf/config/compression-enabled.properties
+stream = all
+clients = 1

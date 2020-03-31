@@ -75,6 +75,9 @@ def main():
     cm.wait_until_healthy()
     cm.wait_until_warmed_up()
 
+    if cm.test_config.collection.config:
+        cm.create_collections()
+
     cm.tweak_memory()
     cm.enable_n2n_encryption()
 

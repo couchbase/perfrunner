@@ -19,6 +19,7 @@ from perfrunner.settings import (
     TestConfig,
 )
 from perfrunner.workloads import spring_workload
+from perfrunner.workloads.dcp import java_dcp_client
 from perfrunner.workloads.jts import jts_run, jts_warmup
 from perfrunner.workloads.pillowfight import (
     pillowfight_data_load,
@@ -81,6 +82,11 @@ def tpcds_initial_data_load_task(*args):
 @celery.task
 def tpcds_remaining_data_load_task(*args):
     tpcds_remaining_data_load(*args)
+
+
+@celery.task
+def java_dcp_client_task(*args):
+    java_dcp_client(*args)
 
 
 class WorkerManager:

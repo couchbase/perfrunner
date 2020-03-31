@@ -1,0 +1,70 @@
+{
+  "bucket-1": {
+    "_default": {
+      "_default": {
+        "load": 0,
+        "access": 0
+      }
+    },
+    "scope-1": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      }
+    },
+    "scope-2": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      }
+    },
+    "scope-3": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      }
+    },
+    "scope-4": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      }
+    },
+    "scope-5": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      }
+    },
+    "scope-6": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      }
+    },
+    "scope-7": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      }
+    },
+    "scope-8": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      }
+    },
+    "scope-9": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      }
+    },
+    "scope-10": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      }
+    }
+  }
+}

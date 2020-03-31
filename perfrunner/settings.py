@@ -1,4 +1,5 @@
 import csv
+import json
 import os
 import re
 from configparser import ConfigParser, NoOptionError, NoSectionError
@@ -338,6 +339,28 @@ class BucketSettings:
         self.backend_storage = options.get('backend_storage', self.BACKEND_STORAGE)
 
 
+class CollectionSettings:
+
+    CONFIG = None
+    COLLECTION_MAP = None
+
+    def __init__(self, options: dict):
+        self.config = options.get('config', self.CONFIG)
+        self.collection_map = self.COLLECTION_MAP
+        if self.config is not None:
+            with open(self.config) as f:
+                self.collection_map = json.load(f)
+
+
+class UserSettings:
+
+    NUM_USERS_PER_BUCKET = 0
+
+    def __init__(self, options: dict):
+        self.num_users_per_bucket = int(options.get('num_users_per_bucket',
+                                                    self.NUM_USERS_PER_BUCKET))
+
+
 class CompactionSettings:
 
     DB_PERCENTAGE = 30
@@ -502,6 +525,19 @@ class PhaseSettings:
 
     ANALYTICS_WARMUP_OPS = 0
     ANALYTICS_WARMUP_WORKERS = 0
+
+    COLLECTION_MAP = None
+    CUSTOM_PILLOWFIGHT = False
+
+    USERS = None
+    USER_MOD_THROUGHPUT = float('inf')
+    USER_MOD_WORKERS = 0
+    COLLECTION_MOD_WORKERS = 0
+    COLLECTION_MOD_THROUGHPUT = float('inf')
+
+    JAVA_DCP_STREAM = 'all'
+    JAVA_DCP_CONFIG = None
+    JAVA_DCP_CLIENTS = 0
 
     def __init__(self, options: dict):
         # Common settings
@@ -674,6 +710,26 @@ class PhaseSettings:
                                                     self.ANALYTICS_WARMUP_OPS))
         self.analytics_warmup_workers = int(options.get('analytics_warmup_workers',
                                                         self.ANALYTICS_WARMUP_WORKERS))
+
+        # collection map placeholder
+        self.collections = self.COLLECTION_MAP
+
+        self.custom_pillowfight = self.CUSTOM_PILLOWFIGHT
+
+        self.users = self.USERS
+
+        self.user_mod_workers = int(options.get('user_mod_workers', self.USER_MOD_WORKERS))
+
+        self.user_mod_throughput = float(options.get('user_mod_throughput',
+                                                     self.USER_MOD_THROUGHPUT))
+
+        self.collection_mod_workers = int(options.get('collection_mod_workers',
+                                                      self.COLLECTION_MOD_WORKERS))
+        self.collection_mod_throughput = float(options.get('collection_mod_throughput',
+                                                           self.COLLECTION_MOD_THROUGHPUT))
+        self.java_dcp_stream = self.JAVA_DCP_STREAM
+        self.java_dcp_config = self.JAVA_DCP_CONFIG
+        self.java_dcp_clients = self.JAVA_DCP_CLIENTS
 
     def __str__(self) -> str:
         return str(self.__dict__)
@@ -1071,10 +1127,13 @@ class ClientSettings:
 
     LIBCOUCHBASE = '2.9.3'
     PYTHON_CLIENT = '2.5.0'
+    PILLOWFIGHT = '0.0.0'
 
     def __init__(self, options: dict):
         self.libcouchbase = options.get('libcouchbase', self.LIBCOUCHBASE)
         self.python_client = options.get('python_client', self.PYTHON_CLIENT)
+        if options.get('pillowfight'):
+            self.pillowfight = options.get('pillowfight')
 
     def __str__(self) -> str:
         return str(self.__dict__)
@@ -1086,10 +1145,19 @@ class JavaDCPSettings:
 
     BRANCH = 'master'
 
+    COMMIT = None
+
+    STREAM = 'all'
+
+    CLIENTS = 1
+
     def __init__(self, options: dict):
         self.config = options.get('config')
         self.repo = options.get('repo', self.REPO)
         self.branch = options.get('branch', self.BRANCH)
+        self.commit = options.get('commit', self.COMMIT)
+        self.stream = options.get('stream', self.STREAM)
+        self.clients = int(options.get('clients', self.CLIENTS))
 
     def __str__(self) -> str:
         return str(self.__dict__)
@@ -1168,6 +1236,16 @@ class TestConfig(Config):
         return BucketSettings(options)
 
     @property
+    def collection(self) -> CollectionSettings:
+        options = self._get_options_as_dict('collection')
+        return CollectionSettings(options)
+
+    @property
+    def users(self) -> UserSettings:
+        options = self._get_options_as_dict('users')
+        return UserSettings(options)
+
+    @property
     def bucket_extras(self) -> dict:
         return self._get_options_as_dict('bucket_extras')
 
@@ -1195,8 +1273,20 @@ class TestConfig(Config):
 
     @property
     def load_settings(self):
-        options = self._get_options_as_dict('load')
-        return LoadSettings(options)
+        load_options = self._get_options_as_dict('load')
+        load_settings = LoadSettings(load_options)
+
+        client_options = self._get_options_as_dict('clients')
+        client_settings = ClientSettings(client_options)
+        if hasattr(client_settings, "pillowfight"):
+            load_settings.custom_pillowfight = True
+
+        collection_options = self._get_options_as_dict('collection')
+        collection_settings = CollectionSettings(collection_options)
+        if collection_settings.collection_map is not None:
+            load_settings.collections = collection_settings.collection_map
+
+        return load_settings
 
     @property
     def hot_load_settings(self) -> HotLoadSettings:
@@ -1210,6 +1300,16 @@ class TestConfig(Config):
         hot_load.num_replies = load.num_replies
         hot_load.size = load.size
         hot_load.key_fmtr = load.key_fmtr
+
+        client_options = self._get_options_as_dict('clients')
+        client_settings = ClientSettings(client_options)
+        if hasattr(client_settings, "pillowfight"):
+            hot_load.custom_pillowfight = True
+
+        collection_options = self._get_options_as_dict('collection')
+        collection_settings = CollectionSettings(collection_options)
+        if collection_settings.collection_map is not None:
+            hot_load.collections = collection_settings.collection_map
         return hot_load
 
     @property
@@ -1266,6 +1366,26 @@ class TestConfig(Config):
     def access_settings(self) -> AccessSettings:
         options = self._get_options_as_dict('access')
         access = AccessSettings(options)
+
+        java_dcp_options = self._get_options_as_dict('java_dcp')
+        java_dcp_settings = JavaDCPSettings(java_dcp_options)
+        access.java_dcp_config = java_dcp_settings.config
+        access.java_dcp_clients = java_dcp_settings.clients
+        access.java_dcp_stream = java_dcp_settings.stream
+
+        client_options = self._get_options_as_dict('clients')
+        client_settings = ClientSettings(client_options)
+        if hasattr(client_settings, "pillowfight"):
+            access.custom_pillowfight = True
+
+        user_options = self._get_options_as_dict('users')
+        user_settings = UserSettings(user_options)
+        access.users = user_settings.num_users_per_bucket
+
+        collection_options = self._get_options_as_dict('collection')
+        collection_settings = CollectionSettings(collection_options)
+        if collection_settings.collection_map is not None:
+            access.collections = collection_settings.collection_map
 
         if hasattr(access, 'n1ql_queries'):
             access.define_queries(self)

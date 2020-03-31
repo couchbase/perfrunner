@@ -1,0 +1,45 @@
+apiVersion: couchbase.com/v2
+kind: CouchbaseCluster
+metadata:
+  name: cb-example-perf
+spec:
+  backup:
+    managed: false
+    image: couchbase/operator-backup:6.5.0
+    serviceAccountName: couchbase-backup
+  nodeSelector:
+    type: worker
+  image: couchbase/server:enterprise-6.5.0
+  antiAffinity: true
+  security:
+    adminSecret: cb-example-auth
+  buckets:
+    managed: true
+  cluster:
+    dataServiceMemoryQuota: 40960Mi
+    autoFailoverTimeout: 120s
+    autoFailoverMaxCount: 3
+    autoFailoverOnDataDiskIssues: true
+    autoFailoverOnDataDiskIssuesTimePeriod: 120s
+    autoFailoverServerGroup: false
+  servers:
+  - size: 3
+    name: data
+    services:
+    - data
+    pod:
+      nodeSelector:
+        type: worker
+      resources:
+        limits:
+          cpu: 12000m
+          memory: 60Gi
+        requests:
+          cpu: 12000m
+          memory: 60Gi
+  networking:
+    exposeAdminConsole: true
+    exposedFeatures:
+    - client
+
+

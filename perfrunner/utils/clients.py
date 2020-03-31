@@ -219,7 +219,38 @@ LIBCOUCHBASE_PACKAGES = [{"version": "3.0.0-alpha.5",
                               "sudo dpkg -i libcouchbase2-core_2.9.0-1_amd64.deb "
                               "libcouchbase2-libevent_2.9.0-1_amd64.deb "
                               "libcouchbase-dev_2.9.0-1_amd64.deb "
-                              "libcouchbase2-bin_2.9.0-1_amd64.deb"]}]
+                              "libcouchbase2-bin_2.9.0-1_amd64.deb"]},
+                         {"version": "3.0.1",
+                          "os": "ubuntu",
+                          "package": "libcouchbase-3.0.1_ubuntu1604_xenial_amd64",
+                          "package_path": "libcouchbase-3.0.1_ubuntu1604_xenial_amd64",
+                          "format": "tar",
+                          "install_cmds":
+                              ["grep -qxF "
+                               "'deb http://us.archive.ubuntu.com/ubuntu/ bionic main restricted' "
+                               "/etc/apt/sources.list || echo "
+                               "'deb http://us.archive.ubuntu.com/ubuntu/ bionic main restricted' "
+                               ">> /etc/apt/sources.list",
+                               "sudo apt-get update -y",
+                               "sudo apt-get install libevent-core-2.1 libev4 -y ",
+                               "sudo dpkg -i libcouchbase3_3.0.1-1_amd64.deb "
+                               "libcouchbase3-libevent_3.0.1-1_amd64.deb "
+                               "libcouchbase-dbg_3.0.1-1_amd64.deb "
+                               "libcouchbase3-libev_3.0.1-1_amd64.deb "
+                               "libcouchbase3-tools_3.0.1-1_amd64.deb "
+                               "libcouchbase-dev_3.0.1-1_amd64.deb"]}]
+
+PILLOWFIGHT_CUSTOM_DEPS = {'3.0.0': {'ubuntu': ["grep -qxF "
+                                                "'deb http://us.archive.ubuntu.com/ubuntu/"
+                                                " bionic main restricted' "
+                                                "/etc/apt/sources.list || echo "
+                                                "'deb http://us.archive.ubuntu.com/ubuntu/"
+                                                " bionic main restricted' "
+                                                ">> /etc/apt/sources.list",
+                                                "sudo apt-get update -y",
+                                                "sudo apt-get install "
+                                                "libevent-core-2.1 libev4 -y "]}
+                           }
 
 
 class ClientInstaller:
@@ -270,18 +301,55 @@ class ClientInstaller:
                 for cmd in install_cmds:
                     run(cmd)
 
+    @all_clients
+    def install_clients_from_commit(self, client: str, version: str):
+        _, version, commit_id = version.split(":")
+
+        if client == "pillowfight":
+            dep_cmds = PILLOWFIGHT_CUSTOM_DEPS[version][self.client_os]
+            for cmd in dep_cmds:
+                run(cmd)
+            with cd('/tmp'):
+                run("rm -rf libcouchbase_custom")
+                run("mkdir libcouchbase_custom")
+            with cd('/tmp/libcouchbase_custom'):
+                run('git clone https://github.com/couchbase/libcouchbase.git')
+            with cd('/tmp/libcouchbase_custom/libcouchbase'):
+                run('git checkout {}'.format(commit_id))
+                run('mkdir build')
+            with cd('/tmp/libcouchbase_custom/libcouchbase/build'):
+                run('apt-get install cmake libevent-dev libevent-core-2.1 libev4 -y')
+                run('../cmake/configure')
+                run('make')
+
     def install(self):
-        for client, version in self.client_settings.items():
-            if client == "libcouchbase":
-                if any([current_version != version
-                        for current_version
-                        in self.detect_client_versions(client).values()]):
-                    self.uninstall_clients(client)
+        install_order = ['libcouchbase', 'python_client', 'pillowfight']
+
+        for client in install_order:
+            try:
+                version = self.client_settings[client]
+                if client == "libcouchbase":
+                    if any([current_version != version
+                            for current_version
+                            in self.detect_client_versions(client).values()]):
+                        self.uninstall_clients(client)
+                        logger.info("Installing {} {}".format(client, version))
+                        self.install_clients(client, version)
+                        logger.info("Successfully installed {} {}".format(client, version))
+                elif client == "python_client":
                     logger.info("Installing {} {}".format(client, version))
-                    self.install_clients(client, version)
+                    if 'review.couchbase.org' in version or 'github.com' in version:
+                        local("env/bin/pip install {} --no-cache-dir".format(version))
+                    else:
+                        local("env/bin/pip install couchbase=={} --no-cache-dir".format(version))
                     logger.info("Successfully installed {} {}".format(client, version))
-            elif client == "python_client":
-                local("env/bin/pip install couchbase=={}".format(version))
+                elif client == 'pillowfight':
+                    if 'commit' in version:
+                        logger.info("Installing {} {}".format(client, version))
+                        self.install_clients_from_commit(client, version)
+                        logger.info("Successfully installed {} {}".format(client, version))
+            except KeyError:
+                pass
 
 
 def get_args():

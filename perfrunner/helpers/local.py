@@ -325,7 +325,10 @@ def run_cbc_pillowfight(host: str,
                         durability: int,
                         doc_gen: str = 'binary',
                         ssl_mode: str = 'none',
-                        populate: bool = False):
+                        populate: bool = False,
+                        collections: dict = None,
+                        custom_pillowfight: bool = False):
+
     cmd = 'cbc-pillowfight ' \
         '--password {password} ' \
         '--batch-size {batch_size} ' \
@@ -335,6 +338,20 @@ def run_cbc_pillowfight(host: str,
         '--max-size {size} ' \
         '--persist-to {persist_to} ' \
         '--replicate-to {replicate_to} '
+
+    if custom_pillowfight:
+        cmd = '/tmp/libcouchbase_custom/libcouchbase/build/bin/'+cmd
+
+    if collections:
+        target_scope_collections = collections[bucket]
+        for scope in target_scope_collections.keys():
+            for collection in target_scope_collections[scope].keys():
+                if populate:
+                    if target_scope_collections[scope][collection]['load'] == 1:
+                        cmd += "--collection " + scope+"."+collection + " "
+                else:
+                    if target_scope_collections[scope][collection]['access'] == 1:
+                        cmd += "--collection " + scope+"."+collection + " "
 
     if doc_gen == 'json':
         cmd += '--json '
@@ -357,7 +374,7 @@ def run_cbc_pillowfight(host: str,
     durability_options = {
         0: 'none',
         1: 'majority',
-        2: 'majority_and_persist_on_master',
+        2: 'majority_and_persist_to_active',
         3: 'persist_to_majority'}
 
     if durability:
@@ -666,7 +683,7 @@ def start_celery_worker(queue: str):
               '-A perfrunner.helpers.worker -Q {} > worker.log &'.format(queue))
 
 
-def clone_git_repo(repo: str, branch: str):
+def clone_git_repo(repo: str, branch: str, commit: str=None):
     repo_name = repo.split("/")[-1].split(".")[0]
     logger.info('checking if repo {} exists...'.format(repo_name))
     if os.path.exists("{}".format(repo_name)):
@@ -674,6 +691,9 @@ def clone_git_repo(repo: str, branch: str):
         shutil.rmtree(repo_name, ignore_errors=True)
     logger.info('Cloning repository: {} branch: {}'.format(repo, branch))
     local('git clone -q -b {} {}'.format(branch, repo))
+    if commit:
+        with lcd(repo_name):
+            local('git checkout {}'.format(commit))
 
 
 def init_tpcds_couchbase_loader(repo: str, branch: str):
@@ -747,10 +767,21 @@ def build_java_dcp_client():
         local('perf/build.sh')
 
 
-def run_java_dcp_client(connection_string: str, messages: int, config_file: str):
-    cmd = 'perf/run.sh {} {} {} > java_dcp.log'.format(connection_string,
-                                                       messages,
-                                                       config_file)
+def run_java_dcp_client(connection_string: str, messages: int,
+                        config_file: str, instance: int=None, collections: list=None):
+
+    cmd = 'perf/run.sh {} {} {} '.format(connection_string,
+                                         messages,
+                                         config_file)
+
+    if collections:
+        for collection in collections:
+            cmd += collection+","
+        cmd = cmd[:-1]
+    if instance:
+        cmd += ' > java_dcp_{}.log'.format(str(instance))
+    else:
+        cmd += ' > java_dcp.log'
     with lcd('java-dcp-client'):
         logger.info('Running: {}'.format(cmd))
         local(cmd)

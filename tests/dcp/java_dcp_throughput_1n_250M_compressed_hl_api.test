@@ -1,0 +1,29 @@
+[test_case]
+test = perfrunner.tests.dcp.JavaDCPThroughputTest
+
+[showfast]
+title = DCP Throughput, 1 node, 250M x 1KB, Java client, compression enabled, high-level api
+component = kv
+category = dcp
+
+[stats]
+client_processes = java
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 1
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+eviction_policy = fullEviction
+
+[load]
+items = 250000000
+size = 1024
+workers = 40
+key_fmtr = hex
+doc_gen = large
+
+[java_dcp]
+config = perf/config/high-level-api.properties

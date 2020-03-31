@@ -16,7 +16,7 @@ num_buckets = 1
 replica_number = 2
 
 [load]
-items = 20000000
+items = 20000
 size = 1024
 workers = 80
 doc_gen = large
@@ -27,11 +27,11 @@ reads = 0
 updates = 100
 deletes = 0
 throughput = 999999999
-items = 20000000
+items = 20000
 workers = 100
 time = 1200
 durability = 3
 
 [clients]
-libcouchbase = 3.0.0-beta.2
-python_client = 3.0.0-beta.2
+libcouchbase = 3.0.0
+python_client = 3.0.0b3

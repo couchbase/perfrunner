@@ -24,7 +24,7 @@ doc_gen = json
 [access]
 batch_size = 1
 items = 20000000
-iterations = 2000000
+iterations = 500000
 workers = 128
 updates = 100
 replicate_to = 1
@@ -33,4 +33,3 @@ connstr_params = {'ipv6': 'allow', 'enable_tracing': 'false', 'durability_interv
 
 [clients]
 libcouchbase = 3.0.0-alpha.5
-python_client = 3.0.0-alpha.5

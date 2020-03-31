@@ -95,15 +95,26 @@ import multiprocessing
 import random
 import time
 
+import pkg_resources
+
 from logger import logger
 
-try:
-    from couchbase import FMT_BYTES, exceptions
+cb_version = pkg_resources.get_distribution("couchbase").version
+
+if cb_version[0] == '2':
+    from couchbase import FMT_BYTES
+    from couchbase.exceptions import TimeoutError, TemporaryFailError
     from couchbase.cluster import Cluster, PasswordAuthenticator
-except ImportError:
-    from couchbase_v2 import exceptions
-    from couchbase_v2.cluster import Cluster, PasswordAuthenticator
-    from couchbase_core._libcouchbase import FMT_BYTES
+elif cb_version[0] == '3':
+    if cb_version == '3.0.0b3':
+        from couchbase_v2.exceptions import TimeoutError, TemporaryFailError
+        from couchbase_core._libcouchbase import FMT_BYTES
+        from couchbase_v2.cluster import Cluster, PasswordAuthenticator
+    else:
+        from couchbase.exceptions import TimeoutException as TimeoutError
+        from couchbase.exceptions import TemporaryFailException as TemporaryFailError
+        from couchbase_core._libcouchbase import FMT_BYTES
+        from couchbase.cluster import Cluster, PasswordAuthenticator
 
 
 # TCMalloc size classes
@@ -270,8 +281,8 @@ class Worker(multiprocessing.Process):
             try:
                 self.client.set(key, value, format=FMT_BYTES)
                 success = True
-            except (exceptions.TimeoutError,
-                    exceptions.TemporaryFailError) as e:
+            except (TimeoutError,
+                    TemporaryFailError) as e:
                 logger.debug('Worker-{0}: Sleeping for {1}s due to {2}'.format(
                     self.start, backoff, e))
                 time.sleep(backoff)

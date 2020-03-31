@@ -942,3 +942,19 @@ class RestHelper:
             'tlsMinVersion': tls_version
         }
         self.post(url=api, data=data)
+
+    def create_scope(self, host, bucket, scope):
+        logger.info("Creating scope {}:{}".format(bucket, scope))
+        api = 'http://{}:8091/pools/default/buckets/{}/collections'.format(host, bucket)
+        data = {
+            'name': scope
+        }
+        self.post(url=api, data=data)
+
+    def create_collection(self, host, bucket, scope, collection):
+        logger.info("Creating collection {}:{}.{}".format(bucket, scope, collection))
+        api = 'http://{}:8091/pools/default/buckets/{}/collections/{}'.format(host, bucket, scope)
+        data = {
+            'name': collection
+        }
+        self.post(url=api, data=data)

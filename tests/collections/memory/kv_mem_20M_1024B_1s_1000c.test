@@ -1,0 +1,30 @@
+[test_case]
+test = perfrunner.tests.kv.MemoryOverheadTest
+
+[showfast]
+title = Memory overhead (%%), 1 bucket x 20M x 1KB, s=1 c=1000
+component = kv
+category = memory
+
+[stats]
+interval = 1
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+
+[collection]
+config = collections/1bucket_1scope_1000collections_basic.json
+
+[load]
+items = 20000000
+size = 1024
+workers = 10
+
+[access]
+time = 300
+
+[clients]
+libcouchbase = 3.0.1
+python_client = git+https://github.com/couchbase/couchbase-python-client@e3a92f20fad3a78ca8313bdab4a9ea6cd9866e73

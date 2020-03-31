@@ -1,13 +1,15 @@
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
+from perfrunner.helpers.profiler import with_profiles
+from perfrunner.helpers.worker import java_dcp_client_task
 from perfrunner.tests import PerfTest
 
 
 class DCPThroughputTest(PerfTest):
 
-    def _report_kpi(self, time_elapsed: float):
+    def _report_kpi(self, time_elapsed: float, clients: int, stream: str):
         self.reporter.post(
-            *self.metrics.dcp_throughput(time_elapsed)
+            *self.metrics.dcp_throughput(time_elapsed, clients, stream)
         )
 
     @with_stats
@@ -32,7 +34,9 @@ class DCPThroughputTest(PerfTest):
 
         time_elapsed = self.access()
 
-        self.report_kpi(time_elapsed)
+        self.report_kpi(time_elapsed,
+                        int(self.test_config.java_dcp_settings.clients),
+                        self.test_config.java_dcp_settings.stream)
 
 
 class JavaDCPThroughputTest(DCPThroughputTest):
@@ -56,3 +60,42 @@ class JavaDCPThroughputTest(DCPThroughputTest):
         self.init_java_dcp_client()
 
         super().run()
+
+
+class JavaDCPCollectionThroughputTest(DCPThroughputTest):
+
+    def init_java_dcp_clients(self):
+        if self.worker_manager.is_remote:
+            self.remote.init_java_dcp_client(repo=self.test_config.java_dcp_settings.repo,
+                                             branch=self.test_config.java_dcp_settings.branch,
+                                             worker_home=self.worker_manager.WORKER_HOME,
+                                             commit=self.test_config.java_dcp_settings.commit)
+
+        else:
+            local.clone_git_repo(repo=self.test_config.java_dcp_settings.repo,
+                                 branch=self.test_config.java_dcp_settings.branch,
+                                 commit=self.test_config.java_dcp_settings.commit)
+            local.build_java_dcp_client()
+
+    @with_stats
+    @timeit
+    @with_profiles
+    def access(self, *args, **kwargs):
+        access_settings = self.test_config.access_settings
+        access_settings.workload_instances = int(self.test_config.java_dcp_settings.clients)
+        PerfTest.access(self, task=java_dcp_client_task, settings=access_settings)
+
+    def run(self):
+        self.init_java_dcp_clients()
+        self.load()
+        self.wait_for_persistence()
+        self.compact_bucket()
+
+        if self.test_config.access_settings.workers > 0:
+            self.access_bg()
+
+        time_elapsed = self.access()
+
+        self.report_kpi(time_elapsed,
+                        int(self.test_config.java_dcp_settings.clients),
+                        self.test_config.java_dcp_settings.stream)

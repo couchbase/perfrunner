@@ -86,6 +86,10 @@ def set_cpu_afinity(sid):
     os.system('taskset -p -c {} {}'.format(sid % cpu_count(), os.getpid()))
 
 
+Client = Union[CBAsyncGen, CBGen, SubDocGen]
+Sequence = List[Tuple[str, Callable, Tuple]]
+
+
 class Worker:
 
     CORRECTION_FACTOR = 0.975  # empiric!
@@ -264,11 +268,6 @@ class Worker:
 
     def dump_stats(self):
         self.reservoir.dump(filename='{}-{}'.format(self.NAME, self.sid))
-
-
-Client = Union[CBAsyncGen, CBGen, SubDocGen]
-
-Sequence = List[Tuple[str, Callable, Tuple]]
 
 
 class KVWorker(Worker):
@@ -830,7 +829,6 @@ class WorkloadGen:
     def start_all_workers(self):
         """Start all the workers groups."""
         logger.info('Starting all workers')
-
         curr_items = Value('L', self.ws.items)
         deleted_items = Value('L', 0)
         current_hot_load_start = Value('L', 0)
@@ -841,12 +839,16 @@ class WorkloadGen:
             self.sync = SyncHotWorkload(current_hot_load_start, timer_elapse)
 
         self.start_workers(WorkerFactory,
-                           curr_items, deleted_items,
-                           current_hot_load_start, timer_elapse)
+                           curr_items,
+                           deleted_items,
+                           current_hot_load_start,
+                           timer_elapse)
         self.start_workers(ViewWorkerFactory,
-                           curr_items, deleted_items)
+                           curr_items,
+                           deleted_items)
         self.start_workers(N1QLWorkerFactory,
-                           curr_items, deleted_items)
+                           curr_items,
+                           deleted_items)
 
     def run(self):
         self.start_all_workers()

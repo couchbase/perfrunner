@@ -2,6 +2,7 @@ from threading import Thread
 from time import sleep, time
 
 import numpy
+import pkg_resources
 from decorator import decorator
 
 from cbagent.collectors import Latency
@@ -10,12 +11,18 @@ from logger import logger
 from perfrunner.helpers.misc import uhex
 from spring.docgen import Document, Key
 
-try:
+cb_version = pkg_resources.get_distribution("couchbase").version
+
+if cb_version[0] == '2':
     from couchbase.bucket import Bucket
     from couchbase.n1ql import N1QLQuery
-except ImportError:
-    from couchbase_v2.bucket import Bucket
-    from couchbase_v2.n1ql import N1QLQuery
+elif cb_version[0] == '3':
+    if cb_version == '3.0.0b3':
+        from couchbase_v2.bucket import Bucket
+        from couchbase_v2.n1ql import N1QLQuery
+    else:
+        from couchbase.bucket import Bucket
+        from couchbase.n1ql import N1QLRequest as N1QLQuery
 
 
 @decorator

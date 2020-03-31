@@ -1,3 +1,5 @@
+import copy
+
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.worker import (
@@ -21,7 +23,6 @@ class KVTest(PerfTest):
         self.wait_for_persistence()
         self.compact_bucket()
         self.hot_load()
-
         self.reset_kv_stats()
 
         self.access()
@@ -50,6 +51,19 @@ class MixedLatencyTest(ReadLatencyTest):
             self.reporter.post(
                 *self.metrics.kv_latency(operation=operation)
             )
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.compact_bucket()
+        self.hot_load()
+
+        if self.test_config.users.num_users_per_bucket > 0:
+            self.cluster.add_extra_rbac_users(self.test_config.users.num_users_per_bucket)
+
+        self.reset_kv_stats()
+        self.access()
+        self.report_kpi()
 
 
 class EnhancedDurabilityLatencyTest(ReadLatencyTest):
@@ -313,7 +327,7 @@ class FragmentationTest(PerfTest):
         password = self.test_config.bucket.password
         WorkloadGen(self.test_config.load_settings.items,
                     self.master_node, self.test_config.buckets[0],
-                    password).run()
+                    password, collections=self.test_config.collection.collection_map).run()
 
     def calc_fragmentation_ratio(self) -> float:
         ratios = list()
@@ -497,22 +511,28 @@ class PillowFightTest(PerfTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
+        self.compact_bucket()
+
+        if self.test_config.users.num_users_per_bucket > 0:
+            self.cluster.add_extra_rbac_users(self.test_config.users.num_users_per_bucket)
+
+        self.reset_kv_stats()
+
+        if self.test_config.access_settings.user_mod_workers:
+            access_settings = copy.deepcopy(self.test_config.access_settings)
+            access_settings.workers = 0
+            access_settings.n1ql_workers = 0
+            access_settings.query_workers = 0
+            self.access_bg(settings=access_settings)
 
         self.access()
-
         self.report_kpi()
 
 
 class PillowFightDurabilityTest(PillowFightTest):
 
     def run(self):
-        self.load()
-        self.wait_for_persistence()
-        self.compact_bucket()
-        self.reset_kv_stats()
-        self.access()
-
-        self.report_kpi()
+        super().run()
 
 
 class CompressionTest(PillowFightTest):

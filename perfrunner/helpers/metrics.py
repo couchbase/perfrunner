@@ -849,10 +849,17 @@ class MetricHelper:
 
         return max_latency, self._snapshots, metric_info
 
-    def dcp_throughput(self, time_elapsed: float) -> Metric:
+    def dcp_throughput(self,
+                       time_elapsed: float,
+                       clients: int,
+                       stream: str) -> Metric:
         metric_info = self._metric_info(chirality=1)
-
-        throughput = round(self.test_config.load_settings.items / time_elapsed)
+        if stream == 'all':
+            throughput = round(
+                (self.test_config.load_settings.items * clients) / time_elapsed)
+        else:
+            throughput = round(
+                self.test_config.load_settings.items / time_elapsed)
 
         return throughput, self._snapshots, metric_info
 

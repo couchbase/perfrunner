@@ -20,7 +20,9 @@ def pillowfight_data_load(workload_settings: PhaseSettings,
                         durability=workload_settings.durability,
                         doc_gen=workload_settings.doc_gen,
                         ssl_mode=workload_settings.ssl_mode,
-                        populate=True)
+                        populate=True,
+                        collections=workload_settings.collections,
+                        custom_pillowfight=workload_settings.custom_pillowfight)
 
 
 def pillowfight_workload(workload_settings: PhaseSettings,
@@ -40,4 +42,6 @@ def pillowfight_workload(workload_settings: PhaseSettings,
                         durability=workload_settings.durability,
                         connstr_params=workload_settings.connstr_params,
                         doc_gen=workload_settings.doc_gen,
-                        ssl_mode=workload_settings.ssl_mode)
+                        ssl_mode=workload_settings.ssl_mode,
+                        collections=workload_settings.collections,
+                        custom_pillowfight=workload_settings.custom_pillowfight)

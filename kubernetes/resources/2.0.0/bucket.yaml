@@ -1,0 +1,13 @@
+apiVersion: couchbase.com/v2
+kind: CouchbaseBucket
+metadata:
+  name: default
+spec:
+  type: couchbase
+  memoryQuota: 40960Mi
+  replicas: 1
+  ioPriority: high
+  evictionPolicy: valueOnly
+  conflictResolution: seqno
+  enableFlush: true
+  enableIndexReplica: false

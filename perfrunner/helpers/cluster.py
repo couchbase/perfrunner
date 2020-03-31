@@ -170,6 +170,17 @@ class ClusterManager:
                     compression_mode=self.test_config.bucket.compression_mode,
                 )
 
+    def create_collections(self):
+        collection_map = self.test_config.collection.collection_map
+        for master in self.cluster_spec.masters:
+            if collection_map is not None:
+                for bucket in collection_map.keys():
+                    for scope in collection_map[bucket]:
+                        if scope != '_default':
+                            self.rest.create_scope(master, bucket, scope)
+                            for collection in collection_map[bucket][scope]:
+                                self.rest.create_collection(master, bucket, scope, collection)
+
     def create_eventing_buckets(self):
         if not self.test_config.cluster.eventing_bucket_mem_quota:
             return
@@ -389,6 +400,37 @@ class ClusterManager:
                     password=self.test_config.bucket.password,
                     roles=bucket_roles,
                 )
+
+    def add_extra_rbac_users(self, num_users):
+        if not self.rest.supports_rbac(self.master_node):
+            logger.info('RBAC not supported - skipping adding RBAC users')
+            return
+
+        if self.rest.is_community(self.master_node):
+            roles = self.generate_ce_roles()
+        else:
+            roles = self.generate_ee_roles()
+
+        for master in self.cluster_spec.masters:
+            admin_user, admin_password = self.cluster_spec.rest_credentials
+            self.rest.add_rbac_user(
+                host=master,
+                user=admin_user,
+                password=admin_password,
+                roles=['admin'],
+            )
+
+            for bucket in self.test_config.buckets:
+                bucket_roles = [role.format(bucket=bucket) for role in roles]
+                bucket_roles.append("admin")
+                for i in range(1, num_users+1):
+                    user = 'user{user_number}'.format(user_number=str(i))
+                    self.rest.add_rbac_user(
+                        host=master,
+                        user=user,
+                        password=self.test_config.bucket.password,
+                        roles=bucket_roles,
+                    )
 
     def throttle_cpu(self):
         if self.remote.os == 'Cygwin':

@@ -296,10 +296,10 @@ class Monitor(RestHelper):
 
         while True:
             stats = memcached.get_stats(host, memcached_port, bucket, 'warmup')
-            if b'ep_warmup_state' in stats:
-                state = stats[b'ep_warmup_state']
-                if state == b'done':
-                    return float(stats.get(b'ep_warmup_time', 0))
+            if 'ep_warmup_state' in stats:
+                state = stats['ep_warmup_state']
+                if state == 'done':
+                    return float(stats.get('ep_warmup_time', 0))
                 else:
                     logger.info('Warmpup status: {}'.format(state))
                     time.sleep(self.POLLING_INTERVAL)
@@ -315,7 +315,7 @@ class Monitor(RestHelper):
         json_docs = -1
         while json_docs:
             stats = memcached.get_stats(host, memcached_port, bucket)
-            json_docs = int(stats[b'ep_active_datatype_json'])
+            json_docs = int(stats['ep_active_datatype_json'])
             if json_docs:
                 logger.info('Still uncompressed: {:,} items'.format(json_docs))
                 time.sleep(self.POLLING_INTERVAL)

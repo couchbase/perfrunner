@@ -320,7 +320,7 @@ class FragmentationTest(PerfTest):
         for target in self.target_iterator:
             port = self.rest.get_memcached_port(target.node)
             stats = self.memcached.get_stats(target.node, port, target.bucket, stats='memory')
-            mem_used = int(stats[b'mem_used'])
+            mem_used = int(stats['mem_used'])
             memcache_rss = self.metrics.get_percentile_value_of_node_metric("atop",
                                                                             "memcached_rss",
                                                                             target.node, 99)
@@ -461,9 +461,9 @@ class EvictionTest(KVTest):
 
                 stats = self.memcached.get_stats(host, port, bucket)
 
-                ejected_items += int(stats[b'vb_active_auto_delete_count'])
-                ejected_items += int(stats[b'vb_pending_auto_delete_count'])
-                ejected_items += int(stats[b'vb_replica_auto_delete_count'])
+                ejected_items += int(stats['vb_active_auto_delete_count'])
+                ejected_items += int(stats['vb_pending_auto_delete_count'])
+                ejected_items += int(stats['vb_replica_auto_delete_count'])
         return ejected_items
 
     def _report_kpi(self):

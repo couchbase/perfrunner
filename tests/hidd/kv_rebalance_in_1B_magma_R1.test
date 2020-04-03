@@ -2,13 +2,13 @@
 test = perfrunner.tests.magma.RebalanceKVDGMTest
 
 [showfast]
-title = Rebalance-out (min), 5 -> 4, 1B x 1KB, 15K ops/sec (90/10 R/W), 10%% cache miss rate, Magma
+title = Rebalance-in (min), 4 -> 5, 1B x 1KB, 15K ops/sec (90/10 R/W), 10%% cache miss rate, Magma
 component = hidd
 category = reb
 
 [cluster]
 mem_quota = 10240
-initial_nodes = 5
+initial_nodes = 4
 num_buckets = 1
 kernel_mem_limit = 20G
 kernel_mem_limit_services = kv
@@ -41,6 +41,6 @@ working_set = 1
 working_set_access = 90
 
 [rebalance]
-nodes_after = 4
+nodes_after = 5
 start_after = 1800
 stop_after = 1800

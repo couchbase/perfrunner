@@ -1,0 +1,35 @@
+[test_case]
+test = perfrunner.tests.kv.WarmupTest
+
+[showfast]
+title = Warmup time (min), 4 nodes, 1 bucket x 500M x 1KB, Magma
+component = kv
+category = warmup
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+
+[bucket]
+backend_storage = magma
+
+[stats]
+interval = 1
+
+[load]
+items = 500000000
+size = 1024
+workers = 40
+key_fmtr = hex
+doc_gen = large
+
+[access]
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+throughput = 20000
+items = 500000000
+workers = 20
+time = 3600

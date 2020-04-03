@@ -1,0 +1,35 @@
+[test_case]
+test = perfrunner.tests.magma.YCSBThroughputHIDDTest
+
+[showfast]
+title = Avg Throughput (ops/sec), Workload G, 4 nodes, Magma
+component = kv
+category = ycsb
+
+[cluster]
+mem_quota = 102400
+initial_nodes = 4
+num_buckets = 1
+
+[bucket]
+replica_number = 1
+eviction_policy = fullEviction
+backend_storage = magma
+
+[load]
+workload_path = workloads/workloadg
+items = 100000000
+workers = 160
+field_length = 6000
+field_count = 1
+size = 6000
+
+[access]
+workload_path = workloads/workloadg
+items = 100000000
+ops = 1000000000
+time = 10800
+boost = 12
+workers = 160
+workload_instances = 6
+requestdistribution = uniform

@@ -1,0 +1,34 @@
+[test_case]
+test = perfrunner.tests.magma.ThroughputDGMMagmaTest
+
+[showfast]
+title = Avg Throughput (ops/sec), 4 nodes, 1 bucket x 1B x 256B, 90/10 R/W, Uniform distribution, Magma
+component = hidd
+category = ops
+
+[cluster]
+mem_quota = 2560
+initial_nodes = 4
+num_buckets = 1
+kernel_mem_limit = 10G
+kernel_mem_limit_services = kv
+
+[bucket]
+eviction_policy = fullEviction
+backend_storage = magma
+
+[load]
+items = 1000000000
+size = 256
+workers = 128
+key_fmtr = hex
+
+[access]
+creates = 0
+reads = 90
+updates = 10
+deletes = 0
+items = 1000000000
+workers = 128
+time = 3600
+requestdistribution = uniform

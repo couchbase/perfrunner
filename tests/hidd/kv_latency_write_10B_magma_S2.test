@@ -1,0 +1,36 @@
+[test_case]
+test = perfrunner.tests.magma.WriteLatencyDGMTest
+
+[showfast]
+title = latency (ms), 4 nodes, 1 bucket x 10B x 1KB, 15K ops/sec (45/10/45 C/R/W), Uniform distribution, Magma
+component = hidd
+category = latency
+
+[cluster]
+mem_quota = 10240
+initial_nodes = 4
+num_buckets = 1
+kernel_mem_limit = 20G
+kernel_mem_limit_services = kv
+
+[bucket]
+eviction_policy = fullEviction
+backend_storage = magma
+
+[load]
+items = 10000000000
+size = 1024
+workers = 128
+key_fmtr = hex
+doc_gen = large
+
+[access]
+creates = 45
+reads = 10
+updates = 45
+deletes = 0
+items = 10000000000
+workers = 128
+throughput = 15000
+time = 3600
+requestdistribution = uniform

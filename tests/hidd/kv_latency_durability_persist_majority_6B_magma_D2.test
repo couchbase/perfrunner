@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.EnhancedDurabilityLatencyDGMTest
 
 [showfast]
-title = latency (ms), 4 nodes, 1 bucket x 1B x 1KB, 0/100 R/W, Unlimited Ops, Durability Persist Majority, Magma
+title = latency (ms), 4 nodes, 1 bucket x 6B x 1KB, 0/100 R/W, Unlimited Ops, Durability Persist Majority, Magma
 component = hidd
 category = latency
 
@@ -18,7 +18,7 @@ replica_number = 2
 backend_storage = magma
 
 [load]
-items = 1000000000
+items = 6000000000
 size = 1024
 workers = 128
 doc_gen = large
@@ -29,7 +29,7 @@ reads = 0
 updates = 100
 deletes = 0
 throughput = 999999999
-items = 1000000000
+items = 6000000000
 workers = 128
 time = 3600
 durability = 3

@@ -491,6 +491,89 @@ class YCSBThroughputHIDDTest(YCSBThroughputTest, KVTest):
         self.report_kpi()
 
 
+class YCSBLatencyHiDDTest(YCSBThroughputHIDDTest):
+
+    def _report_kpi(self):
+        self.collect_export_files()
+
+        for percentile in self.test_config.ycsb_settings.latency_percentiles:
+            latency_dic = self.metrics.ycsb_get_latency(percentile=percentile)
+            for key, value in latency_dic.items():
+                if str(percentile) in key \
+                        and "CLEANUP" not in key \
+                        and "FAILED" not in key:
+                    self.reporter.post(
+                        *self.metrics.ycsb_latency(key, latency_dic[key])
+                    )
+
+        if self.test_config.ycsb_settings.average_latency == 1:
+            latency_dic = self.metrics.ycsb_get_latency(
+                percentile=99)
+
+            for key, value in latency_dic.items():
+                if "Average" in key \
+                        and "CLEANUP" not in key \
+                        and "FAILED" not in key:
+                    self.reporter.post(
+                        *self.metrics.ycsb_latency(key, latency_dic[key])
+                    )
+
+
+class YCSBDurabilityThroughputHiDDTest(YCSBThroughputHIDDTest):
+
+    def log_latency_percentiles(self, type: str, percentiles):
+        for percentile in percentiles:
+            latency_dic = self.metrics.ycsb_get_latency(percentile=percentile)
+            for key, value in latency_dic.items():
+                if str(percentile) in key \
+                        and type in key \
+                        and "CLEANUP" not in key \
+                        and "FAILED" not in key:
+                    logger.info("{}: {}".format(key, latency_dic[key]))
+
+    def log_percentiles(self):
+        logger.info("------------------")
+        logger.info("Latency Percentiles")
+        logger.info("-------READ-------")
+        self.log_latency_percentiles("READ", [95, 96, 97, 98, 99])
+        logger.info("------UPDATE------")
+        self.log_latency_percentiles("UPDATE", [95, 96, 97, 98, 99])
+        logger.info("------------------")
+
+    def _report_kpi(self):
+        self.collect_export_files()
+
+        self.log_percentiles()
+
+        self.reporter.post(
+            *self.metrics.ycsb_durability_throughput()
+        )
+
+        for percentile in self.test_config.ycsb_settings.latency_percentiles:
+            latency_dic = self.metrics.ycsb_get_latency(percentile=percentile)
+            for key, value in latency_dic.items():
+                if str(percentile) in key \
+                        and "CLEANUP" not in key \
+                        and "FAILED" not in key:
+                    self.reporter.post(
+                        *self.metrics.ycsb_slo_latency(key, latency_dic[key])
+                    )
+
+        for key, value in self.metrics.ycsb_get_max_latency().items():
+            self.reporter.post(
+                *self.metrics.ycsb_slo_max_latency(key, value)
+            )
+
+        for key, value in self.metrics.ycsb_get_failed_ops().items():
+            self.reporter.post(
+                *self.metrics.ycsb_failed_ops(key, value)
+            )
+
+        self.reporter.post(
+            *self.metrics.ycsb_gcs()
+        )
+
+
 class JavaDCPThroughputDGMTest(KVTest):
 
     def _report_kpi(self, time_elapsed: float):

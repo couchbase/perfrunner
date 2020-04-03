@@ -1,0 +1,43 @@
+[test_case]
+test = perfrunner.tests.kv.CompactionTest
+
+[showfast]
+title = Full compaction time (min), 4 nodes, 1B x 1KB, 15K ops/sec (90/10 R/W), 5%% cache miss rate, Magma
+component = kv
+category = compact
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+
+[bucket]
+eviction_policy = fullEviction
+backend_storage = magma
+
+[compaction]
+db_percentage = 100
+
+[load]
+items = 1000000000
+size = 1024
+workers = 80
+key_fmtr = hex
+doc_gen = large
+
+[hot_load]
+items = 1000000000
+workers = 100
+working_set = 5
+
+[access]
+creates = 0
+reads = 90
+updates = 10
+deletes = 0
+items = 1000000000
+working_set = 5
+working_set_access = 95
+workers = 15
+throughput = 15000
+async = 1

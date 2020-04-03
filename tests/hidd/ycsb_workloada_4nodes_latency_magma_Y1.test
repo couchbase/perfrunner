@@ -1,0 +1,35 @@
+[test_case]
+test = perfrunner.tests.magma.YCSBLatencyHiDDTest
+
+[showfast]
+title = Latency(ms), Workload A, 4 nodes, Magma
+component = hidd
+category = ycsb
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+
+[bucket]
+backend_storage = magma
+
+[load]
+workload_path = workloads/workloada
+items = 100000000
+workers = 160
+
+[access]
+workload_path = workloads/workloada
+items = 100000000
+target = 900000
+ops = 0
+time = 10800
+boost = 12
+workers = 96
+timeseries = 1
+workload_instances = 6
+
+[ycsb]
+latency_percentiles = 99
+average_latency = 1

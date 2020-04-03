@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.BackupTestDGM
 
 [showfast]
-title = 4 nodes, 1 bucket x 1B x 1KB, Idle, Magma
+title = 4 nodes, 1 bucket x 1B x 256B, Idle, Magma
 component = hidd
 category = tools
 sub_category = Backup
@@ -14,10 +14,10 @@ client_processes = cbbackupmgr
 backend_storage = magma
 
 [cluster]
-mem_quota = 10240
+mem_quota = 2560
 initial_nodes = 4
 num_buckets = 1
-kernel_mem_limit = 20G
+kernel_mem_limit = 10G
 kernel_mem_limit_services = kv
 
 [compaction]
@@ -25,7 +25,7 @@ db_percentage = 100
 
 [load]
 items = 1000000000
-size = 1024
+size = 256
 workers = 128
 
 [access]

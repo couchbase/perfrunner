@@ -1,0 +1,42 @@
+[test_case]
+test = perfrunner.tests.magma.YCSBThroughputHIDDTest
+
+[showfast]
+title = Avg Throughput (ops/sec), SDK 3, Durability Persist Majority, 4 nodes,  Workload A, Magma
+component = hidd
+category = durability
+sub_category = Throughput
+orderby = d31
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+
+[bucket]
+replica_number = 2
+backend_storage = magma
+
+[load]
+workload_path = workloads/workloada
+items = 100000000
+workers = 128
+ycsb_client = couchbase3
+
+[access]
+durability = 3
+workload_path = workloads/workloada
+items = 100000000
+ops = 100000000
+time = 10800
+workers = 128
+workload_instances = 4
+ycsb_client = couchbase3
+enable_mutation_token = true
+kv_endpoints = 64
+
+[ycsb]
+branch = couchbase3-new-durability

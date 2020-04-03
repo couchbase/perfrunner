@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.BackupTestDGM
 
 [showfast]
-title = 4 nodes, 1 bucket x 1B x 1KB, Idle, Magma
+title = 4 nodes, 1 bucket x 10B x 1KB, Idle, Magma
 component = hidd
 category = tools
 sub_category = Backup
@@ -24,12 +24,12 @@ kernel_mem_limit_services = kv
 db_percentage = 100
 
 [load]
-items = 1000000000
+items = 10000000000
 size = 1024
 workers = 128
 
 [access]
-items = 1000000000
+items = 10000000000
 
 [backup]
 threads = 16

@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.JavaDCPThroughputDGMTest
 
 [showfast]
-title = DCP Throughput, 4 nodes, 2B x 1KB, Java client, compression enabled, Magma
+title = DCP Throughput, 4 nodes, 20B x 1KB, Java client, compression enabled, Magma
 component = hidd
 category = dcp
 
@@ -22,7 +22,7 @@ eviction_policy = fullEviction
 backend_storage = magma
 
 [load]
-items = 2000000000
+items = 20000000000
 size = 1024
 workers = 128
 key_fmtr = hex

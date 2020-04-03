@@ -64,7 +64,9 @@ class BackupRestoreTest(PerfTest):
 
         self.load()
         self.wait_for_persistence()
-        self.compact_bucket(wait=True)
+
+        if self.test_config.compaction.bucket_compaction == 'true':
+            self.compact_bucket(wait=True)
 
 
 class BackupTest(BackupRestoreTest):

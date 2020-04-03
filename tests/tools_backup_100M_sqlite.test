@@ -2,7 +2,7 @@
 test = perfrunner.tests.tools.BackupTest
 
 [showfast]
-title = 4 nodes, 1 bucket x 100M x 1KB, Idle
+title = 4 nodes, 1 bucket x 100M x 1KB, Idle, Uncompressed
 component = tools
 category = backup
 sub_category = SQLite
@@ -26,3 +26,6 @@ workers = 100
 [backup]
 threads = 16
 storage_type = sqlite
+
+[compaction]
+bucket_compaction = false

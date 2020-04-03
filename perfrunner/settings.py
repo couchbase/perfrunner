@@ -343,6 +343,7 @@ class CompactionSettings:
     DB_PERCENTAGE = 30
     VIEW_PERCENTAGE = 30
     PARALLEL = True
+    BUCKET_COMPACTION = 'true'
 
     def __init__(self, options: dict):
         self.db_percentage = options.get('db_percentage',
@@ -350,6 +351,7 @@ class CompactionSettings:
         self.view_percentage = options.get('view_percentage',
                                            self.VIEW_PERCENTAGE)
         self.parallel = options.get('parallel', self.PARALLEL)
+        self.bucket_compaction = options.get('bucket_compaction', self.BUCKET_COMPACTION)
 
     def __str__(self):
         return str(self.__dict__)

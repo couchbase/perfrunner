@@ -2,9 +2,9 @@
 test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
 
 [showfast]
-title = 1 bucket x 500M x 1KB, 200K ops,single 2i index, 100K KV ops/sec, no mutations during initial build only, FDB
+title = 1 bucket x 500M x 1KB, 200K ops,single 2i index, 100K KV ops/sec, no mutations during initial build only, CE
 component = secondary
-sub_category = ForestDB
+sub_category = MOI
 
 [stats]
 server_processes = projector
@@ -31,7 +31,7 @@ workers = 100
 [secondary]
 indexes = myindex:alt_email
 db = moi
-indexer.settings.storage_mode = ForestDB
+indexer.settings.storage_mode = forestdb
 indexer.settings.gc_percent = 200
 indexer.settings.max_cpu_percent = 4800
 

@@ -1,21 +1,12 @@
 import socket
 import time
 
-from decorator import decorator
-from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
+from mc_bin_client.mc_bin_client import MemcachedClient
 
 from perfrunner.settings import TestConfig
 
 SOCKET_RETRY_INTERVAL = 2
-
-
-@decorator
-def retry(method, *args, **kwargs):
-    while True:
-        try:
-            return method(*args, **kwargs)
-        except (EOFError, socket.error, MemcachedError):
-            time.sleep(SOCKET_RETRY_INTERVAL)
+MAX_RETRY = 600
 
 
 class MemcachedHelper:
@@ -27,11 +18,21 @@ class MemcachedHelper:
         else:
             self.family = socket.AF_INET
 
-    @retry
     def get_stats(self, host: str, port: int, bucket: str, stats: str = '') -> dict:
-        mc = MemcachedClient(host=host, port=port, family=self.family)
-        mc.sasl_auth_plain(user=bucket, password=self.password)
-        return mc.stats(stats)
+        retries = 0
+        while True:
+            try:
+                mc = MemcachedClient(host=host, port=port, family=self.family)
+                mc.enable_xerror()
+                mc.hello("mc")
+                mc.sasl_auth_plain(user=bucket, password=self.password)
+                return mc.stats(stats)
+            except Exception:
+                if retries < MAX_RETRY:
+                    retries += 1
+                    time.sleep(SOCKET_RETRY_INTERVAL)
+                else:
+                    raise
 
     def reset_stats(self, host: str, port: int, bucket: str):
         self.get_stats(host, port, bucket, 'reset')

@@ -2,7 +2,7 @@
 test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
 
 [showfast]
-title = 1 bucket x 20M x 1KB, five 2i indexes, no mutations during initial build only, updates only in incremental build, CE
+title = 1 bucket x 20M x 1KB,five 2i indexes, 100K KV ops/sec, no mutations during initial build only, CE
 component = secondary
 sub_category = ForestDB
 
@@ -11,28 +11,33 @@ server_processes = projector
 
 [cluster]
 mem_quota = 30000
-index_mem_quota = 100000
-initial_nodes = 5
+index_mem_quota = 60000
+initial_nodes = 6
 num_buckets = 1
 
 [compaction]
 db_percentage = 100
 view_percentage = 100
 
+[bucket]
+replica_number=0
+replica_index=0
+
 [load]
 items = 20000000
 size = 1024
-workers = 20
+workers = 100
 doc_gen = gsi_multiindex
 
 [secondary]
 indexes = myindex1:alt_email#myindex2:city#myindex3:name#myindex4:coins#myindex5:achievements
 indexer.settings.storage_mode = forestdb
 indexer.settings.gc_percent = 200
-indexer.settings.max_cpu_percent = 2400
+indexer.settings.max_cpu_percent = 4800
 
 [access]
 updates = 100
 ops = 20000000
 items = 20000000
-workers = 20
+throughput = 100000
+workers = 80

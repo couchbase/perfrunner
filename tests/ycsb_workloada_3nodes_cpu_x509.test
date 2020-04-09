@@ -5,6 +5,7 @@ test = perfrunner.tests.ycsb.YCSBThroughputTest
 title = Avg Throughput (ops/sec), Workload A, 3 nodes, 12 vCPU, SSL, X.509 Auth
 component = kv
 category = ycsb
+orderby = a65
 
 [cluster]
 mem_quota = 40960

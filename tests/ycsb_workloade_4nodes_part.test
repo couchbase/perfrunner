@@ -24,6 +24,7 @@ indexer.settings.storage_mode = memory_optimized
 
 [load]
 workload_path = workloads/workloade
+ycsb_client = couchbase3
 items = 20000000
 workers = 40
 
@@ -33,8 +34,16 @@ statements =
 
 [access]
 workload_path = workloads/workloade
+ycsb_client = couchbase3
 items = 20000000
 ops = 1000000000
 time = 1200
 workers = 120
 workload_instances = 6
+kv_endpoints = 16
+
+[ycsb]
+branch = couchbase3-new-durability
+
+[stats]
+client_processes = java

@@ -14,11 +14,13 @@ online_cores = 6
 
 [load]
 workload_path = workloads/workloada
+ycsb_client = couchbase3
 items = 20000000
 workers = 160
 
 [access]
 workload_path = workloads/workloada
+ycsb_client = couchbase3
 items = 20000000
 target = 900000
 time = 7200
@@ -27,3 +29,10 @@ boost = 12
 workers = 96
 workload_instances = 6
 cbcollect = 1
+kv_endpoints = 16
+
+[ycsb]
+branch = couchbase3-new-durability
+
+[stats]
+client_processes = java

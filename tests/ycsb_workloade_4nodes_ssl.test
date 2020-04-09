@@ -42,3 +42,6 @@ ssl_mode = data
 
 [ycsb]
 branch = tmp-x509
+
+[stats]
+client_processes = java

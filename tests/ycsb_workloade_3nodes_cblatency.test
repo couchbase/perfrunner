@@ -43,7 +43,6 @@ workers = 120
 workload_instances = 1
 epoll = false
 cbcollect = 1
-kv_endpoints = 16
 
 [stats]
 interval = 1

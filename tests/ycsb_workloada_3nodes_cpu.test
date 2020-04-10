@@ -28,7 +28,6 @@ time = 1800
 boost = 12
 workers = 96
 workload_instances = 6
-kv_endpoints = 16
 
 [ycsb]
 branch = couchbase3-new-durability

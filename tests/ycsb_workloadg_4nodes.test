@@ -14,6 +14,7 @@ num_buckets = 1
 [bucket]
 replica_number = 1
 eviction_policy = fullEviction
+backend_storage = magma
 
 [load]
 workload_path = workloads/workloadg

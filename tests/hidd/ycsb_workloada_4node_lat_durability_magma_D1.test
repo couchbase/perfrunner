@@ -2,16 +2,18 @@
 test = perfrunner.tests.magma.YCSBLatencyHiDDTest
 
 [showfast]
-title = Latency (ms), SDK 3, Durability Persist Majority, 4 nodes, Workload A, Magma
+title = Latency (ms), SDK 3, Durability Persist Majority, 4 nodes, 1 bucket x 1B x 1KB, Workload A, Magma
 component = hidd
 category = durability
 sub_category = Latency
 orderby = d31
 
 [cluster]
-mem_quota = 51200
+mem_quota = 15360
 initial_nodes = 4
 num_buckets = 1
+kernel_mem_limit = 25G
+kernel_mem_limit_services = kv
 
 [compaction]
 db_percentage = 100
@@ -22,14 +24,14 @@ backend_storage = magma
 
 [load]
 workload_path = workloads/workloada
-items = 100000000
+items = 1000000000
 workers = 128
 ycsb_client = couchbase3
 
 [access]
 durability = 3
 workload_path = workloads/workloada
-items = 100000000
+items = 1000000000
 ops = 0
 target = 1000
 timeseries = 1
@@ -40,3 +42,6 @@ ycsb_client = couchbase3
 
 [ycsb]
 branch = couchbase3-new-durability
+
+[stats]
+client_processes = java

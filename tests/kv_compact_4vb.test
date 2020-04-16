@@ -1,6 +1,11 @@
 [test_case]
 test = perfrunner.tests.kv.CompactionTest
 
+[showfast]
+title = Full compaction time (min), 4 nodes, 4 vBucket, 800M x 512B
+component = kv
+category = compact
+
 [cluster]
 mem_quota = 51200
 initial_nodes = 4
@@ -16,6 +21,6 @@ replica_number = 0
 [load]
 items = 800000000
 size = 512
-workers = 10
+workers = 20
 key_fmtr = hex
 doc_gen = large

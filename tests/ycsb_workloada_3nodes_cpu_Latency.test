@@ -31,6 +31,7 @@ boost = 12
 workers = 10
 timeseries = 1
 workload_instances = 6
+kv_endpoints = 16
 
 [ycsb]
 latency_percentiles = 99

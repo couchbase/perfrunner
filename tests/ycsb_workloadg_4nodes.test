@@ -31,8 +31,9 @@ items = 100000000
 ops = 1000000000
 time = 1800
 boost = 12
-workers = 160
+workers = 600
 workload_instances = 6
+kv_endpoints = 1024
 requestdistribution = uniform
 
 [ycsb]

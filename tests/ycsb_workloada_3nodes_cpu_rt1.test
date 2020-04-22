@@ -24,10 +24,9 @@ items = 20000000
 ops = 1000000000
 time = 1800
 boost = 12
-workers = 600
+workers = 96
 workload_instances = 6
 replicate_to = 1
-kv_endpoints = 16
 
 [stats]
 client_processes = java

@@ -2,7 +2,7 @@
 test = perfrunner.tests.rebalance.RebalanceKVTest
 
 [showfast]
-title = Rebalance-swap (min), 9 -> 9, 10B x 1KB, 15K ops/sec (90/10 R/W), 10%% cache miss rate
+title = Rebalance-swap (min), 9 -> 9, 10B x 1KB, 15K ops/sec (90/10 R/W), 10%% cache miss rate, Disk i/o Optimized
 component = reb
 category = kv
 sub_category = DGM
@@ -47,3 +47,7 @@ nodes_after = 9
 swap = 1
 start_after = 1800
 stop_after = 1800
+
+[bucket_extras]
+num_writer_threads = disk_io_optimized
+num_reader_threads = disk_io_optimized

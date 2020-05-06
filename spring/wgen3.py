@@ -709,12 +709,18 @@ class UserModWorker(AuxillaryWorker):
     def update_random_user(self, *args, **kwargs):
         random_user = "user"+str(random.randint(1, self.users+1))
         num_random_roles = random.randint(1, self.num_roles+1)
-        random_roles = [(self.supported_roles[i].role, self.supported_roles[i].bucket_name)
-                        if self.supported_roles[i].bucket_name is not None
-                        else self.supported_roles[i].role
-                        for i in random.choice(self.num_roles,
-                                               size=num_random_roles,
-                                               replace=False)]
+        random_roles = []
+        for i in random.choice(self.num_roles,
+                               size=num_random_roles,
+                               replace=False):
+            if self.supported_roles[i].role in self.collection_level_roles:
+                for target in self.targets:
+                    random_roles.append((self.supported_roles[i].role, target))
+            elif self.supported_roles[i].role and self.supported_roles[i].bucket_name:
+                random_roles.append((self.supported_roles[i].role,
+                                     self.supported_roles[i].bucket_name))
+            else:
+                random_roles.append(self.supported_roles[i].role)
         password = 'password'
         self.cb.do_upsert_user(random_user, random_roles, password)
 
@@ -735,6 +741,16 @@ class UserModWorker(AuxillaryWorker):
         self.users = self.ws.users
         self.cb.create_user_manager()
         self.supported_roles = [raw_role for raw_role in self.cb.get_roles()]
+        self.targets = []
+        for bucket in self.ws.collections.keys():
+            for scope in self.ws.collections[bucket].keys():
+                for collection in self.ws.collections[bucket][scope].keys():
+                    target = bucket+":"+scope+":"+collection
+                    self.targets.append(target)
+
+        self.collection_level_roles = ["data_reader", "data_writer", "data_dcp_reader",
+                                       "fts_searcher", "query_select", "query_update",
+                                       "query_insert", "query_delete", "query_manage_index"]
         self.num_roles = len(self.supported_roles)
 
         logger.info('Started: {}-{}'.format(self.NAME, self.sid))

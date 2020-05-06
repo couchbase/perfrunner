@@ -38,7 +38,6 @@ workers = 24
 throughput = 10000
 
 [java_dcp]
-commit = fb61bd8f4c63a2cda1a988fa1700bf7e3df16ec9
 config = perf/config/compression-enabled.properties
 stream = even_split
 clients = 4

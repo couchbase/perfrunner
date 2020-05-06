@@ -13,13 +13,6 @@ if cb_version[0] == '2':
     from couchbase.views.params import ViewQuery
     from txcouchbase.connection import Connection as TxConnection
     experimental.enable()
-elif cb_version == '3.0.0b3':
-    from couchbase_v2 import experimental, subdocument
-    from couchbase_v2.bucket import Bucket
-    from couchbase_v2.n1ql import N1QLQuery
-    from couchbase_v2.views.params import ViewQuery
-    from txcouchbase.connection import Connection as TxConnection
-    experimental.enable()
 
 
 class CBAsyncGen:

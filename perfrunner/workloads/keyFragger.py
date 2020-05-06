@@ -61,15 +61,10 @@ if cb_version[0] == '2':
     from couchbase.exceptions import TimeoutError, TemporaryFailError
     from couchbase.cluster import Cluster, PasswordAuthenticator
 elif cb_version[0] == '3':
-    if cb_version == '3.0.0b3':
-        from couchbase_v2.exceptions import TimeoutError, TemporaryFailError
-        from couchbase_core._libcouchbase import FMT_BYTES
-        from couchbase_v2.cluster import Cluster, PasswordAuthenticator
-    else:
-        from couchbase.exceptions import TimeoutException as TimeoutError
-        from couchbase.exceptions import TemporaryFailException as TemporaryFailError
-        from couchbase_core._libcouchbase import FMT_BYTES
-        from couchbase.cluster import Cluster, PasswordAuthenticator
+    from couchbase.exceptions import TimeoutException as TimeoutError
+    from couchbase.exceptions import TemporaryFailException as TemporaryFailError
+    from couchbase_core._libcouchbase import FMT_BYTES
+    from couchbase.cluster import Cluster, PasswordAuthenticator
 
 # Stored value overhead
 SV_SIZE = 56 + 2

@@ -40,4 +40,4 @@ collection_mod_throughput = 1
 
 [clients]
 libcouchbase = 3.0.1
-python_client = git+https://github.com/couchbase/couchbase-python-client@e3a92f20fad3a78ca8313bdab4a9ea6cd9866e73
+python_client = git+https://github.com/couchbase/couchbase-python-client@fd3879c31bf8f0737d776dee59fb9a54fc5b3ced

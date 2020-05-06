@@ -18,7 +18,7 @@ autofailover_enabled = false
 config = collections/1bucket_1scope_1collection_basic.json
 
 [load]
-items = 20000
+items = 20000000
 size = 1024
 workers = 80
 doc_gen = large
@@ -37,4 +37,4 @@ collection_mod_throughput = 1
 
 [clients]
 libcouchbase = 3.0.1
-python_client = git+https://github.com/couchbase/couchbase-python-client@e3a92f20fad3a78ca8313bdab4a9ea6cd9866e73
+python_client = git+https://github.com/couchbase/couchbase-python-client@fd3879c31bf8f0737d776dee59fb9a54fc5b3ced

@@ -2,7 +2,7 @@
 test = perfrunner.tests.kv.PillowFightDurabilityTest
 
 [showfast]
-title = Max ops/sec, cbc-pillowfight, 4 nodes, 0/100 R/W, 512B JSON items, batch size = 1, Durability None, s=1 c=1000, 1000 Users, 10k mods/sec
+title = Max ops/sec, cbc-pillowfight, 4 nodes, 0/100 R/W, 512B JSON items, batch size = 1, Durability None, s=1 c=1000, 1000 Users, 100 mods/sec
 component = kv
 category = max_ops
 orderby = za1
@@ -35,10 +35,9 @@ iterations = 1000000
 workers = 128
 updates = 100
 durability = 0
-user_mod_workers = 24
-user_mod_throughput = 10000
+user_mod_workers = 10
+user_mod_throughput = 100
 
 [clients]
 libcouchbase = 3.0.1
-pillowfight = commit:3.0.0:803ae523f2fd487e67a610f46e64beb908f7c3d9
-python_client = git+https://github.com/couchbase/couchbase-python-client@e3a92f20fad3a78ca8313bdab4a9ea6cd9866e73
+python_client = git+https://github.com/couchbase/couchbase-python-client@fd3879c31bf8f0737d776dee59fb9a54fc5b3ced

@@ -14,11 +14,8 @@ cb_version = pkg_resources.get_distribution("couchbase").version
 if cb_version[0] == '2':
     from couchbase.exceptions import CouchbaseError, TemporaryFailError
 elif cb_version[0] == '3':
-    if cb_version == '3.0.0b3':
-        from couchbase.exceptions import CouchbaseError, TemporaryFailError
-    else:
-        from couchbase.exceptions import CouchbaseException as CouchbaseError
-        from couchbase.exceptions import TemporaryFailException as TemporaryFailError
+    from couchbase.exceptions import CouchbaseException as CouchbaseError
+    from couchbase.exceptions import TemporaryFailException as TemporaryFailError
 
 
 class ErrorTracker:

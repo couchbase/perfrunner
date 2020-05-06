@@ -17,12 +17,8 @@ if cb_version[0] == '2':
     from couchbase.bucket import Bucket
     from couchbase.n1ql import N1QLQuery
 elif cb_version[0] == '3':
-    if cb_version == '3.0.0b3':
-        from couchbase_v2.bucket import Bucket
-        from couchbase_v2.n1ql import N1QLQuery
-    else:
-        from couchbase.bucket import Bucket
-        from couchbase.n1ql import N1QLRequest as N1QLQuery
+    from couchbase.bucket import Bucket
+    from couchbase.n1ql import N1QLRequest as N1QLQuery
 
 
 @decorator

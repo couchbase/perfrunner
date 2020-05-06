@@ -2,7 +2,7 @@
 test = perfrunner.tests.kv.MixedLatencyTest
 
 [showfast]
-title = latency (ms), 4 nodes, 1 bucket x 20M x 1KB, 10K ops/sec, s=1 c=1, 1000 Users, 10k mods/sec
+title = latency (ms), 4 nodes, 1 bucket x 20M x 1KB, 10k ops/sec, s=1 c=1, 1000 Users, 100 mods/sec
 component = kv
 category = latency
 
@@ -32,9 +32,9 @@ throughput = 10000
 items = 20000000
 workers = 24
 time = 3600
-user_mod_workers = 24
-user_mod_throughput = 10000
+user_mod_workers = 10
+user_mod_throughput = 100
 
 [clients]
 libcouchbase = 3.0.1
-python_client = git+https://github.com/couchbase/couchbase-python-client@e3a92f20fad3a78ca8313bdab4a9ea6cd9866e73
+python_client = git+https://github.com/couchbase/couchbase-python-client@fd3879c31bf8f0737d776dee59fb9a54fc5b3ced

@@ -197,6 +197,7 @@ class ClusterSettings:
     KERNEL_MEM_LIMIT = 0
     KERNEL_MEM_LIMIT_SERVICES = 'fts', 'index'
     ONLINE_CORES = 0
+    ENABLE_CPU_CORES = 'true'
     ENABLE_N2N_ENCRYPTION = None
 
     IPv6 = 0
@@ -228,6 +229,7 @@ class ClusterSettings:
         self.num_vbuckets = options.get('num_vbuckets')
         self.online_cores = int(options.get('online_cores',
                                             self.ONLINE_CORES))
+        self.enable_cpu_cores = maybe_atoi(options.get('enable_cpu_cores', self.ENABLE_CPU_CORES))
         self.ipv6 = int(options.get('ipv6', self.IPv6))
         self.kernel_mem_limit = options.get('kernel_mem_limit',
                                             self.KERNEL_MEM_LIMIT)

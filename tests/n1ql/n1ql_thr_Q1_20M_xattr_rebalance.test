@@ -1,8 +1,8 @@
 [test_case]
-test = perfrunner.tests.n1ql.N1QLThroughputTest
+test = perfrunner.tests.n1ql.N1QLXattrThroughputRebalanceTest
 
 [showfast]
-title = Q1, Key-Value Lookup, Audit
+title = Q1, XATTR Lookup with rebalance-swap
 component = n1ql
 category = Q1_Q3
 sub_category = KV
@@ -13,9 +13,6 @@ index_mem_quota = 100000
 initial_nodes = 6
 num_buckets = 1
 
-[audit]
-extra_events = 28672
-
 [compaction]
 db_percentage = 100
 
@@ -25,14 +22,20 @@ size = 1024
 workers = 80
 doc_gen = reverse_lookup
 
+[xattr_load]
+items = 10000000
+size = 1024
+workers = 80
+xattr_field = user
+
 [access]
 items = 20000000
 workers = 0
 n1ql_queries = key-value-lookup
 n1ql_workers = 480
 workload_instances = 2
-time = 600
+time = 1200
 
 [n1ql-key-value-lookup]
-statement = SELECT * FROM `bucket-1` USE KEYS[$1];
+statement = SELECT META().xattrs.`user` FROM `bucket-1` USE KEYS[$1];
 args = ["{key}"]

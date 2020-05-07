@@ -1,8 +1,8 @@
 [test_case]
-test = perfrunner.tests.n1ql.N1QLThroughputTest
+test = perfrunner.tests.n1ql.N1QLThroughputRebalanceTest
 
 [showfast]
-title = Q1, Key-Value Lookup, Audit
+title = Q1, Key-Value Lookup with rebalance-swap, Audit
 component = n1ql
 category = Q1_Q3
 sub_category = KV

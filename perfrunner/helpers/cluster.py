@@ -447,7 +447,8 @@ class ClusterManager:
         if self.remote.os == 'Cygwin':
             return
 
-        self.remote.enable_cpu()
+        if self.test_config.cluster.enable_cpu_cores:
+            self.remote.enable_cpu()
 
         if self.test_config.cluster.online_cores:
             self.remote.disable_cpu(self.test_config.cluster.online_cores)

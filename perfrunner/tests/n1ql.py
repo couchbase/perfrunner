@@ -1,3 +1,5 @@
+import time
+
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.misc import pretty_dict
@@ -102,12 +104,124 @@ class N1QLLatencyTest(N1QLTest):
         )
 
 
+class N1QLLatencyRebalanceTest(N1QLLatencyTest):
+
+    def is_balanced(self):
+        for master in self.cluster_spec.masters:
+            if self.rest.is_not_balanced(master):
+                return False
+        return True
+
+    def monitor_progress(self, master):
+        self.monitor.monitor_rebalance(master)
+
+    @timeit
+    def _rebalance(self, initial_nodes):
+        for _, servers in self.cluster_spec.clusters:
+            master = servers[0]
+
+            new_nodes = servers[initial_nodes:initial_nodes + 1]
+            known_nodes = servers[:initial_nodes + 1]
+            ejected_nodes = servers[1:2]
+
+            for node in new_nodes:
+                self.rest.add_node(master, node)
+            self.rest.rebalance(master, known_nodes, ejected_nodes)
+            self.monitor_progress(master)
+
+    @with_stats
+    @with_profiles
+    def rebalance(self, initial_nodes):
+        self.access_n1ql_bg()
+
+        logger.info('Sleeping for 30 seconds before taking actions')
+        time.sleep(30)
+
+        self.rebalance_time = self._rebalance(initial_nodes)
+
+        logger.info('Sleeping for 30 seconds before finishing')
+        time.sleep(30)
+
+        self.worker_manager.abort()
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.create_indexes()
+        self.wait_for_indexing()
+
+        self.store_plans()
+
+        initial_nodes = self.test_config.cluster.initial_nodes
+        self.rebalance(initial_nodes[0])
+
+        if self.is_balanced():
+            self.report_kpi()
+
+
 class N1QLThroughputTest(N1QLTest):
 
     def _report_kpi(self):
         self.reporter.post(
             *self.metrics.avg_n1ql_throughput()
         )
+
+
+class N1QLThroughputRebalanceTest(N1QLThroughputTest):
+
+    def is_balanced(self):
+        for master in self.cluster_spec.masters:
+            if self.rest.is_not_balanced(master):
+                return False
+        return True
+
+    def monitor_progress(self, master):
+        self.monitor.monitor_rebalance(master)
+
+    @timeit
+    def _rebalance(self, initial_nodes):
+        for _, servers in self.cluster_spec.clusters:
+            master = servers[0]
+
+            new_nodes = servers[initial_nodes:initial_nodes + 1]
+            known_nodes = servers[:initial_nodes + 1]
+            ejected_nodes = servers[1:2]
+
+            for node in new_nodes:
+                self.rest.add_node(master, node)
+            self.rest.rebalance(master, known_nodes, ejected_nodes)
+            self.monitor_progress(master)
+
+    @with_stats
+    @with_profiles
+    def rebalance(self, initial_nodes):
+        self.access_n1ql_bg()
+
+        logger.info('Sleeping for 30 seconds before taking actions')
+        time.sleep(30)
+
+        self.rebalance_time = self._rebalance(initial_nodes)
+
+        logger.info('Sleeping for 30 seconds before finishing')
+        time.sleep(30)
+
+        self.worker_manager.abort()
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.create_indexes()
+        self.wait_for_indexing()
+
+        self.store_plans()
+
+        initial_nodes = self.test_config.cluster.initial_nodes
+        self.rebalance(initial_nodes[0])
+
+        if self.is_balanced():
+            self.report_kpi()
 
 
 class N1QLJoinTest(N1QLTest):
@@ -277,6 +391,63 @@ class N1QLXattrThroughputTest(N1QLThroughputTest):
         self.access()
 
         self.report_kpi()
+
+
+class N1QLXattrThroughputRebalanceTest(N1QLXattrThroughputTest):
+
+    def is_balanced(self):
+        for master in self.cluster_spec.masters:
+            if self.rest.is_not_balanced(master):
+                return False
+        return True
+
+    def monitor_progress(self, master):
+        self.monitor.monitor_rebalance(master)
+
+    @timeit
+    def _rebalance(self, initial_nodes):
+        for _, servers in self.cluster_spec.clusters:
+            master = servers[0]
+
+            new_nodes = servers[initial_nodes:initial_nodes + 1]
+            known_nodes = servers[:initial_nodes + 1]
+            ejected_nodes = servers[1:2]
+
+            for node in new_nodes:
+                self.rest.add_node(master, node)
+            self.rest.rebalance(master, known_nodes, ejected_nodes)
+            self.monitor_progress(master)
+
+    @with_stats
+    @with_profiles
+    def rebalance(self, initial_nodes):
+        self.access_n1ql_bg()
+
+        logger.info('Sleeping for 30 seconds before taking actions')
+        time.sleep(30)
+
+        self.rebalance_time = self._rebalance(initial_nodes)
+
+        logger.info('Sleeping for 30 seconds before finishing')
+        time.sleep(30)
+
+        self.worker_manager.abort()
+
+    def run(self):
+        self.load()
+        self.xattr_load()
+        self.wait_for_persistence()
+
+        self.create_indexes()
+        self.wait_for_indexing()
+
+        self.store_plans()
+
+        initial_nodes = self.test_config.cluster.initial_nodes
+        self.rebalance(initial_nodes[0])
+
+        if self.is_balanced():
+            self.report_kpi()
 
 
 class TpcDsTest(N1QLTest):

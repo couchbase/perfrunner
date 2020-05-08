@@ -958,3 +958,9 @@ class RestHelper:
             'name': collection
         }
         self.post(url=api, data=data)
+
+    def delete_collection(self, host, bucket, scope, collection):
+        logger.info("Dropping scope {}:{}.{}".format(bucket, scope, collection))
+        api = 'http://{}:8091/pools/default/buckets/{}/collections/{}/{}'\
+            .format(host, bucket, scope, collection)
+        self.delete(url=api)

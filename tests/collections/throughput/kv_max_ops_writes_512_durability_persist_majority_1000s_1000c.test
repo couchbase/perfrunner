@@ -1,0 +1,38 @@
+[test_case]
+test = perfrunner.tests.kv.PillowFightTest
+
+[showfast]
+title = Max ops/sec, cbc-pillowfight, 4 nodes, 0/100 R/W, 512B JSON items, batch size = 1, Persist Majority, s=1000 c=1000
+component = kv
+category = max_ops
+orderby = zd1
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+
+[bucket]
+replica_number = 2
+
+[collection]
+config = collections/1bucket_1000scopes_1000collections_basic.json
+
+[load]
+size = 512
+items = 20000000
+workers = 128
+doc_gen = json
+durability = 0
+
+[access]
+batch_size = 1
+items = 20000000
+iterations = 100000
+workers = 128
+updates = 100
+durability = 3
+
+[clients]
+libcouchbase = 3.0.1
+python_client = git+https://github.com/couchbase/couchbase-python-client@fd3879c31bf8f0737d776dee59fb9a54fc5b3ced

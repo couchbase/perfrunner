@@ -475,7 +475,8 @@ def run_ycsb(host: str,
              retry_lower: int = 1,
              retry_upper: int = 500,
              retry_factor: int = 2,
-             ycsb_jvm_args: str = None):
+             ycsb_jvm_args: str = None,
+             collections_map: dict = None):
 
     cmd = 'bin/ycsb {action} {ycsb_client} ' \
           '-P {workload} ' \
@@ -569,6 +570,44 @@ def run_ycsb(host: str,
         cmd += ' -p totalrecordcount={totalrecordcount} '.format(totalrecordcount=items)
         cmd += ' -p recordcount={items} '.format(items=soe_params['recorded_load_cache_size'])
         cmd += ' -p insertstart={insertstart} '.format(insertstart=soe_params['insertstart'])
+
+    if collections_map:
+        target_scope_collections = collections_map[bucket]
+        target_scopes = set()
+        target_collections = set()
+
+        for scope in target_scope_collections.keys():
+            for collection in target_scope_collections[scope].keys():
+                if target_scope_collections[scope][collection]['load'] == 1 \
+                        and target_scope_collections[scope][collection]['access'] == 1:
+                    target_scopes.add(scope)
+                    target_collections.add(collection)
+
+        records_per_collection = items // len(target_collections)
+        cmd += ' -p recordspercollection={recordspercollection} '\
+            .format(recordspercollection=records_per_collection)
+        cmd += ' -p collectioncount={num_of_collections} '\
+            .format(num_of_collections=len(target_collections))
+        cmd += ' -p scopecount={num_of_scopes} '\
+            .format(num_of_scopes=len(target_scopes))
+
+        collection_string = ''
+
+        for coll in list(target_collections):
+            collection_string += coll + ","
+
+        collections_param = collection_string[:-1]
+
+        cmd += ' -p collectionsparam={collectionsparam} '.format(collectionsparam=collections_param)
+
+        scope_string = ''
+
+        for scope in list(target_scopes):
+            scope_string += scope + ","
+
+        scopes_param = scope_string[:-1]
+
+        cmd += ' -p scopesparam={scopesparam} '.format(scopesparam=scopes_param)
 
     cmd += ' 2>ycsb_{action}_{instance}_stderr.log '.format(action=action, instance=instance)
 

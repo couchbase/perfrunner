@@ -175,10 +175,21 @@ class ClusterManager:
         for master in self.cluster_spec.masters:
             if collection_map is not None:
                 for bucket in collection_map.keys():
+                    delete_default = True
+                    for scope in collection_map[bucket]:
+                        if scope == '_defualt':
+                            for collection in collection_map[bucket][scope]:
+                                if collection == "_default":
+                                    delete_default = False
+                    if delete_default:
+                        self.rest.delete_collection(master, bucket, '_default', '_default')
+
+                for bucket in collection_map.keys():
                     for scope in collection_map[bucket]:
                         if scope != '_default':
                             self.rest.create_scope(master, bucket, scope)
-                            for collection in collection_map[bucket][scope]:
+                        for collection in collection_map[bucket][scope]:
+                            if collection != '_default':
                                 self.rest.create_collection(master, bucket, scope, collection)
 
     def create_eventing_buckets(self):

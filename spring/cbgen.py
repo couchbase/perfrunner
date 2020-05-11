@@ -112,8 +112,8 @@ class CBGen(CBAsyncGen):
         super().delete(*args, **kwargs)
 
     @timeit
-    def view_query(self, ddoc: str, view: str, view_query: ViewQuery):
-        tuple(self.client.query(ddoc, view, query=view_query))
+    def view_query(self, ddoc: str, view: str, query: ViewQuery):
+        tuple(self.client.query(ddoc, view, query=query))
 
     @quiet
     @timeit

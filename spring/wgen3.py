@@ -296,6 +296,10 @@ class KVWorker(Worker):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.reservoir = Reservoir(num_workers=self.ws.workers)
+        self.gen_duration = 0.0
+        self.batch_duration = 0.0
+        self.delta = 0.0
+        self.op_delay = 0.0
 
     @property
     def random_ops(self) -> List[str]:
@@ -429,13 +433,28 @@ class KVWorker(Worker):
                 cmds += self.modify_args(cb, c, d, target)
         return cmds
 
-    @with_sleep
     def do_batch(self, *args, **kwargs):
-        cmd_seq = self.gen_cmd_sequence()
-        for cmd, func, args in cmd_seq:
-            latency = func(*args)
-            if latency is not None:
-                self.reservoir.update(operation=cmd, value=latency)
+        if self.target_time is None:
+            cmd_seq = self.gen_cmd_sequence()
+            for cmd, func, args in cmd_seq:
+                latency = func(*args)
+                if latency is not None:
+                    self.reservoir.update(operation=cmd, value=latency)
+        else:
+            t0 = time.time()
+            self.op_delay = self.op_delay + (self.delta / self.batch_size)
+            cmd_seq = self.gen_cmd_sequence()
+            self.gen_duration = time.time() - t0
+            for cmd, func, args in cmd_seq:
+                latency = func(*args)
+                if latency is not None:
+                    self.reservoir.update(operation=cmd, value=latency)
+                if self.op_delay > 0:
+                    time.sleep(self.op_delay * self.CORRECTION_FACTOR)
+            self.batch_duration = time.time() - t0
+            self.delta = self.target_time - self.batch_duration
+            if self.delta > 0:
+                time.sleep(self.CORRECTION_FACTOR * self.delta)
 
     def run_condition(self, curr_ops):
         return curr_ops.value < self.ws.ops and not self.time_to_stop()
@@ -480,6 +499,9 @@ class KVWorker(Worker):
 
         logger.info('Started: {}-{}'.format(self.NAME, self.sid))
         try:
+            if self.target_time:
+                start_delay = random.random_sample() * self.target_time
+                time.sleep(start_delay * self.CORRECTION_FACTOR)
             while self.run_condition(curr_ops):
                 with lock:
                     curr_ops.value += self.batch_size

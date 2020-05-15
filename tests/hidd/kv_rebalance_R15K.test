@@ -13,10 +13,15 @@ initial_nodes = 9
 num_buckets = 1
 kernel_mem_limit = 65G
 kernel_mem_limit_services = kv
+enable_cpu_cores = false
 
 [bucket]
 eviction_policy = fullEviction
 backend_storage = magma
+
+[bucket_extras]
+num_reader_threads = 64
+num_writer_threads = 64
 
 [load]
 items = 750000000

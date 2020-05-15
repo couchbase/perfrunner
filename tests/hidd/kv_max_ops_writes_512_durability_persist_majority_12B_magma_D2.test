@@ -12,10 +12,15 @@ initial_nodes = 4
 num_buckets = 1
 kernel_mem_limit = 25G
 kernel_mem_limit_services = kv
+enable_cpu_cores = false
 
 [bucket]
 replica_number = 2
 backend_storage = magma
+
+[bucket_extras]
+num_reader_threads = 64
+num_writer_threads = 64
 
 [load]
 size = 512

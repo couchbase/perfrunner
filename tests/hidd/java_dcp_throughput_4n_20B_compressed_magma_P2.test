@@ -15,11 +15,16 @@ initial_nodes = 4
 num_buckets = 1
 kernel_mem_limit = 20G
 kernel_mem_limit_services = kv
+enable_cpu_cores = false
 
 [bucket]
 replica_number = 0
 eviction_policy = fullEviction
 backend_storage = magma
+
+[bucket_extras]
+num_reader_threads = 64
+num_writer_threads = 64
 
 [load]
 items = 20000000000

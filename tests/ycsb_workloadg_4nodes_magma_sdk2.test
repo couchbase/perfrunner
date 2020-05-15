@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.YCSBThroughputHIDDTest
 
 [showfast]
-title = Avg Throughput (ops/sec), Workload G, 4 nodes, 1 bucket x 100M x 6KB, Uniform distribution, Magma
+title = Avg Throughput (ops/sec), Workload G, 4 nodes, 1 bucket x 100M x 6KB, Uniform distribution, SDK2, Magma
 component = hidd
 category = ycsb
 
@@ -23,22 +23,22 @@ num_writer_threads = 64
 
 [load]
 workload_path = workloads/workloadg
-ycsb_client = couchbase3
+ycsb_client = couchbase2
 items = 100000000
-workers = 320
-kv_endpoints = 64
+workers = 160
+kv_endpoints = 1
 field_length = 6000
 field_count = 1
 
 [access]
 workload_path = workloads/workloadg
-ycsb_client = couchbase3
+ycsb_client = couchbase2
 items = 100000000
 ops = 1000000000
 time = 10800
 boost = 12
-workers = 320
-kv_endpoints = 64
+workers = 160
+kv_endpoints = 1
 workload_instances = 6
 requestdistribution = uniform
 

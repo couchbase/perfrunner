@@ -17,6 +17,7 @@ enable_cpu_cores = false
 [bucket]
 replica_number = 2
 backend_storage = magma
+eviction_policy = fullEviction
 
 [bucket_extras]
 num_reader_threads = 64
@@ -38,5 +39,5 @@ updates = 100
 durability = 3
 
 [clients]
-libcouchbase = 3.0.0-beta.2
-python_client = 3.0.0-beta.2
+libcouchbase = 3.0.1
+python_client = git+https://github.com/couchbase/couchbase-python-client@fd3879c31bf8f0737d776dee59fb9a54fc5b3ced

@@ -12,6 +12,7 @@ client_processes = cbbackupmgr
 
 [bucket]
 backend_storage = magma
+eviction_policy = fullEviction
 
 [bucket_extras]
 num_reader_threads = 64

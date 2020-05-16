@@ -26,5 +26,17 @@
         {"job": "titan-reb", "cluster": "titan.spec", "test_config": "reb_out_1B_4nodes_kv_magma.test"},
         {"job": "hera", "cluster": "hera.spec", "test_config": "kv_latency_read_1000M_compacted_magma.test"},
         {"job": "hera", "cluster": "hera.spec", "test_config": "kv_thr_1000M_5cm_fe_read_comp_magma.test"}
+    ],
+    "Magma1": [
+        {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/kv_latency_read_1B_magma_S1.test"},
+        {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/kv_throughput_read_1B_magma_T1.test"},
+        {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/java_dcp_throughput_4n_2B_compressed_magma_P1.test"}
+    ],
+    "Magma2": [
+        {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/kv_latency_write_1B_magma_S1.test"},
+        {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/kv_throughput_write_1B_magma_T1.test"},
+        {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/kv_latency_durability_persist_majority_1B_magma_D1.testt"},
+        {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/tools_backup_1B_sqlite_magma_B1.test"},
+        {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/kv_warmup_1B_magma_W1.test"}
     ]
 }

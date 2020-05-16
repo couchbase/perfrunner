@@ -1,3 +1,4 @@
+import copy
 import json
 from typing import Callable
 
@@ -402,10 +403,19 @@ class PillowFightDGMTest(StabilityBootstrap):
         self.load()
         self.wait_for_persistence()
 
+        if self.test_config.users.num_users_per_bucket > 0:
+            self.cluster.add_extra_rbac_users(self.test_config.users.num_users_per_bucket)
+
         self.run_extra_access()
 
-        self.hot_load()
         self.reset_kv_stats()
+
+        if self.test_config.access_settings.user_mod_workers:
+            access_settings = copy.deepcopy(self.test_config.access_settings)
+            access_settings.workers = 0
+            access_settings.n1ql_workers = 0
+            access_settings.query_workers = 0
+            self.access_bg(settings=access_settings)
 
         self.access()
 
@@ -438,7 +448,6 @@ class WarmupDGMTest(StabilityBootstrap):
 
         self.run_extra_access()
 
-        self.hot_load()
         self.reset_kv_stats()
 
         self.access()
@@ -576,9 +585,9 @@ class YCSBDurabilityThroughputHiDDTest(YCSBThroughputHIDDTest):
 
 class JavaDCPThroughputDGMTest(KVTest):
 
-    def _report_kpi(self, time_elapsed: float):
+    def _report_kpi(self, time_elapsed: float, clients: int, stream: str):
         self.reporter.post(
-            *self.metrics.dcp_throughput(time_elapsed)
+            *self.metrics.dcp_throughput(time_elapsed, clients, stream)
         )
 
     def init_java_dcp_client(self):
@@ -600,12 +609,13 @@ class JavaDCPThroughputDGMTest(KVTest):
         self.init_java_dcp_client()
 
         self.load()
-
-        self.reset_kv_stats()
+        self.wait_for_persistence()
 
         time_elapsed = self.access()
 
-        self.report_kpi(time_elapsed)
+        self.report_kpi(time_elapsed,
+                        int(self.test_config.java_dcp_settings.clients),
+                        self.test_config.java_dcp_settings.stream)
 
 
 class RebalanceKVDGMTest(RebalanceKVTest):

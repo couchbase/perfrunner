@@ -170,6 +170,18 @@ pipeline {
                         buildComponent('Magma-Legacy', testCases)
                     }
                 }
+                stage('Magma1') {
+                    when { expression { return params.Magma1 } }
+                    steps {
+                        buildComponent('Magma1', testCases)
+                    }
+                }
+                stage('Magma2') {
+                    when { expression { return params.Magma2 } }
+                    steps {
+                        buildComponent('Magma2', testCases)
+                    }
+                }
             }
         }
     }

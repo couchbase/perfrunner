@@ -19,6 +19,7 @@ enable_cpu_cores = false
 [bucket]
 replica_number = 2
 backend_storage = magma
+eviction_policy = fullEviction
 
 [bucket_extras]
 num_reader_threads = 64

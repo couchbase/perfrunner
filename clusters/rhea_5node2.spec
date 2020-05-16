@@ -13,6 +13,7 @@ credentials = root:couchbase
 
 [storage]
 data = /data
+backup = /workspace/backup
 
 [credentials]
 rest = Administrator:password

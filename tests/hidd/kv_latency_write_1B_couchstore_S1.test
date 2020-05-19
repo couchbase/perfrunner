@@ -1,13 +1,10 @@
 [test_case]
-test = perfrunner.tests.magma.JavaDCPThroughputDGMTest
+test = perfrunner.tests.magma.WriteLatencyDGMTest
 
 [showfast]
-title = DCP Throughput, 4 nodes, 2B x 1KB, Java client, compression enabled, Magma
+title = latency (ms), 4 nodes, 1 bucket x 1B x 1KB, 15K ops/sec (45/10/45 C/R/W), Uniform distribution, Couchstore
 component = hidd
-category = dcp
-
-[stats]
-client_processes = java
+category = latency
 
 [cluster]
 mem_quota = 10240
@@ -18,20 +15,26 @@ kernel_mem_limit_services = kv
 enable_cpu_cores = false
 
 [bucket]
-replica_number = 0
 eviction_policy = fullEviction
-backend_storage = magma
 
 [bucket_extras]
 num_reader_threads = 64
 num_writer_threads = 64
 
 [load]
-items = 2000000000
+items = 1000000000
 size = 1024
 workers = 128
 key_fmtr = hex
 doc_gen = large
 
-[java_dcp]
-config = perf/config/compression-enabled.properties
+[access]
+creates = 45
+reads = 10
+updates = 45
+deletes = 0
+items = 1000000000
+workers = 128
+throughput = 15000
+time = 3600
+requestdistribution = uniform

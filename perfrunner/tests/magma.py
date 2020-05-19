@@ -620,7 +620,6 @@ class JavaDCPThroughputDGMTest(KVTest):
 
 class RebalanceKVDGMTest(RebalanceKVTest):
 
-    @with_stats
     def run_extra_access(self):
         access_settings = self.test_config.access_settings
         access_settings.updates = 100
@@ -635,10 +634,8 @@ class RebalanceKVDGMTest(RebalanceKVTest):
         access_settings.power_alpha = 0.0
         access_settings.zipf_alpha = 0.0
         access_settings.durability = None
-        self.COLLECTORS["latency"] = False
         logger.info("Starting first access phase")
         PerfTest.access(self, settings=access_settings)
-        self.COLLECTORS["latency"] = True
 
     def run(self):
         self.load()

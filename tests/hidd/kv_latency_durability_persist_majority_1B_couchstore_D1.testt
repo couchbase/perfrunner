@@ -1,10 +1,10 @@
 [test_case]
-test = perfrunner.tests.magma.PillowFightDGMTest
+test = perfrunner.tests.magma.EnhancedDurabilityLatencyDGMTest
 
 [showfast]
-title = Max ops/sec, cbc-pillowfight, 4 nodes, 0/100 R/W, 1 bucket x 2B x 512B JSON items, batch size = 1, Persist Majority, Magma
+title = latency (ms), 4 nodes, 1 bucket x 1B x 1KB, 0/100 R/W, Unlimited Ops, Durability Persist Majority, Couchstore
 component = hidd
-category = ops
+category = latency
 
 [cluster]
 mem_quota = 15360
@@ -16,7 +16,6 @@ enable_cpu_cores = false
 
 [bucket]
 replica_number = 2
-backend_storage = magma
 eviction_policy = fullEviction
 
 [bucket_extras]
@@ -24,18 +23,20 @@ num_reader_threads = 64
 num_writer_threads = 64
 
 [load]
-size = 512
-items = 2000000000
+items = 1000000000
+size = 1024
 workers = 128
-doc_gen = json
-durability = 0
+doc_gen = large
 
 [access]
-batch_size = 1
-items = 2000000000
-iterations = 100000
-workers = 128
+creates = 0
+reads = 0
 updates = 100
+deletes = 0
+throughput = 999999999
+items = 1000000000
+workers = 128
+time = 3600
 durability = 3
 
 [clients]

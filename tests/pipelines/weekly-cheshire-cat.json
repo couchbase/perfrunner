@@ -36,7 +36,7 @@
     "Magma2": [
         {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/kv_latency_write_1B_magma_S1.test"},
         {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/kv_throughput_write_1B_magma_T1.test"},
-        {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/kv_latency_durability_persist_majority_1B_magma_D1.testt"},
+        {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/kv_latency_durability_persist_majority_1B_magma_D1.test"},
         {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/tools_backup_1B_sqlite_magma_B1.test"},
         {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/kv_warmup_1B_magma_W1.test"}
     ]

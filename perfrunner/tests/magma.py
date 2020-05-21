@@ -327,6 +327,7 @@ class StabilityBootstrap(KVTest):
         access_settings.power_alpha = 0.0
         access_settings.zipf_alpha = 0.0
         access_settings.durability = None
+        access_settings.async = False
         self.COLLECTORS["latency"] = False
         self.extra_access(access_settings=access_settings)
         self.COLLECTORS["latency"] = True
@@ -338,6 +339,33 @@ class ReadLatencyDGMTest(StabilityBootstrap):
         self.reporter.post(
             *self.metrics.kv_latency(operation='get')
         )
+
+
+class CompactionMagmaTest(StabilityBootstrap):
+
+    @with_stats
+    @timeit
+    def compact(self):
+        self.compact_bucket()
+
+    def _report_kpi(self, time_elapsed):
+        self.reporter.post(
+            *self.metrics.elapsed_time(time_elapsed)
+        )
+
+    def run(self):
+        self.load()
+
+        self.run_extra_access()
+
+        self.hot_load()
+        self.reset_kv_stats()
+
+        self.access_bg()
+
+        time_elapsed = self.compact()
+
+        self.report_kpi(time_elapsed)
 
 
 class ThroughputDGMMagmaTest(StabilityBootstrap):

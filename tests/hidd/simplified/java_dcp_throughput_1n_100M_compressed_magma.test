@@ -10,7 +10,7 @@ category = single
 client_processes = java
 
 [cluster]
-mem_quota = 128
+mem_quota = 256
 initial_nodes = 1
 num_buckets = 1
 enable_cpu_cores = false

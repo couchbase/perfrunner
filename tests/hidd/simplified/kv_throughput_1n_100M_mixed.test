@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.ThroughputDGMMagmaTest
 
 [showfast]
-title = Throughput, 1 nodes, 100M x 1KB, read only, Uniform distribution, Magma
+title = Throughput, 1 nodes, 100M x 1KB, 50/50 R/W, 75%% cache miss rate
 component = hidd
 category = single
 
@@ -28,12 +28,18 @@ workers = 128
 key_fmtr = hex
 doc_gen = large
 
+[hot_load]
+items = 100000000
+workers = 128
+working_set = 0.1
+
 [access]
 creates = 0
-reads = 100
-updates = 0
+reads = 50
+updates = 50
 deletes = 0
 items = 100000000
 workers = 128
 time = 3600
-requestdistribution = uniform
+working_set = 0.1
+working_set_access = 25

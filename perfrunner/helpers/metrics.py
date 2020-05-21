@@ -1123,12 +1123,20 @@ class DailyMetricHelper(MetricHelper):
             s2m(time_elapsed), \
             self._snapshots
 
-    def dcp_throughput(self, time_elapsed: float) -> DailyMetric:
-        throughput = round(self.test_config.load_settings.items / time_elapsed)
+    def dcp_throughput(self,
+                       time_elapsed: float,
+                       clients: int,
+                       stream: str) -> DailyMetric:
+        if stream == 'all':
+            throughput = round(
+                (self.test_config.load_settings.items * clients) / time_elapsed)
+        else:
+            throughput = round(
+                self.test_config.load_settings.items / time_elapsed)
 
         return 'Avg Throughput (items/sec)', \
-            throughput, \
-            self._snapshots
+               throughput, \
+               self._snapshots
 
     def rebalance_time(self, rebalance_time: float) -> DailyMetric:
         return 'Rebalance Time (min)', \

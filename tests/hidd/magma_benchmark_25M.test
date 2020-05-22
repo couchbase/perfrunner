@@ -24,16 +24,16 @@ num_writer_threads = 64
 
 [magma_benchmark]
 num_kvstores=1
-write_batchsize=1000
+write_batchsize=50
 key_len=40
 doc_size=1024
 num_docs=25000000
-num_writes=25000000
 write_multiplier=5
-num_reads=2500000
+num_writes=25000000
+num_reads=1562500
 num_readers=32
-memquota=1073741824
-fs_cache_size=1342177280
+memquota=256000000
+fs_cache_size=0
 data_dir=/data
 engine=magma
-engine_config='{"log_level":"warn"}'
+engine_config='{"compactiontype":"universal","enable_block_cache":true,"enable_lookup_on_set":true,"enable_directio":true,"enable_wal":true,"io_q_depth":1}'

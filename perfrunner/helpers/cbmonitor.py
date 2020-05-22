@@ -175,8 +175,14 @@ class CbAgent:
         self.processes = []
 
         self.add_collector(NSServer)
-        self.add_collector(NSServerOverview)
         self.add_collector(ActiveTasks)
+
+        split_version = self.test.build.split(".")
+        major = int(split_version[0])
+        minor = int(split_version[1])
+
+        if (major == 6 and minor < 6) or (major < 6):
+            self.add_collector(NSServerOverview)
 
         if self.test.remote.os != 'Cygwin':
             self.add_collector(PS)

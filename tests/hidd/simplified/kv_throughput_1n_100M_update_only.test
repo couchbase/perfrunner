@@ -1,19 +1,20 @@
 [test_case]
-test = perfrunner.tests.magma.MixedLatencyDGMTest
+test = perfrunner.tests.magma.ThroughputDGMMagmaTest
 
 [showfast]
-title = latency (ms), 4 nodes, 1 bucket x 10B x 1KB, 15K ops/sec (25/50/25 C/R/W), 10%% cache miss rate, Magma
+title = Throughput, 1 nodes, 100M x 1KB, update only, 10%% cache miss rate, Magma
 component = hidd
-category = latency
+category = single
 
 [cluster]
-mem_quota = 51200
-initial_nodes = 4
+mem_quota = 256
+initial_nodes = 1
 num_buckets = 1
 enable_cpu_cores = false
 
 [bucket]
 eviction_policy = fullEviction
+replica_number = 0
 backend_storage = magma
 
 [bucket_extras]
@@ -21,25 +22,24 @@ num_reader_threads = 64
 num_writer_threads = 64
 
 [load]
-items = 10000000000
+items = 100000000
 size = 1024
 workers = 128
 key_fmtr = hex
 doc_gen = large
 
 [hot_load]
-items = 10000000000
+items = 100000000
 workers = 128
 working_set = 1
 
 [access]
-creates = 5
-reads = 90
-updates = 5
+creates = 0
+reads = 0
+updates = 100
 deletes = 0
-items = 10000000000
+items = 100000000
+workers = 128
+time = 3600
 working_set = 1
 working_set_access = 90
-workers = 128
-throughput = 15000
-time = 3600

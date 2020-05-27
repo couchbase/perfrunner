@@ -1,0 +1,39 @@
+[test_case]
+test = perfrunner.tests.kv.EvictionTest
+
+[showfast]
+title = Avg ejections/sec, NRU - Ephemeral, single node, s=1000 c=1000
+component = kv
+category = cache
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 1
+num_buckets = 1
+
+[bucket]
+bucket_type = ephemeral
+eviction_policy = nruEviction
+replica_number = 0
+
+[collection]
+config = collections/1bucket_1000scopes_1000collections_basic.json
+
+[load]
+items = 35000000
+size = 1024
+workers = 100
+
+[access]
+creates = 100
+reads = 0
+updates = 0
+deletes = 0
+workers = 200
+items = 35000000
+throughput = 200000
+time = 3600
+
+[clients]
+libcouchbase = 3.0.1
+python_client = git+https://github.com/couchbase/couchbase-python-client@fd3879c31bf8f0737d776dee59fb9a54fc5b3ced

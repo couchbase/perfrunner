@@ -30,6 +30,7 @@ class DCPThroughputTest(PerfTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
+        self.check_num_items()
         self.compact_bucket()
 
         time_elapsed = self.access()
@@ -89,6 +90,7 @@ class JavaDCPCollectionThroughputTest(DCPThroughputTest):
         self.init_java_dcp_clients()
         self.load()
         self.wait_for_persistence()
+        self.check_num_items()
         self.compact_bucket()
 
         if self.test_config.access_settings.workers > 0:

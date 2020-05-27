@@ -200,12 +200,27 @@ class PerfTest:
                 self.monitor.monitor_indexing(server)
 
     def check_num_items(self):
-        num_items = self.test_config.load_settings.items * (
-            1 + self.test_config.bucket.replica_number
-        )
-        for target in self.target_iterator:
-            self.monitor.monitor_num_items(target.node, target.bucket,
-                                           num_items)
+        if hasattr(self.test_config.load_settings, "collections"):
+            for target in self.target_iterator:
+                num_load_targets = 0
+                target_scope_collections = self.test_config.load_settings.collections[target.bucket]
+                for scope in target_scope_collections.keys():
+                    for collection in target_scope_collections[scope].keys():
+                        if target_scope_collections[scope][collection]['load'] == 1:
+                            num_load_targets += 1
+                num_items = \
+                    (self.test_config.load_settings.items // num_load_targets) * \
+                    num_load_targets * \
+                    (1 + self.test_config.bucket.replica_number)
+                self.monitor.monitor_num_items(target.node, target.bucket,
+                                               num_items)
+        else:
+            num_items = self.test_config.load_settings.items * (
+                1 + self.test_config.bucket.replica_number
+            )
+            for target in self.target_iterator:
+                self.monitor.monitor_num_items(target.node, target.bucket,
+                                               num_items)
 
     def reset_kv_stats(self):
         master_node = next(self.cluster_spec.masters)

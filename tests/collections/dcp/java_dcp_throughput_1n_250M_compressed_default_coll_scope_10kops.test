@@ -41,3 +41,8 @@ throughput = 10000
 config = perf/config/compression-enabled.properties
 stream = all
 clients = 1
+
+[clients]
+libcouchbase = 3.0.1
+python_client = git+https://github.com/couchbase/couchbase-python-client@fd3879c31bf8f0737d776dee59fb9a54fc5b3ced
+

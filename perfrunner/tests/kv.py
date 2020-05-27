@@ -21,6 +21,7 @@ class KVTest(PerfTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
+        self.check_num_items()
         self.compact_bucket()
         self.hot_load()
         self.reset_kv_stats()
@@ -55,6 +56,7 @@ class MixedLatencyTest(ReadLatencyTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
+        self.check_num_items()
         self.compact_bucket()
         self.hot_load()
 
@@ -79,6 +81,7 @@ class EnhancedDurabilityLatencyTest(ReadLatencyTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
+        self.check_num_items()
         self.compact_bucket()
         self.hot_load()
 
@@ -99,6 +102,7 @@ class DGMCompactionTest(DGMTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
+        self.check_num_items()
 
         self.hot_load()
 
@@ -116,6 +120,7 @@ class DGMCompactedTest(DGMTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
+        self.check_num_items()
         self.compact_bucket()
 
         self.hot_load()
@@ -217,6 +222,7 @@ class XATTRTest(MixedLatencyTest):
         self.load()
         self.xattr_load()
         self.wait_for_persistence()
+        self.check_num_items()
 
         self.access()
 
@@ -241,6 +247,7 @@ class InitialLoadTest(DrainTest):
 
     def run(self):
         self.load()
+        self.check_num_items()
 
         self.report_kpi()
 
@@ -254,6 +261,7 @@ class IngestionTest(KVTest):
         super(KVTest, self).access(*args, **kwargs)
 
         self.wait_for_persistence()
+        self.check_num_items()
 
     def _report_kpi(self):
         self.reporter.post(
@@ -289,6 +297,7 @@ class WarmupTest(PerfTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
+        self.check_num_items()
 
         self.access()
         self.wait_for_persistence()
@@ -511,6 +520,7 @@ class PillowFightTest(PerfTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
+        self.check_num_items()
         self.compact_bucket()
 
         if self.test_config.users.num_users_per_bucket > 0:
@@ -556,6 +566,8 @@ class CompressionTest(PillowFightTest):
 
         time_elapsed = self.wait_for_compression()
 
+        self.check_num_items()
+
         self.report_kpi(time_elapsed)
 
 
@@ -576,6 +588,7 @@ class CompactionTest(KVTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
+        self.check_num_items()
 
         self.hot_load()
 
@@ -616,6 +629,7 @@ class KVImport(PerfTest):
     def load(self, *args):
         self.restore_local()
         self.wait_for_persistence()
+        self.check_num_items()
 
     def run(self):
         self.load()

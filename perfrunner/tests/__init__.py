@@ -200,7 +200,7 @@ class PerfTest:
                 self.monitor.monitor_indexing(server)
 
     def check_num_items(self):
-        if hasattr(self.test_config.load_settings, "collections"):
+        if getattr(self.test_config.load_settings, 'collections', None):
             for target in self.target_iterator:
                 num_load_targets = 0
                 target_scope_collections = self.test_config.load_settings.collections[target.bucket]

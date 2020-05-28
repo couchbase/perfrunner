@@ -15,7 +15,7 @@ num_buckets = 1
 interval = 1
 
 [collection]
-config = collections/1bucket_1000scope_1000collections_basic.json
+config = collections/1bucket_1000scopes_1000collections_basic.json
 
 [load]
 items = 500000000

@@ -3,9 +3,8 @@ test = perfrunner.tests.magma.MagmaBenchmarkTest
 
 [showfast]
 title = Magma Benchmark, 25M docs
-component = kv
-category = hidd
-sub_category = Steady
+component = hidd
+category = single
 
 [cluster]
 mem_quota = 20480
@@ -28,11 +27,11 @@ write_batchsize=50
 key_len=40
 doc_size=1024
 num_docs=25000000
-write_multiplier=5
+write_multiplier=3
 num_writes=25000000
-num_reads=1562500
+num_reads=2350000
 num_readers=32
-memquota=256000000
+memquota=266000000
 fs_cache_size=0
 data_dir=/data
 engine=magma

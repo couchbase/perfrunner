@@ -50,7 +50,7 @@ class MagmaBenchmarkTest(PerfTest):
               "--kvstore {NUM_KVSTORES} --ndocs {NUM_DOCS} " \
               "--batch-size {WRITE_BATCHSIZE} --keylen {KEY_LEN} --vallen {DOC_SIZE} " \
               "--nwrites {NUM_WRITES} --nreads {NUM_READS} --nreaders {NUM_READERS} " \
-              "--memquota {MEM_QUOTA} --fs-cache-size {FS_CACHE_SIZE} " \
+              "--memquota {MEM_QUOTA} --fs-cache-size {FS_CACHE_SIZE} --active-stats " \
               "--engine {ENGINE} --engine-config {ENGINE_CONFIG} --stats {STATS_FILE}"\
             .format(NUM_KVSTORES=self.settings.num_kvstores, NUM_DOCS=self.settings.num_docs,
                     WRITE_BATCHSIZE=self.settings.write_batchsize, KEY_LEN=self.settings.key_len,
@@ -73,21 +73,40 @@ class MagmaBenchmarkTest(PerfTest):
         cmd = self.create_command()
         cmd += " --benchmark writeSequential --clear-existing"
         stats = self.run_and_get_stats(cmd)
-        return stats["writer"]["Throughput"], stats["WriteAmp"], stats["SpaceAmp"]
+        return \
+            stats["writer"]["Throughput"], \
+            stats["WriteAmp"], stats["SpaceAmp"], \
+            stats["writer"]["Latency(us)"]["p99.99"]
 
     def read(self):
         cmd = self.create_command()
         cmd += " --benchmark readRandom"
         stats = self.run_and_get_stats(cmd)
-        return stats["reader"]["Throughput"], stats["ReadIOAmp"], stats["BytesPerRead"]
+        return \
+            stats["reader"]["Throughput"], \
+            stats["ReadIOAmp"], \
+            stats["BytesPerRead"], \
+            stats["reader"]["Latency(us)"]["p99.99"]
 
     def update(self):
         cmd = self.create_command(write_multiplier=self.settings.write_multiplier)
         cmd += " --benchmark writeRandom"
         stats = self.run_and_get_stats(cmd)
-        return stats["writer"]["Throughput"], stats["WriteAmp"], stats["SpaceAmp"]
+        return \
+            stats["writer"]["Throughput"], \
+            stats["WriteAmp"], stats["SpaceAmp"], \
+            stats["writer"]["Latency(us)"]["p99.99"]
 
-    def _report_kpi(self, create_metrics, read_metrics, write_metrics):
+    def delete(self):
+        cmd = self.create_command()
+        cmd += " --benchmark deleteRandom"
+        stats = self.run_and_get_stats(cmd)
+        return \
+            stats["writer"]["Throughput"], \
+            stats["DiskUsed"], \
+            stats["writer"]["Latency(us)"]["p99.99"]
+
+    def _report_kpi(self, create_metrics, read_metrics, write_metrics, delete_metrics):
         self.reporter.post(
             *self.metrics.magma_benchmark_metrics(throughput=create_metrics[0],
                                                   precision=0,
@@ -96,14 +115,17 @@ class MagmaBenchmarkTest(PerfTest):
         self.reporter.post(
             *self.metrics.magma_benchmark_metrics(throughput=create_metrics[1],
                                                   precision=2,
-                                                  benchmark="Write amplification, "
-                                                            "Write sequential")
+                                                  benchmark="Write amp, Write sequential")
         )
         self.reporter.post(
             *self.metrics.magma_benchmark_metrics(throughput=create_metrics[2],
                                                   precision=2,
-                                                  benchmark="Space amplification, "
-                                                            "Write sequential")
+                                                  benchmark="Space amp, Write sequential")
+        )
+        self.reporter.post(
+            *self.metrics.magma_benchmark_metrics(throughput=create_metrics[3],
+                                                  precision=0,
+                                                  benchmark="P9999, Write sequential")
         )
         self.reporter.post(
             *self.metrics.magma_benchmark_metrics(throughput=read_metrics[0],
@@ -113,12 +135,17 @@ class MagmaBenchmarkTest(PerfTest):
         self.reporter.post(
             *self.metrics.magma_benchmark_metrics(throughput=read_metrics[1],
                                                   precision=2,
-                                                  benchmark="Read IO amplification, Read random")
+                                                  benchmark="Read IO amp, Read random")
         )
         self.reporter.post(
             *self.metrics.magma_benchmark_metrics(throughput=read_metrics[2],
                                                   precision=1,
                                                   benchmark="Bytes per read, Read random")
+        )
+        self.reporter.post(
+            *self.metrics.magma_benchmark_metrics(throughput=read_metrics[3],
+                                                  precision=0,
+                                                  benchmark="P9999, Read random")
         )
         self.reporter.post(
             *self.metrics.magma_benchmark_metrics(throughput=write_metrics[0],
@@ -128,12 +155,32 @@ class MagmaBenchmarkTest(PerfTest):
         self.reporter.post(
             *self.metrics.magma_benchmark_metrics(throughput=write_metrics[1],
                                                   precision=2,
-                                                  benchmark="Write amplification, Write random")
+                                                  benchmark="Write amp, Write random")
         )
         self.reporter.post(
             *self.metrics.magma_benchmark_metrics(throughput=write_metrics[2],
                                                   precision=2,
-                                                  benchmark="Space amplification, Write random")
+                                                  benchmark="Space amp, Write random")
+        )
+        self.reporter.post(
+            *self.metrics.magma_benchmark_metrics(throughput=write_metrics[3],
+                                                  precision=0,
+                                                  benchmark="P9999, Write random")
+        )
+        self.reporter.post(
+            *self.metrics.magma_benchmark_metrics(throughput=delete_metrics[0],
+                                                  precision=0,
+                                                  benchmark="Throughput, Delete random")
+        )
+        self.reporter.post(
+            *self.metrics.magma_benchmark_metrics(throughput=delete_metrics[1],
+                                                  precision=0,
+                                                  benchmark="DiskUsed, Delete random")
+        )
+        self.reporter.post(
+            *self.metrics.magma_benchmark_metrics(throughput=delete_metrics[2],
+                                                  precision=0,
+                                                  benchmark="P9999, Delete random")
         )
 
     def run(self):
@@ -145,7 +192,9 @@ class MagmaBenchmarkTest(PerfTest):
 
         write_metrics = self.update()
 
-        self.report_kpi(create_metrics, read_metrics, write_metrics)
+        delete_metrics = self.delete()
+
+        self.report_kpi(create_metrics, read_metrics, write_metrics, delete_metrics)
 
 
 class KVTest(PerfTest):

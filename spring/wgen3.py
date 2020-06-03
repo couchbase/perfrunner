@@ -58,6 +58,7 @@ from spring.docgen import (
     WorkingSetKey,
     ZipfKey,
 )
+from spring.querygen3 import N1QLQueryGen3
 from spring.reservoir import Reservoir
 
 
@@ -845,6 +846,262 @@ class CollectionModWorker(AuxillaryWorker):
             logger.info('Finished: {}-{}'.format(self.NAME, self.sid))
 
 
+class N1QLWorker(Worker):
+
+    NAME = 'query-worker'
+
+    def __init__(self, workload_settings, target_settings, shutdown_event=None):
+        super().__init__(workload_settings, target_settings, shutdown_event)
+        self.new_queries = N1QLQueryGen3(workload_settings.n1ql_queries)
+        self.reservoir = Reservoir(num_workers=self.ws.n1ql_workers)
+        self.gen_duration = 0.0
+        self.batch_duration = 0.0
+        self.delta = 0.0
+        self.op_delay = 0.0
+        self.bucket_targets = dict()
+        self.access_targets = dict()
+        self.replacement_targets = dict()
+        self.first = True
+
+    def create(self):
+        with self.lock:
+            curr_items = self.curr_items.value
+            self.curr_items.value += self.ws.n1ql_batch_size
+
+        for _ in range(self.ws.n1ql_batch_size):
+            curr_items += 1
+            key = self.new_keys.next(curr_items=curr_items)
+            doc = self.docs.next(key)
+            query = self.new_queries.next(key.string, doc)
+
+            latency = self.cb.n1ql_query(query)
+            self.reservoir.update(operation='query', value=latency)
+
+    def update(self):
+        with self.lock:
+            curr_items = self.curr_items.value
+
+        for _ in range(self.ws.n1ql_batch_size):
+            key = self.keys_for_cas_update.next(sid=self.sid,
+                                                curr_items=curr_items)
+            doc = self.docs.next(key)
+            query = self.new_queries.next(key.string, doc)
+
+            latency = self.cb.n1ql_query(query)
+            self.reservoir.update(operation='query', value=latency)
+
+    def do_batch_update(self, *args, **kwargs):
+        if self.target_time is None:
+            with self.lock:
+                curr_items = self.curr_items.value
+
+            for _ in range(self.ws.n1ql_batch_size):
+                key = self.keys_for_cas_update.next(sid=self.sid,
+                                                    curr_items=curr_items)
+                doc = self.docs.next(key)
+                query = self.new_queries.next(key.string, doc)
+
+                latency = self.cb.n1ql_query(query)
+                self.reservoir.update(operation='query', value=latency)
+        else:
+            t0 = time.time()
+            self.op_delay = self.op_delay + (self.delta / self.batch_size)
+
+            with self.lock:
+                curr_items = self.curr_items.value
+
+            for _ in range(self.ws.n1ql_batch_size):
+                key = self.keys_for_cas_update.next(sid=self.sid,
+                                                    curr_items=curr_items)
+                doc = self.docs.next(key)
+                query = self.new_queries.next(key.string, doc)
+
+                latency = self.cb.n1ql_query(query)
+                self.reservoir.update(operation='query', value=latency)
+                if self.op_delay > 0:
+                    time.sleep(self.op_delay * self.CORRECTION_FACTOR)
+            self.batch_duration = time.time() - t0
+            self.delta = self.target_time - self.batch_duration
+            if self.delta > 0:
+                time.sleep(self.CORRECTION_FACTOR * self.delta)
+
+    def do_batch_read(self, *args, **kwargs):
+        if self.target_time:
+            t0 = time.time()
+            self.op_delay = self.op_delay + (self.delta / self.ws.n1ql_batch_size)
+
+        target = self.next_target()
+        with self.lock:
+            target_info = self.shared_dict[target]
+        target_curr_items, target_deleted_items = target_info.split(":")
+        target_curr_items = int(target_curr_items)
+
+        if self.ws.doc_gen == 'ext_reverse_lookup':
+            target_curr_items //= 4
+        for i in range(self.ws.n1ql_batch_size):
+            key = self.existing_keys.next(curr_items=target_curr_items,
+                                          curr_deletes=0)
+            doc = self.docs.next(key)
+            query, options = self.new_queries.next(key.string, doc, self.replacement_targets)
+            latency = self.cb.n1ql_query(query, options)
+            if not self.first:
+                self.reservoir.update(operation='query', value=latency)
+            else:
+                self.first = False
+
+            if self.op_delay > 0 and self.target_time:
+                time.sleep(self.op_delay * self.CORRECTION_FACTOR)
+
+        if self.target_time:
+            self.batch_duration = time.time() - t0
+            self.delta = self.target_time - self.batch_duration
+            if self.delta > 0:
+                time.sleep(self.CORRECTION_FACTOR * self.delta)
+
+    def do_batch(self):
+        if self.ws.n1ql_op == 'read':
+            self.do_batch_read()
+        elif self.ws.n1ql_op == 'create':
+            self.create()
+        elif self.ws.n1ql_op == 'update':
+            self.update()
+
+    def init_bucket_targets(self):
+        # create dictionary of all targets for each bucket
+        for bucket in self.ws.bucket_list:
+            targets = []
+            if self.ws.collections is not None:
+                scopes = self.ws.collections[bucket]
+                for scope in scopes.keys():
+                    collections = scopes[scope]
+                    for collection in collections.keys():
+                        if collections[collection]['load'] == 1 and \
+                                        collections[collection]['access'] == 1:
+                            targets += [":".join([scope, collection])]
+            else:
+                targets = [":".join(['_default', '_default'])]
+            self.bucket_targets[bucket] = targets
+
+    def init_access_targets(self):
+        for bucket in self.ws.bucket_list:
+            worker_targets = self.bucket_targets[bucket]
+            worker_targets.sort()
+            num_worker_targets = len(worker_targets)
+            max_target_count = 0
+
+            # find max number of times a bucket is used in all queries
+            for query in self.ws.n1ql_queries:
+                max_target_count = max(query['statement'].count(bucket), max_target_count)
+            worker_access_targets = []
+
+            # need to replace
+            for i in range(max_target_count):
+                target_index_set = set()
+                if num_worker_targets <= self.ws.n1ql_workers:
+                    target_index_set.add((self.sid + i) % num_worker_targets)
+                else:
+                    for j in range((self.sid + i) % num_worker_targets,
+                                   num_worker_targets,
+                                   self.ws.n1ql_workers):
+                        target_index_set.add(j)
+
+                target_indexes = list(target_index_set)
+                target_indexes.sort()
+                if bucket != self.ts.bucket:
+                    target_indexes = list(random.choice(target_indexes, 1))
+                worker_access_targets.append([worker_targets[i] for i in target_indexes])
+            self.access_targets[bucket] = worker_access_targets
+
+    def init_replacement_targets(self):
+        # replacements dictionary:
+        # Ex: {"bucket-1": ['collection-1',
+        #                   'collection-3']}
+        # For target bucket,
+        #   Randomly select a collection from access targets.
+        # For any non-target bucket,
+        #   Select the first collection for that bucket from access targets
+        #
+        # A query may contain multiple instances of a bucket, ex: joins.
+        # The bucket instances are replaced in the same order as they appear in
+        # in the replacement list for a bucket.
+        #
+        # Ex: select * from bucket-1 join bucket-1 on ...
+        # The first bucket-1 is replaced with collection-1 and the second bucket-1
+        # is replaced with collection-3 (from example dictionary above)
+        #
+        # Only one target bucket in a query is random selected. For the case where a bucket
+        # occurs more than once, the instance is first randomly selected, i.e we randomly
+        # choose which occurrence of the bucket to randomly select before we randomly choose
+        # a replacement target for that instance of the bucket.
+        target = None
+        for bucket in self.access_targets.keys():
+            bucket_instances = self.access_targets[bucket]
+            if bucket == self.ts.bucket:
+                num_bucket_instances = len(bucket_instances)
+                random_instance = random.randint(num_bucket_instances)
+                target_replacements = []
+                for j in range(num_bucket_instances):
+                    if j == random_instance:
+                        random_target = random.choice(bucket_instances[j])
+                        target = random_target
+                        target_replacements.append(random_target)
+                    else:
+                        target_replacements.append(bucket_instances[j][0])
+                self.replacement_targets[bucket] = target_replacements
+            else:
+                self.replacement_targets[bucket] = [instance[0] for instance in bucket_instances]
+        if not target:
+            raise Exception("No target")
+
+    def next_target(self):
+        random_instance = random.randint(self.num_bucket_instances)
+        target_replacements = []
+        target = None
+        for j in range(self.num_bucket_instances):
+            if j == random_instance:
+                random_target = random.choice(self.bucket_instances[j])
+                target = random_target
+                target_replacements.append(random_target)
+            else:
+                target_replacements.append(self.bucket_instances[j][0])
+        if not target:
+            raise Exception("No target")
+        self.replacement_targets[self.ts.bucket] = target_replacements
+        return target
+
+    def run(self, sid, lock, curr_ops, shared_dict, current_hot_load_start=None, timer_elapse=None):
+        self.sid = sid
+        self.lock = lock
+        self.shared_dict = shared_dict
+        self.current_hot_load_start = current_hot_load_start
+        self.timer_elapse = timer_elapse
+        self.init_bucket_targets()
+        self.init_access_targets()
+        self.init_replacement_targets()
+        self.bucket_instances = self.access_targets[self.ts.bucket]
+        self.num_bucket_instances = len(self.bucket_instances)
+
+        if self.ws.n1ql_throughput < float('inf'):
+            self.target_time = self.ws.n1ql_batch_size * self.ws.n1ql_workers / \
+                               float(self.ws.n1ql_throughput)
+        else:
+            self.target_time = None
+
+        logger.info('Started: {}-{}'.format(self.NAME, self.sid))
+        try:
+            if self.target_time:
+                start_delay = random.random_sample() * self.target_time
+                time.sleep(start_delay * self.CORRECTION_FACTOR)
+            while not self.time_to_stop():
+                self.do_batch()
+        except KeyboardInterrupt:
+            logger.info('Interrupted: {}-{}'.format(self.NAME, self.sid))
+        else:
+            logger.info('Finished: {}-{}'.format(self.NAME, self.sid))
+
+        self.dump_stats()
+
+
 class WorkerFactory:
 
     def __new__(cls, settings):
@@ -868,6 +1125,12 @@ class AuxillaryWorkerFactory:
             return CollectionModWorker, settings.collection_mod_workers
         else:
             return AuxillaryWorker, 0
+
+
+class N1QLWorkerFactory:
+
+    def __new__(cls, workload_settings):
+        return N1QLWorker, workload_settings.n1ql_workers
 
 
 class WorkloadGen:
@@ -952,6 +1215,10 @@ class WorkloadGen:
                            current_hot_load_start,
                            timer_elapse)
         self.start_workers(WorkerFactory,
+                           self.shared_dict,
+                           current_hot_load_start,
+                           timer_elapse)
+        self.start_workers(N1QLWorkerFactory,
                            self.shared_dict,
                            current_hot_load_start,
                            timer_elapse)

@@ -1,0 +1,52 @@
+[test_case]
+test = perfrunner.tests.ycsb.YCSBN1QLThroughputTest
+
+[showfast]
+title = Avg Throughput (queries/sec), Workload E, Plasma, 4 nodes
+component = n1ql
+category = ycsb
+sub_category = Plasma
+
+[cluster]
+mem_quota = 40960
+index_mem_quota = 10240
+initial_nodes = 4
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
+
+[bucket]
+replica_number = 0
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[load]
+workload_path = workloads/workloadce
+ycsb_client = couchbase3
+items = 20000000
+workers = 40
+
+[index]
+statements =
+    CREATE PRIMARY INDEX primary_idx ON `bucket-1` WITH {"num_replica": 3};
+
+[access]
+workload_path = workloads/workloadce
+ycsb_client = couchbase3
+items = 20000000
+ops = 1000000000
+time = 1200
+workers = 600
+workload_instances = 6
+kv_endpoints = 1024
+
+[ycsb]
+branch = couchbase3-collection-imp2
+
+[stats]
+client_processes = java

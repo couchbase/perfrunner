@@ -1,0 +1,45 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1QLBulkTest
+
+[showfast]
+title = Avg. Throughput (docs/sec), UP10, Bulk Update, MOI, 5M documents, s=1 c=1 i=1
+component = n1ql
+category = iud
+
+[cluster]
+mem_quota = 20480
+index_mem_quota = 100000
+initial_nodes = 6
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
+
+[bucket]
+replica_number = 0
+
+[secondary]
+indexer.settings.storage_mode = memory_optimized
+
+[load]
+items = 20000000
+size = 1024
+workers = 80
+doc_gen = reverse_lookup
+
+[index]
+fields = year
+indexes_per_collection = 1
+
+[access]
+n1ql_queries = bulk-delete
+
+[n1ql-bulk-delete]
+statement = UPDATE `bucket-1` SET year = 2017 WHERE `year` > 1996;
+
+[clients]
+libcouchbase = 3.0.2
+python_client = git+https://github.com/couchbase/couchbase-python-client@8d5820a297b35378d314eb399c041b214aa6a7db

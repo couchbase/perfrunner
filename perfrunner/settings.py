@@ -3,6 +3,7 @@ import json
 import os
 import re
 from configparser import ConfigParser, NoOptionError, NoSectionError
+from itertools import chain, combinations, permutations
 from typing import Dict, Iterable, Iterator, List
 
 from decorator import decorator
@@ -930,18 +931,71 @@ class IndexSettings:
 
     FTS_INDEX_NAME = ''
     FTS_INDEX_CONFIG_FILE = ''
+    TOP_DOWN = False
+    INDEXES_PER_COLLECTION = 1
 
     def __init__(self, options: dict):
-        self.statements = self.split_statements(options.get('statements'))
+        self.raw_statements = options.get('statements')
+        self.fields = options.get('fields')
+        self.collection_map = options.get('collection_map')
+        self.indexes_per_collection = int(options.get('indexes_per_collection',
+                                                      self.INDEXES_PER_COLLECTION))
+        self.top_down = bool(options.get('top_down', self.TOP_DOWN))
+
+        self.statements = self.create_index_statements()
         self.couchbase_fts_index_name = options.get('couchbase_fts_index_name',
                                                     self.FTS_INDEX_NAME)
         self.couchbase_fts_index_configfile = options.get('couchbase_fts_index_configfile',
                                                           self.FTS_INDEX_CONFIG_FILE)
 
-    def split_statements(self, statements: str) -> List[str]:
-        if statements:
-            return statements.strip().split('\n')
-        return []
+    def create_index_statements(self) -> List[str]:
+        #  Here we generate all permutations of all subsets of index fields
+        #  The total number generate given n fields is the following:
+        #
+        #  Sum from k=0 to n, n!/k! where
+        #
+        #  n=3  sum = 16
+        #  n=4  sum = 65
+        #  n=5  sum = 326
+        #  n=6  sum = 1957
+        if self.collection_map and self.fields:
+            fields = self.fields.strip().split(',')
+            field_combos = list(chain.from_iterable(combinations(fields, r)
+                                                    for r in range(1, len(fields)+1)))
+            if self.top_down:
+                field_combos.reverse()
+            statements = []
+            for bucket in self.collection_map.keys():
+                for scope in self.collection_map[bucket].keys():
+                    for collection in self.collection_map[bucket][scope].keys():
+                        if self.collection_map[bucket][scope][collection]['load'] == 1:
+                            indexes_created = 0
+                            for field_subset in field_combos:
+                                subset_permutations = list(permutations(list(field_subset)))
+                                for permutation in subset_permutations:
+                                    index_field_list = list(permutation)
+                                    index_name = "_".join(index_field_list)
+                                    index_fields = ",".join(index_field_list)
+                                    statements.append(
+                                        "CREATE INDEX {} ON default:`{}`.`{}`.`{}`({})"
+                                        .format(index_name,
+                                                bucket,
+                                                scope,
+                                                collection,
+                                                index_fields))
+                                    indexes_created += 1
+                                    if indexes_created == self.indexes_per_collection:
+                                        break
+                                if indexes_created == self.indexes_per_collection:
+                                    break
+            return statements
+        elif self.raw_statements:
+            return self.raw_statements.strip().split('\n')
+        elif self.raw_statements is None and self.fields is None:
+            return []
+        else:
+            raise Exception('Index options must include one statement, '
+                            'or fields (if collections enabled)')
 
     @property
     def indexes(self) -> List[str]:
@@ -1350,6 +1404,10 @@ class TestConfig(Config):
     @property
     def index_settings(self) -> IndexSettings:
         options = self._get_options_as_dict('index')
+        collection_options = self._get_options_as_dict('collection')
+        collection_settings = CollectionSettings(collection_options)
+        if collection_settings.collection_map is not None:
+            options['collection_map'] = collection_settings.collection_map
         return IndexSettings(options)
 
     @property
@@ -1410,6 +1468,7 @@ class TestConfig(Config):
         access.key_fmtr = load_settings.key_fmtr
         access.field_count = load_settings.field_count
         access.field_length = load_settings.field_length
+        access.bucket_list = self.buckets
 
         return access
 

@@ -1,6 +1,12 @@
+from datetime import timedelta
 from urllib import parse
 
-from couchbase.cluster import Cluster, ClusterOptions
+from couchbase.cluster import (
+    Cluster,
+    ClusterOptions,
+    ClusterTimeoutOptions,
+    QueryOptions,
+)
 from couchbase.management.collections import CollectionSpec
 from couchbase.management.users import User
 from txcouchbase.cluster import TxCluster
@@ -20,11 +26,10 @@ class CBAsyncGen3:
                                                      password=kwargs['password'])
 
         pass_auth = PasswordAuthenticator(kwargs['username'], kwargs['password'])
-
-        self.cluster = TxCluster(connection_string=connection_string,
-                                 options=ClusterOptions(pass_auth))
+        timeout = ClusterTimeoutOptions(kv_timeout=timedelta(seconds=self.TIMEOUT))
+        options = ClusterOptions(authenticator=pass_auth, timeout_options=timeout)
+        self.cluster = TxCluster(connection_string=connection_string, options=options)
         self.bucket = self.cluster.bucket(kwargs['bucket'])
-        self.bucket.timeout = self.TIMEOUT
 
         self.collections = dict()
         self.collection = None
@@ -99,20 +104,6 @@ class CBGen3(CBAsyncGen3):
     TIMEOUT = 10  # seconds
 
     def __init__(self, ssl_mode: str = 'none', n1ql_timeout: int = None, **kwargs):
-
-        # connection_string = 'couchbase://{host}/{bucket}?password={password}&{params}'
-        # connstr_params = parse.urlencode(kwargs["connstr_params"])
-        #
-        # if ssl_mode == 'data':
-        #     connection_string = connection_string.replace('couchbase',
-        #                                                   'couchbases')
-        #     connection_string += '&certpath=root.pem'
-        #
-        # connection_string = connection_string.format(host=kwargs['host'],
-        #                                              bucket=kwargs['bucket'],
-        #                                              password=kwargs['password'],
-        #                                              params=connstr_params)
-
         connection_string = 'couchbase://{host}?password={password}&{params}'
         connstr_params = parse.urlencode(kwargs["connstr_params"])
 
@@ -126,10 +117,14 @@ class CBGen3(CBAsyncGen3):
                                                      params=connstr_params)
 
         pass_auth = PasswordAuthenticator(kwargs['username'], kwargs['password'])
-        self.cluster = Cluster(connection_string, ClusterOptions(pass_auth))
-
+        if n1ql_timeout:
+            timeout = ClusterTimeoutOptions(kv_timeout=timedelta(seconds=self.TIMEOUT),
+                                            query_timeout=timedelta(seconds=n1ql_timeout))
+        else:
+            timeout = ClusterTimeoutOptions(kv_timeout=timedelta(seconds=self.TIMEOUT))
+        options = ClusterOptions(authenticator=pass_auth, timeout_options=timeout)
+        self.cluster = Cluster(connection_string=connection_string, options=options)
         self.bucket = self.cluster.bucket(kwargs['bucket'])
-        self.bucket.timeout = self.TIMEOUT
         self.collections = dict()
         self.collection = None
         if n1ql_timeout:
@@ -191,6 +186,11 @@ class CBGen3(CBAsyncGen3):
     @quiet
     def do_delete(self, *args, **kwargs):
         super().do_delete(*args, **kwargs)
+
+    @quiet
+    @timeit
+    def n1ql_query(self, n1ql_query: str, options: QueryOptions):
+        tuple(self.cluster.query(n1ql_query, options))
 
     def create_user_manager(self):
         self.user_manager = self.cluster.users()

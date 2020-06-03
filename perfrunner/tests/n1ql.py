@@ -74,16 +74,39 @@ class N1QLTest(PerfTest):
 
     def store_plans(self):
         logger.info('Storing query plans')
-
         for i, query in enumerate(self.test_config.access_settings.n1ql_queries):
-            plan = self.rest.explain_n1ql_statement(self.query_nodes[0],
-                                                    query['statement'])
+            if self.test_config.collection.collection_map:
+                query_statement = query['statement']
+                for bucket in self.test_config.buckets:
+                    if bucket in query_statement:
+                        bucket_replaced = False
+                        bucket_scopes = self.test_config.collection.collection_map[bucket]
+                        for scope in bucket_scopes.keys():
+                            for collection in bucket_scopes[scope].keys():
+                                if bucket_scopes[scope][collection]["access"] == 1:
+                                    query_target = "default:`{}`.`{}`.`{}`"\
+                                        .format(bucket, scope, collection)
+                                    replace_target = "`{}`".format(bucket)
+                                    query_statement = query_statement.\
+                                        replace(replace_target, query_target)
+                                    bucket_replaced = True
+                                    break
+                            if bucket_replaced:
+                                break
+                        if not bucket_replaced:
+                            raise Exception('No access target for bucket: {}'
+                                            .format(bucket))
+                logger.info("Grabbing plan for query: {}".format(query_statement))
+                plan = self.rest.explain_n1ql_statement(self.query_nodes[0], query_statement)
+            else:
+                plan = self.rest.explain_n1ql_statement(self.query_nodes[0], query['statement'])
             with open('query_plan_{}.json'.format(i), 'w') as fh:
                 fh.write(pretty_dict(plan))
 
     def run(self):
         self.load()
         self.wait_for_persistence()
+        self.check_num_items()
 
         self.create_indexes()
         self.wait_for_indexing()
@@ -147,6 +170,7 @@ class N1QLLatencyRebalanceTest(N1QLLatencyTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
+        self.check_num_items()
 
         self.create_indexes()
         self.wait_for_indexing()
@@ -211,6 +235,7 @@ class N1QLThroughputRebalanceTest(N1QLThroughputTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
+        self.check_num_items()
 
         self.create_indexes()
         self.wait_for_indexing()
@@ -298,8 +323,25 @@ class N1QLBulkTest(N1QLTest):
     @timeit
     def access(self, *args):
         statement = self.test_config.access_settings.n1ql_queries[0]['statement']
-
-        self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+        statement_list = []
+        if self.test_config.collection.collection_map:
+            for bucket in self.test_config.buckets:
+                if bucket in statement:
+                    bucket_scopes = self.test_config.collection.collection_map[bucket]
+                    for scope in bucket_scopes.keys():
+                        for collection in bucket_scopes[scope].keys():
+                            if bucket_scopes[scope][collection]["access"] == 1 \
+                                    and bucket_scopes[scope][collection]["load"] == 1:
+                                replace_target = "default:`{}`.`{}`.`{}`"\
+                                    .format(bucket, scope, collection)
+                                statement_with_coll = statement.\
+                                    replace("`{}`".format(bucket), replace_target)
+                                statement_list.append(statement_with_coll)
+        if not statement_list:
+            raise Exception('No statements to execute')
+        for statement in statement_list:
+            print("executing {}".format(statement))
+            self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
 
     def _report_kpi(self, time_elapsed):
         self.reporter.post(
@@ -309,6 +351,7 @@ class N1QLBulkTest(N1QLTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
+        self.check_num_items()
 
         self.create_indexes()
         self.wait_for_indexing()
@@ -350,6 +393,7 @@ class N1QLDGMTest(PerfTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
+        self.check_num_items()
 
         self.create_indexes()
         self.wait_for_indexing()
@@ -381,6 +425,7 @@ class N1QLXattrThroughputTest(N1QLThroughputTest):
         self.load()
         self.xattr_load()
         self.wait_for_persistence()
+        self.check_num_items()
 
         self.create_indexes()
         self.wait_for_indexing()
@@ -437,6 +482,7 @@ class N1QLXattrThroughputRebalanceTest(N1QLXattrThroughputTest):
         self.load()
         self.xattr_load()
         self.wait_for_persistence()
+        self.check_num_items()
 
         self.create_indexes()
         self.wait_for_indexing()
@@ -538,6 +584,7 @@ class N1QLFunctionTest(N1QLTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
+        self.check_num_items()
 
         self.create_functions()
         self.create_indexes()

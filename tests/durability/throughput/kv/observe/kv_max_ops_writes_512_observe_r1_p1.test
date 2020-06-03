@@ -29,7 +29,7 @@ workers = 128
 updates = 100
 replicate_to = 1
 persist_to = 1
-connstr_params = {'ipv6': 'allow', 'enable_tracing': 'false', 'durability_interval': 0.02}
+connstr_params = {'ipv6': 'allow', 'enable_tracing': 'false', 'durability_interval': 0.0005}
 
 [clients]
 libcouchbase = 3.0.2

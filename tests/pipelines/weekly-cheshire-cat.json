@@ -122,5 +122,11 @@
         {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloadca_4node_max_thr_durability3b_new_ooo_1s_1000c.test"},
         {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloadca_4node_max_thr_durability3d_new_ooo_1s_1c.test"},
         {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloadca_4node_max_thr_durability3d_new_ooo_1s_1000c.test"}
+    ],
+    "YCSB": [
+        {"job": "hebe", "cluster": "hebe.spec", "test_config": "collections/ycsb/ycsb_workloadce_4nodes_1s_1c.test"},
+        {"job": "hebe", "cluster": "hebe.spec", "test_config": "collections/ycsb/ycsb_workloadce_4nodes_1s_1000c.test"},
+        {"job": "hebe", "cluster": "hebe.spec", "test_config": "collections/ycsb/ycsb_workloadce_4nodes_plasma_1s_1c.test"},
+        {"job": "hebe", "cluster": "hebe.spec", "test_config": "collections/ycsb/ycsb_workloadce_4nodes_plasma_1s_1000c.test"}
     ]
 }

@@ -31,6 +31,8 @@ class KVStoreStats(Collector):
         "NSyncs",
         "NTablesCreated",
         "NTablesDeleted",
+        "NTableFiles",
+        "NFileCountCompacts",
         "NWriteBytes",
         "NWriteBytesCompact",
         "NWriteIOs",

@@ -45,3 +45,11 @@ def all_clients(task: Callable, *args, **kwargs):
     hosts = helper.cluster_spec.workers
 
     return execute(parallel(task), *args, hosts=hosts, **kwargs)
+
+
+@decorator
+def master_client(task: Callable, *args, **kwargs):
+    """Execute the decorated function on master client."""
+    self = args[0]
+    with settings(host_string=self.cluster_spec.workers[0]):
+        return task(*args, **kwargs)

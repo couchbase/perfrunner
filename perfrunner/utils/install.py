@@ -1,14 +1,17 @@
+import sys
 from argparse import ArgumentParser
 from collections import namedtuple
 from typing import Iterator
 
 import requests
 import validators
+from fabric.api import cd, run
 from requests.exceptions import ConnectionError
 
 from logger import logger
 from perfrunner.helpers.local import detect_ubuntu_release
 from perfrunner.helpers.remote import RemoteHelper
+from perfrunner.remote.context import master_client
 from perfrunner.settings import ClusterSpec
 
 LOCATIONS = (
@@ -48,6 +51,7 @@ class CouchbaseInstaller:
     def __init__(self, cluster_spec, options):
         self.remote = RemoteHelper(cluster_spec, options.verbose)
         self.options = options
+        self.cluster_spec = cluster_spec
 
     @property
     def url(self) -> str:
@@ -123,6 +127,22 @@ class CouchbaseInstaller:
         except (Exception, BaseException):
             logger.info("Saving local copy for ubuntu failed, package may not present")
 
+    def download_remote(self):
+        """Download and save a copy of the specified package on a remote client."""
+        if self.remote.package == 'rpm':
+            logger.info('Saving a remote copy of {}'.format(self.url))
+            self.wget(url=self.url)
+        else:
+            logger.interrupt('Unsupported package format')
+
+    @master_client
+    def wget(self, url):
+        logger.info('Fetching {}'.format(url))
+        with cd('/tmp'):
+            run('wget -nc "{}"'.format(url))
+            package = url.split('/')[-1]
+            run('mv {} couchbase.rpm'.format(package))
+
     def kill_processes(self):
         self.remote.kill_processes()
 
@@ -163,6 +183,9 @@ def get_args():
     parser.add_argument('--local-copy',
                         action='store_true',
                         help='save a local copy of a package')
+    parser.add_argument('--remote-copy',
+                        action='store_true',
+                        help='save a remote copy of a package')
 
     return parser.parse_args()
 
@@ -179,6 +202,10 @@ def main():
     if args.local_copy:
         installer.download()
         installer.download_local()
+
+    if '--remote-copy' in sys.argv:
+        logger.info('Saving a remote copy')
+        installer.download_remote()
 
 
 if __name__ == '__main__':

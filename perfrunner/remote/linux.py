@@ -3,7 +3,7 @@ from collections import defaultdict
 from typing import Dict, List
 from urllib.parse import urlparse
 
-from fabric.api import get, put, quiet, run, settings
+from fabric.api import cd, get, put, quiet, run, settings
 from fabric.exceptions import CommandTimeout, NetworkError
 
 from logger import logger
@@ -12,9 +12,11 @@ from perfrunner.remote import Remote
 from perfrunner.remote.context import (
     all_clients,
     all_servers,
+    master_client,
     master_server,
     servers_by_role,
 )
+from perfrunner.settings import ClusterSpec
 
 
 class RemoteLinux(Remote):
@@ -535,3 +537,90 @@ class RemoteLinux(Remote):
         with settings(host_string=server):
             stats = run("cat /proc/`pidof memcached`/io")
         return stats
+
+    @master_client
+    def calc_backup_size(self, cluster_spec: ClusterSpec,
+                         rounded: bool = True) -> float:
+        backup_size = run('du -sb0 {}'.format(cluster_spec.backup))
+        backup_size = backup_size.split()[0]
+        backup_size = float(backup_size) / 2 ** 30  # B -> GB
+
+        return round(backup_size) if rounded else backup_size
+
+    @master_client
+    def backup(self, master_node: str, cluster_spec: ClusterSpec, threads: int,
+               worker_home: str, mode: str = None, compression: bool = False,
+               storage_type: str = None, sink_type: str = None,
+               shards: int = None):
+        logger.info('Creating a new backup: {}'.format(cluster_spec.backup))
+
+        if not mode:
+            self.cleanup(cluster_spec.backup)
+
+        self.cbbackupmgr_backup(master_node, cluster_spec, threads, mode,
+                                compression, storage_type, sink_type, shards,
+                                worker_home)
+
+    @master_client
+    def cleanup(self, backup_dir: str):
+        logger.info("Cleaning the disk before backup/export")
+        run('rm -fr {}/*'.format(backup_dir))
+        run('mkdir -p {}'.format(backup_dir))
+
+    @master_client
+    def cbbackupmgr_backup(self, master_node: str, cluster_spec: ClusterSpec,
+                           threads: int, mode: str, compression: bool,
+                           storage_type: str, sink_type: str, shards: int,
+                           worker_home: str):
+        with cd(worker_home), cd('perfrunner'):
+            if not mode:
+                run('./opt/couchbase/bin/cbbackupmgr config '
+                    '--archive {} --repo default'.format(cluster_spec.backup))
+
+            flags = ['--archive {}'.format(cluster_spec.backup),
+                     '--repo default',
+                     '--host http://{}'.format(master_node),
+                     '--username {}'.format(cluster_spec.rest_credentials[0]),
+                     '--password {}'.format(cluster_spec.rest_credentials[1]),
+                     '--threads {}'.format(threads) if threads else None,
+                     '--storage {}'.format(storage_type) if storage_type else None,
+                     '--sink {}'.format(sink_type) if sink_type else None,
+                     '--value-compression compressed' if compression else None,
+                     '--shards {}'.format(shards) if shards else None]
+
+            cmd = './opt/couchbase/bin/cbbackupmgr backup {}'.format(
+                ' '.join(filter(None, flags)))
+
+            logger.info('Running: {}'.format(cmd))
+            run(cmd)
+
+    @master_client
+    def client_drop_caches(self):
+        logger.info('Dropping memory cache')
+        run('sync && echo 3 > /proc/sys/vm/drop_caches')
+
+    @master_client
+    def restore(self, master_node: str, cluster_spec: ClusterSpec, threads: int,
+                worker_home: str):
+        logger.info('Restore from {}'.format(cluster_spec.backup))
+
+        self.cbbackupmgr_restore(master_node, cluster_spec, threads, worker_home)
+
+    @master_client
+    def cbbackupmgr_restore(self, master_node: str, cluster_spec: ClusterSpec,
+                            threads: int, worker_home: str,
+                            archive: str = '', repo: str = 'default'):
+        with cd(worker_home), cd('perfrunner'):
+            cmd = \
+                './opt/couchbase/bin/cbbackupmgr restore --force-updates ' \
+                '--archive {} --repo {} --threads {} ' \
+                '--host http://{} --username {} --password {}'.format(
+                    archive or cluster_spec.backup,
+                    repo,
+                    threads,
+                    master_node,
+                    cluster_spec.rest_credentials[0],
+                    cluster_spec.rest_credentials[1],
+                )
+            logger.info('Running: {}'.format(cmd))
+            run(cmd)

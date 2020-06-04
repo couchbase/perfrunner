@@ -16,6 +16,8 @@ def get_args():
                         help='enable verbose logging')
     parser.add_argument('--remote', dest='remote', action='store_true',
                         help='use remote workers as workload generators')
+    parser.add_argument('--remote-copy', dest='remote_copy', action='store_true',
+                        help='save a remote copy of a package')
     parser.add_argument('override',
                         nargs='*',
                         help='custom cluster and/or test settings')

@@ -502,3 +502,127 @@ class ImportSampleDataTest(ImportTest):
         time_elapsed = self.import_data()
 
         self.report_kpi(time_elapsed)
+
+
+class CloudBackupTest(BackupRestoreTest):
+
+    COLLECTORS = {'iostat': False}
+
+    @with_stats
+    @timeit
+    def backup(self, mode=None):
+        self.remote.backup(
+            master_node=self.master_node,
+            cluster_spec=self.cluster_spec,
+            threads=self.test_config.backup_settings.threads,
+            worker_home=self.worker_manager.WORKER_HOME,
+            mode=mode,
+            compression=self.test_config.backup_settings.compression,
+            storage_type=self.test_config.backup_settings.storage_type,
+            sink_type=self.test_config.backup_settings.sink_type,
+            shards=self.test_config.backup_settings.shards
+        )
+
+    def _report_kpi(self, time_elapsed):
+        edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
+        backup_size = self.remote.calc_backup_size(cluster_spec=self.cluster_spec)
+
+        backing_store = self.test_config.backup_settings.storage_type
+        sink_type = self.test_config.backup_settings.sink_type
+
+        tool = 'backup'
+        storage = None
+        if backing_store:
+            storage = backing_store
+        elif sink_type:
+            storage = sink_type
+
+        self.reporter.post(
+            *self.metrics.bnr_throughput(time_elapsed, edition, tool, storage)
+        )
+
+        if sink_type != 'blackhole':
+            self.reporter.post(
+                *self.metrics.backup_size(
+                    backup_size,
+                    edition,
+                    tool if backing_store or sink_type else None,
+                    storage)
+            )
+
+    def run(self):
+        self.remote.extract_cb(filename='couchbase.rpm',
+                               worker_home=self.worker_manager.WORKER_HOME)
+
+        self.load()
+        self.wait_for_persistence()
+
+        if self.test_config.compaction.bucket_compaction == 'true':
+            self.compact_bucket(wait=True)
+
+        time_elapsed = self.backup()
+
+        self.report_kpi(time_elapsed)
+
+
+class CloudRestoreTest(BackupRestoreTest):
+
+    COLLECTORS = {'iostat': False}
+
+    def backup(self, mode=None):
+        self.remote.backup(
+            master_node=self.master_node,
+            cluster_spec=self.cluster_spec,
+            threads=self.test_config.backup_settings.threads,
+            worker_home=self.worker_manager.WORKER_HOME,
+            mode=mode,
+            compression=self.test_config.backup_settings.compression,
+            storage_type=self.test_config.backup_settings.storage_type,
+            sink_type=self.test_config.backup_settings.sink_type,
+            shards=self.test_config.backup_settings.shards
+        )
+
+    @with_stats
+    @timeit
+    def restore(self):
+        self.remote.client_drop_caches()
+
+        self.remote.restore(cluster_spec=self.cluster_spec,
+                            master_node=self.master_node,
+                            threads=self.test_config.restore_settings.threads,
+                            worker_home=self.worker_manager.WORKER_HOME)
+
+    def _report_kpi(self, time_elapsed):
+        edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
+
+        backing_store = self.test_config.backup_settings.storage_type
+        sink_type = self.test_config.backup_settings.sink_type
+
+        tool = 'restore'
+        storage = None
+        if backing_store:
+            storage = backing_store
+        elif sink_type:
+            storage = sink_type
+
+        self.reporter.post(
+            *self.metrics.bnr_throughput(time_elapsed, edition, tool, storage)
+        )
+
+    def run(self):
+        self.remote.extract_cb(filename='couchbase.rpm',
+                               worker_home=self.worker_manager.WORKER_HOME)
+
+        self.load()
+        self.wait_for_persistence()
+
+        if self.test_config.compaction.bucket_compaction == 'true':
+            self.compact_bucket(wait=True)
+
+        self.backup()
+
+        self.flush_buckets()
+
+        time_elapsed = self.restore()
+
+        self.report_kpi(time_elapsed)

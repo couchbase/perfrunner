@@ -37,3 +37,9 @@ class RemoteHelper:
             return os
         else:
             return 'Cygwin'
+
+    @staticmethod
+    def detect_client_release(server: str):
+        logger.info('Detecting OS on client {}'.format(server))
+        with settings(host_string=server):
+            return run('lsb_release -sr').strip()

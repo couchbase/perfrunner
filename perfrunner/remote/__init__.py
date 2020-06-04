@@ -2,7 +2,7 @@ import shutil
 from fabric.api import cd, get, run, settings, shell_env
 from glob import glob
 from logger import logger
-from perfrunner.remote.context import all_clients
+from perfrunner.remote.context import all_clients, master_client
 from perfrunner.settings import REPO
 
 
@@ -47,6 +47,13 @@ class Remote:
                     else:
                         run("env/bin/pip install couchbase=={} "
                             "--no-cache-dir".format(version), quiet=True)
+
+    @master_client
+    def remote_copy(self, worker_home: str):
+        with cd(worker_home):
+            with cd('perfrunner'):
+                logger.info('move couchbase package to perfrunner')
+                run('mv /tmp/couchbase.rpm ./')
 
     def start_celery_worker(self, worker, worker_home):
         with settings(host_string=worker):
@@ -128,3 +135,9 @@ class Remote:
             r = run('stat YCSB/ycsb_run_*.log', quiet=True)
             if not r.return_code:
                 get('YCSB/ycsb_run_*.log', local_path='YCSB/')
+
+    @master_client
+    def extract_cb(self, filename: str, worker_home: str):
+        logger.info('extra couchbase.rpm')
+        with cd(worker_home), cd('perfrunner'):
+            run('rpm2cpio ./{} | cpio -idm'.format(filename))

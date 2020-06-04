@@ -132,6 +132,9 @@ class RemoteWorkerManager:
         self.remote.init_repo(self.WORKER_HOME)
         self.remote.install_clients(perfrunner_home, self.test_config)
 
+        if '--remote-copy' in sys.argv:
+            self.remote.remote_copy(self.WORKER_HOME)
+
         for worker in self.cluster_spec.workers:
             logger.info('Starting remote Celery worker, host={}'.format(worker))
             self.remote.start_celery_worker(worker, perfrunner_home)

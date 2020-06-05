@@ -7,7 +7,7 @@ component = hidd
 category = single
 
 [cluster]
-mem_quota = 256
+mem_quota = 16384
 initial_nodes = 1
 num_buckets = 1
 enable_cpu_cores = false
@@ -20,6 +20,7 @@ backend_storage = magma
 [bucket_extras]
 num_reader_threads = 64
 num_writer_threads = 64
+backend = "magma;magma_enable_direct_io=true"
 
 [load]
 items = 100000000
@@ -39,7 +40,7 @@ reads = 0
 updates = 100
 deletes = 0
 items = 100000000
-workers = 128
+workers = 512
 time = 3600
 working_set = 1
 working_set_access = 90

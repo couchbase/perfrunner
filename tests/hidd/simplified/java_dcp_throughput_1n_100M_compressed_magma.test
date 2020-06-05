@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.dcp.JavaDCPThroughputTest
+test = perfrunner.tests.magma.JavaDCPThroughputDGMTest
 
 [showfast]
 title = DCP Throughput, 1 node, 100M x 1KB, Java client, compression enabled, Magma
@@ -10,7 +10,7 @@ category = single
 client_processes = java
 
 [cluster]
-mem_quota = 256
+mem_quota = 16384
 initial_nodes = 1
 num_buckets = 1
 enable_cpu_cores = false
@@ -23,6 +23,7 @@ backend_storage = magma
 [bucket_extras]
 num_reader_threads = 64
 num_writer_threads = 64
+backend = "magma;magma_enable_direct_io=true"
 
 [load]
 items = 100000000

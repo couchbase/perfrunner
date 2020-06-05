@@ -182,6 +182,12 @@ pipeline {
                         buildComponent('Magma2', testCases)
                     }
                 }
+                stage('MagmaNVME') {
+                    when { expression { return params.MagmaNVME } }
+                    steps {
+                        buildComponent('MagmaNVME', testCases)
+                    }
+                }
             }
         }
     }

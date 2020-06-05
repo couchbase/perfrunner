@@ -39,5 +39,13 @@
         {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/kv_latency_durability_persist_majority_1B_magma_D1.test"},
         {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/tools_backup_1B_sqlite_magma_B1.test"},
         {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/kv_warmup_1B_magma_W1.test"}
+    ],
+    "MagmaNVME": [
+        {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/java_dcp_throughput_1n_100M_compressed_magma.test"},
+        {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/kv_throughput_1n_100M_mixed.test"},
+        {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/kv_throughput_1n_100M_read_only.test"},
+        {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/kv_throughput_1n_100M_read_only_uniform.test"},
+        {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/kv_throughput_1n_100M_update_only.test"},
+        {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/kv_throughput_1n_100M_update_only_uniform.test"}
     ]
 }

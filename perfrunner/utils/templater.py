@@ -40,12 +40,15 @@ TEMPLATES_DIR = 'templates'
 TEMPLATES = (
     'full_cluster.spec',
     'kv_cluster.spec',
+    'tools_cluster.spec',
     'pillowfight.test',
     'ycsb_workload_a.test',
     'ycsb_workload_d.test',
     'ycsb_workload_e.test',
     'ycsb_workloada_latency.test',
-    'ycsb_workloade_latency.test'
+    'ycsb_workloade_latency.test',
+    'backup.test',
+    'restore.test'
 )
 
 THREADS_PER_CLIENT = {
@@ -54,7 +57,9 @@ THREADS_PER_CLIENT = {
     'ycsb_workload_d.test': 20,
     'ycsb_workload_e.test': 20,
     'ycsb_workloada_latency.test': 20,
-    'ycsb_workloade_latency.test': 20
+    'ycsb_workloade_latency.test': 20,
+    'backup.test': 20,
+    'restore.test': 20
 }
 
 
@@ -64,7 +69,7 @@ def get_templates(template: str) -> Template:
     return env.get_template(template)
 
 
-def render_test(template: str, instance: str, threads: int, server_instances: int):
+def render_test(template: str, instance: str, threads: int, server_instances: int, num_docs: int):
     mem_quota = MEMORY_QUOTAS[instance][0]
     workload_instances = estimate_num_clients(template, threads)
     num_replica = server_instances-1
@@ -74,7 +79,8 @@ def render_test(template: str, instance: str, threads: int, server_instances: in
                               workload_instances=workload_instances,
                               server_instances=server_instances,
                               instance=instance,
-                              num_replica=num_replica)
+                              num_replica=num_replica,
+                              num_docs=num_docs)
     filename = template.split('.')[0] + '_' + str(server_instances) + 'nodes'
     store_cfg(content, extension='.test', filename=filename)
 
@@ -139,11 +145,15 @@ def main():
     parser.add_argument('--num-servers', dest='server_instances', type=int,
                         default=0,
                         help='Total number of nodes')
+    parser.add_argument('--num-docs', dest='num_docs', type=int,
+                        default=0,
+                        help='Total number of docs')
 
     args = parser.parse_args()
 
     if '.test' in args.template:
-        render_test(args.template, args.instance, args.threads, args.server_instances)
+        render_test(args.template, args.instance, args.threads, args.server_instances,
+                    args.num_docs)
     else:
         render_spec(args.template, args.instance)
         render_inventory(args.instance)

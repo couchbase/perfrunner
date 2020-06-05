@@ -1,0 +1,28 @@
+[test_case]
+test = perfrunner.tests.tools.CloudRestoreTest
+
+[showfast]
+title = {{server_instances}} nodes, 1 bucket x {{ num_docs // 1000000}}M x 1KB, Idle, AWS, {{instance}}
+component = tools
+category = restore
+sub_category = Rift
+
+[stats]
+client_processes = cbbackupmgr
+
+[cluster]
+mem_quota = {{ mem_quota }}
+initial_nodes = {{server_instances}}
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+
+[load]
+items = {{num_docs}}
+size = 1024
+workers = 40
+
+[backup]
+threads = 16
+storage_type = rift

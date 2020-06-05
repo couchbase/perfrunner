@@ -123,6 +123,17 @@ class YCSBDurabilityThroughputTest(YCSBTest):
 
         self.log_percentiles()
 
+        for key, value in self.metrics.ycsb_get_max_latency().items():
+            max_latency, _, _ = self.metrics.ycsb_slo_max_latency(key, value)
+            logger.info("Max {} Latency: {}".format(key, max_latency))
+
+        for key, value in self.metrics.ycsb_get_failed_ops().items():
+            failures, _, _ = self.metrics.ycsb_failed_ops(key, value)
+            logger.info("{} Failures: {}".format(key, failures))
+
+        gcs, _, _ = self.metrics.ycsb_gcs()
+        logger.info("Garbage Collections: {}".format(gcs))
+
         self.reporter.post(
             *self.metrics.ycsb_durability_throughput()
         )
@@ -136,20 +147,6 @@ class YCSBDurabilityThroughputTest(YCSBTest):
                     self.reporter.post(
                         *self.metrics.ycsb_slo_latency(key, latency_dic[key])
                     )
-
-        for key, value in self.metrics.ycsb_get_max_latency().items():
-            self.reporter.post(
-                *self.metrics.ycsb_slo_max_latency(key, value)
-            )
-
-        for key, value in self.metrics.ycsb_get_failed_ops().items():
-            self.reporter.post(
-                *self.metrics.ycsb_failed_ops(key, value)
-            )
-
-        self.reporter.post(
-            *self.metrics.ycsb_gcs()
-        )
 
 
 class YCSBLatencyTest(YCSBTest):

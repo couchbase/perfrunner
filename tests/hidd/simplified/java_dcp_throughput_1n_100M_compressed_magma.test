@@ -23,7 +23,7 @@ backend_storage = magma
 [bucket_extras]
 num_reader_threads = 64
 num_writer_threads = 64
-backend = "magma;magma_enable_direct_io=true"
+backend = magma;magma_enable_direct_io=true
 
 [load]
 items = 100000000

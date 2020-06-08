@@ -30,7 +30,9 @@ MEMORY_QUOTAS = {
     'c5d.12xlarge': [81920, '48vCPU', '1 x 1800 NVMe SSD', 'RHEL 7.1', 98304],  # 96GB RAM
 
     'r5.2xlarge': [56320, '8vCPU', '', 'RHEL 7.1', 65536],  # 64GB RAM
-    'r5.4xlarge': [102400, '16vCPU', '', 'RHEL 7.1', 131072]  # 128GB RAM
+    'r5.4xlarge': [102400, '16vCPU', '', 'RHEL 7.1', 131072],  # 128GB RAM
+
+    'm5ad.4xlarge': [56320, '16vCPU', '', 'RHEL 7.1', 65536]  # 64GB RAM
 }
 
 OUTPUT_FILE = 'custom'

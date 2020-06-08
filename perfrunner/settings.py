@@ -979,6 +979,9 @@ class BackupSettings:
     STORAGE_TYPE = None
     SINK_TYPE = None
     SHARDS = None
+    OBJ_STAGING_DIR = None
+    OBJ_REGION = None
+    AWS_CREDENTIAL_PATH = None
 
     def __init__(self, options: dict):
         self.compression = int(options.get('compression', self.COMPRESSION))
@@ -986,6 +989,9 @@ class BackupSettings:
         self.storage_type = options.get('storage_type', self.STORAGE_TYPE)
         self.sink_type = options.get('sink_type', self.SINK_TYPE)
         self.shards = options.get('shards', self.SHARDS)
+        self.obj_staging_dir = options.get('obj_staging_dir', self.OBJ_STAGING_DIR)
+        self.obj_region = options.get('obj_region', self.OBJ_REGION)
+        self.aws_credential_path = options.get('aws_credential_path', self.AWS_CREDENTIAL_PATH)
 
 
 class ExportSettings:

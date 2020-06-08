@@ -15,6 +15,9 @@ mem_quota = {{ mem_quota }}
 initial_nodes = {{server_instances}}
 num_buckets = 1
 
+[bucket]
+replica_number = 0
+
 [compaction]
 db_percentage = 100
 
@@ -26,3 +29,6 @@ workers = 40
 [backup]
 threads = 16
 storage_type = rift
+obj_staging_dir = /tmp/stage
+obj_region = us-west-2
+aws_credential_path = /root/.ssh

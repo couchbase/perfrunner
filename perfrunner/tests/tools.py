@@ -511,6 +511,8 @@ class CloudBackupTest(BackupRestoreTest):
     @with_stats
     @timeit
     def backup(self, mode=None):
+        credential = local.read_aws_credential(self.test_config.backup_settings.aws_credential_path)
+        self.remote.create_aws_credential(credential)
         self.remote.backup(
             master_node=self.master_node,
             cluster_spec=self.cluster_spec,
@@ -520,12 +522,13 @@ class CloudBackupTest(BackupRestoreTest):
             compression=self.test_config.backup_settings.compression,
             storage_type=self.test_config.backup_settings.storage_type,
             sink_type=self.test_config.backup_settings.sink_type,
-            shards=self.test_config.backup_settings.shards
+            shards=self.test_config.backup_settings.shards,
+            obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
+            obj_region=self.test_config.backup_settings.obj_region
         )
 
     def _report_kpi(self, time_elapsed):
         edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
-        backup_size = self.remote.calc_backup_size(cluster_spec=self.cluster_spec)
 
         backing_store = self.test_config.backup_settings.storage_type
         sink_type = self.test_config.backup_settings.sink_type
@@ -540,15 +543,6 @@ class CloudBackupTest(BackupRestoreTest):
         self.reporter.post(
             *self.metrics.bnr_throughput(time_elapsed, edition, tool, storage)
         )
-
-        if sink_type != 'blackhole':
-            self.reporter.post(
-                *self.metrics.backup_size(
-                    backup_size,
-                    edition,
-                    tool if backing_store or sink_type else None,
-                    storage)
-            )
 
     def run(self):
         self.remote.extract_cb(filename='couchbase.rpm',
@@ -570,6 +564,8 @@ class CloudRestoreTest(BackupRestoreTest):
     COLLECTORS = {'iostat': False}
 
     def backup(self, mode=None):
+        credential = local.download_aws_credential()
+        self.remote.create_aws_credential(credential)
         self.remote.backup(
             master_node=self.master_node,
             cluster_spec=self.cluster_spec,
@@ -579,7 +575,9 @@ class CloudRestoreTest(BackupRestoreTest):
             compression=self.test_config.backup_settings.compression,
             storage_type=self.test_config.backup_settings.storage_type,
             sink_type=self.test_config.backup_settings.sink_type,
-            shards=self.test_config.backup_settings.shards
+            shards=self.test_config.backup_settings.shards,
+            obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
+            obj_region=self.test_config.backup_settings.obj_region
         )
 
     @with_stats
@@ -590,7 +588,9 @@ class CloudRestoreTest(BackupRestoreTest):
         self.remote.restore(cluster_spec=self.cluster_spec,
                             master_node=self.master_node,
                             threads=self.test_config.restore_settings.threads,
-                            worker_home=self.worker_manager.WORKER_HOME)
+                            worker_home=self.worker_manager.WORKER_HOME,
+                            obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
+                            obj_region=self.test_config.backup_settings.obj_region)
 
     def _report_kpi(self, time_elapsed):
         edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'

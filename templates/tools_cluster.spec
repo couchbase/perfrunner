@@ -13,7 +13,7 @@ credentials = root:couchbase
 
 [storage]
 data = /data
-backup = /workspace/backup
+backup = s3://cb-backup-to-s3-perftest
 
 [credentials]
 rest = Administrator:password

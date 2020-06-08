@@ -835,3 +835,12 @@ def get_cbstats(server: str, port: int, command: str, cluster_spec: ClusterSpec)
         .format(server, port, cluster_spec.rest_credentials[0],
                 cluster_spec.rest_credentials[1], command)
     return local(cmd, capture=True)
+
+
+def read_aws_credential(credential_path: str):
+    logger.info("Reading AWS credential")
+    cmd = 'cat {}/aws_credential'.format(credential_path)
+    credential = local(cmd, capture=True)
+    cmd = 'rm {}/aws_credential'.format(credential_path)
+    local(cmd)
+    return credential

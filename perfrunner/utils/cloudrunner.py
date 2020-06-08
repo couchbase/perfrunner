@@ -48,6 +48,7 @@ class CloudRunner:
 
     def __init__(self):
         self.ec2 = boto3.resource('ec2', region_name=self.AWS_REGION)
+        self.s3 = boto3.resource('s3', region_name=self.AWS_REGION)
 
     def launch(self, count: int, group: str, instance_type: str) -> List[str]:
         instance_settings = copy.deepcopy(self.EC2_SETTINGS)
@@ -63,9 +64,15 @@ class CloudRunner:
         )
         return [instance.instance_id for instance in instances]
 
+    def initiate_s3(self):
+        logger.info('Creating S3 bucket')
+        self.s3.create_bucket(Bucket='cb-backup-to-s3-perftest',
+                              CreateBucketConfiguration={
+                                  'LocationConstraint': self.AWS_REGION})
+
     def monitor_instances(self, instance_ids: list):
         logger.info('Waiting for all instances to be running')
-
+        time.sleep(self.MONITORING_INTERVAL)
         for instance_id in instance_ids:
             while True:
                 instance = self.ec2.Instance(instance_id)
@@ -103,6 +110,10 @@ class CloudRunner:
             logger.info('Terminating: {}'.format(instance_id))
             instance = self.ec2.Instance(instance_id)
             instance.terminate()
+        logger.info('Deleting S3 bucket')
+        s3_bucket = self.s3.Bucket('cb-backup-to-s3-perftest')
+        s3_bucket.objects.all().delete()
+        s3_bucket.delete()
 
 
 def get_args():
@@ -136,9 +147,13 @@ def get_args():
                                  'i3en.3xlarge',
                                  'c5d.12xlarge',
                                  'r5.2xlarge',
-                                 'r5.4xlarge'])
+                                 'r5.4xlarge',
+                                 'm5ad.4xlarge'])
     parser.add_argument('action',
                         choices=['launch', 'terminate'])
+    parser.add_argument('--enable-s3',
+                        default=0,
+                        type=int)
 
     return parser.parse_args()
 
@@ -163,6 +178,8 @@ def main():
             cr.monitor_instances(instance_ids)
             ips = cr.get_ips(instance_ids)
             cr.store_ips(ips, group='clients')
+        if args.enable_s3:
+            cr.initiate_s3()
     else:
         instance_ids = cr.read_ids()
         cr.terminate(instance_ids)

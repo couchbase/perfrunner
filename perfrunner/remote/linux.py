@@ -551,15 +551,16 @@ class RemoteLinux(Remote):
     def backup(self, master_node: str, cluster_spec: ClusterSpec, threads: int,
                worker_home: str, mode: str = None, compression: bool = False,
                storage_type: str = None, sink_type: str = None,
-               shards: int = None):
+               shards: int = None, obj_staging_dir: str = None,
+               obj_region: str = None):
         logger.info('Creating a new backup: {}'.format(cluster_spec.backup))
 
-        if not mode:
-            self.cleanup(cluster_spec.backup)
+        self.cbbackupmgr_config(cluster_spec, worker_home, obj_staging_dir,
+                                obj_region)
 
         self.cbbackupmgr_backup(master_node, cluster_spec, threads, mode,
                                 compression, storage_type, sink_type, shards,
-                                worker_home)
+                                worker_home, obj_staging_dir, obj_region)
 
     @master_client
     def cleanup(self, backup_dir: str):
@@ -568,15 +569,36 @@ class RemoteLinux(Remote):
         run('mkdir -p {}'.format(backup_dir))
 
     @master_client
+    def create_aws_credential(self, credential):
+        logger.info("Creating AWS credential")
+        with cd('~/'):
+            run('mkdir -p .aws')
+            with cd('.aws'):
+                cmd = 'echo "{}" > credentials'.format(credential)
+                run(cmd)
+
+    @master_client
+    def cbbackupmgr_config(self, cluster_spec: ClusterSpec, worker_home: str,
+                           obj_staging_dir: str = None, obj_region: str = None):
+        with cd(worker_home), cd('perfrunner'):
+            flags = ['--archive {}'.format(cluster_spec.backup),
+                     '--repo default',
+                     '--obj-region {}'.format(obj_region) if obj_region else None,
+                     '--obj-staging-dir {}'.format(obj_staging_dir) if obj_staging_dir else None]
+
+            cmd = './opt/couchbase/bin/cbbackupmgr config {}'.format(
+                ' '.join(filter(None, flags)))
+
+            logger.info('Running: {}'.format(cmd))
+            run(cmd)
+
+    @master_client
     def cbbackupmgr_backup(self, master_node: str, cluster_spec: ClusterSpec,
                            threads: int, mode: str, compression: bool,
                            storage_type: str, sink_type: str, shards: int,
-                           worker_home: str):
+                           worker_home: str, obj_staging_dir: str = None,
+                           obj_region: str = None):
         with cd(worker_home), cd('perfrunner'):
-            if not mode:
-                run('./opt/couchbase/bin/cbbackupmgr config '
-                    '--archive {} --repo default'.format(cluster_spec.backup))
-
             flags = ['--archive {}'.format(cluster_spec.backup),
                      '--repo default',
                      '--host http://{}'.format(master_node),
@@ -586,7 +608,9 @@ class RemoteLinux(Remote):
                      '--storage {}'.format(storage_type) if storage_type else None,
                      '--sink {}'.format(sink_type) if sink_type else None,
                      '--value-compression compressed' if compression else None,
-                     '--shards {}'.format(shards) if shards else None]
+                     '--shards {}'.format(shards) if shards else None,
+                     '--obj-region {}'.format(obj_region) if obj_region else None,
+                     '--obj-staging-dir {}'.format(obj_staging_dir) if obj_staging_dir else None]
 
             cmd = './opt/couchbase/bin/cbbackupmgr backup {}'.format(
                 ' '.join(filter(None, flags)))
@@ -601,26 +625,28 @@ class RemoteLinux(Remote):
 
     @master_client
     def restore(self, master_node: str, cluster_spec: ClusterSpec, threads: int,
-                worker_home: str):
+                worker_home: str, obj_staging_dir: str = None, obj_region: str = None):
         logger.info('Restore from {}'.format(cluster_spec.backup))
 
-        self.cbbackupmgr_restore(master_node, cluster_spec, threads, worker_home)
+        self.cbbackupmgr_restore(master_node, cluster_spec, threads, worker_home,
+                                 obj_staging_dir, obj_region)
 
     @master_client
     def cbbackupmgr_restore(self, master_node: str, cluster_spec: ClusterSpec,
                             threads: int, worker_home: str,
-                            archive: str = '', repo: str = 'default'):
+                            archive: str = '', repo: str = 'default',
+                            obj_staging_dir: str = None, obj_region: str = None):
         with cd(worker_home), cd('perfrunner'):
-            cmd = \
-                './opt/couchbase/bin/cbbackupmgr restore --force-updates ' \
-                '--archive {} --repo {} --threads {} ' \
-                '--host http://{} --username {} --password {}'.format(
-                    archive or cluster_spec.backup,
-                    repo,
-                    threads,
-                    master_node,
-                    cluster_spec.rest_credentials[0],
-                    cluster_spec.rest_credentials[1],
-                )
+            flags = ['--archive {}'.format(cluster_spec.backup),
+                     '--repo default',
+                     '--host http://{}'.format(master_node),
+                     '--username {}'.format(cluster_spec.rest_credentials[0]),
+                     '--password {}'.format(cluster_spec.rest_credentials[1]),
+                     '--threads {}'.format(threads) if threads else None,
+                     '--obj-region {}'.format(obj_region) if obj_region else None,
+                     '--obj-staging-dir {}'.format(obj_staging_dir) if obj_staging_dir else None]
+            cmd = './opt/couchbase/bin/cbbackupmgr restore --force-updates {}'.format(
+                ' '.join(filter(None, flags)))
+
             logger.info('Running: {}'.format(cmd))
             run(cmd)

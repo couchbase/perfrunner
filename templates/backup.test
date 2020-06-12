@@ -30,6 +30,6 @@ workers = 40
 [backup]
 threads = 16
 storage_type = rift
-obj_staging_dir = /tmp/stage
+obj_staging_dir = /stage
 obj_region = us-west-2
 aws_credential_path = /root/.ssh

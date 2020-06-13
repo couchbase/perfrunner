@@ -601,7 +601,7 @@ class RemoteLinux(Remote):
         with cd(worker_home), cd('perfrunner'):
             flags = ['--archive {}'.format(cluster_spec.backup),
                      '--repo default',
-                     '--host http://{}'.format(master_node),
+                     '--cluster http://{}'.format(master_node),
                      '--username {}'.format(cluster_spec.rest_credentials[0]),
                      '--password {}'.format(cluster_spec.rest_credentials[1]),
                      '--threads {}'.format(threads) if threads else None,
@@ -610,7 +610,8 @@ class RemoteLinux(Remote):
                      '--value-compression compressed' if compression else None,
                      '--shards {}'.format(shards) if shards else None,
                      '--obj-region {}'.format(obj_region) if obj_region else None,
-                     '--obj-staging-dir {}'.format(obj_staging_dir) if obj_staging_dir else None]
+                     '--obj-staging-dir {}'.format(obj_staging_dir) if obj_staging_dir else None,
+                     '--no-progress-bar']
 
             cmd = './opt/couchbase/bin/cbbackupmgr backup {}'.format(
                 ' '.join(filter(None, flags)))
@@ -634,12 +635,11 @@ class RemoteLinux(Remote):
     @master_client
     def cbbackupmgr_restore(self, master_node: str, cluster_spec: ClusterSpec,
                             threads: int, worker_home: str,
-                            archive: str = '', repo: str = 'default',
                             obj_staging_dir: str = None, obj_region: str = None):
         with cd(worker_home), cd('perfrunner'):
             flags = ['--archive {}'.format(cluster_spec.backup),
                      '--repo default',
-                     '--host http://{}'.format(master_node),
+                     '--cluster http://{}'.format(master_node),
                      '--username {}'.format(cluster_spec.rest_credentials[0]),
                      '--password {}'.format(cluster_spec.rest_credentials[1]),
                      '--threads {}'.format(threads) if threads else None,

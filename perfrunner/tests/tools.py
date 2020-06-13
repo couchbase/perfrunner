@@ -564,7 +564,7 @@ class CloudRestoreTest(BackupRestoreTest):
     COLLECTORS = {'iostat': False}
 
     def backup(self, mode=None):
-        credential = local.download_aws_credential()
+        credential = local.read_aws_credential(self.test_config.backup_settings.aws_credential_path)
         self.remote.create_aws_credential(credential)
         self.remote.backup(
             master_node=self.master_node,

@@ -1,0 +1,35 @@
+---
+- hosts: clients
+  vars:
+    data_dir: /stage
+    disk: /dev/nvme1n1
+  tasks:
+  - stat: path=/dev/nvme1n1
+    register: nvme
+
+  - name: using NVME drive if it's available
+    set_fact:
+      disk: /dev/nvme1n1
+    when: nvme.stat.exists
+
+  - name: re-creating filesystem
+    filesystem:
+      fstype: "xfs"
+      dev: "{{ disk }}"
+      force: yes
+
+  - name: mounting data parition
+    mount:
+      name: "{{ data_dir }}"
+      state: mounted
+      src: "{{ disk }}"
+      fstype: "xfs"
+
+  - name: creating new "couchbase" group
+    group: name=couchbase
+
+  - name: creating new "couchbase" user
+    user: name=couchbase group=couchbase
+
+  - name: ensuring ownership of "{{ data_dir }}" directory
+    file: path={{ data_dir }} owner=couchbase group=couchbase

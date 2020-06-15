@@ -45,13 +45,17 @@
     "KV-DGM": [
         {"job": "hera", "cluster": "hera.spec", "test_config": "kv_latency_read_1000M.test"},
         {"job": "hera", "cluster": "hera.spec", "test_config": "kv_latency_read_1000M_compacted.test"},
-        {"job": "hera", "cluster": "hera.spec", "test_config": "kv_compact_1000M_fe.test"},
-        {"job": "hera", "cluster": "hera.spec", "test_config": "kv_warmup_500M_dgm.test"},
+
         {"job": "hera", "cluster": "hera.spec", "test_config": "kv_write_queue_init_1000M_fe.test"},
         {"job": "hera", "cluster": "hera.spec", "test_config": "kv_write_queue_1000M.test"},
         {"job": "hera", "cluster": "hera.spec", "test_config": "kv_thr_1000M_5cm_fe_read_comp.test"},
         {"job": "hera", "cluster": "hera.spec", "test_config": "kv_thr_1000M_rand.test"}
     ],
+    "KV-Athena": [
+        {"job": "athena", "cluster": "athena.spec", "test_config": "kv_compact_1000M_fe.test"},
+        {"job": "athena", "cluster": "athena.spec", "test_config": "kv_warmup_500M_dgm.test"}
+    ],
+    "KV-Hercules": [],
     "N1QL": [
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql_thr_Q1_20M.test"},
         {"job": "iris",              "cluster": "iris.spec", "test_config": "n1ql_thr_Q1_20M_tls.test"},

@@ -31,7 +31,7 @@ deletes = 1
 throughput = 10000
 items = 20000000
 workers = 24
-time = 3600
+time = 1200
 collection_mod_workers = 1
 collection_mod_throughput = 1
 

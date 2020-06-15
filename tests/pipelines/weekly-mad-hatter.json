@@ -112,6 +112,7 @@
         {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/ycsb_trans_latency_workloadt_4nodes_48cores_dur_3.test"}
     ],
     "KV-DGM": [],
+    "KV-Athena": [],
     "KV-Windows": [],
     "KV-SSL": [
         {"job": "ares", "cluster": "ares.spec", "test_config": "ssl/throughput/kv_max_ops_balanced_512_cpu_ephemeral_tls.test"},

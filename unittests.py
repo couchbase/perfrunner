@@ -643,7 +643,7 @@ class PipelineTest(TestCase):
         stages = {'Analytics', 'Eventing', 'FTS', 'GSI', 'KV', 'KV-DGM',
                   'N1QL', 'Rebalance', 'Rebalance-Large-Scale', 'Tools',
                   'Views', 'XDCR', 'YCSB','N1QL-Windows', 'N1QL-Arke',
-                  'KV-Windows', 'XDCR-Windows'}
+                  'KV-Windows', 'XDCR-Windows', 'KV-Athena', 'KV-Hercules'}
         for pipeline in ('tests/pipelines/weekly-watson.json',
                          'tests/pipelines/weekly-spock.json',
                          'tests/pipelines/weekly-vulcan.json',

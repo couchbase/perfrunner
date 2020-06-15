@@ -31,7 +31,7 @@ deletes = 1
 throughput = 10000
 items = 20000000
 workers = 24
-time = 3600
+time = 1200
 
 [clients]
 libcouchbase = 3.0.1

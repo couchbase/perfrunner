@@ -301,6 +301,7 @@ class WarmupTest(PerfTest):
 
         self.access()
         self.wait_for_persistence()
+        self.compact_bucket()
 
         time_elapsed = self.warmup()
 

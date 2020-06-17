@@ -154,7 +154,8 @@
         {"job": "iris",              "cluster": "iris_fts.spec", "test_config": "n1ql_lat_CF3_20M_fts.test"},
         {"job": "iris",              "cluster": "iris_fts.spec", "test_config": "n1ql_lat_QF2_20M_fts.test"},
         {"job": "iris",              "cluster": "iris_fts.spec", "test_config": "n1ql_lat_QF3_20M_fts.test"},
-        {"job": "iris",              "cluster": "iris_fts.spec", "test_config": "n1ql_lat_CF2_20M_fts.test"}
+        {"job": "iris",              "cluster": "iris_fts.spec", "test_config": "n1ql_lat_CF2_20M_fts.test"},
+        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql_thr_Q1_20M_rebalance.test"}
     ],
     "N1QL-Arke": [
         {"job": "arke",              "cluster": "arke.spec", "test_config": "tpc-ds/n1ql_lat_WF1_100M_plasma_ok.test"},

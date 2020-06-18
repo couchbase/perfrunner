@@ -95,4 +95,5 @@ def ycsb_workload(workload_settings: PhaseSettings,
              requestdistribution=workload_settings.requestdistribution,
              num_atrs=workload_settings.num_atrs,
              ycsb_jvm_args=workload_settings.ycsb_jvm_args,
-             collections_map=workload_settings.collections)
+             collections_map=workload_settings.collections,
+             out_of_order=workload_settings.ycsb_out_of_order)

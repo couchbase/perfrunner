@@ -476,7 +476,8 @@ def run_ycsb(host: str,
              retry_upper: int = 500,
              retry_factor: int = 2,
              ycsb_jvm_args: str = None,
-             collections_map: dict = None):
+             collections_map: dict = None,
+             out_of_order: int = 0):
 
     cmd = 'bin/ycsb {action} {ycsb_client} ' \
           '-P {workload} ' \
@@ -570,6 +571,9 @@ def run_ycsb(host: str,
         cmd += ' -p totalrecordcount={totalrecordcount} '.format(totalrecordcount=items)
         cmd += ' -p recordcount={items} '.format(items=soe_params['recorded_load_cache_size'])
         cmd += ' -p insertstart={insertstart} '.format(insertstart=soe_params['insertstart'])
+
+    if out_of_order:
+        cmd += ' -p couchbase.outOfOrderExecution=true '
 
     if collections_map:
         target_scope_collections = collections_map[bucket]

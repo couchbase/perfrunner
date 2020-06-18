@@ -103,6 +103,24 @@
         {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "collections/ycsb/ycsb_workloadca_3nodes_cpu_eph_norepl_1s_1000c.test"},
         {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "collections/ycsb/ycsb_workloadca_3nodes_cpu_Latency_1s_1000c.test"},
         {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "collections/ycsb/ycsb_workloadca_3nodes_cpu_norepl_1s_1000c.test"},
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "collections/ycsb/ycsb_workloadca_3nodes_cpu_requdist_uni_1s_1000c.test"}
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "collections/ycsb/ycsb_workloadca_3nodes_cpu_requdist_uni_1s_1000c.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_slo_workloada_4node_durability3d_new_ooo.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_slo_workloadca_4node_durability3d_new_ooo_1s_1c.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_slo_workloadca_4node_durability3d_new_ooo_1s_1000c.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_trans_workloadt_4nodes_48cores_dur_3_ooo.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloada_3nodes_cpu_ooo.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloada_4node_lat_durability3d_new_ooo.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloada_4node_max_thr_durability3b_new_ooo.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloada_4node_max_thr_durability3d_new_ooo.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloada_4node_thr_durability3b_new_ooo.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloada_4node_thr_durability3d_new_ooo.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloadca_3nodes_cpu_ooo_1s_1c.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloadca_3nodes_cpu_ooo_1s_1000c.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloadca_4node_lat_durability3d_new_ooo_1s_1c.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloadca_4node_lat_durability3d_new_ooo_1s_1000c.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloadca_4node_max_thr_durability3b_new_ooo_1s_1c.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloadca_4node_max_thr_durability3b_new_ooo_1s_1000c.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloadca_4node_max_thr_durability3d_new_ooo_1s_1c.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloadca_4node_max_thr_durability3d_new_ooo_1s_1000c.test"}
     ]
 }

@@ -509,6 +509,7 @@ class PhaseSettings:
     YCSB_RETRY_LOWER = 1
     YCSB_RETRY_UPPER = 500
     YCSB_RETRY_FACTOR = 2
+    YCSB_OUT_OF_ORDER = 0
 
     TRANSACTIONSENABLED = 0
 
@@ -645,6 +646,7 @@ class PhaseSettings:
         self.enable_mutation_token = options.get('enable_mutation_token',
                                                  self.YCSB_ENABLE_MUTATION_TOKEN)
         self.ycsb_client = options.get('ycsb_client', self.YCSB_CLIENT)
+        self.ycsb_out_of_order = int(options.get('out_of_order', self.YCSB_OUT_OF_ORDER))
 
         # trasnsaction settings
         self.transactionsenabled = int(options.get('transactionsenabled',

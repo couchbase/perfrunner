@@ -2,7 +2,7 @@
 test = perfrunner.tests.ycsb.YCSBDurabilityThroughputTest
 
 [showfast]
-title = Durability Persist Majority, 1 client, 128 threads, YCSB SLO, SDK 3, 4 nodes, Workload CA, s=1 c=1
+title = Durability Persist Majority, 1 client, 128 threads, YCSB SLO, SDK 3, 4 nodes,  Workload A, Out of Order
 component = kv
 category = durability
 sub_category = SLO
@@ -19,18 +19,15 @@ db_percentage = 100
 [bucket]
 replica_number = 2
 
-[collection]
-config = collections/1bucket_1scope_1collection_basic.json
-
 [load]
-workload_path = workloads/workloadca
+workload_path = workloads/workloada
 items = 20000000
-workers = 100
+workers = 128
 ycsb_client = couchbase3
 
 [access]
 durability = 3
-workload_path = workloads/workloadca
+workload_path = workloads/workloada
 items = 20000000
 ops = 100000000
 time = 1200
@@ -40,11 +37,9 @@ ycsb_client = couchbase3
 enable_mutation_token = true
 kv_endpoints = 64
 timeseries = 1
+out_of_order = 1
 
 [ycsb]
-branch = couchbase3-collection-imp2
+branch = couchbase3-new-durability
 latency_percentiles = 98
-
-[stats]
-client_processes = java
 

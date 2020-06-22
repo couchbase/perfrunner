@@ -32,5 +32,5 @@ updates = 100
 durability = 3
 
 [clients]
-libcouchbase = 3.0.1
-python_client = git+https://github.com/couchbase/couchbase-python-client@fd3879c31bf8f0737d776dee59fb9a54fc5b3ced
+libcouchbase = 3.0.2
+python_client = git+https://github.com/couchbase/couchbase-python-client@8d5820a297b35378d314eb399c041b214aa6a7db

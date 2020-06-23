@@ -33,6 +33,7 @@ class KVStoreStats(Collector):
         "NTablesDeleted",
         "NTableFiles",
         "NFileCountCompacts",
+        "TableMetaMemUsed",
         "NWriteBytes",
         "NWriteBytesCompact",
         "NWriteIOs",

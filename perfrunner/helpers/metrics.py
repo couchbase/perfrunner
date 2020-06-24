@@ -259,6 +259,15 @@ class MetricHelper:
 
         return rate, self._snapshots, metric_info
 
+    def sgreplicate_items_per_sec(self, time_elapsed: float, items_in_range: int) -> Metric:
+        items_in_range = items_in_range
+
+        metric_info = self._metric_info()
+
+        rate = round(items_in_range / time_elapsed)
+
+        return rate, self._snapshots, metric_info
+
     def _avg_replication_rate(self, time_elapsed: float) -> float:
         initial_items = self.test_config.load_settings.ops or \
             self.test_config.load_settings.items

@@ -798,6 +798,7 @@ class SyncgatewaySettings:
     BASIC_AUTH = "false"
     IMPORT_NODES = 1
     ROUNDTRIP_WRITE_LOAD = "false"
+    SG_REPLICATION_TYPE = 'push'
 
     def __init__(self, options: dict):
         self.repo = options.get('ycsb_repo', self.REPO)
@@ -843,6 +844,7 @@ class SyncgatewaySettings:
         self.import_nodes = int(options.get('import_nodes', self.IMPORT_NODES))
 
         self.roundtrip_write_load = options.get('roundtrip_write_load', self.ROUNDTRIP_WRITE_LOAD)
+        self.sg_replication_type = options.get('sg_replication_type', self.SG_REPLICATION_TYPE)
 
     def __str__(self) -> str:
         return str(self.__dict_)

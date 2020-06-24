@@ -132,7 +132,6 @@ class Monitor(RestHelper):
             if import_docs >= 1:
                 logger.info('importing docs has started')
                 return import_docs, time.time()
-                break
 
     def _wait_for_sg_import_complete(self, host: str, expected_docs: int, start_time):
         expected_docs = expected_docs
@@ -155,7 +154,6 @@ class Monitor(RestHelper):
                 end_time = time.time()
                 time_taken = end_time - start_time
                 return time_taken
-                break
 
     def get_import_count(self, host: str):
         stats = self.get_sg_stats(host=host)
@@ -167,6 +165,57 @@ class Monitor(RestHelper):
                 int(stats['syncgateway']['per_db']['db']['shared_bucket_import'
                                                          '']['import_count'])
         return import_count
+
+    def monitor_sgreplicate(self, host: str, expected_docs: int, replicate_id: str, version: int):
+        logger.info('Monitoring SGReplicate items:')
+        initial_items, start_time = self._wait_for_sg_replicate_start(host, replicate_id, version)
+        items_in_range = expected_docs - initial_items
+        time_taken = self._wait_for_sg_replicate_complete(host,
+                                                          expected_docs,
+                                                          start_time,
+                                                          replicate_id,
+                                                          version)
+        return time_taken, items_in_range
+
+    def _wait_for_sg_replicate_start(self, host: str, replicate_id: str, version: int):
+        logger.info('Checking if replicate process started')
+        logger.info('host: {}'.format(host))
+        replicate_docs = 0
+        while True:
+            stats = self.get_sgreplicate_stats(host=host,
+                                               version=version)
+            for stat in stats:
+                if stat['replication_id'] == replicate_id:
+                    replicate_docs = int(stat['docs_written'])
+                    break
+
+            if replicate_docs >= 1:
+                logger.info('replicating docs has started')
+                return replicate_docs, time.time()
+
+            time.sleep(self.POLLING_INTERVAL)
+
+    def _wait_for_sg_replicate_complete(self, host: str, expected_docs: int, start_time,
+                                        replicate_id: str, version: int):
+        expected_docs = expected_docs
+        start_time = start_time
+        logger.info('Monitoring syncgateway replicate status :')
+        replicate_docs = 0
+        while True:
+            stats = self.get_sgreplicate_stats(host=host,
+                                               version=version)
+            for stat in stats:
+                if stat['replication_id'] == replicate_id:
+                    replicate_docs = int(stat['docs_written'])
+                    break
+
+            logger.info('Docs replicated: {}'.format(replicate_docs))
+            if replicate_docs >= expected_docs:
+                end_time = time.time()
+                time_taken = end_time - start_time
+                return time_taken
+
+            time.sleep(self.POLLING_INTERVAL)
 
     def _get_num_items(self, host: str, bucket: str) -> bool:
         stats = self.get_bucket_stats(host=host, bucket=bucket)

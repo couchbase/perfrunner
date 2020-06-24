@@ -547,6 +547,28 @@ class RestHelper:
         response = self.get(url=api)
         return response.json()
 
+    def start_sg_replication(self, host, payload):
+        logger.info('Start sg replication.')
+        logger.info('Payload: {}'.format(payload))
+
+        api = 'http://{}:4985/_replicate'.format(host)
+        self.post(url=api, data=json.dumps(payload))
+
+    def start_sg_replication2(self, host, payload):
+        logger.info('Start sg replication.')
+        logger.info('Payload: {}'.format(payload))
+
+        api = 'http://{}:4985/db/_replication'.format(host)
+        self.post(url=api, data=json.dumps(payload))
+
+    def get_sgreplicate_stats(self, host: str, version: int) -> dict:
+        if version == 1:
+            api = 'http://{}:4985/_active_tasks'.format(host)
+        elif version == 2:
+            api = 'http://{}:4985/db/_replicationStatus'.format(host)
+        response = self.get(url=api)
+        return response.json()
+
     def get_elastic_stats(self, host: str) -> dict:
         api = "http://{}:9200/_stats".format(host)
         response = self.get(url=api)

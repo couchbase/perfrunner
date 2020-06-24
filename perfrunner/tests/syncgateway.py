@@ -68,6 +68,7 @@ class SGPerfTest(PerfTest):
         self.cluster = ClusterManager(cluster_spec, test_config)
         self.target_iterator = TargetIterator(cluster_spec, test_config)
         self.monitor = Monitor(cluster_spec, test_config, verbose)
+        self.sg_settings = self.test_config.syncgateway_settings
 
     def download_ycsb(self):
         if self.worker_manager.is_remote:
@@ -298,6 +299,30 @@ class CBTargetIterator(TargetIterator):
             yield TargetSettings(cb_master, bucket, password, prefix)
 
 
+class CBLocalIterator(TargetIterator):
+
+    def __iter__(self):
+        password = self.test_config.bucket.password
+        prefix = self.prefix
+        cb_master = self.cluster_spec.servers[1]
+        for bucket in self.test_config.buckets:
+            if self.prefix is None:
+                prefix = target_hash(cb_master, bucket)
+            yield TargetSettings(cb_master, bucket, password, prefix)
+
+
+class CBRemoteIterator(TargetIterator):
+
+    def __iter__(self):
+        password = self.test_config.bucket.password
+        prefix = self.prefix
+        cb_master = self.cluster_spec.servers[5]
+        for bucket in self.test_config.buckets:
+            if self.prefix is None:
+                prefix = target_hash(cb_master, bucket)
+            yield TargetSettings(cb_master, bucket, password, prefix)
+
+
 class SGImportLoad(PerfTest):
 
     def load(self, *args):
@@ -485,3 +510,120 @@ class SGSyncInitialLoad(SGSyncByUserWithAuth):
         self.init_users()
         self.run_test()
         self.report_kpi()
+
+
+class SGReplicateThroughputTest1(SGPerfTest):
+
+    def load(self, *args):
+        cb_target_iterator = CBLocalIterator(self.cluster_spec,
+                                             self.test_config,
+                                             prefix='symmetric')
+        super().load(task=pillowfight_data_load_task, target_iterator=cb_target_iterator)
+
+    def _report_kpi(self, time_elapsed, items_in_range):
+        self.reporter.post(
+            *self.metrics.sgreplicate_items_per_sec(time_elapsed=time_elapsed,
+                                                    items_in_range=items_in_range)
+        )
+
+    def start_replication(self):
+        sg1 = 'http://{}:4985/db'.format(self.cluster_spec.servers[0])
+        sg2 = 'http://{}:4985/db'.format(self.cluster_spec.servers[4])
+        data = {
+            "replication_id": "push",
+            "source": sg1,
+            "target": sg2,
+            "filter": "sync_gateway/bychannel",
+            "query_params": {
+                "channels": ["global"]
+            },
+            "continuous": True,
+            "changes_feed_limit": 10000
+        }
+        if self.sg_settings.sg_replication_type == 'push':
+            self.rest.start_sg_replication(self.cluster_spec.servers[0], data)
+        elif self.sg_settings.sg_replication_type == 'pull':
+            data["replication_id"] = "pull"
+            self.rest.start_sg_replication(self.cluster_spec.servers[4], data)
+
+    @with_stats
+    @with_profiles
+    def monitor_sg_replicate(self):
+        replication_type = 'push'
+        if self.sg_settings.sg_replication_type == 'pull':
+            host = self.cluster_spec.servers[4]
+            replication_type = 'pull'
+        else:
+            host = self.cluster_spec.servers[0]
+        expected_docs = self.test_config.load_settings.items
+        time_elapsed, items_in_range = self.monitor.monitor_sgreplicate(host,
+                                                                        expected_docs,
+                                                                        replication_type,
+                                                                        1)
+        return time_elapsed, items_in_range
+
+    def run(self):
+        self.remote.remove_sglogs()
+        self.load()
+        self.start_replication()
+        time_elapsed, items_in_range = self.monitor_sg_replicate()
+        self.report_kpi(time_elapsed, items_in_range)
+
+
+class SGReplicateThroughputTest2(SGPerfTest):
+
+    def load(self, *args):
+        cb_target_iterator = CBLocalIterator(self.cluster_spec,
+                                             self.test_config,
+                                             prefix='symmetric')
+        super().load(task=pillowfight_data_load_task, target_iterator=cb_target_iterator)
+
+    def _report_kpi(self, time_elapsed, items_in_range):
+        self.reporter.post(
+            *self.metrics.sgreplicate_items_per_sec(time_elapsed=time_elapsed,
+                                                    items_in_range=items_in_range)
+        )
+
+    def start_replication(self):
+        sg1 = 'http://{}:4985/db'.format(self.cluster_spec.servers[0])
+        sg2 = 'http://{}:4985/db'.format(self.cluster_spec.servers[4])
+        data = {
+            "replication_id": "push",
+            "source": sg1,
+            "remote": sg2,
+            "direction": "push",
+            "filter": "sync_gateway/bychannel",
+            "query_params": {
+                "channels": ["global"]
+            },
+            "continuous": True
+        }
+        if self.sg_settings.sg_replication_type == 'push':
+            self.rest.start_sg_replication2(self.cluster_spec.servers[0], data)
+        elif self.sg_settings.sg_replication_type == 'pull':
+            data["replication_id"] = "pull"
+            data["direction"] = "pull"
+            self.rest.start_sg_replication2(self.cluster_spec.servers[4], data)
+
+    @with_stats
+    @with_profiles
+    def monitor_sg_replicate(self):
+        replication_type = 'push'
+        if self.sg_settings.sg_replication_type == 'pull':
+            host = self.cluster_spec.servers[4]
+            replication_type = 'pull'
+        else:
+            host = self.cluster_spec.servers[0]
+        expected_docs = self.test_config.load_settings.items
+        time_elapsed, items_in_range = self.monitor.monitor_sgreplicate(host,
+                                                                        expected_docs,
+                                                                        replication_type,
+                                                                        2)
+        return time_elapsed, items_in_range
+
+    def run(self):
+        self.remote.remove_sglogs()
+        self.load()
+        self.start_replication()
+        time_elapsed, items_in_range = self.monitor_sg_replicate()
+        self.report_kpi(time_elapsed, items_in_range)

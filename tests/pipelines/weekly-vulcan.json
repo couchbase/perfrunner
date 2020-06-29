@@ -165,8 +165,8 @@
     ],
     "XDCR-Windows": [],
     "KV-Hercules": [
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloade_1node_part.test"},
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloade_4nodes_part.test"}
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_1node_part.test"},
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_part.test"}
     ],
     "YCSB": []
 }

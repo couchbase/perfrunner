@@ -2,7 +2,7 @@
 test = perfrunner.tests.ycsb.YCSBN1QLThroughputTest
 
 [showfast]
-title = Avg Throughput (queries/sec), Workload CE, MOI, 4 nodes, s=1 c=1
+title = Avg Throughput (queries/sec), Workload CE, MOI, 4 nodes, s=1 c=1000
 component = n1ql
 category = ycsb
 sub_category = MOI
@@ -32,8 +32,9 @@ items = 20000000
 workers = 40
 
 [index]
-statements =
-    CREATE PRIMARY INDEX primary_idx ON `bucket-1` WITH {"num_replica": 3};
+fields = primary
+indexes_per_collection = 1
+replicas = 3
 
 [access]
 workload_path = workloads/workloadce
@@ -43,7 +44,7 @@ ops = 1000000000
 time = 1200
 workers = 600
 workload_instances = 6
-kv_endpoints = 1024
+kv_endpoints = 1
 
 [ycsb]
 branch = couchbase3-collection-imp2

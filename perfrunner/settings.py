@@ -933,10 +933,12 @@ class IndexSettings:
     FTS_INDEX_CONFIG_FILE = ''
     TOP_DOWN = False
     INDEXES_PER_COLLECTION = 1
+    REPLICAS = 0
 
     def __init__(self, options: dict):
         self.raw_statements = options.get('statements')
         self.fields = options.get('fields')
+        self.replicas = int(options.get('replicas', self.REPLICAS))
         self.collection_map = options.get('collection_map')
         self.indexes_per_collection = int(options.get('indexes_per_collection',
                                                       self.INDEXES_PER_COLLECTION))
@@ -959,35 +961,58 @@ class IndexSettings:
         #  n=5  sum = 326
         #  n=6  sum = 1957
         if self.collection_map and self.fields:
-            fields = self.fields.strip().split(',')
-            field_combos = list(chain.from_iterable(combinations(fields, r)
-                                                    for r in range(1, len(fields)+1)))
-            if self.top_down:
-                field_combos.reverse()
             statements = []
-            for bucket in self.collection_map.keys():
-                for scope in self.collection_map[bucket].keys():
-                    for collection in self.collection_map[bucket][scope].keys():
-                        if self.collection_map[bucket][scope][collection]['load'] == 1:
-                            indexes_created = 0
-                            for field_subset in field_combos:
-                                subset_permutations = list(permutations(list(field_subset)))
-                                for permutation in subset_permutations:
-                                    index_field_list = list(permutation)
-                                    index_name = "_".join(index_field_list)
-                                    index_fields = ",".join(index_field_list)
-                                    statements.append(
-                                        "CREATE INDEX {} ON default:`{}`.`{}`.`{}`({})"
-                                        .format(index_name,
+            if self.fields.strip() == 'primary':
+                for bucket in self.collection_map.keys():
+                    for scope in self.collection_map[bucket].keys():
+                        for collection in self.collection_map[bucket][scope].keys():
+                            if self.collection_map[bucket][scope][collection]['load'] == 1:
+                                index_name = 'primary_idx_{}_{}_{}'\
+                                    .format(bucket, scope, collection)
+                                index_name = index_name.replace("-", "_")
+                                new_statement = \
+                                    "CREATE PRIMARY INDEX {} ON default:`{}`.`{}`.`{}`". \
+                                    format(index_name, bucket, scope, collection)
+                                if self.replicas > 0:
+                                    new_statement = \
+                                        new_statement + \
+                                        " WITH {'num_replica': "+str(self.replicas)+"}"
+                                statements.append(new_statement)
+            else:
+                fields = self.fields.strip().split(',')
+                field_combos = list(chain.from_iterable(combinations(fields, r)
+                                                        for r in range(1, len(fields)+1)))
+                if self.top_down:
+                    field_combos.reverse()
+                for bucket in self.collection_map.keys():
+                    for scope in self.collection_map[bucket].keys():
+                        for collection in self.collection_map[bucket][scope].keys():
+                            if self.collection_map[bucket][scope][collection]['load'] == 1:
+                                indexes_created = 0
+                                for field_subset in field_combos:
+                                    subset_permutations = list(permutations(list(field_subset)))
+                                    for permutation in subset_permutations:
+                                        index_field_list = list(permutation)
+                                        index_name = "_".join(index_field_list)
+                                        index_fields = ",".join(index_field_list)
+                                        new_statement = \
+                                            "CREATE INDEX {} ON default:`{}`.`{}`.`{}`({})".\
+                                            format(
+                                                index_name,
                                                 bucket,
                                                 scope,
                                                 collection,
-                                                index_fields))
-                                    indexes_created += 1
+                                                index_fields)
+                                        if self.replicas > 0:
+                                            new_statement = \
+                                                new_statement + \
+                                                " WITH {'num_replica': "+str(self.replicas)+"}"
+                                        statements.append(new_statement)
+                                        indexes_created += 1
+                                        if indexes_created == self.indexes_per_collection:
+                                            break
                                     if indexes_created == self.indexes_per_collection:
                                         break
-                                if indexes_created == self.indexes_per_collection:
-                                    break
             return statements
         elif self.raw_statements:
             return self.raw_statements.strip().split('\n')

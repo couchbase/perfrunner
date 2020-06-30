@@ -552,13 +552,15 @@ class RestHelper:
         logger.info('Payload: {}'.format(payload))
 
         api = 'http://{}:4985/_replicate'.format(host)
+        logger.info('api: {}'.format(api))
         self.post(url=api, data=json.dumps(payload))
 
     def start_sg_replication2(self, host, payload):
         logger.info('Start sg replication.')
         logger.info('Payload: {}'.format(payload))
 
-        api = 'http://{}:4985/db/_replication'.format(host)
+        api = 'http://{}:4985/db/_replication/'.format(host)
+        logger.info('api: {}'.format(api))
         self.post(url=api, data=json.dumps(payload))
 
     def get_sgreplicate_stats(self, host: str, version: int) -> dict:

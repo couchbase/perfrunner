@@ -1,9 +1,9 @@
 [test_case]
-test = perfrunner.tests.syncgateway.SGReplicateThroughputTest1
-title = Avg Throughput (items/sec), SG Replicate 1.0 Push, 1 SG node, 3 CB nodes, 1 Channel, 200K docs, 1K docsize
+test = perfrunner.tests.syncgateway.SGReplicateThroughputMultiChannelTest1
+title = Avg Throughput (items/sec), SG Replicate 1.0 Pull, 1 SG node, 3 CB nodes, 3 Channels, 200K docs, 1K docsize
 component = syncgateway
 category = sgreplicate
-sub_category = Push
+sub_category = Pull
 
 [cluster]
 mem_quota = 25000
@@ -43,7 +43,7 @@ workload_path = workloads/syncgateway_blank
 ycsb_repo = git://github.com/couchbaselabs/YCSB.git
 ycsb_branch = syncgateway-weekly
 users = 1000
-channels = 1
+channels = 3
 channels_per_user = 1
 channels_per_doc = 1
 documents = 200000
@@ -58,4 +58,4 @@ updateproportion=0
 insertproportion=0
 requestdistribution = zipfian
 log_title = sync_gateway_1node_reads
-sg_replication_type = push
+sg_replication_type = pull

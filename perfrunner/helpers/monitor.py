@@ -186,7 +186,10 @@ class Monitor(RestHelper):
                                                version=version)
             for stat in stats:
                 if stat['replication_id'] == replicate_id:
-                    replicate_docs = int(stat['docs_written'])
+                    if replicate_id == 'sgr2_pull':
+                        replicate_docs = int(stat['docs_read'])
+                    else:
+                        replicate_docs = int(stat['docs_written'])
                     break
 
             if replicate_docs >= 1:
@@ -206,7 +209,10 @@ class Monitor(RestHelper):
                                                version=version)
             for stat in stats:
                 if stat['replication_id'] == replicate_id:
-                    replicate_docs = int(stat['docs_written'])
+                    if replicate_id == 'sgr2_pull':
+                        replicate_docs = int(stat['docs_read'])
+                    else:
+                        replicate_docs = int(stat['docs_written'])
                     break
 
             logger.info('Docs replicated: {}'.format(replicate_docs))

@@ -204,11 +204,12 @@ class YCSBN1QLTest(YCSBTest, N1QLTest):
             self.generate_keystore()
         self.download_ycsb()
 
+        self.create_indexes()
+        self.wait_for_indexing()
+
         self.load()
         self.wait_for_persistence()
         self.check_num_items()
-
-        self.create_indexes()
         self.wait_for_indexing()
 
         if self.test_config.access_settings.cbcollect:

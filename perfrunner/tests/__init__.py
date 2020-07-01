@@ -231,10 +231,25 @@ class PerfTest:
 
     def create_indexes(self):
         logger.info('Creating and building indexes')
-
         if not self.test_config.index_settings.couchbase_fts_index_name:
+            create_statements = []
+            build_statements = []
             for statement in self.test_config.index_settings.statements:
+                if 'CREATE INDEX' in statement.upper() \
+                        or 'CREATE PRIMARY INDEX' in statement.upper():
+                    create_statements.append(statement)
+                elif 'BUILD INDEX' in statement.upper():
+                    build_statements.append(statement)
+
+            for statement in create_statements:
+                logger.info('Creating index: ' + statement)
                 self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+
+            for statement in build_statements:
+                logger.info('Building index: ' + statement)
+                self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+
+            logger.info('Index Create and Build Complete')
         else:
             self.create_fts_index_n1ql()
 

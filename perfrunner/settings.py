@@ -943,12 +943,11 @@ class IndexSettings:
         self.indexes_per_collection = int(options.get('indexes_per_collection',
                                                       self.INDEXES_PER_COLLECTION))
         self.top_down = bool(options.get('top_down', self.TOP_DOWN))
-
-        self.statements = self.create_index_statements()
         self.couchbase_fts_index_name = options.get('couchbase_fts_index_name',
                                                     self.FTS_INDEX_NAME)
         self.couchbase_fts_index_configfile = options.get('couchbase_fts_index_configfile',
                                                           self.FTS_INDEX_CONFIG_FILE)
+        self.statements = self.create_index_statements()
 
     def create_index_statements(self) -> List[str]:
         #  Here we generate all permutations of all subsets of index fields
@@ -962,6 +961,7 @@ class IndexSettings:
         #  n=6  sum = 1957
         if self.collection_map and self.fields:
             statements = []
+            build_statements = []
             if self.fields.strip() == 'primary':
                 for bucket in self.collection_map.keys():
                     for scope in self.collection_map[bucket].keys():
@@ -973,11 +973,18 @@ class IndexSettings:
                                 new_statement = \
                                     "CREATE PRIMARY INDEX {} ON default:`{}`.`{}`.`{}`". \
                                     format(index_name, bucket, scope, collection)
+                                with_clause = " WITH {'defer_build': 'true',"
+
                                 if self.replicas > 0:
-                                    new_statement = \
-                                        new_statement + \
-                                        " WITH {'num_replica': "+str(self.replicas)+"}"
+                                    with_clause += "'num_replica': " + str(self.replicas) + ","
+                                with_clause = with_clause[:-1]
+                                with_clause += "}"
+                                new_statement += with_clause
                                 statements.append(new_statement)
+                                build_statement = "BUILD INDEX ON default:`{}`.`{}`.`{}`('{}')" \
+                                    .format(bucket, scope, collection, index_name)
+                                build_statements.append(build_statement)
+                statements = statements + build_statements
             else:
                 fields = self.fields.strip().split(',')
                 field_combos = list(chain.from_iterable(combinations(fields, r)

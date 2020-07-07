@@ -43,7 +43,7 @@ workload_instances = 6
 kv_endpoints = 1024
 
 [ycsb]
-branch = couchbase3-new-durability
+branch = couchbase3
 
 [stats]
 client_processes = java

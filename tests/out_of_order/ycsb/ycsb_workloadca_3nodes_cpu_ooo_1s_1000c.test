@@ -38,4 +38,4 @@ out_of_order = 1
 client_processes = java
 
 [ycsb]
-branch = couchbase3-collection-imp2
+branch = couchbase3

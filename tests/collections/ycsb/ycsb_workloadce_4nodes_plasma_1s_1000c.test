@@ -47,7 +47,7 @@ workload_instances = 6
 kv_endpoints = 1
 
 [ycsb]
-branch = couchbase3-collection-imp2
+branch = couchbase3
 
 [stats]
 client_processes = java

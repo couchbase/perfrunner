@@ -35,4 +35,4 @@ out_of_order = 1
 client_processes = java
 
 [ycsb]
-branch = couchbase3-new-durability
+branch = couchbase3

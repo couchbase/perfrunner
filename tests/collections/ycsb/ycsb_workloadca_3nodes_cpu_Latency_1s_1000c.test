@@ -38,7 +38,7 @@ kv_endpoints = 16
 [ycsb]
 latency_percentiles = 99
 average_latency = 1
-branch = couchbase3-collection-imp2
+branch = couchbase3
 
 [stats]
 client_processes = java

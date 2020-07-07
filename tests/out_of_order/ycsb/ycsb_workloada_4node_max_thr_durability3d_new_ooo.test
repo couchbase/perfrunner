@@ -39,4 +39,4 @@ kv_endpoints = 64
 out_of_order = 1
 
 [ycsb]
-branch = couchbase3-new-durability
+branch = couchbase3

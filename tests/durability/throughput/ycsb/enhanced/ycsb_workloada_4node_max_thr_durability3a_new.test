@@ -38,4 +38,4 @@ enable_mutation_token = true
 kv_endpoints = 8
 
 [ycsb]
-branch = couchbase3-new-durability
+branch = couchbase3

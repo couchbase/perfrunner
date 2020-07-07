@@ -37,7 +37,7 @@ kv_endpoints = 1024
 requestdistribution = uniform
 
 [ycsb]
-branch = couchbase3-new-durability
+branch = couchbase3
 
 [stats]
 client_processes = java

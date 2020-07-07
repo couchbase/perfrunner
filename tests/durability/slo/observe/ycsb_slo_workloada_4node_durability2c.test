@@ -40,5 +40,5 @@ kv_endpoints = 4
 timeseries = 1
 
 [ycsb]
-branch = couchbase3-new-durability
+branch = couchbase3
 latency_percentiles = 98

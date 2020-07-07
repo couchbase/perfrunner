@@ -235,10 +235,11 @@ class PerfTest:
             create_statements = []
             build_statements = []
             for statement in self.test_config.index_settings.statements:
-                if 'CREATE INDEX' in statement.upper() \
-                        or 'CREATE PRIMARY INDEX' in statement.upper():
+                check_stmt = statement.replace(" ", "").upper()
+                if 'CREATEINDEX' in check_stmt \
+                        or 'CREATEPRIMARYINDEX' in check_stmt:
                     create_statements.append(statement)
-                elif 'BUILD INDEX' in statement.upper():
+                elif 'BUILDINDEX' in check_stmt:
                     build_statements.append(statement)
 
             for statement in create_statements:

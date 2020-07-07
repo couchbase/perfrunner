@@ -42,7 +42,7 @@ kv_endpoints = 64
 timeseries = 1
 
 [ycsb]
-branch = couchbase3-collection-imp2
+branch = couchbase3
 latency_percentiles = 98
 
 [stats]

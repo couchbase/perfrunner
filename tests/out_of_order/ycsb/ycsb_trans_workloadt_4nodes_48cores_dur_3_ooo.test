@@ -40,7 +40,7 @@ requestdistribution = uniform
 out_of_order = 1
 
 [ycsb]
-branch = couchbase3-new-durability
+branch = couchbase3
 
 [stats]
 client_processes = java

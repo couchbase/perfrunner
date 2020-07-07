@@ -38,4 +38,4 @@ kv_endpoints = 16
 client_processes = java
 
 [ycsb]
-branch = couchbase3-collection-imp2
+branch = couchbase3

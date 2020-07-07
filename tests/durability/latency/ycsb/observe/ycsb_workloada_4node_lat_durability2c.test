@@ -39,4 +39,4 @@ workload_instances = 1
 ycsb_client = couchbase2
 
 [ycsb]
-branch = couchbase3-new-durability
+branch = couchbase3

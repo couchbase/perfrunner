@@ -42,4 +42,4 @@ ycsb_client = couchbase3
 out_of_order = 1
 
 [ycsb]
-branch = couchbase3-collection-imp2
+branch = couchbase3

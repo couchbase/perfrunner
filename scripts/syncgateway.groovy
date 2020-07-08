@@ -41,7 +41,7 @@ def buildTestsSGReplicate(tests) {
 }
 
 def buildComponent(component, testCases) {
-    for ( release in ['cobalt', 'mercury'] ) {
+    for ( release in ['cobalt', 'mercury', 'hydrogen'] ) {
         if ( testCases.containsKey(release) ) {
             buildTests(testCases[release][component])
         }
@@ -49,7 +49,7 @@ def buildComponent(component, testCases) {
 }
 
 def buildComponentImport(component, testCases) {
-    for ( release in ['cobalt', 'mercury'] ) {
+    for ( release in ['cobalt', 'mercury', 'hydrogen'] ) {
         if ( testCases.containsKey(release) ) {
             buildTestsImport(testCases[release][component])
         }

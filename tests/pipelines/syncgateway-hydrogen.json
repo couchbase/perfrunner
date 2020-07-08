@@ -1,0 +1,56 @@
+{
+    "Read": [],
+    "Sync": [],
+    "Query": [],
+    "Import": [],
+    "Replicate": [],
+    "SGReplicate": [
+        {"job": "hebe_sg_replicate",
+          "cb_build": "6.5.1-6299",
+          "test_config": "syncgateway_replicate1_multichannel_pull.test",
+          "sg1_config": "hebe_replicate_sg1_multichannel.config",
+          "sg2_config": "hebe_replicate_sg2_multichannel.config"},
+
+        {"job": "hebe_sg_replicate",
+          "cb_build": "6.5.1-6299",
+          "test_config": "syncgateway_replicate2_multichannel_pull.test",
+          "sg1_config": "hebe_replicate_sg1_multichannel.config",
+          "sg2_config": "hebe_replicate_sg2_multichannel.config"},
+
+        {"job": "hebe_sg_replicate",
+          "cb_build": "6.5.1-6299",
+          "test_config": "syncgateway_replicate1_pull.test",
+          "sg1_config": "hebe_replicate_sg1.config",
+          "sg2_config": "hebe_replicate_sg2.config"},
+
+        {"job": "hebe_sg_replicate",
+          "cb_build": "6.5.1-6299",
+          "test_config": "syncgateway_replicate2_pull.test",
+          "sg1_config": "hebe_replicate_sg1.config",
+          "sg2_config": "hebe_replicate_sg2.config"},
+
+        {"job": "hebe_sg_replicate",
+          "cb_build": "6.5.1-6299",
+          "test_config": "syncgateway_replicate1_multichannel_push.test",
+          "sg1_config": "hebe_replicate_sg1_multichannel.config",
+          "sg2_config": "hebe_replicate_sg2_multichannel.config"},
+
+        {"job": "hebe_sg_replicate",
+          "cb_build": "6.5.1-6299",
+          "test_config": "syncgateway_replicate2_multichannel_push.test",
+          "sg1_config": "hebe_replicate_sg1_multichannel.config",
+          "sg2_config": "hebe_replicate_sg2_multichannel.config"},
+
+        {"job": "hebe_sg_replicate",
+          "cb_build": "6.5.1-6299",
+          "test_config": "syncgateway_replicate1_push.test",
+          "sg1_config": "hebe_replicate_sg1.config",
+          "sg2_config": "hebe_replicate_sg2.config"},
+
+        {"job": "hebe_sg_replicate",
+          "cb_build": "6.5.1-6299",
+          "test_config": "syncgateway_replicate2_push.test",
+          "sg1_config": "hebe_replicate_sg1.config",
+          "sg2_config": "hebe_replicate_sg2.config"}
+    ]
+}

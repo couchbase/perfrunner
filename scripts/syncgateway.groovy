@@ -28,6 +28,17 @@ def buildTestsImport(tests) {
     }
 }
 
+def buildTestsSGReplicate(tests) {
+    for ( test in tests ) {
+        build job: test['job'], propagate: false, parameters: [
+            string(name: 'sg_build', value: params.version),
+            string(name: 'cb_build', value: test['cb_build']),
+            string(name: 'test_config', value: test['test_config']),
+            string(name: 'sg1_config', value: test['sg1_config']),
+            string(name: 'sg2_config', value: test['sg2_config'])
+        ]
+    }
+}
 
 def buildComponent(component, testCases) {
     for ( release in ['cobalt', 'mercury'] ) {
@@ -45,6 +56,13 @@ def buildComponentImport(component, testCases) {
     }
 }
 
+def buildComponentSGReplicate(component, testCases) {
+    for ( release in ['hydrogen'] ) {
+        if ( testCases.containsKey(release) ) {
+            buildTestsSGReplicate(testCases[release][component])
+        }
+    }
+}
 
 pipeline {
     agent {label 'master'}
@@ -57,6 +75,9 @@ pipeline {
                     }
                     if ( params.mercury_test_suite != '' ) {
                         testCases['mercury']  = readJSON file: params.mercury_test_suite
+                    }
+                    if ( params.hydrogen_test_suite != '' ) {
+                        testCases['hydrogen']  = readJSON file: params.hydrogen_test_suite
                     }
                 }
             }
@@ -121,6 +142,12 @@ pipeline {
                     when { expression { return params.Import } }
                     steps {
                         buildComponentImport('Import', testCases)
+                    }
+                }
+                stage('SGReplicate') {
+                    when { expression { return params.SGReplicate } }
+                    steps {
+                        buildComponentSGReplicate('SGReplicate', testCases)
                     }
                 }
             }

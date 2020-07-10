@@ -186,7 +186,7 @@ class Monitor(RestHelper):
                                                version=version)
             for stat in stats:
                 if stat['replication_id'] == replicate_id:
-                    if replicate_id == 'sgr2_pull':
+                    if replicate_id == 'sgr2_pull' or replicate_id == 'sgr2_conflict_resolution':
                         replicate_docs = int(stat['docs_read'])
                     else:
                         replicate_docs = int(stat['docs_written'])
@@ -209,7 +209,7 @@ class Monitor(RestHelper):
                                                version=version)
             for stat in stats:
                 if stat['replication_id'] == replicate_id:
-                    if replicate_id == 'sgr2_pull':
+                    if replicate_id == 'sgr2_pull' or replicate_id == 'sgr2_conflict_resolution':
                         replicate_docs = int(stat['docs_read'])
                     else:
                         replicate_docs = int(stat['docs_written'])

@@ -299,30 +299,6 @@ class CBTargetIterator(TargetIterator):
             yield TargetSettings(cb_master, bucket, password, prefix)
 
 
-class CBLocalIterator(TargetIterator):
-
-    def __iter__(self):
-        password = self.test_config.bucket.password
-        prefix = self.prefix
-        cb_master = self.cluster_spec.servers[1]
-        for bucket in self.test_config.buckets:
-            if self.prefix is None:
-                prefix = target_hash(cb_master, bucket)
-            yield TargetSettings(cb_master, bucket, password, prefix)
-
-
-class CBRemoteIterator(TargetIterator):
-
-    def __iter__(self):
-        password = self.test_config.bucket.password
-        prefix = self.prefix
-        cb_master = self.cluster_spec.servers[5]
-        for bucket in self.test_config.buckets:
-            if self.prefix is None:
-                prefix = target_hash(cb_master, bucket)
-            yield TargetSettings(cb_master, bucket, password, prefix)
-
-
 class SGImportLoad(PerfTest):
 
     def load(self, *args):
@@ -520,9 +496,9 @@ class SGReplicateThroughputTest1(SGPerfTest):
                                                     items_in_range=items_in_range)
         )
 
-    def start_replication(self):
-        sg1 = 'http://{}:4985/db'.format(self.cluster_spec.servers[0])
-        sg2 = 'http://{}:4985/db'.format(self.cluster_spec.servers[4])
+    def start_replication(self, sg1_master, sg2_master):
+        sg1 = 'http://{}:4985/db'.format(sg1_master)
+        sg2 = 'http://{}:4985/db'.format(sg2_master)
         data = {
             "replication_id": "sgr1_push",
             "source": sg1,
@@ -535,42 +511,42 @@ class SGReplicateThroughputTest1(SGPerfTest):
             "changes_feed_limit": 10000
         }
         if self.sg_settings.sg_replication_type == 'push':
-            self.rest.start_sg_replication(self.cluster_spec.servers[0], data)
+            self.rest.start_sg_replication(sg1_master, data)
         elif self.sg_settings.sg_replication_type == 'pull':
             data["replication_id"] = "sgr1_pull"
-            self.rest.start_sg_replication(self.cluster_spec.servers[4], data)
+            self.rest.start_sg_replication(sg2_master, data)
 
     @with_stats
     @with_profiles
-    def monitor_sg_replicate(self):
-        replication_id = 'sgr1_push'
-        if self.sg_settings.sg_replication_type == 'pull':
-            host = self.cluster_spec.servers[4]
-            replication_id = 'sgr1_pull'
-        else:
-            host = self.cluster_spec.servers[0]
+    def monitor_sg_replicate(self, replication_id, sg_master):
         expected_docs = self.test_config.load_settings.items
-        time_elapsed, items_in_range = self.monitor.monitor_sgreplicate(host,
+        time_elapsed, items_in_range = self.monitor.monitor_sgreplicate(sg_master,
                                                                         expected_docs,
                                                                         replication_id,
                                                                         1)
         return time_elapsed, items_in_range
 
     def run(self):
+        masters = self.cluster_spec.masters
+        sg1_master = next(masters)
+        sg2_master = next(masters)
         self.remote.remove_sglogs()
         self.download_ycsb()
         self.start_memcached()
         self.load_docs()
-        self.start_replication()
-        time_elapsed, items_in_range = self.monitor_sg_replicate()
+        self.start_replication(sg1_master, sg2_master)
+        if self.sg_settings.sg_replication_type == 'push':
+            time_elapsed, items_in_range = self.monitor_sg_replicate("sgr1_push", sg1_master)
+        elif self.sg_settings.sg_replication_type == 'pull':
+            time_elapsed, items_in_range = self.monitor_sg_replicate("sgr1_pull", sg2_master)
         self.report_kpi(time_elapsed, items_in_range)
 
 
 class SGReplicateThroughputMultiChannelTest1(SGReplicateThroughputTest1):
 
-    def start_replication(self):
-        sg1 = 'http://{}:4985/db'.format(self.cluster_spec.servers[0])
-        sg2 = 'http://{}:4985/db'.format(self.cluster_spec.servers[4])
+    def start_replication(self, sg1_master, sg2_master):
+        sg1 = 'http://{}:4985/db'.format(sg1_master)
+        sg2 = 'http://{}:4985/db'.format(sg2_master)
         data = {
             "replication_id": "sgr1_push",
             "source": sg1,
@@ -583,18 +559,24 @@ class SGReplicateThroughputMultiChannelTest1(SGReplicateThroughputTest1):
             "changes_feed_limit": 10000
         }
         if self.sg_settings.sg_replication_type == 'push':
-            self.rest.start_sg_replication(self.cluster_spec.servers[0], data)
+            self.rest.start_sg_replication(sg1_master, data)
         elif self.sg_settings.sg_replication_type == 'pull':
             data["replication_id"] = "sgr1_pull"
-            self.rest.start_sg_replication(self.cluster_spec.servers[4], data)
+            self.rest.start_sg_replication(sg2_master, data)
 
     def run(self):
+        masters = self.cluster_spec.masters
+        sg1_master = next(masters)
+        sg2_master = next(masters)
         self.remote.remove_sglogs()
         self.download_ycsb()
         self.start_memcached()
         self.load_docs()
-        self.start_replication()
-        time_elapsed, items_in_range = self.monitor_sg_replicate()
+        self.start_replication(sg1_master, sg2_master)
+        if self.sg_settings.sg_replication_type == 'push':
+            time_elapsed, items_in_range = self.monitor_sg_replicate("sgr1_push", sg1_master)
+        elif self.sg_settings.sg_replication_type == 'pull':
+            time_elapsed, items_in_range = self.monitor_sg_replicate("sgr1_pull", sg2_master)
         self.report_kpi(time_elapsed, items_in_range)
 
 
@@ -606,9 +588,9 @@ class SGReplicateThroughputTest2(SGPerfTest):
                                                     items_in_range=items_in_range)
         )
 
-    def start_replication(self):
-        sg1 = 'http://{}:4985/db'.format(self.cluster_spec.servers[0])
-        sg2 = 'http://{}:4985/db'.format(self.cluster_spec.servers[4])
+    def start_replication(self, sg1_master, sg2_master):
+        sg1 = 'http://{}:4985/db'.format(sg1_master)
+        sg2 = 'http://{}:4985/db'.format(sg2_master)
         data = {
             "replication_id": "sgr2_push",
             "remote": sg2,
@@ -620,44 +602,44 @@ class SGReplicateThroughputTest2(SGPerfTest):
             "continuous": True
         }
         if self.sg_settings.sg_replication_type == 'push':
-            self.rest.start_sg_replication2(self.cluster_spec.servers[0], data)
+            self.rest.start_sg_replication2(sg1_master, data)
         elif self.sg_settings.sg_replication_type == 'pull':
             data["replication_id"] = "sgr2_pull"
             data["direction"] = "pull"
             data["remote"] = sg1
-            self.rest.start_sg_replication2(self.cluster_spec.servers[4], data)
+            self.rest.start_sg_replication2(sg2_master, data)
 
     @with_stats
     @with_profiles
-    def monitor_sg_replicate(self):
-        replication_id = 'sgr2_push'
-        if self.sg_settings.sg_replication_type == 'pull':
-            host = self.cluster_spec.servers[4]
-            replication_id = 'sgr2_pull'
-        else:
-            host = self.cluster_spec.servers[0]
+    def monitor_sg_replicate(self, replication_id, sg_master):
         expected_docs = self.test_config.load_settings.items
-        time_elapsed, items_in_range = self.monitor.monitor_sgreplicate(host,
+        time_elapsed, items_in_range = self.monitor.monitor_sgreplicate(sg_master,
                                                                         expected_docs,
                                                                         replication_id,
                                                                         2)
         return time_elapsed, items_in_range
 
     def run(self):
+        masters = self.cluster_spec.masters
+        sg1_master = next(masters)
+        sg2_master = next(masters)
         self.remote.remove_sglogs()
         self.download_ycsb()
         self.start_memcached()
         self.load_docs()
-        self.start_replication()
-        time_elapsed, items_in_range = self.monitor_sg_replicate()
+        self.start_replication(sg1_master, sg2_master)
+        if self.sg_settings.sg_replication_type == 'push':
+            time_elapsed, items_in_range = self.monitor_sg_replicate("sgr2_push", sg1_master)
+        elif self.sg_settings.sg_replication_type == 'pull':
+            time_elapsed, items_in_range = self.monitor_sg_replicate("sgr2_pull", sg2_master)
         self.report_kpi(time_elapsed, items_in_range)
 
 
 class SGReplicateThroughputMultiChannelTest2(SGReplicateThroughputTest2):
 
-    def start_replication(self):
-        sg1 = 'http://{}:4985/db'.format(self.cluster_spec.servers[0])
-        sg2 = 'http://{}:4985/db'.format(self.cluster_spec.servers[4])
+    def start_replication(self, sg1_master, sg2_master):
+        sg1 = 'http://{}:4985/db'.format(sg1_master)
+        sg2 = 'http://{}:4985/db'.format(sg2_master)
         data = {
             "replication_id": "sgr2_push",
             "remote": sg2,
@@ -669,18 +651,66 @@ class SGReplicateThroughputMultiChannelTest2(SGReplicateThroughputTest2):
             "continuous": True
         }
         if self.sg_settings.sg_replication_type == 'push':
-            self.rest.start_sg_replication2(self.cluster_spec.servers[0], data)
+            self.rest.start_sg_replication2(sg1_master, data)
         elif self.sg_settings.sg_replication_type == 'pull':
             data["replication_id"] = "sgr2_pull"
             data["direction"] = "pull"
             data["remote"] = sg1
-            self.rest.start_sg_replication2(self.cluster_spec.servers[4], data)
+            self.rest.start_sg_replication2(sg2_master, data)
+
+    def run(self):
+        masters = self.cluster_spec.masters
+        sg1_master = next(masters)
+        sg2_master = next(masters)
+        self.remote.remove_sglogs()
+        self.download_ycsb()
+        self.start_memcached()
+        self.load_docs()
+        self.start_replication(sg1_master, sg2_master)
+        if self.sg_settings.sg_replication_type == 'push':
+            time_elapsed, items_in_range = self.monitor_sg_replicate("sgr2_push", sg1_master)
+        elif self.sg_settings.sg_replication_type == 'pull':
+            time_elapsed, items_in_range = self.monitor_sg_replicate("sgr2_pull", sg2_master)
+        self.report_kpi(time_elapsed, items_in_range)
+
+
+class SGReplicateThroughputConflictResolutionTest2(SGReplicateThroughputTest2):
+
+    def start_replication(self, sg1_master, sg2_master):
+        sg2 = 'http://{}:4985/db'.format(sg2_master)
+        data = {
+            "replication_id": "sgr2_conflict_resolution",
+            "remote": sg2,
+            "direction": "pushAndPull",
+            "filter": "sync_gateway/bychannel",
+            "query_params": {
+                "channels": ["channel-1"]
+            },
+            "continuous": True,
+            "conflict_resolution_type": "default",
+        }
+
+        if self.sg_settings.sg_conflict_resolution == 'custom':
+            data["conflict_resolution_type"] = "custom"
+            data["custom_conflict_resolver"] = \
+                "function(conflict) { return defaultPolicy(conflict);}"
+
+        self.rest.start_sg_replication2(sg1_master, data)
+
+    def run(self):
+        masters = self.cluster_spec.masters
+        sg1_master = next(masters)
+        sg2_master = next(masters)
+        self.start_replication(sg1_master, sg2_master)
+        time_elapsed, items_in_range = \
+            self.monitor_sg_replicate("sgr2_conflict_resolution", sg1_master)
+        self.report_kpi(time_elapsed, items_in_range)
+
+
+class SGReplicateLoad(SGPerfTest):
 
     def run(self):
         self.remote.remove_sglogs()
         self.download_ycsb()
         self.start_memcached()
         self.load_docs()
-        self.start_replication()
-        time_elapsed, items_in_range = self.monitor_sg_replicate()
-        self.report_kpi(time_elapsed, items_in_range)

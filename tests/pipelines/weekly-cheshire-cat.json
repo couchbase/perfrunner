@@ -88,6 +88,7 @@
         {"job": "athena", "cluster": "athena.spec", "test_config": "collections/dcp/java_dcp_throughput_1n_250M_compressed_1s_1000c_10kops.test"},
         {"job": "athena", "cluster": "athena.spec", "test_config": "collections/dcp/java_dcp_throughput_1n_250M_compressed_1000s_1000c.test"},
         {"job": "athena", "cluster": "athena.spec", "test_config": "collections/dcp/java_dcp_throughput_1n_250M_compressed_default_coll_scope_10kops.test"},
+        {"job": "athena", "cluster": "athena.spec", "test_config": "collections/dcp/java_dcp_throughput_4n_1B_compressed_1s_1000c.test"},
         {"job": "athena", "cluster": "athena.spec", "test_config": "collections/dcp/java_dcp_throughput_4n_1B_compressed_1s_1000c_10kops.test"},
         {"job": "athena", "cluster": "athena.spec", "test_config": "collections/dcp/java_dcp_throughput_4n_1B_compressed_1s_1000c_10kops_4clients_all.test"},
         {"job": "athena", "cluster": "athena.spec", "test_config": "collections/dcp/java_dcp_throughput_4n_1B_compressed_1s_1000c_10kops_4clients_split.test"},

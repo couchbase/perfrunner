@@ -2,7 +2,7 @@
 test = perfrunner.tests.dcp.JavaDCPCollectionThroughputTest
 
 [showfast]
-title = DCP Throughput, 1 node, 1B x 1KB, Java client, compression enabled, s=1 c=1000, 10k ops/sec, 4 clients, 250 collections/clients
+title = DCP Throughput, 4 node, 1B x 1KB, Java client, compression enabled, s=1 c=1000, 10k ops/sec, 4 clients, 250 collections/clients
 component = kv
 category = dcp
 

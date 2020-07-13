@@ -714,3 +714,80 @@ class SGReplicateLoad(SGPerfTest):
         self.download_ycsb()
         self.start_memcached()
         self.load_docs()
+
+
+class SGReplicateThroughputBidirectionalTest1(SGReplicateThroughputTest1):
+
+    def start_replication(self, sg1_master, sg2_master):
+        sg1 = 'http://{}:4985/db'.format(sg1_master)
+        sg2 = 'http://{}:4985/db'.format(sg2_master)
+        data = {
+            "replication_id": "sgr1_push",
+            "source": sg1,
+            "target": sg2,
+            "filter": "sync_gateway/bychannel",
+            "query_params": {
+                "channels": ["channel-1"]
+            },
+            "continuous": True,
+            "changes_feed_limit": 10000
+        }
+        self.rest.start_sg_replication(sg1_master, data)
+
+        data["replication_id"] = "sgr1_pull"
+        data["source"] = sg2
+        data["target"] = sg1
+        self.rest.start_sg_replication(sg1_master, data)
+
+    @with_stats
+    @with_profiles
+    def monitor_sg_replicate(self, replication_id, sg_master):
+        expected_docs = self.test_config.load_settings.items * 2
+        time_elapsed, items_in_range = self.monitor.monitor_sgreplicate(sg_master,
+                                                                        expected_docs,
+                                                                        replication_id,
+                                                                        1)
+        return time_elapsed, items_in_range
+
+    def run(self):
+        masters = self.cluster_spec.masters
+        sg1_master = next(masters)
+        sg2_master = next(masters)
+        self.start_replication(sg1_master, sg2_master)
+        time_elapsed, items_in_range = self.monitor_sg_replicate("sgr1_pushAndPull", sg1_master)
+        self.report_kpi(time_elapsed, items_in_range)
+
+
+class SGReplicateThroughputBidirectionalTest2(SGReplicateThroughputTest2):
+
+    def start_replication(self, sg1_master, sg2_master):
+        sg2 = 'http://{}:4985/db'.format(sg2_master)
+        data = {
+            "replication_id": "sgr2_pushAndPull",
+            "remote": sg2,
+            "direction": "pushAndPull",
+            "filter": "sync_gateway/bychannel",
+            "query_params": {
+                "channels": ["channel-1"]
+            },
+            "continuous": True
+        }
+        self.rest.start_sg_replication2(sg1_master, data)
+
+    @with_stats
+    @with_profiles
+    def monitor_sg_replicate(self, replication_id, sg_master):
+        expected_docs = self.test_config.load_settings.items * 2
+        time_elapsed, items_in_range = self.monitor.monitor_sgreplicate(sg_master,
+                                                                        expected_docs,
+                                                                        replication_id,
+                                                                        2)
+        return time_elapsed, items_in_range
+
+    def run(self):
+        masters = self.cluster_spec.masters
+        sg1_master = next(masters)
+        sg2_master = next(masters)
+        self.start_replication(sg1_master, sg2_master)
+        time_elapsed, items_in_range = self.monitor_sg_replicate("sgr2_pushAndPull", sg1_master)
+        self.report_kpi(time_elapsed, items_in_range)

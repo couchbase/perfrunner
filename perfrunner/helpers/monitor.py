@@ -188,9 +188,17 @@ class Monitor(RestHelper):
                 if stat['replication_id'] == replicate_id:
                     if replicate_id == 'sgr2_pull' or replicate_id == 'sgr2_conflict_resolution':
                         replicate_docs = int(stat['docs_read'])
+                    elif replicate_id == 'sgr2_pushAndPull':
+                        replicate_docs = int(stat['docs_read']) + int(stat['docs_written'])
                     else:
                         replicate_docs = int(stat['docs_written'])
                     break
+
+                if replicate_id == 'sgr1_pushAndPull':
+                    if stat['replication_id'] == 'sgr1_push':
+                        replicate_docs += int(stat['docs_written'])
+                    elif stat['replication_id'] == 'sgr1_pull':
+                        replicate_docs += int(stat['docs_read'])
 
             if replicate_docs >= 1:
                 logger.info('replicating docs has started')
@@ -211,9 +219,17 @@ class Monitor(RestHelper):
                 if stat['replication_id'] == replicate_id:
                     if replicate_id == 'sgr2_pull' or replicate_id == 'sgr2_conflict_resolution':
                         replicate_docs = int(stat['docs_read'])
+                    elif replicate_id == 'sgr2_pushAndPull':
+                        replicate_docs = int(stat['docs_read']) + int(stat['docs_written'])
                     else:
                         replicate_docs = int(stat['docs_written'])
                     break
+
+                if replicate_id == 'sgr1_pushAndPull':
+                    if stat['replication_id'] == 'sgr1_push':
+                        replicate_docs += int(stat['docs_written'])
+                    elif stat['replication_id'] == 'sgr1_pull':
+                        replicate_docs += int(stat['docs_read'])
 
             logger.info('Docs replicated: {}'.format(replicate_docs))
             if replicate_docs >= expected_docs:

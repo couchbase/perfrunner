@@ -825,7 +825,7 @@ class SyncgatewaySettings:
         self.instances_per_client = options.get('instances_per_client', 1)
         self.threads_per_instance = 1
         self.threads = options.get('threads', self.THREADS)
-        self.insertstart = options.get('inserstart', self.INSERTSTART)
+        self.insertstart = options.get('insertstart', self.INSERTSTART)
         self.max_inserts_per_instance = options.get('max_inserts_per_instance',
                                                     self.MAX_INSERTS_PER_INSTANCE)
         self.insert_mode = options.get('insert_mode', self.INSERT_MODE)

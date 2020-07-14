@@ -549,6 +549,8 @@ class PhaseSettings:
     JAVA_DCP_CONFIG = None
     JAVA_DCP_CLIENTS = 0
 
+    DOCUMENT_GROUPS = 1
+
     def __init__(self, options: dict):
         # Common settings
         self.time = int(options.get('time', self.TIME))
@@ -748,6 +750,8 @@ class PhaseSettings:
         self.java_dcp_config = self.JAVA_DCP_CONFIG
         self.java_dcp_clients = self.JAVA_DCP_CLIENTS
 
+        self.doc_groups = int(options.get('doc_groups', self.DOCUMENT_GROUPS))
+
     def __str__(self) -> str:
         return str(self.__dict__)
 
@@ -884,11 +888,17 @@ class GSISettings:
     def __init__(self, options: dict):
         self.indexes = {}
         if options.get('indexes') is not None:
-            for index_def in options.get('indexes').split('#'):
-                name, field = index_def.split(':')
-                if '"' in field:
-                    field = field.replace('"', '\\\"')
-                self.indexes[name] = field
+            myindexes = options.get('indexes')
+            if ".json" in myindexes:
+                # index definitions passed in as json file
+                with open(myindexes) as f:
+                    self.indexes = json.load(f)
+            else:
+                for index_def in myindexes.split('#'):
+                    name, field = index_def.split(':')
+                    if '"' in field:
+                        field = field.replace('"', '\\\"')
+                    self.indexes[name] = field
 
         self.cbindexperf_configfile = options.get('cbindexperf_configfile',
                                                   self.CBINDEXPERF_CONFIGFILE)
@@ -1536,6 +1546,7 @@ class TestConfig(Config):
 
         load_settings = self.load_settings
         access.doc_gen = load_settings.doc_gen
+        access.doc_groups = load_settings.doc_groups
         access.range_distance = load_settings.range_distance
         access.array_size = load_settings.array_size
         access.num_categories = load_settings.num_categories

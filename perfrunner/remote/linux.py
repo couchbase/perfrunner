@@ -1,4 +1,5 @@
 import os
+import time
 from collections import defaultdict
 from typing import Dict, List
 from urllib.parse import urlparse
@@ -56,14 +57,13 @@ class RemoteLinux(Remote):
         logger.info('Running: {}'.format(cmd))
         run(cmd, shell_escape=False, pty=False)
 
-    def build_index(self, index_node, bucket_indexes):
-        all_indexes = ",".join(bucket_indexes)
+    def build_index(self, index_node, indexes):
         options = \
             "-auth=Administrator:password " \
             "-server {index_node}:8091 " \
             "-type build " \
             "-indexes {all_indexes}".format(index_node=index_node,
-                                            all_indexes=all_indexes)
+                                            all_indexes=",".join(indexes))
 
         self.run_cbindex_command(options)
 
@@ -71,28 +71,93 @@ class RemoteLinux(Remote):
         # Remember what bucket:index was created
         bucket_indexes = []
 
-        for index, field in indexes.items():
+        for index, index_def in indexes.items():
+            where = None
+            if ':' in index_def:
+                fields, where = index_def.split(":")
+            else:
+                fields = index_def
+            fields_list = fields.split(",")
+
             options = \
                 "-auth=Administrator:password " \
                 "-server {index_node}:8091 " \
                 "-type create " \
-                "-bucket {bucket} " \
-                "-fields={field}".format(index_node=index_nodes[0],
-                                         bucket=bucket,
-                                         field=field)
+                "-bucket {bucket} ".format(index_node=index_nodes[0], bucket=bucket)
+            options += "-fields "
+            for field in fields_list:
+                options += "\\\\\\`{}\\\\\\`,".format(field)
+
+            options = options.rstrip(",")
+            options = options + " "
+
+            if where is not None:
+                options = '{options} -where \\\"{where_clause}\\\"'\
+                    .format(options=options, where_clause=where)
 
             if storage == 'memdb' or storage == 'plasma':
                 options = '{options} -using {db}'.format(options=options,
                                                          db=storage)
 
-            with_str = r'{\\\"defer_build\\\":true}'
-            options = "{options} -index {index} -with=\\\"{with_str}\\\"" \
-                .format(options=options, index=index, with_str=with_str)
+            options = "{options} -index {index} " \
+                .format(options=options, index=index)
+
+            options = options + '-with {\\\\\\"defer_build\\\\\\":true}'
 
             bucket_indexes.append("{}:{}".format(bucket, index))
             self.run_cbindex_command(options)
 
         return bucket_indexes
+
+    def create_index_collection(self,
+                                index_nodes,
+                                bucket,
+                                scope,
+                                collection,
+                                indexes,
+                                storage):
+        for index, index_def in indexes.items():
+            where = None
+            if ':' in index_def:
+                fields, where = index_def.split(":")
+            else:
+                fields = index_def
+            fields_list = fields.split(",")
+
+            options = \
+                "-auth=Administrator:password " \
+                "-server {index_node}:8091 " \
+                "-type create " \
+                "-bucket {bucket} " \
+                "-scope {scope} " \
+                "-collection {collection} ".format(
+                    index_node=index_nodes[0],
+                    bucket=bucket,
+                    scope=scope,
+                    collection=collection)
+
+            options += "-fields "
+            for field in fields_list:
+                options += "\\\\\\`{}\\\\\\`,".format(field)
+
+            options = options.rstrip(",")
+            options = options + " "
+
+            if where is not None:
+                options = '{options} -where \\\"{where_clause}\\\"' \
+                    .format(options=options, where_clause=where)
+
+            if storage == 'memdb' or storage == 'plasma':
+                options = '{options} -using {db}'.format(options=options,
+                                                         db=storage)
+
+            options = "{options} -index {index} " \
+                .format(options=options, index=index)
+
+            options = options + '-with {\\\\\\"defer_build\\\\\\":true} '
+            options = options + '-refresh_settings=true'
+
+            self.run_cbindex_command(options)
 
     @master_server
     def build_secondary_index(self, index_nodes, bucket, indexes, storage):
@@ -103,6 +168,66 @@ class RemoteLinux(Remote):
 
         # build indexes
         self.build_index(index_nodes[0], bucket_indexes)
+
+    @master_server
+    def create_secondary_index_collections(self,
+                                           index_nodes,
+                                           indexes,
+                                           storage):
+        logger.info('creating secondary indexes')
+        for bucket_name, scope_map in indexes.items():
+            for scope_name, collection_map in scope_map.items():
+                for collection_name, index_map in collection_map.items():
+                    self.create_index_collection(index_nodes,
+                                                 bucket_name,
+                                                 scope_name,
+                                                 collection_name,
+                                                 index_map,
+                                                 storage)
+
+    @master_server
+    def build_secondary_index_collections(self,
+                                          index_nodes,
+                                          indexes,
+                                          rest_helper):
+        logger.info('building secondary indexes')
+        building = {}
+        for bucket_name, scope_map in indexes.items():
+            for scope_name, collection_map in scope_map.items():
+                for collection_name, index_map in collection_map.items():
+                    self.build_index(index_nodes[0],
+                                     ["{}:{}:{}:{}".format(
+                                         bucket_name,
+                                         scope_name,
+                                         collection_name,
+                                         index_name)
+                                         for index_name in index_map.keys()])
+                    building[collection_name] = set([index_name for index_name in index_map.keys()])
+
+                    if len(building.keys()) < 10:
+                        building_max_num_collections = False
+                    else:
+                        building_max_num_collections = True
+
+                    while building_max_num_collections:
+                        collections_building = building.keys()
+                        index_statuses = rest_helper.get_index_status(index_nodes[0])
+                        for index_status in index_statuses['status']:
+                            idx_name = index_status['name']
+                            idx_status = index_status['status']
+                            idx_coll = index_status['collection']
+                            if idx_status == 'Ready' \
+                                    and idx_coll in collections_building:
+                                indexes_building = building[idx_coll]
+                                indexes_building.discard(idx_name)
+                                if len(indexes_building) == 0:
+                                    del building[idx_coll]
+                                else:
+                                    building[idx_coll] = indexes_building
+                        if len(building.keys()) < 10:
+                            building_max_num_collections = False
+                        else:
+                            time.sleep(10)
 
     @all_servers
     def reset_swap(self):

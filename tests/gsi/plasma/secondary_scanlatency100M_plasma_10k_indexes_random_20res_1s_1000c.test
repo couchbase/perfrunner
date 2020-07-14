@@ -1,0 +1,58 @@
+[test_case]
+test = perfrunner.tests.secondary.InitialIncrementalScanLatencyTest
+
+[showfast]
+title = 1 bucket x 100M x 1KB, 100K KV ops/sec, 10k indexes, random workload, 20%% Resident, Plasma, s=1 c=1000
+component = secondary
+category = lat
+sub_category = PlasmaDGM
+
+[stats]
+server_processes = projector
+lat_interval = 0.5
+
+[cluster]
+mem_quota = 50000
+index_mem_quota = 25000
+initial_nodes = 6
+num_buckets = 1
+kernel_mem_limit = 32193M
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[bucket]
+replica_number=0
+replica_index=0
+
+[collection]
+config = collections/1bucket_1scope_1000collections_basic.json
+
+[load]
+items = 100000000
+size = 1024
+workers = 100
+doc_gen = grouped
+doc_groups = 1
+
+[secondary]
+indexes = tests/gsi/index_defs/1bucket_1scope_1000collections_10k_indexes_1.json
+cbindexperf_configfile = tests/gsi/plasma/config/config_scanlatency_10k_indexes_plasma_1s_1000c_1.json
+indexer.settings.storage_mode = plasma
+indexer.settings.max_cpu_percent = 4800
+indexer.settings.gc_percent = 200
+scan_time = 1500
+
+[access]
+creates = 10
+updates = 80
+deletes = 10
+ops = 100000000
+items = 100000000
+throughput = 100000
+workers = 80
+
+[clients]
+libcouchbase = 3.0.2
+python_client = 3.0.4

@@ -24,6 +24,7 @@ class Collector:
         self.auth = (settings.rest_username, settings.rest_password)
         self.buckets = settings.buckets
         self.indexes = settings.indexes
+        self.collections = settings.collections
         self.hostnames = settings.hostnames
         self.workers = settings.workers
         self.nodes = list(self.get_nodes())
@@ -96,6 +97,17 @@ class Collector:
             if self.hostnames is not None and hostname not in self.hostnames:
                 continue
             yield hostname
+
+    def get_all_indexes(self):
+        if self.collections:
+            scopes = self.indexes[self.buckets[0]]
+            for scope_name, collections in scopes.items():
+                for collection_name, index_defs in collections.items():
+                    for index in index_defs:
+                        yield index, self.buckets[0], scope_name, collection_name
+        else:
+            for index in self.indexes:
+                yield index, self.buckets[0], None, None
 
     def _update_metric_metadata(self, metrics, bucket=None, index=None, server=None):
         for metric in metrics:

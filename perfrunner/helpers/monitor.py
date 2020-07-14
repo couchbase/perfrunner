@@ -410,6 +410,40 @@ class Monitor(RestHelper):
         time_elapsed = round(finish_ts - init_ts)
         return time_elapsed
 
+    def wait_for_secindex_init_build_collections(self, host, indexes):
+        # POLL until initial index build is complete
+        index_list = []
+        for bucket_name, scope_map in indexes.items():
+            for scope_name, collection_map in scope_map.items():
+                for collection_name, index_map in collection_map.items():
+                    for index_name in index_map.keys():
+                        index_list.append(index_name)
+        indexes = index_list
+        logger.info(
+            "Waiting for the following indexes to be ready: {}".format(indexes))
+
+        indexes_ready = [0 for _ in indexes]
+
+        def get_index_status(json2i, index):
+            """Return the index status."""
+            for d in json2i["status"]:
+                if d["name"] == index:
+                    return d["status"]
+            return None
+
+        @misc.retry(catch=(KeyError,), iterations=10, wait=30)
+        def update_indexes_ready():
+            json2i = self.get_index_status(host)
+            for i, index in enumerate(indexes):
+                status = get_index_status(json2i, index)
+                if status == 'Ready':
+                    indexes_ready[i] = 1
+
+        while sum(indexes_ready) != len(indexes):
+            time.sleep(self.POLLING_INTERVAL_INDEXING * 10)
+            update_indexes_ready()
+        logger.info('secondary index build complete: {}'.format(indexes))
+
     def wait_for_secindex_incr_build(self, index_nodes, bucket, indexes, numitems):
         # POLL until incremenal index build is complete
         logger.info('expecting {} num_docs_indexed for indexes {}'.format(numitems, indexes))
@@ -442,6 +476,59 @@ class Monitor(RestHelper):
             curr_num_pending = get_num_docs_index_pending()
             if curr_num_pending == expected_num_pending:
                 break
+        curr_num_indexed = get_num_docs_indexed()
+        logger.info("Number of Items indexed {}".format(curr_num_indexed))
+
+    def wait_for_secindex_incr_build_collections(self, index_nodes, index_map, expected_num_docs):
+        indexes = []
+        for bucket_name, scope_map in index_map.items():
+            for scope_name, collection_map in scope_map.items():
+                for collection_name, coll_index_map in collection_map.items():
+                    for index_name, index_def in coll_index_map.items():
+                        if scope_name == '_default' \
+                                and collection_name == '_default':
+                            target_index = "{}:{}".format(
+                                bucket_name,
+                                index_name)
+                        else:
+                            target_index = "{}:{}:{}:{}".format(
+                                bucket_name,
+                                scope_name,
+                                collection_name,
+                                index_name)
+                        indexes.append(target_index)
+        logger.info('expecting {} num_docs_indexed for indexes {}'
+                    .format(expected_num_docs, indexes))
+
+        # collect num_docs_indexed information globally from all index nodes
+        def get_num_docs_indexed():
+            data = self.get_index_stats(index_nodes)
+            num_indexed = []
+            for index in indexes:
+                key = index + ":num_docs_indexed"
+                val = data[key]
+                num_indexed.append(val)
+            return num_indexed
+
+        def get_num_docs_index_pending():
+            data = self.get_index_stats(index_nodes)
+            num_pending = []
+            for index in indexes:
+                key = index + ":num_docs_pending"
+                val1 = data[key]
+                key = index + ":num_docs_queued"
+                val2 = data[key]
+                val = int(val1) + int(val2)
+                num_pending.append(val)
+            return num_pending
+
+        expected_num_pending = [0] * len(indexes)
+        while True:
+            time.sleep(self.POLLING_INTERVAL_INDEXING * 10)
+            curr_num_pending = get_num_docs_index_pending()
+            if curr_num_pending == expected_num_pending:
+                break
+
         curr_num_indexed = get_num_docs_indexed()
         logger.info("Number of Items indexed {}".format(curr_num_indexed))
 

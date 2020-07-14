@@ -435,6 +435,65 @@ class Document(String):
         }
 
 
+class GroupedDocument(Document):
+
+    def __init__(self, avg_size: int, groups: int):
+        super().__init__(avg_size)
+        self.groups = groups
+
+    def next(self, key: Key) -> dict:
+        alphabet = self.build_alphabet(key.string)
+        size = self._size()
+
+        return {
+            'doc_group': key.number % self.groups,
+            'name': self.build_name(alphabet),
+            'email': self.build_email(alphabet),
+            'alt_email': self.build_alt_email(alphabet),
+            'city': self.build_city(alphabet),
+            'realm': self.build_realm(alphabet),
+            'coins': self.build_coins(alphabet),
+            'category': self.build_category(alphabet),
+            'street': self.build_street(alphabet),
+            'year': self.build_year(alphabet),
+            'body': self.build_string(alphabet, size),
+        }
+
+
+class LargeItemGroupedDocument(GroupedDocument):
+    def __init__(self, avg_size: int, groups: int, item_size: int):
+        super().__init__(avg_size, groups)
+        self.item_size = item_size
+
+    @staticmethod
+    def build_item(alphabet: str, size: int = 64, prefix: str = ""):
+        length = size - len(prefix)
+        num_slices = int(math.ceil(length / 64))  # 64 == len(alphabet)
+        body = num_slices * alphabet
+        num = random.randint(1, length)
+        if prefix:
+            return prefix + "-" + body[num:length] + body[0:num]
+        return body[num:length] + body[0:num]
+
+    def next(self, key: Key) -> dict:
+        alphabet = self.build_alphabet(key.string)
+        size = self._size()
+
+        return {
+            'doc_group': key.number % self.groups,
+            'name': self.build_name(alphabet),
+            'email': self.build_email(alphabet),
+            'alt_email': self.build_alt_email(alphabet),
+            'city': self.build_item(alphabet=alphabet, size=self.item_size),
+            'realm': self.build_realm(alphabet),
+            'coins': self.build_coins(alphabet),
+            'category': self.build_category(alphabet),
+            'street': self.build_street(alphabet),
+            'year': self.build_year(alphabet),
+            'body': self.build_string(alphabet, size),
+        }
+
+
 class NestedDocument(Document):
 
     OVERHEAD = 450  # Minimum size due to static fields, body size is variable
@@ -1225,6 +1284,21 @@ class SmallPlasmaDocument(PlasmaDocument):
 
         return {
             'alt_email': self.build_alt_email(alphabet)
+        }
+
+
+class SmallPlasmaGroupedDocument(PlasmaDocument):
+
+    def __init__(self, avg_size: int, groups: int):
+        super().__init__(avg_size)
+        self.groups = groups
+
+    def next(self, key: Key) -> dict:
+        alphabet = self.build_alphabet(key.string)
+
+        return {
+            'doc_group': key.number % self.groups,
+            'alt_email': self.build_alt_email(alphabet),
         }
 
 

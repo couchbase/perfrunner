@@ -1,0 +1,9 @@
+{
+    "bucket-1": {
+        "_default": {
+            "_default": {
+                "index0-1": "alt_email"
+            }
+        }
+    }
+}

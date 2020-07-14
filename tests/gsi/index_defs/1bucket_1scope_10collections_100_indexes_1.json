@@ -1,0 +1,127 @@
+{
+    "bucket-1": {
+        "_default": {},
+        "scope-1": {
+            "collection-1": {
+                "index1-1": "name",
+                "index1-10": "body",
+                "index1-2": "email",
+                "index1-3": "alt_email",
+                "index1-4": "city",
+                "index1-5": "realm",
+                "index1-6": "coins",
+                "index1-7": "category",
+                "index1-8": "street",
+                "index1-9": "year"
+            },
+            "collection-10": {
+                "index10-1": "name",
+                "index10-10": "body",
+                "index10-2": "email",
+                "index10-3": "alt_email",
+                "index10-4": "city",
+                "index10-5": "realm",
+                "index10-6": "coins",
+                "index10-7": "category",
+                "index10-8": "street",
+                "index10-9": "year"
+            },
+            "collection-2": {
+                "index2-1": "name",
+                "index2-10": "body",
+                "index2-2": "email",
+                "index2-3": "alt_email",
+                "index2-4": "city",
+                "index2-5": "realm",
+                "index2-6": "coins",
+                "index2-7": "category",
+                "index2-8": "street",
+                "index2-9": "year"
+            },
+            "collection-3": {
+                "index3-1": "name",
+                "index3-10": "body",
+                "index3-2": "email",
+                "index3-3": "alt_email",
+                "index3-4": "city",
+                "index3-5": "realm",
+                "index3-6": "coins",
+                "index3-7": "category",
+                "index3-8": "street",
+                "index3-9": "year"
+            },
+            "collection-4": {
+                "index4-1": "name",
+                "index4-10": "body",
+                "index4-2": "email",
+                "index4-3": "alt_email",
+                "index4-4": "city",
+                "index4-5": "realm",
+                "index4-6": "coins",
+                "index4-7": "category",
+                "index4-8": "street",
+                "index4-9": "year"
+            },
+            "collection-5": {
+                "index5-1": "name",
+                "index5-10": "body",
+                "index5-2": "email",
+                "index5-3": "alt_email",
+                "index5-4": "city",
+                "index5-5": "realm",
+                "index5-6": "coins",
+                "index5-7": "category",
+                "index5-8": "street",
+                "index5-9": "year"
+            },
+            "collection-6": {
+                "index6-1": "name",
+                "index6-10": "body",
+                "index6-2": "email",
+                "index6-3": "alt_email",
+                "index6-4": "city",
+                "index6-5": "realm",
+                "index6-6": "coins",
+                "index6-7": "category",
+                "index6-8": "street",
+                "index6-9": "year"
+            },
+            "collection-7": {
+                "index7-1": "name",
+                "index7-10": "body",
+                "index7-2": "email",
+                "index7-3": "alt_email",
+                "index7-4": "city",
+                "index7-5": "realm",
+                "index7-6": "coins",
+                "index7-7": "category",
+                "index7-8": "street",
+                "index7-9": "year"
+            },
+            "collection-8": {
+                "index8-1": "name",
+                "index8-10": "body",
+                "index8-2": "email",
+                "index8-3": "alt_email",
+                "index8-4": "city",
+                "index8-5": "realm",
+                "index8-6": "coins",
+                "index8-7": "category",
+                "index8-8": "street",
+                "index8-9": "year"
+            },
+            "collection-9": {
+                "index9-1": "name",
+                "index9-10": "body",
+                "index9-2": "email",
+                "index9-3": "alt_email",
+                "index9-4": "city",
+                "index9-5": "realm",
+                "index9-6": "coins",
+                "index9-7": "category",
+                "index9-8": "street",
+                "index9-9": "year"
+            }
+        }
+    }
+}

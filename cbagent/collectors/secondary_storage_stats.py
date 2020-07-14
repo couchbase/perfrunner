@@ -37,10 +37,6 @@ class SecondaryStorageStats(Collector):
         super().__init__(settings)
         self.index_node = settings.index_node
 
-    def get_all_indexes(self):
-        for index in self.indexes:
-            yield index, self.buckets[0]
-
     def _get_secondary_storage_stats(self):
         server = self.index_node
         port = '9102'
@@ -51,7 +47,7 @@ class SecondaryStorageStats(Collector):
             stats = dict()
             if "Index" not in sample:
                 continue
-            index = sample["Index"].split(":")[1]
+            index = sample["Index"].split(":", 1)[1]
 
             for store in sample["Stats"]:
                 for metric, value in sample["Stats"][store].items():
@@ -64,15 +60,18 @@ class SecondaryStorageStats(Collector):
     def sample(self):
         index_stats = self._get_secondary_storage_stats()
         if index_stats:
-            for index, bucket in self.get_all_indexes():
+            for index, bucket, scope, collection in self.get_all_indexes():
+                index_name = index
+                if scope and collection and scope != "_default" and collection != "_default":
+                    index = "{}:{}:{}".format(scope, collection, index)
                 if index in index_stats and index_stats[index]:
                     stats = index_stats[index]
-                    index1 = "{}.{}".format(bucket, index)
+                    index1 = "{}.{}".format(bucket, index_name)
                     self.update_metric_metadata(stats.keys(), index=index1)
                     self.store.append(stats, cluster=self.cluster,
                                       index=index1, collector=self.COLLECTOR)
 
     def update_metadata(self):
         self.mc.add_cluster()
-        for index, bucket in self.get_all_indexes():
+        for index, bucket, scope, collection in self.get_all_indexes():
             self.mc.add_index("{}.{}".format(bucket, index))

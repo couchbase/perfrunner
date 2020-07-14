@@ -1,0 +1,56 @@
+[test_case]
+test = perfrunner.tests.secondary.SecondaryIndexingThroughputTest
+
+[showfast]
+title = Secondary index scan throughput (scanps), 24 rows per scan, 1 bucket x 100M x 1KB, 100K KV ops/sec, 1000 indexes, MOI, s=1 c=100
+component = secondary
+category = thr
+sub_category = MOI
+
+[stats]
+server_processes = projector
+
+[cluster]
+mem_quota = 30000
+index_mem_quota = 460000
+initial_nodes = 6
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[bucket]
+replica_number=0
+replica_index=0
+
+[collection]
+config = collections/1bucket_1scope_100collections_basic.json
+
+[load]
+items = 100000000
+size = 1024
+workers = 100
+doc_gen = grouped
+doc_groups = 1
+
+[secondary]
+indexes = tests/gsi/index_defs/1bucket_1scope_100collections_1000_indexes_1.json
+db = moi
+cbindexperf_configfile = tests/gsi/moi/config/config_scanthr_1000_indexes_moi_1s_100c_1.json
+indexer.settings.storage_mode = memory_optimized
+indexer.settings.gc_percent = 200
+indexer.settings.max_cpu_percent = 4800
+
+[access]
+creates = 10
+updates = 80
+deletes = 10
+ops = 300000000
+items = 100000000
+throughput = 100000
+workers = 80
+
+[clients]
+libcouchbase = 3.0.2
+python_client = 3.0.4

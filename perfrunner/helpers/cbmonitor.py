@@ -84,6 +84,7 @@ def new_cbagent_settings(test: PerfTest):
         'interval': test.test_config.stats_settings.interval,
         'lat_interval': test.test_config.stats_settings.lat_interval,
         'buckets': buckets,
+        'collections': None,
         'indexes': {},
         'hostnames': hostnames,
         'client_processes': test.test_config.stats_settings.client_processes,
@@ -97,6 +98,9 @@ def new_cbagent_settings(test: PerfTest):
         test.cluster_spec.ssh_credentials
     settings.rest_username, settings.rest_password = \
         test.cluster_spec.rest_credentials
+
+    if test.test_config.collection.collection_map:
+        settings.collections = test.test_config.collection.collection_map
 
     if test.cluster_spec.servers_by_role('index'):
         if test.test_config.gsi_settings.indexes:

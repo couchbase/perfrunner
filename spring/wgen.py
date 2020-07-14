@@ -24,6 +24,7 @@ from spring.docgen import (
     Document,
     EventingSmallDocument,
     ExtReverseLookupDocument,
+    GroupedDocument,
     GSIMultiIndexDocument,
     HashJoinDocument,
     HotKey,
@@ -36,6 +37,7 @@ from spring.docgen import (
     KeyForCASUpdate,
     KeyForRemoval,
     LargeDocument,
+    LargeItemGroupedDocument,
     LargeItemPlasmaDocument,
     MovingWorkingSetKey,
     MultiBucketDocument,
@@ -50,6 +52,7 @@ from spring.docgen import (
     SequentialKey,
     SequentialPlasmaDocument,
     SmallPlasmaDocument,
+    SmallPlasmaGroupedDocument,
     String,
     TpcDsDocument,
     UniformKey,
@@ -140,6 +143,14 @@ class Worker:
     def init_docs(self):
         if not hasattr(self.ws, 'doc_gen') or self.ws.doc_gen == 'basic':
             self.docs = Document(self.ws.size)
+        elif self.ws.doc_gen == 'grouped':
+            self.docs = GroupedDocument(self.ws.size, self.ws.doc_groups)
+        elif self.ws.doc_gen == 'large_item_grouped':
+            self.docs = LargeItemGroupedDocument(self.ws.size,
+                                                 self.ws.doc_groups,
+                                                 self.ws.item_size)
+        elif self.ws.doc_gen == 'small_plasma_grouped':
+            self.docs = SmallPlasmaGroupedDocument(self.ws.size, self.ws.doc_groups)
         elif self.ws.doc_gen == 'string':
             self.docs = String(self.ws.size)
         elif self.ws.doc_gen == 'nested':

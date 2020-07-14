@@ -1,0 +1,47 @@
+[test_case]
+test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
+
+[showfast]
+title = 1 bucket x 100M x 1KB, 10 doc groups, 100 indexes, 100K KV ops/sec, no mutations during initial build only, Plasma
+component = secondary
+sub_category = Plasma
+
+[stats]
+server_processes = projector
+
+[cluster]
+mem_quota = 30000
+index_mem_quota = 460000
+initial_nodes = 6
+num_buckets = 1
+
+[bucket]
+replica_number=0
+replica_index=0
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[load]
+items = 100000000
+size = 1024
+workers = 100
+doc_gen = grouped
+doc_groups = 10
+
+[secondary]
+indexes = tests/gsi/index_defs/1bucket_10_groups_100_indexes_1.json
+indexer.settings.storage_mode = plasma
+indexer.settings.max_cpu_percent = 4800
+
+[access]
+updates = 100
+ops = 100000000
+items = 100000000
+throughput = 100000
+workers = 80
+
+[clients]
+libcouchbase = 3.0.2
+python_client = 3.0.4

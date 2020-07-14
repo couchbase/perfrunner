@@ -66,13 +66,33 @@ class SecondaryIndexTest(PerfTest):
     def _build_secondaryindex(self):
         """Call cbindex create command."""
         logger.info('building secondary index..')
+        if self.test_config.collection.collection_map:
+            self.remote.create_secondary_index_collections(
+                self.index_nodes,
+                self.indexes,
+                self.storage)
 
-        self.remote.build_secondary_index(self.index_nodes, self.bucket,
-                                          self.indexes, self.storage)
-        time_elapsed = self.monitor.wait_for_secindex_init_build(
-            self.index_nodes[0],
-            list(self.indexes.keys()),
-        )
+            build_start = time.time()
+
+            self.remote.build_secondary_index_collections(
+                self.index_nodes,
+                self.indexes,
+                self.rest)
+            self.monitor.wait_for_secindex_init_build_collections(
+                self.index_nodes[0],
+                self.indexes)
+
+            time_elapsed = time.time() - build_start
+        else:
+            self.remote.build_secondary_index(
+                self.index_nodes,
+                self.bucket,
+                self.indexes,
+                self.storage)
+
+            time_elapsed = self.monitor.wait_for_secindex_init_build(
+                self.index_nodes[0],
+                list(self.indexes.keys()))
         return time_elapsed
 
     @staticmethod
@@ -181,20 +201,46 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
                                             unit=unit)
         )
 
-    def build_initindex(self):
-        self.build_secondaryindex()
+    def load_and_build_initial_index(self):
+        self.load()
+        self.wait_for_persistence()
+        time_elapsed = self.build_secondaryindex()
+        self.print_index_disk_usage()
+        if not self.incremental_only:
+            self.report_kpi(time_elapsed, 'Initial')
 
     @with_stats
     @timeit
     def build_incrindex(self):
-        self.access()
+        if self.test_config.collection.collection_map is not None:
+            coll_map = self.test_config.collection.collection_map
+            num_access_collections = 0
+            for bucket in coll_map.keys():
+                for scope in coll_map[bucket].keys():
+                    for collection in coll_map[bucket][scope].keys():
+                        if coll_map[bucket][scope][collection]['load'] == 1 \
+                                and coll_map[bucket][scope][collection]['access'] == 1:
+                            num_access_collections += 1
 
-        numitems = self.test_config.load_settings.items + \
-            self.test_config.access_settings.items
-        self.monitor.wait_for_secindex_incr_build(self.index_nodes,
-                                                  self.bucket,
-                                                  list(self.indexes.keys()),
-                                                  numitems)
+            expected_docs = \
+                (self.test_config.load_settings.items + self.test_config.access_settings.items)\
+                // num_access_collections
+
+            self.access()
+
+            self.monitor.wait_for_secindex_incr_build_collections(
+                self.index_nodes,
+                self.indexes,
+                expected_docs)
+        else:
+            self.access()
+            numitems = self.test_config.load_settings.items + \
+                self.test_config.access_settings.items
+            self.monitor.wait_for_secindex_incr_build(
+                self.index_nodes,
+                self.bucket,
+                list(self.indexes.keys()),
+                numitems)
 
     def run_recovery_scenario(self):
         if self.run_recovery_test:
@@ -208,15 +254,6 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
             # Convert recovery time to second
             recovery_time /= 1000
             self.report_kpi(recovery_time, 'Recovery')
-
-    def load_and_build_initial_index(self):
-        self.load()
-        self.wait_for_persistence()
-
-        time_elapsed = self.build_secondaryindex()
-        self.print_index_disk_usage()
-        if not self.incremental_only:
-            self.report_kpi(time_elapsed, 'Initial')
 
     def run(self):
         self.load_and_build_initial_index()

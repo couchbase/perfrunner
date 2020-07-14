@@ -1,5 +1,3 @@
-from typing import Iterator
-
 from cbagent.collectors import Collector
 
 
@@ -107,13 +105,14 @@ class SecondaryDebugStatsIndex(SecondaryDebugStats):
         "timings/storage_snapshot_create",
     )
 
-    def get_all_indexes(self) -> Iterator:
-        for index in self.indexes:
-            yield index, self.buckets[0]
-
     def sample(self):
-        for index, bucket in self.get_all_indexes():
-            stats = self._get_secondary_debugstats(bucket=bucket, index=index)
+        for index, bucket, scope, collection in self.get_all_indexes():
+            if scope and collection and \
+                            scope != "_default" and collection != "_default":
+                full_index_name = "{}:{}:{}".format(scope, collection, index)
+                stats = self._get_secondary_debugstats(bucket=bucket, index=full_index_name)
+            else:
+                stats = self._get_secondary_debugstats(bucket=bucket, index=index)
             if stats:
                 _index = "{}.{}".format(bucket, index)
                 self.update_metric_metadata(self.METRICS, index=_index)
@@ -124,5 +123,5 @@ class SecondaryDebugStatsIndex(SecondaryDebugStats):
 
     def update_metadata(self):
         self.mc.add_cluster()
-        for index, bucket in self.get_all_indexes():
+        for index, bucket, scope, collection in self.get_all_indexes():
             self.mc.add_index("{}.{}".format(bucket, index))

@@ -186,12 +186,7 @@ class Monitor(RestHelper):
                                                version=version)
             for stat in stats:
                 if stat['replication_id'] == replicate_id:
-                    if replicate_id == 'sgr2_pull' or replicate_id == 'sgr2_conflict_resolution':
-                        replicate_docs = int(stat['docs_read'])
-                    elif replicate_id == 'sgr2_pushAndPull':
-                        replicate_docs = int(stat['docs_read']) + int(stat['docs_written'])
-                    else:
-                        replicate_docs = int(stat['docs_written'])
+                    replicate_docs = int(stat['docs_read']) + int(stat['docs_written'])
                     break
 
                 if replicate_id == 'sgr1_pushAndPull':
@@ -211,8 +206,8 @@ class Monitor(RestHelper):
         expected_docs = expected_docs
         start_time = start_time
         logger.info('Monitoring syncgateway replicate status :')
-        replicate_docs = 0
         while True:
+            replicate_docs = 0
             stats = self.get_sgreplicate_stats(host=host,
                                                version=version)
             for stat in stats:

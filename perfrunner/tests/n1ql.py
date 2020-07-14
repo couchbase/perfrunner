@@ -194,6 +194,11 @@ class N1QLThroughputTest(N1QLTest):
 
 class N1QLThroughputRebalanceTest(N1QLThroughputTest):
 
+    def _report_kpi(self, rebalance_time, total_requests):
+        self.reporter.post(
+            *self.metrics.avg_n1ql_rebalance_throughput(rebalance_time, total_requests)
+        )
+
     def is_balanced(self):
         for master in self.cluster_spec.masters:
             if self.rest.is_not_balanced(master):
@@ -222,15 +227,28 @@ class N1QLThroughputRebalanceTest(N1QLThroughputTest):
     def rebalance(self, initial_nodes):
         self.access_n1ql_bg()
 
-        logger.info('Sleeping for 30 seconds before taking actions')
-        time.sleep(30)
+        logger.info('Sleeping for {} seconds before taking actions'
+                    .format(self.test_config.rebalance_settings.start_after))
+        time.sleep(self.test_config.rebalance_settings.start_after)
 
-        self.rebalance_time = self._rebalance(initial_nodes)
+        query_node = self.cluster_spec.servers_by_role('n1ql')[0]
+        vitals = self.rest.get_query_stats(query_node)
+        total_requests_before = vitals['requests.count']
 
-        logger.info('Sleeping for 30 seconds before finishing')
-        time.sleep(30)
+        rebalance_time = self._rebalance(initial_nodes)
+
+        vitals = self.rest.get_query_stats(query_node)
+        total_requests_after = vitals['requests.count']
+
+        logger.info('Sleeping for {} seconds before finishing'
+                    .format(self.test_config.rebalance_settings.stop_after))
+        time.sleep(self.test_config.rebalance_settings.stop_after)
+
+        total_requests = total_requests_after - total_requests_before
 
         self.worker_manager.abort()
+
+        return rebalance_time, total_requests
 
     def run(self):
         self.load()
@@ -243,10 +261,10 @@ class N1QLThroughputRebalanceTest(N1QLThroughputTest):
         self.store_plans()
 
         initial_nodes = self.test_config.cluster.initial_nodes
-        self.rebalance(initial_nodes[0])
+        rebalance_time, total_requests = self.rebalance(initial_nodes[0])
 
         if self.is_balanced():
-            self.report_kpi()
+            self.report_kpi(rebalance_time, total_requests)
 
 
 class N1QLJoinTest(N1QLTest):

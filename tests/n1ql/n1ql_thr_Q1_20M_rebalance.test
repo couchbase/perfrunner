@@ -30,6 +30,10 @@ n1ql_workers = 480
 workload_instances = 2
 time = 1200
 
+[rebalance]
+start_after = 30
+stop_after = 30
+
 [n1ql-key-value-lookup]
 statement = SELECT * FROM `bucket-1` USE KEYS[$1];
 args = ["{key}"]

@@ -106,6 +106,15 @@ class MetricHelper:
         throughput = total_requests / test_time
         return round(throughput, throughput < 1 and 1 or 0)
 
+    def avg_n1ql_rebalance_throughput(self, rebalance_time, total_requests) -> Metric:
+        metric_id = '{}_avg_query_requests'.format(self.test_config.name)
+        title = 'Avg. Query Throughput (queries/sec), {}'.format(self._title)
+
+        metric_info = self._metric_info(metric_id, title,
+                                        order_by=self.query_id, chirality=1)
+        throughput = int(total_requests / rebalance_time)
+        return throughput, self._snapshots, metric_info
+
     def bulk_n1ql_throughput(self, time_elapsed: float) -> Metric:
         metric_info = self._metric_info(chirality=1)
 

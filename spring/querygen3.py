@@ -44,7 +44,7 @@ class N1QLQueryGen3:
             args = args.format(**doc)
             args = eval(args)
 
-        query_opts = QueryOptions(ad_hoc=bool(ad_hoc),
+        query_opts = QueryOptions(adhoc=bool(ad_hoc),
                                   scan_consistency=self.scan_consistency(scan_consistency),
                                   positional_parameters=args)
 

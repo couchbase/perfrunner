@@ -4,7 +4,8 @@ from perfrunner.settings import ClusterSpec, PhaseSettings
 BINARY_NAME = "bin/ycsb"
 BINARY_PATH = "YCSB"
 
-LOAD_USERS_CMD = " load syncgateway -s -P {workload} -p syncgateway.loadmode=users -threads 50 " \
+LOAD_USERS_CMD = " load syncgateway -s -P {workload} -p syncgateway.loadmode=users " \
+                 "-threads {sg_loader_threads} " \
                  "-p syncgateway.host={hosts} -p memcached.host={memcached_host} " \
                  "-p recordcount={total_users} " \
                  "-p syncgateway.channels={total_channels} " \
@@ -14,7 +15,7 @@ LOAD_USERS_CMD = " load syncgateway -s -P {workload} -p syncgateway.loadmode=use
                  "-p syncgateway.starchannel={starchannel}"
 
 LOAD_DOCS_CMD = " load syncgateway -s -P {workload} " \
-                "-p recordcount={total_docs} -threads 50 " \
+                "-p recordcount={total_docs} -threads {sg_loader_threads} " \
                 "-p fieldcount={fieldcount} -p fieldlength={fieldlength} " \
                 "-p syncgateway.host={hosts} " \
                 "-p syncgateway.auth=false " \
@@ -32,7 +33,7 @@ LOAD_DOCS_CMD = " load syncgateway -s -P {workload} " \
 
 INIT_USERS_CMD = " run syncgateway -s -P {workload} " \
                  "-p recordcount={total_docs} -p operationcount=50 " \
-                 "-p maxexecutiontime=36000 -threads 50 " \
+                 "-p maxexecutiontime=36000 -threads {sg_loader_threads} " \
                  "-p syncgateway.host={hosts} " \
                  "-p syncgateway.auth={auth} " \
                  "-p memcached.host={memcached_host} " \
@@ -46,7 +47,7 @@ INIT_USERS_CMD = " run syncgateway -s -P {workload} " \
 
 GRANT_ACCESS_CMD = " run syncgateway -s -P {workload} " \
                    "-p recordcount={total_docs} -p operationcount=50 " \
-                 "-p maxexecutiontime=36000 -threads 50 " \
+                 "-p maxexecutiontime=36000 -threads {sg_loader_threads} " \
                    "-p syncgateway.host={hosts} " \
                  "-p syncgateway.auth={auth} " \
                    "-p memcached.host={memcached_host} " \
@@ -76,6 +77,7 @@ RUN_TEST_CMD = " run syncgateway -s -P {workload} -p recordcount={total_docs} " 
                "-p syncgateway.feedmode={feedmode} " \
                "-p syncgateway.basic_auth={basic_auth} " \
                "-p syncgateway.replicator2={replicator2} " \
+               "-p syncgateway.readLimit={readLimit} " \
                "-p syncgateway.grantaccessinscan={grant_access_in_scan}"
 
 
@@ -107,6 +109,7 @@ def syncgateway_load_users(workload_settings: PhaseSettings,
                                    hosts=get_hosts(cluster, workload_settings),
                                    memcached_host=cluster.workers[0],
                                    total_users=sgs.users,
+                                   sg_loader_threads=sgs.sg_loader_threads,
                                    total_channels=sgs.channels,
                                    channels_per_user=sgs.channels_per_user,
                                    insertstart=get_offset(workload_settings, worker_id),
@@ -130,6 +133,7 @@ def syncgateway_load_docs(workload_settings: PhaseSettings,
                                   fieldcount=sgs.fieldcount,
                                   memcached_host=cluster.workers[0],
                                   total_users=sgs.users,
+                                  sg_loader_threads=sgs.sg_loader_threads,
                                   roundtrip=sgs.roundtrip_write_load,
                                   feedmode=sgs.feed_mode,
                                   replicator2=sgs.replicator2,
@@ -152,6 +156,7 @@ def syncgateway_init_users(workload_settings: PhaseSettings, timer: int, worker_
     params = INIT_USERS_CMD.format(workload=sgs.workload,
                                    hosts=get_hosts(cluster, workload_settings),
                                    total_docs=sgs.documents,
+                                   sg_loader_threads=sgs.sg_loader_threads,
                                    memcached_host=cluster.workers[0],
                                    auth=sgs.auth,
                                    total_users=sgs.users,
@@ -173,6 +178,7 @@ def syncgateway_grant_access(workload_settings: PhaseSettings,
     params = GRANT_ACCESS_CMD.format(workload=sgs.workload,
                                      hosts=get_hosts(cluster, workload_settings),
                                      total_docs=sgs.documents,
+                                     sg_loader_threads=sgs.sg_loader_threads,
                                      memcached_host=cluster.workers[0],
                                      auth=sgs.auth,
                                      total_users=sgs.users,
@@ -207,6 +213,7 @@ def syncgateway_run_test(workload_settings: PhaseSettings,
                                  sequence_start=int(sgs.users) + int(sgs.documents) + 1,
                                  read_mode=sgs.read_mode,
                                  insert_mode=sgs.insert_mode,
+                                 readLimit=sgs.sg_read_limit,
                                  replicator2=sgs.replicator2,
                                  basic_auth=sgs.basic_auth,
                                  threads=sgs.threads_per_instance,

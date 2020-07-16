@@ -800,6 +800,8 @@ class SyncgatewaySettings:
     ROUNDTRIP_WRITE_LOAD = "false"
     SG_REPLICATION_TYPE = "push"
     SG_CONFLICT_RESOLUTION = "default"
+    SG_READ_LIMIT = 1
+    SG_LOADER_THREADS = 50
 
     def __init__(self, options: dict):
         self.repo = options.get('ycsb_repo', self.REPO)
@@ -848,6 +850,8 @@ class SyncgatewaySettings:
         self.sg_replication_type = options.get('sg_replication_type', self.SG_REPLICATION_TYPE)
         self.sg_conflict_resolution = options.get('sg_conflict_resolution',
                                                   self.SG_CONFLICT_RESOLUTION)
+        self.sg_read_limit = int(options.get('sg_read_limit', self.SG_READ_LIMIT))
+        self.sg_loader_threads = int(options.get("sg_loader_threads", self.SG_LOADER_THREADS))
 
     def __str__(self) -> str:
         return str(self.__dict_)

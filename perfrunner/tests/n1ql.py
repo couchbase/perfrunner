@@ -355,6 +355,8 @@ class N1QLBulkTest(N1QLTest):
                                 statement_with_coll = statement.\
                                     replace("`{}`".format(bucket), replace_target)
                                 statement_list.append(statement_with_coll)
+        else:
+            statement_list.append(statement)
         if not statement_list:
             raise Exception('No statements to execute')
         for statement in statement_list:

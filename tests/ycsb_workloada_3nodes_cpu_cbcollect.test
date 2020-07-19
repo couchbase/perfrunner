@@ -5,6 +5,7 @@ test = perfrunner.tests.ycsb.YCSBLatencyTest
 title = Latency(ms), Workload A, 3 nodes, 12 vCPU , CBCollect
 component = kv
 category = ycsb
+sub_category = ycsb3
 
 [cluster]
 mem_quota = 40960

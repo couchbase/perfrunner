@@ -5,6 +5,7 @@ test = perfrunner.tests.ycsb.YCSBThroughputTest
 title = Avg Throughput (ops/sec), Workload A, 3 nodes, 12 vCPU, Snappy
 component = kv
 category = ycsb
+sub_category = ycsb2
 orderby = a63
 
 [cluster]

@@ -5,6 +5,7 @@ test = perfrunner.tests.ycsb.YCSBLatencyTest
 title = Latency(ms), Workload A, 3 nodes, 12 vCPU, 10K ops/sec
 component = kv
 category = ycsb
+sub_category = ycsb3
 orderby = a90
 
 

@@ -15,7 +15,7 @@ LOAD_USERS_CMD = " load syncgateway -s -P {workload} -p syncgateway.loadmode=use
                  "-p syncgateway.starchannel={starchannel}"
 
 LOAD_DOCS_CMD = " load syncgateway -s -P {workload} " \
-                "-p recordcount={total_docs} -threads {sg_loader_threads} " \
+                "-p recordcount={total_docs} -threads {sg_docloader_thread} " \
                 "-p fieldcount={fieldcount} -p fieldlength={fieldlength} " \
                 "-p syncgateway.host={hosts} " \
                 "-p syncgateway.auth=false " \
@@ -133,7 +133,7 @@ def syncgateway_load_docs(workload_settings: PhaseSettings,
                                   fieldcount=sgs.fieldcount,
                                   memcached_host=cluster.workers[0],
                                   total_users=sgs.users,
-                                  sg_loader_threads=sgs.sg_loader_threads,
+                                  sg_docloader_thread=sgs.sg_docloader_thread,
                                   roundtrip=sgs.roundtrip_write_load,
                                   feedmode=sgs.feed_mode,
                                   replicator2=sgs.replicator2,

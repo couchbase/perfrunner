@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.syncgateway.SGSyncQueryThroughput
-title = , 1 node, 1M docs, 1 users, 1 channel, 1 channels per user,  channels query (no SG cache)
+title = , 1 node, 5M docs, 1 user, 1 channel, 1 channels per user, channels query with limit 200, (no SG cache)
 component = syncgateway
 category = query
 sub_category = xattr
@@ -31,7 +31,7 @@ users = 1
 channels = 1
 channels_per_user = 1
 channels_per_doc = 1
-documents = 1000000
+documents = 5000000
 roundtrip_write = true
 read_mode = changesWithLimit
 feed_reading_mode = withdocs

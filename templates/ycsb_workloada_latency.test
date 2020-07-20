@@ -5,6 +5,7 @@ test = perfrunner.tests.ycsb.YCSBLatencyTest
 title = Latency (ms), Workload A, {{server_instances}} nodes, AWS, {{instance}}
 component = kv
 category = ycsb
+sub_category = ycsb2
 
 [cluster]
 mem_quota = {{ mem_quota }}

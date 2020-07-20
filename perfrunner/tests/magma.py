@@ -11,6 +11,8 @@ from perfrunner.helpers.misc import pretty_dict, read_json
 from perfrunner.helpers.worker import (
     pillowfight_data_load_task,
     pillowfight_task,
+    ycsb_data_load_task,
+    ycsb_task,
 )
 from perfrunner.tests import PerfTest
 from perfrunner.tests.rebalance import RebalanceKVTest
@@ -575,6 +577,78 @@ class YCSBThroughputHIDDTest(YCSBThroughputTest, KVTest):
         KVTest.print_kvstore_stats(self)
 
         self.report_kpi()
+
+
+class YCSBThroughputLatencyHIDDPhaseTest(YCSBThroughputHIDDTest):
+
+    def _report_kpi(self, phase: int, workload: str, operation: str = "access"):
+        self.collect_export_files()
+
+        self.reporter.post(
+            *self.metrics.ycsb_throughput_phase(phase, workload, operation)
+        )
+
+        for percentile in self.test_config.ycsb_settings.latency_percentiles:
+            latency_dic = self.metrics.ycsb_get_latency(percentile=percentile, operation=operation)
+            for key, value in latency_dic.items():
+                logger.info("key:{}".format(key))
+                if str(percentile) in key \
+                        and "CLEANUP" not in key \
+                        and "FAILED" not in key:
+                    self.reporter.post(
+                        *self.metrics.ycsb_latency_phase(key, latency_dic[key], phase, workload)
+                    )
+
+        if self.test_config.ycsb_settings.average_latency == 1:
+            latency_dic = self.metrics.ycsb_get_latency(
+                percentile=99, operation=operation)
+
+            for key, value in latency_dic.items():
+                if "Average" in key \
+                        and "CLEANUP" not in key \
+                        and "FAILED" not in key:
+                    self.reporter.post(
+                        *self.metrics.ycsb_latency_phase(key, latency_dic[key], phase, workload)
+                    )
+
+    @with_stats
+    def custom_load(self, phase):
+        KVTest.save_stats(self)
+        loading_settings = self.test_config.load_settings
+        loading_settings.insertstart = loading_settings.items * phase
+        PerfTest.load(self, task=ycsb_data_load_task, settings=loading_settings)
+        self.wait_for_persistence()
+        self.print_amplifications(doc_size=self.test_config.access_settings.size)
+        KVTest.print_kvstore_stats(self)
+
+    def run(self):
+        self.download_ycsb()
+
+        access_settings = self.test_config.access_settings
+
+        for phase in range(self.test_config.load_settings.phase):
+
+            self.custom_load(phase=phase)
+            self.report_kpi(phase=(phase+1), workload="Load", operation="load")
+
+            self.reset_kv_stats()
+            KVTest.save_stats(self)
+            access_settings.workload_path = "workloads/workloadc"
+            access_settings.items = self.test_config.load_settings.items * (phase + 1)
+            logger.info("Starting Phase {} Workload C".format((phase + 1)))
+            PerfTest.access(self, task=ycsb_task, settings=access_settings)
+            self.print_amplifications(doc_size=self.test_config.access_settings.size)
+            KVTest.print_kvstore_stats(self)
+            self.report_kpi(phase=(phase+1), workload="Workload C")
+
+            self.reset_kv_stats()
+            KVTest.save_stats(self)
+            access_settings.workload_path = "workloads/workloada"
+            logger.info("Starting Phase {} Workload A".format((phase + 1)))
+            PerfTest.access(self, task=ycsb_task, settings=access_settings)
+            self.print_amplifications(doc_size=self.test_config.access_settings.size)
+            KVTest.print_kvstore_stats(self)
+            self.report_kpi(phase=(phase+1), workload="Workload A")
 
 
 class YCSBLatencyHiDDTest(YCSBThroughputHIDDTest):

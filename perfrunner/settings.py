@@ -444,6 +444,8 @@ class PhaseSettings:
     ITEMS = 0
     SIZE = 2048
 
+    PHASE = 0
+
     WORKING_SET = 100
     WORKING_SET_ACCESS = 100
     WORKING_SET_MOVE_TIME = 0
@@ -481,6 +483,7 @@ class PhaseSettings:
 
     YCSB_FIELD_COUNT = 10
     YCSB_FIELD_LENGTH = 100
+    YCSB_INSERTSTART = 0
 
     SSL_MODE = 'none'
     SSL_AUTH_KEYSTORE = "certificates/auth.keystore"
@@ -554,6 +557,8 @@ class PhaseSettings:
 
         self.size = int(options.get('size', self.SIZE))
         self.items = int(options.get('items', self.ITEMS))
+
+        self.phase = int(options.get('phase', self.PHASE))
 
         self.creates = int(options.get('creates', self.CREATES))
         self.reads = int(options.get('reads', self.READS))
@@ -648,6 +653,7 @@ class PhaseSettings:
                                                  self.YCSB_ENABLE_MUTATION_TOKEN)
         self.ycsb_client = options.get('ycsb_client', self.YCSB_CLIENT)
         self.ycsb_out_of_order = int(options.get('out_of_order', self.YCSB_OUT_OF_ORDER))
+        self.insertstart = int(options.get('insertstart', self.YCSB_INSERTSTART))
 
         # trasnsaction settings
         self.transactionsenabled = int(options.get('transactionsenabled',

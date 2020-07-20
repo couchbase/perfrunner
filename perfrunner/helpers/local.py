@@ -477,7 +477,8 @@ def run_ycsb(host: str,
              retry_factor: int = 2,
              ycsb_jvm_args: str = None,
              collections_map: dict = None,
-             out_of_order: int = 0):
+             out_of_order: int = 0,
+             phase_params: dict = None):
 
     cmd = 'bin/ycsb {action} {ycsb_client} ' \
           '-P {workload} ' \
@@ -566,7 +567,13 @@ def run_ycsb(host: str,
                      ycsb_jvm_args=ycsb_jvm_args)
 
     if soe_params is None:
-        cmd += ' -p recordcount={items} '.format(items=items)
+        if phase_params is None:
+            cmd += ' -p recordcount={items} '.format(items=items)
+        else:
+            cmd += ' -p totalrecordcount={totalrecordcount} '.format(totalrecordcount=items)
+            cmd += ' -p recordcount={items} '.format(
+                items=phase_params['inserts_per_workerinstance'])
+            cmd += ' -p insertstart={insertstart} '.format(insertstart=phase_params['insertstart'])
     else:
         cmd += ' -p totalrecordcount={totalrecordcount} '.format(totalrecordcount=items)
         cmd += ' -p recordcount={items} '.format(items=soe_params['recorded_load_cache_size'])

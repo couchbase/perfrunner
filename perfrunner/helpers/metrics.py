@@ -652,11 +652,17 @@ class MetricHelper:
             return False
         return True
 
-    def _parse_ycsb_throughput(self) -> int:
+    def _parse_ycsb_throughput(self, operation: str = "access") -> int:
         throughput = 0
-        ycsb_log_files = [filename
-                          for filename in glob.glob("YCSB/ycsb_run_*.log")
-                          if "stderr" not in filename]
+        if operation == "load":
+            ycsb_log_files = [filename
+                              for filename in glob.glob("YCSB/ycsb_load_*.log")
+                              if "stderr" not in filename]
+        else:
+            ycsb_log_files = [filename
+                              for filename in glob.glob("YCSB/ycsb_run_*.log")
+                              if "stderr" not in filename]
+
         for filename in ycsb_log_files:
             with open(filename) as fh:
                 for line in fh.readlines():
@@ -681,13 +687,18 @@ class MetricHelper:
         lat_dic.update({aio_type: a_lat})
         return lat_dic
 
-    def _parse_ycsb_latency(self, percentile: str) -> int:
+    def _parse_ycsb_latency(self, percentile: str, operation: str = "access") -> int:
         lat_dic = {}
         _temp = []
         _fc = 1
-        ycsb_log_files = [filename
-                          for filename in glob.glob("YCSB/ycsb_run_*.log")
-                          if "stderr" not in filename]
+        if operation == "load":
+            ycsb_log_files = [filename
+                              for filename in glob.glob("YCSB/ycsb_load_*.log")
+                              if "stderr" not in filename]
+        else:
+            ycsb_log_files = [filename
+                              for filename in glob.glob("YCSB/ycsb_run_*.log")
+                              if "stderr" not in filename]
         for filename in ycsb_log_files:
             fh2 = open(filename)
             _l1 = fh2.readlines()
@@ -724,15 +735,20 @@ class MetricHelper:
             del lat_dic['CLEANUP']
         return lat_dic
 
-    def _parse_ycsb_latency_cbcollect(self, percentile: str):
+    def _parse_ycsb_latency_cbcollect(self, percentile: str, operation: str = "access"):
         lat_dic = {}
         _temp = []
         _fc = 1
         _cbtime = int(self.test.cb_time)
         _cbstart = int(self.test.cb_start * 1000)
-        ycsb_log_files = [filename
-                          for filename in glob.glob("YCSB/ycsb_run_*.log")
-                          if "stderr" not in filename]
+        if operation == "load":
+            ycsb_log_files = [filename
+                              for filename in glob.glob("YCSB/ycsb_load_*.log")
+                              if "stderr" not in filename]
+        else:
+            ycsb_log_files = [filename
+                              for filename in glob.glob("YCSB/ycsb_run_*.log")
+                              if "stderr" not in filename]
         for filename in ycsb_log_files:
             fh2 = open(filename)
             list1 = fh2.readlines()
@@ -898,6 +914,20 @@ class MetricHelper:
 
         return throughput, self._snapshots, metric_info
 
+    def ycsb_throughput_phase(self,
+                              phase: int,
+                              workload: str,
+                              operation: str = "access"
+                              ) -> Metric:
+
+        title = '{}, {}, Phase {}, {}'.format(
+            "Avg Throughput (ops/sec)", self._title, phase, workload)
+        metric_info = self._metric_info(title=title, chirality=1)
+
+        throughput = self._parse_ycsb_throughput(operation)
+
+        return throughput, self._snapshots, metric_info
+
     def ycsb_durability_throughput(self) -> Metric:
         title = '{}, {}'.format("Avg Throughput (ops/sec)", self._title)
         metric_id = '{}_{}'\
@@ -917,6 +947,17 @@ class MetricHelper:
         metric_info = self._metric_info(title=title, metric_id=metric_id, chirality=-1)
         return latency, self._snapshots, metric_info
 
+    def ycsb_latency_phase(self,
+                           io_type: str,
+                           latency: int,
+                           phase: int,
+                           workload: str
+                           ) -> Metric:
+        title = '{} Latency(ms), {}, Phase {}, {}'.format(io_type, self._title, phase, workload)
+        metric_id = '{}_{}'.format(self.test_config.name, io_type.replace(' ', '_').casefold())
+        metric_info = self._metric_info(title=title, metric_id=metric_id, chirality=-1)
+        return latency, self._snapshots, metric_info
+
     def ycsb_slo_latency(self,
                          io_type: str,
                          latency: int,
@@ -929,11 +970,12 @@ class MetricHelper:
 
     def ycsb_get_latency(self,
                          percentile: str,
+                         operation: str = "access"
                          ) -> Metric:
         if self.test_config.access_settings.cbcollect:
-            latency_dic = self._parse_ycsb_latency_cbcollect(percentile)
+            latency_dic = self._parse_ycsb_latency_cbcollect(percentile, operation)
         else:
-            latency_dic = self._parse_ycsb_latency(percentile)
+            latency_dic = self._parse_ycsb_latency(percentile, operation)
         return latency_dic
 
     def indexing_time(self, indexing_time: float) -> Metric:

@@ -177,7 +177,7 @@ class ClusterManager:
                 for bucket in collection_map.keys():
                     delete_default = True
                     for scope in collection_map[bucket]:
-                        if scope == '_defualt':
+                        if scope == '_default':
                             for collection in collection_map[bucket][scope]:
                                 if collection == "_default":
                                     delete_default = False

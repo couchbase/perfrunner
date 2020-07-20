@@ -29,13 +29,13 @@ class CBAsyncGen3:
         timeout = ClusterTimeoutOptions(kv_timeout=timedelta(seconds=self.TIMEOUT))
         options = ClusterOptions(authenticator=pass_auth, timeout_options=timeout)
         self.cluster = TxCluster(connection_string=connection_string, options=options)
-        self.bucket = self.cluster.bucket(kwargs['bucket'])
-
+        self.bucket_name = kwargs['bucket']
         self.collections = dict()
         self.collection = None
         logger.info("Connection string: {}".format(connection_string))
 
     def connect_collections(self, scope_collection_list):
+        self.bucket = self.cluster.bucket(self.bucket_name)
         for scope_collection in scope_collection_list:
             scope, collection = scope_collection.split(":")
             if scope == "_default" and collection == "_default":
@@ -124,7 +124,8 @@ class CBGen3(CBAsyncGen3):
             timeout = ClusterTimeoutOptions(kv_timeout=timedelta(seconds=self.TIMEOUT))
         options = ClusterOptions(authenticator=pass_auth, timeout_options=timeout)
         self.cluster = Cluster(connection_string=connection_string, options=options)
-        self.bucket = self.cluster.bucket(kwargs['bucket'])
+        self.bucket_name = kwargs['bucket']
+        self.bucket = None
         self.collections = dict()
         self.collection = None
         if n1ql_timeout:
@@ -196,6 +197,8 @@ class CBGen3(CBAsyncGen3):
         self.user_manager = self.cluster.users()
 
     def create_collection_manager(self):
+        if not self.bucket:
+            self.bucket = self.cluster.bucket(self.bucket_name)
         self.collection_manager = self.bucket.collections()
 
     @quiet

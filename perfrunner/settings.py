@@ -974,7 +974,6 @@ class IndexSettings:
                                     "CREATE PRIMARY INDEX {} ON default:`{}`.`{}`.`{}`". \
                                     format(index_name, bucket, scope, collection)
                                 with_clause = " WITH {'defer_build': 'true',"
-
                                 if self.replicas > 0:
                                     with_clause += "'num_replica': " + str(self.replicas) + ","
                                 with_clause = with_clause[:-1]
@@ -984,7 +983,6 @@ class IndexSettings:
                                 build_statement = "BUILD INDEX ON default:`{}`.`{}`.`{}`('{}')" \
                                     .format(bucket, scope, collection, index_name)
                                 build_statements.append(build_statement)
-                statements = statements + build_statements
             else:
                 fields = self.fields.strip().split(',')
                 field_combos = list(chain.from_iterable(combinations(fields, r)
@@ -1010,16 +1008,24 @@ class IndexSettings:
                                                 scope,
                                                 collection,
                                                 index_fields)
+                                        with_clause = " WITH {'defer_build': 'true',"
                                         if self.replicas > 0:
-                                            new_statement = \
-                                                new_statement + \
-                                                " WITH {'num_replica': "+str(self.replicas)+"}"
+                                            with_clause += \
+                                                "'num_replica': " + str(self.replicas) + ","
+                                        with_clause = with_clause[:-1]
+                                        with_clause += "}"
+                                        new_statement += with_clause
                                         statements.append(new_statement)
+                                        build_statement = \
+                                            "BUILD INDEX ON default:`{}`.`{}`.`{}`('{}')" \
+                                            .format(bucket, scope, collection, index_name)
+                                        build_statements.append(build_statement)
                                         indexes_created += 1
                                         if indexes_created == self.indexes_per_collection:
                                             break
                                     if indexes_created == self.indexes_per_collection:
                                         break
+            statements = statements + build_statements
             return statements
         elif self.raw_statements:
             return self.raw_statements.strip().split('\n')

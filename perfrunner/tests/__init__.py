@@ -245,10 +245,34 @@ class PerfTest:
             for statement in create_statements:
                 logger.info('Creating index: ' + statement)
                 self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+                cont = False
+                while not cont:
+                    building = 0
+                    index_status = self.rest.get_index_status(self.index_nodes[0])
+                    index_list = index_status['status']
+                    for index in index_list:
+                        if index['status'] != "Ready" and index['status'] != "Created":
+                            building += 1
+                    if building < 10:
+                        cont = True
+                    else:
+                        time.sleep(10)
 
             for statement in build_statements:
                 logger.info('Building index: ' + statement)
                 self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
+                cont = False
+                while not cont:
+                    building = 0
+                    index_status = self.rest.get_index_status(self.index_nodes[0])
+                    index_list = index_status['status']
+                    for index in index_list:
+                        if index['status'] != "Ready" and index['status'] != "Created":
+                            building += 1
+                    if building < 10:
+                        cont = True
+                    else:
+                        time.sleep(10)
 
             logger.info('Index Create and Build Complete')
         else:

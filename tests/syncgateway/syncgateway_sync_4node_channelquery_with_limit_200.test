@@ -1,10 +1,10 @@
 [test_case]
 test = perfrunner.tests.syncgateway.SGSyncQueryThroughput
-title = , 1 node, 1M docs, 1 user, 1 channel, channels query with limit, since 0, limit 200 (no SG cache)
+title = , 4 node, 1M docs, 1 user, 1 channel, channels query with limit, since 0, limit 200 (no SG cache)
 component = syncgateway
 category = query
 sub_category = xattr
-orderby = z1
+orderby = z2
 
 [cluster]
 mem_quota = 25000
@@ -21,8 +21,8 @@ indexer.settings.storage_mode = memory_optimized
 
 
 [syncgateway]
-nodes = 1
-threads = 50
+nodes = 4
+threads = 200
 clients = 4
 instances_per_client = 5
 workload_path = workloads/syncgateway_blank

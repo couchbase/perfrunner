@@ -1,0 +1,36 @@
+[test_case]
+test = perfrunner.tests.ycsb.YCSBThroughputTest
+
+[showfast]
+title = Avg Throughput (ops/sec), Workload A, 3 nodes, 12 vCPU, Ephemeral
+component = kv
+category = ycsb
+sub_category = ycsb2
+orderby = a30
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 3
+num_buckets = 1
+online_cores = 6
+
+[bucket]
+bucket_type = ephemeral
+eviction_policy = nruEviction
+
+[load]
+workload_path = workloads/workloada
+items = 20000000
+workers = 160
+
+[access]
+workload_path = workloads/workloada
+items = 20000000
+ops = 1000000000
+time = 1800
+boost = 12
+workers = 96
+workload_instances = 6
+
+[stats]
+client_processes = java

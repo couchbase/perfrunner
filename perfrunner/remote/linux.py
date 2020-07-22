@@ -423,6 +423,7 @@ class RemoteLinux(Remote):
     def tune_memory_settings(self, host_string: str, size: str):
         logger.info('Changing kernel memory to {} on {}'.format(size, host_string))
         with settings(host_string=host_string):
+            run("sed -ir 's/ mem=[0-9]*[kmgKMG]//g' /etc/default/grub")
             run("sed -i 's/quiet/quiet mem={}/' /etc/default/grub".format(size))
             self.grub_config()
             self.reboot()

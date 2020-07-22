@@ -716,7 +716,7 @@ class MetricHelper:
                         line = fh.readline()
                         _n += 1
                     _temp.sort()
-                    if "FAILED" not in io_type:
+                    if "FAILED" not in io_type and "CLEANUP" not in io_type:
                         lat_dic = self._ycsb_perc_calc(_temp=_temp,
                                                        io_type=io_type,
                                                        lat_dic=lat_dic,
@@ -731,8 +731,6 @@ class MetricHelper:
                 _c += 1
                 x += _c
             _fc += 1
-        if 'CLEANUP' in lat_dic:
-            del lat_dic['CLEANUP']
         return lat_dic
 
     def _parse_ycsb_latency_cbcollect(self, percentile: str, operation: str = "access"):

@@ -32,7 +32,7 @@ workers = 25
 workload_instances = 4
 inserts_per_workerinstance = 25000000
 timeseries = 1
-phase = 2
+phase = 4
 
 [access]
 workload_path = workloads/workloada

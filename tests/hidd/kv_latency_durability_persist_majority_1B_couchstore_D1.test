@@ -28,6 +28,22 @@ size = 1024
 workers = 128
 doc_gen = large
 
+[extra_access]
+updates = 100
+creates = 0
+deletes = 0
+reads = 0
+workers = 128
+items = 1000000000
+ops = 1000000000
+time = 86400
+throughput = 999999999
+requestdistribution = uniform
+power_alpha = 0
+zipf_alpha = 0
+durability = 0
+async = 0
+
 [access]
 creates = 0
 reads = 0

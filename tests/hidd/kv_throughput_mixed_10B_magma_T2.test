@@ -32,6 +32,22 @@ items = 10000000000
 workers = 128
 working_set = 1
 
+[extra_access]
+updates = 100
+creates = 0
+deletes = 0
+reads = 0
+workers = 128
+items = 10000000000
+ops = 10000000000
+time = 86400
+throughput = 999999999
+requestdistribution = uniform
+power_alpha = 0
+zipf_alpha = 0
+durability = 0
+async = 0
+
 [access]
 creates = 0
 reads = 50

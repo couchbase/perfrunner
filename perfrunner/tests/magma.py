@@ -8,6 +8,7 @@ from logger import logger
 from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.misc import pretty_dict, read_json
+from perfrunner.helpers.profiler import with_profiles
 from perfrunner.helpers.worker import (
     pillowfight_data_load_task,
     pillowfight_task,
@@ -48,7 +49,7 @@ class MagmaBenchmarkTest(PerfTest):
 
     def create_command(self, write_multiplier: int = 1):
 
-        cmd = "ulimit -n 1000000;/opt/couchbase/bin/magma_bench {DATA_DIR}/{ENGINE} " \
+        cmd = "ulimit -n 1000000;/opt/couchbase/bin/priv/magma_bench {DATA_DIR}/{ENGINE} " \
               "--kvstore {NUM_KVSTORES} --ndocs {NUM_DOCS} " \
               "--batch-size {WRITE_BATCHSIZE} --keylen {KEY_LEN} --vallen {DOC_SIZE} " \
               "--nwrites {NUM_WRITES} --nreads {NUM_READS} --nreaders {NUM_READERS} " \
@@ -365,22 +366,8 @@ class KVTest(PerfTest):
 class StabilityBootstrap(KVTest):
     @with_console_stats
     def run_extra_access(self):
-        access_settings = self.test_config.access_settings
-        access_settings.updates = 100
-        access_settings.creates = 0
-        access_settings.deletes = 0
-        access_settings.reads = 0
-        access_settings.workers = 128
-        access_settings.ops = access_settings.items
-        access_settings.time = 3600 * 24
-        access_settings.throughput = float('inf')
-        access_settings.requestdistribution = 'uniform'
-        access_settings.power_alpha = 0.0
-        access_settings.zipf_alpha = 0.0
-        access_settings.durability = None
-        access_settings.async = False
         self.COLLECTORS["latency"] = False
-        self.extra_access(access_settings=access_settings)
+        self.extra_access(access_settings=self.test_config.extra_access_settings)
         self.COLLECTORS["latency"] = True
 
 
@@ -427,6 +414,46 @@ class ThroughputDGMMagmaTest(StabilityBootstrap):
         )
 
 
+class LoadThroughputDGMMagmaTest(ThroughputDGMMagmaTest):
+
+    def run(self):
+        self.load()
+        self.report_kpi()
+
+
+class SingleNodeThroughputDGMMagmaTest(ThroughputDGMMagmaTest):
+
+    def restart(self):
+        self.remote.stop_server()
+        self.remote.drop_caches()
+        self.remote.start_server()
+        for master in self.cluster_spec.masters:
+            for bucket in self.test_config.buckets:
+                self.monitor.monitor_warmup(self.memcached, master, bucket)
+
+    def run(self):
+        self.load()
+
+        self.run_extra_access()
+
+        self.COLLECTORS["kvstore"] = False
+        self.COLLECTORS["disk"] = False
+        self.COLLECTORS["latency"] = False
+        self.COLLECTORS["vmstat"] = False
+        self.restart()
+        self.COLLECTORS["kvstore"] = True
+        self.COLLECTORS["disk"] = True
+        self.COLLECTORS["latency"] = True
+        self.COLLECTORS["vmstat"] = True
+
+        self.hot_load()
+        self.reset_kv_stats()
+
+        self.access()
+
+        self.report_kpi()
+
+
 class MixedLatencyDGMTest(StabilityBootstrap):
 
     def _report_kpi(self):
@@ -469,9 +496,10 @@ class PillowFightDGMTest(StabilityBootstrap):
         PerfTest.access(self, task=pillowfight_task)
 
     @with_stats
-    def extra_access(self, access_settings):
+    def run_extra_access(self):
         logger.info("Starting first access phase")
-        PerfTest.access(self, settings=access_settings, task=pillowfight_task)
+        PerfTest.access(self, settings=self.test_config.extra_access_settings,
+                        task=pillowfight_task)
 
     def _report_kpi(self, *args):
         self.reporter.post(
@@ -591,7 +619,6 @@ class YCSBThroughputLatencyHIDDPhaseTest(YCSBThroughputHIDDTest):
         for percentile in self.test_config.ycsb_settings.latency_percentiles:
             latency_dic = self.metrics.ycsb_get_latency(percentile=percentile, operation=operation)
             for key, value in latency_dic.items():
-                logger.info("key:{}".format(key))
                 if str(percentile) in key \
                         and "CLEANUP" not in key \
                         and "FAILED" not in key:
@@ -621,6 +648,15 @@ class YCSBThroughputLatencyHIDDPhaseTest(YCSBThroughputHIDDTest):
         self.print_amplifications(doc_size=self.test_config.access_settings.size)
         KVTest.print_kvstore_stats(self)
 
+    @with_stats
+    @with_profiles
+    def access(self, settings):
+        self.reset_kv_stats()
+        KVTest.save_stats(self)
+        PerfTest.access(self, task=ycsb_task, settings=settings)
+        self.print_amplifications(doc_size=self.test_config.access_settings.size)
+        KVTest.print_kvstore_stats(self)
+
     def run(self):
         self.download_ycsb()
 
@@ -631,23 +667,15 @@ class YCSBThroughputLatencyHIDDPhaseTest(YCSBThroughputHIDDTest):
             self.custom_load(phase=phase)
             self.report_kpi(phase=(phase+1), workload="Load", operation="load")
 
-            self.reset_kv_stats()
-            KVTest.save_stats(self)
             access_settings.workload_path = "workloads/workloadc"
             access_settings.items = self.test_config.load_settings.items * (phase + 1)
             logger.info("Starting Phase {} Workload C".format((phase + 1)))
-            PerfTest.access(self, task=ycsb_task, settings=access_settings)
-            self.print_amplifications(doc_size=self.test_config.access_settings.size)
-            KVTest.print_kvstore_stats(self)
+            self.access(settings=access_settings)
             self.report_kpi(phase=(phase+1), workload="Workload C")
 
-            self.reset_kv_stats()
-            KVTest.save_stats(self)
             access_settings.workload_path = "workloads/workloada"
             logger.info("Starting Phase {} Workload A".format((phase + 1)))
-            PerfTest.access(self, task=ycsb_task, settings=access_settings)
-            self.print_amplifications(doc_size=self.test_config.access_settings.size)
-            KVTest.print_kvstore_stats(self)
+            self.access(settings=access_settings)
             self.report_kpi(phase=(phase+1), workload="Workload A")
 
 
@@ -772,21 +800,8 @@ class JavaDCPThroughputDGMTest(KVTest):
 class RebalanceKVDGMTest(RebalanceKVTest):
 
     def run_extra_access(self):
-        access_settings = self.test_config.access_settings
-        access_settings.updates = 100
-        access_settings.creates = 0
-        access_settings.deletes = 0
-        access_settings.reads = 0
-        access_settings.workers = 128
-        access_settings.ops = access_settings.items
-        access_settings.time = 3600 * 24
-        access_settings.throughput = float('inf')
-        access_settings.requestdistribution = 'uniform'
-        access_settings.power_alpha = 0.0
-        access_settings.zipf_alpha = 0.0
-        access_settings.durability = None
         logger.info("Starting first access phase")
-        PerfTest.access(self, settings=access_settings)
+        PerfTest.access(self, settings=self.test_config.extra_access_settings)
 
     def run(self):
         self.load()
@@ -809,22 +824,9 @@ class BackupTestDGM(BackupTest):
 
     @with_stats
     def run_extra_access(self):
-        access_settings = self.test_config.access_settings
-        access_settings.updates = 100
-        access_settings.creates = 0
-        access_settings.deletes = 0
-        access_settings.reads = 0
-        access_settings.workers = 128
-        access_settings.ops = access_settings.items
-        access_settings.time = 3600 * 24
-        access_settings.throughput = float('inf')
-        access_settings.requestdistribution = 'uniform'
-        access_settings.power_alpha = 0.0
-        access_settings.zipf_alpha = 0.0
-        access_settings.durability = None
         self.COLLECTORS["latency"] = False
         logger.info("Starting first access phase")
-        PerfTest.access(self, settings=access_settings)
+        PerfTest.access(self, settings=self.test_config.extra_access_settings)
         self.COLLECTORS["latency"] = True
 
     def run(self):

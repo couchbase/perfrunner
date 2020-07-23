@@ -1,0 +1,53 @@
+[test_case]
+test = perfrunner.tests.magma.WriteLatencyDGMTest
+
+[showfast]
+title = Latency(ms), Workload S0.5, 2 nodes, 250M x 1KB, 20K ops/sec (10/90 R/W), Power distribution (α=10), Couchstore
+component = hidd
+category = latency
+
+[cluster]
+mem_quota = 6144
+initial_nodes = 2
+num_buckets = 1
+num_vbuckets = 256
+kernel_mem_limit = 12G
+kernel_mem_limit_services = kv
+enable_cpu_cores = false
+
+[bucket]
+eviction_policy = fullEviction
+
+[load]
+items = 250000000
+size = 1024
+workers = 100
+key_fmtr = hex
+doc_gen = large
+
+[extra_access]
+updates = 100
+creates = 0
+deletes = 0
+reads = 0
+workers = 128
+items = 250000000
+ops = 250000000
+time = 86400
+throughput = 999999999
+requestdistribution = uniform
+power_alpha = 0
+zipf_alpha = 0
+durability = 0
+async = 0
+
+[access]
+creates = 0
+reads = 10
+updates = 90
+deletes = 0
+items = 250000000
+workers = 60
+throughput = 20000
+power_alpha = 10
+time = 3600

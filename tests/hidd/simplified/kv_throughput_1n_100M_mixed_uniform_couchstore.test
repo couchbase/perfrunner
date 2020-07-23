@@ -1,0 +1,56 @@
+[test_case]
+test = perfrunner.tests.magma.SingleNodeThroughputDGMMagmaTest
+
+[showfast]
+title = Throughput, 1 nodes, 100M x 1KB, 50/50 R/W, Uniform distribution, Couchstore
+component = hidd
+category = single
+
+[cluster]
+mem_quota = 20480
+initial_nodes = 1
+num_buckets = 1
+kernel_mem_limit = 25G
+kernel_mem_limit_services = kv
+enable_cpu_cores = false
+
+[bucket]
+eviction_policy = fullEviction
+replica_number = 0
+
+[bucket_extras]
+num_reader_threads = 64
+num_writer_threads = 64
+
+[load]
+items = 100000000
+size = 1024
+workers = 128
+key_fmtr = hex
+doc_gen = large
+
+[extra_access]
+updates = 100
+creates = 0
+deletes = 0
+reads = 0
+workers = 128
+items = 100000000
+ops = 100000000
+time = 86400
+throughput = 999999999
+requestdistribution = uniform
+power_alpha = 0
+zipf_alpha = 0
+durability = 0
+async = 0
+
+[access]
+creates = 0
+reads = 50
+updates = 50
+deletes = 0
+items = 100000000
+workers = 512
+time = 3600
+requestdistribution = uniform

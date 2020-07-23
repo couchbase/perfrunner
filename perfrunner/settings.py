@@ -1070,6 +1070,11 @@ class AccessSettings(PhaseSettings):
         self.n1ql_queries = queries
 
 
+class ExtraAccessSettings(PhaseSettings):
+
+    OPS = float('inf')
+
+
 class BackupSettings:
 
     COMPRESSION = False
@@ -1515,6 +1520,45 @@ class TestConfig(Config):
         access.bucket_list = self.buckets
 
         return access
+
+    @property
+    def extra_access_settings(self) -> ExtraAccessSettings:
+        options = self._get_options_as_dict('extra_access')
+        extra_access = ExtraAccessSettings(options)
+
+        java_dcp_options = self._get_options_as_dict('java_dcp')
+        java_dcp_settings = JavaDCPSettings(java_dcp_options)
+        extra_access.java_dcp_config = java_dcp_settings.config
+        extra_access.java_dcp_clients = java_dcp_settings.clients
+        extra_access.java_dcp_stream = java_dcp_settings.stream
+
+        client_options = self._get_options_as_dict('clients')
+        client_settings = ClientSettings(client_options)
+        if hasattr(client_settings, "pillowfight"):
+            extra_access.custom_pillowfight = True
+
+        user_options = self._get_options_as_dict('users')
+        user_settings = UserSettings(user_options)
+        extra_access.users = user_settings.num_users_per_bucket
+
+        collection_options = self._get_options_as_dict('collection')
+        collection_settings = CollectionSettings(collection_options)
+        if collection_settings.collection_map is not None:
+            extra_access.collections = collection_settings.collection_map
+
+        load_settings = self.load_settings
+        extra_access.doc_gen = load_settings.doc_gen
+        extra_access.range_distance = load_settings.range_distance
+        extra_access.array_size = load_settings.array_size
+        extra_access.num_categories = load_settings.num_categories
+        extra_access.num_replies = load_settings.num_replies
+        extra_access.size = load_settings.size
+        extra_access.key_fmtr = load_settings.key_fmtr
+        extra_access.field_count = load_settings.field_count
+        extra_access.field_length = load_settings.field_length
+        extra_access.bucket_list = self.buckets
+
+        return extra_access
 
     @property
     def rebalance_settings(self) -> RebalanceSettings:

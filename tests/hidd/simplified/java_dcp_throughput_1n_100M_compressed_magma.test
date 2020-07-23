@@ -10,9 +10,11 @@ category = single
 client_processes = java
 
 [cluster]
-mem_quota = 16384
+mem_quota = 20480
 initial_nodes = 1
 num_buckets = 1
+kernel_mem_limit = 25G
+kernel_mem_limit_services = kv
 enable_cpu_cores = false
 
 [bucket]
@@ -23,7 +25,6 @@ backend_storage = magma
 [bucket_extras]
 num_reader_threads = 64
 num_writer_threads = 64
-backend = magma;magma_enable_direct_io=true
 
 [load]
 items = 100000000

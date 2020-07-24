@@ -170,11 +170,14 @@ class Monitor(RestHelper):
         logger.info('Monitoring SGReplicate items:')
         initial_items, start_time = self._wait_for_sg_replicate_start(host, replicate_id, version)
         items_in_range = expected_docs - initial_items
-        time_taken = self._wait_for_sg_replicate_complete(host,
-                                                          expected_docs,
-                                                          start_time,
-                                                          replicate_id,
-                                                          version)
+        time_taken, final_items = self._wait_for_sg_replicate_complete(host,
+                                                                       expected_docs,
+                                                                       start_time,
+                                                                       replicate_id,
+                                                                       version)
+
+        if replicate_id == 'sgr2_conflict_resolution':
+            items_in_range = final_items - initial_items
         return time_taken, items_in_range
 
     def _wait_for_sg_replicate_start(self, host: str, replicate_id: str, version: int):
@@ -186,7 +189,13 @@ class Monitor(RestHelper):
                                                version=version)
             for stat in stats:
                 if stat['replication_id'] == replicate_id:
-                    replicate_docs = int(stat['docs_read']) + int(stat['docs_written'])
+                    if replicate_id == 'sgr1_pull' or replicate_id == 'sgr2_pull':
+                        replicate_docs = int(stat['docs_read'])
+                    elif replicate_id == 'sgr2_pushAndPull' or \
+                            replicate_id == 'sgr2_conflict_resolution':
+                        replicate_docs = int(stat['docs_read']) + int(stat['docs_written'])
+                    elif replicate_id == 'sgr1_push' or replicate_id == 'sgr2_push':
+                        replicate_docs = int(stat['docs_written'])
                     break
 
                 if replicate_id == 'sgr1_pushAndPull':
@@ -212,11 +221,12 @@ class Monitor(RestHelper):
                                                version=version)
             for stat in stats:
                 if stat['replication_id'] == replicate_id:
-                    if replicate_id == 'sgr2_pull' or replicate_id == 'sgr2_conflict_resolution':
+                    if replicate_id == 'sgr1_pull' or replicate_id == 'sgr2_pull':
                         replicate_docs = int(stat['docs_read'])
-                    elif replicate_id == 'sgr2_pushAndPull':
+                    elif replicate_id == 'sgr2_pushAndPull' or \
+                            replicate_id == 'sgr2_conflict_resolution':
                         replicate_docs = int(stat['docs_read']) + int(stat['docs_written'])
-                    else:
+                    elif replicate_id == 'sgr1_push' or replicate_id == 'sgr2_push':
                         replicate_docs = int(stat['docs_written'])
                     break
 
@@ -227,10 +237,23 @@ class Monitor(RestHelper):
                         replicate_docs += int(stat['docs_read'])
 
             logger.info('Docs replicated: {}'.format(replicate_docs))
-            if replicate_docs >= expected_docs:
-                end_time = time.time()
-                time_taken = end_time - start_time
-                return time_taken
+            if replicate_id == 'sgr2_conflict_resolution':
+                sg_stats = self.get_sg_stats(host=host)
+                sgr_stats = sg_stats['syncgateway']['per_db']['db']['replications'][replicate_id]
+                local_count = int(sgr_stats['sgr_conflict_resolved_local_count'])
+                remote_count = int(sgr_stats['sgr_conflict_resolved_remote_count'])
+                merge_count = int(sgr_stats['sgr_conflict_resolved_merge_count'])
+                num_docs_pushed = int(sgr_stats['sgr_num_docs_pushed'])
+                if ((local_count + remote_count + merge_count) == int(expected_docs/2)) \
+                        and (local_count == num_docs_pushed):
+                    end_time = time.time()
+                    time_taken = end_time - start_time
+                    return time_taken, replicate_docs
+            else:
+                if replicate_docs >= expected_docs:
+                    end_time = time.time()
+                    time_taken = end_time - start_time
+                    return time_taken, replicate_docs
 
             time.sleep(self.POLLING_INTERVAL)
 

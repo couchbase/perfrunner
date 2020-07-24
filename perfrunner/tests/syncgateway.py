@@ -697,6 +697,16 @@ class SGReplicateThroughputConflictResolutionTest2(SGReplicateThroughputTest2):
 
         self.rest.start_sg_replication2(sg1_master, data)
 
+    @with_stats
+    @with_profiles
+    def monitor_sg_replicate(self, replication_id, sg_master):
+        expected_docs = self.test_config.load_settings.items * 2
+        time_elapsed, items_in_range = self.monitor.monitor_sgreplicate(sg_master,
+                                                                        expected_docs,
+                                                                        replication_id,
+                                                                        2)
+        return time_elapsed, items_in_range
+
     def run(self):
         masters = self.cluster_spec.masters
         sg1_master = next(masters)

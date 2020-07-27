@@ -35,7 +35,9 @@ def buildTestsSGReplicate(tests) {
             string(name: 'cb_build', value: test['cb_build']),
             string(name: 'test_config', value: test['test_config']),
             string(name: 'sg1_config', value: test['sg1_config']),
-            string(name: 'sg2_config', value: test['sg2_config'])
+            string(name: 'sg2_config', value: test['sg2_config']),
+            string(name: 'load_config1', value: test['load_config1']),
+            string(name: 'load_config2', value: test['load_config2'])
         ]
     }
 }

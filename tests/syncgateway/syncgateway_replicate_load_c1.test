@@ -1,11 +1,11 @@
 [test_case]
 test = perfrunner.tests.syncgateway.SGReplicateLoad
-title = SG Replicate Load, 1 SG node, 3 CB nodes, 1 Channel, 200K docs, 1K docsize
+title = SG Replicate Load, 1 SG node, 1 CB node, 1 Channel, 200K docs, 1K docsize
 
 [cluster]
 mem_quota = 25000
 index_mem_quota = 25000
-initial_nodes = 3 3
+initial_nodes = 1 1
 num_buckets = 1
 
 [load]

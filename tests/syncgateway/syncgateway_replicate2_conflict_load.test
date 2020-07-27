@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.syncgateway.SGReplicateLoad
-title = Avg Throughput (items/sec), SG Replicate 2.0 Bidirectional, 1 SG node, 3 CB nodes, 1 Channel, 200K docs, 1K docsize, Conflict Resolution Default
+title = Avg Throughput (items/sec), SG Replicate 2.0 Bidirectional, 1 SG node, 1 CB node, 1 Channel, 200K docs, 1K docsize, Conflict Resolution Default
 component = syncgateway
 category = sgreplicate
 sub_category = Bidirectional
@@ -8,7 +8,7 @@ sub_category = Bidirectional
 [cluster]
 mem_quota = 25000
 index_mem_quota = 25000
-initial_nodes = 3 3
+initial_nodes = 1 1
 num_buckets = 1
 
 [load]

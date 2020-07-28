@@ -855,3 +855,18 @@ def read_aws_credential(credential_path: str):
     cmd = 'rm {}/aws_credential'.format(credential_path)
     local(cmd)
     return credential
+
+
+def cbepctl(master_node: str, cluster_spec: ClusterSpec, bucket: str,
+            option: str, value: int):
+    flags = ['{}:11209'.format(master_node),
+             '-u {}'.format(cluster_spec.rest_credentials[0]),
+             '-p {}'.format(cluster_spec.rest_credentials[1]),
+             '-b {}'.format(bucket),
+             'set flush_param {} {}'.format(option, value)]
+
+    cmd = './opt/couchbase/bin/cbepctl {}'.format(
+        ' '.join(flags))
+
+    logger.info('Running: {}'.format(cmd))
+    local(cmd)

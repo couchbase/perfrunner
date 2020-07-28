@@ -446,6 +446,9 @@ class PhaseSettings:
 
     PHASE = 0
 
+    MEM_LOW_WAT = 0
+    MEM_HIGH_WAT = 0
+
     WORKING_SET = 100
     WORKING_SET_ACCESS = 100
     WORKING_SET_MOVE_TIME = 0
@@ -559,6 +562,9 @@ class PhaseSettings:
         self.items = int(options.get('items', self.ITEMS))
 
         self.phase = int(options.get('phase', self.PHASE))
+
+        self.mem_low_wat = int(options.get('mem_low_wat', self.MEM_LOW_WAT))
+        self.mem_high_wat = int(options.get('mem_high_wat', self.MEM_HIGH_WAT))
 
         self.creates = int(options.get('creates', self.CREATES))
         self.reads = int(options.get('reads', self.READS))

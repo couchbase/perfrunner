@@ -10,7 +10,7 @@ category = single
 mem_quota = 20480
 initial_nodes = 1
 num_buckets = 1
-kernel_mem_limit = 25G
+kernel_mem_limit = 30G
 kernel_mem_limit_services = kv
 enable_cpu_cores = false
 
@@ -21,6 +21,7 @@ replica_number = 0
 [bucket_extras]
 num_reader_threads = 64
 num_writer_threads = 64
+backend = couchdb;cursor_dropping_checkpoint_mem_upper_mark=100
 
 [load]
 items = 100000000
@@ -28,6 +29,8 @@ size = 1024
 workers = 128
 key_fmtr = hex
 doc_gen = large
+mem_low_wat = 134217728
+mem_high_wat = 268435456
 
 [hot_load]
 items = 100000000

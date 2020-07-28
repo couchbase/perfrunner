@@ -446,6 +446,22 @@ class SingleNodeThroughputDGMMagmaTest(ThroughputDGMMagmaTest):
         self.COLLECTORS["latency"] = True
         self.COLLECTORS["vmstat"] = True
 
+        local.cbepctl(
+            master_node=self.master_node,
+            cluster_spec=self.cluster_spec,
+            bucket=self.test_config.buckets[0],
+            option="mem_low_wat",
+            value=self.test_config.load_settings.mem_low_wat
+        )
+
+        local.cbepctl(
+            master_node=self.master_node,
+            cluster_spec=self.cluster_spec,
+            bucket=self.test_config.buckets[0],
+            option="mem_high_wat",
+            value=self.test_config.load_settings.mem_high_wat
+        )
+
         self.hot_load()
         self.reset_kv_stats()
 

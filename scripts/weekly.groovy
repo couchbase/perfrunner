@@ -81,13 +81,13 @@ pipeline {
                     }
                 }
                 stage('KV-Hercules') {
-                    when { expression { return params.Hercules } }
+                    when { expression { return params.KV_Hercules } }
                     steps {
                         buildComponent('KV-Hercules', testCases)
                     }
                 }
                 stage('KV-Athena') {
-                    when { expression { return params.Athena } }
+                    when { expression { return params.KV_Athena } }
                     steps {
                         buildComponent('KV-Athena', testCases)
                     }

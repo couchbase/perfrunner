@@ -79,7 +79,7 @@ class MagmaBenchmarkTest(PerfTest):
         return \
             stats["writer"]["Throughput"], \
             stats["WriteAmp"], stats["SpaceAmp"], \
-            stats["writer"]["Latency(us)"]["p99.99"]
+            stats["writer"]["Latency"]["p99.99"]
 
     def read(self):
         cmd = self.create_command()
@@ -89,7 +89,7 @@ class MagmaBenchmarkTest(PerfTest):
             stats["reader"]["Throughput"], \
             stats["ReadIOAmp"], \
             stats["BytesPerRead"], \
-            stats["reader"]["Latency(us)"]["p99.99"]
+            stats["reader"]["Latency"]["p99.99"]
 
     def update(self):
         cmd = self.create_command(write_multiplier=self.settings.write_multiplier)
@@ -98,7 +98,7 @@ class MagmaBenchmarkTest(PerfTest):
         return \
             stats["writer"]["Throughput"], \
             stats["WriteAmp"], stats["SpaceAmp"], \
-            stats["writer"]["Latency(us)"]["p99.99"]
+            stats["writer"]["Latency"]["p99.99"]
 
     def delete(self):
         cmd = self.create_command()
@@ -107,7 +107,7 @@ class MagmaBenchmarkTest(PerfTest):
         return \
             stats["writer"]["Throughput"], \
             stats["DiskUsed"], \
-            stats["writer"]["Latency(us)"]["p99.99"]
+            stats["writer"]["Latency"]["p99.99"]
 
     def _report_kpi(self, create_metrics, read_metrics, write_metrics, delete_metrics):
         self.reporter.post(

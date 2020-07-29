@@ -16,6 +16,10 @@ CMD = " -test_duration {test_duration}" \
       " -test_query_field {test_query_field}" \
       " -test_mutation_field {test_mutation_field}" \
       " -test_worker_type {test_worker_type}" \
+      " -test_geo_polygon_coord_list {test_geo_polygon_coord_list}"\
+      " -test_query_lon_width {test_query_lon_width}"\
+      " -test_query_lat_height {test_query_lat_height}"\
+      " -test_geo_distance {test_geo_distance}"\
       " -couchbase_index_name {couchbase_index_name}" \
       " -couchbase_cluster_ip {couchbase_cluster_ip}" \
       " -couchbase_bucket {couchbase_bucket}" \
@@ -42,6 +46,10 @@ def jts_run(workload_settings: PhaseSettings, target: TargetSettings,
                         test_query_field=settings.test_query_field,
                         test_mutation_field=settings.test_mutation_field,
                         test_worker_type=settings.test_worker_type,
+                        test_geo_polygon_coord_list=settings.test_geo_polygon_coord_list,
+                        test_query_lon_width=settings.test_query_lon_width,
+                        test_query_lat_height=settings.test_query_lat_height,
+                        test_geo_distance=settings.test_geo_distance,
                         couchbase_index_name=settings.couchbase_index_name,
                         couchbase_cluster_ip=target.node,
                         couchbase_bucket=target.bucket,
@@ -69,6 +77,10 @@ def jts_warmup(workload_settings: PhaseSettings, target: TargetSettings,
                         test_query_field=settings.test_query_field,
                         test_mutation_field=settings.test_mutation_field,
                         test_worker_type="warmup",
+                        test_geo_polygon_coord_list=settings.test_geo_polygon_coord_list,
+                        test_query_lon_width=settings.test_query_lon_width,
+                        test_query_lat_height=settings.test_query_lat_height,
+                        test_geo_distance=settings.test_geo_distance,
                         couchbase_index_name=settings.couchbase_index_name,
                         couchbase_cluster_ip=target.node,
                         couchbase_bucket=target.bucket,

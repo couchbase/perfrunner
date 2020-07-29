@@ -793,6 +793,11 @@ class JTSAccessSettings(PhaseSettings):
         self.time = options.get('test_duration', "600")
         self.warmup_query_workers = options.get("warmup_query_workers", "0")
         self.warmup_time = options.get('warmup_time', "0")
+        # Geo Queries parameters
+        self.test_geo_polygon_coord_list = options.get("test_geo_polygon_coord_list", "")
+        self.test_query_lon_width = options.get("test_query_lon_width", "2")
+        self.test_query_lat_height = options.get("test_query_lat_height", "2")
+        self.test_geo_distance = options.get("test_geo_distance", "5mi")
 
     def __str__(self) -> str:
         return str(self.__dict__)

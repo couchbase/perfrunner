@@ -1,0 +1,76 @@
+{
+  "type": "fulltext-index",
+  "name": "",
+  "uuid": "",
+  "sourceType": "couchbase",
+  "sourceName": "",
+  "sourceUUID": "",
+  "planParams": {
+    "maxPartitionsPerPIndex": 171,
+    "indexPartitions": 6
+  },
+  "params": {
+    "doc_config": {
+      "docid_prefix_delim": "",
+      "docid_regexp": "",
+      "mode": "type_field",
+      "type_field": "table_name"
+    },
+    "mapping": {
+      "analysis": {},
+      "default_analyzer": "standard",
+      "default_datetime_parser": "dateTimeOptional",
+      "default_field": "_all",
+      "default_mapping": {
+        "dynamic": true,
+        "enabled": false,
+        "properties": {
+          "cc_geo": {
+            "dynamic": false,
+            "enabled": true,
+            "fields": [
+              {
+                "docvalues": true,
+                "include_in_all": true,
+                "include_term_vectors": true,
+                "index": true,
+                "name": "cc_geo",
+                "store": true,
+                "type": "geopoint"
+              }
+            ]
+          }
+        }
+      },
+      "default_type": "_default",
+      "docvalues_dynamic": true,
+      "index_dynamic": true,
+      "store_dynamic": false,
+      "type_field": "_type",
+      "types": {
+        "call_center": {
+          "dynamic": false,
+          "enabled": true,
+          "properties": {
+            "cc_geo": {
+              "dynamic": false,
+              "enabled": true,
+              "fields": [
+                {
+                  "docvalues": true,
+                  "include_term_vectors": true,
+                  "index": true,
+                  "name": "cc_geo",
+                  "type": "geopoint"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "store": {
+      "indexType": "scorch"
+    }
+  }
+}

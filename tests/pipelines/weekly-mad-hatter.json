@@ -13,7 +13,19 @@
         {"job": "themis", "cluster": "themis_eventing_rebalance.spec", "test_config": "curl/throughput50M_fun_curl_https_json_eventing_rebalance.test"},
         {"job": "themis", "cluster": "themis.spec", "test_config": "phase_change_time100M_bktop.test"}
     ],
-    "FTS": [],
+    "FTS": [
+        {"job": "atlas-sdk", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/jts_fts_latency_3node_1M_geo_bbox_25diag.test"},
+        {"job": "atlas-sdk", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/jts_fts_latency_3node_1M_geo_polygon_3pts.test"},
+        {"job": "atlas-sdk", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/jts_fts_latency_3node_1M_geo_radius_100mi.test"},
+        {"job": "atlas-sdk", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/jts_fts_latency_3node_1M_geo_radius_10mi.test"},
+        {"job": "atlas-sdk", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/jts_fts_latency_3node_1M_geo_radius_50mi.test"},
+        {"job": "atlas-sdk", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/jts_fts_throughput_3node_1M_geo_bbox_25diag.test"},
+        {"job": "atlas-sdk", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/jts_fts_throughput_3node_1M_geo_polygon_3pts.test"},
+        {"job": "atlas-sdk", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/jts_fts_throughput_3node_1M_geo_radius_100mi.test"},
+        {"job": "atlas-sdk", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/jts_fts_throughput_3node_1M_geo_radius_10mi.test"},
+        {"job": "atlas-sdk", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/jts_fts_throughput_3node_1M_geo_radius_50mi.test"}
+    ],
+
     "GSI": [
         {"job": "secondary-moi",    "cluster": "nyx.spec", "test_config": "new_moi/secondary_scan_moi.test"},
         {"job": "secondary-moi",    "cluster": "nyx.spec", "test_config": "new_moi/secondary_1M_multiple_moi.test"},

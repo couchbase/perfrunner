@@ -1,0 +1,44 @@
+[test_case]
+test = perfrunner.tests.fts.FTSThroughputTest
+
+[showfast]
+title = Geo Query Polygon,Points = 3 , 10K KV w/sec, wiki 1M x 1KB, 3 node, FTS
+component = jts
+category = Geo
+sub_category = Throughput
+orderby = q0b00000010
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 3
+num_buckets = 1
+fts_index_mem_quota = 20000
+
+[jts]
+jts_instances = 6
+test_duration = 600
+test_total_docs = 1000000
+test_query_workers = 10
+test_kv_workers = 5
+test_kv_throughput_goal = 1660
+test_data_file = ../tests/fts/data/benchmark/geo_polygon_3pts.txt
+test_driver = couchbase
+test_stats_limit = 1000000
+test_stats_aggregation_step = 100
+test_debug = false
+test_query_type = geo_box
+test_query_lat_height = 3
+test_query_lon_width = 4
+test_query_limit = 10
+test_query_field = cc_geo
+test_mutation_field = cc_mkt_desc
+test_worker_type = validatedThroughput
+couchbase_index_name = perf_fts_index
+couchbase_index_configfile = tests/fts/index/fts_geo.json
+
+[restore]
+backup_storage =  /fts/backup
+backup_repo =  fts_geo
+
+[profiling]
+services = fts

@@ -2,7 +2,7 @@
 test = perfrunner.tests.ycsb.YCSBLatencyTest
 
 [showfast]
-title = Latency(ms), Workload CA, 3 nodes, 12 vCPU, 10K ops/sec, uniform distribution, s=1 c=1000
+title = Latency(ms), Workload CA, 3 nodes, 12 vCPU, 60K ops/sec, uniform distribution, s=1 c=1000
 component = kv
 category = ycsb
 sub_category = ycsb3

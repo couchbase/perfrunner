@@ -561,7 +561,8 @@ class InitialIncrementalMovingScanThroughputTest(InitialIncrementalScanThroughpu
         while t < self.scan_time:
             self.change_scan_range(t)
             run_cbindexperf(path_to_tool, self.index_nodes[0], rest_username,
-                            rest_password, self.configfile, run_in_background=True)
+                            rest_password, self.configfile, run_in_background=True,
+                            collect_profile=False)
             time.sleep(self.test_config.access_settings.working_set_move_time)
             kill_process("cbindexperf")
             self.scan_thr.append(self.get_throughput())
@@ -619,7 +620,8 @@ class SecondaryIndexingScanLatencyLongevityTest(SecondaryIndexingScanLatencyTest
         t = 0
         while t < self.scan_time:
             run_cbindexperf(path_to_tool, self.index_nodes[0], rest_username,
-                            rest_password, self.configfile, run_in_background=True)
+                            rest_password, self.configfile, run_in_background=True,
+                            collect_profile=False)
             time.sleep(3600)
             kill_process("cbindexperf")
             t += 3600
@@ -780,7 +782,8 @@ class InitialIncrementalMovingScanLatencyTest(InitialIncrementalScanLatencyTest)
         while t < self.scan_time:
             self.change_scan_range(t)
             run_cbindexperf(path_to_tool, self.index_nodes[0], rest_username,
-                            rest_password, self.configfile, run_in_background=True)
+                            rest_password, self.configfile, run_in_background=True,
+                            collect_profile=False)
             time.sleep(self.test_config.access_settings.working_set_move_time)
             kill_process("cbindexperf")
             t += self.test_config.access_settings.working_set_move_time

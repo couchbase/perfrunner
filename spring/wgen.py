@@ -374,7 +374,6 @@ class KVWorker(Worker):
                 cmds += self.modify_args(cb, curr_items, deleted_items)
         return cmds
 
-    @with_sleep
     def do_batch(self, *args, **kwargs):
         if self.target_time is None:
             cmd_seq = self.gen_cmd_sequence()
@@ -733,6 +732,7 @@ class N1QLWorker(Worker):
             if self.delta > 0:
                 time.sleep(self.CORRECTION_FACTOR * self.delta)
 
+    @with_sleep
     def create(self):
         with self.lock:
             curr_items = self.curr_items.value
@@ -747,6 +747,7 @@ class N1QLWorker(Worker):
             latency = self.cb.n1ql_query(query)
             self.reservoir.update(operation='query', value=latency)
 
+    @with_sleep
     def update(self):
         with self.lock:
             curr_items = self.curr_items.value
@@ -760,7 +761,6 @@ class N1QLWorker(Worker):
             latency = self.cb.n1ql_query(query)
             self.reservoir.update(operation='query', value=latency)
 
-    @with_sleep
     def do_batch(self):
         if self.ws.n1ql_op == 'read':
             self.read()

@@ -324,6 +324,21 @@ class N1QLJoinTest(N1QLTest):
         super(N1QLTest, self).access(settings=access_settings,
                                      target_iterator=iterator)
 
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.create_indexes()
+        self.wait_for_indexing()
+
+        self.store_plans()
+
+        initial_nodes = self.test_config.cluster.initial_nodes
+        self.rebalance(initial_nodes[0])
+
+        if self.is_balanced():
+            self.report_kpi()
+
 
 class N1QLJoinThroughputTest(N1QLJoinTest, N1QLThroughputTest):
 

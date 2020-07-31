@@ -137,6 +137,13 @@ class SGPerfTest(PerfTest):
             server = self.cluster_spec.servers[_server]
             local.get_sg_logs(host=server, ssh_user=ssh_user, ssh_pass=ssh_pass)
 
+    def channel_list(self, number_of_channels: int):
+        channels = []
+        for number in range(1, number_of_channels + 1):
+            channel = "channel-" + str(number)
+            channels.append(channel)
+        return channels
+
     def run(self):
         self.remote.remove_sglogs()
         self.download_ycsb()
@@ -499,17 +506,21 @@ class SGReplicateThroughputTest1(SGPerfTest):
     def start_replication(self, sg1_master, sg2_master):
         sg1 = 'http://{}:4985/db'.format(sg1_master)
         sg2 = 'http://{}:4985/db'.format(sg2_master)
+
+        channels = self.channel_list(int(self.sg_settings.channels))
+
         data = {
             "replication_id": "sgr1_push",
             "source": sg1,
             "target": sg2,
             "filter": "sync_gateway/bychannel",
             "query_params": {
-                "channels": ["channel-1"]
+                "channels": channels
             },
             "continuous": True,
             "changes_feed_limit": 10000
         }
+
         if self.sg_settings.sg_replication_type == 'push':
             self.rest.start_sg_replication(sg1_master, data)
         elif self.sg_settings.sg_replication_type == 'pull':
@@ -547,13 +558,16 @@ class SGReplicateThroughputMultiChannelTest1(SGReplicateThroughputTest1):
     def start_replication(self, sg1_master, sg2_master):
         sg1 = 'http://{}:4985/db'.format(sg1_master)
         sg2 = 'http://{}:4985/db'.format(sg2_master)
+
+        channels = self.channel_list(int(self.sg_settings.channels))
+
         data = {
             "replication_id": "sgr1_push",
             "source": sg1,
             "target": sg2,
             "filter": "sync_gateway/bychannel",
             "query_params": {
-                "channels": ["channel-1", "channel-2", "channel-3"]
+                "channels": channels
             },
             "continuous": True,
             "changes_feed_limit": 10000
@@ -591,13 +605,16 @@ class SGReplicateThroughputTest2(SGPerfTest):
     def start_replication(self, sg1_master, sg2_master):
         sg1 = 'http://{}:4985/db'.format(sg1_master)
         sg2 = 'http://{}:4985/db'.format(sg2_master)
+
+        channels = self.channel_list(int(self.sg_settings.channels))
+
         data = {
             "replication_id": "sgr2_push",
             "remote": sg2,
             "direction": "push",
             "filter": "sync_gateway/bychannel",
             "query_params": {
-                "channels": ["channel-1"]
+                "channels": channels
             },
             "continuous": True
         }
@@ -640,13 +657,16 @@ class SGReplicateThroughputMultiChannelTest2(SGReplicateThroughputTest2):
     def start_replication(self, sg1_master, sg2_master):
         sg1 = 'http://{}:4985/db'.format(sg1_master)
         sg2 = 'http://{}:4985/db'.format(sg2_master)
+
+        channels = self.channel_list(int(self.sg_settings.channels))
+
         data = {
             "replication_id": "sgr2_push",
             "remote": sg2,
             "direction": "push",
             "filter": "sync_gateway/bychannel",
             "query_params": {
-                "channels": ["channel-1", "channel-2", "channel-3"]
+                "channels": channels
             },
             "continuous": True
         }
@@ -678,13 +698,16 @@ class SGReplicateThroughputConflictResolutionTest2(SGReplicateThroughputTest2):
 
     def start_replication(self, sg1_master, sg2_master):
         sg2 = 'http://{}:4985/db'.format(sg2_master)
+
+        channels = self.channel_list(int(self.sg_settings.channels))
+
         data = {
             "replication_id": "sgr2_conflict_resolution",
             "remote": sg2,
             "direction": "pushAndPull",
             "filter": "sync_gateway/bychannel",
             "query_params": {
-                "channels": ["channel-1"]
+                "channels": channels
             },
             "continuous": True,
             "conflict_resolution_type": "default",
@@ -731,13 +754,16 @@ class SGReplicateThroughputBidirectionalTest1(SGReplicateThroughputTest1):
     def start_replication(self, sg1_master, sg2_master):
         sg1 = 'http://{}:4985/db'.format(sg1_master)
         sg2 = 'http://{}:4985/db'.format(sg2_master)
+
+        channels = self.channel_list(int(self.sg_settings.channels))
+
         data = {
             "replication_id": "sgr1_push",
             "source": sg1,
             "target": sg2,
             "filter": "sync_gateway/bychannel",
             "query_params": {
-                "channels": ["channel-1"]
+                "channels": channels
             },
             "continuous": True,
             "changes_feed_limit": 10000
@@ -772,13 +798,16 @@ class SGReplicateThroughputBidirectionalTest2(SGReplicateThroughputTest2):
 
     def start_replication(self, sg1_master, sg2_master):
         sg2 = 'http://{}:4985/db'.format(sg2_master)
+
+        channels = self.channel_list(int(self.sg_settings.channels))
+
         data = {
             "replication_id": "sgr2_pushAndPull",
             "remote": sg2,
             "direction": "pushAndPull",
             "filter": "sync_gateway/bychannel",
             "query_params": {
-                "channels": ["channel-1"]
+                "channels": channels
             },
             "continuous": True
         }

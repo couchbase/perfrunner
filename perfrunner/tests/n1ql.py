@@ -333,11 +333,10 @@ class N1QLJoinTest(N1QLTest):
 
         self.store_plans()
 
-        initial_nodes = self.test_config.cluster.initial_nodes
-        self.rebalance(initial_nodes[0])
+        self.access_bg()
+        self.access()
 
-        if self.is_balanced():
-            self.report_kpi()
+        self.report_kpi()
 
 
 class N1QLJoinThroughputTest(N1QLJoinTest, N1QLThroughputTest):

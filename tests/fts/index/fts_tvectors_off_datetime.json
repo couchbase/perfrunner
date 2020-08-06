@@ -49,7 +49,6 @@
             "enabled": true,
             "fields": [
               {
-                "display_order": "0",
                 "include_in_all": true,
 		"docvalues": true,
                 "include_term_vectors": false,

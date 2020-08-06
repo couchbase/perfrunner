@@ -1098,6 +1098,7 @@ class BackupSettings:
     OBJ_STAGING_DIR = None
     OBJ_REGION = None
     AWS_CREDENTIAL_PATH = None
+    INCLUDE_DATA = None
 
     def __init__(self, options: dict):
         self.compression = int(options.get('compression', self.COMPRESSION))
@@ -1108,6 +1109,7 @@ class BackupSettings:
         self.obj_staging_dir = options.get('obj_staging_dir', self.OBJ_STAGING_DIR)
         self.obj_region = options.get('obj_region', self.OBJ_REGION)
         self.aws_credential_path = options.get('aws_credential_path', self.AWS_CREDENTIAL_PATH)
+        self.include_data = options.get('include_data', self.INCLUDE_DATA)
 
 
 class ExportSettings:
@@ -1124,6 +1126,9 @@ class ExportSettings:
     INFER_TYPES = False
     OMIT_EMPTY = False
     ERRORS_LOG = None  # error log file
+    COLLECTION_FIELD = None
+    SCOPE_FEILD = None
+    SCOPE_COLLECTION_EXP = None
 
     def __init__(self, options: dict):
         self.threads = options.get('threads', self.THREADS)
@@ -1140,6 +1145,9 @@ class ExportSettings:
         self.infer_types = int(options.get('infer_types', self.INFER_TYPES))
         self.omit_empty = int(options.get('omit_empty', self.OMIT_EMPTY))
         self.errors_log = options.get('errors_log', self.ERRORS_LOG)
+        self.collection_field = options.get('collection_field', self.COLLECTION_FIELD)
+        self.scope_field = options.get('scope_field', self.SCOPE_FEILD)
+        self.scope_collection_exp = options.get('scope_collection_exp', self.SCOPE_COLLECTION_EXP)
 
 
 class EventingSettings:

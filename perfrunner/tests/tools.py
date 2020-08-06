@@ -26,7 +26,8 @@ class BackupRestoreTest(PerfTest):
             compression=self.test_config.backup_settings.compression,
             storage_type=self.test_config.backup_settings.storage_type,
             sink_type=self.test_config.backup_settings.sink_type,
-            shards=self.test_config.backup_settings.shards
+            shards=self.test_config.backup_settings.shards,
+            include_data=self.test_config.backup_settings.include_data,
         )
 
     def compact(self):
@@ -52,7 +53,8 @@ class BackupRestoreTest(PerfTest):
         local.restore(cluster_spec=self.cluster_spec,
                       master_node=self.master_node,
                       threads=self.test_config.restore_settings.threads,
-                      wrapper=self.rest.is_community(self.master_node))
+                      wrapper=self.rest.is_community(self.master_node),
+                      include_data=self.test_config.backup_settings.include_data)
 
     def backup_list(self):
         snapshots = local.get_backup_snapshots(self.cluster_spec)
@@ -355,7 +357,6 @@ class RestoreTest(BackupRestoreTest):
 
     def run(self):
         super().run()
-
         self.backup()
 
         self.flush_buckets()
@@ -420,7 +421,9 @@ class ExportImportTest(BackupRestoreTest):
                        data_format=export_settings.format,
                        threads=export_settings.threads,
                        key_field=export_settings.key_field,
-                       log_file=export_settings.log_file)
+                       log_file=export_settings.log_file,
+                       collection_field=export_settings.collection_field,
+                       scope_field=export_settings.scope_field)
 
     def import_data(self):
         import_file = self.test_config.export_settings.import_file
@@ -447,7 +450,8 @@ class ExportImportTest(BackupRestoreTest):
                        infer_types=export_settings.infer_types,
                        omit_empty=export_settings.omit_empty,
                        errors_log=export_settings.errors_log,
-                       log_file=export_settings.log_file)
+                       log_file=export_settings.log_file,
+                       scope_collection_exp=export_settings.scope_collection_exp)
 
     def _report_kpi(self, time_elapsed: float):
         self.reporter.post(

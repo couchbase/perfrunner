@@ -166,7 +166,7 @@ class Monitor(RestHelper):
                                                          '']['import_count'])
         return import_count
 
-    def monitor_sgreplicate(self, host: str, expected_docs: int, replicate_id: str, version: int):
+    def monitor_sgreplicate(self, host, expected_docs, replicate_id, version):
         logger.info('Monitoring SGReplicate items:')
         initial_items, start_time = self._wait_for_sg_replicate_start(host, replicate_id, version)
         items_in_range = expected_docs - initial_items
@@ -180,29 +180,40 @@ class Monitor(RestHelper):
             items_in_range = final_items - initial_items
         return time_taken, items_in_range
 
-    def _wait_for_sg_replicate_start(self, host: str, replicate_id: str, version: int):
+    def _wait_for_sg_replicate_start(self, host, replicate_id, version):
         logger.info('Checking if replicate process started')
         logger.info('host: {}'.format(host))
         replicate_docs = 0
         while True:
-            stats = self.get_sgreplicate_stats(host=host,
-                                               version=version)
-            for stat in stats:
-                if stat['replication_id'] == replicate_id:
-                    if replicate_id == 'sgr1_pull' or replicate_id == 'sgr2_pull':
-                        replicate_docs = int(stat['docs_read'])
-                    elif replicate_id == 'sgr2_pushAndPull' or \
-                            replicate_id == 'sgr2_conflict_resolution':
-                        replicate_docs = int(stat['docs_read']) + int(stat['docs_written'])
-                    elif replicate_id == 'sgr1_push' or replicate_id == 'sgr2_push':
-                        replicate_docs = int(stat['docs_written'])
-                    break
+            if type(host) is list:
+                for sg in range(len(host)):
+                    stats = self.get_sgreplicate_stats(host=host[sg],
+                                                       version=version)
+                    for stat in stats:
+                        if stat['replication_id'] == replicate_id[sg]:
+                            if 'pull' in replicate_id[sg]:
+                                replicate_docs += int(stat['docs_read'])
+                            elif 'push' in replicate_id[sg]:
+                                replicate_docs += int(stat['docs_written'])
+            else:
+                stats = self.get_sgreplicate_stats(host=host,
+                                                   version=version)
+                for stat in stats:
+                    if stat['replication_id'] == replicate_id:
+                        if replicate_id == 'sgr1_pull' or replicate_id == 'sgr2_pull':
+                            replicate_docs = int(stat['docs_read'])
+                        elif replicate_id == 'sgr2_pushAndPull' or \
+                                replicate_id == 'sgr2_conflict_resolution':
+                            replicate_docs = int(stat['docs_read']) + int(stat['docs_written'])
+                        elif replicate_id == 'sgr1_push' or replicate_id == 'sgr2_push':
+                            replicate_docs = int(stat['docs_written'])
+                        break
 
-                if replicate_id == 'sgr1_pushAndPull':
-                    if stat['replication_id'] == 'sgr1_push':
-                        replicate_docs += int(stat['docs_written'])
-                    elif stat['replication_id'] == 'sgr1_pull':
-                        replicate_docs += int(stat['docs_read'])
+                    if replicate_id == 'sgr1_pushAndPull':
+                        if stat['replication_id'] == 'sgr1_push':
+                            replicate_docs += int(stat['docs_written'])
+                        elif stat['replication_id'] == 'sgr1_pull':
+                            replicate_docs += int(stat['docs_read'])
 
             if replicate_docs >= 1:
                 logger.info('replicating docs has started')
@@ -210,31 +221,42 @@ class Monitor(RestHelper):
 
             time.sleep(self.POLLING_INTERVAL)
 
-    def _wait_for_sg_replicate_complete(self, host: str, expected_docs: int, start_time,
-                                        replicate_id: str, version: int):
+    def _wait_for_sg_replicate_complete(self, host, expected_docs, start_time,
+                                        replicate_id, version):
         expected_docs = expected_docs
         start_time = start_time
         logger.info('Monitoring syncgateway replicate status :')
         while True:
             replicate_docs = 0
-            stats = self.get_sgreplicate_stats(host=host,
-                                               version=version)
-            for stat in stats:
-                if stat['replication_id'] == replicate_id:
-                    if replicate_id == 'sgr1_pull' or replicate_id == 'sgr2_pull':
-                        replicate_docs = int(stat['docs_read'])
-                    elif replicate_id == 'sgr2_pushAndPull' or \
-                            replicate_id == 'sgr2_conflict_resolution':
-                        replicate_docs = int(stat['docs_read']) + int(stat['docs_written'])
-                    elif replicate_id == 'sgr1_push' or replicate_id == 'sgr2_push':
-                        replicate_docs = int(stat['docs_written'])
-                    break
+            if type(host) is list:
+                for sg in range(len(host)):
+                    stats = self.get_sgreplicate_stats(host=host[sg],
+                                                       version=version)
+                    for stat in stats:
+                        if stat['replication_id'] == replicate_id[sg]:
+                            if 'pull' in replicate_id[sg]:
+                                replicate_docs += int(stat['docs_read'])
+                            elif 'push' in replicate_id[sg]:
+                                replicate_docs += int(stat['docs_written'])
+            else:
+                stats = self.get_sgreplicate_stats(host=host,
+                                                   version=version)
+                for stat in stats:
+                    if stat['replication_id'] == replicate_id:
+                        if replicate_id == 'sgr1_pull' or replicate_id == 'sgr2_pull':
+                            replicate_docs = int(stat['docs_read'])
+                        elif replicate_id == 'sgr2_pushAndPull' or \
+                                replicate_id == 'sgr2_conflict_resolution':
+                            replicate_docs = int(stat['docs_read']) + int(stat['docs_written'])
+                        elif replicate_id == 'sgr1_push' or replicate_id == 'sgr2_push':
+                            replicate_docs = int(stat['docs_written'])
+                        break
 
-                if replicate_id == 'sgr1_pushAndPull':
-                    if stat['replication_id'] == 'sgr1_push':
-                        replicate_docs += int(stat['docs_written'])
-                    elif stat['replication_id'] == 'sgr1_pull':
-                        replicate_docs += int(stat['docs_read'])
+                    if replicate_id == 'sgr1_pushAndPull':
+                        if stat['replication_id'] == 'sgr1_push':
+                            replicate_docs += int(stat['docs_written'])
+                        elif stat['replication_id'] == 'sgr1_pull':
+                            replicate_docs += int(stat['docs_read'])
 
             logger.info('Docs replicated: {}'.format(replicate_docs))
             if replicate_id == 'sgr2_conflict_resolution':

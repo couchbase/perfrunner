@@ -1,0 +1,49 @@
+[test_case]
+test = perfrunner.tests.fts.FTSThroughputTest
+
+[showfast]
+title = Flex, Mixed predicates type - 1, 10K KV w/sec, wiki 1M x 1KB, 3 node, FTS
+component = jts
+category = Flex
+sub_category = Throughput
+
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 3
+num_buckets = 1
+fts_index_mem_quota = 20000
+
+[compaction]
+db_percentage = 100
+
+[bucket]
+replica_number = 0
+
+[jts]
+jts_instances = 6
+test_duration = 600
+test_total_docs = 1000000
+test_query_workers = 5
+test_kv_workers = 5
+test_kv_throughput_goal = 1660
+test_data_file = ../tests/fts/data/benchmark/date.txt
+test_driver = couchbase
+test_stats_limit = 1000000
+test_stats_aggregation_step = 100
+test_debug = false
+test_flex = true
+test_query_limit = 10
+test_worker_type = validatedThroughput
+test_flex_query_type = mixed1
+couchbase_index_name = perf_fts_index
+test_query_field = email
+test_mutation_field = email
+couchbase_index_configfile = tests/fts/index/flex.json
+
+[restore]
+backup_storage =  /fts/backup
+backup_repo =  soe
+
+[profiling]
+services = fts

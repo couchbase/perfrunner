@@ -23,7 +23,13 @@
         {"job": "atlas-sdk", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/jts_fts_throughput_3node_1M_geo_polygon_3pts.test"},
         {"job": "atlas-sdk", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/jts_fts_throughput_3node_1M_geo_radius_100mi.test"},
         {"job": "atlas-sdk", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/jts_fts_throughput_3node_1M_geo_radius_10mi.test"},
-        {"job": "atlas-sdk", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/jts_fts_throughput_3node_1M_geo_radius_50mi.test"}
+        {"job": "atlas-sdk", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/jts_fts_throughput_3node_1M_geo_radius_50mi.test"},
+        {"job": "atlas-sdk", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/jts_fts_latency_3node_1M_flex.test"},
+        {"job": "atlas-sdk", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/jts_fts_latency_3node_1M_flex_mixed1.test"},
+        {"job": "atlas-sdk", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/jts_fts_latency_3node_1M_flex_mixed2.test"},
+        {"job": "atlas-sdk", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/jts_fts_throughput_3node_1M_flex.test"},
+        {"job": "atlas-sdk", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/jts_fts_throughput_3node_1M_flex_mixed1.test"},
+        {"job": "atlas-sdk", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/1M/jts_fts_throughput_3node_1M_flex_mixed2.test"}
     ],
 
     "GSI": [

@@ -798,6 +798,9 @@ class JTSAccessSettings(PhaseSettings):
         self.test_query_lon_width = options.get("test_query_lon_width", "2")
         self.test_query_lat_height = options.get("test_query_lat_height", "2")
         self.test_geo_distance = options.get("test_geo_distance", "5mi")
+        # Flex Queries parameters
+        self.test_flex = options.get("test_flex", 'false')
+        self.test_flex_query_type = options.get('test_flex_query_type', '')
 
     def __str__(self) -> str:
         return str(self.__dict__)

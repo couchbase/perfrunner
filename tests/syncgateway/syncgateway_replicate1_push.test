@@ -1,6 +1,6 @@
 [test_case]
 test = perfrunner.tests.syncgateway.SGReplicateThroughputTest1
-title = Avg Throughput (items/sec), SG Replicate 1.0 Push, 1 SG node, 1 CB node, 1 Channel, 200K docs, 1K docsize
+title = Avg Throughput (items/sec), SG Replicate 1.0 Push, 1 SG node, 1 CB node, 1 Channel, 600K docs, 1K docsize
 component = syncgateway
 category = sgreplicate
 sub_category = Push
@@ -12,7 +12,7 @@ initial_nodes = 1 1
 num_buckets = 1
 
 [load]
-items = 200000
+items = 600000
 size = 1024
 workers = 10
 doc_gen = json
@@ -24,7 +24,7 @@ creates = 1
 reads = 0
 updates = 0
 deletes = 0
-items = 200000
+items = 600000
 workers = 10
 worker_instances = 10
 doc_gen = json
@@ -46,7 +46,7 @@ users = 1000
 channels = 1
 channels_per_user = 1
 channels_per_doc = 1
-documents = 200000
+documents = 600000
 roundtrip_write = true
 read_mode = documents
 feed_reading_mode = idsonly

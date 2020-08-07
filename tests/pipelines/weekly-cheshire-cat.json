@@ -31,14 +31,23 @@
         {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/kv_latency_read_1B_magma_S1.test"},
         {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/kv_throughput_read_1B_magma_T1.test"},
         {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/kv_rebalance_out_1B_magma_R1.test"},
-        {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/java_dcp_throughput_4n_1B_compressed_magma_P1.test"}
+        {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/java_dcp_throughput_4n_1B_compressed_magma_P1.test"},
+        {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/simplified/kv_latency_250M_read_heavy_power.test"},
+        {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/simplified/kv_latency_250M_read_heavy_uniform.test"},
+        {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/simplified/kv_latency_250M_update_heavy_power.test"},
+        {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/simplified/kv_throughput_250M_read_only_uniform.test"},
+        {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/simplified/kv_throughput_250M_update_only_uniform.test"}
     ],
     "Magma2": [
         {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/kv_latency_write_1B_magma_S1.test"},
         {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/kv_throughput_write_1B_magma_T1.test"},
         {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/kv_latency_durability_persist_majority_1B_magma_D1.test"},
         {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/tools_backup_1B_sqlite_magma_B1.test"},
-        {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/kv_warmup_1B_magma_W1.test"}
+        {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/kv_warmup_1B_magma_W1.test"},
+        {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/simplified/kv_latency_250M_insert_heavy_power.test"},
+        {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/simplified/kv_latency_250M_mixed_power.test"},
+        {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/simplified/kv_latency_250M_mixed_uniform.test"},
+        {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/simplified/kv_throughput_250M_insert_only_uniform.test"}
     ],
     "MagmaNVME": [
         {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/java_dcp_throughput_1n_100M_compressed_magma.test"},

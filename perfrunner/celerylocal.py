@@ -1,3 +1,6 @@
-BROKER_URL = 'sqla+sqlite:///perfrunner.db'
-CELERY_RESULT_BACKEND = 'database'
-CELERY_RESULT_DBURI = 'sqlite:///results.db'
+broker_url = 'sqla+sqlite:///perfrunner.db'
+result_backend = 'database'
+database_url = 'sqlite:///results.db'
+task_serializer = 'pickle'
+result_serializer = 'pickle'
+accept_content = {'pickle'}

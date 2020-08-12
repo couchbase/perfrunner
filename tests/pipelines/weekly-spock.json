@@ -27,6 +27,7 @@
         {"job": "secondary-plasma-dgm", "cluster": "nyx.spec", "test_config": "plasma/secondary_500M_initial_only_20res.test"},
         {"job": "secondary-plasma-dgm", "cluster": "nyx.spec", "test_config": "plasma/secondary_500M_initial_only_50res.test"},
         {"job": "secondary-plasma-dgm", "cluster": "nyx.spec", "test_config": "plasma/secondary_500M_initial_only_80res.test"},
+        {"job": "secondary-plasma-dgm", "cluster": "nyx.spec", "test_config": "plasma/secondary_2B_initial_only_50res.test"},
         {"job": "secondary-plasma-dgm", "cluster": "nyx.spec", "test_config": "plasma/secondary_scanthr_250M_20res_20kops.test"},
         {"job": "secondary-plasma-dgm", "cluster": "nyx.spec", "test_config": "plasma/secondary_scanthr_250M_50res_50kops.test"},
         {"job": "secondary-plasma-dgm", "cluster": "nyx.spec", "test_config": "plasma/secondary_scanthr_250M_50res_50kops_random.test"},

@@ -171,6 +171,7 @@ class PerfTest:
             threads=self.test_config.restore_settings.threads,
             archive=self.test_config.restore_settings.backup_storage,
             repo=self.test_config.restore_settings.backup_repo,
+            include_data=self.test_config.backup_settings.include_data
         )
 
     def import_data(self):

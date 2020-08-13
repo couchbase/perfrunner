@@ -2,7 +2,7 @@
 test = perfrunner.tests.n1ql.N1QLThroughputTest
 
 [showfast]
-title = UP3, Key-Value Update, s=1 c=1
+title = UP3, Key-Value Update, s=1 c=1000
 component = n1ql
 category = iud
 
@@ -41,5 +41,4 @@ args = ["{key}"]
 
 [clients]
 libcouchbase = 3.0.2
-python_client = git+https://github.com/couchbase/couchbase-python-client@a193cbdc7763aa3fa563bd8d139091a4c220a240
-
+python_client = 3.0.4

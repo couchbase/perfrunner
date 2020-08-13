@@ -2,10 +2,9 @@
 test = perfrunner.tests.n1ql.N1QLThroughputTest
 
 [showfast]
-title = Q2, Singleton Unique Lookup, Plasma, not_bounded, s=1 c=1 i=1
+title = Q7, Order By Query, MOI, request_plus, s=1 c=1 i=1
 component = n1ql
-category = Q1_Q3
-sub_category = Plasma
+category = Q5_Q7
 
 [cluster]
 mem_quota = 20480
@@ -23,7 +22,7 @@ config = collections/1bucket_1scope_1collection_basic.json
 replica_number = 0
 
 [secondary]
-indexer.settings.storage_mode = plasma
+indexer.settings.storage_mode = memory_optimized
 
 [load]
 items = 20000000
@@ -32,7 +31,7 @@ workers = 80
 doc_gen = reverse_lookup
 
 [index]
-fields = email
+fields = capped_small
 indexes_per_collection = 1
 
 [access]
@@ -44,15 +43,14 @@ throughput = 30000
 items = 20000000
 workers = 20
 time = 1200
-n1ql_queries = singleton-unique-lookup
-n1ql_workers = 240
+n1ql_queries = order-by-query
+n1ql_workers = 720
 
-[n1ql-singleton-unique-lookup]
-statement = SELECT * FROM `bucket-1` WHERE email = $1;
-scan_consistency = not_bounded
-args = ["{email}"]
+[n1ql-order-by-query]
+statement = SELECT name AS _name, street AS _street FROM `bucket-1` WHERE capped_small=$1 ORDER BY name;
+scan_consistency = request_plus
+args = ["{capped_small}"]
 
 [clients]
 libcouchbase = 3.0.2
-python_client = git+https://github.com/couchbase/couchbase-python-client@a193cbdc7763aa3fa563bd8d139091a4c220a240
-
+python_client = 3.0.4

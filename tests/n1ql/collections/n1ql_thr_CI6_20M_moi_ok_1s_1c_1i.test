@@ -1,11 +1,10 @@
 [test_case]
-test = perfrunner.tests.n1ql.N1QLLatencyTest
+test = perfrunner.tests.n1ql.N1QLThroughputTest
 
 [showfast]
-title = Q2, Singleton Unique Lookup, 8K queries/sec, MOI, not_bounded, s=1 c=1 i=1
+title = CI6, Group By Query (1K matches), MOI, not_bounded, s=1 c=1 i=1
 component = n1ql
-category = Q1_Q3
-sub_category = MOI
+category = Q5_Q7
 
 [cluster]
 mem_quota = 20480
@@ -29,11 +28,13 @@ indexer.settings.storage_mode = memory_optimized
 items = 20000000
 size = 1024
 workers = 80
-doc_gen = reverse_lookup
+doc_gen = reverse_range_lookup
+range_distance = 10
 
 [index]
-fields = email
+fields = capped_small,year,coins
 indexes_per_collection = 1
+top_down = True
 
 [access]
 creates = 0
@@ -44,16 +45,14 @@ throughput = 30000
 items = 20000000
 workers = 20
 time = 1200
-n1ql_queries = singleton-unique-lookup
-n1ql_throughput = 8000
-n1ql_workers = 240
+n1ql_queries = aggregation-query
+n1ql_workers = 480
 
-[n1ql-singleton-unique-lookup]
-statement = SELECT * FROM `bucket-1` WHERE email = $1;
+[n1ql-aggregation-query]
+statement = SELECT year, SUM(coins) AS coins FROM `bucket-1` WHERE capped_small > $1 AND capped_small < $2 GROUP BY year;
 scan_consistency = not_bounded
-args = ["{email}"]
+args = ["{capped_small}","{capped_small_range}"]
 
 [clients]
 libcouchbase = 3.0.2
-python_client = git+https://github.com/couchbase/couchbase-python-client@a193cbdc7763aa3fa563bd8d139091a4c220a240
-
+python_client = 3.0.4

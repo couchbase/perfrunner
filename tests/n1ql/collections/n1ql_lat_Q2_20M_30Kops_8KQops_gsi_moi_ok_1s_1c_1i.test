@@ -1,10 +1,11 @@
 [test_case]
-test = perfrunner.tests.n1ql.N1QLThroughputTest
+test = perfrunner.tests.n1ql.N1QLLatencyTest
 
 [showfast]
-title = Q5, Aggregation Query, MOI, not_bounded, s=1 c=1 i=1
+title = Q2, Singleton Unique Lookup, 8K queries/sec, MOI, not_bounded, s=1 c=1 i=1
 component = n1ql
-category = Q5_Q7
+category = Q1_Q3
+sub_category = MOI
 
 [cluster]
 mem_quota = 20480
@@ -31,7 +32,7 @@ workers = 80
 doc_gen = reverse_lookup
 
 [index]
-fields = capped_small
+fields = email
 indexes_per_collection = 1
 
 [access]
@@ -43,15 +44,15 @@ throughput = 30000
 items = 20000000
 workers = 20
 time = 1200
-n1ql_queries = aggregation-query
+n1ql_queries = singleton-unique-lookup
+n1ql_throughput = 8000
 n1ql_workers = 240
 
-[n1ql-aggregation-query]
-statement = SELECT SUM(coins) FROM `bucket-1` WHERE capped_small=$1;
+[n1ql-singleton-unique-lookup]
+statement = SELECT * FROM `bucket-1` WHERE email = $1;
 scan_consistency = not_bounded
-args = ["{capped_small}"]
+args = ["{email}"]
 
 [clients]
 libcouchbase = 3.0.2
-python_client = git+https://github.com/couchbase/couchbase-python-client@a193cbdc7763aa3fa563bd8d139091a4c220a240
-
+python_client = 3.0.4

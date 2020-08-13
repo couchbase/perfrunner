@@ -2,9 +2,10 @@
 test = perfrunner.tests.n1ql.N1QLThroughputTest
 
 [showfast]
-title = CI6, Group By Query (1K matches), MOI, not_bounded, s=1 c=1 i=1
+title = Q3, Range Scan, MOI, not_bounded, s=1 c=1 i=1
 component = n1ql
-category = Q5_Q7
+category = Q1_Q3
+sub_category = MOI
 
 [cluster]
 mem_quota = 20480
@@ -28,13 +29,11 @@ indexer.settings.storage_mode = memory_optimized
 items = 20000000
 size = 1024
 workers = 80
-doc_gen = reverse_range_lookup
-range_distance = 10
+doc_gen = reverse_lookup
 
 [index]
-fields = capped_small,year,coins
+fields = capped_small
 indexes_per_collection = 1
-top_down = True
 
 [access]
 creates = 0
@@ -45,15 +44,14 @@ throughput = 30000
 items = 20000000
 workers = 20
 time = 1200
-n1ql_queries = aggregation-query
-n1ql_workers = 480
+n1ql_queries = range-scan
+n1ql_workers = 240
 
-[n1ql-aggregation-query]
-statement = SELECT year, SUM(coins) AS coins FROM `bucket-1` WHERE capped_small > $1 AND capped_small < $2 GROUP BY year;
+[n1ql-range-scan]
+statement = SELECT name AS _name, street AS _street FROM `bucket-1` WHERE capped_small=$1;
 scan_consistency = not_bounded
-args = ["{capped_small}","{capped_small_range}"]
+args = ["{capped_small}"]
 
 [clients]
 libcouchbase = 3.0.2
-python_client = git+https://github.com/couchbase/couchbase-python-client@a193cbdc7763aa3fa563bd8d139091a4c220a240
-
+python_client = 3.0.4

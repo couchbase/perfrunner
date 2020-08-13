@@ -2,9 +2,10 @@
 test = perfrunner.tests.n1ql.N1QLThroughputTest
 
 [showfast]
-title = Q2 Array Indexing, Covering, Singleton Unique Lookup, Plasma, not_bounded, s=1 c=1 i=1
+title = Q2, Singleton Unique Lookup, Plasma, not_bounded, s=1 c=1 i=1
 component = n1ql
-category = array
+category = Q1_Q3
+sub_category = Plasma
 
 [cluster]
 mem_quota = 20480
@@ -25,35 +26,32 @@ replica_number = 0
 indexer.settings.storage_mode = plasma
 
 [load]
-items = 200000
+items = 20000000
 size = 1024
 workers = 80
-array_size = 200
-doc_gen = array_indexing_unique
+doc_gen = reverse_lookup
 
 [index]
-fields = DISTINCT ARRAY i FOR i IN achievements1 END,achievements1
+fields = email
 indexes_per_collection = 1
-top_down = True
 
 [access]
 creates = 0
 reads = 0
 updates = 100
 deletes = 0
-throughput = 3000
-items = 200000
+throughput = 30000
+items = 20000000
 workers = 20
 time = 1200
 n1ql_queries = singleton-unique-lookup
-n1ql_workers = 720
+n1ql_workers = 240
 
 [n1ql-singleton-unique-lookup]
-statement = SELECT meta().id, achievements1 FROM `bucket-1` WHERE ANY i IN achievements1 SATISFIES i = $1 END;
+statement = SELECT * FROM `bucket-1` WHERE email = $1;
 scan_consistency = not_bounded
-args = [{achievements1[0]}]
+args = ["{email}"]
 
 [clients]
 libcouchbase = 3.0.2
-python_client = git+https://github.com/couchbase/couchbase-python-client@a193cbdc7763aa3fa563bd8d139091a4c220a240
-
+python_client = 3.0.4

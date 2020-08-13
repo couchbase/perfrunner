@@ -2,10 +2,9 @@
 test = perfrunner.tests.n1ql.N1QLThroughputTest
 
 [showfast]
-title = Q2, Singleton Unique Lookup, MOI, request_plus, s=1 c=1000 i=10000
+title = UP4, Range Scan, MOI, request_plus, s=1 c=1000 i=10000
 component = n1ql
-category = Q1_Q3
-sub_category = MOI
+category = iud
 
 [cluster]
 mem_quota = 20480
@@ -32,7 +31,7 @@ workers = 80
 doc_gen = reverse_lookup
 
 [index]
-fields = email,city,state
+fields = capped_small,city,state
 indexes_per_collection = 10
 
 [access]
@@ -44,14 +43,15 @@ throughput = 30000
 items = 20000000
 workers = 20
 time = 1200
-n1ql_queries = singleton-unique-lookup
+n1ql_op = update
+n1ql_queries = updaterange
 n1ql_workers = 720
 
-[n1ql-singleton-unique-lookup]
-statement = SELECT * FROM `bucket-1` WHERE email = $1;
+[n1ql-updaterange]
+statement = UPDATE `bucket-1` SET name = name||'_UPDATED' WHERE capped_small=$1;
 scan_consistency = request_plus
-args = ["{email}"]
+args = ["{capped_small}"]
 
 [clients]
 libcouchbase = 3.0.2
-python_client = git+https://github.com/couchbase/couchbase-python-client@a193cbdc7763aa3fa563bd8d139091a4c220a240
+python_client = 3.0.4

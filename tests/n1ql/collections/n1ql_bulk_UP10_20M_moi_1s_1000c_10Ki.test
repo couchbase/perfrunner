@@ -42,4 +42,4 @@ statement = UPDATE `bucket-1` SET year = 2017 WHERE `year` > 1996;
 
 [clients]
 libcouchbase = 3.0.2
-python_client = git+https://github.com/couchbase/couchbase-python-client@a193cbdc7763aa3fa563bd8d139091a4c220a240
+python_client = 3.0.4

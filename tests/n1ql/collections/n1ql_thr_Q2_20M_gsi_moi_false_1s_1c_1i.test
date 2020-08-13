@@ -1,8 +1,8 @@
 [test_case]
-test = perfrunner.tests.n1ql.N1QLLatencyTest
+test = perfrunner.tests.n1ql.N1QLThroughputTest
 
 [showfast]
-title = Q2, Singleton Unique Lookup, 450 queries/sec, MOI, request_plus, s=1 c=1 i=1
+title = Q2, Singleton Unique Lookup, MOI, request_plus, s=1 c=1 i=1
 component = n1ql
 category = Q1_Q3
 sub_category = MOI
@@ -45,8 +45,7 @@ items = 20000000
 workers = 20
 time = 1200
 n1ql_queries = singleton-unique-lookup
-n1ql_throughput = 450
-n1ql_workers = 100
+n1ql_workers = 720
 
 [n1ql-singleton-unique-lookup]
 statement = SELECT * FROM `bucket-1` WHERE email = $1;
@@ -55,4 +54,4 @@ args = ["{email}"]
 
 [clients]
 libcouchbase = 3.0.2
-python_client = git+https://github.com/couchbase/couchbase-python-client@a193cbdc7763aa3fa563bd8d139091a4c220a240
+python_client = 3.0.4

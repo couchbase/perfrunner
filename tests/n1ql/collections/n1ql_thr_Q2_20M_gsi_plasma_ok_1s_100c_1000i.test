@@ -2,9 +2,10 @@
 test = perfrunner.tests.n1ql.N1QLThroughputTest
 
 [showfast]
-title = Q7, Order By Query, MOI, request_plus, s=1 c=1 i=1
+title = Q2, Singleton Unique Lookup, Plasma, not_bounded, s=1 c=100 i=1000
 component = n1ql
-category = Q5_Q7
+category = Q1_Q3
+sub_category = Plasma
 
 [cluster]
 mem_quota = 20480
@@ -16,13 +17,13 @@ num_buckets = 1
 db_percentage = 100
 
 [collection]
-config = collections/1bucket_1scope_1collection_basic.json
+config = collections/1bucket_1scope_100collections_basic.json
 
 [bucket]
 replica_number = 0
 
 [secondary]
-indexer.settings.storage_mode = memory_optimized
+indexer.settings.storage_mode = plasma
 
 [load]
 items = 20000000
@@ -31,8 +32,8 @@ workers = 80
 doc_gen = reverse_lookup
 
 [index]
-fields = capped_small
-indexes_per_collection = 1
+fields = email,year,state
+indexes_per_collection = 10
 
 [access]
 creates = 0
@@ -43,13 +44,13 @@ throughput = 30000
 items = 20000000
 workers = 20
 time = 1200
-n1ql_queries = order-by-query
-n1ql_workers = 720
+n1ql_queries = singleton-unique-lookup
+n1ql_workers = 240
 
-[n1ql-order-by-query]
-statement = SELECT name AS _name, street AS _street FROM `bucket-1` WHERE capped_small=$1 ORDER BY name;
-scan_consistency = request_plus
-args = ["{capped_small}"]
+[n1ql-singleton-unique-lookup]
+statement = SELECT * FROM `bucket-1` WHERE email = $1;
+scan_consistency = not_bounded
+args = ["{email}"]
 
 [clients]
 libcouchbase = 3.0.2

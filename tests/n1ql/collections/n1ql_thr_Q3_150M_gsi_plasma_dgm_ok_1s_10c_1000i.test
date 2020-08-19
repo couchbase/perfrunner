@@ -1,0 +1,57 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1QLThroughputTest
+
+[showfast]
+title = Q3, Range Scan, Plasma, DGM, not_bounded, s=1 c=10 i=1000
+component = n1ql
+category = dgm
+
+[cluster]
+mem_quota = 53248
+index_mem_quota = 20480
+initial_nodes = 6
+num_buckets = 1
+kernel_mem_limit = 32G
+
+[compaction]
+db_percentage = 100
+
+[collection]
+config = collections/1bucket_1scope_10collections_basic.json
+
+[bucket]
+replica_number = 0
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[load]
+items = 150000000
+size = 1024
+workers = 100
+doc_gen = reverse_lookup
+
+[index]
+fields = capped_small,name,email,year,street
+indexes_per_collection = 100
+
+[access]
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+throughput = 30000
+items = 150000000
+workers = 20
+time = 3600
+n1ql_queries = range-scan
+n1ql_workers = 720
+
+[n1ql-range-scan]
+statement = SELECT name AS _name, street AS _street FROM `bucket-1` WHERE capped_small=$1;
+scan_consistency = not_bounded
+args = ["{capped_small}"]
+
+[clients]
+libcouchbase = 3.0.2
+python_client = 3.0.4

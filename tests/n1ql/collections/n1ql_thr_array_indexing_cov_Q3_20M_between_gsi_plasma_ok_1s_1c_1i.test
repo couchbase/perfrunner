@@ -2,10 +2,9 @@
 test = perfrunner.tests.n1ql.N1QLThroughputTest
 
 [showfast]
-title = Q2, Singleton Unique Lookup, MOI, not_bounded, s=1 c=1 i=1
+title = Q3 Array Indexing, Covering, Range Scan, Plasma, not_bounded, s=1 c=1 i=1
 component = n1ql
-category = Q1_Q3
-sub_category = MOI
+category = array
 
 [cluster]
 mem_quota = 20480
@@ -23,34 +22,36 @@ config = collections/1bucket_1scope_1collection_basic.json
 replica_number = 0
 
 [secondary]
-indexer.settings.storage_mode = memory_optimized
+indexer.settings.storage_mode = plasma
 
 [load]
-items = 20000000
+items = 200000
 size = 1024
 workers = 80
-doc_gen = reverse_lookup
+array_size = 200
+doc_gen = array_indexing_range_scan
 
 [index]
-fields = email
+fields = DISTINCT ARRAY i FOR i IN achievements2 END,achievements2
 indexes_per_collection = 1
+top_down = True
 
 [access]
 creates = 0
 reads = 0
 updates = 100
 deletes = 0
-throughput = 30000
-items = 20000000
+throughput = 1000
+items = 200000
 workers = 20
 time = 1200
 n1ql_queries = singleton-unique-lookup
-n1ql_workers = 240
+n1ql_workers = 720
 
 [n1ql-singleton-unique-lookup]
-statement = SELECT * FROM `bucket-1` WHERE email = $1;
+statement = SELECT meta().id, achievements2 FROM `bucket-1` WHERE ANY i IN achievements2 SATISFIES i = $1 END;
 scan_consistency = not_bounded
-args = ["{email}"]
+args = [{achievements2[0]}]
 
 [clients]
 libcouchbase = 3.0.2

@@ -1,17 +1,16 @@
 [test_case]
-test = perfrunner.tests.n1ql.N1QLThroughputTest
+test = perfrunner.tests.n1ql.N1QLJoinThroughputTest
 
 [showfast]
-title = Q2, Singleton Unique Lookup, MOI, not_bounded, s=1 c=1 i=1
+title = Q8, Inner Lookup Join, MOI, not_bounded, s=1 c=1 i=1
 component = n1ql
-category = Q1_Q3
-sub_category = MOI
+category = join_unnest
 
 [cluster]
-mem_quota = 20480
-index_mem_quota = 100000
+mem_quota = 51200
+index_mem_quota = 200000
 initial_nodes = 6
-num_buckets = 1
+num_buckets = 2
 
 [compaction]
 db_percentage = 100
@@ -26,10 +25,10 @@ replica_number = 0
 indexer.settings.storage_mode = memory_optimized
 
 [load]
-items = 20000000
+items = 10000000
 size = 1024
 workers = 80
-doc_gen = reverse_lookup
+doc_gen = ext_reverse_lookup,join
 
 [index]
 fields = email
@@ -40,15 +39,16 @@ creates = 0
 reads = 0
 updates = 100
 deletes = 0
-throughput = 30000
-items = 20000000
+throughput = 15000
+items = 10000000
 workers = 20
 time = 1200
-n1ql_queries = singleton-unique-lookup
+n1ql_gen = ext_reverse_lookup
+n1ql_queries = lookup-join
 n1ql_workers = 240
 
-[n1ql-singleton-unique-lookup]
-statement = SELECT * FROM `bucket-1` WHERE email = $1;
+[n1ql-lookup-join]
+statement = SELECT u.name, t.title FROM `bucket-1` u JOIN `bucket-2` t ON META(t).id IN u.topics WHERE u.email = $1;
 scan_consistency = not_bounded
 args = ["{email}"]
 

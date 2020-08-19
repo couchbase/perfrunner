@@ -2,7 +2,7 @@
 test = perfrunner.tests.ycsb.YCSBThroughputTest
 
 [showfast]
-title = Avg Throughput (ops/sec), Workload CA, 3 nodes, 12 vCPU, uniform distribution, Ephemeral, no replication, s=1 c=1000
+title = Avg Throughput (ops/sec), Workload CA, 3 nodes, 12 vCPU, Ephemeral, no replication, uniform distribution, s=1 c=1000
 component = kv
 category = ycsb
 sub_category = ycsb3

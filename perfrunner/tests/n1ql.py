@@ -113,6 +113,9 @@ class N1QLTest(PerfTest):
 
         self.store_plans()
 
+        if self.test_config.users.num_users_per_bucket > 0:
+            self.cluster.add_extra_rbac_users(self.test_config.users.num_users_per_bucket)
+
         self.access_bg()
         self.access()
 
@@ -431,6 +434,9 @@ class N1QLDGMTest(PerfTest):
 
         self.create_indexes()
         self.wait_for_indexing()
+
+        if self.test_config.users.num_users_per_bucket > 0:
+            self.cluster.add_extra_rbac_users(self.test_config.users.num_users_per_bucket)
 
         self.access_bg()
         self.access()

@@ -986,10 +986,11 @@ class IndexSettings:
                 for bucket in self.collection_map.keys():
                     for scope in self.collection_map[bucket].keys():
                         for collection in self.collection_map[bucket][scope].keys():
+                            index_num = 1
                             if self.collection_map[bucket][scope][collection]['load'] == 1:
-                                index_name = 'primary_idx_{}_{}_{}'\
-                                    .format(bucket, scope, collection)
-                                index_name = index_name.replace("-", "_")
+                                collection_num = collection.replace("collection-", "")
+                                index_name = 'pi{}_{}'\
+                                    .format(collection_num, index_num)
                                 new_statement = \
                                     "CREATE PRIMARY INDEX {} ON default:`{}`.`{}`.`{}`". \
                                     format(index_name, bucket, scope, collection)
@@ -1003,6 +1004,7 @@ class IndexSettings:
                                 build_statement = "BUILD INDEX ON default:`{}`.`{}`.`{}`('{}')" \
                                     .format(bucket, scope, collection, index_name)
                                 build_statements.append(build_statement)
+                                index_num += 1
             else:
                 fields = self.fields.strip().split(',')
                 field_combos = list(chain.from_iterable(combinations(fields, r)
@@ -1014,11 +1016,14 @@ class IndexSettings:
                         for collection in self.collection_map[bucket][scope].keys():
                             if self.collection_map[bucket][scope][collection]['load'] == 1:
                                 indexes_created = 0
+                                collection_num = collection.replace("collection-", "")
                                 for field_subset in field_combos:
                                     subset_permutations = list(permutations(list(field_subset)))
                                     for permutation in subset_permutations:
                                         index_field_list = list(permutation)
-                                        index_name = "_".join(index_field_list)
+
+                                        index_name = "i{}_{}".format(collection_num,
+                                                                     str(indexes_created+1))
                                         index_fields = ",".join(index_field_list)
                                         new_statement = \
                                             "CREATE INDEX {} ON default:`{}`.`{}`.`{}`({})".\

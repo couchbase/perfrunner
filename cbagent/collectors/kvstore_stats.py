@@ -34,6 +34,8 @@ class KVStoreStats(Collector):
         "NTableFiles",
         "NFileCountCompacts",
         "TableMetaMemUsed",
+        "ActiveBloomFilterMemUsed",
+        "TotalBloomFilterMemUsed",
         "NWriteBytes",
         "NWriteBytesCompact",
         "NWriteIOs",

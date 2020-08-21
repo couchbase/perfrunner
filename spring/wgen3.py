@@ -863,63 +863,65 @@ class N1QLWorker(Worker):
         self.replacement_targets = dict()
         self.first = True
 
-    def create(self):
+    def do_batch_create(self, *args, **kwargs):
+        if self.target_time:
+            t0 = time.time()
+            self.op_delay = self.op_delay + (self.delta / self.ws.n1ql_batch_size)
+
+        target = self.next_target()
         with self.lock:
-            curr_items = self.curr_items.value
-            self.curr_items.value += self.ws.n1ql_batch_size
+            target_info = self.shared_dict[target]
+            target_curr_items, target_deleted_items = target_info.split(":")
+            target_curr_items = int(target_curr_items)
+            updated_curr_items = str(target_curr_items + self.ws.n1ql_batch_size)
+            self.shared_dict[target] = updated_curr_items + ":" + target_deleted_items
 
-        for _ in range(self.ws.n1ql_batch_size):
-            curr_items += 1
-            key = self.new_keys.next(curr_items=curr_items)
+        for i in range(self.ws.n1ql_batch_size):
+            target_curr_items += 1
+            key = self.new_keys.next(curr_items=target_curr_items)
             doc = self.docs.next(key)
-            query = self.new_queries.next(key.string, doc)
+            query, options = self.new_queries.next(key.string, doc, self.replacement_targets)
+            latency = self.cb.n1ql_query(query, options)
+            if not self.first:
+                self.reservoir.update(operation='query', value=latency)
+            else:
+                self.first = False
 
-            latency = self.cb.n1ql_query(query)
-            self.reservoir.update(operation='query', value=latency)
+            if self.op_delay > 0 and self.target_time:
+                time.sleep(self.op_delay * self.CORRECTION_FACTOR)
 
-    def update(self):
-        with self.lock:
-            curr_items = self.curr_items.value
-
-        for _ in range(self.ws.n1ql_batch_size):
-            key = self.keys_for_cas_update.next(sid=self.sid,
-                                                curr_items=curr_items)
-            doc = self.docs.next(key)
-            query = self.new_queries.next(key.string, doc)
-
-            latency = self.cb.n1ql_query(query)
-            self.reservoir.update(operation='query', value=latency)
+        if self.target_time:
+            self.batch_duration = time.time() - t0
+            self.delta = self.target_time - self.batch_duration
+            if self.delta > 0:
+                time.sleep(self.CORRECTION_FACTOR * self.delta)
 
     def do_batch_update(self, *args, **kwargs):
-        if self.target_time is None:
-            with self.lock:
-                curr_items = self.curr_items.value
-
-            for _ in range(self.ws.n1ql_batch_size):
-                key = self.keys_for_cas_update.next(sid=self.sid,
-                                                    curr_items=curr_items)
-                doc = self.docs.next(key)
-                query = self.new_queries.next(key.string, doc)
-
-                latency = self.cb.n1ql_query(query)
-                self.reservoir.update(operation='query', value=latency)
-        else:
+        if self.target_time:
             t0 = time.time()
-            self.op_delay = self.op_delay + (self.delta / self.batch_size)
+            self.op_delay = self.op_delay + (self.delta / self.ws.n1ql_batch_size)
 
-            with self.lock:
-                curr_items = self.curr_items.value
+        target = self.next_target()
+        with self.lock:
+            target_info = self.shared_dict[target]
+        target_curr_items, target_deleted_items = target_info.split(":")
+        target_curr_items = int(target_curr_items)
 
-            for _ in range(self.ws.n1ql_batch_size):
-                key = self.keys_for_cas_update.next(sid=self.sid,
-                                                    curr_items=curr_items)
-                doc = self.docs.next(key)
-                query = self.new_queries.next(key.string, doc)
-
-                latency = self.cb.n1ql_query(query)
+        for i in range(self.ws.n1ql_batch_size):
+            key = self.keys_for_cas_update.next(sid=self.sid,
+                                                curr_items=target_curr_items)
+            doc = self.docs.next(key)
+            query, options = self.new_queries.next(key.string, doc, self.replacement_targets)
+            latency = self.cb.n1ql_query(query, options)
+            if not self.first:
                 self.reservoir.update(operation='query', value=latency)
-                if self.op_delay > 0:
-                    time.sleep(self.op_delay * self.CORRECTION_FACTOR)
+            else:
+                self.first = False
+
+            if self.op_delay > 0 and self.target_time:
+                time.sleep(self.op_delay * self.CORRECTION_FACTOR)
+
+        if self.target_time:
             self.batch_duration = time.time() - t0
             self.delta = self.target_time - self.batch_duration
             if self.delta > 0:
@@ -962,9 +964,9 @@ class N1QLWorker(Worker):
         if self.ws.n1ql_op == 'read':
             self.do_batch_read()
         elif self.ws.n1ql_op == 'create':
-            self.create()
+            self.do_batch_create()
         elif self.ws.n1ql_op == 'update':
-            self.update()
+            self.do_batch_update()
 
     def init_bucket_targets(self):
         # create dictionary of all targets for each bucket

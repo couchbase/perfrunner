@@ -1542,8 +1542,6 @@ class TestConfig(Config):
         access.num_replies = load_settings.num_replies
         access.size = load_settings.size
         access.key_fmtr = load_settings.key_fmtr
-        access.field_count = load_settings.field_count
-        access.field_length = load_settings.field_length
         access.bucket_list = self.buckets
 
         return access
@@ -1581,8 +1579,6 @@ class TestConfig(Config):
         extra_access.num_replies = load_settings.num_replies
         extra_access.size = load_settings.size
         extra_access.key_fmtr = load_settings.key_fmtr
-        extra_access.field_count = load_settings.field_count
-        extra_access.field_length = load_settings.field_length
         extra_access.bucket_list = self.buckets
 
         return extra_access

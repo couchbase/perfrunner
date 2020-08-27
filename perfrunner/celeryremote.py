@@ -1,12 +1,13 @@
 broker_url = 'amqp://couchbase:couchbase@172.23.97.73:5672/broker'
 broker_pool_limit = None
 worker_hijack_root_logger = False
-result_backend = "rpc://"
+result_backend = "amqp://"
 result_persistent = False
 result_exchange = "perf_results"
 accept_content = ['pickle']
 result_serializer = 'pickle'
 task_serializer = 'pickle'
+task_protocol = 1
 broker_connection_timeout = 60
 broker_connection_retry = True
 broker_connection_max_retries = 100

@@ -4,3 +4,4 @@ database_url = 'sqlite:///results.db'
 task_serializer = 'pickle'
 result_serializer = 'pickle'
 accept_content = {'pickle'}
+task_protocol = 1

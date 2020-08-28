@@ -908,7 +908,9 @@ class N1QLWorker(Worker):
         target_curr_items = int(target_curr_items)
 
         for i in range(self.ws.n1ql_batch_size):
-            key = self.keys_for_cas_update.next(sid=self.sid,
+
+            random_slice = random.choice(self.update_slices)
+            key = self.keys_for_cas_update.next(sid=random_slice,
                                                 curr_items=target_curr_items)
             doc = self.docs.next(key)
             query, options = self.new_queries.next(key.string, doc, self.replacement_targets)
@@ -1082,6 +1084,26 @@ class N1QLWorker(Worker):
         self.init_replacement_targets()
         self.bucket_instances = self.access_targets[self.ts.bucket]
         self.num_bucket_instances = len(self.bucket_instances)
+        self.num_worker_targets = len(self.bucket_targets[self.ts.bucket])
+
+        self.max_target_count = 0
+        for query in self.ws.n1ql_queries:
+            self.max_target_count = \
+                max(query['statement'].count(
+                    self.ts.bucket),
+                    self.max_target_count)
+
+        if self.ws.n1ql_op == 'update':
+            if self.num_worker_targets <= self.ws.n1ql_workers:
+                self.update_slices = [i % self.ws.n1ql_workers
+                                      for i in range(self.sid,
+                                                     self.sid + self.num_worker_targets,
+                                                     self.max_target_count)]
+            else:
+                self.update_slices = [i % self.ws.n1ql_workers
+                                      for i in range(self.sid,
+                                                     self.sid + self.ws.n1ql_workers,
+                                                     self.max_target_count)]
 
         if self.ws.n1ql_throughput < float('inf'):
             self.target_time = self.ws.n1ql_batch_size * self.ws.n1ql_workers / \

@@ -40,6 +40,8 @@ class KVStoreStats(Collector):
         "NWriteBytesCompact",
         "NWriteIOs",
         "TotalMemUsed",
+        "BufferMemUsed",
+        "WALMemUsed",
         "WriteCacheMemUsed",
         "NCompacts",
         "ReadAmp",

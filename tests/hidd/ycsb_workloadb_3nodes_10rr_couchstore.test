@@ -2,48 +2,42 @@
 test = perfrunner.tests.magma.YCSBThroughputHIDDTest
 
 [showfast]
-title = Avg Throughput (ops/sec), Workload G, 4 nodes, 1 bucket x 100M x 6KB, Uniform distribution, Magma
+title = Avg Throughput (ops/sec), Workload A, 3 nodes, 1 bucket x 1.5B x 1KB, 10%% Resident Ratio, Couchstore
 component = hidd
 category = ycsb
 
 [cluster]
 mem_quota = 102400
-initial_nodes = 4
+initial_nodes = 3
 num_buckets = 1
 enable_cpu_cores = false
 
 [bucket]
 replica_number = 1
 eviction_policy = fullEviction
-backend_storage = magma
 
 [bucket_extras]
 num_reader_threads = 64
 num_writer_threads = 64
 
 [load]
-workload_path = workloads/workloadg
+workload_path = workloads/workloadb
 ycsb_client = couchbase3
-items = 100000000
+items = 1500000000
 workers = 320
 kv_endpoints = 64
-field_length = 6000
-field_count = 1
-size = 6000
+size = 1000
 
 [access]
-workload_path = workloads/workloadg
+workload_path = workloads/workloadb
 ycsb_client = couchbase3
-items = 100000000
-ops = 1000000000
+items = 1500000000
+ops = 1500000000
 time = 10800
 boost = 12
 workers = 320
 kv_endpoints = 64
 workload_instances = 6
-field_length = 6000
-field_count = 1
-requestdistribution = uniform
 
 [ycsb]
 branch = couchbase3

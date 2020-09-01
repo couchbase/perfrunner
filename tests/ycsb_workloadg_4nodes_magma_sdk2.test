@@ -41,6 +41,8 @@ boost = 12
 workers = 160
 kv_endpoints = 1
 workload_instances = 6
+field_length = 6000
+field_count = 1
 requestdistribution = uniform
 
 [ycsb]

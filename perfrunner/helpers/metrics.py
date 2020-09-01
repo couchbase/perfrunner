@@ -905,10 +905,10 @@ class MetricHelper:
 
         return throughput, self._snapshots, metric_info
 
-    def ycsb_throughput(self) -> Metric:
+    def ycsb_throughput(self, operation: str = "access") -> Metric:
         metric_info = self._metric_info(chirality=1)
 
-        throughput = self._parse_ycsb_throughput()
+        throughput = self._parse_ycsb_throughput(operation)
 
         return throughput, self._snapshots, metric_info
 

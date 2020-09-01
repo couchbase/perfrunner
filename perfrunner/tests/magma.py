@@ -623,6 +623,26 @@ class YCSBThroughputHIDDTest(YCSBThroughputTest, KVTest):
         self.report_kpi()
 
 
+class YCSBLoadThroughputHIDDTest(YCSBThroughputHIDDTest):
+
+    def _report_kpi(self):
+        self.collect_export_files()
+
+        self.reporter.post(
+            *self.metrics.ycsb_throughput(operation="load")
+        )
+
+    def run(self):
+        if self.test_config.access_settings.ssl_mode == 'data':
+            self.download_certificate()
+            self.generate_keystore()
+        self.download_ycsb()
+
+        self.custom_load()
+
+        self.report_kpi()
+
+
 class YCSBThroughputLatencyHIDDPhaseTest(YCSBThroughputHIDDTest):
 
     def _report_kpi(self, phase: int, workload: str, operation: str = "access"):

@@ -53,7 +53,6 @@ class RemoteLinux(Remote):
 
     def run_cbindex_command(self, options):
         cmd = "/opt/couchbase/bin/cbindex {options}".format(options=options)
-
         logger.info('Running: {}'.format(cmd))
         run(cmd, shell_escape=False, pty=False)
 
@@ -109,55 +108,109 @@ class RemoteLinux(Remote):
 
         return bucket_indexes
 
-    def create_index_collection(self,
-                                index_nodes,
-                                bucket,
-                                scope,
-                                collection,
-                                indexes,
-                                storage):
-        for index, index_def in indexes.items():
-            where = None
-            if ':' in index_def:
-                fields, where = index_def.split(":")
-            else:
-                fields = index_def
-            fields_list = fields.split(",")
+    def batch_create_index_collection(self, index_nodes, indexes, storage):
+        batch_options = \
+            "-auth=Administrator:password " \
+            "-server {index_node}:8091 " \
+            "-type batch_process " \
+            "-input /tmp/batch.txt " \
+            "-refresh_settings=true".format(index_node=index_nodes[0])
+        with open("/tmp/batch.txt", "w+") as bf:
+            for bucket_name, scope_map in indexes.items():
+                for scope_name, collection_map in scope_map.items():
+                    for collection_name, index_map in collection_map.items():
+                        for index, index_def in index_map.items():
+                            where = None
+                            if ':' in index_def:
+                                fields, where = index_def.split(":")
+                            else:
+                                fields = index_def
+                            fields_list = fields.split(",")
 
-            options = \
-                "-auth=Administrator:password " \
-                "-server {index_node}:8091 " \
-                "-type create " \
-                "-bucket {bucket} " \
-                "-scope {scope} " \
-                "-collection {collection} ".format(
-                    index_node=index_nodes[0],
-                    bucket=bucket,
-                    scope=scope,
-                    collection=collection)
+                            options = "-type create " \
+                                "-bucket {bucket} " \
+                                "-scope {scope} " \
+                                "-collection {collection} ".format(
+                                    bucket=bucket_name,
+                                    scope=scope_name,
+                                    collection=collection_name)
 
-            options += "-fields "
-            for field in fields_list:
-                options += "\\\\\\`{}\\\\\\`,".format(field)
+                            options += "-fields "
+                            for field in fields_list:
+                                options += "`{}`,".format(field)
 
-            options = options.rstrip(",")
-            options = options + " "
+                            options = options.rstrip(",")
+                            options = options + " "
 
-            if where is not None:
-                options = '{options} -where \\\"{where_clause}\\\"' \
-                    .format(options=options, where_clause=where)
+                            if where is not None:
+                                options = '{options} -where "{where_clause}"' \
+                                    .format(options=options, where_clause=where)
 
-            if storage == 'memdb' or storage == 'plasma':
-                options = '{options} -using {db}'.format(options=options,
-                                                         db=storage)
+                            if storage == 'memdb' or storage == 'plasma':
+                                options = '{options} -using {db}'.format(options=options,
+                                                                         db=storage)
 
-            options = "{options} -index {index} " \
-                .format(options=options, index=index)
+                            options = "{options} -index {index} " \
+                                .format(options=options, index=index)
 
-            options = options + '-with {\\\\\\"defer_build\\\\\\":true} '
-            options = options + '-refresh_settings=true'
+                            options = options + '-with {"defer_build":true} \n'
+                            bf.write(options)
 
-            self.run_cbindex_command(options)
+        put("/tmp/batch.txt", "/tmp/batch.txt")
+        self.run_cbindex_command(batch_options)
+
+    def batch_build_index_collection(self, index_nodes, indexes, rest_helper):
+        batch_options = \
+            "-auth=Administrator:password " \
+            "-server {index_node}:8091 " \
+            "-type batch_process " \
+            "-input /tmp/batch.txt " \
+            "-refresh_settings=true".format(index_node=index_nodes[0])
+        building = {}
+
+        for bucket_name, scope_map in indexes.items():
+            for scope_name, collection_map in scope_map.items():
+                for collection_name, index_map in collection_map.items():
+                    build_indexes = ",".join(["{}:{}:{}:{}".format(
+                        bucket_name,
+                        scope_name,
+                        collection_name,
+                        index_name)
+                        for index_name in index_map.keys()])
+                    options = "-type build " \
+                              "-indexes {build_indexes} \n"\
+                        .format(build_indexes=build_indexes)
+                    building[collection_name] = {"indexes": set([index_name
+                                                                 for index_name
+                                                                 in index_map.keys()]),
+                                                 "options": options}
+                    with open("/tmp/batch.txt", "w+") as bf:
+                        bf.write(options)
+                    put("/tmp/batch.txt", "/tmp/batch.txt")
+                    self.run_cbindex_command(batch_options)
+                    if len(building.keys()) < 10:
+                        building_max_num_collections = False
+                    else:
+                        building_max_num_collections = True
+                    while building_max_num_collections:
+                        collections_building = building.keys()
+                        index_statuses = rest_helper.get_index_status(index_nodes[0])
+                        for index_status in index_statuses['status']:
+                            idx_name = index_status['name']
+                            idx_status = index_status['status']
+                            idx_coll = index_status['collection']
+                            if idx_status == 'Ready' \
+                                    and idx_coll in collections_building:
+                                indexes_building = building[idx_coll]['indexes']
+                                indexes_building.discard(idx_name)
+                                if len(indexes_building) == 0:
+                                    del building[idx_coll]
+                                else:
+                                    building[idx_coll]['indexes'] = indexes_building
+                        if len(building.keys()) < 10:
+                            building_max_num_collections = False
+                        else:
+                            time.sleep(10)
 
     @master_server
     def build_secondary_index(self, index_nodes, bucket, indexes, storage):
@@ -170,64 +223,14 @@ class RemoteLinux(Remote):
         self.build_index(index_nodes[0], bucket_indexes)
 
     @master_server
-    def create_secondary_index_collections(self,
-                                           index_nodes,
-                                           indexes,
-                                           storage):
+    def create_secondary_index_collections(self, index_nodes, indexes, storage):
         logger.info('creating secondary indexes')
-        for bucket_name, scope_map in indexes.items():
-            for scope_name, collection_map in scope_map.items():
-                for collection_name, index_map in collection_map.items():
-                    self.create_index_collection(index_nodes,
-                                                 bucket_name,
-                                                 scope_name,
-                                                 collection_name,
-                                                 index_map,
-                                                 storage)
+        self.batch_create_index_collection(index_nodes, indexes, storage)
 
     @master_server
-    def build_secondary_index_collections(self,
-                                          index_nodes,
-                                          indexes,
-                                          rest_helper):
+    def build_secondary_index_collections(self, index_nodes, indexes, rest_helper):
         logger.info('building secondary indexes')
-        building = {}
-        for bucket_name, scope_map in indexes.items():
-            for scope_name, collection_map in scope_map.items():
-                for collection_name, index_map in collection_map.items():
-                    self.build_index(index_nodes[0],
-                                     ["{}:{}:{}:{}".format(
-                                         bucket_name,
-                                         scope_name,
-                                         collection_name,
-                                         index_name)
-                                         for index_name in index_map.keys()])
-                    building[collection_name] = set([index_name for index_name in index_map.keys()])
-
-                    if len(building.keys()) < 10:
-                        building_max_num_collections = False
-                    else:
-                        building_max_num_collections = True
-
-                    while building_max_num_collections:
-                        collections_building = building.keys()
-                        index_statuses = rest_helper.get_index_status(index_nodes[0])
-                        for index_status in index_statuses['status']:
-                            idx_name = index_status['name']
-                            idx_status = index_status['status']
-                            idx_coll = index_status['collection']
-                            if idx_status == 'Ready' \
-                                    and idx_coll in collections_building:
-                                indexes_building = building[idx_coll]
-                                indexes_building.discard(idx_name)
-                                if len(indexes_building) == 0:
-                                    del building[idx_coll]
-                                else:
-                                    building[idx_coll] = indexes_building
-                        if len(building.keys()) < 10:
-                            building_max_num_collections = False
-                        else:
-                            time.sleep(10)
+        self.batch_build_index_collection(index_nodes, indexes, rest_helper)
 
     @all_servers
     def reset_swap(self):

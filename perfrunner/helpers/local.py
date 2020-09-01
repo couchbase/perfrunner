@@ -864,7 +864,18 @@ def get_indexer_heap_profile(indexer: str, user: str, password: str) -> str:
     cmd = 'go tool pprof --text http://{}:{}@{}:9102/debug/pprof/heap'.format(user,
                                                                               password,
                                                                               indexer)
-    return local(cmd, capture=True)
+    logger.info('Running: {}'.format(cmd))
+    for counter in range(10):
+        time.sleep(2)
+        with settings(warn_only=True):
+            result = local(cmd, capture=True)
+        if result.succeeded:
+            break
+        else:
+            logger.info('Error: {}'.format(result.stderr))
+    else:
+        raise Exception('Command failed: {}'.format(cmd))
+    return result
 
 
 def govendor_fetch(path: str, revision: str, package: str):

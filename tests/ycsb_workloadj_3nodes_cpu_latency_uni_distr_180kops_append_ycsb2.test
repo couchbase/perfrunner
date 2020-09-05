@@ -1,0 +1,48 @@
+[test_case]
+test = perfrunner.tests.ycsb.YCSBLatencyTest
+
+[showfast]
+title = Latency(ms), Workload J, 3 nodes, 12 vCPU, uniform distribution, 180K ops/sec, APPEND, docSize (1.7k -> 2.7k)
+component = kv
+category = ycsb
+sub_category = ycsb2
+orderby = a91
+
+
+[cluster]
+mem_quota = 104407
+initial_nodes = 3
+num_buckets = 1
+online_cores = 6
+
+[bucket]
+eviction_policy = valueOnly
+
+[load]
+workload_path = workloads/workloadj
+ycsb_client = couchbase2
+items = 60000000
+workers = 100
+field_count = 17
+
+[access]
+workload_path = workloads/workloadj
+ycsb_client = couchbase2
+items = 60000000
+target = 180000
+ops = 0
+time = 7200
+boost = 12
+workers = 100
+timeseries = 1
+workload_instances = 1
+requestdistribution = uniform
+field_count = 27
+
+[ycsb]
+latency_percentiles = 99
+average_latency = 1
+branch = couchbase3
+
+[stats]
+client_processes = java

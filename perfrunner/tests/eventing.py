@@ -9,7 +9,34 @@ from perfrunner.helpers.worker import (
     pillowfight_data_load_task,
     pillowfight_task,
 )
+from perfrunner.settings import TargetSettings
 from perfrunner.tests import PerfTest, TargetIterator
+
+
+class EventingTargetIterator(TargetIterator):
+
+    def __iter__(self):
+        password = self.test_config.bucket.password
+        prefix = self.prefix
+        src_master = next(self.cluster_spec.masters)
+        for bucket in self.test_config.buckets:
+            if self.prefix == "None":
+                yield TargetSettings(src_master, bucket, password, None)
+            else:
+                yield TargetSettings(src_master, bucket, password, prefix)
+
+
+class EventingDestBktTargetIterator(TargetIterator):
+
+    def __iter__(self):
+        password = self.test_config.bucket.password
+        prefix = self.prefix
+        src_master = next(self.cluster_spec.masters)
+        for bucket in self.test_config.eventing_buckets:
+            if self.prefix == "None":
+                yield TargetSettings(src_master, bucket, password, None)
+            else:
+                yield TargetSettings(src_master, bucket, password, prefix)
 
 
 class EventingTest(PerfTest):
@@ -36,6 +63,7 @@ class EventingTest(PerfTest):
         self.time = self.test_config.access_settings.time
         self.rebalance_settings = self.test_config.rebalance_settings
         self.request_url = self.test_config.eventing_settings.request_url
+        self.key_prefix = self.test_config.load_settings.key_prefix or "eventing"
 
         for master in self.cluster_spec.masters:
             self.rest.add_rbac_user(
@@ -45,7 +73,9 @@ class EventingTest(PerfTest):
                 roles=['admin'],
             )
 
-        self.target_iterator = TargetIterator(self.cluster_spec, self.test_config, "eventing")
+        self.target_iterator = EventingTargetIterator(self.cluster_spec,
+                                                      self.test_config,
+                                                      self.key_prefix)
 
     @timeit
     def deploy_and_bootstrap(self, func, name, wait_for_bootstrap):
@@ -334,6 +364,26 @@ class FunctionsThroughputTest(EventingTest):
                                               event_name=None,
                                               events_processed=events_successfully_processed)
         )
+
+
+class FunctionsThroughputTestDestBucket(FunctionsThroughputTest):
+
+    def load_dest_bucket(self):
+        target_iterator = EventingDestBktTargetIterator(self.cluster_spec,
+                                                        self.test_config,
+                                                        self.key_prefix)
+
+        self.load(settings=self.test_config.load_settings,
+                  target_iterator=target_iterator)
+
+    def run(self):
+        self.set_functions()
+
+        self.load_dest_bucket()
+
+        time_elapsed = self.load_access_and_wait()
+
+        self.report_kpi(time_elapsed)
 
 
 class FunctionsPillowfightThroughputTest(FunctionsThroughputTest):

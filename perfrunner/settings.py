@@ -416,6 +416,7 @@ class PhaseSettings:
     DOC_GEN = 'basic'
     POWER_ALPHA = 0
     ZIPF_ALPHA = 0
+    KEY_PREFIX = None
 
     CREATES = 0
     READS = 0
@@ -562,6 +563,7 @@ class PhaseSettings:
         self.doc_gen = options.get('doc_gen', self.DOC_GEN)
         self.power_alpha = float(options.get('power_alpha', self.POWER_ALPHA))
         self.zipf_alpha = float(options.get('zipf_alpha', self.ZIPF_ALPHA))
+        self.key_prefix = options.get('key_prefix', self.KEY_PREFIX)
 
         self.size = int(options.get('size', self.SIZE))
         self.items = int(options.get('items', self.ITEMS))

@@ -401,7 +401,9 @@ class ClusterManager:
                 roles=['admin'],
             )
 
-            for bucket in self.test_config.buckets:
+            buckets = self.test_config.buckets + self.test_config.eventing_buckets
+
+            for bucket in buckets:
                 bucket_roles = [role.format(bucket=bucket) for role in roles]
                 bucket_roles.append("admin")
                 self.rest.add_rbac_user(

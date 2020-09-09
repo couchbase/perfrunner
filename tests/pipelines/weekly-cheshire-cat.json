@@ -220,5 +220,26 @@
         {"job": "secondary-fdb", "cluster":  "nyx_colocated.spec", "test_config": "fdb/secondary_updatesonly_20M_multiple_fdb.test"},
         {"job": "secondary-fdb", "cluster":  "nyx_colocated.spec", "test_config": "fdb/secondary_updatesonly_50M_fdb.test"},
         {"job": "secondary-fdb", "cluster":  "nyx_colocated.spec", "test_config": "fdb/secondary_updatesonly_rebalance_20M_fdb.test"}
+    ],
+    "Eventing": [
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_decr_ctrop_100cont.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_decr_ctrop_100cont_src_bkt_mut.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_get_advbktop_src_bkt_mut.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_incr_ctrop_0cont.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_incr_ctrop_0cont_src_bkt_mut.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_replace_advbktop_0cont.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_replace_advbktop_0cont_src_bkt_mut.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_replace_advbktop_25cont.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_replace_advbktop_25cont_src_bkt_mut.test"},
+
+        {"job": "themis", "cluster": "themis.spec", "test_config": "latency100M_decr_ctrop_100cont.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "latency100M_decr_ctrop_100cont_src_bkt_mut.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "latency100M_get_advbktop_src_bkt_mut.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "latency100M_incr_ctrop_0cont.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "latency100M_incr_ctrop_0cont_src_bkt_mut.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "latency100M_replace_advbktop_0cont.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "latency100M_replace_advbktop_0cont_src_bkt_mut.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "latency100M_replace_advbktop_25cont.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "latency100M_replace_advbktop_25cont_src_bkt_mut.test"}
     ]
 }

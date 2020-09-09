@@ -527,6 +527,25 @@ class LargeItemGroupedDocumentKeySize(GroupedDocument):
         }
 
 
+class EventingCounterDocument(Document):
+
+    def next(self, key: Key) -> dict:
+        alphabet = self.build_alphabet(key.string)
+        size = self._size()
+
+        return {
+            'name': self.build_name(alphabet),
+            'email': self.build_email(alphabet),
+            'alt_email': self.build_alt_email(alphabet),
+            'city': self.build_city(alphabet),
+            'realm': self.build_realm(alphabet),
+            'category': self.build_category(alphabet),
+            'achievements': self.build_achievements(alphabet),
+            'body': self.build_string(alphabet, size),
+            'count': key.number
+        }
+
+
 class NestedDocument(Document):
 
     OVERHEAD = 450  # Minimum size due to static fields, body size is variable

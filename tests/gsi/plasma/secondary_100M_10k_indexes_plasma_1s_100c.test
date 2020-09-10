@@ -37,6 +37,9 @@ doc_groups = 1
 indexes = tests/gsi/index_defs/1bucket_1scope_100collections_10k_indexes_1.json
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
+queryport.client.usePlanner = false
+queryport.client.log_level = Warn
+projector.backChanSize = 500000
 
 [access]
 updates = 100

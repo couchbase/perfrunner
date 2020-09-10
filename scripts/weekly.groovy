@@ -73,6 +73,12 @@ pipeline {
                         buildComponent('GSI', testCases)
                     }
                 }
+                stage('GSI-Hemera') {
+                    when { expression { return params.GSI_Hemera } }
+                    steps {
+                        buildComponent('GSI-Hemera', testCases)
+                    }
+                }
                 stage('KV') {
                     when { expression { return params.KV } }
                     steps {

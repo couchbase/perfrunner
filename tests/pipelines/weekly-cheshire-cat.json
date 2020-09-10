@@ -51,21 +51,13 @@
     ],
     "MagmaNVME": [
         {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/java_dcp_throughput_1n_100M_compressed_magma.test"},
-        {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/java_dcp_throughput_1n_100M_compressed_couchstore.test"},
         {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/kv_throughput_1n_100M_load.test"},
-        {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/kv_throughput_1n_100M_load_couchstore.test"},
         {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/kv_throughput_1n_100M_mixed.test"},
-        {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/kv_throughput_1n_100M_mixed_couchstore.test"},
         {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/kv_throughput_1n_100M_mixed_uniform.test"},
-        {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/kv_throughput_1n_100M_mixed_uniform_couchstore.test"},
         {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/kv_throughput_1n_100M_read_only.test"},
-        {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/kv_throughput_1n_100M_read_only_couchstore.test"},
         {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/kv_throughput_1n_100M_read_only_uniform.test"},
-        {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/kv_throughput_1n_100M_read_only_uniform_couchstore.test"},
         {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/kv_throughput_1n_100M_update_only.test"},
-        {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/kv_throughput_1n_100M_update_only_couchstore.test"},
         {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/kv_throughput_1n_100M_update_only_uniform.test"},
-        {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/kv_throughput_1n_100M_update_only_uniform_couchstore.test"},
         {"job": "magma-nvme-benchmark", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/magma_benchmark_25M.test"}
     ],
     "KV": [

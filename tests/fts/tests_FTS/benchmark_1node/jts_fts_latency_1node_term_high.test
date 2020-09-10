@@ -43,6 +43,3 @@ backup_repo =  fts_wiki
 
 [profiling]
 services = fts
-
-[profiling]
-services = fts

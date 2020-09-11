@@ -1,0 +1,43 @@
+[test_case]
+test = perfrunner.tests.ycsb.YCSBThroughputTest
+
+[showfast]
+title = Avg Throughput (ops/sec), SDK 3, Durability Majority, 4 nodes, Workload A, uniform distribution, Out of Order
+component = kv
+category = durability
+sub_category = Throughput
+orderby = b31
+
+[cluster]
+mem_quota = 62000
+initial_nodes = 4
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+
+[bucket]
+replica_number = 2
+
+[load]
+workload_path = workloads/workloada
+items = 20000000
+workers = 128
+ycsb_client = couchbase3
+
+[access]
+durability = 1
+workload_path = workloads/workloada
+items = 20000000
+ops = 100000000
+time = 1200
+workers = 128
+workload_instances = 4
+ycsb_client = couchbase3
+enable_mutation_token = true
+kv_endpoints = 16
+out_of_order = 1
+requestdistribution = uniform
+
+[ycsb]
+branch = couchbase3

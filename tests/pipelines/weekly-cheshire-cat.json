@@ -245,5 +245,24 @@
         {"job": "hebe", "cluster": "hebe.spec", "test_config": "collections/ycsb/ycsb_workloadce_4nodes_1s_1000c.test"},
         {"job": "hebe", "cluster": "hebe.spec", "test_config": "collections/ycsb/ycsb_workloadce_4nodes_plasma_1s_1c.test"},
         {"job": "hebe", "cluster": "hebe.spec", "test_config": "collections/ycsb/ycsb_workloadce_4nodes_plasma_1s_1000c.test"}
+    ],
+    "GSI-ForestDB": [
+        {"job": "secondary-fdb", "cluster":  "nyx_colocated.spec", "test_config": "fdb/secondary_1M_100Index_fdb_ce.test"},
+        {"job": "secondary-fdb", "cluster":  "nyx_colocated.spec", "test_config": "fdb/secondary_20M_fdb_ce.test"},
+        {"job": "secondary-fdb", "cluster":  "nyx_colocated.spec", "test_config": "fdb/secondary_20M_multiple_fdb_ce.test"},
+        {"job": "secondary-fdb", "cluster":  "nyx_colocated.spec", "test_config": "fdb/secondary_rebalance_20M_fdb_ce.test"},
+        {"job": "secondary-fdb", "cluster":  "nyx_colocated.spec", "test_config": "fdb/secondary_scanlatency_stalefalse_20M_fdb.test"},
+        {"job": "secondary-fdb", "cluster":  "nyx_colocated.spec", "test_config": "fdb/secondary_scanlatency_rebalance20M_fdb.test"},
+        {"job": "secondary-fdb", "cluster":  "nyx_colocated.spec", "test_config": "fdb/secondary_scanlatency20M_fdb.test"},
+        {"job": "secondary-fdb", "cluster":  "nyx_colocated.spec", "test_config": "fdb/secondary_scanlatency20M_multiple_fdb.test"},
+        {"job": "secondary-fdb", "cluster":  "nyx_colocated.spec", "test_config": "fdb/secondary_scanthr20M_fdb.test"},
+        {"job": "secondary-fdb", "cluster":  "nyx_colocated.spec", "test_config": "fdb/secondary_scanthr20M_multiple_fdb.test"},
+        {"job": "secondary-fdb", "cluster":  "nyx_colocated.spec", "test_config": "fdb/secondary_scanthr_rebalance20M_fdb.test"},
+        {"job": "secondary-fdb", "cluster":  "nyx_colocated.spec", "test_config": "fdb/secondary_scanthr_stalefalse_20M_fdb.test"},
+        {"job": "secondary-fdb", "cluster":  "nyx_colocated.spec", "test_config": "fdb/secondary_100M_fdb_ce.test"},
+        {"job": "secondary-fdb", "cluster":  "nyx_colocated.spec", "test_config": "fdb/secondary_updatesonly_20M_fdb.test"},
+        {"job": "secondary-fdb", "cluster":  "nyx_colocated.spec", "test_config": "fdb/secondary_updatesonly_20M_multiple_fdb.test"},
+        {"job": "secondary-fdb", "cluster":  "nyx_colocated.spec", "test_config": "fdb/secondary_updatesonly_50M_fdb.test"},
+        {"job": "secondary-fdb", "cluster":  "nyx_colocated.spec", "test_config": "fdb/secondary_updatesonly_rebalance_20M_fdb.test"}
     ]
 }

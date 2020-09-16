@@ -11,7 +11,7 @@ server_processes = projector
 
 [cluster]
 mem_quota = 30000
-index_mem_quota = 60000
+index_mem_quota = 400000
 initial_nodes = 5
 num_buckets = 1
 

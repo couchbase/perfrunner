@@ -79,6 +79,12 @@ pipeline {
                         buildComponent('GSI-Hemera', testCases)
                     }
                 }
+                stage('GSI-ForestDB') {
+                    when { expression { return params.GSI_ForestDB } }
+                    steps {
+                        buildComponent('GSI-ForestDB', testCases)
+                    }
+                }
                 stage('KV') {
                     when { expression { return params.KV } }
                     steps {

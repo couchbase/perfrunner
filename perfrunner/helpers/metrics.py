@@ -588,6 +588,15 @@ class MetricHelper:
 
         return size, self._snapshots, metric_info
 
+    def disk_size(self, size: float) -> Metric:
+
+        metric_id = '{}_size'.format(self.test_config.name)
+        title = 'Disk Size (GB), {}'.format(self._title)
+        metric_info = self._metric_info(metric_id, title, chirality=-1)
+        size = round(float(size) / 2 ** 30)  # B -> GB
+
+        return size, self._snapshots, metric_info
+
     def merge_throughput(self,
                          time_elapsed: float,
                          edition: str,

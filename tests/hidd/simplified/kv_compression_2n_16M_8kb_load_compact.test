@@ -1,0 +1,26 @@
+[test_case]
+test = perfrunner.tests.magma.CompressionMagmaTest
+
+[showfast]
+title = 2 nodes, 15.625M x 8KB, Load + Compact, Magma
+component = hidd
+category = compress
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 2
+num_buckets = 1
+enable_cpu_cores = false
+
+[bucket]
+eviction_policy = fullEviction
+backend_storage = magma
+
+[bucket_extras]
+num_reader_threads = 64
+num_writer_threads = 64
+
+[load]
+items = 15625000
+size = 8192
+workers = 100

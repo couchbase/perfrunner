@@ -406,6 +406,29 @@ class CompactionMagmaTest(StabilityBootstrap):
         self.report_kpi(time_elapsed)
 
 
+class CompressionMagmaTest(CompactionMagmaTest):
+
+    def _report_kpi(self):
+        total_size = 0
+        for bucket in self.test_config.buckets:
+            bucket_stats = self.rest.get_bucket_stats(self.master_node, bucket)
+            disk_size = bucket_stats['op']['samples'].get("couch_docs_actual_disk_size")[-1]
+            total_size += disk_size
+
+        self.reporter.post(
+            *self.metrics.disk_size(total_size)
+        )
+
+    def run(self):
+        self.load()
+
+        self.reset_kv_stats()
+
+        self.compact()
+
+        self.report_kpi()
+
+
 class ThroughputDGMMagmaTest(StabilityBootstrap):
 
     def _report_kpi(self):

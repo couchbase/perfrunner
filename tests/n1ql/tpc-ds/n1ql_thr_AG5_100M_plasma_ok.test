@@ -19,7 +19,7 @@ replica_number = 0
 [secondary]
 indexer.settings.storage_mode = plasma
 
-[restore]
+[import]
 import_file = /home/backups/tpc-ds.json
 
 [load]

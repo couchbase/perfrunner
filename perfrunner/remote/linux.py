@@ -407,7 +407,7 @@ class RemoteLinux(Remote):
         run(cmd)
 
     @master_server
-    def import_data(self, import_file: str, bucket: str):
+    def load_tpcds_data_json(self, import_file: str, bucket: str):
         cmd = \
             "/opt/couchbase/bin/cbimport json " \
             "--dataset file://{} --threads 24 " \
@@ -418,6 +418,33 @@ class RemoteLinux(Remote):
                 import_file,
                 bucket,
             )
+
+        logger.info("Running: {}".format(cmd))
+        run(cmd)
+
+    @master_server
+    def load_tpcds_data_json_collection(self,
+                                        import_file: str,
+                                        bucket: str,
+                                        scope: str,
+                                        collection: str,
+                                        docs_per_collection: int = 0):
+        cmd = \
+            "/opt/couchbase/bin/cbimport json " \
+            "--dataset file://{} --threads 24 " \
+            "--cluster http://localhost:8091 " \
+            "--bucket {} " \
+            "--scope-collection-exp {}.{} " \
+            "--username Administrator --password password " \
+            "--generate-key '#MONO_INCR#' --format lines".format(
+                import_file,
+                bucket,
+                scope,
+                collection
+            )
+
+        if docs_per_collection > 0:
+            cmd += " --limit-docs {}".format(docs_per_collection)
 
         logger.info("Running: {}".format(cmd))
         run(cmd)

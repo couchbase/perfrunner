@@ -1,0 +1,50 @@
+[test_case]
+test = perfrunner.tests.n1ql.TpcDsLatencyTest
+
+[showfast]
+title = AG3, Aggregation query, Plasma, not_bounded, s=1 c=100 i=1000
+component = n1ql
+category = aggregation
+sub_category = Latency
+
+[cluster]
+mem_quota = 50000
+index_mem_quota = 300000
+initial_nodes = 6
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+
+[collection]
+config = collections/1bucket_1scope_100collections_basic.json
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[import]
+import_file = /home/backups/tpc-ds.json
+docs_per_collection = 1000000
+
+[load]
+doc_gen = tpc_ds
+
+[index]
+fields = item.manufacturer_id,DATE_PART_STR(sold_date, 'month'),DATE_PART_STR(sold_date, 'year'),item.brand,sales_price
+indexes_per_collection = 10
+top_down = True
+
+[access]
+items = 1000000
+time = 600
+n1ql_queries = aggregation
+n1ql_workers = 10
+
+[n1ql-aggregation]
+statement = SELECT DATE_PART_STR(sold_date, 'year') AS year, item.brand, SUM(sales_price) AS sum_agg FROM `bucket-1` WHERE item.manufacturer_id = $1 AND DATE_PART_STR(sold_date, 'month') = $2 GROUP BY DATE_PART_STR(sold_date, 'year'), item.brand ORDER BY DATE_PART_STR(sold_date, 'year'), sum_agg DESC, item.brand;
+scan_consistency = not_bounded
+args = [{manufacturer_id}, {month}]
+
+[clients]
+libcouchbase = 3.0.2
+python_client = 3.0.4

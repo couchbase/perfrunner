@@ -1,0 +1,50 @@
+[test_case]
+test = perfrunner.tests.n1ql.TpcDsLatencyTest
+
+[showfast]
+title = WF3, Windowing query, Plasma, not_bounded, s=1 c=1 i=1
+component = n1ql
+category = windowing
+sub_category = Latency
+
+[cluster]
+mem_quota = 50000
+index_mem_quota = 300000
+initial_nodes = 6
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[import]
+import_file = /home/backups/tpc-ds.json
+docs_per_collection = 100000000
+
+[load]
+doc_gen = tpc_ds
+
+[index]
+fields = item.manufacturer_id,item.brand,sales_price
+indexes_per_collection = 1
+top_down = True
+
+[access]
+items = 1000000
+time = 600
+n1ql_queries = windowing
+n1ql_workers = 4
+
+[n1ql-windowing]
+statement = SELECT item.brand, SUM(sales_price) AS item_revenue, SUM(sales_price)*100/SUM(SUM(sales_price)) OVER (PARTITION BY item.brand) AS revenue_ratio, COUNT(1) OVER (PARTITION BY item.brand) AS items_per_brand FROM `bucket-1` WHERE item.manufacturer_id = $1 GROUP BY item.brand ORDER BY item_revenue DESC,  item.brand, revenue_ratio;
+scan_consistency = not_bounded
+args = [{manufacturer_id}]
+
+[clients]
+libcouchbase = 3.0.2
+python_client = 3.0.4

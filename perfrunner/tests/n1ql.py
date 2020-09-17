@@ -548,7 +548,7 @@ class TpcDsTest(N1QLTest):
     }
 
     def run(self):
-        self.import_data()
+        self.load_tpcds_json_data()
 
         self.create_indexes()
         self.wait_for_indexing()
@@ -591,7 +591,7 @@ class TpcDsIndexTest(TpcDsTest):
         )
 
     def run(self):
-        self.import_data()
+        self.load_tpcds_json_data()
 
         time_elapsed = self.create_indexes()
 

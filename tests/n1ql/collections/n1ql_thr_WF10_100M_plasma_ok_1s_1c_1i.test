@@ -1,0 +1,52 @@
+[test_case]
+test = perfrunner.tests.n1ql.TpcDsThroughputTest
+
+[showfast]
+title = WF10, Windowing query, Plasma, not_bounded, s=1 c=1 i=1
+component = n1ql
+category = windowing
+sub_category = Throughput
+
+[cluster]
+mem_quota = 50000
+index_mem_quota = 300000
+initial_nodes = 6
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[import]
+import_file = /home/backups/tpc-ds.json
+docs_per_collection = 100000000
+
+[load]
+doc_gen = tpc_ds
+
+[index]
+fields = customer.zip,DATE_PART_STR(sold_date, 'year'),DATE_PART_STR(sold_date, 'quarter'),sales_price
+indexes_per_collection = 1
+top_down = True
+
+[access]
+items = 1000000
+time = 600
+n1ql_queries = windowing
+n1ql_batch_size = 1
+n1ql_workers = 60
+
+[n1ql-windowing]
+statement = SELECT customer.zip AS zip, SUM(sales_price) AS total_sales, LEAD(SUM(sales_price)) OVER(ORDER BY customer.zip  ) as lead, LAG(SUM(sales_price)) OVER(ORDER BY customer.zip  ) as lag FROM `bucket-1` WHERE customer.zip IN $1 AND DATE_PART_STR(sold_date, 'year') = $2 AND DATE_PART_STR(sold_date, 'quarter') = $3 GROUP BY customer.zip ORDER BY customer.zip;
+scan_consistency = not_bounded
+args = [{zip_codes}, {year}, {quarter}]
+ad_hoc = true
+
+[clients]
+libcouchbase = 3.0.2
+python_client = 3.0.4

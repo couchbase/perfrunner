@@ -174,12 +174,26 @@ class PerfTest:
             include_data=self.test_config.backup_settings.include_data
         )
 
-    def import_data(self):
+    def load_tpcds_json_data(self):
         logger.info('Importing data')
-        for bucket in self.test_config.buckets:
-            self.remote.import_data(
-                self.test_config.restore_settings.import_file, bucket,
-            )
+        if self.test_config.collection.collection_map is not None:
+            cm = self.test_config.collection.collection_map
+            for bucket in self.test_config.buckets:
+                for scope in cm[bucket]:
+                    for collection in cm[bucket][scope]:
+                        if cm[bucket][scope][collection]['load'] == 1:
+                            self.remote.load_tpcds_data_json_collection(
+                                self.test_config.import_settings.import_file,
+                                bucket,
+                                scope,
+                                collection,
+                                self.test_config.import_settings.docs_per_collections
+                            )
+        else:
+            for bucket in self.test_config.buckets:
+                self.remote.load_tpcds_data_json(
+                    self.test_config.import_settings.import_file, bucket,
+                )
 
     def compact_bucket(self, wait: bool = True):
         for target in self.target_iterator:

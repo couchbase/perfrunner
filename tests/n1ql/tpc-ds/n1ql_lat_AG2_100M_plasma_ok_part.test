@@ -20,7 +20,7 @@ replica_number = 0
 indexer.settings.storage_mode = plasma
 indexer.settings.scan_timeout = 300000
 
-[restore]
+[import]
 import_file = /home/backups/tpc-ds.json
 
 [load]

@@ -825,15 +825,31 @@ class RestoreSettings:
     BACKUP_STORAGE = '/backups'
     BACKUP_REPO = ''
     IMPORT_FILE = ''
-
+    DOCS_PER_COLLECTION = 0
     THREADS = 16
 
     def __init__(self, options):
+        self.docs_per_collections = int(options.get('docs_per_collection',
+                                                    self.DOCS_PER_COLLECTION))
         self.backup_storage = options.get('backup_storage', self.BACKUP_STORAGE)
         self.backup_repo = options.get('backup_repo', self.BACKUP_REPO)
         self.import_file = options.get('import_file', self.IMPORT_FILE)
 
         self.threads = options.get('threads', self.THREADS)
+
+    def __str__(self) -> str:
+        return str(self.__dict__)
+
+
+class ImportSettings:
+
+    IMPORT_FILE = ''
+    DOCS_PER_COLLECTION = 0
+
+    def __init__(self, options):
+        self.docs_per_collections = int(options.get('docs_per_collection',
+                                                    self.DOCS_PER_COLLECTION))
+        self.import_file = options.get('import_file', self.IMPORT_FILE)
 
     def __str__(self) -> str:
         return str(self.__dict__)
@@ -1017,6 +1033,15 @@ class IndexSettings:
                                 index_num += 1
             else:
                 fields = self.fields.strip().split(',')
+                parsed_fields = []
+                index = 1
+                for field in fields:
+                    while field.count("(") != field.count(")"):
+                        field = ",".join([field, fields[index]])
+                        del fields[index]
+                    index += 1
+                    parsed_fields.append(field)
+                fields = parsed_fields
                 field_combos = list(chain.from_iterable(combinations(fields, r)
                                                         for r in range(1, len(fields)+1)))
                 if self.top_down:
@@ -1420,6 +1445,11 @@ class TestConfig(Config):
     def restore_settings(self) -> RestoreSettings:
         options = self._get_options_as_dict('restore')
         return RestoreSettings(options)
+
+    @property
+    def import_settings(self) -> ImportSettings:
+        options = self._get_options_as_dict('import')
+        return ImportSettings(options)
 
     @property
     def load_settings(self):

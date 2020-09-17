@@ -1,3 +1,4 @@
+import re
 from typing import List
 
 from logger import logger
@@ -282,10 +283,8 @@ class ClusterManager:
               '[{{extra_config_string, "{}={}"}}]).'
 
         for option, value in self.test_config.bucket_extras.items():
-            if option == 'num_writer_threads':
-                self.rest.set_num_writer_threads(self.master_node, value)
-            elif option == 'num_reader_threads':
-                self.rest.set_num_reader_threads(self.master_node, value)
+            if re.search("^num_.*_threads$", option):
+                self.rest.set_num_threads(self.master_node, option, value)
             else:
                 logger.info('Changing {} to {}'.format(option, value))
                 for master in self.cluster_spec.masters:

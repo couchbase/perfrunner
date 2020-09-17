@@ -1,5 +1,4 @@
 import os
-import time
 from collections import defaultdict
 from typing import Dict, List
 from urllib.parse import urlparse
@@ -159,58 +158,30 @@ class RemoteLinux(Remote):
         put("/tmp/batch.txt", "/tmp/batch.txt")
         self.run_cbindex_command(batch_options)
 
-    def batch_build_index_collection(self, index_nodes, indexes, rest_helper):
+    def batch_build_index_collection(self, index_nodes, indexes):
         batch_options = \
             "-auth=Administrator:password " \
             "-server {index_node}:8091 " \
-            "-type batch_process " \
+            "-type batch_build " \
             "-input /tmp/batch.txt " \
             "-refresh_settings=true".format(index_node=index_nodes[0])
-        building = {}
 
-        for bucket_name, scope_map in indexes.items():
-            for scope_name, collection_map in scope_map.items():
-                for collection_name, index_map in collection_map.items():
-                    build_indexes = ",".join(["{}:{}:{}:{}".format(
-                        bucket_name,
-                        scope_name,
-                        collection_name,
-                        index_name)
-                        for index_name in index_map.keys()])
-                    options = "-type build " \
-                              "-indexes {build_indexes} \n"\
-                        .format(build_indexes=build_indexes)
-                    building[collection_name] = {"indexes": set([index_name
-                                                                 for index_name
-                                                                 in index_map.keys()]),
-                                                 "options": options}
-                    with open("/tmp/batch.txt", "w+") as bf:
+        with open("/tmp/batch.txt", "w+") as bf:
+            for bucket_name, scope_map in indexes.items():
+                for scope_name, collection_map in scope_map.items():
+                    for collection_name, index_map in collection_map.items():
+                        build_indexes = ",".join(["{}:{}:{}:{}".format(
+                            bucket_name,
+                            scope_name,
+                            collection_name,
+                            index_name)
+                            for index_name in index_map.keys()])
+                        options = "-type build " \
+                                  "-indexes {build_indexes} \n"\
+                            .format(build_indexes=build_indexes)
                         bf.write(options)
-                    put("/tmp/batch.txt", "/tmp/batch.txt")
-                    self.run_cbindex_command(batch_options)
-                    if len(building.keys()) < 10:
-                        building_max_num_collections = False
-                    else:
-                        building_max_num_collections = True
-                    while building_max_num_collections:
-                        collections_building = building.keys()
-                        index_statuses = rest_helper.get_index_status(index_nodes[0])
-                        for index_status in index_statuses['status']:
-                            idx_name = index_status['name']
-                            idx_status = index_status['status']
-                            idx_coll = index_status['collection']
-                            if idx_status == 'Ready' \
-                                    and idx_coll in collections_building:
-                                indexes_building = building[idx_coll]['indexes']
-                                indexes_building.discard(idx_name)
-                                if len(indexes_building) == 0:
-                                    del building[idx_coll]
-                                else:
-                                    building[idx_coll]['indexes'] = indexes_building
-                        if len(building.keys()) < 10:
-                            building_max_num_collections = False
-                        else:
-                            time.sleep(10)
+        put("/tmp/batch.txt", "/tmp/batch.txt")
+        self.run_cbindex_command(batch_options)
 
     @master_server
     def build_secondary_index(self, index_nodes, bucket, indexes, storage):
@@ -228,9 +199,9 @@ class RemoteLinux(Remote):
         self.batch_create_index_collection(index_nodes, indexes, storage)
 
     @master_server
-    def build_secondary_index_collections(self, index_nodes, indexes, rest_helper):
+    def build_secondary_index_collections(self, index_nodes, indexes):
         logger.info('building secondary indexes')
-        self.batch_build_index_collection(index_nodes, indexes, rest_helper)
+        self.batch_build_index_collection(index_nodes, indexes)
 
     @all_servers
     def reset_swap(self):

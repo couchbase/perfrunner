@@ -76,8 +76,7 @@ class SecondaryIndexTest(PerfTest):
 
             self.remote.build_secondary_index_collections(
                 self.index_nodes,
-                self.indexes,
-                self.rest)
+                self.indexes)
             self.monitor.wait_for_secindex_init_build_collections(
                 self.index_nodes[0],
                 self.indexes)

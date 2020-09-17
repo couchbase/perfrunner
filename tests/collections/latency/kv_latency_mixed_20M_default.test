@@ -1,0 +1,38 @@
+[test_case]
+test = perfrunner.tests.kv.MixedLatencyTest
+
+[showfast]
+title = latency (ms), 4 nodes, 1 bucket x 20M x 1KB, 10K ops/sec, default scope/collection
+component = kv
+category = latency
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 4
+num_buckets = 1
+
+[bucket]
+autofailover_enabled = false
+
+[collection]
+config = collections/1bucket_default.json
+
+[load]
+items = 20000000
+size = 1024
+workers = 80
+doc_gen = large
+
+[access]
+creates = 1
+reads = 50
+updates = 48
+deletes = 1
+throughput = 10000
+items = 20000000
+workers = 24
+time = 1200
+
+[clients]
+libcouchbase = 3.0.2
+python_client = git+https://github.com/couchbase/couchbase-python-client@a193cbdc7763aa3fa563bd8d139091a4c220a240

@@ -1,10 +1,11 @@
 [test_case]
-test = perfrunner.tests.n1ql.N1QLThroughputTest
+test = perfrunner.tests.n1ql.N1QLLatencyTest
 
 [showfast]
-title = Q7, Order By Query, MOI, not_bounded, s=1 c=100 i=1000
+title = Q2, Singleton Unique Lookup, 8K queries/sec, MOI, not_bounded, default collection
 component = n1ql
-category = Q5_Q7
+category = Q1_Q3
+sub_category = MOI
 
 [cluster]
 mem_quota = 20480
@@ -16,7 +17,7 @@ num_buckets = 1
 db_percentage = 100
 
 [collection]
-config = collections/1bucket_1scope_100collections_basic.json
+config = collections/1bucket_default.json
 
 [bucket]
 replica_number = 0
@@ -31,8 +32,8 @@ workers = 80
 doc_gen = reverse_lookup
 
 [index]
-fields = capped_small,name,email
-indexes_per_collection = 10
+fields = email
+indexes_per_collection = 1
 
 [access]
 creates = 0
@@ -43,13 +44,14 @@ throughput = 30000
 items = 20000000
 workers = 20
 time = 1200
-n1ql_queries = order-by-query
-n1ql_workers = 720
+n1ql_queries = singleton-unique-lookup
+n1ql_throughput = 8000
+n1ql_workers = 240
 
-[n1ql-order-by-query]
-statement = SELECT name AS _name, street AS _street FROM `bucket-1` WHERE capped_small=$1 ORDER BY name;
+[n1ql-singleton-unique-lookup]
+statement = SELECT * FROM `bucket-1` WHERE email = $1;
 scan_consistency = not_bounded
-args = ["{capped_small}"]
+args = ["{email}"]
 
 [clients]
 libcouchbase = 3.0.2

@@ -66,6 +66,14 @@ def ycsb_workload(workload_settings: PhaseSettings,
             'recorded_load_cache_size': workload_settings.recorded_load_cache_size,
         }
 
+    if workload_settings.ycsb_split_workload:
+        split_instance = workload_settings.workload_instances // 2
+
+        if instance < split_instance:
+            workload_settings.workload_path = workload_settings.workload_path.split(",")[0]
+        elif instance >= split_instance:
+            workload_settings.workload_path = workload_settings.workload_path.split(",")[1]
+
     run_ycsb(host=target.node,
              bucket=target.bucket,
              password=target.password,

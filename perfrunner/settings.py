@@ -517,6 +517,7 @@ class PhaseSettings:
     YCSB_RETRY_UPPER = 500
     YCSB_RETRY_FACTOR = 2
     YCSB_OUT_OF_ORDER = 0
+    YCSB_SPLIT_WORKLOAD = 0
 
     TRANSACTIONSENABLED = 0
 
@@ -662,6 +663,7 @@ class PhaseSettings:
         self.ycsb_client = options.get('ycsb_client', self.YCSB_CLIENT)
         self.ycsb_out_of_order = int(options.get('out_of_order', self.YCSB_OUT_OF_ORDER))
         self.insertstart = int(options.get('insertstart', self.YCSB_INSERTSTART))
+        self.ycsb_split_workload = int(options.get('ycsb_split_workload', self.YCSB_SPLIT_WORKLOAD))
 
         # trasnsaction settings
         self.transactionsenabled = int(options.get('transactionsenabled',

@@ -2,10 +2,10 @@
 test = perfrunner.tests.n1ql.N1QLThroughputTest
 
 [showfast]
-title = Q2, Singleton Unique Lookup, MOI, not_bounded, s=1 c=10 i=1000
+title = Q2, Singleton Unique Lookup, Plasma, request_plus, s=1 c=1 i=1
 component = n1ql
 category = Q1_Q3
-sub_category = MOI
+sub_category = Plasma
 
 [cluster]
 mem_quota = 20480
@@ -17,13 +17,13 @@ num_buckets = 1
 db_percentage = 100
 
 [collection]
-config = collections/1bucket_1scope_10collections_basic.json
+config = collections/1bucket_1scope_1collection_basic.json
 
 [bucket]
 replica_number = 0
 
 [secondary]
-indexer.settings.storage_mode = memory_optimized
+indexer.settings.storage_mode = plasma
 
 [load]
 items = 20000000
@@ -32,8 +32,8 @@ workers = 80
 doc_gen = reverse_lookup
 
 [index]
-fields = email,city,state,name,year
-indexes_per_collection = 100
+fields = email
+indexes_per_collection = 1
 
 [access]
 creates = 0
@@ -49,7 +49,7 @@ n1ql_workers = 180
 
 [n1ql-singleton-unique-lookup]
 statement = SELECT * FROM `bucket-1` WHERE email = $1;
-scan_consistency = not_bounded
+scan_consistency = request_plus
 args = ["{email}"]
 
 [clients]

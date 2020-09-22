@@ -30,7 +30,7 @@ items = 200000000
 workers = 0
 n1ql_queries = key-value-lookup
 n1ql_throughput = 10000
-n1ql_workers = 200
+n1ql_workers = 180
 time = 1200
 
 [n1ql-key-value-lookup]

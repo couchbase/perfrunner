@@ -48,7 +48,7 @@ workers = 20
 time = 1200
 n1ql_queries = composite
 n1ql_throughput = 1000000
-n1ql_workers = 512
+n1ql_workers = 180
 
 [n1ql-composite]
 statement = SELECT name FROM `bucket-1` WHERE capped_small BETWEEN $1 AND $2 AND email = $3;

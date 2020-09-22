@@ -49,7 +49,7 @@ items = 200000
 workers = 20
 time = 1200
 n1ql_queries = singleton-unique-lookup
-n1ql_workers = 720
+n1ql_workers = 180
 collection_mod_workers = 1
 collection_mod_throughput = 1
 

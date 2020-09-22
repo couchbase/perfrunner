@@ -39,7 +39,7 @@ items = 1000000
 time = 600
 n1ql_queries = aggregation
 n1ql_batch_size = 10
-n1ql_workers = 240
+n1ql_workers = 180
 
 [n1ql-aggregation]
 statement = SELECT DATE_PART_STR(sold_date, 'year') AS year, item.brand, SUM(sales_price) AS sum_agg FROM `bucket-1` WHERE item.manufacturer_id = $1 AND DATE_PART_STR(sold_date, 'month') = $2 GROUP BY DATE_PART_STR(sold_date, 'year'), item.brand ORDER BY DATE_PART_STR(sold_date, 'year'), sum_agg DESC, item.brand;

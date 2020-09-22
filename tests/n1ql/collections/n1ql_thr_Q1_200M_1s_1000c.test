@@ -29,7 +29,7 @@ doc_gen = reverse_lookup
 items = 200000000
 workers = 0
 n1ql_queries = key-value-lookup
-n1ql_workers = 480
+n1ql_workers = 180
 workload_instances = 2
 time = 1200
 

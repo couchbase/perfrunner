@@ -35,13 +35,14 @@ class CBAsyncGen3:
         logger.info("Connection string: {}".format(connection_string))
 
     def connect_collections(self, scope_collection_list):
-        self.bucket = self.cluster.bucket(self.bucket_name)
         for scope_collection in scope_collection_list:
             scope, collection = scope_collection.split(":")
             if scope == "_default" and collection == "_default":
-                self.collections[scope_collection] = self.bucket.default_collection()
+                self.collections[scope_collection] = \
+                    self.cluster.bucket(self.bucket_name).default_collection()
             else:
-                self.collections[scope_collection] = self.bucket.scope(scope).collection(collection)
+                self.collections[scope_collection] = \
+                    self.cluster.bucket(self.bucket_name).scope(scope).collection(collection)
 
     def create(self, *args, **kwargs):
         self.collection = self.collections[args[0]]
@@ -128,8 +129,6 @@ class CBGen3(CBAsyncGen3):
         self.bucket = None
         self.collections = dict()
         self.collection = None
-        if n1ql_timeout:
-            self.bucket.n1ql_timeout = n1ql_timeout
         logger.info("Connection string: {}".format(connection_string))
 
     def create(self, *args, **kwargs):
@@ -197,9 +196,7 @@ class CBGen3(CBAsyncGen3):
         self.user_manager = self.cluster.users()
 
     def create_collection_manager(self):
-        if not self.bucket:
-            self.bucket = self.cluster.bucket(self.bucket_name)
-        self.collection_manager = self.bucket.collections()
+        self.collection_manager = self.cluster.bucket(self.bucket_name).collections()
 
     @quiet
     @backoff

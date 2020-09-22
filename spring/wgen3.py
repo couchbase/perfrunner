@@ -423,7 +423,10 @@ class KVWorker(Worker):
                     self.shared_dict[target] = update_curr_items + ":" + update_deleted_items
 
             curr_items[target] = int(target_curr_items)
-            deleted_items[target] = int(target_deleted_items) + self.ws.deletes * self.ws.workers
+            deleted_items[target] = int(target_deleted_items)
+
+        deletes_buffer = self.ws.deletes * self.ws.workers
+        creates_buffer = self.ws.creates * self.ws.workers
 
         cmds = []
         for i in range(self.batch_size):
@@ -435,14 +438,23 @@ class KVWorker(Worker):
                 cmds += self.create_args(cb, c, target)
                 curr_items[target] = c + 1
             elif op == 'r':
-                cmds += self.read_args(cb, c, d, target)
+                cmds += self.read_args(cb,
+                                       c - creates_buffer,
+                                       d + deletes_buffer,
+                                       target)
             elif op == 'u':
-                cmds += self.update_args(cb, c, d, target)
+                cmds += self.update_args(cb,
+                                         c - creates_buffer,
+                                         d + deletes_buffer,
+                                         target)
             elif op == 'd':
                 cmds += self.delete_args(cb, d, target)
                 deleted_items[target] = d + 1
             elif op == 'm':
-                cmds += self.modify_args(cb, c, d, target)
+                cmds += self.modify_args(cb,
+                                         c - creates_buffer,
+                                         d + deletes_buffer,
+                                         target)
         return cmds
 
     def do_batch(self, *args, **kwargs):

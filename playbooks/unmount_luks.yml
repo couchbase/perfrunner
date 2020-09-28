@@ -1,0 +1,15 @@
+- hosts: kv:index:n1ql:eventing:analytics
+  tasks:
+  - name: View Disk Partitions
+    shell: lsblk
+    register: lsblk
+  - debug:
+      var: lsblk.stdout_lines
+  - name: Mount LUKS Filesystem
+    script:
+          cmd: /workspace/workspace/demeter/scripts/unmount_luks_fs.sh
+  - name: View Disk Partitions
+    shell: lsblk
+    register: lsblk
+  - debug:
+      var: lsblk.stdout_lines

@@ -2,7 +2,7 @@
 test = perfrunner.tests.ycsb.YCSBDurabilityThroughputTest
 
 [showfast]
-title = Durability Majority, 1 client, 128 threads, YCSB SLO, SDK 3, 4 nodes,  Workload A, Out of Order
+title = Durability Majority, 1 client, 128 threads, YCSB SLO, SDK 3, 4 nodes, Workload A, Out of Order
 component = kv
 category = durability
 sub_category = SLO

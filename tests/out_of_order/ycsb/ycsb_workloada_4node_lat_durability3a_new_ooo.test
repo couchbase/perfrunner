@@ -2,7 +2,7 @@
 test = perfrunner.tests.ycsb.YCSBLatencyTest
 
 [showfast]
-title = Latency (ms), SDK 3, Durability Persist Majority, 4 nodes, Workload A, uniform distribution, Out of Order
+title = Latency (ms), SDK 3, Durability None, 4 nodes, Workload A, Out of Order
 component = kv
 category = durability
 sub_category = Latency
@@ -26,7 +26,7 @@ workers = 128
 ycsb_client = couchbase3
 
 [access]
-durability = 3
+durability = 0
 workload_path = workloads/workloada
 items = 20000000
 ops = 0
@@ -37,7 +37,6 @@ workers = 1
 workload_instances = 1
 ycsb_client = couchbase3
 out_of_order = 1
-requestdistribution = uniform
 
 [ycsb]
 branch = couchbase3

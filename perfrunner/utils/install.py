@@ -112,14 +112,16 @@ class CouchbaseInstaller:
         else:
             logger.interrupt('Unsupported package format')
 
-    def download_local(self):
+    def download_local(self, local_copy_url: str = None):
         """Download and save a copy of the specified package."""
         try:
             if RemoteHelper.detect_server_os("127.0.0.1").upper() in ('UBUNTU', 'DEBIAN'):
                 os_release = detect_ubuntu_release()
-
-                url = self.find_package(edition=self.options.edition,
-                                        package="deb", os_release=os_release)
+                if local_copy_url:
+                    url = local_copy_url
+                else:
+                    url = self.find_package(edition=self.options.edition,
+                                            package="deb", os_release=os_release)
                 logger.info('Saving a local copy of {}'.format(url))
                 with open('couchbase.deb', 'wb') as fh:
                     resp = requests.get(url)
@@ -186,7 +188,9 @@ def get_args():
     parser.add_argument('--remote-copy',
                         action='store_true',
                         help='save a remote copy of a package')
-
+    parser.add_argument('--local-copy-url',
+                        default=None,
+                        help='The local copy url of the build')
     return parser.parse_args()
 
 
@@ -201,7 +205,7 @@ def main():
 
     if args.local_copy:
         installer.download()
-        installer.download_local()
+        installer.download_local(args.local_copy_url)
 
     if '--remote-copy' in sys.argv:
         logger.info('Saving a remote copy')

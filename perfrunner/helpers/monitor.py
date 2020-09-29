@@ -204,7 +204,10 @@ class Monitor(RestHelper):
                             replicate_docs = int(stat['docs_read'])
                         elif replicate_id == 'sgr2_pushAndPull' or \
                                 replicate_id == 'sgr2_conflict_resolution':
-                            replicate_docs = int(stat['docs_read']) + int(stat['docs_written'])
+                            if 'docs_read' in stat:
+                                replicate_docs += int(stat['docs_read'])
+                            if 'docs_written' in stat:
+                                replicate_docs += int(stat['docs_written'])
                         elif replicate_id == 'sgr1_push' or replicate_id == 'sgr2_push':
                             replicate_docs = int(stat['docs_written'])
                         break
@@ -247,7 +250,10 @@ class Monitor(RestHelper):
                             replicate_docs = int(stat['docs_read'])
                         elif replicate_id == 'sgr2_pushAndPull' or \
                                 replicate_id == 'sgr2_conflict_resolution':
-                            replicate_docs = int(stat['docs_read']) + int(stat['docs_written'])
+                            if 'docs_read' in stat:
+                                replicate_docs += int(stat['docs_read'])
+                            if 'docs_written' in stat:
+                                replicate_docs += int(stat['docs_written'])
                         elif replicate_id == 'sgr1_push' or replicate_id == 'sgr2_push':
                             replicate_docs = int(stat['docs_written'])
                         break

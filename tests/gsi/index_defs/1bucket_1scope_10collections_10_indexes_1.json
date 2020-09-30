@@ -1,0 +1,37 @@
+{
+    "bucket-1": {
+        "_default": {},
+        "scope-1": {
+            "collection-1": {
+                "index1-1": "city"
+            },
+            "collection-10": {
+                "index10-10": "city"
+            },
+            "collection-2": {
+                "index2-2": "city"
+            },
+            "collection-3": {
+                "index3-3": "city"
+            },
+            "collection-4": {
+                "index4-4": "city"
+            },
+            "collection-5": {
+                "index5-5": "city"
+            },
+            "collection-6": {
+                "index6-4": "city"
+            },
+            "collection-7": {
+                "index7-4": "city"
+            },
+            "collection-8": {
+                "index8-4": "city"
+            },
+            "collection-9": {
+                "index9-4": "city"
+            }
+        }
+    }
+}

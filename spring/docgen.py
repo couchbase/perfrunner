@@ -494,6 +494,39 @@ class LargeItemGroupedDocument(GroupedDocument):
         }
 
 
+class LargeItemGroupedDocumentKeySize(GroupedDocument):
+    def __init__(self, avg_size: int, groups: int, item_size: int):
+        super().__init__(avg_size, groups)
+        self.item_size = item_size
+
+    @staticmethod
+    def build_item(alphabet: str, size: int = 64, prefix: str = ""):
+        length = size - len(prefix)
+        num_slices = int(math.ceil(length / 64))  # 64 == len(alphabet)
+        body = num_slices * alphabet
+        num = random.randint(1, length)
+        if prefix:
+            return prefix + "-" + body[num:length] + body[0:num]
+        return body[num:length] + body[0:num]
+
+    def next(self, key: Key) -> dict:
+        alphabet = self.build_alphabet(key.string)
+
+        return {
+            'doc_group': key.number % self.groups,
+            'name': self.build_item(alphabet=alphabet, size=self.item_size),
+            'email': self.build_item(alphabet=alphabet, size=self.item_size),
+            'alt_email': self.build_item(alphabet=alphabet, size=self.item_size),
+            'city': self.build_item(alphabet=alphabet, size=self.item_size),
+            'realm': self.build_item(alphabet=alphabet, size=self.item_size),
+            'coins': self.build_item(alphabet=alphabet, size=self.item_size),
+            'category': self.build_item(alphabet=alphabet, size=self.item_size),
+            'street': self.build_item(alphabet=alphabet, size=self.item_size),
+            'year': self.build_item(alphabet=alphabet, size=self.item_size),
+            'body': self.build_item(alphabet=alphabet, size=self.item_size)
+        }
+
+
 class NestedDocument(Document):
 
     OVERHEAD = 450  # Minimum size due to static fields, body size is variable

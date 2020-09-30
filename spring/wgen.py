@@ -38,6 +38,7 @@ from spring.docgen import (
     KeyForRemoval,
     LargeDocument,
     LargeItemGroupedDocument,
+    LargeItemGroupedDocumentKeySize,
     LargeItemPlasmaDocument,
     MovingWorkingSetKey,
     MultiBucketDocument,
@@ -149,6 +150,10 @@ class Worker:
             self.docs = LargeItemGroupedDocument(self.ws.size,
                                                  self.ws.doc_groups,
                                                  self.ws.item_size)
+        elif self.ws.doc_gen == 'large_item_grouped_keysize':
+            self.docs = LargeItemGroupedDocumentKeySize(self.ws.size,
+                                                        self.ws.doc_groups,
+                                                        self.ws.item_size)
         elif self.ws.doc_gen == 'small_plasma_grouped':
             self.docs = SmallPlasmaGroupedDocument(self.ws.size, self.ws.doc_groups)
         elif self.ws.doc_gen == 'string':

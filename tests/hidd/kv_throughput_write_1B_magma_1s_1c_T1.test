@@ -1,0 +1,62 @@
+[test_case]
+test = perfrunner.tests.magma.ThroughputDGMMagmaTest
+
+[showfast]
+title = Avg Throughput (ops/sec), 4 nodes, 1 bucket x 1B x 1KB, 20/80 R/W, s=1 c=1, Uniform distribution, Magma
+component = hidd
+category = ops
+
+[cluster]
+mem_quota = 10240
+initial_nodes = 4
+num_buckets = 1
+kernel_mem_limit = 20G
+kernel_mem_limit_services = kv
+enable_cpu_cores = false
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
+
+[bucket]
+eviction_policy = fullEviction
+backend_storage = magma
+
+[bucket_extras]
+num_reader_threads = 64
+num_writer_threads = 64
+
+[load]
+items = 1000000000
+size = 1024
+workers = 128
+key_fmtr = hex
+doc_gen = large
+
+[extra_access]
+updates = 100
+creates = 0
+deletes = 0
+reads = 0
+workers = 128
+items = 1000000000
+ops = 1000000000
+time = 86400
+requestdistribution = uniform
+power_alpha = 0
+zipf_alpha = 0
+durability = 0
+async = 0
+
+[access]
+creates = 0
+reads = 20
+updates = 80
+deletes = 0
+items = 1000000000
+workers = 128
+time = 3600
+requestdistribution = uniform
+
+[clients]
+libcouchbase = 3.0.2
+python_client = git+https://github.com/couchbase/couchbase-python-client@a193cbdc7763aa3fa563bd8d139091a4c220a240

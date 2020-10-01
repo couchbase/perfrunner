@@ -35,14 +35,15 @@ class CBAsyncGen3:
         logger.info("Connection string: {}".format(connection_string))
 
     def connect_collections(self, scope_collection_list):
+        self.bucket = self.cluster.bucket(self.bucket_name)
         for scope_collection in scope_collection_list:
             scope, collection = scope_collection.split(":")
             if scope == "_default" and collection == "_default":
                 self.collections[scope_collection] = \
-                    self.cluster.bucket(self.bucket_name).default_collection()
+                    self.bucket.default_collection()
             else:
                 self.collections[scope_collection] = \
-                    self.cluster.bucket(self.bucket_name).scope(scope).collection(collection)
+                    self.bucket.scope(scope).collection(collection)
 
     def create(self, *args, **kwargs):
         self.collection = self.collections[args[0]]

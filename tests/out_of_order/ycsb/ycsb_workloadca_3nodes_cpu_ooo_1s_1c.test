@@ -2,7 +2,7 @@
 test = perfrunner.tests.ycsb.YCSBThroughputTest
 
 [showfast]
-title = Avg Throughput (ops/sec), Workload CA, 3 nodes, 12 vCPU, uniform distribution, s=1 c=1
+title = Avg Throughput (ops/sec), Workload CA, 3 nodes, 12 vCPU, Out of Order, s=1 c=1
 component = kv
 category = ycsb
 sub_category = ycsb3
@@ -28,12 +28,12 @@ workload_path = workloads/workloadca
 ycsb_client = couchbase3
 items = 20000000
 ops = 1000000000
-time = 1800
+time = 1200
 boost = 12
 workers = 600
-requestdistribution = uniform
 workload_instances = 6
 kv_endpoints = 16
+out_of_order = 1
 
 [stats]
 client_processes = java

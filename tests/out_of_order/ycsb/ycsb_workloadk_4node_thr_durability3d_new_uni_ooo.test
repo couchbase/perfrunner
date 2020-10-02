@@ -2,7 +2,7 @@
 test = perfrunner.tests.ycsb.YCSBThroughputTest
 
 [showfast]
-title = Avg Throughput (ops/sec), SDK 3, Durability None, 4 nodes, Workload A - Split, Out of Order
+title = Avg Throughput (ops/sec), SDK 3, Durability Persist Majority, 4 nodes, Workload K, Uniform Distribution, Out of Order
 component = kv
 category = durability
 sub_category = Throughput
@@ -20,24 +20,25 @@ db_percentage = 100
 replica_number = 2
 
 [load]
-workload_path = workloads/workloada
+workload_path = workloads/workloadk
 items = 20000000
 workers = 128
 ycsb_client = couchbase3
 
 [access]
-durability = 0
-workload_path = workloads/workloadsplitupdate,workloads/workloadsplitread
-ycsb_split_workload = 1
+durability = 3
+workload_path = workloads/workloadk
 items = 20000000
-ops = 100000000
+ops = 0
 time = 1200
-workers = 128
-workload_instances = 4
+workers = 512
+workload_instances = 6
 ycsb_client = couchbase3
 enable_mutation_token = true
-kv_endpoints = 8
+kv_endpoints = 64
 out_of_order = 1
+requestdistribution = uniform
 
 [ycsb]
 branch = couchbase3
+

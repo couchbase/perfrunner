@@ -123,7 +123,6 @@
     ],
     "KV-Hercules": [
         {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "collections/ycsb/ycsb_workloadca_3nodes_cpu_1s_1c.test"},
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "collections/ycsb/ycsb_workloadca_3nodes_cpu_1s_1000c.test"},
         {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "collections/ycsb/ycsb_workloadca_3nodes_cpu_eph_norepl_uni_1s_1000c.test"},
         {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "collections/ycsb/ycsb_workloadca_3nodes_cpu_norepl_uni_1s_1000c.test"},
         {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "collections/ycsb/ycsb_workloadca_3nodes_cpu_uni_1s_1c.test"},
@@ -132,8 +131,10 @@
         {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "collections/ycsb/ycsb_workloadca_3nodes_cpu_lat_uni_1s_1c.test"},
         {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "collections/ycsb/ycsb_workloadca_3nodes_cpu_lat_uni_1s_1000c.test"},
         {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloada_3nodes_cpu_ooo.test"},
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloada_3nodes_cpu_split.test"},
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloada_3nodes_cpu_split_ooo.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloadca_3nodes_cpu_ooo_1s_1c.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloada_3nodes_cpu_uni_ooo.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloadca_3nodes_cpu_uni_ooo_1s_1c.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloadca_3nodes_cpu_uni_ooo_1s_1000c.test"},
         {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_slo_workloada_4node_durability3a_new_ooo.test"},
         {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_slo_workloada_4node_durability3b_new_ooo.test"},
         {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_slo_workloada_4node_durability3c_new_ooo.test"},
@@ -142,14 +143,14 @@
         {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloada_4node_lat_durability3b_new_ooo.test"},
         {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloada_4node_lat_durability3c_new_ooo.test"},
         {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloada_4node_lat_durability3d_new_ooo.test"},
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloada_4node_thr_durability3a_new_split.test"},
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloada_4node_thr_durability3b_new_split.test"},
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloada_4node_thr_durability3c_new_split.test"},
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloada_4node_thr_durability3d_new_split.test"},
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloada_4node_thr_durability3a_new_split_ooo.test"},
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloada_4node_thr_durability3b_new_split_ooo.test"},
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloada_4node_thr_durability3c_new_split_ooo.test"},
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloada_4node_thr_durability3d_new_split_ooo.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloadk_4node_thr_durability3a_new_uni_ooo.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloadck_4node_thr_durability3a_new_uni_ooo_1s_1000c.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloadk_4node_thr_durability3b_new_uni_ooo.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloadck_4node_thr_durability3b_new_uni_ooo_1s_1000c.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloadk_4node_thr_durability3c_new_uni_ooo.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloadck_4node_thr_durability3c_new_uni_ooo_1s_1000c.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloadk_4node_thr_durability3d_new_uni_ooo.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_workloadck_4node_thr_durability3d_new_uni_ooo_1s_1000c.test"},
         {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "out_of_order/ycsb/ycsb_trans_workloadt_4nodes_48cores_dur_3_ooo.test"}
     ],
     "N1QL": [
@@ -172,8 +173,8 @@
         {"job": "iris-collections-multi-client",     "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_Q2_20M_gsi_plasma_false_1s_1c_1i.test"}
     ],
     "YCSB": [
-        {"job": "hebe", "cluster": "hebe.spec", "test_config": "collections/ycsb/ycsb_workloadce_4nodes_1s_1c.test"},
-        {"job": "hebe", "cluster": "hebe.spec", "test_config": "collections/ycsb/ycsb_workloadce_4nodes_plasma_1s_1c.test"}
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "collections/ycsb/ycsb_workloadce_4nodes_1s_1c.test"},
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "collections/ycsb/ycsb_workloadce_4nodes_plasma_1s_1c.test"}
     ],
     "GSI-ForestDB": [
         {"job": "secondary-fdb", "cluster":  "nyx_colocated.spec", "test_config": "fdb/secondary_1M_100Index_fdb_ce.test"},

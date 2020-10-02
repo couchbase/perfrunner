@@ -1,0 +1,35 @@
+[test_case]
+test = perfrunner.tests.magma.YCSBLoadThroughputHIDDTest
+
+[showfast]
+title = Avg Throughput (ops/sec), Load, 1 nodes, 1 bucket x 1B x 1KB, Couchstore
+component = hidd
+category = ycsb
+
+[cluster]
+mem_quota = 102400
+initial_nodes = 1
+num_buckets = 1
+enable_cpu_cores = false
+
+[bucket]
+replica_number = 0
+eviction_policy = fullEviction
+
+[bucket_extras]
+num_reader_threads = 64
+num_writer_threads = 64
+
+[load]
+workload_path = workloads/workloada
+ycsb_client = couchbase3
+items = 1000000000
+workers = 320
+kv_endpoints = 16
+size = 1000
+
+[ycsb]
+branch = couchbase3
+
+[stats]
+client_processes = java

@@ -1,0 +1,307 @@
+{
+    "bucket-1": {
+        "_default": {},
+        "scope-1": {
+           "collection-1": {
+             "index1-1": "name"
+           },
+           "collection-2": {
+             "index2-1": "name"
+           },
+           "collection-3": {
+             "index3-1": "name"
+           },
+           "collection-4": {
+             "index4-1": "name"
+           },
+           "collection-5": {
+             "index5-1": "name"
+           },
+           "collection-6": {
+             "index6-1": "name"
+           },
+           "collection-7": {
+             "index7-1": "name"
+           },
+           "collection-8": {
+             "index8-1": "name"
+           },
+           "collection-9": {
+             "index9-1": "name"
+           },
+           "collection-10": {
+             "index10-1": "name"
+           },
+           "collection-11": {
+             "index11-1": "body"
+           },
+           "collection-12": {
+             "index12-1": "body"
+           },
+           "collection-13": {
+             "index13-1": "body"
+           },
+           "collection-14": {
+             "index14-1": "body"
+           },
+           "collection-15": {
+             "index15-1": "body"
+           },
+           "collection-16": {
+             "index16-1": "body"
+           },
+           "collection-17": {
+             "index17-1": "body"
+           },
+           "collection-18": {
+             "index18-1": "body"
+           },
+           "collection-19": {
+             "index19-1": "body"
+           },
+           "collection-20": {
+             "index20-1": "body"
+           },
+           "collection-21": {
+             "index21-1": "email"
+           },
+           "collection-22": {
+             "index22-1": "email"
+           },
+           "collection-23": {
+             "index23-1": "email"
+           },
+           "collection-24": {
+             "index24-1": "email"
+           },
+           "collection-25": {
+             "index25-1": "email"
+           },
+           "collection-26": {
+             "index26-1": "email"
+           },
+           "collection-27": {
+             "index27-1": "email"
+           },
+           "collection-28": {
+             "index28-1": "email"
+           },
+           "collection-29": {
+             "index29-1": "email"
+           },
+           "collection-30": {
+             "index30-1": "email"
+           },
+           "collection-31": {
+             "index31-1": "alt_email"
+           },
+           "collection-32": {
+             "index32-1": "alt_email"
+           },
+           "collection-33": {
+             "index33-1": "alt_email"
+           },
+           "collection-34": {
+             "index34-1": "alt_email"
+           },
+           "collection-35": {
+             "index35-1": "alt_email"
+           },
+           "collection-36": {
+             "index36-1": "alt_email"
+           },
+           "collection-37": {
+             "index37-1": "alt_email"
+           },
+           "collection-38": {
+             "index38-1": "alt_email"
+           },
+           "collection-39": {
+             "index39-1": "alt_email"
+           },
+           "collection-40": {
+             "index40-1": "alt_email"
+           },
+           "collection-41": {
+             "index41-1": "city"
+           },
+           "collection-42": {
+             "index42-1": "city"
+           },
+           "collection-43": {
+             "index43-1": "city"
+           },
+           "collection-44": {
+             "index44-1": "city"
+           },
+           "collection-45": {
+             "index45-1": "city"
+           },
+           "collection-46": {
+             "index46-1": "city"
+           },
+           "collection-47": {
+             "index47-1": "city"
+           },
+           "collection-48": {
+             "index48-1": "city"
+           },
+           "collection-49": {
+             "index49-1": "city"
+           },
+           "collection-50": {
+             "index50-1": "city"
+           },
+           "collection-51": {
+             "index51-1": "realm"
+           },
+           "collection-52": {
+             "index52-1": "realm"
+           },
+           "collection-53": {
+             "index53-1": "realm"
+           },
+           "collection-54": {
+             "index54-1": "realm"
+           },
+           "collection-55": {
+             "index55-1": "realm"
+           },
+           "collection-56": {
+             "index56-1": "realm"
+           },
+           "collection-57": {
+             "index57-1": "realm"
+           },
+           "collection-58": {
+             "index58-1": "realm"
+           },
+           "collection-59": {
+             "index59-1": "realm"
+           },
+           "collection-60": {
+             "index60-1": "realm"
+           },
+           "collection-61": {
+             "index61-1": "coins"
+           },
+           "collection-62": {
+             "index62-1": "coins"
+           },
+           "collection-63": {
+             "index63-1": "coins"
+           },
+           "collection-64": {
+             "index64-1": "coins"
+           },
+           "collection-65": {
+             "index65-1": "coins"
+           },
+           "collection-66": {
+             "index66-1": "coins"
+           },
+           "collection-67": {
+             "index67-1": "coins"
+           },
+           "collection-68": {
+             "index68-1": "coins"
+           },
+           "collection-69": {
+             "index69-1": "coins"
+           },
+           "collection-70": {
+             "index70-1": "coins"
+           },
+           "collection-71": {
+             "index71-1": "category"
+           },
+           "collection-72": {
+             "index72-1": "category"
+           },
+           "collection-73": {
+             "index73-1": "category"
+           },
+           "collection-74": {
+             "index74-1": "category"
+           },
+           "collection-75": {
+             "index75-1": "category"
+           },
+           "collection-76": {
+             "index76-1": "category"
+           },
+           "collection-77": {
+             "index77-1": "category"
+           },
+           "collection-78": {
+             "index78-1": "category"
+           },
+           "collection-79": {
+             "index79-1": "category"
+           },
+           "collection-80": {
+             "index80-1": "category"
+           },
+           "collection-81": {
+             "index81-1": "street"
+           },
+           "collection-82": {
+             "index82-1": "street"
+           },
+           "collection-83": {
+             "index83-1": "street"
+           },
+           "collection-84": {
+             "index84-1": "street"
+           },
+           "collection-85": {
+             "index85-1": "street"
+           },
+           "collection-86": {
+             "index86-1": "street"
+           },
+           "collection-87": {
+             "index87-1": "street"
+           },
+           "collection-88": {
+             "index88-1": "street"
+           },
+           "collection-89": {
+             "index89-1": "street"
+           },
+           "collection-90": {
+             "index90-1": "street"
+           },
+           "collection-91": {
+             "index91-1": "year"
+           },
+           "collection-92": {
+             "index92-1": "year"
+           },
+           "collection-93": {
+             "index93-1": "year"
+           },
+           "collection-94": {
+             "index94-1": "year"
+           },
+           "collection-95": {
+             "index95-1": "year"
+           },
+           "collection-96": {
+             "index96-1": "year"
+           },
+           "collection-97": {
+             "index97-1": "year"
+           },
+           "collection-98": {
+             "index98-1": "year"
+           },
+           "collection-99": {
+             "index99-1": "year"
+           },
+           "collection-100": {
+             "index100-1": "year"
+           }
+        }
+    }
+}

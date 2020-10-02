@@ -433,3 +433,126 @@ class XdcrBackfillLatencyTest(XdcrPriorityLatencyTest):
         self.access()
 
         self.report_kpi()
+
+
+class XdcrCollectionMapTest(UniDirXdcrInitTest):
+
+    def create_replication(self):
+
+        for bucket in self.test_config.buckets:
+            params = self.replication_params(from_bucket=bucket,
+                                             to_bucket=bucket)
+            self.rest.create_replication(self.master_node, params)
+
+    def replication_params(self, from_bucket: str, to_bucket: str):
+        collection_mapping = self.test_config.xdcr_settings.initial_collection_mapping
+
+        params = {
+            'replicationType': 'continuous',
+            'fromBucket': from_bucket,
+            'toBucket': to_bucket,
+            'toCluster': self.CLUSTER_NAME,
+            'checkpointInterval': 60,
+            'collectionsSkipSrcValidation': True,
+            'colMappingRules': collection_mapping,
+            'collectionsExplicitMapping': True
+        }
+        if self.xdcr_settings.filter_expression:
+            params.update({
+                'filterExpression': self.xdcr_settings.filter_expression,
+            })
+        return params
+
+
+class XdcrCollectionBackfillTest(UniDirXdcrInitTest):
+
+    def create_initial_replication(self):
+        for bucket in self.test_config.buckets:
+            params = self.initial_replication_params(from_bucket=bucket, to_bucket=bucket)
+
+            self.rest.create_replication(self.master_node, params)
+
+    def initial_replication_params(self, from_bucket: str, to_bucket: str):
+        initial_collection_mapping = self.test_config.xdcr_settings.initial_collection_mapping
+
+        params = {
+            'replicationType': 'continuous',
+            'fromBucket': from_bucket,
+            'toBucket': to_bucket,
+            'toCluster': self.CLUSTER_NAME,
+            'checkpointInterval': 60,
+            'collectionsSkipSrcValidation': True,
+            'colMappingRules': initial_collection_mapping,
+            'collectionsExplicitMapping': True
+        }
+        if self.xdcr_settings.filter_expression:
+            params.update({
+                'filterExpression': self.xdcr_settings.filter_expression,
+            })
+        return params
+
+    def get_replication_id(self, src_master):
+        replication_id = self.rest.get_xdcr_replication_id(host=src_master)
+        return replication_id
+
+    def get_replicated_docs(self, host: str):
+        num_items = 0
+        for bucket in self.test_config.buckets:
+            num_items = self.monitor.get_num_items(host=host, bucket=bucket)
+        return num_items
+
+    def create_backfill_replication(self, replication_id: str):
+        params = self.backfill_replication_params()
+        self.rest.edit_replication(self.master_node, params, replication_id)
+
+    def backfill_replication_params(self):
+        backfill_collection_mapping = self.test_config.xdcr_settings.backfill_collection_mapping
+        params = {
+            'colMappingRules': backfill_collection_mapping
+        }
+        return params
+
+    @with_stats
+    @with_profiles
+    def monitor_backfill_replication(self, dest_host: str, num_items: int):
+        backfill_time = 0
+        for bucket in self.test_config.buckets:
+            backfill_time = self.monitor.monitor_num_backfill_items(host=dest_host,
+                                                                    bucket=bucket,
+                                                                    num_items=num_items)
+        return backfill_time
+
+    def _report_kpi(self, throughput):
+        self.reporter.post(
+            *self.metrics.replication_throughput(throughput)
+        )
+
+    def run(self):
+
+        src_master, dest_master = self.cluster_spec.masters
+
+        self.load()
+        self.wait_for_persistence()
+        self.add_remote_cluster()
+        self.create_initial_replication()
+        self.monitor_replication()
+
+        replication_id = self.get_replication_id(src_master=src_master)
+        replicated_items = self.get_replicated_docs(host=dest_master)
+
+        print('replicated_items : ', replicated_items)
+
+        items_remaining = self.test_config.load_settings.items - replicated_items
+
+        print('items_remaining : ', items_remaining)
+
+        self.create_backfill_replication(replication_id=replication_id)
+
+        backfill_time = self.monitor_backfill_replication(
+            dest_host=dest_master,
+            num_items=self.test_config.load_settings.items
+        )
+
+        throughput = items_remaining/backfill_time
+
+        self.report_kpi(throughput)

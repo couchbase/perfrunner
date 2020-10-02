@@ -283,6 +283,13 @@ class RestHelper:
                 return is_running, progress
         return False, 0
 
+    def get_xdcr_replication_id(self, host: str):
+        replication_id = ''
+        for task in self.get_tasks(host):
+            if 'settingsURI' in task:
+                replication_id = task['settingsURI']
+        return replication_id.split('/')[-1]
+
     def delete_bucket(self, host: str, name: str):
         logger.info('Deleting new bucket: {}'.format(name))
         api = 'http://{host}:8091/pools/default/buckets/{bucket}'.format(host=host, bucket=name)
@@ -395,6 +402,12 @@ class RestHelper:
         logger.info('Starting replication with parameters {}'.format(params))
 
         api = 'http://{}:8091/controller/createReplication'.format(host)
+        self.post(url=api, data=params)
+
+    def edit_replication(self, host: str, params: dict, replicationid: str):
+        logger.info('Editing replication {} with parameters {}'.format(replicationid, params))
+
+        api = 'http://{}:8091/settings/replications/{}'.format(host, replicationid)
         self.post(url=api, data=params)
 
     def trigger_bucket_compaction(self, host: str, bucket: str):

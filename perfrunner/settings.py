@@ -862,6 +862,8 @@ class XDCRSettings:
     WAN_DELAY = 0
     NUM_XDCR_LINKS = 1
     XDCR_LINKS_PRIORITY = 'HIGH'
+    INITIAL_COLLECTION_MAPPING = ''    # std format {"scope-1:collection-1":"scope-1:collection-1"}
+    BACKFILL_COLLECTION_MAPPING = ''   # ----------------------"----------------------------------
 
     def __init__(self, options: dict):
         self.demand_encryption = options.get('demand_encryption')
@@ -873,6 +875,10 @@ class XDCRSettings:
         self.num_xdcr_links = int(options.get('num_xdcr_links', self.NUM_XDCR_LINKS))
         self.xdcr_links_priority = options.get('xdcr_links_priority',
                                                self.XDCR_LINKS_PRIORITY).split(',')
+        self.initial_collection_mapping = options.get('initial_collection_mapping',
+                                                      self.INITIAL_COLLECTION_MAPPING)
+        self.backfill_collection_mapping = options.get('backfill_collection_mapping',
+                                                       self.BACKFILL_COLLECTION_MAPPING)
 
     def __str__(self) -> str:
         return str(self.__dict__)

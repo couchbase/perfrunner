@@ -257,6 +257,13 @@ class MetricHelper:
 
         return round(throughput), self._snapshots, metric_info
 
+    def replication_throughput(self, throughput: float) -> Metric:
+        metric_id = self.test_config.name
+        title = self.test_config.showfast.title
+        metric_info = self._metric_info(metric_id=metric_id, title=title, chirality=1)
+
+        return round(throughput), self._snapshots, metric_info
+
     def avg_replication_multilink(self, time_elapsed: float, xdcr_link: str) -> Metric:
 
         metric_id = self.test_config.name + '_' + xdcr_link

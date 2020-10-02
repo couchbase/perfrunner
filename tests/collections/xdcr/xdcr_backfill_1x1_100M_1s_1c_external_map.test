@@ -1,0 +1,39 @@
+[test_case]
+test = perfrunner.tests.xdcr.XdcrCollectionMapTest
+
+[showfast]
+title = Avg. XDCR rate (items/sec), 1 -> 1 (2 source nozzles, 4 target nozzles), 1 bucket x 100M x 1KB, s=1, c=1, external mapp
+component = xdcr
+category = init_single
+orderby = default
+
+[stats]
+server_processes = goxdcr
+
+[cluster]
+mem_quota = 204800
+initial_nodes = 1 1
+num_buckets = 1
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
+
+[bucket]
+replica_number = 0
+
+[xdcr_cluster]
+sourceNozzlePerNode = 2
+targetNozzlePerNode = 4
+
+[load]
+items = 100000000
+size = 1024
+workers = 1
+doc_gen = large
+
+[xdcr]
+initial_collection_mapping = {"scope-1:collection-1":"scope-1:collection-1"}
+
+[clients]
+libcouchbase = 3.0.2
+python_client = git+https://github.com/couchbase/couchbase-python-client@a193cbdc7763aa3fa563bd8d139091a4c220a240

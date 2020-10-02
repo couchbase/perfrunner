@@ -243,6 +243,10 @@ class Monitor(RestHelper):
                                     stats_function=self.get_xdcr_stats)
         return time.time()
 
+    def get_num_items(self, host: str, bucket: str):
+        num_items = self._get_num_items(host, bucket, total=True)
+        return num_items
+
     def _get_num_items(self, host: str, bucket: str, total: bool = False) -> int:
         stats = self.get_bucket_stats(host=host, bucket=bucket)
         if total:
@@ -268,6 +272,19 @@ class Monitor(RestHelper):
             actual_items = self._get_num_items(host, bucket, total=True)
             raise Exception('Mismatch in the number of items: {}'
                             .format(actual_items))
+
+    def monitor_num_backfill_items(self, host: str, bucket: str, num_items: int):
+        logger.info('Checking the number of items in {}'.format(bucket))
+        t0 = time.time()
+        while True:
+            curr_items = self._get_num_items(host, bucket, total=True)
+            if curr_items == num_items:
+                t1 = time.time()
+                break
+            else:
+                logger.info('{}(curr_items) != {}(num_items)'.format(curr_items, num_items))
+            time.sleep(self.POLLING_INTERVAL)
+        return t1-t0
 
     def monitor_task(self, host, task_type):
         logger.info('Monitoring task: {}'.format(task_type))

@@ -17,21 +17,21 @@
         {"job": "leto", "cluster": "leto.spec", "test_config": "tools_restore_100M_rift.test"},
         {"job": "leto", "cluster": "leto.spec", "test_config": "tools_restore_400M_sqlite.test"},
         {"job": "leto", "cluster": "leto.spec", "test_config": "tools_restore_400M_rift.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_rift_1s_1C.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_rift_1s_1000C.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_rift_1000s_1000C.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_sqlite_1s_1C.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_sqlite_1s_1000C.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_sqlite_1000s_1000C.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_export_60M_json_lines_1s_1c.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_export_60M_json_lines_1s_1000c.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_import_3M_20K_json_list_1s_1c.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_restore_100M_rift_1s_1c.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_restore_100M_rift_1s_1000c.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_restore_100M_rift_1000s_1000c.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_restore_100M_sqlite_1s_1c.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_restore_100M_sqlite_1s_1000c.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_restore_100M_sqlite_1000s_1000c.test"}
+        {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_backup_100M_rift_1s_1C.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_backup_100M_rift_1s_1000C.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_backup_100M_rift_1000s_1000C.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_backup_100M_sqlite_1s_1C.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_backup_100M_sqlite_1s_1000C.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_backup_100M_sqlite_1000s_1000C.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_export_60M_json_lines_1s_1c.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_export_60M_json_lines_1s_1000c.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_import_3M_20K_json_list_1s_1c.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_restore_100M_rift_1s_1c.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_restore_100M_rift_1s_1000c.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_restore_100M_rift_1000s_1000c.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_restore_100M_sqlite_1s_1c.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_restore_100M_sqlite_1s_1000c.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_restore_100M_sqlite_1000s_1000c.test"}
     ],
     "Magma-Legacy": [
         {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "durability/latency/ycsb/enhanced/ycsb_workloada_4node_lat_durability3d_magma.test"},
@@ -190,6 +190,11 @@
     "YCSB": [
         {"job": "hercules", "cluster": "hercules.spec", "test_config": "collections/ycsb/ycsb_workloadce_4nodes_1s_1c.test"},
         {"job": "hercules", "cluster": "hercules.spec", "test_config": "collections/ycsb/ycsb_workloadce_4nodes_plasma_1s_1c.test"}
+    ],
+    "Rebalance": [
+        {"job": "titan-reb", "cluster": "titan.spec", "test_config": "collections/rebalance/reb_in_1B_4nodes_kv_1s_1000c.test"},
+        {"job": "titan-reb", "cluster": "titan.spec", "test_config": "collections/rebalance/reb_out_1B_4nodes_kv_1s_1000c.test"},
+        {"job": "titan-reb", "cluster": "titan.spec", "test_config": "collections/rebalance/reb_swap_1B_4nodes_kv_1s_1000c.test"},
     ],
     "GSI-ForestDB": [
         {"job": "secondary-fdb", "cluster":  "nyx_colocated.spec", "test_config": "fdb/secondary_1M_100Index_fdb_ce.test"},

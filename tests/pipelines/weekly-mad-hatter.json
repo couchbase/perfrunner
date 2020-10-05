@@ -167,6 +167,13 @@
         {"job": "iris",              "cluster": "iris_fts.spec", "test_config": "n1ql_lat_CF2_20M_fts.test"},
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql_thr_Q1_20M_rebalance.test"}
     ],
+    "YCSB": [
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_requdist_uni.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_eph_norepl_requdist_uni.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_latency_uni_distr.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_norepl_requdistri_uni.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloadj_3nodes_cpu_latency_uni_distr_180kops_append_ycsb3.test"}
+    ],
     "N1QL-Arke": [
         {"job": "arke",              "cluster": "arke.spec", "test_config": "tpc-ds/n1ql_lat_WF1_100M_plasma_ok.test"},
         {"job": "arke",              "cluster": "arke.spec", "test_config": "tpc-ds/n1ql_thr_WF1_100M_plasma_ok.test"},

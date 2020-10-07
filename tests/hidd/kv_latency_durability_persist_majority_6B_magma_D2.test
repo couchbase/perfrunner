@@ -49,12 +49,11 @@ creates = 0
 reads = 0
 updates = 100
 deletes = 0
-throughput = 999999999
 items = 6000000000
 workers = 128
 time = 3600
 durability = 3
 
 [clients]
-libcouchbase = 3.0.1
-python_client = git+https://github.com/couchbase/couchbase-python-client@fd3879c31bf8f0737d776dee59fb9a54fc5b3ced
+libcouchbase = 3.0.2
+python_client = git+https://github.com/couchbase/couchbase-python-client@a193cbdc7763aa3fa563bd8d139091a4c220a240

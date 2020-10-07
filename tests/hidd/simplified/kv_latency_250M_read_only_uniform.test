@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.ReadLatencyDGMTest
 
 [showfast]
-title = Latency(ms), Workload S0.7, 2 nodes, 250M x 1KB, 20K ops/sec, read only, Uniform distribution
+title = Latency(ms), Workload S0.7, 2 nodes, 250M x 1KB, 20K ops/sec, read only, Uniform distribution, Magma
 component = hidd
 category = latency
 
@@ -40,7 +40,6 @@ workers = 128
 items = 250000000
 ops = 250000000
 time = 86400
-throughput = 999999999
 requestdistribution = uniform
 power_alpha = 0
 zipf_alpha = 0

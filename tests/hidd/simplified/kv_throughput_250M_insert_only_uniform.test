@@ -40,7 +40,6 @@ workers = 128
 items = 250000000
 ops = 250000000
 time = 86400
-throughput = 999999999
 requestdistribution = uniform
 power_alpha = 0
 zipf_alpha = 0

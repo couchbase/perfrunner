@@ -481,6 +481,8 @@ class PhaseSettings:
     RECORDED_LOAD_CACHE_SIZE = 0
     INSERTS_PER_WORKERINSTANCE = 0
 
+    RUN_EXTRA_ACCESS = 'false'
+
     EPOLL = 'true'
     BOOST = 48
 
@@ -608,6 +610,8 @@ class PhaseSettings:
                                                   self.WORKLOAD_INSTANCES))
 
         self.connstr_params = eval(options.get('connstr_params', self.CONNSTR_PARAMS))
+
+        self.run_extra_access = maybe_atoi(options.get('run_extra_access', self.RUN_EXTRA_ACCESS))
 
         # Views settings
         self.ddocs = None

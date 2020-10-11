@@ -24,7 +24,7 @@ eviction_policy = fullEviction
 [bucket_extras]
 num_reader_threads = 64
 num_writer_threads = 64
-backend = magma;cursor_dropping_checkpoint_mem_upper_mark=100
+backend = couchdb;cursor_dropping_checkpoint_mem_upper_mark=100
 
 [load]
 items = 100000000

@@ -353,7 +353,8 @@ class KVTest(PerfTest):
     def run(self):
         self.load()
 
-        self.run_extra_access()
+        if self.test_config.extra_access_settings.run_extra_access:
+            self.run_extra_access()
 
         self.hot_load()
         self.reset_kv_stats()
@@ -394,7 +395,8 @@ class CompactionMagmaTest(StabilityBootstrap):
     def run(self):
         self.load()
 
-        self.run_extra_access()
+        if self.test_config.extra_access_settings.run_extra_access:
+            self.run_extra_access()
 
         self.hot_load()
         self.reset_kv_stats()
@@ -457,7 +459,8 @@ class SingleNodeThroughputDGMMagmaTest(ThroughputDGMMagmaTest):
     def run(self):
         self.load()
 
-        self.run_extra_access()
+        if self.test_config.extra_access_settings.run_extra_access:
+            self.run_extra_access()
 
         self.COLLECTORS["kvstore"] = False
         self.COLLECTORS["disk"] = False
@@ -552,7 +555,8 @@ class PillowFightDGMTest(StabilityBootstrap):
         if self.test_config.users.num_users_per_bucket > 0:
             self.cluster.add_extra_rbac_users(self.test_config.users.num_users_per_bucket)
 
-        self.run_extra_access()
+        if self.test_config.extra_access_settings.run_extra_access:
+            self.run_extra_access()
 
         self.reset_kv_stats()
 
@@ -592,7 +596,8 @@ class WarmupDGMTest(StabilityBootstrap):
     def run(self):
         self.load()
 
-        self.run_extra_access()
+        if self.test_config.extra_access_settings.run_extra_access:
+            self.run_extra_access()
 
         self.reset_kv_stats()
 
@@ -624,6 +629,15 @@ class YCSBThroughputHIDDTest(YCSBThroughputTest, KVTest):
         self.print_amplifications(doc_size=self.test_config.access_settings.size)
         KVTest.print_kvstore_stats(self)
 
+    @with_stats
+    def run_extra_access(self):
+        self.reset_kv_stats()
+        KVTest.save_stats(self)
+        logger.info("Starting first access phase")
+        PerfTest.access(self, task=ycsb_task, settings=self.test_config.extra_access_settings)
+        self.print_amplifications(doc_size=self.test_config.extra_access_settings.size)
+        KVTest.print_kvstore_stats(self)
+
     def run(self):
         if self.test_config.access_settings.ssl_mode == 'data':
             self.download_certificate()
@@ -631,6 +645,9 @@ class YCSBThroughputHIDDTest(YCSBThroughputTest, KVTest):
         self.download_ycsb()
 
         self.custom_load()
+
+        if self.test_config.extra_access_settings.run_extra_access:
+            self.run_extra_access()
 
         self.reset_kv_stats()
         KVTest.save_stats(self)
@@ -866,7 +883,8 @@ class RebalanceKVDGMTest(RebalanceKVTest):
         self.load()
         self.wait_for_persistence()
 
-        self.run_extra_access()
+        if self.test_config.extra_access_settings.run_extra_access:
+            self.run_extra_access()
 
         self.hot_load()
 
@@ -894,7 +912,8 @@ class BackupTestDGM(BackupTest):
         self.load()
         self.wait_for_persistence()
 
-        self.run_extra_access()
+        if self.test_config.extra_access_settings.run_extra_access:
+            self.run_extra_access()
 
         time_elapsed = self.backup()
 

@@ -18,6 +18,7 @@
         {"job": "secondary-moi", "cluster": "nyx.spec",       "test_config": "moi/secondary_20M_multiple_moi.test"},
         {"job": "secondary-moi", "cluster": "nyx.spec",       "test_config": "moi/secondary_rebalance_20M_moi.test"}
     ],
+    "GSI-DGM": [],
     "KV": [
         {"job": "ares", "cluster": "ares.spec", "test_config": "kv_max_ops_reads_512.test"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "kv_max_ops_balanced_512.test"},

@@ -73,6 +73,12 @@ pipeline {
                         buildComponent('GSI', testCases)
                     }
                 }
+                stage('GSI-DGM') {
+                    when { expression { return params.GSI_DGM } }
+                    steps {
+                        buildComponent('GSI-DGM', testCases)
+                    }
+                }
                 stage('GSI-Hemera') {
                     when { expression { return params.GSI_Hemera } }
                     steps {

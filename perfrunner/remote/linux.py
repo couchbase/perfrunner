@@ -10,6 +10,7 @@ from logger import logger
 from perfrunner.helpers.misc import uhex
 from perfrunner.remote import Remote
 from perfrunner.remote.context import (
+    all_clients,
     all_servers,
     master_server,
     servers_by_role,
@@ -421,4 +422,23 @@ class RemoteLinux(Remote):
     def remove_sglogs(self):
         print('removing old sglogs')
         cmd = 'rm -rf /var/tmp/sglogs/*log.gz'
+        run(cmd)
+
+    @all_clients
+    def download_blockholepuller(self):
+        cmd = 'curl -o blackholePuller-linux-x64 https://github.com/couchbaselabs/sg_dev_tools/'
+        run(cmd)
+        cmd = 'chmod +x blackholePuller-linux-x64'
+        run(cmd)
+
+    @all_clients
+    def execute_blockholepuller(self, clients, timeout, result_path):
+        cmd = './blackholePuller -url http://demo:password@localhost:4984/db1 ' \
+              '-clients {} -timeout {}s > {}'.format(clients, timeout, result_path)
+        run(cmd)
+
+    @all_clients
+    def execute_newdocpush(self, clients, timeout, result_path):
+        cmd = './newDocPusher -url http://demo:password@localhost:4984/db1 ' \
+              '-clients {} -timeout {}s > {}'.format(clients, timeout, result_path)
         run(cmd)

@@ -803,6 +803,10 @@ class SyncgatewaySettings:
     SG_READ_LIMIT = 1
     SG_LOADER_THREADS = 50
     SG_DOCLOADER_THREAD = 50
+    SG_BLACKHOLEPULLER_CLIENTS = 6
+    SG_BLACKHOLEPULLER_TIMEOUT = 600    # in seconds
+    SG_DOCSIZE = 10240
+    SGTOOL_CHANGEBATCHSET = 200
 
     def __init__(self, options: dict):
         self.repo = options.get('ycsb_repo', self.REPO)
@@ -854,6 +858,13 @@ class SyncgatewaySettings:
         self.sg_read_limit = int(options.get('sg_read_limit', self.SG_READ_LIMIT))
         self.sg_loader_threads = int(options.get("sg_loader_threads", self.SG_LOADER_THREADS))
         self.sg_docloader_thread = int(options.get("sg_docloader_thread", self.SG_DOCLOADER_THREAD))
+        self.sg_blackholepuller_client = int(options.get("sg_blackholepuller_client",
+                                                         self.SG_BLACKHOLEPULLER_CLIENTS))
+        self.sg_blackholepuller_timeout = options.get("sg_blackholepuller_timeout",
+                                                      self.SG_BLACKHOLEPULLER_TIMEOUT)
+        self.sg_docsize = int(options.get("sg_docsize", self.SG_DOCSIZE))
+        self.sgtool_changebatchset = int(options.get("sgtool_changebatchset",
+                                                     self.SGTOOL_CHANGEBATCHSET))
 
     def __str__(self) -> str:
         return str(self.__dict_)

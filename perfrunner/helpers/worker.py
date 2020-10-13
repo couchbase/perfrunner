@@ -18,6 +18,10 @@ from perfrunner.settings import (
     TestConfig,
 )
 from perfrunner.workloads import spring_workload
+from perfrunner.workloads.blackholepuller import (
+    blackholepuller_runtest,
+    newdocpusher_runtest,
+)
 from perfrunner.workloads.pillowfight import (
     pillowfight_data_load,
     pillowfight_workload,
@@ -93,6 +97,16 @@ def syncgateway_task_run_test(*args):
 @celery.task
 def syncgateway_task_start_memcached(*args):
     syncgateway_start_memcached(*args)
+
+
+@celery.task
+def syncgateway_bh_puller_task(*args):
+    blackholepuller_runtest(*args)
+
+
+@celery.task
+def syncgateway_new_docpush_task(*args):
+    newdocpusher_runtest(*args)
 
 
 class WorkerManager:
@@ -200,6 +214,38 @@ class RemoteWorkerManager:
             async_result = task.apply_async(
                 args=(task_settings, timer, 0, self.cluster_spec), queue=client, expires=timer,
             )
+            self.async_results.append(async_result)
+
+    def run_sg_bp_tasks(self,
+                        task: Callable,
+                        task_settings: PhaseSettings,
+                        timer: int = None,
+                        distribute: bool = False,
+                        phase: str = ""):
+
+        self.async_results = []
+        self.reset_workers()
+
+        if distribute:
+            worker_id = 0
+            total_clients = int(task_settings.syncgateway_settings.clients)
+
+            for client in self.cluster_spec.workers[:total_clients]:
+                worker_id += 1
+                logger.info('Running the \'{}\' by worker #{} on'
+                            ' client {}'.format(phase, worker_id, client))
+
+                async_result = task.apply_async(
+                    args=(task_settings, timer, worker_id, self.cluster_spec),
+                    queue=client, expires=timer,)
+
+                self.async_results.append(async_result)
+        else:
+            client = self.cluster_spec.workers[0]
+            logger.info('Running sigle-instance task \'{}\' on client {}'.format(phase, client))
+            async_result = task.apply_async(
+                args=(task_settings, timer, 0, self.cluster_spec),
+                queue=client, expires=timer)
             self.async_results.append(async_result)
 
     def wait_for_workers(self):

@@ -416,3 +416,60 @@ def get_sg_logs(host: str, ssh_user: str, ssh_pass: str):
     os.system('sshpass -p {} scp {}@{}:/home/sync_gateway/*logs.tar.gz ./'.format(ssh_pass,
                                                                                   ssh_user,
                                                                                   host))
+
+
+def run_blackholepuller(host, clients, timeout, stderr_file_name, log_file_name):
+    local('./blackholePuller -url http://sg-user-0:password@{}:4984/db -clients {}'
+          ' -timeout {}s 2>{}.log 1>{}.json'.format(host, clients,
+                                                    timeout,
+                                                    stderr_file_name,
+                                                    log_file_name))
+
+
+def run_blackholepuller_adv(url_str, clients, timeout, stderr_file_name, log_file_name):
+    local('./blackholePuller -url {} -clients {}'
+          ' -timeout {}s 2>{}.log 1>{}.json'.format(url_str, clients,
+                                                    timeout,
+                                                    stderr_file_name,
+                                                    log_file_name))
+
+
+def run_newdocpusher(host, changebatchset, clients, timeout, stderr_file_name,
+                     log_file_name, doc_id_prefix, doc_size):
+
+    local('./newDocPusher -url http://sg-user-0:password@{}:4984/db -changesBatchSize {} '
+          '-clients {} -docSize {} -docIDPrefix {}'
+          ' -timeout {}s 2>{}.log 1>{}.json'.format(host, changebatchset, clients,
+                                                    doc_size, doc_id_prefix,
+                                                    timeout, stderr_file_name,
+                                                    log_file_name))
+
+
+def run_newdocpusher_adv(url_str, changebatchset, clients, timeout, stderr_file_name,
+                         log_file_name, doc_id_prefix, doc_size):
+    print('printing url string', url_str)
+    local('./newDocPusher -url {} -changesBatchSize {} -clients {} '
+          '-docSize {} -docIDPrefix {}'
+          ' -timeout {}s 2>{}.log 1>{}.json'.format(url_str, changebatchset, clients,
+                                                    doc_size, doc_id_prefix, timeout,
+                                                    stderr_file_name, log_file_name))
+
+
+def download_blockholepuller():
+    local('curl -o blackholePuller-linux-x64 https://github.com/couchbaselabs/sg_dev_tools/')
+    local('chmod +x blackholePuller-linux-x64')
+
+
+def download_newdocpusher():
+    local('curl -o newDocPusher-linux-x64 https://github.com/couchbaselabs/sg_dev_tools/')
+    local('chmod +x newDocPusher-linux-x64')
+
+
+def remove_sg_bp_logs():
+    local('rm -rf *blackholepuller*')
+    local('rm -rf *newdocpush*')
+
+
+def remove_sg_newdocpusher_logs():
+    local('rm -rf *blackholepuller*')
+    local('rm -rf *newdocpush*')

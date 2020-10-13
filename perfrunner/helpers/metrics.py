@@ -635,6 +635,90 @@ class MetricHelper:
             throughput = round(throughput, 0)
         return throughput
 
+    def _sg_bp_total_docs_pulled(self) -> int:
+
+        total_docs = 0
+
+        for filename in glob.glob("sg_stats_blackholepuller_*.json"):
+            total_docs_pulled_per_file = 0
+            with open(filename) as fh:
+                content_lines = fh.readlines()
+                for i in content_lines:
+                    # print('printing each line :', i)
+                    if "docs_pulled" in i:
+                        total_docs_pulled_per_file += int(i.split(':')[1].split(',')[0])
+            total_docs += total_docs_pulled_per_file
+        return total_docs
+
+    def _sg_bp_total_docs_pushed(self) -> int:
+
+        total_docs = 0
+
+        for filename in glob.glob("sg_stats_newdocpusher_*.json"):
+            total_docs_pulled_per_file = 0
+            with open(filename) as fh:
+                content_lines = fh.readlines()
+                for i in content_lines:
+                    # print('printing each line :', i)
+                    if "docs_pushed" in i:
+                        total_docs_pulled_per_file += int(i.split(':')[1].split(',')[0])
+            total_docs += total_docs_pulled_per_file
+        return total_docs
+
+    def _parse_sg_bp_throughput(self) -> int:
+
+        throughput = 0
+        fc = 0
+        sum_doc_per_sec = 0
+
+        for filename in glob.glob("sg_stats_blackholepuller_*.json"):
+
+            total_docs_per_sec = 0
+
+            with open(filename) as fh:
+                content_lines = fh.readlines()
+
+                c = 0
+                for i in content_lines:
+                    # print('printing each line :', i)
+                    if "docs_per_sec" in i:
+                        c += 1
+                        total_docs_per_sec += float(i.split(':')[1])
+                average_doc_per_sec = total_docs_per_sec / c
+            fc += 1
+            sum_doc_per_sec += average_doc_per_sec
+
+        throughput = sum_doc_per_sec / fc
+
+        return throughput
+
+    def _parse_newdocpush_throughput(self) -> int:
+
+        throughput = 0
+        fc = 0
+        sum_doc_per_sec = 0
+
+        for filename in glob.glob("sg_stats_newdocpusher_*.json"):
+
+            total_docs_per_sec = 0
+
+            with open(filename) as fh:
+                content_lines = fh.readlines()
+
+                c = 0
+                for i in content_lines:
+                    # print('printing each line :', i)
+                    if "docs_per_sec" in i:
+                        c += 1
+                        total_docs_per_sec += float(i.split(':')[1].split(',')[0])
+                average_doc_per_sec = total_docs_per_sec / c
+            fc += 1
+            sum_doc_per_sec += average_doc_per_sec
+
+        throughput = sum_doc_per_sec / fc
+
+        return throughput
+
     def _parse_sg_latency(self, metric_name) -> float:
         lat = 0
         count = 0
@@ -827,3 +911,31 @@ class DailyMetricHelper(MetricHelper):
         return 'Avg Query Throughput (queries/sec)', \
             throughput, \
             self._snapshots
+
+    def sg_bp_throughput(self, title) -> Metric:
+        metric_id = '{}_throughput'.format(self.test_config.name)
+        metric_title = "{}{}".format(title, self._title)
+        metric_info = self._metric_info(metric_id, metric_title)
+        throughput = round(self._parse_sg_bp_throughput())
+        return throughput, self._snapshots, metric_info
+
+    def sg_newdocpush_throughput(self, title) -> Metric:
+        metric_id = '{}_throughput'.format(self.test_config.name)
+        metric_title = "{}{}".format(title, self._title)
+        metric_info = self._metric_info(metric_id, metric_title)
+        throughput = round(self._parse_newdocpush_throughput())
+        return throughput, self._snapshots, metric_info
+
+    def sg_bp_total_docs_pulled(self, title, duration) -> Metric:
+        metric_id = '{}_docs_pulled'.format(self.test_config.name)
+        metric_title = "{}{}".format(title, self._title)
+        metric_info = self._metric_info(metric_id, metric_title)
+        docs_pulled_per_sec = round(self._sg_bp_total_docs_pulled() / duration)
+        return docs_pulled_per_sec, self._snapshots, metric_info
+
+    def sg_bp_total_docs_pushed(self, title, duration) -> Metric:
+        metric_id = '{}_docs_pushed'.format(self.test_config.name)
+        metric_title = "{}{}".format(title, self._title)
+        metric_info = self._metric_info(metric_id, metric_title)
+        docs_pulled_per_sec = round(self._sg_bp_total_docs_pushed() / duration)
+        return docs_pulled_per_sec, self._snapshots, metric_info

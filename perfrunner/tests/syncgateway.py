@@ -19,6 +19,8 @@ from perfrunner.helpers.rest import RestHelper
 from perfrunner.helpers.worker import (
     WorkerManager,
     pillowfight_data_load_task,
+    syncgateway_bh_puller_task,
+    syncgateway_new_docpush_task,
     syncgateway_task_grant_access,
     syncgateway_task_init_users,
     syncgateway_task_load_docs,
@@ -951,3 +953,145 @@ class SGReplicateThroughputMultiChannelMultiSgTest2(SGReplicateThroughputTest2):
         elif self.sg_settings.sg_replication_type == 'pull':
             time_elapsed, items_in_range = self.monitor_sg_replicate(replication_ids, sg2_nodes)
         self.report_kpi(time_elapsed, items_in_range)
+
+    class SGReplicateMultiCluster(SGPerfTest):
+
+        def download_blockholepuller_tool(self):
+            print('enetered blackhole puller')
+            if self.worker_manager.is_remote:
+                print('enetered since its remote')
+                print('printing elf.worker_manager.WORKER_HOME', self.worker_manager.WORKER_HOME)
+                self.remote.download_blackholepuller(worker_home=self.worker_manager.WORKER_HOME)
+            else:
+                local.download_blockholepuller()
+
+        def execute_multicluster_pull(self, clinets, timeout):
+            result_path = "/tmp/perfrunner/perfrunner/results.json"
+            self.remote.execute_blockholepuller(clients=clinets,
+                                                timeout=timeout,
+                                                result_path=result_path)
+
+        def collect_execution_logs(self):
+            if self.worker_manager.is_remote:
+                # if os.path.exists(self.LOCAL_DIR):
+                # shutil.rmtree(self.LOCAL_DIR, ignore_errors=True)
+                # os.makedirs(self.LOCAL_DIR)
+                logger.info('removing existing log & stderr files')
+                local.remove_sg_bp_logs()
+                self.remote.get_sg_blackholepuller_logs(self.worker_manager.WORKER_HOME,
+                                                        self.test_config.syncgateway_settings)
+
+        def run_sg_bp_phase(self,
+                            phase: str,
+                            task: Callable, settings: PhaseSettings,
+                            timer: int = None,
+                            distribute: bool = False) -> None:
+            self.worker_manager.run_sg_bp_tasks(task, settings, timer, distribute, phase)
+            self.worker_manager.wait_for_workers()
+
+        @with_stats
+        @with_profiles
+        def run_bp_test(self):
+            print('entered run test here ')
+            self.run_sg_bp_phase(" blackholepuller test", syncgateway_bh_puller_task,
+                                 self.settings, self.settings.time, True)
+
+        def _report_kpi(self):
+            self.collect_execution_logs()
+            for f in glob.glob('*sg_stats_blackholepuller_*.json'):
+                with open(f, 'r') as fout:
+                    logger.info(f)
+                    logger.info(fout.read())
+
+            self.reporter.post(
+                *self.metrics.sg_bp_throughput("Average docs/sec per client")
+            )
+
+            duration = int(self.test_config.syncgateway_settings.sg_blackholepuller_timeout)
+
+            self.reporter.post(
+                *self.metrics.sg_bp_total_docs_pulled(title="Total docs pulled per second",
+                                                      duration=duration)
+            )
+
+        def run(self):
+
+            self.remote.remove_sglogs()
+            self.download_ycsb()
+            self.start_memcached()
+            self.load_users()
+            self.load_docs()
+            self.init_users()
+            self.grant_access()
+            self.download_blockholepuller_tool()
+            self.run_bp_test()
+            self.report_kpi()
+
+    class SGReplicateMultiClusterPush(SGPerfTest):
+
+        def download_newdocpusher_tool(self):
+            print('enetered docPusher tool')
+            if self.worker_manager.is_remote:
+                print('enetered since its remote')
+                print('printing elf.worker_manager.WORKER_HOME', self.worker_manager.WORKER_HOME)
+                self.remote.download_newdocpusher(worker_home=self.worker_manager.WORKER_HOME)
+            else:
+                local.download_newdocpusher()
+
+        def execute_newdocpush(self, clinets, timeout):
+            result_path = "/tmp/perfrunner/perfrunner/results.json"
+            self.remote.execute_blockholepuller(clients=clinets,
+                                                timeout=timeout,
+                                                result_path=result_path)
+
+        def collect_execution_logs(self):
+            if self.worker_manager.is_remote:
+                # if os.path.exists(self.LOCAL_DIR):
+                # shutil.rmtree(self.LOCAL_DIR, ignore_errors=True)
+                # os.makedirs(self.LOCAL_DIR)
+                logger.info('removing existing log & stderr files')
+                local.remove_sg_newdocpusher_logs()
+                self.remote.get_sg_newdocpusher_logs(self.worker_manager.WORKER_HOME,
+                                                     self.test_config.syncgateway_settings)
+
+        def run_sg_docpush_phase(self,
+                                 phase: str,
+                                 task: Callable, settings: PhaseSettings,
+                                 timer: int = None,
+                                 distribute: bool = False) -> None:
+            self.worker_manager.run_sg_bp_tasks(task, settings, timer, distribute, phase)
+            self.worker_manager.wait_for_workers()
+
+        @with_stats
+        @with_profiles
+        def run_bp_test(self):
+            print('entered run test here ')
+            self.run_sg_docpush_phase(" newDocpusher test", syncgateway_new_docpush_task,
+                                      self.settings, self.settings.time, True)
+
+        def _report_kpi(self):
+            self.collect_execution_logs()
+            for f in glob.glob('*sg_stats_newdocpusher_*.json'):
+                with open(f, 'r') as fout:
+                    logger.info(f)
+                    logger.info(fout.read())
+
+            self.reporter.post(
+                *self.metrics.sg_newdocpush_throughput("Average docs/sec per client")
+            )
+
+            duration = int(self.test_config.syncgateway_settings.sg_blackholepuller_timeout)
+
+            self.reporter.post(
+                *self.metrics.sg_bp_total_docs_pushed(title="Total docs pushed per second",
+                                                      duration=duration)
+            )
+
+        def run(self):
+            self.remote.remove_sglogs()
+            self.download_ycsb()
+            self.start_memcached()
+            self.load_users()
+            self.download_newdocpusher_tool()
+            self.run_bp_test()
+            self.report_kpi()

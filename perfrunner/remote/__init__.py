@@ -90,3 +90,51 @@ class Remote:
                 r = run('stat YCSB_{}/{}'.format(i+1, pattern), quiet=True)
                 if not r.return_code:
                     get('YCSB_{}/{}'.format(i+1, pattern), local_path=local_dir)
+
+    @all_clients
+    def download_blackholepuller(self, worker_home: str):
+        print('download or copy  blackholepuller ')
+        with cd('/root/SG_TestingTools'):
+            cmd = 'cp blackholePuller /tmp/perfrunner/perfrunner/'
+            run(cmd)
+
+    @all_clients
+    def download_newdocpusher(self, worker_home: str):
+        print('download or copy  blackholepuller ')
+        with cd('/root/SG_TestingTools'):
+            cmd = 'cp newDocPusher /tmp/perfrunner/perfrunner/'
+            run(cmd)
+
+    @all_clients
+    def get_sg_blackholepuller_logs(self, worker_home, sgs):
+        pattern = "*{}*".format('_blackholepuller_')
+        logger.info('Collecting SG Blackhole Puller logs')
+        with cd(worker_home), cd('perfrunner'):
+            r = run('stat {}'.format(pattern), quiet=True)
+            if not r.return_code:
+                get('{}'.format(pattern), local_path='.')
+
+    @all_clients
+    def get_sgblackholepuller_result_files(self):
+        logger.info('Collecting blackholepuller result files')
+        with cd('/tmp/perfrunner'), cd('perfrunner'):
+            r = run('stat sg_blackholepuller_result*.log', quiet=True)
+            if not r.return_code:
+                get('sg_blackholepuller_result*.log', local_path='/')
+
+    @all_clients
+    def get_sg_newdocpusher_logs(self, worker_home, sgs):
+        pattern = "*{}*".format('_newdocpusher_')
+        logger.info('Collecting SG Blackhole Puller logs')
+        with cd(worker_home), cd('perfrunner'):
+            r = run('stat {}'.format(pattern), quiet=True)
+            if not r.return_code:
+                get('{}'.format(pattern), local_path='.')
+
+    @all_clients
+    def get_newdocpusher_result_files(self):
+        logger.info('Collecting blackholepuller result files')
+        with cd('/tmp/perfrunner'), cd('perfrunner'):
+            r = run('stat sg_newdocpusher_result*.log', quiet=True)
+            if not r.return_code:
+                get('sg_newdocpusher_result*.log', local_path='/')

@@ -29,6 +29,7 @@ workers = 128
 key_fmtr = hex
 
 [extra_access]
+run_extra_access = true
 updates = 100
 creates = 0
 deletes = 0

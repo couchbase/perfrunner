@@ -35,18 +35,8 @@ items = 1000000000
 workers = 128
 working_set = 1
 
-[access]
-creates = 5
-reads = 90
-updates = 5
-deletes = 0
-items = 1000000000
-workers = 40
-throughput = 15000
-working_set = 1
-working_set_access = 90
-
 [extra_access]
+run_extra_access = true
 updates = 100
 creates = 0
 deletes = 0
@@ -60,6 +50,17 @@ power_alpha = 0
 zipf_alpha = 0
 durability = 0
 async = 0
+
+[access]
+creates = 5
+reads = 90
+updates = 5
+deletes = 0
+items = 1000000000
+workers = 40
+throughput = 15000
+working_set = 1
+working_set_access = 90
 
 [rebalance]
 nodes_after = 4

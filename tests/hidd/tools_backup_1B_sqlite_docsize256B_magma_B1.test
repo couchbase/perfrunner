@@ -35,6 +35,7 @@ size = 256
 workers = 128
 
 [extra_access]
+run_extra_access = true
 updates = 100
 creates = 0
 deletes = 0

@@ -37,6 +37,7 @@ workers = 128
 working_set = 1
 
 [extra_access]
+run_extra_access = true
 updates = 100
 creates = 0
 deletes = 0

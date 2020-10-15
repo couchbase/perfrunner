@@ -134,6 +134,16 @@ def cbbackupmgr_backup(master_node: str, cluster_spec: ClusterSpec,
     local(cmd)
 
 
+def cbbackupmgr_collectinfo(cluster_spec: ClusterSpec, archive: str = ''):
+    logger.info('Running cbbackumgr cbcollect_info on local/host ')
+
+    cmd = ('./opt/couchbase/bin/cbbackupmgr collect-logs --archive {} '
+           '--output-dir {}'.format(archive or cluster_spec.backup, '.'))
+
+    logger.info('Running: {}'.format(cmd))
+    local(cmd)
+
+
 def get_backup_snapshots(cluster_spec: ClusterSpec) -> List[str]:
 
     logger.info('running cbbackupmgr list/info command ')

@@ -61,6 +61,9 @@ class BackupRestoreTest(PerfTest):
         local.cbbackupmgr_list(cluster_spec=self.cluster_spec,
                                snapshots=snapshots)
 
+    def collectinfo(self):
+        local.cbbackupmgr_collectinfo(cluster_spec=self.cluster_spec)
+
     def run(self):
         self.extract_tools()
 
@@ -108,7 +111,10 @@ class BackupTest(BackupRestoreTest):
     def run(self):
         super().run()
 
-        time_elapsed = self.backup()
+        try:
+            time_elapsed = self.backup()
+        finally:
+            self.collectinfo()
 
         self.report_kpi(time_elapsed)
 
@@ -179,16 +185,19 @@ class BackupTestWithCompact(BackupRestoreTest):
     def run(self):
         super().run()
 
-        self.backup()
-        self.wait_for_persistence()
+        try:
+            self.backup()
+            self.wait_for_persistence()
 
-        initial_size = local.calc_backup_size(self.cluster_spec,
-                                              rounded=False)
-        compact_time = self.compact()
-        compacted_size = local.calc_backup_size(self.cluster_spec,
-                                                rounded=False)
-        # Size differences can be a little small, so go for more precision here
-        size_diff = round(initial_size - compacted_size, 2)
+            initial_size = local.calc_backup_size(self.cluster_spec,
+                                                  rounded=False)
+            compact_time = self.compact()
+            compacted_size = local.calc_backup_size(self.cluster_spec,
+                                                    rounded=False)
+            # Size differences can be a little small, so go for more precision here
+            size_diff = round(initial_size - compacted_size, 2)
+        finally:
+            self.collectinfo()
 
         self.report_kpi(compact_time, size_diff)
 
@@ -243,38 +252,41 @@ class BackupIncrementalTest(BackupRestoreTest):
             )
 
     def run(self):
-        self.extract_tools()
+        try:
+            self.extract_tools()
 
-        self.load()
-        self.wait_for_persistence()
-        self.compact_bucket(wait=True)
-        self.backup()
+            self.load()
+            self.wait_for_persistence()
+            self.compact_bucket(wait=True)
+            self.backup()
 
-        initial_backup_size = local.calc_backup_size(self.cluster_spec,
-                                                     rounded=False)
+            initial_backup_size = local.calc_backup_size(self.cluster_spec,
+                                                         rounded=False)
 
-        self.access()
-        self.wait_for_persistence()
+            self.access()
+            self.wait_for_persistence()
 
-        # Define a secondary load. For this we borrow the 'creates' field,
-        # since load doesn't normally use this anyway.
-        inc_load = self.test_config.load_settings.creates
-        workers = self.test_config.load_settings.workers
-        size = self.test_config.load_settings.size
+            # Define a secondary load. For this we borrow the 'creates' field,
+            # since load doesn't normally use this anyway.
+            inc_load = self.test_config.load_settings.creates
+            workers = self.test_config.load_settings.workers
+            size = self.test_config.load_settings.size
 
-        # New key prefix needed to create incremental dataset.
-        self.load(settings=LoadSettings({"items": inc_load,
-                                         "workers": workers,
-                                         "size": size}),
-                  target_iterator=TargetIterator(self.cluster_spec,
-                                                 self.test_config,
-                                                 prefix='inc-'))
-        self.wait_for_persistence()
+            # New key prefix needed to create incremental dataset.
+            self.load(settings=LoadSettings({"items": inc_load,
+                                             "workers": workers,
+                                             "size": size}),
+                      target_iterator=TargetIterator(self.cluster_spec,
+                                                     self.test_config,
+                                                     prefix='inc-'))
+            self.wait_for_persistence()
 
-        inc_backup_time = self.backup_with_stats(mode=True)
-        total_backup_size = local.calc_backup_size(self.cluster_spec,
-                                                   rounded=False)
-        inc_backup_size = round(total_backup_size - initial_backup_size, 2)
+            inc_backup_time = self.backup_with_stats(mode=True)
+            total_backup_size = local.calc_backup_size(self.cluster_spec,
+                                                       rounded=False)
+            inc_backup_size = round(total_backup_size - initial_backup_size, 2)
+        finally:
+            self.collectinfo()
 
         self._report_kpi(inc_backup_time, inc_backup_size)
 
@@ -320,13 +332,16 @@ class MergeTest(BackupRestoreTest):
 
         self.load()
         self.wait_for_persistence()
-        self.backup()  # 1st snapshot
+        try:
+            self.backup()  # 1st snapshot
 
-        self.load()
-        self.wait_for_persistence()
-        self.backup(mode=True)  # 2nd snapshot
+            self.load()
+            self.wait_for_persistence()
+            self.backup(mode=True)  # 2nd snapshot
 
-        time_elapsed = self.merge()
+            time_elapsed = self.merge()
+        finally:
+            self.collectinfo()
 
         self.report_kpi(time_elapsed)
 
@@ -361,7 +376,10 @@ class RestoreTest(BackupRestoreTest):
 
         self.flush_buckets()
 
-        time_elapsed = self.restore()
+        try:
+            time_elapsed = self.restore()
+        finally:
+            self.collectinfo()
 
         self.report_kpi(time_elapsed)
 
@@ -403,9 +421,13 @@ class ListTest(BackupRestoreTest):
     def run(self):
         super().run()
 
-        self.backup()
-        local.drop_caches()
-        list_time = self.backup_list()
+        try:
+            self.backup()
+            local.drop_caches()
+            list_time = self.backup_list()
+        finally:
+            self.collectinfo()
+
         self.report_kpi(list_time)
 
 
@@ -469,7 +491,10 @@ class ExportTest(ExportImportTest):
     def run(self):
         super().run()
 
-        time_elapsed = self.export()
+        try:
+            time_elapsed = self.export()
+        finally:
+            self.collectinfo()
 
         self.report_kpi(time_elapsed)
 
@@ -488,7 +513,10 @@ class ImportTest(ExportImportTest):
 
         self.flush_buckets()
 
-        time_elapsed = self.import_data()
+        try:
+            time_elapsed = self.import_data()
+        finally:
+            self.collectinfo()
 
         self.report_kpi(time_elapsed)
 
@@ -503,7 +531,10 @@ class ImportSampleDataTest(ImportTest):
     def run(self):
         self.extract_tools()
 
-        time_elapsed = self.import_data()
+        try:
+            time_elapsed = self.import_data()
+        finally:
+            self.collectinfo()
 
         self.report_kpi(time_elapsed)
 

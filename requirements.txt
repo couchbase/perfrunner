@@ -34,7 +34,7 @@ sshtunnel==0.1.3
 twisted==19.7.0
 validators==0.12.0
 xmltodict==0.11.0
-pyYAML==3.12
+pyYAML==5.1
 
 git+https://github.com/couchbaselabs/mc_bin_client.git@magma#egg=mc_bin_client
 git+https://github.com/mattrobenolt/jinja2-cli.git#egg=jinja2-cli

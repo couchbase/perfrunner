@@ -42,6 +42,19 @@ def buildTestsSGReplicate(tests) {
     }
 }
 
+def buildTestsSGReplicateMultiCluster(tests) {
+    for ( test in tests ) {
+        build job: test['job'], propagate: false, parameters: [
+            string(name: 'sg_build', value: params.version),
+            string(name: 'cb_build', value: test['cb_build']),
+            string(name: 'sg_cluster_map', value: test['sg_cluster_map']),
+            string(name: 'cb_cluster_map', value: test['cb_cluster_map']),
+            string(name: 'sg_config', value: test['sg_config']),
+            string(name: 'test', value: test['test'])
+        ]
+    }
+}
+
 def buildComponent(component, testCases) {
     for ( release in ['cobalt', 'mercury', 'hydrogen'] ) {
         if ( testCases.containsKey(release) ) {
@@ -62,6 +75,14 @@ def buildComponentSGReplicate(component, testCases) {
     for ( release in ['hydrogen'] ) {
         if ( testCases.containsKey(release) ) {
             buildTestsSGReplicate(testCases[release][component])
+        }
+    }
+}
+
+def buildComponentSGReplicateMultiCluster(component, testCases) {
+    for ( release in ['hydrogen'] ) {
+        if ( testCases.containsKey(release) ) {
+            buildTestsSGReplicateMultiCluster(testCases[release][component])
         }
     }
 }
@@ -150,6 +171,12 @@ pipeline {
                     when { expression { return params.SGReplicate } }
                     steps {
                         buildComponentSGReplicate('SGReplicate', testCases)
+                    }
+                }
+                stage('SGReplicateMulti') {
+                    when { expression { return params.SGReplicateMulti } }
+                    steps {
+                        buildComponentSGReplicateMultiCluster('SGReplicateMulti', testCases)
                     }
                 }
             }

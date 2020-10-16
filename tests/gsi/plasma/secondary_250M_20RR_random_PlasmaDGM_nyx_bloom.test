@@ -1,0 +1,48 @@
+[test_case]
+test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
+
+[showfast]
+title = 1 bucket x 250M, single 2i index, 100K KV ops/sec, random workload, PLASMA With Bloom filter
+component = secondary
+category = incremental
+sub_category = PlasmaDGM
+
+[stats]
+server_processes = projector
+
+[cluster]
+mem_quota = 30000
+index_mem_quota = 64000
+initial_nodes = 6
+num_buckets = 1
+kernel_mem_limit = 76000M
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[bucket]
+replica_number=0
+replica_index=0
+
+[load]
+items = 250000000
+workers = 100
+size = 1024
+key_fmtr = hash
+item_size = 128
+doc_gen = large_item_plasma
+
+[secondary]
+indexes = myindex1:city#myindex2:city#myindex3:city#myindex4:city
+indexer.settings.storage_mode = plasma
+indexer.plasma.backIndex.enablePageBloomFilter = true
+indexer.settings.max_cpu_percent = 1200
+
+[access]
+updates = 40
+creates = 60
+ops = 20000000
+items = 250000000
+throughput = 100000
+workers = 100

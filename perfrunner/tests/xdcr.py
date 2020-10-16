@@ -453,7 +453,6 @@ class XdcrCollectionMapTest(UniDirXdcrInitTest):
             'toBucket': to_bucket,
             'toCluster': self.CLUSTER_NAME,
             'checkpointInterval': 60,
-            'collectionsSkipSrcValidation': True,
             'colMappingRules': collection_mapping,
             'collectionsExplicitMapping': True
         }
@@ -481,7 +480,6 @@ class XdcrCollectionBackfillTest(UniDirXdcrInitTest):
             'toBucket': to_bucket,
             'toCluster': self.CLUSTER_NAME,
             'checkpointInterval': 60,
-            'collectionsSkipSrcValidation': True,
             'colMappingRules': initial_collection_mapping,
             'collectionsExplicitMapping': True
         }
@@ -508,7 +506,8 @@ class XdcrCollectionBackfillTest(UniDirXdcrInitTest):
     def backfill_replication_params(self):
         backfill_collection_mapping = self.test_config.xdcr_settings.backfill_collection_mapping
         params = {
-            'colMappingRules': backfill_collection_mapping
+            'colMappingRules': backfill_collection_mapping,
+            'collectionsSkipSrcValidation': True
         }
         return params
 
@@ -556,3 +555,35 @@ class XdcrCollectionBackfillTest(UniDirXdcrInitTest):
         throughput = items_remaining/backfill_time
 
         self.report_kpi(throughput)
+
+
+class CollectionMigrationTest(XdcrCollectionMapTest):
+
+    def create_replication(self):
+
+        for bucket in self.test_config.buckets:
+            params = self.replication_params(from_bucket=bucket,
+                                             to_bucket=bucket)
+            self.rest.create_replication(self.master_node, params)
+
+    def replication_params(self, from_bucket: str, to_bucket: str):
+
+        collection_mapping = self.test_config.xdcr_settings.initial_collection_mapping
+
+        print('printing collection_mapping : ', collection_mapping)
+
+        params = {
+            'replicationType': 'continuous',
+            'fromBucket': from_bucket,
+            'toBucket': to_bucket,
+            'toCluster': self.CLUSTER_NAME,
+            'checkpointInterval': 60,
+            'collectionsMigrationMode': True,
+            'colMappingRules': collection_mapping,
+            'collectionsExplicitMapping': True
+        }
+        if self.xdcr_settings.filter_expression:
+            params.update({
+                'filterExpression': self.xdcr_settings.filter_expression,
+            })
+        return params

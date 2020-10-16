@@ -1,0 +1,36 @@
+[test_case]
+test = perfrunner.tests.xdcr.CollectionMigrationTest
+
+[showfast]
+title = Avg. XDCR rate (items/sec), 1 -> 1 ,  Migration, Default -> 10 Collections
+component = xdcr
+category = init_single
+orderby = default
+
+[stats]
+server_processes = goxdcr
+
+[cluster]
+mem_quota = 204800
+initial_nodes = 1 1
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+
+[xdcr_cluster]
+sourceNozzlePerNode = 2
+targetNozzlePerNode = 4
+
+[load]
+items = 100000000
+size = 1024
+workers = 1
+doc_gen = large_grouped_doc
+
+[xdcr]
+initial_collection_mapping = {"REGEXP_CONTAINS(state, \"0\")":"scope-1:collection-1","REGEXP_CONTAINS(state, \"1\")":"scope-1:collection-2","REGEXP_CONTAINS(state, \"2\")":"scope-1:collection-3","REGEXP_CONTAINS(state, \"3\")":"scope-1:collection-4","REGEXP_CONTAINS(state, \"4\")":"scope-1:collection-5","REGEXP_CONTAINS(state, \"5\")":"scope-1:collection-6","REGEXP_CONTAINS(state, \"6\")":"scope-1:collection-7","REGEXP_CONTAINS(state, \"7\")":"scope-1:collection-8","REGEXP_CONTAINS(state, \"8\")":"scope-1:collection-9","REGEXP_CONTAINS(state, \"9\")":"scope-1:collection-10" }
+
+[clients]
+libcouchbase = 3.0.2
+python_client = git+https://github.com/couchbase/couchbase-python-client@a193cbdc7763aa3fa563bd8d139091a4c220a240

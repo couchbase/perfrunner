@@ -2,7 +2,7 @@
 test = perfrunner.tests.rebalance.RebalanceWithXdcrInitTest
 
 [showfast]
-title = Avg. initial XDCR rate (items/sec), 2 -> 2 changes to 1 -> 2 (2 source nozzles, 4 target nozzles), 1 bucket x 200M x 1KB, s=1, c=1000, external map
+title = Avg. initial XDCR rate (items/sec), 2 -> 2 changes to 1 -> 2 (2 source nozzles, 4 target nozzles), 1 bucket x 200M x 1KB, s=1, c=1000, external_map
 component = xdcr
 category = reb
 

@@ -2,7 +2,7 @@
 test = perfrunner.tests.xdcr.XdcrCollectionMapTest
 
 [showfast]
-title = Avg. initial XDCR rate (items/sec), 5 -> 5 (2 source nozzles, 4 target nozzles), 1 bucket x 1G x 1KB, DGM, s=1, c=1000, external map
+title = Avg. initial XDCR rate (items/sec), 5 -> 5 (2 source nozzles, 4 target nozzles), 1 bucket x 1G x 1KB, DGM, s=1, c=1000, external_map
 component = xdcr
 category = init_multi
 orderby = default

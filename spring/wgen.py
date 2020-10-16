@@ -37,6 +37,7 @@ from spring.docgen import (
     KeyForCASUpdate,
     KeyForRemoval,
     LargeDocument,
+    LargeGroupedDocument,
     LargeItemGroupedDocument,
     LargeItemGroupedDocumentKeySize,
     LargeItemPlasmaDocument,
@@ -246,6 +247,8 @@ class Worker:
             self.docs = HundredIndexDocument(self.ws.size,
                                              self.ws.size_variation_min,
                                              self.ws.size_variation_max)
+        elif self.ws.doc_gen == 'large_grouped_doc':
+            self.docs = LargeGroupedDocument(self.ws.size, self.ws.doc_groups)
 
     def init_db(self):
         params = {

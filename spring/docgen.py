@@ -1673,3 +1673,38 @@ class AdvFilterXattrBody(AdvFilterDocument):
             'city': self.build_city(alphabet),
             'text': self.build_string(alphabet[:16], size),
         }
+
+
+class LargeGroupedDocument(LargeDocument):
+
+    def __init__(self, avg_size: int, groups: int):
+        super().__init__(avg_size)
+        self.groups = groups
+
+    def next(self, key: Key) -> dict:
+        alphabet = self.build_alphabet(key.string)
+        size = self._size() / 3
+        offset = (PRIME * key.number) % (len(LOREM) - self.TEXT_LENGTH)
+
+        return {
+            'state': key.number % self.groups,
+            'id': alphabet,
+            'revered_id': alphabet[::-1],
+            'code': hex_digest(alphabet),
+            'name': self.build_name(alphabet),
+            'email': self.build_email(alphabet),
+            'city': self.build_city(alphabet),
+            'county': self.build_county(alphabet),
+            'full_state': self.build_full_state(alphabet),
+            'country': self.build_country(alphabet),
+            'realm': self.build_realm(alphabet),
+            'coins': self.build_coins(alphabet),
+            'category': self.build_category(alphabet),
+            'achievements': self.build_achievements(alphabet),
+            'gmtime': self.build_gmtime(alphabet),
+            'year': self.build_year(alphabet),
+            'padding': self.build_string(alphabet, size),
+            'notes': self.build_string(alphabet[::-1], size),
+            'text': self.build_string(alphabet[:16], size),
+            'lorem': LOREM[offset:offset + self.TEXT_LENGTH],
+        }

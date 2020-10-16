@@ -794,6 +794,34 @@ class MetricHelper:
         throughput = self._parse_sg_throughput()
         return throughput, self._snapshots, metric_info
 
+    def sg_bp_throughput(self, title) -> Metric:
+        metric_id = '{}_throughput'.format(self.test_config.name)
+        metric_title = "{}{}".format(title, self._title)
+        metric_info = self._metric_info(metric_id, metric_title)
+        throughput = round(self._parse_sg_bp_throughput())
+        return throughput, self._snapshots, metric_info
+
+    def sg_newdocpush_throughput(self, title) -> Metric:
+        metric_id = '{}_throughput'.format(self.test_config.name)
+        metric_title = "{}{}".format(title, self._title)
+        metric_info = self._metric_info(metric_id, metric_title)
+        throughput = round(self._parse_newdocpush_throughput())
+        return throughput, self._snapshots, metric_info
+
+    def sg_bp_total_docs_pulled(self, title, duration) -> Metric:
+        metric_id = '{}_docs_pulled'.format(self.test_config.name)
+        metric_title = "{}{}".format(title, self._title)
+        metric_info = self._metric_info(metric_id, metric_title)
+        docs_pulled_per_sec = round(self._sg_bp_total_docs_pulled() / duration)
+        return docs_pulled_per_sec, self._snapshots, metric_info
+
+    def sg_bp_total_docs_pushed(self, title, duration) -> Metric:
+        metric_id = '{}_docs_pushed'.format(self.test_config.name)
+        metric_title = "{}{}".format(title, self._title)
+        metric_info = self._metric_info(metric_id, metric_title)
+        docs_pulled_per_sec = round(self._sg_bp_total_docs_pushed() / duration)
+        return docs_pulled_per_sec, self._snapshots, metric_info
+
     def sg_latency(self, metric_name, title) -> Metric:
         metric_id = '{}_latency'.format(self.test_config.name)
         metric_title = "{}{}".format(title, self._title)
@@ -911,31 +939,3 @@ class DailyMetricHelper(MetricHelper):
         return 'Avg Query Throughput (queries/sec)', \
             throughput, \
             self._snapshots
-
-    def sg_bp_throughput(self, title) -> Metric:
-        metric_id = '{}_throughput'.format(self.test_config.name)
-        metric_title = "{}{}".format(title, self._title)
-        metric_info = self._metric_info(metric_id, metric_title)
-        throughput = round(self._parse_sg_bp_throughput())
-        return throughput, self._snapshots, metric_info
-
-    def sg_newdocpush_throughput(self, title) -> Metric:
-        metric_id = '{}_throughput'.format(self.test_config.name)
-        metric_title = "{}{}".format(title, self._title)
-        metric_info = self._metric_info(metric_id, metric_title)
-        throughput = round(self._parse_newdocpush_throughput())
-        return throughput, self._snapshots, metric_info
-
-    def sg_bp_total_docs_pulled(self, title, duration) -> Metric:
-        metric_id = '{}_docs_pulled'.format(self.test_config.name)
-        metric_title = "{}{}".format(title, self._title)
-        metric_info = self._metric_info(metric_id, metric_title)
-        docs_pulled_per_sec = round(self._sg_bp_total_docs_pulled() / duration)
-        return docs_pulled_per_sec, self._snapshots, metric_info
-
-    def sg_bp_total_docs_pushed(self, title, duration) -> Metric:
-        metric_id = '{}_docs_pushed'.format(self.test_config.name)
-        metric_title = "{}{}".format(title, self._title)
-        metric_info = self._metric_info(metric_id, metric_title)
-        docs_pulled_per_sec = round(self._sg_bp_total_docs_pushed() / duration)
-        return docs_pulled_per_sec, self._snapshots, metric_info

@@ -131,8 +131,10 @@
           "sg1_config": "hebe_replicate_sg1_multichannel.config",
           "sg2_config": "hebe_replicate_sg2_multichannel.config",
           "load_config1": "",
-          "load_config2": ""},
-
+          "load_config2": ""}
+    ],
+    "SGReplicateMulti": [
+      
         {"job": "sg_hebe_sgreplicate_multicluster",
           "cb_build": "6.5.1-6299",
           "sg_cluster_map": "hebe_1node",
@@ -209,6 +211,5 @@
             "cb_cluster_map": "hebe_4nodes_colocated.spec",
             "sg_config": "2.1/hebe_channel_nocache_xattr_cachelength_300k",
             "test": "syncgateway_sg_replicate_multicluster_1_client.test"}
-
     ]
 }

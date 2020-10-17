@@ -2,10 +2,10 @@
 test = perfrunner.tests.xdcr.CollectionMigrationTest
 
 [showfast]
-title = Avg. XDCR rate (items/sec), 1 -> 1 ,  Migration, Default -> 2 Collections
+title = Avg. XDCR rate (items/sec), 1 -> 1, 1 bucket x 100M x 1KB,  Migration, Default_Bucket -> 2 Collections
 component = xdcr
 category = init_single
-orderby = default
+orderby = aa
 
 [stats]
 server_processes = goxdcr

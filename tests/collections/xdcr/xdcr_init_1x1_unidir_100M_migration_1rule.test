@@ -25,7 +25,7 @@ targetNozzlePerNode = 4
 [load]
 items = 100000000
 size = 1024
-workers = 1
+workers = 80
 doc_gen = large_grouped_doc
 
 [xdcr]

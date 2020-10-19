@@ -28,7 +28,7 @@ targetNozzlePerNode = 4
 [load]
 items = 200000000
 size = 1024
-workers = 40
+workers = 80
 
 [rebalance]
 nodes_after = 2 2

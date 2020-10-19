@@ -27,9 +27,10 @@ items = 100000000
 size = 1024
 workers = 1
 doc_gen = large_grouped_doc
+doc_groups = 2
 
 [xdcr]
-initial_collection_mapping = {"REGEXP_CONTAINS(state, \"0\")":"scope-1:collection-1","REGEXP_CONTAINS(state, \"1\")":"scope-1:collection-2"}
+initial_collection_mapping = {"state==0":"scope-1:collection-1","state==1":"scope-1:collection-2"}
 
 [clients]
 libcouchbase = 3.0.2

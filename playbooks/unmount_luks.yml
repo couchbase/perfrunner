@@ -5,7 +5,7 @@
     register: lsblk
   - debug:
       var: lsblk.stdout_lines
-  - name: Mount LUKS Filesystem
+  - name: Unmount LUKS Filesystem
     script:
           cmd: /workspace/workspace/demeter/scripts/unmount_luks_fs.sh
   - name: View Disk Partitions

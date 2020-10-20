@@ -1,6 +1,7 @@
 #Script assumes there is a block device containing the /data partition already present and mounted on it
 #/data partition is the data path for couchbase server which is set during the tests
 systemctl daemon-reload
+service couchbase-server stop
 lsblk
 LUKS_PARTITION_NAME="cbefs"
 LUKS_KEYFILE="luks_keyfile.key"

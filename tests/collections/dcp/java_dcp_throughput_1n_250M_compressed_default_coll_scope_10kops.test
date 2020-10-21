@@ -24,7 +24,7 @@ config = collections/1bucket_default.json
 [load]
 items = 250000000
 size = 1024
-workers = 40
+workers = 100
 key_fmtr = hex
 doc_gen = large
 

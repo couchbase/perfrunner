@@ -21,7 +21,7 @@ num_users_per_bucket = 1000
 [load]
 size = 512
 items = 20000000
-workers = 50
+workers = 100
 doc_gen = json
 
 [access]

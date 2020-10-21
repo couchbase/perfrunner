@@ -21,7 +21,7 @@ config = collections/1bucket_1000scopes_1000collections_basic.json
 [load]
 size = 512
 items = 20000000
-workers = 128
+workers = 100
 doc_gen = json
 durability = 0
 

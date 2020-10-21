@@ -18,7 +18,7 @@ replica_number = 2
 [load]
 items = 20000000
 size = 1024
-workers = 80
+workers = 100
 doc_gen = large
 
 [access]

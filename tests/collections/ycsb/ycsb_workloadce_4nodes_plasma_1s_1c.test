@@ -29,7 +29,7 @@ indexer.settings.storage_mode = plasma
 workload_path = workloads/workloadce
 ycsb_client = couchbase3
 items = 20000000
-workers = 40
+workers = 100
 
 [index]
 fields = primary

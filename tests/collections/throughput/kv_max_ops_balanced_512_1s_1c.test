@@ -18,7 +18,7 @@ config = collections/1bucket_1scope_1collection_basic.json
 [load]
 size = 512
 items = 20000000
-workers = 50
+workers = 100
 doc_gen = json
 
 [access]

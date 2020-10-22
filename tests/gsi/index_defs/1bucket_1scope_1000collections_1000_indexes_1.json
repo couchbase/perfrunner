@@ -1,10 +1,7 @@
 {
 	 "bucket-1" : {
 		 "_default" : {},
-		 "scope-1" : {
-			"collection-0":{
-				"index0-1" : "alt_email"
-			},
+		 "scope-1":	{
 			"collection-1":{
 				"index1-1" : "alt_email"
 			},
@@ -3001,6 +2998,9 @@
 			},
 			"collection-999":{
 				"index999-1" : "alt_email"
+			},
+			"collection-1000":{
+				"index1000-1" : "alt_email"
 			}
 		}
 	}

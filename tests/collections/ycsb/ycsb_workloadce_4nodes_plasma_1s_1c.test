@@ -44,7 +44,7 @@ ops = 1000000000
 time = 1200
 workers = 600
 workload_instances = 6
-kv_endpoints = 1
+kv_endpoints = 1024
 
 [ycsb]
 branch = couchbase3

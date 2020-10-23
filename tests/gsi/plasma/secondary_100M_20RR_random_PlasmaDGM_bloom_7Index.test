@@ -1,0 +1,48 @@
+[test_case]
+test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
+
+[showfast]
+title = 1 bucket x 100M, 7 2i Indexes, 100K KV ops/sec, 128 byte keysize, Update Create Workload, PLASMA With Bloom filter
+component = secondary
+category = incremental
+sub_category = PlasmaDGM
+
+[stats]
+server_processes = projector
+
+[cluster]
+mem_quota = 30000
+index_mem_quota = 50000
+kernel_mem_limit = 76000M
+initial_nodes = 6
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[bucket]
+replica_number=0
+replica_index=0
+
+[load]
+items = 100000000
+workers = 100
+size = 1024
+key_fmtr = hash
+item_size = 128
+doc_gen = large_item_grouped_keysize
+
+[secondary]
+indexes = myindex1:name#myindex2:email#myindex3:alt_email#myindex4:city#myindex5:realm#myindex6:coins#myindex7:category
+indexer.settings.storage_mode = plasma
+indexer.plasma.backIndex.enablePageBloomFilter = true
+indexer.settings.max_cpu_percent = 1200
+
+[access]
+updates = 40
+creates = 60
+ops = 10000000
+items = 100000000
+throughput = 100000
+workers = 100

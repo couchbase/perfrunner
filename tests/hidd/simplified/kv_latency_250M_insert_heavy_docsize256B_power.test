@@ -4,7 +4,8 @@ test = perfrunner.tests.magma.WriteLatencyDGMTest
 [showfast]
 title = Latency(ms), Workload S0.4.1, 2 nodes, 250M x 256B, 20K ops/sec (90/10 C/R), Power distribution (α=10), Magma
 component = hidd
-category = latency
+category = S0
+orderby = S04
 
 [cluster]
 mem_quota = 1536

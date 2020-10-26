@@ -47,7 +47,8 @@ class KVStoreStats(Collector):
         "ReadAmp",
         "ReadAmpGet",
         "ReadIOAmp",
-        "WriteAmp"
+        "WriteAmp",
+        "TxnSizeEstimate"
     )
     METRICS_AVERAGE_PER_NODE_PER_SHARD = (
         "ReadAmp",
@@ -84,6 +85,11 @@ class KVStoreStats(Collector):
                                     stats[metric] += metrics[metric]
                                 else:
                                     stats[metric] = metrics[metric]
+                            if metric == "TxnSizeEstimate" and "walStats" in metrics.keys():
+                                if metric in stats:
+                                    stats[metric] += metrics["walStats"][metric]
+                                else:
+                                    stats[metric] = metrics["walStats"][metric]
                     break
         except Exception:
             pass

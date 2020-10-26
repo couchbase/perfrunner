@@ -4,7 +4,8 @@ test = perfrunner.tests.magma.ReadLatencyDGMTest
 [showfast]
 title = Latency(ms), Workload S0.2, 2 nodes, 250M x 1KB, 20K ops/sec (5/90/5 C/R/W), Uniform distribution, Couchstore
 component = hidd
-category = latency
+category = S0
+orderby = S02
 
 [cluster]
 mem_quota = 6144

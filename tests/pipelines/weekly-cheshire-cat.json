@@ -65,6 +65,7 @@
         {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/simplified/kv_throughput_250M_insert_only_uniform.test"}
     ],
     "MagmaNVME": [
+        {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "ycsb_workloadg_4nodes_magma.test"},
         {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/java_dcp_throughput_1n_100M_compressed_magma.test"},
         {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/kv_throughput_1n_100M_load.test"},
         {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/kv_throughput_1n_100M_mixed.test"},

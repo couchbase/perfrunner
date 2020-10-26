@@ -4,7 +4,8 @@ test = perfrunner.tests.magma.ThroughputDGMMagmaTest
 [showfast]
 title = Throughput, Workload S0.8, 2 nodes, 250M x 1KB, insert only, Uniform distribution, Couchstore
 component = hidd
-category = ops
+category = S0
+orderby = S08
 
 [cluster]
 mem_quota = 6144

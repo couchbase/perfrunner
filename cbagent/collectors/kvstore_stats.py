@@ -54,7 +54,8 @@ class KVStoreStats(Collector):
         "ReadAmp",
         "ReadAmpGet",
         "ReadIOAmp",
-        "WriteAmp"
+        "WriteAmp",
+        "TxnSizeEstimate"
     )
 
     def __init__(self, settings, test):

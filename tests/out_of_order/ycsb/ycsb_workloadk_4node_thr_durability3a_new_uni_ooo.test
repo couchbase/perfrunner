@@ -35,7 +35,7 @@ workers = 512
 workload_instances = 6
 ycsb_client = couchbase3
 enable_mutation_token = true
-kv_endpoints = 8
+kv_endpoints = 256
 out_of_order = 1
 requestdistribution = uniform
 

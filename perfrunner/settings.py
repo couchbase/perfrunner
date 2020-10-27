@@ -495,6 +495,7 @@ class PhaseSettings:
     SSL_AUTH_KEYSTORE = "certificates/auth.keystore"
     SSL_DATA_KEYSTORE = "certificates/data.keystore"
     SSL_KEYSTOREPASS = "storepass"
+    CERTIFICATE_FILE = "root.pem"
     SHOW_TLS_VERSION = False
     CIPHER_LIST = None
     MIN_TLS_VERSION = None
@@ -699,6 +700,7 @@ class PhaseSettings:
             self.ssl_keystore_file = self.SSL_AUTH_KEYSTORE
         else:
             self.ssl_keystore_file = self.SSL_DATA_KEYSTORE
+        self.certificate_file = self.CERTIFICATE_FILE
         self.show_tls_version = options.get('show_tls_version', self.SHOW_TLS_VERSION)
         self.cipher_list = options.get('cipher_list', self.CIPHER_LIST)
         if self.cipher_list:

@@ -537,6 +537,7 @@ def run_ycsb(host: str,
              ssl_keystore_file: str = '',
              ssl_keystore_password: str = '',
              ssl_mode: str = 'none',
+             certificate_file: str = '',
              soe_params: dict = None,
              ops: int = None,
              execution_time: int = None,
@@ -575,6 +576,7 @@ def run_ycsb(host: str,
           '-p couchbase.sslMode={ssl_mode} ' \
           '-p couchbase.certKeystoreFile=../{ssl_keystore_file} ' \
           '-p couchbase.certKeystorePassword={ssl_keystore_password} ' \
+          '-p couchbase.certificateFile=../{certificate_file} ' \
           '-p couchbase.password={password} ' \
           '-p exportfile=ycsb_{action}_{instance}.log ' \
           '-p couchbase.retryStrategy={retry_strategy} ' \
@@ -633,6 +635,7 @@ def run_ycsb(host: str,
                      ssl_mode=ssl_mode, password=password,
                      ssl_keystore_file=ssl_keystore_file,
                      ssl_keystore_password=ssl_keystore_password,
+                     certificate_file=certificate_file,
                      fieldlength=fieldlength,
                      fieldcount=fieldcount,
                      durability=durability,

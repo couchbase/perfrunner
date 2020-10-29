@@ -101,16 +101,10 @@
     ],
     "XDCR-Windows": [],
     "KV-Hercules": [
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_eph.test"},
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_eph_norepl.test"},
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu.test"},
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_norepl.test"},
         {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_rt1.test"},
         {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_pt1.test"},
         {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_x509.test"},
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_ssl.test"},
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_ssl_sdk3.test"},
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_x509_sdk3.test"}
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_ssl.test"}
     ],
     "YCSB": [
         {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_1node.test"},

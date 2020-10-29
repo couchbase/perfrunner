@@ -2,7 +2,7 @@
 test = perfrunner.tests.ycsb.YCSBThroughputTest
 
 [showfast]
-title = Avg Throughput (ops/sec), Workload A, 3 nodes, 12 vCPU, SSL
+title = Avg Throughput (ops/sec), Workload A, 3 nodes, 12 vCPU, SSL, X.509 Auth
 component = kv
 category = ycsb
 sub_category = ycsb3
@@ -19,6 +19,7 @@ workload_path = workloads/workloada
 ycsb_client = couchbase3
 items = 20000000
 workers = 160
+ssl_mode = auth
 
 [access]
 workload_path = workloads/workloada
@@ -30,7 +31,7 @@ boost = 12
 workers = 600
 workload_instances = 6
 kv_endpoints = 16
-ssl_mode = data
+ssl_mode = auth
 
 [ycsb]
 branch = couchbase3

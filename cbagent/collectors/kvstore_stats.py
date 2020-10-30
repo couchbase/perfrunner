@@ -123,7 +123,7 @@ class KVStoreStats(Collector):
                     stats = self._get_kvstore_stats(bucket, node)
                     for metric in self.METRICS_AVERAGE_PER_NODE_PER_SHARD:
                         if metric in stats:
-                            if stats[metric] / num_shards >= 50:
+                            if stats[metric] / num_shards >= 50 and metric != "TxnSizeEstimate":
                                 stats[metric] = 50
                             else:
                                 stats[metric] /= num_shards
@@ -148,7 +148,7 @@ class KVStoreStats(Collector):
 
             for metric in self.METRICS_AVERAGE_PER_NODE_PER_SHARD:
                 if metric in stats:
-                    if stats[metric]/(num_shards * num_nodes) >= 50:
+                    if stats[metric]/(num_shards * num_nodes) >= 50 and metric != "TxnSizeEstimate":
                         stats[metric] = 50
                     else:
                         stats[metric] /= (num_shards * num_nodes)

@@ -98,7 +98,11 @@
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_100M_10k_indexes_plasma_1s_100c.test"},
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_100M_10k_indexes_plasma_1s_1000c.test"},
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_scanlatency100M_plasma_10k_indexes_1s_1000c.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_scanthr100M_plasma_10k_indexes_1s_1000c.test"}
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_scanthr100M_plasma_10k_indexes_1s_1000c.test"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/moi/secondary_100M_1kb_keysize_10_indexes_moi_1s_10c.test"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/moi/secondary_100M_2kb_keysize_10_indexes_moi_1s_10c.test"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_100M_1kb_keysize_10_indexes_plasma_1s_10c.test"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_100M_2kb_keysize_10_indexes_plasma_1s_10c.test"}
     ],
     "KV": [
         {"job": "ares", "cluster": "ares.spec", "test_config": "collections/latency/kv_latency_mixed_20M_1s_1c.test"},
@@ -245,7 +249,7 @@
     "Rebalance": [
         {"job": "titan-reb", "cluster": "titan.spec", "test_config": "collections/rebalance/reb_in_1B_4nodes_kv_1s_1000c.test"},
         {"job": "titan-reb", "cluster": "titan.spec", "test_config": "collections/rebalance/reb_out_1B_4nodes_kv_1s_1000c.test"},
-        {"job": "titan-reb", "cluster": "titan.spec", "test_config": "collections/rebalance/reb_swap_1B_4nodes_kv_1s_1000c.test"},
+        {"job": "titan-reb", "cluster": "titan.spec", "test_config": "collections/rebalance/reb_swap_1B_4nodes_kv_1s_1000c.test"}
     ],
     "GSI-ForestDB": [
         {"job": "secondary-fdb", "cluster":  "nyx_colocated.spec", "test_config": "fdb/secondary_1M_100Index_fdb_ce.test"},

@@ -222,7 +222,8 @@ class EventingTest(PerfTest):
 
     def validate_failures(self):
         ignore_failures = ["uv_try_write_failure_counter", "on_update_failure",
-                           "bucket_op_exception_count", "timestamp"]
+                           "bucket_op_exception_count", "timestamp",
+                           "bkt_ops_cas_mismatch_count"]
         for node in self.eventing_nodes:
             all_stats = self.rest.get_eventing_stats(node=node)
 

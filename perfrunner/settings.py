@@ -1112,13 +1112,38 @@ class IndexSettings:
                             'or fields (if collections enabled)')
 
     @property
-    def indexes(self) -> List[str]:
-        indexes = []
-        for statement in self.statements:
-            match = re.search(r'CREATE .*INDEX (.*) ON', statement)
-            if match:
-                indexes.append(match.group(1))
-        return indexes
+    def indexes(self):
+        if self.collection_map:
+            indexes = []
+            for statement in self.statements:
+                match = re.search(r'CREATE .*INDEX (.*) ON', statement)
+                if match:
+                    indexes.append(match.group(1))
+            indexes_per_collection = set(indexes)
+            index_map = {}
+            for bucket in self.collection_map.keys():
+                for scope in self.collection_map[bucket].keys():
+                    for collection in self.collection_map[bucket][scope].keys():
+                        if self.collection_map[bucket][scope][collection]['load'] == 1:
+                            bucket_map = index_map.get(bucket, {})
+                            if bucket_map == {}:
+                                index_map[bucket] = {}
+                            scope_map = index_map[bucket].get(scope, {})
+                            if scope_map == {}:
+                                index_map[bucket][scope] = {}
+                            coll_map = index_map[bucket][scope].get(collection, {})
+                            if coll_map == {}:
+                                index_map[bucket][scope][collection] = {}
+                            for index_name in list(indexes_per_collection):
+                                index_map[bucket][scope][collection][index_name] = ""
+            return index_map
+        else:
+            indexes = []
+            for statement in self.statements:
+                match = re.search(r'CREATE .*INDEX (.*) ON', statement)
+                if match:
+                    indexes.append(match.group(1))
+            return indexes
 
     def __str__(self) -> str:
         return str(self.__dict__)

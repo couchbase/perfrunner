@@ -111,7 +111,7 @@ pipeline {
                     }
                 }
                 stage('KV-Windows') {
-                    when { expression { return params.KV } }
+                    when { expression { return params.KV_Windows } }
                     steps {
                         buildComponent('KV-Windows', testCases)
                     }
@@ -135,7 +135,7 @@ pipeline {
                     }
                 }
                 stage('N1QL-Windows') {
-                    when { expression { return params.N1QL } }
+                    when { expression { return params.N1QL_Windows } }
                     steps {
                         buildComponent('N1QL-Windows', testCases)
                     }
@@ -177,7 +177,7 @@ pipeline {
                     }
                 }
                 stage('XDCR-Windows') {
-                    when { expression { return params.XDCR } }
+                    when { expression { return params.XDCR_Windows } }
                     steps {
                         buildComponent('XDCR-Windows', testCases)
                     }

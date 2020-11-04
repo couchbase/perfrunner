@@ -1,6 +1,9 @@
-BROKER_URL = 'amqp://couchbase:couchbase@172.23.97.73:5672/broker'
-BROKER_POOL_LIMIT = None
-CELERY_RESULT_BACKEND = 'amqp'
-CELERY_RESULT_EXCHANGE = 'perf_results'
-CELERY_RESULT_PERSISTENT = False
-CELERYD_HIJACK_ROOT_LOGGER = False
+broker_url = 'amqp://couchbase:couchbase@172.23.97.73:5672/broker'
+broker_pool_limit = None
+worker_hijack_root_logger = False
+result_backend = "amqp://"
+result_persistent = False
+result_exchange = "perf_results"
+accept_content = ['pickle']
+result_serializer = 'pickle'
+task_serializer = 'pickle'

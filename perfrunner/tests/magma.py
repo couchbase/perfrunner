@@ -873,22 +873,22 @@ class JavaDCPThroughputDGMTest(KVTest):
                         self.test_config.java_dcp_settings.stream)
 
 
-class RebalanceKVDGMTest(RebalanceKVTest):
+class RebalanceKVDGMTest(RebalanceKVTest, StabilityBootstrap):
 
-    def run_extra_access(self):
-        logger.info("Starting first access phase")
-        PerfTest.access(self, settings=self.test_config.extra_access_settings)
+    COLLECTORS = {'disk': True, 'latency': True, 'net': False, 'kvstore': True, 'vmstat': True}
+
+    def __init__(self, *args):
+        RebalanceKVTest.__init__(self, *args)
 
     def run(self):
-        self.load()
-        self.wait_for_persistence()
+        StabilityBootstrap.load(self)
 
         if self.test_config.extra_access_settings.run_extra_access:
-            self.run_extra_access()
+            StabilityBootstrap.run_extra_access(self)
 
-        self.hot_load()
+        StabilityBootstrap.hot_load(self)
 
-        self.reset_kv_stats()
+        StabilityBootstrap.reset_kv_stats(self)
 
         self.access_bg()
         self.rebalance()

@@ -8,7 +8,7 @@ from glob import glob
 from sys import platform
 from typing import List
 
-from fabric.api import lcd, local, quiet, settings, shell_env
+from fabric.api import hide, lcd, local, quiet, settings, shell_env
 from mc_bin_client.mc_bin_client import MemcachedClient, MemcachedError
 
 from logger import logger
@@ -940,7 +940,12 @@ def get_cbstats(server: str, port: int, command: str, cluster_spec: ClusterSpec)
     cmd = "./opt/couchbase/bin/cbstats -a {}:{} -u {} -p {} {} -j" \
         .format(server, port, cluster_spec.rest_credentials[0],
                 cluster_spec.rest_credentials[1], command)
-    return local(cmd, capture=True)
+    with hide('warnings'), settings(warn_only=True):
+        result = local(cmd, capture=True)
+        if result.return_code == 0:
+            return result
+        else:
+            return False
 
 
 def read_aws_credential(credential_path: str):

@@ -22,7 +22,7 @@ backend_storage = magma
 
 [bucket_extras]
 num_reader_threads = 64
-num_writer_threads = 64
+num_writer_threads = 16
 
 [load]
 workload_path = workloads/workloada

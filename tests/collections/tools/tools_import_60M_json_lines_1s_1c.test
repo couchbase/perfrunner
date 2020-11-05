@@ -2,7 +2,7 @@
 test = perfrunner.tests.tools.ImportTest
 
 [showfast]
-title = Import JSON List (Avg. MB/sec), 4 nodes, 1 bucket x 3M x 20KB, Idle, s=1, c=1
+title = Import JSON Lines (Avg. MB/sec), 4 nodes, 1 bucket x 60M x 1KB, Idle, s=1, c=1
 component = tools
 category = import
 
@@ -21,18 +21,19 @@ config = tests/collections/utils/configs/1bucket_1scope_1collection_basic.json
 db_percentage = 100
 
 [load]
-items = 3000000
-size = 20480
+items = 60000000
+size = 1024
 workers = 40
 doc_gen = import_export_simple
 
 [export]
 threads = 16
-format = list
+format = lines
 type = json
 collection_field = collection
 scope_field = scope
 scope_collection_exp = scope-1.collection-1
+
 
 [clients]
 libcouchbase = 3.0.2

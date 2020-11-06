@@ -1,0 +1,53 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1QLJoinThroughputTest
+
+[showfast]
+title = Q11, Complex Join, MOI, not_bounded, b=3 s=1 c=1 i=1
+component = n1ql
+category = join_unnest
+
+[cluster]
+mem_quota = 51200
+index_mem_quota = 200000
+initial_nodes = 6
+num_buckets = 3
+
+[compaction]
+db_percentage = 100
+
+[collection]
+config = collections/3buckets_1scope_1collection_basic.json
+
+[bucket]
+replica_number = 0
+
+[secondary]
+indexer.settings.storage_mode = memory_optimized
+
+[load]
+items = 10000000
+size = 1024
+workers = 80
+doc_gen = ext_reverse_lookup,join,ref
+
+[index]
+fields = bucket-2#capped
+indexes_per_collection = 1
+
+[access]
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+throughput = 15000
+items = 10000000
+workers = 20
+time = 1200
+n1ql_gen = join
+n1ql_queries = complex-join
+n1ql_workers = 180
+
+[n1ql-complex-join]
+statement = SELECT u.email AS email, COUNT(t.title) FROM `bucket-2` t INNER JOIN `bucket-3` c ON META(c).id IN t.categories LEFT OUTER JOIN `bucket-1` u ON t.owner = META(u).id WHERE t.capped = $1 AND c.name = $2 GROUP BY u.email;
+scan_consistency = not_bounded
+args = ["{capped}","{categories[0]}"]

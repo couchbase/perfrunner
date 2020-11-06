@@ -114,7 +114,6 @@ class Worker:
         self.init_keys()
         self.init_docs()
         self.init_db()
-        self.init_creds()
 
     def init_load_targets(self):
         self.load_targets = []

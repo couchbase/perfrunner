@@ -103,7 +103,7 @@ class CBAsyncGen3:
 
 class CBGen3(CBAsyncGen3):
 
-    TIMEOUT = 10  # seconds
+    TIMEOUT = 60  # seconds
 
     def __init__(self, ssl_mode: str = 'none', n1ql_timeout: int = None, **kwargs):
         connection_string = 'couchbase://{host}?password={password}&{params}'

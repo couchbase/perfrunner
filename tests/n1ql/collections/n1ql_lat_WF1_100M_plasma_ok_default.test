@@ -1,0 +1,51 @@
+[test_case]
+test = perfrunner.tests.n1ql.TpcDsLatencyTest
+
+[showfast]
+title = WF1, Windowing query, Plasma, not_bounded, default collection
+component = n1ql
+category = windowing
+sub_category = Latency
+
+[cluster]
+mem_quota = 50000
+index_mem_quota = 300000
+initial_nodes = 6
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+
+[collection]
+config = collections/1bucket_default.json
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[import]
+import_file = /home/backups/tpc-ds.json
+docs_per_collection = 100000000
+
+[load]
+doc_gen = tpc_ds
+
+[index]
+fields = DATE_PART_STR(sold_date, 'year'),customer.state,store,quantity
+indexes_per_collection = 1
+top_down = True
+
+[access]
+items = 1000000
+time = 600
+n1ql_queries = windowing
+n1ql_batch_size = 1
+n1ql_workers = 4
+
+[n1ql-windowing]
+statement = SELECT state, store, AVG(quantity) AS avg_quantity, (SUM(SUM(quantity) ) OVER () /SUM(count(1) ) OVER ()) AS avg_quantity_over FROM `bucket-1` WHERE DATE_PART_STR(sold_date, 'year') =$1 AND customer.state =$2 GROUP BY state,store ORDER BY state;
+scan_consistency = not_bounded
+args = [{year}, "{state}"]
+
+[clients]
+libcouchbase = 3.0.2
+python_client = git+http://review.couchbase.org/couchbase-python-client@refs/changes/91/135991/3

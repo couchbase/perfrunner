@@ -1,0 +1,57 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1QLThroughputTest
+
+[showfast]
+title = Q14, Exact + Text Search, MOI, not_bounded, default collection
+component = n1ql
+category = tokens
+
+[cluster]
+mem_quota = 20480
+index_mem_quota = 409600
+initial_nodes = 6
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+
+[collection]
+config = collections/1bucket_default.json
+
+[bucket]
+replica_number = 0
+
+[secondary]
+indexer.settings.storage_mode = memory_optimized
+
+[load]
+items = 20000000
+size = 1024
+workers = 80
+doc_gen = profile
+
+[index]
+fields = address.zip, DISTINCT ARRAY s FOR s IN TOKENS(address.street) END
+indexes_per_collection = 1
+top_down = True
+
+[access]
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+throughput = 30000
+items = 20000000
+workers = 20
+time = 1200
+n1ql_queries = token
+n1ql_workers = 180
+
+[n1ql-token]
+statement = SELECT first_name, last_name, address FROM `bucket-1` WHERE address.zip = $1 AND ANY s IN TOKENS(address.street) SATISFIES s = $2 END;
+scan_consistency = not_bounded
+args = ["{address[zip]}","{capped_large}"]
+
+[clients]
+libcouchbase = 3.0.2
+python_client = git+http://review.couchbase.org/couchbase-python-client@refs/changes/91/135991/3

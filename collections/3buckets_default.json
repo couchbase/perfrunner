@@ -1,0 +1,26 @@
+{
+  "bucket-1": {
+    "_default": {
+      "_default": {
+        "access": 1,
+        "load": 1
+      }
+    }
+  },
+  "bucket-2": {
+    "_default": {
+      "_default": {
+        "access": 1,
+        "load": 1
+      }
+    }
+  },
+  "bucket-3": {
+    "_default": {
+      "_default": {
+        "access": 1,
+        "load": 1
+      }
+    }
+  }
+}

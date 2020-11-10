@@ -6,7 +6,7 @@ use_workers = 0
 title = 2 nodes, BigFUN 20M users (320M docs), SSD, no indexes (ad hoc), window functions
 component = analytics
 category = latency
-sub_category = Without Index
+sub_category = Window Functions
 orderby = _ssd
 
 [stats]

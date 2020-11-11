@@ -872,6 +872,7 @@ class XDCRSettings:
     XDCR_LINKS_PRIORITY = 'HIGH'
     INITIAL_COLLECTION_MAPPING = ''    # std format {"scope-1:collection-1":"scope-1:collection-1"}
     BACKFILL_COLLECTION_MAPPING = ''   # ----------------------"----------------------------------
+    COLLECTIONS_OSO_MODE = False
 
     def __init__(self, options: dict):
         self.demand_encryption = options.get('demand_encryption')
@@ -887,6 +888,8 @@ class XDCRSettings:
                                                       self.INITIAL_COLLECTION_MAPPING)
         self.backfill_collection_mapping = options.get('backfill_collection_mapping',
                                                        self.BACKFILL_COLLECTION_MAPPING)
+        self.collections_oso_mode = bool(options.get('collections_oso_mode',
+                                                     self.COLLECTIONS_OSO_MODE))
 
     def __str__(self) -> str:
         return str(self.__dict__)

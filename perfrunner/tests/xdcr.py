@@ -473,6 +473,7 @@ class XdcrCollectionBackfillTest(UniDirXdcrInitTest):
 
     def initial_replication_params(self, from_bucket: str, to_bucket: str):
         initial_collection_mapping = self.test_config.xdcr_settings.initial_collection_mapping
+        collections_oso_mode = self.test_config.xdcr_settings.collections_oso_mode
 
         params = {
             'replicationType': 'continuous',
@@ -481,7 +482,8 @@ class XdcrCollectionBackfillTest(UniDirXdcrInitTest):
             'toCluster': self.CLUSTER_NAME,
             'checkpointInterval': 60,
             'colMappingRules': initial_collection_mapping,
-            'collectionsExplicitMapping': True
+            'collectionsExplicitMapping': True,
+            'collectionsOSOMode': collections_oso_mode
         }
         if self.xdcr_settings.filter_expression:
             params.update({

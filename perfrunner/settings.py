@@ -815,6 +815,10 @@ class JTSAccessSettings(PhaseSettings):
         # Flex Queries parameters
         self.test_flex = options.get("test_flex", 'false')
         self.test_flex_query_type = options.get('test_flex_query_type', '')
+        # Collection settings
+        self.collections = int(options.get("collections", "0"))
+        self.scope = int(options.get("scope", "-1"))
+        self.collection_prefix = options.get('collection_prefix', 'collection')
 
     def __str__(self) -> str:
         return str(self.__dict__)

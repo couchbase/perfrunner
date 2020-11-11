@@ -407,6 +407,19 @@ class RemoteLinux(Remote):
         run(cmd)
 
     @master_server
+    def export_data(self, num_collections, collection_prefix, scope, name_of_backup):
+        logger.info("Loading data into the collections")
+        scope_name = "scope" + str(scope)
+        name_of_backup = "/fts/backup/exportFiles/" + name_of_backup + ".json"
+        cmd = "python3 /fts/backup/exportFiles/splitData.py --num_col {} " \
+              "--collection_prefix {} " \
+              "--scope_name {} " \
+              "--data_file {}".format(num_collections, collection_prefix,
+                                      scope_name, name_of_backup)
+        logger.info("the command {}".format(cmd))
+        run(cmd)
+
+    @master_server
     def load_tpcds_data_json(self, import_file: str, bucket: str):
         cmd = \
             "/opt/couchbase/bin/cbimport json " \

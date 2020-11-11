@@ -193,6 +193,20 @@ class ClusterManager:
                             if collection != '_default':
                                 self.rest.create_collection(master, bucket, scope, collection)
 
+    # Creating FTS collections
+    def create_fts_collections(self):
+        logger.info("Creating Scopes and collections")
+        num_collections = self.test_config.jts_access_settings.collections
+        fts_collection_prefix = self.test_config.jts_access_settings.collection_prefix
+        bucket = "bucket-1"
+        scope = "scope" + str(self.test_config.jts_access_settings.scope)
+        for master in self.cluster_spec.masters:
+            self.rest.create_scope(master, bucket, scope)
+            for coll_num in range(0, num_collections):
+                collection_name = fts_collection_prefix + str(coll_num)
+                for master in self.cluster_spec.masters:
+                    self.rest.create_collection(master, bucket, scope, collection_name)
+
     def create_eventing_buckets(self):
         if not self.test_config.cluster.eventing_bucket_mem_quota:
             return

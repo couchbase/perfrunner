@@ -1,0 +1,44 @@
+[test_case]
+test = perfrunner.tests.fts.FTSLatencyTest
+
+[showfast]
+title = OrHighMed, 10K KV w/sec, wiki 1M x 1KB, 3 node, FTS, s=1 c=1
+component = jts
+category = 1M
+sub_category = Latency
+orderby = q0b00000101
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 3
+num_buckets = 1
+fts_index_mem_quota = 20000
+
+[jts]
+collections = 1
+scope = 1
+jts_instances = 1
+test_duration = 600
+test_total_docs = 1000000
+test_query_workers = 1
+test_kv_workers = 60
+test_kv_throughput_goal = 10000
+test_data_file = ../tests/fts/data/benchmark/hi_med.txt
+test_driver = couchbase
+test_stats_limit = 1000000
+test_stats_aggregation_step = 100
+test_debug = false
+test_query_type = 2_disjuncts
+test_query_limit = 10
+test_query_field = text
+test_mutation_field = text2
+test_worker_type = validatedLatency
+couchbase_index_name = perf_fts_index
+couchbase_index_configfile = tests/fts/index/fts_tvectors_off.json
+
+[restore]
+backup_storage =  /fts/backup
+backup_repo =  fts_wiki
+
+[profiling]
+services = fts

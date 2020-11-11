@@ -1,3 +1,4 @@
+import copy
 import os
 import shutil
 
@@ -68,6 +69,27 @@ class FTSTest(JTSTest):
             'name': self.access.couchbase_index_name,
             'sourceName': self.test_config.buckets[0],
         })
+        indexed_fld = copy.deepcopy(definition["params"]["mapping"]["default_mapping"])
+        num_collections = self.access.collections
+        scope = "scope"+str(self.access.scope)
+        # Adding the collections index definition here ;
+        # -1 is bucket level
+        # 0 is default scope
+        # non 0  = non default scope
+        if self.access.scope != -1:
+            types_col = {}
+            definition["params"]["mapping"]["default_mapping"]["enabled"] = False
+            definition["params"]["doc_config"]["mode"] = "scope.collection.type_field"
+            if num_collections == 0:
+                types_col["_default._default"] = indexed_fld
+            else:
+                for coll_num in range(0, num_collections):
+                    collection_name = self.access.collection_prefix+str(coll_num)
+                    # key_name is the key for the collection type mapping
+                    key_name = scope+"."+collection_name
+                    types_col[key_name] = indexed_fld
+            definition["params"]["mapping"]["types"] = types_col
+            logger.info('Index definition: {}'.format(pretty_dict(definition)))
         if self.access.couchbase_index_type:
             definition["params"]["store"]["indexType"] = self.access.couchbase_index_type
         logger.info('Index definition: {}'.format(pretty_dict(definition)))
@@ -83,9 +105,15 @@ class FTSTest(JTSTest):
         self.monitor.monitor_fts_index_persistence(self.fts_nodes,
                                                    self.access.couchbase_index_name)
 
+    def data_restore(self):
+        if self.access.scope != 0:
+            self.fts_cbimport()
+        else:
+            self.restore()
+
     def cleanup_and_restore(self):
         self.delete_index()
-        self.restore()
+        self.data_restore()
         self.wait_for_persistence()
 
 

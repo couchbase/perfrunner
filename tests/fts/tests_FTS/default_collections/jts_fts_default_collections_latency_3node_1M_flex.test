@@ -1,0 +1,51 @@
+[test_case]
+test = perfrunner.tests.fts.FTSLatencyTest
+
+[showfast]
+title = Flex, Array predicates only,Default Collection, Default scope, 10K KV w/sec, wiki 1M x 1KB, 3 node, FTS
+component = jts
+category = Flex
+sub_category = Latency
+orderby = q0b00001111
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 3
+num_buckets = 1
+fts_index_mem_quota = 20000
+
+[compaction]
+db_percentage = 100
+
+[bucket]
+replica_number = 0
+
+[jts]
+collections = 0
+scope = 0
+jts_instances = 1
+test_duration = 600
+test_total_docs = 1000000
+test_query_workers = 1
+test_kv_workers = 60
+test_kv_throughput_goal = 10000
+test_data_file = ../tests/fts/data/benchmark/wildcard.txt
+test_driver = couchbase
+test_stats_limit = 1000000
+test_stats_aggregation_step = 100
+test_debug = false
+test_flex = true
+test_query_limit = 10
+test_flex_query_type = array_predicate
+test_worker_type = validatedLatency
+couchbase_index_name = perf_fts_index
+test_query_field = email
+test_mutation_field = email
+couchbase_index_configfile = tests/fts/index/flex.json
+
+[restore]
+backup_storage =  /fts/backup
+backup_repo =  soe
+
+[profiling]
+services = fts

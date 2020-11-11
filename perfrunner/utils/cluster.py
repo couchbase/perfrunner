@@ -77,6 +77,8 @@ def main():
 
     if cm.test_config.collection.config:
         cm.create_collections()
+    if cm.test_config.jts_access_settings.scope > 0:
+        cm.create_fts_collections()
 
     cm.tweak_memory()
     cm.enable_n2n_encryption()

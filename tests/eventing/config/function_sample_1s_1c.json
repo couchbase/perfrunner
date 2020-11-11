@@ -1,0 +1,33 @@
+[{
+  "depcfg": {
+  "buckets": [
+    {
+      "alias": "bucket1",
+      "bucket_name": "eventing-bucket-1",
+      "scope_name": "scope-1",
+      "collection_name": "collection-1"
+    }
+  ],
+  "metadata_bucket": "eventing",
+  "metadata_scope": "scope-1",
+  "metadata_collection": "collection-1",
+  "source_bucket": "bucket-1",
+  "source_scope": "scope-1",
+  "source_collection": "collection-1"
+},
+"code_path": "tests/eventing/code/bktop.js",
+"settings": {
+"worker_count": 24,
+"log_level": "INFO",
+"dcp_stream_boundary": "everything",
+"processing_status": true,
+"deployment_status": true,
+"enable_recursive_mutation": true,
+"cpp_worker_thread_count": 2,
+"breakpad_on": false,
+"description": "Perf test"
+},
+"appname": "perf-test1",
+"appcode": "function OnUpdate(doc, meta) {\n}\nfunction OnDelete(doc) {\n}",
+"actionsVisible": true
+}]

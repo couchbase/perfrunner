@@ -42,4 +42,3 @@ updates = 100
 items = 20000000
 workers = 100
 time = 1200
-throughput = 150000

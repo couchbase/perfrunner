@@ -6,6 +6,7 @@ title = Timers executed/sec, 1 bucket x 50M x 1KB, KV Rebalance, 3KV > 4KV + 1Ev
 component = eventing
 category = thr
 sub_category = Timer
+orderby = ab003
 
 [stats]
 server_processes = eventing-produc

@@ -65,6 +65,12 @@ class EventingTest(PerfTest):
         self.request_url = self.test_config.eventing_settings.request_url
         self.key_prefix = self.test_config.load_settings.key_prefix or "eventing"
 
+        if self.functions == {}:
+            with open(self.config_file) as f:
+                funcs = json.load(f)
+                for func_settings in funcs:
+                    self.functions[func_settings["appname"]] = func_settings["code_path"]
+
         for master in self.cluster_spec.masters:
             self.rest.add_rbac_user(
                 host=master,
@@ -91,30 +97,32 @@ class EventingTest(PerfTest):
 
         return self.set_functions_with_config(func=func)
 
-    def set_functions_with_config(self, func, override_name: bool = True,
+    def set_functions_with_config(self, func,
                                   wait_for_bootstrap: bool = True):
-        func["settings"]["worker_count"] = self.worker_count
-        func["settings"]["cpp_worker_thread_count"] = self.cpp_worker_thread_count
-        func["settings"]["timer_worker_pool_size"] = self.timer_worker_pool_size
-        func["settings"]["worker_queue_cap"] = self.worker_queue_cap
-        if "curl" in func["depcfg"]:
-            func["depcfg"]["curl"][0]["hostname"] = self.request_url
-
         time_to_deploy = 0
-        for name, filename in self.functions.items():
-            with open(filename, 'r') as myfile:
+        for func_settings in func:
+
+            func_settings["settings"]["worker_count"] = self.worker_count
+            func_settings["settings"]["cpp_worker_thread_count"] = self.cpp_worker_thread_count
+            func_settings["settings"]["timer_worker_pool_size"] = self.timer_worker_pool_size
+            func_settings["settings"]["worker_queue_cap"] = self.worker_queue_cap
+
+            if "curl" in func_settings["depcfg"]:
+                func_settings["depcfg"]["curl"][0]["hostname"] = self.request_url
+
+            code_file = self.functions[func_settings["appname"]]
+
+            with open(code_file, 'r') as myfile:
                 code = myfile.read()
                 if self.timer_timeout:
                     expiry = (calendar.timegm(time.gmtime()) + self.timer_timeout) * 1000
                     code = code.replace("fixed_expiry", str(expiry))
                     code = code.replace("fuzz_factor", str(self.timer_fuzz))
-                if override_name:
-                    func["appname"] = name
-                func["appcode"] = code
-            temp_time_to_deploy = self.deploy_and_bootstrap(func, func["appname"],
+                func_settings["appcode"] = code
+            temp_time_to_deploy = self.deploy_and_bootstrap(func_settings, func_settings["appname"],
                                                             wait_for_bootstrap)
             logger.info("Function {} deployed, time taken for deployment {}".
-                        format(name, temp_time_to_deploy))
+                        format(func_settings["appname"], temp_time_to_deploy))
             time_to_deploy += temp_time_to_deploy
         return time_to_deploy
 
@@ -423,14 +431,29 @@ class FunctionsIndexThroughputTest(EventingTest):
         storage = self.test_config.gsi_settings.storage
         indexes = self.test_config.gsi_settings.indexes
 
-        for server in self.index_nodes:
-            for bucket in self.test_config.buckets:
-                for name, field in indexes.items():
-                    self.rest.create_index(host=server,
-                                           bucket=bucket,
-                                           name=name,
-                                           field=field,
-                                           storage=storage)
+        if self.test_config.collection.collection_map:
+            for server in self.index_nodes:
+                for bucket, scope_map in indexes.items():
+                    for scope, collection_map in scope_map.items():
+                        for collection, index_map in collection_map.items():
+                            for name, field in index_map.items():
+                                self.rest.create_index(host=server,
+                                                       bucket=bucket,
+                                                       scope=scope,
+                                                       collection=collection,
+                                                       name=name,
+                                                       field=field,
+                                                       storage=storage)
+
+        else:
+            for server in self.index_nodes:
+                for bucket in self.test_config.buckets:
+                    for name, field in indexes.items():
+                        self.rest.create_index(host=server,
+                                               bucket=bucket,
+                                               name=name,
+                                               field=field,
+                                               storage=storage)
 
     def run(self):
         self.set_functions()

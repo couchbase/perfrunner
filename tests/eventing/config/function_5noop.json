@@ -1,0 +1,141 @@
+[{
+    "depcfg":{
+    "buckets": [
+      {
+        "alias": "bucket1",
+        "bucket_name": "eventing-bucket-1",
+        "access": "rw"
+      }
+    ],
+    "metadata_bucket": "eventing",
+    "source_bucket": "bucket-1"
+    },
+    "code_path": "tests/eventing/code/noop.js",
+    "settings": {
+        "worker_count": 5,
+        "log_level": "INFO",
+        "dcp_stream_boundary": "everything",
+        "processing_status": true,
+        "deployment_status": true,
+        "enable_recursive_mutation": true,
+        "cpp_worker_thread_count": 2,
+        "breakpad_on": false,
+        "description": "Perf test"
+    },
+    "appname": "perf-test1",
+    "appcode": "function OnUpdate(doc, meta) {} function OnDelete(doc) {}",
+    "actionsVisible": true
+  },
+  {
+    "depcfg":{
+    "buckets": [
+      {
+        "alias": "bucket1",
+        "bucket_name": "eventing-bucket-1",
+        "access": "rw"
+      }
+    ],
+    "metadata_bucket": "eventing",
+    "source_bucket": "bucket-1"
+    },
+    "code_path": "tests/eventing/code/noop.js",
+    "settings": {
+        "worker_count": 5,
+        "log_level": "INFO",
+        "dcp_stream_boundary": "everything",
+        "processing_status": true,
+        "deployment_status": true,
+        "enable_recursive_mutation": true,
+        "cpp_worker_thread_count": 2,
+        "breakpad_on": false,
+        "description": "Perf test"
+    },
+    "appname": "perf-test2",
+    "appcode": "function OnUpdate(doc, meta) {} function OnDelete(doc) {}",
+    "actionsVisible": true
+  },
+  {
+    "depcfg":{
+    "buckets": [
+      {
+        "alias": "bucket1",
+        "bucket_name": "eventing-bucket-1",
+        "access": "rw"
+      }
+    ],
+    "metadata_bucket": "eventing",
+    "source_bucket": "bucket-1"
+    },
+    "code_path": "tests/eventing/code/noop.js",
+    "settings": {
+        "worker_count": 5,
+        "log_level": "INFO",
+        "dcp_stream_boundary": "everything",
+        "processing_status": true,
+        "deployment_status": true,
+        "enable_recursive_mutation": true,
+        "cpp_worker_thread_count": 2,
+        "breakpad_on": false,
+        "description": "Perf test"
+    },
+    "appname": "perf-test3",
+    "appcode": "function OnUpdate(doc, meta) {} function OnDelete(doc) {}",
+    "actionsVisible": true
+  },
+  {
+    "depcfg":{
+    "buckets": [
+      {
+        "alias": "bucket1",
+        "bucket_name": "eventing-bucket-1",
+        "access": "rw"
+      }
+    ],
+    "metadata_bucket": "eventing",
+    "source_bucket": "bucket-1"
+    },
+    "code_path": "tests/eventing/code/noop.js",
+    "settings": {
+        "worker_count": 5,
+        "log_level": "INFO",
+        "dcp_stream_boundary": "everything",
+        "processing_status": true,
+        "deployment_status": true,
+        "enable_recursive_mutation": true,
+        "cpp_worker_thread_count": 2,
+        "breakpad_on": false,
+        "description": "Perf test"
+    },
+    "appname": "perf-test4",
+    "appcode": "function OnUpdate(doc, meta) {} function OnDelete(doc) {}",
+    "actionsVisible": true
+  },
+  {
+    "depcfg":{
+    "buckets": [
+      {
+        "alias": "bucket1",
+        "bucket_name": "eventing-bucket-1",
+        "access": "rw"
+      }
+    ],
+    "metadata_bucket": "eventing",
+    "source_bucket": "bucket-1"
+    },
+    "code_path": "tests/eventing/code/noop.js",
+    "settings": {
+        "worker_count": 5,
+        "log_level": "INFO",
+        "dcp_stream_boundary": "everything",
+        "processing_status": true,
+        "deployment_status": true,
+        "enable_recursive_mutation": true,
+        "cpp_worker_thread_count": 2,
+        "breakpad_on": false,
+        "description": "Perf test"
+    },
+    "appname": "perf-test5",
+    "appcode": "function OnUpdate(doc, meta) {} function OnDelete(doc) {}",
+    "actionsVisible": true
+  }
+  ]

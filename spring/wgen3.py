@@ -166,7 +166,7 @@ class Worker:
         if not hasattr(ws, 'doc_gen') or ws.doc_gen == 'basic':
             self.docs = Document(ws.size)
         elif self.ws.doc_gen == 'eventing_counter':
-            self.doc = EventingCounterDocument(ws.size)
+            self.docs = EventingCounterDocument(ws.size)
         elif self.ws.doc_gen == 'grouped':
             self.docs = GroupedDocument(ws.size, ws.doc_groups)
         elif self.ws.doc_gen == 'large_item_grouped':

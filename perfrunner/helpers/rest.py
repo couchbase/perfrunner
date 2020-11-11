@@ -189,11 +189,14 @@ class RestHelper:
         return self.get(url=api).json()
 
     def create_index(self, host: str, bucket: str, name: str, field: str,
-                     storage: str = 'memdb'):
+                     storage: str = 'memdb', scope: str = '_default',
+                     collection: str = '_default'):
         api = 'http://{}:9102/createIndex'.format(host)
         data = {
             'index': {
                 'bucket': bucket,
+                'scope': scope,
+                'collection': collection,
                 'using': storage,
                 'name': name,
                 'secExprs': ['`{}`'.format(field)],

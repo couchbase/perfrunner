@@ -33,9 +33,9 @@ size = 1024
 workers = 160
 
 [eventing]
-functions = perf-test1:tests/eventing/code/noop.js,perf-test2:tests/eventing/code/noop.js,perf-test3:tests/eventing/code/noop.js,perf-test4:tests/eventing/code/noop.js,perf-test5:tests/eventing/code/noop.js
 worker_count = 5
 cpp_worker_thread_count = 2
+config_file = tests/eventing/config/function_5noop.json
 
 [access]
 updates = 100

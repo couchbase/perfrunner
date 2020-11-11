@@ -1,0 +1,301 @@
+{
+  "bucket-1": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      },
+      "collection-2": {
+        "load": 1,
+        "access": 1
+      }
+    },
+    "scope-2": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      },
+      "collection-2": {
+        "load": 1,
+        "access": 1
+      }
+    }
+  },
+    "bucket-2": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      },
+      "collection-2": {
+        "load": 1,
+        "access": 1
+      }
+    },
+    "scope-2": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      },
+      "collection-2": {
+        "load": 1,
+        "access": 1
+      }
+    }
+  },
+    "bucket-3": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      },
+      "collection-2": {
+        "load": 1,
+        "access": 1
+      }
+    },
+    "scope-2": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      },
+      "collection-2": {
+        "load": 1,
+        "access": 1
+      }
+    }
+  },
+    "bucket-4": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      },
+      "collection-2": {
+        "load": 1,
+        "access": 1
+      }
+    },
+    "scope-2": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      },
+      "collection-2": {
+        "load": 1,
+        "access": 1
+      }
+    }
+  },
+    "bucket-5": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      },
+      "collection-2": {
+        "load": 1,
+        "access": 1
+      }
+    },
+    "scope-2": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      },
+      "collection-2": {
+        "load": 1,
+        "access": 1
+      }
+    }
+  },
+    "bucket-6": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      },
+      "collection-2": {
+        "load": 1,
+        "access": 1
+      }
+    },
+    "scope-2": {
+      "collection-1": {
+        "load": 1,
+        "access": 1
+      },
+      "collection-2": {
+        "load": 1,
+        "access": 1
+      }
+    }
+  },
+  "eventing": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 0,
+        "access": 0
+      },
+      "collection-2": {
+        "load": 0,
+        "access": 0
+      }
+    },
+    "scope-2": {
+      "collection-1": {
+        "load": 0,
+        "access": 0
+      },
+      "collection-2": {
+        "load": 0,
+        "access": 0
+      }
+    }
+  },
+  "eventing-bucket-1": {
+    "_default": {},
+   "scope-1": {
+      "collection-1": {
+        "load": 0,
+        "access": 0
+      },
+      "collection-2": {
+        "load": 0,
+        "access": 0
+      }
+    },
+    "scope-2": {
+      "collection-1": {
+        "load": 0,
+        "access": 0
+      },
+      "collection-2": {
+        "load": 0,
+        "access": 0
+      }
+    }
+  },
+  "eventing-bucket-2": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 0,
+        "access": 0
+      },
+      "collection-2": {
+        "load": 0,
+        "access": 0
+      }
+    },
+    "scope-2": {
+      "collection-1": {
+        "load": 0,
+        "access": 0
+      },
+      "collection-2": {
+        "load": 0,
+        "access": 0
+      }
+    }
+  },
+  "eventing-bucket-3": {
+    "_default": {},
+   "scope-1": {
+      "collection-1": {
+        "load": 0,
+        "access": 0
+      },
+      "collection-2": {
+        "load": 0,
+        "access": 0
+      }
+    },
+    "scope-2": {
+      "collection-1": {
+        "load": 0,
+        "access": 0
+      },
+      "collection-2": {
+        "load": 0,
+        "access": 0
+      }
+    }
+  },
+  "eventing-bucket-4": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 0,
+        "access": 0
+      },
+      "collection-2": {
+        "load": 0,
+        "access": 0
+      }
+    },
+    "scope-2": {
+      "collection-1": {
+        "load": 0,
+        "access": 0
+      },
+      "collection-2": {
+        "load": 0,
+        "access": 0
+      }
+    }
+  },
+  "eventing-bucket-5": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 0,
+        "access": 0
+      },
+      "collection-2": {
+        "load": 0,
+        "access": 0
+      }
+    },
+    "scope-2": {
+      "collection-1": {
+        "load": 0,
+        "access": 0
+      },
+      "collection-2": {
+        "load": 0,
+        "access": 0
+      }
+    }
+  },
+  "eventing-bucket-6": {
+    "_default": {},
+     "scope-1": {
+      "collection-1": {
+        "load": 0,
+        "access": 0
+      },
+      "collection-2": {
+        "load": 0,
+        "access": 0
+      }
+    },
+    "scope-2": {
+      "collection-1": {
+        "load": 0,
+        "access": 0
+      },
+      "collection-2": {
+        "load": 0,
+        "access": 0
+      }
+    }
+  }
+}

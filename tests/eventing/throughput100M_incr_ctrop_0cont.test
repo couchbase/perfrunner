@@ -6,6 +6,7 @@ title = Functions executed/sec, 1 bucket x 100M x 1KB, 4KV + 1Eventing node, Cou
 component = eventing
 category = thr
 sub_category = Function
+orderby = ac001
 
 [stats]
 server_processes = eventing-produc

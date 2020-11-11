@@ -1,0 +1,57 @@
+[test_case]
+test = perfrunner.tests.eventing.FunctionsRebalanceThroughputTest
+
+[showfast]
+title = Functions executed/sec, 1 bucket x 50M x 1KB, KV Rebalance, 3KV > 4KV + 1Eventing node, single function-BucketOp, s=1, c=1
+component = eventing
+category = thr
+sub_category = Function
+orderby = ae004
+
+[stats]
+server_processes = eventing-produc
+
+[cluster]
+mem_quota = 50000
+eventing_mem_quota = 24576
+initial_nodes = 4
+num_buckets = 1
+eventing_bucket_mem_quota = 10000
+eventing_metadata_bucket_mem_quota = 1000
+eventing_buckets = 1
+online_cores = 12
+
+[rebalance]
+nodes_after = 5
+start_after = 180
+stop_after = 180
+
+[bucket]
+replica_number=0
+
+[collection]
+config = collections/1bucket_1scope_1collection_eventing.json
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[load]
+items = 50000000
+size = 1024
+workers = 100
+
+[eventing]
+functions = perf-test1:tests/eventing/code/bktop.js
+worker_count = 24
+cpp_worker_thread_count = 2
+config_file = tests/eventing/config/function_sample_1s_1c.json
+
+[access]
+updates = 100
+items = 50000000
+workers = 100
+
+[clients]
+libcouchbase = 3.0.2
+python_client = 3.0.4

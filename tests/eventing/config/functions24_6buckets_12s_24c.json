@@ -1,0 +1,817 @@
+[{
+    "depcfg":{
+    "buckets": [
+      {
+        "alias": "bucket1",
+        "bucket_name": "eventing-bucket-1",
+        "scope_name": "scope-1",
+        "collection_name": "collection-1",
+        "access": "rw"
+      }
+    ],
+    "metadata_bucket": "eventing",
+    "metadata_scope": "scope-1",
+    "metadata_collection": "collection-1",
+    "source_bucket": "bucket-1",
+    "source_scope": "scope-1",
+    "source_collection": "collection-1"
+    },
+    "code_path": "tests/eventing/code/bktop.js",
+    "settings": {
+        "worker_count": 2,
+        "log_level": "INFO",
+        "dcp_stream_boundary": "everything",
+        "processing_status": true,
+        "deployment_status": true,
+        "enable_recursive_mutation": true,
+        "cpp_worker_thread_count": 2,
+        "breakpad_on": false,
+        "description": "Perf test"
+    },
+    "appname": "perf-test1-1-1",
+    "appcode": "function OnUpdate(doc, meta) {} function OnDelete(doc) {}",
+    "actionsVisible": true
+  },
+  {
+    "depcfg":{
+    "buckets": [
+      {
+        "alias": "bucket1",
+        "bucket_name": "eventing-bucket-1",
+        "scope_name": "scope-1",
+        "collection_name": "collection-2",
+        "access": "rw"
+      }
+    ],
+    "metadata_bucket": "eventing",
+    "metadata_scope": "scope-1",
+    "metadata_collection": "collection-2",
+    "source_bucket": "bucket-1",
+    "source_scope": "scope-1",
+    "source_collection": "collection-2"
+    },
+    "code_path": "tests/eventing/code/bktop.js",
+    "settings": {
+        "worker_count": 2,
+        "log_level": "INFO",
+        "dcp_stream_boundary": "everything",
+        "processing_status": true,
+        "deployment_status": true,
+        "enable_recursive_mutation": true,
+        "cpp_worker_thread_count": 2,
+        "breakpad_on": false,
+        "description": "Perf test"
+    },
+    "appname": "perf-test1-1-2",
+    "appcode": "function OnUpdate(doc, meta) {} function OnDelete(doc) {}",
+    "actionsVisible": true
+  },
+  {
+    "depcfg":{
+    "buckets": [
+      {
+        "alias": "bucket1",
+        "bucket_name": "eventing-bucket-1",
+        "scope_name": "scope-2",
+        "collection_name": "collection-1",
+        "access": "rw"
+      }
+    ],
+    "metadata_bucket": "eventing",
+    "metadata_scope": "scope-2",
+    "metadata_collection": "collection-1",
+    "source_bucket": "bucket-1",
+    "source_scope": "scope-2",
+    "source_collection": "collection-1"
+    },
+    "code_path": "tests/eventing/code/bktop.js",
+    "settings": {
+        "worker_count": 2,
+        "log_level": "INFO",
+        "dcp_stream_boundary": "everything",
+        "processing_status": true,
+        "deployment_status": true,
+        "enable_recursive_mutation": true,
+        "cpp_worker_thread_count": 2,
+        "breakpad_on": false,
+        "description": "Perf test"
+    },
+    "appname": "perf-test1-2-1",
+    "appcode": "function OnUpdate(doc, meta) {} function OnDelete(doc) {}",
+    "actionsVisible": true
+  },
+  {
+    "depcfg":{
+    "buckets": [
+      {
+        "alias": "bucket1",
+        "bucket_name": "eventing-bucket-1",
+        "scope_name": "scope-2",
+        "collection_name": "collection-2",
+        "access": "rw"
+      }
+    ],
+    "metadata_bucket": "eventing",
+    "metadata_scope": "scope-2",
+    "metadata_collection": "collection-2",
+    "source_bucket": "bucket-1",
+    "source_scope": "scope-2",
+    "source_collection": "collection-2"
+    },
+    "code_path": "tests/eventing/code/bktop.js",
+    "settings": {
+        "worker_count": 2,
+        "log_level": "INFO",
+        "dcp_stream_boundary": "everything",
+        "processing_status": true,
+        "deployment_status": true,
+        "enable_recursive_mutation": true,
+        "cpp_worker_thread_count": 2,
+        "breakpad_on": false,
+        "description": "Perf test"
+    },
+    "appname": "perf-test1-2-2",
+    "appcode": "function OnUpdate(doc, meta) {} function OnDelete(doc) {}",
+    "actionsVisible": true
+  },
+  {
+    "depcfg":{
+    "buckets": [
+      {
+        "alias": "bucket1",
+        "bucket_name": "eventing-bucket-2",
+        "scope_name": "scope-1",
+        "collection_name": "collection-1",
+        "access": "rw"
+      }
+    ],
+    "metadata_bucket": "eventing",
+    "metadata_scope": "scope-1",
+    "metadata_collection": "collection-1",
+    "source_bucket": "bucket-2",
+    "source_scope": "scope-1",
+    "source_collection": "collection-1"
+    },
+    "code_path": "tests/eventing/code/bktop.js",
+    "settings": {
+        "worker_count": 2,
+        "log_level": "INFO",
+        "dcp_stream_boundary": "everything",
+        "processing_status": true,
+        "deployment_status": true,
+        "enable_recursive_mutation": true,
+        "cpp_worker_thread_count": 2,
+        "breakpad_on": false,
+        "description": "Perf test"
+    },
+    "appname": "perf-test2-1-1",
+    "appcode": "function OnUpdate(doc, meta) {} function OnDelete(doc) {}",
+    "actionsVisible": true
+  },
+  {
+    "depcfg":{
+    "buckets": [
+      {
+        "alias": "bucket1",
+        "bucket_name": "eventing-bucket-2",
+        "scope_name": "scope-1",
+        "collection_name": "collection-2",
+        "access": "rw"
+      }
+    ],
+    "metadata_bucket": "eventing",
+    "metadata_scope": "scope-1",
+    "metadata_collection": "collection-2",
+    "source_bucket": "bucket-2",
+    "source_scope": "scope-1",
+    "source_collection": "collection-2"
+    },
+    "code_path": "tests/eventing/code/bktop.js",
+    "settings": {
+        "worker_count": 2,
+        "log_level": "INFO",
+        "dcp_stream_boundary": "everything",
+        "processing_status": true,
+        "deployment_status": true,
+        "enable_recursive_mutation": true,
+        "cpp_worker_thread_count": 2,
+        "breakpad_on": false,
+        "description": "Perf test"
+    },
+    "appname": "perf-test2-1-2",
+    "appcode": "function OnUpdate(doc, meta) {} function OnDelete(doc) {}",
+    "actionsVisible": true
+  },
+  {
+    "depcfg":{
+    "buckets": [
+      {
+        "alias": "bucket1",
+        "bucket_name": "eventing-bucket-2",
+        "scope_name": "scope-2",
+        "collection_name": "collection-1",
+        "access": "rw"
+      }
+    ],
+    "metadata_bucket": "eventing",
+    "metadata_scope": "scope-2",
+    "metadata_collection": "collection-1",
+    "source_bucket": "bucket-2",
+    "source_scope": "scope-2",
+    "source_collection": "collection-1"
+    },
+    "code_path": "tests/eventing/code/bktop.js",
+    "settings": {
+        "worker_count": 2,
+        "log_level": "INFO",
+        "dcp_stream_boundary": "everything",
+        "processing_status": true,
+        "deployment_status": true,
+        "enable_recursive_mutation": true,
+        "cpp_worker_thread_count": 2,
+        "breakpad_on": false,
+        "description": "Perf test"
+    },
+    "appname": "perf-test2-2-1",
+    "appcode": "function OnUpdate(doc, meta) {} function OnDelete(doc) {}",
+    "actionsVisible": true
+  },
+  {
+    "depcfg":{
+    "buckets": [
+      {
+        "alias": "bucket1",
+        "bucket_name": "eventing-bucket-2",
+        "scope_name": "scope-2",
+        "collection_name": "collection-2",
+        "access": "rw"
+      }
+    ],
+    "metadata_bucket": "eventing",
+    "metadata_scope": "scope-2",
+    "metadata_collection": "collection-2",
+    "source_bucket": "bucket-2",
+    "source_scope": "scope-2",
+    "source_collection": "collection-2"
+    },
+    "code_path": "tests/eventing/code/bktop.js",
+    "settings": {
+        "worker_count": 2,
+        "log_level": "INFO",
+        "dcp_stream_boundary": "everything",
+        "processing_status": true,
+        "deployment_status": true,
+        "enable_recursive_mutation": true,
+        "cpp_worker_thread_count": 2,
+        "breakpad_on": false,
+        "description": "Perf test"
+    },
+    "appname": "perf-test2-2-2",
+    "appcode": "function OnUpdate(doc, meta) {} function OnDelete(doc) {}",
+    "actionsVisible": true
+  },
+  {
+    "depcfg":{
+    "buckets": [
+      {
+        "alias": "bucket1",
+        "bucket_name": "eventing-bucket-3",
+        "scope_name": "scope-1",
+        "collection_name": "collection-1",
+        "access": "rw"
+      }
+    ],
+    "metadata_bucket": "eventing",
+    "metadata_scope": "scope-1",
+    "metadata_collection": "collection-1",
+    "source_bucket": "bucket-3",
+    "source_scope": "scope-1",
+    "source_collection": "collection-1"
+    },
+    "code_path": "tests/eventing/code/bktop.js",
+    "settings": {
+        "worker_count": 2,
+        "log_level": "INFO",
+        "dcp_stream_boundary": "everything",
+        "processing_status": true,
+        "deployment_status": true,
+        "enable_recursive_mutation": true,
+        "cpp_worker_thread_count": 2,
+        "breakpad_on": false,
+        "description": "Perf test"
+    },
+    "appname": "perf-test3-1-1",
+    "appcode": "function OnUpdate(doc, meta) {} function OnDelete(doc) {}",
+    "actionsVisible": true
+  },
+  {
+    "depcfg":{
+    "buckets": [
+      {
+        "alias": "bucket1",
+        "bucket_name": "eventing-bucket-3",
+        "scope_name": "scope-1",
+        "collection_name": "collection-2",
+        "access": "rw"
+      }
+    ],
+    "metadata_bucket": "eventing",
+    "metadata_scope": "scope-1",
+    "metadata_collection": "collection-2",
+    "source_bucket": "bucket-3",
+    "source_scope": "scope-1",
+    "source_collection": "collection-2"
+    },
+    "code_path": "tests/eventing/code/bktop.js",
+    "settings": {
+        "worker_count": 2,
+        "log_level": "INFO",
+        "dcp_stream_boundary": "everything",
+        "processing_status": true,
+        "deployment_status": true,
+        "enable_recursive_mutation": true,
+        "cpp_worker_thread_count": 2,
+        "breakpad_on": false,
+        "description": "Perf test"
+    },
+    "appname": "perf-test3-1-2",
+    "appcode": "function OnUpdate(doc, meta) {} function OnDelete(doc) {}",
+    "actionsVisible": true
+  },
+  {
+    "depcfg":{
+    "buckets": [
+      {
+        "alias": "bucket1",
+        "bucket_name": "eventing-bucket-3",
+        "scope_name": "scope-2",
+        "collection_name": "collection-1",
+        "access": "rw"
+      }
+    ],
+    "metadata_bucket": "eventing",
+    "metadata_scope": "scope-2",
+    "metadata_collection": "collection-1",
+    "source_bucket": "bucket-3",
+    "source_scope": "scope-2",
+    "source_collection": "collection-1"
+    },
+    "code_path": "tests/eventing/code/bktop.js",
+    "settings": {
+        "worker_count": 2,
+        "log_level": "INFO",
+        "dcp_stream_boundary": "everything",
+        "processing_status": true,
+        "deployment_status": true,
+        "enable_recursive_mutation": true,
+        "cpp_worker_thread_count": 2,
+        "breakpad_on": false,
+        "description": "Perf test"
+    },
+    "appname": "perf-test3-2-1",
+    "appcode": "function OnUpdate(doc, meta) {} function OnDelete(doc) {}",
+    "actionsVisible": true
+  },
+  {
+    "depcfg":{
+    "buckets": [
+      {
+        "alias": "bucket1",
+        "bucket_name": "eventing-bucket-3",
+        "scope_name": "scope-2",
+        "collection_name": "collection-2",
+        "access": "rw"
+      }
+    ],
+    "metadata_bucket": "eventing",
+    "metadata_scope": "scope-2",
+    "metadata_collection": "collection-2",
+    "source_bucket": "bucket-3",
+    "source_scope": "scope-2",
+    "source_collection": "collection-2"
+    },
+    "code_path": "tests/eventing/code/bktop.js",
+    "settings": {
+        "worker_count": 2,
+        "log_level": "INFO",
+        "dcp_stream_boundary": "everything",
+        "processing_status": true,
+        "deployment_status": true,
+        "enable_recursive_mutation": true,
+        "cpp_worker_thread_count": 2,
+        "breakpad_on": false,
+        "description": "Perf test"
+    },
+    "appname": "perf-test3-2-2",
+    "appcode": "function OnUpdate(doc, meta) {} function OnDelete(doc) {}",
+    "actionsVisible": true
+  },
+  {
+    "depcfg":{
+    "buckets": [
+      {
+        "alias": "bucket1",
+        "bucket_name": "eventing-bucket-4",
+        "scope_name": "scope-1",
+        "collection_name": "collection-1",
+        "access": "rw"
+      }
+    ],
+    "metadata_bucket": "eventing",
+    "metadata_scope": "scope-1",
+    "metadata_collection": "collection-1",
+    "source_bucket": "bucket-4",
+    "source_scope": "scope-1",
+    "source_collection": "collection-1"
+    },
+    "code_path": "tests/eventing/code/bktop.js",
+    "settings": {
+        "worker_count": 2,
+        "log_level": "INFO",
+        "dcp_stream_boundary": "everything",
+        "processing_status": true,
+        "deployment_status": true,
+        "enable_recursive_mutation": true,
+        "cpp_worker_thread_count": 2,
+        "breakpad_on": false,
+        "description": "Perf test"
+    },
+    "appname": "perf-test4-1-1",
+    "appcode": "function OnUpdate(doc, meta) {} function OnDelete(doc) {}",
+    "actionsVisible": true
+  },
+  {
+    "depcfg":{
+    "buckets": [
+      {
+        "alias": "bucket1",
+        "bucket_name": "eventing-bucket-4",
+        "scope_name": "scope-1",
+        "collection_name": "collection-2",
+        "access": "rw"
+      }
+    ],
+    "metadata_bucket": "eventing",
+    "metadata_scope": "scope-1",
+    "metadata_collection": "collection-2",
+    "source_bucket": "bucket-4",
+    "source_scope": "scope-1",
+    "source_collection": "collection-2"
+    },
+    "code_path": "tests/eventing/code/bktop.js",
+    "settings": {
+        "worker_count": 2,
+        "log_level": "INFO",
+        "dcp_stream_boundary": "everything",
+        "processing_status": true,
+        "deployment_status": true,
+        "enable_recursive_mutation": true,
+        "cpp_worker_thread_count": 2,
+        "breakpad_on": false,
+        "description": "Perf test"
+    },
+    "appname": "perf-test4-1-2",
+    "appcode": "function OnUpdate(doc, meta) {} function OnDelete(doc) {}",
+    "actionsVisible": true
+  },
+  {
+    "depcfg":{
+    "buckets": [
+      {
+        "alias": "bucket1",
+        "bucket_name": "eventing-bucket-4",
+        "scope_name": "scope-2",
+        "collection_name": "collection-1",
+        "access": "rw"
+      }
+    ],
+    "metadata_bucket": "eventing",
+    "metadata_scope": "scope-2",
+    "metadata_collection": "collection-1",
+    "source_bucket": "bucket-4",
+    "source_scope": "scope-2",
+    "source_collection": "collection-1"
+    },
+    "code_path": "tests/eventing/code/bktop.js",
+    "settings": {
+        "worker_count": 2,
+        "log_level": "INFO",
+        "dcp_stream_boundary": "everything",
+        "processing_status": true,
+        "deployment_status": true,
+        "enable_recursive_mutation": true,
+        "cpp_worker_thread_count": 2,
+        "breakpad_on": false,
+        "description": "Perf test"
+    },
+    "appname": "perf-test4-2-1",
+    "appcode": "function OnUpdate(doc, meta) {} function OnDelete(doc) {}",
+    "actionsVisible": true
+  },
+  {
+    "depcfg":{
+    "buckets": [
+      {
+        "alias": "bucket1",
+        "bucket_name": "eventing-bucket-4",
+        "scope_name": "scope-2",
+        "collection_name": "collection-2",
+        "access": "rw"
+      }
+    ],
+    "metadata_bucket": "eventing",
+    "metadata_scope": "scope-2",
+    "metadata_collection": "collection-2",
+    "source_bucket": "bucket-4",
+    "source_scope": "scope-2",
+    "source_collection": "collection-2"
+    },
+    "code_path": "tests/eventing/code/bktop.js",
+    "settings": {
+        "worker_count": 2,
+        "log_level": "INFO",
+        "dcp_stream_boundary": "everything",
+        "processing_status": true,
+        "deployment_status": true,
+        "enable_recursive_mutation": true,
+        "cpp_worker_thread_count": 2,
+        "breakpad_on": false,
+        "description": "Perf test"
+    },
+    "appname": "perf-test4-2-2",
+    "appcode": "function OnUpdate(doc, meta) {} function OnDelete(doc) {}",
+    "actionsVisible": true
+  },
+  {
+    "depcfg":{
+    "buckets": [
+      {
+        "alias": "bucket1",
+        "bucket_name": "eventing-bucket-5",
+        "scope_name": "scope-1",
+        "collection_name": "collection-1",
+        "access": "rw"
+      }
+    ],
+    "metadata_bucket": "eventing",
+    "metadata_scope": "scope-1",
+    "metadata_collection": "collection-1",
+    "source_bucket": "bucket-5",
+    "source_scope": "scope-1",
+    "source_collection": "collection-1"
+    },
+    "code_path": "tests/eventing/code/bktop.js",
+    "settings": {
+        "worker_count": 2,
+        "log_level": "INFO",
+        "dcp_stream_boundary": "everything",
+        "processing_status": true,
+        "deployment_status": true,
+        "enable_recursive_mutation": true,
+        "cpp_worker_thread_count": 2,
+        "breakpad_on": false,
+        "description": "Perf test"
+    },
+    "appname": "perf-test5-1-1",
+    "appcode": "function OnUpdate(doc, meta) {} function OnDelete(doc) {}",
+    "actionsVisible": true
+  },
+  {
+    "depcfg":{
+    "buckets": [
+      {
+        "alias": "bucket1",
+        "bucket_name": "eventing-bucket-5",
+        "scope_name": "scope-1",
+        "collection_name": "collection-2",
+        "access": "rw"
+      }
+    ],
+    "metadata_bucket": "eventing",
+    "metadata_scope": "scope-1",
+    "metadata_collection": "collection-2",
+    "source_bucket": "bucket-5",
+    "source_scope": "scope-1",
+    "source_collection": "collection-2"
+    },
+    "code_path": "tests/eventing/code/bktop.js",
+    "settings": {
+        "worker_count": 2,
+        "log_level": "INFO",
+        "dcp_stream_boundary": "everything",
+        "processing_status": true,
+        "deployment_status": true,
+        "enable_recursive_mutation": true,
+        "cpp_worker_thread_count": 2,
+        "breakpad_on": false,
+        "description": "Perf test"
+    },
+    "appname": "perf-test5-1-2",
+    "appcode": "function OnUpdate(doc, meta) {} function OnDelete(doc) {}",
+    "actionsVisible": true
+  },
+  {
+    "depcfg":{
+    "buckets": [
+      {
+        "alias": "bucket1",
+        "bucket_name": "eventing-bucket-5",
+        "scope_name": "scope-2",
+        "collection_name": "collection-1",
+        "access": "rw"
+      }
+    ],
+    "metadata_bucket": "eventing",
+    "metadata_scope": "scope-2",
+    "metadata_collection": "collection-1",
+    "source_bucket": "bucket-5",
+    "source_scope": "scope-2",
+    "source_collection": "collection-1"
+    },
+    "code_path": "tests/eventing/code/bktop.js",
+    "settings": {
+        "worker_count": 2,
+        "log_level": "INFO",
+        "dcp_stream_boundary": "everything",
+        "processing_status": true,
+        "deployment_status": true,
+        "enable_recursive_mutation": true,
+        "cpp_worker_thread_count": 2,
+        "breakpad_on": false,
+        "description": "Perf test"
+    },
+    "appname": "perf-test5-2-1",
+    "appcode": "function OnUpdate(doc, meta) {} function OnDelete(doc) {}",
+    "actionsVisible": true
+  },
+  {
+    "depcfg":{
+    "buckets": [
+      {
+        "alias": "bucket1",
+        "bucket_name": "eventing-bucket-5",
+        "scope_name": "scope-2",
+        "collection_name": "collection-2",
+        "access": "rw"
+      }
+    ],
+    "metadata_bucket": "eventing",
+    "metadata_scope": "scope-2",
+    "metadata_collection": "collection-2",
+    "source_bucket": "bucket-5",
+    "source_scope": "scope-2",
+    "source_collection": "collection-2"
+    },
+    "code_path": "tests/eventing/code/bktop.js",
+    "settings": {
+        "worker_count": 2,
+        "log_level": "INFO",
+        "dcp_stream_boundary": "everything",
+        "processing_status": true,
+        "deployment_status": true,
+        "enable_recursive_mutation": true,
+        "cpp_worker_thread_count": 2,
+        "breakpad_on": false,
+        "description": "Perf test"
+    },
+    "appname": "perf-test5-2-2",
+    "appcode": "function OnUpdate(doc, meta) {} function OnDelete(doc) {}",
+    "actionsVisible": true
+  },
+  {
+    "depcfg":{
+    "buckets": [
+      {
+        "alias": "bucket1",
+        "bucket_name": "eventing-bucket-6",
+        "scope_name": "scope-1",
+        "collection_name": "collection-1",
+        "access": "rw"
+      }
+    ],
+    "metadata_bucket": "eventing",
+    "metadata_scope": "scope-1",
+    "metadata_collection": "collection-1",
+    "source_bucket": "bucket-6",
+    "source_scope": "scope-1",
+    "source_collection": "collection-1"
+    },
+    "code_path": "tests/eventing/code/bktop.js",
+    "settings": {
+        "worker_count": 2,
+        "log_level": "INFO",
+        "dcp_stream_boundary": "everything",
+        "processing_status": true,
+        "deployment_status": true,
+        "enable_recursive_mutation": true,
+        "cpp_worker_thread_count": 2,
+        "breakpad_on": false,
+        "description": "Perf test"
+    },
+    "appname": "perf-test6-1-1",
+    "appcode": "function OnUpdate(doc, meta) {} function OnDelete(doc) {}",
+    "actionsVisible": true
+  },
+  {
+    "depcfg":{
+    "buckets": [
+      {
+        "alias": "bucket1",
+        "bucket_name": "eventing-bucket-6",
+        "scope_name": "scope-1",
+        "collection_name": "collection-2",
+        "access": "rw"
+      }
+    ],
+    "metadata_bucket": "eventing",
+    "metadata_scope": "scope-1",
+    "metadata_collection": "collection-2",
+    "source_bucket": "bucket-6",
+    "source_scope": "scope-1",
+    "source_collection": "collection-2"
+    },
+    "code_path": "tests/eventing/code/bktop.js",
+    "settings": {
+        "worker_count": 2,
+        "log_level": "INFO",
+        "dcp_stream_boundary": "everything",
+        "processing_status": true,
+        "deployment_status": true,
+        "enable_recursive_mutation": true,
+        "cpp_worker_thread_count": 2,
+        "breakpad_on": false,
+        "description": "Perf test"
+    },
+    "appname": "perf-test6-1-2",
+    "appcode": "function OnUpdate(doc, meta) {} function OnDelete(doc) {}",
+    "actionsVisible": true
+  },
+  {
+    "depcfg":{
+    "buckets": [
+      {
+        "alias": "bucket1",
+        "bucket_name": "eventing-bucket-6",
+        "scope_name": "scope-2",
+        "collection_name": "collection-1",
+        "access": "rw"
+      }
+    ],
+    "metadata_bucket": "eventing",
+    "metadata_scope": "scope-2",
+    "metadata_collection": "collection-1",
+    "source_bucket": "bucket-6",
+    "source_scope": "scope-2",
+    "source_collection": "collection-1"
+    },
+    "code_path": "tests/eventing/code/bktop.js",
+    "settings": {
+        "worker_count": 2,
+        "log_level": "INFO",
+        "dcp_stream_boundary": "everything",
+        "processing_status": true,
+        "deployment_status": true,
+        "enable_recursive_mutation": true,
+        "cpp_worker_thread_count": 2,
+        "breakpad_on": false,
+        "description": "Perf test"
+    },
+    "appname": "perf-test6-2-1",
+    "appcode": "function OnUpdate(doc, meta) {} function OnDelete(doc) {}",
+    "actionsVisible": true
+  },
+  {
+    "depcfg":{
+    "buckets": [
+      {
+        "alias": "bucket1",
+        "bucket_name": "eventing-bucket-6",
+        "scope_name": "scope-2",
+        "collection_name": "collection-2",
+        "access": "rw"
+      }
+    ],
+    "metadata_bucket": "eventing",
+    "metadata_scope": "scope-2",
+    "metadata_collection": "collection-2",
+    "source_bucket": "bucket-6",
+    "source_scope": "scope-2",
+    "source_collection": "collection-2"
+    },
+    "code_path": "tests/eventing/code/bktop.js",
+    "settings": {
+        "worker_count": 2,
+        "log_level": "INFO",
+        "dcp_stream_boundary": "everything",
+        "processing_status": true,
+        "deployment_status": true,
+        "enable_recursive_mutation": true,
+        "cpp_worker_thread_count": 2,
+        "breakpad_on": false,
+        "description": "Perf test"
+    },
+    "appname": "perf-test6-2-2",
+    "appcode": "function OnUpdate(doc, meta) {} function OnDelete(doc) {}",
+    "actionsVisible": true
+  }
+  ]

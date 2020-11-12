@@ -231,33 +231,20 @@ def cbrestorewrapper(master_node: str, cluster_spec: ClusterSpec):
 
 
 def cbbackupmgr_restore(master_node: str, cluster_spec: ClusterSpec,
-                        threads: int, include_data: str, archive: str = '', repo: str = 'default'):
+                        threads: int, include_data: str, archive: str = '',
+                        repo: str = 'default', map_data: str = None):
 
-    if include_data:
-        cmd = \
-            './opt/couchbase/bin/cbbackupmgr restore --force-updates ' \
-            '--archive {} --repo {} --include-data {} --threads {} ' \
-            '--host http://{} --username {} --password {}'.format(
-                archive or cluster_spec.backup,
-                repo,
-                include_data,
-                threads,
-                master_node,
-                cluster_spec.rest_credentials[0],
-                cluster_spec.rest_credentials[1],
-            )
-    else:
-        cmd = \
-            './opt/couchbase/bin/cbbackupmgr restore --force-updates ' \
-            '--archive {} --repo {} --threads {} ' \
-            '--host http://{} --username {} --password {}'.format(
-                archive or cluster_spec.backup,
-                repo,
-                threads,
-                master_node,
-                cluster_spec.rest_credentials[0],
-                cluster_spec.rest_credentials[1],
-            )
+    flags = ['--archive {}'.format(archive or cluster_spec.backup),
+             '--repo {}'.format(repo),
+             '--include-data {}'.format(include_data) if include_data else None,
+             '--threads {}'.format(threads),
+             '--host http://{}'.format(master_node),
+             '--username {}'.format(cluster_spec.rest_credentials[0]),
+             '--password {}'.format(cluster_spec.rest_credentials[1]),
+             '--map-data {}'.format(map_data) if map_data else None]
+
+    cmd = './opt/couchbase/bin/cbbackupmgr restore --force-updates {}'.format(
+        ' '.join(filter(None, flags)))
 
     logger.info('Running: {}'.format(cmd))
     local(cmd)

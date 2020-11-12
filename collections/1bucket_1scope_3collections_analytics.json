@@ -1,0 +1,19 @@
+{
+  "bucket-1": {
+    "_default": {},
+    "scope-1": {
+      "GleambookUsers": {
+        "load": 1,
+        "access": 1
+      },
+      "GleambookMessages": {
+        "load": 1,
+        "access": 1
+      },
+      "ChirpMessages": {
+        "load": 1,
+        "access": 1
+      }
+    }
+  }
+}

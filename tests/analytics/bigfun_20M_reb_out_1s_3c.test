@@ -1,0 +1,37 @@
+[test_case]
+test = perfrunner.tests.analytics.BigFunRebalanceTest
+use_workers = 0
+
+[showfast]
+title = Rebalance-out (min), 4 -> 3 nodes, BigFUN 20M users (320M docs), SSD, s=1 c=3
+component = analytics
+category = rebalance
+
+[stats]
+server_processes = java
+
+[cluster]
+mem_quota = 20480
+analytics_mem_quota = 20480
+initial_nodes = 6
+num_buckets = 1
+
+[collection]
+config = collections/1bucket_1scope_3collections_analytics.json
+
+[analytics]
+num_io_devices = 4
+
+[bucket]
+eviction_policy = fullEviction
+
+[restore]
+backup_storage = /data2/backup/
+backup_repo = default
+threads = 8
+map_data = bucket-1.scope-1.GleambookUsers=bucket-1.scope-1.GleambookUsers,bucket-1.scope-1.GleambookMessages=bucket-1.scope-1.GleambookMessages,bucket-1.scope-1.ChirpMessages=bucket-1.scope-1.ChirpMessages
+
+[rebalance]
+nodes_after = 5
+start_after = 0
+stop_after = 0

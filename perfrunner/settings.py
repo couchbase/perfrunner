@@ -841,6 +841,7 @@ class RestoreSettings:
     IMPORT_FILE = ''
     DOCS_PER_COLLECTION = 0
     THREADS = 16
+    MAP_DATA = None
 
     def __init__(self, options):
         self.docs_per_collections = int(options.get('docs_per_collection',
@@ -848,8 +849,8 @@ class RestoreSettings:
         self.backup_storage = options.get('backup_storage', self.BACKUP_STORAGE)
         self.backup_repo = options.get('backup_repo', self.BACKUP_REPO)
         self.import_file = options.get('import_file', self.IMPORT_FILE)
-
         self.threads = options.get('threads', self.THREADS)
+        self.map_data = options.get('map_data', self.MAP_DATA)
 
     def __str__(self) -> str:
         return str(self.__dict__)

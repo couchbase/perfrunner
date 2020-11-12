@@ -34,6 +34,16 @@ class BigFunTest(PerfTest):
             self.rest.exec_analytics_statement(self.analytics_nodes[0],
                                                statement)
 
+    def create_datasets_collections(self, bucket: str):
+        self.disconnect_link()
+        logger.info('Creating datasets')
+        collection_list = ['GleambookUsers', 'GleambookMessages', 'ChirpMessages']
+        for collection in collection_list:
+            statement = "CREATE DATASET `{}` ON `{}`.`scope-1`.`{}`;"\
+                .format(collection, bucket, collection)
+            self.rest.exec_analytics_statement(self.analytics_nodes[0],
+                                               statement)
+
     def create_index(self):
         logger.info('Creating indexes')
         for statement in (
@@ -66,9 +76,12 @@ class BigFunTest(PerfTest):
         for target in self.target_iterator:
             self.disconnect_bucket(target.bucket)
 
-    def sync(self):
+    def sync(self, collection: bool = False):
         for target in self.target_iterator:
-            self.create_datasets(target.bucket)
+            if collection:
+                self.create_datasets_collections(target.bucket)
+            else:
+                self.create_datasets(target.bucket)
             self.create_index()
         self.connect_buckets()
         for target in self.target_iterator:
@@ -115,7 +128,10 @@ class BigFunSyncTest(BigFunTest):
     @with_stats
     @timeit
     def sync(self):
-        super().sync()
+        if self.test_config.collection.collection_map:
+            super().sync(collection=True)
+        else:
+            super().sync()
 
     def run(self):
         super().run()
@@ -195,7 +211,10 @@ class BigFunQueryTest(BigFunTest):
     def run(self):
         super().run()
 
-        self.sync()
+        if self.test_config.collection.collection_map:
+            self.sync(collection=True)
+        else:
+            self.sync()
 
         logger.info('Running warmup phase')
         self.warmup()
@@ -249,7 +268,10 @@ class BigFunRebalanceTest(BigFunTest, RebalanceTest):
     def run(self):
         super().run()
 
-        self.sync()
+        if self.test_config.collection.collection_map:
+            self.sync(collection=True)
+        else:
+            self.sync()
 
         self.rebalance_cbas()
 

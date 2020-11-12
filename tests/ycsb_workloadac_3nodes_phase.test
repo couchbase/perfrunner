@@ -18,17 +18,18 @@ eviction_policy = fullEviction
 backend_storage = magma
 
 [bucket_extras]
-num_reader_threads = 32
-num_writer_threads = 32
+num_reader_threads = 64
+num_writer_threads = 64
 
 [load]
 workload_path = workloads/workloada
-ycsb_client = couchbase2
+ycsb_client = couchbase3
 items = 100000000
 field_length = 100
 field_count = 50
 size = 5000
-workers = 25
+workers = 100
+kv_endpoints = 64
 workload_instances = 4
 inserts_per_workerinstance = 25000000
 timeseries = 1
@@ -36,12 +37,14 @@ phase = 4
 
 [access]
 workload_path = workloads/workloada
-ycsb_client = couchbase2
+ycsb_client = couchbase3
 items = 100000000
 field_length = 100
 field_count = 50
-ops = 40000000
-workers = 25
+size = 5000
+ops = 10000000
+workers = 480
+kv_endpoints = 64
 workload_instances = 4
 timeseries = 1
 

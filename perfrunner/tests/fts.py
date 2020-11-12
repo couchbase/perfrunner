@@ -106,7 +106,7 @@ class FTSTest(JTSTest):
                                                    self.access.couchbase_index_name)
 
     def data_restore(self):
-        if self.access.scope != 0:
+        if self.access.scope > 0:
             self.fts_cbimport()
         else:
             self.restore()

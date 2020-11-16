@@ -215,8 +215,7 @@ class PerfTest:
     def wait_for_persistence(self):
         for target in self.target_iterator:
             self.monitor.monitor_disk_queues(target.node, target.bucket)
-            # self.monitor.monitor_dcp_queues(target.node, target.bucket)
-            time.sleep(60)
+            self.monitor.monitor_dcp_queues(target.node, target.bucket)
             self.monitor.monitor_replica_count(target.node, target.bucket)
 
     def wait_for_indexing(self):

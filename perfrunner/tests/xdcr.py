@@ -513,14 +513,23 @@ class XdcrCollectionBackfillTest(UniDirXdcrInitTest):
         }
         return params
 
-    @with_stats
-    @with_profiles
     def monitor_backfill_replication(self, dest_host: str, num_items: int):
         backfill_time = 0
         for bucket in self.test_config.buckets:
             backfill_time = self.monitor.monitor_num_backfill_items(host=dest_host,
                                                                     bucket=bucket,
                                                                     num_items=num_items)
+        return backfill_time
+
+    @with_stats
+    @with_profiles
+    def backfill_create_monitor(self, replication_id, dest_host):
+        self.create_backfill_replication(replication_id=replication_id)
+
+        backfill_time = self.monitor_backfill_replication(
+            dest_host=dest_host,
+            num_items=self.test_config.load_settings.items
+        )
         return backfill_time
 
     def _report_kpi(self, throughput):
@@ -547,12 +556,8 @@ class XdcrCollectionBackfillTest(UniDirXdcrInitTest):
 
         print('items_remaining : ', items_remaining)
 
-        self.create_backfill_replication(replication_id=replication_id)
-
-        backfill_time = self.monitor_backfill_replication(
-            dest_host=dest_master,
-            num_items=self.test_config.load_settings.items
-        )
+        backfill_time = self.backfill_create_monitor(replication_id=replication_id,
+                                                     dest_host=dest_master)
 
         throughput = items_remaining/backfill_time
 

@@ -47,6 +47,7 @@
         {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/kv_throughput_read_1B_magma_T1.test"},
         {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/kv_rebalance_out_1B_magma_R1.test"},
         {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/java_dcp_throughput_4n_1B_compressed_magma_P1.test"},
+        {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "ycsb_workloadac_3nodes_phase.test"},
         {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/simplified/kv_latency_250M_read_heavy_power.test"},
         {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/simplified/kv_latency_250M_read_heavy_uniform.test"},
         {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/simplified/kv_latency_250M_update_heavy_power.test"},
@@ -65,7 +66,6 @@
         {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/simplified/kv_throughput_250M_insert_only_uniform.test"}
     ],
     "MagmaNVME": [
-        {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "ycsb_workloadg_4nodes_magma.test"},
         {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/java_dcp_throughput_1n_100M_compressed_magma.test"},
         {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/kv_throughput_1n_100M_load.test"},
         {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/kv_throughput_1n_100M_mixed.test"},
@@ -74,7 +74,16 @@
         {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/kv_throughput_1n_100M_read_only_uniform.test"},
         {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/kv_throughput_1n_100M_update_only.test"},
         {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/kv_throughput_1n_100M_update_only_uniform.test"},
-        {"job": "magma-nvme-benchmark", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/magma_benchmark_25M.test"}
+        {"job": "magma-nvme-benchmark", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/magma_benchmark_25M.test"},
+        {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "ycsb_workloadg_4nodes_magma.test"},
+        {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "hidd/ycsb_workloada_3nodes_10rr_load_magma.test"},
+        {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "hidd/ycsb_workloada_3nodes_10rr_magma.test"},
+        {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "hidd/ycsb_workloadb_3nodes_10rr_magma.test"},
+        {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "hidd/ycsb_workloadc_3nodes_10rr_magma.test"},
+        {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "hidd/ycsb_workloada_3nodes_1rr_load_magma.test"},
+        {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "hidd/ycsb_workloada_3nodes_1rr_magma.test"},
+        {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "hidd/ycsb_workloadb_3nodes_1rr_magma.test"},
+        {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "hidd/ycsb_workloadc_3nodes_1rr_magma.test"}
     ],
     "GSI-Hemera": [
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/moi/secondary_100M_100_indexes_default_baseline_moi.test"},
@@ -252,5 +261,13 @@
         {"job": "secondary-fdb", "cluster":  "nyx_colocated.spec", "test_config": "fdb/secondary_updatesonly_20M_multiple_fdb.test"},
         {"job": "secondary-fdb", "cluster":  "nyx_colocated.spec", "test_config": "fdb/secondary_updatesonly_50M_fdb.test"},
         {"job": "secondary-fdb", "cluster":  "nyx_colocated.spec", "test_config": "fdb/secondary_updatesonly_rebalance_20M_fdb.test"}
+    ],
+    "Analytics": [
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_4n_1s_3c.test"},
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_1s_3c.test"},
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_no_index_1s_3c.test"},
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_reb_in_1s_3c.test"},
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_reb_out_1s_3c.test"},
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_no_index_window_functions_1s_3c.test"}
     ]
 }

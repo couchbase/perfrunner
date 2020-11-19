@@ -28,7 +28,7 @@ num_io_devices = 4
 eviction_policy = fullEviction
 
 [restore]
-backup_storage = /data2/backup/
+backup_storage = /data2/backup/3collections/
 backup_repo = default
 threads = 8
 map_data = bucket-1.scope-1.GleambookUsers=bucket-1.scope-1.GleambookUsers,bucket-1.scope-1.GleambookMessages=bucket-1.scope-1.GleambookMessages,bucket-1.scope-1.ChirpMessages=bucket-1.scope-1.ChirpMessages

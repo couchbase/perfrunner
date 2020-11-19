@@ -21,7 +21,8 @@ backend_storage = magma
 
 [bucket_extras]
 num_reader_threads = 64
-num_writer_threads = 16
+num_writer_threads = 32
+num_storage_threads = 40
 backend = magma;cursor_dropping_checkpoint_mem_upper_mark=100
 
 [load]

@@ -121,7 +121,7 @@ class CbAgent:
         if self.test.test_config.stats_settings.enabled:
             self.stop()
             self.reconstruct()
-            self.find_time_series()
+            # self.find_time_series()
             self.add_snapshots()
 
     def init_clusters(self, phase: str):

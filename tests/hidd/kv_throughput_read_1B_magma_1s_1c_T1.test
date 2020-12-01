@@ -5,6 +5,7 @@ test = perfrunner.tests.magma.ThroughputDGMMagmaTest
 title = Avg Throughput (ops/sec), 4 nodes, 1 bucket x 1B x 1KB, 90/10 R/W, s=1 c=1, Uniform distribution, Magma
 component = hidd
 category = ops
+orderby = r0001
 
 [cluster]
 mem_quota = 10240

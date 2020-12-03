@@ -630,7 +630,8 @@ class QueryTest(TestCase):
 class BigFunTest(TestCase):
 
     def test_unique_statements(self):
-        for query in new_queries(BigFunQueryTest.QUERIES):
+        QUERIES = 'perfrunner/workloads/bigfun/queries_with_index.json'
+        for query in new_queries(QUERIES):
             statements = set()
             for i in range(10):
                 self.assertNotIn(query.statement, statements)

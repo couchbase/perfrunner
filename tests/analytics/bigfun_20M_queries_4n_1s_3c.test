@@ -23,6 +23,7 @@ config = collections/1bucket_1scope_3collections_analytics.json
 
 [analytics]
 num_io_devices = 4
+queries = perfrunner/workloads/bigfun/queries_with_index.json
 
 [bucket]
 eviction_policy = fullEviction
@@ -31,10 +32,14 @@ eviction_policy = fullEviction
 backup_storage = /data2/backup/3collections/
 backup_repo = default
 threads = 8
-map_data = bucket-1.scope-1.GleambookUsers=bucket-1.scope-1.GleambookUsers,bucket-1.scope-1.GleambookMessages=bucket-1.scope-1.GleambookMessages,bucket-1.scope-1.ChirpMessages=bucket-1.scope-1.ChirpMessages
+map_data = bucket-1.scope-1.GleambookUsers=bucket-1.scope-1.GleambookUsers-1,bucket-1.scope-1.GleambookMessages=bucket-1.scope-1.GleambookMessages-1,bucket-1.scope-1.ChirpMessages=bucket-1.scope-1.ChirpMessages-1
 
 [access]
 analytics_warmup_ops = 10
 analytics_warmup_workers = 1
 ops = 30
 workers = 1
+
+[clients]
+libcouchbase = 3.0.2
+python_client = git+https://github.com/couchbase/couchbase-python-client@a193cbdc7763aa3fa563bd8d139091a4c220a240

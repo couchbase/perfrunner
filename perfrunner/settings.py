@@ -1291,6 +1291,7 @@ class AnalyticsSettings:
     DEFAULT_LOG_LEVEL = "DEBUG"
     CACHE_PAGE_SIZE = 131072
     STORAGE_COMPRESSION_BLOCK = None
+    QUERIES = ""
 
     def __init__(self, options: dict):
         self.num_io_devices = int(options.get('num_io_devices',
@@ -1299,6 +1300,7 @@ class AnalyticsSettings:
         self.storage_buffer_cache_pagesize = options.get("cache_page_size", self.CACHE_PAGE_SIZE)
         self.storage_compression_block = options.get("storage_compression_block",
                                                      self.STORAGE_COMPRESSION_BLOCK)
+        self.queries = options.get("queries", self.QUERIES)
 
 
 class AuditSettings:

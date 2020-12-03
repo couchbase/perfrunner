@@ -12,31 +12,31 @@ MAX_DATE = "2014-08-29T23:59:59"
 
 STATEMENTS = {
     'BF03': 'SELECT VALUE u '
-            'FROM `GleambookUsers` u '
+            'FROM `GleambookUsers-{}` u '
             'WHERE u.user_since >= "{}" AND u.user_since < "{}";',
     'BF04': 'SELECT VALUE u '
-            'FROM `GleambookUsers` u '
+            'FROM `GleambookUsers-{}` u '
             'WHERE u.user_since >= "{}" AND u.user_since < "{}" '
             'AND (SOME e IN u.employment SATISFIES e.end_date IS UNKNOWN);',
     'BF08': 'SELECT cm.user.screen_name AS username, AVG(LENGTH(cm.message_text)) AS avg '
-            'FROM `ChirpMessages` cm '
+            'FROM `ChirpMessages-{}` cm '
             'WHERE cm.send_time >= "{}" AND cm.send_time < "{}" '
             'GROUP BY cm.user.screen_name '
             'ORDER BY avg '
             'LIMIT 10;',
     'BF10': 'SELECT VALUE cm '
-            'FROM ChirpMessages cm '
+            'FROM `ChirpMessages-{}` cm '
             'WHERE (SOME e IN cm.employment SATISFIES e.doesnt_exist IS NOT UNKNOWN);',
     'BF11': 'SELECT DISTINCT VALUE 1 '
-            'FROM (SELECT * FROM ChirpMessages cm ORDER BY send_time ) AS foo;',
+            'FROM (SELECT * FROM `ChirpMessages-{}` cm ORDER BY send_time ) AS foo;',
     'BF14': 'SELECT META(u).id AS id, COUNT(*) AS count '
-            'FROM `GleambookUsers` u, `GleambookMessages` m '
+            'FROM `GleambookUsers-{}` u, `GleambookMessages-{}` m '
             'WHERE TO_STRING(META(u).id) = m.author_id '
             'AND u.user_since >= "{}" AND u.user_since < "{}" '
             'AND m.send_time >= "{}" AND m.send_time < "{}" '
             'GROUP BY META(u).id;',
     'BF15': 'SELECT META(u).id AS id, COUNT(*) AS count '
-            'FROM `GleambookUsers` u, `GleambookMessages` m '
+            'FROM `GleambookUsers-{}` u, `GleambookMessages-{}` m '
             'WHERE TO_STRING(META(u).id) = m.author_id '
             'AND u.user_since >= "{}" AND u.user_since < "{}" '
             'AND m.send_time >= "{}" AND m.send_time < "{}" '
@@ -47,29 +47,29 @@ STATEMENTS = {
             'SELECT subqry.id, subqry.wf FROM '
             '(SELECT u.id AS id, ROW_NUMBER() '
             'OVER(PARTITION BY meta(u).id) AS wf '
-            'FROM `GleambookUsers` u) subqry WHERE id < 100',
+            'FROM `GleambookUsers-{}` u) subqry WHERE id < 100',
     'WF02': 'set `compiler.windowmemory` "4MB"; '
             'SELECT subqry.id, subqry.wf FROM '
             '(SELECT u.id AS id, NTILE(3) '
             'OVER(PARTITION BY SUBSTR(u.user_since, 0, 10)) AS wf '
-            'FROM `GleambookUsers` u) subqry WHERE id < 100',
+            'FROM `GleambookUsers-{}` u) subqry WHERE id < 100',
     'WF03': 'set `compiler.windowmemory` "4MB"; '
             'SELECT subqry.id, subqry.wf FROM '
             '(SELECT u.id AS id, NTILE(3) '
             'OVER(PARTITION BY SUBSTR(u.user_since, 6, 4)) AS wf '
-            'FROM `GleambookUsers` u) subqry WHERE id < 100',
+            'FROM `GleambookUsers-{}` u) subqry WHERE id < 100',
     'WF04': 'set `compiler.windowmemory` "4MB"; '
             'SELECT subqry.id, subqry.wf FROM '
             '(SELECT u.id AS id, AVG(ARRAY_COUNT(u.friend_ids))'
             ' OVER(PARTITION BY  SUBSTR(u.user_since, 6, 4) ORDER BY id '
             'RANGE BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS wf '
-            'FROM `GleambookUsers` u) subqry WHERE id < 100',
+            'FROM `GleambookUsers-{}` u) subqry WHERE id < 100',
     'WF05': 'set `compiler.windowmemory` "4MB"; '
             'SELECT subqry.id, subqry.wf FROM '
             '(SELECT u.id as id, SUM(ARRAY_COUNT(u.friend_ids)) '
             'OVER(PARTITION BY  SUBSTR(u.user_since, 6, 4) ORDER BY id '
             'RANGE BETWEEN UNBOUNDED PRECEDING AND 0 FOLLOWING) AS wf '
-            'FROM `GleambookUsers` u) subqry WHERE id < 100',
+            'FROM `GleambookUsers-{}` u) subqry WHERE id < 100',
 }
 
 DESCRIPTIONS = {
@@ -108,11 +108,11 @@ def interval() -> int:
     return max_timestamp() - min_timestamp()
 
 
-def items_per_second(dataset: str) -> float:
+def items_per_second(dataset: str, num_set: int) -> float:
     return {
-        'ChirpMessages': 2e8 / interval(),
-        'GleambookMessages': 1e8 / interval(),
-        'GleambookUsers': 2e7 / interval(),
+        'ChirpMessages': 2e8 / num_set / interval(),
+        'GleambookMessages': 1e8 / num_set / interval(),
+        'GleambookUsers': 2e7 / num_set / interval(),
     }[dataset]
 
 
@@ -120,52 +120,85 @@ def new_offset(seconds: int) -> int:
     return random.randint(min_timestamp(), max_timestamp() - seconds)
 
 
-def new_dates(dataset: str, num_matches: float) -> List[str]:
-    seconds = int(num_matches / items_per_second(dataset))
+def new_dates(dataset: str, num_matches: float, num_set: int) -> List[str]:
+    seconds = int(num_matches / items_per_second(dataset, num_set))
     offset = new_offset(seconds)
     return [seconds2iso(offset), seconds2iso(offset + seconds)]
 
 
-def bf03params(num_matches: float) -> List[str]:
-    return new_dates('GleambookUsers', num_matches)
+def bf03params(num_matches: float, num_set: int) -> List[str]:
+    set_index = random.randrange(1, num_set+1)
+    return list(str(set_index)) + new_dates('GleambookUsers', num_matches, num_set)
 
 
-def bf04params(num_matches: float) -> List[str]:
-    return bf03params(num_matches)
+def bf04params(num_matches: float, num_set: int) -> List[str]:
+    return bf03params(num_matches, num_set)
 
 
-def bf08params(num_matches: float) -> List[str]:
-    return new_dates('ChirpMessages', num_matches)
+def bf08params(num_matches: float, num_set: int) -> List[str]:
+    set_index = random.randrange(1, num_set + 1)
+    return list(str(set_index)) + new_dates('ChirpMessages', num_matches, num_set)
 
 
-def bf14params(num_matches: float) -> List[str]:
-    return new_dates('GleambookUsers', num_matches) + \
-        new_dates('GleambookMessages', num_matches)
+def bf10params(num_set: int) -> List[str]:
+    set_index = random.randrange(1, num_set + 1)
+    return list(str(set_index))
 
 
-def bf15params(num_matches: float) -> List[str]:
-    return bf14params(num_matches)
+def bf11params(num_set: int) -> List[str]:
+    return bf10params(num_set)
 
 
-def new_params(qid: str, num_matches: float) -> List[str]:
+def bf14params(num_matches: float, num_set: int) -> List[str]:
+    set_index = str(random.randrange(1, num_set + 1))
+    return [set_index, set_index] + \
+        new_dates('GleambookUsers', num_matches, num_set) + \
+        new_dates('GleambookMessages', num_matches, num_set)
+
+
+def bf15params(num_matches: float, num_set: int) -> List[str]:
+    return bf14params(num_matches, num_set)
+
+
+def wf01params(num_set: int) -> List[str]:
+    return bf10params(num_set)
+
+
+def wf02params(num_set: int) -> List[str]:
+    return bf10params(num_set)
+
+
+def wf03params(num_set: int) -> List[str]:
+    return bf10params(num_set)
+
+
+def wf04params(num_set: int) -> List[str]:
+    return bf10params(num_set)
+
+
+def wf05params(num_set: int) -> List[str]:
+    return bf10params(num_set)
+
+
+def new_params(qid: str, num_matches: float, num_set: int) -> List[str]:
     return {
-        'BF03': bf03params(num_matches),
-        'BF04': bf04params(num_matches),
-        'BF08': bf08params(num_matches),
-        'BF10': [],
-        'BF11': [],
-        'BF14': bf14params(num_matches),
-        'BF15': bf15params(num_matches),
-        'WF01': [],
-        'WF02': [],
-        'WF03': [],
-        'WF04': [],
-        'WF05': [],
+        'BF03': bf03params(num_matches, num_set),
+        'BF04': bf04params(num_matches, num_set),
+        'BF08': bf08params(num_matches, num_set),
+        'BF10': bf10params(num_set),
+        'BF11': bf11params(num_set),
+        'BF14': bf14params(num_matches, num_set),
+        'BF15': bf15params(num_matches, num_set),
+        'WF01': wf01params(num_set),
+        'WF02': wf02params(num_set),
+        'WF03': wf03params(num_set),
+        'WF04': wf04params(num_set),
+        'WF05': wf05params(num_set),
     }[qid]
 
 
-def new_statement(qid: str, num_matches: float) -> str:
-    params = new_params(qid, num_matches)
+def new_statement(qid: str, num_matches: float, num_set: int) -> str:
+    params = new_params(qid, num_matches, num_set)
     return STATEMENTS[qid].format(*params)
 
 
@@ -176,13 +209,14 @@ def new_description(qid: str, num_matches: float) -> str:
 
 class Query:
 
-    def __init__(self, qid: str, num_matches: float):
+    def __init__(self, qid: str, num_matches: float, num_set: int):
         self.id = qid
         self.num_matches = num_matches
+        self.num_set = num_set
 
     @property
     def statement(self) -> str:
-        return new_statement(self.id, self.num_matches)
+        return new_statement(self.id, self.num_matches, self.num_set)
 
     @property
     def description(self) -> str:
@@ -195,4 +229,4 @@ def new_queries(query_set: str) -> Iterator[Query]:
 
     for query in queries:
         for num_matches in query['matches']:
-            yield Query(query['id'], num_matches)
+            yield Query(query['id'], num_matches, query['set'])

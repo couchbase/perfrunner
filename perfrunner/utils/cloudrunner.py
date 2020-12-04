@@ -110,10 +110,13 @@ class CloudRunner:
             logger.info('Terminating: {}'.format(instance_id))
             instance = self.ec2.Instance(instance_id)
             instance.terminate()
-        logger.info('Deleting S3 bucket')
-        s3_bucket = self.s3.Bucket('cb-backup-to-s3-perftest')
-        s3_bucket.objects.all().delete()
-        s3_bucket.delete()
+        try:
+            s3_bucket = self.s3.Bucket('cb-backup-to-s3-perftest')
+            s3_bucket.objects.all().delete()
+            s3_bucket.delete()
+            logger.info('S3 bucket Deleted')
+        except Exception:
+            pass
 
 
 def get_args():
@@ -129,7 +132,8 @@ def get_args():
                         default='c3.4xlarge',
                         choices=['c3.4xlarge',
                                  'c3.8xlarge',
-                                 'm5dn.8xlarge'])
+                                 'm5dn.8xlarge',
+                                 'c5.24xlarge'])
     parser.add_argument('--server-type',
                         default='m4.2xlarge',
                         choices=['c4.4xlarge',
@@ -149,7 +153,8 @@ def get_args():
                                  'c5d.12xlarge',
                                  'r5.2xlarge',
                                  'r5.4xlarge',
-                                 'm5ad.4xlarge'])
+                                 'm5ad.4xlarge',
+                                 'c5.24xlarge'])
     parser.add_argument('action',
                         choices=['launch', 'terminate'])
     parser.add_argument('--enable-s3',

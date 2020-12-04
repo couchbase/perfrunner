@@ -32,7 +32,9 @@ MEMORY_QUOTAS = {
     'r5.2xlarge': [56320, '8vCPU', 'EBS', 'RHEL 7.1', 65536],  # 64GB RAM
     'r5.4xlarge': [102400, '16vCPU', 'EBS', 'RHEL 7.1', 131072],  # 128GB RAM
 
-    'm5ad.4xlarge': [56320, '16vCPU', '2 x 300 NVMe SSD', 'RHEL 7.3', 65536]  # 64GB RAM
+    'm5ad.4xlarge': [56320, '16vCPU', '2 x 300 NVMe SSD', 'RHEL 7.3', 65536],  # 64GB RAM
+
+    'c5.24xlarge': [40960, '96vCPU', 'EBS', 'RHEL 7.3', 196608],  # 192GB RAM
 }
 
 OUTPUT_FILE = 'custom'
@@ -55,7 +57,7 @@ TEMPLATES = (
 
 THREADS_PER_CLIENT = {
     'pillowfight.test': 20,
-    'ycsb_workload_a.test': 20,
+    'ycsb_workload_a.test': 600,
     'ycsb_workload_d.test': 20,
     'ycsb_workload_e.test': 20,
     'ycsb_workloada_latency.test': 20,

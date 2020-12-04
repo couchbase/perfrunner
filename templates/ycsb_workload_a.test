@@ -2,21 +2,28 @@
 test = perfrunner.tests.ycsb.YCSBThroughputTest
 
 [showfast]
-title = Avg Throughput (queries/sec), Workload A, {{server_instances}} nodes, AWS, {{instance}}
+title = Avg Throughput (ops/sec), Workload A, {{server_instances}} nodes, AWS, {{instance}}
 component = kv
 category = ycsb
-sub_category = ycsb2
+sub_category = ycsb3
+orderby = a10
 
 [cluster]
 mem_quota = {{ mem_quota }}
 initial_nodes = {{server_instances}}
+num_buckets = 1
+online_cores = 6
 
 [load]
 workload_path = workloads/workloada
-workers = 40
+ycsb_client = couchbase3
+workers = 160
 
 [access]
 workload_path = workloads/workloada
+ycsb_client = couchbase3
 ops = 1000000000
+boost = 12
 workers = {{ workers }}
 workload_instances = {{ workload_instances }}
+kv_endpoints = 16

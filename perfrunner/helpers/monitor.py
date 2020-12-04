@@ -89,6 +89,10 @@ class Monitor(RestHelper):
                     else:
                         logger.info('{} reached 0'.format(metric))
                     metrics.remove(metric)
+                else:
+                    if metric == 'ep_dcp_other_items_remaining':
+                        logger.info('{} reached 0'.format(metric))
+                        metrics.remove(metric)
             if metrics:
                 time.sleep(self.POLLING_INTERVAL)
             if time.time() - start_time > self.TIMEOUT:

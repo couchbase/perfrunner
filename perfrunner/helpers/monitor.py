@@ -47,6 +47,9 @@ class Monitor(RestHelper):
         self.test_config = test_config
         self.remote = RemoteHelper(cluster_spec, verbose)
 
+        self.master_node = next(cluster_spec.masters)
+        self.build = self.get_version(self.master_node)
+
     def monitor_rebalance(self, host):
         logger.info('Monitoring rebalance status')
 
@@ -90,14 +93,26 @@ class Monitor(RestHelper):
                         logger.info('{} reached 0'.format(metric))
                     metrics.remove(metric)
                 else:
-                    if (metric == 'ep_dcp_other_items_remaining' or
-                            metric == 'ep_dcp_replica_items_remaining'):
-                        logger.info('{} reached 0'.format(metric))
-                        metrics.remove(metric)
+                    logger.info('{} reached 0'.format(metric))
+                    metrics.remove(metric)
             if metrics:
                 time.sleep(self.POLLING_INTERVAL)
             if time.time() - start_time > self.TIMEOUT:
                 raise Exception('Monitoring got stuck')
+
+    def _wait_for_empty_dcp_queues(self, host, bucket, stats_function):
+        start_time = time.time()
+        while True:
+            kv_dcp_stats = stats_function(host, bucket)
+            stats = int(kv_dcp_stats["data"][0]["values"][-1][1])
+            if stats:
+                logger.info('{} = {}'.format('ep_dcp_replica_items_remaining', stats))
+                if time.time() - start_time > self.TIMEOUT:
+                    raise Exception('Monitoring got stuck')
+                time.sleep(self.POLLING_INTERVAL)
+            else:
+                logger.info('{} reached 0'.format('ep_dcp_replica_items_remaining'))
+                break
 
     def _wait_for_replica_count_match(self, host, bucket):
         start_time = time.time()
@@ -205,8 +220,21 @@ class Monitor(RestHelper):
 
     def monitor_dcp_queues(self, host, bucket):
         logger.info('Monitoring DCP queues: {}'.format(bucket))
-        self._wait_for_empty_queues(host, bucket, self.DCP_QUEUES,
-                                    self.get_bucket_stats)
+        version, build_number = self.build.split('-')
+        build = tuple(map(int, version.split('.'))) + (int(build_number),)
+
+        if build < (7, 0, 0, 3937):
+            self._wait_for_empty_queues(host, bucket, self.DCP_QUEUES,
+                                        self.get_bucket_stats)
+        else:
+            if self.test_config.bucket.replica_number != 0:
+                self._wait_for_empty_dcp_queues(host, bucket,
+                                                self.get_dcp_replication_items)
+            self.DCP_QUEUES = (
+                'ep_dcp_other_items_remaining',
+            )
+            self._wait_for_empty_queues(host, bucket, self.DCP_QUEUES,
+                                        self.get_bucket_stats)
 
     def monitor_replica_count(self, host, bucket):
         logger.info('Monitoring replica count match: {}'.format(bucket))

@@ -364,6 +364,11 @@ class RestHelper:
                                                                      bucket)
         return self.get(url=api).json()
 
+    def get_dcp_replication_items(self, host: str, bucket: str) -> dict:
+        api = 'http://{}:8091/pools/default/stats/range/kv_dcp_items_remaining?bucket={}&' \
+              'connection_type=replication&aggregationFunction=sum'.format(host, bucket)
+        return self.get(url=api).json()
+
     def get_xdcr_stats(self, host: str, bucket: str) -> dict:
         api = 'http://{}:8091/pools/default/buckets/@xdcr-{}/stats'.format(host,
                                                                            bucket)

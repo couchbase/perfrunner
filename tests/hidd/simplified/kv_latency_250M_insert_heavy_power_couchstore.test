@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.magma.WriteLatencyDGMTest
+test = perfrunner.tests.magma.MixedLatencyDGMTest
 
 [showfast]
 title = Latency(ms), Workload S0.4, 2 nodes, 250M x 1KB, 20K ops/sec (90/10 C/R), Power distribution (α=10), Couchstore

@@ -48,7 +48,8 @@ class KVStoreStats(Collector):
         "ReadAmpGet",
         "ReadIOAmp",
         "WriteAmp",
-        "TxnSizeEstimate"
+        "TxnSizeEstimate",
+        "NFlushes"
     )
     METRICS_AVERAGE_PER_NODE_PER_SHARD = (
         "ReadAmp",

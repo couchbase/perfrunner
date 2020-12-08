@@ -1,35 +1,37 @@
 [test_case]
-test = perfrunner.tests.magma.MixedLatencyDGMTest
+test = perfrunner.tests.magma.SingleNodeMixedLatencyDGMTest
 
 [showfast]
-title = Latency(ms), Workload S0.4.1, 2 nodes, 250M x 256B, 20K ops/sec (90/10 C/R), Power distribution (α=10), Magma
+title = Latency(ms), 1 nodes, 100M x 1KB, 50K ops/sec, 50/50 R/W, Uniform distribution, Magma
 component = hidd
-category = S0
-orderby = S04
+category = single
 
 [cluster]
-mem_quota = 1536
-initial_nodes = 2
+mem_quota = 20480
+initial_nodes = 1
 num_buckets = 1
-num_vbuckets = 256
-kernel_mem_limit = 8G
+kernel_mem_limit = 30G
 kernel_mem_limit_services = kv
 enable_cpu_cores = false
 
 [bucket]
 eviction_policy = fullEviction
+replica_number = 0
 backend_storage = magma
 
 [bucket_extras]
 num_reader_threads = 64
-num_writer_threads = 64
+num_writer_threads = 16
 backend = magma;cursor_dropping_checkpoint_mem_upper_mark=100
 
 [load]
-items = 250000000
-size = 256
-workers = 100
+items = 100000000
+size = 1024
+workers = 128
 key_fmtr = hex
+doc_gen = large
+mem_low_wat = 134217728
+mem_high_wat = 268435456
 
 [extra_access]
 run_extra_access = true
@@ -38,8 +40,8 @@ creates = 0
 deletes = 0
 reads = 0
 workers = 128
-items = 250000000
-ops = 250000000
+items = 100000000
+ops = 100000000
 time = 86400
 requestdistribution = uniform
 power_alpha = 0
@@ -48,12 +50,12 @@ durability = 0
 async = 0
 
 [access]
-creates = 90
-reads = 10
-updates = 0
+creates = 0
+reads = 50
+updates = 50
 deletes = 0
-items = 250000000
-workers = 60
-throughput = 20000
-power_alpha = 10
+items = 100000000
+workers = 512
+throughput = 50000
 time = 3600
+requestdistribution = uniform

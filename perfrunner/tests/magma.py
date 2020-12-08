@@ -496,6 +496,15 @@ class SingleNodeThroughputDGMMagmaTest(ThroughputDGMMagmaTest):
         self.report_kpi()
 
 
+class SingleNodeMixedLatencyDGMTest(SingleNodeThroughputDGMMagmaTest):
+
+    def _report_kpi(self):
+        for operation in ('get', 'set'):
+            self.reporter.post(
+                *self.metrics.kv_latency(operation=operation)
+            )
+
+
 class MixedLatencyDGMTest(StabilityBootstrap):
 
     def _report_kpi(self):

@@ -24,7 +24,7 @@ doc_gen = json
 [access]
 batch_size = 1
 items = 20000000
-iterations = 2000000
+iterations = 50000
 workers = 128
 updates = 100
 replicate_to = 1

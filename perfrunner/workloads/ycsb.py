@@ -74,6 +74,15 @@ def ycsb_workload(workload_settings: PhaseSettings,
         elif instance >= split_instance:
             workload_settings.workload_path = workload_settings.workload_path.split(",")[1]
 
+    insertheavy_params = None
+    if workload_settings.insertheavy:
+        insertheavy_params = {
+            'insertstart': int(instance * workload_settings.inserts_per_workerinstance +
+                               workload_settings.items),
+            'recordcount': int((instance+1) * workload_settings.inserts_per_workerinstance +
+                               workload_settings.items),
+        }
+
     run_ycsb(host=target.node,
              bucket=target.bucket,
              password=target.password,
@@ -115,4 +124,5 @@ def ycsb_workload(workload_settings: PhaseSettings,
              num_atrs=workload_settings.num_atrs,
              ycsb_jvm_args=workload_settings.ycsb_jvm_args,
              collections_map=workload_settings.collections,
-             out_of_order=workload_settings.ycsb_out_of_order)
+             out_of_order=workload_settings.ycsb_out_of_order,
+             insertheavy_params=insertheavy_params)

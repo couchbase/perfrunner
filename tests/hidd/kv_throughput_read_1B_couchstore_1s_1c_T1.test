@@ -1,22 +1,24 @@
 [test_case]
-test = perfrunner.tests.magma.EnhancedDurabilityLatencyDGMTest
+test = perfrunner.tests.magma.ThroughputDGMMagmaTest
 
 [showfast]
-title = latency (ms), 4 nodes, 1 bucket x 1B x 1KB, 0/100 R/W, Unlimited Ops, Durability Persist Majority, Couchstore
+title = Avg Throughput (ops/sec), 4 nodes, 1 bucket x 1B x 1KB, 90/10 R/W, s=1 c=1, Uniform distribution, Couchstore
 component = hidd
-category = durability
-sub_category = Latency
+category = ops
+orderby = r0001
 
 [cluster]
-mem_quota = 15360
+mem_quota = 10240
 initial_nodes = 4
 num_buckets = 1
-kernel_mem_limit = 25G
+kernel_mem_limit = 20G
 kernel_mem_limit_services = kv
 enable_cpu_cores = false
 
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
+
 [bucket]
-replica_number = 2
 eviction_policy = fullEviction
 
 [bucket_extras]
@@ -27,17 +29,18 @@ num_writer_threads = 64
 items = 1000000000
 size = 1024
 workers = 128
+key_fmtr = hex
 doc_gen = large
 
 [access]
 creates = 0
-reads = 0
-updates = 100
+reads = 90
+updates = 10
 deletes = 0
 items = 1000000000
 workers = 128
 time = 3600
-durability = 3
+requestdistribution = uniform
 
 [clients]
 libcouchbase = 3.0.2

@@ -929,6 +929,7 @@ class GSISettings:
     SCAN_TIME = 1200
     INCREMENTAL_ONLY = 0
     REPORT_INITIAL_BUILD_TIME = 0
+    DISABLE_PERINDEX_STATS = False
 
     def __init__(self, options: dict):
         self.indexes = {}
@@ -958,6 +959,9 @@ class GSISettings:
         self.scan_time = int(options.get('scan_time', self.SCAN_TIME))
         self.report_initial_build_time = int(options.get('report_initial_build_time',
                                                          self.REPORT_INITIAL_BUILD_TIME))
+
+        self.disable_perindex_stats = options.get('disable_perindex_stats',
+                                                  self.DISABLE_PERINDEX_STATS)
 
         self.settings = {}
         for option in options:

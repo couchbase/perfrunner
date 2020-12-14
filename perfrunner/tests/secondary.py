@@ -51,6 +51,10 @@ class SecondaryIndexTest(PerfTest):
             self.COLLECTORS["secondary_storage_stats"] = True
             self.COLLECTORS["secondary_storage_stats_mm"] = True
 
+        if self.test_config.gsi_settings.disable_perindex_stats:
+            self.COLLECTORS["secondary_debugstats_index"] = False
+            self.COLLECTORS["secondary_storage_stats"] = False
+
     def remove_statsfile(self):
         rmfile = "rm -f {}".format(self.SECONDARY_STATS_FILE)
         status = subprocess.call(rmfile, shell=True)

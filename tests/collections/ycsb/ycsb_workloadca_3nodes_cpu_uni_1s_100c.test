@@ -15,7 +15,7 @@ num_buckets = 1
 online_cores = 6
 
 [collection]
-config = collections/1bucket_1scope_100collection_basic.json
+config = collections/1bucket_1scope_100collections_basic.json
 
 [load]
 workload_path = workloads/workloadca

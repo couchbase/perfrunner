@@ -227,6 +227,7 @@ class ClusterSettings:
                             self.EVENTING_METADATA_BUCKET_MEM_QUOTA))
         self.eventing_buckets = int(options.get('eventing_buckets',
                                                 self.EVENTING_BUCKETS))
+        self.fts_intitial_nodes = int(options.get('initial_nodes'))
         self.num_vbuckets = options.get('num_vbuckets')
         self.online_cores = int(options.get('online_cores',
                                             self.ONLINE_CORES))

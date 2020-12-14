@@ -4,7 +4,9 @@ import dateutil.parser
 
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
+from perfrunner.helpers.profiler import with_profiles
 from perfrunner.tests import PerfTest
+from perfrunner.tests.fts import FTSTest
 from perfrunner.tests.views import QueryTest
 from perfrunner.tests.xdcr import DestTargetIterator, UniDirXdcrInitTest
 
@@ -158,18 +160,80 @@ class RebalanceDurabilityTest(RebalanceTest):
             self.report_kpi()
 
 
-class RebalanceBaselineForFTS(RebalanceTest):
+class RebalanceForFTS(RebalanceTest, FTSTest):
+
+    ALL_HOSTNAMES = True
+    COLLECTORS = {'fts_stats': True, 'jts_stats': True}
 
     def load(self, *args):
         logger.info('load/restore data to bucket')
-        self.remote.restore_without_index(self.test_config.fts_settings.storage,
-                                          self.test_config.fts_settings.repo)
+        self.cleanup_and_restore()
+
+    @with_stats
+    @with_profiles
+    def rebalance(self, services=None):
+        self.pre_rebalance()
+        self.rebalance_time = self._rebalance(services)
+        self.post_rebalance()
+
+    @with_stats
+    def create_fts_index(self):
+        st = time.time()
+        self.create_index()
+        self.wait_for_index()
+        en = time.time()
+        return en - st
+
+    def calculate_index_size(self) -> int:
+        metric = '{}:{}:{}'.format(self.test_config.buckets[0],
+                                   self.access.couchbase_index_name,
+                                   'num_bytes_used_disk')
+        size = 0
+        for host in self.fts_nodes:
+            stats = self.rest.get_fts_stats(host)
+            size += stats[metric]
+        index_size_mb = int(size / (1024 ** 2))
+        return index_size_mb
+
+    def set_extra_parameter(self, parameter_flag):
+        nodes = self.cluster_spec.servers_by_role('fts')
+        initial_nodes = self.test_config.cluster.fts_intitial_nodes
+        nodes_after = self.rebalance_settings.fts_nodes_after
+        if initial_nodes <= nodes_after:
+            nodes = nodes[:initial_nodes - 1]
+        if parameter_flag == 0:
+            logger.info("Adding in the maxConcurrentPartitionMovesPerNode parameter ")
+            for node in nodes:
+                api = "http://" + node + ":8094/api/managerOptions -d " \
+                      + "'{\"maxConcurrentPartitionMovesPerNode\":\"" \
+                      + str(self.rebalance_settings.ftspartitions) + "\"}' "
+                self.run_curl_setup(api)
+
+        if parameter_flag == 1:
+            logger.info("Adding in the maxFeedsPerDCPAgent parameter ")
+            for node in nodes:
+                api = "http://" + node + ":8094/api/managerOptions -d " \
+                      + "'{\" maxFeedsPerDCPAgent\": \"" \
+                      + self.rebalance_settings.fts_max_dcp_partitions + "\"}'"
+                self.run_curl_setup(api)
 
     def run(self):
         self.load()
         self.wait_for_persistence()
+        parameter_flag = 0
+        if self.rebalance_settings.ftspartitions > 1:
+            self.set_extra_parameter(parameter_flag)
+        if self.rebalance_settings.fts_max_dcp_partitions:
+            parameter_flag = 1
+            self.set_extra_parameter(parameter_flag)
 
-        self.rebalance()
+        index_time = self.create_fts_index()
+        logger.info("The index took {} s to index the documents".format(index_time))
+        fts_size = self.calculate_index_size()
+        logger.info("The index is {} MB".format(fts_size))
+        self.rebalance(services="fts")
+
+        logger.info("The rebalance in took {} s to index the documents".format(self.rebalance_time))
 
         if self.is_balanced():
             self.report_kpi()

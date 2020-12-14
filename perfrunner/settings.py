@@ -391,11 +391,12 @@ class RebalanceSettings:
     DELAY_BEFORE_FAILOVER = 600
     START_AFTER = 1200
     STOP_AFTER = 1200
+    FTSPARTITIONS = 1
 
     def __init__(self, options: dict):
         nodes_after = options.get('nodes_after', '').split()
         self.nodes_after = [int(num_nodes) for num_nodes in nodes_after]
-
+        self.fts_nodes_after = int(options.get('nodes_after', ''))
         self.swap = int(options.get('swap', self.SWAP))
 
         self.failed_nodes = int(options.get('failed_nodes', 1))
@@ -407,6 +408,10 @@ class RebalanceSettings:
 
         self.start_after = int(options.get('start_after', self.START_AFTER))
         self.stop_after = int(options.get('stop_after', self.STOP_AFTER))
+
+        # The reblance settings for FTS
+        self.ftspartitions = int(options.get('ftspartitions', self.FTSPARTITIONS))
+        self.fts_max_dcp_partitions = int(options.get('fts_max_dcp_partitions', 0))
 
 
 class PhaseSettings:

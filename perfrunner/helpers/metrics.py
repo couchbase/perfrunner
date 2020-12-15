@@ -936,7 +936,9 @@ class MetricHelper:
 
         title = '{}, {}, Phase {}, {}'.format(
             "Avg Throughput (ops/sec)", self._title, phase, workload)
-        metric_info = self._metric_info(title=title, chirality=1)
+        metric_id = '{}_{}_{}'.format(self.test_config.name, workload.replace(' ', '_').casefold(),
+                                      phase)
+        metric_info = self._metric_info(title=title, metric_id=metric_id, chirality=1)
 
         throughput = self._parse_ycsb_throughput(operation)
 
@@ -968,7 +970,9 @@ class MetricHelper:
                            workload: str
                            ) -> Metric:
         title = '{} Latency(ms), {}, Phase {}, {}'.format(io_type, self._title, phase, workload)
-        metric_id = '{}_{}'.format(self.test_config.name, io_type.replace(' ', '_').casefold())
+        metric_id = '{}_{}_{}_{}'.\
+            format(self.test_config.name, workload.replace(' ', '_').casefold(),
+                   phase, io_type.replace(' ', '_').casefold())
         metric_info = self._metric_info(title=title, metric_id=metric_id, chirality=-1)
         return latency, self._snapshots, metric_info
 

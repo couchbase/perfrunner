@@ -412,7 +412,7 @@ class RebalanceSettings:
         self.stop_after = int(options.get('stop_after', self.STOP_AFTER))
 
         # The reblance settings for FTS
-        self.ftspartitions = int(options.get('ftspartitions', self.FTSPARTITIONS))
+        self.ftspartitions = int(options.get('ftspartitions', self.FTS_PARTITIONS))
         self.fts_max_dcp_partitions = int(options.get('fts_max_dcp_partitions',
                                                       self.FTS_MAX_DCP_PARTITIONS))
 

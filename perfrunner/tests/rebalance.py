@@ -197,7 +197,7 @@ class RebalanceForFTS(RebalanceTest, FTSTest):
 
     def set_extra_parameter(self, parameter_flag):
         nodes = self.cluster_spec.servers_by_role('fts')
-        initial_nodes = self.test_config.cluster.fts_intitial_nodes
+        initial_nodes = self.test_config.cluster.fts_initial_nodes
         nodes_after = self.rebalance_settings.fts_nodes_after
         if initial_nodes <= nodes_after:
             nodes = nodes[:initial_nodes - 1]

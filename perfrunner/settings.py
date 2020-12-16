@@ -227,7 +227,7 @@ class ClusterSettings:
                             self.EVENTING_METADATA_BUCKET_MEM_QUOTA))
         self.eventing_buckets = int(options.get('eventing_buckets',
                                                 self.EVENTING_BUCKETS))
-        self.fts_intitial_nodes = int(options.get('initial_nodes'))
+        self.fts_initial_nodes = int(options.get('initial_nodes', '0'))
         self.num_vbuckets = options.get('num_vbuckets')
         self.online_cores = int(options.get('online_cores',
                                             self.ONLINE_CORES))
@@ -392,7 +392,8 @@ class RebalanceSettings:
     DELAY_BEFORE_FAILOVER = 600
     START_AFTER = 1200
     STOP_AFTER = 1200
-    FTSPARTITIONS = 1
+    FTS_PARTITIONS = 1
+    FTS_MAX_DCP_PARTITIONS = 0
 
     def __init__(self, options: dict):
         nodes_after = options.get('nodes_after', '').split()
@@ -412,7 +413,8 @@ class RebalanceSettings:
 
         # The reblance settings for FTS
         self.ftspartitions = int(options.get('ftspartitions', self.FTSPARTITIONS))
-        self.fts_max_dcp_partitions = int(options.get('fts_max_dcp_partitions', 0))
+        self.fts_max_dcp_partitions = int(options.get('fts_max_dcp_partitions',
+                                                      self.FTS_MAX_DCP_PARTITIONS))
 
 
 class PhaseSettings:

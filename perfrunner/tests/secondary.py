@@ -124,6 +124,27 @@ class SecondaryIndexTest(PerfTest):
         else:
             logger.info('Scan workload applied')
 
+    def calc_avg_rr(self, storage_stats):
+        total_num_rec_allocs, total_num_rec_frees,\
+            total_num_rec_swapout, total_num_rec_swapin = 0, 0, 0, 0
+
+        for index in storage_stats:
+            total_num_rec_allocs += index["Stats"]["MainStore"]["num_rec_allocs"] + \
+                index["Stats"]["BackStore"]["num_rec_allocs"]
+            total_num_rec_frees += index["Stats"]["MainStore"]["num_rec_frees"] + \
+                index["Stats"]["BackStore"]["num_rec_frees"]
+            total_num_rec_swapout += index["Stats"]["MainStore"]["num_rec_swapout"] + \
+                index["Stats"]["BackStore"]["num_rec_swapout"]
+            total_num_rec_swapin += index["Stats"]["MainStore"]["num_rec_swapin"] + \
+                index["Stats"]["BackStore"]["num_rec_swapin"]
+
+        total_recs_in_mem = total_num_rec_allocs - total_num_rec_frees
+        total_recs_on_disk = total_num_rec_swapout - total_num_rec_swapin
+        logger.info("Total Recs in Mem {}".format(total_recs_in_mem))
+        logger.info("Total Recs in Disk {}".format(total_recs_on_disk))
+        avg_rr = total_recs_in_mem / (total_recs_on_disk + total_recs_in_mem)
+        return avg_rr
+
     def print_index_disk_usage(self, text=""):
         if text:
             logger.info("{}".format(text))
@@ -133,7 +154,7 @@ class SecondaryIndexTest(PerfTest):
         logger.info("Disk usage:\n{}".format(disk_usage))
 
         storage_stats = self.rest.get_index_storage_stats(self.index_nodes[0])
-        logger.info("Index storage stats:\n{}".format(storage_stats))
+        logger.info("Index storage stats:\n{}".format(storage_stats.text))
 
         heap_profile = get_indexer_heap_profile(self.index_nodes[0],
                                                 self.rest.rest_username,
@@ -143,6 +164,9 @@ class SecondaryIndexTest(PerfTest):
         if self.storage == 'plasma':
             stats = self.rest.get_index_storage_stats_mm(self.index_nodes[0])
             logger.info("Index storage stats mm:\n{}".format(stats))
+
+            avg_rr = self.calc_avg_rr(storage_stats.json())
+            logger.info("Average RR over all Indexes  : {}".format(avg_rr))
 
         return self.remote.get_disk_usage(self.index_nodes[0],
                                           self.cluster_spec.index_path,

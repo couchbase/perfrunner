@@ -689,7 +689,7 @@ class RestHelper:
 
     def get_index_storage_stats(self, host: str) -> str:
         api = 'http://{}:9102/stats/storage'.format(host)
-        return self.get(url=api).text
+        return self.get(url=api)
 
     def get_index_storage_stats_mm(self, host: str) -> str:
         api = 'http://{}:9102/stats/storage/mm'.format(host)

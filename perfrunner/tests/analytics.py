@@ -114,7 +114,8 @@ class BigFunTest(PerfTest):
         self.connect_buckets()
         for target in self.target_iterator:
             self.num_items += self.monitor.monitor_data_synced(target.node,
-                                                               target.bucket)
+                                                               target.bucket,
+                                                               self.analytics_nodes[0])
 
     def re_sync(self):
         for target in self.target_iterator:

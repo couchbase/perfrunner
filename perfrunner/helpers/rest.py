@@ -767,6 +767,10 @@ class RestHelper:
         api = 'http://{}:9110/analytics/node/stats'.format(analytics_node)
         return self.get(url=api).json()
 
+    def get_pending_mutations(self, analytics_node: str) -> dict:
+        api = 'http://{}:8095/analytics/node/agg/stats/remaining'.format(analytics_node)
+        return self.get(url=api).json()
+
     def set_analytics_logging_level(self, analytics_node: str, log_level: str):
         logger.info('Setting log level \"{}\" for analytics'.format(log_level))
         api = 'http://{}:{}/analytics/config/service'.format(analytics_node, ANALYTICS_PORT)

@@ -195,37 +195,19 @@ class RebalanceForFTS(RebalanceTest, FTSTest):
         index_size_mb = int(size / (1024 ** 2))
         return index_size_mb
 
-    def set_extra_parameter(self, parameter_flag):
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
         nodes = self.cluster_spec.servers_by_role('fts')
         initial_nodes = self.test_config.cluster.fts_initial_nodes
         nodes_after = self.rebalance_settings.fts_nodes_after
         if initial_nodes <= nodes_after:
             nodes = nodes[:initial_nodes - 1]
-        if parameter_flag == 0:
-            logger.info("Adding in the maxConcurrentPartitionMovesPerNode parameter ")
-            for node in nodes:
-                api = "http://" + node + ":8094/api/managerOptions -d " \
-                      + "'{\"maxConcurrentPartitionMovesPerNode\":\"" \
-                      + str(self.rebalance_settings.ftspartitions) + "\"}' "
-                self.run_curl_setup(api)
 
-        if parameter_flag == 1:
-            logger.info("Adding in the maxFeedsPerDCPAgent parameter ")
+        if self.rebalance_settings.fts_node_level_parameters.keys() != []:
             for node in nodes:
-                api = "http://" + node + ":8094/api/managerOptions -d " \
-                      + "'{\" maxFeedsPerDCPAgent\": \"" \
-                      + self.rebalance_settings.fts_max_dcp_partitions + "\"}'"
-                self.run_curl_setup(api)
-
-    def run(self):
-        self.load()
-        self.wait_for_persistence()
-        parameter_flag = 0
-        if self.rebalance_settings.ftspartitions > 1:
-            self.set_extra_parameter(parameter_flag)
-        if self.rebalance_settings.fts_max_dcp_partitions:
-            parameter_flag = 1
-            self.set_extra_parameter(parameter_flag)
+                self.rest.fts_set_node_level_parameters(
+                    self.rebalance_settings.fts_node_level_parameters, node)
 
         index_time = self.create_fts_index()
         logger.info("The index took {} s to index the documents".format(index_time))

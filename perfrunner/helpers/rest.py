@@ -906,6 +906,13 @@ class RestHelper:
                 active_nodes_by_role.append(node)
         return active_nodes_by_role
 
+    def fts_set_node_level_parameters(self, parameter: dict, host: str):
+        logger.info("Adding in the parameter {} ".format(parameter))
+        api = "http://{}:8094/api/managerOptions".format(host)
+        headers = {'Content-Type': 'application/json'}
+        data = json.dumps(parameter, ensure_ascii=False)
+        self.put(url=api, data=data, headers=headers)
+
     def upload_cluster_certificate(self, node: str):
         logger.info("Uploading cluster certificate to {}".format(node))
         api = 'http://{}:8091/controller/uploadClusterCA'.format(node)

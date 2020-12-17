@@ -392,8 +392,8 @@ class RebalanceSettings:
     DELAY_BEFORE_FAILOVER = 600
     START_AFTER = 1200
     STOP_AFTER = 1200
-    FTS_PARTITIONS = 1
-    FTS_MAX_DCP_PARTITIONS = 0
+    FTS_PARTITIONS = "1"
+    FTS_MAX_DCP_PARTITIONS = "0"
 
     def __init__(self, options: dict):
         nodes_after = options.get('nodes_after', '').split()
@@ -412,9 +412,15 @@ class RebalanceSettings:
         self.stop_after = int(options.get('stop_after', self.STOP_AFTER))
 
         # The reblance settings for FTS
-        self.ftspartitions = int(options.get('ftspartitions', self.FTS_PARTITIONS))
-        self.fts_max_dcp_partitions = int(options.get('fts_max_dcp_partitions',
-                                                      self.FTS_MAX_DCP_PARTITIONS))
+        self.ftspartitions = options.get('ftspartitions', self.FTS_PARTITIONS)
+        self.fts_max_dcp_partitions = options.get('fts_max_dcp_partitions',
+                                                  self.FTS_MAX_DCP_PARTITIONS)
+        self.fts_node_level_parameters = {}
+        if self.ftspartitions != self.FTS_PARTITIONS:
+            self.fts_node_level_parameters["maxConcurrentPartitionMovesPerNode"] = \
+                self.ftspartitions
+        if self.fts_max_dcp_partitions != self.FTS_MAX_DCP_PARTITIONS:
+            self.fts_node_level_parameters["maxFeedsPerDCPAgent"] = self.fts_max_dcp_partitions
 
 
 class PhaseSettings:

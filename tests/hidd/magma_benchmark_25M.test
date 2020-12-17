@@ -4,7 +4,7 @@ test = perfrunner.tests.magma.MagmaBenchmarkTest
 [showfast]
 title = Magma Benchmark, 25M docs
 component = hidd
-category = single
+category = benchmark
 
 [cluster]
 mem_quota = 20480

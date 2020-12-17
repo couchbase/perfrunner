@@ -121,7 +121,10 @@ class SecondaryIndexTest(PerfTest):
         rest_username, rest_password = self.cluster_spec.rest_credentials
         with open(self.configfile, 'r') as fp:
             config_file_content = fp.read()
-        logger.info("cbindexperf config file: \n" + config_file_content)
+
+        if not self.test_config.gsi_settings.disable_perindex_stats:
+            logger.info("cbindexperf config file: \n" + config_file_content)
+
         status = run_cbindexperf(path_to_tool, self.index_nodes[0],
                                  rest_username, rest_password, self.configfile)
         if status != 0:

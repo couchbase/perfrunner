@@ -598,6 +598,25 @@ class RemoteLinux(Remote):
             '/opt/couchbase/etc/couchbase/static_config')
 
     @all_servers
+    def update_ip_family_cli(self):
+        logger.info('Updating IP family')
+        cmd = \
+            "/opt/couchbase/bin/couchbase-cli ip-family "\
+            "-c http://localhost:8091 -u Administrator "\
+            "-p password --set --ipv6"
+        logger.info("Running: {}".format(cmd))
+        run(cmd)
+
+    @all_servers
+    def update_ip_family_rest(self):
+        logger.info('Updating IP family')
+        cmd = \
+            "curl -u Administrator:password -d 'afamily=ipv6' " \
+            "http://localhost:8091/node/controller/setupNetConfig"
+        logger.info("Running: {}".format(cmd))
+        run(cmd)
+
+    @all_servers
     def setup_x509(self):
         logger.info('Setting up x.509 certificates')
         put("certificates/inbox", "/opt/couchbase/var/lib/couchbase/")

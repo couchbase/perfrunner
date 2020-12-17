@@ -25,6 +25,7 @@ class ClusterManager:
         self.master_node = next(self.cluster_spec.masters)
 
         self.initial_nodes = test_config.cluster.initial_nodes
+        self.build = self.rest.get_version(self.master_node)
 
     def is_compatible(self, min_release: str) -> bool:
         for master in self.cluster_spec.masters:
@@ -494,6 +495,13 @@ class ClusterManager:
 
     def enable_ipv6(self):
         if self.test_config.cluster.ipv6:
+            version, build_number = self.build.split('-')
+            build = tuple(map(int, version.split('.'))) + (int(build_number),)
+
+            if build < (6, 5, 0, 0):
+                self.remote.update_ip_family_rest()
+            else:
+                self.remote.update_ip_family_cli()
             self.remote.enable_ipv6()
 
     def set_x509_certificates(self):

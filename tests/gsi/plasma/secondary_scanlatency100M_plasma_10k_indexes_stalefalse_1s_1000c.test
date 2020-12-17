@@ -45,6 +45,7 @@ indexer.settings.gc_percent = 200
 queryport.client.usePlanner = false
 queryport.client.log_level = Warn
 projector.backChanSize = 500000
+disable_perindex_stats = True
 
 [access]
 creates = 10

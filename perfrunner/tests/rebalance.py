@@ -198,11 +198,18 @@ class RebalanceForFTS(RebalanceTest, FTSTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
+        # to set the additional node level parameters for FTS rebalance
+        # nodes = list oof all the FTS nodes in the cluster
+        # nodes_before_rebalance = initial number of nodes in the cluster before rebalance
+        # nodes_after_rebalance = final number of nodes present in the cluster after rebalance
         nodes = self.cluster_spec.servers_by_role('fts')
-        initial_nodes = self.test_config.cluster.fts_initial_nodes
-        nodes_after = self.rebalance_settings.fts_nodes_after
-        if initial_nodes <= nodes_after:
-            nodes = nodes[:initial_nodes - 1]
+        nodes_before_rebalance = self.test_config.cluster.initial_nodes[0]
+        nodes_after_rebalance = self.rebalance_settings.nodes_after[0]
+
+        # logic to ensure the parameter is applied to the correct nodes
+        # for the rebalance in and rebalance swap case
+        if nodes_before_rebalance <= nodes_after_rebalance:
+            nodes = nodes[:nodes_before_rebalance - 1]
 
         if self.rebalance_settings.fts_node_level_parameters.keys() != []:
             for node in nodes:

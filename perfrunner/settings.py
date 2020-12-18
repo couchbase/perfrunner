@@ -227,7 +227,6 @@ class ClusterSettings:
                             self.EVENTING_METADATA_BUCKET_MEM_QUOTA))
         self.eventing_buckets = int(options.get('eventing_buckets',
                                                 self.EVENTING_BUCKETS))
-        self.fts_initial_nodes = int(options.get('initial_nodes', '0'))
         self.num_vbuckets = options.get('num_vbuckets')
         self.online_cores = int(options.get('online_cores',
                                             self.ONLINE_CORES))
@@ -398,7 +397,6 @@ class RebalanceSettings:
     def __init__(self, options: dict):
         nodes_after = options.get('nodes_after', '').split()
         self.nodes_after = [int(num_nodes) for num_nodes in nodes_after]
-        self.fts_nodes_after = int(options.get('nodes_after', '0'))
         self.swap = int(options.get('swap', self.SWAP))
 
         self.failed_nodes = int(options.get('failed_nodes', 1))

@@ -256,6 +256,8 @@ class Monitor(RestHelper):
     def monitor_xdcr_queues(self, host: str, bucket: str):
         logger.info('Monitoring XDCR queues: {}'.format(bucket))
         self._wait_for_xdcr_to_start(host)
+        # adding temporary delay to make sure replication_changes_left stats arrives
+        time.sleep(20)
         self._wait_for_empty_queues(host, bucket, self.XDCR_QUEUES,
                                     self.get_xdcr_stats)
 

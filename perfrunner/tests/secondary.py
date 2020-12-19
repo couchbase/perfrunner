@@ -11,6 +11,7 @@ from perfrunner.helpers.local import (
     kill_process,
     run_cbindexperf,
 )
+from perfrunner.helpers.profiler import with_profiles
 from perfrunner.tests import PerfTest, TargetIterator
 from perfrunner.tests.rebalance import RebalanceTest
 from spring.docgen import decimal_fmtr
@@ -64,6 +65,7 @@ class SecondaryIndexTest(PerfTest):
             logger.info('Existing 2i latency stats file removed')
 
     @with_stats
+    @with_profiles
     def build_secondaryindex(self):
         return self._build_secondaryindex()
 
@@ -112,6 +114,7 @@ class SecondaryIndexTest(PerfTest):
             raise Exception('Validation for num_connections failed')
 
     @with_stats
+    @with_profiles
     def apply_scanworkload(self, path_to_tool="./opt/couchbase/bin/cbindexperf"):
         rest_username, rest_password = self.cluster_spec.rest_credentials
         with open(self.configfile, 'r') as fp:
@@ -240,6 +243,7 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
 
     @with_stats
     @timeit
+    @with_profiles
     def build_incrindex(self):
         if self.test_config.collection.collection_map is not None:
             coll_map = self.test_config.collection.collection_map

@@ -56,6 +56,8 @@ class SecondaryIndexTest(PerfTest):
             self.COLLECTORS["secondary_debugstats_index"] = False
             self.COLLECTORS["secondary_storage_stats"] = False
 
+        self.build = self.rest.get_version(self.master_node)
+
     def remove_statsfile(self):
         rmfile = "rm -f {}".format(self.SECONDARY_STATS_FILE)
         status = subprocess.call(rmfile, shell=True)
@@ -170,8 +172,14 @@ class SecondaryIndexTest(PerfTest):
             stats = self.rest.get_index_storage_stats_mm(self.index_nodes[0])
             logger.info("Index storage stats mm:\n{}".format(stats))
 
-            avg_rr = self.calc_avg_rr(storage_stats.json())
-            logger.info("Average RR over all Indexes  : {}".format(avg_rr))
+            version, build_number = self.build.split('-')
+            build = tuple(map(int, version.split('.'))) + (int(build_number),)
+
+            # MB - 43098 Caused missing stats from indexer - Hence this fails
+            # before build 7.0.0-3951
+            if build > (7, 0, 0, 3951):
+                avg_rr = self.calc_avg_rr(storage_stats.json())
+                logger.info("Average RR over all Indexes  : {}".format(avg_rr))
 
         return self.remote.get_disk_usage(self.index_nodes[0],
                                           self.cluster_spec.index_path,

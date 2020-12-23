@@ -704,6 +704,9 @@ class Monitor(RestHelper):
         return num_items
 
     def monitor_data_synced(self, data_node: str, bucket: str, analytics_node: str) -> int:
+        version, build_number = self.build.split('-')
+        build = tuple(map(int, version.split('.'))) + (int(build_number),)
+
         logger.info('Waiting for data to be synced from {}'.format(data_node))
 
         num_items = self._get_num_items(data_node, bucket)
@@ -714,11 +717,15 @@ class Monitor(RestHelper):
             logger.info('Analytics has {:,} docs (target is {:,})'.format(
                 num_analytics_items, num_items))
 
-            num_remaining_mutations = self.get_num_remaining_mutations(analytics_node)
-            logger.info('Number of remaining mutations: {}'.format(num_remaining_mutations))
+            if build < (6, 5, 0, 0):
+                if num_analytics_items == num_items:
+                    break
+            else:
+                num_remaining_mutations = self.get_num_remaining_mutations(analytics_node)
+                logger.info('Number of remaining mutations: {}'.format(num_remaining_mutations))
 
-            if num_remaining_mutations == 0:
-                break
+                if num_remaining_mutations == 0:
+                    break
 
             time.sleep(self.POLLING_INTERVAL_ANALYTICS)
 

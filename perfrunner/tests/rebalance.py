@@ -518,3 +518,18 @@ class RebalanceWithXdcrInitTest(RebalanceTest, UniDirXdcrInitTest):
 
         time_elapsed = self.init_xdcr()
         self.report_kpi(time_elapsed)
+
+
+class RebalanceLoadOnlyTest(RebalanceTest):
+
+    ALL_HOSTNAMES = True
+
+    def run(self):
+        self.load()
+
+        self.wait_for_persistence()
+
+        self.rebalance()
+
+        if self.is_balanced():
+            self.report_kpi()

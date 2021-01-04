@@ -1,0 +1,24 @@
+[test_case]
+test = perfrunner.tests.rebalance.RebalanceLoadOnlyTest
+
+[showfast]
+title = Rebalance-swap (min), 2 -> 2, 200M x 1KB, 20K ops/sec
+component = reb
+category = kv
+sub_category = Non-DGM
+
+[cluster]
+mem_quota = 204800
+initial_nodes = 2
+num_buckets = 1
+
+[load]
+items = 200000000
+size = 1024
+workers = 100
+
+[rebalance]
+nodes_after = 2
+swap = 1
+start_after = 60
+stop_after = 60

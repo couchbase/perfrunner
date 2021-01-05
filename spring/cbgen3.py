@@ -12,6 +12,7 @@ from couchbase.management.users import User
 from txcouchbase.cluster import TxCluster
 
 from couchbase_core.cluster import PasswordAuthenticator
+from couchbase_core.views.params import ViewQuery
 from logger import logger
 from spring.cbgen_helpers import backoff, quiet, timeit
 
@@ -187,6 +188,10 @@ class CBGen3(CBAsyncGen3):
     @quiet
     def do_delete(self, *args, **kwargs):
         super().do_delete(*args, **kwargs)
+
+    @timeit
+    def view_query(self, ddoc: str, view: str, query: ViewQuery):
+        tuple(self.cluster.view_query(ddoc, view, query=query))
 
     @quiet
     @timeit

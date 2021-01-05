@@ -1,0 +1,49 @@
+[test_case]
+test = perfrunner.tests.views.QueryLatencyTest
+
+[showfast]
+title = 4 nodes, 1 bucket x 100M x 2KB, DGM, 4 x 1 views, 500 mutations/sec/node, 400 queries/sec, default collection
+component = views
+category = lat
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 4
+num_buckets = 1
+
+[collection]
+config = collections/1bucket_default.json
+
+[compaction]
+db_percentage = 10
+
+[load]
+items = 100000000
+size = 2048
+workers = 40
+
+[hot_load]
+items = 100000000
+workers = 20
+working_set = 5
+
+[views]
+views = [1, 1, 1, 1]
+
+[access]
+creates = 4
+reads = 80
+updates = 12
+deletes = 4
+throughput = 10000
+query_throughput = 400
+items = 100000000
+working_set = 5
+working_set_access = 98
+workers = 24
+query_workers = 12
+time = 7200
+
+[clients]
+libcouchbase = 3.0.2
+python_client = git+http://review.couchbase.org/couchbase-python-client@refs/changes/91/135991/3

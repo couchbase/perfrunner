@@ -64,7 +64,7 @@ from spring.docgen import (
     WorkingSetKey,
     ZipfKey,
 )
-from spring.querygen3 import N1QLQueryGen3
+from spring.querygen3 import N1QLQueryGen3, ViewQueryGen3, ViewQueryGenByType3
 from spring.reservoir import Reservoir
 
 
@@ -1159,6 +1159,84 @@ class N1QLWorker(Worker):
         self.dump_stats()
 
 
+class ViewWorker(Worker):
+
+    NAME = 'query-worker'
+
+    def __init__(self, workload_settings, target_settings, shutdown_event):
+        super().__init__(workload_settings, target_settings, shutdown_event)
+
+        self.delta = 0.0
+        self.op_delay = 0.0
+        self.batch_duration = 0.0
+
+        self.reservoir = Reservoir(num_workers=self.ws.query_workers)
+
+        if workload_settings.index_type is None:
+            self.new_queries = ViewQueryGen3(workload_settings.ddocs,
+                                             workload_settings.query_params)
+        else:
+            self.new_queries = ViewQueryGenByType3(workload_settings.index_type,
+                                                   workload_settings.query_params)
+
+    def do_batch(self):
+        if self.target_time:
+            t0 = time.time()
+            self.op_delay = self.op_delay + (self.delta / self.ws.n1ql_batch_size)
+
+        with self.lock:
+            target_info = self.shared_dict["_default:_default"]
+        target_curr_items, target_deleted_items = target_info.split(":")
+        curr_items = int(target_curr_items)
+        deleted_items = int(target_deleted_items)
+        curr_items_spot = \
+            curr_items - self.ws.creates * self.ws.workers
+        deleted_spot = \
+            deleted_items + self.ws.deletes * self.ws.workers
+
+        for _ in range(self.ws.spring_batch_size):
+            key = self.existing_keys.next(curr_items_spot, deleted_spot)
+            doc = self.docs.next(key)
+            ddoc_name, view_name, query = self.new_queries.next(doc)
+
+            latency = self.cb.view_query(ddoc_name, view_name, query=query)
+
+            self.reservoir.update(operation='query', value=latency)
+
+            if self.op_delay > 0 and self.target_time:
+                time.sleep(self.op_delay * self.CORRECTION_FACTOR)
+
+        if self.target_time:
+            self.batch_duration = time.time() - t0
+            self.delta = self.target_time - self.batch_duration
+            if self.delta > 0:
+                time.sleep(self.CORRECTION_FACTOR * self.delta)
+
+    def run(self, sid, lock, curr_ops, shared_dict, current_hot_load_start=None, timer_elapse=None):
+        if self.ws.query_throughput < float('inf'):
+            self.target_time = float(self.ws.spring_batch_size) * self.ws.query_workers / \
+                               self.ws.query_throughput
+        else:
+            self.target_time = None
+
+        self.sid = sid
+        self.lock = lock
+        self.shared_dict = shared_dict
+        self.current_hot_load_start = current_hot_load_start
+        self.timer_elapse = timer_elapse
+
+        try:
+            logger.info('Started: {}-{}'.format(self.NAME, self.sid))
+            while not self.time_to_stop():
+                self.do_batch()
+        except KeyboardInterrupt:
+            logger.info('Interrupted: {}-{}'.format(self.NAME, self.sid))
+        else:
+            logger.info('Finished: {}-{}'.format(self.NAME, self.sid))
+
+        self.dump_stats()
+
+
 class WorkerFactory:
 
     def __new__(cls, settings):
@@ -1188,6 +1266,12 @@ class N1QLWorkerFactory:
 
     def __new__(cls, workload_settings):
         return N1QLWorker, workload_settings.n1ql_workers
+
+
+class ViewWorkerFactory:
+
+    def __new__(cls, workload_settings):
+        return ViewWorker, workload_settings.query_workers
 
 
 class WorkloadGen:
@@ -1276,6 +1360,10 @@ class WorkloadGen:
                            current_hot_load_start,
                            timer_elapse)
         self.start_workers(N1QLWorkerFactory,
+                           self.shared_dict,
+                           current_hot_load_start,
+                           timer_elapse)
+        self.start_workers(ViewWorkerFactory,
                            self.shared_dict,
                            current_hot_load_start,
                            timer_elapse)

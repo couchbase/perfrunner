@@ -1,0 +1,38 @@
+[test_case]
+test = perfrunner.tests.views.QueryThroughputTest
+
+[showfast]
+title = Query throughput (qps), 4 nodes, 1 bucket x 20M x 2KB, non-DGM, 4 x 1 views, 500 mutations/sec/node, default collection
+component = views
+category = throughput
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 4
+num_buckets = 1
+
+[collection]
+config = collections/1bucket_default.json
+
+[load]
+items = 20000000
+size = 2048
+workers = 40
+
+[views]
+views = [1, 1, 1, 1]
+
+[access]
+creates = 4
+reads = 80
+updates = 12
+deletes = 4
+throughput = 10000
+items = 20000000
+workers = 24
+query_workers = 24
+time = 7200
+
+[clients]
+libcouchbase = 3.0.2
+python_client = git+http://review.couchbase.org/couchbase-python-client@refs/changes/91/135991/3

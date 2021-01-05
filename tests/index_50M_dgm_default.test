@@ -1,0 +1,37 @@
+[test_case]
+test = perfrunner.tests.views.InitialAndIncrementalIndexTest
+
+[showfast]
+title = 4 nodes, 1 bucket x 50M x 2KB, DGM, 4 x 1 views, no mutations, default collection
+component = views
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 4
+num_buckets = 1
+
+[collection]
+config = collections/1bucket_default.json
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[load]
+items = 50000000
+size = 2048
+workers = 40
+
+[views]
+views = [1, 1, 1, 1]
+disabled_updates = 1
+
+[access]
+creates = 100
+ops = 50000000
+items = 50000000
+workers = 16
+
+[clients]
+libcouchbase = 3.0.2
+python_client = git+http://review.couchbase.org/couchbase-python-client@refs/changes/91/135991/3

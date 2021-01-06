@@ -21,4 +21,4 @@ ssh = root:couchbase
 OS = CentOS 7
 CPU = Gold 6230 2.1GHz (80 vCPU)
 Memory = 128 GB
-Disk = Intel P4610 3.2TB NVMe
+Disk = Intel P4610 3.2TB NVMe x3, RAID0

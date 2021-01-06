@@ -7,10 +7,10 @@ component = hidd
 category = single
 
 [cluster]
-mem_quota = 20480
+mem_quota = 2048
 initial_nodes = 1
 num_buckets = 1
-kernel_mem_limit = 30G
+kernel_mem_limit = 10G
 kernel_mem_limit_services = kv
 enable_cpu_cores = false
 
@@ -30,8 +30,6 @@ size = 1024
 workers = 128
 key_fmtr = hex
 doc_gen = large
-mem_low_wat = 134217728
-mem_high_wat = 268435456
 
 [extra_access]
 run_extra_access = true

@@ -504,6 +504,29 @@ class SingleNodeMixedLatencyDGMTest(SingleNodeThroughputDGMMagmaTest):
                 *self.metrics.kv_latency(operation=operation)
             )
 
+    def run(self):
+        self.load()
+
+        if self.test_config.extra_access_settings.run_extra_access:
+            self.run_extra_access()
+
+        self.COLLECTORS["kvstore"] = False
+        self.COLLECTORS["disk"] = False
+        self.COLLECTORS["latency"] = False
+        self.COLLECTORS["vmstat"] = False
+        self.restart()
+        self.COLLECTORS["kvstore"] = True
+        self.COLLECTORS["disk"] = True
+        self.COLLECTORS["latency"] = True
+        self.COLLECTORS["vmstat"] = True
+
+        self.hot_load()
+        self.reset_kv_stats()
+
+        self.access()
+
+        self.report_kpi()
+
 
 class MixedLatencyDGMTest(StabilityBootstrap):
 

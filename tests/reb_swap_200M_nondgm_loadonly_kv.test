@@ -12,6 +12,9 @@ mem_quota = 204800
 initial_nodes = 2
 num_buckets = 1
 
+[bucket]
+replica_number = 0
+
 [load]
 items = 200000000
 size = 1024

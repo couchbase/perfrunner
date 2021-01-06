@@ -2,7 +2,7 @@
 test = perfrunner.tests.rebalance.RebalanceLoadOnlyTest
 
 [showfast]
-title = Rebalance-in (min), 1 -> 2, 200M x 1KB, 20K ops/sec
+title = Rebalance-in (min), 1 -> 2, 200M x 1KB
 component = reb
 category = kv
 sub_category = Non-DGM
@@ -11,6 +11,9 @@ sub_category = Non-DGM
 mem_quota = 204800
 initial_nodes = 1
 num_buckets = 1
+
+[bucket]
+replica_number = 0
 
 [load]
 items = 200000000

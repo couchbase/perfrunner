@@ -2,17 +2,17 @@
 test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
 
 [showfast]
-title = 1 bucket x 100M x 1KB, 1000 indexes, 100K KV ops/sec, 20%% Resident, no mutations during initial build only, Plasma, s=1 c=100
+title = 1 bucket x 100M x 1KB, 1000 indexes, 100K KV ops/sec, 20%% Resident, Plasma, s=1 c=100
 component = secondary
-sub_category = Plasma
+sub_category = PlasmaDGM
 
 [stats]
 server_processes = projector
 
 [cluster]
 mem_quota = 30000
-index_mem_quota = 150000
-kernel_mem_limit = 170G
+index_mem_quota = 80000
+kernel_mem_limit = 100G
 initial_nodes = 6
 num_buckets = 1
 

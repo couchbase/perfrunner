@@ -54,6 +54,6 @@ reads = 100
 updates = 0
 deletes = 0
 items = 250000000
-workers = 60
+workers = 128
 time = 3600
 requestdistribution = uniform

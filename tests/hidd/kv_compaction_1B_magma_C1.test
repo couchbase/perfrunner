@@ -58,6 +58,6 @@ deletes = 0
 items = 1000000000
 working_set = 1
 working_set_access = 95
-workers = 15
+workers = 128
 throughput = 15000
 async = 1

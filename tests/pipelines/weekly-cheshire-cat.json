@@ -47,6 +47,7 @@
         {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/kv_throughput_read_1B_magma_T1.test"},
         {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/kv_rebalance_out_1B_magma_R1.test"},
         {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/java_dcp_throughput_4n_1B_compressed_magma_P1.test"},
+        {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/kv_throughput_durability_persist_majority_1B_magma_D1.test"},
         {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/simplified/kv_latency_250M_read_heavy_power.test"},
         {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/simplified/kv_latency_250M_read_heavy_uniform.test"},
         {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/simplified/kv_latency_250M_update_heavy_power.test"},

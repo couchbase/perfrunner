@@ -1,11 +1,11 @@
 [test_case]
-test = perfrunner.tests.magma.EnhancedDurabilityLatencyDGMTest
+test = perfrunner.tests.magma.ThroughputDGMMagmaTest
 
 [showfast]
-title = latency (ms), 4 nodes, 1 bucket x 1B x 1KB, 0/100 R/W, 500 ops/sec, Durability Persist Majority, Couchstore
+title = Avg Throughput (ops/sec), 4 nodes, 1 bucket x 1B x 1KB, 0/100 R/W, Durability Persist Majority, Couchstore
 component = hidd
 category = durability
-sub_category = Latency
+sub_category = Throughput
 
 [cluster]
 mem_quota = 15360
@@ -34,7 +34,6 @@ creates = 0
 reads = 0
 updates = 100
 deletes = 0
-throughput = 500
 items = 1000000000
 workers = 128
 time = 3600

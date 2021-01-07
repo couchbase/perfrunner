@@ -1,10 +1,10 @@
 [test_case]
-test = perfrunner.tests.magma.ThroughputDGMMagmaTest
+test = perfrunner.tests.magma.ReadLatencyDGMTest
 
 [showfast]
-title = Avg Throughput (ops/sec), 4 nodes, 1 bucket x 10B x 1KB, 20/80 R/W, Uniform distribution, Magma
+title = latency (ms), 4 nodes, 1 bucket x 10B x 1KB, 15K ops/sec (5/90/5 C/R/W), Uniform distribution, Couchstore
 component = hidd
-category = ops
+category = latency
 
 [cluster]
 mem_quota = 51200
@@ -16,7 +16,6 @@ enable_cpu_cores = false
 
 [bucket]
 eviction_policy = fullEviction
-backend_storage = magma
 
 [bucket_extras]
 num_reader_threads = 64
@@ -29,28 +28,13 @@ workers = 128
 key_fmtr = hex
 doc_gen = large
 
-[extra_access]
-run_extra_access = true
-updates = 100
-creates = 0
-deletes = 0
-reads = 0
-workers = 128
-items = 10000000000
-ops = 10000000000
-time = 86400
-requestdistribution = uniform
-power_alpha = 0
-zipf_alpha = 0
-durability = 0
-async = 0
-
 [access]
-creates = 0
-reads = 20
-updates = 80
+creates = 5
+reads = 90
+updates = 5
 deletes = 0
 items = 10000000000
 workers = 128
+throughput = 15000
 time = 3600
 requestdistribution = uniform

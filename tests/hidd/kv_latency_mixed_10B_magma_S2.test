@@ -10,6 +10,8 @@ category = latency
 mem_quota = 51200
 initial_nodes = 4
 num_buckets = 1
+kernel_mem_limit = 60G
+kernel_mem_limit_services = kv
 enable_cpu_cores = false
 
 [bucket]
@@ -49,9 +51,9 @@ durability = 0
 async = 0
 
 [access]
-creates = 5
-reads = 90
-updates = 5
+creates = 25
+reads = 50
+updates = 25
 deletes = 0
 items = 10000000000
 working_set = 1

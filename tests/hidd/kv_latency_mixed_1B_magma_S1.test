@@ -51,9 +51,9 @@ durability = 0
 async = 0
 
 [access]
-creates = 5
-reads = 90
-updates = 5
+creates = 25
+reads = 50
+updates = 25
 deletes = 0
 items = 1000000000
 working_set = 1

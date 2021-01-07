@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.ThroughputDGMMagmaTest
 
 [showfast]
-title = Avg Throughput (ops/sec), 4 nodes, 1 bucket x 10B x 1KB, 20/80 R/W, Uniform distribution, Magma
+title = Avg Throughput (ops/sec), 4 nodes, 1 bucket x 10B x 1KB, 90/10 R/W, Uniform distribution, Couchstore
 component = hidd
 category = ops
 
@@ -16,7 +16,6 @@ enable_cpu_cores = false
 
 [bucket]
 eviction_policy = fullEviction
-backend_storage = magma
 
 [bucket_extras]
 num_reader_threads = 64
@@ -29,26 +28,10 @@ workers = 128
 key_fmtr = hex
 doc_gen = large
 
-[extra_access]
-run_extra_access = true
-updates = 100
-creates = 0
-deletes = 0
-reads = 0
-workers = 128
-items = 10000000000
-ops = 10000000000
-time = 86400
-requestdistribution = uniform
-power_alpha = 0
-zipf_alpha = 0
-durability = 0
-async = 0
-
 [access]
 creates = 0
-reads = 20
-updates = 80
+reads = 90
+updates = 10
 deletes = 0
 items = 10000000000
 workers = 128

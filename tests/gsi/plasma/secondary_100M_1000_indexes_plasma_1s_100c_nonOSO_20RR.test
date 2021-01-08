@@ -2,9 +2,9 @@
 test = perfrunner.tests.secondary.InitialSecondaryIndexTest
 
 [showfast]
-title = 1 bucket x 100M x 1KB, 1000 indexes, 100K KV ops/sec, OSO Disabled 20%% Bucket RR 20%% Index RR, Plasma, s=1 c=100
+title = 1 bucket x 100M x 1KB, 1000 indexes, OSO Disabled 20%% Bucket RR 20%% Index RR, Plasma, s=1 c=100
 component = secondary
-sub_category = Plasma
+sub_category = PlasmaDGM
 
 [stats]
 server_processes = projector
@@ -43,13 +43,7 @@ queryport.client.usePlanner = false
 queryport.client.log_level = Warn
 projector.backChanSize = 500000
 disable_perindex_stats = True
-
-[access]
-updates = 100
-ops = 50000000
-items = 50000000
-throughput = 100000
-workers = 80
+indexer.settings.build.batch_size = 100
 
 [clients]
 libcouchbase = 3.0.2

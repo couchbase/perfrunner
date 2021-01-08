@@ -70,6 +70,7 @@ class Profiler:
 
     def save(self, host: str, service: str, profile: str, content: bytes):
         fname = '{}_{}_{}_{}.pprof'.format(host, service, profile, uhex()[:6])
+        logger.info('Collected {} '.format(fname))
         with open(fname, 'wb') as fh:
             fh.write(content)
 

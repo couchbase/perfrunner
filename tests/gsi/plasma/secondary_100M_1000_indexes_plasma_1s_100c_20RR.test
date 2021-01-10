@@ -2,7 +2,7 @@
 test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
 
 [showfast]
-title = 1 bucket x 100M x 1KB, 1000 indexes, 100K KV ops/sec, 20%% Resident, Plasma, s=1 c=100
+title = 1 bucket x 100M x 1KB, 1000 indexes, 10K KV ops/sec, 20%% Resident, Plasma, s=1 c=100
 component = secondary
 sub_category = PlasmaDGM
 

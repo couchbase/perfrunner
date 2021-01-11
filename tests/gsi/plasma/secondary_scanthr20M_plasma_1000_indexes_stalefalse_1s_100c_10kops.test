@@ -1,0 +1,59 @@
+[test_case]
+test = perfrunner.tests.secondary.SecondaryIndexingThroughputTest
+
+[showfast]
+title = Secondary index scan throughput (scanps), stale=false, 1 bucket x 20M x 1KB, 10K KV ops/sec, 1000 indexes, Plasma, s=1 c=100
+component = secondary
+category = thr
+sub_category = Plasma
+
+[stats]
+server_processes = projector
+
+[cluster]
+mem_quota = 30000
+index_mem_quota = 460000
+initial_nodes = 6
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[bucket]
+replica_number=0
+replica_index=0
+
+[collection]
+config = collections/1bucket_1scope_100collections_basic.json
+
+[load]
+items = 20000000
+size = 1024
+workers = 100
+doc_gen = grouped
+doc_groups = 1
+
+[secondary]
+indexes = tests/gsi/index_defs/1bucket_1scope_100collections_1000_indexes_1.json
+cbindexperf_configfile = tests/gsi/plasma/config/config_scanthr_sessionconsistent_1000_indexes_plasma_1s_100c_1.json
+indexer.settings.storage_mode = plasma
+indexer.settings.max_cpu_percent = 4800
+indexer.settings.gc_percent = 200
+queryport.client.usePlanner = false
+queryport.client.log_level = Warn
+projector.backChanSize = 500000
+disable_perindex_stats = True
+indexer.settings.build.batch_size = 100
+
+[access]
+creates = 10
+updates = 80
+deletes = 10
+items = 20000000
+workers = 20
+throughput = 10000
+
+[clients]
+libcouchbase = 3.0.2
+python_client = 3.0.4

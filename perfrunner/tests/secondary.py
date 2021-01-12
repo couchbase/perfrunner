@@ -175,14 +175,14 @@ class SecondaryIndexTest(PerfTest):
             stats = self.rest.get_index_storage_stats_mm(self.index_nodes[0])
             logger.info("Index storage stats mm:\n{}".format(stats))
 
-            version, build_number = self.build.split('-')
-            build = tuple(map(int, version.split('.'))) + (int(build_number),)
+            # version, build_number = self.build.split('-')
+            # build = tuple(map(int, version.split('.'))) + (int(build_number),)
 
             # MB - 43098 Caused missing stats from indexer - Hence this fails
             # before build 7.0.0-3951
-            if build > (7, 0, 0, 3951):
-                avg_rr = self.calc_avg_rr(storage_stats.json())
-                logger.info("Average RR over all Indexes  : {}".format(avg_rr))
+            # if build > (7, 0, 0, 3951):
+            #     avg_rr = self.calc_avg_rr(storage_stats.json())
+            #     logger.info("Average RR over all Indexes  : {}".format(avg_rr))
 
         return self.remote.get_disk_usage(self.index_nodes[0],
                                           self.cluster_spec.index_path,

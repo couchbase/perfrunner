@@ -2,9 +2,9 @@
 test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
 
 [showfast]
-title = 1 bucket x 30M x 1KB, 3000 indexes, 100K KV ops/sec, no mutations during initial build only, Plasma, s=1 c=300
+title = 1 bucket x 50M x 1KB, 3000 indexes, 100K KV ops/sec, no mutations during initial build only, MOI, s=1 c=300
 component = secondary
-sub_category = Plasma
+sub_category = MOI
 
 [stats]
 server_processes = projector
@@ -27,7 +27,7 @@ db_percentage = 100
 view_percentage = 100
 
 [load]
-items = 30000000
+items = 50000000
 size = 1024
 workers = 100
 doc_gen = grouped
@@ -35,17 +35,20 @@ doc_groups = 1
 
 [secondary]
 indexes = tests/gsi/index_defs/1bucket_1scope_300collections_3000_indexes_1.json
-indexer.settings.storage_mode = plasma
+db = moi
+indexer.settings.storage_mode = memory_optimized
+indexer.settings.gc_percent = 200
 indexer.settings.max_cpu_percent = 4800
 queryport.client.usePlanner = false
 queryport.client.log_level = Warn
 projector.backChanSize = 500000
 disable_perindex_stats = True
+indexer.settings.build.batch_size = 100
 
 [access]
 updates = 100
-ops = 30000000
-items = 30000000
+ops = 50000000
+items = 50000000
 throughput = 100000
 workers = 80
 

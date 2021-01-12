@@ -12,8 +12,8 @@ server_processes = projector
 
 [cluster]
 mem_quota = 30000
-index_mem_quota = 37000
-kernel_mem_limit = 45G
+index_mem_quota = 42000
+kernel_mem_limit = 50G
 initial_nodes = 6
 num_buckets = 1
 

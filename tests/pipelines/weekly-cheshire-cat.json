@@ -286,5 +286,18 @@
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_reb_in_1s_99c.test"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_reb_out_1s_99c.test"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_no_index_window_functions_1s_99c.test"}
+    ],
+    "Views": [
+        {"job": "leto", "cluster": "leto.spec", "test_config": "index_20M_default.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "index_50M_dgm_default.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "query_lat_100M_dgm_default.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "query_lat_20M_basic_default.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "query_lat_20M_body_default.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "query_lat_20M_compute_default.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "query_lat_20M_default.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "query_lat_20M_group_by_default.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "query_lat_20M_multi_emits_default.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "query_lat_20M_range_default.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "query_thr_20M_default.test"}
     ]
 }

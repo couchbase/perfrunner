@@ -753,7 +753,7 @@ def restart_memcached(mem_limit: int = 10000, port: int = 8000):
         else:
             logger.info('memcached still running')
     else:
-        raise Exception('memcached was not kill properly')
+        raise Exception('memcached was not killed properly')
 
     cmd2 = 'memcached -u root -m {mem_limit} -l localhost -p {port} -d'
     cmd2 = cmd2.format(mem_limit=mem_limit, port=port)

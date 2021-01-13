@@ -40,6 +40,7 @@ indexer.settings.max_cpu_percent = 4800
 queryport.client.usePlanner = false
 queryport.client.log_level = Warn
 projector.backChanSize = 500000
+indexer.settings.build.batch_size = 100
 
 [access]
 updates = 100

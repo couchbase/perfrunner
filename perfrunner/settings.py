@@ -830,7 +830,11 @@ class JTSAccessSettings(PhaseSettings):
         # Collection settings
         self.collections = int(options.get("collections", "0"))
         self.scope = int(options.get("scope", "-1"))
-        self.collection_prefix = options.get('collection_prefix', 'collection')
+        self.collection_prefix = options.get('collection_prefix', 'collection-')
+        self.scope_prefix = options.get('scope_prefix', 'scope-')
+        self.test_collections_flag = options.get("test_collections_flag", "0")
+        # Settings for notifying that the jts needs to use appropriate id for mutations
+        self.test_docid_use_long = options.get("test_test_docid_use_long", "0")
 
     def __str__(self) -> str:
         return str(self.__dict__)

@@ -407,9 +407,9 @@ class RemoteLinux(Remote):
         run(cmd)
 
     @master_server
-    def export_data(self, num_collections, collection_prefix, scope, name_of_backup):
+    def export_data(self, num_collections, collection_prefix, scope_prefix, scope, name_of_backup):
         logger.info("Loading data into the collections")
-        scope_name = "scope" + str(scope)
+        scope_name = scope_prefix + str(scope)
         name_of_backup = "/fts/backup/exportFiles/" + name_of_backup + ".json"
         cmd = "python3 /fts/backup/exportFiles/splitData.py --num_col {} " \
               "--collection_prefix {} " \

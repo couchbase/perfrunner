@@ -22,6 +22,9 @@ CMD = " -test_duration {test_duration}" \
       " -test_geo_distance {test_geo_distance}"\
       " -test_flex {test_flex}"\
       " -test_flex_query_type {test_flex_query_type}"\
+      " -test_collections_flag {test_collections_flag}"\
+      " -test_docid_use_long {test_docid_use_long}"\
+      " -test_flex_query_type {test_flex_query_type}"\
       " -couchbase_index_name {couchbase_index_name}" \
       " -couchbase_cluster_ip {couchbase_cluster_ip}" \
       " -couchbase_bucket {couchbase_bucket}" \
@@ -52,6 +55,8 @@ def jts_run(workload_settings: PhaseSettings, target: TargetSettings,
                         test_query_lon_width=settings.test_query_lon_width,
                         test_query_lat_height=settings.test_query_lat_height,
                         test_geo_distance=settings.test_geo_distance,
+                        test_collections_flag=settings.test_collections_flag,
+                        test_docid_use_long=settings.test_docid_use_long,
                         test_flex=settings.test_flex,
                         test_flex_query_type=settings.test_flex_query_type,
                         couchbase_index_name=settings.couchbase_index_name,
@@ -85,6 +90,8 @@ def jts_warmup(workload_settings: PhaseSettings, target: TargetSettings,
                         test_query_lon_width=settings.test_query_lon_width,
                         test_query_lat_height=settings.test_query_lat_height,
                         test_geo_distance=settings.test_geo_distance,
+                        test_collections_flag=settings.test_collections_flag,
+                        test_docid_use_long=settings.test_docid_use_long,
                         test_flex=settings.test_flex,
                         test_flex_query_type=settings.test_flex_query_type,
                         couchbase_index_name=settings.couchbase_index_name,

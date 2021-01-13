@@ -49,14 +49,45 @@ class KVStoreStats(Collector):
         "ReadIOAmp",
         "WriteAmp",
         "TxnSizeEstimate",
-        "NFlushes"
+        "NFlushes",
+        "NGetsPerSec",
+        "NSetsPerSec",
+        "NDeletesPerSec",
+        "NCommitBatchesPerSec",
+        "NFlushesPerSec",
+        "NCompactsPerSec",
+        "NSyncsPerSec",
+        "NReadBytesPerSec",
+        "NReadBytesGetPerSec",
+        "NReadBytesCompactPerSec",
+        "BytesOutgoingPerSec",
+        "NReadIOsPerSec",
+        "NReadIOsGetPerSec",
+        "BytesIncomingPerSec",
+        "NWriteBytesPerSec",
+        "NWriteIOsPerSec",
+        "NWriteBytesCompactPerSec",
+        "RecentWriteAmp",
+        "RecentReadAmp",
+        "RecentReadAmpGet",
+        "RecentReadIOAmp",
+        "RecentBytesPerRead"
     )
     METRICS_AVERAGE_PER_NODE_PER_SHARD = (
         "ReadAmp",
         "ReadAmpGet",
         "ReadIOAmp",
         "WriteAmp",
-        "TxnSizeEstimate"
+        "TxnSizeEstimate",
+        "RecentWriteAmp",
+        "RecentReadAmp",
+        "RecentReadAmpGet",
+        "RecentReadIOAmp",
+        "RecentBytesPerRead"
+    )
+    NO_CAP = (
+        "TxnSizeEstimate",
+        "RecentBytesPerRead"
     )
 
     def __init__(self, settings, test):
@@ -124,7 +155,7 @@ class KVStoreStats(Collector):
                     stats = self._get_kvstore_stats(bucket, node)
                     for metric in self.METRICS_AVERAGE_PER_NODE_PER_SHARD:
                         if metric in stats:
-                            if stats[metric] / num_shards >= 50 and metric != "TxnSizeEstimate":
+                            if stats[metric] / num_shards >= 50 and metric not in self.NO_CAP:
                                 stats[metric] = 50
                             else:
                                 stats[metric] /= num_shards
@@ -149,7 +180,7 @@ class KVStoreStats(Collector):
 
             for metric in self.METRICS_AVERAGE_PER_NODE_PER_SHARD:
                 if metric in stats:
-                    if stats[metric]/(num_shards * num_nodes) >= 50 and metric != "TxnSizeEstimate":
+                    if stats[metric]/(num_shards * num_nodes) >= 50 and metric not in self.NO_CAP:
                         stats[metric] = 50
                     else:
                         stats[metric] /= (num_shards * num_nodes)

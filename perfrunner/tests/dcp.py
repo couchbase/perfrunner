@@ -27,11 +27,26 @@ class DCPThroughputTest(PerfTest):
                 num_connections=self.test_config.dcp_settings.num_connections
             )
 
+    def warmup(self):
+        self.remote.stop_server()
+        self.remote.drop_caches()
+
+        return self._warmup()
+
+    def _warmup(self):
+        self.remote.start_server()
+        for master in self.cluster_spec.masters:
+            for bucket in self.test_config.buckets:
+                self.monitor.monitor_warmup(self.memcached, master, bucket)
+
     def run(self):
         self.load()
         self.wait_for_persistence()
         self.check_num_items()
         self.compact_bucket()
+
+        if self.test_config.dcp_settings.invoke_warm_up:
+            self.warmup()
 
         time_elapsed = self.access()
 

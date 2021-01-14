@@ -997,10 +997,13 @@ class GSISettings:
 class DCPSettings:
 
     NUM_CONNECTIONS = 4
+    INVOKE_WARM_UP = 0
 
     def __init__(self, options: dict):
         self.num_connections = int(options.get('num_connections',
                                                self.NUM_CONNECTIONS))
+        self.invoke_warm_up = int(options.get('invoke_warm_up',
+                                              self.INVOKE_WARM_UP))
 
     def __str__(self) -> str:
         return str(self.__dict__)

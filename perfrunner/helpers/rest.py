@@ -966,7 +966,8 @@ class RestHelper:
 
     def create_scope(self, host, bucket, scope):
         logger.info("Creating scope {}:{}".format(bucket, scope))
-        api = 'http://{}:8091/pools/default/buckets/{}/collections'.format(host, bucket)
+        api = 'http://{}:8091/pools/default/buckets/{}/scopes'\
+            .format(host, bucket)
         data = {
             'name': scope
         }
@@ -974,7 +975,8 @@ class RestHelper:
 
     def create_collection(self, host, bucket, scope, collection):
         logger.info("Creating collection {}:{}.{}".format(bucket, scope, collection))
-        api = 'http://{}:8091/pools/default/buckets/{}/collections/{}'.format(host, bucket, scope)
+        api = 'http://{}:8091/pools/default/buckets/{}/scopes/{}/collections'\
+            .format(host, bucket, scope)
         data = {
             'name': collection
         }
@@ -982,6 +984,6 @@ class RestHelper:
 
     def delete_collection(self, host, bucket, scope, collection):
         logger.info("Dropping collection {}:{}.{}".format(bucket, scope, collection))
-        api = 'http://{}:8091/pools/default/buckets/{}/collections/{}/{}'\
+        api = 'http://{}:8091/pools/default/buckets/{}/scopes/{}/collections/{}'\
             .format(host, bucket, scope, collection)
         self.delete(url=api)

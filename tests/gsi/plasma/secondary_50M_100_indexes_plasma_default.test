@@ -2,7 +2,7 @@
 test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
 
 [showfast]
-title = 1 bucket x 100M x 1KB, 1000 indexes, 100K KV ops/sec, no mutations during initial build only, Plasma
+title = 1 bucket x 50M x 1KB, 100 indexes, 100K KV ops/sec, no mutations during initial build only, Plasma
 component = secondary
 sub_category = Plasma
 
@@ -27,14 +27,14 @@ db_percentage = 100
 view_percentage = 100
 
 [load]
-items = 100000000
+items = 50000000
 size = 1024
 workers = 100
 doc_gen = grouped
 doc_groups = 1
 
 [secondary]
-indexes = tests/gsi/index_defs/1bucket_default_1000_indexes_1.json
+indexes = tests/gsi/index_defs/1bucket_default_100_indexes_1.json
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
 queryport.client.usePlanner = false
@@ -45,8 +45,8 @@ indexer.settings.build.batch_size = 100
 
 [access]
 updates = 100
-ops = 100000000
-items = 100000000
+ops = 50000000
+items = 50000000
 throughput = 100000
 workers = 80
 

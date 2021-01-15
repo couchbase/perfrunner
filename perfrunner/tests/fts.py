@@ -71,7 +71,7 @@ class FTSTest(JTSTest):
         })
         indexed_fld = copy.deepcopy(definition["params"]["mapping"]["default_mapping"])
         num_collections = self.access.collections
-        scope = "scope"+str(self.access.scope)
+        scope = self.access.scope_prefix + str(self.access.scope)
         # Adding the collections index definition here ;
         # -1 is bucket level
         # 0 is default scope
@@ -84,7 +84,7 @@ class FTSTest(JTSTest):
                 types_col["_default._default"] = indexed_fld
             else:
                 for coll_num in range(0, num_collections):
-                    collection_name = self.access.collection_prefix+str(coll_num)
+                    collection_name = self.access.collection_prefix+str(coll_num+1)
                     # key_name is the key for the collection type mapping
                     key_name = scope+"."+collection_name
                     types_col[key_name] = indexed_fld

@@ -24,17 +24,19 @@ CMD = " -test_duration {test_duration}" \
       " -test_flex_query_type {test_flex_query_type}"\
       " -test_collections_flag {test_collections_flag}"\
       " -test_docid_use_long {test_docid_use_long}"\
-      " -test_flex_query_type {test_flex_query_type}"\
       " -couchbase_index_name {couchbase_index_name}" \
       " -couchbase_cluster_ip {couchbase_cluster_ip}" \
       " -couchbase_bucket {couchbase_bucket}" \
       " -couchbase_user {couchbase_user}" \
-      " -couchbase_password {couchbase_password}"
+      " -couchbase_password {couchbase_password}"\
+      " -test_collections_number {collections}"\
+      " -test_scope_number {scope}"\
+      " -test_collection_prefix {collection_prefix}"\
+      " -test_scope_prefix {scope_prefix}"
 
 
 def jts_run(workload_settings: PhaseSettings, target: TargetSettings,
             timer: int, worker_id: int):
-
     settings = workload_settings
     params = CMD.format(test_duration=settings.time,
                         test_total_docs=settings.test_total_docs,
@@ -58,12 +60,17 @@ def jts_run(workload_settings: PhaseSettings, target: TargetSettings,
                         test_collections_flag=settings.test_collections_flag,
                         test_docid_use_long=settings.test_docid_use_long,
                         test_flex=settings.test_flex,
+                        test_collections_number=settings.collections,
+                        test_scope_number=settings.scope,
+                        test_collection_prefix=settings.collection_prefix,
+                        test_scope_prefix=settings.scope_prefix,
                         test_flex_query_type=settings.test_flex_query_type,
                         couchbase_index_name=settings.couchbase_index_name,
                         couchbase_cluster_ip=target.node,
                         couchbase_bucket=target.bucket,
                         couchbase_user=target.bucket,
-                        couchbase_password=target.password)
+                        couchbase_password=target.password
+                        )
 
     run_custom_cmd(settings.jts_home_dir, settings.jts_run_cmd, params)
 
@@ -93,6 +100,10 @@ def jts_warmup(workload_settings: PhaseSettings, target: TargetSettings,
                         test_collections_flag=settings.test_collections_flag,
                         test_docid_use_long=settings.test_docid_use_long,
                         test_flex=settings.test_flex,
+                        test_collections_number=settings.collections,
+                        test_scope_number=settings.scope,
+                        test_collection_prefix=settings.collection_prefix,
+                        test_scope_prefix=settings.scope_prefix,
                         test_flex_query_type=settings.test_flex_query_type,
                         couchbase_index_name=settings.couchbase_index_name,
                         couchbase_cluster_ip=target.node,

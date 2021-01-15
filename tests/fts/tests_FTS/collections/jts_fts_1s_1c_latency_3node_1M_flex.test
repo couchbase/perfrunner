@@ -20,10 +20,15 @@ db_percentage = 100
 [bucket]
 replica_number = 0
 
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
+
 [jts]
+jts_repo_branch = SDK3
 collections = 1
 scope = 1
-jts_instances = 1
+test_collections_flag = 1
+test_docid_use_long = 1
 test_duration = 600
 test_total_docs = 1000000
 test_query_workers = 1

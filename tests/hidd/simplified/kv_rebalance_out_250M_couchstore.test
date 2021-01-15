@@ -2,19 +2,20 @@
 test = perfrunner.tests.magma.RebalanceKVDGMTest
 
 [showfast]
-title = Rebalance-swap (min), 4 -> 4, 10B x 1KB, 15K ops/sec (90/10 R/W), 10%% cache miss rate, Magma
+title = Rebalance-out (min), 3 -> 2, 250M x 1KB, 15K ops/sec (90/10 R/W), 10%% cache miss rate, Couchstore
 component = hidd
 category = reb
 
 [cluster]
-mem_quota = 51200
-initial_nodes = 4
+mem_quota = 6144
+initial_nodes = 3
 num_buckets = 1
+kernel_mem_limit = 12G
+kernel_mem_limit_services = kv
 enable_cpu_cores = false
 
 [bucket]
 eviction_policy = fullEviction
-backend_storage = magma
 failover_min = 120
 failover_max = 600
 
@@ -23,46 +24,29 @@ num_reader_threads = 64
 num_writer_threads = 64
 
 [load]
-items = 10000000000
+items = 250000000
 size = 1024
 workers = 128
 key_fmtr = hex
 doc_gen = large
 
 [hot_load]
-items = 10000000000
+items = 250000000
 workers = 128
 working_set = 1
-
-[extra_access]
-run_extra_access = true
-updates = 100
-creates = 0
-deletes = 0
-reads = 0
-workers = 128
-items = 10000000000
-ops = 10000000000
-time = 86400
-requestdistribution = uniform
-power_alpha = 0
-zipf_alpha = 0
-durability = 0
-async = 0
 
 [access]
 creates = 5
 reads = 90
 updates = 5
 deletes = 0
-items = 10000000000
+items = 250000000
 workers = 128
 throughput = 15000
 working_set = 1
 working_set_access = 90
 
 [rebalance]
-nodes_after = 4
-swap = 1
+nodes_after = 2
 start_after = 1800
 stop_after = 1800

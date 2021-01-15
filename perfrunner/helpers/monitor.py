@@ -708,7 +708,7 @@ class Monitor(RestHelper):
         build = tuple(map(int, version.split('.'))) + (int(build_number),)
 
         logger.info('Waiting for data to be synced from {}'.format(data_node))
-        time.sleep(self.POLLING_INTERVAL_ANALYTICS)
+        time.sleep(self.MONITORING_DELAY * 3)
 
         num_items = self._get_num_items(data_node, bucket)
 

@@ -10,8 +10,6 @@ category = compact
 mem_quota = 51200
 initial_nodes = 4
 num_buckets = 1
-kernel_mem_limit = 60G
-kernel_mem_limit_services = kv
 enable_cpu_cores = false
 
 [bucket]

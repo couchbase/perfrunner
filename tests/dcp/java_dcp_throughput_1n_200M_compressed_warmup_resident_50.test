@@ -2,7 +2,7 @@
 test = perfrunner.tests.dcp.JavaDCPThroughputTest
 
 [showfast]
-title = DCP Throughput, 1 node, 100M x 1KB, Java client, 50%% Resident, compression enabled, post warmup
+title = DCP Throughput, 1 node, 200M x 1KB, Java client, 50%% Resident, compression enabled, post warmup
 component = kv
 category = dcp
 

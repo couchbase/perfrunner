@@ -38,7 +38,7 @@ doc_groups = 1
 [secondary]
 indexes = tests/gsi/index_defs/1bucket_1scope_100collections_1000_indexes_1.json
 db = moi
-cbindexperf_configfile = tests/gsi/moi/config/config_scanlatency_sessionconsistent_1000_indexes_moi_1s_100c_1.json
+cbindexperf_configfile = tests/gsi/moi/config/config_scanlatency_sessionconsistent_1000_indexes_moi_1s_100c_1_dgm.json
 indexer.settings.storage_mode = memory_optimized
 indexer.settings.gc_percent = 200
 indexer.settings.max_cpu_percent = 4800

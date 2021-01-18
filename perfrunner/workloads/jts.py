@@ -29,10 +29,10 @@ CMD = " -test_duration {test_duration}" \
       " -couchbase_bucket {couchbase_bucket}" \
       " -couchbase_user {couchbase_user}" \
       " -couchbase_password {couchbase_password}"\
-      " -test_collections_number {collections}"\
-      " -test_scope_number {scope}"\
-      " -test_collection_prefix {collection_prefix}"\
-      " -test_scope_prefix {scope_prefix}"
+      " -test_collections_number {test_collections_number}"\
+      " -test_scope_number {test_scope_number}"\
+      " -test_collection_prefix {test_collection_prefix}"\
+      " -test_scope_prefix {test_scope_prefix}"
 
 
 def jts_run(workload_settings: PhaseSettings, target: TargetSettings,
@@ -60,8 +60,8 @@ def jts_run(workload_settings: PhaseSettings, target: TargetSettings,
                         test_collections_flag=settings.test_collections_flag,
                         test_docid_use_long=settings.test_docid_use_long,
                         test_flex=settings.test_flex,
-                        test_collections_number=settings.collections,
-                        test_scope_number=settings.scope,
+                        test_collections_number=settings.collections_number,
+                        test_scope_number=settings.scope_number,
                         test_collection_prefix=settings.collection_prefix,
                         test_scope_prefix=settings.scope_prefix,
                         test_flex_query_type=settings.test_flex_query_type,
@@ -100,8 +100,8 @@ def jts_warmup(workload_settings: PhaseSettings, target: TargetSettings,
                         test_collections_flag=settings.test_collections_flag,
                         test_docid_use_long=settings.test_docid_use_long,
                         test_flex=settings.test_flex,
-                        test_collections_number=settings.collections,
-                        test_scope_number=settings.scope,
+                        test_collections_number=settings.collections_number,
+                        test_scope_number=settings.scope_number,
                         test_collection_prefix=settings.collection_prefix,
                         test_scope_prefix=settings.scope_prefix,
                         test_flex_query_type=settings.test_flex_query_type,

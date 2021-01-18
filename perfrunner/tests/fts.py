@@ -70,13 +70,13 @@ class FTSTest(JTSTest):
             'sourceName': self.test_config.buckets[0],
         })
         indexed_fld = copy.deepcopy(definition["params"]["mapping"]["default_mapping"])
-        num_collections = self.access.collections
-        scope = self.access.scope_prefix + str(self.access.scope)
+        num_collections = self.access.collections_number
+        scope = self.access.scope_prefix + str(self.access.scope_number)
         # Adding the collections index definition here ;
         # -1 is bucket level
         # 0 is default scope
         # non 0  = non default scope
-        if self.access.scope != -1:
+        if self.access.scope_number != -1:
             types_col = {}
             definition["params"]["mapping"]["default_mapping"]["enabled"] = False
             definition["params"]["doc_config"]["mode"] = "scope.collection.type_field"
@@ -106,7 +106,7 @@ class FTSTest(JTSTest):
                                                    self.access.couchbase_index_name)
 
     def data_restore(self):
-        if self.access.scope > 0:
+        if self.access.scope_number > 0:
             self.fts_cbimport()
         else:
             self.restore()

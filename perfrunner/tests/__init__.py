@@ -164,10 +164,10 @@ class PerfTest:
 
     def fts_cbimport(self):
         logger.info('Restoring data into collections')
-        num_collections = self.test_config.jts_access_settings.collections
+        num_collections = self.test_config.jts_access_settings.collections_number
         scope_prefix = self.test_config.jts_access_settings.scope_prefix
         collection_prefix = self.test_config.jts_access_settings.collection_prefix
-        scope = self.test_config.jts_access_settings.scope
+        scope = self.test_config.jts_access_settings.scope_number
         name_of_backup = self.test_config.restore_settings.backup_repo
         self.remote.export_data(num_collections, collection_prefix, scope_prefix,
                                 scope, name_of_backup)

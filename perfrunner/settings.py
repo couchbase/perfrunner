@@ -828,8 +828,8 @@ class JTSAccessSettings(PhaseSettings):
         self.test_flex = options.get("test_flex", 'false')
         self.test_flex_query_type = options.get('test_flex_query_type', 'array_predicate')
         # Collection settings
-        self.collections = int(options.get("collections", "0"))
-        self.scope = int(options.get("scope", "-1"))
+        self.collections_number = int(options.get("collections", "0"))
+        self.scope_number = int(options.get("scope", "-1"))
         self.collection_prefix = options.get('collection_prefix', 'collection-')
         self.scope_prefix = options.get('scope_prefix', 'scope-')
         self.test_collections_flag = options.get("test_collections_flag", "0")

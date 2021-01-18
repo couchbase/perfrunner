@@ -14,10 +14,10 @@ server_processes = eventing-produc
 mem_quota = 50000
 eventing_mem_quota = 24576
 initial_nodes = 4
-num_buckets = 1
+num_buckets = 6
 eventing_bucket_mem_quota = 10000
 eventing_metadata_bucket_mem_quota = 1000
-eventing_buckets = 1
+eventing_buckets = 6
 online_cores = 12
 
 [rebalance]
@@ -36,16 +36,18 @@ db_percentage = 100
 view_percentage = 100
 
 [load]
-items = 90000000
+items = 8000000
 size = 1024
 workers = 100
 
 [eventing]
-config_file = tests/eventing/config/function_sample_1s_1c.json
+cpp_worker_thread_count = 2
+worker_count = 1
+config_file = tests/eventing/config/functions24_6buckets_12s_24c.json
 
 [access]
 updates = 100
-items = 90000000
+items = 8000000
 workers = 100
 
 [clients]

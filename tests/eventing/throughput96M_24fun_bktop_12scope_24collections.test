@@ -36,6 +36,8 @@ size = 1024
 workers = 160
 
 [eventing]
+cpp_worker_thread_count = 2
+worker_count = 1
 config_file = tests/eventing/config/functions24_6buckets_12s_24c.json
 
 [access]

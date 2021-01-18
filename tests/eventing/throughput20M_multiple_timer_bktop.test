@@ -33,11 +33,11 @@ size = 1024
 workers = 160
 
 [eventing]
-functions = perf-test1:tests/eventing/code/timer_bktop.js,perf-test2:tests/eventing/code/timer_bktop.js,perf-test3:tests/eventing/code/timer_bktop.js,perf-test4:tests/eventing/code/timer_bktop.js,perf-test5:tests/eventing/code/timer_bktop.js
 worker_count = 5
 cpp_worker_thread_count = 2
 timer_timeout = 3000
 timer_fuzz = 500
+config_file = tests/eventing/config/function_5timer_bktop.json
 
 [access]
 time = 600

@@ -27,7 +27,7 @@
     "breakpad_on": false,
     "description": "Perf test"
   },
-  "appname": "perf-test",
+  "appname": "perf-test1",
   "appcode": "function OnUpdate(doc, meta) {\n}\nfunction OnDelete(doc) {\n}",
   "actionsVisible": true
 }]

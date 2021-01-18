@@ -11,11 +11,11 @@ sub_category = Function
 server_processes = eventing-produc
 
 [cluster]
-mem_quota = 50000
+mem_quota = 55000
 eventing_mem_quota = 24576
 initial_nodes = 5
 num_buckets = 3
-eventing_bucket_mem_quota = 10000
+eventing_bucket_mem_quota = 5000
 eventing_metadata_bucket_mem_quota = 1000
 eventing_buckets = 3
 online_cores = 12
@@ -36,6 +36,8 @@ size = 1024
 workers = 160
 
 [eventing]
+cpp_worker_thread_count = 2
+worker_count = 2
 config_file = tests/eventing/config/functions12_3buckets_6s_12c.json
 
 [access]

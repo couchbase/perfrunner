@@ -587,7 +587,7 @@ class CollectionMigrationTest(XdcrCollectionMapTest):
             'checkpointInterval': 60,
             'collectionsMigrationMode': True,
             'colMappingRules': collection_mapping,
-            'collectionsExplicitMapping': True
+            'collectionsExplicitMapping': False
         }
         if self.xdcr_settings.filter_expression:
             params.update({

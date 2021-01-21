@@ -1273,7 +1273,7 @@ class EventingSettings:
     TIMER_TIMEOUT = 0
     TIMER_FUZZ = 0
     CONFIG_FILE = "tests/eventing/config/function_sample.json"
-    REQUEST_URL = "http://172.23.96.38/cgi-bin/text/1kb_text_200ms.py"
+    REQUEST_URL = "http://172.23.99.247/cgi-bin/text/1kb_text_200ms.py"
 
     def __init__(self, options: dict):
         self.functions = {}

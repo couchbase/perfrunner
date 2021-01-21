@@ -10,7 +10,7 @@
     "source_bucket": "bucket-1",
     "curl": [
         {
-          "hostname": "http://172.23.96.38/cgi-bin/1kb_text.py",
+          "hostname": "http://172.23.99.247/cgi-bin/1kb_text.py",
           "value": "requestUrl",
           "is_auth": false,
           "username": "",

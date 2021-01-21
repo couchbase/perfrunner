@@ -37,7 +37,7 @@ functions = perf-test1:tests/eventing/code/curl_json.js
 worker_count = 24
 cpp_worker_thread_count = 20
 config_file = tests/eventing/config/function_curl.json
-request_url = https://172.23.96.38/cgi-bin/json/1kb_text_2s.py
+request_url = https://172.23.99.247/cgi-bin/json/1kb_text_2s.py
 
 [access]
 updates = 100

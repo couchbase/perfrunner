@@ -6,7 +6,7 @@ themis =
 
 [clients]
 hosts =
-    172.23.96.38
+    172.23.99.247
 credentials = root:couchbase
 
 [storage]

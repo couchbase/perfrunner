@@ -39,7 +39,7 @@ cpp_worker_thread_count = 2
 timer_timeout = 3000
 timer_fuzz = 500
 config_file = tests/eventing/config/function_curl.json
-request_url = http://172.23.96.38/cgi-bin/json/1kb_text_200ms.py
+request_url = http://172.23.99.247/cgi-bin/json/1kb_text_200ms.py
 
 [access]
 time = 1200

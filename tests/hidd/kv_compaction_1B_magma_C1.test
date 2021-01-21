@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.CompactionMagmaTest
 
 [showfast]
-title = Full compaction time (min), 4 nodes, 1B x 1KB, 15K ops/sec (90/10 R/W), 5%% cache miss rate, Magma
+title = Full compaction time (min), 4 nodes, 1B x 1KB, 15K ops/sec (90/10 R/W), 5%% cache miss rate, 2%% Resident Ratio, Magma
 component = hidd
 category = compact
 

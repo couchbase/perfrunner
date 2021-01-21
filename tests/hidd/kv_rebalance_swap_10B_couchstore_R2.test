@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.RebalanceKVDGMTest
 
 [showfast]
-title = Rebalance-swap (min), 4 -> 4, 10B x 1KB, 15K ops/sec (90/10 R/W), 10%% cache miss rate, Couchstore
+title = Rebalance-swap (min), 4 -> 4, 10B x 1KB, 15K ops/sec (90/10 R/W), 10%% cache miss rate, 1%% Resident Ratio, Couchstore
 component = hidd
 category = reb
 

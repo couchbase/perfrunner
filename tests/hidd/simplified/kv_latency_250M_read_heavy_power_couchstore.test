@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.MixedLatencyDGMTest
 
 [showfast]
-title = Latency(ms), Workload S0.1, 2 nodes, 250M x 1KB, 20K ops/sec (5/90/5 C/R/W), Power distribution (α=10), Couchstore
+title = Latency(ms), Workload S0.1, 2 nodes, 250M x 1KB, 20K ops/sec (5/90/5 C/R/W), Power distribution (α=10), 2.4%% Resident Ratio, Couchstore
 component = hidd
 category = S0
 orderby = S01

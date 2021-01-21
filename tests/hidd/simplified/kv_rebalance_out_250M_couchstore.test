@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.RebalanceKVDGMTest
 
 [showfast]
-title = Rebalance-out (min), 3 -> 2, 250M x 1KB, 15K ops/sec (90/10 R/W), 10%% cache miss rate, Couchstore
+title = Rebalance-out (min), 3 -> 2, 250M x 1KB, 15K ops/sec (90/10 R/W), 10%% cache miss rate, 2.4%% Resident Ratio, Couchstore
 component = hidd
 category = reb
 

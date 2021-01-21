@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.RebalanceKVDGMTest
 
 [showfast]
-title = Rebalance-out (min), 5 -> 4, 1B x 1KB, 15K ops/sec (90/10 R/W), 10%% cache miss rate, Magma
+title = Rebalance-out (min), 5 -> 4, 1B x 1KB, 15K ops/sec (90/10 R/W), 10%% cache miss rate, 2%% Resident Ratio, Magma
 component = hidd
 category = reb
 

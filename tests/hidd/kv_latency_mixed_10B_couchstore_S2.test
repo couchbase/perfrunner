@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.MixedLatencyDGMTest
 
 [showfast]
-title = latency (ms), 4 nodes, 1 bucket x 10B x 1KB, 15K ops/sec (25/50/25 C/R/W), 10%% cache miss rate, Couchstore
+title = latency (ms), 4 nodes, 1 bucket x 10B x 1KB, 15K ops/sec (25/50/25 C/R/W), 10%% cache miss rate, 1%% Resident Ratio, Couchstore
 component = hidd
 category = latency
 

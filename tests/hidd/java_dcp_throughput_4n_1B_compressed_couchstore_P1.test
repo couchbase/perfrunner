@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.JavaDCPThroughputDGMTest
 
 [showfast]
-title = DCP Throughput, 4 nodes, 1B x 1KB, Java client, compression enabled, Couchstore
+title = DCP Throughput, 4 nodes, 1B x 1KB, Java client, compression enabled, 2%% Resident Ratio, Couchstore
 component = hidd
 category = dcp
 

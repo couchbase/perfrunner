@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.BackupTestDGM
 
 [showfast]
-title = 4 nodes, 1 bucket x 10B x 1KB, Idle, SQLite, Magma
+title = 4 nodes, 1 bucket x 10B x 1KB, Idle, SQLite, 1%% Resident Ratio, Magma
 component = hidd
 category = tools
 sub_category = Backup
@@ -19,11 +19,9 @@ num_reader_threads = 64
 num_writer_threads = 64
 
 [cluster]
-mem_quota = 10240
+mem_quota = 51200
 initial_nodes = 4
 num_buckets = 1
-kernel_mem_limit = 20G
-kernel_mem_limit_services = kv
 enable_cpu_cores = false
 
 [compaction]

@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.BackupTestDGM
 
 [showfast]
-title = 4 nodes, 1 bucket x 1B x 1KB, Idle, SQLite, Magma
+title = 4 nodes, 1 bucket x 1B x 1KB, Idle, SQLite, 2%% Resident Ratio, Magma
 component = hidd
 category = tools
 sub_category = Backup

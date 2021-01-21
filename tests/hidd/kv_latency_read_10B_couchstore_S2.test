@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.ReadLatencyDGMTest
 
 [showfast]
-title = latency (ms), 4 nodes, 1 bucket x 10B x 1KB, 15K ops/sec (5/90/5 C/R/W), Uniform distribution, Couchstore
+title = latency (ms), 4 nodes, 1 bucket x 10B x 1KB, 15K ops/sec (5/90/5 C/R/W), Uniform distribution, 1%% Resident Ratio, Couchstore
 component = hidd
 category = latency
 

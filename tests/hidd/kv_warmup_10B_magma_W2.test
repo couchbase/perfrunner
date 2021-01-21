@@ -2,16 +2,14 @@
 test = perfrunner.tests.magma.WarmupDGMTest
 
 [showfast]
-title = Warmup time (min), 4 nodes, 1 bucket x 10B x 1KB, Magma
+title = Warmup time (min), 4 nodes, 1 bucket x 10B x 1KB, 1%% Resident Ratio, Magma
 component = hidd
 category = warmup
 
 [cluster]
-mem_quota = 10240
+mem_quota = 51200
 initial_nodes = 4
 num_buckets = 1
-kernel_mem_limit = 20G
-kernel_mem_limit_services = kv
 enable_cpu_cores = false
 
 [stats]

@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.MixedLatencyDGMTest
 
 [showfast]
-title = Latency(ms), Workload S0.2, 2 nodes, 250M x 1KB, 20K ops/sec (5/90/5 C/R/W), Uniform distribution, Magma
+title = Latency(ms), Workload S0.2, 2 nodes, 250M x 1KB, 20K ops/sec (5/90/5 C/R/W), Uniform distribution, 2.4%% Resident Ratio, Magma
 component = hidd
 category = S0
 orderby = S02

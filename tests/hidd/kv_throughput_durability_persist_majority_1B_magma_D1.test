@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.ThroughputDGMMagmaTest
 
 [showfast]
-title = Avg Throughput (ops/sec), 4 nodes, 1 bucket x 1B x 1KB, 0/100 R/W, Durability Persist Majority, Magma
+title = Avg Throughput (ops/sec), 4 nodes, 1 bucket x 1B x 1KB, 0/100 R/W, Durability Persist Majority, 2%% Resident Ratio, Magma
 component = hidd
 category = durability
 sub_category = Throughput

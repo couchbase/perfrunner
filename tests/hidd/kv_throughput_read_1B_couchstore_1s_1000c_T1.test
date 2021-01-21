@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.ThroughputDGMMagmaTest
 
 [showfast]
-title = Avg Throughput (ops/sec), 4 nodes, 1 bucket x 1B x 1KB, 90/10 R/W, s=1 c=1000, Uniform distribution, Couchstore
+title = Avg Throughput (ops/sec), 4 nodes, 1 bucket x 1B x 1KB, 90/10 R/W, s=1 c=1000, Uniform distribution, 2%% Resident Ratio, Couchstore
 component = hidd
 category = ops
 orderby = r1000

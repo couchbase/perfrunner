@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.WarmupDGMTest
 
 [showfast]
-title = Warmup time (min), 4 nodes, 1 bucket x 1B x 1KB, Couchstore
+title = Warmup time (min), 4 nodes, 1 bucket x 1B x 1KB, 2%% Resident Ratio, Couchstore
 component = hidd
 category = warmup
 

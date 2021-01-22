@@ -1317,6 +1317,7 @@ class AnalyticsSettings:
     CACHE_PAGE_SIZE = 131072
     STORAGE_COMPRESSION_BLOCK = None
     QUERIES = ""
+    ANALYTICS_CONFIG_FILE = ""
 
     def __init__(self, options: dict):
         self.num_io_devices = int(options.get('num_io_devices',
@@ -1326,6 +1327,8 @@ class AnalyticsSettings:
         self.storage_compression_block = options.get("storage_compression_block",
                                                      self.STORAGE_COMPRESSION_BLOCK)
         self.queries = options.get("queries", self.QUERIES)
+        self.analytics_config_file = options.get("analytics_config_file",
+                                                 self.ANALYTICS_CONFIG_FILE)
 
 
 class AuditSettings:

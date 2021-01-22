@@ -1,3 +1,4 @@
+import json
 import time
 from typing import List, Tuple
 
@@ -20,17 +21,7 @@ class BigFunTest(PerfTest):
         super().__init__(*args, **kwargs)
 
         self.num_items = 0
-        self.num_collections = 0
-        if self.test_config.collection.collection_map is not None:
-            coll_map = self.test_config.collection.collection_map
-            num_collections = 0
-            for bucket in coll_map.keys():
-                for scope in coll_map[bucket].keys():
-                    for collection in coll_map[bucket][scope].keys():
-                        if coll_map[bucket][scope][collection]['load'] == 1 \
-                                and coll_map[bucket][scope][collection]['access'] == 1:
-                            num_collections += 1
-            self.num_collections = num_collections
+        self.config_file = self.test_config.analytics_settings.analytics_config_file
 
     def create_datasets(self, bucket: str):
         self.disconnect_link()
@@ -45,17 +36,23 @@ class BigFunTest(PerfTest):
             self.rest.exec_analytics_statement(self.analytics_nodes[0],
                                                statement)
 
-    def create_datasets_collections(self, bucket: str, num_collections: int):
+    def create_datasets_collections(self, bucket: str):
         self.disconnect_link()
         logger.info('Creating datasets')
-        dataset_list = ['GleambookUsers', 'GleambookMessages', 'ChirpMessages']
-        for dataset in dataset_list:
-            for dateset_num in range(1, int(num_collections/len(dataset_list)) + 1):
-                dataset_name = dataset + "-" + str(dateset_num)
+        with open(self.config_file, "r") as jsonFile:
+            analytics_config = json.load(jsonFile)
+        dataset_list = analytics_config["Analytics"]
+        if analytics_config["DefaultCollection"]:
+            for dataset in dataset_list:
+                statement = "CREATE DATASET `{}` ON `{}` " \
+                            "WHERE `type` = \"{}\" and meta().id like \"%-{}\";"\
+                    .format(dataset["Dataset"], bucket, dataset["Type"], dataset["Group"])
+                self.rest.exec_analytics_statement(self.analytics_nodes[0], statement)
+        else:
+            for dataset in dataset_list:
                 statement = "CREATE DATASET `{}` ON `{}`.`scope-1`.`{}`;"\
-                    .format(dataset_name, bucket, dataset_name)
-                self.rest.exec_analytics_statement(self.analytics_nodes[0],
-                                                   statement)
+                    .format(dataset["Dataset"], bucket, dataset["Collection"])
+                self.rest.exec_analytics_statement(self.analytics_nodes[0], statement)
 
     def create_index(self):
         logger.info('Creating indexes')
@@ -67,19 +64,16 @@ class BigFunTest(PerfTest):
             self.rest.exec_analytics_statement(self.analytics_nodes[0],
                                                statement)
 
-    def create_index_collections(self, num_collections: int):
+    def create_index_collections(self):
         logger.info('Creating indexes')
-        index_list = [
-            ['usrSinceIdx', 'GleambookUsers', 'user_since'],
-            ['gbmSndTimeIdx', 'GleambookMessages', 'send_time'],
-            ['cmSndTimeIdx', 'ChirpMessages', 'send_time'],
-        ]
+        with open(self.config_file, "r") as jsonFile:
+            analytics_config = json.load(jsonFile)
+        index_list = analytics_config["Analytics"]
+
         for index in index_list:
-            for index_num in range(1, int(num_collections/len(index_list)) + 1):
-                statement = "CREATE INDEX `{}-{}` ON `{}-{}`({}: string);"\
-                    .format(index[0], index_num, index[1], index_num, index[2])
-                self.rest.exec_analytics_statement(self.analytics_nodes[0],
-                                                   statement)
+            statement = "CREATE INDEX `{}` ON `{}`({}: string);"\
+                .format(index["Index"], index["Dataset"], index["Field"])
+            self.rest.exec_analytics_statement(self.analytics_nodes[0], statement)
 
     def disconnect_bucket(self, bucket: str):
         logger.info('Disconnecting the bucket: {}'.format(bucket))
@@ -103,14 +97,14 @@ class BigFunTest(PerfTest):
         for target in self.target_iterator:
             self.disconnect_bucket(target.bucket)
 
-    def sync(self, num_collections: int = 0):
+    def sync(self):
         for target in self.target_iterator:
-            if num_collections == 0:
+            if self.config_file:
+                self.create_datasets_collections(target.bucket)
+                self.create_index_collections()
+            else:
                 self.create_datasets(target.bucket)
                 self.create_index()
-            else:
-                self.create_datasets_collections(target.bucket, num_collections)
-                self.create_index_collections(num_collections)
         self.connect_buckets()
         for target in self.target_iterator:
             self.num_items += self.monitor.monitor_data_synced(target.node,
@@ -157,7 +151,7 @@ class BigFunSyncTest(BigFunTest):
     @with_stats
     @timeit
     def sync(self):
-        super().sync(num_collections=self.num_collections)
+        super().sync()
 
     def run(self):
         super().run()
@@ -179,7 +173,7 @@ class BigFunSyncNoIndexTest(BigFunSyncTest):
     def create_index(self):
         pass
 
-    def create_index_collections(self, num_collections: int):
+    def create_index_collections(self):
         pass
 
 
@@ -242,7 +236,7 @@ class BigFunQueryTest(BigFunTest):
     def run(self):
         super().run()
 
-        self.sync(num_collections=self.num_collections)
+        self.sync()
 
         logger.info('Running warmup phase')
         self.warmup()
@@ -265,7 +259,7 @@ class BigFunQueryNoIndexTest(BigFunQueryTest):
     def create_index(self):
         pass
 
-    def create_index_collections(self, num_collections: int):
+    def create_index_collections(self):
         pass
 
 
@@ -274,7 +268,7 @@ class BigFunQueryNoIndexWithCompressionTest(BigFunQueryWithCompressionTest):
     def create_index(self):
         pass
 
-    def create_index_collections(self, num_collections: int):
+    def create_index_collections(self):
         pass
 
 
@@ -293,7 +287,7 @@ class BigFunRebalanceTest(BigFunTest, RebalanceTest):
     def run(self):
         super().run()
 
-        self.sync(num_collections=self.num_collections)
+        self.sync()
 
         self.rebalance_cbas()
 

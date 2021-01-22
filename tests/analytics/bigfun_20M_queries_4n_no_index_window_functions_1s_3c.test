@@ -24,6 +24,7 @@ config = collections/1bucket_1scope_3collections_analytics.json
 [analytics]
 num_io_devices = 4
 queries = perfrunner/workloads/bigfun/queries_without_index_window_functions.json
+analytics_config_file = tests/analytics/config/3_datasets_collection_config.json
 
 [bucket]
 eviction_policy = fullEviction

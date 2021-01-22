@@ -33,32 +33,40 @@ def main():
 
     cm = ClusterManager(cluster_spec, test_config, args.verbose)
 
-    # Individual nodes
-    cm.disable_wan()
-    cm.clear_login_history()
-    cm.tune_memory_settings()
-    cm.throttle_cpu()
-    cm.enable_ipv6()
-    cm.tune_logging()
-    cm.restart_with_alternative_num_vbuckets()
-    cm.flush_iptables()
+    if cluster_spec.dynamic_infrastructure:
+        cm.set_mem_quotas()
+        cm.set_services()
+        cm.tune_memory_settings()
+        cm.throttle_cpu()
+        cm.enable_auto_failover()
+        cm.configure_auto_compaction()
+    else:
+        # Individual nodes
+        cm.disable_wan()
+        cm.clear_login_history()
+        cm.tune_memory_settings()
+        cm.throttle_cpu()
+        cm.enable_ipv6()
+        cm.tune_logging()
+        cm.restart_with_alternative_num_vbuckets()
+        cm.flush_iptables()
 
-    cm.configure_internal_settings()
-    cm.set_data_path()
-    cm.set_index_path()
-    cm.set_analytics_path()
-    cm.set_mem_quotas()
-    cm.set_services()
-    cm.rename()
-    cm.set_auth()
-    cm.configure_xdcr_settings()
+        cm.configure_internal_settings()
+        cm.set_data_path()
+        cm.set_index_path()
+        cm.set_analytics_path()
+        cm.set_mem_quotas()
+        cm.set_services()
+        cm.rename()
+        cm.set_auth()
+        cm.configure_xdcr_settings()
 
-    # Cluster
-    cm.add_nodes()
-    cm.rebalance()
-    cm.enable_auto_failover()
-    cm.configure_auto_compaction()
-    cm.enable_audit()
+        # Cluster
+        cm.add_nodes()
+        cm.rebalance()
+        cm.enable_auto_failover()
+        cm.configure_auto_compaction()
+        cm.enable_audit()
 
     if cm.test_config.cluster.num_buckets:
         cm.create_buckets()

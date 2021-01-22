@@ -41,8 +41,10 @@ class MetricHelper:
         self.test = test
         self.test_config = test.test_config
         self.cluster_spec = test.cluster_spec
-
-        self.store = PerfStore(CBMONITOR_HOST)
+        if self.test.dynamic_infra:
+            self.store = None
+        else:
+            self.store = PerfStore(CBMONITOR_HOST)
 
     @property
     def _title(self) -> str:

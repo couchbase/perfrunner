@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  labels:
+    app: worker
+spec:
+  replicas: NUM_WORKERS
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      containers:
+      - name: perfrunner
+        image: korry8911/perfrunner:latest
+        resources:
+          limits:
+            cpu: 80
+            memory: 128Gi
+        imagePullPolicy: Always
+        command: [ "/bin/bash", "-c", "--" ]
+        args: [ "while true; do sleep 30; done;" ]
+      nodeSelector:
+        NodeRoles: workers1
+      imagePullSecrets:
+      - name: regcred

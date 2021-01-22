@@ -547,7 +547,7 @@ def run_ycsb(host: str,
              phase_params: dict = None,
              insert_test_params: dict = None):
 
-    cmd = 'bin/ycsb {action} {ycsb_client} ' \
+    cmd = 'pyenv local system && bin/ycsb {action} {ycsb_client} ' \
           '-P {workload} ' \
           '-p writeallfields=true ' \
           '-threads {workers} ' \
@@ -805,8 +805,10 @@ def kill_process(process: str):
 
 def start_celery_worker(queue: str):
     with shell_env(PYTHONOPTIMIZE='1', PYTHONWARNINGS='ignore', C_FORCE_ROOT='1'):
-        local('nohup env/bin/celery worker '
-              '-A perfrunner.helpers.worker -Q {} > worker.log &'.format(queue))
+        local('WORKER_TYPE=local '
+              'BROKER_URL=sqla+sqlite:///perfrunner.db '
+              'nohup env/bin/celery worker '
+              '-A perfrunner.helpers.worker -l INFO -Q {} > worker.log &'.format(queue))
 
 
 def clone_git_repo(repo: str, branch: str, commit: str = None):

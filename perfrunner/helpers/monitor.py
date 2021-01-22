@@ -3,10 +3,23 @@ import time
 from logger import logger
 from perfrunner.helpers import misc
 from perfrunner.helpers.remote import RemoteHelper
-from perfrunner.helpers.rest import RestHelper
+from perfrunner.helpers.rest import DefaultRestHelper, KubernetesRestHelper
+from perfrunner.settings import ClusterSpec, TestConfig
 
 
-class Monitor(RestHelper):
+class Monitor:
+
+    def __new__(cls,
+                cluster_spec: ClusterSpec,
+                test_config: TestConfig,
+                verbose: bool = False):
+        if cluster_spec.dynamic_infrastructure:
+            return KubernetesMonitor(cluster_spec, test_config, verbose)
+        else:
+            return DefaultMonitor(cluster_spec, test_config, verbose)
+
+
+class DefaultMonitor(DefaultRestHelper):
 
     MAX_RETRY = 150
     MAX_RETRY_RECOVERY = 1200
@@ -46,7 +59,6 @@ class Monitor(RestHelper):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
         self.remote = RemoteHelper(cluster_spec, verbose)
-
         self.master_node = next(cluster_spec.masters)
         self.build = self.get_version(self.master_node)
 
@@ -801,3 +813,144 @@ class Monitor(RestHelper):
             retry += 1
         if retry == self.MAX_RETRY_TIMER_EVENT:
             logger.info('Function {} failed to {}...!!!'.format(function, status))
+
+
+class KubernetesMonitor(KubernetesRestHelper):
+
+    MAX_RETRY = 150
+    MAX_RETRY_RECOVERY = 1200
+    MAX_RETRY_TIMER_EVENT = 18000
+    MAX_RETRY_BOOTSTRAP = 1200
+
+    MONITORING_DELAY = 5
+
+    POLLING_INTERVAL = 2
+    POLLING_INTERVAL_INDEXING = 1
+    POLLING_INTERVAL_MACHINE_UP = 10
+    POLLING_INTERVAL_ANALYTICS = 15
+    POLLING_INTERVAL_EVENTING = 1
+
+    REBALANCE_TIMEOUT = 3600 * 6
+    TIMEOUT = 3600 * 12
+
+    DISK_QUEUES = (
+        'ep_queue_size',
+        'ep_flusher_todo',
+        'ep_diskqueue_items',
+        'vb_active_queue_size',
+        'vb_replica_queue_size',
+    )
+
+    DCP_QUEUES = (
+        'ep_dcp_replica_items_remaining',
+        'ep_dcp_other_items_remaining',
+    )
+
+    XDCR_QUEUES = (
+        'replication_changes_left',
+    )
+
+    def __init__(self, cluster_spec, test_config, verbose):
+        super().__init__(cluster_spec=cluster_spec)
+        self.cluster_spec = cluster_spec
+        self.test_config = test_config
+
+    def is_index_ready(self, host: str) -> bool:
+        return True
+
+    def monitor_indexing(self, host):
+        logger.info('Monitoring indexing progress')
+
+        while not self.is_index_ready(host):
+            time.sleep(self.POLLING_INTERVAL_INDEXING * 5)
+            pending_docs = self.estimate_pending_docs(host)
+            logger.info('Pending docs: {:,}'.format(pending_docs))
+
+        logger.info('Indexing completed')
+
+    def estimate_pending_docs(self, host: str) -> int:
+        stats = self.get_gsi_stats(host)
+        pending_docs = 0
+        for metric, value in stats.items():
+            if 'num_docs_queued' in metric or 'num_docs_pending' in metric:
+                pending_docs += value
+        return pending_docs
+
+    def monitor_disk_queues(self, host, bucket):
+        logger.info('Monitoring disk queues: {}'.format(bucket))
+        self._wait_for_empty_queues(host, bucket, self.DISK_QUEUES,
+                                    self.get_bucket_stats)
+
+    def monitor_dcp_queues(self, host, bucket):
+        logger.info('Monitoring DCP queues: {}'.format(bucket))
+        self._wait_for_empty_queues(host, bucket, self.DCP_QUEUES,
+                                    self.get_bucket_stats)
+
+    def monitor_replica_count(self, host, bucket):
+        logger.info('Monitoring replica count match: {}'.format(bucket))
+        self._wait_for_replica_count_match(host, bucket)
+
+    def _wait_for_empty_queues(self, host, bucket, queues, stats_function):
+        metrics = list(queues)
+
+        start_time = time.time()
+        while metrics:
+            bucket_stats = stats_function(host, bucket)
+            # As we are changing metrics in the loop; take a copy of it to
+            # iterate over.
+            for metric in list(metrics):
+                stats = bucket_stats['op']['samples'].get(metric)
+                if stats:
+                    last_value = stats[-1]
+                    if last_value:
+                        logger.info('{} = {:,}'.format(metric, last_value))
+                        continue
+                    else:
+                        logger.info('{} reached 0'.format(metric))
+                    metrics.remove(metric)
+            if metrics:
+                time.sleep(self.POLLING_INTERVAL)
+            if time.time() - start_time > self.TIMEOUT:
+                raise Exception('Monitoring got stuck')
+
+    def _wait_for_replica_count_match(self, host, bucket):
+        start_time = time.time()
+        bucket_info = self.get_bucket_info(host, bucket)
+        replica_number = int(bucket_info['replicaNumber'])
+        while replica_number:
+            bucket_stats = self.get_bucket_stats(host, bucket)
+            curr_items = bucket_stats['op']['samples'].get("curr_items")[-1]
+            replica_curr_items = bucket_stats['op']['samples'].get("vb_replica_curr_items")[-1]
+            logger.info("curr_items: {}, replica_curr_items: {}".format(curr_items,
+                                                                        replica_curr_items))
+            if (curr_items * replica_number) == replica_curr_items:
+                break
+            time.sleep(self.POLLING_INTERVAL)
+            if time.time() - start_time > self.TIMEOUT:
+                raise Exception('Replica items monitoring got stuck')
+
+    def monitor_num_items(self, host: str, bucket: str, num_items: int):
+        logger.info('Checking the number of items in {}'.format(bucket))
+        retries = 0
+        while retries < self.MAX_RETRY:
+            curr_items = self._get_num_items(host, bucket, total=True)
+            if curr_items == num_items:
+                break
+            else:
+                logger.info('{}(curr_items) != {}(num_items)'.format(curr_items, num_items))
+            time.sleep(self.POLLING_INTERVAL)
+            retries += 1
+        else:
+            actual_items = self._get_num_items(host, bucket, total=True)
+            raise Exception('Mismatch in the number of items: {}'
+                            .format(actual_items))
+
+    def _get_num_items(self, host: str, bucket: str, total: bool = False) -> int:
+        stats = self.get_bucket_stats(host=host, bucket=bucket)
+        if total:
+            curr_items = stats['op']['samples'].get('curr_items_tot')
+        else:
+            curr_items = stats['op']['samples'].get('curr_items')
+        if curr_items:
+            return curr_items[-1]
+        return 0

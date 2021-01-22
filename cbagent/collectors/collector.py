@@ -16,9 +16,11 @@ class Collector:
 
     def __init__(self, settings):
         self.session = requests.Session()
-
+        self.cloud = settings.cloud
+        self.cloud_enabled = self.cloud['enabled']
+        if self.cloud_enabled:
+            self.session = self.cloud["cloud_rest"]
         self.interval = settings.interval
-
         self.cluster = settings.cluster
         self.master_node = settings.master_node
         self.auth = (settings.rest_username, settings.rest_password)
@@ -39,9 +41,14 @@ class Collector:
 
     def get_http(self, path, server=None, port=8091, json=True):
         server = server or self.master_node
-        url = "http://{}:{}{}".format(server, port, path)
         try:
-            r = self.session.get(url=url, auth=self.auth)
+            if self.cloud_enabled:
+                server, port = self.session.translate_host_and_port(server, port)
+                url = "http://{}:{}{}".format(server, port, path)
+                r = self.session.get(url=url)
+            else:
+                url = "http://{}:{}{}".format(server, port, path)
+                r = self.session.get(url=url, auth=self.auth)
             if r.status_code in (200, 201, 202):
                 return json and r.json() or r.text
             else:

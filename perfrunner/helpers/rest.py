@@ -9,6 +9,7 @@ from requests.exceptions import ConnectionError
 
 from logger import logger
 from perfrunner.helpers.misc import pretty_dict
+from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import BucketSettings, ClusterSpec
 
 MAX_RETRY = 20
@@ -24,7 +25,9 @@ def retry(method: Callable, *args, **kwargs):
     for _ in range(MAX_RETRY):
         try:
             r = method(*args, **kwargs)
-        except ConnectionError:
+        except ConnectionError as ex:
+            print(str(ex))
+            print(str(r))
             time.sleep(RETRY_DELAY * 2)
             continue
         if r.status_code in range(200, 203):
@@ -39,6 +42,16 @@ def retry(method: Callable, *args, **kwargs):
 
 
 class RestHelper:
+    def __new__(cls,
+                cluster_spec: ClusterSpec,
+                verbose: bool = False):
+        if cluster_spec.dynamic_infrastructure:
+            return KubernetesRestHelper(cluster_spec)
+        else:
+            return DefaultRestHelper(cluster_spec)
+
+
+class RestBase:
 
     def __init__(self, cluster_spec: ClusterSpec):
         self.rest_username, self.rest_password = cluster_spec.rest_credentials
@@ -68,6 +81,12 @@ class RestHelper:
 
     def delete(self, **kwargs) -> requests.Response:
         return self._delete(**kwargs)
+
+
+class DefaultRestHelper(RestBase):
+
+    def __init__(self, cluster_spec):
+        super().__init__(cluster_spec=cluster_spec)
 
     def set_data_path(self, host: str, path: str):
         logger.info('Configuring data path on {}'.format(host))
@@ -999,3 +1018,70 @@ class RestHelper:
         api = 'http://{}:8091/pools/default/buckets/{}/scopes/{}/collections/{}'\
             .format(host, bucket, scope, collection)
         self.delete(url=api)
+
+
+class KubernetesRestHelper(RestBase):
+
+    def __init__(self, cluster_spec: ClusterSpec):
+        super().__init__(cluster_spec=cluster_spec)
+        self.remote = RemoteHelper(cluster_spec)
+        self.ip_table, self.port_translation = self.remote.get_ip_port_mapping()
+
+    def translate_host_and_port(self, host, port):
+        trans_host = self.ip_table.get(host)
+        trans_port = self.port_translation.get(trans_host).get(str(port))
+        return trans_host, trans_port
+
+    def exec_n1ql_statement(self, host: str, statement: str) -> dict:
+        host, port = self.translate_host_and_port(host, '8093')
+        api = 'http://{}:{}/query/service'\
+            .format(host, port)
+        data = {
+            'statement': statement,
+        }
+        response = self.post(url=api, data=data)
+        return response.json()
+
+    # indexer endpoints not yet exposed by operator
+    def get_index_status(self, host: str) -> dict:
+        return {'status': [{'status': 'Ready'}]}
+
+    # indexer endpoints not yet exposed by operator
+    def get_gsi_stats(self, host: str) -> dict:
+        return {'num_docs_queued': 0, 'num_docs_pending': 0}
+
+    def get_active_nodes_by_role(self, master_node: str, role: str) -> List[str]:
+        active_nodes_by_role = []
+        for node in self.cluster_spec.servers_by_role(role):
+            active_nodes_by_role.append(node)
+        return active_nodes_by_role
+
+    def node_statuses(self, host: str) -> dict:
+        host, port = self.translate_host_and_port(host, '8091')
+        api = 'http://{}:{}/nodeStatuses'\
+            .format(host, port)
+        data = self.get(url=api).json()
+        return {node: info['status'] for node, info in data.items()}
+
+    def get_version(self, host: str) -> str:
+        logger.info('Getting Couchbase Server version')
+        host, port = self.translate_host_and_port(host, '8091')
+        api = 'http://{}:{}/pools/'\
+            .format(host, port)
+        r = self.get(url=api).json()
+        return r['implementationVersion'] \
+            .replace('-rel-enterprise', '') \
+            .replace('-enterprise', '') \
+            .replace('-community', '')
+
+    def get_bucket_stats(self, host: str, bucket: str) -> dict:
+        host, port = self.translate_host_and_port(host, '8091')
+        api = 'http://{}:{}/pools/default/buckets/{}/stats'\
+            .format(host, port, bucket)
+        return self.get(url=api).json()
+
+    def get_bucket_info(self, host: str, bucket: str) -> List[str]:
+        host, port = self.translate_host_and_port(host, '8091')
+        api = 'http://{}:{}/pools/default/buckets/{}'\
+            .format(host, port, bucket)
+        return self.get(url=api).json()

@@ -2,6 +2,7 @@ from fabric import state
 from fabric.api import run, settings
 
 from logger import logger
+from perfrunner.remote.kubernetes import RemoteKubernetes
 from perfrunner.remote.linux import RemoteLinux
 from perfrunner.remote.windows import RemoteWindows
 from perfrunner.settings import ClusterSpec
@@ -12,6 +13,8 @@ class RemoteHelper:
     def __new__(cls, cluster_spec: ClusterSpec, verbose: bool = False):
         if not cluster_spec.ssh_credentials:
             return None
+        if cluster_spec.dynamic_infrastructure:
+            return RemoteKubernetes(cluster_spec, 'kubernetes')
 
         state.env.user, state.env.password = cluster_spec.ssh_credentials
         state.output.running = verbose

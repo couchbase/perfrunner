@@ -1,0 +1,10 @@
+apiVersion: couchbase.com/v2
+kind: CouchbaseUser
+metadata:
+  name: administrator
+  labels:
+    cluster: cb-example-perf
+spec:
+  fullName: "Administrator"
+  authDomain: local
+  authSecret: user-password-secret

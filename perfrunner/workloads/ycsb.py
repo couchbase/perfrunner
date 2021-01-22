@@ -22,7 +22,11 @@ def ycsb_data_load(workload_settings: PhaseSettings,
             'inserts_per_workerinstance': workload_settings.inserts_per_workerinstance,
         }
 
-    run_ycsb(host=target.node,
+    host = target.node
+    if target.cloud:
+        host = target.cloud['cluster_svc']
+
+    run_ycsb(host=host,
              bucket=target.bucket,
              password=target.password,
              action='load',
@@ -83,7 +87,11 @@ def ycsb_workload(workload_settings: PhaseSettings,
                                workload_settings.items),
         }
 
-    run_ycsb(host=target.node,
+    host = target.node
+    if target.cloud:
+        host = target.cloud['cluster_svc']
+
+    run_ycsb(host=host,
              bucket=target.bucket,
              password=target.password,
              action='run',

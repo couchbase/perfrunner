@@ -1,3 +1,4 @@
+import os
 import sys
 from argparse import ArgumentParser
 from collections import namedtuple
@@ -46,6 +47,270 @@ PKG_PATTERNS = {
 Build = namedtuple('Build', ['filename', 'url'])
 
 
+class OperatorInstaller:
+
+    def __init__(self, cluster_spec, options):
+        self.options = options
+        self.cluster_spec = cluster_spec
+        self.operator_version = self.options.operator_version
+        self.couchbase_version = self.options.couchbase_version
+        self.node_count = len(self.cluster_spec.infrastructure_clusters['couchbase1'].split())
+        self.remote = RemoteHelper(cluster_spec)
+        self.release = self.operator_version.split("-")[0]
+        self.build = self.operator_version.split("-")[1]
+        self.docker_config_path = os.path.expanduser("~") + "/.docker/config.json"
+        self.operator_base_path = "cloud/operator/{}/{}".format(self.release[0], self.release[2])
+        self.certificate_authority_path = "{}/ca.crt".format(self.operator_base_path)
+        self.crd_path = "{}/crd.yaml".format(self.operator_base_path)
+        self.config_path = "{}/config.yaml".format(self.operator_base_path)
+        self.config_template_path = "{}/config_template.yaml".format(self.operator_base_path)
+        self.auth_path = "{}/auth_secret.yaml".format(self.operator_base_path)
+        self.cb_cluster_path = "{}/couchbase-cluster.yaml".format(self.operator_base_path)
+        self.template_cb_cluster_path = "{}/couchbase-cluster_template.yaml"\
+            .format(self.operator_base_path)
+        self.worker_base_path = "cloud/worker"
+        self.worker_path = "{}/worker.yaml".format(self.worker_base_path)
+        self.rmq_base_path = "cloud/broker/rabbitmq/0.48"
+        self.rmq_operator_path = "{}/cluster-operator.yaml".format(self.rmq_base_path)
+        self.rmq_cluster_path = "{}/rabbitmq.yaml".format(self.rmq_base_path)
+
+    def install(self):
+        self.install_operator()
+        self.install_celery_broker()
+
+    def install_operator(self):
+        logger.info("installing operator")
+        self.create_secrets()
+        self.create_crd()
+        self.create_config()
+        self.wait_for_operator_and_admission()
+        self.create_auth()
+        self.create_cluster()
+        self.wait_for_cluster()
+
+    def install_celery_broker(self):
+        logger.info("installing celery broker")
+        self.create_rabbitmq_operator()
+        self.wait_for_rabbitmq_operator()
+        self.create_rabbitmq_cluster()
+        self.wait_for_rabbitmq_cluster()
+        self.creating_rabbitmq_config()
+
+    def uninstall(self):
+        self.uninstall_operator()
+        self.uninstall_celery_broker()
+        self.uninstall_workers()
+        self.delete_artifacts()
+
+    def uninstall_operator(self):
+        logger.info("uninstalling operator")
+        self.delete_operator_files()
+        self.delete_operator_secrets()
+        self.wait_for_operator_deletion()
+
+    def uninstall_celery_broker(self):
+        logger.info("uninstalling celery broker")
+        self.delete_rabbitmq_files()
+        self.wait_for_rabbitmq_deletion()
+
+    def uninstall_workers(self):
+        logger.info("uninstall workers")
+        self.delete_worker_files()
+        self.wait_for_worker_deletion()
+
+    def create_secrets(self):
+        logger.info("creating secrets")
+        self.remote.create_docker_secret(
+            self.docker_config_path)
+        self.remote.create_operator_tls_secret(
+            self.certificate_authority_path)
+
+    def create_crd(self):
+        logger.info("creating CRD")
+        self.remote.create_from_file(self.crd_path)
+
+    def create_config(self):
+        logger.info("creating config")
+        self.remote.create_operator_config(
+            self.config_template_path,
+            self.config_path,
+            self.release,
+            self.build)
+
+    def create_auth(self):
+        logger.info("creating auth")
+        self.remote.create_from_file(self.auth_path)
+
+    def create_cluster(self):
+        logger.info("creating couchbase cluster")
+        self.remote.create_couchbase_cluster(
+            self.template_cb_cluster_path,
+            self.cb_cluster_path,
+            self.couchbase_version,
+            self.node_count)
+
+    def wait_for_operator_and_admission(self):
+        logger.info("waiting for operator and admission controller")
+        self.remote.wait_for_admission_controller_ready()
+        self.remote.wait_for_operator_ready()
+
+    def wait_for_cluster(self):
+        logger.info("waiting for cluster")
+        self.remote.wait_for_couchbase_pods_ready(self.node_count)
+
+    def create_rabbitmq_operator(self):
+        logger.info("creating rabbitmq operator")
+        self.remote.create_from_file(self.rmq_operator_path)
+
+    def wait_for_rabbitmq_operator(self):
+        logger.info("waiting for rabbitmq operator")
+        self.remote.wait_for_rabbitmq_operator_ready()
+
+    def create_rabbitmq_cluster(self):
+        logger.info("creating rabbitmq cluster")
+        self.remote.create_from_file(self.rmq_cluster_path)
+
+    def wait_for_rabbitmq_cluster(self):
+        logger.info("waiting for rabbitmq cluster")
+        self.remote.wait_for_rabbitmq_broker_ready()
+
+    def creating_rabbitmq_config(self):
+        logger.info("creating rabbitmq config")
+        self.remote.upload_rabbitmq_config()
+
+    def delete_operator_files(self):
+        logger.info("deleting operator files")
+        files = [self.cb_cluster_path, self.auth_path,
+                 self.config_path,  self.crd_path]
+        self.remote.delete_from_files(files)
+
+    def delete_operator_secrets(self):
+        logger.info("deleting operator secrets")
+        secrets = ['regcred', 'couchbase-operator-tls',
+                   'couchbase-server-tls', 'user-password-secret']
+        self.remote.delete_secrets(secrets)
+
+    def wait_for_operator_deletion(self):
+        logger.info("waiting for operator deletion")
+        self.remote.wait_for_operator_deletion()
+
+    def delete_rabbitmq_files(self):
+        logger.info("deleting rabbit mq files")
+        self.remote.delete_from_files(
+            [self.rmq_cluster_path,
+             self.rmq_operator_path])
+
+    def wait_for_rabbitmq_deletion(self):
+        logger.info("waiting for rabbitmq deletion")
+        self.remote.wait_for_rabbitmq_deletion()
+
+    def delete_worker_files(self):
+        logger.info("deleting worker files")
+        self.remote.delete_from_file(self.worker_path)
+
+    def wait_for_worker_deletion(self):
+        logger.info("waiting for worker deletion")
+        self.remote.wait_for_workers_deletion()
+
+    def delete_artifacts(self):
+        logger.info("deleting any artifact pods, pvcs, and backups")
+        self.remote.delete_all_backups()
+        self.remote.delete_all_pods()
+        self.remote.delete_all_pvc()
+
+
+class CloudInstaller:
+
+    def __init__(self, cluster_spec, options):
+        self.options = options
+        self.cluster_spec = cluster_spec
+        self.operator_installer = OperatorInstaller(cluster_spec, options)
+
+    def install(self):
+        self.install_storage_class()
+        self.install_istio()
+        self.operator_installer.install()
+
+    def uninstall(self):
+        self.operator_installer.uninstall()
+        self.uninstall_istio()
+        self.uninstall_storage_class()
+
+    def install_storage_class(self):
+        raise NotImplementedError
+
+    def uninstall_storage_class(self):
+        raise NotImplementedError
+
+    def install_istio(self):
+        raise NotImplementedError
+
+    def uninstall_istio(self):
+        raise NotImplementedError
+
+
+class AWSInstaller(CloudInstaller):
+
+    STORAGE_CLASSES = {
+        'default': None,
+        'gp2': 'cloud/infrastructure/aws/eks/ebs-gp2-sc.yaml'
+    }
+
+    def __init__(self, cluster_spec, options):
+        super().__init__(cluster_spec, options)
+
+    def install_storage_class(self):
+        scs = self.operator_installer.remote.get_storage_classes()
+        for sc in scs['items']:
+            sc_name = sc['metadata']['name']
+            self.operator_installer.remote.delete_storage_class(sc_name)
+        for cluster in self.cluster_spec.kubernetes_clusters():
+            sc = self.cluster_spec.kubernetes_storage_class(cluster)
+            if self.STORAGE_CLASSES[sc]:
+                self.operator_installer.remote.create_from_file(self.STORAGE_CLASSES[sc])
+
+    def uninstall_storage_class(self):
+        for cluster in self.cluster_spec.kubernetes_clusters():
+            sc = self.cluster_spec.kubernetes_storage_class(cluster)
+            if self.STORAGE_CLASSES[sc]:
+                self.operator_installer.remote.delete_from_file(self.STORAGE_CLASSES[sc])
+
+    def install_istio(self):
+        if not self.cluster_spec.istio_enabled('k8s_cluster_1'):
+            return
+        istio_install_cmd = "install " \
+                            "--set profile=default " \
+                            "--set values.global.defaultNodeSelector.'NodeRoles'=utilities -y"
+        istio_label_cmd = "label namespace default istio-injection=enabled --overwrite"
+        self.operator_installer.remote.istioctl(istio_install_cmd)
+        self.operator_installer.remote.kubectl(istio_label_cmd)
+
+    def uninstall_istio(self):
+        if not self.cluster_spec.istio_enabled('k8s_cluster_1'):
+            return
+        self.operator_installer.remote.istioctl("x uninstall --purge -y")
+        self.operator_installer.remote.delete_namespace("istio-system")
+        self.operator_installer.remote.kubectl("label namespace default istio-injection-")
+
+    def install_kubernetes_dashboard(self):
+        pass
+
+    def uninstall_kubernetes_dashboard(self):
+        pass
+
+
+class AzureInstaller(CloudInstaller):
+
+    def __init__(self, cluster_spec, options):
+        super().__init__(cluster_spec, options)
+
+
+class GCPInstaller(CloudInstaller):
+
+    def __init__(self, cluster_spec, options):
+        super().__init__(cluster_spec, options)
+
+
 class CouchbaseInstaller:
 
     def __init__(self, cluster_spec, options):
@@ -55,18 +320,18 @@ class CouchbaseInstaller:
 
     @property
     def url(self) -> str:
-        if validators.url(self.options.version):
-            return self.options.version
+        if validators.url(self.options.couchbase_version):
+            return self.options.couchbase_version
         else:
             return self.find_package(edition=self.options.edition)
 
     @property
     def release(self) -> str:
-        return self.options.version.split('-')[0]
+        return self.options.couchbase_version.split('-')[0]
 
     @property
     def build(self) -> str:
-        split = self.options.version.split('-')
+        split = self.options.couchbase_version.split('-')
         if len(split) > 1:
             return split[1]
 
@@ -170,8 +435,9 @@ class CouchbaseInstaller:
 def get_args():
     parser = ArgumentParser()
 
-    parser.add_argument('-v', '--version', '--url',
+    parser.add_argument('-v', '--version', '--url', '-cv', '--couchbase-version',
                         required=True,
+                        dest='couchbase_version',
                         help='the build version or the HTTP URL to a package')
     parser.add_argument('-c', '--cluster',
                         required=True,
@@ -192,6 +458,12 @@ def get_args():
     parser.add_argument('--local-copy-url',
                         default=None,
                         help='The local copy url of the build')
+    parser.add_argument('-ov', '--operator-version',
+                        dest='operator_version',
+                        help='the build version for the couchbase operator')
+    parser.add_argument('-u', '--uninstall',
+                        action='store_true',
+                        help='the path to a cluster specification file')
     return parser.parse_args()
 
 
@@ -201,16 +473,31 @@ def main():
     cluster_spec = ClusterSpec()
     cluster_spec.parse(fname=args.cluster)
 
-    installer = CouchbaseInstaller(cluster_spec, args)
-    installer.install()
+    if cluster_spec.dynamic_infrastructure:
+        infra_provider = cluster_spec.infrastructure_settings['provider']
+        if infra_provider == 'aws':
+            installer = AWSInstaller(cluster_spec, args)
+        elif infra_provider == 'azure':
+            installer = AzureInstaller(cluster_spec, args)
+        elif infra_provider == 'gcp':
+            installer = GCPInstaller(cluster_spec, args)
+        else:
+            raise Exception("{} is not a valid infrastructure provider"
+                            .format(infra_provider))
 
-    if args.local_copy:
-        installer.download()
-        installer.download_local(args.local_copy_url)
-
-    if '--remote-copy' in sys.argv:
-        logger.info('Saving a remote copy')
-        installer.download_remote()
+        if args.uninstall:
+            installer.uninstall()
+        else:
+            installer.install()
+    else:
+        installer = CouchbaseInstaller(cluster_spec, args)
+        installer.install()
+        if args.local_copy:
+            installer.download()
+            installer.download_local(args.local_copy_url)
+        if '--remote-copy' in sys.argv:
+            logger.info('Saving a remote copy')
+            installer.download_remote()
 
 
 if __name__ == '__main__':

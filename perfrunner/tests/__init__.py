@@ -36,19 +36,16 @@ class PerfTest:
                  verbose: bool):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
-
+        self.dynamic_infra = self.cluster_spec.dynamic_infrastructure
         self.target_iterator = TargetIterator(cluster_spec, test_config)
-
         self.cluster = ClusterManager(cluster_spec, test_config)
+        self.remote = RemoteHelper(cluster_spec, verbose)
+        self.profiler = Profiler(cluster_spec, test_config)
+        self.master_node = next(cluster_spec.masters)
         self.memcached = MemcachedHelper(test_config)
         self.monitor = Monitor(cluster_spec, test_config, verbose)
         self.rest = RestHelper(cluster_spec)
-        self.remote = RemoteHelper(cluster_spec, verbose)
-        self.profiler = Profiler(cluster_spec, test_config)
-
-        self.master_node = next(cluster_spec.masters)
         self.build = self.rest.get_version(self.master_node)
-
         self.metrics = MetricHelper(self)
         self.reporter = ShowFastReporter(cluster_spec, test_config, self.build)
 
@@ -116,7 +113,6 @@ class PerfTest:
 
     def collect_logs(self):
         self.remote.collect_info()
-
         for hostname in self.cluster_spec.servers:
             for fname in glob.glob('{}/*.zip'.format(hostname)):
                 shutil.move(fname, '{}.zip'.format(hostname))
@@ -139,11 +135,17 @@ class PerfTest:
             fh.write(cert)
 
     def check_rebalance(self) -> str:
-        for master in self.cluster_spec.masters:
-            if self.rest.is_not_balanced(master):
-                return 'The cluster is not balanced'
+        if self.dynamic_infra:
+            pass
+        else:
+            for master in self.cluster_spec.masters:
+                if self.rest.is_not_balanced(master):
+                    return 'The cluster is not balanced'
 
     def check_failover(self) -> Optional[str]:
+        if self.dynamic_infra:
+            return
+
         if hasattr(self, 'rebalance_settings'):
             if self.rebalance_settings.failover or \
                     self.rebalance_settings.graceful_failover:

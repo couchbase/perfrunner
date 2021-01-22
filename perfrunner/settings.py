@@ -62,6 +62,68 @@ class Config:
 class ClusterSpec(Config):
 
     @property
+    def dynamic_infrastructure(self):
+        if 'infrastructure' in self.config.sections():
+            return True
+        else:
+            return False
+
+    @property
+    def generated_cloud_config_path(self):
+        if self.dynamic_infrastructure:
+            return "cloud/infrastructure/generated/infrastructure_config.json"
+        else:
+            return None
+
+    @property
+    def infrastructure_settings(self):
+        return {k: v for k, v in self.config.items('infrastructure')}
+
+    @property
+    def infrastructure_clusters(self):
+        return {k: v for k, v in self.config.items('clusters')}
+
+    @property
+    def infrastructure_clients(self):
+        return {k: v for k, v in self.config.items('clients')}
+
+    @property
+    def infrastructure_utilities(self):
+        return {k: v for k, v in self.config.items('utilities')}
+
+    def kubernetes_version(self, cluster_name):
+        return self.infrastructure_section(cluster_name)\
+            .get('version', '1.17')
+
+    def istio_enabled(self, cluster_name):
+        istio_enabled = self.infrastructure_section(cluster_name).get('istio_enabled', 0)
+        istio_enabled = bool(int(istio_enabled))
+        return istio_enabled
+
+    def kubernetes_storage_class(self, cluster_name):
+        return self.infrastructure_section(cluster_name) \
+            .get('storage_class', 'default')
+
+    def kubernetes_clusters(self):
+        k8s_clusters = []
+        if 'k8s' in self.config.sections():
+            for k, v in self.config.items('k8s'):
+                k8s_clusters += v.split(",")
+        return k8s_clusters
+
+    def infrastructure_section(self, section: str):
+        if section in self.config.sections():
+            return {k: v for k, v in self.config.items(section)}
+        else:
+            return {}
+
+    def infrastructure_config(self):
+        infra_config = {}
+        for section in self.config.sections():
+            infra_config[section] = {p: v for p, v in self.config.items(section)}
+        return infra_config
+
+    @property
     def clusters(self) -> Iterator:
         for cluster_name, servers in self.config.items('clusters'):
             hosts = [s.split(':')[0] for s in servers.split()]
@@ -109,7 +171,15 @@ class ClusterSpec(Config):
 
     @property
     def workers(self) -> List[str]:
-        return self.config.get('clients', 'hosts').split()
+        if self.dynamic_infrastructure:
+            client_map = self.infrastructure_clients
+            clients = []
+            for k, v in client_map.items():
+                if "workers" in k:
+                    clients += ["{}.{}".format(k, host) for host in v.split()]
+            return clients
+        else:
+            return self.config.get('clients', 'hosts').split()
 
     @property
     def client_credentials(self) -> List[str]:
@@ -148,6 +218,10 @@ class ClusterSpec(Config):
     @property
     def ssh_credentials(self) -> List[str]:
         return self.config.get('credentials', 'ssh').split(':')
+
+    @property
+    def aws_key_name(self) -> List[str]:
+        return self.config.get('credentials', 'aws_key_name')
 
     @property
     def parameters(self) -> dict:
@@ -1817,11 +1891,12 @@ class TestConfig(Config):
 
 class TargetSettings:
 
-    def __init__(self, host: str, bucket: str, password: str, prefix: str):
+    def __init__(self, host: str, bucket: str, password: str, prefix: str, cloud: dict = None):
         self.password = password
         self.node = host
         self.bucket = bucket
         self.prefix = prefix
+        self.cloud = cloud
 
     @property
     def connection_string(self) -> str:
@@ -1850,4 +1925,8 @@ class TargetIterator(Iterable):
             for bucket in self.test_config.buckets:
                 if self.prefix is None:
                     prefix = target_hash(master)
-                yield TargetSettings(master, bucket, password, prefix)
+                if self.cluster_spec.dynamic_infrastructure:
+                    yield TargetSettings(master, bucket, password, prefix,
+                                         {'cluster_svc': 'cb-example-perf'})
+                else:
+                    yield TargetSettings(master, bucket, password, prefix)

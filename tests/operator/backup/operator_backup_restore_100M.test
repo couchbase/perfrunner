@@ -1,0 +1,25 @@
+[test_case]
+test = perfrunner.tests.operator.OperatorBackupRestoreTest
+
+[showfast]
+title = 4 nodes, 1 bucket x 100M x 1KB, Idle
+component = operator
+category = backup
+
+[cluster]
+mem_quota = 52428
+initial_nodes = 4
+num_buckets = 1
+online_cores = 12
+kernel_mem_limit_services = kv
+kernel_mem_limit = 65536
+
+[compaction]
+db_percentage = 100
+
+[load]
+items = 100000000
+size = 1024
+workers = 100
+
+

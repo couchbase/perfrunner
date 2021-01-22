@@ -1,4 +1,6 @@
+import fileinput
 import json
+import shutil
 import time
 from hashlib import md5
 from typing import Any, Union
@@ -94,3 +96,85 @@ def human_format(number: float) -> str:
         magnitude += 1
         number /= 1e3
     return '{:.0f}{}'.format(number, ['', 'K', 'M', 'G', 'T', 'P'][magnitude])
+
+
+def copy_template(source, dest):
+    shutil.copyfile(source, dest)
+
+
+def inject_operator_build(config_path, release, build):
+    repo = 'couchbase'
+    operator_name = 'couchbase-operator-internal'
+    admission_controller_name = 'couchbase-admission-internal'
+    major = int(release[0])
+    minor = int(release[2])
+    if major >= 2 and minor >= 1:
+        repo = 'registry.gitlab.com/cb-vanilla'
+        operator_name = 'operator'
+        admission_controller_name = 'admission-controller'
+    with fileinput.FileInput(config_path, inplace=True, backup='.bak') as file:
+        search = 'couchbase/operator:build'
+        replace = '{}/{}:{}-{}'.format(repo, operator_name, release, build)
+        for line in file:
+            print(line.replace(search, replace), end='')
+    with fileinput.FileInput(config_path, inplace=True, backup='.bak') as file:
+        search = 'couchbase/admission-controller:build'
+        replace = '{}/{}:{}-{}'.format(repo, admission_controller_name, release, build)
+        for line in file:
+            print(line.replace(search, replace), end='')
+
+
+def inject_couchbase_version(cluster_path, couchbase_version):
+    repo = 'couchbase'
+    backup_repo = 'registry.gitlab.com/cb-vanilla/operator-backup'
+    release = couchbase_version.split("-")[0]
+    major = int(release[0])
+    minor = int(release[2])
+    patch = int(release[4])
+    is_build = "-" in couchbase_version
+    if is_build:
+        build = int(couchbase_version.split("-")[1])
+        check_66 = major == 6 and minor == 6
+        check_660 = check_66 and patch == 0 and build >= 7924
+        check_661 = check_66 and patch == 1 and build >= 9133
+        check_700 = major >= 7 and minor >= 0 and patch >= 0
+        if check_660 or check_661 or check_700:
+            repo = 'registry.gitlab.com/cb-vanilla/server'
+        else:
+            repo = 'couchbase/server-internal'
+        if major <= 6 and minor <= 5:
+            backup_build = '6.5.1-116'
+        else:
+            backup_build = '6.6.0-100'
+    else:
+        repo = 'couchbase/server'
+        backup_build = '6.6.0-100'
+
+    with fileinput.FileInput(cluster_path, inplace=True, backup='.bak') as file:
+        search = 'couchbase/server:build'
+        replace = '{}:{}'.format(repo, couchbase_version)
+        for line in file:
+            print(line.replace(search, replace), end='')
+
+    with fileinput.FileInput(cluster_path, inplace=True, backup='.bak') as file:
+        search = 'couchbase/operator-backup:build'
+        replace = '{}:{}'.format(backup_repo, backup_build)
+        for line in file:
+            print(line.replace(search, replace), end='')
+
+
+def inject_server_count(cluster_path, server_count):
+    with fileinput.FileInput(cluster_path, inplace=True, backup='.bak') as file:
+        search = 'size: node_count'
+        replace = 'size: {}'.format(server_count)
+        for line in file:
+            print(line.replace(search, replace), end='')
+
+
+def inject_num_workers(num_workers, worker_template_path, worker_path):
+    shutil.copyfile(worker_template_path, worker_path)
+    with fileinput.FileInput(worker_path, inplace=True, backup='.bak') as file:
+        search = 'NUM_WORKERS'
+        replace = '{}'.format(str(num_workers))
+        for line in file:
+            print(line.replace(search, replace), end='')

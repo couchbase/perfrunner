@@ -69,6 +69,14 @@ loader:
 docker:
 	docker build -t docker.io/perflab/perfrunner docker
 
+docker-cloud-worker:
+	pyenv local 3.6.12 && \
+	virtualenv --quiet --python ${PYTHON} ${ENV}
+	${ENV}/bin/pip install --upgrade --quiet pip wheel
+	${ENV}/bin/pip install --quiet --no-warn-script-location -r requirements.txt
+	${ENV}/bin/python setup.py --quiet install
+	pwd > ${ENV}/lib/${PYTHON}/site-packages/perfrunner.pth
+
 CONTAINER_PASSWORD := puppet
 docker-compose:
 	docker-compose up -d --build perfrunner

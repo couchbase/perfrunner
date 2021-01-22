@@ -1,0 +1,43 @@
+{
+  "rabbit_version": "3.8.9",
+  "parameters": [],
+  "policies": [],
+  "users": [
+    {
+      "name": "guest",
+      "password_hash": "i6qMFDGjSjiOHQ6KpNilidmpk48=",
+      "tags": "administrator"
+    },
+    {
+      "name": "couchbase",
+      "password_hash": "Z6MS4kUSF6v1TxJVI+aREEwzypE=",
+      "tags": ""
+    }
+  ],
+  "vhosts": [
+    {
+      "name": "broker"
+    },
+    {
+      "name": "/"
+    }
+  ],
+  "permissions": [
+    {
+      "user": "couchbase",
+      "vhost": "broker",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "guest",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "queues": [],
+  "bindings": []
+}

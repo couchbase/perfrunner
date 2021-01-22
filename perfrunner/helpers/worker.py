@@ -10,7 +10,7 @@ from sqlalchemy import create_engine
 
 from logger import logger
 from perfrunner import celerylocal, celeryremote
-from perfrunner.helpers import local
+from perfrunner.helpers import local, misc
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import (
     ClusterSpec,
@@ -32,11 +32,46 @@ from perfrunner.workloads.tpcds import (
 from perfrunner.workloads.ycsb import ycsb_data_load, ycsb_workload
 
 celery = Celery('workers')
-if '--remote' in sys.argv or '-C' in sys.argv:
-    # -C flag is a hack to distinguish local and remote workers!
-    celery.config_from_object(celeryremote)
+
+if 'env/bin/perfrunner' in sys.argv:
+    if '--remote' in sys.argv:
+        # -C flag is a hack to distinguish local and remote workers!
+        celery.config_from_object(celeryremote)
+    else:
+        celery.config_from_object(celerylocal)
+elif 'env/bin/nosetests' in sys.argv:
+    pass
 else:
-    celery.config_from_object(celerylocal)
+    worker_type = os.getenv('WORKER_TYPE')
+    broker_url = os.getenv('BROKER_URL')
+    if worker_type == 'local':
+        logger.info("local worker")
+        celery.conf.update(
+            broker_url='sqla+sqlite:///perfrunner.db',
+            result_backend='database',
+            database_url='sqlite:///results.db',
+            task_serializer='pickle',
+            result_serializer='pickle',
+            accept_content={'pickle'},
+            task_protocol=1)
+    elif worker_type == 'remote':
+        logger.info('remote worker')
+        celery.conf.update(
+            broker_url=broker_url,
+            broker_pool_limit=None,
+            worker_hijack_root_logger=False,
+            result_backend="amqp://",
+            result_persistent=False,
+            result_exchange="perf_results",
+            accept_content=['pickle'],
+            result_serializer='pickle',
+            task_serializer='pickle',
+            task_protocol=1,
+            broker_connection_timeout=30,
+            broker_connection_retry=True,
+            broker_connection_max_retries=10)
+    else:
+        raise Exception('invalid worker type: {}'.format(worker_type))
 
 
 @celery.task
@@ -108,10 +143,29 @@ class RemoteWorkerManager:
                  verbose: bool):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
+        self.broker_url = 'amqp://couchbase:couchbase@172.23.97.73:5672/broker'
         self.remote = RemoteHelper(cluster_spec, verbose)
-
+        self.dynamic_infra = self.cluster_spec.dynamic_infrastructure
+        if self.dynamic_infra:
+            self.WORKER_HOME = '/opt/perfrunner'
+            self.broker_url = self.remote.get_broker_urls()[0]
+            self.worker_template_path = "cloud/worker/worker_template.yaml"
+            self.worker_path = "cloud/worker/worker.yaml"
+        celery.conf.update(
+            broker_url=self.broker_url,
+            broker_pool_limit=None,
+            worker_hijack_root_logger=False,
+            result_backend="amqp://",
+            result_persistent=False,
+            result_exchange="perf_results",
+            accept_content=['pickle'],
+            result_serializer='pickle',
+            task_serializer='pickle',
+            task_protocol=1,
+            broker_connection_timeout=5,
+            broker_connection_retry=True,
+            broker_connection_max_retries=2)
         self.workers = cycle(self.cluster_spec.workers)
-
         self.terminate()
         self.start()
         self.wait_until_workers_are_ready()
@@ -128,16 +182,36 @@ class RemoteWorkerManager:
 
     def start(self):
         logger.info('Initializing remote worker environment')
+        if self.dynamic_infra:
+            self.start_kubernetes_workers()
+        else:
+            self.start_remote_workers()
+
+    def start_remote_workers(self):
         perfrunner_home = os.path.join(self.WORKER_HOME, 'perfrunner')
         self.remote.init_repo(self.WORKER_HOME)
         self.remote.install_clients(perfrunner_home, self.test_config)
-
         if '--remote-copy' in sys.argv:
             self.remote.remote_copy(self.WORKER_HOME)
-
         for worker in self.cluster_spec.workers:
             logger.info('Starting remote Celery worker, host={}'.format(worker))
             self.remote.start_celery_worker(worker, perfrunner_home)
+
+    def start_kubernetes_workers(self):
+        num_workers = len(self.cluster_spec.workers)
+        misc.inject_num_workers(num_workers,
+                                self.worker_template_path,
+                                self.worker_path)
+        self.remote.create_from_file(self.worker_path)
+        self.remote.wait_for_pods_ready("worker", num_workers)
+        worker_idx = 0
+        for pod in self.remote.get_pods():
+            worker_name = pod.get("metadata", {}).get("name", "")
+            if "worker" in worker_name:
+                self.remote.start_celery_worker(worker_name,
+                                                self.cluster_spec.workers[worker_idx],
+                                                self.broker_url)
+                worker_idx += 1
 
     def wait_until_workers_are_ready(self):
         workers = ['celery@{}'.format(worker)
@@ -156,9 +230,9 @@ class RemoteWorkerManager:
                   timer: int = None):
         if self.test_config.test_case.reset_workers:
             self.reset_workers()
-
         self.async_results = []
         for target in target_iterator:
+            logger.info('Task target: {}'.format(str(target.__dict__)))
             for instance in range(task_settings.workload_instances):
                 worker = self.next_worker()
                 logger.info('Running the task on {}'.format(worker))
@@ -184,7 +258,10 @@ class RemoteWorkerManager:
 
     def terminate(self):
         logger.info('Terminating Celery workers')
-        self.remote.terminate_client_processes()
+        if self.dynamic_infra:
+            self.remote.terminate_client_pods(self.worker_path)
+        else:
+            self.remote.terminate_client_processes()
 
 
 class LocalWorkerManager(RemoteWorkerManager):

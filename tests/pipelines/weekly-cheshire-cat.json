@@ -319,5 +319,24 @@
         {"job": "leto", "cluster": "leto.spec", "test_config": "query_lat_20M_multi_emits_default.test"},
         {"job": "leto", "cluster": "leto.spec", "test_config": "query_lat_20M_range_default.test"},
         {"job": "leto", "cluster": "leto.spec", "test_config": "query_thr_20M_default.test"}
+    ],
+    "Eventing": [
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_fun_bktop_1s_1c.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_fun_bktop_src_bkt_mut_1s_1c.test"},
+        {"job": "themis", "cluster": "themis_eventing_rebalance.spec", "test_config": "throughput50M_fun_bktop_eventing_rebalance_1s_1c.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput50M_fun_bktop_rebalance_1s_1c.test"},
+        {"job": "themis", "cluster": "themis_n1ql.spec", "test_config": "throughput20M_fun_n1ql_1s_1c.test"},
+        {"job": "themis", "cluster": "themis_eventing_index_n1ql.spec", "test_config": "throughput20M_fun_n1ql_iter_1s_1c.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_incr_ctrop_0cont_src_bkt_mut_1s_1c.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_get_advbktop_src_bkt_mut_1s_1c.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_replace_advbktop_0cont_1s_1c.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput96M_24fun_bktop_12scope_24collections.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput96M_12fun_bktop_6scope_12collections.test"},
+        {"job": "themis", "cluster": "themis_eventing_rebalance.spec", "test_config": "throughput50M_24fun_bktop_eventing_rebalance_12s_24c.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput50M_create_timer_same_src_meta_bkt_512bytes_context_1s_1c.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput50M_timer_same_src_meta_bkt_bktop_512bytes_context_1s_1c.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_timer_bktop_1s_1c.test"},
+        {"job": "themis", "cluster": "themis_eventing_rebalance.spec", "test_config": "throughput50M_timer_bktop_eventing_rebalance_512bytes_context_1s_1c.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput50M_timer_bktop_rebalance_1s_1c.test"}
     ]
 }

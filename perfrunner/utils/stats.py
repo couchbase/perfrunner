@@ -1,9 +1,8 @@
 from collections import namedtuple
 from typing import Dict, Iterator, Optional
 
-from couchbase.bucket import Bucket
-from couchbase.exceptions import NotFoundError
-from couchbase.n1ql import N1QLQuery
+from couchbase.cluster import Cluster, ClusterOptions, QueryOptions
+from couchbase_core.cluster import PasswordAuthenticator
 
 from cbagent.metadata_client import MetadataClient
 from cbagent.stores import PerfStore
@@ -38,19 +37,17 @@ class StatsScanner:
     """
 
     def __init__(self):
-        self.bucket = self.new_bucket()
+        pass_auth = PasswordAuthenticator(self.COUCHBASE_BUCKET, self.COUCHBASE_PASSWORD)
+        options = ClusterOptions(authenticator=pass_auth)
+        self.cluster = Cluster(connection_string=self.connection_string, options=options)
+        self.bucket = self.cluster.bucket(self.COUCHBASE_BUCKET).default_collection()
         self.jenkins = JenkinsScanner()
         self.ps = PerfStore(host=CBMONITOR_HOST)
         self.weekly = Weekly()
 
     @property
     def connection_string(self) -> str:
-        return 'couchbase://{}/{}?password={}'.format(self.COUCHBASE_HOST,
-                                                      self.COUCHBASE_BUCKET,
-                                                      self.COUCHBASE_PASSWORD)
-
-    def new_bucket(self) -> Bucket:
-        return Bucket(connection_string=self.connection_string)
+        return 'couchbase://{}?password={}'.format(self.COUCHBASE_HOST, self.COUCHBASE_PASSWORD)
 
     @staticmethod
     def generate_key(attributes: dict) -> str:
@@ -129,8 +126,9 @@ class StatsScanner:
                     }
 
     def find_snapshots(self, url: str):
-        n1ql_query = N1QLQuery(self.SNAPSHOT_QUERY, url)
-        for snapshots in self.bucket.n1ql_query(n1ql_query):
+        for snapshots in self.cluster.query(
+                self.SNAPSHOT_QUERY,
+                QueryOptions(positional_parameters=url)):
             for snapshot in snapshots:
                 yield snapshot
 
@@ -147,8 +145,9 @@ class StatsScanner:
 
     def get_checkpoint(self, url: str) -> Optional[dict]:
         try:
-            return self.bucket.get(url)
-        except NotFoundError:
+            return self.bucket.get(url).content
+        except Exception as ex:
+            logger.info(ex)
             return
 
     def add_checkpoint(self, url: str):
@@ -180,8 +179,9 @@ class StatsScanner:
         for build in self.weekly.builds:
             logger.info('Updating status of build {}'.format(build))
 
-            n1ql_query = N1QLQuery(self.STATUS_QUERY, build)
-            for status in self.bucket.n1ql_query(n1ql_query):
+            for status in self.cluster.query(
+                    self.STATUS_QUERY,
+                    QueryOptions(positional_parameters=build)):
                 status = {
                     'build': build,
                     'component': status['component'],

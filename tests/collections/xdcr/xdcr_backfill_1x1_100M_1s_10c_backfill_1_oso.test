@@ -2,7 +2,7 @@
 test = perfrunner.tests.xdcr.XdcrCollectionBackfillTest
 
 [showfast]
-title = Avg. XDCR rate (items/sec), 1 -> 1 (2 source nozzles, 4 target nozzles), 1 bucket x 100M x 1KB, s=1, c=10, Initial Collections 9, Backfill Collections 1, OSO=true
+title = Avg. XDCR rate (items/sec), 1 -> 1 (2 source nozzles, 4 target nozzles), 1 bucket x 100M x 1KB, s=1, c=10, Initial Collections 9, Backfill Collections 1, OSO=True
 component = xdcr
 category = init_single
 orderby = aa

@@ -4,9 +4,8 @@ from collections import defaultdict
 from typing import Dict, Iterator, List, Optional, Tuple
 
 import jenkins
-from couchbase.bucket import Bucket
-from couchbase.exceptions import NotFoundError
-from couchbase.n1ql import N1QLQuery
+from couchbase.cluster import Cluster, ClusterOptions, QueryOptions
+from couchbase_core.cluster import PasswordAuthenticator
 
 from logger import logger
 from perfrunner.utils.weekly import Weekly
@@ -41,24 +40,23 @@ class JenkinsScanner:
     """
 
     def __init__(self):
-        self.bucket = self.new_bucket()
+        pass_auth = PasswordAuthenticator(self.COUCHBASE_BUCKET, self.COUCHBASE_PASSWORD)
+        options = ClusterOptions(authenticator=pass_auth)
+        self.cluster = Cluster(connection_string=self.connection_string, options=options)
+        self.bucket = self.cluster.bucket(self.COUCHBASE_BUCKET).default_collection()
         self.jenkins = jenkins.Jenkins(self.JENKINS_URL)
         self.weekly = Weekly()
         self.jobs = set()
 
     @property
     def connection_string(self) -> str:
-        return 'couchbase://{}/{}?password={}'.format(self.COUCHBASE_HOST,
-                                                      self.COUCHBASE_BUCKET,
-                                                      self.COUCHBASE_PASSWORD)
-
-    def new_bucket(self) -> Bucket:
-        return Bucket(connection_string=self.connection_string)
+        return 'couchbase://{}?password={}'.format(self.COUCHBASE_HOST, self.COUCHBASE_PASSWORD)
 
     def get_checkpoint(self, job_name: str) -> Optional[int]:
         try:
-            return self.bucket.get(job_name).value
-        except NotFoundError:
+            return self.bucket.get(job_name).content
+        except Exception as ex:
+            logger.info(ex)
             return 0
 
     def add_checkpoint(self, job_name: str, build_number: int):
@@ -171,8 +169,9 @@ class JenkinsScanner:
         for build in self.weekly.builds:
             logger.info('Updating status of build {}'.format(build))
 
-            n1ql_query = N1QLQuery(self.STATUS_QUERY, build)
-            for status in self.bucket.n1ql_query(n1ql_query):
+            for status in self.cluster.query(self.STATUS_QUERY,
+                                             QueryOptions(
+                                                 positional_parameters=build)):
                 status = {
                     'build': build,
                     'component': status['component'],
@@ -184,8 +183,9 @@ class JenkinsScanner:
                 self.weekly.update_status(status)
 
     def find_builds(self, version: str) -> Iterator[dict]:
-        n1ql_query = N1QLQuery(self.BUILD_QUERY, version)
-        for build in self.bucket.n1ql_query(n1ql_query):
+        for build in self.cluster.query(self.BUILD_QUERY,
+                                        QueryOptions(
+                                            positional_parameters=version)):
             yield build
 
 

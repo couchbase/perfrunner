@@ -1,17 +1,22 @@
 import glob
 import json
+import pkg_resources
 from collections import defaultdict, namedtuple
 from multiprocessing import Value
 from unittest import TestCase
 
 import snappy
 
-from perfrunner.tests.analytics import BigFunQueryTest
 from perfrunner.settings import ClusterSpec, TestConfig
 from perfrunner.workloads.bigfun.query_gen import new_queries
 from perfrunner.workloads.tcmalloc import KeyValueIterator, LargeIterator
 from spring import docgen
-from spring.querygen import N1QLQueryGen
+
+cb_version = pkg_resources.get_distribution("couchbase").version
+if cb_version[0] == '2':
+    from spring.querygen import N1QLQueryGen
+elif cb_version[0] == '3':
+    from spring.querygen3 import N1QLQueryGen3 as N1QLQueryGen
 
 
 class SettingsTest(TestCase):
@@ -607,10 +612,17 @@ class QueryTest(TestCase):
         qg = N1QLQueryGen(queries=queries)
 
         for key in 'n1ql-0123456789', 'n1ql-9876543210':
-            query = qg.next(key, doc={})
-            self.assertEqual(query.adhoc, False)
-            self.assertEqual(query.consistency, 'not_bounded')
-            self.assertEqual(query._body['args'], [key])
+            if cb_version[0] == '3':
+                stmt, queryopts = qg.next(key, doc={})
+                self.assertEqual(queryopts['adhoc'], False)
+                self.assertEqual(str(queryopts['scan_consistency']),
+                                 'QueryScanConsistency.NOT_BOUNDED')
+                self.assertEqual(queryopts['positional_parameters'], [key])
+            else:
+                query = qg.next(key, doc={})
+                self.assertEqual(query.adhoc, False)
+                self.assertEqual(query.consistency, 'not_bounded')
+                self.assertEqual(query._body['args'], [key])
 
     def test_n1ql_query_gen_q2(self):
         queries = [{
@@ -622,9 +634,16 @@ class QueryTest(TestCase):
         qg = N1QLQueryGen(queries=queries)
 
         for doc in {'email': 'a@a.com'}, {'email': 'b@b.com'}:
-            query = qg.next(key='n1ql-0123456789', doc=doc)
-            self.assertEqual(query.consistency, 'request_plus')
-            self.assertEqual(query._body['args'], [doc['email']])
+            if cb_version[0] == '3':
+                stmt, queryopts = qg.next(key='n1ql-0123456789', doc=doc)
+                self.assertEqual(str(queryopts['scan_consistency']),
+                                 'QueryScanConsistency.REQUEST_PLUS')
+                self.assertEqual(queryopts['positional_parameters'],
+                                 [doc['email']])
+            else:
+                query = qg.next(key='n1ql-0123456789', doc=doc)
+                self.assertEqual(query.consistency, 'request_plus')
+                self.assertEqual(query._body['args'], [doc['email']])
 
 
 class BigFunTest(TestCase):

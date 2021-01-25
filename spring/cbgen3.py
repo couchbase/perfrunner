@@ -9,10 +9,10 @@ from couchbase.cluster import (
 )
 from couchbase.management.collections import CollectionSpec
 from couchbase.management.users import User
-from txcouchbase.cluster import TxCluster
-
 from couchbase_core.cluster import PasswordAuthenticator
 from couchbase_core.views.params import ViewQuery
+from txcouchbase.cluster import TxCluster
+
 from logger import logger
 from spring.cbgen_helpers import backoff, quiet, timeit
 

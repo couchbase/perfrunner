@@ -3,9 +3,8 @@ from itertools import cycle
 from typing import List, Tuple
 
 from couchbase.cluster import QueryOptions, QueryScanConsistency
-from numpy import random
-
 from couchbase_core.views.params import ViewQuery
+from numpy import random
 
 
 class ViewQueryGen3:

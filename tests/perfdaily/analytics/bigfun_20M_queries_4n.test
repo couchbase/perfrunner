@@ -27,7 +27,7 @@ queries = perfrunner/workloads/bigfun/queries_with_index.json
 eviction_policy = fullEviction
 
 [restore]
-backup_storage = /workspace/analytics/backups
+backup_storage = /data/analytics/backups
 backup_repo = bigfun20M
 threads = 8
 

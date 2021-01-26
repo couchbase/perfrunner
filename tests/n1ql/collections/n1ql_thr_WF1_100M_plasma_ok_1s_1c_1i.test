@@ -46,6 +46,3 @@ statement = SELECT state, store, AVG(quantity) AS avg_quantity, (SUM(SUM(quantit
 scan_consistency = not_bounded
 args = [{year}, "{state}"]
 
-[clients]
-libcouchbase = 3.0.2
-python_client = git+http://review.couchbase.org/couchbase-python-client@refs/changes/91/135991/3

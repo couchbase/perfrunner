@@ -24,3 +24,7 @@ workers = 80
 
 [dcp]
 num_connections = 1
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

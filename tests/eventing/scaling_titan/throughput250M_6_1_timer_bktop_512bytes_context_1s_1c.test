@@ -44,7 +44,3 @@ config_file = tests/eventing/config/function_sample_1s_1c.json
 
 [access]
 time = 600
-
-[clients]
-libcouchbase = 3.0.2
-python_client = 3.0.4

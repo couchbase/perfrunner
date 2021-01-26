@@ -49,3 +49,7 @@ n1ql_workers = 480
 statement = SELECT year, SUM(coins) AS coins FROM `bucket-1` WHERE capped_small > $1 AND capped_small < $2 GROUP BY year;
 scan_consistency = request_plus
 args = ["{capped_small}","{capped_small_range}"]
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

@@ -52,7 +52,3 @@ doc_gen = ext_reverse_lookup,join
 statement = SELECT u.name, t.title FROM `bucket-1` u JOIN `bucket-2` t ON META(u).id = t.owner WHERE u.email = $1;
 scan_consistency = not_bounded
 args = ["{email}"]
-
-[clients]
-libcouchbase = 3.0.2
-python_client = git+http://review.couchbase.org/couchbase-python-client@refs/changes/91/135991/3

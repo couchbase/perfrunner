@@ -46,3 +46,7 @@ power_alpha = 140
 nodes_after = 3
 start_after = 1800
 stop_after = 1800
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

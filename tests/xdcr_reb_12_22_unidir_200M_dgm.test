@@ -28,3 +28,7 @@ workers = 40
 
 [rebalance]
 nodes_after = 2 2
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

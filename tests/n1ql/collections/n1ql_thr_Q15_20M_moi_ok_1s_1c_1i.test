@@ -50,7 +50,3 @@ n1ql_workers = 180
 statement = SELECT COUNT(1) FROM `bucket-1` WHERE ANY s IN TOKENS(address) SATISFIES s = $1 END;
 scan_consistency = not_bounded
 args = ["{capped_large}"]
-
-[clients]
-libcouchbase = 3.0.2
-python_client = git+http://review.couchbase.org/couchbase-python-client@refs/changes/91/135991/3

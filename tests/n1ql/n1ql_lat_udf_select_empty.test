@@ -45,3 +45,7 @@ n1ql_throughput = 10000
 [n1ql-empty-function]
 statement = SELECT func();
 args = []
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

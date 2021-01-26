@@ -43,7 +43,3 @@ queryport.client.usePlanner = false
 queryport.client.log_level = Warn
 projector.backChanSize = 500000
 indexer.settings.build.batch_size = 100
-
-[clients]
-libcouchbase = 3.0.2
-python_client = 3.0.4

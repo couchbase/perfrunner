@@ -47,7 +47,3 @@ working_set_access = 90
 nodes_after = 5
 start_after = 1800
 stop_after = 1800
-
-[clients]
-libcouchbase = 3.0.2
-python_client = git+https://github.com/couchbase/couchbase-python-client@a193cbdc7763aa3fa563bd8d139091a4c220a240

@@ -51,7 +51,3 @@ n1ql_workers = 180
 statement = SELECT u.name, t.title FROM `bucket-1` u JOIN `bucket-2` t ON META(t).id IN u.topics WHERE u.email = $1;
 scan_consistency = not_bounded
 args = ["{email}"]
-
-[clients]
-libcouchbase = 3.0.2
-python_client = git+http://review.couchbase.org/couchbase-python-client@refs/changes/91/135991/3

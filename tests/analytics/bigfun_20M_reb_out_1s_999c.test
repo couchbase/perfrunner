@@ -36,7 +36,3 @@ map_data = bucket-1.scope-1.GleambookUsers-1=bucket-1.scope-1.GleambookUsers-1,b
 nodes_after = 5
 start_after = 0
 stop_after = 0
-
-[clients]
-libcouchbase = 3.0.2
-python_client = git+https://github.com/couchbase/couchbase-python-client@a193cbdc7763aa3fa563bd8d139091a4c220a240

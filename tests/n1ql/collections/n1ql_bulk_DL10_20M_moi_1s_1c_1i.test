@@ -39,8 +39,3 @@ n1ql_queries = bulk-delete
 
 [n1ql-bulk-delete]
 statement = DELETE FROM `bucket-1` WHERE `year` > 1996;
-
-[clients]
-libcouchbase = 3.0.2
-python_client = git+http://review.couchbase.org/couchbase-python-client@refs/changes/91/135991/3
-

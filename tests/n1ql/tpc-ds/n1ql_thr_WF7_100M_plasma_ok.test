@@ -41,3 +41,7 @@ statement = SELECT customer.zip, FIRST_VALUE(customer.zip) OVER(ORDER BY custome
 scan_consistency = not_bounded
 args = [{zip_codes}]
 ad_hoc = true
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

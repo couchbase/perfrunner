@@ -45,7 +45,3 @@ updates = 100
 items = 16000000
 workers = 100
 time = 1200
-
-[clients]
-libcouchbase = 3.0.2
-python_client = 3.0.4

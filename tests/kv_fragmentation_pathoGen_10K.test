@@ -19,3 +19,7 @@ replica_number = 0
 items = 10000
 workers = 7
 iterations = 40
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

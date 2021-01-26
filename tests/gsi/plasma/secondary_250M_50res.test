@@ -49,3 +49,7 @@ working_set = 20
 working_set_access = 100
 working_set_move_time = 60
 working_set_moving_docs = 6000000
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

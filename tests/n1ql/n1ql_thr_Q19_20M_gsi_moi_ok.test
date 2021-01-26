@@ -50,3 +50,7 @@ n1ql_workers = 512
 statement = SELECT name FROM `bucket-1` WHERE capped_small BETWEEN $1 AND $2 AND email = $3;
 args = ["{capped_small}","{capped_small_range}","{email}"]
 scan_consistency = not_bounded
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

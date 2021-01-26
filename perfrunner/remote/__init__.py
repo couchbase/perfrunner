@@ -40,14 +40,14 @@ class Remote:
     @all_clients
     def install_clients(self, perfrunner_home, test_config):
         client_settings = test_config.client_settings.__dict__
-        for client, version in client_settings.items():
-            if client == "python_client":
-                with cd(perfrunner_home):
-                    if 'review.couchbase.org' in version or "github" in version:
-                        run("env/bin/pip install {} --no-cache-dir".format(version), quiet=True)
-                    else:
-                        run("env/bin/pip install couchbase=={} "
-                            "--no-cache-dir".format(version), quiet=True)
+        py_version = client_settings['python_client']
+        if py_version is not None:
+            with cd(perfrunner_home):
+                if 'review.couchbase.org' in py_version or "github" in py_version:
+                    run("env/bin/pip install {} --no-cache-dir".format(py_version), quiet=True)
+                else:
+                    run("env/bin/pip install couchbase=={} "
+                        "--no-cache-dir".format(py_version), quiet=True)
 
     @master_client
     def remote_copy(self, worker_home: str):

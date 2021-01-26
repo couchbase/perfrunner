@@ -58,3 +58,7 @@ time = 7200
 statement = SELECT packageStatus, SUM(charges) AS totalCharges FROM `bucket-1` WHERE minorAccountId = $1 GROUP BY packageStatus;
 scan_consistency = not_bounded
 args = ["{minorAccountId}"]
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

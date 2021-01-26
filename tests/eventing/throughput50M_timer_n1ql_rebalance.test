@@ -41,3 +41,7 @@ workers = 100
 functions = perf-test1:tests/eventing/code/timer_n1ql.js
 worker_count = 24
 cpp_worker_thread_count = 2
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

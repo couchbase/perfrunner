@@ -40,3 +40,7 @@ n1ql_workers = 10
 statement = SELECT store, AVG(quantity) AS avg_quantity FROM `bucket-1` WHERE DATE_PART_STR(sold_date, 'year') = $1 AND customer.state = $2 GROUP BY store;
 scan_consistency = not_bounded
 args = [{year}, "{state}"]
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

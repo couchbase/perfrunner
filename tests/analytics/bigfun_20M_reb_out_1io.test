@@ -31,3 +31,7 @@ threads = 8
 nodes_after = 5
 start_after = 0
 stop_after = 0
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

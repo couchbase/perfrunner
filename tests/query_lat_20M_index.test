@@ -33,3 +33,7 @@ items = 20000000
 workers = 12
 query_workers = 12
 time = 7200
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

@@ -22,3 +22,7 @@ threads = 16
 format = lines
 type = csv
 import_file = /data/import/data.csv
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

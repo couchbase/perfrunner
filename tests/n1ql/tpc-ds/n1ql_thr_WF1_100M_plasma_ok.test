@@ -40,3 +40,7 @@ n1ql_workers = 60
 statement = SELECT state, store, AVG(quantity) AS avg_quantity, (SUM(SUM(quantity) ) OVER () /SUM(count(1) ) OVER ()) AS avg_quantity_over FROM `bucket-1` WHERE DATE_PART_STR(sold_date, 'year') =$1 AND customer.state =$2 GROUP BY state,store ORDER BY state;
 scan_consistency = not_bounded
 args = [{year}, "{state}"]
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

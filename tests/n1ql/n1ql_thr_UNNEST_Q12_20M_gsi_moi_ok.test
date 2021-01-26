@@ -49,3 +49,7 @@ n1ql_batch_size = 10
 statement = SELECT t.title FROM `bucket-1` t UNNEST t.replies AS r WHERE r.`user` = $1;
 scan_consistency = not_bounded
 args = ["{key}"]
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

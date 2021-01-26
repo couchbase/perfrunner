@@ -30,7 +30,3 @@ doc_gen = large_grouped_doc
 
 [xdcr]
 initial_collection_mapping = {"state==0":"scope-1.collection-1"}
-
-[clients]
-libcouchbase = 3.0.2
-python_client = git+https://github.com/couchbase/couchbase-python-client@a193cbdc7763aa3fa563bd8d139091a4c220a240

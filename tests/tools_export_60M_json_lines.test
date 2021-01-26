@@ -26,3 +26,7 @@ doc_gen = import_export_simple
 [export]
 threads = 16
 format = lines
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

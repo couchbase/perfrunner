@@ -34,7 +34,3 @@ doc_gen = large
 [xdcr]
 backfill_collection_mapping = {"scope-1.collection-10":"scope-1.collection-10"}
 initial_collection_mapping = {"scope-1.collection-1":"scope-1.collection-1","scope-1.collection-2":"scope-1.collection-2","scope-1.collection-3":"scope-1.collection-3","scope-1.collection-4":"scope-1.collection-4","scope-1.collection-5":"scope-1.collection-5","scope-1.collection-6":"scope-1.collection-6","scope-1.collection-7":"scope-1.collection-7","scope-1.collection-8":"scope-1.collection-8","scope-1.collection-9":"scope-1.collection-9"}
-
-[clients]
-libcouchbase = 3.0.2
-python_client = git+https://github.com/couchbase/couchbase-python-client@a193cbdc7763aa3fa563bd8d139091a4c220a240

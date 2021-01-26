@@ -40,3 +40,7 @@ statement = SELECT customer.zip FROM `bucket-1` WHERE customer.zip IN $1 AND cus
 scan_consistency = not_bounded
 args = [{zip_codes}]
 ad_hoc = true
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

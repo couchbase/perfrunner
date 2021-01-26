@@ -27,3 +27,7 @@ doc_gen = import_export_simple
 threads = 16
 format = list
 type = json
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

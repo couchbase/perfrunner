@@ -52,7 +52,3 @@ n1ql_workers = 180
 statement = SELECT COUNT(*) FROM `bucket-1` WHERE capped_small > $1 AND capped_small < $2;
 args = ["{capped_small}","{capped_small_range}"]
 scan_consistency = not_bounded
-
-[clients]
-libcouchbase = 3.0.2
-python_client = git+http://review.couchbase.org/couchbase-python-client@refs/changes/91/135991/3

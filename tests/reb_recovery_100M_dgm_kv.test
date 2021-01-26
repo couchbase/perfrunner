@@ -41,3 +41,7 @@ failover = hard
 delay_before_failover = 1200
 start_after = 1200
 stop_after = 1200
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

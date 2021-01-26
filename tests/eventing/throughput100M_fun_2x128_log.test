@@ -44,3 +44,7 @@ items = 100000000
 workers = 100
 time = 1200
 iterations = -1
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

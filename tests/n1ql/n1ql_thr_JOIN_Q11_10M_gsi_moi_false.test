@@ -48,3 +48,7 @@ n1ql_workers = 720
 statement = SELECT u.email AS email, COUNT(t.title) FROM `bucket-2` t INNER JOIN `bucket-3` c ON META(c).id IN t.categories LEFT OUTER JOIN `bucket-1` u ON t.owner = META(u).id WHERE t.capped = $1 AND c.name = $2 GROUP BY u.email;
 scan_consistency = request_plus
 args = ["{capped}","{categories[0]}"]
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

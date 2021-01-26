@@ -48,3 +48,7 @@ n1ql_workers = 240
 statement = SELECT name, email FROM `bucket-1` WHERE capped_small > $1 ORDER BY capped_small LIMIT 10;
 scan_consistency = not_bounded
 args = ["{capped_small}"]
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

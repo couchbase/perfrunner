@@ -36,3 +36,7 @@ workers = 40
 throughput = 15000
 power_alpha = 25
 time = 43200
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

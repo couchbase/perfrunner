@@ -41,3 +41,7 @@ working_set_access = 95
 nodes_after = 4
 start_after = 180
 stop_after = 180
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

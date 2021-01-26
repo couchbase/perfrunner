@@ -47,3 +47,7 @@ workers = 100
 working_set = 20
 working_set_access = 100
 working_set_move_time = 120
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

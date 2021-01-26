@@ -55,3 +55,7 @@ throughput = 20000
 items = 10000000000
 workers = 128
 time = 3600
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

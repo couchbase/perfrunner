@@ -50,3 +50,7 @@ doc_gen = ext_reverse_lookup,join
 statement = SELECT u.name, t.title FROM `bucket-1` u JOIN `bucket-2` t ON u.name = t.owner AND u.capped_small = t.sub_capped WHERE u.email = $1;
 scan_consistency = request_plus
 args = ["{email}"]
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

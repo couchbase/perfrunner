@@ -20,3 +20,7 @@ batch_size = 50
 batches = 20000
 workers = 10
 iterations = 4
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

@@ -32,7 +32,3 @@ items = 20000000
 workers = 24
 query_workers = 24
 time = 7200
-
-[clients]
-libcouchbase = 3.0.2
-python_client = git+http://review.couchbase.org/couchbase-python-client@refs/changes/91/135991/3

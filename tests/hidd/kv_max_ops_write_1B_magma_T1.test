@@ -52,3 +52,7 @@ deletes = 0
 items = 1000000000
 iterations = 100000
 workers = 128
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

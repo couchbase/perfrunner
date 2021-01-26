@@ -51,7 +51,3 @@ n1ql_workers = 180
 statement = SELECT RAW meta().id FROM `bucket-1` WHERE meta().id >= $1 ORDER BY meta().id LIMIT 50;
 scan_consistency = not_bounded
 args = ["{key}"]
-
-[clients]
-libcouchbase = 3.0.2
-python_client = git+http://review.couchbase.org/couchbase-python-client@refs/changes/91/135991/3

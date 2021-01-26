@@ -16,3 +16,7 @@ replica_number = 0
 
 [load]
 items = 5000000
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

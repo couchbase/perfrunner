@@ -217,3 +217,7 @@ args = []
 statement = SELECT name AS _name, alt_email AS _alt_email FROM `bucket-10` WHERE alt_email > 'a0' limit 1;
 scan_consistency = not_bounded
 args = []
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

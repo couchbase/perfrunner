@@ -42,3 +42,7 @@ n1ql_timeout = 300
 statement = SELECT customer.birth_country AS country, SUM(wholesale_cost - sales_price) AS year_total, MAX(SUM(wholesale_cost - sales_price)) OVER (PARTITION BY customer.birth_country) as max_for_country, MAX(SUM(wholesale_cost - sales_price)) OVER () as max_total, MIN(SUM(wholesale_cost - sales_price)) OVER (PARTITION BY customer.birth_country) as min_for_country, MIN(SUM(wholesale_cost - sales_price)) OVER () as min_total FROM `bucket-1`  WHERE DATE_PART_STR(sold_date, "year") = $1 AND customer.preferred_flag = true  GROUP BY customer.birth_country;
 scan_consistency = not_bounded
 args = [{year}]
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

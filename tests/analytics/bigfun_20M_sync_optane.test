@@ -22,3 +22,7 @@ replica_number = 0
 backup_storage = /backups
 backup_repo = bigfun20M
 threads = 16
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

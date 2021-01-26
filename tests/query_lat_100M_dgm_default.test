@@ -43,7 +43,3 @@ working_set_access = 98
 workers = 24
 query_workers = 12
 time = 7200
-
-[clients]
-libcouchbase = 3.0.2
-python_client = git+http://review.couchbase.org/couchbase-python-client@refs/changes/91/135991/3

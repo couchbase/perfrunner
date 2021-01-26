@@ -42,3 +42,7 @@ deletes = 1
 throughput = 50000
 items = 100000000
 workers = 20
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

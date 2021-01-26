@@ -38,3 +38,7 @@ couchbase_index_configfile = tests/fts/index/fts_tvectors_off.json
 [restore]
 backup_storage =  /fts/backup
 backup_repo =  fts_wiki
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

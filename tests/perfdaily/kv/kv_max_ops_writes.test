@@ -25,3 +25,7 @@ items = 20000000
 iterations = 20000
 workers = 50
 updates = 80
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

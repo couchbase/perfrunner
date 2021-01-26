@@ -29,3 +29,7 @@ workers = 50
 updates = 50
 ssl_mode = data
 show_tls_version = true
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

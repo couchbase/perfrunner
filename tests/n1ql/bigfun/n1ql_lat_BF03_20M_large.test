@@ -46,3 +46,7 @@ time = 1200
 [n1ql-bigfun]
 statement = SELECT u FROM `bucket-1` u WHERE `id` IS NOT MISSING AND u.user_since >= $1 AND u.user_since < $2;
 args = ["{user_since_large[0]}", "{user_since_large[1]}"]
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

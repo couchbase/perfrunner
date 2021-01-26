@@ -28,3 +28,7 @@ creates = 100
 ops = 50000000
 items = 50000000
 workers = 16
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

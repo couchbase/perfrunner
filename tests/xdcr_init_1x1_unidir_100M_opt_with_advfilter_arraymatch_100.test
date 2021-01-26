@@ -37,3 +37,7 @@ xattr_field = city
 
 [xdcr]
 filter_expression = achievements[0] >= 0
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

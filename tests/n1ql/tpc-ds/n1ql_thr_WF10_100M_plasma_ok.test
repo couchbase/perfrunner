@@ -41,3 +41,7 @@ statement = SELECT customer.zip AS zip, SUM(sales_price) AS total_sales, LEAD(SU
 scan_consistency = not_bounded
 args = [{zip_codes}, {year}, {quarter}]
 ad_hoc = true
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

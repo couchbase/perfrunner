@@ -27,3 +27,7 @@ workers = 40
 compression = 1
 threads = 16
 storage_type = forestdb
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

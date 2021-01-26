@@ -50,7 +50,3 @@ n1ql_workers = 180
 statement = SELECT name AS _name, street AS _street FROM `bucket-1` WHERE ANY i IN achievements2 SATISFIES i=$1 END;
 scan_consistency = not_bounded
 args = [{achievements2[0]}]
-
-[clients]
-libcouchbase = 3.0.2
-python_client = git+http://review.couchbase.org/couchbase-python-client@refs/changes/91/135991/3

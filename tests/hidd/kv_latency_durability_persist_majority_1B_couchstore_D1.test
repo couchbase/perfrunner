@@ -39,7 +39,3 @@ items = 1000000000
 workers = 128
 time = 3600
 durability = 3
-
-[clients]
-libcouchbase = 3.0.2
-python_client = git+https://github.com/couchbase/couchbase-python-client@a193cbdc7763aa3fa563bd8d139091a4c220a240

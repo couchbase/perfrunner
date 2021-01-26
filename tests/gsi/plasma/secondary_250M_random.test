@@ -40,3 +40,7 @@ ops = 250000000
 items = 250000000
 throughput = 100000
 workers = 100
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

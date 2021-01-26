@@ -24,3 +24,7 @@ iterations = 10000
 workers = 50
 updates = 20
 ssl_mode = data
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

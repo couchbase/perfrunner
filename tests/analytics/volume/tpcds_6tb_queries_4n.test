@@ -30,3 +30,7 @@ tpcds_scale_factor = 1
 [access]
 ops = 1
 workers = 1
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

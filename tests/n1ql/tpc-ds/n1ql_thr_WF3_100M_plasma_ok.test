@@ -40,3 +40,7 @@ n1ql_workers = 60
 statement = SELECT item.brand, SUM(sales_price) AS item_revenue, SUM(sales_price)*100/SUM(SUM(sales_price)) OVER (PARTITION BY item.brand) AS revenue_ratio, COUNT(1) OVER (PARTITION BY item.brand) AS items_per_brand FROM `bucket-1` WHERE item.manufacturer_id = $1 GROUP BY item.brand ORDER BY item_revenue DESC,  item.brand, revenue_ratio;
 scan_consistency = not_bounded
 args = [{manufacturer_id}]
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

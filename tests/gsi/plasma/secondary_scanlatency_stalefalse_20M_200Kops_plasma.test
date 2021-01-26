@@ -43,3 +43,7 @@ updates = 100
 items = 20000000
 throughput = 200000
 workers = 100
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

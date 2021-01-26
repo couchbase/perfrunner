@@ -48,3 +48,7 @@ n1ql_workers = 480
 statement = UPDATE `bucket-1` SET name = name||'_UPDATED' WHERE capped_small=$1;
 scan_consistency = not_bounded
 args = ["{capped_small}"]
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

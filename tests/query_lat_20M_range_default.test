@@ -38,7 +38,3 @@ workers = 1
 query_workers = 10
 query_params = {"stale": "false"}
 time = 3600
-
-[clients]
-libcouchbase = 3.0.2
-python_client = git+http://review.couchbase.org/couchbase-python-client@refs/changes/91/135991/3

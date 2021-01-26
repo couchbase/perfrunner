@@ -45,3 +45,7 @@ working_set_access = 95
 workers = 128
 throughput = 15000
 async = 1
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

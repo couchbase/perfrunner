@@ -49,7 +49,3 @@ config_file = tests/eventing/config/functions24_6buckets_12s_24c.json
 updates = 100
 items = 8000000
 workers = 100
-
-[clients]
-libcouchbase = 3.0.2
-python_client = 3.0.4

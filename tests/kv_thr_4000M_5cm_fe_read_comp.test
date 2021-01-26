@@ -37,3 +37,7 @@ working_set = 5
 working_set_access = 95
 time = 3600
 async = 1
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

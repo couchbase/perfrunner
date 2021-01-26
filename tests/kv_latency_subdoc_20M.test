@@ -27,3 +27,7 @@ items = 20000000
 workers = 12
 subdoc_field = city
 time = 1200
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

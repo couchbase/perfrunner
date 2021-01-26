@@ -32,5 +32,4 @@ persist_to = 0
 connstr_params = {'ipv6': 'allow', 'enable_tracing': 'false', 'durability_interval': 0.02}
 
 [clients]
-libcouchbase = 3.0.2
-python_client = git+https://github.com/couchbase/couchbase-python-client@a193cbdc7763aa3fa563bd8d139091a4c220a240
+libcouchbase = 3.0.7

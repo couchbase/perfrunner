@@ -47,3 +47,7 @@ n1ql_workers = 480
 statement = SELECT first_name, last_name, address FROM `bucket-1` WHERE address.zip = $1 AND ANY s IN TOKENS(address.street) SATISFIES s = $2 END;
 scan_consistency = request_plus
 args = ["{address[zip]}","{capped_large}"]
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

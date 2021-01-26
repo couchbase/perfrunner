@@ -29,3 +29,7 @@ eviction_policy = fullEviction
 backup_storage = /workspace/analytics/backups
 backup_repo = bigfun20M
 threads = 8
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

@@ -26,3 +26,7 @@ num_writer_threads = 64
 items = 31250000
 size = 8192
 workers = 100
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

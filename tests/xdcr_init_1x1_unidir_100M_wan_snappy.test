@@ -32,3 +32,7 @@ doc_gen = large
 
 [xdcr]
 wan_delay = 40
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

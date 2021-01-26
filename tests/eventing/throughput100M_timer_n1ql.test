@@ -41,3 +41,7 @@ timer_fuzz = 500
 
 [access]
 time = 1000
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

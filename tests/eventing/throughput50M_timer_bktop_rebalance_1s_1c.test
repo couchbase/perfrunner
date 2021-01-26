@@ -48,7 +48,3 @@ cpp_worker_thread_count = 2
 timer_timeout = 1500
 timer_fuzz = 500
 config_file = tests/eventing/config/function_sample_1s_1c.json
-
-[clients]
-libcouchbase = 3.0.2
-python_client = 3.0.4

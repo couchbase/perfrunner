@@ -23,3 +23,7 @@ items = 250000000
 size = 1024
 workers = 50
 doc_gen = large
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

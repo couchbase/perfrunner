@@ -55,3 +55,7 @@ workers = 128
 throughput = 15000
 time = 3600
 requestdistribution = uniform
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

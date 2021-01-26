@@ -38,9 +38,8 @@ deletes = 0
 items = 1000000000
 working_set = 5
 working_set_access = 95
-workers = 15
+workers = 36
 throughput = 15000
-async = 1
 
 [clients]
 libcouchbase = 2.9.3

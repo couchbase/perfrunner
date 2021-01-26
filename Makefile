@@ -3,10 +3,14 @@ SHELL := /bin/bash
 PATH := ${GOPATH}/bin:$(PATH)
 
 ENV := env
-PYTHON := python3.5
+PYTHON := python3.6
 PYTHON_PROJECTS := cbagent perfdaily perfrunner scripts spring
 
 all:
+	export PYENV_ROOT="$$HOME/.pyenv" && \
+	export PATH="$$PYENV_ROOT/bin:$$PATH" && \
+	eval "$$(pyenv init -)" && \
+	pyenv local 3.6.12 && \
 	virtualenv --quiet --python ${PYTHON} ${ENV}
 	${ENV}/bin/pip install --upgrade --quiet pip wheel
 	${ENV}/bin/pip install --quiet -r requirements.txt

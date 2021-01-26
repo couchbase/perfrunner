@@ -692,12 +692,18 @@ class Monitor(RestHelper):
         return num_items
 
     def get_num_remaining_mutations(self, analytics_node: str) -> int:
+        version, build_number = self.build.split('-')
+        build = tuple(map(int, version.split('.'))) + (int(build_number),)
+
         while True:
             num_items = 0
             try:
                 stats = self.get_pending_mutations(analytics_node)
-                for i in stats['Default']:
-                    num_items += int(stats['Default'][i])
+                for dataset in stats['Default']:
+                    if build < (7, 0, 0, 4310):
+                        num_items += int(stats['Default'][dataset])
+                    else:
+                        num_items += int(stats['Default'][dataset]['seqnoLag'])
                 break
             except Exception:
                 time.sleep(self.POLLING_INTERVAL_ANALYTICS)

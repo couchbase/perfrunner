@@ -52,7 +52,8 @@
         {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/simplified/kv_latency_250M_read_heavy_uniform.test"},
         {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/simplified/kv_latency_250M_update_heavy_power.test"},
         {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/simplified/kv_throughput_250M_read_only_uniform.test"},
-        {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/simplified/kv_throughput_250M_update_only_uniform.test"}
+        {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/simplified/kv_throughput_250M_update_only_uniform.test"},
+        {"job": "rhea-5node1", "cluster": "rhea_5node1.spec", "test_config": "hidd/simplified/kv_rebalance_out_250M_magma.test"}
     ],
     "Magma2": [
         {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/kv_latency_write_1B_magma_S1.test"},
@@ -305,7 +306,14 @@
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_no_index_1s_99c.test"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_reb_in_1s_99c.test"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_reb_out_1s_99c.test"},
-        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_no_index_window_functions_1s_99c.test"}
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_no_index_window_functions_1s_99c.test"},
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_4n_1s_999c.test"},
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_1s_999c.test"},
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_no_index_1s_999c.test"},
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_reb_in_1s_999c.test"},
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_reb_out_1s_999c.test"},
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_no_index_window_functions_1s_999c.test"},
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_4n_default_99indexes.test"}
     ],
     "Views": [
         {"job": "leto", "cluster": "leto.spec", "test_config": "index_20M_default.test"},

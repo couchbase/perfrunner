@@ -38,5 +38,5 @@ map_data = bucket-1.scope-1.GleambookUsers-1=bucket-1.scope-1.GleambookUsers-1,b
 [access]
 analytics_warmup_ops = 10
 analytics_warmup_workers = 1
-ops = 30
+ops = 100
 workers = 1

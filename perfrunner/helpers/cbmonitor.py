@@ -17,6 +17,7 @@ from cbagent.collectors import (
     DurabilityLatency,
     ElasticStats,
     EventingConsumerStats,
+    EventingPerHandlerStats,
     EventingPerNodeStats,
     EventingStats,
     FTSCollector,
@@ -73,7 +74,8 @@ def new_cbagent_settings(test: PerfTest):
     if hasattr(test, 'ALL_BUCKETS'):
         buckets = None
     else:
-        buckets = test.test_config.buckets[:1]
+        buckets = test.test_config.buckets[:1] +\
+                  test.test_config.eventing_buckets
     if hasattr(test, 'ALL_HOSTNAMES'):
         hostnames = test.cluster_spec.servers
     else:
@@ -223,6 +225,7 @@ class CbAgent:
             self.add_collector(EventingStats, self.test)
             self.add_collector(EventingPerNodeStats, self.test)
             self.add_collector(EventingConsumerStats, self.test)
+            self.add_collector(EventingPerHandlerStats, self.test)
 
         if ns_server_system:
             self.add_collector(NSServerSystem)

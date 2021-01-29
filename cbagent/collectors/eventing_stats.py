@@ -78,6 +78,37 @@ class EventingPerNodeStats(EventingStats):
             self.mc.add_server(node)
 
 
+class EventingPerHandlerStats(EventingStats):
+
+    COLLECTOR = "eventing_per_handler_stats"
+
+    def __init__(self, settings, test):
+        super().__init__(settings, test)
+
+    def _get_handler_stats(self, function_name):
+        handler_stats = dict()
+        handler_stats[function_name] = dict()
+        on_update_success = 0
+        for node in self.eventing_nodes:
+            stats = self.get_eventing_stats(server=node)
+            for stat in stats:
+                if stat["function_name"] == function_name:
+                    on_update_success += stat["execution_stats"]["on_update_success"]
+        handler_stats[function_name]["on_update_success"] = on_update_success
+        return handler_stats
+
+    def sample(self):
+        for name, function in self.functions.items():
+            handler_stats = self._get_handler_stats(function_name=name)
+            if handler_stats:
+                stats = handler_stats[name]
+                self.update_metric_metadata(stats.keys(),
+                                            bucket=name)
+                self.store.append(stats, cluster=self.cluster,
+                                  bucket=name,
+                                  collector=self.COLLECTOR)
+
+
 class EventingConsumerStats(EventingPerNodeStats):
 
     COLLECTOR = "eventing_consumer_stats"

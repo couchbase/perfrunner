@@ -4,6 +4,7 @@ from cbagent.collectors.active_tasks import ActiveTasks
 from cbagent.collectors.analytics import AnalyticsStats
 from cbagent.collectors.eventing_stats import (
     EventingConsumerStats,
+    EventingPerHandlerStats,
     EventingPerNodeStats,
     EventingStats,
 )

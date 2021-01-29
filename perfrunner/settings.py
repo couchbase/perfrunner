@@ -1316,6 +1316,7 @@ class AnalyticsSettings:
     STORAGE_COMPRESSION_BLOCK = None
     QUERIES = ""
     ANALYTICS_CONFIG_FILE = ""
+    DROP_DATASET = ""
 
     def __init__(self, options: dict):
         self.num_io_devices = int(options.get('num_io_devices',
@@ -1327,6 +1328,7 @@ class AnalyticsSettings:
         self.queries = options.get("queries", self.QUERIES)
         self.analytics_config_file = options.get("analytics_config_file",
                                                  self.ANALYTICS_CONFIG_FILE)
+        self.drop_dataset = options.get("drop_dataset", self.DROP_DATASET)
 
 
 class AuditSettings:

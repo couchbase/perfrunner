@@ -738,6 +738,19 @@ class Monitor(RestHelper):
 
         return num_items
 
+    def monitor_dataset_drop(self, analytics_node: str, dataset: str):
+        while True:
+            statement = "SELECT COUNT(*) from `{}`;".format(dataset)
+            result = self.exec_analytics_query(analytics_node, statement)
+            num_analytics_items = result['results'][0]['$1']
+            logger.info("Number of items in dataset {}: {}".
+                        format(dataset, num_analytics_items))
+
+            if num_analytics_items == 0:
+                break
+
+            time.sleep(self.POLLING_INTERVAL_ANALYTICS)
+
     def wait_for_timer_event(self, node: str, function: str, event="timer_events"):
         logger.info('Waiting for timer events to start processing: {} '.format(function))
         retry = 1

@@ -136,6 +136,13 @@ class BigFunTest(PerfTest):
         self.rest.validate_analytics_setting(self.analytics_nodes[0], 'storageCompressionBlock',
                                              storage_compression_block)
 
+    def get_dataset_items(self, dataset: str):
+        logger.info('Get number of items in dataset {}'.format(dataset))
+        statement = "SELECT COUNT(*) from `{}`;".format(dataset)
+        result = self.rest.exec_analytics_query(self.analytics_nodes[0], statement)
+        logger.info("Number of items in dataset {}: {}".
+                    format(dataset, result['results'][0]['$1']))
+
     def run(self):
         self.restore_local()
         self.wait_for_persistence()
@@ -159,6 +166,34 @@ class BigFunSyncTest(BigFunTest):
         sync_time = self.sync()
 
         self.report_kpi(sync_time)
+
+
+class BigFunDropDatasetTest(BigFunTest):
+
+    def _report_kpi(self, time_elapsed):
+        self.reporter.post(
+            *self.metrics.elapsed_time(time_elapsed)
+        )
+
+    @with_stats
+    @timeit
+    def drop_dataset(self, drop_dataset: str):
+        self.get_dataset_items(drop_dataset)
+        for target in self.target_iterator:
+            self.rest.delete_collection(host=target.node,
+                                        bucket=target.bucket,
+                                        scope="scope-1",
+                                        collection=drop_dataset)
+        self.monitor.monitor_dataset_drop(self.analytics_nodes[0], drop_dataset)
+
+    def run(self):
+        super().run()
+
+        super().sync()
+
+        drop_time = self.drop_dataset(self.test_config.analytics_settings.drop_dataset)
+
+        self.report_kpi(drop_time)
 
 
 class BigFunSyncWithCompressionTest(BigFunSyncTest):

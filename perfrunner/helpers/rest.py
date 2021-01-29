@@ -766,6 +766,15 @@ class RestHelper:
         }
         return self.post(url=api, data=data)
 
+    def exec_analytics_query(self, analytics_node: str,
+                             statement: str) -> requests.Response:
+        api = 'http://{}:{}/analytics/service'.format(analytics_node,
+                                                      ANALYTICS_PORT)
+        data = {
+            'statement': statement
+        }
+        return self.post(url=api, data=data).json()
+
     def get_analytics_stats(self, analytics_node: str) -> dict:
         api = 'http://{}:9110/analytics/node/stats'.format(analytics_node)
         return self.get(url=api).json()

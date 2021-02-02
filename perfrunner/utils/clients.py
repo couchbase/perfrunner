@@ -245,7 +245,8 @@ class ClientInstaller:
         self.client_settings = self.test_config.client_settings.__dict__
         self.options = options
         self.remote = RemoteHelper(self.cluster_spec, options.verbose)
-        self.client_os = RemoteHelper.detect_server_os(self.cluster_spec.workers[0]).lower()
+        self.client_os = RemoteHelper.detect_client_os(self.cluster_spec.workers[0],
+                                                       self.cluster_spec).lower()
 
     @all_clients
     def detect_client_versions(self, client: str):

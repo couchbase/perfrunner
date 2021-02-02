@@ -7,7 +7,11 @@ from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.misc import pretty_dict, read_json
 from perfrunner.helpers.profiler import with_profiles
-from perfrunner.helpers.worker import jts_run_task, jts_warmup_task
+from perfrunner.helpers.worker import (
+    jts_run_task,
+    jts_warmup_task,
+    spring_task,
+)
 from perfrunner.tests import PerfTest
 
 
@@ -22,24 +26,38 @@ class JTSTest(PerfTest):
 
     def download_jts(self):
         if self.worker_manager.is_remote:
-            self.remote.init_jts(repo=self.access.jts_repo,
-                                 branch=self.access.jts_repo_branch,
-                                 worker_home=self.worker_manager.WORKER_HOME,
-                                 jts_home=self.access.jts_home_dir)
+            self.remote.init_jts(
+                repo=self.access.jts_repo,
+                branch=self.access.jts_repo_branch,
+                worker_home=self.worker_manager.WORKER_HOME,
+                jts_home=self.access.jts_home_dir
+            )
         else:
-            local.init_jts(repo=self.access.jts_repo,
-                           branch=self.access.jts_repo_branch,
-                           jts_home=self.access.jts_home_dir)
+            local.init_jts(
+                repo=self.access.jts_repo,
+                branch=self.access.jts_repo_branch,
+                jts_home=self.access.jts_home_dir
+            )
 
     @with_stats
     @with_profiles
     def run_test(self):
-        self.run_phase('jts run phase', jts_run_task, self.access, self.target_iterator)
+        self.run_phase(
+            'jts run phase',
+            jts_run_task,
+            self.access,
+            self.target_iterator
+        )
         self._download_logs()
 
     def warmup(self):
         if int(self.access.warmup_query_workers) > 0:
-            self.run_phase('jts warmup phase', jts_warmup_task, self.access, self.target_iterator)
+            self.run_phase(
+                'jts warmup phase',
+                jts_warmup_task,
+                self.access,
+                self.target_iterator
+            )
 
     def _download_logs(self):
         local_dir = self.access.jts_logs_dir
@@ -47,21 +65,29 @@ class JTSTest(PerfTest):
             if os.path.exists(local_dir):
                 shutil.rmtree(local_dir, ignore_errors=True)
             os.makedirs(local_dir)
-            self.remote.get_jts_logs(self.worker_manager.WORKER_HOME,
-                                     self.access.jts_home_dir,
-                                     self.access.jts_logs_dir)
+            self.remote.get_jts_logs(
+                self.worker_manager.WORKER_HOME,
+                self.access.jts_home_dir,
+                self.access.jts_logs_dir
+            )
         else:
-            local.get_jts_logs(self.access.jts_home_dir, local_dir)
+            local.get_jts_logs(
+                self.access.jts_home_dir,
+                local_dir
+            )
 
 
 class FTSTest(JTSTest):
+
     def __init__(self, cluster_spec, test_config, verbose):
         super().__init__(cluster_spec, test_config, verbose)
         self.fts_master_node = self.fts_nodes[0]
 
     def delete_index(self):
-        self.rest.delete_fts_index(self.fts_master_node,
-                                   self.access.couchbase_index_name)
+        self.rest.delete_fts_index(
+            self.fts_master_node,
+            self.access.couchbase_index_name
+        )
 
     def create_index(self):
         definition = read_json(self.access.couchbase_index_configfile)
@@ -97,17 +123,33 @@ class FTSTest(JTSTest):
                                    self.access.couchbase_index_name, definition)
 
     def wait_for_index(self):
-        self.monitor.monitor_fts_indexing_queue(self.fts_master_node,
-                                                self.access.couchbase_index_name,
-                                                int(self.access.test_total_docs))
+        self.monitor.monitor_fts_indexing_queue(
+            self.fts_master_node,
+            self.access.couchbase_index_name,
+            int(self.access.test_total_docs)
+        )
 
     def wait_for_index_persistence(self):
-        self.monitor.monitor_fts_index_persistence(self.fts_nodes,
-                                                   self.access.couchbase_index_name)
+        self.monitor.monitor_fts_index_persistence(
+            self.fts_nodes,
+            self.access.couchbase_index_name
+        )
+
+    def spread_data(self):
+        settings = self.test_config.load_settings
+        settings.seq_upserts = False
+        self.run_phase(
+            'data spread',
+            spring_task,
+            settings,
+            self.target_iterator
+        )
 
     def data_restore(self):
-        if self.access.scope_number > 0:
-            self.fts_cbimport()
+        if self.test_config.collection.collection_map:
+            self.fts_collections_restore()
+            self.wait_for_persistence()
+            self.spread_data()
         else:
             self.restore()
 
@@ -155,6 +197,7 @@ class FTSLatencyTest(FTSTest):
 
 
 class FTSIndexTest(FTSTest):
+
     COLLECTORS = {'fts_stats': True}
 
     def report_kpi(self, time_elapsed: int, size: int):
@@ -172,9 +215,11 @@ class FTSIndexTest(FTSTest):
         self.wait_for_index()
 
     def calculate_index_size(self) -> int:
-        metric = '{}:{}:{}'.format(self.test_config.buckets[0],
-                                   self.access.couchbase_index_name,
-                                   'num_bytes_used_disk')
+        metric = '{}:{}:{}'.format(
+            self.test_config.buckets[0],
+            self.access.couchbase_index_name,
+            'num_bytes_used_disk'
+        )
         size = 0
         for host in self.fts_nodes:
             stats = self.rest.get_fts_stats(host)

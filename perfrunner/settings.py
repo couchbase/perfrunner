@@ -477,6 +477,7 @@ class PhaseSettings:
     WORKERS = 0
     QUERY_WORKERS = 0
     N1QL_WORKERS = 0
+    FTS_DATA_SPREAD_WORKERS = 0
     WORKLOAD_INSTANCES = 1
 
     N1QL_OP = 'read'
@@ -775,6 +776,10 @@ class PhaseSettings:
         self.java_dcp_clients = self.JAVA_DCP_CLIENTS
 
         self.doc_groups = int(options.get('doc_groups', self.DOCUMENT_GROUPS))
+
+        self.fts_data_spread_workers = int(options.get(
+            'fts_data_spread_workers',
+            self.FTS_DATA_SPREAD_WORKERS))
 
     def __str__(self) -> str:
         return str(self.__dict__)

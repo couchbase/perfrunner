@@ -392,7 +392,7 @@ class RemoteLinux(Remote):
             '/opt/couchbase/etc/couchbase/static_config')
 
     @master_server
-    def restore_data(self, archive_path: str, repo_path: str):
+    def restore_data(self, archive_path: str, repo_path: str, map_data: str=None):
         cmd = \
             "/opt/couchbase/bin/cbbackupmgr restore " \
             "--archive {} --repo {} --threads 24 " \
@@ -402,6 +402,9 @@ class RemoteLinux(Remote):
                 archive_path,
                 repo_path,
             )
+
+        if map_data:
+            cmd += " --map-data {}".format(map_data)
 
         logger.info("Running: {}".format(cmd))
         run(cmd)

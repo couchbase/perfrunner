@@ -155,15 +155,25 @@ class CBGen3(CBAsyncGen3):
         self.collection = self.collections[args[0]]
         return self.do_read(*args[1:], **kwargs)
 
+    def get(self, *args, **kwargs):
+        self.collection = self.collections[args[0]]
+        return self.do_get(*args[1:], **kwargs)
+
+    def do_get(self, *args, **kwargs):
+        return super().do_read(*args, **kwargs)
+
     @quiet
     @backoff
     @timeit
     def do_read(self, *args, **kwargs):
         super().do_read(*args, **kwargs)
 
-    def update(self, *args, **kwargs):
+    def set(self, *args, **kwargs):
         self.collection = self.collections[args[0]]
         return self.do_update(*args[1:], **kwargs)
+
+    def do_set(self, *args, **kwargs):
+        return super().do_update(*args, **kwargs)
 
     @quiet
     @backoff

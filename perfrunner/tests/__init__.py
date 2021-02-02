@@ -162,6 +162,22 @@ class PerfTest:
             self.test_config.restore_settings.backup_repo,
         )
 
+    def fts_collections_restore(self):
+        restore_mapping = None
+        collection_map = self.test_config.collection.collection_map
+        for target in self.target_iterator:
+            if not collection_map.get(
+                    target.bucket, {}).get("_default", {}).get("_default", {}).get('load', 0):
+                restore_mapping = \
+                    "{0}._default._default={0}.scope-1.collection-1"\
+                    .format(target.bucket)
+            logger.info('Restoring data')
+            self.remote.restore_data(
+                self.test_config.restore_settings.backup_storage,
+                self.test_config.restore_settings.backup_repo,
+                map_data=restore_mapping
+            )
+
     def fts_cbimport(self):
         logger.info('Restoring data into collections')
         num_collections = self.test_config.jts_access_settings.collections_number

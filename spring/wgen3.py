@@ -111,6 +111,7 @@ class Worker:
 
         self.next_report = 0.05  # report after every 5% of completion
         self.init_load_targets()
+        self.init_access_targets()
         self.init_keys()
         self.init_docs()
         self.init_db()
@@ -125,8 +126,20 @@ class Worker:
                         self.load_targets += [scope+":"+collection]
         else:
             self.load_targets = ["_default:_default"]
-
         self.num_load_targets = len(self.load_targets)
+
+    def init_access_targets(self):
+        self.access_targets = []
+        if self.ws.collections is not None:
+            target_scope_collections = self.ws.collections[self.ts.bucket]
+            for scope in target_scope_collections.keys():
+                for collection in target_scope_collections[scope].keys():
+                    if target_scope_collections[scope][collection]['load'] == 1 and \
+                                    target_scope_collections[scope][collection]['access'] == 1:
+                        self.access_targets += [scope+":"+collection]
+        else:
+            self.access_targets = ["_default:_default"]
+        self.num_access_targets = len(self.access_targets)
 
     def init_keys(self):
         ws = copy.deepcopy(self.ws)
@@ -499,19 +512,7 @@ class KVWorker(Worker):
         self.shared_dict = shared_dict
         self.current_hot_load_start = current_hot_load_start
         self.timer_elapse = timer_elapse
-        self.access_targets = []
-        if self.ws.collections is not None:
-            target_scope_collections = self.ws.collections[self.ts.bucket]
-            for scope in target_scope_collections.keys():
-                for collection in target_scope_collections[scope].keys():
-                    if target_scope_collections[scope][collection]['load'] == 1 and \
-                                    target_scope_collections[scope][collection]['access'] == 1:
-                        self.access_targets += [scope+":"+collection]
-        else:
-            self.access_targets = ["_default:_default"]
         self.cb.connect_collections(self.access_targets)
-
-        self.num_access_targets = len(self.access_targets)
         self.ops_list = \
             ['c'] * self.ws.creates + \
             ['r'] * self.ws.reads + \
@@ -620,21 +621,9 @@ class AsyncKVWorker(KVWorker):
         self.timer_elapse = timer_elapse
         self.curr_ops = curr_ops
 
-        self.access_targets = []
-        if self.ws.collections is not None:
-            target_scope_collections = self.ws.collections[self.ts.bucket]
-            for scope in target_scope_collections.keys():
-                for collection in target_scope_collections[scope].keys():
-                    if target_scope_collections[scope][collection]['load'] == 1 and \
-                                    target_scope_collections[scope][collection]['access'] == 1:
-                        self.access_targets += [scope+":"+collection]
-        else:
-            self.access_targets = ["_default:_default"]
-
         for cb in self.cbs:
             cb.connect_collections(self.access_targets)
 
-        self.num_access_targets = len(self.access_targets)
         self.ops_list = \
             ['c'] * self.ws.creates + \
             ['r'] * self.ws.reads + \
@@ -667,20 +656,10 @@ class HotReadsWorker(Worker):
 
     def run(self, sid, *args):
         set_cpu_afinity(sid)
-
-        hot_load_targets = []
-        if self.ws.collections is not None:
-            target_scope_collections = self.ws.collections[self.ts.bucket]
-            for scope in target_scope_collections.keys():
-                for collection in target_scope_collections[scope].keys():
-                    if target_scope_collections[scope][collection]['load'] == 1:
-                        hot_load_targets += [scope+":"+collection]
-        else:
-            hot_load_targets = ["_default:_default"]
         ws = copy.deepcopy(self.ws)
-        ws.items = ws.items // len(hot_load_targets)
-        self.cb.connect_collections(hot_load_targets)
-        for target in hot_load_targets:
+        ws.items = ws.items // self.num_load_targets
+        self.cb.connect_collections(self.load_targets)
+        for target in self.load_targets:
             for key in HotKey(sid, ws, self.ts.prefix):
                 self.cb.read(target, key.string)
 
@@ -688,22 +667,43 @@ class HotReadsWorker(Worker):
 class SeqUpsertsWorker(Worker):
 
     def run(self, sid, *args):
-        load_targets = []
-        if self.ws.collections is not None:
-            target_scope_collections = self.ws.collections[self.ts.bucket]
-            for scope in target_scope_collections.keys():
-                for collection in target_scope_collections[scope].keys():
-                    if target_scope_collections[scope][collection]['load'] == 1:
-                        load_targets += [scope+":"+collection]
-        else:
-            load_targets = ["_default:_default"]
         ws = copy.deepcopy(self.ws)
-        ws.items = ws.items // len(load_targets)
-        self.cb.connect_collections(load_targets)
-        for target in load_targets:
+        ws.items = ws.items // self.num_load_targets
+        self.cb.connect_collections(self.load_targets)
+        for target in self.load_targets:
             for key in SequentialKey(sid, ws, self.ts.prefix):
                 doc = self.docs.next(key)
                 self.cb.update(target, key.string, doc)
+
+
+class FTSDataSpreadWorker(Worker):
+
+    def run(self, sid, *args):
+        self.sid = sid
+        items_per_collection = self.ws.items // self.num_load_targets
+        self.cb.connect_collections(self.load_targets)
+        if not self.ws.collections.get(self.ts.bucket, {}) \
+                .get("_default", {}) \
+                .get("_default", {}) \
+                .get('load', 0):
+            source = "scope-1:collection-1"
+        else:
+            source = "_default:_default"
+
+        iteration = 0
+        step = self.ws.fts_data_spread_workers
+        for target in sorted(self.load_targets):
+            if target != source:
+                start = sid + (items_per_collection * iteration)
+                stop = items_per_collection * (iteration + 1)
+                for key in range(start, stop, step):
+                    hex_key = format(key, 'x')
+                    get_args = source, hex_key
+                    doc = self.cb.get(*get_args)
+                    set_args = target, hex_key, doc.content_as[str]
+                    self.cb.set(*set_args)
+                    self.cb.delete(*get_args)
+            iteration += 1
 
 
 class AuxillaryWorker:
@@ -717,7 +717,6 @@ class AuxillaryWorker:
         self.ts = target_settings
         self.shutdown_event = shutdown_event
         self.sid = 0
-
         self.next_report = 0.05  # report after every 5% of completion
         self.init_db()
         self.init_creds()
@@ -1240,15 +1239,19 @@ class ViewWorker(Worker):
 class WorkerFactory:
 
     def __new__(cls, settings):
+        num_workers = settings.workers
         if getattr(settings, 'async', None):
             worker = AsyncKVWorker
         elif getattr(settings, 'seq_upserts', None):
             worker = SeqUpsertsWorker
         elif getattr(settings, 'hot_reads', None):
             worker = HotReadsWorker
+        elif getattr(settings, 'fts_data_spread_workers', None):
+            worker = FTSDataSpreadWorker
+            num_workers = settings.fts_data_spread_workers
         else:
             worker = KVWorker
-        return worker, settings.workers
+        return worker, num_workers
 
 
 class AuxillaryWorkerFactory:
@@ -1291,7 +1294,6 @@ class WorkloadGen:
         curr_ops = Value('L', 0)
         lock = Lock()
         worker_type, total_workers = worker_factory(self.ws)
-
         for sid in range(total_workers):
             args = (sid, lock, curr_ops, shared_dict,
                     current_hot_load_start, timer_elapse, worker_type,

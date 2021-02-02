@@ -71,7 +71,9 @@ class KVStoreStats(Collector):
         "RecentReadAmp",
         "RecentReadAmpGet",
         "RecentReadIOAmp",
-        "RecentBytesPerRead"
+        "RecentBytesPerRead",
+        "NGetStatsPerSec",
+        "NGetStatsComputedPerSec"
     )
     METRICS_AVERAGE_PER_NODE_PER_SHARD = (
         "ReadAmp",

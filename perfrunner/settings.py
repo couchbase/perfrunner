@@ -477,7 +477,7 @@ class PhaseSettings:
     WORKERS = 0
     QUERY_WORKERS = 0
     N1QL_WORKERS = 0
-    FTS_DATA_SPREAD_WORKERS = 0
+    FTS_DATA_SPREAD_WORKERS = None
     WORKLOAD_INSTANCES = 1
 
     N1QL_OP = 'read'
@@ -777,9 +777,12 @@ class PhaseSettings:
 
         self.doc_groups = int(options.get('doc_groups', self.DOCUMENT_GROUPS))
 
-        self.fts_data_spread_workers = int(options.get(
+        self.fts_data_spread_workers = options.get(
             'fts_data_spread_workers',
-            self.FTS_DATA_SPREAD_WORKERS))
+            self.FTS_DATA_SPREAD_WORKERS
+        )
+        if self.fts_data_spread_workers is not None:
+            self.fts_data_spread_workers = int(self.fts_data_spread_workers)
 
     def __str__(self) -> str:
         return str(self.__dict__)

@@ -749,7 +749,7 @@ class Monitor(RestHelper):
             if num_analytics_items == 0:
                 break
 
-            time.sleep(self.POLLING_INTERVAL_ANALYTICS)
+            time.sleep(self.POLLING_INTERVAL)
 
     def wait_for_timer_event(self, node: str, function: str, event="timer_events"):
         logger.info('Waiting for timer events to start processing: {} '.format(function))

@@ -142,6 +142,7 @@ class BigFunTest(PerfTest):
         result = self.rest.exec_analytics_query(self.analytics_nodes[0], statement)
         logger.info("Number of items in dataset {}: {}".
                     format(dataset, result['results'][0]['$1']))
+        return result['results'][0]['$1']
 
     def run(self):
         self.restore_local()
@@ -170,15 +171,14 @@ class BigFunSyncTest(BigFunTest):
 
 class BigFunDropDatasetTest(BigFunTest):
 
-    def _report_kpi(self, time_elapsed):
+    def _report_kpi(self, num_items, time_elapsed):
         self.reporter.post(
-            *self.metrics.elapsed_time(time_elapsed)
+            *self.metrics.avg_drop_rate(num_items, time_elapsed)
         )
 
     @with_stats
     @timeit
     def drop_dataset(self, drop_dataset: str):
-        self.get_dataset_items(drop_dataset)
         for target in self.target_iterator:
             self.rest.delete_collection(host=target.node,
                                         bucket=target.bucket,
@@ -188,12 +188,14 @@ class BigFunDropDatasetTest(BigFunTest):
 
     def run(self):
         super().run()
-
         super().sync()
 
-        drop_time = self.drop_dataset(self.test_config.analytics_settings.drop_dataset)
+        drop_dataset = self.test_config.analytics_settings.drop_dataset
+        num_items = self.get_dataset_items(drop_dataset)
 
-        self.report_kpi(drop_time)
+        drop_time = self.drop_dataset(drop_dataset)
+
+        self.report_kpi(num_items, drop_time)
 
 
 class BigFunSyncWithCompressionTest(BigFunSyncTest):

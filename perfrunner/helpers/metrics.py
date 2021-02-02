@@ -1177,6 +1177,13 @@ class MetricHelper:
 
         return rate, self._snapshots, metric_info
 
+    def avg_drop_rate(self, num_items: int, time_elapsed: float) -> Metric:
+        metric_info = self._metric_info(chirality=1)
+
+        rate = round(num_items / time_elapsed)
+
+        return rate, self._snapshots, metric_info
+
     def compression_throughput(self, time_elapsed: float) -> Metric:
         metric_info = self._metric_info(chirality=1)
 

@@ -42,7 +42,7 @@ class RemoteHelper:
     @staticmethod
     def detect_client_os(server: str, cluster_spec: ClusterSpec):
         state.env.user, state.env.password = cluster_spec.client_credentials
-        logger.info('Detecting OS on server {}'.format(server))
+        logger.info('Detecting OS on client {}'.format(server))
         with settings(host_string=server):
             os = run('python -c "import platform; print platform.dist()[0]"')
         return os

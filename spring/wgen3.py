@@ -890,9 +890,6 @@ class N1QLWorker(Worker):
         self.batch_duration = 0.0
         self.delta = 0.0
         self.op_delay = 0.0
-        self.bucket_targets = dict()
-        self.access_targets = dict()
-        self.replacement_targets = dict()
         self.first = True
 
     def do_batch_create(self, *args, **kwargs):
@@ -1002,8 +999,11 @@ class N1QLWorker(Worker):
         elif self.ws.n1ql_op == 'update':
             self.do_batch_update()
 
-    def init_bucket_targets(self):
-        # create dictionary of all targets for each bucket
+    def init_access_targets(self):
+        self.bucket_targets = dict()
+        self.access_targets = dict()
+        self.replacement_targets = dict()
+        # create bucket_targets
         for bucket in self.ws.bucket_list:
             targets = []
             if self.ws.collections is not None:
@@ -1018,7 +1018,7 @@ class N1QLWorker(Worker):
                 targets = [":".join(['_default', '_default'])]
             self.bucket_targets[bucket] = targets
 
-    def init_access_targets(self):
+        # create access targets
         for bucket in self.ws.bucket_list:
             worker_targets = self.bucket_targets[bucket]
             worker_targets.sort()
@@ -1048,7 +1048,8 @@ class N1QLWorker(Worker):
                 worker_access_targets.append([worker_targets[i] for i in target_indexes])
             self.access_targets[bucket] = worker_access_targets
 
-    def init_replacement_targets(self):
+        # create replacement targets
+
         # replacements dictionary:
         # Ex: {"bucket-1": ['collection-1',
         #                   'collection-3']}
@@ -1111,9 +1112,6 @@ class N1QLWorker(Worker):
         self.shared_dict = shared_dict
         self.current_hot_load_start = current_hot_load_start
         self.timer_elapse = timer_elapse
-        self.init_bucket_targets()
-        self.init_access_targets()
-        self.init_replacement_targets()
         self.bucket_instances = self.access_targets[self.ts.bucket]
         self.num_bucket_instances = len(self.bucket_instances)
         self.num_worker_targets = len(self.bucket_targets[self.ts.bucket])

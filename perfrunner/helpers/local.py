@@ -545,7 +545,7 @@ def run_ycsb(host: str,
              collections_map: dict = None,
              out_of_order: int = 0,
              phase_params: dict = None,
-             insertheavy_params: dict = None):
+             insert_test_params: dict = None):
 
     cmd = 'bin/ycsb {action} {ycsb_client} ' \
           '-P {workload} ' \
@@ -641,10 +641,10 @@ def run_ycsb(host: str,
             cmd += ' -p recordcount={items} '.format(
                 items=phase_params['inserts_per_workerinstance'])
             cmd += ' -p insertstart={insertstart} '.format(insertstart=phase_params['insertstart'])
-        elif insertheavy_params:
-            cmd += ' -p recordcount={items} '.format(items=insertheavy_params['recordcount'])
+        elif insert_test_params:
+            cmd += ' -p recordcount={items} '.format(items=insert_test_params['recordcount'])
             cmd += ' -p insertstart={insertstart} '.format(
-                insertstart=insertheavy_params['insertstart'])
+                insertstart=insert_test_params['insertstart'])
         else:
             cmd += ' -p recordcount={items} '.format(items=items)
     else:

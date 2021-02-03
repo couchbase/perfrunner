@@ -458,7 +458,7 @@ class PhaseSettings:
     SIZE = 2048
 
     PHASE = 0
-    INSERTHEAVY = 0
+    INSERT_TEST_FLAG = 0
 
     MEM_LOW_WAT = 0
     MEM_HIGH_WAT = 0
@@ -584,7 +584,7 @@ class PhaseSettings:
         self.items = int(options.get('items', self.ITEMS))
 
         self.phase = int(options.get('phase', self.PHASE))
-        self.insertheavy = int(options.get('insertheavy', self.INSERTHEAVY))
+        self.insert_test_flag = int(options.get('insert_test_flag', self.INSERT_TEST_FLAG))
 
         self.mem_low_wat = int(options.get('mem_low_wat', self.MEM_LOW_WAT))
         self.mem_high_wat = int(options.get('mem_high_wat', self.MEM_HIGH_WAT))

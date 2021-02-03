@@ -36,6 +36,7 @@ class YCSBTest(PerfTest):
     @with_profiles
     def access(self, *args, **kwargs):
         PerfTest.access(self, task=ycsb_task)
+        self.wait_for_persistence()
 
     def access_bg(self, *args, **kwargs):
         PerfTest.access_bg(self, task=ycsb_task)

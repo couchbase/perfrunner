@@ -115,7 +115,8 @@ class CouchbaseInstaller:
     def download_local(self, local_copy_url: str = None):
         """Download and save a copy of the specified package."""
         try:
-            if RemoteHelper.detect_server_os("127.0.0.1").upper() in ('UBUNTU', 'DEBIAN'):
+            if RemoteHelper.detect_server_os("127.0.0.1", self.cluster_spec).\
+                    upper() in ('UBUNTU', 'DEBIAN'):
                 os_release = detect_ubuntu_release()
                 if local_copy_url:
                     url = local_copy_url

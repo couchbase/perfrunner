@@ -7,7 +7,7 @@ title = Avg. ingestion rate (items/sec), 2 nodes, BigFUN 20M users (320M docs), 
 component = analytics
 category = sync
 sub_category = Initial
-orderby = hdd
+orderby = _hdd_2n
 
 [stats]
 server_processes = java

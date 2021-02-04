@@ -7,7 +7,7 @@ title = 2 nodes, BigFUN 20M users (320M docs), HDD
 component = analytics
 category = latency
 sub_category = With Index
-orderby = hdd
+orderby = _hdd_2n
 
 [stats]
 server_processes = java

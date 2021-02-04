@@ -7,7 +7,7 @@ title = Avg. incremental ingestion rate (items/sec), 4 nodes, BigFUN 20M users (
 component = analytics
 category = sync
 sub_category = Incremental
-orderby = hdd
+orderby = _hdd_4n
 
 [stats]
 server_processes = java

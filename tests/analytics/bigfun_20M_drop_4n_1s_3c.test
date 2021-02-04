@@ -6,6 +6,7 @@ use_workers = 0
 title = Avg. drop rate (items/sec), 4 nodes, BigFUN 20M users (320M docs), 3 indexes, SSD, s=1 c=3
 component = analytics
 category = drop
+orderby = _ssd_1n_3
 
 [stats]
 server_processes = java

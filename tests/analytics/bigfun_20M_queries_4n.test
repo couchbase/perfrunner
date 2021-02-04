@@ -7,7 +7,7 @@ title = 4 nodes, BigFUN 20M users (320M docs), SSD
 component = analytics
 category = latency
 sub_category = With Index
-orderby = _ssd
+orderby = _ssd_4n
 
 [stats]
 server_processes = java

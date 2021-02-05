@@ -18,7 +18,7 @@ from spring.cbgen_helpers import backoff, quiet, timeit
 
 class CBAsyncGen3:
 
-    TIMEOUT = 60  # seconds
+    TIMEOUT = 120  # seconds
 
     def __init__(self, **kwargs):
         connection_string = 'couchbase://{host}?password={password}'
@@ -102,7 +102,7 @@ class CBAsyncGen3:
 
 class CBGen3(CBAsyncGen3):
 
-    TIMEOUT = 60  # seconds
+    TIMEOUT = 120  # seconds
 
     def __init__(self, ssl_mode: str = 'none', n1ql_timeout: int = None, **kwargs):
         connection_string = 'couchbase://{host}?password={password}&{params}'

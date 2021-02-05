@@ -890,6 +890,7 @@ class LoadSettings(PhaseSettings):
 
 
 class JTSAccessSettings(PhaseSettings):
+
     JTS_REPO = "https://github.com/couchbaselabs/JTS"
     JTS_REPO_BRANCH = "master"
     JTS_HOME_DIR = "JTS"
@@ -933,13 +934,11 @@ class JTSAccessSettings(PhaseSettings):
         self.test_flex = options.get("test_flex", 'false')
         self.test_flex_query_type = options.get('test_flex_query_type', 'array_predicate')
         # Collection settings
-        self.collections_number = int(options.get("collections", "0"))
-        self.scope_number = int(options.get("scope", "-1"))
-        self.collection_prefix = options.get('collection_prefix', 'collection-')
-        self.scope_prefix = options.get('scope_prefix', 'scope-')
-        self.test_collections_flag = options.get("test_collections_flag", "0")
-        # Settings for notifying that the jts needs to use appropriate id for mutations
-        self.test_docid_use_long = options.get("test_docid_use_long", "0")
+        self.test_collection_query_mode = options.get('test_collection_query_mode', 'default')
+        self.indexes_per_group = int(options.get('indexes_per_group', '1'))
+        self.index_groups = int(options.get('index_groups', '1'))
+        self.fts_index_map = {}
+        self.collections_enabled = False
 
     def __str__(self) -> str:
         return str(self.__dict__)

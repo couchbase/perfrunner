@@ -16,7 +16,7 @@ if cb_version[0] == '2':
 
 class CBAsyncGen:
 
-    TIMEOUT = 60  # seconds
+    TIMEOUT = 120  # seconds
 
     def __init__(self, **kwargs):
         self.client = TxConnection(quiet=True, **kwargs)
@@ -55,7 +55,7 @@ class CBAsyncGen:
 
 class CBGen(CBAsyncGen):
 
-    TIMEOUT = 10  # seconds
+    TIMEOUT = 120  # seconds
 
     def __init__(self, ssl_mode: str = 'none', n1ql_timeout: int = None, **kwargs):
 

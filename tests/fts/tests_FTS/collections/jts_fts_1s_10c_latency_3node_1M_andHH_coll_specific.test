@@ -2,7 +2,7 @@
 test = perfrunner.tests.fts.FTSLatencyTest
 
 [showfast]
-title = AndHighHigh, 10K KV w/sec, wiki 1M x 1KB, 3 node, FTS, s=1 c=1
+title = AndHighHigh, 10K KV w/sec, wiki 1M x 1KB, 3 node, FTS, collection specific, s=1 c=10
 component = jts
 category = 1M
 sub_category = Latency
@@ -15,7 +15,7 @@ num_buckets = 1
 fts_index_mem_quota = 20000
 
 [collection]
-config = collections/1bucket_1scope_1collection_basic.json
+config = collections/1bucket_10scope_1collections_basic.json
 
 [load]
 items = 1000000
@@ -39,7 +39,7 @@ test_query_limit = 10
 test_query_field = text
 test_mutation_field = text2
 test_worker_type = validatedLatency
-test_collection_query_mode = default
+test_collection_query_mode = collection_specific
 index_groups = 1
 indexes_per_group = 1
 couchbase_index_name = perf_fts_index

@@ -695,13 +695,16 @@ class FTSDataSpreadWorker(Worker):
             if target != source:
                 start = sid + (items_per_collection * iteration)
                 stop = items_per_collection * (iteration + 1)
+                new_key = sid
                 for key in range(start, stop, step):
                     hex_key = format(key, 'x')
                     get_args = source, hex_key
                     doc = self.cb.get(*get_args)
-                    set_args = target, hex_key, doc.content_as[str]
+                    new_hex_key = format(new_key, 'x')
+                    set_args = target, new_hex_key, doc.content
                     self.cb.set(*set_args)
                     self.cb.delete(*get_args)
+                    new_key += step
             iteration += 1
 
 

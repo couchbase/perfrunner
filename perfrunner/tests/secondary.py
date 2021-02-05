@@ -1,3 +1,4 @@
+import copy
 import csv
 import json
 import subprocess
@@ -169,7 +170,19 @@ class SecondaryIndexTest(PerfTest):
         avg_rr = total_recs_in_mem / (total_recs_on_disk + total_recs_in_mem)
         return avg_rr
 
+    def print_average_rr(self):
+        version, build_number = self.build.split('-')
+        build = tuple(map(int, version.split('.'))) + (int(build_number),)
+
+        # MB - 43098 Caused missing stats from indexer - Hence this fails
+        # before build 7.0.0-3951
+        if build > (7, 0, 0, 3951):
+            storage_stats = self.rest.get_index_storage_stats(self.index_nodes[0])
+            avg_rr = self.calc_avg_rr(storage_stats.json())
+            logger.info("Average RR over all Indexes  : {}".format(avg_rr))
+
     def print_index_disk_usage(self, text=""):
+        self.print_average_rr()
         if self.test_config.gsi_settings.disable_perindex_stats:
             return
 
@@ -181,7 +194,6 @@ class SecondaryIndexTest(PerfTest):
         logger.info("Disk usage:\n{}".format(disk_usage))
 
         storage_stats = self.rest.get_index_storage_stats(self.index_nodes[0])
-
         logger.info("Index storage stats:\n{}".format(storage_stats.text))
 
         heap_profile = get_indexer_heap_profile(self.index_nodes[0],
@@ -192,15 +204,6 @@ class SecondaryIndexTest(PerfTest):
         if self.storage == 'plasma':
             stats = self.rest.get_index_storage_stats_mm(self.index_nodes[0])
             logger.info("Index storage stats mm:\n{}".format(stats))
-
-            # version, build_number = self.build.split('-')
-            # build = tuple(map(int, version.split('.'))) + (int(build_number),)
-
-            # MB - 43098 Caused missing stats from indexer - Hence this fails
-            # before build 7.0.0-3951
-            # if build > (7, 0, 0, 3951):
-            #     avg_rr = self.calc_avg_rr(storage_stats.json())
-            #     logger.info("Average RR over all Indexes  : {}".format(avg_rr))
 
         return self.remote.get_disk_usage(self.index_nodes[0],
                                           self.cluster_spec.index_path,
@@ -289,7 +292,6 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
                 // num_access_collections
 
             self.access()
-
             self.monitor.wait_for_secindex_incr_build_collections(
                 self.index_nodes,
                 self.indexes,
@@ -730,6 +732,26 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
         self.wait_for_persistence()
 
         self.build_secondaryindex()
+        self.access_bg()
+        self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
+        self.print_index_disk_usage()
+        self.report_kpi()
+        self.validate_num_connections()
+
+
+class ScanOverlapWorkloadTest(SecondaryIndexingScanTest):
+
+    def run(self):
+        self.remove_statsfile()
+        self.load()
+        self.wait_for_persistence()
+        self.build_secondaryindex()
+
+        access_settings = copy.deepcopy(self.test_config.access_settings)
+        access_settings.collections = access_settings.split_workload
+        access_settings.ops = int(access_settings.split_workload_ops)
+
+        self.access_bg(settings=access_settings)
         self.access_bg()
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         self.print_index_disk_usage()

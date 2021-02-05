@@ -672,6 +672,8 @@ class PhaseSettings:
     JAVA_DCP_STREAM = 'all'
     JAVA_DCP_CONFIG = None
     JAVA_DCP_CLIENTS = 0
+    SPLIT_WORKLOAD = None
+    SPLIT_WORKLOAD_OPS = 0
 
     DOCUMENT_GROUPS = 1
 
@@ -890,6 +892,8 @@ class PhaseSettings:
             self.fts_data_spread_workers = int(self.fts_data_spread_workers)
 
         self.fts_data_spread_worker_type = "default"
+        self.split_workload = options.get('split_workload', self.SPLIT_WORKLOAD)
+        self.split_workload_ops = options.get('split_workload_ops', self.SPLIT_WORKLOAD_OPS)
 
     def __str__(self) -> str:
         return str(self.__dict__)
@@ -1768,6 +1772,10 @@ class TestConfig(Config):
         collection_settings = CollectionSettings(collection_options)
         if collection_settings.collection_map is not None:
             access.collections = collection_settings.collection_map
+
+        if access.split_workload is not None:
+            with open(access.split_workload) as f:
+                access.split_workload = json.load(f)
 
         if hasattr(access, 'n1ql_queries'):
             access.define_queries(self)

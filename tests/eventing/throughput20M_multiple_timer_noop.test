@@ -37,7 +37,7 @@ worker_count = 5
 cpp_worker_thread_count = 2
 timer_timeout = 3000
 timer_fuzz = 500
-config_file = tests/eventing/config/function_5noop.json
+config_file = tests/eventing/config/function_5timer_noop.json
 
 [access]
 time = 600

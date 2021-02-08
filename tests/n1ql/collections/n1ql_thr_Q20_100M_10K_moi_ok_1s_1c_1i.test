@@ -46,7 +46,8 @@ items = 100000000
 workers = 20
 time = 1200
 n1ql_queries = aggregation-query
-n1ql_workers = 180
+n1ql_workers = 120
+workload_instances = 2
 
 [n1ql-aggregation-query]
 statement = SELECT COUNT(*) FROM `bucket-1` WHERE capped_small > $1 AND capped_small < $2;

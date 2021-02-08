@@ -33,7 +33,8 @@ statements =
 items = 1000000
 time = 600
 n1ql_queries = aggregation
-n1ql_workers = 10
+n1ql_workers = 5
+workload_instances = 2
 
 [n1ql-aggregation]
 statement = SELECT customer.zip AS zip, SUM(sales_price) AS total_sales FROM `bucket-1` WHERE customer.zip IN $1 AND DATE_PART_STR(sold_date, 'year') = $2 AND DATE_PART_STR(sold_date, 'quarter') = $3 GROUP BY customer.zip ORDER BY customer.zip;

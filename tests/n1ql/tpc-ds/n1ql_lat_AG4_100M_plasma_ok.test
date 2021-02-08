@@ -35,8 +35,9 @@ items = 1000000
 time = 600
 n1ql_queries = aggregation
 n1ql_batch_size = 1
-n1ql_workers = 4
+n1ql_workers = 2
 n1ql_timeout = 300
+workload_instances = 2
 
 [n1ql-aggregation]
 statement = SELECT customer.birth_country AS country, SUM(wholesale_cost - sales_price) AS year_total FROM `bucket-1` WHERE DATE_PART_STR(sold_date, "year") = $1 AND customer.preferred_flag = true GROUP BY customer.birth_country;

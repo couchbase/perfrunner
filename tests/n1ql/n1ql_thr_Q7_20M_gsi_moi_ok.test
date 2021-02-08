@@ -41,7 +41,8 @@ items = 20000000
 workers = 20
 time = 1200
 n1ql_queries = order-by-query
-n1ql_workers = 240
+n1ql_workers = 120
+workload_instances = 2
 
 [n1ql-order-by-query]
 statement = SELECT name AS _name, street AS _street FROM `bucket-1` WHERE capped_small=$1 ORDER BY name;

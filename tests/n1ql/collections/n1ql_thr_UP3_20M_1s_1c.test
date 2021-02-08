@@ -33,7 +33,8 @@ workers = 0
 time = 1200
 n1ql_op = update
 n1ql_queries = key-value-update
-n1ql_workers = 180
+n1ql_workers = 120
+workload_instances = 2
 
 [n1ql-key-value-update]
 statement = UPDATE `bucket-1` USE KEYS [$1] SET name = name||'_UPDATED';

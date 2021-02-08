@@ -34,7 +34,8 @@ items = 1000000
 time = 600
 n1ql_queries = windowing
 n1ql_batch_size = 1
-n1ql_workers = 60
+n1ql_workers = 30
+workload_instances = 2
 
 [n1ql-windowing]
 statement = SELECT state, store, AVG(quantity) AS avg_quantity, (SUM(SUM(quantity) ) OVER () /SUM(count(1) ) OVER ()) AS avg_quantity_over FROM `bucket-1` WHERE DATE_PART_STR(sold_date, 'year') =$1 AND customer.state =$2 GROUP BY state,store ORDER BY state;

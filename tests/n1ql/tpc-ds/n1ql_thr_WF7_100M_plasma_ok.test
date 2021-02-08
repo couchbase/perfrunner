@@ -34,7 +34,8 @@ items = 1000000
 time = 600
 n1ql_queries = windowing
 n1ql_batch_size = 1
-n1ql_workers = 60
+n1ql_workers = 30
+workload_instances = 2
 
 [n1ql-windowing]
 statement = SELECT customer.zip, FIRST_VALUE(customer.zip) OVER(ORDER BY customer.zip), LAST_VALUE(customer.zip) OVER(ORDER BY customer.zip DESC) FROM `bucket-1` WHERE customer.zip IN $1 AND customer.preferred_flag = true  GROUP BY customer.zip HAVING COUNT(1) > 10;

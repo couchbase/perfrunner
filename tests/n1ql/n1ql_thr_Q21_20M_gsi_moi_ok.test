@@ -42,7 +42,8 @@ items = 20000000
 workers = 20
 time = 1200
 n1ql_queries = count-distinct
-n1ql_workers = 480
+n1ql_workers = 240
+workload_instances = 2
 
 [n1ql-count-distinct]
 statement = SELECT COUNT(DISTINCT year) FROM `bucket-1` WHERE capped_small = $1;

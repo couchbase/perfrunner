@@ -42,7 +42,8 @@ items = 20000000
 workers = 20
 time = 1200
 n1ql_queries = page-query
-n1ql_workers = 240
+n1ql_workers = 120
+workload_instances = 2
 
 [n1ql-page-query]
 statement = SELECT name, email FROM `bucket-1` WHERE capped_small > $1 ORDER BY capped_small OFFSET 1000 LIMIT 10;

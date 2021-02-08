@@ -40,10 +40,11 @@ updates = 100
 deletes = 0
 throughput = 3600
 items = 20000000
-workers = 4
+workers = 8
 time = 1200
 n1ql_queries = range-scan
-n1ql_workers = 240
+n1ql_workers = 120
+workload_instances = 2
 
 [n1ql-range-scan]
 statement = SELECT name AS _name, street AS _street FROM `bucket-1` WHERE capped_small=$1;

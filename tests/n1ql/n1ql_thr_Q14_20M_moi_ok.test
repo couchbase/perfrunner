@@ -41,7 +41,8 @@ items = 20000000
 workers = 20
 time = 1200
 n1ql_queries = token
-n1ql_workers = 480
+n1ql_workers = 240
+workload_instances = 2
 
 [n1ql-token]
 statement = SELECT first_name, last_name, address FROM `bucket-1` WHERE address.zip = $1 AND ANY s IN TOKENS(address.street) SATISFIES s = $2 END;

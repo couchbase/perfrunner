@@ -42,7 +42,8 @@ workers = 20
 time = 1200
 n1ql_gen = join
 n1ql_queries = complex-join
-n1ql_workers = 720
+n1ql_workers = 360
+workload_instances = 2
 
 [n1ql-complex-join]
 statement = SELECT u.email AS email, COUNT(t.title) FROM `bucket-2` t INNER JOIN `bucket-3` c ON META(c).id IN t.categories LEFT OUTER JOIN `bucket-1` u ON t.owner = META(u).id WHERE t.capped = $1 AND c.name = $2 GROUP BY u.email;

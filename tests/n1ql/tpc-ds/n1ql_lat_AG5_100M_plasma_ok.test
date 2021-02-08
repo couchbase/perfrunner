@@ -34,7 +34,8 @@ items = 1000000
 time = 600
 n1ql_queries = aggregation
 n1ql_batch_size = 10
-n1ql_workers = 10
+n1ql_workers = 5
+workload_instances = 2
 
 [n1ql-aggregation]
 statement = SELECT customer.state, cnt FROM `bucket-1` WHERE DATE_PART_STR(sold_date, 'year') = $1 AND DATE_PART_STR(sold_date, 'month') = $2 AND sales_price > $3 GROUP BY customer.state LETTING cnt = COUNT(1) HAVING cnt >= 10 ORDER BY cnt, customer.state;

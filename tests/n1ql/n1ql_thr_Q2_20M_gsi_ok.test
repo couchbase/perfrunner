@@ -40,10 +40,11 @@ updates = 100
 deletes = 0
 throughput = 3600
 items = 20000000
-workers = 4
+workers = 8
 time = 1200
 n1ql_queries = singleton-unique-lookup
-n1ql_workers = 240
+n1ql_workers = 120
+workload_instances = 2
 
 [n1ql-singleton-unique-lookup]
 statement = SELECT * FROM `bucket-1` WHERE email = $1;

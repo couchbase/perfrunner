@@ -39,7 +39,8 @@ items = 1000000
 time = 600
 n1ql_queries = windowing
 n1ql_batch_size = 1
-n1ql_workers = 60
+n1ql_workers = 30
+workload_instances = 2
 
 [n1ql-windowing]
 statement = SELECT item.brand, SUM(sales_price) AS item_revenue, SUM(sales_price)*100/SUM(SUM(sales_price)) OVER (PARTITION BY item.brand) AS revenue_ratio, COUNT(1) OVER (PARTITION BY item.brand) AS items_per_brand FROM `bucket-1` WHERE item.manufacturer_id = $1 GROUP BY item.brand ORDER BY item_revenue DESC,  item.brand, revenue_ratio;

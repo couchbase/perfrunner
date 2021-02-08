@@ -39,7 +39,8 @@ items = 1000000
 time = 600
 n1ql_queries = windowing
 n1ql_batch_size = 1
-n1ql_workers = 60
+n1ql_workers = 30
+workload_instances = 2
 
 [n1ql-windowing]
 statement = SELECT customer.zip AS zip, SUM(sales_price) AS total_sales, LEAD(SUM(sales_price)) OVER(ORDER BY customer.zip  ) as lead, LAG(SUM(sales_price)) OVER(ORDER BY customer.zip  ) as lag FROM `bucket-1` WHERE customer.zip IN $1 AND DATE_PART_STR(sold_date, 'year') = $2 AND DATE_PART_STR(sold_date, 'quarter') = $3 GROUP BY customer.zip ORDER BY customer.zip;

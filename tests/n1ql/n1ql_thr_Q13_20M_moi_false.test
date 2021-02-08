@@ -42,7 +42,8 @@ items = 20000000
 workers = 20
 time = 1200
 n1ql_queries = range-scan
-n1ql_workers = 720
+n1ql_workers = 360
+workload_instances = 2
 
 [n1ql-range-scan]
 statement = SELECT RAW meta().id FROM `bucket-1` WHERE meta().id >= $1 ORDER BY meta().id LIMIT 50;

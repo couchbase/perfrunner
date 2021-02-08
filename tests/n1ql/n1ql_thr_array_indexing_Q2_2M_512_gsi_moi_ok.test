@@ -43,7 +43,8 @@ items = 2000000
 workers = 10
 time = 1200
 n1ql_queries = singleton-unique-lookup
-n1ql_workers = 240
+n1ql_workers = 120
+workload_instances = 2
 
 [n1ql-singleton-unique-lookup]
 statement = SELECT * FROM `bucket-1` WHERE ANY i IN achievements1 SATISFIES i = $1 END;

@@ -34,7 +34,8 @@ items = 1000000
 time = 600
 n1ql_queries = aggregation
 n1ql_batch_size = 10
-n1ql_workers = 2
+n1ql_workers = 1
+workload_instances = 2
 
 [n1ql-aggregation]
 statement = SELECT item.id, AVG(quantity) AS avg_quantity, AVG(list_price) AS avg_list_price, AVG(coupon_amt) AS avg_coupon_amt, AVG(sales_price) AS avg_sales_price FROM `bucket-1` WHERE customer.gender = $1 AND customer.marital_status = $2 AND customer.education_status = $3 GROUP BY item.id ORDER BY item.id LIMIT 100;

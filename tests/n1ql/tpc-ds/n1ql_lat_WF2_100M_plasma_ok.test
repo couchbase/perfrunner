@@ -35,8 +35,9 @@ items = 1000000
 time = 600
 n1ql_queries = windowing
 n1ql_batch_size = 1
-n1ql_workers = 4
+n1ql_workers = 2
 n1ql_timeout = 300
+workload_instances = 2
 
 [n1ql-windowing]
 statement = SELECT DATE_PART_STR(sold_date, 'week') AS week, SUM(CASE WHEN (WEEKDAY_STR(sold_date) = 'Monday'   ) THEN sales_price ELSE 0 END) mon_sales, SUM(CASE WHEN (WEEKDAY_STR(sold_date) = 'Tuesday'  ) THEN sales_price ELSE 0 END) tue_sales, SUM(CASE WHEN (WEEKDAY_STR(sold_date) = 'Wednesday') THEN sales_price ELSE 0 END) wed_sales, SUM(CASE WHEN (WEEKDAY_STR(sold_date) = 'Thursday' ) THEN sales_price ELSE 0 END) thu_sales, SUM(CASE WHEN (WEEKDAY_STR(sold_date) = 'Friday'   ) THEN sales_price ELSE 0 END) fri_sales, SUM(CASE WHEN (WEEKDAY_STR(sold_date) = 'Saturday' ) THEN sales_price ELSE 0 END) sat_sales, SUM(CASE WHEN (WEEKDAY_STR(sold_date) = 'Sunday' ) THEN sales_price ELSE 0 END) sun_sales, SUM(SUM(CASE WHEN (WEEKDAY_STR(sold_date) = 'Monday'   ) THEN sales_price ELSE 0 END)) OVER( PARTITION BY DATE_PART_STR(sold_date, 'week') ) sales_total_mon, SUM(SUM(CASE WHEN (WEEKDAY_STR(sold_date) = 'Tuesday'   ) THEN sales_price ELSE 0 END)) OVER( PARTITION BY DATE_PART_STR(sold_date, 'week') ) sales_total_tue, SUM(SUM(CASE WHEN (WEEKDAY_STR(sold_date) = 'Wednesday'   ) THEN sales_price ELSE 0 END)) OVER( PARTITION BY DATE_PART_STR(sold_date, 'week') ) sales_total_wed, SUM(SUM(CASE WHEN (WEEKDAY_STR(sold_date) = 'Thursday'   ) THEN sales_price ELSE 0 END) ) OVER( PARTITION BY DATE_PART_STR(sold_date, 'week') ) sales_total_thr, SUM(SUM(CASE WHEN (WEEKDAY_STR(sold_date) = 'Friday'   ) THEN sales_price ELSE 0 END)) OVER( PARTITION BY DATE_PART_STR(sold_date, 'week') ) sales_total_fri, SUM(SUM(CASE WHEN (WEEKDAY_STR(sold_date) = 'Saturday'   ) THEN sales_price ELSE 0 END)) OVER( PARTITION BY DATE_PART_STR(sold_date, 'week') ) sales_total_sat, SUM(SUM(CASE WHEN (WEEKDAY_STR(sold_date) = 'Sunday'   ) THEN sales_price ELSE 0 END)) OVER( PARTITION BY DATE_PART_STR(sold_date, 'week') ) sales_total_sun FROM `bucket-1` WHERE DATE_PART_STR(sold_date, 'year') = $1 GROUP BY DATE_PART_STR(sold_date, 'week');

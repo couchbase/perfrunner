@@ -310,11 +310,10 @@
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_4n_1s_999c.test"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_1s_999c.test"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_no_index_1s_999c.test"},
-        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_reb_in_1s_999c.test"},
-        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_reb_out_1s_999c.test"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_no_index_window_functions_1s_999c.test"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_4n_default_99indexes.test"},
-        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_drop_4n_1s_3c.test"}
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_drop_4n_1s_3c.test"},
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_drop_4n_1s_99c.test"}
     ],
     "Views": [
         {"job": "leto", "cluster": "leto.spec", "test_config": "index_20M_default.test"},

@@ -45,7 +45,6 @@ time = 3600
 n1ql_queries = singleton-unique-lookup
 n1ql_throughput = 8000
 n1ql_workers = 120
-workload_instances = 2
 
 [n1ql-singleton-unique-lookup]
 statement = SELECT * FROM `bucket-1` WHERE email = $1;

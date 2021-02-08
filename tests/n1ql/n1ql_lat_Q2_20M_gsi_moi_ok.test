@@ -38,7 +38,6 @@ workers = 0
 time = 1200
 n1ql_queries = singleton-unique-lookup
 n1ql_workers = 120
-workload_instances = 2
 n1ql_throughput = 10000
 
 [n1ql-singleton-unique-lookup]

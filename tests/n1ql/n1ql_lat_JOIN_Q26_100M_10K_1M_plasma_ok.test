@@ -40,12 +40,11 @@ updates = 100
 deletes = 0
 throughput = 15000
 items = 50000000
-workers = 10
+workers = 20
 time = 1200
 n1ql_gen = hash_join
 n1ql_queries = join
-n1ql_workers = 2
-workload_instances = 2
+n1ql_workers = 20
 
 [n1ql-join]
 statement = SELECT b1.state, SUM(b1.coins) FROM `bucket-1` b1 JOIN `bucket-2` b2 USE HASH(build) ON b1.coins = b2.coins WHERE b1.capped_10K = $1 AND b2.capped_100 > $2 AND b2.capped_100 < $3 GROUP BY b1.state;

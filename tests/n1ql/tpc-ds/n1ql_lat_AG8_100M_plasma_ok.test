@@ -33,8 +33,7 @@ statements =
 items = 1000000
 time = 600
 n1ql_queries = aggregation
-n1ql_workers = 5
-workload_instances = 2
+n1ql_workers = 20
 
 [n1ql-aggregation]
 statement = SELECT customer.gender, customer.marital_status, customer.education_status, customer.purchase_estimate, customer.credit_rating, customer.dep_count, customer.dep_employed_count, customer.dep_college_count, COUNT(1) AS cnt FROM `bucket-1` WHERE customer.county IN $1 AND DATE_PART_STR(sold_date, 'year') = $2 AND DATE_PART_STR(sold_date, 'month') BETWEEN $3 AND $3 + 3 GROUP BY customer.gender, customer.marital_status, customer.education_status, customer.purchase_estimate, customer.credit_rating, customer.dep_count, customer.dep_employed_count, customer.dep_college_count ORDER BY customer.gender, customer.marital_status, customer.education_status, customer.purchase_estimate, customer.credit_rating, customer.dep_count, customer.dep_employed_count, customer.dep_college_count LIMIT 100;

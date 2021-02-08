@@ -34,8 +34,7 @@ items = 1000000
 time = 600
 n1ql_queries = aggregation
 n1ql_batch_size = 10
-n1ql_workers = 5
-workload_instances = 2
+n1ql_workers = 20
 
 [n1ql-aggregation]
 statement = SELECT store, AVG(quantity) AS avg_quantity FROM `bucket-1` WHERE DATE_PART_STR(sold_date, 'year') = $1 AND customer.state = $2 GROUP BY store;

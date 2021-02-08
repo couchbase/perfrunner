@@ -47,7 +47,6 @@ workers = 20
 time = 1200
 n1ql_queries = range-scan
 n1ql_workers = 120
-workload_instances = 2
 n1ql_throughput = 960
 
 [n1ql-range-scan]

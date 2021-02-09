@@ -189,6 +189,15 @@ class N1QLLatencyRebalanceTest(N1QLLatencyTest):
 
 class N1QLThroughputTest(N1QLTest):
 
+    COLLECTORS = {
+        'iostat': False,
+        'memory': False,
+        'n1ql_latency': False,
+        'n1ql_stats': True,
+        'secondary_stats': True,
+        'ns_server_system': True
+    }
+
     def _report_kpi(self):
         self.reporter.post(
             *self.metrics.avg_n1ql_throughput()

@@ -19,7 +19,6 @@ initial_nodes = 6
 num_buckets = 1
 
 [bucket]
-replica_number = 0
 eviction_policy = fullEviction
 
 [analytics]

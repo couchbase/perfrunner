@@ -1,4 +1,5 @@
 import json
+import random
 import time
 from typing import List, Tuple
 
@@ -112,9 +113,9 @@ class BigFunTest(PerfTest):
                                                                self.analytics_nodes[0])
 
     def re_sync(self):
+        self.connect_buckets()
         for target in self.target_iterator:
-            self.connect_bucket(target.bucket)
-            self.monitor.monitor_data_synced(target.node, target.bucket)
+            self.monitor.monitor_data_synced(target.node, target.bucket, self.analytics_nodes[0])
 
     def set_analytics_logging_level(self):
         log_level = self.test_config.analytics_settings.log_level
@@ -231,7 +232,7 @@ class BigFunIncrSyncTest(BigFunTest):
 
         self.sync()
 
-        self.disconnect()
+        self.disconnect_link()
 
         super().run()
 
@@ -271,6 +272,7 @@ class BigFunQueryTest(BigFunTest):
             )
 
     def run(self):
+        random.seed(8095)
         super().run()
 
         self.sync()

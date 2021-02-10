@@ -1,6 +1,7 @@
 import threading
 from typing import Callable
 
+import paramiko
 import requests
 from decorator import decorator
 from sshtunnel import SSHTunnelForwarder
@@ -41,7 +42,8 @@ class Profiler:
     DEBUG_PORTS = {
         'fts':   8094,
         'index': 9102,
-        'kv':    9998,  # goxdcr
+        'goxdcr':    9998,
+        'kv': 9998,           # will be deprecated in future
         'n1ql':  8093,
     }
 
@@ -60,6 +62,12 @@ class Profiler:
 
         self.ssh_username, self.ssh_password = cluster_spec.ssh_credentials
 
+        self.cluster_spec = cluster_spec
+
+        self.profiling_settings = test_config.profiling_settings
+
+        self.linux_perf_path = '/opt/couchbase/var/lib/couchbase/logs/'
+
     def new_tunnel(self, host: str, port: int) -> SSHTunnelForwarder:
         return SSHTunnelForwarder(
             ssh_address_or_host=host,
@@ -74,11 +82,58 @@ class Profiler:
         with open(fname, 'wb') as fh:
             fh.write(content)
 
+    def linux_perf_profile(self, host: str, fname: str, path: str):
+
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        try:
+            client.connect(hostname=host, username=self.ssh_username,
+                           password=self.ssh_password)
+
+        except Exception:
+            logger.info('Cannot connect to the "{}" via SSH Server'.format(host))
+            exit()
+
+        logger.info('Capturing linux profile using linux perf record ')
+
+        cmd = 'perf record -a -F {} -g --call-graph {} ' \
+              '-p $(pgrep memcached) -o {}{} ' \
+              '-- sleep {}'.format(self.profiling_settings.linux_perf_frequency,
+                                   self.profiling_settings.linux_perf_callgraph,
+                                   path,
+                                   fname,
+                                   self.profiling_settings.linux_perf_profile_duration)
+        stdin, stdout, stderr = client.exec_command(cmd)
+        exit_status = stdout.channel.recv_exit_status()
+
+        if exit_status == 0:
+            logger.info("linux perf record: linux perf profile capture completed")
+        else:
+            logger.info("perf record failed , exit_status :  ", exit_status)
+
+        client.close()
+
     def profile(self, host: str, service: str, profile: str):
         logger.info('Collecting {} profile on {}'.format(profile, host))
 
         endpoint = self.ENDPOINTS[profile]
         port = self.DEBUG_PORTS[service]
+
+        if self.profiling_settings.linux_perf_profile_flag:
+            logger.info('Collecting {} profile on {} using linux perf '
+                        'reccord'.format(profile, host))
+
+            fname = 'linux_{}_{}_{}_perf.data'.format(host, profile, uhex()[:4])
+            self.linux_perf_profile(host=host, fname=fname, path=self.linux_perf_path)
+
+        else:
+            logger.info('Collecting {} profile on {}'.format(profile, host))
+
+            with self.new_tunnel(host, port) as tunnel:
+                url = endpoint.format(tunnel.local_bind_port)
+                response = requests.get(url=url, auth=self.rest.auth)
+                self.save(host, service, profile, response.content)
 
         with self.new_tunnel(host, port) as tunnel:
             url = endpoint.format(tunnel.local_bind_port)

@@ -99,6 +99,7 @@ class RebalanceTest(PerfTest):
         time.sleep(self.rebalance_settings.stop_after)
 
     @with_stats
+    @with_profiles
     def rebalance(self, services=None):
         self.pre_rebalance()
         self.rebalance_time = self._rebalance(services)
@@ -137,6 +138,7 @@ class RebalanceDurabilityTest(RebalanceTest):
     COLLECTORS = {'latency': True}
 
     @with_stats
+    @with_profiles
     def rebalance(self, services=None):
         self.access_bg()
         self.rebalance_time = self._rebalance(services)
@@ -177,6 +179,7 @@ class RebalanceForFTS(RebalanceTest, FTSTest):
         self.post_rebalance()
 
     @with_stats
+    @with_profiles
     def create_fts_index(self):
         st = time.time()
         self.create_index()

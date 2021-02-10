@@ -519,3 +519,23 @@ class ClusterManager:
             )
             check_tls_version = self.rest.get_minimum_tls_version(self.master_node)
             logger.info('new tls version: {}'.format(check_tls_version))
+
+    def get_debug_rpm_url(self):
+        release, build_number = self.build.split('-')
+        build = tuple(map(int, release.split('.'))) + (int(build_number),)
+        if build > (7, 0, 0, 0):
+            release = 'cheshire-cat'
+        elif build > (6, 5, 0, 0) and build < (7, 0, 0, 0):
+            release = 'mad-hatter'
+        elif build < (6, 5, 0, 0):
+            release = 'alice'
+        centos_version = self.remote.detect_centos_release()
+
+        rpm_url = 'http://latestbuilds.service.couchbase.com/builds/' \
+                  'latestbuilds/couchbase-server/{}/{}/' \
+                  'couchbase-server-enterprise-debuginfo-{}-centos{}.x86_64.rpm' \
+                  ''.format(release, build_number, self.build, centos_version)
+        return rpm_url
+
+    def install_cb_debug_rpm(self):
+        self.remote.install_cb_debug_rpm(url=self.get_debug_rpm_url())

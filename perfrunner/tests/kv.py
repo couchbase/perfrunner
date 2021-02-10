@@ -2,6 +2,7 @@ import copy
 
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
+from perfrunner.helpers.profiler import with_profiles
 from perfrunner.helpers.worker import (
     pillowfight_data_load_task,
     pillowfight_task,
@@ -552,6 +553,7 @@ class CompressionTest(PillowFightTest):
 
     @with_stats
     @timeit
+    @with_profiles
     def wait_for_compression(self):
         for master in self.cluster_spec.masters:
             for bucket in self.test_config.buckets:
@@ -578,6 +580,7 @@ class CompactionTest(KVTest):
 
     @with_stats
     @timeit
+    @with_profiles
     def compact(self):
         self.compact_bucket()
 

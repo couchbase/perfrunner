@@ -14,6 +14,7 @@ class DCPThroughputTest(PerfTest):
 
     @with_stats
     @timeit
+    @with_profiles
     def access(self, *args):
         username, password = self.cluster_spec.rest_credentials
 
@@ -64,6 +65,7 @@ class JavaDCPThroughputTest(DCPThroughputTest):
 
     @with_stats
     @timeit
+    @with_profiles
     def access(self, *args):
         for target in self.target_iterator:
             local.run_java_dcp_client(

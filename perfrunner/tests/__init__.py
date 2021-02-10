@@ -95,6 +95,9 @@ class PerfTest:
         return self.rest.get_active_nodes_by_role(self.master_node, 'eventing')
 
     def tear_down(self):
+        if self.test_config.profiling_settings.linux_perf_profile_flag:
+            self.collect_linux_perf_profiles()
+
         if self.test_config.test_case.use_workers:
             self.worker_manager.download_celery_logs()
             self.worker_manager.terminate()
@@ -106,6 +109,10 @@ class PerfTest:
             self.collect_logs()
 
             self.cluster.reset_memory_settings()
+
+    def collect_linux_perf_profiles(self):
+        self.remote.generate_linux_perf_script()
+        self.remote.get_linuxperf_files()
 
     def collect_logs(self):
         self.remote.collect_info()

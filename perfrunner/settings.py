@@ -290,6 +290,14 @@ class ProfilingSettings:
 
     SERVICES = ''
 
+    LINUX_PERF_PROFILE_DURATION = 10  # seconds
+
+    LINUX_PERF_FREQUENCY = 99
+
+    LINUX_PERF_CALLGRAPH = 'lbr'     # optional lbr, dwarf
+
+    LINUX_PERF_DELAY_MULTIPLIER = 2
+
     def __init__(self, options: dict):
         self.services = options.get('services',
                                     self.SERVICES).split()
@@ -299,6 +307,19 @@ class ProfilingSettings:
                                             self.NUM_PROFILES))
         self.profiles = options.get('profiles',
                                     self.PROFILES).split(',')
+        self.linux_perf_profile_duration = int(options.get('linux_perf_profile_duration',
+                                                           self.LINUX_PERF_PROFILE_DURATION))
+
+        self.linux_perf_profile_flag = bool(options.get('linux_perf_profile_flag'))
+
+        self.linux_perf_frequency = int(options.get('linux_perf_frequency',
+                                                    self.LINUX_PERF_FREQUENCY))
+
+        self.linux_perf_callgraph = options.get('linux_perf_callgraph',
+                                                self.LINUX_PERF_CALLGRAPH)
+
+        self.linux_perf_delay_multiplier = int(options.get('linux_perf_delay_multiplier',
+                                                           self.LINUX_PERF_DELAY_MULTIPLIER))
 
 
 class BucketSettings:

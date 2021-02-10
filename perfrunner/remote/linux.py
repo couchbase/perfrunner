@@ -1,11 +1,11 @@
 import os
+import time
 from collections import defaultdict
 from typing import Dict, List
 from urllib.parse import urlparse
 
 from fabric.api import cd, get, put, quiet, run, settings
 from fabric.exceptions import CommandTimeout, NetworkError
-
 from logger import logger
 from perfrunner.helpers.misc import uhex
 from perfrunner.remote import Remote
@@ -28,6 +28,10 @@ class RemoteLinux(Remote):
                  'moxi', 'spring', 'sync_gateway')
 
     PROCESS_PATTERNS = ('cbas', )
+
+    LINUX_PERF_PROFILES_PATH = '/opt/couchbase/var/lib/couchbase/logs/'
+
+    LINUX_PERF_DELAY = 30
 
     @property
     def package(self):
@@ -812,3 +816,47 @@ class RemoteLinux(Remote):
 
             logger.info('Running: {}'.format(cmd))
             run(cmd)
+
+    @all_servers
+    def install_cb_debug_rpm(self, url):
+        logger.info('Installing Couchbase Debug rpm on all servers')
+        run('rpm -iv {}'.format(url), quiet=True)
+
+    @all_servers
+    def generate_linux_perf_script(self):
+
+        files_list = 'for i in {}*_perf.data; do echo $i; ' \
+                     'done'.format(self.LINUX_PERF_PROFILES_PATH)
+        files = run(files_list).replace("\r", "").split("\n")
+
+        for filename in files:
+            fname = filename.split('/')[-1]
+            if fname != '*_perf.data':
+                cmd_perf_script = 'perf script -i {}' \
+                                ' --no-inline > {}.txt'.format(filename, filename)
+
+                logger.info('Generating linux script data : {}'.format(cmd_perf_script))
+                try:
+
+                    with settings(warn_only=True):
+                        run(cmd_perf_script, timeout=600, pty=False)
+                        time.sleep(self.LINUX_PERF_DELAY)
+
+                except CommandTimeout:
+                    logger.error('linux perf script timed out')
+
+                cmd_zip = 'cd {}; zip -q {}.zip {}.txt'.format(self.LINUX_PERF_PROFILES_PATH,
+                                                               fname,
+                                                               fname)
+
+                with settings(warn_only=True):
+                    run(cmd_zip, pty=False)
+
+    @all_servers
+    def get_linuxperf_files(self):
+
+        logger.info('Collecting linux perf files from kv nodes')
+        with cd(self.LINUX_PERF_PROFILES_PATH):
+            r = run('stat *.zip', quiet=True, warn_only=True)
+            if not r.return_code:
+                get('*.zip', local_path='.')

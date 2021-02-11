@@ -1,7 +1,7 @@
 from perfrunner.helpers.metrics import DailyMetricHelper
 from perfrunner.helpers.reporter import DailyReporter
-from perfrunner.tests import PerfTest
 from perfrunner.settings import ClusterSpec, TestConfig
+from perfrunner.tests import PerfTest
 
 
 class DailyTest(PerfTest):

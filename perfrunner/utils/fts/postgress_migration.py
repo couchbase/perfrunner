@@ -8,10 +8,9 @@
 
 from threading import Thread
 
+import psycopg2
 from couchbase.bucket import Bucket
 from couchbase.exceptions import NotFoundError
-
-import psycopg2
 
 
 def load_as_separate_docs(bucketname, count, limit):

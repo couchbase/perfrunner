@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 
 from fabric.api import cd, get, put, quiet, run, settings
 from fabric.exceptions import CommandTimeout, NetworkError
+
 from logger import logger
 from perfrunner.helpers.misc import uhex
 from perfrunner.remote import Remote

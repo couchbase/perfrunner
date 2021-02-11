@@ -8,12 +8,12 @@ from logger import logger
 
 cb_version = pkg_resources.get_distribution("couchbase").version
 if cb_version[0] == '2':
-    from txcouchbase.connection import Connection
     from couchbase import experimental
+    from txcouchbase.connection import Connection
     experimental.enable()
 elif cb_version[0] == '3':
-    from couchbase_core.cluster import PasswordAuthenticator
     from couchbase.cluster import ClusterOptions
+    from couchbase_core.cluster import PasswordAuthenticator
     from txcouchbase.cluster import TxCluster
 
 

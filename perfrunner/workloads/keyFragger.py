@@ -58,13 +58,14 @@ cb_version = pkg_resources.get_distribution("couchbase").version
 
 if cb_version[0] == '2':
     from couchbase import FMT_BYTES
-    from couchbase.exceptions import TimeoutError, TemporaryFailError
     from couchbase.cluster import Cluster, PasswordAuthenticator
+    from couchbase.exceptions import TemporaryFailError, TimeoutError
 elif cb_version[0] == '3':
-    from couchbase.exceptions import TimeoutException as TimeoutError
-    from couchbase.exceptions import TemporaryFailException as TemporaryFailError
-    from couchbase_core._libcouchbase import FMT_BYTES
     from couchbase.cluster import Cluster, PasswordAuthenticator
+    from couchbase.exceptions import \
+        TemporaryFailException as TemporaryFailError
+    from couchbase.exceptions import TimeoutException as TimeoutError
+    from couchbase_core._libcouchbase import FMT_BYTES
 
 # Stored value overhead
 SV_SIZE = 56 + 2

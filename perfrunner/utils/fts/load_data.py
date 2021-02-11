@@ -133,7 +133,7 @@ class Numeric(Docgen):
 
 class Datefacet:
     def __init__(self):
-        from multiprocessing import Manager, Lock
+        from multiprocessing import Lock, Manager
         self.cb = Bucket('couchbase://172.23.99.211/bucket-1', password="password")
         self.lock = Lock()
         self.dsize = 1000000

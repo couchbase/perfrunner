@@ -4,7 +4,6 @@ import time
 from typing import Callable, Iterable, List, Optional
 
 from logger import logger
-
 from perfrunner.helpers import local
 from perfrunner.helpers.cluster import ClusterManager
 from perfrunner.helpers.memcached import MemcachedHelper
@@ -15,7 +14,7 @@ from perfrunner.helpers.profiler import Profiler
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.reporter import ShowFastReporter
 from perfrunner.helpers.rest import RestHelper
-from perfrunner.helpers.worker import spring_task, WorkerManager
+from perfrunner.helpers.worker import WorkerManager, spring_task
 from perfrunner.settings import (
     ClusterSpec,
     PhaseSettings,

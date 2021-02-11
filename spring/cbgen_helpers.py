@@ -15,7 +15,8 @@ if cb_version[0] == '2':
     from couchbase.exceptions import CouchbaseError, TemporaryFailError
 elif cb_version[0] == '3':
     from couchbase.exceptions import CouchbaseException as CouchbaseError
-    from couchbase.exceptions import TemporaryFailException as TemporaryFailError
+    from couchbase.exceptions import \
+        TemporaryFailException as TemporaryFailError
 
 
 class ErrorTracker:

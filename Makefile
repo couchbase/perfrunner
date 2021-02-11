@@ -24,7 +24,7 @@ clean:
 
 pep8:
 	${ENV}/bin/flake8 --statistics ${PYTHON_PROJECTS}
-	${ENV}/bin/isort --quiet --check-only --recursive ${PYTHON_PROJECTS}
+	${ENV}/bin/isort --quiet --check-only ${PYTHON_PROJECTS}
 	${ENV}/bin/pydocstyle ${PYTHON_PROJECTS}
 
 test:

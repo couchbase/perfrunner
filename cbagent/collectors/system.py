@@ -1,4 +1,4 @@
-from cbagent.collectors import Collector
+from cbagent.collectors.collector import Collector
 from cbagent.collectors.libstats.iostat import DiskStats, IOStat
 from cbagent.collectors.libstats.meminfo import MemInfo
 from cbagent.collectors.libstats.net import NetStat

@@ -1,7 +1,7 @@
 import time
 from glob import glob
 
-from cbagent.collectors import Collector
+from cbagent.collectors.collector import Collector
 
 
 class JTSCollector(Collector):

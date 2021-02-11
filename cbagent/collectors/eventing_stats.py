@@ -1,6 +1,6 @@
 from fabric.api import run, settings
 
-from cbagent.collectors import Collector
+from cbagent.collectors.collector import Collector
 
 
 class EventingStats(Collector):

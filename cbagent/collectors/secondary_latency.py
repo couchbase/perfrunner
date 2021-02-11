@@ -1,6 +1,6 @@
 import os
 
-from cbagent.collectors import Collector
+from cbagent.collectors.collector import Collector
 
 
 class SecondaryLatencyStats(Collector):

@@ -1,6 +1,6 @@
 import json
 
-from cbagent.collectors import Collector
+from cbagent.collectors.collector import Collector
 from perfrunner.helpers.local import extract_cb_any, get_cbstats
 
 

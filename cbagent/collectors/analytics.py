@@ -1,6 +1,6 @@
 from typing import List
 
-from cbagent.collectors import Collector
+from cbagent.collectors.collector import Collector
 
 
 class AnalyticsStats(Collector):

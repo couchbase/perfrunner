@@ -5,7 +5,7 @@ from typing import Iterator
 
 from aiohttp import ClientSession
 
-from cbagent.collectors import Collector
+from cbagent.collectors.collector import Collector
 
 
 class Latency(Collector):

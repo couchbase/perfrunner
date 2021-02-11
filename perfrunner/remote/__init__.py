@@ -57,15 +57,17 @@ class Remote:
                 logger.info('move couchbase package to perfrunner')
                 run('mv /tmp/couchbase.rpm ./')
 
-    def start_celery_worker(self, worker, worker_home):
+    def start_celery_worker(self, worker, worker_home, broker_url):
         with settings(host_string=worker):
             with cd(worker_home), shell_env(PYTHONOPTIMIZE='1',
                                             PYTHONWARNINGS='ignore',
                                             C_FORCE_ROOT='1'):
                 run('ulimit -n 10240; '
+                    'WORKER_TYPE=remote '
+                    'BROKER_URL={1} '
                     'nohup env/bin/celery worker -A perfrunner.helpers.worker '
                     '-l INFO -Q {0} -n {0} -C --discard '
-                    '&>worker_{0}.log &'.format(worker), pty=False)
+                    '&>worker_{0}.log &'.format(worker, broker_url), pty=False)
 
     def clone_git_repo(self, repo: str, branch: str, worker_home: str, commit: str = None):
         logger.info('Cloning repository: {} branch {}'.format(repo, branch))

@@ -13,7 +13,6 @@ from couchbase_core.cluster import PasswordAuthenticator
 from couchbase_core.views.params import ViewQuery
 from txcouchbase.cluster import TxCluster
 
-from logger import logger
 from spring.cbgen_helpers import backoff, quiet, timeit
 
 
@@ -33,7 +32,6 @@ class CBAsyncGen3:
         self.bucket_name = kwargs['bucket']
         self.collections = dict()
         self.collection = None
-        logger.info("Connection string: {}".format(connection_string))
 
     def connect_collections(self, scope_collection_list):
         self.bucket = self.cluster.bucket(self.bucket_name)
@@ -131,7 +129,6 @@ class CBGen3(CBAsyncGen3):
         self.bucket = None
         self.collections = dict()
         self.collection = None
-        logger.info("Connection string: {}".format(connection_string))
 
     def create(self, *args, **kwargs):
         self.collection = self.collections[args[0]]

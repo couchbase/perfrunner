@@ -4,7 +4,6 @@ MAINTAINER Korrigan Clark <korrigan.clark@couchbase.com>
 
 ARG DEBIAN_FRONTEND="noninteractive"
 
-# set the variables as per $(pyenv init -)
 ENV LANG="C.UTF-8" \
     LC_ALL="C.UTF-8" \
     PATH="/opt/pyenv/shims:/opt/pyenv/bin:$PATH" \
@@ -31,7 +30,6 @@ RUN git clone -b `cat /pyenv-version.txt` --single-branch --depth 1 https://gith
 WORKDIR /opt
 RUN git clone https://github.com/couchbase/perfrunner.git
 WORKDIR /opt/perfrunner
-RUN git fetch "http://review.couchbase.org/perfrunner" refs/changes/78/144178/9 && git checkout FETCH_HEAD
 RUN make docker-cloud-worker
 
 

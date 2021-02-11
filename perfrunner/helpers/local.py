@@ -545,9 +545,10 @@ def run_ycsb(host: str,
              collections_map: dict = None,
              out_of_order: int = 0,
              phase_params: dict = None,
-             insert_test_params: dict = None):
+             insert_test_params: dict = None,
+             cloud: bool = None):
 
-    cmd = 'pyenv local system && bin/ycsb {action} {ycsb_client} ' \
+    cmd = 'bin/ycsb {action} {ycsb_client} ' \
           '-P {workload} ' \
           '-p writeallfields=true ' \
           '-threads {workers} ' \
@@ -571,6 +572,9 @@ def run_ycsb(host: str,
           '-p couchbase.retryLower={retry_lower} ' \
           '-p couchbase.retryUpper={retry_upper} ' \
           '-p couchbase.retryFactor={retry_factor} '
+
+    if cloud:
+        cmd = 'pyenv local system && ' + cmd
 
     if durability is None:
         cmd += '-p couchbase.persistTo={persist_to} '

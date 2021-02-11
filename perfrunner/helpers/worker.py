@@ -195,7 +195,7 @@ class RemoteWorkerManager:
             self.remote.remote_copy(self.WORKER_HOME)
         for worker in self.cluster_spec.workers:
             logger.info('Starting remote Celery worker, host={}'.format(worker))
-            self.remote.start_celery_worker(worker, perfrunner_home)
+            self.remote.start_celery_worker(worker, perfrunner_home, self.broker_url)
 
     def start_kubernetes_workers(self):
         num_workers = len(self.cluster_spec.workers)

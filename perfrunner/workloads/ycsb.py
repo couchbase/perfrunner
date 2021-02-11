@@ -56,7 +56,8 @@ def ycsb_data_load(workload_settings: PhaseSettings,
              ycsb_jvm_args=workload_settings.ycsb_jvm_args,
              collections_map=workload_settings.collections,
              timeseries=workload_settings.timeseries,
-             phase_params=phase_params)
+             phase_params=phase_params,
+             cloud=target.cloud)
 
 
 def ycsb_workload(workload_settings: PhaseSettings,
@@ -133,4 +134,5 @@ def ycsb_workload(workload_settings: PhaseSettings,
              ycsb_jvm_args=workload_settings.ycsb_jvm_args,
              collections_map=workload_settings.collections,
              out_of_order=workload_settings.ycsb_out_of_order,
-             insert_test_params=insert_test_params)
+             insert_test_params=insert_test_params,
+             cloud=target.cloud)

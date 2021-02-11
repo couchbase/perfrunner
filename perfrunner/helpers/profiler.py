@@ -42,7 +42,7 @@ class Profiler:
     DEBUG_PORTS = {
         'fts':   8094,
         'index': 9102,
-        'goxdcr':    9998,
+        'goxdcr': 9998,
         'kv': 9998,           # will be deprecated in future
         'n1ql':  8093,
     }
@@ -134,11 +134,6 @@ class Profiler:
                 url = endpoint.format(tunnel.local_bind_port)
                 response = requests.get(url=url, auth=self.rest.auth)
                 self.save(host, service, profile, response.content)
-
-        with self.new_tunnel(host, port) as tunnel:
-            url = endpoint.format(tunnel.local_bind_port)
-            response = requests.get(url=url, auth=self.rest.auth)
-            self.save(host, service, profile, response.content)
 
     def timer(self, **kwargs):
         timer = Timer(

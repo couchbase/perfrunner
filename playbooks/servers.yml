@@ -26,3 +26,5 @@
       - tree
       - vim
       - wget
+      - perf
+      - zip

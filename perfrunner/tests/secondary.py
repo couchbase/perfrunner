@@ -154,6 +154,9 @@ class SecondaryIndexTest(PerfTest):
         return avg_rr
 
     def print_index_disk_usage(self, text=""):
+        if self.test_config.gsi_settings.disable_perindex_stats:
+            return
+
         if text:
             logger.info("{}".format(text))
 
@@ -163,8 +166,7 @@ class SecondaryIndexTest(PerfTest):
 
         storage_stats = self.rest.get_index_storage_stats(self.index_nodes[0])
 
-        if not self.test_config.gsi_settings.disable_perindex_stats:
-            logger.info("Index storage stats:\n{}".format(storage_stats.text))
+        logger.info("Index storage stats:\n{}".format(storage_stats.text))
 
         heap_profile = get_indexer_heap_profile(self.index_nodes[0],
                                                 self.rest.rest_username,

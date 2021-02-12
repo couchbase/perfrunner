@@ -532,7 +532,6 @@ class KVWorker(Worker):
 
         self.seed()
 
-        logger.info('Started: {}-{}'.format(self.NAME, self.sid))
         try:
             if self.target_time:
                 start_delay = random.random_sample() * self.target_time
@@ -808,7 +807,6 @@ class UserModWorker(AuxillaryWorker):
                                        "query_insert", "query_delete", "query_manage_index"]
         self.num_roles = len(self.supported_roles)
 
-        logger.info('Started: {}-{}'.format(self.NAME, self.sid))
         try:
             while self.run_condition(curr_ops) and self.users > 0:
                 self.update_random_user()
@@ -833,9 +831,7 @@ class CollectionModWorker(AuxillaryWorker):
         random_scope = list(random.choice(self.target_scopes, 1))
         target_scope = random_scope[0]
         target_collection = "temp-collection-"+str(self.sid)
-        print("creating collection: "+target_scope+":"+target_collection)
         self.cb.do_collection_create(target_scope, target_collection)
-        print("dropping collection: "+target_scope+":"+target_collection)
         self.cb.do_collection_drop(target_scope, target_collection)
 
     def run(self, sid, lock, curr_ops, shared_dict,
@@ -860,15 +856,12 @@ class CollectionModWorker(AuxillaryWorker):
         else:
             self.target_scopes = ["_default"]
 
-        print('target scopes: '+str(self.target_scopes))
-
         if self.ws.collection_mod_throughput < float('inf'):
             self.target_time = self.ws.collection_mod_workers / \
                                self.ws.collection_mod_throughput
         else:
             self.target_time = None
 
-        logger.info('Started: {}-{}'.format(self.NAME, self.sid))
         try:
             while self.run_condition(curr_ops):
                 self.create_delete_collection()
@@ -1141,7 +1134,6 @@ class N1QLWorker(Worker):
         else:
             self.target_time = None
 
-        logger.info('Started: {}-{}'.format(self.NAME, self.sid))
         try:
             if self.target_time:
                 start_delay = random.random_sample() * self.target_time
@@ -1223,7 +1215,6 @@ class ViewWorker(Worker):
         self.timer_elapse = timer_elapse
 
         try:
-            logger.info('Started: {}-{}'.format(self.NAME, self.sid))
             while not self.time_to_stop():
                 self.do_batch()
         except KeyboardInterrupt:

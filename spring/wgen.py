@@ -438,7 +438,6 @@ class KVWorker(Worker):
 
         self.seed()
 
-        logger.info('Started: {}-{}'.format(self.NAME, self.sid))
         try:
             while self.run_condition(curr_ops):
                 with lock:
@@ -693,7 +692,6 @@ class ViewWorker(Worker):
         self.deleted_items = deleted_items
 
         try:
-            logger.info('Started: {}-{}'.format(self.NAME, self.sid))
             while not self.time_to_stop():
                 self.do_batch()
         except KeyboardInterrupt:
@@ -802,7 +800,6 @@ class N1QLWorker(Worker):
         self.curr_items = curr_items
 
         try:
-            logger.info('Started: {}-{}'.format(self.NAME, self.sid))
             while not self.time_to_stop():
                 self.do_batch()
         except KeyboardInterrupt:

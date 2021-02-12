@@ -2,7 +2,6 @@ from urllib import parse
 
 import pkg_resources
 
-from logger import logger
 from spring.cbgen_helpers import backoff, quiet, timeit
 
 cb_version = pkg_resources.get_distribution("couchbase").version
@@ -77,7 +76,6 @@ class CBGen(CBAsyncGen):
         self.client.timeout = self.TIMEOUT
         if n1ql_timeout:
             self.client.n1ql_timeout = n1ql_timeout
-        logger.info("Connection string: {}".format(connection_string))
 
     @quiet
     @backoff

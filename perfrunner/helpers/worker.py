@@ -45,7 +45,6 @@ else:
     worker_type = os.getenv('WORKER_TYPE')
     broker_url = os.getenv('BROKER_URL')
     if worker_type == 'local':
-        logger.info("local worker")
         celery.conf.update(
             broker_url='sqla+sqlite:///perfrunner.db',
             result_backend='database',
@@ -55,7 +54,6 @@ else:
             accept_content={'pickle'},
             task_protocol=1)
     elif worker_type == 'remote':
-        logger.info('remote worker')
         celery.conf.update(
             broker_url=broker_url,
             broker_pool_limit=None,
@@ -232,7 +230,6 @@ class RemoteWorkerManager:
             self.reset_workers()
         self.async_results = []
         for target in target_iterator:
-            logger.info('Task target: {}'.format(str(target.__dict__)))
             for instance in range(task_settings.workload_instances):
                 worker = self.next_worker()
                 logger.info('Running the task on {}'.format(worker))

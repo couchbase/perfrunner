@@ -45,7 +45,6 @@ class ObserveIndexLatency(Latency):
 
     def __init__(self, settings):
         super().__init__(settings)
-
         self.pools = self.init_pool(settings)
 
     def init_pool(self, settings):
@@ -56,6 +55,7 @@ class ObserveIndexLatency(Latency):
                 host=settings.master_node,
                 username=bucket,
                 password=settings.bucket_password,
+                collections=settings.collections,
                 quiet=True,
             )
             pools.append((bucket, pool))
@@ -69,7 +69,6 @@ class ObserveIndexLatency(Latency):
 
     def _create_doc(self, pool):
         client = pool.get_client()
-
         key = uhex()
         client.set(key, {"city": key})
         return client, key
@@ -84,9 +83,7 @@ class ObserveIndexLatency(Latency):
 
     def _measure_lags(self, pool):
         client, key = self._create_doc(pool)
-
         t0, t1 = self._wait_until_indexed(client, key)
-
         return self._post_wait_operations(end_time=t1, start_time=t0, key=key,
                                           client=client, pool=pool)
 

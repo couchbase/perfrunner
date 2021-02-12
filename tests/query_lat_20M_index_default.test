@@ -1,0 +1,38 @@
+[test_case]
+test = perfrunner.tests.views.IndexLatencyTest
+
+[showfast]
+title = indexing latency (ms), 1 bucket x 20M x 2KB, non-DGM, 1 view, 250 mutations/sec/node, 400 queries/sec, default collection
+component = views
+category = lat
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 4
+num_buckets = 1
+
+[collection]
+config = collections/1bucket_default.json
+
+[compaction]
+db_percentage = 20
+
+[load]
+items = 20000000
+size = 2048
+workers = 40
+
+[views]
+views = [1]
+
+[access]
+creates = 2
+reads = 90
+updates = 6
+deletes = 2
+throughput = 10000
+query_throughput = 400
+items = 20000000
+workers = 12
+query_workers = 12
+time = 7200

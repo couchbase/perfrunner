@@ -25,9 +25,7 @@ def retry(method: Callable, *args, **kwargs):
     for _ in range(MAX_RETRY):
         try:
             r = method(*args, **kwargs)
-        except ConnectionError as ex:
-            print(str(ex))
-            print(str(r))
+        except ConnectionError:
             time.sleep(RETRY_DELAY * 2)
             continue
         if r.status_code in range(200, 203):

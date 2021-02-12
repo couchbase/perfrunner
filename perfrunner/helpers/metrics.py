@@ -1137,6 +1137,28 @@ class MetricHelper:
 
         return latency, self._snapshots, metric_info
 
+    def analytics_avg_connect_time(self, avg_connect_time: int) -> Metric:
+        metric_id = '{}_{}'.format(self.test_config.name, "connect")
+
+        title = 'Avg. connect time (sec), {}'.format(self._title)
+
+        metric_info = self._metric_info(metric_id,
+                                        title,
+                                        chirality=-1)
+
+        return round(avg_connect_time, 1), self._snapshots, metric_info
+
+    def analytics_avg_disconnect_time(self, avg_disconnect_time: int) -> Metric:
+        metric_id = '{}_{}'.format(self.test_config.name, "disconnect")
+
+        title = 'Avg. disconnect time (sec), {}'.format(self._title)
+
+        metric_info = self._metric_info(metric_id,
+                                        title,
+                                        chirality=-1)
+
+        return round(avg_disconnect_time, 1), self._snapshots, metric_info
+
     def analytics_volume_latency(self,
                                  query: Query,
                                  latency: int,

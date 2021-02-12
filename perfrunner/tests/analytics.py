@@ -334,6 +334,49 @@ class BigFunRebalanceTest(BigFunTest, RebalanceTest):
             self.report_kpi()
 
 
+class BigFunConnectTest(BigFunTest):
+
+    def _report_kpi(self, avg_connect_time: int, avg_disconnect_time: int):
+        self.reporter.post(
+            *self.metrics.analytics_avg_connect_time(avg_connect_time)
+        )
+
+        self.reporter.post(
+            *self.metrics.analytics_avg_disconnect_time(avg_disconnect_time)
+        )
+
+    @timeit
+    def connect_buckets(self):
+        super().connect_buckets()
+
+    @timeit
+    def disconnect_link(self):
+        super().disconnect_link()
+
+    @with_stats
+    def connect_cycle(self, ops: int):
+        total_connect_time = 0
+        total_disconnect_time = 0
+        for op in range(ops):
+            disconnect_time = self.disconnect_link()
+            connect_time = self.connect_buckets()
+            logger.info("connect time: {}".format(connect_time))
+            logger.info("disconnect time: {}".format(disconnect_time))
+            total_connect_time += connect_time
+            total_disconnect_time += disconnect_time
+        return total_connect_time/ops, total_disconnect_time/ops
+
+    def run(self):
+        super().run()
+
+        self.sync()
+
+        avg_connect_time, avg_disconnect_time = \
+            self.connect_cycle(int(self.test_config.access_settings.ops))
+
+        self.report_kpi(avg_connect_time, avg_disconnect_time)
+
+
 class TPCDSTest(PerfTest):
 
     TPCDS_DATASETS = [

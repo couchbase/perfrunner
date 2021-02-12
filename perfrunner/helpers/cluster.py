@@ -58,13 +58,8 @@ class ClusterManager:
                 paths.append(io_device)
         for server in self.cluster_spec.servers_by_role('cbas'):
             for path in self.cluster_spec.analytics_paths:
-                for i in range(self.test_config.analytics_settings.num_io_devices):
-                    io_device = '{}/dev{}'.format(path, i)
-                    paths.append(io_device)
-            for server in self.cluster_spec.servers_by_role('cbas'):
-                for path in self.cluster_spec.analytics_paths:
-                    self.remote.change_owner(server, path)
-                self.rest.set_analytics_paths(server, paths)
+                self.remote.change_owner(server, path)
+            self.rest.set_analytics_paths(server, paths)
 
     def rename(self):
         if self.dynamic_infra:

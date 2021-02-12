@@ -6,7 +6,7 @@ use_workers = 0
 title = Avg. incremental ingestion rate (items/sec), 4 nodes, BigFUN 20M users (320M docs), 3 indexes, SSD, s=1 c=3
 component = analytics
 category = sync
-sub_category = Initial
+sub_category = Incremental
 orderby = _ssd_4n_3
 
 [stats]

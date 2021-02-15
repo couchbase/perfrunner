@@ -45,7 +45,8 @@ class Profiler:
         'goxdcr': 9998,
         'kv': 9998,           # will be deprecated in future
         'n1ql':  8093,
-        'eventing': 8096
+        'eventing': 8096,
+        'projector': 9999
     }
 
     ENDPOINTS = {
@@ -148,7 +149,12 @@ class Profiler:
     def schedule(self):
         for service in self.test_config.profiling_settings.services:
             logger.info('Scheduling profiling of "{}" services'.format(service))
-            for server in self.rest.get_active_nodes_by_role(self.master_node,
-                                                             role=service):
+            if service == 'projector':
+                active_nodes_by_role = self.rest.get_active_nodes_by_role(
+                                                self.master_node, role='kv')
+            else:
+                active_nodes_by_role = self.rest.get_active_nodes_by_role(
+                                            self.master_node, role=service)
+            for server in active_nodes_by_role:
                 for profile in self.test_config.profiling_settings.profiles:
                     self.timer(host=server, service=service, profile=profile)

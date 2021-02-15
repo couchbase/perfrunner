@@ -5,6 +5,7 @@ import time
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.misc import pretty_dict
+from perfrunner.helpers.profiler import with_profiles
 from perfrunner.helpers.worker import (
     pillowfight_data_load_task,
     pillowfight_task,
@@ -177,6 +178,7 @@ class EventingTest(PerfTest):
         return timer_msg_counter
 
     @with_stats
+    @with_profiles
     @timeit
     def load_access_and_wait(self):
         self.load()

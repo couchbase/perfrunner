@@ -45,6 +45,7 @@ class Profiler:
         'goxdcr': 9998,
         'kv': 9998,           # will be deprecated in future
         'n1ql':  8093,
+        'eventing': 8096
     }
 
     ENDPOINTS = {

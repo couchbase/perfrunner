@@ -1,0 +1,55 @@
+[test_case]
+test = perfrunner.tests.secondary.SecondaryIndexingScanLatencyTest
+
+[showfast]
+title = 1 bucket x 50M x 1KB, 10K KV ops/sec, 3000 indexes, Plasma, s=1 c=300
+component = secondary
+category = lat
+sub_category = Plasma
+
+[stats]
+server_processes = projector
+lat_interval = 0.5
+
+[cluster]
+mem_quota = 30000
+index_mem_quota = 460000
+initial_nodes = 6
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[bucket]
+replica_number=0
+replica_index=0
+
+[collection]
+config = collections/1bucket_1scope_300collections_basic.json
+
+[load]
+items = 50000000
+size = 1024
+workers = 100
+doc_gen = grouped
+doc_groups = 1
+
+[secondary]
+indexes = tests/gsi/index_defs/1bucket_1scope_300collections_3000_indexes_1.json
+cbindexperf_configfile = tests/gsi/scan_config/config_scan_3000_indexes_1s_300c_1.json
+indexer.settings.storage_mode = plasma
+indexer.settings.max_cpu_percent = 4800
+indexer.settings.gc_percent = 200
+queryport.client.usePlanner = false
+queryport.client.log_level = Warn
+projector.backChanSize = 500000
+disable_perindex_stats = True
+indexer.settings.build.batch_size = 100
+
+[access]
+updates = 100
+ops = 100000000
+items = 50000000
+throughput = 10000
+workers = 20

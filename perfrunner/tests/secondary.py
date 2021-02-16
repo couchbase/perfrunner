@@ -477,10 +477,14 @@ class SecondaryIndexingScanTest(SecondaryIndexTest):
                                                     name=title)
                 )
         else:
+            title = "Secondary Scan Throughput (scanps) {}"\
+                .format(str(self.test_config.showfast.title).strip())
             self.reporter.post(
-                *self.metrics.scan_throughput(scan_thr, metric_id_append_str="thr")
+                *self.metrics.scan_throughput(scan_thr,
+                                              metric_id_append_str="thr",
+                                              title=title)
             )
-            title = str(self.test_config.showfast.title).split(",", 1)[1].strip()
+            title = str(self.test_config.showfast.title).strip()
             self.reporter.post(
                 *self.metrics.secondary_scan_latency(percentile=90, title=title)
             )

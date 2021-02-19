@@ -1066,10 +1066,10 @@ class GSISettings:
 
         self.cbindexperf_configfile = options.get('cbindexperf_configfile',
                                                   self.CBINDEXPERF_CONFIGFILE)
-        self.cbindexperf_concurrency = options.get('cbindexperf_concurrency',
-                                                   self.CBINDEXPERF_CONCURRENCY)
-        self.cbindexperf_repeat = options.get('cbindexperf_repeat',
-                                              self.CBINDEXPERF_REPEAT)
+        self.cbindexperf_concurrency = int(options.get('cbindexperf_concurrency',
+                                                       self.CBINDEXPERF_CONCURRENCY))
+        self.cbindexperf_repeat = int(options.get('cbindexperf_repeat',
+                                                  self.CBINDEXPERF_REPEAT))
         self.cbindexperf_configfiles = options.get('cbindexperf_configfiles',
                                                    self.CBINDEXPERF_CONFIGFILES)
         self.run_recovery_test = int(options.get('run_recovery_test',

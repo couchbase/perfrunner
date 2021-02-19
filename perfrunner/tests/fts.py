@@ -278,15 +278,17 @@ class FTSIndexTest(FTSTest):
         self.wait_for_indexes()
 
     def calculate_index_size(self) -> int:
-        metric = '{}:{}:{}'.format(
-            self.test_config.buckets[0],
-            self.access.couchbase_index_name,
-            'num_bytes_used_disk'
-        )
         size = 0
-        for host in self.fts_nodes:
-            stats = self.rest.get_fts_stats(host)
-            size += stats[metric]
+        for index_name, index_info in list(self.fts_index_map.keys()):
+            metric = '{}:{}:{}'.format(
+                index_info['bucket'],
+                index_name,
+                'num_bytes_used_disk'
+            )
+
+            for host in self.fts_nodes:
+                stats = self.rest.get_fts_stats(host)
+                size += stats[metric]
         return size
 
     def run(self):

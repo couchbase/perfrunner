@@ -25,7 +25,7 @@ workload_path = workloads/workloadl
 ycsb_client = couchbase3
 items = 20000000
 target = 12000
-ops = 20000000
+ops = 10000000
 time = 7200
 boost = 12
 workers = 10
@@ -33,7 +33,7 @@ timeseries = 1
 workload_instances = 5
 kv_endpoints = 16
 insert_test_flag = 1
-inserts_per_workerinstance = 20000000
+inserts_per_workerinstance = 10000000
 
 [ycsb]
 latency_percentiles = 99

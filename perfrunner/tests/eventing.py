@@ -398,6 +398,9 @@ class FunctionsThroughputTestDestBucket(FunctionsThroughputTest):
 
 
 class FunctionsPillowfightThroughputTest(FunctionsThroughputTest):
+
+    ALL_BUCKETS = True
+
     def load(self, *args):
         PerfTest.load(self, task=pillowfight_data_load_task)
 

@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.eventing.FunctionsThroughputTest
+test = perfrunner.tests.eventing.FunctionsPillowfightThroughputTest
 
 [showfast]
 title = Functions executed/sec, 6 buckets x 16M x 1KB, 4KV + 1Eventing node, 24 functions-BucketOp, s=12, c=24
@@ -33,7 +33,8 @@ view_percentage = 100
 [load]
 items = 16000000
 size = 1024
-workers = 160
+workers = 128
+doc_gen = json
 
 [eventing]
 cpp_worker_thread_count = 2
@@ -43,5 +44,10 @@ config_file = tests/eventing/config/functions24_6buckets_12s_24c.json
 [access]
 updates = 100
 items = 16000000
-workers = 100
+workers = 128
 time = 1200
+batch_size = 1
+iterations = -1
+
+[clients]
+libcouchbase = 3.0.7

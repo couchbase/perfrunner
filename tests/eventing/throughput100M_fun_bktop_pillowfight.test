@@ -2,48 +2,49 @@
 test = perfrunner.tests.eventing.FunctionsPillowfightThroughputTest
 
 [showfast]
-title = Functions executed/sec, 3 buckets x 32M x 1KB, 4KV + 1Eventing node, 12 functions-BucketOp, s=6, c=12
+title = Functions executed/sec, 1 bucket x 100M x 1KB, 4KV + 1Eventing node, single function-BucketOp, s=1, c=1 (Pillowfight)
 component = eventing
 category = thr
 sub_category = Function
+orderby = aa002
 
 [stats]
 server_processes = eventing-produc
 
 [cluster]
-mem_quota = 55000
+mem_quota = 50000
 eventing_mem_quota = 24576
 initial_nodes = 5
-num_buckets = 3
-eventing_bucket_mem_quota = 5000
+num_buckets = 1
+eventing_bucket_mem_quota = 10000
 eventing_metadata_bucket_mem_quota = 1000
-eventing_buckets = 3
+eventing_buckets = 1
 online_cores = 12
 
 [bucket]
 replica_number=0
 
 [collection]
-config = collections/3buckets_6scopes_12collections_eventing.json
+config = collections/1bucket_1scope_1collection_eventing.json
 
 [compaction]
 db_percentage = 100
 view_percentage = 100
 
 [load]
-items = 32000000
+items = 100000000
 size = 1024
 workers = 128
 doc_gen = json
 
 [eventing]
+worker_count = 24
 cpp_worker_thread_count = 2
-worker_count = 2
-config_file = tests/eventing/config/functions12_3buckets_6s_12c.json
+config_file = tests/eventing/config/function_sample_1s_1c_pillowfight.json
 
 [access]
 updates = 100
-items = 32000000
+items = 100000000
 workers = 128
 time = 1200
 batch_size = 1

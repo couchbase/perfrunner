@@ -48,6 +48,20 @@ class SecondaryIndexTest(PerfTest):
         self.target_iterator = TargetIterator(self.cluster_spec, self.test_config, "gsi")
         extract_cb_deb(filename='couchbase.deb')
 
+        self.cbindexperf_concurrency = self.test_config.gsi_settings.cbindexperf_concurrency
+        self.cbindexperf_repeat = self.test_config.gsi_settings.cbindexperf_repeat
+
+        if self.cbindexperf_concurrency and self.cbindexperf_repeat:
+            with open(self.configfile, 'r') as f:
+                cbindexperf_contents = json.load(f)
+
+            cbindexperf_contents["Concurrency"] = self.cbindexperf_concurrency
+            for scan_spec in cbindexperf_contents["ScanSpecs"]:
+                scan_spec["Repeat"] = self.cbindexperf_repeat
+
+            with open(self.configfile, 'w') as f:
+                json.dump(cbindexperf_contents, f)
+
         if self.storage == "plasma":
             self.COLLECTORS["secondary_storage_stats"] = True
             self.COLLECTORS["secondary_storage_stats_mm"] = True

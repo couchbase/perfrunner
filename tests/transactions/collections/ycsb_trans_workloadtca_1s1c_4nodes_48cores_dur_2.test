@@ -1,0 +1,48 @@
+[test_case]
+test = perfrunner.tests.ycsb.YCSBThroughputTest
+
+[showfast]
+title = Avg Throughput (trans/sec), Workload T, 4 nodes, Majority_Persist_Active, 48 vCPU, s=1 c=1
+component = kv
+category = transaction
+sub_category = Throughput
+orderby = c1
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 4
+num_buckets = 1
+online_cores = 24
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
+
+[bucket]
+replica_number = 2
+
+[load]
+workload_path = workloads/workloadca
+ycsb_client = couchbase3
+items = 20000000
+workers = 100
+
+[access]
+workload_path = workloads/workloadtca
+ycsb_client = couchbase3
+items = 20000000
+ops = 1000000000
+time = 900
+boost = 12
+workers = 128
+workload_instances = 6
+transactionsenabled = 1
+num_atrs = 20480
+durability = 2
+kv_endpoints = 128
+requestdistribution = uniform
+
+[ycsb]
+branch = couchbase3
+
+[stats]
+client_processes = java

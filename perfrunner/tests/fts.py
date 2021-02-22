@@ -181,7 +181,7 @@ class FTSTest(JTSTest):
                     len(load_targets) // self.test_config.jts_access_settings.index_groups
                 items_per_index = items_per_collections * collections_per_index_group
             else:
-                items_per_index = self.access.test_total_docs
+                items_per_index = int(self.access.test_total_docs)
             for index_name, index_targets in self.fts_index_map.items():
                 index_bucket = index_targets["bucket"]
                 if index_bucket == bucket:
@@ -279,7 +279,7 @@ class FTSIndexTest(FTSTest):
 
     def calculate_index_size(self) -> int:
         size = 0
-        for index_name, index_info in list(self.fts_index_map.keys()):
+        for index_name, index_info in self.fts_index_map.items():
             metric = '{}:{}:{}'.format(
                 index_info['bucket'],
                 index_name,

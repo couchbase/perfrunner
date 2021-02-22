@@ -355,6 +355,7 @@ class KVTest(PerfTest):
 
         if self.test_config.extra_access_settings.run_extra_access:
             self.run_extra_access()
+            self.wait_for_persistence()
 
         self.hot_load()
         self.reset_kv_stats()
@@ -397,6 +398,7 @@ class CompactionMagmaTest(StabilityBootstrap):
 
         if self.test_config.extra_access_settings.run_extra_access:
             self.run_extra_access()
+            self.wait_for_persistence()
 
         self.hot_load()
         self.reset_kv_stats()
@@ -461,6 +463,7 @@ class SingleNodeThroughputDGMMagmaTest(ThroughputDGMMagmaTest):
 
         if self.test_config.extra_access_settings.run_extra_access:
             self.run_extra_access()
+            self.wait_for_persistence()
 
         self.COLLECTORS["kvstore"] = False
         self.COLLECTORS["disk"] = False
@@ -509,6 +512,7 @@ class SingleNodeMixedLatencyDGMTest(SingleNodeThroughputDGMMagmaTest):
 
         if self.test_config.extra_access_settings.run_extra_access:
             self.run_extra_access()
+            self.wait_for_persistence()
 
         self.COLLECTORS["kvstore"] = False
         self.COLLECTORS["disk"] = False
@@ -589,6 +593,7 @@ class PillowFightDGMTest(StabilityBootstrap):
 
         if self.test_config.extra_access_settings.run_extra_access:
             self.run_extra_access()
+            self.wait_for_persistence()
 
         self.reset_kv_stats()
 
@@ -630,6 +635,7 @@ class WarmupDGMTest(StabilityBootstrap):
 
         if self.test_config.extra_access_settings.run_extra_access:
             self.run_extra_access()
+            self.wait_for_persistence()
 
         self.reset_kv_stats()
 
@@ -680,6 +686,7 @@ class YCSBThroughputHIDDTest(YCSBThroughputTest, KVTest):
 
         if self.test_config.extra_access_settings.run_extra_access:
             self.run_extra_access()
+            self.wait_for_persistence()
 
         self.reset_kv_stats()
         KVTest.save_stats(self)
@@ -917,6 +924,7 @@ class RebalanceKVDGMTest(RebalanceKVTest, StabilityBootstrap):
 
         if self.test_config.extra_access_settings.run_extra_access:
             StabilityBootstrap.run_extra_access(self)
+            self.wait_for_persistence()
 
         StabilityBootstrap.hot_load(self)
 
@@ -946,6 +954,7 @@ class BackupTestDGM(BackupTest):
 
         if self.test_config.extra_access_settings.run_extra_access:
             self.run_extra_access()
+            self.wait_for_persistence()
 
         time_elapsed = self.backup()
 

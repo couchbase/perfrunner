@@ -3,6 +3,8 @@ import json
 import subprocess
 import time
 
+import numpy
+
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.local import (
@@ -469,7 +471,7 @@ class SecondaryIndexingScanTest(SecondaryIndexTest):
 
     """Apply moving scan workload and measure scan latency and average scan throughput."""
 
-    COLLECTORS = {'secondary_stats': True, 'secondary_latency': True,
+    COLLECTORS = {'secondary_stats': True,
                   'secondary_debugstats': True, 'secondary_debugstats_bucket': True,
                   'secondary_debugstats_index': True}
 
@@ -478,6 +480,7 @@ class SecondaryIndexingScanTest(SecondaryIndexTest):
         self.scan_thr = []
 
     def _report_kpi(self,
+                    percentile_latencies,
                     scan_thr: float = 0,
                     time_elapsed: float = 0):
 
@@ -500,25 +503,47 @@ class SecondaryIndexingScanTest(SecondaryIndexTest):
             )
             title = str(self.test_config.showfast.title).strip()
             self.reporter.post(
-                *self.metrics.secondary_scan_latency(percentile=90, title=title)
-            )
+                *self.metrics.secondary_scan_latency_value(percentile_latencies[90],
+                                                           percentile=90,
+                                                           title=title))
             self.reporter.post(
-                *self.metrics.secondary_scan_latency(percentile=95, title=title)
-            )
+                *self.metrics.secondary_scan_latency_value(percentile_latencies[95],
+                                                           percentile=95,
+                                                           title=title))
+
+    def calculate_scan_latencies(self):
+
+        scan_latencies = []
+        percentile_latencies = []
+
+        with open(self.SECONDARY_STATS_FILE, 'r') as f:
+            reader = csv.reader(f)
+            for row in reader:
+                nth_lat_str = row[-1]
+                nth_lat_val = nth_lat_str.split(":")[-1]
+                val = nth_lat_val.strip()
+                scan_latencies.append(float(val))
+
+        for percentile in range(100):
+            percentile_latencies.append(numpy.percentile(scan_latencies, percentile))
+
+        return percentile_latencies
 
     def run(self):
+        self.remove_statsfile()
         self.load()
         self.wait_for_persistence()
 
         initial_index_time = self.build_secondaryindex()
-        self.report_kpi(0, initial_index_time)
+        self.report_kpi(0, 0, initial_index_time)
         self.access_bg()
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         scan_thr, row_thr = self.read_scanresults()
+        percentile_latencies = self.calculate_scan_latencies()
         logger.info('Scan throughput: {}'.format(scan_thr))
         logger.info('Rows throughput: {}'.format(row_thr))
         self.print_index_disk_usage()
-        self.report_kpi(scan_thr, 0)
+        self.report_kpi(percentile_latencies, scan_thr, 0)
         self.validate_num_connections()
 
 

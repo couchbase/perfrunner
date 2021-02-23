@@ -385,6 +385,19 @@ class MetricHelper:
 
         return scan_latency, self._snapshots, metric_info
 
+    def secondary_scan_latency_value(self, scan_latency,
+                                     percentile: Number, title: str = None) -> Metric:
+        metric_id = "{}_{}th".format(self.test_config.name, percentile)
+        title = '{}th percentile secondary scan latency (ms), {}'.format(percentile,
+                                                                         title)
+        metric_info = self._metric_info(metric_id, title, chirality=-1)
+        metric_info['category'] = "lat"
+
+        scan_latency = scan_latency / 1e6
+        scan_latency = round(scan_latency, 2)
+
+        return scan_latency, self._snapshots, metric_info
+
     def kv_latency(self,
                    operation: str,
                    percentile: Number = 99.9,

@@ -167,65 +167,48 @@ class RebalanceForFTS(RebalanceTest, FTSTest):
     ALL_HOSTNAMES = True
     COLLECTORS = {'fts_stats': True, 'jts_stats': True}
 
-    def load(self, *args):
-        logger.info('load/restore data to bucket')
-        self.cleanup_and_restore()
+    def wait_for_index_persistence(self):
+        num_initial_nodes = self.test_config.cluster.initial_nodes[0]
+        fts_nodes_before = self.cluster_spec.servers_by_role('fts')[0:num_initial_nodes]
+        for index_name in self.fts_index_map.keys():
+            self.monitor.monitor_fts_index_persistence(
+                fts_nodes_before,
+                index_name
+            )
 
     @with_stats
     @with_profiles
-    def rebalance(self, services=None):
-        self.pre_rebalance()
-        self.rebalance_time = self._rebalance(services)
-        self.post_rebalance()
-
-    @with_stats
-    @with_profiles
-    def create_fts_index(self):
-        st = time.time()
-        self.create_index()
-        self.wait_for_index()
-        en = time.time()
-        return en - st
-
-    def calculate_index_size(self) -> int:
-        metric = '{}:{}:{}'.format(self.test_config.buckets[0],
-                                   self.access.couchbase_index_name,
-                                   'num_bytes_used_disk')
-        size = 0
-        for host in self.fts_nodes:
-            stats = self.rest.get_fts_stats(host)
-            size += stats[metric]
-        index_size_mb = int(size / (1024 ** 2))
-        return index_size_mb
+    @timeit
+    def build_indexes(self):
+        self.create_indexes()
+        self.wait_for_indexes()
 
     def run(self):
-        self.load()
+        self.cleanup_and_restore()
         self.wait_for_persistence()
-        # to set the additional node level parameters for FTS rebalance
-        # nodes = list oof all the FTS nodes in the cluster
-        # nodes_before_rebalance = initial number of nodes in the cluster before rebalance
-        # nodes_after_rebalance = final number of nodes present in the cluster after rebalance
+
         nodes = self.cluster_spec.servers_by_role('fts')
         nodes_before_rebalance = self.test_config.cluster.initial_nodes[0]
         nodes_after_rebalance = self.rebalance_settings.nodes_after[0]
 
-        # logic to ensure the parameter is applied to the correct nodes
-        # for the rebalance in and rebalance swap case
         if nodes_before_rebalance <= nodes_after_rebalance:
             nodes = nodes[:nodes_before_rebalance - 1]
 
-        if self.rebalance_settings.fts_node_level_parameters.keys() != []:
+        if self.rebalance_settings.fts_node_level_parameters.keys():
+            node_level_params = self.rebalance_settings.fts_node_level_parameters
             for node in nodes:
-                self.rest.fts_set_node_level_parameters(
-                    self.rebalance_settings.fts_node_level_parameters, node)
+                self.rest.fts_set_node_level_parameters(node_level_params, node)
 
-        index_time = self.create_fts_index()
-        logger.info("The index took {} s to index the documents".format(index_time))
-        fts_size = self.calculate_index_size()
-        logger.info("The index is {} MB".format(fts_size))
+        total_index_time = self.build_indexes()
+        logger.info("Total index build time: {} seconds".format(total_index_time))
+
+        self.wait_for_index_persistence()
+
+        total_index_size_bytes = self.calculate_index_size()
+        logger.info("Total index size: {} MB".format(int(total_index_size_bytes / (1024 ** 2))))
+
         self.rebalance(services="fts")
-
-        logger.info("The rebalance in took {} s to index the documents".format(self.rebalance_time))
+        logger.info("Total rebalance time: {} seconds".format(self.rebalance_time))
 
         if self.is_balanced():
             self.report_kpi()

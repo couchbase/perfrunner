@@ -1,6 +1,8 @@
 import copy
 import os
 import shutil
+import time
+from itertools import cycle, islice
 
 from logger import logger
 from perfrunner.helpers import local
@@ -93,10 +95,13 @@ class FTSTest(JTSTest):
         )
 
     def create_indexes(self):
+        index_defs = self.access.couchbase_index_configfile.split(",")
+        index_defs_per_group = \
+            list(islice(cycle(index_defs), self.test_config.jts_access_settings.indexes_per_group))
         if not self.test_config.collection.collection_map:
             index_id = 0
             for bucket in self.test_config.buckets:
-                for index_def in self.access.couchbase_index_configfile.split(","):
+                for index_def in index_defs_per_group:
                     index_name = "{}-{}".format(self.access.couchbase_index_name, index_id)
                     definition = read_json(index_def)
                     definition.update({
@@ -134,7 +139,7 @@ class FTSTest(JTSTest):
                 else:
                     raise Exception("index group partitions must be <= number of collections")
                 for index_group in index_groups:
-                    for index_def in self.access.couchbase_index_configfile.split(","):
+                    for index_def in index_defs_per_group:
                         index_name = "{}-{}".format(self.access.couchbase_index_name, index_id)
                         definition = read_json(index_def)
                         definition.update({
@@ -176,7 +181,7 @@ class FTSTest(JTSTest):
                         if collection_map[bucket][scope][collection]['load'] == 1:
                             load_targets += [scope+":"+collection]
                 items_per_collections = \
-                    len(load_targets) // self.test_config.load_settings.items
+                    self.test_config.load_settings.items // len(load_targets)
                 collections_per_index_group = \
                     len(load_targets) // self.test_config.jts_access_settings.index_groups
                 items_per_index = items_per_collections * collections_per_index_group
@@ -197,6 +202,32 @@ class FTSTest(JTSTest):
                 self.fts_nodes,
                 index_name
             )
+
+    def calculate_index_size(self) -> int:
+        size = 0
+        for index_name, index_info in self.fts_index_map.items():
+            metric = '{}:{}:{}'.format(
+                index_info['bucket'],
+                index_name,
+                'num_bytes_used_disk'
+            )
+            for host in self.fts_nodes:
+                stats = self.rest.get_fts_stats(host)
+                size += stats[metric]
+        return size
+
+    @with_stats
+    def build_indexes(self):
+        time.sleep(60)
+        elapsed_time = self._build_indexes()
+        self.wait_for_index_persistence()
+        time.sleep(60)
+        return elapsed_time
+
+    @timeit
+    def _build_indexes(self):
+        self.create_indexes()
+        self.wait_for_indexes()
 
     def spread_data(self):
         settings = self.test_config.load_settings
@@ -271,29 +302,8 @@ class FTSIndexTest(FTSTest):
             *self.metrics.fts_index_size(size)
         )
 
-    @with_stats
-    @timeit
-    def build_index(self):
-        self.create_indexes()
-        self.wait_for_indexes()
-
-    def calculate_index_size(self) -> int:
-        size = 0
-        for index_name, index_info in self.fts_index_map.items():
-            metric = '{}:{}:{}'.format(
-                index_info['bucket'],
-                index_name,
-                'num_bytes_used_disk'
-            )
-
-            for host in self.fts_nodes:
-                stats = self.rest.get_fts_stats(host)
-                size += stats[metric]
-        return size
-
     def run(self):
         self.cleanup_and_restore()
-        time_elapsed = self.build_index()
-        self.wait_for_index_persistence()
+        time_elapsed = self.build_indexes()
         size = self.calculate_index_size()
         self.report_kpi(time_elapsed, size)

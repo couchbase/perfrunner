@@ -645,22 +645,27 @@ class DefaultMonitor(DefaultRestHelper):
         logger.info('Waiting for index to be persisted')
         if not bkt:
             bkt = self.test_config.buckets[0]
+        tries = 0
         pending_items = 1
         while pending_items:
-            persist = 0
-            compact = 0
-            for host in hosts:
-                stats = self.get_fts_stats(host)
+            try:
+                persist = 0
+                compact = 0
+                for host in hosts:
+                    stats = self.get_fts_stats(host)
+                    metric = '{}:{}:{}'.format(bkt, index, 'num_recs_to_persist')
+                    persist += stats[metric]
 
-                metric = '{}:{}:{}'.format(bkt, index, 'num_recs_to_persist')
-                persist += stats[metric]
+                    metric = '{}:{}:{}'.format(bkt, index, 'total_compactions')
+                    compact += stats[metric]
 
-                metric = '{}:{}:{}'.format(bkt, index, 'total_compactions')
-                compact += stats[metric]
-
-            pending_items = persist or compact
-            logger.info('Records to persist: {:,}'.format(persist))
-            logger.info('Ongoing compactions: {:,}'.format(compact))
+                pending_items = persist or compact
+                logger.info('Records to persist: {:,}'.format(persist))
+                logger.info('Ongoing compactions: {:,}'.format(compact))
+            except KeyError:
+                tries += 1
+            if tries >= 10:
+                raise Exception("cannot get fts stats")
             time.sleep(self.POLLING_INTERVAL)
 
     def monitor_elastic_indexing_queue(self, host: str, index: str):

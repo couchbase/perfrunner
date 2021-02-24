@@ -582,6 +582,32 @@ class FunctionsRebalanceTimeThroughputTest(FunctionsRebalanceThroughputTest):
         )
 
 
+class FunctionsRebalancePillowfightThroughputTest(FunctionsRebalanceThroughputTest):
+
+    ALL_BUCKETS = True
+
+    def load(self, *args):
+        PerfTest.load(self, task=pillowfight_data_load_task)
+
+    def access_bg(self, *args):
+        self.download_certificate()
+
+        PerfTest.access_bg(self, task=pillowfight_task)
+
+
+class FunctionsRebalanceTimePillowfightThroughputTest(FunctionsRebalanceTimeThroughputTest):
+
+    ALL_BUCKETS = True
+
+    def load(self, *args):
+        PerfTest.load(self, task=pillowfight_data_load_task)
+
+    def access_bg(self, *args):
+        self.download_certificate()
+
+        PerfTest.access_bg(self, task=pillowfight_task)
+
+
 class FunctionsScalingThroughputTest(EventingTest):
 
     def __init__(self, *args):

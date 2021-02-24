@@ -1,8 +1,8 @@
 [test_case]
-test = perfrunner.tests.eventing.FunctionsRebalanceThroughputTest
+test = perfrunner.tests.eventing.FunctionsRebalancePillowfightThroughputTest
 
 [showfast]
-title = Functions executed/sec, 1 bucket x 50M x 1KB, KV Rebalance, 3KV > 4KV + 1Eventing node, single function-BucketOp, s=12, c=24
+title = Functions executed/sec, 6 bucket x 50M x 1KB, KV Rebalance, 5KV > 6KV + 1Eventing node, single function-BucketOp, s=12, c=24
 component = eventing
 category = thr
 sub_category = Function
@@ -13,7 +13,7 @@ server_processes = eventing-produc
 [cluster]
 mem_quota = 55000
 eventing_mem_quota = 24576
-initial_nodes = 4
+initial_nodes = 6
 num_buckets = 6
 eventing_bucket_mem_quota = 5000
 eventing_metadata_bucket_mem_quota = 1000
@@ -21,7 +21,7 @@ eventing_buckets = 6
 online_cores = 12
 
 [rebalance]
-nodes_after = 5
+nodes_after = 7
 start_after = 180
 stop_after = 180
 
@@ -37,8 +37,9 @@ view_percentage = 100
 
 [load]
 items = 8000000
-size = 1024
-workers = 100
+size = 256
+workers = 128
+doc_gen = json
 
 [eventing]
 cpp_worker_thread_count = 2
@@ -48,4 +49,9 @@ config_file = tests/eventing/config/functions24_6buckets_12s_24c.json
 [access]
 updates = 100
 items = 8000000
-workers = 100
+workers = 128
+iterations = -1
+batch_size = 1
+
+[clients]
+libcouchbase = 3.0.7

@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.eventing.FunctionsRebalanceTimeThroughputTest
+test = perfrunner.tests.eventing.FunctionsRebalanceTimePillowfightThroughputTest
 
 [showfast]
 title = Functions executed/sec, 6 bucket x 50M x 1KB, eventing Rebalance, 3KV + 1Eventing > 2Eventing nodes, single function-BucketOp, s=12, c=24
@@ -37,8 +37,9 @@ view_percentage = 100
 
 [load]
 items = 8000000
-size = 1024
-workers = 100
+size = 256
+workers = 128
+doc_gen = json
 
 [eventing]
 cpp_worker_thread_count = 2
@@ -48,4 +49,9 @@ config_file = tests/eventing/config/functions24_6buckets_12s_24c.json
 [access]
 updates = 100
 items = 8000000
-workers = 100
+workers = 128
+iterations = -1
+batch_size = 1
+
+[clients]
+libcouchbase = 3.0.7

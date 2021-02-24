@@ -2,7 +2,7 @@
 test = perfrunner.tests.ycsb.YCSBThroughputTest
 
 [showfast]
-title = Avg Throughput (trans/sec), Workload T, 4 nodes, Majority_Persist_Active, 12 vCPU
+title = Avg Throughput (trans/sec), Workload T, 4 nodes, Majority_Persist_Active, 12 vCPU, worker_instance=1
 component = kv
 category = transaction
 sub_category = Throughput
@@ -30,7 +30,7 @@ ops = 1000000000
 time = 900
 boost = 12
 workers = 96
-workload_instances = 6
+workload_instances = 1
 transactionsenabled = 1
 num_atrs = 20480
 durability = 2

@@ -2,7 +2,7 @@
 test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
 
 [showfast]
-title = 1 bucket x 100M x 1KB, 1000 indexes, 10K KV ops/sec, 20%% Resident, Plasma, s=1 c=100
+title = 1 bucket x 100M x 1KB, 6000 indexes, 10K KV ops/sec, 20%% Resident, Plasma, s=1 c=600
 component = secondary
 sub_category = PlasmaDGM
 
@@ -11,8 +11,8 @@ server_processes = projector
 
 [cluster]
 mem_quota = 30000
-index_mem_quota = 95000
-kernel_mem_limit = 130G
+index_mem_quota = 120000
+kernel_mem_limit = 150G
 initial_nodes = 6
 num_buckets = 1
 
@@ -21,7 +21,7 @@ replica_number=0
 replica_index=0
 
 [collection]
-config = collections/1bucket_1scope_100collections_basic.json
+config = collections/1bucket_1scope_600collections_basic.json
 
 [compaction]
 db_percentage = 100
@@ -35,7 +35,7 @@ doc_gen = grouped
 doc_groups = 1
 
 [secondary]
-indexes = tests/gsi/index_defs/1bucket_1scope_100collections_1000_indexes_1.json
+indexes = tests/gsi/index_defs/1bucket_1scope_600collections_6000_indexes_1.json
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
 queryport.client.usePlanner = false
@@ -43,6 +43,8 @@ queryport.client.log_level = Warn
 projector.backChanSize = 500000
 disable_perindex_stats = True
 indexer.settings.build.batch_size = 100
+cbindexperf_concurrency = 128
+cbindexperf_repeat = 4999
 
 [access]
 updates = 100

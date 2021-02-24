@@ -231,6 +231,8 @@ class FTSTest(JTSTest):
 
     def spread_data(self):
         settings = self.test_config.load_settings
+        if self.access.test_collection_query_mode == "collection_specific":
+            settings.fts_data_spread_worker_type = "collection_specific"
         settings.seq_upserts = False
         self.run_phase(
             'data spread',

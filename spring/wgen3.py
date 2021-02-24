@@ -689,13 +689,24 @@ class FTSDataSpreadWorker(Worker):
         else:
             source = "_default:_default"
 
+        if self.ws.fts_data_spread_worker_type == "default":
+            self.default_spread(source, items_per_collection)
+        elif self.ws.fts_data_spread_worker_type == "collection_specific":
+            self.collection_specific_spread(source, items_per_collection)
+        else:
+            raise Exception(
+                "invalid fts data spread worker type: {}".format(
+                    self.ws.fts_data_spread_worker_type)
+            )
+
+    def default_spread(self, source, items_per_collection):
         iteration = 0
         step = self.ws.fts_data_spread_workers
         for target in sorted(self.load_targets):
             if target != source:
-                start = sid + (items_per_collection * iteration)
+                start = self.sid + (items_per_collection * iteration)
                 stop = items_per_collection * (iteration + 1)
-                new_key = sid
+                new_key = self.sid
                 for key in range(start, stop, step):
                     hex_key = format(key, 'x')
                     get_args = source, hex_key
@@ -705,6 +716,32 @@ class FTSDataSpreadWorker(Worker):
                     self.cb.set(*set_args)
                     self.cb.delete(*get_args)
                     new_key += step
+            iteration += 1
+
+    def collection_specific_spread(self, source, items_per_collection):
+        source_key_range = range(0, self.ws.items, self.num_load_targets)
+        iteration = 0
+        for source_key_index in range(self.sid,
+                                      len(source_key_range),
+                                      self.ws.fts_data_spread_workers):
+            source_key = source_key_range[source_key_index]
+            hex_source_key = format(source_key, 'x')
+
+            target_key = self.sid + (iteration * self.ws.fts_data_spread_workers)
+            hex_target_key = format(target_key, 'x')
+
+            get_args = source, hex_source_key
+            doc = self.cb.get(*get_args)
+
+            for target in sorted(self.load_targets):
+                set_args = target, hex_target_key, doc.content
+                self.cb.set(*set_args)
+
+            if source_key >= items_per_collection:
+                for delete_key in range(source_key, source_key + self.num_load_targets):
+                    hex_delete_key = format(delete_key, 'x')
+                    del_args = source, hex_delete_key
+                    self.cb.delete(*del_args)
             iteration += 1
 
 

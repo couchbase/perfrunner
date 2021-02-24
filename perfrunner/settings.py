@@ -573,6 +573,7 @@ class PhaseSettings:
     QUERY_WORKERS = 0
     N1QL_WORKERS = 0
     FTS_DATA_SPREAD_WORKERS = None
+    FTS_DATA_SPREAD_WORKER_TYPE = "default"
     WORKLOAD_INSTANCES = 1
 
     N1QL_OP = 'read'
@@ -878,6 +879,8 @@ class PhaseSettings:
         )
         if self.fts_data_spread_workers is not None:
             self.fts_data_spread_workers = int(self.fts_data_spread_workers)
+
+        self.fts_data_spread_worker_type = "default"
 
     def __str__(self) -> str:
         return str(self.__dict__)

@@ -34,9 +34,9 @@ CMD = " -test_duration {test_duration}" \
 def jts_run(workload_settings: PhaseSettings, target: TargetSettings,
             timer: int, worker_id: int):
     settings = workload_settings
-
+    index_name = "{}-0".format(settings.couchbase_index_name)
     params = CMD.format(
-        couchbase_index_name=settings.couchbase_index_name,
+        couchbase_index_name=index_name,
         couchbase_cluster_ip=target.node,
         couchbase_bucket=target.bucket,
         couchbase_user=target.bucket,
@@ -69,6 +69,8 @@ def jts_run(workload_settings: PhaseSettings, target: TargetSettings,
             .format(test_collections_enabled=settings.collections_enabled)
         params += " -test_collection_query_mode {test_collection_query_mode}" \
             .format(test_collection_query_mode=settings.test_collection_query_mode)
+        params += " -test_collection_specific_count {test_collection_specific_count}" \
+            .format(test_collection_specific_count=settings.test_collection_specific_count)
         params += " -test_fts_index_map \'{test_fts_index_map}\'"\
             .format(test_fts_index_map=json.dumps(settings.fts_index_map))
     print(params)
@@ -78,8 +80,9 @@ def jts_run(workload_settings: PhaseSettings, target: TargetSettings,
 def jts_warmup(workload_settings: PhaseSettings, target: TargetSettings,
                timer: int, worker_id: int):
     settings = workload_settings
+    index_name = "{}-0".format(settings.couchbase_index_name)
     params = CMD.format(
-        couchbase_index_name=settings.couchbase_index_name,
+        couchbase_index_name=index_name,
         couchbase_cluster_ip=target.node,
         couchbase_bucket=target.bucket,
         couchbase_user=target.bucket,
@@ -112,6 +115,8 @@ def jts_warmup(workload_settings: PhaseSettings, target: TargetSettings,
             .format(test_collections_enabled=settings.collections_enabled)
         params += " -test_collection_query_mode {test_collection_query_mode}" \
             .format(test_collection_query_mode=settings.test_collection_query_mode)
+        params += " -test_collection_specific_count {test_collection_specific_count}" \
+            .format(test_collection_specific_count=settings.test_collection_specific_count)
         params += " -test_fts_index_map \'{test_fts_index_map}\'" \
             .format(test_fts_index_map=json.dumps(settings.fts_index_map))
     print(params)

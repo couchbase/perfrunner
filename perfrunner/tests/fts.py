@@ -196,10 +196,12 @@ class FTSTest(JTSTest):
                         items_per_index
                     )
 
-    def wait_for_index_persistence(self):
+    def wait_for_index_persistence(self, fts_nodes=None):
+        if fts_nodes is None:
+            fts_nodes = self.fts_nodes
         for index_name in self.fts_index_map.keys():
             self.monitor.monitor_fts_index_persistence(
-                self.fts_nodes,
+                fts_nodes,
                 index_name
             )
 

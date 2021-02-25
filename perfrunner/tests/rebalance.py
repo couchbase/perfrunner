@@ -167,15 +167,6 @@ class RebalanceForFTS(RebalanceTest, FTSTest):
     ALL_HOSTNAMES = True
     COLLECTORS = {'fts_stats': True, 'jts_stats': True}
 
-    def wait_for_index_persistence(self):
-        num_initial_nodes = self.test_config.cluster.initial_nodes[0]
-        fts_nodes_before = self.cluster_spec.servers_by_role('fts')[0:num_initial_nodes]
-        for index_name in self.fts_index_map.keys():
-            self.monitor.monitor_fts_index_persistence(
-                fts_nodes_before,
-                index_name
-            )
-
     @with_stats
     @with_profiles
     @timeit
@@ -187,22 +178,24 @@ class RebalanceForFTS(RebalanceTest, FTSTest):
         self.cleanup_and_restore()
         self.wait_for_persistence()
 
-        nodes = self.cluster_spec.servers_by_role('fts')
         nodes_before_rebalance = self.test_config.cluster.initial_nodes[0]
-        nodes_after_rebalance = self.rebalance_settings.nodes_after[0]
-
-        if nodes_before_rebalance <= nodes_after_rebalance:
-            nodes = nodes[:nodes_before_rebalance - 1]
+        servers_and_roles = self.cluster_spec.servers_and_roles
+        fts_nodes_before = []
+        for i in range(0, nodes_before_rebalance):
+            host = servers_and_roles[i][0]
+            roles = servers_and_roles[i][1]
+            if "fts" in roles:
+                fts_nodes_before.append(host)
 
         if self.rebalance_settings.fts_node_level_parameters.keys():
             node_level_params = self.rebalance_settings.fts_node_level_parameters
-            for node in nodes:
+            for node in fts_nodes_before:
                 self.rest.fts_set_node_level_parameters(node_level_params, node)
 
         total_index_time = self.build_indexes()
         logger.info("Total index build time: {} seconds".format(total_index_time))
 
-        self.wait_for_index_persistence()
+        self.wait_for_index_persistence(fts_nodes=fts_nodes_before)
 
         total_index_size_bytes = self.calculate_index_size()
         logger.info("Total index size: {} MB".format(int(total_index_size_bytes / (1024 ** 2))))

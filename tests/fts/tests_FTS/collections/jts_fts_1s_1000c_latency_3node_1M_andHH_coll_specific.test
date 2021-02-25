@@ -40,6 +40,7 @@ test_query_field = text
 test_mutation_field = text2
 test_worker_type = validatedLatency
 test_collection_query_mode = collection_specific
+test_collection_specific_count = 1000
 index_groups = 1
 indexes_per_group = 1
 couchbase_index_name = perf_fts_index

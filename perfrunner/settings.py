@@ -170,6 +170,15 @@ class ClusterSpec(Config):
         return server_roles
 
     @property
+    def servers_and_roles(self) -> Dict[str, str]:
+        server_and_roles = []
+        for _, servers in self.config.items('clusters'):
+            for server in servers.split():
+                host, roles = server.split(':')
+                server_and_roles.append((host, roles))
+        return server_and_roles
+
+    @property
     def workers(self) -> List[str]:
         if self.dynamic_infrastructure:
             client_map = self.infrastructure_clients
@@ -942,6 +951,8 @@ class JTSAccessSettings(PhaseSettings):
         self.index_groups = int(options.get('index_groups', '1'))
         self.fts_index_map = {}
         self.collections_enabled = False
+        self.test_collection_specific_count = \
+            int(options.get('test_collection_specific_count', '1'))
 
     def __str__(self) -> str:
         return str(self.__dict__)

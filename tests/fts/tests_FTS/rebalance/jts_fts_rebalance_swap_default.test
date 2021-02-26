@@ -1,0 +1,43 @@
+[test_case]
+test = perfrunner.tests.rebalance.RebalanceForFTS
+
+[showfast]
+title = FTS Rebalance-swap (min),  3 -> 3, 20M X 1KB, partitioned_index = 6, replica = 0, default collection
+component = jts
+category = Rebalance
+sub_category = default
+orderby = q0b00000000
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 3
+num_buckets = 1
+fts_index_mem_quota = 102400
+
+[bucket]
+replica_number=0
+
+[load]
+items = 20000000
+fts_data_spread_workers = 200
+
+[collection]
+config = collections/1bucket_default.json
+
+[jts]
+test_total_docs = 20000000
+couchbase_index_name = perf_fts_index
+couchbase_index_configfile = tests/fts/index/fts_rebal_basic.json
+
+[restore]
+backup_storage =  /data3/Jyotsna/backup/
+backup_repo =  fts_generic_20M
+
+[rebalance]
+nodes_after = 3
+start_after = 300
+stop_after = 600
+swap = 1
+
+[profiling]
+services = fts

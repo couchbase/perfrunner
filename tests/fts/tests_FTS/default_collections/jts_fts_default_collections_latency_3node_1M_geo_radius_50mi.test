@@ -2,7 +2,7 @@
 test = perfrunner.tests.fts.FTSLatencyTest
 
 [showfast]
-title = Geo Query Radius-based,Radius= 50mi,Default Collection, Default scope, 10K KV w/sec, wiki 1M x 1KB, 3 node, FTS
+title = Geo Query Radius-based,Radius= 50mi, 10K KV w/sec, wiki 1M x 1KB, 3 node, FTS, default scope, default collection
 component = jts
 category = Geo
 sub_category = Latency
@@ -14,9 +14,18 @@ initial_nodes = 3
 num_buckets = 1
 fts_index_mem_quota = 20000
 
+load]
+items = 1000000
+fts_data_spread_workers = 100
+
+[collection]
+config = collections/1bucket_default.json
+
 [jts]
-collections = 0
-scope = 0
+jts_repo_branch = korry_jts_enhancements
+index_groups = 1
+indexes_per_group = 1
+test_collection_query_mode = default
 jts_instances = 1
 test_duration = 600
 test_total_docs = 1000000

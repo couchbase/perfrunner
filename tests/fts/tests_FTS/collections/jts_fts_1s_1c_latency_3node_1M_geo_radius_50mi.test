@@ -17,12 +17,16 @@ fts_index_mem_quota = 20000
 [collection]
 config = collections/1bucket_1scope_1collection_basic.json
 
+[load]
+items = 1000000
+fts_data_spread_workers = 100
+
+
 [jts]
-jts_repo_branch = SDK3
-collections = 1
-scope = 1
-test_collections_flag = 1
-test_docid_use_long = 1
+jts_repo_branch = korry_jts_enhancements
+test_collection_query_mode = default
+index_groups = 1
+indexes_per_group = 1
 jts_instances = 1
 test_duration = 600
 test_total_docs = 1000000

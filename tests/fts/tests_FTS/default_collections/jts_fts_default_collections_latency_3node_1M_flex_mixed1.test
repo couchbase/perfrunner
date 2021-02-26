@@ -2,7 +2,7 @@
 test = perfrunner.tests.fts.FTSLatencyTest
 
 [showfast]
-title = Flex, Mixed predicates type - 1,Default Collection, Default scope, 10K KV w/sec, wiki 1M x 1KB, 3 node, FTS
+title = Flex, Mixed predicates type - 1, 10K KV w/sec, wiki 1M x 1KB, 3 node, FTS, default scope, default collection
 component = jts
 category = Flex
 sub_category = Latency
@@ -20,9 +20,18 @@ db_percentage = 100
 [bucket]
 replica_number = 0
 
+[load]
+items = 1000000
+fts_data_spread_workers = 100
+
+[collection]
+config = collections/1bucket_default.json
+
 [jts]
-collections = 0
-scope = 0
+jts_repo_branch = korry_jts_enhancements
+index_groups = 1
+indexes_per_group = 1
+test_collection_query_mode = default
 jts_instances = 1
 test_duration = 600
 test_total_docs = 1000000

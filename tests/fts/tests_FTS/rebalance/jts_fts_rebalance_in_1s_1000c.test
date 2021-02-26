@@ -29,11 +29,11 @@ test_total_docs = 20000000
 index_groups = 1
 indexes_per_group = 1
 couchbase_index_name = perf_fts_index
-couchbase_index_configfile = tests/fts/index/fts_rebal_basic.json
+couchbase_index_configfile =  tests/fts/index/fts_rebal_basic.json
 
 [restore]
-backup_storage = /data3/Jyotsna/backup/
-backup_repo = fts_generic_20M
+backup_storage =  /data3/Jyotsna/backup/
+backup_repo =  fts_generic_20M
 
 [rebalance]
 nodes_after = 4

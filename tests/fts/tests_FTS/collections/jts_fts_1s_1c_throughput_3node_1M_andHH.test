@@ -23,6 +23,9 @@ fts_data_spread_workers = 100
 
 [jts]
 jts_repo_branch = korry_jts_enhancements
+test_collection_query_mode = default
+index_groups = 1
+indexes_per_group = 1
 jts_instances = 6
 test_duration = 600
 test_total_docs = 1000000

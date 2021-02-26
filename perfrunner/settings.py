@@ -1443,6 +1443,7 @@ class AnalyticsSettings:
     QUERIES = ""
     ANALYTICS_CONFIG_FILE = ""
     DROP_DATASET = ""
+    ANALYTICS_LINK = "Local"
 
     def __init__(self, options: dict):
         self.num_io_devices = int(options.get('num_io_devices',
@@ -1455,6 +1456,7 @@ class AnalyticsSettings:
         self.analytics_config_file = options.get("analytics_config_file",
                                                  self.ANALYTICS_CONFIG_FILE)
         self.drop_dataset = options.get("drop_dataset", self.DROP_DATASET)
+        self.analytics_link = options.get("analytics_link", self.ANALYTICS_LINK)
 
 
 class AuditSettings:

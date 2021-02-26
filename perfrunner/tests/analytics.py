@@ -23,6 +23,12 @@ class BigFunTest(PerfTest):
 
         self.num_items = 0
         self.config_file = self.test_config.analytics_settings.analytics_config_file
+        self.analytics_link = self.test_config.analytics_settings.analytics_link
+        if self.analytics_link == "Local":
+            self.data_node = self.master_node
+            self.analytics_node = self.analytics_nodes[0]
+        else:
+            self.data_node, self.analytics_node = self.cluster_spec.masters
 
     def create_datasets(self, bucket: str):
         self.disconnect_link()
@@ -32,9 +38,9 @@ class BigFunTest(PerfTest):
             ('GleambookMessages-1', 'message_id'),
             ('ChirpMessages-1', 'chirpid'),
         ):
-            statement = "CREATE DATASET `{}` ON `{}` WHERE `{}` IS NOT UNKNOWN;"\
-                .format(dataset, bucket, key)
-            self.rest.exec_analytics_statement(self.analytics_nodes[0],
+            statement = "CREATE DATASET `{}` ON `{}` AT `{}` WHERE `{}` IS NOT UNKNOWN;"\
+                .format(dataset, bucket, self.analytics_link, key)
+            self.rest.exec_analytics_statement(self.analytics_node,
                                                statement)
 
     def create_datasets_collections(self, bucket: str):
@@ -45,15 +51,16 @@ class BigFunTest(PerfTest):
         dataset_list = analytics_config["Analytics"]
         if analytics_config["DefaultCollection"]:
             for dataset in dataset_list:
-                statement = "CREATE DATASET `{}` ON `{}` " \
+                statement = "CREATE DATASET `{}` ON `{}` AT `{}` " \
                             "WHERE `type` = \"{}\" and meta().id like \"%-{}\";"\
-                    .format(dataset["Dataset"], bucket, dataset["Type"], dataset["Group"])
-                self.rest.exec_analytics_statement(self.analytics_nodes[0], statement)
+                    .format(dataset["Dataset"], bucket, self.analytics_link,
+                            dataset["Type"], dataset["Group"])
+                self.rest.exec_analytics_statement(self.analytics_node, statement)
         else:
             for dataset in dataset_list:
-                statement = "CREATE DATASET `{}` ON `{}`.`scope-1`.`{}`;"\
-                    .format(dataset["Dataset"], bucket, dataset["Collection"])
-                self.rest.exec_analytics_statement(self.analytics_nodes[0], statement)
+                statement = "CREATE DATASET `{}` ON `{}`.`scope-1`.`{}` AT `{}`;"\
+                    .format(dataset["Dataset"], bucket, dataset["Collection"], self.analytics_link)
+                self.rest.exec_analytics_statement(self.analytics_node, statement)
 
     def create_index(self):
         logger.info('Creating indexes')
@@ -62,7 +69,7 @@ class BigFunTest(PerfTest):
             "CREATE INDEX gbmSndTimeIdx ON `GleambookMessages-1`(send_time: string);",
             "CREATE INDEX cmSndTimeIdx  ON `ChirpMessages-1`(send_time: string);",
         ):
-            self.rest.exec_analytics_statement(self.analytics_nodes[0],
+            self.rest.exec_analytics_statement(self.analytics_node,
                                                statement)
 
     def create_index_collections(self):
@@ -74,24 +81,24 @@ class BigFunTest(PerfTest):
         for index in index_list:
             statement = "CREATE INDEX `{}` ON `{}`({}: string);"\
                 .format(index["Index"], index["Dataset"], index["Field"])
-            self.rest.exec_analytics_statement(self.analytics_nodes[0], statement)
+            self.rest.exec_analytics_statement(self.analytics_node, statement)
 
     def disconnect_bucket(self, bucket: str):
         logger.info('Disconnecting the bucket: {}'.format(bucket))
         statement = 'DISCONNECT BUCKET `{}`;'.format(bucket)
-        self.rest.exec_analytics_statement(self.analytics_nodes[0],
+        self.rest.exec_analytics_statement(self.analytics_node,
                                            statement)
 
-    def connect_buckets(self):
-        logger.info('Connecting all buckets')
-        statement = "CONNECT link Local"
-        self.rest.exec_analytics_statement(self.analytics_nodes[0],
+    def connect_link(self):
+        logger.info('Connecting Link {}'.format(self.analytics_link))
+        statement = "CONNECT link {}".format(self.analytics_link)
+        self.rest.exec_analytics_statement(self.analytics_node,
                                            statement)
 
     def disconnect_link(self):
-        logger.info('DISCONNECT LINK Local')
-        statement = "DISCONNECT LINK Local"
-        self.rest.exec_analytics_statement(self.analytics_nodes[0],
+        logger.info('DISCONNECT LINK {}'.format(self.analytics_link))
+        statement = "DISCONNECT LINK {}".format(self.analytics_link)
+        self.rest.exec_analytics_statement(self.analytics_node,
                                            statement)
 
     def disconnect(self):
@@ -99,48 +106,48 @@ class BigFunTest(PerfTest):
             self.disconnect_bucket(target.bucket)
 
     def sync(self):
-        for target in self.target_iterator:
+        for bucket in self.test_config.buckets:
             if self.config_file:
-                self.create_datasets_collections(target.bucket)
+                self.create_datasets_collections(bucket)
                 self.create_index_collections()
             else:
-                self.create_datasets(target.bucket)
+                self.create_datasets(bucket)
                 self.create_index()
-        self.connect_buckets()
-        for target in self.target_iterator:
-            self.num_items += self.monitor.monitor_data_synced(target.node,
-                                                               target.bucket,
-                                                               self.analytics_nodes[0])
+        self.connect_link()
+        for bucket in self.test_config.buckets:
+            self.num_items += self.monitor.monitor_data_synced(self.data_node,
+                                                               bucket,
+                                                               self.analytics_node)
 
     def re_sync(self):
-        self.connect_buckets()
-        for target in self.target_iterator:
-            self.monitor.monitor_data_synced(target.node, target.bucket, self.analytics_nodes[0])
+        self.connect_link()
+        for bucket in self.test_config.buckets:
+            self.monitor.monitor_data_synced(self.data_node, bucket, self.analytics_node)
 
     def set_analytics_logging_level(self):
         log_level = self.test_config.analytics_settings.log_level
-        self.rest.set_analytics_logging_level(self.analytics_nodes[0], log_level)
-        self.rest.restart_analytics_cluster(self.analytics_nodes[0])
-        if not self.rest.validate_analytics_logging_level(self.analytics_nodes[0], log_level):
+        self.rest.set_analytics_logging_level(self.analytics_node, log_level)
+        self.rest.restart_analytics_cluster(self.analytics_node)
+        if not self.rest.validate_analytics_logging_level(self.analytics_node, log_level):
             logger.error('Failed to set logging level {}'.format(log_level))
 
     def set_buffer_cache_page_size(self):
         page_size = self.test_config.analytics_settings.storage_buffer_cache_pagesize
-        self.rest.set_analytics_page_size(self.analytics_nodes[0], page_size)
-        self.rest.restart_analytics_cluster(self.analytics_nodes[0])
+        self.rest.set_analytics_page_size(self.analytics_node, page_size)
+        self.rest.restart_analytics_cluster(self.analytics_node)
 
     def set_storage_compression_block(self):
         storage_compression_block = self.test_config.analytics_settings.storage_compression_block
-        self.rest.set_analytics_storage_compression_block(self.analytics_nodes[0],
+        self.rest.set_analytics_storage_compression_block(self.analytics_node,
                                                           storage_compression_block)
-        self.rest.restart_analytics_cluster(self.analytics_nodes[0])
-        self.rest.validate_analytics_setting(self.analytics_nodes[0], 'storageCompressionBlock',
+        self.rest.restart_analytics_cluster(self.analytics_node)
+        self.rest.validate_analytics_setting(self.analytics_node, 'storageCompressionBlock',
                                              storage_compression_block)
 
     def get_dataset_items(self, dataset: str):
         logger.info('Get number of items in dataset {}'.format(dataset))
         statement = "SELECT COUNT(*) from `{}`;".format(dataset)
-        result = self.rest.exec_analytics_query(self.analytics_nodes[0], statement)
+        result = self.rest.exec_analytics_query(self.analytics_node, statement)
         logger.info("Number of items in dataset {}: {}".
                     format(dataset, result['results'][0]['$1']))
         return result['results'][0]['$1']
@@ -165,6 +172,9 @@ class BigFunSyncTest(BigFunTest):
     def run(self):
         super().run()
 
+        if self.analytics_link != "Local":
+            local.create_remote_link(self.analytics_link, self.data_node, self.analytics_node)
+
         sync_time = self.sync()
 
         self.report_kpi(sync_time)
@@ -185,7 +195,7 @@ class BigFunDropDatasetTest(BigFunTest):
                                         bucket=target.bucket,
                                         scope="scope-1",
                                         collection=drop_dataset)
-        self.monitor.monitor_dataset_drop(self.analytics_nodes[0], drop_dataset)
+        self.monitor.monitor_dataset_drop(self.analytics_node, drop_dataset)
 
     def run(self):
         super().run()
@@ -346,11 +356,11 @@ class BigFunConnectTest(BigFunTest):
         )
 
     @timeit
-    def connect_buckets(self):
-        super().connect_buckets()
+    def connect_analytics_link(self):
+        super().connect_link()
 
     @timeit
-    def disconnect_link(self):
+    def disconnect_analytics_link(self):
         super().disconnect_link()
 
     @with_stats
@@ -358,8 +368,8 @@ class BigFunConnectTest(BigFunTest):
         total_connect_time = 0
         total_disconnect_time = 0
         for op in range(ops):
-            disconnect_time = self.disconnect_link()
-            connect_time = self.connect_buckets()
+            disconnect_time = self.disconnect_analytics_link()
+            connect_time = self.connect_analytics_link()
             logger.info("connect time: {}".format(connect_time))
             logger.info("disconnect time: {}".format(disconnect_time))
             total_connect_time += connect_time
@@ -368,6 +378,9 @@ class BigFunConnectTest(BigFunTest):
 
     def run(self):
         super().run()
+
+        if self.analytics_link != "Local":
+            local.create_remote_link(self.analytics_link, self.data_node, self.analytics_node)
 
         self.sync()
 

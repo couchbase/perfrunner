@@ -968,3 +968,17 @@ def cbepctl(master_node: str, cluster_spec: ClusterSpec, bucket: str,
 
     logger.info('Running: {}'.format(cmd))
     local(cmd)
+
+
+def create_remote_link(analytics_link, data_node, analytics_node):
+    logger.info('Create analytics remote ink')
+    cmd = "curl -v -u Administrator:password " \
+          "-X POST http://{}:8095/analytics/link " \
+          "-d dataverse=Default " \
+          "-d name={} " \
+          "-d type=couchbase " \
+          "-d hostname={}:8091 " \
+          "-d username=Administrator " \
+          "-d password=password " \
+          "-d encryption=none ".format(analytics_node, analytics_link, data_node)
+    local(cmd)

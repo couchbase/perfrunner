@@ -700,10 +700,10 @@ class DefaultMonitor(DefaultRestHelper):
                 logger.info('Failed to bootstrap function: {}, node: {}'.
                             format(function, node))
 
-    def get_num_analytics_items(self, data_node: str, bucket: str) -> int:
+    def get_num_analytics_items(self, analytics_node: str, bucket: str) -> int:
         stats_key = '{}:all:incoming_records_count_total'.format(bucket)
         num_items = 0
-        for node in self.get_active_nodes_by_role(data_node, 'cbas'):
+        for node in self.get_active_nodes_by_role(analytics_node, 'cbas'):
             stats = self.get_analytics_stats(node)
             num_items += stats.get(stats_key, 0)
         return num_items
@@ -736,7 +736,7 @@ class DefaultMonitor(DefaultRestHelper):
         num_items = self._get_num_items(data_node, bucket)
 
         while True:
-            num_analytics_items = self.get_num_analytics_items(data_node,
+            num_analytics_items = self.get_num_analytics_items(analytics_node,
                                                                bucket)
             logger.info('Analytics has {:,} docs (target is {:,})'.format(
                 num_analytics_items, num_items))

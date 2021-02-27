@@ -1024,7 +1024,7 @@ class MetricHelper:
 
     def rebalance_time(self, rebalance_time: float) -> Metric:
         metric = self.elapsed_time(rebalance_time)
-        metric[-1]['orderBy'] = self.rebalance_order_by
+        metric[-1]['orderBy'] = self.rebalance_order_by + self._order_by
         return metric
 
     def failover_time(self, delta: float) -> Metric:

@@ -1,45 +1,50 @@
 [test_case]
-test = perfrunner.tests.ycsb.YCSBThroughputTest
+test = perfrunner.tests.ycsb.YCSBLatencyTest
 
 [showfast]
-title = Avg Throughput (trans/sec), Workload T, 4 nodes, Durability Majority, 12 vCPU, worker_instance=1
+title = Latency(ms), Workload T, 4 nodes, Durability Majority, 48 vCPU, s=1 c=1
 component = kv
 category = transaction
-sub_category = Throughput
-orderby = g1
+sub_category = Latency
+orderby = b1
 
 [cluster]
 mem_quota = 40960
 initial_nodes = 4
 num_buckets = 1
-online_cores = 6
+online_cores = 24
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
 
 [bucket]
 replica_number = 2
 
 [load]
-workload_path = workloads/workloada
+workload_path = workloads/workloadca
 ycsb_client = couchbase3
 items = 20000000
-workers = 160
+workers = 100
 
 [access]
-workload_path = workloads/workloadta
+workload_path = workloads/workloadtca
 ycsb_client = couchbase3
 items = 20000000
 ops = 1000000000
-time = 900
+time = 600
 boost = 12
-workers = 96
+workers = 1
 workload_instances = 1
 transactionsenabled = 1
 num_atrs = 20480
 durability = 1
 kv_endpoints = 16
+timeseries = 1
 requestdistribution = uniform
 
 [ycsb]
 branch = couchbase3
+average_latency = 1
 
 [stats]
 client_processes = java

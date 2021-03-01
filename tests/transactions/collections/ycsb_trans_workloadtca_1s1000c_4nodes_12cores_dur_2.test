@@ -6,6 +6,8 @@ title = Avg Throughput (trans/sec), Workload T, 4 nodes, Majority_Persist_Active
 component = kv
 category = transaction
 sub_category = Throughput
+orderby = e1
+
 
 [cluster]
 mem_quota = 40960

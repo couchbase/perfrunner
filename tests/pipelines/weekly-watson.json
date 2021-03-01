@@ -59,7 +59,7 @@
     "KV-Hercules": [],
     "N1QL": [
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q1_20M.test"},
-        {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q1_20M_tls.test"},
+        {"job": "iris", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q1_20M_tls.test"},
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q2_20M_gsi_moi_false.test"},
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q2_20M_gsi_moi_ok.test"},
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q3_20M_gsi_moi_false.test"},

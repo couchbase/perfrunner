@@ -30,6 +30,7 @@ couchbase_fts_index_name = perf_fts_index
 couchbase_fts_index_configfile = tests/n1ql/fts/index/fts_cf2_qf2_index.json
 
 [access]
+items = 20000000
 workers = 0
 n1ql_queries = range-scan
 n1ql_throughput = 10000

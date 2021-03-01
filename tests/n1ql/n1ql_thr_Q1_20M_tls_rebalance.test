@@ -26,8 +26,7 @@ doc_gen = reverse_lookup
 items = 20000000
 workers = 0
 n1ql_queries = key-value-lookup
-n1ql_workers = 240
-workload_instances = 2
+n1ql_workers = 480
 time = 1200
 ssl_mode = data
 

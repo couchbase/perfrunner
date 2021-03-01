@@ -878,6 +878,11 @@ class DefaultRestHelper(RestBase):
         response = self.get(url=api).json()
         return response
 
+    def get_cbas_incoming_records_count(self, host: str) -> dict:
+        api = 'http://{}:8091/pools/default/stats/range/cbas_incoming_records_count?' \
+              'aggregationFunction=sum'.format(host)
+        return self.get(url=api).json()
+
     def deploy_function(self, node: str, func: dict, name: str):
         logger.info('Deploying function on node {}: {}'.format(node, pretty_dict(func)))
         api = 'http://{}:8096/api/v1/functions/{}'.format(node, name)

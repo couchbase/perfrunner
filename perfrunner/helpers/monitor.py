@@ -736,8 +736,12 @@ class DefaultMonitor(DefaultRestHelper):
         num_items = self._get_num_items(data_node, bucket)
 
         while True:
-            num_analytics_items = self.get_num_analytics_items(analytics_node,
-                                                               bucket)
+            if build < (7, 0, 0, 0):
+                num_analytics_items = self.get_num_analytics_items(analytics_node, bucket)
+            else:
+                incoming_records = self.get_cbas_incoming_records_count(analytics_node)
+                num_analytics_items = int(incoming_records["data"][0]["values"][-1][1])
+
             logger.info('Analytics has {:,} docs (target is {:,})'.format(
                 num_analytics_items, num_items))
 

@@ -2,7 +2,7 @@
 test = perfrunner.tests.secondary.SecondaryIndexingScanTest
 
 [showfast]
-title = 1 bucket x 50M x 1KB, 10K KV ops/sec, 10k indexes, MOI, s=1 c=1000
+title = 1 bucket x 50M x 1KB, 10K KV ops/sec, 10k indexes, MOI, s=1 c=1000, 128 Concurrency
 component = secondary
 category = lat
 sub_category = MOI
@@ -47,6 +47,8 @@ queryport.client.log_level = Warn
 projector.backChanSize = 500000
 disable_perindex_stats = True
 indexer.settings.build.batch_size = 100
+cbindexperf_concurrency = 128
+cbindexperf_repeat = 2999
 
 [access]
 updates = 100

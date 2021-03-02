@@ -39,7 +39,7 @@ top_down = True
 [access]
 creates = 0
 reads = 0
-updates = 100
+updates = 50
 deletes = 0
 throughput = 3000
 items = 200000

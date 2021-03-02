@@ -2,7 +2,7 @@
 test = perfrunner.tests.rebalance.RebalanceForFTS
 
 [showfast]
-title = FTS Rebalance-swap (min),  3 -> 3, 20M X 1KB, partitioned_index = 6, replica = 0, default collection
+title = FTS Rebalance-swap (min),  3 -> 3, 20M X 1KB, partitioned_index = 6, replica = 0, default scope, default collection
 component = jts
 category = Rebalance
 sub_category = default

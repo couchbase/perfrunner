@@ -306,7 +306,9 @@
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_connect_4n_1s_999c.test"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_4n_incr.test"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_4n_1s_3c_incr.test"},
-        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_4n_1s_99c_incr.test"}
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_4n_1s_99c_incr.test"},
+        {"job": "oceanus-remotelink", "cluster": "oceanus_2x4.spec",     "test_config": "bigfun_20M_remote_sync_4n_1s_999c.test"},
+        {"job": "oceanus-remotelink", "cluster": "oceanus_2x4.spec",     "test_config": "bigfun_20M_remote_connect_4n_1s_999c.test"}
     ],
     "Views": [
         {"job": "leto", "cluster": "leto.spec", "test_config": "index_20M_default.test"},

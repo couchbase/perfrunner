@@ -211,7 +211,7 @@ class CbAgent:
         if xdcr_stats:
             self.add_collector(XdcrStats)
         if analytics:
-            self.add_collector(AnalyticsStats, self.test.analytics_nodes)
+            self.add_collector(AnalyticsStats, self.test)
         if kvstore:
             self.add_collector(KVStoreStats, self.test)
 

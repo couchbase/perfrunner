@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.secondary.SecondaryIndexingScanLatencyTest
+test = perfrunner.tests.secondary.SecondaryIndexingScanTest
 
 [showfast]
 title = Stale = false, 1 bucket x 50M x 1KB, 10K KV ops/sec, 3000 indexes, Plasma, s=1 c=300, 128 Concurrency

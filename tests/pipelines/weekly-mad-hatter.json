@@ -208,7 +208,6 @@
         {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_WF5_100M_plasma_ok.test"},
         {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_thr_WF5_100M_plasma_ok.test"},
         {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_WF6_100M_plasma_ok.test"},
-        {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_thr_WF6_100M_plasma_ok.test"},
         {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_WF7_100M_plasma_ok.test"},
         {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_thr_WF7_100M_plasma_ok.test"},
         {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_WF8_100M_plasma_ok.test"},

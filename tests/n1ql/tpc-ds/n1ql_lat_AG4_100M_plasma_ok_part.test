@@ -38,7 +38,7 @@ items = 1000000
 time = 600
 n1ql_queries = aggregation
 n1ql_batch_size = 1
-n1ql_workers = 20
+n1ql_workers = 4
 n1ql_timeout = 300
 
 [n1ql-aggregation]

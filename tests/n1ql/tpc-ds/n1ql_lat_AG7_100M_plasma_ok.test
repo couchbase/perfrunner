@@ -33,7 +33,7 @@ statements =
 items = 1000000
 time = 600
 n1ql_queries = aggregation
-n1ql_workers = 20
+n1ql_workers = 10
 
 [n1ql-aggregation]
 statement = SELECT customer.zip FROM `bucket-1` WHERE customer.zip IN $1 AND customer.preferred_flag = true GROUP BY customer.zip HAVING COUNT(1) > 10;

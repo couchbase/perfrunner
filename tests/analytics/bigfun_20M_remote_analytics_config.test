@@ -1,0 +1,35 @@
+[test_case]
+test = perfrunner.tests.analytics.BigFunSyncTest
+use_workers = 0
+
+[showfast]
+title = Avg. ingestion rate (items/sec), 4 nodes, BigFUN 20M users (320M docs), 3 indexes, SSD, Remote Link
+component = analytics
+category = sync
+sub_category = Initial
+orderby = _ssd_4n
+
+[stats]
+server_processes = java
+
+[cluster]
+mem_quota = 2048
+analytics_mem_quota = 20480
+initial_nodes = 4
+num_buckets = 1
+
+[analytics]
+num_io_devices = 4
+analytics_link = RemoteLink
+
+[bucket]
+eviction_policy = fullEviction
+
+[restore]
+backup_storage = /backups
+backup_repo = bigfun20M
+threads = 8
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

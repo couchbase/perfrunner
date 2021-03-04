@@ -253,8 +253,7 @@
         {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/collections/n1ql_thr_JOIN_Q8_10M_gsi_moi_ok_1s_1c_1i.test"},
         {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/collections/n1ql_lat_AG1_100M_plasma_ok_1s_1c_1i.test"},
         {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/collections/n1ql_lat_AG1_100M_plasma_ok_1s_1c_1i.test"},
-        {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/collections/n1ql_lat_AG1_100M_plasma_ok_1s_1c_1i.test"},
-        {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "tpc-ds/n1ql_thr_WF10_100M_plasma_ok.test"}
+        {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/collections/n1ql_lat_AG1_100M_plasma_ok_1s_1c_1i.test"}
     ],
     "YCSB": [
         {"job": "hercules", "cluster": "hercules.spec", "test_config": "collections/ycsb/ycsb_workloadce_4nodes_1s_1c.test"},

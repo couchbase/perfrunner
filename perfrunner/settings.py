@@ -1702,6 +1702,12 @@ class TestConfig(Config):
         ]
 
     @property
+    def eventing_metadata_bucket(self) -> List[str]:
+        return [
+            'eventing'
+        ]
+
+    @property
     def compaction(self) -> CompactionSettings:
         options = self._get_options_as_dict('compaction')
         return CompactionSettings(options)

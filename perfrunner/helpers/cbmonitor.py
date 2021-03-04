@@ -75,7 +75,9 @@ def new_cbagent_settings(test: PerfTest):
         buckets = None
     else:
         buckets = test.test_config.buckets[:1] +\
-                  test.test_config.eventing_buckets
+                  test.test_config.eventing_buckets +\
+                  test.test_config.eventing_metadata_bucket
+
     if hasattr(test, 'ALL_HOSTNAMES'):
         hostnames = test.cluster_spec.servers
     else:

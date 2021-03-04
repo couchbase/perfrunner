@@ -682,15 +682,16 @@ class TimerUndeployTest(TimerTest):
             self.monitor.wait_for_all_timer_creation(node=self.eventing_nodes[0],
                                                      function=name)
 
+    @with_stats
+    def load_and_wait_for_timers(self):
+        self.load()
+        self.wait_for_all_timers_creation()
+        time_to_undeploy = self.undeploy()
+        return time_to_undeploy
+
     def run(self):
         self.set_functions()
-
-        self.load()
-
-        self.wait_for_all_timers_creation()
-
-        time_to_undeploy = self.undeploy()
-
+        time_to_undeploy = self.load_and_wait_for_timers()
         self.report_kpi(time_to_undeploy)
 
 

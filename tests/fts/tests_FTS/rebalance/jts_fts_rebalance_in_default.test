@@ -26,7 +26,6 @@ config = collections/1bucket_default.json
 
 [jts]
 test_total_docs = 20000000
-test_collection_query_mode = default
 index_groups = 1
 indexes_per_group = 1
 couchbase_index_name = perf_fts_index

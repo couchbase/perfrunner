@@ -2,7 +2,7 @@
 test = perfrunner.tests.fts.FTSLatencyTest
 
 [showfast]
-title = NumericRangeQuery, 10K KV w/sec, wiki 1M x 1KB, 3 node, FTS,collection specific, s=1 c=1000
+title = NumericRangeQuery, 10K KV w/sec, wiki 1M x 1KB, 3 node, FTS, collection specific, s=1 c=1000
 component = jts
 category = 1M
 sub_category = Latency
@@ -29,7 +29,7 @@ indexes_per_group = 1
 test_collection_specific_count = 1000
 jts_instances = 1
 test_duration = 600
-test_total_docs = 3273681
+test_total_docs = 1000000
 test_query_workers = 1
 test_kv_workers = 60
 test_kv_throughput_goal = 10000

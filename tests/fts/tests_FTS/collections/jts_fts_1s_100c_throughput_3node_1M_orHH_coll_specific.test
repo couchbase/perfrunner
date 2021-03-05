@@ -1,0 +1,54 @@
+[test_case]
+test = perfrunner.tests.fts.FTSThroughputTest
+
+[showfast]
+title = OrHighHigh, 10K KV w/sec, wiki 1M x 1KB, 3 node, FTS, collection specific, s=1 c=100
+component = jts
+category = 1M
+sub_category = Throughput
+orderby = q0b00000111
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 3
+num_buckets = 1
+fts_index_mem_quota = 20000
+
+[collection]
+config = collections/1bucket_1scope_100collections_basic.json
+
+[load]
+items = 1000000
+fts_data_spread_workers = 100
+
+[jts]
+jts_repo_branch = korry_jts_enhancements
+test_collection_query_mode = collection_specific
+index_groups = 1
+indexes_per_group = 1
+test_collection_specific_count = 100
+jts_instances = 6
+test_duration = 600
+test_total_docs = 1000000
+test_query_workers = 15
+test_kv_workers = 5
+test_kv_throughput_goal = 1660
+test_data_file = ../tests/fts/data/benchmark/hi_hi.txt
+test_driver = couchbase
+test_stats_limit = 1000000
+test_stats_aggregation_step = 100
+test_debug = false
+test_query_type = 2_disjuncts
+test_query_limit = 10
+test_query_field = text
+test_mutation_field = text2
+test_worker_type = validatedThroughput
+couchbase_index_name = perf_fts_index
+couchbase_index_configfile = tests/fts/index/fts_tvectors_off.json
+
+[restore]
+backup_storage =  /fts/backup
+backup_repo =  fts_wiki
+
+[profiling]
+services = fts

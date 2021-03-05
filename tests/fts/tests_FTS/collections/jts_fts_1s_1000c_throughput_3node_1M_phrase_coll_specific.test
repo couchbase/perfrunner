@@ -2,7 +2,7 @@
 test = perfrunner.tests.fts.FTSThroughputTest
 
 [showfast]
-title = PhraseQuery, 10K KV w/sec, wiki 1M x 1KB, 3 node, FTS, s=1 c=1000
+title = PhraseQuery, 10K KV w/sec, wiki 1M x 1KB, 3 node, FTS, collection specific, s=1 c=1000
 component = jts
 category = 1M
 sub_category = Throughput

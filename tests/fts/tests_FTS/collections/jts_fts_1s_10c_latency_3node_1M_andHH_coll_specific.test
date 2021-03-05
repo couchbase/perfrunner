@@ -23,6 +23,10 @@ fts_data_spread_workers = 100
 
 [jts]
 jts_repo_branch = korry_jts_enhancements
+test_collection_query_mode = collection_specific
+index_groups = 1
+indexes_per_group = 1
+test_collection_specific_count = 10
 jts_instances = 1
 test_duration = 600
 test_total_docs = 1000000
@@ -39,9 +43,6 @@ test_query_limit = 10
 test_query_field = text
 test_mutation_field = text2
 test_worker_type = validatedLatency
-test_collection_query_mode = collection_specific
-index_groups = 1
-indexes_per_group = 1
 couchbase_index_name = perf_fts_index
 couchbase_index_configfile = tests/fts/index/fts_tvectors_off.json
 

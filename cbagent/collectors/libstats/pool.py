@@ -51,6 +51,16 @@ class BucketWrapper:
     def delete(self, key):
         self.client.delete(key)
 
+    def upsert(self, key, doc):
+        self.client.upsert(key, doc)
+
+    def endure(self, key, persist_to, replicate_to, interval, timeout=120):
+        self.client.endure(key,
+                           persist_to=persist_to,
+                           replicate_to=replicate_to,
+                           interval=interval,
+                           timeout=timeout)
+
 
 class CollectionsWrapper:
 

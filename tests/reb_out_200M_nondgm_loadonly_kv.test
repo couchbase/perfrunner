@@ -2,7 +2,7 @@
 test = perfrunner.tests.rebalance.RebalanceLoadOnlyTest
 
 [showfast]
-title = Rebalance-out (min), 2 -> 1, 200M x 1KB, 20K ops/sec
+title = Rebalance-out (min), 2 -> 1, 200M x 1KB
 component = reb
 category = kv
 sub_category = Non-DGM

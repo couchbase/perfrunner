@@ -15,15 +15,24 @@
     "FTS": [],
     "GSI": [],
     "GSI-DGM": [],
-    "KV": [],
+    "KV": [
+    ],
     "KV-DGM": [],
     "KV-Hercules": [],
-    "KV-Athena": [],
+    "KV-Athena": [
+        {"job": "athena", "cluster": "athena.spec", "test_config": "dcp/java_dcp_throughput_1n_100M_compressed_warmup_resident_100.test"},
+        {"job": "athena", "cluster": "athena.spec", "test_config": "dcp/java_dcp_throughput_1n_100M_compressed_warmup_resident_50.test"},
+        {"job": "athena", "cluster": "athena.spec", "test_config": "dcp/java_dcp_throughput_1n_200M_compressed_warmup_resident_50.test"}
+    ],
     "KV-Windows":[],
     "N1QL": [],
     "N1QL-Arke": [],
     "N1QL-Windows": [],
-    "Rebalance": [],
+    "Rebalance": [
+        {"job": "titan", "cluster": "titan.spec", "test_config": "reb_in_200M_nondgm_loadonly_kv.test "},
+        {"job": "titan", "cluster": "titan.spec", "test_config": "reb_out_200M_nondgm_loadonly_kv.test "},
+        {"job": "titan", "cluster": "titan.spec", "test_config": "reb_swap_200M_nondgm_loadonly_kv.test "}
+    ],
     "Rebalance-Large-Scale": [],
     "Tools": [],
     "Views": [],

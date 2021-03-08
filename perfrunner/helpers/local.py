@@ -982,3 +982,127 @@ def create_remote_link(analytics_link, data_node, analytics_node):
           "-d password=password " \
           "-d encryption=none ".format(analytics_node, analytics_link, data_node)
     local(cmd)
+
+
+def download_pytppc(repo: str, branch: str):
+    cmd = 'git clone -q -b {} {}'.format(branch, repo)
+    local(cmd)
+
+
+def pytpcc_create_collections(collection_config: str, master_node:  str):
+
+    cmd = 'cp py-tpcc/pytpcc/constants.py.collections py-tpcc/pytpcc/constants.py'
+    logger.info("Copyied constants.py.collections {}".format(cmd))
+
+    local(cmd)
+    cmd = './py-tpcc/pytpcc/util/{} {}'.format(collection_config, master_node)
+
+    logger.info("Creating Collections : {}".format(cmd))
+    local(cmd)
+
+
+def pytpcc_create_indexes(master_node: str, run_sql_shell: str, cbrindex_sql: str,
+                          port: str, index_replica: int):
+
+    cmd = './py-tpcc/pytpcc/util/{} {}:{} {} ' \
+          '< ./py-tpcc/pytpcc/util/{} '.format(run_sql_shell, master_node, port,
+                                               index_replica, cbrindex_sql)
+
+    logger.info("Creating pytpcc Indexes : {}".format(cmd))
+
+    local(cmd)
+
+
+def pytpcc_load_data(warehouse: int, client_threads: int,
+                     master_node: str, port: str,
+                     cluster_spec: ClusterSpec,
+                     multi_query_node: bool,
+                     driver: str,
+                     nodes: list):
+
+    if multi_query_node:
+        nodes_length = len(nodes)
+        multi_query_url = master_node + ':' + port
+
+        for node in range(1, nodes_length):
+            multi_query_url = multi_query_url + ',' + nodes[node] + ':' + port
+
+        cmd = './tpcc.py --warehouses {}' \
+              ' --clients {} {} --no-execute --query-url {}:{}' \
+              ' --multi-query-url {}' \
+              ' --userid {} --password {}'.format(warehouse, client_threads, driver,
+                                                  master_node,
+                                                  port,
+                                                  multi_query_url,
+                                                  cluster_spec.rest_credentials[0],
+                                                  cluster_spec.rest_credentials[1])
+    else:
+
+        cmd = './tpcc.py --warehouses {}' \
+              ' --clients {} {} --no-execute --query-url {}:{}' \
+              ' --userid {} --password {}'.format(warehouse, client_threads, driver,
+                                                  master_node,
+                                                  port,
+                                                  cluster_spec.rest_credentials[0],
+                                                  cluster_spec.rest_credentials[1])
+
+    logger.info("Loading Docs : {}".format(cmd))
+
+    with lcd('py-tpcc/pytpcc/'):
+
+        for line in local(cmd, capture=True).split('\n'):
+            print(line)
+
+
+def pytpcc_run_task(warehouse: int, duration: int, client_threads: int,
+                    driver: str, master_node:  str,
+                    multi_query_node: bool, cluster_spec: ClusterSpec, port: str,
+                    nodes: list, durability_level: str, scan_consistency: str, txtimeout: str):
+
+    if multi_query_node:
+        nodes_length = len(nodes)
+        multi_query_url = master_node + ':' + port
+
+        for node in range(1, nodes_length):
+            multi_query_url = multi_query_url + ',' + nodes[node] + ':' + port
+
+        cmd = './tpcc.py --warehouses {} --duration {} ' \
+              '--clients {} {} --query-url {}:{} ' \
+              '--multi-query-url {} --userid {} --no-load --durability_level {} ' \
+              '--password {} --scan_consistency {}' \
+              ' --txtimeout {} > pytpcc_run_result.log'.format(warehouse,
+                                                               duration,
+                                                               client_threads, driver,
+                                                               master_node, port,
+                                                               multi_query_url,
+                                                               cluster_spec.rest_credentials[0],
+                                                               durability_level,
+                                                               cluster_spec.rest_credentials[1],
+                                                               scan_consistency, txtimeout)
+
+    else:
+        cmd = './tpcc.py --warehouses {} --duration {} ' \
+              '--clients {} {} --query-url {}:{} ' \
+              '--no-load --userid {} --password {} --durability_level {} ' \
+              '--scan_consistency {} ' \
+              '--txtimeout {} > pytpcc_run_result.log'.format(warehouse,
+                                                              duration,
+                                                              client_threads,
+                                                              driver,
+                                                              master_node,
+                                                              port,
+                                                              cluster_spec.rest_credentials[0],
+                                                              cluster_spec.rest_credentials[1],
+                                                              durability_level,
+                                                              scan_consistency, txtimeout)
+
+    logger.info("Running : {}".format(cmd))
+
+    with lcd('py-tpcc/pytpcc/'):
+        for line in local(cmd, capture=True).split('\n'):
+            print(line)
+
+
+def copy_pytpcc_run_output():
+    cmd = 'cp  py-tpcc/pytpcc/pytpcc_run_result.log .'
+    local(cmd)

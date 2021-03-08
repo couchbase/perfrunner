@@ -861,3 +861,22 @@ class RemoteLinux(Remote):
             r = run('stat *.zip', quiet=True, warn_only=True)
             if not r.return_code:
                 get('*.zip', local_path='.')
+
+    @all_servers
+    def txn_query_cleanup(self, timeout):
+        logger.info('Running txn cleanup window')
+
+        cmd = \
+            "curl -s -u Administrator:password http://localhost:8091/" \
+            "settings/querySettings  -d 'queryCleanupWindow={}s'".format(timeout)
+
+        logger.info("Running: {}".format(cmd))
+        run(cmd, pty=False)
+
+        cmd2 = "curl -u Administrator:password http://localhost:8093/admin/settings" \
+               " -XPOST -d '{\"atrcollection\":\"default._default._default\"}'"
+
+        logger.info("Running: {}".format(cmd2))
+
+        with settings(warn_only=True):
+            run(cmd2, pty=False)

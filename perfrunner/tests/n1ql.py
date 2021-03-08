@@ -1,6 +1,7 @@
 import time
 
 from logger import logger
+from perfrunner.helpers import local
 from perfrunner.helpers.cbmonitor import timeit, with_stats
 from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.profiler import with_profiles
@@ -661,3 +662,129 @@ class N1QLFunctionThroughputTest(N1QLFunctionTest):
         self.reporter.post(
             *self.metrics.avg_n1ql_throughput()
         )
+
+
+class PytpccBenchmarkTest(N1QLTest):
+
+    COLLECTORS = {
+        'iostat': False,
+        'memory': False,
+        'n1ql_latency': False,
+        'n1ql_stats': True,
+        'secondary_stats': True,
+        'ns_server_system': True,
+    }
+
+    def download_pytpcc(self):
+        branch = self.test_config.pytpcc_settings.pytpcc_branch
+        repo = self.test_config.pytpcc_settings.pytpcc_repo
+        local.download_pytppc(branch=branch, repo=repo)
+
+    def pytpcc_create_collections(self):
+        collection_config = self.test_config.pytpcc_settings.collection_config
+        master_node = self.cluster.master_node
+
+        local.pytpcc_create_collections(collection_config=collection_config,
+                                        master_node=master_node)
+
+    def pytpcc_create_indexes(self):
+        master_node = self.cluster.master_node
+        run_sql_shell = self.test_config.pytpcc_settings.run_sql_shell
+        cbrindex_sql = self.test_config.pytpcc_settings.cbrindex_sql
+        port = self.test_config.pytpcc_settings.query_port
+        index_replica = self.test_config.pytpcc_settings.index_replicas
+
+        local.pytpcc_create_indexes(master_node=master_node,
+                                    run_sql_shell=run_sql_shell,
+                                    cbrindex_sql=cbrindex_sql,
+                                    port=port, index_replica=index_replica)
+
+    def load_tpcc(self):
+        master_node = self.cluster.master_node
+        warehouse = self.test_config.pytpcc_settings.warehouse
+        client_threads = self.test_config.pytpcc_settings.client_threads
+        query_port = self.test_config.pytpcc_settings.query_port
+        multi_query_node = self.test_config.pytpcc_settings.multi_query_node
+        driver = self.test_config.pytpcc_settings.driver
+        nodes = self.cluster_spec.servers[:self.test_config.cluster.initial_nodes[0]]
+
+        local.pytpcc_load_data(master_node=master_node, warehouse=warehouse,
+                               client_threads=client_threads, port=query_port,
+                               cluster_spec=self.cluster_spec,
+                               multi_query_node=multi_query_node,
+                               driver=driver,
+                               nodes=nodes)
+
+    @with_profiles
+    @with_stats
+    def run_tpcc(self):
+        warehouse = self.test_config.pytpcc_settings.warehouse
+        duration = self.test_config.pytpcc_settings.duration
+        client_threads = self.test_config.pytpcc_settings.client_threads
+        query_port = self.test_config.pytpcc_settings.query_port
+        driver = self.test_config.pytpcc_settings.driver
+        master_node = self.cluster.master_node
+        multi_query_node = self.test_config.pytpcc_settings.multi_query_node
+        nodes = self.cluster_spec.servers[:self.test_config.cluster.initial_nodes[0]]
+        durability_level = self.test_config.pytpcc_settings.durability_level
+        scan_consistency = self.test_config.pytpcc_settings.scan_consistency
+        txtimetout = self.test_config.pytpcc_settings.txtimeout
+
+        local.pytpcc_run_task(warehouse=warehouse, duration=duration,
+                              client_threads=client_threads, port=query_port,
+                              driver=driver, master_node=master_node,
+                              multi_query_node=multi_query_node,
+                              cluster_spec=self.cluster_spec,
+                              nodes=nodes,
+                              durability_level=durability_level,
+                              scan_consistency=scan_consistency,
+                              txtimeout=txtimetout)
+
+    def restore_pytpcc(self):
+        master_node = self.cluster.master_node
+        local.restore(master_node=master_node, cluster_spec=self.cluster_spec, threads=8)
+
+    def _report_kpi(self):
+
+        self.reporter.post(
+            *self.metrics.pytpcc_tpmc_throughput(self.test_config.pytpcc_settings.duration)
+        )
+
+    def copy_pytpcc_run_output(self):
+        local.copy_pytpcc_run_output()
+
+    def run(self):
+
+        self.download_pytpcc()
+
+        self.pytpcc_create_collections()
+
+        if self.test_config.pytpcc_settings.use_pytpcc_backup:
+            self.restore_pytpcc()
+            self.pytpcc_create_indexes()
+            self.create_indexes()
+            self.wait_for_indexing()
+        else:
+            self.pytpcc_create_indexes()
+            self.create_indexes()
+            self.wait_for_indexing()
+            self.load_tpcc()
+            self.wait_for_persistence()
+
+        for service in self.test_config.profiling_settings.services:
+            if service == 'n1ql':
+                self.remote.kill_process_on_query_node("cbq-engine")
+                logger.info('cbq-engine service restarting after loading docs')
+                break
+
+        if self.test_config.pytpcc_settings.txt_cleanup_window:
+            cleanup_interval = self.test_config.pytpcc_settings.txt_cleanup_window
+            self.remote.txn_query_cleanup(timeout=cleanup_interval)
+
+        if self.test_config.pytpcc_settings.txt_cleanup_window:
+            self.remote.txn_query_cleanup(
+                timeout=self.test_config.pytpcc_settings.txt_cleanup_window)
+
+        self.run_tpcc()
+        self.copy_pytpcc_run_output()
+        self._report_kpi()

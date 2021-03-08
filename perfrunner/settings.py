@@ -283,6 +283,7 @@ class ClusterSettings:
     ONLINE_CORES = 0
     ENABLE_CPU_CORES = 'true'
     ENABLE_N2N_ENCRYPTION = None
+    BUCKET_NAME = 'bucket-1'
 
     IPv6 = 0
 
@@ -325,6 +326,8 @@ class ClusterSettings:
             self.kernel_mem_limit_services = kernel_mem_limit_services.split()
         else:
             self.kernel_mem_limit_services = self.KERNEL_MEM_LIMIT_SERVICES
+
+        self.bucket_name = options.get('bucket_name', self.BUCKET_NAME)
 
 
 class StatsSettings:
@@ -1592,6 +1595,57 @@ class TPCDSLoaderSettings:
         return str(self.__dict__)
 
 
+class PYTPCCSettings:
+
+    WAREHOUSE = 1
+    CLIENT_THREADS = 1
+    DURATION = 600
+    MULTI_QUERY_NODE = 0
+    DRIVER = 'n1ql'
+    QUERY_PORT = '8093'
+    KV_PORT = '8091'
+    RUN_SQL_SHELL = 'run_sqlcollections.sh'
+    CBRINDEX_SQL = 'cbcrindexcollection_replicas3.sql'
+    COLLECTION_CONFIG = 'cbcrbucketcollection_20GB.sh'
+    DURABILITY_LEVEL = 'majority'
+    SCAN_CONSISTENCY = 'not_bounded'
+    TXTIMEOUT = 3.0
+    TXT_CLEANUP_WINDOW = 0
+    PYTPCC_BRANCH = 'py3'
+    PYTPCC_REPO = 'https://github.com/couchbaselabs/py-tpcc.git'
+    INDEX_REPLICAS = 0
+
+    def __init__(self, options: dict):
+        self.warehouse = int(options.get('warehouse', self.WAREHOUSE))
+        self.client_threads = int(options.get('client_threads',
+                                              self.CLIENT_THREADS))
+        self.duration = int(options.get('duration', self.DURATION))
+        self.multi_query_node = int(options.get('multi_query_node',
+                                                self.MULTI_QUERY_NODE))
+        self.driver = options.get('driver', self.DRIVER)
+        self.query_port = options.get('query_port', self.QUERY_PORT)
+        self.kv_port = options.get('kv_port', self.KV_PORT)
+        self.run_sql_shell = options.get('run_sql_shell', self.RUN_SQL_SHELL)
+        self.cbrindex_sql = options.get('cbrindex_sql', self.CBRINDEX_SQL)
+        self.collection_config = options.get('collection_config',
+                                             self.COLLECTION_CONFIG)
+        self.durability_level = options.get('durability_level',
+                                            self.DURABILITY_LEVEL)
+        self.scan_consistency = options.get('scan_consistency',
+                                            self.SCAN_CONSISTENCY)
+        self.txtimeout = options.get('txtimeout', self.TXTIMEOUT)
+        self.txt_cleanup_window = int(options.get('txt_cleanup_window',
+                                                  self.TXT_CLEANUP_WINDOW))
+        self.pytpcc_branch = options.get('pytpcc_branch', self.PYTPCC_BRANCH)
+        self.pytpcc_repo = options.get('pytpcc_repo', self.PYTPCC_REPO)
+        self.use_pytpcc_backup = bool(options.get('use_pytpcc_backup'))
+        self.index_replicas = int(options.get('index_replicas',
+                                              self.INDEX_REPLICAS))
+
+    def __str__(self) -> str:
+        return str(self.__dict__)
+
+
 class TestConfig(Config):
 
     @property
@@ -1630,9 +1684,12 @@ class TestConfig(Config):
 
     @property
     def buckets(self) -> List[str]:
-        return [
-            'bucket-{}'.format(i + 1) for i in range(self.cluster.num_buckets)
-        ]
+        if self.cluster.num_buckets == 1 and self.cluster.bucket_name != 'bucket-1':
+            return [self.cluster.bucket_name]
+        else:
+            return [
+                'bucket-{}'.format(i + 1) for i in range(self.cluster.num_buckets)
+            ]
 
     @property
     def eventing_buckets(self) -> List[str]:
@@ -1916,6 +1973,11 @@ class TestConfig(Config):
     def tpcds_loader_settings(self) -> TPCDSLoaderSettings:
         options = self._get_options_as_dict('TPCDSLoader')
         return TPCDSLoaderSettings(options)
+
+    @property
+    def pytpcc_settings(self) -> PYTPCCSettings:
+        options = self._get_options_as_dict('py_tpcc')
+        return PYTPCCSettings(options)
 
 
 class TargetSettings:

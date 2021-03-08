@@ -702,6 +702,20 @@ class MetricHelper:
                         break
         return throughput
 
+    def _parse_pytpcc_throughput(self) -> int:
+        executed = 0
+
+        pytpcc_log_file = [filename for filename
+                           in glob.glob("py-tpcc/pytpcc/pytpcc_run_result.log")]
+
+        for filename in pytpcc_log_file:
+            with open(filename) as fh:
+                for line in fh.readlines():
+                    if 'NEW_ORDER' in line:
+                        if line.split()[4] == 'txn/s':
+                            executed = line.split()[1]
+        return int(executed)
+
     def _ycsb_perc_calc(self, _temp: [], io_type: str, percentile: str, lat_dic: {}, _fc: int):
         pio_type = '{}th Percentile {}'.format(percentile, io_type)
         p_lat = round(np.percentile(_temp, percentile) / 1000, 3)
@@ -942,6 +956,16 @@ class MetricHelper:
         throughput = self._parse_ycsb_throughput(operation)
 
         return throughput, self._snapshots, metric_info
+
+    def pytpcc_tpmc_throughput(self, duration: int) -> Metric:
+
+        metric_info = self._metric_info(chirality=1)
+
+        executed = self._parse_pytpcc_throughput()
+
+        tpmc = round(executed / duration) * 60
+
+        return tpmc, self._snapshots, metric_info
 
     def ycsb_throughput_phase(self,
                               phase: int,

@@ -59,7 +59,7 @@ THREADS_PER_CLIENT = {
     'pillowfight.test': 20,
     'ycsb_workload_a.test': 600,
     'ycsb_workload_d.test': 20,
-    'ycsb_workload_e.test': 20,
+    'ycsb_workload_e.test': 600,
     'ycsb_workloada_latency.test': 20,
     'ycsb_workloade_latency.test': 20,
     'backup.test': 20,
@@ -91,7 +91,7 @@ def render_test(template: str, instance: str, threads: int, server_instances: in
 
 def render_spec(template: str, instance: str):
     with open(CloudRunner.EC2_META) as fp:
-        meta = yaml.load(fp)
+        meta = yaml.load(fp, Loader=yaml.FullLoader)
         clients = meta.get('clients', {}).values()
         servers = meta.get('servers', {}).values()
     mem_quota = MEMORY_QUOTAS[instance][4]/1024
@@ -112,7 +112,7 @@ def render_spec(template: str, instance: str):
 
 def render_inventory(instance: str):
     with open(CloudRunner.EC2_META) as fp:
-        meta = yaml.load(fp)
+        meta = yaml.load(fp, Loader=yaml.FullLoader)
         servers = meta.get('servers', {}).values()
         clients = meta.get('clients', {}).values()
 

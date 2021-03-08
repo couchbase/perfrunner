@@ -12,7 +12,8 @@ from logger import logger
 class CloudRunner:
 
     AMI = {
-        'clients': 'ami-dbf9baa3',
+        #  perf-client-2021-03, pyenv python 3.6.12
+        'clients': 'ami-04f9b8bb1ea4c3ef6',
         'servers': 'ami-83b400fb',
     }
 
@@ -100,7 +101,7 @@ class CloudRunner:
         logger.info('Reading information from {}'.format(self.EC2_META))
         ids = []
         with open(self.EC2_META) as fp:
-            meta = yaml.load(fp)
+            meta = yaml.load(fp, Loader=yaml.FullLoader)
             for instances in meta.values():
                 ids += list(instances)
         return ids

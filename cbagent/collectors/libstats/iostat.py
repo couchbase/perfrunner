@@ -94,8 +94,11 @@ class DiskStats(IOStat):
         sectors_read, sectors_written = int(stats[5]), int(stats[9])
 
         # https://www.kernel.org/doc/Documentation/block/queue-sysfs.txt
-        parent = self.run('lsblk -no pkname {}'.format(device)).strip()
-        stdout = self.run('cat /sys/block/{}/queue/hw_sector_size'.format(parent))
+        if 'nvme' in device:
+            stdout = self.run('cat /sys/block/{}/queue/hw_sector_size'.format(device_name))
+        else:
+            parent = self.run('lsblk -no pkname {}'.format(device)).strip()
+            stdout = self.run('cat /sys/block/{}/queue/hw_sector_size'.format(parent))
         sector_size = int(stdout)
 
         return sectors_read * sector_size, sectors_written * sector_size
@@ -106,13 +109,10 @@ class DiskStats(IOStat):
 
     def get_samples(self, partitions: dict) -> dict:
         samples = {}
-
         for purpose, partition in partitions.items():
             device, lvm_swraid = self.get_device_name(partition)
             if device is not None and not lvm_swraid:
                 bytes_read, bytes_written = self.get_disk_stats(device)
-
                 samples[purpose + '_bytes_read'] = bytes_read
                 samples[purpose + '_bytes_written'] = bytes_written
-
         return samples

@@ -754,8 +754,12 @@ class ScanOverlapWorkloadTest(SecondaryIndexingScanTest):
         self.access_bg(settings=access_settings)
         self.access_bg()
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
+        scan_thr, row_thr = self.read_scanresults()
+        percentile_latencies = self.calculate_scan_latencies()
+        logger.info('Scan throughput: {}'.format(scan_thr))
+        logger.info('Rows throughput: {}'.format(row_thr))
         self.print_index_disk_usage()
-        self.report_kpi()
+        self.report_kpi(percentile_latencies, scan_thr, 0)
         self.validate_num_connections()
 
 

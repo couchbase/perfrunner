@@ -2,10 +2,10 @@
 test = perfrunner.tests.n1ql.PytpccBenchmarkTest
 
 [showfast]
-title = Tpm-c (NewOrders/sec), nodes 4, warerhouse 100 , replica 2, durability majority, scan_consistency request_plus, vCPU 16, s=1 c=9
+title = Tpm-c (NewOrders/sec), nodes 4, warerhouse 100 , replica 2, durability majority, scan_consistency not_bounded, vCPU 16, s=1 c=9
 component = n1ql
 category = pytpcc
-sub_category = Plasma
+sub_category = MOI
 orderby = d1
 
 [cluster]
@@ -23,7 +23,7 @@ db_percentage = 100
 replica_number = 1
 
 [secondary]
-indexer.settings.storage_mode = plasma
+indexer.settings.storage_mode = memory_optimized
 
 [index]
 statements =
@@ -52,4 +52,3 @@ cbrindex_sql = cbcrindexcollection_replicas.sql
 collection_config = cbcrbucketcollection_20GB_bucket_replica1.sh
 durability_level = majority
 index_replicas = 1
-scan_consistency=request_plus

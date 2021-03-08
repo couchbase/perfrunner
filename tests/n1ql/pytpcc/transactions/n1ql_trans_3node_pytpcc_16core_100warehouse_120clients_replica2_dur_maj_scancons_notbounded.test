@@ -2,16 +2,16 @@
 test = perfrunner.tests.n1ql.PytpccBenchmarkTest
 
 [showfast]
-title = Tpm-c (NewOrders/sec), nodes 4, warerhouse 100 , replica 2, durability majority, scan_consistency request_plus, vCPU 16, s=1 c=9
+title = Tpm-c (NewOrders/sec), nodes 3, warehouse 100 , replica 1, durability majority, scan_consistency not_bounded, vCPU 16, s=1 c=9
 component = n1ql
 category = pytpcc
 sub_category = Plasma
-orderby = d1
+orderby = c1
 
 [cluster]
 mem_quota = 20480
 index_mem_quota = 20000
-initial_nodes = 4
+initial_nodes = 3
 num_buckets = 1
 online_cores = 8
 bucket_name = default
@@ -20,7 +20,7 @@ bucket_name = default
 db_percentage = 100
 
 [bucket]
-replica_number = 1
+replica_number = 2
 
 [secondary]
 indexer.settings.storage_mode = plasma
@@ -34,14 +34,13 @@ statements =
    BUILD INDEX ON default:default.tpcc.ORDER_LINE(OL_O_ID_D_ID_W_ID);
    BUILD INDEX ON default:default.tpcc.WAREHOUSE(WH_ID);
 
-
 [bucket_extras]
 num_writer_threads = disk_io_optimized
 num_reader_threads = disk_io_optimized
 
 [py_tpcc]
 warehouse = 100
-client_threads = 160
+client_threads = 120
 duration = 600
 multi_query_node = 1
 driver = nestcollections
@@ -49,7 +48,6 @@ query_port = 8093
 kv_port = 8091
 run_sql_shell = run_sqlcollections.sh
 cbrindex_sql = cbcrindexcollection_replicas.sql
-collection_config = cbcrbucketcollection_20GB_bucket_replica1.sh
+collection_config = cbcrbucketcollection_20GB_bucket_replica2.sh
 durability_level = majority
-index_replicas = 1
-scan_consistency=request_plus
+index_replicas = 2

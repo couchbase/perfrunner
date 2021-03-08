@@ -6,6 +6,7 @@ title = Tpm-c (NewOrders/sec), nodes 4, warehouse 100 , replica 1, durability ma
 component = n1ql
 category = pytpcc
 sub_category = Plasma
+orderby = d2
 
 [cluster]
 mem_quota = 20480

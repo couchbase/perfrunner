@@ -61,6 +61,8 @@ class DefaultMonitor(DefaultRestHelper):
         self.remote = RemoteHelper(cluster_spec, verbose)
         self.master_node = next(cluster_spec.masters)
         self.build = self.get_version(self.master_node)
+        version, build_number = self.build.split('-')
+        self.build_version_number = tuple(map(int, version.split('.'))) + (int(build_number),)
 
     def monitor_rebalance(self, host):
         logger.info('Monitoring rebalance status')
@@ -232,10 +234,8 @@ class DefaultMonitor(DefaultRestHelper):
 
     def monitor_dcp_queues(self, host, bucket):
         logger.info('Monitoring DCP queues: {}'.format(bucket))
-        version, build_number = self.build.split('-')
-        build = tuple(map(int, version.split('.'))) + (int(build_number),)
 
-        if build < (7, 0, 0, 3937):
+        if self.build_version_number < (7, 0, 0, 3937):
             self._wait_for_empty_queues(host, bucket, self.DCP_QUEUES,
                                         self.get_bucket_stats)
         else:
@@ -709,34 +709,34 @@ class DefaultMonitor(DefaultRestHelper):
         return num_items
 
     def get_num_remaining_mutations(self, analytics_node: str) -> int:
-        version, build_number = self.build.split('-')
-        build = tuple(map(int, version.split('.'))) + (int(build_number),)
-
         while True:
             num_items = 0
             try:
-                stats = self.get_pending_mutations(analytics_node)
-                for dataset in stats['Default']:
-                    if build < (7, 0, 0, 4310):
-                        num_items += int(stats['Default'][dataset])
-                    else:
-                        num_items += int(stats['Default'][dataset]['seqnoLag'])
+                if self.build_version_number < (7, 0, 0, 4622):
+                    stats = self.get_pending_mutations(analytics_node)
+                    for dataset in stats['Default']:
+                        if self.build_version_number < (7, 0, 0, 4310):
+                            num_items += int(stats['Default'][dataset])
+                        else:
+                            num_items += int(stats['Default'][dataset]['seqnoLag'])
+                else:
+                    stats = self.get_pending_mutations_v2(analytics_node)
+                    for scope in stats['scopes']:
+                        for collection in scope['collections']:
+                            num_items += int(collection['seqnoLag'])
                 break
             except Exception:
                 time.sleep(self.POLLING_INTERVAL_ANALYTICS)
         return num_items
 
     def monitor_data_synced(self, data_node: str, bucket: str, analytics_node: str) -> int:
-        version, build_number = self.build.split('-')
-        build = tuple(map(int, version.split('.'))) + (int(build_number),)
-
         logger.info('Waiting for data to be synced from {}'.format(data_node))
         time.sleep(self.MONITORING_DELAY * 3)
 
         num_items = self._get_num_items(data_node, bucket)
 
         while True:
-            if build < (7, 0, 0, 0):
+            if self.build_version_number < (7, 0, 0, 0):
                 num_analytics_items = self.get_num_analytics_items(analytics_node, bucket)
             else:
                 incoming_records = self.get_cbas_incoming_records_count(analytics_node)
@@ -745,7 +745,7 @@ class DefaultMonitor(DefaultRestHelper):
             logger.info('Analytics has {:,} docs (target is {:,})'.format(
                 num_analytics_items, num_items))
 
-            if build < (6, 5, 0, 0):
+            if self.build_version_number < (6, 5, 0, 0):
                 if num_analytics_items == num_items:
                     break
             else:

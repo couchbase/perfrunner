@@ -2,7 +2,7 @@
 test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
 
 [showfast]
-title = 1 bucket x 100M x 1KB, 10k indexes, 100K KV ops/sec, 70/20/10 IUD, no mutations during initial build only, 20%% Resident, Plasma, s=1 c=1000
+title = 1 bucket x 100M x 1KB, 10k indexes, 10K KV ops/sec, 70/20/10 IUD, no mutations during initial build only, 20%% Resident, Plasma, s=1 c=1000
 component = secondary
 sub_category = PlasmaDGM
 
@@ -11,10 +11,10 @@ server_processes = projector
 
 [cluster]
 mem_quota = 50000
-index_mem_quota = 25000
+index_mem_quota = 175000
 initial_nodes = 6
 num_buckets = 1
-kernel_mem_limit = 32193M
+kernel_mem_limit = 230G
 
 [bucket]
 replica_number=0
@@ -48,7 +48,7 @@ indexer.settings.build.batch_size = 100
 creates = 70
 updates = 20
 deletes = 10
-ops = 100000000
+ops = 60000000
 items = 100000000
-throughput = 100000
+throughput = 10000
 workers = 80

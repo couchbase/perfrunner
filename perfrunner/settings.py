@@ -676,7 +676,8 @@ class PhaseSettings:
     JAVA_DCP_CONFIG = None
     JAVA_DCP_CLIENTS = 0
     SPLIT_WORKLOAD = None
-    SPLIT_WORKLOAD_OPS = 0
+    SPLIT_WORKLOAD_THROUGHPUT = 0
+    SPLIT_WORKLOAD_WORKERS = 0
 
     DOCUMENT_GROUPS = 1
 
@@ -896,7 +897,8 @@ class PhaseSettings:
 
         self.fts_data_spread_worker_type = "default"
         self.split_workload = options.get('split_workload', self.SPLIT_WORKLOAD)
-        self.split_workload_ops = options.get('split_workload_ops', self.SPLIT_WORKLOAD_OPS)
+        self.split_workload_throughput = options.get('split_workload_throughput', self.SPLIT_WORKLOAD_THROUGHPUT)
+        self.split_workload_workers = options.get('split_workload_throughput', self.SPLIT_WORKLOAD_WORKERS)
 
     def __str__(self) -> str:
         return str(self.__dict__)

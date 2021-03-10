@@ -746,10 +746,12 @@ class ScanOverlapWorkloadTest(SecondaryIndexingScanTest):
         self.load()
         self.wait_for_persistence()
         self.build_secondaryindex()
+        self.print_index_disk_usage()
 
         access_settings = copy.deepcopy(self.test_config.access_settings)
         access_settings.collections = access_settings.split_workload
-        access_settings.ops = int(access_settings.split_workload_ops)
+        access_settings.throughput = int(access_settings.split_workload_throughput)
+        access_settings.workers = int(access_settings.split_workload_workers)
 
         self.access_bg(settings=access_settings)
         self.access_bg()

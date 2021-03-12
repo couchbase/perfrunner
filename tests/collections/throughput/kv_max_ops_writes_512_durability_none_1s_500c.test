@@ -1,0 +1,37 @@
+[test_case]
+test = perfrunner.tests.kv.PillowFightDurabilityTest
+
+[showfast]
+title = Max ops/sec, cbc-pillowfight, 4 nodes, 0/100 R/W, 512B JSON items, batch size = 1, Durability None, s=1 c=500
+component = kv
+category = max_ops
+orderby = za1
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+
+[bucket]
+replica_number = 2
+
+[collection]
+config = collections/1bucket_1scope_500collections_basic.json
+
+[load]
+size = 512
+items = 20000000
+workers = 100
+doc_gen = json
+durability = 0
+
+[access]
+batch_size = 1
+items = 20000000
+iterations = 1000000
+workers = 128
+updates = 100
+durability = 0
+
+[clients]
+libcouchbase = 3.0.7

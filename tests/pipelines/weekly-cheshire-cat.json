@@ -136,7 +136,23 @@
         {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_writes_512_durability_persist_majority_1s_1000c.test"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "collections/memory/kv_fragmentation_5M_1s_1c.test"},
         {"job": "ares", "cluster": "ares.spec", "test_config": "collections/memory/kv_mem_20M_1024B_1s_1000c.test"},
-        {"job": "ares", "cluster": "ares.spec", "test_config": "collections/memory/kv_mem_20M_1024B_1000s_1000c.test"}
+        {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_writes_512_durability_majority_1s_100c.test"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_writes_512_durability_majority_1s_10c.test"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_writes_512_durability_majority_1s_1c.test"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_writes_512_durability_majority_1s_500c.test"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_writes_512_durability_majority_persist_active_1s_100c.test"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_writes_512_durability_majority_persist_active_1s_10c.test"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_writes_512_durability_majority_persist_active_1s_1c.test"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_writes_512_durability_majority_persist_active_1s_500c.test"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_writes_512_durability_none_1s_100c.test"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_writes_512_durability_none_1s_10c.test"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_writes_512_durability_none_1s_1c.test"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_writes_512_durability_none_1s_500c.test"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_writes_512_durability_persist_majority_1s_100c.test"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_writes_512_durability_persist_majority_1s_10c.test"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_writes_512_durability_persist_majority_1s_1c.test"},
+        {"job": "ares", "cluster": "ares.spec", "test_config": "collections/throughput/kv_max_ops_writes_512_durability_persist_majority_1s_500c.test"}
+
     ],
     "KV-DGM": [
         {"job": "hera", "cluster": "hera.spec", "test_config": "collections/dgm/kv_latency_read_1000M_compacted_fe_1s_1000c.test"},
@@ -204,7 +220,19 @@
         {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/collections/ycsb_trans_latency_workloadtca_1s1c_4nodes_48cores_dur_none.test"},
         {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/collections/ycsb_trans_latency_workloadtca_1s1c_4nodes_48cores_dur_3.test"},
         {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/collections/ycsb_trans_latency_workloadtca_1s1c_4nodes_48cores_dur_maj.test"},
-        {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/collections/ycsb_trans_latency_workloadtca_1s1c_4nodes_48cores_dur_2.test"}
+        {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/collections/ycsb_trans_latency_workloadtca_1s1c_4nodes_48cores_dur_2.test"},
+        {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/collections/ycsb_trans_workloadtca_1s100c_4nodes_12cores_dur_2.test"},
+        {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/collections/ycsb_trans_workloadtca_1s100c_4nodes_12cores_dur_3.test"},
+        {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/collections/ycsb_trans_workloadtca_1s100c_4nodes_12cores_dur_maj.test"},
+        {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/collections/ycsb_trans_workloadtca_1s100c_4nodes_12cores_dur_none.test"},
+        {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/collections/ycsb_trans_workloadtca_1s10c_4nodes_12cores_dur_2.test"},
+        {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/collections/ycsb_trans_workloadtca_1s10c_4nodes_12cores_dur_3.test"},
+        {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/collections/ycsb_trans_workloadtca_1s10c_4nodes_12cores_dur_maj.test"},
+        {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/collections/ycsb_trans_workloadtca_1s10c_4nodes_12cores_dur_none.test"},
+        {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/collections/ycsb_trans_workloadtca_1s500c_4nodes_12cores_dur_2.test"},
+        {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/collections/ycsb_trans_workloadtca_1s500c_4nodes_12cores_dur_3.test"},
+        {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/collections/ycsb_trans_workloadtca_1s500c_4nodes_12cores_dur_maj.test"},
+        {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/collections/ycsb_trans_workloadtca_1s500c_4nodes_12cores_dur_none.test"}
     ],
     "N1QL": [
         {"job": "iris",     "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_lat_Q1_20M_10KQops_1s_1c.test"},

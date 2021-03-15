@@ -369,9 +369,9 @@ class BigFunConnectTest(BigFunTest):
         total_disconnect_time = 0
         for op in range(ops):
             disconnect_time = self.disconnect_analytics_link()
+            logger.info("disconnect time: {}".format(disconnect_time))
             connect_time = self.connect_analytics_link()
             logger.info("connect time: {}".format(connect_time))
-            logger.info("disconnect time: {}".format(disconnect_time))
             total_connect_time += connect_time
             total_disconnect_time += disconnect_time
         return total_connect_time/ops, total_disconnect_time/ops

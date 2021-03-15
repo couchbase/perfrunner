@@ -2,7 +2,7 @@
 test = perfrunner.tests.n1ql.PytpccBenchmarkTest
 
 [showfast]
-title = Tpm-c (NewOrders/sec), nodes 4, warehouse 100 , replica 1, durability majority, scan_consistency not_bounded, vCPU 16, s=1 c=9
+title = Tpm-c (NewOrders/min), nodes 4, warehouse 100 , replica 2, durability majority, scan_consistency not_bounded, vCPU 16, s=1 c=9
 component = n1ql
 category = pytpcc
 sub_category = Plasma

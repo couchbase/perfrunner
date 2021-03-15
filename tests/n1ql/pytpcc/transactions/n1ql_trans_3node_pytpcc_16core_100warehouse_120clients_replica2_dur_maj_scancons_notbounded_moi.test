@@ -2,16 +2,16 @@
 test = perfrunner.tests.n1ql.PytpccBenchmarkTest
 
 [showfast]
-title = Tpm-c (NewOrders/min), nodes 4, warehouse 100 , replica 2, durability majority, scan_consistency not_bounded, vCPU 16, s=1 c=9
+title = Tpm-c (NewOrders/min), nodes 3, warehouse 100 , replica 2, durability majority, scan_consistency not_bounded, vCPU 16, s=1 c=9
 component = n1ql
 category = pytpcc
 sub_category = MOI
-orderby = d2
+orderby = c1
 
 [cluster]
 mem_quota = 20480
 index_mem_quota = 20000
-initial_nodes = 4
+initial_nodes = 3
 num_buckets = 1
 online_cores = 8
 bucket_name = default
@@ -40,7 +40,7 @@ num_reader_threads = disk_io_optimized
 
 [py_tpcc]
 warehouse = 100
-client_threads = 160
+client_threads = 120
 duration = 600
 multi_query_node = 1
 driver = nestcollections

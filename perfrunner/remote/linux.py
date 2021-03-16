@@ -880,3 +880,9 @@ class RemoteLinux(Remote):
 
         with settings(warn_only=True):
             run(cmd2, pty=False)
+
+    @master_server
+    def enable_developer_preview(self):
+        logger.info('Enabling developer preview')
+        run("curl -X POST -u Administrator:password "
+            "localhost:8091/settings/developerPreview -d 'enabled=true'", pty=False)

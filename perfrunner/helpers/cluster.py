@@ -274,6 +274,8 @@ class ClusterManager:
                 }
                 self.remote.create_bucket(bucket)
         else:
+            if self.test_config.bucket.backend_storage == 'magma':
+                self.enable_developer_preview()
             for master in self.cluster_spec.masters:
                 for bucket_name in self.test_config.buckets:
                     self.rest.create_bucket(
@@ -807,3 +809,9 @@ class ClusterManager:
 
     def install_cb_debug_rpm(self):
         self.remote.install_cb_debug_rpm(url=self.get_debug_rpm_url())
+
+    def enable_developer_preview(self):
+        release, build_number = self.build.split('-')
+        build = tuple(map(int, release.split('.'))) + (int(build_number),)
+        if build > (7, 0, 0, 4698):
+            self.remote.enable_developer_preview()

@@ -305,6 +305,8 @@ def run_ycsb(host, bucket, password, action, workload, items, workers, target, e
           '-p couchbase.epoll=true ' \
           '-p exportfile=ycsb_{action}_{instance}.log '
 
+    cmd = 'pyenv local system && ' + cmd
+
     if ops is not None:
         cmd += ' -p operationcount={ops} '
     if time is not None:

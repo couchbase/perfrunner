@@ -50,7 +50,7 @@
  "sourceParams": {},
  "planParams": {
   "maxPartitionsPerPIndex": 171,
-  "numReplicas": 0,
+  "numReplicas": 1,
   "hierarchyRules": null,
    "nodePlanParams": null,
    "pindexWeights": null,

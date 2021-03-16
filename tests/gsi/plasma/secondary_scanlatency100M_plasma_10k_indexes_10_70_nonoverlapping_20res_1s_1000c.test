@@ -2,7 +2,7 @@
 test = perfrunner.tests.secondary.ScanOverlapWorkloadTest
 
 [showfast]
-title = 1 bucket x 100M x 1KB, 100K KV ops/sec, 10k indexes, 10/70 non-overlapping mutations and scans, 20%% Resident, Plasma, s=1 c=1000
+title = 1 bucket x 100M x 1KB, 100K KV ops/sec, 10000 Indexes, 10/70 non-overlapping mutations and scans, 20%% Resident, Plasma, s=1 c=1000
 component = secondary
 category = lat
 sub_category = PlasmaDGM

@@ -2,7 +2,7 @@
 test = perfrunner.tests.secondary.SecondaryIndexingScanLatencyTest
 
 [showfast]
-title = Secondary index stale=false scan latency(ms), 1 bucket x 100M x 1KB, 100K KV ops/sec, 10k indexes, MOI, s=1 c=1000
+title = Secondary index stale=false scan latency(ms), 1 bucket x 100M x 1KB, 100K KV ops/sec, 10000 Indexes, MOI, s=1 c=1000
 component = secondary
 category = lat
 sub_category = MOI

@@ -2,7 +2,7 @@
 test = perfrunner.tests.secondary.InitialSecondaryIndexTest
 
 [showfast]
-title = 1 bucket x 100M x 5KB, 10k indexes, large key 4096 char, initial build only, 20%% Resident, Plasma, s=1 c=1000
+title = 1 bucket x 100M x 5KB, 10000 Indexes, large key 4096 char, initial build only, 20%% Resident, Plasma, s=1 c=1000
 component = secondary
 sub_category = PlasmaDGM
 

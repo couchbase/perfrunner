@@ -2,7 +2,7 @@
 test = perfrunner.tests.secondary.InitialandSingleIncrementalDGMSecondaryIndexTest
 
 [showfast]
-title = 1 bucket x 100M, 10k indexes, random workload, 50%% Resident, Plasma, s=1 c=1000
+title = 1 bucket x 100M, 10000 Indexes, random workload, 50%% Resident, Plasma, s=1 c=1000
 component = secondary
 category = lat
 sub_category = PlasmaDGM

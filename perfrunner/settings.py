@@ -897,8 +897,10 @@ class PhaseSettings:
 
         self.fts_data_spread_worker_type = "default"
         self.split_workload = options.get('split_workload', self.SPLIT_WORKLOAD)
-        self.split_workload_throughput = options.get('split_workload_throughput', self.SPLIT_WORKLOAD_THROUGHPUT)
-        self.split_workload_workers = options.get('split_workload_throughput', self.SPLIT_WORKLOAD_WORKERS)
+        self.split_workload_throughput = options.get('split_workload_throughput',
+                                                     self.SPLIT_WORKLOAD_THROUGHPUT)
+        self.split_workload_workers = options.get('split_workload_throughput',
+                                                  self.SPLIT_WORKLOAD_WORKERS)
 
     def __str__(self) -> str:
         return str(self.__dict__)

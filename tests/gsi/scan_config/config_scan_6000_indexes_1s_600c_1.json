@@ -1,7 +1,7 @@
 {
   "Clients": 5,
   "Concurrency": 6000,
-  "ScanSpecs":         {
+  "ScanSpecs":         [{
             "Bucket": "bucket-1",
             "Collection": "collection-1",
             "High": [
@@ -113401,5 +113401,5 @@
             "Scope": "scope-1",
             "Type": "Range"
             
-        }
+        }]
 }

@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.eventing.FunctionsThroughputTest
+test = perfrunner.tests.eventing.FunctionsPillowfightThroughputTest
 
 [showfast]
 title = Functions executed/sec, 1 bucket x 100M x 1KB, 4KV + 1Eventing node, Counter Increment 0%% Contention Source bkt mutation

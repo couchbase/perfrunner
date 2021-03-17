@@ -2,11 +2,11 @@
 test = perfrunner.tests.eventing.FunctionsThroughputTest
 
 [showfast]
-title = Functions executed/sec, 1 bucket x 100M x 1KB, 4KV + 1Eventing node, single function-BucketOp Source bkt mutation, s=1, c=1
+title = Functions executed/sec, 1 bucket x 80M x 1KB, 4KV + 1Eventing node, single function-BucketOp Source bkt mutation
 component = eventing
 category = thr
 sub_category = Function
-orderby = aa004
+orderby = aa003
 
 [stats]
 server_processes = eventing-produc
@@ -24,15 +24,12 @@ online_cores = 12
 [bucket]
 replica_number=0
 
-[collection]
-config = collections/1bucket_1scope_1collection_eventing.json
-
 [compaction]
 db_percentage = 100
 view_percentage = 100
 
 [load]
-items = 100000000
+items = 80000000
 size = 1024
 workers = 100
 
@@ -40,10 +37,14 @@ workers = 100
 functions = perf-test1:tests/eventing/code/bktop_src_bkt_mut.js
 worker_count = 24
 cpp_worker_thread_count = 2
-config_file = tests/eventing/config/function_src_bkt_mut_sample_1s_1c.json
+config_file = tests/eventing/config/function_src_bkt_mut_sample.json
 
 [access]
 updates = 100
-items = 100000000
+items = 80000000
 workers = 100
 time = 1200
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

@@ -4,7 +4,7 @@
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_no_index_window_functions.test"}
     ],
     "Eventing": [
-        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_fun_bktop_src_bkt_mut.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput80M_fun_bktop_src_bkt_mut.test"},
         {"job": "themis", "cluster": "themis.spec", "test_config": "latency100M_fun_bktop_src_bkt_mut.test"},
         {"job": "themis", "cluster": "themis.spec", "test_config": "curl/latency100M_fun_curl_https_json_200ms.test"},
         {"job": "themis", "cluster": "themis.spec", "test_config": "curl/throughput100M_fun_curl_https_json_200ms.test"},

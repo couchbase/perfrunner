@@ -1,0 +1,55 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1QLLatencyTest
+
+[showfast]
+title = Q2 Array Indexing, Covering, Singleton Unique Lookup, 450 queries/sec, Plasma, not_bounded
+component = n1ql
+category = array
+
+[cluster]
+mem_quota = 20480
+index_mem_quota = 100000
+initial_nodes = 6
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+
+[bucket]
+replica_number = 0
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[load]
+items = 200000
+size = 1024
+workers = 80
+array_size = 200
+doc_gen = array_indexing_unique
+
+[index]
+statements =
+    CREATE INDEX cov_array_idx ON `bucket-1`(DISTINCT ARRAY i FOR i IN achievements1 END, achievements1);
+
+[access]
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+throughput = 1000
+items = 200000
+workers = 20
+time = 1200
+n1ql_queries = singleton-unique-lookup
+n1ql_throughput = 450
+n1ql_workers = 120
+
+[n1ql-singleton-unique-lookup]
+statement = SELECT meta().id, achievements1 FROM `bucket-1` WHERE ANY i IN achievements1 SATISFIES i = $1 END;
+scan_consistency = not_bounded
+args = [{achievements1[0]}]
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

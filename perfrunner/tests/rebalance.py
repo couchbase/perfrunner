@@ -167,8 +167,6 @@ class RebalanceForFTS(RebalanceTest, FTSTest):
     ALL_HOSTNAMES = True
     COLLECTORS = {'fts_stats': True, 'jts_stats': True}
 
-    @with_stats
-    @with_profiles
     @timeit
     def build_indexes(self):
         self.create_indexes()

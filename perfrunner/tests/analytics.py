@@ -456,6 +456,12 @@ class TPCDSTest(PerfTest):
         super().__init__(*args, **kwargs)
 
         self.num_items = 0
+        self.analytics_link = self.test_config.analytics_settings.analytics_link
+        if self.analytics_link == "Local":
+            self.data_node = self.master_node
+            self.analytics_node = self.analytics_nodes[0]
+        else:
+            self.data_node, self.analytics_node = self.cluster_spec.masters
 
     def download_tpcds_couchbase_loader(self):
         if self.worker_manager.is_remote:
@@ -469,9 +475,9 @@ class TPCDSTest(PerfTest):
                 branch=self.test_config.tpcds_loader_settings.branch)
 
     def set_max_active_writable_datasets(self):
-        self.rest.set_analytics_max_active_writable_datasets(self.analytics_nodes[0], 24)
-        self.rest.restart_analytics_cluster(self.analytics_nodes[0])
-        self.rest.validate_analytics_setting(self.analytics_nodes[0],
+        self.rest.set_analytics_max_active_writable_datasets(self.analytics_node, 24)
+        self.rest.restart_analytics_cluster(self.analytics_node)
+        self.rest.validate_analytics_setting(self.analytics_node,
                                              'storageMaxActiveWritableDatasets', 24)
         time.sleep(5)
 
@@ -484,8 +490,7 @@ class TPCDSTest(PerfTest):
             statement = "CREATE DATASET `{}` ON `{}` WHERE table_name = '{}';" \
                 .format(dataset, bucket, dataset)
             logger.info('Running: {}'.format(statement))
-            res = self.rest.exec_analytics_statement(
-                self.analytics_nodes[0], statement)
+            res = self.rest.exec_analytics_statement(self.analytics_node, statement)
             logger.info("Result: {}".format(str(res)))
             time.sleep(5)
 
@@ -494,8 +499,7 @@ class TPCDSTest(PerfTest):
         for index in self.TPCDS_INDEXES:
             statement = "CREATE INDEX {} ON {};".format(index[0], index[1])
             logger.info('Running: {}'.format(statement))
-            res = self.rest.exec_analytics_statement(
-                self.analytics_nodes[0], statement)
+            res = self.rest.exec_analytics_statement(self.analytics_node, statement)
             logger.info("Result: {}".format(str(res)))
             time.sleep(5)
 
@@ -504,17 +508,20 @@ class TPCDSTest(PerfTest):
         for index in self.TPCDS_INDEXES:
             statement = "DROP INDEX {}.{};".format(index[2], index[0])
             logger.info('Running: {}'.format(statement))
-            res = self.rest.exec_analytics_statement(
-                self.analytics_nodes[0], statement)
+            res = self.rest.exec_analytics_statement(self.analytics_node, statement)
             logger.info("Result: {}".format(str(res)))
             time.sleep(5)
 
+    def disconnect_link(self):
+        logger.info('DISCONNECT LINK {}'.format(self.analytics_link))
+        statement = "DISCONNECT LINK {}".format(self.analytics_link)
+        self.rest.exec_analytics_statement(self.analytics_node,
+                                           statement)
+
     def connect_buckets(self):
-        logger.info('Connecting all buckets')
-        statement = "CONNECT link Local"
-        logger.info('Running: {}'.format(statement))
-        res = self.rest.exec_analytics_statement(
-            self.analytics_nodes[0], statement)
+        logger.info('Connecting Link {}'.format(self.analytics_link))
+        statement = "CONNECT link {}".format(self.analytics_link)
+        res = self.rest.exec_analytics_statement(self.analytics_node, statement)
         logger.info("Result: {}".format(str(res)))
         time.sleep(5)
 
@@ -523,8 +530,7 @@ class TPCDSTest(PerfTest):
         for dataset in self.TPCDS_DATASETS:
             statement = "CREATE PRIMARY INDEX ON {};".format(dataset)
             logger.info('Running: {}'.format(statement))
-            res = self.rest.exec_analytics_statement(
-                self.analytics_nodes[0], statement)
+            res = self.rest.exec_analytics_statement(self.analytics_node, statement)
             logger.info("Result: {}".format(str(res)))
             time.sleep(5)
 
@@ -533,22 +539,22 @@ class TPCDSTest(PerfTest):
         for dataset in self.TPCDS_DATASETS:
             statement = "DROP INDEX {}.primary_idx_{};".format(dataset, dataset)
             logger.info('Running: {}'.format(statement))
-            res = self.rest.exec_analytics_statement(
-                self.analytics_nodes[0], statement)
+            res = self.rest.exec_analytics_statement(self.analytics_node, statement)
             logger.info("Result: {}".format(str(res)))
             time.sleep(5)
 
     def sync(self):
-        for target in self.target_iterator:
-            self.create_datasets(target.bucket)
+        self.disconnect_link()
+        for bucket in self.test_config.buckets:
+            self.create_datasets(bucket)
         self.connect_buckets()
-        for target in self.target_iterator:
-            self.num_items += self.monitor.monitor_data_synced(target.node,
-                                                               target.bucket)
+        for bucket in self.test_config.buckets:
+            self.num_items += self.monitor.monitor_data_synced(self.data_node,
+                                                               bucket,
+                                                               self.analytics_node)
 
     def run(self):
         self.download_tpcds_couchbase_loader()
-        self.set_max_active_writable_datasets()
         self.load()
         self.wait_for_persistence()
         self.compact_bucket()

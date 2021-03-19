@@ -527,7 +527,7 @@ class DefaultRestHelper(RestBase):
 
     def set_auto_failover(self, host: str, enabled: str,
                           failover_min: int, failover_max: int):
-        logger.info('Enabling auto-failover with the minimum timeout')
+        logger.info('Setting auto-failover to: {}'.format(enabled))
 
         api = 'http://{}:8091/settings/autoFailover'.format(host)
 

@@ -459,8 +459,10 @@ class ClusterManager:
                         self.rest.run_diag_eval(master, diag_eval)
 
         if self.test_config.bucket_extras:
+            self.disable_auto_failover()
             self.remote.restart()
             self.wait_until_healthy()
+            self.enable_auto_failover()
 
     def tune_logging(self):
         if self.dynamic_infra:
@@ -470,6 +472,24 @@ class ClusterManager:
 
     def enable_auto_failover(self):
         enabled = self.test_config.bucket.autofailover_enabled
+        failover_min = self.test_config.bucket.failover_min
+        failover_max = self.test_config.bucket.failover_max
+        if self.dynamic_infra:
+            cluster = self.remote.get_cluster()
+            cluster['spec']['cluster']['autoFailoverMaxCount'] = 1
+            cluster['spec']['cluster']['autoFailoverServerGroup'] = bool(enabled)
+            cluster['spec']['cluster']['autoFailoverOnDataDiskIssues'] = bool(enabled)
+            cluster['spec']['cluster']['autoFailoverOnDataDiskIssuesTimePeriod'] = \
+                '{}s'.format(10)
+            cluster['spec']['cluster']['autoFailoverTimeout'] = \
+                '{}s'.format(failover_max)
+            self.remote.update_cluster_config(cluster)
+        else:
+            for master in self.cluster_spec.masters:
+                self.rest.set_auto_failover(master, enabled, failover_min, failover_max)
+
+    def disable_auto_failover(self):
+        enabled = 'false'
         failover_min = self.test_config.bucket.failover_min
         failover_max = self.test_config.bucket.failover_max
         if self.dynamic_infra:

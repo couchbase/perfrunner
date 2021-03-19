@@ -1684,7 +1684,13 @@ class TestConfig(Config):
 
     @property
     def bucket_extras(self) -> dict:
-        return self._get_options_as_dict('bucket_extras')
+        bucket_extras = self._get_options_as_dict('bucket_extras')
+        options = self._get_options_as_dict('access')
+        access = AccessSettings(options)
+        if access.durability is not None:
+            if "num_writer_threads" not in bucket_extras:
+                bucket_extras["num_writer_threads"] = "disk_io_optimized"
+        return bucket_extras
 
     @property
     def buckets(self) -> List[str]:

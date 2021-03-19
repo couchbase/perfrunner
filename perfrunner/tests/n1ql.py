@@ -16,6 +16,8 @@ class N1QLTest(PerfTest):
         'n1ql_latency': True,
         'n1ql_stats': True,
         'secondary_stats': True,
+        'secondary_debugstats': True,
+        'secondary_debugstats_index': True,
         'ns_server_system': True
     }
 
@@ -196,6 +198,8 @@ class N1QLThroughputTest(N1QLTest):
         'n1ql_latency': False,
         'n1ql_stats': True,
         'secondary_stats': True,
+        'secondary_debugstats': True,
+        'secondary_debugstats_index': True,
         'ns_server_system': True
     }
 

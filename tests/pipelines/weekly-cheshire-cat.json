@@ -91,30 +91,18 @@
     ],
     "GSI-Hemera": [
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_50M_1000_indexes_plasma_1s_100c.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_50M_3000_indexes_plasma_1s_300c.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_50M_6000_indexes_plasma_1s_600c.test"},
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_50M_10k_indexes_plasma_1s_1000c.test"},
 
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/moi/secondary_50M_1000_indexes_moi_1s_100c.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/moi/secondary_50M_3000_indexes_moi_1s_300c.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/moi/secondary_50M_6000_indexes_moi_1s_600c.test"},
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/moi/secondary_50M_10k_indexes_moi_1s_1000c.test"},
 
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/moi/secondary_scan50M_moi_1000_indexes_1s_100c_10kops.test"},
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/moi/secondary_scan50M_moi_1000_indexes_stalefalse_1s_100c_10kops.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/moi/secondary_scan50M_moi_3000_indexes_1s_300c_10kops.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/moi/secondary_scan50M_moi_3000_indexes_stalefalse_1s_300c_10kops.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/moi/secondary_scan50M_moi_6000_indexes_1s_600c_10kops.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/moi/secondary_scan50M_moi_6000_indexes_stalefalse_1s_600c_10kops.test"},
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/moi/secondary_scan50M_moi_10k_indexes_1s_1000c_10kops.test"},
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/moi/secondary_scan50M_moi_10k_indexes_stalefalse_1s_1000c_10kops.test"},
 
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_scan50M_plasma_1000_indexes_1s_100c_10kops.test"},
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_scan50M_plasma_1000_indexes_stalefalse_1s_100c_10kops.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_scan50M_plasma_3000_indexes_1s_300c_10kops.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_scan50M_plasma_3000_indexes_stalefalse_1s_300c_10kops.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_scan50M_plasma_6000_indexes_1s_600c_10kops.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_scan50M_plasma_6000_indexes_stalefalse_1s_600c_10kops.test"},
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_scan50M_plasma_10k_indexes_1s_1000c_10kops.test"},
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_scan50M_plasma_10k_indexes_stalefalse_1s_1000c_10kops.test"},
 

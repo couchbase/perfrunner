@@ -16,8 +16,7 @@ destination_bucket =
  
 [clients]
 hosts =
-    172.23.97.16
-    172.23.97.17
+    172.23.99.247
 credentials = root:couchbase
  
 [storage]

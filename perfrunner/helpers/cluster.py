@@ -298,23 +298,34 @@ class ClusterManager:
         collection_map = self.test_config.collection.collection_map
         for master in self.cluster_spec.masters:
             if collection_map is not None:
-                for bucket in collection_map.keys():
-                    delete_default = True
-                    for scope in collection_map[bucket]:
-                        if scope == '_default':
+                if self.test_config.collection.use_bulk_api:
+                    for bucket in collection_map.keys():
+                        create_scopes = []
+                        for scope in collection_map[bucket]:
+                            scope_collections = []
                             for collection in collection_map[bucket][scope]:
-                                if collection == "_default":
-                                    delete_default = False
-                    if delete_default:
-                        self.rest.delete_collection(master, bucket, '_default', '_default')
+                                scope_collections.append({"name": collection})
+                            create_scopes.append({"name": scope, "collections": scope_collections})
+                        print(str({"scopes": create_scopes}))
+                        self.rest.set_collection_map(master, bucket, {"scopes": create_scopes})
+                else:
+                    for bucket in collection_map.keys():
+                        delete_default = True
+                        for scope in collection_map[bucket]:
+                            if scope == '_default':
+                                for collection in collection_map[bucket][scope]:
+                                    if collection == "_default":
+                                        delete_default = False
+                        if delete_default:
+                            self.rest.delete_collection(master, bucket, '_default', '_default')
 
-                for bucket in collection_map.keys():
-                    for scope in collection_map[bucket]:
-                        if scope != '_default':
-                            self.rest.create_scope(master, bucket, scope)
-                        for collection in collection_map[bucket][scope]:
-                            if collection != '_default':
-                                self.rest.create_collection(master, bucket, scope, collection)
+                    for bucket in collection_map.keys():
+                        for scope in collection_map[bucket]:
+                            if scope != '_default':
+                                self.rest.create_scope(master, bucket, scope)
+                            for collection in collection_map[bucket][scope]:
+                                if collection != '_default':
+                                    self.rest.create_collection(master, bucket, scope, collection)
 
     def create_eventing_buckets(self):
         if not self.test_config.cluster.eventing_bucket_mem_quota:

@@ -1026,6 +1026,12 @@ class DefaultRestHelper(RestBase):
             .format(host, bucket, scope, collection)
         self.delete(url=api)
 
+    def set_collection_map(self, host, bucket, collection_map):
+        logger.info("Setting collection map on {} via bulk api".format(bucket))
+        api = 'http://{}:8091/pools/default/buckets/{}/collections' \
+            .format(host, bucket)
+        self.put(url=api, data=json.dumps(collection_map))
+
 
 class KubernetesRestHelper(RestBase):
 

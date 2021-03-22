@@ -453,10 +453,12 @@ class CollectionSettings:
 
     CONFIG = None
     COLLECTION_MAP = None
+    USE_BULK_API = 0
 
     def __init__(self, options: dict):
         self.config = options.get('config', self.CONFIG)
         self.collection_map = self.COLLECTION_MAP
+        self.use_bulk_api = int(options.get('use_bulk_api', self.USE_BULK_API))
         if self.config is not None:
             with open(self.config) as f:
                 self.collection_map = json.load(f)

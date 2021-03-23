@@ -2,16 +2,16 @@
 test = perfrunner.tests.n1ql.PytpccBenchmarkTest
 
 [showfast]
-title = Tpm-c (NewOrders/min), nodes 2, warehouse 100 , replica 1, durability majority, scan_consistency not_bounded, vCPU 16, s=1 c=9
+title = Tpm-c (NewOrders/min), nodes 4, warehouse 100 , replica 2, durability persistToMajority, scan_consistency request_plus, vCPU 16, s=1 c=9
 component = n1ql
 category = pytpcc
 sub_category = Plasma
-orderby = b1
+orderby = d2
 
 [cluster]
 mem_quota = 20480
 index_mem_quota = 20000
-initial_nodes = 2
+initial_nodes = 4
 num_buckets = 1
 online_cores = 8
 bucket_name = default
@@ -20,7 +20,7 @@ bucket_name = default
 db_percentage = 100
 
 [bucket]
-replica_number = 1
+replica_number = 2
 
 [secondary]
 indexer.settings.storage_mode = plasma
@@ -40,7 +40,7 @@ num_reader_threads = disk_io_optimized
 
 [py_tpcc]
 warehouse = 100
-client_threads = 80
+client_threads = 160
 duration = 600
 multi_query_node = 1
 driver = nestcollections
@@ -48,6 +48,7 @@ query_port = 8093
 kv_port = 8091
 run_sql_shell = run_sqlcollections.sh
 cbrindex_sql = cbcrindexcollection_replicas.sql
-collection_config = cbcrbucketcollection_20GB_bucket_replica1.sh
-durability_level = majority
+collection_config = cbcrbucketcollection_20GB_bucket_replica2.sh
+durability_level = persistToMajority
 index_replicas = 2
+scan_consistency=request_plus

@@ -13,11 +13,8 @@ class N1QLTest(PerfTest):
     COLLECTORS = {
         'iostat': False,
         'memory': False,
-        'n1ql_latency': True,
+        'n1ql_latency': False,
         'n1ql_stats': True,
-        'secondary_stats': True,
-        'secondary_debugstats': True,
-        'secondary_debugstats_index': True,
         'ns_server_system': True
     }
 
@@ -106,7 +103,17 @@ class N1QLTest(PerfTest):
             with open('query_plan_{}.json'.format(i), 'w') as fh:
                 fh.write(pretty_dict(plan))
 
+    def enable_stats(self):
+        if self.index_nodes:
+            self.COLLECTORS['secondary_stats'] = True
+            if not hasattr(self, 'ALL_BUCKETS'):
+                self.COLLECTORS['secondary_debugstats'] = True
+                self.COLLECTORS['secondary_debugstats_index'] = True
+        if "latency" in self.__class__.__name__.lower():
+            self.COLLECTORS['n1ql_latency'] = True
+
     def run(self):
+        self.enable_stats()
         self.load()
         self.wait_for_persistence()
         self.check_num_items()
@@ -174,6 +181,7 @@ class N1QLLatencyRebalanceTest(N1QLLatencyTest):
         self.worker_manager.abort()
 
     def run(self):
+        self.enable_stats()
         self.load()
         self.wait_for_persistence()
         self.check_num_items()
@@ -197,9 +205,6 @@ class N1QLThroughputTest(N1QLTest):
         'memory': False,
         'n1ql_latency': False,
         'n1ql_stats': True,
-        'secondary_stats': True,
-        'secondary_debugstats': True,
-        'secondary_debugstats_index': True,
         'ns_server_system': True
     }
 
@@ -268,6 +273,7 @@ class N1QLThroughputRebalanceTest(N1QLThroughputTest):
         return rebalance_time, total_requests
 
     def run(self):
+        self.enable_stats()
         self.load()
         self.wait_for_persistence()
         self.check_num_items()
@@ -287,6 +293,14 @@ class N1QLThroughputRebalanceTest(N1QLThroughputTest):
 class N1QLJoinTest(N1QLTest):
 
     ALL_BUCKETS = True
+
+    COLLECTORS = {
+        'iostat': False,
+        'memory': False,
+        'n1ql_latency': False,
+        'n1ql_stats': True,
+        'ns_server_system': True
+    }
 
     def load_regular(self, load_settings, target):
         load_settings.items //= 2
@@ -342,6 +356,7 @@ class N1QLJoinTest(N1QLTest):
                                      target_iterator=iterator)
 
     def run(self):
+        self.enable_stats()
         self.load()
         self.wait_for_persistence()
 
@@ -400,6 +415,7 @@ class N1QLBulkTest(N1QLTest):
         )
 
     def run(self):
+        self.enable_stats()
         self.load()
         self.wait_for_persistence()
         self.check_num_items()
@@ -442,6 +458,7 @@ class N1QLDGMTest(PerfTest):
         PerfTest.access(self, settings=access_settings)
 
     def run(self):
+        self.enable_stats()
         self.load()
         self.wait_for_persistence()
         self.check_num_items()
@@ -476,6 +493,7 @@ class N1QLXattrThroughputTest(N1QLThroughputTest):
         super().xattr_load(target_iterator=iterator)
 
     def run(self):
+        self.enable_stats()
         self.load()
         self.xattr_load()
         self.wait_for_persistence()
@@ -533,6 +551,7 @@ class N1QLXattrThroughputRebalanceTest(N1QLXattrThroughputTest):
         self.worker_manager.abort()
 
     def run(self):
+        self.enable_stats()
         self.load()
         self.xattr_load()
         self.wait_for_persistence()
@@ -555,13 +574,14 @@ class TpcDsTest(N1QLTest):
     COLLECTORS = {
         'iostat': False,
         'memory': False,
-        'n1ql_latency': True,
+        'n1ql_latency': False,
         'n1ql_stats': True,
         'net': False,
-        'secondary_debugstats_index': True,
+        'secondary_debugstats_index': False,
     }
 
     def run(self):
+        self.enable_stats()
         self.load_tpcds_json_data()
 
         self.create_indexes()
@@ -589,7 +609,7 @@ class TpcDsIndexTest(TpcDsTest):
     COLLECTORS = {
         'memory': False,
         'net': False,
-        'secondary_debugstats_index': True,
+        'secondary_debugstats_index': False,
     }
 
     @with_stats
@@ -605,6 +625,7 @@ class TpcDsIndexTest(TpcDsTest):
         )
 
     def run(self):
+        self.enable_stats()
         self.load_tpcds_json_data()
 
         time_elapsed = self.create_indexes()
@@ -615,13 +636,14 @@ class TpcDsIndexTest(TpcDsTest):
 class BigFUNLatencyTest(N1QLLatencyTest):
 
     COLLECTORS = {
-        'n1ql_latency': True,
+        'n1ql_latency': False,
         'n1ql_stats': True,
         'net': False,
-        'secondary_debugstats_index': True,
+        'secondary_debugstats_index': False,
     }
 
     def run(self):
+        self.enable_stats()
         self.restore()
         self.wait_for_persistence()
 
@@ -636,6 +658,7 @@ class BigFUNLatencyTest(N1QLLatencyTest):
 class N1QLFunctionTest(N1QLTest):
 
     def run(self):
+        self.enable_stats()
         self.load()
         self.wait_for_persistence()
         self.check_num_items()

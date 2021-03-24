@@ -392,7 +392,7 @@ class MultibucketGSI(HighBucketDensityTest):
         # PerfTest.load(self, target_iterator=src_target_iterator)
         # self.wait_for_persistence()
         t0 = time.time()
-        self.create_indexes()
+        PerfTest.create_indexes(self)
         self.wait_for_indexing()
         index_build_time = time.time() - t0
         logger.info("Index build time: {} min".format(index_build_time / 60))

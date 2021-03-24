@@ -22,5 +22,6 @@
   },
   "appname": "perf-test1",
   "appcode": "function OnUpdate(doc, meta) {\n}\nfunction OnDelete(doc) {\n}",
+  "code_path": "tests/eventing/code/bktop.js",
   "actionsVisible": true
 }]

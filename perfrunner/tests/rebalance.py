@@ -510,3 +510,14 @@ class RebalanceLoadOnlyTest(RebalanceTest):
 
         if self.is_balanced():
             self.report_kpi()
+
+
+class RebalanceMultiBucketKVTest(RebalanceKVTest):
+
+    ALL_BUCKETS = True
+
+    COLLECTORS = {
+        'iostat': True,
+        'memory': True,
+        'ns_server_system': True,
+        'latency': True}

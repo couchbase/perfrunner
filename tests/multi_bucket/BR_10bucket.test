@@ -1,8 +1,8 @@
 [test_case]
-test = perfrunner.tests.rebalance.RebalanceSimpleKVTest
+test = perfrunner.tests.rebalance.RebalanceMultiBucketKVTest
 
 [showfast]
-title = Rebalance-in (min), 3 -> 4, 10 bucket x 300K x 1KB, 100 KV ops/sec
+title = Rebalance-in (min), 3 -> 4, 10 bucket x 300K x 1KB, 1000 KV ops/sec
 component = multi_bucket
 sub_category = BR
 
@@ -36,8 +36,8 @@ workers = 1
 
 [rebalance]
 nodes_after = 4
-start_after = 600
-stop_after = 600
+start_after = 900
+stop_after = 900
 
 [clients]
 libcouchbase = 2.9.3

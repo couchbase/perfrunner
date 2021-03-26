@@ -708,6 +708,16 @@ class DefaultMonitor(DefaultRestHelper):
             num_items += stats.get(stats_key, 0)
         return num_items
 
+    def get_ingestion_progress(self, analytics_node: str) -> int:
+        stats = self.get_ingestion_v2(analytics_node)
+        progress = 0
+        number_dataset = 0
+        for scope_state in stats["links"][0]["state"]:
+            progress += scope_state["progress"] * len(scope_state["scopes"][0]['collections'])
+            number_dataset += len(scope_state["scopes"][0]['collections'])
+        avg_progress = progress/number_dataset*100
+        return avg_progress
+
     def get_num_remaining_mutations(self, analytics_node: str) -> int:
         while True:
             num_items = 0
@@ -749,11 +759,16 @@ class DefaultMonitor(DefaultRestHelper):
                 if num_analytics_items == num_items:
                     break
             else:
-                num_remaining_mutations = self.get_num_remaining_mutations(analytics_node)
-                logger.info('Number of remaining mutations: {}'.format(num_remaining_mutations))
-
-                if num_remaining_mutations == 0:
-                    break
+                if self.build_version_number > (7, 0, 0, 4853):
+                    ingestion_progress = self.get_ingestion_progress(analytics_node)
+                    logger.info('Ingestion progress: {:.2f}%'.format(ingestion_progress))
+                    if int(ingestion_progress) == 100:
+                        break
+                else:
+                    num_remaining_mutations = self.get_num_remaining_mutations(analytics_node)
+                    logger.info('Number of remaining mutations: {}'.format(num_remaining_mutations))
+                    if num_remaining_mutations == 0:
+                        break
 
             time.sleep(self.POLLING_INTERVAL_ANALYTICS)
 

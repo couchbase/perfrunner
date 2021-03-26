@@ -2,7 +2,7 @@
 test = perfrunner.tests.secondary.SecondaryIndexingScanTest
 
 [showfast]
-title = Stale = False, 1 bucket x 100M x 1KB, 10K KV ops/sec, 3000 indexes, 20%% RR, Plasma, s=1 c=300
+title = Stale = False, 1 bucket x 100M x 1KB, 2K KV ops/sec, 3000 indexes, 20%% RR, Plasma, s=1 c=300
 component = secondary
 category = lat
 sub_category = PlasmaDGM
@@ -53,8 +53,8 @@ cbindexperf_repeat = 9999
 [access]
 updates = 100
 items = 100000000
-throughput = 10000
-workers = 20
+throughput = 2000
+workers = 2
 
 [clients]
 libcouchbase = 3.0.2

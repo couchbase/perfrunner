@@ -2,7 +2,7 @@
 test = perfrunner.tests.secondary.ScanOverlapWorkloadTest
 
 [showfast]
-title = 1 bucket x 100M x 1KB, 10K KV ops/sec, 10000 indexes, 50/50 overlapping mutations and scans, 20%% Resident, Plasma, s=1 c=1000
+title = 1 bucket x 100M x 1KB, 2K KV ops/sec, 10000 indexes, 50/50 overlapping mutations and scans, 20%% Resident, Plasma, s=1 c=1000
 component = secondary
 category = lat
 sub_category = PlasmaDGM
@@ -38,7 +38,7 @@ doc_groups = 1
 
 [secondary]
 indexes = tests/gsi/index_defs/1bucket_1scope_1000collections_10k_indexes_1.json
-cbindexperf_configfile = tests/gsi/scan_config/config_scan_10k_indexes_1s_1000c_500_overlapping_1.json
+cbindexperf_configfile = tests/gsi/scan_config/config_scan_sessionconsistent_10k_indexes_1s_1000c_500_overlapping_1.json
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
 indexer.settings.gc_percent = 200
@@ -54,8 +54,8 @@ cbindexperf_repeat = 5999
 [access]
 updates = 100
 items = 100000000
-throughput = 9000
-workers = 20
+throughput = 1800
+workers = 1
 split_workload = collections/1bucket_1scope_1000collections_last500access_basic.json
-split_workload_throughput = 1000
-split_workload_workers = 20
+split_workload_throughput = 200
+split_workload_workers = 1

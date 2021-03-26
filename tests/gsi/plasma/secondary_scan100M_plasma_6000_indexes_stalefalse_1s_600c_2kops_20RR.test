@@ -2,7 +2,7 @@
 test = perfrunner.tests.secondary.SecondaryIndexingScanTest
 
 [showfast]
-title = Stale = False, 1 bucket x 100M x 1KB, 10K KV ops/sec, 10000 indexes, 20%% RR, Plasma, s=1 c=1000
+title = Stale = False, 1 bucket x 100M x 1KB, 2K KV ops/sec, 6000 indexes, 20%% RR, Plasma, s=1 c=600
 component = secondary
 category = lat
 sub_category = PlasmaDGM
@@ -13,8 +13,8 @@ lat_interval = 0.5
 
 [cluster]
 mem_quota = 30000
-index_mem_quota = 175000
-kernel_mem_limit = 230G
+index_mem_quota = 120000
+kernel_mem_limit = 150G
 initial_nodes = 6
 num_buckets = 1
 
@@ -27,7 +27,7 @@ replica_number=0
 replica_index=0
 
 [collection]
-config = collections/1bucket_1scope_1000collections_basic.json
+config = collections/1bucket_1scope_600collections_basic.json
 
 [load]
 items = 100000000
@@ -37,8 +37,8 @@ doc_gen = grouped
 doc_groups = 1
 
 [secondary]
-indexes = tests/gsi/index_defs/1bucket_1scope_1000collections_10k_indexes_1.json
-cbindexperf_configfile = tests/gsi/scan_config/config_scan_sessionconsistent_10k_indexes_1s_1000c_1.json
+indexes = tests/gsi/index_defs/1bucket_1scope_600collections_6000_indexes_1.json
+cbindexperf_configfile = tests/gsi/scan_config/config_scan_sessionconsistent_6000_indexes_1s_600c_1.json
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
 indexer.settings.gc_percent = 200
@@ -48,13 +48,13 @@ projector.backChanSize = 500000
 disable_perindex_stats = True
 indexer.settings.build.batch_size = 100
 cbindexperf_concurrency = 128
-cbindexperf_repeat = 2999
+cbindexperf_repeat = 4999
 
 [access]
 updates = 100
 items = 100000000
-throughput = 10000
-workers = 20
+throughput = 2000
+workers = 2
 
 [clients]
 libcouchbase = 3.0.2

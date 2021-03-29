@@ -593,7 +593,6 @@ class TpcDsTest(N1QLTest):
         self.enable_stats()
         self.load_tpcds_json_data()
         self.wait_for_persistence()
-        self.check_num_items()
         self.compact_bucket()
 
         self.create_indexes()
@@ -640,7 +639,6 @@ class TpcDsIndexTest(TpcDsTest):
         self.enable_stats()
         self.load_tpcds_json_data()
         self.wait_for_persistence()
-        self.check_num_items()
         self.compact_bucket()
 
         time_elapsed = self.create_indexes()
@@ -661,7 +659,6 @@ class BigFUNLatencyTest(N1QLLatencyTest):
         self.enable_stats()
         self.restore()
         self.wait_for_persistence()
-        self.check_num_items()
         self.compact_bucket()
 
         self.create_indexes()

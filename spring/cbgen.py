@@ -56,6 +56,7 @@ class CBAsyncGen:
 class CBGen(CBAsyncGen):
 
     TIMEOUT = 120  # seconds
+    N1QL_TIMEOUT = 600
 
     def __init__(self, ssl_mode: str = 'none', n1ql_timeout: int = None, **kwargs):
 
@@ -74,7 +75,7 @@ class CBGen(CBAsyncGen):
 
         self.client = Bucket(connection_string=connection_string)
         self.client.timeout = self.TIMEOUT
-        self.client.n1ql_timeout = n1ql_timeout
+        self.client.n1ql_timeout = n1ql_timeout if n1ql_timeout else self.N1QL_TIMEOUT
 
     @quiet
     @backoff

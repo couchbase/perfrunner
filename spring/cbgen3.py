@@ -103,6 +103,7 @@ class CBAsyncGen3:
 class CBGen3(CBAsyncGen3):
 
     TIMEOUT = 120  # seconds
+    N1QL_TIMEOUT = 600
 
     def __init__(self, ssl_mode: str = 'none', n1ql_timeout: int = None, **kwargs):
         connection_string = 'couchbase://{host}?password={password}&{params}'
@@ -120,7 +121,9 @@ class CBGen3(CBAsyncGen3):
         pass_auth = PasswordAuthenticator(kwargs['username'], kwargs['password'])
         timeout = ClusterTimeoutOptions(
             kv_timeout=timedelta(seconds=self.TIMEOUT),
-            query_timeout=timedelta(seconds=n1ql_timeout))
+            query_timeout=timedelta(
+                seconds=n1ql_timeout if n1ql_timeout else self.N1QL_TIMEOUT)
+        )
         options = ClusterOptions(authenticator=pass_auth, timeout_options=timeout)
         self.cluster = Cluster(connection_string=connection_string, options=options)
         self.bucket_name = kwargs['bucket']

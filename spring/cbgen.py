@@ -74,8 +74,7 @@ class CBGen(CBAsyncGen):
 
         self.client = Bucket(connection_string=connection_string)
         self.client.timeout = self.TIMEOUT
-        if n1ql_timeout:
-            self.client.n1ql_timeout = n1ql_timeout
+        self.client.n1ql_timeout = n1ql_timeout
 
     @quiet
     @backoff

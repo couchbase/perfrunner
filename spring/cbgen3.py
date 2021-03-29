@@ -118,11 +118,9 @@ class CBGen3(CBAsyncGen3):
                                                      params=connstr_params)
 
         pass_auth = PasswordAuthenticator(kwargs['username'], kwargs['password'])
-        if n1ql_timeout:
-            timeout = ClusterTimeoutOptions(kv_timeout=timedelta(seconds=self.TIMEOUT),
-                                            query_timeout=timedelta(seconds=n1ql_timeout))
-        else:
-            timeout = ClusterTimeoutOptions(kv_timeout=timedelta(seconds=self.TIMEOUT))
+        timeout = ClusterTimeoutOptions(
+            kv_timeout=timedelta(seconds=self.TIMEOUT),
+            query_timeout=timedelta(seconds=n1ql_timeout))
         options = ClusterOptions(authenticator=pass_auth, timeout_options=timeout)
         self.cluster = Cluster(connection_string=connection_string, options=options)
         self.bucket_name = kwargs['bucket']

@@ -117,6 +117,7 @@ class N1QLTest(PerfTest):
         self.load()
         self.wait_for_persistence()
         self.check_num_items()
+        self.compact_bucket()
 
         self.create_indexes()
         self.wait_for_indexing()
@@ -185,6 +186,7 @@ class N1QLLatencyRebalanceTest(N1QLLatencyTest):
         self.load()
         self.wait_for_persistence()
         self.check_num_items()
+        self.compact_bucket()
 
         self.create_indexes()
         self.wait_for_indexing()
@@ -277,6 +279,7 @@ class N1QLThroughputRebalanceTest(N1QLThroughputTest):
         self.load()
         self.wait_for_persistence()
         self.check_num_items()
+        self.compact_bucket()
 
         self.create_indexes()
         self.wait_for_indexing()
@@ -359,6 +362,8 @@ class N1QLJoinTest(N1QLTest):
         self.enable_stats()
         self.load()
         self.wait_for_persistence()
+        self.check_num_items()
+        self.compact_bucket()
 
         self.create_indexes()
         self.wait_for_indexing()
@@ -419,6 +424,7 @@ class N1QLBulkTest(N1QLTest):
         self.load()
         self.wait_for_persistence()
         self.check_num_items()
+        self.compact_bucket()
 
         self.create_indexes()
         self.wait_for_indexing()
@@ -462,6 +468,7 @@ class N1QLDGMTest(PerfTest):
         self.load()
         self.wait_for_persistence()
         self.check_num_items()
+        self.compact_bucket()
 
         self.create_indexes()
         self.wait_for_indexing()
@@ -498,6 +505,7 @@ class N1QLXattrThroughputTest(N1QLThroughputTest):
         self.xattr_load()
         self.wait_for_persistence()
         self.check_num_items()
+        self.compact_bucket()
 
         self.create_indexes()
         self.wait_for_indexing()
@@ -556,6 +564,7 @@ class N1QLXattrThroughputRebalanceTest(N1QLXattrThroughputTest):
         self.xattr_load()
         self.wait_for_persistence()
         self.check_num_items()
+        self.compact_bucket()
 
         self.create_indexes()
         self.wait_for_indexing()
@@ -583,6 +592,9 @@ class TpcDsTest(N1QLTest):
     def run(self):
         self.enable_stats()
         self.load_tpcds_json_data()
+        self.wait_for_persistence()
+        self.check_num_items()
+        self.compact_bucket()
 
         self.create_indexes()
         self.wait_for_indexing()
@@ -627,6 +639,9 @@ class TpcDsIndexTest(TpcDsTest):
     def run(self):
         self.enable_stats()
         self.load_tpcds_json_data()
+        self.wait_for_persistence()
+        self.check_num_items()
+        self.compact_bucket()
 
         time_elapsed = self.create_indexes()
 
@@ -646,6 +661,8 @@ class BigFUNLatencyTest(N1QLLatencyTest):
         self.enable_stats()
         self.restore()
         self.wait_for_persistence()
+        self.check_num_items()
+        self.compact_bucket()
 
         self.create_indexes()
         self.wait_for_indexing()
@@ -662,6 +679,7 @@ class N1QLFunctionTest(N1QLTest):
         self.load()
         self.wait_for_persistence()
         self.check_num_items()
+        self.compact_bucket()
 
         self.create_functions()
         self.create_indexes()

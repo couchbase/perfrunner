@@ -838,12 +838,17 @@ class PhaseSettings:
                                            self.MIN_TLS_VERSION)
 
         # Durability settings
-        self.persist_to = int(options.get('persist_to',
-                                          self.PERSIST_TO))
-        self.replicate_to = int(options.get('replicate_to',
-                                            self.REPLICATE_TO))
+
+        self.durability_set = False
+        if options.get('persist_to', None) or \
+                options.get('replicate_to', None) or \
+                options.get('durability', None):
+            self.durability_set = True
+
+        self.replicate_to = int(options.get('replicate_to', self.REPLICATE_TO))
+        self.persist_to = int(options.get('persist_to', self.PERSIST_TO))
         if options.get('durability', self.DURABILITY) is not None:
-            self.durability = int(options.get('durability', self.DURABILITY))
+            self.durability = int(options.get('durability'))
         else:
             self.durability = self.DURABILITY
 
@@ -1689,7 +1694,7 @@ class TestConfig(Config):
         bucket_extras = self._get_options_as_dict('bucket_extras')
         options = self._get_options_as_dict('access')
         access = AccessSettings(options)
-        if access.durability is not None:
+        if access.durability_set:
             if "num_writer_threads" not in bucket_extras:
                 bucket_extras["num_writer_threads"] = "disk_io_optimized"
         return bucket_extras

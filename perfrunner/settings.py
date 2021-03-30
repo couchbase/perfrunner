@@ -453,7 +453,7 @@ class CollectionSettings:
 
     CONFIG = None
     COLLECTION_MAP = None
-    USE_BULK_API = 0
+    USE_BULK_API = 1
 
     def __init__(self, options: dict):
         self.config = options.get('config', self.CONFIG)

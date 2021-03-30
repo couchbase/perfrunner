@@ -403,6 +403,8 @@ class KVWorker(Worker):
                 latency = func(*args)
                 if latency is not None:
                     self.reservoir.update(operation=cmd, value=latency)
+                if self.time_to_stop():
+                    return
         else:
             t0 = time.time()
             self.op_delay = self.op_delay + (self.delta / self.ws.spring_batch_size)
@@ -414,6 +416,8 @@ class KVWorker(Worker):
                     self.reservoir.update(operation=cmd, value=latency)
                 if self.op_delay > 0:
                     time.sleep(self.op_delay * self.CORRECTION_FACTOR)
+                if self.time_to_stop():
+                    return
             self.batch_duration = time.time() - t0
             self.delta = self.target_time - self.batch_duration
             if self.delta > 0:
@@ -680,6 +684,8 @@ class ViewWorker(Worker):
             latency = self.cb.view_query(ddoc_name, view_name, query=query)
 
             self.reservoir.update(operation='query', value=latency)
+            if self.time_to_stop():
+                return
 
     def run(self, sid, lock, curr_ops, curr_items, deleted_items, *args):
         if self.ws.query_throughput < float('inf'):
@@ -746,6 +752,9 @@ class N1QLWorker(Worker):
             if self.op_delay > 0 and self.target_time:
                 time.sleep(self.op_delay * self.CORRECTION_FACTOR)
 
+            if self.time_to_stop():
+                return
+
         if self.target_time:
             self.batch_duration = time.time() - t0
             self.delta = self.target_time - self.batch_duration
@@ -767,6 +776,9 @@ class N1QLWorker(Worker):
             latency = self.cb.n1ql_query(query)
             self.reservoir.update(operation='query', value=latency)
 
+            if self.time_to_stop():
+                return
+
     @with_sleep
     def update(self):
         with self.lock:
@@ -780,6 +792,9 @@ class N1QLWorker(Worker):
 
             latency = self.cb.n1ql_query(query)
             self.reservoir.update(operation='query', value=latency)
+
+            if self.time_to_stop():
+                return
 
     def do_batch(self):
         if self.ws.n1ql_op == 'read':

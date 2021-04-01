@@ -4,6 +4,7 @@ test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
 [showfast]
 title = 1 bucket x 100M x 1KB, 10000 Indexes, 10K KV ops/sec, 45/45/10 IUD, no mutations during initial build only, 20%% Resident, Plasma, s=1 c=1000
 component = secondary
+category = incremental
 sub_category = PlasmaDGM
 
 [stats]

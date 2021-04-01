@@ -1028,7 +1028,7 @@ class DefaultRestHelper(RestBase):
 
     def set_collection_map(self, host, bucket, collection_map):
         logger.info("Setting collection map on {} via bulk api".format(bucket))
-        api = 'http://{}:8091/pools/default/buckets/{}/collections' \
+        api = 'http://{}:8091/pools/default/buckets/{}/scopes' \
             .format(host, bucket)
         self.put(url=api, data=json.dumps(collection_map))
 

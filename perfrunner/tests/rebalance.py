@@ -131,6 +131,24 @@ class RebalanceKVTest(RebalanceTest):
             self.report_kpi()
 
 
+class RebalanceKVCompactionTest(RebalanceKVTest):
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.compact_bucket()
+
+        self.hot_load()
+
+        self.reset_kv_stats()
+
+        self.access_bg()
+        self.rebalance()
+
+        if self.is_balanced():
+            self.report_kpi()
+
+
 class RebalanceDurabilityTest(RebalanceTest):
 
     ALL_HOSTNAMES = True

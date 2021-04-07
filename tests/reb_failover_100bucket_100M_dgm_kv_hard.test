@@ -1,0 +1,42 @@
+[test_case]
+test = perfrunner.tests.rebalance.HardFailoverTest
+
+[showfast]
+title = Hard failover (ms), 4 -> 3, 100 buckets x 1M x 2KB, 10K ops/sec
+component = reb
+category = failover
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 4
+num_buckets = 100
+
+[load]
+items = 1000000
+size = 2048
+workers = 2
+
+[hot_load]
+items = 1000000
+workers = 2
+working_set = 5
+
+[access]
+creates = 5
+reads = 50
+updates = 40
+deletes = 5
+throughput = 100
+items = 1000000
+workers = 1
+working_set = 5
+working_set_access = 98
+
+[rebalance]
+failed_nodes = 1
+start_after = 300
+stop_after = 300
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

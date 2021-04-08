@@ -1,0 +1,52 @@
+[test_case]
+test = perfrunner.tests.secondary.SecondaryIndexingScanLatencyRebalanceTest
+
+[showfast]
+title = Secondary index stale=false scan latency(ms) with rebalance, 1 bucket x 20M x 1KB, 100K ops/sec, single index, MOI
+component = secondary
+category = lat
+sub_category = MOI
+
+[stats]
+server_processes = projector
+lat_interval = 0.5
+
+[cluster]
+mem_quota = 30000
+index_mem_quota = 60000
+initial_nodes = 5
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[bucket]
+replica_number=0
+replica_index=0
+
+[load]
+items = 20000000
+size = 1024
+workers = 100
+
+[secondary]
+indexes = myindex:alt_email
+db = moi
+cbindexperf_configfile = tests/gsi/moi/config/config_scanlatency_sessionconsistent_moi_rebalance.json
+indexer.settings.storage_mode = memory_optimized
+indexer.settings.gc_percent = 200
+indexer.settings.max_cpu_percent = 4800
+
+[access]
+creates = 10
+updates = 80
+deletes = 10
+ops = 300000000
+items = 20000000
+throughput = 100000
+workers = 80
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

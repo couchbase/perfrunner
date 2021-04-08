@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
+test = perfrunner.tests.secondary.InitialandIncrementalandRecoverySecondaryIndexTest
 
 [showfast]
 title = 1 bucket x 50M x 1KB, 10000 indexes, 100K KV ops/sec, no mutations during initial build only, Plasma, s=1 c=1000
@@ -42,6 +42,7 @@ queryport.client.log_level = Warn
 projector.backChanSize = 500000
 disable_perindex_stats = True
 indexer.settings.build.batch_size = 100
+run_recovery_test = 1
 
 [access]
 updates = 100

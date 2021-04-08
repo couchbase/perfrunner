@@ -494,7 +494,7 @@ class DefaultMonitor(DefaultRestHelper):
         time_elapsed = round(finish_ts - init_ts)
         return time_elapsed
 
-    def wait_for_secindex_init_build_collections(self, host, indexes):
+    def wait_for_secindex_init_build_collections(self, host, indexes, recovery=False):
         # POLL until initial index build is complete
         index_list = []
         for bucket_name, scope_map in indexes.items():
@@ -523,13 +523,18 @@ class DefaultMonitor(DefaultRestHelper):
                 if status == 'Ready':
                     indexes_ready[i] = 1
 
+        if recovery:
+            polling_interval = self.POLLING_INTERVAL
+        else:
+            polling_interval = self.POLLING_INTERVAL_INDEXING*10
+
         while sum(indexes_ready) != len(indexes):
-            time.sleep(self.POLLING_INTERVAL_INDEXING * 10)
+            time.sleep(polling_interval)
             update_indexes_ready()
         logger.info('secondary index build complete: {}'.format(indexes))
 
     def wait_for_secindex_incr_build(self, index_nodes, bucket, indexes, numitems):
-        # POLL until incremenal index build is complete
+        # POLL until incremental index build is complete
         logger.info('expecting {} num_docs_indexed for indexes {}'.format(numitems, indexes))
 
         # collect num_docs_indexed information globally from all index nodes

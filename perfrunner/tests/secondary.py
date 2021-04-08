@@ -333,6 +333,19 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
         self.run_recovery_scenario()
 
 
+class InitialandIncrementalandRecoverySecondaryIndexTest(InitialandIncrementalSecondaryIndexTest):
+
+    def run_recovery_scenario(self):
+        if self.run_recovery_test:
+            # Measure recovery time for index
+            self.remote.kill_process_on_index_node("indexer")
+            start_time = time.time()
+            self.monitor.wait_for_secindex_init_build_collections(
+                self.index_nodes[0], self.indexes, recovery=True)
+            recovery_time = time.time() - start_time
+            self.report_kpi(recovery_time, 'Recovery')
+
+
 class InitialandIncrementalDGMSecondaryIndexTest(InitialandIncrementalSecondaryIndexTest):
 
     """Run InitialandIncrementalSecondaryIndexTest in DGM mode."""

@@ -634,7 +634,7 @@ class DefaultMonitor(DefaultRestHelper):
         logger.interrupt('Some nodes are still down')
 
     def monitor_fts_indexing_queue(self, host: str, index: str, items: int):
-        logger.info('Waiting for indexing to finish')
+        logger.info('{} : Waiting for indexing to finish'.format(index))
         count = 0
         while count < items:
             count = self.get_fts_doc_count(host, index)
@@ -642,7 +642,7 @@ class DefaultMonitor(DefaultRestHelper):
             time.sleep(self.POLLING_INTERVAL)
 
     def monitor_fts_index_persistence(self, hosts: list, index: str, bkt: str = None):
-        logger.info('Waiting for index to be persisted')
+        logger.info('{}: Waiting for index to be persisted'.format(index))
         if not bkt:
             bkt = self.test_config.buckets[0]
         tries = 0

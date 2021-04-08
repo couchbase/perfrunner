@@ -169,26 +169,12 @@ class RebalanceForFTS(RebalanceTest, FTSTest):
 
     @timeit
     def build_indexes(self):
-        self.create_indexes()
-        self.wait_for_indexes()
+        self.create_fts_indexes_and_wait
 
     def run(self):
         self.cleanup_and_restore()
         self.wait_for_persistence()
-
-        nodes_before_rebalance = self.test_config.cluster.initial_nodes[0]
-        servers_and_roles = self.cluster_spec.servers_and_roles
-        fts_nodes_before = []
-        for i in range(0, nodes_before_rebalance):
-            host = servers_and_roles[i][0]
-            roles = servers_and_roles[i][1]
-            if "fts" in roles:
-                fts_nodes_before.append(host)
-
-        if self.rebalance_settings.fts_node_level_parameters.keys():
-            node_level_params = self.rebalance_settings.fts_node_level_parameters
-            for node in fts_nodes_before:
-                self.rest.fts_set_node_level_parameters(node_level_params, node)
+        fts_nodes_before = self.add_extra_fts_parameters()
 
         total_index_time = self.build_indexes()
         logger.info("Total index build time: {} seconds".format(total_index_time))

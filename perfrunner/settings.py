@@ -926,6 +926,8 @@ class JTSAccessSettings(PhaseSettings):
     JTS_HOME_DIR = "JTS"
     JTS_RUN_CMD = "java -jar target/JTS-1.0-jar-with-dependencies.jar"
     JTS_LOGS_DIR = "JTSlogs"
+    FTS_PARTITIONS = "1"
+    FTS_MAX_DCP_PARTITIONS = "0"
 
     def __init__(self, options: dict):
         self.jts_repo = self.JTS_REPO
@@ -965,12 +967,26 @@ class JTSAccessSettings(PhaseSettings):
         self.test_flex_query_type = options.get('test_flex_query_type', 'array_predicate')
         # Collection settings
         self.test_collection_query_mode = options.get('test_collection_query_mode', 'default')
+        # Number of indexes per index - group
         self.indexes_per_group = int(options.get('indexes_per_group', '1'))
+        # index_group is the number of collections per index
+        # if index_group is 1; all the collections are present in the index_def type mapping
         self.index_groups = int(options.get('index_groups', '1'))
         self.fts_index_map = {}
         self.collections_enabled = False
         self.test_collection_specific_count = \
             int(options.get('test_collection_specific_count', '1'))
+
+        # Extra parameters for the FTS debugging
+        self.ftspartitions = options.get('ftspartitions', self.FTS_PARTITIONS)
+        self.fts_max_dcp_partitions = options.get('fts_max_dcp_partitions',
+                                                  self.FTS_MAX_DCP_PARTITIONS)
+        self.fts_node_level_parameters = {}
+        if self.ftspartitions != self.FTS_PARTITIONS:
+            self.fts_node_level_parameters["maxConcurrentPartitionMovesPerNode"] = \
+                self.ftspartitions
+        if self.fts_max_dcp_partitions != self.FTS_MAX_DCP_PARTITIONS:
+            self.fts_node_level_parameters["maxFeedsPerDCPAgent"] = self.fts_max_dcp_partitions
 
     def __str__(self) -> str:
         return str(self.__dict__)

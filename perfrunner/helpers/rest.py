@@ -338,8 +338,6 @@ class DefaultRestHelper(RestBase):
             'evictionPolicy': eviction_policy,
             'flushEnabled': 1,
             'replicaNumber': replica_number,
-            'authType': 'sasl',
-            'saslPassword': password,
         }
 
         if bucket_type == BucketSettings.BUCKET_TYPE:

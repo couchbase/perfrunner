@@ -220,7 +220,8 @@ class SecondaryIndexTest(PerfTest):
 
     @with_stats
     @with_profiles
-    def apply_scanworkload(self, path_to_tool="./opt/couchbase/bin/cbindexperf"):
+    def apply_scanworkload(self, path_to_tool="./opt/couchbase/bin/cbindexperf",
+                           run_in_background=False):
         rest_username, rest_password = self.cluster_spec.rest_credentials
         with open(self.configfile, 'r') as fp:
             config_file_content = fp.read()
@@ -229,7 +230,8 @@ class SecondaryIndexTest(PerfTest):
             logger.info("cbindexperf config file: \n" + config_file_content)
 
         status = run_cbindexperf(path_to_tool, self.index_nodes[0],
-                                 rest_username, rest_password, self.configfile)
+                                 rest_username, rest_password, self.configfile,
+                                 run_in_background)
         if status != 0:
             raise Exception('Scan workload could not be applied')
         else:
@@ -1116,34 +1118,6 @@ class SecondaryIndexingMultiScanTest(SecondaryIndexingScanLatencyTest):
         self.report_kpi(multifilter_time, independent_time)
 
 
-class SecondaryRebalanceTest(SecondaryIndexTest, RebalanceTest):
-
-    """Measure swap rebalance time for indexer."""
-
-    COLLECTORS = {}
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.rebalance_settings = self.test_config.rebalance_settings
-
-    def run(self):
-        self.load()
-        self.wait_for_persistence()
-
-        self._build_secondaryindex()
-        self.access_bg()
-        self.rebalance_indexer()
-        self.report_kpi()
-
-    def rebalance_indexer(self):
-        self.rebalance(services="index")
-
-    def _report_kpi(self):
-        self.reporter.post(
-            *self.metrics.rebalance_time(self.rebalance_time)
-        )
-
-
 class CreateBackupandRestoreIndexTest(SecondaryIndexTest):
 
     """Measure time to create indexes, to backup and to restore indexes."""
@@ -1232,3 +1206,82 @@ class CreateBackupandRestoreIndexTestWithRebalance(CreateBackupandRestoreIndexTe
 
         self.report_kpi(time_to_backup, "Backup", "seconds")
         self.report_kpi(time_to_restore, "Restore", "seconds")
+
+
+class SecondaryRebalanceTest(SecondaryIndexingScanTest, RebalanceTest):
+
+    """Measure rebalance time for indexer with scan and access workload."""
+
+    COLLECTORS = {'secondary_stats': True,
+                  'secondary_debugstats': True, 'secondary_debugstats_bucket': True}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.rebalance_settings = self.test_config.rebalance_settings
+
+    def get_config(self):
+        with open('{}'.format(self.configfile)) as config_file:
+            config_data = json.load(config_file)
+        return config_data['ScanSpecs'][0]['NInterval'], config_data['Concurrency']
+
+    def get_throughput(self) -> float:
+        duration = 0
+        lines = 0
+        with open(self.SECONDARY_STATS_FILE, 'r') as csvfile:
+            csv_reader = csv.reader(csvfile, delimiter=',')
+            for row in csv_reader:
+                duration += int(row[2].split(":")[1])
+                lines += 1
+        interval, concurrency = self.get_config()
+        return lines * interval / (duration / 1000000000 / concurrency)
+
+    def run(self):
+        self.remove_statsfile()
+        self.load()
+        self.wait_for_persistence()
+
+        self.build_secondaryindex()
+        self.access_bg()
+        self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf",
+                                run_in_background=True)
+        self.rebalance_indexer()
+        kill_process("cbindexperf")
+        scan_thr = self.get_throughput()
+        percentile_latencies = self.calculate_scan_latencies()
+        logger.info('Scan throughput: {}'.format(scan_thr))
+        self.print_index_disk_usage()
+        self.report_kpi(rebalance_time=True)
+        self.report_kpi(percentile_latencies, scan_thr)
+        self.validate_num_connections()
+
+    @with_stats
+    @with_profiles
+    def rebalance_indexer(self):
+        self.rebalance(services="index")
+
+    def _report_kpi(self,
+                    percentile_latencies=0,
+                    scan_thr: float = 0,
+                    rebalance_time: bool = False):
+
+        if rebalance_time:
+            self.reporter.post(
+                *self.metrics.rebalance_time(self.rebalance_time)
+            )
+        else:
+            title = "Secondary Scan Throughput (scanps) {}" \
+                .format(str(self.test_config.showfast.title).strip())
+            self.reporter.post(
+                *self.metrics.scan_throughput(scan_thr,
+                                              metric_id_append_str="thr",
+                                              title=title)
+            )
+            title = str(self.test_config.showfast.title).strip()
+            self.reporter.post(
+                *self.metrics.secondary_scan_latency_value(percentile_latencies[90],
+                                                           percentile=90,
+                                                           title=title))
+            self.reporter.post(
+                *self.metrics.secondary_scan_latency_value(percentile_latencies[95],
+                                                           percentile=95,
+                                                           title=title))

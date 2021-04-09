@@ -1,0 +1,154 @@
+{"name": "",
+    "params": {
+        "doc_config": {
+            "docid_prefix_delim": "",
+            "docid_regexp": "",
+            "mode": "type_field",
+            "type_field": "type"
+        },
+        "mapping": {
+            "analysis": {},
+            "default_analyzer": "standard",
+            "default_datetime_parser": "dateTimeOptional",
+            "default_field": "_all",
+            "default_mapping": {
+                "default_analyzer": "standard",
+                "dynamic": false,
+                "enabled": true,
+                "properties": {
+                    "16x8": {
+                        "dynamic": false,
+                        "enabled": true,
+                        "fields": [
+                            {
+                                "index": true,
+                                "name": "16x8",
+                                "type": "text"
+                            }
+                        ]
+                    },
+                    "1x5k": {
+                        "dynamic": false,
+                        "enabled": true,
+                        "fields": [
+                            {
+                                "analyzer": "keyword",
+                                "index": true,
+                                "name": "1x5k",
+                                "type": "text"
+                            }
+                        ]
+                    },
+                    "2x3": {
+                        "dynamic": false,
+                        "enabled": true,
+                        "fields": [
+                            {
+                                "index": true,
+                                "name": "2x3",
+                                "type": "text"
+                            }
+                        ]
+                    },
+                    "2x4": {
+                        "dynamic": false,
+                        "enabled": true,
+                        "fields": [
+                            {
+                                "index": true,
+                                "name": "2x4",
+                                "type": "text"
+                            }
+                        ]
+                    },
+                    "id": {
+                        "dynamic": false,
+                        "enabled": true,
+                        "fields": [
+                            {
+                                "analyzer": "keyword",
+                                "index": true,
+                                "name": "id",
+                                "type": "text"
+                            }
+                        ]
+                    },
+                    "sub": {
+                        "dynamic": false,
+                        "enabled": true,
+                        "properties": {
+                            "3x4": {
+                                "dynamic": false,
+                                "enabled": true,
+                                "fields": [
+                                    {
+                                        "index": true,
+                                        "name": "3x4",
+                                        "type": "text"
+                                    }
+                                ]
+                            },
+                            "sub2": {
+                                "dynamic": false,
+                                "enabled": true,
+                                "properties": {
+                                    "10x7": {
+                                        "dynamic": false,
+                                        "enabled": true,
+                                        "fields": [
+                                            {
+                                                "index": true,
+                                                "name": "10x7",
+                                                "type": "text"
+                                            }
+                                        ]
+                                    },
+                                    "5x6": {
+                                        "dynamic": false,
+                                        "enabled": true,
+                                        "fields": [
+                                            {
+                                                "index": true,
+                                                "name": "5x6",
+                                                "type": "text"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "type": {
+                        "dynamic": false,
+                        "enabled": true,
+                        "fields": [
+                            {
+                                "index": true,
+                                "name": "type",
+                                "type": "text"
+                            }
+                        ]
+                    }
+                }
+            },
+            "default_type": "_default",
+            "docvalues_dynamic": true,
+            "index_dynamic": false,
+            "store_dynamic": false,
+            "type_field": "_type"
+        },
+        "store": {
+            "indexType": "scorch",
+            "kvStoreName": ""
+        }
+    },
+    "planParams": {
+        "maxPartitionsPerPIndex": 171
+    },
+    "sourceName": "",
+    "sourceParams": {},
+    "sourceType": "couchbase",
+    "sourceUUID": "",
+    "type": "fulltext-index",
+    "uuid": ""
+}

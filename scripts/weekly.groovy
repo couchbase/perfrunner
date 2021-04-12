@@ -212,6 +212,12 @@ pipeline {
                         buildComponent('MagmaNVME', testCases)
                     }
                 }
+                stage('GSI-Recovery') {
+                    when { expression { return params.GSI_Recovery } }
+                    steps {
+                        buildComponent('GSI-Recovery', testCases)
+                    }
+                }
             }
         }
     }

@@ -490,6 +490,20 @@
         {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_swap_1s_1c_with_replica.test"},
         {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_swap_1s_100c_with_replica.test"},
         {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_swap_1s_1000c_with_replica.test"}
-
+    ],
+    "GSI-Recovery": [
+        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/moi/secondary_100M_moi.test"},
+        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/moi/secondary_1B_moi.test"},
+        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_100M_plasma.test"},
+        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_1B_plasma.test"},
+        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_250M_20res_20kops.test"},
+        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_250M_50res_50kops_random.test"},
+        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_250M_50res_50kops.test"},
+        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_250M_80res_50kops_random.test"},
+        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_250M_80res_50kops.test"},
+        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_2B_initial_only_50res.test"},
+        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_500M_initial_only_20res.test"},
+        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_500M_initial_only_50res.test"},
+        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_500M_initial_only_80res.test"}
     ]
 }

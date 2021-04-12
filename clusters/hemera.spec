@@ -6,6 +6,7 @@ hemera =
     cen-s710.perf.couchbase.com:kv
     cen-s709.perf.couchbase.com:kv
     cen-s708.perf.couchbase.com:kv
+    172.23.100.119:index
 
 [clients]
 hosts =

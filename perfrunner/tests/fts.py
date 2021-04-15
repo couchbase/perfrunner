@@ -280,7 +280,6 @@ class FTSTest(JTSTest):
     @timeit
     def build_indexes(self):
         elapsed_time = self.create_fts_indexes_and_wait()
-
         return elapsed_time
 
     def spread_data(self):
@@ -358,7 +357,7 @@ class FTSIndexTest(FTSTest):
 
     def run(self):
         self.cleanup_and_restore()
-        fts_nodes = self.add_extra_fts_parameters
+        fts_nodes = self.add_extra_fts_parameters()
         time_elapsed = self.build_indexes()
         self.wait_for_index_persistence(fts_nodes)
         size = self.calculate_index_size()

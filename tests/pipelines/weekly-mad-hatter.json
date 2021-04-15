@@ -47,7 +47,21 @@
         {"job": "atlas-sdk", "cluster": "atlas_setupE.spec", "test_config": "tests_FTS/1M/jts_fts_throughput_3node_1M_flex_mixed1.test"},
         {"job": "atlas-sdk", "cluster": "atlas_setupE.spec", "test_config": "tests_FTS/1M/jts_fts_throughput_3node_1M_flex_mixed2.test"}
     ],
-
+    "FTS-Rebalance": [
+        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_in_default_with_index_replica.test"},
+        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_out_default_with_index_replica.test"},
+        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_swap_default_with_index_replica.test"},
+        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_in_default.test"},
+        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_swap_default.test"},
+        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_out_default.test"},
+        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_in.test"},
+        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_swap.test"},
+        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_out.test"},
+        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_in_with_para.test"},
+        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_swap_with_para.test"},
+        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_out_with_para.test"}
+    ],
+    "FTS-MultiIndex": [],
     "GSI": [
         {"job": "secondary-moi",    "cluster": "nyx.spec", "test_config": "new_moi/secondary_scan_moi.test"},
         {"job": "secondary-moi",    "cluster": "nyx.spec", "test_config": "new_moi/secondary_1M_multiple_moi.test"},

@@ -2,7 +2,7 @@
 test = perfrunner.tests.rebalance.RebalanceForFTS
 
 [showfast]
-title = FTS Rebalance-out (min),  4 -> 3, 20M X 1KB, partitioned_index = 6, replica = 1, default scope, default collection
+title = FTS Rebalance-out (min),  4 -> 3, 20M X 1KB, partitioned_index = 6, replica = 1
 component = jts
 category = Rebalance
 sub_category = default
@@ -16,13 +16,6 @@ fts_index_mem_quota = 102400
 
 [bucket]
 replica_number=0
-
-[load]
-items = 20000000
-fts_data_spread_workers = 200
-
-[collection]
-config = collections/1bucket_default.json
 
 [jts]
 test_total_docs = 20000000

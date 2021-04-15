@@ -312,12 +312,14 @@ class N1QLJoinTest(N1QLTest):
         target.prefix = 'n1ql'
         super(N1QLTest, self).load(settings=load_settings,
                                    target_iterator=(target, ))
+        self.bucket_items[target.bucket] = load_settings.items*2
 
     def load_categories(self, load_settings, target):
         load_settings.items = load_settings.num_categories
         target.prefix = 'n1ql'
         super(N1QLTest, self).load(settings=load_settings,
                                    target_iterator=(target, ))
+        self.bucket_items[target.bucket] = load_settings.items
 
     def load(self, *args):
         doc_gens = self.test_config.load_settings.doc_gen.split(',')
@@ -359,10 +361,11 @@ class N1QLJoinTest(N1QLTest):
                                      target_iterator=iterator)
 
     def run(self):
+        self.bucket_items = {}
         self.enable_stats()
         self.load()
         self.wait_for_persistence()
-        self.check_num_items()
+        self.check_num_items(bucket_items=self.bucket_items)
         self.compact_bucket()
 
         self.create_indexes()

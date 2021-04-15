@@ -4,7 +4,7 @@ source_cluster =
     172.23.99.158:kv
     172.23.99.159:kv
     172.23.96.19:index,n1ql
-    172.23.97.15:index,n1ql
+    172.23.96.15:index,n1ql
     172.23.97.177:eventing
     172.23.96.23:cbas
     172.23.96.20:fts

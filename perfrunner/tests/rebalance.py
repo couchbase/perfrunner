@@ -169,13 +169,15 @@ class RebalanceForFTS(RebalanceTest, FTSTest):
 
     @timeit
     def build_indexes(self):
-        self.create_fts_indexes_and_wait
+        self.create_fts_indexes_and_wait()
 
     def run(self):
         self.cleanup_and_restore()
         self.wait_for_persistence()
         fts_nodes_before = self.add_extra_fts_parameters()
 
+        logger.info("Sleeping for 10s before the index creation")
+        time.sleep(10)
         total_index_time = self.build_indexes()
         logger.info("Total index build time: {} seconds".format(total_index_time))
 

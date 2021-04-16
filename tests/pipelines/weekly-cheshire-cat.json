@@ -286,7 +286,16 @@
         {"job": "iris-multi-client",     "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_array_indexing_cov_Q3_20M_between_gsi_plasma_ok_1s_1c_1i.test"},
         {"job": "iris-multi-client",     "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_array_indexing_Q2_20M_gsi_moi_ok_1s_1c_1i.test"},
         {"job": "iris-multi-client",     "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_array_indexing_Q3_20M_between_gsi_moi_ok_1s_1c_1i.test"},
-        {"job": "iris-multi-client",     "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_Q2_20M_gsi_plasma_false_1s_1c_1i.test"}
+        {"job": "iris-multi-client",     "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_Q2_20M_gsi_plasma_false_1s_1c_1i.test"},
+        {"job": "iris-multi-client", "cluster": "iris_fts.spec", "test_config": "n1ql/collections/n1ql_thr_CF2_20M_fts_1s_1c.test"},
+        {"job": "iris-multi-client", "cluster": "iris_fts.spec", "test_config": "n1ql/collections/n1ql_thr_QF2_20M_fts_1s_1c.test"},
+        {"job": "iris-multi-client", "cluster": "iris_fts.spec", "test_config": "n1ql/collections/n1ql_thr_CF3_20M_fts_1s_1c.test"},
+        {"job": "iris-multi-client", "cluster": "iris_fts.spec", "test_config": "n1ql/collections/n1ql_thr_QF3_20M_fts_1s_1c.test"},
+        {"job": "iris",              "cluster": "iris_fts.spec", "test_config": "n1ql/collections/n1ql_lat_CF3_20M_fts_1s_1c.test"},
+        {"job": "iris",              "cluster": "iris_fts.spec", "test_config": "n1ql/collections/n1ql_lat_QF2_20M_fts_1s_1c.test"},
+        {"job": "iris",              "cluster": "iris_fts.spec", "test_config": "n1ql/collections/n1ql_lat_QF3_20M_fts_1s_1c.test"},
+        {"job": "iris",              "cluster": "iris_fts.spec", "test_config": "n1ql/collections/n1ql_lat_CF2_20M_fts_1s_1c.test"}
+
     ],
     "N1QL-Arke": [
         {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/collections/n1ql_lat_AG1_100M_plasma_ok_1s_1c_1i.test"},

@@ -1,3 +1,4 @@
+import copy
 import glob
 import shutil
 import time
@@ -339,10 +340,23 @@ class PerfTest:
             self.create_fts_index_n1ql()
 
     def create_fts_index_n1ql(self):
+        logger.info("Creating FTS index")
         definition = read_json(self.test_config.index_settings.couchbase_fts_index_configfile)
+        bucket_name = self.test_config.buckets[0]
         definition.update({
             'name': self.test_config.index_settings.couchbase_fts_index_name
         })
+        if self.test_config.collection.collection_map:
+            collection_map = self.test_config.collection.collection_map
+            definition["params"]["doc_config"]["mode"] = "scope.collection.type_field"
+            scope_name = list(collection_map[bucket_name].keys())[1:][0]
+            collection_name = list(collection_map[bucket_name][scope_name].keys())[0]
+            ind_type_mapping = \
+                copy.deepcopy(definition["params"]["mapping"]["default_mapping"])
+            definition["params"]["mapping"]["default_mapping"]["enabled"] = False
+            new_type_mapping_name = "{}.{}".format(scope_name, collection_name)
+            definition["params"]["mapping"]["types"] = {new_type_mapping_name: ind_type_mapping}
+
         logger.info('Index definition: {}'.format(pretty_dict(definition)))
         self.rest.create_fts_index(
             self.fts_nodes[0],

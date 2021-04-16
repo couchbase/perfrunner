@@ -1,10 +1,11 @@
 import copy
 import os
 import shutil
+import time
 
 from logger import logger
 from perfrunner.helpers import local
-from perfrunner.helpers.cbmonitor import timeit, with_stats
+from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.helpers.misc import pretty_dict, read_json
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.helpers.worker import (
@@ -26,6 +27,7 @@ class JTSTest(PerfTest):
             self.access.collections_enabled = True
         self.showfast = self.test_config.showfast
         self.fts_index_map = dict()
+        self.fts_index_defs = dict()
 
     def download_jts(self):
         if self.worker_manager.is_remote:
@@ -127,7 +129,7 @@ class FTSTest(JTSTest):
             coll_type_mapping.append(types_col)
         return coll_type_mapping
 
-    def create_fts_indexes_and_wait(self):
+    def create_fts_index_definitions(self):
         logger.info("In the Indexing function:")
         # On a singlee fts index definition
         index_def = read_json(self.access.couchbase_index_configfile)
@@ -199,8 +201,6 @@ class FTSTest(JTSTest):
                         'name': index_name,
                     })
                     index_def["params"]["mapping"]["types"] = collection_type_mapping
-                    logger.info('Index definition: {}'.format(pretty_dict(index_def)))
-                    self.rest.create_fts_index(self.fts_master_node, index_name, index_def)
                     self.fts_index_map[index_name] = \
                         {
                             "bucket": bucket_name,
@@ -208,7 +208,9 @@ class FTSTest(JTSTest):
                             "collections": collection_list[coll_group_id],
                             "total_docs": items_per_index
                         }
-                    self.wait_for_index(index_name)
+                    self.fts_index_defs[index_name] = {
+                        "index_def": index_def
+                    }
                     index_id += 1
 
         else:
@@ -221,23 +223,37 @@ class FTSTest(JTSTest):
             # for indexes with default collection and scope in the index
             if collection_map and len(collection_map[bucket_name].keys()) == 1:
                 index_def["params"]["mapping"]["types"] = default_index_type_mapping
-            logger.info('Index definition: {}'.format(pretty_dict(index_def)))
-            self.rest.create_fts_index(self.fts_master_node, index_name, index_def)
             self.fts_index_map[index_name] = {
                 "bucket": bucket_name,
                 "scope": "_default",
                 "collections": ["_default"],
                 "total_docs": int(self.access.test_total_docs)
             }
-            self.wait_for_index(index_name)
+            self.fts_index_defs[index_name] = {
+                "index_def": index_def
+            }
+
         self.access.fts_index_map = self.fts_index_map
 
+    def create_fts_indexes(self):
+        total_time = 0
+        for index_name in self.fts_index_defs.keys():
+            index_def = self.fts_index_defs[index_name]['index_def']
+            logger.info('Index definition: {}'.format(pretty_dict(index_def)))
+            t0 = time.time()
+            self.rest.create_fts_index(self.fts_master_node, index_name, index_def)
+            self.wait_for_index(index_name)
+            t1 = time.time()
+            logger.info("Time taken by {} is {} s".format(index_name, (t1-t0)))
+            total_time = total_time+(t1-t0)
+        return total_time
+
     def wait_for_index(self, index_name):
-            self.monitor.monitor_fts_indexing_queue(
-                        self.fts_master_node,
-                        index_name,
-                        self.fts_index_map[index_name]["total_docs"]
-                    )
+        self.monitor.monitor_fts_indexing_queue(
+            self.fts_master_node,
+            index_name,
+            self.fts_index_map[index_name]["total_docs"]
+        )
 
     def wait_for_index_persistence(self, fts_nodes=None):
         if fts_nodes is None:
@@ -277,9 +293,8 @@ class FTSTest(JTSTest):
         return size
 
     @with_stats
-    @timeit
     def build_indexes(self):
-        elapsed_time = self.create_fts_indexes_and_wait()
+        elapsed_time = self.create_fts_indexes()
         return elapsed_time
 
     def spread_data(self):
@@ -317,7 +332,8 @@ class FTSThroughputTest(FTSTest):
 
     def run(self):
         self.cleanup_and_restore()
-        self.create_fts_indexes_and_wait()
+        self.create_fts_index_definitions()
+        self.create_fts_indexes()
         self.download_jts()
         self.wait_for_index_persistence()
         self.warmup()
@@ -335,7 +351,8 @@ class FTSLatencyTest(FTSTest):
 
     def run(self):
         self.cleanup_and_restore()
-        self.create_fts_indexes_and_wait()
+        self.create_fts_index_definitions()
+        self.create_fts_indexes()
         self.download_jts()
         self.wait_for_index_persistence()
         self.warmup()
@@ -358,6 +375,7 @@ class FTSIndexTest(FTSTest):
     def run(self):
         self.cleanup_and_restore()
         fts_nodes = self.add_extra_fts_parameters()
+        self.create_fts_index_definitions()
         time_elapsed = self.build_indexes()
         self.wait_for_index_persistence(fts_nodes)
         size = self.calculate_index_size()

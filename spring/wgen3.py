@@ -296,7 +296,8 @@ class Worker:
             'n1ql_timeout': self.ws.n1ql_timeout,
             'connstr_params': self.ws.connstr_params
         }
-
+        if self.ts.cloud:
+            params['host'] = self.ts.cloud['cluster_svc']
         try:
             self.cb = CBGen3(**params)
         except Exception as e:
@@ -345,6 +346,9 @@ class KVWorker(Worker):
     def random_targets(self) -> List[str]:
         targets = list(random.choice(self.access_targets, self.num_random_targets))
         return self.q * targets + targets[:self.r]
+
+    def random_target(self) -> str:
+        return random.choice(self.access_targets)
 
     def create_args(self, cb: Client,
                     curr_items: int,
@@ -405,90 +409,46 @@ class KVWorker(Worker):
     def gen_cmd_sequence(self, cb: Client = None) -> Sequence:
         if not cb:
             cb = self.cb
-
-        ops = self.random_ops
-        targets = self.random_targets
-        target_set = set(targets)
-
-        curr_items = dict()
-        deleted_items = dict()
-        creates = dict()
-        deletes = dict()
-
-        for i in range(self.batch_size):
-            op = ops[i]
-            target = targets[i]
-            c = creates.get(target, 0)
-            d = deletes.get(target, 0)
-            creates[target] = c
-            deletes[target] = d
-            if op == 'c':
-                creates[target] = c + 1
-            elif op == 'd':
-                deletes[target] = d + 1
-
-        for target in target_set:
-            c = creates[target]
-            d = deletes[target]
-
-            with self.lock:
+        target = self.random_target()
+        curr_items = self.ws.items
+        deleted_items = 0
+        if self.ws.creates or self.ws.deletes:
+            max_batch_deletes_buffer = self.ws.deletes * self.ws.workers
+            delete_buffer_diff = self.ws.deletes - max_batch_deletes_buffer
+            with self.gen_lock:
                 target_info = self.shared_dict[target]
-                target_curr_items, target_deleted_items = target_info.split(":")
-                if c > 0:
-                    update_curr_items = str(int(target_curr_items) + c)
-                else:
-                    update_curr_items = target_curr_items
-                if d > 0:
-                    update_deleted_items = str(int(target_deleted_items) + self.ws.deletes)
-                else:
-                    update_deleted_items = target_deleted_items
-                if c + d > 0:
-                    self.shared_dict[target] = update_curr_items + ":" + update_deleted_items
-
-            curr_items[target] = int(target_curr_items)
-            deleted_items[target] = int(target_deleted_items)
-
-        deletes_buffer = self.ws.deletes * self.ws.workers
-        creates_buffer = self.ws.creates * self.ws.workers
-
+                curr_items = target_info[0]
+                deleted_items = target_info[1] + max_batch_deletes_buffer
+                self.shared_dict[target] = \
+                    [curr_items + self.ws.creates, deleted_items + delete_buffer_diff]
         cmds = []
-        for i in range(self.batch_size):
-            op = ops[i]
-            target = targets[i]
-            c = curr_items[target]
-            d = deleted_items[target]
+        for op in self.random_ops:
             if op == 'c':
-                cmds += self.create_args(cb, c, target)
-                curr_items[target] = c + 1
+                cmds += self.create_args(cb, curr_items, target)
+                curr_items += 1
             elif op == 'r':
-                cmds += self.read_args(cb,
-                                       c - creates_buffer,
-                                       d + deletes_buffer,
-                                       target)
+                cmds += self.read_args(cb, curr_items, deleted_items, target)
             elif op == 'u':
-                cmds += self.update_args(cb,
-                                         c - creates_buffer,
-                                         d + deletes_buffer,
-                                         target)
+                cmds += self.update_args(cb, curr_items, deleted_items, target)
             elif op == 'd':
-                cmds += self.delete_args(cb, d, target)
-                deleted_items[target] = d + 1
+                cmds += self.delete_args(cb, deleted_items, target)
+                deleted_items += 1
             elif op == 'm':
-                cmds += self.modify_args(cb,
-                                         c - creates_buffer,
-                                         d + deletes_buffer,
-                                         target)
+                cmds += self.modify_args(cb, curr_items, deleted_items, target)
         return cmds
 
     def do_batch(self, *args, **kwargs):
+        op_count = 0
         if self.target_time is None:
             cmd_seq = self.gen_cmd_sequence()
             for cmd, func, args in cmd_seq:
                 latency = func(*args)
                 if latency is not None:
                     self.reservoir.update(operation=cmd, value=latency)
-                if self.time_to_stop():
-                    return
+                if not op_count % 5:
+                    if self.time_to_stop():
+                        return
+                op_count += 1
         else:
             t0 = time.time()
             self.op_delay = self.op_delay + (self.delta / self.batch_size)
@@ -500,8 +460,10 @@ class KVWorker(Worker):
                     self.reservoir.update(operation=cmd, value=latency)
                 if self.op_delay > 0:
                     time.sleep(self.op_delay * self.CORRECTION_FACTOR)
-                if self.time_to_stop():
-                    return
+                if not op_count % 5:
+                    if self.time_to_stop():
+                        return
+                op_count += 1
             self.batch_duration = time.time() - t0
             self.delta = self.target_time - self.batch_duration
             if self.delta > 0:
@@ -510,9 +472,12 @@ class KVWorker(Worker):
     def run_condition(self, curr_ops):
         return curr_ops.value < self.ws.ops and not self.time_to_stop()
 
-    def run(self, sid, lock, curr_ops, shared_dict, current_hot_load_start=None, timer_elapse=None):
+    def run(self, sid, locks, curr_ops, shared_dict,
+            current_hot_load_start=None, timer_elapse=None):
         self.sid = sid
-        self.lock = lock
+        self.locks = locks
+        self.gen_lock = locks[0]
+        self.batch_lock = locks[1]
         self.shared_dict = shared_dict
         self.current_hot_load_start = current_hot_load_start
         self.timer_elapse = timer_elapse
@@ -533,15 +498,13 @@ class KVWorker(Worker):
                                self.ws.throughput
         else:
             self.target_time = None
-
         self.seed()
-
         try:
             if self.target_time:
                 start_delay = random.random_sample() * self.target_time
                 time.sleep(start_delay * self.CORRECTION_FACTOR)
             while self.run_condition(curr_ops):
-                with lock:
+                with self.batch_lock:
                     curr_ops.value += self.batch_size
                 self.do_batch()
                 self.report_progress(curr_ops.value)
@@ -549,7 +512,6 @@ class KVWorker(Worker):
             logger.info('Interrupted: {}-{}'.format(self.NAME, self.sid))
         else:
             logger.info('Finished: {}-{}'.format(self.NAME, self.sid))
-
         self.dump_stats()
 
 
@@ -933,14 +895,13 @@ class N1QLWorker(Worker):
         if self.target_time:
             t0 = time.time()
             self.op_delay = self.op_delay + (self.delta / self.ws.n1ql_batch_size)
-
         target = self.next_target()
         with self.lock:
             target_info = self.shared_dict[target]
-            target_curr_items, target_deleted_items = target_info.split(":")
-            target_curr_items = int(target_curr_items)
-            updated_curr_items = str(target_curr_items + self.ws.n1ql_batch_size)
-            self.shared_dict[target] = updated_curr_items + ":" + target_deleted_items
+            target_curr_items = target_info[0]
+            target_deleted_items = target_info[1]
+            updated_curr_items = target_curr_items + self.ws.n1ql_batch_size
+            self.shared_dict[target] = [updated_curr_items, target_deleted_items]
 
         for i in range(self.ws.n1ql_batch_size):
             target_curr_items += 1
@@ -952,12 +913,11 @@ class N1QLWorker(Worker):
                 self.reservoir.update(operation='query', value=latency)
             else:
                 self.first = False
-
             if self.op_delay > 0 and self.target_time:
                 time.sleep(self.op_delay * self.CORRECTION_FACTOR)
-            if self.time_to_stop():
-                return
-
+            if not i % 5:
+                if self.time_to_stop():
+                    return
         if self.target_time:
             self.batch_duration = time.time() - t0
             self.delta = self.target_time - self.batch_duration
@@ -970,10 +930,8 @@ class N1QLWorker(Worker):
             self.op_delay = self.op_delay + (self.delta / self.ws.n1ql_batch_size)
 
         target = self.next_target()
-        with self.lock:
-            target_info = self.shared_dict[target]
-        target_curr_items, target_deleted_items = target_info.split(":")
-        target_curr_items = int(target_curr_items)
+        target_info = self.shared_dict[target]
+        target_curr_items = target_info[0]
 
         for i in range(self.ws.n1ql_batch_size):
 
@@ -987,13 +945,11 @@ class N1QLWorker(Worker):
                 self.reservoir.update(operation='query', value=latency)
             else:
                 self.first = False
-
             if self.op_delay > 0 and self.target_time:
                 time.sleep(self.op_delay * self.CORRECTION_FACTOR)
-
-            if self.time_to_stop():
-                return
-
+            if not i % 5:
+                if self.time_to_stop():
+                    return
         if self.target_time:
             self.batch_duration = time.time() - t0
             self.delta = self.target_time - self.batch_duration
@@ -1006,10 +962,8 @@ class N1QLWorker(Worker):
             self.op_delay = self.op_delay + (self.delta / self.ws.n1ql_batch_size)
 
         target = self.next_target()
-        with self.lock:
-            target_info = self.shared_dict[target]
-        target_curr_items, target_deleted_items = target_info.split(":")
-        target_curr_items = int(target_curr_items)
+        target_info = self.shared_dict[target]
+        target_curr_items = target_info[0]
 
         if self.ws.doc_gen == 'ext_reverse_lookup':
             target_curr_items //= 4
@@ -1023,13 +977,11 @@ class N1QLWorker(Worker):
                 self.reservoir.update(operation='query', value=latency)
             else:
                 self.first = False
-
             if self.op_delay > 0 and self.target_time:
                 time.sleep(self.op_delay * self.CORRECTION_FACTOR)
-
-            if self.time_to_stop():
-                return
-
+            if not i % 5:
+                if self.time_to_stop():
+                    return
         if self.target_time:
             self.batch_duration = time.time() - t0
             self.delta = self.target_time - self.batch_duration
@@ -1151,16 +1103,17 @@ class N1QLWorker(Worker):
         self.replacement_targets[self.ts.bucket] = target_replacements
         return target
 
-    def run(self, sid, lock, curr_ops, shared_dict, current_hot_load_start=None, timer_elapse=None):
+    def run(self, sid, locks, curr_ops, shared_dict,
+            current_hot_load_start=None, timer_elapse=None):
         self.sid = sid
-        self.lock = lock
+        self.locks = locks
+        self.lock = locks[0]
         self.shared_dict = shared_dict
         self.current_hot_load_start = current_hot_load_start
         self.timer_elapse = timer_elapse
         self.bucket_instances = self.access_targets[self.ts.bucket]
         self.num_bucket_instances = len(self.bucket_instances)
         self.num_worker_targets = len(self.bucket_targets[self.ts.bucket])
-
         self.max_target_count = 0
         for query in self.ws.n1ql_queries:
             self.max_target_count = \
@@ -1206,13 +1159,10 @@ class ViewWorker(Worker):
 
     def __init__(self, workload_settings, target_settings, shutdown_event):
         super().__init__(workload_settings, target_settings, shutdown_event)
-
         self.delta = 0.0
         self.op_delay = 0.0
         self.batch_duration = 0.0
-
         self.reservoir = Reservoir(num_workers=self.ws.query_workers)
-
         if workload_settings.index_type is None:
             self.new_queries = ViewQueryGen3(workload_settings.ddocs,
                                              workload_settings.query_params)
@@ -1225,38 +1175,33 @@ class ViewWorker(Worker):
             t0 = time.time()
             self.op_delay = self.op_delay + (self.delta / self.ws.n1ql_batch_size)
 
-        with self.lock:
-            target_info = self.shared_dict["_default:_default"]
-        target_curr_items, target_deleted_items = target_info.split(":")
-        curr_items = int(target_curr_items)
-        deleted_items = int(target_deleted_items)
+        target_info = self.shared_dict["_default:_default"]
+        curr_items = target_info[0]
+        deleted_items = target_info[1]
         curr_items_spot = \
             curr_items - self.ws.creates * self.ws.workers
         deleted_spot = \
             deleted_items + self.ws.deletes * self.ws.workers
 
-        for _ in range(self.ws.spring_batch_size):
+        for i in range(self.ws.spring_batch_size):
             key = self.existing_keys.next(curr_items_spot, deleted_spot)
             doc = self.docs.next(key)
             ddoc_name, view_name, query = self.new_queries.next(doc)
-
             latency = self.cb.view_query(ddoc_name, view_name, query=query)
-
             self.reservoir.update(operation='query', value=latency)
-
             if self.op_delay > 0 and self.target_time:
                 time.sleep(self.op_delay * self.CORRECTION_FACTOR)
-
-            if self.time_to_stop():
-                return
-
+            if not i % 5:
+                if self.time_to_stop():
+                    return
         if self.target_time:
             self.batch_duration = time.time() - t0
             self.delta = self.target_time - self.batch_duration
             if self.delta > 0:
                 time.sleep(self.CORRECTION_FACTOR * self.delta)
 
-    def run(self, sid, lock, curr_ops, shared_dict, current_hot_load_start=None, timer_elapse=None):
+    def run(self, sid, locks, curr_ops, shared_dict,
+            current_hot_load_start=None, timer_elapse=None):
         if self.ws.query_throughput < float('inf'):
             self.target_time = float(self.ws.spring_batch_size) * self.ws.query_workers / \
                                self.ws.query_throughput
@@ -1264,7 +1209,8 @@ class ViewWorker(Worker):
             self.target_time = None
 
         self.sid = sid
-        self.lock = lock
+        self.locks = locks
+        self.lock = locks[0]
         self.shared_dict = shared_dict
         self.current_hot_load_start = current_hot_load_start
         self.timer_elapse = timer_elapse
@@ -1326,8 +1272,9 @@ class WorkloadGen:
     def __init__(self, workload_settings, target_settings, timer=None, *args):
         self.ws = workload_settings
         self.ts = target_settings
-        self.timer = timer and Timer(timer, self.abort) or None
-        self.shutdown_event = timer and Event() or None
+        self.time = timer
+        self.timer = self.time and Timer(self.time, self.abort) or None
+        self.shutdown_events = []
         self.worker_processes = []
 
     def start_workers(self,
@@ -1336,18 +1283,22 @@ class WorkloadGen:
                       current_hot_load_start=None,
                       timer_elapse=None):
         curr_ops = Value('L', 0)
-        lock = Lock()
+        batch_lock = Lock()
+        gen_lock = Lock()
+        locks = [batch_lock, gen_lock]
         worker_type, total_workers = worker_factory(self.ws)
         for sid in range(total_workers):
-            args = (sid, lock, curr_ops, shared_dict,
+            shutdown_event = self.time and Event() or None
+            self.shutdown_events.append(shutdown_event)
+            args = (sid, locks, curr_ops, shared_dict,
                     current_hot_load_start, timer_elapse, worker_type,
-                    self.ws, self.ts, self.shutdown_event)
+                    self.ws, self.ts, shutdown_event)
 
-            def run_worker(sid, lock, curr_ops, shared_dict,
+            def run_worker(sid, locks, curr_ops, shared_dict,
                            current_hot_load_start, timer_elapse, worker_type,
                            ws, ts, shutdown_event):
                 worker = worker_type(ws, ts, shutdown_event)
-                worker.run(sid, lock, curr_ops, shared_dict, current_hot_load_start, timer_elapse)
+                worker.run(sid, locks, curr_ops, shared_dict, current_hot_load_start, timer_elapse)
 
             worker_process = Process(target=run_worker, args=args)
             worker_process.daemon = True
@@ -1362,33 +1313,26 @@ class WorkloadGen:
         logger.info('Starting all collections workers')
         self.manager = Manager()
         self.shared_dict = self.manager.dict()
-        num_load = 0
-
-        zero_string = str(0)
         if self.ws.collections is not None:
+            num_load = 0
             target_scope_collections = self.ws.collections[self.ts.bucket]
-
             for scope in target_scope_collections.keys():
                 for collection in target_scope_collections[scope].keys():
                     if target_scope_collections[scope][collection]['load'] == 1:
                         num_load += 1
 
             curr_items = self.ws.items // num_load
-            curr_items_string = str(curr_items)
-            zero_zero = zero_string + ":" + zero_string
-            curr_items_zero = curr_items_string + ":" + zero_string
             for scope in target_scope_collections.keys():
                 for collection in target_scope_collections[scope].keys():
                     target = scope+":"+collection
                     if target_scope_collections[scope][collection]['load'] == 1:
-                        self.shared_dict[target] = curr_items_zero
+                        self.shared_dict[target] = [curr_items, 0]
                     else:
-                        self.shared_dict[target] = zero_zero
+                        self.shared_dict[target] = [0, 0]
         else:
             # version prior to 7.0.0
-            num_load = 1
             target = "_default:_default"
-            self.shared_dict[target] = str(self.ws.items) + ":" + zero_string
+            self.shared_dict[target] = [self.ws.items, 0]
 
         timer_elapse = Value('I', 0)
         current_hot_load_start = Value('L', 0)
@@ -1420,7 +1364,8 @@ class WorkloadGen:
 
     def abort(self, *args):
         """Triggers the shutdown event."""
-        self.shutdown_event.set()
+        for shutdown_event in self.shutdown_events:
+            shutdown_event.set()
 
     @staticmethod
     def store_pid():

@@ -368,16 +368,13 @@ class KVWorker(Worker):
             cb = self.cb
 
         curr_items = self.ws.items
-        if self.ws.creates:
-            with self.lock:
+        deleted_items = 0
+        if self.ws.creates or self.ws.deletes:
+            with self.gen_lock:
                 curr_items = self.curr_items.value
                 self.curr_items.value += self.ws.creates
-
-        deleted_items = 0
-        if self.ws.deletes:
-            with self.lock:
-                deleted_items = self.deleted_items.value + \
-                    self.ws.deletes * self.ws.workers
+                deleted_items = \
+                    self.deleted_items.value + self.ws.deletes * self.ws.workers
                 self.deleted_items.value += self.ws.deletes
 
         cmds = []
@@ -397,14 +394,17 @@ class KVWorker(Worker):
         return cmds
 
     def do_batch(self, *args, **kwargs):
+        op_count = 0
         if self.target_time is None:
             cmd_seq = self.gen_cmd_sequence()
             for cmd, func, args in cmd_seq:
                 latency = func(*args)
                 if latency is not None:
                     self.reservoir.update(operation=cmd, value=latency)
-                if self.time_to_stop():
-                    return
+                if not op_count % 5:
+                    if self.time_to_stop():
+                        return
+                op_count += 1
         else:
             t0 = time.time()
             self.op_delay = self.op_delay + (self.delta / self.ws.spring_batch_size)
@@ -416,8 +416,10 @@ class KVWorker(Worker):
                     self.reservoir.update(operation=cmd, value=latency)
                 if self.op_delay > 0:
                     time.sleep(self.op_delay * self.CORRECTION_FACTOR)
-                if self.time_to_stop():
-                    return
+                if not op_count % 5:
+                    if self.time_to_stop():
+                        return
+                op_count += 1
             self.batch_duration = time.time() - t0
             self.delta = self.target_time - self.batch_duration
             if self.delta > 0:
@@ -426,7 +428,7 @@ class KVWorker(Worker):
     def run_condition(self, curr_ops):
         return curr_ops.value < self.ws.ops and not self.time_to_stop()
 
-    def run(self, sid, lock, curr_ops, curr_items, deleted_items,
+    def run(self, sid, locks, curr_ops, curr_items, deleted_items,
             current_hot_load_start=None, timer_elapse=None):
         if self.ws.throughput < float('inf'):
             self.target_time = float(self.ws.spring_batch_size) * self.ws.workers / \
@@ -434,17 +436,18 @@ class KVWorker(Worker):
         else:
             self.target_time = None
         self.sid = sid
-        self.lock = lock
+        self.locks = locks
+        self.gen_lock = locks[0]
+        self.batch_lock = locks[1]
         self.curr_items = curr_items
         self.deleted_items = deleted_items
         self.current_hot_load_start = current_hot_load_start
         self.timer_elapse = timer_elapse
-
         self.seed()
 
         try:
             while self.run_condition(curr_ops):
-                with lock:
+                with self.batch_lock:
                     curr_ops.value += self.ws.spring_batch_size
                 self.do_batch()
                 self.report_progress(curr_ops.value)
@@ -687,7 +690,7 @@ class ViewWorker(Worker):
             if self.time_to_stop():
                 return
 
-    def run(self, sid, lock, curr_ops, curr_items, deleted_items, *args):
+    def run(self, sid, locks, curr_ops, curr_items, deleted_items, *args):
         if self.ws.query_throughput < float('inf'):
             self.target_time = float(self.ws.spring_batch_size) * self.ws.query_workers / \
                 self.ws.query_throughput
@@ -737,7 +740,7 @@ class N1QLWorker(Worker):
         if self.ws.doc_gen == 'ext_reverse_lookup':
             curr_items //= 4
 
-        for _ in range(self.ws.n1ql_batch_size):
+        for i in range(self.ws.n1ql_batch_size):
             key = self.existing_keys.next(curr_items=curr_items,
                                           curr_deletes=0)
             doc = self.docs.next(key)
@@ -752,8 +755,9 @@ class N1QLWorker(Worker):
             if self.op_delay > 0 and self.target_time:
                 time.sleep(self.op_delay * self.CORRECTION_FACTOR)
 
-            if self.time_to_stop():
-                return
+            if not i % 5:
+                if self.time_to_stop():
+                    return
 
         if self.target_time:
             self.batch_duration = time.time() - t0
@@ -763,11 +767,11 @@ class N1QLWorker(Worker):
 
     @with_sleep
     def create(self):
-        with self.lock:
+        with self.gen_lock:
             curr_items = self.curr_items.value
             self.curr_items.value += self.ws.n1ql_batch_size
 
-        for _ in range(self.ws.n1ql_batch_size):
+        for i in range(self.ws.n1ql_batch_size):
             curr_items += 1
             key = self.new_keys.next(curr_items=curr_items)
             doc = self.docs.next(key)
@@ -776,15 +780,16 @@ class N1QLWorker(Worker):
             latency = self.cb.n1ql_query(query)
             self.reservoir.update(operation='query', value=latency)
 
-            if self.time_to_stop():
-                return
+            if not i % 5:
+                if self.time_to_stop():
+                    return
 
     @with_sleep
     def update(self):
-        with self.lock:
+        with self.gen_lock:
             curr_items = self.curr_items.value
 
-        for _ in range(self.ws.n1ql_batch_size):
+        for i in range(self.ws.n1ql_batch_size):
             key = self.keys_for_cas_update.next(sid=self.sid,
                                                 curr_items=curr_items)
             doc = self.docs.next(key)
@@ -793,8 +798,9 @@ class N1QLWorker(Worker):
             latency = self.cb.n1ql_query(query)
             self.reservoir.update(operation='query', value=latency)
 
-            if self.time_to_stop():
-                return
+            if not i % 5:
+                if self.time_to_stop():
+                    return
 
     def do_batch(self):
         if self.ws.n1ql_op == 'read':
@@ -804,13 +810,15 @@ class N1QLWorker(Worker):
         elif self.ws.n1ql_op == 'update':
             self.update()
 
-    def run(self, sid, lock, curr_ops, curr_items, *args):
+    def run(self, sid, locks, curr_ops, curr_items, *args):
         if self.ws.n1ql_throughput < float('inf'):
             self.target_time = self.ws.n1ql_batch_size * self.ws.n1ql_workers / \
                 float(self.ws.n1ql_throughput)
         else:
             self.target_time = None
-        self.lock = lock
+        self.locks = locks
+        self.gen_lock = locks[0]
+        self.batch_lock = locks[1]
         self.sid = sid
         self.curr_items = curr_items
 
@@ -830,8 +838,9 @@ class WorkloadGen:
     def __init__(self, workload_settings, target_settings, timer=None, *args):
         self.ws = workload_settings
         self.ts = target_settings
-        self.timer = timer and Timer(timer, self.abort) or None
-        self.shutdown_event = timer and Event() or None
+        self.time = timer
+        self.timer = self.time and Timer(self.time, self.abort) or None
+        self.shutdown_events = []
         self.worker_processes = []
 
     def start_workers(self,
@@ -841,19 +850,22 @@ class WorkloadGen:
                       current_hot_load_start=None,
                       timer_elapse=None):
         curr_ops = Value('L', 0)
-        lock = Lock()
+        batch_lock = Lock()
+        gen_lock = Lock()
+        locks = [batch_lock, gen_lock]
         worker_type, total_workers = worker_factory(self.ws)
-
         for sid in range(total_workers):
-            args = (sid, lock, curr_ops, curr_items, deleted_items,
+            shutdown_event = self.time and Event() or None
+            self.shutdown_events.append(shutdown_event)
+            args = (sid, locks, curr_ops, curr_items, deleted_items,
                     current_hot_load_start, timer_elapse, worker_type,
-                    self.ws, self.ts, self.shutdown_event)
+                    self.ws, self.ts, shutdown_event)
 
-            def run_worker(sid, lock, curr_ops, curr_items, deleted_items,
+            def run_worker(sid, locks, curr_ops, curr_items, deleted_items,
                            current_hot_load_start, timer_elapse, worker_type,
                            ws, ts, shutdown_event):
                 worker = worker_type(ws, ts, shutdown_event)
-                worker.run(sid, lock, curr_ops, curr_items, deleted_items,
+                worker.run(sid, locks, curr_ops, curr_items, deleted_items,
                            current_hot_load_start, timer_elapse)
 
             worker_process = Process(target=run_worker, args=args)
@@ -870,7 +882,8 @@ class WorkloadGen:
 
     def abort(self, *args):
         """Triggers the shutdown event."""
-        self.shutdown_event.set()
+        for shutdown_event in self.shutdown_events:
+            shutdown_event.set()
 
     @staticmethod
     def store_pid():

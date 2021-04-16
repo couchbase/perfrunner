@@ -49,12 +49,9 @@
  "sourceUUID": "",
  "sourceParams": {},
  "planParams": {
-  "maxPartitionsPerPIndex": 171,
-  "numReplicas": 0,
-  "hierarchyRules": null,
-   "nodePlanParams": null,
-   "pindexWeights": null,
-   "planFrozen": false
+  "maxPartitionsPerPIndex": 102,
+  "indexPartitions":10,
+  "numReplicas": 0
  },
  "uuid": ""
 }

@@ -470,9 +470,14 @@
         ],
     "FTS-MultiIndex": [
         {"job": "atlas_collections", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/collections/jts_fts_index_3node_1M_initial_10_coll_per_index_1s_10c_1i.test"},
-        {"job": "atlas_collections", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/collections/jts_fts_index_3node_1M_initial_10_coll_per_index_1s_1000c_1i.test"},
-        {"job": "atlas_collections", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/collections/jts_fts_index_3node_1M_initial_20_coll_per_index_1s_1000c_100i.test"},
+        {"job": "atlas_collections", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/collections/jts_fts_index_3node_1M_initial_100_coll_per_index_1s_100c_1i.test"},
+        {"job": "atlas_collections", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/collections/jts_fts_index_3node_1M_initial_1000_coll_per_index_1s_1000c_1i.test"},
         {"job": "atlas_collections", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/collections/jts_fts_index_3node_1M_initial_100_coll_per_index_1s_1000c_10i.test"},
+        {"job": "atlas_collections", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/collections/jts_fts_index_3node_1M_initial_1000_coll_per_index_1s_1000c_10i.test"},
+        {"job": "atlas_collections", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/collections/jts_fts_index_3node_1M_initial_20_coll_per_index_1s_1000c_50i.test"},
+        {"job": "atlas_collections", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/collections/jts_fts_index_3node_1M_initial_20_coll_per_index_1s_1000c_100i.test"},
+        {"job": "atlas_collections", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/collections/jts_fts_index_3node_1M_initial_10_coll_per_index_1s_1000c_100i.test"},
+        {"job": "atlas_collections", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/collections/jts_fts_index_3node_1M_initial_10_coll_per_index_1s_1000c_1000i.test"}
         ],
     "FTS-Rebalance": [
 

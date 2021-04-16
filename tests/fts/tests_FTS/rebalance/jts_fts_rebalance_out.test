@@ -2,7 +2,7 @@
 test = perfrunner.tests.rebalance.RebalanceForFTS
 
 [showfast]
-title = FTS Rebalance-out (min), 4 -> 3, 20M X 1KB, maxConcurrentPartitionMovesPerNode = 1, partitioned_index = 10, replica = 1
+title = FTS Rebalance-out (min), 4 -> 3, 20M X 1KB, maxConcurrentPartitionMovesPerNode = 1, partitioned_index = 10, replica = 0
 component = jts
 category = Rebalance
 sub_category = default
@@ -20,7 +20,7 @@ replica_number=0
 [jts]
 test_total_docs = 20000000
 couchbase_index_name = perf_fts_index
-couchbase_index_configfile = tests/fts/index/fts_rebal_with_replica.json
+couchbase_index_configfile = tests/fts/index/fts_rebal.json
 
 [restore]
 backup_storage =  /data3/Jyotsna/backup/

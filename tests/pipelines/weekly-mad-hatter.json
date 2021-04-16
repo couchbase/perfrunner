@@ -57,6 +57,9 @@
         {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_in.test"},
         {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_swap.test"},
         {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_out.test"},
+        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_in_with_index_replica.test"},
+        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_swap_with_index_replica.test"},
+        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_out_with_index_replica.test"},
         {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_in_with_para.test"},
         {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_swap_with_para.test"},
         {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_out_with_para.test"}
@@ -188,8 +191,6 @@
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_array_indexing_cov_Q3_20M_between_gsi_plasma_ok.test"},
         {"job": "iris", "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_array_indexing_cov_Q2_20M_gsi_plasma_false.test"},
         {"job": "iris", "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_array_indexing_cov_Q2_20M_gsi_plasma_ok.test"},
-        {"job": "iris", "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_array_indexing_cov_Q2_20M_gsi_moi_false.test"},
-        {"job": "iris", "cluster": "iris.spec", "test_config": "n1ql/n1ql_lat_array_indexing_cov_Q2_20M_gsi_moi_ok.test"},
         {"job": "iris-multi-client-dp", "cluster": "iris.spec", "test_config": "n1ql_thr_udf_empty.test"},
         {"job": "iris-multi-client-dp", "cluster": "iris.spec", "test_config": "n1ql_thr_udf_QU2_20M_gsi_moi_ok.test"},
         {"job": "iris-multi-client-dp", "cluster": "iris.spec", "test_config": "n1ql_thr_udf_nested_QU2_20M_gsi_moi_ok.test"},

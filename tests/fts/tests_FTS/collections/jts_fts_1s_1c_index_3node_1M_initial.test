@@ -2,7 +2,7 @@
 test = perfrunner.tests.fts.FTSIndexTest
 
 [showfast]
-title = Index build time, initial (sec), wiki 1M x 1KB, 3 node, FTS, 1000 collections per index, s=1 c=1 i=1
+title = Index build time, initial (sec), wiki 1M x 1KB, 3 node, FTS, 1 collection per index, s=1 c=1 i=1
 component = jts
 category = 1M
 sub_category = Index

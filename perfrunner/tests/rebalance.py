@@ -167,13 +167,14 @@ class RebalanceForFTS(RebalanceTest, FTSTest):
     ALL_HOSTNAMES = True
     COLLECTORS = {'fts_stats': True, 'jts_stats': True}
 
-    @timeit
     def build_indexes(self):
-        self.create_fts_indexes_and_wait()
+        elapsed_time = self.create_fts_indexes()
+        return elapsed_time
 
     def run(self):
         self.cleanup_and_restore()
         self.wait_for_persistence()
+        self.create_fts_index_definitions()
         fts_nodes_before = self.add_extra_fts_parameters()
 
         logger.info("Sleeping for 10s before the index creation")

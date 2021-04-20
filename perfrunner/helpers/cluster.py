@@ -844,5 +844,5 @@ class ClusterManager:
     def enable_developer_preview(self):
         release, build_number = self.build.split('-')
         build = tuple(map(int, release.split('.'))) + (int(build_number),)
-        if build > (7, 0, 0, 4698):
+        if build > (7, 0, 0, 4698) or build < (0, 0, 0, 9999):
             self.remote.enable_developer_preview()

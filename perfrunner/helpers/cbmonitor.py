@@ -197,7 +197,7 @@ class CbAgent:
         major = int(split_version[0])
         minor = int(split_version[1])
 
-        if (major == 6 and minor < 6) or (major < 6):
+        if (major == 6 and minor < 6) or (major < 6 and major != 0):
             self.add_collector(NSServerOverview)
 
         if latency:

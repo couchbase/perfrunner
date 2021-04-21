@@ -540,7 +540,7 @@ class RemoteLinux(Remote):
     @servers_by_role(roles=['index'])
     def kill_process_on_index_node(self, process):
         logger.info('Killing following process on index node: {}'.format(process))
-        run("killall {}".format(process))
+        run("killall {}".format(process), quiet=True)
 
     def change_owner(self, host, path, owner='couchbase'):
         with settings(host_string=host):

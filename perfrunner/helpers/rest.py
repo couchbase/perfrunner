@@ -387,6 +387,11 @@ class DefaultRestHelper(RestBase):
               'connection_type=replication&aggregationFunction=sum'.format(host, bucket)
         return self.get(url=api).json()
 
+    def get_dcp_replication_items_v2(self, host: str, bucket: str) -> dict:
+        api = 'http://{}:8091/pools/default/stats/range/kv_dcp_items_remaining?bucket={}&' \
+              'connection_type=replication&nodesAggregation=sum'.format(host, bucket)
+        return self.get(url=api).json()
+
     def get_xdcr_stats(self, host: str, bucket: str) -> dict:
         api = 'http://{}:8091/pools/default/buckets/@xdcr-{}/stats'.format(host,
                                                                            bucket)
@@ -887,6 +892,11 @@ class DefaultRestHelper(RestBase):
     def get_cbas_incoming_records_count(self, host: str) -> dict:
         api = 'http://{}:8091/pools/default/stats/range/cbas_incoming_records_count?' \
               'aggregationFunction=sum'.format(host)
+        return self.get(url=api).json()
+
+    def get_cbas_incoming_records_count_v2(self, host: str) -> dict:
+        api = 'http://{}:8091/pools/default/stats/range/cbas_incoming_records_count?' \
+              'nodesAggregation=sum'.format(host)
         return self.get(url=api).json()
 
     def deploy_function(self, node: str, func: dict, name: str):

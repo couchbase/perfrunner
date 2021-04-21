@@ -240,8 +240,12 @@ class DefaultMonitor(DefaultRestHelper):
                                         self.get_bucket_stats)
         else:
             if self.test_config.bucket.replica_number != 0:
-                self._wait_for_empty_dcp_queues(host, bucket,
-                                                self.get_dcp_replication_items)
+                if self.build_version_number < (7, 0, 0, 4990):
+                    self._wait_for_empty_dcp_queues(host, bucket,
+                                                    self.get_dcp_replication_items)
+                else:
+                    self._wait_for_empty_dcp_queues(host, bucket,
+                                                    self.get_dcp_replication_items_v2)
             self.DCP_QUEUES = (
                 'ep_dcp_other_items_remaining',
             )
@@ -749,7 +753,10 @@ class DefaultMonitor(DefaultRestHelper):
             if self.build_version_number < (7, 0, 0, 0):
                 num_analytics_items = self.get_num_analytics_items(analytics_node, bucket)
             else:
-                incoming_records = self.get_cbas_incoming_records_count(analytics_node)
+                if self.build_version_number < (7, 0, 0, 4990):
+                    incoming_records = self.get_cbas_incoming_records_count(analytics_node)
+                else:
+                    incoming_records = self.get_cbas_incoming_records_count_v2(analytics_node)
                 num_analytics_items = int(incoming_records["data"][0]["values"][-1][1])
 
             logger.info('Analytics has {:,} docs (target is {:,})'.format(

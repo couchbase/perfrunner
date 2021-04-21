@@ -372,11 +372,16 @@ class FTSIndexTest(FTSTest):
             *self.metrics.fts_index_size(size)
         )
 
+    @with_stats
+    def build_index(self, fts_nodes):
+        elapsed_time = self.create_fts_indexes()
+        self.wait_for_index_persistence(fts_nodes)
+        return elapsed_time
+
     def run(self):
         self.cleanup_and_restore()
         fts_nodes = self.add_extra_fts_parameters()
         self.create_fts_index_definitions()
-        time_elapsed = self.build_indexes()
-        self.wait_for_index_persistence(fts_nodes)
+        time_elapsed = self.build_index(fts_nodes)
         size = self.calculate_index_size()
         self.report_kpi(time_elapsed, size)

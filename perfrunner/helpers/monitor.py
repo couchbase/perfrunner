@@ -235,7 +235,20 @@ class DefaultMonitor(DefaultRestHelper):
     def monitor_dcp_queues(self, host, bucket):
         logger.info('Monitoring DCP queues: {}'.format(bucket))
 
-        if self.build_version_number < (7, 0, 0, 3937):
+        if self.build_version_number < (1, 0, 0, 0):
+            if self.test_config.bucket.replica_number != 0:
+                if self.build_version_number < (0, 0, 0, 2106):
+                    self._wait_for_empty_dcp_queues(host, bucket,
+                                                    self.get_dcp_replication_items)
+                else:
+                    self._wait_for_empty_dcp_queues(host, bucket,
+                                                    self.get_dcp_replication_items_v2)
+            self.DCP_QUEUES = (
+                'ep_dcp_other_items_remaining',
+            )
+            self._wait_for_empty_queues(host, bucket, self.DCP_QUEUES,
+                                        self.get_bucket_stats)
+        elif self.build_version_number < (7, 0, 0, 3937):
             self._wait_for_empty_queues(host, bucket, self.DCP_QUEUES,
                                         self.get_bucket_stats)
         else:

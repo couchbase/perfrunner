@@ -1,0 +1,51 @@
+[test_case]
+test = perfrunner.tests.rebalance.RebalanceKVTest
+
+[showfast]
+title = Rebalance-swap (min), 3 -> 3, 150M x 1KB, 15K ops/sec (90/10 R/W), 10%% cache miss rate
+component = reb
+category = kv
+sub_category = DGM
+
+[cluster]
+mem_quota = 10240
+initial_nodes = 3
+num_buckets = 1
+
+[bucket]
+eviction_policy = fullEviction
+failover_min = 120
+failover_max = 600
+
+[load]
+items = 150000000
+size = 1024
+workers = 200
+key_fmtr = hex
+doc_gen = large
+
+[hot_load]
+items = 150000000
+workers = 96
+working_set = 5
+
+[access]
+creates = 0
+reads = 90
+updates = 10
+deletes = 0
+throughput = 15000
+items = 150000000
+workers = 96
+working_set = 5
+working_set_access = 90
+
+[rebalance]
+nodes_after = 3
+swap = 1
+start_after = 1200
+stop_after = 1200
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

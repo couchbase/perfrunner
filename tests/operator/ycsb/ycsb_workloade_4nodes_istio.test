@@ -3,9 +3,8 @@ test = perfrunner.tests.ycsb.YCSBN1QLThroughputTest
 
 [showfast]
 title = Avg Throughput (queries/sec), Workload E, MOI, 4 nodes, Istio
-component = n1ql
+component = cloud
 category = ycsb
-sub_category = MOI
 
 [cluster]
 mem_quota = 40960

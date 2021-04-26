@@ -3,7 +3,7 @@ test = perfrunner.tests.operator.OperatorBackupRestoreTest
 
 [showfast]
 title = 4 nodes, 1 bucket x 100M x 1KB, Idle
-component = operator
+component = cloud
 category = backup
 
 [cluster]

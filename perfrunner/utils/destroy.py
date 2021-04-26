@@ -60,7 +60,7 @@ class AWSDestroyer(Destroyer):
                     waiter.wait(
                         clusterName=node_group_config['clusterName'],
                         nodegroupName=node_group_config['nodegroupName'],
-                        WaiterConfig={'Delay': 10, 'MaxAttempts': 120})
+                        WaiterConfig={'Delay': 10, 'MaxAttempts': 600})
                 except Exception as ex:
                     logger.info(ex)
 
@@ -80,7 +80,7 @@ class AWSDestroyer(Destroyer):
             waiter = self.eksclient.get_waiter('cluster_deleted')
             try:
                 waiter.wait(name=eks_cluster_name,
-                            WaiterConfig={'Delay': 10, 'MaxAttempts': 120})
+                            WaiterConfig={'Delay': 10, 'MaxAttempts': 600})
             except Exception as ex:
                 logger.info(ex)
 
@@ -103,7 +103,7 @@ class AWSDestroyer(Destroyer):
             waiter.wait(
                 InstanceIds=instance_list,
                 DryRun=False,
-                WaiterConfig={'Delay': 10, 'MaxAttempts': 120})
+                WaiterConfig={'Delay': 10, 'MaxAttempts': 600})
 
     def delete_vpc(self):
         logger.info("Deleting VPC...")
@@ -205,7 +205,7 @@ class AWSDestroyer(Destroyer):
             waiter.wait(
                 VolumeIds=deleted_volumes,
                 DryRun=False,
-                WaiterConfig={'Delay': 3, 'MaxAttempts': 100}
+                WaiterConfig={'Delay': 10, 'MaxAttempts': 600}
             )
 
     def destroy(self):

@@ -53,27 +53,77 @@ class OperatorInstaller:
     def __init__(self, cluster_spec, options):
         self.options = options
         self.cluster_spec = cluster_spec
+
         self.operator_version = self.options.operator_version
+        if "-" in self.operator_version:
+            self.operator_release = self.operator_version.split("-")[0]
+            self.operator_tag = 'registry.gitlab.com/cb-vanilla/operator:{}'\
+                .format(self.operator_version)
+            self.admission_controller_release = self.operator_version.split("-")[0]
+            self.admission_controller_tag = \
+                'registry.gitlab.com/cb-vanilla/admission-controller:{}' \
+                .format(self.operator_version)
+        else:
+            self.operator_release = self.operator_version
+            self.operator_tag = 'couchbase/operator:{}'\
+                .format(self.operator_version)
+            self.admission_controller_release = self.operator_version
+            self.admission_controller_tag = 'couchbase/admission-controller:{}' \
+                .format(self.operator_version)
+
         self.couchbase_version = self.options.couchbase_version
+        if "-" in self.couchbase_version:
+            self.couchbase_release = self.couchbase_version.split("-")[0]
+            self.couchbase_tag = 'registry.gitlab.com/cb-vanilla/server:{}'\
+                .format(self.couchbase_version)
+        else:
+            self.couchbase_release = self.couchbase_version
+            self.couchbase_tag = 'couchbase/server:{}'\
+                .format(self.couchbase_version)
+
+        self.operator_backup_version = self.options.operator_backup_version
+        if self.operator_backup_version:
+            if "-" in self.operator_backup_version:
+                self.operator_backup_release = self.operator_backup_version.split("-")[0]
+                self.operator_backup_tag = 'registry.gitlab.com/cb-vanilla/operator-backup:{}'\
+                    .format(self.operator_backup_version)
+            else:
+                self.operator_backup_release = self.operator_backup_version
+                self.operator_backup_tag = 'couchbase/operator-backup/{}'\
+                    .format(self.operator_backup_version)
+        else:
+            self.operator_backup_tag = 'registry.gitlab.com/cb-vanilla/operator-backup:latest'
+
         self.node_count = len(self.cluster_spec.infrastructure_clusters['couchbase1'].split())
+
         self.remote = RemoteHelper(cluster_spec)
-        self.release = self.operator_version.split("-")[0]
-        self.build = self.operator_version.split("-")[1]
+
         self.docker_config_path = os.path.expanduser("~") + "/.docker/config.json"
-        self.operator_base_path = "cloud/operator/{}/{}".format(self.release[0], self.release[2])
-        self.certificate_authority_path = "{}/ca.crt".format(self.operator_base_path)
-        self.crd_path = "{}/crd.yaml".format(self.operator_base_path)
-        self.config_path = "{}/config.yaml".format(self.operator_base_path)
-        self.config_template_path = "{}/config_template.yaml".format(self.operator_base_path)
-        self.auth_path = "{}/auth_secret.yaml".format(self.operator_base_path)
-        self.cb_cluster_path = "{}/couchbase-cluster.yaml".format(self.operator_base_path)
+        self.operator_base_path = "cloud/operator/{}/{}"\
+            .format(self.operator_release.split(".")[0],
+                    self.operator_release.split(".")[1])
+        self.certificate_authority_path = "{}/ca.crt"\
+            .format(self.operator_base_path)
+        self.crd_path = "{}/crd.yaml"\
+            .format(self.operator_base_path)
+        self.config_path = "{}/config.yaml"\
+            .format(self.operator_base_path)
+        self.config_template_path = "{}/config_template.yaml"\
+            .format(self.operator_base_path)
+        self.auth_path = "{}/auth_secret.yaml"\
+            .format(self.operator_base_path)
+        self.cb_cluster_path = "{}/couchbase-cluster.yaml"\
+            .format(self.operator_base_path)
         self.template_cb_cluster_path = "{}/couchbase-cluster_template.yaml"\
             .format(self.operator_base_path)
         self.worker_base_path = "cloud/worker"
-        self.worker_path = "{}/worker.yaml".format(self.worker_base_path)
+        self.worker_path = "{}/worker.yaml"\
+            .format(self.worker_base_path)
         self.rmq_base_path = "cloud/broker/rabbitmq/0.48"
-        self.rmq_operator_path = "{}/cluster-operator.yaml".format(self.rmq_base_path)
-        self.rmq_cluster_path = "{}/rabbitmq.yaml".format(self.rmq_base_path)
+        self.rmq_operator_path = "{}/cluster-operator.yaml"\
+            .format(self.rmq_base_path)
+        self.rmq_cluster_path = "{}/rabbitmq.yaml"\
+            .format(self.rmq_base_path)
 
     def install(self):
         self.install_operator()
@@ -135,8 +185,8 @@ class OperatorInstaller:
         self.remote.create_operator_config(
             self.config_template_path,
             self.config_path,
-            self.release,
-            self.build)
+            self.operator_tag,
+            self.admission_controller_tag)
 
     def create_auth(self):
         logger.info("creating auth")
@@ -147,7 +197,8 @@ class OperatorInstaller:
         self.remote.create_couchbase_cluster(
             self.template_cb_cluster_path,
             self.cb_cluster_path,
-            self.couchbase_version,
+            self.couchbase_tag,
+            self.operator_backup_tag,
             self.node_count)
 
     def wait_for_operator_and_admission(self):
@@ -461,6 +512,9 @@ def get_args():
                         help='The local copy url of the build')
     parser.add_argument('-ov', '--operator-version',
                         dest='operator_version',
+                        help='the build version for the couchbase operator')
+    parser.add_argument('-obv', '--operator-backup-version',
+                        dest='operator_backup_version',
                         help='the build version for the couchbase operator')
     parser.add_argument('-u', '--uninstall',
                         action='store_true',

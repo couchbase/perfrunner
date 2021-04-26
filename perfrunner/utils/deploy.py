@@ -80,7 +80,7 @@ class AWSDeployer(Deployer):
         self.write_infra_file()
         waiter = self.ec2client.get_waiter('vpc_available')
         waiter.wait(VpcIds=[self.deployed_infra['vpc']['VpcId']],
-                    WaiterConfig={'Delay': 2, 'MaxAttempts': 15})
+                    WaiterConfig={'Delay': 10, 'MaxAttempts': 120})
         response = self.ec2client.describe_vpcs(
             VpcIds=[self.deployed_infra['vpc']['VpcId']], DryRun=False)
         self.deployed_infra['vpc'] = response['Vpcs'][0]
@@ -133,7 +133,7 @@ class AWSDeployer(Deployer):
         waiter = self.ec2client.get_waiter('subnet_available')
         waiter.wait(
             SubnetIds=list(self.deployed_infra['vpc']['subnets'].keys()),
-            WaiterConfig={'Delay': 2, 'MaxAttempts': 15})
+            WaiterConfig={'Delay': 10, 'MaxAttempts': 120})
         response = self.ec2client.describe_subnets(
             SubnetIds=list(self.deployed_infra['vpc']['subnets'].keys()), DryRun=False)
         for subnet in response['Subnets']:
@@ -149,7 +149,7 @@ class AWSDeployer(Deployer):
         waiter = self.ec2client.get_waiter('subnet_available')
         waiter.wait(
             SubnetIds=list(self.deployed_infra['vpc']['subnets'].keys()),
-            WaiterConfig={'Delay': 2, 'MaxAttempts': 15})
+            WaiterConfig={'Delay': 10, 'MaxAttempts': 120})
         response = self.ec2client.describe_subnets(
             SubnetIds=list(self.deployed_infra['vpc']['subnets'].keys()), DryRun=False)
         for subnet in response['Subnets']:
@@ -230,10 +230,10 @@ class AWSDeployer(Deployer):
         waiter = self.cloudformation_client.get_waiter('stack_create_complete')
         waiter.wait(
             StackName='CloudPerfTestingEKSClusterRole',
-            WaiterConfig={'Delay': 2, 'MaxAttempts': 60})
+            WaiterConfig={'Delay': 10, 'MaxAttempts': 120})
         waiter.wait(
             StackName='CloudPerfTestingEKSNodeRole',
-            WaiterConfig={'Delay': 2, 'MaxAttempts': 60})
+            WaiterConfig={'Delay': 10, 'MaxAttempts': 120})
         response = self.cloudformation_client.describe_stacks(
             StackName='CloudPerfTestingEKSClusterRole')
         self.deployed_infra['vpc']['eks_cluster_role_iam_arn'] = \
@@ -275,7 +275,7 @@ class AWSDeployer(Deployer):
             cluster_name = 'k8s_cluster_{}'.format(i)
             waiter = self.eksclient.get_waiter('cluster_active')
             waiter.wait(name=cluster_name,
-                        WaiterConfig={'Delay': 10, 'MaxAttempts': 180})
+                        WaiterConfig={'Delay': 10, 'MaxAttempts': 600})
             self.deployed_infra['vpc']['eks_clusters'][response['cluster']['name']] = \
                 response['cluster']
             self.write_infra_file()
@@ -379,7 +379,7 @@ class AWSDeployer(Deployer):
                 waiter.wait(
                     clusterName=k8s_cluster_name,
                     nodegroupName=node_group,
-                    WaiterConfig={'Delay': 10, 'MaxAttempts': 120})
+                    WaiterConfig={'Delay': 10, 'MaxAttempts': 600})
         for k8s_cluster_name, k8s_cluster_spec in self.desired_infra['k8s'].items():
             cluster_infra = self.deployed_infra['vpc']['eks_clusters'][k8s_cluster_name]
             for node_group in k8s_cluster_spec['node_groups'].split(','):
@@ -447,7 +447,7 @@ class AWSDeployer(Deployer):
                     waiter.wait(
                         InstanceIds=ec2_list,
                         DryRun=False,
-                        WaiterConfig={'Delay': 10, 'MaxAttempts': 120})
+                        WaiterConfig={'Delay': 10, 'MaxAttempts': 600})
 
     def open_security_groups(self):
         logger.info("Opening security groups...")

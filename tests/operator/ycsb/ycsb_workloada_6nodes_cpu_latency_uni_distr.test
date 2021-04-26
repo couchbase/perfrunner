@@ -3,9 +3,8 @@ test = perfrunner.tests.ycsb.YCSBLatencyTest
 
 [showfast]
 title = Latency(ms), Workload A, 6 nodes, 12 vCPU, uniform distribution, 60K ops/sec
-component = kv
+component = cloud
 category = ycsb
-sub_category = ycsb3
 orderby = a91
 
 

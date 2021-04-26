@@ -3,8 +3,6 @@ kind: CouchbaseCluster
 metadata:
   name: cb-example-perf
 spec:
-  nodeSelector:
-    NodeRoles: couchbase1
   image: couchbase/server:build
   antiAffinity: true
   networking:
@@ -54,7 +52,6 @@ spec:
         annotations:
           sidecar.istio.io/inject: "true"
       spec:
-        containers: []
         nodeSelector:
           NodeRoles: couchbase1
           kv_enabled: "true"

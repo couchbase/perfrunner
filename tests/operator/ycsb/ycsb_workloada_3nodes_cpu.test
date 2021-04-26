@@ -3,9 +3,8 @@ test = perfrunner.tests.ycsb.YCSBThroughputTest
 
 [showfast]
 title = Avg Throughput (ops/sec), Workload A, 3 nodes, 12 vCPU
-component = kv
+component = cloud
 category = ycsb
-sub_category = ycsb3
 orderby = a10
 
 [cluster]

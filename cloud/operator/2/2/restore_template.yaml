@@ -1,0 +1,10 @@
+apiVersion: couchbase.com/v2
+kind: CouchbaseBackupRestore
+metadata:
+  name: my-restore
+spec:
+  backup: my-backup
+  start:
+    str: oldest
+  end:
+    str: latest

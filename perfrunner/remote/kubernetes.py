@@ -16,9 +16,14 @@ class RemoteKubernetes(Remote):
     def __init__(self, cluster_spec, os):
         super().__init__(cluster_spec, os)
         self.kube_config_path = "cloud/infrastructure/generated/kube_configs/k8s_cluster_1"
-        self.cluster_path = 'cloud/operator/2/1/couchbase-cluster.yaml'
-        self.backup_template_path = 'cloud/operator/2/1/backup_template.yaml'
-        self.backup_path = 'cloud/operator/2/1/backup.yaml'
+        self.base_path = 'cloud/operator'
+        self.cluster_file = 'couchbase-cluster.yaml'
+        self.bucket_template_file = 'bucket_template.yaml'
+        self.backup_template_file = 'backup_template.yaml'
+        self.backup_file = 'backup.yaml'
+        self.restore_template_file = 'restore_template.yaml'
+        self.restore_file = 'restore.yaml'
+        self.operator_version = None
 
     def kubectl(self, params, kube_config, split_lines=True, max_attempts=3):
         params = params.split()
@@ -160,20 +165,28 @@ class RemoteKubernetes(Remote):
     def create_operator_config(self,
                                config_template_path,
                                config_path,
-                               release,
-                               build):
-        misc.copy_template(config_template_path, config_path)
-        misc.inject_operator_build(config_path, release, build)
+                               operator_tag,
+                               admission_controller_tag):
+        misc.copy_template(config_template_path,
+                           config_path)
+        misc.inject_config_tags(config_path,
+                                operator_tag,
+                                admission_controller_tag)
         self.create_from_file(config_path)
 
     def create_couchbase_cluster(self,
                                  template_cb_cluster_path,
                                  cb_cluster_path,
-                                 couchbase_version,
+                                 couchbase_tag,
+                                 operator_tag,
                                  node_count):
-        misc.copy_template(template_cb_cluster_path, cb_cluster_path)
-        misc.inject_couchbase_version(cb_cluster_path, couchbase_version)
-        misc.inject_server_count(cb_cluster_path, node_count)
+        misc.copy_template(template_cb_cluster_path,
+                           cb_cluster_path)
+        misc.inject_cluster_tags(cb_cluster_path,
+                                 couchbase_tag,
+                                 operator_tag)
+        misc.inject_server_count(cb_cluster_path,
+                                 node_count)
         self.create_from_file(cb_cluster_path)
 
     def delete_secret(self, secret_name, ignore_errors=True):
@@ -213,7 +226,8 @@ class RemoteKubernetes(Remote):
                 raise ex
 
     def create_cluster(self):
-        self.create_from_file(self.cluster_path)
+        cluster_path = self.get_cluster_path()
+        self.create_from_file(cluster_path)
 
     def describe_cluster(self):
         ret = self.kubectl('describe cbc',
@@ -260,40 +274,97 @@ class RemoteKubernetes(Remote):
         cluster = json.loads(raw_cluster.decode('utf8'))
         return cluster
 
-    def update_cluster_config(self, cluster, timeout=30, reboot=False):
+    def get_operator_version(self):
+        for pod in self.get_pods():
+            name = pod['metadata']['name']
+            if 'couchbase-operator' in name and 'admission' not in name:
+                containers = pod['spec']['containers']
+                for container in containers:
+                    if container['name'] == 'couchbase-operator':
+                        image = container['image']
+                        build = image.split(":")[-1]
+                        return build.split("-")[0]
+        raise Exception("could not get operator version")
+
+    def get_cluster_path(self):
+        if not self.operator_version:
+            self.operator_version = self.get_operator_version()
+        return "{}/{}/{}/{}".format(
+            self.base_path,
+            self.operator_version.split(".")[0],
+            self.operator_version.split(".")[1],
+            self.cluster_file)
+
+    def get_bucket_path(self, bucket_name):
+        if not self.operator_version:
+            self.operator_version = self.get_operator_version()
+        return "{}/{}/{}/{}.yaml".format(
+            self.base_path,
+            self.operator_version.split(".")[0],
+            self.operator_version.split(".")[1],
+            bucket_name)
+
+    def get_bucket_template_path(self):
+        if not self.operator_version:
+            self.operator_version = self.get_operator_version()
+        return "{}/{}/{}/{}".format(self.base_path,
+                                    self.operator_version.split(".")[0],
+                                    self.operator_version.split(".")[1],
+                                    self.bucket_template_file)
+
+    def update_cluster_config(self, cluster, timeout=1200, reboot=False):
+        cluster_path = self.get_cluster_path()
         if reboot:
             self.delete_cluster()
             self.wait_for_pods_deleted('cb-example', timeout=timeout)
             cluster['metadata'] = {'name': 'cb-example-perf'}
             cluster.pop('status', None)
-            self.dump_config_to_yaml_file(cluster, self.cluster_path)
+            self.dump_config_to_yaml_file(cluster, cluster_path)
             self.create_cluster()
             self.wait_for_cluster_ready(timeout=timeout)
         else:
             cluster['metadata'] = self.sanitize_meta(cluster['metadata'])
-            self.dump_config_to_yaml_file(cluster, self.cluster_path)
+            self.dump_config_to_yaml_file(cluster, cluster_path)
             self.kubectl(
-                'replace -f {}'.format(self.cluster_path),
+                'replace -f {}'.format(cluster_path),
                 kube_config=self.kube_config_path)
             self.wait_for_cluster_ready(timeout=timeout)
 
-    def update_bucket_config(self, bucket, timeout=30):
+    def update_bucket_config(self, bucket, timeout=1200):
+        cluster_path = self.get_cluster_path()
         bucket['metadata'] = self.sanitize_meta(bucket['metadata'])
         bucket_path = "cloud/operator/2/1/{}.yaml".format(bucket['metadata']['name'])
         self.dump_config_to_yaml_file(bucket, bucket_path)
-        self.kubectl('replace -f {}'.format(self.cluster_path),
+        self.kubectl('replace -f {}'.format(cluster_path),
                      kube_config=self.kube_config_path)
         self.wait_for_cluster_ready(timeout=timeout)
 
-    def create_bucket(self, bucket, timeout=30):
+    def create_bucket(self, bucket_name, mem_quota, bucket_config, timeout=30):
+        bucket_template_path = self.get_bucket_template_path()
+        bucket_path = self.get_bucket_path(bucket_name)
+        misc.copy_template(bucket_template_path, bucket_path)
+        with open(bucket_path, 'r') as file:
+            bucket = yaml.load(file, Loader=yaml.FullLoader)
+        bucket['metadata']['name'] = bucket_name
+        bucket['spec'] = {
+            'memoryQuota': '{}Mi'.format(mem_quota),
+            'replicas': bucket_config.replica_number,
+            'evictionPolicy': bucket_config.eviction_policy,
+            'compressionMode': str(bucket_config.compression_mode)
+            if bucket_config.compression_mode else "off",
+            'conflictResolution': str(bucket_config.conflict_resolution_type)
+            if bucket_config.conflict_resolution_type else "seqno",
+            'enableFlush': True,
+            'enableIndexReplica': False,
+            'ioPriority': 'high',
+        }
         bucket['metadata'] = self.sanitize_meta(bucket['metadata'])
-        bucket_path = "cloud/operator/2/1/{}.yaml".format(bucket['metadata']['name'])
         self.dump_config_to_yaml_file(bucket, bucket_path)
         self.kubectl('create -f {}'.format(bucket_path),
                      kube_config=self.kube_config_path)
         self.wait_for_cluster_ready(timeout=timeout)
 
-    def delete_all_buckets(self, timeout=30):
+    def delete_all_buckets(self, timeout=1200):
         self.kubectl('delete couchbasebuckets --all',
                      kube_config=self.kube_config_path)
         self.wait_for_cluster_ready(timeout=timeout)
@@ -311,7 +382,7 @@ class RemoteKubernetes(Remote):
     def delete_all_pods(self):
         self.kubectl('delete pods --all', kube_config=self.kube_config_path)
 
-    def wait_for(self, condition_func, condition_params=None, timeout=30):
+    def wait_for(self, condition_func, condition_params=None, timeout=1200):
         start_time = time.time()
         while time.time() - start_time < timeout:
             if condition_params:
@@ -322,7 +393,7 @@ class RemoteKubernetes(Remote):
                     return
         raise Exception('timeout: condition not reached')
 
-    def wait_for_cluster_ready(self, timeout=300):
+    def wait_for_cluster_ready(self, timeout=1200):
         self.wait_for(self.cluster_ready, timeout=timeout)
 
     def cluster_ready(self):
@@ -346,7 +417,7 @@ class RemoteKubernetes(Remote):
                 return False
         return True
 
-    def wait_for_pods_ready(self, pod, desired_num, namespace="default", timeout=300):
+    def wait_for_pods_ready(self, pod, desired_num, namespace="default", timeout=1200):
         self.wait_for(self.pods_ready,
                       condition_params=(pod, desired_num, namespace),
                       timeout=timeout)
@@ -394,7 +465,7 @@ class RemoteKubernetes(Remote):
     def wait_for_rabbitmq_broker_ready(self):
         self.wait_for_pods_ready("rabbitmq-rabbitmq", 1)
 
-    def wait_for_pods_deleted(self, pod, namespace="default", timeout=300):
+    def wait_for_pods_deleted(self, pod, namespace="default", timeout=1200):
         self.wait_for(self.pods_deleted,
                       condition_params=(pod, namespace),
                       timeout=timeout)
@@ -527,22 +598,40 @@ class RemoteKubernetes(Remote):
             json_from_yaml = yaml.load(file, Loader=yaml.FullLoader)
         return json_from_yaml
 
+    def get_backup_template_path(self):
+        if not self.operator_version:
+            self.operator_version = self.get_operator_version()
+        return "{}/{}/{}/{}".format(self.base_path,
+                                    self.operator_version.split(".")[0],
+                                    self.operator_version.split(".")[1],
+                                    self.backup_template_file)
+
+    def get_backup_path(self):
+        if not self.operator_version:
+            self.operator_version = self.get_operator_version()
+        return "{}/{}/{}/{}".format(self.base_path,
+                                    self.operator_version.split(".")[0],
+                                    self.operator_version.split(".")[1],
+                                    self.backup_file)
+
     def create_backup(self):
-        misc.copy_template(self.backup_template_path, self.backup_path)
-        self.create_from_file(self.backup_path)
+        backup_template_path = self.get_backup_template_path()
+        backup_path = self.get_backup_path()
+        misc.copy_template(backup_template_path, backup_path)
+        self.create_from_file(backup_path)
 
         # 2020-12-04T23:33:57Z
         current_utc_timestamp = self.get_backups()['items'][0]['metadata']['creationTimestamp']
-        self.delete_from_file(self.backup_path)
-        backup_def = self.yaml_to_json(self.backup_path)
+        self.delete_from_file(backup_path)
+        backup_def = self.yaml_to_json(backup_path)
         cron_minute = int(current_utc_timestamp.split("T")[1].split(":")[1]) + 2
         cron_minute = cron_minute % 60
         cron_schedule = '{} * * * *'.format(cron_minute)
         backup_def['spec']['full']['schedule'] = cron_schedule
-        self.dump_config_to_yaml_file(backup_def, self.backup_path)
-        self.create_from_file(self.backup_path)
+        self.dump_config_to_yaml_file(backup_def, backup_path)
+        self.create_from_file(backup_path)
 
-    def wait_for_backup_complete(self, timeout=3600):
+    def wait_for_backup_complete(self, timeout=7200):
         self.wait_for(self.backup_complete, timeout=timeout)
 
     def backup_complete(self):
@@ -561,8 +650,25 @@ class RemoteKubernetes(Remote):
                 return True
         return False
 
+    def get_restore_template_path(self):
+        if not self.operator_version:
+            self.operator_version = self.get_operator_version()
+        return "{}/{}/{}/{}".format(self.base_path,
+                                    self.operator_version.split(".")[0],
+                                    self.operator_version.split(".")[1],
+                                    self.restore_template_file)
+
+    def get_restore_path(self):
+        if not self.operator_version:
+            self.operator_version = self.get_operator_version()
+        return "{}/{}/{}/{}".format(self.base_path,
+                                    self.operator_version.split(".")[0],
+                                    self.operator_version.split(".")[1],
+                                    self.restore_file)
+
     def create_restore(self):
-        self.create_from_file("cloud/operator/2/1/restore_template.yaml")
+        restore_template_path = self.get_restore_template_path()
+        self.create_from_file(restore_template_path)
 
     def wait_for_restore_complete(self):
         logger.info('waiting for restore')
@@ -594,10 +700,11 @@ class RemoteKubernetes(Remote):
         return end - start
 
     def recreate_bucket(self, bucket_name):
-        self.delete_from_file("cloud/operator/2/1/{}.yaml".format(bucket_name))
-        time.sleep(30)
+        bucket_path = self.get_bucket_path(bucket_name)
+        self.delete_from_file(bucket_path)
+        time.sleep(60)
         self.create_from_file("cloud/operator/2/1/{}.yaml".format(bucket_name))
-        time.sleep(30)
+        time.sleep(60)
 
     def istioctl(self, params, kube_config=None, split_lines=True, max_attempts=1):
         kube_config = kube_config or self.kube_config_path

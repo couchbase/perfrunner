@@ -102,63 +102,38 @@ def copy_template(source, dest):
     shutil.copyfile(source, dest)
 
 
-def inject_operator_build(config_path, release, build):
-    repo = 'couchbase'
-    operator_name = 'couchbase-operator-internal'
-    admission_controller_name = 'couchbase-admission-internal'
-    major = int(release[0])
-    minor = int(release[2])
-    if major >= 2 and minor >= 1:
-        repo = 'registry.gitlab.com/cb-vanilla'
-        operator_name = 'operator'
-        admission_controller_name = 'admission-controller'
+def inject_config_tags(config_path,
+                       operator_tag,
+                       admission_controller_tag):
+    #  operator
     with fileinput.FileInput(config_path, inplace=True, backup='.bak') as file:
         search = 'couchbase/operator:build'
-        replace = '{}/{}:{}-{}'.format(repo, operator_name, release, build)
+        replace = operator_tag
         for line in file:
             print(line.replace(search, replace), end='')
+
+    #  admission controller
     with fileinput.FileInput(config_path, inplace=True, backup='.bak') as file:
         search = 'couchbase/admission-controller:build'
-        replace = '{}/{}:{}-{}'.format(repo, admission_controller_name, release, build)
+        replace = admission_controller_tag
         for line in file:
             print(line.replace(search, replace), end='')
 
 
-def inject_couchbase_version(cluster_path, couchbase_version):
-    repo = 'couchbase'
-    backup_repo = 'registry.gitlab.com/cb-vanilla/operator-backup'
-    release = couchbase_version.split("-")[0]
-    major = int(release[0])
-    minor = int(release[2])
-    patch = int(release[4])
-    is_build = "-" in couchbase_version
-    if is_build:
-        build = int(couchbase_version.split("-")[1])
-        check_66 = major == 6 and minor == 6
-        check_660 = check_66 and patch == 0 and build >= 7924
-        check_661 = check_66 and patch == 1 and build >= 9133
-        check_700 = major >= 7 and minor >= 0 and patch >= 0
-        if check_660 or check_661 or check_700:
-            repo = 'registry.gitlab.com/cb-vanilla/server'
-        else:
-            repo = 'couchbase/server-internal'
-        if major <= 6 and minor <= 5:
-            backup_build = '6.5.1-116'
-        else:
-            backup_build = '6.6.0-100'
-    else:
-        repo = 'couchbase/server'
-        backup_build = '6.6.0-100'
-
+def inject_cluster_tags(cluster_path,
+                        couchbase_tag,
+                        operator_backup_tag):
+    #  couchbase
     with fileinput.FileInput(cluster_path, inplace=True, backup='.bak') as file:
         search = 'couchbase/server:build'
-        replace = '{}:{}'.format(repo, couchbase_version)
+        replace = couchbase_tag
         for line in file:
             print(line.replace(search, replace), end='')
 
+    #  operator backup
     with fileinput.FileInput(cluster_path, inplace=True, backup='.bak') as file:
         search = 'couchbase/operator-backup:build'
-        replace = '{}:{}'.format(backup_repo, backup_build)
+        replace = operator_backup_tag
         for line in file:
             print(line.replace(search, replace), end='')
 

@@ -1,8 +1,5 @@
 import re
-import shutil
 from typing import List
-
-import yaml
 
 from logger import logger
 from perfrunner.helpers.memcached import MemcachedHelper
@@ -156,6 +153,9 @@ class ClusterManager:
                 istio = 'true'
 
             cluster_servers = []
+            operator_version = self.remote.get_operator_version()
+            operator_major = int(operator_version.split(".")[0])
+            operator_minor = int(operator_version.split(".")[1])
             for server_role, server_role_count in server_types.items():
                 node_selector = {
                     '{}_enabled'.format(service
@@ -164,14 +164,15 @@ class ClusterManager:
                     for service in server_role.split(",")
                 }
                 node_selector['NodeRoles'] = 'couchbase1'
+                spec = {
+                    'imagePullSecrets': [{'name': 'regcred'}],
+                    'nodeSelector': node_selector,
+                }
+                if (operator_major, operator_minor) <= (2, 1):
+                    spec['containers'] = []
                 pod_def =\
                     {
-                        'spec':
-                            {
-                                'imagePullSecrets': [{'name': 'regcred'}],
-                                'nodeSelector': node_selector,
-                                'containers': []
-                            },
+                        'spec': spec,
                         'metadata':
                             {
                                 'annotations': {'sidecar.istio.io/inject': istio}
@@ -253,26 +254,7 @@ class ClusterManager:
         if self.dynamic_infra:
             self.remote.delete_all_buckets()
             for bucket_name in self.test_config.buckets:
-                bucket_template_path = "cloud/operator/2/1/bucket_template.yaml"
-                bucket_path = "cloud/operator/2/1/{}.yaml".format(bucket_name)
-                shutil.copyfile(bucket_template_path, bucket_path)
-                with open(bucket_path, 'r') as file:
-                    bucket = yaml.load(file, Loader=yaml.FullLoader)
-                bucket['metadata']['name'] = bucket_name
-                bucket['spec'] = {
-                    'type': self.test_config.bucket.bucket_type,
-                    'memoryQuota': '{}Mi'.format(per_bucket_quota),
-                    'replicas': self.test_config.bucket.replica_number,
-                    'evictionPolicy': self.test_config.bucket.eviction_policy,
-                    'compressionMode': str(self.test_config.bucket.compression_mode)
-                    if self.test_config.bucket.compression_mode else "off",
-                    'conflictResolution': str(self.test_config.bucket.conflict_resolution_type)
-                    if self.test_config.bucket.conflict_resolution_type else "seqno",
-                    'enableFlush': True,
-                    'enableIndexReplica': False,
-                    'ioPriority': 'high',
-                }
-                self.remote.create_bucket(bucket)
+                self.remote.create_bucket(bucket_name, per_bucket_quota, self.test_config.bucket)
         else:
             if self.test_config.bucket.backend_storage == 'magma':
                 self.enable_developer_preview()
@@ -306,7 +288,6 @@ class ClusterManager:
                             for collection in collection_map[bucket][scope]:
                                 scope_collections.append({"name": collection})
                             create_scopes.append({"name": scope, "collections": scope_collections})
-                        print(str({"scopes": create_scopes}))
                         self.rest.set_collection_map(master, bucket, {"scopes": create_scopes})
                 else:
                     for bucket in collection_map.keys():

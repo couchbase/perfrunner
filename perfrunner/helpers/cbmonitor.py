@@ -125,9 +125,6 @@ class CbAgent:
         self.test = test
         self.settings = new_cbagent_settings(test=test)
         if self.test.test_config.stats_settings.enabled:
-            if self.test.dynamic_infra:
-                logger.info('cbagent cbmonitor not enabled')
-                return
             self.init_clusters(phase=phase)
             self.add_collectors(**test.COLLECTORS)
             self.update_metadata()
@@ -138,9 +135,6 @@ class CbAgent:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.test.test_config.stats_settings.enabled:
-            if self.test.dynamic_infra:
-                logger.info('no cbagents to shutdown')
-                return
             self.stop()
             self.reconstruct()
             # self.find_time_series()

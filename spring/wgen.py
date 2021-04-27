@@ -539,7 +539,7 @@ class AsyncKVWorker(KVWorker):
             self.report_progress(self.curr_ops.value)
             if not self.done and (
                     self.curr_ops.value >= self.ws.ops or self.time_to_stop()):
-                with self.lock:
+                with self.batch_lock:
                     self.done = True
                 logger.info('Finished: {}-{}'.format(self.NAME, self.sid))
                 reactor.stop()
@@ -550,7 +550,7 @@ class AsyncKVWorker(KVWorker):
         self.counter[i] = 0
         self.time_started = time.time()
 
-        with self.lock:
+        with self.batch_lock:
             self.curr_ops.value += self.ws.spring_batch_size
 
         for _, func, args in self.gen_cmd_sequence(cb):
@@ -575,7 +575,7 @@ class AsyncKVWorker(KVWorker):
         d.addCallback(self.do_batch, cb, i)
         d.addErrback(self.error, cb, i)
 
-    def run(self, sid, lock, curr_ops, curr_items, deleted_items,
+    def run(self, sid, locks, curr_ops, curr_items, deleted_items,
             current_hot_load_start=None, timer_elapse=None):
         set_cpu_afinity(sid)
 
@@ -586,7 +586,9 @@ class AsyncKVWorker(KVWorker):
             self.target_time = None
 
         self.sid = sid
-        self.lock = lock
+        self.locks = locks
+        self.gen_lock = locks[0]
+        self.batch_lock = locks[1]
         self.curr_items = curr_items
         self.deleted_items = deleted_items
         self.curr_ops = curr_ops
@@ -883,7 +885,8 @@ class WorkloadGen:
     def abort(self, *args):
         """Triggers the shutdown event."""
         for shutdown_event in self.shutdown_events:
-            shutdown_event.set()
+            if shutdown_event:
+                shutdown_event.set()
 
     @staticmethod
     def store_pid():

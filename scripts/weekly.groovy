@@ -230,6 +230,12 @@ pipeline {
                         buildComponent('GSI-Recovery', testCases)
                     }
                 }
+                stage('Rebalance-Windows') {
+                    when { expression { return params.Rebalance_Windows } }
+                    steps {
+                        buildComponent('Rebalance-Windows', testCases)
+                    }
+                }
             }
         }
     }

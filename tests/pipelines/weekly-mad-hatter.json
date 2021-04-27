@@ -259,5 +259,10 @@
         {"job": "titan", "cluster": "titan_1x1x1.spec", "test_config": "xdcr_ongoing_backfill_1x1x1_unidir_updates_8k_proiority_low_high.test"},
         {"job": "titan", "cluster": "titan_1x1x1.spec", "test_config": "xdcr_ongoing_1x1x1_unidir_updates_8k_proiority_low_high.test"}
     ],
-    "XDCR-Windows": []
+    "XDCR-Windows": [],
+    "Rebalance-Windows": [
+        {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "reb_in_1B_3nodes_kv.test"},
+        {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "reb_out_1B_3nodes_kv.test"},
+        {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "reb_swap_1B_3nodes_kv.test"}
+    ]
 }

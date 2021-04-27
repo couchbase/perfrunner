@@ -755,3 +755,23 @@ class FunctionsLatencyTest(EventingTest):
         self.reporter.post(
             *self.metrics.function_latency(percentile=80.0, latency_stats=latency_stats)
         )
+
+
+class FunctionsLatencyTestDestBucket(FunctionsLatencyTest):
+
+    def load_dest_bucket(self):
+        target_iterator = EventingDestBktTargetIterator(self.cluster_spec,
+                                                        self.test_config,
+                                                        self.key_prefix)
+
+        self.load(settings=self.test_config.load_settings,
+                  target_iterator=target_iterator)
+
+    def run(self):
+        self.set_functions()
+
+        self.load_dest_bucket()
+
+        time_elapsed = self.load_access_and_wait()
+
+        self.report_kpi(time_elapsed)

@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.eventing.FunctionsLatencyTest
+test = perfrunner.tests.eventing.FunctionsLatencyTestDestBucket
 
 [showfast]
 title = 80th percentile latency(ms), 1 bucket x 100M x 1KB, 4KV + 1Eventing node, REPLACE 0%% Contention Adv-BucketOp

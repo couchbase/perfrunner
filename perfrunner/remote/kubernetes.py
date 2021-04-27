@@ -1,4 +1,5 @@
 import base64
+import datetime
 import json
 import subprocess
 import time
@@ -391,6 +392,7 @@ class RemoteKubernetes(Remote):
             else:
                 if condition_func():
                     return
+            time.sleep(1)
         raise Exception('timeout: condition not reached')
 
     def wait_for_cluster_ready(self, timeout=1200):
@@ -618,15 +620,11 @@ class RemoteKubernetes(Remote):
         backup_template_path = self.get_backup_template_path()
         backup_path = self.get_backup_path()
         misc.copy_template(backup_template_path, backup_path)
-        self.create_from_file(backup_path)
-
         # 2020-12-04T23:33:57Z
-        current_utc_timestamp = self.get_backups()['items'][0]['metadata']['creationTimestamp']
-        self.delete_from_file(backup_path)
+        current_utc = datetime.datetime.utcnow()
+        minute = current_utc.minute + 5
+        cron_schedule = '{} * * * *'.format(minute)
         backup_def = self.yaml_to_json(backup_path)
-        cron_minute = int(current_utc_timestamp.split("T")[1].split(":")[1]) + 2
-        cron_minute = cron_minute % 60
-        cron_schedule = '{} * * * *'.format(cron_minute)
         backup_def['spec']['full']['schedule'] = cron_schedule
         self.dump_config_to_yaml_file(backup_def, backup_path)
         self.create_from_file(backup_path)

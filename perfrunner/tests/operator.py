@@ -28,7 +28,11 @@ class OperatorBackupTest(OperatorTest):
         end_dt = datetime.datetime.strptime(end_time, '%Y-%m-%dT%H:%M:%SZ')
         time_elapsed = end_dt - start_dt
         time_elapsed = time_elapsed.total_seconds()
-        backup_size = float(backup_status['capacityUsed'].strip("Gi"))
+        capacity_used = backup_status['capacityUsed']
+        if "Mi" in capacity_used:
+            backup_size = float(backup_status['capacityUsed'].strip("Mi"))/1024
+        if "Gi" in capacity_used:
+            backup_size = float(backup_status['capacityUsed'].strip("Gi"))
         return time_elapsed, backup_size
 
     def _report_kpi(self, time_elapsed, backup_size):

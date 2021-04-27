@@ -437,3 +437,68 @@ spec:
     targetPort: 8383
   selector:
     app: couchbase-operator
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations:
+    config.couchbase.com/version: 2.2.0
+  creationTimestamp: null
+  name: couchbase-backup
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  annotations:
+    config.couchbase.com/version: 2.2.0
+  creationTimestamp: null
+  name: couchbase-backup
+rules:
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  - cronjobs
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+- apiGroups:
+  - couchbase.com
+  resources:
+  - couchbasebackups
+  - couchbasebackuprestores
+  verbs:
+  - get
+  - list
+  - watch
+  - patch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  annotations:
+    config.couchbase.com/version: 2.2.0
+  creationTimestamp: null
+  name: couchbase-backup
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: couchbase-backup
+subjects:
+- kind: ServiceAccount
+  name: couchbase-backup
+  namespace: default

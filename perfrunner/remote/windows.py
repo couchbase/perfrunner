@@ -21,7 +21,7 @@ class RemoteWindows(Remote):
 
     SLEEP_TIME = 30  # crutch
 
-    PROCESSES = ('erl*', 'epmd*')
+    PROCESSES = ('erl*', 'epmd*', 'memcached')
 
     @staticmethod
     def exists(fname):
@@ -75,6 +75,12 @@ class RemoteWindows(Remote):
         logger.info('Killing {}'.format(', '.join(self.PROCESSES)))
         run('taskkill /F /T /IM {}'.format(' /IM '.join(self.PROCESSES)),
             warn_only=True, quiet=True)
+
+    def shutdown(self, host):
+        with settings(host_string=host):
+            logger.info('Killing {}'.format(', '.join(self.PROCESSES)))
+            run('taskkill /F /T /IM {}'.format(' /IM '.join(self.PROCESSES)),
+                warn_only=True, quiet=True)
 
     def kill_installer(self):
         run('taskkill /F /T /IM setup.exe', warn_only=True, quiet=True)
@@ -239,3 +245,31 @@ class RemoteWindows(Remote):
 
     def change_owner(self, *args):
         pass
+
+    def detect_auto_failover(self, host):
+        with settings(host_string=host):
+            r = run('grep "Starting failing over" '
+                    '{}/var/lib/couchbase/logs/info.log'.format(self.CB_DIR), quiet=True)
+            if not r.return_code:
+                return r.strip().split(',')[1]
+
+    def detect_hard_failover_start(self, host):
+        with settings(host_string=host):
+            r = run('grep "Starting failing" '
+                    '{}/var/lib/couchbase/logs/info.log'.format(self.CB_DIR), quiet=True)
+            if not r.return_code:
+                return r.strip().split(',')[1]
+
+    def detect_graceful_failover_start(self, host):
+        with settings(host_string=host):
+            r = run('grep "Starting vbucket moves" '
+                    '{}/var/lib/couchbase/logs/info.log'.format(self.CB_DIR), quiet=True)
+            if not r.return_code:
+                return r.strip().split(',')[1]
+
+    def detect_failover_end(self, host):
+        with settings(host_string=host):
+            r = run('grep "Failed over .*: ok" '
+                    '{}/var/lib/couchbase/logs/info.log'.format(self.CB_DIR), quiet=True)
+            if not r.return_code:
+                return r.strip().split(',')[1]

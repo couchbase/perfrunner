@@ -1,4 +1,5 @@
 import calendar
+import copy
 import json
 import time
 
@@ -65,6 +66,7 @@ class EventingTest(PerfTest):
         self.rebalance_settings = self.test_config.rebalance_settings
         self.request_url = self.test_config.eventing_settings.request_url
         self.key_prefix = self.test_config.load_settings.key_prefix or "eventing"
+        self.dest_bkt_doc_gen = self.test_config.eventing_settings.eventing_dest_bkt_doc_gen
 
         if self.functions == {}:
             with open(self.config_file) as f:
@@ -384,8 +386,9 @@ class FunctionsThroughputTestDestBucket(FunctionsThroughputTest):
                                                         self.test_config,
                                                         self.key_prefix)
 
-        self.load(settings=self.test_config.load_settings,
-                  target_iterator=target_iterator)
+        load_settings = copy.deepcopy(self.test_config.load_settings)
+        load_settings.doc_gen = self.dest_bkt_doc_gen
+        self.load(settings=load_settings, target_iterator=target_iterator)
 
     def run(self):
         self.set_functions()
@@ -764,8 +767,9 @@ class FunctionsLatencyTestDestBucket(FunctionsLatencyTest):
                                                         self.test_config,
                                                         self.key_prefix)
 
-        self.load(settings=self.test_config.load_settings,
-                  target_iterator=target_iterator)
+        load_settings = copy.deepcopy(self.test_config.load_settings)
+        load_settings.doc_gen = self.dest_bkt_doc_gen
+        self.load(settings=load_settings, target_iterator=target_iterator)
 
     def run(self):
         self.set_functions()

@@ -1430,6 +1430,7 @@ class EventingSettings:
     TIMER_FUZZ = 0
     CONFIG_FILE = "tests/eventing/config/function_sample.json"
     REQUEST_URL = "http://172.23.99.247/cgi-bin/text/1kb_text_200ms.py"
+    EVENTING_DEST_BKT_DOC_GEN = "basic"
 
     def __init__(self, options: dict):
         self.functions = {}
@@ -1451,6 +1452,8 @@ class EventingSettings:
                                           self.TIMER_FUZZ))
         self.config_file = options.get("config_file", self.CONFIG_FILE)
         self.request_url = options.get("request_url", self.REQUEST_URL)
+        self.eventing_dest_bkt_doc_gen = options.get("eventing_dest_bkt_doc_gen",
+                                                     self.EVENTING_DEST_BKT_DOC_GEN)
 
     def __str__(self) -> str:
         return str(self.__dict__)

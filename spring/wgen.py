@@ -23,6 +23,7 @@ from spring.docgen import (
     BigFunDocument,
     Document,
     EventingCounterDocument,
+    EventingSmallCounterDocument,
     EventingSmallDocument,
     ExtReverseLookupDocument,
     GroupedDocument,
@@ -148,6 +149,8 @@ class Worker:
             self.docs = Document(self.ws.size)
         elif self.ws.doc_gen == 'eventing_counter':
             self.docs = EventingCounterDocument(self.ws.size)
+        elif self.ws.doc_gen == 'eventing_small_counter':
+            self.docs = EventingSmallCounterDocument(self.ws.size)
         elif self.ws.doc_gen == 'grouped':
             self.docs = GroupedDocument(self.ws.size, self.ws.doc_groups)
         elif self.ws.doc_gen == 'large_item_grouped':

@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.eventing.FunctionsLatencyTest
+test = perfrunner.tests.eventing.FunctionsLatencyTestDestBucket
 
 [showfast]
 title = 80th percentile latency(ms), 1 bucket x 100M x 1KB, 4KV + 1Eventing node, Counter Decrement 100%% Contention
@@ -39,6 +39,7 @@ functions = perf-test1:tests/eventing/code/decr_ctrop_100cont.js
 worker_count = 24
 cpp_worker_thread_count = 2
 config_file = tests/eventing/config/function_sample_destbkt.json
+eventing_dest_bkt_doc_gen = eventing_small_counter
 
 [access]
 updates = 100

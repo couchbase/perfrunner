@@ -546,6 +546,20 @@ class EventingCounterDocument(Document):
         }
 
 
+class EventingSmallCounterDocument(Document):
+
+    def next(self, key: Key) -> dict:
+        alphabet = self.build_alphabet(key.string)
+
+        return {
+            'name': self.build_name(alphabet),
+            'email': self.build_email(alphabet),
+            'alt_email': self.build_alt_email(alphabet),
+            'city': self.build_city(alphabet),
+            'count': key.number
+        }
+
+
 class NestedDocument(Document):
 
     OVERHEAD = 450  # Minimum size due to static fields, body size is variable

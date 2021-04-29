@@ -26,7 +26,9 @@ class RemoteKubernetes(Remote):
         self.restore_file = 'restore.yaml'
         self.operator_version = None
 
-    def kubectl(self, params, kube_config, split_lines=True, max_attempts=3):
+    def kubectl(self, params, kube_config=None, split_lines=True, max_attempts=3):
+        if not kube_config:
+            kube_config = self.kube_config_path
         params = params.split()
         if params[0] == 'exec':
             params = params[0:5] + [" ".join(params[5::])]
@@ -667,42 +669,6 @@ class RemoteKubernetes(Remote):
     def create_restore(self):
         restore_template_path = self.get_restore_template_path()
         self.create_from_file(restore_template_path)
-
-    def wait_for_restore_complete(self):
-        logger.info('waiting for restore')
-        running = False
-        tries = 0
-        while not running and tries < 60:
-            try:
-                running = self.get_restore('my-restore')['status']['running']
-            except Exception:
-                logger.info("restore not started")
-            tries += 1
-            time.sleep(1)
-        if not running:
-            raise Exception('failed to see running restore')
-        logger.info("restore started")
-        tries = 0
-        start = time.time()
-        while tries < 7200:
-            try:
-                self.get_restore('my-restore')
-            except Exception as ex:
-                break
-            tries += 1
-            time.sleep(1)
-        end = time.time()
-        if tries >= 3600:
-            raise Exception('failed complete restore')
-        logger.info("restore finished")
-        return end - start
-
-    def recreate_bucket(self, bucket_name):
-        bucket_path = self.get_bucket_path(bucket_name)
-        self.delete_from_file(bucket_path)
-        time.sleep(60)
-        self.create_from_file("cloud/operator/2/1/{}.yaml".format(bucket_name))
-        time.sleep(60)
 
     def istioctl(self, params, kube_config=None, split_lines=True, max_attempts=1):
         kube_config = kube_config or self.kube_config_path

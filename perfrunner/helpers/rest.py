@@ -1110,3 +1110,9 @@ class KubernetesRestHelper(RestBase):
         api = 'http://{}:{}/pools/default/buckets/{}'\
             .format(host, port, bucket)
         return self.get(url=api).json()
+
+    def flush_bucket(self, host: str, bucket: str):
+        logger.info('Flushing bucket: {}'.format(bucket))
+        host, port = self.translate_host_and_port(host, '8091')
+        api = 'http://{}:{}/pools/default/buckets/{}/controller/doFlush'.format(host, port, bucket)
+        self.post(url=api)

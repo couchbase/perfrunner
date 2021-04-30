@@ -35,8 +35,9 @@ replica_number = 0
 indexer.settings.storage_mode = plasma
 
 [bucket_extras]
-num_writer_threads = disk_io_optimized
-num_reader_threads = disk_io_optimized
+num_writer_threads = 64
+num_reader_threads = 32
+max_num_shards = 64
 
 [py_tpcc]
 warehouse = 100

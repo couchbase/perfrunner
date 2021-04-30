@@ -803,6 +803,7 @@ class PytpccBenchmarkTest(N1QLTest):
         self.download_pytpcc()
 
         self.pytpcc_create_collections()
+        time.sleep(60)
 
         if self.test_config.pytpcc_settings.use_pytpcc_backup:
             self.restore_pytpcc()

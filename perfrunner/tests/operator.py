@@ -71,7 +71,7 @@ class OperatorBackupRestoreTest(OperatorBackupTest):
     def restore(self):
         logger.info('Running restore')
         self.remote.create_restore()
-        self.check_num_items()
+        self.check_num_items(max_retry=3600)
 
     def flush_buckets(self):
         logger.info('Flushing bucket')

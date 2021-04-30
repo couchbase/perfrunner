@@ -250,7 +250,7 @@ class PerfTest:
             for server in self.index_nodes:
                 self.monitor.monitor_indexing(server)
 
-    def check_num_items(self, bucket_items: dict = None):
+    def check_num_items(self, bucket_items: dict = None, max_retry: int=None):
         if bucket_items:
             for target in self.target_iterator:
                 num_items = bucket_items.get(target.bucket, None)
@@ -259,7 +259,8 @@ class PerfTest:
                     self.monitor.monitor_num_items(
                         target.node,
                         target.bucket,
-                        num_items
+                        num_items,
+                        max_retry=max_retry
                     )
         elif getattr(self.test_config.load_settings, 'collections', None):
             for target in self.target_iterator:
@@ -274,14 +275,14 @@ class PerfTest:
                     num_load_targets * \
                     (1 + self.test_config.bucket.replica_number)
                 self.monitor.monitor_num_items(target.node, target.bucket,
-                                               num_items)
+                                               num_items, max_retry=max_retry)
         else:
             num_items = self.test_config.load_settings.items * (
                 1 + self.test_config.bucket.replica_number
             )
             for target in self.target_iterator:
                 self.monitor.monitor_num_items(target.node, target.bucket,
-                                               num_items)
+                                               num_items, max_retry=max_retry)
 
     def reset_kv_stats(self):
         master_node = next(self.cluster_spec.masters)

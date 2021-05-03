@@ -1044,6 +1044,30 @@ class DefaultRestHelper(RestBase):
             .format(host, bucket)
         self.put(url=api, data=json.dumps(collection_map))
 
+    def create_server_group(self, host, server_group):
+        logger.info('Creating Server Group {}'.format(server_group))
+        api = 'http://{}:8091/pools/default/serverGroups'.format(host)
+        data = {
+            'name': server_group
+        }
+        return self.post(url=api, data=data)
+
+    def get_server_group_info(self, host):
+        api = 'http://{}:8091/pools/default/serverGroups'.format(host)
+        return self.get(url=api).json()
+
+    def change_group_membership(self, host, uri, node_json):
+        api = 'http://{}:8091{}'.format(host, uri)
+        self.put(url=api, data=json.dumps(node_json))
+
+    def delete_server_group(self, host, uri):
+        api = 'http://{}:8091{}'.format(host, uri)
+        self.delete(url=api)
+
+    def indexes_per_node(self, host: str):
+        api = 'http://{}:{}/stats'.format(host, '9102')
+        return self.get(url=api).json()['num_indexes']
+
 
 class KubernetesRestHelper(RestBase):
 

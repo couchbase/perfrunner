@@ -800,6 +800,23 @@ def run_cbindexperf(path_to_tool: str, node: str, rest_username: str,
     return ret.return_code
 
 
+def run_cbindex(path_to_tool: str, options: str, index_nodes):
+    batch_options = \
+        "-auth=Administrator:password " \
+        "-server {index_node}:8091 " \
+        "-type batch_process " \
+        "-input /tmp/batch.txt " \
+        "-refresh_settings=true".format(index_node=index_nodes[0])
+    with open("/tmp/batch.txt", "w+") as bf:
+        bf.write(options)
+    logger.info('Running cbindex on the client')
+    cmdstr = "{} {}"\
+             .format(path_to_tool, batch_options)
+    logger.info('Running {}'.format(cmdstr))
+    ret = local(cmdstr)
+    return ret.return_code, ret.stderr
+
+
 def kill_process(process: str):
     logger.info('Killing the following process: {}'.format(process))
     with quiet():

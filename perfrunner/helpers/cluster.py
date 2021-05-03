@@ -565,6 +565,53 @@ class ClusterManager:
                 disabled = self.gen_disabled_audit_events(master)
             self.rest.enable_audit(master, disabled)
 
+    def add_server_groups(self):
+        if self.cluster_spec.server_group_map:
+            server_group_info = self.rest.get_server_group_info(self.master_node)["groups"]
+            existing_server_groups = [group_info["name"] for group_info in server_group_info]
+            groups = set(self.cluster_spec.server_group_map.values())
+            for group in groups:
+                if group not in existing_server_groups:
+                    self.rest.create_server_group(self.master_node, group)
+
+    def change_group_membership(self):
+        if self.cluster_spec.server_group_map:
+            server_group_info = self.rest.get_server_group_info(self.master_node)
+            server_groups = set(self.cluster_spec.server_group_map.values())
+
+            node_group_json = {
+                "groups": []
+            }
+
+            for i, group_info in enumerate(server_group_info["groups"]):
+                node_group_json["groups"].append(dict((k, group_info[k])
+                                                      for k in ["name", "uri"]))
+                node_group_json["groups"][i]["nodes"] = []
+
+            for server, group in self.cluster_spec.server_group_map.items():
+                for server_info in node_group_json["groups"]:
+                    if server_info["name"] == group:
+                        server_info["nodes"].append({"otpNode": "ns_1@{}".format(server)})
+                        break
+
+            self.rest.change_group_membership(self.master_node,
+                                              server_group_info["uri"],
+                                              node_group_json)
+
+            logger.info("node json {}".format(node_group_json))
+            for server_grp in server_group_info["groups"]:
+                if server_grp["name"] not in server_groups:
+                    self.delete_server_group(server_grp["name"])
+
+    def delete_server_group(self, server_group):
+        logger.info("Deleting Server Group {}".format(server_group))
+        server_group_info = self.rest.get_server_group_info(self.master_node)["groups"]
+        for server_grp in server_group_info:
+            if server_grp["name"] == server_group:
+                uri = server_grp["uri"]
+                break
+        self.rest.delete_server_group(self.master_node, uri)
+
     def generate_ce_roles(self) -> List[str]:
         return ['admin']
 

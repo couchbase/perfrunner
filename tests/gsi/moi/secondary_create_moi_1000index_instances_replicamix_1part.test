@@ -1,0 +1,35 @@
+[test_case]
+test = perfrunner.tests.secondary.CreateIndexDDLTest
+
+[showfast]
+title = 1 bucket, 1000 Index Instances, Non-Partitioned Indexes with Replica mix, MOI, s=1 c=50
+component = secondary
+category = ddl
+sub_category = MOI
+
+[stats]
+client_processes = cbindex
+
+[cluster]
+mem_quota = 30000
+index_mem_quota = 30000
+initial_nodes = 6
+num_buckets = 1
+
+[bucket]
+replica_number=0
+replica_index=0
+
+[collection]
+config = collections/1bucket_1scope_50collections_basic.json
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[secondary]
+indexes = tests/gsi/index_defs/1bucket_1scope_50collections_1000index_instances_replicamix_1partition.json
+disable_perindex_stats = True
+indexer.settings.storage_mode = memory_optimized
+indexer.settings.max_cpu_percent = 4800
+indexer.settings.gc_percent = 200

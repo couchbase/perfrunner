@@ -112,7 +112,7 @@ class RemoteLinux(Remote):
 
         return bucket_indexes
 
-    def batch_create_index_collection(self, index_nodes, indexes, storage):
+    def batch_create_index_collection(self, index_nodes, options):
         batch_options = \
             "-auth=Administrator:password " \
             "-server {index_node}:8091 " \
@@ -120,71 +120,19 @@ class RemoteLinux(Remote):
             "-input /tmp/batch.txt " \
             "-refresh_settings=true".format(index_node=index_nodes[0])
         with open("/tmp/batch.txt", "w+") as bf:
-            for bucket_name, scope_map in indexes.items():
-                for scope_name, collection_map in scope_map.items():
-                    for collection_name, index_map in collection_map.items():
-                        for index, index_def in index_map.items():
-                            where = None
-                            if ':' in index_def:
-                                fields, where = index_def.split(":")
-                            else:
-                                fields = index_def
-                            fields_list = fields.split(",")
-
-                            options = "-type create " \
-                                "-bucket {bucket} " \
-                                "-scope {scope} " \
-                                "-collection {collection} ".format(
-                                    bucket=bucket_name,
-                                    scope=scope_name,
-                                    collection=collection_name)
-
-                            options += "-fields "
-                            for field in fields_list:
-                                options += "`{}`,".format(field)
-
-                            options = options.rstrip(",")
-                            options = options + " "
-
-                            if where is not None:
-                                options = '{options} -where "{where_clause}"' \
-                                    .format(options=options, where_clause=where)
-
-                            if storage == 'memdb' or storage == 'plasma':
-                                options = '{options} -using {db}'.format(options=options,
-                                                                         db=storage)
-
-                            options = "{options} -index {index} " \
-                                .format(options=options, index=index)
-
-                            options = options + '-with {"defer_build":true} \n'
-                            bf.write(options)
-
+            bf.write(options)
         put("/tmp/batch.txt", "/tmp/batch.txt")
         self.run_cbindex_command(batch_options)
 
-    def batch_build_index_collection(self, index_nodes, indexes):
+    def batch_build_index_collection(self, index_nodes, options):
         batch_options = \
             "-auth=Administrator:password " \
             "-server {index_node}:8091 " \
             "-type batch_build " \
             "-input /tmp/batch.txt " \
             "-refresh_settings=true".format(index_node=index_nodes[0])
-
         with open("/tmp/batch.txt", "w+") as bf:
-            for bucket_name, scope_map in indexes.items():
-                for scope_name, collection_map in scope_map.items():
-                    for collection_name, index_map in collection_map.items():
-                        build_indexes = ",".join(["{}:{}:{}:{}".format(
-                            bucket_name,
-                            scope_name,
-                            collection_name,
-                            index_name)
-                            for index_name in index_map.keys()])
-                        options = "-type build " \
-                                  "-indexes {build_indexes} \n"\
-                            .format(build_indexes=build_indexes)
-                        bf.write(options)
+            bf.write(options)
         put("/tmp/batch.txt", "/tmp/batch.txt")
         self.run_cbindex_command(batch_options)
 
@@ -199,14 +147,14 @@ class RemoteLinux(Remote):
         self.build_index(index_nodes[0], bucket_indexes)
 
     @master_server
-    def create_secondary_index_collections(self, index_nodes, indexes, storage):
+    def create_secondary_index_collections(self, index_nodes, options):
         logger.info('creating secondary indexes')
-        self.batch_create_index_collection(index_nodes, indexes, storage)
+        self.batch_create_index_collection(index_nodes, options)
 
     @master_server
-    def build_secondary_index_collections(self, index_nodes, indexes):
+    def build_secondary_index_collections(self, index_nodes, options):
         logger.info('building secondary indexes')
-        self.batch_build_index_collection(index_nodes, indexes)
+        self.batch_build_index_collection(index_nodes, options)
 
     @all_servers
     def reset_swap(self):

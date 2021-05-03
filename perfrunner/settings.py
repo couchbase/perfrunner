@@ -156,7 +156,7 @@ class ClusterSpec(Config):
         has_service = []
         for _, servers in self.config.items('clusters'):
             for server in servers.split():
-                host, roles = server.split(':')
+                host, roles, *group = server.split(':')
                 if role in roles:
                     has_service.append(host)
         return has_service
@@ -165,7 +165,7 @@ class ClusterSpec(Config):
         has_service = []
         servers = self.config.items('clusters')[0][1]
         for server in servers.split():
-            host, roles = server.split(':')
+            host, roles, *group = server.split(':')
             if role in roles:
                 has_service.append(host)
         return has_service
@@ -175,7 +175,7 @@ class ClusterSpec(Config):
         server_roles = {}
         for _, servers in self.config.items('clusters'):
             for server in servers.split():
-                host, roles = server.split(':')
+                host, roles, *group = server.split(':')
                 server_roles[host] = roles
         return server_roles
 
@@ -184,7 +184,7 @@ class ClusterSpec(Config):
         server_and_roles = []
         for _, servers in self.config.items('clusters'):
             for server in servers.split():
-                host, roles = server.split(':')
+                host, roles, *group = server.split(':')
                 server_and_roles.append((host, roles))
         return server_and_roles
 
@@ -265,6 +265,16 @@ class ClusterSpec(Config):
     @property
     def parameters(self) -> dict:
         return self._get_options_as_dict('parameters')
+
+    @property
+    def server_group_map(self) -> dict:
+        server_grp_map = {}
+        for cluster_name, servers in self.config.items('clusters'):
+            for server in servers.split():
+                host, roles, *group = server.split(':')
+                if len(group):
+                    server_grp_map[host] = group[0]
+        return server_grp_map
 
 
 class TestCaseSettings:

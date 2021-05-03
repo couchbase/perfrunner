@@ -63,7 +63,9 @@ def main():
         cm.configure_xdcr_settings()
 
         # Cluster
+        cm.add_server_groups()
         cm.add_nodes()
+        cm.change_group_membership()
         cm.rebalance()
         cm.enable_auto_failover()
         cm.configure_auto_compaction()

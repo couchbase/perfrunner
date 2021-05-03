@@ -12,6 +12,7 @@ from perfrunner.helpers.local import (
     extract_cb_deb,
     get_indexer_heap_profile,
     kill_process,
+    run_cbindex,
     run_cbindexperf,
 )
 from perfrunner.helpers.profiler import with_profiles
@@ -53,17 +54,19 @@ class SecondaryIndexTest(PerfTest):
 
         self.cbindexperf_concurrency = self.test_config.gsi_settings.cbindexperf_concurrency
         self.cbindexperf_repeat = self.test_config.gsi_settings.cbindexperf_repeat
+        self.local_path_to_cbindex = './opt/couchbase/bin/cbindex'
 
-        if self.cbindexperf_concurrency and self.cbindexperf_repeat:
+        if self.configfile:
             with open(self.configfile, 'r') as f:
                 cbindexperf_contents = json.load(f)
-
-            cbindexperf_contents["Concurrency"] = self.cbindexperf_concurrency
-            for scan_spec in cbindexperf_contents["ScanSpecs"]:
-                scan_spec["Repeat"] = self.cbindexperf_repeat
+                if self.cbindexperf_concurrency:
+                    cbindexperf_contents["Concurrency"] = self.cbindexperf_concurrency
+                if self.cbindexperf_repeat:
+                    for scan_spec in cbindexperf_contents["ScanSpecs"]:
+                        scan_spec["Repeat"] = self.cbindexperf_repeat
 
             with open(self.configfile, 'w') as f:
-                json.dump(cbindexperf_contents, f)
+                json.dump(cbindexperf_contents, f, indent=4)
 
         if self.storage == "plasma":
             self.COLLECTORS["secondary_storage_stats"] = True
@@ -83,6 +86,76 @@ class SecondaryIndexTest(PerfTest):
         else:
             logger.info('Existing 2i latency stats file removed')
 
+    def batch_create_index_collection_options(self, indexes, storage):
+        all_options = ""
+        for bucket_name, scope_map in indexes.items():
+            for scope_name, collection_map in scope_map.items():
+                for collection_name, index_map in collection_map.items():
+                    for index, index_config in index_map.items():
+                        configs = ''
+                        if type(index_config) is dict:
+                            index_def = index_config.pop("field")
+                            for config, value in index_config.items():
+                                configs = configs + '"{}":{},'.format(config, value)
+                        else:
+                            index_def = index_config
+
+                        where = None
+                        if ':' in index_def:
+                            fields, where = index_def.split(":")
+                        else:
+                            fields = index_def
+                        fields_list = fields.split(",")
+
+                        options = "-type create " \
+                                  "-bucket {bucket} " \
+                                  "-scope {scope} " \
+                                  "-collection {collection} ". \
+                            format(bucket=bucket_name,
+                                   scope=scope_name,
+                                   collection=collection_name)
+
+                        options += "-fields "
+                        for field in fields_list:
+                            options += "`{}`,".format(field)
+
+                        options = options.rstrip(",")
+                        options = options + " "
+
+                        if where is not None:
+                            options = '{options} -where "{where_clause}"' \
+                                .format(options=options, where_clause=where)
+
+                        if storage == 'memdb' or storage == 'plasma':
+                            options = '{options} -using {db}'.format(options=options,
+                                                                     db=storage)
+
+                        options = "{options} -index {index} " \
+                            .format(options=options, index=index)
+
+                        options = options + '-with {{{}"defer_build":true}} \n'.format(configs)
+                        options = options.rstrip(',')
+                        all_options = all_options + options
+
+        return all_options
+
+    def batch_build_index_collection_options(self, indexes):
+        all_options = ""
+        for bucket_name, scope_map in indexes.items():
+            for scope_name, collection_map in scope_map.items():
+                for collection_name, index_map in collection_map.items():
+                    build_indexes = ",".join(["{}:{}:{}:{}".format(
+                        bucket_name,
+                        scope_name,
+                        collection_name,
+                        index_name)
+                        for index_name in index_map.keys()])
+                    options = "-type build " \
+                              "-indexes {build_indexes} \n" \
+                        .format(build_indexes=build_indexes)
+                    all_options = all_options + options
+        return all_options
+
     @with_stats
     @with_profiles
     def build_secondaryindex(self):
@@ -92,16 +165,15 @@ class SecondaryIndexTest(PerfTest):
         """Call cbindex create command."""
         logger.info('building secondary index..')
         if self.test_config.collection.collection_map:
+            create_options = self.batch_create_index_collection_options(self.indexes, self.storage)
             self.remote.create_secondary_index_collections(
-                self.index_nodes,
-                self.indexes,
-                self.storage)
+                self.index_nodes, create_options)
+
+            build_options = self.batch_build_index_collection_options(self.indexes)
 
             build_start = time.time()
-
             self.remote.build_secondary_index_collections(
-                self.index_nodes,
-                self.indexes)
+                self.index_nodes, build_options)
             self.monitor.wait_for_secindex_init_build_collections(
                 self.index_nodes[0],
                 self.indexes)
@@ -154,8 +226,8 @@ class SecondaryIndexTest(PerfTest):
             logger.info('Scan workload applied')
 
     def calc_avg_rr(self, storage_stats):
-        total_num_rec_allocs, total_num_rec_frees,\
-            total_num_rec_swapout, total_num_rec_swapin = 0, 0, 0, 0
+        total_num_rec_allocs, total_num_rec_frees, total_num_rec_swapout, total_num_rec_swapin =\
+            0, 0, 0, 0
 
         for index in storage_stats:
             total_num_rec_allocs += index["Stats"]["MainStore"]["num_rec_allocs"] + \
@@ -292,7 +364,7 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
                             num_access_collections += 1
 
             expected_docs = \
-                (self.test_config.load_settings.items + self.test_config.access_settings.items)\
+                (self.test_config.load_settings.items + self.test_config.access_settings.items) \
                 // num_access_collections
 
             self.access()
@@ -302,8 +374,7 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
                 expected_docs)
         else:
             self.access()
-            numitems = self.test_config.load_settings.items + \
-                self.test_config.access_settings.items
+            numitems = self.test_config.load_settings.items + self.test_config.access_settings.items
             self.monitor.wait_for_secindex_incr_build(
                 self.index_nodes,
                 self.bucket,
@@ -403,7 +474,7 @@ class MultipleIncrementalSecondaryIndexTest(InitialandIncrementalSecondaryIndexT
     @with_stats
     def build_incrindex_multiple_times(self, num_times):
         numitems = self.test_config.load_settings.items + \
-            self.test_config.access_settings.items
+                   self.test_config.access_settings.items
 
         for i in range(1, num_times + 1):
             self.access()
@@ -513,7 +584,7 @@ class SecondaryIndexingScanTest(SecondaryIndexTest):
                                                     name=title)
                 )
         else:
-            title = "Secondary Scan Throughput (scanps) {}"\
+            title = "Secondary Scan Throughput (scanps) {}" \
                 .format(str(self.test_config.showfast.title).strip())
             self.reporter.post(
                 *self.metrics.scan_throughput(scan_thr,
@@ -1061,3 +1132,33 @@ class SecondaryRebalanceTest(SecondaryIndexTest, RebalanceTest):
         self.reporter.post(
             *self.metrics.rebalance_time(self.rebalance_time)
         )
+
+
+class CreateIndexDDLTest(SecondaryIndexTest):
+
+    """Measure time to create indexes only."""
+
+    def _report_kpi(self, time_elapsed, index_type, unit="min"):
+        self.reporter.post(
+            *self.metrics.get_ddl_time(value=time_elapsed,
+                                       index_type=index_type,
+                                       unit=unit)
+        )
+
+    @with_stats
+    @timeit
+    def run_create_index(self, create_options):
+        status, error = run_cbindex(self.local_path_to_cbindex, create_options, self.index_nodes)
+        if status != 0:
+            raise Exception('Cbindex command failed with {}'.format(error))
+
+    def run(self):
+        logger.info('Creating Secondary Indexes')
+        if self.test_config.collection.collection_map:
+            create_options = self.batch_create_index_collection_options(self.indexes, self.storage)
+            time_elapsed = self.run_create_index(create_options)
+
+        self._report_kpi(time_elapsed, "Create")
+
+        for server in self.cluster_spec.servers_by_role('index'):
+            logger.info("{} : {} Indexes".format(server, self.rest.indexes_per_node(server)))

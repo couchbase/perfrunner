@@ -586,6 +586,23 @@ class MetricHelper:
 
         return value, self._snapshots, metric_info
 
+    def get_ddl_time(self,
+                     value: float,
+                     index_type: str,
+                     unit: str = "min",
+                     name: str = "") -> Metric:
+        metric_id = '{}_{}'.format(self.test_config.name, index_type.lower())
+        test_name = self._title
+        if name:
+            test_name = name
+        title = '{} index ({}), {}'.format(index_type, unit, test_name)
+        metric_info = self._metric_info(metric_id, title, chirality=-1)
+        metric_info['category'] = "ddl"
+
+        value = s2m(value)
+
+        return value, self._snapshots, metric_info
+
     def get_memory_meta(self,
                         value: float,
                         memory_type: str) -> Metric:

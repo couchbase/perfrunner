@@ -413,7 +413,7 @@ class KVWorker(Worker):
         if not cb:
             cb = self.cb
         target = self.random_target()
-        curr_items = self.ws.items
+        curr_items = self.ws.items // self.num_load_targets
         deleted_items = 0
         if self.ws.creates or self.ws.deletes:
             max_batch_deletes_buffer = self.ws.deletes * self.ws.workers
@@ -934,9 +934,8 @@ class N1QLWorker(Worker):
             t0 = time.time()
             self.op_delay = self.op_delay + (self.delta / self.ws.n1ql_batch_size)
 
-        target = self.next_target()
-        target_info = self.shared_dict[target]
-        target_curr_items = target_info[0]
+        self.next_target()
+        target_curr_items = self.ws.items // self.num_load_targets
 
         for i in range(self.ws.n1ql_batch_size):
 
@@ -966,9 +965,8 @@ class N1QLWorker(Worker):
             t0 = time.time()
             self.op_delay = self.op_delay + (self.delta / self.ws.n1ql_batch_size)
 
-        target = self.next_target()
-        target_info = self.shared_dict[target]
-        target_curr_items = target_info[0]
+        self.next_target()
+        target_curr_items = self.ws.items // self.num_load_targets
 
         if self.ws.doc_gen == 'ext_reverse_lookup':
             target_curr_items //= 4

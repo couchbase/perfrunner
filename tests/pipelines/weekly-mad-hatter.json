@@ -266,6 +266,7 @@
         {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "reb_swap_1B_3nodes_kv.test"},
         {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "reb_failover_100M_dgm_kv_auto_windows.test"},
         {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "reb_failover_100M_dgm_kv_graceful_windows.test"},
-        {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "reb_failover_100M_dgm_kv_hard_windows.test"}
+        {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "reb_failover_100M_dgm_kv_hard_windows.test"},
+        {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "reb_failover_100M_dgm_kv_windows.test"}
     ]
 }

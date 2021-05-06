@@ -1,5 +1,6 @@
 import copy
 import json
+import time
 from typing import Callable
 
 from decorator import decorator
@@ -326,6 +327,12 @@ class KVTest(PerfTest):
         self._print_amplifications(old_stats=self.memcached_stats, now_stats=now_memcached_ops,
                                    now_ops=now_ops, doc_size=doc_size, stat_type="Virtual")
 
+    def wait_for_fragmentation(self):
+        for master in self.cluster_spec.masters:
+            for bucket in self.test_config.buckets:
+                self.monitor.wait_for_fragmentation_stable(master, bucket)
+        time.sleep(300)
+
     @with_console_stats
     @with_stats
     def access(self, *args):
@@ -356,6 +363,7 @@ class KVTest(PerfTest):
         if self.test_config.extra_access_settings.run_extra_access:
             self.run_extra_access()
             self.wait_for_persistence()
+            self.wait_for_fragmentation()
 
         self.hot_load()
         self.reset_kv_stats()
@@ -399,6 +407,7 @@ class CompactionMagmaTest(StabilityBootstrap):
         if self.test_config.extra_access_settings.run_extra_access:
             self.run_extra_access()
             self.wait_for_persistence()
+            self.wait_for_fragmentation()
 
         self.hot_load()
         self.reset_kv_stats()
@@ -464,6 +473,7 @@ class SingleNodeThroughputDGMMagmaTest(ThroughputDGMMagmaTest):
         if self.test_config.extra_access_settings.run_extra_access:
             self.run_extra_access()
             self.wait_for_persistence()
+            self.wait_for_fragmentation()
 
         self.COLLECTORS["kvstore"] = False
         self.COLLECTORS["disk"] = False
@@ -513,6 +523,7 @@ class SingleNodeMixedLatencyDGMTest(SingleNodeThroughputDGMMagmaTest):
         if self.test_config.extra_access_settings.run_extra_access:
             self.run_extra_access()
             self.wait_for_persistence()
+            self.wait_for_fragmentation()
 
         self.COLLECTORS["kvstore"] = False
         self.COLLECTORS["disk"] = False
@@ -594,6 +605,7 @@ class PillowFightDGMTest(StabilityBootstrap):
         if self.test_config.extra_access_settings.run_extra_access:
             self.run_extra_access()
             self.wait_for_persistence()
+            self.wait_for_fragmentation()
 
         self.reset_kv_stats()
 
@@ -636,6 +648,7 @@ class WarmupDGMTest(StabilityBootstrap):
         if self.test_config.extra_access_settings.run_extra_access:
             self.run_extra_access()
             self.wait_for_persistence()
+            self.wait_for_fragmentation()
 
         self.reset_kv_stats()
 
@@ -687,6 +700,7 @@ class YCSBThroughputHIDDTest(YCSBThroughputTest, KVTest):
         if self.test_config.extra_access_settings.run_extra_access:
             self.run_extra_access()
             self.wait_for_persistence()
+            self.wait_for_fragmentation()
 
         self.reset_kv_stats()
         KVTest.save_stats(self)
@@ -925,6 +939,7 @@ class RebalanceKVDGMTest(RebalanceKVTest, StabilityBootstrap):
         if self.test_config.extra_access_settings.run_extra_access:
             StabilityBootstrap.run_extra_access(self)
             self.wait_for_persistence()
+            StabilityBootstrap.wait_for_fragmentation()
 
         StabilityBootstrap.hot_load(self)
 
@@ -946,6 +961,12 @@ class BackupTestDGM(BackupTest):
         PerfTest.access(self, settings=self.test_config.extra_access_settings)
         self.COLLECTORS["latency"] = True
 
+    def wait_for_fragmentation(self):
+        for master in self.cluster_spec.masters:
+            for bucket in self.test_config.buckets:
+                self.monitor.wait_for_fragmentation_stable(master, bucket)
+        time.sleep(300)
+
     def run(self):
         self.extract_tools()
 
@@ -955,6 +976,7 @@ class BackupTestDGM(BackupTest):
         if self.test_config.extra_access_settings.run_extra_access:
             self.run_extra_access()
             self.wait_for_persistence()
+            self.wait_for_fragmentation()
 
         time_elapsed = self.backup()
 

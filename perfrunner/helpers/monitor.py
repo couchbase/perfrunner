@@ -33,6 +33,7 @@ class DefaultMonitor(DefaultRestHelper):
     POLLING_INTERVAL_MACHINE_UP = 10
     POLLING_INTERVAL_ANALYTICS = 15
     POLLING_INTERVAL_EVENTING = 1
+    POLLING_INTERVAL_FRAGMENTATION = 10
 
     REBALANCE_TIMEOUT = 3600 * 6
     TIMEOUT = 3600 * 12
@@ -859,6 +860,15 @@ class DefaultMonitor(DefaultRestHelper):
             retry += 1
         if retry == self.MAX_RETRY_TIMER_EVENT:
             logger.info('Function {} failed to {}...!!!'.format(function, status))
+
+    def wait_for_fragmentation_stable(self, host: str, bucket: str):
+        while True:
+            stats = self.get_bucket_stats(host=host, bucket=bucket)
+            fragmentation = int(stats['op']['samples'].get("couch_docs_fragmentation")[-1])
+            logger.info("couch_docs_fragmentation: {}".format(fragmentation))
+            if fragmentation < 50:
+                break
+            time.sleep(self.POLLING_INTERVAL_FRAGMENTATION)
 
 
 class KubernetesMonitor(KubernetesRestHelper):

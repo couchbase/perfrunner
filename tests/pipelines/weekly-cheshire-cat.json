@@ -510,8 +510,6 @@
         {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_swap_1s_1000c.test"}
     ],
     "GSI-Recovery": [
-        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/moi/secondary_100M_moi.test"},
-        {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/moi/secondary_1B_moi.test"},
         {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_100M_plasma.test"},
         {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_1B_plasma.test"},
         {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_250M_20res_20kops.test"},

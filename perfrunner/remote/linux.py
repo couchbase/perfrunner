@@ -255,6 +255,18 @@ class RemoteLinux(Remote):
             run('rm -f {}'.format(fname))
 
     @all_servers
+    def collect_index_datafiles(self):
+        logger.info('Archiving Index Data Files')
+
+        fname = '/data/@2i'
+        cmd_zip = 'zip -rq @2i.zip /data/@2i'
+        r = run('stat {}'.format(fname), quiet=True, warn_only=True)
+        if not r.return_code:
+            run(cmd_zip, warn_only=True, pty=False)
+            get('{}'.format('@2i.zip'), local_path='.')
+            run('rm -f {}'.format('@2i.zip'))
+
+    @all_servers
     def clean_data(self):
         for path in self.cluster_spec.paths:
             run('rm -fr {}/*'.format(path))
@@ -540,7 +552,7 @@ class RemoteLinux(Remote):
     @servers_by_role(roles=['index'])
     def kill_process_on_index_node(self, process):
         logger.info('Killing following process on index node: {}'.format(process))
-        run("killall {}".format(process), quiet=True)
+        run("killall {}".format(process), warn_only=True)
 
     def change_owner(self, host, path, owner='couchbase'):
         with settings(host_string=host):

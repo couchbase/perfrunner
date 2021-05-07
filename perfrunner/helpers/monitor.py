@@ -866,7 +866,7 @@ class DefaultMonitor(DefaultRestHelper):
             stats = self.get_bucket_stats(host=host, bucket=bucket)
             fragmentation = int(stats['op']['samples'].get("couch_docs_fragmentation")[-1])
             logger.info("couch_docs_fragmentation: {}".format(fragmentation))
-            if fragmentation < 50:
+            if fragmentation <= 50:
                 break
             time.sleep(self.POLLING_INTERVAL_FRAGMENTATION)
 

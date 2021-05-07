@@ -399,7 +399,7 @@
         {"job": "themis", "cluster": "themis.spec", "test_config": "throughput50M_fun_bktop_rebalance_1s_1c.test"},
         {"job": "themis", "cluster": "themis_n1ql.spec", "test_config": "throughput20M_fun_n1ql_1s_1c.test"},
         {"job": "themis", "cluster": "themis_eventing_index_n1ql.spec", "test_config": "throughput20M_fun_n1ql_iter_1s_1c.test"},
-        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_incr_ctrop_0cont_src_bkt_mut_1s_1c.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput80M_incr_ctrop_0cont_src_bkt_mut_1s_1c.test"},
         {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_get_advbktop_src_bkt_mut_1s_1c.test"},
         {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_replace_advbktop_0cont_1s_1c.test"},
         {"job": "themis", "cluster": "themis.spec", "test_config": "throughput96M_24fun_bktop_12scope_24collections.test"},

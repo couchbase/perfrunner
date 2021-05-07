@@ -14,7 +14,7 @@
         {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_decr_ctrop_100cont_src_bkt_mut.test"},
         {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_get_advbktop_src_bkt_mut.test"},
         {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_incr_ctrop_0cont.test"},
-        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_incr_ctrop_0cont_src_bkt_mut.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput80M_incr_ctrop_0cont_src_bkt_mut.test"},
         {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_replace_advbktop_0cont.test"},
         {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_replace_advbktop_0cont_src_bkt_mut.test"},
         {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_replace_advbktop_25cont.test"},

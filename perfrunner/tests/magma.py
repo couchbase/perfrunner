@@ -331,6 +331,7 @@ class KVTest(PerfTest):
         for master in self.cluster_spec.masters:
             for bucket in self.test_config.buckets:
                 self.monitor.wait_for_fragmentation_stable(master, bucket)
+        logger.info("sleep for 300 seconds")
         time.sleep(300)
 
     @with_console_stats
@@ -473,7 +474,8 @@ class SingleNodeThroughputDGMMagmaTest(ThroughputDGMMagmaTest):
         if self.test_config.extra_access_settings.run_extra_access:
             self.run_extra_access()
             self.wait_for_persistence()
-            self.wait_for_fragmentation()
+            logger.info("sleep for 300 seconds")
+            time.sleep(300)
 
         self.COLLECTORS["kvstore"] = False
         self.COLLECTORS["disk"] = False
@@ -523,7 +525,8 @@ class SingleNodeMixedLatencyDGMTest(SingleNodeThroughputDGMMagmaTest):
         if self.test_config.extra_access_settings.run_extra_access:
             self.run_extra_access()
             self.wait_for_persistence()
-            self.wait_for_fragmentation()
+            logger.info("sleep for 300 seconds")
+            time.sleep(300)
 
         self.COLLECTORS["kvstore"] = False
         self.COLLECTORS["disk"] = False
@@ -965,6 +968,7 @@ class BackupTestDGM(BackupTest):
         for master in self.cluster_spec.masters:
             for bucket in self.test_config.buckets:
                 self.monitor.wait_for_fragmentation_stable(master, bucket)
+        logger.info("sleep for 300 seconds")
         time.sleep(300)
 
     def run(self):

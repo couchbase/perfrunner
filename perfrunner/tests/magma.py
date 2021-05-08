@@ -942,7 +942,7 @@ class RebalanceKVDGMTest(RebalanceKVTest, StabilityBootstrap):
         if self.test_config.extra_access_settings.run_extra_access:
             StabilityBootstrap.run_extra_access(self)
             self.wait_for_persistence()
-            StabilityBootstrap.wait_for_fragmentation()
+            StabilityBootstrap.wait_for_fragmentation(self)
 
         StabilityBootstrap.hot_load(self)
 

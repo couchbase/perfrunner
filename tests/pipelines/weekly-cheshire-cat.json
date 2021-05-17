@@ -509,12 +509,12 @@
         ],
     "FTS-Rebalance": [
 
-        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_in_1s_1c_with_replica.test"},
-        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_out_1s_1c_with_replica.test"},
-        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_swap_1s_1c_with_replica.test"},
-        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_in_1s_1000c_with_replica.test"},
-        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_out_1s_1000c_with_replica.test"},
-        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_swap_1s_1000c_with_replica.test"},
+        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_in_1s_1c_with_index_replica.test"},
+        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_out_1s_1c_with_index_replica.test"},
+        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_swap_1s_1c_with_index_replica.test"},
+        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_in_1s_1000c_with_index_replica.test"},
+        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_out_1s_1000c_with_index_replica.test"},
+        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_swap_1s_1000c_with_index_replica.test"},
         {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_in_1s_1c.test"},
         {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_out_1s_1c.test"},
         {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_swap_1s_1c.test"},

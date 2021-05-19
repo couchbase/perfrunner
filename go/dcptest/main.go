@@ -131,8 +131,8 @@ func startBucket(cluster, bucketn string, wg *sync.WaitGroup) int {
 	mf(err, "- upr")
 
 	vbnos := listOfVbnos()
-
-	flogs, err := b.GetFailoverLogs(0xABCD, vbnos, dcpConfig)
+	uuid := common.GetUUID(fmt.Sprintf("BucketFailoverLog-%v", bucketn), 0xABCD)
+	flogs, err := b.GetFailoverLogs(0xABCD, vbnos, uuid, dcpConfig)
 	mf(err, "- dcp failoverlogs")
 
 	if options.printFLogs {

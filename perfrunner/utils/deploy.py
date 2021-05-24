@@ -33,6 +33,7 @@ class AWSDeployer(Deployer):
         super().__init__(infra_spec, options)
         self.desired_infra = self.gen_desired_infrastructure_config()
         self.deployed_infra = {}
+        self.vpc_int = 0
         self.ec2client = boto3.client('ec2')
         self.ec2 = boto3.resource('ec2')
         self.cloudformation_client = boto3.client('cloudformation')
@@ -42,6 +43,7 @@ class AWSDeployer(Deployer):
         self.eks_node_role_path = "cloud/infrastructure/aws/eks/eks_node_role.yaml"
         self.generated_kube_config_dir = "cloud/infrastructure/generated/kube_configs"
         self.ebs_csi_iam_policy_path = "cloud/infrastructure/aws/eks/ebs-csi-iam-policy.json"
+        self.cloud_ini = "cloud/infrastructure/cloud.ini"
 
     def gen_desired_infrastructure_config(self):
         desired_infra = {'k8s': {}, 'ec2': {}}
@@ -59,6 +61,9 @@ class AWSDeployer(Deployer):
             desired_ec2_clusters = ec2['clusters'].split(',')
             for desired_ec2_cluster in desired_ec2_clusters:
                 ec2_cluster_config = self.infra_spec.infrastructure_section(desired_ec2_cluster)
+                for desired_node_group in ec2_cluster_config['node_groups'].split(','):
+                    node_group_config = self.infra_spec.infrastructure_section(desired_node_group)
+                    ec2_cluster_config[desired_node_group] = node_group_config
                 desired_infra['ec2'][desired_ec2_cluster] = ec2_cluster_config
         return desired_infra
 
@@ -68,8 +73,30 @@ class AWSDeployer(Deployer):
 
     def create_vpc(self):
         logger.info("Creating VPC...")
+        vpc_available = False
+        for i in range(0, 5):
+            response = self.ec2client.describe_vpcs(
+                Filters=[
+                    {
+                        'Name': 'cidr-block-association.cidr-block',
+                        'Values': [
+                            '10.{}.0.0/16'.format(i)
+                        ]
+                    }
+                ]
+            )
+            resp = response['Vpcs']
+            if resp:
+                continue
+            else:
+                self.vpc_int = i
+                vpc_available = True
+                break
+
+        if not vpc_available:
+            raise Exception("vpc cidr block already in use")
         response = self.ec2client.create_vpc(
-            CidrBlock='10.0.0.0/16',
+            CidrBlock='10.{}.0.0/16'.format(self.vpc_int),
             AmazonProvidedIpv6CidrBlock=False,
             DryRun=False,
             InstanceTenancy='default',
@@ -81,6 +108,18 @@ class AWSDeployer(Deployer):
         waiter = self.ec2client.get_waiter('vpc_available')
         waiter.wait(VpcIds=[self.deployed_infra['vpc']['VpcId']],
                     WaiterConfig={'Delay': 10, 'MaxAttempts': 120})
+        response = self.ec2client.modify_vpc_attribute(
+            EnableDnsSupport={
+                'Value': True
+            },
+            VpcId=self.deployed_infra['vpc']['VpcId']
+        )
+        response = self.ec2client.modify_vpc_attribute(
+            EnableDnsHostnames={
+                'Value': True
+            },
+            VpcId=self.deployed_infra['vpc']['VpcId']
+        )
         response = self.ec2client.describe_vpcs(
             VpcIds=[self.deployed_infra['vpc']['VpcId']], DryRun=False)
         self.deployed_infra['vpc'] = response['Vpcs'][0]
@@ -104,7 +143,7 @@ class AWSDeployer(Deployer):
                              {'Key': 'kubernetes.io/cluster/{}'.format(cluster_name),
                               'Value': 'shared'}]}],
                     AvailabilityZone=az,
-                    CidrBlock='10.0.{}.0/24'.format(subnets+1),
+                    CidrBlock='10.{}.{}.0/24'.format(self.vpc_int, subnets+1),
                     VpcId=self.deployed_infra['vpc']['VpcId'],
                     DryRun=False)
                 subnets += 1
@@ -113,6 +152,7 @@ class AWSDeployer(Deployer):
                 self.write_infra_file()
 
         if len(self.desired_infra['ec2'].keys()) > 0:
+            az = 'us-west-2b'
             response = self.ec2client.create_subnet(
                 TagSpecifications=[
                     {'ResourceType': 'subnet',
@@ -122,7 +162,7 @@ class AWSDeployer(Deployer):
                          {'Key': 'Role',
                           'Value': 'ec2'}]}],
                 AvailabilityZone=az,
-                CidrBlock='10.0.{}.0/24'.format(subnets+1),
+                CidrBlock='10.{}.{}.0/24'.format(self.vpc_int, subnets+1),
                 VpcId=self.deployed_infra['vpc']['VpcId'],
                 DryRun=False)
             subnets += 1
@@ -206,6 +246,8 @@ class AWSDeployer(Deployer):
         self.write_infra_file()
 
     def create_eks_roles(self):
+        if not self.desired_infra['k8s']:
+            return
         logger.info("Creating cloudformation eks roles...")
         with open(self.eks_cluster_role_path, 'r') as cf_file:
             cft_template = cf_file.read()
@@ -246,6 +288,8 @@ class AWSDeployer(Deployer):
         self.write_infra_file()
 
     def create_eks_clusters(self):
+        if not self.desired_infra['k8s']:
+            return
         logger.info("Creating eks clusters...")
         self.deployed_infra['vpc']['eks_clusters'] = {}
         for i in range(1, len(self.desired_infra['k8s'].keys()) + 1):
@@ -282,6 +326,8 @@ class AWSDeployer(Deployer):
             self.create_kubeconfig(cluster_name)
 
     def create_kubeconfig(self, cluster_name):
+        if not self.desired_infra['k8s']:
+            return
         cluster = self.eksclient.describe_cluster(name=cluster_name)
         cluster_cert = cluster["cluster"]["certificateAuthority"]["data"]
         cluster_ep = cluster["cluster"]["endpoint"]
@@ -319,6 +365,8 @@ class AWSDeployer(Deployer):
         self.write_infra_file()
 
     def create_eks_node_groups(self):
+        if not self.desired_infra['k8s']:
+            return
         logger.info("Creating eks node groups...")
         for k8s_cluster_name, k8s_cluster_spec in self.desired_infra['k8s'].items():
             cluster_infra = self.deployed_infra['vpc']['eks_clusters'][k8s_cluster_name]
@@ -404,50 +452,92 @@ class AWSDeployer(Deployer):
                     break
             if ec2_subnet is None:
                 raise Exception("need at least one subnet with tag ec2 to deploy instances")
-            for ec2_group_name, ec2_config in self.desired_infra['ec2'].items():
-                if "client" in ec2_group_name:
-                    ami = 'ami-dbf9baa3'  # perf client ami
-                elif "server" in ec2_group_name:
-                    ami = 'ami-83b400fb'  # perf server ami
-                elif "broker" in ec2_group_name:
-                    ami = 'ami-dbf9baa3'  # perf client ami
-                else:
-                    raise Exception("ec2 group must include one of: client, server, broker")
-                response = self.ec2.create_instances(
-                    BlockDeviceMappings=[
-                        {'DeviceName': '/dev/sda1',
-                         'Ebs':
-                             {'DeleteOnTermination': True,
-                              'VolumeSize': int(ec2_config['volume_size']),
-                              'VolumeType': 'gp2',
-                              'Encrypted': False}}],
-                    ImageId=ami,
-                    InstanceType=ec2_config['instance_type'],
-                    KeyName=self.infra_spec.aws_key_name,
-                    MaxCount=int(ec2_config['instance_capacity']),
-                    MinCount=int(ec2_config['instance_capacity']),
-                    Monitoring={'Enabled': False},
-                    SubnetId=ec2_subnet,
-                    DisableApiTermination=False,
-                    DryRun=False,
-                    EbsOptimized=False,
-                    InstanceInitiatedShutdownBehavior='terminate',
-                    TagSpecifications=[
-                        {'ResourceType': 'instance',
-                         'Tags':
-                             [{'Key': 'Use', 'Value': 'CloudPerfTesting'},
-                              {'Key': 'Role', 'Value': ec2_group_name}]}])
-                ec2_group = self.deployed_infra['vpc']['ec2'].get(ec2_group_name, [])
-                ec2_group.append(response[0].id)
-                self.deployed_infra['vpc']['ec2'][ec2_group_name] = ec2_group
-                self.write_infra_file()
+            for ec2_cluster_name, ec2_cluster_config in self.desired_infra['ec2'].items():
+                for node_group in ec2_cluster_config['node_groups'].split(','):
+                    resource_path = 'ec2.{}.{}'.format(ec2_cluster_name, node_group)
+                    tags = [{'Key': 'Use', 'Value': 'CloudPerfTesting'},
+                            {'Key': 'Role', 'Value': node_group}]
+                    node_role = None
+                    for k, v in self.clusters.items():
+                        if 'couchbase' in k:
+                            for host in v.split():
+                                host_resource, services = host.split(":")
+                                if resource_path in host_resource:
+                                    node_role = k
+                                    tags.append({'Key': 'NodeRoles', 'Value': k})
+                                    break
+                            if node_role:
+                                break
+                    if not node_role:
+                        for k, v in self.clients.items():
+                            if 'workers' in k and resource_path in v:
+                                node_role = k
+                                tags.append({'Key': 'NodeRoles', 'Value': k})
+                                break
+                            if 'backups' in k and resource_path in v:
+                                node_role = k
+                                tags.append({'Key': 'NodeRoles', 'Value': k})
+                                break
+                    if not node_role:
+                        for k, v in self.utilities.items():
+                            if ('brokers' in k or 'operators' in k) and resource_path in v:
+                                node_role = 'utilities'
+                                tags.append({'Key': 'NodeRoles', 'Value': 'utilities'})
+                                break
+                    node_group_spec = ec2_cluster_config[node_group]
+                    if "workers" in node_role:
+                        ami = 'ami-04f9b8bb1ea4c3ef6'  # perf client ami
+                    elif "couchbase" in node_role:
+                        ami = 'ami-83b400fb'  # perf server ami
+                    elif "utilities" in node_role:
+                        ami = 'ami-0c7ae1c909fa076e9'  # perf client ami
+                    else:
+                        raise Exception("ec2 group must include one of: client, server, broker")
+                    response = self.ec2.create_instances(
+                        BlockDeviceMappings=[
+                            {'DeviceName': '/dev/sda1',
+                             'Ebs':
+                                 {'DeleteOnTermination': True,
+                                  'VolumeSize': int(node_group_spec['volume_size']),
+                                  'VolumeType': 'gp2',
+                                  'Encrypted': False}}],
+                        ImageId=ami,
+                        InstanceType=node_group_spec['instance_type'],
+                        KeyName=self.infra_spec.aws_key_name,
+                        MaxCount=int(node_group_spec['instance_capacity']),
+                        MinCount=int(node_group_spec['instance_capacity']),
+                        Monitoring={'Enabled': False},
+                        SubnetId=ec2_subnet,
+                        DisableApiTermination=False,
+                        DryRun=False,
+                        EbsOptimized=False,
+                        InstanceInitiatedShutdownBehavior='terminate',
+                        TagSpecifications=[
+                            {'ResourceType': 'instance',
+                             'Tags': tags}]
+                    )
+                    ec2_group = self.deployed_infra['vpc']['ec2'].get(node_group, {})
+                    for node in response:
+                        instance = self.ec2.Instance(node.id)
+                        ec2_group[node.id] = {
+                            "private_ip": instance.private_ip_address
+                        }
+                    self.deployed_infra['vpc']['ec2'][node_group] = ec2_group
+                    self.write_infra_file()
 
-            for ec2_group_name, ec2_list in self.deployed_infra['vpc']['ec2'].items():
+            for ec2_group_name, ec2_dict in self.deployed_infra['vpc']['ec2'].items():
                     waiter = self.ec2client.get_waiter('instance_status_ok')
+                    ec2_list = list(ec2_dict.keys())
                     waiter.wait(
-                        InstanceIds=ec2_list,
+                        InstanceIds=list(ec2_dict.keys()),
                         DryRun=False,
                         WaiterConfig={'Delay': 10, 'MaxAttempts': 600})
+                    for ec2_id in ec2_list:
+                        instance = self.ec2.Instance(ec2_id)
+                        ec2_dict[ec2_id]["public_ip"] = instance.public_ip_address
+                        ec2_dict[ec2_id]["public_dns"] = instance.public_dns_name
+                    self.deployed_infra['vpc']['ec2'][ec2_group_name] = ec2_dict
+                    self.write_infra_file()
 
     def open_security_groups(self):
         logger.info("Opening security groups...")
@@ -478,6 +568,8 @@ class AWSDeployer(Deployer):
         self.write_infra_file()
 
     def setup_eks_csi_driver_iam_policy(self):
+        if not self.desired_infra['k8s']:
+            return
         logger.info("Attaching EBS CSI Driver policy ARN...")
         with open(self.ebs_csi_iam_policy_path) as f:
             self.iam_policy = json.load(f)
@@ -495,63 +587,155 @@ class AWSDeployer(Deployer):
         )
 
     def update_infrastructure_spec(self):
-        remote = RemoteHelper(self.infra_spec)
+        if self.infra_spec.infrastructure_settings['type'] == 'kubernetes':
+            remote = RemoteHelper(self.infra_spec)
 
-        with open(self.generated_cloud_config_path) as f:
-            self.deployed_infra = json.load(f)
+            with open(self.generated_cloud_config_path) as f:
+                self.deployed_infra = json.load(f)
 
-        k8_nodes = {
-            node_dict['metadata']['name']:
-                {
-                    "labels": node_dict['metadata']['labels'],
-                    "addresses": node_dict['status']['addresses']
-                }
-            for node_dict in remote.get_nodes()}
+            k8_nodes = {
+                node_dict['metadata']['name']:
+                    {
+                        "labels": node_dict['metadata']['labels'],
+                        "addresses": node_dict['status']['addresses']
+                    }
+                for node_dict in remote.get_nodes()}
 
-        address_replace_list = []
-        clusters = self.infra_spec.infrastructure_clusters
-        for cluster, hosts in clusters.items():
-            for host in hosts.split():
-                address, services = host.split(":")
-                node_group = address.split(".")[2]
-                matching_node = None
-                for node_name, node_spec in k8_nodes.items():
-                    if node_spec['labels']['NodeRoles'] != cluster:
-                        continue
-                    if node_spec['labels']['eks.amazonaws.com/nodegroup'] != node_group:
-                        continue
+            address_replace_list = []
+            clusters = self.infra_spec.infrastructure_clusters
+            for cluster, hosts in clusters.items():
+                for host in hosts.split():
+                    address, services = host.split(":")
+                    node_group = address.split(".")[2]
+                    matching_node = None
+                    for node_name, node_spec in k8_nodes.items():
+                        if node_spec['labels']['NodeRoles'] != cluster:
+                            continue
+                        if node_spec['labels']['eks.amazonaws.com/nodegroup'] != node_group:
+                            continue
 
-                    has_all_services = True
-                    for service in services.split(","):
-                        service_enabled = node_spec['labels'].get("{}_enabled"
-                                                                  .format(service), 'false')
-                        if service_enabled != 'true':
-                            has_all_services = False
+                        has_all_services = True
+                        for service in services.split(","):
+                            service_enabled = node_spec['labels'].get("{}_enabled"
+                                                                      .format(service), 'false')
+                            if service_enabled != 'true':
+                                has_all_services = False
 
-                    if has_all_services:
-                        replace_addr = None
-                        for node_addr_dict in node_spec['addresses']:
-                            if node_addr_dict['type'] == "ExternalIP":
-                                replace_addr = node_addr_dict['address']
-                        if not replace_addr:
-                            raise Exception("no replace address found")
-                        address_replace_list.append((address, replace_addr))
-                        del k8_nodes[node_name]
-                        matching_node = node_name
-                        break
-                if not matching_node:
-                    raise Exception("no matching node found")
+                        if has_all_services:
+                            replace_addr = None
+                            for node_addr_dict in node_spec['addresses']:
+                                if node_addr_dict['type'] == "ExternalIP":
+                                    replace_addr = node_addr_dict['address']
+                            if not replace_addr:
+                                raise Exception("no replace address found")
+                            address_replace_list.append((address, replace_addr))
+                            del k8_nodes[node_name]
+                            matching_node = node_name
+                            break
+                    if not matching_node:
+                        raise Exception("no matching node found")
 
-            print("cluster: {}, hosts: {}".format(cluster, str(address_replace_list)))
+                print("cluster: {}, hosts: {}".format(cluster, str(address_replace_list)))
 
-            # Safely read the input filename using 'with'
-            with open(self.cluster_path) as f:
-                s = f.read()
-            # Safely write the changed content, if found in the file
-            with open(self.cluster_path, 'w') as f:
-                for replace_pair in address_replace_list:
-                    s = s.replace(replace_pair[0], replace_pair[1])
-                f.write(s)
+                with open(self.cluster_path) as f:
+                    s = f.read()
+                with open(self.cluster_path, 'w') as f:
+                    for replace_pair in address_replace_list:
+                        s = s.replace(replace_pair[0], replace_pair[1])
+                    f.write(s)
+        else:
+            with open(self.generated_cloud_config_path) as f:
+                self.deployed_infra = json.load(f)
+            clusters = self.infra_spec.infrastructure_clusters
+            clients = self.infra_spec.infrastructure_clients
+            utilities = self.infra_spec.infrastructure_utilities
+            node_group_ips = {}
+            for node_group_name, ec2_dict in self.deployed_infra['vpc']['ec2'].items():
+                ips = []
+                for instance, instance_ips in ec2_dict.items():
+                    ips.append(instance_ips['public_dns'])
+                node_group_ips[node_group_name] = ips
+            for cluster, hosts in clusters.items():
+                address_replace_list = []
+                for host in hosts.split():
+                    address, services = host.split(":")
+                    node_group = address.split(".")[2]
+                    ip_list = node_group_ips[node_group]
+                    next_ip = ip_list.pop(0)
+                    node_group_ips[node_group] = ip_list
+                    address_replace_list.append((address, next_ip))
+
+                print("cluster: {}, hosts: {}".format(cluster, str(address_replace_list)))
+
+                server_list = ""
+                for server_tuple in address_replace_list:
+                    print(server_tuple[1])
+                    server_list += "{}\n".format(server_tuple[1])
+                    print(server_list)
+                server_list = server_list.rstrip()
+
+                with open(self.cloud_ini) as f:
+                    s = f.read()
+                with open(self.cloud_ini, 'w') as f:
+                    s = s.replace("server_list", server_list)
+                    f.write(s)
+
+                with open(self.cluster_path) as f:
+                    s = f.read()
+                with open(self.cluster_path, 'w') as f:
+                    for replace_pair in address_replace_list:
+                        s = s.replace(replace_pair[0], replace_pair[1])
+                    f.write(s)
+
+            for cluster, hosts in clients.items():
+                address_replace_list = []
+                for host in hosts.split():
+                    node_group = host.split(".")[2]
+                    ip_list = node_group_ips[node_group]
+                    next_ip = ip_list.pop(0)
+                    node_group_ips[node_group] = ip_list
+                    address_replace_list.append((host, next_ip))
+
+                print("clients: {}, hosts: {}".format(cluster, str(address_replace_list)))
+
+                worker_list = ""
+                for worker_tuple in address_replace_list:
+                    print(worker_tuple[1])
+                    worker_list += "{}\n".format(worker_tuple[1])
+                    print(worker_list)
+
+                worker_list = worker_list.rstrip()
+
+                with open(self.cloud_ini) as f:
+                    s = f.read()
+                with open(self.cloud_ini, 'w') as f:
+                    s = s.replace("worker_list", worker_list)
+                    f.write(s)
+
+                with open(self.cluster_path) as f:
+                    s = f.read()
+                with open(self.cluster_path, 'w') as f:
+                    for replace_pair in address_replace_list:
+                        s = s.replace(replace_pair[0], replace_pair[1])
+                    f.write(s)
+
+            for cluster, hosts in utilities.items():
+                address_replace_list = []
+                for host in hosts.split():
+                    node_group = host.split(".")[2]
+                    ip_list = node_group_ips[node_group]
+                    next_ip = ip_list.pop(0)
+                    node_group_ips[node_group] = ip_list
+                    address_replace_list.append((host, next_ip))
+
+                print("utilities: {}, hosts: {}".format(cluster, str(address_replace_list)))
+
+                with open(self.cluster_path) as f:
+                    s = f.read()
+                with open(self.cluster_path, 'w') as f:
+                    for replace_pair in address_replace_list:
+                        s = s.replace(replace_pair[0], replace_pair[1])
+                    f.write(s)
 
     def deploy(self):
         logger.info("Deploying infrastructure...")
@@ -601,13 +785,10 @@ def get_args():
 
 def main():
     args = get_args()
-
     infra_spec = ClusterSpec()
     infra_spec.parse(fname=args.cluster)
-
-    if infra_spec.dynamic_infrastructure:
+    if infra_spec.cloud_infrastructure:
         infra_provider = infra_spec.infrastructure_settings['provider']
-
         if infra_provider == 'aws':
             deployer = AWSDeployer(infra_spec, args)
         elif infra_provider == 'azure':
@@ -616,7 +797,6 @@ def main():
             deployer = GCPDeployer(infra_spec, args)
         else:
             raise Exception("{} is not a valid infrastructure provider".format(infra_provider))
-
         try:
             deployer.deploy()
         except Exception as ex:

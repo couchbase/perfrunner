@@ -143,12 +143,15 @@ class RemoteWorkerManager:
         self.test_config = test_config
         self.broker_url = 'amqp://couchbase:couchbase@172.23.97.73:5672/broker'
         self.remote = RemoteHelper(cluster_spec, verbose)
-        self.dynamic_infra = self.cluster_spec.dynamic_infrastructure
-        if self.dynamic_infra:
-            self.WORKER_HOME = '/opt/perfrunner'
-            self.broker_url = self.remote.get_broker_urls()[0]
-            self.worker_template_path = "cloud/worker/worker_template.yaml"
-            self.worker_path = "cloud/worker/worker.yaml"
+        if self.cluster_spec.cloud_infrastructure:
+            if self.cluster_spec.kubernetes_infrastructure:
+                self.WORKER_HOME = '/opt/perfrunner'
+                self.broker_url = self.remote.get_broker_urls()[0]
+                self.worker_template_path = "cloud/worker/worker_template.yaml"
+                self.worker_path = "cloud/worker/worker.yaml"
+            else:
+                self.broker_url = 'amqp://couchbase:couchbase@{}:5672/broker'\
+                    .format(self.cluster_spec.brokers[0])
         celery.conf.update(
             broker_url=self.broker_url,
             broker_pool_limit=None,
@@ -180,7 +183,7 @@ class RemoteWorkerManager:
 
     def start(self):
         logger.info('Initializing remote worker environment')
-        if self.dynamic_infra:
+        if self.cluster_spec.kubernetes_infrastructure:
             self.start_kubernetes_workers()
         else:
             self.start_remote_workers()
@@ -255,7 +258,7 @@ class RemoteWorkerManager:
 
     def terminate(self):
         logger.info('Terminating Celery workers')
-        if self.dynamic_infra:
+        if self.cluster_spec.kubernetes_infrastructure:
             self.remote.terminate_client_pods(self.worker_path)
         else:
             self.remote.terminate_client_processes()

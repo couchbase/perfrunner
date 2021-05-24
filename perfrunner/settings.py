@@ -4,7 +4,7 @@ import os
 import re
 from configparser import ConfigParser, NoOptionError, NoSectionError
 from itertools import chain, combinations, permutations
-from typing import Dict, Iterable, Iterator, List
+from typing import Dict, Iterable, Iterator, List, Tuple
 
 from decorator import decorator
 
@@ -63,14 +63,24 @@ class ClusterSpec(Config):
 
     @property
     def dynamic_infrastructure(self):
+        return self.cloud_infrastructure and self.kubernetes_infrastructure
+
+    @property
+    def cloud_infrastructure(self):
         if 'infrastructure' in self.config.sections():
             return True
         else:
             return False
 
     @property
+    def kubernetes_infrastructure(self):
+        if self.cloud_infrastructure:
+            return self.infrastructure_settings.get("type", "kubernetes") == "kubernetes"
+        return False
+
+    @property
     def generated_cloud_config_path(self):
-        if self.dynamic_infrastructure:
+        if self.cloud_infrastructure:
             return "cloud/infrastructure/generated/infrastructure_config.json"
         else:
             return None
@@ -170,7 +180,7 @@ class ClusterSpec(Config):
         return server_roles
 
     @property
-    def servers_and_roles(self) -> Dict[str, str]:
+    def servers_and_roles(self) -> List[Tuple[str, str]]:
         server_and_roles = []
         for _, servers in self.config.items('clusters'):
             for server in servers.split():
@@ -180,15 +190,35 @@ class ClusterSpec(Config):
 
     @property
     def workers(self) -> List[str]:
-        if self.dynamic_infrastructure:
-            client_map = self.infrastructure_clients
-            clients = []
-            for k, v in client_map.items():
-                if "workers" in k:
-                    clients += ["{}.{}".format(k, host) for host in v.split()]
-            return clients
+        if self.cloud_infrastructure:
+            if self.kubernetes_infrastructure:
+                client_map = self.infrastructure_clients
+                clients = []
+                for k, v in client_map.items():
+                    if "workers" in k:
+                        clients += ["{}.{}".format(k, host) for host in v.split()]
+                return clients
+            else:
+                client_map = self.infrastructure_clients
+                clients = []
+                for k, v in client_map.items():
+                    if "workers" in k:
+                        clients += [host for host in v.split()]
+                return clients
         else:
             return self.config.get('clients', 'hosts').split()
+
+    @property
+    def brokers(self) -> List[str]:
+        if self.cloud_infrastructure:
+            if not self.kubernetes_infrastructure:
+                util_map = self.infrastructure_utilities
+                brokers = []
+                for k, v in util_map.items():
+                    if "brokers" in k:
+                        brokers += [host for host in v.split()]
+                return brokers
+        return []
 
     @property
     def client_credentials(self) -> List[str]:
@@ -299,7 +329,7 @@ class ClusterSettings:
                                                   self.EVENTING_MEM_QUOTA))
 
         self.initial_nodes = [
-            int(nodes) for nodes in options.get('initial_nodes').split()
+            int(nodes) for nodes in options.get('initial_nodes', '1').split()
         ]
 
         self.num_buckets = int(options.get('num_buckets',
@@ -328,6 +358,8 @@ class ClusterSettings:
             self.kernel_mem_limit_services = self.KERNEL_MEM_LIMIT_SERVICES
 
         self.bucket_name = options.get('bucket_name', self.BUCKET_NAME)
+
+        self.cloud_server_groups = options.get('bucket_name', self.BUCKET_NAME)
 
 
 class StatsSettings:
@@ -1676,6 +1708,31 @@ class PYTPCCSettings:
         return str(self.__dict__)
 
 
+class AutoscalingSettings:
+
+    ENABLED = False
+    MIN_NODES = 0
+    MAX_NODES = 0
+    SERVER_GROUP = None
+    TARGET_METRIC = None
+    TARGET_TYPE = None
+    TARGET_VALUE = None
+
+    def __init__(self, options: dict):
+        self.min_nodes = options.get('min_nodes', self.MIN_NODES)
+        self.max_nodes = options.get('max_nodes', self.MAX_NODES)
+        self.server_group = options.get('server_group', self.SERVER_GROUP)
+        self.target_metric = options.get('target_metric', self.TARGET_METRIC)
+        self.target_type = options.get('target_type', self.TARGET_TYPE)
+        self.target_value = options.get('target_value', self.TARGET_VALUE)
+        self.enabled = self.ENABLED
+        if self.min_nodes and self.max_nodes:
+            self.enabled = True
+
+    def __str__(self) -> str:
+        return str(self.__dict__)
+
+
 class TestConfig(Config):
 
     @property
@@ -1992,6 +2049,9 @@ class TestConfig(Config):
     def get_n1ql_query_definition(self, query_name: str) -> dict:
         return self._get_options_as_dict('n1ql-{}'.format(query_name))
 
+    def get_sever_group_definition(self, server_group_name: str) -> dict:
+        return self._get_options_as_dict('sg-{}'.format(server_group_name))
+
     @property
     def fio(self) -> dict:
         return self._get_options_as_dict('fio')
@@ -2020,6 +2080,11 @@ class TestConfig(Config):
     def pytpcc_settings(self) -> PYTPCCSettings:
         options = self._get_options_as_dict('py_tpcc')
         return PYTPCCSettings(options)
+
+    @property
+    def autoscaling_setting(self) -> AutoscalingSettings:
+        options = self._get_options_as_dict('autoscaling')
+        return AutoscalingSettings(options)
 
 
 class TargetSettings:

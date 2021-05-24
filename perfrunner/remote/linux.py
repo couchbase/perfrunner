@@ -324,6 +324,15 @@ class RemoteLinux(Remote):
             run('yes | yum localinstall -y /tmp/{}'.format(filename))
 
     @all_servers
+    def install_uploaded_couchbase(self, filename: str):
+        logger.info('Installing Couchbase Server')
+        if self.package == 'deb':
+            run('yes | apt-get install gdebi')
+            run('yes | apt install -y ./tmp/{}'.format(filename))
+        else:
+            run('yes | yum localinstall -y /tmp/{}'.format(filename))
+
+    @all_servers
     def restart(self):
         logger.info('Restarting server')
         run('systemctl restart couchbase-server', pty=False)

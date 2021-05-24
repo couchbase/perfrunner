@@ -87,8 +87,8 @@ class AWSDestroyer(Destroyer):
     def delete_ec2s(self):
         logger.info("Deleting ec2s...")
         instance_list = []
-        for ec2_group_name, ec2_list in self.deployed_infra['vpc'].get('ec2', {}).items():
-            instance_list += ec2_list
+        for ec2_group_name, ec2_dict in self.deployed_infra['vpc'].get('ec2', {}).items():
+            instance_list += list(ec2_dict.keys())
         if len(instance_list) > 0:
             self.ec2client.terminate_instances(
                 InstanceIds=instance_list, DryRun=False)
@@ -96,8 +96,8 @@ class AWSDestroyer(Destroyer):
     def wait_ec2s_deleted(self):
         logger.info("Waiting for ec2s deletion...")
         instance_list = []
-        for ec2_group_name, ec2_list in self.deployed_infra['vpc'].get('ec2', {}).items():
-            instance_list += ec2_list
+        for ec2_group_name, ec2_dict in self.deployed_infra['vpc'].get('ec2', {}).items():
+            instance_list += list(ec2_dict.keys())
         if len(instance_list) > 0:
             waiter = self.ec2client.get_waiter('instance_terminated')
             waiter.wait(
@@ -115,6 +115,8 @@ class AWSDestroyer(Destroyer):
 
     def delete_subnets(self):
         logger.info('Deleting subnets...')
+        if not self.deployed_infra['vpc'].get('subnets', None):
+            return
         for subnet in self.deployed_infra['vpc']['subnets'].keys():
             try:
                 self.ec2client.delete_subnet(
@@ -125,6 +127,8 @@ class AWSDestroyer(Destroyer):
     def delete_internet_gateway(self):
         logger.info('Deleting internet gateway')
         vpc_id = self.deployed_infra['vpc']['VpcId']
+        if not self.deployed_infra['vpc'].get('internet_gateway', None):
+            return
         igw_id = self.deployed_infra['vpc']['internet_gateway']['InternetGatewayId']
         try:
             self.ec2client.detach_internet_gateway(
@@ -259,12 +263,10 @@ def get_args():
 
 def main():
     args = get_args()
-
     infra_spec = ClusterSpec()
     infra_spec.parse(fname=args.cluster)
     infra_provider = infra_spec.infrastructure_settings['provider']
-
-    if infra_spec.dynamic_infrastructure:
+    if infra_spec.cloud_infrastructure:
         if infra_provider == 'aws':
             destroyer = AWSDestroyer(infra_spec, args)
         elif infra_provider == 'azure':

@@ -94,7 +94,7 @@ class DiskStats(IOStat):
         sectors_read, sectors_written = int(stats[5]), int(stats[9])
 
         # https://www.kernel.org/doc/Documentation/block/queue-sysfs.txt
-        if 'nvme' in device:
+        if 'nvme' in device and 'p1' not in device and 'p2' not in device:
             stdout = self.run('cat /sys/block/{}/queue/hw_sector_size'.format(device_name))
         else:
             parent = self.run('lsblk -no pkname {}'.format(device)).strip()

@@ -1,0 +1,14 @@
+---
+- hosts: servers
+  vars:
+    data_dir: /data
+    disk: /dev/nvme0n1
+  tasks:
+  - name: creating new "couchbase" group
+    group: name=couchbase
+
+  - name: creating new "couchbase" user
+    user: name=couchbase group=couchbase
+
+  - name: ensuring ownership of "{{ data_dir }}" directory
+    file: path={{ data_dir }} owner=couchbase group=couchbase

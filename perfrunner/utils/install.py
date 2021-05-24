@@ -2,8 +2,10 @@ import os
 import sys
 from argparse import ArgumentParser
 from collections import namedtuple
+from multiprocessing import Process
 from typing import Iterator
 
+import paramiko
 import requests
 import validators
 from fabric.api import cd, run
@@ -271,7 +273,7 @@ class OperatorInstaller:
         self.remote.delete_all_pvc()
 
 
-class CloudInstaller:
+class KubernetesInstaller:
 
     def __init__(self, cluster_spec, options):
         self.options = options
@@ -301,7 +303,7 @@ class CloudInstaller:
         raise NotImplementedError
 
 
-class AWSInstaller(CloudInstaller):
+class EKSInstaller(KubernetesInstaller):
 
     STORAGE_CLASSES = {
         'default': None,
@@ -351,13 +353,13 @@ class AWSInstaller(CloudInstaller):
         pass
 
 
-class AzureInstaller(CloudInstaller):
+class AKSInstaller(KubernetesInstaller):
 
     def __init__(self, cluster_spec, options):
         super().__init__(cluster_spec, options)
 
 
-class GCPInstaller(CloudInstaller):
+class GKEInstaller(KubernetesInstaller):
 
     def __init__(self, cluster_spec, options):
         super().__init__(cluster_spec, options)
@@ -484,6 +486,44 @@ class CouchbaseInstaller:
         self.install_package()
 
 
+class CloudInstaller(CouchbaseInstaller):
+
+    def __init__(self, cluster_spec, options):
+        super().__init__(cluster_spec, options)
+
+    def install_package(self):
+        logger.info('Using this URL: {}'.format(self.url))
+        self.remote.upload_iss_files(self.release)
+        package_name = "couchbase.{}".format(self.remote.package)
+        logger.info('Saving a local copy of {}'.format(self.url))
+        with open(package_name, 'wb') as fh:
+            resp = requests.get(self.url)
+            fh.write(resp.content)
+
+        uploads = []
+        user, password = self.cluster_spec.ssh_credentials
+        for host in self.cluster_spec.servers:
+            args = (host, user, password, package_name)
+
+            def upload_couchbase(to_host, to_user, to_password, package):
+                client = paramiko.SSHClient()
+                client.set_missing_host_key_policy(paramiko.WarningPolicy())
+                client.connect(to_host, username=to_user, password=to_password)
+                sftp = client.open_sftp()
+                sftp.put(package, "/tmp/{}".format(package))
+                sftp.close()
+
+            worker_process = Process(target=upload_couchbase, args=args)
+            worker_process.daemon = True
+            worker_process.start()
+            uploads.append(worker_process)
+
+        for process in uploads:
+            process.join()
+
+        self.remote.install_uploaded_couchbase(package_name)
+
+
 def get_args():
     parser = ArgumentParser()
 
@@ -528,17 +568,20 @@ def main():
     cluster_spec = ClusterSpec()
     cluster_spec.parse(fname=args.cluster)
 
-    if cluster_spec.dynamic_infrastructure:
-        infra_provider = cluster_spec.infrastructure_settings['provider']
-        if infra_provider == 'aws':
-            installer = AWSInstaller(cluster_spec, args)
-        elif infra_provider == 'azure':
-            installer = AzureInstaller(cluster_spec, args)
-        elif infra_provider == 'gcp':
-            installer = GCPInstaller(cluster_spec, args)
+    if cluster_spec.cloud_infrastructure:
+        if cluster_spec.kubernetes_infrastructure:
+            infra_provider = cluster_spec.infrastructure_settings['provider']
+            if infra_provider == 'aws':
+                installer = EKSInstaller(cluster_spec, args)
+            elif infra_provider == 'azure':
+                installer = AKSInstaller(cluster_spec, args)
+            elif infra_provider == 'gcp':
+                installer = GKEInstaller(cluster_spec, args)
+            else:
+                raise Exception("{} is not a valid infrastructure provider"
+                                .format(infra_provider))
         else:
-            raise Exception("{} is not a valid infrastructure provider"
-                            .format(infra_provider))
+            installer = CloudInstaller(cluster_spec, args)
 
         if args.uninstall:
             installer.uninstall()

@@ -493,29 +493,55 @@ class AWSDeployer(Deployer):
                         ami = 'ami-0c7ae1c909fa076e9'  # perf client ami
                     else:
                         raise Exception("ec2 group must include one of: client, server, broker")
-                    response = self.ec2.create_instances(
-                        BlockDeviceMappings=[
-                            {'DeviceName': '/dev/sda1',
-                             'Ebs':
-                                 {'DeleteOnTermination': True,
-                                  'VolumeSize': int(node_group_spec['volume_size']),
-                                  'VolumeType': 'gp2',
-                                  'Encrypted': False}}],
-                        ImageId=ami,
-                        InstanceType=node_group_spec['instance_type'],
-                        KeyName=self.infra_spec.aws_key_name,
-                        MaxCount=int(node_group_spec['instance_capacity']),
-                        MinCount=int(node_group_spec['instance_capacity']),
-                        Monitoring={'Enabled': False},
-                        SubnetId=ec2_subnet,
-                        DisableApiTermination=False,
-                        DryRun=False,
-                        EbsOptimized=False,
-                        InstanceInitiatedShutdownBehavior='terminate',
-                        TagSpecifications=[
-                            {'ResourceType': 'instance',
-                             'Tags': tags}]
-                    )
+                    if node_group_spec['instance_type'][0] == "t":
+                        response = self.ec2.create_instances(
+                            BlockDeviceMappings=[
+                                {'DeviceName': '/dev/sda1',
+                                 'Ebs':
+                                     {'DeleteOnTermination': True,
+                                      'VolumeSize': int(node_group_spec['volume_size']),
+                                      'VolumeType': 'gp2',
+                                      'Encrypted': False}}],
+                            CreditSpecification={'CpuCredits': 'standard'},
+                            ImageId=ami,
+                            InstanceType=node_group_spec['instance_type'],
+                            KeyName=self.infra_spec.aws_key_name,
+                            MaxCount=int(node_group_spec['instance_capacity']),
+                            MinCount=int(node_group_spec['instance_capacity']),
+                            Monitoring={'Enabled': False},
+                            SubnetId=ec2_subnet,
+                            DisableApiTermination=False,
+                            DryRun=False,
+                            EbsOptimized=False,
+                            InstanceInitiatedShutdownBehavior='terminate',
+                            TagSpecifications=[
+                                {'ResourceType': 'instance',
+                                 'Tags': tags}]
+                        )
+                    else:
+                        response = self.ec2.create_instances(
+                            BlockDeviceMappings=[
+                                {'DeviceName': '/dev/sda1',
+                                 'Ebs':
+                                     {'DeleteOnTermination': True,
+                                      'VolumeSize': int(node_group_spec['volume_size']),
+                                      'VolumeType': 'gp2',
+                                      'Encrypted': False}}],
+                            ImageId=ami,
+                            InstanceType=node_group_spec['instance_type'],
+                            KeyName=self.infra_spec.aws_key_name,
+                            MaxCount=int(node_group_spec['instance_capacity']),
+                            MinCount=int(node_group_spec['instance_capacity']),
+                            Monitoring={'Enabled': False},
+                            SubnetId=ec2_subnet,
+                            DisableApiTermination=False,
+                            DryRun=False,
+                            EbsOptimized=False,
+                            InstanceInitiatedShutdownBehavior='terminate',
+                            TagSpecifications=[
+                                {'ResourceType': 'instance',
+                                 'Tags': tags}]
+                        )
                     ec2_group = self.deployed_infra['vpc']['ec2'].get(node_group, {})
                     for node in response:
                         instance = self.ec2.Instance(node.id)

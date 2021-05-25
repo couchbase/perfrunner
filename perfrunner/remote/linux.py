@@ -855,3 +855,26 @@ class RemoteLinux(Remote):
         logger.info('Enabling developer preview')
         run("curl -X POST -u Administrator:password "
             "localhost:8091/settings/developerPreview -d 'enabled=true'", pty=False)
+
+    @all_servers
+    def create_data_backup(self, backup_directory: str):
+        logger.info('Creating backup file: {}'.format(backup_directory))
+        cmd = "tar cf {}/backup.tar.bz2 /data/ --use-compress-program=lbzip2"\
+            .format(backup_directory)
+        logger.info('cmd: {}'.format(cmd))
+        run(cmd, pty=False)
+        logger.info('backup create done')
+
+    @all_servers
+    def copy_backup(self, backup_directory: str):
+        logger.info('Copying data back to /data')
+        cmd = "tar xf {}/backup.tar.bz2 --use-compress-program=lbzip2 -C /"\
+            .format(backup_directory)
+        logger.info('cmd: {}'.format(cmd))
+        run(cmd, pty=False)
+        logger.info('backup copy done')
+
+    @all_servers
+    def remove_data(self):
+        logger.info('Clean up /data/')
+        run('rm -rf /data/*')

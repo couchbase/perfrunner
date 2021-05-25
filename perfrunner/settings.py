@@ -1412,6 +1412,7 @@ class BackupSettings:
     OBJ_REGION = None
     AWS_CREDENTIAL_PATH = None
     INCLUDE_DATA = None
+    BACKUP_DIRECTORY = None
 
     def __init__(self, options: dict):
         self.compression = int(options.get('compression', self.COMPRESSION))
@@ -1423,6 +1424,7 @@ class BackupSettings:
         self.obj_region = options.get('obj_region', self.OBJ_REGION)
         self.aws_credential_path = options.get('aws_credential_path', self.AWS_CREDENTIAL_PATH)
         self.include_data = options.get('include_data', self.INCLUDE_DATA)
+        self.backup_directory = options.get('backup_directory', self.BACKUP_DIRECTORY)
 
 
 class ExportSettings:

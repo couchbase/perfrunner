@@ -16,7 +16,7 @@ from perfrunner.helpers.worker import (
     ycsb_data_load_task,
     ycsb_task,
 )
-from perfrunner.tests import PerfTest
+from perfrunner.tests import PerfTest, TargetIterator
 from perfrunner.tests.rebalance import RebalanceKVTest
 from perfrunner.tests.tools import BackupTest
 from perfrunner.tests.ycsb import YCSBThroughputTest
@@ -333,6 +333,20 @@ class KVTest(PerfTest):
                 self.monitor.wait_for_fragmentation_stable(master, bucket)
         logger.info("sleep for 300 seconds")
         time.sleep(300)
+
+    def warmup_after_copy(self):
+        for master in self.cluster_spec.masters:
+            for bucket in self.test_config.buckets:
+                self.monitor.monitor_warmup(self.memcached, master, bucket)
+
+    def copy_data_from_backup(self):
+        self.remote.stop_server()
+        time.sleep(30)
+        self.remote.remove_data()
+        self.remote.copy_backup(self.test_config.backup_settings.backup_directory)
+        self.remote.start_server()
+        time.sleep(30)
+        self.warmup_after_copy()
 
     @with_console_stats
     @with_stats
@@ -1011,3 +1025,128 @@ class BackupTestDGM(BackupTest):
         time_elapsed = self.backup()
 
         self.report_kpi(time_elapsed)
+
+
+class LoadBackupDGMTest(StabilityBootstrap):
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        if self.test_config.extra_access_settings.run_extra_access:
+            self.run_extra_access()
+            self.wait_for_persistence()
+            self.wait_for_fragmentation()
+
+        self.remote.stop_server()
+        time.sleep(30)
+
+        self.remote.create_data_backup(self.test_config.backup_settings.backup_directory)
+
+        self.remote.start_server()
+        time.sleep(30)
+
+
+class ThroughputNoLoadDGMTest(ThroughputDGMMagmaTest):
+
+    @with_console_stats
+    @with_stats
+    def access(self, target_iterator):
+        PerfTest.access(self, target_iterator=target_iterator)
+
+    def hotload(self, target_iterator):
+        PerfTest.hot_load(self, target_iterator=target_iterator)
+
+    def run(self):
+        self.copy_data_from_backup()
+
+        iterator = TargetIterator(self.cluster_spec, self.test_config,
+                                  self.test_config.access_settings.key_prefix)
+
+        self.hotload(target_iterator=iterator)
+        self.reset_kv_stats()
+
+        self.access(target_iterator=iterator)
+
+        self.report_kpi()
+
+
+class YCSBLoadBackupHIDDTest(YCSBThroughputHIDDTest):
+
+    def run(self):
+        if self.test_config.access_settings.ssl_mode == 'data':
+            self.download_certificate()
+            self.generate_keystore()
+        self.download_ycsb()
+
+        self.custom_load()
+
+        if self.test_config.extra_access_settings.run_extra_access:
+            self.run_extra_access()
+            self.wait_for_persistence()
+            self.wait_for_fragmentation()
+
+        self.remote.stop_server()
+        time.sleep(30)
+
+        self.remote.create_data_backup(self.test_config.backup_settings.backup_directory)
+
+        self.remote.start_server()
+        time.sleep(30)
+
+
+class YCSBThroughputNoLoadHIDDTest(YCSBThroughputHIDDTest):
+
+    def run(self):
+        self.copy_data_from_backup()
+
+        if self.test_config.access_settings.ssl_mode == 'data':
+            self.download_certificate()
+            self.generate_keystore()
+        self.download_ycsb()
+
+        self.reset_kv_stats()
+        KVTest.save_stats(self)
+        if self.test_config.access_settings.cbcollect:
+            YCSBThroughputTest.access_bg(self)
+            self.collect_cb()
+        else:
+            YCSBThroughputTest.access(self)
+
+        self.print_amplifications(doc_size=self.test_config.access_settings.size)
+        KVTest.print_kvstore_stats(self)
+
+        self.report_kpi()
+
+
+class MixedLatencyNoLoadDGMTest(ThroughputNoLoadDGMTest):
+
+    def _report_kpi(self):
+        for operation in ('get', 'set'):
+            self.reporter.post(
+                *self.metrics.kv_latency(operation=operation)
+            )
+
+
+class RebalanceKVNoLoadDGMTest(RebalanceKVDGMTest):
+
+    def access_background(self, target_iterator):
+        PerfTest.access_bg(self, target_iterator=target_iterator)
+
+    def hotload(self, target_iterator):
+        PerfTest.hot_load(self, target_iterator=target_iterator)
+
+    def run(self):
+        self.copy_data_from_backup()
+
+        iterator = TargetIterator(self.cluster_spec, self.test_config,
+                                  self.test_config.access_settings.key_prefix)
+
+        self.hotload(target_iterator=iterator)
+        self.reset_kv_stats()
+
+        self.access_background(target_iterator=iterator)
+
+        self.rebalance()
+
+        if self.is_balanced():
+            self.report_kpi()

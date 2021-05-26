@@ -24,6 +24,8 @@ class RemoteKubernetes(Remote):
         self.backup_file = 'backup.yaml'
         self.restore_template_file = 'restore_template.yaml'
         self.restore_file = 'restore.yaml'
+        self.autoscaler_template_file = 'autoscaler_template.yaml'
+        self.autoscaler_file = 'autoscaler.yaml'
         self.operator_version = None
 
     def kubectl(self, params, kube_config=None, split_lines=True, max_attempts=3):
@@ -669,6 +671,51 @@ class RemoteKubernetes(Remote):
     def create_restore(self):
         restore_template_path = self.get_restore_template_path()
         self.create_from_file(restore_template_path)
+
+    def get_autoscaler_template_path(self):
+        if not self.operator_version:
+            self.operator_version = self.get_operator_version()
+        return "{}/{}/{}/{}".format(self.base_path,
+                                    self.operator_version.split(".")[0],
+                                    self.operator_version.split(".")[1],
+                                    self.autoscaler_template_file)
+
+    def get_autoscaler_path(self):
+        if not self.operator_version:
+            self.operator_version = self.get_operator_version()
+        return "{}/{}/{}/{}".format(self.base_path,
+                                    self.operator_version.split(".")[0],
+                                    self.operator_version.split(".")[1],
+                                    self.autoscaler_file)
+
+    def create_horizontal_pod_autoscaler(self, server_group, min_nodes, max_nodes,
+                                         target_metric, target_type, target_value):
+        autoscaler_template_path = self.get_autoscaler_template_path()
+        autoscaler_path = self.get_autoscaler_path()
+        misc.copy_template(autoscaler_template_path, autoscaler_path)
+        with open(autoscaler_path, 'r') as file:
+            autoscaler = yaml.load(file, Loader=yaml.FullLoader)
+
+        cluster = self.get_cluster()
+        cluster_name = cluster['metadata']['name']
+        autoscaler['spec']['scaleTargetRef']['name'] = "{}.{}".format(server_group, cluster_name)
+        autoscaler['spec']['minReplicas'] = min_nodes
+        autoscaler['spec']['maxReplicas'] = max_nodes
+        autoscaler['spec']['metrics'] = \
+            [
+                {
+                    'type': 'Pods',
+                    'pods':
+                        {
+                            'metric': {'name': target_metric},
+                            'target':
+                                {
+                                    'type': target_type,
+                                    target_type: target_value
+                                }
+                        }
+                }
+            ]
 
     def istioctl(self, params, kube_config=None, split_lines=True, max_attempts=1):
         kube_config = kube_config or self.kube_config_path

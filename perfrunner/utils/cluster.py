@@ -40,6 +40,7 @@ def main():
         cm.throttle_cpu()
         cm.enable_auto_failover()
         cm.configure_auto_compaction()
+        cm.configure_autoscaling()
     else:
         # Individual nodes
         cm.disable_wan()

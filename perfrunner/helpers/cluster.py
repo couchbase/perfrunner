@@ -22,8 +22,10 @@ class ClusterManager:
         self.monitor = Monitor(cluster_spec, test_config, verbose)
         self.memcached = MemcachedHelper(test_config)
         self.master_node = next(self.cluster_spec.masters)
-
-        self.initial_nodes = test_config.cluster.initial_nodes
+        if self.dynamic_infra:
+            self.initial_nodes = None
+        else:
+            self.initial_nodes = test_config.cluster.initial_nodes
         self.build = self.rest.get_version(self.master_node)
 
     def is_compatible(self, min_release: str) -> bool:
@@ -153,6 +155,7 @@ class ClusterManager:
                 istio = 'true'
 
             cluster_servers = []
+            volume_claims = []
             operator_version = self.remote.get_operator_version()
             operator_major = int(operator_version.split(".")[0])
             operator_minor = int(operator_version.split(".")[1])
@@ -170,6 +173,13 @@ class ClusterManager:
                 }
                 if (operator_major, operator_minor) <= (2, 1):
                     spec['containers'] = []
+
+                sg_name = server_role.replace(",", "-")
+                sg_def = self.test_config.get_sever_group_definition(sg_name)
+                sg_nodes = int(sg_def.get("nodes", server_role_count))
+                volume_size = sg_def.get("volume_size", "1000GB")
+                volume_size = volume_size.replace("GB", "Gi")
+                volume_size = volume_size.replace("MB", "Mi")
                 pod_def =\
                     {
                         'spec': spec,
@@ -180,15 +190,29 @@ class ClusterManager:
                     }
                 server_def = \
                     {
-                        'name': server_role.replace(",", "-"),
+                        'name': sg_name,
                         'services': server_role.split(","),
                         'pod': pod_def,
-                        'size': server_role_count,
-                        'volumeMounts': {'default': 'couchbase_kv'}
+                        'size': sg_nodes,
+                        'volumeMounts': {'default': sg_name}
+                    }
+
+                volume_claim_def = \
+                    {
+                        'metadata': {'name': sg_name},
+                        'spec':
+                            {
+                                'resources':
+                                    {
+                                        'requests': {'storage': volume_size}
+                                    }
+                            }
                     }
                 cluster_servers.append(server_def)
+                volume_claims.append(volume_claim_def)
 
             cluster['spec']['servers'] = cluster_servers
+            cluster['spec']['volumeClaimTemplates'] = volume_claims
             self.remote.update_cluster_config(cluster, timeout=300, reboot=True)
         else:
             if not self.is_compatible(min_release='4.0.0'):
@@ -651,21 +675,8 @@ class ClusterManager:
 
     def throttle_cpu(self):
         if self.dynamic_infra:
-            cluster = self.remote.get_cluster()
-            if self.test_config.cluster.enable_cpu_cores:
-                server_groups = cluster['spec']['servers']
-                updated_server_groups = []
-                default_cpu = 80
-                for server_group in server_groups:
-                    resources = server_group.get('resources', {})
-                    limits = resources.get('limits', {})
-                    limits['cpu'] = default_cpu
-                    resources['limits'] = limits
-                    server_group['resources'] = resources
-                    updated_server_groups.append(server_group)
-                cluster['spec']['servers'] = updated_server_groups
-
             if self.test_config.cluster.online_cores:
+                cluster = self.remote.get_cluster()
                 server_groups = cluster['spec']['servers']
                 updated_server_groups = []
                 online_vcpus = self.test_config.cluster.online_cores * 2
@@ -677,7 +688,7 @@ class ClusterManager:
                     server_group['resources'] = resources
                     updated_server_groups.append(server_group)
                 cluster['spec']['servers'] = updated_server_groups
-            self.remote.update_cluster_config(cluster, timeout=300, reboot=True)
+                self.remote.update_cluster_config(cluster, timeout=300, reboot=True)
         else:
             if self.remote.os == 'Cygwin':
                 return
@@ -827,3 +838,24 @@ class ClusterManager:
         build = tuple(map(int, release.split('.'))) + (int(build_number),)
         if build > (7, 0, 0, 4698) or build < (1, 0, 0, 0):
             self.remote.enable_developer_preview()
+
+    def configure_autoscaling(self):
+        autoscaling_settings = self.test_config.autoscaling_setting
+        if self.dynamic_infra and autoscaling_settings.enabled:
+            cluster = self.remote.get_cluster()
+            server_groups = cluster['spec']['servers']
+            updated_server_groups = []
+            for server_group in server_groups:
+                if server_group['name'] == autoscaling_settings.server_group:
+                    server_group['autoscaleEnabled'] = True
+                updated_server_groups.append(server_group)
+            cluster['spec']['servers'] = updated_server_groups
+            self.remote.update_cluster_config(cluster, timeout=300, reboot=True)
+            self.remote.create_horizontal_pod_autoscaler(autoscaling_settings.server_group,
+                                                         autoscaling_settings.min_nodes,
+                                                         autoscaling_settings.max_nodes,
+                                                         autoscaling_settings.target_metric,
+                                                         autoscaling_settings.target_type,
+                                                         autoscaling_settings.target_value)
+        else:
+            return

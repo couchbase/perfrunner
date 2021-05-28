@@ -5,7 +5,7 @@ test = perfrunner.tests.rebalance.RebalanceForFTS
 title = FTS Rebalance-swap (min),  3 -> 3, 20M X 1KB, partitioned_index = 6, replica = 0, s=1 c=100
 component = jts
 category = Rebalance
-sub_category = default
+sub_category = Swap
 orderby = q0b00000000
 
 [cluster]

@@ -127,8 +127,9 @@ class MetricHelper:
 
     def fts_index(self, elapsed_time: float) -> Metric:
         metric_id = self.test_config.name
-        self._title = self._title.split("(sec),")[1]
-        title = 'Total Index build time(sec), {}'.format(self._title)
+        title_temp = self._title
+        title_test = title_temp.split("(sec), ")[1]
+        title = 'Total Index build time(sec), {}'.format(title_test)
         metric_info = self._metric_info(metric_id, title, chirality=-1)
 
         index_time = round(elapsed_time, 1)
@@ -137,8 +138,9 @@ class MetricHelper:
 
     def fts_index_size(self, index_size_raw: int) -> Metric:
         metric_id = "{}_indexsize".format(self.test_config.name)
-        self._title = self._title.split("(sec),")[1]
-        title = 'Index size (MB), {}'.format(self._title)
+        title_temp = self._title
+        title_test = title_temp.split("(sec), ")[1]
+        title = 'Index size (MB), {}'.format(title_test)
         metric_info = self._metric_info(metric_id, title, chirality=-1)
 
         index_size_mb = int(index_size_raw / (1024 ** 2))

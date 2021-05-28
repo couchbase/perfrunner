@@ -544,9 +544,8 @@ class AWSDeployer(Deployer):
                         )
                     ec2_group = self.deployed_infra['vpc']['ec2'].get(node_group, {})
                     for node in response:
-                        instance = self.ec2.Instance(node.id)
                         ec2_group[node.id] = {
-                            "private_ip": instance.private_ip_address
+                            "private_ip": ""
                         }
                     self.deployed_infra['vpc']['ec2'][node_group] = ec2_group
                     self.write_infra_file()
@@ -562,6 +561,7 @@ class AWSDeployer(Deployer):
                         instance = self.ec2.Instance(ec2_id)
                         ec2_dict[ec2_id]["public_ip"] = instance.public_ip_address
                         ec2_dict[ec2_id]["public_dns"] = instance.public_dns_name
+                        ec2_dict[ec2_id]["private_ip"] = instance.private_ip_address
                     self.deployed_infra['vpc']['ec2'][ec2_group_name] = ec2_dict
                     self.write_infra_file()
 

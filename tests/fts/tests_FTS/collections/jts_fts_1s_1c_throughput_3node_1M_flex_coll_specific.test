@@ -27,7 +27,7 @@ items = 1000000
 fts_data_spread_workers = 100
 
 [jts]
-jts_repo_branch = korry_jts_enhancements
+jts_repo_branch = sdk3_temp
 test_collection_query_mode = collection_specific
 index_groups = 1
 indexes_per_group = 1

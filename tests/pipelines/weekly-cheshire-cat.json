@@ -495,7 +495,13 @@
         {"job": "atlas_collections", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/collections/jts_fts_1s_1c_throughput_3node_1M_geo_bbox_25diag.test"},
         {"job": "atlas_collections", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/collections/jts_fts_1s_1c_latency_3node_1M_geo_bbox_25diag.test"},
         {"job": "atlas_collections", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/collections/jts_fts_1s_100c_throughput_3node_geo_bbox_25diag.test"},
-        {"job": "atlas_collections", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/collections/jts_fts_1s_100c_latency_3node_1M_geo_bbox_25diag.test"}
+        {"job": "atlas_collections", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/collections/jts_fts_1s_100c_latency_3node_1M_geo_bbox_25diag.test"},
+        {"job": "atlas_collections", "cluster": "atlas_setupE.spec", "test_config": "tests_FTS/collections/jts_fts_1s_1c_throughput_3node_1M_flex.test"},
+        {"job": "atlas_collections", "cluster": "atlas_setupE.spec", "test_config": "tests_FTS/collections/jts_fts_1s_1c_latency_3node_1M_flex.test"},
+         {"job": "atlas_collections", "cluster": "atlas_setupE.spec", "test_config": "tests_FTS/collections/jts_fts_1s_1c_throughput_3node_1M_flex_mixed1.test"},
+        {"job": "atlas_collections", "cluster": "atlas_setupE.spec", "test_config": "tests_FTS/collections/jts_fts_1s_1c_latency_3node_1M_flex_mixed1.test"},
+         {"job": "atlas_collections", "cluster": "atlas_setupE.spec", "test_config": "tests_FTS/collections/jts_fts_1s_1c_throughput_3node_1M_flex_mixed2.test"},
+        {"job": "atlas_collections", "cluster": "atlas_setupE.spec", "test_config": "tests_FTS/collections/jts_fts_1s_1c_latency_3node_1M_flex_mixed2.test"}
     ],
     "FTS-MultiIndex": [
         {"job": "atlas_collections", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/collections/jts_fts_index_3node_1M_initial_10_coll_per_index_1s_10c_1i.test"},

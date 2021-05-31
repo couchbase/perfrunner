@@ -1134,9 +1134,13 @@ class SecondaryRebalanceTest(SecondaryIndexTest, RebalanceTest):
         )
 
 
-class CreateIndexDDLTest(SecondaryIndexTest):
+class CreateBackupandRestoreIndexTest(SecondaryIndexTest):
 
-    """Measure time to create indexes only."""
+    """Measure time to create indexes, to backup and to restore indexes."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.index_defns = {}
 
     def _report_kpi(self, time_elapsed, index_type, unit="min"):
         self.reporter.post(
@@ -1151,6 +1155,33 @@ class CreateIndexDDLTest(SecondaryIndexTest):
         status, error = run_cbindex(self.local_path_to_cbindex, create_options, self.index_nodes)
         if status != 0:
             raise Exception('Cbindex command failed with {}'.format(error))
+        self.monitor.wait_for_secindex_init_build_collections(self.index_nodes[0],
+                                                              self.indexes,
+                                                              recovery=False,
+                                                              created=True)
+
+    @with_stats
+    @timeit
+    def backup(self):
+        self.index_defns = self.rest.backup_index(self.index_nodes[0], self.bucket)
+
+    @with_stats
+    @timeit
+    def restore(self):
+        self.rest.restore_index(self.index_nodes[0], self.bucket, self.index_defns,
+                                self.bucket, self.bucket)
+        self.monitor.wait_for_secindex_init_build_collections(self.index_nodes[0],
+                                                              self.indexes,
+                                                              recovery=False,
+                                                              created=True)
+
+    def drop_all_indexes(self):
+        logger.info('Dropping all indexes')
+        self.rest.delete_bucket(self.master_node, self.bucket)
+        self.monitor.wait_for_all_indexes_dropped(self.index_nodes)
+        logger.info('Recreate buckets and collections')
+        self.cluster.create_buckets()
+        self.cluster.create_collections()
 
     def run(self):
         logger.info('Creating Secondary Indexes')
@@ -1158,7 +1189,36 @@ class CreateIndexDDLTest(SecondaryIndexTest):
             create_options = self.batch_create_index_collection_options(self.indexes, self.storage)
             time_elapsed = self.run_create_index(create_options)
 
-        self._report_kpi(time_elapsed, "Create")
+        self.report_kpi(time_elapsed, "Create")
 
         for server in self.cluster_spec.servers_by_role('index'):
             logger.info("{} : {} Indexes".format(server, self.rest.indexes_per_node(server)))
+
+        time_to_backup = self.backup()
+        self.drop_all_indexes()
+        time_to_restore = self.restore()
+
+        self.report_kpi(time_to_backup, "Backup", "seconds")
+        self.report_kpi(time_to_restore, "Restore", "seconds")
+
+
+class CreateBackupandRestoreIndexTestWithRebalance(CreateBackupandRestoreIndexTest):
+
+    """Measure time to create indexes, to backup and to restore indexes with rebalance."""
+
+    @with_stats
+    @with_profiles
+    def rebalance_indexer(self):
+        self.rebalance(services="index")
+
+    def run(self):
+        create_options = self.batch_create_index_collection_options(self.indexes, self.storage)
+        self.run_create_index(create_options)
+
+        time_to_backup = self.backup()
+        self.drop_all_indexes()
+        self.rebalance_indexer()
+        time_to_restore = self.restore()
+
+        self.report_kpi(time_to_backup, "Backup", "seconds")
+        self.report_kpi(time_to_restore, "Restore", "seconds")

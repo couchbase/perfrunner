@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.secondary.CreateIndexDDLTest
+test = perfrunner.tests.secondary.CreateBackupandRestoreIndexTest
 
 [showfast]
 title = 1 bucket, 10000 Index Instances, Non-Partitioned Indexes with Replica mix, MOI, s=1 c=500

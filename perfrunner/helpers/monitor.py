@@ -463,6 +463,18 @@ class DefaultMonitor(DefaultRestHelper):
 
         logger.info('Indexing completed')
 
+    def wait_for_all_indexes_dropped(self, index_nodes):
+        logger.info('Waiting for all indexes to be dropped')
+        indexes_remaining = [1 for _ in index_nodes]
+
+        def update_indexes_remaining():
+            for i, node in enumerate(index_nodes):
+                indexes_remaining[i] = self.indexes_per_node(node)
+
+        while(sum(indexes_remaining) != 0):
+            time.sleep(self.POLLING_INTERVAL_INDEXING)
+            update_indexes_remaining()
+
     def wait_for_secindex_init_build(self, host, indexes):
         # POLL until initial index build is complete
         logger.info(
@@ -494,8 +506,14 @@ class DefaultMonitor(DefaultRestHelper):
         time_elapsed = round(finish_ts - init_ts)
         return time_elapsed
 
-    def wait_for_secindex_init_build_collections(self, host, indexes, recovery=False):
+    def wait_for_secindex_init_build_collections(self, host,
+                                                 indexes, recovery=False, created=False):
         # POLL until initial index build is complete
+        if created:
+            check_for_status = 'Created'
+        else:
+            check_for_status = 'Ready'
+
         index_list = []
         for bucket_name, scope_map in indexes.items():
             for scope_name, collection_map in scope_map.items():
@@ -520,7 +538,7 @@ class DefaultMonitor(DefaultRestHelper):
             json2i = self.get_index_status(host)
             for i, index in enumerate(indexes):
                 status = get_index_status(json2i, index)
-                if status == 'Ready':
+                if status == check_for_status:
                     indexes_ready[i] = 1
 
         if recovery:

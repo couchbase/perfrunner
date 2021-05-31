@@ -599,7 +599,10 @@ class MetricHelper:
         metric_info = self._metric_info(metric_id, title, chirality=-1)
         metric_info['category'] = "ddl"
 
-        value = s2m(value)
+        if unit == "min":
+            value = s2m(value)
+        else:
+            value = round(value, 2)
 
         return value, self._snapshots, metric_info
 

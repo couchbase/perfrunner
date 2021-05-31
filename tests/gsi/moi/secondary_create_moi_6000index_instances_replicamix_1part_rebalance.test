@@ -1,8 +1,8 @@
 [test_case]
-test = perfrunner.tests.secondary.CreateBackupandRestoreIndexTest
+test = perfrunner.tests.secondary.CreateBackupandRestoreIndexTestWithRebalance
 
 [showfast]
-title = 1 bucket, 1000 Index Instances, Non-Partitioned Indexes with Replica mix, MOI, s=1 c=50
+title = 1 bucket, 6000 Index Instances, Non-Partitioned Indexes with Replica mix, Rebalance 5->4, MOI, s=1 c=300
 component = secondary
 category = ddl
 sub_category = MOI
@@ -20,15 +20,20 @@ num_buckets = 1
 replica_number=0
 replica_index=0
 
+[rebalance]
+nodes_after = 5
+start_after = 180
+stop_after = 180
+
 [collection]
-config = collections/1bucket_1scope_50collections_basic.json
+config = collections/1bucket_1scope_300collections_basic.json
 
 [compaction]
 db_percentage = 100
 view_percentage = 100
 
 [secondary]
-indexes = tests/gsi/index_defs/1bucket_1scope_50collections_1000index_instances_replicamix_1partition.json
+indexes = tests/gsi/index_defs/1bucket_1scope_300collections_6000index_instances_replicamix_1partition.json
 disable_perindex_stats = True
 indexer.settings.storage_mode = memory_optimized
 indexer.settings.max_cpu_percent = 4800

@@ -1068,6 +1068,19 @@ class DefaultRestHelper(RestBase):
         api = 'http://{}:{}/stats'.format(host, '9102')
         return self.get(url=api).json()['num_indexes']
 
+    def backup_index(self, host, bucket):
+        logger.info("Backing up index metadata on host {} bucket {}"
+                    .format(host, bucket))
+        api = 'http://{}:{}/api/v1/bucket/{}/backup?keyspace={}' \
+            .format(host, '9102', bucket, bucket)
+        return self.get(url=api).json()["result"]
+
+    def restore_index(self, host, bucket, metadata, from_keyspace, to_keyspace):
+        logger.info("Restoring indexes on host {} bucket {}".format(host, bucket))
+        api = 'http://{}:{}/api/v1/bucket/{}/backup?keyspace={}:{}'.\
+            format(host, '9102', bucket, from_keyspace, to_keyspace)
+        return self.post(url=api, data=json.dumps(metadata))
+
 
 class KubernetesRestHelper(RestBase):
 

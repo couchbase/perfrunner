@@ -233,7 +233,7 @@ class EventingTest(PerfTest):
         return time_to_resume
 
     def validate_failures(self):
-        ignore_failures = ["uv_try_write_failure_counter", "on_update_failure",
+        ignore_failures = ["uv_try_write_failure_counter",
                            "bucket_op_exception_count", "timestamp",
                            "bkt_ops_cas_mismatch_count"]
         for node in self.eventing_nodes:

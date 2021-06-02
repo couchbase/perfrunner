@@ -470,6 +470,32 @@ class MetricHelper:
 
         return cpu_utilization, self._snapshots, metric_info
 
+    def avg_server_process_cpu(self, server_process: str) -> Metric:
+        metric_id = '{}_avg_{}_cpu'.format(self.test_config.name, server_process)
+        title = 'Avg. {} CPU utilization (%)'.format(server_process)
+        title = '{}, {}'.format(title, self._title)
+        metric_info = self._metric_info(metric_id, title, chirality=-1)
+
+        values = []
+        for (cluster_name, servers), initial_nodes in zip(
+                self.cluster_spec.clusters,
+                self.test_config.cluster.initial_nodes,
+        ):
+            cluster = list(filter(lambda name: name.startswith(cluster_name),
+                                  self.test.cbmonitor_clusters))[0]
+            for server in servers[:initial_nodes]:
+                hostname = server.replace('.', '')
+
+                db = self.store.build_dbname(cluster=cluster,
+                                             collector='atop',
+                                             server=hostname)
+                metric = server_process + '_cpu'
+                values += self.store.get_values(db, metric=metric)
+
+        server_process_cpu = round(np.average(values), 1)
+
+        return server_process_cpu, self._snapshots, metric_info
+
     def max_memcached_rss(self) -> Metric:
         metric_id = '{}_memcached_rss'.format(self.test_config.name)
         title = 'Max. memcached RSS (MB),{}'.format(

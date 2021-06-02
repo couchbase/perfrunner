@@ -32,3 +32,6 @@ workers = 100
 
 [access]
 time = 1800
+
+[stats]
+server_processes = projector prometheus

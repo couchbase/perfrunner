@@ -26,3 +26,6 @@ indexer.settings.storage_mode = plasma
 
 [access]
 time = 1800
+
+[stats]
+server_processes = projector prometheus

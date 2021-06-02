@@ -46,3 +46,4 @@ branch = couchbase3
 
 [stats]
 client_processes = java
+server_processes = projector prometheus

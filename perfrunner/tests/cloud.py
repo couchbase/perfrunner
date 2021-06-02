@@ -6,6 +6,15 @@ from perfrunner.tests import PerfTest
 
 class CloudTest(PerfTest):
 
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.server_processes = ['beam.smp',
+                                 'cbq-engine',
+                                 'indexer',
+                                 'memcached',
+                                 'projector',
+                                 'prometheus']
+
     @with_stats
     def access(self, *args):
         pass
@@ -20,6 +29,11 @@ class CloudIdleTest(CloudTest):
         self.reporter.post(
             *self.metrics.cpu_utilization()
         )
+
+        for process in self.server_processes:
+            self.reporter.post(
+                *self.metrics.avg_server_process_cpu(process)
+            )
 
     @with_stats
     def access(self, *args):
@@ -36,6 +50,11 @@ class CloudIdleDocsTest(CloudIdleTest):
         self.reporter.post(
             *self.metrics.cpu_utilization()
         )
+
+        for process in self.server_processes:
+            self.reporter.post(
+                *self.metrics.avg_server_process_cpu(process)
+            )
 
     @with_stats
     def access(self, *args):

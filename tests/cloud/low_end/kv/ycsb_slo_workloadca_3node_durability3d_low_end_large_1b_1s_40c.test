@@ -47,3 +47,5 @@ timeseries = 1
 branch = couchbase3
 latency_percentiles = 98
 
+[stats]
+server_processes = projector prometheus

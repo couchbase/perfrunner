@@ -472,6 +472,7 @@ class MetricHelper:
 
     def avg_server_process_cpu(self, server_process: str) -> Metric:
         metric_id = '{}_avg_{}_cpu'.format(self.test_config.name, server_process)
+        metric_id = metric_id.replace('.', '_')
         title = 'Avg. {} CPU utilization (%)'.format(server_process)
         title = '{}, {}'.format(title, self._title)
         metric_info = self._metric_info(metric_id, title, chirality=-1)

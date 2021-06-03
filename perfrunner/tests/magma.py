@@ -572,6 +572,32 @@ class EnhancedDurabilityLatencyDGMTest(StabilityBootstrap):
             )
 
 
+class EnhancedMixedDurabilityLatencyDGMTest(EnhancedDurabilityLatencyDGMTest):
+
+    def run(self):
+        self.load()
+
+        if self.test_config.extra_access_settings.run_extra_access:
+            self.run_extra_access()
+            self.wait_for_persistence()
+            self.wait_for_fragmentation()
+
+        self.hot_load()
+        self.reset_kv_stats()
+
+        self.COLLECTORS["latency"] = False
+        access_settings = self.test_config.access_settings
+        access_settings.time = 300
+        logger.info("Starting warmup access phase")
+        PerfTest.access(self, settings=access_settings)
+        self.COLLECTORS["latency"] = True
+        self.reset_kv_stats()
+
+        self.access()
+
+        self.report_kpi()
+
+
 class PillowFightDGMTest(StabilityBootstrap):
 
     """Use cbc-pillowfight from libcouchbase to drive cluster."""

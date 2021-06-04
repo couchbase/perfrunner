@@ -66,16 +66,22 @@ class MetricHelper:
     def _num_nodes(self):
         return self.test_config.cluster.initial_nodes[0]
 
+    @property
+    def _mem_quota(self):
+        return self.test_config.cluster.mem_quota
+
     def _metric_info(self,
                      metric_id: str = None,
                      title: str = None,
                      order_by: str = None,
-                     chirality: int = None) -> Dict[str, str]:
+                     chirality: int = None,
+                     mem_quota: int = None) -> Dict[str, str]:
         return {
             'id': metric_id or self.test_config.name,
             'title': title or self._title,
             'orderBy': order_by or self._order_by,
             'chirality': chirality or self._chirality,
+            'memquota': mem_quota or self._mem_quota
         }
 
     @property

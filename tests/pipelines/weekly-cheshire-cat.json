@@ -26,6 +26,7 @@
         {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_export_60M_json_lines_1s_1c.test"},
         {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_export_60M_json_lines_1s_1000c.test"},
         {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_import_3M_20K_json_list_1s_1c.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_import_60M_json_lines_1s_1c.test.test"},
         {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_restore_100M_rift_1s_1c.test"},
         {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_restore_100M_rift_1s_1000c.test"},
         {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_restore_100M_rift_1000s_1000c.test"},

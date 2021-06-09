@@ -1,0 +1,54 @@
+[test_case]
+test = perfrunner.tests.ycsb.YCSBN1QLThroughputTest
+
+[showfast]
+title = Avg Throughput (ops/sec), Workload AE, 1M docs, 3 nodes, 1 bucket, 40 collections, t3.medium, standard
+component = cloud
+category = lowend
+sub_category = mixed
+orderby = b_medium_kv_n1ql
+
+[cluster]
+mem_quota = 256
+index_mem_quota = 512
+fts_index_mem_quota = 256
+initial_nodes = 3
+num_buckets = 1
+
+[collection]
+config = collections/1bucket_1scope_40collections_basic.json
+
+[bucket]
+replica_number = 1
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[load]
+workload_path = workloads/workloadcae
+ycsb_client = couchbase3
+items = 1000000
+workers = 1
+
+[index]
+fields = primary
+indexes_per_collection = 1
+replicas = 1
+
+[access]
+workload_path = workloads/workloadcae
+ycsb_client = couchbase3
+items = 1000000
+ops = 1000000000
+time = 1800
+boost = 12
+workers = 96
+workload_instances = 1
+kv_endpoints = 16
+
+[ycsb]
+branch = couchbase3
+
+[stats]
+client_processes = java
+server_processes = projector prometheus

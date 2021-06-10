@@ -15,6 +15,8 @@ from perfrunner.workloads.tcmalloc import WorkloadGen
 
 class KVTest(PerfTest):
 
+    ALL_BUCKETS = True
+
     @with_stats
     def access(self, *args):
         super().access(*args)

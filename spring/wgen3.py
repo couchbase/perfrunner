@@ -325,7 +325,7 @@ class Worker:
         random.seed(seed=self.sid * 9901)
 
     def dump_stats(self):
-        self.reservoir.dump(filename='{}-{}'.format(self.NAME, self.sid))
+        self.reservoir.dump(filename='{}-{}-{}'.format(self.NAME, self.sid, self.ts.bucket))
 
 
 class KVWorker(Worker):
@@ -334,7 +334,7 @@ class KVWorker(Worker):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.reservoir = Reservoir(num_workers=self.ws.workers)
+        self.reservoir = Reservoir(num_workers=self.ws.workers * len(self.ws.bucket_list))
         self.gen_duration = 0.0
         self.batch_duration = 0.0
         self.delta = 0.0
@@ -512,9 +512,9 @@ class KVWorker(Worker):
                 self.do_batch()
                 self.report_progress(curr_ops.value)
         except KeyboardInterrupt:
-            logger.info('Interrupted: {}-{}'.format(self.NAME, self.sid))
+            logger.info('Interrupted: {}-{}-{}'.format(self.NAME, self.sid, self.ts.bucket))
         else:
-            logger.info('Finished: {}-{}'.format(self.NAME, self.sid))
+            logger.info('Finished: {}-{}-{}'.format(self.NAME, self.sid, self.ts.bucket))
         self.dump_stats()
 
 

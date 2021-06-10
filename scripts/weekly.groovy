@@ -73,6 +73,12 @@ pipeline {
                         buildComponent('FTS-Rebalance', testCases)
                     }
                 }
+                stage("FTS-N1FTY") {
+                    when { expression { return params.FTS_N1FTY } }
+                    steps {
+                        buildComponent('FTS-N1FTY', testCases)
+                    }
+                }
                 stage("FTS-MultiIndex"){
                     when { expression { return params.FTS_MultiIndex } }
                     steps {

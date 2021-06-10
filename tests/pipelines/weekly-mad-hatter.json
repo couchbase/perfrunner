@@ -47,6 +47,16 @@
         {"job": "atlas-sdk", "cluster": "atlas_setupE.spec", "test_config": "tests_FTS/1M/jts_fts_throughput_3node_1M_flex_mixed1.test"},
         {"job": "atlas-sdk", "cluster": "atlas_setupE.spec", "test_config": "tests_FTS/1M/jts_fts_throughput_3node_1M_flex_mixed2.test"}
     ],
+    "FTS-N1FTY": [
+        {"job": "iris-multi-client", "cluster": "iris_fts.spec", "test_config": "n1ql/n1ql_thr_CF2_20M_fts.test"},
+        {"job": "iris-multi-client", "cluster": "iris_fts.spec", "test_config": "n1ql/n1ql_thr_QF2_20M_fts.test"},
+        {"job": "iris-multi-client", "cluster": "iris_fts.spec", "test_config": "n1ql/n1ql_thr_CF3_20M_fts.test"},
+        {"job": "iris-multi-client", "cluster": "iris_fts.spec", "test_config": "n1ql/n1ql_thr_QF3_20M_fts.test"},
+        {"job": "iris",              "cluster": "iris_fts.spec", "test_config": "n1ql/n1ql_lat_CF3_20M_fts.test"},
+        {"job": "iris",              "cluster": "iris_fts.spec", "test_config": "n1ql/n1ql_lat_QF2_20M_fts.test"},
+        {"job": "iris",              "cluster": "iris_fts.spec", "test_config": "n1ql/n1ql_lat_QF3_20M_fts.test"},
+        {"job": "iris",              "cluster": "iris_fts.spec", "test_config": "n1ql/n1ql_lat_CF2_20M_fts.test"}
+    ],
     "FTS-Rebalance": [
         {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_in_default_with_index_replica.test"},
         {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_out_default_with_index_replica.test"},
@@ -199,14 +209,6 @@
         {"job": "iris-dp",              "cluster": "iris.spec", "test_config": "n1ql_lat_udf_QU3_20M_gsi_moi_ok.test"},
         {"job": "iris-dp",              "cluster": "iris.spec", "test_config": "n1ql_lat_udf_select_empty.test"},
         {"job": "iris-dp",              "cluster": "iris.spec", "test_config": "n1ql_lat_udf_select_QU2_20M_gsi_moi_ok.test"},
-        {"job": "iris-multi-client", "cluster": "iris_fts.spec", "test_config": "n1ql/n1ql_thr_CF2_20M_fts.test"},
-        {"job": "iris-multi-client", "cluster": "iris_fts.spec", "test_config": "n1ql/n1ql_thr_QF2_20M_fts.test"},
-        {"job": "iris-multi-client", "cluster": "iris_fts.spec", "test_config": "n1ql/n1ql_thr_CF3_20M_fts.test"},
-        {"job": "iris-multi-client", "cluster": "iris_fts.spec", "test_config": "n1ql/n1ql_thr_QF3_20M_fts.test"},
-        {"job": "iris",              "cluster": "iris_fts.spec", "test_config": "n1ql/n1ql_lat_CF3_20M_fts.test"},
-        {"job": "iris",              "cluster": "iris_fts.spec", "test_config": "n1ql/n1ql_lat_QF2_20M_fts.test"},
-        {"job": "iris",              "cluster": "iris_fts.spec", "test_config": "n1ql/n1ql_lat_QF3_20M_fts.test"},
-        {"job": "iris",              "cluster": "iris_fts.spec", "test_config": "n1ql/n1ql_lat_CF2_20M_fts.test"},
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q1_20M_rebalance.test"}
     ],
     "YCSB": [

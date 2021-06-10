@@ -20,6 +20,7 @@ replica_number=0
 [jts]
 test_total_docs = 20000000
 couchbase_index_name = perf_fts_index
+ftspartitions = 10
 couchbase_index_configfile = tests/fts/index/fts_rebal_with_replica.json
 
 [restore]
@@ -30,7 +31,7 @@ backup_repo =  fts_generic_20M
 nodes_after = 3
 start_after = 300
 stop_after = 600
-ftspartitions = 10
+
 
 [profiling]
 services = fts

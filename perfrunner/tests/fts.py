@@ -265,6 +265,7 @@ class FTSTest(JTSTest):
             )
 
     def add_extra_fts_parameters(self):
+        logger.info("Adding extra parameter to the fts nodes")
         nodes_before_rebalance = self.test_config.cluster.initial_nodes[0]
         servers_and_roles = self.cluster_spec.servers_and_roles
         fts_nodes_before = []

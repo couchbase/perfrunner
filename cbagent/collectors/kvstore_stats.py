@@ -75,7 +75,10 @@ class KVStoreStats(Collector):
         "NGetStatsPerSec",
         "NGetStatsComputedPerSec",
         "FlushQueueSize",
-        "CompactQueueSize"
+        "CompactQueueSize",
+        "NBloomFilterHits",
+        "NBloomFilterMisses",
+        "BloomFilterFPR"
     )
     METRICS_AVERAGE_PER_NODE_PER_SHARD = (
         "ReadAmp",
@@ -89,13 +92,15 @@ class KVStoreStats(Collector):
         "RecentReadIOAmp",
         "RecentBytesPerRead",
         "FlushQueueSize",
-        "CompactQueueSize"
+        "CompactQueueSize",
+        "BloomFilterFPR"
     )
     NO_CAP = (
         "TxnSizeEstimate",
         "RecentBytesPerRead",
         "FlushQueueSize",
-        "CompactQueueSize"
+        "CompactQueueSize",
+        "BloomFilterFPR"
     )
 
     def __init__(self, settings, test):

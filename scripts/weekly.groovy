@@ -135,7 +135,7 @@ pipeline {
                     }
                 }
                 stage('KV-DGM') {
-                    when { expression { return params.KV } }
+                    when { expression { return params.KV_DGM } }
                     steps {
                         buildComponent('KV-DGM', testCases)
                     }
@@ -159,7 +159,7 @@ pipeline {
                     }
                 }
                 stage('N1QL-Arke') {
-                    when { expression { return params.N1QL } }
+                    when { expression { return params.N1QL_Arke } }
                     steps {
                         buildComponent('N1QL-Arke', testCases)
                     }
@@ -180,6 +180,18 @@ pipeline {
                     when { expression { return params.Rebalance } }
                     steps {
                         buildComponent('Rebalance-Large-Scale', testCases)
+                    }
+                }
+                stage('Rebalance-Hestia') {
+                    when { expression { return params.Rebalance_Hestia } }
+                    steps {
+                        buildComponent('Rebalance-Hestia', testCases)
+                    }
+                }
+                stage('Rebalance-Windows') {
+                    when { expression { return params.Rebalance_Windows } }
+                    steps {
+                        buildComponent('Rebalance-Windows', testCases)
                     }
                 }
                 stage('Views') {
@@ -234,12 +246,6 @@ pipeline {
                     when { expression { return params.GSI_Recovery } }
                     steps {
                         buildComponent('GSI-Recovery', testCases)
-                    }
-                }
-                stage('Rebalance-Windows') {
-                    when { expression { return params.Rebalance_Windows } }
-                    steps {
-                        buildComponent('Rebalance-Windows', testCases)
                     }
                 }
             }

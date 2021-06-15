@@ -34,6 +34,7 @@
         {"job": "titan", "cluster": "titan.spec", "test_config": "reb_swap_200M_nondgm_loadonly_kv.test "}
     ],
     "Rebalance-Large-Scale": [],
+    "Rebalance-Hestia": [],
     "Tools": [],
     "Views": [],
     "XDCR": [],

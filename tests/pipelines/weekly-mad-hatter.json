@@ -169,7 +169,12 @@
         {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/ycsb_trans_workloadt_4nodes_12cores_dur_2.test"},
         {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/collections/ycsb_trans_workloadtca_1s1000c_4nodes_12cores_dur_3.test"},
         {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/collections/ycsb_trans_workloadtca_1s1000c_4nodes_12cores_dur_maj.test"},
-        {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/collections/ycsb_trans_workloadtca_1s1000c_4nodes_12cores_dur_none.test"}
+        {"job": "hercules-txn", "cluster": "hercules_kv.spec", "test_config": "transactions/collections/ycsb_trans_workloadtca_1s1000c_4nodes_12cores_dur_none.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_requdist_uni.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_eph_norepl_requdist_uni.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_latency_uni_distr.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_norepl_requdistri_uni.test"},
+        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloadj_3nodes_cpu_latency_uni_distr_180kops_append_ycsb3.test"}
     ],
     "KV-DGM": [],
     "KV-Athena": [],
@@ -211,13 +216,7 @@
         {"job": "iris-dp",              "cluster": "iris.spec", "test_config": "n1ql_lat_udf_select_QU2_20M_gsi_moi_ok.test"},
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/n1ql_thr_Q1_20M_rebalance.test"}
     ],
-    "YCSB": [
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_requdist_uni.test"},
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_eph_norepl_requdist_uni.test"},
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_latency_uni_distr.test"},
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_norepl_requdistri_uni.test"},
-        {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloadj_3nodes_cpu_latency_uni_distr_180kops_append_ycsb3.test"}
-    ],
+    "YCSB": [],
     "N1QL-Arke": [
         {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_lat_WF1_100M_plasma_ok.test"},
         {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_thr_WF1_100M_plasma_ok.test"},

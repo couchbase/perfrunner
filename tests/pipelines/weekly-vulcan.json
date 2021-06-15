@@ -146,6 +146,7 @@
         {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_failover_100M_dgm_kv_disk.test"}
     ],
     "Rebalance-Large-Scale": [],
+    "Rebalance-Hestia": [],
     "Tools": [
         {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_sqlite.test"},
         {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_forestdb.test"},

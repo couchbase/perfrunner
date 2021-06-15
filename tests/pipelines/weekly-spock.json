@@ -92,6 +92,7 @@
         {"job": "titan", "cluster": "titan.spec", "test_config": "reb_in_500M_kv.test"},
         {"job": "titan", "cluster": "titan.spec", "test_config": "reb_in_500M_kv_ephemeral.test"}
     ],
+    "Rebalance-Hestia": [],
     "Tools": [],
     "Views": [],
     "XDCR": [
@@ -107,12 +108,6 @@
         {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "ycsb_workloada_3nodes_cpu_ssl.test"}
     ],
     "YCSB": [
-        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_1node.test"},
-        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes.test"},
-        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_1node_plasma.test"},
-        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_plasma.test"},
-        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_ssl.test"},
-        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_x509.test"},
         {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadse_4nodecluster.test"},
         {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsg2_4nodecluster.test"},
         {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsg_4nodecluster.test"},
@@ -124,6 +119,12 @@
         {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsl1_4nodecluster.test"},
         {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsl2_4nodecluster.test"},
         {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsmix2_4nodecluster.test"},
-        {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsmix_4nodecluster.test"}
+        {"job": "hebe", "cluster": "hebe.spec", "test_config": "soe/ycsb_workloadsmix_4nodecluster.test"},
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_1node.test"},
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes.test"},
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_1node_plasma.test"},
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_plasma.test"},
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_ssl.test"},
+        {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_4nodes_x509.test"}
     ]
 }

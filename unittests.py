@@ -661,8 +661,8 @@ class PipelineTest(TestCase):
 
     def test_stages(self):
         stages = {'Analytics', 'Eventing', 'FTS', 'GSI', 'GSI-DGM', 'KV', 'KV-DGM',
-                  'N1QL', 'Rebalance', 'Rebalance-Large-Scale', 'Tools',
-                  'Views', 'XDCR', 'YCSB','N1QL-Windows', 'N1QL-Arke',
+                  'N1QL', 'Rebalance', 'Rebalance-Large-Scale', 'Rebalance-Hestia',
+                  'Tools', 'Views', 'XDCR', 'YCSB','N1QL-Windows', 'N1QL-Arke',
                   'KV-Windows', 'XDCR-Windows', 'KV-Athena', 'KV-Hercules'}
         for pipeline in ('tests/pipelines/weekly-watson.json',
                          'tests/pipelines/weekly-spock.json',

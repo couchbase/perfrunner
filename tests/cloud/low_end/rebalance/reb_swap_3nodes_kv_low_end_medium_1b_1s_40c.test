@@ -1,0 +1,54 @@
+[test_case]
+test = perfrunner.tests.cloud.CloudRebalanceKVTest
+
+[showfast]
+title = Rebalance-swap (min), 3 -> 3, 3M x 1KB, 200 ops/sec (90/10 R/W), 10%% cache miss rate, 1 bucket, 40 collections, t3.medium, standard
+component = cloud
+category = lowend
+sub_category = reb
+orderby = b_medium
+
+[cluster]
+mem_quota = 512
+index_mem_quota = 256
+fts_index_mem_quota = 256
+initial_nodes = 3
+num_buckets = 1
+
+[collection]
+config = collections/1bucket_1scope_40collections_basic.json
+
+[bucket]
+replica_number = 1
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[load]
+items = 3000000
+size = 1024
+workers = 10
+key_fmtr = hex
+doc_gen = large
+
+[hot_load]
+items = 3000000
+workers = 10
+working_set = 5
+
+[access]
+creates = 0
+reads = 90
+updates = 10
+deletes = 0
+throughput = 200
+items = 3000000
+workers = 5
+working_set = 5
+working_set_access = 90
+
+[rebalance]
+nodes_after = 3
+swap = 1
+start_after = 600
+stop_after = 600

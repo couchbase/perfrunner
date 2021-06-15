@@ -2,6 +2,7 @@ import time
 
 from perfrunner.helpers.cbmonitor import with_stats
 from perfrunner.tests import PerfTest
+from perfrunner.tests.rebalance import RebalanceKVTest
 from perfrunner.tests.ycsb import YCSBN1QLTest
 
 
@@ -106,3 +107,25 @@ class CloudIdleKVN1QLTest(YCSBN1QLTest, CloudIdleTest):
         self.access()
 
         self.report_kpi()
+
+
+class CloudRebalanceKVTest(RebalanceKVTest, CloudTest):
+
+    def __init__(self, *args):
+        CloudTest.__init__(self, *args)
+        self.rebalance_settings = self.test_config.rebalance_settings
+        self.rebalance_time = 0
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.hot_load()
+
+        self.reset_kv_stats()
+
+        self.access_bg()
+        self.rebalance(services="kv,index,n1ql,fts")
+
+        if self.is_balanced():
+            self.report_kpi()

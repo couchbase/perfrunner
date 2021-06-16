@@ -9,7 +9,7 @@ sub_category = mixed
 orderby = c_large_kv_n1ql
 
 [cluster]
-mem_quota = 256
+mem_quota = 1024
 index_mem_quota = 1024
 fts_index_mem_quota = 256
 initial_nodes = 3

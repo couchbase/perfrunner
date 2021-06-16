@@ -632,3 +632,122 @@ class TPCDSQueryTest(TPCDSTest):
         self.report_kpi(count_results_with_index, with_index=True)
         self.report_kpi(results_no_index, with_index=False)
         self.report_kpi(results_with_index, with_index=True)
+
+
+class CH2Test(PerfTest):
+
+    CH2_DATASETS = [
+        "customer",
+        "district",
+        "history",
+        "item",
+        "neworder",
+        "orders",
+        "stock",
+        "warehouse",
+        "supplier",
+        "nation",
+        "region",
+    ]
+
+    CH2_INDEXES = [("cu_w_id_d_id_last",
+                    "customer(c_w_id, c_d_id, c_last)",
+                    "customer"),
+                   ("di_id_w_id",
+                    "district(d_id, d_w_id)",
+                    "district"),
+                   ("no_o_id_d_id_w_id",
+                    "neworder(no_o_id, no_d_id, no_w_id)",
+                    "neworder"),
+                   ("or_id_d_id_w_id_c_id",
+                    "orders(o_id, o_d_id, o_w_id, o_c_id)",
+                    "orders"),
+                   ("or_w_id_d_id_c_id",
+                    "orders(o_w_id, o_d_id, o_c_id)",
+                    "orders"),
+                   ("wh_id",
+                    "warehouse(w_id)",
+                    "warehouse")]
+
+    COLLECTORS = {'analytics': True}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.num_items = 0
+        self.analytics_link = self.test_config.analytics_settings.analytics_link
+        self.data_node = self.master_node
+        self.analytics_node = self.analytics_nodes[0]
+
+    def create_datasets(self):
+        logger.info('Creating datasets')
+        for dataset in self.CH2_DATASETS:
+            statement = "CREATE DATASET `{}` ON default.tpcc.{};" \
+                .format(dataset, dataset)
+            logger.info('Running: {}'.format(statement))
+            res = self.rest.exec_analytics_statement(self.analytics_node, statement)
+            logger.info("Result: {}".format(str(res)))
+            time.sleep(5)
+
+    def create_indexes(self):
+        logger.info('Creating indexes')
+        for index in self.CH2_INDEXES:
+            statement = "CREATE INDEX {} ON {};".format(index[0], index[1])
+            logger.info('Running: {}'.format(statement))
+            res = self.rest.exec_analytics_statement(self.analytics_node, statement)
+            logger.info("Result: {}".format(str(res)))
+            time.sleep(5)
+
+    def drop_indexes(self):
+        logger.info('Dropping indexes')
+        for index in self.CH2_INDEXES:
+            statement = "DROP INDEX {}.{};".format(index[2], index[0])
+            logger.info('Running: {}'.format(statement))
+            res = self.rest.exec_analytics_statement(self.analytics_node, statement)
+            logger.info("Result: {}".format(str(res)))
+            time.sleep(5)
+
+    def disconnect_link(self):
+        logger.info('DISCONNECT LINK {}'.format(self.analytics_link))
+        statement = "DISCONNECT LINK {}".format(self.analytics_link)
+        self.rest.exec_analytics_statement(self.analytics_node,
+                                           statement)
+
+    def connect_link(self):
+        logger.info('Connecting Link {}'.format(self.analytics_link))
+        statement = "CONNECT link {}".format(self.analytics_link)
+        self.rest.exec_analytics_statement(self.analytics_node,
+                                           statement)
+
+    def create_primary_indexes(self):
+        logger.info('Creating primary indexes')
+        for dataset in self.CH2_DATASETS:
+            statement = "CREATE PRIMARY INDEX ON {};".format(dataset)
+            logger.info('Running: {}'.format(statement))
+            res = self.rest.exec_analytics_statement(self.analytics_node, statement)
+            logger.info("Result: {}".format(str(res)))
+            time.sleep(5)
+
+    def drop_primary_indexes(self):
+        logger.info('Dropping primary indexes')
+        for dataset in self.CH2_DATASETS:
+            statement = "DROP INDEX {}.primary_idx_{};".format(dataset, dataset)
+            logger.info('Running: {}'.format(statement))
+            res = self.rest.exec_analytics_statement(self.analytics_node, statement)
+            logger.info("Result: {}".format(str(res)))
+            time.sleep(5)
+
+    def sync(self):
+        self.disconnect_link()
+        self.create_datasets()
+        self.connect_link()
+        for bucket in self.test_config.buckets:
+            self.num_items += self.monitor.monitor_data_synced(self.data_node,
+                                                               bucket,
+                                                               self.analytics_node)
+
+    def run(self):
+        self.restore_local()
+        self.wait_for_persistence()
+        self.compact_bucket()
+        self.sync()

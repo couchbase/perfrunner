@@ -1,0 +1,33 @@
+[test_case]
+test = perfrunner.tests.analytics.CH2Test
+
+[showfast]
+title = CH2 Queries, SSD, 4 nodes
+component = analytics
+category = volume
+
+[stats]
+server_processes = java
+
+[cluster]
+mem_quota = 25600
+index_mem_quota = 12800
+analytics_mem_quota = 51200
+initial_nodes = 6
+num_buckets = 1
+bucket_name = default
+
+[collection]
+config = collections/1bucket_1scope_11collections_analytics_ch2.json
+
+[analytics]
+num_io_devices = 4
+
+[bucket]
+eviction_policy = fullEviction
+
+[restore]
+backup_storage = /data3/backup/ch2_w1000_060421/
+backup_repo = ch2
+threads = 8
+map_data = default.tpcc.customer=default.tpcc.customer,default.tpcc.district=default.tpcc.district,default.tpcc.history=default.tpcc.history,default.tpcc.item=default.tpcc.item,default.tpcc.neworder=default.tpcc.neworder,default.tpcc.orders=default.tpcc.orders,default.tpcc.stock=default.tpcc.stock,default.tpcc.warehouse=default.tpcc.warehouse,default.tpcc.supplier=default.tpcc.supplier,default.tpcc.nation=default.tpcc.nation,default.tpcc.region=default.tpcc.region,default._default._default=default._default._default

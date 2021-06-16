@@ -18,6 +18,7 @@ from perfrunner.remote.context import master_client
 from perfrunner.settings import ClusterSpec
 
 LOCATIONS = (
+    'http://172.23.126.166/builds/latestbuilds/couchbase-server/neo/{build}/',
     'http://172.23.126.166/builds/latestbuilds/couchbase-server/magma-preview/{build}/',
     'http://172.23.126.166/builds/latestbuilds/couchbase-server/cheshire-cat/{build}/',
     'http://172.23.126.166/builds/latestbuilds/couchbase-server/mad-hatter/{build}/',

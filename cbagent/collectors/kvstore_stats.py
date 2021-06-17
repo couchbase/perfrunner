@@ -78,7 +78,10 @@ class KVStoreStats(Collector):
         "CompactQueueSize",
         "NBloomFilterHits",
         "NBloomFilterMisses",
-        "BloomFilterFPR"
+        "BloomFilterFPR",
+        "NumNormalFlushes",
+        "NumPersistentFlushes",
+        "NumSyncFlushes"
     )
     METRICS_AVERAGE_PER_NODE_PER_SHARD = (
         "ReadAmp",

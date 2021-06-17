@@ -87,16 +87,22 @@ class SecondaryIndexTest(PerfTest):
             logger.info('Existing 2i latency stats file removed')
 
     def batch_create_index_collection_options(self, indexes, storage):
+        indexes_copy = copy.deepcopy(indexes)
         all_options = ""
-        for bucket_name, scope_map in indexes.items():
+        for bucket_name, scope_map in indexes_copy.items():
             for scope_name, collection_map in scope_map.items():
                 for collection_name, index_map in collection_map.items():
                     for index, index_config in index_map.items():
                         configs = ''
+                        partition_keys = ''
                         if type(index_config) is dict:
                             index_def = index_config.pop("field")
                             for config, value in index_config.items():
                                 configs = configs + '"{}":{},'.format(config, value)
+
+                            if index_config["num_partition"] > 1:
+                                partition_keys = " --scheme KEY" \
+                                                 " --partitionKeys `{}` ".format(index_def)
                         else:
                             index_def = index_config
 
@@ -129,6 +135,10 @@ class SecondaryIndexTest(PerfTest):
                         if storage == 'memdb' or storage == 'plasma':
                             options = '{options} -using {db}'.format(options=options,
                                                                      db=storage)
+
+                        if partition_keys:
+                            options = "{options} {partition_keys}"\
+                                .format(options=options, partition_keys=partition_keys)
 
                         options = "{options} -index {index} " \
                             .format(options=options, index=index)

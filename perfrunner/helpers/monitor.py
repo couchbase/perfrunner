@@ -518,8 +518,17 @@ class DefaultMonitor(DefaultRestHelper):
         for bucket_name, scope_map in indexes.items():
             for scope_name, collection_map in scope_map.items():
                 for collection_name, index_map in collection_map.items():
-                    for index_name in index_map.keys():
-                        index_list.append(index_name)
+                    for index, index_config in index_map.items():
+                        if type(index_config) is dict:
+                            num_replica = index_config["num_replica"]
+                            index_list.append(index)
+                            for i in range(1, num_replica+1):
+                                index_list.append("{index_name} (replica {number})"
+                                                  .format(index_name=index, number=i))
+                        else:
+                            for index_name in index_map.keys():
+                                index_list.append(index_name)
+
         indexes = index_list
         logger.info(
             "Waiting for the following indexes to be ready: {}".format(indexes))

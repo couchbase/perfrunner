@@ -1,0 +1,31 @@
+[test_case]
+test = perfrunner.tests.kv.PillowFightTest
+
+[showfast]
+title = Max ops/sec, cbc-pillowfight, 2 nodes, 50/50 R/W, 512B JSON items, 1K batch size, s=1 c=1000, 30 buckets
+component = kv
+category = max_ops
+orderby = mixed
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 2
+num_buckets = 30
+
+[collection]
+config = collections/30buckets_1scope_33collections_basic.json
+
+[load]
+size = 512
+items = 666666
+workers = 3
+doc_gen = json
+
+[access]
+items = 666666
+iterations = 40000
+workers = 2
+updates = 50
+
+[clients]
+libcouchbase = 3.0.7

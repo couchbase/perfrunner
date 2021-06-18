@@ -215,7 +215,12 @@ class MetricHelper:
             db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
                                          collector='ns_server',
                                          bucket=bucket)
-            values += self.store.get_values(db, metric='ops')
+            return_ops = self.store.get_values(db, metric='ops')
+            if len(values) != 0:
+                sum_ops = [ops1 + ops2 for ops1, ops2 in zip(values, return_ops)]
+                values = sum_ops
+            else:
+                values = return_ops
 
         return int(np.percentile(values, 90))
 

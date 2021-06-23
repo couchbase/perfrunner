@@ -266,5 +266,13 @@
         {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "reb_failover_100M_dgm_kv_graceful_windows.test"},
         {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "reb_failover_100M_dgm_kv_hard_windows.test"},
         {"job": "zeus", "cluster": "zeus_kv.spec", "test_config": "reb_failover_100M_dgm_kv_windows.test"}
+    ],
+    "GSI-Hemera": [
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_100M_20RR_random_PlasmaDGM_bloom_4Index.test"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_100M_20RR_random_PlasmaDGM_bloom_4Index_insertonly.test"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_100M_20RR_random_PlasmaDGM_bloom_7Index.test"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_100M_20RR_random_PlasmaDGM_nobloom_4Index.test"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_100M_20RR_random_PlasmaDGM_nobloom_4Index_insertonly.test"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_100M_20RR_random_PlasmaDGM_nobloom_7Index.test"}
     ]
 }

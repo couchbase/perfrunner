@@ -6,6 +6,7 @@ title = 1 bucket x 100M, 4 2i Indexes, 100K KV ops/sec, 128 byte keysize, Insert
 component = secondary
 category = incremental
 sub_category = PlasmaDGM
+orderBy = A3
 
 [stats]
 server_processes = projector

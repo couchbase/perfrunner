@@ -2,10 +2,11 @@
 test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
 
 [showfast]
-title = 1 bucket x 100M, 4 2i Indexes, 100K KV ops/sec, 128 byte keysize, Update/Create Workload, PLASMA Without Bloom filter
+title = 1 bucket x 100M, 4 2i Indexes, 100K KV ops/sec, 128 byte keysize, Update Create Workload, PLASMA Without Bloom filter
 component = secondary
 category = incremental
 sub_category = PlasmaDGM
+orderBy = A2
 
 [stats]
 server_processes = projector

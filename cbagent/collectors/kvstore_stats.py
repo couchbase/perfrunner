@@ -22,6 +22,7 @@ class KVStoreStats(Collector):
         "NCommitBatches",
         "NDeletes",
         "NGets",
+        "NInserts",
         "NReadBytes",
         "NReadBytesCompact",
         "NReadBytesGet",

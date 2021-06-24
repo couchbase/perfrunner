@@ -604,6 +604,11 @@ class MetricHelper:
         metric_info = self._metric_info(metric_id, title, chirality=-1)
         metric_info['category'] = "ddl"
 
+        if index_type == "Backup":
+            metric_info['orderBy'] = 'B' + str(metric_info['orderBy'][1:])
+        if index_type == "Restore":
+            metric_info['orderBy'] = 'C' + str(metric_info['orderBy'][1:])
+
         if unit == "min":
             value = s2m(value)
         else:

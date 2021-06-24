@@ -6,6 +6,7 @@ title = 1 bucket, 10000 Index Instances, Non-Partitioned Indexes with Replica mi
 component = secondary
 category = ddl
 sub_category = MOI
+orderby = A2
 
 [stats]
 client_processes = cbindex

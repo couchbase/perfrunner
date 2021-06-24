@@ -6,6 +6,7 @@ title = 1 bucket, 1000 Index Instances, Non-Partitioned Indexes with Replica mix
 component = secondary
 category = ddl
 sub_category = Plasma
+orderby = A1
 
 [stats]
 client_processes = cbindex

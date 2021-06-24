@@ -6,6 +6,7 @@ title = 1 bucket, 10000 Index Instances, Partitions = 10 with Replica mix, Plasm
 component = secondary
 category = ddl
 sub_category = MOI
+orderby = A3
 
 [stats]
 client_processes = cbindex

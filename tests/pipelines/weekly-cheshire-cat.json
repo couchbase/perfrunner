@@ -408,7 +408,13 @@
         {"job": "themis", "cluster": "themis.spec", "test_config": "latency100M_incr_ctrop_0cont_src_bkt_mut_1s_1c.test"},
         {"job": "themis", "cluster": "themis.spec", "test_config": "latency100M_replace_advbktop_0cont_1s_1c.test"},
         {"job": "themis", "cluster": "themis_n1ql.spec", "test_config": "latency20M_fun_n1ql_1s_1c.test"},
-        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput50M_timer_bktop_rebalance_1s_1c.test"}
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput50M_timer_bktop_rebalance_1s_1c.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_bkt_cache.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_bkt_cache_30per_overflow.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "throughput100M_bkt_without_cache.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "latency100M_bkt_without_cache.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "latency100M_bkt_cache.test"},
+        {"job": "themis", "cluster": "themis.spec", "test_config": "latency100M_bkt_cache_30per_overflow.test"}
     ],
     "FTS": [
       {"job": "atlas_collections", "cluster": "atlas_setupA.spec", "test_config": "tests_FTS/collections/jts_fts_1s_1c_index_3node_1M_initial.test"},

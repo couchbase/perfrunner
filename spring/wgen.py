@@ -26,6 +26,7 @@ from spring.docgen import (
     EventingSmallCounterDocument,
     EventingSmallDocument,
     ExtReverseLookupDocument,
+    FTSDocument,
     GroupedDocument,
     GSIMultiIndexDocument,
     HashJoinDocument,
@@ -255,6 +256,8 @@ class Worker:
                                              self.ws.size_variation_max)
         elif self.ws.doc_gen == 'large_grouped_doc':
             self.docs = LargeGroupedDocument(self.ws.size, self.ws.doc_groups)
+        elif self.ws.doc_gen == 'fts_doc':
+            self.docs = FTSDocument(self.ws.size)
 
     def init_db(self):
         params = {

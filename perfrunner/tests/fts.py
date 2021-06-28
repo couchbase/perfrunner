@@ -386,3 +386,29 @@ class FTSIndexTest(FTSTest):
         time_elapsed = self.build_index(fts_nodes)
         size = self.calculate_index_size()
         self.report_kpi(time_elapsed, size)
+
+
+class FTSThroughputCloudTest(FTSThroughputTest):
+
+    def run(self):
+        self.load()
+        self.create_fts_index_definitions()
+        self.create_fts_indexes()
+        self.download_jts()
+        self.wait_for_index_persistence()
+        self.warmup()
+        self.run_test()
+        self.report_kpi()
+
+
+class FTSLatencyCloudTest(FTSLatencyTest):
+
+    def run(self):
+        self.load()
+        self.create_fts_index_definitions()
+        self.create_fts_indexes()
+        self.download_jts()
+        self.wait_for_index_persistence()
+        self.warmup()
+        self.run_test()
+        self.report_kpi()

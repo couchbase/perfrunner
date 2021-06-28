@@ -1835,7 +1835,7 @@ class TestConfig(Config):
         collection_settings = CollectionSettings(collection_options)
         if collection_settings.collection_map is not None:
             load_settings.collections = collection_settings.collection_map
-
+        load_settings.bucket_list = self.buckets
         return load_settings
 
     @property
@@ -1860,12 +1860,15 @@ class TestConfig(Config):
         collection_settings = CollectionSettings(collection_options)
         if collection_settings.collection_map is not None:
             hot_load.collections = collection_settings.collection_map
+        hot_load.bucket_list = self.buckets
         return hot_load
 
     @property
     def xattr_load_settings(self) -> XattrLoadSettings:
         options = self._get_options_as_dict('xattr_load')
-        return XattrLoadSettings(options)
+        xattr_settings = XattrLoadSettings(options)
+        xattr_settings.bucket_list = self.buckets
+        return xattr_settings
 
     @property
     def xdcr_settings(self) -> XDCRSettings:

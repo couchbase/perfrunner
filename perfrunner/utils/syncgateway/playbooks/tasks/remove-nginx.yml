@@ -1,0 +1,9 @@
+# Stop nginx service
+- name: NGINX | stop nginx service
+  service: name=nginx state=stopped
+  ignore_errors: yes
+
+- name: NGINX | Remove nginx package
+  yum: pkg=nginx state=absent
+
+

@@ -1,0 +1,14 @@
+# Stop service
+- name: SYNC GATEWAY | Stop sync_gateway service
+  become: yes
+  service: name=sync_gateway state=stopped
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+
+- name: SYNC GATEWAY | Stop sync_gateway for CentOS 6
+  become: yes
+  shell: /sbin/initctl stop sync_gateway
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "6"
+
+- name: SYNC GATEWAY | Verify sync_gateway not listening on port
+  become: yes
+  wait_for: port=4985 state=stopped

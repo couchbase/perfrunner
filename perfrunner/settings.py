@@ -102,6 +102,13 @@ class ClusterSpec(Config):
         return {k: v for k, v in self.config.items('clients')}
 
     @property
+    def infrastructure_sync_gateways(self):
+        if 'sync_gateways' in self.config.sections():
+            return {k: v for k, v in self.config.items('sync_gateways')}
+        else:
+            return {}
+
+    @property
     def infrastructure_utilities(self):
         return {k: v for k, v in self.config.items('utilities')}
 
@@ -144,9 +151,24 @@ class ClusterSpec(Config):
             yield cluster_name, hosts
 
     @property
+    def sgw_clusters(self) -> Iterator:
+        for cluster_name, servers in self.config.items('sync_gateways'):
+            hosts = [s.split(':')[0] for s in servers.split()]
+            yield cluster_name, hosts
+
+    @property
     def masters(self) -> Iterator[str]:
         for _, servers in self.clusters:
             yield servers[0]
+
+    @property
+    def sgw_masters(self) -> Iterator[str]:
+        if 'sync_gateways' in self.config.sections():
+            for _, servers in self.sgw_clusters:
+                yield servers[0]
+        else:
+            for _, servers in self.clusters:
+                yield servers[0]
 
     @property
     def servers(self) -> List[str]:
@@ -162,6 +184,15 @@ class ClusterSpec(Config):
             for cluster_name, private_ips in self.config.items('private_ips'):
                 yield cluster_name, private_ips.split()
 
+    @property
+    def sgw_servers(self) -> List[str]:
+        servers = []
+        if 'sync_gateways' in self.config.sections():
+            for _, cluster_servers in self.sgw_clusters:
+                for server in cluster_servers:
+                    servers.append(server)
+        return servers
+
     def servers_by_role(self, role: str) -> List[str]:
         has_service = []
         for _, servers in self.config.items('clusters'):
@@ -169,6 +200,17 @@ class ClusterSpec(Config):
                 host, roles, *group = server.split(':')
                 if role in roles:
                     has_service.append(host)
+        return has_service
+
+    def servers_by_cluster_and_role(self, role: str) -> List[str]:
+        has_service = []
+        for _, servers in self.config.items('clusters'):
+            cluster_has_service = []
+            for server in servers.split():
+                host, roles, *group = server.split(':')
+                if role in roles:
+                    cluster_has_service.append(host)
+            has_service.append(cluster_has_service)
         return has_service
 
     def servers_by_role_from_first_cluster(self, role: str) -> List[str]:
@@ -217,6 +259,26 @@ class ClusterSpec(Config):
                 return clients
         else:
             return self.config.get('clients', 'hosts').split()
+
+    @property
+    def sync_gateways(self) -> List[str]:
+        if self.cloud_infrastructure:
+            if self.kubernetes_infrastructure:
+                client_map = self.infrastructure_clients
+                clients = []
+                for k, v in client_map.items():
+                    if "workers" in k:
+                        clients += ["{}.{}".format(k, host) for host in v.split()]
+                return clients
+            else:
+                client_map = self.infrastructure_clients
+                clients = []
+                for k, v in client_map.items():
+                    if "workers" in k:
+                        clients += [host for host in v.split()]
+                return clients
+        else:
+            return self.config.get('sync_gateways', 'hosts').split()
 
     @property
     def brokers(self) -> List[str]:
@@ -291,11 +353,11 @@ class TestCaseSettings:
 
     USE_WORKERS = 1
     RESET_WORKERS = 0
+    THRESHOLD = -10
 
     def __init__(self, options: dict):
         self.test_module = '.'.join(options.get('test').split('.')[:-1])
         self.test_class = options.get('test').split('.')[-1]
-
         self.use_workers = int(options.get('use_workers', self.USE_WORKERS))
         self.reset_workers = int(options.get('reset_workers', self.RESET_WORKERS))
 
@@ -332,6 +394,7 @@ class ClusterSettings:
     KV_KERNEL_MEM_LIMIT = 0
     KERNEL_MEM_LIMIT_SERVICES = 'fts', 'index'
     ONLINE_CORES = 0
+    SGW_ONLINE_CORES = 0
     ENABLE_CPU_CORES = 'true'
     ENABLE_N2N_ENCRYPTION = None
     BUCKET_NAME = 'bucket-1'
@@ -366,6 +429,8 @@ class ClusterSettings:
         self.num_vbuckets = options.get('num_vbuckets')
         self.online_cores = int(options.get('online_cores',
                                             self.ONLINE_CORES))
+        self.sgw_online_cores = int(options.get('sgw_online_cores',
+                                                self.SGW_ONLINE_CORES))
         self.enable_cpu_cores = maybe_atoi(options.get('enable_cpu_cores', self.ENABLE_CPU_CORES))
         self.ipv6 = int(options.get('ipv6', self.IPv6))
         self.kernel_mem_limit = options.get('kernel_mem_limit',
@@ -402,25 +467,27 @@ class StatsSettings:
                         'cbft',
                         'cbq-engine',
                         'indexer',
-                        'memcached']
+                        'memcached',
+                        'sync_gateway']
     TRACED_PROCESSES = []
+
+    SECONDARY_STATSFILE = '/root/statsfile'
 
     def __init__(self, options: dict):
         self.enabled = int(options.get('enabled', self.ENABLED))
         self.post_to_sf = int(options.get('post_to_sf', self.POST_TO_SF))
-
         self.interval = int(options.get('interval', self.INTERVAL))
         self.lat_interval = float(options.get('lat_interval',
                                               self.LAT_INTERVAL))
-
         self.post_cpu = int(options.get('post_cpu', self.POST_CPU))
-
         self.client_processes = self.CLIENT_PROCESSES + \
             options.get('client_processes', '').split()
         self.server_processes = self.SERVER_PROCESSES + \
             options.get('server_processes', '').split()
         self.traced_processes = self.TRACED_PROCESSES + \
             options.get('traced_processes', '').split()
+        self.secondary_statsfile = options.get('secondary_statsfile',
+                                               self.SECONDARY_STATSFILE)
 
 
 class ProfilingSettings:
@@ -432,6 +499,8 @@ class ProfilingSettings:
     PROFILES = 'cpu'
 
     SERVICES = ''
+
+    CPU_INTERVAL = 10  # 10 seconds
 
     LINUX_PERF_PROFILE_DURATION = 10  # seconds
 
@@ -450,6 +519,7 @@ class ProfilingSettings:
                                             self.NUM_PROFILES))
         self.profiles = options.get('profiles',
                                     self.PROFILES).split(',')
+        self.cpu_interval = int(options.get('cpu_interval', self.CPU_INTERVAL))
         self.linux_perf_profile_duration = int(options.get('linux_perf_profile_duration',
                                                            self.LINUX_PERF_PROFILE_DURATION))
 
@@ -851,6 +921,9 @@ class PhaseSettings:
                                                   self.SIZE_VARIATION_MIN))
         self.size_variation_max = int(options.get('size_variation_max',
                                                   self.SIZE_VARIATION_MAX))
+
+        # Syncgateway settings
+        self.syncgateway_settings = None
 
         # YCSB settings
         self.workload_path = options.get('workload_path')
@@ -1880,6 +1953,173 @@ class TableauSettings:
             self.credentials = self.CREDENTIALS
 
 
+class SyncgatewaySettings:
+    REPO = 'https://github.com/couchbaselabs/YCSB.git'
+    BRANCH = 'syncgateway-weekly'
+    WORKLOAD = 'workloads/syncgateway_blank'
+    USERS = 100
+    CHANNELS = 1
+    CHANNLES_PER_USER = 1
+    LOAD_CLIENTS = 1
+    CLIENTS = 4
+    NODES = 4
+    CHANNELS_PER_DOC = 1
+    DOCUMENTS = 1000000
+    ROUNDTRIP_WRITE = "false"
+    READ_MODE = 'documents'          # |documents|changes
+    FEED_READING_MODE = 'withdocs'   # |withdocs|idsonly
+    FEED_MODE = 'longpoll'           # |longpoll|normal
+    INSERT_MODE = 'byuser'           # |byuser|bykey
+    AUTH = "true"
+    READPROPORTION = 1
+    UPDATEPROPORTION = 0
+    INSERTPROPORTION = 0
+    SCANPROPORTION = 0
+    REQUESTDISTRIBUTION = 'zipfian'  # |zipfian|uniform
+    LOG_TITE = 'sync_gateway_default'
+    LOAD_THREADS = 1
+    THREADS = 10
+    INSERTSTART = 0
+    MAX_INSERTS_PER_INSTANCE = 1000000
+    STAR = "false"
+    GRANT_ACCESS = "false"
+    GRANT_ACCESS_IN_SCAN = "false"
+    CHANNELS_PER_GRANT = 1
+    FIELDCOUNT = 10
+    FIELDLENGTH = 100
+    REPLICATOR2 = "false"
+    BASIC_AUTH = "false"
+    IMPORT_NODES = 1
+    ROUNDTRIP_WRITE_LOAD = "false"
+    SG_REPLICATION_TYPE = "push"
+    SG_CONFLICT_RESOLUTION = "default"
+    SG_READ_LIMIT = 1
+    SG_LOADER_THREADS = 50
+    SG_DOCLOADER_THREAD = 50
+    SG_BLACKHOLEPULLER_CLIENTS = 6
+    SG_BLACKHOLEPULLER_TIMEOUT = 600    # in seconds
+    SG_DOCSIZE = 10240
+    SGTOOL_CHANGEBATCHSET = 200
+
+    REPLICATION_TYPE = None
+    REPLICATION_CONCURRENCY = 1
+    DELTA_SYNC = ''
+    DELTASYNC_CACHEHIT_RATIO = 0
+    DOCTYPE = 'simple'
+    DOC_DEPTH = '1'
+    WRITEALLFIELDS = 'true'
+    READALLFIELDS = 'true'
+    UPDATEFIELDCOUNT = 1
+
+    E2E = ''
+    YCSB_RETRY_COUNT = 5
+    YCSB_RETRY_INTERVAL = 1
+    CBL_PER_WORKER = 0
+    CBL_TARGET = "127.0.0.1"
+    RAMDISK_SIZE = 0
+    CBL_THROUGHPUT = 0
+    COLLECT_CBL_LOGS = 0
+    CBL_VERBOSE_LOGGING = 0
+    TROUBLEMAKER = None
+    COLLECT_SGW_LOGS = 0
+    DATA_INTEGRITY = 'false'
+    REPLICATION_AUTH = 1
+
+    def __init__(self, options: dict):
+        self.repo = options.get('ycsb_repo', self.REPO)
+        self.branch = options.get('ycsb_branch', self.BRANCH)
+        self.workload = options.get('workload', self.WORKLOAD)
+        self.users = options.get('users', self.USERS)
+        self.channels = options.get('channels', self.CHANNELS)
+        self.channels_per_user = options.get('channels_per_user', self.CHANNLES_PER_USER)
+        self.channels_per_doc = options.get('channels_per_doc', self.CHANNELS_PER_DOC)
+        self.documents = options.get('documents', self.DOCUMENTS)
+        self.documents_workset = options.get("documents_workset", self.DOCUMENTS)
+        self.roundtrip_write = options.get('roundtrip_write', self.ROUNDTRIP_WRITE)
+        self.read_mode = options.get('read_mode', self.READ_MODE)
+        self.feed_mode = options.get('feed_mode', self.FEED_MODE)
+        self.feed_reading_mode = options.get('feed_reading_mode', self.FEED_READING_MODE)
+        self.auth = options.get('auth', self.AUTH)
+        self.readproportion = options.get('readproportion', self.READPROPORTION)
+        self.updateproportion = options.get('updateproportion', self.UPDATEPROPORTION)
+        self.insertproportion = options.get('insertproportion', self.INSERTPROPORTION)
+        self.scanproportion = options.get('scanproportion', self.SCANPROPORTION)
+        self.requestdistribution = options.get('requestdistribution', self.REQUESTDISTRIBUTION)
+        self.log_title = options.get('log_title', self.LOG_TITE)
+        self.instances_per_client = options.get('instances_per_client', 1)
+        self.load_instances_per_client = options.get('load_instances_per_client', 1)
+        self.threads_per_instance = 1
+        self.load_threads = options.get('load_threads', self.LOAD_THREADS)
+        self.threads = options.get('threads', self.THREADS)
+        self.insertstart = options.get('insertstart', self.INSERTSTART)
+        self.max_inserts_per_instance = options.get('max_inserts_per_instance',
+                                                    self.MAX_INSERTS_PER_INSTANCE)
+        self.insert_mode = options.get('insert_mode', self.INSERT_MODE)
+        self.load_clients = options.get('load_clients', self.LOAD_CLIENTS)
+        self.clients = options.get('clients', self.CLIENTS)
+        self.nodes = int(options.get('nodes', self.NODES))
+        self.starchannel = options.get('starchannel', self.STAR)
+        self.grant_access = options.get('grant_access', self.GRANT_ACCESS)
+        self.channels_per_grant = options.get('channels_per_grant', self.CHANNELS_PER_GRANT)
+        self.grant_access_in_scan = options.get('grant_access_in_scan', self.GRANT_ACCESS_IN_SCAN)
+        self.build_label = options.get('build_label', '')
+        self.fieldcount = options.get('fieldcount', self.FIELDCOUNT)
+        self.fieldlength = options.get('fieldlength', self.FIELDLENGTH)
+
+        self.replicator2 = options.get('replicator2', self.REPLICATOR2)
+        self.basic_auth = options.get('basic_auth', self.BASIC_AUTH)
+
+        self.import_nodes = int(options.get('import_nodes', self.IMPORT_NODES))
+
+        self.roundtrip_write_load = options.get('roundtrip_write_load', self.ROUNDTRIP_WRITE_LOAD)
+        self.sg_replication_type = options.get('sg_replication_type', self.SG_REPLICATION_TYPE)
+        self.sg_conflict_resolution = options.get('sg_conflict_resolution',
+                                                  self.SG_CONFLICT_RESOLUTION)
+        self.sg_read_limit = int(options.get('sg_read_limit', self.SG_READ_LIMIT))
+        self.sg_loader_threads = int(options.get("sg_loader_threads", self.SG_LOADER_THREADS))
+        self.sg_docloader_thread = int(options.get("sg_docloader_thread", self.SG_DOCLOADER_THREAD))
+        self.sg_blackholepuller_client = int(options.get("sg_blackholepuller_client",
+                                                         self.SG_BLACKHOLEPULLER_CLIENTS))
+        self.sg_blackholepuller_timeout = options.get("sg_blackholepuller_timeout",
+                                                      self.SG_BLACKHOLEPULLER_TIMEOUT)
+        self.sg_docsize = int(options.get("sg_docsize", self.SG_DOCSIZE))
+        self.sgtool_changebatchset = int(options.get("sgtool_changebatchset",
+                                                     self.SGTOOL_CHANGEBATCHSET))
+
+        self.delta_sync = self.DELTA_SYNC
+        self.e2e = self.E2E
+        self.replication_type = options.get('replication_type', self.REPLICATION_TYPE)
+        if self.replication_type:
+            if self.replication_type in ["PUSH", "PULL"]:
+                self.delta_sync = 'true'
+            if self.replication_type in ["E2E_PUSH", "E2E_PULL", "E2E_BIDI"]:
+                self.e2e = 'true'
+        self.deltasync_cachehit_ratio = options.get(
+            'deltasync_cachehit_ratio', self.DELTASYNC_CACHEHIT_RATIO)
+        self.replication_concurrency = options.get(
+            'replication_concurrency', self.REPLICATION_CONCURRENCY)
+        self.doctype = options.get('doctype', self.DOCTYPE)
+        self.doc_depth = options.get('doc_depth', self.DOC_DEPTH)
+        self.writeallfields = options.get('writeallfields', self.WRITEALLFIELDS)
+        self.readallfields = options.get('readallfields', self.READALLFIELDS)
+        self.updatefieldcount = options.get('updatefieldcount', self.UPDATEFIELDCOUNT)
+        self.ycsb_retry_count = int(options.get('ycsb_retry_count', self.YCSB_RETRY_COUNT))
+        self.ycsb_retry_interval = int(options.get('ycsb_retry_interval', self.YCSB_RETRY_INTERVAL))
+        self.cbl_per_worker = int(options.get('cbl_per_worker', self.CBL_PER_WORKER))
+        self.cbl_target = self.CBL_TARGET
+        self.ramdisk_size = int(options.get('ramdisk_size', self.RAMDISK_SIZE))
+        self.cbl_throughput = int(options.get('cbl_throughput', self.CBL_THROUGHPUT))
+        self.collect_cbl_logs = int(options.get('collect_cbl_logs', self.COLLECT_CBL_LOGS))
+        self.cbl_verbose_logging = int(options.get('cbl_verbose_logging', self.CBL_VERBOSE_LOGGING))
+        self.troublemaker = options.get('troublemaker', self.TROUBLEMAKER)
+        self.collect_sgw_logs = int(options.get('collect_sgw_logs', self.COLLECT_SGW_LOGS))
+        self.data_integrity = options.get('data_integrity', self.DATA_INTEGRITY)
+        self.replication_auth = int(options.get('replication_auth', self.REPLICATION_AUTH))
+
+    def __str__(self) -> str:
+        return str(self.__dict_)
+
+
 class TestConfig(Config):
 
     @property
@@ -2245,6 +2485,11 @@ class TestConfig(Config):
     def tableau_settings(self) -> TableauSettings:
         options = self._get_options_as_dict('tableau')
         return TableauSettings(options)
+
+    @property
+    def syncgateway_settings(self) -> SyncgatewaySettings:
+        options = self._get_options_as_dict('syncgateway')
+        return SyncgatewaySettings(options)
 
 
 class TargetSettings:

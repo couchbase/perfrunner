@@ -85,6 +85,14 @@ class RestBase:
     def delete(self, **kwargs) -> requests.Response:
         return self._delete(**kwargs)
 
+    @retry
+    def cblite_post(self, **kwargs) -> requests.Response:
+        return requests.post(**kwargs)
+
+    @retry
+    def cblite_get(self, **kwargs) -> requests.Response:
+        return requests.get(**kwargs)
+
 
 class DefaultRestHelper(RestBase):
 
@@ -572,7 +580,7 @@ class DefaultRestHelper(RestBase):
         self.get(url=api, params=params)
 
     def get_version(self, host: str) -> str:
-        logger.info('Getting Couchbase Server version')
+        logger.info('Getting Couchbase Server version on server {}'.format(host))
         if self.test_config.cluster.enable_n2n_encryption:
             api = 'https://{}:18091/pools/'.format(host)
         else:
@@ -1448,6 +1456,139 @@ class DefaultRestHelper(RestBase):
     def get_analytics_replica(self, host: str):
         api = 'http://{}:8091/settings/analytics'.format(host)
         return self.get(url=api).json()
+
+    def get_sgversion(self, host: str) -> str:
+        logger.info('Getting SG  Server version')
+
+        api = 'http://{}:4985'.format(host)
+        r = self.get(url=api).json()
+        return r['version'] \
+            .replace('Couchbase Sync Gateway/', '') \
+            .replace(') EE', '').replace('(', '-').split(';')[0]
+
+    def get_sg_stats(self, host: str) -> dict:
+        api = 'http://{}:4985/_expvar'.format(host)
+        response = self.get(url=api)
+        # logger.info("The sgw stats are: {}".format(response.json()))
+        return response.json()
+
+    def start_sg_replication(self, host, payload):
+        logger.info('Start sg replication.')
+        logger.info('Payload: {}'.format(payload))
+
+        api = 'http://{}:4985/_replicate'.format(host)
+        logger.info('api: {}'.format(api))
+        self.post(url=api, data=json.dumps(payload))
+
+    def start_sg_replication2(self, host, payload):
+        logger.info('Start sg replication.')
+        logger.info('Payload: {}'.format(payload))
+
+        api = 'http://{}:4985/db/_replication/'.format(host)
+        logger.info('api: {}'.format(api))
+        self.post(url=api, data=json.dumps(payload))
+
+    def get_sgreplicate_stats(self, host: str, version: int) -> dict:
+        if version == 1:
+            api = 'http://{}:4985/_active_tasks'.format(host)
+        elif version == 2:
+            api = 'http://{}:4985/db/_replicationStatus'.format(host)
+        response = self.get(url=api)
+        return response.json()
+
+    def get_expvar_stats(self, host: str) -> dict:
+        api = 'http://{}:4985/_expvar'.format(host)
+        return self.get(url=api).json()
+
+    def start_cblite_replication_push(
+            self,
+            cblite_host,
+            cblite_port,
+            cblite_db,
+            sgw_host,
+            sgw_port=4984,
+            user="guest",
+            password="guest"):
+        api = 'http://{}:{}/_replicate'.format(cblite_host, cblite_port)
+        if user and password:
+            data = {
+                "source": "{}".format(cblite_db),
+                "target": "ws://{}:{}/db".format(sgw_host, sgw_port),
+                "continuous": 1,
+                "user": user,
+                "password": password,
+                "bidi": 0
+            }
+        else:
+            data = {
+                "source": "{}".format(cblite_db),
+                "target": "ws://{}:{}/db".format(sgw_host, sgw_port),
+                "continuous": 1,
+                "bidi": 0
+            }
+        logger.info("The sgw host is: {}".format(sgw_host))
+        logger.info("The url is: {}".format(api))
+        logger.info("The json data is: {}".format(data))
+        self.cblite_post(url=api, json=data, headers={'content-type': 'application/json'})
+        logger.info("Successfully posted")
+
+    def start_cblite_replication_pull(
+            self,
+            cblite_host,
+            cblite_port,
+            cblite_db,
+            sgw_host,
+            user="guest",
+            password="guest"):
+        api = 'http://{}:{}/_replicate'.format(cblite_host, cblite_port)
+        if user and password:
+            data = {
+                "source": "ws://{}:4984/db".format(sgw_host),
+                "target": "{}".format(cblite_db),
+                "continuous": 1,
+                "user": user,
+                "password": password,
+                "bidi": 0
+            }
+        else:
+            data = {
+                "source": "ws://{}:4984/db".format(sgw_host),
+                "target": "{}".format(cblite_db),
+                "continuous": 1,
+                "bidi": 0
+            }
+        self.cblite_post(url=api, json=data, headers={'content-type': 'application/json'})
+
+    def start_cblite_replication_bidi(
+            self,
+            cblite_host,
+            cblite_port,
+            cblite_db,
+            sgw_host,
+            user="guest",
+            password="guest"):
+        api = 'http://{}:{}/_replicate'.format(cblite_host, cblite_port)
+        if user and password:
+            data = {
+                "source": "{}".format(cblite_db),
+                "target": "ws://{}:4984/db".format(sgw_host),
+                "continuous": 1,
+                "user": user,
+                "password": password,
+                "bidi": 1
+            }
+        else:
+            data = {
+                "source": "{}".format(cblite_db),
+                "target": "ws://{}:4984/db".format(sgw_host),
+                "continuous": 1,
+                "bidi": 1
+            }
+        self.cblite_post(url=api, json=data, headers={'content-type': 'application/json'})
+
+    def get_cblite_info(self, cblite_host, cblite_port, cblite_db):
+        api = 'http://{}:{}/{}'.format(cblite_host, cblite_port, cblite_db)
+        return self.cblite_get(url=api).json()
 
 
 class KubernetesRestHelper(RestBase):

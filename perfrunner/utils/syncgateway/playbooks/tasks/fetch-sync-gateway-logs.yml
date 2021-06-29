@@ -1,0 +1,24 @@
+# Fetch sync gateway logs for CentOS
+- name: SYNC GATEWAY | Check if sync_gateway access log is present
+  become: yes
+  stat:
+    path: '/home/sync_gateway/logs/sync_gateway_access.log'
+  register: pa
+
+- name: SYNC GATEWAY | Fetch sync_gateway access logs
+  become: yes
+  # Do not validate checksum as this is just a passive grab of the logs. Since they are continuously being appended to, the checksum may fail
+  fetch: src=/home/sync_gateway/logs/sync_gateway_access.log dest=/tmp/sg_logs/{{ inventory_hostname }}/ fail_on_missing=yes flat=yes validate_checksum=no
+  when: pa.stat.exists
+
+- name: SYNC GATEWAY | Check if sync_gateway error log is present
+  become: yes
+  stat:
+    path: '/home/sync_gateway/logs/sync_gateway_error.log'
+  register: pe
+
+- name: SYNC GATEWAY | Fetch sync_gateway error logs
+  become: yes
+  # Do not validate checksum as this is just a passive grab of the logs. Since they are continuously being appended to, the checksum may fail
+  fetch: src=/home/sync_gateway/logs/sync_gateway_error.log dest=/tmp/sg_logs/{{ inventory_hostname }}/ fail_on_missing=yes flat=yes validate_checksum=no
+  when: pe.stat.exists

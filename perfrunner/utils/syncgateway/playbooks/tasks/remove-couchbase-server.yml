@@ -1,0 +1,34 @@
+- name: Stop Couchbase Service
+  service: name=couchbase-server state=stopped
+  ignore_errors: yes
+
+# Try to stop via init scipt if running CBS 4.1.0 on CentOS 7.2 due to https://issues.couchbase.com/browse/MB-17193
+- name: COUCHBASE SERVER | Try to stop Couchbase Service (Hack around 7.2 and CBS 4.1.0 issue)
+  shell: /opt/couchbase/etc/couchbase_init.d stop
+  when: ansible_distribution == 'CentOS' and ansible_distribution_version == '7.2.1511'
+  ignore_errors: yes
+
+- name: COUCHBASE SERVER | Uninstall couchbase server
+  shell: rpm -e couchbase-server
+  ignore_errors: yes
+
+- name: COUCHBASE SERVER | Uninstall couchbase server community
+  shell: rpm -e couchbase-server-community
+  ignore_errors: yes
+
+# Kill any processes that may be hanging around
+- name: COUCHBASE SERVER | Kill epmd
+  shell: pkill epmd
+  ignore_errors: yes
+
+- name: COUCHBASE SERVER | Kill beam.smp
+  shell: pkill beam.smp
+  ignore_errors: yes
+
+- name: COUCHBASE SERVER | Kill memcached
+  shell: pkill memcached
+  ignore_errors: yes
+
+- name: COUCHBASE SERVER | Remove all couchbase server residue
+  file: path=/opt/couchbase state=absent
+  ignore_errors: yes

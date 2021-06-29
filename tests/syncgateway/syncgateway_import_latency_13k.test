@@ -1,0 +1,54 @@
+[test_case]
+test = perfrunner.tests.syncgateway.SGImportLatencyTest
+
+[showfast]
+title = Import Latency(ms), 13K Throughput, 3 SG Nodes
+component = syncgateway
+category = import
+sub_category = Latency
+
+[cluster]
+mem_quota = 25000
+index_mem_quota = 25000
+initial_nodes = 5
+num_buckets = 1
+
+[load]
+workload_path = workloads/workloada
+items = 7200000
+workers = 10
+target = 2000
+
+[access]
+workload_path = workloads/workloada
+items = 1000
+workers = 1
+time = 7200
+boost = 12
+ops = 0
+target = 4000
+
+[syncgateway]
+nodes = 3
+threads = 10
+clients = 1
+instances_per_client = 5
+workload_path = workloads/syncgateway_blank
+ycsb_repo = git://github.com/couchbaselabs/YCSB.git
+ycsb_branch = syncgateway-weekly
+users = 1000
+channels = 1
+channels_per_user = 1
+channels_per_doc = 1
+documents = 100000
+roundtrip_write = true
+read_mode = documents
+feed_reading_mode = idsonly
+feed_mode = normal
+insert_mode = bykey
+auth = true
+readproportion=1
+updateproportion=0
+insertproportion=0
+requestdistribution = zipfian
+log_title = sync_gateway_1node_reads

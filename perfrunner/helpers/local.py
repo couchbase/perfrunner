@@ -615,8 +615,6 @@ def run_ycsb(host: str,
           '-p couchbase.retryUpper={retry_upper} ' \
           '-p couchbase.retryFactor={retry_factor} '
 
-    cmd = 'pyenv local system && ' + cmd
-
     if durability is None:
         cmd += '-p couchbase.persistTo={persist_to} '
         cmd += '-p couchbase.replicateTo={replicate_to} '
@@ -788,7 +786,14 @@ def get_jts_logs(jts_home: str, local_dir: str):
         local("cp -r {} {}/".format(file, local_dir))
 
 
-def restart_memcached(mem_limit: int = 10000, port: int = 8000):
+def run_cmd(path, command, parameters, output_file):
+    cmd = "{} {} 2>{}".format(command, parameters, output_file)
+    logger.info('Running : {}'.format(cmd))
+    with lcd(path):
+        local(cmd)
+
+
+def restart_memcached(mem_limit: int = 10000, port: int = 8000, mem_host: str = 'localhost'):
     cmd1 = 'killall -9 memcached'
     logger.info('Running: {}'.format(cmd1))
     with settings(warn_only=True):
@@ -805,15 +810,15 @@ def restart_memcached(mem_limit: int = 10000, port: int = 8000):
     else:
         raise Exception('memcached was not killed properly')
 
-    cmd2 = 'memcached -u root -m {mem_limit} -l localhost -p {port} -d'
-    cmd2 = cmd2.format(mem_limit=mem_limit, port=port)
+    cmd2 = 'memcached -u root -m {mem_limit} -l {memhost} -p {port} -d'
+    cmd2 = cmd2.format(mem_limit=mem_limit, port=port, memhost=mem_host)
     logger.info('Running: {}'.format(cmd2))
     local(cmd2, capture=True)
 
     for counter in range(5):
         try:
             time.sleep(2)
-            mc = MemcachedClient(host='localhost', port=port)
+            mc = MemcachedClient(host=mem_host, port=port)
             mc.stats()
             mc.close()
             break
@@ -1208,4 +1213,191 @@ def ch2_run_task(cluster_spec: ClusterSpec, warehouses: int, aclients: int = 0,
 
     with lcd('ch2/ch2driver/pytpcc/'):
         logger.info('Running: {}'.format(cmd))
+
+
+def get_sg_logs(host: str, ssh_user: str, ssh_pass: str):
+    local('sshpass -p {} scp {}@{}:/home/sync_gateway/*logs.tar.gz ./'.format(ssh_pass,
+                                                                              ssh_user,
+                                                                              host))
+
+
+def get_sg_logs_new(host: str, ssh_user: str, ssh_pass: str):
+    local('sshpass -p {} scp {}@{}:/var/tmp/sglogs/syncgateway_logs.tar.gz ./'.format(ssh_pass,
+                                                                                      ssh_user,
+                                                                                      host))
+
+
+def get_sg_console(host: str, ssh_user: str, ssh_pass: str):
+    local('sshpass -p {} scp {}@{}:/var/tmp/sg_console* ./'.format(ssh_pass,
+                                                                   ssh_user,
+                                                                   host))
+
+
+def get_troublemaker_logs(host: str, ssh_user: str, ssh_pass: str):
+    local('sshpass -p {} scp {}@{}:/root/troublemaker.log ./'.format(ssh_pass,
+                                                                     ssh_user,
+                                                                     host))
+
+
+def get_default_troublemaker_logs(host: str, ssh_user: str, ssh_pass: str):
+    local('sshpass -p {} scp {}@{}:/tmp/Logs/troublemaker-log.txt ./'.format(ssh_pass,
+                                                                             ssh_user,
+                                                                             host))
+
+
+def rename_troublemaker_logs(from_host: str):
+    local('cp ./troublemaker.log ./{}_troublemaker.log'.format(from_host))
+    local('rm ./troublemaker.log')
+
+
+def run_blackholepuller(host, clients, timeout, stderr_file_name, log_file_name):
+    local('./blackholePuller -url http://sg-user-0:password@{}:4984/db -clients {}'
+          ' -timeout {}s 2>{}.log 1>{}.json'.format(host, clients,
+                                                    timeout,
+                                                    stderr_file_name,
+                                                    log_file_name))
+
+
+def run_blackholepuller_adv(url_str, clients, timeout, stderr_file_name, log_file_name):
+    local('./blackholePuller -url {} -clients {}'
+          ' -timeout {}s 2>{}.log 1>{}.json'.format(url_str, clients,
+                                                    timeout,
+                                                    stderr_file_name,
+                                                    log_file_name))
+
+
+def run_newdocpusher(host, changebatchset, clients, timeout, stderr_file_name,
+                     log_file_name, doc_id_prefix, doc_size):
+
+    local('./newDocPusher -url http://sg-user-0:password@{}:4984/db -changesBatchSize {} '
+          '-clients {} -docSize {} -docIDPrefix {}'
+          ' -timeout {}s 2>{}.log 1>{}.json'.format(host, changebatchset, clients,
+                                                    doc_size, doc_id_prefix,
+                                                    timeout, stderr_file_name,
+                                                    log_file_name))
+
+
+def run_newdocpusher_adv(url_str, changebatchset, clients, timeout, stderr_file_name,
+                         log_file_name, doc_id_prefix, doc_size):
+    print('printing url string', url_str)
+    local('./newDocPusher -url {} -changesBatchSize {} -clients {} '
+          '-docSize {} -docIDPrefix {}'
+          ' -timeout {}s 2>{}.log 1>{}.json'.format(url_str, changebatchset, clients,
+                                                    doc_size, doc_id_prefix, timeout,
+                                                    stderr_file_name, log_file_name))
+
+
+def download_blockholepuller():
+    local('curl -o blackholePuller-linux-x64 https://github.com/couchbaselabs/sg_dev_tools/')
+    local('chmod +x blackholePuller-linux-x64')
+
+
+def download_newdocpusher():
+    local('curl -o newDocPusher-linux-x64 https://github.com/couchbaselabs/sg_dev_tools/')
+    local('chmod +x newDocPusher-linux-x64')
+
+
+def remove_sg_bp_logs():
+    local('rm -rf *blackholepuller*')
+    local('rm -rf *newdocpush*')
+
+
+def remove_sg_newdocpusher_logs():
+    local('rm -rf *blackholepuller*')
+    local('rm -rf *newdocpush*')
+
+
+def replicate_push(cblite_db: str, sgw_ip: str):
+    cmd = '/root/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
+          'push --user guest:guest /root/couchbase-mobile-tools/{0}.cblite2 ' \
+          'ws://{1}:4984/db'.format(cblite_db, sgw_ip)
+    logger.info('Running: {}'.format(cmd))
+    with quiet():
+        return local(cmd, capture=True)
+
+
+def replicate_pull(cblite_db: str, sgw_ip: str):
+    cmd = '/root/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
+          'pull --user guest:guest /root/couchbase-mobile-tools/{0}.cblite2 ' \
+          'ws://{1}:4984/db'.format(cblite_db, sgw_ip)
+    logger.info('Running: {}'.format(cmd))
+    with quiet():
+        return local(cmd, capture=True)
+
+
+def start_cblitedb(port: str, db_name: str):
+    cmd = 'nohup /root/couchbase-mobile-tools/cblite/build_cmake/cblite --create serve --port' \
+          ' {} /root/couchbase-mobile-tools/{}.cblite2 &>/dev/null &'.format(port, db_name)
+    logger.info('Running: {}'.format(cmd))
+    with lcd('/root/couchbase-mobile-tools/'):
+        local(cmd)
+
+
+def cleanup_cblite_db():
+    cmd = 'rm -rf db*'
+    with lcd('/root/couchbase-mobile-tools/'):
+        local(cmd)
+
+
+def clone_cblite():
+    with lcd('/tmp/'):
+        local('rm -rf couchbase-mobile-tools/')
+        local('git clone https://github.com/couchbaselabs/couchbase-mobile-tools -b'
+              'perf/no_compression')
+
+
+def build_cblite():
+    with lcd('/tmp/couchbase-mobile-tools/'):
+        local('git submodule update --init --recursive')
+    with lcd('/tmp/couchbase-mobile-tools/cblite/'):
+        local('mkdir build_cmake')
+    with lcd('/tmp/couchbase-mobile-tools/cblite/build_cmake'):
+        local('/snap/bin/cmake ..')
+        local('/usr/bin/make -j 5')
+
+
+def replicate_push_continuous(cblite_db: str, sgw_ip: str):
+    cmd = 'nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
+          'push --continuous --user guest:guest /tmp/couchbase-mobile-tools/{0}.cblite2 ' \
+          'ws://{1}:4984/db &>/dev/null &'.format(cblite_db, sgw_ip)
+    logger.info('Running: {}'.format(cmd))
+    with quiet():
+        local(cmd)
+
+
+def replicate_pull_continuous(cblite_db: str, sgw_ip: str):
+    cmd = 'nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite ' \
+          'pull --continuous --user guest:guest /tmp/couchbase-mobile-tools/{0}.cblite2 ' \
+          'ws://{1}:4984/db &>/dev/null &'.format(cblite_db, sgw_ip)
+    logger.info('Running: {}'.format(cmd))
+    with quiet():
+        local(cmd)
+
+
+def cleanup_cblite_db_coninuous():
+    logger.info("cleaning up cblite db continuous")
+    cmd = 'rm -rf db*'
+    with lcd('/tmp/couchbase-mobile-tools/'):
+        local(cmd)
+
+
+def start_cblitedb_continuous(port: str, db_name: str):
+    cmd = 'nohup /tmp/couchbase-mobile-tools/cblite/build_cmake/cblite --create serve --port' \
+          ' {} {}.cblite2 &>/dev/null &'.format(port, db_name)
+    logger.info('Running: {}'.format(cmd))
+    with lcd('/tmp/couchbase-mobile-tools/'), quiet():
+        local(cmd)
+    logger.info('cblite started')
+
+
+def clone_ycsb(repo: str, branch: str):
+    repo = repo.replace("git://", "https://")
+    logger.info('Cloning YCSB repository: {} branch: {}'.format(repo, branch))
+    local('git clone -q -b {} {}'.format(branch, repo))
+
+
+def kill_cblite():
+    logger.info("cleaning up cblite db continuous")
+    cmd = "ps auxww | grep 'cblite' | awk '{print $2}' | xargs kill -9"
+    with settings(warn_only=True):
         local(cmd)

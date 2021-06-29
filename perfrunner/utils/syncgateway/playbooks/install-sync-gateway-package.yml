@@ -1,0 +1,116 @@
+---
+# Remove sync_gateway
+- hosts: sync_gateways:sg_accels
+  become: yes
+
+  tasks:
+  - include: tasks/remove-sync-gateway.yml
+  - include: tasks/remove-sg-accel.yml
+  - include: tasks/clean-users.yml
+
+  # Check no sync_gateways or accels running
+  - name: SYNC GATEWAY | verify no service on 4985
+    wait_for: port=4985 delay=1 state=stopped
+
+
+# Create sync_gateway user
+- hosts: sync_gateways
+  any_errors_fatal: true
+  become: yes
+  tasks:
+  - include: tasks/create-sync-gateway-user.yml
+
+# Create sg_accel user
+- hosts: sg_accels
+  any_errors_fatal: true
+  become: yes
+  tasks:
+  - include: tasks/create-sg-accel-user.yml
+
+
+# Download sync_gateway package
+- hosts: sync_gateways
+  any_errors_fatal: true
+
+  vars:
+    couchbase_sync_gateway_package_base_url:
+    couchbase_sync_gateway_package:
+    couchbase_sync_gateway_package_url: "{{ couchbase_sync_gateway_package_base_url }}/{{ couchbase_sync_gateway_package }}"
+    couchbase_server_primary_node: "{{ hostvars[groups.couchbase_servers[0]].ansible_host }}"
+
+  tasks:
+  - debug: msg="Downloading sync_gateway locally v. {{ couchbase_sync_gateway_package_url }}"
+  - name: SYNC GATEWAY |  Download sync_gateway rpm local
+    get_url: url={{ couchbase_sync_gateway_package_url }} dest=/tmp/{{ couchbase_sync_gateway_package }}
+    delegate_to: 127.0.0.1
+
+  - debug: msg="Uploading SGW rpm to remote servers. {{ couchbase_sync_gateway_package_url }}"
+  - name: SYNC GATEWAY |  Copy sync_gateway rpm to remote
+    copy: src=/tmp/{{ couchbase_sync_gateway_package }} dest=/tmp/{{ couchbase_sync_gateway_package }}
+
+# Download sg accel package
+- hosts: sg_accels
+  any_errors_fatal: true
+
+  vars:
+    couchbase_sync_gateway_package_base_url:
+    couchbase_sg_accel_package:
+    couchbase_sg_accel_package_url: "{{ couchbase_sync_gateway_package_base_url }}/{{ couchbase_sg_accel_package }}"
+    couchbase_server_primary_node: "{{ hostvars[groups.couchbase_servers[0]].ansible_host }}"
+
+  tasks:
+  - debug: msg="Downloading sg_accel v. {{ couchbase_sg_accel_package_url }}"
+  - name: SYNC GATEWAY | Download sg_accel rpm
+    get_url: url={{ couchbase_sg_accel_package_url }} dest=/tmp/{{ couchbase_sg_accel_package }}
+
+# Deploy non writer sync_gateway configs
+- hosts: sync_gateways
+  any_errors_fatal: true
+  become: yes
+  vars:
+    sync_gateway_config_filepath:
+    couchbase_server_primary_node: "{{ hostvars[groups.couchbase_servers[0]].ansible_host }}"
+    # hack until mobile-testkit/issues/406 allows any sync gateway to be referenced
+    sync_gateway_node: "{{ hostvars[groups.sync_gateways[0]].ansible_host }}"
+    is_index_writer: "false"
+  tasks:
+  - include: tasks/deploy-sync-gateway-config.yml
+
+# Deploy sg_accel index writer configs
+- hosts: sg_accels
+  become: yes
+  vars:
+    sync_gateway_config_filepath:
+    couchbase_server_primary_node: "{{ hostvars[groups.couchbase_servers[0]].ansible_host }}"
+    # hack until mobile-testkit/issues/406 allows any sync gateway to be referenced
+    sync_gateway_node: "{{ hostvars[groups.sync_gateways[0]].ansible_host }}"
+    is_index_writer: "true"
+  tasks:
+  - include: tasks/deploy-sg-accel-config.yml
+
+# Install and launch sync_gateway service
+- hosts: sync_gateways
+  any_errors_fatal: true
+  become: yes
+  tasks:
+  # Install and start service
+  - name: SYNC GATEWAY | Install sync_gateway rpm
+    shell: rpm -i /tmp/{{ couchbase_sync_gateway_package }}
+
+  - name: SYNC GATEWAY | wait until sync gateway to listen on port
+    wait_for: port=4985 timeout=600
+
+# Install and launch sg_accel service
+- hosts: sg_accels
+  any_errors_fatal: true
+  become: yes
+  tasks:
+  # Install and start service
+  - name: SYNC GATEWAY | Install sg_accel rpm
+    shell: rpm -i /tmp/{{ couchbase_sg_accel_package }}
+
+  - name: SYNC GATEWAY | Start the service
+    service: name=sg_accel state=started
+
+  - name: SYNC GATEWAY | wait for sg_accel to listen on port
+    wait_for: port=4985 delay=2 timeout=120

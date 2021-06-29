@@ -1328,6 +1328,248 @@ class MetricHelper:
 
         return round(time_elapsed, 1), self._snapshots, metric_info
 
+    def sgimport_latency(self, percentile: Number = 95) -> Metric:
+        metric_id = '{}_{}th_sgimport_latency'.format(self.test_config.name, percentile)
+        title = '{}th percentile sgimport latency (ms), {}'.format(
+            percentile, self._title)
+        metric_info = self._metric_info(metric_id, title)
+        values = []
+
+        db = self.store.build_dbname(cluster=self.test.cbmonitor_clusters[0],
+                                     collector='sgimport_latency')
+        logger.info("db: {}, cluster: {}".format(db, self.test.cbmonitor_clusters[0]))
+        values += self.store.get_values(db, metric='sgimport_latency')
+        lag = round(np.percentile(values, percentile), 1)
+        return lag, self._snapshots, metric_info
+
+    def sgimport_items_per_sec(self, time_elapsed: float, items_in_range: int,
+                               operation: str) -> Metric:
+        title = 'Average throughput (docs/sec) {} {}'.format(operation, self._title)
+        metric_id = '{}_{}_{}'.format(
+            self.test_config.name, "throughput", operation)
+        metric_info = self._metric_info(title=title, metric_id=metric_id)
+        items_in_range = items_in_range
+        rate = round(items_in_range / time_elapsed)
+        return rate, self._snapshots, metric_info
+
+    def sgreplicate_items_per_sec(self, time_elapsed: float, items_in_range: int) -> Metric:
+        items_in_range = items_in_range
+        metric_info = self._metric_info()
+        logger.info("*** {} {} ***".format(items_in_range, time_elapsed))
+        rate = round(items_in_range / time_elapsed)
+        return rate, self._snapshots, metric_info
+
+    def _parse_sg_throughput(self) -> int:
+        throughput = 0
+        for filename in glob.glob("YCSB/*_runtest_*.result"):
+            with open(filename) as fh:
+                for line in fh.readlines():
+                    if line.startswith('[OVERALL], Throughput(ops/sec)'):
+                        throughput += float(line.split()[-1])
+        if throughput < 1:
+            throughput = round(throughput, 2)
+        else:
+            throughput = round(throughput, 0)
+        return throughput
+
+    def _sg_bp_total_docs_pulled(self) -> int:
+        total_docs = 0
+        for filename in glob.glob("sg_stats_blackholepuller_*.json"):
+            total_docs_pulled_per_file = 0
+            with open(filename) as fh:
+                content_lines = fh.readlines()
+                for i in content_lines:
+                    if "docs_pulled" in i:
+                        total_docs_pulled_per_file += int(i.split(':')[1].split(',')[0])
+            total_docs += total_docs_pulled_per_file
+        return total_docs
+
+    def _sg_bp_total_docs_pushed(self) -> int:
+        total_docs = 0
+        for filename in glob.glob("sg_stats_newdocpusher_*.json"):
+            total_docs_pulled_per_file = 0
+            with open(filename) as fh:
+                content_lines = fh.readlines()
+                for i in content_lines:
+                    if "docs_pushed" in i:
+                        total_docs_pulled_per_file += int(i.split(':')[1].split(',')[0])
+            total_docs += total_docs_pulled_per_file
+        return total_docs
+
+    def _parse_sg_bp_throughput(self) -> int:
+        throughput = 0
+        fc = 0
+        sum_doc_per_sec = 0
+        for filename in glob.glob("sg_stats_blackholepuller_*.json"):
+            total_docs_per_sec = 0
+            with open(filename) as fh:
+                content_lines = fh.readlines()
+                c = 0
+                for i in content_lines:
+                    if "docs_per_sec" in i:
+                        c += 1
+                        total_docs_per_sec += float(i.split(':')[1])
+                average_doc_per_sec = total_docs_per_sec / c
+            fc += 1
+            sum_doc_per_sec += average_doc_per_sec
+        throughput = sum_doc_per_sec / fc
+        return throughput
+
+    def _parse_newdocpush_throughput(self) -> int:
+        throughput = 0
+        fc = 0
+        sum_doc_per_sec = 0
+        for filename in glob.glob("sg_stats_newdocpusher_*.json"):
+            total_docs_per_sec = 0
+            with open(filename) as fh:
+                content_lines = fh.readlines()
+                c = 0
+                for i in content_lines:
+                    if "docs_per_sec" in i:
+                        c += 1
+                        total_docs_per_sec += float(i.split(':')[1].split(',')[0])
+                average_doc_per_sec = total_docs_per_sec / c
+            fc += 1
+            sum_doc_per_sec += average_doc_per_sec
+        throughput = sum_doc_per_sec / fc
+        return throughput
+
+    def _parse_sg_latency(self, metric_name) -> float:
+        lat = 0
+        count = 0
+        for filename in glob.glob("YCSB/*_runtest_*.result"):
+            with open(filename) as fh:
+                for line in fh.readlines():
+                    if line.startswith(metric_name):
+                        lat += float(line.split()[-1])
+                        count += 1
+        if count > 0:
+            return lat / count
+        return 0
+
+    def parses_sg_failures(self):
+        failed_ops = 0
+        for filename in glob.glob("YCSB/*_runtest_*.result"):
+            with open(filename) as fh:
+                for line in fh.readlines():
+                    if 'FAILED' in line:
+                        failed_ops = 1
+                        break
+        if failed_ops == 1:
+            return 1
+        else:
+            return 0
+
+    def sg_throughput(self, title) -> Metric:
+        metric_id = '{}_throughput'.format(self.test_config.name)
+        metric_title = "{}{}".format(title, self._title)
+        metric_info = self._metric_info(metric_id, metric_title)
+        throughput = self._parse_sg_throughput()
+        return throughput, self._snapshots, metric_info
+
+    def sg_bp_throughput(self, title) -> Metric:
+        metric_id = '{}_throughput'.format(self.test_config.name)
+        metric_title = "{}{}".format(title, self._title)
+        metric_info = self._metric_info(metric_id, metric_title)
+        throughput = round(self._parse_sg_bp_throughput())
+        return throughput, self._snapshots, metric_info
+
+    def sg_newdocpush_throughput(self, title) -> Metric:
+        metric_id = '{}_throughput'.format(self.test_config.name)
+        metric_title = "{}{}".format(title, self._title)
+        metric_info = self._metric_info(metric_id, metric_title)
+        throughput = round(self._parse_newdocpush_throughput())
+        return throughput, self._snapshots, metric_info
+
+    def sg_bp_total_docs_pulled(self, title, duration) -> Metric:
+        metric_id = '{}_docs_pulled'.format(self.test_config.name)
+        metric_title = "{}{}".format(title, self._title)
+        metric_info = self._metric_info(metric_id, metric_title)
+        docs_pulled_per_sec = round(self._sg_bp_total_docs_pulled() / duration)
+        return docs_pulled_per_sec, self._snapshots, metric_info
+
+    def sg_bp_total_docs_pushed(self, title, duration) -> Metric:
+        metric_id = '{}_docs_pushed'.format(self.test_config.name)
+        metric_title = "{}{}".format(title, self._title)
+        metric_info = self._metric_info(metric_id, metric_title)
+        docs_pulled_per_sec = round(self._sg_bp_total_docs_pushed() / duration)
+        return docs_pulled_per_sec, self._snapshots, metric_info
+
+    def sg_latency(self, metric_name, title) -> Metric:
+        metric_id = '{}_latency'.format(self.test_config.name)
+        metric_title = "{}{}".format(title, self._title)
+        metric_info = self._metric_info(metric_id, metric_title)
+
+        lat = float(self._parse_sg_latency(metric_name) / 1000)
+        if lat < 10:
+            lat = round(lat, 2)
+        else:
+            lat = round(lat)
+
+        return lat, self._snapshots, metric_info
+
+    def deltasync_time(self, replication_time: float, field_length: str) -> Metric:
+        title = 'Replication time (sec) {}'.format(self._title)
+        metric_id = '{}_{}'.format(self.test_config.name, "time")
+        order_by = '00000003' + field_length
+        metric_info = self._metric_info(title=title, metric_id=metric_id, order_by=order_by)
+        replication_time = round(replication_time, 3)
+        return replication_time, self._snapshots, metric_info
+
+    def deltasync_throughput(self, throughput: int, field_length: str) -> Metric:
+        title = 'Throughput (docs/sec) {}'.format(self._title)
+        metric_id = '{}_{}'.format(self.test_config.name, "throughput")
+        order_by = '000002' + field_length
+        metric_info = self._metric_info(title=title, metric_id=metric_id, order_by=order_by)
+
+        return throughput, self._snapshots, metric_info
+
+    def deltasync_bandwidth(self, bandwidth: float, field_length: str) -> Metric:
+        title = 'Bandwidth Usage (MB/sec) {}'.format(self._title)
+        metric_id = '{}_{}'.format(self.test_config.name, "bandwidth")
+        order_by = '000000004' + field_length
+        metric_info = self._metric_info(title=title, metric_id=metric_id, order_by=order_by)
+        return bandwidth, self._snapshots, metric_info
+
+    def deltasync_bytes(self, bytes: float, field_length: str) -> Metric:
+        title = 'Bytes Transfer (MB) {}'.format(self._title)
+        metric_id = '{}_{}'.format(self.test_config.name, "Mbytes")
+        order_by = '00001' + field_length
+        metric_info = self._metric_info(title=title, metric_id=metric_id, order_by=order_by)
+        # in MB
+        bytes = round(((bytes/1024)/1024), 2)
+        return bytes, self._snapshots, metric_info
+
+    def cblite_e2e_throughput(self, throughput: int, field_length: str,
+                              operation: str, replication: str) -> Metric:
+        title = 'CBLite {} {} Throughput (docs/sec) {}'.format(
+            replication.lower(), operation, self._title)
+        metric_id = '{}_{}_{}_{}'.format(
+            self.test_config.name, "throughput", operation, replication.lower())
+        order_by = '000002' + field_length
+        metric_info = self._metric_info(title=title, metric_id=metric_id, order_by=order_by)
+        return round(throughput), self._snapshots, metric_info
+
+    def sgw_e2e_throughput(self, throughput: int, field_length: str,
+                           operation: str, replication: str) -> Metric:
+        title = 'SGW {} {} Throughput (docs/sec) {}'.format(
+            replication.lower(), operation, self._title)
+        metric_id = '{}_{}_{}_{}'.format(
+            self.test_config.name, "throughput", operation, replication.lower())
+        order_by = '000002' + field_length
+        metric_info = self._metric_info(title=title, metric_id=metric_id, order_by=order_by)
+        return round(throughput), self._snapshots, metric_info
+
+    def cb_e2e_throughput(self, throughput: int, field_length: str,
+                          operation: str, replication: str) -> Metric:
+        title = 'CB {} {} Throughput (docs/sec) {}'.format(
+            replication.lower(), operation, self._title)
+        metric_id = '{}_{}_{}_{}'.format(
+            self.test_config.name, "throughput", operation, replication.lower())
+        order_by = '000002' + field_length
+        metric_info = self._metric_info(title=title, metric_id=metric_id, order_by=order_by)
+        return round(throughput), self._snapshots, metric_info
+
 
 class DailyMetricHelper(MetricHelper):
 

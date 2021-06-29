@@ -43,6 +43,8 @@ from cbagent.collectors import (
     SecondaryStats,
     SecondaryStorageStats,
     SecondaryStorageStatsMM,
+    SGImportLatency,
+    SyncGatewayStats,
     Sysdig,
     TypePerf,
     XdcrLag,
@@ -82,6 +84,8 @@ def new_cbagent_settings(test: PerfTest):
 
     if hasattr(test, 'ALL_HOSTNAMES'):
         hostnames = test.cluster_spec.servers
+        if test.cluster_spec.infrastructure_sync_gateways:
+            hostnames += test.cluster_spec.sgw_servers
     else:
         hostnames = None
     settings = type('settings', (object,), {
@@ -92,6 +96,7 @@ def new_cbagent_settings(test: PerfTest):
         'collections': None,
         'indexes': {},
         'hostnames': hostnames,
+        'secondary_statsfile': test.test_config.stats_settings.secondary_statsfile,
         'client_processes': test.test_config.stats_settings.client_processes,
         'server_processes': test.test_config.stats_settings.server_processes,
         'traced_processes': test.test_config.stats_settings.traced_processes,
@@ -157,6 +162,7 @@ class CbAgent:
         self.test.cbmonitor_clusters = list(self.cluster_map.keys())
 
     def add_collectors(self,
+                       active_tasks=True,
                        analytics=False,
                        cbstats_all=False,
                        cbstats_memory=False,
@@ -174,6 +180,8 @@ class CbAgent:
                        n1ql_latency=False,
                        n1ql_stats=False,
                        net=True,
+                       ns_server=True,
+                       ns_server_overview=True,
                        ns_server_system=False,
                        page_cache=False,
                        query_latency=False,
@@ -185,21 +193,26 @@ class CbAgent:
                        secondary_stats=False,
                        secondary_storage_stats=False,
                        secondary_storage_stats_mm=False,
+                       syncgateway_stats=False,
+                       sgimport_latency=False,
                        vmstat=False,
                        xdcr_lag=False,
                        xdcr_stats=False):
         self.collectors = []
         self.processes = []
 
-        self.add_collector(NSServer)
-        self.add_collector(ActiveTasks)
+        if ns_server:
+            self.add_collector(NSServer)
+        if active_tasks:
+            self.add_collector(ActiveTasks)
 
         split_version = self.test.build.split(".")
         major = int(split_version[0])
         minor = int(split_version[1])
 
-        if (major == 6 and minor < 6) or (major < 6 and major != 0):
-            self.add_collector(NSServerOverview)
+        if ns_server_overview:
+            if (major == 6 and minor < 6) or (major < 6 and major != 0):
+                self.add_collector(NSServerOverview)
 
         if latency:
             self.add_collector(KVLatency)
@@ -272,6 +285,18 @@ class CbAgent:
                 self.add_collector(SecondaryStorageStats)
             if secondary_storage_stats_mm:
                 self.add_collector(SecondaryStorageStatsMM)
+            if syncgateway_stats:
+                self.add_collector(SyncGatewayStats, self.test)
+            if sgimport_latency:
+                self.add_sgimport_latency()
+
+    def add_sgimport_latency(self):
+        for i, cluster_id in enumerate(self.cluster_map):
+            settings = copy(self.settings)
+            settings.cluster = cluster_id
+            collector = SGImportLatency(settings, self.test.cluster_spec,
+                                        self.test.test_config.syncgateway_settings)
+            self.collectors.append(collector)
 
     def add_collector(self, cls, *args):
         for cluster_id, master_node in self.cluster_map.items():

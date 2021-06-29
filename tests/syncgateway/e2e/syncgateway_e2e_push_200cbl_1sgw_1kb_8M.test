@@ -1,0 +1,52 @@
+[test_case]
+test = perfrunner.tests.syncgateway.EndToEndMultiCBLPushTest
+
+[showfast]
+title = 1 node, 200 cbl, 8M docs, 10 fields, 1.5Kb docSize
+component = syncgateway
+category = e2e
+sub_category = Push
+
+[cluster]
+mem_quota = 25000
+index_mem_quota = 25000
+initial_nodes = 4
+num_buckets = 1
+
+[access]
+time = 1200
+workers = 0
+
+[secondary]
+indexer.settings.storage_mode = memory_optimized
+
+[syncgateway]
+nodes = 1
+load_threads = 200
+threads = 200
+clients = 20
+instances_per_client = 10
+workload_path = workloads/syncgateway_blank
+ycsb_repo = git://github.com/couchbaselabs/YCSB.git
+ycsb_branch = tmp-sqw-weekly-updated
+users = 200
+channels = 200
+channels_per_user = 1
+channels_per_doc = 1
+auth = false
+grant_access = false
+starchannel = false
+documents = 8000000
+roundtrip_write = false
+feed_reading_mode = idsonly
+insert_mode = bykey
+readproportion=0
+updateproportion=1
+insertproportion=0
+requestdistribution = sequential
+replication_type = E2E_PUSH
+writeallfields = false
+updatefieldcount = 1
+fieldlength = 100
+ramdisk_size = 8000
+cbl_throughput = 10000

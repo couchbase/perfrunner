@@ -427,6 +427,18 @@ class PerfTest:
         self.run_phase('load phase',
                        task, settings, target_iterator)
 
+    def load_bg(self,
+                task: Callable = spring_task,
+                settings: PhaseSettings = None,
+                target_iterator: Iterable = None):
+        if settings is None:
+            settings = self.test_config.load_settings
+        if target_iterator is None:
+            target_iterator = self.target_iterator
+
+        self.run_phase('load phase',
+                       task, settings, target_iterator, wait=False)
+
     def hot_load(self,
                  task: Callable = spring_task,
                  settings: PhaseSettings = None,

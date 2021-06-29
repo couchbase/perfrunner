@@ -331,7 +331,7 @@ class SpringTest(TestCase):
             size = len(str(doc))
 
             self.assertEqual(doc["body"], "")
-            self.assertAlmostEqual(size, doc_gen.OVERHEAD, delta=20)
+            self.assertAlmostEqual(size, doc_gen.OVERHEAD, delta=100)
 
     def test_large_documents(self):
         size = 1024

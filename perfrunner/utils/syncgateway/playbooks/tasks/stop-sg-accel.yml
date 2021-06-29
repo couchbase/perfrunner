@@ -1,0 +1,15 @@
+# Stop service
+- name: SG ACCEL | stop sg_accel service
+  become: yes
+  service: name=sg_accel state=stopped
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+
+- name: SG ACCEL | stop sg_accel for CentOS 6
+  become: yes
+  shell: /sbin/initctl stop sg_accel
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "6"
+
+- name: SG ACCEL | verify sg_accel not listening on port
+  become: yes
+  wait_for: port=4985 state=stopped
+

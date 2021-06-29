@@ -19,12 +19,14 @@ class Reporter:
     def __init__(self,
                  cluster_spec: ClusterSpec,
                  test_config: TestConfig,
-                 build: str):
+                 build: str,
+                 sgw: bool = False):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
         self.build = build + test_config.showfast.build_label
         self.master_node = next(self.cluster_spec.masters)
         self.rest = RestHelper(cluster_spec, test_config)
+        self.sgw = sgw
 
 
 class ShowFastReporter(Reporter):
@@ -41,10 +43,13 @@ class ShowFastReporter(Reporter):
         if 'category' not in metric:
             metric['category'] = self.test_config.showfast.category
 
+        cluster = self.cluster_spec.name
+        component = self.test_config.showfast.component
+        sub_category = self.test_config.showfast.sub_category
         metric.update({
-            'cluster': self.cluster_spec.name,
-            'component': self.test_config.showfast.component,
-            'subCategory': self.test_config.showfast.sub_category,
+            'cluster': cluster,
+            'component': component,
+            'subCategory': sub_category,
         })
 
         logger.info('Adding a metric: {}'.format(pretty_dict(metric)))

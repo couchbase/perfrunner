@@ -29,6 +29,7 @@ class Deployer:
         self.settings = self.infra_spec.infrastructure_settings
         self.clusters = self.infra_spec.infrastructure_clusters
         self.clients = self.infra_spec.infrastructure_clients
+        self.sync_gateways = self.infra_spec.infrastructure_sync_gateways
         self.utilities = self.infra_spec.infrastructure_utilities
         self.infra_config = self.infra_spec.infrastructure_config()
         self.generated_cloud_config_path = self.infra_spec.generated_cloud_config_path
@@ -80,6 +81,7 @@ class AWSDeployer(Deployer):
                     node_group_config = self.infra_spec.infrastructure_section(desired_node_group)
                     ec2_cluster_config[desired_node_group] = node_group_config
                 desired_infra['ec2'][desired_ec2_cluster] = ec2_cluster_config
+        logger.info("Desired infrastructure: {}".format(str(desired_infra)))
         return desired_infra
 
     def write_infra_file(self):
@@ -123,6 +125,7 @@ class AWSDeployer(Deployer):
                  'Tags': [{'Key': 'Use', 'Value': 'CloudPerfTesting'}]}])
         self.deployed_infra['vpc'] = response['Vpc']
         self.write_infra_file()
+        time.sleep(5)
         waiter = self.ec2client.get_waiter('vpc_available')
         waiter.wait(VpcIds=[self.deployed_infra['vpc']['VpcId']],
                     WaiterConfig={'Delay': 10, 'MaxAttempts': 120})
@@ -194,7 +197,7 @@ class AWSDeployer(Deployer):
             subnet_id = response['Subnet']['SubnetId']
             self.deployed_infra['vpc']['subnets'][subnet_id] = response['Subnet']
             self.write_infra_file()
-
+        time.sleep(5)
         waiter = self.ec2client.get_waiter('subnet_available')
         waiter.wait(
             SubnetIds=list(self.deployed_infra['vpc']['subnets'].keys()),
@@ -211,6 +214,7 @@ class AWSDeployer(Deployer):
             self.ec2client.modify_subnet_attribute(
                 MapPublicIpOnLaunch={'Value': True},
                 SubnetId=subnet)
+        time.sleep(5)
         waiter = self.ec2client.get_waiter('subnet_available')
         waiter.wait(
             SubnetIds=list(self.deployed_infra['vpc']['subnets'].keys()),
@@ -230,6 +234,7 @@ class AWSDeployer(Deployer):
             TagSpecifications=[spec],
             DryRun=False
         )
+        time.sleep(5)
         self.deployed_infra['vpc']['internet_gateway'] = response['InternetGateway']
         self.write_infra_file()
 
@@ -243,6 +248,7 @@ class AWSDeployer(Deployer):
             DryRun=False,
             InternetGatewayIds=[
                 self.deployed_infra['vpc']['internet_gateway']['InternetGatewayId']])
+        time.sleep(5)
         self.deployed_infra['vpc']['internet_gateway'] = response['InternetGateways'][0]
         self.write_infra_file()
 
@@ -263,6 +269,7 @@ class AWSDeployer(Deployer):
                 rt_updated = bool(response['Return'])
         if not rt_updated:
             raise Exception("Failed to update route table")
+        time.sleep(5)
         response = self.ec2client.describe_route_tables(
             Filters=[{'Name': 'vpc-id',
                       'Values': [self.deployed_infra['vpc']['VpcId']]}],
@@ -371,7 +378,7 @@ class AWSDeployer(Deployer):
                            "command": "aws",
                            "args":
                                ["--region",
-                                "us-west-2",
+                                self.region,
                                 "eks",
                                 "get-token",
                                 "--cluster-name",
@@ -505,6 +512,12 @@ class AWSDeployer(Deployer):
                                 tags.append({'Key': 'NodeRoles', 'Value': k})
                                 break
                     if not node_role:
+                        for k, v in self.sync_gateways.items():
+                            if 'sync_gateways' in k and resource_path in v:
+                                node_role = k
+                                tags.append({'Key': 'NodeRoles', 'Value': k})
+                                break
+                    if not node_role:
                         for k, v in self.utilities.items():
                             if ('brokers' in k or 'operators' in k) and resource_path in v:
                                 node_role = 'utilities'
@@ -514,7 +527,7 @@ class AWSDeployer(Deployer):
                     block_device = '/dev/sda1'
                     if "workers" in node_role:  # perf client ami
                         if self.region == 'us-east-1':
-                            ami = 'ami-04fe7d9b8322397e6'
+                            ami = 'ami-01b36cb3330d38ac5'
                         else:
                             ami = 'ami-0045ddecdcfa4a45c'
                     elif "couchbase" in node_role:  # perf server ami
@@ -527,6 +540,11 @@ class AWSDeployer(Deployer):
                                 block_device = '/dev/xvda'
                             else:
                                 ami = 'ami-005bce54f0c4e2248'
+                        else:
+                            ami = 'ami-83b400fb'
+                    elif "sync_gateway" in node_role:  # perf server ami
+                        if self.region == 'us-east-1':
+                            ami = 'ami-005bce54f0c4e2248'
                         else:
                             ami = 'ami-83b400fb'
                     elif "utilities" in node_role:  # perf broker ami
@@ -640,6 +658,7 @@ class AWSDeployer(Deployer):
             DryRun=False)
         self.deployed_infra['security_groups'] = response['SecurityGroups']
         self.write_infra_file()
+        logger.info("The security groups are: {}".format(self.deployed_infra['security_groups']))
         for sg in self.deployed_infra['security_groups']:
             self.ec2client.authorize_security_group_ingress(
                 GroupId=sg['GroupId'],
@@ -656,6 +675,7 @@ class AWSDeployer(Deployer):
                      [self.deployed_infra['vpc']['VpcId']]}],
             DryRun=False)
         self.deployed_infra['security_groups'] = response['SecurityGroups']
+        logger.info("The security groups are: {}".format(self.deployed_infra['security_groups']))
         self.write_infra_file()
 
     def setup_eks_csi_driver_iam_policy(self):
@@ -726,19 +746,20 @@ class AWSDeployer(Deployer):
                     if not matching_node:
                         raise Exception("no matching node found")
 
-                print("cluster: {}, hosts: {}".format(cluster, str(address_replace_list)))
+                logger.info("cluster: {}, hosts: {}".format(cluster, str(address_replace_list)))
 
                 with open(self.cluster_path) as f:
                     s = f.read()
                 with open(self.cluster_path, 'w') as f:
                     for replace_pair in address_replace_list:
-                        s = s.replace(replace_pair[0], replace_pair[1])
+                        s = s.replace(replace_pair[0], replace_pair[1], 1)
                     f.write(s)
         else:
             with open(self.generated_cloud_config_path) as f:
                 self.deployed_infra = json.load(f)
             clusters = self.infra_spec.infrastructure_clusters
             clients = self.infra_spec.infrastructure_clients
+            sgws = self.infra_spec.infrastructure_sync_gateways
             utilities = self.infra_spec.infrastructure_utilities
             backup = self.infra_spec.backup
             node_group_ips = {}
@@ -757,13 +778,11 @@ class AWSDeployer(Deployer):
                     node_group_ips[node_group] = ip_list
                     address_replace_list.append((address, next_ip))
 
-                print("cluster: {}, hosts: {}".format(cluster, str(address_replace_list)))
+                logger.info("cluster: {}, hosts: {}".format(cluster, str(address_replace_list)))
 
                 server_list = ""
                 for server_tuple in address_replace_list:
-                    print(server_tuple[1])
                     server_list += "{}\n".format(server_tuple[1])
-                    print(server_list)
                 server_list = server_list.rstrip()
 
                 with open(self.cloud_ini) as f:
@@ -776,7 +795,7 @@ class AWSDeployer(Deployer):
                     s = f.read()
                 with open(self.cluster_path, 'w') as f:
                     for replace_pair in address_replace_list:
-                        s = s.replace(replace_pair[0], replace_pair[1])
+                        s = s.replace(replace_pair[0], replace_pair[1], 1)
                     f.write(s)
 
             for cluster, hosts in clients.items():
@@ -788,20 +807,47 @@ class AWSDeployer(Deployer):
                     node_group_ips[node_group] = ip_list
                     address_replace_list.append((host, next_ip))
 
-                print("clients: {}, hosts: {}".format(cluster, str(address_replace_list)))
+                logger.info("clients: {}, hosts: {}".format(cluster, str(address_replace_list)))
 
                 worker_list = ""
                 for worker_tuple in address_replace_list:
-                    print(worker_tuple[1])
                     worker_list += "{}\n".format(worker_tuple[1])
-                    print(worker_list)
-
                 worker_list = worker_list.rstrip()
 
                 with open(self.cloud_ini) as f:
                     s = f.read()
                 with open(self.cloud_ini, 'w') as f:
                     s = s.replace("worker_list", worker_list)
+                    f.write(s)
+
+                with open(self.cluster_path) as f:
+                    s = f.read()
+                with open(self.cluster_path, 'w') as f:
+                    for replace_pair in address_replace_list:
+                        s = s.replace(replace_pair[0], replace_pair[1], 1)
+                    f.write(s)
+
+            for cluster, hosts in sgws.items():
+                address_replace_list = []
+                for host in hosts.split():
+                    node_group = host.split(".")[2]
+                    ip_list = node_group_ips[node_group]
+                    next_ip = ip_list.pop(0)
+                    node_group_ips[node_group] = ip_list
+                    address_replace_list.append((host, next_ip))
+
+                logger.info("sgws: {}, hosts: {}".format(cluster, str(address_replace_list)))
+
+                sgw_list = ""
+                for sgw_tuple in address_replace_list:
+                    sgw_list += "{}\n".format(sgw_tuple[1])
+
+                sgw_list = sgw_list.rstrip()
+
+                with open(self.cloud_ini) as f:
+                    s = f.read()
+                with open(self.cloud_ini, 'w') as f:
+                    s = s.replace("sgw_list", sgw_list, 1)
                     f.write(s)
 
                 with open(self.cluster_path) as f:
@@ -820,13 +866,13 @@ class AWSDeployer(Deployer):
                     node_group_ips[node_group] = ip_list
                     address_replace_list.append((host, next_ip))
 
-                print("utilities: {}, hosts: {}".format(cluster, str(address_replace_list)))
+                logger.info("utilities: {}, hosts: {}".format(cluster, str(address_replace_list)))
 
                 with open(self.cluster_path) as f:
                     s = f.read()
                 with open(self.cluster_path, 'w') as f:
                     for replace_pair in address_replace_list:
-                        s = s.replace(replace_pair[0], replace_pair[1])
+                        s = s.replace(replace_pair[0], replace_pair[1], 1)
                     f.write(s)
 
             # Replace backup storage bucket name in infra spec (if exists)
@@ -1368,7 +1414,7 @@ class GCPDeployer(Deployer):
                 server_list += "{}\n".format(public_ip)
                 internal_ip_section += "        {}\n".format(private_ip)
 
-            print("cluster: {}, hosts: {}".format(cluster, str(public_address_replace_list)))
+            logger.info("cluster: {}, hosts: {}".format(cluster, str(public_address_replace_list)))
 
             # Perform the IP replacement in the infra spec
             with open(self.cluster_path) as f:
@@ -1400,7 +1446,7 @@ class GCPDeployer(Deployer):
                 worker_list += "{}\n".format(public_ip)
             worker_list = worker_list.rstrip()
 
-            print("clients: {}, hosts: {}".format(cluster, str(address_replace_list)))
+            logger.info("clients: {}, hosts: {}".format(cluster, str(address_replace_list)))
 
             with open(self.cluster_path) as f:
                 s = f.read()
@@ -1425,7 +1471,7 @@ class GCPDeployer(Deployer):
                     (host, node_group_ips[node_group][node_num]['public'])
                 )
 
-            print("utilities: {}, hosts: {}".format(cluster, str(address_replace_list)))
+            logger.info("utilities: {}, hosts: {}".format(cluster, str(address_replace_list)))
 
             with open(self.cluster_path) as f:
                 s = f.read()
@@ -1481,6 +1527,9 @@ def get_args():
     parser.add_argument('-t', '--tag',
                         default='<None>',
                         help='Global tag for launched instances.')
+    parser.add_argument('override',
+                        nargs='*',
+                        help='custom cluster and/or test settings')
 
     return parser.parse_args()
 
@@ -1488,7 +1537,7 @@ def get_args():
 def main():
     args = get_args()
     infra_spec = ClusterSpec()
-    infra_spec.parse(fname=args.cluster)
+    infra_spec.parse(fname=args.cluster, override=args.override)
     if infra_spec.cloud_infrastructure:
         infra_provider = infra_spec.infrastructure_settings['provider']
         if infra_provider == 'aws':

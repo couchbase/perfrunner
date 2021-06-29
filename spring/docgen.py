@@ -438,6 +438,25 @@ class Document(String):
         }
 
 
+class SGImportLatencyDocument(Document):
+
+    def next(self, key: str) -> dict:
+        alphabet = self.build_alphabet(key)
+        size = self._size()
+
+        return {
+            'name': self.build_name(alphabet),
+            'email': self.build_email(alphabet),
+            'alt_email': self.build_alt_email(alphabet),
+            'city': self.build_city(alphabet),
+            'realm': self.build_realm(alphabet),
+            'coins': self.build_coins(alphabet),
+            'category': self.build_category(alphabet),
+            'achievements': self.build_achievements(alphabet),
+            'body': self.build_string(alphabet, size),
+        }
+
+
 class GroupedDocument(Document):
 
     def __init__(self, avg_size: int, groups: int):

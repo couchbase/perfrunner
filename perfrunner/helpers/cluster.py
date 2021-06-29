@@ -139,10 +139,14 @@ class ClusterManager:
                     self.remote.update_cluster_config(cluster, timeout=300, reboot=True)
                     logger.info('Index settings: {}'.format(settings))
                 else:
-                    self.rest.set_index_settings(index_nodes[0], settings)
-                    settings = self.rest.get_index_settings(index_nodes[0])
-                    settings = pretty_dict(settings)
-                    logger.info('Index settings: {}'.format(settings))
+                    for cluster_index_servers in \
+                            self.cluster_spec.servers_by_cluster_and_role('index'):
+                        index_node = cluster_index_servers[0]
+                        self.rest.set_index_settings(index_node,
+                                                     self.test_config.gsi_settings.settings)
+                        cluster_settings = self.rest.get_index_settings(index_node)
+                        cluster_settings = pretty_dict(self.rest.get_index_settings(index_node))
+                        logger.info('Index settings: {}'.format(cluster_settings))
 
     def set_analytics_settings(self):
         replica_analytics = self.test_config.analytics_settings.replica_analytics
@@ -780,6 +784,9 @@ class ClusterManager:
             if self.test_config.cluster.online_cores:
                 self.remote.disable_cpu(self.test_config.cluster.online_cores)
 
+            if self.test_config.cluster.sgw_online_cores:
+                self.remote.disable_cpu_sgw(self.test_config.cluster.sgw_online_cores)
+
     def tune_memory_settings(self):
         kernel_memory = self.test_config.cluster.kernel_mem_limit
         kv_kernel_memory = self.test_config.cluster.kv_kernel_mem_limit
@@ -921,8 +928,8 @@ class ClusterManager:
         self.remote.install_cb_debug_rpm(url=self.get_debug_rpm_url())
 
     def enable_developer_preview(self):
-        release, build_number = self.build.split('-')
-        build = tuple(map(int, release.split('.'))) + (int(build_number),)
+        version, build_number = self.build.split('-')
+        build = tuple(map(int, version.split('.'))) + (int(build_number),)
         if build > (7, 0, 0, 4698) or build < (1, 0, 0, 0):
             self.remote.enable_developer_preview()
 

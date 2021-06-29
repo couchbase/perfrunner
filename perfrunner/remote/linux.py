@@ -16,6 +16,8 @@ from perfrunner.remote.context import (
     master_client,
     master_server,
     servers_by_role,
+    syncgateway_master_server,
+    syncgateway_servers,
 )
 from perfrunner.settings import ClusterSpec
 
@@ -516,7 +518,19 @@ class RemoteLinux(Remote):
             for cpu in cpu_map[core]:
                 run('echo 0 > /sys/devices/system/cpu/cpu{}/online'.format(cpu))
 
+    @syncgateway_servers
+    def disable_cpu_sgw(self, sgw_online_cores: int):
+        logger.info('Throttling CPU resources')
+
+        cpu_map = self.get_cpu_map()
+        offline_cores = sorted(cpu_map)[sgw_online_cores:]
+
+        for core in offline_cores:
+            for cpu in cpu_map[core]:
+                run('echo 0 > /sys/devices/system/cpu/cpu{}/online'.format(cpu))
+
     @all_servers
+    @syncgateway_servers
     def enable_cpu(self):
         logger.info('Enabling all CPU cores')
         for i in range(self.num_vcpu):
@@ -1010,3 +1024,44 @@ class RemoteLinux(Remote):
         with cd(worker_home), cd('perfrunner'), cd('ch2/ch2driver/pytpcc/'):
             logger.info('Running: {}'.format(cmd))
             run(cmd)
+
+    @master_server
+    def compress_sg_logs(self):
+        logger.info('Compressing Syncgateway log folders')
+        cmd = 'tar cvzf /home/sync_gateway/syncgateway_logs.tar.gz /home/sync_gateway/logs'
+        run(cmd, warn_only=True)
+
+    @syncgateway_master_server
+    def compress_sg_logs_new(self):
+        logger.info('Compressing Syncgateway log folders')
+        run('rm -rf /tmp/sglogs_temp', warn_only=True)
+        run('mkdir /tmp/sglogs_temp', warn_only=True)
+        r = run('cp -R /var/tmp/sglogs/* /tmp/sglogs_temp', warn_only=True)
+        logger.info(str(r))
+        run('tar cvzf /var/tmp/sglogs/syncgateway_logs.tar.gz /tmp/sglogs_temp', warn_only=True)
+        run('rm -rf /tmp/sglogs_temp', warn_only=True)
+
+    @all_servers
+    def remove_sglogs(self):
+        logger.info('removing old sglogs')
+        cmd = 'rm -rf /var/tmp/sglogs/*'
+        run(cmd)
+
+    @all_clients
+    def download_blockholepuller(self):
+        cmd = 'curl -o blackholePuller-linux-x64 https://github.com/couchbaselabs/sg_dev_tools/'
+        run(cmd)
+        cmd = 'chmod +x blackholePuller-linux-x64'
+        run(cmd)
+
+    @all_clients
+    def execute_blockholepuller(self, clients, timeout, result_path):
+        cmd = './blackholePuller -url http://demo:password@localhost:4984/db1 ' \
+              '-clients {} -timeout {}s > {}'.format(clients, timeout, result_path)
+        run(cmd)
+
+    @all_clients
+    def execute_newdocpush(self, clients, timeout, result_path):
+        cmd = './newDocPusher -url http://demo:password@localhost:4984/db1 ' \
+              '-clients {} -timeout {}s > {}'.format(clients, timeout, result_path)
+        run(cmd)

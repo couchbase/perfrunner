@@ -1,0 +1,9 @@
+- debug: msg="Starting sync_gateway with config {{ sync_gateway_config_filepath }}"
+
+- name: SYNC GATEWAY | Start sync gateway service
+  become: yes
+  service: name=sync_gateway state=started
+
+- name: SYNC GATEWAY | Wait until sync gateway to listen on port
+  become: yes
+  wait_for: port=4985 timeout=60

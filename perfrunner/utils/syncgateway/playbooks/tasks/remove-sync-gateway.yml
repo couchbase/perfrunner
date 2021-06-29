@@ -1,0 +1,38 @@
+# Stop sync_gateway service
+- name: SYNC GATEWAY | Stop sync_gateway service
+  service: name=sync_gateway state=stopped
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+  ignore_errors: yes
+
+- name: SYNC GATEWAY | Stop sync_gateway for CentOS 6
+  shell: /sbin/initctl stop sync_gateway
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "6"
+  ignore_errors: yes
+
+# Remove sync_gateway package
+- name: SYNC GATEWAY | Uninstall sync_gateway rpm
+  shell: rpm -e couchbase-sync-gateway
+  ignore_errors: yes
+
+# Remove sync_gateway service
+- name: SYNC GATEWAY | Remove sync_gateway service
+  file: path=/usr/lib/systemd/system/sync_gateway.service state=absent
+  ignore_errors: yes
+
+# Delete sync_gateway binary
+- name: SYNC GATEWAY | Delete sync_gateway binary
+  file: path=/opt/couchbase-sync-gateway state=absent
+  ignore_errors: yes
+
+# Remove sync gateway source
+- name: SYNC GATEWAY | Remove sync gateway source
+  shell: rm -rf /home/centos/*
+  ignore_errors: yes
+
+- name: SYNC GATEWAY | Remove sync gateway source .repo directory
+  shell: rm -rf /home/centos/.repo
+  ignore_errors: yes
+
+- name: SYNC GATEWAY | Remove tmp logging dir (log rotation tests)
+  shell: rm -rf /tmp/sg_logs
+  ignore_errors: yes

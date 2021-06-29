@@ -1,0 +1,10 @@
+# Add sync_gateway user
+- name: SYNC GATEWAY | Create sync gateway user
+  user: name=sync_gateway createhome=yes
+
+# Add tmp logging dir (Log Rotation testing)
+- name: SYNC GATEWAY | Create /tmp/sg_logs
+  file:
+    path: /tmp/sg_logs
+    state: directory
+    mode: 0777

@@ -6,7 +6,7 @@ from itertools import cycle
 from multiprocessing import set_start_method
 from typing import Callable
 
-from celery import Celery
+from celery import Celery, group
 from kombu.serialization import registry
 from sqlalchemy import create_engine
 
@@ -21,11 +21,31 @@ from perfrunner.settings import (
     TestConfig,
 )
 from perfrunner.workloads import spring_workload
+from perfrunner.workloads.blackholepuller import (
+    blackholepuller_runtest,
+    newdocpusher_runtest,
+)
 from perfrunner.workloads.dcp import java_dcp_client
 from perfrunner.workloads.jts import jts_run, jts_warmup
 from perfrunner.workloads.pillowfight import (
     pillowfight_data_load,
     pillowfight_workload,
+)
+from perfrunner.workloads.syncgateway import (
+    syncgateway_delta_sync_load_docs,
+    syncgateway_delta_sync_run_test,
+    syncgateway_e2e_cbl_load_docs,
+    syncgateway_e2e_cbl_run_test,
+    syncgateway_e2e_multi_cb_load_docs,
+    syncgateway_e2e_multi_cb_run_test,
+    syncgateway_e2e_multi_cbl_load_docs,
+    syncgateway_e2e_multi_cbl_run_test,
+    syncgateway_grant_access,
+    syncgateway_init_users,
+    syncgateway_load_docs,
+    syncgateway_load_users,
+    syncgateway_run_test,
+    syncgateway_start_memcached,
 )
 from perfrunner.workloads.tpcds import (
     tpcds_initial_data_load,
@@ -153,6 +173,86 @@ def java_dcp_client_task(*args):
     java_dcp_client(*args)
 
 
+@celery.task
+def syncgateway_task_load_users(*args):
+    syncgateway_load_users(*args)
+
+
+@celery.task
+def syncgateway_task_init_users(*args):
+    syncgateway_init_users(*args)
+
+
+@celery.task
+def syncgateway_task_grant_access(*args):
+    syncgateway_grant_access(*args)
+
+
+@celery.task
+def syncgateway_task_load_docs(*args):
+    syncgateway_load_docs(*args)
+
+
+@celery.task
+def syncgateway_task_run_test(*args):
+    syncgateway_run_test(*args)
+
+
+@celery.task
+def syncgateway_task_start_memcached(*args):
+    syncgateway_start_memcached(*args)
+
+
+@celery.task
+def syncgateway_bh_puller_task(*args):
+    blackholepuller_runtest(*args)
+
+
+@celery.task
+def syncgateway_new_docpush_task(*args):
+    newdocpusher_runtest(*args)
+
+
+@celery.task
+def syncgateway_delta_sync_task_load_docs(*args):
+    syncgateway_delta_sync_load_docs(*args)
+
+
+@celery.task
+def syncgateway_delta_sync_task_run_test(*args):
+    syncgateway_delta_sync_run_test(*args)
+
+
+@celery.task
+def syncgateway_e2e_cbl_task_load_docs(*args):
+    syncgateway_e2e_cbl_load_docs(*args)
+
+
+@celery.task
+def syncgateway_e2e_cbl_task_run_test(*args):
+    syncgateway_e2e_cbl_run_test(*args)
+
+
+@celery.task
+def syncgateway_e2e_multi_cbl_task_load_docs(*args):
+    syncgateway_e2e_multi_cbl_load_docs(*args)
+
+
+@celery.task
+def syncgateway_e2e_multi_cbl_task_run_test(*args):
+    syncgateway_e2e_multi_cbl_run_test(*args)
+
+
+@celery.task
+def syncgateway_e2e_multi_cb_task_load_docs(*args):
+    syncgateway_e2e_multi_cb_load_docs(*args)
+
+
+@celery.task
+def syncgateway_e2e_multi_cb_task_run_test(*args):
+    syncgateway_e2e_multi_cb_run_test(*args)
+
+
 class WorkerManager:
 
     def __new__(cls, *args, **kwargs):
@@ -205,6 +305,7 @@ class RemoteWorkerManager:
         self.terminate()
         self.start()
         self.wait_until_workers_are_ready()
+        self.async_results = []
 
     @property
     def is_remote(self) -> bool:
@@ -299,6 +400,85 @@ class RemoteWorkerManager:
         else:
             self.remote.terminate_client_processes()
 
+    def run_sg_tasks(self,
+                     task: Callable,
+                     task_settings: PhaseSettings,
+                     timer: int = None,
+                     distribute: bool = False,
+                     phase: str = ""):
+        self.async_results = []
+        self.reset_workers()
+        if distribute:
+            total_threads = int(task_settings.syncgateway_settings.threads)
+            total_clients = int(task_settings.syncgateway_settings.clients)
+            instances_per_client = int(task_settings.syncgateway_settings.instances_per_client)
+            total_instances = total_clients * instances_per_client
+            threads_per_instance = int(total_threads/total_instances) or 1
+            worker_id = 0
+
+            group_tasks = []
+
+            for instance in range(instances_per_client):
+                for client in self.cluster_spec.workers[:total_clients]:
+                    worker_id += 1
+                    logger.info('Running the \'{}\' by worker #{} on client {}'
+                                .format(phase, worker_id, client))
+                    task_settings.syncgateway_settings.threads_per_instance = \
+                        str(threads_per_instance)
+
+                    group_tasks.append(
+                        task.s(task_settings, timer, worker_id, self.cluster_spec).set(
+                            queue=client
+                        ).set(
+                            expires=timer
+                        ))
+                    # async_result = task.apply_async(
+                    #    args=(task_settings, timer, worker_id, self.cluster_spec),
+                    #    queue=client,
+                    #    expires=timer,
+                    # )
+                    # self.async_results.append(async_result)
+
+            g = group(group_tasks)
+            self.async_results.append(g())
+        else:
+            client = self.cluster_spec.workers[0]
+            logger.info('Running single-instance task \'{}\' on client {}'
+                        .format(phase, client))
+            async_result = task.apply_async(
+                args=(task_settings, timer, 0, self.cluster_spec),
+                queue=client,
+                expires=timer,
+            )
+            self.async_results.append(async_result)
+
+    def run_sg_bp_tasks(self,
+                        task: Callable,
+                        task_settings: PhaseSettings,
+                        timer: int = None,
+                        distribute: bool = False,
+                        phase: str = ""):
+        self.async_results = []
+        self.reset_workers()
+        if distribute:
+            worker_id = 0
+            total_clients = int(task_settings.syncgateway_settings.clients)
+            for client in self.cluster_spec.workers[:total_clients]:
+                worker_id += 1
+                logger.info('Running the \'{}\' by worker #{} on'
+                            ' client {}'.format(phase, worker_id, client))
+                async_result = task.apply_async(
+                    args=(task_settings, timer, worker_id, self.cluster_spec),
+                    queue=client, expires=timer,)
+                self.async_results.append(async_result)
+        else:
+            client = self.cluster_spec.workers[0]
+            logger.info('Running sigle-instance task \'{}\' on client {}'.format(phase, client))
+            async_result = task.apply_async(
+                args=(task_settings, timer, 0, self.cluster_spec),
+                queue=client, expires=timer)
+            self.async_results.append(async_result)
+
 
 class LocalWorkerManager(RemoteWorkerManager):
 
@@ -309,7 +489,6 @@ class LocalWorkerManager(RemoteWorkerManager):
                  verbose: bool):
         self.cluster_spec = cluster_spec
         self.test_config = test_config
-
         self.terminate()
         self.tune_sqlite()
         self.start()
@@ -362,3 +541,43 @@ class LocalWorkerManager(RemoteWorkerManager):
     def terminate(self):
         logger.info('Terminating Celery workers')
         local.kill_process('celery')
+
+    def run_sg_tasks(self,
+                     task: Callable,
+                     task_settings: PhaseSettings,
+                     timer: int = None,
+                     distribute: bool = False,
+                     phase: str = ""):
+        self.async_results = []
+        self.reset_workers()
+        if distribute:
+            total_threads = int(task_settings.syncgateway_settings.threads)
+            total_clients = int(task_settings.syncgateway_settings.clients)
+            instances_per_client = int(task_settings.syncgateway_settings.instances_per_client)
+            total_instances = total_clients * instances_per_client
+            threads_per_instance = int(total_threads/total_instances) or 1
+            worker_id = 0
+            for instance in range(instances_per_client):
+                for _ in range(0, total_clients):
+                    client = self.next_worker()
+                    worker_id += 1
+                    logger.info('Running the \'{}\' by worker #{} on client {}'
+                                .format(phase, worker_id, client))
+                    task_settings.syncgateway_settings.threads_per_instance = \
+                        str(threads_per_instance)
+                    async_result = task.apply_async(
+                        args=(task_settings, timer, worker_id, self.cluster_spec),
+                        queue=client,
+                        expires=timer,
+                    )
+                    self.async_results.append(async_result)
+        else:
+            client = self.next_worker()
+            logger.info('Running single-instance task \'{}\' on client {}'
+                        .format(phase, client))
+            async_result = task.apply_async(
+                args=(task_settings, timer, 0, self.cluster_spec),
+                queue=client,
+                expires=timer,
+            )
+            self.async_results.append(async_result)

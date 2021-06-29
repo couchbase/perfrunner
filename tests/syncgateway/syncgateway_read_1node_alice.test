@@ -1,0 +1,47 @@
+[test_case]
+test = perfrunner.tests.syncgateway.SGRead
+
+[showfast]
+title = , 1 node, cache hit 0.5%%, Alice
+component = syncgateway
+category = read
+sub_category = xattr
+
+[cluster]
+mem_quota = 25000
+index_mem_quota = 25000
+initial_nodes = 6
+num_buckets = 1
+
+[access]
+time = 300
+workers = 0
+
+[secondary]
+indexer.settings.storage_mode = memory_optimized
+
+[syncgateway]
+nodes = 1
+threads = 800
+clients = 4
+instances_per_client = 5
+workload_path = workloads/syncgateway_blank
+ycsb_repo = git://github.com/couchbaselabs/YCSB.git
+ycsb_branch = syncgateway-weekly
+users = 1000
+channels = 1
+channels_per_user = 1
+channels_per_doc = 1
+documents = 1000000
+roundtrip_write = false
+read_mode = documents
+feed_reading_mode = idsonly
+feed_mode = normal
+insert_mode = bykey
+auth = true
+readproportion=1
+updateproportion=0
+insertproportion=0
+requestdistribution = zipfian
+log_title = sync_gateway_1node_reads
+

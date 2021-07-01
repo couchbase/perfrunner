@@ -29,12 +29,12 @@ jts_repo_branch = korry_jts_enhancements
 test_collection_query_mode = default
 index_groups = 1
 indexes_per_group = 1
-jts_instances = 2
+jts_instances = 1
 test_duration = 600
 test_total_docs = 1000000
 test_query_workers = 5
 test_kv_workers = 2
-test_kv_throughput_goal = 100
+test_kv_throughput_goal = 200
 test_data_file = ../tests/fts/data/benchmark/hi.txt
 test_driver = couchbase
 test_stats_limit = 1000000
@@ -49,5 +49,4 @@ couchbase_index_name = perf_fts_index
 couchbase_index_configfile = tests/fts/index/fts_tvectors_off.json
 
 [profiling]
-services = fts
 server_processes = projector prometheus

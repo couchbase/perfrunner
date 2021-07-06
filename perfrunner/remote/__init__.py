@@ -120,7 +120,7 @@ class Remote:
     def get_jts_logs(self, worker_home: str, jts_home: str, local_dir: str):
         logger.info("Collecting remote JTS logs")
         jts_logs_dir = "{}/logs".format(jts_home)
-        with cd(worker_home):
+        with cd(worker_home), cd('perfrunner'):
             for file in glob("{}/*/*".format(jts_logs_dir)):
                 get(file, local_path=local_dir)
 

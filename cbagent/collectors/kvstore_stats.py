@@ -82,7 +82,9 @@ class KVStoreStats(Collector):
         "BloomFilterFPR",
         "NumNormalFlushes",
         "NumPersistentFlushes",
-        "NumSyncFlushes"
+        "NumSyncFlushes",
+        "HistogramMemUsed",
+        "WALBufferMemUsed"
     )
     METRICS_AVERAGE_PER_NODE_PER_SHARD = (
         "ReadAmp",

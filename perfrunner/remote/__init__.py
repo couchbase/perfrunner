@@ -1,5 +1,4 @@
 import shutil
-from glob import glob
 
 from fabric.api import cd, get, run, settings, shell_env
 
@@ -120,9 +119,11 @@ class Remote:
     def get_jts_logs(self, worker_home: str, jts_home: str, local_dir: str):
         logger.info("Collecting remote JTS logs")
         jts_logs_dir = "{}/logs".format(jts_home)
-        with cd(worker_home), cd('perfrunner'):
-            for file in glob("{}/*/*".format(jts_logs_dir)):
-                get(file, local_path=local_dir)
+        with cd(worker_home), cd('perfrunner'), cd(jts_logs_dir):
+            directory = run('ls -d */')
+            r = run('stat {}*.log'.format(directory), quiet=True)
+            if not r.return_code:
+                get('{}*.log'.format(directory), local_path=local_dir)
 
     @all_clients
     def get_celery_logs(self, worker_home: str):

@@ -2,16 +2,16 @@
 test = perfrunner.tests.fts.FTSThroughputCloudTest
 
 [showfast]
-title = High Term, 200 KV w/sec, wiki 1M, 3 node, FTS, 1 bucket, 40 collections, t3.medium, standard
+title = High Term, 200 KV w/sec, wiki 1.5M, 3 node, FTS, 1 bucket, 40 collections, t3.large, standard
 component = cloud
 category = lowend
 sub_category = fts
-orderby = b_medium
+orderby = c_large
 
 [cluster]
-mem_quota = 512
-index_mem_quota = 512
-fts_index_mem_quota = 512
+mem_quota = 1024
+index_mem_quota = 1024
+fts_index_mem_quota = 1024
 initial_nodes = 3
 num_buckets = 1
 
@@ -19,7 +19,7 @@ num_buckets = 1
 config = collections/1bucket_1scope_40collections_basic.json
 
 [load]
-items = 1000000
+items = 1500000
 size = 1024
 workers = 10
 doc_gen = fts_doc
@@ -31,7 +31,7 @@ index_groups = 1
 indexes_per_group = 1
 jts_instances = 1
 test_duration = 600
-test_total_docs = 1000000
+test_total_docs = 1500000
 test_query_workers = 2
 test_kv_workers = 1
 test_kv_throughput_goal = 200

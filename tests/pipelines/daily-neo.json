@@ -1,0 +1,46 @@
+{
+    "Analytics": [
+        {"cluster": "triton_analytics.spec", "test_config": "analytics/bigfun_20M_sync_4n.test"},
+        {"cluster": "triton_analytics.spec", "test_config": "analytics/bigfun_20M_queries_4n.test"}
+    ],
+    "Eventing": [
+        {"cluster": "triton_eventing.spec", "test_config": "eventing/eventing_throughput100M_fun_bktop.test"},
+        {"cluster": "triton_eventing.spec", "test_config": "eventing/throughput50M_timer_bktop_512bytes_context.test"}
+    ],
+    "FTS": [
+        {"cluster": "triton_fts.spec", "test_config": "fts/fts_thr_wiki_med.test"},
+        {"cluster": "triton_fts.spec", "test_config": "fts/fts_thr_wiki_and_med_or_hi_hi.test"}
+    ],
+    "GSI": [
+        {"cluster": "triton.spec", "test_config": "gsi/gsi_200M_moi.test"},
+        {"cluster": "triton.spec", "test_config": "gsi/gsi_200M_plasma.test"}
+    ],
+    "KV": [
+        {"cluster": "triton_kv.spec", "test_config": "kv/dcp_max_throughput_250M.test"},
+        {"cluster": "triton_kv.spec", "test_config": "kv/kv_max_ops_mixed.test"},
+        {"cluster": "triton_kv.spec", "test_config": "kv/kv_max_ops_reads.test"},
+        {"cluster": "triton_kv.spec", "test_config": "kv/kv_max_ops_writes.test"},
+        {"cluster": "triton_kv.spec", "test_config": "kv/kv_max_ops_mixed_ephemeral.test"},
+        {"cluster": "triton_kv.spec", "test_config": "kv/reb_in_100M.test"}
+    ],
+    "N1QL": [
+        {"cluster": "triton.spec", "test_config": "n1ql/n1ql_thr_Q1_5M.test"},
+        {"cluster": "triton.spec", "test_config": "n1ql/n1ql_thr_Q2_5M_moi_false.test"},
+        {"cluster": "triton.spec", "test_config": "n1ql/n1ql_thr_Q2_5M_moi_ok.test"},
+        {"cluster": "triton.spec", "test_config": "n1ql/n1ql_thr_Q2_5M_plasma_false.test"},
+        {"cluster": "triton.spec", "test_config": "n1ql/n1ql_thr_Q2_5M_plasma_ok.test"}
+    ],
+    "Tools": [
+        {"cluster": "triton_kv.spec", "test_config": "tools/backup_100M.test"}
+    ],
+    "XDCR": [
+        {"cluster": "triton_2x2.spec", "test_config": "xdcr/xdcr_init_1x1_unidir_25M.test"},
+        {"cluster": "triton_2x2.spec", "test_config": "xdcr/xdcr_init_1x1_unidir_25M_opt.test"}
+    ],
+    "YCSB": [
+        {"cluster": "triton_ycsb.spec", "test_config": "ycsb/ycsb_workloada_10M.test"},
+        {"cluster": "triton_ycsb.spec", "test_config": "ycsb/ycsb_workloada_10M_ephemeral.test"},
+        {"cluster": "triton_kv.spec",   "test_config": "ycsb/ycsb_workloadd_100M.test"},
+        {"cluster": "triton_ycsb.spec", "test_config": "ycsb/ycsb_workloade_10M_moi.test"}
+    ]
+}

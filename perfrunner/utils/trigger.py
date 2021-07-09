@@ -17,7 +17,8 @@ RELEASES = {
     'vulcan': '5.5.6',
     'alice': '6.0.4',
     'mad-hatter': '6.5.0',
-    'cheshire-cat': '7.0.0'
+    'cheshire-cat': '7.0.0',
+    'neo': '7.1.0'
 }
 
 

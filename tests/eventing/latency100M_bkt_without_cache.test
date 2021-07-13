@@ -34,8 +34,8 @@ workers = 22
 key_prefix = None
 
 [eventing]
-functions = perf-test1:tests/eventing/code/get_bktop_without_cache.js
-worker_count = 24
+functions = perf-test1:tests/eventing/code/8get_bktop_without_cache.js
+worker_count = 1
 cpp_worker_thread_count = 2
 config_file = tests/eventing/config/function_src_bkt_mut_sample.json
 

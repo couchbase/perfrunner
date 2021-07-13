@@ -1,17 +1,15 @@
 [test_case]
-test = perfrunner.tests.magma.ThroughputNoLoadDGMTest
+test = perfrunner.tests.magma.LoadBackupDGMTest
 
 [showfast]
-title = Avg Throughput (ops/sec), 4 nodes, 1 bucket x 1B x 1KB, 90/10 R/W, Uniform distribution, 2%% Resident Ratio, Magma
+title = 4 nodes, 1 bucket x 4B x 256B, Magma
 component = hidd
 category = ops
 
 [cluster]
-mem_quota = 10240
+mem_quota = 51200
 initial_nodes = 4
 num_buckets = 1
-kernel_mem_limit = 20G
-kernel_mem_limit_services = kv
 enable_cpu_cores = false
 
 [bucket]
@@ -23,11 +21,10 @@ num_reader_threads = 64
 num_writer_threads = 64
 
 [load]
-items = 1000000000
-size = 1024
+items = 4000000000
+size = 256
 workers = 128
 key_fmtr = hex
-doc_gen = large
 
 [extra_access]
 run_extra_access = true
@@ -36,8 +33,8 @@ creates = 0
 deletes = 0
 reads = 0
 workers = 128
-items = 1000000000
-ops = 1000000000
+items = 4000000000
+ops = 4000000000
 time = 86400
 requestdistribution = uniform
 power_alpha = 0
@@ -45,20 +42,9 @@ zipf_alpha = 0
 durability = 0
 async = 0
 
-[access]
-creates = 0
-reads = 90
-updates = 10
-deletes = 0
-items = 1000000000
-workers = 128
-time = 3600
-requestdistribution = uniform
-key_prefix = 8b8944
-
 [clients]
 libcouchbase = 2.9.3
 python_client = 2.5.0
 
 [backup]
-backup_directory = /data2/4n_1b
+backup_directory = /data2/4n_4b_256b

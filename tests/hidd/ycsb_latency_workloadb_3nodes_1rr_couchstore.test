@@ -1,12 +1,12 @@
 [test_case]
-test = perfrunner.tests.magma.YCSBThroughputHIDDTest
+test = perfrunner.tests.magma.YCSBLatencyHiDDTest
 
 [showfast]
-title = Avg Throughput (ops/sec), Workload A, 3 nodes, 1 bucket x 1.5B x 1KB, 1%% Resident Ratio, Couchstore
+title = Latency(ms), Workload B, 3 nodes, 1 bucket x 1.5B x 1KB, Uniform distribution, 15K ops/sec, 1%% Resident Ratio, Couchstore
 component = hidd
 category = ycsb
-orderby = aml
-sub_category = Throughput
+orderby = bml
+sub_category = Latency
 
 [cluster]
 mem_quota = 10240
@@ -25,7 +25,7 @@ num_reader_threads = 64
 num_writer_threads = 16
 
 [load]
-workload_path = workloads/workloada
+workload_path = workloads/workloadb
 ycsb_client = couchbase3
 items = 1500000000
 workers = 320
@@ -33,18 +33,21 @@ kv_endpoints = 16
 size = 1000
 
 [access]
-workload_path = workloads/workloada
+workload_path = workloads/workloadb
 ycsb_client = couchbase3
 items = 1500000000
-ops = 1500000000
-target = 6000
+ops = 0
+target = 2500
 time = 1800
 boost = 12
-workers = 320
-kv_endpoints = 16
+workers = 480
+kv_endpoints = 24
 workload_instances = 6
+timeseries = 1
+requestdistribution = uniform
 
 [ycsb]
+latency_percentiles = 50,90,99
 branch = couchbase3
 
 [stats]

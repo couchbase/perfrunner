@@ -6,6 +6,7 @@ title = Avg Throughput (ops/sec), Load, 3 nodes, 1 bucket x 1.5B x 1KB, 1%% Resi
 component = hidd
 category = ycsb
 orderby = lml
+sub_category = Throughput
 
 [cluster]
 mem_quota = 10240

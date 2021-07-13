@@ -6,6 +6,7 @@ title = Avg Throughput (ops/sec), Workload C, 3 nodes, 1 bucket x 1.5B x 1KB, 10
 component = hidd
 category = ycsb
 orderby = cc
+sub_category = Throughput
 
 [cluster]
 mem_quota = 102400

@@ -575,6 +575,7 @@ class RebalanceSettings:
 class PhaseSettings:
 
     TIME = 3600 * 24
+    USE_BACKUP = 'false'
 
     DOC_GEN = 'basic'
     POWER_ALPHA = 0
@@ -728,6 +729,7 @@ class PhaseSettings:
     def __init__(self, options: dict):
         # Common settings
         self.time = int(options.get('time', self.TIME))
+        self.use_backup = maybe_atoi(options.get('use_backup', self.USE_BACKUP))
 
         # KV settings
         self.doc_gen = options.get('doc_gen', self.DOC_GEN)

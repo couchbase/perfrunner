@@ -6,6 +6,7 @@ title = Avg Throughput (ops/sec), Workload A, 3 nodes, 1 bucket x 1.5B x 1KB, 10
 component = hidd
 category = ycsb
 orderby = am
+sub_category = Throughput
 
 [cluster]
 mem_quota = 102400
@@ -31,6 +32,7 @@ items = 1500000000
 workers = 640
 kv_endpoints = 128
 size = 1000
+use_backup = false
 
 [extra_access]
 run_extra_access = true
@@ -61,3 +63,6 @@ branch = couchbase3
 
 [stats]
 client_processes = java
+
+[backup]
+backup_directory = /data2/3n_1500m_1kb

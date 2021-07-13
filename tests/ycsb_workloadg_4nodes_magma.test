@@ -5,6 +5,7 @@ test = perfrunner.tests.magma.YCSBThroughputHIDDTest
 title = Avg Throughput (ops/sec), Workload G, 4 nodes, 1 bucket x 100M x 6KB, Uniform distribution, Magma
 component = hidd
 category = ycsb
+sub_category = Throughput
 
 [cluster]
 mem_quota = 102400

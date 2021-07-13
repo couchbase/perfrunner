@@ -212,6 +212,8 @@ class KVTest(PerfTest):
         self.disk_stats = {}
         self.memcached_stats = {}
         self.disk_ops = {}
+        self.iterator = TargetIterator(self.cluster_spec, self.test_config,
+                                       self.test_config.load_settings.key_prefix)
 
     def print_kvstore_stats(self):
         try:
@@ -372,18 +374,32 @@ class KVTest(PerfTest):
         self.wait_for_persistence()
         self.COLLECTORS["latency"] = True
 
+    def access_background_key_prefix(self, target_iterator):
+        PerfTest.access_bg(self, target_iterator=target_iterator)
+
+    def hot_load_key_prefix(self, target_iterator):
+        PerfTest.hot_load(self, target_iterator=target_iterator)
+
+    @with_console_stats
+    @with_stats
+    def access_key_prefix(self, target_iterator):
+        PerfTest.access(self, target_iterator=target_iterator)
+
     def run(self):
-        self.load()
-
-        if self.test_config.extra_access_settings.run_extra_access:
-            self.run_extra_access()
-            self.wait_for_persistence()
-            self.wait_for_fragmentation()
-
-        self.hot_load()
-        self.reset_kv_stats()
-
-        self.access()
+        if self.test_config.load_settings.use_backup:
+            self.copy_data_from_backup()
+            self.hot_load_key_prefix(target_iterator=self.iterator)
+            self.reset_kv_stats()
+            self.access_key_prefix(target_iterator=self.iterator)
+        else:
+            self.load()
+            if self.test_config.extra_access_settings.run_extra_access:
+                self.run_extra_access()
+                self.wait_for_persistence()
+                self.wait_for_fragmentation()
+            self.hot_load()
+            self.reset_kv_stats()
+            self.access()
 
         self.report_kpi()
 
@@ -396,11 +412,43 @@ class StabilityBootstrap(KVTest):
         self.COLLECTORS["latency"] = True
 
 
+class ThroughputDGMMagmaTest(StabilityBootstrap):
+
+    def _report_kpi(self):
+        self.reporter.post(
+            *self.metrics.avg_ops()
+        )
+
+
+class LoadThroughputDGMMagmaTest(ThroughputDGMMagmaTest):
+
+    def run(self):
+        self.load()
+        self.report_kpi()
+
+
 class ReadLatencyDGMTest(StabilityBootstrap):
 
     def _report_kpi(self):
         self.reporter.post(
             *self.metrics.kv_latency(operation='get')
+        )
+
+
+class MixedLatencyDGMTest(StabilityBootstrap):
+
+    def _report_kpi(self):
+        for operation in ('get', 'set'):
+            self.reporter.post(
+                *self.metrics.kv_latency(operation=operation)
+            )
+
+
+class WriteLatencyDGMTest(StabilityBootstrap):
+
+    def _report_kpi(self):
+        self.reporter.post(
+            *self.metrics.kv_latency(operation='set')
         )
 
 
@@ -417,17 +465,20 @@ class CompactionMagmaTest(StabilityBootstrap):
         )
 
     def run(self):
-        self.load()
-
-        if self.test_config.extra_access_settings.run_extra_access:
-            self.run_extra_access()
-            self.wait_for_persistence()
-            self.wait_for_fragmentation()
-
-        self.hot_load()
-        self.reset_kv_stats()
-
-        self.access_bg()
+        if self.test_config.load_settings.use_backup:
+            self.copy_data_from_backup()
+            self.hot_load_key_prefix(target_iterator=self.iterator)
+            self.reset_kv_stats()
+            self.access_background_key_prefix(target_iterator=self.iterator)
+        else:
+            self.load()
+            if self.test_config.extra_access_settings.run_extra_access:
+                self.run_extra_access()
+                self.wait_for_persistence()
+                self.wait_for_fragmentation()
+            self.hot_load()
+            self.reset_kv_stats()
+            self.access_bg()
 
         time_elapsed = self.compact()
 
@@ -454,21 +505,6 @@ class CompressionMagmaTest(CompactionMagmaTest):
 
         self.compact()
 
-        self.report_kpi()
-
-
-class ThroughputDGMMagmaTest(StabilityBootstrap):
-
-    def _report_kpi(self):
-        self.reporter.post(
-            *self.metrics.avg_ops()
-        )
-
-
-class LoadThroughputDGMMagmaTest(ThroughputDGMMagmaTest):
-
-    def run(self):
-        self.load()
         self.report_kpi()
 
 
@@ -560,23 +596,6 @@ class SingleNodeMixedLatencyDGMTest(SingleNodeThroughputDGMMagmaTest):
         self.report_kpi()
 
 
-class MixedLatencyDGMTest(StabilityBootstrap):
-
-    def _report_kpi(self):
-        for operation in ('get', 'set'):
-            self.reporter.post(
-                *self.metrics.kv_latency(operation=operation)
-            )
-
-
-class WriteLatencyDGMTest(StabilityBootstrap):
-
-    def _report_kpi(self):
-        self.reporter.post(
-            *self.metrics.kv_latency(operation='set')
-        )
-
-
 class EnhancedDurabilityLatencyDGMTest(StabilityBootstrap):
 
     def _report_kpi(self):
@@ -589,25 +608,34 @@ class EnhancedDurabilityLatencyDGMTest(StabilityBootstrap):
 class EnhancedMixedDurabilityLatencyDGMTest(EnhancedDurabilityLatencyDGMTest):
 
     def run(self):
-        self.load()
-
-        if self.test_config.extra_access_settings.run_extra_access:
-            self.run_extra_access()
-            self.wait_for_persistence()
-            self.wait_for_fragmentation()
-
-        self.hot_load()
-        self.reset_kv_stats()
+        if self.test_config.load_settings.use_backup:
+            self.copy_data_from_backup()
+            self.hot_load_key_prefix(target_iterator=self.iterator)
+            self.reset_kv_stats()
+        else:
+            self.load()
+            if self.test_config.extra_access_settings.run_extra_access:
+                self.run_extra_access()
+                self.wait_for_persistence()
+                self.wait_for_fragmentation()
+            self.hot_load()
+            self.reset_kv_stats()
 
         self.COLLECTORS["latency"] = False
         access_settings = self.test_config.access_settings
         access_settings.time = 300
         logger.info("Starting warmup access phase")
-        PerfTest.access(self, settings=access_settings)
+        if self.test_config.load_settings.use_backup:
+            PerfTest.access(self, settings=access_settings, target_iterator=self.iterator)
+        else:
+            PerfTest.access(self, settings=access_settings)
         self.COLLECTORS["latency"] = True
         self.reset_kv_stats()
 
-        self.access()
+        if self.test_config.load_settings.use_backup:
+            self.access_key_prefix(target_iterator=self.iterator)
+        else:
+            self.access()
 
         self.report_kpi()
 
@@ -686,17 +714,20 @@ class WarmupDGMTest(StabilityBootstrap):
         )
 
     def run(self):
-        self.load()
-
-        if self.test_config.extra_access_settings.run_extra_access:
-            self.run_extra_access()
+        if self.test_config.load_settings.use_backup:
+            self.copy_data_from_backup()
+            self.hot_load_key_prefix(target_iterator=self.iterator)
+            self.reset_kv_stats()
+            self.access_key_prefix(target_iterator=self.iterator)
+        else:
+            self.load()
+            if self.test_config.extra_access_settings.run_extra_access:
+                self.run_extra_access()
+                self.wait_for_persistence()
+                self.wait_for_fragmentation()
+            self.reset_kv_stats()
+            self.access()
             self.wait_for_persistence()
-            self.wait_for_fragmentation()
-
-        self.reset_kv_stats()
-
-        self.access()
-        self.wait_for_persistence()
 
         self.COLLECTORS["kvstore"] = False
         self.COLLECTORS["disk"] = False
@@ -738,12 +769,14 @@ class YCSBThroughputHIDDTest(YCSBThroughputTest, KVTest):
             self.generate_keystore()
         self.download_ycsb()
 
-        self.custom_load()
-
-        if self.test_config.extra_access_settings.run_extra_access:
-            self.run_extra_access()
-            self.wait_for_persistence()
-            self.wait_for_fragmentation()
+        if self.test_config.load_settings.use_backup:
+            self.copy_data_from_backup()
+        else:
+            self.custom_load()
+            if self.test_config.extra_access_settings.run_extra_access:
+                self.run_extra_access()
+                self.wait_for_persistence()
+                self.wait_for_fragmentation()
 
         self.reset_kv_stats()
         KVTest.save_stats(self)
@@ -977,50 +1010,42 @@ class RebalanceKVDGMTest(RebalanceKVTest, StabilityBootstrap):
         RebalanceKVTest.__init__(self, *args)
 
     def run(self):
-        StabilityBootstrap.load(self)
-
-        if self.test_config.extra_access_settings.run_extra_access:
-            StabilityBootstrap.run_extra_access(self)
-            self.wait_for_persistence()
-            StabilityBootstrap.wait_for_fragmentation(self)
-
-        StabilityBootstrap.hot_load(self)
-
-        StabilityBootstrap.reset_kv_stats(self)
-
-        self.access_bg()
+        self.iterator = TargetIterator(self.cluster_spec, self.test_config,
+                                       self.test_config.load_settings.key_prefix)
+        if self.test_config.load_settings.use_backup:
+            self.copy_data_from_backup()
+            self.hot_load_key_prefix(target_iterator=self.iterator)
+            self.reset_kv_stats()
+            self.access_background_key_prefix(target_iterator=self.iterator)
+        else:
+            StabilityBootstrap.load(self)
+            if self.test_config.extra_access_settings.run_extra_access:
+                StabilityBootstrap.run_extra_access(self)
+                self.wait_for_persistence()
+                StabilityBootstrap.wait_for_fragmentation(self)
+            StabilityBootstrap.hot_load(self)
+            StabilityBootstrap.reset_kv_stats(self)
+            self.access_bg()
         self.rebalance()
 
         if self.is_balanced():
             self.report_kpi()
 
 
-class BackupTestDGM(BackupTest):
-
-    @with_stats
-    def run_extra_access(self):
-        self.COLLECTORS["latency"] = False
-        logger.info("Starting first access phase")
-        PerfTest.access(self, settings=self.test_config.extra_access_settings)
-        self.COLLECTORS["latency"] = True
-
-    def wait_for_fragmentation(self):
-        for master in self.cluster_spec.masters:
-            for bucket in self.test_config.buckets:
-                self.monitor.wait_for_fragmentation_stable(master, bucket)
-        logger.info("sleep for 300 seconds")
-        time.sleep(300)
+class BackupTestDGM(BackupTest, StabilityBootstrap):
 
     def run(self):
         self.extract_tools()
 
-        self.load()
-        self.wait_for_persistence()
-
-        if self.test_config.extra_access_settings.run_extra_access:
-            self.run_extra_access()
+        if self.test_config.load_settings.use_backup:
+            self.copy_data_from_backup()
+        else:
+            self.load()
             self.wait_for_persistence()
-            self.wait_for_fragmentation()
+            if self.test_config.extra_access_settings.run_extra_access:
+                self.run_extra_access()
+                self.wait_for_persistence()
+                self.wait_for_fragmentation()
 
         time_elapsed = self.backup()
 
@@ -1028,6 +1053,7 @@ class BackupTestDGM(BackupTest):
 
 
 class LoadBackupDGMTest(StabilityBootstrap):
+
     def run(self):
         self.load()
         self.wait_for_persistence()
@@ -1044,30 +1070,6 @@ class LoadBackupDGMTest(StabilityBootstrap):
 
         self.remote.start_server()
         time.sleep(30)
-
-
-class ThroughputNoLoadDGMTest(ThroughputDGMMagmaTest):
-
-    @with_console_stats
-    @with_stats
-    def access(self, target_iterator):
-        PerfTest.access(self, target_iterator=target_iterator)
-
-    def hotload(self, target_iterator):
-        PerfTest.hot_load(self, target_iterator=target_iterator)
-
-    def run(self):
-        self.copy_data_from_backup()
-
-        iterator = TargetIterator(self.cluster_spec, self.test_config,
-                                  self.test_config.access_settings.key_prefix)
-
-        self.hotload(target_iterator=iterator)
-        self.reset_kv_stats()
-
-        self.access(target_iterator=iterator)
-
-        self.report_kpi()
 
 
 class YCSBLoadBackupHIDDTest(YCSBThroughputHIDDTest):
@@ -1092,61 +1094,3 @@ class YCSBLoadBackupHIDDTest(YCSBThroughputHIDDTest):
 
         self.remote.start_server()
         time.sleep(30)
-
-
-class YCSBThroughputNoLoadHIDDTest(YCSBThroughputHIDDTest):
-
-    def run(self):
-        self.copy_data_from_backup()
-
-        if self.test_config.access_settings.ssl_mode == 'data':
-            self.download_certificate()
-            self.generate_keystore()
-        self.download_ycsb()
-
-        self.reset_kv_stats()
-        KVTest.save_stats(self)
-        if self.test_config.access_settings.cbcollect:
-            YCSBThroughputTest.access_bg(self)
-            self.collect_cb()
-        else:
-            YCSBThroughputTest.access(self)
-
-        self.print_amplifications(doc_size=self.test_config.access_settings.size)
-        KVTest.print_kvstore_stats(self)
-
-        self.report_kpi()
-
-
-class MixedLatencyNoLoadDGMTest(ThroughputNoLoadDGMTest):
-
-    def _report_kpi(self):
-        for operation in ('get', 'set'):
-            self.reporter.post(
-                *self.metrics.kv_latency(operation=operation)
-            )
-
-
-class RebalanceKVNoLoadDGMTest(RebalanceKVDGMTest):
-
-    def access_background(self, target_iterator):
-        PerfTest.access_bg(self, target_iterator=target_iterator)
-
-    def hotload(self, target_iterator):
-        PerfTest.hot_load(self, target_iterator=target_iterator)
-
-    def run(self):
-        self.copy_data_from_backup()
-
-        iterator = TargetIterator(self.cluster_spec, self.test_config,
-                                  self.test_config.access_settings.key_prefix)
-
-        self.hotload(target_iterator=iterator)
-        self.reset_kv_stats()
-
-        self.access_background(target_iterator=iterator)
-
-        self.rebalance()
-
-        if self.is_balanced():
-            self.report_kpi()

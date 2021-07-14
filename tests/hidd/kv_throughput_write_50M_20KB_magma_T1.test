@@ -1,0 +1,60 @@
+[test_case]
+test = perfrunner.tests.magma.ThroughputDGMMagmaTest
+
+[showfast]
+title = Avg Throughput (ops/sec), 4 nodes, 1 bucket x 50M x 20KB, 20/80 R/W, Uniform distribution, 2%% Resident Ratio, Magma
+component = hidd
+category = ops
+
+[cluster]
+mem_quota = 10240
+initial_nodes = 4
+num_buckets = 1
+kernel_mem_limit = 20G
+kernel_mem_limit_services = kv
+enable_cpu_cores = false
+
+[bucket]
+eviction_policy = fullEviction
+backend_storage = magma
+
+[bucket_extras]
+num_reader_threads = 64
+num_writer_threads = 64
+
+[load]
+items = 50000000
+size = 20480
+workers = 128
+key_fmtr = hex
+doc_gen = incompressible
+
+[extra_access]
+run_extra_access = true
+updates = 100
+creates = 0
+deletes = 0
+reads = 0
+workers = 128
+items = 50000000
+ops = 50000000
+time = 86400
+requestdistribution = uniform
+power_alpha = 0
+zipf_alpha = 0
+durability = 0
+async = 0
+
+[access]
+creates = 0
+reads = 20
+updates = 80
+deletes = 0
+items = 50000000
+workers = 128
+time = 1800
+requestdistribution = uniform
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

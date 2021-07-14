@@ -392,6 +392,9 @@ class FTSThroughputCloudTest(FTSThroughputTest):
 
     def run(self):
         self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+        self.compact_bucket()
         self.create_fts_index_definitions()
         self.create_fts_indexes()
         self.download_jts()
@@ -405,6 +408,9 @@ class FTSLatencyCloudTest(FTSLatencyTest):
 
     def run(self):
         self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+        self.compact_bucket()
         self.create_fts_index_definitions()
         self.create_fts_indexes()
         self.download_jts()

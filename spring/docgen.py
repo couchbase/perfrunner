@@ -1651,18 +1651,23 @@ class FTSDocument(Document):
     def __init__(self, avg_size: int):
         super().__init__(avg_size)
         with open("tests/fts/data/benchmark/hi.txt") as fp:
-            data = fp.read()
-        self.words = data.split()
+            data_hi = fp.read()
+        with open("tests/fts/data/benchmark/phrase.txt") as fp:
+            data_phrase = fp.read()
+        self.words_hi = data_hi.split()
+        self.words_phrase = data_phrase.split()
 
     def get_words(self, num: int):
         factor = random.randint(0, 4)
         num = num - 2 + factor
-        return " ".join(random.sample(self.words, num))
+        return_string = random.sample(self.words_hi, factor) + random.sample(self.words_phrase, num)
+        random.shuffle(return_string)
+        return " ".join(return_string)
 
     def next(self, key: Key) -> dict:
         return {
-            'text': self.get_words(140),
-            'text2': self.get_words(140)
+            'text': self.get_words(25),
+            'text2': self.get_words(25)
         }
 
 

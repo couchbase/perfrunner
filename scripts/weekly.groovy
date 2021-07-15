@@ -248,6 +248,12 @@ pipeline {
                         buildComponent('GSI-Recovery', testCases)
                     }
                 }
+                stage('Cloud') {
+                    when { expression { return params.Cloud } }
+                    steps {
+                        buildComponent('Cloud', testCases)
+                    }
+                }
             }
         }
     }

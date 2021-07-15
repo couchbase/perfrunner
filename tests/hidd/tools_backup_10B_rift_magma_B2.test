@@ -1,0 +1,60 @@
+[test_case]
+test = perfrunner.tests.magma.BackupTestDGM
+
+[showfast]
+title = 4 nodes, 1 bucket x 10B x 1KB, Idle, Rift, 1%% Resident Ratio, Magma
+component = hidd
+category = tools
+sub_category = Backup
+
+[stats]
+client_processes = cbbackupmgr
+
+[bucket]
+backend_storage = magma
+eviction_policy = fullEviction
+
+[bucket_extras]
+num_reader_threads = 64
+num_writer_threads = 64
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+enable_cpu_cores = false
+
+[compaction]
+db_percentage = 100
+
+[load]
+items = 10000000000
+size = 1024
+workers = 128
+
+[extra_access]
+run_extra_access = true
+updates = 100
+creates = 0
+deletes = 0
+reads = 0
+workers = 128
+items = 10000000000
+ops = 10000000000
+time = 86400
+requestdistribution = uniform
+power_alpha = 0
+zipf_alpha = 0
+durability = 0
+async = 0
+
+[access]
+items = 10000000000
+
+[backup]
+threads = 16
+storage_type = rift
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

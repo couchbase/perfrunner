@@ -233,6 +233,18 @@ LCB_CUSTOM_DEPS = {
                     "sudo apt-get update -y",
                     "sudo apt-get install "
                     "libevent-core-2.1 libev4 -y "]
+         },
+    '3.2.0':
+        {'ubuntu': ["grep -qxF "
+                    "'deb http://us.archive.ubuntu.com/ubuntu/"
+                    " bionic main restricted' "
+                    "/etc/apt/sources.list || echo "
+                    "'deb http://us.archive.ubuntu.com/ubuntu/"
+                    " bionic main restricted' "
+                    ">> /etc/apt/sources.list",
+                    "sudo apt-get update -y",
+                    "sudo apt-get install "
+                    "libevent-core-2.1 libev4 -y "]
          }
 }
 
@@ -364,7 +376,7 @@ class ClientInstaller:
         elif lcb_version is None and py_version is None:
             pass
         else:
-            logger.info("unknown combination of LCB and python sdk")
+            logger.exception("unknown combination of LCB and python sdk")
 
 
 def get_args():

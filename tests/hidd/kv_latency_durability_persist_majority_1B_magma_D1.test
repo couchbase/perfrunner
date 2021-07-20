@@ -28,6 +28,7 @@ num_writer_threads = 64
 items = 1000000000
 size = 1024
 workers = 128
+key_fmtr = hex
 doc_gen = large
 
 [extra_access]

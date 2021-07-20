@@ -1,18 +1,16 @@
 [test_case]
-test = perfrunner.tests.magma.ThroughputDGMMagmaTest
+test = perfrunner.tests.magma.EnhancedMixedDurabilityLatencyDGMTest
 
 [showfast]
-title = Avg Throughput (ops/sec), 4 nodes, 1 bucket x 1B x 1KB, 0/100 R/W, Durability Persist Majority, 2%% Resident Ratio, Magma
+title = latency (ms), 4 nodes, 1 bucket x 6B x 1KB, 80/20 R/W, 2000 ops/sec, Durability Persist Majority, 1%% Resident Ratio, Magma
 component = hidd
 category = durability
-sub_category = Throughput
+sub_category = Latency
 
 [cluster]
-mem_quota = 15360
+mem_quota = 51200
 initial_nodes = 4
 num_buckets = 1
-kernel_mem_limit = 25G
-kernel_mem_limit_services = kv
 enable_cpu_cores = false
 
 [bucket]
@@ -25,7 +23,7 @@ num_reader_threads = 64
 num_writer_threads = 64
 
 [load]
-items = 1000000000
+items = 6000000000
 size = 1024
 workers = 128
 key_fmtr = hex
@@ -38,8 +36,8 @@ creates = 0
 deletes = 0
 reads = 0
 workers = 128
-items = 1000000000
-ops = 1000000000
+items = 6000000000
+ops = 6000000000
 time = 86400
 requestdistribution = uniform
 power_alpha = 0
@@ -49,10 +47,11 @@ async = 0
 
 [access]
 creates = 0
-reads = 0
-updates = 100
+reads = 80
+updates = 20
 deletes = 0
-items = 1000000000
+throughput = 2000
+items = 6000000000
 workers = 128
 time = 3600
 durability = 3

@@ -6,7 +6,6 @@ title = Avg Throughput (trans/sec), Workload T, 4 nodes, 1 bucket x 1B x 1KB, Pe
 component = hidd
 category = transaction
 sub_category = Throughput
-orderby = d1
 
 [cluster]
 mem_quota = 15360
@@ -29,14 +28,30 @@ num_writer_threads = 64
 workload_path = workloads/workloada
 ycsb_client = couchbase3
 items = 1000000000
-workers = 160
+workers = 640
+kv_endpoints = 128
+size = 1000
+use_backup = false
+
+[extra_access]
+run_extra_access = true
+workload_path = workloads/workloadupdate
+ycsb_client = couchbase3
+items = 1000000000
+ops = 500000000
+time = 86400
+boost = 12
+workers = 640
+kv_endpoints = 128
+workload_instances = 2
+requestdistribution = uniform
 
 [access]
 workload_path = workloads/workloadta
 ycsb_client = couchbase3
 items = 1000000000
 ops = 1000000000
-time = 10800
+time = 1800
 boost = 12
 workers = 128
 workload_instances = 6
@@ -47,7 +62,7 @@ kv_endpoints = 128
 requestdistribution = uniform
 
 [ycsb]
-branch = couchbase3-new-durability
+branch = couchbase3
 
 [stats]
 client_processes = java

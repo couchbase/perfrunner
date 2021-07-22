@@ -32,7 +32,7 @@ items = 1500000000
 workers = 640
 kv_endpoints = 128
 size = 1000
-use_backup = false
+use_backup = true
 
 [access]
 workload_path = workloads/workloadc

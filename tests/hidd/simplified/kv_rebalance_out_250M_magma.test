@@ -30,6 +30,8 @@ size = 1024
 workers = 128
 key_fmtr = hex
 doc_gen = large
+use_backup = true
+key_prefix = dac318
 
 [hot_load]
 items = 250000000
@@ -71,3 +73,6 @@ stop_after = 1800
 [clients]
 libcouchbase = 2.9.3
 python_client = 2.5.0
+
+[backup]
+backup_directory = /data2/3n_250m

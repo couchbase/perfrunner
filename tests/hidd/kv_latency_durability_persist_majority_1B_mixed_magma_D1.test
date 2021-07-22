@@ -30,6 +30,8 @@ size = 1024
 workers = 128
 key_fmtr = hex
 doc_gen = large
+use_backup = true
+key_prefix = e12ef6
 
 [extra_access]
 run_extra_access = true
@@ -57,3 +59,6 @@ items = 1000000000
 workers = 128
 time = 3600
 durability = 3
+
+[backup]
+backup_directory = /data2/4n_1b_durability

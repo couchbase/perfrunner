@@ -32,6 +32,8 @@ key_fmtr = hex
 doc_gen = large
 mem_low_wat = 134217728
 mem_high_wat = 268435456
+use_backup = true
+key_prefix = a34425
 
 [hot_load]
 items = 100000000
@@ -68,3 +70,6 @@ working_set_access = 70
 [clients]
 libcouchbase = 2.9.3
 python_client = 2.5.0
+
+[backup]
+backup_directory = /data2/1n_100m

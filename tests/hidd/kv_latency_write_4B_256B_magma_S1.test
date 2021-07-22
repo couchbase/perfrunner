@@ -27,6 +27,8 @@ items = 4000000000
 size = 256
 workers = 128
 key_fmtr = hex
+use_backup = true
+key_prefix = b26b93
 
 [extra_access]
 run_extra_access = true
@@ -58,3 +60,6 @@ requestdistribution = uniform
 [clients]
 libcouchbase = 2.9.3
 python_client = 2.5.0
+
+[backup]
+backup_directory = /data2/4n_4b_256b

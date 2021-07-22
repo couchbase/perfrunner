@@ -26,6 +26,8 @@ size = 1024
 workers = 128
 key_fmtr = hex
 doc_gen = large
+use_backup = true
+key_prefix = 309814
 
 [hot_load]
 items = 10000000000
@@ -62,3 +64,6 @@ working_set_access = 25
 [clients]
 libcouchbase = 2.9.3
 python_client = 2.5.0
+
+[backup]
+backup_directory = /data2/4n_10b

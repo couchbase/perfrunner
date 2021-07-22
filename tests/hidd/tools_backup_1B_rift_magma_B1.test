@@ -33,6 +33,10 @@ db_percentage = 100
 items = 1000000000
 size = 1024
 workers = 128
+key_fmtr = hex
+doc_gen = large
+use_backup = true
+key_prefix = f017e9
 
 [extra_access]
 run_extra_access = true
@@ -60,3 +64,6 @@ storage_type = rift
 [clients]
 libcouchbase = 2.9.3
 python_client = 2.5.0
+
+[backup]
+backup_directory = /data2/4n_1b

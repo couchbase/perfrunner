@@ -519,13 +519,15 @@ class SingleNodeThroughputDGMMagmaTest(ThroughputDGMMagmaTest):
                 self.monitor.monitor_warmup(self.memcached, master, bucket)
 
     def run(self):
-        self.load()
-
-        if self.test_config.extra_access_settings.run_extra_access:
-            self.run_extra_access()
-            self.wait_for_persistence()
-            logger.info("sleep for 300 seconds")
-            time.sleep(300)
+        if self.test_config.load_settings.use_backup:
+            self.copy_data_from_backup()
+        else:
+            self.load()
+            if self.test_config.extra_access_settings.run_extra_access:
+                self.run_extra_access()
+                self.wait_for_persistence()
+                logger.info("sleep for 300 seconds")
+                time.sleep(300)
 
         self.COLLECTORS["kvstore"] = False
         self.COLLECTORS["disk"] = False
@@ -553,10 +555,14 @@ class SingleNodeThroughputDGMMagmaTest(ThroughputDGMMagmaTest):
             value=self.test_config.load_settings.mem_high_wat
         )
 
-        self.hot_load()
-        self.reset_kv_stats()
-
-        self.access()
+        if self.test_config.load_settings.use_backup:
+            self.hot_load_key_prefix(target_iterator=self.iterator)
+            self.reset_kv_stats()
+            self.access_key_prefix(target_iterator=self.iterator)
+        else:
+            self.hot_load()
+            self.reset_kv_stats()
+            self.access()
 
         self.report_kpi()
 
@@ -570,13 +576,15 @@ class SingleNodeMixedLatencyDGMTest(SingleNodeThroughputDGMMagmaTest):
             )
 
     def run(self):
-        self.load()
-
-        if self.test_config.extra_access_settings.run_extra_access:
-            self.run_extra_access()
-            self.wait_for_persistence()
-            logger.info("sleep for 300 seconds")
-            time.sleep(300)
+        if self.test_config.load_settings.use_backup:
+            self.copy_data_from_backup()
+        else:
+            self.load()
+            if self.test_config.extra_access_settings.run_extra_access:
+                self.run_extra_access()
+                self.wait_for_persistence()
+                logger.info("sleep for 300 seconds")
+                time.sleep(300)
 
         self.COLLECTORS["kvstore"] = False
         self.COLLECTORS["disk"] = False
@@ -588,10 +596,14 @@ class SingleNodeMixedLatencyDGMTest(SingleNodeThroughputDGMMagmaTest):
         self.COLLECTORS["latency"] = True
         self.COLLECTORS["vmstat"] = True
 
-        self.hot_load()
-        self.reset_kv_stats()
-
-        self.access()
+        if self.test_config.load_settings.use_backup:
+            self.hot_load_key_prefix(target_iterator=self.iterator)
+            self.reset_kv_stats()
+            self.access_key_prefix(target_iterator=self.iterator)
+        else:
+            self.hot_load()
+            self.reset_kv_stats()
+            self.access()
 
         self.report_kpi()
 
@@ -978,6 +990,9 @@ class JavaDCPThroughputDGMTest(KVTest):
         local.clone_git_repo(repo=self.test_config.java_dcp_settings.repo,
                              branch=self.test_config.java_dcp_settings.branch)
         local.build_java_dcp_client()
+
+    def load(self):
+        PerfTest.load(self)
 
     @with_stats
     @timeit

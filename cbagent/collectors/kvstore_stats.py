@@ -84,7 +84,8 @@ class KVStoreStats(Collector):
         "NumPersistentFlushes",
         "NumSyncFlushes",
         "HistogramMemUsed",
-        "WALBufferMemUsed"
+        "WALBufferMemUsed",
+        "TreeSnapshotMemoryUsed"
     )
     METRICS_AVERAGE_PER_NODE_PER_SHARD = (
         "ReadAmp",

@@ -31,6 +31,8 @@ db_percentage = 100
 items = 10000000000
 size = 1024
 workers = 128
+use_backup = true
+key_prefix = 309814
 
 [extra_access]
 run_extra_access = true
@@ -54,6 +56,7 @@ items = 10000000000
 [backup]
 threads = 16
 storage_type = rift
+backup_directory = /data2/4n_10b
 
 [clients]
 libcouchbase = 2.9.3

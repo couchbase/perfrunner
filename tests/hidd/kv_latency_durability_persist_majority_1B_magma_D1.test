@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.magma.EnhancedDurabilityLatencyDGMTest
+test = perfrunner.tests.magma.EnhancedMixedDurabilityLatencyDGMTest
 
 [showfast]
 title = latency (ms), 4 nodes, 1 bucket x 1B x 1KB, 0/100 R/W, 500 ops/sec, Durability Persist Majority, 2%% Resident Ratio, Magma

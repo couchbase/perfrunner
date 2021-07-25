@@ -33,9 +33,7 @@ db_percentage = 100
 items = 1000000000
 size = 1024
 workers = 128
-key_fmtr = hex
-doc_gen = large
-use_backup = true
+use_backup = false
 key_prefix = f017e9
 
 [extra_access]

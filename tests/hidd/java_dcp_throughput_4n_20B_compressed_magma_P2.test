@@ -33,3 +33,7 @@ doc_gen = large
 
 [java_dcp]
 config = perf/config/compression-enabled.properties
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

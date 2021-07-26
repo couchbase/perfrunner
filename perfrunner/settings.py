@@ -1671,6 +1671,31 @@ class TPCDSLoaderSettings:
         return str(self.__dict__)
 
 
+class CH2:
+
+    REPO = 'https://github.com/couchbaselabs2/ch2.git'
+    BRANCH = 'main'
+    WAREHOUSES = 1000
+    ACLIENTS = 0
+    TCLIENTS = 0
+    ITERATIONS = 1
+    DURATION = 0
+    WORKLOAD = 'ch2_mixed'
+
+    def __init__(self, options: dict):
+        self.repo = options.get('repo', self.REPO)
+        self.branch = options.get('branch', self.BRANCH)
+        self.warehouses = int(options.get('warehouses', self.WAREHOUSES))
+        self.aclients = int(options.get('aclients', self.ACLIENTS))
+        self.tclients = int(options.get('tclients', self.TCLIENTS))
+        self.iterations = int(options.get('iterations', self.ITERATIONS))
+        self.duration = int(options.get('duration', self.DURATION))
+        self.workload = options.get('workload', self.WORKLOAD)
+
+    def __str__(self) -> str:
+        return str(self.__dict__)
+
+
 class PYTPCCSettings:
 
     WAREHOUSE = 1
@@ -2092,6 +2117,11 @@ class TestConfig(Config):
     def tpcds_loader_settings(self) -> TPCDSLoaderSettings:
         options = self._get_options_as_dict('TPCDSLoader')
         return TPCDSLoaderSettings(options)
+
+    @property
+    def ch2_settings(self) -> CH2:
+        options = self._get_options_as_dict('ch2')
+        return CH2(options)
 
     @property
     def pytpcc_settings(self) -> PYTPCCSettings:

@@ -1122,3 +1122,29 @@ def pytpcc_run_task(warehouse: int, duration: int, client_threads: int,
 def copy_pytpcc_run_output():
     cmd = 'cp  py-tpcc/pytpcc/pytpcc_run_result.log .'
     local(cmd)
+
+
+def ch2_run_task(cluster_spec: ClusterSpec, warehouses: int, aclients: int = 0,
+                 tclients: int = 0, duration: int = 0, iterations: int = 0,
+                 query_url: str = None, multi_query_url: str = None,
+                 analytics_url: str = None, log_file: str = 'ch2_mixed'):
+
+    flags = ['--warehouses {}'.format(warehouses),
+             '--aclients {}'.format(aclients) if aclients else None,
+             '--tclients {}'.format(tclients) if tclients else None,
+             '--duration {}'.format(duration) if duration else None,
+             '--query-iterations {}'.format(iterations) if iterations else None,
+             'nestcollections',
+             '--query-url {}'.format(query_url) if tclients else None,
+             '--multi-query-url {}'.format(multi_query_url) if tclients else None,
+             '--analytics-url {}'.format(analytics_url) if aclients else None,
+             '--userid {}'.format(cluster_spec.rest_credentials[0]),
+             '--password {}'.format(cluster_spec.rest_credentials[1]),
+             '--no-load > ../../../{}.log'.format(log_file)]
+
+    cmd = '../../../env/bin/python3 ./tpcc.py {}'.format(
+        ' '.join(filter(None, flags)))
+
+    with lcd('ch2/ch2driver/pytpcc/'):
+        logger.info('Running: {}'.format(cmd))
+        local(cmd)

@@ -1,0 +1,44 @@
+[test_case]
+test = perfrunner.tests.analytics.CH2Test
+
+[showfast]
+title = CH2 Queries, SSD, 2 nodes
+component = analytics
+category = volume
+
+[stats]
+server_processes = java
+
+[cluster]
+mem_quota = 25600
+index_mem_quota = 12800
+analytics_mem_quota = 51200
+initial_nodes = 4
+num_buckets = 1
+bucket_name = bench
+
+[collection]
+config = collections/1bucket_1scope_11collections_analytics_ch2.json
+
+[analytics]
+num_io_devices = 4
+
+[bucket]
+eviction_policy = fullEviction
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[restore]
+backup_storage = /data3/backup/ch2_w1000/
+backup_repo = ch2
+threads = 8
+map_data = bench.ch2.customer=bench.ch2.customer,bench.ch2.district=bench.ch2.district,bench.ch2.history=bench.ch2.history,bench.ch2.item=bench.ch2.item,bench.ch2.neworder=bench.ch2.neworder,bench.ch2.orders=bench.ch2.orders,bench.ch2.stock=bench.ch2.stock,bench.ch2.warehouse=bench.ch2.warehouse,bench.ch2.supplier=bench.ch2.supplier,bench.ch2.nation=bench.ch2.nation,bench.ch2.region=bench.ch2.region,bench._default._default=bench._default._default
+
+[ch2]
+warehouses = 1000
+aclients = 0
+tclients = 4
+iterations = 0
+duration = 1440
+workload = ch2_transaction

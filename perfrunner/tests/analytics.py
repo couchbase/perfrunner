@@ -682,7 +682,7 @@ class CH2Test(PerfTest):
     def create_datasets(self):
         logger.info('Creating datasets')
         for dataset in self.CH2_DATASETS:
-            statement = "CREATE DATASET `{}` ON default.tpcc.{};" \
+            statement = "CREATE DATASET `{}` ON bench.ch2.{};" \
                 .format(dataset, dataset)
             logger.info('Running: {}'.format(statement))
             res = self.rest.exec_analytics_statement(self.analytics_node, statement)
@@ -692,18 +692,18 @@ class CH2Test(PerfTest):
     def create_indexes(self):
         logger.info('Creating indexes')
         for index in self.CH2_INDEXES:
-            statement = "CREATE INDEX {} ON {};".format(index[0], index[1])
+            statement = "CREATE INDEX {} ON bench.ch2.{} using gsi;".format(index[0], index[1])
             logger.info('Running: {}'.format(statement))
-            res = self.rest.exec_analytics_statement(self.analytics_node, statement)
+            res = self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
             logger.info("Result: {}".format(str(res)))
             time.sleep(5)
 
     def drop_indexes(self):
         logger.info('Dropping indexes')
         for index in self.CH2_INDEXES:
-            statement = "DROP INDEX {}.{};".format(index[2], index[0])
+            statement = "DROP INDEX {} ON bench.ch2.{} using gsi;".format(index[0], index[2])
             logger.info('Running: {}'.format(statement))
-            res = self.rest.exec_analytics_statement(self.analytics_node, statement)
+            res = self.rest.exec_n1ql_statement(self.query_nodes[0], statement)
             logger.info("Result: {}".format(str(res)))
             time.sleep(5)
 
@@ -751,3 +751,28 @@ class CH2Test(PerfTest):
         self.wait_for_persistence()
         self.compact_bucket()
         self.sync()
+        self.create_indexes()
+
+        local.clone_git_repo(repo=self.test_config.ch2_settings.repo,
+                             branch=self.test_config.ch2_settings.branch)
+
+        query_url = self.query_nodes[0] + ":8093"
+        analytics_url = self.analytics_nodes[0] + ":8095"
+        query_nodes_port = []
+        for node in self.query_nodes:
+            query_nodes_port.append(node + ":8093")
+        multi_query_url = ",".join(query_nodes_port)
+
+        logger.info("running {}".format(self.test_config.ch2_settings.workload))
+        local.ch2_run_task(
+            cluster_spec=self.cluster_spec,
+            warehouses=self.test_config.ch2_settings.warehouses,
+            aclients=self.test_config.ch2_settings.aclients,
+            tclients=self.test_config.ch2_settings.tclients,
+            duration=self.test_config.ch2_settings.duration,
+            iterations=self.test_config.ch2_settings.iterations,
+            query_url=query_url,
+            multi_query_url=multi_query_url,
+            analytics_url=analytics_url,
+            log_file=self.test_config.ch2_settings.workload
+        )

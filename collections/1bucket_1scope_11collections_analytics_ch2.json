@@ -1,12 +1,12 @@
 {
-  "default": {
+  "bench": {
     "_default": {
       "_default": {
         "access": 1,
         "load": 1
       }
     },
-    "tpcc": {
+    "ch2": {
       "stock": {
         "load": 1,
         "access": 1

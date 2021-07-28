@@ -22,6 +22,7 @@ class Deployer:
         self.utilities = self.infra_spec.infrastructure_utilities
         self.infra_config = self.infra_spec.infrastructure_config()
         self.generated_cloud_config_path = self.infra_spec.generated_cloud_config_path
+        self.region = options.region
 
     def deploy(self):
         raise NotImplementedError
@@ -131,7 +132,11 @@ class AWSDeployer(Deployer):
         self.deployed_infra['vpc']['subnets'] = {}
         for i in range(1, len(self.desired_infra['k8s'].keys()) + 1):
             cluster_name = 'k8s_cluster_{}'.format(i)
-            for az in ['us-west-2a', 'us-west-2b']:
+            if self.region == 'us-east-1':
+                availability_zones = ['us-east-1a', 'us-east-1b']
+            else:
+                availability_zones = ['us-west-2a', 'us-west-2b']
+            for az in availability_zones:
                 response = self.ec2client.create_subnet(
                     TagSpecifications=[
                         {'ResourceType': 'subnet',
@@ -152,7 +157,10 @@ class AWSDeployer(Deployer):
                 self.write_infra_file()
 
         if len(self.desired_infra['ec2'].keys()) > 0:
-            az = 'us-west-2b'
+            if self.region == 'us-east-1':
+                az = 'us-east-1b'
+            else:
+                az = 'us-west-2b'
             response = self.ec2client.create_subnet(
                 TagSpecifications=[
                     {'ResourceType': 'subnet',
@@ -485,12 +493,21 @@ class AWSDeployer(Deployer):
                                 tags.append({'Key': 'NodeRoles', 'Value': 'utilities'})
                                 break
                     node_group_spec = ec2_cluster_config[node_group]
-                    if "workers" in node_role:
-                        ami = 'ami-04f9b8bb1ea4c3ef6'  # perf client ami
-                    elif "couchbase" in node_role:
-                        ami = 'ami-83b400fb'  # perf server ami
-                    elif "utilities" in node_role:
-                        ami = 'ami-0c7ae1c909fa076e9'  # perf client ami
+                    if "workers" in node_role:  # perf client ami
+                        if self.region == 'us-east-1':
+                            ami = 'ami-040bd58822f237e77'
+                        else:
+                            ami = 'ami-04f9b8bb1ea4c3ef6'
+                    elif "couchbase" in node_role:  # perf server ami
+                        if self.region == 'us-east-1':
+                            ami = 'ami-0c6f86d5c61063ccd'
+                        else:
+                            ami = 'ami-83b400fb'
+                    elif "utilities" in node_role:  # perf client ami
+                        if self.region == 'us-east-1':
+                            ami = 'ami-0d9e5ee360aa02d94'
+                        else:
+                            ami = 'ami-0c7ae1c909fa076e9'
                     else:
                         raise Exception("ec2 group must include one of: client, server, broker")
                     if node_group_spec['instance_type'][0] == "t":
@@ -805,6 +822,10 @@ def get_args():
     parser.add_argument('--verbose',
                         action='store_true',
                         help='enable verbose logging')
+    parser.add_argument('-r', '--region',
+                        choices=['us-east-1', 'us-west-2'],
+                        default='us-east-1',
+                        help='the cloud region')
 
     return parser.parse_args()
 

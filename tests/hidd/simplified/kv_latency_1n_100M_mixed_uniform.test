@@ -30,7 +30,7 @@ size = 1024
 workers = 128
 key_fmtr = hex
 doc_gen = large
-use_backup = true
+use_backup = false
 key_prefix = a34425
 
 [extra_access]

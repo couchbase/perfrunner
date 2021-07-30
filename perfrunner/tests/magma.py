@@ -19,6 +19,7 @@ from perfrunner.helpers.worker import (
 from perfrunner.tests import PerfTest, TargetIterator
 from perfrunner.tests.rebalance import RebalanceKVTest
 from perfrunner.tests.tools import BackupTest
+from perfrunner.tests.xdcr import UniDirXdcrInitTest
 from perfrunner.tests.ycsb import YCSBThroughputTest
 
 
@@ -1109,3 +1110,23 @@ class YCSBLoadBackupHIDDTest(YCSBThroughputHIDDTest):
 
         self.remote.start_server()
         time.sleep(30)
+
+
+class UniDirXdcrInitHiDDTest(UniDirXdcrInitTest):
+
+    COLLECTORS = {'disk': True, 'kvstore': True, 'vmstat': True, 'xdcr_stats': True}
+    CB_STATS_PORT = 11209
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        local.extract_cb_any(filename='couchbase')
+        self.collect_per_server_stats = self.test_config.magma_settings.collect_per_server_stats
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.configure_wan()
+
+        time_elapsed = self.init_xdcr()
+        self.report_kpi(time_elapsed)

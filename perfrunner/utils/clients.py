@@ -219,7 +219,27 @@ LIBCOUCHBASE_PACKAGES = [{"version": "2.9.0",
                                "libcouchbase-dbg_3.0.7-1_amd64.deb "
                                "libcouchbase3-libev_3.0.7-1_amd64.deb "
                                "libcouchbase3-tools_3.0.7-1_amd64.deb "
-                               "libcouchbase-dev_3.0.7-1_amd64.deb"]}]
+                               "libcouchbase-dev_3.0.7-1_amd64.deb"]},
+                         {"version": "3.2.0",
+                          "os": "ubuntu",
+                          "package": "libcouchbase-3.2.0_ubuntu1804_bionic_amd64",
+                          "package_path": "libcouchbase-3.2.0_ubuntu1804_bionic_amd64",
+                          "format": "tar",
+                          "install_cmds":
+                              ["grep -qxF "
+                               "'deb http://us.archive.ubuntu.com/ubuntu/ bionic main restricted' "
+                               "/etc/apt/sources.list || echo "
+                               "'deb http://us.archive.ubuntu.com/ubuntu/ bionic main restricted' "
+                               ">> /etc/apt/sources.list",
+                               "sudo apt-get update -y",
+                               "sudo apt-get install libevent-core-2.1 libev4 -y ",
+                               "sudo dpkg -i libcouchbase3_3.2.0-1_amd64.deb "
+                               "libcouchbase3-libevent_3.2.0-1_amd64.deb "
+                               "libcouchbase-dbg_3.2.0-1_amd64.deb "
+                               "libcouchbase3-libev_3.2.0-1_amd64.deb "
+                               "libcouchbase3-tools_3.2.0-1_amd64.deb "
+                               "libcouchbase-dev_3.2.0-1_amd64.deb"]}
+                         ]
 
 LCB_CUSTOM_DEPS = {
     '3.0.0':

@@ -519,18 +519,12 @@
         {"job": "iris",              "cluster": "iris_fts.spec", "test_config": "n1ql/collections/n1ql_lat_CF2_20M_fts_1s_1c.test"}
     ],
     "FTS-Rebalance": [
-        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_in_1s_1c_with_index_replica.test"},
-        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_out_1s_1c_with_index_replica.test"},
-        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_swap_1s_1c_with_index_replica.test"},
-        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_in_1s_1000c_with_index_replica.test"},
-        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_out_1s_1000c_with_index_replica.test"},
-        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_swap_1s_1000c_with_index_replica.test"},
-        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_in_1s_1c.test"},
-        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_out_1s_1c.test"},
-        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_swap_1s_1c.test"},
-        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_in_1s_1000c.test"},
-        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_out_1s_1000c.test"},
-        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/jts_fts_rebalance_swap_1s_1000c.test"}
+        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/tests_with_spring/jts_fts_rebalance_in_1s_1c.test"},
+        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/tests_with_spring/jts_fts_rebalance_out_1s_1c.test"},
+        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/tests_with_spring/jts_fts_rebalance_swap_1s_1c.test"},
+        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/tests_with_spring/jts_fts_rebalance_in_1s_1000c.test"},
+        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/tests_with_spring/jts_fts_rebalance_out_1s_1000c.test"},
+        {"job": "atlas_rebalance", "cluster": "atlas_setupF.spec", "test_config": "tests_FTS/rebalance/tests_with_spring/jts_fts_rebalance_swap_1s_1000c.test"}
     ],
     "GSI-Recovery": [
         {"job": "aether", "cluster": "aether.spec", "test_config": "gsi/plasma/secondary_100M_plasma.test"},

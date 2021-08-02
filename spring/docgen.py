@@ -1,7 +1,7 @@
 import math
 import random
 import time
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from typing import Iterator, List, Tuple
 
 import numpy as np
@@ -1643,6 +1643,41 @@ class MultiBucketDocument(Document):
             'fts_more_words': self.get_words(140),
             'fts_less_words': self.get_words(3),
             'category': self.build_category(alphabet),
+        }
+
+
+class FTSRebalanceDocument(Document):
+
+    def __init__(self, avg_size: int):
+        super().__init__(avg_size)
+        with open("tests/fts/data/benchmark/phrase.txt") as fp:
+            data_phrase = fp.read()
+        self.words_phrase = data_phrase.split()
+
+    def get_words(self, num: int):
+        factor = random.randint(0, 4)
+        num = num - 2 + factor
+        return " ".join(random.sample(self.words_phrase, num))
+
+    @staticmethod
+    def build_random_date(start_date: date, days_between_dates: int) -> str:
+        random_number_of_days = random.randrange(days_between_dates)
+        val = str(start_date + timedelta(days=random_number_of_days))
+        return val
+
+    def next(self, key: Key) -> dict:
+        start_date = date(2020, 1, 1)
+        end_date = date(2020, 3, 1)
+        time_between_dates = end_date - start_date
+        days_between_dates = time_between_dates.days
+
+        return {
+            'num1': random.randint(100000, 999999),
+            'num2': random.randint(100000, 999999),
+            'date1': self.build_random_date(start_date, days_between_dates),
+            'date2': self.build_random_date(start_date, days_between_dates),
+            'text1': self.get_words(170),
+            'text2': self.get_words(170)
         }
 
 

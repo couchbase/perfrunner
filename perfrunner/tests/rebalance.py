@@ -190,7 +190,8 @@ class RebalanceForFTS(RebalanceTest, FTSTest):
         return elapsed_time
 
     def run(self):
-        self.cleanup_and_restore()
+        # self.cleanup_and_restore()
+        self.load()
         self.wait_for_persistence()
         fts_nodes_before = self.add_extra_fts_parameters()
         self.create_fts_index_definitions()

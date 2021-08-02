@@ -30,7 +30,7 @@ view_percentage = 100
 [load]
 items = 100000000
 size = 1024
-workers = 100
+workers = 1
 key_prefix = None
 doc_gen = eventing_counter
 

@@ -41,7 +41,7 @@ working_set = 1
 working_set_access = 90
 workers = 128
 throughput = 15000
-time = 3600
+time = 1800
 
 [clients]
 libcouchbase = 2.9.3

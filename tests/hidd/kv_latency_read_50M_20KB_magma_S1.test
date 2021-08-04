@@ -55,7 +55,7 @@ deletes = 0
 items = 50000000
 workers = 128
 throughput = 15000
-time = 3600
+time = 1800
 requestdistribution = uniform
 
 [clients]

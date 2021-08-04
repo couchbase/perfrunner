@@ -44,7 +44,7 @@ updates = 0
 deletes = 0
 items = 100000000
 workers = 512
-time = 3600
+time = 1800
 working_set = 5
 working_set_access = 70
 

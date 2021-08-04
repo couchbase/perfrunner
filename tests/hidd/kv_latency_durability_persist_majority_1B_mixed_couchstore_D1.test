@@ -38,5 +38,5 @@ deletes = 0
 throughput = 2000
 items = 1000000000
 workers = 128
-time = 3600
+time = 1800
 durability = 3

@@ -1,14 +1,5 @@
 {
     "Tools": [
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_rift.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_400M_sqlite.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_400M_rift.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_incremental_100M_rift.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_list_100M_rift.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_merge_100M_rift.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_comp_size_rift.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_restore_100M_rift.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_restore_400M_rift.test"},
         {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_backup_100M_rift_1s_1C.test"},
         {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_backup_100M_rift_1s_1000C.test"},
         {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_backup_100M_rift_1000s_1000C.test"},
@@ -24,8 +15,7 @@
         {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_restore_100M_rift_1000s_1000c.test"},
         {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_restore_100M_sqlite_1s_1c.test"},
         {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_restore_100M_sqlite_1s_1000c.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_restore_100M_sqlite_1000s_1000c.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_compact_100M_rift.test"}
+        {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_restore_100M_sqlite_1000s_1000c.test"}
     ],
     "Magma-Legacy": [
         {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "durability/latency/ycsb/enhanced/ycsb_workloada_4node_lat_durability3d_magma.test"},

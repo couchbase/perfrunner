@@ -235,7 +235,17 @@
         {"job": "titan-durability", "cluster": "titan.spec", "test_config": "durability/rebalance/reb_swap_20M_4nodes_durability_majority.test"},
         {"job": "titan-durability", "cluster": "titan.spec", "test_config": "durability/rebalance/reb_swap_20M_4nodes_durability_persist_majority.test"}],
     "Rebalance-Large-Scale": [],
-    "Tools": [],
+    "Tools": [
+        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_rift.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_400M_sqlite.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_400M_rift.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_incremental_100M_rift.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_list_100M_rift.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_merge_100M_rift.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_comp_size_rift.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_restore_100M_rift.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_restore_400M_rift.test"}
+    ],
     "Views": [],
     "XDCR": [
         {"job": "titan", "cluster": "titan_1x1x1.spec", "test_config": "xdcr_init_1x1_unidir_100M_2links_proiority_high_high.test"},

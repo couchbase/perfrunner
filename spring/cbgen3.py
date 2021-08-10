@@ -102,7 +102,7 @@ class CBAsyncGen3:
 
 class CBGen3(CBAsyncGen3):
 
-    TIMEOUT = 120  # seconds
+    TIMEOUT = 600  # seconds
     N1QL_TIMEOUT = 600
 
     def __init__(self, ssl_mode: str = 'none', n1ql_timeout: int = None, **kwargs):

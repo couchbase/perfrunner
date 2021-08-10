@@ -2,7 +2,7 @@
 test = perfrunner.tests.analytics.CH2Test
 
 [showfast]
-title = CH2 Queries, SSD, 2 nodes
+title = CH2 Queries, SSD, 1 node
 component = analytics
 category = volume
 
@@ -13,7 +13,7 @@ server_processes = java
 mem_quota = 25600
 index_mem_quota = 12800
 analytics_mem_quota = 51200
-initial_nodes = 4
+initial_nodes = 3
 num_buckets = 1
 bucket_name = bench
 
@@ -43,8 +43,8 @@ map_data = bench.ch2.customer=bench.ch2.customer,bench.ch2.district=bench.ch2.di
 
 [ch2]
 warehouses = 1000
-aclients = 0
-tclients = 4
-iterations = 0
-duration = 1450
-workload = ch2_transaction
+aclients = 1
+tclients = 0
+iterations = 3
+duration = 0
+workload = ch2_analytics

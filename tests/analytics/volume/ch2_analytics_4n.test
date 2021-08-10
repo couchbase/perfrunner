@@ -25,6 +25,12 @@ num_io_devices = 4
 
 [bucket]
 eviction_policy = fullEviction
+replica_index = 1
+
+[bucket_extras]
+num_writer_threads = 64
+num_reader_threads = 32
+max_num_shards = 64
 
 [secondary]
 indexer.settings.storage_mode = plasma

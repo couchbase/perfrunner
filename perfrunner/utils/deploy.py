@@ -100,7 +100,7 @@ class AWSDeployer(Deployer):
             CidrBlock='10.{}.0.0/16'.format(self.vpc_int),
             AmazonProvidedIpv6CidrBlock=False,
             DryRun=False,
-            InstanceTenancy='default',
+            InstanceTenancy='dedicated',
             TagSpecifications=[
                 {'ResourceType': 'vpc',
                  'Tags': [{'Key': 'Use', 'Value': 'CloudPerfTesting'}]}])

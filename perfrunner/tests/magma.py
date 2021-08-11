@@ -924,6 +924,40 @@ class YCSBLatencyHiDDTest(YCSBThroughputHIDDTest):
                         *self.metrics.ycsb_latency(key, latency_dic[key])
                     )
 
+    def run(self):
+        if self.test_config.access_settings.ssl_mode == 'data':
+            self.download_certificate()
+            self.generate_keystore()
+        self.download_ycsb()
+
+        if self.test_config.load_settings.use_backup:
+            self.copy_data_from_backup()
+        else:
+            self.custom_load()
+            if self.test_config.extra_access_settings.run_extra_access:
+                self.run_extra_access()
+                self.wait_for_persistence()
+                self.wait_for_fragmentation()
+
+        self.reset_kv_stats()
+        access_settings = self.test_config.access_settings
+        access_settings.time = 300
+        logger.info("Starting warmup access phase")
+        PerfTest.access(self, task=ycsb_task, settings=access_settings)
+
+        self.reset_kv_stats()
+        KVTest.save_stats(self)
+        if self.test_config.access_settings.cbcollect:
+            YCSBThroughputTest.access_bg(self)
+            self.collect_cb()
+        else:
+            YCSBThroughputTest.access(self)
+
+        self.print_amplifications(doc_size=self.test_config.access_settings.size)
+        KVTest.print_kvstore_stats(self)
+
+        self.report_kpi()
+
 
 class YCSBDurabilityThroughputHiDDTest(YCSBThroughputHIDDTest):
 

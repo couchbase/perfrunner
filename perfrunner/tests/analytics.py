@@ -669,7 +669,15 @@ class CH2Test(PerfTest):
                     "warehouse(w_id)",
                     "warehouse")]
 
-    COLLECTORS = {'analytics': True}
+    COLLECTORS = {
+        'iostat': False,
+        'memory': False,
+        'n1ql_latency': False,
+        'n1ql_stats': True,
+        'secondary_stats': True,
+        'ns_server_system': True,
+        'analytics': True,
+    }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -746,16 +754,8 @@ class CH2Test(PerfTest):
                                                                bucket,
                                                                self.analytics_node)
 
-    def run(self):
-        self.restore_local()
-        self.wait_for_persistence()
-        self.compact_bucket()
-        self.sync()
-        self.create_indexes()
-
-        local.clone_git_repo(repo=self.test_config.ch2_settings.repo,
-                             branch=self.test_config.ch2_settings.branch)
-
+    @with_stats
+    def run_ch2(self):
         query_url = self.query_nodes[0] + ":8093"
         analytics_url = self.analytics_nodes[0] + ":8095"
         query_nodes_port = []
@@ -776,3 +776,15 @@ class CH2Test(PerfTest):
             analytics_url=analytics_url,
             log_file=self.test_config.ch2_settings.workload
         )
+
+    def run(self):
+        self.restore_local()
+        self.wait_for_persistence()
+        self.compact_bucket()
+        self.sync()
+        self.create_indexes()
+
+        local.clone_git_repo(repo=self.test_config.ch2_settings.repo,
+                             branch=self.test_config.ch2_settings.branch)
+
+        self.run_ch2()

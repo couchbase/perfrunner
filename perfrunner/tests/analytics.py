@@ -777,10 +777,18 @@ class CH2Test(PerfTest):
             log_file=self.test_config.ch2_settings.workload
         )
 
+    def restart(self):
+        self.remote.stop_server()
+        self.remote.drop_caches()
+        self.remote.start_server()
+        for master in self.cluster_spec.masters:
+            for bucket in self.test_config.buckets:
+                self.monitor.monitor_warmup(self.memcached, master, bucket)
+
     def run(self):
         self.restore_local()
         self.wait_for_persistence()
-        self.compact_bucket()
+        self.restart()
         self.sync()
         self.create_indexes()
 

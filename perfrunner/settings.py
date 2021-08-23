@@ -972,6 +972,7 @@ class JTSAccessSettings(PhaseSettings):
     JTS_LOGS_DIR = "JTSlogs"
     FTS_PARTITIONS = "1"
     FTS_MAX_DCP_PARTITIONS = "0"
+    FTS_FILE_BASED_REBAL_DISABLED = "true"
 
     def __init__(self, options: dict):
         self.jts_repo = self.JTS_REPO
@@ -1006,6 +1007,9 @@ class JTSAccessSettings(PhaseSettings):
         self.test_query_lon_width = options.get("test_query_lon_width", "2")
         self.test_query_lat_height = options.get("test_query_lat_height", "2")
         self.test_geo_distance = options.get("test_geo_distance", "5mi")
+        # File based rebalance parameter
+        self.fts_file_based_rebal_disabled = options.get('fts_file_based_rebal_disabled',
+                                                         self.FTS_FILE_BASED_REBAL_DISABLED)
         # Flex Queries parameters
         self.test_flex = options.get("test_flex", 'false')
         self.test_flex_query_type = options.get('test_flex_query_type', 'array_predicate')
@@ -1031,6 +1035,8 @@ class JTSAccessSettings(PhaseSettings):
                 self.ftspartitions
         if self.fts_max_dcp_partitions != self.FTS_MAX_DCP_PARTITIONS:
             self.fts_node_level_parameters["maxFeedsPerDCPAgent"] = self.fts_max_dcp_partitions
+        self.fts_node_level_parameters["disableFileTransferRebalance"] = \
+            self.fts_file_based_rebal_disabled
 
     def __str__(self) -> str:
         return str(self.__dict__)

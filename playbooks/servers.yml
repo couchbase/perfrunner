@@ -1,5 +1,5 @@
 ---
-- hosts: kv:index:n1ql:analytics
+- hosts: kv:index:n1ql:analytics:eventing:fts
   tasks:
   - name: upgrading packages on the system
     yum: state=latest name=epel-release
@@ -28,3 +28,7 @@
       - wget
       - perf
       - zip
+  - name: disable thp
+    shell: "echo never > /sys/kernel/mm/transparent_hugepage/enabled"
+  - name: disable thp defrag
+    shell: "echo never > /sys/kernel/mm/transparent_hugepage/defrag"

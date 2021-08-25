@@ -115,6 +115,9 @@ def new_cbagent_settings(test: PerfTest):
         else:
             settings.indexes = test.test_config.index_settings.indexes
         settings.index_node = test.cluster_spec.servers_by_role('index')[0]
+    settings.is_n2n = False
+    if test.test_config.cluster.enable_n2n_encryption is not None:
+        settings.is_n2n = True
 
     return settings
 

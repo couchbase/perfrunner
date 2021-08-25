@@ -24,8 +24,11 @@ class CBAsyncGen3:
         connection_string = 'couchbase://{host}?password={password}'
         connection_string = connection_string.format(host=kwargs['host'],
                                                      password=kwargs['password'])
-
         pass_auth = PasswordAuthenticator(kwargs['username'], kwargs['password'])
+        if kwargs["ssl_mode"] == 'n2n':
+            connection_string = connection_string.replace('couchbase',
+                                                          'couchbases')
+            connection_string += '&certpath=root.pem'
         timeout = ClusterTimeoutOptions(kv_timeout=timedelta(seconds=self.TIMEOUT))
         options = ClusterOptions(authenticator=pass_auth, timeout_options=timeout)
         self.cluster = TxCluster(connection_string=connection_string, options=options)
@@ -109,7 +112,7 @@ class CBGen3(CBAsyncGen3):
         connection_string = 'couchbase://{host}?password={password}&{params}'
         connstr_params = parse.urlencode(kwargs["connstr_params"])
 
-        if ssl_mode == 'data':
+        if ssl_mode == 'data' or ssl_mode == 'n2n':
             connection_string = connection_string.replace('couchbase',
                                                           'couchbases')
             connection_string += '&certpath=root.pem'

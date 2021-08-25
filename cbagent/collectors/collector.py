@@ -29,6 +29,7 @@ class Collector:
         self.collections = settings.collections
         self.hostnames = settings.hostnames
         self.workers = settings.workers
+        self.n2n_enabled = settings.is_n2n
         self.nodes = list(self.get_nodes())
         self.ssh_username = getattr(settings, 'ssh_username', None)
         self.ssh_password = getattr(settings, 'ssh_password', None)
@@ -47,8 +48,12 @@ class Collector:
                 url = "http://{}:{}{}".format(server, port, path)
                 r = self.session.get(url=url)
             else:
-                url = "http://{}:{}{}".format(server, port, path)
-                r = self.session.get(url=url, auth=self.auth)
+                if self.n2n_enabled:
+                    port = int(str(1) + str(port))
+                    url = "https://{}:{}{}".format(server, port, path)
+                else:
+                    url = "http://{}:{}{}".format(server, port, path)
+                r = self.session.get(url=url, auth=self.auth, verify=False)
             if r.status_code in (200, 201, 202):
                 return json and r.json() or r.text
             else:

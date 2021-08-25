@@ -17,7 +17,7 @@ class ClusterManager:
         self.cluster_spec = cluster_spec
         self.test_config = test_config
         self.dynamic_infra = self.cluster_spec.dynamic_infrastructure
-        self.rest = RestHelper(cluster_spec)
+        self.rest = RestHelper(cluster_spec, test_config)
         self.remote = RemoteHelper(cluster_spec, verbose)
         self.monitor = Monitor(cluster_spec, test_config, verbose)
         self.memcached = MemcachedHelper(test_config)
@@ -827,7 +827,6 @@ class ClusterManager:
     def set_x509_certificates(self):
         if self.dynamic_infra:
             return
-        logger.info('Setting x509 settings')
         if self.test_config.access_settings.ssl_mode == "auth":
             self.remote.setup_x509()
             for host in self.cluster_spec.servers:

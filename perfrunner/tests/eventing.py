@@ -85,6 +85,8 @@ class EventingTest(PerfTest):
         self.target_iterator = EventingTargetIterator(self.cluster_spec,
                                                       self.test_config,
                                                       self.key_prefix)
+        if self.test_config.access_settings.ssl_mode == 'n2n':
+            self.download_certificate()
 
     @timeit
     def deploy_and_bootstrap(self, func, name, wait_for_bootstrap):

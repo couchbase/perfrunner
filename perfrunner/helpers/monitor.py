@@ -56,7 +56,7 @@ class DefaultMonitor(DefaultRestHelper):
     )
 
     def __init__(self, cluster_spec, test_config, verbose):
-        super().__init__(cluster_spec=cluster_spec)
+        super().__init__(cluster_spec=cluster_spec, test_config=test_config)
         self.cluster_spec = cluster_spec
         self.test_config = test_config
         self.remote = RemoteHelper(cluster_spec, verbose)

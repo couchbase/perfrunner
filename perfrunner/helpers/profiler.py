@@ -58,7 +58,7 @@ class Profiler:
     def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):
         self.test_config = test_config
 
-        self.rest = RestHelper(cluster_spec)
+        self.rest = RestHelper(cluster_spec, test_config)
 
         self.master_node = next(cluster_spec.masters)
 

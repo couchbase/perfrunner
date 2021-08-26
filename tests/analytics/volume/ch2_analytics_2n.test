@@ -27,6 +27,9 @@ num_io_devices = 4
 eviction_policy = fullEviction
 replica_index = 1
 
+[compaction]
+db_percentage = 100
+
 [bucket_extras]
 num_writer_threads = 64
 num_reader_threads = 32

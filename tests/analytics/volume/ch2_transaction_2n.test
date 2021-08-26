@@ -27,6 +27,9 @@ num_io_devices = 4
 eviction_policy = fullEviction
 replica_index = 1
 
+[compaction]
+db_percentage = 100
+
 [bucket_extras]
 num_writer_threads = 64
 num_reader_threads = 32
@@ -46,5 +49,5 @@ warehouses = 1000
 aclients = 0
 tclients = 4
 iterations = 0
-duration = 1450
+duration = 1500
 workload = ch2_transaction

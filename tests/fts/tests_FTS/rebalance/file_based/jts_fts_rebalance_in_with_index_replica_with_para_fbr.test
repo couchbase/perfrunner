@@ -1,0 +1,39 @@
+[test_case]
+test = perfrunner.tests.rebalance.RebalanceForFTS
+
+[showfast]
+title = FTS Rebalance-in (min), 3 -> 4, 20M X 1KB, maxConcurrentPartitionMovesPerNode = 10, partitioned_index = 10, replica = 1 , with File based rebalance
+component = jts
+category = Rebalance
+sub_category = In
+orderby = q0b00000000
+
+[cluster]
+mem_quota = 51024
+initial_nodes = 3
+num_buckets = 1
+fts_index_mem_quota = 102400
+
+[bucket]
+replica_number=0
+
+[load]
+items = 20000000
+size = 1024
+workers = 10
+doc_gen = fts_rebal_doc
+
+[jts]
+test_total_docs = 20000000
+couchbase_index_name = perf_fts_index
+couchbase_index_configfile = tests/fts/index/fts_rebal_with_replica.json
+ftspartitions = 10
+fts_file_based_rebal_disabled = false
+
+[rebalance]
+nodes_after = 4
+start_after = 300
+stop_after = 600
+
+[profiling]
+services = fts

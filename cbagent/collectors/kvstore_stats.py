@@ -88,7 +88,11 @@ class KVStoreStats(Collector):
         "TreeSnapshotMemoryUsed",
         "LSMTreeObjectMemUsed",
         "ReadAheadBufferMemUsed",
-        "TableObjectMemUsed"
+        "TableObjectMemUsed",
+        "BlockCacheHitsPerSec",
+        "BlockCacheMissesPerSec",
+        "NBloomFilterMissesPerSec",
+        "NBloomFilterHitsPerSec"
     )
     METRICS_AVERAGE_PER_NODE_PER_SHARD = (
         "ReadAmp",

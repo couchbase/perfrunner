@@ -423,7 +423,7 @@ def run_cbc_pillowfight(host: str,
     elif doc_gen == 'json_snappy':
         cmd += '--json --compress --compress '
 
-    if ssl_mode == 'data':
+    if ssl_mode == 'data' or ssl_mode == 'n2n':
         cmd += '--spec "couchbases://{host}/{bucket}?{params}" --certpath root.pem '
     else:
         cmd += '--spec "couchbase://{host}/{bucket}?{params}" '

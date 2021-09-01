@@ -22,7 +22,7 @@ class AnalyticsStats(Collector):
     def __init__(self, settings, test):
         super().__init__(settings)
 
-        self.rest = rest.RestHelper(test.cluster_spec)
+        self.rest = rest.RestHelper(test.cluster_spec, test.test_config)
         self.build = self.rest.get_version(host=self.master_node)
         self.servers = self.rest.get_active_nodes_by_role(self.master_node, 'cbas')
         version, build_number = self.build.split('-')

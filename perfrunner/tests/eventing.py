@@ -85,7 +85,8 @@ class EventingTest(PerfTest):
         self.target_iterator = EventingTargetIterator(self.cluster_spec,
                                                       self.test_config,
                                                       self.key_prefix)
-        if self.test_config.access_settings.ssl_mode == 'n2n':
+        if self.test_config.access_settings.ssl_mode == 'n2n' or \
+                self.test_config.load_settings.ssl_mode == 'n2n':
             self.download_certificate()
 
     @timeit
@@ -592,6 +593,7 @@ class FunctionsRebalancePillowfightThroughputTest(FunctionsRebalanceThroughputTe
     ALL_BUCKETS = True
 
     def load(self, *args):
+        self.download_certificate()
         PerfTest.load(self, task=pillowfight_data_load_task)
 
     def access_bg(self, *args):

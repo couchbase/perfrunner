@@ -63,7 +63,7 @@ class CBGen(CBAsyncGen):
         connection_string = 'couchbase://{host}/{bucket}?password={password}&{params}'
         connstr_params = parse.urlencode(kwargs["connstr_params"])
 
-        if ssl_mode == 'data':
+        if ssl_mode == 'data' or ssl_mode == 'n2n':
             connection_string = connection_string.replace('couchbase',
                                                           'couchbases')
             connection_string += '&certpath=root.pem'

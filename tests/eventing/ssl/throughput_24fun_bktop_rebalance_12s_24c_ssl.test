@@ -57,4 +57,4 @@ batch_size = 1
 ssl_mode = n2n
 
 [clients]
-libcouchbase = 3.0.8
+python_client = 3.0.8

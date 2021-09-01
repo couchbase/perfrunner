@@ -53,4 +53,4 @@ iterations = -1
 ssl_mode = n2n
 
 [clients]
-libcouchbase = 3.0.8
+libcouchbase = 3.0.7

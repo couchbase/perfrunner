@@ -2,7 +2,7 @@
 test = perfrunner.tests.secondary.InitialandIncrementalSecondaryIndexTest
 
 [showfast]
-title = 1 bucket x 20M x 1KB, 100 doc groups, 1000 indexes, 100K KV ops/sec, no mutations during initial build only, MOI
+title = 1 bucket x 100M x 1KB, 100 doc groups, 1000 indexes, 100K KV ops/sec, no mutations during initial build only, MOI
 component = secondary
 sub_category = MOI
 

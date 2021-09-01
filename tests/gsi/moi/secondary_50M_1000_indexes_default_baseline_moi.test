@@ -19,9 +19,6 @@ num_buckets = 1
 replica_number=0
 replica_index=0
 
-[collection]
-config = collections/1bucket_default.json
-
 [compaction]
 db_percentage = 100
 view_percentage = 100

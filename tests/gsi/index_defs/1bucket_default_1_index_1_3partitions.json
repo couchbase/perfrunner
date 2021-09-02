@@ -1,0 +1,13 @@
+{
+    "bucket-1": {
+        "_default": {
+            "_default": {
+                "myindex": {
+                    "field": "alt_email",
+                    "num_partition": 3,
+                    "num_replica": 0
+                }
+            }
+        }
+    }
+}

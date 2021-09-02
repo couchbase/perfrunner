@@ -18,6 +18,10 @@ from perfrunner.helpers.worker import (
 )
 from perfrunner.tests import PerfTest, TargetIterator
 from perfrunner.tests.rebalance import RebalanceKVTest
+from perfrunner.tests.secondary import (
+    InitialandIncrementalSecondaryIndexTest,
+    SecondaryIndexingScanTest,
+)
 from perfrunner.tests.tools import BackupTest
 from perfrunner.tests.xdcr import UniDirXdcrInitTest
 from perfrunner.tests.ycsb import YCSBThroughputTest
@@ -1164,3 +1168,75 @@ class UniDirXdcrInitHiDDTest(UniDirXdcrInitTest):
 
         time_elapsed = self.init_xdcr()
         self.report_kpi(time_elapsed)
+
+
+class InitialandIncrementalSecondaryIndexHiDDTest(InitialandIncrementalSecondaryIndexTest):
+
+    COLLECTORS = {'secondary_stats': True, 'secondary_debugstats': True,
+                  'secondary_debugstats_bucket': True, 'secondary_debugstats_index': True,
+                  'disk': True, 'kvstore': True, 'vmstat': True}
+    CB_STATS_PORT = 11209
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.collect_per_server_stats = self.test_config.magma_settings.collect_per_server_stats
+
+    def _report_kpi(self, time_elapsed, index_type, unit="min"):
+        self.reporter.post(
+            *self.metrics.get_indexing_meta(value=time_elapsed,
+                                            index_type=index_type,
+                                            unit=unit,
+                                            update_category=False)
+        )
+
+
+class SecondaryIndexingScanHiDDTest(SecondaryIndexingScanTest):
+
+    COLLECTORS = {'secondary_stats': True, 'secondary_debugstats': True,
+                  'secondary_debugstats_bucket': True, 'secondary_debugstats_index': True,
+                  'disk': True, 'kvstore': True, 'vmstat': True}
+    CB_STATS_PORT = 11209
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.collect_per_server_stats = self.test_config.magma_settings.collect_per_server_stats
+
+    def _report_kpi(self,
+                    percentile_latencies,
+                    scan_thr: float = 0):
+
+        title = "Secondary Scan Throughput (scanps) {}" \
+            .format(str(self.test_config.showfast.title).strip())
+        self.reporter.post(
+            *self.metrics.scan_throughput(scan_thr,
+                                          metric_id_append_str="thr",
+                                          title=title,
+                                          update_category=False)
+        )
+        title = str(self.test_config.showfast.title).strip()
+        self.reporter.post(
+            *self.metrics.secondary_scan_latency_value(percentile_latencies[90],
+                                                       percentile=90,
+                                                       title=title,
+                                                       update_category=False))
+        self.reporter.post(
+            *self.metrics.secondary_scan_latency_value(percentile_latencies[95],
+                                                       percentile=95,
+                                                       title=title,
+                                                       update_category=False))
+
+    def run(self):
+        self.remove_statsfile()
+        self.load()
+        self.wait_for_persistence()
+
+        self.build_secondaryindex()
+        self.access_bg()
+        self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
+        scan_thr, row_thr = self.read_scanresults()
+        percentile_latencies = self.calculate_scan_latencies()
+        logger.info('Scan throughput: {}'.format(scan_thr))
+        logger.info('Rows throughput: {}'.format(row_thr))
+        self.print_index_disk_usage()
+        self.report_kpi(percentile_latencies, scan_thr)
+        self.validate_num_connections()

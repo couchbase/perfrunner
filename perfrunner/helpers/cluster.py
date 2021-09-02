@@ -280,8 +280,6 @@ class ClusterManager:
             for bucket_name in self.test_config.buckets:
                 self.remote.create_bucket(bucket_name, per_bucket_quota, self.test_config.bucket)
         else:
-            if self.test_config.bucket.backend_storage == 'magma':
-                self.enable_developer_preview()
             for master in self.cluster_spec.masters:
                 for bucket_name in self.test_config.buckets:
                     self.rest.create_bucket(

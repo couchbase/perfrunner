@@ -401,12 +401,14 @@ class MetricHelper:
         return scan_latency, self._snapshots, metric_info
 
     def secondary_scan_latency_value(self, scan_latency,
-                                     percentile: Number, title: str = None) -> Metric:
+                                     percentile: Number, title: str = None,
+                                     update_category: bool = True) -> Metric:
         metric_id = "{}_{}th".format(self.test_config.name, percentile)
         title = '{}th percentile secondary scan latency (ms), {}'.format(percentile,
                                                                          title)
         metric_info = self._metric_info(metric_id, title, chirality=-1)
-        metric_info['category'] = "lat"
+        if update_category:
+            metric_info['category'] = "lat"
 
         scan_latency = scan_latency / 1e6
         scan_latency = round(scan_latency, 2)
@@ -578,14 +580,16 @@ class MetricHelper:
                           value: float,
                           index_type: str,
                           unit: str = "min",
-                          name: str = "") -> Metric:
+                          name: str = "",
+                          update_category: bool = True) -> Metric:
         metric_id = '{}_{}'.format(self.test_config.name, index_type.lower())
         test_name = self._title
         if name:
             test_name = name
         title = '{} index ({}), {}'.format(index_type, unit, test_name)
         metric_info = self._metric_info(metric_id, title, chirality=-1)
-        metric_info['category'] = index_type.lower()
+        if update_category:
+            metric_info['category'] = index_type.lower()
 
         value = s2m(value)
 
@@ -1124,12 +1128,13 @@ class MetricHelper:
         return delta, self._snapshots, metric_info
 
     def scan_throughput(self, throughput: float, metric_id_append_str: str = None,
-                        title: str = None) -> Metric:
+                        title: str = None, update_category: bool = True) -> Metric:
         metric_info = self._metric_info()
         if metric_id_append_str is not None:
             metric_id = '{}_{}'.format(self.test_config.name, metric_id_append_str)
             metric_info = self._metric_info(metric_id=metric_id, title=title, chirality=1)
-        metric_info['category'] = "thr"
+        if update_category:
+            metric_info['category'] = "thr"
 
         throughput = round(throughput, 1)
 

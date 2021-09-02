@@ -348,7 +348,8 @@ class ClientInstaller:
         py_version = self.client_settings['python_client']
         logger.info("Desired clients: lcb={}, py={}"
                     .format(lcb_version, py_version))
-        if lcb_version == '2.9.3' and py_version == '2.5.0':
+        if (lcb_version == '2.9.3' and py_version == '2.5.0') or \
+                (lcb_version == '3.0.2' and py_version == '3.0.4'):
             if any([current_version != lcb_version
                     for current_version
                     in self.detect_client_versions('libcouchbase').values()]):
@@ -396,7 +397,7 @@ class ClientInstaller:
         elif lcb_version is None and py_version is None:
             pass
         else:
-            logger.exception("unknown combination of LCB and python sdk")
+            logger.error("unknown combination of LCB and python sdk")
 
 
 def get_args():

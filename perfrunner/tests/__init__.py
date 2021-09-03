@@ -55,6 +55,8 @@ class PerfTest:
         if self.test_config.test_case.use_workers:
             self.worker_manager = WorkerManager(cluster_spec, test_config,
                                                 verbose)
+        if self.test_config.cluster.enable_n2n_encryption:
+            self.download_certificate()
 
     def __enter__(self):
         return self

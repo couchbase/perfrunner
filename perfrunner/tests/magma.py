@@ -17,6 +17,7 @@ from perfrunner.helpers.worker import (
     ycsb_task,
 )
 from perfrunner.tests import PerfTest, TargetIterator
+from perfrunner.tests.n1ql import N1QLLatencyTest, N1QLThroughputTest
 from perfrunner.tests.rebalance import RebalanceKVTest
 from perfrunner.tests.secondary import (
     InitialandIncrementalSecondaryIndexTest,
@@ -1220,3 +1221,89 @@ class SecondaryIndexingScanHiDDTest(SecondaryIndexingScanTest):
         self.print_index_disk_usage()
         self.report_kpi(percentile_latencies=percentile_latencies, scan_thr=scan_thr)
         self.validate_num_connections()
+
+
+class N1QLThroughputHiDDTest(N1QLThroughputTest):
+    COLLECTORS = {
+        'iostat': True,
+        'memory': True,
+        'n1ql_latency': False,
+        'n1ql_stats': True,
+        'ns_server_system': True,
+        'disk': True,
+        'kvstore': True,
+        'vmstat': True,
+        'secondary_stats': True,
+        'secondary_debugstats': True,
+        'secondary_debugstats_bucket': True,
+        'secondary_debugstats_index': True,
+        'secondary_storage_stats': True,
+        'secondary_storage_stats_mm': True
+    }
+    CB_STATS_PORT = 11209
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        local.extract_cb_any(filename='couchbase')
+        self.collect_per_server_stats = self.test_config.magma_settings.collect_per_server_stats
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+
+        self.create_indexes()
+        self.wait_for_indexing()
+
+        self.store_plans()
+
+        if self.test_config.users.num_users_per_bucket > 0:
+            self.cluster.add_extra_rbac_users(self.test_config.users.num_users_per_bucket)
+
+        self.access_bg()
+        self.access()
+
+        self.report_kpi()
+
+
+class N1QLLatencyHiDDTest(N1QLLatencyTest):
+    COLLECTORS = {
+        'iostat': True,
+        'memory': True,
+        'n1ql_latency': True,
+        'n1ql_stats': True,
+        'ns_server_system': True,
+        'disk': True,
+        'kvstore': True,
+        'vmstat': True,
+        'secondary_stats': True,
+        'secondary_debugstats': True,
+        'secondary_debugstats_bucket': True,
+        'secondary_debugstats_index': True,
+        'secondary_storage_stats': True,
+        'secondary_storage_stats_mm': True
+    }
+    CB_STATS_PORT = 11209
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        local.extract_cb_any(filename='couchbase')
+        self.collect_per_server_stats = self.test_config.magma_settings.collect_per_server_stats
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+
+        self.create_indexes()
+        self.wait_for_indexing()
+
+        self.store_plans()
+
+        if self.test_config.users.num_users_per_bucket > 0:
+            self.cluster.add_extra_rbac_users(self.test_config.users.num_users_per_bucket)
+
+        self.access_bg()
+        self.access()
+
+        self.report_kpi()

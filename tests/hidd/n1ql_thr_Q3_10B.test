@@ -1,0 +1,58 @@
+[test_case]
+test = perfrunner.tests.magma.N1QLThroughputHiDDTest
+
+[showfast]
+title = Q3, 1 bucket x 10B x 1KB, Range Scan, not_bounded, Plasma, 3 Indexer Nodes, 3 Partitions, Compressed, 10%% Index Resident Ratio
+component = hidd
+category = n1ql
+
+[cluster]
+mem_quota = 51200
+index_mem_quota = 71680
+initial_nodes = 8
+num_buckets = 1
+enable_cpu_cores = false
+
+[bucket]
+eviction_policy = fullEviction
+backend_storage = magma
+
+[bucket_extras]
+num_reader_threads = 64
+num_writer_threads = 64
+
+[secondary]
+indexer.settings.storage_mode = plasma
+indexer.settings.max_cpu_percent = 4800
+
+[load]
+items = 10000000000
+size = 1024
+workers = 100
+doc_gen = reverse_lookup
+
+[index]
+statements =
+    CREATE INDEX by_capped_small ON `bucket-1`(capped_small) PARTITION BY HASH(META().id) WITH {"num_partition": 3};
+
+[access]
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+throughput = 15000
+items = 10000000000
+workers = 20
+time = 3600
+n1ql_queries = range-scan
+n1ql_workers = 240
+workload_instances = 1
+
+[n1ql-range-scan]
+statement = SELECT name AS _name, street AS _street FROM `bucket-1` WHERE capped_small=$1;
+scan_consistency = not_bounded
+args = ["{capped_small}"]
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

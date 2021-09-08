@@ -1,0 +1,48 @@
+[test_case]
+test = perfrunner.tests.magma.N1QLLatencyHiDDTest
+
+[showfast]
+title = Q1, 1 bucket x 10B x 1KB, Key-Value Lookup, 10K queries/sec, Plasma
+component = hidd
+category = n1ql
+
+[cluster]
+mem_quota = 51200
+index_mem_quota = 71680
+initial_nodes = 8
+num_buckets = 1
+enable_cpu_cores = false
+
+[bucket]
+eviction_policy = fullEviction
+backend_storage = magma
+
+[bucket_extras]
+num_reader_threads = 64
+num_writer_threads = 64
+
+[secondary]
+indexer.settings.storage_mode = plasma
+indexer.settings.max_cpu_percent = 4800
+
+[load]
+items = 10000000000
+size = 1024
+workers = 100
+doc_gen = reverse_lookup
+
+[access]
+items = 10000000000
+workers = 0
+n1ql_queries = key-value-lookup
+n1ql_throughput = 10000
+n1ql_workers = 240
+time = 1200
+
+[n1ql-key-value-lookup]
+statement = SELECT * FROM `bucket-1` USE KEYS[$1];
+args = ["{key}"]
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

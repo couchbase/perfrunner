@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.InitialandIncrementalSecondaryIndexHiDDTest
 
 [showfast]
-title = 1 bucket x 10B x 1KB, 10K KV ops/sec, 3 Indexer Nodes, 3 Partitions, Compressed, Plasma
+title = 1 bucket x 10B x 1KB, 10K KV ops/sec, 3 Indexer Nodes, 3 Partitions, Compressed, Plasma, 10%% Index Resident Ratio
 component = hidd
 category = gsi
 

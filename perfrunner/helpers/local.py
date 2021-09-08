@@ -828,7 +828,7 @@ def start_celery_worker(queue: str):
         local('WORKER_TYPE=local '
               'BROKER_URL=sqla+sqlite:///perfrunner.db '
               'nohup env/bin/celery worker '
-              '-A perfrunner.helpers.worker -l INFO -Q {} > worker.log &'.format(queue))
+              '-A perfrunner.helpers.worker -l INFO -Q {} -f worker.log &'.format(queue))
 
 
 def clone_git_repo(repo: str, branch: str, commit: str = None):

@@ -1285,3 +1285,98 @@ class SecondaryRebalanceTest(SecondaryIndexingScanTest, RebalanceTest):
                 *self.metrics.secondary_scan_latency_value(percentile_latencies[95],
                                                            percentile=95,
                                                            title=title))
+
+
+class SecondaryIndexingThroughputCompactAllTest(SecondaryIndexTest):
+
+    """Apply scan workload and measure the average scan throughput."""
+
+    def _report_kpi(self, scan_thr):
+        self.reporter.post(
+            *self.metrics.scan_throughput(scan_thr)
+        )
+
+    def set_plasma_diag(self):
+        ids = self.rest.get_plasma_dbs(self.index_nodes[0])
+        for id in ids:
+            self.rest.set_plasma_diag(self.index_nodes[0], "compactAll", id)
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.build_secondaryindex()
+        self.set_plasma_diag()
+        self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
+        scan_thr, row_thr = self.read_scanresults()
+        logger.info('Scan throughput: {}'.format(scan_thr))
+        logger.info('Rows throughput: {}'.format(row_thr))
+        self.print_index_disk_usage()
+        self.report_kpi(scan_thr)
+        self.validate_num_connections()
+
+
+class SecondaryIndexingThroughputCompressAllTest(SecondaryIndexTest):
+
+    """Apply scan workload and measure the average scan throughput."""
+
+    def _report_kpi(self, scan_thr):
+        self.reporter.post(
+            *self.metrics.scan_throughput(scan_thr)
+        )
+
+    def set_plasma_diag(self):
+        ids = self.rest.get_plasma_dbs(self.index_nodes[0])
+        for id in ids:
+            self.rest.set_plasma_diag(self.index_nodes[0], "compactAll", id)
+        for id in ids:
+            self.rest.set_plasma_diag(self.index_nodes[0], "persistAll", id)
+        for id in ids:
+            self.rest.set_plasma_diag(self.index_nodes[0], "compressAll", id)
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.build_secondaryindex()
+        self.set_plasma_diag()
+        self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
+        scan_thr, row_thr = self.read_scanresults()
+        logger.info('Scan throughput: {}'.format(scan_thr))
+        logger.info('Rows throughput: {}'.format(row_thr))
+        self.print_index_disk_usage()
+        self.report_kpi(scan_thr)
+        self.validate_num_connections()
+
+
+class SecondaryIndexingThroughputEvictAllTest(SecondaryIndexTest):
+
+    """Apply scan workload and measure the average scan throughput."""
+
+    def _report_kpi(self, scan_thr):
+        self.reporter.post(
+            *self.metrics.scan_throughput(scan_thr)
+        )
+
+    def set_plasma_diag(self):
+        ids = self.rest.get_plasma_dbs(self.index_nodes[0])
+        for id in ids:
+            self.rest.set_plasma_diag(self.index_nodes[0], "compactAll", id)
+        for id in ids:
+            self.rest.set_plasma_diag(self.index_nodes[0], "persistAll", id)
+        for id in ids:
+            self.rest.set_plasma_diag(self.index_nodes[0], "evictAll", id)
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.build_secondaryindex()
+        self.set_plasma_diag()
+        self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
+        scan_thr, row_thr = self.read_scanresults()
+        logger.info('Scan throughput: {}'.format(scan_thr))
+        logger.info('Rows throughput: {}'.format(row_thr))
+        self.print_index_disk_usage()
+        self.report_kpi(scan_thr)
+        self.validate_num_connections()

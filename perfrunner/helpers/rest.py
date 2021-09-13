@@ -1276,6 +1276,28 @@ class DefaultRestHelper(RestBase):
             format(host, '9102', bucket, from_keyspace, to_keyspace)
         return self.post(url=api, data=json.dumps(metadata))
 
+    def set_plasma_diag(self, host: str, cmd: str, arg: str):
+        logger.info('setting plasma diag to {} for {}'.format(cmd, arg))
+        api = 'http://{}:{}/plasmaDiag'.format(host, '9102')
+        data = {
+            'Cmd': cmd, "Args": [arg]
+        }
+        r = self.post(url=api, data=json.dumps(data))
+        if r.status_code not in (200, 202):
+            logger.warning('Unexpected request status code {}'.format(r.status_code))
+
+    def get_plasma_dbs(self, host: str):
+        api = 'http://{}:{}/plasmaDiag'.format(host, '9102')
+        data = {
+            'Cmd': 'listDBs'
+        }
+        r = self.post(url=api, data=json.dumps(data))
+        if r.status_code not in (200, 202):
+            logger.warning('Unexpected request status code {}'.format(r.status_code))
+        ids = [line.split()[-1] for line in r.text.split("\n")[1:-1]]
+        logger.info('Plasma db list {}'.format(ids))
+        return ids
+
 
 class KubernetesRestHelper(RestBase):
 

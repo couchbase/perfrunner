@@ -36,6 +36,8 @@ PKG_PATTERNS = {
         'couchbase-server-{edition}-{release}-{build}-centos{os}.x86_64.rpm',
         'couchbase-server-{edition}-{release}-centos{os}.x86_64.rpm',
         'couchbase-server-{edition}-{release}-centos6.x86_64.rpm',
+        'couchbase-server-{edition}-{release}-{build}-{os}.aarch64.rpm',
+        'couchbase-server-{edition}-{release}-{os}.aarch64.rpm',
     ),
     'deb': (
         'couchbase-server-{edition}_{release}-{build}-ubuntu{os}_amd64.deb',
@@ -401,7 +403,11 @@ class CouchbaseInstaller:
                      package: str = None, os_release: str = None) -> Iterator[str]:
         if package is None:
             if self.remote.package == 'rpm':
-                os_release = self.remote.detect_centos_release()
+                os_arch = self.cluster_spec.infrastructure_settings.get('os_arch', 'x86_64')
+                if os_arch == 'arm':
+                    os_release = 'amzn2'
+                else:
+                    os_release = self.remote.detect_centos_release()
             elif self.remote.package == 'deb':
                 os_release = self.remote.detect_ubuntu_release()
             package = self.remote.package

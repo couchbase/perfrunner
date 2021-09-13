@@ -45,6 +45,7 @@ class AWSDeployer(Deployer):
         self.generated_kube_config_dir = "cloud/infrastructure/generated/kube_configs"
         self.ebs_csi_iam_policy_path = "cloud/infrastructure/aws/eks/ebs-csi-iam-policy.json"
         self.cloud_ini = "cloud/infrastructure/cloud.ini"
+        self.os_arch = self.infra_spec.infrastructure_settings.get('os_arch', 'x86_64')
 
     def gen_desired_infrastructure_config(self):
         desired_infra = {'k8s': {}, 'ec2': {}}
@@ -493,6 +494,7 @@ class AWSDeployer(Deployer):
                                 tags.append({'Key': 'NodeRoles', 'Value': 'utilities'})
                                 break
                     node_group_spec = ec2_cluster_config[node_group]
+                    block_device = '/dev/sda1'
                     if "workers" in node_role:  # perf client ami
                         if self.region == 'us-east-1':
                             ami = 'ami-040bd58822f237e77'
@@ -500,7 +502,11 @@ class AWSDeployer(Deployer):
                             ami = 'ami-04f9b8bb1ea4c3ef6'
                     elif "couchbase" in node_role:  # perf server ami
                         if self.region == 'us-east-1':
-                            ami = 'ami-0c6f86d5c61063ccd'
+                            if self.os_arch == 'arm':
+                                ami = 'ami-0f249abfe3dd01b30'
+                                block_device = '/dev/xvda'
+                            else:
+                                ami = 'ami-0c6f86d5c61063ccd'
                         else:
                             ami = 'ami-83b400fb'
                     elif "utilities" in node_role:  # perf client ami
@@ -513,7 +519,7 @@ class AWSDeployer(Deployer):
                     if node_group_spec['instance_type'][0] == "t":
                         response = self.ec2.create_instances(
                             BlockDeviceMappings=[
-                                {'DeviceName': '/dev/sda1',
+                                {'DeviceName': block_device,
                                  'Ebs':
                                      {'DeleteOnTermination': True,
                                       'VolumeSize': int(node_group_spec['volume_size']),
@@ -538,7 +544,7 @@ class AWSDeployer(Deployer):
                     else:
                         response = self.ec2.create_instances(
                             BlockDeviceMappings=[
-                                {'DeviceName': '/dev/sda1',
+                                {'DeviceName': block_device,
                                  'Ebs':
                                      {'DeleteOnTermination': True,
                                       'VolumeSize': int(node_group_spec['volume_size']),

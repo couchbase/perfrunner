@@ -20,7 +20,13 @@ class RemoteHelper:
         state.output.running = verbose
         state.output.stdout = verbose
 
-        os = cls.detect_os(cluster_spec)
+        if cluster_spec.cloud_infrastructure:
+            if cluster_spec.infrastructure_settings.get('os_arch', 'x86_64') == 'arm':
+                os = 'arm'
+            else:
+                os = cls.detect_os(cluster_spec)
+        else:
+            os = cls.detect_os(cluster_spec)
         if os == 'Cygwin':
             return RemoteWindows(cluster_spec, os)
         else:

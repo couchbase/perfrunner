@@ -403,9 +403,12 @@ class CouchbaseInstaller:
                      package: str = None, os_release: str = None) -> Iterator[str]:
         if package is None:
             if self.remote.package == 'rpm':
-                os_arch = self.cluster_spec.infrastructure_settings.get('os_arch', 'x86_64')
-                if os_arch == 'arm':
-                    os_release = 'amzn2'
+                if self.cluster_spec.cloud_infrastructure:
+                    os_arch = self.cluster_spec.infrastructure_settings.get('os_arch', 'x86_64')
+                    if os_arch == 'arm':
+                        os_release = 'amzn2'
+                    else:
+                        os_release = self.remote.detect_centos_release()
                 else:
                     os_release = self.remote.detect_centos_release()
             elif self.remote.package == 'deb':

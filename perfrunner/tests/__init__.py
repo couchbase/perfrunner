@@ -288,10 +288,14 @@ class PerfTest:
 
     def reset_kv_stats(self):
         master_node = next(self.cluster_spec.masters)
-        for bucket in self.test_config.buckets:
-            for server in self.rest.get_server_list(master_node, bucket):
-                port = self.rest.get_memcached_port(server)
-                self.memcached.reset_stats(server, port, bucket)
+        if self.test_config.cluster.enable_n2n_encryption:
+            local.get_cbstats(self.master_node, 11210, "reset",
+                              self.cluster_spec)
+        else:
+            for bucket in self.test_config.buckets:
+                for server in self.rest.get_server_list(master_node, bucket):
+                    port = self.rest.get_memcached_port(server)
+                    self.memcached.reset_stats(server, port, bucket)
 
     def create_indexes(self):
         logger.info('Creating and building indexes')

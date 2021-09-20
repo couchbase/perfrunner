@@ -11,7 +11,7 @@ server_processes = projector
 
 [cluster]
 mem_quota = 51200
-index_mem_quota = 56320
+index_mem_quota = 71680
 initial_nodes = 7
 num_buckets = 1
 enable_cpu_cores = false
@@ -38,12 +38,19 @@ indexes = tests/gsi/index_defs/1bucket_default_1_index_1_3partitions.json
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
 
+[hot_load]
+items = 10000000000
+workers = 100
+working_set = 10
+
 [access]
 updates = 100
 ops = 100000000
 items = 10000000000
 throughput = 10000
 workers = 20
+working_set = 10
+working_set_access = 90
 
 [clients]
 libcouchbase = 2.9.3

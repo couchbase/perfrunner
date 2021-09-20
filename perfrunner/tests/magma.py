@@ -1189,6 +1189,16 @@ class InitialandIncrementalSecondaryIndexHiDDTest(InitialandIncrementalSecondary
                                             update_category=False)
         )
 
+    def run(self):
+        self.load_and_build_initial_index()
+
+        self.hot_load()
+        time_elapsed = self.build_incrindex()
+        self.print_index_disk_usage()
+        self.report_kpi(time_elapsed, 'Incremental')
+
+        self.run_recovery_scenario()
+
 
 class SecondaryIndexingScanHiDDTest(SecondaryIndexingScanTest):
 
@@ -1203,7 +1213,8 @@ class SecondaryIndexingScanHiDDTest(SecondaryIndexingScanTest):
 
     def _report_kpi(self,
                     percentile_latencies,
-                    scan_thr: float = 0):
+                    scan_thr: float = 0,
+                    time_elapsed: float = 0):
 
         title = "Secondary Scan Throughput (scanps) {}" \
             .format(str(self.test_config.showfast.title).strip())
@@ -1238,5 +1249,5 @@ class SecondaryIndexingScanHiDDTest(SecondaryIndexingScanTest):
         logger.info('Scan throughput: {}'.format(scan_thr))
         logger.info('Rows throughput: {}'.format(row_thr))
         self.print_index_disk_usage()
-        self.report_kpi(percentile_latencies, scan_thr)
+        self.report_kpi(percentile_latencies=percentile_latencies, scan_thr=scan_thr)
         self.validate_num_connections()

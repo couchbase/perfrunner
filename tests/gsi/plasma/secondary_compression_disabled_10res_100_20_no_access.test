@@ -1,0 +1,44 @@
+[test_case]
+test = perfrunner.tests.secondary.SecondaryIndexingThroughputNoAccessTest
+
+[showfast]
+title = 1 bucket x 250M, single 2i index, 20K KV ops/sec, no backgroud mutation, 10%% Resident, PLASMA, Compression disabled 100/20
+component = secondary
+category = thr
+sub_category = Compression
+
+[stats]
+server_processes = projector
+lat_interval = 0.5
+
+[cluster]
+mem_quota = 12000
+index_mem_quota = 3100
+initial_nodes = 6
+num_buckets = 1
+kernel_mem_limit = 7000M
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[bucket]
+replica_number=0
+replica_index=0
+
+[load]
+items = 250000000
+size = 17
+workers = 100
+doc_gen = sequential_plasma
+key_fmtr = hash
+
+[secondary]
+indexes = myindex:city
+incremental_only = 1
+indexer.settings.storage_mode = plasma
+indexer.settings.max_cpu_percent = 4800
+indexer.plasma.backIndex.enableInMemoryCompression = false
+indexer.plasma.mainIndex.enableInMemoryCompression = false
+cbindexperf_configfile = tests/gsi/plasma/config/config_scanthr_20per_hot_plasma.json
+scan_time = 1500

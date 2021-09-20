@@ -201,12 +201,15 @@ class MovingWorkingSetKey:
         num_hot_items = int(num_existing_items * self.working_set / 100)
 
         if timer_elapse.value:
+            from logger import logger
             timer_elapse.value = 0
             # Create next hot_load_start, add working_set_move_docs and then
             # modulus to prevent going beyond num_docs
             num_items = num_existing_items - num_hot_items
             offset = current_hot_load_start.value + self.working_set_moving_docs
             current_hot_load_start.value = int(offset % num_items)
+            logger.info("New hotload start {} end {}".format(current_hot_load_start.value,
+                        current_hot_load_start.value + num_hot_items))
 
         left_boundary = curr_deletes + current_hot_load_start.value
         right_boundary = left_boundary + num_hot_items
@@ -1608,6 +1611,14 @@ class SmallPlasmaDocument(PlasmaDocument):
 
         return {
             'alt_email': self.build_alt_email(alphabet)
+        }
+
+
+class KeyPlasmaDocument(PlasmaDocument):
+
+    def next(self, key: Key) -> dict:
+        return {
+            'city': key.string
         }
 
 

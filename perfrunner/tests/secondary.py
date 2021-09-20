@@ -318,6 +318,7 @@ class SecondaryIndexTest(PerfTest):
                 (self.test_config.access_settings.items - num_hot_items)
         end = start + num_hot_items
 
+        logger.info("new start {} new end {}".format(start, end))
         data["ScanSpecs"][0]["Low"][0] = decimal_fmtr(start, prefix='')
         data["ScanSpecs"][0]["High"][0] = decimal_fmtr(end, prefix='')
 
@@ -1215,7 +1216,7 @@ class SecondaryRebalanceTest(SecondaryIndexingScanTest, RebalanceTest):
 
     """Measure rebalance time for indexer with scan and access workload."""
 
-    COLLECTORS = {'secondary_stats': True,
+    COLLECTORS = {'secondary_stats': True, 'secondary_latency': True,
                   'secondary_debugstats': True, 'secondary_debugstats_bucket': True}
 
     def __init__(self, *args, **kwargs):
@@ -1391,4 +1392,331 @@ class SecondaryIndexingThroughputEvictAllTest(SecondaryIndexTest):
         logger.info('Rows throughput: {}'.format(row_thr))
         self.print_index_disk_usage()
         self.report_kpi(scan_thr)
+        self.validate_num_connections()
+
+
+class InitialIncrementalMovingScanLatencyTestColdScans(InitialIncrementalMovingScanLatencyTest):
+
+    def change_scan_range(self, iteration):
+        working_set = self.test_config.access_settings.working_set / 100
+        num_hot_items = int(self.test_config.access_settings.items * working_set)
+
+        with open(self.configfile, "r") as jsonFile:
+            data = json.load(jsonFile)
+
+        if iteration == 0:
+            old_start = num_hot_items * 2
+        else:
+            old_start = data["ScanSpecs"][0]["Low"][0].split("-")
+            old_start = old_start[0] if len(old_start) == 1 else old_start[1]
+
+        # predict next hot_load_start
+        start = (int(old_start) + self.test_config.access_settings.working_set_moving_docs) % \
+                (self.test_config.access_settings.items - num_hot_items)
+        end = (start + num_hot_items)
+
+        logger.info("new start {} new end {}".format(start, end))
+        data["ScanSpecs"][0]["Low"][0] = decimal_fmtr(start, prefix='')
+        data["ScanSpecs"][0]["High"][0] = decimal_fmtr(end, prefix='')
+
+        with open(self.configfile, "w") as jsonFile:
+            jsonFile.write(json.dumps(data))
+
+    def run(self):
+        self.load_and_build_initial_index()
+        time_elapsed = self.build_incrindex()
+        self.print_index_disk_usage()
+        self.report_kpi(time_elapsed, 'Incremental')
+
+        self.remove_statsfile()
+        self.access_bg()
+        self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
+        self.print_index_disk_usage()
+        self.report_kpi()
+        self.validate_num_connections()
+
+
+class InitialIncrementalMovingScanLatencyTestMixedScans \
+            (InitialIncrementalMovingScanLatencyTestColdScans):
+
+    def change_scan_range(self, iteration):
+        working_set = self.test_config.access_settings.working_set / 100
+        num_hot_items = int(self.test_config.access_settings.items * working_set)
+        iteration = iteration / self.test_config.access_settings.working_set_move_time
+        moving_docs = self.test_config.access_settings.working_set_moving_docs * iteration
+        offset = num_hot_items + moving_docs
+
+        with open(self.configfile, "r") as jsonFile:
+            data = json.load(jsonFile)
+
+        if iteration == 0:
+            old_start = num_hot_items
+        elif iteration % 2 == 0:
+            # Cold Scans
+            old_start = offset
+        else:
+            # Hot Scans
+            old_start = offset + num_hot_items
+
+            # predict next hot_load_start
+        start = (int(old_start) + self.test_config.access_settings.working_set_moving_docs) % \
+                (self.test_config.access_settings.items - num_hot_items)
+        end = (start + num_hot_items)
+
+        logger.info("new start {} new end {}".format(start, end))
+        data["ScanSpecs"][0]["Low"][0] = decimal_fmtr(start, prefix='')
+        data["ScanSpecs"][0]["High"][0] = decimal_fmtr(end, prefix='')
+
+        with open(self.configfile, "w") as jsonFile:
+            jsonFile.write(json.dumps(data))
+
+
+class MovingScanThroughputTestColdScan(InitialIncrementalMovingScanThroughputTest):
+
+    def change_scan_range(self, iteration):
+        working_set = self.test_config.access_settings.working_set / 100
+        num_hot_items = int(self.test_config.access_settings.items * working_set)
+
+        with open(self.configfile, "r") as jsonFile:
+            data = json.load(jsonFile)
+
+        if iteration == 0:
+            old_start = num_hot_items * 2
+        else:
+            old_start = data["ScanSpecs"][0]["Low"][0].split("-")
+            old_start = old_start[0] if len(old_start) == 1 else old_start[1]
+
+        # predict next hot_load_start
+        start = (int(old_start) + self.test_config.access_settings.working_set_moving_docs) % \
+                (self.test_config.access_settings.items - num_hot_items)
+        end = (start + num_hot_items)
+
+        logger.info("new start {} new end {}".format(start, end))
+        data["ScanSpecs"][0]["Low"][0] = decimal_fmtr(start, prefix='')
+        data["ScanSpecs"][0]["High"][0] = decimal_fmtr(end, prefix='')
+
+        with open(self.configfile, "w") as jsonFile:
+            jsonFile.write(json.dumps(data))
+
+    def run(self):
+        self.remove_statsfile()
+        self.load_and_build_initial_index()
+
+        self.access_bg()
+        self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
+        scan_throughput = self.calc_throughput()
+        self.print_index_disk_usage()
+        self.report_kpi(scan_throughput)
+        self.validate_num_connections()
+
+
+class MovingScanThroughputTestMixScan(MovingScanThroughputTestColdScan):
+    def change_scan_range(self, iteration):
+        working_set = self.test_config.access_settings.working_set / 100
+        num_hot_items = int(self.test_config.access_settings.items * working_set)
+        iteration = iteration / self.test_config.access_settings.working_set_move_time
+        moving_docs = self.test_config.access_settings.working_set_moving_docs * iteration
+        offset = num_hot_items + moving_docs
+
+        with open(self.configfile, "r") as jsonFile:
+            data = json.load(jsonFile)
+
+        if iteration == 0:
+            old_start = num_hot_items
+        elif iteration % 2 == 0:
+            # Cold Scans
+            old_start = offset
+        else:
+            # Hot Scans
+            old_start = offset + num_hot_items
+
+            # predict next hot_load_start
+        start = (int(old_start) + self.test_config.access_settings.working_set_moving_docs) % \
+                (self.test_config.access_settings.items - num_hot_items)
+        end = (start + num_hot_items)
+
+        logger.info("new start {} new end {}".format(start, end))
+        data["ScanSpecs"][0]["Low"][0] = decimal_fmtr(start, prefix='')
+        data["ScanSpecs"][0]["High"][0] = decimal_fmtr(end, prefix='')
+
+        with open(self.configfile, "w") as jsonFile:
+            jsonFile.write(json.dumps(data))
+
+
+class SecondaryIndexingThroughputNoAccessTest(SecondaryIndexingThroughputTest):
+    COLLECTORS = {'secondary_stats': True, 'secondary_debugstats': True,  'secondary_latency': True,
+                  'secondary_debugstats_bucket': True, 'secondary_debugstats_index': True}
+
+    def remove_resultfile(self):
+        rmfile = "rm -f {}".format("result.json")
+        status = subprocess.call(rmfile, shell=True)
+        if status != 0:
+            raise Exception('existing scan result file could not be removed')
+        else:
+            logger.info('Existing scan result file removed')
+
+    def calculate_scan_latencies(self):
+
+        scan_latencies = []
+        percentile_latencies = []
+
+        with open(self.SECONDARY_STATS_FILE, 'r') as f:
+            reader = csv.reader(f)
+            for row in reader:
+                nth_lat_str = row[-1]
+                nth_lat_val = nth_lat_str.split(":")[-1]
+                val = nth_lat_val.strip()
+                scan_latencies.append(float(val))
+
+        for percentile in range(100):
+            percentile_latencies.append(numpy.percentile(scan_latencies, percentile))
+
+        return percentile_latencies
+
+    def _report_kpi(self,
+                    percentile_latencies,
+                    scan_thr: float = 0,
+                    time_elapsed: float = 0):
+
+        if time_elapsed != 0:
+            if self.report_initial_build_time:
+                title = str(self.test_config.showfast.title).split(",", 1)[1].strip()
+                self.reporter.post(
+                    *self.metrics.get_indexing_meta(value=time_elapsed,
+                                                    index_type="Initial",
+                                                    unit="min",
+                                                    name=title)
+                )
+        else:
+            title = "Secondary Scan Throughput (scanps) {}" \
+                .format(str(self.test_config.showfast.title).strip())
+            self.reporter.post(
+                *self.metrics.scan_throughput(scan_thr,
+                                              metric_id_append_str="thr",
+                                              title=title)
+            )
+            title = str(self.test_config.showfast.title).strip()
+            self.reporter.post(
+                *self.metrics.secondary_scan_latency_value(percentile_latencies[90],
+                                                           percentile=90,
+                                                           title=title))
+            self.reporter.post(
+                *self.metrics.secondary_scan_latency_value(percentile_latencies[95],
+                                                           percentile=95,
+                                                           title=title))
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        time_elapsed = self.build_secondaryindex()
+        self.report_kpi(0, 0, time_elapsed)
+        time.sleep(900)
+
+        self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
+        self.remove_resultfile()
+        with open(self.configfile, "r") as jsonFile:
+            data = json.load(jsonFile)
+        for spec in data["ScanSpecs"]:
+            spec["Repeat"] = spec["Repeat"] * 5
+        with open(self.configfile, "w") as jsonFile:
+            jsonFile.write(json.dumps(data))
+        logger.info("updated cbindexperf config file: \n {}".format(data))
+        self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
+        scan_thr, row_thr = self.read_scanresults()
+        logger.info('Scan throughput: {}'.format(scan_thr))
+        logger.info('Rows throughput: {}'.format(row_thr))
+        percentile_latencies = self.calculate_scan_latencies()
+        self.print_index_disk_usage()
+        self.report_kpi(percentile_latencies, scan_thr, 0)
+        self.validate_num_connections()
+
+
+class MovingScanThroughputTestHotScan(InitialIncrementalMovingScanThroughputTest):
+
+    def run(self):
+        self.remove_statsfile()
+        self.load_and_build_initial_index()
+
+        self.access_bg()
+        self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
+        scan_throughput = self.calc_throughput()
+        self.print_index_disk_usage()
+        self.report_kpi(scan_throughput)
+        self.validate_num_connections()
+
+
+class InMemoryCompressionTest(SecondaryIndexingThroughputTest):
+    COLLECTORS = {'secondary_stats': True, 'secondary_debugstats': True, 'secondary_latency': True,
+                  'secondary_debugstats_bucket': True, 'secondary_debugstats_index': True}
+
+    def remove_resultfile(self):
+        rmfile = "rm -f {}".format("result.json")
+        status = subprocess.call(rmfile, shell=True)
+        if status != 0:
+            raise Exception('existing scan result file could not be removed')
+        else:
+            logger.info('Existing scan result file removed')
+
+    def calculate_scan_latencies(self):
+
+        scan_latencies = []
+        percentile_latencies = []
+
+        with open(self.SECONDARY_STATS_FILE, 'r') as f:
+            reader = csv.reader(f)
+            for row in reader:
+                nth_lat_str = row[-1]
+                nth_lat_val = nth_lat_str.split(":")[-1]
+                val = nth_lat_val.strip()
+                scan_latencies.append(float(val))
+
+        for percentile in range(100):
+            percentile_latencies.append(numpy.percentile(scan_latencies, percentile))
+
+        return percentile_latencies
+
+    def _report_kpi(self, percentile_latencies, scan_thr: float = 0):
+        title = "Secondary Scan Throughput (scanps) {}" \
+            .format(str(self.test_config.showfast.title).strip())
+        self.reporter.post(
+            *self.metrics.scan_throughput(scan_thr,
+                                          metric_id_append_str="thr",
+                                          title=title)
+        )
+        title = str(self.test_config.showfast.title).strip()
+        self.reporter.post(
+            *self.metrics.secondary_scan_latency_value(percentile_latencies[90],
+                                                       percentile=90,
+                                                       title=title))
+        self.reporter.post(
+            *self.metrics.secondary_scan_latency_value(percentile_latencies[95],
+                                                       percentile=95,
+                                                       title=title))
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+
+        self.build_secondaryindex()
+        time.sleep(900)
+
+        self.access_bg()
+        self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
+        self.remove_resultfile()
+        with open(self.configfile, "r") as jsonFile:
+            data = json.load(jsonFile)
+        for spec in data["ScanSpecs"]:
+            spec["Repeat"] = spec["Repeat"]*5
+        with open(self.configfile, "w") as jsonFile:
+            jsonFile.write(json.dumps(data))
+        logger.info("updated cbindexperf config file: \n {}".format(data))
+        self.scan_time = self.scan_time*5
+        self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
+        scan_thr, row_thr = self.read_scanresults()
+        logger.info('Scan throughput: {}'.format(scan_thr))
+        logger.info('Rows throughput: {}'.format(row_thr))
+        percentile_latencies = self.calculate_scan_latencies()
+        self.print_index_disk_usage()
+        self.report_kpi(percentile_latencies, scan_thr)
         self.validate_num_connections()

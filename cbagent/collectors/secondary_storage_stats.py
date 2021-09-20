@@ -12,6 +12,9 @@ class SecondaryStorageStats(Collector):
         "cache_hit_ratio",
         "cache_hits",
         "cache_misses",
+        "compress_cache_hit_ratio",
+        "compressed_compressible_percent",
+        "compressed_percent",
         "freed",
         "lss_fragmentation",
         "memory_size",
@@ -22,15 +25,20 @@ class SecondaryStorageStats(Collector):
         "rcache_hit_ratio",
         "rcache_hits",
         "rcache_misses",
+        "rcompress_cache_hit_ratio",
         "reclaimed",
         "reclaim_pending",
         "resident_ratio",
         "write_amp",
         "mvcc_purge_ratio",
         "memory_quota",
+        "num_burst_visits",
+        "num_periodic_visits",
         "lss_blk_read_bs",
         "lss_blk_gc_reads_bs",
         "lss_blk_rdr_reads_bs",
+        "lss_cached_pages_percent",
+        "rlss_num_reads"
     )
 
     def __init__(self, settings):

@@ -1,23 +1,25 @@
 {
-       "Concurrency" : 64,
-       "Clients" : 5,
-       "ScanSpecs" : [
-          {
-             "Limit" : 1,
-             "Low" : [
+    "Concurrency": 64,
+    "Clients": 5,
+    "ScanSpecs": [
+        {
+            "Limit": 1,
+            "Low": [
                 "000015"
-             ],
-             "Repeat" : 149999999,
-             "Type" : "Range",
-             "Bucket" : "bucket-1",
-             "High" : [
+            ],
+            "Repeat": 149999999,
+            "Type": "Range",
+            "Bucket": "bucket-1",
+            "High": [
                 "000028"
-             ],
-             "Id" : 1,
-             "Inclusion" : 3,
-             "Index" : "myindex",
-             "NInterval" : 100,
-             "RandomLen" : 12
-           }
-       ]
+            ],
+            "Id": 1,
+            "Inclusion": 3,
+            "Index": "myindex",
+            "NInterval": 100,
+            "TestSpec": {
+                "RandomKeyLen": 12
+            }
+        }
+    ]
 }

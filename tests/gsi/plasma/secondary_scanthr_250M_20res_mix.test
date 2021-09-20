@@ -1,0 +1,43 @@
+[test_case]
+test = perfrunner.tests.secondary.SecondaryIndexingThroughputNoAccessTest
+
+[showfast]
+title = 1 bucket x 250M, single 2i index, 50K KV ops/sec, random workload, 20%% Resident, PLASMA
+component = secondary
+category = thr
+sub_category = PlasmaDGM
+
+[stats]
+server_processes = projector
+lat_interval = 0.5
+
+[cluster]
+mem_quota = 12000
+index_mem_quota = 18000
+initial_nodes = 6
+num_buckets = 1
+kernel_mem_limit = 29607M
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[bucket]
+replica_number=0
+replica_index=0
+
+[load]
+items = 250000000
+workers = 100
+doc_gen = small_plasma
+
+[secondary]
+indexes = myindex:alt_email
+indexer.settings.storage_mode = plasma
+indexer.settings.max_cpu_percent = 4800
+cbindexperf_configfile = tests/gsi/plasma/config/config_scanlatency_random_scan_50per_plasma.json
+scan_time = 1500
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

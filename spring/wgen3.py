@@ -45,6 +45,7 @@ from spring.docgen import (
     JoinedDocument,
     KeyForCASUpdate,
     KeyForRemoval,
+    KeyPlasmaDocument,
     LargeDocument,
     LargeGroupedDocument,
     LargeItemGroupedDocument,
@@ -179,6 +180,8 @@ class Worker:
         self.keys_for_cas_update = KeyForCASUpdate(ws.n1ql_workers,
                                                    self.ts.prefix,
                                                    ws.key_fmtr)
+        logger.info("existing_keys {}, keys_for_removal {}, keys_for_cas_update {}"
+                    .format(self.existing_keys, self.keys_for_removal, self.keys_for_cas_update))
 
     def init_docs(self):
         ws = copy.deepcopy(self.ws)
@@ -282,6 +285,8 @@ class Worker:
             self.docs = GSIMultiIndexDocument(ws.size)
         elif self.ws.doc_gen == 'small_plasma':
             self.docs = SmallPlasmaDocument(ws.size)
+        elif self.ws.doc_gen == 'key_plasma':
+            self.docs = KeyPlasmaDocument(self.ws.size)
         elif self.ws.doc_gen == 'sequential_plasma':
             self.docs = SequentialPlasmaDocument(ws.size)
         elif self.ws.doc_gen == 'large_item_plasma':

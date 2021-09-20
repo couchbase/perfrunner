@@ -1,0 +1,57 @@
+[test_case]
+test = perfrunner.tests.secondary.MovingScanThroughputTestMixScan
+
+[showfast]
+title = 1 bucket x 250M, single 2i index, 20K KV ops/sec, hot workload, 20%% Resident, PLASMA, Compression mix scan
+component = secondary
+category = thr
+sub_category = PlasmaDGM
+
+[stats]
+server_processes = projector
+lat_interval = 0.5
+
+[cluster]
+mem_quota = 12000
+index_mem_quota = 18000
+initial_nodes = 6
+num_buckets = 1
+kernel_mem_limit = 29607M
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[bucket]
+replica_number=0
+replica_index=0
+
+[load]
+items = 250000000
+size = 17
+workers = 100
+doc_gen = key_plasma
+key_fmtr = hash
+
+[secondary]
+indexes = myindex:city
+incremental_only = 1
+indexer.settings.storage_mode = plasma
+indexer.settings.max_cpu_percent = 4800
+cbindexperf_configfile = tests/gsi/plasma/config/config_scanthr_dgm_plasma.json
+scan_time = 1500
+
+[access]
+updates = 100
+ops = 60000000
+items = 250000000
+throughput = 20000
+workers = 100
+working_set = 20
+working_set_access = 100
+working_set_move_time = 60
+working_set_moving_docs = 3000000
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

@@ -1,0 +1,196 @@
+{
+    "Concurrency": 64,
+    "Clients": 5,
+    "ScanSpecs": [
+        {
+            "Bucket": "bucket-1",
+            "Limit": 1,
+            "Low": [
+                "000000000000"
+            ],
+            "Repeat": 1499999,
+            "Type": "Range",
+            "High": [
+                "333333333333"
+            ],
+            "Id": 1,
+            "Inclusion": 3,
+            "Index": "myindex",
+            "NInterval": 2999,
+            "TestSpec": {
+                "RandomKeyLen": 12
+            }
+        },
+        {
+            "Bucket": "bucket-1",
+            "Limit": 1,
+            "Low": [
+                "000000000000"
+            ],
+            "Repeat": 1499999,
+            "Type": "Range",
+            "High": [
+                "333333333333"
+            ],
+            "Id": 2,
+            "Inclusion": 3,
+            "Index": "myindex",
+            "NInterval": 2999,
+            "TestSpec": {
+                "RandomKeyLen": 12
+            }
+        },
+        {
+            "Bucket": "bucket-1",
+            "Limit": 1,
+            "Low": [
+                "000000000000"
+            ],
+            "Repeat": 1499999,
+            "Type": "Range",
+            "High": [
+                "333333333333"
+            ],
+            "Id": 3,
+            "Inclusion": 3,
+            "Index": "myindex",
+            "NInterval": 2999,
+            "TestSpec": {
+                "RandomKeyLen": 12
+            }
+        },
+        {
+            "Bucket": "bucket-1",
+            "Limit": 1,
+            "Low": [
+                "000000000000"
+            ],
+            "Repeat": 1499999,
+            "Type": "Range",
+            "High": [
+                "333333333333"
+            ],
+            "Id": 4,
+            "Inclusion": 3,
+            "Index": "myindex",
+            "NInterval": 2999,
+            "TestSpec": {
+                "RandomKeyLen": 12
+            }
+        },
+        {
+            "Bucket": "bucket-1",
+            "Limit": 1,
+            "Low": [
+                "000000000000"
+            ],
+            "Repeat": 1499999,
+            "Type": "Range",
+            "High": [
+                "333333333333"
+            ],
+            "Id": 5,
+            "Inclusion": 3,
+            "Index": "myindex",
+            "NInterval": 2999,
+            "TestSpec": {
+                "RandomKeyLen": 12
+            }
+        },
+        {
+            "Bucket": "bucket-1",
+            "Limit": 1,
+            "Low": [
+                "000000000000"
+            ],
+            "Repeat": 1499999,
+            "Type": "Range",
+            "High": [
+                "333333333333"
+            ],
+            "Id": 6,
+            "Inclusion": 3,
+            "Index": "myindex",
+            "NInterval": 2999,
+            "TestSpec": {
+                "RandomKeyLen": 12
+            }
+        },
+        {
+            "Bucket": "bucket-1",
+            "Limit": 1,
+            "Low": [
+                "000000000000"
+            ],
+            "Repeat": 1499999,
+            "Type": "Range",
+            "High": [
+                "333333333333"
+            ],
+            "Id": 7,
+            "Inclusion": 3,
+            "Index": "myindex",
+            "NInterval": 2999,
+            "TestSpec": {
+                "RandomKeyLen": 12
+            }
+        },
+        {
+            "Bucket": "bucket-1",
+            "Limit": 1,
+            "Low": [
+                "000000000000"
+            ],
+            "Repeat": 1499999,
+            "Type": "Range",
+            "High": [
+                "333333333333"
+            ],
+            "Id": 8,
+            "Inclusion": 3,
+            "Index": "myindex",
+            "NInterval": 2999,
+            "TestSpec": {
+                "RandomKeyLen": 12
+            }
+        },
+        {
+            "Bucket": "bucket-1",
+            "Limit": 1,
+            "Low": [
+                "333333333334"
+            ],
+            "Repeat": 1499999,
+            "Type": "Range",
+            "High": [
+                "ffffffffffff"
+            ],
+            "Id": 9,
+            "Inclusion": 3,
+            "Index": "myindex",
+            "NInterval": 2999,
+            "TestSpec": {
+                "RandomKeyLen": 12
+            }
+        },
+        {
+            "Bucket": "bucket-1",
+            "Limit": 1,
+            "Low": [
+                "333333333334"
+            ],
+            "Repeat": 1499998,
+            "Type": "Range",
+            "High": [
+                "ffffffffffff"
+            ],
+            "Id": 10,
+            "Inclusion": 3,
+            "Index": "myindex",
+            "NInterval": 2999,
+            "TestSpec": {
+                "RandomKeyLen": 12
+            }
+        }
+    ]
+}

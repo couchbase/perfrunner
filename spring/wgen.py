@@ -44,6 +44,7 @@ from spring.docgen import (
     JoinedDocument,
     KeyForCASUpdate,
     KeyForRemoval,
+    KeyPlasmaDocument,
     LargeDocument,
     LargeGroupedDocument,
     LargeItemGroupedDocument,
@@ -149,10 +150,14 @@ class Worker:
         self.keys_for_cas_update = KeyForCASUpdate(self.ws.n1ql_workers,
                                                    self.ts.prefix,
                                                    self.ws.key_fmtr)
+        logger.info("existing_keys {}, keys_for_removal {}, keys_for_cas_update {}"
+                    .format(self.existing_keys, self.keys_for_removal, self.keys_for_cas_update))
 
     def init_docs(self):
         if not hasattr(self.ws, 'doc_gen') or self.ws.doc_gen == 'basic':
             self.docs = Document(self.ws.size)
+        elif self.ws.doc_gen == 'key_plasma':
+            self.docs = KeyPlasmaDocument(self.ws.size)
         elif self.ws.doc_gen == 'eventing_counter':
             self.docs = EventingCounterDocument(self.ws.size)
         elif self.ws.doc_gen == 'eventing_small_counter':

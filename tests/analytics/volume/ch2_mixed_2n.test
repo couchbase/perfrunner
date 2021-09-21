@@ -2,9 +2,9 @@
 test = perfrunner.tests.analytics.CH2Test
 
 [showfast]
-title = CH2 Queries, SSD, 2 nodes
+title = CH2 Queries, 2Q x 2A, mixed workload
 component = analytics
-category = volume
+category = ch2
 
 [stats]
 server_processes = java
@@ -47,7 +47,7 @@ map_data = bench.ch2.customer=bench.ch2.customer,bench.ch2.district=bench.ch2.di
 [ch2]
 warehouses = 1000
 aclients = 1
-tclients = 4
+tclients = 64
 iterations = 1
 duration = 0
 workload = ch2_mixed

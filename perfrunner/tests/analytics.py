@@ -687,6 +687,21 @@ class CH2Test(PerfTest):
         self.data_node = self.master_node
         self.analytics_node = self.analytics_nodes[0]
 
+    def _report_kpi(self):
+        total_time, rate, test_duration = \
+            self.metrics.ch2_metric(self.test_config.ch2_settings.duration,
+                                    self.test_config.ch2_settings.workload)
+        tpm = round(rate*60/test_duration, 2)
+        response_time = round(total_time/1000000/rate, 2)
+
+        self.reporter.post(
+            *self.metrics.ch2_tmp(tpm, self.test_config.ch2_settings.tclients)
+        )
+
+        self.reporter.post(
+            *self.metrics.ch2_response_time(response_time, self.test_config.ch2_settings.tclients)
+        )
+
     def create_datasets(self):
         logger.info('Creating datasets')
         for dataset in self.CH2_DATASETS:
@@ -796,3 +811,4 @@ class CH2Test(PerfTest):
                              branch=self.test_config.ch2_settings.branch)
 
         self.run_ch2()
+        self.report_kpi()

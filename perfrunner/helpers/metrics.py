@@ -1325,6 +1325,41 @@ class MetricHelper:
 
         return throughput, self._snapshots, metric_info
 
+    def ch2_metric(self, duration: float, logfile: str):
+        filename = logfile + '.log'
+        test_duration = duration
+        with open(filename) as fh:
+            for line in fh.readlines():
+                if 'NEW_ORDER' in line and 'success' in line:
+                    elements = line.split()
+                    total_time = float(elements[2].split('.')[0])
+                    rate = int("".join(filter(str.isdigit, elements[-1])))
+                if 'AVERAGE TIME PER QUERY SET' in line:
+                    test_duration = float(line.split()[-1])
+        return total_time, rate, test_duration
+
+    def ch2_tmp(self, tpm: float, tclients: int) -> Metric:
+        metric_id = '{}_{}'.format(self.test_config.name, "tmp")
+        title = 'Transactions per minute (tpm), {}, {} tclients'.format(self._title,
+                                                                        tclients)
+
+        metric_info = self._metric_info(metric_id,
+                                        title,
+                                        chirality=1)
+
+        return tpm, self._snapshots, metric_info
+
+    def ch2_response_time(self, response_time: float, tclients: int) -> Metric:
+        metric_id = '{}_{}'.format(self.test_config.name, "response_time")
+        title = 'Average response time (sec), {}, {} tclients'.format(self._title,
+                                                                      tclients)
+
+        metric_info = self._metric_info(metric_id,
+                                        title,
+                                        chirality=-1)
+
+        return response_time, self._snapshots, metric_info
+
 
 class DailyMetricHelper(MetricHelper):
 

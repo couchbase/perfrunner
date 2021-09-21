@@ -2,9 +2,9 @@
 test = perfrunner.tests.analytics.CH2Test
 
 [showfast]
-title = CH2 Queries, SSD, 4 nodes
+title = CH2 Queries, 2Q x 4A, analytics only
 component = analytics
-category = volume
+category = ch2
 
 [stats]
 server_processes = java

@@ -30,7 +30,7 @@ class KVLatency(Latency):
 
     COLLECTOR = "spring_latency"
 
-    METRICS = "latency_get", "latency_set"
+    METRICS = "latency_get", "latency_set", "latency_total_get", "latency_total_set"
 
     PATTERN = '*-worker-*'
 
@@ -41,12 +41,15 @@ class KVLatency(Latency):
         for filename in glob.glob(self.PATTERN):
             with open(filename) as fh:
                 reader = csv.reader(fh)
-                for operation, timestamp, latency in reader:
-                    yield operation, timestamp, latency
+                for line in reader:
+                    yield line
 
     async def post_results(self, bucket: str):
         async with ClientSession() as self.store.async_session:
-            for operation, timestamp, latency in self.read_stats():
+            for line in self.read_stats():
+                operation = line[0]
+                timestamp = line[1]
+                latency = line[2]
                 data = {
                     'latency_' + operation: float(latency) * 1000,  # Latency in ms
                 }
@@ -55,6 +58,16 @@ class KVLatency(Latency):
                                               cluster=self.cluster,
                                               bucket=bucket,
                                               collector=self.COLLECTOR)
+                if len(line) == 4:
+                    total_latency = line[3]
+                    data = {
+                        'latency_total_' + operation: float(total_latency) * 1000,  # Latency in ms
+                    }
+                    await self.store.append_async(data=data,
+                                                  timestamp=int(timestamp),
+                                                  cluster=self.cluster,
+                                                  bucket=bucket,
+                                                  collector=self.COLLECTOR)
 
     def reconstruct(self):
         loop = asyncio.get_event_loop()

@@ -2,7 +2,7 @@ from urllib import parse
 
 import pkg_resources
 
-from spring.cbgen_helpers import backoff, quiet, timeit
+from spring.cbgen_helpers import backoff, quiet, time_all, timeit
 
 cb_version = pkg_resources.get_distribution("couchbase").version
 if cb_version[0] == '2':
@@ -87,21 +87,15 @@ class CBGen(CBAsyncGen):
     def create_durable(self, *args, **kwargs):
         super().create_durable(*args, **kwargs)
 
-    @quiet
-    @backoff
-    @timeit
+    @time_all
     def read(self, *args, **kwargs):
         super().read(*args, **kwargs)
 
-    @quiet
-    @backoff
-    @timeit
+    @time_all
     def update(self, *args, **kwargs):
         super().update(*args, **kwargs)
 
-    @quiet
-    @backoff
-    @timeit
+    @time_all
     def update_durable(self, *args, **kwargs):
         super().update_durable(*args, **kwargs)
 

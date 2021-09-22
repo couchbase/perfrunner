@@ -91,3 +91,29 @@ def timeit(method: Callable, *args, **kwargs) -> float:
     t0 = time()
     method(*args, **kwargs)
     return time() - t0
+
+
+@decorator
+def time_all(method: Callable, *args, **kwargs):
+    # Needs to be tidied, includes backoff+quiet functions, to be reduced to a smaller decorator.
+    try:
+        retry_delay = 0.1
+        has_retried = False
+        start_time = time()
+        while True:
+            try:
+                t0 = time()
+                method(*args, **kwargs)
+                t1 = time()
+                if has_retried:
+                    ret_pair = (t1 - t0, t1 - start_time)
+                    return ret_pair
+                else:
+                    ret_pair = (t1 - t0, t1 - t0)
+                    return ret_pair
+            except TemporaryFailError:
+                has_retried = True
+                sleep(retry_delay)
+                retry_delay *= 1 + 0.1 * random.random()
+    except CouchbaseError as e:
+        error_tracker.track(method.__name__, e)

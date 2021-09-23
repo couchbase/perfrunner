@@ -1108,12 +1108,29 @@ class BackupTestDGM(BackupTest, StabilityBootstrap):
 
 class LoadBackupDGMTest(StabilityBootstrap):
 
+    COLLECTORS = {'disk': True, 'latency': False, 'net': False, 'kvstore': True, 'vmstat': True}
+
+    @with_stats
+    def load(self):
+        if self.test_config.load_settings.key_prefix:
+            PerfTest.load(self, target_iterator=self.iterator)
+        else:
+            PerfTest.load(self)
+
+    @with_stats
+    def extra_access(self):
+        if self.test_config.load_settings.key_prefix:
+            PerfTest.access(self, settings=self.test_config.extra_access_settings,
+                            target_iterator=self.iterator)
+        else:
+            PerfTest.access(self, settings=self.test_config.extra_access_settings)
+
     def run(self):
         self.load()
         self.wait_for_persistence()
 
         if self.test_config.extra_access_settings.run_extra_access:
-            self.run_extra_access()
+            self.extra_access()
             self.wait_for_persistence()
             self.wait_for_fragmentation()
 

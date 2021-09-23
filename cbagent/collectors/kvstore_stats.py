@@ -94,7 +94,13 @@ class KVStoreStats(Collector):
         "NBloomFilterMissesPerSec",
         "NBloomFilterHitsPerSec",
         "RecentBlockCacheHitRatio",
-        "BlockCacheHitRatio"
+        "BlockCacheHitRatio",
+        "ReadIOAmpSet",
+        "RecentReadIOAmpSet",
+        "NReadBytesSet",
+        "NReadIOsSet",
+        "NReadBytesSetPerSec",
+        "NReadIOsSetPerSec"
     )
     METRICS_AVERAGE_PER_NODE_PER_SHARD = (
         "ReadAmp",
@@ -111,7 +117,9 @@ class KVStoreStats(Collector):
         "CompactQueueSize",
         "BloomFilterFPR",
         "RecentBlockCacheHitRatio",
-        "BlockCacheHitRatio"
+        "BlockCacheHitRatio",
+        "ReadIOAmpSet",
+        "RecentReadIOAmpSet"
     )
     NO_CAP = (
         "TxnSizeEstimate",
@@ -120,7 +128,9 @@ class KVStoreStats(Collector):
         "CompactQueueSize",
         "BloomFilterFPR",
         "RecentBlockCacheHitRatio",
-        "BlockCacheHitRatio"
+        "BlockCacheHitRatio",
+        "ReadIOAmpSet",
+        "RecentReadIOAmpSet"
     )
 
     def __init__(self, settings, test):

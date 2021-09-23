@@ -2,16 +2,20 @@
 test = perfrunner.tests.ycsb.YCSBThroughputTest
 
 [showfast]
-title = Avg Throughput (ops/sec), Workload A, 3 nodes, 12 vCPU
+title = Avg Throughput (ops/sec), Workload A, 3 nodes, 12 vCPU, Ephemeral
 component = sdk
 category = java
-sub_category = mad-hatter
+sub_category = neo
 
 [cluster]
 mem_quota = 40960
 initial_nodes = 3
 num_buckets = 1
 online_cores = 6
+
+[bucket]
+bucket_type = ephemeral
+eviction_policy = nruEviction
 
 [load]
 workload_path = workloads/workloada

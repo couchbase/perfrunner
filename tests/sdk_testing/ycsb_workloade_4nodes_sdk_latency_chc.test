@@ -1,11 +1,11 @@
 [test_case]
-test = perfrunner.tests.ycsb.YCSBN1QLThroughputTest
+test = perfrunner.tests.ycsb.YCSBN1QLLatencyTest
 
 [showfast]
-title = Avg Throughput (queries/sec), Workload E, MOI, 4 nodes
+title = Latency (ms), Workload E, MOI, 4 nodes
 component = sdk
 category = java
-sub_category = mad-hatter
+sub_category = cheshire-cat
 
 [cluster]
 mem_quota = 40960
@@ -34,12 +34,13 @@ statements =
 [access]
 workload_path = workloads/workloade
 items = 20000000
-ops = 1000000000
-time = 600
-workers = 120
+target = 1500
+ops = 0
+time = 1200
+workers = 60
 workload_instances = 6
-enable_mutation_token = true
-kv_endpoints = 16
+timeseries = 1
+kv_endpoints = 1024
 
 [sdktesting]
 enable_sdktest = 1
@@ -47,6 +48,8 @@ sdk_type = java
 
 [ycsb]
 branch = couchbase3
+latency_percentiles = 99
+average_latency = 1
 
 [stats]
 client_processes = java

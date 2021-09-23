@@ -5,7 +5,7 @@ test = perfrunner.tests.ycsb.YCSBThroughputTest
 title = Avg Throughput (ops/sec), Workload A, 3 nodes, 12 vCPU
 component = sdk
 category = java
-sub_category = mad-hatter
+sub_category = neo
 
 [cluster]
 mem_quota = 40960

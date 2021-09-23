@@ -5,7 +5,7 @@ test = perfrunner.tests.ycsb.YCSBN1QLThroughputTest
 title = Avg Throughput (queries/sec), Workload E, MOI, 4 nodes
 component = sdk
 category = java
-sub_category = mad-hatter
+sub_category = neo
 
 [cluster]
 mem_quota = 40960

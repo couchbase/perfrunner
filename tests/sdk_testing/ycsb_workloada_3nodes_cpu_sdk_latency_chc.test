@@ -1,11 +1,11 @@
 [test_case]
-test = perfrunner.tests.ycsb.YCSBThroughputTest
+test = perfrunner.tests.ycsb.YCSBLatencyTest
 
 [showfast]
-title = Avg Throughput (ops/sec), Workload A, 3 nodes, 12 vCPU
+title = Latency(ms), Workload A, 3 nodes, 12 vCPU, 60K ops/sec
 component = sdk
 category = java
-sub_category = mad-hatter
+sub_category = cheshire-cat
 
 [cluster]
 mem_quota = 40960
@@ -21,19 +21,22 @@ workers = 40
 [access]
 workload_path = workloads/workloada
 items = 20000000
-ops = 1000000000
-time = 600
+target = 10000
+ops = 0
+time = 1200
 boost = 12
 workers = 96
+timeseries = 1
 workload_instances = 6
 enable_mutation_token = true
-kv_endpoints = 16
 
 [sdktesting]
 enable_sdktest = 1
 sdk_type = java
 
 [ycsb]
+latency_percentiles = 99
+average_latency = 1
 branch = couchbase3
 
 [stats]

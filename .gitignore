@@ -37,7 +37,12 @@ nosetests.xml
 # PyCharm
 *.idea/
 
+# VSCode
+.vscode/
+
+# pyenv
 env/
+.python-version
 
 vendor/github.com
 

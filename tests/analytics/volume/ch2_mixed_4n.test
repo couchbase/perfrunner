@@ -2,7 +2,7 @@
 test = perfrunner.tests.analytics.CH2Test
 
 [showfast]
-title = CH2 Queries, 2Q x 4A, mixed workload
+title = CH2 Queries, 2Q x 4A, c=11, mixed workload
 component = analytics
 category = ch2
 

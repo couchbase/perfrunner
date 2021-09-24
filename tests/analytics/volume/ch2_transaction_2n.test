@@ -2,7 +2,7 @@
 test = perfrunner.tests.analytics.CH2Test
 
 [showfast]
-title = CH2 Queries, 2Q x 2A, transaction only
+title = CH2 Queries, 2Q x 2A, c=11, transaction only
 component = analytics
 category = ch2
 

@@ -390,11 +390,25 @@ class KVTest(PerfTest):
     def access_key_prefix(self, target_iterator):
         PerfTest.access(self, target_iterator=target_iterator)
 
+    def warmup_access_phase(self):
+        self.COLLECTORS["latency"] = False
+        access_settings = self.test_config.access_settings
+        access_settings.time = 300
+        logger.info("Starting warmup access phase")
+        if self.test_config.load_settings.use_backup:
+            PerfTest.access(self, settings=access_settings, target_iterator=self.iterator)
+        else:
+            PerfTest.access(self, settings=access_settings)
+        self.wait_for_persistence()
+        self.COLLECTORS["latency"] = True
+        self.reset_kv_stats()
+
     def run(self):
         if self.test_config.load_settings.use_backup:
             self.copy_data_from_backup()
             self.hot_load_key_prefix(target_iterator=self.iterator)
             self.reset_kv_stats()
+            self.warmup_access_phase()
             self.access_key_prefix(target_iterator=self.iterator)
         else:
             self.load()
@@ -404,6 +418,7 @@ class KVTest(PerfTest):
                 self.wait_for_fragmentation()
             self.hot_load()
             self.reset_kv_stats()
+            self.warmup_access_phase()
             self.access()
 
         self.report_kpi()
@@ -622,41 +637,6 @@ class EnhancedDurabilityLatencyDGMTest(StabilityBootstrap):
             )
 
 
-class EnhancedMixedDurabilityLatencyDGMTest(EnhancedDurabilityLatencyDGMTest):
-
-    def run(self):
-        if self.test_config.load_settings.use_backup:
-            self.copy_data_from_backup()
-            self.hot_load_key_prefix(target_iterator=self.iterator)
-            self.reset_kv_stats()
-        else:
-            self.load()
-            if self.test_config.extra_access_settings.run_extra_access:
-                self.run_extra_access()
-                self.wait_for_persistence()
-                self.wait_for_fragmentation()
-            self.hot_load()
-            self.reset_kv_stats()
-
-        self.COLLECTORS["latency"] = False
-        access_settings = self.test_config.access_settings
-        access_settings.time = 300
-        logger.info("Starting warmup access phase")
-        if self.test_config.load_settings.use_backup:
-            PerfTest.access(self, settings=access_settings, target_iterator=self.iterator)
-        else:
-            PerfTest.access(self, settings=access_settings)
-        self.COLLECTORS["latency"] = True
-        self.reset_kv_stats()
-
-        if self.test_config.load_settings.use_backup:
-            self.access_key_prefix(target_iterator=self.iterator)
-        else:
-            self.access()
-
-        self.report_kpi()
-
-
 class PillowFightDGMTest(StabilityBootstrap):
 
     """Use cbc-pillowfight from libcouchbase to drive cluster."""
@@ -796,6 +776,12 @@ class YCSBThroughputHIDDTest(YCSBThroughputTest, KVTest):
                 self.wait_for_fragmentation()
 
         self.reset_kv_stats()
+        access_settings = self.test_config.access_settings
+        access_settings.time = 300
+        logger.info("Starting warmup access phase")
+        PerfTest.access(self, task=ycsb_task, settings=access_settings)
+
+        self.reset_kv_stats()
         KVTest.save_stats(self)
         if self.test_config.access_settings.cbcollect:
             YCSBThroughputTest.access_bg(self)
@@ -927,40 +913,6 @@ class YCSBLatencyHiDDTest(YCSBThroughputHIDDTest):
                     self.reporter.post(
                         *self.metrics.ycsb_latency(key, latency_dic[key])
                     )
-
-    def run(self):
-        if self.test_config.access_settings.ssl_mode == 'data':
-            self.download_certificate()
-            self.generate_keystore()
-        self.download_ycsb()
-
-        if self.test_config.load_settings.use_backup:
-            self.copy_data_from_backup()
-        else:
-            self.custom_load()
-            if self.test_config.extra_access_settings.run_extra_access:
-                self.run_extra_access()
-                self.wait_for_persistence()
-                self.wait_for_fragmentation()
-
-        self.reset_kv_stats()
-        access_settings = self.test_config.access_settings
-        access_settings.time = 300
-        logger.info("Starting warmup access phase")
-        PerfTest.access(self, task=ycsb_task, settings=access_settings)
-
-        self.reset_kv_stats()
-        KVTest.save_stats(self)
-        if self.test_config.access_settings.cbcollect:
-            YCSBThroughputTest.access_bg(self)
-            self.collect_cb()
-        else:
-            YCSBThroughputTest.access(self)
-
-        self.print_amplifications(doc_size=self.test_config.access_settings.size)
-        KVTest.print_kvstore_stats(self)
-
-        self.report_kpi()
 
 
 class YCSBDurabilityThroughputHiDDTest(YCSBThroughputHIDDTest):

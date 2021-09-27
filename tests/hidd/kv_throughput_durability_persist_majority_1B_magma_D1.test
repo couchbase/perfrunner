@@ -30,7 +30,7 @@ size = 1024
 workers = 128
 key_fmtr = hex
 doc_gen = large
-use_backup = false
+use_backup = true
 key_prefix = e12ef6
 
 [extra_access]

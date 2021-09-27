@@ -688,9 +688,11 @@ class CH2Test(PerfTest):
         self.analytics_node = self.analytics_nodes[0]
 
     def _report_kpi(self):
+        measure_time = self.test_config.ch2_settings.duration - \
+                       self.test_config.ch2_settings.warmup_duration
         total_time, rate, test_duration = \
-            self.metrics.ch2_metric(self.test_config.ch2_settings.duration,
-                                    self.test_config.ch2_settings.workload)
+            self.metrics.ch2_metric(duration=measure_time,
+                                    logfile=self.test_config.ch2_settings.workload)
         tpm = round(rate*60/test_duration, 2)
         response_time = round(total_time/1000000/rate, 2)
 
@@ -786,6 +788,8 @@ class CH2Test(PerfTest):
             tclients=self.test_config.ch2_settings.tclients,
             duration=self.test_config.ch2_settings.duration,
             iterations=self.test_config.ch2_settings.iterations,
+            warmup_iterations=self.test_config.ch2_settings.warmup_iterations,
+            warmup_duration=self.test_config.ch2_settings.warmup_duration,
             query_url=query_url,
             multi_query_url=multi_query_url,
             analytics_url=analytics_url,

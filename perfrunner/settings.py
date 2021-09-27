@@ -1685,6 +1685,8 @@ class CH2:
     ACLIENTS = 0
     TCLIENTS = 0
     ITERATIONS = 1
+    WARMUP_ITERATIONS = 0
+    WARMUP_DURATION = 0
     DURATION = 0
     WORKLOAD = 'ch2_mixed'
 
@@ -1695,6 +1697,8 @@ class CH2:
         self.aclients = int(options.get('aclients', self.ACLIENTS))
         self.tclients = int(options.get('tclients', self.TCLIENTS))
         self.iterations = int(options.get('iterations', self.ITERATIONS))
+        self.warmup_iterations = int(options.get('warmup_iterations', self.WARMUP_ITERATIONS))
+        self.warmup_duration = int(options.get('warmup_duration', self.WARMUP_DURATION))
         self.duration = int(options.get('duration', self.DURATION))
         self.workload = options.get('workload', self.WORKLOAD)
 

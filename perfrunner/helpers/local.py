@@ -1126,6 +1126,7 @@ def copy_pytpcc_run_output():
 
 def ch2_run_task(cluster_spec: ClusterSpec, warehouses: int, aclients: int = 0,
                  tclients: int = 0, duration: int = 0, iterations: int = 0,
+                 warmup_iterations: int = 0, warmup_duration: int = 0,
                  query_url: str = None, multi_query_url: str = None,
                  analytics_url: str = None, log_file: str = 'ch2_mixed'):
 
@@ -1133,7 +1134,10 @@ def ch2_run_task(cluster_spec: ClusterSpec, warehouses: int, aclients: int = 0,
              '--aclients {}'.format(aclients) if aclients else None,
              '--tclients {}'.format(tclients) if tclients else None,
              '--duration {}'.format(duration) if duration else None,
+             '--warmup-duration {}'.format(warmup_duration) if warmup_duration else None,
              '--query-iterations {}'.format(iterations) if iterations else None,
+             '--warmup-query-iterations {}'.format(warmup_iterations)
+             if warmup_iterations else None,
              'nestcollections',
              '--query-url {}'.format(query_url) if tclients else None,
              '--multi-query-url {}'.format(multi_query_url) if tclients else None,

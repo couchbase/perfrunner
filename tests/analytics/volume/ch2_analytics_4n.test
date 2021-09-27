@@ -48,6 +48,8 @@ map_data = bench.ch2.customer=bench.ch2.customer,bench.ch2.district=bench.ch2.di
 warehouses = 1000
 aclients = 1
 tclients = 0
-iterations = 3
+iterations = 2
+warmup_iterations = 1
 duration = 0
+warmup_duration = 0
 workload = ch2_analytics

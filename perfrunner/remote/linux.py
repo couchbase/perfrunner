@@ -856,6 +856,20 @@ class RemoteLinux(Remote):
         run("curl -X POST -u Administrator:password "
             "localhost:8091/settings/developerPreview -d 'enabled=true'", pty=False)
 
+    @master_server
+    def set_magma_quota(self, bucket: str, storage_quota_percentage: int):
+        logger.info('Set Magma quota percentage to {}'.format(storage_quota_percentage))
+        run("curl -s -u Administrator:password "
+            "localhost:8091/pools/default/buckets/{} -d 'storageQuotaPercentage={}'"
+            .format(bucket, storage_quota_percentage), pty=False)
+
+    @master_server
+    def set_magma_fragmentation(self, bucket: str, fragmentation_percentage: int):
+        logger.info('Set Magma fragmentation percentage to {}'.format(fragmentation_percentage))
+        run("curl -s -u Administrator:password "
+            "localhost:8091/pools/default/buckets/{} -d 'fragmentationPercentage={}'"
+            .format(bucket, fragmentation_percentage), pty=False)
+
     @all_servers
     def create_data_backup(self, backup_directory: str):
         logger.info('Creating backup file: {}'.format(backup_directory))

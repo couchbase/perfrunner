@@ -1,5 +1,6 @@
 from cbagent.collectors.active_tasks import ActiveTasks
 from cbagent.collectors.analytics import AnalyticsStats
+from cbagent.collectors.cbstats import CBStatsMemory
 from cbagent.collectors.collector import Collector
 from cbagent.collectors.eventing_stats import (
     EventingConsumerStats,

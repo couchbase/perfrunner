@@ -13,7 +13,7 @@ from couchbase_core.cluster import PasswordAuthenticator
 from couchbase_core.views.params import ViewQuery
 from txcouchbase.cluster import TxCluster
 
-from spring.cbgen_helpers import backoff, quiet, timeall, timeit
+from spring.cbgen_helpers import backoff, quiet, time_all, timeit
 
 
 class CBAsyncGen3:
@@ -163,7 +163,7 @@ class CBGen3(CBAsyncGen3):
     def do_get(self, *args, **kwargs):
         return super().do_read(*args, **kwargs)
 
-    @timeall
+    @time_all
     def do_read(self, *args, **kwargs):
         super().do_read(*args, **kwargs)
 
@@ -174,7 +174,7 @@ class CBGen3(CBAsyncGen3):
     def do_set(self, *args, **kwargs):
         return super().do_update(*args, **kwargs)
 
-    @timeall
+    @time_all
     def do_update(self, *args, **kwargs):
         super().do_update(*args, **kwargs)
 
@@ -182,7 +182,7 @@ class CBGen3(CBAsyncGen3):
         self.collection = self.collections[args[0]]
         return self.do_update_durable(*args[1:], **kwargs)
 
-    @timeall
+    @time_all
     def do_update_durable(self, *args, **kwargs):
         super().do_update_durable(*args, **kwargs)
 

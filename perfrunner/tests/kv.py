@@ -51,7 +51,7 @@ class MixedLatencyTest(ReadLatencyTest):
     """Enable reporting of GET and SET latency."""
 
     def _report_kpi(self):
-        for operation in ('get', 'set', 'total_get', 'total_set'):
+        for operation in ('get', 'set'):
             self.reporter.post(
                 *self.metrics.kv_latency(operation=operation)
             )

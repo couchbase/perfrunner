@@ -55,6 +55,8 @@ class ShowFastReporter(Reporter):
                             value: Union[float, int],
                             snapshots: List[str]) -> JSON:
 
+        build_str = self.build
+
         if self.test_config.sdktesting_settings.enable_sdktest:
             self.sdk_type = self.test_config.sdktesting_settings.sdk_type[-1]
 
@@ -65,14 +67,14 @@ class ShowFastReporter(Reporter):
             elif self.sdk_type == 'python':
                 self.sdk_version = self.test_config.client_settings.python_client
 
-            self.build = self.sdk_version + ' : ' + self.build
+            build_str = self.sdk_version + ' : ' + build_str
 
         if self.test_config.access_settings.show_tls_version:
-            self.build = self.rest.get_minimum_tls_version(self.master_node) + ' : ' + self.build
+            build_str = self.rest.get_minimum_tls_version(self.master_node) + ' : ' + build_str
             logger.info('build: {}'.format(self.build))
 
         return {
-            'build': self.build,
+            'build': build_str,
             'buildURL': os.environ.get('BUILD_URL'),
             'dateTime': time.strftime('%Y-%m-%d %H:%M'),
             'id': uhex(),

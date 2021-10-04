@@ -14,6 +14,8 @@ mem_quota = 51200
 index_mem_quota = 71680
 initial_nodes = 7
 num_buckets = 1
+kernel_mem_limit = 91G
+kernel_mem_limit_services = index
 enable_cpu_cores = false
 
 [bucket]
@@ -32,11 +34,13 @@ config = collections/1bucket_default.json
 items = 10000000000
 size = 1024
 workers = 100
+use_backup = true
 
 [secondary]
 indexes = tests/gsi/index_defs/1bucket_default_1_index_1_3partitions.json
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
+projector.maxCpuPercent = 1200
 
 [hot_load]
 items = 10000000000
@@ -55,3 +59,6 @@ working_set_access = 90
 [clients]
 libcouchbase = 2.9.3
 python_client = 2.5.0
+
+[backup]
+backup_directory = /data2/gsi_10b

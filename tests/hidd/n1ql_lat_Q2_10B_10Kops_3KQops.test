@@ -11,6 +11,8 @@ mem_quota = 51200
 index_mem_quota = 71680
 initial_nodes = 8
 num_buckets = 1
+kernel_mem_limit = 91G
+kernel_mem_limit_services = index
 enable_cpu_cores = false
 
 [bucket]

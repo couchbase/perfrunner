@@ -834,3 +834,134 @@ class PytpccBenchmarkTest(N1QLTest):
         self.run_tpcc()
         self.copy_pytpcc_run_output()
         self._report_kpi()
+
+
+class N1QLShutdownTest(N1QLTest):
+
+    def hard_failover(self, *args):
+        wait_time = self.test_config.access_settings.time // 4
+        time.sleep(wait_time)
+        master = self.cluster_spec.servers[0]
+        failover_n1ql_node = self.cluster_spec.servers_by_role("n1ql")[-1]
+        self.rest.fail_over(master, failover_n1ql_node)
+        self.monitor.monitor_rebalance(master)
+        initial_nodes = self.test_config.cluster.initial_nodes[0]
+        known_nodes = self.cluster_spec.servers[:initial_nodes]
+        self.rest.rebalance(master, known_nodes, [failover_n1ql_node])
+        self.monitor.monitor_rebalance(master)
+        self.worker_manager.wait_for_workers()
+
+    def graceful_failover(self, *args):
+        wait_time = self.test_config.access_settings.time // 4
+        time.sleep(wait_time)
+        master = self.cluster_spec.servers[0]
+        failover_n1ql_node = self.cluster_spec.servers_by_role("n1ql")[-1]
+        self.rest.graceful_fail_over(master, failover_n1ql_node)
+        self.monitor.monitor_rebalance(master)
+        initial_nodes = self.test_config.cluster.initial_nodes[0]
+        known_nodes = self.cluster_spec.servers[:initial_nodes]
+        self.rest.rebalance(master, known_nodes, [failover_n1ql_node])
+        self.monitor.monitor_rebalance(master)
+        self.worker_manager.wait_for_workers()
+
+    def rebalance_out(self, *args):
+        wait_time = self.test_config.access_settings.time // 4
+        time.sleep(wait_time)
+        master = self.cluster_spec.servers[0]
+        initial_nodes = self.test_config.cluster.initial_nodes[0]
+        known_nodes = self.cluster_spec.servers[:initial_nodes]
+        eject_n1ql_node = self.cluster_spec.servers_by_role("n1ql")[-1]
+        self.rest.rebalance(master, known_nodes, [eject_n1ql_node])
+        self.monitor.monitor_rebalance(master)
+        self.worker_manager.wait_for_workers()
+
+    @with_stats
+    @with_profiles
+    def shutdown_n1ql(self):
+        shutdown_type = self.test_config.access_settings.n1ql_shutdown_type
+        if shutdown_type == "hard_failover":
+            self.hard_failover()
+        elif shutdown_type == "graceful_failover":
+            self.graceful_failover()
+        elif shutdown_type == "rebalance_out":
+            self.rebalance_out()
+
+    def run(self):
+        self.enable_stats()
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+        self.compact_bucket()
+
+        self.create_indexes()
+        self.wait_for_indexing()
+
+        self.store_plans()
+
+        if self.test_config.users.num_users_per_bucket > 0:
+            self.cluster.add_extra_rbac_users(self.test_config.users.num_users_per_bucket)
+
+        self.access_bg()
+        self.access_n1ql_bg()
+        self.shutdown_n1ql()
+
+        self.report_kpi()
+
+
+class N1QLLatencyShutdownTest(N1QLShutdownTest):
+
+    def _report_kpi(self):
+        self.reporter.post(
+            *self.metrics.query_latency(percentile=90)
+        )
+
+
+class N1QLThroughputShutdownTest(N1QLShutdownTest):
+
+    COLLECTORS = {
+        'iostat': False,
+        'memory': False,
+        'n1ql_latency': False,
+        'n1ql_stats': True,
+        'ns_server_system': True
+    }
+
+    def _report_kpi(self):
+        self.reporter.post(
+            *self.metrics.avg_n1ql_throughput()
+        )
+
+
+class TpcDsShutdownTest(N1QLShutdownTest):
+
+    COLLECTORS = {
+        'iostat': False,
+        'memory': False,
+        'n1ql_latency': False,
+        'n1ql_stats': True,
+        'net': False,
+        'secondary_debugstats_index': False,
+    }
+
+    def run(self):
+        self.enable_stats()
+        self.load_tpcds_json_data()
+        self.wait_for_persistence()
+        self.compact_bucket()
+        self.create_indexes()
+        self.wait_for_indexing()
+        self.store_plans()
+        self.access_bg()
+        self.access_n1ql_bg()
+        self.shutdown_n1ql()
+        self.report_kpi()
+
+
+class TpcDsLatencyShutdownTest(TpcDsShutdownTest, N1QLLatencyShutdownTest):
+
+    pass
+
+
+class TpcDsThroughputShutdownTest(TpcDsShutdownTest, N1QLThroughputShutdownTest):
+
+    pass

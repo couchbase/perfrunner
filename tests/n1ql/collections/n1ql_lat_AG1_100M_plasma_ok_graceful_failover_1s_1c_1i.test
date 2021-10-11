@@ -1,0 +1,48 @@
+[test_case]
+test = perfrunner.tests.n1ql.TpcDsLatencyShutdownTest
+
+[showfast]
+title = AG1, Aggregation query, Plasma, not_bounded, Graceful Failover, Query+Data Service, s=1 c=1 i=1
+component = n1ql
+category = aggregation
+sub_category = Latency
+
+[cluster]
+mem_quota = 50000
+index_mem_quota = 300000
+initial_nodes = 7
+num_buckets = 1
+
+[bucket]
+replica_number = 1
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
+
+[secondary]
+indexer.settings.storage_mode = plasma
+
+[import]
+import_file = /home/backups/tpc-ds.json
+docs_per_collection = 100000000
+
+[load]
+doc_gen = tpc_ds
+
+[index]
+fields = DATE_PART_STR(sold_date, 'year'),customer.state,store,quantity
+indexes_per_collection = 1
+top_down = True
+
+[access]
+n1ql_shutdown_type = graceful_failover
+items = 1000000
+time = 1200
+n1ql_queries = aggregation
+n1ql_batch_size = 10
+n1ql_workers = 10
+
+[n1ql-aggregation]
+statement = SELECT store, AVG(quantity) AS avg_quantity FROM `bucket-1` WHERE DATE_PART_STR(sold_date, 'year') = $1 AND customer.state = $2 GROUP BY store;
+scan_consistency = not_bounded
+args = [{year}, "{state}"]

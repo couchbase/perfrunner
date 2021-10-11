@@ -1065,6 +1065,98 @@ class ArrayIndexingRangeScanDocument(ReverseLookupDocument):
         }
 
 
+class ArrayIndexingCompositeFieldDocument(ArrayIndexingDocument):
+
+    ARRAY_CAP = 100
+
+    TYPE_CAP = 5
+
+    ARRAY_SIZE = 10
+
+    OVERHEAD = 530
+
+    def __init__(self, avg_size: int, prefix: str, array_size: int, num_docs: int):
+        super().__init__(avg_size, prefix, array_size, num_docs)
+
+    def build_achievements1(self, seq_id: int):
+        offset = seq_id * self.array_size
+        if self.is_random:
+            offset = self.num_docs * self.array_size
+            offset += 2 * seq_id * self.array_size
+            offset += random.randint(1, self.array_size)
+
+        return \
+            [
+                {
+                    "atype": int(offset + i),
+                    "avalue": int(offset + i)
+                }
+                for i in range(self.array_size)
+            ]
+
+    def build_achievements2(self, seq_id: int):
+        offset = seq_id // self.ARRAY_CAP * self.array_size
+        if self.is_random:
+            offset = self.num_docs * self.array_size
+            offset += (2 * seq_id) // self.ARRAY_CAP * self.array_size
+            offset += random.randint(1, self.array_size)
+
+        return \
+            [
+                {
+                    "atype": int(offset + i),
+                    "avalue": int(offset + i)
+                }
+                for i in range(self.array_size)
+            ]
+
+    def build_achievements3(self, seq_id: int):
+        offset_a = seq_id // self.ARRAY_CAP * self.array_size
+        offset_b = seq_id // (2 * self.ARRAY_CAP) * self.array_size
+        if self.is_random:
+            offset_a = self.num_docs * self.array_size
+            offset_a += (2 * seq_id) // self.ARRAY_CAP * self.array_size
+            offset_a += random.randint(1, self.array_size)
+            offset_b = self.num_docs * self.array_size
+            offset_b += seq_id // self.ARRAY_CAP * self.array_size
+            offset_b += random.randint(1, self.array_size)
+
+        return \
+            [
+                {
+                    "atype": int(offset_a + i),
+                    "avalue": int(offset_b + i)
+                }
+                for i in range(self.array_size)
+            ]
+
+    def next(self, key: Key) -> dict:
+        alphabet = self.build_alphabet(key.string)
+        size = self._size()
+
+        return {
+            'name': self.build_name(alphabet),
+            'email': self.build_email(alphabet),
+            'alt_email': self.build_alt_email(alphabet),
+            'street': self.build_street(alphabet),
+            'city': self.build_city(alphabet),
+            'county': self.build_county(alphabet),
+            'state': self.build_state(alphabet),
+            'full_state': self.build_full_state(alphabet),
+            'country': self.build_country(alphabet),
+            'realm': self.build_realm(alphabet),
+            'coins': self.build_coins(alphabet),
+            'category': self.build_category(alphabet),
+            'achievements1': self.build_achievements1(key.number + 1),
+            'achievements2': self.build_achievements2(key.number + 1),
+            'achievements3': self.build_achievements3(key.number + 1),
+            'gmtime': self.build_gmtime(alphabet),
+            'year': self.build_year(alphabet),
+            'body': self.build_string(alphabet, size),
+            'topics': self.build_topics(key.number),
+        }
+
+
 class ProfileDocument(ReverseLookupDocument):
 
     OVERHEAD = 390

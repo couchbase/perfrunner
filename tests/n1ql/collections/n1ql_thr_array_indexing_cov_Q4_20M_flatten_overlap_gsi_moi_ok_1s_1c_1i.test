@@ -1,0 +1,54 @@
+[test_case]
+test = perfrunner.tests.n1ql.N1QLThroughputTest
+
+[showfast]
+title = Q4 Array Indexing, Covering, FLATTEN_KEYS, Overlapping Composite Field Range Scan, MOI, not_bounded, s=1 c=1 i=1
+component = n1ql
+category = array
+
+[cluster]
+mem_quota = 20480
+index_mem_quota = 100000
+initial_nodes = 6
+num_buckets = 1
+
+[compaction]
+db_percentage = 100
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
+
+[bucket]
+replica_number = 0
+
+[secondary]
+indexer.settings.storage_mode = memory_optimized
+
+[load]
+items = 200000
+size = 1024
+workers = 80
+array_size = 200
+doc_gen = array_indexing_composite
+
+[index]
+fields = DISTINCT ARRAY FLATTEN_KEYS(i.atype, i.avalue) FOR i IN achievements2 END,name,street
+indexes_per_collection = 1
+
+[access]
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+throughput = 500
+items = 200000
+workers = 20
+time = 1200
+n1ql_queries = singleton-unique-lookup
+n1ql_workers = 120
+workload_instances = 2
+
+[n1ql-singleton-unique-lookup]
+statement = SELECT name AS _name, street AS _street FROM `bucket-1` WHERE ANY i IN achievements2 SATISFIES i.atype=$1 and i.avalue=$2 END;
+scan_consistency = not_bounded
+args = [{achievements2[0][atype]}, {achievements2[0][avalue]}]

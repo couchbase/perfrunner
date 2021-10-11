@@ -17,6 +17,7 @@ from spring.cbgen import CBAsyncGen, CBGen, SubDocGen
 from spring.docgen import (
     AdvFilterDocument,
     AdvFilterXattrBody,
+    ArrayIndexingCompositeFieldDocument,
     ArrayIndexingDocument,
     ArrayIndexingRangeScanDocument,
     ArrayIndexingUniqueDocument,
@@ -198,6 +199,11 @@ class Worker:
                                               self.ts.prefix,
                                               self.ws.array_size,
                                               self.ws.items)
+        elif self.ws.doc_gen == 'array_indexing_composite':
+            self.docs = ArrayIndexingCompositeFieldDocument(self.ws.size,
+                                                            self.ts.prefix,
+                                                            self.ws.array_size,
+                                                            self.ws.items)
         elif self.ws.doc_gen == 'array_indexing_unique':
             self.docs = ArrayIndexingUniqueDocument(self.ws.size,
                                                     self.ts.prefix,

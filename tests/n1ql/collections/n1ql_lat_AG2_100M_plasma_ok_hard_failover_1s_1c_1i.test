@@ -1,0 +1,50 @@
+[test_case]
+test = perfrunner.tests.n1ql.TpcDsLatencyShutdownTest
+
+[showfast]
+title = AG2, Aggregation query, Plasma, not_bounded, Hard Failover, Query Service Only, s=1 c=1 i=1
+component = n1ql
+category = aggregation
+sub_category = Latency
+
+[cluster]
+mem_quota = 50000
+index_mem_quota = 300000
+initial_nodes = 7
+num_buckets = 1
+
+[bucket]
+replica_number = 0
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
+
+[secondary]
+indexer.settings.storage_mode = plasma
+indexer.settings.scan_timeout = 300000
+
+[import]
+import_file = /home/backups/tpc-ds.json
+docs_per_collection = 100000000
+
+[load]
+doc_gen = tpc_ds
+
+[index]
+fields = DATE_PART_STR(sold_date, 'year'),DATE_PART_STR(sold_date, 'week'),WEEKDAY_STR(sold_date),sales_price
+indexes_per_collection = 1
+top_down = True
+
+[access]
+n1ql_shutdown_type = hard_failover
+items = 1000000
+time = 1200
+n1ql_queries = aggregation
+n1ql_batch_size = 1
+n1ql_workers = 4
+n1ql_timeout = 300
+
+[n1ql-aggregation]
+statement = SELECT DATE_PART_STR(sold_date, 'week') AS week, SUM(CASE WHEN (WEEKDAY_STR(sold_date) = 'Monday'   ) THEN sales_price ELSE 0 END) mon_sales, SUM(CASE WHEN (WEEKDAY_STR(sold_date) = 'Tuesday'  ) THEN sales_price ELSE 0 END) tue_sales, SUM(CASE WHEN (WEEKDAY_STR(sold_date) = 'Wednesday') THEN sales_price ELSE 0 END) wed_sales, SUM(CASE WHEN (WEEKDAY_STR(sold_date) = 'Thursday' ) THEN sales_price ELSE 0 END) thu_sales, SUM(CASE WHEN (WEEKDAY_STR(sold_date) = 'Friday'   ) THEN sales_price ELSE 0 END) fri_sales, SUM(CASE WHEN (WEEKDAY_STR(sold_date) = 'Saturday' ) THEN sales_price ELSE 0 END) sat_sales, SUM(CASE WHEN (WEEKDAY_STR(sold_date) = 'Sunday'   ) THEN sales_price ELSE 0 END) sun_sales FROM `bucket-1` WHERE DATE_PART_STR(sold_date, 'year') = $1 GROUP BY DATE_PART_STR(sold_date, 'week');
+scan_consistency = not_bounded
+args = [{year}]

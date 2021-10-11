@@ -726,6 +726,7 @@ class PhaseSettings:
     SPLIT_WORKLOAD_WORKERS = 0
 
     DOCUMENT_GROUPS = 1
+    N1QL_SHUTDOWN_TYPE = None
 
     def __init__(self, options: dict):
         # Common settings
@@ -954,6 +955,7 @@ class PhaseSettings:
                                                      self.SPLIT_WORKLOAD_THROUGHPUT)
         self.split_workload_workers = options.get('split_workload_throughput',
                                                   self.SPLIT_WORKLOAD_WORKERS)
+        self.n1ql_shutdown_type = options.get('n1ql_shutdown_type', self.N1QL_SHUTDOWN_TYPE)
 
     def __str__(self) -> str:
         return str(self.__dict__)

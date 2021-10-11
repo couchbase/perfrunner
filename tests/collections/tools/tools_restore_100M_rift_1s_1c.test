@@ -29,4 +29,3 @@ workers = 100
 [backup]
 threads = 16
 storage_type = rift
-include_data = bucket-1.scope-1.collection-1

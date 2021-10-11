@@ -20,7 +20,6 @@ config = tests/collections/utils/configs/1bucket_1scope_1collection_basic.json
 
 [compaction]
 db_percentage = 100
-bucket_compaction = false
 
 [load]
 items = 100000000
@@ -30,4 +29,3 @@ workers = 100
 [backup]
 threads = 16
 storage_type = rift
-include_data = bucket-1.scope-1.collection-1

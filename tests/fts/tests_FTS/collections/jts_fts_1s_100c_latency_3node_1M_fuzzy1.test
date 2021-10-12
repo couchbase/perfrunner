@@ -15,7 +15,7 @@ num_buckets = 1
 fts_index_mem_quota = 20000
 
 [collection]
-config = collections/1bucket_1scope_100collection_basic.json
+config = collections/1bucket_1scope_100collections_basic.json
 
 [load]
 items = 1000000

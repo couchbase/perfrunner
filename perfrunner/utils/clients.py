@@ -238,7 +238,26 @@ LIBCOUCHBASE_PACKAGES = [{"version": "2.9.0",
                                "libcouchbase-dbg_3.2.0-1_amd64.deb "
                                "libcouchbase3-libev_3.2.0-1_amd64.deb "
                                "libcouchbase3-tools_3.2.0-1_amd64.deb "
-                               "libcouchbase-dev_3.2.0-1_amd64.deb"]}
+                               "libcouchbase-dev_3.2.0-1_amd64.deb"]},
+                         {"version": "3.2.2",
+                          "os": "ubuntu",
+                          "package": "libcouchbase-3.2.2_ubuntu1804_bionic_amd64",
+                          "package_path": "libcouchbase-3.2.2_ubuntu1804_bionic_amd64",
+                          "format": "tar",
+                          "install_cmds":
+                              ["grep -qxF "
+                               "'deb http://us.archive.ubuntu.com/ubuntu/ bionic main restricted' "
+                               "/etc/apt/sources.list || echo "
+                               "'deb http://us.archive.ubuntu.com/ubuntu/ bionic main restricted' "
+                               ">> /etc/apt/sources.list",
+                               "sudo apt-get update -y",
+                               "sudo apt-get install libevent-core-2.1 libev4 -y ",
+                               "sudo dpkg -i libcouchbase3_3.2.2-1_amd64.deb "
+                               "libcouchbase3-libevent_3.2.2-1_amd64.deb "
+                               "libcouchbase-dbg_3.2.2-1_amd64.deb "
+                               "libcouchbase3-libev_3.2.2-1_amd64.deb "
+                               "libcouchbase3-tools_3.2.2-1_amd64.deb "
+                               "libcouchbase-dev_3.2.2-1_amd64.deb"]}
                          ]
 
 LCB_CUSTOM_DEPS = {
@@ -281,13 +300,15 @@ class ClientInstaller:
                                                        self.cluster_spec).lower()
 
     @all_clients
-    def detect_client_versions(self, client: str):
-        if client == "libcouchbase":
-            r = run("cbc version 2>&1 | head -n 2 | tail -n 1 | "
-                    "awk -F ' ' '{ print $2 }' | "
-                    "awk -F '=' '{ print $2 }' | "
-                    "awk -F ',' '{ print $1 }'")
-        return r
+    def detect_libcouchbase_versions(self):
+        return run("cbc version 2>&1 | head -n 2 | tail -n 1 | "
+                   "awk -F ' ' '{ print $2 }' | "
+                   "awk -F '=' '{ print $2 }' | "
+                   "awk -F ',' '{ print $1 }'")
+
+    def detect_python_client_version(self):
+        return local("env/bin/pip freeze | grep ^couchbase | awk -F '==' '{ print $2 }'",
+                     capture=True)
 
     @all_clients
     def uninstall_clients(self, client: str):
@@ -317,8 +338,8 @@ class ClientInstaller:
             package_path = package_path.replace('xenial', 'bionic')
         with cd('/tmp'):
             run("rm -rf {}*".format(package))
-            run("wget {}/{}/{}.{}".format(LIBCOUCHBASE_BASE_URL,
-                                          package_version, package, package_format))
+            run("wget {}/{}/{}.{}".format(LIBCOUCHBASE_BASE_URL, package_version, package,
+                                          package_format))
             run("tar xf {}.{}".format(package, package_format))
         with cd("/tmp/{}".format(package_path)):
             for cmd in install_cmds:
@@ -343,61 +364,49 @@ class ClientInstaller:
             run('../cmake/configure')
             run('make')
 
+    def install_python_client(self, version: str):
+        if not ('review.couchbase.org' in version or 'github.com' in version):
+            version = "couchbase=={}".format(version)
+
+        local("env/bin/pip install {} --no-cache-dir".format(version))
+
     def install(self):
         lcb_version = self.client_settings['libcouchbase']
         py_version = self.client_settings['python_client']
-        logger.info("Desired clients: lcb={}, py={}"
-                    .format(lcb_version, py_version))
-        if (lcb_version == '2.9.3' and py_version == '2.5.0') or \
-                (lcb_version == '3.0.2' and py_version == '3.0.4'):
-            if any([current_version != lcb_version
-                    for current_version
-                    in self.detect_client_versions('libcouchbase').values()]):
+        logger.info("Desired clients: lcb={}, py={}".format(lcb_version, py_version))
+
+        if py_version and py_version.split('.')[0] == "2" and not lcb_version:
+            raise Exception("libcouchbase version must be specified when python_client=2.x.x")
+
+        if lcb_version:
+            installed_versions = self.detect_libcouchbase_versions()
+
+            if any(v != lcb_version for v in installed_versions.values()):
                 logger.info("Uninstalling libcouchbase")
                 self.uninstall_clients('libcouchbase')
-                logger.info("Installing {} {}"
-                            .format('libcouchbase', lcb_version))
-                self.install_libcouchbase(lcb_version)
-                logger.info("Successfully installed {} {}"
-                            .format('libcouchbase', lcb_version))
-            logger.info("Installing {} {}"
-                        .format('python_client', py_version))
-            local("env/bin/pip install couchbase=={} --no-cache-dir"
-                  .format(py_version))
-            logger.info("Successfully installed {} {}"
-                        .format('python_client', py_version))
-        elif py_version is not None and py_version.split(".")[0] != "2" and lcb_version is None:
-            logger.info("Uninstalling libcouchbase")
-            self.uninstall_clients("libcouchbase")
 
-            logger.info("Installing {} {}"
-                        .format('python_client', py_version))
-
-            if 'review.couchbase.org' in py_version or 'github.com' in py_version:
-                local("env/bin/pip install {} --no-cache-dir"
-                      .format(py_version))
-            else:
-                local("env/bin/pip install couchbase=={} --no-cache-dir"
-                      .format(py_version))
-
-            logger.info("Successfully installed {} {}"
-                        .format('python_client', py_version))
-        elif lcb_version is not None and py_version is None:
-            logger.info("Uninstalling libcouchbase")
-            self.uninstall_clients('libcouchbase')
-            if 'commit' in lcb_version:
                 logger.info("Installing libcouchbase {}".format(lcb_version))
-                self.install_lcb_from_commit(lcb_version)
+
+                if 'commit' in lcb_version:
+                    self.install_lcb_from_commit(lcb_version)
+                else:
+                    self.install_libcouchbase(lcb_version)
+
+                detected = self.detect_libcouchbase_versions()
+                logger.info("libcouchbase versions detected after installation: ")
+                for ip, version in detected.items():
+                    logger.info("\t{}:\t{}".format(ip, version))
             else:
-                logger.info("Installing {} {}"
-                            .format('libcouchbase', lcb_version))
-                self.install_libcouchbase(lcb_version)
-                logger.info("Successfully installed {} {}"
-                            .format('libcouchbase', lcb_version))
-        elif lcb_version is None and py_version is None:
-            pass
-        else:
-            logger.error("unknown combination of LCB and python sdk")
+                logger.info("Clients already have desired libcouchbase versions: ")
+                for ip, version in installed_versions.items():
+                    logger.info("\t{}:\t{}".format(ip, version))
+
+        if py_version:
+            logger.info("Installing python_client {}".format(py_version))
+            self.install_python_client(py_version)
+            detected = self.detect_python_client_version()
+            logger.info("Python client detected after installation (pip freeze): {}"
+                        .format(detected))
 
 
 def get_args():

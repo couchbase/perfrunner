@@ -257,9 +257,14 @@ class BigFunQueryTest(BigFunTest):
         super().__init__(*args, **kwargs)
         self.QUERIES = self.test_config.analytics_settings.queries
 
-    def warmup(self) -> List[Tuple[Query, int]]:
+    def warmup(self, nodes: list = []) -> List[Tuple[Query, int]]:
+        if len(nodes) == 0:
+            analytics_nodes = self.analytics_nodes
+        else:
+            analytics_nodes = nodes
+        logger.info("analytics_nodes = {}".format(analytics_nodes))
         results = bigfun(self.rest,
-                         nodes=self.analytics_nodes,
+                         nodes=analytics_nodes,
                          concurrency=self.test_config.access_settings.analytics_warmup_workers,
                          num_requests=int(self.test_config.access_settings.analytics_warmup_ops),
                          query_set=self.QUERIES)
@@ -267,9 +272,14 @@ class BigFunQueryTest(BigFunTest):
         return [(query, latency) for query, latency in results]
 
     @with_stats
-    def access(self, *args, **kwargs) -> List[Tuple[Query, int]]:
+    def access(self, nodes: list = [], *args, **kwargs) -> List[Tuple[Query, int]]:
+        if len(nodes) == 0:
+            analytics_nodes = self.analytics_nodes
+        else:
+            analytics_nodes = nodes
+        logger.info("analytics_nodes = {}".format(analytics_nodes))
         results = bigfun(self.rest,
-                         nodes=self.analytics_nodes,
+                         nodes=analytics_nodes,
                          concurrency=int(self.test_config.access_settings.workers),
                          num_requests=int(self.test_config.access_settings.ops),
                          query_set=self.QUERIES)
@@ -310,6 +320,53 @@ class BigFunQueryNoIndexTest(BigFunQueryTest):
 
     def create_index_collections(self):
         pass
+
+
+class BigFunQueryFailoverTest(BigFunQueryTest):
+
+    def failover(self):
+        logger.info("Starting node failover")
+        clusters = self.cluster_spec.clusters
+        initial_nodes = self.test_config.cluster.initial_nodes
+        failed_nodes = self.test_config.rebalance_settings.failed_nodes
+        active_analytics_nodes = self.analytics_nodes
+
+        for (_, servers), initial_nodes in zip(clusters,
+                                               initial_nodes):
+            master = servers[0]
+
+            failed = servers[initial_nodes - failed_nodes:initial_nodes]
+
+            for node in failed:
+                self.rest.fail_over(master, node)
+                active_analytics_nodes.remove(node)
+
+        logger.info("sleep for 120 seconds")
+        time.sleep(120)
+        t_start = self.remote.detect_hard_failover_start(self.master_node)
+        t_end = self.remote.detect_failover_end(self.master_node)
+        logger.info("failover starts at {}".format(t_start))
+        logger.info("failover ends at {}".format(t_end))
+        return active_analytics_nodes
+
+    def run(self):
+        random.seed(8095)
+        self.restore_local()
+        self.wait_for_persistence()
+
+        self.sync()
+
+        self.disconnect_link()
+        self.monitor.monitor_cbas_pending_ops(self.analytics_nodes)
+        active_analytics_nodes = self.failover()
+
+        logger.info('Running warmup phase')
+        self.warmup(nodes=active_analytics_nodes)
+
+        logger.info('Running access phase')
+        results = self.access(nodes=active_analytics_nodes)
+
+        self.report_kpi(results)
 
 
 class BigFunQueryNoIndexWithCompressionTest(BigFunQueryWithCompressionTest):

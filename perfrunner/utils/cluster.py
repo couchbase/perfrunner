@@ -80,6 +80,7 @@ def main():
     cm.restart_with_alternative_bucket_options()
     cm.set_index_settings()
     cm.set_query_settings()
+    cm.set_analytics_settings()
     cm.set_x509_certificates()
     cm.set_cipher_suite()
     cm.set_min_tls_version()

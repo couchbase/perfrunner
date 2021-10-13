@@ -1298,6 +1298,18 @@ class DefaultRestHelper(RestBase):
         logger.info('Plasma db list {}'.format(ids))
         return ids
 
+    def set_analytics_replica(self, host: str, analytics_replica: int):
+        logger.info('Setting analytics replica to: {}'.format(analytics_replica))
+        api = 'http://{}:8091/settings/analytics'.format(host)
+        data = {
+            'numReplicas': analytics_replica,
+        }
+        self.post(url=api, data=data)
+
+    def get_analytics_replica(self, host: str):
+        api = 'http://{}:8091/settings/analytics'.format(host)
+        return self.get(url=api).json()
+
 
 class KubernetesRestHelper(RestBase):
 

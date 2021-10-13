@@ -829,6 +829,29 @@ class DefaultMonitor(DefaultRestHelper):
 
         return num_items
 
+    def monitor_cbas_pending_ops(self, analytics_nodes):
+        logger.info('Wait until cbas_pending_ops reaches 0')
+        cbas_pending_ops_list = ['cbas_pending_flush_ops',
+                                 'cbas_pending_merge_ops',
+                                 'cbas_pending_replicate_ops']
+
+        while True:
+            pending_ops = 0
+            for analytics_node in analytics_nodes:
+                api = 'http://{}:8095/_prometheusMetrics'.format(analytics_node)
+                api_return = self.get(url=api)
+                for line in api_return.text.splitlines():
+                    if "#" not in line:
+                        metric_line = line.split()
+                        metric = metric_line[0]
+                        if metric in cbas_pending_ops_list:
+                            pending_ops += int(float(metric_line[1]))
+            logger.info("cbas pending ops= {}".format(pending_ops))
+            if pending_ops == 0:
+                break
+
+            time.sleep(self.POLLING_INTERVAL_ANALYTICS)
+
     def monitor_dataset_drop(self, analytics_node: str, dataset: str):
         while True:
             statement = "SELECT COUNT(*) from `{}`;".format(dataset)

@@ -138,6 +138,17 @@ class ClusterManager:
                     settings = pretty_dict(settings)
                     logger.info('Index settings: {}'.format(settings))
 
+    def set_analytics_settings(self):
+        replica_analytics = self.test_config.analytics_settings.replica_analytics
+        if replica_analytics:
+            if self.dynamic_infra:
+                return
+
+            self.rest.set_analytics_replica(self.master_node, replica_analytics)
+            self.rebalance()
+            check_replica = self.rest.get_analytics_replica(self.master_node)
+            logger.info("Analytics replica setting: {}".format(check_replica))
+
     def set_services(self):
         if self.dynamic_infra:
             cluster = self.remote.get_cluster()

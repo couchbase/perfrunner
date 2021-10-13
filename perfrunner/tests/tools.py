@@ -268,7 +268,7 @@ class BackupIncrementalTest(BackupRestoreTest):
 
             # Define a secondary load. For this we borrow the 'creates' field,
             # since load doesn't normally use this anyway.
-            inc_load = self.test_config.load_settings.creates
+            inc_load = self.test_config.load_settings.additional_items
             workers = self.test_config.load_settings.workers
             size = self.test_config.load_settings.size
 

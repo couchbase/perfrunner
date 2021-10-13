@@ -608,6 +608,7 @@ class PhaseSettings:
 
     ITEMS = 0
     SIZE = 2048
+    ADDITIONAL_ITEMS = 0
 
     PHASE = 0
     INSERT_TEST_FLAG = 0
@@ -739,6 +740,7 @@ class PhaseSettings:
 
         self.size = int(options.get('size', self.SIZE))
         self.items = int(options.get('items', self.ITEMS))
+        self.additional_items = int(options.get('additional_items', self.ADDITIONAL_ITEMS))
 
         self.phase = int(options.get('phase', self.PHASE))
         self.insert_test_flag = int(options.get('insert_test_flag', self.INSERT_TEST_FLAG))

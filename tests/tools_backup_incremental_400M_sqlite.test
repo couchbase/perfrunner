@@ -22,13 +22,15 @@ db_percentage = 100
 items = 400000000
 size = 1024
 workers = 100
-creates = 80000000
+additional_items = 200000000
 
 [access]
-creates = 100000
-deletes = 100000
+ops = 80000000
+items = 400000000
+creates = 50
+deletes = 50
 workers = 100
-time = 40
+time = 600
 
 [backup]
 threads = 16

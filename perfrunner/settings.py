@@ -1640,9 +1640,10 @@ class MagmaBenchmarkSettings:
     KEY_LEN = 40
     DOC_SIZE = 1024
     NUM_DOCS = 100000000
-    NUM_WRITES = 100000000
-    NUM_READS = 10000000
+    NUM_WRITES = 1000000000
+    NUM_READS = 1000000000
     NUM_READERS = 32
+    NUM_WRITERS = 128
     MEM_QUOTA = 1048576
     FS_CACHE_SIZE = 5368709120
     WRITE_MULTIPLIER = 5
@@ -1659,6 +1660,7 @@ class MagmaBenchmarkSettings:
         self.num_writes = int(options.get('num_writes', self.NUM_WRITES))
         self.num_reads = int(options.get('num_reads', self.NUM_READS))
         self.num_readers = int(options.get('num_readers', self.NUM_READERS))
+        self.num_writers = int(options.get('num_writers', self.NUM_WRITERS))
         self.memquota = int(options.get('memquota', self.MEM_QUOTA))
         self.fs_cache_size = int(options.get('fs_cache_size', self.FS_CACHE_SIZE))
         self.write_multiplier = int(options.get('write_multiplier', self.WRITE_MULTIPLIER))

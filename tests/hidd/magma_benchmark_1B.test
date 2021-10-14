@@ -1,0 +1,42 @@
+[test_case]
+test = perfrunner.tests.magma.MagmaBenchmarkTest
+
+[showfast]
+title = Magma Benchmark, 1B docs
+component = hidd
+category = benchmark
+
+[cluster]
+mem_quota = 20480
+initial_nodes = 1
+num_buckets = 1
+kernel_mem_limit = 34G
+kernel_mem_limit_services = kv
+enable_cpu_cores = false
+
+[bucket]
+backend_storage = magma
+
+[bucket_extras]
+num_reader_threads = 64
+num_writer_threads = 64
+
+[magma_benchmark]
+num_kvstores=128
+write_batchsize=1000
+key_len=40
+doc_size=1024
+num_docs=1000000000
+num_writes=1000000000
+num_reads=1000000000
+num_readers=8
+num_writers=128
+memquota=10737418240
+fs_cache_size=0
+data_dir=/data
+engine=magma
+engine_config='{"enable_lookup_on_set":true,"enable_directio":true}'
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

@@ -43,8 +43,6 @@ class MagmaBenchmarkTest(PerfTest):
 
     def __init__(self, *args):
         super().__init__(*args)
-
-        self.settings = self.test_config.magma_benchmark_settings
         self.stats_file = "stats.json"
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -54,22 +52,23 @@ class MagmaBenchmarkTest(PerfTest):
             logger.warn('The test was interrupted')
             return True
 
-    def create_command(self, write_multiplier: int = 1):
+    def create_command(self, settings):
 
-        cmd = "ulimit -n 1000000;/opt/couchbase/bin/priv/magma_bench {DATA_DIR}/{ENGINE} " \
+        cmd = "/opt/couchbase/bin/priv/magma_bench {DATA_DIR}/{ENGINE} " \
               "--kvstore {NUM_KVSTORES} --ndocs {NUM_DOCS} " \
               "--batch-size {WRITE_BATCHSIZE} --keylen {KEY_LEN} --vallen {DOC_SIZE} " \
-              "--nwrites {NUM_WRITES} --nreads {NUM_READS} --nreaders {NUM_READERS} " \
+              "--nwrites {NUM_WRITES} --nreads {NUM_READS} " \
+              "--nreaders {NUM_READERS} --nwriters {NUM_WRITERS} " \
               "--memquota {MEM_QUOTA} --fs-cache-size {FS_CACHE_SIZE} --active-stats " \
               "--engine {ENGINE} --engine-config {ENGINE_CONFIG} --stats {STATS_FILE}"\
-            .format(NUM_KVSTORES=self.settings.num_kvstores, NUM_DOCS=self.settings.num_docs,
-                    WRITE_BATCHSIZE=self.settings.write_batchsize, KEY_LEN=self.settings.key_len,
-                    DOC_SIZE=self.settings.doc_size,
-                    NUM_WRITES=(self.settings.num_writes * write_multiplier),
-                    NUM_READS=self.settings.num_reads, NUM_READERS=self.settings.num_readers,
-                    MEM_QUOTA=self.settings.memquota,
-                    FS_CACHE_SIZE=self.settings.fs_cache_size, DATA_DIR=self.settings.data_dir,
-                    ENGINE=self.settings.engine, ENGINE_CONFIG=self.settings.engine_config,
+            .format(NUM_KVSTORES=settings.num_kvstores, NUM_DOCS=settings.num_docs,
+                    WRITE_BATCHSIZE=settings.write_batchsize, KEY_LEN=settings.key_len,
+                    DOC_SIZE=settings.doc_size,
+                    NUM_WRITES=settings.num_writes, NUM_READS=settings.num_reads,
+                    NUM_READERS=settings.num_readers, NUM_WRITERS=settings.num_writers,
+                    MEM_QUOTA=settings.memquota,
+                    FS_CACHE_SIZE=settings.fs_cache_size, DATA_DIR=settings.data_dir,
+                    ENGINE=settings.engine, ENGINE_CONFIG=settings.engine_config,
                     STATS_FILE=self.stats_file)
         return cmd
 
@@ -79,36 +78,69 @@ class MagmaBenchmarkTest(PerfTest):
         logger.info("\nStats: {}".format(pretty_dict(data)))
         return data
 
-    def create(self):
-        cmd = self.create_command()
+    def load_docs(self):
+        settings = self.test_config.magma_benchmark_settings
+        settings.num_reads = 0
+        settings.num_readers = 0
+        cmd = self.create_command(settings=settings)
         cmd += " --benchmark writeSequential --clear-existing"
         stats = self.run_and_get_stats(cmd)
         return \
             stats["writer"]["Throughput"], \
-            stats["WriteAmp"], stats["SpaceAmp"], \
-            stats["writer"]["Latency"]["p99.99"]
+            stats["WriteAmp"], stats["SpaceAmp"]
 
-    def read(self):
-        cmd = self.create_command()
+    def read(self, mem_multiplier, reader_multiplier):
+        settings = self.test_config.magma_benchmark_settings
+        settings.num_writes = 0
+        settings.num_writers = 1
+        settings.memquota = int(settings.memquota * mem_multiplier)
+        settings.num_readers = int(settings.num_readers * reader_multiplier)
+        settings.num_reads = int((settings.num_docs / settings.num_readers)/2)
+        settings.write_batchsize = 1
+        cmd = self.create_command(settings=settings)
         cmd += " --benchmark readRandom"
         stats = self.run_and_get_stats(cmd)
         return \
             stats["reader"]["Throughput"], \
             stats["ReadIOAmp"], \
-            stats["BytesPerRead"], \
-            stats["reader"]["Latency"]["p99.99"]
+            stats["reader"]["Latency"]["p50"], \
+            stats["reader"]["Latency"]["p90"], \
+            stats["reader"]["Latency"]["p99"], \
+            stats["reader"]["Latency"]["p99.9"],
 
     def update(self):
-        cmd = self.create_command(write_multiplier=self.settings.write_multiplier)
+        settings = self.test_config.magma_benchmark_settings
+        settings.num_reads = 0
+        settings.num_readers = 0
+        settings.num_writes = int(settings.num_docs / settings.num_writers)
+        cmd = self.create_command(settings=settings)
         cmd += " --benchmark writeRandom"
         stats = self.run_and_get_stats(cmd)
         return \
             stats["writer"]["Throughput"], \
-            stats["WriteAmp"], stats["SpaceAmp"], \
-            stats["writer"]["Latency"]["p99.99"]
+            stats["WriteAmp"], stats["SpaceAmp"]
+
+    def update_latency(self, num_writes, batch_size, mem_multiplier, num_writers):
+        settings = self.test_config.magma_benchmark_settings
+        settings.num_reads = 0
+        settings.num_readers = 0
+        settings.num_writes = num_writes
+        settings.num_writers = num_writers
+        settings.write_batchsize = batch_size
+        settings.memquota = int(settings.memquota * mem_multiplier)
+        cmd = self.create_command(settings=settings)
+        cmd += " --benchmark writeRandom"
+        stats = self.run_and_get_stats(cmd)
+        return \
+            stats["writer"]["Throughput"], \
+            stats["writer"]["Latency"]["p50"], \
+            stats["writer"]["Latency"]["p90"], \
+            stats["writer"]["Latency"]["p99"], \
+            stats["writer"]["Latency"]["p99.9"]
 
     def delete(self):
-        cmd = self.create_command()
+        settings = self.test_config.magma_benchmark_settings
+        cmd = self.create_command(settings=settings)
         cmd += " --benchmark deleteRandom"
         stats = self.run_and_get_stats(cmd)
         return \
@@ -116,95 +148,181 @@ class MagmaBenchmarkTest(PerfTest):
             stats["DiskUsed"], \
             stats["writer"]["Latency"]["p99.99"]
 
-    def _report_kpi(self, create_metrics, read_metrics, write_metrics, delete_metrics):
+    def scan(self):
+        settings = self.test_config.magma_benchmark_settings
+        settings.num_writes = 0
+        settings.num_writers = 1
+        settings.num_readers = 1
+        settings.write_batchsize = 1
+        cmd = self.create_command(settings=settings)
+        cmd += " --benchmark scanSequence"
+        stats = self.run_and_get_stats(cmd)
+        return \
+            stats["reader"]["Throughput"]
+
+    def _report_kpi(self, load_metrics, read_metrics_1, read_metrics_2, write_metrics,
+                    write_latency_metrics, scan_metrics):
         self.reporter.post(
-            *self.metrics.magma_benchmark_metrics(throughput=create_metrics[0],
+            *self.metrics.magma_benchmark_metrics(throughput=load_metrics[0],
                                                   precision=0,
-                                                  benchmark="Throughput, Write sequential")
+                                                  benchmark="Throughput, Load, "
+                                                            "1% memory, 128 writers")
         )
         self.reporter.post(
-            *self.metrics.magma_benchmark_metrics(throughput=create_metrics[1],
+            *self.metrics.magma_benchmark_metrics(throughput=load_metrics[1],
                                                   precision=2,
-                                                  benchmark="Write amp, Write sequential")
+                                                  benchmark="Writeamp, Load, "
+                                                            "1% memory, 128 writers")
         )
         self.reporter.post(
-            *self.metrics.magma_benchmark_metrics(throughput=create_metrics[2],
+            *self.metrics.magma_benchmark_metrics(throughput=load_metrics[2],
                                                   precision=2,
-                                                  benchmark="Space amp, Write sequential")
+                                                  benchmark="Spaceamp, Load, "
+                                                            "1% memory, 128 writers")
         )
         self.reporter.post(
-            *self.metrics.magma_benchmark_metrics(throughput=create_metrics[3],
+            *self.metrics.magma_benchmark_metrics(throughput=read_metrics_1[0],
                                                   precision=0,
-                                                  benchmark="P9999, Write sequential")
+                                                  benchmark="Throughput, Read random, "
+                                                            "1% memory, 8 readers")
         )
         self.reporter.post(
-            *self.metrics.magma_benchmark_metrics(throughput=read_metrics[0],
-                                                  precision=0,
-                                                  benchmark="Throughput, Read random")
-        )
-        self.reporter.post(
-            *self.metrics.magma_benchmark_metrics(throughput=read_metrics[1],
+            *self.metrics.magma_benchmark_metrics(throughput=read_metrics_1[1],
                                                   precision=2,
-                                                  benchmark="Read IO amp, Read random")
+                                                  benchmark="Read IO amp, Read random, "
+                                                            "1% memory, 8 readers")
         )
         self.reporter.post(
-            *self.metrics.magma_benchmark_metrics(throughput=read_metrics[2],
+            *self.metrics.magma_benchmark_metrics(throughput=read_metrics_1[2],
                                                   precision=1,
-                                                  benchmark="Bytes per read, Read random")
+                                                  benchmark="P50, Read random, "
+                                                            "1% memory, 8 readers")
         )
         self.reporter.post(
-            *self.metrics.magma_benchmark_metrics(throughput=read_metrics[3],
+            *self.metrics.magma_benchmark_metrics(throughput=read_metrics_1[3],
                                                   precision=0,
-                                                  benchmark="P9999, Read random")
+                                                  benchmark="P90, Read random, "
+                                                            "1% memory, 8 readers")
+        )
+        self.reporter.post(
+            *self.metrics.magma_benchmark_metrics(throughput=read_metrics_1[4],
+                                                  precision=1,
+                                                  benchmark="P99, Read random, "
+                                                            "1% memory, 8 readers")
+        )
+        self.reporter.post(
+            *self.metrics.magma_benchmark_metrics(throughput=read_metrics_1[5],
+                                                  precision=0,
+                                                  benchmark="P999, Read random, "
+                                                            "1% memory, 8 readers")
+        )
+        self.reporter.post(
+            *self.metrics.magma_benchmark_metrics(throughput=read_metrics_2[0],
+                                                  precision=0,
+                                                  benchmark="Throughput, Read random, "
+                                                            "4% memory, 256 readers")
+        )
+        self.reporter.post(
+            *self.metrics.magma_benchmark_metrics(throughput=read_metrics_2[1],
+                                                  precision=2,
+                                                  benchmark="Read IO amp, Read random, "
+                                                            "4% memory, 256 readers")
+        )
+        self.reporter.post(
+            *self.metrics.magma_benchmark_metrics(throughput=read_metrics_2[2],
+                                                  precision=1,
+                                                  benchmark="P50, Read random, "
+                                                            "4% memory, 256 readers")
+        )
+        self.reporter.post(
+            *self.metrics.magma_benchmark_metrics(throughput=read_metrics_2[3],
+                                                  precision=0,
+                                                  benchmark="P90, Read random, "
+                                                            "4% memory, 256 readers")
+        )
+        self.reporter.post(
+            *self.metrics.magma_benchmark_metrics(throughput=read_metrics_2[4],
+                                                  precision=1,
+                                                  benchmark="P99, Read random, "
+                                                            "4% memory, 256 readers")
+        )
+        self.reporter.post(
+            *self.metrics.magma_benchmark_metrics(throughput=read_metrics_2[5],
+                                                  precision=0,
+                                                  benchmark="P999, Read random, "
+                                                            "4% memory, 256 readers")
         )
         self.reporter.post(
             *self.metrics.magma_benchmark_metrics(throughput=write_metrics[0],
                                                   precision=0,
-                                                  benchmark="Throughput, Write random")
+                                                  benchmark="Throughput, Write random, "
+                                                            "1% memory, 128 writers")
         )
         self.reporter.post(
             *self.metrics.magma_benchmark_metrics(throughput=write_metrics[1],
                                                   precision=2,
-                                                  benchmark="Write amp, Write random")
+                                                  benchmark="Write amp, Write random, "
+                                                            "1% memory, 128 writers")
         )
         self.reporter.post(
             *self.metrics.magma_benchmark_metrics(throughput=write_metrics[2],
                                                   precision=2,
-                                                  benchmark="Space amp, Write random")
+                                                  benchmark="Space amp, Write random, "
+                                                            "1% memory, 128 writers")
         )
         self.reporter.post(
-            *self.metrics.magma_benchmark_metrics(throughput=write_metrics[3],
+            *self.metrics.magma_benchmark_metrics(throughput=write_latency_metrics[0],
                                                   precision=0,
-                                                  benchmark="P9999, Write random")
+                                                  benchmark="Throughput, Write random, "
+                                                            "4% memory, 8 writers")
         )
         self.reporter.post(
-            *self.metrics.magma_benchmark_metrics(throughput=delete_metrics[0],
-                                                  precision=0,
-                                                  benchmark="Throughput, Delete random")
+            *self.metrics.magma_benchmark_metrics(throughput=write_latency_metrics[1],
+                                                  precision=1,
+                                                  benchmark="P50, Write random, "
+                                                            "4% memory, 8 writers")
         )
         self.reporter.post(
-            *self.metrics.magma_benchmark_metrics(throughput=delete_metrics[1],
+            *self.metrics.magma_benchmark_metrics(throughput=write_latency_metrics[2],
                                                   precision=0,
-                                                  benchmark="DiskUsed, Delete random")
+                                                  benchmark="P90, Write random, "
+                                                            "4% memory, 8 writers")
         )
         self.reporter.post(
-            *self.metrics.magma_benchmark_metrics(throughput=delete_metrics[2],
+            *self.metrics.magma_benchmark_metrics(throughput=write_latency_metrics[3],
+                                                  precision=1,
+                                                  benchmark="P99, Write random, "
+                                                            "4% memory, 8 writers")
+        )
+        self.reporter.post(
+            *self.metrics.magma_benchmark_metrics(throughput=write_latency_metrics[4],
                                                   precision=0,
-                                                  benchmark="P9999, Delete random")
+                                                  benchmark="P999, Write random, "
+                                                            "4% memory, 8 writers")
+        )
+        self.reporter.post(
+            *self.metrics.magma_benchmark_metrics(throughput=scan_metrics,
+                                                  precision=0,
+                                                  benchmark="Throughput, Scan, "
+                                                            "1% memory, 1 reader")
         )
 
     def run(self):
         self.remote.stop_server()
 
-        create_metrics = self.create()
+        load_metrics = self.load_docs()
+        read_metrics_1 = self.read(1, 1)
+        read_metrics_2 = self.read(4, 32)
 
-        read_metrics = self.read()
+        logger.info("start overwrite")
+        self.update()
 
         write_metrics = self.update()
+        write_latency_metrics = self.update_latency(1000000, 1, 4, 8)
+        scan_metrics = self.scan()
 
-        delete_metrics = self.delete()
-
-        self.report_kpi(create_metrics, read_metrics, write_metrics, delete_metrics)
+        self.report_kpi(load_metrics, read_metrics_1, read_metrics_2, write_metrics,
+                        write_latency_metrics, scan_metrics)
 
 
 class KVTest(PerfTest):
@@ -393,9 +511,10 @@ class KVTest(PerfTest):
         PerfTest.access(self, target_iterator=target_iterator)
 
     def warmup_access_phase(self):
-        self.COLLECTORS["latency"] = False
         access_settings = self.test_config.access_settings
         access_settings.time = 300
+        access_settings.creates = 0
+        self.COLLECTORS["latency"] = False
         logger.info("Starting warmup access phase")
         if self.test_config.load_settings.use_backup:
             PerfTest.access(self, settings=access_settings, target_iterator=self.iterator)

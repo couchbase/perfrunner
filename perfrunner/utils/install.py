@@ -12,9 +12,10 @@ from fabric.api import cd, run
 from requests.exceptions import ConnectionError
 
 from logger import logger
+from perfrunner.helpers.misc import url_exist
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.remote.context import master_client
-from perfrunner.settings import ClusterSpec
+from perfrunner.settings import ClusterSpec, TestConfig
 
 set_start_method("fork")
 
@@ -405,6 +406,18 @@ class CouchbaseInstaller:
         else:
             return self.find_package(edition=self.options.edition)
 
+    @cached_property
+    def debuginfo_url(self) -> str:
+        debuginfo_str = ''
+        if self.url.endswith('.rpm'):
+            debuginfo_str = '-debuginfo'
+        elif self.url.endswith('.deb'):
+            debuginfo_str = '-dbg'
+
+        search_str = 'couchbase-server-{}'.format(self.options.edition)
+
+        return self.url.replace(search_str, search_str + debuginfo_str)
+
     @property
     def release(self) -> str:
         return self.options.couchbase_version.split('-')[0]
@@ -491,6 +504,12 @@ class CouchbaseInstaller:
 
     def clean_data(self):
         self.remote.clean_data()
+
+    def install_debuginfo(self):
+        if not url_exist(self.debuginfo_url):
+            logger.interrupt('Debuginfo package not found for url {}'.format(self.debuginfo_url))
+
+        self.remote.install_cb_debug_package(url=self.debuginfo_url)
 
     def install_package(self):
         logger.info('Using this URL: {}'.format(self.url))
@@ -678,7 +697,7 @@ def get_args():
                         help='the build version for the couchbase operator')
     parser.add_argument('-u', '--uninstall',
                         action='store_true',
-                        help='the path to a cluster specification file')
+                        help='uninstall the installed build')
     parser.add_argument('--serverless-profile',
                         default=False,
                         help='use to convert the cb-server profile to \
@@ -728,6 +747,13 @@ def main():
         if args.remote_copy:
             logger.info('Saving a remote copy')
             installer.download_remote()
+
+        # Here we install CB debuginfo
+        # It only works if the linux_perf_profile_flag setting is set through an OVERRIDE
+        test_config = TestConfig()
+        test_config.override(args.override)
+        if test_config.profiling_settings.linux_perf_profile_flag:
+            installer.install_debuginfo()
 
 
 if __name__ == '__main__':

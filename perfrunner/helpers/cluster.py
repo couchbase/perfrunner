@@ -15,7 +15,6 @@ from perfrunner.helpers.misc import (
     run_local_shell_command,
     set_azure_capella_subscription,
     set_azure_perf_subscription,
-    url_exist,
 )
 from perfrunner.helpers.monitor import Monitor
 from perfrunner.helpers.remote import RemoteHelper
@@ -1052,42 +1051,6 @@ class ClusterManager:
             )
             check_tls_version = self.rest.get_minimum_tls_version(self.master_node)
             logger.info('new tls version: {}'.format(check_tls_version))
-
-    def get_debug_package_url(self):
-        release, build_number = self.build.split('-')
-        if self.build_tuple > (8, 0, 0, 0):
-            release = 'morpheus'
-        elif self.build_tuple > (7, 6, 0, 0):
-            release = 'trinity'
-        elif (7, 2, 0, 0) < self.build_tuple <= (7, 2, 0, 2228) or self.build_tuple > (7, 5, 0, 0):
-            release = 'elixir'
-        elif self.build_tuple > (7, 1, 0, 0):
-            release = 'neo'
-        elif self.build_tuple > (7, 0, 0, 0):
-            release = 'cheshire-cat'
-        elif self.build_tuple > (6, 5, 0, 0) and self.build_tuple < (7, 0, 0, 0):
-            release = 'mad-hatter'
-        elif self.build_tuple < (6, 5, 0, 0):
-            release = 'alice'
-
-        if self.remote.distro.upper() in ['UBUNTU', 'DEBIAN']:
-            package_name = 'couchbase-server-enterprise-dbg_{}-{}{}_amd64.deb'
-        else:
-            package_name = 'couchbase-server-enterprise-debuginfo-{}-{}{}.x86_64.rpm'
-
-        package_name = package_name.format(self.build, self.remote.distro,
-                                           self.remote.distro_version)
-        return (
-            'http://latestbuilds.service.couchbase.com/'
-            'builds/latestbuilds/couchbase-server/{}/{}/{}'
-        ).format(release, build_number, package_name)
-
-    def install_cb_debug_package(self):
-        url = self.get_debug_package_url()
-        if url_exist(url):
-            self.remote.install_cb_debug_package(url=url)
-        else:
-            logger.warn('Debug packages not found for url: {}'.format(url))
 
     def enable_developer_preview(self):
         if self.build_tuple > (7, 0, 0, 4698) or self.build_tuple < (1, 0, 0, 0):

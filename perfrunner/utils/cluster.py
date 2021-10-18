@@ -150,10 +150,6 @@ def main():
 
     cm.tweak_memory()
     cm.enable_n2n_encryption()
-
-    if cm.test_config.profiling_settings.linux_perf_profile_flag:
-        cm.install_cb_debug_package()
-
     cm.deploy_couchbase_with_cgroups()
 
 

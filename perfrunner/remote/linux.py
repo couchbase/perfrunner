@@ -382,16 +382,12 @@ class RemoteLinux(Remote):
         run(cmd)
 
     @master_server
-    def restore_data(self, archive_path: str, repo_path: str, map_data: str=None):
-        cmd = \
-            "/opt/couchbase/bin/cbbackupmgr restore " \
-            "--archive {} --repo {} --threads 24 " \
-            "--cluster http://localhost:8091 " \
-            "--username Administrator --password password " \
-            "--disable-ft-indexes --disable-gsi-indexes".format(
-                archive_path,
-                repo_path,
-            )
+    def restore_data(self, archive_path: str, repo_path: str, map_data: str = None):
+        cmd = "/opt/couchbase/bin/cbbackupmgr restore " \
+              "--archive {} --repo {} --threads 24 " \
+              "--cluster http://localhost:8091 " \
+              "--username Administrator --password password " \
+              "--disable-ft-indexes --disable-gsi-indexes".format(archive_path, repo_path)
 
         if map_data:
             cmd += " --map-data {}".format(map_data)

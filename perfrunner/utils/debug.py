@@ -4,12 +4,15 @@ import shutil
 import zipfile
 from argparse import ArgumentParser
 from collections import defaultdict
+from multiprocessing import set_start_method
 from typing import List
 
 from logger import logger
 from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import ClusterSpec
+
+set_start_method("fork")
 
 GOLANG_LOG_FILES = ("eventing.log",
                     "fts.log",

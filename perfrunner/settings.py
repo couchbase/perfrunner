@@ -777,7 +777,7 @@ class PhaseSettings:
         self.working_set_moving_docs = int(options.get('working_set_moving_docs',
                                                        self.WORKING_SET_MOVE_DOCS))
         self.workers = int(options.get('workers', self.WORKERS))
-        self.async = bool(int(options.get('async', self.ASYNC)))
+        self.run_async = bool(int(options.get('async', self.ASYNC)))
         self.key_fmtr = options.get('key_fmtr', self.KEY_FMTR)
 
         self.hot_reads = self.HOT_READS

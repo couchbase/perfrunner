@@ -11,7 +11,7 @@ from perfrunner.remote.context import all_servers, master_server
 
 class RemoteWindows(Remote):
 
-    CB_DIR = '/cygdrive/c/Program\ Files/Couchbase/Server'
+    CB_DIR = '/cygdrive/c/Program\\ Files/Couchbase/Server'
 
     VERSION_FILE = '/cygdrive/c/Program Files/Couchbase/Server/VERSION.txt'
 

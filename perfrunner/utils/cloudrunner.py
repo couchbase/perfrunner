@@ -1,12 +1,15 @@
 import argparse
 import copy
 import time
+from multiprocessing import set_start_method
 from typing import Dict, Iterator, List
 
 import boto3
 import yaml
 
 from logger import logger
+
+set_start_method("fork")
 
 
 class CloudRunner:

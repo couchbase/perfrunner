@@ -1,7 +1,10 @@
 from argparse import ArgumentParser
+from multiprocessing import set_start_method
 
 from perfrunner.helpers.cluster import ClusterManager
 from perfrunner.settings import ClusterSpec, TestConfig
+
+set_start_method("fork")
 
 
 def get_args():

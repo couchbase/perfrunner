@@ -145,20 +145,20 @@ class EventingConsumerStats(EventingPerNodeStats):
                 pid_list_top = []
                 pid_list_top_str = ""
                 grep_text_top = []
-                grep_text_top_str = "^\s*"
+                grep_text_top_str = "^\\s*"
                 counter = 0
                 # run top command in batches of 20 pids as per top command limitation
                 for pid in pids.values():
-                    grep_text_ps += '^[[:space:]]*{}\|'.format(pid)
+                    grep_text_ps += '^[[:space:]]*{}\\|'.format(pid)
                     pid_list_top_str += '{},'.format(pid)
-                    grep_text_top_str += '{}\|'.format(pid)
+                    grep_text_top_str += '{}\\|'.format(pid)
                     counter += 1
                     if counter == 20:
                         counter = 0
                         pid_list_top.append(pid_list_top_str[:-1])
                         grep_text_top.append(grep_text_top_str[:-2])
                         pid_list_top_str = ""
-                        grep_text_top_str = "^\s*"
+                        grep_text_top_str = "^\\s*"
                 grep_text_ps = grep_text_ps[:-2]
                 with settings(host_string=node):
                     rss_used = run(self.PS_CMD.format(grep_text_ps))

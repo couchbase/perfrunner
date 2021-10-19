@@ -562,12 +562,12 @@ class RemoteKubernetes(Remote):
                     sdk_version = sdk_version.replace(":", ".")
                     major_version = sdk_version.split(".")[0]
                     cb_version = "couchbase"
-                    if major_version is "1":
+                    if major_version == "1":
                         cb_version += ""
                     else:
                         cb_version += major_version
-                    original_string = '<{0}.version>*.*.*<\/{0}.version>'.format(cb_version)
-                    new_string = '<{0}.version>{1}<\/{0}.version>'.format(cb_version, sdk_version)
+                    original_string = '<{0}.version>*.*.*<\\/{0}.version>'.format(cb_version)
+                    new_string = '<{0}.version>{1}<\\/{0}.version>'.format(cb_version, sdk_version)
                     cmd = "sed -i 's/{}/{}/g' pom.xml".format(original_string, new_string)
                     self.kubectl_exec(worker_name, 'cd YCSB; {}'.format(cmd))
 

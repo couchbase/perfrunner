@@ -7,7 +7,7 @@ class PCStat(RemoteStats):
 
     def get_pcstat(self, partition: str) -> float:
         stdout = self.run(
-            'find {} -regex .*[0-9]+\.couch\.[0-9]+ \
+            'find {} -regex .*[0-9]+\\.couch\\.[0-9]+ \
             | xargs pcstat -nohdr -terse 2>/dev/null'.format(partition),
         )
         percents = []

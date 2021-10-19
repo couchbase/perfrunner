@@ -2,7 +2,7 @@ import os
 import sys
 from argparse import ArgumentParser
 from collections import namedtuple
-from multiprocessing import Process
+from multiprocessing import Process, set_start_method
 from typing import Iterator
 
 import paramiko
@@ -16,6 +16,8 @@ from perfrunner.helpers.local import detect_ubuntu_release
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.remote.context import master_client
 from perfrunner.settings import ClusterSpec
+
+set_start_method("fork")
 
 LOCATIONS = (
     'http://172.23.126.166/builds/latestbuilds/couchbase-server/neo/{build}/',

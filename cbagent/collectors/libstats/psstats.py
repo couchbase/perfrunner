@@ -11,7 +11,7 @@ class PSStats(RemoteStats):
     PS_CMD = "ps -eo pid,rss,vsize,comm | " \
         "grep {} | grep -v grep | sort -n -k 2 | tail -n 1"
 
-    TOP_CMD = "top -b -n2 -d{0} -p {1} | grep '^\s*{1}' | tail -n 1"
+    TOP_CMD = "top -b -n2 -d{0} -p {1} | grep '^\\s*{1}' | tail -n 1"
 
     MAX_TOP_INTERVAL = 10  # seconds
 

@@ -65,8 +65,8 @@ class Remote:
                 run('ulimit -n 10240; '
                     'WORKER_TYPE=remote '
                     'BROKER_URL={1} '
-                    'nohup env/bin/celery worker -A perfrunner.helpers.worker '
-                    '-l INFO -Q {0} -n {0} -C --discard '
+                    'nohup env/bin/celery -A perfrunner.helpers.worker worker '
+                    '-l INFO -Q {0} -n {0} --discard '
                     '&>worker_{0}.log &'.format(worker, broker_url), pty=False)
 
     def clone_git_repo(self, repo: str, branch: str, worker_home: str, commit: str = None):
@@ -86,12 +86,12 @@ class Remote:
             major_version = sdk_version.split(".")[0]
             with cd(worker_home), cd('perfrunner'), cd('YCSB'):
                 cb_version = "couchbase"
-                if major_version is "1":
+                if major_version == "1":
                     cb_version += ""
                 else:
                     cb_version += major_version
-                original_string = '<{0}.version>*.*.*<\/{0}.version>'.format(cb_version)
-                new_string = '<{0}.version>{1}<\/{0}.version>'.format(cb_version, sdk_version)
+                original_string = '<{0}.version>*.*.*<\\/{0}.version>'.format(cb_version)
+                new_string = '<{0}.version>{1}<\\/{0}.version>'.format(cb_version, sdk_version)
                 cmd = "sed -i 's/{}/{}/g' pom.xml".format(original_string, new_string)
                 run(cmd)
 

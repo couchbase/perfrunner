@@ -9,11 +9,14 @@ This utility will:
 import collections
 import xml.etree.ElementTree
 from argparse import ArgumentParser
+from multiprocessing import set_start_method
 from typing import Dict
 
 from perfrunner.helpers.local import govendor_fetch
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import ClusterSpec
+
+set_start_method("fork")
 
 REQUIRED_PROJECTS = ["indexing", "clog", "go-slab", "go_json",
                      "go-jsonpointer", "gojson"]

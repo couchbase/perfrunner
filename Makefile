@@ -3,15 +3,16 @@ SHELL := /bin/bash
 PATH := ${GOPATH}/bin:$(PATH)
 
 ENV := env
-PYTHON := python3.6
+PYTHON := python3.9
 PYTHON_PROJECTS := cbagent perfdaily perfrunner scripts spring
 .PHONY: docker
 
 all:
 	export PYENV_ROOT="$$HOME/.pyenv" && \
 	export PATH="$$PYENV_ROOT/bin:$$PATH" && \
-	eval "$$(pyenv init -)" && \
-	pyenv local 3.6.12 && \
+	eval "$$(pyenv init --path)" && \
+	pyenv install 3.9.7 -s && \
+	pyenv local 3.9.7 && \
 	virtualenv --quiet --python ${PYTHON} ${ENV}
 	${ENV}/bin/pip install --upgrade --quiet pip wheel
 	${ENV}/bin/pip install --quiet --no-warn-script-location -r requirements.txt
@@ -70,7 +71,7 @@ docker:
 	docker build -t docker.io/perflab/perfrunner docker
 
 docker-cloud-worker:
-	pyenv local 3.6.12 && \
+	pyenv local 3.9.7 && \
 	virtualenv --quiet --python ${PYTHON} ${ENV}
 	${ENV}/bin/pip install --upgrade --quiet pip wheel
 	${ENV}/bin/pip install --quiet --no-warn-script-location -r requirements.txt

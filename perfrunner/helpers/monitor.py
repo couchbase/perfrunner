@@ -322,7 +322,7 @@ class DefaultMonitor(DefaultRestHelper):
             return curr_items[-1]
         return 0
 
-    def monitor_num_items(self, host: str, bucket: str, num_items: int, max_retry: int=None):
+    def monitor_num_items(self, host: str, bucket: str, num_items: int, max_retry: int = None):
         logger.info('Checking the number of items in {}'.format(bucket))
         if not max_retry:
             max_retry = self.MAX_RETRY
@@ -1040,7 +1040,7 @@ class KubernetesMonitor(KubernetesRestHelper):
             if time.time() - start_time > self.TIMEOUT:
                 raise Exception('Replica items monitoring got stuck')
 
-    def monitor_num_items(self, host: str, bucket: str, num_items: int, max_retry: int=None):
+    def monitor_num_items(self, host: str, bucket: str, num_items: int, max_retry: int = None):
         logger.info('Checking the number of items in {}'.format(bucket))
         if not max_retry:
             max_retry = self.MAX_RETRY

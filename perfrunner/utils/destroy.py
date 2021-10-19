@@ -1,11 +1,14 @@
 import datetime
 import json
 from argparse import ArgumentParser
+from multiprocessing import set_start_method
 
 import boto3
 
 from logger import logger
 from perfrunner.settings import ClusterSpec
+
+set_start_method("fork")
 
 
 class Destroyer:

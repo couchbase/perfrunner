@@ -1,10 +1,13 @@
 import glob
 import zipfile
 from collections import defaultdict
+from multiprocessing import set_start_method
 from typing import List
 
 from logger import logger
 from perfrunner.helpers.misc import pretty_dict
+
+set_start_method("fork")
 
 GOLANG_LOG_FILES = ("eventing.log",
                     "fts.log",

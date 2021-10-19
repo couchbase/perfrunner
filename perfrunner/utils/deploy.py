@@ -1,5 +1,6 @@
 import json
 from argparse import ArgumentParser
+from multiprocessing import set_start_method
 
 import boto3
 import yaml
@@ -8,6 +9,8 @@ from logger import logger
 from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import ClusterSpec
+
+set_start_method("fork")
 
 
 class Deployer:
@@ -581,19 +584,19 @@ class AWSDeployer(Deployer):
                     self.write_infra_file()
 
             for ec2_group_name, ec2_dict in self.deployed_infra['vpc']['ec2'].items():
-                    waiter = self.ec2client.get_waiter('instance_status_ok')
-                    ec2_list = list(ec2_dict.keys())
-                    waiter.wait(
-                        InstanceIds=list(ec2_dict.keys()),
-                        DryRun=False,
-                        WaiterConfig={'Delay': 10, 'MaxAttempts': 600})
-                    for ec2_id in ec2_list:
-                        instance = self.ec2.Instance(ec2_id)
-                        ec2_dict[ec2_id]["public_ip"] = instance.public_ip_address
-                        ec2_dict[ec2_id]["public_dns"] = instance.public_dns_name
-                        ec2_dict[ec2_id]["private_ip"] = instance.private_ip_address
-                    self.deployed_infra['vpc']['ec2'][ec2_group_name] = ec2_dict
-                    self.write_infra_file()
+                waiter = self.ec2client.get_waiter('instance_status_ok')
+                ec2_list = list(ec2_dict.keys())
+                waiter.wait(
+                    InstanceIds=list(ec2_dict.keys()),
+                    DryRun=False,
+                    WaiterConfig={'Delay': 10, 'MaxAttempts': 600})
+                for ec2_id in ec2_list:
+                    instance = self.ec2.Instance(ec2_id)
+                    ec2_dict[ec2_id]["public_ip"] = instance.public_ip_address
+                    ec2_dict[ec2_id]["public_dns"] = instance.public_dns_name
+                    ec2_dict[ec2_id]["private_ip"] = instance.private_ip_address
+                self.deployed_infra['vpc']['ec2'][ec2_group_name] = ec2_dict
+                self.write_infra_file()
 
     def open_security_groups(self):
         logger.info("Opening security groups...")

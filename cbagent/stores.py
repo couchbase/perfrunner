@@ -19,7 +19,7 @@ class PerfStore:
                      index: str = None,
                      collector: str = None) -> str:
         db_name = (collector or "") + cluster + (bucket or "") + (index or "") + (server or "")
-        for char in "[]/\;.,><&*:%=+@!#^()|?^'\"":
+        for char in "[ ] / \\ ; . , > < & * : % = + @ ! # ^ ( ) | ? ^ ' \"":
             db_name = db_name.replace(char, "")
         return db_name
 

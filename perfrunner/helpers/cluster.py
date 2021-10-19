@@ -236,16 +236,15 @@ class ClusterManager:
     def add_nodes(self):
         if self.dynamic_infra:
             return
-        for (_, servers), initial_nodes \
-                in zip(self.cluster_spec.clusters, self.initial_nodes):
+        for (_, servers), initial_nodes in zip(self.cluster_spec.clusters, self.initial_nodes):
 
-                if initial_nodes < 2:  # Single-node cluster
-                    continue
+            if initial_nodes < 2:  # Single-node cluster
+                continue
 
-                master = servers[0]
-                for node in servers[1:initial_nodes]:
-                    roles = self.cluster_spec.roles[node]
-                    self.rest.add_node(master, node, roles)
+            master = servers[0]
+            for node in servers[1:initial_nodes]:
+                roles = self.cluster_spec.roles[node]
+                self.rest.add_node(master, node, roles)
 
     def rebalance(self):
         if self.dynamic_infra:

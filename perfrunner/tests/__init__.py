@@ -2,6 +2,7 @@ import copy
 import glob
 import shutil
 import time
+from multiprocessing import set_start_method
 from typing import Callable, Iterable, List, Optional
 
 from logger import logger
@@ -22,6 +23,11 @@ from perfrunner.settings import (
     TargetIterator,
     TestConfig,
 )
+
+try:
+    set_start_method("fork")
+except Exception as ex:
+    print(ex)
 
 
 class PerfTest:
@@ -266,7 +272,7 @@ class PerfTest:
             for server in self.index_nodes:
                 self.monitor.monitor_indexing(server)
 
-    def check_num_items(self, bucket_items: dict = None, max_retry: int=None):
+    def check_num_items(self, bucket_items: dict = None, max_retry: int = None):
         if bucket_items:
             for target in self.target_iterator:
                 num_items = bucket_items.get(target.bucket, None)

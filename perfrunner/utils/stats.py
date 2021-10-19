@@ -1,4 +1,5 @@
 from collections import namedtuple
+from multiprocessing import set_start_method
 from typing import Dict, Iterator, Optional
 
 from couchbase.cluster import Cluster, ClusterOptions, QueryOptions
@@ -10,6 +11,8 @@ from logger import logger
 from perfrunner.settings import CBMONITOR_HOST
 from perfrunner.utils.jenkins import JenkinsScanner
 from perfrunner.utils.weekly import Weekly
+
+set_start_method("fork")
 
 StatsSettings = namedtuple('StatsSettings', ('cluster', 'cbmonitor_host'))
 

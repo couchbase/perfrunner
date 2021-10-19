@@ -21,7 +21,7 @@ class WorkloadSettings:
         self.working_set_access = options.working_set_access
         self.working_set_moving_docs = 0
 
-        self.async = options.async
+        self.run_async = options.run_async
 
         self.workers = options.workers
 

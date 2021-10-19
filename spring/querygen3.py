@@ -247,7 +247,7 @@ class N1QLQueryGen3:
         else:
             return QueryScanConsistency.NOT_BOUNDED
 
-    def next(self, key: str, doc: dict, replace_targets: dict=None) -> Tuple[str, QueryOptions]:
+    def next(self, key: str, doc: dict, replace_targets: dict = None) -> Tuple[str, QueryOptions]:
         statement, args, scan_consistency, ad_hoc = next(self.queries)
         if replace_targets:
             for bucket in replace_targets.keys():

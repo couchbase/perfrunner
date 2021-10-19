@@ -1,6 +1,7 @@
 import glob
 import json
 from collections import defaultdict
+from multiprocessing import set_start_method
 from typing import Dict, Iterator, List, Optional, Tuple
 
 import jenkins
@@ -9,6 +10,8 @@ from couchbase_core.cluster import PasswordAuthenticator
 
 from logger import logger
 from perfrunner.utils.weekly import Weekly
+
+set_start_method("fork")
 
 JobMapping = Dict[str, List[Dict[str, str]]]
 

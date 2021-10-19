@@ -1,10 +1,13 @@
 from argparse import ArgumentParser
+from multiprocessing import set_start_method
 from queue import LifoQueue
 from typing import Iterator, List
 
 import requests
 
 from logger import logger
+
+set_start_method("fork")
 
 BASE_URL = 'http://showfast.sc.couchbase.com'
 

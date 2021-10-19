@@ -3,11 +3,13 @@ import signal
 import sys
 import time
 from itertools import cycle
+from multiprocessing import set_start_method
 from typing import Callable
 
-from celery import Celery
+from kombu.serialization import registry
 from sqlalchemy import create_engine
 
+from celery import Celery
 from logger import logger
 from perfrunner import celerylocal, celeryremote
 from perfrunner.helpers import local, misc
@@ -31,7 +33,20 @@ from perfrunner.workloads.tpcds import (
 )
 from perfrunner.workloads.ycsb import ycsb_data_load, ycsb_workload
 
+try:
+    set_start_method("fork")
+except Exception as ex:
+    print(ex)
+
 celery = Celery('workers')
+
+try:
+    registry.enable('json')
+    registry.enable('application/json')
+    registry.enable('application/data')
+    registry.enable('application/text')
+except Exception as ex:
+    print(ex)
 
 if 'env/bin/perfrunner' in sys.argv:
     if '--remote' in sys.argv:
@@ -51,17 +66,25 @@ else:
             database_url='sqlite:///results.db',
             task_serializer='pickle',
             result_serializer='pickle',
-            accept_content={'pickle'},
+            accept_content={'pickle',
+                            'json',
+                            'application/json',
+                            'application/data',
+                            'application/text'},
             task_protocol=1)
     elif worker_type == 'remote':
         celery.conf.update(
             broker_url=broker_url,
             broker_pool_limit=None,
             worker_hijack_root_logger=False,
-            result_backend="amqp://",
+            result_backend="rpc://",
             result_persistent=False,
             result_exchange="perf_results",
-            accept_content=['pickle'],
+            accept_content=['pickle',
+                            'json',
+                            'application/json',
+                            'application/data',
+                            'application/text'],
             result_serializer='pickle',
             task_serializer='pickle',
             task_protocol=1,
@@ -70,6 +93,14 @@ else:
             broker_connection_max_retries=10)
     else:
         raise Exception('invalid worker type: {}'.format(worker_type))
+
+try:
+    registry.enable('json')
+    registry.enable('application/json')
+    registry.enable('application/data')
+    registry.enable('application/text')
+except Exception as ex:
+    print(ex)
 
 
 @celery.task
@@ -156,10 +187,14 @@ class RemoteWorkerManager:
             broker_url=self.broker_url,
             broker_pool_limit=None,
             worker_hijack_root_logger=False,
-            result_backend="amqp://",
+            result_backend="rpc://",
             result_persistent=False,
             result_exchange="perf_results",
-            accept_content=['pickle'],
+            accept_content=['pickle',
+                            'json',
+                            'application/json',
+                            'application/data',
+                            'application/text'],
             result_serializer='pickle',
             task_serializer='pickle',
             task_protocol=1,

@@ -1,8 +1,11 @@
 from argparse import ArgumentParser
+from multiprocessing import set_start_method
 
 from logger import logger
 from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.settings import ClusterSpec
+
+set_start_method("fork")
 
 
 def get_args():

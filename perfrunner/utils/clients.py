@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 from re import split as re_split
+from multiprocessing import set_start_method
 
 from fabric.api import cd, local, run
 
@@ -8,6 +9,8 @@ from perfrunner.helpers.remote import RemoteHelper
 from perfrunner.helpers.rest import RestHelper
 from perfrunner.remote.context import all_clients
 from perfrunner.settings import ClusterSpec, TestConfig
+
+set_start_method("fork")
 
 LIBCOUCHBASE_BASE_URL = "https://github.com/couchbase/libcouchbase/releases/download"
 LIBCOUCHBASE_PACKAGES = [{"version": "2.9.0",

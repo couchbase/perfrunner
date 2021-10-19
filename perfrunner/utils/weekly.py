@@ -1,9 +1,12 @@
 import json
 from argparse import ArgumentParser
 from collections import defaultdict
+from multiprocessing import set_start_method
 from typing import Dict, List
 
 import requests
+
+set_start_method("fork")
 
 
 class Weekly:

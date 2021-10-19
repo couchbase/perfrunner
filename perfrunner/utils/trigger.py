@@ -1,10 +1,13 @@
 import os
 import sys
 from argparse import ArgumentParser
+from multiprocessing import set_start_method
 
 import requests
 
 from logger import logger
+
+set_start_method("fork")
 
 BASE_URL = 'http://172.23.126.166/builds/latestbuilds/couchbase-server'
 

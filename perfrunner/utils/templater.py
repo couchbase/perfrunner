@@ -1,10 +1,13 @@
 from argparse import ArgumentParser
+from multiprocessing import set_start_method
 
 import yaml
 from jinja2 import Environment, FileSystemLoader, Template
 
 from logger import logger
 from perfrunner.utils.cloudrunner import CloudRunner
+
+set_start_method("fork")
 
 MEMORY_QUOTAS = {
     'c4.4xlarge':  24576,   # 30GB RAM

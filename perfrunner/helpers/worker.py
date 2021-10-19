@@ -241,6 +241,7 @@ class RemoteWorkerManager:
                     queue=worker, expires=timer,
                 )
                 self.async_results.append(async_result)
+                time.sleep(5)
 
     def wait_for_workers(self):
         logger.info('Waiting for all tasks to finish')

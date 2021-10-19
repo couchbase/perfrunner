@@ -582,5 +582,11 @@
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "tests/gsi/ephemeral/secondary_scan50M_moi_ephemeral_1000_indexes_stalefalse_1s_100c_10kops.test"},
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "tests/gsi/ephemeral/secondary_scan50M_plasma_ephemeral_10k_indexes_1s_1000c_10kops.test"},
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "tests/gsi/ephemeral/secondary_scan50M_plasma_ephemeral_10k_indexes_stalefalse_1s_1000c_10kops_2indexers.test"}
+    ],
+    "GSI-DDl": [
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "tests/gsi/moi/secondary_create_moi_1000index_instances_replicamix_1part.test"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "tests/gsi/moi/secondary_create_moi_10kindex_instances_replicamix_1part.test"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "tests/gsi/plasma/secondary_create_plasma_1000index_instances_replicamix_1part.test"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "tests/gsi/plasma/secondary_create_plasma_10kindex_instances_replicamix_1part.test"}
     ]
 }

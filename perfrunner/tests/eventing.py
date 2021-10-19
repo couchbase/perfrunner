@@ -117,7 +117,13 @@ class EventingTest(PerfTest):
                 func_settings["depcfg"]["curl"][0]["hostname"] = self.request_url
 
             code_file = self.functions[func_settings["appname"]]
-
+            # code to support function scope for rbac
+            source_bucket = func_settings["depcfg"]["source_bucket"]
+            if "source_scope" not in func_settings["depcfg"]:
+                func_settings["function_scope"] = {"bucket": source_bucket, "scope": "_default"}
+            else:
+                func_settings["function_scope"] = {"bucket": source_bucket, "scope":
+                                                   func_settings["depcfg"]["source_scope"]}
             with open(code_file, 'r') as myfile:
                 code = myfile.read()
                 if self.timer_timeout:

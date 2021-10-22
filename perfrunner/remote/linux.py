@@ -600,6 +600,15 @@ class RemoteLinux(Remote):
         run('chmod a+x /opt/couchbase/var/lib/couchbase/inbox/chain.pem')
         run('chmod a+x /opt/couchbase/var/lib/couchbase/inbox/pkey.key')
 
+    @master_server
+    def allow_non_local_ca_upload(self):
+        logger.info('Enabling non-local CA upload')
+        command = ("curl -X POST -v -u Administrator:password http://localhost:8091" +
+                   "/settings/security/allowNonLocalCACertUpload " +
+                   "-H 'Content-Type:application/x-www-form-urlencoded" +
+                   "' -d 'true'")
+        run(command)
+
     @all_clients
     def generate_ssl_keystore(self, root_certificate, keystore_file, storepass, worker_home):
         logger.info('Generating SSL keystore')

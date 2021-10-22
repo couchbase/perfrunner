@@ -847,12 +847,12 @@ class ClusterManager:
         if self.dynamic_infra:
             return
         if self.test_config.access_settings.ssl_mode == "auth":
+            self.remote.allow_non_local_ca_upload()
             self.remote.setup_x509()
-            for host in self.cluster_spec.servers:
-                self.rest.upload_cluster_certificate(host)
-            for host in self.cluster_spec.servers:
-                self.rest.reload_cluster_certificate(host)
-                self.rest.enable_certificate_auth(host)
+            self.rest.upload_cluster_certificate(self.cluster_spec.servers[0])
+            for i in range(self.initial_nodes[0]):
+                self.rest.reload_cluster_certificate(self.cluster_spec.servers[i])
+                self.rest.enable_certificate_auth(self.cluster_spec.servers[i])
 
     def set_cipher_suite(self):
         if self.dynamic_infra:

@@ -900,6 +900,7 @@ class YCSBThroughputHIDDTest(YCSBThroughputTest, KVTest):
         self.reset_kv_stats()
         access_settings = self.test_config.access_settings
         access_settings.time = 300
+        access_settings.target = 0
         logger.info("Starting warmup access phase")
         PerfTest.access(self, task=ycsb_task, settings=access_settings)
 

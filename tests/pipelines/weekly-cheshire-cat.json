@@ -53,7 +53,6 @@
     ],
     "MagmaNVME": [
         {"job": "magma-nvme-1node", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/simplified/java_dcp_throughput_1n_100M_compressed_magma.test"},
-        {"job": "magma-nvme-benchmark", "cluster": "magma-nvme-1node.spec", "test_config": "hidd/magma_benchmark_1B.test"},
         {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "ycsb_workloadg_4nodes_magma.test"},
         {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "hidd/ycsb_workloada_3nodes_10rr_load_magma.test"},
         {"job": "magma-nvme-ycsb", "cluster": "magma-nvme.spec", "test_config": "hidd/ycsb_workloada_3nodes_10rr_magma.test"},

@@ -1177,7 +1177,7 @@ class MetricHelper:
     def magma_benchmark_metrics(self, throughput: float, precision: int, benchmark: str) -> Metric:
         title = "{}, {}".format(benchmark, self._title)
         metric_id = '{}_{}'.format(self.test_config.name,
-                                   benchmark.replace(" ", "_").replace(",", ""))
+                                   benchmark.replace(" ", "_").replace(",", "").replace("%", ""))
         metric_info = self._metric_info(metric_id=metric_id, title=title, chirality=1)
         return round(throughput, precision), self._snapshots, metric_info
 

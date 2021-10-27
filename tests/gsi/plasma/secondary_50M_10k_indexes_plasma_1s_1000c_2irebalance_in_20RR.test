@@ -2,7 +2,7 @@
 test = perfrunner.tests.secondary.SecondaryRebalanceTest
 
 [showfast]
-title = Rebalance-in (min) 1->2, 1 bucket x 50M x 1KB, 10000 indexes, 100K KV ops/sec, Scan Workload concurrency=128, 20% RR, Plasma, s=1 c=1000
+title = Rebalance-in (min) 1->2, 1 bucket x 50M x 1KB, 10000 indexes, 100K KV ops/sec, Scan Workload concurrency=128, 20%% RR, Plasma, s=1 c=1000
 component = secondary
 category = rebalance
 sub_category = PlasmaDGM

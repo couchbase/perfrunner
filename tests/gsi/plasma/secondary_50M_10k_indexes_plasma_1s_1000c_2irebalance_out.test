@@ -54,5 +54,5 @@ indexer.settings.build.batch_size = 100
 [access]
 updates = 100
 items = 50000000
-throughput = 100000
-workers = 80
+throughput = 10000
+workers = 20

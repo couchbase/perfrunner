@@ -1037,8 +1037,10 @@ class JTSAccessSettings(PhaseSettings):
                 self.ftspartitions
         if self.fts_max_dcp_partitions != self.FTS_MAX_DCP_PARTITIONS:
             self.fts_node_level_parameters["maxFeedsPerDCPAgent"] = self.fts_max_dcp_partitions
-        self.fts_node_level_parameters["disableFileTransferRebalance"] = \
-            self.fts_file_based_rebal_disabled
+
+        if self.fts_file_based_rebal_disabled != self.FTS_FILE_BASED_REBAL_DISABLED:
+            self.fts_node_level_parameters["disableFileTransferRebalance"] = \
+                self.fts_file_based_rebal_disabled
 
     def __str__(self) -> str:
         return str(self.__dict__)

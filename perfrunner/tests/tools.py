@@ -64,8 +64,15 @@ class BackupRestoreTest(PerfTest):
     def collectinfo(self):
         local.cbbackupmgr_collectinfo(cluster_spec=self.cluster_spec)
 
+    def get_tool_versions(self):
+        local.cbbackupmgr_version()
+        local.cbimport_version()
+        local.cbexport_version()
+
     def run(self):
         self.extract_tools()
+
+        self.get_tool_versions()
 
         self.load()
         self.wait_for_persistence()
@@ -123,6 +130,7 @@ class BackupXATTRTest(BackupTest):
 
     def run(self):
         self.extract_tools()
+        self.get_tool_versions()
         self.load()
         self.xattr_load()
         self.wait_for_persistence()
@@ -255,6 +263,8 @@ class BackupIncrementalTest(BackupRestoreTest):
         try:
             self.extract_tools()
 
+            self.get_tool_versions()
+
             self.load()
             self.wait_for_persistence()
             self.compact_bucket(wait=True)
@@ -330,6 +340,8 @@ class MergeTest(BackupRestoreTest):
     def run(self):
         self.extract_tools()
 
+        self.get_tool_versions()
+
         self.load()
         self.wait_for_persistence()
         try:
@@ -388,6 +400,7 @@ class RestoreXATTRTest(RestoreTest):
 
     def run(self):
         self.extract_tools()
+        self.get_tool_versions()
         self.load()
         self.xattr_load()
         self.wait_for_persistence()
@@ -530,6 +543,7 @@ class ImportSampleDataTest(ImportTest):
 
     def run(self):
         self.extract_tools()
+        self.get_tool_versions()
 
         try:
             time_elapsed = self.import_data()
@@ -582,6 +596,8 @@ class CloudBackupTest(BackupRestoreTest):
     def run(self):
         self.remote.extract_cb(filename='couchbase.rpm',
                                worker_home=self.worker_manager.WORKER_HOME)
+
+        self.remote.cbbackupmgr_version()
 
         self.load()
         self.wait_for_persistence()
@@ -647,6 +663,8 @@ class CloudRestoreTest(BackupRestoreTest):
     def run(self):
         self.remote.extract_cb(filename='couchbase.rpm',
                                worker_home=self.worker_manager.WORKER_HOME)
+
+        self.remote.cbbackupmgr_version()
 
         self.load()
         self.wait_for_persistence()

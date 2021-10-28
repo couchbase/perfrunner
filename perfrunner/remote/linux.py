@@ -723,6 +723,13 @@ class RemoteLinux(Remote):
                 run(cmd)
 
     @master_client
+    def cbbackupmgr_version(self):
+        cmd = './opt/couchbase/bin/cbbackupmgr --version'
+        logger.info('Running: {}'.format(cmd))
+        result = run(cmd)
+        logger.info(result)
+
+    @master_client
     def cbbackupmgr_config(self, cluster_spec: ClusterSpec, worker_home: str,
                            obj_staging_dir: str = None, obj_region: str = None):
         with cd(worker_home), cd('perfrunner'):

@@ -96,6 +96,13 @@ def cbbackupwrapper(master_node: str, cluster_spec: ClusterSpec,
         local(cmd)
 
 
+def cbbackupmgr_version():
+    cmd = './opt/couchbase/bin/cbbackupmgr --version'
+    logger.info('Running: {}'.format(cmd))
+    result = local(cmd, capture=True)
+    logger.info(result)
+
+
 def cbbackupmgr_backup(master_node: str, cluster_spec: ClusterSpec,
                        threads: int, mode: str, compression: bool,
                        storage_type: str, sink_type: str, shards: int, include_data: str):
@@ -280,6 +287,13 @@ def cbbackupmgr_list(cluster_spec: ClusterSpec, snapshots: List[str],
     local(cmd)
 
 
+def cbexport_version():
+    cmd = './opt/couchbase/bin/cbexport --version'
+    logger.info('Running: {}'.format(cmd))
+    result = local(cmd, capture=True)
+    logger.info(result)
+
+
 def cbexport(master_node: str, cluster_spec: ClusterSpec, bucket: str,
              data_format: str, threads: int, collection_field: str, scope_field: str,
              key_field: str = None,
@@ -318,6 +332,13 @@ def cbexport(master_node: str, cluster_spec: ClusterSpec, bucket: str,
 
     logger.info('Running: {}'.format(cmd))
     local(cmd)
+
+
+def cbimport_version():
+    cmd = './opt/couchbase/bin/cbimport --version'
+    logger.info('Running: {}'.format(cmd))
+    result = local(cmd, capture=True)
+    logger.info(result)
 
 
 def cbimport(master_node: str, cluster_spec: ClusterSpec, bucket: str,

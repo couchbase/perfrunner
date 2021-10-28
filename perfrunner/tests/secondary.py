@@ -1233,6 +1233,8 @@ class SecondaryRebalanceTest(SecondaryIndexingScanTest, RebalanceTest):
                 duration += int(row[2].split(":")[1])
                 lines += 1
         interval, concurrency = self.get_config()
+        logger.info("interval: {}, concurrency: {}, duration: {}".format(interval, concurrency,
+                                                                         duration))
         return lines * interval / (duration / 1000000000 / concurrency)
 
     def run(self):

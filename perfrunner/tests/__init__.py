@@ -168,6 +168,10 @@ class PerfTest:
 
     def restore(self):
         logger.info('Restoring data')
+        self.remote.purge_restore_progress(
+            self.test_config.restore_settings.backup_storage,
+            self.test_config.restore_settings.backup_repo
+        )
         self.remote.restore_data(
             self.test_config.restore_settings.backup_storage,
             self.test_config.restore_settings.backup_repo,
@@ -183,6 +187,10 @@ class PerfTest:
                     "{0}._default._default={0}.scope-1.collection-1"\
                     .format(target.bucket)
             logger.info('Restoring data')
+            self.remote.purge_restore_progress(
+                self.test_config.restore_settings.backup_storage,
+                self.test_config.restore_settings.backup_repo
+            )
             self.remote.restore_data(
                 self.test_config.restore_settings.backup_storage,
                 self.test_config.restore_settings.backup_repo,
@@ -202,6 +210,11 @@ class PerfTest:
     def restore_local(self):
         logger.info('Restoring data')
         local.extract_cb(filename='couchbase.rpm')
+        local.purge_restore_progress(
+            self.cluster_spec,
+            archive=self.test_config.restore_settings.backup_storage,
+            repo=self.test_config.restore_settings.backup_repo
+        )
         local.cbbackupmgr_restore(
             master_node=self.master_node,
             cluster_spec=self.cluster_spec,

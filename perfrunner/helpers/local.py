@@ -219,10 +219,22 @@ def restore(master_node: str, cluster_spec: ClusterSpec, threads: int,
 
     logger.info('Restore from {}'.format(cluster_spec.backup))
 
+    purge_restore_progress(cluster_spec)
+
     if wrapper:
         cbrestorewrapper(master_node, cluster_spec)
     else:
         cbbackupmgr_restore(master_node, cluster_spec, threads, include_data)
+
+
+def purge_restore_progress(cluster_spec: ClusterSpec, archive: str = '',
+                           repo: str = 'default'):
+    archive_path = archive or cluster_spec.backup
+    repo_dir = '{}/{}'.format(archive_path.rstrip('/'), repo)
+    logger.info('Purging restore progress from {}'.format(repo_dir))
+    cmd = 'rm -rf {}/.restore'.format(repo_dir)
+    logger.info('Running: {}'.format(cmd))
+    local(cmd)
 
 
 def cbrestorewrapper(master_node: str, cluster_spec: ClusterSpec):

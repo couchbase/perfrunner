@@ -366,6 +366,14 @@ class RemoteLinux(Remote):
             '/opt/couchbase/etc/couchbase/static_config')
 
     @master_server
+    def purge_restore_progress(self, archive: str, repo: str):
+        repo_dir = '{}/{}'.format(archive.rstrip('/'), repo)
+        logger.info('Purging restore progress from {}'.format(repo_dir))
+        cmd = 'rm -rf {}/.restore'.format(repo_dir)
+        logger.info('Running: {}'.format(cmd))
+        run(cmd)
+
+    @master_server
     def restore_data(self, archive_path: str, repo_path: str, map_data: str=None):
         cmd = \
             "/opt/couchbase/bin/cbbackupmgr restore " \

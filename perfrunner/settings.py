@@ -1572,7 +1572,7 @@ class AuditSettings:
 
 class YCSBSettings:
 
-    REPO = 'git://github.com/couchbaselabs/YCSB.git'
+    REPO = 'https://github.com/couchbaselabs/YCSB.git'
     BRANCH = 'master'
     SDK_VERSION = None
     LATENCY_PERCENTILES = [98]
@@ -1619,7 +1619,7 @@ class ClientSettings:
 
 class JavaDCPSettings:
 
-    REPO = 'git://github.com/couchbase/java-dcp-client.git'
+    REPO = 'https://github.com/couchbase/java-dcp-client.git'
 
     BRANCH = 'master'
 
@@ -1682,7 +1682,7 @@ class MagmaBenchmarkSettings:
 
 class TPCDSLoaderSettings:
 
-    REPO = 'git://github.com/couchbaselabs/cbas-perf-support.git'
+    REPO = 'https://github.com/couchbaselabs/cbas-perf-support.git'
     BRANCH = 'master'
 
     def __init__(self, options: dict):

@@ -1,0 +1,53 @@
+[test_case]
+test = perfrunner.tests.magma.LoadBackupDGMTest
+
+[showfast]
+title = 1 nodes, 1B x 1KB, Magma
+component = hidd
+category = single
+
+[cluster]
+mem_quota = 102400
+initial_nodes = 1
+num_buckets = 1
+num_vbuckets = 128
+enable_cpu_cores = false
+
+[bucket]
+eviction_policy = fullEviction
+backend_storage = magma
+replica_number = 0
+
+[bucket_extras]
+num_reader_threads = 64
+num_writer_threads = 16
+
+[load]
+items = 1000000000
+size = 1024
+workers = 128
+key_fmtr = hex
+doc_gen = large
+
+[extra_access]
+run_extra_access = true
+updates = 100
+creates = 0
+deletes = 0
+reads = 0
+workers = 128
+items = 1000000000
+ops = 1000000000
+time = 86400
+requestdistribution = uniform
+power_alpha = 0
+zipf_alpha = 0
+durability = 0
+async = 0
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0
+
+[backup]
+backup_directory = /data2/1n_1b

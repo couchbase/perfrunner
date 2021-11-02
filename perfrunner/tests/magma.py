@@ -1211,6 +1211,7 @@ class LoadBackupDGMTest(StabilityBootstrap):
             self.wait_for_persistence()
             self.wait_for_fragmentation()
 
+        time.sleep(1200)
         self.remote.stop_server()
         time.sleep(30)
 

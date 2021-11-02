@@ -12,7 +12,7 @@ sub_category = Latency
 mem_quota = 61440
 initial_nodes = 3
 num_buckets = 1
-kernel_mem_limit = 70G
+kernel_mem_limit = 80G
 kernel_mem_limit_services = kv
 enable_cpu_cores = false
 

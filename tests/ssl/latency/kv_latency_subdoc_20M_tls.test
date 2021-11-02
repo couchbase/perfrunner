@@ -1,0 +1,36 @@
+[test_case]
+test = perfrunner.tests.kv.SubDocTest
+
+[showfast]
+title = Sub-document latency (ms), 4 nodes, 1 bucket x 20M x 1KB, TLS
+component = kv
+category = latency_ssl
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 4
+num_buckets = 1
+
+[load]
+items = 20000000
+size = 1024
+workers = 80
+doc_gen = large
+
+[access]
+creates = 0
+reads = 50
+updates = 50
+deletes = 0
+throughput = 10000
+items = 20000000
+workers = 12
+subdoc_field = city
+time = 1200
+ssl_mode = data
+show_tls_version = true
+min_tls_version = tlsv1.3
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

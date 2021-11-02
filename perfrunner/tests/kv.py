@@ -69,6 +69,7 @@ class MixedLatencyTest(ReadLatencyTest):
             self.cluster.add_extra_rbac_users(self.test_config.users.num_users_per_bucket)
 
         self.reset_kv_stats()
+        self.download_certificate()
         self.access()
         self.report_kpi()
 
@@ -113,7 +114,7 @@ class EnhancedDurabilityLatencyTest(ReadLatencyTest):
         self.hot_load()
 
         self.reset_kv_stats()
-
+        self.download_certificate()
         self.access()
 
         self.report_kpi()

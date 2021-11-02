@@ -1187,9 +1187,20 @@ class DefaultRestHelper(RestBase):
         self.post(url=api, data=data)
 
     def get_minimum_tls_version(self, node: str):
+        # Because tlsv1.3 cannot be the global tls min version (unlike previous tls versions),
+        # we must add additional checks to ensure that version is correctly identified
         logger.info("Getting TLS version of {}".format(node))
         api = 'http://{}:8091/settings/security'.format(node)
-        return self.get(url=api).json()['tlsMinVersion']
+        global_tls_min_version = self.get(url=api).json()['tlsMinVersion']
+        try:
+            api = 'http://{}:8091/settings/security/data'.format(node)
+            local_tls_min_version = self.get(url=api).json()['tlsMinVersion']
+            if local_tls_min_version == global_tls_min_version:
+                return global_tls_min_version
+            else:
+                return local_tls_min_version
+        except KeyError:
+            return global_tls_min_version
 
     def set_num_threads(self, node: str, thread_type: str, thread: int):
         logger.info('Setting {} to {}'.format(thread_type, thread))
@@ -1199,26 +1210,108 @@ class DefaultRestHelper(RestBase):
         }
         self.post(url=api, data=data)
 
+    def get_supported_ciphers(self, node: str, service: str):
+        logger.info("Getting the supported ciphers for the {} service".format(service))
+        api = api = 'http://{}:8091/settings/security/{}'.format(node, service)
+        return self.get(url=api).json()['supportedCipherSuites']
+
     def get_cipher_suite(self, node: str):
         logger.info("Getting cipher suites of {}".format(node))
         api = 'http://{}:8091/settings/security'.format(node)
         return self.get(url=api).json()['cipherSuites']
 
     def set_cipher_suite(self, node: str, cipher_list: list):
-        logger.info("Setting cipher list of {}".format(cipher_list))
-        api = 'http://{}:8091/settings/security'.format(node)
-        data = {
-            'cipherSuites': json.dumps(cipher_list)
-        }
-        self.post(url=api, data=data)
+        # There are around 200 different supported ciphers, but only 10 of them are supported by all
+        # services. Only these 10 ciphers can be set globally. They are:
+        # "TLS_RSA_WITH_AES_128_CBC_SHA256", "TLS_RSA_WITH_AES_128_GCM_SHA256",
+        # "TLS_RSA_WITH_AES_256_GCM_SHA384", "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+        # "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA", "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+        # "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA", "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",
+        # "TLS_AES_256_GCM_SHA384", "TLS_AES_128_GCM_SHA256". If we want to set any other cipher,
+        # it needs to be set individually for each service that supports the cipher.
+        logger.info("Setting cipher suite of {}".format(cipher_list))
+        try:
+            api = 'http://{}:8091/settings/security'.format(node)
+            data = {
+                'cipherSuites': json.dumps(cipher_list)
+            }
+            self.post(url=api, data=data)
+            logger.info("The entire cipher suite has been set globally")
+        except Exception:
+            logger.info("The cipher suite cannot be set globally, will be set for each service")
+            service_list = ['data', 'fullTextSearch', 'index', 'query', 'eventing', 'analytics',
+                            'backup', 'clusterManager']
+            for service in service_list:
+                api = 'http://{}:8091/settings/security/{}'.format(node, service)
+                try:
+                    data = {
+                        'cipherSuites': json.dumps(cipher_list)
+                    }
+                    self.post(url=api, data=data)
+                    logger.info("The entire cipher suite has been set for the {} service"
+                                .format(service))
+                except Exception:
+                    valid_cipher_list = []
+                    supported_cipher_list = self.get_supported_ciphers(node, service)
+                    for cipher in cipher_list:
+                        if cipher in supported_cipher_list:
+                            valid_cipher_list.append(cipher)
+                    data = {
+                        'cipherSuites': json.dumps(valid_cipher_list)
+                    }
+                    self.post(url=api, data=data)
+                    logger.info("The following cipher suite: {} has been set for the {} service"
+                                .format(valid_cipher_list, service))
 
     def set_minimum_tls_version(self, node: str, tls_version: str):
         logger.info("Setting minimum TLS version of {}".format(tls_version))
-        api = 'http://{}:8091/settings/security'.format(node)
-        data = {
-            'tlsMinVersion': tls_version
-        }
-        self.post(url=api, data=data)
+        # ClusterManager does not support tlsv1.3, so tlsv1.3 cannot be set as the global
+        # minimum tls version. As a result, for all the services that support tlsv1.3
+        # (Data, Search, Index, Query, Eventing, Analytics, Backup),
+        # the minimum tls version must be set separately.
+        if tls_version != 'tlsv1.3':
+            api = 'http://{}:8091/settings/security'.format(node)
+            data = {
+                'tlsMinVersion': tls_version
+            }
+            self.post(url=api, data=data)
+        else:
+            build = self.get_version(node)
+            version, build_number = build.split('-')
+            build_version_number = tuple(map(int, version.split('.'))) + (int(build_number),)
+            if build_version_number < (7, 1, 0, 0):
+                logger.info("TLSv1.3 is not supported by this version of couchbase server")
+                logger.info("Reverting to TLSv1.2")
+                api = 'http://{}:8091/settings/security'.format(node)
+                data = {
+                    'tlsMinVersion': 'tlsv1.2'
+                }
+                self.post(url=api, data=data)
+            else:
+                data = {
+                    'tlsMinVersion': tls_version
+                }
+                # Data
+                api = 'http://{}:8091/settings/security/data'.format(node)
+                self.post(url=api, data=data)
+                # Search
+                api = 'http://{}:8091/settings/security/fullTextSearch'.format(node)
+                self.post(url=api, data=data)
+                # Index
+                api = 'http://{}:8091/settings/security/index'.format(node)
+                self.post(url=api, data=data)
+                # Query
+                api = 'http://{}:8091/settings/security/query'.format(node)
+                self.post(url=api, data=data)
+                # Eventing
+                api = 'http://{}:8091/settings/security/eventing'.format(node)
+                self.post(url=api, data=data)
+                # Analytics
+                api = 'http://{}:8091/settings/security/analytics'.format(node)
+                self.post(url=api, data=data)
+                # Backup
+                api = 'http://{}:8091/settings/security/backup'.format(node)
+                self.post(url=api, data=data)
 
     def create_scope(self, host, bucket, scope):
         logger.info("Creating scope {}:{}".format(bucket, scope))

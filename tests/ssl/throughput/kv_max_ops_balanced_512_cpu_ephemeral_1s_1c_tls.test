@@ -2,15 +2,19 @@
 test = perfrunner.tests.kv.PillowFightTest
 
 [showfast]
-title = Max ops/sec, cbc-pillowfight, 2 nodes, 50/50 R/W, 512B JSON items, 1K batch size, Ephemeral, TLS
+title = Max ops/sec, cbc-pillowfight, 2 nodes, 50/50 R/W, 512B JSON items, 1K batch size, Ephemeral, 10 vCPU, s=1 c=1, TLS
 component = kv
 category = max_ops_ssl
-orderby = mixed4
+orderby = mixed3
 
 [cluster]
 mem_quota = 51200
 initial_nodes = 2
 num_buckets = 1
+online_cores = 5
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
 
 [bucket]
 bucket_type = ephemeral
@@ -32,5 +36,4 @@ show_tls_version = true
 min_tls_version = tlsv1.3
 
 [clients]
-libcouchbase = 2.9.3
-python_client = 2.5.0
+libcouchbase = 3.0.7

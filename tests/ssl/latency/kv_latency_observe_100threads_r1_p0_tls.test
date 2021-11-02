@@ -1,0 +1,42 @@
+[test_case]
+test = perfrunner.tests.kv.EnhancedDurabilityLatencyTest
+
+[showfast]
+title = latency (ms), 4 nodes, 1 bucket x 20M x 1KB, 0/100 R/W, 100 threads, 2000 ops/sec, ReplicateTo=1 PersistTo=0, TLS
+component = kv
+category = latency_ssl
+orderby = 0100b
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 4
+num_buckets = 1
+
+[bucket]
+replica_number = 2
+
+[load]
+items = 20000000
+size = 1024
+workers = 100
+doc_gen = large
+
+[access]
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+throughput = 2000
+items = 20000000
+workers = 100
+time = 1200
+replicate_to = 1
+persist_to = 0
+connstr_params = {'ipv6': 'allow', 'enable_tracing': 'false', 'durability_interval': 0.02}
+ssl_mode = data
+show_tls_version = true
+min_tls_version = tlsv1.3
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

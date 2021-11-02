@@ -1,15 +1,14 @@
 [test_case]
-test = perfrunner.tests.kv.PillowFightTest
+test = perfrunner.tests.kv.MixedLatencyTest
 
 [showfast]
-title = Max ops/sec, cbc-pillowfight, 2 nodes, 50/50 R/W, 512B JSON items, 1K batch size, Ephemeral, TLS
+title = latency (ms), 4 nodes, 1 bucket x 20M x 1KB, 10K ops/sec, Ephemeral, TLS
 component = kv
-category = max_ops_ssl
-orderby = mixed4
+category = latency_ssl
 
 [cluster]
 mem_quota = 51200
-initial_nodes = 2
+initial_nodes = 4
 num_buckets = 1
 
 [bucket]
@@ -17,16 +16,20 @@ bucket_type = ephemeral
 eviction_policy = nruEviction
 
 [load]
-size = 512
 items = 20000000
-workers = 50
-doc_gen = json
+size = 1024
+workers = 80
+doc_gen = large
 
 [access]
+creates = 1
+reads = 50
+updates = 48
+deletes = 1
+throughput = 10000
 items = 20000000
-iterations = 40000
-workers = 50
-updates = 50
+workers = 12
+time = 1200
 ssl_mode = data
 show_tls_version = true
 min_tls_version = tlsv1.3

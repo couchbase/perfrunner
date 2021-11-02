@@ -31,6 +31,7 @@ updates = 100
 durability = 1
 ssl_mode = data
 show_tls_version = true
+min_tls_version = tlsv1.3
 
 [clients]
 libcouchbase = 3.0.7

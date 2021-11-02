@@ -2,10 +2,10 @@
 test = perfrunner.tests.kv.PillowFightDurabilityTest
 
 [showfast]
-title = Max ops/sec, cbc-pillowfight, 4 nodes, 0/100 R/W, 512B JSON items, batch size = 1, ReplicateTo=1, PersistTo=2, TLS
+title = Max ops/sec, cbc-pillowfight, 4 nodes, 0/100 R/W, 512B JSON items, batch size = 1, ReplicateTo=0, PersistTo=0, s=1 c=1, TLS
 component = kv
 category = max_ops_ssl
-orderby = zd2
+orderby = za2
 
 [cluster]
 mem_quota = 51200
@@ -14,6 +14,9 @@ num_buckets = 1
 
 [bucket]
 replica_number = 2
+
+[collection]
+config = collections/1bucket_1scope_1collection_basic.json
 
 [load]
 size = 512
@@ -24,11 +27,11 @@ doc_gen = json
 [access]
 batch_size = 1
 items = 20000000
-iterations = 50000
+iterations = 5000000
 workers = 128
 updates = 100
-replicate_to = 1
-persist_to = 2
+replicate_to = 0
+persist_to = 0
 connstr_params = {'ipv6': 'allow', 'enable_tracing': 'false', 'durability_interval': 0.02}
 ssl_mode = data
 show_tls_version = true

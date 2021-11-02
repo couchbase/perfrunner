@@ -1,0 +1,42 @@
+[test_case]
+test = perfrunner.tests.kv.XATTRTest
+
+[showfast]
+title = XATTR latency (ms), 4 nodes, 1 bucket x 20M x 1KB, SSL
+component = kv
+category = latency_ssl
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 4
+num_buckets = 1
+
+[load]
+items = 20000000
+size = 1024
+workers = 80
+doc_gen = large
+
+[xattr_load]
+items = 20000000
+size = 1024
+workers = 80
+xattr_field = city
+
+[access]
+creates = 0
+reads = 50
+updates = 50
+deletes = 0
+throughput = 10000
+items = 20000000
+workers = 12
+xattr_field = city
+time = 1200
+ssl_mode = data
+show_tls_version = true
+min_tls_version = tlsv1.3
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

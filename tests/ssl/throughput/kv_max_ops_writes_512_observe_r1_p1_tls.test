@@ -32,6 +32,7 @@ persist_to = 1
 connstr_params = {'ipv6': 'allow', 'enable_tracing': 'false', 'durability_interval': 0.02}
 ssl_mode = data
 show_tls_version = true
+min_tls_version = tlsv1.3
 
 [clients]
 libcouchbase = 3.0.7

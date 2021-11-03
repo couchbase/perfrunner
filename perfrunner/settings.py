@@ -1204,6 +1204,8 @@ class GSISettings:
                 self.storage = self.settings['indexer.settings.storage_mode']
             else:
                 self.storage = 'memdb'
+        self.settings['indexer.cpu.throttle.target'] = \
+            self.settings.get('indexer.cpu.throttle.target', 1.00)
 
     def __str__(self) -> str:
         return str(self.__dict__)

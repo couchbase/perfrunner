@@ -6,8 +6,6 @@ hercules =
     172.23.100.124:kv,index,n1ql
     172.23.100.125:kv,index,n1ql
     172.23.100.126:kv,index,n1ql
-    172.23.100.127:kv,index,n1ql
-    172.23.100.128:kv,index,n1ql
 
 [clients]
 hosts =

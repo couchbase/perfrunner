@@ -7,8 +7,6 @@ hercules_c1 =
 hercules_c2 =
     172.23.100.125:kv
     172.23.100.126:kv
-    172.23.100.127:kv
-    172.23.100.128:kv
 
 [clients]
 hosts =

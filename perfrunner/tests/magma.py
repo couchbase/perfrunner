@@ -903,6 +903,7 @@ class YCSBThroughputHIDDTest(YCSBThroughputTest, KVTest):
         access_settings.target = 0
         logger.info("Starting warmup access phase")
         PerfTest.access(self, task=ycsb_task, settings=access_settings)
+        self.wait_for_persistence()
 
         self.reset_kv_stats()
         KVTest.save_stats(self)
@@ -1234,6 +1235,7 @@ class YCSBLoadBackupHIDDTest(YCSBThroughputHIDDTest):
             self.wait_for_persistence()
             self.wait_for_fragmentation()
 
+        time.sleep(1200)
         self.remote.stop_server()
         time.sleep(30)
 

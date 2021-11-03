@@ -401,7 +401,8 @@ class DefaultRestHelper(RestBase):
         data = {
             'databaseFragmentationThreshold[percentage]': settings.db_percentage,
             'viewFragmentationThreshold[percentage]': settings.view_percentage,
-            'parallelDBAndViewCompaction': str(settings.parallel).lower()
+            'parallelDBAndViewCompaction': str(settings.parallel).lower(),
+            'magmaFragmentationPercentage': settings.magma_fragmentation_percentage
         }
         self.post(url=api, data=data)
 

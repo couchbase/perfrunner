@@ -521,6 +521,7 @@ class CompactionSettings:
     VIEW_PERCENTAGE = 30
     PARALLEL = True
     BUCKET_COMPACTION = 'true'
+    MAGMA_FRAGMENTATION_PERCENTAGE = 50
 
     def __init__(self, options: dict):
         self.db_percentage = options.get('db_percentage',
@@ -529,6 +530,8 @@ class CompactionSettings:
                                            self.VIEW_PERCENTAGE)
         self.parallel = options.get('parallel', self.PARALLEL)
         self.bucket_compaction = options.get('bucket_compaction', self.BUCKET_COMPACTION)
+        self.magma_fragmentation_percentage = options.get('magma_fragmentation_percentage',
+                                                          self.MAGMA_FRAGMENTATION_PERCENTAGE)
 
     def __str__(self):
         return str(self.__dict__)
@@ -1520,15 +1523,12 @@ class EventingSettings:
 class MagmaSettings:
     COLLECT_PER_SERVER_STATS = 0
     STORAGE_QUOTA_PERCENTAGE = 0
-    FRAGMENTATION_PERCENTAGE = 0
 
     def __init__(self, options: dict):
         self.collect_per_server_stats = int(options.get("collect_per_server_stats",
                                                         self.COLLECT_PER_SERVER_STATS))
         self.storage_quota_percentage = int(options.get("storage_quota_percentage",
                                                         self.STORAGE_QUOTA_PERCENTAGE))
-        self.fragmentation_percentage = int(options.get("fragmentation_percentage",
-                                                        self.FRAGMENTATION_PERCENTAGE))
 
 
 class AnalyticsSettings:

@@ -494,11 +494,6 @@ class ClusterManager:
             for bucket in self.test_config.buckets:
                 self.remote.set_magma_quota(bucket, magma_quota)
 
-        if self.test_config.magma_settings.fragmentation_percentage:
-            magma_fragmentation = self.test_config.magma_settings.fragmentation_percentage
-            for bucket in self.test_config.buckets:
-                self.remote.set_magma_fragmentation(bucket, magma_fragmentation)
-
     def tune_logging(self):
         if self.dynamic_infra:
             return

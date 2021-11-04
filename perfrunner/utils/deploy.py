@@ -516,15 +516,28 @@ class AWSDeployer(Deployer):
                             ami = 'ami-0c7ae1c909fa076e9'
                     else:
                         raise Exception("ec2 group must include one of: client, server, broker")
+                    volume_type = self.os_arch = node_group_spec.get('volume_type', 'gp2')
+                    iops = self.os_arch = node_group_spec.get('iops', 0)
+                    if int(iops):
+                        block_device_mappings = [
+                            {'DeviceName': block_device,
+                             'Ebs':
+                                 {'DeleteOnTermination': True,
+                                  'VolumeSize': int(node_group_spec['volume_size']),
+                                  'VolumeType': volume_type,
+                                  'Encrypted': False,
+                                  'Iops': int(iops)}}]
+                    else:
+                        block_device_mappings = [
+                            {'DeviceName': block_device,
+                             'Ebs':
+                                 {'DeleteOnTermination': True,
+                                  'VolumeSize': int(node_group_spec['volume_size']),
+                                  'VolumeType': volume_type,
+                                  'Encrypted': False}}]
                     if node_group_spec['instance_type'][0] == "t":
                         response = self.ec2.create_instances(
-                            BlockDeviceMappings=[
-                                {'DeviceName': block_device,
-                                 'Ebs':
-                                     {'DeleteOnTermination': True,
-                                      'VolumeSize': int(node_group_spec['volume_size']),
-                                      'VolumeType': 'gp2',
-                                      'Encrypted': False}}],
+                            BlockDeviceMappings=block_device_mappings,
                             CreditSpecification={'CpuCredits': 'standard'},
                             ImageId=ami,
                             InstanceType=node_group_spec['instance_type'],
@@ -543,13 +556,7 @@ class AWSDeployer(Deployer):
                         )
                     else:
                         response = self.ec2.create_instances(
-                            BlockDeviceMappings=[
-                                {'DeviceName': block_device,
-                                 'Ebs':
-                                     {'DeleteOnTermination': True,
-                                      'VolumeSize': int(node_group_spec['volume_size']),
-                                      'VolumeType': 'gp2',
-                                      'Encrypted': False}}],
+                            BlockDeviceMappings=block_device_mappings,
                             ImageId=ami,
                             InstanceType=node_group_spec['instance_type'],
                             KeyName=self.infra_spec.aws_key_name,

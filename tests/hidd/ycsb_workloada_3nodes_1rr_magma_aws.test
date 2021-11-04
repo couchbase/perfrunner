@@ -27,22 +27,9 @@ num_writer_threads = 64
 workload_path = workloads/workloada
 ycsb_client = couchbase3
 items = 1500000000
-workers = 640
+workers = 384
 kv_endpoints = 128
 size = 1000
-
-[extra_access]
-run_extra_access = true
-workload_path = workloads/workloadupdate
-ycsb_client = couchbase3
-items = 1500000000
-ops = 750000000
-time = 86400
-boost = 12
-workers = 640
-kv_endpoints = 128
-workload_instances = 2
-requestdistribution = uniform
 
 [access]
 workload_path = workloads/workloada
@@ -51,9 +38,9 @@ items = 1500000000
 ops = 1500000000
 time = 1800
 boost = 12
-workers = 640
+workers = 384
 kv_endpoints = 128
-workload_instances = 6
+workload_instances = 3
 
 [ycsb]
 branch = couchbase3

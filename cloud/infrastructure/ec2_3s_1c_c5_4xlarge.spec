@@ -11,6 +11,8 @@ couchbase1 =
 [clients]
 workers1 =
         ec2.ec2_cluster_1.ec2_node_group_2.1
+        ec2.ec2_cluster_1.ec2_node_group_2.2
+        ec2.ec2_cluster_1.ec2_node_group_2.3
 
 [utilities]
 brokers1 = ec2.ec2_cluster_1.ec2_node_group_3.1
@@ -26,10 +28,12 @@ storage_class = gp2
 instance_type = c5.4xlarge
 instance_capacity = 3
 volume_size = 3000
+volume_type = io2
+iops = 64000
 
 [ec2_node_group_2]
 instance_type = c5.24xlarge
-instance_capacity = 1
+instance_capacity = 3
 volume_size = 100
 
 [ec2_node_group_3]

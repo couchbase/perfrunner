@@ -1243,10 +1243,17 @@ class SecondaryRebalanceTest(SecondaryIndexingScanTest, RebalanceTest):
         self.wait_for_persistence()
 
         self.build_secondaryindex()
+        for server in self.index_nodes:
+            logger.info("{} : {} Indexes".format(server, self.rest.indexes_per_node(server)))
+
         self.access_bg()
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf",
                                 run_in_background=True)
         self.rebalance_indexer()
+        logger.info("Indexes after rebalance")
+        for server in self.index_nodes:
+            logger.info("{} : {} Indexes".format(server, self.rest.indexes_per_node(server)))
+
         kill_process("cbindexperf")
         scan_thr = self.get_throughput()
         percentile_latencies = self.calculate_scan_latencies()

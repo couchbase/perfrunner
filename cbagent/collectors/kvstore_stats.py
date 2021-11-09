@@ -101,7 +101,8 @@ class KVStoreStats(Collector):
         "NReadIOsSet",
         "NReadBytesSetPerSec",
         "NReadIOsSetPerSec",
-        "ActiveIndexBlocksSize"
+        "ActiveIndexBlocksSize",
+        "NBlocksCached"
     )
     METRICS_AVERAGE_PER_NODE_PER_SHARD = (
         "ReadAmp",

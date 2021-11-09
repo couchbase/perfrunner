@@ -1288,8 +1288,29 @@ class InitialandIncrementalSecondaryIndexHiDDTest(InitialandIncrementalSecondary
                                             update_category=False)
         )
 
+    def warmup_after_copy(self):
+        for master in self.cluster_spec.masters:
+            for bucket in self.test_config.buckets:
+                self.monitor.monitor_warmup(self.memcached, master, bucket)
+
+    def copy_data_from_backup(self):
+        self.remote.stop_server()
+        time.sleep(30)
+        self.remote.remove_data()
+        self.remote.copy_backup(self.test_config.backup_settings.backup_directory)
+        self.remote.start_server()
+        time.sleep(30)
+        self.warmup_after_copy()
+
     def run(self):
-        self.load_and_build_initial_index()
+        if self.test_config.load_settings.use_backup:
+            self.copy_data_from_backup()
+            time_elapsed = self.build_secondaryindex()
+            self.print_index_disk_usage()
+            if not self.incremental_only:
+                self.report_kpi(time_elapsed, 'Initial')
+        else:
+            self.load_and_build_initial_index()
 
         self.hot_load()
         time_elapsed = self.build_incrindex()
@@ -1335,10 +1356,27 @@ class SecondaryIndexingScanHiDDTest(SecondaryIndexingScanTest):
                                                        title=title,
                                                        update_category=False))
 
+    def warmup_after_copy(self):
+        for master in self.cluster_spec.masters:
+            for bucket in self.test_config.buckets:
+                self.monitor.monitor_warmup(self.memcached, master, bucket)
+
+    def copy_data_from_backup(self):
+        self.remote.stop_server()
+        time.sleep(30)
+        self.remote.remove_data()
+        self.remote.copy_backup(self.test_config.backup_settings.backup_directory)
+        self.remote.start_server()
+        time.sleep(30)
+        self.warmup_after_copy()
+
     def run(self):
         self.remove_statsfile()
-        self.load()
-        self.wait_for_persistence()
+        if self.test_config.load_settings.use_backup:
+            self.copy_data_from_backup()
+        else:
+            self.load()
+            self.wait_for_persistence()
 
         self.build_secondaryindex()
         self.access_bg()
@@ -1350,6 +1388,18 @@ class SecondaryIndexingScanHiDDTest(SecondaryIndexingScanTest):
         self.print_index_disk_usage()
         self.report_kpi(percentile_latencies=percentile_latencies, scan_thr=scan_thr)
         self.validate_num_connections()
+
+
+class GSILoadBackupTest(InitialandIncrementalSecondaryIndexHiDDTest):
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        time.sleep(1200)
+        self.remote.stop_server()
+        time.sleep(30)
+        self.remote.create_data_backup(self.test_config.backup_settings.backup_directory)
+        self.remote.start_server()
+        time.sleep(30)
 
 
 class N1QLThroughputHiDDTest(N1QLThroughputTest):

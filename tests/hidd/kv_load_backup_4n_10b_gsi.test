@@ -1,0 +1,46 @@
+[test_case]
+test = perfrunner.tests.magma.GSILoadBackupTest
+
+[showfast]
+title = 1 bucket x 10B x 1KB, 10K KV ops/sec, 3 Indexer Nodes, 3 Partitions, Compressed, Plasma, 10%% Index Resident Ratio
+component = hidd
+category = gsi
+
+[stats]
+server_processes = projector
+
+[cluster]
+mem_quota = 51200
+index_mem_quota = 71680
+initial_nodes = 7
+num_buckets = 1
+enable_cpu_cores = false
+
+[bucket]
+replica_index=0
+eviction_policy = fullEviction
+backend_storage = magma
+
+[bucket_extras]
+num_reader_threads = 64
+num_writer_threads = 64
+
+[collection]
+config = collections/1bucket_default.json
+
+[load]
+items = 10000000000
+size = 1024
+workers = 100
+
+[secondary]
+indexes = tests/gsi/index_defs/1bucket_default_1_index_1_3partitions.json
+indexer.settings.storage_mode = plasma
+indexer.settings.max_cpu_percent = 4800
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0
+
+[backup]
+backup_directory = /data2/gsi_10b

@@ -29,11 +29,12 @@ items = 200000
 size = 1024
 workers = 80
 array_size = 200
-doc_gen = array_indexing_composite
+doc_gen = array_indexing_composite_unique
 
 [index]
 fields = DISTINCT ARRAY i.atype FOR i IN achievements1 END,name,street,achievements1
 indexes_per_collection = 1
+top_down = True
 
 [access]
 creates = 0

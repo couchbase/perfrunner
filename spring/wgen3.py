@@ -19,6 +19,9 @@ from spring.docgen import (
     AdvFilterDocument,
     AdvFilterXattrBody,
     ArrayIndexingCompositeFieldDocument,
+    ArrayIndexingCompositeFieldIntersectDocument,
+    ArrayIndexingCompositeFieldRangeScanDocument,
+    ArrayIndexingCompositeFieldUniqueDocument,
     ArrayIndexingDocument,
     ArrayIndexingRangeScanDocument,
     ArrayIndexingUniqueDocument,
@@ -232,10 +235,25 @@ class Worker:
                                               ws.array_size,
                                               ws.items)
         elif self.ws.doc_gen == 'array_indexing_composite':
-            self.docs = ArrayIndexingCompositeFieldDocument(ws.size,
+            self.docs = ArrayIndexingCompositeFieldDocument(self.ws.size,
                                                             self.ts.prefix,
-                                                            ws.array_size,
-                                                            ws.items)
+                                                            self.ws.array_size,
+                                                            self.ws.items)
+        elif self.ws.doc_gen == 'array_indexing_composite_unique':
+            self.docs = ArrayIndexingCompositeFieldUniqueDocument(self.ws.size,
+                                                                  self.ts.prefix,
+                                                                  self.ws.array_size,
+                                                                  self.ws.items)
+        elif self.ws.doc_gen == 'array_indexing_composite_range_scan':
+            self.docs = ArrayIndexingCompositeFieldRangeScanDocument(self.ws.size,
+                                                                     self.ts.prefix,
+                                                                     self.ws.array_size,
+                                                                     self.ws.items)
+        elif self.ws.doc_gen == 'array_indexing_composite_intersect':
+            self.docs = ArrayIndexingCompositeFieldIntersectDocument(self.ws.size,
+                                                                     self.ts.prefix,
+                                                                     self.ws.array_size,
+                                                                     self.ws.items)
         elif self.ws.doc_gen == 'array_indexing_unique':
             self.docs = ArrayIndexingUniqueDocument(ws.size,
                                                     self.ts.prefix,

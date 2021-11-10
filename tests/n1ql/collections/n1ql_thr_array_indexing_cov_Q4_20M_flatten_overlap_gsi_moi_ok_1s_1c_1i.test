@@ -29,11 +29,12 @@ items = 200000
 size = 1024
 workers = 80
 array_size = 200
-doc_gen = array_indexing_composite
+doc_gen = array_indexing_composite_range_scan
 
 [index]
 fields = DISTINCT ARRAY FLATTEN_KEYS(i.atype, i.avalue) FOR i IN achievements2 END,name,street
 indexes_per_collection = 1
+top_down = True
 
 [access]
 creates = 0

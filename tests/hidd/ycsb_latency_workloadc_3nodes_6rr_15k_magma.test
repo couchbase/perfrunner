@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.YCSBLatencyHiDDTest
 
 [showfast]
-title = Latency(ms), Workload C, 3 nodes, 1 bucket x 1.5B x 1KB, Uniform distribution, 15K ops/sec, 6%% Resident Ratio, Magma
+title = Latency(ms), Workload C, 3 nodes, 1 bucket x 1.5B x 1KB, Uniform distribution, 15K ops/sec, 6%% Resident Ratio, 85 storage_quota_percentage, Magma
 component = hidd
 category = ycsb
 orderby = cml

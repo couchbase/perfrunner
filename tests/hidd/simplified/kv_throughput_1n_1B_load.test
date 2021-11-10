@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.LoadThroughputDGMMagmaTest
 
 [showfast]
-title = Throughput, 1 nodes, 1B x 1KB, Load, Magma
+title = Throughput, 1 node, 1B x 1KB, Load, Magma
 component = hidd
 category = single
 

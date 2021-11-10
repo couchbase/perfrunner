@@ -571,26 +571,29 @@ class LoadThroughputDGMMagmaTest(ThroughputDGMMagmaTest):
 class ReadLatencyDGMTest(StabilityBootstrap):
 
     def _report_kpi(self):
-        self.reporter.post(
-            *self.metrics.kv_latency(operation='get')
-        )
+        for percentile in self.test_config.access_settings.latency_percentiles:
+            self.reporter.post(
+                *self.metrics.kv_latency(operation='get', percentile=percentile)
+            )
 
 
 class MixedLatencyDGMTest(StabilityBootstrap):
 
     def _report_kpi(self):
-        for operation in ('get', 'set'):
-            self.reporter.post(
-                *self.metrics.kv_latency(operation=operation)
-            )
+        for percentile in self.test_config.access_settings.latency_percentiles:
+            for operation in ('get', 'set'):
+                self.reporter.post(
+                    *self.metrics.kv_latency(operation=operation, percentile=percentile)
+                )
 
 
 class WriteLatencyDGMTest(StabilityBootstrap):
 
     def _report_kpi(self):
-        self.reporter.post(
-            *self.metrics.kv_latency(operation='set')
-        )
+        for percentile in self.test_config.access_settings.latency_percentiles:
+            self.reporter.post(
+                *self.metrics.kv_latency(operation='set', percentile=percentile)
+            )
 
 
 class CompactionMagmaTest(StabilityBootstrap):

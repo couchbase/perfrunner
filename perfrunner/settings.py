@@ -731,6 +731,8 @@ class PhaseSettings:
     DOCUMENT_GROUPS = 1
     N1QL_SHUTDOWN_TYPE = None
 
+    LATENCY_PERCENTILES = [99.9]
+
     def __init__(self, options: dict):
         # Common settings
         self.time = int(options.get('time', self.TIME))
@@ -793,6 +795,10 @@ class PhaseSettings:
         self.connstr_params = eval(options.get('connstr_params', self.CONNSTR_PARAMS))
 
         self.run_extra_access = maybe_atoi(options.get('run_extra_access', self.RUN_EXTRA_ACCESS))
+
+        self.latency_percentiles = options.get('latency_percentiles', self.LATENCY_PERCENTILES)
+        if isinstance(self.latency_percentiles, str):
+            self.latency_percentiles = [float(x) for x in self.latency_percentiles.split(',')]
 
         # Views settings
         self.ddocs = None

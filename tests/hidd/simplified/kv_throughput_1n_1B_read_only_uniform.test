@@ -1,0 +1,67 @@
+[test_case]
+test = perfrunner.tests.magma.ThroughputDGMMagmaTest
+
+[showfast]
+title = Throughput, 1 node, 1B x 1KB, read only, Uniform distribution, 1%% Resident Ratio, Magma
+component = hidd
+category = single
+
+[cluster]
+mem_quota = 10240
+initial_nodes = 1
+num_buckets = 1
+num_vbuckets = 128
+kernel_mem_limit = 20G
+kernel_mem_limit_services = kv
+enable_cpu_cores = false
+
+[bucket]
+eviction_policy = fullEviction
+replica_number = 0
+backend_storage = magma
+
+[bucket_extras]
+num_reader_threads = 64
+num_writer_threads = 16
+
+[load]
+items = 1000000000
+size = 1024
+workers = 128
+key_fmtr = hex
+doc_gen = large
+use_backup = true
+key_prefix = 92c04a
+
+[extra_access]
+run_extra_access = true
+updates = 100
+creates = 0
+deletes = 0
+reads = 0
+workers = 128
+items = 1000000000
+ops = 1000000000
+time = 86400
+requestdistribution = uniform
+power_alpha = 0
+zipf_alpha = 0
+durability = 0
+async = 0
+
+[access]
+creates = 0
+reads = 100
+updates = 0
+deletes = 0
+items = 1000000000
+workers = 128
+time = 1800
+requestdistribution = uniform
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0
+
+[backup]
+backup_directory = /data2/1n_1b

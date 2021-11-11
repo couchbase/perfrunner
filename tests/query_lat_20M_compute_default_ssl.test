@@ -1,0 +1,43 @@
+[test_case]
+test = perfrunner.tests.views.QueryLatencyByTypeTest
+
+[showfast]
+title = 1 node, 20M docs, 3 views, 100 updates/sec, 100 queries/sec, stale=false, compute-intensive queries, default collection, N2N=Strict
+component = views
+category = by_type
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 1
+num_buckets = 1
+enable_n2n_encryption = strict
+
+[collection]
+config = collections/1bucket_default.json
+
+[bucket]
+replica_number = 0
+
+[load]
+items = 20000000
+size = 1024
+workers = 80
+doc_gen = nested
+ssl_mode = n2n
+
+[views]
+index_type = compute
+
+[access]
+creates = 0
+reads = 0
+updates = 100
+deletes = 0
+throughput = 100
+query_throughput = 100
+items = 20000000
+workers = 1
+query_workers = 10
+query_params = {"stale": "false"}
+time = 3600
+ssl_mode = n2n

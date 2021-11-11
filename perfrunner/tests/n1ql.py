@@ -110,7 +110,6 @@ class N1QLTest(PerfTest):
                 self.COLLECTORS['secondary_debugstats'] = True
                 self.COLLECTORS['secondary_debugstats_index'] = True
                 self.COLLECTORS['secondary_stats'] = True
-                self.COLLECTORS['secondary_storage_stats'] = True
         if "latency" in self.__class__.__name__.lower():
             self.COLLECTORS['n1ql_latency'] = True
 

@@ -19,7 +19,7 @@ class SecondaryStorageStatsMM(SecondaryStats):
 
         stats = {}
         for line in samples.split("\n"):
-            if "resident" in line:
+            if "resident" in line and "Allocated" in line:
                 for s in line.split(","):
                     v = s.split(":")
                     if v[0].strip() in self.METRICS:

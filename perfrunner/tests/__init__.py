@@ -222,7 +222,8 @@ class PerfTest:
             archive=self.test_config.restore_settings.backup_storage,
             repo=self.test_config.restore_settings.backup_repo,
             include_data=self.test_config.backup_settings.include_data,
-            map_data=self.test_config.restore_settings.map_data
+            map_data=self.test_config.restore_settings.map_data,
+            use_tls=self.test_config.restore_settings.use_tls
         )
 
     def load_tpcds_json_data(self):

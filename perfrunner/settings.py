@@ -1075,6 +1075,9 @@ class RestoreSettings:
     DOCS_PER_COLLECTION = 0
     THREADS = 16
     MAP_DATA = None
+    USE_TLS = False
+    SHOW_TLS_VERSION = False
+    MIN_TLS_VERSION = None
 
     def __init__(self, options):
         self.docs_per_collections = int(options.get('docs_per_collection',
@@ -1084,6 +1087,9 @@ class RestoreSettings:
         self.import_file = options.get('import_file', self.IMPORT_FILE)
         self.threads = options.get('threads', self.THREADS)
         self.map_data = options.get('map_data', self.MAP_DATA)
+        self.use_tls = int(options.get('use_tls', self.USE_TLS))
+        self.show_tls_version = int(options.get('show_tls_version', self.SHOW_TLS_VERSION))
+        self.min_tls_version = options.get('min_tls_version', self.MIN_TLS_VERSION)
 
     def __str__(self) -> str:
         return str(self.__dict__)
@@ -1427,6 +1433,9 @@ class ExtraAccessSettings(PhaseSettings):
 class BackupSettings:
 
     COMPRESSION = False
+    USE_TLS = False
+    SHOW_TLS_VERSION = False
+    MIN_TLS_VERSION = None
 
     # Undefined test parameters will use backup's default
     THREADS = None
@@ -1450,6 +1459,9 @@ class BackupSettings:
         self.aws_credential_path = options.get('aws_credential_path', self.AWS_CREDENTIAL_PATH)
         self.include_data = options.get('include_data', self.INCLUDE_DATA)
         self.backup_directory = options.get('backup_directory', self.BACKUP_DIRECTORY)
+        self.use_tls = int(options.get('use_tls', self.USE_TLS))
+        self.show_tls_version = int(options.get('show_tls_version', self.SHOW_TLS_VERSION))
+        self.min_tls_version = options.get('min_tls_version', self.MIN_TLS_VERSION)
 
 
 class ExportSettings:

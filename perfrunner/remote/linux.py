@@ -705,7 +705,7 @@ class RemoteLinux(Remote):
                worker_home: str, mode: str = None, compression: bool = False,
                storage_type: str = None, sink_type: str = None,
                shards: int = None, obj_staging_dir: str = None,
-               obj_region: str = None):
+               obj_region: str = None, use_tls: bool = False):
         logger.info('Creating a new backup: {}'.format(cluster_spec.backup))
 
         self.cbbackupmgr_config(cluster_spec, worker_home, obj_staging_dir,
@@ -713,7 +713,7 @@ class RemoteLinux(Remote):
 
         self.cbbackupmgr_backup(master_node, cluster_spec, threads, mode,
                                 compression, storage_type, sink_type, shards,
-                                worker_home, obj_staging_dir, obj_region)
+                                worker_home, obj_staging_dir, obj_region, use_tls)
 
     @master_client
     def cleanup(self, backup_dir: str):
@@ -757,11 +757,12 @@ class RemoteLinux(Remote):
                            threads: int, mode: str, compression: bool,
                            storage_type: str, sink_type: str, shards: int,
                            worker_home: str, obj_staging_dir: str = None,
-                           obj_region: str = None):
+                           obj_region: str = None, use_tls: bool = False):
         with cd(worker_home), cd('perfrunner'):
             flags = ['--archive {}'.format(cluster_spec.backup),
                      '--repo default',
-                     '--cluster http://{}'.format(master_node),
+                     '--cluster http{}://{}'.format('s' if use_tls else '', master_node),
+                     '--cacert root.pem' if use_tls else None,
                      '--username {}'.format(cluster_spec.rest_credentials[0]),
                      '--password {}'.format(cluster_spec.rest_credentials[1]),
                      '--threads {}'.format(threads) if threads else None,
@@ -786,20 +787,23 @@ class RemoteLinux(Remote):
 
     @master_client
     def restore(self, master_node: str, cluster_spec: ClusterSpec, threads: int,
-                worker_home: str, obj_staging_dir: str = None, obj_region: str = None):
+                worker_home: str, obj_staging_dir: str = None, obj_region: str = None,
+                use_tls: bool = False):
         logger.info('Restore from {}'.format(cluster_spec.backup))
 
         self.cbbackupmgr_restore(master_node, cluster_spec, threads, worker_home,
-                                 obj_staging_dir, obj_region)
+                                 obj_staging_dir, obj_region, use_tls)
 
     @master_client
     def cbbackupmgr_restore(self, master_node: str, cluster_spec: ClusterSpec,
                             threads: int, worker_home: str,
-                            obj_staging_dir: str = None, obj_region: str = None):
+                            obj_staging_dir: str = None, obj_region: str = None,
+                            use_tls: bool = False):
         with cd(worker_home), cd('perfrunner'):
             flags = ['--archive {}'.format(cluster_spec.backup),
                      '--repo default',
-                     '--cluster http://{}'.format(master_node),
+                     '--cluster http{}://{}'.format('s' if use_tls else '', master_node),
+                     '--cacert root.pem' if use_tls else None,
                      '--username {}'.format(cluster_spec.rest_credentials[0]),
                      '--password {}'.format(cluster_spec.rest_credentials[1]),
                      '--threads {}'.format(threads) if threads else None,

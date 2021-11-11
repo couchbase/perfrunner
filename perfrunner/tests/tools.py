@@ -28,6 +28,7 @@ class BackupRestoreTest(PerfTest):
             sink_type=self.test_config.backup_settings.sink_type,
             shards=self.test_config.backup_settings.shards,
             include_data=self.test_config.backup_settings.include_data,
+            use_tls=self.test_config.backup_settings.use_tls
         )
 
     def compact(self):
@@ -54,7 +55,8 @@ class BackupRestoreTest(PerfTest):
                       master_node=self.master_node,
                       threads=self.test_config.restore_settings.threads,
                       wrapper=self.rest.is_community(self.master_node),
-                      include_data=self.test_config.backup_settings.include_data)
+                      include_data=self.test_config.backup_settings.include_data,
+                      use_tls=self.test_config.restore_settings.use_tls)
 
     def backup_list(self):
         snapshots = local.get_backup_snapshots(self.cluster_spec)
@@ -71,6 +73,10 @@ class BackupRestoreTest(PerfTest):
 
     def run(self):
         self.extract_tools()
+
+        if self.test_config.backup_settings.use_tls or \
+           self.test_config.restore_settings.use_tls:
+            self.download_certificate()
 
         self.get_tool_versions()
 
@@ -130,6 +136,11 @@ class BackupXATTRTest(BackupTest):
 
     def run(self):
         self.extract_tools()
+
+        if self.test_config.backup_settings.use_tls or \
+           self.test_config.restore_settings.use_tls:
+            self.download_certificate()
+
         self.get_tool_versions()
         self.load()
         self.xattr_load()
@@ -262,6 +273,10 @@ class BackupIncrementalTest(BackupRestoreTest):
     def run(self):
         try:
             self.extract_tools()
+
+            if self.test_config.backup_settings.use_tls or \
+               self.test_config.restore_settings.use_tls:
+                self.download_certificate()
 
             self.get_tool_versions()
 
@@ -400,6 +415,11 @@ class RestoreXATTRTest(RestoreTest):
 
     def run(self):
         self.extract_tools()
+
+        if self.test_config.backup_settings.use_tls or \
+           self.test_config.restore_settings.use_tls:
+            self.download_certificate()
+
         self.get_tool_versions()
         self.load()
         self.xattr_load()
@@ -573,7 +593,8 @@ class CloudBackupTest(BackupRestoreTest):
             sink_type=self.test_config.backup_settings.sink_type,
             shards=self.test_config.backup_settings.shards,
             obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
-            obj_region=self.test_config.backup_settings.obj_region
+            obj_region=self.test_config.backup_settings.obj_region,
+            use_tls=self.test_config.backup_settings.use_tls
         )
 
     def _report_kpi(self, time_elapsed):
@@ -628,7 +649,8 @@ class CloudRestoreTest(BackupRestoreTest):
             sink_type=self.test_config.backup_settings.sink_type,
             shards=self.test_config.backup_settings.shards,
             obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
-            obj_region=self.test_config.backup_settings.obj_region
+            obj_region=self.test_config.backup_settings.obj_region,
+            use_tls=self.test_config.backup_settings.use_tls
         )
 
     @with_stats
@@ -641,7 +663,8 @@ class CloudRestoreTest(BackupRestoreTest):
                             threads=self.test_config.restore_settings.threads,
                             worker_home=self.worker_manager.WORKER_HOME,
                             obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
-                            obj_region=self.test_config.backup_settings.obj_region)
+                            obj_region=self.test_config.backup_settings.obj_region,
+                            use_tls=self.test_config.restore_settings.use_tls)
 
     def _report_kpi(self, time_elapsed):
         edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'

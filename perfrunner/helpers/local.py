@@ -55,7 +55,7 @@ def drop_caches():
 def backup(master_node:  str, cluster_spec: ClusterSpec, threads: int,
            wrapper: bool = False, mode: str = None, compression: bool = False,
            storage_type: str = None, sink_type: str = None,
-           shards: int = None, include_data: str = None):
+           shards: int = None, include_data: str = None, use_tls: bool = False):
     logger.info('Creating a new backup: {}'.format(cluster_spec.backup))
 
     if not mode:
@@ -65,7 +65,7 @@ def backup(master_node:  str, cluster_spec: ClusterSpec, threads: int,
         cbbackupwrapper(master_node, cluster_spec, 16, mode)
     else:
         cbbackupmgr_backup(master_node, cluster_spec, threads, mode,
-                           compression, storage_type, sink_type, shards, include_data)
+                           compression, storage_type, sink_type, shards, include_data, use_tls)
 
 
 def compact(cluster_spec: ClusterSpec,
@@ -105,7 +105,8 @@ def cbbackupmgr_version():
 
 def cbbackupmgr_backup(master_node: str, cluster_spec: ClusterSpec,
                        threads: int, mode: str, compression: bool,
-                       storage_type: str, sink_type: str, shards: int, include_data: str):
+                       storage_type: str, sink_type: str, shards: int, include_data: str,
+                       use_tls: bool):
     if not mode:
         if include_data:
 
@@ -125,7 +126,8 @@ def cbbackupmgr_backup(master_node: str, cluster_spec: ClusterSpec,
 
     flags = ['--archive {}'.format(cluster_spec.backup),
              '--repo default',
-             '--host http://{}'.format(master_node),
+             '--cluster http{}://{}'.format('s' if use_tls else '', master_node),
+             '--cacert root.pem' if use_tls else None,
              '--username {}'.format(cluster_spec.rest_credentials[0]),
              '--password {}'.format(cluster_spec.rest_credentials[1]),
              '--threads {}'.format(threads) if threads else None,
@@ -215,7 +217,7 @@ def calc_backup_size(cluster_spec: ClusterSpec,
 
 
 def restore(master_node: str, cluster_spec: ClusterSpec, threads: int,
-            wrapper: bool = False, include_data: str = None):
+            wrapper: bool = False, include_data: str = None, use_tls: bool = False):
 
     logger.info('Restore from {}'.format(cluster_spec.backup))
 
@@ -224,7 +226,7 @@ def restore(master_node: str, cluster_spec: ClusterSpec, threads: int,
     if wrapper:
         cbrestorewrapper(master_node, cluster_spec)
     else:
-        cbbackupmgr_restore(master_node, cluster_spec, threads, include_data)
+        cbbackupmgr_restore(master_node, cluster_spec, threads, include_data, use_tls=use_tls)
 
 
 def purge_restore_progress(cluster_spec: ClusterSpec, archive: str = '',
@@ -251,13 +253,14 @@ def cbrestorewrapper(master_node: str, cluster_spec: ClusterSpec):
 
 def cbbackupmgr_restore(master_node: str, cluster_spec: ClusterSpec,
                         threads: int, include_data: str, archive: str = '',
-                        repo: str = 'default', map_data: str = None):
+                        repo: str = 'default', map_data: str = None, use_tls: bool = False):
 
     flags = ['--archive {}'.format(archive or cluster_spec.backup),
              '--repo {}'.format(repo),
              '--include-data {}'.format(include_data) if include_data else None,
              '--threads {}'.format(threads),
-             '--host http://{}'.format(master_node),
+             '--cluster http{}://{}'.format('s' if use_tls else '', master_node),
+             '--cacert root.pem' if use_tls else None,
              '--username {}'.format(cluster_spec.rest_credentials[0]),
              '--password {}'.format(cluster_spec.rest_credentials[1]),
              '--map-data {}'.format(map_data) if map_data else None]

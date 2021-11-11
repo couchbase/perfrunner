@@ -863,7 +863,9 @@ class ClusterManager:
     def set_min_tls_version(self):
         if self.dynamic_infra:
             return
-        if self.test_config.access_settings.min_tls_version:
+        if self.test_config.access_settings.min_tls_version or \
+           self.test_config.backup_settings.min_tls_version or \
+           self.test_config.restore_settings.min_tls_version:
             check_tls_version = self.rest.get_minimum_tls_version(self.master_node)
             logger.info('current tls version: {}'.format(check_tls_version))
             self.rest.set_minimum_tls_version(

@@ -69,7 +69,9 @@ class ShowFastReporter(Reporter):
 
             build_str = self.sdk_version + ' : ' + build_str
 
-        if self.test_config.access_settings.show_tls_version:
+        if self.test_config.access_settings.show_tls_version or \
+           self.test_config.backup_settings.show_tls_version or \
+           self.test_config.restore_settings.show_tls_version:
             build_str = self.rest.get_minimum_tls_version(self.master_node) + ' : ' + build_str
             logger.info('build: {}'.format(self.build))
 

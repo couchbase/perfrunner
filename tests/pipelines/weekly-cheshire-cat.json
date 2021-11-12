@@ -289,6 +289,16 @@
         {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/collections/n1ql_lat_AG1_100M_plasma_ok_1s_1c_1i.test"},
         {"job": "arke",              "cluster": "arke.spec", "test_config": "n1ql/collections/n1ql_lat_AG1_100M_plasma_ok_1s_1c_1i.test"}
     ],
+    "N1QL-PYTPCC": [
+        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_2node_pytpcc_16core_100warehouse_80clients_replica1_dur_maj_scancons_requestplus.test"},
+        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_2node_pytpcc_16core_100warehouse_80clients_replica1_dur_pers_to_maj_scancons_requestplus.test"},
+        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_4node_pytpcc_16core_100warehouse_160clients_replica2_dur_maj_scancons_requestplus.test"},
+        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_4node_pytpcc_16core_100warehouse_160clients_replica2_dur_pers_to_maj_scancons_requestplus.test"},
+        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_6node_pytpcc_16core_100warehouse_240clients_replica2_dur_maj_scancons_requestplus.test"},
+        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_6node_pytpcc_16core_100warehouse_240clients_replica2_dur_pers_to_maj_scancons_requestplus.test"},
+        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_6node_pytpcc_16core_1000warehouse_240clients_replica2_dur_maj_scancons_requestplus.test"},
+        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_6node_pytpcc_16core_1000warehouse_240clients_replica2_dur_pers_to_maj_scancons_requestplus.test"}
+    ],
     "YCSB": [
         {"job": "hercules", "cluster": "hercules.spec", "test_config": "collections/ycsb/ycsb_workloadce_4nodes_1s_1c.test"},
         {"job": "hercules", "cluster": "hercules.spec", "test_config": "collections/ycsb/ycsb_workloadce_4nodes_1s_10c.test"},

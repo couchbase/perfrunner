@@ -167,6 +167,12 @@ pipeline {
                         buildComponent('N1QL-Arke', testCases)
                     }
                 }
+                stage('N1QL-PYTPCC') {
+                    when { expression { return params.N1QL_PYTPCC } }
+                    steps {
+                        buildComponent('N1QL-PYTPCC', testCases)
+                    }
+                }
                 stage('Tools') {
                     when { expression { return params.Tools } }
                     steps {

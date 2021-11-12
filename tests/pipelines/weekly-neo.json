@@ -4,5 +4,15 @@
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_1s_3c_1replica.test"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_1s_3c_1replica_failover.test"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_reb_in_1s_99c_1replica.test"}
+    ],
+    "N1QL-PYTPCC": [
+        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_2node_pytpcc_16core_100warehouse_80clients_replica1_dur_maj_scancons_requestplus_magma.test"},
+        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_2node_pytpcc_16core_100warehouse_80clients_replica1_dur_pers_to_maj_scancons_requestplus_magma.test"},
+        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_4node_pytpcc_16core_100warehouse_160clients_replica2_dur_maj_scancons_requestplus_magma.test"},
+        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_4node_pytpcc_16core_100warehouse_160clients_replica2_dur_pers_to_maj_scancons_requestplus_magma.test"},
+        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_6node_pytpcc_16core_100warehouse_240clients_replica2_dur_maj_scancons_requestplus_magma.test"},
+        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_6node_pytpcc_16core_100warehouse_240clients_replica2_dur_pers_to_maj_scancons_requestplus_magma.test"},
+        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_6node_pytpcc_16core_1000warehouse_240clients_replica2_dur_maj_scancons_requestplus_magma.test"},
+        {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_6node_pytpcc_16core_1000warehouse_240clients_replica2_dur_pers_to_maj_scancons_requestplus_magma.test"}
     ]
 }

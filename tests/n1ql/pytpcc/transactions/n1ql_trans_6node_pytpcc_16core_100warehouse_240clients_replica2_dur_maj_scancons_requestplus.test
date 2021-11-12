@@ -2,7 +2,7 @@
 test = perfrunner.tests.n1ql.PytpccBenchmarkTest
 
 [showfast]
-title = Tpm-c (NewOrders/min), nodes 6, warehouse 100 , replica 2, durability majority, scan_consistency request_plus, vCPU 16, s=1 c=9
+title = Tpm-c (NewOrders/min), nodes 6, warehouse 100, replica 2, durability majority, scan_consistency request_plus, vCPU 16, s=1 c=9
 component = n1ql
 category = pytpcc
 sub_category = Plasma
@@ -35,8 +35,9 @@ statements =
    BUILD INDEX ON default:default.tpcc.WAREHOUSE(WH_ID);
 
 [bucket_extras]
-num_writer_threads = disk_io_optimized
-num_reader_threads = disk_io_optimized
+num_writer_threads = 64
+num_reader_threads = 32
+max_num_shards = 64
 
 [py_tpcc]
 warehouse = 100

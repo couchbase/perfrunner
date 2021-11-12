@@ -2,7 +2,7 @@
 test = perfrunner.tests.n1ql.PytpccBenchmarkTest
 
 [showfast]
-title = Tpm-c (NewOrders/min), nodes 2, warehouse 100, replica 1, durability persistToMajority, scan_consistency request_plus, vCPU 16, s=1 c=9
+title = Tpm-c (NewOrders/min), nodes 2, warehouse 100, replica 1, durability persistToMajority, scan_consistency request_plus, vCPU 16, s=1 c=9, Magma
 component = n1ql
 category = pytpcc
 sub_category = Plasma
@@ -21,6 +21,7 @@ db_percentage = 100
 
 [bucket]
 replica_number = 1
+backend_storage = magma
 
 [secondary]
 indexer.settings.storage_mode = plasma

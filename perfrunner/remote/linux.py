@@ -112,28 +112,36 @@ class RemoteLinux(Remote):
 
         return bucket_indexes
 
-    def batch_create_index_collection(self, index_nodes, options):
+    def batch_create_index_collection(self, index_nodes, options, is_ssl):
         batch_options = \
             "-auth=Administrator:password " \
             "-server {index_node}:8091 " \
             "-type batch_process " \
             "-input /tmp/batch.txt " \
             "-refresh_settings=true".format(index_node=index_nodes[0])
+        if is_ssl:
+            batch_options = batch_options + " -use_tls -cacert ./root.pem"
         with open("/tmp/batch.txt", "w+") as bf:
             bf.write(options)
         put("/tmp/batch.txt", "/tmp/batch.txt")
+        if is_ssl:
+            put("root.pem", "/root/root.pem")
         self.run_cbindex_command(batch_options)
 
-    def batch_build_index_collection(self, index_nodes, options):
+    def batch_build_index_collection(self, index_nodes, options, is_ssl):
         batch_options = \
             "-auth=Administrator:password " \
             "-server {index_node}:8091 " \
             "-type batch_build " \
             "-input /tmp/batch.txt " \
             "-refresh_settings=true".format(index_node=index_nodes[0])
+        if is_ssl:
+            batch_options = batch_options + " -use_tls -cacert ./root.pem"
         with open("/tmp/batch.txt", "w+") as bf:
             bf.write(options)
         put("/tmp/batch.txt", "/tmp/batch.txt")
+        if is_ssl:
+            put("root.pem", "/root/root.pem")
         self.run_cbindex_command(batch_options)
 
     @master_server
@@ -147,14 +155,14 @@ class RemoteLinux(Remote):
         self.build_index(index_nodes[0], bucket_indexes)
 
     @master_server
-    def create_secondary_index_collections(self, index_nodes, options):
+    def create_secondary_index_collections(self, index_nodes, options, is_ssl):
         logger.info('creating secondary indexes')
-        self.batch_create_index_collection(index_nodes, options)
+        self.batch_create_index_collection(index_nodes, options, is_ssl)
 
     @master_server
-    def build_secondary_index_collections(self, index_nodes, options):
+    def build_secondary_index_collections(self, index_nodes, options, is_ssl):
         logger.info('building secondary indexes')
-        self.batch_build_index_collection(index_nodes, options)
+        self.batch_build_index_collection(index_nodes, options, is_ssl)
 
     @all_servers
     def reset_swap(self):

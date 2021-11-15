@@ -55,6 +55,9 @@ class SecondaryIndexTest(PerfTest):
         self.cbindexperf_concurrency = self.test_config.gsi_settings.cbindexperf_concurrency
         self.cbindexperf_repeat = self.test_config.gsi_settings.cbindexperf_repeat
         self.local_path_to_cbindex = './opt/couchbase/bin/cbindex'
+        self.is_ssl = False
+        if self.test_config.cluster.enable_n2n_encryption:
+            self.is_ssl = True
 
         if self.configfile:
             with open(self.configfile, 'r') as f:
@@ -177,13 +180,13 @@ class SecondaryIndexTest(PerfTest):
         if self.test_config.collection.collection_map:
             create_options = self.batch_create_index_collection_options(self.indexes, self.storage)
             self.remote.create_secondary_index_collections(
-                self.index_nodes, create_options)
+                self.index_nodes, create_options, self.is_ssl)
 
             build_options = self.batch_build_index_collection_options(self.indexes)
 
             build_start = time.time()
             self.remote.build_secondary_index_collections(
-                self.index_nodes, build_options)
+                self.index_nodes, build_options, self.is_ssl)
             self.monitor.wait_for_secindex_init_build_collections(
                 self.index_nodes[0],
                 self.indexes)
@@ -231,7 +234,7 @@ class SecondaryIndexTest(PerfTest):
 
         status = run_cbindexperf(path_to_tool, self.index_nodes[0],
                                  rest_username, rest_password, self.configfile,
-                                 run_in_background)
+                                 run_in_background, self.is_ssl)
         if status != 0:
             raise Exception('Scan workload could not be applied')
         else:

@@ -50,4 +50,4 @@ run_sql_shell = run_sqlcollections.sh
 cbrindex_sql = cbcrindexcollection_replicas.sql
 collection_config = cbcrbucketcollection_20GB_bucket_replica1.sh
 durability_level = majority
-index_replicas = 2
+index_replicas = 1

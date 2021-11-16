@@ -26,7 +26,7 @@ storage_class = gp2
 [ec2_node_group_1]
 instance_type = m5.4xlarge
 instance_capacity = 4
-volume_size = 12000
+volume_size = 7000
 volume_type = io2
 iops = 64000
 

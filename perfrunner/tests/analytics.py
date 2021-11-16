@@ -743,6 +743,7 @@ class CH2Test(PerfTest):
         self.analytics_link = self.test_config.analytics_settings.analytics_link
         self.data_node = self.master_node
         self.analytics_node = self.analytics_nodes[0]
+        self.analytics_statements = self.test_config.ch2_settings.analytics_statements
 
     def _report_kpi(self):
         measure_time = self.test_config.ch2_settings.duration - \
@@ -770,6 +771,14 @@ class CH2Test(PerfTest):
             res = self.rest.exec_analytics_statement(self.analytics_node, statement)
             logger.info("Result: {}".format(str(res)))
             time.sleep(5)
+
+    def create_analytics_indexes(self):
+        if self.analytics_statements:
+            logger.info('Creating analytics indexes')
+            for statement in self.analytics_statements:
+                logger.info('Running: {}'.format(statement))
+                self.rest.exec_analytics_statement(self.analytics_node,
+                                                   statement)
 
     def create_indexes(self):
         logger.info('Creating indexes')
@@ -822,6 +831,7 @@ class CH2Test(PerfTest):
     def sync(self):
         self.disconnect_link()
         self.create_datasets()
+        self.create_analytics_indexes()
         self.connect_link()
         for bucket in self.test_config.buckets:
             self.num_items += self.monitor.monitor_data_synced(self.data_node,
@@ -872,4 +882,5 @@ class CH2Test(PerfTest):
                              branch=self.test_config.ch2_settings.branch)
 
         self.run_ch2()
-        self.report_kpi()
+        if self.test_config.ch2_settings.workload != 'ch2_analytics':
+            self.report_kpi()

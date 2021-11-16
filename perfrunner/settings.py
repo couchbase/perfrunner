@@ -1715,6 +1715,7 @@ class CH2:
     WARMUP_DURATION = 0
     DURATION = 0
     WORKLOAD = 'ch2_mixed'
+    ANALYTICS_STATEMENTS = ''
 
     def __init__(self, options: dict):
         self.repo = options.get('repo', self.REPO)
@@ -1727,6 +1728,12 @@ class CH2:
         self.warmup_duration = int(options.get('warmup_duration', self.WARMUP_DURATION))
         self.duration = int(options.get('duration', self.DURATION))
         self.workload = options.get('workload', self.WORKLOAD)
+        self.raw_analytics_statements = options.get('analytics_statements',
+                                                    self.ANALYTICS_STATEMENTS)
+        if self.raw_analytics_statements:
+            self.analytics_statements = self.raw_analytics_statements.strip().split('\n')
+        else:
+            self.analytics_statements = ''
 
     def __str__(self) -> str:
         return str(self.__dict__)

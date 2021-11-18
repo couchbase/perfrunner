@@ -382,8 +382,12 @@ class ClientInstaller:
             installed_versions = self.detect_libcouchbase_versions()
 
             if any(v != lcb_version for v in installed_versions.values()):
-                logger.info("Uninstalling libcouchbase")
-                self.uninstall_clients('libcouchbase')
+                if any(installed_versions.values()):
+                    logger.info("Uninstalling libcouchbase")
+                    self.uninstall_clients('libcouchbase')
+
+                else:
+                    logger.info("libcouchbase is not installed")
 
                 logger.info("Installing libcouchbase {}".format(lcb_version))
 

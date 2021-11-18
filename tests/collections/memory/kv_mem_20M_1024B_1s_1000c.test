@@ -24,3 +24,6 @@ workers = 10
 
 [access]
 time = 300
+
+[clients]
+libcouchbase = 3.0.7

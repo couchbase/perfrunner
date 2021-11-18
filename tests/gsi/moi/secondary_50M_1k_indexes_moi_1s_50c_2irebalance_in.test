@@ -2,7 +2,7 @@
 test = perfrunner.tests.secondary.SecondaryRebalanceTest
 
 [showfast]
-title = Rebalance-in (min) 3->4, 1 bucket x 50M x 1KB, 10000 indexes, 10K KV ops/sec, Scan Workload concurrency=128, MOI, s=1 c=50
+title = Rebalance-in (min) 3->4, 1 bucket x 50M x 1KB, 1000 indexes, 10K KV ops/sec, Scan Workload concurrency=128, MOI, s=1 c=50
 component = secondary
 category = rebalance
 sub_category = MOI

@@ -3,7 +3,8 @@
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_sync_4n_1s_99c_1replica.test"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_1s_3c_1replica.test"},
         {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_queries_4n_1s_3c_1replica_failover.test"},
-        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_reb_in_1s_99c_1replica.test"}
+        {"job": "oceanus", "cluster": "oceanus.spec",     "test_config": "bigfun_20M_reb_in_1s_99c_1replica.test"},
+        {"job": "oceanus", "cluster": "oceanus_benchmark.spec",     "test_config": "volume/ch2_mixed_2n_array_index.test"}
     ],
     "N1QL-PYTPCC": [
         {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_2node_pytpcc_16core_100warehouse_80clients_replica1_dur_maj_scancons_requestplus_magma.test"},

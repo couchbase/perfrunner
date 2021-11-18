@@ -762,6 +762,12 @@ class CH2Test(PerfTest):
             *self.metrics.ch2_response_time(response_time, self.test_config.ch2_settings.tclients)
         )
 
+        if self.test_config.ch2_settings.workload == 'ch2_mixed':
+            self.reporter.post(
+                *self.metrics.ch2_analytics_query_time(test_duration,
+                                                       self.test_config.ch2_settings.tclients)
+            )
+
     def create_datasets(self):
         logger.info('Creating datasets')
         for dataset in self.CH2_DATASETS:

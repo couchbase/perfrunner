@@ -1360,6 +1360,17 @@ class MetricHelper:
 
         return response_time, self._snapshots, metric_info
 
+    def ch2_analytics_query_time(self, query_time: float, tclients: int) -> Metric:
+        metric_id = '{}_{}'.format(self.test_config.name, "analytics_query_time")
+        title = 'Average time per analytics query set (min), {}, {} tclients'.format(self._title,
+                                                                                     tclients)
+
+        metric_info = self._metric_info(metric_id,
+                                        title,
+                                        chirality=-1)
+
+        return query_time, self._snapshots, metric_info
+
 
 class DailyMetricHelper(MetricHelper):
 

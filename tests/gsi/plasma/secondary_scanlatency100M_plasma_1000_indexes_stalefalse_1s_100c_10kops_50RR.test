@@ -55,5 +55,5 @@ throughput = 10000
 workers = 20
 
 [clients]
-libcouchbase = 3.0.2
-python_client = 3.0.4
+libcouchbase = 3.2.0
+python_client = 3.2.0

@@ -375,7 +375,7 @@ class ClientInstaller:
         py_version = self.client_settings['python_client']
         logger.info("Desired clients: lcb={}, py={}".format(lcb_version, py_version))
 
-        if not lcb_version and not py_version:
+        if not lcb_version:
             logger.info("No libcouchbase version provided. Defaulting to 3.2.0.")
             lcb_version = "3.2.0"
 

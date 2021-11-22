@@ -375,42 +375,50 @@ class ClientInstaller:
         py_version = self.client_settings['python_client']
         logger.info("Desired clients: lcb={}, py={}".format(lcb_version, py_version))
 
-        if py_version and py_version.split('.')[0] == "2" and not lcb_version:
-            raise Exception("libcouchbase version must be specified when python_client=2.x.x")
+        if not lcb_version and not py_version:
+            logger.info("No libcouchbase version provided. Defaulting to 3.2.0.")
+            lcb_version = "3.2.0"
 
-        if lcb_version:
-            installed_versions = self.detect_libcouchbase_versions()
+        if not py_version:
+            logger.info("No python SDK version provided. Defaulting to 3.2.0.")
+            py_version = "3.2.0"
 
-            if any(v != lcb_version for v in installed_versions.values()):
-                if any(installed_versions.values()):
-                    logger.info("Uninstalling libcouchbase")
-                    self.uninstall_clients('libcouchbase')
+        if py_version.split('.')[0] == "2" and lcb_version.split('.')[0] != "2":
+            raise Exception("libcouchbase version 2.x.x must be specified when python_client=2.x.x")
 
-                else:
-                    logger.info("libcouchbase is not installed")
+        # Install LCB
+        installed_versions = self.detect_libcouchbase_versions()
 
-                logger.info("Installing libcouchbase {}".format(lcb_version))
+        if any(v != lcb_version for v in installed_versions.values()):
+            if any(installed_versions.values()):
+                logger.info("Uninstalling libcouchbase")
+                self.uninstall_clients('libcouchbase')
 
-                if 'commit' in lcb_version:
-                    self.install_lcb_from_commit(lcb_version)
-                else:
-                    self.install_libcouchbase(lcb_version)
-
-                detected = self.detect_libcouchbase_versions()
-                logger.info("libcouchbase versions detected after installation: ")
-                for ip, version in detected.items():
-                    logger.info("\t{}:\t{}".format(ip, version))
             else:
-                logger.info("Clients already have desired libcouchbase versions: ")
-                for ip, version in installed_versions.items():
-                    logger.info("\t{}:\t{}".format(ip, version))
+                logger.info("libcouchbase is not installed")
 
-        if py_version:
-            logger.info("Installing python_client {}".format(py_version))
-            self.install_python_client(py_version)
-            detected = self.detect_python_client_version()
-            logger.info("Python client detected after installation (pip freeze): {}"
-                        .format(detected))
+            logger.info("Installing libcouchbase {}".format(lcb_version))
+
+            if 'commit' in lcb_version:
+                self.install_lcb_from_commit(lcb_version)
+            else:
+                self.install_libcouchbase(lcb_version)
+
+            detected = self.detect_libcouchbase_versions()
+            logger.info("libcouchbase versions detected after installation: ")
+            for ip, version in detected.items():
+                logger.info("\t{}:\t{}".format(ip, version))
+        else:
+            logger.info("Clients already have desired libcouchbase versions: ")
+            for ip, version in installed_versions.items():
+                logger.info("\t{}:\t{}".format(ip, version))
+
+        # Install Python SDK
+        logger.info("Installing python_client {}".format(py_version))
+        self.install_python_client(py_version)
+        detected = self.detect_python_client_version()
+        logger.info("Python client detected after installation (pip freeze): {}"
+                    .format(detected))
 
 
 def get_args():

@@ -82,6 +82,7 @@ class BackupRestoreTest(PerfTest):
 
         self.load()
         self.wait_for_persistence()
+        self.check_num_items()
 
         if self.test_config.compaction.bucket_compaction == 'true':
             self.compact_bucket(wait=True)
@@ -145,6 +146,7 @@ class BackupXATTRTest(BackupTest):
         self.load()
         self.xattr_load()
         self.wait_for_persistence()
+        self.check_num_items()
         self.compact_bucket(wait=True)
 
         time_elapsed = self.backup()
@@ -282,6 +284,7 @@ class BackupIncrementalTest(BackupRestoreTest):
 
             self.load()
             self.wait_for_persistence()
+            self.check_num_items()
             self.compact_bucket(wait=True)
             self.backup()
 
@@ -359,11 +362,13 @@ class MergeTest(BackupRestoreTest):
 
         self.load()
         self.wait_for_persistence()
+        self.check_num_items()
         try:
             self.backup()  # 1st snapshot
 
             self.load()
             self.wait_for_persistence()
+            self.check_num_items()
             self.backup(mode=True)  # 2nd snapshot
 
             time_elapsed = self.merge()
@@ -424,6 +429,7 @@ class RestoreXATTRTest(RestoreTest):
         self.load()
         self.xattr_load()
         self.wait_for_persistence()
+        self.check_num_items()
 
         self.backup()
         self.flush_buckets()
@@ -622,6 +628,7 @@ class CloudBackupTest(BackupRestoreTest):
 
         self.load()
         self.wait_for_persistence()
+        self.check_num_items()
 
         if self.test_config.compaction.bucket_compaction == 'true':
             self.compact_bucket(wait=True)
@@ -691,6 +698,7 @@ class CloudRestoreTest(BackupRestoreTest):
 
         self.load()
         self.wait_for_persistence()
+        self.check_num_items()
 
         if self.test_config.compaction.bucket_compaction == 'true':
             self.compact_bucket(wait=True)

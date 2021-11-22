@@ -357,7 +357,7 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
         self.load()
         self.wait_for_persistence()
         time_elapsed = self.build_secondaryindex()
-        self.print_index_disk_usage()
+        # self.print_index_disk_usage()
         if not self.incremental_only:
             self.report_kpi(time_elapsed, 'Initial')
 
@@ -410,7 +410,7 @@ class InitialandIncrementalSecondaryIndexTest(SecondaryIndexTest):
         self.load_and_build_initial_index()
 
         time_elapsed = self.build_incrindex()
-        self.print_index_disk_usage()
+        # self.print_index_disk_usage()
         self.report_kpi(time_elapsed, 'Incremental')
 
         self.run_recovery_scenario()
@@ -437,10 +437,10 @@ class InitialandIncrementalDGMSecondaryIndexTest(InitialandIncrementalSecondaryI
         self.load_and_build_initial_index()
 
         self.build_incrindex()
-        self.print_index_disk_usage()
+        # self.print_index_disk_usage()
 
         time_elapsed = self.build_incrindex()
-        self.print_index_disk_usage()
+        # self.print_index_disk_usage()
 
         self.report_kpi(time_elapsed, 'Incremental')
         self.run_recovery_scenario()
@@ -458,10 +458,10 @@ class InitialandSingleIncrementalDGMSecondaryIndexTest(InitialandIncrementalSeco
         self.load_and_build_initial_index()
 
         time_elapsed = self.build_incrindex()
-        self.print_index_disk_usage()
+        # self.print_index_disk_usage()
 
         self.after_test()
-        self.print_index_disk_usage()
+        # self.print_index_disk_usage()
 
         self.report_kpi(time_elapsed, 'Incremental')
         self.run_recovery_scenario()
@@ -543,7 +543,7 @@ class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSeco
         nodes_after[0] = initial_nodes[0] + 1
         self.rebalance(initial_nodes[0], nodes_after[0])
         time_elapsed = self.build_secondaryindex()
-        self.print_index_disk_usage()
+        # self.print_index_disk_usage()
         self.report_kpi(time_elapsed, 'Initial')
 
         for master in self.cluster_spec.masters:
@@ -552,7 +552,7 @@ class InitialandIncrementalSecondaryIndexRebalanceTest(InitialandIncrementalSeco
         nodes_after[0] += 1
         self.rebalance(initial_nodes[0], nodes_after[0])
         time_elapsed = self.build_incrindex()
-        self.print_index_disk_usage()
+        # self.print_index_disk_usage()
         self.report_kpi(time_elapsed, 'Incremental')
 
 
@@ -562,7 +562,7 @@ class InitialSecondaryIndexTest(InitialandIncrementalSecondaryIndexTest):
 
     def run(self):
         self.load_and_build_initial_index()
-        self.print_index_disk_usage()
+        # self.print_index_disk_usage()
 
         # Adding sleep to get log cleaner catch up
         time.sleep(600)
@@ -644,7 +644,7 @@ class SecondaryIndexingScanTest(SecondaryIndexTest):
         percentile_latencies = self.calculate_scan_latencies()
         logger.info('Scan throughput: {}'.format(scan_thr))
         logger.info('Rows throughput: {}'.format(row_thr))
-        self.print_index_disk_usage()
+        # self.print_index_disk_usage()
         self.report_kpi(percentile_latencies, scan_thr, 0)
         self.validate_num_connections()
 
@@ -668,7 +668,7 @@ class SecondaryIndexingThroughputTest(SecondaryIndexTest):
         scan_thr, row_thr = self.read_scanresults()
         logger.info('Scan throughput: {}'.format(scan_thr))
         logger.info('Rows throughput: {}'.format(row_thr))
-        self.print_index_disk_usage()
+        # self.print_index_disk_usage()
         self.report_kpi(scan_thr)
         self.validate_num_connections()
 
@@ -705,7 +705,7 @@ class SecondaryIndexingThroughputRebalanceTest(SecondaryIndexingThroughputTest):
         scan_thr, row_thr = self.read_scanresults()
         logger.info('Scan throughput: {}'.format(scan_thr))
         logger.info('Rows throughput: {}'.format(row_thr))
-        self.print_index_disk_usage()
+        # self.print_index_disk_usage()
         self.report_kpi(scan_thr)
         self.validate_num_connections()
 
@@ -734,7 +734,7 @@ class InitialIncrementalScanThroughputTest(InitialandIncrementalDGMSecondaryInde
         scan_thr, row_thr = self.read_scanresults()
         logger.info('Scan throughput: {}'.format(scan_thr))
         logger.info('Rows throughput: {}'.format(row_thr))
-        self.print_index_disk_usage()
+        # self.print_index_disk_usage()
         self.report_kpi(scan_thr)
         self.validate_num_connections()
 
@@ -802,7 +802,7 @@ class InitialIncrementalMovingScanThroughputTest(InitialIncrementalScanThroughpu
         self.access_bg()
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         scan_throughput = self.calc_throughput()
-        self.print_index_disk_usage()
+        # self.print_index_disk_usage()
         self.report_kpi(scan_throughput)
         self.validate_num_connections()
 
@@ -834,7 +834,7 @@ class SecondaryIndexingScanLatencyTest(SecondaryIndexTest):
         self.build_secondaryindex()
         self.access_bg()
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
-        self.print_index_disk_usage()
+        # self.print_index_disk_usage()
         self.report_kpi()
         self.validate_num_connections()
 
@@ -846,7 +846,7 @@ class ScanOverlapWorkloadTest(SecondaryIndexingScanTest):
         self.load()
         self.wait_for_persistence()
         self.build_secondaryindex()
-        self.print_index_disk_usage()
+        # self.print_index_disk_usage()
 
         access_settings = copy.deepcopy(self.test_config.access_settings)
         access_settings.collections = access_settings.split_workload
@@ -860,7 +860,7 @@ class ScanOverlapWorkloadTest(SecondaryIndexingScanTest):
         percentile_latencies = self.calculate_scan_latencies()
         logger.info('Scan throughput: {}'.format(scan_thr))
         logger.info('Rows throughput: {}'.format(row_thr))
-        self.print_index_disk_usage()
+        # self.print_index_disk_usage()
         self.report_kpi(percentile_latencies, scan_thr, 0)
         self.validate_num_connections()
 
@@ -888,7 +888,7 @@ class SecondaryIndexingScanLatencyLongevityTest(SecondaryIndexingScanLatencyTest
         self.build_secondaryindex()
         self.access_bg()
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
-        self.print_index_disk_usage()
+        # self.print_index_disk_usage()
 
 
 class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest):
@@ -921,7 +921,7 @@ class SecondaryIndexingScanLatencyRebalanceTest(SecondaryIndexingScanLatencyTest
         self.access_bg()
         self.rebalance(initial_nodes[0], nodes_after[0])
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
-        self.print_index_disk_usage()
+        # self.print_index_disk_usage()
         self.report_kpi()
         self.validate_num_connections()
 
@@ -963,7 +963,7 @@ class InitialIncrementalScanLatencyTest(InitialandIncrementalDGMSecondaryIndexTe
         super().run()
         self.access_bg()
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
-        self.print_index_disk_usage()
+        # self.print_index_disk_usage()
         self.report_kpi()
         self.validate_num_connections()
 
@@ -1258,7 +1258,7 @@ class SecondaryRebalanceTest(SecondaryIndexingScanTest, RebalanceTest):
         scan_thr = self.get_throughput()
         percentile_latencies = self.calculate_scan_latencies()
         logger.info('Scan throughput: {}'.format(scan_thr))
-        self.print_index_disk_usage()
+        # self.print_index_disk_usage()
         self.report_kpi(rebalance_time=True)
         self.report_kpi(percentile_latencies, scan_thr)
         self.validate_num_connections()
@@ -1320,7 +1320,7 @@ class SecondaryIndexingThroughputCompactAllTest(SecondaryIndexTest):
         scan_thr, row_thr = self.read_scanresults()
         logger.info('Scan throughput: {}'.format(scan_thr))
         logger.info('Rows throughput: {}'.format(row_thr))
-        self.print_index_disk_usage()
+        # self.print_index_disk_usage()
         self.report_kpi(scan_thr)
         self.validate_num_connections()
 
@@ -1353,7 +1353,7 @@ class SecondaryIndexingThroughputCompressAllTest(SecondaryIndexTest):
         scan_thr, row_thr = self.read_scanresults()
         logger.info('Scan throughput: {}'.format(scan_thr))
         logger.info('Rows throughput: {}'.format(row_thr))
-        self.print_index_disk_usage()
+        # self.print_index_disk_usage()
         self.report_kpi(scan_thr)
         self.validate_num_connections()
 
@@ -1386,6 +1386,6 @@ class SecondaryIndexingThroughputEvictAllTest(SecondaryIndexTest):
         scan_thr, row_thr = self.read_scanresults()
         logger.info('Scan throughput: {}'.format(scan_thr))
         logger.info('Rows throughput: {}'.format(row_thr))
-        self.print_index_disk_usage()
+        # self.print_index_disk_usage()
         self.report_kpi(scan_thr)
         self.validate_num_connections()

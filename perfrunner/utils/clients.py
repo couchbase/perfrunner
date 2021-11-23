@@ -1,9 +1,11 @@
 from argparse import ArgumentParser
+from re import split as re_split
 
 from fabric.api import cd, local, run
 
 from logger import logger
 from perfrunner.helpers.remote import RemoteHelper
+from perfrunner.helpers.rest import RestHelper
 from perfrunner.remote.context import all_clients
 from perfrunner.settings import ClusterSpec, TestConfig
 
@@ -257,7 +259,26 @@ LIBCOUCHBASE_PACKAGES = [{"version": "2.9.0",
                                "libcouchbase-dbg_3.2.2-1_amd64.deb "
                                "libcouchbase3-libev_3.2.2-1_amd64.deb "
                                "libcouchbase3-tools_3.2.2-1_amd64.deb "
-                               "libcouchbase-dev_3.2.2-1_amd64.deb"]}
+                               "libcouchbase-dev_3.2.2-1_amd64.deb"]},
+                         {"version": "3.2.3",
+                          "os": "ubuntu",
+                          "package": "libcouchbase-3.2.3_ubuntu1804_bionic_amd64",
+                          "package_path": "libcouchbase-3.2.3_ubuntu1804_bionic_amd64",
+                          "format": "tar",
+                          "install_cmds":
+                              ["grep -qxF "
+                               "'deb http://us.archive.ubuntu.com/ubuntu/ bionic main restricted' "
+                               "/etc/apt/sources.list || echo "
+                               "'deb http://us.archive.ubuntu.com/ubuntu/ bionic main restricted' "
+                               ">> /etc/apt/sources.list",
+                               "sudo apt-get update -y",
+                               "sudo apt-get install libevent-core-2.1 libev4 -y ",
+                               "sudo dpkg -i libcouchbase3_3.2.3-1_amd64.deb "
+                               "libcouchbase3-libevent_3.2.3-1_amd64.deb "
+                               "libcouchbase-dbg_3.2.3-1_amd64.deb "
+                               "libcouchbase3-libev_3.2.3-1_amd64.deb "
+                               "libcouchbase3-tools_3.2.3-1_amd64.deb "
+                               "libcouchbase-dev_3.2.3-1_amd64.deb"]}
                          ]
 
 LCB_CUSTOM_DEPS = {
@@ -288,6 +309,10 @@ LCB_CUSTOM_DEPS = {
 }
 
 
+def version_tuple(version: str):
+    return tuple(int(n) for n in re_split('\.|-', version))
+
+
 class ClientInstaller:
 
     def __init__(self, cluster_spec, test_config, options):
@@ -298,6 +323,8 @@ class ClientInstaller:
         self.remote = RemoteHelper(self.cluster_spec, options.verbose)
         self.client_os = RemoteHelper.detect_client_os(self.cluster_spec.workers[0],
                                                        self.cluster_spec).lower()
+        self.rest = RestHelper(self.cluster_spec, self.test_config, options.verbose)
+        self.cb_version = version_tuple(self.rest.get_version(host=next(self.cluster_spec.masters)))
 
     @all_clients
     def detect_libcouchbase_versions(self):
@@ -313,7 +340,8 @@ class ClientInstaller:
     @all_clients
     def uninstall_clients(self, client: str):
         if client == "libcouchbase":
-            run("apt-get remove 'libcouchbase*' -y")
+            # if any libcouchbase packages are installed, uninstall them; otherwise do nothing
+            run("(dpkg-query -l | grep -q libcouchbase) && apt-get remove 'libcouchbase*' -y || :")
 
     @all_clients
     def install_libcouchbase(self, version: str):
@@ -376,12 +404,25 @@ class ClientInstaller:
         logger.info("Desired clients: lcb={}, py={}".format(lcb_version, py_version))
 
         if not lcb_version:
-            logger.info("No libcouchbase version provided. Defaulting to 3.2.0.")
-            lcb_version = "3.2.0"
+            logger.info("No libcouchbase version provided. Defaulting to 3.0.7")
+            lcb_version = "3.0.7"
 
         if not py_version:
-            logger.info("No python SDK version provided. Defaulting to 3.2.0.")
-            py_version = "3.2.0"
+            logger.info("No python SDK version provided. Defaulting to 3.0.8")
+            py_version = "3.0.8"
+
+        # SDK compatibility changed with 7.1.0-1745
+        # see https://issues.couchbase.com/browse/MB-45563
+        if self.cb_version >= (7, 1, 0, 1745):
+            if version_tuple(lcb_version) < (3, 2, 0):
+                logger.warn("libcouchbase >= 3.2.0 required for Couchbase Server >= 7.1.0-1745. "
+                            "Upgrading libcouchbase version to 3.2.3")
+                lcb_version = "3.2.3"
+
+            if version_tuple(py_version) < (3, 2, 0):
+                logger.warn("python SDK >= 3.2.0 required for Couchbase Server >= 7.1.0-1745. "
+                            "Upgrading python SDK version to 3.2.3")
+                py_version = "3.2.3"
 
         if py_version.split('.')[0] == "2" and lcb_version.split('.')[0] != "2":
             raise Exception("libcouchbase version 2.x.x must be specified when python_client=2.x.x")

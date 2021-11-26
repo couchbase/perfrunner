@@ -15,6 +15,7 @@ from perfrunner.helpers.local import (
     run_cbindex,
     run_cbindexperf,
 )
+from perfrunner.helpers.misc import pretty_dict
 from perfrunner.helpers.profiler import with_profiles
 from perfrunner.tests import PerfTest, TargetIterator
 from perfrunner.tests.rebalance import RebalanceTest
@@ -1253,17 +1254,25 @@ class SecondaryRebalanceTest(SecondaryIndexingScanTest, RebalanceTest):
         self.access_bg()
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf",
                                 run_in_background=True)
+        if self.test_config.gsi_settings.excludeNode:
+            planner_settings = {"excludeNode": self.test_config.gsi_settings.excludeNode}
+            nodes = self.rest.get_active_nodes_by_role(self.master_node, 'index')
+            for node in nodes:
+                logger.info(f"setting planner settings {planner_settings}")
+                self.rest.set_planner_settings(node, planner_settings)
+                meta = self.rest.get_index_metadata(node)
+                logger.info('Index Metadata: {}'.format(pretty_dict(meta['localSettings'])))
+
         self.rebalance_indexer()
         logger.info("Indexes after rebalance")
         for server in self.index_nodes:
             logger.info("{} : {} Indexes".format(server, self.rest.indexes_per_node(server)))
-
+        self.report_kpi(rebalance_time=True)
         kill_process("cbindexperf")
         scan_thr = self.get_throughput()
         percentile_latencies = self.calculate_scan_latencies()
         logger.info('Scan throughput: {}'.format(scan_thr))
         self.print_index_disk_usage()
-        self.report_kpi(rebalance_time=True)
         self.report_kpi(percentile_latencies, scan_thr)
         self.validate_num_connections()
 

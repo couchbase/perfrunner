@@ -1,0 +1,57 @@
+{
+  "bucket-1": {
+    "_default": {},
+    "scope-1": {
+      "collection-1": {
+        "load": 1,
+        "access": 1,
+        "ratio": 1
+      },
+      "collection-2": {
+        "load": 1,
+        "access": 1,
+        "ratio": 2
+      },
+      "collection-3": {
+        "load": 1,
+        "access": 1,
+        "ratio": 3
+      },
+      "collection-4": {
+        "load": 1,
+        "access": 1,
+        "ratio": 4
+      },
+      "collection-5": {
+        "load": 1,
+        "access": 5,
+        "ratio": 5
+      },
+      "collection-6": {
+        "load": 1,
+        "access": 1,
+        "ratio": 6
+      },
+      "collection-7": {
+        "load": 1,
+        "access": 1,
+        "ratio": 7
+      },
+      "collection-8": {
+        "load": 1,
+        "access": 1,
+        "ratio": 8
+      },
+      "collection-9": {
+        "load": 1,
+        "access": 1,
+        "ratio": 9
+      },
+      "collection-10": {
+        "load": 1,
+        "access": 1,
+        "ratio": 10
+      }
+    }
+  }
+}

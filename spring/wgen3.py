@@ -126,15 +126,33 @@ class Worker:
 
     def init_load_targets(self):
         self.load_targets = []
+        self.load_map = {}
+        num_ratio = 0
         if self.ws.collections is not None:
             target_scope_collections = self.ws.collections[self.ts.bucket]
             for scope in target_scope_collections.keys():
                 for collection in target_scope_collections[scope].keys():
                     if target_scope_collections[scope][collection]['load'] == 1:
                         self.load_targets += [scope+":"+collection]
+                        if target_scope_collections[scope][collection].get('ratio'):
+                            num_ratio += target_scope_collections[scope][collection].get('ratio')
         else:
             self.load_targets = ["_default:_default"]
         self.num_load_targets = len(self.load_targets)
+        if num_ratio > 0:
+            base_items = self.ws.items // num_ratio
+            target_scope_collections = self.ws.collections[self.ts.bucket]
+            for scope in target_scope_collections.keys():
+                for collection in target_scope_collections[scope].keys():
+                    if target_scope_collections[scope][collection]['load'] == 1:
+                        self.load_targets += [scope+":"+collection]
+                        if target_scope_collections[scope][collection].get('ratio'):
+                            ratio = target_scope_collections[scope][collection].get('ratio')
+                            self.load_map[scope + ":" + collection] = ratio * base_items
+        else:
+            for target in self.load_targets:
+                self.load_map[target] = self.ws.items // self.num_load_targets
+        logger.info(f"load map {self.load_map}")
 
     def init_access_targets(self):
         self.access_targets = []
@@ -448,7 +466,8 @@ class KVWorker(Worker):
         if not cb:
             cb = self.cb
         target = self.random_target()
-        curr_items = self.ws.items // self.num_load_targets
+        curr_items = self.load_map[target]
+        # curr_items = self.ws.items // self.num_load_targets
         deleted_items = 0
         if self.ws.creates or self.ws.deletes:
             max_batch_deletes_buffer = self.ws.deletes * self.ws.workers
@@ -673,10 +692,11 @@ class HotReadsWorker(Worker):
 class SeqUpsertsWorker(Worker):
 
     def run(self, sid, *args):
+        logger.info("running SeqUpsertsWorker")
         ws = copy.deepcopy(self.ws)
-        ws.items = ws.items // self.num_load_targets
         self.cb.connect_collections(self.load_targets)
         for target in self.load_targets:
+            ws.items = self.load_map[target]
             for key in SequentialKey(sid, ws, self.ts.prefix):
                 doc = self.docs.next(key)
                 self.cb.update(target, key.string, doc)
@@ -970,7 +990,6 @@ class N1QLWorker(Worker):
             t0 = time.time()
             self.op_delay = self.op_delay + (self.delta / self.ws.n1ql_batch_size)
 
-        self.next_target()
         target_curr_items = self.ws.items // self.num_load_targets
 
         for i in range(self.ws.n1ql_batch_size):
@@ -1354,18 +1373,28 @@ class WorkloadGen:
         self.shared_dict = self.manager.dict()
         if self.ws.collections is not None:
             num_load = 0
+            num_ratio = 0
             target_scope_collections = self.ws.collections[self.ts.bucket]
             for scope in target_scope_collections.keys():
                 for collection in target_scope_collections[scope].keys():
                     if target_scope_collections[scope][collection]['load'] == 1:
                         num_load += 1
+                    if target_scope_collections[scope][collection].get('ratio'):
+                        num_ratio += target_scope_collections[scope][collection].get('ratio')
 
             curr_items = self.ws.items // num_load
+            if num_ratio > 0:
+                curr_items = self.ws.items // num_ratio
             for scope in target_scope_collections.keys():
                 for collection in target_scope_collections[scope].keys():
                     target = scope+":"+collection
                     if target_scope_collections[scope][collection]['load'] == 1:
-                        self.shared_dict[target] = [curr_items, 0]
+                        if target_scope_collections[scope][collection].get('ratio'):
+                            ratio = target_scope_collections[scope][collection]['ratio']
+                            final_items = curr_items * ratio
+                            self.shared_dict[target] = [final_items, 0]
+                        else:
+                            self.shared_dict[target] = [curr_items, 0]
                     else:
                         self.shared_dict[target] = [0, 0]
         else:

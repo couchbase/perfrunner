@@ -200,6 +200,16 @@ class DefaultRestHelper(RestBase):
             else:
                 logger.warn('Skipping unknown option: {}'.format(option))
 
+    def set_planner_settings(self, host: str, settings: dict):
+        api = 'http://{}:9102/settings/planner'.format(host)
+        logger.info('Changing host {} to {}'.format(host, settings))
+        self.post(url=api, data=settings)
+
+    def get_index_metadata(self, host: str) -> dict:
+        api = 'http://{}:9102/getLocalIndexMetadata'.format(host)
+
+        return self.get(url=api).json()
+
     def get_index_settings(self, host: str) -> dict:
         api = 'http://{}:9102/settings?internal=ok'.format(host)
 

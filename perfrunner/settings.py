@@ -1203,7 +1203,7 @@ class GSISettings:
 
         self.settings = {}
         for option in options:
-            if option.startswith(('indexer', 'projector', 'queryport')):
+            if option.startswith(('indexer', 'projector', 'queryport', 'planner')):
                 value = options.get(option)
                 if '.' in value:
                     self.settings[option] = maybe_atoi(value, t=float)
@@ -1218,6 +1218,11 @@ class GSISettings:
                 self.storage = 'memdb'
         self.settings['indexer.cpu.throttle.target'] = \
             self.settings.get('indexer.cpu.throttle.target', 1.00)
+
+        self.excludeNode = None
+        if self.settings.get('planner.excludeNode'):
+            self.excludeNode = self.settings.get('planner.excludeNode')
+            self.settings.pop('planner.excludeNode')
 
     def __str__(self) -> str:
         return str(self.__dict__)

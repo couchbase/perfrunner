@@ -1,12 +1,12 @@
 [test_case]
-test = perfrunner.tests.ycsb.YCSBThroughputTest
+test = perfrunner.tests.ycsb.YCSBLatencyTest
 
 [showfast]
-title = Avg Throughput (ops/sec), Workload A, 3 nodes, 12 vCPU, CBCollect
+title = Latency(ms), Workload A, 3 nodes, 12 vCPU, 60K ops/sec, CBCollect
 component = kv
 category = ycsb
 sub_category = ycsb3
-orderby = a10
+orderby = a90
 
 [cluster]
 mem_quota = 40960
@@ -24,15 +24,19 @@ workers = 160
 workload_path = workloads/workloada
 ycsb_client = couchbase3
 items = 20000000
-ops = 1000000000
+target = 10000
 time = 1200
+ops = 0
 boost = 12
-workers = 600
+workers = 10
+timeseries = 1
 workload_instances = 6
 kv_endpoints = 16
 cbcollect = 1
 
 [ycsb]
+latency_percentiles = 99
+average_latency = 1
 branch = couchbase3
 
 [stats]

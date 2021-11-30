@@ -849,54 +849,6 @@ class MetricHelper:
             _fc += 1
         return lat_dic
 
-    def _parse_ycsb_latency_cbcollect(self, percentile: str, operation: str = "access"):
-        lat_dic = {}
-        _temp = []
-        _fc = 1
-        _cbtime = int(self.test.cb_time)
-        _cbstart = int(self.test.cb_start * 1000)
-        if operation == "load":
-            ycsb_log_files = [filename
-                              for filename in glob.glob("YCSB/ycsb_load_*.log")
-                              if "stderr" not in filename]
-        else:
-            ycsb_log_files = [filename
-                              for filename in glob.glob("YCSB/ycsb_run_*.log")
-                              if "stderr" not in filename]
-        for filename in ycsb_log_files:
-            fh2 = open(filename)
-            list1 = fh2.readlines()
-            list1_length = len(list1)
-            fh = open(filename)
-            _c = 0
-            for x in range(list1_length-1):
-                line = fh.readline()
-                if line.find('], {},'.format(_cbstart)) >= 1:
-                    io_type = line.split('[')[1].split(']')[0]
-                    for y in range(_cbtime):
-                        lat = float(line.split()[-1])
-                        _temp.append(lat)
-                        if y < _cbtime-1:
-                            line = fh.readline()
-                    _temp.sort()
-                    lat_dic = self._ycsb_perc_calc(_temp=_temp,
-                                                   io_type=io_type,
-                                                   lat_dic=lat_dic,
-                                                   _fc=_fc,
-                                                   percentile=percentile)
-                    lat_dic = self._ycsb_avg_calc(_temp=_temp,
-                                                  io_type=io_type,
-                                                  lat_dic=lat_dic,
-                                                  _fc=_fc)
-                    _temp.clear()
-                    _c += _cbtime
-                _c += 1
-                x += _c
-            _fc += 1
-        if 'CLEANUP' in lat_dic:
-            del lat_dic['CLEANUP']
-        return lat_dic
-
     def ycsb_get_max_latency(self):
         max_lats = {}
         ycsb_log_files = [filename
@@ -1100,10 +1052,7 @@ class MetricHelper:
                          percentile: str,
                          operation: str = "access"
                          ) -> Metric:
-        if self.test_config.access_settings.cbcollect:
-            latency_dic = self._parse_ycsb_latency_cbcollect(percentile, operation)
-        else:
-            latency_dic = self._parse_ycsb_latency(percentile, operation)
+        latency_dic = self._parse_ycsb_latency(percentile, operation)
         return latency_dic
 
     def indexing_time(self, indexing_time: float) -> Metric:

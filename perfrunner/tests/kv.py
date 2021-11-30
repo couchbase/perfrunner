@@ -1,4 +1,5 @@
 import copy
+import time
 
 from logger import logger
 from perfrunner.helpers.cbmonitor import timeit, with_stats
@@ -539,10 +540,27 @@ class PillowFightTest(PerfTest):
 
         PerfTest.access(self, task=pillowfight_task)
 
+    def access_bg(self, *args, **kwargs):
+        self.download_certificate()
+
+        PerfTest.access_bg(self, task=pillowfight_task)
+
     def _report_kpi(self, *args):
         self.reporter.post(
             *self.metrics.max_ops()
         )
+
+    @with_stats
+    def collect_cb(self):
+        duration = self.test_config.access_settings.time
+        self.cb_start = duration*0.8
+        time.sleep(self.cb_start)
+        start_time = time.time()
+        self.remote.collect_info()
+        end_time = time.time()
+        self.cb_time = round(end_time - start_time)
+        logger.info("cbcollect_info finished and it took: {} seconds".format(self.cb_time))
+        self.worker_manager.wait_for_workers()
 
     def run(self):
         self.load()
@@ -562,7 +580,13 @@ class PillowFightTest(PerfTest):
             access_settings.query_workers = 0
             self.access_bg(settings=access_settings)
 
-        self.access()
+        if self.test_config.access_settings.cbcollect:
+            self.access_bg()
+            self.collect_cb()
+
+        else:
+            self.access()
+
         self.report_kpi()
 
 

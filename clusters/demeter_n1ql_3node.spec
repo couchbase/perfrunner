@@ -1,8 +1,8 @@
 [clusters]
-iris =
-    172.23.100.161:kv,n1ql
-    172.23.100.162:kv,n1ql
-    172.23.100.163:index
+demeter =
+    172.23.100.161:kv,n1ql,index
+    172.23.100.162:kv,n1ql,index
+    172.23.100.163:kv,n1ql,index
 
 [clients]
 hosts =
@@ -11,6 +11,8 @@ credentials = root:couchbase
 
 [storage]
 data = /data
+index = /data
+backup = /data/workspace/backup
 
 [credentials]
 rest = Administrator:password

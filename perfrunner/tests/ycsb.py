@@ -45,12 +45,13 @@ class YCSBTest(PerfTest):
     @with_stats
     def collect_cb(self):
         duration = self.test_config.access_settings.time
-        self.cb_start = duration*0.6
+        self.cb_start = duration*0.8
         time.sleep(self.cb_start)
         start_time = time.time()
         self.remote.collect_info()
         end_time = time.time()
         self.cb_time = round(end_time - start_time)
+        logger.info("cbcollect_info finished and it took: {} seconds".format(self.cb_time))
         self.worker_manager.wait_for_workers()
 
     def generate_keystore(self):

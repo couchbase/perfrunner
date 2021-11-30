@@ -624,7 +624,7 @@ def run_ycsb(host: str,
         cmd += ' -p operationcount={ops} '
     if execution_time is not None:
         cmd += ' -p maxexecutiontime={execution_time} '
-    if timeseries or cbcollect:
+    if timeseries:
         cmd += '-p measurementtype=timeseries '
 
     if transactionsenabled:

@@ -353,7 +353,7 @@ class ClientInstaller:
                    "awk -F ',' '{ print $1 }'")
 
     def detect_python_client_version(self):
-        return local("env/bin/pip freeze | grep ^couchbase | awk -F '==' '{ print $2 }'",
+        return local("env/bin/pip freeze | grep ^couchbase | awk -F '==|@' '{ print $2 }'",
                      capture=True)
 
     @all_clients

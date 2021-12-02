@@ -357,10 +357,9 @@ class ClientInstaller:
                      capture=True)
 
     @all_clients
-    def uninstall_clients(self, client: str):
-        if client == "libcouchbase":
-            # if any libcouchbase packages are installed, uninstall them; otherwise do nothing
-            run("(dpkg-query -l | grep -q libcouchbase) && apt-get remove 'libcouchbase*' -y || :")
+    def uninstall_lcb(self):
+        # if any libcouchbase packages are installed, uninstall them; otherwise do nothing
+        run("(dpkg-query -l | grep -q libcouchbase) && apt-get remove 'libcouchbase*' -y || :")
 
     @all_clients
     def install_libcouchbase(self, version: str):
@@ -422,62 +421,66 @@ class ClientInstaller:
         py_version = self.client_settings['python_client']
         logger.info("Desired clients: lcb={}, py={}".format(lcb_version, py_version))
 
-        if not lcb_version:
-            logger.info("No libcouchbase version provided. Defaulting to 3.0.7")
-            lcb_version = "3.0.7"
+        mb45563_is_hit = self.cb_version >= (7, 1, 0, 1745) and self.cb_version < (7, 1, 0, 1807)
 
         if not py_version:
-            logger.info("No python SDK version provided. Defaulting to 3.0.8")
-            py_version = "3.0.8"
+            logger.info("No python SDK version provided. "
+                        "Defaulting to version specified in requirements.txt")
+        elif mb45563_is_hit and version_tuple(py_version) < (3, 2, 0):
+            # SDK compatibility changed with 7.1.0-1745
+            # see https://issues.couchbase.com/browse/MB-45563
+            logger.warn("python SDK >= 3.2.0 required for Couchbase Server builds "
+                        "7.1.0-1745 <= (build) < 7.1.0-1807. "
+                        "Upgrading python SDK version to 3.2.3")
+            py_version = "3.2.3"
 
-        # SDK compatibility changed with 7.1.0-1745
-        # see https://issues.couchbase.com/browse/MB-45563
-        if self.cb_version >= (7, 1, 0, 1745):
-            if version_tuple(lcb_version) < (3, 2, 0):
-                logger.warn("libcouchbase >= 3.2.0 required for Couchbase Server >= 7.1.0-1745. "
-                            "Upgrading libcouchbase version to 3.2.3")
-                lcb_version = "3.2.3"
+        if not lcb_version:
+            logger.info("No libcouchbase version provided. Uninstalling libcouchbase.")
+            self.uninstall_lcb()
+        elif mb45563_is_hit and version_tuple(lcb_version) < (3, 2, 0):
+            # SDK compatibility changed with 7.1.0-1745
+            # see https://issues.couchbase.com/browse/MB-45563
+            logger.warn("libcouchbase >= 3.2.0 required for Couchbase Server builds "
+                        "7.1.0-1745 <= (build) < 7.1.0-1807. "
+                        "Upgrading libcouchbase version to 3.2.3")
+            lcb_version = "3.2.3"
 
-            if version_tuple(py_version) < (3, 2, 0):
-                logger.warn("python SDK >= 3.2.0 required for Couchbase Server >= 7.1.0-1745. "
-                            "Upgrading python SDK version to 3.2.3")
-                py_version = "3.2.3"
-
-        if py_version.split('.')[0] == "2" and lcb_version.split('.')[0] != "2":
+        if py_version and py_version.split('.')[0] == "2" and \
+           lcb_version and lcb_version.split('.')[0] != "2":
             raise Exception("libcouchbase version 2.x.x must be specified when python_client=2.x.x")
 
         # Install LCB
-        installed_versions = self.detect_libcouchbase_versions()
+        if lcb_version:
+            installed_versions = self.detect_libcouchbase_versions()
 
-        if any(v != lcb_version for v in installed_versions.values()):
-            if any(installed_versions.values()):
-                logger.info("Uninstalling libcouchbase")
-                self.uninstall_clients('libcouchbase')
+            if any(v != lcb_version for v in installed_versions.values()):
+                if any(installed_versions.values()):
+                    logger.info("Uninstalling libcouchbase")
+                    self.uninstall_lcb()
 
+                else:
+                    logger.info("libcouchbase is not installed")
+
+                logger.info("Installing libcouchbase {}".format(lcb_version))
+
+                if 'commit' in lcb_version:
+                    self.install_lcb_from_commit(lcb_version)
+                else:
+                    self.install_libcouchbase(lcb_version)
             else:
-                logger.info("libcouchbase is not installed")
+                logger.info("Clients already have desired libcouchbase versions.")
 
-            logger.info("Installing libcouchbase {}".format(lcb_version))
-
-            if 'commit' in lcb_version:
-                self.install_lcb_from_commit(lcb_version)
-            else:
-                self.install_libcouchbase(lcb_version)
-
-            detected = self.detect_libcouchbase_versions()
-            logger.info("libcouchbase versions detected after installation: ")
-            for ip, version in detected.items():
-                logger.info("\t{}:\t{}".format(ip, version))
-        else:
-            logger.info("Clients already have desired libcouchbase versions: ")
-            for ip, version in installed_versions.items():
-                logger.info("\t{}:\t{}".format(ip, version))
+        detected = self.detect_libcouchbase_versions()
+        for ip, version in detected.items():
+            logger.info("\t{}:\t{}".format(ip, version))
 
         # Install Python SDK
-        logger.info("Installing python_client {}".format(py_version))
-        self.install_python_client(py_version)
+        if py_version:
+            logger.info("Installing python_client {}".format(py_version))
+            self.install_python_client(py_version)
+
         detected = self.detect_python_client_version()
-        logger.info("Python client detected after installation (pip freeze): {}"
+        logger.info("Python client detected (pip freeze): {}"
                     .format(detected))
 
 

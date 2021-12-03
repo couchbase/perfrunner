@@ -1379,6 +1379,7 @@ class SecondaryIndexingScanHiDDTest(SecondaryIndexingScanTest):
             self.wait_for_persistence()
 
         self.build_secondaryindex()
+        self.hot_load()
         self.access_bg()
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
         scan_thr, row_thr = self.read_scanresults()

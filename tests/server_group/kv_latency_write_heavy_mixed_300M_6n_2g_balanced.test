@@ -1,0 +1,37 @@
+[test_case]
+test = perfrunner.tests.kv.MixedLatencyTest
+
+[showfast]
+title = latency (ms), 6 nodes, 1 bucket x 300M x 1KB, 20/80 R/W, 15K ops/sec, 2 Server Groups (3+3), Balanced
+component = kv
+category = server_group
+
+[cluster]
+mem_quota = 51200
+initial_nodes = 6
+num_buckets = 1
+kernel_mem_limit = 65G
+kernel_mem_limit_services = kv
+
+[bucket]
+eviction_policy = fullEviction
+
+[load]
+items = 300000000
+size = 1024
+workers = 80
+doc_gen = large
+
+[access]
+creates = 0
+reads = 20
+updates = 80
+deletes = 0
+throughput = 15000
+items = 300000000
+workers = 15
+time = 1200
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

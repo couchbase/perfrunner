@@ -8,6 +8,7 @@ from perfrunner.helpers.worker import (
     pillowfight_task,
 )
 from perfrunner.tests import PerfTest
+from perfrunner.tests.rebalance import RebalanceTest
 from perfrunner.workloads.keyFragger import KeyFragger
 from perfrunner.workloads.pathoGen import PathoGen
 from perfrunner.workloads.tcmalloc import WorkloadGen
@@ -69,6 +70,28 @@ class MixedLatencyTest(ReadLatencyTest):
         self.reset_kv_stats()
         self.access()
         self.report_kpi()
+
+
+class MixedLatencyAfterRebalanceTest(MixedLatencyTest, RebalanceTest):
+
+    def rebalance(self, services=None):
+        self.pre_rebalance()
+        self.rebalance_time = self._rebalance(services)
+        self.post_rebalance()
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+
+        self.rebalance()
+
+        if self.is_balanced():
+            self.compact_bucket()
+            self.hot_load()
+            self.reset_kv_stats()
+            self.access()
+            self.report_kpi()
 
 
 class EnhancedDurabilityLatencyTest(ReadLatencyTest):

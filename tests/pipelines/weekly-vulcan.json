@@ -142,11 +142,11 @@
         {"job": "arke-dgm",          "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_index_100M_plasma_dgm.test"},
         {"job": "arke-dgm",          "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_index_100M_plasma_part_dgm.test"}
     ],
-    "Rebalance": [
+    "Rebalance": [],
+    "Rebalance-Large-Scale": [],
+    "Rebalance-Hestia": [
         {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_failover_100M_dgm_kv_disk.test"}
     ],
-    "Rebalance-Large-Scale": [],
-    "Rebalance-Hestia": [],
     "Tools": [
         {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_sqlite.test"},
         {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_forestdb.test"},

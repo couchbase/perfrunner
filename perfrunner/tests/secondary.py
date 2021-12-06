@@ -224,7 +224,7 @@ class SecondaryIndexTest(PerfTest):
     @with_stats
     @with_profiles
     def apply_scanworkload(self, path_to_tool="./opt/couchbase/bin/cbindexperf",
-                           run_in_background=False):
+                           run_in_background=False, is_ssl=False):
         rest_username, rest_password = self.cluster_spec.rest_credentials
         with open(self.configfile, 'r') as fp:
             config_file_content = fp.read()
@@ -234,7 +234,7 @@ class SecondaryIndexTest(PerfTest):
 
         status = run_cbindexperf(path_to_tool, self.index_nodes[0],
                                  rest_username, rest_password, self.configfile,
-                                 run_in_background, self.is_ssl)
+                                 run_in_background, is_ssl=is_ssl)
         if status != 0:
             raise Exception('Scan workload could not be applied')
         else:
@@ -642,7 +642,7 @@ class SecondaryIndexingScanTest(SecondaryIndexTest):
         initial_index_time = self.build_secondaryindex()
         self.report_kpi(0, 0, initial_index_time)
         self.access_bg()
-        self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf")
+        self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf", is_ssl=self.is_ssl)
         scan_thr, row_thr = self.read_scanresults()
         percentile_latencies = self.calculate_scan_latencies()
         logger.info('Scan throughput: {}'.format(scan_thr))

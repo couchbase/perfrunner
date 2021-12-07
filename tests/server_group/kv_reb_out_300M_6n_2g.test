@@ -18,7 +18,7 @@ kernel_mem_limit_services = kv
 eviction_policy = fullEviction
 
 [load]
-items = 150000000
+items = 300000000
 size = 1024
 workers = 80
 key_fmtr = hex
@@ -30,7 +30,7 @@ reads = 90
 updates = 10
 deletes = 0
 throughput = 15000
-items = 150000000
+items = 300000000
 workers = 40
 
 [rebalance]

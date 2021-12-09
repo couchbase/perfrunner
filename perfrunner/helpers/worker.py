@@ -6,10 +6,10 @@ from itertools import cycle
 from multiprocessing import set_start_method
 from typing import Callable
 
+from celery import Celery
 from kombu.serialization import registry
 from sqlalchemy import create_engine
 
-from celery import Celery
 from logger import logger
 from perfrunner import celerylocal, celeryremote
 from perfrunner.helpers import local, misc

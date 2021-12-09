@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
-from re import split as re_split
 from multiprocessing import set_start_method
+from re import split as re_split
 
 from fabric.api import cd, local, run
 
@@ -332,7 +332,7 @@ LCB_CUSTOM_DEPS = {
 
 
 def version_tuple(version: str):
-    return tuple(int(n) for n in re_split('\.|-', version))
+    return tuple(int(n) for n in re_split('\\.|-', version))
 
 
 class ClientInstaller:

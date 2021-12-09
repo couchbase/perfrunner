@@ -500,9 +500,9 @@ class AWSDeployer(Deployer):
                     block_device = '/dev/sda1'
                     if "workers" in node_role:  # perf client ami
                         if self.region == 'us-east-1':
-                            ami = 'ami-040bd58822f237e77'
+                            ami = 'ami-09dcb69fe2852d6cd'
                         else:
-                            ami = 'ami-04f9b8bb1ea4c3ef6'
+                            ami = 'ami-0045ddecdcfa4a45c'
                     elif "couchbase" in node_role:  # perf server ami
                         if self.region == 'us-east-1':
                             if self.os_arch == 'arm':

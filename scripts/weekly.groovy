@@ -263,6 +263,24 @@ pipeline {
                         buildComponent('Cloud', testCases)
                     }
                 }
+                stage('GSI-Ephemeral') {
+                    when { expression { return params.GSI_Ephemeral } }
+                    steps {
+                        buildComponent('GSI-Ephemeral', testCases)
+                    }
+                }
+                stage('GSI-Compression') {
+                    when { expression { return params.GSI_Compression } }
+                    steps {
+                        buildComponent('GSI-Compression', testCases)
+                    }
+                }
+                stage('GSI-DDl') {
+                    when { expression { return params.GSI_DDl } }
+                    steps {
+                        buildComponent('GSI-DDl', testCases)
+                    }
+                }
             }
         }
     }

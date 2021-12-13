@@ -23,6 +23,8 @@ class RemoteHelper:
         if cluster_spec.cloud_infrastructure:
             if cluster_spec.infrastructure_settings.get('os_arch', 'x86_64') == 'arm':
                 os = 'arm'
+            elif cluster_spec.infrastructure_settings.get('os_arch', 'x86_64') == 'al2':
+                os = 'al2'
             else:
                 os = cls.detect_os(cluster_spec)
         else:

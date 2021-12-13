@@ -661,6 +661,12 @@ class RemoteLinux(Remote):
             " --cluster {}:8091 -u Administrator -p password".format(level, host))
 
     @master_server
+    def ui_http_off(self, host: str):
+        logger.info('Disabling UI over http.')
+        run("/opt/couchbase/bin/couchbase-cli setting-security --set --disable-http-ui 1 --cluster "
+            "{}:8091 -u Administrator -p password".format(host))
+
+    @master_server
     def run_magma_benchmark(self, cmd: str, stats_file: str):
         logger.info('Running magma benchmark cmd: {}'.format(cmd))
         stdout = run(cmd)

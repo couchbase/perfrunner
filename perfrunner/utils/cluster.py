@@ -89,6 +89,7 @@ def main():
     cm.set_min_tls_version()
     cm.wait_until_healthy()
     cm.wait_until_warmed_up()
+    cm.disable_ui_http()
 
     if cm.test_config.collection.config:
         cm.create_collections()

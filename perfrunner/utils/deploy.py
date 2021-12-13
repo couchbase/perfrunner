@@ -508,6 +508,9 @@ class AWSDeployer(Deployer):
                             if self.os_arch == 'arm':
                                 ami = 'ami-0f249abfe3dd01b30'
                                 block_device = '/dev/xvda'
+                            elif self.os_arch == 'al2':
+                                ami = 'ami-09416c5c736392e2c'
+                                block_device = '/dev/xvda'
                             else:
                                 ami = 'ami-0c6f86d5c61063ccd'
                         else:

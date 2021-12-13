@@ -450,6 +450,10 @@ class ClusterManager:
                     master,
                     self.test_config.cluster.enable_n2n_encryption)
 
+    def disable_ui_http(self):
+        if self.test_config.cluster.ui_http == 'disabled':
+            self.remote.ui_http_off(self.cluster_spec.servers[0])
+
     def restart_with_alternative_num_vbuckets(self):
         num_vbuckets = self.test_config.cluster.num_vbuckets
         if num_vbuckets is not None:

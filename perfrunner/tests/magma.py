@@ -17,7 +17,7 @@ from perfrunner.helpers.worker import (
     ycsb_task,
 )
 from perfrunner.tests import PerfTest, TargetIterator
-from perfrunner.tests.n1ql import N1QLLatencyTest, N1QLThroughputTest
+from perfrunner.tests.n1ql import N1QLThroughputTest
 from perfrunner.tests.rebalance import RebalanceKVTest
 from perfrunner.tests.secondary import (
     InitialandIncrementalSecondaryIndexTest,
@@ -1426,11 +1426,49 @@ class N1QLThroughputHiDDTest(N1QLThroughputTest):
         super().__init__(*args)
         local.extract_cb_any(filename='couchbase')
         self.collect_per_server_stats = self.test_config.magma_settings.collect_per_server_stats
+        self.kv_iterator = TargetIterator(self.cluster_spec, self.test_config,
+                                          self.test_config.load_settings.key_prefix)
+
+    def load(self, *args):
+        load_settings = self.test_config.load_settings
+        load_settings.items //= 2
+        iterator = TargetIterator(self.cluster_spec, self.test_config, 'n1ql')
+        PerfTest.load(self, settings=load_settings, target_iterator=iterator)
+        if self.test_config.load_settings.key_prefix:
+            PerfTest.load(self, settings=load_settings, target_iterator=self.kv_iterator)
+        else:
+            PerfTest.load(self, settings=load_settings)
+
+    def access_bg(self, *args):
+        access_settings = self.test_config.access_settings
+        access_settings.items //= 2
+        access_settings.n1ql_workers = 0
+        if self.test_config.load_settings.key_prefix:
+            PerfTest.access_bg(self, settings=access_settings, target_iterator=self.kv_iterator)
+        else:
+            PerfTest.access_bg(self, settings=access_settings)
+
+    def warmup_after_copy(self):
+        for master in self.cluster_spec.masters:
+            for bucket in self.test_config.buckets:
+                self.monitor.monitor_warmup(self.memcached, master, bucket)
+
+    def copy_data_from_backup(self):
+        self.remote.stop_server()
+        time.sleep(30)
+        self.remote.remove_data()
+        self.remote.copy_backup(self.test_config.backup_settings.backup_directory)
+        self.remote.start_server()
+        time.sleep(30)
+        self.warmup_after_copy()
 
     def run(self):
-        self.load()
-        self.wait_for_persistence()
-        self.check_num_items()
+        if self.test_config.load_settings.use_backup:
+            self.copy_data_from_backup()
+        else:
+            self.load()
+            self.wait_for_persistence()
+            self.check_num_items()
 
         self.create_indexes()
         self.wait_for_indexing()
@@ -1446,44 +1484,22 @@ class N1QLThroughputHiDDTest(N1QLThroughputTest):
         self.report_kpi()
 
 
-class N1QLLatencyHiDDTest(N1QLLatencyTest):
-    COLLECTORS = {
-        'iostat': True,
-        'memory': True,
-        'n1ql_latency': True,
-        'n1ql_stats': True,
-        'ns_server_system': True,
-        'disk': True,
-        'kvstore': True,
-        'vmstat': True,
-        'secondary_stats': True,
-        'secondary_debugstats': True,
-        'secondary_debugstats_bucket': True,
-        'secondary_debugstats_index': True,
-        'secondary_storage_stats': True,
-        'secondary_storage_stats_mm': True
-    }
-    CB_STATS_PORT = 11209
+class N1QLLatencyHiDDTest(N1QLThroughputHiDDTest):
 
-    def __init__(self, *args):
-        super().__init__(*args)
-        local.extract_cb_any(filename='couchbase')
-        self.collect_per_server_stats = self.test_config.magma_settings.collect_per_server_stats
+    def _report_kpi(self):
+        self.reporter.post(
+            *self.metrics.query_latency(percentile=90)
+        )
 
+
+class N1QLLoadBackupTest(N1QLThroughputHiDDTest):
     def run(self):
         self.load()
         self.wait_for_persistence()
         self.check_num_items()
-
-        self.create_indexes()
-        self.wait_for_indexing()
-
-        self.store_plans()
-
-        if self.test_config.users.num_users_per_bucket > 0:
-            self.cluster.add_extra_rbac_users(self.test_config.users.num_users_per_bucket)
-
-        self.access_bg()
-        self.access()
-
-        self.report_kpi()
+        time.sleep(1200)
+        self.remote.stop_server()
+        time.sleep(30)
+        self.remote.create_data_backup(self.test_config.backup_settings.backup_directory)
+        self.remote.start_server()
+        time.sleep(30)

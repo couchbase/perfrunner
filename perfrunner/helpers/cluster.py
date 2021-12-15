@@ -761,6 +761,7 @@ class ClusterManager:
 
     def tune_memory_settings(self):
         kernel_memory = self.test_config.cluster.kernel_mem_limit
+        kv_kernel_memory = self.test_config.cluster.kv_kernel_mem_limit
         if kernel_memory:
             if self.dynamic_infra:
                 cluster = self.remote.get_cluster()
@@ -797,8 +798,12 @@ class ClusterManager:
             else:
                 for service in self.test_config.cluster.kernel_mem_limit_services:
                     for server in self.cluster_spec.servers_by_role(service):
-                        self.remote.tune_memory_settings(host_string=server,
-                                                         size=kernel_memory)
+                        if service == 'kv' and kv_kernel_memory:
+                            self.remote.tune_memory_settings(host_string=server,
+                                                             size=kv_kernel_memory)
+                        else:
+                            self.remote.tune_memory_settings(host_string=server,
+                                                             size=kernel_memory)
                 self.monitor.wait_for_servers()
 
     def reset_memory_settings(self):

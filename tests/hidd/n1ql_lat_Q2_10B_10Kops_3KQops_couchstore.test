@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.N1QLLatencyHiDDTest
 
 [showfast]
-title = Q2, 1 bucket x 10B x 1KB, Singleton Unique Lookup, 3K queries/sec, not_bounded, Plasma, 3 Indexer Nodes, 3 Partitions, Compressed, 10%% Index Resident Ratio
+title = Q2, 1 bucket x 10B x 1KB, Singleton Unique Lookup, 3K queries/sec, not_bounded, Plasma, 3 Indexer Nodes, 3 Partitions, Compressed, 10%% Index Resident Ratio, Couchstore
 component = hidd
 category = n1ql
 
@@ -17,7 +17,6 @@ enable_cpu_cores = false
 
 [bucket]
 eviction_policy = fullEviction
-backend_storage = magma
 
 [bucket_extras]
 num_reader_threads = 64
@@ -32,8 +31,6 @@ items = 10000000000
 size = 1024
 workers = 100
 doc_gen = reverse_lookup
-use_backup = true
-key_prefix = 12e097
 
 [index]
 statements =
@@ -60,6 +57,3 @@ args = ["{email}"]
 [clients]
 libcouchbase = 2.9.3
 python_client = 2.5.0
-
-[backup]
-backup_directory = /data2/n1ql_10b

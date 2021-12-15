@@ -32,6 +32,8 @@ items = 10000000000
 size = 1024
 workers = 100
 doc_gen = reverse_lookup
+use_backup = true
+key_prefix = 12e097
 
 [index]
 statements =
@@ -45,7 +47,7 @@ deletes = 0
 throughput = 15000
 items = 10000000000
 workers = 20
-time = 3600
+time = 1200
 n1ql_queries = singleton-unique-lookup
 n1ql_workers = 240
 workload_instances = 1
@@ -58,3 +60,6 @@ args = ["{email}"]
 [clients]
 libcouchbase = 2.9.3
 python_client = 2.5.0
+
+[backup]
+backup_directory = /data2/n1ql_10b

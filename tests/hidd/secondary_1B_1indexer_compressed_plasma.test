@@ -1,22 +1,22 @@
 [test_case]
-test = perfrunner.tests.magma.SecondaryIndexingScanHiDDTest
+test = perfrunner.tests.magma.InitialandIncrementalSecondaryIndexHiDDTest
 
 [showfast]
-title = 1 bucket x 10B x 1KB, 10K KV ops/sec, 3 Indexer Nodes, 3 Partitions, Compressed, Plasma, 10%% Index Resident Ratio, 90/10
+title = 1 bucket x 1B x 1KB, 10K KV ops/sec, 1 Indexer Node, Compressed, Plasma, 10%% Index Resident Ratio
 component = hidd
 category = gsi
 
 [stats]
 server_processes = projector
-lat_interval = 0.5
 
 [cluster]
-mem_quota = 51200
-index_mem_quota = 71680
-initial_nodes = 7
+mem_quota = 5120
+index_mem_quota = 21504
+initial_nodes = 5
 num_buckets = 1
-kernel_mem_limit = 91G
-kernel_mem_limit_services = index
+kernel_mem_limit = 28G
+kv_kernel_mem_limit = 10G
+kernel_mem_limit_services = kv index
 enable_cpu_cores = false
 
 [bucket]
@@ -28,32 +28,27 @@ backend_storage = magma
 num_reader_threads = 64
 num_writer_threads = 64
 
-[collection]
-config = collections/1bucket_default.json
-
 [load]
-items = 10000000000
+items = 1000000000
 size = 1024
 workers = 100
 use_backup = true
 
 [secondary]
-indexes = tests/gsi/index_defs/1bucket_default_1_index_1_3partitions.json
-cbindexperf_configfile = tests/gsi/plasma/config/config_scan_90_10_plasma.json
+indexes = myindex:alt_email
 indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
 projector.maxCpuPercent = 1200
-scan_time = 1500
 
 [hot_load]
-items = 10000000000
+items = 1000000000
 workers = 100
 working_set = 10
 
 [access]
 updates = 100
-ops = 100000000
-items = 10000000000
+ops = 10000000
+items = 1000000000
 throughput = 10000
 workers = 20
 working_set = 10
@@ -64,4 +59,4 @@ libcouchbase = 2.9.3
 python_client = 2.5.0
 
 [backup]
-backup_directory = /data2/gsi_10b
+backup_directory = /data2/gsi_1b

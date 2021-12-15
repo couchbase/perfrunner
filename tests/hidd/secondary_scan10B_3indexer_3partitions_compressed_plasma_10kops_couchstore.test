@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.SecondaryIndexingScanHiDDTest
 
 [showfast]
-title = 1 bucket x 10B x 1KB, 10K KV ops/sec, 3 Indexer Nodes, 3 Partitions, Compressed, Plasma, 10%% Index Resident Ratio, 90/10
+title = 1 bucket x 10B x 1KB, 10K KV ops/sec, 3 Indexer Nodes, 3 Partitions, Compressed, Plasma, 10%% Index Resident Ratio, Couchstore
 component = hidd
 category = gsi
 
@@ -22,7 +22,6 @@ enable_cpu_cores = false
 [bucket]
 replica_index=0
 eviction_policy = fullEviction
-backend_storage = magma
 
 [bucket_extras]
 num_reader_threads = 64
@@ -35,7 +34,6 @@ config = collections/1bucket_default.json
 items = 10000000000
 size = 1024
 workers = 100
-use_backup = true
 
 [secondary]
 indexes = tests/gsi/index_defs/1bucket_default_1_index_1_3partitions.json
@@ -62,6 +60,3 @@ working_set_access = 90
 [clients]
 libcouchbase = 2.9.3
 python_client = 2.5.0
-
-[backup]
-backup_directory = /data2/gsi_10b

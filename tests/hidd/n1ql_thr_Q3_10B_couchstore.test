@@ -1,8 +1,8 @@
 [test_case]
-test = perfrunner.tests.magma.N1QLLatencyHiDDTest
+test = perfrunner.tests.magma.N1QLThroughputHiDDTest
 
 [showfast]
-title = Q2, 1 bucket x 10B x 1KB, Singleton Unique Lookup, 3K queries/sec, not_bounded, Plasma, 3 Indexer Nodes, 3 Partitions, Compressed, 10%% Index Resident Ratio
+title = Q3, 1 bucket x 10B x 1KB, Range Scan, not_bounded, Plasma, 3 Indexer Nodes, 3 Partitions, Compressed, 10%% Index Resident Ratio, Couchstore
 component = hidd
 category = n1ql
 
@@ -17,7 +17,6 @@ enable_cpu_cores = false
 
 [bucket]
 eviction_policy = fullEviction
-backend_storage = magma
 
 [bucket_extras]
 num_reader_threads = 64
@@ -32,34 +31,29 @@ items = 10000000000
 size = 1024
 workers = 100
 doc_gen = reverse_lookup
-use_backup = true
-key_prefix = 12e097
 
 [index]
 statements =
-    CREATE INDEX by_email ON `bucket-1`(email) PARTITION BY HASH(META().id) WITH {"num_partition": 3};
+    CREATE INDEX by_capped_small ON `bucket-1`(capped_small) PARTITION BY HASH(META().id) WITH {"num_partition": 3};
 
 [access]
 creates = 0
 reads = 0
 updates = 100
 deletes = 0
-throughput = 10000
+throughput = 15000
 items = 10000000000
 workers = 20
 time = 1200
-n1ql_queries = singleton-unique-lookup
-n1ql_throughput = 3000
+n1ql_queries = range-scan
 n1ql_workers = 240
+workload_instances = 1
 
-[n1ql-singleton-unique-lookup]
-statement = SELECT * FROM `bucket-1` WHERE email = $1;
+[n1ql-range-scan]
+statement = SELECT name AS _name, street AS _street FROM `bucket-1` WHERE capped_small=$1;
 scan_consistency = not_bounded
-args = ["{email}"]
+args = ["{capped_small}"]
 
 [clients]
 libcouchbase = 2.9.3
 python_client = 2.5.0
-
-[backup]
-backup_directory = /data2/n1ql_10b

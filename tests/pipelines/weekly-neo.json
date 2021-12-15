@@ -18,17 +18,17 @@
         {"job": "hercules_nest_pytpcc_perfrunner", "cluster": "hercules_n1ql_trans.spec", "test_config": "n1ql_trans_6node_pytpcc_16core_1000warehouse_240clients_replica2_dur_pers_to_maj_scancons_requestplus_magma.test"}
     ],
     "GSI-Compression": [
-        {"job": "secondary-plasma-dgm", "cluster": "nyx.spec", "test_config": "plasma/secondary_compression_10res_80_20.test"},
-        {"job": "secondary-plasma-dgm", "cluster": "nyx.spec", "test_config": "plasma/secondary_compression_10res_80_20_no_access.test"},
-        {"job": "secondary-plasma-dgm", "cluster": "nyx.spec", "test_config": "plasma/secondary_compression_10res_100_20.test"},
-        {"job": "secondary-plasma-dgm", "cluster": "nyx.spec", "test_config": "plasma/secondary_compression_10res_100_20_no_access.test"},
-        {"job": "secondary-plasma-dgm", "cluster": "nyx.spec", "test_config": "plasma/secondary_compression_20res_80_20.test"},
-        {"job": "secondary-plasma-dgm", "cluster": "nyx.spec", "test_config": "plasma/secondary_compression_20res_80_20_no_access.test"},
-        {"job": "secondary-plasma-dgm", "cluster": "nyx.spec", "test_config": "plasma/secondary_compression_disabled_10res_80_20.test"},
-        {"job": "secondary-plasma-dgm", "cluster": "nyx.spec", "test_config": "plasma/secondary_compression_disabled_10res_80_20_no_access.test"},
-        {"job": "secondary-plasma-dgm", "cluster": "nyx.spec", "test_config": "plasma/secondary_compression_disabled_10res_100_20.test"},
-        {"job": "secondary-plasma-dgm", "cluster": "nyx.spec", "test_config": "plasma/secondary_compression_disabled_10res_100_20_no_access.test"},
-        {"job": "secondary-plasma-dgm", "cluster": "nyx.spec", "test_config": "plasma/secondary_compression_disabled_20res_80_20.test"},
-        {"job": "secondary-plasma-dgm", "cluster": "nyx.spec", "test_config": "plasma/secondary_compression_disabled_20res_80_20_no_access.test"}
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "plasma/secondary_compression_10res_80_20.test"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "plasma/secondary_compression_10res_80_20_no_access.test"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "plasma/secondary_compression_10res_100_20.test"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "plasma/secondary_compression_10res_100_20_no_access.test"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "plasma/secondary_compression_20res_80_20.test"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "plasma/secondary_compression_20res_80_20_no_access.test"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "plasma/secondary_compression_disabled_10res_80_20.test"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "plasma/secondary_compression_disabled_10res_80_20_no_access.test"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "plasma/secondary_compression_disabled_10res_100_20.test"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "plasma/secondary_compression_disabled_10res_100_20_no_access.test"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "plasma/secondary_compression_disabled_20res_80_20.test"},
+        {"job": "hemera", "cluster": "hemera.spec", "test_config": "plasma/secondary_compression_disabled_20res_80_20_no_access.test"}
     ]
 }

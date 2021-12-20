@@ -2,10 +2,11 @@
 test = perfrunner.tests.secondary.InMemoryCompressionTest
 
 [showfast]
-title = 1 bucket x 250M, single 2i index, 20K KV ops/sec, 20%% Resident, PLASMA, Compression mix scan 80/20
+title = 1 bucket x 250M, single 2i index, 20K KV ops/sec, 20%% Resident, PLASMA, Compression 80/20
 component = secondary
 category = thr
 sub_category = Compression
+orderby = a9
 
 [stats]
 server_processes = projector

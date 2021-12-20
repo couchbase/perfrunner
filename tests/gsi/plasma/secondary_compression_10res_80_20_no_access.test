@@ -6,6 +6,7 @@ title = 1 bucket x 250M, single 2i index, 20K KV ops/sec, no backgroud mutation,
 component = secondary
 category = thr
 sub_category = Compression
+orderby = a3
 
 [stats]
 server_processes = projector

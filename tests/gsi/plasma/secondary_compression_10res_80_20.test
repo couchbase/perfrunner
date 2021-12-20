@@ -41,3 +41,9 @@ indexer.settings.storage_mode = plasma
 indexer.settings.max_cpu_percent = 4800
 cbindexperf_configfile = tests/gsi/plasma/config/config_scanthr_80_20_plasma.json
 scan_time = 1500
+
+[access]
+updates = 100
+items = 250000000
+throughput = 10000
+workers = 20

@@ -43,3 +43,9 @@ indexer.plasma.backIndex.enableInMemoryCompression = false
 indexer.plasma.mainIndex.enableInMemoryCompression = false
 cbindexperf_configfile = tests/gsi/plasma/config/config_scanthr_20per_hot_plasma.json
 scan_time = 1500
+
+[access]
+updates = 100
+items = 250000000
+throughput = 10000
+workers = 20

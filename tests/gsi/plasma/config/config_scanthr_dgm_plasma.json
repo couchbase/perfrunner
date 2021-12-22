@@ -17,9 +17,7 @@
             "Inclusion": 3,
             "Index": "myindex",
             "NInterval": 100,
-            "TestSpec": {
-                "RandomKeyLen": 12
-            }
+            "RandomLen" : 12
         }
     ]
 }

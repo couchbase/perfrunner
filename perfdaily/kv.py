@@ -1,5 +1,5 @@
 from perfdaily import DailyTest
-from perfrunner.tests.dcp import DCPThroughputTest as _DCPThroughputTest
+from perfrunner.tests.dcp import JavaDCPThroughputTest as _DCPThroughputTest
 from perfrunner.tests.kv import PillowFightTest as _PillowFightTest
 from perfrunner.tests.rebalance import RebalanceKVTest
 

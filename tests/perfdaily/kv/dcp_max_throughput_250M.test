@@ -7,7 +7,7 @@ threshold = -15
 component = KV
 
 [stats]
-client_processes = dcptest
+client_processes = java
 
 [cluster]
 mem_quota = 51200
@@ -27,8 +27,8 @@ items = 250000000
 size = 1024
 workers = 40
 
-[dcp]
-num_connections = 8
+[java_dcp]
+config = perf/config/compression-enabled.properties
 
 [clients]
 libcouchbase = 2.9.3

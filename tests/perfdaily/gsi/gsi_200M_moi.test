@@ -1,6 +1,5 @@
 [test_case]
 test = perfdaily.gsi.InitialIndexTest
-use_workers = 0
 
 [showfast]
 title = 200M docs, 1 index, MOI
@@ -29,6 +28,8 @@ replica_number = 0
 
 [load]
 items = 200000000
+size = 1024
+workers = 100
 
 [index]
 statements =

@@ -4,8 +4,9 @@
   - name: upgrading packages on the system
     yum: state=latest name=epel-release
   - name: installing additional packages
-    yum: state=latest name={{item}}
-    with_items:
+    yum:
+     state: latest
+     name:
       - atop
       - fio
       - gdb

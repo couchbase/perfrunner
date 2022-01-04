@@ -36,8 +36,9 @@
       - 9999
 
   - name: uninstalling the database packages
-    yum: state=absent name={{item}}
-    with_items:
+    yum:
+     state: absent
+     name:
       - 'couchbase*'
       - 'mongodb*'
       - 'MariaDB*'

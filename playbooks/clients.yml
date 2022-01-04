@@ -4,8 +4,9 @@
   - name: upgrading packages on the system
     apt: upgrade=dist
   - name: installing additional packages
-    apt: name={{item}} update_cache=yes
-    with_items:
+    apt:
+     update_cache: yes
+     name:
       - atop
       - cpufrequtils
       - git
@@ -28,11 +29,12 @@
   - name: adding Couchbase repository
     apt: deb=https://packages.couchbase.com/releases/couchbase-release/couchbase-release-1.0-amd64.deb
   - name: installing libcouchbase
-    apt: name={{item}} update_cache=yes
-    with_items:
-    - build-essential
-    - libcouchbase-dev
-    - libcouchbase2-bin
-    - libcouchbase2-libevent
+    apt:
+     update_cache: yes
+     name:
+      - build-essential
+      - libcouchbase-dev
+      - libcouchbase2-bin
+      - libcouchbase2-libevent
   - name: disabling scheduled fstrim jobs
     file: path=/etc/cron.weekly/fstrim state=absent

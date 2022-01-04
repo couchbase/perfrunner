@@ -14,8 +14,9 @@
       baseurl: https://download.fedoraproject.org/pub/epel/$releasever/$basearch/
       gpgcheck: no
   - name: installing additional packages
-    yum: state=latest name={{item}}
-    with_items:
+    yum:
+     state: latest
+     name:
       - atop
       - fio
       - gdb

@@ -2,7 +2,7 @@
 test = perfrunner.tests.secondary.InMemoryCompressionTest
 
 [showfast]
-title = 1 bucket x 250M, single 2i index, 20K KV ops/sec, 10%% Resident, PLASMA, Compression disabled 100/20
+title = 1 bucket x 250M, single 2i index, 10K KV ops/sec, 10%% Resident, PLASMA, Compression disabled 100/20
 component = secondary
 category = thr
 sub_category = Compression

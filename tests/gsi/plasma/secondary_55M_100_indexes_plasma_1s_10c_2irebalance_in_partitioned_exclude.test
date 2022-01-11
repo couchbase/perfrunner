@@ -1,0 +1,62 @@
+[test_case]
+test = perfrunner.tests.secondary.SecondaryRebalanceTest
+
+[showfast]
+title = Rebalance-in (min) 3->4, 1 bucket x 55M x 1KB, 100 indexes, 10K KV ops/sec, excludeNode=in, Plasma, s=1 c=10
+component = secondary
+category = rebalance
+sub_category = Plasma
+
+[stats]
+server_processes = projector
+
+[cluster]
+mem_quota = 50000
+index_mem_quota = 127000
+initial_nodes = 5
+num_buckets = 1
+
+[bucket]
+replica_number=0
+replica_index=0
+
+[collection]
+config = collections/1bucket_1scope_10collections_uneven.json
+
+[compaction]
+db_percentage = 100
+view_percentage = 100
+
+[load]
+items = 55000000
+size = 1024
+workers = 100
+doc_gen = grouped
+doc_groups = 1
+
+[rebalance]
+nodes_after = 6
+start_after = 180
+stop_after = 180
+
+[secondary]
+indexes = tests/gsi/index_defs/1bucket_1scope_10collections_100_indexes_partitioned.json
+cbindexperf_configfile = tests/gsi/plasma/config/config_scanlatency_sessionconsistent_100_indexes_1s_10c_partitioned.json
+indexer.settings.rebalance.redistribute_indexes = True
+indexer.settings.storage_mode = plasma
+indexer.settings.max_cpu_percent = 4800
+indexer.settings.gc_percent = 200
+planner.excludeNode = in
+queryport.client.usePlanner = false
+queryport.client.log_level = Warn
+projector.backChanSize = 500000
+disable_perindex_stats = True
+indexer.settings.build.batch_size = 100
+cbindexperf_repeat = 299999
+cbindexperf_concurrency = 128
+
+[access]
+updates = 100
+items = 55000000
+throughput = 10000
+workers = 20

@@ -63,6 +63,13 @@ class ClusterManager:
     def rename(self):
         if self.dynamic_infra:
             return
+        elif self.cluster_spec.cloud_infrastructure:
+            if self.cluster_spec.cloud_provider == 'gcp':
+                clusters_private = dict(self.cluster_spec.clusters_private)
+                for cluster_name, public_ips in self.cluster_spec.clusters:
+                    private_ips = clusters_private.get(cluster_name, [])
+                    for host, new_host in zip(public_ips, private_ips):
+                        self.rest.rename(host, new_host)
         else:
             for server in self.cluster_spec.servers:
                 self.rest.rename(server)
@@ -236,15 +243,23 @@ class ClusterManager:
     def add_nodes(self):
         if self.dynamic_infra:
             return
-        for (_, servers), initial_nodes in zip(self.cluster_spec.clusters, self.initial_nodes):
+
+        using_gcp = self.cluster_spec.cloud_provider == 'gcp'
+
+        for (cluster, servers), initial_nodes in zip(self.cluster_spec.clusters,
+                                                     self.initial_nodes):
 
             if initial_nodes < 2:  # Single-node cluster
                 continue
 
+            if using_gcp:
+                private_ips = dict(self.cluster_spec.clusters_private)[cluster]
+
             master = servers[0]
-            for node in servers[1:initial_nodes]:
+            for i, node in enumerate(servers[1:initial_nodes]):
                 roles = self.cluster_spec.roles[node]
-                self.rest.add_node(master, node, roles)
+                new_host = private_ips[1:initial_nodes][i] if using_gcp else node
+                self.rest.add_node(master, new_host, roles)
 
     def rebalance(self):
         if self.dynamic_infra:

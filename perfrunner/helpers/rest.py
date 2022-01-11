@@ -128,11 +128,14 @@ class DefaultRestHelper(RestBase):
         }
         self.post(url=api, data=data)
 
-    def rename(self, host: str):
-        logger.info('Changing server name: {}'.format(host))
+    def rename(self, host: str, new_host: str = None):
+        if not new_host:
+            new_host = host
+
+        logger.info('Changing server name: {} -> {}'.format(host, new_host))
 
         api = 'http://{}:8091/node/controller/rename'.format(host)
-        data = {'hostname': host}
+        data = {'hostname': new_host}
 
         self.post(url=api, data=data)
 

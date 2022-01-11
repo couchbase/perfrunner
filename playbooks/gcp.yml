@@ -1,0 +1,36 @@
+---
+- hosts: servers
+  gather_facts: no
+  vars:
+    data_dir: /data
+    disk: /dev/sdb
+  tasks:
+  - name: wait for clients to become reachable
+    wait_for_connection:
+      sleep: 10
+      timeout: 300
+
+  - name: gather facts
+    setup:
+
+  - name: re-creating filesystem
+    filesystem:
+      fstype: "xfs"
+      dev: "{{ disk }}"
+      force: yes
+
+  - name: mounting data parition
+    mount:
+      name: "{{ data_dir }}"
+      state: mounted
+      src: "{{ disk }}"
+      fstype: "xfs"
+
+  - name: creating new "couchbase" group
+    group: name=couchbase
+
+  - name: creating new "couchbase" user
+    user: name=couchbase group=couchbase
+
+  - name: ensuring ownership of "{{ data_dir }}" directory
+    file: path={{ data_dir }} owner=couchbase group=couchbase

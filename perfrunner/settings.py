@@ -73,6 +73,10 @@ class ClusterSpec(Config):
             return False
 
     @property
+    def cloud_provider(self):
+        return self.config.get('infrastructure', 'provider', fallback='')
+
+    @property
     def kubernetes_infrastructure(self):
         if self.cloud_infrastructure:
             return self.infrastructure_settings.get("type", "kubernetes") == "kubernetes"
@@ -151,6 +155,12 @@ class ClusterSpec(Config):
             for server in cluster_servers:
                 servers.append(server)
         return servers
+
+    @property
+    def clusters_private(self) -> Iterator:
+        if self.config.has_section('private_ips'):
+            for cluster_name, private_ips in self.config.items('private_ips'):
+                yield cluster_name, private_ips.split()
 
     def servers_by_role(self, role: str) -> List[str]:
         has_service = []

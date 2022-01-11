@@ -4,6 +4,9 @@ from argparse import ArgumentParser
 from multiprocessing import set_start_method
 
 import boto3
+import google.auth
+from google.cloud import compute_v1 as compute
+from google.cloud import storage
 
 from logger import logger
 from perfrunner.settings import ClusterSpec
@@ -247,8 +250,122 @@ class AzureDestroyer(Destroyer):
 
 class GCPDestroyer(Destroyer):
 
+    def __init__(self, infra_spec, options):
+        super().__init__(infra_spec, options)
+        self.project = 'couchbase-qe'
+        self.credentials, _ = google.auth.default()
+        self.storage_client = storage.Client(project=self.project, credentials=self.credentials)
+        self.instance_client = compute.InstancesClient()
+        self.network_client = compute.NetworksClient()
+        self.subnet_client = compute.SubnetworksClient()
+        self.firewall_client = compute.FirewallsClient()
+        self.zone_ops_client = compute.ZoneOperationsClient()
+        self.region_ops_client = compute.RegionOperationsClient()
+        self.global_ops_client = compute.GlobalOperationsClient()
+        with open(self.generated_cloud_config_path) as f:
+            self.deployed_infra = json.load(f)
+        self.zone = self.deployed_infra['zone']
+        self.region = self.zone.rsplit('-', 1)[0]
+
+    def delete_gce_instances(self):
+        logger.info('Deleting instances...')
+        ops = []
+        for _, instances in self.deployed_infra['vpc']['gce'].items():
+            for instance in instances.keys():
+                op = self.instance_client.delete_unary(
+                    project=self.project,
+                    zone=self.zone,
+                    instance=instance
+                )
+                ops.append(op)
+        self._wait_for_operations(ops)
+        logger.info('Instances deleted.')
+
+    def delete_subnets(self):
+        logger.info('Deleting subnetwork...')
+        op = self.subnet_client.delete_unary(
+            project=self.project,
+            region=self.region,
+            subnetwork=self.deployed_infra['vpc']['primary_subnet']['name']
+        )
+        self._wait_for_operations([op])
+        logger.info('Subnetwork deleted.')
+
+    def delete_firewalls(self):
+        logger.info('Deleting firewall rules...')
+        ops = []
+        for firewall in self.deployed_infra['vpc']['firewalls']:
+            op = self.firewall_client.delete_unary(
+                project=self.project,
+                firewall=firewall['name']
+            )
+            ops.append(op)
+        self._wait_for_operations(ops)
+        logger.info('Firewall rules deleted.')
+
+    def delete_vpc(self):
+        logger.info('Deleting VPC...')
+        op = self.network_client.delete_unary(
+            project=self.project,
+            network=self.deployed_infra['vpc']['name']
+        )
+        self._wait_for_operations([op])
+        logger.info('VPC deleted.')
+
+    def delete_cloud_storage_bucket(self):
+        if bucket_name := self.deployed_infra.get('storage_bucket', None):
+            logger.info('Deleting Cloud Storage bucket...')
+            bucket = self.storage_client.get_bucket(bucket_name)
+            try:
+                bucket.delete(force=True)
+            except ValueError:  # Cannot force bucket deletion if > 256 items in bucket
+                blobs = list(self.storage_client.list_blobs(bucket))
+                bucket.delete_blobs(blobs)
+                bucket.delete(force=True)
+            logger.info('Cloud Storage bucket deleted.')
+
+    def _wait_for_operations(self, pending_ops: list[compute.Operation]):
+        while pending_ops:
+            new_ops = []
+
+            for op in pending_ops:
+                kwargs = {'project': self.project, 'operation': op.name}
+                if op.zone:
+                    client = self.zone_ops_client
+                    kwargs['zone'] = self.zone
+                elif op.region:
+                    client = self.region_ops_client
+                    kwargs['region'] = self.region
+                else:
+                    client = self.global_ops_client
+
+                new_op = client.wait(**kwargs)
+
+                if new_op.error:
+                    raise Exception('ERROR: ', new_op.error)
+
+                if new_op.warnings:
+                    logger.warning('Warnings for operation {}: {}'
+                                   .format(new_op.id, new_op.warnings))
+
+                if new_op.status == compute.Operation.Status.DONE:
+                    logger.info('Operation {} completed successfully.'.format(new_op.id))
+                else:
+                    new_ops.append(new_op)
+
+            pending_ops = new_ops
+
     def destroy(self):
-        pass
+        logger.info("Deleting deployed infrastructure: {}"
+                    .format(self.generated_cloud_config_path))
+
+        self.delete_gce_instances()
+        self.delete_firewalls()
+        self.delete_subnets()
+        self.delete_vpc()
+        self.delete_cloud_storage_bucket()
+
+        logger.info("Destroy complete")
 
 
 def get_args():

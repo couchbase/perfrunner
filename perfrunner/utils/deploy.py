@@ -1,10 +1,16 @@
 import json
 import time
 from argparse import ArgumentParser
+from copy import deepcopy
 from multiprocessing import set_start_method
+from uuid import uuid4
 
 import boto3
+import google.auth
 import yaml
+from google.cloud import compute_v1 as compute
+from google.cloud import storage
+from google.protobuf.json_format import MessageToDict
 
 from logger import logger
 from perfrunner.helpers.misc import pretty_dict
@@ -27,6 +33,7 @@ class Deployer:
         self.infra_config = self.infra_spec.infrastructure_config()
         self.generated_cloud_config_path = self.infra_spec.generated_cloud_config_path
         self.region = options.region
+        self.zone = options.zone
 
     def deploy(self):
         raise NotImplementedError
@@ -833,8 +840,586 @@ class AzureDeployer(Deployer):
 
 class GCPDeployer(Deployer):
 
+    def __init__(self, infra_spec, options):
+        super().__init__(infra_spec, options)
+        self.desired_infra = self.gen_desired_infrastructure_config()
+        self.deployed_infra = {'zone': self.zone}
+        self.vpc_int = 0
+        self.cloud_ini = "cloud/infrastructure/cloud.ini"
+        self.project = 'couchbase-qe'
+        self.region = self.zone.rsplit('-', 1)[0]
+        self.credentials, _ = google.auth.default()
+        if hasattr(self.credentials, '_service_account_email'):
+            self.service_account = self.credentials._service_account_email
+        else:
+            raise Exception('The GCP credentials provided do not belong to a service account.')
+        self.storage_client = storage.Client(project=self.project, credentials=self.credentials)
+        self.instance_client = compute.InstancesClient()
+        self.image_client = compute.ImagesClient()
+        self.network_client = compute.NetworksClient()
+        self.subnet_client = compute.SubnetworksClient()
+        self.firewall_client = compute.FirewallsClient()
+        self.zone_ops_client = compute.ZoneOperationsClient()
+        self.region_ops_client = compute.RegionOperationsClient()
+        self.global_ops_client = compute.GlobalOperationsClient()
+        self.deployment_id = uuid4().hex
+
+    def gen_desired_infrastructure_config(self):
+        desired_infra = {'gce': {}}
+        gce = self.infra_spec.infrastructure_section('gce')
+        if 'clusters' in list(gce.keys()):
+            desired_gce_clusters = gce['clusters'].split(',')
+            for desired_gce_cluster in desired_gce_clusters:
+                gce_cluster_config = self.infra_spec.infrastructure_section(desired_gce_cluster)
+                for desired_node_group in gce_cluster_config['node_groups'].split(','):
+                    node_group_config = self.infra_spec.infrastructure_section(desired_node_group)
+                    gce_cluster_config[desired_node_group] = node_group_config
+                desired_infra['gce'][desired_gce_cluster] = gce_cluster_config
+        return desired_infra
+
+    def write_infra_file(self):
+        with open(self.generated_cloud_config_path, 'w+') as fp:
+            json.dump(self.deployed_infra, fp, indent=4, sort_keys=True, default=str)
+
+    def create_vpc(self):
+        logger.info('Creating VPC...')
+
+        vpc_name = "perf-vpc-{}".format(self.deployment_id)
+        vpc = compute.Network(
+            name=vpc_name,
+            auto_create_subnetworks=False,
+            routing_config=compute.NetworkRoutingConfig(
+                routing_mode='REGIONAL'
+            )
+        )
+
+        try:
+            op = self.network_client.insert_unary(project=self.project, network_resource=vpc)
+            self._wait_for_operations([op])
+        finally:
+            deployed = self.network_client.get(project=self.project, network=vpc_name)
+            self.deployed_infra['vpc'] = MessageToDict(deployed._pb)
+            self.write_infra_file()
+
+        logger.info('VPC created.')
+
+    def create_subnets(self):
+        logger.info('Creating subnet...')
+
+        ip_cidr_range = "10.0.0.0/16"
+        vpc_name = self.deployed_infra['vpc']['name']
+        subnet_name = "perf-subnet-{}".format(self.deployment_id)
+
+        subnet = compute.Subnetwork(
+            name=subnet_name,
+            ip_cidr_range=ip_cidr_range,
+            network="projects/{}/global/networks/{}".format(self.project, vpc_name),
+            private_ip_google_access=True
+        )
+
+        try:
+            op = self.subnet_client.insert_unary(
+                project=self.project,
+                region=self.region,
+                subnetwork_resource=subnet
+            )
+            self._wait_for_operations([op])
+        finally:
+            deployed = self.subnet_client.get(
+                project=self.project,
+                region=self.region,
+                subnetwork=subnet_name
+            )
+            self.deployed_infra['vpc']['primary_subnet'] = MessageToDict(deployed._pb)
+            self.write_infra_file()
+
+        logger.info('All subnets created.')
+
+    def create_firewall_rules(self):
+        logger.info('Creating firewall rules...')
+
+        vpc_name = self.deployed_infra['vpc']['name']
+        network = "projects/{}/global/networks/{}".format(self.project, vpc_name)
+        firewall_configs = [
+            {   # Allow all network traffic going from instances in our subnet to any other
+                # instance in our VPC, effectively allowing unrestricted network traffic between
+                # our instances
+                "name": "{}-allow-custom".format(vpc_name),
+                "network": network,
+                "direction": "INGRESS",
+                "allowed": [
+                    compute.Allowed(
+                        I_p_protocol="all"
+                    )
+                ],
+                "source_ranges": [
+                    self.deployed_infra['vpc']['primary_subnet']['ipCidrRange']
+                ]
+            },
+            {   # Allow SSH connections from any IP address (external or internal) to any instance
+                # in our VPC
+                "name": "{}-allow-ssh".format(vpc_name),
+                "network": network,
+                "direction": "INGRESS",
+                "allowed": [
+                    compute.Allowed(
+                        I_p_protocol="tcp",
+                        ports=[
+                            "22"
+                        ]
+                    )
+                ],
+                "source_ranges": [
+                    "0.0.0.0/0"
+                ]
+            },
+            {   # Allow connections from any IP address to the RabbitMQ ports of broker instances
+                "name": "{}-allow-broker".format(vpc_name),
+                "network": network,
+                "direction": "INGRESS",
+                "target_tags": [
+                    "broker"
+                ],
+                "allowed": [
+                    compute.Allowed(
+                        I_p_protocol="tcp",
+                        ports=[
+                            "5672"
+                        ]
+                    )
+                ],
+                "source_ranges": [
+                    "0.0.0.0/0"
+                ]
+            },
+            {
+                # Allow connections from any IP address to the couchbase ports
+                # (for stats collectors)
+                "name": "{}-allow-couchbase".format(vpc_name),
+                "network": network,
+                "direction": "INGRESS",
+                "target_tags": [
+                    "server"
+                ],
+                "allowed": [
+                    compute.Allowed(
+                        I_p_protocol="tcp",
+                        ports=[
+                            "8091-8096",
+                            "18091-18096",
+                            "11210"
+                        ]
+                    )
+                ],
+                "source_ranges": [
+                    "0.0.0.0/0"
+                ]
+            }
+        ]
+
+        try:
+            ops = []
+            for config in firewall_configs:
+                firewall = compute.Firewall(**config)
+                op = self.firewall_client.insert_unary(
+                    project=self.project,
+                    firewall_resource=firewall
+                )
+                ops.append(op)
+
+            self._wait_for_operations(ops)
+        finally:
+            request = compute.ListFirewallsRequest(
+                project=self.project,
+                filter='network = "https://www.googleapis.com/compute/v1/{}"'.format(network)
+            )
+            deployed = self.firewall_client.list(request=request)
+            deployed_dicts = [MessageToDict(firewall._pb) for firewall in deployed]
+            self.deployed_infra['vpc']['firewalls'] = deployed_dicts
+            self.write_infra_file()
+
+        logger.info('All firewall rules created.')
+
+    def create_gce_instances(self):
+        logger.info('Creating instances...')
+
+        self.deployed_infra['vpc']['gce'] = {}
+        if len(list(self.desired_infra['gce'].keys())) > 0:
+            for gce_cluster_name, gce_cluster_config in self.desired_infra['gce'].items():
+                for node_group in gce_cluster_config['node_groups'].split(','):
+                    node_group_spec = gce_cluster_config[node_group]
+                    num_nodes = int(node_group_spec['instance_capacity'])
+                    resource_path = 'gce.{}.{}'.format(gce_cluster_name, node_group)
+
+                    disk_params = []
+                    volume_size = int(node_group_spec.get('volume_size', 0))
+                    if volume_size:
+                        volume_type = node_group_spec.get('volume_type', 'pd-balanced')
+                        if volume_type == 'pd-extreme':
+                            iops = int(node_group_spec.get('iops', 0))
+                        else:
+                            iops = 0
+
+                        params = {
+                            'disk_size_gb': volume_size,
+                            'disk_type': 'zones/{}/diskTypes/{}'.format(self.zone, volume_type),
+                        }
+
+                        if iops:
+                            params['provisioned_iops'] = iops
+
+                        disk_params.append(params)
+
+                    # A template instance config
+                    instance_template = {
+                        'name': None,
+                        'project': self.project,
+                        'zone': self.zone,
+                        'machine_type': node_group_spec['instance_type'],
+                        'boot_disk_image': None,
+                        'subnet': self.deployed_infra['vpc']['primary_subnet']['name'],
+                        'network_tier': 'PREMIUM',
+                        'labels': {
+                            'use': 'cloud_perf_testing',
+                            'role': node_group,
+                            'node_roles': None
+                        },
+                        'tags': [],
+                        'extra_disk_params': disk_params
+                    }
+
+                    # List that will contain configs for all instances in the current node group
+                    instances = []
+
+                    # Find all the servers in the current node group,
+                    # and add them to the instance list
+                    for k, v in self.clusters.items():
+                        if 'couchbase' in k:
+                            i = 0
+                            for host in v.split():
+                                host_resource, services = host.split(":")
+                                if resource_path in host_resource:
+                                    instance_conf = deepcopy(instance_template)
+                                    instance_conf['name'] = "perf-{}-{}-{}".format(
+                                        k, (i := i+1), self.deployment_id
+                                    )
+                                    instance_conf['labels']['node_roles'] = k
+                                    instance_conf['tags'] = ['server'] + services.split(',')
+                                    instance_conf['boot_disk_image'] = 'perftest-server-disk-image'
+                                    instances.append(instance_conf)
+
+                    # Find all the clients in the current node group,
+                    # and add them to the instance list
+                    for k, v in self.clients.items():
+                        if 'workers' in k:
+                            i = 0
+                            for host in v.split():
+                                if resource_path in host:
+                                    instance_conf = deepcopy(instance_template)
+                                    instance_conf['name'] = "perf-{}-{}-{}".format(
+                                        k, (i := i+1), self.deployment_id
+                                    )
+                                    instance_conf['labels']['node_roles'] = k
+                                    instance_conf['tags'] = ['client']
+                                    instance_conf['boot_disk_image'] = 'perftest-client-disk-image'
+                                    instances.append(instance_conf)
+
+                    # Find all the brokers in the current node group,
+                    # and add them to the instance list
+                    for k, v in self.utilities.items():
+                        if 'brokers' in k:
+                            i = 0
+                            for host in v.split():
+                                if resource_path in host:
+                                    instance_conf = deepcopy(instance_template)
+                                    instance_conf['name'] = "perf-{}-{}-{}".format(
+                                        k, (i := i+1), self.deployment_id
+                                    )
+                                    instance_conf['labels']['node_roles'] = k
+                                    instance_conf['tags'] = ['broker']
+                                    instance_conf['boot_disk_image'] = 'perftest-broker-disk-image'
+                                    instances.append(instance_conf)
+
+                    if num_nodes != len(instances):
+                        raise Exception('Node number mismatch in {}. '
+                                        'Found {} nodes but instance capacity is {}.'
+                                        .format(node_group, len(instances), num_nodes))
+
+                    logger.info('Launching instances for {}...'.format(node_group))
+
+                    try:
+                        ops = []
+                        for instance_conf in instances:
+                            instance = self._configure_instance(**instance_conf)
+                            op = self.instance_client.insert_unary(
+                                project=self.project,
+                                zone=self.zone,
+                                instance_resource=instance
+                            )
+                            ops.append(op)
+
+                        self._wait_for_operations(ops)
+                    finally:
+                        instance_names = [conf['name'] for conf in instances]
+                        deployed = self._get_deployed_gce_instances(instance_names)
+
+                        gce_group = self.deployed_infra['vpc']['gce'].get(node_group, {})
+                        for instance in deployed:
+                            network_interface = instance.network_interfaces[0]
+                            gce_group[instance.name] = {
+                                "private_ip": network_interface.network_i_p,
+                                "public_ip": network_interface.access_configs[0].nat_i_p
+                            }
+
+                        self.deployed_infra['vpc']['gce'][node_group] = gce_group
+                        self.write_infra_file()
+
+                    logger.info('All instances created for {}.'.format(node_group))
+
+        logger.info('All instances created.')
+
+    def _configure_instance(self, name: str, project: str, zone: str, machine_type: str,
+                            boot_disk_image: str, subnet: str, network_tier: str, labels: dict,
+                            tags: list[str], extra_disk_params: list[dict] = []):
+        disks = []
+
+        # Configure the boot disk from the given "disk image" (equivalent to AWS AMI)
+        custom_image = self.image_client.get(project=project, image=boot_disk_image)
+        boot_init_params = compute.AttachedDiskInitializeParams(
+            source_image="projects/{}/global/images/{}".format(project, boot_disk_image),
+            disk_size_gb=custom_image.disk_size_gb,
+            disk_type="zones/{}/diskTypes/pd-balanced".format(zone)
+        )
+        boot_disk = compute.AttachedDisk(
+            initialize_params=boot_init_params,
+            auto_delete=True,
+            boot=True
+        )
+
+        disks.append(boot_disk)
+
+        # Configure any extra disks
+        for params in extra_disk_params:
+            init_params = compute.AttachedDiskInitializeParams(**params)
+            disk = compute.AttachedDisk(
+                initialize_params=init_params,
+                auto_delete=True,
+                boot=False
+            )
+            disks.append(disk)
+
+        # This is the account the instance will authenticate with
+        service_account = compute.ServiceAccount(
+            email=self.service_account,
+            scopes=["https://www.googleapis.com/auth/cloud-platform"]
+        )
+
+        # Configure the network interface - the instance will belong to the subnet we created
+        access_config = compute.AccessConfig(
+            network_tier=network_tier
+        )
+        network_interface = compute.NetworkInterface(
+            access_configs=[access_config],
+            subnetwork="projects/{}/regions/{}/subnetworks/{}".format(
+                            project, zone.rsplit('-', 1)[0], subnet
+                        )
+        )
+
+        # Assemble the full instance configuration
+        instance = compute.Instance(
+            name=name,
+            machine_type="projects/{}/zones/{}/machineTypes/{}".format(
+                project, zone, machine_type
+            ),
+            disks=disks,
+            service_accounts=[service_account],
+            network_interfaces=[network_interface],
+            labels=labels,
+            tags=compute.Tags(items=tags)
+        )
+
+        return instance
+
+    def create_storage_bucket(self):
+        bucket_name = self.infra_spec.backup
+        prefix = 'gs://'
+        if bucket_name and bucket_name.startswith(prefix):
+            logger.info('Creating Cloud Storage bucket...')
+
+            bucket_name = "{}-{}".format(bucket_name.split(prefix)[1], self.deployment_id)
+
+            bucket = self.storage_client.bucket(bucket_name)
+            bucket.storage_class = 'STANDARD'
+            bucket.iam_configuration.uniform_bucket_level_access_enabled = True
+
+            self.storage_client.create_bucket(bucket, location=self.region)
+            logger.info('Cloud Storage bucket created.')
+            self.deployed_infra['storage_bucket'] = bucket_name
+            self.write_infra_file()
+
+    def _wait_for_operations(self, pending_ops: list[compute.Operation]):
+        while pending_ops:
+            new_ops = []
+
+            for op in pending_ops:
+                kwargs = {'project': self.project, 'operation': op.name}
+                if op.zone:
+                    client = self.zone_ops_client
+                    kwargs['zone'] = self.zone
+                elif op.region:
+                    client = self.region_ops_client
+                    kwargs['region'] = self.region
+                else:
+                    client = self.global_ops_client
+
+                new_op = client.wait(**kwargs)
+
+                if new_op.error:
+                    raise Exception('ERROR: ', new_op.error)
+
+                if new_op.warnings:
+                    logger.warning('Warnings for operation {}: {}'
+                                   .format(new_op.id, new_op.warnings))
+
+                if new_op.status == compute.Operation.Status.DONE:
+                    logger.info('Operation {} completed successfully.'.format(new_op.id))
+                else:
+                    new_ops.append(new_op)
+
+            pending_ops = new_ops
+
+    def _get_deployed_gce_instances(self, instance_names: list[str]):
+        instance_filter = ' OR '.join('(name = {})'.format(name) for name in instance_names)
+        request = compute.ListInstancesRequest(
+            project=self.project,
+            zone=self.zone,
+            filter=instance_filter
+        )
+        instance_list = self.instance_client.list(request=request)
+        return instance_list
+
+    def update_infrastructure_spec(self):
+        with open(self.generated_cloud_config_path) as f:
+            self.deployed_infra = json.load(f)
+
+        clusters = self.infra_spec.infrastructure_clusters
+        clients = self.infra_spec.infrastructure_clients
+        utilities = self.infra_spec.infrastructure_utilities
+        backup = self.infra_spec.backup
+
+        # Build up dictionary of node identifiers and their public and private IP addresses
+        node_group_ips = {}
+        for node_group_name, gce_dict in self.deployed_infra['vpc']['gce'].items():
+            ips = {}
+            for instance, instance_ips in gce_dict.items():
+                node_num = instance.split('-')[2]
+                ips[node_num] = {
+                    'public': instance_ips['public_ip'],
+                    'private': instance_ips['private_ip']
+                }
+            node_group_ips[node_group_name] = ips
+
+        internal_ip_section = "\n[private_ips]\n"
+
+        # Iterate through server clusters and replace node identifiers with IPs in the infra spec
+        server_list = ""
+        for cluster, hosts in clusters.items():
+            public_address_replace_list = []
+            private_address_replace_list = []
+            internal_ip_section += "{} =\n".format(cluster)
+            for host in hosts.split():
+                address = host.split(":")[0]
+                node_group, node_num = address.split(".")[2:4]
+                public_ip = node_group_ips[node_group][node_num]['public']
+                private_ip = node_group_ips[node_group][node_num]['private']
+                public_address_replace_list.append((address, public_ip))
+                private_address_replace_list.append((address, private_ip))
+                server_list += "{}\n".format(public_ip)
+                internal_ip_section += "        {}\n".format(private_ip)
+
+            print("cluster: {}, hosts: {}".format(cluster, str(public_address_replace_list)))
+
+            # Perform the IP replacement in the infra spec
+            with open(self.cluster_path) as f:
+                s = f.read()
+            with open(self.cluster_path, 'w') as f:
+                for replace_pair in public_address_replace_list:
+                    s = s.replace(replace_pair[0], replace_pair[1])
+                f.write(s)
+
+        # Append the internal IP section to the infra spec
+        with open(self.cluster_path, 'a') as f:
+            f.write(internal_ip_section)
+
+        # Add all of the servers to the cloud.ini file
+        with open(self.cloud_ini) as f:
+            s = f.read()
+        with open(self.cloud_ini, 'w') as f:
+            s = s.replace("server_list", server_list)
+            f.write(s)
+
+        # Iterate through client clusters and replace node identifiers with IPs in the infra spec
+        worker_list = ""
+        for cluster, hosts in clients.items():
+            address_replace_list = []
+            for host in hosts.split():
+                node_group, node_num = host.split(".")[2:4]
+                public_ip = node_group_ips[node_group][node_num]['public']
+                address_replace_list.append((host, public_ip))
+                worker_list += "{}\n".format(public_ip)
+            worker_list = worker_list.rstrip()
+
+            print("clients: {}, hosts: {}".format(cluster, str(address_replace_list)))
+
+            with open(self.cluster_path) as f:
+                s = f.read()
+            with open(self.cluster_path, 'w') as f:
+                for replace_pair in address_replace_list:
+                    s = s.replace(replace_pair[0], replace_pair[1])
+                f.write(s)
+
+        # Add all of the clients to the cloud.ini file
+        with open(self.cloud_ini) as f:
+            s = f.read()
+        with open(self.cloud_ini, 'w') as f:
+            s = s.replace("worker_list", worker_list)
+            f.write(s)
+
+        # Iterate through broker clusters and replace node identifiers with IPs in the infra spec
+        for cluster, hosts in utilities.items():
+            address_replace_list = []
+            for host in hosts.split():
+                node_group, node_num = host.split(".")[2:4]
+                address_replace_list.append(
+                    (host, node_group_ips[node_group][node_num]['public'])
+                )
+
+            print("utilities: {}, hosts: {}".format(cluster, str(address_replace_list)))
+
+            with open(self.cluster_path) as f:
+                s = f.read()
+            with open(self.cluster_path, 'w') as f:
+                for replace_pair in address_replace_list:
+                    s = s.replace(replace_pair[0], replace_pair[1])
+                f.write(s)
+
+        # Replace backup storage bucket name in infra spec (if exists)
+        with open(self.cluster_path) as f:
+            s = f.read()
+        with open(self.cluster_path, 'w') as f:
+            if storage_bucket := self.deployed_infra.get('storage_bucket', None):
+                s = s.replace(backup, 'gs://{}'.format(storage_bucket))
+            f.write(s)
+
     def deploy(self):
-        pass
+        logger.info("Deploying infrastructure...")
+        self.create_vpc()
+        self.create_subnets()
+        self.create_firewall_rules()
+        self.create_gce_instances()
+        self.create_storage_bucket()
+        self.update_infrastructure_spec()
+        logger.info("Infrastructure deployment complete.")
 
 
 def get_args():
@@ -849,7 +1434,19 @@ def get_args():
     parser.add_argument('-r', '--region',
                         choices=['us-east-1', 'us-west-2'],
                         default='us-east-1',
-                        help='the cloud region')
+                        help='the cloud region (AWS)')
+    parser.add_argument('-z', '--zone',
+                        choices=[
+                            'us-central1-a',
+                            'us-central1-b',
+                            'us-central1-c'
+                            'us-central1-f',
+                            'us-west1-a',
+                            'us-west1-b',
+                            'us-west1-c'
+                            ],
+                        default='us-west1-b',
+                        help='the cloud zone (GCP)')
 
     return parser.parse_args()
 

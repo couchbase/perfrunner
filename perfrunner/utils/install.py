@@ -514,9 +514,14 @@ class CloudInstaller(CouchbaseInstaller):
             resp = requests.get(self.url)
             fh.write(resp.content)
 
+        logger.info('Uploading {} to servers'.format(package_name))
         uploads = []
         user, password = self.cluster_spec.ssh_credentials
-        for host in self.cluster_spec.servers:
+        hosts = self.cluster_spec.servers
+        if self.options.remote_copy:
+            hosts += self.cluster_spec.workers
+        for host in hosts:
+            logger.info('Uploading {} to {}'.format(package_name, host))
             args = (host, user, password, package_name)
 
             def upload_couchbase(to_host, to_user, to_password, package):

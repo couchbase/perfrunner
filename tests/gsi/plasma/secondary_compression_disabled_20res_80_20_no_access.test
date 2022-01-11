@@ -6,7 +6,7 @@ title = 1 bucket x 250M, single 2i index, no backgroud mutation, 20%% Resident, 
 component = secondary
 category = thr
 sub_category = Compression
-orderby = a12
+orderby = b4
 
 [stats]
 server_processes = projector

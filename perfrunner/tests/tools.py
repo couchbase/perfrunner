@@ -63,8 +63,8 @@ class BackupRestoreTest(PerfTest):
         local.cbbackupmgr_list(cluster_spec=self.cluster_spec,
                                snapshots=snapshots)
 
-    def collectinfo(self):
-        local.cbbackupmgr_collectinfo(cluster_spec=self.cluster_spec)
+    def collectlogs(self):
+        local.cbbackupmgr_collectlogs(cluster_spec=self.cluster_spec)
 
     def get_tool_versions(self):
         local.cbbackupmgr_version()
@@ -128,7 +128,7 @@ class BackupTest(BackupRestoreTest):
         try:
             time_elapsed = self.backup()
         finally:
-            self.collectinfo()
+            self.collectlogs()
 
         self.report_kpi(time_elapsed)
 
@@ -152,7 +152,7 @@ class BackupXATTRTest(BackupTest):
         try:
             time_elapsed = self.backup()
         finally:
-            self.collectinfo()
+            self.collectlogs()
 
         self.report_kpi(time_elapsed)
 
@@ -222,7 +222,7 @@ class BackupTestWithCompact(BackupRestoreTest):
             # Size differences can be a little small, so go for more precision here
             size_diff = round(initial_size - compacted_size, 2)
         finally:
-            self.collectinfo()
+            self.collectlogs()
 
         self.report_kpi(compact_time, size_diff)
 
@@ -239,7 +239,7 @@ class BackupUnderLoadTest(BackupTest):
         try:
             time_elapsed = self.backup()
         finally:
-            self.collectinfo()
+            self.collectlogs()
 
         self.report_kpi(time_elapsed)
 
@@ -280,48 +280,43 @@ class BackupIncrementalTest(BackupRestoreTest):
             )
 
     def run(self):
+        self.extract_tools()
+
+        if self.test_config.backup_settings.use_tls or self.test_config.restore_settings.use_tls:
+            self.download_certificate()
+
+        self.get_tool_versions()
+
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+        self.compact_bucket(wait=True)
+        self.backup()
+
+        initial_backup_size = local.calc_backup_size(self.cluster_spec, rounded=False)
+
+        self.access()
+        self.wait_for_persistence()
+
+        # Define a secondary load. For this we borrow the 'creates' field,
+        # since load doesn't normally use this anyway.
+        inc_load = self.test_config.load_settings.additional_items
+        workers = self.test_config.load_settings.workers
+        size = self.test_config.load_settings.size
+
+        # New key prefix needed to create incremental dataset.
+        self.load(
+            settings=LoadSettings({"items": inc_load, "workers": workers, "size": size}),
+            target_iterator=TargetIterator(self.cluster_spec, self.test_config, prefix='inc-')
+        )
+        self.wait_for_persistence()
+
         try:
-            self.extract_tools()
-
-            if self.test_config.backup_settings.use_tls or \
-               self.test_config.restore_settings.use_tls:
-                self.download_certificate()
-
-            self.get_tool_versions()
-
-            self.load()
-            self.wait_for_persistence()
-            self.check_num_items()
-            self.compact_bucket(wait=True)
-            self.backup()
-
-            initial_backup_size = local.calc_backup_size(self.cluster_spec,
-                                                         rounded=False)
-
-            self.access()
-            self.wait_for_persistence()
-
-            # Define a secondary load. For this we borrow the 'creates' field,
-            # since load doesn't normally use this anyway.
-            inc_load = self.test_config.load_settings.additional_items
-            workers = self.test_config.load_settings.workers
-            size = self.test_config.load_settings.size
-
-            # New key prefix needed to create incremental dataset.
-            self.load(settings=LoadSettings({"items": inc_load,
-                                             "workers": workers,
-                                             "size": size}),
-                      target_iterator=TargetIterator(self.cluster_spec,
-                                                     self.test_config,
-                                                     prefix='inc-'))
-            self.wait_for_persistence()
-
             inc_backup_time = self.backup_with_stats(mode=True)
-            total_backup_size = local.calc_backup_size(self.cluster_spec,
-                                                       rounded=False)
+            total_backup_size = local.calc_backup_size(self.cluster_spec, rounded=False)
             inc_backup_size = round(total_backup_size - initial_backup_size, 2)
         finally:
-            self.collectinfo()
+            self.collectlogs()
 
         self._report_kpi(inc_backup_time, inc_backup_size)
 
@@ -370,6 +365,7 @@ class MergeTest(BackupRestoreTest):
         self.load()
         self.wait_for_persistence()
         self.check_num_items()
+
         try:
             self.backup()  # 1st snapshot
 
@@ -380,7 +376,7 @@ class MergeTest(BackupRestoreTest):
 
             time_elapsed = self.merge()
         finally:
-            self.collectinfo()
+            self.collectlogs()
 
         self.report_kpi(time_elapsed)
 
@@ -411,14 +407,14 @@ class RestoreTest(BackupRestoreTest):
 
     def run(self):
         super().run()
-        self.backup()
 
+        self.backup()
         self.flush_buckets()
 
         try:
             time_elapsed = self.restore()
         finally:
-            self.collectinfo()
+            self.collectlogs()
 
         self.report_kpi(time_elapsed)
 
@@ -444,7 +440,7 @@ class RestoreXATTRTest(RestoreTest):
         try:
             time_elapsed = self.restore()
         finally:
-            self.collectinfo()
+            self.collectlogs()
 
         self.report_kpi(time_elapsed)
 
@@ -477,7 +473,7 @@ class ListTest(BackupRestoreTest):
             local.drop_caches()
             list_time = self.backup_list()
         finally:
-            self.collectinfo()
+            self.collectlogs()
 
         self.report_kpi(list_time)
 
@@ -558,9 +554,7 @@ class ImportTest(ExportImportTest):
         super().run()
 
         self.export()
-
         self.flush_buckets()
-
         time_elapsed = self.import_data()
 
         self.report_kpi(time_elapsed)
@@ -576,27 +570,20 @@ class ImportSampleDataTest(ImportTest):
     def run(self):
         self.extract_tools()
         self.get_tool_versions()
-
         time_elapsed = self.import_data()
 
         self.report_kpi(time_elapsed)
 
 
-class CloudBackupTest(BackupRestoreTest):
-
+class CloudBackupRestoreTest(BackupRestoreTest):
     COLLECTORS = {'iostat': False}
 
-    @with_stats
-    @timeit
-    def backup(self, mode=None):
-        credential = local.read_aws_credential(self.test_config.backup_settings.aws_credential_path)
-        self.remote.create_aws_credential(credential)
+    def backup(self, master_node=None):
         self.remote.backup(
-            master_node=self.master_node,
+            master_node=master_node if master_node else self.master_node,
             cluster_spec=self.cluster_spec,
             threads=self.test_config.backup_settings.threads,
             worker_home=self.worker_manager.WORKER_HOME,
-            mode=mode,
             compression=self.test_config.backup_settings.compression,
             storage_type=self.test_config.backup_settings.storage_type,
             sink_type=self.test_config.backup_settings.sink_type,
@@ -605,6 +592,47 @@ class CloudBackupTest(BackupRestoreTest):
             obj_region=self.test_config.backup_settings.obj_region,
             use_tls=self.test_config.backup_settings.use_tls
         )
+
+    def restore(self, master_node=None):
+        self.remote.client_drop_caches()
+
+        self.remote.restore(cluster_spec=self.cluster_spec,
+                            master_node=master_node if master_node else self.master_node,
+                            threads=self.test_config.restore_settings.threads,
+                            worker_home=self.worker_manager.WORKER_HOME,
+                            obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
+                            obj_region=self.test_config.backup_settings.obj_region,
+                            use_tls=self.test_config.restore_settings.use_tls)
+
+    def collectlogs(self):
+        staging_dir = './stage'
+        os.mkdir(staging_dir)
+        local.cbbackupmgr_collectlogs(
+            cluster_spec=self.cluster_spec,
+            obj_staging_dir=staging_dir,
+            obj_region=self.test_config.backup_settings.obj_region
+        )
+
+    def setup_run(self):
+        self.remote.extract_cb(filename='couchbase.rpm',
+                               worker_home=self.worker_manager.WORKER_HOME)
+
+        self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
+
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+
+        if self.test_config.compaction.bucket_compaction == 'true':
+            self.compact_bucket(wait=True)
+
+
+class CloudBackupTest(CloudBackupRestoreTest):
+
+    @with_stats
+    @timeit
+    def backup(self, master_node=None):
+        super().backup(master_node=master_node)
 
     def _report_kpi(self, time_elapsed):
         edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
@@ -624,32 +652,21 @@ class CloudBackupTest(BackupRestoreTest):
         )
 
     def run(self):
-        self.remote.extract_cb(filename='couchbase.rpm',
-                               worker_home=self.worker_manager.WORKER_HOME)
-
-        self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
-
-        self.load()
-        self.wait_for_persistence()
-        self.check_num_items()
-
-        if self.test_config.compaction.bucket_compaction == 'true':
-            self.compact_bucket(wait=True)
+        self.setup_run()
 
         try:
             time_elapsed = self.backup()
         finally:
             self.extract_tools()
-            self.collectinfo()
+            self.collectlogs()
 
         self.report_kpi(time_elapsed)
 
 
-class CloudRestoreTest(BackupRestoreTest):
-
-    COLLECTORS = {'iostat': False}
-
-    def backup(self, mode=None):
+class AWSBackupTest(CloudBackupTest):
+    @with_stats
+    @timeit
+    def backup(self):
         credential = local.read_aws_credential(self.test_config.backup_settings.aws_credential_path)
         self.remote.create_aws_credential(credential)
         self.remote.backup(
@@ -657,7 +674,6 @@ class CloudRestoreTest(BackupRestoreTest):
             cluster_spec=self.cluster_spec,
             threads=self.test_config.backup_settings.threads,
             worker_home=self.worker_manager.WORKER_HOME,
-            mode=mode,
             compression=self.test_config.backup_settings.compression,
             storage_type=self.test_config.backup_settings.storage_type,
             sink_type=self.test_config.backup_settings.sink_type,
@@ -667,18 +683,31 @@ class CloudRestoreTest(BackupRestoreTest):
             use_tls=self.test_config.backup_settings.use_tls
         )
 
+
+class GCPBackupTest(CloudBackupTest):
+    ALL_HOSTNAMES = True
+
+    def run(self):
+        self.setup_run()
+
+        internal_ips = dict(self.cluster_spec.clusters_private)
+        master_node = list(internal_ips.values())[0][0]
+
+        try:
+            time_elapsed = self.backup(master_node=master_node)
+        finally:
+            self.extract_tools()
+            self.collectlogs()
+
+        self.report_kpi(time_elapsed)
+
+
+class CloudRestoreTest(CloudBackupRestoreTest):
+
     @with_stats
     @timeit
-    def restore(self):
-        self.remote.client_drop_caches()
-
-        self.remote.restore(cluster_spec=self.cluster_spec,
-                            master_node=self.master_node,
-                            threads=self.test_config.restore_settings.threads,
-                            worker_home=self.worker_manager.WORKER_HOME,
-                            obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
-                            obj_region=self.test_config.backup_settings.obj_region,
-                            use_tls=self.test_config.restore_settings.use_tls)
+    def restore(self, master_node=None):
+        super().restore(master_node=master_node)
 
     def _report_kpi(self, time_elapsed):
         edition = self.rest.is_community(self.master_node) and 'CE' or 'EE'
@@ -698,26 +727,42 @@ class CloudRestoreTest(BackupRestoreTest):
         )
 
     def run(self):
-        self.remote.extract_cb(filename='couchbase.rpm',
-                               worker_home=self.worker_manager.WORKER_HOME)
-
-        self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
-
-        self.load()
-        self.wait_for_persistence()
-        self.check_num_items()
-
-        if self.test_config.compaction.bucket_compaction == 'true':
-            self.compact_bucket(wait=True)
-
-        self.backup()
-
-        self.flush_buckets()
+        self.setup_run()
 
         try:
+            self.backup()
+            self.flush_buckets()
             time_elapsed = self.restore()
         finally:
             self.extract_tools()
-            self.collectinfo()
+            self.collectlogs()
+
+        self.report_kpi(time_elapsed)
+
+
+class AWSRestoreTest(CloudRestoreTest):
+
+    def backup(self):
+        credential = local.read_aws_credential(self.test_config.backup_settings.aws_credential_path)
+        self.remote.create_aws_credential(credential)
+        super().backup()
+
+
+class GCPRestoreTest(CloudRestoreTest):
+    ALL_HOSTNAMES = True
+
+    def run(self):
+        self.setup_run()
+
+        internal_ips = dict(self.cluster_spec.clusters_private)
+        master_node = list(internal_ips.values())[0][0]
+
+        try:
+            self.backup(master_node=master_node)
+            self.flush_buckets()
+            time_elapsed = self.restore(master_node=master_node)
+        finally:
+            self.extract_tools()
+            self.collectlogs()
 
         self.report_kpi(time_elapsed)

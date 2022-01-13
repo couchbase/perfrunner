@@ -711,19 +711,17 @@ class RemoteLinux(Remote):
         return round(backup_size, 2) if rounded else backup_size
 
     @master_client
-    def backup(self, master_node: str, cluster_spec: ClusterSpec, threads: int,
-               worker_home: str, mode: str = None, compression: bool = False,
-               storage_type: str = None, sink_type: str = None,
-               shards: int = None, obj_staging_dir: str = None,
-               obj_region: str = None, use_tls: bool = False):
+    def backup(self, master_node: str, cluster_spec: ClusterSpec, threads: int, worker_home: str,
+               compression: bool = False, storage_type: str = None, sink_type: str = None,
+               shards: int = None, obj_staging_dir: str = None, obj_region: str = None,
+               use_tls: bool = False):
         logger.info('Creating a new backup: {}'.format(cluster_spec.backup))
 
-        self.cbbackupmgr_config(cluster_spec, worker_home, obj_staging_dir,
-                                obj_region)
+        self.cbbackupmgr_config(cluster_spec, worker_home, obj_staging_dir, obj_region)
 
-        self.cbbackupmgr_backup(master_node, cluster_spec, threads, mode,
-                                compression, storage_type, sink_type, shards,
-                                worker_home, obj_staging_dir, obj_region, use_tls)
+        self.cbbackupmgr_backup(master_node, cluster_spec, threads, compression, storage_type,
+                                sink_type, shards, worker_home, obj_staging_dir, obj_region,
+                                use_tls)
 
     @master_client
     def cleanup(self, backup_dir: str):
@@ -764,11 +762,10 @@ class RemoteLinux(Remote):
             run(cmd)
 
     @master_client
-    def cbbackupmgr_backup(self, master_node: str, cluster_spec: ClusterSpec,
-                           threads: int, mode: str, compression: bool,
-                           storage_type: str, sink_type: str, shards: int,
-                           worker_home: str, obj_staging_dir: str = None,
-                           obj_region: str = None, use_tls: bool = False):
+    def cbbackupmgr_backup(self, master_node: str, cluster_spec: ClusterSpec, threads: int,
+                           compression: bool, storage_type: str, sink_type: str, shards: int,
+                           worker_home: str, obj_staging_dir: str = None, obj_region: str = None,
+                           use_tls: bool = False):
         with cd(worker_home), cd('perfrunner'):
             flags = ['--archive {}'.format(cluster_spec.backup),
                      '--repo default',
@@ -823,7 +820,9 @@ class RemoteLinux(Remote):
                      '--threads {}'.format(threads) if threads else None,
                      '--obj-region {}'.format(obj_region) if obj_region else None,
                      '--obj-staging-dir {}'.format(obj_staging_dir) if obj_staging_dir else None,
-                     '--map-data {}'.format(map_data) if map_data else None]
+                     '--map-data {}'.format(map_data) if map_data else None,
+                     '--no-progress-bar']
+
             cmd = './opt/couchbase/bin/cbbackupmgr restore --force-updates {}'.format(
                 ' '.join(filter(None, flags)))
 

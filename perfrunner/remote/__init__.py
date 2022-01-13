@@ -147,7 +147,7 @@ class Remote:
 
     @master_client
     def extract_cb(self, filename: str, worker_home: str):
-        logger.info('extra couchbase.rpm')
+        logger.info('Extracting couchbase.rpm')
         with cd(worker_home), cd('perfrunner'):
             run('rpm2cpio ./{} | cpio -idm'.format(filename))
 

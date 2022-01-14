@@ -624,7 +624,7 @@ class CloudBackupTest(BackupRestoreTest):
         self.remote.extract_cb(filename='couchbase.rpm',
                                worker_home=self.worker_manager.WORKER_HOME)
 
-        self.remote.cbbackupmgr_version()
+        self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
 
         self.load()
         self.wait_for_persistence()
@@ -694,7 +694,7 @@ class CloudRestoreTest(BackupRestoreTest):
         self.remote.extract_cb(filename='couchbase.rpm',
                                worker_home=self.worker_manager.WORKER_HOME)
 
-        self.remote.cbbackupmgr_version()
+        self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
 
         self.load()
         self.wait_for_persistence()

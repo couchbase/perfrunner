@@ -30,5 +30,9 @@
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_compression_disabled_10res_100_20_no_access.test"},
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_compression_disabled_20res_80_20.test"},
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_compression_disabled_20res_80_20_no_access.test"}
+    ],
+    "Magma1": [
+        {"job": "rhea-5node1", "cluster": "rhea_5node1_gsi.spec", "test_config": "hidd/secondary_1B_1indexer_compressed_plasma.test"},
+        {"job": "rhea-5node1", "cluster": "rhea_5node1_gsi.spec", "test_config": "hidd/secondary_scan1B_1indexer_compressed_plasma_10kops.test"}
     ]
 }

@@ -890,3 +890,69 @@ class CH2Test(PerfTest):
         self.run_ch2()
         if self.test_config.ch2_settings.workload != 'ch2_analytics':
             self.report_kpi()
+
+
+class CH2CloudTest(CH2Test):
+
+    def restore(self):
+        credential = local.read_aws_credential(self.test_config.backup_settings.aws_credential_path)
+        self.remote.create_aws_credential(credential)
+        self.remote.client_drop_caches()
+
+        self.remote.restore(cluster_spec=self.cluster_spec,
+                            master_node=self.master_node,
+                            threads=self.test_config.restore_settings.threads,
+                            worker_home=self.worker_manager.WORKER_HOME,
+                            archive=self.test_config.restore_settings.backup_storage,
+                            repo=self.test_config.restore_settings.backup_repo,
+                            obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
+                            obj_region=self.test_config.backup_settings.obj_region,
+                            use_tls=self.test_config.restore_settings.use_tls,
+                            map_data=self.test_config.restore_settings.map_data)
+
+    @with_stats
+    def run_ch2(self):
+        query_url = self.query_nodes[0] + ":8093"
+        analytics_url = self.analytics_nodes[0] + ":8095"
+        query_nodes_port = []
+        for node in self.query_nodes:
+            query_nodes_port.append(node + ":8093")
+        multi_query_url = ",".join(query_nodes_port)
+
+        logger.info("running {}".format(self.test_config.ch2_settings.workload))
+        self.remote.ch2_run_task(
+            cluster_spec=self.cluster_spec,
+            worker_home=self.worker_manager.WORKER_HOME,
+            warehouses=self.test_config.ch2_settings.warehouses,
+            aclients=self.test_config.ch2_settings.aclients,
+            tclients=self.test_config.ch2_settings.tclients,
+            duration=self.test_config.ch2_settings.duration,
+            iterations=self.test_config.ch2_settings.iterations,
+            warmup_iterations=self.test_config.ch2_settings.warmup_iterations,
+            warmup_duration=self.test_config.ch2_settings.warmup_duration,
+            query_url=query_url,
+            multi_query_url=multi_query_url,
+            analytics_url=analytics_url,
+            log_file=self.test_config.ch2_settings.workload
+        )
+
+    def run(self):
+        self.remote.extract_cb(filename='couchbase.rpm',
+                               worker_home=self.worker_manager.WORKER_HOME)
+        self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
+
+        self.restore()
+        self.wait_for_persistence()
+        self.restart()
+        self.sync()
+        self.create_indexes()
+
+        self.remote.init_ch2(repo=self.test_config.ch2_settings.repo,
+                             branch=self.test_config.ch2_settings.branch,
+                             worker_home=self.worker_manager.WORKER_HOME)
+
+        self.run_ch2()
+        self.remote.get_ch2_logfile(worker_home=self.worker_manager.WORKER_HOME,
+                                    logfile=self.test_config.ch2_settings.workload)
+        if self.test_config.ch2_settings.workload != 'ch2_analytics':
+            self.report_kpi()

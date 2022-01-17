@@ -524,7 +524,7 @@ class AWSDeployer(Deployer):
                                 ami = 'ami-09416c5c736392e2c'
                                 block_device = '/dev/xvda'
                             else:
-                                ami = 'ami-0c6f86d5c61063ccd'
+                                ami = 'ami-005bce54f0c4e2248'
                         else:
                             ami = 'ami-83b400fb'
                     elif "utilities" in node_role:  # perf broker ami

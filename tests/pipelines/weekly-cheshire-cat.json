@@ -15,7 +15,10 @@
         {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_restore_100M_rift_1000s_1000c.test"},
         {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_restore_100M_sqlite_1s_1c.test"},
         {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_restore_100M_sqlite_1s_1000c.test"},
-        {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_restore_100M_sqlite_1000s_1000c.test"}
+        {"job": "leto", "cluster": "leto.spec", "test_config": "collections/tools/tools_restore_100M_sqlite_1000s_1000c.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_rift_tls.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_blackhole_tls.test"},
+        {"job": "leto", "cluster": "leto.spec", "test_config": "tools_restore_100M_rift_tls.test"}
     ],
     "Magma-Legacy": [
         {"job": "hercules", "cluster": "hercules_kv.spec", "test_config": "durability/latency/ycsb/enhanced/ycsb_workloada_4node_lat_durability3d_magma.test"},

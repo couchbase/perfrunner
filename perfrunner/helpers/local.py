@@ -1068,6 +1068,18 @@ def pytpcc_create_indexes(master_node: str, run_sql_shell: str, cbrindex_sql: st
     local(cmd)
 
 
+def pytpcc_create_functions(master_node: str, run_function_shell: str, cbrfunction_sql: str,
+                            port: str, index_replica: int):
+
+    cmd = './py-tpcc/pytpcc/util/{} {}:{} {} ' \
+          '< ./py-tpcc/pytpcc/util/{} '.format(run_function_shell, master_node, port,
+                                               index_replica, cbrfunction_sql)
+
+    logger.info("Creating pytpcc Functions : {}".format(cmd))
+
+    local(cmd)
+
+
 def pytpcc_load_data(warehouse: int, client_threads: int,
                      master_node: str, port: str,
                      cluster_spec: ClusterSpec,

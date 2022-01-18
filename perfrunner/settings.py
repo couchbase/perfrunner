@@ -1771,7 +1771,9 @@ class PYTPCCSettings:
     QUERY_PORT = '8093'
     KV_PORT = '8091'
     RUN_SQL_SHELL = 'run_sqlcollections.sh'
+    RUN_FUNCTION_SHELL = 'run_sqlfunctions.sh'
     CBRINDEX_SQL = 'cbcrindexcollection_replicas3.sql'
+    CBRFUNCTION_SQL = 'cbcrjsfunctions.sql'
     COLLECTION_CONFIG = 'cbcrbucketcollection_20GB.sh'
     DURABILITY_LEVEL = 'majority'
     SCAN_CONSISTENCY = 'not_bounded'
@@ -1792,7 +1794,9 @@ class PYTPCCSettings:
         self.query_port = options.get('query_port', self.QUERY_PORT)
         self.kv_port = options.get('kv_port', self.KV_PORT)
         self.run_sql_shell = options.get('run_sql_shell', self.RUN_SQL_SHELL)
+        self.run_function_shell = options.get('run_function_shell', self.RUN_FUNCTION_SHELL)
         self.cbrindex_sql = options.get('cbrindex_sql', self.CBRINDEX_SQL)
+        self.cbrfunction_sql = options.get('cbrfunction_sql', self.CBRFUNCTION_SQL)
         self.collection_config = options.get('collection_config',
                                              self.COLLECTION_CONFIG)
         self.durability_level = options.get('durability_level',

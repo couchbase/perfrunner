@@ -745,6 +745,18 @@ class PytpccBenchmarkTest(N1QLTest):
                                     cbrindex_sql=cbrindex_sql,
                                     port=port, index_replica=index_replica)
 
+    def pytpcc_create_functions(self):
+        master_node = self.cluster.master_node
+        run_function_shell = self.test_config.pytpcc_settings.run_function_shell
+        cbrfunction_sql = self.test_config.pytpcc_settings.cbrfunction_sql
+        port = self.test_config.pytpcc_settings.query_port
+        index_replica = self.test_config.pytpcc_settings.index_replicas
+
+        local.pytpcc_create_functions(master_node=master_node,
+                                      run_function_shell=run_function_shell,
+                                      cbrfunction_sql=cbrfunction_sql,
+                                      port=port, index_replica=index_replica)
+
     def load_tpcc(self):
         master_node = self.cluster.master_node
         warehouse = self.test_config.pytpcc_settings.warehouse
@@ -811,10 +823,12 @@ class PytpccBenchmarkTest(N1QLTest):
             self.pytpcc_create_indexes()
             self.create_indexes()
             self.wait_for_indexing()
+            self.pytpcc_create_functions()
         else:
             self.pytpcc_create_indexes()
             self.create_indexes()
             self.wait_for_indexing()
+            self.pytpcc_create_functions()
             self.load_tpcc()
             self.wait_for_persistence()
 

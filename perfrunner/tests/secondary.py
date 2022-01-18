@@ -1842,3 +1842,17 @@ class InMemoryCompressionTest(SecondaryIndexingThroughputTest):
         self.print_index_disk_usage()
         self.report_kpi(percentile_latencies, scan_thr)
         self.validate_num_connections()
+
+
+class InitialOSOIndexTest(InitialandIncrementalSecondaryIndexTest):
+
+    """Measures time it takes to build index for the first time."""
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.access_bg()
+        time_elapsed = self.build_secondaryindex()
+        self.print_index_disk_usage()
+        self.report_kpi(time_elapsed, 'Initial')
+        self.print_index_disk_usage()

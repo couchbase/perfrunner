@@ -783,7 +783,7 @@ class ClusterManager:
     def tune_memory_settings(self):
         kernel_memory = self.test_config.cluster.kernel_mem_limit
         kv_kernel_memory = self.test_config.cluster.kv_kernel_mem_limit
-        if kernel_memory:
+        if kernel_memory or kv_kernel_memory:
             if self.dynamic_infra:
                 cluster = self.remote.get_cluster()
                 server_groups = cluster['spec']['servers']

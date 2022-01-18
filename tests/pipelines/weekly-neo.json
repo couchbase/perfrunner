@@ -71,5 +71,9 @@
         {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/plasma/secondary_55M_100_indexes_plasma_1s_10c_2irebalance_in_partitioned.test"},
         {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/moi/secondary_55M_100_indexes_moi_1s_10c_2irebalance_in_partitioned.test"},
         {"job": "aether", "cluster": "aether_5indexes.spec", "test_config": "gsi/moi/secondary_55M_100_indexes_moi_1s_10c_2irebalance_out_partitioned.test"}
+    ],
+    "GSI": [
+        {"job": "secondary-plasma", "cluster": "nyx.spec", "test_config": "plasma/secondary_100M_1000_indexes_plasma_1s_1000c_OSO.test"},
+        {"job": "secondary-plasma", "cluster": "nyx.spec", "test_config": "plasma/secondary_100M_1000_indexes_plasma_1s_1000c_nonOSO.test"}
     ]
 }

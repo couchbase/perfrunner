@@ -1,5 +1,5 @@
 ---
-- hosts: kv:index:n1ql
+- hosts: kv:index:n1ql:analytics:eventing
   tasks:
   - name: creating a temporary directory
     tempfile:
@@ -15,3 +15,9 @@
 
   - name: removing temporary files
     file: path={{ temp.path }} state=absent
+
+  - name: set vm.swappiness to 0
+    shell: "echo 0 > /proc/sys/vm/swappiness"
+
+  - name: disable thp
+    shell: "echo never > /sys/kernel/mm/transparent_hugepage/enabled"

@@ -1,5 +1,5 @@
 ---
-- hosts: kv:index:n1ql:analytics
+- hosts: kv:index:n1ql:analytics:eventing
   vars:
     couchbase_home: /opt/couchbase
     data_dir: /data
@@ -64,3 +64,9 @@
     shell: rm -fr /var/lib/mysql
     args:
       warn: no
+
+  - name: set vm.swappiness to 0
+    shell: "echo 0 > /proc/sys/vm/swappiness"
+
+  - name: disable thp
+    shell: "echo never > /sys/kernel/mm/transparent_hugepage/enabled"

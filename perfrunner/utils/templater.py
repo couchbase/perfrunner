@@ -1,5 +1,4 @@
 from argparse import ArgumentParser
-from multiprocessing import set_start_method
 
 import yaml
 from jinja2 import Environment, FileSystemLoader, Template
@@ -7,23 +6,21 @@ from jinja2 import Environment, FileSystemLoader, Template
 from logger import logger
 from perfrunner.utils.cloudrunner import CloudRunner
 
-set_start_method("fork")
-
 MEMORY_QUOTAS = {
-    'c4.4xlarge':  24576,   # 30GB RAM
-    'c4.8xlarge':  54272,   # 60GB RAM
+    'c4.4xlarge':  [24576, '16vCPU', 'EBS', 'RHEL 7.3', 30720],   # 30GB RAM
+    'c4.8xlarge':  [54272, '36vCPU', 'EBS', 'RHEL 7.3', 61440],   # 60GB RAM
 
-    'c5.4xlarge':  26624,   # 32GB RAM
-    'c5.9xlarge':  61440,   # 72GB RAM
+    'c5.4xlarge':  [26624, '16vCPU', 'EBS', 'RHEL 7.3', 32768],   # 32GB RAM
+    'c5.9xlarge':  [61440, '36vCPU', 'EBS', 'RHEL 7.3', 73728],   # 72GB RAM
 
-    'm4.2xlarge':  26624,   # 32GB RAM
-    'm4.4xlarge':  56320,   # 64GB RAM
-    'm4.10xlarge': 143360,  # 160GB RAM
-    'm4.16xlarge': 225280,  # 256GB RAM
+    'm4.2xlarge':  [26624, '8vCPU', 'EBS', 'RHEL 7.3', 32768],   # 32GB RAM
+    'm4.4xlarge':  [56320, '16vCPU', 'EBS', 'RHEL 7.3', 65536],   # 64GB RAM
+    'm4.10xlarge': [143360, '40vCPU', 'EBS', 'RHEL 7.3', 163840],  # 160GB RAM
+    'm4.16xlarge': [225280, '64vCPU', 'EBS', 'RHEL 7.3', 262144],  # 256GB RAM
 
-    'r4.2xlarge':  54272,   # 61GB RAM
-    'r4.4xlarge':  102400,  # 122GB RAM
-    'r4.8xlarge':  209920,  # 244GB RAM
+    'r4.2xlarge':  [54272, '8vCPU', 'EBS', 'RHEL 7.3', 62464],   # 61GB RAM
+    'r4.4xlarge':  [102400, '16vCPU', 'EBS', 'RHEL 7.3', 124928],  # 122GB RAM
+    'r4.8xlarge':  [209920, '32vCPU', 'EBS', 'RHEL 7.3', 249856],  # 244GB RAM
 
     'i3.8xlarge':  [209920, '32vCPU', '4 x 1900 NVMe SSD', 'RHEL 7.3', 249856],   # 244GB RAM
     'i3.4xlarge':  [102400, '16vCPU', '2 x 1.9 NVMe SSD', 'RHEL 7.3', 124928],  # 122 GB RAM

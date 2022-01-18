@@ -15,8 +15,8 @@ set_start_method("fork")
 class CloudRunner:
 
     AMI = {
-        #  perf-client-2021-03, pyenv python 3.6.12
-        'clients': 'ami-04f9b8bb1ea4c3ef6',
+        #  perf client with updated pyenv, ready for python 3.9.7
+        'clients': 'ami-04d42c1073bc50f71',
         'servers': 'ami-83b400fb',
     }
 

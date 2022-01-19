@@ -18,6 +18,9 @@ db_percentage = 100
 eviction_policy = fullEviction
 replica_number = 0
 
+[bucket_extras]
+num_writer_threads = disk_io_optimized
+
 [load]
 items = 800000000
 size = 512

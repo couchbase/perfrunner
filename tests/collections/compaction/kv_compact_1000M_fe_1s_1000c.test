@@ -14,6 +14,9 @@ num_buckets = 1
 [bucket]
 eviction_policy = fullEviction
 
+[bucket_extras]
+num_writer_threads = disk_io_optimized
+
 [compaction]
 db_percentage = 100
 

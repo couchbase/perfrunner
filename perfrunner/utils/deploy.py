@@ -1,4 +1,5 @@
 import json
+import time
 from argparse import ArgumentParser
 from multiprocessing import set_start_method
 
@@ -802,10 +803,14 @@ class AWSDeployer(Deployer):
     def deploy(self):
         logger.info("Deploying infrastructure...")
         self.create_vpc()
+        time.sleep(30)
         self.create_subnets()
+        time.sleep(30)
         self.map_public_ip()
         self.create_internet_gateway()
+        time.sleep(30)
         self.attach_internet_gateway()
+        time.sleep(30)
         self.create_public_routes()
         self.create_eks_roles()
         self.create_eks_clusters()

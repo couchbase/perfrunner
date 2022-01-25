@@ -798,28 +798,32 @@ class RemoteLinux(Remote):
 
     @master_client
     def restore(self, master_node: str, cluster_spec: ClusterSpec, threads: int,
-                worker_home: str, obj_staging_dir: str = None, obj_region: str = None,
-                use_tls: bool = False):
-        logger.info('Restore from {}'.format(cluster_spec.backup))
+                worker_home: str, archive: str = '', repo: str = 'default',
+                obj_staging_dir: str = None, obj_region: str = None,
+                use_tls: bool = False, map_data: str = None):
+        logger.info('Restore from {}'.format(archive))
 
         self.cbbackupmgr_restore(master_node, cluster_spec, threads, worker_home,
-                                 obj_staging_dir, obj_region, use_tls)
+                                 archive, repo, obj_staging_dir, obj_region,
+                                 use_tls, map_data)
 
     @master_client
     def cbbackupmgr_restore(self, master_node: str, cluster_spec: ClusterSpec,
-                            threads: int, worker_home: str,
-                            obj_staging_dir: str = None, obj_region: str = None,
-                            use_tls: bool = False):
+                            threads: int, worker_home: str, archive: str = '',
+                            repo: str = 'default', obj_staging_dir: str = None,
+                            obj_region: str = None, use_tls: bool = False,
+                            map_data: str = None):
         with cd(worker_home), cd('perfrunner'):
-            flags = ['--archive {}'.format(cluster_spec.backup),
-                     '--repo default',
+            flags = ['--archive {}'.format(archive or cluster_spec.backup),
+                     '--repo {}'.format(repo),
                      '--cluster http{}://{}'.format('s' if use_tls else '', master_node),
                      '--cacert root.pem' if use_tls else None,
                      '--username {}'.format(cluster_spec.rest_credentials[0]),
                      '--password {}'.format(cluster_spec.rest_credentials[1]),
                      '--threads {}'.format(threads) if threads else None,
                      '--obj-region {}'.format(obj_region) if obj_region else None,
-                     '--obj-staging-dir {}'.format(obj_staging_dir) if obj_staging_dir else None]
+                     '--obj-staging-dir {}'.format(obj_staging_dir) if obj_staging_dir else None,
+                     '--map-data {}'.format(map_data) if map_data else None]
             cmd = './opt/couchbase/bin/cbbackupmgr restore --force-updates {}'.format(
                 ' '.join(filter(None, flags)))
 
@@ -924,3 +928,33 @@ class RemoteLinux(Remote):
     def remove_data(self):
         logger.info('Clean up /data/')
         run('rm -rf /data/*')
+
+    @master_client
+    def ch2_run_task(self, cluster_spec: ClusterSpec, worker_home: str, warehouses: int,
+                     aclients: int = 0, tclients: int = 0, duration: int = 0,
+                     iterations: int = 0, warmup_iterations: int = 0, warmup_duration: int = 0,
+                     query_url: str = None, multi_query_url: str = None,
+                     analytics_url: str = None, log_file: str = 'ch2_mixed'):
+
+        flags = ['--warehouses {}'.format(warehouses),
+                 '--aclients {}'.format(aclients) if aclients else None,
+                 '--tclients {}'.format(tclients) if tclients else None,
+                 '--duration {}'.format(duration) if duration else None,
+                 '--warmup-duration {}'.format(warmup_duration) if warmup_duration else None,
+                 '--query-iterations {}'.format(iterations) if iterations else None,
+                 '--warmup-query-iterations {}'.format(warmup_iterations)
+                 if warmup_iterations else None,
+                 'nestcollections',
+                 '--query-url {}'.format(query_url) if tclients else None,
+                 '--multi-query-url {}'.format(multi_query_url) if tclients else None,
+                 '--analytics-url {}'.format(analytics_url) if aclients else None,
+                 '--userid {}'.format(cluster_spec.rest_credentials[0]),
+                 '--password {}'.format(cluster_spec.rest_credentials[1]),
+                 '--no-load > ../../../{}.log'.format(log_file)]
+
+        cmd = '../../../env/bin/python3 ./tpcc.py {}'.format(
+            ' '.join(filter(None, flags)))
+
+        with cd(worker_home), cd('perfrunner'), cd('ch2/ch2driver/pytpcc/'):
+            logger.info('Running: {}'.format(cmd))
+            run(cmd)

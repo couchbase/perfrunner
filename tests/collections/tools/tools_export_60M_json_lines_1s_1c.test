@@ -31,3 +31,4 @@ threads = 16
 format = lines
 collection_field = collection
 scope_field = scope
+log_file = cbexport.log

@@ -33,3 +33,4 @@ type = json
 collection_field = collection
 scope_field = scope
 scope_collection_exp = scope-1.collection-1
+log_file = cbimport.log

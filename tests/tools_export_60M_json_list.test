@@ -26,6 +26,7 @@ doc_gen = import_export_simple
 [export]
 threads = 16
 format = list
+log_file = cbexport.log
 
 [clients]
 libcouchbase = 2.9.3

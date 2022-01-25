@@ -329,7 +329,7 @@ def cbexport(master_node: str, cluster_spec: ClusterSpec, bucket: str,
                  '--scope-field {}'.format(scope_field),
                  '--threads {}'.format(threads) if threads else None,
                  '--include-key key',
-                 '--log-file {}'.format(log_file) if log_file else None]
+                 '--verbose --log-file {}'.format(log_file) if log_file else None]
 
     else:
         flags = ['--format {}'.format(data_format),
@@ -340,7 +340,7 @@ def cbexport(master_node: str, cluster_spec: ClusterSpec, bucket: str,
                  '--password {}'.format(cluster_spec.rest_credentials[1]),
                  '--threads {}'.format(threads) if threads else None,
                  '--include-key {}'.format(key_field) if key_field else None,
-                 '--log-file {}'.format(log_file) if log_file else None]
+                 '--verbose --log-file {}'.format(log_file) if log_file else None]
 
     cmd = './opt/couchbase/bin/cbexport json {}'.format(
         ' '.join(filter(None, flags)))
@@ -381,7 +381,7 @@ def cbimport(master_node: str, cluster_spec: ClusterSpec, bucket: str,
                  '--infer-types' if infer_types else None,
                  '--omit-empty' if omit_empty else None,
                  '--errors-log {}'.format(errors_log) if errors_log else None,
-                 '--log-file {}'.format(log_file) if log_file else None]
+                 '--verbose --log-file {}'.format(log_file) if log_file else None]
 
     else:
 
@@ -401,7 +401,7 @@ def cbimport(master_node: str, cluster_spec: ClusterSpec, bucket: str,
                  '--infer-types' if infer_types else None,
                  '--omit-empty' if omit_empty else None,
                  '--errors-log {}'.format(errors_log) if errors_log else None,
-                 '--log-file {}'.format(log_file) if log_file else None,
+                 '--verbose --log-file {}'.format(log_file) if log_file else None,
                  '--scope-collection-exp {}'.format(scope_collection_exp)]
 
     cmd = './opt/couchbase/bin/cbimport {} {}'.format(

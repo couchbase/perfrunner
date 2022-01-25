@@ -149,7 +149,11 @@ class BackupXATTRTest(BackupTest):
         self.check_num_items()
         self.compact_bucket(wait=True)
 
-        time_elapsed = self.backup()
+        try:
+            time_elapsed = self.backup()
+        finally:
+            self.collectinfo()
+
         self.report_kpi(time_elapsed)
 
 
@@ -232,7 +236,10 @@ class BackupUnderLoadTest(BackupTest):
 
         self.access_bg()
 
-        time_elapsed = self.backup()
+        try:
+            time_elapsed = self.backup()
+        finally:
+            self.collectinfo()
 
         self.report_kpi(time_elapsed)
 
@@ -433,7 +440,12 @@ class RestoreXATTRTest(RestoreTest):
 
         self.backup()
         self.flush_buckets()
-        time_elapsed = self.restore()
+
+        try:
+            time_elapsed = self.restore()
+        finally:
+            self.collectinfo()
+
         self.report_kpi(time_elapsed)
 
 
@@ -530,10 +542,7 @@ class ExportTest(ExportImportTest):
     def run(self):
         super().run()
 
-        try:
-            time_elapsed = self.export()
-        finally:
-            self.collectinfo()
+        time_elapsed = self.export()
 
         self.report_kpi(time_elapsed)
 
@@ -552,10 +561,7 @@ class ImportTest(ExportImportTest):
 
         self.flush_buckets()
 
-        try:
-            time_elapsed = self.import_data()
-        finally:
-            self.collectinfo()
+        time_elapsed = self.import_data()
 
         self.report_kpi(time_elapsed)
 
@@ -571,10 +577,7 @@ class ImportSampleDataTest(ImportTest):
         self.extract_tools()
         self.get_tool_versions()
 
-        try:
-            time_elapsed = self.import_data()
-        finally:
-            self.collectinfo()
+        time_elapsed = self.import_data()
 
         self.report_kpi(time_elapsed)
 
@@ -633,7 +636,11 @@ class CloudBackupTest(BackupRestoreTest):
         if self.test_config.compaction.bucket_compaction == 'true':
             self.compact_bucket(wait=True)
 
-        time_elapsed = self.backup()
+        try:
+            time_elapsed = self.backup()
+        finally:
+            self.extract_tools()
+            self.collectinfo()
 
         self.report_kpi(time_elapsed)
 
@@ -707,6 +714,10 @@ class CloudRestoreTest(BackupRestoreTest):
 
         self.flush_buckets()
 
-        time_elapsed = self.restore()
+        try:
+            time_elapsed = self.restore()
+        finally:
+            self.extract_tools()
+            self.collectinfo()
 
         self.report_kpi(time_elapsed)

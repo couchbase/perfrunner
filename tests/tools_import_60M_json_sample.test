@@ -22,6 +22,7 @@ threads = 16
 format = sample
 type = json
 import_file = /data/import/sample.zip
+log_file = cbimport.log
 
 [clients]
 libcouchbase = 2.9.3

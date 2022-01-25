@@ -22,6 +22,7 @@ threads = 16
 format = lines
 type = csv
 import_file = /data/import/data.csv
+log_file = cbimport.log
 
 [clients]
 libcouchbase = 2.9.3

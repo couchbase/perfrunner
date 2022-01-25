@@ -708,7 +708,7 @@ class RemoteLinux(Remote):
         backup_size = backup_size.split()[0]
         backup_size = float(backup_size) / 2 ** 30  # B -> GB
 
-        return round(backup_size) if rounded else backup_size
+        return round(backup_size, 2) if rounded else backup_size
 
     @master_client
     def backup(self, master_node: str, cluster_spec: ClusterSpec, threads: int,

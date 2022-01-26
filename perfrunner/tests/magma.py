@@ -327,7 +327,7 @@ class MagmaBenchmarkTest(PerfTest):
 
 class KVTest(PerfTest):
     COLLECTORS = {'disk': True, 'latency': True, 'net': False, 'kvstore': True,
-                  'vmstat': True, 'cbstats_memory': True}
+                  'vmstat': True, 'cbstats_memory': True, 'cbstats_all': True}
     CB_STATS_PORT = 11209
 
     def __init__(self, *args):
@@ -861,8 +861,8 @@ class WarmupDGMTest(StabilityBootstrap):
 
 class YCSBThroughputHIDDTest(YCSBThroughputTest, KVTest):
 
-    COLLECTORS = {'disk': True, 'net': True, 'kvstore': True,
-                  'vmstat': True, 'cbstats_memory': True}
+    COLLECTORS = {'disk': True, 'net': True, 'kvstore': True, 'vmstat': True,
+                  'cbstats_memory': True, 'cbstats_all': True}
 
     def __init__(self, *args):
         KVTest.__init__(self, *args)
@@ -1138,7 +1138,7 @@ class JavaDCPThroughputDGMTest(KVTest):
 class RebalanceKVDGMTest(RebalanceKVTest, StabilityBootstrap):
 
     COLLECTORS = {'disk': True, 'latency': True, 'net': False, 'kvstore': True,
-                  'vmstat': True, 'cbstats_memory': True}
+                  'vmstat': True, 'cbstats_memory': True, 'cbstats_all': True}
 
     def __init__(self, *args):
         RebalanceKVTest.__init__(self, *args)

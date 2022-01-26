@@ -13,6 +13,7 @@ from cbagent.collectors import (
     VMSTAT,
     ActiveTasks,
     AnalyticsStats,
+    CBStatsAll,
     CBStatsMemory,
     Disk,
     DurabilityLatency,
@@ -157,6 +158,7 @@ class CbAgent:
 
     def add_collectors(self,
                        analytics=False,
+                       cbstats_all=False,
                        cbstats_memory=False,
                        disk=False,
                        durability=False,
@@ -217,6 +219,8 @@ class CbAgent:
             self.add_collector(KVStoreStats, self.test)
         if cbstats_memory:
             self.add_collector(CBStatsMemory, self.test)
+        if cbstats_all:
+            self.add_collector(CBStatsAll, self.test)
 
         if not self.test.dynamic_infra:
             if self.test.remote.os != 'Cygwin':

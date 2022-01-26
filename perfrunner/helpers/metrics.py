@@ -1311,7 +1311,7 @@ class MetricHelper:
 
     def ch2_analytics_query_time(self, query_time: float, tclients: int) -> Metric:
         metric_id = '{}_{}'.format(self.test_config.name, "analytics_query_time")
-        title = 'Average time per analytics query set (min), {}, {} tclients'.format(self._title,
+        title = 'Average time per analytics query set (sec), {}, {} tclients'.format(self._title,
                                                                                      tclients)
 
         metric_info = self._metric_info(metric_id,

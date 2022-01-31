@@ -8,7 +8,6 @@ class CBStatsMemory(Collector):
     COLLECTOR = "cbstats_memory"
     CB_STATS_PORT = 11209
     METRICS = (
-        "ep_mem_used_secondary",
         "ep_mem_used_primary"
     )
 

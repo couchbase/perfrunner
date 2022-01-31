@@ -12,7 +12,10 @@ from perfrunner.settings import CBMONITOR_HOST
 from perfrunner.utils.jenkins import JenkinsScanner
 from perfrunner.utils.weekly import Weekly
 
-set_start_method("fork")
+try:
+    set_start_method("fork")
+except Exception as ex:
+    print(ex)
 
 StatsSettings = namedtuple('StatsSettings', ('cluster', 'cbmonitor_host'))
 

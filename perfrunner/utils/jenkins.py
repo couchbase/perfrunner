@@ -11,7 +11,10 @@ from couchbase_core.cluster import PasswordAuthenticator
 from logger import logger
 from perfrunner.utils.weekly import Weekly
 
-set_start_method("fork")
+try:
+    set_start_method("fork")
+except Exception as ex:
+    print(ex)
 
 JobMapping = Dict[str, List[Dict[str, str]]]
 

@@ -916,14 +916,15 @@ class DefaultMonitor(DefaultRestHelper):
         if retry == self.MAX_RETRY_TIMER_EVENT:
             logger.info('Function {} failed to {}...!!!'.format(function, status))
 
-    def wait_for_fragmentation_stable(self, host: str, bucket: str):
+    def wait_for_fragmentation_stable(self, host: str, bucket: str,
+                                      target_fragmentation: int = 50):
         while True:
             stats = self.get_bucket_stats(host=host, bucket=bucket)
             fragmentation = int(stats['op']['samples'].get("couch_docs_fragmentation")[-1])
             logger.info("couch_docs_fragmentation: {}".format(fragmentation))
-            if fragmentation <= 50:
+            if fragmentation <= target_fragmentation:
                 break
-            time.sleep(self.POLLING_INTERVAL_FRAGMENTATION)
+            time.sleep(self.POLLING_INTERVAL)
 
 
 class KubernetesMonitor(KubernetesRestHelper):

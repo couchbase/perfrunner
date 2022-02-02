@@ -639,10 +639,24 @@ class CompactionTest(KVTest):
             *self.metrics.elapsed_time(time_elapsed)
         )
 
+    def disable_auto_compaction(self):
+        compaction_settings = self.test_config.compaction
+        compaction_settings.db_percentage = 100
+        for master in self.cluster_spec.masters:
+            self.rest.configure_auto_compaction(master, compaction_settings)
+
+    def wait_for_fragmentation(self):
+        for master in self.cluster_spec.masters:
+            for bucket in self.test_config.buckets:
+                self.monitor.wait_for_fragmentation_stable(master, bucket, 60)
+
     def run(self):
         self.load()
         self.wait_for_persistence()
         self.check_num_items()
+        self.wait_for_fragmentation()
+
+        self.disable_auto_compaction()
 
         self.hot_load()
 

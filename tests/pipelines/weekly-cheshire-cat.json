@@ -621,9 +621,9 @@
         {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/ephemeral/secondary_scan50M_plasma_ephemeral_10k_indexes_stalefalse_1s_1000c_10kops_2indexers.test"}
     ],
     "GSI-DDl": [
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/moi/secondary_create_moi_1000index_instances_replicamix_1part.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/moi/secondary_create_moi_10kindex_instances_replicamix_1part.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_create_plasma_1000index_instances_replicamix_1part.test"},
-        {"job": "hemera", "cluster": "hemera.spec", "test_config": "gsi/plasma/secondary_create_plasma_10kindex_instances_replicamix_1part.test"}
+        {"job": "hemera", "cluster": "hemera_5indexers.spec", "test_config": "gsi/moi/secondary_create_moi_1000index_instances_replicamix_1part.test"},
+        {"job": "hemera", "cluster": "hemera_5indexers.spec", "test_config": "gsi/moi/secondary_create_moi_10kindex_instances_replicamix_1part.test"},
+        {"job": "hemera", "cluster": "hemera_5indexers.spec", "test_config": "gsi/plasma/secondary_create_plasma_1000index_instances_replicamix_1part.test"},
+        {"job": "hemera", "cluster": "hemera_5indexers.spec", "test_config": "gsi/plasma/secondary_create_plasma_10kindex_instances_replicamix_1part.test"}
     ]
 }

@@ -362,20 +362,26 @@
         {"job": "hercules", "cluster": "hercules.spec", "test_config": "collections/ycsb/ycsb_workloadce_4nodes_plasma_1s_1c.test"},
         {"job": "hercules", "cluster": "hercules.spec", "test_config": "collections/ycsb/ycsb_workloadce_4nodes_plasma_1s_10c.test"}
     ],
-    "Rebalance": [
-        {"job": "titan-reb", "cluster": "titan.spec", "test_config": "collections/rebalance/reb_in_1B_4nodes_kv_1s_1000c.test"},
-        {"job": "titan-reb", "cluster": "titan.spec", "test_config": "collections/rebalance/reb_out_1B_4nodes_kv_1s_1000c.test"},
-        {"job": "titan-reb", "cluster": "titan.spec", "test_config": "collections/rebalance/reb_swap_1B_4nodes_kv_1s_1000c.test"}
+    "Rebalance": [],
+    "Rebalance-C1": [
+        {"job": "titan_5node1", "cluster": "titan_5node1.spec", "test_config": "collections/rebalance/reb_in_1B_4nodes_kv_1s_1000c.test"}
+    ],
+    "Rebalance-C2": [
+        {"job": "titan_5node2", "cluster": "titan_5node2.spec", "test_config": "collections/rebalance/reb_out_1B_4nodes_kv_1s_1000c.test"},
+        {"job": "titan_5node2", "cluster": "titan_5node2.spec", "test_config": "collections/rebalance/reb_swap_1B_4nodes_kv_1s_1000c.test"}
     ],
     "XDCR": [
-        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "collections/xdcr/xdcr_backfill_1x1_100M_1s_1000c_external_map.test"},
-        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "collections/xdcr/xdcr_backfill_1x1_100M_1s_10c_backfill_1_non_oso.test"},
-        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "collections/xdcr/xdcr_backfill_1x1_100M_1s_10c_backfill_1_oso.test"},
-        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "collections/xdcr/xdcr_backfill_1x1_100M_1s_1c_external_map.test"},
-        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "collections/xdcr/xdcr_init_1x1_unidir_100M_1s_1000c.test"},
         {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "collections/xdcr/xdcr_init_5x5_unidir_100M_1s_1000c_dgm_comp.test"},
         {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "collections/xdcr/xdcr_init_5x5_unidir_100M_1s_1000c_dgm_comp_external_map.test"}
-
+    ],
+    "XDCR-C1": [
+        {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "collections/xdcr/xdcr_backfill_1x1_100M_1s_1000c_external_map.test"},
+        {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "collections/xdcr/xdcr_backfill_1x1_100M_1s_10c_backfill_1_non_oso.test"},
+        {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "collections/xdcr/xdcr_backfill_1x1_100M_1s_10c_backfill_1_oso.test"}
+    ],
+    "XDCR-C2": [
+        {"job": "titan_5node2", "cluster": "titan_2x2_5node2.spec", "test_config": "collections/xdcr/xdcr_backfill_1x1_100M_1s_1c_external_map.test"},
+        {"job": "titan_5node2", "cluster": "titan_2x2_5node2.spec", "test_config": "collections/xdcr/xdcr_init_1x1_unidir_100M_1s_1000c.test"}
     ],
     "GSI-ForestDB": [
         {"job": "secondary-fdb", "cluster":  "nyx_colocated.spec", "test_config": "fdb/secondary_1M_100Index_fdb_ce.test"},

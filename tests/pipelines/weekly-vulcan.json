@@ -143,7 +143,11 @@
         {"job": "arke-dgm",          "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_index_100M_plasma_part_dgm.test"}
     ],
     "Rebalance": [],
+    "Rebalance-C1": [],
+    "Rebalance-C2": [],
     "Rebalance-Large-Scale": [],
+    "Rebalance-Large-Scale-C1": [],
+    "Rebalance-Large-Scale-C2": [],
     "Rebalance-Hestia": [
         {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_failover_100M_dgm_kv_disk.test"}
     ],
@@ -162,9 +166,11 @@
         {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_comp_size_sqlite.test"}
     ],
     "Views": [],
-    "XDCR": [
-        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_init_1x1_unidir_100M_scram_sha.test"}
+    "XDCR": [],
+    "XDCR-C1": [
+        {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_scram_sha.test"}
     ],
+    "XDCR-C2": [],
     "XDCR-Windows": [],
     "KV-Hercules": [
         {"job": "hercules", "cluster": "hercules.spec", "test_config": "ycsb_workloade_1node_part.test"},

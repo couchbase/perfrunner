@@ -243,9 +243,13 @@
         {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_thr_WF10_100M_plasma_ok.test"}
     ],
     "N1QL-Windows": [],
-    "Rebalance": [
-        {"job": "titan-durability", "cluster": "titan.spec", "test_config": "durability/rebalance/reb_swap_20M_4nodes_durability_majority.test"},
-        {"job": "titan-durability", "cluster": "titan.spec", "test_config": "durability/rebalance/reb_swap_20M_4nodes_durability_persist_majority.test"}],
+    "Rebalance": [],
+    "Rebalance-C1": [
+        {"job": "titan_5node1", "cluster": "titan_5node1.spec", "test_config": "durability/rebalance/reb_swap_20M_4nodes_durability_majority.test"}
+    ],
+    "Rebalance-C2": [
+        {"job": "titan_5node2", "cluster": "titan_5node2.spec", "test_config": "durability/rebalance/reb_swap_20M_4nodes_durability_persist_majority.test"}
+    ],
     "Rebalance-Large-Scale": [],
     "Tools": [
         {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_rift.test"},
@@ -259,17 +263,20 @@
         {"job": "leto", "cluster": "leto.spec", "test_config": "tools_restore_400M_rift.test"}
     ],
     "Views": [],
-    "XDCR": [
-        {"job": "titan", "cluster": "titan_1x1x1.spec", "test_config": "xdcr_init_1x1_unidir_100M_2links_proiority_high_high.test"},
-        {"job": "titan", "cluster": "titan_1x1x1.spec", "test_config": "xdcr_init_1x1_unidir_100M_2links_proiority_high_low.test"},
-        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt_with_advfilter_arraymatch_100.test"},
-        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt_with_advfilter_matchbody_100.test"},
-        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt_with_advfilter_matchxattr_100.test"},
-        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt_with_advfilter_matchxattr_compression_active.test"},
-        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt_with_xattr_nofilter.test"},
-        {"job": "titan", "cluster": "titan_1x1x1.spec", "test_config": "xdcr_ongoing_1x1x1_unidir_updates_8k_proiority_high_high.test"},
-        {"job": "titan", "cluster": "titan_1x1x1.spec", "test_config": "xdcr_ongoing_backfill_1x1x1_unidir_updates_8k_proiority_low_high.test"},
-        {"job": "titan", "cluster": "titan_1x1x1.spec", "test_config": "xdcr_ongoing_1x1x1_unidir_updates_8k_proiority_low_high.test"}
+    "XDCR": [],
+    "XDCR-C1": [
+        {"job": "titan_5node1", "cluster": "titan_1x1x1_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_2links_proiority_high_high.test"},
+        {"job": "titan_5node1", "cluster": "titan_1x1x1_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_2links_proiority_high_low.test"},
+        {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt_with_advfilter_arraymatch_100.test"},
+        {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt_with_advfilter_matchbody_100.test"},
+        {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt_with_advfilter_matchxattr_100.test"}
+    ],
+    "XDCR-C2": [
+        {"job": "titan_5node2", "cluster": "titan_2x2_5node2.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt_with_advfilter_matchxattr_compression_active.test"},
+        {"job": "titan_5node2", "cluster": "titan_2x2_5node2.spec", "test_config": "xdcr_init_1x1_unidir_100M_opt_with_xattr_nofilter.test"},
+        {"job": "titan_5node2", "cluster": "titan_1x1x1_5node2.spec", "test_config": "xdcr_ongoing_1x1x1_unidir_updates_8k_proiority_high_high.test"},
+        {"job": "titan_5node2", "cluster": "titan_1x1x1_5node2.spec", "test_config": "xdcr_ongoing_backfill_1x1x1_unidir_updates_8k_proiority_low_high.test"},
+        {"job": "titan_5node2", "cluster": "titan_1x1x1_5node2.spec", "test_config": "xdcr_ongoing_1x1x1_unidir_updates_8k_proiority_low_high.test"}
     ],
     "XDCR-Windows": [],
     "Rebalance-Windows": [

@@ -185,10 +185,34 @@ pipeline {
                         buildComponent('Rebalance', testCases)
                     }
                 }
+                stage('Rebalance-C1') {
+                    when { expression { return params.Rebalance } }
+                    steps {
+                        buildComponent('Rebalance-C1', testCases)
+                    }
+                }
+                stage('Rebalance-C2') {
+                    when { expression { return params.Rebalance } }
+                    steps {
+                        buildComponent('Rebalance-C2', testCases)
+                    }
+                }
                 stage('Rebalance-Large-Scale') {
                     when { expression { return params.Rebalance } }
                     steps {
                         buildComponent('Rebalance-Large-Scale', testCases)
+                    }
+                }
+                stage('Rebalance-Large-Scale-C1') {
+                    when { expression { return params.Rebalance } }
+                    steps {
+                        buildComponent('Rebalance-Large-Scale-C1', testCases)
+                    }
+                }
+                stage('Rebalance-Large-Scale-C2') {
+                    when { expression { return params.Rebalance } }
+                    steps {
+                        buildComponent('Rebalance-Large-Scale-C2', testCases)
                     }
                 }
                 stage('Rebalance-Hestia') {
@@ -213,6 +237,18 @@ pipeline {
                     when { expression { return params.XDCR } }
                     steps {
                         buildComponent('XDCR', testCases)
+                    }
+                }
+                stage('XDCR-C1') {
+                    when { expression { return params.XDCR } }
+                    steps {
+                        buildComponent('XDCR-C1', testCases)
+                    }
+                }
+                stage('XDCR-C2') {
+                    when { expression { return params.XDCR } }
+                    steps {
+                        buildComponent('XDCR-C2', testCases)
                     }
                 }
                 stage('XDCR-Windows') {

@@ -77,17 +77,24 @@
     ],
     "N1QL-Arke": [],
     "Rebalance": [],
+    "Rebalance-C1": [],
+    "Rebalance-C2": [],
     "Rebalance-Large-Scale": [
         {"job": "titan", "cluster": "titan.spec", "test_config": "reb_in_500M_kv.test"},
         {"job": "titan", "cluster": "titan.spec", "test_config": "reb_in_500M_kv_ephemeral.test"}
     ],
+    "Rebalance-Large-Scale-C1": [],
+    "Rebalance-Large-Scale-C2": [],
     "Rebalance-Hestia": [],
     "Tools": [],
     "Views": [],
-    "XDCR": [
-        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_init_1x1_unidir_100M_ephemeral.test"},
-        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_init_2x2_unidir_100M_ephemeral.test"},
-        {"job": "titan", "cluster": "titan_5x5.spec", "test_config": "xdcr_init_1x1_unidir_100M_limit.test"}
+    "XDCR": [],
+    "XDCR-C1": [
+        {"job": "titan_5node1", "cluster": "titan_2x2_5node1.spec", "test_config": "xdcr_init_1x1_unidir_100M_ephemeral.test"}
+    ],
+    "XDCR-C2": [
+        {"job": "titan_5node2", "cluster": "titan_2x2_5node2.spec", "test_config": "xdcr_init_2x2_unidir_100M_ephemeral.test"},
+        {"job": "titan_5node2", "cluster": "titan_2x2_5node2.spec", "test_config": "xdcr_init_1x1_unidir_100M_limit.test"}
     ],
     "XDCR-Windows": [],
     "KV-Hercules": [

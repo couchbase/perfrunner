@@ -29,7 +29,7 @@ time = 1800
 boost = 12
 workers = 600
 workload_instances = 6
-kv_endpoints = 16
+kv_endpoints = 256
 ssl_mode = data
 
 [ycsb]

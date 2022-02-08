@@ -2,7 +2,7 @@
 test = perfrunner.tests.fts.FTSLatencyTest
 
 [showfast]
-title = Flex, Mixed predicates type - 1, 10K KV w/sec, wiki 1M x 1KB, 3 node, FTS, collection specific, s=1 c=1
+title = Flex, Mixed predicates type - 2, 10K KV w/sec, wiki 1M x 1KB, 3 node, FTS, collection specific, s=1 c=1
 component = jts
 category = Flex
 sub_category = Latency

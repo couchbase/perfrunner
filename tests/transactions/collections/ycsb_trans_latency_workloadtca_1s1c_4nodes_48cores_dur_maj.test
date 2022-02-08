@@ -15,7 +15,7 @@ num_buckets = 1
 online_cores = 24
 
 [collection]
-config = collections/1bucket_1scope_1collection_basic.json
+config = collections/1bucket_1scope_1collection_transactions.json
 
 [bucket]
 replica_number = 2

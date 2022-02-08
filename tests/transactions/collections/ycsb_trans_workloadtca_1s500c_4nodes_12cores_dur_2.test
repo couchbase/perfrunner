@@ -19,7 +19,7 @@ online_cores = 6
 replica_number = 2
 
 [collection]
-config = collections/1bucket_1scope_500collections_basic.json
+config = collections/1bucket_1scope_500collections_transactions.json
 
 [load]
 workload_path = workloads/workloadca

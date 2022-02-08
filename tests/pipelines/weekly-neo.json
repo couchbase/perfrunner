@@ -37,7 +37,12 @@
     ],
     "Magma1": [
         {"job": "rhea-5node1", "cluster": "rhea_5node1_gsi.spec", "test_config": "hidd/secondary_1B_1indexer_compressed_plasma.test"},
-        {"job": "rhea-5node1", "cluster": "rhea_5node1_gsi.spec", "test_config": "hidd/secondary_scan1B_1indexer_compressed_plasma_10kops.test"}
+        {"job": "rhea-5node1", "cluster": "rhea_5node1_gsi.spec", "test_config": "hidd/secondary_scan1B_1indexer_compressed_plasma_10kops.test"},
+        {"job": "rhea-5node1", "cluster": "rhea_5node1_n1ql.spec", "test_config": "hidd/n1ql_thr_Q1_1B.test"},
+        {"job": "rhea-5node1", "cluster": "rhea_5node1_n1ql.spec", "test_config": "hidd/n1ql_thr_Q2_1B.test"},
+        {"job": "rhea-5node1", "cluster": "rhea_5node1_n1ql.spec", "test_config": "hidd/n1ql_thr_Q3_1B.test"},
+        {"job": "rhea-5node1", "cluster": "rhea_5node1_n1ql.spec", "test_config": "hidd/n1ql_lat_Q1_1B_10KQops.test"},
+        {"job": "rhea-5node1", "cluster": "rhea_5node1_n1ql.spec", "test_config": "hidd/n1ql_lat_Q2_1B_10Kops_3KQops.test"}
     ],
     "Magma2": [
         {"job": "rhea-5node2", "cluster": "rhea_5node2_2x2.spec", "test_config": "hidd/xdcr_init_1x1_unidir_500M_1s_1000c.test"},

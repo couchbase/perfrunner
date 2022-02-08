@@ -1485,6 +1485,22 @@ class N1QLThroughputHiDDTest(N1QLThroughputTest):
 
 
 class N1QLLatencyHiDDTest(N1QLThroughputHiDDTest):
+    COLLECTORS = {
+        'iostat': True,
+        'memory': True,
+        'n1ql_latency': True,
+        'n1ql_stats': True,
+        'ns_server_system': True,
+        'disk': True,
+        'kvstore': True,
+        'vmstat': True,
+        'secondary_stats': True,
+        'secondary_debugstats': True,
+        'secondary_debugstats_bucket': True,
+        'secondary_debugstats_index': True,
+        'secondary_storage_stats': True,
+        'secondary_storage_stats_mm': True
+    }
 
     def _report_kpi(self):
         self.reporter.post(

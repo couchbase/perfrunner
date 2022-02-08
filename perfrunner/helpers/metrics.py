@@ -986,7 +986,7 @@ class MetricHelper:
 
         executed = self._parse_pytpcc_throughput()
 
-        tpmc = round(executed / duration) * 60
+        tpmc = round(executed / duration * 60)
 
         return tpmc, self._snapshots, metric_info
 

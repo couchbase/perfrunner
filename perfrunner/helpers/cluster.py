@@ -63,13 +63,12 @@ class ClusterManager:
     def rename(self):
         if self.dynamic_infra:
             return
-        elif self.cluster_spec.cloud_infrastructure:
-            if self.cluster_spec.cloud_provider == 'gcp':
-                clusters_private = dict(self.cluster_spec.clusters_private)
-                for cluster_name, public_ips in self.cluster_spec.clusters:
-                    private_ips = clusters_private.get(cluster_name, [])
-                    for host, new_host in zip(public_ips, private_ips):
-                        self.rest.rename(host, new_host)
+        elif self.cluster_spec.cloud_infrastructure and self.cluster_spec.cloud_provider == 'gcp':
+            clusters_private = dict(self.cluster_spec.clusters_private)
+            for cluster_name, public_ips in self.cluster_spec.clusters:
+                private_ips = clusters_private.get(cluster_name, [])
+                for host, new_host in zip(public_ips, private_ips):
+                    self.rest.rename(host, new_host)
         else:
             for server in self.cluster_spec.servers:
                 self.rest.rename(server)
@@ -338,12 +337,15 @@ class ClusterManager:
                         self.rest.set_collection_map(master, bucket, {"scopes": create_scopes})
                 else:
                     for bucket in collection_map.keys():
-                        delete_default = True
-                        for scope in collection_map[bucket]:
-                            if scope == '_default':
-                                for collection in collection_map[bucket][scope]:
-                                    if collection == "_default":
-                                        delete_default = False
+                        if self.test_config.access_settings.transactionsenabled:
+                            delete_default = False
+                        else:
+                            delete_default = True
+                            for scope in collection_map[bucket]:
+                                if scope == '_default':
+                                    for collection in collection_map[bucket][scope]:
+                                        if collection == "_default":
+                                            delete_default = False
                         if delete_default:
                             self.rest.delete_collection(master, bucket, '_default', '_default')
 

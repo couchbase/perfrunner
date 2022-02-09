@@ -98,7 +98,8 @@ class KVStoreStats(Collector):
         "NReadBytesSetPerSec",
         "NReadIOsSetPerSec",
         "ActiveIndexBlocksSize",
-        "NBlocksCached"
+        "NBlocksCached",
+        "CheckpointOverheadPeriod"
     )
     METRICS_AVERAGE_PER_NODE_PER_SHARD = (
         "ReadAmp",
@@ -117,7 +118,8 @@ class KVStoreStats(Collector):
         "RecentBlockCacheHitRatio",
         "BlockCacheHitRatio",
         "ReadIOAmpSet",
-        "RecentReadIOAmpSet"
+        "RecentReadIOAmpSet",
+        "CheckpointOverheadPeriod"
     )
     NO_CAP = (
         "TxnSizeEstimate",
@@ -128,7 +130,8 @@ class KVStoreStats(Collector):
         "RecentBlockCacheHitRatio",
         "BlockCacheHitRatio",
         "ReadIOAmpSet",
-        "RecentReadIOAmpSet"
+        "RecentReadIOAmpSet",
+        "CheckpointOverheadPeriod"
     )
 
     def __init__(self, settings, test):

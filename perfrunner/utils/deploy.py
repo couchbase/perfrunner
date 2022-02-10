@@ -476,7 +476,8 @@ class AWSDeployer(Deployer):
                 for node_group in ec2_cluster_config['node_groups'].split(','):
                     resource_path = 'ec2.{}.{}'.format(ec2_cluster_name, node_group)
                     tags = [{'Key': 'Use', 'Value': 'CloudPerfTesting'},
-                            {'Key': 'Role', 'Value': node_group}]
+                            {'Key': 'Role', 'Value': node_group},
+                            {'Key': 'Jenkins Tag', 'Value': self.options.tag}]
                     node_role = None
                     for k, v in self.clusters.items():
                         if 'couchbase' in k:
@@ -1447,6 +1448,9 @@ def get_args():
                             ],
                         default='us-west1-b',
                         help='the cloud zone (GCP)')
+    parser.add_argument('-t', '--tag',
+                        default='<None>',
+                        help='Global tag for launched instances.')
 
     return parser.parse_args()
 

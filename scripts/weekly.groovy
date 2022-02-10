@@ -281,6 +281,12 @@ pipeline {
                         buildComponent('GSI-DDl', testCases)
                     }
                 }
+                stage('GSI-Rebalance') {
+                    when { expression { return params.GSI_Rebalance } }
+                    steps {
+                        buildComponent('GSI-Rebalance', testCases)
+                    }
+                }
             }
         }
     }

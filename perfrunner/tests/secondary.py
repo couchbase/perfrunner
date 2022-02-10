@@ -198,7 +198,8 @@ class SecondaryIndexTest(PerfTest):
                 self.index_nodes,
                 self.bucket,
                 self.indexes,
-                self.storage)
+                self.storage,
+                self.is_ssl)
 
             time_elapsed = self.monitor.wait_for_secindex_init_build(
                 self.index_nodes[0],

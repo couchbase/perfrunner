@@ -60,17 +60,19 @@ class RemoteLinux(Remote):
         logger.info('Running: {}'.format(cmd))
         run(cmd, shell_escape=False, pty=False)
 
-    def build_index(self, index_node, indexes):
+    def build_index(self, index_node, indexes, is_ssl):
         options = \
             "-auth=Administrator:password " \
             "-server {index_node}:8091 " \
             "-type build " \
             "-indexes {all_indexes}".format(index_node=index_node,
                                             all_indexes=",".join(indexes))
+        if is_ssl:
+            options = options + " -use_tls -cacert ./root.pem"
 
         self.run_cbindex_command(options)
 
-    def create_index(self, index_nodes, bucket, indexes, storage):
+    def create_index(self, index_nodes, bucket, indexes, storage, is_ssl):
         # Remember what bucket:index was created
         bucket_indexes = []
 
@@ -108,6 +110,8 @@ class RemoteLinux(Remote):
             options = options + '-with {\\\\\\"defer_build\\\\\\":true}'
 
             bucket_indexes.append("{}:{}".format(bucket, index))
+            if is_ssl:
+                options = options + " -use_tls -cacert ./root.pem"
             self.run_cbindex_command(options)
 
         return bucket_indexes
@@ -145,14 +149,14 @@ class RemoteLinux(Remote):
         self.run_cbindex_command(batch_options)
 
     @master_server
-    def build_secondary_index(self, index_nodes, bucket, indexes, storage):
+    def build_secondary_index(self, index_nodes, bucket, indexes, storage, is_ssl):
         logger.info('building secondary indexes')
 
         # Create index but do not build
-        bucket_indexes = self.create_index(index_nodes, bucket, indexes, storage)
+        bucket_indexes = self.create_index(index_nodes, bucket, indexes, storage, is_ssl)
 
         # build indexes
-        self.build_index(index_nodes[0], bucket_indexes)
+        self.build_index(index_nodes[0], bucket_indexes, is_ssl)
 
     @master_server
     def create_secondary_index_collections(self, index_nodes, options, is_ssl):

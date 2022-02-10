@@ -1,0 +1,50 @@
+[test_case]
+test = perfrunner.tests.magma.N1QLThroughputHiDDTest
+
+[showfast]
+title = Q1, 1 bucket x 1B x 1KB, Key-Value Lookup, Plasma, Couchstore
+component = hidd
+category = n1ql
+
+[cluster]
+mem_quota = 5120
+index_mem_quota = 21504
+initial_nodes = 6
+num_buckets = 1
+kernel_mem_limit = 28G
+kv_kernel_mem_limit = 10G
+kernel_mem_limit_services = kv index
+enable_cpu_cores = false
+
+[bucket]
+eviction_policy = fullEviction
+
+[bucket_extras]
+num_reader_threads = 64
+num_writer_threads = 64
+
+[secondary]
+indexer.settings.storage_mode = plasma
+indexer.settings.max_cpu_percent = 4800
+
+[load]
+items = 1000000000
+size = 1024
+workers = 100
+doc_gen = reverse_lookup
+
+[access]
+items = 1000000000
+workers = 0
+n1ql_queries = key-value-lookup
+n1ql_workers = 240
+workload_instances = 1
+time = 1200
+
+[n1ql-key-value-lookup]
+statement = SELECT * FROM `bucket-1` USE KEYS[$1];
+args = ["{key}"]
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

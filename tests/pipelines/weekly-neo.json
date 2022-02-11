@@ -46,7 +46,9 @@
     ],
     "Magma2": [
         {"job": "rhea-5node2", "cluster": "rhea_5node2_2x2.spec", "test_config": "hidd/xdcr_init_1x1_unidir_500M_1s_1000c.test"},
-        {"job": "rhea-5node2", "cluster": "rhea_5node2_2x2.spec", "test_config": "hidd/xdcr_init_2x2_unidir_500M.test"}
+        {"job": "rhea-5node2", "cluster": "rhea_5node2_2x2.spec", "test_config": "hidd/xdcr_init_2x2_unidir_500M.test"},
+        {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/ycsb_workloadt_4nodes_1B_magma_TR1.test"},
+        {"job": "rhea-5node2", "cluster": "rhea_5node2.spec", "test_config": "hidd/ycsb_latency_workloadt_4nodes_1B_magma_TR1.test"}
     ],
     "N1QL": [
         {"job": "iris-multi-client", "cluster": "iris.spec", "test_config": "n1ql/collections/n1ql_thr_array_indexing_Q4_20M_overlap_gsi_moi_ok_1s_1c_1i.test"},

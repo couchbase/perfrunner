@@ -2,20 +2,21 @@
 test = perfrunner.tests.magma.YCSBLatencyHiDDTest
 
 [showfast]
-title = Latency(ms), Workload T, 4 nodes, 1 bucket x 4B x 1KB, Persist_Majority, Uniform distribution, 100 ops/sec, Magma
+title = Latency(ms), Workload T, 4 nodes, 1 bucket x 1B x 1KB, Persist_Majority, Uniform distribution, 100 ops/sec, 2%% Resident Ratio, Couchstore
 component = hidd
 category = transaction
 sub_category = Latency
 
 [cluster]
-mem_quota = 51200
+mem_quota = 15360
 initial_nodes = 4
 num_buckets = 1
+kernel_mem_limit = 25G
+kernel_mem_limit_services = kv
 enable_cpu_cores = false
 
 [bucket]
 replica_number = 2
-backend_storage = magma
 eviction_policy = fullEviction
 
 [bucket_extras]
@@ -25,39 +26,25 @@ num_writer_threads = 64
 [load]
 workload_path = workloads/workloada
 ycsb_client = couchbase3
-items = 4000000000
+items = 1000000000
 workers = 160
 kv_endpoints = 128
 size = 1000
-use_backup = true
-
-[extra_access]
-run_extra_access = true
-workload_path = workloads/workloadupdate
-ycsb_client = couchbase3
-items = 4000000000
-ops = 1000000000
-time = 86400
-boost = 12
-workers = 80
-kv_endpoints = 128
-workload_instances = 4
-requestdistribution = uniform
 
 [access]
 workload_path = workloads/workloadta
 ycsb_client = couchbase3
-items = 4000000000
+items = 1000000000
 ops = 0
 target = 100
 time = 1800
 boost = 12
 workers = 160
+kv_endpoints = 128
 workload_instances = 1
 transactionsenabled = 1
 num_atrs = 20480
 durability = 3
-kv_endpoints = 128
 timeseries = 1
 requestdistribution = uniform
 
@@ -68,6 +55,3 @@ latency_percentiles = 50,90,99
 
 [stats]
 client_processes = java
-
-[backup]
-backup_directory = /data2/4n_4b_transaction

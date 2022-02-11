@@ -8,10 +8,10 @@ category = n1ql
 
 [cluster]
 mem_quota = 5120
-index_mem_quota = 21504
+index_mem_quota = 10752
 initial_nodes = 6
 num_buckets = 1
-kernel_mem_limit = 28G
+kernel_mem_limit = 16G
 kv_kernel_mem_limit = 10G
 kernel_mem_limit_services = kv index
 enable_cpu_cores = false

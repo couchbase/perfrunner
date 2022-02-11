@@ -2,7 +2,7 @@
 test = perfrunner.tests.magma.YCSBThroughputHIDDTest
 
 [showfast]
-title = Avg Throughput (trans/sec), Workload T, 4 nodes, 1 bucket x 1B x 1KB, Persist_Majority, Magma
+title = Avg Throughput (trans/sec), Workload T, 4 nodes, 1 bucket x 1B x 1KB, Persist_Majority, Uniform distribution, 2%% Resident Ratio, Magma
 component = hidd
 category = transaction
 sub_category = Throughput
@@ -31,7 +31,7 @@ items = 1000000000
 workers = 160
 kv_endpoints = 128
 size = 1000
-use_backup = false
+use_backup = true
 
 [extra_access]
 run_extra_access = true
@@ -62,7 +62,10 @@ durability = 3
 requestdistribution = uniform
 
 [ycsb]
-branch = couchbase3-dgm
+branch = couchbase3
 
 [stats]
 client_processes = java
+
+[backup]
+backup_directory = /data2/4n_1b_transaction

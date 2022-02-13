@@ -1368,6 +1368,10 @@ class DefaultRestHelper(RestBase):
 
     def indexes_per_node(self, host: str):
         api = 'http://{}:{}/stats'.format(host, '9102')
+        return self.get(url=api).json()['num_indexes']
+
+    def indexes_instances_per_node(self, host: str):
+        api = 'http://{}:{}/stats'.format(host, '9102')
         return self.get(url=api).json()['num_storage_instances']
 
     def backup_index(self, host, bucket):

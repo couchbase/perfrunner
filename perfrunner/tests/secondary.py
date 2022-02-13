@@ -1210,7 +1210,8 @@ class CreateBackupandRestoreIndexTest(SecondaryIndexTest):
         self.report_kpi(time_elapsed, "Create")
 
         for server in self.cluster_spec.servers_by_role('index'):
-            logger.info("{} : {} Indexes".format(server, self.rest.indexes_per_node(server)))
+            logger.info("{} : {} Indexes".format(server,
+                                                 self.rest.indexes_instances_per_node(server)))
 
         time_to_backup = self.backup()
         self.drop_all_indexes()
@@ -1278,7 +1279,8 @@ class SecondaryRebalanceTest(SecondaryIndexingScanTest, RebalanceTest):
 
         self.build_secondaryindex()
         for server in self.index_nodes:
-            logger.info("{} : {} Indexes".format(server, self.rest.indexes_per_node(server)))
+            logger.info("{} : {} Indexes".format(server,
+                                                 self.rest.indexes_instances_per_node(server)))
 
         self.access_bg()
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf",
@@ -1295,7 +1297,8 @@ class SecondaryRebalanceTest(SecondaryIndexingScanTest, RebalanceTest):
         self.rebalance_indexer()
         logger.info("Indexes after rebalance")
         for server in self.index_nodes:
-            logger.info("{} : {} Indexes".format(server, self.rest.indexes_per_node(server)))
+            logger.info("{} : {} Indexes".format(server,
+                                                 self.rest.indexes_instances_per_node(server)))
         self.report_kpi(rebalance_time=True)
         kill_process("cbindexperf")
         scan_thr = self.get_throughput()

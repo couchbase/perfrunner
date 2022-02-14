@@ -1209,7 +1209,7 @@ class CreateBackupandRestoreIndexTest(SecondaryIndexTest):
 
         self.report_kpi(time_elapsed, "Create")
 
-        for server in self.cluster_spec.servers_by_role('index'):
+        for server in self.rest.get_active_nodes_by_role(self.master_node, 'index'):
             logger.info("{} : {} Indexes".format(server,
                                                  self.rest.indexes_instances_per_node(server)))
 

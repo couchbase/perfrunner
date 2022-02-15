@@ -16,6 +16,7 @@ mem_quota = 30000
 index_mem_quota = 460000
 initial_nodes = 6
 num_buckets = 10
+online_cores = 12
 
 [compaction]
 db_percentage = 100
@@ -29,7 +30,7 @@ replica_index=0
 config = collections/10buckets_1scope_100collections_basic.json
 
 [load]
-items = 50000000
+items = 5000000
 size = 1024
 workers = 100
 doc_gen = grouped
@@ -39,7 +40,7 @@ doc_groups = 1
 indexes = tests/gsi/index_defs/10bucket_1scope_100collections_10k_indexes_1.json
 cbindexperf_configfile = tests/gsi/scan_config/config_scanlatency_10k_indexes_1s_100c_10b.json
 indexer.settings.storage_mode = plasma
-indexer.settings.max_cpu_percent = 4800
+indexer.settings.max_cpu_percent = 1200
 indexer.settings.gc_percent = 200
 queryport.client.usePlanner = false
 queryport.client.log_level = Warn
@@ -51,6 +52,6 @@ cbindexperf_repeat = 2999
 
 [access]
 updates = 100
-items = 50000000
-throughput = 10000
+items = 5000000
+throughput = 1000
 workers = 20

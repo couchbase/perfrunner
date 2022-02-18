@@ -619,6 +619,8 @@ def run_ycsb(host: str,
           '-p couchbase.retryUpper={retry_upper} ' \
           '-p couchbase.retryFactor={retry_factor} '
 
+    cmd = 'pyenv local system && ' + cmd
+
     if durability is None:
         cmd += '-p couchbase.persistTo={persist_to} '
         cmd += '-p couchbase.replicateTo={replicate_to} '

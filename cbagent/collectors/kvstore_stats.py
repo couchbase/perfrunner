@@ -120,7 +120,8 @@ class KVStoreStats(Collector):
         "BlockCacheHitRatio",
         "ReadIOAmpSet",
         "RecentReadIOAmpSet",
-        "CheckpointOverheadPeriod"
+        "CheckpointOverheadPeriod",
+        "CheckpointOverheadRatio"
     )
     NO_CAP = (
         "TxnSizeEstimate",
@@ -132,7 +133,8 @@ class KVStoreStats(Collector):
         "BlockCacheHitRatio",
         "ReadIOAmpSet",
         "RecentReadIOAmpSet",
-        "CheckpointOverheadPeriod"
+        "CheckpointOverheadPeriod",
+        "CheckpointOverheadRatio"
     )
 
     def __init__(self, settings, test):

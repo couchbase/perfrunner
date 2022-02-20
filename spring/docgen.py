@@ -482,6 +482,32 @@ class GroupedDocument(Document):
         }
 
 
+class GroupedDocumentById(Document):
+
+    def __init__(self, avg_size: int, groups: int):
+        super().__init__(avg_size)
+        self.groups = groups
+
+    def next(self, key: Key) -> dict:
+        alphabet = self.build_alphabet(key.string)
+        size = self._size()
+
+        return {
+            'doc_group': key.number % self.groups,
+            'name': self.build_name(alphabet),
+            'email': self.build_email(alphabet),
+            'alt_email': self.build_alt_email(alphabet),
+            'city': self.build_city(alphabet),
+            'realm': self.build_realm(alphabet),
+            'coins': self.build_coins(alphabet),
+            'category': self.build_category(alphabet),
+            'street': self.build_street(alphabet),
+            'year': self.build_year(alphabet),
+            'body': self.build_string(alphabet, size),
+            'id': key.string
+        }
+
+
 class LargeItemGroupedDocument(GroupedDocument):
     def __init__(self, avg_size: int, groups: int, item_size: int):
         super().__init__(avg_size, groups)

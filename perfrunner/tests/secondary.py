@@ -54,7 +54,9 @@ class SecondaryIndexTest(PerfTest):
         extract_cb_deb(filename='couchbase.deb')
 
         self.cbindexperf_concurrency = self.test_config.gsi_settings.cbindexperf_concurrency
+        self.cbindexperf_gcpercent = self.test_config.gsi_settings.cbindexperf_gcpercent
         self.cbindexperf_repeat = self.test_config.gsi_settings.cbindexperf_repeat
+        self.cbindexperf_clients = self.test_config.gsi_settings.cbindexperf_clients
         self.local_path_to_cbindex = './opt/couchbase/bin/cbindex'
         self.is_ssl = False
         if self.test_config.cluster.enable_n2n_encryption:
@@ -68,6 +70,8 @@ class SecondaryIndexTest(PerfTest):
                 if self.cbindexperf_repeat:
                     for scan_spec in cbindexperf_contents["ScanSpecs"]:
                         scan_spec["Repeat"] = self.cbindexperf_repeat
+                if self.cbindexperf_clients:
+                    cbindexperf_contents["Clients"] = self.cbindexperf_clients
 
             with open(self.configfile, 'w') as f:
                 json.dump(cbindexperf_contents, f, indent=4)
@@ -236,7 +240,8 @@ class SecondaryIndexTest(PerfTest):
 
         status = run_cbindexperf(path_to_tool, self.index_nodes[0],
                                  rest_username, rest_password, self.configfile,
-                                 run_in_background, is_ssl=is_ssl)
+                                 run_in_background, is_ssl=is_ssl,
+                                 gcpercent=self.cbindexperf_gcpercent)
         if status != 0:
             raise Exception('Scan workload could not be applied')
         else:

@@ -1244,8 +1244,10 @@ class GSISettings:
 
     CBINDEXPERF_CONFIGFILE = ''
     CBINDEXPERF_CONCURRENCY = 0
+    CBINDEXPERF_CLIENTS = 5
     CBINDEXPERF_REPEAT = 0
     CBINDEXPERF_CONFIGFILES = ''
+    CBINDEXPERF_GCPERCENT = 100
     RUN_RECOVERY_TEST = 0
     INCREMENTAL_LOAD_ITERATIONS = 0
     SCAN_TIME = 1200
@@ -1276,6 +1278,10 @@ class GSISettings:
                                                   self.CBINDEXPERF_REPEAT))
         self.cbindexperf_configfiles = options.get('cbindexperf_configfiles',
                                                    self.CBINDEXPERF_CONFIGFILES)
+        self.cbindexperf_gcpercent = int(options.get('cbindexperf_gcpercent',
+                                         self.CBINDEXPERF_GCPERCENT))
+        self.cbindexperf_clients = int(options.get('cbindexperf_clients',
+                                       self.CBINDEXPERF_CLIENTS))
         self.run_recovery_test = int(options.get('run_recovery_test',
                                                  self.RUN_RECOVERY_TEST))
         self.incremental_only = int(options.get('incremental_only',

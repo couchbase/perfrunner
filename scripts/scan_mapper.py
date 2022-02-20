@@ -13,7 +13,7 @@ def main():
         ]
     }
 
-    with open("tests/gsi/index_defs/1bucket_1scope_1000collections_10k_indexes_1.json", "r")\
+    with open("tests/gsi/index_defs/1bucket_1scope_1collection_1_index_3partition.json", "r")\
             as read_file:
         index_map = json.load(read_file)
 

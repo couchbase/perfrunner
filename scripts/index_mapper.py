@@ -12,7 +12,7 @@ def main():
                   'realm',
                   'coins',
                   'category',
-                  'achievements',
+                  'street',
                   'year',
                   'body']
 
@@ -24,13 +24,12 @@ def main():
         collection_indexes = {}
         num_coll_indexes = 0
         for field1 in doc_fields:
-            for field2 in doc_fields:
-                collection_indexes["myindex"+str(i+1)+"-"+str(num_coll_indexes+1)] = \
-                    "{},{}".format(field1, field2)
-                num_coll_indexes += 1
+            collection_indexes["myindex"+str(i+1)+"-"+str(num_coll_indexes+1)] = \
+                {"field": "{}".format(field1), "num_partition": 0, "num_replica": 0}
+            num_coll_indexes += 1
         index_map['bucket-1']['scope-1']['collection-'+str(i+1)] = collection_indexes
     outpath = 'tests/gsi/index_defs/'
-    outfile = '1bucket_1scope_100collections_10k_indexes_1.json'
+    outfile = '1bucket_1scope_100collections_1000indexes_1.json'
     with open(outpath+outfile, 'w') as outfile:
         json.dump(index_map, outfile, indent=4, sort_keys=True)
     pp.pprint(index_map)

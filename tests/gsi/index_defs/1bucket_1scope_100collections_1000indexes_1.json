@@ -1,0 +1,5207 @@
+{
+    "bucket-1": {
+        "_default": {},
+        "scope-1": {
+            "collection-1": {
+                "myindex1-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex1-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex1-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex1-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex1-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex1-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex1-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex1-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex1-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex1-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-10": {
+                "myindex10-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex10-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex10-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex10-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex10-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex10-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex10-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex10-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex10-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex10-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-100": {
+                "myindex100-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex100-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex100-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex100-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex100-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex100-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex100-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex100-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex100-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex100-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-11": {
+                "myindex11-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex11-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex11-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex11-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex11-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex11-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex11-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex11-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex11-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex11-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-12": {
+                "myindex12-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex12-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex12-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex12-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex12-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex12-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex12-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex12-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex12-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex12-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-13": {
+                "myindex13-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex13-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex13-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex13-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex13-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex13-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex13-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex13-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex13-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex13-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-14": {
+                "myindex14-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex14-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex14-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex14-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex14-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex14-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex14-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex14-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex14-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex14-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-15": {
+                "myindex15-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex15-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex15-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex15-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex15-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex15-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex15-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex15-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex15-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex15-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-16": {
+                "myindex16-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex16-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex16-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex16-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex16-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex16-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex16-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex16-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex16-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex16-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-17": {
+                "myindex17-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex17-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex17-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex17-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex17-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex17-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex17-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex17-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex17-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex17-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-18": {
+                "myindex18-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex18-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex18-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex18-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex18-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex18-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex18-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex18-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex18-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex18-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-19": {
+                "myindex19-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex19-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex19-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex19-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex19-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex19-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex19-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex19-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex19-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex19-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-2": {
+                "myindex2-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex2-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex2-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex2-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex2-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex2-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex2-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex2-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex2-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex2-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-20": {
+                "myindex20-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex20-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex20-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex20-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex20-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex20-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex20-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex20-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex20-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex20-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-21": {
+                "myindex21-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex21-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex21-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex21-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex21-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex21-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex21-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex21-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex21-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex21-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-22": {
+                "myindex22-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex22-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex22-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex22-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex22-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex22-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex22-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex22-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex22-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex22-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-23": {
+                "myindex23-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex23-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex23-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex23-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex23-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex23-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex23-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex23-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex23-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex23-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-24": {
+                "myindex24-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex24-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex24-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex24-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex24-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex24-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex24-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex24-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex24-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex24-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-25": {
+                "myindex25-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex25-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex25-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex25-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex25-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex25-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex25-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex25-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex25-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex25-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-26": {
+                "myindex26-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex26-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex26-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex26-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex26-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex26-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex26-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex26-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex26-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex26-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-27": {
+                "myindex27-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex27-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex27-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex27-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex27-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex27-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex27-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex27-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex27-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex27-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-28": {
+                "myindex28-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex28-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex28-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex28-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex28-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex28-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex28-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex28-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex28-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex28-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-29": {
+                "myindex29-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex29-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex29-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex29-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex29-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex29-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex29-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex29-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex29-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex29-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-3": {
+                "myindex3-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex3-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex3-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex3-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex3-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex3-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex3-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex3-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex3-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex3-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-30": {
+                "myindex30-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex30-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex30-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex30-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex30-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex30-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex30-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex30-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex30-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex30-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-31": {
+                "myindex31-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex31-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex31-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex31-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex31-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex31-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex31-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex31-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex31-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex31-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-32": {
+                "myindex32-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex32-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex32-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex32-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex32-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex32-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex32-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex32-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex32-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex32-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-33": {
+                "myindex33-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex33-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex33-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex33-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex33-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex33-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex33-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex33-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex33-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex33-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-34": {
+                "myindex34-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex34-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex34-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex34-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex34-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex34-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex34-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex34-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex34-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex34-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-35": {
+                "myindex35-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex35-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex35-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex35-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex35-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex35-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex35-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex35-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex35-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex35-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-36": {
+                "myindex36-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex36-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex36-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex36-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex36-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex36-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex36-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex36-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex36-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex36-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-37": {
+                "myindex37-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex37-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex37-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex37-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex37-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex37-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex37-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex37-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex37-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex37-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-38": {
+                "myindex38-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex38-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex38-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex38-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex38-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex38-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex38-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex38-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex38-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex38-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-39": {
+                "myindex39-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex39-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex39-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex39-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex39-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex39-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex39-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex39-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex39-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex39-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-4": {
+                "myindex4-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex4-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex4-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex4-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex4-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex4-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex4-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex4-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex4-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex4-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-40": {
+                "myindex40-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex40-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex40-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex40-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex40-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex40-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex40-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex40-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex40-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex40-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-41": {
+                "myindex41-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex41-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex41-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex41-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex41-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex41-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex41-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex41-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex41-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex41-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-42": {
+                "myindex42-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex42-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex42-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex42-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex42-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex42-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex42-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex42-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex42-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex42-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-43": {
+                "myindex43-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex43-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex43-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex43-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex43-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex43-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex43-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex43-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex43-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex43-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-44": {
+                "myindex44-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex44-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex44-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex44-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex44-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex44-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex44-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex44-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex44-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex44-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-45": {
+                "myindex45-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex45-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex45-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex45-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex45-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex45-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex45-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex45-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex45-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex45-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-46": {
+                "myindex46-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex46-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex46-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex46-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex46-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex46-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex46-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex46-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex46-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex46-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-47": {
+                "myindex47-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex47-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex47-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex47-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex47-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex47-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex47-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex47-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex47-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex47-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-48": {
+                "myindex48-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex48-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex48-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex48-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex48-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex48-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex48-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex48-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex48-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex48-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-49": {
+                "myindex49-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex49-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex49-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex49-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex49-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex49-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex49-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex49-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex49-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex49-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-5": {
+                "myindex5-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex5-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex5-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex5-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex5-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex5-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex5-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex5-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex5-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex5-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-50": {
+                "myindex50-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex50-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex50-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex50-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex50-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex50-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex50-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex50-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex50-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex50-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-51": {
+                "myindex51-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex51-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex51-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex51-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex51-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex51-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex51-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex51-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex51-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex51-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-52": {
+                "myindex52-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex52-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex52-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex52-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex52-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex52-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex52-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex52-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex52-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex52-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-53": {
+                "myindex53-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex53-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex53-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex53-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex53-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex53-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex53-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex53-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex53-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex53-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-54": {
+                "myindex54-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex54-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex54-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex54-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex54-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex54-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex54-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex54-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex54-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex54-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-55": {
+                "myindex55-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex55-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex55-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex55-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex55-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex55-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex55-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex55-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex55-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex55-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-56": {
+                "myindex56-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex56-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex56-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex56-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex56-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex56-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex56-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex56-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex56-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex56-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-57": {
+                "myindex57-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex57-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex57-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex57-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex57-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex57-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex57-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex57-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex57-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex57-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-58": {
+                "myindex58-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex58-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex58-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex58-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex58-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex58-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex58-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex58-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex58-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex58-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-59": {
+                "myindex59-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex59-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex59-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex59-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex59-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex59-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex59-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex59-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex59-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex59-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-6": {
+                "myindex6-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex6-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex6-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex6-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex6-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex6-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex6-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex6-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex6-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex6-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-60": {
+                "myindex60-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex60-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex60-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex60-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex60-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex60-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex60-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex60-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex60-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex60-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-61": {
+                "myindex61-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex61-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex61-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex61-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex61-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex61-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex61-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex61-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex61-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex61-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-62": {
+                "myindex62-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex62-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex62-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex62-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex62-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex62-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex62-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex62-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex62-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex62-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-63": {
+                "myindex63-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex63-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex63-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex63-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex63-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex63-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex63-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex63-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex63-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex63-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-64": {
+                "myindex64-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex64-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex64-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex64-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex64-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex64-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex64-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex64-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex64-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex64-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-65": {
+                "myindex65-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex65-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex65-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex65-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex65-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex65-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex65-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex65-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex65-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex65-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-66": {
+                "myindex66-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex66-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex66-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex66-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex66-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex66-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex66-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex66-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex66-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex66-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-67": {
+                "myindex67-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex67-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex67-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex67-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex67-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex67-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex67-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex67-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex67-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex67-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-68": {
+                "myindex68-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex68-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex68-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex68-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex68-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex68-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex68-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex68-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex68-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex68-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-69": {
+                "myindex69-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex69-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex69-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex69-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex69-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex69-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex69-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex69-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex69-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex69-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-7": {
+                "myindex7-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex7-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex7-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex7-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex7-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex7-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex7-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex7-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex7-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex7-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-70": {
+                "myindex70-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex70-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex70-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex70-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex70-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex70-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex70-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex70-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex70-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex70-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-71": {
+                "myindex71-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex71-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex71-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex71-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex71-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex71-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex71-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex71-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex71-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex71-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-72": {
+                "myindex72-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex72-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex72-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex72-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex72-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex72-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex72-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex72-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex72-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex72-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-73": {
+                "myindex73-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex73-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex73-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex73-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex73-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex73-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex73-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex73-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex73-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex73-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-74": {
+                "myindex74-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex74-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex74-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex74-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex74-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex74-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex74-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex74-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex74-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex74-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-75": {
+                "myindex75-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex75-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex75-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex75-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex75-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex75-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex75-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex75-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex75-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex75-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-76": {
+                "myindex76-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex76-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex76-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex76-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex76-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex76-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex76-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex76-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex76-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex76-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-77": {
+                "myindex77-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex77-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex77-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex77-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex77-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex77-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex77-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex77-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex77-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex77-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-78": {
+                "myindex78-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex78-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex78-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex78-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex78-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex78-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex78-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex78-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex78-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex78-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-79": {
+                "myindex79-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex79-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex79-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex79-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex79-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex79-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex79-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex79-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex79-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex79-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-8": {
+                "myindex8-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex8-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex8-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex8-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex8-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex8-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex8-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex8-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex8-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex8-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-80": {
+                "myindex80-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex80-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex80-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex80-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex80-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex80-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex80-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex80-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex80-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex80-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-81": {
+                "myindex81-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex81-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex81-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex81-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex81-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex81-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex81-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex81-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex81-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex81-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-82": {
+                "myindex82-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex82-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex82-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex82-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex82-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex82-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex82-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex82-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex82-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex82-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-83": {
+                "myindex83-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex83-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex83-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex83-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex83-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex83-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex83-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex83-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex83-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex83-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-84": {
+                "myindex84-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex84-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex84-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex84-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex84-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex84-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex84-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex84-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex84-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex84-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-85": {
+                "myindex85-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex85-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex85-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex85-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex85-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex85-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex85-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex85-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex85-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex85-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-86": {
+                "myindex86-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex86-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex86-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex86-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex86-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex86-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex86-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex86-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex86-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex86-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-87": {
+                "myindex87-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex87-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex87-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex87-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex87-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex87-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex87-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex87-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex87-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex87-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-88": {
+                "myindex88-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex88-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex88-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex88-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex88-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex88-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex88-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex88-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex88-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex88-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-89": {
+                "myindex89-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex89-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex89-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex89-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex89-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex89-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex89-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex89-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex89-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex89-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-9": {
+                "myindex9-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex9-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex9-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex9-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex9-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex9-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex9-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex9-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex9-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex9-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-90": {
+                "myindex90-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex90-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex90-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex90-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex90-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex90-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex90-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex90-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex90-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex90-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-91": {
+                "myindex91-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex91-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex91-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex91-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex91-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex91-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex91-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex91-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex91-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex91-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-92": {
+                "myindex92-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex92-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex92-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex92-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex92-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex92-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex92-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex92-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex92-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex92-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-93": {
+                "myindex93-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex93-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex93-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex93-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex93-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex93-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex93-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex93-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex93-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex93-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-94": {
+                "myindex94-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex94-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex94-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex94-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex94-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex94-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex94-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex94-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex94-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex94-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-95": {
+                "myindex95-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex95-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex95-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex95-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex95-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex95-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex95-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex95-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex95-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex95-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-96": {
+                "myindex96-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex96-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex96-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex96-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex96-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex96-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex96-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex96-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex96-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex96-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-97": {
+                "myindex97-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex97-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex97-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex97-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex97-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex97-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex97-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex97-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex97-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex97-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-98": {
+                "myindex98-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex98-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex98-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex98-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex98-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex98-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex98-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex98-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex98-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex98-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            },
+            "collection-99": {
+                "myindex99-1": {
+                    "field": "name",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex99-10": {
+                    "field": "body",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex99-2": {
+                    "field": "email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex99-3": {
+                    "field": "alt_email",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex99-4": {
+                    "field": "city",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex99-5": {
+                    "field": "realm",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex99-6": {
+                    "field": "coins",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex99-7": {
+                    "field": "category",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex99-8": {
+                    "field": "street",
+                    "num_partition": 0,
+                    "num_replica": 0
+                },
+                "myindex99-9": {
+                    "field": "year",
+                    "num_partition": 0,
+                    "num_replica": 0
+                }
+            }
+        }
+    }
+}

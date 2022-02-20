@@ -834,11 +834,17 @@ def run_cbindexperf(path_to_tool: str, node: str, rest_username: str,
                     rest_password: str, configfile: str,
                     run_in_background: bool = False,
                     collect_profile: bool = True,
-                    is_ssl: bool = False):
+                    is_ssl: bool = False,
+                    gcpercent: int = None):
     logger.info('Initiating scan workload')
-    cmdstr = "{} -cluster {}:8091 -auth=\"{}:{}\" -configfile {} -resultfile result.json " \
-             "-statsfile /root/statsfile" \
-        .format(path_to_tool, node, rest_username, rest_password, configfile)
+    if gcpercent:
+        cmdstr = "{} -cluster {}:8091 -auth=\"{}:{}\" -configfile {} -resultfile result.json " \
+            "-statsfile /root/statsfile -gcpercent {}".\
+            format(path_to_tool, node, rest_username, rest_password, configfile, gcpercent)
+    else:
+        cmdstr = "{} -cluster {}:8091 -auth=\"{}:{}\" -configfile {} -resultfile result.json " \
+                 "-statsfile /root/statsfile" \
+            .format(path_to_tool, node, rest_username, rest_password, configfile)
     if collect_profile:
         cmdstr += " -cpuprofile cpuprofile.prof -memprofile memprofile.prof "
     if is_ssl:

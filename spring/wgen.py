@@ -33,6 +33,7 @@ from spring.docgen import (
     FTSDocument,
     FTSRebalanceDocument,
     GroupedDocument,
+    GroupedDocumentById,
     GSIMultiIndexDocument,
     HashJoinDocument,
     HotKey,
@@ -164,6 +165,8 @@ class Worker:
             self.docs = EventingSmallCounterDocument(self.ws.size)
         elif self.ws.doc_gen == 'grouped':
             self.docs = GroupedDocument(self.ws.size, self.ws.doc_groups)
+        elif self.ws.doc_gen == 'grouped_id':
+            self.docs = GroupedDocumentById(self.ws.size, self.ws.doc_groups)
         elif self.ws.doc_gen == 'large_item_grouped':
             self.docs = LargeItemGroupedDocument(self.ws.size,
                                                  self.ws.doc_groups,

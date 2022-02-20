@@ -1,0 +1,24 @@
+{
+    "Clients": 5,
+    "Concurrency": 128,
+    "ScanSpecs": [
+        {
+            "Bucket": "bucket-1",
+            "Collection": "collection-1",
+            "High": [
+                "gsi-000000000400"
+            ],
+            "Id": 1,
+            "Inclusion": 3,
+            "Index": "index1-1",
+            "Limit": 1,
+            "Low": [
+                "gsi-000000000400"
+            ],
+            "NInterval": 100,
+            "Repeat": 9999999,
+            "Scope": "scope-1",
+            "Type": "Range"
+        }
+    ]
+}

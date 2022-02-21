@@ -97,6 +97,16 @@ class EventingTest(PerfTest):
             self.monitor.wait_for_bootstrap(nodes=self.eventing_nodes,
                                             function=name)
 
+    def get_function_scope(self):
+        functions = self.rest.get_functions(node=self.eventing_nodes[0])
+        logger.info("function")
+        list = {}
+        for func in functions:
+            if func["function_scope"]:
+                list[func["appname"]] = {"bucket": func["function_scope"]["bucket"],
+                                         "scope": func["function_scope"]["scope"]}
+        return list
+
     def set_functions(self) -> float:
         with open(self.config_file) as f:
             func = json.load(f)
@@ -197,47 +207,47 @@ class EventingTest(PerfTest):
         self.sleep()
 
     @timeit
-    def undeploy_function(self, name):
+    def undeploy_function(self, name, func_scope):
         func = '{"processing_status":false, "deployment_status":false}'
         self.rest.change_function_settings(node=self.eventing_nodes[0],
-                                           func=func, name=name)
+                                           func=func, name=name, func_scope=func_scope)
         self.monitor.wait_for_function_status(node=self.eventing_nodes[0], function=name,
                                               status="undeployed")
 
     @timeit
-    def pause_function(self, name):
+    def pause_function(self, name, func_scope):
         func = '{"processing_status":false, "deployment_status":true}'
         self.rest.change_function_settings(node=self.eventing_nodes[0],
-                                           func=func, name=name)
+                                           func=func, name=name, func_scope=func_scope)
         self.monitor.wait_for_function_status(node=self.eventing_nodes[0], function=name,
                                               status="paused")
 
     @timeit
-    def resume_function(self, name):
+    def resume_function(self, name, func_scope):
         func = '{"processing_status":true, "deployment_status":true}'
         self.rest.change_function_settings(node=self.eventing_nodes[0],
-                                           func=func, name=name)
+                                           func=func, name=name, func_scope=func_scope)
         self.monitor.wait_for_function_status(node=self.eventing_nodes[0], function=name,
                                               status="deployed")
 
-    def undeploy(self) -> int:
+    def undeploy(self, func_scope=None) -> int:
         time_to_undeploy = 0
         for name, filename in self.functions.items():
-            time_to_undeploy += self.undeploy_function(name=name)
+            time_to_undeploy += self.undeploy_function(name=name, func_scope=func_scope[name])
             logger.info("Function {} is undeployed.".format(name))
         return time_to_undeploy
 
-    def pause(self) -> int:
+    def pause(self, func_scope=None) -> int:
         time_to_pause = 0
         for name, filename in self.functions.items():
-            time_to_pause += self.pause_function(name=name)
+            time_to_pause += self.pause_function(name=name, func_scope=func_scope[name])
             logger.info("Function {} is paused.".format(name))
         return time_to_pause
 
-    def resume(self) -> int:
+    def resume(self, func_scope=None) -> int:
         time_to_resume = 0
         for name, filename in self.functions.items():
-            time_to_resume += self.resume_function(name=name)
+            time_to_resume += self.resume_function(name=name, func_scope=func_scope[name])
             logger.info("Function {} is resumed.".format(name))
         return time_to_resume
 
@@ -331,18 +341,20 @@ class FunctionsTimeTest(EventingTest):
 
 
 class FunctionsPhaseChangeTimeTest(EventingTest):
-    TIME_BETWEEN_PHASES = 300
+    TIME_BETWEEN_PHASES = 1
 
     @with_stats
     def apply_function(self):
         time_to_deploy = self.set_functions()
         self.access_bg()
+        function_scope = self.get_function_scope()
+        logger.info("### func {}".format(function_scope))
         time.sleep(self.TIME_BETWEEN_PHASES)
-        time_to_pause = self.pause()
+        time_to_pause = self.pause(func_scope=function_scope)
         time.sleep(self.TIME_BETWEEN_PHASES)
-        time_to_resume = self.resume()
+        time_to_resume = self.resume(func_scope=function_scope)
         time.sleep(self.TIME_BETWEEN_PHASES)
-        time_to_undeploy = self.undeploy()
+        time_to_undeploy = self.undeploy(func_scope=function_scope)
         return time_to_deploy, time_to_pause, time_to_resume, time_to_undeploy
 
     def run(self):

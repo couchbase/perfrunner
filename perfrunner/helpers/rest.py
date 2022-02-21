@@ -1115,13 +1115,29 @@ class DefaultRestHelper(RestBase):
             api = 'http://{}:8096/api/v1/functions/{}'.format(node, name)
         self.post(url=api, data=json.dumps(func))
 
-    def change_function_settings(self, node: str, func: dict, name: str):
-        logger.info('Changing function settings on on node {}: {}'.format(node,
-                                                                          pretty_dict(func)))
+    def get_functions(self, node: str):
+        logger.info('Getting all functions')
+        if self.test_config.cluster.enable_n2n_encryption:
+            api = 'https://{}:18096/api/v1/functions'.format(node)
+        else:
+            api = 'http://{}:8096/api/v1/functions'.format(node)
+        return self.get(url=api).json()
+
+    def change_function_settings(self, node: str, func: dict, name: str, func_scope: dict):
+        logger.info('Changing function settings on node {}: {}'.format(node,
+                    pretty_dict(func)))
+        logger.info('function scope for {} is {}'.format(name, pretty_dict(func_scope)))
         if self.test_config.cluster.enable_n2n_encryption:
             api = 'https://{}:18096/api/v1/functions/{}/settings/'.format(node, name)
+            if func_scope:
+                api = 'https://{}:18096/api/v1/functions/{}/settings?bucket={}&scope={}'.\
+                    format(node, name, func_scope['bucket'], func_scope['scope'])
         else:
             api = 'http://{}:8096/api/v1/functions/{}/settings/'.format(node, name)
+            if func_scope:
+                api = 'http://{}:8096/api/v1/functions/{}/settings?bucket={}&scope={}'.\
+                    format(node, name, func_scope['bucket'], func_scope['scope'])
+        logger.info("Api path {}".format(api))
         self.post(url=api, data=func)
 
     def get_num_events_processed(self, event: str, node: str, name: str):

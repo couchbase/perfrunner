@@ -25,8 +25,8 @@ class EventingStats(Collector):
         for node in self.eventing_nodes:
             stats = self.get_eventing_stats(server=node)
             for fun_stat in stats:
-                samples[fun_stat["function_name"]] = fun_stat["event_processing_stats"]
-
+                if fun_stat["function_name"]:
+                    samples[fun_stat["function_name"]] = fun_stat["event_processing_stats"]
         return samples
 
     def sample(self):
@@ -58,8 +58,9 @@ class EventingPerNodeStats(EventingStats):
             stats = self.get_eventing_stats(server=node)
             events_remaining = 0
             for fun_stat in stats:
-                events_remaining += fun_stat["events_remaining"]["dcp_backlog"]
-                events_remaining_stats[node] = {"DcpEventsRemaining": events_remaining}
+                if fun_stat["events_remaining"]:
+                    events_remaining += fun_stat["events_remaining"]["dcp_backlog"]
+                    events_remaining_stats[node] = {"DcpEventsRemaining": events_remaining}
         return events_remaining_stats
 
     def sample(self):
@@ -93,7 +94,8 @@ class EventingPerHandlerStats(EventingStats):
             stats = self.get_eventing_stats(server=node)
             for stat in stats:
                 if stat["function_name"] == function_name:
-                    on_update_success += stat["execution_stats"]["on_update_success"]
+                    if stat["execution_stats"]:
+                        on_update_success += stat["execution_stats"]["on_update_success"]
         handler_stats[function_name]["on_update_success"] = on_update_success
         return handler_stats
 

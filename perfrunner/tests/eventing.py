@@ -712,7 +712,8 @@ class TimerUndeployTest(TimerTest):
     def load_and_wait_for_timers(self):
         self.load()
         self.wait_for_all_timers_creation()
-        time_to_undeploy = self.undeploy()
+        function_scope = self.get_function_scope()
+        time_to_undeploy = self.undeploy(func_scope=function_scope)
         return time_to_undeploy
 
     def run(self):

@@ -1,0 +1,57 @@
+[test_case]
+test = perfrunner.tests.rebalance.RebalanceKVTest
+
+[showfast]
+title = Rebalance-swap (min), 3 -> 3, 65M x 1KB, 400 ops/sec (90/10 R/W), 10%% cache miss rate, N2N, TLS,  AWS/Capella, m5.xlarge
+component = cloud
+category = kv
+orderby = cc1
+
+[cluster]
+mem_quota = 12288
+initial_nodes = 3
+num_buckets = 1
+enable_cpu_cores = false
+enable_n2n_encryption = all
+ui_http = disabled
+
+[bucket]
+replica_number = 1
+eviction_policy = fullEviction
+failover_min = 10
+
+[load]
+items = 65000000
+size = 1024
+workers = 80
+key_fmtr = hex
+doc_gen = large
+
+[hot_load]
+items = 250000000
+workers = 80
+working_set = 5
+
+[access]
+creates = 0
+reads = 90
+updates = 10
+deletes = 0
+throughput = 400
+items = 65000000
+workers = 40
+working_set = 5
+working_set_access = 90
+ssl_mode = data
+show_tls_version = true
+min_tls_version = tlsv1.2
+
+[rebalance]
+nodes_after = 3
+swap = 1
+start_after = 600
+stop_after = 1800
+
+[clients]
+libcouchbase = 2.9.3
+python_client = 2.5.0

@@ -1,0 +1,52 @@
+[test_case]
+test = perfrunner.tests.ycsb.YCSBLatencyTest
+
+[showfast]
+title = Latency(ms), Workload A, 3 nodes, 60K ops/sec, N2N, TLS, AWS/Capella, m5.4xlarge
+component = cloud
+category = kv
+orderby = bb2
+
+[cluster]
+mem_quota = 40960
+initial_nodes = 3
+num_buckets = 1
+enable_cpu_cores = false
+enable_n2n_encryption = all
+ui_http = disabled
+
+[bucket]
+replica_number = 1
+eviction_policy = fullEviction
+failover_min = 10
+
+[load]
+workload_path = workloads/workloada
+ycsb_client = couchbase3
+items = 20000000
+workers = 160
+
+[access]
+workload_path = workloads/workloada
+ycsb_client = couchbase3
+items = 20000000
+target = 10000
+ops = 0
+time = 7200
+boost = 12
+workers = 10
+timeseries = 1
+workload_instances = 6
+kv_endpoints = 16
+ssl_mode = data
+show_tls_version = true
+min_tls_version = tlsv1.2
+
+[ycsb]
+latency_percentiles = 99
+average_latency = 1
+branch = couchbase3
+
+[stats]
+client_processes = java
+server_processes = projector prometheus

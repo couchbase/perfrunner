@@ -6,39 +6,32 @@ class SecondaryStorageStats(Collector):
     COLLECTOR = "secondary_storage_stats"
 
     METRICS = (
-        "allocated",
-        "bytes_incoming",
-        "bytes_written",
         "cache_hit_ratio",
-        "cache_hits",
-        "cache_misses",
         "compress_cache_hit_ratio",
-        "compressed_compressible_percent",
         "compressed_percent",
-        "freed",
-        "lss_fragmentation",
+        "lss_stats/lss_fragmentation",
         "memory_size",
-        "num_cached_pages",
-        "num_pages",
-        "num_pages_swapin",
-        "num_pages_swapout",
         "rcache_hit_ratio",
-        "rcache_hits",
-        "rcache_misses",
         "rcompress_cache_hit_ratio",
-        "reclaimed",
         "reclaim_pending",
         "resident_ratio",
         "write_amp",
         "mvcc_purge_ratio",
         "memory_quota",
-        "num_burst_visits",
-        "num_periodic_visits",
         "lss_blk_read_bs",
-        "lss_blk_gc_reads_bs",
+        "lss_stats/lss_blk_gc_reads_bs",
         "lss_blk_rdr_reads_bs",
-        "lss_cached_pages_percent",
-        "rlss_num_reads"
+        "rlss_num_reads",
+        "avg_throttle_dur_reader",
+        "avg_throttle_dur_writer",
+        "avg_throttle_dur_other",
+        "inserts",
+        "burst_eviction_rate",
+        "periodic_eviction_rate",
+        "eviction_rate_reader",
+        "eviction_rate_writer",
+        "eviction_rate_swapper",
+        "eviction_rate_other",
     )
 
     def __init__(self, settings):
@@ -59,7 +52,12 @@ class SecondaryStorageStats(Collector):
 
             for store in sample["Stats"]:
                 for metric, value in sample["Stats"][store].items():
-                    if metric in self.METRICS:
+                    if metric == "lss_stats":
+                        for lss_key, lss_value in sample["Stats"][store]["lss_stats"].items():
+                            if "lss_stats/" + lss_key in self.METRICS:
+                                key = store + "_" + lss_key
+                                stats[key] = lss_value
+                    elif metric in self.METRICS:
                         key = store + "_" + metric
                         stats[key] = value
             index_stats[index] = stats

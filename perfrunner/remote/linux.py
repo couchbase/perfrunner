@@ -639,6 +639,48 @@ class RemoteLinux(Remote):
             "-noprompt -keystore {} -alias couchbase"
             .format(remote_root_cert, storepass, remote_keystore))
 
+    @all_clients
+    def cloud_put_certificate(self, cert, worker_home):
+        put(cert, worker_home + '/perfrunner')
+
+    @master_client
+    def run_cbindexperf(self, path_to_tool: str, node: str,
+                        rest_username: str,
+                        rest_password: str, configfile: str,
+                        worker_home: str,
+                        run_in_background: bool = False,
+                        collect_profile: bool = True,
+                        is_ssl: bool = False):
+        with cd(worker_home), cd('perfrunner'):
+            logger.info('Initiating scan workload')
+            cmdstr = "export CBAUTH_REVRPC_URL=http://Administrator:password@{}" \
+                     ":8091/query;" \
+                     " {} -cluster {}:8091 -auth=\"{}:{}\" -configfile {} " \
+                     "-resultfile result.json " \
+                     "-statsfile /root/statsfile" \
+                .format(node, path_to_tool, node, rest_username, rest_password, configfile)
+            if collect_profile:
+                cmdstr += " -cpuprofile cpuprofile.prof -memprofile memprofile.prof "
+            if is_ssl:
+                cmdstr += " -use_tls -cacert ./root.pem"
+            if run_in_background:
+                cmdstr += " &"
+            logger.info('To be applied: {}'.format(cmdstr))
+            status = run(cmdstr)
+            return status
+
+    @master_client
+    def get_indexer_heap_profile(self, indexer: str):
+        logger.info('I get here.')
+        cmd = 'export GOPATH=$HOME/go; ' \
+              'export GOROOT=/usr/local/go; ' \
+              'export PATH=$PATH:$GOROOT/bin; ' \
+              'go tool pprof --text http://Administrator:password@{}:9102' \
+              '/debug/pprof/heap'.format(indexer)
+        logger.info('Running: {}'.format(cmd))
+        result = run(cmd)
+        return result
+
     def set_auto_failover(self, host: str, enable: bool, timeout: int = 5):
         logger.info('Setting auto failover: {} on {}'.format(enable, host))
         cmd = "/opt/couchbase/bin/couchbase-cli setting-autofailover"

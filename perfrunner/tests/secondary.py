@@ -242,6 +242,30 @@ class SecondaryIndexTest(PerfTest):
         else:
             logger.info('Scan workload applied')
 
+    @with_stats
+    @with_profiles
+    def cloud_apply_scanworkload(self, path_to_tool="./opt/couchbase/bin/cbindexperf",
+                                 run_in_background=False, is_ssl=False):
+        rest_username, rest_password = self.cluster_spec.rest_credentials
+        with open(self.configfile, 'r') as fp:
+            config_file_content = fp.read()
+
+        if not self.test_config.gsi_settings.disable_perindex_stats:
+            logger.info("cbindexperf config file: \n" + config_file_content)
+
+        status = str(self.remote.run_cbindexperf(path_to_tool, self.index_nodes[0],
+                                                 rest_username, rest_password,
+                                                 self.configfile,
+                                                 self.worker_manager.WORKER_HOME,
+                                                 run_in_background, is_ssl=is_ssl))
+
+        if status != "Log Level = error":
+            raise Exception('Scan workload could not be applied: ' + str(status))
+        else:
+            logger.info('Scan workload applied')
+
+        logger.info('Scan workload applied')
+
     def calc_avg_rr(self, storage_stats):
         total_num_rec_allocs, total_num_rec_frees, total_num_rec_swapout, total_num_rec_swapin =\
             0, 0, 0, 0
@@ -674,6 +698,63 @@ class SecondaryIndexingScanTest(SecondaryIndexTest):
         self.report_kpi(0, 0, initial_index_time)
         self.access_bg()
         self.apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf", is_ssl=self.is_ssl)
+        scan_thr, row_thr = self.read_scanresults()
+        percentile_latencies = self.calculate_scan_latencies()
+        logger.info('Scan throughput: {}'.format(scan_thr))
+        logger.info('Rows throughput: {}'.format(row_thr))
+        self.print_index_disk_usage()
+        self.report_kpi(percentile_latencies, scan_thr, 0)
+        self.validate_num_connections()
+
+
+class CloudSecondaryIndexingScanTest(SecondaryIndexingScanTest):
+
+    """CLOUD - Apply moving scan workload and measure scan latency and average scan throughput."""
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.remote.extract_cb('couchbase.rpm', worker_home=self.worker_manager.WORKER_HOME)
+
+    def print_index_disk_usage(self, text=""):
+        self.print_average_rr()
+        if self.test_config.gsi_settings.disable_perindex_stats:
+            return
+
+        if text:
+            logger.info("{}".format(text))
+
+        disk_usage = self.remote.get_disk_usage(self.index_nodes[0],
+                                                self.cluster_spec.index_path)
+        logger.info("Disk usage:\n{}".format(disk_usage))
+
+        storage_stats = self.rest.get_index_storage_stats(self.index_nodes[0])
+        logger.info("Index storage stats:\n{}".format(storage_stats.text))
+
+        heap_profile = self.remote.get_indexer_heap_profile(self.index_nodes[0])
+        logger.info("Indexer heap profile:\n{}".format(heap_profile))
+
+        if self.storage == 'plasma':
+            stats = self.rest.get_index_storage_stats_mm(self.index_nodes[0])
+            logger.info("Index storage stats mm:\n{}".format(stats))
+
+        return self.remote.get_disk_usage(self.index_nodes[0],
+                                          self.cluster_spec.index_path,
+                                          human_readable=False)
+
+    def run(self):
+        self.download_certificate()
+        self.remote.cloud_put_certificate(self.ROOT_CERTIFICATE, self.worker_manager.WORKER_HOME)
+        self.remove_statsfile()
+        self.load()
+        self.wait_for_persistence()
+
+        initial_index_time = self.build_secondaryindex()
+        self.report_kpi(0, 0, initial_index_time)
+        self.access_bg()
+        self.cloud_apply_scanworkload(path_to_tool="./opt/couchbase/bin/cbindexperf",
+                                      is_ssl=self.is_ssl)
+        self.remote.get_gsi_measurements(self.worker_manager.WORKER_HOME)
+        self.remote.get_indexer_heap_profile(self.index_nodes[0])
         scan_thr, row_thr = self.read_scanresults()
         percentile_latencies = self.calculate_scan_latencies()
         logger.info('Scan throughput: {}'.format(scan_thr))

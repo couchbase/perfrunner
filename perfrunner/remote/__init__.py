@@ -145,6 +145,17 @@ class Remote:
             if not r.return_code:
                 get('YCSB/ycsb_run_*.log', local_path='YCSB/')
 
+    @all_clients
+    def get_gsi_measurements(self, worker_home: str):
+        logger.info('Collecting GSI measurements')
+        with cd(worker_home), cd('perfrunner'):
+            r = run('stat result.json', quiet=True)
+            if not r.return_code:
+                get('result.json', local_path='.')
+            r = run('stat /root/statsfile', quiet=True)
+            if not r.return_code:
+                get('/root/statsfile', local_path='/root/')
+
     @master_client
     def extract_cb(self, filename: str, worker_home: str):
         logger.info('Extracting couchbase.rpm')

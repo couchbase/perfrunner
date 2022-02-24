@@ -99,13 +99,14 @@ class EventingTest(PerfTest):
 
     def get_function_scope(self):
         functions = self.rest.get_functions(node=self.eventing_nodes[0])
-        logger.info("function")
-        list = {}
+        func_scope = {}
         for func in functions:
-            if func["function_scope"]:
-                list[func["appname"]] = {"bucket": func["function_scope"]["bucket"],
-                                         "scope": func["function_scope"]["scope"]}
-        return list
+            if "function_scope" in func:
+                func_scope[func["appname"]] = {"bucket": func["function_scope"]["bucket"],
+                                               "scope": func["function_scope"]["scope"]}
+        if not func_scope:
+            return None
+        return func_scope
 
     def set_functions(self) -> float:
         with open(self.config_file) as f:
@@ -207,7 +208,7 @@ class EventingTest(PerfTest):
         self.sleep()
 
     @timeit
-    def undeploy_function(self, name, func_scope):
+    def undeploy_function(self, name, func_scope=None):
         func = '{"processing_status":false, "deployment_status":false}'
         self.rest.change_function_settings(node=self.eventing_nodes[0],
                                            func=func, name=name, func_scope=func_scope)
@@ -215,7 +216,7 @@ class EventingTest(PerfTest):
                                               status="undeployed")
 
     @timeit
-    def pause_function(self, name, func_scope):
+    def pause_function(self, name, func_scope=None):
         func = '{"processing_status":false, "deployment_status":true}'
         self.rest.change_function_settings(node=self.eventing_nodes[0],
                                            func=func, name=name, func_scope=func_scope)
@@ -223,7 +224,7 @@ class EventingTest(PerfTest):
                                               status="paused")
 
     @timeit
-    def resume_function(self, name, func_scope):
+    def resume_function(self, name, func_scope=None):
         func = '{"processing_status":true, "deployment_status":true}'
         self.rest.change_function_settings(node=self.eventing_nodes[0],
                                            func=func, name=name, func_scope=func_scope)
@@ -233,21 +234,30 @@ class EventingTest(PerfTest):
     def undeploy(self, func_scope=None) -> int:
         time_to_undeploy = 0
         for name, filename in self.functions.items():
-            time_to_undeploy += self.undeploy_function(name=name, func_scope=func_scope[name])
+            if func_scope:
+                time_to_undeploy += self.undeploy_function(name=name, func_scope=func_scope[name])
+            else:
+                time_to_undeploy += self.undeploy_function(name=name)
             logger.info("Function {} is undeployed.".format(name))
         return time_to_undeploy
 
     def pause(self, func_scope=None) -> int:
         time_to_pause = 0
         for name, filename in self.functions.items():
-            time_to_pause += self.pause_function(name=name, func_scope=func_scope[name])
+            if func_scope:
+                time_to_pause += self.pause_function(name=name, func_scope=func_scope[name])
+            else:
+                time_to_pause += self.pause_function(name=name)
             logger.info("Function {} is paused.".format(name))
         return time_to_pause
 
     def resume(self, func_scope=None) -> int:
         time_to_resume = 0
         for name, filename in self.functions.items():
-            time_to_resume += self.resume_function(name=name, func_scope=func_scope[name])
+            if func_scope:
+                time_to_resume += self.resume_function(name=name, func_scope=func_scope[name])
+            else:
+                time_to_resume += self.resume_function(name=name)
             logger.info("Function {} is resumed.".format(name))
         return time_to_resume
 
@@ -348,7 +358,6 @@ class FunctionsPhaseChangeTimeTest(EventingTest):
         time_to_deploy = self.set_functions()
         self.access_bg()
         function_scope = self.get_function_scope()
-        logger.info("### func {}".format(function_scope))
         time.sleep(self.TIME_BETWEEN_PHASES)
         time_to_pause = self.pause(func_scope=function_scope)
         time.sleep(self.TIME_BETWEEN_PHASES)

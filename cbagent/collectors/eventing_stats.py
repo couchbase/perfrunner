@@ -25,7 +25,7 @@ class EventingStats(Collector):
         for node in self.eventing_nodes:
             stats = self.get_eventing_stats(server=node)
             for fun_stat in stats:
-                if fun_stat["function_name"]:
+                if "function_name" in fun_stat:
                     samples[fun_stat["function_name"]] = fun_stat["event_processing_stats"]
         return samples
 
@@ -58,7 +58,7 @@ class EventingPerNodeStats(EventingStats):
             stats = self.get_eventing_stats(server=node)
             events_remaining = 0
             for fun_stat in stats:
-                if fun_stat["events_remaining"]:
+                if "events_remaining" in fun_stat:
                     events_remaining += fun_stat["events_remaining"]["dcp_backlog"]
                     events_remaining_stats[node] = {"DcpEventsRemaining": events_remaining}
         return events_remaining_stats
@@ -93,8 +93,8 @@ class EventingPerHandlerStats(EventingStats):
         for node in self.eventing_nodes:
             stats = self.get_eventing_stats(server=node)
             for stat in stats:
-                if stat["function_name"] == function_name:
-                    if stat["execution_stats"]:
+                if "function_name" in function_name and stat["function_name"] == function_name:
+                    if "execution_stats" in stat:
                         on_update_success += stat["execution_stats"]["on_update_success"]
         handler_stats[function_name]["on_update_success"] = on_update_success
         return handler_stats
@@ -132,7 +132,7 @@ class EventingConsumerStats(EventingPerNodeStats):
             stats = self.get_eventing_stats(server=node)
             worker_pids = {}
             for fun_stat in stats:
-                if fun_stat["function_name"] == function_name:
+                if "function_name" in function_name and fun_stat["function_name"] == function_name:
                     worker_pids = fun_stat["worker_pids"]
                     break
             node_pids[node] = worker_pids

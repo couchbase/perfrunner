@@ -788,8 +788,8 @@ class RemoteKubernetes(Remote):
               'PYTHONWARNINGS=ignore ' \
               'WORKER_TYPE=remote ' \
               'BROKER_URL={1} ' \
-              'nohup env/bin/celery worker -A perfrunner.helpers.worker' \
-              ' -l INFO -Q {0} -n {0} -C --discard &>worker_{2}.log &' \
+              'nohup env/bin/celery worker -C -A perfrunner.helpers.worker worker' \
+              ' -l INFO -Q {0} -n {0} --discard &>worker_{2}.log &' \
             .format(worker_hostname,
                     broker_url,
                     worker_name)

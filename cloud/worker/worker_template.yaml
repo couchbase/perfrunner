@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: perfrunner
-        image: korry8911/perfrunner:latest
+        image: scorrcb/perfrunner:latest
         resources:
           limits:
             cpu: 80

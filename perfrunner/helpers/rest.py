@@ -48,7 +48,7 @@ class RestHelper:
                 verbose: bool = False
                 ):
         if cluster_spec.dynamic_infrastructure:
-            return KubernetesRestHelper(cluster_spec)
+            return KubernetesRestHelper(cluster_spec, test_config)
         else:
             return DefaultRestHelper(cluster_spec, test_config)
 
@@ -1452,8 +1452,8 @@ class DefaultRestHelper(RestBase):
 
 class KubernetesRestHelper(RestBase):
 
-    def __init__(self, cluster_spec: ClusterSpec):
-        super().__init__(cluster_spec=cluster_spec)
+    def __init__(self, cluster_spec: ClusterSpec, test_config: TestConfig):
+        super().__init__(cluster_spec=cluster_spec, test_config=test_config)
         self.remote = RemoteHelper(cluster_spec)
         self.ip_table, self.port_translation = self.remote.get_ip_port_mapping()
 

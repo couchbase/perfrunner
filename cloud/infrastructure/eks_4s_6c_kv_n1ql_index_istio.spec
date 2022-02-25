@@ -1,5 +1,6 @@
 [infrastructure]
 provider = aws
+type = kubernetes
 
 [clusters]
 couchbase1 =
@@ -26,7 +27,7 @@ clusters = k8s_cluster_1
 
 [k8s_cluster_1]
 node_groups = k8s_node_group_1,k8s_node_group_2,k8s_node_group_3
-version = 1.17
+version = 1.18
 storage_class = gp2
 istio_enabled = 1
 

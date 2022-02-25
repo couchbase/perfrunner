@@ -108,11 +108,14 @@ class AWSDeployer(Deployer):
 
         if not vpc_available:
             raise Exception("vpc cidr block already in use")
+        desired_tenancy = 'dedicated'
+        if self.desired_infra['k8s']:
+            desired_tenancy = 'default'
         response = self.ec2client.create_vpc(
             CidrBlock='10.{}.0.0/16'.format(self.vpc_int),
             AmazonProvidedIpv6CidrBlock=False,
             DryRun=False,
-            InstanceTenancy='dedicated',
+            InstanceTenancy=desired_tenancy,
             TagSpecifications=[
                 {'ResourceType': 'vpc',
                  'Tags': [{'Key': 'Use', 'Value': 'CloudPerfTesting'}]}])

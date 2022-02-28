@@ -18,7 +18,7 @@ replica_number = 0
 [load]
 workload_path = workloads/workloada
 items = 10000000
-workers = 120
+workers = 60
 
 [access]
 workload_path = workloads/workloada

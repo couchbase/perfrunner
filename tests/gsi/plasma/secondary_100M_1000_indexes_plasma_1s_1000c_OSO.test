@@ -13,7 +13,7 @@ server_processes = projector
 mem_quota = 5000
 index_mem_quota = 460000
 kv_kernel_mem_limit = 9G
-kernel_mem_limit_services = kv index
+kernel_mem_limit_services = kv
 initial_nodes = 6
 num_buckets = 1
 

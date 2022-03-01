@@ -15,7 +15,7 @@ index_mem_quota = 460000
 initial_nodes = 6
 num_buckets = 1
 kv_kernel_mem_limit = 5G
-kernel_mem_limit_services = kv index
+kernel_mem_limit_services = kv
 
 [bucket]
 replica_number=0

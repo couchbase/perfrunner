@@ -422,3 +422,44 @@ class FTSLatencyCloudTest(FTSLatencyTest):
         self.warmup()
         self.run_test()
         self.report_kpi()
+
+
+class FTSLatencyCloudBackupTest(FTSLatencyTest):
+
+    def restore(self):
+        self.remote.extract_cb(filename='couchbase.rpm',
+                               worker_home=self.worker_manager.WORKER_HOME)
+        self.remote.cbbackupmgr_version(worker_home=self.worker_manager.WORKER_HOME)
+        credential = local.read_aws_credential(self.test_config.backup_settings.aws_credential_path)
+        self.remote.create_aws_credential(credential)
+        self.remote.client_drop_caches()
+
+        self.remote.restore(cluster_spec=self.cluster_spec,
+                            master_node=self.master_node,
+                            threads=self.test_config.restore_settings.threads,
+                            worker_home=self.worker_manager.WORKER_HOME,
+                            archive=self.test_config.restore_settings.backup_storage,
+                            repo=self.test_config.restore_settings.backup_repo,
+                            obj_staging_dir=self.test_config.backup_settings.obj_staging_dir,
+                            obj_region=self.test_config.backup_settings.obj_region,
+                            use_tls=self.test_config.restore_settings.use_tls,
+                            map_data=self.test_config.restore_settings.map_data)
+        self.wait_for_persistence()
+        if self.test_config.collection.collection_map:
+            self.spread_data()
+
+    def run(self):
+        self.restore()
+        self.create_fts_index_definitions()
+        self.create_fts_indexes()
+        self.download_jts()
+        self.wait_for_index_persistence()
+        self.warmup()
+        self.run_test()
+        self.report_kpi()
+
+
+class FTSThroughputCloudBackupTest(FTSLatencyCloudBackupTest):
+
+    def report_kpi(self):
+        self.reporter.post(*self.metrics.jts_throughput())

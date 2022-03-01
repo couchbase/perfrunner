@@ -120,14 +120,16 @@ class Remote:
     def get_jts_logs(self, worker_home: str, jts_home: str, local_dir: str):
         logger.info("Collecting remote JTS logs")
         jts_logs_dir = "{}/logs".format(jts_home)
-        local_dir = "{}/logs/".format(local_dir)
-        if not os.path.exists(local_dir):
-            os.mkdir(local_dir)
         with cd(worker_home), cd('perfrunner'), cd(jts_logs_dir):
-            directory = run('ls -d */')
-            r = run('stat {}*.log'.format(directory), quiet=True)
-            if not r.return_code:
-                get('{}*.log'.format(directory), local_path=local_dir)
+            directories = run('ls -d */')
+            directories = directories.split()
+            for directory in directories:
+                target_dir = "{}/{}".format(local_dir, directory)
+                if not os.path.exists(target_dir):
+                    os.mkdir(target_dir)
+                r = run('stat {}*.log'.format(directory), quiet=True)
+                if not r.return_code:
+                    get('{}*.log'.format(directory), local_path=target_dir)
 
     @all_clients
     def get_celery_logs(self, worker_home: str):

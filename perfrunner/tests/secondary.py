@@ -623,7 +623,8 @@ class InitialSecondaryIndexTest(InitialandIncrementalSecondaryIndexTest):
         self.print_index_disk_usage()
 
         # Adding sleep to get log cleaner catch up
-        time.sleep(600)
+        if self.run_recovery_test:
+            time.sleep(600)
         self.run_recovery_scenario()
 
 

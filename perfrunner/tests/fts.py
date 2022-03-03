@@ -96,20 +96,17 @@ class FTSTest(JTSTest):
 
     def collection_split(self, collection_map, bucket, scope):
         collection_list_per_index = []
-        start = 0
         collection_list = list(collection_map[bucket][scope].keys())
         total_num_collections = len(collection_list)
-        collections_per_index = int(total_num_collections / int(self.access.index_groups))
-        end = collections_per_index
-        end_index = collections_per_index*int(self.access.index_groups)
+        collections_per_index = int(total_num_collections / self.access.index_groups)
 
         if int(self.access.index_groups) == 1:
             # if index is built on all the collections
             return [collection_list]
-        while end <= end_index:
+        for i in range(self.access.index_groups):
+            start = collections_per_index * i
+            end = collections_per_index * (i + 1)
             collection_list_per_index.append(collection_list[start:end])
-            start = end
-            end = end + collections_per_index
 
         return collection_list_per_index
 
@@ -189,6 +186,7 @@ class FTSTest(JTSTest):
                                                                          index_type_mapping,
                                                                          key_values
                                                                          )
+
             # calculating the doc per collection for persistence
             num_docs_per_collection = \
                 self.test_config.load_settings.items // len(collection_name_list)
@@ -197,10 +195,11 @@ class FTSTest(JTSTest):
             for coll_group_id, collection_type_mapping in enumerate(index_type_mapping_per_group):
                 for index_count in range(0, self.access.indexes_per_group):
                     index_name = "{}-{}".format(self.access.couchbase_index_name, index_id)
-                    index_def.update({
+                    temp_index_def = copy.deepcopy(index_def)
+                    temp_index_def.update({
                         'name': index_name,
                     })
-                    index_def["params"]["mapping"]["types"] = collection_type_mapping
+                    temp_index_def["params"]["mapping"]["types"] = collection_type_mapping
                     self.fts_index_map[index_name] = \
                         {
                             "bucket": bucket_name,
@@ -209,7 +208,7 @@ class FTSTest(JTSTest):
                             "total_docs": items_per_index
                         }
                     self.fts_index_defs[index_name] = {
-                        "index_def": index_def
+                        "index_def": temp_index_def
                     }
                     index_id += 1
 

@@ -243,7 +243,10 @@
         {"job": "arke-multi-client", "cluster": "arke.spec", "test_config": "n1ql/tpc-ds/n1ql_thr_WF10_100M_plasma_ok.test"}
     ],
     "N1QL-Windows": [],
-    "Rebalance": [],
+    "Rebalance": [
+        {"job": "titan", "cluster": "titan.spec", "test_config": "reb_swap_1B_9nodes_kv_disk_io_optimized.test"},
+        {"job": "titan", "cluster": "titan.spec", "test_config": "reb_swap_1B_9nodes_n2n_kv.test"}
+    ],
     "Rebalance-C1": [
         {"job": "titan_5node1", "cluster": "titan_5node1.spec", "test_config": "durability/rebalance/reb_swap_20M_4nodes_durability_majority.test"}
     ],
@@ -251,6 +254,9 @@
         {"job": "titan_5node2", "cluster": "titan_5node2.spec", "test_config": "durability/rebalance/reb_swap_20M_4nodes_durability_persist_majority.test"}
     ],
     "Rebalance-Large-Scale": [],
+    "Rebalance-Hestia": [
+        {"job": "hestia", "cluster": "hestia.spec", "test_config": "reb_failover_30bucket_100M_dgm_kv_hard.test"}
+    ],
     "Tools": [
         {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_100M_rift.test"},
         {"job": "leto", "cluster": "leto.spec", "test_config": "tools_backup_400M_sqlite.test"},

@@ -362,7 +362,9 @@
         {"job": "hercules", "cluster": "hercules.spec", "test_config": "collections/ycsb/ycsb_workloadce_4nodes_plasma_1s_1c.test"},
         {"job": "hercules", "cluster": "hercules.spec", "test_config": "collections/ycsb/ycsb_workloadce_4nodes_plasma_1s_10c.test"}
     ],
-    "Rebalance": [],
+    "Rebalance": [
+         {"job": "titan", "cluster": "titan.spec", "test_config": "collections/rebalance/reb_swap_1B_9nodes_kv_disk_io_optimized_1s_1000c.test"}
+    ],
     "Rebalance-C1": [
         {"job": "titan_5node1", "cluster": "titan_5node1.spec", "test_config": "collections/rebalance/reb_in_1B_4nodes_kv_1s_1000c.test"}
     ],

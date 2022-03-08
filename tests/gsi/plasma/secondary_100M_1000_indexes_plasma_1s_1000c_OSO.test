@@ -29,7 +29,7 @@ db_percentage = 100
 view_percentage = 100
 
 [load]
-items = 50000000
+items = 100000000
 size = 1024
 workers = 100
 doc_gen = grouped

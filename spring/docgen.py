@@ -1954,24 +1954,31 @@ class FTSDocument(Document):
 
     def __init__(self, avg_size: int):
         super().__init__(avg_size)
-        with open("tests/fts/data/benchmark/hi.txt") as fp:
-            data_hi = fp.read()
-        with open("tests/fts/data/benchmark/phrase.txt") as fp:
-            data_phrase = fp.read()
-        self.words_hi = data_hi.split()
-        self.words_phrase = data_phrase.split()
+        with open("tests/fts/data/benchmark/word_prob.txt") as fp:
+            data = fp.read().splitlines()
+        words = []
+        probability = []
+        self.average_length = 0
+
+        for line in data:
+            line = line.split()
+            words.append(line[0])
+            probability.append(float(line[1]))
+            self.average_length += len(line[0]) * float(line[1])
+
+        self.words = np.array(words)
+        self.probability = np.array(probability)
 
     def get_words(self, num: int):
-        factor = random.randint(0, 4)
-        num = num - 2 + factor
-        return_string = random.sample(self.words_hi, factor) + random.sample(self.words_phrase, num)
+        return_string = np.random.choice(self.words, size=num, replace=False, p=self.probability)
         random.shuffle(return_string)
         return " ".join(return_string)
 
     def next(self, key: Key) -> dict:
+        num_words = int(self.avg_size/self.average_length/2)
         return {
-            'text': self.get_words(25),
-            'text2': self.get_words(25)
+            'text': self.get_words(num_words),
+            'text2': self.get_words(num_words)
         }
 
 

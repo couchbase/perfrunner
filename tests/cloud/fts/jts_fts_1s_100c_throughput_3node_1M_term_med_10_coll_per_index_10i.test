@@ -1,5 +1,5 @@
 [test_case]
-test = perfrunner.tests.fts.FTSThroughputCloudBackupTest
+test = perfrunner.tests.fts.FTSThroughputLoadTest
 
 [showfast]
 title = Med Term, 10K KV w/sec, wiki 1M x 1KB, 3 node, FTS, s=1 c=100 i=10, 10 collections per index
@@ -13,13 +13,21 @@ fts_index_mem_quota = 8192
 initial_nodes = 3
 num_buckets = 1
 enable_cpu_cores = false
+ui_http = disabled
+enable_n2n_encryption = all
 
 [collection]
 config = collections/1bucket_1scope_100collections_basic.json
 
+[bucket]
+eviction_policy = fullEviction
+failover_min = 10
+
 [load]
 items = 1000000
-fts_data_spread_workers = 10
+size = 1024
+workers = 10
+doc_gen = fts_doc
 
 [jts]
 jts_repo_branch = korry_jts_enhancements
@@ -44,14 +52,3 @@ test_mutation_field = text2
 test_worker_type = validatedThroughput
 couchbase_index_name = perf_fts_index
 couchbase_index_configfile = tests/fts/index/fts_tvectors_off.json
-
-[backup]
-obj_staging_dir = /root
-obj_region = us-east-1
-aws_credential_path = /root/.ssh
-
-[restore]
-backup_storage = s3://fts-wiki-1m
-backup_repo = fts_wiki
-threads = 8
-map_data = bucket-1._default._default=bucket-1.scope-1.collection-1

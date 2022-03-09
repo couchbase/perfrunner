@@ -127,110 +127,123 @@ class FTSTest(JTSTest):
         return coll_type_mapping
 
     def create_fts_index_definitions(self):
-        logger.info("In the Indexing function:")
-        # On a singlee fts index definition
-        index_def = read_json(self.access.couchbase_index_configfile)
+        logger.info("Creating indexing definitions:")
+        general_index_def = read_json(self.access.couchbase_index_configfile)
         collection_map = self.test_config.collection.collection_map
+        index_id = 0
+
         # this variable will hold the key valuesfor the custom type mapping
         key_values = []
+
+        # Geo queries have a slightly different index type with custom type mapping
+        if "types" in list(general_index_def["params"]["mapping"].keys()):
+            # if any custom type mapping is present
+            key_values = list(general_index_def["params"]["mapping"]["types"].keys())
+
         # index_type_mapping holds the type mapping part of the index
         index_type_mapping = {}
-        index_id = 0
-        # on a single bucket
-        bucket_name = self.test_config.buckets[0]
-        index_def.update({
-            'sourceName': bucket_name,
-        })
+
         if self.access.couchbase_index_type:
-            index_def["params"]["store"]["indexType"] = self.access.couchbase_index_type
+            general_index_def["params"]["store"]["indexType"] = \
+                self.access.couchbase_index_type
 
         # setting the type mapping for collection indexes
         if collection_map:
-            index_def["params"]["doc_config"]["mode"] = "scope.collection.type_field"
+            general_index_def["params"]["doc_config"]["mode"] = "scope.collection.type_field"
 
-        # Geo queries have a slightly different index type with custom type mapping
-        if "types" in list(index_def["params"]["mapping"].keys()):
-            # if any custom type mapping is present
-            key_values = list(index_def["params"]["mapping"]["types"].keys())
+        for bucket_name in self.test_config.buckets:
 
-        default_index_type_mapping = {}
-        # for default collection settings
-        if collection_map and len(collection_map[bucket_name].keys()) == 1:
-            key_name = "{}.{}".format("_default", "_default")
-            if len(key_values) > 0:
-                # there is custom mapping
-                for type_name in key_values:
-                    type_mapping_key_name = key_name + ".{}".format(type_name)
-                    default_index_type_mapping[type_mapping_key_name] = \
-                        index_def["params"]["mapping"]["types"][type_name]
+            bucket_index_def = copy.deepcopy(general_index_def)
+            bucket_index_def.update({
+                'sourceName': bucket_name,
+            })
+
+            # if collection map exists , the index is on collections
+            if collection_map and len(collection_map[bucket_name].keys()) > 1:
+                scope_names = list(collection_map[bucket_name].keys())[1:]
+                if "types" in list(bucket_index_def["params"]["mapping"].keys()):
+                    # to get the custom mapping
+                    temp = bucket_index_def["params"]["mapping"]["types"]
+                    index_type_mapping = [temp[type_key] for type_key in key_values]
+                else:
+                    index_type_mapping = \
+                        copy.deepcopy(bucket_index_def["params"]["mapping"]["default_mapping"])
+                    bucket_index_def["params"]["mapping"]["default_mapping"]["enabled"] = False
+
+                for scope_name in scope_names:
+                    collection_name_list = list(collection_map[bucket_name][scope_name].keys())
+                    collection_list = self.collection_split(collection_map, bucket_name, scope_name)
+                    index_type_mapping_per_group = self.get_collection_index_def(collection_list,
+                                                                                 scope_name,
+                                                                                 index_type_mapping,
+                                                                                 key_values
+                                                                                 )
+
+                    # calculating the doc per collection for persistence
+                    num_collections = len(collection_name_list) * len(scope_names)
+                    num_docs_per_collection = \
+                        self.test_config.load_settings.items // num_collections
+                    items_per_index = num_docs_per_collection * len(collection_list[0])
+
+                    for coll_group_id, collection_type_mapping in \
+                            enumerate(index_type_mapping_per_group):
+                        for index_count in range(0, self.access.indexes_per_group):
+                            index_name = "{}-{}".format(self.access.couchbase_index_name, index_id)
+                            collection_index_def = copy.deepcopy(bucket_index_def)
+                            collection_index_def.update({
+                                'name': index_name,
+                            })
+                            collection_index_def["params"]["mapping"]["types"] = \
+                                collection_type_mapping
+                            self.fts_index_map[index_name] = \
+                                {
+                                    "bucket": bucket_name,
+                                    "scope": scope_name,
+                                    "collections": collection_list[coll_group_id],
+                                    "total_docs": items_per_index
+                                }
+                            self.fts_index_defs[index_name] = {
+                                "index_def": collection_index_def
+                            }
+                            index_id += 1
             else:
-                default_index_type_mapping[key_name] = index_type_mapping
-                index_def["params"]["mapping"]["default_mapping"]["enabled"] = False
+                default_index_type_mapping = {}
+                # for default scope and collection settings
+                if collection_map and len(collection_map[bucket_name].keys()) == 1:
+                    key_name = "{}.{}".format("_default", "_default")
+                    if len(key_values) > 0:
+                        # there is custom mapping
+                        for type_name in key_values:
+                            type_mapping_key_name = key_name + ".{}".format(type_name)
+                            default_index_type_mapping[type_mapping_key_name] = \
+                                bucket_index_def["params"]["mapping"]["types"][type_name]
+                    else:
+                        default_index_type_mapping[key_name] = index_type_mapping
+                        bucket_index_def["params"]["mapping"]["default_mapping"]["enabled"] = False
 
-        # if collection map exists , the index is on collections
-        if collection_map and len(collection_map[bucket_name].keys()) > 1:
-            scope_names = list(collection_map[bucket_name].keys())[1:]
-            if "types" in list(index_def["params"]["mapping"].keys()):
-                # to get the custom mapping
-                temp = index_def["params"]["mapping"]["types"]
-                index_type_mapping = [temp[type_key] for type_key in key_values]
-            else:
-                index_type_mapping = \
-                    copy.deepcopy(index_def["params"]["mapping"]["default_mapping"])
-                index_def["params"]["mapping"]["default_mapping"]["enabled"] = False
-            # on a single scope
-            collection_name_list = list(collection_map[bucket_name][scope_names[0]].keys())
-            collection_list = self.collection_split(collection_map, bucket_name, scope_names[0])
-            index_type_mapping_per_group = self.get_collection_index_def(collection_list,
-                                                                         scope_names[0],
-                                                                         index_type_mapping,
-                                                                         key_values
-                                                                         )
-
-            # calculating the doc per collection for persistence
-            num_docs_per_collection = \
-                self.test_config.load_settings.items // len(collection_name_list)
-            items_per_index = num_docs_per_collection * len(collection_list[0])
-            # as the test is on a single scope:
-            for coll_group_id, collection_type_mapping in enumerate(index_type_mapping_per_group):
-                for index_count in range(0, self.access.indexes_per_group):
-                    index_name = "{}-{}".format(self.access.couchbase_index_name, index_id)
-                    temp_index_def = copy.deepcopy(index_def)
-                    temp_index_def.update({
+                # default, multiple indexes with the same index def
+                for num_indexes in range(0, self.access.indexes_per_group):
+                    index_name = "{}-{}".format(self.access.couchbase_index_name, num_indexes)
+                    collection_index_def = copy.deepcopy(bucket_index_def)
+                    collection_index_def.update({
                         'name': index_name,
                     })
-                    temp_index_def["params"]["mapping"]["types"] = collection_type_mapping
-                    self.fts_index_map[index_name] = \
-                        {
-                            "bucket": bucket_name,
-                            "scope": scope_names[0],
-                            "collections": collection_list[coll_group_id],
-                            "total_docs": items_per_index
-                        }
-                    self.fts_index_defs[index_name] = {
-                        "index_def": temp_index_def
-                    }
-                    index_id += 1
 
-        else:
-            # default , multiple indexes with the same index def
-            for num_indexes in range(0, self.access.indexes_per_group):
-                index_name = "{}-{}".format(self.access.couchbase_index_name, num_indexes)
-                index_def.update({
-                    'name': index_name,
-                })
-            # for indexes with default collection and scope in the index
-            if collection_map and len(collection_map[bucket_name].keys()) == 1:
-                index_def["params"]["mapping"]["types"] = default_index_type_mapping
-            self.fts_index_map[index_name] = {
-                "bucket": bucket_name,
-                "scope": "_default",
-                "collections": ["_default"],
-                "total_docs": int(self.access.test_total_docs)
-            }
-            self.fts_index_defs[index_name] = {
-                "index_def": index_def
-            }
+                    # for indexes with default collection and scope in the index
+                    if collection_map and len(collection_map[bucket_name].keys()) == 1:
+                        collection_index_def["params"]["mapping"]["types"] = \
+                            default_index_type_mapping
+
+                    self.fts_index_map[index_name] = {
+                        "bucket": bucket_name,
+                        "scope": "_default",
+                        "collections": ["_default"],
+                        "total_docs": int(self.access.test_total_docs)
+                    }
+
+                    self.fts_index_defs[index_name] = {
+                        "index_def": collection_index_def
+                    }
 
         self.access.fts_index_map = self.fts_index_map
 
@@ -259,8 +272,9 @@ class FTSTest(JTSTest):
             fts_nodes = self.fts_nodes
         for index_name in self.fts_index_map.keys():
             self.monitor.monitor_fts_index_persistence(
-                fts_nodes,
-                index_name
+                hosts=fts_nodes,
+                index=index_name,
+                bkt=self.fts_index_map[index_name]["bucket"]
             )
 
     def add_extra_fts_parameters(self):
@@ -462,3 +476,46 @@ class FTSThroughputCloudBackupTest(FTSLatencyCloudBackupTest):
 
     def report_kpi(self):
         self.reporter.post(*self.metrics.jts_throughput())
+
+
+class FTSIndexLoadTest(FTSIndexTest):
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+        fts_nodes = self.add_extra_fts_parameters()
+        self.create_fts_index_definitions()
+        time_elapsed = self.build_index(fts_nodes)
+        size = self.calculate_index_size()
+        self.report_kpi(time_elapsed, size)
+
+
+class FTSThroughputLoadTest(FTSThroughputTest):
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+        self.create_fts_index_definitions()
+        self.create_fts_indexes()
+        self.download_jts()
+        self.wait_for_index_persistence()
+        self.warmup()
+        self.run_test()
+        self.report_kpi()
+
+
+class FTSLatencyLoadTest(FTSLatencyTest):
+
+    def run(self):
+        self.load()
+        self.wait_for_persistence()
+        self.check_num_items()
+        self.create_fts_index_definitions()
+        self.create_fts_indexes()
+        self.download_jts()
+        self.wait_for_index_persistence()
+        self.warmup()
+        self.run_test()
+        self.report_kpi()

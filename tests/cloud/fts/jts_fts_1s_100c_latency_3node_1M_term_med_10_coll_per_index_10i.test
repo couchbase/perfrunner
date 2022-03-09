@@ -2,7 +2,7 @@
 test = perfrunner.tests.fts.FTSLatencyCloudBackupTest
 
 [showfast]
-title = Med Term, 10K KV w/sec, wiki 1M x 1KB, 3 node, FTS, s=1 c=100
+title = Med Term, 10K KV w/sec, wiki 1M x 1KB, 3 node, FTS, s=1 c=100 i=10, 10 collections per index
 component = cloud
 category = search
 
@@ -24,7 +24,7 @@ fts_data_spread_workers = 10
 [jts]
 jts_repo_branch = korry_jts_enhancements
 test_collection_query_mode = default
-index_groups = 1
+index_groups = 10
 indexes_per_group = 1
 jts_instances = 1
 test_docid_use_long = 1

@@ -55,6 +55,3 @@ backup_storage = s3://fts-wiki-1m
 backup_repo = fts_wiki
 threads = 8
 map_data = bucket-1._default._default=bucket-1.scope-1.collection-1
-
-[profiling]
-services = fts

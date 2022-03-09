@@ -1,8 +1,8 @@
 [test_case]
-test = perfrunner.tests.fts.FTSLatencyCloudBackupTest
+test = perfrunner.tests.fts.FTSThroughputCloudBackupTest
 
 [showfast]
-title = Med Term, 10K KV w/sec, wiki 1M x 1KB, 3 node, FTS, s=1 c=100
+title = Med Term, 10K KV w/sec, wiki 1M x 1KB, 3 node, FTS, s=1 c=100 i=10, 10 collections per index
 component = cloud
 category = search
 
@@ -24,15 +24,14 @@ fts_data_spread_workers = 10
 [jts]
 jts_repo_branch = korry_jts_enhancements
 test_collection_query_mode = default
-index_groups = 1
+index_groups = 10
 indexes_per_group = 1
-jts_instances = 1
-test_docid_use_long = 1
+jts_instances = 6
 test_duration = 600
 test_total_docs = 1000000
-test_query_workers = 1
-test_kv_workers = 60
-test_kv_throughput_goal = 10000
+test_query_workers = 30
+test_kv_workers = 5
+test_kv_throughput_goal = 1660
 test_data_file = ../tests/fts/data/benchmark/med.txt
 test_driver = couchbase
 test_stats_limit = 1000000
@@ -42,7 +41,7 @@ test_query_type = term
 test_query_limit = 10
 test_query_field = text
 test_mutation_field = text2
-test_worker_type = validatedLatency
+test_worker_type = validatedThroughput
 couchbase_index_name = perf_fts_index
 couchbase_index_configfile = tests/fts/index/fts_tvectors_off.json
 
